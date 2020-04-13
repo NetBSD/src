@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_spi.c,v 1.1 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imx51_spi.c,v 1.1.36.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_spi.c,v 1.1 2014/03/22 09:28:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_spi.c,v 1.1.36.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_spi.c,v 1.1 2014/03/22 09:28:08 hkenken Exp $"
 #include <arm/imx/imx51_ccmvar.h>
 
 struct imx51spi_softc {
-	struct imxspi_softc sc_spi;
+	struct imxspi_softc sc_spi; /* Must be first */
+
 	struct spi_chipset_tag sc_tag;
 };
 
@@ -74,26 +75,43 @@ imxspi_match(device_t parent, cfdata_t cf, void *aux)
 void
 imxspi_attach(device_t parent, device_t self, void *aux)
 {
-	struct imx51spi_softc *sc = device_private(self);
+	struct imx51spi_softc *isc = device_private(self);
+	struct imxspi_softc *sc = &isc->sc_spi;
 	struct axi_attach_args *aa = aux;
 	struct imxspi_attach_args saa;
 	int cf_flags = device_cfdata(self)->cf_flags;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	addr = aa->aa_addr;
+	size = aa->aa_size;
+	if (size <= 0)
+		size = SPI_SIZE;
 
 	sc->sc_tag.cookie = sc;
 	sc->sc_tag.spi_cs_enable = imxspi_cs_enable;
 	sc->sc_tag.spi_cs_disable = imxspi_cs_disable;
 
-	saa.saa_iot = aa->aa_iot;
-	saa.saa_addr = aa->aa_addr;
-	saa.saa_size = aa->aa_size;
-	saa.saa_irq = aa->aa_irq;
-	saa.saa_enhanced = cf_flags;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_enhanced = cf_flags;
+	if (sc->sc_enhanced)
+		sc->sc_type = IMX51_ECSPI;
+	else
+		sc->sc_type = IMX35_CSPI;
 
-	saa.saa_nslaves = IMXSPINSLAVES;
-	saa.saa_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
-	saa.saa_tag = &sc->sc_tag;
+	sc->sc_nslaves = IMXSPINSLAVES;
+	sc->sc_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
+	sc->sc_tag = &sc->sc_tag;
 
-	sc->sc_spi.sc_dev = self;
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
+		return;
+	}
 
-	imxspi_attach_common(parent, &sc->sc_spi, &saa);
+	/* enable device interrupts */
+	sc->sc_ih = intr_establish(aa->aa_irq, IPL_BIO, IST_LEVEL,
+	    imxspi_intr, sc);
+
+	imxspi_attach_common(self);
 }

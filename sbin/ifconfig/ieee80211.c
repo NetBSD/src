@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.29.14.1 2019/06/10 22:05:34 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.29.14.2 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.29.14.1 2019/06/10 22:05:34 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.29.14.2 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -470,7 +470,7 @@ scan_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 		return -1;
 	}
 
-	if ((ifr.ifr_flags & IFF_UP) == 0) 
+	if ((ifr.ifr_flags & IFF_UP) == 0)
 		errx(EXIT_FAILURE, "The interface must be up before scanning.");
 
 	scan_and_wait(env);
@@ -1191,7 +1191,7 @@ copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
 			bufsize -= 2;
 		}
 		maxlen = i;
-	} else{
+	} else {
 		/* printable, truncate as needed */
 		strlcpy(buf, (const char *)essid, maxlen);
 	}

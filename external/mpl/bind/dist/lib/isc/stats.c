@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.4.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.4.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,92 +25,46 @@
 #include <isc/mem.h>
 #include <isc/platform.h>
 #include <isc/print.h>
-#include <isc/rwlock.h>
+#include <isc/refcount.h>
 #include <isc/stats.h>
 #include <isc/util.h>
 
 #define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
 #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
-#ifndef _LP64
-typedef atomic_int_fast32_t isc_stat_t;
+#if (defined(_WIN32) && !defined(_WIN64)) || !defined(_LP64)
+	typedef atomic_int_fast32_t isc__atomic_statcounter_t;
 #else
-typedef atomic_int_fast64_t isc_stat_t;
+	typedef atomic_int_fast64_t isc__atomic_statcounter_t;
 #endif
 
 struct isc_stats {
-	/*% Unlocked */
-	unsigned int	magic;
-	isc_mem_t	*mctx;
-	int		ncounters;
-
-	isc_mutex_t	lock;
-	unsigned int	references; /* locked by lock */
-
-	/*%
-	 * Locked by counterlock or unlocked if efficient rwlock is not
-	 * available.
-	 */
-	isc_stat_t	*counters;
-
-	/*%
-	 * We don't want to lock the counters while we are dumping, so we first
-	 * copy the current counter values into a local array.  This buffer
-	 * will be used as the copy destination.  It's allocated on creation
-	 * of the stats structure so that the dump operation won't fail due
-	 * to memory allocation failure.
-	 * XXX: this approach is weird for non-threaded build because the
-	 * additional memory and the copy overhead could be avoided.  We prefer
-	 * simplicity here, however, under the assumption that this function
-	 * should be only rarely called.
-	 */
-	uint64_t	*copiedcounters;
+	unsigned int			magic;
+	isc_mem_t			*mctx;
+	isc_refcount_t			refs;
+	int				ncounters;
+	isc__atomic_statcounter_t	*counters;
 };
 
 static isc_result_t
 create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 	isc_stats_t *stats;
-	isc_result_t result = ISC_R_SUCCESS;
+	size_t counters_alloc_size;
 
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
 	stats = isc_mem_get(mctx, sizeof(*stats));
-	if (stats == NULL)
-		return (ISC_R_NOMEMORY);
-
-	isc_mutex_init(&stats->lock);
-
-	stats->counters = isc_mem_get(mctx, sizeof(isc_stat_t) * ncounters);
-	if (stats->counters == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto clean_mutex;
-	}
-	stats->copiedcounters = isc_mem_get(mctx,
-					    sizeof(uint64_t) * ncounters);
-	if (stats->copiedcounters == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto clean_counters;
-	}
-
-	stats->references = 1;
-	memset(stats->counters, 0, sizeof(isc_stat_t) * ncounters);
+	counters_alloc_size = sizeof(isc__atomic_statcounter_t) * ncounters;
+	stats->counters = isc_mem_get(mctx, counters_alloc_size);
+	isc_refcount_init(&stats->refs, 1);
+	memset(stats->counters, 0, counters_alloc_size);
 	stats->mctx = NULL;
 	isc_mem_attach(mctx, &stats->mctx);
 	stats->ncounters = ncounters;
 	stats->magic = ISC_STATS_MAGIC;
-
 	*statsp = stats;
 
-	return (result);
-
-clean_counters:
-	isc_mem_put(mctx, stats->counters, sizeof(isc_stat_t) * ncounters);
-
-clean_mutex:
-	isc_mutex_destroy(&stats->lock);
-	isc_mem_put(mctx, stats, sizeof(*stats));
-
-	return (result);
+	return (ISC_R_SUCCESS);
 }
 
 void
@@ -118,10 +72,7 @@ isc_stats_attach(isc_stats_t *stats, isc_stats_t **statsp) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
-	LOCK(&stats->lock);
-	stats->references++;
-	UNLOCK(&stats->lock);
-
+	isc_refcount_increment(&stats->refs);
 	*statsp = stats;
 }
 
@@ -134,21 +85,12 @@ isc_stats_detach(isc_stats_t **statsp) {
 	stats = *statsp;
 	*statsp = NULL;
 
-	LOCK(&stats->lock);
-	stats->references--;
-
-	if (stats->references == 0) {
-		isc_mem_put(stats->mctx, stats->copiedcounters,
-			    sizeof(isc_stat_t) * stats->ncounters);
+	if (isc_refcount_decrement(&stats->refs) == 1) {
 		isc_mem_put(stats->mctx, stats->counters,
-			    sizeof(isc_stat_t) * stats->ncounters);
-		UNLOCK(&stats->lock);
-		isc_mutex_destroy(&stats->lock);
+			    sizeof(isc__atomic_statcounter_t) *
+				stats->ncounters);
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
-		return;
 	}
-
-	UNLOCK(&stats->lock);
 }
 
 int
@@ -192,16 +134,12 @@ isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
 	REQUIRE(ISC_STATS_VALID(stats));
 
 	for (i = 0; i < stats->ncounters; i++) {
-		stats->copiedcounters[i] =
-			atomic_load_explicit(&stats->counters[i],
-					     memory_order_relaxed);
-	}
-
-	for (i = 0; i < stats->ncounters; i++) {
-		if ((options & ISC_STATSDUMP_VERBOSE) == 0 &&
-		    stats->copiedcounters[i] == 0)
-				continue;
-		dump_fn((isc_statscounter_t)i, stats->copiedcounters[i], arg);
+		uint32_t counter = atomic_load_explicit(&stats->counters[i],
+							memory_order_relaxed);
+		if ((options & ISC_STATSDUMP_VERBOSE) == 0 && counter == 0) {
+			continue;
+		}
+		dump_fn((isc_statscounter_t)i, counter, arg);
 	}
 }
 
@@ -214,4 +152,32 @@ isc_stats_set(isc_stats_t *stats, uint64_t val,
 
 	atomic_store_explicit(&stats->counters[counter], val,
 			      memory_order_relaxed);
+}
+
+void isc_stats_update_if_greater(isc_stats_t *stats,
+				 isc_statscounter_t counter,
+				 isc_statscounter_t value)
+{
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	isc_statscounter_t curr_value =
+		atomic_load_relaxed(&stats->counters[counter]);
+	do {
+		if (curr_value >= value) {
+			break;
+		}
+	} while (!atomic_compare_exchange_strong(&stats->counters[counter],
+						 &curr_value,
+						 value));
+}
+
+isc_statscounter_t
+isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter)
+{
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	return (atomic_load_explicit(&stats->counters[counter],
+				    memory_order_relaxed));
 }

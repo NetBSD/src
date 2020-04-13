@@ -1,4 +1,4 @@
-.\"	$NetBSD: bcd.6,v 1.17 2018/01/16 06:43:53 pgoyette Exp $
+.\"	$NetBSD: bcd.6,v 1.17.4.1 2020/04/13 08:03:07 martin Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)bcd.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd January 9, 2018
+.Dd September 1, 2019
 .Dt BCD 6
 .Os
 .Sh NAME
@@ -83,3 +83,10 @@ option).
 .%B "ITU-T Recommendation F.1: Operational provisions for the international public telegram service"
 .%O "Division B, I. Morse code"
 .Re
+.Sh HISTORY
+A
+.Nm bcd
+utility appeared in
+.At v1 .
+The current implementation originates from a rewrite included in
+.Bx 4.3 reno .

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.10 2016/04/23 10:15:32 skrll Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.10.18.1 2020/04/13 08:04:49 martin Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -89,22 +89,6 @@ enum {
 	ftdi_sio_b38400 = 7,
 	ftdi_sio_b57600 = 8,
 	ftdi_sio_b115200 = 9
-};
-
-enum {
-	ftdi_8u232am_b300 = 0x2710,
-	ftdi_8u232am_b600 = 0x1388,
-	ftdi_8u232am_b1200 = 0x09c4,
-	ftdi_8u232am_b2400 = 0x04e2,
-	ftdi_8u232am_b4800 = 0x0271,
-	ftdi_8u232am_b9600 = 0x4138,
-	ftdi_8u232am_b19200 = 0x809c,
-	ftdi_8u232am_b38400 = 0xc04e,
-	ftdi_8u232am_b57600 = 0x0034,
-	ftdi_8u232am_b115200 = 0x001a,
-	ftdi_8u232am_b230400 = 0x000d,
-	ftdi_8u232am_b460800 = 0x4006,
-	ftdi_8u232am_b921600 = 0x8003
 };
 
 /*

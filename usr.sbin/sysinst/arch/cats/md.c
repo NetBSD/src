@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
+/*	$NetBSD: md.c,v 1.2.28.1 2020/04/13 08:06:01 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include <util.h>
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 
@@ -60,8 +59,8 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -71,11 +70,6 @@ md_get_info(void)
 	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
 #endif
 	int offset = 0;
-
-	if (strncmp(pm->diskdev, "wd", 2) == 0)
-		pm->disktype = "ST506";
-	else
-		pm->disktype = "SCSI";
 
 	snprintf(dev_name, 100, "/dev/r%sc", pm->diskdev);
 
@@ -123,43 +117,45 @@ md_get_info(void)
 	printf("secpun=%d\n", disklabel.d_secperunit);
 	backtowin();*/
 
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -168,19 +164,19 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -188,21 +184,41 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+#ifdef HAVE_GPT
+/*
+ * New GPT partitions have been written, update bootloader or remember
+ * data untill needed in md_post_newfs
+ */
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	return true;
+}
+#endif
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mainbus.c,v 1.6 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_mainbus.c,v 1.6.4.1 2020/04/13 08:04:01 martin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mainbus.c,v 1.6 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mainbus.c,v 1.6.4.1 2020/04/13 08:04:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,8 +70,6 @@ static int
 wdc_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
 
@@ -83,11 +81,6 @@ wdc_mainbus_match(device_t parent, cfdata_t match, void *aux)
 	    ma->ma_irq1 == MAINBUSCF_IRQ1_DEFAULT)
 		return 0;
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
-
 	wdr.cmd_iot = SH3_BUS_SPACE_PCMCIA_IO;
 	if (bus_space_map(wdr.cmd_iot, ma->ma_addr1,
 	    WDC_MAINBUS_REG_NPORTS, 0, &wdr.cmd_baseioh) != 0)
@@ -98,7 +91,7 @@ wdc_mainbus_match(device_t parent, cfdata_t match, void *aux)
 		    i == 0 ? 4 : 1, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	wdr.ctl_iot = SH3_BUS_SPACE_PCMCIA_IO;
 	if (bus_space_map(wdr.ctl_iot, ma->ma_addr1 + WDC_MAINBUS_AUXREG_OFFSET,
@@ -115,7 +108,7 @@ bus_space_write_1(iot, ioh, 0x200, 0x41);
 printf("CF COR=0x%x\n", bus_space_read_1(iot, ioh, 0x200));
 delay(1000000);
 #endif
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 
 	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_MAINBUS_AUXREG_NPORTS);
 outunmap:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfs,v 1.8 2018/06/07 13:21:44 kamil Exp $
+#	$NetBSD: Makefile.zfs,v 1.8.2.1 2020/04/13 07:56:35 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -21,10 +21,6 @@ ZFSDIR=		${NETBSDSRCDIR}/external/cddl/osnet
 CPPFLAGS+=	-I${ZFSDIR}
 CPPFLAGS+=	-I${ZFSDIR}/include
 CPPFLAGS+=	-I${ZFSDIR}/sys
-CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
-CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zfs
-CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/fs/zfs
-CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/sys
 
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/zfs
 CPPFLAGS+=	-I${ZFSDIR}/dist/head
@@ -38,6 +34,11 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzfs_core/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzpool/common
 
 CPPFLAGS+=      -I${ZFSDIR}/dist/common
+
+CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
+CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zfs
+CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/fs/zfs
+CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/sys
 
 CWARNFLAGS+=	-Wno-missing-field-initializers
 CWARNFLAGS+=	-Wno-strict-prototypes

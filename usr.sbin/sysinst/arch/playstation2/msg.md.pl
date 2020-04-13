@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2.28.1 2020/04/13 08:06:04 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/15 16:22:52 uch Exp */
 
@@ -62,8 +62,8 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # cylindry  glowice sektory
------- ---------- ------- -------
+{BIOS # cylindry  glowice sektory 
+------ ---------- ------- ------- 
 }
 
 message onebiosmatch_row
@@ -75,8 +75,8 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cylindry  glowice sektory
-   ------ ---------- ------- -------
+{   BIOS # cylindry  glowice sektory 
+   ------ ---------- ------- ------- 
 }
 
 message biosmultmatch_row

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.5.4.2 2019/06/10 22:08:32 christos Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.5.4.3 2020/04/13 08:04:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.5.4.2 2019/06/10 22:08:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.5.4.3 2020/04/13 08:04:59 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -133,11 +133,11 @@ dma_buf_get(int fd)
 
 	if ((file = fd_getfile(fd)) == NULL) {
 		error = EBADF;
-		goto fail1;
+		goto fail0;
 	}
 	if (file->f_type != DTYPE_MISC || file->f_ops != &dmabuf_fileops) {
 		error = EINVAL;
-		goto fail0;
+		goto fail1;
 	}
 
 	dmabuf = file->f_data;

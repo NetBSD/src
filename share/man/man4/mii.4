@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.27 2014/03/03 09:10:00 wiz Exp $
+.\"	$NetBSD: mii.4,v 1.27.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2014
+.Dd November 2, 2019
 .Dt MII 4
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Cd "ikphy*    at mii? phy ?		# Intel 82563 PHYs"
 .Cd "inphy*    at mii? phy ?		# Intel 82555 PHYs"
 .Cd "iophy*    at mii? phy ?		# Intel 82553 PHYs"
+.Cd "ipgphy*   at mii? phy ?		# IC PLUS IP1000A/IP1001 PHYs"
+.Cd "jmphy*    at mii? phy ?		# JMicron"
 .Cd "lxtphy*   at mii? phy ?		# Level One LXT-970 PHYs"
 .Cd "makphy*   at mii? phy ?		# Marvel 88E1000 Gig-E PHYs"
 .Cd "micphy*   at mii? phy ?		# Micrel KSZ9021 Gig-E PHYs"
@@ -58,6 +60,7 @@
 .Cd "qsphy*    at mii? phy ?		# Quality Semiconductor QS6612 PHYs"
 .Cd "rgephy*   at mii? phy ?		# Realtek 8169S/8110S internal PHYs"
 .Cd "rlphy*    at mii? phy ?		# Realtek 8139/8201L PHYs"
+.Cd "smscphy*  at mii? phy ?		# SMSC LAN87xx PHYs"
 .Cd "sqphy*    at mii? phy ?		# Seeq 80220/80221/80223/80225 PHYs"
 .Cd "tlphy*    at mii? phy ?		# ThunderLAN internal PHYs"
 .Cd "tqphy*    at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs"
@@ -114,6 +117,7 @@ program.
 .Xr ikphy 4 ,
 .Xr inphy 4 ,
 .Xr iophy 4 ,
+.Xr jmphy 4 ,
 .Xr lxtphy 4 ,
 .Xr makphy 4 ,
 .Xr micphy 4 ,
@@ -123,6 +127,7 @@ program.
 .Xr qsphy 4 ,
 .Xr rgephy 4 ,
 .Xr rlphy 4 ,
+.Xr smscphy 4 ,
 .Xr sqphy 4 ,
 .Xr tlphy 4 ,
 .Xr tqphy 4 ,

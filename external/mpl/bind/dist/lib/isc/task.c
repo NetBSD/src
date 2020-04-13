@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.4.2.3 2020/04/08 14:07:09 martin Exp $	*/
+/*	$NetBSD: task.c,v 1.4.2.4 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1384,8 +1384,8 @@ isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 		RUNTIME_CHECK(isc_thread_create(run, &manager->queues[i],
 						&manager->queues[i].thread)
 			      == ISC_R_SUCCESS);
-		char name[16];
-		snprintf(name, sizeof(name), "isc-worker%04u", i);
+		char name[21];
+		snprintf(name, sizeof(name), "work-%u", i);
 		isc_thread_setname(manager->queues[i].thread, name);
 	}
 	UNLOCK(&manager->lock);

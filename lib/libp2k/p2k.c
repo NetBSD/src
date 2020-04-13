@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.70.12.1 2020/04/08 14:07:15 martin Exp $	*/
+/*	$NetBSD: p2k.c,v 1.70.12.2 2020/04/13 08:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -157,7 +157,7 @@ static volatile sig_atomic_t dodump;
 static void
 dumpmp(struct puffs_usermount *pu)
 {
-	struct statvfs svfsb;
+	struct puffs_statvfs svfsb;
 
 	if (dodump && p2k_fs_statvfs(pu, &svfsb) == 0) {
 		rump_pub_vfs_mount_print(svfsb.f_mntonname, dodump-1);
@@ -586,12 +586,14 @@ p2k_setup_diskfs(struct p2k_mount *p2m, const char *vfsname,
 }
 
 int
-p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
+p2k_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *sbp)
 {
 	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct mount *mp = p2m->p2m_mp;
+	struct statvfs sb;
+	puffs_statvfs_to_statvfs(sbp, &sb);
 
-	return rump_pub_vfs_statvfs(mp, sbp);
+	return rump_pub_vfs_statvfs(mp, &sb);
 }
 
 /*ARGSUSED*/
@@ -606,7 +608,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 
 	if (fs) {
 		if (ukfs_release(fs, 0) != 0) {
-			struct statvfs svfsb;
+			struct puffs_statvfs svfsb;
 
 			if (p2m->p2m_hasdebug
 			    && p2k_fs_statvfs(pu, &svfsb) == 0) {

@@ -1,6 +1,6 @@
 // std::numpunct implementation details, GNU version -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,7 +35,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  template<> 
+  template<>
     void
     numpunct<char>::_M_initialize_numpunct(__c_locale __cloc)
     {
@@ -61,9 +61,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       else
 	{
 	  // Named locale.
-	  _M_data->_M_decimal_point = *(__nl_langinfo_l(DECIMAL_POINT, 
+	  _M_data->_M_decimal_point = *(__nl_langinfo_l(DECIMAL_POINT,
 							__cloc));
-	  _M_data->_M_thousands_sep = *(__nl_langinfo_l(THOUSANDS_SEP, 
+	  _M_data->_M_thousands_sep = *(__nl_langinfo_l(THOUSANDS_SEP,
 							__cloc));
 
 	  // Check for NULL, which implies no grouping.
@@ -111,17 +111,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_data->_M_falsename = "false";
       _M_data->_M_falsename_size = 5;
     }
- 
-  template<> 
+
+  template<>
     numpunct<char>::~numpunct()
     {
       if (_M_data->_M_grouping_size)
 	delete [] _M_data->_M_grouping;
       delete _M_data;
     }
-   
+
 #ifdef _GLIBCXX_USE_WCHAR_T
-  template<> 
+  template<>
     void
     numpunct<wchar_t>::_M_initialize_numpunct(__c_locale __cloc)
     {
@@ -204,7 +204,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_data->_M_falsename_size = 5;
     }
 
-  template<> 
+  template<>
     numpunct<wchar_t>::~numpunct()
     {
       if (_M_data->_M_grouping_size)

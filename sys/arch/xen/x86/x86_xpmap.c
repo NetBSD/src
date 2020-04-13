@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.75.2.1 2019/06/10 22:06:56 christos Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.75.2.2 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.75.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.75.2.2 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -489,7 +489,7 @@ xen_locore(void)
 
 	/* Set the NX/XD bit, if available. descs[3] = %edx. */
 	x86_cpuid(0x80000001, descs);
-	xpmap_pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
+	xpmap_pg_nx = (descs[3] & CPUID_NOX) ? PTE_NX : 0;
 
 	/* Space after Xen boostrap tables should be free */
 	xen_tables = xen_start_info.pt_base;
@@ -902,7 +902,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Mark old tables RW */
 	page = old_pgd;
-	addr = xpmap_mtop((paddr_t)L2[pl2_pi(page)] & PG_FRAME);
+	addr = xpmap_mtop((paddr_t)L2[pl2_pi(page)] & PTE_4KFRAME);
 	pte = (pd_entry_t *)((u_long)addr + KERNBASE);
 	pte += pl1_pi(page);
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {

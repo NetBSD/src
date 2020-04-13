@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.63.2.1 2019/06/10 22:05:33 christos Exp $
+.\" $NetBSD: gpt.8,v 1.63.2.2 2020/04/13 08:03:20 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd April 4, 2019
+.Dd July 26, 2019
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -693,6 +693,25 @@ code.
 They may be used by
 .Nx
 code in the future.
+.\" ==== uuid ====
+.It Nm Ic uuid Oo Fl a Oc
+.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
+The
+.Ic uuid
+command allows the user to change the UUID of any and all partitions
+that match the selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
+If
+.Fl a
+is used, then the header UUID is changed as well.
+.Pp
+The primary purpose of this command is for use after cloning a disk to
+prevent collisions when both disks are used in the same system.
+.\" ==== end of commands ====
 .El
 .Sh EXIT STATUS
 The
@@ -739,11 +758,7 @@ nas# gpt show -l wd3
 nas#
 .Ed
 .Pp
-Booting from GPT on an BIOS system.
-This creates a bootable partition that can be manually installed to.
-Note that
-.Xr sysinst 8
-does not yet properly support this setup.
+Booting from GPT on a BIOS system: this creates a bootable partition.
 .Bd -literal
 xotica# gpt create wd1
 xotica# gpt add -b 1024 -l bootroot -t ffs -s 1g wd1
@@ -757,6 +772,10 @@ xotica# installboot /dev/rdk0 /usr/mdec/bootxx_ffsv1
 xotica# mount /dev/dk0 /mnt
 xotica# cp /usr/mdec/boot /mnt
 .Ed
+.Pp
+Note that
+.Ic biosboot
+is not needed for UEFI systems.
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dkctl 8 ,

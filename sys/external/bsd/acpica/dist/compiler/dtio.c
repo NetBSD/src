@@ -964,7 +964,7 @@ DtDumpSubtableInfo (
 {
 
     DbgPrint (ASL_DEBUG_OUTPUT,
-        "[%.04X] %24s %.08X %.08X %.08X %.08X %.08X %p %p %p\n",
+        "[%.04X] %24s %.08X %.08X %.08X %.08X %p %p %p %p\n",
         Subtable->Depth, Subtable->Name, Subtable->Length, Subtable->TotalLength,
         Subtable->SizeOfLengthField, Subtable->Flags, Subtable,
         Subtable->Parent, Subtable->Child, Subtable->Peer);
@@ -978,7 +978,7 @@ DtDumpSubtableTree (
 {
 
     DbgPrint (ASL_DEBUG_OUTPUT,
-        "[%.04X] %24s %*s%08X (%.02X) - (%.02X)\n",
+        "[%.04X] %24s %*s%p (%.02X) - (%.02X)\n",
         Subtable->Depth, Subtable->Name, (4 * Subtable->Depth), " ",
         Subtable, Subtable->Length, Subtable->TotalLength);
 }
@@ -1072,7 +1072,7 @@ DtWriteFieldToListing (
     if (strlen (Field->Value) > 64)
     {
         FlPrintFile (ASL_FILE_LISTING_OUTPUT, "...Additional data, length 0x%X\n",
-            strlen (Field->Value));
+            (UINT32) strlen (Field->Value));
     }
 
     FlPrintFile (ASL_FILE_LISTING_OUTPUT, "\n");

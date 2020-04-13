@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.63 2018/01/18 00:31:22 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.63.4.1 2020/04/13 08:04:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.63 2018/01/18 00:31:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.63.4.1 2020/04/13 08:04:08 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -365,12 +365,7 @@ ebus_alloc_bus_tag(struct ebus_softc *sc, int type)
 {
 	bus_space_tag_t bt;
 
-	bt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (bt == NULL)
-		panic("could not allocate ebus bus tag");
-
-	memset(bt, 0, sizeof *bt);
+	bt = malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_WAITOK | M_ZERO);
 	bt->cookie = sc;
 	bt->parent = sc->sc_memtag;
 	bt->type = type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.11 2014/05/19 20:39:23 rmind Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.11.28.1 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.11 2014/05/19 20:39:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.11.28.1 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -357,7 +357,7 @@ kcpuset_set(kcpuset_t *kcp, cpuid_t i)
 	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_next == NULL);
 	KASSERT(j < kc_nfields);
 
-	kcp->bits[j] |= 1 << (i & KC_MASK);
+	kcp->bits[j] |= __BIT(i & KC_MASK);
 }
 
 void
@@ -368,7 +368,7 @@ kcpuset_clear(kcpuset_t *kcp, cpuid_t i)
 	KASSERT(!kc_initialised || KC_GETCSTRUCT(kcp)->kc_next == NULL);
 	KASSERT(j < kc_nfields);
 
-	kcp->bits[j] &= ~(1 << (i & KC_MASK));
+	kcp->bits[j] &= ~(__BIT(i & KC_MASK));
 }
 
 bool
@@ -381,14 +381,14 @@ kcpuset_isset(const kcpuset_t *kcp, cpuid_t i)
 	KASSERT(!kc_initialised || KC_GETCSTRUCT(kcp)->kc_next == NULL);
 	KASSERT(j < kc_nfields);
 
-	return ((1 << (i & KC_MASK)) & kcp->bits[j]) != 0;
+	return ((__BIT(i & KC_MASK)) & kcp->bits[j]) != 0;
 }
 
 bool
 kcpuset_isotherset(const kcpuset_t *kcp, cpuid_t i)
 {
 	const size_t j2 = i >> KC_SHIFT;
-	const uint32_t mask = ~(1 << (i & KC_MASK));
+	const uint32_t mask = ~(__BIT(i & KC_MASK));
 
 	for (size_t j = 0; j < kc_nfields; j++) {
 		const uint32_t bits = kcp->bits[j];
@@ -500,7 +500,7 @@ kcpuset_atomic_set(kcpuset_t *kcp, cpuid_t i)
 	const size_t j = i >> KC_SHIFT;
 
 	KASSERT(j < kc_nfields);
-	atomic_or_32(&kcp->bits[j], 1 << (i & KC_MASK));
+	atomic_or_32(&kcp->bits[j], __BIT(i & KC_MASK));
 }
 
 void
@@ -509,7 +509,7 @@ kcpuset_atomic_clear(kcpuset_t *kcp, cpuid_t i)
 	const size_t j = i >> KC_SHIFT;
 
 	KASSERT(j < kc_nfields);
-	atomic_and_32(&kcp->bits[j], ~(1 << (i & KC_MASK)));
+	atomic_and_32(&kcp->bits[j], ~(__BIT(i & KC_MASK)));
 }
 
 void

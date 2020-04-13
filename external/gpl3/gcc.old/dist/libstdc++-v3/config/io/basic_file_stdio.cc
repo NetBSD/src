@@ -1,6 +1,6 @@
 // Wrapper of C-language FILE struct -*- C++ -*-
 
-// Copyright (C) 2000-2016 Free Software Foundation, Inc.
+// Copyright (C) 2000-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -41,7 +41,7 @@
 
 // Pick up FIONREAD on Solaris 2
 #ifdef _GLIBCXX_HAVE_SYS_IOCTL_H
-#define BSD_COMP 
+#define BSD_COMP
 #include <sys/ioctl.h>
 #endif
 
@@ -65,14 +65,14 @@
 
 #include <limits> // For <off_t>::max() and min() and <streamsize>::max()
 
-namespace 
+namespace
 {
   // Map ios_base::openmode flags to a string for use in fopen().
   // Table of valid combinations as given in [lib.filebuf.members]/2.
   static const char*
   fopen_mode(std::ios_base::openmode mode)
   {
-    enum 
+    enum
       {
 	in     = std::ios_base::in,
 	out    = std::ios_base::out,
@@ -167,7 +167,7 @@ namespace
 	    __nleft -= xwrite(__fd, __s2 + __off, __n2 - __off);
 	    break;
 	  }
-	
+
 	__s1 += __ret;
 	__n1_left -= __ret;
       }
@@ -188,9 +188,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   __basic_file<char>::~__basic_file()
   { this->close(); }
-      
+
   __basic_file<char>*
-  __basic_file<char>::sys_open(__c_file* __file, ios_base::openmode) 
+  __basic_file<char>::sys_open(__c_file* __file, ios_base::openmode)
   {
     __basic_file* __ret = NULL;
     if (!this->is_open() && __file)
@@ -211,7 +211,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
     return __ret;
   }
-  
+
   __basic_file<char>*
   __basic_file<char>::sys_open(int __fd, ios_base::openmode __mode) throw ()
   {
@@ -227,9 +227,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
     return __ret;
   }
-  
-  __basic_file<char>* 
-  __basic_file<char>::open(const char* __name, ios_base::openmode __mode, 
+
+  __basic_file<char>*
+  __basic_file<char>::open(const char* __name, ios_base::openmode __mode,
 			   int /*__prot*/)
   {
     __basic_file* __ret = NULL;
@@ -248,45 +248,36 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
     return __ret;
   }
-  
-  bool 
+
+  bool
   __basic_file<char>::is_open() const throw ()
   { return _M_cfile != 0; }
-  
-  int 
+
+  int
   __basic_file<char>::fd() throw ()
   { return fileno(_M_cfile); }
-  
+
   __c_file*
   __basic_file<char>::file() throw ()
   { return _M_cfile; }
-  
-  __basic_file<char>* 
+
+  __basic_file<char>*
   __basic_file<char>::close()
-  { 
+  {
     __basic_file* __ret = static_cast<__basic_file*>(NULL);
     if (this->is_open())
       {
 	int __err = 0;
 	if (_M_cfile_created)
-	  {
-	    // In general, no need to zero errno in advance if checking
-	    // for error first. However, C89/C99 (at variance with IEEE
-	    // 1003.1, f.i.) do not mandate that fclose must set errno
-	    // upon error.
-	    errno = 0;
-	    do
-	      __err = fclose(_M_cfile);
-	    while (__err && errno == EINTR);
-	  }
+	  __err = fclose(_M_cfile);
 	_M_cfile = 0;
 	if (!__err)
 	  __ret = this;
       }
     return __ret;
   }
- 
-  streamsize 
+
+  streamsize
   __basic_file<char>::xsgetn(char* __s, streamsize __n)
   {
     streamsize __ret;
@@ -296,11 +287,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     return __ret;
   }
 
-  streamsize 
+  streamsize
   __basic_file<char>::xsputn(const char* __s, streamsize __n)
   { return xwrite(this->fd(), __s, __n); }
 
-  streamsize 
+  streamsize
   __basic_file<char>::xsputn_2(const char* __s1, streamsize __n1,
 			       const char* __s2, streamsize __n2)
   {
@@ -330,8 +321,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
   }
 
-  int 
-  __basic_file<char>::sync() 
+  int
+  __basic_file<char>::sync()
   { return fflush(_M_cfile); }
 
   streamsize
@@ -339,11 +330,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
 #ifndef _GLIBCXX_NO_IOCTL
 #ifdef FIONREAD
-    // Pipes and sockets.    
+    // Pipes and sockets.
     int __num = 0;
     int __r = ioctl(this->fd(), FIONREAD, &__num);
     if (!__r && __num >= 0)
-      return __num; 
+      return __num;
 #endif
 #endif
 
@@ -354,7 +345,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __pfd[0].events = POLLIN;
     if (poll(__pfd, 1, 0) <= 0)
       return 0;
-#endif   
+#endif
 
 #if defined(_GLIBCXX_HAVE_S_ISREG) || defined(_GLIBCXX_HAVE_S_IFREG)
     // Regular files.

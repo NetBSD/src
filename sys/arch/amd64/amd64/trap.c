@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.113.4.2 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.2 2020/04/13 08:03:30 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,13 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp 
 #include <sys/syscall.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef COMPAT_NETBSD32
-#include <sys/exec.h>
-#include <compat/netbsd32/netbsd32_exec.h>
-#endif
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
@@ -110,21 +107,22 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.1 2019/06/10 22:05:47 christos Exp 
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
+/*
+ * This is a hook which is initialized by the dtrace module to handle traps
+ * which might occur during DTrace probe execution.
+ */
+dtrace_trap_func_t dtrace_trap_func = NULL;
+dtrace_doubletrap_func_t dtrace_doubletrap_func = NULL;
+#endif
 
 /*
- * This is a hook which is initialized by the dtrace module
- * to handle traps which might occur during DTrace probe
- * execution.
+ * Module hook for amd64_oosyscall
  */
-dtrace_trap_func_t	dtrace_trap_func = NULL;
-
-dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
-#endif
+struct amd64_oosyscall_hook_t amd64_oosyscall_hook;
 
 void nmitrap(struct trapframe *);
 void doubletrap(struct trapframe *);
 void trap(struct trapframe *);
-void trap_return_fault_return(struct trapframe *) __dead;
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -149,9 +147,7 @@ const char * const trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = __arraycount(trap_type);
-
-#define	IDTVEC(name)	__CONCAT(X, name)
+int trap_types = __arraycount(trap_type);
 
 #ifdef TRAP_SIGDEBUG
 static void sigdebug(const struct trapframe *, const ksiginfo_t *, int);
@@ -265,8 +261,6 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char kcopy_fault[];
-	extern char IDTVEC(osyscall)[];
-	extern char IDTVEC(syscall32)[];
 	ksiginfo_t ksi;
 	void *onfault;
 	int type, error;
@@ -278,7 +272,7 @@ trap(struct trapframe *frame)
 		p = l->l_proc;
 	} else {
 		/*
-		 * this can happen eg. on break points in early on boot.
+		 * This can happen eg on break points in early on boot.
 		 */
 		pcb = NULL;
 		p = NULL;
@@ -350,32 +344,16 @@ trap(struct trapframe *frame)
 		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-#if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
+	{	int hook_ret;
 
-/*
- * XXX This code currently not included in loadable module;  it is
- * only included in built-in modules.
- */
-	{
-		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
-		const size_t sz = sizeof(lcall);
-		char tmp[sz];
-
-		/* Check for the oosyscall lcall instruction. */
-		if (p->p_emul == &emul_netbsd32 &&
-		    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
-		    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
-		    memcmp(tmp, lcall, sz) == 0) {
-
-			/* Advance past the lcall. */
-			frame->tf_rip += sz;
-
-			/* Do the syscall. */
+		MODULE_HOOK_CALL(amd64_oosyscall_hook, (p, frame),
+			ENOSYS, hook_ret);
+		if (hook_ret == 0) {
+			/* Do the syscall */
 			p->p_md.md_syscall(frame);
 			goto out;
 		}
 	}
-#endif
 		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
@@ -434,10 +412,6 @@ trap(struct trapframe *frame)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) {
-			preempt();
-		}
 		goto out;
 
 	case T_BOUND|T_USER:
@@ -458,9 +432,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
-#ifdef DIAGNOSTIC
-			panic("unhandled type %x\n", type);
-#endif
+			KASSERT(0);
 			break;
 		}
 		goto trapsignal;
@@ -481,13 +453,9 @@ trap(struct trapframe *frame)
 		if (frame->tf_err & PGEX_X) {
 			/* SMEP might have brought us here */
 			if (cr2 < VM_MAXUSER_ADDRESS) {
-				if (cr2 == 0)
-					panic("prevented jump to null"
-					    " instruction pointer (SMEP)");
-				else
-					panic("prevented execution of"
-					    " user address %p (SMEP)",
-					    (void *)cr2);
+				printf("prevented execution of %p (SMEP)\n",
+				    (void *)cr2);
+				goto we_re_toast;
 			}
 		}
 
@@ -495,12 +463,13 @@ trap(struct trapframe *frame)
 		    cr2 < VM_MAXUSER_ADDRESS) {
 			/* SMAP might have brought us here */
 			if (onfault_handler(pcb, frame) == NULL) {
-				panic("prevented access to %p (SMAP)",
+				printf("prevented access to %p (SMAP)\n",
 				    (void *)cr2);
+				goto we_re_toast;
 			}
 		}
 
-		goto faultcommon;
+		goto pagefltcommon;
 
 	case T_PAGEFLT|T_USER: {
 		register vaddr_t va;
@@ -513,7 +482,7 @@ trap(struct trapframe *frame)
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
-faultcommon:
+pagefltcommon:
 		vm = p->p_vmspace;
 		if (__predict_false(vm == NULL)) {
 			goto we_re_toast;
@@ -660,12 +629,6 @@ faultcommon:
 		if (x86_dbregs_user_trap())
 			break;
 
-		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
-		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
-			frame->tf_rflags &= ~PSL_T;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */

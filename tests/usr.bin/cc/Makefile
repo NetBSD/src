@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4.2.1 2019/06/10 22:10:12 christos Exp $
+# $NetBSD: Makefile,v 1.4.2.2 2020/04/13 08:05:33 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,28 @@ TESTS_SH+=	$(ASAN_TESTS)
 TESTS_SH+=	$(UBSAN_TESTS)
 TESTS_SH+=	t_hello
 TESTS_SH+=	t_libgomp
+
+TESTS_SH+=	t_fuzzer_oom
+TESTS_SH+=	t_fuzzer_simple
+TESTS_SH+=	t_fuzzer_timeout
+
+TESTS_SH+=	t_msan_allocated_memory
+TESTS_SH+=	t_msan_check_mem
+TESTS_SH+=	t_msan_free
+TESTS_SH+=	t_msan_heap
+TESTS_SH+=	t_msan_partial_poison
+TESTS_SH+=	t_msan_poison
+TESTS_SH+=	t_msan_realloc
+TESTS_SH+=	t_msan_shadow
+TESTS_SH+=	t_msan_stack
+TESTS_SH+=	t_msan_unpoison
+
+TESTS_SH+=	t_tsan_data_race
+TESTS_SH+=	t_tsan_heap_use_after_free
+TESTS_SH+=	t_tsan_lock_order_inversion
+TESTS_SH+=	t_tsan_locked_mutex_destroy
+TESTS_SH+=	t_tsan_signal_errno
+TESTS_SH+=	t_tsan_thread_leak
 
 .for test in ${ASAN_TESTS}
 TESTS_SH_SRC_${test}=	asan_common.subr ${test}.sh

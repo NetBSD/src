@@ -22,7 +22,7 @@ CWARNINGS =
 BACKTRACECFLAGS = @BACKTRACECFLAGS@
 PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
 
-DNSLIBS =	../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCNOSYMLIBS =	../../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 ISCCFGLIBS = 	../../../lib/isccfg/libisccfg.@A@

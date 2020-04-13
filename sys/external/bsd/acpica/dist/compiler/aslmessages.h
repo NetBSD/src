@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -177,7 +177,7 @@ typedef enum
     ASL_MSG_NO_RETVAL,
     ASL_MSG_NO_WHILE,
     ASL_MSG_NON_ASCII,
-    ASL_MSG_NON_ZERO,
+    ASL_MSG_BUFFER_FIELD_LENGTH,
     ASL_MSG_NOT_EXIST,
     ASL_MSG_NOT_FOUND,
     ASL_MSG_NOT_METHOD,
@@ -259,6 +259,22 @@ typedef enum
     ASL_MSG_REGION_LENGTH,
     ASL_MSG_TEMPORARY_OBJECT,
     ASL_MSG_UNDEFINED_EXTERNAL,
+    ASL_MSG_BUFFER_FIELD_OVERFLOW,
+    ASL_MSG_INVALID_SPECIAL_NAME,
+    ASL_MSG_INVALID_PROCESSOR_UID,
+    ASL_MSG_LEGACY_PROCESSOR_OP,
+    ASL_MSG_NAMESTRING_LENGTH,
+    ASL_MSG_CASE_FOUND_HERE,
+    ASL_MSG_EXTERN_INVALID_RET_TYPE,
+    ASL_MSG_EXTERN_INVALID_PARAM_TYPE,
+    ASL_MSG_NAMED_OBJECT_CREATION,
+    ASL_MSG_ARG_COUNT_MISMATCH,
+    ASL_MSG_STATIC_OPREGION_IN_METHOD,
+    ASL_MSG_DECLARATION_TYPE_MISMATCH,
+    ASL_MSG_TYPE_MISMATCH_FOUND_HERE,
+    ASL_MSG_DUPLICATE_EXTERN_MISMATCH,
+    ASL_MSG_DUPLICATE_EXTERN_FOUND_HERE,
+
 
     /* These messages are used by the Data Table compiler only */
 
@@ -275,6 +291,9 @@ typedef enum
     ASL_MSG_UNKNOWN_SUBTABLE,
     ASL_MSG_UNKNOWN_TABLE,
     ASL_MSG_ZERO_VALUE,
+    ASL_MSG_INVALID_LABEL,
+    ASL_MSG_BUFFER_LIST,
+    ASL_MSG_ENTRY_LIST,
 
     /* These messages are used by the Preprocessor only */
 

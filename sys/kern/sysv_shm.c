@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.131.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.131.18.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131.18.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -119,6 +119,26 @@ SYSCTL_SETUP_PROTO(sysctl_ipc_shm_setup);
 #endif
 
 static int shmrealloc(int);
+
+/*
+ * Find the shared memory segment permission by the index. Only used by
+ * compat_linux to implement SHM_STAT.
+ */
+int
+shm_find_segment_perm_by_index(int index, struct ipc_perm *perm)
+{
+	struct shmid_ds *shmseg;
+
+	mutex_enter(&shm_lock);
+	if (index < 0 || index >= shminfo.shmmni) {
+		mutex_exit(&shm_lock);
+		return EINVAL;
+	}
+	shmseg = &shmsegs[index];
+	memcpy(perm, &shmseg->shm_perm, sizeof(*perm));
+	mutex_exit(&shm_lock);
+	return 0;
+}
 
 /*
  * Find the shared memory segment by the identifier.
@@ -417,19 +437,15 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 
 	/*
 	 * Create a map entry, add it to the list and increase the counters.
-	 * The lock will be dropped before the mapping, disable reallocation.
 	 */
 	shmmap_s = shmmap_getprivate(p);
 	SLIST_INSERT_HEAD(&shmmap_s->entries, shmmap_se, next);
 	shmmap_s->nitems++;
 	shmseg->shm_lpid = p->p_pid;
 	shmseg->shm_nattch++;
-	shm_realloc_disable++;
-	mutex_exit(&shm_lock);
 
 	/*
-	 * Add a reference to the memory object, map it to the
-	 * address space, and lock the memory, if needed.
+	 * Map the segment into the address space.
 	 */
 	uobj = shmseg->_shm_internal;
 	uao_reference(uobj);
@@ -439,15 +455,12 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 		goto err_detach;
 
 	/* Set the new address, and update the time */
-	mutex_enter(&shm_lock);
 	shmmap_se->va = attach_va;
 	shmseg->shm_atime = time_second;
-	shm_realloc_disable--;
 	retval[0] = attach_va;
 	SHMPRINTF(("shmat: vm %p: add %d @%lx\n",
 	    p->p_vmspace, shmmap_se->shmid, attach_va));
 err:
-	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 	if (error && shmmap_se) {
 		kmem_free(shmmap_se, sizeof(struct shmmap_entry));
@@ -456,10 +469,7 @@ err:
 
 err_detach:
 	uao_detach(uobj);
-	mutex_enter(&shm_lock);
 	uobj = shm_delete_mapping(shmmap_s, shmmap_se);
-	shm_realloc_disable--;
-	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 	if (uobj != NULL) {
 		uao_detach(uobj);
@@ -928,7 +938,7 @@ shmrealloc(int newshmni)
 }
 
 int
-shminit(struct sysctllog **clog)
+shminit(void)
 {
 	vaddr_t v;
 	size_t sz;
@@ -973,10 +983,6 @@ shminit(struct sysctllog **clog)
 	uvm_shmexit = shmexit;
 	uvm_shmfork = shmfork;
 
-#ifdef _MODULE
-	if (clog)
-		sysctl_ipc_shm_setup(clog);
-#endif
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusic.c,v 1.1.6.2 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: vmbusic.c,v 1.1.6.3 2020/04/13 08:04:20 martin Exp $	*/
 /*-
  * Copyright (c) 2014,2016 Microsoft Corp.
  * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: vmbusic.c,v 1.1.6.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbusic.c,v 1.1.6.3 2020/04/13 08:04:20 martin Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/utilities/vmbus_ic.c 310317 2016-12-20 07:14:24Z sephe $");
@@ -71,7 +71,7 @@ vmbusic_attach(device_t dv, struct vmbus_attach_args *aa,
 	sc->sc_chan = aa->aa_chan;
 
 	sc->sc_buflen = VMBUS_IC_BRSIZE;
-	sc->sc_buf = kmem_alloc(sc->sc_buflen, cold ? KM_NOSLEEP : KM_SLEEP);
+	sc->sc_buf = kmem_alloc(sc->sc_buflen, KM_SLEEP);
 
 	/*
 	 * These services are not performance critical and do not need

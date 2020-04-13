@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.40 2017/12/26 08:30:58 kamil Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.40.4.1 2020/04/13 08:04:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.40 2017/12/26 08:30:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.40.4.1 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,7 +165,7 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 			return error;
 
 		uts.tv_sec = utv32.tv_sec;
-		uts.tv_nsec = utv32.tv_usec * 1000;
+		uts.tv_nsec = (long)((unsigned long)utv32.tv_usec * 1000);
 
 		if (itimespecfix(&uts)) {
 			/*
@@ -733,4 +733,20 @@ linux32_sys_pwrite(struct lwp *l,
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+/*
+ * fallocate(2)
+ */
+int
+linux32_sys_fallocate(struct lwp *l,
+    const struct linux32_sys_fallocate_args *uap, register_t *retval)
+{
+	/*
+	 * For now just return EOPNOTSUPP, this makes glibc posix_fallocate()
+	 * to fallback to emulation.
+	 * XXX Right now no filesystem actually implements fallocate support,
+	 * so no need for mapping.
+	 */
+	return EOPNOTSUPP;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1066.2.1 2019/06/10 22:05:42 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1066.2.2 2020/04/13 08:03:26 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -19,7 +19,12 @@ MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
 #
+.if !empty(MACHINE:Mevbarm) || !empty(MACHINE:Mevbmips) \
+	|| !empty(MACHINE:Mevbsh3)
+RELEASEMACHINEDIR?=	${MACHINE}-${MACHINE_ARCH}
+.else
 RELEASEMACHINEDIR?=	${MACHINE}
+.endif
 
 #
 # Subdirectory or path component used for the following paths:
@@ -58,7 +63,20 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
+.if ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386" || \
+    ${MACHINE} == "ia64" || \
+    ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || \
+    ${MACHINE_CPU} == "aarch64" || \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "powerpc" || \
+    ${MACHINE_CPU} == "powerpc64" || \
+    ${MACHINE_CPU} == "riscv"
+HAVE_GCC?=	8
+.else
 HAVE_GCC?=	7
+.endif
 
 #
 # Platforms that can't run a modern GCC natively
@@ -70,9 +88,9 @@ MKGCCCMDS?=	no
 # We import the old gcc as "gcc.old" when upgrading.  EXTERNAL_GCC_SUBDIR is
 # set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
 #
-.if ${HAVE_GCC} == 6
+.if ${HAVE_GCC} == 7
 EXTERNAL_GCC_SUBDIR?=	gcc.old
-.elif ${HAVE_GCC} == 7
+.elif ${HAVE_GCC} == 8
 EXTERNAL_GCC_SUBDIR?=	gcc
 .else
 EXTERNAL_GCC_SUBDIR=?	/does/not/exist
@@ -151,11 +169,15 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 #
 # What binutils is used?
 #
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+HAVE_BINUTILS?=	234
+.else
 HAVE_BINUTILS?=	231
+.endif
 
-.if ${HAVE_BINUTILS} == 231
+.if ${HAVE_BINUTILS} == 234
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 227
+.elif ${HAVE_BINUTILS} == 231
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
@@ -329,7 +351,8 @@ DESTDIR?=
 # Don't append another copy of sysroot (coming from COMPATCPPFLAGS etc.)
 # because it confuses Coverity. Still we need to cov-configure specially
 # for each specific sysroot argument.
-.if !defined(HOSTPROG) && !defined(HOSTLIB)
+# Also don't add a sysroot at all if a rumpkernel build.
+.if !defined(HOSTPROG) && !defined(HOSTLIB) && !defined(RUMPRUN)
 .  if ${DESTDIR} != ""
 .	if empty(CPPFLAGS:M*--sysroot=*)
 CPPFLAGS+=	--sysroot=${DESTDIR}
@@ -805,6 +828,15 @@ NOPROFILE=	# defined
 .endif
 
 #
+# GCC warnings with simple disables.  Use these with eg
+# COPTS.foo.c+= ${GCC_NO_STRINGOP_TRUNCATION}.
+#
+GCC_NO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
+GCC_NO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
+GCC_NO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+GCC_NO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
+
+#
 # The ia64 port is incomplete.
 #
 MKGDB.ia64=	no
@@ -875,8 +907,8 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 
 .if !empty(MACHINE_ARCH:M*arm*)
 # Flags to pass to CC for using the old APCS ABI on ARM for compat or stand.
-ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft
-ARM_APCS_FLAGS+=${${ACTIVE_CC} == "gcc":? -marm :}
+ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft -marm
+ARM_APCS_FLAGS+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -mno-thumb-interwork :}
 ARM_APCS_FLAGS+=${${ACTIVE_CC} == "clang":? -target ${MACHINE_GNU_ARCH}--netbsdelf -B ${TOOLDIR}/${MACHINE_GNU_PLATFORM}/bin :}
 .endif
 
@@ -998,17 +1030,19 @@ SOFTFLOAT_BITS=	32
 .endif
 
 #
-# We want to build zfs only for amd64 by default for now.
+# We want to build zfs only for amd64, aarch64 and sparc64 by default for now.
 #
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE} == "sparc64"
 MKZFS?=		yes
 .endif
 
 #
-# DTrace works on amd64, i386 and earm*
+# DTrace works on amd64, i386, aarch64, and earm*
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "aarch64" || \
     !empty(MACHINE_ARCH:Mearm*)
 MKDTRACE?=	yes
 MKCTF?=		yes
@@ -1053,6 +1087,7 @@ MKSTATICPIE?=	no
 _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
+	MKBSDTAR \
 	MKCOMPLEX MKCVS MKCXX \
 	MKDOC MKDTC \
 	MKDYNAMICROOT \
@@ -1069,7 +1104,7 @@ _MKVARS.yes= \
 	MKNPF \
 	MKOBJ \
 	MKPAM MKPERFUSE \
-	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+	MKPF MKPIC MKPICLIB MKPOSTFIX MKPROFILE \
 	MKRUMP \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKUNBOUND \
@@ -1127,6 +1162,11 @@ GROFF_FLAGS ?= -dpaper=letter
 ROFF_PAGESIZE ?= -P-pletter
 .endif
 
+#
+# Install the kernel as /netbsd/kernel and the modules in /netbsd/modules
+#
+KERNEL_DIR?=	no
+
 # Only install the general firmware on some systems
 MKFIRMWARE.amd64=		yes
 MKFIRMWARE.cobalt=		yes
@@ -1141,9 +1181,13 @@ MKFIRMWARE.macppc=		yes
 MKFIRMWARE.sandpoint=		yes
 MKFIRMWARE.sparc64=		yes
 
-# Only install the radeon firmware on DRM-happy systems.
+# Only install the nouveau and radeon firmwares on DRM-happy systems.
+MKNOUVEAUFIRMWARE.x86_64=	yes
+MKNOUVEAUFIRMWARE.i386=		yes
+MKNOUVEAUFIRMWARE.aarch64=	yes
 MKRADEONFIRMWARE.x86_64=	yes
 MKRADEONFIRMWARE.i386=		yes
+MKRADEONFIRMWARE.aarch64=	yes
 
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
@@ -1156,12 +1200,13 @@ EXTERNAL_MESALIB_DIR?=	MesaLib.old
 EXTERNAL_MESALIB_DIR?=	MesaLib
 .endif
 
-# Default to LLVM run-time if x86 and X11 and Mesa 18
+# Default to LLVM run-time if x86 or aarch64 and X11 and Mesa 18
 # XXX This knows that MKX11=no is default below, but would
 # require splitting the below loop in two parts.
 .if ${MKX11:Uno} != "no" && ${HAVE_MESA_VER} == "18"
 MKLLVMRT.amd64=		yes
 MKLLVMRT.i386=		yes
+MKLLVMRT.aarch64=	yes
 .endif
 
 #
@@ -1170,8 +1215,9 @@ MKLLVMRT.i386=		yes
 # sorted with at most one letter per line.
 #
 _MKVARS.no= \
+	MKARGON2 \
 	MKARZERO \
-	MKBSDGREP MKBSDTAR \
+	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
 	MKDEBUG MKDEBUGLIB MKDTRACE \
 	MKEXTSRC \
@@ -1180,9 +1226,9 @@ _MKVARS.no= \
 	MKKYUA \
 	MKLIBCXX MKLLD MKLLDB MKLLVM MKLLVMRT MKLINT \
 	MKMANZ MKMCLINKER \
-	MKNSD \
+	MKNOUVEAUFIRMWARE MKNSD \
 	MKOBJDIRS \
-	MKPCC MKPIGZGZIP \
+	MKPCC MKPICINSTALL MKPIGZGZIP \
 	MKRADEONFIRMWARE MKREPRO \
 	MKSLJIT MKSOFTFLOAT MKSTRIPIDENT \
 	MKTEGRAFIRMWARE MKTPM \
@@ -1241,6 +1287,8 @@ MKXORG_SERVER=yes
 
 .if ${MKCXX} == "no"
 MKATF:=		no
+MKGCCCMDS:=	no
+MKGDB:=		no
 MKGROFF:=	no
 MKKYUA:=	no
 .endif
@@ -1492,6 +1540,7 @@ HAVE_XORG_GLAMOR?=	no
 	ico iceauth listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
 	rstart setxkbmap showfont smproxy transset twm viewres \
+	util-macros \
 	x11perf xauth xcalc xclipboard \
 	xclock xcmsdb xconsole xditview xdpyinfo xdriinfo xdm \
 	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \

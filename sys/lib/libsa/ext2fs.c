@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.25.16.2 2020/04/08 14:08:53 martin Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.25.16.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -692,7 +692,7 @@ out:
 	if (rc)
 		ext2fs_close(f);
 	else
-		fsmod = "ext2fs";
+		fsmod = "ufs/ext2fs";
 	return rc;
 }
 

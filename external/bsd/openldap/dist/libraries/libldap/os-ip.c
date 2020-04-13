@@ -1,10 +1,10 @@
-/*	$NetBSD: os-ip.c,v 1.8 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.8.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: os-ip.c,v 1.8 2018/02/06 01:57:23 christos Exp $");
+__RCSID("$NetBSD: os-ip.c,v 1.8.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -448,7 +448,7 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 		if ( connect(s, sin, addrlen) != AC_SOCKET_ERROR ) {
 			osip_debug(ld, "connect success\n", 0, 0, 0);
 
-			if ( opt_tv && ldap_pvt_ndelay_off(ld, s) == -1 )
+			if ( !async && opt_tv && ldap_pvt_ndelay_off(ld, s) == -1 )
 				return ( -1 );
 			return ( 0 );
 		}
@@ -628,6 +628,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 			continue;
 		}
 
+#ifndef LDAP_PF_INET6
+		if ( sai->ai_family == AF_INET6 ) continue;
+#endif
 		/* we assume AF_x and PF_x are equal for all x */
 		s = ldap_int_socket( ld, sai->ai_family, socktype );
 		if ( s == AC_SOCKET_INVALID ) {

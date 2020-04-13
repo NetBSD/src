@@ -1,4 +1,4 @@
-/* $NetBSD: pic_amiga.c,v 1.3 2011/06/19 07:59:47 matt Exp $ */
+/* $NetBSD: pic_amiga.c,v 1.3.54.1 2020/04/13 08:03:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2008,2009,2010 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.3 2011/06/19 07:59:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.3.54.1 2020/04/13 08:03:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -65,8 +65,7 @@ setup_amiga_intr(void)
 	struct amiga_ops *amipic;
 	struct pic_ops *pic;
 
-	amipic = malloc(sizeof(struct amiga_ops), M_DEVBUF, M_NOWAIT);
-	KASSERT(amipic != NULL);
+	amipic = malloc(sizeof(struct amiga_ops), M_DEVBUF, M_WAITOK);
 	pic = &amipic->pic;
 
 	pic->pic_numintrs = MAXIPL;

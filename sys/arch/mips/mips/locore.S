@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.218.2.2 2020/04/08 14:07:45 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.218.2.3 2020/04/13 08:04:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.218.2.2 2020/04/08 14:07:45 martin Exp $")
+RCSID("$NetBSD: locore.S,v 1.218.2.3 2020/04/13 08:04:00 martin Exp $")
 
 #include "assym.h"
 
@@ -73,10 +73,10 @@ RCSID("$NetBSD: locore.S,v 1.218.2.2 2020/04/08 14:07:45 martin Exp $")
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
+	/* First disable the interrupts only, for safety */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
 
-	/* First disable the interrupts only, for safety */
 	and	k0, ~MIPS_SR_INT_IE
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
@@ -85,6 +85,7 @@ _C_LABEL(kernel_text):
 	/* Leaving TS | RE alone (for emips) */
 	and	k0, MIPS_SR_TS | MIPS3_SR_RE
 	mtc0	k0, MIPS_COP_0_STATUS
+	mtc0	zero, MIPS_COP_0_CAUSE
 	COP0_SYNC
 
 #if defined(_LP64) 

@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.224.4.2 2020/04/08 14:09:18 martin Exp $ */
+/* $NetBSD: vmstat.c,v 1.224.4.3 2020/04/13 08:05:49 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,11 +71,12 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.224.4.2 2020/04/08 14:09:18 martin Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.224.4.3 2020/04/13 08:05:49 martin Exp $");
 #endif
 #endif /* not lint */
 
 #define	__POOL_EXPOSE
+#define __NAMECACHE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.4.2.3 2020/04/08 14:07:10 martin Exp $	*/
+/*	$NetBSD: update.c,v 1.4.2.4 2020/04/13 08:03:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,6 +55,8 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/update.h>
+
+#include <ns/pfilter.h>
 
 /*! \file
  * \brief
@@ -337,6 +339,7 @@ checkqueryacl(ns_client_t *client, dns_acl_t *queryacl, dns_name_t *zonename,
 
 	result = ns_client_checkaclsilent(client, NULL, queryacl, true);
 	if (result != ISC_R_SUCCESS) {
+		pfilter_notify(result, client, "queryacl");
 		dns_name_format(zonename, namebuf, sizeof(namebuf));
 		dns_rdataclass_format(client->view->rdclass, classbuf,
 				      sizeof(classbuf));
@@ -349,6 +352,7 @@ checkqueryacl(ns_client_t *client, dns_acl_t *queryacl, dns_name_t *zonename,
 			      "update '%s/%s' denied due to allow-query",
 			      namebuf, classbuf);
 	} else if (updateacl == NULL && ssutable == NULL) {
+		pfilter_notify(result, client, "updateacl");
 		dns_name_format(zonename, namebuf, sizeof(namebuf));
 		dns_rdataclass_format(client->view->rdclass, classbuf,
 				      sizeof(classbuf));
@@ -392,6 +396,7 @@ checkupdateacl(ns_client_t *client, dns_acl_t *acl, const char *message,
 		msg = "disabled";
 	} else {
 		result = ns_client_checkaclsilent(client, NULL, acl, false);
+		pfilter_notify(result, client, "updateacl");
 		if (result == ISC_R_SUCCESS) {
 			level = ISC_LOG_DEBUG(3);
 			msg = "approved";

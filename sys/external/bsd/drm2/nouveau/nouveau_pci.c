@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.11.2.1 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.11.2.2 2020/04/13 08:04:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11.2.1 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11.2.2 2020/04/13 08:04:59 martin Exp $");
+
+#ifdef _KERNEL_OPT
+#if defined(__arm__) || defined(__aarch64__)
+#include "opt_fdt.h"
+#endif
+#endif
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -43,6 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11.2.1 2019/06/10 22:08:33 christo
 #include <core/device.h>
 #include <core/pci.h>
 
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
 
@@ -52,6 +62,7 @@ SIMPLEQ_HEAD(nouveau_pci_task_head, nouveau_pci_task);
 
 struct nouveau_pci_softc {
 	device_t		sc_dev;
+	struct pci_attach_args	sc_pa;
 	enum {
 		NOUVEAU_TASK_ATTACH,
 		NOUVEAU_TASK_WORKQUEUE,
@@ -67,6 +78,7 @@ struct nouveau_pci_softc {
 
 static int	nouveau_pci_match(device_t, cfdata_t, void *);
 static void	nouveau_pci_attach(device_t, device_t, void *);
+static void	nouveau_pci_attach_real(device_t);
 static int	nouveau_pci_detach(device_t, int);
 
 static bool	nouveau_pci_suspend(device_t, const pmf_qual_t *);
@@ -95,8 +107,6 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
 		return 0;
 
-#define IS_BETWEEN(x,y) \
-	(PCI_PRODUCT(pa->pa_id) >= (x) && PCI_PRODUCT(pa->pa_id) <= (y))
 	/*
 	 * NetBSD drm2 doesn't support Pascal, Volta or Turing based cards:
 	 *   0x1580-0x15ff 	GP100
@@ -109,20 +119,16 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	 *   0x1e00-0x1e7f 	TU102
 	 *   0x1e80-0x1eff 	TU104
 	 *   0x1f00-0x1f7f 	TU106
+	 *   0x1f80-0x1fff 	TU117
+	 *   0x2180-0x21ff 	TU116
+	 *
+	 * reduce this to >= 1580, so that new chipsets not explictly
+	 * listed above will be picked up.
+	 *
+	 * XXX perhaps switch this to explicitly match known list.
 	 */
-	
-	if (IS_BETWEEN(0x1580, 0x15ff) ||
-	    IS_BETWEEN(0x1b00, 0x1b7f) ||
-	    IS_BETWEEN(0x1b80, 0x1bff) ||
-	    IS_BETWEEN(0x1c00, 0x1c7f) ||
-	    IS_BETWEEN(0x1c80, 0x1cff) ||
-	    IS_BETWEEN(0x1d00, 0x1d7f) ||
-	    IS_BETWEEN(0x1d80, 0x1dff) ||
-	    IS_BETWEEN(0x1e00, 0x1e7f) ||
-	    IS_BETWEEN(0x1e80, 0x1eff) ||
-	    IS_BETWEEN(0x1f00, 0x1f7f))
+	if (PCI_PRODUCT(pa->pa_id) >= 0x1580)
 		return 0;
-#undef IS_BETWEEN
 
 	linux_pci_dev_init(&pdev, parent /* XXX bogus */, parent, pa, 0);
 	ret = nvkm_device_pci_new(&pdev, NULL, "error",
@@ -144,21 +150,45 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	int error;
 
 	pci_aprint_devinfo(pa, NULL);
 
+	if (!pmf_device_register(self, &nouveau_pci_suspend, &nouveau_pci_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
+
+	/*
+	 * Trivial initialization first; the rest will come after we
+	 * have mounted the root file system and can load firmware
+	 * images.
+	 */
+	sc->sc_dev = NULL;
+	sc->sc_pa = *pa;
+
+#ifdef FDT
+	/*
+	 * XXX Remove the simple framebuffer, assuming that this device
+	 * will take over.
+	 */
+	const char *fb_compatible[] = { "simple-framebuffer", NULL };
+	fdt_remove_bycompat(fb_compatible);
+#endif
+
+	config_mountroot(self, &nouveau_pci_attach_real);
+}
+
+static void
+nouveau_pci_attach_real(device_t self)
+{
+	struct nouveau_pci_softc *const sc = device_private(self);
+	const struct pci_attach_args *const pa = &sc->sc_pa;
+	int error;
+
 	sc->sc_dev = self;
+	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
+	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
-
-	if (!pmf_device_register(self, &nouveau_pci_suspend,
-		&nouveau_pci_resume))
-		aprint_error_dev(self, "unable to establish power handler\n");
-
-	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
-	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
 	/* XXX errno Linux->NetBSD */
 	error = -nvkm_device_pci_new(&sc->sc_pci_dev,
@@ -203,6 +233,10 @@ nouveau_pci_detach(device_t self, int flags)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
 	int error;
+
+	if (sc->sc_dev == NULL)
+		/* Not done attaching.  */
+		return EBUSY;
 
 	/* XXX Check for in-use before tearing it all down...  */
 	error = config_detach_children(self, flags);

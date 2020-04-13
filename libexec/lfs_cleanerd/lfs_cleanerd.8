@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.18 2009/08/06 21:18:54 wiz Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.18.46.1 2020/04/13 08:03:18 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,9 +39,11 @@
 .Nm
 .Op Fl bcDdfmqs
 .Op Fl i Ar segment-number
+.Op Fl J Ar raw-device
 .Op Fl l Ar load-threshhold
 .Op Fl n Ar number-of-segments
 .Op Fl r Ar report-frequency
+.Op Fl S Ar semaphore-address
 .Op Fl t Ar timeout
 .Pa node
 .Sh DESCRIPTION
@@ -94,6 +96,12 @@ Invalidate the segment with segment number
 This option is used by
 .Xr resize_lfs 8 ,
 and should not be specified on the command line.
+.It Fl J Ar raw device
+Specify the raw device that the cleaner is to work against rather than
+trying to figure it out from the mount point.
+This is mostly useful when the cleaner is compiled into
+.Xr rump_lfs 8
+and the ATF test framework.
 .It Fl l Ar load-threshhold
 Clean more aggressively when the system load is below the given threshhold.
 The default threshhold is 0.2.
@@ -112,6 +120,13 @@ Quit after cleaning once.
 Give an efficiency report after every
 .Ar report-frequency
 times through the main loop.
+.It Fl S Ar semaphore address
+When the cleaner code is compiled into
+.Xr rump_lfs 8
+and the ATF frame work, this option allows for a synchronization
+semaphore to be specified.
+This option is not available in the stand-alone
+.Nm .
 .It Fl s
 When cleaning the file system,
 send only a few blocks through lfs_markv at a time.
@@ -132,7 +147,8 @@ to a low value.
 .Xr lfs_bmapv 2 ,
 .Xr lfs_markv 2 ,
 .Xr lfs_segwait 2 ,
-.Xr mount_lfs 8
+.Xr mount_lfs 8 ,
+.Xr rump_lfs 8
 .Sh HISTORY
 The
 .Nm

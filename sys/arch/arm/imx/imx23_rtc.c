@@ -1,4 +1,4 @@
-/* $Id: imx23_rtc.c,v 1.1 2015/01/10 12:16:28 jmcneill Exp $ */
+/* $Id: imx23_rtc.c,v 1.1.22.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ rtc_release_gnd(int val)
 	struct rtc_softc *sc = _sc;
 
         if (sc == NULL) {
-                aprint_error("rtc is not initalized");
+                aprint_error("rtc is not initialized");
                 return;
         }
 	if(val)

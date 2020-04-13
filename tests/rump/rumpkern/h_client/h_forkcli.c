@@ -1,4 +1,4 @@
-/*	$NetBSD: h_forkcli.c,v 1.1 2011/01/05 17:19:09 pooka Exp $	*/
+/*	$NetBSD: h_forkcli.c,v 1.1.46.1 2020/04/13 08:05:32 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -24,7 +24,7 @@ simple(void)
 	if ((pid1 = rump_sys_getpid()) < 2)
 		errx(1, "unexpected pid %d", pid1);
 
-	fd = rump_sys_open("/dev/null", O_CREAT | O_RDWR);
+	fd = rump_sys_open("/dev/null", O_CREAT | O_RDWR, 0600);
 	if (rump_sys_write(fd, &fd, sizeof(fd)) != sizeof(fd))
 		errx(1, "write newlyopened /dev/null");
 

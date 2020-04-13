@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.59.2.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.59.2.2 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,6 +36,9 @@
 #include <dev/vndvar.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
 #include <net80211/ieee80211_ioctl.h>
 
 /* we define some handy macros here... */
@@ -624,3 +627,5 @@ struct netbsd32_disk_strategy {
 
 #define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
 #define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)
+
+int	netbsd32_drm_ioctl(struct file *, unsigned long, void *, struct lwp *);

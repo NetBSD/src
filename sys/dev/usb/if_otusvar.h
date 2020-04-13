@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.8.18.1 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.8.18.2 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ struct otus_rx_radiotap_header {
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define OTUS_RX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -100,7 +100,7 @@ struct otus_tx_radiotap_header {
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-} __packed;
+};
 
 #define OTUS_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -184,7 +184,7 @@ struct otus_softc {
 	uint8_t 			*sc_ibuf;
 	size_t				sc_ibuf_size;
 
-	int				sc_if_flags;
+	unsigned short			sc_if_flags;
 	int				sc_tx_timer;
 	int				sc_fixed_ridx;
 	int				sc_bb_reset;

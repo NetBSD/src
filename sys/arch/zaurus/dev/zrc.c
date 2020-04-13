@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.9 2012/10/27 17:18:14 chs Exp $	*/
+/*	$NetBSD: zrc.c,v 1.9.38.1 2020/04/13 08:04:13 martin Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -17,8 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "opt_wsdisplay_compat.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.9 2012/10/27 17:18:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.9.38.1 2020/04/13 08:04:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,6 +133,11 @@ static const keysym_t zrc_keydesc[] = {
 };
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
+/* XXX see OpenBSD's <sys/dev/wscons/wskbdraw.h> */
+#define	RAWKEY_Null		0x00
+#define	RAWKEY_AudioMute	0x85
+#define	RAWKEY_AudioLower	0x86
+#define	RAWKEY_AudioRaise 	0x87
 #define	RAWKEY_AudioRewind	0xa0
 #define	RAWKEY_AudioForward	0xa1
 #define	RAWKEY_AudioPlay	0xa2

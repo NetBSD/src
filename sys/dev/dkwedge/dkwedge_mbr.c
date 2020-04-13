@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.10 2017/01/19 00:44:40 maya Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.10.14.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.10 2017/01/19 00:44:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.10.14.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,8 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 				continue;
 			break;
 		}
+
+		memset(&dkw, 0, sizeof(dkw));
 
 		if ((ptype = mbr_ptype_to_str(dp[i].mbrp_type)) == NULL) {
 			/*

@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.20.2.1 2019/06/10 22:06:07 christos Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.20.2.2 2020/04/13 08:03:44 martin Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.20.2.1 2019/06/10 22:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.20.2.2 2020/04/13 08:03:44 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -329,7 +329,7 @@ static const struct pmap_devmap imx31lk_devmap[] = {
 #endif
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -341,7 +341,7 @@ static const struct pmap_devmap imx31lk_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int loop;
@@ -724,7 +724,7 @@ printf("%s: textsize %#lx, totalsize %#lx\n",
 		Debugger();
 #endif
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 #if 0

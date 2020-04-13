@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.38 2016/10/01 15:10:58 roy Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.38.14.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.38 2016/10/01 15:10:58 roy Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.38.14.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/nd6.h>
@@ -222,7 +222,7 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 		errx(EXIT_FAILURE,
 		    "eui64 address modifier not allowed for the AF");
 	}
- 	in6 = &ifra->ifra_addr.sin6_addr;
+	in6 = &ifra->ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0) {
 		union {
 			struct sockaddr_in6 sin6;
@@ -250,9 +250,9 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 		}
 	}
 	if (lladdr == NULL)
-		errx(EXIT_FAILURE, "could not determine link local address"); 
+		errx(EXIT_FAILURE, "could not determine link local address");
 
- 	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
+	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
 
 	freeifaddrs(ifap);
 	return 0;

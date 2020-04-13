@@ -1,6 +1,7 @@
-/*	$NetBSD: sun6i_spi.c,v 1.2 2018/02/01 14:50:36 jakllsch Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.2.4.1 2020/04/13 08:03:37 martin Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Nygren
  * Copyright (c) 2018 Jonathan A. Kollasch
  * All rights reserved.
  *
@@ -27,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.2 2018/02/01 14:50:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.2.4.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/mutex.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
@@ -63,6 +63,11 @@ struct sun6ispi_softc {
 	u_int			sc_modclkrate;
 	volatile bool		sc_running;
 };
+
+#define SPIREG_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
+#define SPIREG_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 
 static int sun6ispi_match(device_t, cfdata_t, void *);
 static void sun6ispi_attach(device_t, device_t, void *);
@@ -97,52 +102,37 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 	struct sun6ispi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct spibus_attach_args sba;
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
 	struct fdtbus_reset *rst;
 	struct clk *clk, *modclk;
 	uint32_t gcr, isr;
 	char intrstr[128];
 
-	aprint_naive("\n");
-	aprint_normal(": SPI\n");
-
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
 	SIMPLEQ_INIT(&sc->sc_q);
 
-	const int phandle = faa->faa_phandle;
-	bus_addr_t addr;
-	bus_size_t size;
-
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error_dev(sc->sc_dev, "missing 'reg' property\n");
+	if ((clk = fdtbus_clock_get_index(phandle, 0)) == NULL
+	    || clk_enable(clk) != 0) {
+		aprint_error(": couldn't enable clock\n");
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map device\n");
+	/* 200MHz max on H3,H5 */
+	if ((modclk = fdtbus_clock_get(phandle, "mod")) == NULL
+	    || clk_set_rate(modclk, 200000000) != 0
+	    || clk_enable(modclk) != 0) {
+		aprint_error(": couldn't enable module clock\n");
 		return;
 	}
+	sc->sc_modclkrate = clk_get_rate(modclk);
 
-	if ((clk = fdtbus_clock_get_index(phandle, 0)) != NULL) {
-		if (clk_enable(clk) != 0) {
-			aprint_error_dev(sc->sc_dev, "couldn't enable clock\n");
-			return;
-		}
-		device_printf(self, "%s ahb @ %uHz\n", __func__, clk_get_rate(clk));
-	}
-
-	if ((modclk = fdtbus_clock_get(phandle, "mod")) != NULL) {
-		/* 200MHz max on H3,H5 */
-		if (clk_set_rate(modclk, 200000000) != 0) {
-			aprint_error_dev(sc->sc_dev, "couldn't configure module clock\n");
-			return;
-		}
-		if (clk_enable(modclk) != 0) {
-			aprint_error_dev(sc->sc_dev, "couldn't enable module clock\n");
-			return;
-		}
-		sc->sc_modclkrate = clk_get_rate(modclk);
-		device_printf(self, "%s %uHz\n", __func__, sc->sc_modclkrate);
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
 	}
 
 	if ((rst = fdtbus_reset_get_index(phandle, 0)) != NULL)
@@ -151,8 +141,8 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-	isr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA, isr);
+	isr = SPIREG_READ(sc, SPI_INT_STA);
+	SPIREG_WRITE(sc, SPI_INT_STA, isr);
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
@@ -162,13 +152,17 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
 	    sun6ispi_intr, sc);
 	if (sc->sc_intrh == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		aprint_error(": unable to establish interrupt\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": SPI\n");
+	
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	gcr = SPI_GCR_SRST;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_GCR, gcr);
+	SPIREG_WRITE(sc, SPI_GCR, gcr);
 	for (u_int i = 0; ; i++) {
 		if (i >= 1000000) {
 			aprint_error_dev(self, "reset timeout\n");
@@ -181,15 +175,16 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 			DELAY(1);
 	}
 	gcr = SPI_GCR_TP_EN | SPI_GCR_MODE | SPI_GCR_EN;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_GCR, gcr);
+	SPIREG_WRITE(sc, SPI_GCR, gcr);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_IER, SPI_IER_DEFAULT);
+	SPIREG_WRITE(sc, SPI_IER, SPI_IER_DEFAULT);
 
 	sc->sc_spi.sct_cookie = sc;
 	sc->sc_spi.sct_configure = sun6ispi_configure;
 	sc->sc_spi.sct_transfer = sun6ispi_transfer;
 	sc->sc_spi.sct_nslaves = 4;
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	(void) config_found_ia(self, "spibus", &sba, spibus_print);
@@ -200,21 +195,18 @@ sun6ispi_configure(void *cookie, int slave, int mode, int speed)
 {
 	struct sun6ispi_softc * const sc = cookie;
 	uint32_t tcr, cctl;
+	uint32_t minfreq, maxfreq;
 
-#if 0
-	device_printf(sc->sc_dev, "%s slave %d mode %d speed %d\n", __func__, slave, mode, speed);
+	minfreq = sc->sc_modclkrate >> 16;
+	maxfreq = sc->sc_modclkrate >> 1;
 
-	if (speed > 200000)
-		speed = 200000;
-#endif
+	if (speed <= 0 || speed < minfreq || speed > maxfreq)
+		return EINVAL;
 
+	if (slave >= sc->sc_spi.sct_nslaves)
+		return EINVAL;
+	
 	tcr = SPI_TCR_SS_LEVEL | SPI_TCR_SPOL;
-
-	if (slave > 3)
-		return EINVAL;
-
-	if (speed <= 0)
-		return EINVAL;
 
 	switch (mode) {
 	case SPI_MODE_0:
@@ -235,10 +227,7 @@ sun6ispi_configure(void *cookie, int slave, int mode, int speed)
 
 	sc->sc_TCR = tcr;
 
-	if (speed < 3000 || speed > 200000000)
-		return EINVAL;
-
-	if (speed > sc->sc_modclkrate / 2 || speed < sc->sc_modclkrate / 512) {
+	if (speed < sc->sc_modclkrate / 512) {
 		for (cctl = 0; cctl <= __SHIFTOUT_MASK(SPI_CCTL_CDR1); cctl++) {
 			if ((sc->sc_modclkrate / (1<<cctl)) <= speed)
 				goto cdr1_found;
@@ -251,8 +240,14 @@ cdr1_found:
 		cctl = SPI_CCTL_DRS|__SHIFTIN(cctl, SPI_CCTL_CDR2);
 	}
 
-	device_printf(sc->sc_dev, "%s CCTL 0x%08x\n", __func__, cctl);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_CCTL, cctl);
+	device_printf(sc->sc_dev, "tcr 0x%x, cctl 0x%x, CLK %uHz, SCLK %uHz\n",
+	    tcr, cctl, sc->sc_modclkrate,
+	    (cctl & SPI_CCTL_DRS)
+	    ? (sc->sc_modclkrate / (u_int)(2 * (__SHIFTOUT(cctl, SPI_CCTL_CDR2) + 1)))
+	    : (sc->sc_modclkrate >> (__SHIFTOUT(cctl, SPI_CCTL_CDR1) + 1))
+	);
+
+	SPIREG_WRITE(sc, SPI_CCTL, cctl);
 
 	return 0;
 }
@@ -272,27 +267,14 @@ sun6ispi_transfer(void *cookie, struct spi_transfer *st)
 	return 0;
 }
 
-static size_t
-chunks_total_count(struct spi_transfer * st)
-{
-	struct spi_chunk *chunk = st->st_chunks;
-	size_t len = 0;
-
-	do {
-		len += chunk->chunk_count;
-	} while ((chunk = chunk->chunk_next) != NULL);
-
-	return len;
-}
-
 static void
 sun6ispi_start(struct sun6ispi_softc * const sc)
 {
 	struct spi_transfer *st;
 	uint32_t isr, tcr;
-	size_t ctc;
+	struct spi_chunk *chunk;
+	size_t burstcount;
 
-	//device_printf(sc->sc_dev, "%s\n", __func__);
 	while ((st = spi_transq_first(&sc->sc_q)) != NULL) {
 
 		spi_transq_dequeue(&sc->sc_q);
@@ -302,48 +284,39 @@ sun6ispi_start(struct sun6ispi_softc * const sc)
 		sc->sc_rchunk = sc->sc_wchunk = st->st_chunks;
 		sc->sc_running = true;
 
-		isr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA, isr);
+		isr = SPIREG_READ(sc, SPI_INT_STA);
+		SPIREG_WRITE(sc, SPI_INT_STA, isr);
 
-		//printf("%s fcr 0x%08x\n", __func__, bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_FCR));
-
-		ctc = chunks_total_count(st);
-		//printf("%s total count %zu\n", __func__, ctc);
-
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_BC, __SHIFTIN(ctc, SPI_BC_MBC));
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_TC, __SHIFTIN(ctc, SPI_TC_MWTC));
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_BCC, __SHIFTIN(ctc, SPI_BCC_STC));
+		burstcount = 0;
+		for (chunk = st->st_chunks; chunk; chunk = chunk->chunk_next) {
+			burstcount += chunk->chunk_count;
+		}
+		KASSERT(burstcount <= SPI_BC_MBC);
+		SPIREG_WRITE(sc, SPI_BC, __SHIFTIN(burstcount, SPI_BC_MBC));
+		SPIREG_WRITE(sc, SPI_TC, __SHIFTIN(burstcount, SPI_TC_MWTC));
+		SPIREG_WRITE(sc, SPI_BCC, __SHIFTIN(burstcount, SPI_BCC_STC));
 
 		KASSERT(st->st_slave <= 3);
 		tcr = sc->sc_TCR | __SHIFTIN(st->st_slave, SPI_TCR_SS_SEL);
 
-		//device_printf(sc->sc_dev, "%s before TCR write\n", __func__);
-		//bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_TCR, tcr);
-
 		sun6ispi_send(sc);
 
 		const uint32_t ier = SPI_IER_DEFAULT | SPI_IER_RF_RDY_INT_EN | SPI_IER_TX_ERQ_INT_EN;
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_IER, ier);
+		SPIREG_WRITE(sc, SPI_IER, ier);
 
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_TCR, tcr|SPI_TCR_XCH);
-		//device_printf(sc->sc_dev, "%s after TCR write\n", __func__);
+		SPIREG_WRITE(sc, SPI_TCR, tcr|SPI_TCR_XCH);
 
 		if (!cold)
 			return;
 
-		//device_printf(sc->sc_dev, "%s cold\n", __func__);
-
-		int s = splbio();
 		for (;;) {
 			sun6ispi_intr(sc);
 			if (ISSET(st->st_flags, SPI_F_DONE))
 				break;
 		}
-		splx(s);
 	}
 
 	sc->sc_running = false;
-//	device_printf(sc->sc_dev, "%s finishes\n", __func__);
 }
 
 static void
@@ -353,13 +326,10 @@ sun6ispi_send(struct sun6ispi_softc * const sc)
 	uint32_t fsr;
 	struct spi_chunk *chunk;
 
-	//device_printf(sc->sc_dev, "%s\n", __func__);
-
 	while ((chunk = sc->sc_wchunk) != NULL) {
 		while (chunk->chunk_wresid) {
-			fsr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_FSR);
+			fsr = SPIREG_READ(sc, SPI_FSR);
 			if (__SHIFTOUT(fsr, SPI_FSR_TF_CNT) >= 64) {
-				//printf("%s fsr 0x%08x\n", __func__, fsr);
 				return;
 			}
 			if (chunk->chunk_wptr) {
@@ -367,7 +337,6 @@ sun6ispi_send(struct sun6ispi_softc * const sc)
 			} else {
 				fd = '\0';
 			}
-			//printf("%s fd %02x\n", __func__, fd);
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, SPI_TXD, fd);
 			chunk->chunk_wresid--;
 		}
@@ -382,17 +351,13 @@ sun6ispi_recv(struct sun6ispi_softc * const sc)
 	uint32_t fsr;
 	struct spi_chunk *chunk;
 
-	//device_printf(sc->sc_dev, "%s\n", __func__);
-
 	while ((chunk = sc->sc_rchunk) != NULL) {
 		while (chunk->chunk_rresid) {
-			fsr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_FSR);
+			fsr = SPIREG_READ(sc, SPI_FSR);
 			if (__SHIFTOUT(fsr, SPI_FSR_RF_CNT) == 0) {
-				//printf("%s fsr 0x%08x\n", __func__, fsr);
 				return;
 			}
 			fd = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SPI_RXD);
-			//printf("%s fd %02x\n", __func__, fd);
 			if (chunk->chunk_rptr) {
 				*chunk->chunk_rptr++ = fd;
 			}
@@ -409,9 +374,8 @@ sun6ispi_intr(void *cookie)
 	struct spi_transfer *st;
 	uint32_t isr;
 
-	isr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_INT_STA, isr);
-	//device_printf(sc->sc_dev, "%s ISR 0x%08x\n", __func__, isr);
+	isr = SPIREG_READ(sc, SPI_INT_STA);
+	SPIREG_WRITE(sc, SPI_INT_STA, isr);
 
 	if (ISSET(isr, SPI_ISR_RX_RDY)) {
 		sun6ispi_recv(sc);
@@ -419,7 +383,7 @@ sun6ispi_intr(void *cookie)
 	}
 
 	if (ISSET(isr, SPI_ISR_TC)) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_IER, SPI_IER_DEFAULT);
+		SPIREG_WRITE(sc, SPI_IER, SPI_IER_DEFAULT);
 
 		sc->sc_rchunk = sc->sc_wchunk = NULL;
 		st = sc->sc_transfer;

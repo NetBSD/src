@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.44.2.1 2019/06/10 22:10:13 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.44.2.2 2020/04/13 08:05:34 martin Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -436,6 +436,12 @@
 /* Define to 1 if you have the `dprintf' function. */
 #undef HAVE_DPRINTF
 
+/* Define if you have the enum uio_rw type. */
+#undef HAVE_ENUM_UIO_RW
+
+/* Define if you have the enum uio_seg type. */
+#undef HAVE_ENUM_UIO_SEG
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
@@ -768,6 +774,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#undef HAVE_SYS_UIO_H
+
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #undef HAVE_SYS_UTSNAME_H
 
@@ -777,14 +786,26 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* Define to 1 if the system has the type `uchar_t'. */
+#undef HAVE_UCHAR_T
+
 /* Define to 1 if you have the `uid_from_user' function. */
 #undef HAVE_UID_FROM_USER
+
+/* Define to 1 if the system has the type `uint_t'. */
+#undef HAVE_UINT_T
+
+/* Define to 1 if the system has the type `ulong_t'. */
+#undef HAVE_ULONG_T
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Define to 1 if you have the `user_from_uid' function. */
 #undef HAVE_USER_FROM_UID
+
+/* Define to 1 if the system has the type `ushort_t'. */
+#undef HAVE_USHORT_T
 
 /* Define to 1 if you have the <util.h> header file. */
 #undef HAVE_UTIL_H

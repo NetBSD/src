@@ -1,4 +1,4 @@
-/*	$NetBSD: ldtoa.c,v 1.5 2016/03/13 19:44:58 christos Exp $	*/
+/*	$NetBSD: ldtoa.c,v 1.5.16.1 2020/04/13 08:03:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_ldtoa.c,v 1.2 2004/01/18 07:53:49 das Exp $");
 #else
-__RCSID("$NetBSD: ldtoa.c,v 1.5 2016/03/13 19:44:58 christos Exp $");
+__RCSID("$NetBSD: ldtoa.c,v 1.5.16.1 2020/04/13 08:03:09 martin Exp $");
 #endif
 
 #include <float.h>
@@ -54,7 +54,7 @@ char *
 ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign, char **rve)
 {
 #ifdef EXT_EXPBITS
-	static FPI fpi = {
+	static CONST FPI fpi = {
 		LDBL_MANT_DIG,			/* nbits */
 		LDBL_MIN_EXP - LDBL_MANT_DIG,	/* emin */
 		LDBL_MAX_EXP - LDBL_MANT_DIG,	/* emax */

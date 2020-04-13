@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.2.2.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -45,8 +45,40 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.2.2 2019/06/10 22:07:06 christos E
 #include <dev/audio/audiodef.h>
 #include <dev/audio/audiobellvar.h>
 
-/* 44.1 kHz should reduce hum at higher pitches. */
-#define BELL_SAMPLE_RATE	44100
+/*
+ * The hexadecagon is sufficiently close to a sine wave.
+ * Audiobell always outputs this 16 points data but changes its playback
+ * frequency.  In addition, audio layer does linear interpolation in the
+ * frequency conversion stage, so the waveform becomes smooth.
+ * When the playback frequency rises (or the device frequency is not enough
+ * high) and one wave cannot be expressed with 16 points, the data is thinned
+ * out by power of two, like 8 points -> 4 points (triangular wave)
+ * -> 2 points (rectangular wave).
+ */
+
+/* Amplitude.  Full scale amplitude is too loud. */
+#define A(x) ((x) * 0.6)
+
+/* (sin(2*pi * (x/16)) * 32767 / 100) << 16 */
+static const int32_t sinewave[] = {
+	A(        0),
+	A(  8217813),
+	A( 15184539),
+	A( 19839556),
+	A( 21474181),
+	A( 19839556),
+	A( 15184539),
+	A(  8217813),
+	A(        0),
+	A( -8217814),
+	A(-15184540),
+	A(-19839557),
+	A(-21474182),
+	A(-19839557),
+	A(-15184540),
+	A( -8217814),
+};
+#undef A
 
 /*
  * dev is a device_t for the audio device to use.
@@ -60,18 +92,22 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 {
 	dev_t audio;
 	int16_t *buf;
-	struct audiobell_arg bellarg;
 	audio_file_t *file;
 	audio_track_t *ptrack;
 	struct uio auio;
 	struct iovec aiov;
-	int i;
-	int remaincount;
-	int remainlen;
-	int wave1count;
-	int wave1len;
-	int len;
-	int16_t vol;
+	u_int i;
+	u_int j;
+	u_int remaincount;
+	u_int remainbytes;
+	u_int wave1count;
+	u_int wave1bytes;
+	u_int blkbytes;
+	u_int len;
+	u_int step;
+	u_int offset;
+	u_int play_sample_rate;
+	u_int mixer_sample_rate;
 
 	KASSERT(volume <= 100);
 
@@ -79,53 +115,69 @@ audiobell(void *dev, u_int pitch, u_int period, u_int volume, int poll)
 	if (poll)
 		return;
 
-	/* Limit the pitch from 20Hz to Nyquist frequency. */
-	if (pitch > BELL_SAMPLE_RATE / 2)
-		pitch = BELL_SAMPLE_RATE;
-	if (pitch < 20)
-		pitch = 20;
-
 	buf = NULL;
 	audio = AUDIO_DEVICE | device_unit((device_t)dev);
 
-	memset(&bellarg, 0, sizeof(bellarg));
-	bellarg.encoding = AUDIO_ENCODING_SLINEAR_NE;
-	bellarg.precision = 16;
-	bellarg.channels = 1;
-	bellarg.sample_rate = BELL_SAMPLE_RATE;
-
 	/* If not configured, we can't beep. */
-	if (audiobellopen(audio, &bellarg) != 0)
+	if (audiobellopen(audio, &file) != 0)
 		return;
 
-	file = bellarg.file;
 	ptrack = file->ptrack;
+	mixer_sample_rate = ptrack->mixer->track_fmt.sample_rate;
 
-	/* msec to sample count. */
-	remaincount = period * BELL_SAMPLE_RATE / 1000;
-	remainlen = remaincount * sizeof(int16_t);
+	/* Limit pitch */
+	if (pitch < 20)
+		pitch = 20;
 
-	wave1count = BELL_SAMPLE_RATE / pitch;
-	wave1len = wave1count * sizeof(int16_t);
+	offset = 0;
+	if (pitch <= mixer_sample_rate / 16) {
+		/* 16-point sine wave */
+		step = 1;
+	} else if (pitch <= mixer_sample_rate / 8) {
+		/* 8-point sine wave */
+		step = 2;
+	} else if (pitch <= mixer_sample_rate / 4) {
+		/* 4-point sine wave, aka, triangular wave */
+		step = 4;
+	} else {
+		/* Rectangular wave */
+		if (pitch > mixer_sample_rate / 2)
+			pitch = mixer_sample_rate / 2;
+		step = 8;
+		offset = 4;
+	}
 
-	buf = malloc(wave1len, M_TEMP, M_WAITOK);
+	wave1count = __arraycount(sinewave) / step;
+	play_sample_rate = pitch * wave1count;
+	audiobellsetrate(file, play_sample_rate);
+
+	/* msec to sample count */
+	remaincount = play_sample_rate * period / 1000;
+	/* Roundup to full wave */
+	remaincount = roundup(remaincount, wave1count);
+	remainbytes = remaincount * sizeof(int16_t);
+	wave1bytes = wave1count * sizeof(int16_t);
+
+	blkbytes = ptrack->usrbuf_blksize;
+	blkbytes = rounddown(blkbytes, wave1bytes);
+	blkbytes = uimin(blkbytes, remainbytes);
+	buf = malloc(blkbytes, M_TEMP, M_WAITOK);
 	if (buf == NULL)
 		goto out;
 
-	/* Generate single square wave.  It's enough to beep. */
-	vol = 32767 * volume / 100;
-	for (i = 0; i < wave1count / 2; i++) {
-		buf[i] = vol;
-	}
-	vol = -vol;
-	for (; i < wave1count; i++) {
-		buf[i] = vol;
+	/* Generate sinewave with specified volume */
+	j = offset;
+	for (i = 0; i < blkbytes / sizeof(int16_t); i++) {
+		/* XXX audio already has track volume feature though #if 0 */
+		buf[i] = AUDIO_SCALEDOWN(sinewave[j] * (int)volume, 16);
+		j += step;
+		j %= __arraycount(sinewave);
 	}
 
-	/* Write while paused to avoid begin inserted silence. */
+	/* Write while paused to avoid inserting silence. */
 	ptrack->is_pause = true;
-	for (; remainlen > 0; remainlen -= wave1len) {
-		len = uimin(remainlen, wave1len);
+	for (; remainbytes > 0; remainbytes -= len) {
+		len = uimin(remainbytes, blkbytes);
 		aiov.iov_base = (void *)buf;
 		aiov.iov_len = len;
 		auio.uio_iov = &aiov;

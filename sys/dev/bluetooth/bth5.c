@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.5 2017/09/03 23:11:19 nat Exp $	*/
+/*	$NetBSD: bth5.c,v 1.5.6.1 2020/04/13 08:04:19 martin Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.5 2017/09/03 23:11:19 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.5.6.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1230,7 +1230,7 @@ bth5_tx_reliable_pkt(struct bth5_softc *sc, struct mbuf *m, u_int protocol_id)
 #endif
 
 	sc->sc_seq_winspace--;
-	_retrans = m_copym(m, 0, M_COPYALL, M_WAIT);
+	_retrans = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 	if (_retrans == NULL) {
 		aprint_error_dev(sc->sc_dev, "out of memory\n");
 		goto out;
@@ -1488,7 +1488,12 @@ bth5_start_le(struct bth5_softc *sc)
 	if (!sc->sc_le_muzzled) {
 		struct mbuf *m;
 
-		m = m_gethdr(M_WAIT, MT_DATA);
+		m = m_gethdr(M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "le-packet transmit out of memory\n");
+			return ENOMEM;
+		}
 		m->m_pkthdr.len = m->m_len = 0;
 		m_copyback(m, 0, sizeof(sync), sync);
 		if (!bth5_tx_unreliable_pkt(sc, m, BTH5_CHANNEL_LE)) {

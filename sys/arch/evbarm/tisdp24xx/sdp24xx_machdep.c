@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.18.16.1 2019/06/10 22:06:11 christos Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.18.16.2 2020/04/13 08:03:47 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.18.16.1 2019/06/10 22:06:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.18.16.2 2020/04/13 08:03:47 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -395,7 +395,7 @@ sdp_putchar(char c)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -407,7 +407,7 @@ sdp_putchar(char c)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 #if 1
@@ -574,7 +574,7 @@ initarm(void *arg)
 	printf("initarm done.\n");
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void arm11_pmc_ccnt_init(void);

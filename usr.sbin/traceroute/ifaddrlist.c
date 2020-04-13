@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.10 2011/09/11 01:06:26 christos Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.10.42.1 2020/04/13 08:06:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -40,7 +40,7 @@ static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
     "@(#) Id: ifaddrlist.c,v 1.9 2000/11/23 20:01:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.10 2011/09/11 01:06:26 christos Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.10.42.1 2020/04/13 08:06:07 martin Exp $");
 #endif
 #endif
 
@@ -75,6 +75,7 @@ struct rtentry;
 #endif
 
 #include "ifaddrlist.h"
+#include "prog_ops.h"
 
 /* Not all systems have IFF_LOOPBACK */
 #ifdef IFF_LOOPBACK
@@ -94,7 +95,7 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, size_t buflen)
 	struct ifaddrlist *al = NULL, *nal;
 	size_t i = 0, maxal = 10;
 
-	if (getifaddrs(&ifap) != 0)
+	if (prog_getifaddrs(&ifap) != 0)
 		goto out;
 
 	if ((al = malloc(maxal * sizeof(*al))) == NULL)

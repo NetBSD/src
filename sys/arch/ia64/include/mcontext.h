@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8.2.1 2020/04/08 14:07:41 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.2.2 2020/04/13 08:03:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,10 +112,10 @@ typedef struct __mcontext {
 } mcontext_t;
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.mc_special.sp)  /* gregs[12] */
-#define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[79])
+#define _UC_MACHINE_FP(uc)	0 /* Not supported in target */
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.mc_special.iip)
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[8])
-#define _UC_MACHINE_SET_PC(uc)  _UC_MACHINE_PC(uc) = (pc)  /* XXX */
+#define _UC_MACHINE_SET_PC(uc, pc)	(uc)->uc_mcontext.mc_special.iip = (pc)
 
 #if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
     defined(__LIBPTHREAD_SOURCE__)

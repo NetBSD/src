@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6.16.1 2019/06/10 22:05:25 christos Exp $
+# $NetBSD: Makefile,v 1.6.16.2 2020/04/13 08:03:14 martin Exp $
 
 USE_SHLIBDIR=   yes
 
@@ -12,7 +12,11 @@ SRCS=		npf.c
 INCS=		npf.h
 INCSDIR=	/usr/include
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
+LIBNV_DIST=	${NETBSDSRCDIR}/external/bsd/libnv/lib
+
+.include "${LIBNV_DIST}/srcs.mk"
+SRCS+=		${LIBNV_SRCS}
+CPPFLAGS.npf.c	+=	-I${NVSRC_DISTPATH}
 
 WARNS=		5
 

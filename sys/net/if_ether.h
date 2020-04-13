@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.75.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.75.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,7 +59,7 @@
 /*
  * Some Ethernet extensions.
  */
-#define	ETHER_VLAN_ENCAP_LEN	4      /* length of 802.1Q VLAN encapsulation */
+#define	ETHER_VLAN_ENCAP_LEN	4     /* length of 802.1Q VLAN encapsulation */
 #define	EVL_VLANOFTAG(tag)	((tag) & 4095)		/* VLAN ID */
 #define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
 #define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
@@ -163,6 +163,7 @@ struct mii_data;
 struct ethercom;
 
 typedef int (*ether_cb_t)(struct ethercom *);
+typedef int (*ether_vlancb_t)(struct ethercom *, uint16_t, bool);
 
 /*
  * Structure shared between the ethernet driver modules and
@@ -181,14 +182,22 @@ struct ethercom {
 						   capabilities to enable */
 
 	int	ec_nvlans;			/* # VLANs on this interface */
+	SIMPLEQ_HEAD(, vlanid_list) ec_vids;	/* list of VLAN IDs */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
 	struct ifmedia				*ec_ifmedia;
-	/* Called after a change to ec_if.if_flags.  Returns
+	/*
+	 * Called after a change to ec_if.if_flags.  Returns
 	 * ENETRESET if the device should be reinitialized with
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
 	ether_cb_t				ec_ifflags_cb;
+	/*
+	 * Called whenever a vlan interface is configured or unconfigured.
+	 * Args include the vlan tag and a flag indicating whether the tag is
+	 * being added or removed.
+	 */
+	ether_vlancb_t				ec_vlan_cb;
 	kmutex_t				*ec_lock;
 	/* Flags used only by the kernel */
 	int					ec_flags;
@@ -240,6 +249,7 @@ extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
 void	ether_set_ifflags_cb(struct ethercom *, ether_cb_t);
+void	ether_set_vlan_cb(struct ethercom *, ether_vlancb_t);
 int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
@@ -255,7 +265,7 @@ void    ether_input(struct ifnet *, struct mbuf *);
 struct ether_multi {
 	uint8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	uint8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	u_int	 enm_refcount;		/* no. claims to this addr/range */
+	u_int	enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
 
@@ -308,9 +318,9 @@ ether_next_multi(struct ether_multistep *step)
 
 	return enm;
 }
-#define ETHER_NEXT_MULTI(step, enm) \
-	/* struct ether_multistep step; */  \
-	/* struct ether_multi *enm; */  \
+#define ETHER_NEXT_MULTI(step, enm)		\
+	/* struct ether_multistep step; */	\
+	/* struct ether_multi *enm; */		\
 	(enm) = ether_next_multi(&(step))
 
 static __inline struct ether_multi *
@@ -322,10 +332,10 @@ ether_first_multi(struct ether_multistep *step, const struct ethercom *ec)
 	return ether_next_multi(step);
 }
 
-#define ETHER_FIRST_MULTI(step, ec, enm) \
-	/* struct ether_multistep step; */ \
-	/* struct ethercom *ec; */ \
-	/* struct ether_multi *enm; */ \
+#define ETHER_FIRST_MULTI(step, ec, enm)		\
+	/* struct ether_multistep step; */		\
+	/* struct ethercom *ec; */			\
+	/* struct ether_multi *enm; */			\
 	(enm) = ether_first_multi(&(step), (ec))
 
 #define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
@@ -334,6 +344,12 @@ ether_first_multi(struct ether_multistep *step, const struct ethercom *ec)
 /*
  * Ethernet 802.1Q VLAN structures.
  */
+
+/* for ethercom */
+struct vlanid_list {
+	uint16_t vid;
+	SIMPLEQ_ENTRY(vlanid_list) vid_list;
+};
 
 /* add VLAN tag to input/received packet */
 static __inline void

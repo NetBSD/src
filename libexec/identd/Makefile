@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16.4.1 2019/06/10 22:05:29 christos Exp $
+# $NetBSD: Makefile,v 1.16.4.2 2020/04/13 08:03:17 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -22,10 +22,6 @@ CPPFLAGS+=-DWITH_PF
 .if (${MKNPF} != "no")
 SRCS+=	npf.c
 CPPFLAGS+=-DWITH_NPF
-
-PROGDPLIBS+= nv ${NETBSDSRCDIR}/external/bsd/libnv/lib
-CPPFLAGS+= -I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
-
 LDADD+=-lnpf
 DPADD+=${LIBNPF}
 .endif

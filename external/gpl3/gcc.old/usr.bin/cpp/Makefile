@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 21:58:10 christos Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2020/04/13 08:01:58 martin Exp $
+
+.include <bsd.init.mk>
 
 PROG=		cpp
 SRCS=		cppspec.c ${G_GCC_OBJS:.o=.c}
 
+.include "../Makefile.driver"
 .include "../Makefile.target-defines"
 
 COPTS+=		-Wno-stack-protector
@@ -18,6 +21,7 @@ INFOFLAGS=	-I${DIST}/gcc/doc -I${DIST}/gcc/doc/include -I.
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
+ADD_FRONTEND_LIBRARY=	no
 .include "../Makefile.frontend"
 
 ${SRCS}: ${GCCARCH}/defs.mk

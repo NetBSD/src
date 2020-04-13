@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:56:30 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.1 2020/04/13 08:06:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,3 +33,9 @@
  */
 
 #define XNEEDMB		100
+
+#ifdef __sun__
+/* sunlabels force track alignment (true = no further processing) */
+#define	MD_DISKLABEL_SET_ALIGN_PRE(align, track)	\
+	(align) = (track), true
+#endif

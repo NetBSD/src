@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.3.6.2 2020/04/08 14:07:45 martin Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.3.6.3 2020/04/13 08:03:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.3.6.2 2020/04/08 14:07:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.3.6.3 2020/04/13 08:03:59 martin Exp $");
 
 #include "opt_octeon.h"
 
@@ -207,7 +207,7 @@ octeon_gmx_attach(device_t parent, device_t self, void *aux)
 	octeon_gmx_init(sc);
 
 	sc->sc_ports = malloc(sizeof(*sc->sc_ports) * sc->sc_nports, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		port_sc = &sc->sc_ports[i];

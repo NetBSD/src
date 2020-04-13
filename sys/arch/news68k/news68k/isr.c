@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.21 2010/12/20 00:25:40 matt Exp $	*/
+/*	$NetBSD: isr.c,v 1.21.60.1 2020/04/13 08:04:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21 2010/12/20 00:25:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21.60.1 2020/04/13 08:04:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,7 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
 		panic("isrlink_autovec: bad ipl %d", ipl);
 
-	newisr = (struct isr_autovec *)malloc(sizeof(struct isr_autovec),
-	    M_DEVBUF, M_NOWAIT);
-	if (newisr == NULL)
-		panic("isrlink_autovec: can't allocate space for isr");
-
-	/* Fill in the new entry. */
+	newisr = malloc(sizeof(struct isr_autovec), M_DEVBUF, M_WAITOK);
 	newisr->isr_func = func;
 	newisr->isr_arg = arg;
 	newisr->isr_ipl = ipl;

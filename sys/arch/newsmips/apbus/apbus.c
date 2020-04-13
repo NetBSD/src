@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.22.56.1 2019/06/10 22:06:34 christos Exp $	*/
+/*	$NetBSD: apbus.c,v 1.22.56.2 2020/04/13 08:04:02 martin Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22.56.1 2019/06/10 22:06:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22.56.2 2020/04/13 08:04:02 martin Exp $");
 
 #define __INTR_PRIVATE
 
@@ -230,9 +230,7 @@ apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
 
 	ip = &apintr_tab[level];
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		panic("%s: can't malloc handler info", __func__);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_mask = mask;
 	ih->ih_priority = priority;
 	ih->ih_func = func;
@@ -503,12 +501,10 @@ apbus_dmatag_init(struct apbus_attach_args *apa)
 {
 	struct newsmips_bus_dma_tag *dmat;
 
-	dmat = malloc(sizeof(*dmat), M_DEVBUF, M_NOWAIT);
-	if (dmat != NULL) {
-		memcpy(dmat, &apbus_dma_tag, sizeof(*dmat));
-		dmat->_slotno = apa->apa_slotno;
-		dmat->_slotbaset = 0;
-		dmat->_slotbaseh = apa->apa_hwbase;
-	}
+	dmat = malloc(sizeof(*dmat), M_DEVBUF, M_WAITOK);
+	memcpy(dmat, &apbus_dma_tag, sizeof(*dmat));
+	dmat->_slotno = apa->apa_slotno;
+	dmat->_slotbaset = 0;
+	dmat->_slotbaseh = apa->apa_hwbase;
 	return dmat;
 }

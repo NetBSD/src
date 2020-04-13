@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.1.4.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: files.generic,v 1.1.4.2 2020/04/13 08:03:42 martin Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -23,5 +23,13 @@ include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
+include "arch/arm/ti/files.ti"
 include "arch/arm/vexpress/files.vexpress"
 include "arch/arm/virt/files.virt"
+include "arch/arm/xilinx/files.zynq"
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"

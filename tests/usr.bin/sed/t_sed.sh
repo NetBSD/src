@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.6 2016/04/05 00:48:53 christos Exp $
+# $NetBSD: t_sed.sh,v 1.6.16.1 2020/04/13 08:05:33 martin Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -133,10 +133,57 @@ preserve_leading_ws_ia_body() {
     7 8 9"'
 }
 
+atf_test_case escapes_in_subst
+escapes_in_subst_head() {
+	atf_set "descr" "Test that sed(1) expands \x \d \o escapes " \
+		"in substition strings"
+}
+
+escapes_in_subst_body() {
+	atf_check -o inline:"fooXbar\n" \
+		-x 'echo "foo bar" | sed -e "s/ /\x58/"'
+	atf_check -o inline:"fooXbar\n" \
+		-x 'echo "foo bar" | sed -e "s/ /\o130/"'
+	atf_check -o inline:"fooXbar\n" \
+		-x 'echo "foo bar" | sed -e "s/ /\d88/"'
+}
+
+atf_test_case escapes_in_re
+escapes_in_re_head() {
+	atf_set "descr" "Test that sed(1) expands \x \d \o escapes " \
+		"in regex strings"
+}
+
+escapes_in_re_body() {
+	atf_check -o inline:"foo bar\n" \
+		-x 'echo "fooXbar" | sed -e "s/\x58/ /"'
+	atf_check -o inline:"foo bar\n" \
+		-x 'echo "fooXbar" | sed -e "s/\o130/ /"'
+	atf_check -o inline:"foo bar\n" \
+		-x 'echo "fooXbar" | sed -e "s/\d88/ /"'
+}
+
+atf_test_case escapes_in_re_bracket
+escapes_in_re_bracket_head() {
+	atf_set "descr" "Test that sed(1) does not expand \x \d \o escapes " \
+		"in regex strings inside braces"
+}
+
+escapes_in_re_bracket_body() {
+	atf_check -o inline:"foo    bar\n" \
+		-x 'echo "foo\\x58bar" | sed -e "s/[\x58]/ /g"'
+	atf_check -o inline:"f       bar\n" \
+		-x 'echo "fooo\\130bar" | sed -e "s/[\o130]/ /g"'
+	atf_check -o inline:"foo    bar\n" \
+		-x 'echo "foo\\d88bar" | sed -e "s/[\d88]/ /g"'
+}
 atf_init_test_cases() {
 	atf_add_test_case c2048
 	atf_add_test_case emptybackref
 	atf_add_test_case longlines
 	atf_add_test_case rangeselection
 	atf_add_test_case preserve_leading_ws_ia
+	atf_add_test_case escapes_in_subst
+	atf_add_test_case escapes_in_re
+	atf_add_test_case escapes_in_re_bracket
 }

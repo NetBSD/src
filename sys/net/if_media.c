@@ -1,7 +1,7 @@
-/*	$NetBSD: if_media.c,v 1.36.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_media.c,v 1.36.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,23 +76,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.36.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.36.2.2 2020/04/13 08:05:15 martin Exp $");
+
+#define	__IFMEDIA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/netisr.h>
 
 static void	ifmedia_status(struct ifmedia *, struct ifnet *,
-    struct ifmediareq *);
-static int	_ifmedia_ioctl(struct ifnet *, struct ifreq *,
-    struct ifmedia *, u_long);
+		    struct ifmediareq *);
+static struct ifmedia_entry *
+		ifmedia_match_locked(struct ifmedia *, u_int, u_int);
 
 /*
  * Compile-time options:
@@ -106,15 +108,83 @@ int	ifmedia_debug = 0;
 static	void ifmedia_printword(int);
 #endif
 
-MALLOC_DEFINE(M_IFMEDIA, "ifmedia", "interface media state");
+/*
+ * We need to implement a recursive mutex to handle the un-converted
+ * driver case.  For a fully MP-safe driver, the media lock will be
+ * held before calling any of the entry points that require it.  However,
+ * this is not necessarily the case for a driver that hasn't yet been
+ * converted, and the entry point calls may be nested (for example
+ * mii_ifmedia_change -> ether_mediachange -> mii_mediachg).  Luckily,
+ * the nesting won't be very deep, and 4 nested holds should be plenty.
+ */
+#define	IFM_L_OWNLOCK		0x01
+#define	IFM_L_COUNT_MASK	0x3UL
+#define	IFM_L_CPU_MASK		~(IFM_L_COUNT_MASK)
+
+void
+ifmedia_lock_for_legacy(struct ifmedia *ifm)
+{
+	uintptr_t cnt = IFM_L_OWNLOCK;
+	uintptr_t ci;
+
+	if (mutex_tryenter(ifm->ifm_lock)) {
+		goto gotit;
+	}
+
+	kpreempt_disable();
+	ci = (uintptr_t)curcpu();
+	if ((ifm->ifm_legacy & IFM_L_CPU_MASK) == ci) {
+		cnt = ifm->ifm_legacy & IFM_L_COUNT_MASK;
+		KASSERT(cnt < IFM_L_COUNT_MASK);
+		cnt++;
+		kpreempt_enable();
+		goto gotit;
+	}
+	kpreempt_enable();
+
+	mutex_enter(ifm->ifm_lock);
+ gotit:
+	KASSERT(kpreempt_disabled());
+	ci = (uintptr_t)curcpu();
+	KASSERT((ci & IFM_L_CPU_MASK) == ci);
+	ifm->ifm_legacy = ci | cnt;
+}
+
+void
+ifmedia_unlock_for_legacy(struct ifmedia *ifm)
+{
+	uintptr_t cnt;
+	uintptr_t ci = (uintptr_t)curcpu();
+
+	KASSERT(kpreempt_disabled());
+	KASSERT((ifm->ifm_legacy & IFM_L_CPU_MASK) == ci);
+	cnt = ifm->ifm_legacy & IFM_L_COUNT_MASK;
+	KASSERT(cnt != 0);
+	if (cnt == IFM_L_OWNLOCK) {
+		ifm->ifm_legacy = IFM_L_OWNLOCK;
+		mutex_exit(ifm->ifm_lock);
+		return;
+	}
+	cnt--;
+	ifm->ifm_legacy = ci | cnt;
+}
 
 /*
  * Initialize if_media struct for a specific interface instance.
  */
 void
-ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
-    ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback)
+ifmedia_init_with_lock(struct ifmedia *ifm, int dontcare_mask,
+    ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback,
+    kmutex_t *lock)
 {
+
+	/*
+	 * XXX Would really like to assert:
+	 *
+	 *	!if_is_mpsafe(ifp) || ((if_is_mpsafe(ifp) && lock != NULL)
+	 *
+	 * ...but we don't have acccess to the ifnet here.
+	 */
 
 	TAILQ_INIT(&ifm->ifm_list);
 	ifm->ifm_cur = NULL;
@@ -122,21 +192,69 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
 	ifm->ifm_change = change_callback;
 	ifm->ifm_status = status_callback;
+	ifm->ifm_legacy = 0;
+
+	if (lock == NULL) {
+		/*
+		 * This is to support drivers that are not yet MP-safe
+		 * with regard to the ifmedia layer.  In these cases,
+		 * we supply the lock and we ensure it's taken upon entry
+		 * to various routines that expect it to be held.  When
+		 * we do this, we expect that the driver is in general a
+		 * non-MP-safe driver and has already gone to splnet().
+		 */
+		lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+		ifm->ifm_legacy = IFM_L_OWNLOCK;
+	}
+	ifm->ifm_lock = lock;
+}
+
+void
+ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
+    ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback)
+{
+	ifmedia_init_with_lock(ifm, dontcare_mask, change_callback,
+	    status_callback, NULL);
+}
+
+/*
+ * Free resources associated with an ifmedia.
+ */
+void
+ifmedia_fini(struct ifmedia *ifm)
+{
+
+	ifmedia_removeall(ifm);
+
+	if (ifm->ifm_legacy) {
+		KASSERT(ifm->ifm_legacy == IFM_L_OWNLOCK);
+		mutex_obj_free(ifm->ifm_lock);
+	}
+	ifm->ifm_legacy = 0;
+	ifm->ifm_lock = NULL;
 }
 
 int
 ifmedia_change(struct ifmedia *ifm, struct ifnet *ifp)
 {
+	int rv;
 
-	if (ifm->ifm_change == NULL)
-		return -1;
-	return (*ifm->ifm_change)(ifp);
+	IFMEDIA_LOCK_FOR_LEGACY(ifm);
+	KASSERT(ifmedia_locked(ifm));
+	if (ifm->ifm_change)
+		rv = (*ifm->ifm_change)(ifp);
+	else
+		rv = -1;
+	IFMEDIA_UNLOCK_FOR_LEGACY(ifm);
+
+	return rv;
 }
 
 static void
 ifmedia_status(struct ifmedia *ifm, struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 
+	KASSERT(ifmedia_locked(ifm));
 	if (ifm->ifm_status == NULL)
 		return;
 	(*ifm->ifm_status)(ifp, ifmr);
@@ -146,10 +264,10 @@ ifmedia_status(struct ifmedia *ifm, struct ifnet *ifp, struct ifmediareq *ifmr)
  * Add a media configuration to the list of supported media
  * for a specific interface instance.
  */
-void
-ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
+static void
+ifmedia_add_entry(struct ifmedia *ifm, int mword, int data, void *aux,
+    struct ifmedia_entry *entry)
 {
-	struct ifmedia_entry *entry;
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
@@ -162,15 +280,21 @@ ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
 	}
 #endif
 
-	entry = malloc(sizeof(*entry), M_IFMEDIA, M_NOWAIT);
-	if (entry == NULL)
-		panic("ifmedia_add: can't malloc entry");
-
 	entry->ifm_media = mword;
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
-
 	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
+}
+
+void
+ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
+{
+	struct ifmedia_entry *entry;
+
+	entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
+	ifmedia_lock(ifm);
+	ifmedia_add_entry(ifm, mword, data, aux, entry);
+	ifmedia_unlock(ifm);
 }
 
 /*
@@ -197,9 +321,10 @@ ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
 void
 ifmedia_set(struct ifmedia *ifm, int target)
 {
-	struct ifmedia_entry *match;
+	struct ifmedia_entry *match, *entry = NULL;
 
-	match = ifmedia_match(ifm, target, ifm->ifm_mask);
+	ifmedia_lock(ifm);
+	match = ifmedia_match_locked(ifm, target, ifm->ifm_mask);
 
 	/*
 	 * If we didn't find the requested media, then we try to fall
@@ -219,15 +344,28 @@ ifmedia_set(struct ifmedia *ifm, int target)
 		printf("ifmedia_set: no match for 0x%x/0x%x\n",
 		    target, ~ifm->ifm_mask);
 		target = (target & IFM_NMASK) | IFM_NONE;
-		match = ifmedia_match(ifm, target, ifm->ifm_mask);
+		match = ifmedia_match_locked(ifm, target, ifm->ifm_mask);
 		if (match == NULL) {
-			ifmedia_add(ifm, target, 0, NULL);
-			match = ifmedia_match(ifm, target, ifm->ifm_mask);
+			ifmedia_unlock(ifm);
+			entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
+			ifmedia_lock(ifm);
+			match = ifmedia_match_locked(ifm, target,
+			    ifm->ifm_mask);
+			if (match == NULL) {
+				ifmedia_add_entry(ifm, target, 0, NULL, entry);
+				entry = NULL;
+			}
+			match = ifmedia_match_locked(ifm, target,
+			    ifm->ifm_mask);
 			if (match == NULL)
 				panic("ifmedia_set failed");
 		}
 	}
 	ifm->ifm_cur = match;
+	ifmedia_unlock(ifm);
+
+	if (entry)
+		kmem_free(entry, sizeof(*entry));
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
@@ -239,11 +377,45 @@ ifmedia_set(struct ifmedia *ifm, int target)
 #endif
 }
 
+static int
+ifmedia_getwords(struct ifmedia * const ifm, int *words, int maxwords)
+{
+	struct ifmedia_entry *ep;
+	int nwords = 0;
+
+	KASSERT(ifmedia_locked(ifm));
+
+	TAILQ_FOREACH(ep, &ifm->ifm_list, ifm_list) {
+		if (words != NULL && nwords < maxwords) {
+			words[nwords] = ep->ifm_media;
+		}
+		nwords++;
+	}
+
+	return nwords;
+}
+
+#define	IFMEDIA_IOCTL_LOCK(ifm)						\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_lock_for_legacy(ifm);				\
+	else								\
+		ifmedia_lock(ifm);					\
+} while (/*CONSTCOND*/0)
+
+#define	IFMEDIA_IOCTL_UNLOCK(ifm)					\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_unlock_for_legacy(ifm);				\
+	else								\
+		ifmedia_unlock(ifm);					\
+} while (/*CONSTCOND*/0)
+
 /*
  * Device-independent media ioctl support function.
  */
-static int
-_ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
+int
+ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
     u_long cmd)
 {
 	struct ifmedia_entry *match;
@@ -253,6 +425,8 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	if (ifp == NULL || ifr == NULL || ifm == NULL)
 		return EINVAL;
 
+	KERNEL_LOCK_UNLESS_IFP_MPSAFE(ifp);
+
 	switch (cmd) {
 	case SIOCSIFMEDIA:	/* Set the current media. */
 	{
@@ -260,7 +434,9 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		u_int oldmedia;
 		u_int newmedia = ifr->ifr_media;
 
-		match = ifmedia_match(ifm, newmedia, ifm->ifm_mask);
+		IFMEDIA_IOCTL_LOCK(ifm);
+
+		match = ifmedia_match_locked(ifm, newmedia, ifm->ifm_mask);
 		if (match == NULL) {
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
@@ -268,7 +444,9 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				    "0x%08x\n", newmedia);
 			}
 #endif
-			return EINVAL;
+			IFMEDIA_IOCTL_UNLOCK(ifm);
+			error = EINVAL;
+			break;
 		}
 
 		/*
@@ -278,8 +456,10 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
-		    (newmedia == ifm->ifm_media) && (match == ifm->ifm_cur))
-			return 0;
+		    (newmedia == ifm->ifm_media) && (match == ifm->ifm_cur)) {
+			IFMEDIA_IOCTL_UNLOCK(ifm);
+			break;
+		}
 
 		/*
 		 * We found a match, now make the driver switch to it.
@@ -302,18 +482,21 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			ifm->ifm_cur = oldentry;
 			ifm->ifm_media = oldmedia;
 		}
+		IFMEDIA_IOCTL_UNLOCK(ifm);
 		break;
 	}
 
 	/* Get list of available media and current media on interface. */
 	case SIOCGIFMEDIA:
 	{
-		struct ifmedia_entry *ep;
-		size_t nwords;
+		int nwords1, nwords2;
 
-		if (ifmr->ifm_count < 0)
-			return EINVAL;
+		if (ifmr->ifm_count < 0) {
+			error = EINVAL;
+			break;
+		}
 
+		IFMEDIA_IOCTL_LOCK(ifm);
 		ifmr->ifm_active = ifmr->ifm_current = ifm->ifm_cur ?
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
 		ifmr->ifm_mask = ifm->ifm_mask;
@@ -321,67 +504,46 @@ _ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		ifmedia_status(ifm, ifp, ifmr);
 
 		/*
-		 * Count them so we know a-priori how much is the max we'll
+		 * Count them so we know how much is the max we'll
 		 * need.
 		 */
-		ep = TAILQ_FIRST(&ifm->ifm_list);
-		for (nwords = 0; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
-			nwords++;
+		nwords1 = nwords2 = ifmedia_getwords(ifm, NULL, 0);
+		IFMEDIA_IOCTL_UNLOCK(ifm);
 
 		if (ifmr->ifm_count != 0) {
-			size_t count;
-			size_t minwords = nwords > (size_t)ifmr->ifm_count
-			    ? (size_t)ifmr->ifm_count : nwords;
-			int *kptr = malloc(minwords * sizeof(int), M_TEMP,
-			    M_WAITOK);
+			int maxwords = MIN(nwords1, ifmr->ifm_count);
+			int *kptr = kmem_zalloc(maxwords * sizeof(int),
+			    KM_SLEEP);
 
-			if (kptr == NULL)
-				return ENOMEM;
-			/* Get the media words from the interface's list. */
-			ep = TAILQ_FIRST(&ifm->ifm_list);
-			for (count = 0; ep != NULL && count < minwords;
-			    ep = TAILQ_NEXT(ep, ifm_list), count++)
-				kptr[count] = ep->ifm_media;
-
+			ifmedia_lock(ifm);
+			nwords2 = ifmedia_getwords(ifm, kptr, maxwords);
+			ifmedia_unlock(ifm);
 			error = copyout(kptr, ifmr->ifm_ulist,
-			    minwords * sizeof(int));
-			if (error == 0 && ep != NULL)
+			    maxwords * sizeof(int));
+			if (error == 0 && nwords2 > nwords1)
 				error = E2BIG;	/* oops! */
-			free(kptr, M_TEMP);
+			kmem_free(kptr, maxwords * sizeof(int));
 		}
 		/* Update with the real number */
-		ifmr->ifm_count = nwords;
+		ifmr->ifm_count = nwords2;
 		break;
 	}
 
 	default:
-		return EINVAL;
+		error = EINVAL;
+		break;
 	}
 
+	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(ifp);
+
 	return error;
-}
-
-int
-ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
-    u_long cmd)
-{
-	int e;
-
-	/*
-	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here,
-	 * but _ifmedia_ioctl isn't MP-safe yet, so we must hold the lock.
-	 */
-	KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
-	e = _ifmedia_ioctl(ifp, ifr, ifm, cmd);
-	KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
-	return e;
 }
 
 /*
  * Find media entry matching a given ifm word.
  */
-struct ifmedia_entry *
-ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
+static struct ifmedia_entry *
+ifmedia_match_locked(struct ifmedia *ifm, u_int target, u_int mask)
 {
 	struct ifmedia_entry *match, *next;
 
@@ -405,6 +567,22 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 	return match;
 }
 
+struct ifmedia_entry *
+ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
+{
+	struct ifmedia_entry *match;
+
+	/*
+	 * N.B. We expect the caller is responsible fot the lifecycle
+	 * of the media entries.  Use with extreme caution.
+	 */
+
+	ifmedia_lock(ifm);
+	match = ifmedia_match_locked(ifm, target, mask);
+	ifmedia_unlock(ifm);
+	return match;
+}
+
 /*
  * Delete all media for a given instance.
  */
@@ -412,17 +590,27 @@ void
 ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 {
 	struct ifmedia_entry *ife, *nife;
+	TAILQ_HEAD(, ifmedia_entry) dead_entries;
 
+	TAILQ_INIT(&dead_entries);
+
+	ifmedia_lock(ifm);
 	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
+			if (ifm->ifm_cur == ife) {
+				ifm->ifm_cur = NULL;
+				ifm->ifm_media = IFM_NONE;
+			}
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_IFMEDIA);
+			TAILQ_INSERT_TAIL(&dead_entries, ife, ifm_list);
 		}
 	}
-	if (inst == IFM_INST_ANY) {
-		ifm->ifm_cur = NULL;
-		ifm->ifm_media = IFM_NONE;
+	ifmedia_unlock(ifm);
+
+	TAILQ_FOREACH_SAFE(ife, &dead_entries, ifm_list, nife) {
+		TAILQ_REMOVE(&dead_entries, ife, ifm_list);
+		kmem_free(ife, sizeof(*ife));
 	}
 }
 
@@ -432,7 +620,6 @@ ifmedia_removeall(struct ifmedia *ifm)
 
 	ifmedia_delete_instance(ifm, IFM_INST_ANY);
 }
-
 
 /*
  * Compute the interface `baudrate' from the media, for the interface

@@ -1,5 +1,5 @@
 /* PowerPC AltiVec include file.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez (aldyh@redhat.com).
    Rewritten by Paolo Bonzini (bonzini@gnu.org).
 
@@ -168,6 +168,9 @@
 #define vec_re __builtin_vec_re
 #define vec_round __builtin_vec_round
 #define vec_recipdiv __builtin_vec_recipdiv
+#define vec_rlmi __builtin_vec_rlmi
+#define vec_vrlnm __builtin_vec_rlnm
+#define vec_rlnm(a,b,c) (__builtin_vec_rlnm((a),((b)<<8)|(c)))
 #define vec_rsqrt __builtin_vec_rsqrt
 #define vec_rsqrte __builtin_vec_rsqrte
 #define vec_vsubfp __builtin_vec_vsubfp
@@ -189,6 +192,7 @@
 #define vec_vupklsh __builtin_vec_vupklsh
 #define vec_vupklsb __builtin_vec_vupklsb
 #define vec_abs __builtin_vec_abs
+#define vec_nabs __builtin_vec_nabs
 #define vec_abss __builtin_vec_abss
 #define vec_add __builtin_vec_add
 #define vec_adds __builtin_vec_adds
@@ -196,6 +200,7 @@
 #define vec_andc __builtin_vec_andc
 #define vec_avg __builtin_vec_avg
 #define vec_cmpeq __builtin_vec_cmpeq
+#define vec_cmpne __builtin_vec_cmpne
 #define vec_cmpgt __builtin_vec_cmpgt
 #define vec_ctf __builtin_vec_ctf
 #define vec_dst __builtin_vec_dst
@@ -228,6 +233,7 @@
 #define vec_mladd __builtin_vec_mladd
 #define vec_msum __builtin_vec_msum
 #define vec_msums __builtin_vec_msums
+#define vec_mul __builtin_vec_mul
 #define vec_mule __builtin_vec_mule
 #define vec_mulo __builtin_vec_mulo
 #define vec_nor __builtin_vec_nor
@@ -345,7 +351,7 @@
 #define vec_vaddudm __builtin_vec_vaddudm
 #define vec_vadduqm __builtin_vec_vadduqm
 #define vec_vbpermq __builtin_vec_vbpermq
-#define vec_bperm __builtin_vec_vbpermq
+#define vec_bperm __builtin_vec_vbperm_api
 #define vec_vclz __builtin_vec_vclz
 #define vec_cntlz __builtin_vec_vclz
 #define vec_vclzb __builtin_vec_vclzb
@@ -384,14 +390,16 @@
 #define vec_vupklsw __builtin_vec_vupklsw
 #endif
 
-#ifdef _ARCH_PWR9
+#ifdef __POWER9_VECTOR__
 /* Vector additions added in ISA 3.0.  */
 #define vec_vctz __builtin_vec_vctz
-#define vec_cntlz __builtin_vec_vctz
+#define vec_cnttz __builtin_vec_vctz
 #define vec_vctzb __builtin_vec_vctzb
 #define vec_vctzd __builtin_vec_vctzd
 #define vec_vctzh __builtin_vec_vctzh
 #define vec_vctzw __builtin_vec_vctzw
+#define vec_extract4b __builtin_vec_extract4b
+#define vec_insert4b __builtin_vec_insert4b
 #define vec_vprtyb __builtin_vec_vprtyb
 #define vec_vprtybd __builtin_vec_vprtybd
 #define vec_vprtybw __builtin_vec_vprtybw
@@ -400,13 +408,44 @@
 #define vec_vprtybq __builtin_vec_vprtybq
 #endif
 
-#define vec_slv __builtin_vec_vslv
-#define vec_srv __builtin_vec_vsrv
-
 #define vec_absd __builtin_vec_vadu
 #define vec_absdb __builtin_vec_vadub
 #define vec_absdh __builtin_vec_vaduh
 #define vec_absdw __builtin_vec_vaduw
+
+#define vec_slv __builtin_vec_vslv
+#define vec_srv __builtin_vec_vsrv
+
+#define vec_extract_exp __builtin_vec_extract_exp
+#define vec_extract_sig __builtin_vec_extract_sig
+#define vec_insert_exp __builtin_vec_insert_exp
+#define vec_test_data_class __builtin_vec_test_data_class
+
+#define scalar_extract_exp __builtin_vec_scalar_extract_exp
+#define scalar_extract_sig __builtin_vec_scalar_extract_sig
+#define scalar_insert_exp __builtin_vec_scalar_insert_exp
+#define scalar_test_data_class __builtin_vec_scalar_test_data_class
+#define scalar_test_neg __builtin_vec_scalar_test_neg
+
+#define scalar_cmp_exp_gt __builtin_vec_scalar_cmp_exp_gt
+#define scalar_cmp_exp_lt __builtin_vec_scalar_cmp_exp_lt
+#define scalar_cmp_exp_eq __builtin_vec_scalar_cmp_exp_eq
+#define scalar_cmp_exp_unordered __builtin_vec_scalar_cmp_exp_unordered
+
+#ifdef _ARCH_PPC64
+#define vec_xl_len __builtin_vec_lxvl
+#define vec_xst_len __builtin_vec_stxvl
+#endif
+
+#define vec_cmpnez __builtin_vec_vcmpnez
+
+#define vec_cntlz_lsbb __builtin_vec_vclzlsbb
+#define vec_cnttz_lsbb __builtin_vec_vctzlsbb
+
+#define vec_xlx __builtin_vec_vextulx
+#define vec_xrx __builtin_vec_vexturx
+
+#define vec_revb __builtin_vec_revb
 #endif
 
 /* Predicates.
@@ -470,10 +509,23 @@ __altivec_unary_pred(vec_any_numeric,
 
 __altivec_scalar_pred(vec_all_eq,
   __builtin_vec_vcmpeq_p (__CR6_LT, a1, a2))
+
+#ifndef __POWER9_VECTOR__
 __altivec_scalar_pred(vec_all_ne,
   __builtin_vec_vcmpeq_p (__CR6_EQ, a1, a2))
 __altivec_scalar_pred(vec_any_eq,
   __builtin_vec_vcmpeq_p (__CR6_EQ_REV, a1, a2))
+#else
+__altivec_scalar_pred(vec_all_nez,
+  __builtin_vec_vcmpnez_p (__CR6_LT, a1, a2))
+__altivec_scalar_pred(vec_any_eqz,
+  __builtin_vec_vcmpnez_p (__CR6_LT_REV, a1, a2))
+__altivec_scalar_pred(vec_all_ne,
+  __builtin_vec_vcmpne_p (a1, a2))
+__altivec_scalar_pred(vec_any_eq,
+  __builtin_vec_vcmpae_p (a1, a2))
+#endif
+
 __altivec_scalar_pred(vec_any_ne,
   __builtin_vec_vcmpeq_p (__CR6_LT_REV, a1, a2))
 
@@ -533,8 +585,17 @@ __altivec_scalar_pred(vec_any_nle,
 #define vec_any_numeric(a1) __builtin_vec_vcmpeq_p (__CR6_EQ_REV, (a1), (a1))
 
 #define vec_all_eq(a1, a2) __builtin_vec_vcmpeq_p (__CR6_LT, (a1), (a2))
+
+#ifdef __POWER9_VECTOR__
+#define vec_all_nez(a1, a2) __builtin_vec_vcmpnez_p (__CR6_LT, (a1), (a2))
+#define vec_any_eqz(a1, a2) __builtin_vec_vcmpnez_p (__CR6_LT_REV, (a1), (a2))
+#define vec_all_ne(a1, a2) __builtin_vec_vcmpne_p ((a1), (a2))
+#define vec_any_eq(a1, a2) __builtin_vec_vcmpae_p ((a1), (a2))
+#else
 #define vec_all_ne(a1, a2) __builtin_vec_vcmpeq_p (__CR6_EQ, (a1), (a2))
 #define vec_any_eq(a1, a2) __builtin_vec_vcmpeq_p (__CR6_EQ_REV, (a1), (a2))
+#endif
+
 #define vec_any_ne(a1, a2) __builtin_vec_vcmpeq_p (__CR6_LT_REV, (a1), (a2))
 
 #define vec_all_gt(a1, a2) __builtin_vec_vcmpgt_p (__CR6_LT, (a1), (a2))

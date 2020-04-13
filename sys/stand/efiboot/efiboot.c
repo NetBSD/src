@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.16.2.2 2019/06/10 22:09:56 christos Exp $ */
+/* $NetBSD: efiboot.c,v 1.16.2.3 2020/04/13 08:05:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -68,7 +68,10 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	InitializeLib(imageHandle, systemTable);
 
-	(void)uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, FALSE);
+	uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, TRUE);
+	uefi_call_wrapper(ST->ConOut->SetMode, 2, ST->ConOut, 0);
+	uefi_call_wrapper(ST->ConOut->EnableCursor, 2, ST->ConOut, TRUE);
+	uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
 
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, sz, &heap_start);
 	if (EFI_ERROR(status))

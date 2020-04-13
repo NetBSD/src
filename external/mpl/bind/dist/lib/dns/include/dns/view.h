@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.3.2.2 2019/06/10 22:04:37 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -200,9 +200,9 @@ struct dns_view {
 
 	/* Locked by themselves. */
 	isc_refcount_t			references;
+	isc_refcount_t			weakrefs;
 
 	/* Locked by lock. */
-	unsigned int			weakrefs;
 	unsigned int			attributes;
 	/* Under owner's locking control. */
 	ISC_LINK(struct dns_view)	link;
@@ -1192,14 +1192,16 @@ dns_view_getsecroots(dns_view_t *view, dns_keytable_t **ktp);
 
 isc_result_t
 dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
-			isc_stdtime_t now, bool checknta,
+			isc_stdtime_t now, bool checknta, bool *ntap,
 			bool *secure_domain);
 /*%<
  * Is 'name' at or beneath a trusted key, and not covered by a valid
  * negative trust anchor?  Put answer in '*secure_domain'.
  *
  * If 'checknta' is false, ignore the NTA table in determining
- * whether this is a secure domain.
+ * whether this is a secure domain. If 'checknta' is not false, and if
+ * 'ntap' is non-NULL, then '*ntap' will be updated with true if the
+ * name is covered by an NTA.
  *
  * Requires:
  * \li	'view' is valid.

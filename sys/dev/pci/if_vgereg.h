@@ -240,8 +240,8 @@
 #define VGE_INTCTL_HC_RELOAD		0x02 /* enable hold timer reload */
 #define VGE_INTCTL_STATUS		0x04 /* interrupt pending status */
 #define VGE_INTCTL_MASK			0x18 /* multilayer int mask */
-#define VGE_INTCTL_RXINTSUP_DISABLE	0x20 /* disable RX int supression */
-#define VGE_INTCTL_TXINTSUP_DISABLE	0x40 /* disable TX int supression */
+#define VGE_INTCTL_RXINTSUP_DISABLE	0x20 /* disable RX int suppression */
+#define VGE_INTCTL_TXINTSUP_DISABLE	0x40 /* disable TX int suppression */
 #define VGE_INTCTL_SOFTINT		0x80 /* request soft interrupt */
 
 #define VGE_INTMASK_LAYER0		0x00
@@ -384,8 +384,8 @@
  *   the multicast hash filter or the CAM table)
  * - The behavior of the interrupt holdoff timer register at offset
  *   0x20 (the page select bits allow you to set the interrupt
- *   holdoff timer, the TX interrupt supression count or the
- *   RX interrupt supression count)
+ *   holdoff timer, the TX interrupt suppression count or the
+ *   RX interrupt suppression count)
  * - The behavior the WOL pattern programming registers at offset
  *   0xC0 (controls which pattern is set)
  */
@@ -539,6 +539,31 @@
 #define VGE_TXBLOCK_32PKTS	0x04
 #define VGE_TXBLOCK_128PKTS	0x08
 #define VGE_TXBLOCK_8PKTS	0x0C
+
+/* Sticky bit shadow register */
+
+#define	VGE_STICKHW_DS0		0x01
+#define	VGE_STICKHW_DS1		0x02
+#define	VGE_STICKHW_WOL_ENB	0x04
+#define	VGE_STICKHW_WOL_STS	0x08
+#define	VGE_STICKHW_SWPTAG	0x10
+
+/* WOL pattern control */
+#define	VGE_WOLCR0_PATTERN0	0x01
+#define	VGE_WOLCR0_PATTERN1	0x02
+#define	VGE_WOLCR0_PATTERN2	0x04
+#define	VGE_WOLCR0_PATTERN3	0x08
+#define	VGE_WOLCR0_PATTERN4	0x10
+#define	VGE_WOLCR0_PATTERN5	0x20
+#define	VGE_WOLCR0_PATTERN6	0x40
+#define	VGE_WOLCR0_PATTERN7	0x80
+#define	VGE_WOLCR0_PATTERN_ALL	0xFF
+
+/* WOL config register */
+#define	VGE_WOLCFG_PHYINT_ENB	0x01
+#define	VGE_WOLCFG_SAB		0x10
+#define	VGE_WOLCFG_SAM		0x20
+#define	VGE_WOLCFG_PMEOVR	0x80
 
 /* EEPROM control/status register */
 

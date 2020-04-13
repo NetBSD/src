@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.47.28.1 2019/06/10 22:05:30 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.47.28.2 2020/04/13 08:03:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.47.28.1 2019/06/10 22:05:30 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.47.28.2 2020/04/13 08:03:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,13 +177,6 @@ spcset(int func, cc_t *valp, cc_t **valpp)
  *
  * Returns the file descriptor of the opened pty.
  */
-#ifndef	__GNUC__
-char *line = NULL16STR;
-#else
-static char Xline[] = NULL16STR;
-char *line = Xline;
-#endif
-
 
 static int ptyslavefd; /* for cleanopen() */
 

@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.23 2016/06/08 07:53:15 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.23.16.1 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 8, 2016
+.Dd October 24, 2019
 .Dt ICONV 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -44,7 +44,7 @@
 .Ft int
 .Fn iconv_close "iconv_t cd"
 .Ft size_t
-.Fn iconv "iconv_t cd" "const char ** restrict src" "size_t * restrict srcleft" "char ** restrict dst" "size_t * restrict dstleft"
+.Fn iconv "iconv_t cd" "char ** restrict src" "size_t * restrict srcleft" "char ** restrict dst" "size_t * restrict dstleft"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -259,10 +259,16 @@ follow the header file definition
 .Pq without const ,
 even though the version with const is arguably more correct.
 .Nx
-has always used the const form.
+used initially the const form.
 It was decided to reject the committee's regression and become
 .Pq technically
 incompatible.
+.Pp
+This decision was changed in
+.Nx 10
+and the
+.Fn iconv
+prototype was synchronized with the standard.
 .\" ----------------------------------------------------------------------
 .Sh BUGS
 If

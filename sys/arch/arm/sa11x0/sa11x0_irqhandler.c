@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.18 2012/09/01 14:48:05 matt Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.18.40.1 2020/04/13 08:03:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.18 2012/09/01 14:48:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.18.40.1 2020/04/13 08:03:37 martin Exp $");
 
 #include "opt_irqstats.h"
 
@@ -167,10 +167,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	struct irqhandler **p, *q, *ih;
 	static struct irqhandler fakehand = {fakeintr};
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("sa11x0_intr_establish: can't malloc handler info");
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (irq < 0 || irq >= ICU_LEN || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");

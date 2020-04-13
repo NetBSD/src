@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.8 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.8.18.1 2020/04/13 08:04:04 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.8 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.8.18.1 2020/04/13 08:04:04 martin Exp $");
 
 #include "opt_usb.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.8 2016/04/23 10:15:30 skrll Exp $");
 #include <dev/usb/ehcivar.h>
 
 /*
- * This is relative to the start of the unreserved registers in USB contoller
+ * This is relative to the start of the unreserved registers in USB controller
  * block and not the full USB block which would be 0x1a8.
  */
 #define	PQ3_USBMODE		0xa8			/* USB mode */

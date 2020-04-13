@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.80 2017/05/22 17:22:29 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.80.10.1 2020/04/13 08:04:47 martin Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.80 2017/05/22 17:22:29 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.80.10.1 2020/04/13 08:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -137,9 +137,7 @@ uba_reset_establish(void (*reset)(device_t), device_t dev)
 	struct uba_softc *uh = device_private(device_parent(dev));
 	struct uba_reset *ur;
 
-	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (ur == NULL)
-		panic("uba_reset_establish");
+	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_WAITOK|M_ZERO);
 	ur->ur_dev = dev;
 	ur->ur_reset = reset;
 

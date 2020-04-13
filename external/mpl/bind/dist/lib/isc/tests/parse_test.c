@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_test.c,v 1.3.2.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: parse_test.c,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,11 +21,12 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>

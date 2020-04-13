@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.65.2.3 2020/04/13 08:04:26 martin Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.65.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -385,9 +385,11 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 #if NVLAN > 0
-	if (sc->sc_flags & NFE_HW_VLAN)
+	if (sc->sc_flags & NFE_HW_VLAN) {
 		sc->sc_ethercom.ec_capabilities |=
 			ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
+	}
 #endif
 	if (sc->sc_flags & NFE_HW_CSUM) {
 		ifp->if_capabilities |=
@@ -662,7 +664,7 @@ nfe_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct nfe_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	/*
 	 * If only the PROMISC flag changes, then

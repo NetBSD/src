@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_kcov.c,v 1.8.2.2 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.8.2.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,8 +115,6 @@ typedef struct kcov_desc {
 	bool lwpfree;
 } kcov_t;
 
-static specificdata_key_t kcov_lwp_key;
-
 static void
 kcov_lock(kcov_t *kd)
 {
@@ -143,10 +141,10 @@ kcov_free(kcov_t *kd)
 	kmem_free(kd, sizeof(*kd));
 }
 
-static void
-kcov_lwp_free(void *arg)
+void
+kcov_lwp_free(struct lwp *l)
 {
-	kcov_t *kd = (kcov_t *)arg;
+	kcov_t *kd = (kcov_t *)l->l_kcov;
 
 	if (kd == NULL) {
 		return;
@@ -234,6 +232,7 @@ kcov_fops_close(file_t *fp)
 static int
 kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 {
+	struct lwp *l = curlwp;
 	int error = 0;
 	int mode;
 	kcov_t *kd;
@@ -256,7 +255,7 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 			error = EBUSY;
 			break;
 		}
-		if (lwp_getspecific(kcov_lwp_key) != NULL) {
+		if (l->l_kcov != NULL) {
 			error = EBUSY;
 			break;
 		}
@@ -278,7 +277,7 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 		if (error)
 			break;
 
-		lwp_setspecific(kcov_lwp_key, kd);
+		l->l_kcov = kd;
 		kd->enabled = true;
 		break;
 	case KCOV_IOC_DISABLE:
@@ -286,11 +285,11 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 			error = ENOENT;
 			break;
 		}
-		if (lwp_getspecific(kcov_lwp_key) != kd) {
+		if (l->l_kcov != kd) {
 			error = ENOENT;
 			break;
 		}
-		lwp_setspecific(kcov_lwp_key, NULL);
+		l->l_kcov = NULL;
 		kd->enabled = false;
 		break;
 	default:
@@ -339,7 +338,14 @@ out:
 	return error;
 }
 
-static inline bool
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Constraints on the functions here: they must be marked with __nomsan, and
+ * must not make any external call.
+ */
+
+static inline bool __nomsan
 in_interrupt(void)
 {
 	return curcpu()->ci_idepth >= 0;
@@ -347,7 +353,7 @@ in_interrupt(void)
 
 void __sanitizer_cov_trace_pc(void);
 
-void
+void __nomsan
 __sanitizer_cov_trace_pc(void)
 {
 	extern int cold;
@@ -364,7 +370,7 @@ __sanitizer_cov_trace_pc(void)
 		return;
 	}
 
-	kd = lwp_getspecific(kcov_lwp_key);
+	kd = curlwp->l_kcov;
 	if (__predict_true(kd == NULL)) {
 		/* Not traced. */
 		return;
@@ -388,7 +394,7 @@ __sanitizer_cov_trace_pc(void)
 	}
 }
 
-static void
+static void __nomsan
 trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 {
 	extern int cold;
@@ -405,7 +411,7 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 		return;
 	}
 
-	kd = lwp_getspecific(kcov_lwp_key);
+	kd = curlwp->l_kcov;
 	if (__predict_true(kd == NULL)) {
 		/* Not traced. */
 		return;
@@ -433,7 +439,7 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 
 void __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
 {
 
@@ -443,7 +449,7 @@ __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
 
 void __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
 {
 
@@ -453,7 +459,7 @@ __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
 
 void __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
 {
 
@@ -463,7 +469,7 @@ __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
 
 void __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
 {
 
@@ -473,7 +479,7 @@ __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
 
 void __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
 {
 
@@ -483,7 +489,7 @@ __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
 
 void __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
 {
 
@@ -493,7 +499,7 @@ __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
 
 void __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
 {
 
@@ -503,7 +509,7 @@ __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
 
 void __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
 {
 
@@ -513,7 +519,7 @@ __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
 
 void __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases);
 
-void
+void __nomsan
 __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
 {
 	uint64_t i, nbits, ncases, type;
@@ -549,20 +555,12 @@ __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
 
 MODULE(MODULE_CLASS_MISC, kcov, NULL);
 
-static void
-kcov_init(void)
-{
-
-	lwp_specific_key_create(&kcov_lwp_key, kcov_lwp_free);
-}
-
 static int
 kcov_modcmd(modcmd_t cmd, void *arg)
 {
 
    	switch (cmd) {
 	case MODULE_CMD_INIT:
-		kcov_init();
 		return 0;
 	case MODULE_CMD_FINI:
 		return EINVAL;

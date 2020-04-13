@@ -291,6 +291,8 @@ AS_VAR_IF([$1], [""], [$5], [$4])dnl
 m4_include([m4/ax_check_openssl.m4])
 m4_include([m4/ax_posix_shell.m4])
 m4_include([m4/ax_pthread.m4])
+m4_include([m4/ax_restore_flags.m4])
+m4_include([m4/ax_save_flags.m4])
 m4_include([m4/libtool.m4])
 m4_include([m4/ltoptions.m4])
 m4_include([m4/ltsugar.m4])

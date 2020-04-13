@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.14 2018/06/20 07:05:37 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.14.2.1 2020/04/13 08:03:34 martin Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -28,16 +28,20 @@ file	arch/arm/imx/imx6_axi.c			axi
 
 # iMX6 PCIe
 device	imxpcie: pcibus
-attach	imxpcie at axi
-file	arch/arm/imx/imx6_pcie.c		imxpcie
+attach	imxpcie at axi with imx6_pcie
+file	arch/arm/imx/imxpcie.c			imxpcie
+file	arch/arm/imx/imx6_pcie.c		imx6_pcie
 
 # iMX6 Clock Control Module
-device	imxccm
+device	imxccm : clk
 attach	imxccm at axi
-file	arch/arm/imx/imx6_ccm.c			imxccm	needs-flag
-defflag opt_imx6clk.h				IMXCCMDEBUG
+file	arch/arm/imx/imx6_ccm.c			imxccm needs-flag
+file	arch/arm/imx/imx6_clk.c			imxccm
 defparam opt_imx6clk.h				IMX6_OSC_FREQ
 defparam opt_imx6clk.h				IMX6_CKIL_FREQ
+defparam opt_imx6clk.h				IMX6_CKIH_FREQ
+defparam opt_imx6clk.h				IMX6_ANACLK1_FREQ
+defparam opt_imx6clk.h				IMX6_ANACLK2_FREQ
 
 # iMX6 Enhanced Periodic Interrupt Timer
 device	imxclock
@@ -59,16 +63,15 @@ file	arch/arm/imx/imxwdog.c			imxwdog
 # iMX GPIO
 device	imxgpio: gpiobus
 attach	imxgpio at axi
-file	arch/arm/imx/imxgpio.c			imxgpio	needs-flag
+file	arch/arm/imx/imxgpio.c			imxgpio		needs-flag
 file	arch/arm/imx/imx6_gpio.c		imxgpio
-defflag opt_imxgpio.h				IMX_GPIO_INTR_SPLIT
 
 # iMX6 IOMUX
 device	imxiomux
 attach	imxiomux at axi
 file	arch/arm/imx/imx6_iomux.c		imxiomux
 
-# iMX iic Controler
+# iMX iic controller
 device	imxi2c: motoi2c, i2cbus, i2cexec
 attach	imxi2c at axi
 file	arch/arm/imx/imxi2c.c			imxi2c

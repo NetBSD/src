@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.12 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.12.18.1 2020/04/13 08:05:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.12 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.12.18.1 2020/04/13 08:05:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,11 +44,10 @@ static int
 makeonedevnode(dev_t devtype, const char *devname,
 	devmajor_t majnum, devminor_t minnum)
 {
-	register_t retval;
 	int error;
 
 	error = do_sys_mknod(curlwp, devname, 0666 | devtype,
-	    makedev(majnum, minnum), &retval, UIO_SYSSPACE);
+	    makedev(majnum, minnum), UIO_SYSSPACE);
 	if (error == EEXIST) /* XXX: should check it's actually the same */
 		error = 0;
 
@@ -62,7 +61,6 @@ makedevnodes(dev_t devtype, const char *basename, char minchar,
 	int error = 0;
 	char *devname, *p;
 	size_t devlen;
-	register_t retval;
 
 	devlen = strlen(basename) + 1 + 1; /* +letter +0 */
 	devname = kmem_zalloc(devlen, KM_SLEEP);
@@ -74,7 +72,7 @@ makedevnodes(dev_t devtype, const char *basename, char minchar,
 		*p = minchar;
 
 		if ((error = do_sys_mknod(curlwp, devname, 0666 | devtype,
-		    makedev(maj, minnum), &retval, UIO_SYSSPACE))) {
+		    makedev(maj, minnum), UIO_SYSSPACE))) {
 			if (error == EEXIST)
 				error = 0;
 			else
@@ -121,7 +119,6 @@ makeonenode(char *buf, size_t len, devmajor_t blk, devmajor_t chr,
     devminor_t dmin, const char *base, int c1, int c2)
 {
 	char cstr1[2] = {0,0}, cstr2[2] = {0,0};
-	register_t rv;
 	int error;
 
 	if (c1 != -1) {
@@ -145,7 +142,7 @@ makeonenode(char *buf, size_t len, devmajor_t blk, devmajor_t chr,
 			break;
 		case NOTEXIST:
 			if ((error = do_sys_mknod(curlwp, buf, 0600 | S_IFBLK,
-			    makedev(blk, dmin), &rv, UIO_SYSSPACE)) != 0)
+			    makedev(blk, dmin), UIO_SYSSPACE)) != 0)
 				aprint_verbose("mkdevnodes: failed to "
 				    "create %s: %d\n", buf, error);
 			break;
@@ -163,7 +160,7 @@ makeonenode(char *buf, size_t len, devmajor_t blk, devmajor_t chr,
 		break;
 	case NOTEXIST:
 		if ((error = do_sys_mknod(curlwp, buf, 0600 | S_IFCHR,
-		    makedev(chr, dmin), &rv, UIO_SYSSPACE)) != 0)
+		    makedev(chr, dmin), UIO_SYSSPACE)) != 0)
 			aprint_verbose("mkdevnodes: failed to "
 			    "create %s: %d\n", buf, error);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bignum.c,v 1.2 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: bignum.c,v 1.2.4.1 2020/04/13 08:03:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
@@ -2304,7 +2304,7 @@ fast_col_array_multiply(mp_int * a, mp_int * b, mp_int * c, int digs)
 		tmpc = c->dp;
 		for (ix = 0; ix < pa+1; ix++) {
 			/* now extract the previous digit [below the carry] */
-			*tmpc++ = W[ix];
+			*tmpc++ = (ix < pa) ? W[ix] : 0;
 		}
 
 		/* clear unused digits [that existed in the old copy of c] */

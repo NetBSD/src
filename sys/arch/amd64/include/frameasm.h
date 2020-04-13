@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.38.2.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.38.2.2 2020/04/13 08:03:30 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -6,6 +6,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #include "opt_svs.h"
+#include "opt_kcov.h"
+#include "opt_kmsan.h"
 #endif
 
 /*
@@ -205,6 +207,77 @@
 #define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif
 
+#ifdef KMSAN
+#define KMSAN_ENTER	\
+	movq	%rsp,%rdi		; \
+	movq	$TF_REGSIZE+16+40,%rsi	; \
+	xorq	%rdx,%rdx		; \
+	callq	kmsan_mark		; \
+	callq	kmsan_intr_enter
+#define KMSAN_LEAVE	\
+	pushq	%rbp			; \
+	movq	%rsp,%rbp		; \
+	callq	kmsan_intr_leave	; \
+	popq	%rbp
+#define KMSAN_INIT_ARG(sz)	\
+	pushq	%rax			; \
+	pushq	%rcx			; \
+	pushq	%rdx			; \
+	pushq	%rsi			; \
+	pushq	%rdi			; \
+	pushq	%r8			; \
+	pushq	%r9			; \
+	pushq	%r10			; \
+	pushq	%r11			; \
+	movq	$sz,%rdi		; \
+	callq	_C_LABEL(kmsan_init_arg); \
+	popq	%r11			; \
+	popq	%r10			; \
+	popq	%r9			; \
+	popq	%r8			; \
+	popq	%rdi			; \
+	popq	%rsi			; \
+	popq	%rdx			; \
+	popq	%rcx			; \
+	popq	%rax
+#define KMSAN_INIT_RET(sz)	\
+	pushq	%rax			; \
+	pushq	%rcx			; \
+	pushq	%rdx			; \
+	pushq	%rsi			; \
+	pushq	%rdi			; \
+	pushq	%r8			; \
+	pushq	%r9			; \
+	pushq	%r10			; \
+	pushq	%r11			; \
+	movq	$sz,%rdi		; \
+	callq	_C_LABEL(kmsan_init_ret); \
+	popq	%r11			; \
+	popq	%r10			; \
+	popq	%r9			; \
+	popq	%r8			; \
+	popq	%rdi			; \
+	popq	%rsi			; \
+	popq	%rdx			; \
+	popq	%rcx			; \
+	popq	%rax
+#else
+#define KMSAN_ENTER		/* nothing */
+#define KMSAN_LEAVE		/* nothing */
+#define KMSAN_INIT_ARG(sz)	/* nothing */
+#define KMSAN_INIT_RET(sz)	/* nothing */
+#endif
+
+#ifdef KCOV
+#define KCOV_DISABLE			\
+	incl	CPUVAR(IDEPTH)
+#define KCOV_ENABLE			\
+	decl	CPUVAR(IDEPTH)
+#else
+#define KCOV_DISABLE		/* nothing */
+#define KCOV_ENABLE		/* nothing */
+#endif
+
 #define	INTRENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
@@ -219,7 +292,7 @@
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
 	movw	%ds,TF_DS(%rsp)		; \
-98:
+98:	KMSAN_ENTER
 
 #define INTRFASTEXIT \
 	jmp	intrfastexit
@@ -238,12 +311,27 @@
 #define INTR_RECURSE_ENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
-	cld
+	cld				; \
+	KMSAN_ENTER
 
 #define	CHECK_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define CHECK_ASTPENDING(reg)	cmpl	$0, L_MD_ASTPENDING(reg)
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
+
+/*
+ * If the FPU state is not in the CPU, restore it. Executed with interrupts
+ * disabled.
+ *
+ *     %r14 is curlwp, must not be modified
+ *     %rbx must not be modified
+ */
+#define HANDLE_DEFERRED_FPU	\
+	testl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%r14)	; \
+	jnz	1f					; \
+	call	_C_LABEL(fpu_handle_deferred)		; \
+	orl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%r14)	; \
+1:
 
 #endif /* _AMD64_MACHINE_FRAMEASM_H */

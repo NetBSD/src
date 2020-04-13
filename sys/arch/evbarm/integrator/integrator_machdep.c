@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.74.30.1 2019/06/10 22:06:07 christos Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.74.30.2 2020/04/13 08:03:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.74.30.1 2019/06/10 22:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.74.30.2 2020/04/13 08:03:44 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -309,7 +309,7 @@ static const struct pmap_devmap integrator_devmap[] = {
 };
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -322,7 +322,7 @@ static const struct pmap_devmap integrator_devmap[] = {
  *   Relocating the kernel to the bottom of physical memory
  */
 
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	extern int KERNEL_BASE_phys[];

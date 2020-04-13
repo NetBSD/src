@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.3.2.1 2019/06/10 22:05:24 christos Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.3.2.2 2020/04/13 08:03:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <kvm.h>
 
 #include <machine/kcore.h>
+#include <machine/armreg.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
@@ -48,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.3.2.1 2019/06/10 22:05:24 christos Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.3.2.2 2020/04/13 08:03:13 martin Exp $");
 
 /*ARGSUSED*/
 void

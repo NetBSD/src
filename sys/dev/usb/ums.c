@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.91.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.91.4.2 2020/04/13 08:04:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.4.2 2020/04/13 08:04:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -78,6 +78,8 @@ struct ums_softc {
 	struct uhidev sc_hdev;
 	struct hidms sc_ms;
 
+	bool	sc_alwayson;
+
 	int	sc_enabled;
 	char	sc_dying;
 };
@@ -88,22 +90,22 @@ Static int	ums_enable(void *);
 Static void	ums_disable(void *);
 Static int	ums_ioctl(void *, u_long, void *, int, struct lwp *);
 
-const struct wsmouse_accessops ums_accessops = {
+static const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
 	ums_ioctl,
 	ums_disable,
 };
 
-int ums_match(device_t, cfdata_t, void *);
-void ums_attach(device_t, device_t, void *);
-void ums_childdet(device_t, device_t);
-int ums_detach(device_t, int);
-int ums_activate(device_t, enum devact);
+static int ums_match(device_t, cfdata_t, void *);
+static void ums_attach(device_t, device_t, void *);
+static void ums_childdet(device_t, device_t);
+static int ums_detach(device_t, int);
+static int ums_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(ums, sizeof(struct ums_softc), ums_match, ums_attach,
     ums_detach, ums_activate, NULL, ums_childdet);
 
-int
+static int
 ums_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -130,12 +132,12 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS;
 }
 
-void
+static void
 ums_attach(device_t parent, device_t self, void *aux)
 {
 	struct ums_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
-	int size;
+	int size, error;
 	void *desc;
 	uint32_t quirks;
 
@@ -171,6 +173,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		switch (uha->uiaa->uiaa_product) {
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR10:
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR20:
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR70:
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR80:
 		case USB_PRODUCT_MICROSOFT_NATURAL_6000:
 			fixpos = 24;
 			break;
@@ -192,10 +196,29 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_HAILUCK &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_HAILUCK_KEYBOARD) {
+		/*
+		 * The HAILUCK USB Keyboard has a built-in touchpad, which
+		 * needs to be active for the keyboard to function properly.
+		 */
+		sc->sc_alwayson = true;
+	}
+
+	tpcalib_init(&sc->sc_ms.sc_tpcalib);
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
+
+	if (sc->sc_alwayson) {
+		error = uhidev_open(&sc->sc_hdev);
+		if (error != 0) {
+			aprint_error_dev(self,
+			    "WARNING: couldn't open always-on device\n");
+			sc->sc_alwayson = false;
+		}
+	}
 }
 
-int
+static int
 ums_activate(device_t self, enum devact act)
 {
 	struct ums_softc *sc = device_private(self);
@@ -209,7 +232,7 @@ ums_activate(device_t self, enum devact act)
 	}
 }
 
-void
+static void
 ums_childdet(device_t self, device_t child)
 {
 	struct ums_softc *sc = device_private(self);
@@ -218,13 +241,16 @@ ums_childdet(device_t self, device_t child)
 	sc->sc_ms.hidms_wsmousedev = NULL;
 }
 
-int
+static int
 ums_detach(device_t self, int flags)
 {
 	struct ums_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
+
+	if (sc->sc_alwayson)
+		uhidev_close(&sc->sc_hdev);
 
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_ms.hidms_wsmousedev != NULL)
@@ -235,18 +261,20 @@ ums_detach(device_t self, int flags)
 	return rv;
 }
 
-void
+Static void
 ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
-	hidms_intr(&sc->sc_ms, ibuf, len);
+
+	if (sc->sc_enabled)
+		hidms_intr(&sc->sc_ms, ibuf, len);
 }
 
 Static int
 ums_enable(void *v)
 {
 	struct ums_softc *sc = v;
-	int error;
+	int error = 0;
 
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 
@@ -259,9 +287,11 @@ ums_enable(void *v)
 	sc->sc_enabled = 1;
 	sc->sc_ms.hidms_buttons = 0;
 
-	error = uhidev_open(&sc->sc_hdev);
-	if (error)
-		sc->sc_enabled = 0;
+	if (!sc->sc_alwayson) {
+		error = uhidev_open(&sc->sc_hdev);
+		if (error)
+			sc->sc_enabled = 0;
+	}
 
 	return error;
 }
@@ -281,7 +311,8 @@ ums_disable(void *v)
 
 	if (sc->sc_enabled) {
 		sc->sc_enabled = 0;
-		uhidev_close(&sc->sc_hdev);
+		if (!sc->sc_alwayson)
+			uhidev_close(&sc->sc_hdev);
 	}
 }
 

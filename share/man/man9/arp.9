@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.26 2013/09/17 19:58:03 wiz Exp $
+.\"	$NetBSD: arp.9,v 1.26.26.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 3, 1997
+.Dd September 1, 2019
 .Dt ARP 9
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Ft void
 .Fn arp_ifinit "struct ifnet *ifp" "struct ifaddr *ifa"
 .Ft int
-.Fn arpresolve "struct ifnet *ifp" "struct rtentry *rt" "struct mbuf *m" "struct sockaddr *dst" "u_char *desten"
+.Fn arpresolve "struct ifnet *ifp" "const struct rtentry *rt" "struct mbuf *m" "const struct sockaddr *dst" "void *desten" "size_t destlen"
 .Ft void
 .Fn arpintr
 .Sh DESCRIPTION

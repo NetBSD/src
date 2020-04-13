@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.470.4.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.470.4.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.470.4.2 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.470.4.3 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -755,6 +755,7 @@ sched_sync(void *arg)
 {
 	mount_iterator_t *iter;
 	synclist_t *slp;
+	struct vnode_impl *vi;
 	struct vnode *vp;
 	struct mount *mp;
 	time_t starttime;
@@ -787,14 +788,16 @@ sched_sync(void *arg)
 		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
 
-		while ((vp = VIMPL_TO_VNODE(TAILQ_FIRST(slp))) != NULL) {
+		while ((vi = TAILQ_FIRST(slp)) != NULL) {
+			vp = VIMPL_TO_VNODE(vi);
 			synced = lazy_sync_vnode(vp);
 
 			/*
 			 * XXX The vnode may have been recycled, in which
 			 * case it may have a new identity.
 			 */
-			if (VIMPL_TO_VNODE(TAILQ_FIRST(slp)) == vp) {
+			vi = TAILQ_FIRST(slp);
+			if (vi != NULL && VIMPL_TO_VNODE(vi) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
@@ -1195,6 +1198,8 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 	    sizeof(sbp->f_mntonname));
 	(void)memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname,
 	    sizeof(sbp->f_mntfromname));
+	(void)memcpy(sbp->f_mntfromlabel, mp->mnt_stat.f_mntfromlabel,
+	    sizeof(sbp->f_mntfromlabel));
 	sbp->f_namemax = mbp->f_namemax;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.29 2013/12/04 18:44:14 jdc Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.29.30.1 2020/04/13 08:04:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -376,7 +376,7 @@
 #define	SFSR_BITS	"\177\020"		\
 	"b\21EM\0b\20CS\0b\17SB\0f\15\2PERR\0"	\
 	"b\14UC\0b\13TO\0b\12BE\0f\10\2LVL\0"	\
-	"f\05\3AT\0f\02\3FT\0b\01FAV\0b\01OW"
+	"f\05\3AT\0f\02\3FT\0b\01FAV\0b\01OW\0"
 
 /* [4m] Synchronous Fault Types */
 #define SFSR_FT_NONE		(0 << 2) 	/* no fault */

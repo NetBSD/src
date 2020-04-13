@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.31.2.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.31.2.2 2020/04/13 08:04:25 martin Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.31.2.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.31.2.2 2020/04/13 08:04:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,6 +502,64 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		prop_object_release(array);
 	}
 }
+
+void
+of_enter_spi_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
+{
+	int node, len;
+	char name[32];
+	uint64_t reg64;
+	uint32_t reg32;
+	uint32_t slave;
+	u_int32_t maxfreq;
+	prop_array_t array = NULL;
+	prop_dictionary_t dev;
+	int mode;
+
+	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			continue;
+		len = OF_getproplen(node, "reg");
+		slave = 0;
+		if (cell_size == 8 && len >= sizeof(reg64)) {
+			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
+			    < sizeof(reg64))
+				continue;
+			slave = be64toh(reg64);
+		} else if (cell_size == 4 && len >= sizeof(reg32)) {
+			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
+			    < sizeof(reg32))
+				continue;
+			slave = be32toh(reg32);
+		} else {
+			continue;
+		}
+		if (of_getprop_uint32(node, "spi-max-frequency", &maxfreq)) {
+			maxfreq = 0;
+		}
+		mode = ((int)of_hasprop(node, "cpol") << 1) | (int)of_hasprop(node, "cpha");
+
+		if (array == NULL)
+			array = prop_array_create();
+
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", name);
+		prop_dictionary_set_uint32(dev, "slave", slave);
+		prop_dictionary_set_uint32(dev, "mode", mode);
+		if (maxfreq > 0)
+			prop_dictionary_set_uint32(dev, "spi-max-frequency", maxfreq);
+		prop_dictionary_set_uint64(dev, "cookie", node);
+		of_to_dataprop(dev, node, "compatible", "compatible");
+		prop_array_add(array, dev);
+		prop_object_release(dev);
+	}
+
+	if (array != NULL) {
+		prop_dictionary_set(props, "spi-child-devices", array);
+		prop_object_release(array);
+	}
+}
+
 
 /*
  * Returns true if the specified property is present.

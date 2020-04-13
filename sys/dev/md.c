@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.80.4.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.80.4.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.80.4.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.80.4.3 2020/04/13 08:04:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -132,7 +132,8 @@ const struct cdevsw md_cdevsw = {
 };
 
 static struct dkdriver mddkdriver = {
-	.d_strategy = mdstrategy
+	.d_strategy = mdstrategy,
+	.d_minphys = minphys
 };
 
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),

@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.7.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* search.c - ldap backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.1.1.7.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -42,7 +42,22 @@ __RCSID("$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $");
 
 static int
 ldap_build_entry( Operation *op, LDAPMessage *e, Entry *ent,
-	 struct berval *bdn );
+	 struct berval *bdn, int remove_unknown_schema );
+
+
+static ObjectClass *
+oc_bvfind_undef_ex( struct berval *ocname, int flag )
+{
+	ObjectClass	*oc	= oc_bvfind( ocname );
+
+	if ( oc || flag ) {
+		/* oc defined or remove-unknown-schema flag set */
+		return oc;
+	}
+
+	return oc_bvfind_undef( ocname );
+}
+
 
 /*
  * replaces (&) with (objectClass=*) and (|) with (!(objectClass=*))
@@ -152,6 +167,8 @@ ldap_back_search(
 	int		do_retry = 1, dont_retry = 0;
 	LDAPControl	**ctrls = NULL;
 	char		**references = NULL;
+	int		remove_unknown_schema =
+				 LDAP_BACK_OMIT_UNKNOWN_SCHEMA (li);
 
 	rs_assert_ready( rs );
 	rs->sr_flags &= ~REP_ENTRY_MASK; /* paranoia, we can set rs = non-entry */
@@ -359,7 +376,8 @@ retry:
 			do_retry = 0;
 
 			e = ldap_first_entry( lc->lc_ld, res );
-			rc = ldap_build_entry( op, e, &ent, &bdn );
+			rc = ldap_build_entry( op, e, &ent, &bdn,
+						remove_unknown_schema);
 			if ( rc == LDAP_SUCCESS ) {
 				ldap_get_entry_controls( lc->lc_ld, res, &rs->sr_ctrls );
 				rs->sr_entry = &ent;
@@ -665,7 +683,8 @@ ldap_build_entry(
 		Operation	*op,
 		LDAPMessage	*e,
 		Entry		*ent,
-		struct berval	*bdn )
+		struct berval	*bdn,
+		int remove_unknown_schema)
 {
 	struct berval	a;
 	BerElement	ber = *ldap_get_message_ber( e );
@@ -719,7 +738,7 @@ ldap_build_entry(
 				!= LDAP_SUCCESS )
 		{
 			if ( slap_bv2undef_ad( &a, &attr->a_desc, &text,
-				SLAP_AD_PROXIED ) != LDAP_SUCCESS )
+				 (remove_unknown_schema ? SLAP_AD_NOINSERT : SLAP_AD_PROXIED )) != LDAP_SUCCESS )
 			{
 				Debug( LDAP_DEBUG_ANY, 
 					"%s ldap_build_entry: "
@@ -797,7 +816,8 @@ ldap_build_entry(
 
 				/* check if, by chance, it's an undefined objectClass */
 				if ( attr->a_desc == slap_schema.si_ad_objectClass &&
-						( oc = oc_bvfind_undef( &attr->a_vals[i] ) ) != NULL )
+						( oc = oc_bvfind_undef_ex( &attr->a_vals[i],
+								remove_unknown_schema ) ) != NULL )
 				{
 					ber_dupbv( &pval, &oc->soc_cname );
 					rc = LDAP_SUCCESS;
@@ -923,6 +943,8 @@ ldap_back_entry_get(
 	LDAPControl	**ctrls = NULL;
 	Operation op2 = *op;
 
+	int		remove_unknown_schema =
+				LDAP_BACK_OMIT_UNKNOWN_SCHEMA (li);
 	*ent = NULL;
 
 	/* Tell getconn this is a privileged op */
@@ -989,6 +1011,7 @@ retry:
 	e = ldap_first_entry( lc->lc_ld, result );
 	if ( e == NULL ) {
 		/* the entry exists, but it doesn't match the filter? */
+		rc = LDAP_NO_RESULTS_RETURNED;
 		goto cleanup;
 	}
 
@@ -998,7 +1021,7 @@ retry:
 		goto cleanup;
 	}
 
-	rc = ldap_build_entry( op, e, *ent, &bdn );
+	rc = ldap_build_entry( op, e, *ent, &bdn, remove_unknown_schema );
 
 	if ( rc != LDAP_SUCCESS ) {
 		entry_free( *ent );

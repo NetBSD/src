@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.12.12.1 2019/06/10 22:06:59 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.12.12.2 2020/04/13 08:04:14 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1740,6 +1740,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = (intptr_t) SCARG(p, times); /* struct linux_timespec * */
 		iarg[3] = SCARG(p, flag); /* int */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_fallocate */
+	case 285: {
+		const struct linux_sys_fallocate_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, mode); /* int */
+		iarg[2] = SCARG(p, offset); /* off_t */
+		iarg[3] = SCARG(p, len); /* off_t */
 		*n_args = 4;
 		break;
 	}
@@ -4687,6 +4697,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_fallocate */
+	case 285:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "off_t";
+			break;
+		case 3:
+			p = "off_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_accept4 */
 	case 288:
 		switch(ndx) {
@@ -5784,6 +5813,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_utimensat */
 	case 280:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_fallocate */
+	case 285:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

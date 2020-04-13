@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.12.2.2 2019/06/10 22:09:02 christos Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.12.2.3 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
-#include "opt_sctp.h"
 #endif
 
 #include <sys/systm.h>
@@ -42,10 +41,6 @@
 #ifdef NTP
 #include <sys/timespec.h>
 #include <sys/timex.h>
-#endif
-
-#ifdef SCTP
-#include <netinet/sctp_asconf.h>
 #endif
 
 /*
@@ -68,15 +63,15 @@ void (*vec_ntp_adjtime1)(struct timex *) = NULL;
  * Routine vectors for sctp (called from within rtsock)
  *
  * MP-hooks not needed since the SCTP code is not modular
+ *
+ * For now, just point these at NULL.  Network initialization code
+ * in if.c will overwrite these with correct values.  This is needed
+ * to enable building of rumpkern library without creating circular
+ * dependency with rumpnet library
  */
 
-#ifdef SCTP
-void (*vec_sctp_add_ip_address)(struct ifaddr *) = sctp_add_ip_address;
-void (*vec_sctp_delete_ip_address)(struct ifaddr *) = sctp_delete_ip_address;
-#else
 void (*vec_sctp_add_ip_address)(struct ifaddr *) = NULL;
 void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
-#endif 
 
 
 /*
@@ -122,13 +117,6 @@ struct raidframe_netbsd32_ioctl_hook_t raidframe_netbsd32_ioctl_hook;
 
 struct puffs_out_50_hook_t puffs_out_50_hook;
 struct puffs_in_50_hook_t puffs_in_50_hook;
-
-/* XXX
-int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
-    ssize_t *) = (void *)enosys;
-void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
-    (void *)voidop;
-   XXX */
 
 /*
  * wsevents compatability
@@ -278,3 +266,21 @@ struct ifmedia_80_post_hook_t ifmedia_80_post_hook;
  * this is true for i386 and sgimips.)
  */
 struct netbsd32_machine32_hook_t netbsd32_machine32_hook;
+struct netbsd32_reg_validate_hook_t netbsd32_reg_validate_hook;
+
+/*
+ * Hook for sendsig_sigcontext_16
+ */
+struct sendsig_sigcontext_16_hook_t sendsig_sigcontext_16_hook;
+
+/*
+ * Hooks for coredumps
+ */
+struct coredump_hook_t coredump_hook;
+struct coredump_offset_hook_t coredump_offset_hook;
+struct coredump_write_hook_t coredump_write_hook;
+struct coredump_netbsd_hook_t coredump_netbsd_hook;
+struct uvm_coredump_walkmap_hook_t uvm_coredump_walkmap_hook;
+struct uvm_coredump_count_segs_hook_t uvm_coredump_count_segs_hook;
+
+

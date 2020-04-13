@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84.12.2 2020/04/08 14:07:18 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.84.12.3 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.84.12.2 2020/04/08 14:07:18 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.84.12.3 2020/04/13 08:03:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,6 @@ struct	ufs1_dinode ufs1_zino;
 struct	ufs2_dinode ufs2_zino;
 
 int	progress = 0;
-volatile sig_atomic_t	returntosingle = 0;
 
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, const char *, int);

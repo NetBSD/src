@@ -1,10 +1,10 @@
-/*	$NetBSD: trans.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: trans.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* trans.c - bdb backend transaction routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trans.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: trans.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $");
 
 #include "portable.h"
 

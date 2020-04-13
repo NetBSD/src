@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.280.2.2 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: vnode.h,v 1.280.2.3 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -302,6 +302,8 @@ struct vattr {
  * Token indicating no attribute value yet assigned.
  */
 #define	VNOVAL	(-1)
+#define VNOVALSIZE ((u_quad_t)-1)
+#define VNOVALFLAGS ((u_long)-1)
 
 /*
  * Convert between vnode types and inode formats (since POSIX.1
@@ -483,6 +485,7 @@ struct vop_generic_args {
 struct file;
 struct filedesc;
 struct nameidata;
+struct pathbuf;
 struct proc;
 struct stat;
 struct uio;
@@ -543,6 +546,9 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 int	vn_fifo_bypass(void *);
+int	vn_bdev_open(dev_t, struct vnode **, struct lwp *);
+int	vn_bdev_openpath(struct pathbuf *pb, struct vnode **, struct lwp *);
+
 
 #ifdef DIAGNOSTIC
 static __inline bool

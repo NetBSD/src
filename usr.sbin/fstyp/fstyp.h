@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.1.4.1 2020/04/13 08:05:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -39,17 +39,40 @@
 #ifndef FSTYP_H
 #define	FSTYP_H
 
+#include <stdbool.h>
+
+/* Undefine this on FreeBSD and NetBSD. */
+//#define HAS_DEVPATH
+
+/* The spec doesn't seem to permit UTF-16 surrogates; definitely LE. */
+#define	EXFAT_ENC	"UCS-2LE"
+/*
+ * NTFS itself is agnostic to encoding; it just stores 255 u16 wchars.  In
+ * practice, UTF-16 seems expected for NTFS.  (Maybe also for exFAT.)
+ */
+#define	NTFS_ENC	"UTF-16LE"
+
+extern bool	show_label;	/* -l flag */
+
 void	*read_buf(FILE *, off_t, size_t);
 char	*checked_strdup(const char *);
 void	rtrim(char *, size_t);
 
+int	fstyp_apfs(FILE *, char *, size_t);
 int	fstyp_cd9660(FILE *, char *, size_t);
+int	fstyp_exfat(FILE *, char *, size_t);
 int	fstyp_ext2fs(FILE *, char *, size_t);
+int	fstyp_hfsp(FILE *, char *, size_t);
 int	fstyp_msdosfs(FILE *, char *, size_t);
 int	fstyp_ntfs(FILE *, char *, size_t);
 int	fstyp_ufs(FILE *, char *, size_t);
+int	fstyp_hammer(FILE *, char *, size_t);
+int	fstyp_hammer2(FILE *, char *, size_t);
 #ifdef HAVE_ZFS
 int	fstyp_zfs(FILE *, char *, size_t);
 #endif
+
+int	fsvtyp_hammer(const char *, char *, size_t);
+int	fsvtyp_hammer_partial(const char *, char *, size_t);
 
 #endif /* !FSTYP_H */

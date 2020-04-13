@@ -38,7 +38,7 @@
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.4.12.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.4.12.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,6 +90,7 @@ typedef struct {
 
 struct lpm {
 	uint32_t	bitmask[LPM_MAX_WORDS];
+	int		flags;
 	void *		defvals[2];
 	lpm_hmap_t	prefix[LPM_MAX_PREFIX + 1];
 };
@@ -97,9 +98,11 @@ struct lpm {
 static const uint32_t zero_address[LPM_MAX_WORDS];
 
 lpm_t *
-lpm_create(void)
+lpm_create(int flags)
 {
-	return kmem_zalloc(sizeof(lpm_t), KM_SLEEP);
+	lpm_t *lpm = kmem_zalloc(sizeof(*lpm), KM_SLEEP);
+	lpm->flags = flags;
+	return lpm;
 }
 
 void
@@ -164,7 +167,7 @@ fnv1a_hash(const void *buf, size_t len)
 }
 
 static bool
-hashmap_rehash(lpm_hmap_t *hmap, unsigned size)
+hashmap_rehash(lpm_hmap_t *hmap, unsigned size, int flags)
 {
 	lpm_ent_t **bucket;
 	unsigned hashsize;
@@ -172,7 +175,9 @@ hashmap_rehash(lpm_hmap_t *hmap, unsigned size)
 	for (hashsize = 1; hashsize < size; hashsize <<= 1) {
 		continue;
 	}
-	bucket = kmem_zalloc(hashsize * sizeof(lpm_ent_t *), KM_SLEEP);
+	bucket = kmem_zalloc(hashsize * sizeof(lpm_ent_t *), flags);
+	if (bucket == NULL)
+		return false;
 	for (unsigned n = 0; n < hmap->hashsize; n++) {
 		lpm_ent_t *list = hmap->bucket[n];
 
@@ -194,14 +199,14 @@ hashmap_rehash(lpm_hmap_t *hmap, unsigned size)
 }
 
 static lpm_ent_t *
-hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len)
+hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len, int flags)
 {
 	const unsigned target = hmap->nitems + LPM_HASH_STEP;
 	const size_t entlen = offsetof(lpm_ent_t, key[len]);
 	uint32_t hash, i;
 	lpm_ent_t *entry;
 
-	if (hmap->hashsize < target && !hashmap_rehash(hmap, target)) {
+	if (hmap->hashsize < target && !hashmap_rehash(hmap, target, flags)) {
 		return NULL;
 	}
 
@@ -215,7 +220,7 @@ hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len)
 		entry = entry->next;
 	}
 
-	if ((entry = kmem_alloc(entlen, KM_SLEEP)) != NULL) {
+	if ((entry = kmem_alloc(entlen, flags)) != NULL) {
 		memcpy(entry->key, key, len);
 		entry->next = hmap->bucket[i];
 		entry->len = len;
@@ -326,7 +331,7 @@ lpm_insert(lpm_t *lpm, const void *addr,
 		return 0;
 	}
 	compute_prefix(nwords, addr, preflen, prefix);
-	entry = hashmap_insert(&lpm->prefix[preflen], prefix, len);
+	entry = hashmap_insert(&lpm->prefix[preflen], prefix, len, lpm->flags);
 	if (entry) {
 		const unsigned n = --preflen >> 5;
 		lpm->bitmask[n] |= 0x80000000U >> (preflen & 31);

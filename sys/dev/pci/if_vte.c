@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.20.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.20.2.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.20.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.20.2.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	sc->vte_dev = self;
 
 	callout_init(&sc->vte_tick_ch, 0);
+	callout_setfunc(&sc->vte_tick_ch, vte_tick, sc);
 
 	/* Map the device. */
 	h_valid = 0;
@@ -325,10 +326,10 @@ vte_detach(device_t dev, int flags __unused)
 	pmf_device_deregister(dev);
 
 	mii_detach(&sc->vte_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->vte_mii.mii_media, IFM_INST_ANY);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->vte_mii.mii_media);
 
 	vte_dma_free(sc);
 
@@ -829,7 +830,7 @@ vte_ifwatchdog(struct ifnet *ifp)
 		return;
 
 	aprint_error_dev(sc->vte_dev, "watchdog timeout -- resetting\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	vte_init(ifp);
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vte_ifstart(ifp);
@@ -847,7 +848,7 @@ vte_mediachange(struct ifnet *ifp)
 		aprint_error_dev(sc->vte_dev, "could not set media\n");
 		return error;
 	}
-											return 0;
+	return 0;
 
 }
 
@@ -918,37 +919,46 @@ vte_stats_update(struct vte_softc *sc)
 
 	stat = &sc->vte_stats;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	CSR_READ_2(sc, VTE_MECISR);
+
 	/* RX stats. */
 	stat->rx_frames += CSR_READ_2(sc, VTE_CNT_RX_DONE);
+
 	value = CSR_READ_2(sc, VTE_CNT_MECNT0);
 	stat->rx_bcast_frames += (value >> 8);
 	stat->rx_mcast_frames += (value & 0xFF);
+
 	value = CSR_READ_2(sc, VTE_CNT_MECNT1);
-	stat->rx_runts += (value >> 8);
-	stat->rx_crcerrs += (value & 0xFF);
+	if_statadd_ref(nsr, if_ierrors,
+	    (value >> 8) +			/* rx_runts */
+	    (value & 0xFF));			/* rx_crcerrs */
+
 	value = CSR_READ_2(sc, VTE_CNT_MECNT2);
-	stat->rx_long_frames += (value & 0xFF);
+	if_statadd_ref(nsr, if_ierrors,
+	    (value & 0xFF));			/* rx_long_frames */
+
 	value = CSR_READ_2(sc, VTE_CNT_MECNT3);
-	stat->rx_fifo_full += (value >> 8);
+	if_statadd_ref(nsr, if_ierrors,
+	    (value >> 8));			/* rx_fifo_full */
 	stat->rx_desc_unavail += (value & 0xFF);
 
 	/* TX stats. */
-	stat->tx_frames += CSR_READ_2(sc, VTE_CNT_TX_DONE);
-	value = CSR_READ_2(sc, VTE_CNT_MECNT4);
-	stat->tx_underruns += (value >> 8);
-	stat->tx_late_colls += (value & 0xFF);
+	if_statadd_ref(nsr, if_opackets,
+	    CSR_READ_2(sc, VTE_CNT_TX_DONE));	/* tx_frames */
 
+	value = CSR_READ_2(sc, VTE_CNT_MECNT4);
+	if_statadd_ref(nsr, if_oerrors,
+	    (value >> 8) +			/* tx_underruns */
+	    (value & 0xFF));			/* tx_late_colls */
+
+	/* Pause stats. */
 	value = CSR_READ_2(sc, VTE_CNT_PAUSE);
 	stat->tx_pause_frames += (value >> 8);
 	stat->rx_pause_frames += (value & 0xFF);
 
-	/* Update ifp counters. */
-	ifp->if_opackets = stat->tx_frames;
-	ifp->if_oerrors = stat->tx_late_colls + stat->tx_underruns;
-	ifp->if_ipackets = stat->rx_frames;
-	ifp->if_ierrors = stat->rx_crcerrs + stat->rx_runts +
-	    stat->rx_long_frames + stat->rx_fifo_full;
+	IF_STAT_PUTREF(ifp);
 }
 
 static int
@@ -1020,7 +1030,7 @@ vte_txeof(struct vte_softc *sc)
 		if ((status & VTE_DTST_TX_OWN) != 0)
 			break;
 		if ((status & VTE_DTST_TX_OK) != 0)
-			ifp->if_collisions += (status & 0xf);
+			if_statadd(ifp, if_collisions, (status & 0xf));
 		sc->vte_cdata.vte_tx_cnt--;
 		/* Reclaim transmitted mbufs. */
 		bus_dmamap_sync(sc->vte_dmatag, txd->tx_dmamap, 0,
@@ -1126,7 +1136,7 @@ vte_rxeof(struct vte_softc *sc)
 		}
 		if (vte_newbuf(sc, rxd) != 0) {
 			DPRINTF(("vte_rxeof newbuf failed\n"));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			rxd->rx_desc->drlen =
 			    htole16(MCLBYTES - sizeof(uint32_t));
 			rxd->rx_desc->drst = htole16(VTE_DRST_RX_OWN);
@@ -1194,7 +1204,7 @@ vte_tick(void *arg)
 	vte_stats_update(sc);
 	vte_txeof(sc);
 	vte_ifwatchdog(&sc->vte_if);
-	callout_reset(&sc->vte_tick_ch, hz, vte_tick, sc);
+	callout_schedule(&sc->vte_tick_ch, hz);
 	splx(s);
 }
 
@@ -1358,7 +1368,7 @@ vte_init(struct ifnet *ifp)
 		return error;
 	}
 
-	callout_reset(&sc->vte_tick_ch, hz, vte_tick, sc);
+	callout_schedule(&sc->vte_tick_ch, hz);
 
 	DPRINTF(("ipend 0x%x 0x%x\n", CSR_READ_2(sc, VTE_MIER),
 		CSR_READ_2(sc, VTE_MISR)));

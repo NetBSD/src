@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.6 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.6.4.1 2020/04/13 08:03:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -100,8 +100,6 @@ wdc_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct generic_attach_args * const ga = aux;
 	bus_size_t size = ga->ga_size;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	struct device dev;
 	int rv = 0;
@@ -115,18 +113,13 @@ wdc_obio_match(device_t parent, cfdata_t cf, void *aux)
 	 * We need to see if a CF is attached in True-IDE mode
 	 */
 	memset(&dev, 0, sizeof(dev));
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
 	memset(&wdr, 0, sizeof(wdr));
 
 	dev.dv_xname[0] = '?';
-	wdc.sc_atac.atac_dev = &dev;
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
 
 	if (wdc_obio_initregmap(&wdr, ga->ga_bst, ga->ga_addr, size)) {
-		wdc_init_shadow_regs(&ch);
-		rv = wdcprobe(&ch);
+		wdc_init_shadow_regs(&wdr);
+		rv = wdcprobe(&wdr);
 		bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, size);
 	}
 

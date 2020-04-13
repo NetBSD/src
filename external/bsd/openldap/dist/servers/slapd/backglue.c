@@ -1,10 +1,10 @@
-/*	$NetBSD: backglue.c,v 1.1.1.7 2018/02/06 01:53:15 christos Exp $	*/
+/*	$NetBSD: backglue.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* backglue.c - backend glue */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2017 The OpenLDAP Foundation.
+ * Copyright 2001-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backglue.c,v 1.1.1.7 2018/02/06 01:53:15 christos Exp $");
+__RCSID("$NetBSD: backglue.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 
@@ -1317,7 +1317,7 @@ glue_db_init(
 
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
 
-	if ( ga_list ) {
+	if ( ga_list && ( slapMode & SLAP_SERVER_MODE ) ) {
 		be->bd_info = (BackendInfo *)oi;
 		glue_sub_attach( 1 );
 	}

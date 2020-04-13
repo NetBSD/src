@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.99.2.2 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.99.2.3 2020/04/13 08:05:16 martin Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.99.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.99.2.3 2020/04/13 08:05:16 martin Exp $");
 
 /*
  * TODO:
@@ -1653,9 +1653,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			return (EINVAL);
 
 		if (ifp->if_carp == NULL) {
-			ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT);
-			if (ncif == NULL)
-				return (ENOBUFS);
+			ncif = malloc(sizeof(*cif), M_IFADDR, M_WAITOK);
 			if ((error = ifpromisc(ifp, 1))) {
 				free(ncif, M_IFADDR);
 				return (error);

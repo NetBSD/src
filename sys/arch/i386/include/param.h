@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.83.4.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.83.4.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,7 +58,8 @@
 #define	MACHINE_ARCH	"i386"
 #define	MID_MACHINE	MID_I386
 
-#define ALIGNED_POINTER(p,t)	1
+#define ALIGNED_POINTER(p,t)		1
+#define ALIGNED_POINTER_LOAD(q,p,t)	memcpy((q), (p), sizeof(t))
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.153.2.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.153.2.3 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153.2.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.153.2.3 2020/04/13 08:04:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -827,16 +827,18 @@ db_read_command(void)
 static void
 db_command(const struct db_command **last_cmdp)
 {
-	const struct db_command *command;
 	static db_expr_t last_count = 0;
-	db_expr_t	addr, count;
-	char		modif[TOK_STRING_SIZE];
-	
-	int			t;
-	bool		have_addr = false;
+
+	int t;
+	const struct db_command *command;
+	db_expr_t addr, count;
+	bool have_addr;
+	char modif[TOK_STRING_SIZE];
 
 	command = NULL;
-	
+	have_addr = false;
+	count = -1;
+
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
 		/*
@@ -857,7 +859,6 @@ db_command(const struct db_command **last_cmdp)
 			}
 		} else
 			count = last_count;
-		have_addr = false;
 		modif[0] = '\0';
 		db_skip_to_eol();
 
@@ -904,7 +905,6 @@ db_command(const struct db_command **last_cmdp)
 				have_addr = true;
 			} else {
 				addr = (db_expr_t) db_dot;
-				have_addr = false;
 			}
 
 			t = db_read_token();
@@ -916,7 +916,6 @@ db_command(const struct db_command **last_cmdp)
 				}
 			} else {
 				db_unread_token(t);
-				count = -1;
 			}
 			if ((command->flag & CS_MORE) == 0) {
 				db_skip_to_eol();
@@ -1289,6 +1288,8 @@ db_kernhist_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
+	if (!have_addr)
+		addr = 0;
 	kernhist_print((void *)(uintptr_t)addr, count, modif, db_printf);
 }
 #endif

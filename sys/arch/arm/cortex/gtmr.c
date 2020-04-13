@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.31.2.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.31.2.2 2020/04/13 08:03:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.31.2.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.31.2.2 2020/04/13 08:03:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,12 @@ static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
 
 static u_int gtmr_get_timecount(struct timecounter *);
+
+static uint64_t gtmr_read_cntct(struct gtmr_softc *);
+static uint32_t gtmr_read_ctl(struct gtmr_softc *);
+static void gtmr_write_ctl(struct gtmr_softc *, uint32_t);
+static void gtmr_write_tval(struct gtmr_softc *, uint32_t);
+static void gtmr_write_cval(struct gtmr_softc *, uint64_t);
 
 static struct gtmr_softc gtmr_sc;
 
@@ -99,6 +105,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 	struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
+	prop_dictionary_t pdict = device_properties(device_parent(self));
 	char freqbuf[sizeof("X.XXX SHz")];
 	bool flag;
 
@@ -108,12 +115,16 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq))
 		sc->sc_freq = gtmr_cntfrq_read();
 
+	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical))
+	    prop_dictionary_get_bool(pdict, "physical", &sc->sc_physical);
+
 	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
 	aprint_naive("\n");
-	aprint_normal(": ARM Generic Timer (%s)\n", freqbuf);
+	aprint_normal(": Generic Timer (%s, %s)\n", freqbuf,
+	    sc->sc_physical ? "physical" : "virtual");
 
 	if (prop_dictionary_get_bool(dict, "sun50i-a64-unstable-timer", &flag) && flag) {
 		sc->sc_flags |= GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER;
@@ -155,12 +166,14 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	tc_init(&gtmr_timecounter);
 
 	/* Disable the timer until we are ready */
-	gtmr_cntv_ctl_write(0);
+	gtmr_write_ctl(sc, 0);
 }
 
 static uint64_t
-gtmr_read_cntvct(struct gtmr_softc *sc)
+gtmr_read_cntct(struct gtmr_softc *sc)
 {
+	arm_isb();
+
 	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
 		/*
 		 * The Allwinner A64 SoC has an unstable architectural timer.
@@ -170,19 +183,63 @@ gtmr_read_cntvct(struct gtmr_softc *sc)
 		uint64_t val;
 		u_int bits;
 		do {
-			val = gtmr_cntvct_read();
+			val = sc->sc_physical ? gtmr_cntpct_read() : gtmr_cntvct_read();
 			bits = val & __BITS(9,0);
 		} while (bits == 0 || bits == __BITS(9,0));
 		return val;
 	}
 
-	return gtmr_cntvct_read();
+	return sc->sc_physical ? gtmr_cntpct_read() : gtmr_cntvct_read();
 }
+
+static uint32_t
+gtmr_read_ctl(struct gtmr_softc *sc)
+{
+	if (sc->sc_physical)
+		return gtmr_cntp_ctl_read();
+	else
+		return gtmr_cntv_ctl_read();
+}
+
+static void
+gtmr_write_ctl(struct gtmr_softc *sc, uint32_t val)
+{
+	if (sc->sc_physical)
+		gtmr_cntp_ctl_write(val);
+	else
+		gtmr_cntv_ctl_write(val);
+
+	arm_isb();
+}
+
+static void
+gtmr_write_tval(struct gtmr_softc *sc, uint32_t val)
+{
+	if (sc->sc_physical)
+		gtmr_cntp_tval_write(val);
+	else
+		gtmr_cntv_tval_write(val);
+
+	arm_isb();
+}
+
+static void
+gtmr_write_cval(struct gtmr_softc *sc, uint64_t val)
+{
+	if (sc->sc_physical)
+		gtmr_cntp_cval_write(val);
+	else
+		gtmr_cntv_cval_write(val);
+
+	arm_isb();
+}
+
 
 void
 gtmr_init_cpu_clock(struct cpu_info *ci)
 {
 	struct gtmr_softc * const sc = &gtmr_sc;
+	uint32_t val;
 
 	KASSERT(ci == curcpu());
 
@@ -192,22 +249,30 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * Allow the virtual and physical counters to be accessed from
 	 * usermode. (PL0)
 	 */
-	gtmr_cntk_ctl_write(gtmr_cntk_ctl_read() |
-	    CNTKCTL_PL0VCTEN | CNTKCTL_PL0PCTEN);
+	val = gtmr_cntk_ctl_read();
+	val &= ~(CNTKCTL_PL0PTEN | CNTKCTL_PL0VTEN | CNTKCTL_EVNTEN);
+	if (sc->sc_physical) {
+		val |= CNTKCTL_PL0PCTEN;
+		val &= ~CNTKCTL_PL0VCTEN;
+	} else {
+		val |= CNTKCTL_PL0VCTEN;
+		val &= ~CNTKCTL_PL0PCTEN;
+	}
+	gtmr_cntk_ctl_write(val);
+	arm_isb();
 
 	/*
 	 * enable timer and stop masking the timer.
 	 */
-	gtmr_cntv_ctl_write(CNTCTL_ENABLE);
+	gtmr_write_ctl(sc, CNTCTL_ENABLE);
 
 	/*
 	 * Get now and update the compare timer.
 	 */
-	arm_isb();
-	ci->ci_lastintr = gtmr_read_cntvct(sc);
-	gtmr_cntv_tval_write(sc->sc_autoinc);
+	ci->ci_lastintr = gtmr_read_cntct(sc);
+	gtmr_write_tval(sc, sc->sc_autoinc);
 	splx(s);
-	KASSERT(gtmr_read_cntvct(sc) != 0);
+	KASSERT(gtmr_read_cntct(sc) != 0);
 }
 
 void
@@ -236,12 +301,10 @@ gtmr_delay(unsigned int n)
 	const unsigned int incr_per_us = howmany(freq, 1000000);
 	int64_t ticks = (int64_t)n * incr_per_us;
 
-	arm_isb();
-	uint64_t last = gtmr_read_cntvct(sc);
+	uint64_t last = gtmr_read_cntct(sc);
 
 	while (ticks > 0) {
-		arm_isb();
-		uint64_t curr = gtmr_read_cntvct(sc);
+		uint64_t curr = gtmr_read_cntct(sc);
 		if (curr >= last)
 			ticks -= (curr - last);
 		else
@@ -261,20 +324,22 @@ gtmr_intr(void *arg)
 	struct cpu_info * const ci = curcpu();
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
+	uint32_t ctl;
 
-	arm_isb();
-
-	const uint32_t ctl = gtmr_cntv_ctl_read();
+	ctl = gtmr_read_ctl(sc);
 	if ((ctl & CNTCTL_ISTATUS) == 0)
 		return 0;
 
-	const uint64_t now = gtmr_read_cntvct(sc);
+	ctl |= CNTCTL_IMASK;
+	gtmr_write_ctl(sc, ctl);
+
+	const uint64_t now = gtmr_read_cntct(sc);
 	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
 	struct gtmr_percpu *pc = NULL;
 	if (!ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
-		const uint64_t then = gtmr_cntv_cval_read();
+		const uint64_t then = sc->sc_physical ? gtmr_cntp_cval_read() : gtmr_cntv_cval_read();
 		pc = percpu_getref(sc->sc_percpu);
 		KASSERTMSG(then <= now, "%"PRId64, now - then);
 		KASSERTMSG(then + pc->pc_delta >= ci->ci_lastintr + sc->sc_autoinc,
@@ -299,11 +364,17 @@ gtmr_intr(void *arg)
 		delta = 0;
 	}
 
+	arm_isb();
 	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
-		gtmr_cntv_cval_write(now + sc->sc_autoinc - delta);
+		gtmr_write_cval(sc, now + sc->sc_autoinc - delta);
 	} else {
-		gtmr_cntv_tval_write(sc->sc_autoinc - delta);
+		gtmr_write_tval(sc, sc->sc_autoinc - delta);
 	}
+
+	ctl = gtmr_read_ctl(sc);
+	ctl &= ~CNTCTL_IMASK;
+	ctl |= CNTCTL_ENABLE;
+	gtmr_write_ctl(sc, ctl);
 
 	ci->ci_lastintr = now;
 
@@ -331,6 +402,6 @@ static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
 	struct gtmr_softc * const sc = tc->tc_priv;
-	arm_isb();	// we want the time NOW, not some instructions later.
-	return (u_int) gtmr_read_cntvct(sc);
+
+	return (u_int) gtmr_read_cntct(sc);
 }

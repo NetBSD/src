@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.103.4.2 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.103.4.3 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.103.4.2 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.103.4.3 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1122,9 +1122,12 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
 #ifdef DEBUG
+				struct proc *p = curlwp->l_proc;
 				const file_t *ft = kn->kn_obj;
-				uprintf("%s: event type %d not supported for "
-				    "file type %d/%s (error %d)\n", __func__,
+				printf("%s: %s[%d]: event type %d not "
+				    "supported for file type %d/%s "
+				    "(error %d)\n", __func__,
+				    p->p_comm, p->p_pid,
 				    kn->kn_filter, ft ? ft->f_type : -1,
 				    ft ? ft->f_ops->fo_name : "?", error);
 #endif

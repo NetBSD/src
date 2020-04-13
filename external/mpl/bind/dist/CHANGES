@@ -1,3 +1,300 @@
+        --- 9.14.8 released ---
+
+5315.	[bug]		Apply the inital RRSIG expiration spread fixed
+			to all dynamically created records in the zone
+			including NSEC3. Also fix the signature clusters
+			when the server has been offline for prolonged
+			period of times. [GL #1256]
+
+5314.	[func]		Added a new statistics variable "tcp-highwater"
+			that reports the maximum number of simultaneous TCP
+			clients BIND has handled while running. [GL #1206]
+
+5313.	[bug]		The default GeoIP2 database location did not match
+			the ARM.  'named -V' now reports the default
+			location. [GL #1301]
+
+5310.	[bug]		TCP failures were affecting EDNS statistics. [GL #1059]
+
+5308.	[bug]		Don't log DNS_R_UNCHANGED from sync_secure_journal()
+			at ERROR level in receive_secure_serial(). [GL #1288]
+
+5307.	[bug]		Fix hang when named-compilezone output is sent to pipe.
+			Thanks to Tony Finch. [GL !2481]
+
+5306.	[security]	Set a limit on the number of concurrently served
+			pipelined TCP queries. (CVE-2019-6477) [GL #1264]
+
+5305.	[bug]		NSEC Aggressive Cache ("synth-from-dnssec") has been
+			disabled by default because it was found to have
+			a significant performance impact on the recursive
+			service. [GL #1265]
+
+5304.	[bug]		"dnskey-sig-validity 0;" was not being accepted.
+			[GL #876]
+
+5302.	[bug]		Fix checking that "dnstap-output" is defined when
+			"dnstap" is specified in a view. [GL #1281]
+
+5301.	[bug]		Detect partial prefixes / incomplete IPv4 address in
+			acls. [GL #1143]
+
+	--- 9.14.7 released ---
+
+5299.	[security]	A flaw in DNSSEC verification when transferring
+			mirror zones could allow data to be incorrectly
+			marked valid. (CVE-2019-6475) [GL #1252]
+
+5298.	[security]	Named could assert if a forwarder returned a
+			referral, rather than resolving the query, when QNAME
+			minimization was enabled. (CVE-2019-6476) [GL #1051]
+
+5297.	[bug]		Check whether a previous QNAME minimization fetch
+			is still running before starting a new one; return
+			SERVFAIL and log an error if so. [GL #1191]
+
+5295.	[cleanup]	Split dns_name_copy() calls into dns_name_copy() and
+			dns_name_copynf() for those calls that can potentially
+			fail and those that should not fail respectively.
+			[GL !2265]
+
+5294.	[func]		Fallback to ACE name on output in locale, which does not
+			support converting it to unicode.  [GL #846]
+
+5293.	[bug]		On Windows, named crashed upon any attempt to fetch XML
+			statistics from it. [GL #1245]
+
+5292.	[bug]		Queue 'rndc nsec3param' requests while signing inline
+			zone changes. [GL #1205]
+
+	--- 9.14.6 released ---
+
+5289.	[bug]		Address NULL pointer dereference in rpz.c:rpz_detach.
+			[GL #1210]
+
+5286.	[contrib]	Address potential NULL pointer dereferences in
+			dlz_mysqldyn_mod.c. [GL #1207]
+
+5285.	[port]		win32: implement "-T maxudpXXX". [GL #837]
+
+5283.	[bug]		When a response-policy zone expires, ensure that
+			its policies are removed from the RPZ summary
+			database. [GL #1146]
+
+5282.	[bug]		Fixed a bug in searching for possible wildcard matches
+			for query names in the RPZ summary database. [GL #1146]
+
+5281.	[cleanup]	Don't escape commas when reporting named's command
+			line. [GL #1189]
+
+5280.	[protocol]	Add support for displaying EDNS option LLQ. [GL #1201]
+
+5279.	[bug]		When loading, reject zones containing CDS or CDNSKEY
+			RRsets at the zone apex if they would cause DNSSEC
+			validation failures if published in the parent zone
+			as the DS RRset.  [GL #1187]
+
+	--- 9.14.5 released ---
+
+5277.	[bug]		Cache DB statistics could underflow when serve-stale
+			was in use, because of a bug in counter maintenance
+			when RRsets become stale.
+
+			Functions for dumping statistics have been updated
+			to dump active, stale, and ancient statistic
+			counters.  Ancient RRset counters are prefixed
+			with '~'; stale RRset counters are still prefixed
+			with '#'. [GL #602]
+
+5275.	[bug]		Mark DS records included in referral messages
+			with trust level "pending" so that they can be
+			validated and cached immediately, with no need to
+			re-query. [GL #964]
+
+5274.	[bug]		Address potential use after free race when shutting
+			down rpz. [GL #1175]
+
+5273.	[bug]		Check that bits [64..71] of a dns64 prefix are zero.
+			[GL #1159]
+
+5269.	[port]		cygwin: can return ETIMEDOUT on connect() with a
+			non-blocking socket. [GL #1133]
+
+5268.	[bug]		named could crash during configuration if
+			configured to use "geoip continent" ACLs with
+			legacy GeoIP. [GL #1163]
+
+5266.	[bug]		named-checkconf failed to report dnstap-output
+			missing from named.conf when dnstap was specified.
+			[GL #1136]
+
+5265.	[bug]		DNS64 and RPZ nodata (CNAME *.) rules interacted badly
+			[GL #1106]
+
+5264.	[func]		New DNS Cookie algorithm - siphash24 - has been added
+			to BIND 9. [GL #605]
+
+5236.	[func]		Add SipHash 2-4 implementation in lib/isc/siphash.c
+			and switch isc_hash_function() to use SipHash 2-4.
+			[GL #605]
+
+	--- 9.14.4 released ---
+
+5260.	[bug]		dnstap-read was producing malformed output for large
+			packets. [GL #1093]
+
+5258.	[func]		Added support for the GeoIP2 API from MaxMind,
+			when BIND is compiled using "configure --with-geoip2".
+			The legacy GeoIP API can be enabled by using
+			"configure --with-geoip" instead. These options
+			cannot be used together.
+
+			Certain geoip ACL settings that were available with
+			legacy GeoIP are not available when using GeoIP2.
+			See the ARM for details. [GL #182]
+
+5257.	[bug]		Some statistics data was not being displayed.
+			Add shading to the zone tables. [GL #1030]
+
+5256.	[bug]		Ensure that glue records are included in root
+			priming responses if "minimal-responses" is not
+			set to "yes". [GL #1092]
+
+5255.	[bug]		Errors encountered while reloading inline-signing
+			zones could be ignored, causing the zone content to
+			be left in an incompletely updated state rather than
+			reverted. [GL #1109]
+
+5254.	[func]		Collect metrics to report to the statistics-channel
+			DNSSEC signing operations (dnssec-sign) and refresh
+			operations (dnssec-refresh) per zone and per keytag.
+			[GL #513]
+
+5253.	[port]		Support platforms that don't define ULLONG_MAX.
+			[GL #1098]
+
+5251.	[bug]		Statistics were broken in x86 Windows builds.
+			[GL #1081]
+
+5249.	[bug]		Fix a possible underflow in recursion clients
+			statistics when hitting recursive clients
+			soft quota. [GL #1067]
+
+	--- 9.14.3 released ---
+
+5244.	[security]	Fixed a race condition in dns_dispatch_getnext()
+			that could cause an assertion failure if a
+			significant number of incoming packets were
+			rejected. (CVE-2019-6471) [GL #942]
+
+5243.	[bug]		Fix a possible race between dispatcher and socket
+			code in a high-load cold-cache resolver scenario.
+			[GL #943]
+
+5242.	[bug]		In relaxed qname minimization mode, fall back to
+			normal resolution when encountering a lame
+			delegation, and use _.domain/A queries rather
+			than domain/NS. [GL #1055]
+
+5241.	[bug]		Fix Ed448 private and public key ASN.1 prefix blobs.
+			[GL #225]
+
+5240.	[bug]		Remove key id calculation for RSAMD5. [GL #996]
+
+5238.	[bug]		Fix a possible deadlock in TCP code. [GL #1046]
+
+5237.	[bug]		Recurse to find the root server list with 'dig +trace'.
+			[GL #1028]
+
+5234.	[port]		arm: just use the compiler's default support for
+			yield. [GL #981]
+
+	--- 9.14.2 released ---
+
+5233.	[bug]		Negative trust anchors did not work with "forward only;"
+			to validating resolvers. [GL #997]
+
+5231.	[protocol]	Add support for displaying CLIENT-TAG and SERVER-TAG.
+			[GL #960]
+
+5229.	[protocol]	Enforce known SSHFP fingerprint lengths. [GL #852]
+
+5228.	[cleanup]	If trusted-keys and managed-keys are configured
+			simultaneously for the same name, the key cannot
+			be rolled automatically. This configuration now
+			logs a warning. [GL #868]
+
+5224.	[bug]		Only test provide-ixfr on TCP streams. [GL #991]
+
+5223.	[bug]		Fixed a race in the filter-aaaa plugin accessing
+			the hash table. [GL #1005]
+
+5222.	[bug]		'delv -t ANY' could leak memory. [GL #983]
+
+5221.	[test]		Enable parallel execution of system tests on
+			Windows. [GL !4101]
+
+5220.	[cleanup]	Refactor the isc_stat structure to take advantage
+			of stdatomic. [GL !1493]
+
+5219.	[bug]		Fixed a race in the filter-aaaa plugin that could
+			trigger a crash when returning an instance object
+			to the memory pool. [GL #982]
+
+5218.	[bug]		Conditionally include <dlfcn.h>. [GL #995]
+
+5217.	[bug]		Restore key id calculation for RSAMD5. [GL #996]
+
+5216.	[bug]		Fetches-per-zone counter wasn't updated correctly
+			when doing qname minimization. [GL #992]
+
+5215.	[bug]		Change #5124 was incomplete; named could still
+			return FORMERR instead of SERVFAIL in some cases.
+			[GL #990]
+
+5214.	[bug]		win32: named now removes its lock file upon shutdown.
+			[GL #979]
+
+5213.	[bug]		win32: Eliminated a race which allowed named.exe running
+			as a service to be killed prematurely during shutdown.
+			[GL #978]
+
+5211.	[bug]		Allow out-of-zone additional data to be included
+			in authoritative responses if recursion is allowed
+			and "minimal-responses" is disabled.  This behavior
+			was inadvertently removed in change #4605. [GL #817]
+
+5210.	[bug]		When dnstap is enabled and recursion is not
+			available, incoming queries are now logged
+			as "auth". Previously, this depended on whether
+			recursion was requested by the client, not on
+			whether recursion was available. [GL #963]
+
+5209.	[bug]		When update-check-ksk is true, add_sigs was not
+			considering offline keys, leaving record sets signed
+			with the incorrect type key. [GL #763]
+
+5208.	[test]		Run valid rdata wire encodings through totext+fromtext
+			and tofmttext+fromtext methods to check these methods.
+			[GL #899]
+
+5207.	[test]		Check delv and dig TTL values. [GL #965]
+
+5206.	[bug]		Delv could print out bad TTLs. [GL #965]
+
+5205.	[bug]		Enforce that a DS hash exists. [GL #899]
+
+5204.	[test]		Check that dns_rdata_fromtext() produces a record that
+			will be accepted by dns_rdata_fromwire(). [GL #852]
+
+5203.	[bug]		Enforce whether key rdata exists or not in KEY,
+			DNSKEY, CDNSKEY and RKEY. [GL #899]
+
+5202.	[bug]		<dns/ecs.h> was missing ISC_LANG_ENDDECLS. [GL #976]
+
+5190.	[bug]		Ignore trust anchors using disabled algorithms.
+			[GL #806]
+
 	--- 9.14.1 released ---
 
 5201.	[bug]		Fix a possible deadlock in RPZ update code. [GL #973]

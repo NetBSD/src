@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.132 2018/06/10 07:52:05 zafer Exp $ */
+/* $NetBSD: user.c,v 1.132.2.1 2020/04/13 08:06:07 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.132 2018/06/10 07:52:05 zafer Exp $");
+__RCSID("$NetBSD: user.c,v 1.132.2.1 2020/04/13 08:06:07 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -300,7 +300,7 @@ removehomedir(struct passwd *pwp)
 	(void)asystem("%s -rf %s > /dev/null 2>&1 || true", _PATH_RM,
 		      pwp->pw_dir);
 	(void)seteuid(0);
-	if (rmdir(pwp->pw_dir) < 0) {
+	if (rmdir(pwp->pw_dir) < 0 && errno != ENOENT) {
 		warn("Unable to remove all files in `%s'", pwp->pw_dir);
 		return 0;
 	}

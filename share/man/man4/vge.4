@@ -1,4 +1,4 @@
-.\" $NetBSD: vge.4,v 1.7 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: vge.4,v 1.7.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -41,7 +41,8 @@
 .Sh SYNOPSIS
 .Cd "vge* at pci? dev ? function ?"
 .Pp
-Configuration of PHYs is also necessary.  See
+Configuration of PHYs is also necessary.
+See
 .Xr mii 4 .
 .Sh DESCRIPTION
 The
@@ -180,6 +181,7 @@ the network connection (cable). Driver resets the device.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ciphy 4 ,
+.Xr ipgphy 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr ukphy 4 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.264.2.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.264.2.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.264.2.2 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.264.2.3 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -112,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.264.2.2 2020/04/08 14:08:52 martin
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_loan.h>
 #include <uvm/uvm_page.h>
+
+#ifdef SCTP
+#include <netinet/sctp_route.h>
+#endif
 
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
 
@@ -438,6 +442,13 @@ soinit(void)
 {
 
 	sysctl_kern_socket_setup();
+
+#ifdef SCTP
+	/* Update the SCTP function hooks if necessary*/
+
+        vec_sctp_add_ip_address = sctp_add_ip_address;
+        vec_sctp_delete_ip_address = sctp_delete_ip_address; 
+#endif
 
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -917,7 +928,8 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 		}
 		if (so->so_error) {
 			error = so->so_error;
-			so->so_error = 0;
+			if ((flags & MSG_PEEK) == 0)
+				so->so_error = 0;
 			goto release;
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -1217,15 +1229,13 @@ restart:
 			panic("receive 1");
 #endif
 		if (so->so_error || so->so_rerror) {
+			u_short *e;
 			if (m != NULL)
 				goto dontblock;
-			if (so->so_error) {
-				error = so->so_error;
-				so->so_error = 0;
-			} else {
-				error = so->so_rerror;
-				so->so_rerror = 0;
-			}
+			e = so->so_error ? &so->so_error : &so->so_rerror;
+			error = *e;
+			if ((flags & MSG_PEEK) == 0)
+				*e = 0;
 			goto release;
 		}
 		if (so->so_state & SS_CANTRCVMORE) {
@@ -2090,7 +2100,9 @@ sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
 	}
 
 	sopt->sopt_retsize = MIN(sopt->sopt_size, len);
-	memcpy(sopt->sopt_data, buf, sopt->sopt_retsize);
+	if (sopt->sopt_retsize > 0) {
+		memcpy(sopt->sopt_data, buf, sopt->sopt_retsize);
+	}
 
 	return 0;
 }
@@ -2413,7 +2425,7 @@ sbsavetimestamp(int opt, struct mbuf **mp)
 
 	microtime(&tv);
 
-	MODULE_HOOK_CALL(uipc_socket_50_sbts_hook, (opt, mp), enosys(), error);
+	MODULE_HOOK_CALL(uipc_socket_50_sbts_hook, (opt, &mp), enosys(), error);
 	if (error == 0)
 		return mp;
 

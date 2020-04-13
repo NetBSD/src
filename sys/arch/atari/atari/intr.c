@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: intr.c,v 1.26.20.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26.20.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,13 +113,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	int		s;
 
 	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
-
-	/*
-	 * Initialize vector info
-	 */
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_fun    = ih_fun;
 	ih->ih_arg    = ih_arg;
 	ih->ih_type   = type;

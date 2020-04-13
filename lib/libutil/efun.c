@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $	*/
+/*	$NetBSD: efun.c,v 1.10.16.1 2020/04/13 08:03:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $");
+__RCSID("$NetBSD: efun.c,v 1.10.16.1 2020/04/13 08:03:16 martin Exp $");
 #endif
 
 #include <err.h>
@@ -49,11 +49,17 @@ __RCSID("$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $");
 
 static void (*efunc)(int, const char *, ...) = err;
 
+static void __dead
+eexit(int e, const char *fmt __unused, ...)
+{
+	exit(e);
+}
+
 void (*
 esetfunc(void (*ef)(int, const char *, ...)))(int, const char *, ...)
 {
 	void (*of)(int, const char *, ...) = efunc;
-	efunc = ef == NULL ? (void (*)(int, const char *, ...))exit : ef;
+	efunc = ef == NULL ? eexit : ef;
 	return of;
 }
 

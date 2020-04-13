@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_load.c,v 1.4 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: dtrace_load.c,v 1.4.2.1 2020/04/13 07:56:35 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -88,9 +88,9 @@ dtrace_load(void *dummy)
 	/* Hang our hook for exceptions. */
 	dtrace_invop_init();
 
-#ifdef __FreeBSD__
 	dtrace_taskq = taskq_create("dtrace_taskq", 1, maxclsyspri, 0, 0, 0);
 
+#ifdef __FreeBSD__
 	dtrace_arena = new_unrhdr(1, INT_MAX, &dtrace_unr_mtx);
 
 	/* Register callbacks for linker file load and unload events. */

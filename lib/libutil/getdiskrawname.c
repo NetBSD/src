@@ -1,4 +1,4 @@
-/*	$NetBSD: getdiskrawname.c,v 1.5 2014/09/17 23:54:42 christos Exp $	*/
+/*	$NetBSD: getdiskrawname.c,v 1.5.16.1 2020/04/13 08:03:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdiskrawname.c,v 1.5 2014/09/17 23:54:42 christos Exp $");
+__RCSID("$NetBSD: getdiskrawname.c,v 1.5.16.1 2020/04/13 08:03:16 martin Exp $");
 
 #include <sys/stat.h>
 
@@ -70,10 +70,74 @@ resolve_link(char *buf, size_t bufsiz, const char *name)
 	return buf;
 }
 
+/*
+ * zvol device names look like:
+ * /dev/zvol/dsk/pool_name/.../volume_name
+ * /dev/zvol/rdsk/pool_name/.../volume_name
+ *
+ * ZFS pools can be divided nearly to infinity
+ *
+ * This allows for 16 pool names, which one would hope would be enough
+ */
+#define DISKMAXPARTS 20
+static int
+calc_zvol_name(char *buf, size_t bufsiz, const char *name, const char *raw)
+{
+	char copyname[PATH_MAX];
+	char *names[DISKMAXPARTS];
+	char *last, *p;
+	size_t i = 0;
+
+	strlcpy(copyname, name, sizeof(copyname));
+	for (p = strtok_r(copyname, "/", &last); p;
+	     p = strtok_r(NULL, "/", &last)) {
+		if (i >= DISKMAXPARTS) {
+			errno =  ENOSPC;
+			return -1;
+		}
+		names[i++] = p;
+	}
+
+	if (i < 4) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	snprintf(buf, bufsiz, "/dev/zvol/%sdsk", raw);
+	for (size_t j = 3; j < i; j++) {
+		strlcat(buf, "/", bufsiz);
+		strlcat(buf, names[j], bufsiz);
+	}
+	return 0;
+}
+
+static int
+calc_name(char *buf, size_t bufsiz, const char *name, const char *raw)
+{
+	int skip = 1;
+
+	if (strncmp("/dev/zvol/", name, 10) == 0)
+		return calc_zvol_name(buf, bufsiz, name, raw);
+
+	const char *dp = strrchr(name, '/');
+	if (!*raw && ((dp != NULL && dp[1] != 'r')
+		|| (dp == NULL && name[0] != 'r'))) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (raw[0] != 'r')
+		skip = 2;
+	if (dp != NULL)
+		snprintf(buf, bufsiz, "%.*s/%s%s", (int)(dp - name),
+		    name, raw, dp + skip);
+	else
+		snprintf(buf, bufsiz, "%s%s", raw, name);
+	return 0;
+}
+
 const char *
 getdiskrawname(char *buf, size_t bufsiz, const char *name)
 {
-	const char *dp;
 	struct stat st;
 	char dest[PATH_MAX];
 
@@ -81,8 +145,6 @@ getdiskrawname(char *buf, size_t bufsiz, const char *name)
 		errno = EINVAL;
 		return NULL;
 	}
-
-	dp = strrchr(name, '/');
 
 	if (stat(name, &st) == -1)
 		return NULL;
@@ -92,10 +154,8 @@ getdiskrawname(char *buf, size_t bufsiz, const char *name)
 		return NULL;
 	}
 
-	if (dp != NULL)
-		(void)snprintf(buf, bufsiz, "%.*s/r%s", (int)(dp - name), name, dp + 1);
-	else
-		(void)snprintf(buf, bufsiz, "r%s", name);
+	if (calc_name(buf, bufsiz, name, "r") == -1)
+		return NULL;
 
 	return buf;
 }
@@ -103,18 +163,10 @@ getdiskrawname(char *buf, size_t bufsiz, const char *name)
 const char *
 getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 {
-	const char *dp;
 	struct stat st;
 	char dest[PATH_MAX];
 
 	if ((name = resolve_link(dest, sizeof(dest), name)) == NULL) {
-		errno = EINVAL;
-		return NULL;
-	}
-
-	dp = strrchr(name, '/');
-
-	if ((dp != NULL && dp[1] != 'r') || (dp == NULL && name[0] != 'r')) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -127,10 +179,8 @@ getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 		return NULL;
 	}
 
-	if (dp != NULL)
-		(void)snprintf(buf, bufsiz, "%.*s/%s", (int)(dp - name), name, dp + 2);
-	else
-		(void)snprintf(buf, bufsiz, "%s", name + 1);
+	if (calc_name(buf, bufsiz, name, "") == -1)
+		return NULL;
 
 	return buf;
 }

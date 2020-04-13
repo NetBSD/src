@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_statfs.h,v 1.6 2012/09/13 13:59:33 pooka Exp $	*/
+/*	$NetBSD: linux_statfs.h,v 1.6.38.1 2020/04/13 08:04:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 {
 	int i;
 
+	memset(lsp, 0, sizeof(*lsp));
+
 	for (i = 0; i < linux_fstypes_cnt; i++) {
 		if (strcmp(bsp->f_fstypename, linux_fstypes[i].mty_bsd) == 0) {
 			lsp->l_ftype = linux_fstypes[i].mty_linux;
@@ -82,7 +84,6 @@ bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
 	lsp->l_fnamelen = bsp->f_namemax;
-	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
 /*
@@ -95,6 +96,8 @@ static void __unused
 bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
 {
 	int i, div;
+
+	memset(lsp, 0, sizeof(*lsp));
 
 	for (i = 0; i < linux_fstypes_cnt; i++) {
 		if (strcmp(bsp->f_fstypename, linux_fstypes[i].mty_bsd) == 0) {
@@ -121,7 +124,6 @@ bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
 	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
 	lsp->l_fnamelen = bsp->f_namemax;
-	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
 #endif /* !_LINUX_STATFS_H */

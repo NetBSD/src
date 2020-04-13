@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10.2.2 2019/06/10 22:09:56 christos Exp $
+$NetBSD: version,v 1.10.2.3 2020/04/13 08:05:19 martin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,7 @@ is taken as the current.
 1.7:	Add NFS support.
 1.8:	Add support for "bootargs" environment variable.
 1.9:	Add support for efiboot.plist and loading device tree overlays.
+1.10:	Add support for EFI GOP framebuffers in ACPI mode.
+1.11:	Add full UEFI memory map to /chosen node.
+1.12:	Derive ACPI model string from SMBIOS.
+1.13:	Add rndseed support.

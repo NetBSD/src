@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.8.4.1 2019/06/10 22:06:23 christos Exp $ */
+/* $NetBSD: interrupt.c,v 1.8.4.2 2020/04/13 08:03:55 martin Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8.4.1 2019/06/10 22:06:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8.4.2 2020/04/13 08:03:55 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -293,9 +293,7 @@ intr_establish(int irq, int type, int level, int (*func)(void *), void *arg)
 
 	i = ia64_intrs[vector];
 	if (i == NULL) {
-		i = malloc(sizeof(struct ia64_intr), M_DEVBUF, M_NOWAIT);
-		if (i == NULL)
-			return NULL;
+		i = malloc(sizeof(struct ia64_intr), M_DEVBUF, M_WAITOK);
 		i->irq = irq;
 		i->sapic = sa;
 		i->type = type;
@@ -311,9 +309,7 @@ intr_establish(int irq, int type, int level, int (*func)(void *), void *arg)
 		if (i->type != type)
 			return NULL;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return NULL;
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_level = level;

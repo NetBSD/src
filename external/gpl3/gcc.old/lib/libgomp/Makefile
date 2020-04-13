@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.4.1 2019/06/10 21:57:43 christos Exp $
+#	$NetBSD: Makefile,v 1.6.4.2 2020/04/13 08:01:37 martin Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -11,45 +11,11 @@ NOLINT=	# defined
 
 DIST=	${GCCDIST}
 
-LIB=	gomp
-SRCS= \
-	alloc.c \
-	barrier.c \
-	critical.c \
-	env.c \
-	error.c \
-	iter.c \
-	iter_ull.c \
-	loop.c \
-	loop_ull.c \
-	ordered.c \
-	parallel.c \
-	sections.c \
-	single.c \
-	task.c \
-	team.c \
-	work.c \
-	lock.c \
-	mutex.c \
-	proc.c \
-	sem.c \
-	bar.c \
-	ptrlock.c \
-	time.c \
-	fortran.c \
-	affinity.c \
-	target.c \
-	splay-tree.c \
-	libgomp-plugin.c \
-	oacc-parallel.c \
-	oacc-host.c \
-	oacc-init.c \
-	oacc-mem.c \
-	oacc-async.c \
-	oacc-plugin.c \
-	oacc-cuda.c \
-	priority_queue.c
 
+LIB=	gomp
+
+.include "${.CURDIR}/defs.mk"
+SRCS=	${G_libgomp_la_SOURCES}
 
 GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 ARCHDIR=		${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
@@ -65,11 +31,8 @@ CFLAGS+=-pthread
 
 CWARNFLAGS.clang+=	-Wno-conversion
 
-# libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
-# XXXGCC5 -- marking 1.2 for GCC 5.3 for now
-# XXXGCC6 -- marking 1.3 for GCC 6 for now
-SHLIB_MAJOR=	1
-SHLIB_MINOR=	3
+SHLIB_MAJOR=	2
+SHLIB_MINOR=	0
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
@@ -91,4 +54,8 @@ libinstall::
 COPTS+=	-Wno-stack-protector -Wno-missing-prototypes
 COPTS.oacc-mem.c+= -Wno-pointer-arith
 
-.PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
+COPTS.lock.c+=		-Wno-error=incompatible-pointer-types
+COPTS.target.c+=	-Wno-error=pointer-arith
+
+.PATH: ${DIST}/libgomp/config/posix
+.PATH: ${ARCHDIR} ${DIST}/libgomp

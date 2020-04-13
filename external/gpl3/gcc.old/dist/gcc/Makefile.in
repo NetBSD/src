@@ -1,7 +1,7 @@
 # Makefile for GNU Compiler Collection
 # Run 'configure' to generate Makefile from Makefile.in
 
-# Copyright (C) 1987-2016 Free Software Foundation, Inc.
+# Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -56,6 +56,7 @@ MAKEOVERRIDES =
 
 build=@build@
 host=@host@
+host_noncanonical=@host_noncanonical@
 target=@target@
 target_noncanonical:=@target_noncanonical@
 
@@ -272,6 +273,17 @@ ifeq (@DO_LINK_MUTEX@,true)
 LLINKER = $(SHELL) $(srcdir)/lock-and-run.sh linkfe.lck $(LINKER)
 else
 LLINKER = $(LINKER)
+endif
+
+THIN_ARCHIVE_SUPPORT = @thin_archive_support@
+
+USE_THIN_ARCHIVES = no
+ifeq ($(THIN_ARCHIVE_SUPPORT),yes)
+ifeq ($(AR_FLAGS),rc)
+ifeq ($(RANLIB_FLAGS),)
+USE_THIN_ARCHIVES = yes
+endif
+endif
 endif
 
 # -------------------------------------------
@@ -849,7 +861,7 @@ else
 REVISION_c  := $(shell cat $(REVISION))
 endif
 
-version     := $(BASEVER_c)
+version     := $(shell @get_gcc_base_ver@ $(BASEVER))
 
 PATCHLEVEL_c := \
   $(shell echo $(BASEVER_c) | sed -e 's/^[0-9]*\.[0-9]*\.\([0-9]*\)$$/\1/')
@@ -904,7 +916,8 @@ RTL_H = $(RTL_BASE_H) $(FLAGS_H) genrtl.h
 READ_MD_H = $(OBSTACK_H) $(HASHTAB_H) read-md.h
 PARAMS_H = params.h params-enum.h params.def
 BUILTINS_DEF = builtins.def sync-builtins.def omp-builtins.def \
-	gtm-builtins.def sanitizer.def cilkplus.def cilk-builtins.def
+	gtm-builtins.def sanitizer.def cilkplus.def cilk-builtins.def \
+	hsa-builtins.def
 INTERNAL_FN_DEF = internal-fn.def
 INTERNAL_FN_H = internal-fn.h $(INTERNAL_FN_DEF)
 TREE_CORE_H = tree-core.h coretypes.h all-tree.def tree.def \
@@ -1164,7 +1177,7 @@ CXX_TARGET_OBJS=@cxx_target_objs@
 FORTRAN_TARGET_OBJS=@fortran_target_objs@
 
 # Object files for gcc many-languages driver.
-GCC_OBJS = gcc.o gcc-main.o ggc-none.o spellcheck.o
+GCC_OBJS = gcc.o gcc-main.o ggc-none.o
 
 c-family-warn = $(STRICT_WARN)
 
@@ -1175,7 +1188,8 @@ C_COMMON_OBJS = c-family/c-common.o c-family/c-cppbuiltin.o c-family/c-dump.o \
   c-family/c-ppoutput.o c-family/c-pragma.o c-family/c-pretty-print.o \
   c-family/c-semantics.o c-family/c-ada-spec.o \
   c-family/c-cilkplus.o \
-  c-family/array-notation-common.o c-family/cilk.o c-family/c-ubsan.o
+  c-family/array-notation-common.o c-family/cilk.o c-family/c-ubsan.o \
+  c-family/c-attribs.o c-family/c-warn.o
 
 # Language-independent object files.
 # We put the *-match.o and insn-*.o files first so that a parallel make
@@ -1263,16 +1277,19 @@ OBJS = \
 	explow.o \
 	expmed.o \
 	expr.o \
+	fibonacci_heap.o \
 	final.o \
 	fixed-value.o \
 	fold-const.o \
 	fold-const-call.o \
 	function.o \
+	function-tests.o \
 	fwprop.o \
 	gcc-rich-location.o \
 	gcse.o \
 	gcse-common.o \
 	ggc-common.o \
+	ggc-tests.o \
 	gimple.o \
 	gimple-builder.o \
 	gimple-expr.o \
@@ -1285,7 +1302,10 @@ OBJS = \
 	gimple-ssa-isolate-paths.o \
 	gimple-ssa-nonnull-compare.o \
 	gimple-ssa-split-paths.o \
+	gimple-ssa-store-merging.o \
 	gimple-ssa-strength-reduction.o \
+	gimple-ssa-sprintf.o \
+	gimple-ssa-warn-alloca.o \
 	gimple-streamer-in.o \
 	gimple-streamer-out.o \
 	gimple-walk.o \
@@ -1303,7 +1323,9 @@ OBJS = \
 	graphite-sese-to-poly.o \
 	gtype-desc.o \
 	haifa-sched.o \
-	hsa.o \
+	hash-map-tests.o \
+	hash-set-tests.o \
+	hsa-common.o \
 	hsa-gen.o \
 	hsa-regalloc.o \
 	hsa-brig.o \
@@ -1373,6 +1395,10 @@ OBJS = \
 	mode-switching.o \
 	modulo-sched.o \
 	multiple_target.o \
+	omp-offload.o \
+	omp-expand.o \
+	omp-general.o \
+	omp-grid.o \
 	omp-low.o \
 	omp-simd-clone.o \
 	optabs.o \
@@ -1387,8 +1413,12 @@ OBJS = \
 	postreload.o \
 	predict.o \
 	print-rtl.o \
+	print-rtl-function.o \
 	print-tree.o \
 	profile.o \
+	read-md.o \
+	read-rtl.o \
+	read-rtl-function.o \
 	real.o \
 	realmpfr.o \
 	recog.o \
@@ -1404,10 +1434,12 @@ OBJS = \
 	resource.o \
 	rtl-chkp.o \
 	rtl-error.o \
+	rtl-tests.o \
 	rtl.o \
 	rtlhash.o \
 	rtlanal.o \
 	rtlhooks.o \
+	run-rtl-passes.o \
 	sbitmap.o \
 	sched-deps.o \
 	sched-ebb.o \
@@ -1416,6 +1448,8 @@ OBJS = \
 	sel-sched-ir.o \
 	sel-sched-dump.o \
 	sel-sched.o \
+	selftest-rtl.o \
+	selftest-run-tests.o \
 	sese.o \
 	shrink-wrap.o \
 	simplify-rtx.o \
@@ -1430,6 +1464,7 @@ OBJS = \
 	store-motion.o \
 	streamer-hooks.o \
 	stringpool.o \
+	substring-locations.o \
 	target-globals.o \
 	targhooks.o \
 	timevar.o \
@@ -1490,6 +1525,7 @@ OBJS = \
 	tree-ssa-loop-manip.o \
 	tree-ssa-loop-niter.o \
 	tree-ssa-loop-prefetch.o \
+	tree-ssa-loop-split.o \
 	tree-ssa-loop-unswitch.o \
 	tree-ssa-loop.o \
 	tree-ssa-math-opts.o \
@@ -1529,6 +1565,7 @@ OBJS = \
 	tree-vectorizer.o \
 	tree-vrp.o \
 	tree.o \
+	typed-splay-tree.o \
 	valtrack.o \
 	value-prof.o \
 	var-tracking.o \
@@ -1547,14 +1584,16 @@ OBJS = \
 # Objects in libcommon.a, potentially used by all host binaries and with
 # no target dependencies.
 OBJS-libcommon = diagnostic.o diagnostic-color.o diagnostic-show-locus.o \
+	edit-context.o \
 	pretty-print.o intl.o \
-	vec.o input.o version.o hash-table.o ggc-none.o memory-block.o
+	vec.o input.o version.o hash-table.o ggc-none.o memory-block.o \
+	selftest.o
 
 # Objects in libcommon-target.a, used by drivers and by the core
 # compiler and containing target-dependent code.
 OBJS-libcommon-target = $(common_out_object_file) prefix.o params.o \
 	opts.o opts-common.o options.o vec.o hooks.o common/common-targhooks.o \
-	hash-table.o file-find.o
+	hash-table.o file-find.o spellcheck.o selftest.o
 
 # This lists all host objects for the front ends.
 ALL_HOST_FRONTEND_OBJS = $(foreach v,$(CONFIG_LANGUAGES),$($(v)_OBJS))
@@ -1564,6 +1603,14 @@ ALL_HOST_BACKEND_OBJS = $(GCC_OBJS) $(OBJS) $(OBJS-libcommon) \
   $(COLLECT2_OBJS) $(EXTRA_GCC_OBJS) $(GCOV_OBJS) $(GCOV_DUMP_OBJS) \
   $(GCOV_TOOL_OBJS) $(GENGTYPE_OBJS) gcc-ar.o gcc-nm.o gcc-ranlib.o \
   lto-wrapper.o collect-utils.o
+
+# for anything that is shared use the cc1plus profile data, as that
+# is likely the most exercised during the build
+ifeq ($(if $(wildcard ../stage_current),$(shell cat \
+  ../stage_current)),stageautofeedback)
+$(ALL_HOST_BACKEND_OBJS): ALL_COMPILERFLAGS += -fauto-profile=cc1plus.fda
+$(ALL_HOST_BACKEND_OBJS): cc1plus.fda
+endif
 
 # This lists all host object files, whether they are included in this
 # compilation or not.
@@ -1594,7 +1641,7 @@ MOSTLYCLEANFILES = insn-flags.h insn-config.h insn-codes.h \
  gcov-iov$(build_exeext) gcov$(exeext) gcov-dump$(exeext) \
  gcov-tool$(exeect) \
  gengtype$(exeext) *.[0-9][0-9].* *.[si] *-checksum.c libbackend.a \
- libcommon-target.a libcommon.a libgcc.mk
+ libcommon-target.a libcommon.a libgcc.mk perf.data
 
 # This symlink makes the full installation name of the driver be available
 # from within the *build* directory, for use when running the JIT library
@@ -1754,21 +1801,23 @@ aclocal_deps = \
 	$(srcdir)/../lt~obsolete.m4 \
 	$(srcdir)/../config/acx.m4 \
 	$(srcdir)/../config/codeset.m4 \
-	$(srcdir)/../config/extensions.m4 \
-	$(srcdir)/../config/gettext-sister.m4 \
+	$(srcdir)/../config/depstand.m4 \
+	$(srcdir)/../config/dfp.m4 \
 	$(srcdir)/../config/gcc-plugin.m4 \
+	$(srcdir)/../config/gettext-sister.m4 \
 	$(srcdir)/../config/iconv.m4 \
 	$(srcdir)/../config/lcmessage.m4 \
+	$(srcdir)/../config/lead-dot.m4 \
 	$(srcdir)/../config/lib-ld.m4 \
 	$(srcdir)/../config/lib-link.m4 \
 	$(srcdir)/../config/lib-prefix.m4 \
+	$(srcdir)/../config/mmap.m4 \
 	$(srcdir)/../config/override.m4 \
+	$(srcdir)/../config/picflag.m4 \
 	$(srcdir)/../config/progtest.m4 \
         $(srcdir)/../config/stdint.m4 \
-	$(srcdir)/../config/unwind_ipinfo.m4 \
 	$(srcdir)/../config/warnings.m4 \
-	$(srcdir)/../config/dfp.m4 \
-	$(srcdir)/../config/mmap.m4 \
+	$(srcdir)/../config/zlib.m4 \
 	$(srcdir)/acinclude.m4
 
 $(srcdir)/configure: @MAINT@ $(srcdir)/configure.ac $(srcdir)/aclocal.m4
@@ -1821,10 +1870,10 @@ config.status: $(srcdir)/configure $(srcdir)/config.gcc
 quickstrap: all
 	cd $(toplevel_builddir) && $(MAKE) all-target-libgcc
 
-all.internal: start.encap rest.encap doc
+all.internal: start.encap rest.encap doc selftest
 # This is what to compile if making a cross-compiler.
 all.cross: native gcc-cross$(exeext) cpp$(exeext) specs \
-	libgcc-support lang.all.cross doc @GENINSRC@ srcextra
+	libgcc-support lang.all.cross doc selftest @GENINSRC@ srcextra
 # This is what must be made before installing GCC and converting libraries.
 start.encap: native xgcc$(exeext) cpp$(exeext) specs \
 	libgcc-support lang.start.encap @GENINSRC@ srcextra
@@ -1844,6 +1893,42 @@ endif
 # This does the things that can't be done on the host machine.
 rest.cross: specs
 
+# GCC's selftests.
+# Specify a dummy input file to placate the driver.
+# Specify -nostdinc to work around missing WIND_BASE environment variable
+# required for *-wrs-vxworks-* targets.
+# Specify -o /dev/null so the output of -S is discarded. More importantly
+# It does not try to create a file with the name "null.s" on POSIX and
+# "nul.s" on Windows. Because on Windows "nul" is a reserved file name.
+# Specify the path to gcc/testsuite/selftests within the srcdir
+# as an argument to -fself-test.
+SELFTEST_FLAGS = -nostdinc -x c /dev/null -S -o /dev/null \
+	-fself-test=$(srcdir)/testsuite/selftests
+
+# Run the selftests during the build once we have a driver and a cc1,
+# so that self-test failures are caught as early as possible.
+# Use "s-selftest" to ensure that we only run the selftests if the
+# driver, cc1, or selftest data change.
+.PHONY: selftest
+selftest: s-selftest
+s-selftest: $(GCC_PASSES) cc1$(exeext) stmp-int-hdrs
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_s-selftest:
+	$(GCC_FOR_TARGET) $(SELFTEST_FLAGS)
+	$(STAMP) $@
+
+# Convenience method for running selftests under gdb:
+.PHONY: selftest-gdb
+selftest-gdb: $(GCC_PASSES) cc1$(exeext) stmp-int-hdrs
+	$(GCC_FOR_TARGET) $(SELFTEST_FLAGS) \
+	  -wrapper gdb,--args
+
+# Convenience method for running selftests under valgrind:
+.PHONY: selftest-valgrind
+selftest-valgrind: $(GCC_PASSES) cc1$(exeext) stmp-int-hdrs
+	$(GCC_FOR_TARGET) $(SELFTEST_FLAGS) \
+	  -wrapper valgrind,--leak-check=full
+
 # Recompile all the language-independent object files.
 # This is used only if the user explicitly asks for it.
 compilations: $(BACKEND)
@@ -1851,8 +1936,14 @@ compilations: $(BACKEND)
 # This archive is strictly for the host.
 libbackend.a: $(OBJS)
 	-rm -rf libbackend.a
+	@# Build libbackend.a as a thin archive if possible, as doing so
+	@# significantly reduces build times.
+ifeq ($(USE_THIN_ARCHIVES),yes)
+	$(AR) $(AR_FLAGS)T libbackend.a $(OBJS)
+else
 	$(AR) $(AR_FLAGS) libbackend.a $(OBJS)
 	-$(RANLIB) $(RANLIB_FLAGS) libbackend.a
+endif
 
 libcommon-target.a: $(OBJS-libcommon-target)
 	-rm -rf libcommon-target.a
@@ -1992,7 +2083,7 @@ gcc-nm.c: gcc-ar.c
 	cp -f $^ $@
 
 COLLECT2_OBJS = collect2.o collect2-aix.o tlink.o vec.o ggc-none.o \
-  collect-utils.o file-find.o hash-table.o
+  collect-utils.o file-find.o hash-table.o selftest.o
 COLLECT2_LIBS = @COLLECT2_LIBS@
 collect2$(exeext): $(COLLECT2_OBJS) $(LIBDEPS)
 # Don't try modifying collect2 (aka ld) in place--it might be linking this.
@@ -2042,7 +2133,8 @@ DRIVER_DEFINES = \
   $(if $(SHLIB),$(if $(filter yes,@enable_shared@),-DENABLE_SHARED_LIBGCC)) \
   -DCONFIGURE_SPECS="\"@CONFIGURE_SPECS@\""
 
-CFLAGS-gcc.o += $(DRIVER_DEFINES)
+CFLAGS-gcc.o += $(DRIVER_DEFINES) -DBASEVER=$(BASEVER_s)
+gcc.o: $(BASEVER)
 
 specs.h : s-specs ; @true
 s-specs : Makefile
@@ -2101,9 +2193,10 @@ s-bversion: BASE-VER
 
 CFLAGS-toplev.o += -DTARGET_NAME=\"$(target_noncanonical)\"
 
-pass-instances.def: $(srcdir)/passes.def $(srcdir)/gen-pass-instances.awk
+pass-instances.def: $(srcdir)/passes.def $(PASSES_EXTRA) \
+		    $(srcdir)/gen-pass-instances.awk
 	$(AWK) -f $(srcdir)/gen-pass-instances.awk \
-	  $(srcdir)/passes.def > pass-instances.def
+	  $(srcdir)/passes.def $(PASSES_EXTRA) > pass-instances.def
 
 $(out_object_file): $(out_file)
 	$(COMPILE) $<
@@ -2362,7 +2455,8 @@ s-match: build/genmatch$(build_exeext) $(srcdir)/match.pd cfn-operators.pd
 GTFILES = $(CPP_ID_DATA_H) $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(host_xm_file_list) \
   $(tm_file_list) $(HASHTAB_H) $(SPLAY_TREE_H) $(srcdir)/bitmap.h \
-  $(srcdir)/wide-int.h $(srcdir)/alias.h $(srcdir)/coverage.c $(srcdir)/rtl.h \
+  $(srcdir)/wide-int.h $(srcdir)/alias.h $(srcdir)/cilk.h \
+  $(srcdir)/cilk-common.c $(srcdir)/coverage.c  $(srcdir)/rtl.h \
   $(srcdir)/optabs.h $(srcdir)/tree.h $(srcdir)/tree-core.h \
   $(srcdir)/libfuncs.h $(SYMTAB_H) \
   $(srcdir)/real.h $(srcdir)/function.h $(srcdir)/insn-addr.h $(srcdir)/hwint.h \
@@ -2383,6 +2477,7 @@ GTFILES = $(CPP_ID_DATA_H) $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/emit-rtl.c $(srcdir)/except.h $(srcdir)/explow.c $(srcdir)/expr.c \
   $(srcdir)/expr.h \
   $(srcdir)/function.c $(srcdir)/except.c \
+  $(srcdir)/ggc-tests.c \
   $(srcdir)/gcse.c $(srcdir)/godump.c \
   $(srcdir)/lists.c $(srcdir)/optabs-libfuncs.c \
   $(srcdir)/profile.c $(srcdir)/mcf.c \
@@ -2400,13 +2495,16 @@ GTFILES = $(CPP_ID_DATA_H) $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/tree-scalar-evolution.c \
   $(srcdir)/tree-ssa-operands.h \
   $(srcdir)/tree-profile.c $(srcdir)/tree-nested.c \
+  $(srcdir)/omp-offload.h \
+  $(srcdir)/omp-offload.c \
+  $(srcdir)/omp-expand.c \
   $(srcdir)/omp-low.c \
-  $(srcdir)/omp-low.h \
   $(srcdir)/targhooks.c $(out_file) $(srcdir)/passes.c $(srcdir)/cgraphunit.c \
   $(srcdir)/cgraphclones.c \
   $(srcdir)/tree-phinodes.c \
   $(srcdir)/tree-ssa-alias.h \
   $(srcdir)/tree-ssanames.h \
+  $(srcdir)/tree-vrp.h \
   $(srcdir)/ipa-prop.h \
   $(srcdir)/trans-mem.c \
   $(srcdir)/lto-streamer.h \
@@ -2420,7 +2518,8 @@ GTFILES = $(CPP_ID_DATA_H) $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/sancov.c \
   $(srcdir)/ipa-devirt.c \
   $(srcdir)/internal-fn.h \
-  $(srcdir)/hsa.c \
+  $(srcdir)/hsa-common.c \
+  $(srcdir)/calls.c \
   @all_gtfiles@
 
 # Compute the list of GT header files from the corresponding C sources,
@@ -2471,7 +2570,7 @@ generated_files = config.h tm.h $(TM_P_H) $(TM_H) multilib.h \
        $(ALL_GTFILES_H) gtype-desc.c gtype-desc.h gcov-iov.h \
        options.h target-hooks-def.h insn-opinit.h \
        common/common-target-hooks-def.h pass-instances.def \
-       c-family/c-target-hooks-def.h params.list case-cfn-macros.h \
+       c-family/c-target-hooks-def.h params.list params.options case-cfn-macros.h \
        cfn-operators.pd
 
 #
@@ -3313,10 +3412,17 @@ s-params.list: $(srcdir)/params-list.h $(srcdir)/params.def
 	$(SHELL) $(srcdir)/../move-if-change tmp-params.list params.list
 	$(STAMP) s-params.list
 
+params.options: s-params.options; @true
+s-params.options: $(srcdir)/params-options.h $(srcdir)/params.def
+	$(CPP) $(srcdir)/params-options.h | sed 's/^#.*//;/^$$/d' > tmp-params.options
+	$(SHELL) $(srcdir)/../move-if-change tmp-params.options params.options
+	$(STAMP) s-params.options
+
+
 PLUGIN_HEADERS = $(TREE_H) $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   toplev.h $(DIAGNOSTIC_CORE_H) $(BASIC_BLOCK_H) $(HASH_TABLE_H) \
   tree-ssa-alias.h $(INTERNAL_FN_H) gimple-fold.h tree-eh.h gimple-expr.h \
-  gimple.h is-a.h $(TREE_PASS_H) $(GCC_PLUGIN_H) \
+  gimple.h is-a.h memmodel.h $(TREE_PASS_H) $(GCC_PLUGIN_H) \
   $(GGC_H) $(TREE_DUMP_H) $(PRETTY_PRINT_H) $(OPTS_H) $(PARAMS_H) \
   $(tm_file_list) $(tm_include_list) $(tm_p_file_list) $(tm_p_include_list) \
   $(host_xm_file_list) $(host_xm_include_list) $(xm_include_list) \
@@ -3737,7 +3843,6 @@ site.exp: ./config.status Makefile
 	  echo "set PLUGINCFLAGS \"$(PLUGINCFLAGS)\"" >> ./site.tmp; \
 	  echo "set GMPINC \"$(GMPINC)\"" >> ./site.tmp; \
 	fi
-	@echo "set ISLVER \"$(ISLVER)\"" >> ./site.tmp
 # If newlib has been configured, we need to pass -B to gcc so it can find
 # newlib's crt0.o if it exists.  This will cause a "path prefix not used"
 # message if it doesn't, but the testsuite is supposed to ignore the message -

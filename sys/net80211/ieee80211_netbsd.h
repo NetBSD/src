@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.21.2.10 2020/04/08 14:08:57 martin Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.21.2.11 2020/04/13 08:05:16 martin Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -402,6 +402,11 @@ typedef kmutex_t ieee80211_rt_lock_t;
 struct ieee80211_node;
 int	ieee80211_node_dectestref(struct ieee80211_node *ni);
 #define	ieee80211_node_refcnt(_ni)	(_ni)->ni_refcnt
+
+/*
+ * Media locking definitions.
+ */
+typedef kmutex_t ieee80211_media_lock_t;
 
 /*
  * Media locking definitions.

@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.9.18.1 2019/06/10 22:06:29 christos Exp $ */
+/* $NetBSD: athflash.c,v 1.9.18.2 2020/04/13 08:03:59 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.9.18.1 2019/06/10 22:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.9.18.2 2020/04/13 08:03:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -251,11 +251,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 	sc->sc_size = flash_ids[i].flash_size;
 	sc->sc_sector_size = flash_ids[i].sector_size;
 
-	if ((sc->sc_buf = malloc(sc->sc_sector_size, M_DEVBUF, M_NOWAIT))
-	    == NULL) {
-		printf(": can't alloc buffer space\n");
-		return;
-	}
+	sc->sc_buf = malloc(sc->sc_sector_size, M_DEVBUF, M_WAITOK);
 
 	printf("\n");
 }

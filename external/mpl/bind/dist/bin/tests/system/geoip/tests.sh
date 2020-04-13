@@ -292,6 +292,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "reloading server with different geoip-directory ($n)"
+ret=0
 copy_setports ns2/named15.conf.in ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -310,6 +311,16 @@ if $TESTSOCK6 fd92:7065:b8e:ffff::2; then
     j=`cat dig.out.ns2.test$n.2 | tr -d '"'`
     [ "$j" = "2" ] || ret=1
 fi
+[ $ret -eq 0 ] || echo_i "failed"
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "reloading server with different geoip-directory, missing continent support ($n)"
+nextpart ns2/named.run > /dev/null
+copy_setports ns2/named16.conf.in ns2/named.conf
+rndc_reload ns2 10.53.0.2 > /dev/null
+sleep 3
+nextpart ns2/named.run | grep 'no GeoIP database installed' > /dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 

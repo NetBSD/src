@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.h,v 1.3 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: devopen.h,v 1.3.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,11 +34,21 @@ extern struct fs_ops file_system_nfs;
 extern struct fs_ops file_system_tftp;
 extern struct fs_ops file_system_null;
 
-#define	MAXDEVNAME	16
+#define	MAXDEVNAME	39 /* mxmimum is "NAME=" + 34 char part_name */
 
-void bios2dev(int, daddr_t, char **, int *, int *);
+void bios2dev(int, daddr_t, char **, int *, int *, const char **);
 
 struct devdesc {
 	char	d_name[MAXDEVNAME];
 	char	d_unit;
 };
+
+struct netboot_fstab {
+	const char *name;
+	struct fs_ops *ops;
+};
+
+extern const struct netboot_fstab netboot_fstab[];
+extern const int nnetboot_fstab;
+
+const struct netboot_fstab *netboot_fstab_find(const char *);

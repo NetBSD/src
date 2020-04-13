@@ -49,6 +49,24 @@ public:
 
 static arm_nbsd_nat_target the_arm_nbsd_nat_target;
 
+/* Determine if PT_GETREGS fetches REGNUM.  */
+
+static bool
+getregs_supplies (int regnum)
+{
+  return ((regnum >= ARM_A1_REGNUM && regnum <= ARM_PC_REGNUM)
+	  || regnum == ARM_PS_REGNUM);
+}
+
+/* Determine if PT_GETFPREGS fetches REGNUM.  */
+
+static bool
+getfpregs_supplies (int regnum)
+{
+  return ((regnum >= ARM_D0_REGNUM && regnum <= ARM_D31_REGNUM)
+	  || regnum == ARM_FPSCR_REGNUM);
+}
+
 extern int arm_apcs_32;
 
 #define FPSCR(r) ((char *) &(r)->fpr_vfp.vfp_fpscr)
@@ -256,10 +274,12 @@ arm_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
   if (regno >= 0)
     {
-      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
+      if (getregs_supplies (regno))
+	fetch_register (regcache, regno);
+      else if (getfpregs_supplies (regno))
 	fetch_fp_register (regcache, regno);
       else
-	fetch_register (regcache, regno);
+        warning (_("unable to fetch register %d"), regno);
     }
   else
     {
@@ -442,10 +462,12 @@ arm_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
   if (regno >= 0)
     {
-      if (regno >= ARM_D0_REGNUM && regno <= ARM_FPSCR_REGNUM)
+      if (getregs_supplies (regno))
+	store_register (regcache, regno);
+      else if (getfpregs_supplies (regno))
 	store_fp_register (regcache, regno);
       else
-	store_register (regcache, regno);
+        warning (_("unable to store register %d"), regno);
     }
   else
     {
@@ -535,6 +557,9 @@ void
 _initialize_arm_netbsd_nat (void)
 {
   add_inf_child_target (&the_arm_nbsd_nat_target);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (armnbsd_supply_pcb);
 
   deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);

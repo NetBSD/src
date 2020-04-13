@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgtvar.h,v 1.2.18.1 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_upgtvar.h,v 1.2.18.2 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
@@ -29,7 +29,7 @@ struct upgt_rx_radiotap_header {
 	uint16_t			wr_chan_freq;
 	uint16_t			wr_chan_flags;
 	uint8_t				wr_antsignal;
-} __packed;
+};
 
 #define UPGT_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
@@ -43,7 +43,7 @@ struct upgt_tx_radiotap_header {
 	uint8_t				wt_rate;
 	uint16_t			wt_chan_freq;
 	uint16_t			wt_chan_flags;
-} __packed;
+};
 
 #define UPGT_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
@@ -398,6 +398,10 @@ struct upgt_softc {
 	struct ethercom		 sc_ec;
 #define sc_if	sc_ec.ec_if
 
+	enum {
+		UPGT_INIT_NONE,
+		UPGT_INIT_INITED
+	} sc_init_state;
 	struct usbd_device *	 sc_udev;
 	struct usbd_interface *	 sc_iface;
 	int			 sc_rx_no;

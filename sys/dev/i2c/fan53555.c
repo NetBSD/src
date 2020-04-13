@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.2.8.3 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: fan53555.c,v 1.2.8.4 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.2.8.3 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.2.8.4 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.2.8.3 2020/04/08 14:08:05 martin Exp 
 #define	 ID1_VENDOR			__BITS(7,5)
 #define	 ID1_DIE_ID			__BITS(3,0)
 #define	  SILERGY_DIE_ID_SYR82X		8
+#define	  SILERGY_DIE_ID_SYR83X		9
 #define	ID2_REG			0x04
 #define	 ID2_DIE_REV			__BITS(3,0)
 #define	MONITOR_REG		0x05
@@ -231,6 +232,11 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 			sc->sc_base = 712500;
 			sc->sc_step = 12500;
 			break;
+		case SILERGY_DIE_ID_SYR83X:
+			aprint_normal(": Silergy SYR83X\n");
+			sc->sc_base = 712500;
+			sc->sc_step = 12500;
+			break;
 		default:
 			aprint_error(": Unsupported Silergy chip (0x%x)\n", die_id);
 			return ENXIO;
@@ -241,7 +247,8 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 		return ENXIO;
 	}
 
-	of_getprop_uint32(sc->sc_phandle, "suspend_voltage_selector",
+	sc->sc_suspend_voltage_selector = -1;
+	of_getprop_uint32(sc->sc_phandle, "fcs,suspend-voltage-selector",
 	    &sc->sc_suspend_voltage_selector);
 	switch (sc->sc_suspend_voltage_selector) {
 	case 0:

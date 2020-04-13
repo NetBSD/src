@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.6.28.1 2019/06/10 22:05:28 christos Exp $
+#	$NetBSD: mod.mk,v 1.6.28.2 2020/04/13 08:03:17 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -25,8 +25,6 @@ SHLIBINSTALLDIR=${LIBROOTDIR}/npf
 
 LIB=		${MOD}
 SRCS=		npf${MOD}.c
-
-CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 LIBDPLIBS+=	npf ${NETBSDSRCDIR}/lib/libnpf
 
 .include <bsd.lib.mk>

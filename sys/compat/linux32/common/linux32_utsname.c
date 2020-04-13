@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_utsname.c,v 1.9 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_utsname.c,v 1.9.68.1 2020/04/13 08:04:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.9 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.9.68.1 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +81,7 @@ linux32_sys_uname(struct lwp *l, const struct linux32_sys_uname_args *uap, regis
 	struct linux_utsname luts;
 	struct linux_utsname *lp;
 
+	memset(&luts, 0, sizeof(luts));
 	strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
 	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));
@@ -101,6 +102,7 @@ linux32_sys_olduname(struct lwp *l, const struct linux32_sys_olduname_args *uap,
 	} */
 	struct linux_oldutsname luts;
 
+	memset(&luts, 0, sizeof(luts));
 	strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
 	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));
@@ -118,6 +120,7 @@ linux32_sys_oldolduname(struct lwp *l, const struct linux32_sys_oldolduname_args
         } */
         struct linux_oldoldutsname luts;
  
+	memset(&luts, 0, sizeof(luts));
         strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
         strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
         strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));

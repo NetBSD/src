@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.4.2.2 2019/06/10 22:04:44 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.4.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1008,7 +1008,7 @@ isc_socketmgr_setreserved(isc_socketmgr_t *mgr, uint32_t);
  */
 
 void
-isc_socketmgr_maxudp(isc_socketmgr_t *mgr, int maxudp);
+isc_socketmgr_maxudp(isc_socketmgr_t *mgr, unsigned int maxudp);
 /*%<
  * Test interface. Drop UDP packet > 'maxudp'.
  */

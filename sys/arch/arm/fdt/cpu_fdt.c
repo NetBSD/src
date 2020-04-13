@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.7.2.2 2020/04/08 14:07:29 martin Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.7.2.3 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.7.2.2 2020/04/08 14:07:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.7.2.3 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -265,8 +265,7 @@ arm_fdt_cpu_mpstart(void)
 
 		/* Wait for AP to start */
 		for (i = 0x10000000; i > 0; i--) {
-			membar_consumer();
-			if (arm_cpu_hatched & __BIT(cpuindex))
+			if (cpu_hatched_p(cpuindex))
 				break;
 		}
 
@@ -305,6 +304,14 @@ cpu_enable_psci(int phandle)
 
 	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
+#if !defined(AARCH64)
+	/*
+	 * not necessary on AARCH64. beside there it hangs the system
+	 * because cache ops are only functional after cpu_attach()
+	 * was called.
+	 */
+	cpu_dcache_wbinv_all();
+#endif
 	ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
 	if (ret != PSCI_SUCCESS)
 		return EIO;

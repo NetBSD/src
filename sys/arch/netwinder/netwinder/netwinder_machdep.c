@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.85.16.1 2019/06/10 22:06:33 christos Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.85.16.2 2020/04/13 08:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85.16.1 2019/06/10 22:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85.16.2 2020/04/13 08:04:01 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -368,7 +368,7 @@ struct l1_sec_map {
 };
 
 /*
- * u_int initarm(...);
+ * vaddr_t initarm(...);
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -381,7 +381,7 @@ struct l1_sec_map {
  *   Relocating the kernel to the bottom of physical memory
  */
 
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int loop;
@@ -842,7 +842,7 @@ initarm(void *arg)
 	ISA_PUTBYTE(0x338, 0x06);
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

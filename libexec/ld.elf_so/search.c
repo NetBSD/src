@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.24.28.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: search.c,v 1.24.28.2 2020/04/13 08:03:17 martin Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.24.28.1 2019/06/10 22:05:29 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.24.28.2 2020/04/13 08:03:17 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -138,7 +138,7 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
 
 	tmperrorp = dlerror();
 	if (tmperrorp != NULL) {
-		strncpy(tmperror, tmperrorp, sizeof tmperror);
+		strlcpy(tmperror, tmperrorp, sizeof(tmperror));
 		tmperrorp = tmperror;
 	}
 

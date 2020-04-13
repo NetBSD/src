@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch_test.c,v 1.4.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.4.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <setjmp.h>
 
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

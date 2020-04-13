@@ -32,7 +32,7 @@
 #include "inferior.h"
 #include "regcache.h"
 
-#include "gdb_assert.h"
+#include "common/gdb_assert.h"
 
 #include "nbsd-nat.h"
 #include "ppc-tdep.h"

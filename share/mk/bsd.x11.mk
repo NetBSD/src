@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.125.4.2 2020/04/08 14:07:23 martin Exp $
+#	$NetBSD: bsd.x11.mk,v 1.125.4.3 2020/04/13 08:03:26 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -355,8 +355,14 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@EXPAT_CFLAGS@,,; \
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,;" \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
-		< ${.IMPSRC} > ${.TARGET}.tmp && \
-	${MV} ${.TARGET}.tmp ${.TARGET}
+		< ${.IMPSRC} > ${.TARGET}.tmp
+	if ${TOOL_GREP} '@.*@' ${.TARGET}.tmp; then \
+		echo "${.TARGET} matches @.*@, probably missing updates" 1>&2; \
+		false; \
+	else \
+		${MV} ${.TARGET}.tmp ${.TARGET}; \
+	fi
+
 
 CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
@@ -391,6 +397,7 @@ CLEANDIRFILES+= ${MAN:U${PROG:D${PROG.1}}}
 .SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
 
 _X11MANTRANSFORM= \
+	${X11EXTRAMANTRANSFORMS} \
 	__adminmansuffix__	8 \
 	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
 	__appmansuffix__ 	1 \
@@ -407,8 +414,7 @@ _X11MANTRANSFORM= \
 	__mandir__		${X11MANDIR} \
 	__miscmansuffix__	7 \
 	__oslibmansuffix__	3 \
-	__projectroot__		${X11ROOTDIR} \
-	${X11EXTRAMANTRANSFORMS}
+	__projectroot__		${X11ROOTDIR}
 
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
 XORGVERSION=	'"X Version 11"'

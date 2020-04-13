@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.1.1.2.30.2 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.1.1.2.30.3 2020/04/13 08:04:57 martin Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -150,7 +150,7 @@
 #define GEN8_RING_PDP_LDW(ring, n)	((ring)->mmio_base+0x270 + (n) * 8)
 
 #define GEN8_R_PWR_CLK_STATE		0x20C8
-#define   GEN8_RPCS_ENABLE		(1 << 31)
+#define   GEN8_RPCS_ENABLE		(1UL << 31)
 #define   GEN8_RPCS_S_CNT_ENABLE	(1 << 18)
 #define   GEN8_RPCS_S_CNT_SHIFT		15
 #define   GEN8_RPCS_S_CNT_MASK		(0x7 << GEN8_RPCS_S_CNT_SHIFT)
@@ -186,8 +186,8 @@
 #define   GAB_CTL_CONT_AFTER_PAGEFAULT	(1<<8)
 
 #define GEN6_STOLEN_RESERVED		0x1082C0
-#define GEN6_STOLEN_RESERVED_ADDR_MASK	(0xFFF << 20)
-#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFF << 18)
+#define GEN6_STOLEN_RESERVED_ADDR_MASK	(0xFFFUL << 20)
+#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFFUL << 18)
 #define GEN6_STOLEN_RESERVED_SIZE_MASK	(3 << 4)
 #define GEN6_STOLEN_RESERVED_1M		(0 << 4)
 #define GEN6_STOLEN_RESERVED_512K	(1 << 4)
@@ -646,7 +646,7 @@ enum skl_disp_power_wells {
 };
 
 #define SKL_POWER_WELL_STATE(pw) (1 << ((pw) * 2))
-#define SKL_POWER_WELL_REQ(pw) (1 << (((pw) * 2) + 1))
+#define SKL_POWER_WELL_REQ(pw) (1U << (((pw) * 2) + 1))
 
 #define PUNIT_REG_PWRGT_CTRL			0x60
 #define PUNIT_REG_PWRGT_STATUS			0x61
@@ -1652,7 +1652,7 @@ enum skl_disp_power_wells {
 
 #define ERROR_GEN6	0x040a0
 #define GEN7_ERR_INT	0x44040
-#define   ERR_INT_POISON		(1<<31)
+#define   ERR_INT_POISON		(1U<<31)
 #define   ERR_INT_MMIO_UNCLAIMED	(1<<13)
 #define   ERR_INT_PIPE_CRC_DONE_C	(1<<8)
 #define   ERR_INT_FIFO_UNDERRUN_C	(1<<6)
@@ -1667,7 +1667,7 @@ enum skl_disp_power_wells {
 #define GEN8_FAULT_TLB_DATA1		0x04b14
 
 #define FPGA_DBG		0x42300
-#define   FPGA_DBG_RM_NOCLAIM	(1<<31)
+#define   FPGA_DBG_RM_NOCLAIM	(1UL << 31)
 
 #define DERRMR		0x44050
 /* Note that HBLANK events are reserved on bdw+ */
@@ -1728,7 +1728,7 @@ enum skl_disp_power_wells {
 #define GFX_MODE	0x02520
 #define GFX_MODE_GEN7	0x0229c
 #define RING_MODE_GEN7(ring)	((ring)->mmio_base+0x29c)
-#define   GFX_RUN_LIST_ENABLE		(1<<15)
+#define   GFX_RUN_LIST_ENABLE		(1U << 15)
 #define   GFX_INTERRUPT_STEERING	(1<<14)
 #define   GFX_TLB_INVALIDATE_EXPLICIT	(1<<13)
 #define   GFX_SURFACE_FAULT_ENABLE	(1<<12)
@@ -1792,7 +1792,7 @@ enum skl_disp_power_wells {
 #define FW_BLC_SELF	0x020e0 /* 915+ only */
 #define   FW_BLC_SELF_EN_MASK      (1<<31)
 #define   FW_BLC_SELF_FIFO_MASK    (1<<16) /* 945 only */
-#define   FW_BLC_SELF_EN           (1<<15) /* 945 only */
+#define   FW_BLC_SELF_EN           (1U<<15) /* 945 only */
 #define MM_BURST_LENGTH     0x00700000
 #define MM_FIFO_WATERMARK   0x0001F000
 #define LM_BURST_LENGTH     0x00000700
@@ -2039,7 +2039,7 @@ enum skl_disp_power_wells {
 #define FBC_CFB_BASE		0x03200 /* 4k page aligned */
 #define FBC_LL_BASE		0x03204 /* 4k page aligned */
 #define FBC_CONTROL		0x03208
-#define   FBC_CTL_EN		(1<<31)
+#define   FBC_CTL_EN		__BIT(31)
 #define   FBC_CTL_PERIODIC	(1<<30)
 #define   FBC_CTL_INTERVAL_SHIFT (16)
 #define   FBC_CTL_UNCOMPRESSIBLE (1<<14)
@@ -2072,7 +2072,7 @@ enum skl_disp_power_wells {
 /* Framebuffer compression for GM45+ */
 #define DPFC_CB_BASE		0x3200
 #define DPFC_CONTROL		0x3208
-#define   DPFC_CTL_EN		(1<<31)
+#define   DPFC_CTL_EN		(1UL << 31)
 #define   DPFC_CTL_PLANE(plane)	((plane)<<30)
 #define   IVB_DPFC_CTL_PLANE(plane)	((plane)<<29)
 #define   DPFC_CTL_FENCE_EN	(1<<29)
@@ -2182,7 +2182,7 @@ enum skl_disp_power_wells {
 #define   GMBUS_PIN_3_BXT	3
 #define   GMBUS_NUM_PINS	7 /* including 0 */
 #define GMBUS1			(dev_priv->gpio_mmio_base + 0x5104) /* command/status */
-#define   GMBUS_SW_CLR_INT	(1<<31)
+#define   GMBUS_SW_CLR_INT	(1UL << 31)
 #define   GMBUS_SW_RDY		(1<<30)
 #define   GMBUS_ENT		(1<<29) /* enable timeout */
 #define   GMBUS_CYCLE_NONE	(0<<25)
@@ -2232,7 +2232,7 @@ enum skl_disp_power_wells {
 #define   VGA1_PD_P1_DIV_2	(1 << 13)
 #define   VGA1_PD_P1_SHIFT	8
 #define   VGA1_PD_P1_MASK	(0x1f << 8)
-#define   DPLL_VCO_ENABLE		(1 << 31)
+#define   DPLL_VCO_ENABLE		__BIT(31)
 #define   DPLL_SDVO_HIGH_SPEED		(1 << 30)
 #define   DPLL_DVO_2X_MODE		(1 << 30)
 #define   DPLL_EXT_BUFFER_ENABLE_VLV	(1 << 30)
@@ -3182,7 +3182,7 @@ enum skl_disp_power_wells {
 #define PCH_ADPA                0xe1100
 #define VLV_ADPA		(VLV_DISPLAY_BASE + ADPA)
 
-#define   ADPA_DAC_ENABLE	(1<<31)
+#define   ADPA_DAC_ENABLE	__BIT(31)
 #define   ADPA_DAC_DISABLE	0
 #define   ADPA_PIPE_SELECT_MASK	(1<<30)
 #define   ADPA_PIPE_A_SELECT	0
@@ -3344,7 +3344,7 @@ enum skl_disp_power_wells {
 #define   PIPE_A_SCRAMBLE_RESET			(1 << 0)
 
 /* Gen 3 SDVO bits: */
-#define   SDVO_ENABLE				(1 << 31)
+#define   SDVO_ENABLE				__BIT(31)
 #define   SDVO_PIPE_SEL(pipe)			((pipe) << 30)
 #define   SDVO_PIPE_SEL_MASK			(1 << 30)
 #define   SDVO_PIPE_B_SELECT			(1 << 30)
@@ -3435,7 +3435,7 @@ enum skl_disp_power_wells {
  * Enables the LVDS port.  This bit must be set before DPLLs are enabled, as
  * the DPLL semantics change when the LVDS is assigned to that pipe.
  */
-#define   LVDS_PORT_EN			(1 << 31)
+#define   LVDS_PORT_EN			(1U << 31)
 /* Selects pipe B for LVDS data.  Must be set on pre-965. */
 #define   LVDS_PIPEB_SELECT		(1 << 30)
 #define   LVDS_PIPE_MASK		(1 << 30)
@@ -3488,7 +3488,7 @@ enum skl_disp_power_wells {
 #define   VIDEO_DIP_VSC_DATA_SIZE	36
 #define VIDEO_DIP_CTL		0x61170
 /* Pre HSW: */
-#define   VIDEO_DIP_ENABLE		(1 << 31)
+#define   VIDEO_DIP_ENABLE		(1U << 31)
 #define   VIDEO_DIP_PORT(port)		((port) << 29)
 #define   VIDEO_DIP_PORT_MASK		(3 << 29)
 #define   VIDEO_DIP_ENABLE_GCP		(1 << 25)
@@ -3514,7 +3514,7 @@ enum skl_disp_power_wells {
 
 /* Panel power sequencing */
 #define PP_STATUS	0x61200
-#define   PP_ON		(1 << 31)
+#define   PP_ON		(1UL << 31)
 /*
  * Indicates that all dependencies of the panel are on:
  *
@@ -3547,7 +3547,7 @@ enum skl_disp_power_wells {
 
 /* Panel fitting */
 #define PFIT_CONTROL	(dev_priv->info.display_mmio_offset + 0x61230)
-#define   PFIT_ENABLE		(1 << 31)
+#define   PFIT_ENABLE		__BIT(31)
 #define   PFIT_PIPE_MASK	(3 << 29)
 #define   PFIT_PIPE_SHIFT	29
 #define   VERT_INTERP_DISABLE	(0 << 10)
@@ -3595,7 +3595,7 @@ enum skl_disp_power_wells {
 
 /* Backlight control */
 #define BLC_PWM_CTL2	(dev_priv->info.display_mmio_offset + 0x61250) /* 965+ only */
-#define   BLM_PWM_ENABLE		(1 << 31)
+#define   BLM_PWM_ENABLE		__BIT(31)
 #define   BLM_COMBINATION_MODE		(1 << 30) /* gen4 only */
 #define   BLM_PIPE_SELECT		(1 << 29)
 #define   BLM_PIPE_SELECT_IVB		(3 << 29)
@@ -3652,7 +3652,7 @@ enum skl_disp_power_wells {
 /* PCH CTL1 is totally different, all but the below bits are reserved. CTL2 is
  * like the normal CTL from gen4 and earlier. Hooray for confusing naming. */
 #define BLC_PWM_PCH_CTL1	0xc8250
-#define   BLM_PCH_PWM_ENABLE			(1 << 31)
+#define   BLM_PCH_PWM_ENABLE			__BIT(31)
 #define   BLM_PCH_OVERRIDE_ENABLE		(1 << 30)
 #define   BLM_PCH_POLARITY			(1 << 29)
 #define BLC_PWM_PCH_CTL2	0xc8254
@@ -3690,7 +3690,7 @@ enum skl_disp_power_wells {
 /* TV port control */
 #define TV_CTL			0x68000
 /* Enables the TV encoder */
-# define TV_ENC_ENABLE			(1 << 31)
+# define TV_ENC_ENABLE			(1U << 31)
 /* Sources the TV encoder input from pipe B instead of A. */
 # define TV_ENC_PIPEB_SELECT		(1 << 30)
 /* Outputs composite video (DAC A only) */
@@ -3889,7 +3889,7 @@ enum skl_disp_power_wells {
 
 #define TV_H_CTL_2		0x68034
 /* Enables the colorburst (needed for non-component color) */
-# define TV_BURST_ENA			(1 << 31)
+# define TV_BURST_ENA			(1U << 31)
 /* Offset of the colorburst from the start of hsync, in pixels minus one. */
 # define TV_HBURST_START_SHIFT		16
 # define TV_HBURST_START_MASK		0x1fff0000
@@ -3934,7 +3934,7 @@ enum skl_disp_power_wells {
 
 #define TV_V_CTL_3		0x68044
 /* Enables generation of the equalization signal */
-# define TV_EQUAL_ENA			(1 << 31)
+# define TV_EQUAL_ENA			(1U << 31)
 /* Length of vsync, in half lines */
 # define TV_VEQ_LEN_MASK		0x007f0000
 # define TV_VEQ_LEN_SHIFT		16
@@ -4008,7 +4008,7 @@ enum skl_disp_power_wells {
 
 #define TV_SC_CTL_1		0x68060
 /* Turns on the first subcarrier phase generation DDA */
-# define TV_SC_DDA1_EN			(1 << 31)
+# define TV_SC_DDA1_EN			(1U << 31)
 /* Turns on the first subcarrier phase generation DDA */
 # define TV_SC_DDA2_EN			(1 << 30)
 /* Turns on the first subcarrier phase generation DDA */
@@ -4071,7 +4071,7 @@ enum skl_disp_power_wells {
  * If set, the rest of the registers are ignored, and the calculated values can
  * be read back from the register.
  */
-# define TV_AUTO_SCALE			(1 << 31)
+# define TV_AUTO_SCALE			(1U << 31)
 /*
  * Disables the vertical filter.
  *
@@ -4173,7 +4173,7 @@ enum skl_disp_power_wells {
 #define VLV_DP_C			(VLV_DISPLAY_BASE + DP_C)
 #define CHV_DP_D			(VLV_DISPLAY_BASE + DP_D)
 
-#define   DP_PORT_EN			(1 << 31)
+#define   DP_PORT_EN			__BIT(31)
 #define   DP_PIPEB_SELECT		(1 << 30)
 #define   DP_PIPE_MASK			(1 << 30)
 #define   DP_PIPE_SELECT_CHV(pipe)	((pipe) << 16)
@@ -4286,7 +4286,7 @@ enum skl_disp_power_wells {
 #define DPD_AUX_CH_DATA4		0x64320
 #define DPD_AUX_CH_DATA5		0x64324
 
-#define   DP_AUX_CH_CTL_SEND_BUSY	    (1 << 31)
+#define   DP_AUX_CH_CTL_SEND_BUSY	    (1UL << 31)
 #define   DP_AUX_CH_CTL_DONE		    (1 << 30)
 #define   DP_AUX_CH_CTL_INTERRUPT	    (1 << 29)
 #define   DP_AUX_CH_CTL_TIME_OUT_ERROR	    (1 << 28)
@@ -4373,7 +4373,7 @@ enum skl_disp_power_wells {
 #define   DSL_LINEMASK_GEN2	0x00000fff
 #define   DSL_LINEMASK_GEN3	0x00001fff
 #define _PIPEACONF		0x70008
-#define   PIPECONF_ENABLE	(1<<31)
+#define   PIPECONF_ENABLE	(1UL << 31)
 #define   PIPECONF_DISABLE	0
 #define   PIPECONF_DOUBLE_WIDE	(1<<30)
 #define   I965_PIPECONF_ACTIVE	(1<<30)
@@ -4590,7 +4590,7 @@ enum skl_disp_power_wells {
 /* pnv/gen4/g4x/vlv/chv */
 #define DSPFW1			(dev_priv->info.display_mmio_offset + 0x70034)
 #define   DSPFW_SR_SHIFT		23
-#define   DSPFW_SR_MASK			(0x1ff<<23)
+#define   DSPFW_SR_MASK			(0x1ffU<<23)
 #define   DSPFW_CURSORB_SHIFT		16
 #define   DSPFW_CURSORB_MASK		(0x3f<<16)
 #define   DSPFW_PLANEB_SHIFT		8
@@ -4616,7 +4616,7 @@ enum skl_disp_power_wells {
 #define   DSPFW_SPRITEA_MASK		(0x7f<<0) /* g4x */
 #define   DSPFW_SPRITEA_MASK_VLV	(0xff<<0) /* vlv/chv */
 #define DSPFW3			(dev_priv->info.display_mmio_offset + 0x7003c)
-#define   DSPFW_HPLL_SR_EN		(1<<31)
+#define   DSPFW_HPLL_SR_EN		(1U<<31)
 #define   PINEVIEW_SELF_REFRESH_EN	(1<<30)
 #define   DSPFW_CURSOR_SR_SHIFT		24
 #define   DSPFW_CURSOR_SR_MASK		(0x3f<<24)
@@ -4801,7 +4801,7 @@ enum skl_disp_power_wells {
 
 /* define the Watermark register on Ironlake */
 #define WM0_PIPEA_ILK		0x45100
-#define  WM0_PIPE_PLANE_MASK	(0xffff<<16)
+#define  WM0_PIPE_PLANE_MASK	(0xffffUL << 16)
 #define  WM0_PIPE_PLANE_SHIFT	16
 #define  WM0_PIPE_SPRITE_MASK	(0xff<<8)
 #define  WM0_PIPE_SPRITE_SHIFT	8
@@ -4810,7 +4810,7 @@ enum skl_disp_power_wells {
 #define WM0_PIPEB_ILK		0x45104
 #define WM0_PIPEC_IVB		0x45200
 #define WM1_LP_ILK		0x45108
-#define  WM1_LP_SR_EN		(1<<31)
+#define  WM1_LP_SR_EN		(1UL << 31)
 #define  WM1_LP_LATENCY_SHIFT	24
 #define  WM1_LP_LATENCY_MASK	(0x7f<<24)
 #define  WM1_LP_FBC_MASK	(0xf<<20)
@@ -4938,7 +4938,7 @@ enum skl_disp_power_wells {
 
 /* Display A control */
 #define _DSPACNTR				0x70180
-#define   DISPLAY_PLANE_ENABLE			(1<<31)
+#define   DISPLAY_PLANE_ENABLE			(1UL << 31)
 #define   DISPLAY_PLANE_DISABLE			0
 #define   DISPPLANE_GAMMA_ENABLE		(1<<30)
 #define   DISPPLANE_GAMMA_DISABLE		0
@@ -5059,7 +5059,7 @@ enum skl_disp_power_wells {
 
 /* Sprite A control */
 #define _DVSACNTR		0x72180
-#define   DVS_ENABLE		(1<<31)
+#define   DVS_ENABLE		__BIT(31)
 #define   DVS_GAMMA_ENABLE	(1<<30)
 #define   DVS_PIXFORMAT_MASK	(3<<25)
 #define   DVS_FORMAT_YUV422	(0<<25)
@@ -5126,7 +5126,7 @@ enum skl_disp_power_wells {
 #define DVSSURFLIVE(pipe) _PIPE(pipe, _DVSASURFLIVE, _DVSBSURFLIVE)
 
 #define _SPRA_CTL		0x70280
-#define   SPRITE_ENABLE			(1<<31)
+#define   SPRITE_ENABLE			(1UL << 31)
 #define   SPRITE_GAMMA_ENABLE		(1<<30)
 #define   SPRITE_PIXFORMAT_MASK		(7<<25)
 #define   SPRITE_FORMAT_YUV422		(0<<25)
@@ -5466,7 +5466,7 @@ enum skl_disp_power_wells {
 
 /* VBIOS regs */
 #define VGACNTRL		0x71400
-# define VGA_DISP_DISABLE			(1 << 31)
+# define VGA_DISP_DISABLE			__BIT(31)
 # define VGA_2X_MODE				(1 << 30)
 # define VGA_PIPE_B_SELECT			(1 << 29)
 
@@ -5558,7 +5558,7 @@ enum skl_disp_power_wells {
 /* IVB+ has 3 fitters, 0 is 7x5 capable, the other two only 3x3 */
 #define _PFA_CTL_1               0x68080
 #define _PFB_CTL_1               0x68880
-#define  PF_ENABLE              (1<<31)
+#define  PF_ENABLE              (1UL << 31)
 #define  PF_PIPE_SEL_MASK_IVB	(3<<29)
 #define  PF_PIPE_SEL_IVB(pipe)	((pipe)<<29)
 #define  PF_FILTER_MASK		(3<<23)
@@ -5727,7 +5727,7 @@ enum skl_disp_power_wells {
 #define  MMIO_TIMEOUT_US(us)	((us) << 0)
 
 /* interrupts */
-#define DE_MASTER_IRQ_CONTROL   (1 << 31)
+#define DE_MASTER_IRQ_CONTROL   (1UL << 31)
 #define DE_SPRITEB_FLIP_DONE    (1 << 29)
 #define DE_SPRITEA_FLIP_DONE    (1 << 28)
 #define DE_PLANEB_FLIP_DONE     (1 << 27)
@@ -5791,7 +5791,7 @@ enum skl_disp_power_wells {
 #define GTIER   0x4401c
 
 #define GEN8_MASTER_IRQ			0x44200
-#define  GEN8_MASTER_IRQ_CONTROL	(1<<31)
+#define  GEN8_MASTER_IRQ_CONTROL	(1UL << 31)
 #define  GEN8_PCU_IRQ			(1<<30)
 #define  GEN8_DE_PCH_IRQ		(1<<23)
 #define  GEN8_DE_MISC_IRQ		(1<<22)
@@ -5823,7 +5823,7 @@ enum skl_disp_power_wells {
 #define GEN8_DE_PIPE_IMR(pipe) (0x44404 + (0x10 * (pipe)))
 #define GEN8_DE_PIPE_IIR(pipe) (0x44408 + (0x10 * (pipe)))
 #define GEN8_DE_PIPE_IER(pipe) (0x4440c + (0x10 * (pipe)))
-#define  GEN8_PIPE_FIFO_UNDERRUN	(1 << 31)
+#define  GEN8_PIPE_FIFO_UNDERRUN	(1UL << 31)
 #define  GEN8_PIPE_CDCLK_CRC_ERROR	(1 << 29)
 #define  GEN8_PIPE_CDCLK_CRC_DONE	(1 << 28)
 #define  GEN8_PIPE_CURSOR_FAULT		(1 << 10)
@@ -6053,7 +6053,7 @@ enum skl_disp_power_wells {
 #define SDE_AUDIO_POWER_C_CPT	(1 << 30)
 #define SDE_AUDIO_POWER_B_CPT	(1 << 29)
 #define SDE_AUDIO_POWER_SHIFT_CPT   29
-#define SDE_AUDIO_POWER_MASK_CPT    (7 << 29)
+#define SDE_AUDIO_POWER_MASK_CPT    (7UL << 29)
 #define SDE_AUXD_CPT		(1 << 27)
 #define SDE_AUXC_CPT		(1 << 26)
 #define SDE_AUXB_CPT		(1 << 25)
@@ -6102,7 +6102,7 @@ enum skl_disp_power_wells {
 #define SDEIER  0xc400c
 
 #define SERR_INT			0xc4040
-#define  SERR_INT_POISON		(1<<31)
+#define  SERR_INT_POISON		(1U<<31)
 #define  SERR_INT_TRANS_C_FIFO_UNDERRUN	(1<<6)
 #define  SERR_INT_TRANS_B_FIFO_UNDERRUN	(1<<3)
 #define  SERR_INT_TRANS_A_FIFO_UNDERRUN	(1<<0)
@@ -6378,7 +6378,7 @@ enum skl_disp_power_wells {
 #define PCH_TRANSCONF(pipe) _PIPE(pipe, _PCH_TRANSACONF, _PCH_TRANSBCONF)
 #define LPT_TRANSCONF		_PCH_TRANSACONF /* lpt has only one transcoder */
 #define  TRANS_DISABLE          (0<<31)
-#define  TRANS_ENABLE           (1<<31)
+#define  TRANS_ENABLE           __BIT(31)
 #define  TRANS_STATE_MASK       (1<<30)
 #define  TRANS_STATE_DISABLE    (0<<30)
 #define  TRANS_STATE_ENABLE     (1<<30)
@@ -6403,7 +6403,7 @@ enum skl_disp_power_wells {
 #define _TRANSA_CHICKEN2	 0xf0064
 #define _TRANSB_CHICKEN2	 0xf1064
 #define TRANS_CHICKEN2(pipe) _PIPE(pipe, _TRANSA_CHICKEN2, _TRANSB_CHICKEN2)
-#define  TRANS_CHICKEN2_TIMING_OVERRIDE			(1<<31)
+#define  TRANS_CHICKEN2_TIMING_OVERRIDE			__BIT(31)
 #define  TRANS_CHICKEN2_FDI_POLARITY_REVERSED		(1<<29)
 #define  TRANS_CHICKEN2_FRAME_START_DELAY_MASK		(3<<27)
 #define  TRANS_CHICKEN2_DISABLE_DEEP_COLOR_COUNTER	(1<<26)
@@ -6439,7 +6439,7 @@ enum skl_disp_power_wells {
 #define _FDI_TXB_CTL             0x61100
 #define FDI_TX_CTL(pipe) _PIPE(pipe, _FDI_TXA_CTL, _FDI_TXB_CTL)
 #define  FDI_TX_DISABLE         (0<<31)
-#define  FDI_TX_ENABLE          (1<<31)
+#define  FDI_TX_ENABLE          __BIT(31)
 #define  FDI_LINK_TRAIN_PATTERN_1       (0<<28)
 #define  FDI_LINK_TRAIN_PATTERN_2       (1<<28)
 #define  FDI_LINK_TRAIN_PATTERN_IDLE    (2<<28)
@@ -6488,7 +6488,7 @@ enum skl_disp_power_wells {
 #define _FDI_RXA_CTL             0xf000c
 #define _FDI_RXB_CTL             0xf100c
 #define FDI_RX_CTL(pipe) _PIPE(pipe, _FDI_RXA_CTL, _FDI_RXB_CTL)
-#define  FDI_RX_ENABLE          (1<<31)
+#define  FDI_RX_ENABLE          __BIT(31)
 /* train, dp width same as FDI_TX */
 #define  FDI_FS_ERRC_ENABLE		(1<<27)
 #define  FDI_FE_ERRC_ENABLE		(1<<26)
@@ -6583,8 +6583,8 @@ enum skl_disp_power_wells {
 
 #define PCH_PP_STATUS		0xc7200
 #define PCH_PP_CONTROL		0xc7204
-#define  PANEL_UNLOCK_REGS	(0xabcd << 16)
-#define  PANEL_UNLOCK_MASK	(0xffff << 16)
+#define  PANEL_UNLOCK_REGS	(0xabcdUL << 16)
+#define  PANEL_UNLOCK_MASK	(0xffffUL << 16)
 #define  BXT_POWER_CYCLE_DELAY_MASK	(0x1f0)
 #define  BXT_POWER_CYCLE_DELAY_SHIFT	4
 #define  EDP_FORCE_VDD		(1 << 3)
@@ -6593,11 +6593,11 @@ enum skl_disp_power_wells {
 #define  PANEL_POWER_OFF	(0 << 0)
 #define  PANEL_POWER_ON		(1 << 0)
 #define PCH_PP_ON_DELAYS	0xc7208
-#define  PANEL_PORT_SELECT_MASK	(3 << 30)
-#define  PANEL_PORT_SELECT_LVDS	(0 << 30)
-#define  PANEL_PORT_SELECT_DPA	(1 << 30)
-#define  PANEL_PORT_SELECT_DPC	(2 << 30)
-#define  PANEL_PORT_SELECT_DPD	(3 << 30)
+#define  PANEL_PORT_SELECT_MASK	(3U << 30)
+#define  PANEL_PORT_SELECT_LVDS	(0U << 30)
+#define  PANEL_PORT_SELECT_DPA	(1U << 30)
+#define  PANEL_PORT_SELECT_DPC	(2U << 30)
+#define  PANEL_PORT_SELECT_DPD	(3U << 30)
 #define  PANEL_POWER_UP_DELAY_MASK	(0x1fff0000)
 #define  PANEL_POWER_UP_DELAY_SHIFT	16
 #define  PANEL_LIGHT_ON_DELAY_MASK	(0x1fff)
@@ -6665,7 +6665,7 @@ enum skl_disp_power_wells {
 #define TRANS_DP_CTL_B		0xe1300
 #define TRANS_DP_CTL_C		0xe2300
 #define TRANS_DP_CTL(pipe)	_PIPE(pipe, TRANS_DP_CTL_A, TRANS_DP_CTL_B)
-#define  TRANS_DP_OUTPUT_ENABLE	(1<<31)
+#define  TRANS_DP_OUTPUT_ENABLE	__BIT(31)
 #define  TRANS_DP_PORT_SEL_B	(0<<29)
 #define  TRANS_DP_PORT_SEL_C	(1<<29)
 #define  TRANS_DP_PORT_SEL_D	(2<<29)
@@ -6816,7 +6816,7 @@ enum skl_disp_power_wells {
 #define   VLV_RC_CTL_CTX_RST_PARALLEL		(1<<24)
 #define   GEN7_RC_CTL_TO_MODE			(1<<28)
 #define   GEN6_RC_CTL_EI_MODE(x)		((x)<<27)
-#define   GEN6_RC_CTL_HW_ENABLE			(1<<31)
+#define   GEN6_RC_CTL_HW_ENABLE			(1UL << 31)
 #define GEN6_RP_DOWN_TIMEOUT			0xA010
 #define GEN6_RP_INTERRUPT_LIMITS		0xA014
 #define GEN6_RPSTAT1				0xA01C
@@ -6871,7 +6871,7 @@ enum skl_disp_power_wells {
 #define VLV_RCEDATA				0xA0BC
 #define GEN6_RC6pp_THRESHOLD			0xA0C0
 #define GEN6_PMINTRMSK				0xA168
-#define GEN8_PMINTR_REDIRECT_TO_NON_DISP	(1<<31)
+#define GEN8_PMINTR_REDIRECT_TO_NON_DISP	(1UL <<31)
 #define VLV_PWRDWNUPCTL				0xA294
 #define GEN9_MEDIA_PG_IDLE_HYSTERESIS		0xA0C4
 #define GEN9_RENDER_PG_IDLE_HYSTERESIS		0xA0C8
@@ -6922,7 +6922,7 @@ enum skl_disp_power_wells {
 #define VLV_MEDIA_C0_COUNT			0x13811C
 
 #define GEN6_PCODE_MAILBOX			0x138124
-#define   GEN6_PCODE_READY			(1<<31)
+#define   GEN6_PCODE_READY			(1UL << 31)
 #define	  GEN6_PCODE_WRITE_RC6VIDS		0x4
 #define	  GEN6_PCODE_READ_RC6VIDS		0x5
 #define     GEN6_ENCODE_RC6_VID(mv)		(((mv) - 245) / 5)
@@ -7192,7 +7192,7 @@ enum skl_disp_power_wells {
 #define HSW_PWR_WELL_DRIVER			0x45404 /* CTL2 */
 #define HSW_PWR_WELL_KVMR			0x45408 /* CTL3 */
 #define HSW_PWR_WELL_DEBUG			0x4540C /* CTL4 */
-#define   HSW_PWR_WELL_ENABLE_REQUEST		(1<<31)
+#define   HSW_PWR_WELL_ENABLE_REQUEST		(1UL << 31)
 #define   HSW_PWR_WELL_STATE_ENABLED		(1<<30)
 #define HSW_PWR_WELL_CTL5			0x45410
 #define   HSW_PWR_WELL_ENABLE_SINGLE_STEP	(1<<31)
@@ -7214,7 +7214,7 @@ enum skl_disp_power_wells {
 #define TRANS_DDI_FUNC_CTL_EDP		0x6F400
 #define TRANS_DDI_FUNC_CTL(tran) _TRANSCODER2(tran, TRANS_DDI_FUNC_CTL_A)
 
-#define  TRANS_DDI_FUNC_ENABLE		(1<<31)
+#define  TRANS_DDI_FUNC_ENABLE		(1UL << 31)
 /* Those bits are ignored by pipe EDP since it can only connect to DDI A */
 #define  TRANS_DDI_PORT_MASK		(7<<28)
 #define  TRANS_DDI_PORT_SHIFT		28
@@ -7245,7 +7245,7 @@ enum skl_disp_power_wells {
 #define DP_TP_CTL_A			0x64040
 #define DP_TP_CTL_B			0x64140
 #define DP_TP_CTL(port) _PORT(port, DP_TP_CTL_A, DP_TP_CTL_B)
-#define  DP_TP_CTL_ENABLE			(1<<31)
+#define  DP_TP_CTL_ENABLE			(1UL << 31)
 #define  DP_TP_CTL_MODE_SST			(0<<27)
 #define  DP_TP_CTL_MODE_MST			(1<<27)
 #define  DP_TP_CTL_FORCE_ACT			(1<<25)
@@ -7275,7 +7275,7 @@ enum skl_disp_power_wells {
 #define DDI_BUF_CTL_A				0x64000
 #define DDI_BUF_CTL_B				0x64100
 #define DDI_BUF_CTL(port) _PORT(port, DDI_BUF_CTL_A, DDI_BUF_CTL_B)
-#define  DDI_BUF_CTL_ENABLE			(1<<31)
+#define  DDI_BUF_CTL_ENABLE			(1UL << 31)
 #define  DDI_BUF_TRANS_SELECT(n)	((n) << 24)
 #define  DDI_BUF_EMP_MASK			(0xf<<24)
 #define  DDI_BUF_PORT_REVERSAL			(1<<16)
@@ -7334,7 +7334,7 @@ enum skl_disp_power_wells {
 
 /* SPLL */
 #define SPLL_CTL			0x46020
-#define  SPLL_PLL_ENABLE		(1<<31)
+#define  SPLL_PLL_ENABLE		(1UL << 31)
 #define  SPLL_PLL_SSC			(1<<28)
 #define  SPLL_PLL_NON_SSC		(2<<28)
 #define  SPLL_PLL_LCPLL			(3<<28)
@@ -7348,7 +7348,7 @@ enum skl_disp_power_wells {
 #define WRPLL_CTL1			0x46040
 #define WRPLL_CTL2			0x46060
 #define WRPLL_CTL(pll)			(pll == 0 ? WRPLL_CTL1 : WRPLL_CTL2)
-#define  WRPLL_PLL_ENABLE		(1<<31)
+#define  WRPLL_PLL_ENABLE		(1UL << 31)
 #define  WRPLL_PLL_SSC			(1<<28)
 #define  WRPLL_PLL_NON_SSC		(2<<28)
 #define  WRPLL_PLL_LCPLL		(3<<28)
@@ -7371,7 +7371,7 @@ enum skl_disp_power_wells {
 #define  PORT_CLK_SEL_LCPLL_1350	(1<<29)
 #define  PORT_CLK_SEL_LCPLL_810		(2<<29)
 #define  PORT_CLK_SEL_SPLL		(3<<29)
-#define  PORT_CLK_SEL_WRPLL(pll)	(((pll)+4)<<29)
+#define  PORT_CLK_SEL_WRPLL(pll)	(((u32)(pll)+4)<<29)
 #define  PORT_CLK_SEL_WRPLL1		(4U<<29)
 #define  PORT_CLK_SEL_WRPLL2		(5U<<29)
 #define  PORT_CLK_SEL_NONE		(7U<<29)
@@ -7402,7 +7402,7 @@ enum skl_disp_power_wells {
 
 /* LCPLL Control */
 #define LCPLL_CTL			0x130040
-#define  LCPLL_PLL_DISABLE		(1<<31)
+#define  LCPLL_PLL_DISABLE		(1UL << 31)
 #define  LCPLL_PLL_LOCK			(1<<30)
 #define  LCPLL_CLK_FREQ_MASK		(3<<26)
 #define  LCPLL_CLK_FREQ_450		(0<<26)
@@ -7439,7 +7439,7 @@ enum skl_disp_power_wells {
 /* LCPLL_CTL */
 #define LCPLL1_CTL		0x46010
 #define LCPLL2_CTL		0x46014
-#define  LCPLL_PLL_ENABLE	(1<<31)
+#define  LCPLL_PLL_ENABLE	(1UL << 31)
 
 /* DPLL control1 */
 #define DPLL_CTRL1		0x6C058

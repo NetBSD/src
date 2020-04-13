@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.92.4.1 2019/06/10 22:10:14 christos Exp $
+#	$NetBSD: mknative-gcc,v 1.92.4.2 2020/04/13 08:05:34 martin Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -422,6 +422,15 @@ __EOF__
 	if [ "${MACHINE_ARCH}" = "i386" -o "${MACHINE_ARCH}" = "x86_64" ]; then
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/i386-builtin-types.inc <$_TMPDIR/gcc/i386-builtin-types.inc
 	fi
+
+	case "${MACHINE_ARCH}" in
+	(*arm*)
+		d=$_OUTDIRBASE/usr.bin/$_subdir/arch/${MACHINE_ARCH}
+		for f in arm-cpu.h arm-cpu-cdata.h arm-cpu-data.h arm-isa.h; do
+			write_c $d/$f <$_TMPDIR/gcc/$f
+		done
+		;;
+	esac
 }
 
 ##### main #####

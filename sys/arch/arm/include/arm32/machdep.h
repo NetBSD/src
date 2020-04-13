@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.21.14.2 2020/04/08 14:07:29 martin Exp $ */
+/* $NetBSD: machdep.h,v 1.21.14.3 2020/04/13 08:03:35 martin Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -64,7 +64,7 @@ void dumpsys(void);
  * note that we use void * as all the platforms have different ideas on what
  * the structure is
  */
-u_int initarm(void *);
+vaddr_t initarm(void *);
 struct pmap_devmap;
 struct boot_physmem;
 

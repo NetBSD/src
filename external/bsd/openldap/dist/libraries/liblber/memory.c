@@ -1,9 +1,9 @@
-/*	$NetBSD: memory.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: memory.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memory.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $");
+__RCSID("$NetBSD: memory.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $");
 
 #include "portable.h"
 
@@ -487,7 +487,7 @@ struct berval *
 ber_dupbv_x(
 	struct berval *dst, struct berval *src, void *ctx )
 {
-	struct berval *new;
+	struct berval *new, tmp;
 
 	if( src == NULL ) {
 		ber_errno = LBER_ERROR_PARAM;
@@ -495,7 +495,7 @@ ber_dupbv_x(
 	}
 
 	if ( dst ) {
-		new = dst;
+		new = &tmp;
 	} else {
 		if(( new = ber_memalloc_x( sizeof(struct berval), ctx )) == NULL ) {
 			return NULL;
@@ -505,18 +505,23 @@ ber_dupbv_x(
 	if ( src->bv_val == NULL ) {
 		new->bv_val = NULL;
 		new->bv_len = 0;
-		return new;
+	} else {
+
+		if(( new->bv_val = ber_memalloc_x( src->bv_len + 1, ctx )) == NULL ) {
+			if ( !dst )
+				ber_memfree_x( new, ctx );
+			return NULL;
+		}
+
+		AC_MEMCPY( new->bv_val, src->bv_val, src->bv_len );
+		new->bv_val[src->bv_len] = '\0';
+		new->bv_len = src->bv_len;
 	}
 
-	if(( new->bv_val = ber_memalloc_x( src->bv_len + 1, ctx )) == NULL ) {
-		if ( !dst )
-			ber_memfree_x( new, ctx );
-		return NULL;
+	if ( dst ) {
+		*dst = *new;
+		new = dst;
 	}
-
-	AC_MEMCPY( new->bv_val, src->bv_val, src->bv_len );
-	new->bv_val[src->bv_len] = '\0';
-	new->bv_len = src->bv_len;
 
 	return new;
 }

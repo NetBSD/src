@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.62.18.1 2019/06/10 22:06:25 christos Exp $ */
+/* $NetBSD: locore.s,v 1.62.18.2 2020/04/13 08:03:56 martin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
+#include <machine/board.h>
 
 #include "ksyms.h"
 
@@ -116,13 +117,13 @@ ASENTRY_NOPROFILE(start)
 	RELOC(lowram,%a0)
 	movl	%a5,%a0@		| store start of physical memory
 
-	movl	#0x41000000,%a0		| available memory in bytes
+	movl	#PROM_ADDR,%a0		| available memory in bytes
 	movl	%a0@(12),%a0		| (int *)base[3])
 	movl	%a0@,%d5
 	RELOC(memavail,%a0)
 	movl	%d5,%a0@		| save memavail
 
-	movl	#0x41000000,%a0		| planemask; 0x0f or 0xff
+	movl	#PROM_ADDR,%a0		| planemask; 0x0f or 0xff
 	movl	%a0@(184),%a0		| (int *)base[46]
 	movl	%a0@,%d5
 	RELOC(hwplanemask,%a0)
@@ -157,7 +158,7 @@ Lstart0:
 	 * save argument of 'x' command on boot per machine type
 	 * XXX: assume CPU_68040 is LUNA-II
 	 */
-	movl	#0x41000000,%a0
+	movl	#PROM_ADDR,%a0
 	cmpl	#CPU_68040,%d0		| 68040?
 	jne	1f			| no, assume 68030 LUNA
 	movl	%a0@(8),%a0		| arg at (char *)base[2] on LUNA-II
@@ -644,9 +645,9 @@ ENTRY_NOPROFILE(intrhand_vectored)
 #if 1	/* XXX wild timer -- how can I disable/enable the interrupt? */
 ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(idepth)
-	btst	#7,0x63000000		| check whether system clock
+	btst	#7,OBIO_CLOCK		| check whether system clock
 	beq	1f
-	movb	#1,0x63000000		| clear the interrupt
+	movb	#1,OBIO_CLOCK		| clear the interrupt
 	tstl	_C_LABEL(clock_enable)	| is hardclock() available?
 	jeq	1f
 	INTERRUPT_SAVEREG
@@ -887,7 +888,7 @@ Lbootcommon:
 	movl	#0,%d3
 	movc	%d3,%vbr		| monitor %vbr
 
-	movl	#0x41000000,%a0		| base = (int **)0x4100.0000
+	movl	#PROM_ADDR,%a0		| base = (int **)0x4100.0000
 	movl	%a0@,%d0		| *((int *)base[0])
 	movc	%d0,%isp		| set initial stack pointer
 	movc	%d0,%msp		| set initial stack pointer

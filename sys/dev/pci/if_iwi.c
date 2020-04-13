@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.107.2.2 2020/04/08 14:08:09 martin Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.107.2.3 2020/04/13 08:04:26 martin Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.107.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.107.2.3 2020/04/13 08:04:26 martin Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -630,12 +630,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 	memset(ring->desc, 0, IWI_TX_DESC_SIZE * count);
 
 	ring->data = malloc(count * sizeof (struct iwi_tx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	    M_WAITOK | M_ZERO);
 	ring->count = count;
 
 	/*
@@ -725,13 +720,7 @@ iwi_alloc_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring, int count)
 	ring->cur = 0;
 
 	ring->data = malloc(count * sizeof (struct iwi_rx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
-
+	    M_WAITOK | M_ZERO);
 	ring->count = count;
 
 	/*

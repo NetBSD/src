@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd1.c,v 1.3 2011/06/18 06:44:27 matt Exp $ */
+/* 	$NetBSD: design_gsrd1.c,v 1.3.54.1 2020/04/13 08:03:49 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.3 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.3.54.1 2020/04/13 08:03:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,11 +373,7 @@ ll_dmac_intr_establish(int chan, void (*func)(void *), void *arg)
 	if (cdmac_intrs[chan] != NULL)
 		return (NULL);
 
-	ih = malloc(sizeof(struct cdmac_intr_handle), M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(struct cdmac_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->cih_func = func;
 	ih->cih_arg = arg;
 

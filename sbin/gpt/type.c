@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.14.2.1 2019/06/10 22:05:33 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.14.2.2 2020/04/13 08:03:20 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ struct gpt_cmd c_type = {
 #define usage() gpt_usage(NULL, &c_type)
 
 static void
-change(struct gpt_ent *ent, void *v)
+change(struct gpt_ent *ent, void *v, int backup)
 {
 	gpt_uuid_t *newtype = v;
 	gpt_uuid_copy(ent->ent_type, *newtype);

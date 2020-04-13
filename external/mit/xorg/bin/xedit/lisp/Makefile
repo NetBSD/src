@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.16.1 2020/04/13 08:02:30 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,7 +22,7 @@ CPPFLAGS+=	-DANSI_SOURCE
 
 .PATH:		${X11SRCDIR.xedit}/lisp
 
-CWARNFLAGS.clang+=	-Wno-format
+CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 
 # Ugh. writes to const char *
 COPTS.format.c+=	-Wno-error

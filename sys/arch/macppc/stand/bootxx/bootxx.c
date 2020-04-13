@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.18.64.2 2020/04/08 14:07:44 martin Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.18.64.3 2020/04/13 08:03:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -299,7 +299,7 @@ OF_write(int handle, const void *addr, int len)
 
 int stdout;
 
-void
+static void
 putstrn(const char *s, size_t n)
 {
 	OF_write(stdout, s, n);

@@ -1,3 +1,5 @@
+/*	$NetBSD: map.h,v 1.6.16.1 2020/04/13 08:03:20 martin Exp $	*/
+
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
  * All rights reserved.

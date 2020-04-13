@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -170,9 +170,3 @@ while (0)
 
 #undef FPUTYPE_DEFAULT
 #define FPUTYPE_DEFAULT "vfp"
-
-/* Ensure that libgcc does not attempt to define __[CD]TOR_LIST__[] for APCS,
-   which belongs in crtbegin on NetBSD.  */
-#ifndef __ARM_EABI__
-#define CTOR_LISTS_DEFINED_EXTERNALLY
-#endif

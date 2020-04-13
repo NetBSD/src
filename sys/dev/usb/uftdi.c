@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.67.4.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.67.4.3 2020/04/13 08:04:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67.4.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67.4.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -85,6 +85,10 @@ struct uftdi_softc {
 	int			sc_iface_no;
 
 	enum uftdi_type		sc_type;
+	u_int			sc_flags;
+#define FLAGS_BAUDCLK_12M	0x00000001
+#define FLAGS_ROUNDOFF_232A	0x00000002
+#define FLAGS_BAUDBITS_HINDEX	0x00000004
 	u_int			sc_hdrlen;
 	u_int			sc_chiptype;
 
@@ -96,7 +100,6 @@ struct uftdi_softc {
 	bool			sc_dying;
 
 	u_int			last_lcr;
-
 };
 
 static void	uftdi_get_status(void *, int, u_char *, u_char *);
@@ -225,14 +228,45 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iface_no = uiaa->uiaa_ifaceno;
 	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
 	sc->sc_hdrlen = 0;
-	if (uiaa->uiaa_vendor == USB_VENDOR_FTDI
-	    && uiaa->uiaa_product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
-		sc->sc_type = UFTDI_TYPE_SIO;
-		sc->sc_hdrlen = 1;
-	}
 
 	ddesc = usbd_get_device_descriptor(dev);
 	sc->sc_chiptype = UGETW(ddesc->bcdDevice);
+
+	switch (sc->sc_chiptype) {
+	case 0x0200:
+		if (ddesc->iSerialNumber != 0)
+			sc->sc_flags |= FLAGS_ROUNDOFF_232A;
+		ucaa.ucaa_portno = 0;
+		break;
+	case 0x0400:
+		ucaa.ucaa_portno = 0;
+		break;
+	case 0x0500:
+		sc->sc_flags |= FLAGS_BAUDBITS_HINDEX;
+		ucaa.ucaa_portno = FTDI_PIT_SIOA + sc->sc_iface_no;
+		break;
+	case 0x0600:
+		ucaa.ucaa_portno = 0;
+		break;
+	case 0x0700:
+	case 0x0800:
+	case 0x0900:
+		sc->sc_flags |= FLAGS_BAUDCLK_12M;
+		sc->sc_flags |= FLAGS_BAUDBITS_HINDEX;
+		ucaa.ucaa_portno = FTDI_PIT_SIOA + sc->sc_iface_no;
+		break;
+	case 0x1000:
+		sc->sc_flags |= FLAGS_BAUDBITS_HINDEX;
+		ucaa.ucaa_portno = FTDI_PIT_SIOA + sc->sc_iface_no;
+		break;
+	default:
+		if (sc->sc_chiptype < 0x0200) {
+			sc->sc_type = UFTDI_TYPE_SIO;
+			sc->sc_hdrlen = 1;
+		}
+		ucaa.ucaa_portno = 0;
+		break;
+	}
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -281,7 +315,6 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	ucaa.ucaa_portno = FTDI_PIT_SIOA + sc->sc_iface_no;
 	/* ucaa_bulkin, ucaa_bulkout set above */
 	if (ucaa.ucaa_ibufsize == 0)
 		ucaa.ucaa_ibufsize = UFTDIIBUFSIZE;
@@ -469,13 +502,130 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
+/*
+ * Return true if the given speed is within operational tolerance of the target
+ * speed.  FTDI recommends that the hardware speed be within 3% of nominal.
+ */
+static inline bool
+uftdi_baud_within_tolerance(uint64_t speed, uint64_t target)
+{
+	return ((speed >= (target * 100) / 103) &&
+	    (speed <= (target * 100) / 97));
+}
+
+static int
+uftdi_encode_baudrate(struct uftdi_softc *sc, int speed, int *rate, int *ratehi)
+{
+	static const uint8_t encoded_fraction[8] = {
+	    0, 3, 2, 4, 1, 5, 6, 7
+	};
+	static const uint8_t roundoff_232a[16] = {
+	    0,  1,  0,  1,  0, -1,  2,  1,
+	    0, -1, -2, -3,  4,  3,  2,  1,
+	};
+	uint32_t clk, divisor, fastclk_flag, frac, hwspeed;
+
+	/*
+	 * If this chip has the fast clock capability and the speed is within
+	 * range, use the 12MHz clock, otherwise the standard clock is 3MHz.
+	 */
+	if ((sc->sc_flags & FLAGS_BAUDCLK_12M) && speed >= 1200) {
+		clk = 12000000;
+		fastclk_flag = (1 << 17);
+	} else {
+		clk = 3000000;
+		fastclk_flag = 0;
+	}
+
+	/*
+	 * Make sure the requested speed is reachable with the available clock
+	 * and a 14-bit divisor.
+	 */
+	if (speed < (clk >> 14) || speed > clk)
+		return -1;
+
+	/*
+	 * Calculate the divisor, initially yielding a fixed point number with a
+	 * 4-bit (1/16ths) fraction, then round it to the nearest fraction the
+	 * hardware can handle.  When the integral part of the divisor is
+	 * greater than one, the fractional part is in 1/8ths of the base clock.
+	 * The FT8U232AM chips can handle only 0.125, 0.250, and 0.5 fractions.
+	 * Later chips can handle all 1/8th fractions.
+	 *
+	 * If the integral part of the divisor is 1, a special rule applies: the
+	 * fractional part can only be .0 or .5 (this is a limitation of the
+	 * hardware).  We handle this by truncating the fraction rather than
+	 * rounding, because this only applies to the two fastest speeds the
+	 * chip can achieve and rounding doesn't matter, either you've asked for
+	 * that exact speed or you've asked for something the chip can't do.
+	 *
+	 * For the FT8U232AM chips, use a roundoff table to adjust the result
+	 * to the nearest 1/8th fraction that is supported by the hardware,
+	 * leaving a fixed-point number with a 3-bit fraction which exactly
+	 * represents the math the hardware divider will do.  For later-series
+	 * chips that support all 8 fractional divisors, just round 16ths to
+	 * 8ths by adding 1 and dividing by 2.
+	 */
+	divisor = (clk << 4) / speed;
+	if ((divisor & 0xf) == 1)
+		divisor &= 0xfffffff8;
+	else if (sc->sc_flags & FLAGS_ROUNDOFF_232A)
+		divisor += roundoff_232a[divisor & 0x0f];
+	else
+		divisor += 1;  /* Rounds odd 16ths up to next 8th. */
+	divisor >>= 1;
+
+	/*
+	 * Ensure the resulting hardware speed will be within operational
+	 * tolerance (within 3% of nominal).
+	 */
+	hwspeed = (clk << 3) / divisor;
+	if (!uftdi_baud_within_tolerance(hwspeed, speed))
+		return -1;
+
+	/*
+	 * Re-pack the divisor into hardware format. The lower 14-bits hold the
+	 * integral part, while the upper bits specify the fraction by indexing
+	 * a table of fractions within the hardware which is laid out as:
+	 *    {0.0, 0.5, 0.25, 0.125, 0.325, 0.625, 0.725, 0.875}
+	 * The A-series chips only have the first four table entries; the
+	 * roundoff table logic above ensures that the fractional part for those
+	 * chips will be one of the first four values.
+	 *
+	 * When the divisor is 1 a special encoding applies:  1.0 is encoded as
+	 * 0.0, and 1.5 is encoded as 1.0.  The rounding logic above has already
+	 * ensured that the fraction is either .0 or .5 if the integral is 1.
+	 */
+	frac = divisor & 0x07;
+	divisor >>= 3;
+	if (divisor == 1) {
+		if (frac == 0)
+			divisor = 0;	/* 1.0 becomes 0.0 */
+		else
+			frac = 0;	/* 1.5 becomes 1.0 */
+	}
+	divisor |= (encoded_fraction[frac] << 14) | fastclk_flag;
+
+	*rate = (uint16_t)divisor;
+	*ratehi = (uint16_t)(divisor >> 16);
+
+	/*
+	 * If this chip requires the baud bits to be in the high byte of the
+	 * index word, move the bits up to that location.
+	 */
+	if (sc->sc_flags & FLAGS_BAUDBITS_HINDEX)
+		*ratehi <<= 8;
+
+	return 0;
+}
+
 static int
 uftdi_param(void *vsc, int portno, struct termios *t)
 {
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
 	usbd_status err;
-	int rate, data, flow;
+	int rate, ratehi, rerr, data, flow;
 
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
@@ -507,35 +657,20 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		default:
 			return EINVAL;
 		}
+		ratehi = 0;
 		break;
-
 	case UFTDI_TYPE_8U232AM:
-		switch(t->c_ospeed) {
-		case 300: rate = ftdi_8u232am_b300; break;
-		case 600: rate = ftdi_8u232am_b600; break;
-		case 1200: rate = ftdi_8u232am_b1200; break;
-		case 2400: rate = ftdi_8u232am_b2400; break;
-		case 4800: rate = ftdi_8u232am_b4800; break;
-		case 9600: rate = ftdi_8u232am_b9600; break;
-		case 19200: rate = ftdi_8u232am_b19200; break;
-		case 38400: rate = ftdi_8u232am_b38400; break;
-		case 57600: rate = ftdi_8u232am_b57600; break;
-		case 115200: rate = ftdi_8u232am_b115200; break;
-		case 230400: rate = ftdi_8u232am_b230400; break;
-		case 460800: rate = ftdi_8u232am_b460800; break;
-		case 921600: rate = ftdi_8u232am_b921600; break;
-		default:
+		rerr = uftdi_encode_baudrate(sc, t->c_ospeed, &rate, &ratehi);
+		if (rerr != 0)
 			return EINVAL;
-		}
 		break;
-
 	default:
 		return EINVAL;
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
 	USETW(req.wValue, rate);
-	USETW(req.wIndex, portno);
+	USETW(req.wIndex, portno | ratehi);
 	USETW(req.wLength, 0);
 	DPRINTFN(2,("uftdi_param: reqtype=0x%02x req=0x%02x value=0x%04x "
 		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,

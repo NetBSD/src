@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.92.6.2 2020/04/08 14:07:28 martin Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.92.6.3 2020/04/13 08:03:32 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -86,9 +86,13 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.92.6.2 2020/04/08 14:07:28 martin Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.92.6.3 2020/04/13 08:03:32 martin Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
+
+#ifdef FPU_VFP
+	.fpu vfpv2
+#endif
 
 #undef IRQdisable
 #undef IRQenable
@@ -431,7 +435,7 @@ END(softint_switch)
  * r7 = curcpu()
  */
 ENTRY_NP(softint_tramp)
-	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readust after mi_switch */
+	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readjust after mi_switch */
 	add	r3, r3, #1
 	str	r3, [r7, #(CI_MTX_COUNT)]
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8.12.1 2020/04/08 14:07:39 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8.12.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*	$OpenBSD: ptrace.h,v 1.2 1998/12/01 03:05:44 mickey Exp $	*/
 
@@ -50,6 +50,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_pcoqh
+#define PTRACE_REG_FP(r)	(r)->r_regs[3]
 #define PTRACE_REG_SET_PC(r, v)	do {	\
 	(r)->r_pcoqh = (v);		\
 	(r)->r_pcoqt = (v) + 4;		\

@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_exec.c,v 1.459.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.459.2.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459.2.2 2020/04/13 08:05:03 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -74,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459.2.1 2019/06/10 22:09:03 christos
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/mount.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
@@ -242,9 +246,9 @@ struct emul emul_netbsd = {
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
-krwlock_t exec_lock;
+krwlock_t exec_lock __cacheline_aligned;
 
-static kmutex_t sigobject_lock;
+static kmutex_t sigobject_lock __cacheline_aligned;
 
 /*
  * Data used between a loadvm and execve part of an "exec" operation
@@ -256,7 +260,7 @@ struct execve_data {
 	struct ps_strings	ed_arginfo;
 	char			*ed_argp;
 	const char		*ed_pathstring;
-	char			*ed_resolvedpathbuf;
+	char			*ed_resolvedname;
 	size_t			ed_ps_strings_sz;
 	int			ed_szsigcode;
 	size_t			ed_argslen;
@@ -303,6 +307,40 @@ static struct pool_allocator exec_palloc = {
 	.pa_pagesz = NCARGS
 };
 
+static void
+exec_path_free(struct execve_data *data)
+{              
+	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
+	pathbuf_destroy(data->ed_pathbuf);
+	if (data->ed_resolvedname)
+		PNBUF_PUT(data->ed_resolvedname);
+}
+
+static int
+exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
+    char **rpath)
+{
+	int error;
+	char *p;
+
+	KASSERT(rpath != NULL);
+
+	*rpath = PNBUF_GET();
+	error = vnode_to_path(*rpath, MAXPATHLEN, vp, l, l->l_proc);
+	if (error) {
+		DPRINTF(("%s: can't resolve name for %s, error %d\n",
+		    __func__, epp->ep_kname, error));
+		PNBUF_PUT(*rpath);
+		*rpath = NULL;
+		return error;
+	}
+	epp->ep_resolvedname = *rpath;
+	if ((p = strrchr(*rpath, '/')) != NULL)
+		epp->ep_kname = p + 1;
+	return 0;
+}
+
+
 /*
  * check exec:
  * given an "executable" described in the exec package's namei info,
@@ -330,37 +368,41 @@ static struct pool_allocator exec_palloc = {
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
+check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
+    char **rpath)
 {
 	int		error, i;
 	struct vnode	*vp;
-	struct nameidata nd;
 	size_t		resid;
 
-#if 1
-	// grab the absolute pathbuf here before namei() trashes it.
-	pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
-#endif
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+	if (epp->ep_resolvedname) {
+		struct nameidata nd;
 
-	/* first get the vnode */
-	if ((error = namei(&nd)) != 0)
-		return error;
-	epp->ep_vp = vp = nd.ni_vp;
-#if 0
-	/*
-	 * XXX: can't use nd.ni_pnbuf, because although pb contains an
-	 * absolute path, nd.ni_pnbuf does not if the path contains symlinks.
-	 */
-	/* normally this can't fail */
-	error = copystr(nd.ni_pnbuf, epp->ep_resolvedname, PATH_MAX, NULL);
-	KASSERT(error == 0);
-#endif
+		// grab the absolute pathbuf here before namei() trashes it.
+		pathbuf_copystring(pb, epp->ep_resolvedname, PATH_MAX);
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
+		/* first get the vnode */
+		if ((error = namei(&nd)) != 0)
+			return error;
+
+		epp->ep_vp = vp = nd.ni_vp;
 #ifdef DIAGNOSTIC
-	/* paranoia (take this out once namei stuff stabilizes) */
-	memset(nd.ni_pnbuf, '~', PATH_MAX);
+		/* paranoia (take this out once namei stuff stabilizes) */
+		memset(nd.ni_pnbuf, '~', PATH_MAX);
 #endif
+	} else {
+		struct file *fp;
+
+		if ((error = fd_getvnode(epp->ep_xfd, &fp)) != 0)
+			return error;
+		epp->ep_vp = vp = fp->f_vnode;
+		vref(vp);
+		fd_putfile(epp->ep_xfd);
+		if ((error = exec_resolvename(l, epp, vp, rpath)) != 0)
+			return error;
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
 
 	/* check access and type */
 	if (vp->v_type != VREG) {
@@ -371,6 +413,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 		goto bad1;
 
 	/* get attributes */
+	/* XXX VOP_GETATTR is the only thing that needs LK_EXCLUSIVE here */
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred)) != 0)
 		goto bad1;
 
@@ -386,11 +429,18 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	if ((error = VOP_OPEN(vp, FREAD, l->l_cred)) != 0)
 		goto bad1;
 
+	/* now we have the file, get the exec header */
+	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
+			UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, NULL);
+	if (error)
+		goto bad1;
+
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp);
 
 #if NVERIEXEC > 0
-	error = veriexec_verify(l, vp, epp->ep_resolvedname,
+	error = veriexec_verify(l, vp,
+	    epp->ep_resolvedname ? epp->ep_resolvedname : epp->ep_kname,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
 	    NULL);
 	if (error)
@@ -403,11 +453,6 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 		goto bad2;
 #endif /* PAX_SEGVGUARD */
 
-	/* now we have the file, get the exec header */
-	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, 0, l->l_cred, &resid, NULL);
-	if (error)
-		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
 	/*
@@ -504,7 +549,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	 */
 	kill_vmcmds(&epp->ep_vmcmds);
 
+#if NVERIEXEC > 0 || defined(PAX_SEGVGUARD)
 bad2:
+#endif
 	/*
 	 * close and release the vnode, restore the old one, free the
 	 * pathname buf, and punt.
@@ -547,7 +594,7 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 		syscallarg(char * const *)	envp;
 	} */
 
-	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
+	return execve1(l, true, SCARG(uap, path), -1, SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
@@ -561,7 +608,8 @@ sys_fexecve(struct lwp *l, const struct sys_fexecve_args *uap,
 		syscallarg(char * const *)	envp;
 	} */
 
-	return ENOSYS;
+	return execve1(l, false, NULL, SCARG(uap, fd), SCARG(uap, argp),
+	    SCARG(uap, envp), execve_fetch_element);
 }
 
 /*
@@ -589,6 +637,10 @@ exec_autoload(void)
 		"exec_ecoff",
 		"compat_aoutm68k",
 		"compat_netbsd32",
+#if 0
+		"compat_linux",
+		"compat_linux32",
+#endif
 		"compat_sunos",
 		"compat_sunos32",
 		"compat_ultrix",
@@ -597,7 +649,7 @@ exec_autoload(void)
 	char const * const *list;
 	int i;
 
-	list = (nexecs == 0 ? native : compat);
+	list = nexecs == 0 ? native : compat;
 	for (i = 0; list[i] != NULL; i++) {
 		if (module_autoload(list[i], MODULE_CLASS_EXEC) != 0) {
 			continue;
@@ -607,6 +659,12 @@ exec_autoload(void)
 #endif
 }
 
+/*
+ * Copy the user or kernel supplied upath to the allocated pathbuffer pbp
+ * making it absolute in the process, by prepending the current working
+ * directory if it is not. If offs is supplied it will contain the offset
+ * where the original supplied copy of upath starts.
+ */
 int
 exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
     struct pathbuf **pbp, size_t *offs)
@@ -614,7 +672,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	char *path, *bp;
 	size_t len, tlen;
 	int error;
-	struct cwdinfo *cwdi;
+	struct vnode *dvp;
 
 	path = PNBUF_GET();
 	if (seg == UIO_SYSSPACE) {
@@ -622,11 +680,8 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	} else {
 		error = copyinstr(upath, path, MAXPATHLEN, &len);
 	}
-	if (error) {
-		PNBUF_PUT(path);
-		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
-		return error;
-	}
+	if (error)
+		goto err;
 
 	if (path[0] == '/') {
 		if (offs)
@@ -635,32 +690,33 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	}
 
 	len++;
-	if (len + 1 >= MAXPATHLEN)
-		goto out;
+	if (len + 1 >= MAXPATHLEN) {
+		error = ENAMETOOLONG;
+		goto err;
+	}
 	bp = path + MAXPATHLEN - len;
 	memmove(bp, path, len);
 	*(--bp) = '/';
 
-	cwdi = l->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, MAXPATHLEN / 2,
+	dvp = cwdcdir();
+	error = getcwd_common(dvp, NULL, &bp, path, MAXPATHLEN / 2,
 	    GETCWD_CHECK_ACCESS, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(dvp);
 
-	if (error) {
-		DPRINTF(("%s: getcwd_common path %s %d\n", __func__, path,
-		    error));
-		goto out;
-	}
+	if (error)
+		goto err;
 	tlen = path + MAXPATHLEN - bp;
 
 	memmove(path, bp, tlen);
-	path[tlen] = '\0';
+	path[tlen - 1] = '\0';
 	if (offs)
 		*offs = tlen - len;
 out:
 	*pbp = pathbuf_assimilate(path);
 	return 0;
+err:
+	PNBUF_PUT(path);
+	return error;
 }
 
 vaddr_t
@@ -677,8 +733,9 @@ exec_vm_minaddr(vaddr_t va_min)
 }
 
 static int
-execve_loadvm(struct lwp *l, const char *path, char * const *args,
-	char * const *envs, execve_fetch_element_t fetch_element,
+execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
+	char * const *args, char * const *envs,
+	execve_fetch_element_t fetch_element,
 	struct execve_data * restrict data)
 {
 	struct exec_package	* const epp = &data->ed_pack;
@@ -686,7 +743,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
-	size_t			offs = 0;	// XXX: GCC
 
 	KASSERT(data != NULL);
 
@@ -729,24 +785,36 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 */
 	rw_enter(&p->p_reflock, RW_WRITER);
 
-	/*
-	 * Init the namei data to point the file user's program name.
-	 * This is done here rather than in check_exec(), so that it's
-	 * possible to override this settings if any of makecmd/probe
-	 * functions call check_exec() recursively - for example,
-	 * see exec_script_makecmds().
-	 */
-	if ((error = exec_makepathbuf(l, path, UIO_USERSPACE,
-	    &data->ed_pathbuf, &offs)) != 0)
-		goto clrflg;
-	data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
-	data->ed_resolvedpathbuf = PNBUF_GET();
+	if (has_path) {
+		size_t	offs;
+		/*
+		 * Init the namei data to point the file user's program name.
+		 * This is done here rather than in check_exec(), so that it's
+		 * possible to override this settings if any of makecmd/probe
+		 * functions call check_exec() recursively - for example,
+		 * see exec_script_makecmds().
+		 */
+		if ((error = exec_makepathbuf(l, path, UIO_USERSPACE,
+		    &data->ed_pathbuf, &offs)) != 0)
+			goto clrflg;
+		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
+		epp->ep_kname = data->ed_pathstring + offs;
+		data->ed_resolvedname = PNBUF_GET();
+		epp->ep_resolvedname = data->ed_resolvedname;
+		epp->ep_xfd = -1;
+	} else {
+		data->ed_pathbuf = pathbuf_assimilate(strcpy(PNBUF_GET(), "/"));
+		data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
+		epp->ep_kname = "*fexecve*";
+		data->ed_resolvedname = NULL;
+		epp->ep_resolvedname = NULL;
+		epp->ep_xfd = fd;
+	}
+
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	epp->ep_kname = data->ed_pathstring + offs;
-	epp->ep_resolvedname = data->ed_resolvedpathbuf;
 	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	epp->ep_hdrlen = exec_maxhdrsz;
 	epp->ep_hdrvalid = 0;
@@ -765,7 +833,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, epp, data->ed_pathbuf)) != 0) {
+	if ((error = check_exec(l, epp, data->ed_pathbuf,
+	    &data->ed_resolvedname)) != 0) {
 		if (error != ENOENT && error != EACCES && error != ENOEXEC) {
 			DPRINTF(("%s: check exec failed for %s, error %d\n",
 			    __func__, epp->ep_kname, error));
@@ -837,9 +906,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	rw_exit(&exec_lock);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 
  clrflg:
 	rw_exit(&p->p_reflock);
@@ -935,18 +1002,25 @@ execve_free_data(struct execve_data *data)
 	if (epp->ep_interp != NULL)
 		vrele(epp->ep_interp);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 }
 
 static void
 pathexec(struct proc *p, const char *resolvedname)
 {
-	KASSERT(resolvedname[0] == '/');
-
 	/* set command name & other accounting info */
-	strlcpy(p->p_comm, strrchr(resolvedname, '/') + 1, sizeof(p->p_comm));
+	const char *cmdname;
+
+	if (resolvedname == NULL) {
+		cmdname = "*fexecve*";
+		resolvedname = "/";
+	} else {
+		cmdname = strrchr(resolvedname, '/') + 1;
+	}
+	KASSERTMSG(resolvedname[0] == '/', "bad resolvedname `%s'",
+	    resolvedname);
+
+	strlcpy(p->p_comm, cmdname, sizeof(p->p_comm));
 
 	kmem_strfree(p->p_path);
 	p->p_path = kmem_strdupsize(resolvedname, NULL, KM_SLEEP);
@@ -1044,6 +1118,7 @@ static void
 emulexec(struct lwp *l, struct exec_package *epp)
 {
 	struct proc		*p = l->l_proc;
+	struct cwdinfo		*cwdi;
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -1052,9 +1127,10 @@ emulexec(struct lwp *l, struct exec_package *epp)
 		emul_find_root(l, epp);
 
 	/* Any old emulation root got removed by fdcloseexec */
-	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
-	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
-	rw_exit(&p->p_cwdi->cwdi_lock);
+	KASSERT(p == curproc);
+	cwdi = cwdenter(RW_WRITER);
+	cwdi->cwdi_edir = epp->ep_emul_root;
+	cwdexit(cwdi);
 	epp->ep_emul_root = NULL;
 	if (epp->ep_interp != NULL)
 		vrele(epp->ep_interp);
@@ -1073,14 +1149,9 @@ emulexec(struct lwp *l, struct exec_package *epp)
 	    && p->p_emul != epp->ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
-	/*
-	 * This is now LWP 1.
-	 */
-	/* XXX elsewhere */
-	mutex_enter(p->p_lock);
-	p->p_nlwpid = 1;
-	l->l_lid = 1;
-	mutex_exit(p->p_lock);
+	/* This is now LWP 1.  Re-number the LWP if needed. */
+	if (l->l_lid != 1)
+		lwp_renumber(l, 1);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -1108,6 +1179,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	struct exec_package	* const epp = &data->ed_pack;
 	int error = 0;
 	struct proc		*p;
+	struct vmspace		*vm;
 
 	/*
 	 * In case of a posix_spawn operation, the child doing the exec
@@ -1142,6 +1214,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * Do whatever is necessary to prepare the address space
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
+	 *
+	 * vfork(): do not touch any user space data in the new child
+	 * until we have awoken the parent below, or it will defeat
+	 * lazy pmap switching (on x86).
 	 */
 	if (is_spawn)
 		uvmspace_spawn(l, epp->ep_vm_minaddr,
@@ -1151,9 +1227,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		uvmspace_exec(l, epp->ep_vm_minaddr,
 		    epp->ep_vm_maxaddr,
 		    epp->ep_flags & EXEC_TOPDOWN_VM);
-
-	struct vmspace		*vm;
 	vm = p->p_vmspace;
+
 	vm->vm_taddr = (void *)epp->ep_taddr;
 	vm->vm_tsize = btoc(epp->ep_tsize);
 	vm->vm_daddr = (void*)epp->ep_daddr;
@@ -1164,19 +1239,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
 	pax_aslr_init_vm(l, vm, epp);
-
-	/* Now map address space. */
-	error = execve_dovmcmds(l, data);
-	if (error != 0)
-		goto exec_abort;
-
-	pathexec(p, epp->ep_resolvedname);
-
-	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
-
-	error = copyoutargs(data, l, newstack);
-	if (error != 0)
-		goto exec_abort;
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
@@ -1192,6 +1254,17 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	p->p_flag |= PK_EXEC;
 	mutex_exit(p->p_lock);
 
+	error = credexec(l, &data->ed_attr);
+	if (error)
+		goto exec_abort;
+
+#if defined(__HAVE_RAS)
+	/*
+	 * Remove all RASs from the address space.
+	 */
+	ras_purgeall();
+#endif
+
 	/*
 	 * Stop profiling.
 	 */
@@ -1204,25 +1277,46 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/*
 	 * It's OK to test PL_PPWAIT unlocked here, as other LWPs have
 	 * exited and exec()/exit() are the only places it will be cleared.
+	 *
+	 * Once the parent has been awoken, curlwp may teleport to a new CPU
+	 * in sched_vforkexec(), and it's then OK to start messing with user
+	 * data.  See comment above.
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
+		bool samecpu;
+		lwp_t *lp;
+
 		mutex_enter(proc_lock);
+		lp = p->p_vforklwp;
+		p->p_vforklwp = NULL;
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
+		cv_broadcast(&lp->l_waitcv);
+
+		/* Clear flags after cv_broadcast() (scheduler needs them). */
 		p->p_lflag &= ~PL_PPWAIT;
-		cv_broadcast(&p->p_pptr->p_waitcv);
+		lp->l_vforkwaiting = false;
+
+		/* If parent is still on same CPU, teleport curlwp elsewhere. */
+		samecpu = (lp->l_cpu == curlwp->l_cpu);
 		mutex_exit(proc_lock);
+
+		/* Give the parent its CPU back - find a new home. */
+		KASSERT(!is_spawn);
+		sched_vforkexec(l, samecpu);
 	}
 
-	error = credexec(l, &data->ed_attr);
-	if (error)
+	/* Now map address space. */
+	error = execve_dovmcmds(l, data);
+	if (error != 0)
 		goto exec_abort;
 
-#if defined(__HAVE_RAS)
-	/*
-	 * Remove all RASs from the address space.
-	 */
-	ras_purgeall();
-#endif
+	pathexec(p, epp->ep_resolvedname);
+
+	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
+
+	error = copyoutargs(data, l, newstack);
+	if (error != 0)
+		goto exec_abort;
 
 	doexechooks(p);
 
@@ -1269,9 +1363,10 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	mutex_enter(proc_lock);
 
-	if (p->p_slflag & PSL_TRACED) {
+	/* posix_spawn(3) reports a single event with implied exec(3) */
+	if ((p->p_slflag & PSL_TRACED) && !is_spawn) {
 		mutex_enter(p->p_lock);
-		eventswitch(TRAP_EXEC);
+		eventswitch(TRAP_EXEC, 0, 0);
 		mutex_enter(proc_lock);
 	}
 
@@ -1292,16 +1387,14 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		lwp_lock(l);
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
-		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
 		mutex_exit(proc_lock);
 	}
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 #ifdef TRACE_EXEC
 	DPRINTF(("%s finished\n", __func__));
 #endif
@@ -1313,17 +1406,17 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (!no_local_exec_lock)
 		rw_exit(&exec_lock);
 
-	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
-	pathbuf_destroy(data->ed_pathbuf);
-	PNBUF_PUT(data->ed_resolvedpathbuf);
+	exec_path_free(data);
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
 	 * get rid of the (new) address space we have created, if any, get rid
 	 * of our namei data and vnode, and exit noting failure
 	 */
-	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
-		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	if (vm != NULL) {
+		uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
+			VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	}
 
 	exec_free_emul_arg(epp);
 	pool_put(&exec_pool, data->ed_argp);
@@ -1343,13 +1436,15 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 }
 
 int
-execve1(struct lwp *l, const char *path, char * const *args,
-    char * const *envs, execve_fetch_element_t fetch_element)
+execve1(struct lwp *l, bool has_path, const char *path, int fd,
+    char * const *args, char * const *envs,
+    execve_fetch_element_t fetch_element)
 {
 	struct execve_data data;
 	int error;
 
-	error = execve_loadvm(l, path, args, envs, fetch_element, &data);
+	error = execve_loadvm(l, has_path, path, fd, args, envs, fetch_element,
+	    &data);
 	if (error)
 		return error;
 	error = execve_runproc(l, &data, false, false);
@@ -1967,6 +2062,156 @@ spawn_exec_data_release(struct spawn_exec_data *data)
 	kmem_free(data, sizeof(*data));
 }
 
+static int
+handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
+{
+	struct lwp *l = curlwp;
+	register_t retval;
+	int error, newfd;
+
+	if (actions == NULL)
+		return 0;
+
+	for (size_t i = 0; i < actions->len; i++) {
+		const struct posix_spawn_file_actions_entry *fae =
+		    &actions->fae[i];
+		switch (fae->fae_action) {
+		case FAE_OPEN:
+			if (fd_getfile(fae->fae_fildes) != NULL) {
+				error = fd_close(fae->fae_fildes);
+				if (error)
+					return error;
+			}
+			error = fd_open(fae->fae_path, fae->fae_oflag,
+			    fae->fae_mode, &newfd);
+			if (error)
+				return error;
+			if (newfd != fae->fae_fildes) {
+				error = dodup(l, newfd,
+				    fae->fae_fildes, 0, &retval);
+				if (fd_getfile(newfd) != NULL)
+					fd_close(newfd);
+			}
+			break;
+		case FAE_DUP2:
+			error = dodup(l, fae->fae_fildes,
+			    fae->fae_newfildes, 0, &retval);
+			break;
+		case FAE_CLOSE:
+			if (fd_getfile(fae->fae_fildes) == NULL) {
+				return EBADF;
+			}
+			error = fd_close(fae->fae_fildes);
+			break;
+		}
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+static int
+handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
+{
+	struct sigaction sigact;
+	int error;
+	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+
+	if (attrs == NULL)
+		return 0;
+
+	memset(&sigact, 0, sizeof(sigact));
+	sigact._sa_u._sa_handler = SIG_DFL;
+	sigact.sa_flags = 0;
+
+	/* 
+	 * set state to SSTOP so that this proc can be found by pid.
+	 * see proc_enterprp, do_sched_setparam below
+	 */
+	mutex_enter(proc_lock);
+	/*
+	 * p_stat should be SACTIVE, so we need to adjust the
+	 * parent's p_nstopchild here.  For safety, just make
+	 * we're on the good side of SDEAD before we adjust.
+	 */
+	int ostat = p->p_stat;
+	KASSERT(ostat < SSTOP);
+	p->p_stat = SSTOP;
+	p->p_waited = 0;
+	p->p_pptr->p_nstopchild++;
+	mutex_exit(proc_lock);
+
+	/* Set process group */
+	if (attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
+		pid_t mypid = p->p_pid;
+		pid_t pgrp = attrs->sa_pgroup;
+
+		if (pgrp == 0)
+			pgrp = mypid;
+
+		error = proc_enterpgrp(parent, mypid, pgrp, false);
+		if (error)
+			goto out;
+	}
+
+	/* Set scheduler policy */
+	if (attrs->sa_flags & POSIX_SPAWN_SETSCHEDULER)
+		error = do_sched_setparam(p->p_pid, 0, attrs->sa_schedpolicy,
+		    &attrs->sa_schedparam);
+	else if (attrs->sa_flags & POSIX_SPAWN_SETSCHEDPARAM) {
+		error = do_sched_setparam(parent->p_pid, 0,
+		    SCHED_NONE, &attrs->sa_schedparam);
+	}
+	if (error)
+		goto out;
+
+	/* Reset user ID's */
+	if (attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
+		error = do_setresuid(l, -1, kauth_cred_getgid(l->l_cred), -1,
+		     ID_E_EQ_R | ID_E_EQ_S);
+		if (error)
+			return error;
+		error = do_setresuid(l, -1, kauth_cred_getuid(l->l_cred), -1,
+		    ID_E_EQ_R | ID_E_EQ_S);
+		if (error)
+			goto out;
+	}
+
+	/* Set signal masks/defaults */
+	if (attrs->sa_flags & POSIX_SPAWN_SETSIGMASK) {
+		mutex_enter(p->p_lock);
+		error = sigprocmask1(l, SIG_SETMASK, &attrs->sa_sigmask, NULL);
+		mutex_exit(p->p_lock);
+		if (error)
+			goto out;
+	}
+
+	if (attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
+		/*
+		 * The following sigaction call is using a sigaction
+		 * version 0 trampoline which is in the compatibility
+		 * code only. This is not a problem because for SIG_DFL
+		 * and SIG_IGN, the trampolines are now ignored. If they
+		 * were not, this would be a problem because we are
+		 * holding the exec_lock, and the compat code needs
+		 * to do the same in order to replace the trampoline
+		 * code of the process.
+		 */
+		for (int i = 1; i <= NSIG; i++) {
+			if (sigismember(&attrs->sa_sigdefault, i))
+				sigaction1(l, i, &sigact, NULL, NULL, 0);
+		}
+	}
+	error = 0;
+out:
+	mutex_enter(proc_lock);
+	p->p_stat = ostat;
+	p->p_pptr->p_nstopchild--;
+	mutex_exit(proc_lock);
+	return error;
+}
+
 /*
  * A child lwp of a posix_spawn operation starts here and ends up in
  * cpu_spawn_return, dealing with all filedescriptor and scheduler
@@ -1984,12 +2229,8 @@ spawn_return(void *arg)
 {
 	struct spawn_exec_data *spawn_data = arg;
 	struct lwp *l = curlwp;
-	int error, newfd;
-	int ostat;
-	size_t i;
-	const struct posix_spawn_file_actions_entry *fae;
-	pid_t ppid;
-	register_t retval;
+	struct proc *p = l->l_proc;
+	int error;
 	bool have_reflock;
 	bool parent_is_waiting = true;
 
@@ -2001,10 +2242,9 @@ spawn_return(void *arg)
 	 * We then try to get the exec_lock, and only if that works, we can
 	 * release the parent here already.
 	 */
-	ppid = spawn_data->sed_parent->p_pid;
-	if ((!spawn_data->sed_attrs
-	    || (spawn_data->sed_attrs->sa_flags
-	        & (POSIX_SPAWN_RETURNERROR|POSIX_SPAWN_SETPGROUP)) == 0)
+	struct posix_spawnattr *attrs = spawn_data->sed_attrs;
+	if ((!attrs || (attrs->sa_flags
+		& (POSIX_SPAWN_RETURNERROR|POSIX_SPAWN_SETPGROUP)) == 0)
 	    && rw_tryenter(&exec_lock, RW_READER)) {
 		parent_is_waiting = false;
 		mutex_enter(&spawn_data->sed_mtx_child);
@@ -2013,146 +2253,18 @@ spawn_return(void *arg)
 	}
 
 	/* don't allow debugger access yet */
-	rw_enter(&l->l_proc->p_reflock, RW_WRITER);
+	rw_enter(&p->p_reflock, RW_WRITER);
 	have_reflock = true;
 
-	error = 0;
 	/* handle posix_spawn_file_actions */
-	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions->len; i++) {
-			fae = &spawn_data->sed_actions->fae[i];
-			switch (fae->fae_action) {
-			case FAE_OPEN:
-				if (fd_getfile(fae->fae_fildes) != NULL) {
-					error = fd_close(fae->fae_fildes);
-					if (error)
-						break;
-				}
-				error = fd_open(fae->fae_path, fae->fae_oflag,
-				    fae->fae_mode, &newfd);
-				if (error)
-					break;
-				if (newfd != fae->fae_fildes) {
-					error = dodup(l, newfd,
-					    fae->fae_fildes, 0, &retval);
-					if (fd_getfile(newfd) != NULL)
-						fd_close(newfd);
-				}
-				break;
-			case FAE_DUP2:
-				error = dodup(l, fae->fae_fildes,
-				    fae->fae_newfildes, 0, &retval);
-				break;
-			case FAE_CLOSE:
-				if (fd_getfile(fae->fae_fildes) == NULL) {
-					error = EBADF;
-					break;
-				}
-				error = fd_close(fae->fae_fildes);
-				break;
-			}
-			if (error)
-				goto report_error;
-		}
-	}
+	error = handle_posix_spawn_file_actions(spawn_data->sed_actions);
+	if (error)
+		goto report_error;
 
 	/* handle posix_spawnattr */
-	if (spawn_data->sed_attrs != NULL) {
-		struct sigaction sigact;
-		sigact._sa_u._sa_handler = SIG_DFL;
-		sigact.sa_flags = 0;
-
-		/* 
-		 * set state to SSTOP so that this proc can be found by pid.
-		 * see proc_enterprp, do_sched_setparam below
-		 */
-		mutex_enter(proc_lock);
-		/*
-		 * p_stat should be SACTIVE, so we need to adjust the
-		 * parent's p_nstopchild here.  For safety, just make
-		 * we're on the good side of SDEAD before we adjust.
-		 */
-		ostat = l->l_proc->p_stat;
-		KASSERT(ostat < SSTOP);
-		l->l_proc->p_stat = SSTOP;
-		l->l_proc->p_waited = 0;
-		l->l_proc->p_pptr->p_nstopchild++;
-		mutex_exit(proc_lock);
-
-		/* Set process group */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
-			pid_t mypid = l->l_proc->p_pid,
-			     pgrp = spawn_data->sed_attrs->sa_pgroup;
-
-			if (pgrp == 0)
-				pgrp = mypid;
-
-			error = proc_enterpgrp(spawn_data->sed_parent,
-			    mypid, pgrp, false);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		/* Set scheduler policy */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSCHEDULER)
-			error = do_sched_setparam(l->l_proc->p_pid, 0,
-			    spawn_data->sed_attrs->sa_schedpolicy,
-			    &spawn_data->sed_attrs->sa_schedparam);
-		else if (spawn_data->sed_attrs->sa_flags
-		    & POSIX_SPAWN_SETSCHEDPARAM) {
-			error = do_sched_setparam(ppid, 0,
-			    SCHED_NONE, &spawn_data->sed_attrs->sa_schedparam);
-		}
-		if (error)
-			goto report_error_stopped;
-
-		/* Reset user ID's */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
-			error = do_setresuid(l, -1,
-			     kauth_cred_getgid(l->l_cred), -1,
-			     ID_E_EQ_R | ID_E_EQ_S);
-			if (error)
-				goto report_error_stopped;
-			error = do_setresuid(l, -1,
-			    kauth_cred_getuid(l->l_cred), -1,
-			    ID_E_EQ_R | ID_E_EQ_S);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		/* Set signal masks/defaults */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGMASK) {
-			mutex_enter(l->l_proc->p_lock);
-			error = sigprocmask1(l, SIG_SETMASK,
-			    &spawn_data->sed_attrs->sa_sigmask, NULL);
-			mutex_exit(l->l_proc->p_lock);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
-			/*
-			 * The following sigaction call is using a sigaction
-			 * version 0 trampoline which is in the compatibility
-			 * code only. This is not a problem because for SIG_DFL
-			 * and SIG_IGN, the trampolines are now ignored. If they
-			 * were not, this would be a problem because we are
-			 * holding the exec_lock, and the compat code needs
-			 * to do the same in order to replace the trampoline
-			 * code of the process.
-			 */
-			for (i = 1; i <= NSIG; i++) {
-				if (sigismember(
-				    &spawn_data->sed_attrs->sa_sigdefault, i))
-					sigaction1(l, i, &sigact, NULL, NULL,
-					    0);
-			}
-		}
-		mutex_enter(proc_lock);
-		l->l_proc->p_stat = ostat;
-		l->l_proc->p_pptr->p_nstopchild--;
-		mutex_exit(proc_lock);
-	}
+	error = handle_posix_spawn_attrs(attrs, spawn_data->sed_parent);
+	if (error)
+		goto report_error;
 
 	/* now do the real exec */
 	error = execve_runproc(l, &spawn_data->sed_exec, parent_is_waiting,
@@ -2172,17 +2284,15 @@ spawn_return(void *arg)
 	/* release our refcount on the data */
 	spawn_exec_data_release(spawn_data);
 
+	if (p->p_slflag & PSL_TRACED)
+		eventswitchchild(p, TRAP_CHLD, PTRACE_POSIX_SPAWN);
+
 	/* and finally: leave to userland for the first time */
 	cpu_spawn_return(l);
 
 	/* NOTREACHED */
 	return;
 
- report_error_stopped:
-	mutex_enter(proc_lock);
-	l->l_proc->p_stat = ostat;
-	l->l_proc->p_pptr->p_nstopchild--;
-	mutex_exit(proc_lock);
  report_error:
 	if (have_reflock) {
 		/*
@@ -2191,7 +2301,7 @@ spawn_return(void *arg)
 		 * taken ownership of the sed_exec part of spawn_data,
 		 * so release/free both here.
 		 */
-		rw_exit(&l->l_proc->p_reflock);
+		rw_exit(&p->p_reflock);
 		execve_free_data(&spawn_data->sed_exec);
 	}
 
@@ -2209,7 +2319,7 @@ spawn_return(void *arg)
 	spawn_exec_data_release(spawn_data);
 
 	/* done, exit */
-	mutex_enter(l->l_proc->p_lock);
+	mutex_enter(p->p_lock);
 	/*
 	 * Posix explicitly asks for an exit code of 127 if we report
 	 * errors from the child process - so, unfortunately, there
@@ -2358,7 +2468,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * Do the first part of the exec now, collect state
 	 * in spawn_data.
 	 */
-	error = execve_loadvm(l1, path, argv,
+	error = execve_loadvm(l1, true, path, -1, argv,
 	    envp, fetch, &spawn_data->sed_exec);
 	if (error == EJUSTRETURN)
 		error = 0;
@@ -2420,6 +2530,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
+	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
@@ -2447,6 +2558,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	}
 
 	p2->p_lflag = 0;
+	l1->l_vforkwaiting = false;
 	p2->p_sflag = 0;
 	p2->p_slflag = 0;
 	p2->p_pptr = p1;
@@ -2545,6 +2657,12 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	p2->p_exitsig = SIGCHLD;	/* signal for parent on exit */
 
+	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
+	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
+		proc_changeparent(p2, p1->p_pptr);
+		p2->p_oppid = p1->p_pid;
+	}
+
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
@@ -2563,11 +2681,11 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	lwp_lock(l2);
 	KASSERT(p2->p_nrlwps == 1);
+	KASSERT(l2->l_stat == LSIDL);
 	p2->p_nrlwps = 1;
 	p2->p_stat = SACTIVE;
-	l2->l_stat = LSRUN;
-	sched_enqueue(l2, false);
-	lwp_unlock(l2);
+	setrunnable(l2);
+	/* LWP now unlocked */
 
 	mutex_exit(p2->p_lock);
 	mutex_exit(proc_lock);
@@ -2582,7 +2700,23 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	have_exec_lock = false;
 
 	*pid_res = pid;
-	return error;
+
+	if (error)
+		return error;
+
+	if (p1->p_slflag & PSL_TRACED) {
+		/* Paranoid check */
+		mutex_enter(proc_lock);
+		if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) !=
+		    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
+			mutex_exit(proc_lock);
+			return 0;
+		}
+
+		mutex_enter(p1->p_lock);
+		eventswitch(TRAP_CHLD, PTRACE_POSIX_SPAWN, pid);
+	}
+	return 0;
 
  error_exit:
 	if (have_exec_lock) {

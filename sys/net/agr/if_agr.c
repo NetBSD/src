@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.47.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.47.2.3 2020/04/13 08:05:15 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.47.2.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.47.2.3 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -896,13 +896,11 @@ agrreq_copyout(void *ubuf, struct agrreq *ar)
 static void
 agr_sync(void)
 {
-	uint64_t h;
 
 	if (!mp_online)
 		return;
 
-	h = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(h);
+	xc_barrier(0);
 }
 
 static int

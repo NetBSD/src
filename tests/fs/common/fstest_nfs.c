@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.9.44.1 2019/06/10 22:10:00 christos Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.9.44.2 2020/04/13 08:05:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,10 +87,12 @@ donewfs(const atf_tc_t *tc, void **argp,
 	 * First, we start the nfs service.
 	 */
 	srcdir = atf_tc_get_config_var(tc, "srcdir");
-	sprintf(nfsdpath, "%s/../nfs/nfsservice/rumpnfsd", srcdir);
-	sprintf(ethername, "/%s/%s.etherbus", getcwd(cwd, sizeof(cwd)), image);
-	sprintf(ethername_ro, "%s_ro", ethername);
-	sprintf(imagepath, "/%s/%s", cwd, image);
+	snprintf(nfsdpath, sizeof nfsdpath,
+	    "%s/../nfs/nfsservice/rumpnfsd", srcdir);
+	snprintf(ethername, sizeof ethername,
+	    "/%s/%s.etherbus", getcwd(cwd, sizeof(cwd)), image);
+	snprintf(ethername_ro, sizeof ethername_ro, "%s_ro", ethername);
+	snprintf(imagepath, sizeof imagepath, "/%s/%s", cwd, image);
 
 	nfsdargv[0] = nfsdpath;
 	nfsdargv[1] = ethername;

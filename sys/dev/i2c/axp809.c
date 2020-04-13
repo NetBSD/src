@@ -1,4 +1,4 @@
-/* $NetBSD: axp809.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: axp809.c,v 1.2.2.1 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define AXP_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp809.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp809.c,v 1.2.2.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,15 +147,13 @@ axp809_attach(device_t parent, device_t self, void *aux)
 static int
 axp809_read(struct axp809_softc *sc, uint8_t reg, uint8_t *val)
 {
-	return iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static int
 axp809_write(struct axp809_softc *sc, uint8_t reg, uint8_t val)
 {
-	return iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static void

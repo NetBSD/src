@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.11.12.2 2020/04/08 14:07:53 martin Exp $ */
+/*	$NetBSD: ptrace.h,v 1.11.12.3 2020/04/13 08:04:07 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	((register_t)(r)->r_pc)
+#define PTRACE_REG_FP(r)	0 /* not stored in struct reg */
 #define PTRACE_REG_SET_PC(r, v)	do {	\
 	(r)->r_pc = (v);		\
 	(r)->r_npc = (v) + 4;		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:03 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3.16.1 2020/04/13 08:06:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,8 @@ static uint32_t rdbchksum(void *);
 
 /* We use MBR_PTYPE_PREP like port-prep does. */
 static int nonewfsmsdos = 0, nobootfix = 0, noprepfix=0;
-static int bootpart_fat12 = PART_BOOT_FAT12;
-static int bootpart_binfo = PART_BOOT_BINFO;
-static int bootpart_prep = PART_BOOT_PREP;
+static part_id bootpart_fat12 = NO_PART, bootpart_binfo = NO_PART,
+    bootpart_prep = NO_PART;
 static int bootinfo_mbr = 1;
 static int rdb_found = 0;
 
@@ -73,22 +72,46 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 
 	if (check_rdb())
-		return 1;
+		return true;
 
-	return set_bios_geom_with_mbr_guess();
+
+	if (pm->no_mbr || pm->no_part)
+		return true;
+
+	if (pm->parts == NULL) {
+
+		const struct disk_partitioning_scheme *ps =
+		    select_part_scheme(pm, NULL, true, NULL);
+
+		if (!ps)
+			return false;
+
+		struct disk_partitions *parts =
+		   (*ps->create_new_for_disk)(pm->diskdev,
+		   0, pm->dlsize, true, NULL);
+		if (!parts)
+			return false;
+
+		pm->parts = parts;
+		if (ps->size_limit > 0 && pm->dlsize > ps->size_limit)
+			pm->dlsize = ps->size_limit;
+	}
+
+	return set_bios_geom_with_mbr_guess(pm->parts);
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
+#if 0
 	int i;
 	int part;
 	int maxpart = getmaxpartitions();
@@ -96,9 +119,15 @@ md_make_bsd_partitions(void)
 	int part_raw, part_bsd;
 	int ptend;
 	int no_swap = 0;
-	partinfo *p;
+#endif
 
 	if (rdb_found) {
+#if 0
+	/*
+	 * XXX - need to test on real machine if the disklabel code
+	 * deals with RDB partitions properly, otherwise write
+	 * a read-only RDB backend
+	 */
 		/*
 		 * We found RDB partitions on the disk, which cannot be
 		 * modified by rewriting the disklabel.
@@ -129,7 +158,7 @@ rdb_edit_check:
 		}
 		if (md_check_partitions() == 0)
 			goto rdb_edit_check;
-
+#endif
 		return 1;
 	}
 
@@ -142,11 +171,12 @@ rdb_edit_check:
 	if (pm->dlsize == 0)
 		pm->dlsize = pm->ptstart + pm->ptsize;
 
+#if 0
 	partstart = pm->ptstart;
 	ptend = pm->ptstart + pm->ptsize;
 
 	/* Ask for layout type -- standard or special */
-	msg_display(MSG_layout,
+	msg_fmt_display(MSG_layout, "%d%d%d",
 		    pm->ptsize / (MEG / pm->sectorsize),
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
@@ -258,75 +288,106 @@ rdb_edit_check:
 
 	/* Everything looks OK. */
 	return 1;
+#endif
+
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	int part, fprep=0, ffat=0;
+	struct disk_partitions *parts;
+	struct disk_part_info info;
+	int fprep=0, ffat=0;
+	part_id part;
 
 	if (rdb_found)
 		return 1;
+
+	if (install->num < 1)
+		return false;
+	parts = install->infos[0].parts;	/* disklabel parts */
+	if (parts->parent)
+		parts = parts->parent;		/* MBR parts */
 
 	/* we need to find a boot partition, otherwise we can't create
 	 * our msdos fs boot partition.  We make the assumption that
 	 * the user hasn't done something stupid, like move it away
 	 * from the MBR partition.
 	 */
-	for (part = PART_A; part < MAXPARTITIONS; part++) {
-		if (pm->bsdlabel[part].pi_fstype == FS_MSDOS) {
+	for (part = 0; part < parts->num_part; part++) {
+		if (!parts->pscheme->get_part_info(parts, part, &info))
+			continue;
+
+		if (info.fs_type == FS_MSDOS) {
 			bootpart_fat12 = part;
 			ffat++;
-		} else if (pm->bsdlabel[part].pi_fstype == FS_BOOT) {
+		} else if (info.fs_type == FS_BOOT) {
 			bootpart_prep = part;
 			fprep++;
-		} else if (pm->bsdlabel[part].pi_fstype == FS_OTHER) {
+		} else if (info.fs_type == FS_OTHER) {
 			bootpart_binfo = part;
 			fprep++;
 		}
 	}
 	/* oh, the confusion */
-	if (ffat >= 1 && fprep < 2)
-		return 1;
-	if (ffat < 1 && fprep >= 2)
-		return 2;
-	if (ffat >=1 && fprep >= 2)
-		return 3;
+	if (ffat >= 1 && fprep < 2) {
+		noprepfix = 1;
+		return true;
+	}
+	if (ffat < 1 && fprep >= 2) {
+		nobootfix = 1;
+		return true;
+	}
+	if (ffat >=1 && fprep >= 2) {
+		return true;
+	}
 
 	msg_display(MSG_nobootpartdisklabel);
 	process_menu(MENU_ok, NULL);
-	return 0;
+	nobootfix = 1;
+	return false;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
 
 	if (rdb_found)
-		return 0;
+		return true;
 
-	msg_display(MSG_dofdisk);
 
-	/* write edited MBR onto disk. */
-	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
+	if (parts->parent == NULL)
+		return true;	/* no outer partitions */
+
+	parts = parts->parent;
+
+	msg_display_subst(MSG_dofdisk, 3, parts->disk,
+	    msg_string(parts->pscheme->name),
+	    msg_string(parts->pscheme->short_name));
+
+	/* write edited "MBR" onto disk. */
+	if (!parts->pscheme->write_to_disk(parts)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
-		return 1;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
 	char bootdev[100];
 
@@ -334,7 +395,7 @@ md_post_disklabel(void)
 		return 0;
 
 	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
-	    'a'+bootpart_fat12);
+	    (char)('a'+bootpart_fat12));
 	run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s", bootdev);
 
 	return 0;
@@ -346,7 +407,7 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 
 	/* No bootblock. We use ofwboot from a partition visiable by OFW. */
@@ -354,9 +415,10 @@ md_post_newfs(void)
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	char bootdev[100], bootbdev[100], version[64];
+	struct disk_partitions *parts;
 
 	/* if we can't make it bootable, just punt */
 	if ((nobootfix && noprepfix) || rdb_found)
@@ -379,20 +441,24 @@ md_post_extract(void)
 		    "/%s/boot/ofwboot", target_prefix());
 	}
 
-	if (!noprepfix) {
-		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
-		    'a'+bootpart_prep);
-		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", pm->diskdev,
-		    'a'+bootpart_prep);
+	if (!noprepfix && install != NULL && install->num > 0) {
+		parts = install->infos[0].parts;	/* disklabel */
+		if (parts->parent != NULL)
+			parts = parts->parent;		/* MBR */
+
+		parts->pscheme->get_part_device(parts, bootpart_prep,
+		    bootdev, sizeof bootdev, NULL, raw_dev_name, true, true);
+		parts->pscheme->get_part_device(parts, bootpart_prep,
+		    bootbdev, sizeof bootbdev, NULL, plain_name, true, true);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
 		run_program(RUN_DISPLAY, "/bin/dd if=/usr/mdec/ofwboot "
 		    "of=%s bs=512", bootbdev);
 
-		snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", pm->diskdev,
-		    'a'+bootpart_binfo);
-		snprintf(bootbdev, sizeof bootbdev, "/dev/%s%c", pm->diskdev,
-		    'a'+bootpart_binfo);
+		parts->pscheme->get_part_device(parts, bootpart_binfo,
+		    bootdev, sizeof bootdev, NULL, raw_dev_name, true, true);
+		parts->pscheme->get_part_device(parts, bootpart_binfo,
+		    bootbdev, sizeof bootbdev, NULL, plain_name, true, true);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
 		run_program(RUN_DISPLAY, "/bin/dd if=/tmp/bootinfo.txt "
@@ -403,7 +469,7 @@ md_post_extract(void)
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 
 #ifndef DEBUG
@@ -412,15 +478,18 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
+#if 0
 	struct mbr_partition *part;
 	mbr_info_t *ext;
 	int i;
+#endif
 
 	if (check_rdb())
 		return 1;
 
+#if 0
 	read_mbr(pm->diskdev, &mbr);
 	/* do a sanity check of the partition table */
 	for (ext = &mbr; ext; ext = ext->extended) {
@@ -432,38 +501,35 @@ md_pre_update(void)
 			if (part->mbrp_type == MBR_PTYPE_RESERVED_x21 &&
 			    part->mbrp_size < (MIN_FAT12_BOOT/512)) {
 				msg_display(MSG_boottoosmall);
-				msg_display_add(MSG_nobootpartdisklabel, 0);
+				msg_fmt_display_add(MSG_nobootpartdisklabel,
+				    "%d", 0);
 				if (!ask_yesno(NULL))
 					return 0;
 				nobootfix = 1;
 			}
 		}
 	}
+#endif
 
-	i = md_check_partitions();
-	switch (i) {
-	case 0: nobootfix=1; noprepfix=1; break;
-	case 1: noprepfix=1; break;
-	case 2: nobootfix=1; break;
-	default: break;
-	}
+	if (!md_check_partitions(install))
+		return 0;
 
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
 
 	nonewfsmsdos = 1;
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 
 int
-md_check_mbr(mbr_info_t *mbri)
+md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 {
 	mbr_info_t *ext;
 	struct mbr_partition *part;
@@ -495,42 +561,38 @@ md_check_mbr(mbr_info_t *mbri)
 	if (!(pm->bootsize >= (MIN_FAT12_BOOT/512) ||
 		(binfosize >= (MIN_BINFO_BOOT/512) &&
 		    bprepsize >= (MIN_PREP_BOOT/512)))) {
-		msg_display(MSG_bootnotright);
-		msg_display_add(MSG_reeditpart, 0);
-		if (!ask_yesno(NULL))
+		if (quiet)
 			return 0;
-		return 1;
+		msg_display(MSG_bootnotright);
+		return ask_reedit(parts);
 	}
 
 	/* check the prep partitions */
 	if ((binfosize > 0 || bprepsize > 0) &&
 	    (binfosize < (MIN_BINFO_BOOT/512) ||
 		bprepsize < (MIN_PREP_BOOT/512))) {
-		msg_display(MSG_preptoosmall);
-		msg_display_add(MSG_reeditpart, 0);
-		if (!ask_yesno(NULL))
+		if (quiet)
 			return 0;
-		return 1;
+		msg_display(MSG_preptoosmall);
+		return ask_reedit(parts);
 	}
 
 	/* check the fat12 parititons */
 	if (pm->bootsize > 0 && pm->bootsize < (MIN_FAT12_BOOT/512)) {
-		msg_display(MSG_boottoosmall);
-		msg_display_add(MSG_reeditpart, 0);
-		if (!ask_yesno(NULL))
+		if (quiet)
 			return 0;
-		return 1;
+		msg_display(MSG_boottoosmall);
+		return ask_reedit(parts);
 	}
 
 	/* if both sets contain zero, thats bad */
 	if ((pm->bootstart == 0 || pm->bootsize == 0) &&
 	    (binfosize == 0 || binfostart == 0 ||
 		bprepsize == 0 || bprepstart == 0)) {
-		msg_display(MSG_nobootpart);
-		msg_display_add(MSG_reeditpart, 0);
-		if (!ask_yesno(NULL))
+		if (quiet)
 			return 0;
-		return 1;
+		msg_display(MSG_nobootpart);
+		return ask_reedit(parts);
 	}
 	return 2;
 }
@@ -545,54 +607,18 @@ md_check_mbr(mbr_info_t *mbri)
  * One partition to hold ofwboot
  */
 
-int
-md_mbr_use_wholedisk(mbr_info_t *mbri)
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
 {
-	struct mbr_sector *mbrs = &mbri->mbr;
-	mbr_info_t *ext;
-	struct mbr_partition *part;
+	struct disk_part_info boot_parts[] = 
+	{
+		{ .fs_type = FS_MSDOS, .size = FAT12_BOOT_SIZE/512 },
+		{ .fs_type = FS_OTHER, .size = BINFO_BOOT_SIZE/512 },
+		{ .fs_type = FS_BOOT, .size = PREP_BOOT_SIZE/512 }
+	};
 
-	part = &mbrs->mbr_parts[0];
-	/* Set the partition information for full disk usage. */
-	while ((ext = mbri->extended)) {
-		mbri->extended = ext->extended;
-		free(ext);
-	}
-	memset(part, 0, MBR_PART_COUNT * sizeof *part);
-
-	part[0].mbrp_type = MBR_PTYPE_RESERVED_x21;
-	part[0].mbrp_size = FAT12_BOOT_SIZE/512;
-	part[0].mbrp_start = bsec;
-	part[0].mbrp_flag = 0;
-
-	part[1].mbrp_type = MBR_PTYPE_NETBSD;
-	part[1].mbrp_size = pm->dlsize - (bsec + FAT12_BOOT_SIZE/512 +
-	    BINFO_BOOT_SIZE/512 + PREP_BOOT_SIZE/512);
-	part[1].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512 +
-	    PREP_BOOT_SIZE/512;
-	part[1].mbrp_flag = MBR_PFLAG_ACTIVE;
-
-	part[2].mbrp_type = MBR_PTYPE_PREP;
-	part[2].mbrp_size = BINFO_BOOT_SIZE/512;
-	part[2].mbrp_start = bsec + FAT12_BOOT_SIZE/512;
-	part[2].mbrp_flag = 0;
-
-	part[3].mbrp_type = MBR_PTYPE_PREP;
-	part[3].mbrp_size = PREP_BOOT_SIZE/512;
-	part[3].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512;
-	part[3].mbrp_flag = 0;
-
-	pm->ptstart = part[1].mbrp_start;
-	pm->ptsize = part[1].mbrp_size;
-	pm->bootstart = part[0].mbrp_start;
-	pm->bootsize = part[0].mbrp_size;
-	binfostart = part[2].mbrp_start;
-	binfosize= part[2].mbrp_size;
-	bprepstart = part[3].mbrp_start;
-	bprepsize = part[3].mbrp_size;
-	bootinfo_mbr = 4;
-
-	return 1;
+	return parts_use_wholedisk(parts, __arraycount(boot_parts),
+	     boot_parts);
 }
 
 const char *md_disklabel_cmd(void)
@@ -643,8 +669,25 @@ rdbchksum(void *bdata)
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 
 	return 0;
 }
+
+bool
+md_mbr_update_check(struct disk_partitions *parts, mbr_info_t *mbri)
+{
+	return false;	/* no change, no need to write back */
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+

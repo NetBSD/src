@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.18.12.1 2019/06/10 22:10:09 christos Exp $
+# $NetBSD: t_ifconfig.sh,v 1.18.12.2 2020/04/13 08:05:30 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,6 +68,11 @@ ifconfig_create_destroy_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::1
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+
+	# Check if ifconfig (ioctl) works after a failure of ifconfig destroy
+	atf_check -s exit:0 -o ignore rump.ifconfig lo0
+	atf_check -s not-exit:0 -e ignore rump.ifconfig lo0 destroy
+	atf_check -s exit:0 -o ignore rump.ifconfig lo0
 
 	unset RUMP_SERVER
 }
@@ -478,6 +483,40 @@ ifconfig_number_cleanup()
 	cleanup
 }
 
+atf_test_case ifconfig_description cleanup
+ifconfig_description_head()
+{
+	atf_set "descr" "tests of setting and unsetting interface description"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_description_body()
+{
+
+	rump_server_start $RUMP_SERVER1
+
+	export RUMP_SERVER=$RUMP_SERVER1
+	for descr in description descr; do
+		atf_check -s exit:0 rump.ifconfig lo0 $descr DESCRIPTION-TEST
+		atf_check -s exit:0 -o match:"DESCRIPTION-TEST" rump.ifconfig lo0
+		atf_check -s exit:0 rump.ifconfig lo0 $descr DESCRIPTION-TEST-MODIFIED
+		atf_check -s exit:0 -o match:"DESCRIPTION-TEST-MODIFIED" rump.ifconfig lo0
+		atf_check -s exit:0 rump.ifconfig lo0 -$descr
+		atf_check -s exit:0 -o not-match:'DESCRIPTION-TEST-MODIFIED' rump.ifconfig lo0
+
+		atf_check -s exit:0 rump.ifconfig lo0 $descr `printf "%063d" 0`	
+		atf_check -s not-exit:0 -e match:"description too long" rump.ifconfig lo0 $descr `printf "%064d" 0`
+		atf_check -s exit:0 rump.ifconfig lo0 $descr ""
+	done
+}
+
+ifconfig_description_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -487,4 +526,5 @@ atf_init_test_cases()
 	atf_add_test_case ifconfig_up_down_ipv4
 	atf_add_test_case ifconfig_up_down_ipv6
 	atf_add_test_case ifconfig_number
+	atf_add_test_case ifconfig_description
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bellctrl.1,v 1.15 2017/07/04 06:34:03 wiz Exp $
+.\"	$NetBSD: bellctrl.1,v 1.15.6.1 2020/04/13 08:03:24 martin Exp $
 .\"
 .\" Copyright (c) 1995 Takuya Harakawa.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)bellctrl.1	6.19 (Berkeley) 7/27/91
 .\"
-.Dd December 15, 1995
+.Dd September 1, 2019
 .Dt BELLCTRL 1 x68k
 .Os
 .Sh NAME
@@ -55,12 +55,13 @@ The options are as follows:
 .It Fl b
 The b option controls bell volume, pitch and duration.
 This option accepts up to three numerical parameters, a preceding
-dash(-), or a 'on/off' flag. If no parameters are given,
-or the 'on' flag is used, the system defaults will be used.
+dash(-), or an 'on/off' flag.
+If no parameters are given, or the 'on' flag is used, the system defaults will
+be used.
 If the dash or 'off' are given, the bell will be turned off.
 If only one numerical parameter is given, the bell volume will be
 set to that value, as a percentage of its maximum.
-Like wise, the second numerical parameter specifies the bell pitch,
+Likewise, the second numerical parameter specifies the bell pitch,
 in hertz, and the third numerical parameter specifies the duration
 in milliseconds.
 .It Sy v Ar default
@@ -73,6 +74,11 @@ The
 option sets the voice parameter to given voice parameter file (
 .Ar voicefile ) .
 .El
+.Sh HISTORY
+A
+.Nm
+utility first appeared in
+.Nx 1.3 .
 .Sh AUTHORS
 .Nm
 was written by

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.4.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.4.2.3 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1783,7 +1783,7 @@ make_dnskey(dst_key_t *key, unsigned char *buf, int bufsize,
 }
 
 static isc_result_t
-publish(dns_rdata_t *rdata, dns_diff_t *diff, dns_name_t *origin,
+addrdata(dns_rdata_t *rdata, dns_diff_t *diff, const dns_name_t *origin,
 	dns_ttl_t ttl, isc_mem_t *mctx)
 {
 	isc_result_t result;
@@ -1798,7 +1798,7 @@ publish(dns_rdata_t *rdata, dns_diff_t *diff, dns_name_t *origin,
 }
 
 static isc_result_t
-delrdata(dns_rdata_t *rdata, dns_diff_t *diff, dns_name_t *origin,
+delrdata(dns_rdata_t *rdata, dns_diff_t *diff, const dns_name_t *origin,
 	 dns_ttl_t ttl, isc_mem_t *mctx)
 {
 	isc_result_t result;
@@ -1818,7 +1818,6 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	    void (*report)(const char *, ...))
 {
 	isc_result_t result;
-	dns_difftuple_t *tuple = NULL;
 	unsigned char buf[DST_KEY_MAXSIZE];
 	char keystr[DST_KEY_FORMATSIZE];
 	dns_rdata_t dnskey = DNS_RDATA_INIT;
@@ -1842,10 +1841,7 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	}
 
 	/* publish key */
-	RETERR(dns_difftuple_create(mctx, DNS_DIFFOP_ADD, origin, ttl,
-				    &dnskey, &tuple));
-	dns_diff_appendminimal(diff, &tuple);
-	result = ISC_R_SUCCESS;
+	result = addrdata(&dnskey, diff, origin, ttl, mctx);
 
  failure:
 	return (result);
@@ -1857,7 +1853,6 @@ remove_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	  void (*report)(const char *, ...))
 {
 	isc_result_t result;
-	dns_difftuple_t *tuple = NULL;
 	unsigned char buf[DST_KEY_MAXSIZE];
 	dns_rdata_t dnskey = DNS_RDATA_INIT;
 	char alg[80];
@@ -1867,10 +1862,7 @@ remove_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	       reason, dst_key_id(key->key), alg);
 
 	RETERR(make_dnskey(key->key, buf, sizeof(buf), &dnskey));
-	RETERR(dns_difftuple_create(mctx, DNS_DIFFOP_DEL, origin, ttl, &dnskey,
-				    &tuple));
-	dns_diff_appendminimal(diff, &tuple);
-	result = ISC_R_SUCCESS;
+	result = delrdata(&dnskey, diff, origin, ttl, mctx);
 
  failure:
 	return (result);
@@ -1943,16 +1935,22 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		if (syncpublish(key->key, now)) {
 			if (!dns_rdataset_isassociated(cdnskey) ||
 			    !exists(cdnskey, &cdnskeyrdata))
-				RETERR(publish(&cdnskeyrdata, diff, origin,
-					       ttl, mctx));
+			{
+				RETERR(addrdata(&cdnskeyrdata, diff, origin,
+						ttl, mctx));
+			}
 			if (!dns_rdataset_isassociated(cds) ||
 			    !exists(cds, &cdsrdata1))
-				RETERR(publish(&cdsrdata1, diff, origin,
-					       ttl, mctx));
+			{
+				RETERR(addrdata(&cdsrdata1, diff, origin,
+						ttl, mctx));
+			}
 			if (!dns_rdataset_isassociated(cds) ||
 			    !exists(cds, &cdsrdata2))
-				RETERR(publish(&cdsrdata2, diff, origin,
-					       ttl, mctx));
+			{
+				RETERR(addrdata(&cdsrdata2, diff, origin,
+						ttl, mctx));
+			}
 		}
 
 		if (dns_rdataset_isassociated(cds) &&

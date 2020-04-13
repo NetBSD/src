@@ -1,4 +1,4 @@
-/* $Id: imx23_digctl.c,v 1.1 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_digctl.c,v 1.1.36.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ digctl_usb_clkgate(int value)
 	struct digctl_softc *sc = _sc;
 
 	if (sc == NULL) {
-		aprint_error("digctl is not initalized");
+		aprint_error("digctl is not initialized");
 		return;
 	}
 

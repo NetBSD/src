@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/28 22:33:43 christos Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2020/04/13 07:56:30 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -38,5 +38,7 @@ COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare
+
+COPTS.session.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

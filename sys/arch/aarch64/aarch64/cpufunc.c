@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.1.4.2 2020/04/13 08:03:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -26,14 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.4.2 2020/04/13 08:03:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
-#include <aarch64/cpu.h>
 #include <aarch64/cpufunc.h>
 
 u_int cputype;			/* compat arm */
@@ -47,6 +49,7 @@ u_int aarch64_cache_prefer_mask;
 /* cache info per cluster. the same cluster has the same cache configuration? */
 #define MAXCPUPACKAGES	MAXCPUS		/* maximum of ci->ci_package_id */
 static struct aarch64_cache_info *aarch64_cacheinfo[MAXCPUPACKAGES];
+static struct aarch64_cache_info aarch64_cacheinfo0[MAX_CACHE_LEVEL];
 
 
 static void
@@ -86,28 +89,32 @@ extract_cacheunit(int level, bool insn, int cachetype,
 }
 
 void
-aarch64_getcacheinfo(void)
+aarch64_getcacheinfo(int unit)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t clidr, ctr;
 	int level, cachetype;
-	struct aarch64_cache_info *cinfo;
+	struct aarch64_cache_info *cinfo = NULL;
 
 	if (cputype == 0)
 		cputype = aarch64_cpuid();
 
 	/* already extract about this cluster? */
-	KASSERT(curcpu()->ci_package_id < MAXCPUPACKAGES);
-	cinfo = aarch64_cacheinfo[curcpu()->ci_package_id];
+	KASSERT(ci->ci_package_id < MAXCPUPACKAGES);
+	cinfo = aarch64_cacheinfo[ci->ci_package_id];
 	if (cinfo != NULL) {
-		curcpu()->ci_cacheinfo = cinfo;
+		ci->ci_cacheinfo = cinfo;
 		return;
 	}
 
-	cinfo = aarch64_cacheinfo[curcpu()->ci_package_id] =
-	    kmem_zalloc(sizeof(struct aarch64_cache_info) * MAX_CACHE_LEVEL,
-	    KM_NOSLEEP);
-	KASSERT(cinfo != NULL);
-	curcpu()->ci_cacheinfo = cinfo;
+	/* Need static buffer for the boot CPU */
+	if (unit == 0)
+		cinfo = aarch64_cacheinfo0;
+	else
+		cinfo = kmem_zalloc(sizeof(struct aarch64_cache_info)
+		    * MAX_CACHE_LEVEL, KM_SLEEP);
+	aarch64_cacheinfo[ci->ci_package_id] = cinfo;
+	ci->ci_cacheinfo = cinfo;
 
 
 	/*
@@ -135,9 +142,12 @@ aarch64_getcacheinfo(void)
 		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
 		arm_dcache_align_mask = arm_dcache_align - 1;
 	}
-	/* update coherency_unit (in param.h) */
+
+#ifdef MULTIPROCESSOR
 	if (coherency_unit < arm_dcache_align)
-		coherency_unit = arm_dcache_align;
+		panic("coherency_unit %ld < arm_dcache_align %d; increase COHERENCY_UNIT",
+		    coherency_unit, arm_dcache_align);
+#endif
 
 	/*
 	 * CLIDR -  Cache Level ID Register
@@ -263,7 +273,7 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 		}
 
 		purging = cunit->cache_purging;
-		aprint_normal_dev(self,
+		aprint_verbose_dev(self,
 		    "L%d %dKB/%dB %d-way%s%s%s%s %s %s cache\n",
 		    level + 1,
 		    cunit->cache_size / 1024,

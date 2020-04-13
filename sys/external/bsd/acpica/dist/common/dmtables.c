@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -219,7 +219,7 @@ AdCreateTableHeader (
      * makes it easier to rename the disassembled ASL file if needed.
      */
     AcpiOsPrintf (
-        "DefinitionBlock (\"\", \"%4.4s\", %hu, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
+        "DefinitionBlock (\"\", \"%4.4s\", %u, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
         Table->Signature, Table->Revision,
         Table->OemId, Table->OemTableId, Table->OemRevision);
 }
@@ -335,8 +335,8 @@ AdGetLocalTables (
     /* Get the DSDT via table override */
 
     ACPI_MOVE_32_TO_32 (TableHeader.Signature, ACPI_SIG_DSDT);
-    AcpiOsTableOverride (&TableHeader, &NewTable);
-    if (!NewTable)
+    Status = AcpiOsTableOverride (&TableHeader, &NewTable);
+    if (ACPI_FAILURE (Status) || !NewTable)
     {
         fprintf (stderr, "Could not obtain DSDT\n");
         return (AE_NO_ACPI_TABLES);
@@ -398,7 +398,8 @@ AdParseTable (
 
     AmlLength = Table->Length - sizeof (ACPI_TABLE_HEADER);
     AmlStart = ((UINT8 *) Table + sizeof (ACPI_TABLE_HEADER));
-    ASL_CV_INIT_FILETREE(Table, AmlStart, AmlLength);
+
+    AcpiUtSetIntegerWidth (Table->Revision);
 
     /* Create the root object */
 
@@ -435,7 +436,6 @@ AdParseTable (
     }
 
     WalkState->ParseFlags &= ~ACPI_PARSE_DELETE_TREE;
-    WalkState->ParseFlags |= ACPI_PARSE_DISASSEMBLE;
 
     Status = AcpiPsParseAml (WalkState);
     if (ACPI_FAILURE (Status))
@@ -493,7 +493,7 @@ AdParseTable (
     fprintf (stderr,
         "Parsing Deferred Opcodes (Methods/Buffers/Packages/Regions)\n");
 
-    Status = AcpiDmParseDeferredOps (AcpiGbl_ParseOpRoot);
+    (void) AcpiDmParseDeferredOps (AcpiGbl_ParseOpRoot);
     fprintf (stderr, "\n");
 
     /* Process Resource Templates */

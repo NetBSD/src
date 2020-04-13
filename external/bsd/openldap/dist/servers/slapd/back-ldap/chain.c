@@ -1,10 +1,10 @@
-/*	$NetBSD: chain.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: chain.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* chain.c - chain LDAP operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2017 The OpenLDAP Foundation.
+ * Copyright 2003-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chain.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: chain.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -1337,7 +1337,7 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 
 	} else
 #endif
-	if ( lc->lc_common_li != NULL && at == NULL ) {
+	if ( lc->lc_common_li != NULL && lc->lc_common_li != lc->lc_cfg_li && at == NULL ) {
 		/* FIXME: we should generate an empty default entry
 		 * if none is supplied */
 		Debug( LDAP_DEBUG_ANY, "slapd-chain: "
@@ -1357,6 +1357,7 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 
 	}
 	rc = ldap_chain_db_init_one( ca->be );
+	lc->lc_cfg_li = NULL;
 
 	if ( rc != 0 ) {
 fail:
@@ -1369,6 +1370,19 @@ fail:
 	li = ca->be->be_private;
 
 	if ( at ) {
+		char **urls;
+
+		urls = ldap_str2charray( at->a_vals[ 0 ].bv_val, ", \t" );
+		if ( !urls || !urls[0] || urls[1] ) {
+			ldap_charray_free( urls );
+			Debug( LDAP_DEBUG_ANY, "slapd-chain: "
+				"olcDbURI must contain exactly one url, got %s\n",
+				at->a_vals[ 0 ].bv_val, 0, 0 );
+			rc = LDAP_CONSTRAINT_VIOLATION;
+			goto done;
+		}
+		ldap_charray_free( urls );
+
 		li->li_uri = ch_strdup( at->a_vals[ 0 ].bv_val );
 		value_add_one( &li->li_bvuri, &at->a_vals[ 0 ] );
 		if ( avl_insert( &lc->lc_lai.lai_tree, (caddr_t)li,
@@ -1448,6 +1462,8 @@ chain_cfadd( Operation *op, SlapReply *rs, Entry *p, ConfigArgs *ca )
 
 		ca->be->be_private = priv;
 	}
+
+	lc->lc_cfg_li = NULL;
 
 	return 0;
 }

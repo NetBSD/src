@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.53 2018/03/30 22:54:36 maya Exp $	*/
+/*	$NetBSD: stic.c,v 1.53.2.1 2020/04/13 08:04:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.53 2018/03/30 22:54:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.53.2.1 2020/04/13 08:04:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,7 +623,7 @@ stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 	int size;
 
 	size = si->si_consw * si->si_consh * sizeof(*ss->ss_backing);
-	ss->ss_backing = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
+	ss->ss_backing = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
 }
 
 static int

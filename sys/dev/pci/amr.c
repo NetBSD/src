@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.62.16.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.62.16.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.62.16.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.62.16.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,7 +412,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate and initalise the command control blocks.
 	 */
-	ac = malloc(sizeof(*ac) * AMR_MAX_CMDS, M_DEVBUF, M_NOWAIT | M_ZERO);
+	ac = malloc(sizeof(*ac) * AMR_MAX_CMDS, M_DEVBUF, M_WAITOK | M_ZERO);
 	amr->amr_ccbs = ac;
 	SLIST_INIT(&amr->amr_ccb_freelist);
 	TAILQ_INIT(&amr->amr_ccb_active);
@@ -464,7 +464,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Retrieve parameters, and tell the world about us.
 	 */
-	amr->amr_enqbuf = malloc(AMR_ENQUIRY_BUFSIZE, M_DEVBUF, M_NOWAIT);
+	amr->amr_enqbuf = malloc(AMR_ENQUIRY_BUFSIZE, M_DEVBUF, M_WAITOK);
 	amr->amr_flags |= AMRF_ENQBUF;
 	amr->amr_maxqueuecnt = i;
 	aprint_normal(": AMI RAID ");
@@ -1583,4 +1583,3 @@ amr_modcmd(modcmd_t cmd, void *opaque)
 
 	return error;
 }
-

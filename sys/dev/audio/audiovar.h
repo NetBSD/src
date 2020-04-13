@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.3.2.3 2020/04/08 14:08:03 martin Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.3.2.4 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -136,8 +136,15 @@ struct audio_softc {
 	void		*hw_hdl;
 
 	/*
+	 * Properties obtained by get_props().
+	 * No need any locks to read this variable.
+	 */
+	int sc_props;
+
+	/*
 	 * List of opened descriptors.
-	 * Must be protected by sc_intr_lock.
+	 * Must be protected by sc_lock || sc_intr_lock for traversal(FOREACH).
+	 * Must be protected by sc_lock && sc_intr_lock for insertion/removal.
 	 */
 	SLIST_HEAD(, audio_file) sc_files;
 
@@ -318,15 +325,8 @@ audio_format2_endian(const audio_format2_t *fmt)
 }
 
 /* Interfaces for audiobell. */
-struct audiobell_arg {
-	u_int sample_rate;	/* IN */
-	u_int encoding;		/* IN */
-	u_int channels;		/* IN */
-	u_int precision;	/* IN */
-	u_int blocksize;	/* OUT */
-	audio_file_t *file;	/* OUT */
-};
-int audiobellopen(dev_t, struct audiobell_arg *);
+int audiobellopen(dev_t, audio_file_t **);
+int audiobellsetrate(audio_file_t *, u_int);
 int audiobellclose(audio_file_t *);
 int audiobellwrite(audio_file_t *, struct uio *);
 

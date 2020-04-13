@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.4 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.4.2.1 2020/04/13 08:04:23 martin Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -404,7 +404,7 @@ struct mvxpe_softc {
 	struct ethercom sc_ethercom;
 	struct mii_data sc_mii;
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* station addr */
-	int sc_if_flags;
+	u_short sc_if_flags;
 	int sc_wdogsoft;
 
 	/*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2018/05/09 13:53:13 christos Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2020/04/13 08:02:11 martin Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -33,21 +33,6 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE=0 \
 		-DBINDIR=\"${BINDIR}\" \
 		${GCPPFLAGS:M-D*}
-
-# XXX inf-ptrace.c has some bogus (PTRACE_TYPE_ARG3) casts, but in 
-# code that's never exercised on NetBSD.
-CPPFLAGS.inf-ptrace.c=	-Wno-error
-
-# XXX: I should fix these...
-CPPFLAGS.i386-nbsd-tdep.c+= -Wno-narrowing
-CPPFLAGS.arm-get-next-pcs.c+= -Wno-narrowing
-CPPFLAGS.mips-tdep.c+= -Wno-narrowing
-CPPFLAGS.sh-nbsd-tdep.c+= -Wno-narrowing
-CPPFLAGS.ppc-nbsd-tdep.c+= -Wno-narrowing
-CPPFLAGS.alpha-nbsd-tdep.c+= -Wno-narrowing
-CPPFLAGS.alpha-tdep.c+= -Wno-narrowing
-CPPFLAGS.rs6000-tdep.c+= -Wno-narrowing
-CPPFLAGS.hppa-nbsd-tdep.c+= -Wno-narrowing
 
 CWARNFLAGS.clang+=	-Wno-switch
 

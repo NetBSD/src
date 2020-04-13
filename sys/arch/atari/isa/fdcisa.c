@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.14 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.14.54.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.14 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.14.54.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.14 2011/07/01 20:34:06 dyoung Exp $");
 
 
 /* controller driver configuration */
-int	fdc_isa_probe (device_t, cfdata_t, void *);
-void	fdc_isa_attach (device_t, device_t, void *);
+static int	fdc_isa_probe (device_t, cfdata_t, void *);
+static void	fdc_isa_attach (device_t, device_t, void *);
 
 struct fdc_isa_softc {
 	struct fdc_softc	sc_fdc;		/* base fdc device */
@@ -93,7 +93,7 @@ struct fdc_isa_softc {
 CFATTACH_DECL_NEW(fdcisa, sizeof(struct fdc_isa_softc),
     fdc_isa_probe, fdc_isa_attach, NULL, NULL);
 
-int
+static int
 fdc_isa_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct isa_attach_args	*ia = aux;
@@ -177,7 +177,7 @@ out:
 	return fdc_matched;
 }
 
-void
+static void
 fdc_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdc_isa_softc	*isc = device_private(self);

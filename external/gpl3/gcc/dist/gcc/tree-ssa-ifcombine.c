@@ -1,5 +1,5 @@
 /* Combining of if-expressions on trees.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -40,6 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimplify-me.h"
 #include "tree-cfg.h"
 #include "tree-ssa.h"
+#include "params.h"
 
 #ifndef LOGICAL_OP_NON_SHORT_CIRCUIT
 #define LOGICAL_OP_NON_SHORT_CIRCUIT \
@@ -358,23 +359,15 @@ update_profile_after_ifcombine (basic_block inner_cond_bb,
      outer_cond_bb->(outer_to_inner)->inner_cond_bb->(inner_taken)
      and probability of inner_not_taken updated.  */
 
-  outer_to_inner->count = outer_cond_bb->count;
   inner_cond_bb->count = outer_cond_bb->count;
-  inner_taken->count += outer2->count;
-  outer2->count = 0;
 
-  inner_taken->probability = outer2->probability
-			     + RDIV (outer_to_inner->probability
-				     * inner_taken->probability,
-				     REG_BR_PROB_BASE);
-  if (inner_taken->probability > REG_BR_PROB_BASE)
-    inner_taken->probability = REG_BR_PROB_BASE;
-  inner_not_taken->probability = REG_BR_PROB_BASE
+  inner_taken->probability = outer2->probability + outer_to_inner->probability
+			     * inner_taken->probability;
+  inner_not_taken->probability = profile_probability::always ()
 				 - inner_taken->probability;
 
-  outer_to_inner->probability = REG_BR_PROB_BASE;
-  inner_cond_bb->frequency = outer_cond_bb->frequency;
-  outer2->probability = 0;
+  outer_to_inner->probability = profile_probability::always ();
+  outer2->probability = profile_probability::never ();
 }
 
 /* If-convert on a and pattern with a common else block.  The inner
@@ -444,11 +437,11 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
       if (dump_file)
 	{
 	  fprintf (dump_file, "optimizing double bit test to ");
-	  print_generic_expr (dump_file, name1, 0);
+	  print_generic_expr (dump_file, name1);
 	  fprintf (dump_file, " & T == T\nwith temporary T = (1 << ");
-	  print_generic_expr (dump_file, bit1, 0);
+	  print_generic_expr (dump_file, bit1);
 	  fprintf (dump_file, ") | (1 << ");
-	  print_generic_expr (dump_file, bit2, 0);
+	  print_generic_expr (dump_file, bit2);
 	  fprintf (dump_file, ")\n");
 	}
 
@@ -523,11 +516,11 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
       if (dump_file)
 	{
 	  fprintf (dump_file, "optimizing bits or bits test to ");
-	  print_generic_expr (dump_file, name1, 0);
+	  print_generic_expr (dump_file, name1);
 	  fprintf (dump_file, " & T != 0\nwith temporary T = ");
-	  print_generic_expr (dump_file, bits1, 0);
+	  print_generic_expr (dump_file, bits1);
 	  fprintf (dump_file, " | ");
-	  print_generic_expr (dump_file, bits2, 0);
+	  print_generic_expr (dump_file, bits2);
 	  fprintf (dump_file, "\n");
 	}
 
@@ -564,7 +557,11 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
 	{
 	  tree t1, t2;
 	  gimple_stmt_iterator gsi;
-	  if (!LOGICAL_OP_NON_SHORT_CIRCUIT)
+	  bool logical_op_non_short_circuit = LOGICAL_OP_NON_SHORT_CIRCUIT;
+	  if (PARAM_VALUE (PARAM_LOGICAL_OP_NON_SHORT_CIRCUIT) != -1)
+	    logical_op_non_short_circuit
+	      = PARAM_VALUE (PARAM_LOGICAL_OP_NON_SHORT_CIRCUIT);
+	  if (!logical_op_non_short_circuit || flag_sanitize_coverage)
 	    return false;
 	  /* Only do this optimization if the inner bb contains only the conditional. */
 	  if (!gsi_one_before_end_p (gsi_start_nondebug_after_labels_bb (inner_cond_bb)))
@@ -607,7 +604,7 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
       if (dump_file)
 	{
 	  fprintf (dump_file, "optimizing two comparisons to ");
-	  print_generic_expr (dump_file, t, 0);
+	  print_generic_expr (dump_file, t);
 	  fprintf (dump_file, "\n");
 	}
 

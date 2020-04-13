@@ -1,5 +1,5 @@
 /* Callgraph summary data structure.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    Contributed by Martin Liska
 
 This file is part of GCC.
@@ -37,15 +37,9 @@ class GTY((user)) function_summary <T *>
 public:
   /* Default construction takes SYMTAB as an argument.  */
   function_summary (symbol_table *symtab, bool ggc = false): m_ggc (ggc),
-    m_map (13, ggc), m_insertion_enabled (true), m_symtab (symtab)
+    m_insertion_enabled (true), m_released (false), m_map (13, ggc),
+    m_symtab (symtab)
   {
-    if (flag_checking)
-      {
-	cgraph_node *node;
-	FOR_EACH_FUNCTION (node)
-	  gcc_assert (node->summary_uid > 0);
-      }
-
     m_symtab_insertion_hook =
       symtab->add_cgraph_insertion_hook
       (function_summary::symtab_insertion, this);
@@ -67,23 +61,19 @@ public:
   /* Destruction method that can be called for GGT purpose.  */
   void release ()
   {
-    if (m_symtab_insertion_hook)
-      m_symtab->remove_cgraph_insertion_hook (m_symtab_insertion_hook);
+    if (m_released)
+      return;
 
-    if (m_symtab_removal_hook)
-      m_symtab->remove_cgraph_removal_hook (m_symtab_removal_hook);
-
-    if (m_symtab_duplication_hook)
-      m_symtab->remove_cgraph_duplication_hook (m_symtab_duplication_hook);
-
-    m_symtab_insertion_hook = NULL;
-    m_symtab_removal_hook = NULL;
-    m_symtab_duplication_hook = NULL;
+    m_symtab->remove_cgraph_insertion_hook (m_symtab_insertion_hook);
+    m_symtab->remove_cgraph_removal_hook (m_symtab_removal_hook);
+    m_symtab->remove_cgraph_duplication_hook (m_symtab_duplication_hook);
 
     /* Release all summaries.  */
     typedef typename hash_map <map_hash, T *>::iterator map_iterator;
     for (map_iterator it = m_map.begin (); it != m_map.end (); ++it)
       release ((*it).second);
+
+    m_released = true;
   }
 
   /* Traverses all summarys with a function F called with
@@ -106,7 +96,9 @@ public:
   /* Allocates new data that are stored within map.  */
   T* allocate_new ()
   {
-    return m_ggc ? new (ggc_alloc <T> ()) T() : new T () ;
+    /* Call gcc_internal_because we do not want to call finalizer for
+       a type T.  We call dtor explicitly.  */
+    return m_ggc ? new (ggc_internal_alloc (sizeof (T))) T () : new T () ;
   }
 
   /* Release an item that is stored within map.  */
@@ -124,6 +116,7 @@ public:
   /* Getter for summary callgraph node pointer.  */
   T* get (cgraph_node *node)
   {
+    gcc_checking_assert (node->summary_uid);
     return get (node->summary_uid);
   }
 
@@ -148,6 +141,7 @@ public:
   /* Symbol insertion hook that is registered to symbol table.  */
   static void symtab_insertion (cgraph_node *node, void *data)
   {
+    gcc_checking_assert (node->summary_uid);
     function_summary *summary = (function_summary <T *> *) (data);
 
     if (summary->m_insertion_enabled)
@@ -211,6 +205,10 @@ private:
     return *v;
   }
 
+  /* Indicates if insertion hook is enabled.  */
+  bool m_insertion_enabled;
+  /* Indicates if the summary is released.  */
+  bool m_released;
   /* Main summary store, where summary ID is used as key.  */
   hash_map <map_hash, T *> m_map;
   /* Internal summary insertion hook pointer.  */
@@ -219,8 +217,6 @@ private:
   cgraph_node_hook_list *m_symtab_removal_hook;
   /* Internal summary duplication hook pointer.  */
   cgraph_2node_hook_list *m_symtab_duplication_hook;
-  /* Indicates if insertion hook is enabled.  */
-  bool m_insertion_enabled;
   /* Symbol table the summary is registered to.  */
   symbol_table *m_symtab;
 

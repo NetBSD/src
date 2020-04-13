@@ -1,4 +1,4 @@
-/* $NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $ */
+/* $NetBSD: t_write.c,v 1.6.6.1 2020/04/13 08:05:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.6.6.1 2020/04/13 08:05:27 martin Exp $");
 
 #include <sys/uio.h>
 #include <sys/mman.h>
@@ -71,7 +71,7 @@ ATF_TC_BODY(write_err, tc)
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, write(-1, wbuf, sizeof(wbuf)) == -1);
 
-	fd = open(path, O_RDWR | O_CREAT);
+	fd = open(path, O_RDWR | O_CREAT, 0600);
 
 	if (fd >= 0) {
 
@@ -143,7 +143,7 @@ ATF_TC_BODY(write_pos, tc)
 	size_t i;
 	int fd;
 
-	fd = open(path, O_RDWR | O_CREAT);
+	fd = open(path, O_RDWR | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	for (i = 0; i < n; i++) {
@@ -173,7 +173,7 @@ ATF_TC_BODY(write_ret, tc)
 	size_t i, j;
 	int fd;
 
-	fd = open(path, O_WRONLY | O_CREAT);
+	fd = open(path, O_WRONLY | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	(void)memset(buf, 'x', sizeof(buf));

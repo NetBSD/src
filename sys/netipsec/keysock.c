@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.65.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.65.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.65.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.65.2.2 2020/04/13 08:05:17 martin Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -437,7 +437,7 @@ key_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
-	panic("key_accept");
+	panic("%s: unsupported", __func__);
 
 	return EOPNOTSUPP;
 }
@@ -513,7 +513,7 @@ key_abort(struct socket *so)
 {
 	KASSERT(solocked(so));
 
-	panic("key_abort");
+	panic("%s: unsupported", __func__);
 
 	return EOPNOTSUPP;
 }
@@ -612,7 +612,7 @@ static int
 key_purgeif(struct socket *so, struct ifnet *ifa)
 {
 
-	panic("key_purgeif");
+	panic("%s: unsupported", __func__);
 
 	return EOPNOTSUPP;
 }

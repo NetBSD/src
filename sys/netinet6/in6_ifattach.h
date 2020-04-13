@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.h,v 1.13 2009/09/19 13:11:02 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.13.64.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_ifattach.h,v 1.8 2000/04/12 03:51:30 itojun Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 void in6_ifattach(struct ifnet *, struct ifnet *);
 void in6_ifdetach(struct ifnet *);
 int in6_get_tmpifid(struct ifnet *, u_int8_t *, const u_int8_t *, int);
-void in6_tmpaddrtimer(void *);
 int in6_get_hw_ifid(struct ifnet *, struct in6_addr *);
 int in6_nigroup(struct ifnet *, const char *, int, struct sockaddr_in6 *);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.70.14.1 2019/06/10 22:10:24 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.70.14.2 2020/04/13 08:05:48 martin Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.70.14.1 2019/06/10 22:10:24 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.70.14.2 2020/04/13 08:05:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -2503,13 +2503,14 @@ cmdrc(const char *m1, const char *m2)
 	    if (isspace((unsigned char)line[0]))
 		continue;
 	    if (strncasecmp(line, m1, l1) == 0)
-		strncpy(line, &line[l1], sizeof(line) - l1);
+		memmove(line, &line[l1], sizeof(line) - l1 - 1);
 	    else if (strncasecmp(line, m2, l2) == 0)
-		strncpy(line, &line[l2], sizeof(line) - l2);
+		memmove(line, &line[l2], sizeof(line) - l2 - 1);
 	    else if (strncasecmp(line, "DEFAULT", 7) == 0)
-		strncpy(line, &line[7], sizeof(line) - 7);
+		memmove(line, &line[7], sizeof(line) - 7 - 1);
 	    else
 		continue;
+	    line[sizeof(line) - 1] = '\0';
 	    if (line[0] != ' ' && line[0] != '\t' && line[0] != '\n')
 		continue;
 	    gotmachine = 1;

@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.10.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.10.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.10.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.10.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.10.2.1 2019/06/10 22:09:47 christo
 #include <netinet/sctp_output.h>
 #include <netinet/sctp_uio.h>
 #include <netinet/sctp_asconf.h>
+#include <netinet/sctp_route.h>
 #include <netinet/sctputil.h>
 #include <netinet/sctp_indata.h>
 #include <netinet/sctp_asconf.h>

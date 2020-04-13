@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc_mainbus.c,v 1.6 2011/07/01 19:03:09 dyoung Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.6.54.1 2020/04/13 08:03:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.6 2011/07/01 19:03:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.6.54.1 2020/04/13 08:03:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -79,11 +79,10 @@ cpc_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct genppc_pci_chipset_businfo *pbi;
 
 	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
-	    M_NOWAIT);
+	    M_WAITOK);
 	pmppc_pci_get_chipset_tag(genppc_pct);
 	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-	    M_DEVBUF, M_NOWAIT);
-	KASSERT(pbi != NULL);
+	    M_DEVBUF, M_WAITOK);
 	pbi->pbi_properties = prop_dictionary_create();
 	KASSERT(pbi->pbi_properties != NULL);
 	SIMPLEQ_INIT(&genppc_pct->pc_pbi);

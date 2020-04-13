@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.72.10.1 2019/06/10 22:05:22 christos Exp $
+.\"	$NetBSD: curses.3,v 1.72.10.2 2020/04/13 08:03:12 martin Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 25, 2018
+.Dd August 29, 2019
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -96,6 +96,7 @@ must be called before any of the other routines that deal with color are used.
 .It color_set Ta Xr curses_attributes 3
 .It copywin Ta Xr curses_window 3
 .It curs_set Ta Xr curses_tty 3
+.It curses_version Ta Xr curses_version 3
 .It def_prog_mode Ta Xr curses_tty 3
 .It def_shell_mode Ta Xr curses_tty 3
 .It define_key Ta Xr curses_input 3

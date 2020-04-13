@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.39 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.39.2.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -146,7 +146,7 @@ struct atw_rx_radiotap_header {
 	uint16_t				ar_chan_freq;
 	uint16_t				ar_chan_flags;
 	uint8_t					ar_antsignal;
-} __packed;
+};
 
 #define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_RATE) | \
 				 (1 << IEEE80211_RADIOTAP_CHANNEL))
@@ -157,7 +157,7 @@ struct atw_tx_radiotap_header {
 	uint8_t					at_pad;
 	uint16_t				at_chan_freq;
 	uint16_t				at_chan_flags;
-} __packed;
+};
 
 enum atw_revision {
 	ATW_REVISION_AB = 0x11,	/* ADM8211A */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.39.16.2 2020/04/08 14:08:01 martin Exp $
+#	$NetBSD: files.netbsd32,v 1.39.16.3 2020/04/13 08:04:16 martin Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -7,10 +7,14 @@
 # own file lists.
 
 define	compat_netbsd32
+
+#makeoptions	drmkms	CPPFLAGS+="-DNETBSD32_DRMKMS"
+
 file	compat/netbsd32/netbsd32_core.c		compat_netbsd32 & coredump
 file	compat/netbsd32/netbsd32_exec_elf32.c	compat_netbsd32 & exec_elf32
 file	compat/netbsd32/netbsd32_exec_aout.c	compat_netbsd32 & exec_aout
 file	compat/netbsd32/netbsd32_netbsd.c	compat_netbsd32
+#file	compat/netbsd32/netbsd32_drm.c		compat_netbsd32 & drmkms
 file	compat/netbsd32/netbsd32_event.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_execve.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_fd.c		compat_netbsd32
@@ -25,7 +29,7 @@ file	compat/netbsd32/netbsd32_mqueue.c	compat_netbsd32 & mqueue
 file	compat/netbsd32/netbsd32_nfssvc.c	compat_netbsd32 & nfsserver
 file	compat/netbsd32/netbsd32_ptrace.c	compat_netbsd32 & ptrace
 file	compat/netbsd32/netbsd32_rlimit.c	compat_netbsd32
-file	compat/netbsd32/netbsd32_quota.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_quota.c	compat_netbsd32 & quota
 file	compat/netbsd32/netbsd32_select.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_sem.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_signal.c	compat_netbsd32
@@ -57,3 +61,4 @@ file	compat/netbsd32/netbsd32_compat_50_sysv.c compat_netbsd32 & compat_50 &
 						(sysvmsg | sysvsem | sysvshm)
 file	compat/netbsd32/netbsd32_compat_60.c	compat_netbsd32 & compat_60
 file	compat/netbsd32/netbsd32_compat_80.c	compat_netbsd32 & compat_80
+file	compat/netbsd32/netbsd32_compat_90.c	compat_netbsd32 & compat_90

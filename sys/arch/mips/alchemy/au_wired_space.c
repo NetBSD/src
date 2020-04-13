@@ -1,4 +1,4 @@
-/* $NetBSD: au_wired_space.c,v 1.9 2012/01/27 18:52:58 para Exp $ */
+/* $NetBSD: au_wired_space.c,v 1.9.48.1 2020/04/13 08:03:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.9 2012/01/27 18:52:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.9.48.1 2020/04/13 08:03:59 martin Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -633,8 +633,7 @@ au_wired_space_init(bus_space_tag_t bst, const char *name,
 	au_wired_cookie_t	*c;
 
 	c = malloc(sizeof (struct au_wired_cookie), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-
+	    M_WAITOK | M_ZERO);
 	c->c_pbase = paddr;
 	c->c_name = name;
 	c->c_start = start;

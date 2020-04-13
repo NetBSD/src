@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.22 2011/05/26 15:34:14 joerg Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.22.56.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.22 2011/05/26 15:34:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.22.56.1 2020/04/13 08:04:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <ddb/ddb.h>
 
@@ -61,6 +62,18 @@ db_read_line(void)
 {
 	int	i;
 
+#ifdef _KERNEL
+	/*
+	 * crash(8) prints the prompt using libedit.  That's why we used to
+	 * print it in db_readline().  But now people are using db_read_line()
+	 * for general purpose input, so..
+	 */
+#ifdef MULTIPROCESSOR
+	db_printf("db{%ld}> ", (long)cpu_number());
+#else
+	db_printf("db> ");
+#endif
+#endif
 	i = db_readline(db_line, sizeof(db_line));
 	if (i == 0)
 		return (0);	/* EOI */
@@ -204,14 +217,14 @@ db_lex(void)
 		for (;;) {
 			if (c >= '0' && c <= ((r == 8) ? '7' : '9'))
 				digit = c - '0';
-			else if (r == 16 && ((c >= 'A' && c <= 'F') ||
-				(c >= 'a' && c <= 'f'))) {
-				if (c >= 'a')
-					digit = c - 'a' + 10;
-				else if (c >= 'A')
+			else if (r == 16) {
+				if (c >= 'A' && c <= 'F')
 					digit = c - 'A' + 10;
-			}
-			else
+				else if (c >= 'a' && c <= 'f')
+					digit = c - 'a' + 10;
+				else
+					break;
+			} else
 				break;
 			db_tok_number = db_tok_number * r + digit;
 			c = db_read_char();

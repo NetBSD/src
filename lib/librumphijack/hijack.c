@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.125.2.2 2020/04/08 14:07:16 martin Exp $	*/
+/*      $NetBSD: hijack.c,v 1.125.2.3 2020/04/13 08:03:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.125.2.2 2020/04/08 14:07:16 martin Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.125.2.3 2020/04/13 08:03:16 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -216,7 +216,17 @@ enum dualcall {
 #define REALMOUNT __mount50
 #define REALGETFH __getfh30
 #define REALFHOPEN __fhopen40
+#if !__NetBSD_Prereq__(9,99,13)
+#define REALSTATVFS1 statvfs1
+#define REALFSTATVFS1 fstatvfs1
+#define REALGETVFSSTAT getvfsstat
 #define REALFHSTATVFS1 __fhstatvfs140
+#else
+#define REALSTATVFS1 __statvfs190
+#define REALFSTATVFS1 __fstatvfs190
+#define REALGETVFSSTAT __getvfsstat90
+#define REALFHSTATVFS1 __fhstatvfs190
+#endif
 #define REALSOCKET __socket30
 
 #define LSEEK_ALIAS _lseek
@@ -264,7 +274,10 @@ int REALMOUNT(const char *, const char *, int, void *, size_t);
 int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
+int REALSTATVFS1(const char *, struct statvfs *, int);
+int REALFSTATVFS1(int, struct statvfs *, int);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
+int REALGETVFSSTAT(struct statvfs *, size_t, int);
 int REALSOCKET(int, int, int);
 
 #define S(a) __STRING(a)
@@ -365,9 +378,9 @@ struct sysnames {
 #endif
 
 #ifdef __NetBSD__
-	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
-	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
-	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
+	{ DUALCALL_STATVFS1,	S(REALSTATVFS1),RSYS_NAME(STATVFS1)	},
+	{ DUALCALL_FSTATVFS1,	S(REALFSTATVFS1),RSYS_NAME(FSTATVFS1)	},
+	{ DUALCALL_GETVFSSTAT,	S(REALGETVFSSTAT),RSYS_NAME(GETVFSSTAT)	},
 #endif
 
 #ifdef __NetBSD__
@@ -2497,7 +2510,7 @@ FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 #endif
 
 #ifdef __NetBSD__
-FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
+FDCALL(int, REALFSTATVFS1, DUALCALL_FSTATVFS1,				\
 	(int fd, struct statvfs *buf, int flags),			\
 	(int, struct statvfs *, int),					\
 	(fd, buf, flags))
@@ -2599,7 +2612,7 @@ PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
 	(path, mode))
 
 #ifdef __NetBSD__
-PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
+PATHCALL(int, REALSTATVFS1, DUALCALL_STATVFS1,				\
 	(const char *path, struct statvfs *buf, int flags),		\
 	(const char *, struct statvfs *, int),				\
 	(path, buf, flags))
@@ -2728,7 +2741,7 @@ PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
  */
 
 #ifdef __NetBSD__
-VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
+VFSCALL(VFSBIT_GETVFSSTAT, int, REALGETVFSSTAT, DUALCALL_GETVFSSTAT,	\
 	(struct statvfs *buf, size_t buflen, int flags),		\
 	(struct statvfs *, size_t, int),				\
 	(buf, buflen, flags))

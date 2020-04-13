@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_lpchc.c,v 1.2.54.1 2019/06/10 22:05:53 christos Exp $	*/
+/*	$NetBSD: gemini_lpchc.c,v 1.2.54.2 2020/04/13 08:03:34 martin Exp $	*/
 
 /*
  * GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.2.54.1 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpchc.c,v 1.2.54.2 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -94,12 +94,7 @@ gemini_lpchc_intrq_insert(gemini_lpchc_softc_t *sc, int (*func)(void *),
 {
 	gemini_lpchc_intrq_t *iqp;
 
-        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_NOWAIT|M_ZERO);
-        if (iqp == NULL) {
-		printf("gemini_lpchc_intrq_insert: malloc failed\n");
-		return NULL;
-	}
-
+        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_WAITOK|M_ZERO);
         iqp->iq_func = func;
         iqp->iq_arg = arg;
         iqp->iq_bit = bit;
@@ -199,10 +194,6 @@ gemini_lpchc_intr_establish(lpcintrtag_t tag, uint irq,
 		gemini_lpchc_sirq_enable(iot, ioh);
 
 	ih = gemini_lpchc_intrq_insert(sc, func, arg, bit, isedge); 
-	if (ih == NULL)
-		if (gemini_lpchc_intrq_empty(sc))
-			gemini_lpchc_sirq_disable(iot, ioh);
-
 	return ih;
 }
 
@@ -228,4 +219,3 @@ printf("%s: exit\n", __FUNCTION__);
 
 	return rv;
 }
-

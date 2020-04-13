@@ -1,5 +1,5 @@
 /* Generic SSA value propagation engine.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
    This file is part of GCC.
@@ -479,9 +479,6 @@ ssa_prop_fini (void)
   free (cfg_order_to_bb);
   BITMAP_FREE (ssa_edge_worklist);
   uid_to_stmt.release ();
-  basic_block bb;
-  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR_FOR_FN (cfun), NULL, next_bb)
-    bb->flags &= ~BB_VISITED;
 }
 
 
@@ -863,7 +860,7 @@ static struct prop_stats_d prop_stats;
 /* Replace USE references in statement STMT with the values stored in
    PROP_VALUE. Return true if at least one reference was replaced.  */
 
-static bool
+bool
 replace_uses_in (gimple *stmt, ssa_prop_get_value_fn get_value)
 {
   bool replaced = false;
@@ -914,7 +911,6 @@ replace_phi_args_in (gphi *phi, ssa_prop_get_value_fn get_value)
       print_gimple_stmt (dump_file, phi, 0, TDF_SLIM);
     }
 
-  basic_block bb = gimple_bb (phi);
   for (i = 0; i < gimple_phi_num_args (phi); i++)
     {
       tree arg = gimple_phi_arg_def (phi, i);
@@ -926,19 +922,6 @@ replace_phi_args_in (gphi *phi, ssa_prop_get_value_fn get_value)
 	  if (val && val != arg && may_propagate_copy (arg, val))
 	    {
 	      edge e = gimple_phi_arg_edge (phi, i);
-
-	      /* Avoid propagating constants into loop latch edge
-	         PHI arguments as this makes coalescing the copy
-		 across this edge impossible.  If the argument is
-		 defined by an assert - otherwise the stmt will
-		 get removed without replacing its uses.  */
-	      if (TREE_CODE (val) != SSA_NAME
-		  && bb->loop_father->header == bb
-		  && dominated_by_p (CDI_DOMINATORS, e->src, bb)
-		  && is_gimple_assign (SSA_NAME_DEF_STMT (arg))
-		  && (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (arg))
-		      == ASSERT_EXPR))
-		continue;
 
 	      if (TREE_CODE (val) != SSA_NAME)
 		prop_stats.num_const_prop++;
@@ -986,10 +969,9 @@ class substitute_and_fold_dom_walker : public dom_walker
 public:
     substitute_and_fold_dom_walker (cdi_direction direction,
 				    ssa_prop_get_value_fn get_value_fn_,
-				    ssa_prop_fold_stmt_fn fold_fn_,
-				    bool do_dce_)
+				    ssa_prop_fold_stmt_fn fold_fn_)
 	: dom_walker (direction), get_value_fn (get_value_fn_),
-      fold_fn (fold_fn_), do_dce (do_dce_), something_changed (false)
+      fold_fn (fold_fn_), something_changed (false)
     {
       stmts_to_remove.create (0);
       stmts_to_fixup.create (0);
@@ -1007,7 +989,6 @@ public:
 
     ssa_prop_get_value_fn get_value_fn;
     ssa_prop_fold_stmt_fn fold_fn;
-    bool do_dce;
     bool something_changed;
     vec<gimple *> stmts_to_remove;
     vec<gimple *> stmts_to_fixup;
@@ -1026,8 +1007,7 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
       tree res = gimple_phi_result (phi);
       if (virtual_operand_p (res))
 	continue;
-      if (do_dce
-	  && res && TREE_CODE (res) == SSA_NAME)
+      if (res && TREE_CODE (res) == SSA_NAME)
 	{
 	  tree sprime = get_value_fn (res);
 	  if (sprime
@@ -1049,28 +1029,21 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
     {
       bool did_replace;
       gimple *stmt = gsi_stmt (i);
-      enum gimple_code code = gimple_code (stmt);
-
-      /* Ignore ASSERT_EXPRs.  They are used by VRP to generate
-	 range information for names and they are discarded
-	 afterwards.  */
-
-      if (code == GIMPLE_ASSIGN
-	  && TREE_CODE (gimple_assign_rhs1 (stmt)) == ASSERT_EXPR)
-	continue;
 
       /* No point propagating into a stmt we have a value for we
          can propagate into all uses.  Mark it for removal instead.  */
       tree lhs = gimple_get_lhs (stmt);
-      if (do_dce
-	  && lhs && TREE_CODE (lhs) == SSA_NAME)
+      if (lhs && TREE_CODE (lhs) == SSA_NAME)
 	{
 	  tree sprime = get_value_fn (lhs);
 	  if (sprime
 	      && sprime != lhs
 	      && may_propagate_copy (lhs, sprime)
 	      && !stmt_could_throw_p (stmt)
-	      && !gimple_has_side_effects (stmt))
+	      && !gimple_has_side_effects (stmt)
+	      /* We have to leave ASSERT_EXPRs around for jump-threading.  */
+	      && (!is_gimple_assign (stmt)
+		  || gimple_assign_rhs_code (stmt) != ASSERT_EXPR))
 	    {
 	      stmts_to_remove.safe_push (stmt);
 	      continue;
@@ -1090,18 +1063,6 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
       bool was_noreturn = (is_gimple_call (stmt)
 			   && gimple_call_noreturn_p (stmt));
 
-      /* Some statements may be simplified using propagator
-	 specific information.  Do this before propagating
-	 into the stmt to not disturb pass specific information.  */
-      if (fold_fn
-	  && (*fold_fn)(&i))
-	{
-	  did_replace = true;
-	  prop_stats.num_stmts_folded++;
-	  stmt = gsi_stmt (i);
-	  update_stmt (stmt);
-	}
-
       /* Replace real uses in the statement.  */
       did_replace |= replace_uses_in (stmt, get_value_fn);
 
@@ -1110,6 +1071,22 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
 	{
 	  fold_stmt (&i, follow_single_use_edges);
 	  stmt = gsi_stmt (i);
+	  gimple_set_modified (stmt, true);
+	}
+
+      /* Some statements may be simplified using propagator
+	 specific information.  Do this before propagating
+	 into the stmt to not disturb pass specific information.  */
+      if (fold_fn)
+	{
+	  update_stmt_if_modified (stmt);
+	  if ((*fold_fn)(&i))
+	    {
+	      did_replace = true;
+	      prop_stats.num_stmts_folded++;
+	      stmt = gsi_stmt (i);
+	      gimple_set_modified (stmt, true);
+	    }
 	}
 
       /* If this is a control statement the propagator left edges
@@ -1127,6 +1104,7 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
 		gimple_cond_make_true (as_a <gcond *> (stmt));
 	      else
 		gimple_cond_make_false (as_a <gcond *> (stmt));
+	      gimple_set_modified (stmt, true);
 	      did_replace = true;
 	    }
 	}
@@ -1155,7 +1133,7 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
 	    }
 
 	  /* Determine what needs to be done to update the SSA form.  */
-	  update_stmt (stmt);
+	  update_stmt_if_modified (stmt);
 	  if (!is_gimple_debug (stmt))
 	    something_changed = true;
 	}
@@ -1195,8 +1173,7 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
 
 bool
 substitute_and_fold (ssa_prop_get_value_fn get_value_fn,
-		     ssa_prop_fold_stmt_fn fold_fn,
-		     bool do_dce)
+		     ssa_prop_fold_stmt_fn fold_fn)
 {
   gcc_assert (get_value_fn);
 
@@ -1207,7 +1184,7 @@ substitute_and_fold (ssa_prop_get_value_fn get_value_fn,
 
   calculate_dominance_info (CDI_DOMINATORS);
   substitute_and_fold_dom_walker walker(CDI_DOMINATORS,
-					get_value_fn, fold_fn, do_dce);
+					get_value_fn, fold_fn);
   walker.walk (ENTRY_BLOCK_PTR_FOR_FN (cfun));
 
   /* We cannot remove stmts during the BB walk, especially not release

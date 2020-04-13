@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.54.10.1 2019/06/10 22:09:01 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.54.10.2 2020/04/13 08:05:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.54.10.1 2019/06/10 22:09:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.54.10.2 2020/04/13 08:05:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ptyfs_setattr(void *v)
 	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
 	bool changing_sysflags = false;
 
-	if (vap->va_size != VNOVAL) {
+	if (vap->va_size != VNOVALSIZE) {
  		switch (ptyfs->ptyfs_type) {
  		case PTYFSroot:
  			return EISDIR;
@@ -417,7 +417,7 @@ ptyfs_setattr(void *v)
 		}
 	}
 
-	if (vap->va_flags != VNOVAL) {
+	if (vap->va_flags != VNOVALFLAGS) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
 

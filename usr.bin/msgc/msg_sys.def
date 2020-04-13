@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.41.32.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.41.32.2 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -158,7 +158,7 @@ msg_standend(void)
 	wstandend(msg_win);
 }
 
-static int
+static int __printflike(2, 0)
 _msg_vprintf(int auto_fill, const char *fmt, va_list ap)
 {
 	const char *wstart, *afterw;
@@ -285,28 +285,43 @@ out:
 }
 
 void
-msg_display(msg msg_no, ...)
+msg_display(msg msg_no)
+{
+
+	msg_clear();
+	msg_printf("%s", msg_string(msg_no));
+}
+
+void __printflike(2, 3)
+msg_fmt_display(msg msg_no, const char *fmt, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
-	va_start(ap, msg_no);
-	(void)_msg_vprintf(1, msg_string(msg_no), ap);
+	va_start(ap, fmt);
+	(void)_msg_vprintf(1, fmtcheck(msg_string(msg_no), fmt), ap);
 	va_end(ap);
 }
 
 void
-msg_display_add(msg msg_no, ...)
+msg_display_add(msg msg_no)
+{
+
+	msg_printf("%s", msg_string(msg_no));
+}
+
+void __printflike(2, 3)
+msg_fmt_display_add(msg msg_no, const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, msg_no);
-	(void)_msg_vprintf(1, msg_string(msg_no), ap);
+	va_start(ap, fmt);
+	(void)_msg_vprintf(1, fmtcheck(msg_string(msg_no), fmt), ap);
 	va_end(ap);
 }
 
-void
+void __printflike(1, 2)
 msg_printf(const char *fmt, ...)
 {
 	va_list ap;
@@ -316,7 +331,7 @@ msg_printf(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void
+static void __printflike(1, 0)
 _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
     size_t val_buf_len, va_list ap)
 {
@@ -469,21 +484,36 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 }
 
 void
-msg_prompt(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+msg_prompt(msg msg_no, const char *def, char *val, size_t val_buf_len)
+{
+
+	msg_fmt_prompt(msg_no, def, val, val_buf_len, "");
+}
+
+void __printflike(5, 6)
+msg_fmt_prompt(msg msg_no, const char *def, char *val, size_t val_buf_len,
+    const char *fmt, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
-	va_start(ap, val_buf_len);
-	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO,
+	va_start(ap, fmt);
+	_msg_vprompt(fmtcheck(msg_string(msg_no), fmt), MSG_PROMPT_ECHO,
 		def, val, val_buf_len, ap);
 	va_end(ap);
 }
 
 void
 msg_prompt_win(msg msg_no, int x, int y, int w, int h,
-	const char *def, char *val, size_t val_buf_len, ...)
+    const char *def, char *val, size_t val_buf_len)
+{
+    msg_fmt_prompt_win(msg_no, x, y, w, h, def, val, val_buf_len, "");
+}
+
+void __printflike(9, 10)
+msg_fmt_prompt_win(msg msg_no, int x, int y, int w, int h,
+    const char *def, char *val, size_t val_buf_len, const char *fmt, ...)
 {
 	va_list ap;
 	WINDOW *win;
@@ -495,10 +525,10 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	maxx = getmaxx(msg_win);
 	maxy = getmaxy(msg_win);
 	if (w == 0) {
-		va_start(ap, val_buf_len);
-		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
+		va_start(ap, fmt);
+		w = vsnprintf(NULL, 0, fmtcheck(msg_string(msg_no), fmt), ap);
 		va_end(ap);
-		if (def != NULL && *def != 0 && w + (int)val_buf_len * 2 < maxx) {
+		if (def != NULL && *def != 0 && w + (int)val_buf_len * 2 < maxx) 		{
 			w += 2 + strlen(def) + 1;
 			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
 		}
@@ -561,8 +591,9 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		msg_clear();
 	}
 
-	va_start(ap, val_buf_len);
-	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, val_buf_len, ap);
+	va_start(ap, fmt);
+	_msg_vprompt(fmtcheck(msg_string(msg_no), fmt), msg_flags, def, val,
+	    val_buf_len, ap);
 	va_end(ap);
 
 	if (win != NULL) {
@@ -579,35 +610,59 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	}
 }
 
-void
-msg_prompt_add(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+void 
+msg_prompt_add(msg msg_no, const char *def, char *val, size_t val_buf_len)
+{
+
+	msg_fmt_prompt_add(msg_no, def, val, val_buf_len, "");
+}
+
+void __printflike(5, 6)
+msg_fmt_prompt_add(msg msg_no, const char *def, char *val, size_t val_buf_len,
+    const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, val_buf_len);
-	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO, def, val, val_buf_len, ap);
+	va_start(ap, fmt);
+	_msg_vprompt(fmtcheck(msg_string(msg_no), fmt), MSG_PROMPT_ECHO, def,
+	    val, val_buf_len, ap);
 	va_end(ap);
 }
 
 void
-msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
+msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t val_buf_len)
+{
+	msg_fmt_prompt_noecho(msg_no, def, val, val_buf_len, "");
+}
+
+void __printflike(5, 6)
+msg_fmt_prompt_noecho(msg msg_no, const char *def, char *val,
+    size_t val_buf_len, const char *fmt, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
-	va_start(ap, val_buf_len);
-	_msg_vprompt(msg_string(msg_no), 0, def, val, val_buf_len, ap);
+	va_start(ap, fmt);
+	_msg_vprompt(fmtcheck(msg_string(msg_no), fmt), 0, def, val,
+	    val_buf_len, ap);
 	va_end(ap);
 }
 
 void
-msg_table_add(msg msg_no, ...)
+msg_table_add(msg msg_no)
+{
+
+	msg_fmt_table_add(msg_no, "");
+}
+
+void __printflike(2, 3)
+msg_fmt_table_add(msg msg_no, const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, msg_no);
-	(void)_msg_vprintf(0, msg_string(msg_no), ap);
+	va_start(ap, fmt);
+	(void)_msg_vprintf(0, fmtcheck(msg_string(msg_no), fmt), ap);
 	va_end(ap);
 }
 

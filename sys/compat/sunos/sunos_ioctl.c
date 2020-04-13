@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.68.16.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.68.16.2 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.68.16.1 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.68.16.2 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -439,6 +439,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap,
 		}
 
 		error = (*ctl)(fp, TIOCSETD, &disc);
+		break;
 	    }
 	case _IOW('t', 101, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {

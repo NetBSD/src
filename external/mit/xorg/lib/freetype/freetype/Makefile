@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2018/05/09 07:28:44 maya Exp $
+#	$NetBSD: Makefile,v 1.23.2.1 2020/04/13 08:02:31 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,8 @@ SUBDIR=	config
 INCSDIR=${X11INCDIR}/freetype2/freetype
 
 INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
-	ftchapters.h ftcid.h ftdriver.h fterrdef.h fterrors.h ftfntfmt.h ftgasp.h \
+	ftchapters.h ftcid.h ftcolor.h ftdriver.h fterrdef.h fterrors.h \
+	ftfntfmt.h ftgasp.h \
 	ftglyph.h ftgxval.h ftgzip.h ftimage.h ftincrem.h ftlcdfil.h ftlist.h \
 	ftlzw.h ftmac.h ftmm.h ftmodapi.h ftmoderr.h ftotval.h ftoutln.h \
 	ftparams.h ftpfr.h ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h \

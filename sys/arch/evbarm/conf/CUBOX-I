@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.13.2.2 2020/04/08 14:07:34 martin Exp $
+# $NetBSD: CUBOX-I,v 1.13.2.3 2020/04/13 08:03:42 martin Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -21,6 +21,7 @@ options 	CPU_CORTEXA9
 options 	IMX6
 options 	MULTIPROCESSOR
 options 	PMAPCOUNTERS
+makeoptions	CPUFLAGS="-march=armv7-a -mfpu=vfpv3"
 
 # Standard system options
 
@@ -190,7 +191,7 @@ armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0 	at armperiph?		# ARM Generic Interrupt Controller
 arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
 arma9tmr0	at armperiph?		# A9 Global Timer
-#a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
+#arma9wdt0	at armperiph? flags 0	# A9 Watchdog Timer
 
 axi0		at mainbus?
 
@@ -207,7 +208,6 @@ imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
 imxgpio5	at axi? addr 0x020b0000 irqbase 416 irq 108
 imxgpio6	at axi? addr 0x020b4000 irqbase 448 irq 110
 gpio*		at imxgpio?
-options 	IMX_GPIO_INTR_SPLIT
 
 # Clock Control
 imxccm0		at axi? addr 0x020c4000

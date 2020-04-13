@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.2.2.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.2.2.2 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -142,6 +142,8 @@
 #define CPU_ID_ARM1156T2S	0x4107b560 /* MPU only */
 #define CPU_ID_ARM1176JZS	0x410fb760
 #define CPU_ID_ARM11_P(n)	((n & 0xff07f000) == 0x4107b000)
+
+/* ARMv7 CPUs */
 #define CPU_ID_CORTEXA5R0	0x410fc050
 #define CPU_ID_CORTEXA7R0	0x410fc070
 #define CPU_ID_CORTEXA8R1	0x411fc080
@@ -151,34 +153,50 @@
 #define CPU_ID_CORTEXA9R2	0x412fc090
 #define CPU_ID_CORTEXA9R3	0x413fc090
 #define CPU_ID_CORTEXA9R4	0x414fc090
+#define CPU_ID_CORTEXA12R0	0x410fc0d0
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
 #define CPU_ID_CORTEXA15R4	0x414fc0f0
 #define CPU_ID_CORTEXA17R1	0x411fc0e0
+
+/* ARMv8 CPUS */
+#define CPU_ID_CORTEXA32R1	0x411fd010
 #define CPU_ID_CORTEXA35R0	0x410fd040
+#define CPU_ID_CORTEXA35R1	0x411fd040
 #define CPU_ID_CORTEXA53R0	0x410fd030
 #define CPU_ID_CORTEXA55R1	0x411fd050
 #define CPU_ID_CORTEXA57R0	0x410fd070
 #define CPU_ID_CORTEXA57R1	0x411fd070
+#define CPU_ID_CORTEXA65R0	0x410fd060
 #define CPU_ID_CORTEXA72R0	0x410fd080
 #define CPU_ID_CORTEXA73R0	0x410fd090
 #define CPU_ID_CORTEXA75R2	0x412fd0a0
+#define CPU_ID_CORTEXA76AER1	0x411fd0e0
 #define CPU_ID_CORTEXA76R3	0x413fd0b0
+#define CPU_ID_NEOVERSEN1R3	0x413fd0c0
+#define CPU_ID_NEOVERSEE1R1	0x411fd4a0
+#define CPU_ID_CORTEXA77R0	0x410fd0d0
 
 #define CPU_ID_CORTEX_P(n)	((n & 0xff0fe000) == 0x410fc000)
 #define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
 #define CPU_ID_CORTEX_A7_P(n)	((n & 0xff0ff0f0) == 0x410fc070)
 #define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
 #define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
+#define CPU_ID_CORTEX_A12_P(n)	((n & 0xff0ff0f0) == 0x410fc0d0)
 #define CPU_ID_CORTEX_A15_P(n)	((n & 0xff0ff0f0) == 0x410fc0f0)
+#define CPU_ID_CORTEX_A17_P(n)	((n & 0xff0ff0f0) == 0x410fc0e0)
+#define CPU_ID_CORTEX_A32_P(n)	((n & 0xff0ff0f0) == 0x410fd010)
 #define CPU_ID_CORTEX_A35_P(n)	((n & 0xff0ff0f0) == 0x410fd040)
 #define CPU_ID_CORTEX_A53_P(n)	((n & 0xff0ff0f0) == 0x410fd030)
 #define CPU_ID_CORTEX_A55_P(n)	((n & 0xff0ff0f0) == 0x410fd050)
 #define CPU_ID_CORTEX_A57_P(n)	((n & 0xff0ff0f0) == 0x410fd070)
+#define CPU_ID_CORTEX_A65_P(n)	((n & 0xff0ff0f0) == 0x410fd060)
 #define CPU_ID_CORTEX_A72_P(n)	((n & 0xff0ff0f0) == 0x410fd080)
 #define CPU_ID_CORTEX_A73_P(n)	((n & 0xff0ff0f0) == 0x410fd090)
 #define CPU_ID_CORTEX_A75_P(n)	((n & 0xff0ff0f0) == 0x410fd0a0)
 #define CPU_ID_CORTEX_A76_P(n)	((n & 0xff0ff0f0) == 0x410fd0b0)
+#define CPU_ID_CORTEX_A76AE_P(n) ((n & 0xff0ff0f0) == 0x410fd0e0)
+#define CPU_ID_CORTEX_A77_P(n)	((n & 0xff0ff0f0) == 0x410fd0f0)
 
 #define CPU_ID_THUNDERXRX	0x43000a10
 #define CPU_ID_THUNDERXP1d0	0x43000a10
@@ -190,6 +208,8 @@
 
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
+#define CPU_ID_NVIDIADENVER2	0x4e0f0030
+#define CPU_ID_EMAG8180		0x503f0002
 #define CPU_ID_TI925T		0x54029250
 #define CPU_ID_MV88FR571_VD	0x56155710
 #define CPU_ID_MV88SV131	0x56251310

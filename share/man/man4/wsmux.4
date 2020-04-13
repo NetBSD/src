@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmux.4,v 1.14 2017/06/13 08:10:52 wiz Exp $
+.\" $NetBSD: wsmux.4,v 1.14.6.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2017
+.Dd August 13, 2019
 .Dt WSMUX 4
 .Os
 .Sh NAME
@@ -84,25 +84,23 @@ user program.
 .\" make it appear on the standard mouse mux.
 .Sh FILES
 For each mux device,
-.Pa /dev/wsmuxN
+.Pa /dev/wsmux Ns Ar N
 there is a control device
-.Pa /dev/wsmuxctlN .
+.Pa /dev/wsmuxctl Ns Ar N .
 The control device has a minor number 128 greater than the regular
 mux device.
 It can be used to control the mux even when it is open,
 e.g., by
 .Xr wsmuxctl 8 .
-.Bl -item
-.It
-.Pa /dev/wsmouse
+.Pp
+.Bl -tag -width ".Pa /dev/wsmouse" -compact
+.It Pa /dev/wsmouse
 a.k.a.
 .Pa /dev/wsmux0
-.It
-.Pa /dev/wskbd
+.It Pa /dev/wskbd
 a.k.a.
 .Pa /dev/wsmux1
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h
+.It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
 .Xr wsbell 4 ,
@@ -113,6 +111,9 @@ a.k.a.
 .Xr moused 8 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
-.Xr wsfontload 8 ,
 .Xr wsmoused 8 ,
 .Xr wsmuxctl 8
+.Sh CAVEATS
+If more than one type of keyboard is used,
+.Dv WSKBDIO_GTYPE
+will return the type of the first keyboard.

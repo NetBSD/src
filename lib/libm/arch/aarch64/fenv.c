@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.3.12.1 2019/06/10 22:05:24 christos Exp $ */
+/* $NetBSD: fenv.c,v 1.3.12.2 2020/04/13 08:03:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.3.12.1 2019/06/10 22:05:24 christos Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3.12.2 2020/04/13 08:03:13 martin Exp $");
 
 #include "namespace.h"
 
@@ -107,11 +107,9 @@ feraiseexcept(int excepts)
 	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 	unsigned int fpsr = reg_fpsr_read();
-	fpsr = (fpsr & ~FPSR_CSUM) | __SHIFTIN(excepts, FPSR_CSUM);
+	excepts &= FE_ALL_EXCEPT; /* paranoia */
+	fpsr |= __SHIFTIN(excepts, FPSR_CSUM);
 	reg_fpsr_write(fpsr);
-	unsigned int fpcr = reg_fpcr_read();
-	fpcr = (fpcr & ~FPCR_ESUM) | __SHIFTIN(excepts, FPCR_ESUM);
-	reg_fpcr_write(fpcr);
 	return 0;
 }
 
@@ -213,6 +211,7 @@ int
 fesetenv(const fenv_t *envp)
 {
 	reg_fpsr_write(envp->__fpsr);
+	reg_fpcr_write(envp->__fpcr);
 	return 0;
 }
 
@@ -225,11 +224,10 @@ fesetenv(const fenv_t *envp)
 int
 feupdateenv(const fenv_t *envp)
 {
-#ifndef lint
-	_DIAGASSERT(envp != NULL);
-#endif
-	reg_fpsr_write(envp->__fpsr);
-	reg_fpcr_write(envp->__fpcr);
+	int except = fetestexcept(FE_ALL_EXCEPT);
+
+	fesetenv(envp);
+	feraiseexcept(except);
 
 	/* Success */
 	return 0;

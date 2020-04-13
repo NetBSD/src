@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.22.64.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.22.64.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.22.64.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.22.64.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -54,28 +54,43 @@ static void rf_ShutdownCallback(void *);
 static void
 rf_ShutdownCallback(void *ignored)
 {
-	pool_destroy(&rf_pools.callback);
+	pool_destroy(&rf_pools.callbackf);
+	pool_destroy(&rf_pools.callbackv);
 }
 
 int
 rf_ConfigureCallback(RF_ShutdownList_t **listp)
 {
 
-	rf_pool_init(&rf_pools.callback, sizeof(RF_CallbackDesc_t),
-		     "rf_callbackpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+	rf_pool_init(&rf_pools.callbackf, sizeof(RF_CallbackFuncDesc_t),
+		     "rf_callbackfpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+	rf_pool_init(&rf_pools.callbackv, sizeof(RF_CallbackValueDesc_t),
+		     "rf_callbackvpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
 	rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 
 	return (0);
 }
 
-RF_CallbackDesc_t *
-rf_AllocCallbackDesc(void)
+RF_CallbackFuncDesc_t *
+rf_AllocCallbackFuncDesc(void)
 {
-	return pool_get(&rf_pools.callback, PR_WAITOK);
+	return pool_get(&rf_pools.callbackf, PR_WAITOK);
 }
 
 void
-rf_FreeCallbackDesc(RF_CallbackDesc_t *p)
+rf_FreeCallbackFuncDesc(RF_CallbackFuncDesc_t *p)
 {
-	pool_put(&rf_pools.callback, p);
+	pool_put(&rf_pools.callbackf, p);
+}
+
+RF_CallbackValueDesc_t *
+rf_AllocCallbackValueDesc(void)
+{
+	return pool_get(&rf_pools.callbackv, PR_WAITOK);
+}
+
+void
+rf_FreeCallbackValueDesc(RF_CallbackValueDesc_t *p)
+{
+	pool_put(&rf_pools.callbackv, p);
 }

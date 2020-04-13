@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.46.18.1 2020/04/08 14:07:53 martin Exp $ */
+/*	$NetBSD: msiiep.c,v 1.46.18.2 2020/04/13 08:04:07 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.46.18.1 2020/04/08 14:07:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.46.18.2 2020/04/13 08:04:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -559,10 +559,7 @@ mspcic_intr_establish(bus_space_tag_t t, int line, int ipl,
 	struct intrhand *ih;
 	int pil;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_WAITOK);
 
 	/* use pil set-up by prom */
 	pil = mspcic_assigned_interrupt(line);

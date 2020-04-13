@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.19 2010/04/23 15:19:20 rmind Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.19.60.1 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.19 2010/04/23 15:19:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.19.60.1 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,10 @@ netbsd32___select50(struct lwp *l,
 		error = copyin(SCARG_P32(uap, tv), &tv32, sizeof(tv32));
 		if (error != 0)
 			return error;
+
+		if (tv32.tv_usec < 0 || tv32.tv_usec >= 1000000)
+			return EINVAL;
+
 		ats.tv_sec = tv32.tv_sec;
 		ats.tv_nsec = tv32.tv_usec * 1000;
 		ts = &ats;

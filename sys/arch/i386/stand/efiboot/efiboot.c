@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.8.2.1 2020/04/08 14:07:41 martin Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.8.2.2 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -39,6 +39,7 @@ uintptr_t efi_main_sp;
 physaddr_t efi_loadaddr, efi_kernel_start;
 u_long efi_kernel_size;
 bool efi_cleanuped;
+struct btinfo_efimemmap *btinfo_efimemmap = NULL;
 
 static EFI_PHYSICAL_ADDRESS heap_start = EFI_ALLOCATE_MAX_ADDRESS;
 static UINTN heap_size = 1 * 1024 * 1024;			/* 1MB */
@@ -88,6 +89,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 		}
 	}
 
+	efi_memory_probe();
 	efi_disk_probe();
 	efi_pxe_probe();
 	efi_net_probe();
@@ -108,7 +110,6 @@ efi_cleanup(void)
 	EFI_MEMORY_DESCRIPTOR *desc;
 	UINTN NoEntries, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
-	struct btinfo_efimemmap *bim;
 	size_t allocsz;
 
 	memset(&btinfo_efi, 0, sizeof(btinfo_efi));
@@ -132,14 +133,15 @@ efi_cleanup(void)
 	}
 	efi_cleanuped = true;
 
+	efi_memory_compact_map(desc, &NoEntries, DescriptorSize);
 	allocsz = sizeof(struct btinfo_efimemmap) - 1
 	    + NoEntries * DescriptorSize;
-	bim = alloc(allocsz);
-	bim->num = NoEntries;
-	bim->version = DescriptorVersion;
-	bim->size = DescriptorSize;
-	memcpy(bim->memmap, desc, NoEntries * DescriptorSize);
-	BI_ADD(bim, BTINFO_EFIMEMMAP, allocsz);
+	btinfo_efimemmap = alloc(allocsz);
+	btinfo_efimemmap->num = NoEntries;
+	btinfo_efimemmap->version = DescriptorVersion;
+	btinfo_efimemmap->size = DescriptorSize;
+	memcpy(btinfo_efimemmap->memmap, desc, NoEntries * DescriptorSize);
+	BI_ADD(btinfo_efimemmap, BTINFO_EFIMEMMAP, allocsz);
 }
 
 static void

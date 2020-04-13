@@ -28,8 +28,11 @@ options {
 	minimal-responses no;
 	recursion yes;
 	dnssec-validation yes;
+	min-refresh-time 1;
+	min-retry-time 1;
 
 	response-policy {
+	    zone "fast-expire";
 	    zone "bl"					max-policy-ttl 100;
 	    zone "bl-2";
 	    zone "bl-given"	policy given		recursive-only yes;
@@ -108,5 +111,12 @@ zone "crash2.tld3."	{type master; file "crash2"; notify no;};
 zone "manual-update-rpz." {
 	type master;
 	file "manual-update-rpz.db";
+	notify no;
+};
+
+zone "fast-expire." {
+	type secondary;
+	file "fast-expire.db";
+	masters { 10.53.0.5; };
 	notify no;
 };

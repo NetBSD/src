@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.31 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.31.38.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,15 @@
 #define CARD_NAME_LEN	64
 
 /*
+ * Color map, required for DAFB to support genfb(4).
+ */
+struct grfbus_cmap {
+	uint8_t		*red;
+	uint8_t		*green;
+	uint8_t		*blue;
+};
+
+/*
  * State info, per hardware instance.
  */
 struct grfbus_softc {
@@ -60,6 +69,10 @@ struct grfbus_softc {
 					/* for cards where that's suff.	*/
 	u_int32_t	cli_value;	/* Value to write at cli_offset */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
+
+	bus_space_handle_t	sc_cmh;
+	void			(*sc_set_mapreg)(void *, int, int, int, int);
+	struct grfbus_cmap	sc_cmap;
 };
 
 /*
@@ -82,6 +95,8 @@ struct grfbus_attach_args {
 	bus_addr_t	ga_phys;
 	bus_addr_t	ga_fboff;
 	int		(*ga_mode)(struct grf_softc *, int, void *);
+	void		(*ga_set_mapreg)(void *, int, int, int, int);
+	struct grfbus_softc *ga_parent;
 };
 
 typedef	void *(*grf_phys_t)(struct grf_softc *, vaddr_t);

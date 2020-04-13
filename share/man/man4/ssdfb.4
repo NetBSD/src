@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssdfb.4,v 1.3.2.2 2019/06/10 22:05:40 christos Exp $
+.\"	$NetBSD: ssdfb.4,v 1.3.2.3 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 17, 2019
+.Dd November 2, 2019
 .Dt SSDFB 4
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Cd "ssdfb* at iic? addr ?"
 .Cd "ssdfb* at iic? addr 0x3c"
 .Cd "ssdfb* at iic? addr 0x3d flags 0x102"
+.Cd "ssdfb* at spi? slave ? flags 0x105"
 .Cd "wsdisplay* at ssdfb?"
 .Sh DESCRIPTION
 The
@@ -51,6 +52,8 @@ of the following controller chips:
 Solomon Systech Ltd SSD1306
 .It
 Sino Wealth Electronic Ltd SH1106
+.It
+Solomon Systech Ltd SSD1322
 .El
 .Pp
 The following products (controller + panel assemblies) are supported:
@@ -67,6 +70,9 @@ Adafruit Industries, LLC product 938 (128x64)
 .It
 .Em 0x04 :
 Adafruit Industries, LLC product 931 (128x32)
+.It
+.Em 0x05 :
+Generic SSD1322 modules using default settings
 .El
 .Pp
 The flags value can contain one or more of the following, bitwise OR'ed:
@@ -108,7 +114,6 @@ driver written by
 .An Patrick Wildt Aq Mt patrick@blueri.se
 but does not share any code.
 .Sh BUGS
-Some modules can be reconfigured to attach via
-.Xr spi 4 ,
-typically by moving surface mount zero ohm resistors.
-This is currently not supported.
+The "4-wire SPI" MCU interface which requires an auxiliary
+.Xr gpio 4
+pin for the D/C# signal is currently not supported.

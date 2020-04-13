@@ -1,4 +1,4 @@
-/*      $NetBSD: vmstat.h,v 1.1 2006/03/18 14:58:49 dsl Exp $  */
+/*      $NetBSD: vmstat.h,v 1.1.86.1 2020/04/13 08:05:48 martin Exp $  */
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -35,6 +35,8 @@ extern double etime;
 
 void putfloat(double, int, int, int, int, int);
 void putint(int, int, int, int);
+void puthumanint_scale(u_int64_t, int, int, int, int);
+void puthumanint_sticky(u_int64_t, int, int, int, int*);
 void puthumanint(u_int64_t, int, int, int);
 
 typedef struct uvmexp_sysctl uvmexp_sysctl_t;

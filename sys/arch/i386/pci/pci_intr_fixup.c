@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.50 2014/09/09 06:38:33 apb Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.50.20.1 2020/04/13 08:03:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.50 2014/09/09 06:38:33 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.50.20.1 2020/04/13 08:03:53 martin Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -287,12 +287,7 @@ pciintr_link_alloc(struct pcibios_intr_routing *pir, int pin)
 		}
 	}
 
-	l = malloc(sizeof(*l), M_DEVBUF, M_NOWAIT);
-	if (l == NULL)
-		panic("pciintr_link_alloc");
-
-	memset(l, 0, sizeof(*l));
-
+	l = malloc(sizeof(*l), M_DEVBUF, M_WAITOK | M_ZERO);
 	l->link = link;
 	l->bitmap = pir->linkmap[pin].bitmap;
 	if (pciintr_icu_tag != NULL) { /* compatible PCI ICU found */

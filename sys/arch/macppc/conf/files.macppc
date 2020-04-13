@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.110.2.1 2019/06/10 22:06:27 christos Exp $
+#	$NetBSD: files.macppc,v 1.110.2.2 2020/04/13 08:03:58 martin Exp $
 #
 # macppc-specific configuration info
 
@@ -287,6 +287,7 @@ file arch/macppc/macppc/rbus_machdep.c		cardbus
 device ki2c: i2cbus, ki2c
 attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
+defflag opt_ki2c.h	KI2C_DEBUG
 
 # snapper audio
 device snapper: audiobus
@@ -312,3 +313,13 @@ defflag opt_valkyriefb.h VALKYRIEFB_DEBUG
 device platinumfb: wsemuldisplaydev, rasops8, vcons, videomode
 attach platinumfb at mainbus
 file arch/macppc/dev/platinumfb.c			platinumfb
+
+# 'Psoc' fan controller found in (some?) TiBooks
+device	psoc: sysmon_envsys
+attach	psoc at iic
+file	arch/macppc/dev/psoc.c				psoc
+
+# 'lmu-micro' found in late PowerBooks
+device	lmu: sysmon_envsys
+attach	lmu at iic
+file	arch/macppc/dev/lmu.c				lmu

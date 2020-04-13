@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.168.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.168.2.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.168.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.168.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ struct sip_softc {
 		int		is_vlan;
 	}	sc_prev;
 
-	short	sc_if_flags;
+	u_short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
 	int	sc_rxdiscard;
@@ -1369,6 +1369,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		 */
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 		/*
 		 * The DP83820 can do IPv4, TCPv4, and UDPv4 checksums
@@ -1807,7 +1808,7 @@ sip_ifflags_cb(struct ethercom *ec)
 #define COMPARE_IC(sc, ifp) ((sc)->sc_prev.if_capenable == (ifp)->if_capenable)
 	struct ifnet *ifp = &ec->ec_if;
 	struct sip_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0 || !COMPARE_EC(sc) ||
 	    !COMPARE_IC(sc, ifp))

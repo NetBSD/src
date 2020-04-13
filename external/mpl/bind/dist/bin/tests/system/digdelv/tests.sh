@@ -30,14 +30,37 @@ mdig_with_opts() {
     "$MDIG" -p "$PORT" "$@"
 }
 
+# Check if response in file $1 has the correct TTL range.
+# The response record must have RRtype $2 and class IN (CLASS1).
+# Maximum TTL is given by $3.  This works in most cases where TTL is
+# the second word on the line.  TTL position can be adjusted with
+# setting the position $4, but that requires updating this function.
+check_ttl_range() {
+    file=$1
+    pos=$4
+
+    case "$pos" in
+    "3")
+    awk -v rrtype="$2" -v ttl="$3" '($4 == "IN" || $4 == "CLASS1" ) && $5 == rrtype { if ($3 <= ttl) { ok=1 } } END { exit(ok?0:1) }' < $file
+    ;;
+    *)
+    awk -v rrtype="$2" -v ttl="$3" '($3 == "IN" || $3 == "CLASS1" ) && $4 == rrtype { if ($2 <= ttl) { ok=1 } } END { exit(ok?0:1) }' < $file
+    ;;
+    esac
+
+   result=$?
+   [ $result -eq 0 ] || echo_i "ttl check failed"
+   return $result
+}
+
 # using delv insecure mode as not testing dnssec here
 delv_with_opts() {
-    "$DELV" -i -p "$PORT" "$@"
+    "$DELV" +noroot +nodlv -p "$PORT" "$@"
 }
 
 KEYID="$(cat ns2/keyid)"
-KEYDATA="$(< ns2/keydata sed -e 's/\+/[+]/g')"
-NOSPLIT="$(< ns2/keydata sed -e 's/\+/[+]/g' -e 's/ //g')"
+KEYDATA="$(< ns2/keydata sed -e 's/+/[+]/g')"
+NOSPLIT="$(< ns2/keydata sed -e 's/+/[+]/g' -e 's/ //g')"
 
 if [ -x "$DIG" ] ; then
   n=$((n+1))
@@ -53,6 +76,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +split=4 -t sshfp foo.example > dig.out.test$n || ret=1
   grep " 9ABC DEF6 7890 " < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SSHFP" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -61,6 +85,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +unknownformat a a.example > dig.out.test$n || ret=1
   grep "CLASS1[ 	][ 	]*TYPE1[ 	][ 	]*\\\\# 4 0A000001" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "TYPE1" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -70,6 +95,7 @@ if [ -x "$DIG" ] ; then
   dig_with_opts @10.53.0.3 -x 127.0.0.1 > dig.out.test$n 2>&1 || ret=1
   # doesn't matter if has answer
   grep -i "127\\.in-addr\\.arpa\\." < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SOA" 86400 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -78,22 +104,25 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts +tcp @10.53.0.3 a a.example > dig.out.test$n || ret=1
   grep "10\\.0\\.0\\.1$" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
-  echo_i "checking dig +multi +norrcomments works for dnskey (when default is rrcomments)($n)"
+  echo_i "checking dig +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
-  grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < dig.out.test$n > /dev/null && ret=1
+  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY dnskey.example > dig.out.test$n || ret=1
+  grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" dig.out.test$n > /dev/null && ret=1
+  check_ttl_range dig.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
-  echo_i "checking dig +multi +norrcomments works for soa (when default is rrcomments)($n)"
+  echo_i "checking dig +multi +norrcomments works for SOA (when default is rrcomments)($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments SOA example > dig.out.test$n || ret=1
-  grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < dig.out.test$n > /dev/null && ret=1
+  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t SOA example > dig.out.test$n || ret=1
+  grep "; serial" dig.out.test$n > /dev/null && ret=1
+  check_ttl_range dig.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -102,6 +131,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -144,6 +174,10 @@ if [ -x "$DIG" ] ; then
   test "$lcmm" -ge "$lcmn" || ret=1
   test "$lcnm" -ge "$lcnn" || ret=1
   test "$lcmn" -ge "$lcnn" || ret=1
+  check_ttl_range dig.out.nn.$n "DNSKEY" 300 || ret=1
+  check_ttl_range dig.out.mn.$n "DNSKEY" 300 || ret=1
+  check_ttl_range dig.out.nm.$n "DNSKEY" 300 || ret=1
+  check_ttl_range dig.out.mm.$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -152,6 +186,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts +tcp @10.53.0.3 +noheader-only A example > dig.out.test$n || ret=1
   grep "Got answer:" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -178,6 +213,7 @@ if [ -x "$DIG" ] ; then
   dig_with_opts +tcp @10.53.0.3 +raflag +qr example > dig.out.test$n || ret=1
   grep "^;; flags: rd ra ad; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
   grep "^;; flags: qr rd ra; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -187,6 +223,7 @@ if [ -x "$DIG" ] ; then
   dig_with_opts +tcp @10.53.0.3 +tcflag +qr example > dig.out.test$n || ret=1
   grep "^;; flags: tc rd ad; QUERY: 1, ANSWER: 0" < dig.out.test$n > /dev/null || ret=1
   grep "^;; flags: qr rd ra; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -205,6 +242,7 @@ if [ -x "$DIG" ] ; then
   dig_with_opts +tcp @10.53.0.3 +zflag +qr A example > dig.out.test$n || ret=1
   sed -n '/Sending:/,/Got answer:/p' dig.out.test$n | grep "^;; flags: rd ad; MBZ: 0x4;" > /dev/null || ret=1
   sed -n '/Got answer:/,/AUTHORITY SECTION:/p' dig.out.test$n | grep "^;; flags: qr rd ra; QUERY: 1" > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -217,6 +255,7 @@ if [ -x "$DIG" ] ; then
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
+  n=$((n+1))
   echo_i "checking dig +ttlunits works ($n)"
   ret=0
   dig_with_opts +tcp @10.53.0.2 +ttlunits A weeks.example > dig.out.test$n || ret=1
@@ -323,6 +362,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts +tcp @10.53.0.2 +subnet=127.0.0.1 A a.example > dig.out.test$n 2>&1 || ret=1
   grep "CLIENT-SUBNET: 127.0.0.1/32/0" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -331,6 +371,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts +tcp @10.53.0.2 +subnet=127.0.0.0 +subnet=127.0.0.1 A a.example > dig.out.test$n 2>&1 || ret=1
   grep "CLIENT-SUBNET: 127.0.0.1/32/0" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -356,6 +397,7 @@ if [ -x "$DIG" ] ; then
       esac
       grep "FORMERR" < dig.out.$i.test$n > /dev/null && ret=1
       grep "CLIENT-SUBNET: $addr/$i/0" < dig.out.$i.test$n > /dev/null || ret=1
+      check_ttl_range dig.out.$i.test$n "A" 300 || ret=1
   done
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -367,6 +409,7 @@ if [ -x "$DIG" ] ; then
   grep "status: NOERROR" < dig.out.test$n > /dev/null || ret=1
   grep "CLIENT-SUBNET: 0.0.0.0/0/0" < dig.out.test$n > /dev/null || ret=1
   grep "10.0.0.1" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -377,6 +420,7 @@ if [ -x "$DIG" ] ; then
   grep "status: NOERROR" < dig.out.test$n > /dev/null || ret=1
   grep "CLIENT-SUBNET: 0.0.0.0/0/0" < dig.out.test$n > /dev/null || ret=1
   grep "10.0.0.1" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -387,6 +431,7 @@ if [ -x "$DIG" ] ; then
   grep "status: NOERROR" < dig.out.test$n > /dev/null || ret=1
   grep "CLIENT-SUBNET: ::/0/0" < dig.out.test$n > /dev/null || ret=1
   grep "10.0.0.1" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -397,6 +442,7 @@ if [ -x "$DIG" ] ; then
   grep "status: NOERROR" < dig.out.test$n > /dev/null || ret=1
   grep "CLIENT-SUBNET: 0/0/0" < dig.out.test$n > /dev/null || ret=1
   grep "10.0.0.1" < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -417,6 +463,7 @@ if [ -x "$DIG" ] ; then
     dig_with_opts +tcp @10.53.0.2 +subnet=10.53/$p A a.example > dig.out.test.$p.$n 2>&1 || ret=1
     grep "FORMERR" < dig.out.test.$p.$n > /dev/null && ret=1
     grep "CLIENT-SUBNET.*/$p/0" < dig.out.test.$p.$n > /dev/null || ret=1
+    check_ttl_range dig.out.test.$p.$n "A" 300 || ret=1
   done
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -426,6 +473,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +sp=4 -t sshfp foo.example > dig.out.test$n || ret=1
   grep " 9ABC DEF6 7890 " < dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "SSHFP" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -453,6 +501,7 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +ednsopt=3 a.example > dig.out.test$n 2>&1 || ret=1
   grep 'NSID: .* ("ns3")' dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -461,6 +510,15 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +ednsopt=nsid a.example > dig.out.test$n 2>&1 || ret=1
   grep 'NSID: .* ("ns3")' dig.out.test$n > /dev/null || ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "checking ednsopt LLQ prints as expected ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +ednsopt=llq:0001000200001234567812345678fefefefe +qr a.example > dig.out.test$n 2>&1 || ret=1
+  grep 'LLQ: Version: 1, Opcode: 2, Error: 0, Identifier: 1311768465173141112, Lifetime: 4278124286$' dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -485,6 +543,7 @@ if [ -x "$DIG" ] ; then
   dig_with_opts @10.53.0.3 +ednsopt=key-tag:00010002 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; KEY-TAG: 1, 2$" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
+  check_ttl_range dig.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -493,6 +552,54 @@ if [ -x "$DIG" ] ; then
   ret=0
   dig_with_opts @10.53.0.3 +ednsopt=key-tag:0001000201 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; KEY-TAG: 00 01 00 02 01" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig processes +ednsopt=client-tag:value ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=client-tag:0001 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; CLIENT-TAG: 1$" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that FORMERR is returned for a too short client-tag ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=client-tag:01 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; CLIENT-TAG" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that FORMERR is returned for a too long client-tag ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=client-tag:000001 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; CLIENT-TAG" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig processes +ednsopt=server-tag:value ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=server-tag:0001 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; SERVER-TAG: 1$" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that FORMERR is returned for a too short server-tag ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=server-tag:01 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; SERVER-TAG" dig.out.test$n > /dev/null || ret=1
+  grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that FORMERR is returned for a too long server-tag ($n)"
+  dig_with_opts @10.53.0.3 +ednsopt=server-tag:000001 a.example +qr > dig.out.test$n 2>&1 || ret=1
+  grep "; SERVER-TAG" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -597,6 +704,22 @@ if [ -x "$MDIG" ] ; then
   grep "ednsopt no code point specified" dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "checking mdig +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
+  ret=0
+  mdig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY dnskey.example > dig.out.test$n || ret=1
+  grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" dig.out.test$n && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "checking mdig +multi +norrcomments works for SOA (when default is rrcomments)($n)"
+  ret=0
+  mdig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t SOA example > dig.out.test$n || ret=1
+  grep "; serial" < dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
 else
   echo_i "$MDIG is needed, so skipping these mdig tests"
 fi
@@ -615,6 +738,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 +split=4 -t sshfp foo.example > delv.out.test$n || ret=1
   grep " 9ABC DEF6 7890 " < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "SSHFP" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -623,6 +747,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 +unknownformat a a.example > delv.out.test$n || ret=1
   grep "CLASS1[ 	][ 	]*TYPE1[ 	][ 	]*\\\\# 4 0A000001" < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "TYPE1" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -676,6 +801,7 @@ if [ -x "$DELV" ] ; then
   delv_with_opts @10.53.0.3 -x 127.0.0.1 > delv.out.test$n 2>&1 || ret=1
   # doesn't matter if has answer
   grep -i "127\\.in-addr\\.arpa\\." < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n '\\-ANY' 10800 3 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -684,22 +810,25 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts +tcp @10.53.0.3 a a.example > delv.out.test$n || ret=1
   grep "10\\.0\\.0\\.1$" < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
-  echo_i "checking delv +multi +norrcomments works for dnskey (when default is rrcomments)($n)"
+  echo_i "checking delv +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
   ret=0
   delv_with_opts +tcp @10.53.0.3 +multi +norrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null && ret=1
+  check_ttl_range delv.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
-  echo_i "checking delv +multi +norrcomments works for soa (when default is rrcomments)($n)"
+  echo_i "checking delv +multi +norrcomments works for SOA (when default is rrcomments)($n)"
   ret=0
   delv_with_opts +tcp @10.53.0.3 +multi +norrcomments SOA example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null && ret=1
+  check_ttl_range delv.out.test$n "SOA" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -708,6 +837,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -752,6 +882,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 +sp=4 -t sshfp foo.example > delv.out.test$n || ret=1
   grep " 9ABC DEF6 7890 " < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "SSHFP" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -768,6 +899,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 -c IN -t a a.example > delv.out.test$n || ret=1
   grep "a.example." < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -776,6 +908,7 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 -c CH -t a a.example > delv.out.test$n || ret=1
   grep "a.example." < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
@@ -784,16 +917,28 @@ if [ -x "$DELV" ] ; then
   ret=0
   delv_with_opts @10.53.0.3 -c CH -t a a.example > delv.out.test$n || ret=1
   grep "a.example." < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n "A" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
   echo_i "check that delv -q -m works ($n)"
   ret=0
-  delv_with_opts @10.53.0.3 -q -m > delv.out.test$n 2>&1
+  delv_with_opts @10.53.0.3 -q -m > delv.out.test$n 2>&1 || ret=1
   grep '^; -m\..*[0-9]*.*IN.*ANY.*;' delv.out.test$n > /dev/null || ret=1
   grep "^add " delv.out.test$n > /dev/null && ret=1
   grep "^del " delv.out.test$n > /dev/null && ret=1
+  check_ttl_range delv.out.test$n '\\-ANY' 300 3 || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that delv -t ANY works ($n)"
+  ret=0
+  delv_with_opts @10.53.0.3 -t ANY example > delv.out.test$n 2>&1 || ret=1
+  grep "^example." < delv.out.test$n > /dev/null || ret=1
+  check_ttl_range delv.out.test$n NS 300 || ret=1
+  check_ttl_range delv.out.test$n SOA 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 else

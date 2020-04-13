@@ -879,7 +879,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				}
 				x = execute(a);
 				a = a->nnext;
-				snprintf(t - 1, FMTSZ(t - 1), 
+				snprintf(t - 1, FMTSZ(t - 1),
 				    "%d", fmtwd=(int) getfval(x));
 				if (fmtwd < 0)
 					fmtwd = -fmtwd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.7 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.7.10.1 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -178,7 +178,7 @@ int
 chfs_scan_mark_dirent_obsolete(struct chfs_mount *chmp,
     struct chfs_vnode_cache *vc, struct chfs_dirent *fd)
 {
-	struct chfs_eraseblock *cheb;
+	struct chfs_eraseblock *cheb __diagused;
 	struct chfs_node_ref *prev, *nref;
 
 	nref = fd->nref;

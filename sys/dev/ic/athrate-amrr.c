@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-amrr.c,v 1.12 2012/11/08 20:43:55 dyoung Exp $ */
+/*	$NetBSD: athrate-amrr.c,v 1.12.38.1 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 INRIA
@@ -43,7 +43,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.12 2012/11/08 20:43:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.12.38.1 2020/04/13 08:04:21 martin Exp $");
 #endif
 
 /*
@@ -499,9 +499,7 @@ ath_rate_attach(struct ath_softc *sc)
 {
 	struct amrr_softc *asc;
 
-	asc = malloc(sizeof(struct amrr_softc), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (asc == NULL)
-		return NULL;
+	asc = malloc(sizeof(struct amrr_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	asc->arc.arc_space = sizeof(struct amrr_node);
 	callout_init(&asc->timer, debug_mpsafenet ? CALLOUT_MPSAFE : 0);
 	ath_rate_sysctlattach(sc);

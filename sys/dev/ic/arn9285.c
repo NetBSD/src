@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9285.c,v 1.3 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: arn9285.c,v 1.3.32.1 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: ar9285.c,v 1.19 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9285.c,v 1.3 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9285.c,v 1.3.32.1 2020/04/13 08:04:21 martin Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"
@@ -320,7 +320,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_WRITE_BARRIER(sc);
 		DELAY(100);
 		reg = AR_READ(sc, AR9285_AN_RF2G4);
-		reg = RW(reg, AR9271_AN_RF2G4_DB2,    db2[0]);
+		reg = RW(reg, AR9271_AN_RF2G4_DB2, (uint32_t)db2[0]);
 		AR_WRITE(sc, AR9285_AN_RF2G4, reg);
 		AR_WRITE_BARRIER(sc);
 		DELAY(100);
@@ -784,7 +784,7 @@ ar9285_set_power_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 		    pdadcs[i + 0] <<  0 |
 		    pdadcs[i + 1] <<  8 |
 		    pdadcs[i + 2] << 16 |
-		    pdadcs[i + 3] << 24);
+		    (uint32_t)pdadcs[i + 3] << 24);
 	}
 	AR_WRITE_BARRIER(sc);
 }

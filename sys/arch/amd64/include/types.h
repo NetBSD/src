@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.55.2.2 2020/04/08 14:07:26 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.55.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,8 +74,11 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+#if !__has_feature(undefined_behavior_sanitizer) && \
+	!defined(__SANITIZE_UNDEFINED__)
 /* The amd64 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
+#endif
 
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_COUNTER
@@ -103,8 +106,13 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 #include "opt_xen.h"
 #include "opt_kasan.h"
+#include "opt_kmsan.h"
+#ifdef KASAN
+#define __HAVE_KASAN_INSTR_BUS
+#define __HAVE_KASAN_INSTR_DMA
+#endif
 #if defined(__x86_64__) && !defined(XENPV)
-#if !defined(KASAN)
+#if !defined(KASAN) && !defined(KMSAN)
 #define	__HAVE_PCPU_AREA 1
 #define	__HAVE_DIRECT_MAP 1
 #endif

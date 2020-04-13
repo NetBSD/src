@@ -1,6 +1,6 @@
 // Filesystem declarations -*- C++ -*-
 
-// Copyright (C) 2014-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -256,7 +256,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
   operator^=(directory_options& __x, directory_options __y) noexcept
   { return __x = __x ^ __y; }
 
-  typedef chrono::time_point<chrono::system_clock> file_time_type;
+  using file_time_type = std::chrono::system_clock::time_point;
 
   // operational functions
 

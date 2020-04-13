@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.35 2014/10/18 08:33:26 snj Exp $ */
+/*	$NetBSD: ebus.c,v 1.35.20.1 2020/04/13 08:04:07 martin Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.35 2014/10/18 08:33:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.35.20.1 2020/04/13 08:04:07 martin Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -211,7 +211,7 @@ ebus_init_wiring_table(struct ebus_softc *sc)
 	char *model;
 
 	if (wiring_map != NULL) {
-		printf("%s: global ebus wiring map already initalized\n",
+		printf("%s: global ebus wiring map already initialized\n",
 		    device_xname(sc->sc_dev));
 		return (0);
 	}
@@ -372,7 +372,7 @@ ebus_setup_attach_args(struct ebus_softc *sc,
 		const struct msiiep_ebus_intr_wiring *w = &wiring_map[n];
 		if (strcmp(w->name, ea->ea_name) == 0) {
 			ea->ea_intr = malloc(sizeof(uint32_t),
-					     M_DEVBUF, M_NOWAIT);
+					     M_DEVBUF, M_WAITOK);
 			ea->ea_intr[0] = w->line;
 			ea->ea_nintr = 1;
 			break;
@@ -422,11 +422,7 @@ ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 	bus_dma_tag_t dt;
 
 	dt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	if (dt == NULL)
-		panic("unable to allocate ebus DMA tag");
-
-	memset(dt, 0, sizeof *dt);
+		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_WAITOK | M_ZERO);
 	dt->_cookie = sc;
 #define PCOPY(x)	dt->x = pdt->x
 	PCOPY(_dmamap_create);

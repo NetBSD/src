@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.35 2013/09/14 13:13:33 joerg Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.35.30.1 2020/04/13 08:04:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.35 2013/09/14 13:13:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.35.30.1 2020/04/13 08:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,10 +309,7 @@ match:
 			 * XXX: a driver which still calls pcmcia_card_attach
 			 * very early attach stage should be fixed instead.
 			 */
-			pf = malloc(sizeof(*pf), M_DEVBUF,
-			    cold ? M_NOWAIT : M_WAITOK);
-			if (pf == NULL)
-				panic("pcmcia_check_cis_quirks: malloc pf");
+			pf = malloc(sizeof(*pf), M_DEVBUF, M_WAITOK);
 			*pf = *quirk->pf;
 			SIMPLEQ_INIT(&pf->cfe_head);
 			SIMPLEQ_INSERT_TAIL(&card->pf_head, pf, pf_list);
@@ -322,10 +319,7 @@ match:
 		/*
 		 * XXX: see above.
 		 */
-		cfe = malloc(sizeof(*cfe), M_DEVBUF,
-		    cold ? M_NOWAIT : M_WAITOK);
-		if (cfe == NULL)
-			panic("pcmcia_check_cis_quirks: malloc cfe");
+		cfe = malloc(sizeof(*cfe), M_DEVBUF, M_WAITOK);
 		*cfe = *quirk->cfe;
 		KASSERT(pf != NULL);
 		SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);

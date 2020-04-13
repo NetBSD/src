@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 22:09:15 christos Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2020/04/13 08:05:07 martin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -6,7 +6,7 @@
 KMOD=	compat_freebsd
 
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DKTRACE -DPTRACE -DNTP
-CPPFLAGS+=	-DCOMPAT_FREEBSD
+CPPFLAGS+=	-DCOMPAT_FREEBSD -DQUOTA
 
 .PATH:	${S}/compat/freebsd
 

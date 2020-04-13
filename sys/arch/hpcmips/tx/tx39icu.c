@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.35 2015/07/11 10:32:45 kamil Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.35.18.1 2020/04/13 08:03:51 martin Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.35 2015/07/11 10:32:45 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.35.18.1 2020/04/13 08:03:51 martin Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -507,11 +507,7 @@ tx39_irqhigh_establish(tx_chipset_tag_t tc, int set, int bit, int pri,
 	/*
 	 *	Add new entry to `pri' priority
 	 */
-	if (!(he = malloc(sizeof(struct txintr_high_entry), 
-	    M_DEVBUF, M_NOWAIT))) {
-		panic ("tx39_irqhigh_establish: no memory.");
-	}
-	memset(he, 0, sizeof(struct txintr_high_entry));
+	he = malloc(sizeof(struct txintr_high_entry), M_DEVBUF, M_WAITOK | M_ZERO);
 	he->he_set = set;
 	he->he_mask= (1 << bit);
 	he->he_fun = ih_fun;
@@ -631,16 +627,13 @@ tx39_poll_establish(tx_chipset_tag_t tc, int interval, int level,
 	int s;
 	void *ret;
 	
-	s = splhigh();
-	sc = tc->tc_intrt;
-
-	if (!(p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		panic ("tx39_poll_establish: no memory.");
-	}
-
+	p = malloc(sizeof(*p), M_DEVBUF, M_WAITOK | M_ZERO);
 	p->p_fun = ih_fun;
 	p->p_arg = ih_arg;
 	p->p_cnt = interval;
+
+	s = splhigh();
+	sc = tc->tc_intrt;
 
 	if (!sc->sc_polling) {
 		tx39clock_alarm_set(tc, 33); /* 33 msec */

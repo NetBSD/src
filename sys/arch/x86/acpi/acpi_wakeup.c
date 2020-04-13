@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.49.4.1 2020/04/08 14:07:58 martin Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.49.4.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49.4.1 2020/04/08 14:07:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49.4.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	KASSERT(ci == curcpu());
 
 	s = splhigh();
-	fpusave_cpu(true);
+	fpu_save();
 	x86_disable_intr();
 
 	/*
@@ -309,10 +309,10 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, acpi_wakeup_paddr);
+	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, 0);
 
 	s = splhigh();
-	fpusave_cpu(true);
+	fpu_save();
 	x86_disable_intr();
 
 #ifdef MULTIPROCESSOR

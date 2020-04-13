@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.6.2.1 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: tsl256x.c,v 1.6.2.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.6.2.1 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.6.2.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ struct tsllux_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-	int		sc_i2c_flags;
 
 	uint32_t	sc_poweron;
 
@@ -125,11 +124,11 @@ tsllux_match(device_t parent, cfdata_t match, void *aux)
 		return (0);
 	}
 
-	if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0)
+	if (iic_acquire_bus(ia->ia_tag, 0) != 0)
 		return (0);
 	error = iic_smbus_read_byte(ia->ia_tag, ia->ia_addr,
-	    TSL256x_REG_ID | COMMAND_CMD, &id_reg, I2C_F_POLL);
-	iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	    TSL256x_REG_ID | COMMAND_CMD, &id_reg, 0);
+	iic_release_bus(ia->ia_tag, 0);
 
 	if (error)
 		return (0);
@@ -154,14 +153,12 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_i2c_flags = I2C_F_POLL;
 
 	if (self->dv_cfdata != NULL &&
 	    self->dv_cfdata->cf_flags & TSLLUX_F_CS_PACKAGE)
 		sc->sc_cs_package = true;
 
-	if (iic_acquire_bus(ia->ia_tag, I2C_F_POLL) != 0) {
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	if (iic_acquire_bus(ia->ia_tag, 0) != 0) {
 		return;
 	}
 
@@ -195,7 +192,7 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 
 	tsllux_poweroff(sc);
 
-	iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	iic_release_bus(ia->ia_tag, 0);
 	have_i2c = false;
 
 	tsllux_sysctl_attach(sc);
@@ -217,10 +214,8 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 	if (have_i2c) {
 		if (sc->sc_poweron)
 			tsllux_poweroff(sc);
-		iic_release_bus(ia->ia_tag, I2C_F_POLL);
+		iic_release_bus(ia->ia_tag, 0);
 	}
-
-	sc->sc_i2c_flags = 0;
 }
 
 static int
@@ -327,13 +322,13 @@ tsllux_sysctl_gain(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	if ((error = iic_acquire_bus(sc->sc_i2c, sc->sc_i2c_flags)) != 0) {
+	if ((error = iic_acquire_bus(sc->sc_i2c, 0)) != 0) {
 		mutex_exit(&sc->sc_lock);
 		return (error);
 	}
 
 	error = tsllux_set_gain(sc, new_gain);
-	iic_release_bus(sc->sc_i2c, sc->sc_i2c_flags);
+	iic_release_bus(sc->sc_i2c, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return (error);
@@ -393,13 +388,13 @@ tsllux_sysctl_itime(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	if ((error = iic_acquire_bus(sc->sc_i2c, sc->sc_i2c_flags)) != 0) {
+	if ((error = iic_acquire_bus(sc->sc_i2c, 0)) != 0) {
 		mutex_exit(&sc->sc_lock);
 		return (error);
 	}
 
 	error = tsllux_set_integration_time(sc, new_itime);
-	iic_release_bus(sc->sc_i2c, sc->sc_i2c_flags);
+	iic_release_bus(sc->sc_i2c, 0);
 	mutex_exit(&sc->sc_lock);
 
 	return (error);
@@ -465,9 +460,9 @@ tsllux_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	mutex_enter(&sc->sc_lock);
 
-	if ((error = iic_acquire_bus(sc->sc_i2c, sc->sc_i2c_flags)) == 0) {
+	if ((error = iic_acquire_bus(sc->sc_i2c, 0)) == 0) {
 		error = tsllux_get_lux(sc, &lux, NULL, NULL);
-		iic_release_bus(sc->sc_i2c, sc->sc_i2c_flags);
+		iic_release_bus(sc->sc_i2c, 0);
 	}
 	
 	if (error) {
@@ -489,24 +484,21 @@ static int
 tsllux_read1(struct tsllux_softc *sc, uint8_t reg, uint8_t *valp)
 {
 	reg = (reg & REGMASK) | COMMAND_CMD;
-	return (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, valp,
-				    sc->sc_i2c_flags));
+	return (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, valp, 0));
 }
 
 static int
 tsllux_read2(struct tsllux_softc *sc, uint8_t reg, uint16_t *valp)
 {
 	reg = (reg & REGMASK) | COMMAND_CMD | COMMAND_WORD;
-	return (iic_smbus_read_word(sc->sc_i2c, sc->sc_addr, reg, valp,
-				    sc->sc_i2c_flags));
+	return (iic_smbus_read_word(sc->sc_i2c, sc->sc_addr, reg, valp, 0));
 }
 
 static int
 tsllux_write1(struct tsllux_softc *sc, uint8_t reg, uint8_t val)
 {
 	reg = (reg & REGMASK) | COMMAND_CMD;
-	return (iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val,
-				     sc->sc_i2c_flags));
+	return (iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0));
 }
 
 #if 0
@@ -514,8 +506,7 @@ static int
 tsllux_write2(struct tsllux_softc *sc, uint8_t reg, uint16_t val)
 {
 	reg = (reg & REGMASK) | COMMAND_CMD | COMMAND_WORD;
-	return (iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val,
-				     sc->sc_i2c_flags));
+	return (iic_smbus_write_word(sc->sc_i2c, sc->sc_addr, reg, val, 0));
 }
 #endif
 

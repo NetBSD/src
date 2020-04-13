@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.45 2016/05/31 03:12:49 dholland Exp $	*/
+/*	$NetBSD: intio.c,v 1.45.18.1 2020/04/13 08:04:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.45 2016/05/31 03:12:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.45.18.1 2020/04/13 08:04:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,9 +327,7 @@ intio_intr_establish_ext(int vector, const char *name1, const char *name2,
 	if (iiv[vector].iiv_handler)
 		return EBUSY;
 
-	evcnt = malloc(sizeof(*evcnt), M_DEVBUF, M_NOWAIT);
-	if (evcnt == NULL)
-		return ENOMEM;
+	evcnt = malloc(sizeof(*evcnt), M_DEVBUF, M_WAITOK);
 	evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR, NULL, name1, name2);
 
 	iiv[vector].iiv_handler = handler;

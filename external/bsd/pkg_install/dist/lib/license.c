@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.7.2.1 2019/06/10 21:51:37 christos Exp $	*/
+/*	$NetBSD: license.c,v 1.7.2.2 2020/04/13 07:56:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -56,6 +56,7 @@ const char *default_acceptable_licenses =
     "cc0-1.0-universal "
     "cddl-1.0 "
     "cecill-2.1 "
+    "cecill-b-v1 "
     "cpl-1.0 "
     "epl-v1.0 "
     "eupl-v1.1 "

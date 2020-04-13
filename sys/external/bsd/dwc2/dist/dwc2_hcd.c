@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.19.18.2 2020/04/08 14:08:28 martin Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.19.18.3 2020/04/13 08:05:00 martin Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.19.18.2 2020/04/08 14:08:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.19.18.3 2020/04/13 08:05:00 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -2424,13 +2424,16 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 error3:
 	dwc2_hcd_release(hsotg);
 error2:
-	kmem_free(hsotg->core_params, sizeof(*hsotg->core_params));
+	if (hsotg->core_params != NULL)
+		kmem_free(hsotg->core_params, sizeof(*hsotg->core_params));
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-	kmem_free(hsotg->last_frame_num_array,
-	      sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
-	kmem_free(hsotg->frame_num_array,
-		  sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	if (hsotg->last_frame_num_array != NULL)
+		kmem_free(hsotg->last_frame_num_array,
+		      sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	if (hsotg->frame_num_array != NULL)
+		kmem_free(hsotg->frame_num_array,
+			  sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
 #endif
 
 	dev_err(hsotg->dev, "%s() FAILED, returning %d\n", __func__, retval);
@@ -2460,7 +2463,7 @@ void dwc2_hcd_remove(struct dwc2_hsotg *hsotg)
 	dwc2_hcd_release(hsotg);
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-	kfree(hsotg->last_frame_num_array);
-	kfree(hsotg->frame_num_array);
+	kmem_free(hsotg->last_frame_num_array, sizeof(*hsotg->last_frame_num_array) * FRAME_NUM_ARRAY_SIZE);
+	kmem_free(hsotg->frame_num_array, sizeof(*hsotg->frame_num_array) * FRAME_NUM_ARRAY_SIZE);
 #endif
 }

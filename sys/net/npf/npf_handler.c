@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.39.2.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.39.2.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,12 +112,12 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 }
 
 /*
- * npf_packet_handler: main packet handling routine for layer 3.
+ * npfk_packet_handler: main packet handling routine for layer 3.
  *
  * Note: packet flow and inspection logic is in strict order.
  */
 __dso_public int
-npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
+npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	nbuf_t nbuf;
 	npf_cache_t npc;
@@ -129,8 +129,6 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_match_info_t mi;
 	bool mff;
 
-	/* QSBR checkpoint. */
-	pserialize_checkpoint(npf->qsbr);
 	KASSERT(ifp != NULL);
 
 	/*
@@ -195,13 +193,13 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Acquire the lock, inspect the ruleset using this packet. */
-	int slock = npf_config_read_enter();
+	int slock = npf_config_read_enter(npf);
 	npf_ruleset_t *rlset = npf_config_ruleset(npf);
 
 	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
 	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass(npf);
-		npf_config_read_exit(slock);
+		npf_config_read_exit(npf, slock);
 
 		if (pass) {
 			npf_stats_inc(npf, NPF_STAT_PASS_DEFAULT);
@@ -220,7 +218,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* Conclude with the rule and release the lock. */
 	error = npf_rule_conclude(rl, &mi);
-	npf_config_read_exit(slock);
+	npf_config_read_exit(npf, slock);
 
 	if (error) {
 		npf_stats_inc(npf, NPF_STAT_BLOCK_RULESET);
@@ -234,7 +232,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	 */
 	if ((mi.mi_retfl & NPF_RULE_STATEFUL) != 0 && !con) {
 		con = npf_conn_establish(&npc, di,
-		    (mi.mi_retfl & NPF_RULE_MULTIENDS) == 0);
+		    (mi.mi_retfl & NPF_RULE_GSTATEFUL) == 0);
 		if (con) {
 			/*
 			 * Note: the reference on the rule procedure is
@@ -248,6 +246,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 pass:
 	decision = NPF_DECISION_PASS;
 	KASSERT(error == 0);
+
 	/*
 	 * Perform NAT.
 	 */

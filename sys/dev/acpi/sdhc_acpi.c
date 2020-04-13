@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.5.2.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.5.2.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.5.2.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.5.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -201,11 +201,9 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		goto unmap;
 	}
 
-	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_NOSLEEP);
-	if (sc->sc.sc_host == NULL) {
-		aprint_error_dev(self, "couldn't alloc memory\n");
-		goto intr_disestablish;
-	}
+	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_SLEEP);
+
+	sc->sc.sc_flags |= slot->flags;
 
 	sc->sc.sc_flags |= slot->flags;
 
@@ -236,7 +234,6 @@ fail:
 	if (sc->sc.sc_host != NULL)
 		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
 	sc->sc.sc_host = NULL;
-intr_disestablish:
 	if (sc->sc_ih != NULL)
 		acpi_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;

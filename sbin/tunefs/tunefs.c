@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.49.16.1 2019/06/10 22:05:36 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.49.16.2 2020/04/13 08:03:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.49.16.1 2019/06/10 22:05:36 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.49.16.2 2020/04/13 08:03:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,10 +47,12 @@ __RCSID("$NetBSD: tunefs.c,v 1.49.16.1 2019/06/10 22:05:36 christos Exp $");
  * tunefs: change layout parameters to an existing file system.
  */
 #include <sys/param.h>
+#include <sys/statvfs.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/quota2.h>
 
 #include <machine/bswap.h>
@@ -103,9 +105,10 @@ main(int argc, char *argv[])
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
 	int		maxbpg, minfree, optim, secsize;
-	int		avgfilesize, avgfpdir;
+	int		avgfilesize, avgfpdir, active;
 	long long	logfilesize;
 	int		secshift, fsbtodb;
+	struct statvfs	sfs;
 
 	Aflag = Fflag = Nflag = 0;
 	maxbpg = minfree = optim = secsize = -1;
@@ -203,6 +206,7 @@ main(int argc, char *argv[])
 		fi = openpartition(special, openflags, device, sizeof(device));
 		special = device;
 	}
+	active = fstatvfs(fi, &sfs) != -1;
 	if (fi == -1)
 		err(1, "%s", special);
 	getsb(&sblock, special);
@@ -364,6 +368,18 @@ main(int argc, char *argv[])
 
 	/* write superblock to original coordinates (use old dev_bsize!) */
 	bwrite(sblockloc, buf.data, SBLOCKSIZE, special);
+
+	if (active) {
+		struct ufs_args args;
+		args.fspec = sfs.f_mntfromname;
+		if (mount(MOUNT_FFS, sfs.f_mntonname, sfs.f_flag | MNT_UPDATE,
+		     &args, sizeof args) == -1)
+			 warn("mount");
+		else
+			printf("%s: mount of %s on %s updated\n",
+			    getprogname(), sfs.f_mntfromname, sfs.f_mntonname);
+	}
+
 
 	/* correct dev_bsize from possibly changed superblock data */
 	dev_bsize = sblock.fs_fsize / FFS_FSBTODB(&sblock, 1);

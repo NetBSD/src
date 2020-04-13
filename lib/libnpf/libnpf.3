@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnpf.3,v 1.5.4.1 2019/06/10 22:05:25 christos Exp $
+.\"	$NetBSD: libnpf.3,v 1.5.4.2 2020/04/13 08:03:14 martin Exp $
 .\"
-.\" Copyright (c) 2011-2018 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 29, 2018
+.Dd August 25, 2019
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Ft nl_config_t *
 .Fn npf_config_create "void"
 .Ft int
-.Fn npf_config_submit "nl_config_t *ncf" "int fd" "nl_error_t *errinfo"
+.Fn npf_config_submit "nl_config_t *ncf" "int fd" "npf_error_t *errinfo"
 .Ft nl_config_t *
 .Fn npf_config_retrieve "int fd"
 .Ft int
@@ -95,17 +95,28 @@
 .Ft int
 .Fn npf_nat_setport "nl_nat_t *nt" "in_port_t port"
 .Ft int
-.Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
+.Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt"
 .\" ---
 .Ft nl_table_t *
-.Fn npf_table_create "const char *name" "u_int id" "int type"
+.Fn npf_table_create "const char *name" "unsigned id" "int type"
 .Ft int
 .Fn npf_table_add_entry "nl_table_t *tl" "int af" \
 "const npf_addr_t *addr" "const npf_netmask_t mask"
 .Ft int
 .Fn npf_table_insert "nl_config_t *ncf" "nl_table_t *tl"
+.Ft int
+.Fn npf_table_replace "int fd" "nl_table_t *tl" "npf_error_t *errinfo"
 .Ft void
 .Fn npf_table_destroy "nl_table_t *tl"
+.\" ---
+.Ft int
+.Fn npf_ruleset_add "int fd" "const char *name" "nl_rule_t *rl" "uint64_t *id"
+.Ft int
+.Fn npf_ruleset_remove "int fd" "const char *name" "uint64_t id"
+.Ft int
+.Fn npf_ruleset_remkey "int fd" "const char *name" "const void *key" "size_t len"
+.Ft int
+.Fn npf_ruleset_flush "int fd" "const char *name"
 .\" -----
 .Sh DESCRIPTION
 The
@@ -178,8 +189,11 @@ Create a state (session) on match, track the connection and pass the
 backwards stream (the returning packets) without the ruleset inspection.
 The state is uniquely identified by a 5-tuple (source and destination
 IP addresses, port numbers and an interface identifier).
-.It Dv NPF_RULE_MULTIENDS
+.It Dv NPF_RULE_GSTATEFUL
 Exclude the interface identifier from the state key i.e. use a 4-tuple.
+This makes the state global with respect to the network interfaces.
+The state is also picked for packets travelling different direction than
+originally.
 .It Dv NPF_RULE_RETRST
 Return TCP RST packet in a case of packet block.
 .It Dv NPF_RULE_RETICMP
@@ -344,8 +358,12 @@ for IPv4 or
 for IPv6 address.
 Additionally,
 .Fa mask
-may be specified to indicate the translation network.
-In such case, a custom algorithm may need to be specified using the
+may be specified to indicate the translation network;
+otherwise, it should be set to
+.Dv NPF_NO_NETMASK .
+.Pp
+In order to use the translation network, a custom algorithm may need to
+be specified using the
 .Fn npf_nat_setalgo
 function.
 .\" ---
@@ -361,6 +379,9 @@ Currently, the following algorithms are supported with dynamic NAT:
 Hash of the source and destination addresses.
 .It Dv NPF_ALGO_RR
 Round-robin for the translation addresses.
+.It Dv NPF_ALGO_NETMAP
+Network-to-network map as described below, but with state tracking.
+It is used when it is necessary to translate the ports.
 .El
 .Pp
 The following are support with static NAT:
@@ -373,8 +394,8 @@ original address (zero bits of the mask).
 IPv6-to-IPv6 Network Prefix Translation (NPTv6, defined in RFC 6296).
 .El
 .\" ---
-.It Fn npf_nat_insert "ncf" "nt" "pri"
-Insert NAT policy, its rule, into the specified configuration.
+.It Fn npf_nat_insert "ncf" "nt"
+Insert the NAT policy, its rule, into the specified configuration.
 The NAT rule must not be referenced after insertion.
 .El
 .\" -----
@@ -420,13 +441,60 @@ must be either
 for IPv4 or
 .Dv AF_INET6
 for IPv6 address.
+If there is no mask, then
+.Fa mask
+should be set to
+.Dv NPF_NO_NETMASK .
+.\" ---
 .It Fn npf_table_insert "ncf" "tl"
 Add the table to the configuration object.
 This routine performs a check for duplicate table IDs.
 The table must not be referenced after insertion.
 .\" ---
+.It Fn npf_table_replace "fd" "tl" "errinfo"
+Submit the table object, specified by
+.Fa tl ,
+to the kernel, to replace the existing table with the
+corresponding table name and ID.
+On failure, the error information is written into the structure
+specified by
+.Fa errinfo .
+.\" ---
 .It Fn npf_table_destroy "tl"
 Destroy the specified table.
+.El
+.\" -----
+.Ss Ruleset interface
+.Bl -tag -width 4n
+.It Fn npf_ruleset_add "fd" "name" "rl" "id"
+Add a given rule, specified by
+.Fa rl ,
+into the dynamic ruleset named
+.Fa name .
+On success, return 0 and a unique rule ID in the
+.Fa id
+parameter.
+.It Fn npf_ruleset_remove "fd" "name" "id"
+Remove a rule from the dynamic ruleset, specified by
+.Fa name .
+The rule is specified by its unique ID in the
+.Fa id
+parameter.
+.It Fn npf_ruleset_remkey "fd" "name" "key" "len"
+Remove a rule from the dynamic ruleset, specified by
+.Fa name .
+The rule is specified by its key, in the
+.Fa key
+and
+.Fa len
+parameters.
+The key for the rule must have been set during its construction, using the
+.Fn npf_rule_setkey
+routine.
+.It Fn npf_ruleset_flush "fd" "name"
+Clear the dynamic ruleset, specified by
+.Fa name ,
+by removing all its rules.
 .El
 .\" -----
 .Sh SEE ALSO

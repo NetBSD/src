@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,10 +71,6 @@ XfValidateCrossReference (
     ACPI_PARSE_OBJECT       *Op,
     const ACPI_OPCODE_INFO  *OpInfo,
     ACPI_NAMESPACE_NODE     *Node);
-
-static ACPI_PARSE_OBJECT *
-XfGetParentMethod (
-    ACPI_PARSE_OBJECT       *Op);
 
 static BOOLEAN
 XfObjectExists (
@@ -274,41 +270,6 @@ XfCheckFieldRange (
 
 /*******************************************************************************
  *
- * FUNCTION:    XfGetParentMethod
- *
- * PARAMETERS:  Op                      - Parse Op to be checked
- *
- * RETURN:      Control method Op if found. NULL otherwise
- *
- * DESCRIPTION: Find the control method parent of a parse op. Returns NULL if
- *              the input Op is not within a control method.
- *
- ******************************************************************************/
-
-static ACPI_PARSE_OBJECT *
-XfGetParentMethod (
-    ACPI_PARSE_OBJECT       *Op)
-{
-    ACPI_PARSE_OBJECT       *NextOp;
-
-
-    NextOp = Op->Asl.Parent;
-    while (NextOp)
-    {
-        if (NextOp->Asl.AmlOpcode == AML_METHOD_OP)
-        {
-            return (NextOp);
-        }
-
-        NextOp = NextOp->Asl.Parent;
-    }
-
-    return (NULL); /* No parent method found */
-}
-
-
-/*******************************************************************************
- *
  * FUNCTION:    XfNamespaceLocateBegin
  *
  * PARAMETERS:  ASL_WALK_CALLBACK
@@ -352,6 +313,8 @@ XfNamespaceLocateBegin (
     ASL_METHOD_LOCAL        *MethodArgs = NULL;
     int                     RegisterNumber;
     UINT32                  i;
+    ACPI_NAMESPACE_NODE     *DeclarationParentMethod;
+    ACPI_PARSE_OBJECT       *ReferenceParentMethod;
 
 
     ACPI_FUNCTION_TRACE_PTR (XfNamespaceLocateBegin, Op);
@@ -429,7 +392,7 @@ XfNamespaceLocateBegin (
     {
         /* Find parent method Op */
 
-        NextOp = XfGetParentMethod (Op);
+        NextOp = UtGetParentMethodOp (Op);
         if (!NextOp)
         {
             return_ACPI_STATUS (AE_OK);
@@ -466,7 +429,7 @@ XfNamespaceLocateBegin (
     {
         /* Find parent method Op */
 
-        NextOp = XfGetParentMethod (Op);
+        NextOp = UtGetParentMethodOp (Op);
         if (!NextOp)
         {
             return_ACPI_STATUS (AE_OK);
@@ -505,8 +468,7 @@ XfNamespaceLocateBegin (
         (Op->Asl.ParseOpcode != PARSEOP_NAMESTRING) &&
         (Op->Asl.ParseOpcode != PARSEOP_NAMESEG)    &&
         (Op->Asl.ParseOpcode != PARSEOP_METHODCALL) &&
-        (Op->Asl.ParseOpcode != PARSEOP_EXTERNAL)   &&
-        (OpInfo->Type != AML_TYPE_NAMED_FIELD))
+        (Op->Asl.ParseOpcode != PARSEOP_EXTERNAL))
     {
         return_ACPI_STATUS (AE_OK);
     }
@@ -530,8 +492,7 @@ XfNamespaceLocateBegin (
     if ((Op->Asl.ParseOpcode == PARSEOP_NAMESTRING) ||
         (Op->Asl.ParseOpcode == PARSEOP_NAMESEG)    ||
         (Op->Asl.ParseOpcode == PARSEOP_METHODCALL) ||
-        (Op->Asl.ParseOpcode == PARSEOP_EXTERNAL)   ||
-        (OpInfo->Type == AML_TYPE_NAMED_FIELD))
+        (Op->Asl.ParseOpcode == PARSEOP_EXTERNAL))
     {
         /*
          * These are name references, do not push the scope stack
@@ -567,10 +528,6 @@ XfNamespaceLocateBegin (
         }
 
         Path = NextOp->Asl.Value.String;
-    }
-    else if (OpInfo->Type == AML_TYPE_NAMED_FIELD)
-    {
-        Path = Op->Asl.Child->Asl.Value.String;
     }
     else
     {
@@ -690,22 +647,43 @@ XfNamespaceLocateBegin (
         return_ACPI_STATUS (Status);
     }
 
-    /* Object was found above, check for an illegal forward reference */
+   /* Object was found above, check for an illegal forward reference */
 
     if (Op->Asl.CompileFlags & OP_NOT_FOUND_DURING_LOAD)
     {
         /*
          * During the load phase, this Op was flagged as a possible
-         * illegal forward reference
+         * illegal forward reference. In other words, Op is a name path or
+         * name segment that refers to a named object declared after the
+         * reference. In this scinario, Node refers to the actual declaration
+         * and Op is a parse node that references the named object.
          *
-         * Note: Allow "forward references" from within a method to an
-         * object that is not within any method (module-level code)
+         * Note:
+         *
+         * Object references inside of control methods are allowed to
+         * refer to objects declared outside of control methods.
+         *
+         * If the declaration and reference are both contained inside of the
+         * same method or outside of any method, this is a forward reference
+         * and should be reported as a compiler error.
          */
-        if (!WalkState->ScopeInfo || (UtGetParentMethod (Node) &&
-            !UtNodeIsDescendantOf (WalkState->ScopeInfo->Scope.Node,
-                UtGetParentMethod (Node))))
+        DeclarationParentMethod = UtGetParentMethodNode (Node);
+        ReferenceParentMethod = UtGetParentMethodOp (Op);
+
+        /* case 1: declaration and reference are both outside of method */
+
+        if (!ReferenceParentMethod && !DeclarationParentMethod)
         {
             AslError (ASL_ERROR, ASL_MSG_ILLEGAL_FORWARD_REF, Op,
+                Op->Asl.ExternalName);
+        }
+
+        /* case 2: declaration and reference are both inside of the same method */
+
+        else if (ReferenceParentMethod && DeclarationParentMethod &&
+            ReferenceParentMethod == DeclarationParentMethod->Op)
+        {
+             AslError (ASL_ERROR, ASL_MSG_ILLEGAL_FORWARD_REF, Op,
                 Op->Asl.ExternalName);
         }
     }
@@ -930,7 +908,7 @@ XfNamespaceLocateBegin (
             NextOp = NextOp->Asl.Next;
         }
 
-        if (Node->Value != ASL_EXTERNAL_METHOD &&
+        if (Node->Value != ASL_EXTERNAL_METHOD_UNKNOWN_PARAMS &&
             Op->Asl.Parent->Asl.ParseOpcode != PARSEOP_EXTERNAL)
         {
             /*
@@ -939,8 +917,18 @@ XfNamespaceLocateBegin (
              */
             if (PassedArgs != Node->Value)
             {
-                snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer), "%s requires %u", Op->Asl.ExternalName,
-                            Node->Value);
+                if (Node->Flags & ANOBJ_IS_EXTERNAL)
+                {
+                    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer),
+                        "according to previous use, %s requires %u",
+                        Op->Asl.ExternalName, Node->Value);
+                }
+                else
+                {
+                    snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer),
+			"%s requires %u", Op->Asl.ExternalName,
+                        Node->Value);
+                }
 
                 if (PassedArgs < Node->Value)
                 {
@@ -951,6 +939,22 @@ XfNamespaceLocateBegin (
                     AslError (ASL_ERROR, ASL_MSG_ARG_COUNT_HI, Op, AslGbl_MsgBuffer);
                 }
             }
+        }
+
+        /*
+         * At this point, a method call to an external method has been
+         * detected. As of 11/19/2019, iASL does not support parameter counts
+         * for methods declared as external. Therefore, save the parameter
+         * count of the first method call and use this count check other
+         * method calls to ensure that the methods are being called with the
+         * same amount of parameters.
+         */
+        else if (Node->Type == ACPI_TYPE_METHOD &&
+            (Node->Flags & ANOBJ_IS_EXTERNAL) &&
+            Node->Value == ASL_EXTERNAL_METHOD_UNKNOWN_PARAMS &&
+            Op->Asl.Parent->Asl.ParseOpcode != PARSEOP_EXTERNAL)
+        {
+            Node->Value = PassedArgs;
         }
     }
 
@@ -1187,8 +1191,8 @@ XfNamespaceLocateEnd (
  *                                      execution of A)
  *
  * NOTES:
- *      A null pointer returned by either XfGetParentMethod or
- *      UtGetParentMethod indicates that the parameter object is not
+ *      A null pointer returned by either UtGetParentMethodOp or
+ *      UtGetParentMethodNode indicates that the parameter object is not
  *      within a control method.
  *
  *      Five cases are handled: Case(Op, Node)
@@ -1221,8 +1225,8 @@ XfValidateCrossReference (
      * 1) Search upwards in parse tree for owner of the referencing object
      * 2) Search upwards in namespace to find the owner of the referenced object
      */
-    ReferencingMethodOp = XfGetParentMethod (Op);
-    ReferencedMethodNode = UtGetParentMethod (Node);
+    ReferencingMethodOp = UtGetParentMethodOp (Op);
+    ReferencedMethodNode = UtGetParentMethodNode (Node);
 
     if (!ReferencingMethodOp && !ReferencedMethodNode)
     {

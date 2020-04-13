@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.28.18.1 2019/06/10 22:06:43 christos Exp $	*/
+/*	$NetBSD: int.c,v 1.28.18.2 2020/04/13 08:04:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.28.18.1 2019/06/10 22:06:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.28.18.2 2020/04/13 08:04:06 martin Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -372,12 +372,7 @@ int1_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	} else {
 		struct sgimips_intrhand *n, *ih;
 
-		ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-		if (ih == NULL) {
-			printf("int0: can't allocate handler\n");
-			return (void *)NULL;
-		}
-
+		ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 		ih->ih_fun = handler;
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;
@@ -416,12 +411,7 @@ int2_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	} else {
 		struct sgimips_intrhand *n, *ih;
 
-		ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-		if (ih == NULL) {
-			printf("int0: can't allocate handler\n");
-			return NULL;
-		}
-
+		ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 		ih->ih_fun = handler;
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;

@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.6.4.1 2020/04/13 07:56:19 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.1.1.6.4.1 2020/04/13 07:56:19 martin Exp $");
 
 #include "portable.h"
 

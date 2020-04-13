@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.63 2018/01/24 09:04:43 skrll Exp $
+$NetBSD: README,v 1.63.4.1 2020/04/13 08:03:27 martin Exp $
 
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
 algor	mipsel,mips64el	20010528	Algorithmics, Ltd. MIPS evaluation boards
@@ -15,7 +15,7 @@ cobalt	mipsel,mips64el	20000319	Cobalt Networks Microservers
 dreamcast	sh3el	20010107	SEGA Dreamcast
 emips	mipseb	20110126	Machines based on Extensible MIPS
 epoc32	arm	20130502	32bit EPOC OS machines
-evbarm	armeb	20010905	ARM-based eval boards
+evbarm	armeb,aarch64	20010905	ARM-based eval boards
 evbmips	mipseb,mipsel,mips64eb,mips64el	20020307	MIPS-based eval boards
 evbppc	powerpc,powerpc64	20021209	PowerPC-based eval boards
 evbsh3	sh3eb,sh3el	20010206	Hitachi SuperH(TM) sh3 and sh4 eval boards
@@ -60,6 +60,7 @@ xen	xen	20040311	Xen virtual machine monitor
 zaurus	arm	20061217	Sharp Zaurus C7x0/860/1000/3x00 PDAs
 
 Generic cpu features shared among multiple ports
+aarch64:	ARMv8 CPU based platform files
 arm:		ARM CPU based platform files
 hppa:		Hewlett Packard PA-RISC CPU based platform files
 m68k:		Motorola 680x0 CPU based platform files

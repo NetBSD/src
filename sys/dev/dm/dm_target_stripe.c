@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.23.4.1 2020/04/08 14:08:03 martin Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.23.4.2 2020/04/13 08:04:19 martin Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.23.4.1 2020/04/08 14:08:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.23.4.2 2020/04/13 08:04:19 martin Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -148,8 +148,7 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 	printf("Stripe target chunk size %s number of stripes %s\n",
 	    argv[1], argv[0]);
 
-	if ((tsc = kmem_alloc(sizeof(*tsc), KM_NOSLEEP)) == NULL)
-		return ENOMEM;
+	tsc = kmem_alloc(sizeof(*tsc), KM_SLEEP);
 
 	/* Initialize linked list for striping devices */
 	TAILQ_INIT(&tsc->stripe_devs);
@@ -163,7 +162,7 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 		printf("Stripe target device name %s -- offset %s\n",
 		       argv[strpi], argv[strpi+1]);
 
-		tlc = kmem_alloc(sizeof(*tlc), KM_NOSLEEP);
+		tlc = kmem_alloc(sizeof(*tlc), KM_SLEEP);
 		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL) {
 			kmem_free(tlc, sizeof(*tlc));
 			dm_target_stripe_fini(tsc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.30 2017/12/31 03:29:18 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.30.4.1 2020/04/13 08:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.30 2017/12/31 03:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.30.4.1 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ procfs_doprocargs_helper(void *cookie, const void *src, size_t off, size_t len)
 	char *buf = __UNCONST(src);
 
 	buf += uio->uio_offset - off;
-	if (off + len <= uio->uio_offset)
+	if (off + len <= (uintmax_t)uio->uio_offset)
 		return 0;
 	return uiomove(buf, off + len - uio->uio_offset, cookie);
 }
@@ -90,13 +90,13 @@ procfs_doprocargs(
 				return error;
 		}
 		len = strlen(p->p_comm);
-		if (len >= uio->uio_offset) {
+		if (len >= (uintmax_t)uio->uio_offset) {
 			start = uio->uio_offset - 1;
 			error = uiomove(p->p_comm + start, len - start, uio);
 			if (error)
 				return error;
 		}
-		if (len + 2 >= uio->uio_offset) {
+		if (len + 2 >= (uintmax_t)uio->uio_offset) {
 			start = uio->uio_offset - 1 - len;
 			error = uiomove(msg + 1 + start, 2 - start, uio);
 		}

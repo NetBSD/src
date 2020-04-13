@@ -1,7 +1,7 @@
-/*	$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: sun.c,v 1.9.16.1 2020/04/13 08:05:40 martin Exp $	*/
 
 /*
- * Copyright (c) 2002 Matthew R. Green
+ * Copyright (c) 2002, 2013, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: sun.c,v 1.9.16.1 2020/04/13 08:05:40 martin Exp $");
 #endif
 
 

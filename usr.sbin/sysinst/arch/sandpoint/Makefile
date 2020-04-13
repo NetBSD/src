@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/26 19:30:47 dholland Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2020/04/13 08:06:05 martin Exp $
 #
 # Makefile for sandpoint
 #
 
-MENUS_MD=	menus.md.${SYSINSTLANG} menus.mbr
+MENUS_MD=	menus.md.${SYSINSTLANG}
 MSG_MD=		msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
+NO_MBR=no
 
 .include "../../Makefile.inc"

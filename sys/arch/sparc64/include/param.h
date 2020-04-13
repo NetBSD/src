@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58.14.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: param.h,v 1.58.14.2 2020/04/13 08:04:08 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -228,11 +228,6 @@ extern int nbpg, pgofset, pgshift;
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
 #endif /* __HIDE_DELAY */
-
-#ifdef	__arch64__
-/* If we're using a 64-bit kernel use 64-bit math */
-#define mstohz(ms) ((ms + 0UL) * hz / 1000)
-#endif
 
 /* Keep this a const so compiler optimization is done */
 extern const int cputyp;

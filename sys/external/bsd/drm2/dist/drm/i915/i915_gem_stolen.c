@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.4.30.2 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.4.30.3 2020/04/13 08:04:57 martin Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.4.30.2 2020/04/08 14:08:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.4.30.3 2020/04/13 08:04:57 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -304,18 +304,13 @@ static void g4x_get_stolen_reserved(struct drm_i915_private *dev_priv,
 	unsigned long stolen_top = dev_priv->mm.stolen_base +
 		dev_priv->gtt.stolen_size;
 
-	*base = (reg_val & G4X_STOLEN_RESERVED_ADDR2_MASK) << 16;
+	if (!(reg_val & G4X_STOLEN_RESERVED_ADDR2_MASK))
+		return;
 
+	*base = (reg_val & G4X_STOLEN_RESERVED_ADDR2_MASK) << 16;
 	WARN_ON((reg_val & G4X_STOLEN_RESERVED_ADDR1_MASK) < *base);
 
-	/* On these platforms, the register doesn't have a size field, so the
-	 * size is the distance between the base and the top of the stolen
-	 * memory. We also have the genuine case where base is zero and there's
-	 * nothing reserved. */
-	if (*base == 0)
-		*size = 0;
-	else
-		*size = stolen_top - *base;
+	*size = stolen_top - *base;
 }
 
 static void gen6_get_stolen_reserved(struct drm_i915_private *dev_priv,

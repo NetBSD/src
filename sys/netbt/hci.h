@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.44.4.1 2019/06/10 22:09:46 christos Exp $	*/
+/*	$NetBSD: hci.h,v 1.44.4.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.44.4.1 2019/06/10 22:09:46 christos Exp $
+ * $Id: hci.h,v 1.44.4.2 2020/04/13 08:05:16 martin Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1812,6 +1812,17 @@ typedef struct {
 	uint16_t	accuracy;	/* clock accuracy */
 } __packed hci_read_clock_rp;
 
+#define HCI_OCF_READ_ENCRYPTION_KEY_SIZE		0x0008
+#define HCI_CMD_READ_ENCRYPTION_KEY_SIZE		0x1408
+typedef struct {
+	uint16_t	con_handle;	/* connection handle */
+} __packed hci_read_encryption_key_size_cp;
+
+typedef struct {
+	uint8_t		status;		/* 0x00 - success */
+	uint16_t	con_handle;	/* connection handle */
+	uint8_t		size;		/* key size */
+} __packed hci_read_encryption_key_size_rp;
 
 /**************************************************************************
  **************************************************************************

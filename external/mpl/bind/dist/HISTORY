@@ -1,3 +1,5 @@
+HISTORY
+
 Functional enhancements from prior major releases of BIND 9
 
 BIND 9.11
@@ -431,11 +433,11 @@ BIND 9.4.0
   * Detect duplicates of UDP queries we are recursing on and drop them.
     New stats category "duplicates".
   * "USE INTERNAL MALLOC" is now runtime selectable.
-  * The lame cache is now done on a basis as some servers only appear to
-    be lame for certain query types.
+  * The lame cache is now done on a <qname,qclass,qtype> basis as some
+    servers only appear to be lame for certain query types.
   * Limit the number of recursive clients that can be waiting for a single
-    query () to resolve. New options clients-per-query and
-    max-clients-per-query.
+    query (<qname,qtype,qclass>) to resolve. New options clients-per-query
+    and max-clients-per-query.
   * dig: report the number of extra bytes still left in the packet after
     processing all the records.
   * Support for IPSECKEY rdata type.

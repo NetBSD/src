@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.40.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.40.2.3 2020/04/13 08:04:21 martin Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.40.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.40.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include "opt_mvsata.h"
 
@@ -113,7 +113,8 @@ int	mvsata_debug = 0;
 					   sending a cmd */
 #define ATAPI_MODE_DELAY	1000	/* 1s, timeout for SET_FEATURE cmds */
 
-#define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * (MAXPHYS / PAGE_SIZE))
+#define MVSATA_MAX_SEGS		(MAXPHYS / PAGE_SIZE + 1)
+#define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * MVSATA_MAX_SEGS)
 
 
 static void mvsata_probe_drive(struct ata_channel *);
@@ -347,12 +348,7 @@ mvsata_attach(struct mvsata_softc *sc, const struct mvsata_product *product,
 
 	sc->sc_wdc_regs =
 	    malloc(sizeof(struct wdc_regs) * product->hc * product->port,
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_wdc_regs == NULL) {
-		aprint_error_dev(MVSATA_DEV(sc),
-		    "can't allocate wdc regs memory\n");
-		return ENOMEM;
-	}
+	    M_DEVBUF, M_WAITOK);
 	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 
 	for (hc = 0; hc < sc->sc_hc; hc++) {
@@ -795,14 +791,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		    id->atap_config & ATAPI_CFG_CMD_MASK,
 		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
-		periph = scsipi_alloc_periph(M_NOWAIT);
-		if (periph == NULL) {
-			aprint_error_dev(atac->atac_dev,
-			    "unable to allocate periph"
-			    " for channel %d drive %d\n",
-			    chp->ch_channel, target);
-			return;
-		}
+		periph = scsipi_alloc_periph(M_WAITOK);
 		periph->periph_dev = NULL;
 		periph->periph_channel = chan;
 		periph->periph_switch = &atapi_probe_periphsw;
@@ -3026,13 +3015,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	const int eprd_buf_size = MVSATA_EPRD_MAX_SIZE * MVSATA_EDMAQ_LEN;
 
 	mvport = malloc(sizeof(struct mvsata_port), M_DEVBUF,
-	    M_ZERO | M_NOWAIT);
-	if (mvport == NULL) {
-		aprint_error("%s:%d: can't allocate memory for port %d\n",
-		    device_xname(MVSATA_DEV(sc)), mvhc->hc, port);
-		return ENOMEM;
-	}
-
+	    M_ZERO | M_WAITOK);
 	mvport->port = port;
 	mvport->port_hc = mvhc;
 	mvport->port_edmamode_negotiated = nodma;
@@ -3111,7 +3094,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	}
 	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
 		rv = bus_dmamap_create(mvport->port_dmat, MAXPHYS,
-		    MAXPHYS / PAGE_SIZE, MAXPHYS, 0, BUS_DMA_NOWAIT,
+		    MVSATA_MAX_SEGS, MAXPHYS, 0, BUS_DMA_NOWAIT,
 		    &mvport->port_reqtbl[i].data_dmamap);
 		if (rv != 0) {
 			aprint_error("%s:%d:%d:"
@@ -3283,7 +3266,7 @@ mvsata_dma_bufload(struct mvsata_port *mvport, int index, void *databuf,
 	rv = bus_dmamap_load(mvport->port_dmat, data_dmamap, databuf, datalen,
 	    NULL, BUS_DMA_NOWAIT | lop);
 	if (rv) {
-		aprint_error("%s:%d:%d: buffer load failed: error=%d",
+		aprint_error("%s:%d:%d: buffer load failed: error=%d\n",
 		    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 		    mvport->port, rv);
 		return rv;

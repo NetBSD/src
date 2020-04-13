@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.16 2016/05/13 21:22:47 nakayama Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.16.18.1 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.16 2016/05/13 21:22:47 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.16.18.1 2020/04/13 08:04:08 martin Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -186,10 +186,7 @@ ebus_mainbus_alloc_bus_tag(struct ebus_softc *sc,
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("could not allocate ebus bus tag");
-
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 	bt->cookie = sc;
 	bt->parent = parent;
 	bt->type = type;

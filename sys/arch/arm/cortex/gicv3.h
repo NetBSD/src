@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.4.4.3 2020/04/08 14:07:28 martin Exp $ */
+/* $NetBSD: gicv3.h,v 1.4.4.4 2020/04/13 08:03:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -61,11 +61,15 @@ struct gicv3_softc {
 	bus_space_handle_t	*sc_bsh_r;	/* GICR */
 	u_int			sc_bsh_r_count;
 
+	u_int			sc_priority_shift;
+	u_int			sc_pmr_shift;
+
 	uint32_t		sc_enabled_sgippi;
 	uint64_t		sc_irouter[MAXCPUS];
 
 	/* LPI configuration table */
 	struct gicv3_dma	sc_lpiconf;
+	bool			sc_lpiconf_flush;
 
 	/* LPI pending tables */
 	struct gicv3_dma	sc_lpipend[MAXCPUS];

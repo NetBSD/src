@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.11.18.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.11.18.3 2020/04/13 08:04:49 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -126,64 +126,3 @@ typedef	uWord url_rxhdr_t;	/* Receive Header */
 #define	URL_RXHDR_RUNTPKT_MASK	(0x2000) /* Runt packet */
 #define	URL_RXHDR_PHYPKT_MASK	(0x4000) /* Physical match packet */
 #define	URL_RXHDR_MCASTPKT_MASK	(0x8000) /* Multicast packet */
-
-#define	GET_IFP(sc)		(&(sc)->sc_ec.ec_if)
-#define	GET_MII(sc)		(&(sc)->sc_mii)
-
-struct url_chain {
-	struct url_softc	*url_sc;
-	struct usbd_xfer	*url_xfer;
-	char			*url_buf;
-	struct mbuf		*url_mbuf;
-	int			url_idx;
-};
-
-struct url_cdata {
-	struct url_chain	url_tx_chain[URL_TX_LIST_CNT];
-	struct url_chain	url_rx_chain[URL_TX_LIST_CNT];
-#if 0
-	/* XXX: Interrupt Endpoint is not yet supported! */
-	struct url_intrpkg	url_ibuf;
-#endif
-	int			url_tx_prod;
-	int			url_tx_cons;
-	int			url_tx_cnt;
-	int			url_rx_prod;
-};
-
-struct url_softc {
-	device_t		sc_dev;	/* base device */
-	struct usbd_device *	sc_udev;
-
-	/* USB */
-	struct usbd_interface *	sc_ctl_iface;
-	/* int			sc_ctl_iface_no; */
-	int			sc_bulkin_no; /* bulk in endpoint */
-	int			sc_bulkout_no; /* bulk out endpoint */
-	int			sc_intrin_no; /* intr in endpoint */
-	struct usbd_pipe *	sc_pipe_rx;
-	struct usbd_pipe *	sc_pipe_tx;
-	struct usbd_pipe *	sc_pipe_intr;
-	struct callout		sc_stat_ch;
-	u_int			sc_rx_errs;
-	/* u_int		sc_intr_errs; */
-	struct timeval		sc_rx_notice;
-
-	/* Ethernet */
-	struct ethercom		sc_ec; /* ethernet common */
-	struct mii_data		sc_mii;
-	krwlock_t		sc_mii_rwlock;
-	int			sc_link;
-#define	sc_media url_mii.mii_media
-	krndsource_t	rnd_source;
-	struct url_cdata	sc_cdata;
-
-	int                     sc_attached;
-	int			sc_dying;
-	int                     sc_refcnt;
-
-	struct usb_task		sc_tick_task;
-	struct usb_task		sc_stop_task;
-
-	uint16_t		sc_flags;
-};

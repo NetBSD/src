@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.11 2016/03/07 15:56:17 christos Exp $	*/
+/*	$NetBSD: env.c,v 1.11.16.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: env.c,v 1.11 2016/03/07 15:56:17 christos Exp $");
+__RCSID("$NetBSD: env.c,v 1.11.16.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -138,7 +138,7 @@ getargdata(prop_dictionary_t env, const char *key, uint8_t *buf, size_t buflen)
 	}
 	datalen = prop_data_size(data);
 	if (datalen > buflen) {
-		errno = ENAMETOOLONG; 
+		errno = ENAMETOOLONG;
 		return -1;
 	}
 	memcpy(buf, prop_data_data_nocopy(data), datalen);
@@ -159,7 +159,7 @@ getargstr(prop_dictionary_t env, const char *key, char *buf, size_t buflen)
 	}
 	datalen = prop_data_size(data);
 	if (datalen >= buflen) {
-		errno = ENAMETOOLONG; 
+		errno = ENAMETOOLONG;
 		return -1;
 	}
 	memcpy(buf, prop_data_data_nocopy(data), datalen);

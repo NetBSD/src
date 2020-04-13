@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.3.2.2 2019/06/10 22:04:28 christos Exp $	*/
+/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.3.2.3 2020/04/13 08:02:54 martin Exp $	*/
 
 /*
  * Copyright (C) 2014 Maui Systems Ltd, Scotland, contact@maui-systems.co.uk.
@@ -1299,9 +1299,21 @@ dlz_newversion(const char *zone, void *dbdata, void **versionp) {
 	 * Create new transaction
 	 */
 	newtx = (mysql_transaction_t *)
-		malloc(sizeof(mysql_transaction_t));
+		calloc(1, sizeof(mysql_transaction_t));
+	if (newtx == NULL) {
+		result = ISC_R_NOMEMORY;
+		goto cleanup;
+	}
 	newtx->zone = strdup(zone);
+	if (newtx->zone == NULL) {
+		result = ISC_R_NOMEMORY;
+		goto cleanup;
+	}
 	newtx->zone_id = strdup(zone_id);
+	if (newtx->zone_id == NULL) {
+		result = ISC_R_NOMEMORY;
+		goto cleanup;
+	}
 	newtx->dbi = get_dbi(state);
 	newtx->next = NULL;
 
@@ -1331,9 +1343,15 @@ dlz_newversion(const char *zone, void *dbdata, void **versionp) {
 		*versionp = (void *) newtx;
 	} else {
 		dlz_mutex_unlock(&state->tx_mutex);
-		free(newtx->zone);
-		free(newtx->zone_id);
-		free(newtx);
+		if (newtx != NULL) {
+			if (newtx->zone != NULL) {
+				free(newtx->zone);
+			}
+			if (newtx->zone != NULL) {
+				free(newtx->zone_id);
+			}
+			free(newtx);
+		}
 	}
 
 	return (result);

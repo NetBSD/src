@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.134.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.134.2.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.134.2.2 2020/04/08 14:08:06 martin Exp $
+ * $Id: aic7xxx.c,v 1.134.2.3 2020/04/13 08:04:21 martin Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.134.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.134.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1573,9 +1573,7 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 	    && ahc->enabled_targets[scsi_id] != master_tstate)
 		panic("%s: ahc_alloc_tstate - Target already allocated",
 		      ahc_name(ahc));
-	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT);
-	if (tstate == NULL)
-		return (NULL);
+	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_WAITOK);
 
 	/*
 	 * If we have allocated a master tstate, copy user settings from
@@ -3816,10 +3814,7 @@ ahc_softc_init(struct ahc_softc *ahc)
 	/* XXX The shared scb data stuff should be deprecated */
 	if (ahc->scb_data == NULL) {
 		ahc->scb_data = malloc(sizeof(*ahc->scb_data),
-				       M_DEVBUF, M_NOWAIT);
-		if (ahc->scb_data == NULL)
-			return (ENOMEM);
-		memset(ahc->scb_data, 0, sizeof(*ahc->scb_data));
+				       M_DEVBUF, M_WAITOK | M_ZERO);
 	}
 
 	return (0);
@@ -4181,10 +4176,7 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 
 	/* Allocate SCB resources */
 	scb_data->scbarray = malloc(sizeof(struct scb) * AHC_SCB_MAX_ALLOC,
-				     M_DEVBUF, M_NOWAIT);
-	if (scb_data->scbarray == NULL)
-		return (ENOMEM);
-	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX_ALLOC);
+				     M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
@@ -6365,9 +6357,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 	if (cs_count != 0) {
 
 		cs_count *= sizeof(struct cs);
-		ahc->critical_sections = malloc(cs_count, M_DEVBUF, M_NOWAIT);
-		if (ahc->critical_sections == NULL)
-			panic("ahc_loadseq: Could not malloc");
+		ahc->critical_sections = malloc(cs_count, M_DEVBUF, M_WAITOK);
 		memcpy(ahc->critical_sections, cs_table, cs_count);
 	}
 	ahc_outb(ahc, SEQCTL, PERRORDIS|FAILDIS|FASTMODE);

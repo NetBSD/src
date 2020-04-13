@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.84.14.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.84.14.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.84.14.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.84.14.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ agpmatch(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-static const int agp_max[][2] = {
+static const u_int agp_max[][2] = {
 	{0,	0},
 	{32,	4},
 	{64,	28},
@@ -332,7 +332,8 @@ agpattach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = device_private(self);
 	const struct agp_product *ap;
-	int memsize, i, ret;
+	int ret;
+	u_int memsize, i;
 
 	ap = agp_lookup(pa);
 	KASSERT(ap != NULL);
@@ -407,9 +408,7 @@ agp_alloc_gatt(struct agp_softc *sc)
 	void *virtual;
 	int dummyseg;
 
-	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_NOWAIT);
-	if (!gatt)
-		return NULL;
+	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_WAITOK);
 	gatt->ag_entries = entries;
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),

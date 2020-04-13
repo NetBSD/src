@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.14 2016/06/06 15:02:32 abhinav Exp $
+.\"	$NetBSD: statvfs.5,v 1.14.16.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd June 2, 2016
+.Dd September 22, 2019
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -53,39 +53,40 @@ typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 #define VFS_MNAMELEN 1024	/* length of buffer for returned name */
 
 struct statvfs {
-	unsigned long	f_flag;	  /* copy of mount exported flags */
-	unsigned long	f_bsize;  /* system block size */
-	unsigned long	f_frsize; /* system fragment size */
-	unsigned long	f_iosize; /* optimal file system block size */
+    unsigned long f_flag;	/* copy of mount exported flags */
+    unsigned long f_bsize;	/* system block size */
+    unsigned long f_frsize;	/* system fragment size */
+    unsigned long f_iosize;	/* optimal file system block size */
 
-	/* The following are in units of f_frsize */
-	fsblkcnt_t	f_blocks; /* number of blocks in file system */
-	fsblkcnt_t	f_bfree;  /* free blocks avail in file system */
-	fsblkcnt_t	f_bavail; /* free blocks avail to non-root */
-	fsblkcnt_t	f_bresvd; /* blocks reserved for root */
+    /* The following are in units of f_frsize */
+    fsblkcnt_t	f_blocks;	/* number of blocks in file system */
+    fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
+    fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
+    fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
 
-	fsfilcnt_t	f_files;  /* total file nodes in file system */
-	fsfilcnt_t	f_ffree;  /* free file nodes in file system */
-	fsfilcnt_t	f_favail; /* free file nodes avail to non-root */
-	fsfilcnt_t	f_fresvd; /* file nodes reserved for root */
+    fsfilcnt_t	f_files;	/* total file nodes in file system */
+    fsfilcnt_t	f_ffree;	/* free file nodes in file system */
+    fsfilcnt_t	f_favail	/* free file nodes avail to non-root */
+    fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
 
-	uint64_t  f_syncreads;	  /* count of sync reads since mount */
-	uint64_t  f_syncwrites;	  /* count of sync writes since mount */
+    uint64_t	f_syncreads;	/* count of sync reads since mount */
+    uint64_t	f_syncwrites;	/* count of sync writes since mount */
 
-	uint64_t  f_asyncreads;	  /* count of async reads since mount */
-	uint64_t  f_asyncwrites;  /* count of async writes since mount */
+    uint64_t	f_asyncreads;	/* count of async reads since mount */
+    uint64_t	f_asyncwrites;	/* count of async writes since mount */
 
-	unsigned long	f_fsid;   /* POSIX compliant file system id */
-	fsid_t          f_fsidx;  /* NetBSD compatible file system id */
+    unsigned long f_fsid;	/* POSIX compliant file system id */
+    fsid_t	f_fsidx;	/* NetBSD compatible file system id */
 
-	unsigned long	f_namemax;/* maximum filename length */
-	uid_t		f_owner; /* user that mounted the file system */
+    unsigned long f_namemax;	/* maximum filename length */
+    uid_t	f_owner;	/* user that mounted the file system */
 
-	uint32_t	f_spare[4]; /* spare space */
+    uint64_t	f_spare[4];	/* spare space */
 
-	char	f_fstypename[VFS_NAMELEN]; /* fs type name */
-	char	f_mntonname[VFS_MNAMELEN]; /* directory on which mounted */
-	char	f_mntfromname[VFS_MNAMELEN]; /* mounted file system */
+    char f_fstypename[VFS_NAMELEN];	/* fs type name */
+    char f_mntonname[VFS_MNAMELEN];	/* directory on which mounted */
+    char f_mntfromname[VFS_MNAMELEN];	/* mounted file system */
+    char f_mntfromlabel[_VFS_MNAMELEN];	/* disk label name if avail */
 };
 .Ed
 .Pp

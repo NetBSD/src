@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.2 2017/08/09 23:01:06 maya Exp $ */
+/* $NetBSD: md.h,v 1.2.4.1 2020/04/13 08:06:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@
 
 /*
  *  Default filesets to fetch and install during installation or upgrade.
- *  The standard sets are: base etc comp games man misc tests text
+ *  The standard sets are: base etc comp games man misc rescue tests text
  */
 
 #if defined(ARCH_mipsel) || defined(ARCH_mipseb)

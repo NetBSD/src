@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.57.2.2 2020/04/08 14:07:31 martin Exp $
+#	$NetBSD: files.sunxi,v 1.57.2.3 2020/04/13 08:03:37 martin Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -196,6 +196,11 @@ device	sunxitimer
 attach	sunxitimer at fdt with sunxi_timer
 file	arch/arm/sunxi/sunxi_timer.c		sunxi_timer
 
+# High Speed Timer
+device	sunxihstimer
+attach	sunxihstimer at fdt with sunxi_hstimer
+file	arch/arm/sunxi/sunxi_hstimer.c		sunxi_hstimer
+
 # Watchdog
 device	sunxiwdt: sysmon_wdog
 attach	sunxiwdt at fdt with sunxi_wdt
@@ -293,7 +298,10 @@ device	sunxinand: nandbus
 attach	sunxinand at fdt with sunxi_nand
 file	arch/arm/sunxi/sunxi_nand.c		sunxi_nand
 
-# SPI Controller (sun6i-compatible)
+# SPI Controller
+device	sun4ispi: spibus
+attach	sun4ispi at fdt with sun4i_spi
+file	arch/arm/sunxi/sun4i_spi.c		sun4i_spi
 device	sun6ispi: spibus
 attach	sun6ispi at fdt with sun6i_spi
 file	arch/arm/sunxi/sun6i_spi.c		sun6i_spi

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.15 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.15.42.1 2020/04/13 08:05:45 martin Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.15 2011/09/16 15:39:28 joerg Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.15.42.1 2020/04/13 08:05:45 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,12 +55,26 @@ __RCSID("$NetBSD: pwhash.c,v 1.15 2011/09/16 15:39:28 joerg Exp $");
 #define DO_BLF     3
 #define DO_SHA1	   4
 
+#ifdef HAVE_ARGON2
+#define DO_ARGON2  5
+/*
+ * Argon2 variant may be specified in /etc/passwd.conf
+ * If not found, default to ARGON2_DEFAULT_VARIANT_STR
+ * acceptable values are: argon2i, argon2d, argon2id
+ */
+#define ARGON2_DEFAULT_VARIANT_STR	"argon2id"
+#endif /* HAVE_ARGON2 */
+
 __dead static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
+#ifdef HAVE_ARGON2
+	    "Usage: %s [-km] [-A variant[,params]] [-b rounds] [-S rounds] [-s salt] [-p | string]\n",
+#else
 	    "Usage: %s [-km] [-b rounds] [-S rounds] [-s salt] [-p | string]\n",
+#endif /* HAVE_ARGON2 */
 	    getprogname());
 	exit(1);
 }
@@ -119,6 +133,21 @@ print_passwd(char *string, int operation, const char *extra)
 		salt = extra;
 		break;
 
+#ifdef HAVE_ARGON2
+	case DO_ARGON2:
+		/* pwhash -A <variant>[,param]* */
+		/* param
+		 *    m=<m_cost>
+		 *    t=<t_cost>
+		 *    p=<threads>
+		 */
+		snprintf(option, sizeof(option), "%s", extra);
+		opt = option;
+		key = strsep(&opt, ",");
+		error = pw_gensalt(buf, _PASSWORD_LEN, key, opt);
+		break;
+#endif /* HAVE_ARGON2 */
+
 	default:
 		pw_getconf(option, sizeof(option), "default", "localcipher");
 		opt = option;
@@ -146,7 +175,11 @@ main(int argc, char **argv)
 	if (strcmp(getprogname(), "makekey") == 0)
 		operation = DO_MAKEKEY;
 
+#ifdef HAVE_ARGON2
+	while ((opt = getopt(argc, argv, "kmpS:s:b:A:")) != -1) {
+#else
 	while ((opt = getopt(argc, argv, "kmpS:s:b:")) != -1) {
+#endif /* HAVE_ARGON2 */
 		switch (opt) {
 		case 'k':                       /* Stdin/Stdout Unix crypt */
 			if (operation != -1 || prompt)
@@ -187,6 +220,15 @@ main(int argc, char **argv)
 			operation = DO_BLF;
 			extra = optarg;
 			break;
+
+#ifdef HAVE_ARGON2
+		case 'A':                       /* Argon2 password hash */
+			if (operation != -1)
+				usage();
+			operation = DO_ARGON2;
+			extra = optarg;
+			break;
+#endif /* HAVE_ARGON2 */
 
 		default:
 			usage();

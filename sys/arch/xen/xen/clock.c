@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.67.2.2 2020/04/13 08:04:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.2 2020/04/13 08:04:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -763,9 +763,10 @@ xen_resumeclocks(struct cpu_info *ci)
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
 	/* XXX sketchy function pointer cast -- fix the API, please */
-	ci->ci_xen_timer_intrhand = xen_intr_establish_xname(-1, &xen_pic, evtch,
-	    IST_LEVEL, IPL_CLOCK, (int (*)(void *))xen_timer_handler, ci, true,
-	    intr_xname);
+	ci->ci_xen_timer_intrhand = xen_intr_establish_xname(-1, &xen_pic,
+	    evtch, IST_LEVEL, IPL_CLOCK,
+	    __FPTRCAST(int (*)(void *), xen_timer_handler),
+	    ci, true, intr_xname);
 	if (ci->ci_xen_timer_intrhand == NULL)
 		panic("failed to establish timer interrupt handler");
 

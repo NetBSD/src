@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.11 2015/08/12 17:53:03 tsutsui Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.11.18.1 2020/04/13 08:03:39 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,19 +25,19 @@ main(int argc, char *argv[])
 		if ((argc == 3) && !strcmp(argv[1], "-f")) {
 			mapfile = argv[2];
 			set_sysmap = 1;
-		}
-		else {
+		} else {
 			fprintf(stderr, "%s [-f] keymap\n", argv[0]);
 			exit(1);
 		}
-	}
-	else mapfile = argv[1];
+	} else
+		mapfile = argv[1];
 
 	if (argc == 1)
 		rc = dump_kmap();
-	else rc = load_kmap(mapfile, set_sysmap);
+	else
+		rc = load_kmap(mapfile, set_sysmap);
 
-	exit (rc);
+	exit(rc);
 }
 
 
@@ -45,36 +45,36 @@ static int
 load_kmap(const char *file, int set_sysmap)
 {
 	int	fd;
-	char	buf[sizeof (struct kbdmap)];
+	char	buf[sizeof(struct kbdmap)];
 	int	ioc;
 
 	ioc = set_sysmap ? ITEIOCSSKMAP : ITEIOCSKMAP;
 	
-	if ((fd = open (file, 0)) >= 0) {
-		if (read (fd, buf, sizeof (buf)) == sizeof (buf)) {
-			if (ioctl (0, ioc, buf) == 0) {
+	if ((fd = open(file, 0)) >= 0) {
+		if (read(fd, buf, sizeof(buf)) == sizeof(buf)) {
+			if (ioctl(0, ioc, buf) == 0) {
 				close(fd);
 				return 0;
-			}
-			else perror("ITEIOCSKMAP");
-		}
-		else perror("read kmap");
+			} else
+				perror("ITEIOCSKMAP");
+		} else
+			perror("read kmap");
 
 		close(fd);
-	}
-	else perror("open kmap");
+	} else
+		perror("open kmap");
 	return 1;
 }
 
 static int
 dump_kmap(void)
 {
-	char buf[sizeof (struct kbdmap)];
+	char buf[sizeof(struct kbdmap)];
 
-	if (ioctl (0, ITEIOCGKMAP, buf) == 0) {
-		write (1, buf, sizeof (buf));
+	if (ioctl(0, ITEIOCGKMAP, buf) == 0) {
+		write(1, buf, sizeof(buf));
 		return 0;
 	}
-	perror ("ITEIOCGKMAP");
+	perror("ITEIOCGKMAP");
 	return 1;
 }

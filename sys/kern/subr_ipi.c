@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.3.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.3.18.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.3.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.3.18.2 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ ipi_register(ipi_func_t func, void *arg)
 void
 ipi_unregister(u_int ipi_id)
 {
-	ipi_msg_t ipimsg = { .func = (ipi_func_t)nullop };
+	ipi_msg_t ipimsg = { .func = __FPTRCAST(ipi_func_t, nullop) };
 
 	KASSERT(ipi_id != IPI_SYNCH_ID);
 	KASSERT(ipi_id < IPI_MAXREG);
@@ -331,6 +331,9 @@ ipi_msg_cpu_handler(void *arg __unused)
 		msg->func(msg->arg);
 
 		/* Ack the request. */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_producer();
+#endif
 		atomic_dec_uint(&msg->_pending);
 	}
 }

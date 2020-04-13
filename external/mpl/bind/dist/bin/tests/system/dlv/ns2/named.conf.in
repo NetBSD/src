@@ -22,6 +22,17 @@ options {
 	dnssec-enable yes;
 };
 
+/* Root hints. */
 zone "." { type hint; file "hints"; };
+
+/*
+ * A zone that is unsigned (utld=unsigned tld) that will include a second level
+ * zone that acts as a DLV.
+ */
 zone "utld" { type master; file "utld.db"; };
+
+/*
+ * A zone that has a bad DNSKEY RRset but has good DLV records for its child
+ * zones.
+ */
 zone "druz" { type master; file "druz.signed"; };

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.40 2018/04/20 15:57:23 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.40.2.1 2020/04/13 08:05:58 martin Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -507,34 +507,6 @@ getconfig(const char *intface, int exithard)
 		goto errexit;
 	}
 
-#ifdef SIOCSIFINFO_IN6
-	{
-		struct in6_ndireq ndi;
-		int s;
-
-		if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			logit(LOG_ERR, "<%s> socket: %m", __func__);
-			goto errexit;
-		}
-		memset(&ndi, 0, sizeof(ndi));
-		strncpy(ndi.ifname, intface, IFNAMSIZ);
-		if (prog_ioctl(s, SIOCGIFINFO_IN6, &ndi) < 0) {
-			logit(LOG_INFO, "<%s> ioctl:SIOCGIFINFO_IN6 at %s: %m",
-			     __func__, intface);
-		}
-
-		/* reflect the RA info to the host variables in kernel */
-		ndi.ndi.chlim = tmp->hoplimit;
-		ndi.ndi.retrans = tmp->retranstimer;
-		ndi.ndi.basereachable = tmp->reachabletime;
-		if (prog_ioctl(s, SIOCSIFINFO_IN6, &ndi) < 0) {
-			logit(LOG_INFO, "<%s> ioctl:SIOCSIFINFO_IN6 at %s: %m",
-			     __func__, intface);
-		}
-		prog_close(s);
-	}
-#endif
-
 	/* route information */
 	for (i = -1; i < MAXROUTE; i++) {
 		struct rtinfo *rti;
@@ -701,9 +673,7 @@ getconfig(const char *intface, int exithard)
 
 		makeentry(entbuf, sizeof(entbuf), i, "rdnssltime");
 		MAYHAVE(val64, entbuf, tmp->maxinterval * 3 / 2);
-		if (val64 < tmp->maxinterval ||
-		    val64 > tmp->maxinterval * 2)
-		{
+		if (val64 < 0 || val64 > 0xffffffff) {
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
 			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
@@ -737,9 +707,7 @@ getconfig(const char *intface, int exithard)
 
 		makeentry(entbuf, sizeof(entbuf), i, "dnsslltime");
 		MAYHAVE(val64, entbuf, tmp->maxinterval * 3 / 2);
-		if (val64 < tmp->maxinterval ||
-		    val64 > tmp->maxinterval * 2)
-		{
+		if (val64 < 0 || val64 > 0xffffffff) {
 			logit(LOG_ERR, "<%s> %s (%lld) on %s is invalid",
 			     __func__, entbuf, (long long)val64, intface);
 			goto errexit;
@@ -751,6 +719,11 @@ getconfig(const char *intface, int exithard)
 	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == tmp->ifindex) {
 			TAILQ_REMOVE(&ralist, rai, next);
+			if (Cflag) {
+				free_rainfo(rai);
+				rai = NULL;
+				break;
+			}
 			/* If we already have a leaving RA use that
 			 * as this config hasn't been advertised */
 			if (rai->leaving) {

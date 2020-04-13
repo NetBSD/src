@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.42 2016/01/17 17:49:55 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.42.18.1 2020/04/13 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2016/01/17 17:49:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42.18.1 2020/04/13 08:03:50 martin Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -108,11 +108,7 @@ intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("intr_establish: bad ipl %d", ipl);
 
-	newih = malloc(sizeof(struct hp300_intrhand), M_DEVBUF, M_NOWAIT);
-	if (newih == NULL)
-		panic("intr_establish: can't allocate space for handler");
-
-	/* Fill in the new entry. */
+	newih = malloc(sizeof(struct hp300_intrhand), M_DEVBUF, M_WAITOK);
 	newih->ih_fn = func;
 	newih->ih_arg = arg;
 	newih->ih_ipl = ipl;

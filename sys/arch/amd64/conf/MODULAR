@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.11 2018/01/13 12:38:16 christos Exp $
+# $NetBSD: MODULAR,v 1.11.4.1 2020/04/13 08:03:30 martin Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -22,8 +22,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options 	COMPAT_40	# NetBSD 4.0,
 -no options 	COMPAT_50	# NetBSD 5.0,
 -no options 	COMPAT_60	# NetBSD 6.0,
--no options 	COMPAT_70	# NetBSD 7.0, and
--no options 	COMPAT_80	# NetBSD 8.0 binary compatibility.
+-no options 	COMPAT_70	# NetBSD 7.0,
+-no options 	COMPAT_80	# NetBSD 8.0, and
+-no options 	COMPAT_90	# NetBSD 9.0 binary compatibility.
 -no options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -38,28 +39,48 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options	SYSVSEM		# System V-like semaphores
 -no options	SYSVSHM		# System V-like memory sharing
 
-# XXX: for now
-#no file-system FFS		# UFS
--no file-system MFS		# memory file system
--no file-system NFS		# Network File System client
--no file-system TMPFS		# Efficient memory file-system
--no file-system EXT2FS		# second extended file system (linux)
--no file-system LFS		# log-structured file system
--no file-system NTFS		# Windows/NT file system (experimental)
+-no options 	ACPIVERBOSE	# verbose ACPI configuration messages
+-no options 	MIIVERBOSE	# verbose PHY autoconfig messages
+-no options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+-no options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+-no options 	SCSIVERBOSE	# human readable SCSI error messages
+-no options 	USBVERBOSE	# verbose USB device autoconfig messages
+-no options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
+
+-no file-system ADOSFS		# AmigaDOS-compatible file system
+-no file-system AUTOFS		# Automounter Filesystem
 -no file-system CD9660		# ISO 9660 + Rock Ridge file system
--no file-system MSDOSFS 	# MS-DOS file system
+-no file-system CHFS		# Chip File System
+-no file-system CODA		# Coda File System; also needs vcoda (below)
+-no file-system EFS		# Silicon Graphics Extent File System
+-no file-system EXT2FS		# second extended file system (linux)
 -no file-system FDESC		# /dev/fd
+-no file-system FFS		# UFS
+-no options UFS
+-no options 	QUOTA		# legacy UFS quotas
+-no options 	QUOTA2		# new, in-filesystem UFS quotas
+-no options 	UFS_EXTATTR	# Extended attribute support for UFS1
+-no file-system FILECORE	# Acorn filecore file system
+-no file-system HFS		# experimental - Apple HFS+ (read-only)
 -no file-system KERNFS		# /kern
+-no file-system LAYERFS		# genfs
+-no file-system LFS		# log-structured file system
+-no file-system MFS		# memory file system
+-no file-system MSDOSFS		# MS-DOS file system
+-no file-system NFS		# Network File System client
+-no file-system NILFS		# experimental - NTT's NiLFS(2)
+-no file-system NTFS		# Windows/NT file system (experimental)
 -no file-system NULLFS		# loopback file system
--no file-system OVERLAY 	# overlay file system
+-no file-system OVERLAY		# overlay file system
 -no file-system PROCFS		# /proc
+-no file-system PTYFS		# /dev/ptm support
 -no file-system PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
--no file-system SMBFS		# experimental - CIFS; also needs nsmb (below)
+-no file-system TMPFS		# Efficient memory file-system
+-no file-system UDF		# experimental - OSTA UDF CD/DVD file-system
 -no file-system UMAPFS		# NULLFS + uid and gid remapping
 -no file-system UNION		# union file system
--no file-system CODA		# Coda File System; also needs vcoda (below)
--no file-system PTYFS		# /dev/ptm support
--no file-system AUTOFS		# Automounter Filesystem
+-no file-system V7FS		# 7th Edition(V7) File System
+-no file-system ZFS		# Solaris ZFS
 
 -no options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 -no options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -112,7 +133,6 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	ppp			# Point-to-Point Protocol
 -no pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 -no pseudo-device	sl			# Serial Line IP
--no pseudo-device	strip			# Starmode Radio IP (Metricom)
 -no pseudo-device	tun			# network tunneling over tty
 -no pseudo-device	tap			# virtual Ethernet
 -no pseudo-device	gre			# generic L3 over IP tunnel
@@ -133,9 +153,6 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	clockctl		# user control of clock subsystem
 -no pseudo-device	vcoda			# coda minicache <-> venus comm.
 -no pseudo-device	autofs			# experimental - AUTOFS
-
-# a pseudo device needed for SMBFS
--no pseudo-device	nsmb			# experimental - SMB requester
 
 # pseudo audio device driver
 -no pseudo-device	pad

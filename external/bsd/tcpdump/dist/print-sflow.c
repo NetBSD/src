@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sflow.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-sflow.c,v 1.8.12.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -886,6 +886,14 @@ sflow_print(netdissect_options *ndo,
     tptr = pptr;
     tlen = len;
     sflow_datagram = (const struct sflow_datagram_t *)pptr;
+    if (len < sizeof(struct sflow_datagram_t)) {
+        ND_TCHECK(sflow_datagram->version);
+        ND_PRINT((ndo, "sFlowv%u", EXTRACT_32BITS(sflow_datagram->version)));
+        ND_PRINT((ndo, " [length %u < %zu]",
+                  len, sizeof(struct sflow_datagram_t)));
+        ND_PRINT((ndo, " (invalid)"));
+        return;
+    }
     ND_TCHECK(*sflow_datagram);
 
     /*
@@ -921,6 +929,8 @@ sflow_print(netdissect_options *ndo,
 
     /* skip Common header */
     tptr += sizeof(const struct sflow_datagram_t);
+
+    if(tlen <= sizeof(const struct sflow_datagram_t)) goto trunc;
     tlen -= sizeof(const struct sflow_datagram_t);
 
     while (nsamples > 0 && tlen > 0) {

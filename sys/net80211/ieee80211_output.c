@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.63.2.5 2019/06/10 22:09:46 christos Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.63.2.6 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.63.2.5 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.63.2.6 2020/04/13 08:05:16 martin Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1302,8 +1302,9 @@ ieee80211_mbuf_adjust(struct ieee80211vap *vap, int hdrsize,
 		    ("not enough room, need %u got %d\n", needed_space, MHLEN));
 #elif __NetBSD__
 		KASSERT(needed_space <= MHLEN,
-		    ("not enough room, need %u got %lu\n", needed_space, MHLEN));
+		    ("not enough room, need %u got %lu\n", needed_space, (u_long)MHLEN));
 #endif
+
 		/*
 		 * Setup new mbuf to have leading space to prepend the
 		 * 802.11 header and any crypto header bits that are

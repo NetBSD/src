@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.77.2.2 2020/04/08 14:07:59 martin Exp $
+#	$NetBSD: GENERIC,v 1.77.2.3 2020/04/13 08:04:13 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -150,11 +150,10 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	DIAGNOSTIC		# internal consistency checks
 #options 	DEBUG
 #options 	VERBOSE_INIT_ARM	# verbose bootstraping messages
-#options 	DDB			# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB			# in-kernel debugger
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 #makeoptions 	DEBUG="-g"		# compile full symbol table
-makeoptions	COPY_SYMTAB=1
 
 
 # Kernel root file system and dump configuration.
@@ -191,7 +190,7 @@ apmdev0 at zapm0	# APM
 scoop0 at pxaip?
 scoop1 at pxaip?
 
-# alternate GPIO contoller for SL-C1000
+# alternate GPIO controller for SL-C1000
 ioexp0 at iic? addr 0x18
 
 # ADC, touchpad, backlight
@@ -353,7 +352,7 @@ ukphy*  at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
-# integrated MMC/SD contoller
+# integrated MMC/SD controller
 pxamci0 at pxaip? addr 0x41100000 size 0x48
 sdmmc* at pxamci?
 #options 	PXAMCI_DEBUG

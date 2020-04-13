@@ -1,18 +1,22 @@
-2018-12-06  Release Manager
+2020-03-04  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.4.0 released.
 
-2018-01-25  Release Manager
+2019-02-22  Release Manager
 
-	* GCC 7.3.0 released.
+	* GCC 8.3.0 released.
 
-2017-08-14  Release Manager
+2018-07-26  Release Manager
 
-	* GCC 7.2.0 released.
+	* GCC 8.2.0 released.
 
-2017-05-02  Release Manager
+2018-05-02  Release Manager
 
-	* GCC 7.1.0 released.
+	* GCC 8.1.0 released.
+
+2018-01-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
 
 2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
@@ -411,7 +415,7 @@
 	* inline_bid_add.h: Likewise.
 	* sqrt_macros.h: Likewise.
 
-Copyright (C) 2007-2017 Free Software Foundation, Inc.
+Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

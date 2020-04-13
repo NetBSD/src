@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.6 2014/01/11 15:51:02 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.6.30.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -60,6 +60,7 @@
 
 #include <sys/param.h>
 
+#include <machine/board.h>
 #include <machine/cpu.h>
 
 #include <net/if.h>
@@ -72,6 +73,8 @@
 #include <lib/libsa/netif.h>
 
 #include <luna68k/stand/boot/samachdep.h>
+
+#define TRI_PORT_RAM_LANCE_OFFSET	0x10000
 
 /* libsa netif_driver glue functions */
 static int  le_match(struct netif *, void *);
@@ -113,7 +116,7 @@ leinit(int unit, void *addr)
 	uint8_t eaddr[6];
 
 	reg = addr;
-	mem = (void *)0x71010000;	/* XXX */
+	mem = (void *)(TRI_PORT_RAM + TRI_PORT_RAM_LANCE_OFFSET);
 
 	myetheraddr(eaddr);
 

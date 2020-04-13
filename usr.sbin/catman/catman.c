@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.37 2016/05/29 22:33:39 dholland Exp $       */
+/*      $NetBSD: catman.c,v 1.37.16.1 2020/04/13 08:05:51 martin Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: catman.c,v 1.37 2016/05/29 22:33:39 dholland Exp $");
+__RCSID("$NetBSD: catman.c,v 1.37.16.1 2020/04/13 08:05:51 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -340,14 +340,14 @@ scanmandir(const char *catdir, const char *mandir)
 {
 	TAG *buildp, *crunchp;
 	ENTRY *e_build, *e_crunch;
-	char manpage[PATH_MAX];
-	char catpage[PATH_MAX];
+	char manpage[2 * PATH_MAX];
+	char catpage[2 * PATH_MAX];
 	char linkname[PATH_MAX];
 	char buffer[PATH_MAX], *bp;
-	char tmp[PATH_MAX];
+	char tmp[2 * PATH_MAX];
 	char buildsuff[256], buildcmd[256];
 	char crunchsuff[256], crunchcmd[256];
-	char match[256];
+	char match[2 * 256];
 	struct stat manstat;
 	struct stat catstat;
 	struct stat lnkstat;
@@ -570,7 +570,7 @@ makecat(const char *manpage, const char *catpage, const char *buildcmd,
     const char *crunchcmd)
 {
 	char crunchbuf[1024];
-	char sysbuf[2048];
+	char sysbuf[2048 + 128];
 	size_t len;
 
 	len = snprintf(sysbuf, sizeof(sysbuf), buildcmd, manpage);

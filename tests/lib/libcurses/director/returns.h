@@ -1,4 +1,4 @@
-/*	$NetBSD: returns.h,v 1.1 2011/04/10 09:55:09 blymn Exp $	*/
+/*	$NetBSD: returns.h,v 1.1.44.1 2020/04/13 08:05:28 martin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -33,28 +33,30 @@
 
 
 typedef enum {
-	ret_number = 1,
-	ret_string,
-	ret_byte,
-	ret_err,
-	ret_ok,
-	ret_null,
-	ret_nonnull,
-	ret_var,
-	ret_ref,
-	ret_count,
-	ret_slave_error
-} returns_enum_t;
+	data_number = 1,
+	data_static,
+	data_string,
+	data_byte,
+	data_cchar,
+	data_err,
+	data_ok,
+	data_null,
+	data_nonnull,
+	data_var,
+	data_ref,
+	data_count,
+	data_slave_error
+} data_enum_t;
 
 typedef struct {
-	returns_enum_t	return_type;
-	void		*return_value;	/* used if return_type is ret_num or
-					   or ret_byte or ret_string */
-	size_t		return_len;	/* number of bytes in return_value iff
-					   return_type is ret_byte */
-	int		return_index;	/* index into var array for return
-					   if return_type is ret_var */
-} returns_t;
+	data_enum_t	data_type;
+	void		*data_value;	/* used if data_type is data_num or
+					   or data_byte or data_string */
+	size_t		data_len;	/* number of bytes in return_value iff
+					   return_type is data_byte */
+	int		data_index;	/* index into var array for return
+					   if data_type is data_var */
+} ct_data_t;
 
 typedef struct {
 	size_t	count;

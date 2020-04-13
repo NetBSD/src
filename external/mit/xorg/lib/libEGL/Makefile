@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2019/06/10 22:02:38 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2020/04/13 08:02:31 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -115,7 +115,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 MKLINT=no
 
 PKGCONFIG=	egl
-PKGDIST.egl=	${X11SRCDIR.Mesa}/src/egl/main
+PKGDIST.egl=	${X11SRCDIR.Mesa}/../src/pkgconfig
 .include "${.CURDIR}/../libGL/mesa-ver.mk"
 PKGCONFIG_VERSION.egl=	${MESA_VER}
 

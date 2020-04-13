@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.18.2.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.18.2.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -61,8 +61,6 @@
 #include <miscfs/specfs/specdev.h>
 #include "chfs.h"
 #include "chfs_args.h"
-
-MODULE(MODULE_CLASS_VFS, chfs, "flash");
 
 /* --------------------------------------------------------------------- */
 /* functions */
@@ -827,6 +825,9 @@ struct vfsops chfs_vfsops = {
 };
 
 /* For using CHFS as a module. */
+
+MODULE(MODULE_CLASS_VFS, chfs, "ufs,flash");
+
 static int
 chfs_modcmd(modcmd_t cmd, void *arg)
 {

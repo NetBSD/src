@@ -27,6 +27,7 @@ cp ns2/bits.db.in ns2/retransfer3.db
 cp ns3/master.db.in ns3/master.db
 cp ns3/master.db.in ns3/dynamic.db
 cp ns3/master.db.in ns3/updated.db
+cp ns3/master.db.in ns3/unsupported.db
 cp ns3/master.db.in ns3/expired.db
 cp ns3/master.db.in ns3/nsec3.db
 cp ns3/master.db.in ns3/externalkey.db

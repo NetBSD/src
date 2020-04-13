@@ -611,7 +611,7 @@ char *
 format_k(long amt)
 
 {
-    static char retarray[NUM_STRINGS][16];
+    static char retarray[NUM_STRINGS][24];
     static int idx = 0;
     register char *ret;
     register char tag = 'K';

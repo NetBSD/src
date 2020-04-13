@@ -1,4 +1,4 @@
-.\" $NetBSD: fstyp.8,v 1.2 2018/01/09 09:41:29 wiz Exp $
+.\" $NetBSD: fstyp.8,v 1.2.4.1 2020/04/13 08:05:52 martin Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd November 25, 2017
+.Dd January 1, 2020
 .Dt FSTYP 8
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 The
 .Nm
 utility is used to determine the file system type on a given device.
-It can recognize ISO-9660, Ext2, FAT, NTFS, and UFS file systems.
+It can recognize ISO-9660, exFAT, Ext2, FAT, NTFS, UFS, HAMMER, and HAMMER2 file systems.
 When the
 .Fl u
 flag is specified,
@@ -64,6 +64,8 @@ as, respectively:
 .It
 cd9660
 .It
+exfat
+.It
 ext2fs
 .It
 msdosfs
@@ -72,8 +74,15 @@ ntfs
 .It
 ufs
 .It
+hammer
+.It
+hammer2
+.It
 zfs
 .El
+.Pp
+Note that a HAMMER file system consisting of more than one volume
+requires a path in blkdevs format.
 .Pp
 Because
 .Nm
@@ -140,7 +149,7 @@ utility was ported to
 and
 .Nx
 by
-.An Tomohiro Kusumi Aq Mt kusumi.tomohiro@gmail.com .
+.An Tomohiro Kusumi Aq Mt tkusumi@netbsd.org .
 .Sh BUGS
 geli and hammer are currently unsupported on
 .Nx .

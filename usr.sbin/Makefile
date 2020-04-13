@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276.4.2 2020/04/08 14:09:19 martin Exp $
+#	$NetBSD: Makefile,v 1.276.4.3 2020/04/13 08:05:50 martin Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
 	sa screenblank sdpd service services_mkdb sesd schedctl \
 	sliplogin spray \
-	srtconfig sti sunlabel sup sysinst syslogd \
+	srtconfig sti sunlabel sysinst syslogd \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
@@ -53,6 +53,8 @@ SUBDIR+=mld6query route6d rtadvd traceroute6
 .endif
 
 SUBDIR+= racoon racoonctl
+
+SUBDIR+= nvmmctl
 
 # NPF
 .if (${MKNPF} != "no")

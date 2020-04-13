@@ -12,10 +12,10 @@
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
-zone1=good.
+zone1=good
 infile1=good.db.in
 zonefile1=good.db
-zone2=bad.
+zone2=bad
 infile2=bad.db.in
 zonefile2=bad.db
 
@@ -30,8 +30,8 @@ cat $infile2 $keyname21.key $keyname22.key >$zonefile2
 $SIGNER -P -g -o $zone1 $zonefile1 > /dev/null
 $SIGNER -P -g -o $zone2 $zonefile2 > /dev/null
 
-DSFILENAME1=dsset-`echo $zone1 |sed -e "s/\.$//g"`$TP
-DSFILENAME2=dsset-`echo $zone2 |sed -e "s/\.$//g"`$TP
+DSFILENAME1=dsset-${zone1}${TP}
+DSFILENAME2=dsset-${zone2}${TP}
 $DSFROMKEY -a SHA-256 $keyname12 > $DSFILENAME1
 $DSFROMKEY -a SHA-256 $keyname22 > $DSFILENAME2
 

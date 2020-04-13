@@ -1,9 +1,9 @@
-/*	$NetBSD: extended.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -108,7 +108,6 @@ ldap_extended_operation(
 	int				*msgidp )
 {
 	BerElement *ber;
-	int rc;
 	ber_int_t id;
 
 	Debug( LDAP_DEBUG_TRACE, "ldap_extended_operation\n", 0, 0, 0 );

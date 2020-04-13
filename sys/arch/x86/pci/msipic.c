@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.11.6.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: msipic.c,v 1.11.6.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.11.6.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.11.6.2 2020/04/13 08:04:11 martin Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.11.6.1 2019/06/10 22:06:53 christos Exp
 #include <sys/errno.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/bitops.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -203,7 +204,7 @@ msipic_find_msi_pic_locked(int devid)
 	KASSERT(mutex_owned(&msipic_list_lock));
 
 	LIST_FOREACH(mpp, &msipic_list, mp_list) {
-		if(mpp->mp_devid == devid)
+		if (mpp->mp_devid == devid)
 			return mpp->mp_pic;
 	}
 	return NULL;
@@ -250,7 +251,8 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	}
 
 	memcpy(pic, pic_tmpl, sizeof(*pic));
-	pic->pic_edge_stubs = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs,
+	pic->pic_edge_stubs
+	    = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs;
 	pic->pic_msipic = msipic;
 	msipic->mp_pic = pic;
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag,
@@ -384,9 +386,18 @@ msi_addroute(struct pic *pic, struct cpu_info *ci,
 	addr = LAPIC_MSIADDR_BASE | __SHIFTIN(ci->ci_cpuid,
 	    LAPIC_MSIADDR_DSTID_MASK);
 	/* If trigger mode is edge, it don't care level for trigger mode. */
-	data = __SHIFTIN(idt_vec, LAPIC_MSIDATA_VECTOR_MASK)
-		| LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_DM_FIXED;
+	data = __SHIFTIN(idt_vec, LAPIC_VECTOR_MASK)
+		| LAPIC_TRIGMODE_EDGE | LAPIC_DLMODE_FIXED;
 
+	/*
+	 * The size of the message data register is 16bit if the extended
+	 * message data is not implemented. If it's 16bit and the per-vector
+	 * masking is not capable, the location of the upper 16bit is out of
+	 * the MSI capability structure's range. The PCI spec says the upper
+	 * 16bit is driven to 0 if the message data register is 16bit. It's the
+	 * spec, so it's OK just to write it regardless of the value of the
+	 * upper 16bit.
+	 */
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_LO, addr);
@@ -537,6 +548,11 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	err = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
 	KASSERT(err != 0);
 
+	/* Disable MSI-X before writing MSI-X table */
+	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
+	ctl &= ~PCI_MSIX_CTL_ENABLE;
+	pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
+
 	entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 
 	/*
@@ -550,8 +566,8 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	addr = LAPIC_MSIADDR_BASE | __SHIFTIN(ci->ci_cpuid,
 	    LAPIC_MSIADDR_DSTID_MASK);
 	/* If trigger mode is edge, it don't care level for trigger mode. */
-	data = __SHIFTIN(idt_vec, LAPIC_MSIDATA_VECTOR_MASK)
-		| LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_DM_FIXED;
+	data = __SHIFTIN(idt_vec, LAPIC_VECTOR_MASK)
+		| LAPIC_TRIGMODE_EDGE | LAPIC_DLMODE_FIXED;
 
 	bstag = pic->pic_msipic->mp_bstag;
 	bshandle = pic->pic_msipic->mp_bshandle;
@@ -643,8 +659,8 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 
 	tbl = pci_conf_read(pc, tag, off + PCI_MSIX_TBLOFFSET);
 	table_offset = tbl & PCI_MSIX_TBLOFFSET_MASK;
-	bir = tbl & PCI_MSIX_PBABIR_MASK;
-	switch(bir) {
+	bir = tbl & PCI_MSIX_TBLBIR_MASK;
+	switch (bir) {
 	case 0:
 		bar = PCI_BAR0;
 		break;
@@ -664,18 +680,19 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 		bar = PCI_BAR5;
 		break;
 	default:
-		aprint_error("detect an illegal device! The device use reserved BIR values.\n");
+		aprint_error("detect an illegal device! "
+		    "The device use reserved BIR values.\n");
 		msipic_destruct_common_msi_pic(msix_pic);
 		return NULL;
 	}
 	memtype = pci_mapreg_type(pc, tag, bar);
-	 /*
-	  * PCI_MSIX_TABLE_ENTRY_SIZE consists below
-	  *     - Vector Control (32bit)
-	  *     - Message Data (32bit)
-	  *     - Message Upper Address (32bit)
-	  *     - Message Lower Address (32bit)
-	  */
+	/*
+	 * PCI_MSIX_TABLE_ENTRY_SIZE consists below
+	 *     - Vector Control (32bit)
+	 *     - Message Data (32bit)
+	 *     - Message Upper Address (32bit)
+	 *     - Message Lower Address (32bit)
+	 */
 	table_size = table_nentry * PCI_MSIX_TABLE_ENTRY_SIZE;
 #if 0
 	err = pci_mapreg_submap(pa, bar, memtype, BUS_SPACE_MAP_LINEAR,
@@ -699,7 +716,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 	}
 	bssize = roundup(table_size, PAGE_SIZE);
-	err = bus_space_map(pa->pa_memt, memaddr + table_offset, bssize, flags,
+	err = _x86_memio_map(pa->pa_memt, memaddr + table_offset, bssize, flags,
 	    &bshandle);
 	bstag = pa->pa_memt;
 #endif
@@ -727,8 +744,8 @@ msipic_destruct_msix_pic(struct pic *msix_pic)
 	KASSERT(msix_pic->pic_type == PIC_MSIX);
 
 	msipic = msix_pic->pic_msipic;
-	bus_space_unmap(msipic->mp_bstag, msipic->mp_bshandle,
-	    msipic->mp_bssize);
+	_x86_memio_unmap(msipic->mp_bstag, msipic->mp_bshandle,
+	    msipic->mp_bssize, NULL);
 
 	msipic_destruct_common_msi_pic(msix_pic);
 }
@@ -742,6 +759,25 @@ msipic_set_msi_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs,
 {
 
 	KASSERT(msipic_is_msi_pic(msi_pic));
+
+	if (msi_pic->pic_type == PIC_MSI) {
+		pci_chipset_tag_t pc;
+		struct pci_attach_args *pa;
+		pcitag_t tag;
+		int off, err __diagused;
+		pcireg_t ctl;
+
+		pc = NULL;
+		pa = &msi_pic->pic_msipic->mp_pa;
+		tag = pa->pa_tag;
+		err = pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL);
+		KASSERT(err != 0);
+
+		ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+		ctl &= ~PCI_MSI_CTL_MME_MASK;
+		ctl |= __SHIFTIN(ilog2(count), PCI_MSI_CTL_MME_MASK);
+		pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
+	}
 
 	msi_pic->pic_msipic->mp_veccnt = count;
 	return 0;

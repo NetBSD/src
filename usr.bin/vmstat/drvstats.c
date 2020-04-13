@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.12 2018/02/08 09:05:21 dholland Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.12.4.1 2020/04/13 08:05:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -346,6 +346,7 @@ drvinit(int selected)
 	cur.seek = calloc(ndrive, sizeof(u_int64_t));
 	cur.rbytes = calloc(ndrive, sizeof(u_int64_t));
 	cur.wbytes = calloc(ndrive, sizeof(u_int64_t));
+	cur.scale = calloc(ndrive, sizeof(int));
 	last.time = calloc(ndrive, sizeof(struct timeval));
 	last.wait = calloc(ndrive, sizeof(struct timeval));
 	last.waitsum = calloc(ndrive, sizeof(struct timeval));

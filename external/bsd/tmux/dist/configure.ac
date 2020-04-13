@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT(tmux, 2.8)
+AC_INIT([tmux], 3.0a)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -28,6 +28,7 @@ AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_EGREP
 AC_PROG_INSTALL
+AC_PROG_YACC
 PKG_PROG_PKG_CONFIG
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -35,7 +36,7 @@ AC_USE_SYSTEM_EXTENSIONS
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir=/etc
 
 # Is this --enable-debug?
-test "x$VERSION" = xmaster && enable_debug=yes
+case "x$VERSION" in xnext*) enable_debug=yes;; esac
 AC_ARG_ENABLE(
 	debug,
 	AC_HELP_STRING(--enable-debug, enable debug build flags),
@@ -457,14 +458,6 @@ else
 	AC_LIBOBJ(getopt)
 fi
 
-# Look for fparseln in libutil.
-AC_SEARCH_LIBS(fparseln, util, found_fparseln=yes, found_fparseln=no)
-if test "x$found_fparseln" = xyes; then
-	AC_DEFINE(HAVE_FPARSELN)
-else
-	AC_LIBOBJ(fparseln)
-fi
-
 # Look for fdforkpty and forkpty in libutil.
 AC_SEARCH_LIBS(fdforkpty, util, found_fdforkpty=yes, found_fdforkpty=no)
 if test "x$found_fdforkpty" = xyes; then
@@ -477,6 +470,9 @@ if test "x$found_forkpty" = xyes; then
 	AC_DEFINE(HAVE_FORKPTY)
 fi
 AM_CONDITIONAL(NEED_FORKPTY, test "x$found_forkpty" = xno)
+
+# Look for kinfo_getfile in libutil.
+AC_SEARCH_LIBS(kinfo_getfile, [util util-freebsd])
 
 # Look for a suitable queue.h.
 AC_CHECK_DECL(

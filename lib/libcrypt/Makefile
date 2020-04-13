@@ -1,11 +1,23 @@
-#	$NetBSD: Makefile,v 1.25.26.1 2020/04/08 14:07:14 martin Exp $
+#	$NetBSD: Makefile,v 1.25.26.2 2020/04/13 08:03:12 martin Exp $
+
+.include <bsd.own.mk>
 
 USE_SHLIBDIR=	yes
+
+.if (defined(MKARGON2) && ${MKARGON2} != "no")
+HAVE_ARGON2=1
+.endif
 
 LIB=	crypt
 
 SRCS=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c pw_gensalt.c
 SRCS+=	hmac_sha1.c
+
+.if defined(HAVE_ARGON2)
+SRCS+=		crypt-argon2.c
+CFLAGS+=	-DHAVE_ARGON2 -I../../external/apache2/argon2/dist/phc-winner-argon2/include/
+LDADD+=		-largon2 
+.endif
 
 WARNS?=	5
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.23.14.1 2019/06/10 22:10:20 christos Exp $	*/
+/*	$NetBSD: indent.c,v 1.23.14.2 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.23.14.1 2019/06/10 22:10:20 christos Exp $");
+__RCSID("$NetBSD: indent.c,v 1.23.14.2 2020/04/13 08:05:42 martin Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -360,7 +360,7 @@ main(int argc, char **argv)
 			break;	/* we are at end of comment */
 		    if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
 							 * overflow */
-			diag2(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
+			diag(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
 			fflush(output);
 			exit(1);
 		    }
@@ -429,7 +429,7 @@ main(int argc, char **argv)
 			*sc_end++ = ' ';
 			if (opt.verbose) /* print error msg if the line was
 					 * not already broken */
-			    diag2(0, "Line broken");
+			    diag(0, "Line broken");
 		    }
 		    for (t_ptr = token; *t_ptr; ++t_ptr)
 			*sc_end++ = *t_ptr;
@@ -498,7 +498,7 @@ check_type:
 		    || s_com != e_com)	/* must dump end of line */
 		dump_line();
 	    if (ps.tos > 1)	/* check for balanced braces */
-		diag2(1, "Stuff missing from end of file");
+		diag(1, "Stuff missing from end of file");
 
 	    if (opt.verbose) {
 		printf("There were %d output lines and %d comments\n",
@@ -519,7 +519,7 @@ check_type:
 		    (type_code != lbrace || !opt.btype_2)) {
 		/* we should force a broken line here */
 		if (opt.verbose)
-		    diag2(0, "Line broken");
+		    diag(0, "Line broken");
 		dump_line();
 		ps.want_blank = false;	/* dont insert blank at line start */
 		force_nl = false;
@@ -574,7 +574,7 @@ check_type:
 	case lparen:		/* got a '(' or '[' */
 	    /* count parens to make Healy happy */
 	    if (++ps.p_l_follow == nitems(ps.paren_indents)) {
-		diag3(0, "Reached internal limit of %d unclosed parens",
+		diag(0, "Reached internal limit of %zu unclosed parens",
 		    nitems(ps.paren_indents));
 		ps.p_l_follow--;
 	    }
@@ -625,7 +625,7 @@ check_type:
 	    ps.not_cast_mask &= (1 << ps.p_l_follow) - 1;
 	    if (--ps.p_l_follow < 0) {
 		ps.p_l_follow = 0;
-		diag3(0, "Extra %c", *token);
+		diag(0, "Extra %c", *token);
 	    }
 	    if (e_code == s_code)	/* if the paren starts the line */
 		ps.paren_level = ps.p_l_follow;	/* then indent it */
@@ -779,7 +779,7 @@ check_type:
 		 * stmt.  It is a bit complicated, because the semicolon might
 		 * be in a for stmt
 		 */
-		diag2(1, "Unbalanced parens");
+		diag(1, "Unbalanced parens");
 		ps.p_l_follow = 0;
 		if (sp_sw) {	/* this is a check for an if, while, etc. with
 				 * unbalanced parens */
@@ -828,7 +828,7 @@ check_type:
 
 	    if (ps.p_l_follow > 0) {	/* check for preceding unbalanced
 					 * parens */
-		diag2(1, "Unbalanced parens");
+		diag(1, "Unbalanced parens");
 		ps.p_l_follow = 0;
 		if (sp_sw) {	/* check for unclosed if, for, etc. */
 		    sp_sw = false;
@@ -843,7 +843,7 @@ check_type:
 						 * declaration or an init */
 		di_stack[ps.dec_nest] = dec_ind;
 		if (++ps.dec_nest == nitems(di_stack)) {
-		    diag3(0, "Reached internal limit of %d struct levels",
+		    diag(0, "Reached internal limit of %zu struct levels",
 			nitems(di_stack));
 		    ps.dec_nest--;
 		}
@@ -876,7 +876,7 @@ check_type:
 								 * declarations */
 		parse(semicolon);
 	    if (ps.p_l_follow) {/* check for unclosed if, for, else. */
-		diag2(1, "Unbalanced parens");
+		diag(1, "Unbalanced parens");
 		ps.p_l_follow = 0;
 		sp_sw = false;
 	    }
@@ -885,7 +885,7 @@ check_type:
 	    if (s_code != e_code && !ps.block_init) {	/* '}' must be first on
 							 * line */
 		if (opt.verbose)
-		    diag2(0, "Line broken");
+		    diag(0, "Line broken");
 		dump_line();
 	    }
 	    *e_code++ = '}';
@@ -928,7 +928,7 @@ check_type:
 	    if (*token == 'e') {
 		if (e_code != s_code && (!opt.cuddle_else || e_code[-1] != '}')) {
 		    if (opt.verbose)
-			diag2(0, "Line broken");
+			diag(0, "Line broken");
 		    dump_line();/* make sure this starts a line */
 		    ps.want_blank = false;
 		}
@@ -939,7 +939,7 @@ check_type:
 	    else {
 		if (e_code != s_code) {	/* make sure this starts a line */
 		    if (opt.verbose)
-			diag2(0, "Line broken");
+			diag(0, "Line broken");
 		    dump_line();
 		    ps.want_blank = false;
 		}
@@ -1170,11 +1170,11 @@ check_type:
 		    state_stack[ifdef_level++] = ps;
 		}
 		else
-		    diag2(1, "#if stack overflow");
+		    diag(1, "#if stack overflow");
 	    }
 	    else if (strncmp(s_lab, "#el", 3) == 0) { /* else, elif */
 		if (ifdef_level <= 0)
-		    diag2(1, s_lab[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
+		    diag(1, s_lab[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
 		else {
 		    match_state[ifdef_level - 1] = ps;
 		    ps = state_stack[ifdef_level - 1];
@@ -1182,7 +1182,7 @@ check_type:
 	    }
 	    else if (strncmp(s_lab, "#endif", 6) == 0) {
 		if (ifdef_level <= 0)
-		    diag2(1, "Unmatched #endif");
+		    diag(1, "Unmatched #endif");
 		else
 		    ifdef_level--;
 	    } else {
@@ -1203,7 +1203,7 @@ check_type:
 		    if (strncmp(s_lab + 1, recognized[d].string, recognized[d].size) == 0)
 			break;
 		if (d < 0) {
-		    diag2(1, "Unrecognized cpp directive");
+		    diag(1, "Unrecognized cpp directive");
 		    break;
 		}
 	    }

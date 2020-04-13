@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.18.56.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.18.56.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.18.56.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.18.56.2 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_archs.h"
 
@@ -262,7 +262,7 @@ rf_CreateParityLogData(
     RF_PhysDiskAddr_t * pda,
     void *bufPtr,
     RF_Raid_t * raidPtr,
-    int (*wakeFunc) (RF_DagNode_t * node, int status),
+    void (*wakeFunc)(void *, int),
     void *wakeArg,
     RF_AccTraceEntry_t * tracerec,
     RF_Etimer_t startTime)
@@ -669,7 +669,7 @@ rf_ParityLogAppend(
 	RF_ParityLog_t *log;
 	RF_Raid_t *raidPtr;
 	RF_Etimer_t timer;
-	int     (*wakeFunc) (RF_DagNode_t * node, int status);
+	void     (*wakeFunc) (void *, int);
 	void   *wakeArg;
 
 	/* Add parity to the appropriate log, one sector at a time. This

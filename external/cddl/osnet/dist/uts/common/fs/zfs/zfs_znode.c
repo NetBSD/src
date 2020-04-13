@@ -1315,7 +1315,11 @@ zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 		return (SET_ERROR(EINVAL));
 	}
 	hdl = dmu_buf_get_user(db);
-	ASSERT3P(hdl, !=, NULL);
+	if (hdl == NULL) {
+		sa_buf_rele(db, NULL);
+		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
+		return (SET_ERROR(EINVAL));
+	}
 	zp = sa_get_userdata(hdl);
 	ASSERT3U(zp->z_id, ==, obj_num);
 	sa_buf_rele(db, NULL);
@@ -1560,10 +1564,14 @@ zfs_rezget(znode_t *zp)
 
 	zp->z_unlinked = (zp->z_links == 0);
 	zp->z_blksz = doi.doi_data_block_size;
+#ifdef __NetBSD__
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+	(void)VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO);
+#else
 	vn_pages_remove(vp, 0, 0);
+#endif
 	if (zp->z_size != size)
 		vnode_pager_setsize(vp, zp->z_size);
-
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 
 	return (0);

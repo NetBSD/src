@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.20 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.20.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,9 +42,9 @@
 #define _RF__RF_DAGUTILS_H_
 
 struct RF_RedFuncs_s {
-	int     (*regular) (RF_DagNode_t *);
+	void     (*regular) (RF_DagNode_t *);
 	const char   *RegularName;
-	int     (*simple) (RF_DagNode_t *);
+	void     (*simple) (RF_DagNode_t *);
 	const char   *SimpleName;
 };
 
@@ -57,9 +57,9 @@ extern const RF_RedFuncs_t rf_xorFuncs;
 extern const RF_RedFuncs_t rf_xorRecoveryFuncs;
 
 void rf_InitNode(RF_DagNode_t *, RF_NodeStatus_t, int,
-		 int (*) (RF_DagNode_t *),
-		 int (*) (RF_DagNode_t *),
-		 int (*) (RF_DagNode_t *, int),
+		 void (*) (RF_DagNode_t *),
+		 void (*) (RF_DagNode_t *),
+		 void (*) (void *, int),
 		 int, int, int, int, RF_DagHeader_t *,
 		 const char *, RF_AllocListElem_t *);
 

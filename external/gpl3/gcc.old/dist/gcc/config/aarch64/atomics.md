@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 processor synchronization primitives.
-;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -583,7 +583,7 @@
   }
 )
 
-;; ARMv8.1 LSE instructions.
+;; ARMv8.1-A LSE instructions.
 
 ;; Atomic swap with memory.
 (define_insn "aarch64_atomic_swp<mode>"

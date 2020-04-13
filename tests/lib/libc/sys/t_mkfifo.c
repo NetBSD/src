@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.2 2011/11/02 06:04:48 jruoho Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.2.42.1 2020/04/13 08:05:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.2 2011/11/02 06:04:48 jruoho Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.2.42.1 2020/04/13 08:05:27 martin Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -263,6 +263,34 @@ ATF_TC_CLEANUP(mkfifo_stat, tc)
 	(void)unlink(path);
 }
 
+ATF_TC_WITH_CLEANUP(mknod_s_ififo);
+ATF_TC_HEAD(mknod_s_ififo, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test mknod(2) with S_IFIFO");
+}
+
+ATF_TC_BODY(mknod_s_ififo, tc)
+{
+	struct stat st;
+
+	support();
+
+	(void)memset(&st, 0, sizeof(struct stat));
+
+	ATF_REQUIRE(mknod(path, S_IFIFO | 0600, 0) == 0);
+	ATF_REQUIRE(stat(path, &st) == 0);
+
+	if (S_ISFIFO(st.st_mode) == 0)
+		atf_tc_fail("invalid mode from mknod(2) with S_IFIFO");
+
+	ATF_REQUIRE(unlink(path) == 0);
+}
+
+ATF_TC_CLEANUP(mknod_s_ififo, tc)
+{
+	(void)unlink(path);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -271,6 +299,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mkfifo_nonblock);
 	ATF_TP_ADD_TC(tp, mkfifo_perm);
 	ATF_TP_ADD_TC(tp, mkfifo_stat);
+	ATF_TP_ADD_TC(tp, mknod_s_ififo);
 
 	return atf_no_error();
 }

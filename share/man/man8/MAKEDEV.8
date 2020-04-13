@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.48.2.1 2019/06/10 22:05:41 christos Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.48.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 26, 2019
+.Dd April  1, 2020
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -575,9 +575,6 @@ USB printer devices, see
 . It Ar ugen#
 USB generic devices, see
 .Xr \&ugen 4
-. It Ar urio#
-USB Diamond Rio 500 devices, see
-.Xr \&urio 4
 . It Ar uscanner#
 USB scanners, see
 .Xr \&uscanner 4
@@ -741,6 +738,9 @@ X86 IOPL access for COMPAT_10, COMPAT_FREEBSD, see
 . It Ar iop#
 I2O IOP control interface, see
 .Xr \&iop 4
+. It Ar ipmi#
+OpenIPMI compatible interface, see
+.Xr \&ipmi 4
 . It Ar ipl
 IP Filter
 . It Ar irframe#
@@ -803,6 +803,9 @@ Pass-to-Userspace Transporter
 . It Ar px#
 PixelStamp Xserver access, see
 .Xr \&px 4
+. It Ar qemufwcfg#
+QEMU Firmware Configuration, see
+.Xr \&qemufwcfg 4
 . It Ar radio#
 Radio devices, see
 .Xr \&radio 4
@@ -832,7 +835,8 @@ SPI bus device, see
 . It Ar sram
 Battery backuped memory (x68k)
 . It Ar srt#
-Source-address based routing
+Source-address based routing, see
+.Xr \&srt 4
 . It Ar ss#
 SCSI scanner, see
 .Xr \&ss 4
@@ -862,6 +866,8 @@ Unknown SCSI device, see
 . It Ar veriexec
 Veriexec fingerprint loader, see
 .Xr \&veriexec 4
+. It Ar vhci
+Virtual host controller interface
 . It Ar video#
 Video capture devices, see
 .Xr \&video 4

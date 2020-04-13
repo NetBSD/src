@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.36 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: gettytab.5,v 1.36.32.1 2020/04/13 08:03:17 martin Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,157 +60,162 @@ processes is normally defined by
 .Xr ttys 5 .
 .Pp
 There is a default terminal class,
-.Em default ,
+.Ic default ,
 that is used to set global defaults for all other classes.
 (That is, the
-.Em default
+.Ic default
 entry is read, then the entry for the class required
 is used to override particular settings.)
 The
-.Em default
+.Ic default
 entry is also normally read by other programs that present login prompts
 to the user, such as
 .Xr telnetd 8 ,
 in order to retrieve the values of the
-.Em he ,
-.Em hn ,
-.Em im ,
+.Ic \&he ,
+.Ic \&hn ,
+.Ic \&im ,
 and
-.Em if
+.Ic \&if
 capabilities.
 .Sh CAPABILITIES
 Refer to
 .Xr capfile 5
 for a description of the file layout.
 The
-.Em default
+.Sq Sy Default
 column below lists defaults obtained if there is
 no entry in the table obtained, nor one in the special
-.Em default
+.Ic default
 table.
-.Bl -column Namexx /usr/bin/login Default
-.It Sy Name	Type	Default	Description
-.It "ab	bool	false	Auto-baud speed select mechanism for the Micom 600 portselector. Selection is done by looking at how the character `\er' is garbled at 300, 1200, 4800, and 9600 baud."
-.It "al	str	NULL	user to auto-login instead of prompting"
-.It "ap	bool	false	terminal uses any parity"
-.It "bk	str	0377	alternative end of line character (input break)"
-.It "b2	str	0377	alternative end of line character (input break)"
-.It "c0	num	unused	tty control flags to write messages"
-.It "c1	num	unused	tty control flags to read login name"
-.It "c2	num	unused	tty control flags to leave terminal as"
-.It "ce	bool	false	use crt erase algorithm"
-.It "ck	bool	false	use crt kill algorithm"
-.It "cl	str" Ta Dv NULL Ta
-.No "screen clear sequence"
-.It "co	bool	false	console - add"
+.Bl -column ".Sy Name" ".Sy Type" "/usr/bin/login"
+.It Sy Name Ta Sy Type Ta Sy Default Ta Sy Description
+.It Ic \&ab Ta bool Ta false Ta Auto-baud speed select mechanism for the
+Micom 600 portselector. Selection is done by looking at how the
+character
+.Ql \er
+is garbled at 300, 1200, 4800, and 9600 baud.
+.It Ic \&al Ta str  Ta Dv NULL Ta user to auto-login instead of prompting
+.It Ic \&ap Ta bool Ta false Ta terminal uses any parity
+.It Ic \&bk Ta str  Ta Li \e377 Ta alternative end of line character (input break)
+.Pq Dv VEOL
+.It Ic \&b2 Ta str  Ta Li \e377 Ta alternative end of line character (input break)
+.Pq Dv VEOL2
+.It Ic \&c0 Ta num  Ta unused Ta tty control flags to write messages
+.It Ic \&c1 Ta num  Ta unused Ta tty control flags to read login name
+.It Ic \&c2 Ta num  Ta unused Ta tty control flags to leave terminal as
+.It Ic \&ce Ta bool Ta false Ta use Tn CRT erase algorithm
+.It Ic \&ck Ta bool Ta false Ta use Tn CRT kill algorithm
+.It Ic \&cl Ta str  Ta Dv NULL Ta screen clear sequence
+.It Ic \&co Ta bool Ta false Ta console \(en add
 .Ql \er\en
 after login prompt
-.It "cs	bool	false	clear screen based on terminal type in /etc/ttys"
-.It "ds	str" Ta So Li ^Y Sc Ta
-.No "delayed suspend character"
-.It "dx	bool	false	set"
-.Dv DECCTLQ
-.It "ec	bool	false	leave echo"
+.It Ic \&cs Ta bool Ta false Ta clear screen based on terminal type in
+.Pa /etc/ttys
+.It Ic \&ds Ta str  Ta So Li "^Y" Sc Ta delayed suspend character
+.Pq Dv VDSUSP
+.It Ic \&dx Ta bool Ta false Ta set Dv DECCTLQ
+.It Ic \&ec Ta bool Ta false Ta leave echo
 .Tn OFF
-.It "ep	bool	false	terminal uses even parity"
-.It "er	str" Ta So Li ^? Sc Ta
-.No "erase character"
-.It "et	str" Ta So Li ^D Sc Ta
-.No "end of text"
-.Pq Dv EOF
+.It Ic \&ep Ta bool Ta false Ta terminal uses even parity
+.It Ic \&er Ta str  Ta So Li ^? Sc Ta erase character
+.Pq Dv VERASE
+.It Ic \&et Ta str  Ta So Li ^D Sc Ta end of text
+.Pq Dv VEOF
 character
-.It "ev	str" Ta Dv NULL Ta
-.No "initial environment"
-.It "f0	num	unused	tty mode flags to write messages"
-.It "f1	num	unused	tty mode flags to read login name"
-.It "f2	num	unused	tty mode flags to leave terminal as"
-.It "fl	str" Ta So Li ^O Sc Ta
-.No "output flush character"
-.It "hc	bool	false	do"
+.It Ic \&ev Ta str  Ta Dv NULL Ta initial environment
+.It Ic \&f0 Ta num  Ta unused Ta tty mode flags to write messages
+.It Ic \&f1 Ta num  Ta unused Ta tty mode flags to read login name
+.It Ic \&f2 Ta num  Ta unused Ta tty mode flags to leave terminal as
+.It Ic \&fl Ta str  Ta So Li ^O Sc Ta output flush character
+.Pq Dv VDISCARD
+.It Ic \&hc Ta bool Ta false Ta do
 .Tn NOT
 hangup line on last close
-.It "he	str" Ta Dv NULL Ta
-.No "hostname editing string"
-.It "hn	str	hostname	hostname"
-.It "ht	bool	false	terminal has real tabs"
-.It "i0	num	unused	tty input flags to write messages"
-.It "i1	num	unused	tty input flags to read login name"
-.It "i2	num	unused	tty input flags to leave terminal as"
-.It "if	str	NULL	display named file before prompt, like /etc/issue"
-.It "ig	bool	false	ignore garbage characters in login name"
-.It "im	str" Ta Dv NULL Ta
-.No "initial (banner) message"
-.It "in	str" Ta So Li ^C Sc Ta
-.No "interrupt character"
-.It "is	num	unused	input speed"
-.It "kl	str" Ta So Li ^U Sc Ta
-.No "kill character"
-.It "l0	num	unused	tty local flags to write messages"
-.It "l1	num	unused	tty local flags to read login name"
-.It "l2	num	unused	tty local flags to leave terminal as"
-.It "lc	bool	false	terminal has lower case"
-.It "lm	str	login:	login prompt"
-.It "ln	str" Ta So Li ^V Sc Ta
-.No "``literal next'' character"
-.It "lo	str" Ta Pa /usr/bin/login Ta
-.No "program to exec when name obtained"
-.It "mb	bool	false	do flow control based on carrier"
-.It "nl	bool	false	terminal has (or might have) a newline character"
-.It "nn	bool	false	do not prompt for a login name"
-.It "np	bool	false	terminal uses no parity (i.e. 8-bit characters)"
-.It "nx	str	default	next table (for auto speed selection)"
-.It "o0	num	unused	tty output flags to write messages"
-.It "o1	num	unused	tty output flags to read login name"
-.It "o2	num	unused	tty output flags to leave terminal as"
-.It "op	bool	false	terminal uses odd parity"
-.It "os	num	unused	output speed"
-.It "pc	str" Ta So Li \e0 Sc Ta
-.No "pad character"
-.It "pe	bool	false	use printer (hard copy) erase algorithm"
-.It "pf	num	0	delay"
-between first prompt and following flush (seconds)
-.It "pp	str	unused	PPP authentication program"
-.It "ps	bool	false	line connected to a"
+.It Ic \&he Ta str  Ta Dv NULL Ta hostname editing string
+.It Ic \&hn Ta str  Ta hostname Ta hostname
+.It Ic \&ht Ta bool Ta false Ta terminal has real tabs
+.It Ic \&i0 Ta num  Ta unused Ta tty input flags to write messages
+.It Ic \&i1 Ta num  Ta unused Ta tty input flags to read login name
+.It Ic \&i2 Ta num  Ta unused Ta tty input flags to leave terminal as
+.It Ic \&if Ta str  Ta Dv NULL Ta display named file before prompt,
+like
+.Pa /etc/issue
+.It Ic \&ig Ta bool Ta false Ta ignore garbage characters in login name
+.It Ic \&im Ta str  Ta Dv NULL Ta initial (banner) message
+.It Ic \&in Ta str  Ta So Li ^C Sc Ta interrupt character
+.Pq Dv VINTR
+.It Ic \&is Ta num  Ta unused Ta input speed
+.It Ic \&kl Ta str  Ta So Li ^U Sc Ta kill character
+.Pq Dv VKILL
+.It Ic \&l0 Ta num  Ta unused Ta tty local flags to write messages
+.It Ic \&l1 Ta num  Ta unused Ta tty local flags to read login name
+.It Ic \&l2 Ta num  Ta unused Ta tty local flags to leave terminal as
+.It Ic \&lc Ta bool Ta false Ta terminal has lower case
+.It Ic \&lm Ta str  Ta login: Ta login prompt
+.It Ic \&ln Ta str  Ta So Li ^V Sc Ta So literal next Sc character
+.Pq Dv VLNEXT
+.It Ic \&lo Ta str  Ta /usr/bin/login Ta program to exec when name obtained
+.It Ic \&mb Ta bool Ta false Ta do flow control based on carrier
+.It Ic \&nl Ta bool Ta false Ta terminal has (or might have) a newline character
+.It Ic \&nn Ta bool Ta false Ta do not prompt for a login name
+.It Ic \&np Ta bool Ta false Ta terminal uses no parity (i.e. 8-bit characters)
+.It Ic \&nx Ta str  Ta default Ta next table (for auto speed selection)
+.It Ic \&o0 Ta num  Ta unused Ta tty output flags to write messages
+.It Ic \&o1 Ta num  Ta unused Ta tty output flags to read login name
+.It Ic \&o2 Ta num  Ta unused Ta tty output flags to leave terminal as
+.It Ic \&op Ta bool Ta false Ta terminal uses odd parity
+.It Ic \&os Ta num  Ta unused Ta output speed
+.It Ic \&pc Ta str  Ta So Li \e0 Sc Ta pad character
+.It Ic \&pe Ta bool Ta false Ta use printer (hard copy) erase algorithm
+.It Ic \&pf Ta num  Ta 0 Ta delay between first prompt and following
+flush (seconds)
+.It Ic \&pp Ta str  Ta unused Ta Tn PPP authentication program
+.It Ic \&ps Ta bool Ta false Ta line connected to a
 .Tn MICOM
 port selector
-.It "qu	str" Ta So Li \&^\e Sc Ta
-.No "quit character"
-.It "rp	str" Ta So Li ^R Sc Ta
-.No "line retype character"
-.It "rw	bool	false	do"
+.It Ic \&qu Ta str  Ta So Li \&^\e Sc Ta quit character
+.Pq Dv VQUIT
+.It Ic \&rp Ta str  Ta So Li ^R Sc Ta line retype character
+.Pq Dv VREPRINT
+.It Ic \&rw Ta bool Ta false Ta do
 .Tn NOT
-use raw for input, use cbreak
-.It "sp	num	unused	line speed (input and output)"
-.It "st	str" Ta So Li ^T Sc Ta
-.No "status character"
-.It "su	str" Ta So Li ^Z Sc Ta
-.No "suspend character"
-.It "tc	str	none	table continuation"
-.It "to	num	0	timeout (seconds)"
-.It "tt	str" Ta Dv NULL Ta
-.No "terminal type (for environment)"
-.It "ub	bool	false	do unbuffered output (of prompts etc)"
-.It "we	str" Ta So Li ^W Sc Ta
-.No "word erase character"
-.It "xc	bool	false	do"
+use
+.Dv RAW
+for input, use
+.Dv CBREAK
+.It Ic \&sp Ta num  Ta unused Ta line speed (input and output)
+.It Ic \&st Ta str  Ta So Li ^T Sc Ta status character
+.Pq Dv VSTATUS
+.It Ic \&su Ta str  Ta So Li ^Z Sc Ta suspend character
+.Pq Dv VSUSP
+.It Ic \&tc Ta str  Ta none Ta table continuation
+.It Ic \&to Ta num  Ta 0 Ta timeout (seconds)
+.It Ic \&tt Ta str  Ta Dv NULL Ta terminal type (for environment)
+.It Ic \&ub Ta bool Ta false Ta do unbuffered output (of prompts etc)
+.It Ic \&we Ta str  Ta So Li ^W Sc Ta word erase character
+.Pq Dv VWERASE
+.It Ic \&xc Ta bool Ta false Ta do
 .Tn NOT
 echo control chars as
 .Ql ^X
-.It "xf	str" Ta So Li ^S Sc Ta Dv XOFF
+.It Ic \&xf Ta str  Ta So Li ^S Sc Ta Tn XOFF
 (stop output) character
-.It "xn	str" Ta So Li ^Q Sc Ta Dv XON
+.Pq Dv VSTOP
+.It Ic \&xn Ta str  Ta So Li ^Q Sc Ta Tn XON
 (start output) character
+.Pq Dv VSTART
 .El
 .Pp
 The following capabilities are no longer supported by
 .Xr getty 8 :
-.Bl -column Namexx /usr/bin/login Default
-.It "bd	num	0	backspace delay"
-.It "cb	bool	false	use crt backspace mode"
-.It "cd	num	0	carriage-return delay"
-.It "fd	num	0	form-feed (vertical motion) delay"
-.It "nd	num	0	newline (line-feed) delay"
-.It "uc	bool	false	terminal is known upper case only"
+.Bl -column ".Sy Name" ".Sy Type" "/usr/bin/login"
+.It Ic \&bd Ta num  Ta 0 Ta backspace delay
+.It Ic \&cb Ta bool Ta false Ta use Tn CRT backspace mode
+.It Ic \&cd Ta num  Ta 0 Ta carriage-return delay
+.It Ic \&fd Ta num  Ta 0 Ta form-feed (vertical motion) delay
+.It Ic \&nd Ta num  Ta 0 Ta newline (line-feed) delay
+.It Ic \&uc Ta bool Ta false Ta terminal is known upper case only
 .El
 .Pp
 If no line speed is specified, speed will not be altered
@@ -225,39 +230,41 @@ are derived from the boolean flags specified.
 If the derivation should prove inadequate,
 any (or all) of these three may be overridden
 with one of the
-.Em \&c0 ,
-.Em \&c1 ,
-.Em \&c2 ,
-.Em \&i0 ,
-.Em \&i1 ,
-.Em \&i2 ,
-.Em \&l0 ,
-.Em \&l1 ,
-.Em \&l2 ,
-.Em \&o0 ,
-.Em \&o1 ,
+.Ic \&c0 ,
+.Ic \&c1 ,
+.Ic \&c2 ,
+.Ic \&i0 ,
+.Ic \&i1 ,
+.Ic \&i2 ,
+.Ic \&l0 ,
+.Ic \&l1 ,
+.Ic \&l2 ,
+.Ic \&o0 ,
+.Ic \&o1 ,
 or
-.Em \&o2
+.Ic \&o2
 numeric specifications, which can be used to specify
-(usually in octal, with a leading '0')
+(usually in octal, with a leading
+.Ql 0 )
 the exact values of the flags.
 These flags correspond to the termios
-.Em c_cflag ,
-.Em c_iflag ,
-.Em c_lflag ,
+.Fa c_cflag ,
+.Fa c_iflag ,
+.Fa c_lflag ,
 and
-.Em c_oflag
+.Fa c_oflag
 fields, respectively.
 Each these sets must be completely specified to be effective.
 The
-.Em \&f0 ,
-.Em \&f1 ,
+.Ic \&f0 ,
+.Ic \&f1 ,
 and
-.Em \&f2
+.Ic \&f2
 are excepted for backwards compatibility with a previous incarnation of
 the TTY sub-system.
-In these flags the bottom 16 bits of the (32 bits) value contain the sgttyb
-.Em sg_flags
+In these flags the bottom 16 bits of the (32 bits) value contain the
+.Vt sgttyb
+.Fa sg_flags
 field, while the top 16 bits represent the local mode word.
 .Pp
 Should
@@ -265,7 +272,7 @@ Should
 receive a null character
 (presumed to indicate a line break)
 it will restart using the table indicated by the
-.Em nx
+.Ic nx
 entry.
 If there is none, it will re-use its original table.
 .Pp
@@ -276,78 +283,89 @@ with values 0, 1, 2, and 3 are interpreted as
 choosing that particular delay algorithm from the driver.
 .Pp
 The
-.Em \&cl
+.Ic \&cl
 screen clear string may be preceded by a (decimal) number
 of milliseconds of delay required (a la termcap).
 This delay is simulated by repeated use of the pad character
-.Em \&pc .
+.Ic \&pc .
 .Pp
-The initial message, and login message,
-.Em \&im
-and
-.Em \&lm
+The initial message
+.Ic \&im\^ ,
+and login message
+.Ic \&lm
 may include any of the following character sequences, which expand to
 information about the environment in which
 .Xr getty 8
 is running.
-.Pp
-.Bl -tag -width \&%xxx -compact
-.It \&%d
+.Bl -tag -width ".Li XXXX"
+.It Li \&%d
 The current date.
-.It \&%h
+.It Li \&%h
 The hostname of the machine, which is normally obtained from the
 system using
 .Xr gethostname 3 ,
 but may also be overridden by the
-.Em \&hn
+.Ic \&hn
 table entry.
 In either case it may be edited with the
-.Em \&he
+.Ic \&he
 string.
-A '@' in the
-.Em \&he
+A
+.Ql @
+in the
+.Ic \&he
 string causes one character from the real hostname to
 be copied to the final hostname.
-A '#' in the
-.Em \&he
+A
+.Ql #
+in the
+.Ic \&he
 string causes the next character of the real hostname
 to be skipped.
 Each character that
-is neither '@' nor '#' is copied into the final hostname.
-Surplus '@' and '#' characters are ignored.
-.It \&%t
+is neither
+.Ql @
+nor
+.Ql #
+is copied into the final hostname.
+Surplus
+.Ql @
+and
+.Ql #
+characters are ignored.
+.It Li \&%t
 The tty name.
-.It "\&%m, \&%r, \&%s, \&%v"
+.It Li \&%m , \&%r , \&%s , \&%v
 The type of machine, release of the operating system, name of the
 operating system, and version of the kernel, respectively, as
 returned by
 .Xr uname 3 .
-.It \&%%
+.It Li \&%%
 A
-.Dq %
+.Ql %
 character.
 .El
 .Pp
 When getty execs the login process, given
 in the
-.Em \&lo
+.Ic \&lo
 string (usually
 .Dq Pa /usr/bin/login ) ,
 it will have set
 the environment to include the terminal type, as indicated
 by the
-.Em \&tt
+.Ic \&tt
 string (if it exists).
 The
-.Em \&ev
+.Ic \&ev
 string, can be used to enter additional data into
 the environment.
 It is a list of comma separated strings, each of which
 will presumably be of the form
-.Em name=value .
+.Ar name Ns Li \^= Ns Ar value .
 .Pp
 If a non-zero timeout is specified, with
-.Em \&to ,
+.Ic \&to ,
 then getty will exit within the indicated
 number of seconds, either having
 received a login name and passed control
@@ -359,15 +377,15 @@ This may be useful to hangup dial in lines.
 Output from
 .Xr getty 8
 is even parity unless
-.Em \&op
+.Ic \&op
 or
-.Em \&np
+.Ic \&np
 is specified.
 The
-.Em \&op
+.Ic \&op
 string
 may be specified with
-.Em \&ap
+.Ic \&ap
 to allow any parity on input, but generate odd parity output.
 Note: this only applies while getty is being run,
 terminal driver limitations prevent a more complete
@@ -378,14 +396,14 @@ does not check parity of input characters in
 mode.
 .Pp
 If
-.Em \&pp
+.Ic \&pp
 string is specified and a Point to Point Protocol
 .Pq Tn PPP
 link bringup sequence is recognized,
 .Xr getty 8
 will invoke the program referenced by the
-.Em \&pp
-string, e.g.
+.Ic \&pp
+string, e.g.\&
 .Xr pppd 8 .
 This can be used to handle incoming
 .Tn PPP
@@ -410,8 +428,14 @@ by
 .Xr login 1 .
 In
 .Em all
-cases, '#' or '^H' typed in a login name will be treated as
-an erase character, and '@' will be treated as a kill character.
+cases,
+.Ql #
+or
+.Ql ^H
+typed in a login name will be treated as
+an erase character, and
+.Ql @
+will be treated as a kill character.
 .Pp
 The delay stuff is a real crock.
 Apart from its general lack of flexibility, some
@@ -419,5 +443,5 @@ of the delay algorithms are not implemented.
 The terminal driver should support sane delay settings.
 .Pp
 The
-.Em \&he
+.Ic \&he
 capability is stupid.

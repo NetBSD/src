@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.210.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.210.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210.2.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.210.2.1 2019/06/10 22:09:45 christos Exp
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -178,13 +179,13 @@ static void	rt_timer_timer(void *);
  *     - Make rtcache per-CPU and allow only accesses from softint
  *       (e.g., ipforward_rt_percpu)
  * - References to a rtentry is managed by reference counting and psref
- *   - Reference couting is used for temporal reference when a rtentry
+ *   - Reference counting is used for temporal reference when a rtentry
  *     is fetched from the routing table
  *   - psref is used for temporal reference when a rtentry is fetched
  *     from a rtcache
  *     - struct route (rtcache) has struct psref, so we cannot obtain
  *       a reference twice on the same struct route
- *   - Befere destroying or updating a rtentry, we have to wait for
+ *   - Before destroying or updating a rtentry, we have to wait for
  *     all references left (see below for details)
  *   - APIs
  *     - An obtained rtentry via rtalloc1 or rtrequest* must be
@@ -354,9 +355,8 @@ rt_get_ifa(struct rtentry *rt)
 {
 	struct ifaddr *ifa;
 
-	if ((ifa = rt->rt_ifa) == NULL)
-		return ifa;
-	else if (ifa->ifa_getifa == NULL)
+	ifa = rt->rt_ifa;
+	if (ifa->ifa_getifa == NULL)
 		return ifa;
 #if 0
 	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
@@ -411,8 +411,7 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 	if (rt->rt_ifa == ifa)
 		return;
 
-	if (rt->rt_ifa &&
-	    rt->rt_ifa != ifa &&
+	if (rt->rt_ifa != ifa &&
 	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
 	    rt_ifa_connected(rt, rt->rt_ifa))
 	{
@@ -620,7 +619,7 @@ static void
 rt_ref(struct rtentry *rt)
 {
 
-	KASSERT(rt->rt_refcnt >= 0);
+	KASSERTMSG(rt->rt_refcnt >= 0, "rt_refcnt=%d", rt->rt_refcnt);
 	atomic_inc_uint(&rt->rt_refcnt);
 }
 
@@ -724,7 +723,7 @@ void
 rt_free(struct rtentry *rt)
 {
 
-	KASSERT(rt->rt_refcnt > 0);
+	KASSERTMSG(rt->rt_refcnt > 0, "rt_refcnt=%d", rt->rt_refcnt);
 	if (rt_wait_ok()) {
 		atomic_dec_uint(&rt->rt_refcnt);
 		_rt_free(rt);
@@ -1193,18 +1192,17 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if ((rt = rt_deladdr(rtbl, dst, netmask)) == NULL)
 			senderr(ESRCH);
 		rt->rt_flags &= ~RTF_UP;
-		if ((ifa = rt->rt_ifa)) {
-			if (ifa->ifa_flags & IFA_ROUTE &&
-			    rt_ifa_connected(rt, ifa)) {
-				RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
-				    "deleted IFA_ROUTE\n",
-				    (void *)rt->_rt_key, (void *)ifa);
-				ifa->ifa_flags &= ~IFA_ROUTE;
-			}
-			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
-			ifa = NULL;
+		ifa = rt->rt_ifa;
+		if (ifa->ifa_flags & IFA_ROUTE &&
+		    rt_ifa_connected(rt, ifa)) {
+			RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+			    "deleted IFA_ROUTE\n",
+			    (void *)rt->_rt_key, (void *)ifa);
+			ifa->ifa_flags &= ~IFA_ROUTE;
 		}
+		if (ifa->ifa_rtrequest)
+			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		ifa = NULL;
 		rttrash++;
 		if (ret_nrt) {
 			*ret_nrt = rt;
@@ -1386,47 +1384,48 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 }
 
 static struct ifaddr *
-rt_update_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
+rt_update_get_ifa(const struct rt_addrinfo *info, const struct rtentry *rt,
     struct ifnet **ifp, struct psref *psref_ifp, struct psref *psref)
 {
 	struct ifaddr *ifa = NULL;
 
 	*ifp = NULL;
-	if (info.rti_info[RTAX_IFP] != NULL) {
-		ifa = ifa_ifwithnet_psref(info.rti_info[RTAX_IFP], psref);
+	if (info->rti_info[RTAX_IFP] != NULL) {
+		ifa = ifa_ifwithnet_psref(info->rti_info[RTAX_IFP], psref);
 		if (ifa == NULL)
 			goto next;
 		*ifp = ifa->ifa_ifp;
 		if_acquire(*ifp, psref_ifp);
-		if (info.rti_info[RTAX_IFA] == NULL &&
-		    info.rti_info[RTAX_GATEWAY] == NULL)
-			goto next;
+		if (info->rti_info[RTAX_IFA] == NULL &&
+		    info->rti_info[RTAX_GATEWAY] == NULL)
+			goto out;
 		ifa_release(ifa, psref);
-		if (info.rti_info[RTAX_IFA] == NULL) {
+		if (info->rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
-			    *ifp, psref);
+			ifa = ifaof_ifpforaddr_psref(
+			    info->rti_info[RTAX_GATEWAY], *ifp, psref);
 		} else {
 			/* route change <dst> -ifp <if> -ifa <addr> */
-			ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
+			ifa = ifa_ifwithaddr_psref(info->rti_info[RTAX_IFA],
+			    psref);
 			if (ifa != NULL)
 				goto out;
-			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_IFA],
+			ifa = ifaof_ifpforaddr_psref(info->rti_info[RTAX_IFA],
 			    *ifp, psref);
 		}
 		goto out;
 	}
 next:
-	if (info.rti_info[RTAX_IFA] != NULL) {
+	if (info->rti_info[RTAX_IFA] != NULL) {
 		/* route change <dst> <gw> -ifa <addr> */
-		ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
+		ifa = ifa_ifwithaddr_psref(info->rti_info[RTAX_IFA], psref);
 		if (ifa != NULL)
 			goto out;
 	}
-	if (info.rti_info[RTAX_GATEWAY] != NULL) {
+	if (info->rti_info[RTAX_GATEWAY] != NULL) {
 		/* route change <dst> <gw> */
 		ifa = ifa_ifwithroute_psref(rt->rt_flags, rt_getkey(rt),
-		    info.rti_info[RTAX_GATEWAY], psref);
+		    info->rti_info[RTAX_GATEWAY], psref);
 	}
 out:
 	if (ifa != NULL && *ifp == NULL) {
@@ -1486,7 +1485,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 	 * flags may also be different; ifp may be specified
 	 * by ll sockaddr when protocol address is ambiguous
 	 */
-	new_ifa = rt_update_get_ifa(*info, rt, &new_ifp, &psref_new_ifp,
+	new_ifa = rt_update_get_ifa(info, rt, &new_ifp, &psref_new_ifp,
 	    &psref_new_ifa);
 	if (new_ifa != NULL) {
 		ifa_release(ifa, &psref_ifa);
@@ -1517,7 +1516,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
 		    (rt->rt_flags & PRESERVED_RTF);
 	}
-	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
+	if (rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
 #if defined(INET) || defined(INET6)
 	if (ifp_changed && rt_mask(rt) != NULL)
@@ -2215,6 +2214,26 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 	}
 	rtcache_invariants(ro);
 	return 0;
+}
+
+static void
+rtcache_percpu_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct route **rop = p;
+
+	/*
+	 * We can't have struct route as percpu data because it can be destroyed
+	 * over a memory enlargement processing of percpu.
+	 */
+	*rop = kmem_zalloc(sizeof(**rop), KM_SLEEP);
+}
+
+percpu_t *
+rtcache_percpu_alloc(void)
+{
+
+	return percpu_create(sizeof(struct route *),
+	    rtcache_percpu_init_cpu, NULL, NULL);
 }
 
 const struct sockaddr *

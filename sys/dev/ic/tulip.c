@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.191.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: tulip.c,v 1.191.2.3 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.191.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.191.2.3 2020/04/13 08:04:22 martin Exp $");
 
 
 #include <sys/param.h>
@@ -953,7 +953,7 @@ tlp_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct tulip_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
@@ -2185,7 +2185,7 @@ tlp_read_srom(struct tulip_softc *sc)
 	if (sc->sc_srom_addrbits == 0)
 		return 0;
 	size = TULIP_ROM_SIZE(sc->sc_srom_addrbits);
-	sc->sc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+	sc->sc_srom = malloc(size, M_DEVBUF, M_WAITOK);
 
 	/* Select the SROM. */
 	miirom = MIIROM_SR;
@@ -2930,7 +2930,7 @@ tlp_al981_filter_setup(struct tulip_softc *sc)
 		}
 
 		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
-		mchash[hash >> 5] |= 1 << (hash & 0x1f);
+		mchash[hash >> 5] |= __BIT(hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);

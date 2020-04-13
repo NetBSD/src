@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralreg.h,v 1.4 2016/04/23 10:15:31 skrll Exp $ */
+/*	$NetBSD: if_uralreg.h,v 1.4.18.1 2020/04/13 08:04:49 martin Exp $ */
 /*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
 
 /*-
@@ -194,7 +194,7 @@ struct ural_rx_desc {
 } __packed;
 
 #define RAL_RF_LOBUSY	(1 << 15)
-#define RAL_RF_BUSY	(1 << 31)
+#define RAL_RF_BUSY	(1U << 31)
 #define RAL_RF_20BIT	(20 << 24)
 
 #define RAL_RF1	0

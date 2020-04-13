@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.9.2.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.9.2.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,6 +39,12 @@
 #define MULTIBOOT_HEADER_WANT_MEMORY	0x00000002
 #define MULTIBOOT_HEADER_HAS_VBE	0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR	0x00010000
+
+#if defined(_LOCORE)
+#define MULTIBOOT2_HEADER_MAGIC		0xe85250d6
+#define MULTIBOOT2_BOOTLOADER_MAGIC	0x36d76289
+#define MULTIBOOT2_ARCHITECTURE_I386	0
+#endif
 
 #if !defined(_LOCORE)
 struct multiboot_header {
@@ -219,13 +225,18 @@ struct multiboot_module {
 /* --------------------------------------------------------------------- */
 
 /*
- * Prototypes for public functions defined in multiboot.c.
+ * Prototypes for public functions defined in multiboot.c and multiboot2.c
  */
 #if !defined(_LOCORE) && defined(_KERNEL)
-void		multiboot_pre_reloc(struct multiboot_info *);
-void		multiboot_post_reloc(void);
-void		multiboot_print_info(void);
-bool		multiboot_ksyms_addsyms_elf(void);
+void		multiboot1_pre_reloc(struct multiboot_info *);
+void		multiboot1_post_reloc(void);
+void		multiboot1_print_info(void);
+bool		multiboot1_ksyms_addsyms_elf(void);
+
+void		multiboot2_pre_reloc(struct multiboot_info *);
+void		multiboot2_post_reloc(void);
+void		multiboot2_print_info(void);
+bool		multiboot2_ksyms_addsyms_elf(void);
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_auereg.h,v 1.27.18.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.27.18.2 2020/04/13 08:04:49 martin Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -66,10 +67,6 @@
  * we consider the RX data endpoint to be index 0
  * and work up from there.
  */
-#define AUE_ENDPT_RX		0x0
-#define AUE_ENDPT_TX		0x1
-#define AUE_ENDPT_INTR		0x2
-#define AUE_ENDPT_MAX		0x3
 
 #define AUE_CTL0		0x00
 #define AUE_CTL1		0x01
@@ -198,76 +195,3 @@ struct aue_rxpkt {
 #define AUE_RXSTAT_CRCERR	0x08
 #define AUE_RXSTAT_DRIBBLE	0x10
 #define AUE_RXSTAT_MASK		0x1E
-
-
-/*************** The rest belongs in if_auevar.h *************/
-
-#define AUE_TX_LIST_CNT		1
-#define AUE_RX_LIST_CNT		1
-
-struct aue_softc;
-
-struct aue_chain {
-	struct aue_softc	*aue_sc;
-	struct usbd_xfer	*aue_xfer;
-	char			*aue_buf;
-	struct mbuf		*aue_mbuf;
-	int			aue_idx;
-};
-
-struct aue_cdata {
-	struct aue_chain	aue_tx_chain[AUE_TX_LIST_CNT];
-	struct aue_chain	aue_rx_chain[AUE_RX_LIST_CNT];
-	struct aue_intrpkt	aue_ibuf;
-	int			aue_tx_prod;
-	int			aue_tx_cons;
-	int			aue_tx_cnt;
-	int			aue_rx_prod;
-};
-
-struct aue_softc {
-	device_t aue_dev;
-
-	struct ethercom		aue_ec;
-	struct mii_data		aue_mii;
-	krndsource_t	rnd_source;
-	struct lwp		*aue_thread;
-	int			aue_closing;
-	kcondvar_t		aue_domc;
-	kcondvar_t		aue_closemc;
-	kmutex_t		aue_mcmtx;
-#define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
-#define GET_MII(sc) (&(sc)->aue_mii)
-
-	struct callout aue_stat_ch;
-
-	struct usbd_device	*aue_udev;
-	struct usbd_interface	*aue_iface;
-	uint16_t		aue_vendor;
-	uint16_t		aue_product;
-	int			aue_ed[AUE_ENDPT_MAX];
-	struct usbd_pipe	*aue_ep[AUE_ENDPT_MAX];
-	uint8_t			aue_link;
-	int			aue_if_flags;
-	struct aue_cdata	aue_cdata;
-
-	uint16_t		aue_flags;
-
-	int			aue_refcnt;
-	char			aue_dying;
-	char			aue_attached;
-	u_int			aue_rx_errs;
-	u_int			aue_intr_errs;
-	struct timeval		aue_rx_notice;
-
-	struct usb_task		aue_tick_task;
-	struct usb_task		aue_stop_task;
-
-	kmutex_t		aue_mii_lock;
-};
-
-#define AUE_TIMEOUT		1000
-#define AUE_BUFSZ		1536
-#define AUE_MIN_FRAMELEN	60
-#define AUE_TX_TIMEOUT		10000 /* ms */
-#define AUE_INTR_INTERVAL	100 /* ms */

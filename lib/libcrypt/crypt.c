@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.34.16.1 2020/04/08 14:07:14 martin Exp $	*/
+/*	$NetBSD: crypt.c,v 1.34.16.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.34.16.1 2020/04/08 14:07:14 martin Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.34.16.2 2020/04/13 08:03:12 martin Exp $");
 #endif
 #endif /* not lint */
 
 #include <limits.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <string.h> /* for strcmp */
 #include <unistd.h>
 #if defined(DEBUG) || defined(MAIN) || defined(UNIT_TEST)
 #include <stdio.h>
@@ -498,6 +499,48 @@ ascii_is_unsafe(char ch)
 }
 
 /*
+ * We extract the scheme from setting str to allow for 
+ * full scheme name comparison
+ * Updated to reflect alc suggestion(s) 
+ *
+ * retuns boolean 0 on failure, 1 on success, 
+ */
+static int 
+nondes_scheme_substr(const char * setting,char * scheme, unsigned int len)
+{
+	const char * start;
+	const char * sep;
+
+	/* initialize head pointer */
+	start = setting;
+
+	/* clear out scheme buffer regardless of result */
+	memset(scheme, 0, len);
+
+	/* make sure we are working on non-des scheme string */
+	if (*start != _PASSWORD_NONDES) {
+		return 0;
+	}
+
+	/* increment passed initial _PASSWORD_NONDES */
+	start++;
+
+	if ((sep = memchr(start, _PASSWORD_NONDES,len-1)) == NULL) {
+		return 0;
+	}
+
+	/* if empty string, we are done */
+	if (sep == start) {
+		return 1;
+	}
+
+	/* copy scheme substr to buffer */
+	memcpy(scheme, start, (size_t)(sep - start));
+
+	return 1;
+}
+
+/*
  * Return a pointer to static data consisting of the "setting"
  * followed by an encryption produced by the "key" and "setting".
  */
@@ -505,24 +548,51 @@ static char *
 __crypt(const char *key, const char *setting)
 {
 	char *encp;
+	char scheme[12]; 
 	int32_t i;
 	int t;
+	int r;
 	int32_t salt;
 	int num_iter, salt_size;
 	C_block keyblock, rsltblock;
 
 	/* Non-DES encryption schemes hook in here. */
 	if (setting[0] == _PASSWORD_NONDES) {
-		switch (setting[1]) {
-		case '2':
+		r = nondes_scheme_substr(
+			setting, scheme, sizeof(scheme));
+
+		/* return NULL if we are unable to extract substring */
+		if (!r) {
+			return NULL;
+		}
+
+		/* $2a$ found in bcrypt.c:encode_salt  */
+		if (strcmp(scheme, "2a") == 0) {
 			return (__bcrypt(key, setting));
-		case 's':
+		} else if (strcmp(scheme, "sha1") == 0) {
+		     /* $sha1$ found in crypt.h:SHA1_MAGIC */
 			return (__crypt_sha1(key, setting));
-		case '1':
-		default:
+		} else if (strcmp(scheme, "1") == 0) {
+		     /* $1$ found in pw_gensalt.c:__gensalt_md5 */
 			return (__md5crypt(key, setting));
+#ifdef HAVE_ARGON2
+		/* explicit argon2 variant */
+		} else if (strcmp(scheme, "argon2id") == 0) {
+		     /* $argon2id$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+		} else if (strcmp(scheme, "argon2i") == 0) {
+		     /* $argon2i$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+		} else if (strcmp(scheme, "argon2d") == 0) {
+		     /* $argon2d$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+#endif /* HAVE_ARGON2 */
+		} else {
+		     /* invalid scheme, including empty string */
+			return NULL;
 		}
 	}
+	/* End non-DES handling */
 
 	for (i = 0; i < 8; i++) {
 		if ((t = 2*(unsigned char)(*key)) != 0)
@@ -617,6 +687,7 @@ char *
 crypt(const char *key, const char *salt)
 {
 	char *res = __crypt(key, salt);
+
 	if (res)
 		return res;
 	/* How do I handle errors ? Return "*0" or "*1" */

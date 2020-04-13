@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.13 2005/02/04 16:14:55 perry Exp $	*/
+/*	$NetBSD: put.c,v 1.13.90.1 2020/04/13 08:03:16 martin Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: put.c,v 1.13 2005/02/04 16:14:55 perry Exp $");
+__RCSID("$NetBSD: put.c,v 1.13.90.1 2020/04/13 08:03:16 martin Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -2129,7 +2129,7 @@ int etob(char *out, const char *e)
   if (e == NULL)
     return -1;
 
-  strncpy (input, e, sizeof (input));
+  strlcpy (input, e, sizeof (input));
   memset (b, 0, sizeof (b));
   memset (out, 0, 8);
   for (i = 0, p = 0; i < 6; i++, p += 11)

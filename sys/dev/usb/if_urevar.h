@@ -1,4 +1,5 @@
-/*	$NetBSD: if_urevar.h,v 1.2.4.2 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: if_urevar.h,v 1.2.4.3 2020/04/13 08:04:49 martin Exp $	*/
+
 /*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -71,10 +72,6 @@ struct ure_txpkt {
 #define URE_TXPKT_UDP_CS	__BIT(31)
 } __packed;
 
-#define URE_ENDPT_RX		0
-#define URE_ENDPT_TX		1
-#define URE_ENDPT_MAX		2
-
 #ifndef URE_TX_LIST_CNT
 #define URE_TX_LIST_CNT		4
 #endif
@@ -82,58 +79,11 @@ struct ure_txpkt {
 #define URE_RX_LIST_CNT		4
 #endif
 
-struct ure_chain {
-	struct ure_softc	*uc_sc;
-	struct usbd_xfer	*uc_xfer;
-	char			*uc_buf;
-};
-
-struct ure_cdata {
-	struct ure_chain	tx_chain[URE_TX_LIST_CNT];
-	struct ure_chain	rx_chain[URE_RX_LIST_CNT];
-	int			tx_prod;
-	int			tx_cnt;
-};
-
-struct ure_softc {
-	device_t		ure_dev;
-	struct usbd_device	*ure_udev;
-
-	/* usb */
-	struct usbd_interface	*ure_iface;
-	struct usb_task		ure_tick_task;
-	int			ure_ed[URE_ENDPT_MAX];
-	struct usbd_pipe	*ure_ep[URE_ENDPT_MAX];
-
-	/* ethernet */
-	struct ethercom		ure_ec;
-#define GET_IFP(sc)		(&(sc)->ure_ec.ec_if)
-	struct mii_data		ure_mii;
-#define GET_MII(sc)		(&(sc)->ure_mii)
-	kmutex_t		ure_mii_lock;
-	int			ure_refcnt;
-
-	struct ure_cdata	ure_cdata;
-	callout_t		ure_stat_ch;
-
-	struct timeval		ure_rx_notice;
-	struct timeval		ure_tx_notice;
-	u_int			ure_bufsz;
-
-	int			ure_phyno;
-
-	u_int			ure_flags;
-#define	URE_FLAG_LINK		0x0001
+/* usbnet::un_flags values */
+#define	URE_FLAG_VER_4C00	0x0001
+#define	URE_FLAG_VER_4C10	0x0002
+#define	URE_FLAG_VER_5C00	0x0004
+#define	URE_FLAG_VER_5C10	0x0008
+#define	URE_FLAG_VER_5C20	0x0010
+#define	URE_FLAG_VER_5C30	0x0020
 #define	URE_FLAG_8152		0x1000	/* RTL8152 */
-
-	u_int			ure_chip;
-#define	URE_CHIP_VER_4C00	0x01
-#define	URE_CHIP_VER_4C10	0x02
-#define	URE_CHIP_VER_5C00	0x04
-#define	URE_CHIP_VER_5C10	0x08
-#define	URE_CHIP_VER_5C20	0x10
-#define	URE_CHIP_VER_5C30	0x20
-
-	krndsource_t            ure_rnd_source;
-	bool			ure_dying;
-};

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.121.2.1 2020/04/08 14:08:50 martin Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.121.2.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.121.2.1 2020/04/08 14:08:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.121.2.2 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -216,8 +216,12 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	 * after VFS_MOUNT() because we'd deadlock, so handle it
 	 * here already.
 	 */
-	copy_statvfs_info(&args->pa_svfsb, mp);
-	(void)memcpy(&mp->mnt_stat, &args->pa_svfsb, sizeof(mp->mnt_stat));
+	struct statvfs *sb = STATVFSBUF_GET();
+	puffs_statvfs_to_statvfs(&args->pa_svfsb, sb);
+	copy_statvfs_info(sb, mp);
+	STATVFSBUF_PUT(sb);
+
+	statvfs_to_puffs_statvfs(&mp->mnt_stat, &args->pa_svfsb);
 
 	KASSERT(curlwp != uvm.pagedaemon_lwp);
 	pmp = kmem_zalloc(sizeof(struct puffs_mount), KM_SLEEP);
@@ -497,12 +501,9 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 	 *
 	 * XXX: cache the copy in non-error case
 	 */
+	copy_statvfs_info(sbp, mp);
 	if (!error) {
-		copy_statvfs_info(&statvfs_msg->pvfsr_sb, mp);
-		(void)memcpy(sbp, &statvfs_msg->pvfsr_sb,
-		    sizeof(struct statvfs));
-	} else {
-		copy_statvfs_info(sbp, mp);
+		statvfs_to_puffs_statvfs(sbp, &statvfs_msg->pvfsr_sb);
 	}
 
 	PUFFS_MSG_RELEASE(statvfs);

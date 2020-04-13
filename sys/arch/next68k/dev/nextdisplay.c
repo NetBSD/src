@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.21 2012/10/27 17:18:05 chs Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.21.38.1 2020/04/13 08:04:02 martin Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.21 2012/10/27 17:18:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.21.38.1 2020/04/13 08:04:02 martin Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -233,6 +233,8 @@ nextdisplay_attach(device_t parent, device_t self, void *aux)
 	int isconsole;
 	int iscolor;
 	paddr_t addr;
+
+	sc->sc_dev = self;
 
 	if (rom_machine_type == NeXT_WARP9C ||
 	    rom_machine_type == NeXT_TURBO_COLOR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.h,v 1.1.2.2 2019/06/10 22:10:30 christos Exp $	*/
+/*	$NetBSD: evboards.h,v 1.1.2.3 2020/04/13 08:05:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@ const char *	evb_ubstep_get_file_name(ib_params *, evb_ubstep);
 uint64_t	evb_ubstep_get_file_offset(ib_params *, evb_ubstep);
 uint64_t	evb_ubstep_get_file_size(ib_params *, evb_ubstep);
 uint64_t	evb_ubstep_get_image_offset(ib_params *, evb_ubstep);
+uint64_t	evb_ubstep_get_input_block_size(ib_params *, evb_ubstep);
+uint64_t	evb_ubstep_get_input_pad_size(ib_params *, evb_ubstep);
+uint64_t	evb_ubstep_get_output_size(ib_params *, evb_ubstep);
+uint64_t	evb_ubstep_get_output_block_size(ib_params *, evb_ubstep);
 bool		evb_ubstep_preserves_partial_block(ib_params *, evb_ubstep);
 
 int		evb_uboot_setboot(ib_params *, evb_board);

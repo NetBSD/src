@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $	*/
+/*	$NetBSD: radeon_evergreen.c,v 1.1.6.4 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.1.6.4 2020/04/13 08:04:58 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1871,7 +1871,8 @@ void evergreen_hpd_init(struct radeon_device *rdev)
 			break;
 		}
 		radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
-		enabled |= 1 << radeon_connector->hpd.hpd;
+		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			enabled |= 1 << radeon_connector->hpd.hpd;
 	}
 	radeon_irq_kms_enable_hpd(rdev, enabled);
 }
@@ -5466,6 +5467,7 @@ restart_ih:
 				DRM_ERROR("Unhandled interrupt: %d %d\n", src_id, src_data);
 				break;
 			}
+			break;
 		case 96:
 			DRM_ERROR("SRBM_READ_ERROR: 0x%x\n", RREG32(SRBM_READ_ERROR));
 			WREG32(SRBM_INT_ACK, 0x1);

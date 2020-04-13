@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.97.2.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.97.2.2 2020/04/13 08:04:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97.2.1 2019/06/10 22:06:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97.2.2 2020/04/13 08:04:04 martin Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -452,6 +452,12 @@ cpu_attach_common(device_t self, int id)
 	ci->ci_dev = self;
 	ci->ci_idlespin = cpu_idlespin;
 
+#ifdef MULTIPROCESSOR
+	/* Register IPI Interrupt */
+	if ((ipiops.ppc_establish_ipi) && (id == 0))
+		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+#endif
+
 	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
 
@@ -584,8 +590,11 @@ cpu_setup(device_t self, struct cpu_info *ci)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~HID0_SLEEP;
-		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
+		/* XXX my quicksilver hangs if nap is enabled */
+		if (vers != MPC7450) {
+			hid0 |= HID0_NAP | HID0_DPM;
+			powersave = 1;
+		}
 		break;
 #endif
 
@@ -1381,6 +1390,17 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
 	__asm volatile ("sync; isync");
 #endif
+	int hatch_bail = 0;
+	while ((h->hatch_running < 1) && (hatch_bail < 100000)) {
+		delay(1);
+		hatch_bail++;
+#ifdef CACHE_PROTO_MEI
+		__asm volatile ("dcbi 0,%0"::"r"(&h->hatch_running):"memory");
+		__asm volatile ("sync; isync");
+		__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
+		__asm volatile ("sync; isync");
+#endif
+	}
 	if (h->hatch_running < 1) {
 #ifdef CACHE_PROTO_MEI
 		__asm volatile ("dcbi 0,%0"::"r"(&cpu_spinstart_ack):"memory");
@@ -1393,10 +1413,6 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 		Debugger();
 		return -1;
 	}
-
-	/* Register IPI Interrupt */
-	if (ipiops.ppc_establish_ipi)
-		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
 
 	return 0;
 }

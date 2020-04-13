@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.19.4.1 2019/06/10 22:06:54 christos Exp $	*/
+/*	$NetBSD: spectre.c,v 1.19.4.2 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * Mitigations for the SpectreV2, SpectreV4 and MDS CPU flaws.
+ * Mitigations for the SpectreV2, SpectreV4, MDS and TAA CPU flaws.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.19.4.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.19.4.2 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_spectre.h"
 
@@ -126,20 +126,20 @@ v2_detect_method(void)
 		if (cpuid_level >= 7) {
 			x86_cpuid(7, descs);
 
-			if (descs[3] & CPUID_SEF_ARCH_CAP) {
-				msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
-				if (msr & IA32_ARCH_IBRS_ALL) {
-					v2_mitigation_method =
-					    V2_MITIGATION_INTEL_ENHANCED_IBRS;
-					return;
-				}
-			}
-#ifdef __x86_64__
 			if (descs[3] & CPUID_SEF_IBRS) {
+				if (descs[3] & CPUID_SEF_ARCH_CAP) {
+					msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+					if (msr & IA32_ARCH_IBRS_ALL) {
+						v2_mitigation_method =
+						    V2_MITIGATION_INTEL_ENHANCED_IBRS;
+						return;
+					}
+				}
+#ifdef __x86_64__
 				v2_mitigation_method = V2_MITIGATION_INTEL_IBRS;
 				return;
-			}
 #endif
+			}
 		}
 		v2_mitigation_method = V2_MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
@@ -277,7 +277,7 @@ static void
 mitigation_v2_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1 (IBRS only). */
@@ -435,7 +435,7 @@ v4_detect_method(void)
 				break;
 			}
 	 		x86_cpuid(0x80000008, descs);
-			if (descs[1] & __BIT(26)) {
+			if (descs[1] & CPUID_CAPEX_SSB_NO) {
 				/* Not vulnerable to SpectreV4. */
 				v4_mitigation_method = V4_MITIGATION_AMD_SSB_NO;
 				return;
@@ -488,7 +488,7 @@ mitigation_v4_apply_cpu(bool enabled)
 static void
 mitigation_v4_change_cpu(void *arg1, void *arg2)
 {
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 
 	mitigation_v4_apply_cpu(enabled);
 }
@@ -635,7 +635,7 @@ static void
 mitigation_mds_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1. */
@@ -773,6 +773,185 @@ sysctl_machdep_mds_mitigated(SYSCTLFN_ARGS)
 
 /* -------------------------------------------------------------------------- */
 
+enum taa_mitigation {
+	TAA_MITIGATION_NONE,
+	TAA_MITIGATION_TAA_NO,
+	TAA_MITIGATION_MDS,
+	TAA_MITIGATION_RTM_DISABLE
+};
+
+static char taa_mitigation_name[64] = "(none)";
+
+static enum taa_mitigation taa_mitigation_method = TAA_MITIGATION_NONE;
+static bool taa_mitigation_enabled __read_mostly = false;
+static bool *taa_mitigation_enabled_ptr = &taa_mitigation_enabled;
+
+static void
+mitigation_taa_apply_cpu(struct cpu_info *ci, bool enabled)
+{
+	uint64_t msr;
+
+	switch (taa_mitigation_method) {
+	case TAA_MITIGATION_NONE:
+	case TAA_MITIGATION_TAA_NO:
+	case TAA_MITIGATION_MDS:
+		panic("impossible");
+	case TAA_MITIGATION_RTM_DISABLE:
+		msr = rdmsr(MSR_IA32_TSX_CTRL);
+		if (enabled) {
+			msr |= IA32_TSX_CTRL_RTM_DISABLE;
+		} else {
+			msr &= ~IA32_TSX_CTRL_RTM_DISABLE;
+		}
+		wrmsr(MSR_IA32_TSX_CTRL, msr);
+		break;
+	}
+}
+
+static void
+mitigation_taa_change_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info *ci = curcpu();
+	bool enabled = arg1 != NULL;
+
+	mitigation_taa_apply_cpu(ci, enabled);
+}
+
+static void
+taa_detect_method(void)
+{
+	u_int descs[4];
+	uint64_t msr;
+
+	taa_mitigation_enabled_ptr = &taa_mitigation_enabled;
+
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		taa_mitigation_method = TAA_MITIGATION_TAA_NO;
+		return;
+	}
+	if (!(cpu_feature[5] & CPUID_SEF_RTM)) {
+		taa_mitigation_method = TAA_MITIGATION_TAA_NO;
+		return;
+	}
+
+	/*
+	 * If the CPU doesn't have MDS_NO set, then the TAA mitigation is based
+	 * on the MDS mitigation.
+	 */
+	if (cpuid_level < 7) {
+		taa_mitigation_method = TAA_MITIGATION_MDS;
+		taa_mitigation_enabled_ptr = &mds_mitigation_enabled;
+		return;
+	}
+	x86_cpuid(0x7, descs);
+	if (!(descs[3] & CPUID_SEF_ARCH_CAP)) {
+		taa_mitigation_method = TAA_MITIGATION_MDS;
+		taa_mitigation_enabled_ptr = &mds_mitigation_enabled;
+		return;
+	}
+	msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+	if (!(msr & IA32_ARCH_MDS_NO)) {
+		taa_mitigation_method = TAA_MITIGATION_MDS;
+		taa_mitigation_enabled_ptr = &mds_mitigation_enabled;
+		return;
+	}
+
+	/*
+	 * Otherwise, we need the TAA-specific mitigation.
+	 */
+	if (msr & IA32_ARCH_TAA_NO) {
+		taa_mitigation_method = TAA_MITIGATION_TAA_NO;
+		return;
+	}
+	if (msr & IA32_ARCH_TSX_CTRL) {
+		taa_mitigation_method = TAA_MITIGATION_RTM_DISABLE;
+		return;
+	}
+}
+
+static void
+taa_set_name(void)
+{
+	char name[64] = "";
+
+	switch (taa_mitigation_method) {
+	case TAA_MITIGATION_NONE:
+		strlcpy(name, "(none)", sizeof(name));
+		break;
+	case TAA_MITIGATION_TAA_NO:
+		strlcpy(name, "[TAA_NO]", sizeof(name));
+		break;
+	case TAA_MITIGATION_MDS:
+		strlcpy(name, "[MDS]", sizeof(name));
+		break;
+	case TAA_MITIGATION_RTM_DISABLE:
+		if (!taa_mitigation_enabled) {
+			strlcpy(name, "(none)", sizeof(name));
+		} else {
+			strlcpy(name, "[RTM_DISABLE]", sizeof(name));
+		}
+		break;
+	}
+
+	strlcpy(taa_mitigation_name, name, sizeof(taa_mitigation_name));
+}
+
+static int
+mitigation_taa_change(bool enabled)
+{
+	uint64_t xc;
+
+	taa_detect_method();
+
+	switch (taa_mitigation_method) {
+	case TAA_MITIGATION_NONE:
+		printf("[!] No mitigation available\n");
+		return EOPNOTSUPP;
+	case TAA_MITIGATION_TAA_NO:
+		printf("[+] The CPU is not affected by TAA\n");
+		return 0;
+	case TAA_MITIGATION_MDS:
+		printf("[!] Mitigation based on MDS, use machdep.mds\n");
+		taa_set_name();
+		return EINVAL;
+	case TAA_MITIGATION_RTM_DISABLE:
+		printf("[+] %s TAA Mitigation...",
+		    enabled ? "Enabling" : "Disabling");
+		xc = xc_broadcast(XC_HIGHPRI, mitigation_taa_change_cpu,
+		    (void *)enabled, NULL);
+		xc_wait(xc);
+		printf(" done!\n");
+		taa_mitigation_enabled = enabled;
+		taa_set_name();
+		return 0;
+	default:
+		panic("impossible");
+	}
+}
+
+static int
+sysctl_machdep_taa_mitigated(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	bool val;
+
+	val = *(bool *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == *taa_mitigation_enabled_ptr)
+		return 0;
+	return mitigation_taa_change(val);
+}
+
+/* -------------------------------------------------------------------------- */
+
 void speculation_barrier(struct lwp *, struct lwp *);
 
 void
@@ -787,8 +966,7 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	/*
 	 * From kernel thread to kernel thread, no need for a barrier.
 	 */
-	if ((oldlwp != NULL && (oldlwp->l_flag & LW_SYSTEM)) &&
-	    (newlwp->l_flag & LW_SYSTEM))
+	if ((oldlwp->l_flag & LW_SYSTEM) && (newlwp->l_flag & LW_SYSTEM))
 		return;
 
 	switch (v2_mitigation_method) {
@@ -801,14 +979,15 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	}
 }
 
+/*
+ * cpu0 is the one that detects the method and sets the global 'enabled'
+ * variable for each mitigation.
+ */
 void
 cpu_speculation_init(struct cpu_info *ci)
 {
 	/*
 	 * Spectre V2.
-	 *
-	 * cpu0 is the one that detects the method and sets the global
-	 * variable.
 	 */
 	if (ci == &cpu_info_primary) {
 		v2_detect_method();
@@ -822,9 +1001,6 @@ cpu_speculation_init(struct cpu_info *ci)
 
 	/*
 	 * Spectre V4.
-	 *
-	 * cpu0 is the one that detects the method and sets the global
-	 * variable.
 	 *
 	 * Disabled by default, as recommended by AMD, but can be enabled
 	 * dynamically. We only detect if the CPU is not vulnerable, to
@@ -855,9 +1031,6 @@ cpu_speculation_init(struct cpu_info *ci)
 
 	/*
 	 * Microarchitectural Data Sampling.
-	 *
-	 * cpu0 is the one that detects the method and sets the global
-	 * variable.
 	 */
 	if (ci == &cpu_info_primary) {
 		mds_detect_method();
@@ -868,6 +1041,20 @@ cpu_speculation_init(struct cpu_info *ci)
 	if (mds_mitigation_method != MDS_MITIGATION_NONE &&
 	    mds_mitigation_method != MDS_MITIGATION_MDS_NO) {
 		mitigation_mds_apply_cpu(ci, true);
+	}
+
+	/*
+	 * TSX Asynchronous Abort.
+	 */
+	if (ci == &cpu_info_primary) {
+		taa_detect_method();
+		taa_mitigation_enabled =
+		    (taa_mitigation_method == TAA_MITIGATION_RTM_DISABLE) ||
+		    (taa_mitigation_method == TAA_MITIGATION_TAA_NO);
+		taa_set_name();
+	}
+	if (taa_mitigation_method == TAA_MITIGATION_RTM_DISABLE) {
+		mitigation_taa_apply_cpu(ci, true);
 	}
 }
 
@@ -967,5 +1154,27 @@ sysctl_speculation_init(struct sysctllog **clog)
 		       SYSCTL_DESCR("Mitigation method in use"),
 		       NULL, 0,
 		       mds_mitigation_name, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* TSX Asynchronous Abort */
+	spec_rnode = NULL;
+	sysctl_createv(clog, 0, NULL, &spec_rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "taa", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "mitigated",
+		       SYSCTL_DESCR("Whether TAA is mitigated"),
+		       sysctl_machdep_taa_mitigated, 0,
+		       taa_mitigation_enabled_ptr, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &spec_rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "method",
+		       SYSCTL_DESCR("Mitigation method in use"),
+		       NULL, 0,
+		       taa_mitigation_name, 0,
 		       CTL_CREATE, CTL_EOL);
 }

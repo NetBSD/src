@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.57.2.1 2019/06/10 22:05:57 christos Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.57.2.2 2020/04/13 08:03:38 martin Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.57.2.1 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.57.2.2 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,7 +63,7 @@ static inline void
 load_vfpregs_lo(const uint64_t *p)
 {
 	SETFPU;
-	__asm __volatile("vldmia\t%0, {d0-d15}" :: "r" (p) : "memory");
+	__asm __volatile(".fpu vfp\n vldmia\t%0, {d0-d15}" :: "r" (p) : "memory");
 }
 
 /* FSTMD <X>, {d0-d15} */
@@ -71,7 +71,7 @@ static inline void
 save_vfpregs_lo(uint64_t *p)
 {
 	SETFPU;
-	__asm __volatile("vstmia\t%0, {d0-d15}" :: "r" (p) : "memory");
+	__asm __volatile(".fpu vfp\n vstmia\t%0, {d0-d15}" :: "r" (p) : "memory");
 }
 
 #ifdef CPU_CORTEX
@@ -80,7 +80,7 @@ static inline void
 load_vfpregs_hi(const uint64_t *p)
 {
 	SETFPU;
-	__asm __volatile("vldmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
+	__asm __volatile(".fpu neon-vfpv4\n vldmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
 }
 
 /* FLDMD <X>, {d16-d31} */
@@ -88,7 +88,7 @@ static inline void
 save_vfpregs_hi(uint64_t *p)
 {
 	SETFPU;
-	__asm __volatile("vstmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
+	__asm __volatile(".fpu neon-vfpv4\nvstmia\t%0, {d16-d31}" :: "r" (&p[16]) : "memory");
 }
 #endif
 
@@ -332,8 +332,10 @@ vfp_attach(struct cpu_info *ci)
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
+	case FPU_VFP_CORTEXA12:
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
+	case FPU_VFP_CORTEXA17:
 	case FPU_VFP_CORTEXA53:
 	case FPU_VFP_CORTEXA57:
 		if (armreg_cpacr_read() & CPACR_V7_ASEDIS) {

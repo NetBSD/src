@@ -1,10 +1,10 @@
-/*	$NetBSD: database.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.1.1.7.4.1 2020/04/13 07:56:19 martin Exp $	*/
 
 /* database.c - deals with database subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2017 The OpenLDAP Foundation.
+ * Copyright 2001-2019 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: database.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.1.1.7.4.1 2020/04/13 07:56:19 martin Exp $");
 
 #include "portable.h"
 

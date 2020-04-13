@@ -1,6 +1,6 @@
 /* Declarations for variables relating to reading the source file.
    Used by parsers, lexical analyzers, and error message routines.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -109,6 +109,7 @@ get_finish (location_t loc)
 
 extern location_t make_location (location_t caret,
 				 location_t start, location_t finish);
+extern location_t make_location (location_t caret, source_range src_range);
 
 void dump_line_table_statistics (void);
 

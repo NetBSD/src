@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2017/02/02 21:53:54 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.14.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,12 +42,9 @@
 #define _MACHINE_VMPARAM_H_
 
 /*
- * We use 4K pages on the luna68k.  Override the PAGE_* definitions
- * to be compile-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	PGSHIFT
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 /*
  * USRSTACK is the top (end) of the user stack.

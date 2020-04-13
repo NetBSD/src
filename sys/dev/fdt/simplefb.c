@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: simplefb.c,v 1.5.2.2 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.5.2.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.5.2.2 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -114,10 +114,11 @@ simplefb_mmap(void *v, void *vs, off_t off, int prot)
 {
 	struct simplefb_softc * const sc = v;
 
-	if (off < 0 || off >= sc->sc_gen.sc_fbsize)
+	if (off < 0 || off >= (sc->sc_paddr & PAGE_MASK) +
+	    sc->sc_gen.sc_fbsize)
 		return -1;
 
-	return bus_space_mmap(sc->sc_bst, sc->sc_paddr, off, prot,
+	return bus_space_mmap(sc->sc_bst, trunc_page(sc->sc_paddr), off, prot,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.204.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.204.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.204.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.204.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -134,7 +134,6 @@ percpu_t *ip6stat_percpu;
 
 percpu_t *ip6_forward_rt_percpu __cacheline_aligned;
 
-static void ip6_init2(void);
 static void ip6intr(void *);
 static bool ip6_badaddr(struct ip6_hdr *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
@@ -185,7 +184,7 @@ ip6_init(void)
 	frag6_init();
 	ip6_desync_factor = cprng_fast32() % MAX_TEMP_DESYNC_FACTOR;
 
-	ip6_init2();
+	in6_tmpaddrtimer_init();
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
@@ -194,19 +193,7 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
-	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
-}
-
-static void
-ip6_init2(void)
-{
-
-	/* timer for regeneration of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
-	callout_reset(&in6_tmpaddrtimer_ch,
-		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
-		       ip6_temp_regen_advance) * hz,
-		      in6_tmpaddrtimer, NULL);
+	ip6_forward_rt_percpu = rtcache_percpu_alloc();
 }
 
 /*
@@ -356,7 +343,13 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			IP6_STATINC(IP6_STAT_PFILDROP_IN);
 			return;
 		}
-		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
+		if (m->m_len < sizeof(struct ip6_hdr)) {
+			if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+				IP6_STATINC(IP6_STAT_TOOSMALL);
+				in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
+				return;
+			}
+		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
@@ -399,7 +392,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad;
 	}
 
-	ro = percpu_getref(ip6_forward_rt_percpu);
+	ro = rtcache_percpu_getref(ip6_forward_rt_percpu);
 
 	/*
 	 * Multicast check
@@ -560,7 +553,7 @@ hbhcheck:
 			/* m already freed */
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 
@@ -585,7 +578,7 @@ hbhcheck:
 				    ICMP6_PARAMPROB_HEADER,
 				    (char *)&ip6->ip6_plen - (char *)ip6);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
@@ -593,7 +586,7 @@ hbhcheck:
 		if (hbh == NULL) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
 			rtcache_unref(rt, ro);
-			percpu_putref(ip6_forward_rt_percpu);
+			rtcache_percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		KASSERT(IP6_HDR_ALIGNED_P(hbh));
@@ -647,7 +640,7 @@ hbhcheck:
 
 			if (error != 0) {
 				rtcache_unref(rt, ro);
-				percpu_putref(ip6_forward_rt_percpu);
+				rtcache_percpu_putref(ip6_forward_rt_percpu);
 				IP6_STATINC(IP6_STAT_CANTFORWARD);
 				goto bad;
 			}
@@ -656,7 +649,7 @@ hbhcheck:
 			goto bad_unref;
 	} else if (!ours) {
 		rtcache_unref(rt, ro);
-		percpu_putref(ip6_forward_rt_percpu);
+		rtcache_percpu_putref(ip6_forward_rt_percpu);
 		ip6_forward(m, srcrt);
 		return;
 	}
@@ -697,7 +690,7 @@ hbhcheck:
 		rtcache_unref(rt, ro);
 		rt = NULL;
 	}
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
 
 	rh_present = 0;
 	frg_present = 0;
@@ -758,7 +751,7 @@ hbhcheck:
 
 bad_unref:
 	rtcache_unref(rt, ro);
-	percpu_putref(ip6_forward_rt_percpu);
+	rtcache_percpu_putref(ip6_forward_rt_percpu);
 bad:
 	m_freem(m);
 	return;
@@ -1063,6 +1056,8 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #define IS2292(x, y)	(y)
 #endif
 
+	KASSERT(m->m_flags & M_PKTHDR);
+
 	if (SOOPT_TIMESTAMP(so->so_options))
 		mp = sbsavetimestamp(so->so_options, mp);
 
@@ -1304,11 +1299,17 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	size_t elen;
 	struct mbuf *n;
 
+	if (off + sizeof(ip6e) > m->m_pkthdr.len)
+		return NULL;
+
 	m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 	if (nxt == IPPROTO_AH)
 		elen = (ip6e.ip6e_len + 2) << 2;
 	else
 		elen = (ip6e.ip6e_len + 1) << 3;
+
+	if (off + elen > m->m_pkthdr.len)
+		return NULL;
 
 	MGET(n, M_DONTWAIT, MT_DATA);
 	if (n && elen >= MLEN) {
@@ -1538,6 +1539,30 @@ sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(ip6stat_percpu, IP6_NSTATS));
 }
 
+static int
+sysctl_net_inet6_ip6_temppltime(SYSCTLFN_ARGS)
+{
+	int error;
+	uint32_t pltime;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &pltime;
+	pltime = ip6_temp_preferred_lifetime;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (pltime <= (MAX_TEMP_DESYNC_FACTOR + TEMPADDR_REGEN_ADVANCE))
+		return EINVAL;
+
+	ip6_temp_preferred_lifetime = pltime;
+
+	in6_tmpaddrtimer_schedule();
+
+	return 0;
+}
+
 static void
 sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 {
@@ -1749,7 +1774,7 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "temppltime",
 		       SYSCTL_DESCR("preferred lifetime of a temporary address"),
-		       NULL, 0, &ip6_temp_preferred_lifetime, 0,
+		       sysctl_net_inet6_ip6_temppltime, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

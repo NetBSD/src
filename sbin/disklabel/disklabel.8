@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.68 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.68.6.1 2020/04/13 08:03:19 martin Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 11, 2016
+.Dd July 2, 2019
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -41,37 +41,52 @@
 .Sh SYNOPSIS
 .\" disklabel: read label
 .Nm
-.Op Fl ACDFmrtv
+.Op Fl ACDFmnrtv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -e: read/modify/write using $EDITOR
 .Nm
 .Fl e
-.Op Fl CDFImrv
+.Op Fl CDFImnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -i: read/modify/write using builtin commands
 .Nm
 .Fl i
-.Op Fl DFImrv
+.Op Fl DFImnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk
 .\" disklabel -R: write from edited output
 .Nm
 .Fl R
-.Op Fl DFmrv
+.Op Fl DFmnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Ar disk Ar protofile
 .\" disklabel -w: write from disctab entry
 .Nm
 .Fl w
-.Op Fl DFmrv
+.Op Fl DFmnrv
 .Op Fl B Ar endian
+.Op Fl L Ar sector
 .Op Fl M Ar machine
+.Op Fl O Ar offset
+.Op Fl P Ar size
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -89,9 +104,9 @@ When writing the label, it can be used to change the drive identification,
 the disk partitions on the drive, or to replace a damaged label.
 .Pp
 The
-.Fl e , i , l , R , w , N ,
+.Fl e , i , l , N , R , W ,
 and
-.Fl W
+.Fl w
 options determine the basic operation.
 If none are specified the label
 is displayed.
@@ -110,21 +125,21 @@ Interactively update the existing label and write it back to the disk.
 .It Fl l
 Show all known file system types (those that can be specified along a
 partition within the label) and exit.
+.It Fl N
+Disallow writes to the disk sector that contains the label.
+This is the default state.
 .It Fl R
 Write (restore) a label by reading it from
 .Ar protofile .
 The file should be in the same format as the default output.
+.It Fl W
+Allow writes to the disk sector that contains the label.
+This state may not persist if no programs have the disk open.
 .It Fl w
 Write a standard label for the specified
 .Ar disktype .
 See
 .Xr disktab 5 .
-.It Fl N
-Disallow writes to the disk sector that contains the label.
-This is the default state.
-.It Fl W
-Allow writes to the disk sector that contains the label.
-This state may not persist if no programs have the disk open.
 .El
 .Pp
 The majority of the rest of the options affect more than one form of the
@@ -177,20 +192,37 @@ even if
 is specified.
 Implies
 .Fl r .
+.It Fl f Ar disktab
+Specify the name of a file to use instead of
+.Pa /etc/disktab .
 .It Fl I
 If a label cannot be read from
 .Ar disk
 request the default one from the kernel.
 Implies
 .Fl r .
-.It Fl f Ar disktab
-Specify the name of a file to use instead of
-.Pa /etc/disktab .
+.It Fl L Ar sector
+Specify the relative sector number of the disklabel
+similar to the environment variable
+.Ev DISKLABELSECTOR .
 .It Fl M Ar machine
 Specify the machine to generate a label for.
 Defaults to the current machine it is compiled for.
+Specific details can be overridden via environment
+and with the options
+.Fl B , L , m , n , O ,
+and
+.Fl P .
 .It Fl m
-expect the label to have an MBR.
+Expect the label to have an MBR.
+.It Fl n
+Expect the label not to have an MBR.
+.It Fl O Ar offset
+Specify the relative byte offset of the disklabel
+similar to the environment variable
+.Ev DISKLABELOFFSET .
+.It Fl P Ar size
+Specify the size of the partition table.
 .It Fl r
 Read/write the disk directly rather than using
 .Xr ioctl 2
@@ -368,3 +400,12 @@ flag causes
 to write directly to disk, and bypass the format translation.
 This will result in a disk label that the PROMs will not recognize,
 and that therefore cannot be booted from.
+.Pp
+The
+.Fl m
+flag previously toggled between using an MBR and not using an MBR,
+with the default being implied by the machine type.
+It now always enables MBR mode, independent of the machine default.
+Use the
+.Fl n
+flag to disable MBR mode.

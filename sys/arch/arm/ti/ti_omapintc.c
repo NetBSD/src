@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omapintc.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $	*/
+/*	$NetBSD: ti_omapintc.c,v 1.1.6.1 2020/04/13 08:03:38 martin Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -29,11 +29,12 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.1.6.1 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: ti_omapintc.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp
 
 #define INTC_MAX_SOURCES	128
 
+static const struct of_compat_data compat_data[] = {
+	/* compatible			number of banks */
+	{ "ti,omap3-intc",		3 },
+	{ "ti,am33xx-intc",		4 },
+	{ NULL }
+};
 
 #define	INTC_READ(sc, g, o)		\
 	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (g) * 0x20 + (o))
@@ -92,7 +99,8 @@ struct omap2icu_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	struct pic_softc sc_pic;
-	uint32_t sc_enabled_irqs[howmany(INTC_MAX_SOURCES, 32)];
+	uint32_t *sc_enabled_irqs;
+	u_int sc_nbank;
 };
 
 static struct omap2icu_softc *intc_softc;
@@ -143,20 +151,16 @@ omap_irq_handler(void *frame)
 	struct omap2icu_softc * const sc = intc_softc;
 	const int oldipl = ci->ci_cpl;
 	const uint32_t oldipl_mask = __BIT(oldipl);
-	int ipl_mask = 0;
+	int ipl_mask = 0, n;
 
 	ci->ci_data.cpu_nintr++;
 
-	if (sc->sc_enabled_irqs[0])
-		ipl_mask |= find_pending_irqs(sc, 0);
-	if (sc->sc_enabled_irqs[1])
-		ipl_mask |= find_pending_irqs(sc, 1);
-	if (sc->sc_enabled_irqs[2])
-		ipl_mask |= find_pending_irqs(sc, 2);
-	if (sc->sc_enabled_irqs[3])
-		ipl_mask |= find_pending_irqs(sc, 3);
+	for (n = 0; n < sc->sc_nbank; n++) {
+		if (sc->sc_enabled_irqs[n])
+			ipl_mask |= find_pending_irqs(sc, n);
+	}
 
-	/* force INTC to recomputq IRQ */
+	/* force INTC to recompute IRQ */
 	INTC_WRITE(sc, 0, INTC_CONTROL, INTC_CONTROL_NEWIRQAGR);
 
 	/*
@@ -221,12 +225,7 @@ omap2icu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	static const char * const compatible[] = {
-		"ti,am33xx-intc",
-		NULL
-	};
-
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 void
@@ -237,7 +236,7 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, n;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -250,19 +249,21 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_nbank = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_enabled_irqs =
+	    kmem_zalloc(sizeof(*sc->sc_enabled_irqs) * sc->sc_nbank, KM_SLEEP);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	INTC_WRITE(sc, 0, INTC_MIR_SET, 0xffffffff);
-	INTC_WRITE(sc, 1, INTC_MIR_SET, 0xffffffff);
-	INTC_WRITE(sc, 2, INTC_MIR_SET, 0xffffffff);
+	for (n = 0; n < sc->sc_nbank; n++)
+		INTC_WRITE(sc, n, INTC_MIR_SET, 0xffffffff);
 
 	sc->sc_dev = self;
 	self->dv_private = sc;
 
 	sc->sc_pic.pic_ops = &omap2icu_picops;
-	sc->sc_pic.pic_maxsources = INTC_MAX_SOURCES;
+	sc->sc_pic.pic_maxsources = sc->sc_nbank * 32;
 	snprintf(sc->sc_pic.pic_name, sizeof(sc->sc_pic.pic_name), "intc");
 	pic_add(&sc->sc_pic, 0);
 	error = fdtbus_register_interrupt_controller(self, phandle,

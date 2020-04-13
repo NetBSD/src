@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.h,v 1.2 2018/04/06 10:38:53 knakahara Exp $  */
+/*	$NetBSD: ipsecif.h,v 1.2.2.1 2020/04/13 08:05:17 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -35,6 +35,15 @@
 #define IPSEC_HLIM	64
 
 #ifdef _KERNEL
+#ifdef INET6
+extern int ip6_ipsec_hlim;
+extern int ip6_ipsec_pmtu;
+
+#define IPSEC_PMTU_SYSDEFAULT	-1	/* Use system default value (ip6_gif_pmtu) */
+#define IPSEC_PMTU_MINMTU	0	/* Fragmented by IPV6_MINMTU */
+#define IPSEC_PMTU_OUTERMTU	1	/* Fragmented by Path MTU of outer path */
+#endif
+
 int ipsecif4_encap_func(struct mbuf *, struct ip *, struct ipsec_variant *);
 int ipsecif4_attach(struct ipsec_variant *);
 int ipsecif4_detach(struct ipsec_variant *);

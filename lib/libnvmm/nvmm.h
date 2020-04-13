@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.h,v 1.12.2.2 2019/06/10 22:05:25 christos Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.12.2.3 2020/04/13 08:03:14 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,21 +38,12 @@
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_ioctl.h>
 
-struct nvmm_io {
-	uint64_t port;
-	bool in;
-	size_t size;
-	uint8_t *data;
-};
+#define NVMM_USER_VERSION	1
 
-struct nvmm_mem {
-	gpaddr_t gpa;
-	bool write;
-	size_t size;
-	uint8_t *data;
-};
+struct nvmm_io;
+struct nvmm_mem;
 
-struct nvmm_callbacks {
+struct nvmm_assist_callbacks {
 	void (*io)(struct nvmm_io *);
 	void (*mem)(struct nvmm_mem *);
 };
@@ -61,17 +52,35 @@ struct nvmm_machine {
 	nvmm_machid_t machid;
 	struct nvmm_comm_page **pages;
 	void *areas; /* opaque */
-	struct nvmm_callbacks cbs;
 };
 
 struct nvmm_vcpu {
 	nvmm_cpuid_t cpuid;
+	struct nvmm_assist_callbacks cbs;
 	struct nvmm_vcpu_state *state;
-	struct nvmm_event *event;
-	struct nvmm_exit *exit;
+	struct nvmm_vcpu_event *event;
+	struct nvmm_vcpu_exit *exit;
 };
 
-#define NVMM_MACH_CONF_CALLBACKS	NVMM_MACH_CONF_LIBNVMM_BEGIN
+struct nvmm_io {
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
+	uint16_t port;
+	bool in;
+	size_t size;
+	uint8_t *data;
+};
+
+struct nvmm_mem {
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
+	gpaddr_t gpa;
+	bool write;
+	size_t size;
+	uint8_t *data;
+};
+
+#define NVMM_VCPU_CONF_CALLBACKS	NVMM_VCPU_CONF_LIBNVMM_BEGIN
 
 #define NVMM_PROT_READ		0x01
 #define NVMM_PROT_WRITE		0x02
@@ -79,6 +88,9 @@ struct nvmm_vcpu {
 #define NVMM_PROT_USER		0x08
 #define NVMM_PROT_ALL		0x0F
 typedef uint64_t nvmm_prot_t;
+
+int nvmm_init(void);
+int nvmm_root_init(void);
 
 int nvmm_capability(struct nvmm_capability *);
 
@@ -88,6 +100,8 @@ int nvmm_machine_configure(struct nvmm_machine *, uint64_t, void *);
 
 int nvmm_vcpu_create(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_vcpu *);
 int nvmm_vcpu_destroy(struct nvmm_machine *, struct nvmm_vcpu *);
+int nvmm_vcpu_configure(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t,
+    void *);
 int nvmm_vcpu_setstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
 int nvmm_vcpu_getstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
 int nvmm_vcpu_inject(struct nvmm_machine *, struct nvmm_vcpu *);

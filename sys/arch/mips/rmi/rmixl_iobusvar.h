@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobusvar.h,v 1.1 2011/03/18 01:04:09 cliff Exp $	*/
+/*	$NetBSD: rmixl_iobusvar.h,v 1.1.62.1 2020/04/13 08:04:00 martin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #define _RMIXL_IOBUSVAR_H_
 
 struct rmixl_iobus_attach_args {
-	bus_space_tag_t		ia_obio_bst;	/* for iobus controler access */
+	bus_space_tag_t		ia_obio_bst;	/* for iobus controller access */
 	bus_space_handle_t	ia_obio_bsh;	/*  "   "     "         "     */
 	bus_space_tag_t		ia_iobus_bst;	/* for iobus access */
 	bus_addr_t		ia_iobus_addr;	/* device iobus address */

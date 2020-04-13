@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5.2.2 2020/04/08 14:07:24 martin Exp $ */
+/* $NetBSD: pmap.h,v 1.5.2.3 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <aarch64/armreg.h>
 #include <aarch64/pte.h>
 
+#define PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL
 #define PMAP_STEAL_MEMORY
 
@@ -91,7 +92,6 @@ struct pmap_page {
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
 	uint32_t pp_flags;
-#define PMAP_PAGE_FLAGS_PV_TRACKED	0x80000000
 };
 
 struct vm_page_md {
@@ -108,6 +108,10 @@ struct vm_page_md {
 		(pg)->mdpage.mdpg_pp.pp_flags = 0;		\
 	} while (/*CONSTCOND*/ 0)
 
+#define PMAP_PAGE_INIT(pp)						\
+	do {								\
+		mutex_init(&(pp)->pp_pvlock, MUTEX_SPIN, IPL_VM);	\
+	} while (/*CONSTCOND*/ 0)
 
 /* saved permission bit for referenced/modified emulation */
 #define LX_BLKPAG_OS_READ		LX_BLKPAG_OS_0
@@ -219,7 +223,7 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 		.pd_pa = DEVMAP_ALIGN(pa),		\
 		.pd_size = DEVMAP_SIZE(sz),			\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_flags = PMAP_NOCACHE		\
+		.pd_flags = PMAP_DEV			\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
 
@@ -356,6 +360,7 @@ aarch64_untag_address(vaddr_t va)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
+void	pmap_procwr(struct proc *, vaddr_t, int);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
 

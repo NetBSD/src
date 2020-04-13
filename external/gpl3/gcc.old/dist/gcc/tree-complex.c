@@ -1,5 +1,5 @@
 /* Lower complex number operations to scalar operations.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -603,6 +603,21 @@ extract_component (gimple_stmt_iterator *gsi, tree t, bool imagpart_p,
 
     case COMPLEX_EXPR:
       gcc_unreachable ();
+
+    case BIT_FIELD_REF:
+      {
+	tree inner_type = TREE_TYPE (TREE_TYPE (t));
+	t = unshare_expr (t);
+	TREE_TYPE (t) = inner_type;
+	TREE_OPERAND (t, 1) = TYPE_SIZE (inner_type);
+	if (imagpart_p)
+	  TREE_OPERAND (t, 2) = size_binop (PLUS_EXPR, TREE_OPERAND (t, 2),
+					    TYPE_SIZE (inner_type));
+	if (gimple_p)
+	  t = force_gimple_operand_gsi (gsi, t, true, NULL, true,
+					GSI_SAME_STMT);
+	return t;
+      }
 
     case VAR_DECL:
     case RESULT_DECL:
@@ -1321,6 +1336,7 @@ expand_complex_division (gimple_stmt_iterator *gsi, tree inner_type,
       rr = gimplify_build2 (gsi, code, inner_type, ai, bi);
       ri = gimplify_build2 (gsi, code, inner_type, ar, bi);
       ri = gimplify_build1 (gsi, NEGATE_EXPR, inner_type, ri);
+      break;
 
     case PAIR (ONLY_REAL, VARYING):
     case PAIR (ONLY_IMAG, VARYING):

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.28.4.1 2020/04/08 14:09:05 martin Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.28.4.2 2020/04/13 08:05:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.28.4.1 2020/04/08 14:09:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.28.4.2 2020/04/13 08:05:22 martin Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -69,13 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.28.4.1 2020/04/08 14:09:05 martin Exp
  *
  * Each pmap has two bitmaps: pm_active and pm_onproc.  Each bit in pm_active
  * indicates whether that pmap has an allocated ASID for a CPU.  Each bit in
- * pm_onproc indicates that pmap's ASID is active (equal to the ASID in COP 0
- * register EntryHi) on a CPU.  The bit number comes from the CPU's cpu_index().
- * Even though these bitmaps contain the bits for all CPUs, the bits that
- * correspond to the bits belonging to the CPUs sharing a TLB can only be
- * manipulated while holding that TLB's lock.  Atomic ops must be used to
- * update them since multiple CPUs may be changing different sets of bits at
- * same time but these sets never overlap.
+ * pm_onproc indicates that the pmap's ASID is in use, i.e. a CPU has it in its
+ * "current ASID" field, e.g. the ASID field of the COP 0 register EntryHi for
+ * MIPS, or the ASID field of TTBR0 for AA64.  The bit number used in these
+ * bitmaps comes from the CPU's cpu_index().  Even though these bitmaps contain
+ * the bits for all CPUs, the bits that  correspond to the bits belonging to
+ * the CPUs sharing a TLB can only be manipulated while holding that TLB's
+ * lock.  Atomic ops must be used to update them since multiple CPUs may be
+ * changing different sets of bits at same time but these sets never overlap.
  *
  * When a change to the local TLB may require a change in the TLB's of other
  * CPUs, we try to avoid sending an IPI if at all possible.  For instance, if

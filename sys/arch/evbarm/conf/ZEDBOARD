@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ZEDBOARD,v 1.4.2.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: ZEDBOARD,v 1.4.2.2 2020/04/13 08:03:42 martin Exp $
 #
 #	ZedBoard -- Xilinx Zynq Eval Board Kernel
 #
@@ -58,7 +58,7 @@ armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0 	at armperiph?		# ARM Generic Interrupt Controller
 arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
 arma9tmr0	at armperiph?		# A9 Global Timer
-#a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
+#arma9wdt0	at armperiph? flags 0	# A9 Watchdog Timer
 
 axi0		at mainbus?
 

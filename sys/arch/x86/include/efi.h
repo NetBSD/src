@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.8 2017/10/22 00:59:28 maya Exp $   */
+/*     $NetBSD: efi.h,v 1.8.6.1 2020/04/13 08:04:11 martin Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -62,6 +62,12 @@ enum efi_reset {
 
 typedef uint16_t       efi_char;
 typedef unsigned long efi_status;
+
+#if defined(__amd64__)
+typedef uint64_t uintn;
+#elif defined(__i386__)
+typedef uint32_t uintn;
+#endif
 
 struct efi_cfgtbl {
        struct uuid     ct_uuid;
@@ -149,6 +155,133 @@ struct efi_rt {
            efi_char *);
 };
 
+typedef uintn efi_tpl;
+typedef void *efi_event;
+typedef void (*efi_event_notify)(efi_event, void *);
+typedef void *efi_handle;
+typedef struct {
+	uint8_t type;
+	uint8_t subtype;
+	uint8_t ldnegth[2];
+} efi_device_path;
+
+struct efi_bs {
+       struct efi_tblhdr bs_hdr;
+#define		EFI_BS_SIG  0x56524553544f4f42UL
+       efi_tpl         (*bs_raisetpl)(efi_tpl);
+       void            (*bs_restoretpl)(efi_tpl);
+       efi_status      (*bs_allocatepages)(uint32_t, uint32_t,
+	   uintn, paddr_t *);
+       efi_status      (*bs_freepages)(paddr_t, uintn);
+       efi_status      (*bs_getmemorymap)(uintn *, struct efi_md *,
+	   uintn *, uintn *, uint32_t *);
+       efi_status      (*bs_allocatepool)(uint32_t, uintn, void **);
+       efi_status      (*bs_freepool)(void *);
+       efi_status      (*bs_createevent)(uint32_t, efi_tpl, efi_event_notify,
+	   void *, efi_event *);
+       efi_status      (*bs_settimer)(efi_event, uint32_t, uint64_t);
+       efi_status      (*bs_waitforevent)(uintn, efi_event *, uintn *);
+       efi_status      (*bs_signalevent)(efi_event);
+       efi_status      (*bs_closeevent)(efi_event);
+       efi_status      (*bs_checkevent)(efi_event);
+       efi_status      (*bs_installprotocolinterface)(efi_handle *,
+	   struct uuid *, uint32_t, void *);
+       efi_status      (*bs_reinstallprotocolinterface)(efi_handle *,
+	   struct uuid *, void *, void *);
+       efi_status      (*bs_uninstallprotocolinterface)(efi_handle *,
+	   struct uuid *, void *);
+       efi_status      (*bs_handleprotocol)(efi_handle,
+	   struct uuid *, void **);
+       efi_status      (*bs_pchandleprotocol)(efi_handle,
+	   struct uuid *, void **);
+       efi_status      (*bs_registerprotocolnotify)(struct uuid *, efi_event,
+	   void **);
+       efi_status      (*bs_locatehandle)(uint32_t, struct uuid *, void *,
+	   uintn *, efi_handle *);
+       efi_status      (*bs_locatedevicepath)(struct uuid *, efi_device_path **,
+	   efi_handle *);
+       efi_status      (*bs_installconfigurationtable)(struct uuid *, void *);
+       efi_status      (*bs_loadimage)(uint8_t, efi_handle, efi_device_path *,
+	   void *, uintn, efi_handle *);
+       efi_status      (*bs_startimage)(efi_handle, uintn *, efi_char **);
+       efi_status      (*bs_exit)(efi_handle, efi_status, uintn, efi_char *);
+       efi_status      (*bs_unloadimage)(efi_handle);
+       efi_status      (*bs_exitbootservices)(efi_handle, uintn);
+       efi_status      (*bs_getnextmonotoniccount)(uint64_t *);
+       efi_status      (*bs_stall)(uintn);
+       efi_status      (*bs_setwatchdogtimer)(uintn, uint64_t,
+	   uintn, efi_char *);
+       efi_status      (*bs_connectcontroller)(efi_handle, efi_handle *,
+	    efi_device_path *, uint8_t);
+       efi_status      (*bs_disconnectcontroller)(efi_handle, efi_handle,
+	    efi_handle);
+       efi_status      (*bs_openprotocol)(efi_handle, struct uuid *, void **,
+	    efi_handle, efi_handle, uint32_t);
+       efi_status      (*bs_closeprotocol)(efi_handle, struct uuid *,
+	    efi_handle, efi_handle);
+       efi_status      (*bs_openprotocolinformation)(efi_handle, efi_handle,
+	    uint32_t, uint32_t);
+       efi_status      (*bs_protocolsperhandle)(efi_handle,
+	    struct uuid ***, uintn *);
+       efi_status      (*bs_locatehandlebuffer)(uint32_t, struct uuid *,
+	    void *, uintn *, efi_handle **);
+       efi_status      (*bs_locateprotocol)(struct uuid *, void *, void **);
+       efi_status      (*bs_installmultipleprotocolinterfaces)(efi_handle *,
+	    ...);
+       efi_status      (*bs_uninstallmultipleprotocolinterfaces)(efi_handle,
+	    ...);
+       efi_status      (*bs_calculatecrc32)(void *, uintn, uint32_t *);
+       efi_status      (*bs_copymem)(void *, void *, uintn);
+       efi_status      (*bs_setmem)(void *, uintn, uint8_t);
+       efi_status      (*bs_createeventex)(uint32_t, efi_tpl, 
+	   efi_event_notify, void *, struct uuid, efi_event *);
+};
+
+struct efi_input;
+
+struct efi_key {
+	uint16_t	scancode;
+	efi_char	unicodechar;
+};
+
+struct efi_input {
+	efi_status     (*ei_reset)(struct efi_input *, uint8_t);
+	efi_status     (*ei_readkeystroke)(struct efi_input *,
+	    struct efi_key *);
+	void            *ei_waitforkey;
+};
+
+typedef struct efi_input efi_input;
+
+struct efi_text_output_mode {
+	int32_t	maxmode;
+	int32_t mode;
+	int32_t attribute;
+	int32_t cursorcolumn;
+	int32_t cursorrow;
+	uint8_t cursorvisible;
+};
+
+
+struct efi_output;
+
+struct efi_output {
+	efi_status     (*ei_reset)(struct efi_output *, uint8_t);
+	efi_status     (*ei_outputstring)(struct efi_output *, efi_char *);
+	efi_status     (*ei_teststring)(struct efi_output *, efi_char *);
+	efi_status     (*ei_textquerymode)(struct efi_output *,
+	    uintn, uintn *, uintn *);
+	efi_status     (*ei_textsetmode)(struct efi_output *, uintn);
+	efi_status     (*ei_setattribute)(struct efi_output *, uintn);
+	efi_status     (*ei_clearscreen)(struct efi_output *);
+	efi_status     (*ei_setcursorposition)(struct efi_output *,
+	    uintn, uintn);
+	efi_status     (*ei_enablecursor)(struct efi_output *, uint8_t);
+	struct efi_text_output_mode *ei_mode;
+};
+
+typedef struct efi_output efi_output;
+
 struct efi_systbl {
        struct efi_tblhdr st_hdr;
 #define        EFI_SYSTBL_SIG  0x5453595320494249UL
@@ -157,14 +290,14 @@ struct efi_systbl {
 #ifdef __amd64__
        uint32_t        __pad;
 #endif
-       void            *st_cin;
-       void            *st_cinif;
-       void            *st_cout;
-       void            *st_coutif;
-       void            *st_cerr;
-       void            *st_cerrif;
+       efi_handle      *st_cin;
+       efi_input       *st_cinif;
+       efi_handle      *st_cout;
+       efi_output      *st_coutif;
+       efi_handle      *st_cerr;
+       efi_output      *st_cerrif;
        struct efi_rt   *st_rt;
-       void            *st_bs;
+       struct efi_bs   *st_bs;
        u_long          st_entries;
        struct efi_cfgtbl *st_cfgtbl;
 };

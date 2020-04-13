@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.7.4.1 2020/04/13 07:56:19 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.1.1.7.4.1 2020/04/13 07:56:19 martin Exp $");
 
 #include "portable.h"
 
@@ -349,12 +349,15 @@ down:;
 
 	default:
 other:;
+		/* convert rc to the correct LDAP error and send it back to the client:
+		   assing the error to rs, so we can use it as argument to slap_map_api2result
+		   and then assign the output back to rs->sr_err */
 		rs->sr_err = rc;
-		rc = slap_map_api2result( rs );
+		rs->sr_err = slap_map_api2result( rs );
 
 		ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
 		meta_clear_one_candidate( op, mc, candidate );
-		candidates[ candidate ].sr_err = rc;
+		candidates[ candidate ].sr_err = rs->sr_err;
 		if ( META_BACK_ONERR_STOP( mi ) ) {
 			LDAP_BACK_CONN_TAINTED_SET( mc );
 			meta_back_release_conn_lock( mi, mc, 0 );

@@ -1,4 +1,4 @@
-.\" $NetBSD: axe.4,v 1.13.12.1 2019/06/10 22:05:39 christos Exp $
+.\" $NetBSD: axe.4,v 1.13.12.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2003-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/axe.4,v 1.3 2003/05/29 21:28:35 ru Exp $
 .\" $OpenBSD: axe.4,v 1.37 2009/11/08 20:25:29 jasper Exp $
 .\"
-.Dd August 31, 2018
+.Dd August 24, 2019
 .Dt AXE 4
 .Os
 .Sh NAME
@@ -178,11 +178,16 @@ if this media option is not specified.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
+.Xr usbnet 4 ,
 .Xr ifconfig 8
 .Rs
 .%T ASIX AX88172 data sheet

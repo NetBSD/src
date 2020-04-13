@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.8.2.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.8.2.2 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -29,6 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
+/* Use DWCGMAC_MPSAFE inside the front-ends for interrupt handlers.  */
+#ifdef NET_MPSAFE
+#define DWCGMAC_MPSAFE	1
+#endif
+
+#ifdef DWCGMAC_MPSAFE
+#define DWCGMAC_FDT_INTR_MPSAFE FDT_INTR_MPSAFE
+#else
+#define DWCGMAC_FDT_INTR_MPSAFE 0
+#endif
 
 /*
  * We could use 1024 DMA descriptors to fill up an 8k page (each is 16 byte).
@@ -106,10 +120,10 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
 	const struct dwc_gmac_desc_methods *sc_descm;
-	short sc_if_flags;			/* shadow of ether flags */
+	u_short sc_if_flags;			/* shadow of ether flags */
 	uint16_t sc_mii_clk;
 	bool sc_stopping;
-
+	krndsource_t rnd_source;
 	kmutex_t *sc_lock;			/* lock for softc operations */
 
 	struct if_percpuq *sc_ipq;		/* softint-based input queues */

@@ -8,10 +8,10 @@
 # information regarding copyright ownership.
 
 rm -f dig.out.test*
-rm -f ns1/named.conf
-rm -f ns3/named.conf
-rm -f ns3/root.bk
+rm -f ns*/named.conf
+rm -f ns*/root.bk
 rm -f rndc.out.test*
 rm -f */named.run */named.memstats
 rm -f ns*/managed-keys.bind*
 rm -f ns*/named_dump*
+rm -f ns*/named.stats*

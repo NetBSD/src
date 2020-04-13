@@ -754,7 +754,7 @@ atf_init_test_cases()
 	atf_add_test_case can_change_color
 	atf_add_test_case assume_default_colors
 	atf_add_test_case attributes
-#	atf_add_test_case beep  # comment out for now - return is wrong
+	atf_add_test_case beep
 	atf_add_test_case background
 	atf_add_test_case cbreak
 	atf_add_test_case chgat
@@ -763,9 +763,9 @@ atf_init_test_cases()
 	atf_add_test_case curs_set
 	atf_add_test_case define_key
 #	atf_add_test_case delay_output # not working
-#	atf_add_test_case derwin # not working
+	atf_add_test_case derwin
 	atf_add_test_case doupdate
-#	atf_add_test_case dupwin # not working
+	atf_add_test_case dupwin
 	atf_add_test_case erasechar
 	atf_add_test_case flash
 	atf_add_test_case getattrs
@@ -785,7 +785,7 @@ atf_init_test_cases()
 	atf_add_test_case innstr
 	atf_add_test_case is_linetouched
 	atf_add_test_case is_wintouched
-#	atf_add_test_case keyname # not working
+	atf_add_test_case keyname
 	atf_add_test_case keyok
 	atf_add_test_case killchar
 	atf_add_test_case meta
@@ -802,9 +802,9 @@ atf_init_test_cases()
 	atf_add_test_case mvhline
 	atf_add_test_case mvinchnstr
 	atf_add_test_case mvprintw
-#	atf_add_test_case mvscanw # not working
+	atf_add_test_case mvscanw
 	atf_add_test_case mvvline
-#	atf_add_test_case pad # not working
+	atf_add_test_case pad
 	atf_add_test_case nocbreak
 	atf_add_test_case nodelay
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.9.16.1 2020/04/08 14:08:50 martin Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.9.16.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.9.16.1 2020/04/08 14:08:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.9.16.2 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -234,8 +234,8 @@ tmpfs_strname_free(struct tmpfs_mount *mp, char *str, size_t len)
 bool
 tmpfs_strname_neqlen(struct componentname *fcnp, struct componentname *tcnp)
 {
-	const size_t fln = roundup2(fcnp->cn_namelen, TMPFS_NAME_QUANTUM);
-	const size_t tln = roundup2(tcnp->cn_namelen, TMPFS_NAME_QUANTUM);
+	const size_t fln = fcnp->cn_namelen;
+	const size_t tln = tcnp->cn_namelen;
 
 	return (fln != tln) || memcmp(fcnp->cn_nameptr, tcnp->cn_nameptr, fln);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/19 08:49:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2020/04/13 08:02:30 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
 
-CPPFLAGS+=	-DHAVE_STRLCPY
+CPPFLAGS+=	-DHAVE_STRLCPY -D_CONST_X_STRING
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

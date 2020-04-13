@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.36 2016/04/21 18:06:06 macallan Exp $ */
+/*	$NetBSD: fb.c,v 1.36.18.1 2020/04/13 08:04:48 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.36 2016/04/21 18:06:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.36.18.1 2020/04/13 08:04:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,21 +172,16 @@ fb_attach(struct fbdevice *fb, int isconsole)
 			fbl = fbl->fb_next;
 			nfb++;
 		}
-		if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
-		    M_DEVBUF, M_NOWAIT)) == NULL)
-			printf("%s: replacing %s at /dev/fb0\n",
-			    device_xname(fb->fb_device),
-			    device_xname(fblist.fb_dev->fb_device));
-		else {
-			fbl = fbl->fb_next;
-			nfb++;
-			fbl->fb_dev = fblist.fb_dev;
-			fbl->fb_next = NULL;
-			aprint_normal_dev(fbl->fb_dev->fb_device,
-			    "moved to /dev/fb%d\n", nfb);
-			aprint_normal_dev(fbl->fb_dev->fb_device,
-			    "attached to /dev/fb0\n");
-		}
+		fbl->fb_next = malloc(sizeof (struct fbdevlist),
+		    M_DEVBUF, M_WAITOK);
+		fbl = fbl->fb_next;
+		nfb++;
+		fbl->fb_dev = fblist.fb_dev;
+		fbl->fb_next = NULL;
+		aprint_normal_dev(fbl->fb_dev->fb_device,
+		    "moved to /dev/fb%d\n", nfb);
+		aprint_normal_dev(fbl->fb_dev->fb_device,
+		    "attached to /dev/fb0\n");
 		fblist.fb_dev = fb;
 		if (fb->fb_flags & FB_FORCE)
 			seen_force = 1;
@@ -197,13 +192,8 @@ fb_attach(struct fbdevice *fb, int isconsole)
 				fbl = fbl->fb_next;
 				nfb++;
 			}
-			if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
-			    M_DEVBUF, M_NOWAIT)) == NULL) {
-				aprint_error_dev(fb->fb_device,
-				    "no space to attach after /dev/fb%d\n",
-				    nfb);
-				return;
-			}
+			fbl->fb_next = malloc(sizeof (struct fbdevlist),
+			    M_DEVBUF, M_WAITOK);
 			fbl = fbl->fb_next;
 			nfb++;
 		}
@@ -381,4 +371,3 @@ fb_setsize_eeprom(struct fbdevice *fb, int depth, int def_width, int def_height)
 	fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 #endif /* !SUN4U */
 }
-

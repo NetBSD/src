@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.17 2017/06/16 22:39:34 pgoyette Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.17.6.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.17 2017/06/16 22:39:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.17.6.1 2020/04/13 08:03:39 martin Exp $");
 
 #include "gpio.h"
 #include "opt_pxa2x0_gpio.h"
@@ -280,8 +280,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (sc->sc_handlers[gpio] != NULL)
 		panic("pxa2x0_gpio_intr_establish: illegal shared interrupt");
 
-	gh = malloc(sizeof(struct gpio_irq_handler), M_DEVBUF, M_NOWAIT);
-
+	gh = malloc(sizeof(struct gpio_irq_handler), M_DEVBUF, M_WAITOK);
 	gh->gh_func = func;
 	gh->gh_arg = arg;
 	gh->gh_spl = spl;

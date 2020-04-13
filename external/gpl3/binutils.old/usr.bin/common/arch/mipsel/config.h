@@ -190,7 +190,7 @@
 /* #undef HAVE_WINDOWS_H */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+#define ICONV_CONST
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

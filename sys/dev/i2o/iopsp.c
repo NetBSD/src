@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.37 2015/08/16 19:22:33 msaitoh Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.37.18.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.37 2015/08/16 19:22:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.37.18.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ iopsp_attach(device_t parent, device_t self, void *aux)
 	 * purposes only.
 	 */
 	size = sc->sc_channel.chan_ntargets * sizeof(struct iopsp_target);
-	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
+	sc->sc_targetmap = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 
  	/* Build the two maps, and attach to scsipi. */
 	if (iopsp_reconfig(self) != 0) {

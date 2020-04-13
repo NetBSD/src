@@ -1,4 +1,4 @@
-.\"	$NetBSD: sk.4,v 1.19.2.1 2019/06/10 22:05:40 christos Exp $
+.\"	$NetBSD: sk.4,v 1.19.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2003, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/man4.i386/sk.4,v 1.3 1999/08/28 00:20:29 peter Exp $
 .\"
-.Dd January 9, 2018
+.Dd August 24, 2019
 .Dt SK 4
 .Os
 .Sh NAME
@@ -208,7 +208,7 @@ Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode.
 .\" by adding media options to the appropriate
-.\" .Xr hostname.if 5
+.Xr ifconfig.if 5
 .\" file.
 .It Cm media No 1000baseSX Cm mediaopt No full-duplex
 Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
@@ -247,6 +247,7 @@ the network connection (cable).
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T XaQti XMAC II datasheet

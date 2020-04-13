@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.21.18.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: jmide.c,v 1.21.18.2 2020/04/13 08:04:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.21.18.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.21.18.2 2020/04/13 08:04:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,11 +278,7 @@ jmide_attach(device_t parent, device_t self, void *aux)
 		return;
 	if (pa->pa_function == 1 && (pcictrl0 & JM_CONTROL0_PCIIDE_F1) == 0)
 		return;
-	pp = malloc(sizeof(struct pciide_product_desc), M_DEVBUF, M_NOWAIT);
-	if (pp == NULL) {
-		aprint_error("%s: can't malloc sc_pp\n", JM_NAME(sc));
-		return;
-	}
+	pp = malloc(sizeof(struct pciide_product_desc), M_DEVBUF, M_WAITOK);
 	aprint_normal("%s: PCI IDE interface used", JM_NAME(sc));
 	pp->ide_product = 0;
 	pp->ide_flags = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.2.4.3 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.3 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,16 +42,24 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp
 
 #include <dev/fdt/fdtvar.h>
 
-#define	SUNXI_I2S_CLK_RATE	24576000
+#define	SUNXI_I2S_CLK_RATE		24576000
+#define	SUNXI_I2S_SAMPLE_RATE		48000
 
 #define	DA_CTL		0x00
+#define	 DA_CTL_BCLK_OUT __BIT(18)	/* sun8i */
+#define	 DA_CLK_LRCK_OUT __BIT(17)	/* sun8i */
 #define	 DA_CTL_SDO_EN	__BIT(8)
-#define	 DA_CTL_MS	__BIT(5)
-#define	 DA_CTL_PCM	__BIT(4)
+#define	 DA_CTL_MS	__BIT(5)	/* sun4i */
+#define	 DA_CTL_PCM	__BIT(4)	/* sun4i */
+#define	 DA_CTL_MODE_SEL __BITS(5,4)	/* sun8i */
+#define	  DA_CTL_MODE_SEL_PCM	0
+#define	  DA_CTL_MODE_SEL_LJ	1
+#define	  DA_CTL_MODE_SEL_RJ	2
 #define	 DA_CTL_TXEN	__BIT(2)
 #define	 DA_CTL_RXEN	__BIT(1)
 #define	 DA_CTL_GEN	__BIT(0)
 #define	DA_FAT0		0x04
+#define	 DA_FAT0_LRCK_PERIOD __BITS(17,8) /* sun8i */
 #define	 DA_FAT0_LRCP	__BIT(7)
 #define	  DA_LRCP_NORMAL	0
 #define	  DA_LRCP_INVERTED	1
@@ -79,20 +87,34 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp
 #define	 DA_INT_RX_DRQ	__BIT(3)
 #define	DA_TXFIFO	0x20
 #define	DA_CLKD		0x24
-#define	 DA_CLKD_MCLKO_EN __BIT(7)
-#define	 DA_CLKD_BCLKDIV __BITS(6,4)
+#define	 DA_CLKD_MCLKO_EN_SUN8I __BIT(8)
+#define	 DA_CLKD_MCLKO_EN_SUN4I __BIT(7)
+#define	 DA_CLKD_BCLKDIV_SUN8I __BITS(7,4)
+#define	 DA_CLKD_BCLKDIV_SUN4I __BITS(6,4)
 #define	  DA_CLKD_BCLKDIV_8	3
 #define	  DA_CLKD_BCLKDIV_16	5
 #define	 DA_CLKD_MCLKDIV __BITS(3,0)
 #define	  DA_CLKD_MCLKDIV_1	0
 #define	DA_TXCNT	0x28
 #define	DA_RXCNT	0x2c
+#define	DA_CHCFG	0x30		/* sun8i */
+#define	 DA_CHCFG_TX_SLOT_HIZ	__BIT(9)
+#define	 DA_CHCFG_TXN_STATE	__BIT(8)
+#define	 DA_CHCFG_RX_SLOT_NUM	__BITS(6,4)
+#define	 DA_CHCFG_TX_SLOT_NUM	__BITS(2,0)
 
+#define	DA_CHSEL_OFFSET	__BITS(13,12)	/* sun8i */
 #define	DA_CHSEL_EN	__BITS(11,4)
 #define	DA_CHSEL_SEL	__BITS(2,0)
 
+enum sunxi_i2s_type {
+	SUNXI_I2S_SUN4I,
+	SUNXI_I2S_SUN8I,
+};
+
 struct sunxi_i2s_config {
 	const char	*name;
+	enum sunxi_i2s_type type;
 	bus_size_t	txchsel;
 	bus_size_t	txchmap;
 	bus_size_t	rxchsel;
@@ -101,15 +123,27 @@ struct sunxi_i2s_config {
 
 static const struct sunxi_i2s_config sun50i_a64_codec_config = {
 	.name = "Audio Codec (digital part)",
+	.type = SUNXI_I2S_SUN4I,
 	.txchsel = 0x30,
 	.txchmap = 0x34,
 	.rxchsel = 0x38,
 	.rxchmap = 0x3c,
 };
 
+static const struct sunxi_i2s_config sun8i_h3_config = {
+	.name = "I2S/PCM controller",
+	.type = SUNXI_I2S_SUN8I,
+	.txchsel = 0x34,
+	.txchmap = 0x44,
+	.rxchsel = 0x54,
+	.rxchmap = 0x58,
+};
+
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun50i-a64-codec-i2s",
 	  (uintptr_t)&sun50i_a64_codec_config },
+	{ "allwinner,sun8i-h3-i2s",
+	  (uintptr_t)&sun8i_h3_config },
 
 	{ NULL }
 };
@@ -150,6 +184,7 @@ struct sunxi_i2s_softc {
 	bus_dma_tag_t		sc_dmat;
 	int			sc_phandle;
 	bus_addr_t		sc_baseaddr;
+	struct clk		*sc_clk;
 
 	struct sunxi_i2s_config	*sc_cfg;
 
@@ -166,10 +201,62 @@ struct sunxi_i2s_softc {
 	struct audio_dai_device	sc_dai;
 };
 
+#define	I2S_TYPE(sc)	((sc)->sc_cfg->type)
+
 #define	I2S_READ(sc, reg)			\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	I2S_WRITE(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+static const u_int sun4i_i2s_bclk_divmap[] = {
+	[0] = 2,
+	[1] = 4,
+	[2] = 6,
+	[3] = 8,
+	[4] = 12,
+	[5] = 16,
+};
+
+static const u_int sun4i_i2s_mclk_divmap[] = {
+	[0] = 1,
+	[1] = 2,
+	[2] = 4,
+	[3] = 6,
+	[4] = 8,
+	[5] = 12,
+	[6] = 16,
+	[7] = 24,
+};
+
+static const u_int sun8i_i2s_divmap[] = {
+	[1] = 1,
+	[2] = 2,
+	[3] = 4,
+	[4] = 6,
+	[5] = 8,
+	[6] = 12,
+	[7] = 16,
+	[8] = 24,
+	[9] = 32,
+	[10] = 48,
+	[11] = 64,
+	[12] = 96,
+	[13] = 128,
+	[14] = 176,
+	[15] = 192,
+};
+
+static u_int
+sunxi_i2s_div_to_regval(const u_int *divmap, u_int divmaplen, u_int div)
+{
+	u_int n;
+
+	for (n = 0; n < divmaplen; n++)
+		if (divmap[n] == div)
+			return n;
+
+	return -1;
+}
 
 static int
 sunxi_i2s_allocdma(struct sunxi_i2s_softc *sc, size_t size,
@@ -246,13 +333,6 @@ sunxi_i2s_set_format(void *priv, int setmode,
     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 
-	if ((setmode & AUMODE_PLAY)) {
-		pfil->codec = audio_internal_to_linear32;
-	}
-	if ((setmode & AUMODE_RECORD)) {
-		rfil->codec = audio_linear32_to_internal;
-	}
-
 	return 0;
 }
 
@@ -296,9 +376,17 @@ sunxi_i2s_freem(void *priv, void *addr, size_t size)
 static int
 sunxi_i2s_get_props(void *priv)
 {
+	struct sunxi_i2s_softc * const sc = priv;
+	int props = 0;
 
-	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
-	    AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
+	if (sc->sc_pchan.ch_dma != NULL)
+		props |= AUDIO_PROP_PLAYBACK;
+	if (sc->sc_rchan.ch_dma != NULL)
+		props |= AUDIO_PROP_CAPTURE;
+	if (sc->sc_pchan.ch_dma != NULL && sc->sc_rchan.ch_dma != NULL)
+		props |= AUDIO_PROP_FULLDUPLEX;
+
+	return props;
 }
 
 static int
@@ -312,6 +400,9 @@ sunxi_i2s_trigger_output(void *priv, void *start, void *end, int blksize,
 	bus_size_t psize;
 	uint32_t val;
 	int error;
+
+	if (ch->ch_dma == NULL)
+		return EIO;
 
 	pstart = 0;
 	psize = (uintptr_t)end - (uintptr_t)start;
@@ -371,6 +462,9 @@ sunxi_i2s_trigger_input(void *priv, void *start, void *end, int blksize,
 	uint32_t val;
 	int error;
 
+	if (ch->ch_dma == NULL)
+		return EIO;
+
 	pstart = 0;
 	psize = (uintptr_t)end - (uintptr_t)start;
 
@@ -424,6 +518,9 @@ sunxi_i2s_halt_output(void *priv)
 	struct sunxi_i2s_chan *ch = &sc->sc_pchan;
 	uint32_t val;
 
+	if (ch->ch_dma == NULL)
+		return EIO;
+
 	/* Disable DMA channel */
 	fdtbus_dma_halt(ch->ch_dma);
 
@@ -447,6 +544,9 @@ sunxi_i2s_halt_input(void *priv)
 	struct sunxi_i2s_softc * const sc = priv;
 	struct sunxi_i2s_chan *ch = &sc->sc_rchan;
 	uint32_t val;
+
+	if (ch->ch_dma == NULL)
+		return EIO;
 
 	/* Disable DMA channel */
 	fdtbus_dma_halt(ch->ch_dma);
@@ -509,10 +609,8 @@ sunxi_i2s_chan_init(struct sunxi_i2s_softc *sc,
 	ch->ch_sc = sc;
 	ch->ch_mode = mode;
 	ch->ch_dma = fdtbus_dma_get(sc->sc_phandle, dmaname, sunxi_i2s_dmaintr, ch);
-	if (ch->ch_dma == NULL) {
-		aprint_error(": couldn't get dma channel \"%s\"\n", dmaname);
+	if (ch->ch_dma == NULL)
 		return ENXIO;
-	}
 
 	if (mode == AUMODE_PLAY) {
 		ch->ch_req.dreq_dir = FDT_DMA_WRITE;
@@ -523,9 +621,9 @@ sunxi_i2s_chan_init(struct sunxi_i2s_softc *sc,
 		ch->ch_req.dreq_dev_phys =
 		    sc->sc_baseaddr + DA_RXFIFO;
 	}
-	ch->ch_req.dreq_mem_opt.opt_bus_width = 32;
+	ch->ch_req.dreq_mem_opt.opt_bus_width = 16;
 	ch->ch_req.dreq_mem_opt.opt_burst_len = 8;
-	ch->ch_req.dreq_dev_opt.opt_bus_width = 32;
+	ch->ch_req.dreq_dev_opt.opt_bus_width = 16;
 	ch->ch_req.dreq_dev_opt.opt_burst_len = 8;
 
 	return 0;
@@ -535,14 +633,56 @@ static int
 sunxi_i2s_dai_set_sysclk(audio_dai_tag_t dai, u_int rate, int dir)
 {
 	struct sunxi_i2s_softc * const sc = audio_dai_private(dai);
+	int bclk_val, mclk_val;
 	uint32_t val;
+	int error;
 
-	/* XXX */
+	error = clk_set_rate(sc->sc_clk, SUNXI_I2S_CLK_RATE);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't set mod clock rate to %u Hz: %d\n", SUNXI_I2S_CLK_RATE, error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't enable mod clock: %d\n", error);
+		return error;
+	}
 
-	val = DA_CLKD_MCLKO_EN;
-	val |= __SHIFTIN(DA_CLKD_BCLKDIV_8, DA_CLKD_BCLKDIV);
-	val |= __SHIFTIN(DA_CLKD_MCLKDIV_1, DA_CLKD_MCLKDIV);
+	const u_int bclk_prate = I2S_TYPE(sc) == SUNXI_I2S_SUN4I ? rate : SUNXI_I2S_CLK_RATE;
 
+	const u_int bclk_div = bclk_prate / (2 * 32 * SUNXI_I2S_SAMPLE_RATE);
+	const u_int mclk_div = SUNXI_I2S_CLK_RATE / rate;
+
+	if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+		bclk_val = sunxi_i2s_div_to_regval(sun4i_i2s_bclk_divmap,
+		    __arraycount(sun4i_i2s_bclk_divmap), bclk_div);
+		mclk_val = sunxi_i2s_div_to_regval(sun4i_i2s_mclk_divmap,
+		    __arraycount(sun4i_i2s_mclk_divmap), mclk_div);
+	} else {
+		bclk_val = sunxi_i2s_div_to_regval(sun8i_i2s_divmap,
+		    __arraycount(sun8i_i2s_divmap), bclk_div);
+		mclk_val = sunxi_i2s_div_to_regval(sun8i_i2s_divmap,
+		    __arraycount(sun8i_i2s_divmap), mclk_div);
+	}
+	if (bclk_val == -1 || mclk_val == -1) {
+		aprint_error_dev(sc->sc_dev, "couldn't configure bclk/mclk dividers\n");
+		return EIO;
+	}
+
+	val = I2S_READ(sc, DA_CLKD);
+	if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+		val |= DA_CLKD_MCLKO_EN_SUN4I;
+		val &= ~DA_CLKD_BCLKDIV_SUN4I;
+		val |= __SHIFTIN(bclk_val, DA_CLKD_BCLKDIV_SUN4I);
+	} else {
+		val |= DA_CLKD_MCLKO_EN_SUN8I;
+		val &= ~DA_CLKD_BCLKDIV_SUN8I;
+		val |= __SHIFTIN(bclk_val, DA_CLKD_BCLKDIV_SUN8I);
+	}
+	val &= ~DA_CLKD_MCLKDIV;
+	val |= __SHIFTIN(mclk_val, DA_CLKD_MCLKDIV);
 	I2S_WRITE(sc, DA_CLKD, val);
 
 	return 0;
@@ -552,7 +692,8 @@ static int
 sunxi_i2s_dai_set_format(audio_dai_tag_t dai, u_int format)
 {
 	struct sunxi_i2s_softc * const sc = audio_dai_private(dai);
-	uint32_t ctl, fat0;
+	uint32_t ctl, fat0, chsel;
+	u_int offset;
 
 	const u_int fmt = __SHIFTOUT(format, AUDIO_DAI_FORMAT_MASK);
 	const u_int pol = __SHIFTOUT(format, AUDIO_DAI_POLARITY_MASK);
@@ -561,39 +702,96 @@ sunxi_i2s_dai_set_format(audio_dai_tag_t dai, u_int format)
 	ctl = I2S_READ(sc, DA_CTL);
 	fat0 = I2S_READ(sc, DA_FAT0);
 
-	fat0 &= ~DA_FAT0_FMT;
-	switch (fmt) {
-	case AUDIO_DAI_FORMAT_I2S:
-		fat0 |= __SHIFTIN(DA_FMT_I2S, DA_FAT0_FMT);
-		break;
-	case AUDIO_DAI_FORMAT_RJ:
-		fat0 |= __SHIFTIN(DA_FMT_RJ, DA_FAT0_FMT);
-		break;
-	case AUDIO_DAI_FORMAT_LJ:
-		fat0 |= __SHIFTIN(DA_FMT_LJ, DA_FAT0_FMT);
-		break;
-	default:
-		return EINVAL;
+	if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+		fat0 &= ~DA_FAT0_FMT;
+		switch (fmt) {
+		case AUDIO_DAI_FORMAT_I2S:
+			fat0 |= __SHIFTIN(DA_FMT_I2S, DA_FAT0_FMT);
+			break;
+		case AUDIO_DAI_FORMAT_RJ:
+			fat0 |= __SHIFTIN(DA_FMT_RJ, DA_FAT0_FMT);
+			break;
+		case AUDIO_DAI_FORMAT_LJ:
+			fat0 |= __SHIFTIN(DA_FMT_LJ, DA_FAT0_FMT);
+			break;
+		default:
+			return EINVAL;
+		}
+		ctl &= ~DA_CTL_PCM;
+	} else {
+		ctl &= ~DA_CTL_MODE_SEL;
+		switch (fmt) {
+		case AUDIO_DAI_FORMAT_I2S:
+			ctl |= __SHIFTIN(DA_CTL_MODE_SEL_LJ, DA_CTL_MODE_SEL);
+			offset = 1;
+			break;
+		case AUDIO_DAI_FORMAT_LJ:
+			ctl |= __SHIFTIN(DA_CTL_MODE_SEL_LJ, DA_CTL_MODE_SEL);
+			offset = 0;
+			break;
+		case AUDIO_DAI_FORMAT_RJ:
+			ctl |= __SHIFTIN(DA_CTL_MODE_SEL_RJ, DA_CTL_MODE_SEL);
+			offset = 0;
+			break;
+		case AUDIO_DAI_FORMAT_DSPA:
+			ctl |= __SHIFTIN(DA_CTL_MODE_SEL_PCM, DA_CTL_MODE_SEL);
+			offset = 1;
+			break;
+		case AUDIO_DAI_FORMAT_DSPB:
+			ctl |= __SHIFTIN(DA_CTL_MODE_SEL_PCM, DA_CTL_MODE_SEL);
+			offset = 0;
+			break;
+		default:
+			return EINVAL;
+		}
+
+		chsel = I2S_READ(sc, sc->sc_cfg->txchsel);
+		chsel &= ~DA_CHSEL_OFFSET;
+		chsel |= __SHIFTIN(offset, DA_CHSEL_OFFSET);
+		I2S_WRITE(sc, sc->sc_cfg->txchsel, chsel);
+
+		chsel = I2S_READ(sc, sc->sc_cfg->rxchsel);
+		chsel &= ~DA_CHSEL_OFFSET;
+		chsel |= __SHIFTIN(offset, DA_CHSEL_OFFSET);
+		I2S_WRITE(sc, sc->sc_cfg->rxchsel, chsel);
 	}
 
 	fat0 &= ~(DA_FAT0_LRCP|DA_FAT0_BCP);
-	if (AUDIO_DAI_POLARITY_B(pol))
-		fat0 |= __SHIFTIN(DA_BCP_INVERTED, DA_FAT0_BCP);
-	if (AUDIO_DAI_POLARITY_F(pol))
-		fat0 |= __SHIFTIN(DA_LRCP_INVERTED, DA_FAT0_LRCP);
+	if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+		if (AUDIO_DAI_POLARITY_B(pol))
+			fat0 |= __SHIFTIN(DA_BCP_INVERTED, DA_FAT0_BCP);
+		if (AUDIO_DAI_POLARITY_F(pol))
+			fat0 |= __SHIFTIN(DA_LRCP_INVERTED, DA_FAT0_LRCP);
+	} else {
+		if (AUDIO_DAI_POLARITY_B(pol))
+			fat0 |= __SHIFTIN(DA_BCP_INVERTED, DA_FAT0_BCP);
+		if (!AUDIO_DAI_POLARITY_F(pol))
+			fat0 |= __SHIFTIN(DA_LRCP_INVERTED, DA_FAT0_LRCP);
+
+		fat0 &= ~DA_FAT0_LRCK_PERIOD;
+		fat0 |= __SHIFTIN(32 - 1, DA_FAT0_LRCK_PERIOD);
+	}
 
 	switch (clk) {
 	case AUDIO_DAI_CLOCK_CBM_CFM:
-		ctl |= DA_CTL_MS;	/* codec is master */
+		if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+			ctl |= DA_CTL_MS;	/* codec is master */
+		} else {
+			ctl &= ~DA_CTL_BCLK_OUT;
+			ctl &= ~DA_CLK_LRCK_OUT;
+		}
 		break;
 	case AUDIO_DAI_CLOCK_CBS_CFS:
-		ctl &= ~DA_CTL_MS;	/* codec is slave */
+		if (I2S_TYPE(sc) == SUNXI_I2S_SUN4I) {
+			ctl &= ~DA_CTL_MS;	/* codec is slave */
+		} else {
+			ctl |= DA_CTL_BCLK_OUT;
+			ctl |= DA_CLK_LRCK_OUT;
+		}
 		break;
 	default:
 		return EINVAL;
 	}
-
-	ctl &= ~DA_CTL_PCM;
 
 	I2S_WRITE(sc, DA_CTL, ctl);
 	I2S_WRITE(sc, DA_FAT0, fat0);
@@ -617,27 +815,17 @@ static struct fdtbus_dai_controller_func sunxi_i2s_dai_funcs = {
 };
 
 static int
-sunxi_i2s_clock_init(int phandle)
+sunxi_i2s_clock_init(struct sunxi_i2s_softc *sc)
 {
+	const int phandle = sc->sc_phandle;
 	struct fdtbus_reset *rst;
 	struct clk *clk;
 	int error;
 
-	/* Set module clock to 24.576MHz, suitable for 48 kHz sampling rates */
-	clk = fdtbus_clock_get(phandle, "mod");
-	if (clk == NULL) {
+	sc->sc_clk = fdtbus_clock_get(phandle, "mod");
+	if (sc->sc_clk == NULL) {
 		aprint_error(": couldn't find mod clock\n");
 		return ENXIO;
-	}
-	error = clk_set_rate(clk, SUNXI_I2S_CLK_RATE);
-	if (error != 0) {
-		aprint_error(": couldn't set mod clock rate: %d\n", error);
-		return error;
-	}
-	error = clk_enable(clk);
-	if (error != 0) {
-		aprint_error(": couldn't enable mod clock: %d\n", error);
-		return error;
 	}
 
 	/* Enable APB clock */
@@ -653,7 +841,7 @@ sunxi_i2s_clock_init(int phandle)
 	}
 
 	/* De-assert reset */
-	rst = fdtbus_reset_get(phandle, "rst");
+	rst = fdtbus_reset_get_index(phandle, 0);
 	if (rst == NULL) {
 		aprint_error(": couldn't find reset\n");
 		return ENXIO;
@@ -690,9 +878,6 @@ sunxi_i2s_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (sunxi_i2s_clock_init(phandle) != 0)
-		return;
-
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_baseaddr = addr;
@@ -707,8 +892,13 @@ sunxi_i2s_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	if (sunxi_i2s_chan_init(sc, &sc->sc_pchan, AUMODE_PLAY, "tx") != 0 ||
-	    sunxi_i2s_chan_init(sc, &sc->sc_rchan, AUMODE_RECORD, "rx") != 0) {
+	if (sunxi_i2s_clock_init(sc) != 0)
+		return;
+
+	/* At least one of these needs to succeed */
+	sunxi_i2s_chan_init(sc, &sc->sc_pchan, AUMODE_PLAY, "tx");
+	sunxi_i2s_chan_init(sc, &sc->sc_rchan, AUMODE_RECORD, "rx");
+	if (sc->sc_pchan.ch_dma == NULL && sc->sc_rchan.ch_dma == NULL) {
 		aprint_error(": couldn't setup channels\n");
 		return;
 	}
@@ -729,24 +919,45 @@ sunxi_i2s_attach(device_t parent, device_t self, void *aux)
 	I2S_WRITE(sc, DA_RXCNT, 0);
 
 	/* Enable */
-	I2S_WRITE(sc, DA_CTL, DA_CTL_GEN | DA_CTL_SDO_EN);
+	val = I2S_READ(sc, DA_CTL);
+	val |= DA_CTL_GEN;
+	I2S_WRITE(sc, DA_CTL, val);
+	val |= DA_CTL_SDO_EN;
+	I2S_WRITE(sc, DA_CTL, val);
 
 	/* Setup channels */
 	I2S_WRITE(sc, sc->sc_cfg->txchmap, 0x76543210);
-	I2S_WRITE(sc, sc->sc_cfg->txchsel, __SHIFTIN(1, DA_CHSEL_SEL) |
-					   __SHIFTIN(3, DA_CHSEL_EN));
+	val = I2S_READ(sc, sc->sc_cfg->txchsel);
+	val &= ~DA_CHSEL_EN;
+	val |= __SHIFTIN(3, DA_CHSEL_EN);
+	val &= ~DA_CHSEL_SEL;
+	val |= __SHIFTIN(1, DA_CHSEL_SEL);
+	I2S_WRITE(sc, sc->sc_cfg->txchsel, val);
 	I2S_WRITE(sc, sc->sc_cfg->rxchmap, 0x76543210);
-	I2S_WRITE(sc, sc->sc_cfg->rxchsel, __SHIFTIN(1, DA_CHSEL_SEL) |
-					   __SHIFTIN(3, DA_CHSEL_EN));
+	val = I2S_READ(sc, sc->sc_cfg->rxchsel);
+	val &= ~DA_CHSEL_EN;
+	val |= __SHIFTIN(3, DA_CHSEL_EN);
+	val &= ~DA_CHSEL_SEL;
+	val |= __SHIFTIN(1, DA_CHSEL_SEL);
+	I2S_WRITE(sc, sc->sc_cfg->rxchsel, val);
+
+	if (I2S_TYPE(sc) == SUNXI_I2S_SUN8I) {
+		val = I2S_READ(sc, DA_CHCFG);
+		val &= ~DA_CHCFG_TX_SLOT_NUM;
+		val |= __SHIFTIN(1, DA_CHCFG_TX_SLOT_NUM);
+		val &= ~DA_CHCFG_RX_SLOT_NUM;
+		val |= __SHIFTIN(1, DA_CHCFG_RX_SLOT_NUM);
+		I2S_WRITE(sc, DA_CHCFG, val);
+	}
 
 	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
 	sc->sc_format.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	sc->sc_format.validbits = 32;
-	sc->sc_format.precision = 32;
+	sc->sc_format.validbits = 16;
+	sc->sc_format.precision = 16;
 	sc->sc_format.channels = 2;
 	sc->sc_format.channel_mask = AUFMT_STEREO;
 	sc->sc_format.frequency_type = 1;
-	sc->sc_format.frequency[0] = 48000;
+	sc->sc_format.frequency[0] = SUNXI_I2S_SAMPLE_RATE;
 
 	sc->sc_dai.dai_set_sysclk = sunxi_i2s_dai_set_sysclk;
 	sc->sc_dai.dai_set_format = sunxi_i2s_dai_set_format;

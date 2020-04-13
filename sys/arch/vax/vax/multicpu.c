@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.34 2017/05/22 16:53:05 ragge Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.34.10.1 2020/04/13 08:04:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.34 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.34.10.1 2020/04/13 08:04:10 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -86,10 +86,7 @@ cpu_slavesetup(device_t self, int slotid)
 
 	KASSERT(device_private(self) == NULL);
 
-	ci = malloc(sizeof(*ci), M_DEVBUF, M_ZERO|M_NOWAIT);
-	if (ci == NULL)
-		panic("cpu_slavesetup1");
-
+	ci = malloc(sizeof(*ci), M_DEVBUF, M_ZERO|M_WAITOK);
 	self->dv_private = ci;
 	ci->ci_dev = self;
 	ci->ci_slotid = slotid;
@@ -107,10 +104,7 @@ cpu_slavesetup(device_t self, int slotid)
 	ci->ci_istack = istackbase + PAGE_SIZE;
 	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);
 
-	cq = malloc(sizeof(*cq), M_TEMP, M_NOWAIT|M_ZERO);
-	if (cq == NULL)
-		panic("cpu_slavesetup3");
-
+	cq = malloc(sizeof(*cq), M_TEMP, M_WAITOK|M_ZERO);
 	cq->cq_ci = ci;
 	cq->cq_dev = ci->ci_dev;
 	SIMPLEQ_INSERT_TAIL(&cpuq, cq, cq_q);

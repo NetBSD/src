@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.5 2017/01/21 12:45:22 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.5.14.1 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -441,6 +441,10 @@ struct athn_usb_softc {
 	struct athn_softc		usc_sc;
 #define usc_dev		usc_sc.sc_dev
 
+	enum {
+		ATHN_INIT_NONE,
+		ATHN_INIT_INITED
+	} usc_init_state;
 	int				usc_athn_attached;
 
 	kmutex_t			usc_lock;

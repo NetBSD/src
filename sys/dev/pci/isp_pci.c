@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.119.18.1 2019/06/10 22:07:17 christos Exp $ */
+/* $NetBSD: isp_pci.c,v 1.119.18.2 2020/04/13 08:04:27 martin Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.119.18.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.119.18.2 2020/04/13 08:04:27 martin Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -480,7 +480,6 @@ isp_pci_probe(device_t parent, cfdata_t match, void *aux)
 static void
 isp_pci_attach(device_t parent, device_t self, void *aux)
 {
-	static const char nomem[] = "\n%s: no mem for sdparam table\n";
 	uint32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = device_private(self);
@@ -687,20 +686,9 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	isp->isp_param = malloc(mamt, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_param == NULL) {
-		aprint_error(nomem, device_xname(self));
-		return;
-	}
-	memset(isp->isp_param, 0, mamt);
+	isp->isp_param = malloc(mamt, M_DEVBUF, M_WAITOK | M_ZERO);
 	mamt = sizeof (struct scsipi_channel) * isp->isp_nchan;
-	isp->isp_osinfo.chan = malloc(mamt, M_DEVBUF, M_NOWAIT);
-	if (isp->isp_osinfo.chan == NULL) {
-		free(isp->isp_param, M_DEVBUF);
-		aprint_error(nomem, device_xname(self));
-		return;
-	}
-	memset(isp->isp_osinfo.chan, 0, mamt);
+	isp->isp_osinfo.chan = malloc(mamt, M_DEVBUF, M_WAITOK | M_ZERO);
 	isp->isp_osinfo.adapter.adapt_nchannels = isp->isp_nchan;
 
 	/*
@@ -1137,8 +1125,7 @@ isp_pci_rd_reg_1080(struct ispsoftc *isp, int regoff)
 	uint16_t rv, oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		uint16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.
@@ -1168,8 +1155,7 @@ isp_pci_wr_reg_1080(struct ispsoftc *isp, int regoff, uint32_t val)
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	int oc = 0;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		uint16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.4.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,10 @@
 #include <setjmp.h>
 
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -482,6 +483,7 @@ dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	dns_rdatacallbacks_t callbacks;
 	isc_buffer_t source, target;
 	isc_lex_t *lex = NULL;
+	isc_lexspecials_t specials = { 0 };
 	isc_result_t result;
 	size_t length;
 
@@ -504,6 +506,22 @@ dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
+
+	/*
+	 * Set characters which will be treated as valid multi-line RDATA
+	 * delimiters while reading the source string.  These should match
+	 * specials from lib/dns/master.c.
+	 */
+	specials[0] = 1;
+	specials['('] = 1;
+	specials[')'] = 1;
+	specials['"'] = 1;
+	isc_lex_setspecials(lex, specials);
+
+	/*
+	 * Expect DNS masterfile comments.
+	 */
+	isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 
 	/*
 	 * Point lexer at source.

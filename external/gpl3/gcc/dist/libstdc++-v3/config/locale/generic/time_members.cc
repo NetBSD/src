@@ -1,6 +1,6 @@
 // std::time_get, std::time_put implementation, generic version -*- C++ -*-
 
-// Copyright (C) 2001-2017 Free Software Foundation, Inc.
+// Copyright (C) 2001-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -205,6 +205,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_data->_M_amonth11 = L"Nov";
       _M_data->_M_amonth12 = L"Dec";
     }
+  template<> 
+    __timepunct<wchar_t>::~__timepunct()
+   { 
+   }
 #endif
 
 _GLIBCXX_END_NAMESPACE_VERSION

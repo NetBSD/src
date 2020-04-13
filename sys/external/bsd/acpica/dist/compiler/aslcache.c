@@ -313,7 +313,7 @@ UtDeleteLocalCaches (
     DbgPrint (ASL_DEBUG_OUTPUT,
         "%u ParseOps, Buffer size: %u ops (%u bytes), %u Buffers\n",
         AslGbl_ParseOpCount, ASL_PARSEOP_CACHE_SIZE,
-        (sizeof (ACPI_PARSE_OBJECT) * ASL_PARSEOP_CACHE_SIZE), BufferCount);
+        ((UINT32) sizeof (ACPI_PARSE_OBJECT) * ASL_PARSEOP_CACHE_SIZE), BufferCount);
 
     /* Reset cache globals */
 
@@ -337,7 +337,7 @@ UtDeleteLocalCaches (
     DbgPrint (ASL_DEBUG_OUTPUT,
         "%u Fields, Buffer size: %u fields (%u bytes), %u Buffers\n",
         AslGbl_FieldCount, ASL_FIELD_CACHE_SIZE,
-        (sizeof (DT_FIELD) * ASL_FIELD_CACHE_SIZE), BufferCount);
+        ((UINT32) sizeof (DT_FIELD) * ASL_FIELD_CACHE_SIZE), BufferCount);
 
     /* Reset cache globals */
 
@@ -360,7 +360,7 @@ UtDeleteLocalCaches (
     DbgPrint (ASL_DEBUG_OUTPUT,
         "%u Subtables, Buffer size: %u subtables (%u bytes), %u Buffers\n",
         AslGbl_SubtableCount, ASL_SUBTABLE_CACHE_SIZE,
-        (sizeof (DT_SUBTABLE) * ASL_SUBTABLE_CACHE_SIZE), BufferCount);
+        ((UINT32) sizeof (DT_SUBTABLE) * ASL_SUBTABLE_CACHE_SIZE), BufferCount);
 
     /* Reset cache globals */
 

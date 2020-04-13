@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.adb,v 1.7.40.1 2019/06/10 22:07:05 christos Exp $
+#	$NetBSD: files.adb,v 1.7.40.2 2020/04/13 08:04:18 martin Exp $
 #
 # Apple Desktop Bus protocol and drivers
 
@@ -8,6 +8,7 @@ defflag	adbdebug.h	ADBKBD_DEBUG
 defflag	adbdebug.h	ADBMS_DEBUG
 defflag	adbdebug.h	ADBBT_DEBUG
 defflag adbdebug.h	ADBKBD_POWER_DDB
+defflag	adbdebug.h	KTM_DEBUG
 
 define adb_bus {}
 
@@ -28,3 +29,7 @@ file dev/adb/adb_bt.c		adbbt
 device adbms : wsmousedev
 attach adbms at nadb
 file dev/adb/adb_ms.c		adbms needs-flag
+
+device ktm : wsmousedev
+attach ktm at nadb
+file dev/adb/adb_ktm.c		ktm needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.31 2016/03/25 22:13:23 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.31.16.1 2020/04/13 08:03:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.31 2016/03/25 22:13:23 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.31.16.1 2020/04/13 08:03:09 martin Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -355,9 +355,10 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 	 *	log_2 (o 2^(8 i)) = log_2 o + log_2 2^(8 i)
 	 *	  = log_2 o + 8 i.
 	 */
-	__CTASSERT(CHAR_BIT * sizeof n <=
-	    (/*LINTED*/ilog2(crypto_core_OUTPUTBYTES) +
-		8*crypto_core_INPUTBYTES));
+#ifndef __lint__
+	__CTASSERT(CHAR_BIT * sizeof n <= (ilog2(crypto_core_OUTPUTBYTES) +
+		8 * crypto_core_INPUTBYTES));
+#endif
 
 	p8 = buf;
 	p32 = (uint8_t *)roundup2((uintptr_t)p8, 4);

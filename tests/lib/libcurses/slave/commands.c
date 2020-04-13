@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.4 2011/09/15 11:46:19 blymn Exp $	*/
+/*	$NetBSD: commands.c,v 1.4.42.1 2020/04/13 08:05:28 martin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -43,7 +43,7 @@
 extern int cmdpipe[2];
 extern int slvpipe[2];
 
-static void report_type(returns_enum_t);
+static void report_type(data_enum_t);
 static void report_message(int, const char *);
 
 /*
@@ -104,9 +104,9 @@ void
 report_return(int status)
 {
 	if (status == ERR)
-		report_type(ret_err);
+		report_type(data_err);
 	else if (status == OK)
-		report_type(ret_ok);
+		report_type(data_ok);
 	else
 		report_status("INVALID_RETURN");
 }
@@ -115,7 +115,7 @@ report_return(int status)
  * Report the type back to the director via the command pipe
  */
 static void
-report_type(returns_enum_t return_type)
+report_type(data_enum_t return_type)
 {
 	int type;
 
@@ -133,7 +133,7 @@ report_count(int count)
 {
 	int type;
 
-	type = ret_count;
+	type = data_count;
 	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
 		err(1, "command pipe write for count type failed");
 
@@ -147,7 +147,7 @@ report_count(int count)
 void
 report_status(const char *status)
 {
-	report_message(ret_string, status);
+	report_message(data_string, status);
 }
 
 /*
@@ -156,7 +156,7 @@ report_status(const char *status)
 void
 report_error(const char *status)
 {
-	report_message(ret_slave_error, status);
+	report_message(data_slave_error, status);
 }
 
 /*
@@ -212,7 +212,7 @@ report_nstr(chtype *string)
 	len++; /* add in the termination chtype */
 	len *= sizeof(chtype);
 
-	type = ret_byte;
+	type = data_byte;
 	if (write(slvpipe[WRITE_PIPE], &type, sizeof(int)) < 0)
 		err(1, "%s: command pipe write for status type failed",
 		    __func__);

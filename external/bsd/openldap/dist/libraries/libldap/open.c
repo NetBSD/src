@@ -1,9 +1,9 @@
-/*	$NetBSD: open.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: open.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: open.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: open.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: open.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
 #include <ac/unistd.h>
 
 #include "ldap-int.h"
+#include "ldap.h"
 #include "ldap_log.h"
 
 /* Caller must hold the conn_mutex since simultaneous accesses are possible */
@@ -445,7 +446,7 @@ ldap_int_open_connection(
 #endif
 
 #ifdef HAVE_TLS
-	if (rc == 0 && ( ld->ld_options.ldo_tls_mode == LDAP_OPT_X_TLS_HARD ||
+	if ((rc == 0 || rc == -2) && ( ld->ld_options.ldo_tls_mode == LDAP_OPT_X_TLS_HARD ||
 		strcmp( srv->lud_scheme, "ldaps" ) == 0 ))
 	{
 		++conn->lconn_refcnt;	/* avoid premature free */
@@ -455,6 +456,31 @@ ldap_int_open_connection(
 		--conn->lconn_refcnt;
 
 		if (rc != LDAP_SUCCESS) {
+			/* process connection callbacks */
+			{
+				struct ldapoptions *lo;
+				ldaplist *ll;
+				ldap_conncb *cb;
+
+				lo = &ld->ld_options;
+				LDAP_MUTEX_LOCK( &lo->ldo_mutex );
+				if ( lo->ldo_conn_cbs ) {
+					for ( ll=lo->ldo_conn_cbs; ll; ll=ll->ll_next ) {
+						cb = ll->ll_data;
+						cb->lc_del( ld, conn->lconn_sb, cb );
+					}
+				}
+				LDAP_MUTEX_UNLOCK( &lo->ldo_mutex );
+				lo = LDAP_INT_GLOBAL_OPT();
+				LDAP_MUTEX_LOCK( &lo->ldo_mutex );
+				if ( lo->ldo_conn_cbs ) {
+					for ( ll=lo->ldo_conn_cbs; ll; ll=ll->ll_next ) {
+						cb = ll->ll_data;
+						cb->lc_del( ld, conn->lconn_sb, cb );
+					}
+				}
+				LDAP_MUTEX_UNLOCK( &lo->ldo_mutex );
+			}
 			return -1;
 		}
 	}

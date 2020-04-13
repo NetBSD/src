@@ -226,7 +226,7 @@ options {<br>
 	check-wildcard <em class="replaceable"><code>boolean</code></em>;<br>
 	cleaning-interval <em class="replaceable"><code>integer</code></em>;<br>
 	clients-per-query <em class="replaceable"><code>integer</code></em>;<br>
-	cookie-algorithm ( aes | sha1 | sha256 );<br>
+	cookie-algorithm ( aes | sha1 | sha256 | siphash24 );<br>
 	cookie-secret <em class="replaceable"><code>string</code></em>;<br>
 	coresize ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );<br>
 	datasize ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );<br>
@@ -408,11 +408,12 @@ options {<br>
 	resolver-retry-interval <em class="replaceable"><code>integer</code></em>;<br>
 	response-padding { <em class="replaceable"><code>address_match_element</code></em>; ... } block-size<br>
 	    <em class="replaceable"><code>integer</code></em>;<br>
-	response-policy { zone <em class="replaceable"><code>string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl<br>
-	    <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname |<br>
-	    disabled | drop | given | no-op | nodata | nxdomain | passthru<br>
-	    | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [<br>
-	    nsip-enable <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [<br>
+	response-policy { zone <em class="replaceable"><code>string</code></em> [ add-soa <em class="replaceable"><code>boolean</code></em> ] [ log<br>
+	    <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval<br>
+	    <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname | disabled | drop | given | no-op |<br>
+	    nodata | nxdomain | passthru | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [<br>
+	    recursive-only <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [<br>
+	    nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [ add-soa <em class="replaceable"><code>boolean</code></em> ] [<br>
 	    break-dnssec <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [<br>
 	    min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ min-ns-dots <em class="replaceable"><code>integer</code></em> ] [<br>
 	    nsip-wait-recurse <em class="replaceable"><code>boolean</code></em> ] [ qname-wait-recurse <em class="replaceable"><code>boolean</code></em> ]<br>
@@ -745,11 +746,12 @@ view <em class="replaceable"><code>string</code></em> [ <em class="replaceable">
 	resolver-retry-interval <em class="replaceable"><code>integer</code></em>;<br>
 	response-padding { <em class="replaceable"><code>address_match_element</code></em>; ... } block-size<br>
 	    <em class="replaceable"><code>integer</code></em>;<br>
-	response-policy { zone <em class="replaceable"><code>string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl<br>
-	    <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname |<br>
-	    disabled | drop | given | no-op | nodata | nxdomain | passthru<br>
-	    | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [<br>
-	    nsip-enable <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [<br>
+	response-policy { zone <em class="replaceable"><code>string</code></em> [ add-soa <em class="replaceable"><code>boolean</code></em> ] [ log<br>
+	    <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval<br>
+	    <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname | disabled | drop | given | no-op |<br>
+	    nodata | nxdomain | passthru | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [<br>
+	    recursive-only <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [<br>
+	    nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [ add-soa <em class="replaceable"><code>boolean</code></em> ] [<br>
 	    break-dnssec <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [<br>
 	    min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ min-ns-dots <em class="replaceable"><code>integer</code></em> ] [<br>
 	    nsip-wait-recurse <em class="replaceable"><code>boolean</code></em> ] [ qname-wait-recurse <em class="replaceable"><code>boolean</code></em> ]<br>
@@ -1073,6 +1075,6 @@ zone <em class="replaceable"><code>string</code></em> [ <em class="replaceable">
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $	*/
+/*	$NetBSD: fenv.c,v 1.2.12.1 2020/04/13 08:03:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2.12.1 2020/04/13 08:03:13 martin Exp $");
 
 #include "namespace.h"
 
@@ -38,10 +38,7 @@ __RCSID("$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $");
 
 #ifdef __weak_alias
 __weak_alias(feclearexcept,_feclearexcept)
-__weak_alias(fedisableexcept,_fedisableexcept)
-__weak_alias(feenableexcept,_feenableexcept)
 __weak_alias(fegetenv,_fegetenv)
-__weak_alias(fegetexcept,_fegetexcept)
 __weak_alias(fegetexceptflag,_fegetexceptflag)
 __weak_alias(fegetround,_fegetround)
 __weak_alias(feholdexcept,_feholdexcept)
@@ -51,6 +48,10 @@ __weak_alias(fesetexceptflag,_fesetexceptflag)
 __weak_alias(fesetround,_fesetround)
 __weak_alias(fetestexcept,_fetestexcept)
 __weak_alias(feupdateenv,_feupdateenv)
+
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetexcept,_fegetexcept)
 #endif
 
 #if defined(__GNUC_GNU_INLINE__) && !defined(__lint__)
@@ -68,6 +69,7 @@ extern inline int fegetenv(fenv_t *__envp);
 extern inline int feholdexcept(fenv_t *__envp);
 extern inline int fesetenv(const fenv_t *__envp);
 extern inline int feupdateenv(const fenv_t *__envp);
+
 extern inline int feenableexcept(int __excepts);
 extern inline int fedisableexcept(int __excepts);
 extern inline int fegetexcept(void);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.18.2 2020/04/08 14:08:56 martin Exp $
+# $NetBSD: Makefile,v 1.8.18.3 2020/04/13 08:05:11 martin Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -115,7 +115,7 @@ SRCS+=	intel_uncore.c
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.intel_display.c+=	-Wno-error=implicit-fallthrough
 COPTS.intel_ddi.c+=	-Wno-error=implicit-fallthrough
 COPTS.intel_sdvo.c+=	-Wno-error=implicit-fallthrough

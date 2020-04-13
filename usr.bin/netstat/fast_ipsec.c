@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.22 2017/06/29 07:15:27 ozaki-r Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.22.6.1 2020/04/13 08:05:45 martin Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.22 2017/06/29 07:15:27 ozaki-r Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.22.6.1 2020/04/13 08:05:45 martin Exp $");
 #endif
 #endif /* not lint*/
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: fast_ipsec.c,v 1.22 2017/06/29 07:15:27 ozaki-r Exp $");
 #include <string.h>
 
 #include "netstat.h"
+#include "prog_ops.h"
 
 /*
  * Table-driven mapping from SADB algorithm codes to string names.
@@ -116,7 +117,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	memset(ipips, 0, sizeof(ipips));
 
 	slen = sizeof(ipsecstats);
-	status = sysctlbyname("net.inet.ipsec.ipsecstats", ipsecstats, &slen,
+	status = prog_sysctlbyname("net.inet.ipsec.ipsecstats", ipsecstats, &slen,
 			      NULL, 0);
 	if (status < 0) {
 		if (errno == ENOENT)
@@ -126,22 +127,22 @@ fast_ipsec_stats(u_long off, const char *name)
 	}
 
 	slen = sizeof (ahstats);
-	status = sysctlbyname("net.inet.ah.ah_stats", ahstats, &slen, NULL, 0);
+	status = prog_sysctlbyname("net.inet.ah.ah_stats", ahstats, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ah.ah_stats");
 
 	slen = sizeof (espstats);
-	status = sysctlbyname("net.inet.esp.esp_stats", espstats, &slen, NULL, 0);
+	status = prog_sysctlbyname("net.inet.esp.esp_stats", espstats, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.esp.esp_stats");
 
 	slen = sizeof(ipcs);
-	status = sysctlbyname("net.inet.ipcomp.ipcomp_stats", ipcs, &slen, NULL, 0);
+	status = prog_sysctlbyname("net.inet.ipcomp.ipcomp_stats", ipcs, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipcomp.ipcomp_stats");
 
 	slen = sizeof(ipips);
-	status = sysctlbyname("net.inet.ipip.ipip_stats", ipips, &slen, NULL, 0);
+	status = prog_sysctlbyname("net.inet.ipip.ipip_stats", ipips, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipip.ipip_stats");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.126.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.126.2.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -145,6 +145,26 @@
  */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
+
+/*
+ * XSAVE component indices.
+ */
+#define XSAVE_X87	0
+#define XSAVE_SSE	1
+#define XSAVE_YMM_Hi128	2
+#define XSAVE_BNDREGS	3
+#define XSAVE_BNDCSR	4
+#define XSAVE_Opmask	5
+#define XSAVE_ZMM_Hi256	6
+#define XSAVE_Hi16_ZMM	7
+#define XSAVE_PT	8
+#define XSAVE_PKRU	9
+#define XSAVE_HDC	10
+
+/*
+ * Highest XSAVE component enabled by XCR0_FPU.
+ */
+#define XSAVE_MAX_COMPONENT XSAVE_Hi16_ZMM
 
 /*
  * CPUID "features" bits
@@ -427,6 +447,7 @@
 #define CPUID_SEF_OSPKE		__BIT(4)  /* OS has set CR4.PKE to ena. protec. keys */
 #define CPUID_SEF_WAITPKG	__BIT(5)  /* TPAUSE,UMONITOR,UMWAIT */
 #define CPUID_SEF_AVX512_VBMI2	__BIT(6)  /* AVX-512 Vector Byte Manipulation 2 */
+#define CPUID_SEF_CET_SS	__BIT(7)  /* CET shadow stack */
 #define CPUID_SEF_GFNI		__BIT(8)
 #define CPUID_SEF_VAES		__BIT(9)
 #define CPUID_SEF_VPCLMULQDQ	__BIT(10)
@@ -442,7 +463,7 @@
 
 #define CPUID_SEF_FLAGS1	"\177\20" \
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
-	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0"		      \
+	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0" "b\7CET_SS\0" \
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
 	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
 	"f\21\5MAWAU\0"							\
@@ -453,8 +474,14 @@
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
+#define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOV */
+#define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8)
 #define CPUID_SEF_MD_CLEAR	__BIT(10)
 #define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
+#define CPUID_SEF_SERIALIZE	__BIT(14)
+#define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
+#define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
+#define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
@@ -464,8 +491,11 @@
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-				"\13" "MD_CLEAR"			\
-			"\16" "TSX_FORCE_ABORT"				\
+	"\5" "FSREP_MOV"						\
+	"\11" "VP2INTERSECT"	"\13" "MD_CLEAR"			\
+			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	\
+	"\21" "TSXLDTRK"						\
+	"\25" "CET_IBT"							\
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
 
@@ -626,7 +656,7 @@
 	"\31" "FXSR"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP"	\
 			"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
-/* AMD Fn80000001 extended features - %ecx */
+/* AMD Fn8000_0001 extended features - %ecx */
 /* 	CPUID_LAHF			   LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
@@ -667,8 +697,10 @@
 	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
 
 /*
- * AMD Advanced Power Management
+ * Advanced Power Management
  * CPUID Fn8000_0007 %edx
+ *
+ * Only ITSC is for both Intel and AMD. Others are only for AMD.
  */
 #define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
 #define CPUID_APM_FID	0x00000002	/* Frequency ID control */
@@ -678,17 +710,54 @@
 #define CPUID_APM_STC	0x00000020	/* Software thermal control (STC) */
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
-#define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+#define CPUID_APM_ITSC	0x00000100	/* invariant TSC */
 #define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 #define CPUID_APM_EFF	0x00000400	/* Effective Frequency (read-only) */
+#define CPUID_APM_PROCFI 0x00000800	/* Proc Feedback Interface */
+#define CPUID_APM_PROCPR 0x00001000	/* Proc Power Reporting  */
+#define CPUID_APM_CONNSTBY 0x00002000	/* Connected Standby */
+#define CPUID_APM_RAPL	0x00004000	/* Running Average Power Limit */
 
-#define CPUID_APM_FLAGS		"\20" \
-	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP" \
-	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP" \
-	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "B11" \
-	"\15" "B12"
+#define CPUID_APM_FLAGS		"\20"					      \
+	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP"	      \
+	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP"	      \
+	"\11" "ITSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
+	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
-/* AMD Fn8000000a %edx features (SVM features) */
+/*
+ * AMD Processor Capacity Parameters and Extended Features
+ * CPUID Fn8000_0008
+ * %eax: Long Mode Size Identifiers
+ * %ebx: Extended Feature Identifiers
+ * %ecx: Size Identifiers
+ */
+
+/* %ebx */
+#define CPUID_CAPEX_CLZERO	__BIT(0)	/* CLZERO instruction */
+#define CPUID_CAPEX_IRPERF	__BIT(1)	/* InstRetCntMsr */
+#define CPUID_CAPEX_XSAVEERPTR	__BIT(2)	/* RstrFpErrPtrs by XRSTOR */
+#define CPUID_CAPEX_RDPRU	__BIT(4)	/* RDPRU instruction */
+#define CPUID_CAPEX_MCOMMIT	__BIT(8)	/* MCOMMIT instruction */
+#define CPUID_CAPEX_WBNOINVD	__BIT(9)	/* WBNOINVD instruction */
+#define CPUID_CAPEX_IBPB	__BIT(12)	/* Speculation Control IBPB */
+#define CPUID_CAPEX_IBRS	__BIT(14)	/* Speculation Control IBRS */
+#define CPUID_CAPEX_STIBP	__BIT(15)	/* Speculation Control STIBP */
+#define CPUID_CAPEX_IBRS_ALWAYSON __BIT(16)	/* IBRS always on mode */
+#define CPUID_CAPEX_STIBP_ALWAYSON __BIT(17)	/* STIBP always on mode */
+#define CPUID_CAPEX_PREFER_IBRS	__BIT(18)	/* IBRS preferred */
+#define CPUID_CAPEX_SSBD	__BIT(24)	/* Speculation Control SSBD */
+#define CPUID_CAPEX_VIRT_SSBD	__BIT(25)	/* Virt Spec Control SSBD */
+#define CPUID_CAPEX_SSB_NO	__BIT(26)	/* SSBD not required */
+
+#define CPUID_CAPEX_FLAGS	"\20"					 \
+	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			 \
+	"\5RDPRU"			"\7B6"				 \
+	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			 \
+	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	 \
+	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
+	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
+
+/* AMD Fn8000_000a %edx features (SVM features) */
 #define CPUID_AMD_SVM_NP		0x00000001
 #define CPUID_AMD_SVM_LbrVirt		0x00000002
 #define CPUID_AMD_SVM_SVML		0x00000004
@@ -698,18 +767,46 @@
 #define CPUID_AMD_SVM_FlushByASID	0x00000040
 #define CPUID_AMD_SVM_DecodeAssist	0x00000080
 #define CPUID_AMD_SVM_PauseFilter	0x00000400
-#define CPUID_AMD_SVM_PFThreshold	0x0x001000 /* PAUSE filter threshold */
+#define CPUID_AMD_SVM_PFThreshold	0x00001000 /* PAUSE filter threshold */
 #define CPUID_AMD_SVM_AVIC		0x00002000 /* AMD Virtual intr. ctrl */
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
+#define CPUID_AMD_SVM_GMET		0x00020000
 #define CPUID_AMD_SVM_FLAGS	 "\20" \
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
 	"\5" "TSCRate"	"\6" "VMCBCleanBits" 				\
 			        "\7" "FlushByASID" "\10" "DecodeAssist"	\
-	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11" \
+	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"
+	"\21" "VGIF"	"\22" "GMET"					\
+	"\25" "B20"
+
+/*
+ * AMD Fn8000_0001d Cache Topology Information.
+ * It's almost the same as Intel Deterministic Cache Parameter Leaf(0x04)
+ * except the following:
+ *	No Cores/package (%eax bit 31..26)
+ *	No Complex cache indexing (%edx bit 2)
+ */
+
+/*
+ * AMD Fn8000_0001f Encrypted Memory Capabilities.
+ * %eax: flags
+ * %ebx:  5-0: Cbit Position
+ *       11-6: PhysAddrReduction
+ * %ecx: 31-0: NumEncryptedGuests
+ * %edx: 31-0: MinSevNoEsAsid
+ */
+#define CPUID_AMD_ENCMEM_SME	__BIT(0)   /* Secure Memory Encryption */
+#define CPUID_AMD_ENCMEM_SEV	__BIT(1)   /* Secure Encrypted Virtualiz. */
+#define CPUID_AMD_ENCMEM_PGFLMSR __BIT(2)  /* Page Flush MSR */
+#define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
+#define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
+
+#define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
+	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
+	"\21" "VTE"
 
 /*
  * Centaur Extended Feature flags
@@ -768,9 +865,14 @@
 #define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
 #define 	IA32_ARCH_MDS_NO	0x20
+#define 	IA32_ARCH_TSX_CTRL	0x80
+#define 	IA32_ARCH_TAA_NO	0x100
 #define MSR_IA32_FLUSH_CMD	0x10b
 #define 	IA32_FLUSH_CMD_L1D_FLUSH 0x01
 #define MSR_TSX_FORCE_ABORT	0x10f
+#define MSR_IA32_TSX_CTRL	0x122
+#define 	IA32_TSX_CTRL_RTM_DISABLE	__BIT(0)
+#define 	IA32_TSX_CTRL_TSX_CPUID_CLEAR	__BIT(1)
 #define MSR_SYSENTER_CS		0x174	/* PII+ only */
 #define MSR_SYSENTER_ESP	0x175	/* PII+ only */
 #define MSR_SYSENTER_EIP	0x176	/* PII+ only */

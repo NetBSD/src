@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.24 2016/07/14 04:00:46 msaitoh Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.24.18.1 2020/04/13 08:04:27 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.24 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.24.18.1 2020/04/13 08:04:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,9 +178,7 @@ igsfb_pci_attach(device_t parent, device_t self, void *aux)
 		isconsole = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct igsfb_devconfig),
-				   M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (sc->sc_dc == NULL)
-			panic("unable to allocate igsfb_devconfig");
+				   M_DEVBUF, M_WAITOK | M_ZERO);
 		if (igsfb_pci_map_regs(sc->sc_dc,
 			    pa->pa_iot, pa->pa_memt, pa->pa_pc,
 			    pa->pa_tag, PCI_PRODUCT(pa->pa_id)) != 0)

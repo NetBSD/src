@@ -1,4 +1,4 @@
-.\"	$NetBSD: edahdi.1,v 1.11 2009/10/20 19:10:10 snj Exp $
+.\"	$NetBSD: edahdi.1,v 1.11.46.1 2020/04/13 08:03:24 martin Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 16, 1996
+.Dd September 1, 2019
 .Dt EDAHDI 1 atari
 .Os
 .Sh NAME
@@ -35,16 +35,16 @@
 .Sh DESCRIPTION
 .Nm
 allows you to modify the partition identifiers on a disk partitioned with
-AHDI or an AHDI compatible formatter. An AHDI partition format is usually
-only present on disks shared between
+AHDI or an AHDI compatible formatter.
+An AHDI partition format is usually only present on disks shared between
 .Nx
-and some other OS. The partition identifiers are used by
+and some other OS.
+The partition identifiers are used by
 .Nx
 as a guideline to emulate a disklabel on such a disk.
 .Pp
 .Nm
 supports the following options:
-.Pp
 .Bl -tag -width device
 .It Ar device
 The name of the raw device you want to edit.
@@ -52,13 +52,12 @@ The name of the raw device you want to edit.
 .Pp
 The following partition identifiers are recognized by
 .Nx :
-.Pp
 .Bl -tag -width "GEM or BGM" -compact
 .It NBD
 Partition is reserved for
 .Nx .
-This can be either a root or an user partition. The first NBD
-partition on a disk will be mapped to partition
+This can be either a root or an user partition.
+The first NBD partition on a disk will be mapped to partition
 .Em a
 in
 .Nx .
@@ -72,7 +71,8 @@ The first SWP partition is mapped to partition
 .It GEM or BGM
 These partitions are mapped from
 .Em d
-up. The filesystem type is msdos.
+up.
+The filesystem type is msdos.
 .It NBR
 .Nx
 root partition (deprecated).
@@ -84,8 +84,7 @@ user partition (deprecated).
 swap partition (deprecated).
 .El
 .Sh EXAMPLES
-Say, you have a disk with that is partitioned like:
-.Pp
+Say, you have a disk that is partitioned like:
 .Bl -column Number   Id
 .It Sy "Number" Ta Sy "Id"
 .It 1 Ta GEM
@@ -97,7 +96,6 @@ Say, you have a disk with that is partitioned like:
 This partitioning will show up in
 .Nx
 as (Number refers to the first table):
-.Pp
 .Bl -column "c (whole disk)" "Fstype" "Number"
 .It Sy Partition Ta Sy Fstype Ta Sy Number
 .It c (whole disk) Ta unused Ta ""
@@ -107,10 +105,10 @@ as (Number refers to the first table):
 .It g (user part) Ta MSDOS Ta 4
 .El
 .Pp
-Now you decide to change the id of partition 2 and 3 to NBD. Now
+Now you decide to change the id of partition 2 and 3 to NBD.
+Now
 .Nx
 will show the partitioning as (Number refers to the first table):
-.Pp
 .Bl -column "c (whole disk)" "Fstype" "Number"
 .It Sy Partition Ta Sy Fstype Ta Sy Number
 .It a (root) Ta 4.2BSD Ta 2
@@ -121,7 +119,8 @@ will show the partitioning as (Number refers to the first table):
 .El
 .Pp
 You will notice that the order of the partitions has changed! You will have
-to watchout for this. It is a consequence of
+to watchout for this.
+It is a consequence of
 .Nx
 habit of assigning a predefined meaning to the partitions
 .Em a/b
@@ -138,10 +137,11 @@ command first appeared in
 .Sh BUGS
 The changes made to the AHDI partitions will become active on the next
 .Em first open
-of the device. You are advised to use
+of the device.
+You are advised to use
 .Nm
-only on a device without any mounted or otherwise active partitions. This
-is not enforced by
+only on a device without any mounted or otherwise active partitions.
+This is not enforced by
 .Nm .
 This is particularly confusing when your change caused partitions to shift,
 as shown in the example above.

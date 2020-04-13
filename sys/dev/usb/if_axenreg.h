@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.3.18.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.3.18.2 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -221,37 +221,6 @@
 #define AXEN_CONFIG_NO		1
 #define AXEN_IFACE_IDX		0
 
-/*
- * The interrupt endpoint is currently unused
- * by the ASIX part.
- */
-#define AXEN_ENDPT_RX		0x0
-#define AXEN_ENDPT_TX		0x1
-#define AXEN_ENDPT_INTR		0x2
-#define AXEN_ENDPT_MAX		0x3
-
-struct axen_type {
-	struct usb_devno	axen_dev;
-	uint16_t		axen_flags;
-#define AX178A	0x0001		/* AX88178a */
-#define AX179	0x0002		/* AX88179 */
-};
-
-struct axen_softc;
-
-struct axen_chain {
-	struct axen_softc	*axen_sc;
-	struct usbd_xfer	*axen_xfer;
-	uint8_t			*axen_buf;
-};
-
-struct axen_cdata {
-	struct axen_chain	axen_tx_chain[AXEN_TX_LIST_CNT];
-	struct axen_chain	axen_rx_chain[AXEN_RX_LIST_CNT];
-	int			axen_tx_prod;
-	int			axen_tx_cnt;
-};
-
 struct axen_qctrl {
 	uint8_t			ctrl;
 	uint8_t			timer_low;
@@ -264,44 +233,3 @@ struct axen_sframe_hdr {
 	uint32_t		plen; /* packet length */
 	uint32_t		gso;
 } __packed;
-
-struct axen_softc {
-	device_t		axen_dev;
-	struct ethercom		axen_ec;
-	struct mii_data		axen_mii;
-	krndsource_t		rnd_source;
-	struct usbd_device *	axen_udev;
-	struct usbd_interface *	axen_iface;
-
-	uint16_t		axen_vendor;
-	uint16_t		axen_product;
-	uint16_t		axen_flags;
-
-	int			axen_ed[AXEN_ENDPT_MAX];
-	struct usbd_pipe	*axen_ep[AXEN_ENDPT_MAX];
-	int			axen_if_flags;
-	struct axen_cdata	axen_cdata;
-	struct callout		axen_stat_ch;
-
-	int			axen_refcnt;
-	bool			axen_dying;
-	bool			axen_attached;
-
-	struct usb_task		axen_tick_task;
-
-	krwlock_t		axen_mii_lock;
-
-	int			axen_link;
-
-	int			axen_phyno;
-	struct timeval		axen_rx_notice;
-	struct timeval		axen_tx_notice;
-	u_int			axen_rx_bufsz;
-	u_int			axen_tx_bufsz;
-	int			axen_rev;
-
-#define sc_if	axen_ec.ec_if
-};
-
-#define GET_MII(sc) (&(sc)->axen_mii)
-#define GET_IFP(sc) (&(sc)->sc_if)

@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2017 The OpenLDAP Foundation.
+ * Copyright 2004-2019 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppolicy.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: ppolicy.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 
@@ -1510,7 +1510,7 @@ ppolicy_add(
 		return rs->sr_err;
 
 	/* If this is a replica, assume the master checked everything */
-	if ( be_shadow_update( op ))
+	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) )
 		return SLAP_CB_CONTINUE;
 
 	/* Check for password in entry */
@@ -1627,7 +1627,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	pp_info			*pi = on->on_bi.bi_private;
 	int			i, rc, mod_pw_only, pwmod, pwmop = -1, deladd,
-				hsize = 0;
+				hsize = 0, hskip;
 	PassPolicy		pp;
 	Modifications		*mods = NULL, *modtail = NULL,
 				*ml, *delmod, *addmod;
@@ -1654,7 +1654,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	/* If this is a replica, we may need to tweak some of the
 	 * master's modifications. Otherwise, just pass it through.
 	 */
-	if ( be_shadow_update( op )) {
+	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) ) {
 		Modifications **prev;
 		Attribute *a_grace, *a_lock, *a_fail;
 
@@ -1670,26 +1670,27 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 			/* If we're deleting an attr that didn't exist,
 			 * drop this delete op
 			 */
-			if ( ml->sml_op == LDAP_MOD_DELETE ) {
+			if ( ml->sml_op == LDAP_MOD_DELETE ||
+					ml->sml_op == SLAP_MOD_SOFTDEL ) {
 				int drop = 0;
 
 				if ( ml->sml_desc == ad_pwdGraceUseTime ) {
 					if ( !a_grace || got_del_grace ) {
-						drop = 1;
+						drop = ml->sml_op == LDAP_MOD_DELETE;
 					} else {
 						got_del_grace = 1;
 					}
 				} else
 				if ( ml->sml_desc == ad_pwdAccountLockedTime ) {
 					if ( !a_lock || got_del_lock ) {
-						drop = 1;
+						drop = ml->sml_op == LDAP_MOD_DELETE;
 					} else {
 						got_del_lock = 1;
 					}
 				} else
 				if ( ml->sml_desc == ad_pwdFailureTime ) {
 					if ( !a_fail || got_del_fail ) {
-						drop = 1;
+						drop = ml->sml_op == LDAP_MOD_DELETE;
 					} else {
 						got_del_fail = 1;
 					}
@@ -2045,7 +2046,10 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 			pErr = PP_passwordInHistory;
 			goto return_results;
 		}
-	
+
+		/* We need this when reduce pwdInHistory */
+		hskip = hsize - pp.pwdInHistory;
+
 		/*
 		 * Iterate through the password history, and fail on any
 		 * password matches.
@@ -2054,6 +2058,10 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 		at.a_vals = cr;
 		cr[1].bv_val = NULL;
 		for(p=tl; p; p=p->next) {
+			if(hskip > 0){
+				hskip--;
+				continue;
+			}
 			cr[0] = p->pw;
 			/* FIXME: no access checking? */
 			rc = slap_passwd_check( op, NULL, &at, bv, &txt );
@@ -2162,7 +2170,19 @@ do_modify:
 			modtail = mods;
 		}
 
-		if (!got_history && pp.pwdInHistory > 0) {
+		/* Delete all pwdInHistory attribute */
+		if (!got_history && pp.pwdInHistory == 0 &&
+            attr_find(e->e_attrs, ad_pwdHistory )){
+			mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
+			mods->sml_op = LDAP_MOD_DELETE;
+			mods->sml_flags = SLAP_MOD_INTERNAL;
+			mods->sml_desc = ad_pwdHistory;
+			mods->sml_next = NULL;
+			modtail->sml_next = mods;
+			modtail = mods;
+		}
+
+		if (!got_history && pp.pwdInHistory > 0){
 			if (hsize >= pp.pwdInHistory) {
 				/*
 				 * We use the >= operator, since we are going to add

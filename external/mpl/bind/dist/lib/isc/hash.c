@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.3.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <inttypes.h>
+#if defined(WIN32) || defined(WIN64)
+#include <malloc.h>
+#endif
 
 #include "isc/hash.h" // IWYU pragma: keep
 #include "isc/likely.h"
@@ -28,12 +31,31 @@
 #include "isc/result.h"
 #include "isc/types.h"
 #include "isc/util.h"
+#include "isc/siphash.h"
+#include "isc/string.h"
 
-static uint32_t fnv_offset_basis;
-static isc_once_t fnv_once = ISC_ONCE_INIT;
-static bool fnv_initialized = false;
+#include "entropy_private.h"
 
-static unsigned char maptolower[] = {
+static uint8_t isc_hash_key[16];
+static bool hash_initialized = false;
+static isc_once_t isc_hash_once = ISC_ONCE_INIT;
+
+static void
+isc_hash_initialize(void) {
+	uint64_t key[2] = { 0, 1 };
+#if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+	/*
+	 * Set a constant key to help in problem reproduction should
+	 * fuzzing find a crash or a hang.
+	 */
+#else
+	isc_entropy_get(key, sizeof(key));
+#endif
+	memmove(isc_hash_key, key, sizeof(isc_hash_key));
+	hash_initialized = true;
+}
+
+static uint8_t maptolower[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -68,27 +90,15 @@ static unsigned char maptolower[] = {
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
 
-static void
-fnv_initialize(void) {
-	/*
-	 * This function should not leave fnv_offset_basis set to
-	 * 0. Also, after this function has been called, if it is called
-	 * again, it should not change fnv_offset_basis.
-	 */
-	while (fnv_offset_basis == 0) {
-		fnv_offset_basis = isc_random32();
-	}
-
-	fnv_initialized = true;
-}
-
 const void *
 isc_hash_get_initializer(void) {
-	if (ISC_UNLIKELY(!fnv_initialized))
-		RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) ==
-			      ISC_R_SUCCESS);
+	if (ISC_UNLIKELY(!hash_initialized)) {
+		RUNTIME_CHECK(isc_once_do(&isc_hash_once,
+					  isc_hash_initialize)
+			      == ISC_R_SUCCESS);
+	}
 
-	return (&fnv_offset_basis);
+	return (isc_hash_key);
 }
 
 void
@@ -96,111 +106,39 @@ isc_hash_set_initializer(const void *initializer) {
 	REQUIRE(initializer != NULL);
 
 	/*
-	 * Ensure that fnv_initialize() is not called after
+	 * Ensure that isc_hash_initialize() is not called after
 	 * isc_hash_set_initializer() is called.
 	 */
-	if (ISC_UNLIKELY(!fnv_initialized))
-		RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) ==
-			      ISC_R_SUCCESS);
+	if (ISC_UNLIKELY(!hash_initialized)) {
+		RUNTIME_CHECK(isc_once_do(&isc_hash_once,
+					  isc_hash_initialize)
+			      == ISC_R_SUCCESS);
+	}
 
-	fnv_offset_basis = *((const unsigned int *)initializer);
+	memmove(isc_hash_key, initializer, sizeof(isc_hash_key));
 }
 
-#define FNV_32_PRIME ((uint32_t)0x01000193)
-
-uint32_t
-isc_hash_function(const void *data, size_t length, bool case_sensitive,
-		  const uint32_t *previous_hashp)
+uint64_t
+isc_hash_function(const void *data,
+		  const size_t length,
+		  const bool case_sensitive)
 {
-	uint32_t hval;
-	const unsigned char *bp;
-	const unsigned char *be;
+	uint64_t hval;
 
 	REQUIRE(length == 0 || data != NULL);
 
-	if (ISC_UNLIKELY(!fnv_initialized)) {
-		RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) ==
-			      ISC_R_SUCCESS);
-	}
-
-	hval = ISC_UNLIKELY(previous_hashp != NULL) ? *previous_hashp
-						    : fnv_offset_basis;
-
-	if (length == 0) {
-		return (hval);
-	}
-
-	bp = (const unsigned char *)data;
-	be = bp + length;
-
-	/*
-	 * Fowler-Noll-Vo FNV-1a hash function.
-	 *
-	 * NOTE: A random FNV offset basis is used by default to avoid
-	 * collision attacks as the hash function is reversible. This
-	 * makes the mapping non-deterministic, but the distribution in
-	 * the domain is still uniform.
-	 */
+	RUNTIME_CHECK(isc_once_do(&isc_hash_once,
+				  isc_hash_initialize) == ISC_R_SUCCESS);
 
 	if (case_sensitive) {
-		while (bp < be) {
-			hval ^= *bp++;
-			hval *= FNV_32_PRIME;
-		}
+		isc_siphash24(isc_hash_key, data, length, (uint8_t *)&hval);
 	} else {
-		while (bp < be) {
-			hval ^= maptolower[*bp++];
-			hval *= FNV_32_PRIME;
+		uint8_t input[1024];
+		REQUIRE(length <= 1024);
+		for (unsigned int i = 0; i < length; i++) {
+			input[i] = maptolower[((const uint8_t *)data)[i]];
 		}
-	}
-
-	return (hval);
-}
-
-uint32_t
-isc_hash_function_reverse(const void *data, size_t length, bool case_sensitive,
-			  const uint32_t *previous_hashp)
-{
-	uint32_t hval;
-	const unsigned char *bp;
-	const unsigned char *be;
-
-	REQUIRE(length == 0 || data != NULL);
-
-	if (ISC_UNLIKELY(!fnv_initialized)) {
-		RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) ==
-			      ISC_R_SUCCESS);
-	}
-
-	hval = ISC_UNLIKELY(previous_hashp != NULL) ? *previous_hashp
-						    : fnv_offset_basis;
-
-	if (length == 0) {
-		return (hval);
-	}
-
-	bp = (const unsigned char *)data;
-	be = bp + length;
-
-	/*
-	 * Fowler-Noll-Vo FNV-1a hash function.
-	 *
-	 * NOTE: A random FNV offset basis is used by default to avoid
-	 * collision attacks as the hash function is reversible. This
-	 * makes the mapping non-deterministic, but the distribution in
-	 * the domain is still uniform.
-	 */
-
-	if (case_sensitive) {
-		while (--be >= bp) {
-			hval ^= *be;
-			hval *= FNV_32_PRIME;
-		}
-	} else {
-		while (--be >= bp) {
-			hval ^= maptolower[*be];
-			hval *= FNV_32_PRIME;
-		}
+		isc_siphash24(isc_hash_key, input, length, (uint8_t *)&hval);
 	}
 
 	return (hval);

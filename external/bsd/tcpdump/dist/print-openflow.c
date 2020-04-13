@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-openflow.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-openflow.c,v 1.3.18.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: version-independent OpenFlow printer */
@@ -137,11 +137,9 @@ trunc:
 /* Print a TCP segment worth of OpenFlow messages presuming the segment begins
  * on a message boundary. */
 void
-openflow_print(netdissect_options *ndo, const u_char *cp, const u_int len)
+openflow_print(netdissect_options *ndo, const u_char *cp, const u_int len _U_)
 {
-	const u_char *ep = cp + len;
-
 	ND_PRINT((ndo, ": OpenFlow"));
-	while (cp < ep)
-		cp = of_header_body_print(ndo, cp, ep);
+	while (cp < ndo->ndo_snapend)
+		cp = of_header_body_print(ndo, cp, ndo->ndo_snapend);
 }

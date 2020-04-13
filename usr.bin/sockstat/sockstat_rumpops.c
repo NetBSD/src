@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat_rumpops.c,v 1.1 2011/01/28 18:52:49 pooka Exp $	*/
+/*	$NetBSD: sockstat_rumpops.c,v 1.1.46.1 2020/04/13 08:05:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,10 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat_rumpops.c,v 1.1 2011/01/28 18:52:49 pooka Exp $");
+__RCSID("$NetBSD: sockstat_rumpops.c,v 1.1.46.1 2020/04/13 08:05:47 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/sysctl.h>
 
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
@@ -42,4 +43,8 @@ const struct prog_ops prog_ops = {
 	.op_init =	rumpclient_init,
 
 	.op_sysctl =	rump_sys___sysctl,
+
+	.op_sysctlgetmibinfo = sysctlgetmibinfo,
+
+	.op_sysctlnametomib = sysctlnametomib,
 };

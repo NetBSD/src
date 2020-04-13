@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.493.2.2 2020/04/08 14:07:25 martin Exp $
+# $NetBSD: GENERIC,v 1.493.2.3 2020/04/13 08:03:30 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.493.2.2 $"
+#ident		"GENERIC-$Revision: 1.493.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -74,14 +74,11 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU-related options
+#options 	USER_LDT	# User-settable LDT, used by Wine
 options 	SVS		# Separate Virtual Space
 makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
 						# migitation
 options 	SPECTRE_V2_GCC_MITIGATION
-
-# USER_LDT. You need to disable SVS to use it.
-#options 	USER_LDT	# user-settable LDT; used by WINE
-#no options	SVS
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
@@ -115,7 +112,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table for CTF
-#options	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
+#options 	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
+#options 	UBSAN_ALWAYS_FATAL	# (optional) Panic on all kUBSan reports
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -123,20 +121,38 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Kernel Address Sanitizer (kASan). You need to disable SVS to use it.
 # The quarantine is optional and can help KASAN find more use-after-frees.
-#makeoptions 	KASAN=1		# Kernel Address Sanitizer
-#options 	KASAN
-#no options	SVS
-#options	POOL_QUARANTINE
+# Use KASAN_PANIC if you want panics instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#no options	SVS		# mandatory
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
+
+# Kernel Concurrency Sanitizer (kCSan).
+#makeoptions 	KCSAN=1		# mandatory
+#options 	KCSAN		# mandatory
+#options 	KCSAN_PANIC	# optional
+
+# Kernel Memory Sanitizer (kMSan). You need to disable SVS and kernel modules
+# to use it. The quarantine is optional and can help KMSAN find uninitialized
+# memory in pool caches. Note that KMSAN requires at least 4GB of RAM.
+#makeoptions 	KMSAN=1		# mandatory
+#options 	KMSAN		# mandatory
+#no options	SVS		# mandatory
+#no options 	MODULAR		# mandatory
+#no options 	MODULAR_DEFAULT_AUTOLOAD	# mandatory
+#options	POOL_QUARANTINE	# optional
+#options 	KMSAN_PANIC	# optional
 
 # Kernel Code Coverage Driver.
 #makeoptions	KCOV=1
-#options	KCOV
+#options 	KCOV
 
 # Compatibility options
 # x86_64 never shipped with a.out binaries; the two options below are
 # only relevant to 32-bit i386 binaries
 #options 	EXEC_AOUT	# required by binaries from before 1.5
-#options	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 
 # NetBSD backward compatibility. Support goes from COMPAT_15 up until
 # the latest release. Note that really old compat (< COMPAT_16) is only
@@ -434,10 +450,6 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # Trusted Platform Module
 tpm*	at isa? iomem 0xfed40000 irq 7
-#tpm*	at isa? port 0x02e
-#tpm*	at isa? port 0x04e
-#tpm*	at isa? port 0x07e
-#tpm*	at isa? port 0x0ee
 
 # Serial Devices
 
@@ -578,6 +590,9 @@ gpio*		at gpiobus?
 gpioow* 	at gpio?
 onewire*	at gpioow?
 
+# 1-Wire devices
+owtemp* 	at onewire?			# Temperature sensors
+
 # I2C support
 #gpioiic*	at gpio?
 #iic*		at gpioiic?
@@ -590,6 +605,9 @@ onewire*	at gpioow?
 
 # Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
 #soekrisgpio0	at isa? port 0x680
+
+# Nuvoton NCT5104D SuperIO providing GPIO
+nct0		at isa? port ?
 
 # SCSI Controllers and Devices
 
@@ -767,6 +785,7 @@ bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
 bwfm*	at pci? dev ? function ?	# Broadcom FullMAC
 cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
+ena*	at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
@@ -786,6 +805,7 @@ jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 kse*	at pci? dev ? function ?	# Micrel KSZ8841/8842 ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
+mcx*	at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -868,6 +888,8 @@ ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
+jmphy*	at mii? phy ?			# Jmicron JMP202/211 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
@@ -876,6 +898,7 @@ pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy* at mii? phy ?			# Realtek 8169S/8110 internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+smscphy* at mii? phy ?			# SMSC LAN87xx PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -885,9 +908,11 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # USB Controller and Devices
 
+# Virtual USB controller
+#pseudo-device	vhci
+
 # PCI USB controllers
 xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
-					# xhci is at best experimental
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
@@ -904,6 +929,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
+#usb*	at vhci?
 usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
@@ -1059,6 +1085,7 @@ ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
+#vio9p*	at virtio?			# Virtio 9P device
 
 # Hyper-V devices
 vmbus*		at acpi?		# Hyper-V VMBus

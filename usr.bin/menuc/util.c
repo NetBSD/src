@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2012/03/06 16:55:18 mbalmer Exp $	*/
+/*	$NetBSD: util.c,v 1.5.32.1 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: util.c,v 1.5 2012/03/06 16:55:18 mbalmer Exp $");
+__RCSID("$NetBSD: util.c,v 1.5.32.1 2020/04/13 08:05:44 martin Exp $");
 #endif
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ buff_add_ch(char ch)
 			mc_size = 80;
 		else
 			mc_size *= 2;
-		t = (char *)malloc(mc_size);
+		t = malloc(mc_size);
 		if (t == NULL) {
 			(void)fprintf(stderr, "%s:%d: Malloc error\n",
 					 src_name, line_no);

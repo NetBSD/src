@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootx64.c,v 1.4 2018/03/27 14:15:05 nonaka Exp $	*/
+/*	$NetBSD: efibootx64.c,v 1.4.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -36,13 +36,19 @@ extern void (*startprog64)(physaddr_t, physaddr_t, physaddr_t, u_long,
     void *, physaddr_t);
 extern u_int startprog64_size;
 
+void multiboot64_start(physaddr_t, physaddr_t, uint32_t);
+extern void (*multiboot64)(physaddr_t, physaddr_t, uint32_t);
+extern u_int multiboot64_size;
+
 void
 efi_md_init(void)
 {
 	EFI_STATUS status;
-	EFI_PHYSICAL_ADDRESS addr = EFI_ALLOCATE_MAX_ADDRESS;
-	u_int sz = EFI_SIZE_TO_PAGES(startprog64_size);
+	EFI_PHYSICAL_ADDRESS addr;
+	u_int sz;
 
+	addr = EFI_ALLOCATE_MAX_ADDRESS;
+	sz = EFI_SIZE_TO_PAGES(startprog64_size);
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
 	    EfiLoaderData, sz, &addr);
 	if (EFI_ERROR(status))
@@ -50,6 +56,16 @@ efi_md_init(void)
 		    __func__, sz, (uintmax_t)status);
 	startprog64 = (void *)addr;
 	CopyMem(startprog64, startprog64_start, startprog64_size);
+
+	addr = EFI_ALLOCATE_MAX_ADDRESS;
+	sz = EFI_SIZE_TO_PAGES(multiboot64_size);
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, sz, &addr);
+	if (EFI_ERROR(status))
+		panic("%s: AllocatePages() failed: %d page(s): %" PRIxMAX,
+		    __func__, sz, (uintmax_t)status);
+	multiboot64 = (void *)addr;
+	CopyMem(multiboot64, multiboot64_start, multiboot64_size);
 }
 
 /* ARGSUSED */
@@ -70,7 +86,7 @@ startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 
 /* ARGSUSED */
 void
-multiboot(physaddr_t entry, physaddr_t header, physaddr_t sp)
+multiboot(physaddr_t entry, physaddr_t header, physaddr_t sp, uint32_t magic)
 {
-	panic("%s: not implemented", __func__);
+	(*multiboot64)(entry, header, magic);
 }

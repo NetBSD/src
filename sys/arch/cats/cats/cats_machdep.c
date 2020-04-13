@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.86.4.1 2019/06/10 22:05:59 christos Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.86.4.2 2020/04/13 08:03:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.86.4.1 2019/06/10 22:05:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.86.4.2 2020/04/13 08:03:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -218,7 +218,7 @@ extern struct bus_space footbridge_pci_mem_bs_tag;
 void footbridge_pci_bs_tag_init(void);
 
 /*
- * u_int initarm(struct ebsaboot *bootinfo)
+ * vaddr_t initarm(struct ebsaboot *bootinfo)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -231,7 +231,7 @@ void footbridge_pci_bs_tag_init(void);
  *   Relocating the kernel to the bottom of physical memory
  */
 
-u_int
+vaddr_t
 initarm(void *arm_bootargs)
 {
 	struct ebsaboot *bootinfo = arm_bootargs;
@@ -467,7 +467,7 @@ initarm(void *arm_bootargs)
 	cpu_reset_address_paddr = DC21285_ROM_BASE;
 
 	/* initarm_common returns the new stack pointer address */
-	u_int sp;
+	vaddr_t sp;
 	sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, cats_physmem,
 	    ncats_physmem);
 

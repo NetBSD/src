@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_internal.h,v 1.11.2.2 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.11.2.3 2020/04/13 08:04:25 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,8 +95,12 @@ struct nvmm_impl {
 	void (*fini)(void);
 	void (*capability)(struct nvmm_capability *);
 
-	size_t conf_max;
-	const size_t *conf_sizes;
+	size_t mach_conf_max;
+	const size_t *mach_conf_sizes;
+
+	size_t vcpu_conf_max;
+	const size_t *vcpu_conf_sizes;
+
 	size_t state_size;
 
 	void (*machine_create)(struct nvmm_machine *);
@@ -105,15 +109,13 @@ struct nvmm_impl {
 
 	int (*vcpu_create)(struct nvmm_machine *, struct nvmm_cpu *);
 	void (*vcpu_destroy)(struct nvmm_machine *, struct nvmm_cpu *);
+	int (*vcpu_configure)(struct nvmm_cpu *, uint64_t, void *);
 	void (*vcpu_setstate)(struct nvmm_cpu *);
 	void (*vcpu_getstate)(struct nvmm_cpu *);
 	int (*vcpu_inject)(struct nvmm_cpu *);
 	int (*vcpu_run)(struct nvmm_machine *, struct nvmm_cpu *,
-	    struct nvmm_exit *);
+	    struct nvmm_vcpu_exit *);
 };
-
-int nvmm_vcpu_get(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_cpu **);
-void nvmm_vcpu_put(struct nvmm_cpu *);
 
 extern const struct nvmm_impl nvmm_x86_svm;
 extern const struct nvmm_impl nvmm_x86_vmx;

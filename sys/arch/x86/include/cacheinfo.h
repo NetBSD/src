@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.26 2018/03/12 07:35:45 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.26.2.1 2020/04/13 08:04:11 martin Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -339,7 +339,7 @@ __CI_TBL(CAI_PREFETCH, 0xf1,    0,               0,128, NULL), \
 __CI_TBL(0,               0,    0,               0,  0, NULL)  \
 }
 
-#define AMD_L2CACHE_INFO { \
+#define AMD_L2L3CACHE_INFO {	     \
 __CI_TBL(0, 0x01,    1, 0, 0, NULL), \
 __CI_TBL(0, 0x02,    2, 0, 0, NULL), \
 __CI_TBL(0, 0x03,    3, 0, 0, NULL), \
@@ -347,21 +347,7 @@ __CI_TBL(0, 0x04,    4, 0, 0, NULL), \
 __CI_TBL(0, 0x05,    6, 0, 0, NULL), \
 __CI_TBL(0, 0x06,    8, 0, 0, NULL), \
 __CI_TBL(0, 0x08,   16, 0, 0, NULL), \
-__CI_TBL(0, 0x0a,   32, 0, 0, NULL), \
-__CI_TBL(0, 0x0b,   48, 0, 0, NULL), \
-__CI_TBL(0, 0x0c,   64, 0, 0, NULL), \
-__CI_TBL(0, 0x0d,   96, 0, 0, NULL), \
-__CI_TBL(0, 0x0e,  128, 0, 0, NULL), \
-__CI_TBL(0, 0x0f, 0xff, 0, 0, NULL), \
-__CI_TBL(0, 0x00,    0, 0, 0, NULL)  \
-}
-
-#define AMD_L3CACHE_INFO { \
-__CI_TBL(0, 0x01,    1, 0, 0, NULL), \
-__CI_TBL(0, 0x02,    2, 0, 0, NULL), \
-__CI_TBL(0, 0x04,    4, 0, 0, NULL), \
-__CI_TBL(0, 0x06,    8, 0, 0, NULL), \
-__CI_TBL(0, 0x08,   16, 0, 0, NULL), \
+    /* 0x09:Use Fn8000_001D */	     \
 __CI_TBL(0, 0x0a,   32, 0, 0, NULL), \
 __CI_TBL(0, 0x0b,   48, 0, 0, NULL), \
 __CI_TBL(0, 0x0c,   64, 0, 0, NULL), \

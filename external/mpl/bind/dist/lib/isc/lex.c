@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.5.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.5.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -857,7 +857,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			FATAL_ERROR(__FILE__, __LINE__,
 				    "Unexpected state %d",
 				    state);
-			ISC_UNREACHABLE();
 		}
 
 	} while (!done);

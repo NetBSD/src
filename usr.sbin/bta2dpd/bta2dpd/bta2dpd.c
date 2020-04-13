@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.5 2018/01/13 10:20:45 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.5.4.1 2020/04/13 08:05:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -82,7 +82,9 @@ __RCSID("$NetBSD");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 #include <errno.h>
 
 #include "avdtp_signal.h"
@@ -216,6 +218,7 @@ static struct event recv_ev;			/* audio sink event */
 static struct event ctl_ev;			/* avdtp ctl event */
 
 struct l2cap_info	info;
+static bool		runasDaemon;
 static bool		asSpeaker;
 static bool		initDiscover;	/* initiate avdtp discover */
 static bool 		verbose;	/* copy to stdout */
@@ -250,10 +253,11 @@ static void do_interrupt(int, short, void *);
 static void do_recv(int, short, void *);
 static void do_ctlreq(int, short, void *);
 
-#define log_err(x, ...)		if (verbose) { fprintf (stderr, x "\n",\
-						__VA_ARGS__); }
-#define log_info(x, ...)	if (verbose) { fprintf (stderr, x "\n",\
-						__VA_ARGS__); }
+#define log_err(st, fmt, args...)	\
+	do { syslog(LOG_ERR, fmt, ##args); exit(st); } while (0)
+#define log_warn(fmt, args...)	syslog(LOG_WARNING, fmt, ##args)
+#define log_info(fmt, args...)	syslog(LOG_INFO, fmt, ##args)
+#define log_debug(fmt, args...)	syslog(LOG_DEBUG, fmt, ##args)
 
 int
 main(int ac, char *av[])
@@ -263,7 +267,7 @@ main(int ac, char *av[])
 	bdaddr_copy(&info.laddr, BDADDR_ANY);
 
 	sc = hc = -1;
-	verbose = asSpeaker = test_mode = initDiscover = false;
+	verbose = asSpeaker = test_mode = initDiscover = runasDaemon = false;
 	n = m = l = i = j = o = 0;
 	freqs[0] = frequency;
 	channel_config[0] = channel_mode;
@@ -272,7 +276,7 @@ main(int ac, char *av[])
 	alloc_config[0] = alloc_method;
 	channel_config[0] = channel_mode;
 
-	while ((ch = getopt(ac, av, "A:a:B:b:d:e:f:IKM:m:p:r:tV:v")) != EOF) {
+	while ((ch = getopt(ac, av, "A:a:B:b:Dd:e:f:IKM:m:p:r:tV:v")) != EOF) {
 		switch (ch) {
 		case 'A':
 			for (k = 0; k < (int)strlen(optarg); k++) {
@@ -330,6 +334,9 @@ main(int ac, char *av[])
 			default:
 				usage();
 			}
+			break;
+		case 'D':
+			runasDaemon = true;
 			break;
 		case 'd': /* local device address */
 			if (!bt_devaddr(optarg, &info.laddr))
@@ -446,6 +453,9 @@ main(int ac, char *av[])
 	for (i = 0; i < numfiles; i++)
 		files2open[i] = av[i];
 
+	if (runasDaemon && test_mode)
+		usage();
+
 	if (bdaddr_any(&info.raddr) && (!asSpeaker && !test_mode))
 		usage();
 
@@ -508,21 +518,31 @@ main(int ac, char *av[])
 	if (bitpool == 0 || tmpbitpool < bitpool)
 		bitpool = (uint8_t)tmpbitpool;
 
+	if (runasDaemon) {
+		if (daemon(0, 0) == -1)
+			err(EXIT_FAILURE, "daemon");
+		pidfile(NULL);
+		openlog(getprogname(), LOG_NDELAY | LOG_PID, LOG_DAEMON);
+	} else {
+		openlog(getprogname(), LOG_NLOG | LOG_PERROR | LOG_PTRIM,
+		    LOG_USER);
+	}
+
 again:
 	base = event_init();
 
 	if (asSpeaker == 0) {
 		if (init_client(&info) < 0)
-			err(EXIT_FAILURE, "init client");
+			log_err(EXIT_FAILURE, "init client: %m");
 	} else {
 		if (init_server(&info) < 0)
-			err(EXIT_FAILURE, "init server");
+			log_err(EXIT_FAILURE, "init server: %m");
 	}
 
 	if (verbose) {
-		fprintf(stderr, "A2DP:\n");
-		fprintf(stderr, "\tladdr: %s\n", bt_ntoa(&info.laddr, NULL));
-		fprintf(stderr, "\traddr: %s\n", bt_ntoa(&info.raddr, NULL));
+		log_info("A2DP:");
+		log_info("\tladdr: %s", bt_ntoa(&info.laddr, NULL));
+		log_info("\traddr: %s", bt_ntoa(&info.raddr, NULL));
 	}
 
 	event_base_loop(base, 0);
@@ -546,10 +566,10 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage:\t%s [-v] [-d device] [-m mode] [-r rate] [-M mtu]\n"
+	    "usage:\t%s [-v] [-D] [-d device] [-m mode] [-r rate] [-M mtu]\n"
 	    "\t\t[-V volume] [-f mode] [-b blocks] [-e bands] [-A alloc]\n"
 	    "\t\t[-B bitpool] -a address files...\n"
-	    "\t%s [-v] [-d device] [-m mode] [-p psm] [-B bitpool]\n"
+	    "\t%s [-v] [-D] [-d device] [-m mode] [-p psm] [-B bitpool]\n"
 	    "\t\t[-a address] [-M mtu] [-r rate] [-I] -K file\n"
 	    "\t%s -t [-v] [-K] [-r rate] [-M mtu] [-V volume] [-f mode]\n"
 	    "\t\t[-b blocks] [-e bands] [-A alloc] [-B bitpool] files...\n"
@@ -558,6 +578,7 @@ usage(void)
 	    "\t-a address   Remote device address\n"
 	    "\tfiles...     Files to read from (Defaults to stdin/stdout)\n"
 	    "\t-v           Verbose output\n"
+	    "\t-D           Run in the background\n"
 	    "\t-M mtu       MTU for transmission\n"
 	    "\t-B bitpool   Maximum bitpool value for encoding\n"
 	    "\t-V volume    Volume multiplier 0,1,2.\n"
@@ -681,7 +702,7 @@ do_ctlreq(int fd, short ev, void *arg)
 			avdtpSendReject(fd, fd, trans, signal);
 		}
 		if (verbose)
-			fprintf(stderr, "Received command %d\n",signal);
+			log_debug("Received command %d", signal);
 	} else {
 		switch (signal) {
 		case AVDTP_DISCOVER:
@@ -704,7 +725,7 @@ do_ctlreq(int fd, short ev, void *arg)
 			}
 
 			if (!result && verbose)
-				fprintf(stderr, "Bitpool value = %d\n",bitpool);
+				log_debug("Bitpool value = %d", bitpool);
 			state = 3;
 			break;
 		case AVDTP_SET_CONFIGURATION:
@@ -725,7 +746,7 @@ do_ctlreq(int fd, short ev, void *arg)
 			avdtpSendReject(fd, fd, trans, signal);
 		}
 		if (verbose)
-			fprintf(stderr, "Responded to command %d\n",signal);
+			log_debug("Responded to command %d", signal);
 	}
 
 
@@ -735,7 +756,7 @@ do_ctlreq(int fd, short ev, void *arg)
 	if (asSpeaker && state == 6) {
 		len = sizeof(addr);
 		if ((sc = accept(orighc,(struct sockaddr*)&addr, &len)) < 0)
-			err(EXIT_FAILURE, "stream accept");
+			log_err(EXIT_FAILURE, "stream accept: %m");
 
 	}
 	if (state == 6)
@@ -757,8 +778,8 @@ do_ctlreq(int fd, short ev, void *arg)
 
 	if (setsockopt(sc, BTPROTO_L2CAP, SO_L2CAP_LM,
 	    &l2cap_mode, sizeof(l2cap_mode)) == -1) {
-		log_err("Could not set link mode (0x%4.4x)", l2cap_mode);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "Could not set link mode (0x%4.4x)",
+		    l2cap_mode);
 	}
 
 	bdaddr_copy(&addr.bt_bdaddr, &info.raddr);
@@ -774,13 +795,13 @@ opened_connection:
 	if (asSpeaker) {
 		event_set(&recv_ev, sc, EV_READ | EV_PERSIST, do_recv, NULL);
 		if (event_add(&recv_ev, NULL) < 0)
-			err(EXIT_FAILURE, "recv_ev");
+			log_err(EXIT_FAILURE, "recv_ev: %m");
 		state = 7;
 	} else {
 		event_set(&interrupt_ev, audfile, EV_READ | EV_PERSIST,
 		    do_interrupt, NULL);
 		if (event_add(&interrupt_ev, NULL) < 0)
-			err(EXIT_FAILURE, "interrupt_ev");
+			log_err(EXIT_FAILURE, "interrupt_ev: %m");
 		state = 7;
 	}
 
@@ -800,7 +821,7 @@ do_recv(int fd, short ev, void *arg)
 	len = recvstream(fd, audfile);
 
 	if (verbose)
-		fprintf(stderr, "Recving %zd bytes\n",len);
+		log_debug("Recving %zd bytes", len);
 
 	if (len < 0) {
 		event_del(&recv_ev);
@@ -834,7 +855,7 @@ next_file:
 		currentFileInd++;
 		audfile = open(files2open[currentFileInd], O_RDONLY);
 		if (audfile < 0) {
-			warn("error opening file %s",
+			log_warn("error opening file %s: %m",
 			    files2open[currentFileInd]);
 			goto next_file;
 		}
@@ -843,11 +864,11 @@ next_file:
 		event_set(&interrupt_ev, audfile, EV_READ |
 		    EV_PERSIST, do_interrupt, NULL);
 		if (event_add(&interrupt_ev, NULL) < 0)
-			err(EXIT_FAILURE, "interrupt_ev");
+			log_err(EXIT_FAILURE, "interrupt_ev: %m");
 	}
 
 	if (verbose)
-		fprintf(stderr, "Streaming %zd bytes\n",len);
+		log_debug("Streaming %zd bytes", len);
 }
 
 /*
@@ -862,7 +883,7 @@ init_server(struct l2cap_info *myInfo)
 	static bool first_time = true;
 
 	if (atexit(exit_func))
-		err(EXIT_FAILURE,"atexit failed to initialize");
+		log_err(EXIT_FAILURE, "atexit failed to initialize: %m");
 
 	if (numfiles == 0)
 		audfile = STDOUT_FILENO;
@@ -878,7 +899,7 @@ init_server(struct l2cap_info *myInfo)
 
 		audfile = open(files2open[0], flags, 0600);
 		if (audfile < 0) {
-			err(EXIT_FAILURE, "error opening file %s",
+			log_err(EXIT_FAILURE, "error opening file %s: %m",
 			    files2open[0]);
 		}
 	}
@@ -914,8 +935,8 @@ init_server(struct l2cap_info *myInfo)
 
 	if (setsockopt(orighc, BTPROTO_L2CAP, SO_L2CAP_LM,
 	    &l2cap_mode, sizeof(l2cap_mode)) == -1) {
-		log_err("Could not set link mode (0x%4.4x)", l2cap_mode);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "Could not set link mode (0x%4.4x)",
+		    l2cap_mode);
 	}
 
 	bdaddr_copy(&addr.bt_bdaddr, &myInfo->raddr);
@@ -931,7 +952,7 @@ init_server(struct l2cap_info *myInfo)
 
 	event_set(&ctl_ev, hc, EV_READ | EV_PERSIST, do_ctlreq, NULL);
 	if (event_add(&ctl_ev, NULL) < 0)
-		err(EXIT_FAILURE, "ctl_ev");
+		log_err(EXIT_FAILURE, "ctl_ev: %m");
 
 just_decode:
 	if (test_mode) {
@@ -941,7 +962,7 @@ just_decode:
 
 		event_set(&recv_ev, sc, EV_READ | EV_PERSIST, do_recv, NULL);
 		if (event_add(&recv_ev, NULL) < 0)
-			err(EXIT_FAILURE, "recv_ev");
+			log_err(EXIT_FAILURE, "recv_ev: %m");
 	}
 
 	return 0;
@@ -958,7 +979,7 @@ init_client(struct l2cap_info *myInfo)
 	int i;
 
 	if (atexit(exit_func))
-		err(EXIT_FAILURE,"atexit failed to initialize");
+		log_err(EXIT_FAILURE, "atexit failed to initialize: %m");
 
 	if (numfiles == 0)
 		audfile = STDIN_FILENO;
@@ -966,13 +987,14 @@ init_client(struct l2cap_info *myInfo)
 		for (i = 0; i < numfiles; i++) {
 			audfile = open(files2open[i], O_RDONLY);
 			if (audfile < 0)
-				warn("error opening file %s",files2open[i]);
+				log_warn("error opening file %s: %m",
+				    files2open[i]);
 			else
 				break;
 		}
 		startFileInd = i;
 		if (startFileInd > numfiles - 1)
-			errx(EXIT_FAILURE,"error opening file%s",
+			log_err(EXIT_FAILURE, "error opening file%s",
 			    (numfiles > 1) ? "s":"");
 	}
 
@@ -1010,8 +1032,8 @@ init_client(struct l2cap_info *myInfo)
 
 	if (setsockopt(orighc, BTPROTO_L2CAP, SO_L2CAP_LM,
 	    &l2cap_mode, sizeof(l2cap_mode)) == -1) {
-		log_err("Could not set link mode (0x%4.4x)", l2cap_mode);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "Could not set link mode (0x%4.4x)",
+		    l2cap_mode);
 	}
 
 	bdaddr_copy(&addr.bt_bdaddr, &myInfo->raddr);
@@ -1023,7 +1045,7 @@ init_client(struct l2cap_info *myInfo)
 
 	event_set(&ctl_ev, hc, EV_READ | EV_PERSIST, do_ctlreq, NULL);
 	if (event_add(&ctl_ev, NULL) < 0)
-		err(EXIT_FAILURE, "ctl_ev");
+		log_err(EXIT_FAILURE, "ctl_ev: %m");
 
 just_encode:
 	if (test_mode) {
@@ -1033,7 +1055,7 @@ just_encode:
 		event_set(&interrupt_ev, audfile, EV_READ | EV_PERSIST,
 		    do_interrupt, NULL);
 		if (event_add(&interrupt_ev, NULL) < 0)
-			err(EXIT_FAILURE, "interrupt_ev");
+			log_err(EXIT_FAILURE, "interrupt_ev: %m");
 	}
 
 	return 0;
@@ -1051,8 +1073,8 @@ client_query(void)
 
 	myss = sdp_open(&info.laddr, &info.raddr);
 	if (myss == NULL) {
-		log_err("%s: Could not open sdp session", service_type);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "%s: Could not open sdp session",
+		    service_type);
 	}
 
 	log_info("Searching for %s service at %s",
@@ -1085,8 +1107,8 @@ client_query(void)
 
 	rv = sdp_service_search_attribute(myss, &ssp, &ail, &rsp);
 	if (!rv) {
-		log_err("%s: Required sdp record not found", service_type);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "%s: Required sdp record not found",
+		    service_type);
 	}
 
 	/*
@@ -1116,8 +1138,7 @@ client_query(void)
 	sdp_close(myss);
 
 	if (!rv) {
-		log_err("%s query failed", service_type);
-		exit(EXIT_FAILURE);
+		log_err(EXIT_FAILURE, "%s query failed", service_type);
 	}
 
 	l2cap_psm = (uint16_t)psm;

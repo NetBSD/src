@@ -1,4 +1,4 @@
-.\"	$NetBSD: chdir.2,v 1.22 2013/02/05 13:36:59 wiz Exp $
+.\"	$NetBSD: chdir.2,v 1.22.30.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)chdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd February 5, 2013
+.Dd September 1, 2019
 .Dt CHDIR 2
 .Os
 .Sh NAME
@@ -130,6 +130,10 @@ The
 function conforms to
 .St -p1003.1-90 .
 .Sh HISTORY
+A
+.Fn chdir
+function call appeared in
+.At v1 .
 The
 .Fn fchdir
 function call

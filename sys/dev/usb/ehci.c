@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.259.2.2 2020/04/08 14:08:13 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.259.2.3 2020/04/13 08:04:49 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.259.2.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.259.2.3 2020/04/13 08:04:49 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.259.2.2 2020/04/08 14:08:13 martin Exp $"
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 #include <dev/usb/usbroothub.h>
-
 
 #ifdef USB_DEBUG
 #ifndef EHCI_DEBUG
@@ -438,10 +437,10 @@ ehci_init(ehci_softc_t *sc)
 	ncomp = EHCI_HCS_N_CC(sparams);
 	if (ncomp != sc->sc_ncomp) {
 		aprint_verbose("%s: wrong number of companions (%d != %d)\n",
-			       device_xname(sc->sc_dev), ncomp, sc->sc_ncomp);
+		    device_xname(sc->sc_dev), ncomp, sc->sc_ncomp);
 #if NOHCI == 0 || NUHCI == 0
 		aprint_error("%s: ohci or uhci probably not configured\n",
-			     device_xname(sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #endif
 		if (ncomp < sc->sc_ncomp)
 			sc->sc_ncomp = ncomp;
@@ -531,16 +530,14 @@ ehci_init(ehci_softc_t *sc)
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 
 	sc->sc_softitds = kmem_zalloc(sc->sc_flsize * sizeof(ehci_soft_itd_t *),
-				     KM_SLEEP);
-	if (sc->sc_softitds == NULL)
-		return ENOMEM;
+	    KM_SLEEP);
 	LIST_INIT(&sc->sc_freeitds);
 	LIST_INIT(&sc->sc_freesitds);
 	TAILQ_INIT(&sc->sc_intrhead);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &ehci_bus_methods;
-	sc->sc_bus.ub_pipesize= sizeof(struct ehci_pipe);
+	sc->sc_bus.ub_pipesize = sizeof(struct ehci_pipe);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
@@ -1035,7 +1032,6 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 	ehci_idone(ex, cq);
 }
 
-
 Static void
 ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 {
@@ -1327,11 +1323,11 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	if (sc->sc_child != NULL)
+	if (sc->sc_child != NULL) {
 		rv = config_detach(sc->sc_child, flags);
-
-	if (rv != 0)
-		return rv;
+		if (rv != 0)
+			return rv;
+	}
 
 	if (sc->sc_ncomp > 0) {
 		mutex_enter(&sc->sc_complock);
@@ -1349,18 +1345,17 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	callout_halt(&sc->sc_tmo_intrlist, NULL);
 	callout_destroy(&sc->sc_tmo_intrlist);
 
-	/* XXX free other data structures XXX */
-	if (sc->sc_softitds)
+	/* XXX free other data structures */
+	if (sc->sc_softitds) {
 		kmem_free(sc->sc_softitds,
 		    sc->sc_flsize * sizeof(ehci_soft_itd_t *));
+	}
 	cv_destroy(&sc->sc_doorbell);
 
 #if 0
 	/* XXX destroyed in ehci_pci.c as it controls ehci_intr access */
-
 	softint_disestablish(sc->sc_doorbell_si);
 	softint_disestablish(sc->sc_pcd_si);
-
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 #endif
@@ -1371,7 +1366,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	return rv;
 }
-
 
 int
 ehci_activate(device_t self, enum devact act)
@@ -3997,7 +3991,6 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 	return USBD_NORMAL_COMPLETION;
 }
 
-
 Static int
 ehci_device_intr_init(struct usbd_xfer *xfer)
 {
@@ -4317,7 +4310,6 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	sitd = NULL;
 	total_length = 0;
 
-
 	DPRINTF("xfer %#jx len %jd flags %jd", (uintptr_t)xfer, xfer->ux_length,
 	    xfer->ux_flags, 0);
 
@@ -4554,9 +4546,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 }
 
-
-/************************/
-
+/* -------------------------------------------------------------------------- */
 
 Static int
 ehci_device_isoc_init(struct usbd_xfer *xfer)

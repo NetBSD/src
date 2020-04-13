@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.6.2.2 2019/06/10 22:05:56 christos Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.6.2.3 2020/04/13 08:03:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.6.2.2 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.6.2.3 2020/04/13 08:03:37 martin Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -665,7 +665,7 @@ rk_tsadc_init_tshut(struct rk_tsadc_softc *sc, int mode, int polarity)
 		KASSERT(mode == TSHUT_MODE_GPIO);
 		val &= ~(TSADC_INT_EN_TSHUT_2CRU_EN_SRC1 |
 			 TSADC_INT_EN_TSHUT_2CRU_EN_SRC0);
-		val &= TSADC_INT_EN_TSHUT_2GPIO_EN_SRC1 |
+		val |= TSADC_INT_EN_TSHUT_2GPIO_EN_SRC1 |
 		       TSADC_INT_EN_TSHUT_2GPIO_EN_SRC0;
 	}
 	TSADC_WRITE(sc, TSADC_INT_EN, val);

@@ -1,10 +1,11 @@
-.\"	$NetBSD: pkg_admin.1,v 1.3.2.1 2019/06/10 21:51:37 christos Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.3.2.2 2020/04/13 07:56:30 martin Exp $
 .\"
-.\" Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Hubert Feyrer <hubert@feyrer.de>.
+.\" by Hubert Feyrer <hubert@feyrer.de> and
+.\" by Joerg Sonnenberger <joerg@NetBSD.org>.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2018
+.Dd October 8, 2019
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -182,6 +183,9 @@ otherwise it exits with error.
 Print the current value of
 .Ar variable
 as used after parsing the configuration file.
+.It Cm digest Ar file ...
+Compute a SHA256 message digest of
+.Ar file .
 .It Cm dump
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
@@ -204,6 +208,11 @@ for packages matching
 Print the URL of the best matching package to stdout for each pattern.
 If a pattern is not matched, it is skipped and the command will return
 a failure.
+.It Cm gpg-sign-package pkg spkg
+Sign the binary package
+.Ar pkg
+using GPG and write the result to
+.Ar spkg .
 .It Cm lsall Ar /dir/pkgpattern
 .It Cm lsbest Ar /dir/pkgpattern
 List all/best package matching pattern in the given directory
@@ -268,11 +277,6 @@ to remove a variable.
 Packages that are not installed directly by the user but pulled in as
 dependencies are marked by setting
 .Dq automatic=YES .
-.It Cm gpg-sign-package pkg spkg
-Sign the binary package
-.Ar pkg
-using GPG and write the result to
-.Ar spkg .
 .It Cm x509-sign-package pkg spkg key cert
 Sign the binary package
 .Ar pkg

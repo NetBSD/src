@@ -47,32 +47,6 @@ feature-test@EXEEXT@: feature-test.@O@
 # Running the scripts below is bypassed when a separate build directory is
 # used.
 
-# Define the tests that can be run in parallel.  This should be identical to
-# the definition of PARALLELDIRS in conf.sh. Note: longer-running tests
-# such as serve-stale and rpzrecurse stale are scheduled first to get more
-# benefit from parallelism.
-PARALLEL = rpzrecurse serve-stale dnssec \
-	   acl additional addzone allow-query auth autosign \
-	   builtin cacheclean case catz cds chain \
-	   checkconf checknames checkzone \
-	   @CHECKDS@ @COVERAGE@ @KEYMGR@ \
-	   cookie database digdelv dlv dlz dlzexternal \
-	   dns64 @DNSTAP@ dscp dsdigest dyndb \
-	   ednscompliance emptyzones \
-	   fetchlimit filter-aaaa formerr forward \
-	   geoip glue idna inline integrity ixfr keepalive \
-	   legacy limits logfileconfig \
-	   masterfile masterformat metadata mirror mkeys \
-	   names notify nslookup nsupdate nzd2nzf \
-	   padding pending pipelined qmin \
-	   reclimit redirect resolver rndc rootkeysentinel rpz \
-	   rrchecker rrl rrsetorder rsabigexponent runtime \
-	   sfcache smartsign sortlist \
-	   spf staticstub statistics statschannel stub synthfromdnssec \
-	   tcp tools tsig tsiggss ttl \
-	   unknown upforwd verify views wildcard \
-	   xfer xferquota zero zonechecks
-
 # Produce intermediate makefile that assigns unique port numbers to each
 # parallel test.  The start port number of 5,000 is arbitrary - it must just
 # be greater than the highest privileged port, 1024.
@@ -84,26 +58,7 @@ PARALLEL = rpzrecurse serve-stale dnssec \
 .PHONY: parallel.mk
 
 parallel.mk:
-	@PARALLEL_SANITIZED=`echo $(PARALLEL) | sed "s|\([^ ][^ ]*\)|test-\1|g;" | tr _ -` ; \
-	echo ".PHONY: $$PARALLEL_SANITIZED" > $@ ; \
-	echo "" >> $@ ; \
-	echo "check_interfaces:" >> $@ ; \
-	echo "	@${PERL} testsock.pl > /dev/null 2>&1 || { \\" >> $@ ; \
-	echo "		echo \"I:NOTE: System tests were skipped because they require that the\"; \\" >> $@ ; \
-	echo "		echo \"I:      IP addresses 10.53.0.1 through 10.53.0.8 be configured\"; \\" >> $@ ; \
-	echo "		echo \"I:      as alias addresses on the loopback interface.  Please run\"; \\" >> $@ ; \
-	echo "		echo \"I:      \"bin/tests/system/ifconfig.sh up\" as root to configure them.\"; \\" >> $@ ; \
-	echo "		exit 1; \\" >> $@ ; \
-	echo "	}" >> $@ ; \
-	echo "" >> $@ ; \
-	echo "test check: $$PARALLEL_SANITIZED" >> $@ ; \
-	port=$${STARTPORT:-5000} ; \
-	for directory in $(PARALLEL) ; do \
-		echo "" >> $@ ; \
-		echo "test-`echo $$directory | tr _ -`: check_interfaces" >> $@ ; \
-		echo "	@$(SHELL) ./run.sh -r -p $$port $$directory 2>&1 | tee $$directory/test.output" >> $@ ; \
-		port=`expr $$port + 100` ; \
-	done
+	$(SHELL) parallel.sh > parallel.mk
 
 # Targets to run the tests.
 

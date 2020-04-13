@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.7.2.1 2019/06/10 22:05:52 christos Exp $
+# $NetBSD: files.cortex,v 1.7.2.2 2020/04/13 08:03:33 martin Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -15,12 +15,14 @@ file	arch/arm/cortex/armperiph.c		armperiph
 device	armgic: pic, pic_splfuncs
 attach	armgic at mpcorebus
 file	arch/arm/cortex/gic.c			armgic
-file	arch/arm/cortex/gic_v2m.c		armgic & pci & __have_pci_msi_msix
 
 # ARM Generic Interrupt Controller v3+
 device	gicvthree: pic, pic_splfuncs
 file	arch/arm/cortex/gicv3.c			gicvthree
 file	arch/arm/cortex/gicv3_its.c		gicvthree & pci & __have_pci_msi_msix
+
+# ARM GICv2m MSI support
+file	arch/arm/cortex/gic_v2m.c		(armgic | gicvthree) & pci & __have_pci_msi_msix
 
 # ARM PL310 L2 Cache Controller(initially on Cortex-A9)
 device	arml2cc
@@ -37,7 +39,12 @@ device	arma9tmr
 attach	arma9tmr at mpcorebus
 file	arch/arm/cortex/a9tmr.c			arma9tmr
 
+# A9 MPcore Private Timer
+device	arma9ptmr
+attach	arma9ptmr at mpcorebus
+file	arch/arm/cortex/a9ptmr.c		arma9ptmr
+
 # A9 MPcore Watchdog Timer
-device	a9wdt: sysmon_wdog
-attach	a9wdt at mpcorebus
-file	arch/arm/cortex/a9wdt.c			a9wdt
+device	arma9wdt: sysmon_wdog
+attach	arma9wdt at mpcorebus
+file	arch/arm/cortex/a9wdt.c			arma9wdt

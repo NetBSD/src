@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40.6.1 2020/04/08 14:09:05 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40.6.2 2020/04/13 08:05:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40.6.1 2020/04/08 14:09:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40.6.2 2020/04/13 08:05:22 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -471,7 +471,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
  * memory system has been bootstrapped.  After that point, either kmem_alloc
  * or malloc should be used.  This function works by stealing pages from the
  * (to be) managed page pool, then implicitly mapping the pages (by using
- * their k0seg addresses) and zeroing them.
+ * their direct mapped addresses) and zeroing them.
  *
  * It may be used once the physical memory segments have been pre-loaded
  * into the vm_physmem[] array.  Early memory allocation MUST use this
@@ -769,7 +769,7 @@ pmap_page_remove(struct vm_page *pg)
 	for (; pv != NULL; pv = npv) {
 		npv = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		if (pv->pv_va & PV_KENTER) {
+		if (PV_ISKENTER_P(pv)) {
 			UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %jx"
 			    " skip", (uintptr_t)pv, (uintptr_t)pv->pv_pmap,
 			    pv->pv_va, 0);
@@ -1035,7 +1035,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		if (pv->pv_pmap != NULL) {
 			while (pv != NULL) {
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-				if (pv->pv_va & PV_KENTER) {
+				if (PV_ISKENTER_P(pv)) {
 					pv = pv->pv_next;
 					continue;
 				}
@@ -1092,7 +1092,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		if (pg != NULL && pte_modified_p(pte)) {
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 			if (VM_PAGEMD_EXECPAGE_P(mdpg)) {
-				KASSERT(mdpg->mdpg_first.pv_pmap != NULL);
+				KASSERT(!VM_PAGEMD_PVLIST_EMPTY_P(mdpg));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 				if (VM_PAGEMD_CACHED_P(mdpg)) {
 #endif
@@ -1703,7 +1703,6 @@ pmap_clear_modify(struct vm_page *pg)
 	 * flush the VAC first if there is one.
 	 */
 	kpreempt_disable();
-	KASSERT(!VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 	for (; pv != NULL; pv = pv_next) {
@@ -1712,7 +1711,7 @@ pmap_clear_modify(struct vm_page *pg)
 
 		pv_next = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		if (pv->pv_va & PV_KENTER)
+		if (PV_ISKENTER_P(pv))
 			continue;
 #endif
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);

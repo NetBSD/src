@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.87.18.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.87.18.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,8 +99,11 @@ typedef __register_t	register_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+#if !__has_feature(undefined_behavior_sanitizer) && \
+	!defined(__SANITIZE_UNDEFINED__)
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
+#endif
 
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_DATA_FIRST

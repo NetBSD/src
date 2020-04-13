@@ -1,4 +1,4 @@
-/*	$NetBSD: t_socket.c,v 1.5 2017/01/13 21:30:41 christos Exp $	*/
+/*	$NetBSD: t_socket.c,v 1.5.14.1 2020/04/13 08:05:25 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -98,7 +98,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
 #define SOCKPATH "/com"
-	strncpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH));
+	memcpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH) - 1);
 	s1 = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (s1 == -1)
 		atf_tc_fail_errno("socket 1");
@@ -114,7 +114,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	/* connect to unix domain socket */
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
-	strncpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH));
+	memcpy(sun.sun_path, SOCKPATH, sizeof(SOCKPATH) - 1);
 	s2 = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (s2 == -1)
 		atf_tc_fail_errno("socket 2");

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.26.2.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.26.2.2 2020/04/13 08:03:52 martin Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -97,6 +97,22 @@
 #define	CHECK_ASTPENDING(reg)	movl	CPUVAR(CURLWP),reg	; \
 				cmpl	$0, L_MD_ASTPENDING(reg)
 #define	CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
+
+/*
+ * If the FPU state is not in the CPU, restore it. Executed with interrupts
+ * disabled.
+ *
+ *     %ebx must not be modified
+ */
+#define HANDLE_DEFERRED_FPU	\
+	movl	CPUVAR(CURLWP),%eax			; \
+	testl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%eax)	; \
+	jnz	1f					; \
+	pushl	%eax					; \
+	call	_C_LABEL(fpu_handle_deferred)		; \
+	popl	%eax					; \
+	orl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%eax)	; \
+1:
 
 /*
  * IDEPTH_INCR:

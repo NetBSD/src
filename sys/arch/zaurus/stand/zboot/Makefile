@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.20.14.1 2020/04/13 08:04:13 martin Exp $
 
 PROG=		zboot
 
@@ -22,7 +22,6 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
-CPPFLAGS+=	-marm
 CPUFLAGS=
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
@@ -67,4 +66,4 @@ cleanlibdir:
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
-	    ${RELEASEDIR}/${MACHINE}/installation
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation

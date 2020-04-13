@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-h5-nanopi-neo-plus2.dts,v 1.2.4.1 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: sun50i-h5-nanopi-neo-plus2.dts,v 1.2.4.2 2020/04/13 08:03:33 martin Exp $ */
 
 #include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo-plus2.dts"
 #include "sun50i-h5.dtsi"
@@ -9,9 +9,9 @@
 			cpu-supply = <&vdd_cpux>;
 			operating-points = <
 				/* kHz	  uV */
-				1152000	1100000
-				1104000	1100000
-				1008000	1100000
+				1152000	1300000
+				1104000	1300000
+				1008000	1300000
 				816000	1100000
 				624000	1100000
 				>;

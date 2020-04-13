@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.750.2.2 2020/04/08 14:08:13 martin Exp $
+$NetBSD: usbdevs,v 1.750.2.3 2020/04/13 08:04:50 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -726,6 +726,7 @@ product ACERW WARPLINK		0x0204	Warplink
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
 product ACTIONTEC PRISM_25A	0x0421	Prism2.5 WLAN A
 product ACTIONTEC AR9287	0x1200	AR9287+AR7010
+product ACTIONTEC KL5KUSB101	0x1200	KL5KUSB101 USB Ethernet adapter
 product ACTIONTEC FREELAN	0x6106	ROPEX FreeLan 802.11b
 product ACTIONTEC UAT1		0x7605	UAT1 Wireless Ethernet adapter
 
@@ -1071,6 +1072,7 @@ product BELKIN RTL8192CU_2	0x1004	RTL8192CU
 product BELKIN RTL8188CU	0x1102	RTL8188CU
 product BELKIN RTL8188CUS	0x11f2	RTL8188CUS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
+product BELKIN F5U258		0x258a	F5U258/F5U279 Host to host adapter
 product BELKIN RTL8192CU	0x2102	RTL8192CU
 product BELKIN F7D2102		0x2103	F7D2102
 product BELKIN RTL8192CU_1	0x21f2	RTL8192CU
@@ -2326,6 +2328,8 @@ product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
 product MICROSOFT XBOX_360_WIRELESS_RECEIVER 0x0291 Xbox 360 Wireless Receiver
 product MICROSOFT 24GHZ_XCVR10		0x071d	2.4GHz Transceiver V1.0
 product MICROSOFT 24GHZ_XCVR20		0x071f	2.4GHz Transceiver V2.0
+product MICROSOFT 24GHZ_XCVR70		0x0745	2.4GHz Transceiver V7.0
+product MICROSOFT 24GHZ_XCVR80		0x07b2	2.4GHz Transceiver V8.0
 product MICROSOFT CM6000		0x077d	Comfort Mouse 6000
 
 
@@ -2380,6 +2384,7 @@ product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 /* MosChip Semiconductor */
 product MOSCHIP MCS7703		0x7703	MCS7703 USB Serial Adapter
 product MOSCHIP MCS7720		0x7720	MCS7720 USB Serial Adapter
+product MOSCHIP MCS7730		0x7730	MCS7730 Ethernet Adapter
 product MOSCHIP MCS7780		0x7780	MCS7780 Fast IrDA Adapter
 product MOSCHIP MCS7781		0x7781	MCS7781 Fast IrDA Adapter
 product MOSCHIP MCS7784		0x7784	MCS7784 Slow IrDA Adapter
@@ -2422,6 +2427,7 @@ product MUSTEK DV2000		0xc441	DV2000 digital camera
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
+product NI HTOH_7825		0x7825	Host to Host Adapter
 
 /* National Semiconductor */
 product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
@@ -2765,6 +2771,7 @@ product PROLIFIC PL2303		0x2303	PL2303 Serial adapter (ATEN/IOGEAR UC232A)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
+product PROLIFIC PL25A1		0x25a1	PL25A1 Host-Host interface
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
 product PROLIFIC RSAQ3		0xaaa2	PL2303 Serial adapter (IODATA USB-RSAQ3)
 product PROLIFIC2 PL2303	0x2303	PL2303 Serial adapter (SMART Technologies)
@@ -3077,6 +3084,9 @@ product SIGMATEL I_BEAD150	0x8009	i-Bead 150 MP3 Player
 product SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 product SIGMATEL MUSICSTICK	0x8134	TrekStor Musicstick
 
+/* Allied Telesyn products */
+product ALLIEDTELESYN AT_USB10	0x07c9	AT-USB10 USB Ethernet Adapter
+
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
 product SIIG UISDMC2S		0x0200	MULTICARDREADER
@@ -3122,6 +3132,7 @@ product SITECOM CN104		0x2068	CN104 serial
 /* Sitecom Europe products */
 product SITECOMEU WL168V1	0x000d	WL-168 v1
 product SITECOMEU RT2870_1	0x0017	RT2870
+product SITECOMEU LN030		0x0021	LN-030
 product SITECOMEU WL168V4	0x0028	WL-168 v4
 product SITECOMEU RT2870_2	0x002b	RT2870
 product SITECOMEU RT2870_3	0x002c	RT2870
@@ -3371,6 +3382,9 @@ product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 product TPLINK RTL8192CU	0x0100	RTL8192CU
 product TPLINK RTL8192EU	0x0109	RTL8192EU
 product TPLINK RTL8188EU	0x010c	RTL8188EU
+product	TPLINK T4UV2		0x010d  Archer T4U ver 2
+product	TPLINK T4UHV2		0x010e  Archer T4UH ver 2
+product	TPLINK T2UNANO		0x011e  Archer T2U Nano
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive

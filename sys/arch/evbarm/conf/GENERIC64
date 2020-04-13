@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.19.2.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: GENERIC64,v 1.19.2.2 2020/04/13 08:03:42 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -8,18 +8,29 @@ include	"arch/evbarm/conf/std.generic64"
 include "arch/evbarm/conf/files.generic64"
 include	"arch/evbarm/conf/GENERIC.common"
 
+maxusers	64
+
 #
 # FDT files supported by this kernel - add to DTSSUBDIR and DTS as
 # appropriate
 #
 makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
+makeoptions	DTSSUBDIR="allwinner amlogic broadcom freescale nvidia rockchip"
 makeoptions	DTS="
+	bcm2711-rpi-4-b.dts
 	bcm2837-rpi-3-a-plus.dts
-	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-cm3-io3.dts
+
+	imx8mq-evk.dts
+	imx8mq-hummingboard-pulse.dts
+	imx8mq-librem5-devkit.dts
+	imx8mq-nitrogen.dts
+	imx8mq-pico-pi.dts
+	imx8mq-zii-ultra-rmb3.dts
+	imx8mq-zii-ultra-zest.dts
 
 	meson-gxbb-nanopi-k2.dts
 	meson-gxbb-nexbox-a95x.dts
@@ -45,6 +56,7 @@ makeoptions	DTS="
 	meson-gxl-s905x-nexbox-a95x.dts
 	meson-gxl-s905x-p212.dts
 
+	rk3328-a1.dts
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
 	rk3328-rock64.dts
@@ -56,9 +68,18 @@ makeoptions	DTS="
 	rk3399-gru-kevin.dts
 	rk3399-gru-scarlet-inx.dts
 	rk3399-gru-scarlet-kd.dts
+	rk3399-hugsun-x99.dts
+	rk3399-khadas-edge-captain.dts
+	rk3399-khadas-edge-v.dts
+	rk3399-khadas-edge.dts
+	rk3399-leez-p710.dts
 	rk3399-nanopc-t4.dts
 	rk3399-nanopi-m4.dts
+	rk3399-nanopi-neo4.dts
+	rk3399-orangepi.dts
+	rk3399-pinebook-pro.dts
 	rk3399-puma-haikou.dts
+	rk3399-roc-pc-mezzanine.dts
 	rk3399-roc-pc.dts
 	rk3399-rock-pi-4.dts
 	rk3399-rock960.dts
@@ -69,6 +90,8 @@ makeoptions	DTS="
 	sun50i-a64-amarula-relic.dts
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-nanopi-a64.dts
+	sun50i-a64-oceanic-5205-5inmfd.dts
+	sun50i-a64-olinuxino-emmc.dts
 	sun50i-a64-olinuxino.dts
 	sun50i-a64-orangepi-win.dts
 	sun50i-a64-pine64-lts.dts
@@ -89,16 +112,21 @@ makeoptions	DTS="
 	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
 
+	sun50i-h6-beelink-gs1.dts
+	sun50i-h6-orangepi-3.dts
 	sun50i-h6-orangepi-lite2.dts
 	sun50i-h6-orangepi-one-plus.dts
 	sun50i-h6-pine-h64.dts
+	sun50i-h6-tanix-tx6.dts
 
 	tegra210-p2371-0000.dts
 	tegra210-p2371-2180.dts
 	tegra210-p2571.dts
 	tegra210-p2894-0050-a08.dts
+	tegra210-p3450-0000.dts
 	tegra210-smaug.dts
 "
+
 options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	CPU_THUNDERX
@@ -122,8 +150,12 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 options 	INCLUDE_CONFIG_FILE
+#options 	UVMHIST
+#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
+#options 	EARLYCONS=bcm2711
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
@@ -132,9 +164,13 @@ options 	INCLUDE_CONFIG_FILE
 #options 	EARLYCONS=thunderx, CONSADDR=0x87e024000000
 #options 	EARLYCONS=virt
 
-# Kernel Address Sanitizer (kASan).
-#makeoptions 	KASAN=1		# Kernel Address Sanitizer
-#options 	KASAN
+# Kernel Address Sanitizer (kASan). The quarantine is optional and can
+# help KASAN find more use-after-frees. Use KASAN_PANIC if you want panics
+# instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -171,7 +207,7 @@ pseudo-device	tprof
 cpufreqdt*	at cpu?
 
 # Power State Coordination Interface (PSCI)
-psci*		at fdt?
+psci*		at fdt? pass 0
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
@@ -192,10 +228,11 @@ armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+bcmpmwdog*	at fdt?			# Broadcom BCM283x watchdog
+dwcwdt* 	at fdt?			# DesignWare watchdog
 mesongxwdt*	at fdt?			# Amlogic Meson GX watchdog
 sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
-watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
 # Interrupt controller
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
@@ -205,6 +242,7 @@ gic*		at acpi?
 armgic0		at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
 gicvthree*	at acpi?
+imx7gpc*	at fdt? pass 2		# IMX GPCv2
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
@@ -212,6 +250,7 @@ tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 
 # Firmware devices
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
+bcmmbox*	at acpi?
 vcmbox*		at bcmmbox?
 qemufwcfg*	at fdt?			# QEMU Firmware Configuration device
 qemufwcfg*	at acpi?
@@ -233,6 +272,7 @@ bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
 gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB/GXL EE clock controller
+imx8mqccm*	at fdt? pass 2		# NXP iMX8MQ CCM
 mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
@@ -248,7 +288,8 @@ sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
-bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+bcmgpio*	at fdt? pass 3		# Broadcom BCM283x GPIO
+imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio*		at acpi?
@@ -262,6 +303,7 @@ rkpwm*		at fdt? pass 3		# Rockchip PWM
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
+imxiomux*	at fdt? pass 2		# IMX IOMUX
 rkiomux*	at fdt?	pass 3		# Rockchip IOMUX
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
@@ -272,6 +314,8 @@ tegra210xphy*	at tegra210xpad?
 # PCIE
 pcihost*	at fdt?			# Generic PCI host controller
 acpipchb*	at acpi?		# ACPI PCIe host bridge
+rkpcie*		at fdt?			# Rockchip AXI PCIE
+rkpciephy*	at fdt? pass 9		# Rockchip AXI PCIE PHY
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
 pci*		at pcibus?
 ppb*		at pci? dev ? function ?
@@ -280,12 +324,22 @@ pci*		at ppb?
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+enet*		at fdt?				# IMX FEC
+genet*		at acpi?			# Broadcom GENET v5
+genet*		at fdt?
+#scx*		at acpi?			# Socionext Gigabit Ethernet
+#scx*		at fdt?	
+aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
+mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
+wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
 # MII/PHY support
+atphy*		at mii? phy ?		# Attansic/Atheros PHYs
+brgphy*		at mii? phy ?		# Broadcom BCM5400-family PHYs
 exphy* 		at mii? phy ?		# 3Com internal PHYs
 gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
@@ -319,6 +373,8 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4			# UART
 com*		at acpi?
+imxuart*	at fdt? pass 4			# IMX UART
+options 	IMXUARTCONSOLE
 mesonuart*	at fdt? pass 4			# Amlogic Meson UART
 plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
@@ -328,12 +384,16 @@ com*		at puc? port ?
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
+bsciic*		at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
-rkiic*		at fdt?			# Rockchip I2C
+imxi2c*		at fdt? pass 4		# IMX I2C
+rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
+#sniiic*	at fdt?			# Socionext SC2A11 I2C
+#sniiic*	at acpi?
 iic*		at i2cbus?
 
 # I2C devices
@@ -344,6 +404,8 @@ as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
 axpreg*		at axppmic?
+cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
+es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
 pcf8563rtc*	at iic?			# PCF8563 RTC
@@ -356,30 +418,36 @@ amdccp*		at fdt?			# AMD Cryptograhic Coprocessor RNG
 amdccp*		at acpi?
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
+sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
-sunxirtc*	at fdt?			# Allwinner RTC
+sunxirtc*	at fdt? pass 4		# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
+bcmsdhost*	at fdt?			# Broadcom BCM283x SD Host Interface
 dwcmmc*		at fdt?			# Designware SD/MMC
 mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
-mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+mmcpwrseq*	at fdt? pass 5		# Simple MMC power sequence provider
 rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
-sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
+sdhc*		at acpi?
 sunximmc*	at fdt?			# Allwinner SD/MMC
+#sniemmc*	at fdt?			# Socionext SC2A11 eMMC
+#sniemmc*	at acpi?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # SATA
 ahcisata*	at fdt?			# AHCI SATA
 ahcisata*	at acpi?
+ahcisata*	at pci? dev ? function ?
 atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
@@ -391,16 +459,23 @@ ld*		at nvme? nsid ?
 
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
+rkspi*		at fdt?			# Rockchip SPI
+sun6ispi*	at fdt?			# Allwinner SPI
 spi*		at spibus?
+m25p*		at spi?
+spiflash*	at spiflashbus?
 
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
+hdaudio*	at pci? dev ? function ?
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
-options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 ausoc*		at fdt?			# Simple SoC audio card
+simpleamp*	at fdt?			# Simple amplifier
+spdiftx*	at fdt?			# SPDIF transmitter
+rki2s*		at fdt?			# Rockchip I2S/PCM
 sunxicodec*	at fdt?			# Allwinner audio codec
 sun8icodec*	at fdt?			# Allwinner audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
@@ -415,9 +490,14 @@ tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
 hdmicec*	at hdmicecbus?
 
 # Display
+anxdp*		at fdt?			# Analogix-based (e)DP
 anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
+panel*		at fdt?			# Display panels
 dwhdmi* 	at fdt?			# Designware HDMI TX
+rkdrm*		at fdt? pass 5		# Rockchip DRM master
+rkfb*		at rkdrm?		# Rockchip DRM framebuffer
+rkvop*		at fdt?			# Rockchip Visual Output Processor
 sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
 sunxidrm*	at fdt?	pass 5		# Allwinner Display Pipeline
 sunxifb*	at sunxidrm?		# Allwinner DRM framebuffer
@@ -448,6 +528,9 @@ options 	FONT_BOLD16x32
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
+#nouveau*	at pci?
+radeon*		at pci? dev ? function ? # AMD Radeon
+radeondrmkmsfb*	at radeonfbbus?
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls
@@ -461,6 +544,7 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 rktsadc*	at fdt?			# RockChip TSASC
 
 # USB
+imx8mqusbphy*	at fdt? pass 9		# IMX USB PHY
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
 mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
 mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY
@@ -483,6 +567,7 @@ usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device
@@ -493,6 +578,9 @@ ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+
+# SCSI controllers
+mpt*		at pci? dev ? function ?
 
 # SCSI bus support
 scsibus*	at scsi?

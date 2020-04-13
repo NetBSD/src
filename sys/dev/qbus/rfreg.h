@@ -1,4 +1,4 @@
-/*	$NetBSD: rfreg.h,v 1.4 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: rfreg.h,v 1.4.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -66,14 +66,15 @@
 
 
 /* Commands of the controller and parameter cont. */
-#define	RX2CS_FBUF	001	/* Fill Buffer, word count and bus address */
-#define	RX2CS_EBUF	003	/* Empty Buffer, word count and bus address */
-#define	RX2CS_WSEC	005	/* Write Sector, sector and track */
-#define	RX2CS_RSEC	007	/* Read Sector, sector and track */
-#define	RX2CS_SMD	011	/* Set Media Density, ??? */
-#define	RX2CS_RSTAT	013	/* Read Status, no params */
-#define	RX2CS_WDDS	015	/* Write Deleted Data Sector, sector and track */
-#define	RX2CS_REC	017	/* Read Error Code, bus address */
+#define	RX2CS_FBUF	0x1	/* Fill Buffer, word count and bus address */
+#define	RX2CS_EBUF	0x3	/* Empty Buffer, word count and bus address */
+#define	RX2CS_WSEC	0x5	/* Write Sector, sector and track */
+#define	RX2CS_RSEC	0x7	/* Read Sector, sector and track */
+#define	RX2CS_SMD	0x9	/* Set Media Density, ??? */
+#define	RX2CS_RSTAT	0xb	/* Read Status, no params */
+#define	RX2CS_WDDS	0xd	/* Write Deleted Data Sector, sector and track */
+#define	RX2CS_REC	0xf	/* Read Error Code, bus address */
+#define	RX2CS_MASK	0xf
 
 
 /* Track Address Register */

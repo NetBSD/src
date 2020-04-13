@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189.16.2 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.189.16.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.16.2 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.16.3 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -209,6 +209,9 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
     bool check_kauth)
 {
 	int error;
+
+	if (tp->tv_nsec < 0 || tp->tv_nsec >= 1000000000L)
+		return EINVAL;
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:
@@ -475,6 +478,9 @@ settimeofday1(const struct timeval *utv, bool userspace,
 		utv = &atv;
 	}
 
+	if (utv->tv_usec < 0 || utv->tv_usec >= 1000000)
+		return EINVAL;
+
 	TIMEVAL_TO_TIMESPEC(utv, &ts);
 	return settime1(l->l_proc, &ts, check_kauth);
 }
@@ -695,6 +701,8 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 			pt->pt_active = 0;
 		}
 	}
+
+	/* Free the timer and release the lock.  */
 	itimerfree(pts, timerid);
 
 	return (0);
@@ -704,8 +712,11 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
  * Set up the given timer. The value in pt->pt_time.it_value is taken
  * to be an absolute time for CLOCK_REALTIME/CLOCK_MONOTONIC timers and
  * a relative time for CLOCK_VIRTUAL/CLOCK_PROF timers.
+ *
+ * If the callout had already fired but not yet run, fails with
+ * ERESTART -- caller must restart from the top to look up a timer.
  */
-void
+int
 timer_settime(struct ptimer *pt)
 {
 	struct ptimer *ptn, *pptn;
@@ -714,7 +725,17 @@ timer_settime(struct ptimer *pt)
 	KASSERT(mutex_owned(&timer_lock));
 
 	if (!CLOCK_VIRTUAL_P(pt->pt_type)) {
-		callout_halt(&pt->pt_ch, &timer_lock);
+		/*
+		 * Try to stop the callout.  However, if it had already
+		 * fired, we have to drop the lock to wait for it, so
+		 * the world may have changed and pt may not be there
+		 * any more.  In that case, tell the caller to start
+		 * over from the top.
+		 */
+		if (callout_halt(&pt->pt_ch, &timer_lock))
+			return ERESTART;
+
+		/* Now we can touch pt and start it up again.  */
 		if (timespecisset(&pt->pt_time.it_value)) {
 			/*
 			 * Don't need to check tshzto() return value, here.
@@ -763,6 +784,9 @@ timer_settime(struct ptimer *pt)
 		} else
 			pt->pt_active = 0;
 	}
+
+	/* Success!  */
+	return 0;
 }
 
 void
@@ -861,6 +885,7 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		return error;
 
 	mutex_spin_enter(&timer_lock);
+restart:
 	if ((pt = pts->pts_timers[timerid]) == NULL) {
 		mutex_spin_exit(&timer_lock);
 		return EINVAL;
@@ -901,7 +926,12 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		}
 	}
 
-	timer_settime(pt);
+	error = timer_settime(pt);
+	if (error == ERESTART) {
+		KASSERT(!CLOCK_VIRTUAL_P(pt->pt_type));
+		goto restart;
+	}
+	KASSERT(error == 0);
 	mutex_spin_exit(&timer_lock);
 
 	if (ovalue)
@@ -1039,12 +1069,17 @@ realtimerexpire(void *arg)
 	}
 
 	/*
+	 * Reset the callout, if it's not going away.
+	 *
 	 * Don't need to check tshzto() return value, here.
 	 * callout_reset() does it for us.
 	 */
-	callout_reset(&pt->pt_ch, pt->pt_type == CLOCK_MONOTONIC ?
-	    tshztoup(&pt->pt_time.it_value) : tshzto(&pt->pt_time.it_value),
-	    realtimerexpire, pt);
+	if (!pt->pt_dying)
+		callout_reset(&pt->pt_ch,
+		    (pt->pt_type == CLOCK_MONOTONIC
+			? tshztoup(&pt->pt_time.it_value)
+			: tshzto(&pt->pt_time.it_value)),
+		    realtimerexpire, pt);
 	mutex_spin_exit(&timer_lock);
 }
 
@@ -1136,6 +1171,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct timespec now;
 	struct ptimers *pts;
 	struct ptimer *pt, *spare;
+	int error;
 
 	KASSERT((u_int)which <= CLOCK_MONOTONIC);
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
@@ -1154,6 +1190,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	if (pts == NULL)
 		pts = timers_alloc(p);
 	mutex_spin_enter(&timer_lock);
+restart:
 	pt = pts->pts_timers[which];
 	if (pt == NULL) {
 		if (spare == NULL) {
@@ -1211,7 +1248,12 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 			break;
 		}
 	}
-	timer_settime(pt);
+	error = timer_settime(pt);
+	if (error == ERESTART) {
+		KASSERT(!CLOCK_VIRTUAL_P(pt->pt_type));
+		goto restart;
+	}
+	KASSERT(error == 0);
 	mutex_spin_exit(&timer_lock);
 	if (spare != NULL)
 		pool_put(&ptimer_pool, spare);
@@ -1298,7 +1340,9 @@ timers_free(struct proc *p, int which)
 	}
 	for ( ; i < TIMER_MAX; i++) {
 		if (pts->pts_timers[i] != NULL) {
+			/* Free the timer and release the lock.  */
 			itimerfree(pts, i);
+			/* Reacquire the lock for the next one.  */
 			mutex_spin_enter(&timer_lock);
 		}
 	}
@@ -1319,12 +1363,33 @@ itimerfree(struct ptimers *pts, int index)
 	KASSERT(mutex_owned(&timer_lock));
 
 	pt = pts->pts_timers[index];
+
+	/*
+	 * Prevent new references, and notify the callout not to
+	 * restart itself.
+	 */
 	pts->pts_timers[index] = NULL;
+	pt->pt_dying = true;
+
+	/*
+	 * For non-virtual timers, stop the callout, or wait for it to
+	 * run if it has already fired.  It cannot restart again after
+	 * this point: the callout won't restart itself when dying, no
+	 * other users holding the lock can restart it, and any other
+	 * users waiting for callout_halt concurrently (timer_settime)
+	 * will restart from the top.
+	 */
 	if (!CLOCK_VIRTUAL_P(pt->pt_type))
 		callout_halt(&pt->pt_ch, &timer_lock);
+
+	/* Remove it from the queue to be signalled.  */
 	if (pt->pt_queued)
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
+
+	/* All done with the global state.  */
 	mutex_spin_exit(&timer_lock);
+
+	/* Destroy the callout, if needed, and free the ptimer.  */
 	if (!CLOCK_VIRTUAL_P(pt->pt_type))
 		callout_destroy(&pt->pt_ch);
 	pool_put(&ptimer_pool, pt);
@@ -1344,6 +1409,7 @@ static int
 itimerdecr(struct ptimer *pt, int nsec)
 {
 	struct itimerspec *itp;
+	int error __diagused;
 
 	KASSERT(mutex_owned(&timer_lock));
 	KASSERT(CLOCK_VIRTUAL_P(pt->pt_type));
@@ -1371,7 +1437,8 @@ expire:
 			itp->it_value.tv_nsec += 1000000000;
 			itp->it_value.tv_sec--;
 		}
-		timer_settime(pt);
+		error = timer_settime(pt);
+		KASSERT(error == 0); /* virtual, never fails */
 	} else
 		itp->it_value.tv_nsec = 0;		/* sec is already 0 */
 	return (0);

@@ -13,7 +13,7 @@ then
 	${KYUA} -v parallelism="${TEST_PARALLEL_JOBS:-1}" --logfile kyua.log --loglevel debug test --results-file "${KYUA_RESULT:-NEW}"
 	status=$?
 
-	${KYUA} report --results-file "${KYUA_RESULT:-LATEST}"
+	${KYUA} --logfile /dev/null report --results-file "${KYUA_RESULT:-LATEST}"
 
 	if [ "${status}" -eq "0" ]
 	then

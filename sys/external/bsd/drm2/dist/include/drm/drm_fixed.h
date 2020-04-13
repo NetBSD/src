@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fixed.h,v 1.1.1.2.30.1 2019/06/10 22:08:29 christos Exp $	*/
+/*	$NetBSD: drm_fixed.h,v 1.1.1.2.30.2 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -34,7 +34,7 @@ typedef union dfixed {
 } fixed20_12;
 
 
-#define dfixed_const(A) (u32)(((A) << 12))/*  + ((B + 0.000122)*4096)) */
+#define dfixed_const(A) (((u32)(A) << 12))/*  + ((B + 0.000122)*4096)) */
 #define dfixed_const_half(A) (u32)(((A) << 12) + 2048)
 #define dfixed_const_666(A) (u32)(((A) << 12) + 2731)
 #define dfixed_const_8(A) (u32)(((A) << 12) + 3277)

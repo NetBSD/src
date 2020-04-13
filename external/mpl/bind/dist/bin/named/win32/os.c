@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
+/*	$NetBSD: os.c,v 1.4.2.4 2020/04/13 08:02:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -111,6 +111,16 @@ named_os_init(const char *progname) {
 	 * ntservice_init();
 	 */
 	version_check(progname);
+	/*
+	 * If running in a Cygwin environment, clear the SEM_NOGPFAULTERRORBOX
+	 * bit in the process error mode to prevent Cygwin from concealing
+	 * non-abort() crashes, giving Windows Error Reporting a chance to
+	 * handle such crashes.  This is done to ensure all crashes triggered
+	 * by system tests can be detected.
+	 */
+	if (getenv("CYGWIN") != NULL) {
+		SetErrorMode(GetErrorMode() & ~SEM_NOGPFAULTERRORBOX);
+	}
 }
 
 void
@@ -350,9 +360,9 @@ named_os_shutdown(void) {
 	if (lockfilefd != -1) {
 		(void) UnlockFile((HANDLE) _get_osfhandle(lockfilefd),
 				  0, 0, 0, 1);
-		close(lockfilefd);
-		lockfilefd = -1;
 	}
+	cleanup_lockfile();
+
 	ntservice_shutdown();	/* This MUST be the last thing done */
 }
 

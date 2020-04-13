@@ -4,6 +4,10 @@
 
 / {
 	soc {
+		timer@fffec600 {
+			status = "disabled";
+		};
+
 		gtimer@fffec200 {
 			compatible = "arm,cortex-a9-global-timer";
 			reg = <0xfffec200 0x20>;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.78.4.2 2020/04/08 14:07:34 martin Exp $
+#	$NetBSD: RPI,v 1.78.4.3 2020/04/13 08:03:42 martin Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -117,7 +117,7 @@ options		VCONS_DRAW_INTR
 #options 	RPI_HWCURSOR
 
 # Power management, Reset controller and Watchdog registers
-watchdog0	at fdt?
+bcmpmwdog*	at fdt?
 
 # Random number generator
 bcmrng0 	at fdt?
@@ -130,8 +130,8 @@ sdhc*		at fdt?
 sdmmc*		at sdhc?
 
 # SD host controller
-sdhost* 	at fdt?
-sdmmc* 		at sdhost?
+bcmsdhost* 	at fdt?
+sdmmc* 		at bcmsdhost?
 
 ld*     at sdmmc?
 bwfm*   at      sdmmc?

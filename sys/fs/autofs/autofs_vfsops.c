@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.4.4.1 2020/04/08 14:08:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.4.4.2 2020/04/13 08:05:02 martin Exp $");
 
 
 #include "autofs.h"
@@ -231,14 +231,14 @@ autofs_unmount(struct mount *mp, int mntflags)
 	mutex_enter(&amp->am_lock);
 	while (!RB_EMPTY(&amp->am_root->an_children)) {
 		struct autofs_node *anp;
+		/*
+		 * Force delete all nodes when more than one level of
+		 * directories are created via indirect map. Autofs doesn't
+		 * support rmdir(2), thus this is the only way to get out.
+		 */
 		anp = RB_MIN(autofs_node_tree, &amp->am_root->an_children);
-		if (!RB_EMPTY(&anp->an_children)) {
-			AUTOFS_DEBUG("%s: %s has children", __func__,
-			    anp->an_name);
-			mutex_exit(&amp->am_lock);
-			return EBUSY;
-		}
-			
+		while (!RB_EMPTY(&anp->an_children))
+			anp = RB_MIN(autofs_node_tree, &anp->an_children);
 		autofs_node_delete(anp);
 	}
 	autofs_node_delete(amp->am_root);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagffwr.h,v 1.7.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -53,24 +53,24 @@ void
 rf_CommonCreateLargeWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList, int nfaults,
-    int (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
-	void    rf_CommonCreateLargeWriteDAGFwd(RF_Raid_t * raidPtr,
-            RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-            RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList, int nfaults,
-            int (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
-	void    rf_CommonCreateSmallWriteDAG(RF_Raid_t * raidPtr,
-            RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-            RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
+    void (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
+void    rf_CommonCreateLargeWriteDAGFwd(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList, int nfaults,
+    void (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
+void    rf_CommonCreateSmallWriteDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
+    const RF_RedFuncs_t * pfuncs, const RF_RedFuncs_t * qfuncs);
+void    rf_CommonCreateSmallWriteDAGFwd(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
             const RF_RedFuncs_t * pfuncs, const RF_RedFuncs_t * qfuncs);
-	void    rf_CommonCreateSmallWriteDAGFwd(RF_Raid_t * raidPtr,
-            RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-            RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-            const RF_RedFuncs_t * pfuncs, const RF_RedFuncs_t * qfuncs);
-	void    rf_CreateRaidOneWriteDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
-            RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
-            RF_AllocListElem_t * allocList);
-	void    rf_CreateRaidOneWriteDAGFwd(RF_Raid_t * raidPtr,
-            RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
-            RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+void    rf_CreateRaidOneWriteDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
+    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
+    RF_AllocListElem_t * allocList);
+void    rf_CreateRaidOneWriteDAGFwd(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
 
 #endif				/* !_RF__RF_DAGFFWR_H_ */

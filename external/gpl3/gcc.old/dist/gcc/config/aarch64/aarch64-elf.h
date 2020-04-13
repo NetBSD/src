@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -24,15 +24,6 @@
 
 #define ASM_OUTPUT_LABELREF(FILE, NAME) \
   aarch64_asm_output_labelref (FILE, NAME)
-
-#define ASM_OUTPUT_DEF(FILE, NAME1, NAME2)	\
-  do						\
-    {						\
-      assemble_name (FILE, NAME1);		\
-      fputs (" = ", FILE);			\
-      assemble_name (FILE, NAME2);		\
-      fputc ('\n', FILE);			\
-    } while (0)
 
 #define TEXT_SECTION_ASM_OP	"\t.text"
 #define DATA_SECTION_ASM_OP	"\t.data"

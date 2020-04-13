@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.177.2.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.177.2.2 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177.2.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177.2.2 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177.2.1 2019/06/10 22:09:58 christos 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/conf.h>
@@ -190,6 +191,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
+static kmutex_t uvm_swap_data_lock __cacheline_aligned;
 static krwlock_t swap_syscall_lock;
 
 /* workqueue and use counter for swap to regular files */
@@ -1069,7 +1071,7 @@ uvm_swap_shutdown(struct lwp *l)
 	struct vnode *vp;
 	int error;
 
-	printf("turning of swap...");
+	printf("turning off swap...");
 	rw_enter(&swap_syscall_lock, RW_WRITER);
 	mutex_enter(&uvm_swap_data_lock);
 again:
@@ -1288,7 +1290,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	 * our buffer.
 	 */
 	error = 0;
-	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
+	bp->b_resid = bp->b_bcount;	/* nothing transferred yet! */
 	addr = bp->b_data;		/* current position in buffer */
 	byteoff = dbtob((uint64_t)bn);
 
@@ -1663,7 +1665,7 @@ uvm_swap_markbad(int startslot, int nslots)
 	 */
 
 	KASSERT(uvmexp.swpgonly >= nslots);
-	uvmexp.swpgonly -= nslots;
+	atomic_add_int(&uvmexp.swpgonly, -nslots);
 	sdp->swd_npgbad += nslots;
 	UVMHIST_LOG(pdhist, "now %jd bad", sdp->swd_npgbad, 0,0,0);
 	mutex_exit(&uvm_swap_data_lock);
@@ -1736,7 +1738,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 {
 	int error;
 
-	uvmexp.nswget++;
+	atomic_inc_uint(&uvmexp.nswget);
 	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
@@ -1750,10 +1752,8 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 		 * this page is no longer only in swap.
 		 */
 
-		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
-		uvmexp.swpgonly--;
-		mutex_exit(&uvm_swap_data_lock);
+		atomic_dec_uint(&uvmexp.swpgonly);
 	}
 	return error;
 }
@@ -1832,7 +1832,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (async) {
-		bp->b_iodone = uvm_aio_biodone;
+		bp->b_iodone = uvm_aio_aiodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 		if (curlwp == uvm.pagedaemon_lwp)
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);

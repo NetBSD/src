@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.4.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.4.2 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,12 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.4.1 2019/06/10 22:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.4.2 2020/04/13 08:03:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -84,8 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.4.1 2019/06/10 22:05:47 c
 #include <compat/sys/signalvar.h>
 
 /* Provide a the name of the architecture we're emulating */
-const char	machine32[] = "i386";
-const char	machine_arch32[] = "i386";	
+const char machine32[] = "i386";
+const char machine_arch32[] = "i386";
+
+static int netbsd32_process_doxmmregs(struct lwp *, struct lwp *, void *, bool);
+static int netbsd32_process_xmmregio(struct lwp *, struct lwp *, struct uio *);
 
 #ifdef USER_LDT
 static int x86_64_get_ldt32(struct lwp *, void *, register_t *);
@@ -104,10 +106,8 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 #endif
 
 int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
-
-void  netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
-    sig_t catcher, int onstack);
-
+void netbsd32_buildcontext(struct lwp *, struct trapframe *, void *,
+    sig_t, int);
 int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #ifdef EXEC_AOUT
@@ -285,10 +285,9 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    netbsd32_sendsig_siginfo(ksi, mask));
 }
 
-#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 struct md_core32 {
 	struct reg32 intreg;
 	struct fpreg32 freg;
@@ -325,15 +324,16 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core)), ENOSYS, error);
+
+	return error;
 }
-#endif
 
 int
 netbsd32_ptrace_translate_request(int req)
@@ -347,12 +347,14 @@ netbsd32_ptrace_translate_request(int req)
 	case PT32_SETREGS:		return PT_SETREGS;
 	case PT32_GETFPREGS:		return PT_GETFPREGS;
 	case PT32_SETFPREGS:		return PT_SETFPREGS;
-	case PT32_GETXMMREGS:		return -1;
-	case PT32_SETXMMREGS:		return -1;
+	case PT32_GETXMMREGS:		return PT_GETXMMREGS;
+	case PT32_SETXMMREGS:		return PT_SETXMMREGS;
 	case PT32_GETDBREGS:		return PT_GETDBREGS;
 	case PT32_SETDBREGS:		return PT_SETDBREGS;
 	case PT32_SETSTEP:		return PT_SETSTEP;
 	case PT32_CLEARSTEP:		return PT_CLEARSTEP;
+	case PT32_GETXSTATE:		return PT_GETXSTATE;
+	case PT32_SETXSTATE:		return PT_SETXSTATE;
 	default:			return -1;
 	}
 }
@@ -380,14 +382,14 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	regs->r_esp = tf->tf_rsp & 0xffffffff;
 	regs->r_ss = tf->tf_ss & 0xffff;
 
-	return (0);
+	return 0;
 }
 
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 {
 
-	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	__CTASSERT(sizeof(*regs) == sizeof(struct save87));
 	process_read_fpregs_s87(l, (struct save87 *)regs);
 	return 0;
 }
@@ -437,7 +439,7 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 	if (!VALID_USER_DSEL32(regs->r_ds) ||
 	    !VALID_USER_DSEL32(regs->r_ss))
 		return EINVAL;
-	if (regs->r_eip >= VM_MAXUSER_ADDRESS32)
+	if ((u_int)regs->r_eip >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
 	tf->tf_rax = regs->r_eax;
@@ -465,7 +467,7 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
     size_t sz)
 {
 
-	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	__CTASSERT(sizeof(*regs) == sizeof(struct save87));
 	process_write_fpregs_s87(l, (const struct save87 *)regs);
 	return 0;
 }
@@ -479,7 +481,7 @@ netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
 
 	/* Check that DR0-DR3 contain user-space address */
 	for (i = 0; i < X86_DBREGS; i++) {
-		if (regs->dr[i] >= VM_MAXUSER_ADDRESS32)
+		if ((u_int)regs->dr[i] >= VM_MAXUSER_ADDRESS32)
 			return EINVAL;
 	}
 
@@ -487,16 +489,89 @@ netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
 		return EINVAL;
 	}
 
-	regs64.dr[0] = regs->dr[0];
-	regs64.dr[1] = regs->dr[1];
-	regs64.dr[2] = regs->dr[2];
-	regs64.dr[3] = regs->dr[3];
+	memset(&regs64, 0, sizeof(regs64));
 
-	regs64.dr[6] = regs->dr[6];
-	regs64.dr[7] = regs->dr[7];
+	regs64.dr[0] = (u_int)regs->dr[0];
+	regs64.dr[1] = (u_int)regs->dr[1];
+	regs64.dr[2] = (u_int)regs->dr[2];
+	regs64.dr[3] = (u_int)regs->dr[3];
+
+	regs64.dr[6] = (u_int)regs->dr[6];
+	regs64.dr[7] = (u_int)regs->dr[7];
 
 	x86_dbregs_write(l, &regs64);
 	return 0;
+}
+
+static int
+netbsd32_process_doxmmregs(struct lwp *curl, struct lwp *l, void *addr,
+    bool write)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	struct uio uio;
+	struct iovec iov;
+	struct vmspace *vm;
+	int error;
+
+	if ((curl->l_proc->p_flag & PK_32) == 0 ||
+	    (l->l_proc->p_flag & PK_32) == 0)
+		return EINVAL;
+
+	if (!process_machdep_validfpu(l->l_proc))
+		return EINVAL;
+
+	error = proc_vmspace_getref(curl->l_proc, &vm);
+	if (error)
+		return error;
+
+	iov.iov_base = addr;
+	iov.iov_len = sizeof(struct xmmregs32);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 0;
+	uio.uio_resid = sizeof(struct xmmregs32);
+	uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+	uio.uio_vmspace = vm;
+
+	error = netbsd32_process_xmmregio(curl, l, &uio);
+	uvmspace_free(vm);
+	return error;
+}
+
+static int
+netbsd32_process_xmmregio(struct lwp *curl, struct lwp *l, struct uio *uio)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	struct xmmregs32 regs;
+	int error;
+	char *kv;
+	size_t kl;
+
+	kl = sizeof(regs);
+	kv = (char *)&regs;
+
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)kl)
+		return EINVAL;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	process_read_fpregs_xmm(l, &regs.fxstate);
+	error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_proc->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			process_write_fpregs_xmm(l, &regs.fxstate);
+	}
+
+	uio->uio_offset = 0;
+	return error;
 }
 
 int
@@ -513,11 +588,11 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 		error = x86_iopl(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
 		break;
-	case X86_GET_LDT: 
+	case X86_GET_LDT:
 		error = x86_64_get_ldt32(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
 		break;
-	case X86_SET_LDT: 
+	case X86_SET_LDT:
 		error = x86_64_set_ldt32(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
 		break;
@@ -546,7 +621,7 @@ x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
 	int error;
 
 	if ((error = copyin(args, &ua32, sizeof(ua32))) != 0)
-		return (error);
+		return error;
 
 	ua.start = ua32.start;
 	ua.num = ua32.num;
@@ -554,10 +629,7 @@ x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
 	if (ua.num < 0 || ua.num > 8192)
 		return EINVAL;
 
-	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_NOWAIT);
-	if (descv == NULL)
-		return ENOMEM;
-
+	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_WAITOK);
 	error = copyin((void *)(uintptr_t)ua32.desc, descv,
 	    sizeof(*descv) * ua.num);
 	if (error == 0)
@@ -586,9 +658,6 @@ x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
 		return EINVAL;
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
-	if (cp == NULL)
-		return ENOMEM;
-
 	error = x86_get_ldt1(l, &ua, cp);
 	*retval = ua.num;
 	if (error == 0)
@@ -619,18 +688,18 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = copyin(args, &args32, sizeof args32);
+	error = copyin(args, &args32, sizeof(args32));
 	if (error != 0)
 		return error;
 
 	if (args32.mtrrp == 0) {
 		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX);
-		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof(n));
 	}
 
-	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof(n));
 	if (error != 0)
 		return error;
 
@@ -650,7 +719,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 		m32.type = mp->type;
 		m32.flags = mp->flags;
 		m32.owner = mp->owner;
-		error = copyout(&m32, m32p, sizeof m32);
+		error = copyout(&m32, m32p, sizeof(m32));
 		if (error != 0)
 			break;
 		mp++;
@@ -661,7 +730,7 @@ fail:
 		kmem_free(m64p, size);
 	if (error != 0)
 		n = 0;
-	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof(n));
 	return error;
 }
 
@@ -683,13 +752,13 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = copyin(args, &args32, sizeof args32);
+	error = copyin(args, &args32, sizeof(args32));
 	if (error != 0)
 		return error;
 
-	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof(n));
 	if (error != 0)
 		return error;
 
@@ -703,7 +772,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
 	mp = m64p;
 	for (i = 0; i < n; i++) {
-		error = copyin(m32p, &m32, sizeof m32);
+		error = copyin(m32p, &m32, sizeof(m32));
 		if (error != 0)
 			goto fail;
 		mp->base = m32.base;
@@ -721,70 +790,10 @@ fail:
 		kmem_free(m64p, size);
 	if (error != 0)
 		n = 0;
-	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof(n));
 	return error;
 }
 #endif
-
-#if 0
-void
-netbsd32_mcontext_to_mcontext32(mcontext32_t *m32, mcontext_t *m, int flags)
-{
-	if ((flags & _UC_CPU) != 0) {
-		m32->__gregs[_REG32_GS] = m->__gregs[_REG_GS] & 0xffffffff;
-		m32->__gregs[_REG32_FS] = m->__gregs[_REG_FS] & 0xffffffff;
-		m32->__gregs[_REG32_ES] = m->__gregs[_REG_ES] & 0xffffffff;
-		m32->__gregs[_REG32_DS] = m->__gregs[_REG_DS] & 0xffffffff;
-		m32->__gregs[_REG32_EDI] = m->__gregs[_REG_RDI] & 0xffffffff;
-		m32->__gregs[_REG32_ESI] = m->__gregs[_REG_RSI] & 0xffffffff;
-		m32->__gregs[_REG32_EBP] = m->__gregs[_REG_RBP] & 0xffffffff;
-		m32->__gregs[_REG32_ESP] = m->__gregs[_REG_URSP] & 0xffffffff;
-		m32->__gregs[_REG32_EBX] = m->__gregs[_REG_RBX] & 0xffffffff;
-		m32->__gregs[_REG32_EDX] = m->__gregs[_REG_RDX] & 0xffffffff;
-		m32->__gregs[_REG32_ECX] = m->__gregs[_REG_RCX] & 0xffffffff;
-		m32->__gregs[_REG32_EAX] = m->__gregs[_REG_RAX] & 0xffffffff;
-		m32->__gregs[_REG32_TRAPNO] =
-		    m->__gregs[_REG_TRAPNO] & 0xffffffff;
-		m32->__gregs[_REG32_ERR] = m->__gregs[_REG_ERR] & 0xffffffff;
-		m32->__gregs[_REG32_EIP] = m->__gregs[_REG_RIP] & 0xffffffff;
-		m32->__gregs[_REG32_CS] = m->__gregs[_REG_CS] & 0xffffffff;
-		m32->__gregs[_REG32_EFL] = m->__gregs[_REG_RFL] & 0xffffffff;
-		m32->__gregs[_REG32_UESP] = m->__gregs[_REG_URSP] & 0xffffffff;
-		m32->__gregs[_REG32_SS] = m->__gregs[_REG_SS] & 0xffffffff;
-	}
-	if ((flags & _UC_FPU) != 0)
-		memcpy(&m32->__fpregs, &m->__fpregs, sizeof (m32->__fpregs));
-}
-
-void
-netbsd32_mcontext32_to_mcontext(mcontext_t *m, mcontext32_t *m32, int flags)
-{
-	if ((flags & _UC_CPU) != 0) {
-		m->__gregs[_REG_GS] = m32->__gregs[_REG32_GS];
-		m->__gregs[_REG_FS] = m32->__gregs[_REG32_FS];
-		m->__gregs[_REG_ES] = m32->__gregs[_REG32_ES];
-		m->__gregs[_REG_DS] = m32->__gregs[_REG32_DS];
-		m->__gregs[_REG_RDI] = m32->__gregs[_REG32_EDI];
-		m->__gregs[_REG_RSI] = m32->__gregs[_REG32_ESI];
-		m->__gregs[_REG_RBP] = m32->__gregs[_REG32_EBP];
-		m->__gregs[_REG_URSP] = m32->__gregs[_REG32_ESP];
-		m->__gregs[_REG_RBX] = m32->__gregs[_REG32_EBX];
-		m->__gregs[_REG_RDX] = m32->__gregs[_REG32_EDX];
-		m->__gregs[_REG_RCX] = m32->__gregs[_REG32_ECX];
-		m->__gregs[_REG_RAX] = m32->__gregs[_REG32_EAX];
-		m->__gregs[_REG_TRAPNO] = m32->__gregs[_REG32_TRAPNO];
-		m->__gregs[_REG_ERR] = m32->__gregs[_REG32_ERR];
-		m->__gregs[_REG_RIP] = m32->__gregs[_REG32_EIP];
-		m->__gregs[_REG_CS] = m32->__gregs[_REG32_CS];
-		m->__gregs[_REG_RFL] = m32->__gregs[_REG32_EFL];
-		m->__gregs[_REG_URSP] = m32->__gregs[_REG32_UESP];
-		m->__gregs[_REG_SS] = m32->__gregs[_REG32_SS];
-	}
-	if (flags & _UC_FPU)
-		memcpy(&m->__fpregs, &m32->__fpregs, sizeof (m->__fpregs));
-}
-#endif
-
 
 int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
@@ -839,7 +848,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -871,7 +880,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_ERR]    = tf->tf_err;
 
 	if ((ras_eip = (__greg32_t)(uintptr_t)ras_lookup(l->l_proc,
-	    (void *) (uintptr_t)gr[_REG32_EIP])) != -1)
+	    (void *) (uintptr_t)gr[_REG32_EIP])) != (__greg32_t)-1)
 		gr[_REG32_EIP] = ras_eip;
 
 	*flags |= _UC_CPU;
@@ -882,7 +891,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	/* Save floating point register context. */
 	process_read_fpregs_xmm(l, (struct fxsave *)
 	    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
-	memset(&mcp->__fpregs.__fp_pad, 0, sizeof mcp->__fpregs.__fp_pad);
+	memset(&mcp->__fpregs.__fp_pad, 0, sizeof(mcp->__fpregs.__fp_pad));
 	*flags |= _UC_FXSAVE | _UC_FPU;
 }
 
@@ -901,12 +910,6 @@ startlwp32(void *arg)
 	userret(l);
 }
 
-/*
- * For various reasons, the amd64 port can't do what the i386 port does,
- * and relies on catching invalid user contexts on exit from the kernel.
- * These functions perform the needed checks.
- */
-
 int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
@@ -921,21 +924,22 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 		return EINVAL;
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
-		/* Only when the LDT is user-set (with USER_LDT) */
+		/* Allow unfamiliar segment register values (USER_LDT). */
 		if (!USERMODE(scp->sc_cs))
 			return EINVAL;
 	} else {
 		if (!VALID_USER_CSEL32(scp->sc_cs))
 			return EINVAL;
 		if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-			!(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
+		    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 			return EINVAL;
 		if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-			!(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
+		    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 			return EINVAL;
 		if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 			return EINVAL;
-		if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
+		if (!VALID_USER_DSEL32(scp->sc_ds) ||
+		    !VALID_USER_DSEL32(scp->sc_ss))
 			return EINVAL;
 	}
 
@@ -948,41 +952,61 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 int
 cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	const __greg32_t *gr;
 	struct trapframe *tf;
+	struct pcb *pcb;
 
 	gr = mcp->__gregs;
 	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
 
 	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
-#ifdef USER_LDT
-	/* Userland is allowed to have unfamiliar segment register values */
-	if (!USERMODE(gr[_REG32_CS]))
-		return EINVAL;
-#else
-	struct pcb *pcb = lwp_getpcb(l);
-
-	if (!VALID_USER_CSEL32(gr[_REG32_CS]))
-		return EINVAL;
-	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
-	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
-		return EINVAL;
-	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
-	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
-		return EINVAL;
-	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
-		return EINVAL;
-	if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
-	    !VALID_USER_DSEL32(gr[_REG32_SS]))
-		return EINVAL;
-#endif
+	if (__predict_false(pmap->pm_ldt != NULL)) {
+		/* Allow unfamiliar segment register values (USER_LDT). */
+		if (!USERMODE(gr[_REG32_CS]))
+			return EINVAL;
+	} else {
+		if (!VALID_USER_CSEL32(gr[_REG32_CS]))
+			return EINVAL;
+		if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
+		    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
+			return EINVAL;
+		if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
+		    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
+			return EINVAL;
+		if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
+			return EINVAL;
+		if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
+		    !VALID_USER_DSEL32(gr[_REG32_SS]))
+			return EINVAL;
+	}
 
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
 	return 0;
+}
+
+static int
+cpu_mcontext32from64_validate(struct lwp *l, const struct reg *regp)
+{
+	mcontext32_t mc;
+	__greg32_t *gr32 = mc.__gregs;
+	const __greg_t *gr = regp->regs;
+
+	memset(&mc, 0, sizeof(mc));
+	gr32[_REG32_EFL] = gr[_REG_RFLAGS];
+	gr32[_REG32_EIP] = gr[_REG_RIP];
+	gr32[_REG32_CS] = gr[_REG_CS];
+	gr32[_REG32_DS] = gr[_REG_DS];
+	gr32[_REG32_ES] = gr[_REG_ES];
+	gr32[_REG32_FS] = gr[_REG_FS];
+	gr32[_REG32_GS] = gr[_REG_GS];
+	gr32[_REG32_SS] = gr[_REG_SS];
+	return cpu_mcontext32_validate(l, &mc);
 }
 
 vaddr_t
@@ -1006,7 +1030,11 @@ void
 netbsd32_machdep_md_init(void)
 {
 
-	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_machine32_hook, netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_reg_validate_hook,
+	    cpu_mcontext32from64_validate);
+	MODULE_HOOK_SET(netbsd32_process_doxmmregs_hook,
+	    netbsd32_process_doxmmregs);
 }
 
 void
@@ -1014,4 +1042,6 @@ netbsd32_machdep_md_fini(void)
 {
 
 	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
+	MODULE_HOOK_UNSET(netbsd32_reg_validate_hook);
+	MODULE_HOOK_UNSET(netbsd32_process_doxmmregs_hook);
 }

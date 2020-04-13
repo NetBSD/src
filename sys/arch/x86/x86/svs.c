@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $	*/
+/*	$NetBSD: svs.c,v 1.18.2.3 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.3 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_svs.h"
+#include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $");
 #include <x86/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/frameasm.h>
+#include <machine/gdt.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -222,9 +224,6 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $");
  *
  *  o Narrow down the entry points: hide the 'jmp handler' instructions. This
  *    makes sense on GENERIC_KASLR kernels.
- *
- *  o Right now there is only one global LDT, and that's not compatible with
- *    USER_LDT.
  */
 
 bool svs_enabled __read_mostly = false;
@@ -471,8 +470,13 @@ cpu_svs_init(struct cpu_info *ci)
 
 	svs_rsp0_init(ci);
 	svs_utls_init(ci);
-
 	svs_pcid_init(ci);
+
+#ifdef USER_LDT
+	mutex_enter(&cpu_lock);
+	ci->ci_svs_ldt_sel = ldt_alloc(&pcpuarea->ent[cid].ldt, MAXGDTSIZ);
+	mutex_exit(&cpu_lock);
+#endif
 }
 
 void
@@ -502,6 +506,23 @@ svs_pmap_sync(struct pmap *pmap, int index)
 		}
 		mutex_exit(&ci->ci_svs_mtx);
 	}
+}
+
+void
+svs_ldt_sync(struct pmap *pmap)
+{
+	struct cpu_info *ci = curcpu();
+	int sel = pmap->pm_ldt_sel;
+
+	KASSERT(kpreempt_disabled());
+
+	if (__predict_false(sel != GSYSSEL(GLDT_SEL, SEL_KPL))) {
+		memcpy(&pcpuarea->ent[cpu_index(ci)].ldt, pmap->pm_ldt,
+		    pmap->pm_ldt_len);
+		sel = ci->ci_svs_ldt_sel;
+	}
+
+	lldt(sel);
 }
 
 void

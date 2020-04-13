@@ -1,4 +1,4 @@
-/*	$NetBSD: rndisreg.h,v 1.2.6.3 2020/04/08 14:08:06 martin Exp $ */
+/*	$NetBSD: rndisreg.h,v 1.2.6.4 2020/04/13 08:04:22 martin Exp $ */
 /*	NetBSD: if_urndisreg.h,v 1.4 2018/11/09 21:57:09 maya Exp */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
@@ -271,6 +271,15 @@ struct rndis_reset_comp {
 
 /* 802.3 link-state or undefined message error. */
 #define REMOTE_NDIS_INDICATE_STATUS_MSG	0x00000007
+
+struct rndis_status_msg {
+	uint32_t	rm_type;
+	uint32_t	rm_len;
+	uint32_t	rm_status;
+	uint32_t	rm_stbuflen;
+	uint32_t	rm_stbufoffset;
+	/* rndis_diag_info */
+};
 
 /* Keepalive messsage.  May be sent by device. */
 #define REMOTE_NDIS_KEEPALIVE_MSG	0x00000008

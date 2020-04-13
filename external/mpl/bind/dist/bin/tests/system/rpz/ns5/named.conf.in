@@ -86,3 +86,5 @@ zone "policy2" {
 	allow-update { any; };
 	allow-transfer { any; };
 };
+
+include "expire.conf";

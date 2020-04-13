@@ -14,6 +14,68 @@
 
 set -e
 
+echo_i "ns3/sign.sh"
+
+infile=key.db.in
+for tld in managed trusted
+do
+	# A secure zone to test.
+	zone=secure.${tld}
+	zonefile=${zone}.db
+
+	keyname1=$("$KEYGEN" -f KSK -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+	cat "$infile" "$keyname1.key" > "$zonefile"
+	"$SIGNER" -z -P -3 - -o "$zone" -O full -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
+
+	# Zone to test trust anchor that matches disabled algorithm.
+	zone=disabled.${tld}
+	zonefile=${zone}.db
+
+	keyname2=$("$KEYGEN" -f KSK -q -a "$DISABLED_ALGORITHM" -b "$DISABLED_BITS" -n zone "$zone")
+	cat "$infile" "$keyname2.key" > "$zonefile"
+	"$SIGNER" -z -P -3 - -o "$zone" -O full -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
+
+	# Zone to test trust anchor that has disabled algorithm for other domain.
+	zone=enabled.${tld}
+	zonefile=${zone}.db
+
+	keyname3=$("$KEYGEN" -f KSK -q -a "$DISABLED_ALGORITHM" -b "$DISABLED_BITS" -n zone "$zone")
+	cat "$infile" "$keyname3.key" > "$zonefile"
+	"$SIGNER" -z -P -3 - -o "$zone" -O full -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
+
+	# Zone to test trust anchor with unsupported algorithm.
+	zone=unsupported.${tld}
+	zonefile=${zone}.db
+
+	keyname4=$("$KEYGEN" -f KSK -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+	cat "$infile" "$keyname4.key" > "$zonefile"
+	"$SIGNER" -z -P -3 - -o "$zone" -O full -f ${zonefile}.tmp "$zonefile" > /dev/null 2>&1
+	awk '$4 == "DNSKEY" { $7 = 255 } $4 == "RRSIG" { $6 = 255 } { print }' ${zonefile}.tmp > ${zonefile}.signed
+
+	# Make trusted-keys and managed keys conf sections for ns8.
+	mv ${keyname4}.key ${keyname4}.tmp
+	awk '$1 == "unsupported.'"${tld}"'." { $6 = 255 } { print }' ${keyname4}.tmp > ${keyname4}.key
+
+	# Zone to test trust anchor that is revoked.
+	zone=revoked.${tld}
+	zonefile=${zone}.db
+
+	keyname5=$("$KEYGEN" -f KSK -f REVOKE -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+	cat "$infile" "$keyname5.key" > "$zonefile"
+	"$SIGNER" -z -P -3 - -o "$zone" -O full -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
+
+	case $tld in
+	"managed")
+		keyfile_to_managed_keys $keyname1 $keyname2 $keyname3 $keyname4 $keyname5 > ../ns8/managed.conf
+		;;
+	"trusted")
+		keyfile_to_trusted_keys $keyname1 $keyname2 $keyname3 $keyname4 $keyname5 > ../ns8/trusted.conf
+		;;
+	esac
+done
+
+echo_i "ns3/sign.sh: example zones"
+
 zone=secure.example.
 infile=secure.example.db.in
 zonefile=secure.example.db
@@ -199,7 +261,7 @@ cat "$infile" "$keyname.key" > "$zonefile"
 # A zone that is signed with an unknown DNSKEY algorithm.
 # Algorithm 7 is replaced by 100 in the zone and dsset.
 #
-zone=dnskey-unknown.example.
+zone=dnskey-unknown.example
 infile=dnskey-unknown.example.db.in
 zonefile=dnskey-unknown.example.db
 
@@ -209,16 +271,16 @@ cat "$infile" "$keyname.key" > "$zonefile"
 
 "$SIGNER" -P -3 - -o "$zone" -O full -f ${zonefile}.tmp "$zonefile" > /dev/null 2>&1
 
-awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
+awk '$4 == "DNSKEY" { $7 = 100 } $4 == "RRSIG" { $6 = 100 } { print }' ${zonefile}.tmp > ${zonefile}.signed
 
-DSFILE="dsset-$(echo ${zone} |sed -e "s/\\.$//g")$TP"
+DSFILE="dsset-${zone}${TP}"
 $DSFROMKEY -A -f ${zonefile}.signed "$zone" > "$DSFILE"
 
 #
 # A zone that is signed with an unsupported DNSKEY algorithm (3).
 # Algorithm 7 is replaced by 255 in the zone and dsset.
 #
-zone=dnskey-unsupported.example.
+zone=dnskey-unsupported.example
 infile=dnskey-unsupported.example.db.in
 zonefile=dnskey-unsupported.example.db
 
@@ -228,16 +290,16 @@ cat "$infile" "$keyname.key" > "$zonefile"
 
 "$SIGNER" -P -3 - -o "$zone" -O full -f ${zonefile}.tmp "$zonefile" > /dev/null 2>&1
 
-awk '$4 == "DNSKEY" { $7 = 255; print } $4 == "RRSIG" { $6 = 255; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
+awk '$4 == "DNSKEY" { $7 = 255 } $4 == "RRSIG" { $6 = 255 } { print }' ${zonefile}.tmp > ${zonefile}.signed
 
-DSFILE="dsset-$(echo ${zone} |sed -e "s/\\.$//g")$TP"
+DSFILE="dsset-${zone}${TP}"
 $DSFROMKEY -A -f ${zonefile}.signed "$zone" > "$DSFILE"
 
 #
 # A zone with a published unsupported DNSKEY algorithm (Reserved).
 # Different from above because this key is not intended for signing.
 #
-zone=dnskey-unsupported-2.example.
+zone=dnskey-unsupported-2.example
 infile=dnskey-unsupported-2.example.db.in
 zonefile=dnskey-unsupported-2.example.db
 
@@ -246,14 +308,13 @@ zsk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 
 cat "$infile" "$ksk.key" "$zsk.key" unsupported-algorithm.key > "$zonefile"
 
-# "$SIGNER" -P -3 - -o "$zone" -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
 "$SIGNER" -P -3 - -o "$zone" -f ${zonefile}.signed "$zonefile" > /dev/null 2>&1
 
 #
 # A zone with a unknown DNSKEY algorithm + unknown NSEC3 hash algorithm (-U).
 # Algorithm 7 is replaced by 100 in the zone and dsset.
 #
-zone=dnskey-nsec3-unknown.example.
+zone=dnskey-nsec3-unknown.example
 infile=dnskey-nsec3-unknown.example.db.in
 zonefile=dnskey-nsec3-unknown.example.db
 
@@ -265,7 +326,7 @@ cat "$infile" "$keyname.key" > "$zonefile"
 
 awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
 
-DSFILE="dsset-$(echo ${zone} |sed -e "s/\\.$//g")$TP"
+DSFILE="dsset-${zone}${TP}"
 $DSFROMKEY -A -f ${zonefile}.signed "$zone" > "$DSFILE"
 
 #

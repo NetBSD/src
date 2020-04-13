@@ -1,5 +1,5 @@
 /* Perform optimizations on tree structure.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    Written by Mark Michell (mark@codesourcery.com).
 
 This file is part of GCC.
@@ -114,26 +114,24 @@ clone_body (tree clone, tree fn, void *arg_map)
 static void
 build_delete_destructor_body (tree delete_dtor, tree complete_dtor)
 {
-  tree call_dtor, call_delete;
   tree parm = DECL_ARGUMENTS (delete_dtor);
   tree virtual_size = cxx_sizeof (current_class_type);
 
   /* Call the corresponding complete destructor.  */
   gcc_assert (complete_dtor);
-  call_dtor = build_cxx_call (complete_dtor, 1, &parm,
-			      tf_warning_or_error);
-  add_stmt (call_dtor);
-
-  add_stmt (build_stmt (0, LABEL_EXPR, cdtor_label));
+  tree call_dtor = build_cxx_call (complete_dtor, 1, &parm,
+				   tf_warning_or_error);
 
   /* Call the delete function.  */
-  call_delete = build_op_delete_call (DELETE_EXPR, current_class_ptr,
-                                      virtual_size,
-                                      /*global_p=*/false,
-                                      /*placement=*/NULL_TREE,
-                                      /*alloc_fn=*/NULL_TREE,
-				      tf_warning_or_error);
-  add_stmt (call_delete);
+  tree call_delete = build_op_delete_call (DELETE_EXPR, current_class_ptr,
+					   virtual_size,
+					   /*global_p=*/false,
+					   /*placement=*/NULL_TREE,
+					   /*alloc_fn=*/NULL_TREE,
+					   tf_warning_or_error);
+
+  /* Operator delete must be called, whether or not the dtor throws.  */
+  add_stmt (build2 (TRY_FINALLY_EXPR, void_type_node, call_dtor, call_delete));
 
   /* Return the address of the object.  */
   if (targetm.cxx.cdtor_returns_this ())
@@ -170,7 +168,8 @@ cdtor_comdat_group (tree complete, tree base)
       {
 	gcc_assert (!diff_seen
 		    && idx > 0
-		    && (p[idx - 1] == 'C' || p[idx - 1] == 'D')
+		    && (p[idx - 1] == 'C' || p[idx - 1] == 'D'
+			|| p[idx - 1] == 'I')
 		    && p[idx] == '1'
 		    && q[idx] == '2');
 	grp_name[idx] = '5';
@@ -263,6 +262,11 @@ maybe_thunk_body (tree fn, bool force)
      (for non-vague linkage ctors) or the COMDAT group (otherwise).  */
 
   populate_clone_array (fn, fns);
+
+  /* Don't use thunks if the base clone omits inherited parameters.  */
+  if (fns[0] && ctor_omit_inherited_parms (fns[0]))
+    return 0;
+
   DECL_ABSTRACT_P (fn) = false;
   if (!DECL_WEAK (fn))
     {
@@ -322,7 +326,7 @@ maybe_thunk_body (tree fn, bool force)
       if (length > max_parms)
         max_parms = length;
     }
-  args = (tree *) alloca (max_parms * sizeof (tree));
+  args = XALLOCAVEC (tree, max_parms);
 
   /* We know that any clones immediately follow FN in TYPE_METHODS.  */
   FOR_EACH_CLONE (clone, fn)
@@ -494,7 +498,7 @@ maybe_clone_body (tree fn)
 	parm = DECL_CHAIN (parm);
       if (DECL_HAS_VTT_PARM_P (clone))
 	clone_parm = DECL_CHAIN (clone_parm);
-      for (; parm;
+      for (; parm && clone_parm;
 	   parm = DECL_CHAIN (parm), clone_parm = DECL_CHAIN (clone_parm))
 	/* Update this parameter.  */
 	update_cloned_parm (parm, clone_parm, first);
@@ -619,8 +623,21 @@ maybe_clone_body (tree fn)
                  function.  */
               else
                 {
-                  decl_map->put (parm, clone_parm);
-                  clone_parm = DECL_CHAIN (clone_parm);
+		  tree replacement;
+		  if (clone_parm)
+		    {
+		      replacement = clone_parm;
+		      clone_parm = DECL_CHAIN (clone_parm);
+		    }
+		  else
+		    {
+		      /* Inheriting ctors can omit parameters from the base
+			 clone.  Replace them with null lvalues.  */
+		      tree reftype = build_reference_type (TREE_TYPE (parm));
+		      replacement = fold_convert (reftype, null_pointer_node);
+		      replacement = convert_from_reference (replacement);
+		    }
+                  decl_map->put (parm, replacement);
                 }
             }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.2 2015/09/15 15:49:03 christos Exp $ */
+/* $NetBSD: ptrace.h,v 1.2.20.1 2020/04/13 08:04:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@
 	"PT_SETREGS"
 
 #include <machine/reg.h>
-#define PTRACE_REG_PC(r)	(r)->r_reg[31]	// XXX:!?!
+#define PTRACE_REG_PC(r)	(r)->r_reg[31]
+#define PTRACE_REG_FP(r)	(r)->r_reg[1]
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_reg[31] = (v)
 #define PTRACE_REG_SP(r)	(r)->r_reg[11]
 #define PTRACE_REG_INTRV(r)	(r)->r_reg[0]

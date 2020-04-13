@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.29.16.1 2019/06/10 22:06:04 christos Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.29.16.2 2020/04/13 08:03:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.29.16.1 2019/06/10 22:06:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.29.16.2 2020/04/13 08:03:42 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -447,7 +447,7 @@ static const struct pmap_devmap armadillo9_devmap[] = {
 };
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -459,7 +459,7 @@ static const struct pmap_devmap armadillo9_devmap[] = {
  *   Setting up page tables for the kernel
  *   Initialising interrupt controllers to a sane default state
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int loop;
@@ -871,7 +871,7 @@ initarm(void *arg)
 	evbarm_device_register = armadillo9_device_register;
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

@@ -19,172 +19,22 @@
 
 <section xmlns:db="http://docbook.org/ns/docbook" version="5.0"><info/>
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
-  <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
-    <para>
-      BIND 9.14 is a stable branch of BIND.
-      This document summarizes significant changes since the last
-      production release on that branch.
-    <para>
-    </para>
-      Please see the file <filename>CHANGES</filename> for a more
-      detailed list of changes and bug fixes.
-    </para>
-  </section>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-intro.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-numbering.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-platforms.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-download.xml"/>
 
-  <section xml:id="relnotes_versions"><info><title>Note on Version Numbering</title></info>
-    <para>
-      As of BIND 9.13/9.14, BIND has adopted the "odd-unstable/even-stable"
-      release numbering convention.  BIND 9.14 contains new features added
-      during the BIND 9.13 development process. Henceforth, the 9.14 branch
-      will be limited to bug fixes and new feature development will proceed
-      in the unstable 9.15 branch, and so forth.
-    </para>
-  </section>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.8.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.7.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.6.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.5.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.4.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.3.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.2.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.1.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-9.14.0.xml"/>
 
-  <section xml:id="relnotes_platforms"><info><title>Supported Platforms</title></info>
-    <para>
-      Since 9.12, BIND has undergone substantial code refactoring and
-      cleanup, and some very old code has been removed that was needed
-      to support legacy platforms which are no longer supported by their
-      vendors and for which ISC is no longer able to perform quality
-      assurance testing.  Specifically, workarounds for old versions of
-      UnixWare, BSD/OS, AIX, Tru64, SunOS, TruCluster and IRIX have been
-      removed.
-    </para>
-    <para>
-      On UNIX-like systems, BIND now requires support for POSIX.1c
-      threads (IEEE Std 1003.1c-1995), the Advanced Sockets API for
-      IPv6 (RFC 3542), and standard atomic operations provided by the
-      C compiler.
-    </para>
-    <para>
-      More information can be found in the <filename>PLATFORM.md</filename>
-      file that is included in the source distribution of BIND 9.  If your
-      platform compiler and system libraries provide the above features,
-      BIND 9 should compile and run. If that isn't the case, the BIND
-      development team will generally accept patches that add support
-      for systems that are still supported by their respective vendors.
-    </para>
-    <para>
-      As of BIND 9.14, the BIND development team has also made cryptography
-      (i.e., TSIG and DNSSEC) an integral part of the DNS server.  The
-      OpenSSL cryptography library must be available for the target
-      platform.  A PKCS#11 provider can be used instead for Public Key
-      cryptography (i.e., DNSSEC signing and validation), but OpenSSL is
-      still required for general cryptography operations such as hashing
-      and random number generation.
-    </para>
-  </section>
-
-  <section xml:id="relnotes_download"><info><title>Download</title></info>
-    <para>
-      The latest versions of BIND 9 software can always be found at
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
-      There you will find additional information about each release,
-      source code, and pre-compiled versions for Microsoft Windows
-      operating systems.
-    </para>
-  </section>
-
-  <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
-    <itemizedlist>
-      <listitem>
-        <para>
-	  In certain configurations, <command>named</command> could crash
-	  with an assertion failure if <command>nxdomain-redirect</command>
-	  was in use and a redirected query resulted in an NXDOMAIN from the
-	  cache. This flaw is disclosed in CVE-2019-6467. [GL #880]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  The TCP client quota set using the <command>tcp-clients</command>
-	  option could be exceeded in some cases. This could lead to
-	  exhaustion of file descriptors. (CVE-2018-5743) [GL #615]
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_features"><info><title>New Features</title></info>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  The new <command>add-soa</command> option specifies whether
-	  or not the <command>response-policy</command> zone's SOA record
-	  should be included in the additional section of RPZ responses.
-	  [GL #865]
-        </para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  None.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
-    <itemizedlist>
-      <listitem>
-        <para>
-	  The <command>allow-update</command> and
-	  <command>allow-update-forwarding</command> options were
-	  inadvertently treated as configuration errors when used at the
-	  <command>options</command> or <command>view</command> level.
-	  This has now been corrected.
-	  [GL #913]
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_license"><info><title>License</title></info>
-    <para>
-      BIND is open source software licenced under the terms of the Mozilla
-      Public License, version 2.0 (see the <filename>LICENSE</filename>
-      file for the full text).
-    </para>
-    <para>
-      The license requires that if you make changes to BIND and distribute
-      them outside your organization, those changes must be published under
-      the same license. It does not require that you publish or disclose
-      anything other than the changes you have made to our software.  This
-      requirement does not affect anyone who is using BIND, with or without
-      modifications, without redistributing it, nor anyone redistributing
-      BIND without changes.
-    </para>
-    <para>
-      Those wishing to discuss license compliance may contact ISC at
-      <link
-	xmlns:xlink="http://www.w3.org/1999/xlink"
-	xlink:href="https://www.isc.org/mission/contact/">
-	https://www.isc.org/mission/contact/</link>.
-    </para>
-  </section>
-
-  <section xml:id="end_of_life"><info><title>End of Life</title></info>
-    <para>
-      The end of life date for BIND 9.14 has not yet been determined.
-      For those needing long term support, the current Extended Support
-      Version (ESV) is BIND 9.11, which will be supported until at
-      least December 2021. See
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/software-support-policy/">https://www.isc.org/downloads/software-support-policy/</link>
-      for details of ISC's software support policy.
-    </para>
-  </section>
-
-  <section xml:id="relnotes_thanks"><info><title>Thank You</title></info>
-    <para>
-      Thank you to everyone who assisted us in making this release possible.
-      If you would like to contribute to ISC to assist us in continuing to
-      make quality open source software, please visit our donations page at
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/donate/">http://www.isc.org/donate/</link>.
-    </para>
-  </section>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-license.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-eol.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="notes-thankyou.xml"/>
 </section>

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.108.2.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.108.2.2 2020/04/13 08:05:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.108.2.1 2019/06/10 22:10:22 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.108.2.2 2020/04/13 08:05:45 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ getpcblist_sysctl(const char *name, size_t *len) {
 		err(1, "asprintf");
 
 	/* get dynamic pcblist node */
-	if (sysctlnametomib(mibname, mib, &namelen) == -1) {
+	if (prog_sysctlnametomib(mibname, mib, &namelen) == -1) {
 		if (errno == ENOENT) {
 			*len = 0;
 			return NULL;
@@ -403,7 +403,7 @@ tcp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(tcpstat);
 
-		if (sysctlbyname("net.inet.tcp.stats", tcpstat, &size,
+		if (prog_sysctlbyname("net.inet.tcp.stats", tcpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -530,7 +530,7 @@ udp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(udpstat);
 
-		if (sysctlbyname("net.inet.udp.stats", udpstat, &size,
+		if (prog_sysctlbyname("net.inet.udp.stats", udpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -583,7 +583,7 @@ ip_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(ipstat);
 
-		if (sysctlbyname("net.inet.ip.stats", ipstat, &size,
+		if (prog_sysctlbyname("net.inet.ip.stats", ipstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -648,7 +648,7 @@ icmp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(icmpstat);
 
-		if (sysctlbyname("net.inet.icmp.stats", icmpstat, &size,
+		if (prog_sysctlbyname("net.inet.icmp.stats", icmpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -704,7 +704,7 @@ igmp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(igmpstat);
 
-		if (sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
+		if (prog_sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -742,7 +742,7 @@ carp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(carpstat);
 
-		if (sysctlbyname("net.inet.carp.stats", carpstat, &size,
+		if (prog_sysctlbyname("net.inet.carp.stats", carpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
@@ -828,7 +828,7 @@ arp_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(arpstat);
 
-		if (sysctlbyname("net.inet.arp.stats", arpstat, &size,
+		if (prog_sysctlbyname("net.inet.arp.stats", arpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {

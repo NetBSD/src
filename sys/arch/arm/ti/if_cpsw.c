@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.2.2.2 2020/04/08 14:07:31 martin Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.2.2.3 2020/04/13 08:03:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.2.2 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.2.3 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,14 +73,11 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.2.2 2020/04/08 14:07:31 martin Exp $
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#if 0
-#include <arch/arm/omap/omap2_obiovar.h>
-#else
 #include <dev/fdt/fdtvar.h>
-#endif
-#include <arch/arm/omap/if_cpswreg.h>
-#include <arch/arm/omap/sitara_cmreg.h>
-#include <arch/arm/omap/sitara_cm.h>
+
+#include <arm/ti/if_cpswreg.h>
+
+#define FDT_INTR_FLAGS	0
 
 #define CPSW_TXFRAGS	16
 
@@ -393,14 +390,14 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	struct cpsw_softc * const sc = device_private(self);
-	prop_dictionary_t dict = device_properties(self);
 	struct ethercom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	const int phandle = faa->faa_phandle;
+	const uint8_t *macaddr;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, slave, len;
 	u_int i;
 
 	KERNHIST_INIT(cpswhist, 4096);
@@ -418,8 +415,14 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, cpsw_tick, sc);
 
-	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
-	if (eaprop == NULL) {
+	macaddr = NULL;
+	slave = of_find_firstchild_byname(phandle, "slave");
+	if (slave > 0) {
+		macaddr = fdtbus_get_prop(slave, "mac-address", &len);
+		if (len != ETHER_ADDR_LEN)
+			macaddr = NULL;
+	}
+	if (macaddr == NULL) {
 #if 0
 		/* grab mac_id0 from AM335x control module */
 		uint32_t reg_lo, reg_hi;
@@ -456,28 +459,13 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 #endif
 		}
 	} else {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(eaprop),
-		    ETHER_ADDR_LEN);
+		memcpy(sc->sc_enaddr, macaddr, ETHER_ADDR_LEN);
 	}
 
-#if 0
-	sc->sc_rxthih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_RXTH,
-	    IPL_VM, IST_LEVEL, cpsw_rxthintr, sc);
-	sc->sc_rxih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_RX,
-	    IPL_VM, IST_LEVEL, cpsw_rxintr, sc);
-	sc->sc_txih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_TX,
-	    IPL_VM, IST_LEVEL, cpsw_txintr, sc);
-	sc->sc_miscih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_MISC,
-	    IPL_VM, IST_LEVEL, cpsw_miscintr, sc);
-#else
-#define FDT_INTR_FLAGS 0
 	sc->sc_rxthih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RXTH, IPL_VM, FDT_INTR_FLAGS, cpsw_rxthintr, sc);
 	sc->sc_rxih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RX, IPL_VM, FDT_INTR_FLAGS, cpsw_rxintr, sc);
 	sc->sc_txih = fdtbus_intr_establish(phandle, CPSW_INTROFF_TX, IPL_VM, FDT_INTR_FLAGS, cpsw_txintr, sc);
 	sc->sc_miscih = fdtbus_intr_establish(phandle, CPSW_INTROFF_MISC, IPL_VM, FDT_INTR_FLAGS, cpsw_miscintr, sc);
-#endif
 
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_bss = size;
@@ -582,19 +570,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
-		if (sc->sc_phy_has_1000t) {
-#if 0
-			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. "
-			    "Setting RGMII Mode\n");
-			/*
-			 * Select the Interface RGMII Mode in the Control
-			 * Module
-			 */
-			sitara_cm_reg_write_4(CPSW_GMII_SEL,
-			    GMIISEL_GMII2_SEL(RGMII_MODE) |
-			    GMIISEL_GMII1_SEL(RGMII_MODE));
-#endif
-		}
 
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}

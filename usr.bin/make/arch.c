@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.70 2017/04/16 20:49:09 riastradh Exp $	*/
+/*	$NetBSD: arch.c,v 1.70.12.1 2020/04/13 08:05:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.70 2017/04/16 20:49:09 riastradh Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.70.12.1 2020/04/13 08:05:43 martin Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.70 2017/04/16 20:49:09 riastradh Exp $");
+__RCSID("$NetBSD: arch.c,v 1.70.12.1 2020/04/13 08:05:43 martin Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -635,7 +635,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
 	    size = (int)strtol(arh.ar_size, NULL, 10);
 
-	    (void)strncpy(memName, arh.ar_name, sizeof(arh.ar_name));
+	    memcpy(memName, arh.ar_name, sizeof(arh.ar_name));
 	    for (cp = &memName[AR_MAX_NAME_LEN]; *cp == ' '; cp--) {
 		continue;
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.160.4.1 2019/06/10 22:05:36 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.160.4.2 2020/04/13 08:03:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.160.4.1 2019/06/10 22:05:36 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.160.4.2 2020/04/13 08:03:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -896,7 +896,7 @@ parse(char *l, regex_t *re, size_t *lastcompiled)
 	namelen = CTL_MAXNAME;
 	sz = sizeof(gsname);
 
-	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
+	if (prog_sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
 			     SYSCTL_VERSION) == -1) {
 		if (optional)
 			return;
@@ -1441,7 +1441,7 @@ parse_create(char *l)
 		namelen = sizeof(name) / sizeof(name[0]);
 		sz = sizeof(gsname);
 		*t = '\0';
-		rc = sysctlgetmibinfo(nname, &name[0], &namelen,
+		rc = prog_sysctlgetmibinfo(nname, &name[0], &namelen,
 				      gsname, &sz, NULL, SYSCTL_VERSION);
 		*t = sep[0];
 		if (rc == -1) {
@@ -1489,7 +1489,7 @@ parse_destroy(char *l)
 	memset(name, 0, sizeof(name));
 	namelen = sizeof(name) / sizeof(name[0]);
 	sz = sizeof(gsname);
-	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
+	rc = prog_sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
 			      SYSCTL_VERSION);
 	if (rc == -1) {
 		sysctlparseerror(namelen, l);
@@ -1538,7 +1538,7 @@ parse_describe(char *l)
 	memset(name, 0, sizeof(name));
 	namelen = sizeof(name) / sizeof(name[0]);
 	sz = sizeof(gsname);
-	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
+	rc = prog_sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
 			      SYSCTL_VERSION);
 	if (rc == -1) {
 		sysctlparseerror(namelen, l);
@@ -2266,7 +2266,7 @@ kern_cp_time(HANDLER_ARGS)
 
 	if (namelen == 2 && Aflag) {
 		sz = sizeof(n);
-		rc = sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
+		rc = prog_sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
 		if (rc != 0)
 			return; /* XXX print an error, eh? */
 		n++; /* Add on space for the sum. */
@@ -2414,7 +2414,7 @@ kern_cp_id(HANDLER_ARGS)
 
 	if (namelen == 2) {
 		sz = sizeof(n);
-		rc = sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
+		rc = prog_sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
 		if (rc != 0)
 			return; /* XXX print an error, eh? */
 		sz = n * sizeof(u_int64_t);

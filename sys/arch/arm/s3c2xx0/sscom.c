@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $ */
+/*	$NetBSD: sscom.c,v 1.47.18.1 2020/04/13 08:03:37 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.47.18.1 2020/04/13 08:03:37 martin Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -481,14 +481,9 @@ sscom_attach_subr(struct sscom_softc *sc)
 	tp->t_hwiflow = sscomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(sscom_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(sscom_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = sscom_rbuf_size;
-	if (sc->sc_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer\n",
-		    device_xname(sc->sc_dev));
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (sscom_rbuf_size << 1);
 
 	tty_attach(tp);

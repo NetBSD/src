@@ -1,10 +1,10 @@
-/*	$NetBSD: dn2id.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: dn2id.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* dn2id.c - routines to deal with the dn2id index */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dn2id.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: dn2id.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -645,6 +645,22 @@ mdb_idscope(
 
 	rc = mdb_cursor_open( txn, dbi, &cursor );
 	if ( rc ) return rc;
+
+	/* first see if base has any children at all */
+	key.mv_data = &base;
+	rc = mdb_cursor_get( cursor, &key, &data, MDB_SET );
+	if ( rc ) {
+		goto leave;
+	}
+	{
+		size_t dkids;
+		rc = mdb_cursor_count( cursor, &dkids );
+		if ( rc == 0 ) {
+			if ( dkids < 2 ) {
+				goto leave;
+			}
+		}
+	}
 
 	ida = mdb_idl_first( ids, &cid );
 

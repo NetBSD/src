@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.8 2015/04/04 14:19:00 macallan Exp $ */
+/* $NetBSD: macekbc.c,v 1.8.18.1 2020/04/13 08:04:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.8 2015/04/04 14:19:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.8.18.1 2020/04/13 08:04:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,11 +125,7 @@ macekbc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PS2 controller\n");
 	aprint_naive("\n");
 
-	t = kmem_alloc(sizeof(struct macekbc_internal), KM_NOSLEEP);
-	if (t == NULL) {
-		aprint_error("%s: not enough memory\n", device_xname(self));
-		return;
-	}
+	t = kmem_alloc(sizeof(struct macekbc_internal), KM_SLEEP);
 	t->t_iot = maa->maa_st;
 	for (slot = 0; slot < PCKBPORT_NSLOTS; slot++)
 		t->t_present[slot] = 0;

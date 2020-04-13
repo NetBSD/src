@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.3.2.3 2020/04/08 14:07:09 martin Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.3.2.4 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,10 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <fcntl.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>

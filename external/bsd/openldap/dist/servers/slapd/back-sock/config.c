@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $	*/
 
 /* config.c - sock backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2017 The OpenLDAP Foundation.
+ * Copyright 2007-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $");
 
 #include "portable.h"
 
@@ -41,11 +41,12 @@ static slap_response sock_over_response;
 enum {
 	BS_EXT = 1,
 	BS_OPS,
-	BS_RESP
+	BS_RESP,
+	BS_DNPAT
 };
 
 /* The number of overlay-only config attrs */
-#define NUM_OV_ATTRS	2
+#define NUM_OV_ATTRS	3
 
 static ConfigTable bscfg[] = {
 	{ "sockops", "ops", 2, 0, 0, ARG_MAGIC|BS_OPS,
@@ -58,6 +59,11 @@ static ConfigTable bscfg[] = {
 			"DESC 'Response types to forward' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ "sockdnpat", "regexp", 2, 2, 0, ARG_MAGIC|BS_DNPAT,
+		bs_cf_gen, "( OLcfgDbAt:7.5 NAME 'olcOvSocketDNpat' "
+			"DESC 'DN pattern to match' "
+			"EQUALITY caseIgnoreMatch "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 
 	{ "socketpath", "pathname", 2, 2, 0, ARG_STRING|ARG_OFFSET,
 		(void *)offsetof(struct sockinfo, si_sockpath),
@@ -91,7 +97,8 @@ static ConfigOCs osocs[] = {
 		"SUP olcOverlayConfig "
 		"MUST olcDbSocketPath "
 		"MAY ( olcDbSocketExtensions $ "
-			" olcOvSocketOps $ olcOvSocketResps ) )",
+			" olcOvSocketOps $ olcOvSocketResps $ "
+			" olcOvSocketDNpat ) )",
 			Cft_Overlay, bscfg },
 	{ NULL, 0, NULL }
 };
@@ -104,6 +111,7 @@ static ConfigOCs osocs[] = {
 #define SOCK_OP_MODRDN	0x020
 #define SOCK_OP_ADD		0x040
 #define SOCK_OP_DELETE	0x080
+#define SOCK_OP_EXTENDED	0x100
 
 #define SOCK_REP_RESULT	0x001
 #define SOCK_REP_SEARCH	0x002
@@ -125,6 +133,7 @@ static slap_verbmasks ov_ops[] = {
 	{ BER_BVC("modrdn"), SOCK_OP_MODRDN },
 	{ BER_BVC("add"), SOCK_OP_ADD },
 	{ BER_BVC("delete"), SOCK_OP_DELETE },
+	{ BER_BVC("extended"), SOCK_OP_EXTENDED },
 	{ BER_BVNULL, 0 }
 };
 
@@ -155,6 +164,9 @@ bs_cf_gen( ConfigArgs *c )
 			return mask_to_verbs( ov_ops, si->si_ops, &c->rvalue_vals );
 		case BS_RESP:
 			return mask_to_verbs( ov_resps, si->si_resps, &c->rvalue_vals );
+		case BS_DNPAT:
+			value_add_one( &c->rvalue_vals, &si->si_dnpatstr );
+			return 0;
 		}
 	} else if ( c->op == LDAP_MOD_DELETE ) {
 		switch( c->type ) {
@@ -191,6 +203,11 @@ bs_cf_gen( ConfigArgs *c )
 					si->si_resps ^= dels;
 			}
 			return rc;
+		case BS_DNPAT:
+			regfree( &si->si_dnpat );
+			ch_free( si->si_dnpatstr.bv_val );
+			BER_BVZERO( &si->si_dnpatstr );
+			return 0;
 		}
 
 	} else {
@@ -201,6 +218,13 @@ bs_cf_gen( ConfigArgs *c )
 			return verbs_to_mask( c->argc, c->argv, ov_ops, &si->si_ops );
 		case BS_RESP:
 			return verbs_to_mask( c->argc, c->argv, ov_resps, &si->si_resps );
+		case BS_DNPAT:
+			if ( !regcomp( &si->si_dnpat, c->argv[1], REG_EXTENDED|REG_ICASE|REG_NOSUB )) {
+				ber_str2bv( c->argv[1], 0, 1, &si->si_dnpatstr );
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 	}
 	return 1;
@@ -232,7 +256,9 @@ static BI_op_bind *sockfuncs[] = {
 	sock_back_modify,
 	sock_back_modrdn,
 	sock_back_add,
-	sock_back_delete
+	sock_back_delete,
+	0,                    /* abandon not supported */
+	sock_back_extended
 };
 
 static const int sockopflags[] = {
@@ -243,7 +269,9 @@ static const int sockopflags[] = {
 	SOCK_OP_MODIFY,
 	SOCK_OP_MODRDN,
 	SOCK_OP_ADD,
-	SOCK_OP_DELETE
+	SOCK_OP_DELETE,
+	0,                    /* abandon not supported */
+	SOCK_OP_EXTENDED
 };
 
 static int sock_over_op(
@@ -266,11 +294,16 @@ static int sock_over_op(
 	case LDAP_REQ_MODRDN:	which = op_modrdn; break;
 	case LDAP_REQ_ADD:	which = op_add; break;
 	case LDAP_REQ_DELETE:	which = op_delete; break;
+	case LDAP_REQ_EXTENDED:	which = op_extended; break;
 	default:
 		return SLAP_CB_CONTINUE;
 	}
 	si = on->on_bi.bi_private;
 	if ( !(si->si_ops & sockopflags[which]))
+		return SLAP_CB_CONTINUE;
+
+	if ( !BER_BVISEMPTY( &si->si_dnpatstr ) &&
+		regexec( &si->si_dnpat, op->o_req_ndn.bv_val, 0, NULL, 0 ))
 		return SLAP_CB_CONTINUE;
 
 	op->o_bd->be_private = si;
@@ -344,6 +377,7 @@ sock_over_setup()
 	sockover.on_bi.bi_op_modrdn = sock_over_op;
 	sockover.on_bi.bi_op_add = sock_over_op;
 	sockover.on_bi.bi_op_delete = sock_over_op;
+	sockover.on_bi.bi_extended = sock_over_op;
 	sockover.on_response = sock_over_response;
 
 	sockover.on_bi.bi_cf_ocs = osocs;

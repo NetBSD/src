@@ -20,12 +20,12 @@ presence of the required flag.
 </para>
 
 <para>
-This section describes the C++17 and library TS support in the GCC 7 series.
+This section describes the C++17 and library TS support in the GCC 8 series.
 </para>
 
 <para>
-The following table lists new library features that have been accepted into
-the C++17 working draft. The "Proposal" column provides a link to the
+The following table lists new library features that are included in
+the C++17 standard. The "Proposal" column provides a link to the
 ISO C++ committee proposal that describes the feature, while the "Status"
 column indicates the first version of GCC that contains an implementation of
 this feature (if it has been implemented).
@@ -259,7 +259,7 @@ Feature-testing recommendations for C++</link>.
 	P0174R2
 	</link>
       </entry>
-      <entry align="center"> No </entry>
+      <entry align="center"> No  (kept for backwards compatibility)</entry>
       <entry/>
     </row>
 
@@ -381,7 +381,7 @@ Feature-testing recommendations for C++</link>.
 	</link>
       </entry>
       <entry align="center"> 7.1 </entry>
-      <entry><code> </code></entry>
+      <entry><code>__cpp_lib_raw_memory_algorithms &gt;= 201606L</code></entry>
     </row>
 
     <row>
@@ -503,7 +503,7 @@ Feature-testing recommendations for C++</link>.
 	P0426R1
 	</link>
       </entry>
-      <entry align="center"> 7.3 </entry>
+      <entry align="center"> 8 </entry>
       <entry><code> __cpp_lib_constexpr_char_traits >= 201611 </code></entry>
     </row>
 
@@ -683,51 +683,49 @@ Feature-testing recommendations for C++</link>.
     </row>
 
     <row>
-      <?dbhtml bgcolor="#C8B0B0" ?>
       <entry>Adopt the File System TS for C++17	 </entry>
       <entry>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0218r1.html">
 	P0218R1
 	</link>
       </entry>
-      <entry align="center"> No </entry>
+      <entry align="center"> 8 </entry>
       <entry><code> __has_include(&lt;filesystem&gt;) </code>,
-	     <code> __cpp_lib_filesystem >= 201603 </code></entry>
+	     <code> __cpp_lib_filesystem >= 201603 </code>
+	     (requires linking with <code>-lstdc++fs</code>)
+      </entry>
     </row>
 
     <row>
-      <?dbhtml bgcolor="#C8B0B0" ?>
       <entry> Relative Paths for Filesystem</entry>
       <entry>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0219r1.html">
 	P0219R1
 	</link>
       </entry>
-      <entry align="center"> No </entry>
+      <entry align="center"> 8 </entry>
       <entry><code> __cpp_lib_filesystem >= 201606 </code></entry>
     </row>
 
     <row>
-      <?dbhtml bgcolor="#C8B0B0" ?>
       <entry> Adapting string_view by filesystem paths </entry>
       <entry>
 	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0392r0.pdf">
 	P0392R0
 	</link>
       </entry>
-      <entry align="center"> No </entry>
+      <entry align="center"> 8 </entry>
       <entry><code> __cpp_lib_filesystem >= 201606 </code></entry>
     </row>
 
     <row>
-      <?dbhtml bgcolor="#C8B0B0" ?>
       <entry> Directory Entry Caching for Filesystem </entry>
       <entry>
        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0317r1.html">
        P0317R1
        </link>
       </entry>
-      <entry align="center"> No </entry>
+      <entry align="center"> 8 </entry>
       <entry><code> __cpp_lib_filesystem >= 201703 </code></entry>
      </row>
 
@@ -789,6 +787,31 @@ Feature-testing recommendations for C++</link>.
              <code> __cpp_lib_to_chars >= 201611 </code></entry>
     </row>
 
+    <row>
+      <entry> Homogeneous interface for variant, any and optional </entry>
+      <entry>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0032r3.pdf">
+	P0032R3
+	</link>
+      </entry>
+      <entry align="center"> 7.1  </entry>
+      <entry>
+             <code> __cpp_lib_any >= 201606 </code>,
+             <code> __cpp_lib_optional >= 201606 </code>,
+             <code> __cpp_lib_variant >= 201606 </code>
+      </entry>
+    </row>
+
+    <row>
+      <entry> Making Optional Greater Equal Again </entry>
+      <entry>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0307r2.pdf">
+	P0307R2
+	</link>
+      </entry>
+      <entry align="center"> 7.1  </entry>
+      <entry> <code> __cpp_lib_optional >= 201606 </code> </entry>
+    </row>
 
   </tbody>
 </tgroup>
@@ -1050,7 +1073,7 @@ and test for <code>__STDCPP_MATH_SPEC_FUNCS__ >= 201003L</code>.
    <para>
       <emphasis>30.10.2.1 [fs.conform.9945]</emphasis>
       The behavior of the filesystem library implementation will depend on
-      the target operating system. Some features will not be not supported
+      the target operating system. Some features will not be supported
       on some targets.
    </para>
 

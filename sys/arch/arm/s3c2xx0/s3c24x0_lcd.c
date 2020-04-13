@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.12.20.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.12.20.2 2020/04/13 08:03:37 martin Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.12.20.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.12.20.2 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,12 +338,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 		return NULL;
 	}
 
-	scr = malloc(sizeof *scr, M_DEVBUF,
-	    M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
-
-	if (scr == NULL)
-		return NULL;
-
+	scr = malloc(sizeof *scr, M_DEVBUF, M_ZERO | M_WAITOK);
 	scr->nsegs = 0;
 	scr->depth = depth;
 	scr->stride = virtual_width * depth / 8;

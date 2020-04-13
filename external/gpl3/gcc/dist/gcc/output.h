@@ -1,6 +1,6 @@
 /* Declarations for insn-output.c and other code to write to asm_out_file.
    These functions are defined in final.c, and varasm.c.
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -287,7 +287,7 @@ extern section *get_named_text_section (tree, const char *, const char *);
 /* Assemble the floating-point constant D into an object of size MODE.  ALIGN
    is the alignment of the constant in bits.  If REVERSE is true, D is output
    in reverse storage order.  */
-extern void assemble_real (REAL_VALUE_TYPE, machine_mode, unsigned,
+extern void assemble_real (REAL_VALUE_TYPE, scalar_float_mode, unsigned,
 			   bool = false);
 
 /* Write the address of the entity given by SYMBOL to SEC.  */
@@ -313,11 +313,6 @@ extern void output_quoted_string (FILE *, const char *);
 
    This variable is defined  in final.c.  */
 extern rtx_sequence *final_sequence;
-
-/* The line number of the beginning of the current function.  Various
-   md code needs this so that it can output relative linenumbers.  */
-
-extern int sdb_begin_function_line;
 
 /* File in which assembler code is being written.  */
 
@@ -361,7 +356,7 @@ extern int compute_reloc_for_constant (tree);
 extern const char *user_label_prefix;
 
 /* Default target function prologue and epilogue assembler output.  */
-extern void default_function_pro_epilogue (FILE *, HOST_WIDE_INT);
+extern void default_function_pro_epilogue (FILE *);
 
 /* Default target function switched text sections.  */
 extern void default_function_switched_text_sections (FILE *, tree, bool);
@@ -543,6 +538,7 @@ extern section *mergeable_constant_section (machine_mode,
 extern section *function_section (tree);
 extern section *unlikely_text_section (void);
 extern section *current_function_section (void);
+extern void switch_to_other_text_partition (void);
 
 /* Return the numbered .ctors.N (if CONSTRUCTOR_P) or .dtors.N (if
    not) section for PRIORITY.  */

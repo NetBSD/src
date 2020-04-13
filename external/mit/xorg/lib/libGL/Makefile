@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.16.1 2019/06/10 22:02:38 christos Exp $
+#	$NetBSD: Makefile,v 1.21.16.2 2020/04/13 08:02:31 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -48,33 +48,49 @@ CPPFLAGS.UTILdebug.c+=	-I${X11SRCDIR.Mesa}/src/util \
 			-I${X11SRCDIR.Mesa}/src \
 			-I${X11SRCDIR.Mesa}/src/gallium/include
 
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/glx/indirect_init.c MESAindirect_init.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect_init.c MESAindirect_init.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/glx/indirect_window_pos.c MESAindirect_window_pos.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/glx/indirect.c MESAindirect.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/glx/indirect_size.c MESAindirect_size.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect.c MESAindirect.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect_size.c MESAindirect_size.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 
 # glapi
 .PATH:		${X11SRCDIR.Mesa}/src/mapi
 .PATH:		${X11SRCDIR.Mesa}/src/mapi/glapi
-SRCS.glapi=	glapi_gentable.c
+#SRCS.glapi=	glapi_gentable.c
 
-.PATH:		${X11SRCDIR.Mesa}/src/mapi/glapi
+.PATH:		${X11SRCDIR.Mesa}/src/mesa/x86
+.PATH:		${X11SRCDIR.Mesa}/src/mesa/x86-64
+.PATH:		${X11SRCDIR.Mesa}/src/mesa/sparc
 
-SRCS.i386.glx=		glapi_x86.S
-SRCS.x86_64.glx=	glapi_x86-64.S
-SRCS.sparc.glx=		glapi_sparc.S
+SRCS.i386.glx=	common_x86_asm.S \
+		x86_xform2.S	\
+		x86_xform3.S	\
+		x86_xform4.S	\
+		x86_cliptest.S	\
+		mmx_blend.S	\
+		3dnow_xform1.S	\
+		3dnow_xform2.S	\
+		3dnow_xform3.S	\
+		3dnow_xform4.S	\
+		sse_xform1.S	\
+		sse_xform2.S	\
+		sse_xform3.S	\
+		sse_xform4.S	\
+		sse_normal.S	\
+		read_rgba_span_x86.S
+SRCS.x86_64.glx=	xform4.S
+SRCS.sparc.glx=		xform.S norm.S sparc_clip.S
 
 .if !empty(SRCS.${MACHINE_ARCH}.glx)
 SRCS.glx += ${SRCS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}.glx}
-.else
-SRCS.glapi+=			entry.c
 .endif
+SRCS.glapi+=			entry.c
 
 .for _f in ${SRCS.glx}
 CPPFLAGS.${_f}= -I${X11SRCDIR.Mesa}/../src/mapi/glapi \
 		-I${X11SRCDIR.Mesa}/src \
-		-I${X11SRCDIR.Mesa}/src/mesa \
+		-I${X11SRCDIR.Mesa}/../src/mesa \
 		-DGLX_SHARED_GLAPI
 .endfor
 
@@ -82,7 +98,7 @@ CPPFLAGS.${_f}= -I${X11SRCDIR.Mesa}/../src/mapi/glapi \
 CPPFLAGS.${_f}= -DMAPI_MODE_BRIDGE \
 		-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\" \
 		-I${X11SRCDIR.Mesa}/src \
-		-I${X11SRCDIR.Mesa}/src/mesa
+		-I${X11SRCDIR.Mesa}/../src/mapi
 .endfor
 
 
@@ -101,9 +117,8 @@ SRCS.dri=	\
 
 .for fn in ${SRCS.dri}
 CPPFLAGS.${fn}= \
-	-DGL_LIB_NAME=\"libGL.so.3\" \
-	-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\" \
-	-I${X11SRCDIR.Mesa}/src
+	-I${X11SRCDIR.Mesa}/src \
+	-DGL_LIB_NAME="\"libGL.so.${SHLIB_MAJOR}\""
 .endfor
 .endif
 
@@ -198,7 +213,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 MKLINT=no
 
 PKGCONFIG=	gl
-PKGDIST.gl=	${X11SRCDIR.Mesa}/src/mesa
+PKGDIST.gl=	${X11SRCDIR.Mesa}/../src/pkgconfig
 .include "${.CURDIR}/../libGL/mesa-ver.mk"
 PKGCONFIG_VERSION.gl=	${MESA_VER}
 

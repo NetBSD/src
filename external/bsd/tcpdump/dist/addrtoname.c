@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtoname.c,v 1.10 2017/09/08 14:01:12 christos Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.10.4.1 2020/04/13 07:56:30 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -124,7 +124,7 @@ win32_gethostbyaddr(const char *addr, int len, int type)
 		    hname, sizeof(hname), NULL, 0, 0)) {
 			return NULL;
 		} else {
-			strcpy(host.h_name, hname);
+			strlcpy(host.h_name, hname, NI_MAXHOST);
 			return &host;
 		}
 		break;
@@ -1230,10 +1230,7 @@ dnaddr_string(netdissect_options *ndo, u_short dnaddr)
 
 	tp->addr = dnaddr;
 	tp->nxt = newhnamemem(ndo);
-	if (ndo->ndo_nflag)
-		tp->name = dnnum_string(ndo, dnaddr);
-	else
-		tp->name = dnname_string(ndo, dnaddr);
+	tp->name = dnnum_string(ndo, dnaddr);
 
 	return(tp->name);
 }

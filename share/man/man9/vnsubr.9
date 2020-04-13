@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.45 2017/01/05 09:54:03 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.45.14.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,8 @@
 .Nm vn_marktext ,
 .Nm vn_rdwr ,
 .Nm vn_open ,
+.Nm vn_bdev_open ,
+.Nm vn_bdev_openpath ,
 .Nm vn_stat ,
 .Nm vn_writechk
 .Nd high-level convenience functions for vnode operations
@@ -64,6 +66,10 @@
 .Fn vn_marktext "struct vnode *vp"
 .Ft int
 .Fn vn_open "struct nameidata *ndp" "int fmode" "int cmode"
+.Ft int
+.Fn vn_bdev_open "dev_t dev" "struct vnode **vpp" "struct lwp *l"
+.Ft int
+.Fn vn_bdev_openpath "struct pathbuf *pb" "struct vnode **vpp" "struct lwp *l"
 .Ft int
 .Fo vn_rdwr
 .Fa "enum uio_rw rw" "struct vnode *vp" "void *base"
@@ -173,6 +179,21 @@ or
 vnode operations.
 If the operation is successful zero is returned and the vnode is locked,
 otherwise an appropriate error code is returned.
+.It Fn vn_bdev_open "dev" "vpp" "l"
+Opens a block device by its device number for reading and writing, and
+stores the vnode pointer into
+.Fa *vpp .
+The argument
+.Fa l
+is the calling process.
+The vnode can be closed and freed with
+.Fa vn_close .
+.It Fn vn_bdev_openpath "pb" "vpp" "l"
+Works like
+.Fn vn_bdev_open
+but looks up a file system path
+.Fa pb
+to determine the device ID.
 .It Fn vn_rdwr "rw" "vp" "base" "len" "offset" "segflg" "ioflg" "cred" "aresid" "l"
 Common code to package up an I/O request on a vnode into a uio and
 then perform the I/O.

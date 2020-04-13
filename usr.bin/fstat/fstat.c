@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.111.14.1 2019/06/10 22:10:19 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.111.14.2 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.111.14.1 2019/06/10 22:10:19 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.111.14.2 2020/04/13 08:05:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ static int 	fsflg,	/* show files on same filesystem as file(s) argument */
 static int 	checkfile; /* true if restricting to particular files or filesystems */
 static int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 static int	Aflg;	/* prefix with address of file structure */
+static int	Oflg;	/* print offset instead of size */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
 static fdfile_t **ofiles; /* buffer of pointers to file structures */
@@ -171,12 +172,12 @@ static const char *inet6_addrstr(char *, size_t, const struct in6_addr *,
     uint16_t, bool);
 #endif
 static const char *at_addrstr(char *, size_t, const struct sockaddr_at *);
-static void	socktrans(struct socket *, int);
+static void	socktrans(struct file *, struct socket *, int);
 static void	misctrans(struct file *, int);
 static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
-static void	vtrans(struct vnode *, int, int, long);
+static void	vtrans(struct file *, struct vnode *, int, int, long);
 static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
 static void	kdriver_init(void);
@@ -196,7 +197,7 @@ main(int argc, char **argv)
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
-	while ((ch = getopt(argc, argv, "fnAp:u:vN:M:")) != -1)
+	while ((ch = getopt(argc, argv, "fnAOp:u:vN:M:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
@@ -212,6 +213,9 @@ main(int argc, char **argv)
 			break;
 		case 'A':
 			Aflg = 1;
+			break;
+		case 'O':
+			Oflg = 1;
 			break;
 		case 'p':
 			if (pflg++)
@@ -284,11 +288,14 @@ main(int argc, char **argv)
 	if (Aflg)
 		(void)printf("%-*s ", 2*(int)(sizeof(void*)), "ADDR");
 	if (nflg)
-		(void)printf("%s",
-"USER     CMD          PID   FD  DEV     INUM  MODE  SZ|DV R/W");
+		(void)printf(
+"USER     CMD          PID   FD    DEV       INUM   MODE  %s R/W",
+    Oflg ? " OFFS" : "SZ|DV" );
 	else
-		(void)printf("%s",
-"USER     CMD          PID   FD MOUNT       INUM MODE         SZ|DV R/W");
+		(void)printf(
+"USER     CMD          PID   FD  MOUNT         INUM MODE         %s R/W",
+    Oflg ? " OFFS" : "SZ|DV" );
+
 	if (checkfile && fsflg == 0)
 		(void)printf(" NAME\n");
 	else
@@ -450,11 +457,11 @@ dofiles(struct kinfo_proc2 *p)
 	 * root directory vnode, if one
 	 */
 	if (cwdi.cwdi_rdir)
-		vtrans(cwdi.cwdi_rdir, RDIR, FREAD, (long)cwdi.cwdi_rdir);
+		vtrans(NULL, cwdi.cwdi_rdir, RDIR, FREAD, (long)cwdi.cwdi_rdir);
 	/*
 	 * current working directory vnode
 	 */
-	vtrans(cwdi.cwdi_cdir, CDIR, FREAD, (long)cwdi.cwdi_cdir);
+	vtrans(NULL, cwdi.cwdi_cdir, CDIR, FREAD, (long)cwdi.cwdi_cdir);
 #if 0
 	/*
 	 * Disable for now, since p->p_tracep appears to point to a ktr_desc *
@@ -507,10 +514,10 @@ ftrans(fdfile_t *fp, int i)
 			2*(int)(sizeof(void*)), (long)fdfile.ff_file);
 	switch (file.f_type) {
 	case DTYPE_VNODE:
-		vtrans(file.f_data, i, file.f_flag, (long)fdfile.ff_file);
+		vtrans(&file, file.f_data, i, file.f_flag, (long)fdfile.ff_file);
 		break;
 	case DTYPE_SOCKET:
-		socktrans(file.f_data, i);
+		socktrans(&file, file.f_data, i);
 		break;
 	case DTYPE_PIPE:
 		if (checkfile == 0)
@@ -634,7 +641,37 @@ checkfs(struct vnode *vp, struct vnode *vn, struct filestat *fst,
 }
 
 static void
-vtrans(struct vnode *vp, int i, int flag, long addr)
+vprint(struct vnode *vn, struct filestat *fst)
+{
+	switch (vn->v_type) {
+	case VBLK:
+	case VCHR: {
+		const char *name;
+
+		if (nflg || ((name = devname(fst->rdev, vn->v_type == VCHR ? 
+		    S_IFCHR : S_IFBLK)) == NULL))
+			(void)printf("  %s,%-2llu",
+			    kdriver_search(vn->v_type, major(fst->rdev)),
+			    (unsigned long long)minor(fst->rdev));
+		else
+			(void)printf(" %6s", name);
+		break;
+	}
+	default:
+		(void)printf(" %6lld", (long long)fst->size);
+	}
+}
+
+void
+oprint(struct file *fp, const char *str)
+{
+	if (Oflg)
+		(void)printf(" %6lld", (long long)(fp ? fp->f_offset : 0));
+	fputs(str, stdout);
+}
+
+static void
+vtrans(struct file *fp, struct vnode *vp, int i, int flag, long addr)
 {
 	struct vnode vn;
 	char mode[15], rw[3];
@@ -658,32 +695,20 @@ vtrans(struct vnode *vp, int i, int flag, long addr)
 		return;
 	}
 	if (nflg)
-		(void)printf("  %2llu,%-2llu",
+		(void)printf("  %3llu,%-2llu",
 		    (unsigned long long)major(fst.fsid),
 		    (unsigned long long)minor(fst.fsid));
 	else
 		(void)printf("  %-8s", getmnton(vn.v_mount));
 	if (nflg)
-		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
+		(void)snprintf(mode, sizeof mode, "%6o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf("  %7"PRIu64" %*s", fst.fileid, nflg ? 5 : 10, mode);
-	switch (vn.v_type) {
-	case VBLK:
-	case VCHR: {
-		char *name;
-
-		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
-		    S_IFCHR : S_IFBLK)) == NULL))
-			(void)printf("  %s,%-2llu",
-			    kdriver_search(vn.v_type, major(fst.rdev)),
-			    (unsigned long long)minor(fst.rdev));
-		else
-			(void)printf(" %6s", name);
-		break;
-	}
-	default:
-		(void)printf(" %6lld", (long long)fst.size);
+	(void)printf("  %8"PRIu64" %*s", fst.fileid, nflg ? 5 : 10, mode);
+	if (Oflg) {
+		oprint(fp, "");
+	} else {
+		vprint(&vn, &fst);
 	}
 	rw[0] = '\0';
 	if (flag & FREAD)
@@ -996,7 +1021,7 @@ at_addrstr(char *buf, size_t len, const struct sockaddr_at *sat)
 }
 
 static void
-socktrans(struct socket *sock, int i)
+socktrans(struct file *f, struct socket *sock, int i)
 {
 	static const char *stypename[] = {
 		"unused",	/* 0 */
@@ -1209,7 +1234,7 @@ again:
 		    lbuf);
 	else if (so.so_pcb)
 		printf(" %jx", (uintmax_t)(uintptr_t)so.so_pcb);
-	(void)printf("\n");
+	oprint(f, "\n");
 	return;
 bad:
 	(void)printf("* error\n");
@@ -1235,7 +1260,7 @@ ptrans(struct file *fp, struct pipe *cpipe, int i)
 		(fp->f_flag & FWRITE) ? "w" : "r",
 		(fp->f_flag & FNONBLOCK) ? "n" : "",
 		(cp.pipe_state & PIPE_ASYNC) ? "a" : "");
-	(void)printf("\n");
+	oprint(fp, "\n");
 	return;
 bad:
 	(void)printf("* error\n");

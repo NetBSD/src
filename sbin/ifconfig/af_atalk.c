@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.19 2013/10/19 00:35:30 christos Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.19.26.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.19 2013/10/19 00:35:30 christos Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.19.26.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 
 #include <netatalk/at.h>
 
@@ -185,7 +185,7 @@ sat_print1(const char *prefix, const struct sockaddr *sa)
 	char buf[40];
 
 	(void)getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
-	
+
 	printf("%s%s", prefix, buf);
 }
 

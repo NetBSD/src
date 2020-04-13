@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: idl.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* idl.c - ldap id list handling routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: idl.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: idl.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $");
 
 #include "portable.h"
 
@@ -1090,18 +1090,11 @@ bdb_idl_intersection(
 	}
 
 	/* If a range completely covers the list, the result is
-	 * just the list. If idmin to idmax is contiguous, just
-	 * turn it into a range.
+	 * just the list.
 	 */
 	if ( BDB_IDL_IS_RANGE( b )
 		&& BDB_IDL_RANGE_FIRST( b ) <= BDB_IDL_FIRST( a )
 		&& BDB_IDL_RANGE_LAST( b ) >= BDB_IDL_LLAST( a ) ) {
-		if (idmax - idmin + 1 == a[0])
-		{
-			a[0] = NOID;
-			a[1] = idmin;
-			a[2] = idmax;
-		}
 		goto done;
 	}
 

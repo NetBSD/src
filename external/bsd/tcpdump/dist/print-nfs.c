@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-nfs.c,v 1.8.4.1 2020/04/08 14:04:14 martin Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.8.4.2 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Network File System (NFS) printer */
@@ -1579,8 +1579,8 @@ interp_reply(netdissect_options *ndo,
 						tok2str(nfsv3_writemodes,
 							NULL, EXTRACT_32BITS(&dp[1]))));
 				}
-				return;
 			}
+			return;
 		} else {
 			if (parseattrstat(ndo, dp, ndo->ndo_vflag, v3) != 0)
 				return;
@@ -1666,8 +1666,8 @@ interp_reply(netdissect_options *ndo,
 				ND_PRINT((ndo, " dir:"));
 				if (!(dp = parse_wcc_data(ndo, dp, ndo->ndo_vflag)))
 					break;
-				return;
 			}
+			return;
 		} else {
 			if (parsestatus(ndo, dp, &er) != NULL)
 				return;

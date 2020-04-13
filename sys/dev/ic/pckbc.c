@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.59.18.1 2019/06/10 22:07:11 christos Exp $ */
+/* $NetBSD: pckbc.c,v 1.59.18.2 2020/04/13 08:04:22 martin Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.59.18.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.59.18.2 2020/04/13 08:04:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,11 +249,7 @@ pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 
 	if (t->t_slotdata[slot] == NULL) {
 		sdata = malloc(sizeof(struct pckbc_slotdata),
-		    M_DEVBUF, M_NOWAIT);
-		if (sdata == NULL) {
-			aprint_error_dev(sc->sc_dv, "no memory\n");
-			return (0);
-		}
+		    M_DEVBUF, M_WAITOK);
 		t->t_slotdata[slot] = sdata;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
 		alloced++;

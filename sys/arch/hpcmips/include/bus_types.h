@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_types.h,v 1.2 2011/02/26 12:04:25 tsutsui Exp $	*/
+/*	$NetBSD: bus_types.h,v 1.2.56.1 2020/04/13 08:03:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -36,6 +36,13 @@
 
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
+
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 typedef u_long bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 #endif /* _HPCMIPS_BUS_TYPES_H_ */

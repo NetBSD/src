@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2017/02/02 21:53:54 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.14.1 2020/04/13 08:04:02 martin Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -53,12 +53,9 @@
  */
 
 /*
- * We use 4K pages on the NeXT.  Override the PAGE_* definitions
- * to be compile-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	PGSHIFT
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 /*
  * USRSTACK is the top (end) of the user stack.

@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.5.2.3 2020/04/08 14:07:05 martin Exp $	*/
+/*	$NetBSD: driver.c,v 1.5.2.4 2020/04/13 08:02:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -171,7 +171,7 @@ del_name(struct dlz_example_data *state, struct record *list,
 
 static isc_result_t
 fmt_address(isc_sockaddr_t *addr, char *buffer, size_t size) {
-	char addr_buf[100];
+	char addr_buf[INET6_ADDRSTRLEN];
 	const char *ret;
 	uint16_t port = 0;
 

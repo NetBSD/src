@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.106.16.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.106.16.2 2020/04/13 08:04:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.106.16.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.106.16.2 2020/04/13 08:04:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,19 +398,15 @@ twe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
-	if (ccb == NULL) {
-		aprint_error_dev(self, "unable to allocate memory for ccbs\n");
-		return;
-	}
-
 	sc->sc_cmds_paddr = sc->sc_dmamap->dm_segs[0].ds_addr;
 	memset(sc->sc_cmds, 0, size);
 
-	sc->sc_ccbs = ccb;
 	tc = (struct twe_cmd *)sc->sc_cmds;
 	max_segs = twe_get_maxsegs();
 	max_xfer = twe_get_maxxfer(max_segs);
+
+	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_WAITOK);
+	sc->sc_ccbs = ccb;
 
 	for (i = 0; i < TWE_MAX_QUEUECNT; i++, tc++, ccb++) {
 		ccb->ccb_cmd = tc;
@@ -1195,13 +1191,8 @@ twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	struct twe_param *tp;
 	int rv, s;
 
-	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
-	if (tp == NULL)
-		return ENOMEM;
-
+	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_WAITOK);
 	ccb = twe_ccb_alloc_wait(sc, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
-	KASSERT(ccb != NULL);
-
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
 	ccb->ccb_tx.tx_handler = 0;

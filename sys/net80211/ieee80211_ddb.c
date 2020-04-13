@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ddb.c,v 1.1.2.3 2019/06/10 22:09:46 christos Exp $ */
+/*	$NetBSD: ieee80211_ddb.c,v 1.1.2.4 2020/04/13 08:05:16 martin Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ddb.c,v 1.1.2.3 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ddb.c,v 1.1.2.4 2020/04/13 08:05:16 martin Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -243,7 +243,7 @@ _db_show_sta(const struct ieee80211_node *ni)
 {
 	int i;
 
-	db_printf("0x%p: mac %s refcnt %d\n", ni,
+	db_printf("%p: mac %s refcnt %d\n", ni,
 		ether_sprintf(ni->ni_macaddr), ieee80211_node_refcnt(ni));
 	db_printf("\tvap %p wdsvap %p ic %p table %p\n",
 		ni->ni_vap, ni->ni_wdsvap, ni->ni_ic, ni->ni_table);

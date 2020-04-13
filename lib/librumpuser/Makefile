@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2017/05/11 04:33:14 sevan Exp $
+#	$NetBSD: Makefile,v 1.27.10.1 2020/04/13 08:03:16 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -53,5 +53,7 @@ INCSDIR=	/usr/include/rump
 INCS=		rumpuser_component.h rumpuser_port.h
 
 CPPFLAGS+=	-D_REENTRANT
+
+COPTS.rumpuser_sp.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>

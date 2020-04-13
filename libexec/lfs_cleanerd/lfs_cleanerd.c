@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.58 2016/03/18 10:10:21 mrg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.58.16.1 2020/04/13 08:03:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ int segwait_timeout;	/* Time to wait in lfs_segwait() */
 int do_quit;		/* Quit after one cleaning loop */
 int do_coalesce;	/* Coalesce filesystem */
 int do_small;		/* Use small writes through markv */
+char *do_asdevice;      /* Use this as the raw device */
 char *copylog_filename; /* File to use for fs debugging analysis */
 int inval_segment;	/* Segment to invalidate */
 int stat_report;	/* Report statistics for this period of cycles */
@@ -165,7 +166,7 @@ init_unmounted_fs(struct clfs *fs, char *fsname)
 {
 	struct lfs *disc_fs;
 	int i;
-	
+
 	fs->clfs_dev = fsname;
 	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDWR)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s read/write",
@@ -213,27 +214,36 @@ init_fs(struct clfs *fs, char *fsname)
 	int rootfd;
 	int i;
 	void *sbuf;
-	char *bn;
+	size_t mlen;
 
-	/*
-	 * Get the raw device from the block device.
-	 * XXX this is ugly.  Is there a way to discover the raw device
-	 * XXX for a given mount point?
-	 */
-	if (kops.ko_statvfs(fsname, &sf, ST_WAIT) < 0)
-		return -1;
-	fs->clfs_dev = malloc(strlen(sf.f_mntfromname) + 2);
-	if (fs->clfs_dev == NULL) {
-		syslog(LOG_ERR, "couldn't malloc device name string: %m");
-		return -1;
+	if (do_asdevice != NULL) {
+		fs->clfs_dev = strndup(do_asdevice,strlen(do_asdevice) + 2);
+		if (fs->clfs_dev == NULL) {
+			syslog(LOG_ERR, "couldn't malloc device name string: %m");
+			return -1;
+		}
+	} else {
+		/*
+		 * Get the raw device from the block device.
+		 * XXX this is ugly.  Is there a way to discover the raw device
+		 * XXX for a given mount point?
+		 */
+		if (kops.ko_statvfs(fsname, &sf, ST_WAIT) < 0)
+			return -1;
+		mlen = strlen(sf.f_mntfromname) + 2;
+		fs->clfs_dev = malloc(mlen);
+		if (fs->clfs_dev == NULL) {
+			syslog(LOG_ERR, "couldn't malloc device name string: %m");
+			return -1;
+		}
+		if (getdiskrawname(fs->clfs_dev, mlen, sf.f_mntfromname) == NULL) {
+			syslog(LOG_ERR, "couldn't convert '%s' to raw name: %m",
+			    sf.f_mntfromname);
+			return -1;
+		}
 	}
-	bn = strrchr(sf.f_mntfromname, '/');
-	bn = bn ? bn+1 : sf.f_mntfromname;
-	strlcpy(fs->clfs_dev, sf.f_mntfromname, bn - sf.f_mntfromname + 1);
-	strcat(fs->clfs_dev, "r");
-	strcat(fs->clfs_dev, bn);
 	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDONLY, 0)) < 0) {
-		syslog(LOG_ERR, "couldn't open device %s for reading",
+		syslog(LOG_ERR, "couldn't open device %s for reading: %m",
 			fs->clfs_dev);
 		return -1;
 	}
@@ -1439,7 +1449,7 @@ sig_exit(int sig)
 static void
 usage(void)
 {
-	errx(1, "usage: lfs_cleanerd [-bcdfmqs] [-i segnum] [-l load] "
+	fprintf(stderr, "usage: lfs_cleanerd [-bcdfmqsJ] [-i segnum] [-l load] "
 	     "[-n nsegs] [-r report_freq] [-t timeout] fs_name ...");
 }
 
@@ -1478,11 +1488,12 @@ lfs_cleaner_main(int argc, char **argv)
 	inval_segment	= -1;
 	copylog_filename = NULL;
 	nodetach        = 0;
+	do_asdevice     = NULL;
 
 	/*
 	 * Parse command-line arguments
 	 */
-	while ((opt = getopt(argc, argv, "bC:cdDfi:l:mn:qr:sS:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "bC:cdDfi:J:l:mn:qr:sS:t:")) != -1) {
 		switch (opt) {
 		    case 'b':	/* Use bytes written, not segments read */
 			    use_bytes = 1;
@@ -1530,6 +1541,9 @@ lfs_cleaner_main(int argc, char **argv)
 #endif
 		    case 't':	/* timeout */
 			    segwait_timeout = atoi(optarg);
+			    break;
+		    case 'J': /* do as a device */
+			    do_asdevice = optarg;
 			    break;
 		    default:
 			    usage();

@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.24 2011/06/22 04:03:23 mrg Exp $	*/
+/*	$NetBSD: fs.c,v 1.24.42.1 2020/04/13 08:05:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.24 2011/06/22 04:03:23 mrg Exp $");
+__RCSID("$NetBSD: fs.c,v 1.24.42.1 2020/04/13 08:05:56 martin Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -171,7 +171,7 @@ psshfs_handshake(struct puffs_usermount *pu, int fd)
 }
 
 int
-psshfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
+psshfs_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *sbp)
 {
 	PSSHFSAUTOVAR(pu);
 	uint64_t tmpval;

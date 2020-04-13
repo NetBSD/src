@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.20 2018/05/30 17:17:11 maxv Exp $	*/
+/*	$NetBSD: xform.h,v 1.20.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -58,6 +58,7 @@ struct tdb_crypto {
 	u_int8_t		tc_nxt;		/* next protocol, e.g. IPV4 */
 	int			tc_protoff;	/* current protocol offset */
 	int			tc_skip;	/* data offset */
+	int			tc_flags;	/* outer protocol flags, e.g. IPV6_MINMTU */
 	struct secasvar		*tc_sav;	/* ipsec SA */
 };
 
@@ -79,7 +80,7 @@ struct xformsw {
 	int (*xf_zeroize)(struct secasvar *);
 	int (*xf_input)(struct mbuf *, struct secasvar *, int, int);
 	int (*xf_output)(struct mbuf *, const struct ipsecrequest *,
-	    struct secasvar *, int, int);
+	    struct secasvar *, int, int, int);
 	struct xformsw *xf_next;	/* list of registered xforms */
 };
 

@@ -1,9 +1,10 @@
-#	$NetBSD: driver.mk,v 1.1.18.1 2019/06/10 22:02:37 christos Exp $
+#	$NetBSD: driver.mk,v 1.1.18.2 2020/04/13 08:02:31 martin Exp $
 
 # stuff both dri and gallium drivers need.
 
 # util
 .PATH:		${X11SRCDIR.Mesa}/src/util
+.PATH:		${X11SRCDIR.Mesa}/../src/util
 
 SRCS.util=	\
 	hash_table.c \
@@ -49,3 +50,6 @@ SRCS+=	${SRCS.util}
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/common
 SRCS+=	utils.c dri_util.c xmlconfig.c
 SRCS+=	megadriver_stub.c
+
+CPPFLAGS.dri_util.c+=		-I${X11SRCDIR.Mesa}/../src/util
+

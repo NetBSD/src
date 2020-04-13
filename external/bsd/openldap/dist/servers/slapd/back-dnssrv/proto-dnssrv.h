@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-dnssrv.h,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
+/*	$NetBSD: proto-dnssrv.h,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

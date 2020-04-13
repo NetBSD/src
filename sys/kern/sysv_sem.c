@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.95.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.95.18.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.95.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.95.18.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -102,7 +102,7 @@ static ONCE_DECL(exithook_control);
 static int seminit_exithook(void);
 
 int
-seminit(struct sysctllog **clog)
+seminit(void)
 {
 	int i, sz;
 	vaddr_t v;
@@ -145,10 +145,6 @@ seminit(struct sysctllog **clog)
 
 	kern_has_sysvsem = 1;
 
-#ifdef _MODULE
-	if (clog)
-		sysctl_ipc_sem_setup(clog);
-#endif
 	return 0;
 }
 

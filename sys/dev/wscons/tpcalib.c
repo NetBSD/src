@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.12 2017/04/06 20:44:39 macallan Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.12.14.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.12 2017/04/06 20:44:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.12.14.1 2020/04/13 08:04:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_tpcalib.h"
@@ -53,7 +53,7 @@ extern int mra_Y_AX1_BX2_C(const int *, int,
 			   const int *, int, const int *, int, int, int,
 			   int *, int *, int *);
 
-#define SCALE	(1024*256)
+#define SCALE	(1024)
 
 int
 tpcalib_init(struct tpcalib_softc *sc)

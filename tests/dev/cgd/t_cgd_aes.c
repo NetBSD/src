@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_aes.c,v 1.6 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: t_cgd_aes.c,v 1.6.14.1 2020/04/13 08:05:22 martin Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 The Institute of Electrical and Electronics Engineers, Inc
@@ -3565,7 +3565,12 @@ ATF_TC_BODY(cgd_aes_xts_512, tc)
 
 	rump_init();
 
-	RL(dkfd = open_disk(dkpath, imgpath, dksize));
+	dkfd = open_disk(dkpath, imgpath, dksize);
+	if (dkfd == -1 && errno == ENOSPC) {
+		atf_tc_skip("not enough space");
+	} else {
+		ATF_CHECK_MSG(dkfd != -1, "open_disk: %s", strerror(errno));
+	}
 
 	RL(cgdfd = open_cgd(0));
 	RL(configure_cgd(cgdfd, dkpath, "aes-xts", "encblkno1",

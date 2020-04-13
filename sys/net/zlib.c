@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $
+ * $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp 
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -461,7 +461,7 @@ typedef struct deflate_state {
     int nice_match; /* Stop searching when current match exceeds this */
 
                 /* used by trees.c: */
-    /* Didn't use ct_data typedef below to supress compiler warning */
+    /* Didn't use ct_data typedef below to suppress compiler warning */
     struct ct_data_s dyn_ltree[HEAP_SIZE];   /* literal and length tree */
     struct ct_data_s dyn_dtree[2*D_CODES+1]; /* distance tree */
     struct ct_data_s bl_tree[2*BL_CODES+1];  /* Huffman tree for bit lengths */
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5813,7 +5813,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.34.30.1 2019/06/10 22:09:45 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.34.30.2 2020/04/13 08:05:15 martin Exp $ */
 
 /* #include "zlib.h" */
 

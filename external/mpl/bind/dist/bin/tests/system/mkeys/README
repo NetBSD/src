@@ -22,3 +22,7 @@ root server, causing key refresh queries to fail.
 
 ns6 is a validator which has unsupported algorithms, one at start up,
 one because of an algorithm rollover.
+
+ns7 is a validator with multiple views configured.  It is used for
+testing per-view rndc commands and checking interactions between options
+related to and potentially affecting RFC 5011 processing.

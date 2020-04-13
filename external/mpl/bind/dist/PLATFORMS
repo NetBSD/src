@@ -1,3 +1,5 @@
+PLATFORMS
+
 Supported platforms
 
 In general, this version of BIND will build and run on any POSIX-compliant
@@ -63,31 +65,6 @@ These are platforms on which BIND 9.14 is known not to build or run:
   * Linux without NPTL (Native POSIX Thread Library)
 
 Platform quirks
-
-ARM
-
-If the compilation ends with following error:
-
-Error: selected processor does not support `yield' in ARM mode
-
-You will need to set -march compiler option to native, so the compiler
-recognizes yield assembler instruction. The proper way to set -march=
-native would be to put it into CFLAGS, e.g. run ./configure like this:
-CFLAGS="-march=native -Os -g" ./configure plus your usual options.
-
-If that doesn't work, you can enforce the minimum CPU and FPU (taken from
-Debian armhf documentation):
-
-  * The lowest worthwhile CPU implementation is Armv7-A, therefore the
-    recommended build option is -march=armv7-a.
-
-  * FPU should be set at VFPv3-D16 as they represent the minimum
-    specification of the processors to support here, therefore the
-    recommended build option is -mfpu=vfpv3-d16.
-
-The configure command should look like this:
-
-CFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -Os -g" ./configure
 
 NetBSD 6 i386
 

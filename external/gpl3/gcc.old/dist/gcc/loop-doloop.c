@@ -1,5 +1,5 @@
 /* Perform doloop optimizations
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Based on code by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
 This file is part of GCC.
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "tree.h"
 #include "cfghooks.h"
+#include "memmodel.h"
 #include "emit-rtl.h"
 #include "dojump.h"
 #include "expr.h"
@@ -70,7 +71,7 @@ along with GCC; see the file COPYING3.  If not see
    if it is not a decrement and branch jump insn.  */
 
 rtx
-doloop_condition_get (rtx doloop_pat)
+doloop_condition_get (rtx_insn *doloop_pat)
 {
   rtx cmp;
   rtx inc;
@@ -366,6 +367,7 @@ add_test (rtx cond, edge *e, basic_block dest)
     }
 
   seq = get_insns ();
+  unshare_all_rtl_in_chain (seq);
   end_sequence ();
 
   /* There always is at least the jump insn in the sequence.  */
@@ -481,9 +483,13 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 
   /* Insert initialization of the count register into the loop header.  */
   start_sequence ();
+  /* count has been already copied through copy_rtx.  */
+  reset_used_flags (count);
+  set_used_flags (condition);
   tmp = force_operand (count, counter_reg);
   convert_move (counter_reg, tmp, 1);
   sequence = get_insns ();
+  unshare_all_rtl_in_chain (sequence);
   end_sequence ();
   emit_insn_after (sequence, BB_END (loop_preheader_edge (loop)->src));
 
@@ -491,10 +497,8 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
     {
       rtx ass = copy_rtx (desc->noloop_assumptions);
       basic_block preheader = loop_preheader_edge (loop)->src;
-      basic_block set_zero
-	      = split_edge (loop_preheader_edge (loop));
-      basic_block new_preheader
-	      = split_edge (loop_preheader_edge (loop));
+      basic_block set_zero = split_edge (loop_preheader_edge (loop));
+      basic_block new_preheader = split_edge (loop_preheader_edge (loop));
       edge te;
 
       /* Expand the condition testing the assumptions and if it does not pass,
@@ -613,7 +617,8 @@ doloop_optimize (struct loop *loop)
   widest_int iterations, iterations_max;
   rtx_code_label *start_label;
   rtx condition;
-  unsigned level, est_niter;
+  unsigned level;
+  HOST_WIDE_INT est_niter;
   int max_cost;
   struct niter_desc *desc;
   unsigned word_mode_size;
@@ -638,21 +643,16 @@ doloop_optimize (struct loop *loop)
     }
   mode = desc->mode;
 
-  est_niter = 3;
-  if (desc->const_iter)
-    est_niter = desc->niter;
-  /* If the estimate on number of iterations is reliable (comes from profile
-     feedback), use it.  Do not use it normally, since the expected number
-     of iterations of an unrolled loop is 2.  */
-  if (loop->header->count)
-    est_niter = expected_loop_iterations (loop);
+  est_niter = get_estimated_loop_iterations_int (loop);
+  if (est_niter == -1)
+    est_niter = get_likely_max_loop_iterations_int (loop);
 
-  if (est_niter < 3)
+  if (est_niter >= 0 && est_niter < 3)
     {
       if (dump_file)
 	fprintf (dump_file,
 		 "Doloop: Too few iterations (%u) to be profitable.\n",
-		 est_niter);
+		 (unsigned int)est_niter);
       return false;
     }
 
@@ -668,7 +668,7 @@ doloop_optimize (struct loop *loop)
     }
 
   if (desc->const_iter)
-    iterations = widest_int::from (std::make_pair (desc->niter_expr, mode),
+    iterations = widest_int::from (rtx_mode_t (desc->niter_expr, mode),
 				   UNSIGNED);
   else
     iterations = 0;
@@ -694,8 +694,7 @@ doloop_optimize (struct loop *loop)
   rtx_insn *doloop_seq = targetm.gen_doloop_end (doloop_reg, start_label);
 
   word_mode_size = GET_MODE_PRECISION (word_mode);
-  word_mode_max
-	  = ((unsigned HOST_WIDE_INT) 1 << (word_mode_size - 1) << 1) - 1;
+  word_mode_max = (HOST_WIDE_INT_1U << (word_mode_size - 1) << 1) - 1;
   if (! doloop_seq
       && mode != word_mode
       /* Before trying mode different from the one in that # of iterations is

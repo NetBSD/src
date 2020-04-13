@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45.4.1 2020/04/08 14:09:17 martin Exp $
+#	$NetBSD: Makefile,v 1.45.4.2 2020/04/13 08:05:45 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -28,6 +28,10 @@ RUMPSRCS+= sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
 LDADD.rump+=	-lrumpres
 DPADD.add+=	${LIBRUMPRES}
 CPPFLAGS+=      -DRUMP_ACTION
+
+SANITIZER_RENAME_CLASSES+=	rump
+SANITIZER_RENAME_FILES.rump+=	${PROG}_rumpops.c ${RUMPSRCS}
+SANITIZER_RENAME_SYMBOL.rump+=	sysctlbyname sysctlgetmibinfo sysctlnametomib
 .endif
 
 
@@ -36,5 +40,9 @@ CPPFLAGS+= -DINET6
 .endif
 
 .include "../../compat/exec.mk"
+
+COPTS.atalk.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.inet6.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.rtutil.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.145.4.2 2020/04/08 14:08:14 martin Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.145.4.3 2020/04/13 08:04:52 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145.4.2 2020/04/08 14:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145.4.3 2020/04/13 08:04:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -277,6 +277,19 @@ static int wsdisplay_dosync(struct wsdisplay_softc *, int);
 int wsdisplay_clearonclose;
 
 #ifdef WSDISPLAY_MULTICONS
+/*
+ * Replace cn_isconsole() so that we can enter DDB from old console.
+ */
+bool
+wsdisplay_cn_isconsole(dev_t dev)
+{
+
+	return (cn_tab != NULL && cn_tab->cn_dev == dev) ||
+	    (cn_tab == &wsdisplay_cons && !wsdisplay_multicons_suspended &&
+	    wsdisplay_multicons_enable && wsdisplay_ocn != NULL &&
+	    wsdisplay_ocn->cn_dev == dev);
+}
+
 static void
 wsscreen_getc_poll(void *priv)
 {
@@ -447,9 +460,7 @@ wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	 */
 	if (scrdesc->capabilities & WSSCREEN_RESIZE) {
 		/* we want per screen wsscreen_descr */
-		scrdescr2 = malloc(sizeof(struct wsscreen_descr), M_DEVBUF, M_NOWAIT);
-		if (scrdescr2 == NULL)
-			return ENOMEM;
+		scrdescr2 = malloc(sizeof(struct wsscreen_descr), M_DEVBUF, M_WAITOK);
 		memcpy(scrdescr2, scrdesc, sizeof(struct wsscreen_descr));
 		scrdescr2->capabilities |= WSSCREEN_FREE;
 		scrdesc = scrdescr2;
@@ -832,9 +843,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		mux = wsmux_getmux(kbdmux);
 	else
 		mux = wsmux_create("dmux", device_unit(sc->sc_dev));
-	/* XXX panic()ing isn't nice, but attach cannot fail */
-	if (mux == NULL)
-		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
 	mux->sc_base.me_dispdv = sc->sc_dev;
 	aprint_normal(" kbdmux %d", kbdmux);
@@ -932,6 +940,10 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
 
 	if (cn_tab != &wsdisplay_cons)
 		wsdisplay_ocn = cn_tab;
+
+	if (wsdisplay_ocn != NULL && wsdisplay_ocn->cn_halt != NULL)
+		wsdisplay_ocn->cn_halt(wsdisplay_ocn->cn_dev);
+
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 2;
 }
@@ -960,6 +972,10 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 
 	if (cn_tab != &wsdisplay_cons)
 		wsdisplay_ocn = cn_tab;
+
+	if (wsdisplay_ocn != NULL && wsdisplay_ocn->cn_halt != NULL)
+		wsdisplay_ocn->cn_halt(wsdisplay_ocn->cn_dev);
+
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 1;
 }

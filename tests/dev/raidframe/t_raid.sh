@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.13 2018/01/18 00:32:49 mrg Exp $
+#	$NetBSD: t_raid.sh,v 1.13.4.1 2020/04/13 08:05:22 martin Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,8 +113,7 @@ old_numrows_config_cleanup()
 	rump.halt
 }
 
-# make this smaller once 44239 is fixed
-export RAID_MEDIASIZE=32m
+export RAID_MEDIASIZE=4m
 
 atf_test_case raid1_compfail cleanup
 raid1_compfail_head()

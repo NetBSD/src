@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.15.14.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.15.14.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -310,6 +310,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	VOP_UNLOCK(vp);
 	*vpp = vp;
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return (0);
 }
 

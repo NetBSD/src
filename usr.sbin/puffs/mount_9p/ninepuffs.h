@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.12.70.1 2019/06/10 22:10:35 christos Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.12.70.2 2020/04/13 08:05:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -105,6 +105,9 @@ struct puffs9p {
 	size_t maxreq;		/* negotiated with server */
 
 	int protover;
+	int server;
+#define P9P_SERVER_TCP		0
+#define P9P_SERVER_CDEV		1
 };
 
 struct dirfid {

@@ -1,5 +1,5 @@
 /* Target Definitions for ft32.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdi.com>
 
    This file is part of GCC.
@@ -250,20 +250,9 @@ enum reg_class
    pointer to a smaller address.  */
 #define STACK_GROWS_DOWNWARD 1
 
-#define INITIAL_FRAME_POINTER_OFFSET(DEPTH) (DEPTH) = 0
-
 /* Offset from the frame pointer to the first local variable slot to
    be allocated.  */
 #define STARTING_FRAME_OFFSET 0
-
-/* Define this if the above stack space is to be considered part of the
-   space allocated by the caller.  */
-#define OUTGOING_REG_PARM_STACK_SPACE(FNTYPE) 1
-/* #define STACK_PARMS_IN_REG_PARM_AREA */
-
-/* Define this if it is the responsibility of the caller to allocate
-   the area reserved for arguments passed in registers.  */
-#define REG_PARM_STACK_SPACE(FNDECL) (6 * UNITS_PER_WORD)
 
 /* Offset from the argument pointer register to the first argument's
    address.  On some machines it may depend on the data type of the
@@ -435,10 +424,8 @@ do { \
  {FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM}}
 
 
-/* This macro is similar to `INITIAL_FRAME_POINTER_OFFSET'.  It
-   specifies the initial difference between the specified pair of
-   registers.  This macro must be defined if `ELIMINABLE_REGS' is
-   defined.  */
+/* This macro returns the initial difference between the specified pair
+   of registers.  */
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)                    \
   do {                                                                  \
     (OFFSET) = ft32_initial_elimination_offset ((FROM), (TO));            \
@@ -514,5 +501,15 @@ do { \
 } while (0);
 
 extern int ft32_is_mem_pm(rtx o);
+
+#define ASM_OUTPUT_SYMBOL_REF(stream, sym) \
+  do { \
+    assemble_name (stream, XSTR (sym, 0)); \
+    int section_debug = in_section && \
+      (SECTION_STYLE (in_section) == SECTION_NAMED) && \
+      (in_section->named.common.flags & SECTION_DEBUG); \
+    if (!section_debug && SYMBOL_REF_FLAGS (sym) & 0x1000) \
+      asm_fprintf (stream, "-0x800000"); \
+  } while (0)
 
 #endif /* GCC_FT32_H */

@@ -1,7 +1,37 @@
-/*	$NetBSD: tpm.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.12.4.1 2020/04/13 08:04:22 martin Exp $	*/
+
+/*
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
- * Copyright (c) 2009, 2010 Hans-Jörg Höxer
+ * Copyright (c) 2009, 2010 Hans-Joerg Hoexer
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,12 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
-
-#if 0
-#define	TPM_DEBUG 
-#define aprint_debug_dev aprint_error_dev
-#endif
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.12.4.1 2020/04/13 08:04:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,198 +65,196 @@ __KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
 
 #include "ioconf.h"
 
-/* Set when enabling legacy interface in host bridge. */
-int tpm_enabled;
+CTASSERT(sizeof(struct tpm_header) == 10);
 
-const struct {
-	uint32_t devid;
-	char name[32];
-	int flags;
-#define TPM_DEV_NOINTS	0x0001
-} tpm_devs[] = {
-	{ 0x000615d1, "IFX SLD 9630 TT 1.1", 0 },
-	{ 0x000b15d1, "IFX SLB 9635 TT 1.2", 0 },
-	{ 0x100214e4, "Broadcom BCM0102", TPM_DEV_NOINTS },
-	{ 0x00fe1050, "WEC WPCT200", 0 },
-	{ 0x687119fa, "SNS SSX35", 0 },
-	{ 0x2e4d5453, "STM ST19WP18", 0 },
-	{ 0x32021114, "ATML 97SC3203", TPM_DEV_NOINTS },
-	{ 0x10408086, "INTEL INTC0102", 0 },
-	{ 0, "", TPM_DEV_NOINTS },
-};
+#define TPM_BUFSIZ	1024
 
-int tpm_tis12_irqinit(struct tpm_softc *, int, int);
+#define TPM_PARAM_SIZE	0x0001	/* that's a flag */
 
-int tpm_waitfor_poll(struct tpm_softc *, uint8_t, int, void *);
-int tpm_waitfor_int(struct tpm_softc *, uint8_t, int, void *, int);
-int tpm_waitfor(struct tpm_softc *, uint8_t, int, void *);
-int tpm_request_locality(struct tpm_softc *, int);
-int tpm_getburst(struct tpm_softc *);
-uint8_t tpm_status(struct tpm_softc *);
-int tpm_tmotohz(int);
+/* Timeouts. */
+#define TPM_ACCESS_TMO	2000	/* 2sec */
+#define TPM_READY_TMO	2000	/* 2sec */
+#define TPM_READ_TMO	2000	/* 2sec */
+#define TPM_BURST_TMO	2000	/* 2sec */
 
-static dev_type_open(tpmopen);
-static dev_type_close(tpmclose); 
-static dev_type_read(tpmread); 
-static dev_type_read(tpmwrite); 
-static dev_type_ioctl(tpmioctl);
+#define TPM_CAPS_REQUIRED \
+	(TPM_INTF_DATA_AVAIL_INT|TPM_INTF_LOCALITY_CHANGE_INT| \
+	 TPM_INTF_INT_LEVEL_LOW)
 
-#define TPMUNIT(a)	minor(a)
- 
-const struct cdevsw tpm_cdevsw = {
-	.d_open = tpmopen,
-	.d_close = tpmclose,
-	.d_read = tpmread,
-	.d_write = tpmwrite,
-	.d_ioctl = tpmioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
-}; 
-
-/* Probe TPM using TIS 1.2 interface. */
-int
-tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
+static inline int
+tpm_tmotohz(int tmo)
 {
-	uint32_t r;
-	uint8_t save, reg;
+	struct timeval tv;
 
-	r = bus_space_read_4(bt, bh, TPM_INTF_CAPABILITIES);
-	if (r == 0xffffffff)
-		return 0;
+	tv.tv_sec = tmo / 1000;
+	tv.tv_usec = 1000 * (tmo % 1000);
 
-#ifdef TPM_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), TPM_CAPBITS, r);
-	printf("%s: caps=%s\n", __func__, buf);
-#endif
-	if ((r & TPM_CAPSREQ) != TPM_CAPSREQ ||
-	    !(r & (TPM_INTF_INT_EDGE_RISING | TPM_INTF_INT_LEVEL_LOW))) {
-#ifdef TPM_DEBUG
-		printf("%s: caps too low (caps=%s)\n", __func__, buf);
-#endif
-		return 0;
+	return tvtohz(&tv);
+}
+
+static int
+tpm_getburst(struct tpm_softc *sc)
+{
+	int burst, to, rv;
+
+	to = tpm_tmotohz(TPM_BURST_TMO);
+
+	while (to--) {
+		/*
+		 * Burst count is in bits 23:8, so read the two higher bytes.
+		 */
+		burst = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS + 1);
+		burst |= bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS + 2)
+		    << 8;
+
+		if (burst)
+			return burst;
+
+		rv = tsleep(sc, PCATCH, "tpm_getburst", 1);
+		if (rv && rv != EWOULDBLOCK) {
+			return 0;
+		}
 	}
 
-	save = bus_space_read_1(bt, bh, TPM_ACCESS);
-	bus_space_write_1(bt, bh, TPM_ACCESS, TPM_ACCESS_REQUEST_USE);
-	reg = bus_space_read_1(bt, bh, TPM_ACCESS);
-	if ((reg & TPM_ACCESS_VALID) && (reg & TPM_ACCESS_ACTIVE_LOCALITY) &&
-	    bus_space_read_4(bt, bh, TPM_ID) != 0xffffffff)
-		return 1;
-
-	bus_space_write_1(bt, bh, TPM_ACCESS, save);
 	return 0;
 }
+
+static inline uint8_t
+tpm_status(struct tpm_softc *sc)
+{
+	return bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS) &
+	    TPM_STS_STATUS_BITS;
+}
+
+/* -------------------------------------------------------------------------- */
+
+static bool
+tpm12_suspend(struct tpm_softc *sc)
+{
+	static const uint8_t command[10] = {
+		0x00, 0xC1,		/* TPM_TAG_RQU_COMMAND */
+		0x00, 0x00, 0x00, 10,	/* Length in bytes */
+		0x00, 0x00, 0x00, 0x98	/* TPM_ORD_SaveState */
+	};
+	struct tpm_header response;
+
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
+
+	return true;
+}
+
+static bool
+tpm20_suspend(struct tpm_softc *sc)
+{
+	static const uint8_t command[12] = {
+		0x80, 0x01,		/* TPM_ST_NO_SESSIONS */
+		0x00, 0x00, 0x00, 12,	/* Length in bytes */
+		0x00, 0x00, 0x01, 0x45,	/* TPM_CC_Shutdown */
+		0x00, 0x01		/* TPM_SU_STATE */
+	};
+	struct tpm_header response;
+
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
+
+	return true;
+}
+
+bool
+tpm_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	struct tpm_softc *sc = device_private(dev);
+
+	switch (sc->sc_ver) {
+	case TPM_1_2:
+		return tpm12_suspend(sc);
+	case TPM_2_0:
+		return tpm20_suspend(sc);
+	default:
+		panic("%s: impossible", __func__);
+	}
+}
+
+bool
+tpm_resume(device_t dev, const pmf_qual_t *qual)
+{
+	/*
+	 * Don't do anything, the BIOS is supposed to restore the previously
+	 * saved state.
+	 */
+	return true;
+}
+
+/* -------------------------------------------------------------------------- */
+
+static int
+tpm_poll(struct tpm_softc *sc, uint8_t mask, int to, wchan_t chan)
+{
+	int rv;
+
+	while (((sc->sc_status = tpm_status(sc)) & mask) != mask && to--) {
+		rv = tsleep(chan, PCATCH, "tpm_poll", 1);
+		if (rv && rv != EWOULDBLOCK) {
+			return rv;
+		}
+	}
+
+	return 0;
+}
+
+static int
+tpm_waitfor(struct tpm_softc *sc, uint8_t bits, int tmo, wchan_t chan)
+{
+	int retry, to, rv;
+	uint8_t todo;
+
+	to = tpm_tmotohz(tmo);
+	retry = 3;
+
+restart:
+	todo = bits;
+
+	/*
+	 * TPM_STS_VALID has priority over the others.
+	 */
+	if (todo & TPM_STS_VALID) {
+		if ((rv = tpm_poll(sc, TPM_STS_VALID, to+1, chan)) != 0)
+			return rv;
+		todo &= ~TPM_STS_VALID;
+	}
+
+	if ((rv = tpm_poll(sc, todo, to, chan)) != 0)
+		return rv;
+
+	if ((todo & sc->sc_status) != todo) {
+		if ((retry-- > 0) && (bits & TPM_STS_VALID)) {
+			bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS,
+			    TPM_STS_RESP_RETRY);
+			goto restart;
+		}
+		return EIO;
+	}
+
+	return 0;
+}
+
+/* -------------------------------------------------------------------------- */
 
 /*
- * Setup interrupt vector if one is provided and interrupts are know to
- * work on that particular chip.
+ * TPM using the TIS 1.2 interface.
  */
-int
-tpm_tis12_irqinit(struct tpm_softc *sc, int irq, int idx)
-{
-	uint32_t r;
 
-	if ((irq == -1) || (tpm_devs[idx].flags & TPM_DEV_NOINTS)) {
-		sc->sc_vector = -1;
-		return 0;
-	}
-
-	/* Ack and disable all interrupts. */
-	r = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    r & ~TPM_GLOBAL_INT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS));
-#ifdef TPM_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), TPM_INTERRUPT_ENABLE_BITS, r);
-	aprint_debug_dev(sc->sc_dev, "%s: before ien %s\n", __func__, buf);
-#endif
-
-	/* Program interrupt vector. */
-	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_INT_VECTOR, irq);
-	sc->sc_vector = irq;
-
-	/* Program interrupt type. */
-	r &= ~(TPM_INT_EDGE_RISING|TPM_INT_EDGE_FALLING|TPM_INT_LEVEL_HIGH|
-	    TPM_INT_LEVEL_LOW);
-	r |= TPM_GLOBAL_INT_ENABLE|TPM_CMD_READY_INT|TPM_LOCALITY_CHANGE_INT|
-	    TPM_STS_VALID_INT|TPM_DATA_AVAIL_INT;
-	if (sc->sc_capabilities & TPM_INTF_INT_EDGE_RISING)
-		r |= TPM_INT_EDGE_RISING;
-	else if (sc->sc_capabilities & TPM_INTF_INT_EDGE_FALLING)
-		r |= TPM_INT_EDGE_FALLING;
-	else if (sc->sc_capabilities & TPM_INTF_INT_LEVEL_HIGH)
-		r |= TPM_INT_LEVEL_HIGH;
-	else
-		r |= TPM_INT_LEVEL_LOW;
-
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE, r);
-#ifdef TPM_DEBUG
-	snprintb(buf, sizeof(buf), TPM_INTERRUPT_ENABLE_BITS, r);
-	aprint_debug_dev(sc->sc_dev, "%s: after ien %s\n", __func__, buf);
-#endif
-
-	return 0;
-}
-
-/* Setup TPM using TIS 1.2 interface. */
-int
-tpm_tis12_init(struct tpm_softc *sc, int irq, const char *name)
-{
-	uint32_t r;
-	int i;
-
-	r = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTF_CAPABILITIES);
-#ifdef TPM_DEBUG
-	char cbuf[128];
-	snprintb(cbuf, sizeof(cbuf), TPM_CAPBITS, r);
-	aprint_debug_dev(sc->sc_dev, "%s: caps=%s ", __func__, cbuf);
-#endif
-	if ((r & TPM_CAPSREQ) != TPM_CAPSREQ ||
-	    !(r & (TPM_INTF_INT_EDGE_RISING | TPM_INTF_INT_LEVEL_LOW))) {
-		char buf[128];
-		snprintb(buf, sizeof(buf), TPM_CAPBITS, r);
-		aprint_error_dev(sc->sc_dev, "capabilities too low (caps=%s)\n",
-		    buf);
-		return 1;
-	}
-	sc->sc_capabilities = r;
-
-	sc->sc_devid = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_ID);
-	sc->sc_rev = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_REV);
-
-	for (i = 0; tpm_devs[i].devid; i++)
-		if (tpm_devs[i].devid == sc->sc_devid)
-			break;
-
-	if (tpm_devs[i].devid)
-		aprint_normal(": %s rev 0x%x\n",
-		    tpm_devs[i].name, sc->sc_rev);
-	else
-		aprint_normal(": device 0x%08x rev 0x%x\n",
-		    sc->sc_devid, sc->sc_rev);
-
-	if (tpm_tis12_irqinit(sc, irq, i))
-		return 1;
-
-	if (tpm_request_locality(sc, 0))
-		return 1;
-
-	/* Abort whatever it thought it was doing. */
-	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
-
-	return 0;
-}
-
-int
-tpm_request_locality(struct tpm_softc *sc, int l)
+static int
+tpm12_request_locality(struct tpm_softc *sc, int l)
 {
 	uint32_t r;
 	int to, rv;
@@ -252,393 +275,130 @@ tpm_request_locality(struct tpm_softc *sc, int l)
 	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
-		rv = tsleep(sc->sc_init, PRIBIO | PCATCH, "tpm_locality", 1);
-		if (rv &&  rv != EWOULDBLOCK) {
-#ifdef TPM_DEBUG
-			aprint_debug_dev(sc->sc_dev, "%s: interrupted %d\n",
-			    __func__, rv);
-#endif
+		rv = tsleep(sc->sc_intf->init, PCATCH, "tpm_locality", 1);
+		if (rv && rv != EWOULDBLOCK) {
 			return rv;
 		}
 	}
 
 	if ((r & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
-#ifdef TPM_DEBUG
-		char buf[128];
-		snprintb(buf, sizeof(buf), TPM_ACCESS_BITS, r);
-		aprint_debug_dev(sc->sc_dev, "%s: access %s\n", __func__, buf);
-#endif
 		return EBUSY;
 	}
 
 	return 0;
 }
 
-int
-tpm_getburst(struct tpm_softc *sc)
+static int
+tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 {
-	int burst, to, rv;
+	uint32_t cap;
+	uint8_t reg;
+	int tmo;
 
-	to = tpm_tmotohz(TPM_BURST_TMO);
+	cap = bus_space_read_4(bt, bh, TPM_INTF_CAPABILITY);
+	if (cap == 0xffffffff)
+		return EINVAL;
+	if ((cap & TPM_CAPS_REQUIRED) != TPM_CAPS_REQUIRED)
+		return ENOTSUP;
 
-	burst = 0;
-	while (burst == 0 && to--) {
-		/*
-		 * Burst count has to be read from bits 8 to 23 without
-		 * touching any other bits, eg. the actual status bits 0
-		 * to 7.
-		 */
-		burst = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS + 1);
-		burst |= bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS + 2)
-		    << 8;
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev, "%s: read %d\n", __func__, burst);
-#endif
-		if (burst)
-			return burst;
+	/* Request locality 0. */
+	bus_space_write_1(bt, bh, TPM_ACCESS, TPM_ACCESS_REQUEST_USE);
 
-		rv = tsleep(sc, PRIBIO | PCATCH, "tpm_getburst", 1);
-		if (rv && rv != EWOULDBLOCK) {
-			return 0;
-		}
+	/* Wait for it to become active. */
+	tmo = TPM_ACCESS_TMO; /* Milliseconds. */
+	while ((reg = bus_space_read_1(bt, bh, TPM_ACCESS) &
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && tmo--) {
+		DELAY(1000); /* 1 millisecond. */
 	}
+	if ((reg & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
+		return ETIMEDOUT;
+	}
+
+	if (bus_space_read_4(bt, bh, TPM_ID) == 0xffffffff)
+		return EINVAL;
 
 	return 0;
 }
 
-uint8_t
-tpm_status(struct tpm_softc *sc)
-{
-	return bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_STS) & TPM_STS_MASK;
-}
-
-int
-tpm_tmotohz(int tmo)
-{
-	struct timeval tv;
-
-	tv.tv_sec = tmo / 1000;
-	tv.tv_usec = 1000 * (tmo % 1000);
-
-	return tvtohz(&tv);
-}
-
-/* Save TPM state on suspend. */
-bool
-tpm_suspend(device_t dev, const pmf_qual_t *qual)
-{
-	struct tpm_softc *sc = device_private(dev);
-	static const uint8_t command[] = {
-	    0, 193,		/* TPM_TAG_RQU_COMMAND */
-	    0, 0, 0, 10,	/* Length in bytes */
-	    0, 0, 0, 156	/* TPM_ORD_SaveStates */
-	};
-	uint8_t scratch[sizeof(command)];
-
-	/*
-	 * Power down:  We have to issue the SaveStates command.
-	 */
-	(*sc->sc_write)(sc, &command, sizeof(command));
-	(*sc->sc_read)(sc, &scratch, sizeof(scratch), NULL, TPM_HDRSIZE);
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: power down\n", __func__);
-#endif
-	return true;
-}
-
-/*
- * Handle resume event.  Actually nothing to do as the BIOS is supposed
- * to restore the previously saved state.
- */
-bool
-tpm_resume(device_t dev, const pmf_qual_t *qual)
-{
-#ifdef TPM_DEBUG
-	struct tpm_softc *sc = device_private(dev);
-	aprint_debug_dev(sc->sc_dev, "%s: resume\n", __func__);
-#endif
-	return true;
-}
-
-/* Wait for given status bits using polling. */
-int
-tpm_waitfor_poll(struct tpm_softc *sc, uint8_t mask, int tmo, void *c)
+static int
+tpm_tis12_init(struct tpm_softc *sc)
 {
 	int rv;
 
-	/*
-	 * Poll until either the requested condition or a time out is
-	 * met.
-	 */
-	while (((sc->sc_stat = tpm_status(sc)) & mask) != mask && tmo--) {
-		rv = tsleep(c, PRIBIO | PCATCH, "tpm_poll", 1);
-		if (rv && rv != EWOULDBLOCK) {
-#ifdef TPM_DEBUG
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: interrupted %d\n", __func__, rv);
-#endif
-			return rv;
-		}
-	}
+	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
+	    TPM_INTF_CAPABILITY);
+	sc->sc_devid = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_ID);
+	sc->sc_rev = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_REV);
 
-	return 0;
-}
+	aprint_normal_dev(sc->sc_dev, "device 0x%08x rev 0x%x\n",
+	    sc->sc_devid, sc->sc_rev);
 
-/* Wait for given status bits using interrupts. */
-int
-tpm_waitfor_int(struct tpm_softc *sc, uint8_t mask, int tmo, void *c,
-    int inttype)
-{
-	int rv, to;
-
-	/* Poll and return when condition is already met. */
-	sc->sc_stat = tpm_status(sc);
-	if ((sc->sc_stat & mask) == mask)
-		return 0;
-
-	/*
-	 * Enable interrupt on tpm chip.  Note that interrupts on our
-	 * level (SPL_TTY) are disabled (see tpm{read,write} et al) and
-	 * will not be delivered to the cpu until we call tsleep(9) below.
-	 */
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE) |
-	    inttype);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE) |
-	    TPM_GLOBAL_INT_ENABLE);
-
-	/*
-	 * Poll once more to remedy the race between previous polling
-	 * and enabling interrupts on the tpm chip.
-	 */
-	sc->sc_stat = tpm_status(sc);
-	if ((sc->sc_stat & mask) == mask) {
-		rv = 0;
-		goto out;
-	}
-
-	to = tpm_tmotohz(tmo);
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: sleeping for %d ticks on %p\n", __func__, to, c);
-#endif
-	/*
-	 * tsleep(9) enables interrupts on the cpu and returns after
-	 * wake up with interrupts disabled again.  Note that interrupts
-	 * generated by the tpm chip while being at SPL_TTY are not lost
-	 * but held and delivered as soon as the cpu goes below SPL_TTY.
-	 */
-	rv = tsleep(c, PRIBIO | PCATCH, "tpm_wait", to);
-
-	sc->sc_stat = tpm_status(sc);
-#ifdef TPM_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), TPM_STS_BITS, sc->sc_stat);
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: woke up with rv %d stat %s\n", __func__, rv, buf);
-#endif
-	if ((sc->sc_stat & mask) == mask)
-		rv = 0;
-
-	/* Disable interrupts on tpm chip again. */
-out:	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE) &
-	    ~TPM_GLOBAL_INT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INTERRUPT_ENABLE) &
-	    ~inttype);
-
-	return rv;
-}
-
-/*
- * Wait on given status bits, uses interrupts where possible, otherwise polls.
- */
-int
-tpm_waitfor(struct tpm_softc *sc, uint8_t b0, int tmo, void *c)
-{
-	uint8_t b;
-	int re, to, rv;
-
-#ifdef TPM_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), TPM_STS_BITS, sc->sc_stat);
-	aprint_debug_dev(sc->sc_dev, "%s: b0 %s\n", __func__, buf);
-#endif
-
-	/*
-	 * If possible, use interrupts, otherwise poll.
-	 *
-	 * We use interrupts for TPM_STS_VALID and TPM_STS_DATA_AVAIL (if
-	 * the tpm chips supports them) as waiting for those can take
-	 * really long.  The other TPM_STS* are not needed very often
-	 * so we do not support them.
-	 */
-	if (sc->sc_vector != -1) {
-		b = b0;
-
-		/*
-		 * Wait for data ready.  This interrupt only occures
-		 * when both TPM_STS_VALID and TPM_STS_DATA_AVAIL are asserted.
-		 * Thus we don't have to bother with TPM_STS_VALID
-		 * separately and can just return.
-		 *
-		 * This only holds for interrupts!  When using polling
-		 * both flags have to be waited for, see below.
-		 */
-		if ((b & TPM_STS_DATA_AVAIL) && (sc->sc_capabilities &
-		    TPM_INTF_DATA_AVAIL_INT))
-			return tpm_waitfor_int(sc, b, tmo, c,
-			    TPM_DATA_AVAIL_INT);
-
-		/* Wait for status valid bit. */
-		if ((b & TPM_STS_VALID) && (sc->sc_capabilities &
-		    TPM_INTF_STS_VALID_INT)) {
-			rv = tpm_waitfor_int(sc, b, tmo, c, TPM_STS_VALID_INT);
-			if (rv != 0)
-				return rv;
-			else
-				b = b0 & ~TPM_STS_VALID;
-		}
-
-		/*
-		 * When all flags are taken care of, return.  Otherwise
-		 * use polling for eg. TPM_STS_CMD_READY.
-		 */
-		if (b == 0)
-			return 0;
-	}
-
-	re = 3;
-restart:
-	/*
-	 * If requested wait for TPM_STS_VALID before dealing with
-	 * any other flag.  Eg. when both TPM_STS_DATA_AVAIL and TPM_STS_VALID
-	 * are requested, wait for the latter first.
-	 */
-	b = b0;
-	if (b0 & TPM_STS_VALID)
-		b = TPM_STS_VALID;
-
-	to = tpm_tmotohz(tmo);
-again:
-	if ((rv = tpm_waitfor_poll(sc, b, to, c)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
-	if ((b & sc->sc_stat) == TPM_STS_VALID) {
-		/* Now wait for other flags. */
-		b = b0 & ~TPM_STS_VALID;
-		to++;
-		goto again;
-	}
-
-	if ((sc->sc_stat & b) != b) {
-#ifdef TPM_DEBUG
-		char bbuf[128], cbuf[128];
-		snprintb(bbuf, sizeof(bbuf), TPM_STS_BITS, b);
-		snprintb(cbuf, sizeof(cbuf), TPM_STS_BITS, sc->sc_stat);
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: timeout: stat=%s b=%s\n", __func__, cbuf, bbuf);
-#endif
-		if (re-- && (b0 & TPM_STS_VALID)) {
-			bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS,
-			    TPM_STS_RESP_RETRY);
-			goto restart;
-		}
-		return EIO;
-	}
+	/* Abort whatever it thought it was doing. */
+	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
 
 	return 0;
 }
 
-/* Start transaction. */
-int
-tpm_tis12_start(struct tpm_softc *sc, int flag)
+static int
+tpm_tis12_start(struct tpm_softc *sc, int rw)
 {
 	int rv;
 
-	if (flag == UIO_READ) {
+	if (rw == UIO_READ) {
 		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read);
+		    TPM_READ_TMO, sc->sc_intf->read);
 		return rv;
 	}
 
-	/* Own our (0th) locality. */
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	/* Request the 0th locality. */
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
-	sc->sc_stat = tpm_status(sc);
-	if (sc->sc_stat & TPM_STS_CMD_READY) {
-#ifdef TPM_DEBUG
-		char buf[128];
-		snprintb(buf, sizeof(buf), TPM_STS_BITS, sc->sc_stat);
-		aprint_debug_dev(sc->sc_dev, "%s: UIO_WRITE status %s\n",
-		    __func__, buf);
-#endif
+	sc->sc_status = tpm_status(sc);
+	if (sc->sc_status & TPM_STS_CMD_READY)
 		return 0;
-	}
-
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: UIO_WRITE readying chip\n", __func__);
-#endif
 
 	/* Abort previous and restart. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
-	if ((rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO,
-	    sc->sc_write))) {
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: UIO_WRITE readying failed %d\n", __func__, rv);
-#endif
+	rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO, sc->sc_intf->write);
+	if (rv)
 		return rv;
-	}
-
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: UIO_WRITE readying done\n", __func__);
-#endif
 
 	return 0;
 }
 
-int
+static int
 tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
     int flags)
 {
 	uint8_t *p = buf;
 	size_t cnt;
-	int rv, n, bcnt;
+	int rv, n;
 
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: len %zu\n", __func__, len);
-#endif
 	cnt = 0;
 	while (len > 0) {
-		if ((rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read)))
+		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
+		    TPM_READ_TMO, sc->sc_intf->read);
+		if (rv)
 			return rv;
 
-		bcnt = tpm_getburst(sc);
-		n = MIN(len, bcnt);
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: fetching %d, burst is %d\n", __func__, n, bcnt);
-#endif
-		for (; n--; len--) {
+		n = MIN(len, tpm_getburst(sc));
+		while (n > 0) {
 			*p++ = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_DATA);
 			cnt++;
+			len--;
+			n--;
 		}
 
 		if ((flags & TPM_PARAM_SIZE) == 0 && cnt >= 6)
 			break;
 	}
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: read %zu bytes, len %zu\n", __func__, cnt, len);
-#endif
 
 	if (count)
 		*count = cnt;
@@ -646,21 +406,16 @@ tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
 	return 0;
 }
 
-int
+static int
 tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
 	size_t cnt;
 	int rv, r;
 
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev,
-	    "%s: sc %p buf %p len %zu\n", __func__, sc, buf, len);
-#endif
 	if (len == 0)
 		return 0;
-
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
 	cnt = 0;
@@ -670,20 +425,10 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 			cnt++;
 		}
 		if ((rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc))) {
-#ifdef TPM_DEBUG
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: failed burst rv %d\n", __func__, rv);
-#endif
 			return rv;
 		}
-		sc->sc_stat = tpm_status(sc);
-		if (!(sc->sc_stat & TPM_STS_DATA_EXPECT)) {
-#ifdef TPM_DEBUG
-			char sbuf[128];
-			snprintb(sbuf, sizeof(sbuf), TPM_STS_BITS, sc->sc_stat);
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: failed rv %d stat=%s\n", __func__, rv, sbuf);
-#endif
+		sc->sc_status = tpm_status(sc);
+		if (!(sc->sc_status & TPM_STS_DATA_EXPECT)) {
 			return EIO;
 		}
 	}
@@ -692,69 +437,41 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 	cnt++;
 
 	if ((rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc))) {
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev, "%s: failed last byte rv %d\n",
-		    __func__, rv);
-#endif
 		return rv;
 	}
-	if ((sc->sc_stat & TPM_STS_DATA_EXPECT) != 0) {
-#ifdef TPM_DEBUG
-		char sbuf[128];
-		snprintb(sbuf, sizeof(sbuf), TPM_STS_BITS, sc->sc_stat);
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: failed rv %d stat=%s\n", __func__, rv, sbuf);
-#endif
+	if ((sc->sc_status & TPM_STS_DATA_EXPECT) != 0) {
 		return EIO;
 	}
-
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: wrote %zu byte\n", __func__, cnt);
-#endif
 
 	return 0;
 }
 
-/* Finish transaction. */
-int
-tpm_tis12_end(struct tpm_softc *sc, int flag, int err)
+static int
+tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 {
 	int rv = 0;
 
-	if (flag == UIO_READ) {
-		if ((rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO,
-		    sc->sc_read)))
+	if (rw == UIO_READ) {
+		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_intf->read);
+		if (rv)
 			return rv;
 
 		/* Still more data? */
-		sc->sc_stat = tpm_status(sc);
-		if (!err && ((sc->sc_stat & TPM_STS_DATA_AVAIL)
-		    == TPM_STS_DATA_AVAIL)) {
-#ifdef TPM_DEBUG
-			char buf[128];
-			snprintb(buf, sizeof(buf), TPM_STS_BITS, sc->sc_stat);
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: read failed stat=%s\n", __func__, buf);
-#endif
+		sc->sc_status = tpm_status(sc);
+		if (!err && (sc->sc_status & TPM_STS_DATA_AVAIL)) {
 			rv = EIO;
 		}
 
 		bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS,
 		    TPM_STS_CMD_READY);
 
-		/* Release our (0th) locality. */
-		bus_space_write_1(sc->sc_bt, sc->sc_bh,TPM_ACCESS,
+		/* Release the 0th locality. */
+		bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
 		    TPM_ACCESS_ACTIVE_LOCALITY);
 	} else {
 		/* Hungry for more? */
-		sc->sc_stat = tpm_status(sc);
-		if (!err && (sc->sc_stat & TPM_STS_DATA_EXPECT)) {
-#ifdef TPM_DEBUG
-			char buf[128];
-			snprintb(buf, sizeof(buf), TPM_STS_BITS, sc->sc_stat);
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: write failed stat=%s\n", __func__, buf);
-#endif
+		sc->sc_status = tpm_status(sc);
+		if (!err && (sc->sc_status & TPM_STS_DATA_EXPECT)) {
 			rv = EIO;
 		}
 
@@ -765,393 +482,175 @@ tpm_tis12_end(struct tpm_softc *sc, int flag, int err)
 	return rv;
 }
 
-int
-tpm_intr(void *v)
-{
-	struct tpm_softc *sc = v;
-	uint32_t r;
-#ifdef TPM_DEBUG
-	static int cnt = 0;
-#endif
+const struct tpm_intf tpm_intf_tis12 = {
+	.version = TIS_1_2,
+	.probe = tpm_tis12_probe,
+	.init = tpm_tis12_init,
+	.start = tpm_tis12_start,
+	.read = tpm_tis12_read,
+	.write = tpm_tis12_write,
+	.end = tpm_tis12_end
+};
 
-	r = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS);
-#ifdef TPM_DEBUG
-	if (r != 0) {
-		char buf[128];
-		snprintb(buf, sizeof(buf), TPM_INTERRUPT_ENABLE_BITS, r);
-		aprint_debug_dev(sc->sc_dev, "%s: int=%s (%d)\n", __func__,
-		    buf, cnt);
-	} else
-		cnt++;
-#endif
-	if (!(r & (TPM_CMD_READY_INT | TPM_LOCALITY_CHANGE_INT |
-	    TPM_STS_VALID_INT | TPM_DATA_AVAIL_INT)))
-#ifdef __FreeBSD__
-		return;
-#else
-		return 0;
-#endif
-	if (r & TPM_STS_VALID_INT)
-		wakeup(sc);
+/* -------------------------------------------------------------------------- */
 
-	if (r & TPM_CMD_READY_INT)
-		wakeup(sc->sc_write);
+static dev_type_open(tpmopen);
+static dev_type_close(tpmclose);
+static dev_type_read(tpmread);
+static dev_type_write(tpmwrite);
+static dev_type_ioctl(tpmioctl);
 
-	if (r & TPM_DATA_AVAIL_INT)
-		wakeup(sc->sc_read);
+const struct cdevsw tpm_cdevsw = {
+	.d_open = tpmopen,
+	.d_close = tpmclose,
+	.d_read = tpmread,
+	.d_write = tpmwrite,
+	.d_ioctl = tpmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE,
+};
 
-	if (r & TPM_LOCALITY_CHANGE_INT)
-		wakeup(sc->sc_init);
-
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS, r);
-
-	return 1;
-}
-
-/* Read single byte using legacy interface. */
-static inline uint8_t
-tpm_legacy_in(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
-{
-	bus_space_write_1(iot, ioh, 0, reg);
-	return bus_space_read_1(iot, ioh, 1);
-}
-
-/* Probe for TPM using legacy interface. */
-int
-tpm_legacy_probe(bus_space_tag_t iot, bus_addr_t iobase)
-{
-	bus_space_handle_t ioh;
-	uint8_t r, v;
-	int i, rv = 0;
-	char id[8];
-
-	if (!tpm_enabled || iobase == -1)
-		return 0;
-
-	if (bus_space_map(iot, iobase, 2, 0, &ioh))
-		return 0;
-
-	v = bus_space_read_1(iot, ioh, 0);
-	if (v == 0xff) {
-		bus_space_unmap(iot, ioh, 2);
-		return 0;
-	}
-	r = bus_space_read_1(iot, ioh, 1);
-
-	for (i = sizeof(id); i--; )
-		id[i] = tpm_legacy_in(iot, ioh, TPM_ID + i);
-
-#ifdef TPM_DEBUG
-	printf("tpm_legacy_probe %.4s %d.%d.%d.%d\n",
-	    &id[4], id[0], id[1], id[2], id[3]);
-#endif
-	/*
-	 * The only chips using the legacy interface we are aware of are
-	 * by Atmel.  For other chips more signature would have to be added.
-	 */
-	if (!bcmp(&id[4], "ATML", 4))
-		rv = 1;
-
-	if (!rv) {
-		bus_space_write_1(iot, ioh, r, 1);
-		bus_space_write_1(iot, ioh, v, 0);
-	}
-	bus_space_unmap(iot, ioh, 2);
-
-	return rv;
-}
-
-/* Setup TPM using legacy interface. */
-int
-tpm_legacy_init(struct tpm_softc *sc, int irq, const char *name)
-{
-	char id[8];
-	int i;
-
-	if ((i = bus_space_map(sc->sc_batm, tpm_enabled, 2, 0, &sc->sc_bahm))) {
-		aprint_debug_dev(sc->sc_dev, "cannot map tpm registers (%d)\n",
-		    i);
-		tpm_enabled = 0;
-		return 1;
-	}
-
-	for (i = sizeof(id); i--; )
-		id[i] = tpm_legacy_in(sc->sc_bt, sc->sc_bh, TPM_ID + i);
-
-	aprint_debug_dev(sc->sc_dev, "%.4s %d.%d @0x%x\n", &id[4], id[0],
-	    id[1], tpm_enabled);
-	tpm_enabled = 0;
-
-	return 0;
-}
-
-/* Start transaction. */
-int
-tpm_legacy_start(struct tpm_softc *sc, int flag)
-{
-	struct timeval tv;
-	uint8_t bits, r;
-	int to, rv;
-
-	bits = flag == UIO_READ ? TPM_LEGACY_DA : 0;
-	tv.tv_sec = TPM_LEGACY_TMO;
-	tv.tv_usec = 0;
-	to = tvtohz(&tv) / TPM_LEGACY_SLEEP;
-	while (((r = bus_space_read_1(sc->sc_batm, sc->sc_bahm, 1)) &
-	    (TPM_LEGACY_BUSY|bits)) != bits && to--) {
-		rv = tsleep(sc, PRIBIO | PCATCH, "legacy_tpm_start",
-		    TPM_LEGACY_SLEEP);
-		if (rv && rv != EWOULDBLOCK)
-			return rv;
-	}
-
-#if defined(TPM_DEBUG) && !defined(__FreeBSD__)
-	char buf[128];
-	snprintb(buf, sizeof(buf), TPM_LEGACY_BITS, r);
-	aprint_debug_dev(sc->sc_dev, "%s: bits %s\n", device_xname(sc->sc_dev),
-	    buf);
-#endif
-	if ((r & (TPM_LEGACY_BUSY|bits)) != bits)
-		return EIO;
-
-	return 0;
-}
-
-int
-tpm_legacy_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
-    int flags)
-{
-	uint8_t *p;
-	size_t cnt;
-	int to, rv;
-
-	cnt = rv = 0;
-	for (p = buf; !rv && len > 0; len--) {
-		for (to = 1000;
-		    !(bus_space_read_1(sc->sc_batm, sc->sc_bahm, 1) &
-		    TPM_LEGACY_DA); DELAY(1))
-			if (!to--)
-				return EIO;
-
-		DELAY(TPM_LEGACY_DELAY);
-		*p++ = bus_space_read_1(sc->sc_batm, sc->sc_bahm, 0);
-		cnt++;
-	}
-
-	*count = cnt;
-	return 0;
-}
-
-int
-tpm_legacy_write(struct tpm_softc *sc, const void *buf, size_t len)
-{
-	const uint8_t *p;
-	size_t n;
-
-	for (p = buf, n = len; n--; DELAY(TPM_LEGACY_DELAY)) {
-		if (!n && len != TPM_BUFSIZ) {
-			bus_space_write_1(sc->sc_batm, sc->sc_bahm, 1,
-			    TPM_LEGACY_LAST);
-			DELAY(TPM_LEGACY_DELAY);
-		}
-		bus_space_write_1(sc->sc_batm, sc->sc_bahm, 0, *p++);
-	}
-
-	return 0;
-}
-
-/* Finish transaction. */
-int
-tpm_legacy_end(struct tpm_softc *sc, int flag, int rv)
-{
-	struct timeval tv;
-	uint8_t r;
-	int to;
-
-	if (rv || flag == UIO_READ)
-		bus_space_write_1(sc->sc_batm, sc->sc_bahm, 1, TPM_LEGACY_ABRT);
-	else {
-		tv.tv_sec = TPM_LEGACY_TMO;
-		tv.tv_usec = 0;
-		to = tvtohz(&tv) / TPM_LEGACY_SLEEP;
-		while(((r = bus_space_read_1(sc->sc_batm, sc->sc_bahm, 1)) &
-		    TPM_LEGACY_BUSY) && to--) {
-			rv = tsleep(sc, PRIBIO | PCATCH, "legacy_tpm_end",
-			    TPM_LEGACY_SLEEP);
-			if (rv && rv != EWOULDBLOCK)
-				return rv;
-		}
-
-#if defined(TPM_DEBUG) && !defined(__FreeBSD__)
-		char buf[128];
-		snprintb(buf, sizeof(buf), TPM_LEGACY_BITS, r);
-		aprint_debug_dev(sc->sc_dev, "%s: bits %s\n",
-		    device_xname(sc->sc_dev), buf);
-#endif
-		if (r & TPM_LEGACY_BUSY)
-			return EIO;
-
-		if (r & TPM_LEGACY_RE)
-			return EIO;	/* XXX Retry the loop? */
-	}
-
-	return rv;
-}
-
-int
+static int
 tpmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	int ret = 0;
 
-	if (!sc)
+	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & TPM_OPEN)
-		return EBUSY;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_busy) {
+		ret = EBUSY;
+	} else {
+		sc->sc_busy = true;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	sc->sc_flags |= TPM_OPEN;
-
-	return 0;
+	return ret;
 }
 
-int
+static int
 tpmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	int ret = 0;
 
-	if (!sc)
+	if (sc == NULL)
 		return ENXIO;
 
-	if (!(sc->sc_flags & TPM_OPEN))
-		return EINVAL;
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_busy) {
+		ret = EINVAL;
+	} else {
+		sc->sc_busy = false;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	sc->sc_flags &= ~TPM_OPEN;
-
-	return 0;
+	return ret;
 }
 
-int
+static int
 tpmread(dev_t dev, struct uio *uio, int flags)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
-	uint8_t buf[TPM_BUFSIZ], *p;
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	struct tpm_header hdr;
+	uint8_t buf[TPM_BUFSIZ];
 	size_t cnt, len, n;
-	int  rv, s;
+	int rv;
 
-	if (!sc)
+	if (sc == NULL)
 		return ENXIO;
 
-	s = spltty();
-	if ((rv = (*sc->sc_start)(sc, UIO_READ)))
-		goto out;
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)))
+		return rv;
 
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: getting header\n", __func__);
-#endif
-	if ((rv = (*sc->sc_read)(sc, buf, TPM_HDRSIZE, &cnt, 0))) {
-		(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Get the header. */
+	if ((rv = (*sc->sc_intf->read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		goto out;
 	}
-
-	len = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: len %zu, io count %zu\n", __func__,
-	    len, uio->uio_resid);
-#endif
-	if (len > uio->uio_resid) {
+	len = TPM_BE32(hdr.length);
+	if (len > uio->uio_resid || len < cnt) {
 		rv = EIO;
-		(*sc->sc_end)(sc, UIO_READ, rv);
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: bad residual io count 0x%zx\n", __func__,
-		    uio->uio_resid);
-#endif
 		goto out;
 	}
 
-	/* Copy out header. */
-	if ((rv = uiomove(buf, cnt, uio))) {
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: uiomove failed %d\n", __func__, rv);
-#endif
-		(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Copy out the header. */
+	if ((rv = uiomove(&hdr, cnt, uio))) {
 		goto out;
 	}
 
-	/* Get remaining part of the answer (if anything is left). */
-	for (len -= cnt, p = buf, n = sizeof(buf); len > 0; p = buf, len -= n,
-	    n = sizeof(buf)) {
-		n = MIN(n, len);
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev, "%s: n %zu len %zu\n", __func__,
-		    n, len);
-#endif
-		if ((rv = (*sc->sc_read)(sc, p, n, NULL, TPM_PARAM_SIZE))) {
-			(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Process the rest. */
+	len -= cnt;
+	while (len > 0) {
+		n = MIN(sizeof(buf), len);
+		if ((rv = (*sc->sc_intf->read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
 			goto out;
 		}
-		p += n;
-		if ((rv = uiomove(buf, p - buf, uio))) {
-#ifdef TPM_DEBUG
-			aprint_debug_dev(sc->sc_dev,
-			    "%s: uiomove failed %d\n", __func__, rv);
-#endif
-			(*sc->sc_end)(sc, UIO_READ, rv);
+		if ((rv = uiomove(buf, n, uio))) {
 			goto out;
 		}
+		len -= n;
 	}
 
-	rv = (*sc->sc_end)(sc, UIO_READ, rv);
 out:
-	splx(s);
+	rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
 	return rv;
 }
 
-int
+static int
 tpmwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	uint8_t buf[TPM_BUFSIZ];
-	int n, rv, s;
+	int n, rv;
 
-	if (!sc)
+	if (sc == NULL)
 		return ENXIO;
-
-	s = spltty();
-
-#ifdef TPM_DEBUG
-	aprint_debug_dev(sc->sc_dev, "%s: io count %zu\n", __func__,
-	    uio->uio_resid);
-#endif
 
 	n = MIN(sizeof(buf), uio->uio_resid);
 	if ((rv = uiomove(buf, n, uio))) {
-#ifdef TPM_DEBUG
-		aprint_debug_dev(sc->sc_dev,
-		    "%s: uiomove failed %d\n", __func__, rv);
-#endif
-		splx(s);
-		return rv;
+		goto out;
+	}
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE))) {
+		goto out;
+	}
+	if ((rv = (*sc->sc_intf->write)(sc, buf, n))) {
+		goto out;
 	}
 
-	if ((rv = (*sc->sc_start)(sc, UIO_WRITE))) {
-		splx(s);
-		return rv;
-	}
-
-	if ((rv = (*sc->sc_write)(sc, buf, n))) {
-		splx(s);
-		return rv;
-	}
-
-	rv = (*sc->sc_end)(sc, UIO_WRITE, rv);
-	splx(s);
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+out:
 	return rv;
 }
 
-int
-tpmioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
+static int
+tpmioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	struct tpm_ioc_getinfo *info;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	switch (cmd) {
+	case TPM_IOC_GETINFO:
+		info = addr;
+		info->api_version = TPM_API_VERSION;
+		info->tpm_version = sc->sc_ver;
+		info->itf_version = sc->sc_intf->version;
+		info->device_id = sc->sc_devid;
+		info->device_rev = sc->sc_rev;
+		info->device_caps = sc->sc_caps;
+		return 0;
+	default:
+		break;
+	}
+
 	return ENOTTY;
 }

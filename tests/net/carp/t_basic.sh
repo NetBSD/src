@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.7 2017/08/03 03:16:26 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.7.4.1 2020/04/13 08:05:30 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ setup_carp()
 		atf_check -s exit:0 -o match:'0.->.1' \
 		    rump.sysctl -w net.inet.carp.log=1
 	fi
-	atf_check -s exit:0 rump.ifconfig $carpif create
+	rump_server_add_iface $sock $carpif
 	if [ $carpdevip = yes ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 $ip/24 up
 		atf_check -s exit:0 rump.ifconfig $carpif \
@@ -200,7 +200,7 @@ setup_carp6()
 		atf_check -s exit:0 -o match:'0.->.1' \
 		    rump.sysctl -w net.inet.carp.log=1
 	fi
-	atf_check -s exit:0 rump.ifconfig $carpif create
+	rump_server_add_iface $sock $carpif
 	if [ $carpdevip = yes ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip up
 		atf_check -s exit:0 rump.ifconfig $carpif inet6 \

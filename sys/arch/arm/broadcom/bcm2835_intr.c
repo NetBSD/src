@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.15.4.2 2020/04/08 14:07:28 martin Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.15.4.3 2020/04/13 08:03:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.15.4.2 2020/04/08 14:07:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.15.4.3 2020/04/13 08:03:33 martin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -202,8 +202,8 @@ struct bcm2835icu_softc {
 	int sc_phandle;
 };
 
-struct bcm2835icu_softc *bcml1icu_sc;
-struct bcm2835icu_softc *bcmicu_sc;
+static struct bcm2835icu_softc *bcml1icu_sc;
+static struct bcm2835icu_softc *bcmicu_sc;
 
 #define read_bcm2835reg(o)	\
 	bus_space_read_4(bcmicu_sc->sc_iot, bcmicu_sc->sc_ioh, (o))
@@ -340,6 +340,8 @@ bcm2835_irq_handler(void *frame)
 	const cpuid_t cpuid = ci->ci_core_id;
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
+
+	KASSERT(cpuid < BCM2836_NCPUS);
 
 	ci->ci_data.cpu_nintr++;
 
@@ -617,6 +619,7 @@ bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
+	KASSERT(cpuid < BCM2836_NCPUS);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -663,6 +666,7 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
+	KASSERT(cpuid < BCM2836_NCPUS);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -685,7 +689,7 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
 	}
 	if (irq_mask & BCM2836MP_PMU_IRQ) {
 		bus_space_write_4(iot, ioh, BCM2836_LOCAL_PM_ROUTING_CLR,
-		     __BIT(cpuid));
+		    __BIT(cpuid));
 	}
 
 	bcm2835_barrier();
@@ -700,6 +704,7 @@ bcm2836mp_pic_find_pending_irqs(struct pic_softc *pic)
 	uint32_t lpending;
 	int ipl = 0;
 
+	KASSERT(cpuid < BCM2836_NCPUS);
 	KASSERT(pic == &bcm2836mp_pic[cpuid]);
 
 	bcm2835_barrier();
@@ -736,10 +741,13 @@ bcm2836mp_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 #if defined(MULTIPROCESSOR)
 static void bcm2836mp_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
+	const cpuid_t cpuid = ci->ci_core_id;
+
+	KASSERT(cpuid < BCM2836_NCPUS);
 
 	/* Enable IRQ and not FIQ */
 	bus_space_write_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
-	    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(ci->ci_core_id), 1);
+	    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid), 1);
 }
 
 static void
@@ -750,6 +758,7 @@ bcm2836mp_send_ipi(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	KASSERT(pic->pic_cpus != NULL);
 
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
+	KASSERT(cpuid < BCM2836_NCPUS);
 
 	bus_space_write_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
 	    BCM2836_LOCAL_MAILBOX0_SETN(cpuid), __BIT(ipi));
@@ -761,6 +770,8 @@ bcm2836mp_ipi_handler(void *priv)
 	const struct cpu_info *ci = curcpu();
 	const cpuid_t cpuid = ci->ci_core_id;
 	uint32_t ipimask, bit;
+
+	KASSERT(cpuid < BCM2836_NCPUS);
 
 	ipimask = bus_space_read_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
 	    BCM2836_LOCAL_MAILBOX0_CLRN(cpuid));
@@ -809,6 +820,8 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 	const cpuid_t cpuid = ci->ci_core_id;
 	struct pic_softc * const pic = &bcm2836mp_pic[cpuid];
 
+	KASSERT(cpuid < BCM2836_NCPUS);
+
 #if defined(MULTIPROCESSOR)
 	pic->pic_cpus = ci->ci_kcpuset;
 
@@ -843,6 +856,7 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 static int
 bcm2836mp_icu_fdt_decode_irq(u_int *specifier)
 {
+
 	if (!specifier)
 		return -1;
 	return be32toh(specifier[0]);

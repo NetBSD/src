@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.5.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.5.2.3 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -91,21 +91,19 @@ struct l2tp_variant {
 	struct psref_target lv_psref;
 };
 
-struct l2tp_ro {
-	struct route lr_ro;
-	kmutex_t *lr_lock;
-};
-
 struct l2tp_softc {
 	struct ethercom	l2tp_ec;	/* common area - must be at the top */
 					/* to use ether_input(), we must have this */
-	percpu_t *l2tp_ro_percpu;	/* struct l2tp_ro */
+	percpu_t *l2tp_ro_percpu;	/* struct tunnel_ro */
 	struct l2tp_variant *l2tp_var;	/*
 					* reader must use l2tp_getref_variant()
 					* instead of direct dereference.
 					*/
 	kmutex_t l2tp_lock;		/* writer lock for l2tp_var */
 	pserialize_t l2tp_psz;
+
+	void *l2tp_si;
+	percpu_t *l2tp_ifq_percpu;
 
 	LIST_ENTRY(l2tp_softc) l2tp_list; /* list of all l2tps */
 	struct pslist_entry l2tp_hash;	/* hashed list to lookup by session id */
@@ -191,7 +189,7 @@ struct mbuf *l2tp_tcpmss_clamp(struct ifnet *, struct mbuf *);
  *   - l2tp_var->lv_psref for reader
  *       l2tp_softc->l2tp_var is used for variant values while the l2tp tunnel
  *       exists.
- * + struct l2tp_ro->lr_ro is protected by struct l2tp_ro->lr_lock.
+ * + struct l2tp_ro->lr_ro is protected by struct tunnel_ro->tr_lock.
  *       This lock is required to exclude softnet/0 lwp(such as output
  *       processing softint) and  processing lwp(such as DAD timer processing).
  *

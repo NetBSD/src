@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.9 2011/05/22 16:01:43 christos Exp $	*/
+/*	$NetBSD: pio.h,v 1.9.56.1 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,17 +37,11 @@
  */
 
 uint8_t		inb(unsigned);
-void		insb(unsigned, void *, int);
 uint16_t	inw(unsigned);
-void		insw(unsigned, void *, int);
 uint32_t	inl(unsigned);
-void		insl(unsigned, void *, int);
 
 void		outb(unsigned, uint8_t);
-void		outsb(unsigned, void *, int);
 void		outw(unsigned, uint16_t);
-void		outsw(unsigned, void *, int);
 void		outl(unsigned, uint32_t);
-void		outsl(unsigned, void *, int);
 	
 #endif /* _X86_PIO_H_ */

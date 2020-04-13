@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.127 2015/11/12 17:51:05 christos Exp $	*/
+/*	$NetBSD: puffs.h,v 1.127.16.1 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -162,7 +162,8 @@ extern const struct mntopt puffsmopts[]; /* puffs.c */
 /* callbacks for operations */
 struct puffs_ops {
 	int (*puffs_fs_unmount)(struct puffs_usermount *, int);
-	int (*puffs_fs_statvfs)(struct puffs_usermount *, struct statvfs *);
+	int (*puffs_fs_statvfs)(struct puffs_usermount *,
+	    struct puffs_statvfs *);
 	int (*puffs_fs_sync)(struct puffs_usermount *, int,
 	    const struct puffs_cred *);
 	int (*puffs_fs_fhtonode)(struct puffs_usermount *, void *, size_t,
@@ -316,7 +317,7 @@ enum {
 #define PUFFSOP_PROTOS(fsname)						\
 	int fsname##_fs_unmount(struct puffs_usermount *, int);		\
 	int fsname##_fs_statvfs(struct puffs_usermount *,		\
-	    struct statvfs *);						\
+	    struct puffs_statvfs *);					\
 	int fsname##_fs_sync(struct puffs_usermount *, int,		\
 	    const struct puffs_cred *cred);				\
 	int fsname##_fs_fhtonode(struct puffs_usermount *, void *,	\
@@ -559,8 +560,8 @@ int			puffs_dispatch_exec(struct puffs_cc *,
  * generic/dummy routines applicable for some file systems
  */
 int  puffs_fsnop_unmount(struct puffs_usermount *, int);
-int  puffs_fsnop_statvfs(struct puffs_usermount *, struct statvfs *);
-void puffs_zerostatvfs(struct statvfs *);
+int  puffs_fsnop_statvfs(struct puffs_usermount *, struct puffs_statvfs *);
+void puffs_zerostatvfs(struct puffs_statvfs *);
 int  puffs_fsnop_sync(struct puffs_usermount *, int waitfor,
 		      const struct puffs_cred *);
 

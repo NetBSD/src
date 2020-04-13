@@ -21,7 +21,7 @@ CDEFINES =	-DTESTS="\"${top_builddir}/lib/dns/tests/\""
 
 ISCLIBS =	../../isc/libisc.@A@ @OPENSSL_LIBS@
 ISCDEPLIBS =	../../isc/libisc.@A@
-DNSLIBS =	../libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 DNSDEPLIBS =	../libdns.@A@
 
 LIBS =		@LIBS@ @CMOCKA_LIBS@
@@ -53,7 +53,6 @@ SRCS =		acl_test.c \
 		rsa_test.c \
 		sigs_test.c \
 		time_test.c \
-		tkey_test.c \
 		tsig_test.c \
 		update_test.c \
 		zonemgr_test.c \
@@ -86,7 +85,6 @@ TARGETS =	acl_test@EXEEXT@ \
 		rsa_test@EXEEXT@ \
 		sigs_test@EXEEXT@ \
 		time_test@EXEEXT@ \
-		tkey_test@EXEEXT@ \
 		tsig_test@EXEEXT@ \
 		update_test@EXEEXT@ \
 		zonemgr_test@EXEEXT@ \
@@ -231,13 +229,6 @@ time_test@EXEEXT@: time_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ time_test.@O@ dnstest.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
-
-WRAP = -Wl,--wrap=isc__mem_put,--wrap=isc__mem_get,--wrap=isc_mem_attach,--wrap=isc_mem_detach
-tkey_test@EXEEXT@: tkey_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	if test "${LD_WRAP}" = true; then wrap="${WRAP}"; fi; \
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
-			${LDFLAGS} -o $@ tkey_test.@O@ \
-			${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 tsig_test@EXEEXT@: tsig_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.24 2011/07/18 00:58:52 mrg Exp $	*/
+/*	$NetBSD: sio16.c,v 1.24.54.1 2020/04/13 08:04:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.24 2011/07/18 00:58:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.24.54.1 2020/04/13 08:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -286,6 +286,7 @@ clcd_attach(device_t parent, device_t self, void *aux)
 	struct cd18xx_softc *sc = device_private(self);
 	struct sio16_attach_args *args = aux;
 
+	sc->sc_dev = self;
 	sc->sc_tag = args->cd_tag;
 	sc->sc_handle = args->cd_handle;
 	sc->sc_osc = args->cd_osc;

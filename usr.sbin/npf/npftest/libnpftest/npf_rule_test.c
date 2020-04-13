@@ -11,9 +11,6 @@
 #include "npf_impl.h"
 #include "npf_test.h"
 
-#define	CHECK_TRUE(x)	\
-    if (!(x)) { printf("FAIL: %s line %d\n", __func__, __LINE__); return 0; }
-
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH
 
@@ -58,58 +55,47 @@ static const struct test_case {
 
 };
 
-static struct mbuf *
-fill_packet(const struct test_case *t)
-{
-	struct mbuf *m;
-	struct ip *ip;
-	struct udphdr *uh;
-
-	m = mbuf_construct(IPPROTO_UDP);
-	uh = mbuf_return_hdrs(m, false, &ip);
-	ip->ip_src.s_addr = inet_addr(t->src);
-	ip->ip_dst.s_addr = inet_addr(t->dst);
-	uh->uh_sport = htons(9000);
-	uh->uh_dport = htons(9000);
-	return m;
-}
-
 static int
-npf_rule_raw_test(struct mbuf *m, ifnet_t *ifp, int di)
+run_raw_testcase(unsigned i)
 {
+	const struct test_case *t = &test_cases[i];
 	npf_t *npf = npf_getkernctx();
-	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf };
-	nbuf_t nbuf;
+	npf_cache_t *npc;
+	struct mbuf *m;
 	npf_rule_t *rl;
-	npf_match_info_t mi;
-	int error;
+	int slock, error;
 
-	nbuf_init(npf, &nbuf, m, ifp);
-	npc.npc_nbuf = &nbuf;
-	npf_cache_all(&npc);
+	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	npc = get_cached_pkt(m, t->ifname);
 
-	int slock = npf_config_read_enter();
-	rl = npf_ruleset_inspect(&npc, npf_config_ruleset(npf),
-	    di, NPF_LAYER_3);
+	slock = npf_config_read_enter(npf);
+	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_LAYER_3);
 	if (rl) {
+		npf_match_info_t mi;
 		error = npf_rule_conclude(rl, &mi);
 	} else {
 		error = ENOENT;
 	}
-	npf_config_read_exit(slock);
+	npf_config_read_exit(npf, slock);
+
+	put_cached_pkt(npc);
 	return error;
 }
 
 static int
-npf_test_case(unsigned i)
+run_handler_testcase(unsigned i)
 {
 	const struct test_case *t = &test_cases[i];
 	ifnet_t *ifp = npf_test_getif(t->ifname);
+	npf_t *npf = npf_getkernctx();
+	struct mbuf *m;
 	int error;
 
-	struct mbuf *m = fill_packet(t);
-	error = npf_rule_raw_test(m, ifp, t->di);
-	m_freem(m);
+	m = mbuf_get_pkt(AF_INET, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
+	error = npfk_packet_handler(npf, &m, ifp, t->di);
+	if (m) {
+		m_freem(m);
+	}
 	return error;
 }
 
@@ -118,14 +104,43 @@ npf_blockall_rule(void)
 {
 	npf_t *npf = npf_getkernctx();
 	nvlist_t *rule = nvlist_create(0);
+	npf_rule_t *rl;
 
 	nvlist_add_number(rule, "attr",
 	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_DYNAMIC);
-	return npf_rule_alloc(npf, rule);
+	rl = npf_rule_alloc(npf, rule);
+	nvlist_destroy(rule);
+	return rl;
 }
 
-bool
-npf_rule_test(bool verbose)
+static bool
+test_static(bool verbose)
+{
+	for (unsigned i = 0; i < __arraycount(test_cases); i++) {
+		const struct test_case *t = &test_cases[i];
+		int error, serror;
+
+		if (npf_test_getif(t->ifname) == NULL) {
+			printf("Interface %s is not configured.\n", t->ifname);
+			return false;
+		}
+
+		error = run_raw_testcase(i);
+		serror = run_handler_testcase(i);
+
+		if (verbose) {
+			printf("rule test %d:\texpected %d (stateful) and %d\n"
+			    "\t\t-> returned %d and %d\n",
+			    i + 1, t->stateful_ret, t->ret, serror, error);
+		}
+		CHECK_TRUE(error == t->ret);
+		CHECK_TRUE(serror == t->stateful_ret)
+	}
+	return true;
+}
+
+static bool
+test_dynamic(void)
 {
 	npf_t *npf = npf_getkernctx();
 	npf_ruleset_t *rlset;
@@ -133,37 +148,11 @@ npf_rule_test(bool verbose)
 	uint64_t id;
 	int error;
 
-	for (unsigned i = 0; i < __arraycount(test_cases); i++) {
-		const struct test_case *t = &test_cases[i];
-		ifnet_t *ifp = npf_test_getif(t->ifname);
-		int serror;
-
-		if (ifp == NULL) {
-			printf("Interface %s is not configured.\n", t->ifname);
-			return false;
-		}
-
-		struct mbuf *m = fill_packet(t);
-		error = npf_rule_raw_test(m, ifp, t->di);
-		serror = npf_packet_handler(npf, &m, ifp, t->di);
-
-		if (m) {
-			m_freem(m);
-		}
-
-		if (verbose) {
-			printf("rule test %d:\texpected %d (stateful) and %d\n"
-			    "\t\t-> returned %d and %d\n",
-			    i + 1, t->stateful_ret, t->ret, serror, error);
-		}
-		CHECK_TRUE(serror == t->stateful_ret && error == t->ret);
-	}
-
 	/*
 	 * Test dynamic NPF rules.
 	 */
 
-	error = npf_test_case(0);
+	error = run_raw_testcase(0);
 	CHECK_TRUE(error == RESULT_PASS);
 
 	npf_config_enter(npf);
@@ -173,7 +162,7 @@ npf_rule_test(bool verbose)
 	error = npf_ruleset_add(rlset, "test-rules", rl);
 	CHECK_TRUE(error == 0);
 
-	error = npf_test_case(0);
+	error = run_raw_testcase(0);
 	CHECK_TRUE(error == RESULT_BLOCK);
 
 	id = npf_rule_getid(rl);
@@ -182,8 +171,22 @@ npf_rule_test(bool verbose)
 
 	npf_config_exit(npf);
 
-	error = npf_test_case(0);
+	error = run_raw_testcase(0);
 	CHECK_TRUE(error == RESULT_PASS);
+
+	return true;
+}
+
+bool
+npf_rule_test(bool verbose)
+{
+	bool ok;
+
+	ok = test_static(verbose);
+	CHECK_TRUE(ok);
+
+	ok = test_dynamic();
+	CHECK_TRUE(ok);
 
 	return true;
 }

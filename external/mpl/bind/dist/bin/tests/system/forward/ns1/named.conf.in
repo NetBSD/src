@@ -51,6 +51,11 @@ zone "example5." {
 	file "example.db";
 };
 
+zone "sld.tld" {
+	type master;
+	file "sld.tld.db";
+};
+
 /* A forward zone without forwarders. */
 zone "example6" {
 	type forward;

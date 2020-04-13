@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2012/07/27 05:36:11 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.12.40.1 2020/04/13 08:04:07 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define IPL_HIGH	15	/* everything */
 
 /*
- * fd hardware, ts102, and tadpole microcontoller interrupts are at level 11
+ * fd hardware, ts102, and tadpole microcontroller interrupts are at level 11
  */
 
 #define	IPL_FD		IPL_SCHED

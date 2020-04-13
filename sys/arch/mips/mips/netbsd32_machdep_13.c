@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.2.4.2 2019/06/10 22:06:30 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.2.4.3 2020/04/13 08:04:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.2.4.2 2019/06/10 22:06:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.2.4.3 2020/04/13 08:04:00 martin Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.2.4.2 2019/06/10 22:06:30 
 #include <mips/pcb.h>
 
 #include <uvm/uvm_extern.h>
-
-#if 0
-cpu_coredump32
-netbsd32_cpu_upcall
-netbsd32_vm_default_addr
-#endif
 
 int
 compat_13_netbsd32_sigreturn(struct lwp *l,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.24.4.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.24.4.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -112,9 +112,24 @@ void	x86_patch(bool);
 
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
-/* x86_cpuid2() writes four 32bit values, %eax, %ebx, %ecx and %edx */
-#define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
-void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
+
+static inline void
+x86_cpuid2(uint32_t eax, uint32_t ecx, uint32_t *regs)
+{
+	uint32_t ebx, edx;
+
+	__asm volatile (
+		"cpuid"
+		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		: "a" (eax), "c" (ecx)
+	);
+
+	regs[0] = eax;
+	regs[1] = ebx;
+	regs[2] = ecx;
+	regs[3] = edx;
+}
+#define x86_cpuid(a,b)	x86_cpuid2((a), 0, (b))
 
 /* -------------------------------------------------------------------------- */
 
@@ -176,6 +191,7 @@ void	setusergs(int);
 			"mov	%[val],%%cr" #crnum	\
 			:				\
 			: [val] "r" (val)		\
+			: "memory"			\
 		);					\
 	}						\
 	static inline register_t rcr##crnum(void)	\
@@ -255,7 +271,7 @@ union savefpu;
 static inline void
 fninit(void)
 {
-	__asm volatile ("fninit");
+	__asm volatile ("fninit" ::: "memory");
 }
 
 static inline void
@@ -264,24 +280,54 @@ fnclex(void)
 	__asm volatile ("fnclex");
 }
 
-void	fnsave(union savefpu *);
-void	fnstcw(uint16_t *);
-uint16_t fngetsw(void);
-void	fnstsw(uint16_t *);
-void	frstor(const union savefpu *);
+static inline void
+fnstcw(uint16_t *val)
+{
+	__asm volatile (
+		"fnstcw	%[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
+
+static inline void
+fnstsw(uint16_t *val)
+{
+	__asm volatile (
+		"fnstsw	%[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
 
 static inline void
 clts(void)
 {
-	__asm volatile ("clts");
+	__asm volatile ("clts" ::: "memory");
 }
 
 void	stts(void);
-void	fxsave(union savefpu *);
-void	fxrstor(const union savefpu *);
 
-void	x86_ldmxcsr(const uint32_t *);
-void	x86_stmxcsr(uint32_t *);
+static inline void
+x86_stmxcsr(uint32_t *val)
+{
+	__asm volatile (
+		"stmxcsr %[val]"
+		: [val] "=m" (*val)
+		:
+	);
+}
+
+static inline void
+x86_ldmxcsr(uint32_t *val)
+{
+	__asm volatile (
+		"ldmxcsr %[val]"
+		:
+		: [val] "m" (*val)
+	);
+}
+
 void	fldummy(void);
 
 static inline uint64_t
@@ -312,9 +358,105 @@ wrxcr(uint32_t xcr, uint64_t val)
 	);
 }
 
-void	xrstor(const union savefpu *, uint64_t);
-void	xsave(union savefpu *, uint64_t);
-void	xsaveopt(union savefpu *, uint64_t);
+static inline void
+fnsave(void *addr)
+{
+	uint8_t *area = addr;
+
+	__asm volatile (
+		"fnsave	%[area]"
+		: [area] "=m" (*area)
+		:
+		: "memory"
+	);
+}
+
+static inline void
+frstor(void *addr)
+{
+	const uint8_t *area = addr;
+
+	__asm volatile (
+		"frstor	%[area]"
+		:
+		: [area] "m" (*area)
+		: "memory"
+	);
+}
+
+static inline void
+fxsave(void *addr)
+{
+	uint8_t *area = addr;
+
+	__asm volatile (
+		"fxsave	%[area]"
+		: [area] "=m" (*area)
+		:
+		: "memory"
+	);
+}
+
+static inline void
+fxrstor(void *addr)
+{
+	const uint8_t *area = addr;
+
+	__asm volatile (
+		"fxrstor %[area]"
+		:
+		: [area] "m" (*area)
+		: "memory"
+	);
+}
+
+static inline void
+xsave(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsave	%[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xsaveopt(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsaveopt %[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xrstor(void *addr, uint64_t mask)
+{
+	const uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xrstor %[area]"
+		:
+		: [area] "m" (*area), "a" (low), "d" (high)
+		: "memory"
+	);
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -325,13 +467,13 @@ void x86_enable_intr(void);
 static inline void
 x86_disable_intr(void)
 {
-	__asm volatile ("cli");
+	__asm volatile ("cli" ::: "memory");
 }
 
 static inline void
 x86_enable_intr(void)
 {
-	__asm volatile ("sti");
+	__asm volatile ("sti" ::: "memory");
 }
 #endif /* XENPV */
 
@@ -367,8 +509,21 @@ rdmsr(u_int msr)
 	return (low | ((uint64_t)high << 32));
 }
 
-uint64_t	rdmsr_locked(u_int);
-int		rdmsr_safe(u_int, uint64_t *);
+static inline uint64_t
+rdmsr_locked(u_int msr)
+{
+	uint32_t low, high, pass = OPTERON_MSR_PASSCODE;
+
+	__asm volatile (
+		"rdmsr"
+		: "=a" (low), "=d" (high)
+		: "c" (msr), "D" (pass)
+	);
+
+	return (low | ((uint64_t)high << 32));
+}
+
+int	rdmsr_safe(u_int, uint64_t *);
 
 static inline void
 wrmsr(u_int msr, uint64_t val)
@@ -381,10 +536,24 @@ wrmsr(u_int msr, uint64_t val)
 		"wrmsr"
 		:
 		: "a" (low), "d" (high), "c" (msr)
+		: "memory"
 	);
 }
 
-void		wrmsr_locked(u_int, uint64_t);
+static inline void
+wrmsr_locked(u_int msr, uint64_t val)
+{
+	uint32_t low, high, pass = OPTERON_MSR_PASSCODE;
+
+	low = val;
+	high = val >> 32;
+	__asm volatile (
+		"wrmsr"
+		:
+		: "a" (low), "d" (high), "c" (msr), "D" (pass)
+		: "memory"
+	);
+}
 
 #endif /* _KERNEL */
 

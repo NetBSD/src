@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.2.40.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.2.40.2 2020/04/13 08:04:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.40.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.40.2 2020/04/13 08:04:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.40.1 2019/06/10 22:06:58 christo
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_prot.h>
@@ -155,8 +156,7 @@ kern_sig_16_init(void)
 	emul_netbsd.e_esigcode = esigcode;
 	emul_netbsd.e_sigobject = &emul_netbsd_object;
 	rw_exit(&exec_lock);
-	KASSERT(sendsig_sigcontext_vec == NULL);
-	sendsig_sigcontext_vec = sendsig_sigcontext;
+	MODULE_HOOK_SET(sendsig_sigcontext_16_hook, sendsig_sigcontext);
 #endif
 
 	return 0;
@@ -188,7 +188,6 @@ kern_sig_16_fini(void)
 		syscall_establish(NULL, kern_sig_16_syscalls);
 		return EBUSY;
 	}
-	sendsig_sigcontext_vec = NULL;
 
 #if defined(COMPAT_SIGCONTEXT)
 	/*
@@ -204,6 +203,8 @@ kern_sig_16_fini(void)
 	emul_netbsd.e_esigcode = NULL;
 	emul_netbsd.e_sigobject = NULL;
 	rw_exit(&exec_lock);
+
+	MODULE_HOOK_UNSET(sendsig_sigcontext_16_hook);
 #endif
 	return 0;
 }

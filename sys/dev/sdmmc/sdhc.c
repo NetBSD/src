@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.101.6.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.101.6.2 2020/04/13 08:04:48 martin Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.101.6.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.101.6.2 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -98,6 +98,8 @@ struct sdhc_host {
 	bus_dmamap_t		adma_map;
 	bus_dma_segment_t	adma_segs[1];
 	void			*adma2;
+
+	uint8_t			vdd;	/* last vdd setting */
 };
 
 #define HDEVNAME(hp)	(device_xname((hp)->sc->sc_dev))
@@ -156,23 +158,29 @@ hwrite2(struct sdhc_host *hp, bus_size_t o, uint16_t val)
 	}
 }
 
+static void
+hwrite4(struct sdhc_host *hp, bus_size_t o, uint32_t val)
+{
+
+	bus_space_write_4(hp->iot, hp->ioh, o, val);
+}
+
 #define HWRITE1(hp, reg, val)		hwrite1(hp, reg, val)
 #define HWRITE2(hp, reg, val)		hwrite2(hp, reg, val)
-#define HWRITE4(hp, reg, val)						\
-	bus_space_write_4((hp)->iot, (hp)->ioh, (reg), (val))
+#define HWRITE4(hp, reg, val)		hwrite4(hp, reg, val)
 
 #define HCLR1(hp, reg, bits)						\
-	do if (bits) HWRITE1((hp), (reg), HREAD1((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE1((hp), (reg), HREAD1((hp), (reg)) & ~(bits)); while (0)
 #define HCLR2(hp, reg, bits)						\
-	do if (bits) HWRITE2((hp), (reg), HREAD2((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE2((hp), (reg), HREAD2((hp), (reg)) & ~(bits)); while (0)
 #define HCLR4(hp, reg, bits)						\
-	do if (bits) HWRITE4((hp), (reg), HREAD4((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE4((hp), (reg), HREAD4((hp), (reg)) & ~(bits)); while (0)
 #define HSET1(hp, reg, bits)						\
-	do if (bits) HWRITE1((hp), (reg), HREAD1((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE1((hp), (reg), HREAD1((hp), (reg)) | (bits)); while (0)
 #define HSET2(hp, reg, bits)						\
-	do if (bits) HWRITE2((hp), (reg), HREAD2((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE2((hp), (reg), HREAD2((hp), (reg)) | (bits)); while (0)
 #define HSET4(hp, reg, bits)						\
-	do if (bits) HWRITE4((hp), (reg), HREAD4((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE4((hp), (reg), HREAD4((hp), (reg)) | (bits)); while (0)
 
 static int	sdhc_host_reset(sdmmc_chipset_handle_t);
 static int	sdhc_host_reset1(sdmmc_chipset_handle_t);
@@ -476,21 +484,23 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		SET(hp->ocr, MMC_OCR_HCS);
 		aprint_normal(" HS");
 	}
-	if (ISSET(caps2, SDHC_SDR50_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" SDR50");
-	}
-	if (ISSET(caps2, SDHC_DDR50_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" DDR50");
-	}
-	if (ISSET(caps2, SDHC_SDR104_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" SDR104 HS200");
-	}
-	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
-		SET(hp->ocr, MMC_OCR_1_65V_1_95V);
-		aprint_normal(" 1.8V");
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_1_8_V)) {
+		if (ISSET(caps2, SDHC_SDR50_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" SDR50");
+		}
+		if (ISSET(caps2, SDHC_DDR50_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" DDR50");
+		}
+		if (ISSET(caps2, SDHC_SDR104_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" SDR104 HS200");
+		}
+		if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
+			SET(hp->ocr, MMC_OCR_1_65V_1_95V);
+			aprint_normal(" 1.8V");
+		}
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_3_0V)) {
 		SET(hp->ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V);
@@ -620,6 +630,10 @@ adma_done:
 		saa.saa_caps |= SMC_CAPS_SINGLE_ONLY;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_POLL_CARD_DET))
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
+
+	if (ISSET(sc->sc_flags, SDHC_FLAG_BROKEN_ADMA2_ZEROLEN))
+		saa.saa_max_seg = 65535;
+
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
@@ -782,6 +796,9 @@ sdhc_host_reset1(sdmmc_chipset_handle_t sch)
 		HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, 0);
 	}
 
+	/* Let sdhc_bus_power restore power */
+	hp->vdd = 0;
+
 	/*
 	 * Reset the entire host controller and wait up to 100ms for
 	 * the controller to clear the reset bit.
@@ -896,6 +913,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	int error = 0;
 	const uint32_t pcmask =
 	    ~(SDHC_BUS_POWER | (SDHC_VOLTAGE_MASK << SDHC_VOLTAGE_SHIFT));
+	uint32_t reg;
 
 	mutex_enter(&hp->intr_lock);
 
@@ -903,8 +921,10 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 * Disable bus power before voltage change.
 	 */
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)
-	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_PWR0))
+	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_PWR0)) {
+		hp->vdd = 0;
 		HWRITE1(hp, SDHC_POWER_CTL, 0);
+	}
 
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
@@ -929,6 +949,12 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 		goto out;
 	}
 
+	/*
+	 * Did voltage change ?
+	 */
+	if (vdd == hp->vdd)
+		goto out;
+
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		/*
 		 * Enable bus power.  Wait at least 1 ms (or 74 clocks) plus
@@ -939,13 +965,14 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 			HWRITE1(hp, SDHC_POWER_CTL,
 			    (vdd << SDHC_VOLTAGE_SHIFT) | SDHC_BUS_POWER);
 		} else {
-			HWRITE1(hp, SDHC_POWER_CTL,
-			    HREAD1(hp, SDHC_POWER_CTL) & pcmask);
+			reg = HREAD1(hp, SDHC_POWER_CTL) & pcmask;
+			HWRITE1(hp, SDHC_POWER_CTL, reg);
 			sdmmc_delay(1);
-			HWRITE1(hp, SDHC_POWER_CTL,
-			    (vdd << SDHC_VOLTAGE_SHIFT));
+			reg |= (vdd << SDHC_VOLTAGE_SHIFT);
+			HWRITE1(hp, SDHC_POWER_CTL, reg);
 			sdmmc_delay(1);
-			HSET1(hp, SDHC_POWER_CTL, SDHC_BUS_POWER);
+			reg |= SDHC_BUS_POWER;
+			HWRITE1(hp, SDHC_POWER_CTL, reg);
 			sdmmc_delay(10000);
 		}
 
@@ -959,6 +986,9 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 			goto out;
 		}
 	}
+
+	/* power successfully changed */
+	hp->vdd = vdd;
 
 out:
 	mutex_exit(&hp->intr_lock);
@@ -1460,7 +1490,7 @@ sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
 		aprint_error_dev(hp->sc->sc_dev,
 		    "tuning did not complete, using fixed sampling clock\n");
-		return EIO;		/* tuning did not complete */
+		return 0;		/* tuning did not complete */
 	}
 
 	if ((HREAD2(hp, SDHC_HOST_CTL2) & SDHC_SAMPLING_CLOCK_SEL) == 0) {
@@ -1469,7 +1499,7 @@ sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
 		aprint_error_dev(hp->sc->sc_dev,
 		    "tuning failed, using fixed sampling clock\n");
-		return EIO;		/* tuning failed */
+		return 0;		/* tuning failed */
 	}
 
 	if (hp->tuning_timer_count) {
@@ -1516,7 +1546,7 @@ sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 	uint32_t state;
 	int timeout;
 
-	for (timeout = 10000; timeout > 0; timeout--) {
+	for (timeout = 100000; timeout > 0; timeout--) {
 		if (((state = HREAD4(hp, SDHC_PRESENT_STATE)) & mask) == value)
 			return 0;
 		sdmmc_delay(10);
@@ -1581,7 +1611,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 * is marked done for any other reason.
 	 */
 	probing = (cmd->c_flags & SCF_TOUT_OK) != 0;
-	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT, probing)) {
+	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT*3, probing)) {
 		DPRINTF(1,("%s: timeout for command\n", __func__));
 		sdmmc_delay(50);
 		cmd->c_error = ETIMEDOUT;
@@ -1818,12 +1848,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
 			/* mode bits is in MIX_CTRL register on uSDHC */
 			HWRITE4(hp, SDHC_MIX_CTRL, mode |
-			    (HREAD4(hp, SDHC_MIX_CTRL) &
-			    ~(SDHC_MULTI_BLOCK_MODE |
-			    SDHC_READ_MODE |
-			    SDHC_AUTO_CMD12_ENABLE |
-			    SDHC_BLOCK_COUNT_ENABLE |
-			    SDHC_DMA_ENABLE)));
+			    (HREAD4(hp, SDHC_MIX_CTRL) & ~SDHC_TRANSFER_MODE_MASK));
+			if (cmd->c_opcode == MMC_STOP_TRANSMISSION)
+				command |= SDHC_COMMAND_TYPE_ABORT;
 			HWRITE4(hp, SDHC_TRANSFER_MODE, command << 16);
 		} else {
 			HWRITE4(hp, SDHC_TRANSFER_MODE, mode | (command << 16));

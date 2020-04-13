@@ -1,5 +1,5 @@
 /*	$KAME: sctp_asconf.h,v 1.8 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp_asconf.h,v 1.1.22.1 2019/06/10 22:09:47 christos Exp $ */
+/*	$NetBSD: sctp_asconf.h,v 1.1.22.2 2020/04/13 08:05:16 martin Exp $ */
 
 #ifndef _NETINET_SCTP_ASCONF_H_
 #define _NETINET_SCTP_ASCONF_H_
@@ -36,13 +36,6 @@
 
 #if defined(_KERNEL)
 
-struct sctp_tcb;
-struct sctp_nets;
-struct sctp_asconf_chunk;
-struct sockaddr;
-struct sctp_inpcb;
-struct sctp_asconf_ack_chunk;
-
 void sctp_asconf_cleanup(struct sctp_tcb *, struct sctp_nets *);
 
 struct mbuf *sctp_compose_asconf(struct sctp_tcb *);
@@ -55,10 +48,6 @@ void sctp_handle_asconf_ack(struct mbuf *, int,
 
 uint32_t sctp_addr_mgmt_ep_sa(struct sctp_inpcb *, struct sockaddr *,
 	uint16_t);
-
-void sctp_add_ip_address(struct ifaddr *);
-
-void sctp_delete_ip_address(struct ifaddr *);
 
 int32_t sctp_set_primary_ip_address_sa(struct sctp_tcb *,
 	struct sockaddr *);

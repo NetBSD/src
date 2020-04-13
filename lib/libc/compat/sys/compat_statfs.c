@@ -1,7 +1,7 @@
-/*	$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.7.26.1 2020/04/13 08:03:09 martin Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.7.26.1 2020/04/13 08:03:09 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $");
 #include <sys/mount.h>
 #include <compat/sys/mount.h>
 #include <compat/include/fstypes.h>
+#include <compat/sys/statvfs.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -62,82 +63,15 @@ __strong_alias(fstatfs, __compat_fstatfs)
 __strong_alias(fhstatfs, __compat_fhstatfs)
 __strong_alias(getfsstat, __compat_getfsstat)
 
-/*
- * Convert from a new statvfs to an old statfs structure.
- */
-
-static void vfs2fs(struct statfs12 *, const struct statvfs *);
-
-#define MOUNTNO_NONE	0
-#define MOUNTNO_UFS	1		/* UNIX "Fast" Filesystem */
-#define MOUNTNO_NFS	2		/* Network Filesystem */
-#define MOUNTNO_MFS	3		/* Memory Filesystem */
-#define MOUNTNO_MSDOS	4		/* MSDOS Filesystem */
-#define MOUNTNO_CD9660	5		/* iso9660 cdrom */
-#define MOUNTNO_FDESC	6		/* /dev/fd filesystem */
-#define MOUNTNO_KERNFS	7		/* kernel variable filesystem */ 
-#define MOUNTNO_DEVFS	8		/* device node filesystem */
-#define MOUNTNO_AFS	9		/* AFS 3.x */
-static const struct {
-	const char *name;
-	const int value;
-} nv[] = {
-	{ MOUNT_UFS, MOUNTNO_UFS },
-	{ MOUNT_NFS, MOUNTNO_NFS },
-	{ MOUNT_MFS, MOUNTNO_MFS },
-	{ MOUNT_MSDOS, MOUNTNO_MSDOS },
-	{ MOUNT_CD9660, MOUNTNO_CD9660 },
-	{ MOUNT_FDESC, MOUNTNO_FDESC },
-	{ MOUNT_KERNFS, MOUNTNO_KERNFS },
-	{ MOUNT_AFS, MOUNTNO_AFS },
-};
-
-static void
-vfs2fs(struct statfs12 *bfs, const struct statvfs *fs) 
-{
-	size_t i = 0;
-	bfs->f_type = 0;
-	bfs->f_oflags = (short)fs->f_flag;
-
-	for (i = 0; i < sizeof(nv) / sizeof(nv[0]); i++) {
-		if (strcmp(nv[i].name, fs->f_fstypename) == 0) {
-			bfs->f_type = nv[i].value;
-			break;
-		}
-	}
-#define CLAMP(a)	(long)(((a) & ~LONG_MAX) ? LONG_MAX : (a))
-	bfs->f_bsize = CLAMP(fs->f_frsize);
-	bfs->f_iosize = CLAMP(fs->f_iosize);
-	bfs->f_blocks = CLAMP(fs->f_blocks);
-	bfs->f_bfree = CLAMP(fs->f_bfree);
-	if (fs->f_bfree > fs->f_bresvd)
-		bfs->f_bavail = CLAMP(fs->f_bfree - fs->f_bresvd);
-	else
-		bfs->f_bavail = -CLAMP(fs->f_bresvd - fs->f_bfree);
-	bfs->f_files = CLAMP(fs->f_files);
-	bfs->f_ffree = CLAMP(fs->f_ffree);
-	bfs->f_fsid = fs->f_fsidx;
-	bfs->f_owner = fs->f_owner;
-	bfs->f_flags = (long)fs->f_flag;
-	bfs->f_syncwrites = CLAMP(fs->f_syncwrites);
-	bfs->f_asyncwrites = CLAMP(fs->f_asyncwrites);
-	(void)strncpy(bfs->f_fstypename, fs->f_fstypename,
-	    sizeof(bfs->f_fstypename));
-	(void)strncpy(bfs->f_mntonname, fs->f_mntonname,
-	    sizeof(bfs->f_mntonname));
-	(void)strncpy(bfs->f_mntfromname, fs->f_mntfromname,
-	    sizeof(bfs->f_mntfromname));
-}
-
 int
 __compat_statfs(const char *file, struct statfs12 *ost)
 {
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = statvfs(file, &nst)) == -1)
+	if ((ret = __statvfs90(file, &nst)) == -1)
 		return ret;
-	vfs2fs(ost, &nst);
+	statvfs_to_statfs12(&nst, ost);
 	return ret;
 }
 
@@ -147,14 +81,11 @@ __compat_fstatfs(int f, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = fstatvfs(f, &nst)) == -1)
+	if ((ret = __fstatvfs90(f, &nst)) == -1)
 		return ret;
-	vfs2fs(ost, &nst);
+	statvfs_to_statfs12(&nst, ost);
 	return ret;
 }
-
-int __fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
-    int flags);
 
 int
 __compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
@@ -162,9 +93,9 @@ __compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = __fhstatvfs140(fh, FHANDLE30_SIZE, &nst, ST_WAIT)) == -1)
+	if ((ret = __fhstatvfs190(fh, FHANDLE30_SIZE, &nst, ST_WAIT)) == -1)
 		return ret;
-	vfs2fs(ost, &nst);
+	statvfs_to_statfs12(&nst, ost);
 	return ret;
 }
 
@@ -181,11 +112,11 @@ __compat_getfsstat(struct statfs12 *ost, long size, int flags)
 	} else
 		nst = NULL;
 
-	if ((ret = getvfsstat(nst, bsize, flags)) == -1)
+	if ((ret = __getvfsstat90(nst, bsize, flags)) == -1)
 		goto done;
 	if (nst)
 		for (i = 0; i < ret; i++)
-			vfs2fs(&ost[i], &nst[i]);
+			statvfs_to_statfs12(&nst[i], &ost[i]);
 done:
 	if (nst)
 		free(nst);

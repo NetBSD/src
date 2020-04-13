@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.2 2019/06/10 22:09:19 christos Exp $
+#	$NetBSD: Makefile,v 1.3.4.3 2020/04/13 08:05:10 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,5 @@ KMOD=	compat_sysctl_09_43
 CPPFLAGS+=	-DCOMPAT_09 -DCOMPAT_43
 
 SRCS+=	compat_sysctl_09_43.c
-
-WARNS=	3
 
 .include <bsd.kmodule.mk>

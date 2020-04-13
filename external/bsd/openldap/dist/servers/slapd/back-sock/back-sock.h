@@ -1,10 +1,10 @@
-/*	$NetBSD: back-sock.h,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: back-sock.h,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $	*/
 
 /* sock.h - socket backend header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2017 The OpenLDAP Foundation.
+ * Copyright 2007-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@ struct sockinfo {
 	slap_mask_t	si_extensions;
 	slap_mask_t	si_ops;		/* overlay: operations to act on */
 	slap_mask_t	si_resps;	/* overlay: responses to forward */
+	regex_t	si_dnpat;		/* overlay: DN pattern to match */
+	struct berval 	si_dnpatstr;
 };
 
 #define	SOCK_EXT_BINDDN	1

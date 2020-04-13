@@ -3,9 +3,11 @@
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
 static const char *const multilib_raw[] = {
-". !march=rv64i,march=rv64g !march=rv32i,march=rv32g;",
-".:. march=rv64i,march=rv64g !march=rv32i,march=rv32g;",
-".:../lib/rv32 !march=rv64i,march=rv64g march=rv32i,march=rv32g;",
+". !march=rv64i !march=rv64g !march=rv32i !march=rv32g;",
+".:. march=rv64i !march=rv64g !march=rv32i !march=rv32g;",
+".:. !march=rv64i march=rv64g !march=rv32i !march=rv32g;",
+".:../lib/rv32 !march=rv64i !march=rv64g march=rv32i !march=rv32g;",
+".:../lib/rv32 !march=rv64i !march=rv64g !march=rv32i march=rv32g;",
 NULL
 };
 
@@ -14,8 +16,10 @@ NULL
 };
 
 static const char *const multilib_matches_raw[] = {
-"march=rv64i,march=rv64g march=rv64i,march=rv64g;",
-"march=rv32i,march=rv32g march=rv32i,march=rv32g;",
+"march=rv64i march=rv64i;",
+"march=rv64g march=rv64g;",
+"march=rv32i march=rv32i;",
+"march=rv32g march=rv32g;",
 NULL
 };
 
@@ -25,4 +29,4 @@ static const char *const multilib_exclusions_raw[] = {
 NULL
 };
 
-static const char *multilib_options = "march=rv64i,march=rv64g/march=rv32i,march=rv32g";
+static const char *multilib_options = "march=rv64i/march=rv64g/march=rv32i/march=rv32g";

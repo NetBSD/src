@@ -102,7 +102,11 @@ typedef struct proc_param {
 	const char *	pp_value;
 } proc_param_t;
 
-enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
+typedef enum {
+	NPFCTL_PARSE_DEFAULT,
+	NPFCTL_PARSE_RULE,
+	NPFCTL_PARSE_MAP
+} parse_entry_t;
 
 #define	NPF_IFNET_TABLE_PREF		".ifnet-"
 #define	NPF_IFNET_TABLE_PREFLEN		(sizeof(NPF_IFNET_TABLE_PREF) - 1)
@@ -111,12 +115,13 @@ bool		join(char *, size_t, int, char **, const char *);
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void		npfctl_bpfjit(bool);
 void		npfctl_parse_file(const char *);
-void		npfctl_parse_string(const char *);
+void		npfctl_parse_string(const char *, parse_entry_t);
 
 void		npfctl_print_error(const npf_error_t *);
 char *		npfctl_print_addrmask(int, const char *, const npf_addr_t *,
 		    npf_netmask_t);
 void		npfctl_note_interface(const char *);
+nl_table_t *	npfctl_table_getbyname(nl_config_t *, const char *);
 unsigned	npfctl_table_getid(const char *);
 const char *	npfctl_table_getname(nl_config_t *, unsigned, bool *);
 int		npfctl_protono(const char *);
@@ -135,6 +140,7 @@ npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);
+int		npfctl_nat_ruleset_p(const char *, bool *);
 
 /*
  * NPF extension loading.
@@ -167,8 +173,8 @@ struct bpf_program *npfctl_bpf_complete(npf_bpf_t *);
 const void *	npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
 void		npfctl_bpf_destroy(npf_bpf_t *);
 
-void		npfctl_bpf_group(npf_bpf_t *);
-void		npfctl_bpf_endgroup(npf_bpf_t *, bool);
+void		npfctl_bpf_group_enter(npf_bpf_t *);
+void		npfctl_bpf_group_exit(npf_bpf_t *, bool);
 
 void		npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
 void		npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
@@ -196,7 +202,10 @@ void		npfctl_show_init(void);
 int		npfctl_ruleset_show(int, const char *);
 
 nl_rule_t *	npfctl_rule_ref(void);
+nl_table_t *	npfctl_table_ref(void);
 bool		npfctl_debug_addif(const char *);
+
+nl_table_t *	npfctl_load_table(const char *, int, u_int, const char *, FILE *);
 
 void		npfctl_build_alg(const char *);
 void		npfctl_build_rproc(const char *, npfvar_t *);
@@ -210,6 +219,8 @@ void		npfctl_build_natseg(int, int, unsigned, const char *,
 		    const opt_proto_t *, const filt_opts_t *, unsigned);
 void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
+
+void		npfctl_setparam(const char *, int);
 
 /*
  * For the systems which do not define TH_ECE and TW_CRW.

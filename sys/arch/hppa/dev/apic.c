@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.2 2014/03/31 20:51:20 christos Exp $	*/
+/*	$NetBSD: apic.c,v 1.2.36.1 2020/04/13 08:03:52 martin Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
@@ -110,9 +110,7 @@ apic_attach(struct elroy_softc *sc)
 	    data & APIC_VERSION_MASK, sc->sc_nints);
 
 	sc->sc_irq = malloc(sc->sc_nints * sizeof(int), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (sc->sc_irq == NULL)
-		panic("apic_attach: can't allocate irq table\n");
+	    M_WAITOK | M_ZERO);
 
 	apic_get_int_tbl(sc);
 
@@ -173,16 +171,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	if (irq <= 0 || irq > 31)
 		return NULL;
 
-	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_NOWAIT);
-	if (aiv == NULL)
-		return NULL;
-
-	cnt = malloc(sizeof(struct evcnt), M_DEVBUF, M_NOWAIT);
-	if (cnt == NULL) {
-		free(aiv, M_DEVBUF);
-		return NULL;
-	}
-
+	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_WAITOK);
+	cnt = malloc(sizeof(struct evcnt), M_DEVBUF, M_WAITOK);
 	aiv->sc = sc;
 	aiv->ih = ih;
 	aiv->handler = handler;
@@ -277,9 +267,7 @@ apic_get_int_tbl(struct elroy_softc *sc)
 
 	size = nentries * sizeof(struct pdc_pat_pci_rt);
 	sc->sc_int_tbl_sz = nentries;
-	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_int_tbl == NULL)
-		return;
+	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_WAITOK);
 
 	pdcproc_pci_gettable(nentries, size, sc->sc_int_tbl);
 }

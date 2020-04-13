@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.3.2.2 2019/06/10 22:02:58 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.3.2.3 2020/04/13 08:02:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -177,11 +177,13 @@ help(void) {
 "                 +bufsize=###        (Set EDNS0 Max UDP packet size)\n"
 "                 +[no]cdflag         (Set checking disabled flag in query)\n"
 "                 +[no]class          (Control display of class in records)\n"
-"                 +[no]cmd            (Control display of command line)\n"
-"                 +[no]comments       (Control display of comment lines)\n"
+"                 +[no]cmd            (Control display of command line -\n"
+"                                      global option)\n"
+"                 +[no]comments       (Control display of packet header\n"
+"                                      and section name comments)\n"
 "                 +[no]cookie         (Add a COOKIE option to the request)\n"
-"                 +[no]crypto         (Control display of cryptographic "
-				       "fields in records)\n"
+"                 +[no]crypto         (Control display of cryptographic\n"
+"                                      fields in records)\n"
 "                 +[no]defname        (Use search list (+[no]search))\n"
 "                 +[no]dnssec         (Request DNSSEC records)\n"
 "                 +domain=###         (Set default domainname)\n"
@@ -197,11 +199,13 @@ help(void) {
 "                 +[no]identify       (ID responders in short answers)\n"
 #ifdef HAVE_LIBIDN2
 "                 +[no]idnin          (Parse IDN names [default=on on tty])\n"
-"                 +[no]idnout         (Convert IDN response [default=on on tty])\n"
+"                 +[no]idnout         (Convert IDN response "
+					"[default=on on tty])\n"
 #endif
 "                 +[no]ignore         (Don't revert to TCP for TC responses.)\n"
 "                 +[no]keepalive      (Request EDNS TCP keepalive)\n"
-"                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
+"                 +[no]keepopen       (Keep the TCP socket open between "
+					"queries)\n"
 "                 +[no]mapped         (Allow mapped IPv4 over IPv6)\n"
 "                 +[no]multiline      (Print records in an expanded format)\n"
 "                 +ndots=###          (Set search NDOTS value)\n"
@@ -220,7 +224,7 @@ help(void) {
 					"comments)\n"
 "                 +[no]search         (Set whether to use searchlist)\n"
 "                 +[no]short          (Display nothing except short\n"
-"                                      form of answer)\n"
+"                                      form of answers - global option)\n"
 "                 +[no]showsearch     (Search with intermediate results)\n"
 "                 +[no]split=##       (Split hex/base64 fields into chunks)\n"
 "                 +[no]stats          (Control display of statistics)\n"
@@ -228,11 +232,13 @@ help(void) {
 "                 +[no]tcflag         (Set TC flag in query (+[no]tcflag))\n"
 "                 +[no]tcp            (TCP mode (+[no]vc))\n"
 "                 +timeout=###        (Set query timeout) [5]\n"
-"                 +[no]trace          (Trace delegation down from root [+dnssec])\n"
+"                 +[no]trace          (Trace delegation down from root "
+					"[+dnssec])\n"
 "                 +tries=###          (Set number of UDP attempts) [3]\n"
 "                 +[no]ttlid          (Control display of ttls in records)\n"
 "                 +[no]ttlunits       (Display TTLs in human-readable units)\n"
-"                 +[no]unknownformat  (Print RDATA in RFC 3597 \"unknown\" format)\n"
+"                 +[no]unknownformat  (Print RDATA in RFC 3597 \"unknown\" "
+					"format)\n"
 "                 +[no]vc             (TCP mode (+[no]tcp))\n"
 "                 +[no]zflag          (Set Z flag in query)\n"
 "        global d-opts and servers (before host name) affect all queries.\n"
@@ -504,8 +510,9 @@ printmessage(dig_query_t *query, dns_message_t *msg, bool headers) {
 	check_result(result, "dns_master_stylecreate");
 
 	if (query->lookup->cmdline[0] != 0) {
-		if (!short_form)
+		if (!short_form && printcmd) {
 			fputs(query->lookup->cmdline, stdout);
+		}
 		query->lookup->cmdline[0]=0;
 	}
 	debug("printmessage(%s %s %s)", headers ? "headers" : "noheaders",
@@ -528,7 +535,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, bool headers) {
 	check_result(result, "isc_buffer_allocate");
 
 	if (query->lookup->comments && !short_form) {
-		if (query->lookup->cmdline[0] != 0)
+		if (query->lookup->cmdline[0] != 0 && printcmd)
 			printf("; %s\n", query->lookup->cmdline);
 		if (msg == query->lookup->sendmsg)
 			printf(";; Sending:\n");
@@ -1447,7 +1454,7 @@ plus_option(char *option, bool is_batchfile,
 				lookup->trace = state;
 				lookup->trace_root = state;
 				if (state) {
-					lookup->recurse = false;
+					lookup->recurse = true;
 					lookup->identify = true;
 					lookup->comments = false;
 					lookup->rrcomments = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: wbsioreg.h,v 1.8 2018/03/07 09:25:56 msaitoh Exp $ */
+/* $NetBSD: wbsioreg.h,v 1.8.2.1 2020/04/13 08:04:22 martin Exp $ */
 
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
@@ -48,12 +48,12 @@
 #define WBSIO_SFR		0x2F	/* Strapping Function Result */
 
 
-#define WBSIO_ID_W83627HF	0x52
+#define WBSIO_ID_W83627HF	0x52	/* 8bits */
 #define WBSIO_ID_W83697HF	0x60
 #define WBSIO_ID_W83637HF	0x70
 #define WBSIO_ID_W83627THF	0x82
 #define WBSIO_ID_W83687THF	0x85
-#define WBSIO_ID_W83627SF	0x595
+#define WBSIO_ID_W83627SF	0x595	/* 12bits */
 #define WBSIO_ID_W83697UG	0x681
 #define WBSIO_ID_W83627EHF_A	0x885
 #define WBSIO_ID_W83627EHF	0x886
@@ -70,7 +70,17 @@
 #define WBSIO_ID_NCT6792D	0xc91
 #define WBSIO_ID_NCT6793D	0xd12
 #define WBSIO_ID_NCT6795D	0xd35
-#define WBSIO_ID_NCT6796D	0xd42
+#define WBSIO_ID_NCT6796D	0xd420	/* 13bits */
+#define WBSIO_ID_NCT6798D	0xd428
+
+/* Make the above WBSIO_ID_* vaue from WBSIO_ID, WBSIO_REV and IDbits */
+#define WBSIO_MAKEID(id, rev, bits)					\
+	(((bits) == 13) ? (((uint16_t)(id) << 8) | ((rev) & 0xf8)) :	\
+	    ((bits) == 12) ? (((uint16_t)(id) << 4) | ((rev) >> 4)) : (id))
+
+#define WBSIO_MAKEREV(rev, bits)					     \
+	(((bits) == 13) ? ((rev) & 0x07) : ((bits) == 12) ? ((rev) & 0x0f) : \
+	    (rev))
 
 /* Strapping Function Result */
 #define WBSIO_SFR_24M48M	0x01

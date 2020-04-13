@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.24.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.24.2.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.24.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.24.2.2 2020/04/13 08:04:26 martin Exp $");
 
 #include "vlan.h"
 
@@ -553,6 +553,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 
 #if NVLAN > 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 #endif
 
 	/* Set up MII bus. */
@@ -612,12 +613,12 @@ ale_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ale_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
@@ -657,7 +658,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_RING_SZ,
-	    0, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring, "
@@ -700,7 +701,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 		/* Allocate DMA'able memory for RX pages */
 		error = bus_dmamem_alloc(sc->sc_dmat, sc->ale_pagesize,
-		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].page_seg,
+		    PAGE_SIZE, 0, &sc->ale_cdata.ale_rx_page[i].page_seg,
 		    1, &nsegs, BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
@@ -745,7 +746,7 @@ ale_dma_alloc(struct ale_softc *sc)
 	}
 
 	/* Allocate DMA'able memory for Tx CMB. */
-	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_CMB_SZ, ETHER_ALIGN, 0,
+	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_CMB_SZ, PAGE_SIZE, 0,
 	    &sc->ale_cdata.ale_tx_cmb_seg, 1, &nsegs, BUS_DMA_WAITOK);
 
 	if (error) {
@@ -790,7 +791,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 		/* Allocate DMA'able memory for Rx CMB */
 		error = bus_dmamem_alloc(sc->sc_dmat, ALE_RX_CMB_SZ,
-		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].cmb_seg, 1,
+		    PAGE_SIZE, 0, &sc->ale_cdata.ale_rx_page[i].cmb_seg, 1,
 		    &nsegs, BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
@@ -1097,13 +1098,13 @@ ale_watchdog(struct ifnet *ifp)
 	if ((sc->ale_flags & ALE_FLAG_LINK) == 0) {
 		printf("%s: watchdog timeout (missed link)\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		ale_init(ifp);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	ale_init(ifp);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1256,11 +1257,14 @@ ale_stats_update(struct ale_softc *sc)
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
 
 	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += smb->tx_single_colls +
+	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+
+	if_statadd_ref(nsr, if_collisions,
+	    smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
-	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT;
+	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT);
 
 	/*
 	 * XXX
@@ -1269,15 +1273,17 @@ ale_stats_update(struct ale_softc *sc)
 	 * the counter name is not correct one so I've removed the
 	 * counter in output errors.
 	 */
-	ifp->if_oerrors += smb->tx_abort + smb->tx_late_colls +
-	    smb->tx_underrun;
+	if_statadd_ref(nsr, if_oerrors,
+	    smb->tx_abort + smb->tx_late_colls +
+	    smb->tx_underrun);
 
-	ifp->if_ipackets += smb->rx_frames;
-
-	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
+	if_statadd_ref(nsr, if_ierrors,
+	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_rrs_errs +
-	    smb->rx_alignerrs;
+	    smb->rx_alignerrs);
+
+	IF_STAT_PUTREF(ifp);
 }
 
 static int
@@ -1533,7 +1539,7 @@ ale_rxeof(struct ale_softc *sc)
 		m = m_devget((char *)(rs + 1), length - ETHER_CRC_LEN,
 		    0, ifp);
 		if (m == NULL) {
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			ale_rx_update_page(sc, &rx_page, length, &prod);
 			continue;
 		}
@@ -1997,27 +2003,37 @@ ale_rxfilter(struct ale_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
+
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
+		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1U << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
 			rxcfg |= MAC_CFG_PROMISC;
-		else
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
 			rxcfg |= MAC_CFG_ALLMULTI;
 		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
-
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
-		}
-		ETHER_UNLOCK(ec);
 	}
-
 	CSR_WRITE_4(sc, ALE_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, ALE_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, ALE_MAC_CFG, rxcfg);

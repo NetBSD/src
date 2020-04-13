@@ -1,9 +1,9 @@
-/*	$NetBSD: gssapi.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Author: Stefan Metzmacher <metze@sernet.de>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gssapi.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: gssapi.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 

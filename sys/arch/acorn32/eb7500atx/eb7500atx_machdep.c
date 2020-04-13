@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.29.16.2 2020/04/08 14:07:24 martin Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.29.16.3 2020/04/13 08:03:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.29.16.2 2020/04/08 14:07:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.29.16.3 2020/04/13 08:03:28 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -359,7 +359,7 @@ canonicalise_bootconfig(struct bootconfig *bootconf, struct bootconfig *raw_boot
 }
 
 
-u_int
+vaddr_t
 initarm(void *cookie)
 {
 	struct bootconfig *raw_bootconf = cookie;

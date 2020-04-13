@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.3.6.3 2020/04/08 14:07:23 martin Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.3.6.4 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3.6.3 2020/04/08 14:07:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3.6.4 2020/04/13 08:03:27 martin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -47,7 +47,7 @@ static struct {
 
 void
 arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, enum arm_efirt_mem_type type)
-{       
+{
 	pt_entry_t attr;
 
 	switch (type) {

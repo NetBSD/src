@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.169.2.2 2020/04/08 14:07:59 martin Exp $
+#	$NetBSD: files.xen,v 1.169.2.3 2020/04/13 08:04:12 martin Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -65,7 +65,6 @@ file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 
 elifdef amd64
 file	arch/amd64/amd64/autoconf.c		xenpvhvm
-file	arch/amd64/amd64/amd64func.S		machdep & xenpvhvm
 file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum

@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.20 2011/07/01 16:56:52 dyoung Exp $	*/
+/*	$NetBSD: gten.c,v 1.20.54.1 2020/04/13 08:04:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.20 2011/07/01 16:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.20.54.1 2020/04/13 08:04:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -140,11 +140,7 @@ gten_attach(device_t parent, device_t self, void *aux)
 		gt->gt_nscreens = 1;
 	} else {
 		gt->gt_ri = malloc(sizeof(*gt->gt_ri),
-			M_DEVBUF, M_NOWAIT|M_ZERO);
-		if (gt->gt_ri == NULL) {
-			aprint_error(": can't alloc memory\n");
-			return;
-		}
+			M_DEVBUF, M_WAITOK|M_ZERO);
 #if 0
 		error = pci_mapreg_map(pa, 0x14, 
 			PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,

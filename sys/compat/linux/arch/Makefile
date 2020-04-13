@@ -1,5 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2017/01/16 00:11:42 christos Exp $
+# $NetBSD: Makefile,v 1.1.22.1 2020/04/13 08:04:14 martin Exp $
 
-SUBDIR=alpha amd64 arm i386 m68k mips powerpc sparc sparc64
+# XXX sparc sparc64 exist but have no syscalls.master
+SUBDIR=alpha amd64 arm i386 m68k mips powerpc
+
 
 .include <bsd.subdir.mk>

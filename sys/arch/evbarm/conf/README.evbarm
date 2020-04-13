@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.18.2.1 2019/06/10 22:06:04 christos Exp $
+$NetBSD: README.evbarm,v 1.18.2.2 2020/04/13 08:03:42 martin Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -6,19 +6,14 @@ ADI_BRH		2003/01/25	ADI Eng. Big Read Head i80200 eval board
 ARMADILLO210	2006/02/06	Atmark Techno Armadillo-210
 ARMADILLO9	2005/11/13	Atmark Techno Armadillo-9
 BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
-BEAGLEBOARD	2008/10/22	TI OMAP3530 BeagleBoard
-BEAGLEBOARDXM	2008/08/20	TI DM37xx BeagleBoard-XM
-BEAGLEBONE	2012/08/20	TI AM335x BeagleBone
 CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
-DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
 DUOVERO		2016/10/15	Gumstix Inc. DuoVero COMS boards
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
-IGEPV2		2010/06/16	IGEPv2 OMAP3530 eval board
 IMX31LITE	2008/04/27	Freescale i.M31 DEV LITE KIT
 INTEGRATOR	2001/10/27	ARM Integrator board
 IQ31244		2003/05/14	Intel IQ31244 reference board
@@ -43,7 +38,6 @@ OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OPENBLOCKS_AX3	2013/09/30	Plat'Home. OpenBlockS AX3
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
-OVERO		2010/07/10	Gumstix Inc. Overo COMS boards
 PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 PARALLELLA	2015/01/23	Xilinx Zynq and Epiphany multi-core chips
 PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)

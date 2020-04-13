@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1.4.2 2020/04/08 14:07:24 martin Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.1.4.3 2020/04/13 08:03:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -147,8 +147,17 @@ cpu_clusterid(void)
 static inline bool
 cpu_earlydevice_va_p(void)
 {
+	extern bool pmap_devmap_bootstrap_done;	/* in pmap.c */
 
-	return false;
+	/* This function may be called before enabling MMU, or mapping KVA */
+	if ((reg_sctlr_el1_read() & SCTLR_M) == 0)
+		return false;
+
+	/* device mapping will be availabled after pmap_devmap_bootstrap() */
+	if (!pmap_devmap_bootstrap_done)
+		return false;
+
+	return true;
 }
 
 #endif /* _KERNEL */

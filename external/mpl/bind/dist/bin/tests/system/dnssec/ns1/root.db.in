@@ -8,12 +8,12 @@
 ; information regarding copyright ownership.
 
 $TTL 300
-. 			IN SOA	gson.nominum.com. a.root.servers.nil. (
-				2000042100   	; serial
-				600         	; refresh
-				600         	; retry
-				1200    	; expire
-				600       	; minimum
+.			IN SOA	gson.nominum.com. a.root.servers.nil. (
+				2000042100	; serial
+				600		; refresh
+				600		; retry
+				1200		; expire
+				600		; minimum
 				)
 .			NS	a.root-servers.nil.
 a.root-servers.nil.	A	10.53.0.1
@@ -22,8 +22,12 @@ example.		NS	ns2.example.
 ns2.example.		A	10.53.0.2
 dlv.			NS	ns2.dlv.
 ns2.dlv.		A	10.53.0.2
-algroll			NS	ns2.algroll
+algroll.		NS	ns2.algroll.
 ns2.algroll.		A	10.53.0.2
+managed.		NS	ns2.managed.
+ns2.managed.		A	10.53.0.2
+trusted.		NS	ns2.trusted.
+ns2.trusted.		A	10.53.0.2
 optout-tld		NS	ns6.optout-tld.
 ns6.optout-tld.		A	10.53.0.6
 in-addr.arpa.		NS	ns2.example.

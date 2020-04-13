@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.43.4.2 2020/04/08 14:08:14 martin Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.43.4.3 2020/04/13 08:04:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.43.4.2 2020/04/08 14:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.43.4.3 2020/04/13 08:04:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -387,7 +387,9 @@ usscanner_detach(device_t self, int flags)
 	else
 		rv = 0;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+	if (sc->sc_udev != NULL)
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+		    sc->sc_dev);
 
 	return rv;
 }

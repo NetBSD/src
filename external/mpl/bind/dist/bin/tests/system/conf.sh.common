@@ -18,9 +18,60 @@ testsock6() {
 	fi
 }
 
-TESTSOCK6="$TESTSOCK6"
+export LANG=C
 
 . ${TOP}/version
+
+#
+# Common lists of system tests to run.
+#
+# The "stress" test is not run by default since it creates enough
+# load on the machine to make it unusable to other users.
+# The "dialup", "delzone", and "dupsigs" tests are also not run by
+# default because they take a very long time to complete.
+#
+# The following tests are hard-coded to use ports 5300 and 9953. For
+# this reason, these must be run sequentially.
+#
+# Sequential tests that only run on unix/linux should be added to
+# SEQUENTIAL_UNIX in conf.sh.in; those that only run on windows should
+# be added to SEQUENTIAL_WINDOWS in conf.sh.win32.
+#
+SEQUENTIAL_COMMON="ecdsa eddsa tkey"
+
+#
+# These tests can use ports assigned by the caller (other than 5300
+# and 9953). Because separate blocks of ports can be used for teach
+# test, these tests can be run in parallel.
+#
+# Parallel tests that only run on unix/linux should be added to
+# PARALLEL_UNIX in conf.sh.in; those that only run on windows should
+# be added to PARALLEL_WINDOWS in conf.sh.win32.
+#
+# Note: some of the longer-running tests such as serve-stale and
+# rpzrecurse are scheduled first, in order to get more benefit from
+# parallelism.
+#
+PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
+	acl additional addzone allow-query auth autosign \
+	builtin cacheclean case catz cds chain \
+	checkconf checknames checkzone \
+	cookie database digdelv dlv dlz dlzexternal \
+	dns64 dscp dsdigest dyndb \
+	ednscompliance emptyzones \
+	fetchlimit filter-aaaa formerr forward \
+	geoip geoip2 glue idna inline integrity ixfr \
+	keepalive legacy limits \
+	masterfile masterformat metadata mirror mkeys \
+	names notify nslookup nsupdate nzd2nzf \
+	padding pending pipelined qmin \
+	reclimit redirect resolver rndc rootkeysentinel rpz \
+	rrchecker rrl rrsetorder rsabigexponent runtime \
+	sfcache smartsign sortlist \
+	spf staticstub statistics statschannel stub synthfromdnssec \
+	tcp tools tsig tsiggss ttl \
+	unknown upforwd verify views wildcard \
+	xfer xferquota zero zonechecks"
 
 #
 # Set up color-coded test output
@@ -125,6 +176,29 @@ digcomp() {
 }
 
 #
+# Useful variables in test scripts
+#
+
+# Default algorithm for testing.
+DEFAULT_ALGORITHM=ECDSAP256SHA256
+DEFAULT_ALGORITHM_NUMBER=13
+DEFAULT_BITS=256
+
+# This is an alternative algorithm for test cases that require more than
+# one algorithm (for example algorithm rollover).  Must be different from
+# DEFAULT_ALGORITHM.
+ALTERNATIVE_ALGORITHM=RSASHA256
+ALTERNATIVE_ALGORITHM_NUMBER=8
+ALTERNATIVE_BITS=1280
+
+# This is an algorithm that is used for tests against the
+# "disable-algorithms" configuration option.  Must be different from above
+# algorithms.
+DISABLED_ALGORITHM=ECDSAP384SHA384
+DISABLED_ALGORITHM_NUMBER=14
+DISABLED_BITS=384
+
+#
 # Useful functions in test scripts
 #
 
@@ -156,13 +230,13 @@ keyfile_to_keys_section() {
     shift
     echo "$section_name {"
     for keyname in $*; do
-        awk '!/^; /{
-            printf "\t\""$1"\" "
-            printf "'"$key_prefix"'"
-            printf $4 " " $5 " " $6 " \""
-            for (i=7; i<=NF; i++) printf $i
-            printf "\";\n"
-        }' $keyname.key
+	awk '!/^; /{
+	    printf "\t\""$1"\" "
+	    printf "'"$key_prefix"'"
+	    printf $4 " " $5 " " $6 " \""
+	    for (i=7; i<=NF; i++) printf $i
+	    printf "\";\n"
+	}' $keyname.key
     done
     echo "};"
 }
@@ -179,6 +253,15 @@ keyfile_to_trusted_keys() {
 # resolver's configuration file
 keyfile_to_managed_keys() {
     keyfile_to_keys_section "managed-keys" "initial-key " $*
+}
+
+# keyfile_to_key_id: convert a key file name to a key ID
+#
+# For a given key file name (e.g. "Kexample.+013+06160") provided as $1,
+# print the key ID with leading zeros stripped ("6160" for the
+# aforementioned example).
+keyfile_to_key_id() {
+	echo "$1" | sed "s/.*+0\{0,4\}//"
 }
 
 # nextpart*() - functions for reading files incrementally
@@ -239,7 +322,7 @@ nextpartread() {
     [ -f $1.prev ] || nextpartreset $1
     prev=`cat $1.prev`
     awk "NR > $prev "'{ print }
-         END          { print NR > "/dev/stderr" }' $1
+	 END          { print NR > "/dev/stderr" }' $1
 }
 
 # nextpart: read everything that's been appended to a file since the
@@ -261,7 +344,7 @@ rndc_reload() {
     # we need to wait for reload to finish
     if [ -z "$3" ]; then
 	for __try in 0 1 2 3 4 5 6 7 8 9; do
-	    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break; 
+	    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
 	    sleep 1
 	done
     fi
@@ -270,30 +353,116 @@ rndc_reload() {
 rndc_reconfig() {
     echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/'$1' /'`"
     for __try in 0 1 2 3 4 5 6 7 8 9; do
-        $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break; 
+	$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
 	sleep 1
     done
+}
+
+# rndc_dumpdb: call "rndc dumpdb [...]" and wait until it completes
+#
+# The first argument is the name server instance to send the command to, in the
+# form of "nsX" (where "X" is the instance number), e.g. "ns5".  The remaining
+# arguments, if any, are appended to the rndc command line after "dumpdb".
+#
+# Control channel configuration for the name server instance to send the
+# command to must match the contents of bin/tests/system/common/rndc.conf.
+#
+# rndc output is stored in a file called rndc.out.test${n}; the "n" variable is
+# required to be set by the calling tests.sh script.
+#
+# Return 0 if the dump completes successfully; return 1 if rndc returns an exit
+# code other than 0 or if the "; Dump complete" string does not appear in the
+# dump within 10 seconds.
+rndc_dumpdb() {
+	__ret=0
+	__dump_complete=0
+	__server="${1}"
+	__ip="10.53.0.$(echo "${__server}" | tr -c -d "0-9")"
+
+	shift
+	${RNDC} -c ../common/rndc.conf -p "${CONTROLPORT}" -s "${__ip}" dumpdb "$@" > "rndc.out.test${n}" 2>&1 || __ret=1
+
+	for _ in 0 1 2 3 4 5 6 7 8 9
+	do
+		if grep '^; Dump complete$' "${__server}/named_dump.db" > /dev/null; then
+			mv "${__server}/named_dump.db" "${__server}/named_dump.db.test${n}"
+			__dump_complete=1
+			break
+		fi
+		sleep 1
+	done
+
+	if [ ${__dump_complete} -eq 0 ]; then
+		echo_i "timed out waiting for 'rndc dumpdb' to finish"
+		__ret=1
+	fi
+
+	return ${__ret}
 }
 
 # get_dig_xfer_stats: extract transfer statistics from dig output stored
 # in $1, converting them to a format used by some system tests.
 get_dig_xfer_stats() {
 	LOGFILE="$1"
-	echo "messages=`sed -n "s/^;; XFR size: .*messages \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
-	echo "records=`sed -n "s/^;; XFR size: \([0-9][0-9]*\) records.*/\1/p" "${LOGFILE}"`"
-	echo "bytes=`sed -n "s/^;; XFR size: .*bytes \([0-9][0-9]*\).*/\1/p" "${LOGFILE}"`"
+	sed -n "s/^;; XFR size: .*messages \([0-9][0-9]*\).*/messages=\1/p" "${LOGFILE}"
+	sed -n "s/^;; XFR size: \([0-9][0-9]*\) records.*/records=\1/p" "${LOGFILE}"
+	sed -n "s/^;; XFR size: .*bytes \([0-9][0-9]*\).*/bytes=\1/p" "${LOGFILE}"
 }
 
 # get_named_xfer_stats: from named log file $1, extract transfer
-# statistics for the last transfer for peer $2 and zone $3, converting
+# statistics for the last transfer for peer $2 and zone $3 (from a log
+# message which has to contain the string provided in $4), converting
 # them to a format used by some system tests.
 get_named_xfer_stats() {
 	LOGFILE="$1"
-	PEER="$2"
-	ZONE="$3"
-	echo "messages=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) messages.*/\1/p" | tail -1`"
-	echo "records=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) records.*/\1/p" | tail -1`"
-	echo "bytes=`grep "${PEER}" "${LOGFILE}" | sed -n "s/.*${ZONE}.* \([0-9][0-9]*\) bytes.*/\1/p" | tail -1`"
+	PEER="`echo $2 | sed 's/\./\\\\./g'`"
+	ZONE="`echo $3 | sed 's/\./\\\\./g'`"
+	MESSAGE="$4"
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) messages.*/messages=\1/p" | tail -1
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) records.*/records=\1/p" | tail -1
+	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
+		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) bytes.*/bytes=\1/p" | tail -1
+}
+
+# copy_setports - Copy Configuration File and Replace Ports
+#
+# Convenience function to copy a configuration file, replacing the tokens
+# QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
+# environment variables. (These values are set by "run.sh", which calls the
+# scripts invoking this function.)
+#
+# Usage:
+#   copy_setports infile outfile
+#
+copy_setports() {
+    # The indirect method of handling the substitution of the PORT variables
+    # (defining "atsign" then substituting for it in the "sed" statement) is
+    # required to prevent the "Configure" script (in the win32utils/ directory)
+    # from replacing the <at>PORT<at> substitution tokens when it processes
+    # this file and produces conf.sh.
+    atsign="@"
+    sed -e "s/${atsign}PORT${atsign}/${PORT}/g" \
+        -e "s/${atsign}EXTRAPORT1${atsign}/${EXTRAPORT1}/g" \
+        -e "s/${atsign}EXTRAPORT2${atsign}/${EXTRAPORT2}/g" \
+        -e "s/${atsign}EXTRAPORT3${atsign}/${EXTRAPORT3}/g" \
+        -e "s/${atsign}EXTRAPORT4${atsign}/${EXTRAPORT4}/g" \
+        -e "s/${atsign}EXTRAPORT5${atsign}/${EXTRAPORT5}/g" \
+        -e "s/${atsign}EXTRAPORT6${atsign}/${EXTRAPORT6}/g" \
+        -e "s/${atsign}EXTRAPORT7${atsign}/${EXTRAPORT7}/g" \
+        -e "s/${atsign}EXTRAPORT8${atsign}/${EXTRAPORT8}/g" \
+        -e "s/${atsign}CONTROLPORT${atsign}/${CONTROLPORT}/g" \
+        -e "s/${atsign}DEFAULT_ALGORITHM${atsign}/${DEFAULT_ALGORITHM}/g" \
+        -e "s/${atsign}DEFAULT_ALGORITHM_NUMBER${atsign}/${DEFAULT_ALGORITHM_NUMBER}/g" \
+        -e "s/${atsign}DEFAULT_BITS${atsign}/${DEFAULT_BITS}/g" \
+        -e "s/${atsign}ALTERNATIVE_ALGORITHM${atsign}/${ALTERNATIVE_ALGORITHM}/g" \
+        -e "s/${atsign}ALTERNATIVE_ALGORITHM_NUMBER${atsign}/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
+        -e "s/${atsign}ALTERNATIVE_BITS${atsign}/${ALTERNATIVE_BITS}/g" \
+        -e "s/${atsign}DISABLED_ALGORITHM${atsign}/${DISABLED_ALGORITHM}/g" \
+        -e "s/${atsign}DISABLED_ALGORITHM_NUMBER${atsign}/${DISABLED_ALGORITHM_NUMBER}/g" \
+        -e "s/${atsign}DISABLED_BITS${atsign}/${DISABLED_BITS}/g" \
+        $1 > $2
 }
 
 #
@@ -303,6 +472,7 @@ export ARPANAME
 export BIGKEY
 export CDS
 export CHECKZONE
+export CYGWIN
 export DESCRIPTION
 export DIG
 export FEATURETEST

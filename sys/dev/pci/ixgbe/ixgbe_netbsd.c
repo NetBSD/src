@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.7.2.2 2020/04/08 14:08:11 martin Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.7.2.3 2020/04/13 08:04:46 martin Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -207,7 +207,8 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
 
 	for (i = 0; i < nbuf; i++) {
 		if ((em = ixgbe_newext(eh, dmat, size)) == NULL) {
-			printf("%s: only %d of %d jumbo buffers allocated\n",
+			device_printf(adapter->dev,
+			    "%s: only %d of %d jumbo buffers allocated\n",
 			    __func__, i, nbuf);
 			break;
 		}

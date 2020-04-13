@@ -1,4 +1,4 @@
-/*	$NetBSD: hidms.h,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: hidms.h,v 1.1.4.1 2020/04/13 08:04:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+#include <dev/wscons/tpcalibvar.h>
 
 #define MAX_BUTTONS	31	/* must not exceed size of sc_buttons */
 
@@ -55,6 +56,9 @@ struct hidms {
 
 	uint32_t hidms_buttons;	/* mouse button status */
 	device_t hidms_wsmousedev;
+
+	struct tpcalib_softc sc_tpcalib; /* calibration */
+	struct wsmouse_calibcoords sc_calibcoords;
 };
 
 bool hidms_setup(device_t, struct hidms *, int, void *, int);

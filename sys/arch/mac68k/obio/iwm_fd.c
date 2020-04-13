@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.56 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.56.18.1 2020/04/13 08:03:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.56 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.56.18.1 2020/04/13 08:03:58 martin Exp $");
 
 #include "locators.h"
 
@@ -441,6 +441,7 @@ fd_attach(device_t parent, device_t self, void *aux)
 
 	iwm = device_private(parent);
 	fd = device_private(self);
+	fd->sc_dev = self;
 	ia = aux;
 
 	driveInfo = iwmCheckDrive(ia->unit);

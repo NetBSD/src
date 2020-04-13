@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.23 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.23.42.1 2020/04/13 08:03:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.23 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.23.42.1 2020/04/13 08:03:21 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,17 +104,21 @@ mount_umap(int argc, char *argv[])
 	long d1, d2;
 	u_long mapdata[MAPFILEENTRIES][2];
 	u_long gmapdata[GMAPFILEENTRIES][2];
+	u_long fsid;
 	int ch, count, gnentries, mntflags, nentries;
 	char *gmapfile, *mapfile, buf[20];
 	char source[MAXPATHLEN], target[MAXPATHLEN];
 	mntoptparse_t mp;
 
-	mntflags = 0;
+	fsid = mntflags = 0;
 	mapfile = gmapfile = NULL;
-	while ((ch = getopt(argc, argv, "g:o:u:")) != -1)
+	while ((ch = getopt(argc, argv, "g:i:o:u:")) != -1)
 		switch (ch) {
 		case 'g':
 			gmapfile = optarg;
+			break;
+		case 'i':
+			fsid = strtoul(optarg, NULL, 16);
 			break;
 		case 'o':
 			mp = getmntopts(optarg, mopts, &mntflags, 0);
@@ -246,6 +250,7 @@ mount_umap(int argc, char *argv[])
 	args.mapdata = mapdata;
 	args.gnentries = gnentries;
 	args.gmapdata = gmapdata;
+	args.fsid = fsid;
 
 	if (mount(MOUNT_UMAP, target, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", source, target);
@@ -260,6 +265,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: mount_umap [-o options] -g groupmap -u usermap target_fs mount_point\n");
+"usage: mount_umap [-i fsid] [-o options] -g groupmap -u usermap target_fs mount_point\n");
 	exit(1);
 }

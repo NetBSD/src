@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.3.4.1 2019/06/10 22:05:57 christos Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.3.4.2 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.3.4.1 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.3.4.2 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -236,7 +236,7 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 
 	/* Timecounter setup */
 	tc->tc_get_timecount = sunxi_timer_get_timecount;
-	tc->tc_counter_mask = ~0u,
+	tc->tc_counter_mask = ~0u;
 	tc->tc_frequency = rate;
 	tc->tc_name = "Timer 2";
 	tc->tc_quality = 200;

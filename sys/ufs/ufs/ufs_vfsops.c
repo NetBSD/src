@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.55.12.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.55.12.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,17 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55.12.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55.12.3 2020/04/13 08:05:21 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
+#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/module.h>
 #include <sys/vnode.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
@@ -304,4 +306,36 @@ ufs_done(void)
 #ifdef UFS_EXTATTR
 	ufs_extattr_done();
 #endif
+}
+
+/*
+ * module interface
+ */
+
+#ifdef WAPBL
+MODULE(MODULE_CLASS_MISC, ufs, "wapbl");
+#else
+MODULE(MODULE_CLASS_MISC, ufs, NULL);
+#endif
+
+static int
+ufs_modcmd(modcmd_t cmd, void *arg)
+{
+        int error;
+ 
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+		ufs_init();
+		error = 0;
+		break;
+        case MODULE_CMD_FINI:
+		ufs_done();
+		error = 0;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }

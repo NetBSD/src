@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.518.4.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518.4.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.4.2 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.4.3 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -163,7 +163,7 @@ const char * const mountcompatnames[] = {
 	MOUNT_AFS,	/* 9 */
 };
 
-const int nmountcompatnames = __arraycount(mountcompatnames);
+const u_int nmountcompatnames = __arraycount(mountcompatnames);
 
 static int 
 fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
@@ -1189,7 +1189,7 @@ do_sys_pstatvfs(struct lwp *l, const char *path, int flags, struct statvfs *sb)
 
 /* ARGSUSED */
 int
-sys_statvfs1(struct lwp *l, const struct sys_statvfs1_args *uap, register_t *retval)
+sys___statvfs190(struct lwp *l, const struct sys___statvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1228,7 +1228,7 @@ do_sys_fstatvfs(struct lwp *l, int fd, int flags, struct statvfs *sb)
 
 /* ARGSUSED */
 int
-sys_fstatvfs1(struct lwp *l, const struct sys_fstatvfs1_args *uap, register_t *retval)
+sys___fstatvfs190(struct lwp *l, const struct sys___fstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1309,7 +1309,8 @@ out:
 }
 
 int
-sys_getvfsstat(struct lwp *l, const struct sys_getvfsstat_args *uap, register_t *retval)
+sys___getvfsstat90(struct lwp *l, const struct sys___getvfsstat90_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct statvfs *) buf;
@@ -1568,6 +1569,13 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	if (open_flags & O_SEARCH) {
 		open_flags &= ~(int)O_SEARCH;
 	}
+
+	/*
+	 * Only one of the O_EXEC, O_RDONLY, O_WRONLY and O_RDWR flags
+	 * may be specified.
+	 */     
+	if ((open_flags & O_EXEC) && (open_flags & O_ACCMODE))
+		return EINVAL;
 
 	flags = FFLAGS(open_flags);
 	if ((flags & (FREAD | FWRITE)) == 0)
@@ -2129,7 +2137,7 @@ do_fhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *sb,
 
 /* ARGSUSED */
 int
-sys___fhstatvfs140(struct lwp *l, const struct sys___fhstatvfs140_args *uap, register_t *retval)
+sys___fhstatvfs190(struct lwp *l, const struct sys___fhstatvfs190_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const void *) fhp;
@@ -2148,6 +2156,25 @@ sys___fhstatvfs140(struct lwp *l, const struct sys___fhstatvfs140_args *uap, reg
 	return error;
 }
 
+int
+do_posix_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
+    dev_t dev)
+{
+
+	/*
+	 * The POSIX mknod(2) call is an alias for mkfifo(2) for S_IFIFO
+	 * in mode and dev=0.
+	 *
+	 * In all the other cases it's implementation defined behavior.
+	 */
+
+	if ((mode & S_IFIFO) && dev == 0)
+		return do_sys_mkfifoat(l, fdat, pathname, mode);
+	else
+		return do_sys_mknodat(l, fdat, pathname, mode, dev,
+		    UIO_USERSPACE);
+}
+
 /*
  * Create a special file.
  */
@@ -2161,8 +2188,8 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev;
 	} */
-	return do_sys_mknodat(l, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval, UIO_USERSPACE);
+	return do_posix_mknodat(l, AT_FDCWD, SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev));
 }
 
 int
@@ -2177,20 +2204,20 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 
-	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path), 
-	    SCARG(uap, mode), SCARG(uap, dev), retval, UIO_USERSPACE);
+	return do_posix_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, mode), SCARG(uap, dev));
 }
 
 int
 do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
-    register_t *retval, enum uio_seg seg)
+    enum uio_seg seg)
 {
-	return do_sys_mknodat(l, AT_FDCWD, pathname, mode, dev, retval, seg);
+	return do_sys_mknodat(l, AT_FDCWD, pathname, mode, dev, seg);
 }
 
 int
 do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
-    dev_t dev, register_t *retval, enum uio_seg seg)
+    dev_t dev, enum uio_seg seg)
 {
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
@@ -3893,23 +3920,31 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 		struct timeval tv[2];
 
 		if (seg != UIO_SYSSPACE) {
-			error = copyin(tptr, tv, sizeof (tv));
+			error = copyin(tptr, tv, sizeof(tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
 		}
 
-		if ((tv[0].tv_usec == UTIME_NOW) || 
-		    (tv[0].tv_usec == UTIME_OMIT))
-			ts[0].tv_nsec = tv[0].tv_usec;
-		else
-			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		if ((tptr[0].tv_usec == UTIME_NOW) || 
+		    (tptr[0].tv_usec == UTIME_OMIT))
+			ts[0].tv_nsec = tptr[0].tv_usec;
+		else {
+			if (tptr[0].tv_usec < 0 || tptr[0].tv_usec >= 1000000)
+				return EINVAL;
 
-		if ((tv[1].tv_usec == UTIME_NOW) || 
-		    (tv[1].tv_usec == UTIME_OMIT))
-			ts[1].tv_nsec = tv[1].tv_usec;
-		else
+			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		}
+
+		if ((tptr[1].tv_usec == UTIME_NOW) || 
+		    (tptr[1].tv_usec == UTIME_OMIT))
+			ts[1].tv_nsec = tptr[1].tv_usec;
+		else {
+			if (tptr[1].tv_usec < 0 || tptr[1].tv_usec >= 1000000)
+				return EINVAL;
+
 			TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
+		}
 
 		tsptr = &ts[0];	
 	}

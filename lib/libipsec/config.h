@@ -69,7 +69,7 @@
 /* #define HAVE_GSSAPI */
 
 /* Have iconv using const */
-#define HAVE_ICONV_2ND_CONST 
+/* #define HAVE_ICONV_2ND_CONST */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1

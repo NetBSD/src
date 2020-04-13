@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.4.2.2 2019/06/10 22:02:59 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4.2.3 2020/04/13 08:02:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -67,6 +67,11 @@ options {\n\
 #	fake-iquery <obsolete>;\n"
 #ifndef WIN32
 "	files unlimited;\n"
+#endif
+#if defined(HAVE_GEOIP2) && !defined(WIN32)
+"	geoip-directory \"" MAXMINDDB_PREFIX "/share/GeoIP\";\n"
+#elif defined(HAVE_GEOIP2)
+"	geoip-directory \".\";\n"
 #endif
 "\
 #	has-old-clients <obsolete>;\n\
@@ -156,11 +161,8 @@ options {\n\
 #	fetch-glue <obsolete>;\n\
 	fetch-quota-params 100 0.1 0.3 0.7;\n\
 	fetches-per-server 0;\n\
-	fetches-per-zone 0;\n"
-#ifdef HAVE_GEOIP
-"	geoip-use-ecs yes;\n"
-#endif
-"	glue-cache yes;\n\
+	fetches-per-zone 0;\n\
+	glue-cache yes;\n\
 	lame-ttl 600;\n"
 #ifdef HAVE_LMDB
 "	lmdb-mapsize 32M;\n"
@@ -197,7 +199,7 @@ options {\n\
 #	sortlist <none>\n\
 	stale-answer-enable false;\n\
 	stale-answer-ttl 1; /* 1 second */\n\
-	synth-from-dnssec yes;\n\
+	synth-from-dnssec no;\n\
 #	topology <none>\n\
 	transfer-format many-answers;\n\
 	v6-bias 50;\n\
@@ -883,7 +885,9 @@ named_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	if (stack != NULL)
 		isc_mem_put(mctx, stack, stackcount * sizeof(*stack));
 
+	INSIST(dscpcount == addrcount);
 	INSIST(keycount == addrcount);
+	INSIST(keycount == dscpcount);
 
 	ipkl->addrs = addrs;
 	ipkl->dscps = dscps;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bta2dpd.8,v 1.3 2018/05/15 04:25:25 nat Exp $
+.\"	$NetBSD: bta2dpd.8,v 1.3.2.1 2020/04/13 08:05:51 martin Exp $
 .\"
 .\" Copyright (c) 2015 - 2016  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 2, 2016
+.Dd July 27, 2019
 .Dt BTA2DPD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd Bluetooth Advanced Audio Distribution Profile daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl v
+.Op Fl \&Dv
 .Op Fl A Ar bitpool_allocation
 .Op Fl B Ar bitpool
 .Op Fl b Ar blocks
@@ -52,7 +52,7 @@
 .Ar files ...
 .Nm
 .Fl K
-.Op Fl Iv
+.Op Fl DIv
 .Op Fl A Ar bitpool_allocation
 .Op Fl B Ar bitpool
 .Op Fl b Ar blocks
@@ -105,6 +105,8 @@ Use
 with only the
 .Fl v
 option and the maximum bitpool for your device will be printed to stdout.
+.It Fl D
+Run in the background.
 .It Fl d Ar device
 Local device address.
 May be given as BDADDR or device name.

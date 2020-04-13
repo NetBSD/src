@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.24.18.1 2019/06/10 22:09:46 christos Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.24.18.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.24.18.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.24.18.2 2020/04/13 08:05:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,6 +63,7 @@ static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_extended_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_ver(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_commands(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_encryption_key_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 static void hci_cmd_create_con(struct hci_unit *unit, uint8_t status);
 
@@ -353,6 +354,10 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 		hci_cmd_read_local_commands(unit, m);
 		break;
 
+	case HCI_CMD_READ_ENCRYPTION_KEY_SIZE:
+		hci_cmd_read_encryption_key_size(unit, m);
+		break;
+
 	case HCI_CMD_RESET:
 		hci_cmd_reset(unit, m);
 		break;
@@ -623,10 +628,11 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 		return;
 	}
 
-	/* XXX could check auth_enable here */
-
-	if (ep.encryption_mode)
-		link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_ENCRYPT);
+	/*
+	 * We purposefully ignore ep.encryption_mode here - if that is set then
+	 * the link will be authenticated and encrypted, but we still want to
+	 * verify the key size and setmode sets the right flags
+	 */
 
 	link->hl_state = HCI_LINK_OPEN;
 	link->hl_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
@@ -777,17 +783,16 @@ hci_event_auth_compl(struct hci_unit *unit, struct mbuf *m)
 /*
  * Encryption Change
  *
- * The encryption status has changed. Basically, we note the change
- * then notify the upper layer protocol unless further mode changes
- * are pending.
- * Note that if encryption gets disabled when it has been requested,
- * we will attempt to enable it again.. (its a feature not a bug :)
+ * The encryption status has changed. Make a note if disabled, or
+ * check the key size if possible before allowing it is enabled.
+ * (checking of key size was enabled in 3.0 spec)
  */
 static void
 hci_event_encryption_change(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_encryption_change_ep ep;
 	struct hci_link *link;
+	uint16_t con_handle;
 	int err;
 
 	if (m->m_pkthdr.len < sizeof(ep))
@@ -796,27 +801,34 @@ hci_event_encryption_change(struct hci_unit *unit, struct mbuf *m)
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
-	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
+	con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
 
 	DPRINTFN(1, "handle #%d, status=0x%x, encryption_enable=0x%x\n",
-		 ep.con_handle, ep.status, ep.encryption_enable);
+		 con_handle, ep.status, ep.encryption_enable);
 
-	link = hci_link_lookup_handle(unit, ep.con_handle);
+	link = hci_link_lookup_handle(unit, con_handle);
 	if (link == NULL || link->hl_type != HCI_LINK_ACL)
 		return;
 
 	if (ep.status == 0) {
-		if (ep.encryption_enable == 0)
+		if (ep.encryption_enable == 0) {
 			link->hl_flags &= ~HCI_LINK_ENCRYPT;
-		else
+		} else if (unit->hci_cmds[20] & (1<<4)) {
+			err = hci_send_cmd(unit, HCI_CMD_READ_ENCRYPTION_KEY_SIZE,
+			    &ep.con_handle, sizeof(ep.con_handle));
+
+			if (err == 0)
+				return;
+		} else {
 			link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_ENCRYPT);
 
-		if (link->hl_state == HCI_LINK_WAIT_ENCRYPT)
-			link->hl_state = HCI_LINK_OPEN;
+			if (link->hl_state == HCI_LINK_WAIT_ENCRYPT)
+				link->hl_state = HCI_LINK_OPEN;
 
-		err = hci_acl_setmode(link);
-		if (err == EINPROGRESS)
-			return;
+			err = hci_acl_setmode(link);
+			if (err == EINPROGRESS)
+				return;
+		}
 	}
 
 	hci_acl_linkmode(link);
@@ -1172,6 +1184,57 @@ hci_cmd_read_local_commands(struct hci_unit *unit, struct mbuf *m)
 	memcpy(unit->hci_cmds, rp.commands, HCI_COMMANDS_SIZE);
 
 	cv_broadcast(&unit->hci_init);
+}
+
+/*
+ * process results of read_encryption_key_size command_complete event
+ */
+static void
+hci_cmd_read_encryption_key_size(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_encryption_key_size_rp rp;
+	struct hci_link *link;
+	int err;
+
+	if (m->m_pkthdr.len < sizeof(rp))
+		return;
+
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status != 0)
+		return;
+
+	rp.con_handle = HCI_CON_HANDLE(le16toh(rp.con_handle));
+
+	DPRINTFN(1, "handle #%d, status=0x%x, key_size=0x%x\n",
+		 rp.con_handle, rp.status, rp.size);
+
+	link = hci_link_lookup_handle(unit, rp.con_handle);
+	if (link == NULL || link->hl_type != HCI_LINK_ACL)
+		return;
+
+	/*
+	 * if the key size is less than minimum standard, go straight to
+	 * linkmode as this is non-recoverable. Otherwise, we are encrypted
+	 * so can proceed with setmode.
+	 */
+	if (rp.status == 0) {
+		if (rp.size < 7) {
+			link->hl_flags &= ~HCI_LINK_ENCRYPT;
+		} else {
+			link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_ENCRYPT);
+
+			if (link->hl_state == HCI_LINK_WAIT_ENCRYPT)
+				link->hl_state = HCI_LINK_OPEN;
+
+			err = hci_acl_setmode(link);
+			if (err == EINPROGRESS)
+				return;
+		}
+	}
+
+	hci_acl_linkmode(link);
 }
 
 /*

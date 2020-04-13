@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.3.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.3.2.3 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -573,6 +573,10 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 		if (result != ISC_R_SUCCESS)
 			goto cleanup_inc;
 		lctx->keep_lex = false;
+		/*
+		 * If specials change update dns_test_rdatafromstring()
+		 * in lib/dns/tests/dnstest.c.
+		 */
 		memset(specials, 0, sizeof(specials));
 		specials[0] = 1;
 		specials['('] = 1;

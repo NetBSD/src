@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/01/31 15:32:13 christos Exp $
+#	$NetBSD: Makefile,v 1.10.18.1 2020/04/13 08:04:13 martin Exp $
 
 WARNS?=	4
 
@@ -10,8 +10,18 @@ OBJS=	zbsdmod.o
 SRCS=	zbsdmod.c
 NOMAN=	# defined
 
+OBJCOPY_FLAGS=			\
+	-R .debug_abbrev	\
+	-R .debug_aranges	\
+	-R .debug_info		\
+	-R .debug_line		\
+	-R .debug_loc		\
+	-R .debug_ranges	\
+	-R .debug_str		\
+	-R .eh_frame
+
 realall: ${OBJS}
-	${OBJCOPY} -R .eh_frame ${.OBJDIR}/zbsdmod.o
+	${OBJCOPY} ${OBJCOPY_FLAGS} ${.OBJDIR}/zbsdmod.o
 
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>
@@ -21,13 +31,14 @@ afterinstall:
 		${OBJS} ${DESTDIR}/${BINDIR}
 
 CPUFLAGS=
-COPTS=		-Os
+DBG=		-Os
 CFLAGS+=	-fno-strict-aliasing
-CFLAGS+=	-DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
-CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
-CPPFLAGS+=      -nostdinc -D_STANDALONE
+CFLAGS+=	-ffreestanding -nostdinc
+CFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
+CPPFLAGS+=	-DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
+CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-I${.OBJDIR} -I${S}
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${OBJS} \
-	    ${RELEASEDIR}/${MACHINE}/installation
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_load.c,v 1.1.1.2 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: mdb_load.c,v 1.1.1.2.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* mdb_load.c - memory-mapped database load tool */
 /*
- * Copyright 2011-2017 Howard Chu, Symas Corp.
+ * Copyright 2011-2018 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,7 @@ static void readhdr(void)
 {
 	char *ptr;
 
+	flags = 0;
 	while (fgets(dbuf.mv_data, dbuf.mv_size, stdin) != NULL) {
 		lineno++;
 		if (!strncmp(dbuf.mv_data, "VERSION=", STRLENOF("VERSION="))) {
@@ -376,7 +377,6 @@ int main(int argc, char *argv[])
 	while(!Eof) {
 		MDB_val key, data;
 		int batch = 0;
-		flags = 0;
 
 		if (!dohdr) {
 			dohdr = 1;

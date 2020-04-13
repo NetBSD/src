@@ -36,7 +36,7 @@
 AU_ALIAS([CHECK_SSL], [AX_CHECK_OPENSSL])
 AC_DEFUN([AX_CHECK_OPENSSL], [
     found=false
-    default_ssldirs="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /usr/local/opt/openssl /usr/local/opt/libressl /usr"
+    default_ssldirs="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /opt/local /usr/local/opt/openssl /usr/local/opt/libressl /usr"
     AC_ARG_WITH([openssl],
         [AS_HELP_STRING([--with-openssl=DIR],
             [root of the OpenSSL directory])],

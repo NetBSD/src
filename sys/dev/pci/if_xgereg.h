@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xgereg.h,v 1.2 2005/12/11 12:22:50 christos Exp $ */
+/*      $NetBSD: if_xgereg.h,v 1.2.166.1 2020/04/13 08:04:27 martin Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -85,7 +85,7 @@
 	"\177\20b\x3fTDMA_READY\0b\x3eRDMA_READY\0b\x3dPFC_READY\0" \
 	"b\x3cTMAC_BUF_EMPTY\0b\x3aPIC_QUIESCENT\0\x39RMAC_REMOTE_FAULT\0" \
 	"b\x38RMAC_LOCAL_FAULT\0b\x27MC_DRAM_READY\0b\x26MC_QUEUES_READY\0" \
-	"b\x21M_PLL_LOCK\0b\x20P_PLL_LOCK"
+	"b\x21M_PLL_LOCK\0b\x20P_PLL_LOCK\0"
 
 /*
  * PCI-X registers

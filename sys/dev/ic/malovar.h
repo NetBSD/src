@@ -59,7 +59,7 @@ struct malo_rx_radiotap_hdr {
 	uint8_t					wr_flags;
 	uint16_t				wr_chan_freq;
 	uint16_t				wr_chan_flags;
-} __packed;
+};
 
 #define MALO_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
@@ -72,7 +72,7 @@ struct malo_tx_radiotap_hdr {
 	uint8_t					wt_rate;
 	uint16_t				wt_chan_freq;
 	uint16_t				wt_chan_flags;
-} __packed;
+};
 
 struct malo_softc {
 	device_t		sc_dev;

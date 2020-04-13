@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.8.12.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Open Shortest Path First (OSPF) printer */
@@ -711,7 +711,7 @@ ospf_print_lsa(netdissect_options *ndo,
 		while ((const u_char *)lp < ls_end) {
 			register uint32_t ul;
 
-			ND_TCHECK(*lp);
+			ND_TCHECK_32BITS(lp);
 			ul = EXTRACT_32BITS(lp);
                         topology = (ul & SLA_MASK_TOS) >> SLA_SHIFT_TOS;
 			ND_PRINT((ndo, "\n\t\ttopology %s (%u) metric %d",
@@ -728,7 +728,7 @@ ospf_print_lsa(netdissect_options *ndo,
 		while ((const u_char *)lp < ls_end) {
 			register uint32_t ul;
 
-			ND_TCHECK(*lp);
+			ND_TCHECK_32BITS(lp);
 			ul = EXTRACT_32BITS(lp);
                         topology = (ul & SLA_MASK_TOS) >> SLA_SHIFT_TOS;
 			ND_PRINT((ndo, "\n\t\ttopology %s (%u) metric %d",

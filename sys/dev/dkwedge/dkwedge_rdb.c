@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.4 2017/02/28 04:47:41 rin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.4.22.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4 2017/02/28 04:47:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4.22.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
@@ -164,6 +164,8 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 		    sizeof(struct rdblock)), secsize);
 		bp = DKW_REALLOC(bp, bufsize);
 	}
+
+	memset(&dkw, 0, sizeof(dkw));
 
 	strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 

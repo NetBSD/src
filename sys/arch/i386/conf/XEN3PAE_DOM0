@@ -1,8 +1,8 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.1.74.2 2020/04/08 14:07:39 martin Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.1.74.3 2020/04/13 08:03:52 martin Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
-include 	"arch/xen/conf/std.xen"
+include 	"arch/i386/conf/std.xen"
 
 options		XENPV		# PV dom0 support
 #options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
@@ -18,7 +18,6 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 options 	PAE
-#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
@@ -29,8 +28,6 @@ options 	DOM0OPS
 #options 	MCLSHIFT=12
 
 makeoptions	CPUFLAGS="-march=i686"
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 # CPU features
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
@@ -543,7 +540,6 @@ wsmouse*	at pms? mux 0
 
 # PCI USB controllers
 xhci*	at pci? dev ? function ?	# eXtensible Host Controller
-					# xhci is at best experimental
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)

@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.7 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.7.4.1 2020/04/13 07:56:04 martin Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.7 2018/02/06 01:57:23 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.7.4.1 2020/04/13 07:56:04 martin Exp $");
 
 #include "portable.h"
 

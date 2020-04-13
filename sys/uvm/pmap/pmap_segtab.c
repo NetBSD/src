@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.6.12.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.6.12.2 2020/04/13 08:05:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6.12.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6.12.2 2020/04/13 08:05:22 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -100,10 +100,11 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6.12.1 2019/06/10 22:09:58 christo
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mutex.h>
+
 #include <sys/atomic.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 
@@ -138,11 +139,11 @@ pmap_check_stp(pmap_segtab_t *stp, const char *caller, const char *why)
 		if (stp->seg_tab[i] != 0) {
 #ifdef DEBUG_NOISY
 			for (size_t j = i; j < PMAP_SEGTABSIZE; j++)
-				printf("%s: pm_segtab.seg_tab[%zu] = 0x%p\n",
-				       caller, j, stp->seg_tab[j]);
+				printf("%s: pm_segtab.seg_tab[%zu] = %p\n",
+				    caller, j, stp->seg_tab[j]);
 #endif
-			panic("%s: pm_segtab.seg_tab[%zu] != 0 (0x%p): %s",
-			      caller, i, stp->seg_tab[i], why);
+			panic("%s: pm_segtab.seg_tab[%zu] != 0 (%p): %s",
+			    caller, i, stp->seg_tab[i], why);
 		}
 	}
 #endif
@@ -247,7 +248,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 #ifdef PMAP_PTP_CACHE
 		mutex_spin_enter(&pmap_segtab_lock);
-		LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist, pg, listq.list);
+		LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist, pg, pageq.list);
 		mutex_spin_exit(&pmap_segtab_lock);
 #else
 		uvm_pagefree(pg);
@@ -299,7 +300,7 @@ pmap_segtab_alloc(void)
 			/*
 			 * XXX What else can we do?  Could we deadlock here?
 			 */
-			uvm_wait("pmap_create");
+			uvm_wait("segtab");
 			goto again;
 		}
 		SEGTAB_ADD(npage, 1);
@@ -392,7 +393,7 @@ pmap_segtab_activate(struct pmap *pm, struct lwp *l)
  */
 void
 pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
-	pte_callback_t callback, uintptr_t flags)
+    pte_callback_t callback, uintptr_t flags)
 {
 #if 0
 	printf("%s: %p, %"PRIxVADDR", %"PRIxVADDR", %p, %"PRIxPTR"\n",
@@ -407,12 +408,12 @@ pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		pt_entry_t * const pte = pmap_pte_lookup(pmap, sva);
-		if (pte != NULL) {
+		pt_entry_t * const ptep = pmap_pte_lookup(pmap, sva);
+		if (ptep != NULL) {
 			/*
 			 * Callback to deal with the ptes for this segment.
 			 */
-			(*callback)(pmap, sva, lastseg_va, pte, flags);
+			(*callback)(pmap, sva, lastseg_va, ptep, flags);
 		}
 		/*
 		 * In theory we could release pages with no entries,
@@ -457,7 +458,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #ifdef PMAP_PTP_CACHE
 		mutex_spin_enter(&pmap_segtab_lock);
 		if ((pg = LIST_FIRST(&pmap_segtab_info.ptp_pgflist)) != NULL) {
-			LIST_REMOVE(pg, listq.list);
+			LIST_REMOVE(pg, pageq.list);
 			KASSERT(LIST_FIRST(&pmap_segtab_info.ptp_pgflist) != pg);
 		}
 		mutex_spin_exit(&pmap_segtab_lock);
@@ -485,7 +486,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #ifdef PMAP_PTP_CACHE
 			mutex_spin_enter(&pmap_segtab_lock);
 			LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist,
-			    pg, listq.list);
+			    pg, pageq.list);
 			mutex_spin_exit(&pmap_segtab_lock);
 #else
 			PMAP_UNMAP_POOLPAGE((vaddr_t)pte);

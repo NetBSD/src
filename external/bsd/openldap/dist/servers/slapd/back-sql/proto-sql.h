@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-sql.h,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
+/*	$NetBSD: proto-sql.h,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * All rights reserved.

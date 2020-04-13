@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.12 2018/02/01 03:15:28 ozaki-r Exp $
+.\"     $NetBSD: xcall.9,v 1.12.4.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 1, 2018
+.Dd February 1, 2020
 .Dt XCALL 9
 .Os
 .Sh NAME
 .Nm xcall ,
 .Nm xc_broadcast ,
 .Nm xc_unicast ,
-.Nm xc_wait
+.Nm xc_wait ,
+.Nm xc_barrier
 .Nd cross-call interface
 .Sh SYNOPSIS
 .In sys/xcall.h
@@ -45,6 +46,8 @@
 .Fn xc_unicast "u_int flags" "xcfunc_t func" "void *arg1" "void *arg2" "struct cpu_info *ci"
 .Ft void
 .Fn xc_wait "uint64_t where"
+.Ft void
+.Fn xc_barrier "u_int flags"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
@@ -94,10 +97,10 @@ Functions being called should be relatively lightweight.
 They may block on locks, but carefully and minimally, to not interfere
 with other cross calls in the system.
 .Sh FUNCTIONS
-.Bl -tag -width compact
+.Bl -tag -width abcd
 .It Fn xc_broadcast "flags" "func" "arg1" "arg2"
 Call
-.Fo "(*func)"
+.Pf (* Fa func\| ) Ns Fo ""
 .Fa "arg1"
 .Fa "arg2"
 .Fc
@@ -112,15 +115,13 @@ on for the cross-call to complete.
 should be
 .Dv XC_HIGHPRI
 or
-.Fo XC_HIGHPRI_IPL
-.Fa ipl
-.Fc
+.Dv XC_HIGHPRI_IPL\| Ns Fn "" ipl
 for a "high priority" call, and 0 for a "low priority" call.
 .Dv XC_HIGHPRI
 uses an
 .Dv IPL_SOFTSERIAL
 software interrupt while
-.Fn XC_HIGHPRI_IPL
+.Dv XC_HIGHPRI_IPL
 uses a software interrupt with an IPL specified by
 .Fa ipl .
 .Fn xc_broadcast
@@ -129,7 +130,7 @@ should not be called from interrupt context.
 Like
 .Fn xc_broadcast ,
 but call
-.Fn "(*func)"
+.Fa func
 on only the CPU indicated by
 .Fa ci .
 .Fn xc_unicast
@@ -145,6 +146,43 @@ or
 for the corresponding cross-call to complete.
 .Fn xc_wait
 should be called from a thread context.
+.It Fn xc_barrier "flags"
+Issue a broadcast cross-call that does nothing,
+and wait for it to complete.
+.Pp
+This functions like a memory barrier that forces all prior operations
+in program order to globally happen before all subsequent operations in
+program order, as witnessed by every CPU.
+.Pp
+This additionally waits for all higher-priority activity on the CPU to
+complete, according to
+.Fa flags :
+.Bl -dash -compact
+.It
+.Fo xc_barrier
+.Li 0
+.Fc
+waits for any pending
+.Xr kpreempt_disable 9
+sections or activity at interrupt priority level above
+.Dv IPL_NONE
+to finish on all CPUs.
+.It
+.Fo xc_barrier
+.Dv XC_HIGHPRI_IPL\| Ns Fn "" ipl
+.Fc
+waits for any pending activity at the software interrupt priority level
+.Fa ipl
+or higher to finish on all CPUs.
+.El
+.Pp
+.Fn xc_barrier
+is much more expensive than
+.Xr membar_ops 3 ,
+so it should be used sparingly, only to publish information
+infrequently \(em for example, during module load and unload \(em when
+the cost of a memory barrier on the consumer side would be
+prohibitive.
 .El
 .Sh CODE REFERENCES
 The
@@ -153,6 +191,7 @@ interface is implemented within the file
 .Pa sys/kern/subr_xcall.c .
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
+.Xr membar_ops 3 ,
 .Xr kpreempt 9 ,
 .Xr percpu 9 ,
 .Xr softint 9

@@ -202,13 +202,6 @@ AcpiNsEvaluate (
 #endif
 
 void
-AcpiNsExecModuleCodeList (
-    void)
-{
-    return;
-}
-
-void
 AcpiExDoDebugObject (
     ACPI_OPERAND_OBJECT     *SourceDesc,
     UINT32                  Level,

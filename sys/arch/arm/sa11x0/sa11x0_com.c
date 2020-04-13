@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.55.18.1 2019/06/10 22:05:56 christos Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.55.18.2 2020/04/13 08:03:37 martin Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.55.18.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.55.18.2 2020/04/13 08:03:37 martin Exp $");
 
 #include "opt_com.h"
 #include "opt_console.h"
@@ -311,13 +311,9 @@ sacom_attach_subr(struct sacom_softc *sc)
 	tp->t_hwiflow = sacomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(SACOM_RING_SIZE << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(SACOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = SACOM_RING_SIZE;
-	if (sc->sc_rbuf == NULL) {
-		aprint_normal_dev(sc->sc_dev, "unable to allocate ring buffer\n");
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (SACOM_RING_SIZE << 1);
 	sc->sc_tbc = 0;
 

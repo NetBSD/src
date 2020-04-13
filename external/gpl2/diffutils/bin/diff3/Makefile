@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/13 03:39:28 christos Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2020/04/13 07:56:40 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -8,6 +8,6 @@ DIST=		${IDIST}/src
 PROG=		diff3
 SRCS=		diff3.c version.c
 
-CWARNFLAGS.clang+=	-Wno-unused-value
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-error=bool-operation
 
 .include <bsd.prog.mk>

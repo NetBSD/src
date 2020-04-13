@@ -1,6 +1,6 @@
 // Pair implementation -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -76,7 +76,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   struct piecewise_construct_t { explicit piecewise_construct_t() = default; };
 
   /// piecewise_construct
-  constexpr piecewise_construct_t piecewise_construct = piecewise_construct_t();
+  _GLIBCXX17_INLINE constexpr piecewise_construct_t piecewise_construct =
+    piecewise_construct_t();
 
   // Forward declarations.
   template<typename...>
@@ -178,12 +179,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
   };
 
-  struct __wrap_nonesuch : std::__nonesuch {
-    explicit __wrap_nonesuch(const __nonesuch&) = delete;
+  // PR libstdc++/79141, a utility type for preventing
+  // initialization of an argument of a disabled assignment
+  // operator from a pair of empty braces.
+  struct __nonesuch_no_braces : std::__nonesuch {
+    explicit __nonesuch_no_braces(const __nonesuch&) = delete;
   };
 #endif // C++11
 
-  class __pair_base
+  template<typename _U1, typename _U2> class __pair_base
   {
 #if __cplusplus >= 201103L
     template<typename _T1, typename _T2> friend struct pair;
@@ -202,7 +206,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
   template<typename _T1, typename _T2>
     struct pair
-    : private __pair_base
+    : private __pair_base<_T1, _T2>
     {
       typedef _T1 first_type;    /// @c first_type is the first bound type
       typedef _T2 second_type;   /// @c second_type is the second bound type
@@ -374,7 +378,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator=(typename conditional<
 		__and_<is_copy_assignable<_T1>,
 		       is_copy_assignable<_T2>>::value,
-		const pair&, const __wrap_nonesuch&>::type __p)
+		const pair&, const __nonesuch_no_braces&>::type __p)
       {
 	first = __p.first;
 	second = __p.second;
@@ -385,7 +389,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator=(typename conditional<
 		__and_<is_move_assignable<_T1>,
 		       is_move_assignable<_T2>>::value,
-		pair&&, __wrap_nonesuch&&>::type __p)
+		pair&&, __nonesuch_no_braces&&>::type __p)
       noexcept(__and_<is_nothrow_move_assignable<_T1>,
 		      is_nothrow_move_assignable<_T2>>::value)
       {
@@ -418,8 +422,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       void
       swap(pair& __p)
-      noexcept(__is_nothrow_swappable<_T1>::value
-               && __is_nothrow_swappable<_T2>::value)
+      noexcept(__and_<__is_nothrow_swappable<_T1>,
+                      __is_nothrow_swappable<_T2>>::value)
       {
 	using std::swap;
 	swap(first, __p.first);
@@ -433,6 +437,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
              _Index_tuple<_Indexes1...>, _Index_tuple<_Indexes2...>);
 #endif
     };
+
+#if __cpp_deduction_guides >= 201606
+  template<typename _T1, typename _T2> pair(_T1, _T2) -> pair<_T1, _T2>;
+#endif
 
   /// Two pairs of the same type are equal iff their members are equal.
   template<typename _T1, typename _T2>
@@ -476,11 +484,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // Note:  no std::swap overloads in C++03 mode, this has performance
   //        implications, see, eg, libstdc++/38466.
   template<typename _T1, typename _T2>
-    inline void
+    inline
+#if __cplusplus > 201402L || !defined(__STRICT_ANSI__) // c++1z or gnu++11
+    // Constrained free swap overload, see p0185r1
+    typename enable_if<__and_<__is_swappable<_T1>,
+                              __is_swappable<_T2>>::value>::type
+#else
+    void
+#endif
     swap(pair<_T1, _T2>& __x, pair<_T1, _T2>& __y)
     noexcept(noexcept(__x.swap(__y)))
     { __x.swap(__y); }
+
+#if __cplusplus > 201402L || !defined(__STRICT_ANSI__) // c++1z or gnu++11
+  template<typename _T1, typename _T2>
+    typename enable_if<!__and_<__is_swappable<_T1>,
+			       __is_swappable<_T2>>::value>::type
+    swap(pair<_T1, _T2>&, pair<_T1, _T2>&) = delete;
 #endif
+#endif // __cplusplus >= 201103L
 
   /**
    *  @brief A convenience wrapper for creating a pair from two objects.

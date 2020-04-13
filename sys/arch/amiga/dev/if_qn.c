@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $ */
+/*	$NetBSD: if_qn.c,v 1.46.2.3 2020/04/13 08:03:31 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46.2.3 2020/04/13 08:03:31 martin Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -195,6 +195,7 @@ qnattach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
 	zap = (struct zbus_args *)aux;
 
 	sc->sc_base = zap->va;

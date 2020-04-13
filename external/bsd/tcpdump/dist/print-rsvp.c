@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rsvp.c,v 1.10 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-rsvp.c,v 1.10.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Resource ReSerVation Protocol (RSVP) printer */
@@ -504,6 +504,7 @@ rsvp_intserv_print(netdissect_options *ndo,
 
     if (obj_tlen < 4)
         return 0;
+    ND_TCHECK_8BITS(tptr);
     parameter_id = *(tptr);
     ND_TCHECK2(*(tptr + 2), 2);
     parameter_length = EXTRACT_16BITS(tptr+2)<<2; /* convert wordcount to bytecount */
@@ -1559,6 +1560,7 @@ rsvp_obj_print(netdissect_options *ndo,
         case RSVP_OBJ_CLASSTYPE_OLD: /* fall through */
             switch(rsvp_obj_ctype) {
             case RSVP_CTYPE_1:
+                ND_TCHECK_32BITS(obj_tptr);
                 ND_PRINT((ndo, "%s  CT: %u",
                        ident,
                        EXTRACT_32BITS(obj_tptr) & 0x7));

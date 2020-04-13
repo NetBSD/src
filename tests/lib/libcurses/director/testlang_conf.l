@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.7 2013/11/21 11:06:04 blymn Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.7.26.1 2020/04/13 08:05:28 martin Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -155,10 +155,14 @@ FILENAME	[A-Za-z0-9.][A-Za-z0-9./_-]+
 VARNAME		[A-Za-z][A-Za-z0-9_-]+
 NULL_RET	NULL
 NON_NULL	NON_NULL
+CCHAR		[cC][cC][hH][aA][rR]
 BYTE		BYTE
 OR		\|
 LHB		\(
 RHB		\)
+LHSB		\[
+RHSB		\]
+MULTIPLIER	\*
 
 %x incl
 %option noinput nounput
@@ -286,6 +290,14 @@ include		BEGIN(incl);
 			return ERR_RET;
 		}
 
+{MULTIPLIER}	{
+			return MULTIPLIER;
+		}
+
+{CCHAR}	{
+			return CCHAR;
+		}
+
 {OR}		{
 			return OR;
 		}
@@ -296,6 +308,14 @@ include		BEGIN(incl);
 
 {RHB}		{
 			return RHB;
+		}
+
+{LHSB}		{
+			return LHSB;
+		}
+
+{RHSB}		{
+			return RHSB;
 		}
 
 {HEX}		{
@@ -342,17 +362,17 @@ include		BEGIN(incl);
 			char *p;
 			size_t len;
 
-			if ((yylval.retval = malloc(sizeof(returns_t))) == NULL)
+			if ((yylval.retval = malloc(sizeof(ct_data_t))) == NULL)
 				err(1, "Cannot allocate return struct");
 			p = yytext;
 			p++; /* skip the leading ' */
-			if ((yylval.retval->return_value = dequote(p, &len))
+			if ((yylval.retval->data_value = dequote(p, &len))
 			     == NULL)
 				err(1, "Cannot allocate string");
 
-			yylval.retval->return_type = ret_byte;
+			yylval.retval->data_type = data_byte;
 			/* trim trailing ' */
-			yylval.retval->return_len = len - 1;
+			yylval.retval->data_len = len - 1;
 			return BYTE;
 		}
 
@@ -362,7 +382,7 @@ include		BEGIN(incl);
 			size_t i;
 			chtype *rv;
 
-			if ((yylval.retval = malloc(sizeof(returns_t))) == NULL)
+			if ((yylval.retval = malloc(sizeof(ct_data_t))) == NULL)
 				err(1, "Cannot allocate return struct");
 			p = yytext;
 			p++; /* skip the leading ' */
@@ -373,16 +393,16 @@ include		BEGIN(incl);
 				len--;
 
 			chlen = ((len / 2) + 1) * sizeof(chtype);
-			if ((yylval.retval->return_value = malloc(chlen))
+			if ((yylval.retval->data_value = malloc(chlen))
 			    == NULL)
 				err(1, "Cannot allocate chtype array");
 
-			rv = yylval.retval->return_value;
+			rv = yylval.retval->data_value;
 			for (i = 0; i < len; i += 2)
 				*rv++ = (str[i] << 8) | str[i+1];
 			*rv = __NORMAL | '\0'; /* terminates chtype array */	
-			yylval.retval->return_type = ret_byte;
-			yylval.retval->return_len = chlen;
+			yylval.retval->data_type = data_byte;
+			yylval.retval->data_len = chlen;
 			return BYTE;
 		}
 

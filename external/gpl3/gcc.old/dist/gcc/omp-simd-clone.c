@@ -1,6 +1,6 @@
 /* OMP constructs' SIMD clone supporting code.
 
-Copyright (C) 2005-2016 Free Software Foundation, Inc.
+Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,6 +47,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "tree-eh.h"
+#include "varasm.h"
 
 
 /* Allocate a fresh `simd_clone' and return it.  NARGS is the number
@@ -125,13 +126,11 @@ simd_clone_clauses_extract (struct cgraph_node *node, tree clauses,
   clone_info->cilk_elemental = cilk_clone;
 
   if (!clauses)
-    {
-      args.release ();
-      return clone_info;
-    }
+    goto out;
+
   clauses = TREE_VALUE (clauses);
   if (!clauses || TREE_CODE (clauses) != OMP_CLAUSE)
-    return clone_info;
+    goto out;
 
   for (t = clauses; t; t = OMP_CLAUSE_CHAIN (t))
     {
@@ -251,6 +250,28 @@ simd_clone_clauses_extract (struct cgraph_node *node, tree clauses,
 	  break;
 	}
     }
+
+ out:
+  if (TYPE_ATOMIC (TREE_TYPE (TREE_TYPE (node->decl))))
+    {
+      warning_at (DECL_SOURCE_LOCATION (node->decl), 0,
+		  "ignoring %<#pragma omp declare simd%> on function "
+		  "with %<_Atomic%> qualified return type");
+      args.release ();
+      return NULL;
+    }
+
+  for (unsigned int argno = 0; argno < clone_info->nargs; argno++)
+    if (TYPE_ATOMIC (args[argno])
+	&& clone_info->args[argno].arg_type != SIMD_CLONE_ARG_TYPE_UNIFORM)
+      {
+	warning_at (DECL_SOURCE_LOCATION (node->decl), 0,
+		    "ignoring %<#pragma omp declare simd%> on function "
+		    "with %<_Atomic%> qualified non-%<uniform%> argument");
+	args.release ();
+	return NULL;
+      }
+
   args.release ();
   return clone_info;
 }
@@ -435,9 +456,18 @@ simd_clone_create (struct cgraph_node *old_node)
     return new_node;
 
   TREE_PUBLIC (new_node->decl) = TREE_PUBLIC (old_node->decl);
+  DECL_COMDAT (new_node->decl) = DECL_COMDAT (old_node->decl);
+  DECL_WEAK (new_node->decl) = DECL_WEAK (old_node->decl);
+  DECL_EXTERNAL (new_node->decl) = DECL_EXTERNAL (old_node->decl);
+  DECL_VISIBILITY_SPECIFIED (new_node->decl)
+    = DECL_VISIBILITY_SPECIFIED (old_node->decl);
+  DECL_VISIBILITY (new_node->decl) = DECL_VISIBILITY (old_node->decl);
+  DECL_DLLIMPORT_P (new_node->decl) = DECL_DLLIMPORT_P (old_node->decl);
+  if (DECL_ONE_ONLY (old_node->decl))
+    make_decl_one_only (new_node->decl, DECL_ASSEMBLER_NAME (new_node->decl));
 
-  /* The function cgraph_function_versioning () will force the new
-     symbol local.  Undo this, and inherit external visability from
+  /* The method cgraph_version_clone_with_body () will force the new
+     symbol local.  Undo this, and inherit external visibility from
      the old node.  */
   new_node->local.local = old_node->local.local;
   new_node->externally_visible = old_node->externally_visible;
@@ -839,7 +869,7 @@ ipa_simd_modify_stmt_ops (tree *tp, int *walk_subtrees, void *data)
 	  stmt = gimple_build_debug_source_bind (vexpr, repl, NULL);
 	  DECL_ARTIFICIAL (vexpr) = 1;
 	  TREE_TYPE (vexpr) = TREE_TYPE (repl);
-	  DECL_MODE (vexpr) = TYPE_MODE (TREE_TYPE (repl));
+	  SET_DECL_MODE (vexpr, TYPE_MODE (TREE_TYPE (repl)));
 	  repl = vexpr;
 	}
       else
@@ -902,11 +932,11 @@ ipa_simd_modify_function_body (struct cgraph_node *node,
     }
 
   l = adjustments.length ();
-  for (i = 1; i < num_ssa_names; i++)
+  tree name;
+
+  FOR_EACH_SSA_NAME (i, name, cfun)
     {
-      tree name = ssa_name (i);
-      if (name
-	  && SSA_NAME_VAR (name)
+      if (SSA_NAME_VAR (name)
 	  && TREE_CODE (SSA_NAME_VAR (name)) == PARM_DECL)
 	{
 	  for (j = 0; j < l; j++)
@@ -1080,6 +1110,7 @@ simd_clone_adjust (struct cgraph_node *node)
   tree iter1 = make_ssa_name (iter);
   tree iter2 = NULL_TREE;
   ipa_simd_modify_function_body (node, adjustments, retval, iter1);
+  adjustments.release ();
 
   /* Initialize the iteration variable.  */
   basic_block entry_bb = single_succ (ENTRY_BLOCK_PTR_FOR_FN (cfun));
@@ -1659,7 +1690,7 @@ const pass_data pass_data_omp_simd_clone =
 {
   SIMPLE_IPA_PASS,		/* type */
   "simdclone",			/* name */
-  OPTGROUP_NONE,		/* optinfo_flags */
+  OPTGROUP_OMP,			/* optinfo_flags */
   TV_NONE,			/* tv_id */
   ( PROP_ssa | PROP_cfg ),	/* properties_required */
   0,				/* properties_provided */

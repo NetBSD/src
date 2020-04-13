@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_usdhc.c,v 1.2 2017/10/26 05:08:30 ryo Exp $	*/
+/*	$NetBSD: imx7_usdhc.c,v 1.2.6.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -29,9 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_usdhc.c,v 1.2 2017/10/26 05:08:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_usdhc.c,v 1.2.6.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "imxgpio.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +93,7 @@ imx7_sdhc_card_detect(struct sdhc_softc *ssc)
 	sc = device_private(ssc->sc_dev);
 #if NIMXGPIO > 0
 	if (sc->sc_gpio_cd >= 0) {
-		detect = gpio_data_read(sc->sc_gpio_cd);
+		detect = imxgpio_data_read(sc->sc_gpio_cd);
 	} else
 #endif
 		detect = 1;
@@ -141,7 +143,7 @@ sdhc_set_gpio_cd(struct sdhc_axi_softc *sc, const char *name)
 
 	sc->sc_gpio_cd = GPIO_NO(grp, pin);
 #if NIMXGPIO > 0
-	gpio_set_direction(sc->sc_gpio_cd, GPIO_DIR_IN);
+	imxgpio_set_direction(sc->sc_gpio_cd, GPIO_PIN_INPUT);
 #endif
 }
 

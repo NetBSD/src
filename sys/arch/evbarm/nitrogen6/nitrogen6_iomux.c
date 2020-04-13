@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_iomux.c,v 1.4 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_iomux.c,v 1.4.8.1 2020/04/13 08:03:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -26,17 +26,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.4 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.4.8.1 2020/04/13 08:03:46 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
+
+#define	_INTR_PRIVATE
+
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/param.h>
+#include <sys/gpio.h>
+
 #include <arm/imx/imx6_reg.h>
 #include <arm/imx/imx6var.h>
 #include <arm/imx/imx6_iomuxreg.h>
 #include <arm/imx/imxgpioreg.h>
 #include <arm/imx/imxgpiovar.h>
+
 #include <evbarm/nitrogen6/platform.h>
 
 struct gpio_conf {
@@ -537,41 +543,41 @@ static const struct iomux_conf iomux_data_6ul[] = {
 static const struct gpio_conf gpio_data[] = {
 	/*	GPIOn, PIN,	dir,		value	*/
 #if (EVBARM_BOARDTYPE == nitrogen6x)
-	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
-	{	7,	0,	GPIO_DIR_IN,	0	}, /* SD3 CD */
-	{	2,	6,	GPIO_DIR_IN,	0	}, /* SD4 CD */
+	{	3,	22,	GPIO_PIN_OUTPUT,	1	}, /* USB OTG */
+	{	7,	0,	GPIO_PIN_INPUT,		0	}, /* SD3 CD */
+	{	2,	6,	GPIO_PIN_INPUT,		0	}, /* SD4 CD */
 #endif
 #if (EVBARM_BOARDTYPE == nitrogen6max)
-	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
-	{	7,	12,	GPIO_DIR_OUT,	1	}, /* USB HUB RESET */
-	{	6,	14,	GPIO_DIR_OUT,	1	}, /* SD3 VSELECT */
-	{	7,	0,	GPIO_DIR_IN,	0	}, /* SD3 CD */
-	{	2,	6,	GPIO_DIR_IN,	0	}, /* SD4 CD */
+	{	3,	22,	GPIO_PIN_OUTPUT,	1	}, /* USB OTG */
+	{	7,	12,	GPIO_PIN_OUTPUT,	1	}, /* USB HUB RESET */
+	{	6,	14,	GPIO_PIN_OUTPUT,	1	}, /* SD3 VSELECT */
+	{	7,	0,	GPIO_PIN_INPUT,		0	}, /* SD3 CD */
+	{	2,	6,	GPIO_PIN_INPUT,		0	}, /* SD4 CD */
 #endif
 #if (EVBARM_BOARDTYPE == cubox_i)
-	{	4,	29,	GPIO_DIR_OUT,	1	}, /* FRONT LED? */
-	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
-	{	1,	0,	GPIO_DIR_OUT,	1	}, /* USB H1 */
-	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
+	{	4,	29,	GPIO_PIN_OUTPUT,	1	}, /* FRONT LED? */
+	{	3,	22,	GPIO_PIN_OUTPUT,	1	}, /* USB OTG */
+	{	1,	0,	GPIO_PIN_OUTPUT,	1	}, /* USB H1 */
+	{	1,	4,	GPIO_PIN_INPUT,		0	}, /* USDHC2 */
 #endif
 #if (EVBARM_BOARDTYPE == hummingboard)
-	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
-	{	1,	0,	GPIO_DIR_OUT,	1	}, /* USB H1 */
-	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
-	{	3,	4,	GPIO_DIR_OUT,	0	}, /* PCIe */
+	{	3,	22,	GPIO_PIN_OUTPUT,	1	}, /* USB OTG */
+	{	1,	0,	GPIO_PIN_OUTPUT,	1	}, /* USB H1 */
+	{	1,	4,	GPIO_PIN_INPUT,		0	}, /* USDHC2 */
+	{	3,	4,	GPIO_PIN_OUTPUT,	0	}, /* PCIe */
 #endif
 #if (EVBARM_BOARDTYPE == hummingboard_edge)
-	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
-	{	1,	0,	GPIO_DIR_OUT,	1	}, /* USB H1 */
-	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
-	{	2,	11,	GPIO_DIR_OUT,	0	}, /* PCIe */
+	{	3,	22,	GPIO_PIN_OUTPUT,	1	}, /* USB OTG */
+	{	1,	0,	GPIO_PIN_OUTPUT,	1	}, /* USB H1 */
+	{	1,	4,	GPIO_PIN_INPUT,		0	}, /* USDHC2 */
+	{	2,	11,	GPIO_PIN_OUTPUT,	0	}, /* PCIe */
 #endif
 #if (EVBARM_BOARDTYPE == ccimx6ulstarter)
-	{	3,	2,	GPIO_DIR_OUT,	1	}, /* ENET1 phy */
+	{	3,	2,	GPIO_PIN_OUTPUT,	1	}, /* ENET1 phy */
 #endif
 
 	/* end of table */
-	{	0,	0,	0,		0	},
+	{	0,	0,	0,			0	},
 };
 
 
@@ -615,10 +621,10 @@ nitrogen6_gpio_config(const struct gpio_conf *conflist)
 	const struct gpio_conf *c;
 
 	for (c = conflist; c->group != 0; c++) {
-		if (c->dir == GPIO_DIR_IN) {
+		if (c->dir == GPIO_PIN_INPUT) {
 			*AIPS1_ADDR(GPIO_ADDR(c->group, GPIO_DIR)) &=
 			    ~(1 << c->pin);
-		} else if (c->dir == GPIO_DIR_OUT) {
+		} else if (c->dir == GPIO_PIN_OUTPUT) {
 			*AIPS1_ADDR(GPIO_ADDR(c->group, GPIO_DIR)) |=
 			    (1 << c->pin);
 

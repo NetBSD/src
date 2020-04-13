@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.21.2.1 2019/06/10 22:09:48 christos Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.21.2.2 2020/04/13 08:05:17 martin Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.21.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.21.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -87,22 +87,21 @@ tcpsignature_init(struct secasvar *sav, const struct xformsw *xsp)
 	int keylen;
 
 	if (sav->spi != htonl(TCP_SIG_SPI)) {
-		DPRINTF(("%s: SPI %x must be TCP_SIG_SPI (0x1000)\n",
-		    __func__, sav->alg_auth));
+		DPRINTF("SPI %x must be TCP_SIG_SPI (0x1000)\n", sav->alg_auth);
 		return EINVAL;
 	}
 	if (sav->alg_auth != SADB_X_AALG_TCP_MD5) {
-		DPRINTF(("%s: unsupported authentication algorithm %u\n",
-		    __func__, sav->alg_auth));
+		DPRINTF("unsupported authentication algorithm %u\n",
+		    sav->alg_auth);
 		return EINVAL;
 	}
 	if (sav->key_auth == NULL) {
-		DPRINTF(("%s: no authentication key present\n", __func__));
+		DPRINTF("no authentication key present\n");
 		return EINVAL;
 	}
 	keylen = _KEYLEN(sav->key_auth);
 	if ((keylen < TCP_KEYLEN_MIN) || (keylen > TCP_KEYLEN_MAX)) {
-		DPRINTF(("%s: invalid key length %u\n", __func__, keylen));
+		DPRINTF("invalid key length %u\n", keylen);
 		return EINVAL;
 	}
 
@@ -133,7 +132,7 @@ tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
 
 static int
 tcpsignature_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	panic("%s: should not have been called", __func__);
 }

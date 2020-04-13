@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx6ul,v 1.1.10.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: std.imx6ul,v 1.1.10.2 2020/04/13 08:03:42 martin Exp $
 #
 # standard NetBSD/evbarm options for i.MX6UL
 
@@ -23,7 +23,6 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_GENERIC_START
 #options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #options 	PMAP_NEED_ALLOC_POOLPAGE
-options 	TPIDRPRW_IS_CURCPU
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.imx6ul"
 makeoptions 	CPPFLAGS+="-I$S/../../../include"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.108 2014/07/20 10:22:54 alnsn Exp $
+#	$NetBSD: files.hpcmips,v 1.108.28.1 2020/04/13 08:03:51 martin Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -392,7 +392,7 @@ file	arch/i386/isa/fd.c		fdc needs-flag
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 

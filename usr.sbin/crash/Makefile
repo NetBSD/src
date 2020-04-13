@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.2.2 2020/04/08 14:09:19 martin Exp $
+#	$NetBSD: Makefile,v 1.40.2.3 2020/04/13 08:05:52 martin Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -118,6 +118,8 @@ COPTS.kern_timeout.c += -Wno-stack-protector
 .endif
 
 .include "../../compat/exec.mk"
+
+COPTS.db_command.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.46.32.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: mdb.c,v 1.46.32.2 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.46.32.1 2019/06/10 22:10:22 christos Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.46.32.2 2020/04/13 08:05:44 martin Exp $");
 #endif
 
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: mdb.c,v 1.46.32.1 2019/06/10 22:10:22 christos Exp $");
 /* Data */
 #undef MAX
 #define MAX 1000
-static int menu_no = 0;
+static int menu_no = 1;	/* Menu 0 is unused (means no menu) */
 static id_rec *menus[MAX];
 
 /* Other defines */
@@ -75,7 +75,7 @@ get_menu(char *name)
 
 	if (temp == NULL) {
 		if (menu_no < MAX) {
-			temp = (id_rec *)malloc(sizeof(id_rec));
+			temp = calloc(1, sizeof(id_rec));
 			temp->id = strdup(name);
 			temp->info = NULL;
 			temp->menu_no = menu_no;
@@ -98,7 +98,7 @@ check_defined(void)
 {
 	int i;
 
-	for (i = 0; i < menu_no; i++)
+	for (i = 1; i < menu_no; i++)
 		if (!menus[i]->info)
 			yyerror ("Menu '%s' undefined.", menus[i]->id);
 }
@@ -177,28 +177,28 @@ write_menu_file(char *initcode)
 		(void)fprintf(out_file,
 		"	const char	*opt_exp_name;\n");
 	(void)fprintf(out_file,
-		"	int		opt_menu;\n"
-		"	int		opt_flags;\n"
+		"	short		opt_menu;\n"
+		"	short		opt_flags;\n"
 		"	int		(*opt_action)(menudesc *, void *);\n"
 		"};\n\n"
+		"#define OPT_NOMENU	0\n"
 		"#define OPT_SUB	1\n"
 		"#define OPT_ENDWIN	2\n"
 		"#define OPT_EXIT	4\n"
 		"#define OPT_IGNORE	8\n"
-		"#define OPT_NOSHORT	16\n"
-		"#define OPT_NOMENU	-1\n\n"
+		"#define OPT_NOSHORT	16\n\n"
 		"struct menudesc {\n"
 		"	const char	*title;\n");
 	if (do_expands)
 		(void)fprintf(out_file,
 		"	const char	*exp_title;\n");
 	(void)fprintf(out_file,
-		"	int		y, x;\n"
-		"	int		h, w;\n"
-		"	int		mopt;\n"
-		"	int		numopts;\n"
-		"	int		cursel;\n"
-		"	int		topline;\n"
+		"	short		y, x;\n"
+		"	short		h, w;\n"
+		"	short		mopt;\n"
+		"	short		numopts;\n"
+		"	short		cursel;\n"
+		"	short		topline;\n"
 		"	menu_ent	*opts;\n"
 		"	WINDOW		*mw;\n"
 		"	WINDOW		*sv_mw;\n"
@@ -253,7 +253,7 @@ write_menu_file(char *initcode)
 			);
 
 	(void)fprintf(out_file, "\n/* Menu names */\n");
-	for (i = 0; i < menu_no; i++)
+	for (i = 1; i < menu_no; i++)
 		(void)fprintf(out_file, "#define MENU_%s\t%d\n",
 		    menus[i]->id, i);
 
@@ -280,7 +280,7 @@ write_menu_file(char *initcode)
 	/* data definitions */
 
 	/* func defs */
-	for (i = 0; i < menu_no; i++) {
+	for (i = 1; i < menu_no; i++) {
 		if (do_expands && strlen(menus[i]->info->expact.code)) {
 			(void)fprintf(out_file, "/*ARGSUSED*/\n"
 			    "static void menu_%d_expact(menudesc *menu, void *arg)\n{\n", i);
@@ -321,7 +321,7 @@ write_menu_file(char *initcode)
 	}
 
 	/* optentX */
-	for (i = 0; i < menu_no; i++) {
+	for (i = 1; i < menu_no; i++) {
 		if (menus[i]->info->numopt > 53) {
 			(void)fprintf(stderr, "Menu %s has "
 				"too many options.\n",
@@ -371,8 +371,9 @@ write_menu_file(char *initcode)
 		(void)fprintf(out_file, "static int num_menus = %d;\n",
 		    menu_no);
 
-	(void)fprintf(out_file, "static struct menudesc menu_def[] = {\n");
-	for (i = 0; i < menu_no; i++) {
+	(void)fprintf(out_file, "static struct menudesc menu_def[] = {\n"
+	    "\t{ },\n");
+	for (i = 1; i < menu_no; i++) {
 		(void)fprintf(out_file,
 			"\t{%s,", menus[i]->info->title);
 		if (do_expands)

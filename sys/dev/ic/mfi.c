@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.58.4.2 2020/04/08 14:08:06 martin Exp $ */
+/* $NetBSD: mfi.c,v 1.58.4.3 2020/04/13 08:04:21 martin Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58.4.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58.4.3 2020/04/13 08:04:21 martin Exp $");
 
 #include "bio.h"
 
@@ -495,10 +495,7 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	DNPRINTF(MFI_D_MEM, "%s: mfi_allocmem: %ld\n", DEVNAME(sc),
 	    (long)size);
 
-	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (mm == NULL)
-		return NULL;
-
+	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_WAITOK|M_ZERO);
 	mm->am_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -869,6 +866,7 @@ mfi_get_bbu(struct mfi_softc *sc, struct mfi_bbu_status *stat)
 		    stat->detail.bbu.remaining_capacity ,
 		    stat->detail.bbu.full_charge_capacity ,
 		    stat->detail.bbu.is_SOH_good);
+		break;
 	default:
 		printf("\n");
 	}
@@ -2529,11 +2527,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data_t\n");
-		return ENOMEM;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* BBU */
 	sc->sc_sensor[0].units = ENVSYS_INDICATOR;

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.52.16.1 2019/06/10 22:05:33 christos Exp $	 */
+/* $NetBSD: main.c,v 1.52.16.2 2020/04/13 08:03:20 martin Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,13 +53,12 @@
 #include "fsutil.h"
 #include "exitvalues.h"
 
-volatile sig_atomic_t returntosingle = 0;
+int	Uflag;
 
 static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
 static void usage(void);
 static void efun(int, const char *, ...);
-extern void (*panic_func)(int, const char *, va_list);
 
 static void
 efun(int eval, const char *fmt, ...)

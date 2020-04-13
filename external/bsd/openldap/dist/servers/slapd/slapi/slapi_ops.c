@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_ops.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
+/*	$NetBSD: slapi_ops.c,v 1.1.1.6.4.1 2020/04/13 07:56:22 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2017 The OpenLDAP Foundation.
+ * Copyright 2002-2019 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_ops.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $");
+__RCSID("$NetBSD: slapi_ops.c,v 1.1.1.6.4.1 2020/04/13 07:56:22 martin Exp $");
 
 #include "portable.h"
 

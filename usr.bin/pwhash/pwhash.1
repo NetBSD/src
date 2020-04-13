@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwhash.1,v 1.8 2016/05/24 06:15:43 abhinav Exp $
+.\"	$NetBSD: pwhash.1,v 1.8.16.1 2020/04/13 08:05:45 martin Exp $
 .\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -33,6 +33,7 @@
 .Sh SYNOPSIS
 .Nm pwhash
 .Op Fl km
+.Op Fl A Ar variant[,params] 
 .Op Fl b Ar rounds
 .Op Fl S Ar rounds
 .Op Fl s Ar salt
@@ -64,6 +65,26 @@ Prompt for a single string with echo turned off.
 Encrypt the salt with HMAC-SHA1 using the password as key and the specified
 .Ar rounds
 as a hint for the number of iterations.
+.It Fl A Ar variant[,params] 
+Encrypt the specified string using Argon2 hashing parameterized using
+variant 
+.Ar variant , 
+where 
+.Ar variant 
+is one of the following: argon2id, argon2i, argon2d.  Variant
+.Ar argon2id
+is recommended.
+
+Following the required 
+.Ar variant 
+name, three optional comma-delimited parameters may be provided,
+
+t=n Specify the number of iterations to n.  The default is 3.
+
+m=n Specify the memory usage in KB  to n. The default is 4096.
+
+p=n Specify the number of threads to n. The default is 1.
+
 .It Fl s Ar salt
 Encrypt the string using DES, with the specified
 .Ar salt .
@@ -80,13 +101,19 @@ the algorithm specified in the default class in
 .Pa /etc/passwd.conf
 will be used.
 .Pp
-For MD5 and Blowfish a new random salt is automatically generated for each
+For MD5,  Blowfish, and Argon2 a new random salt is automatically generated for each
 password.
 .Pp
 Specifying the
 .Ar string
 on the command line should be discouraged; using the
 standard input is more secure.
+.Sh EXAMPLES
+The following specifies the argon2id variant, using 1 thread and 4096KB of memory 
+
+pwhash -A argon2id,p=1,m=4096 -p
+
+
 .Sh FILES
 .Bl -tag -width /etc/passwd.conf -compact
 .It Pa /etc/passwd.conf

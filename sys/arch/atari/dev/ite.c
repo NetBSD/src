@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.77.18.1 2019/06/10 22:05:58 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.77.18.2 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.77.18.1 2019/06/10 22:05:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.77.18.2 2020/04/13 08:03:39 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -135,10 +135,11 @@ static void	itestart(struct tty *);
 static void	ite_switch(int);
 static void	repeat_handler(void *);
 
-void iteputchar(int c, struct ite_softc *sc);
-void ite_putstr(const u_char * s, int len, dev_t dev);
-void iteattach(device_t, device_t, void *);
-int  itematch(device_t, cfdata_t, void *);
+static void iteputchar(int c, struct ite_softc *sc);
+static void ite_putstr(const u_char * s, int len, dev_t dev);
+
+static void iteattach(device_t, device_t, void *);
+static int  itematch(device_t, cfdata_t, void *);
 
 /*
  * Console specific types.
@@ -180,7 +181,7 @@ const struct cdevsw ite_cdevsw = {
  */
 static int		cons_ite = -1;
 
-int
+static int
 itematch(device_t parent, cfdata_t cf, void *aux)
 {
 	
@@ -197,7 +198,7 @@ itematch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-void
+static void
 iteattach(device_t parent, device_t self, void *aux)
 {
 	struct grf_softc	*gsc;
@@ -1324,7 +1325,7 @@ ite_zargnum (struct ite_softc *sc)
   return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
 }
 
-void
+static void
 ite_putstr(const u_char *s, int len, dev_t dev)
 {
 	struct ite_softc *sc;
@@ -1344,7 +1345,7 @@ ite_putstr(const u_char *s, int len, dev_t dev)
 }
 
 
-void
+static void
 iteputchar(register int c, struct ite_softc *sc)
 {
 	struct tty *kbd_tty;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.16.4.1 2019/06/10 22:09:03 christos Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.16.4.2 2020/04/13 08:05:03 martin Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.16.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.16.4.2 2020/04/13 08:05:03 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -483,7 +483,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	}
 
 	/* Total buffer size includes header, events, and string table */
-	bufsize = sizeof(struct sysctl_history) + 
+	bufsize = sizeof(struct sysctl_history) +
 	    h->n * sizeof(struct sysctl_history_event) +
 	    xlate_t[xlate_c].offset;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
@@ -539,7 +539,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 		    "entry %d at wrong offset %"PRIu32, i, xlt->offset);
 		memcpy(next, xlt->addr, xlt->len);
 		next += xlt->len;
-		*next++ = '\0';	
+		*next++ = '\0';
 	}
 
 	/* Copy data to userland */

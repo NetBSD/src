@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.4.4.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: fusu.S,v 1.4.4.2 2020/04/13 08:03:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ STRONG_ALIAS(_ufetch_16,_ufetch_16_no_ldrht)
 ENTRY(_ufetch_16_ldrht)
 	UFETCHSTORE_PROLOGUE
 
-	ldrht	r3, [r0]
+	ldrht	r3, [r0], #0
 	strh	r3, [r1]
 
 	UFETCHSTORE_EPILOGUE
@@ -186,7 +186,7 @@ STRONG_ALIAS(_ustore_16,_ustore_16_no_strht)
 ENTRY(_ustore_16_strht)
 	UFETCHSTORE_PROLOGUE
 
-	strht	r1, [r0]
+	strht	r1, [r0], #0
 
 	UFETCHSTORE_EPILOGUE
 	RETURN_SUCCESS

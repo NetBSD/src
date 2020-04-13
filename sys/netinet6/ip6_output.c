@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.211.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.211.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -477,7 +477,7 @@ ip6_output(
 #ifdef IPSEC
 	if (needipsec) {
 		int s = splsoftnet();
-		error = ipsec6_process_packet(m, sp->req);
+		error = ipsec6_process_packet(m, sp->req, flags);
 		splx(s);
 
 		/*
@@ -550,7 +550,7 @@ ip6_output(
 	 * destination addresses.  We should use ia_ifp to support the
 	 * case of sending packets to an address of our own.
 	 */
-	if (ia != NULL && ia->ia_ifp) {
+	if (ia != NULL) {
 		origifp = ia->ia_ifp;
 		if (if_is_deactivated(origifp))
 			goto bad;

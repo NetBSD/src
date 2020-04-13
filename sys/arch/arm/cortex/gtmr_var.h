@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.10.2.1 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.10.2.2 2020/04/13 08:03:33 martin Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,6 +40,7 @@ struct gtmr_softc {
 	uint32_t sc_flags;
 #define	GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER	__BIT(0)
 	u_long sc_autoinc;
+	bool sc_physical;
 	void *sc_global_ih;
 #ifdef DIAGNOSTIC
 	percpu_t *sc_percpu;

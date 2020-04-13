@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.19.2.2 2020/04/08 14:08:07 martin Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.19.2.3 2020/04/13 08:04:23 martin Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.19.2.2 2020/04/08 14:08:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.19.2.3 2020/04/13 08:04:23 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -286,7 +286,7 @@ STATIC void
 mvxpe_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvxpe_softc *sc = device_private(self);
-	struct mii_softc *mii;
+	struct mii_softc *child;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct marvell_attach_args *mva = aux;
@@ -401,9 +401,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_sysctl_mib_size =
 	    __arraycount(mvxpe_mib_list) * sizeof(struct mvxpe_sysctl_mib);
-	sc->sc_sysctl_mib = kmem_alloc(sc->sc_sysctl_mib_size, KM_NOSLEEP);
-	if (sc->sc_sysctl_mib == NULL)
-		goto fail;
+	sc->sc_sysctl_mib = kmem_alloc(sc->sc_sysctl_mib_size, KM_SLEEP);
 	memset(sc->sc_sysctl_mib, 0, sc->sc_sysctl_mib_size);
 
 	/*
@@ -485,14 +483,14 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	 * but some boards may not.
 	 */
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, sc->sc_dev->dv_unit, 0);
-	mii = LIST_FIRST(&mii->mii_phys);
-	if (mii == NULL) {
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
-		phyaddr = MVXPE_PHYADDR_PHYAD(mii->mii_phy);
+		phyaddr = MVXPE_PHYADDR_PHYAD(child->mii_phy);
 		MVXPE_WRITE(sc, MVXPE_PHYADDR, phyaddr);
 		DPRINTSC(sc, 1, "PHYADDR: %#x\n", MVXPE_READ(sc, MVXPE_PHYADDR));
 	}
@@ -1959,7 +1957,7 @@ mvxpe_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct mvxpe_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	mvxpe_sc_lock(sc);
 

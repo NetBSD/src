@@ -41,6 +41,7 @@
 #include "ctftools.h"
 #include "hash.h"
 #include "memory.h"
+#include "traverse.h"
 
 /*
  * Due to 4432619, the 6.1 compiler will sometimes incorrectly generate pointer
@@ -276,8 +277,64 @@ fix_small_cpu_struct(tdata_t *td, size_t ptrsize)
 	lml->ml_next = cpum;
 }
 
+#ifdef __NetBSD__
+
+/*
+ * XXX: A crude hack to bring down the number of types for a
+ * GENERIC kernel below 2**15-1 (from ~34000 to ~29800).
+ *
+ * Remove the type attributes "volatile", "const" and "restrict",
+ * for DTRACE these attributes are of little value.
+ */
+
+static int
+fix_kill_attr_cb(tdesc_t *tdp, tdesc_t **tdpp, void *private __unused)
+{
+
+	while (tdp->t_type == VOLATILE ||
+	    tdp->t_type == RESTRICT ||
+	    tdp->t_type == CONST)
+		tdp = tdp->t_tdesc;
+
+	*tdpp = tdp;
+
+	return 1;
+}
+
+static tdtrav_cb_f fix_kill_attr_tab[] = {
+	NULL,
+	NULL,			/* intrinsic */
+	NULL,			/* pointer */
+	NULL,			/* reference */
+	NULL,			/* array */
+	NULL,			/* function */
+	NULL,			/* struct */
+	NULL,			/* union */
+	NULL,			/* class */
+	NULL,			/* enum */
+	NULL		,	/* forward */
+	NULL,			/* typedef */
+	NULL,			/* typedef unres */
+	fix_kill_attr_cb,	/* volatile */
+	fix_kill_attr_cb,	/* const */
+	fix_kill_attr_cb,	/* restrict */
+};
+
+static void
+fix_kill_attr(tdata_t *td, size_t ptrsize)
+{
+
+	(void) iitraverse_hash(td->td_iihash, &td->td_curvgen,
+	    fix_kill_attr_tab, NULL, NULL, NULL);
+}
+
+#endif /* __NetBSD__ */
+
 void
 cvt_fixups(tdata_t *td, size_t ptrsize)
 {
 	fix_small_cpu_struct(td, ptrsize);
+#ifdef __NetBSD__
+	fix_kill_attr(td, ptrsize);
+#endif
 }

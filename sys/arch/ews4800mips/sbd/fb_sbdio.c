@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.16 2017/06/13 19:13:55 spz Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.16.6.1 2020/04/13 08:03:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.16 2017/06/13 19:13:55 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.16.6.1 2020/04/13 08:03:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,17 +146,8 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nscreens = 1;
 	} else {
 		ri = malloc(sizeof(struct rasops_info), M_DEVBUF,
-		    M_NOWAIT | M_ZERO);
-		if (ri == NULL) {
-			printf(":can't allocate rasops memory\n");
-			return;
-		}
-		ga = malloc(sizeof(struct ga), M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (ga == NULL) {
-			printf(":can't allocate ga memory\n");
-			free(ri, M_DEVBUF);
-			return;
-		}
+		    M_WAITOK | M_ZERO);
+		ga = malloc(sizeof(struct ga), M_DEVBUF, M_WAITOK | M_ZERO);
 		ga->reg_paddr = sa->sa_addr2;
 		ga->flags = sa->sa_flags;
 		fb_pmap_enter(sa->sa_addr1, sa->sa_addr2,

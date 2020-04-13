@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* config.c - bdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $");
 
 #include "portable.h"
 
@@ -607,10 +607,11 @@ bdb_cf_gen( ConfigArgs *c )
 			if ( c->valx == -1 ) {
 				int i;
 
-				/* delete all (FIXME) */
+				/* delete all */
 				for ( i = 0; i < bdb->bi_nattrs; i++ ) {
 					bdb->bi_attrs[i]->ai_indexmask |= BDB_INDEX_DELETING;
 				}
+				bdb->bi_defaultmask = 0;
 				bdb->bi_flags |= BDB_DEL_INDEX;
 				c->cleanup = bdb_cf_cleanup;
 

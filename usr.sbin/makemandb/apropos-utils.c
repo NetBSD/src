@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.40.4.1 2019/06/10 22:10:33 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.40.4.2 2020/04/13 08:05:54 martin Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.40.4.1 2019/06/10 22:10:33 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.40.4.2 2020/04/13 08:05:54 martin Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -654,6 +654,13 @@ RETURN:
 	return query;
 }
 
+static const char *
+get_stmt_col_text(sqlite3_stmt *stmt, int col)
+{
+	const char *t = (const char *) sqlite3_column_text(stmt, col);
+	return t == NULL ? "*?*" : t;
+}
+
 /*
  * Execute the full text search query and return the number of results
  * obtained.
@@ -695,13 +702,14 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 	unsigned int nresults = 0;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		nresults++;
-		callback_args.section = (const char *) sqlite3_column_text(stmt, 0);
-		name_temp = (const char *) sqlite3_column_text(stmt, 1);
-		callback_args.name_desc = (const char *) sqlite3_column_text(stmt, 2);
+		callback_args.section = get_stmt_col_text(stmt, 0);
+		name_temp = get_stmt_col_text(stmt, 1);
+		callback_args.name_desc = get_stmt_col_text(stmt, 2);
 		callback_args.machine = (const char *) sqlite3_column_text(stmt, 3);
 		if (!args->legacy) {
-			callback_args.snippet = (const char *) sqlite3_column_text(stmt, 4);
-			callback_args.snippet_length = strlen(callback_args.snippet);
+			callback_args.snippet = get_stmt_col_text(stmt, 4);
+			callback_args.snippet_length =
+			    strlen(callback_args.snippet);
 		} else {
 			callback_args.snippet = "";
 			callback_args.snippet_length = 1;
@@ -713,8 +721,7 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 			easprintf(&name, "%s/%s", lower(m), name_temp);
 			free(m);
 		} else {
-			name = estrdup((const char *)
-			    sqlite3_column_text(stmt, 1));
+			name = estrdup(get_stmt_col_text(stmt, 1));
 		}
 		callback_args.name = name;
 		callback_args.other_data = args->callback_data;

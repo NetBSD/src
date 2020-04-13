@@ -1,4 +1,4 @@
-.\"	$NetBSD: putc.3,v 1.13 2017/02/22 15:08:55 abhinav Exp $
+.\"	$NetBSD: putc.3,v 1.13.12.1 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)putc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 6, 2010
+.Dd September 2, 2019
 .Dt PUTC 3
 .Os
 .Sh NAME
@@ -152,13 +152,16 @@ and
 conform to
 .St -p1003.1-96 .
 .Sh HISTORY
-The functions
+The
 .Fn putc ,
-.Fn putchar ,
 and
 .Fn putw
-first appeared in
-.At v6 .
+functions first appeared in
+.At v1 .
+The
+.Fn putchar
+function first appeared in
+.At v4 .
 The function
 .Fn fputc
 appeared in

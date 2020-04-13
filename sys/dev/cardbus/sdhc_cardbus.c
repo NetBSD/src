@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_cardbus.c,v 1.5 2012/12/20 14:37:00 jakllsch Exp $	*/
+/*	$NetBSD: sdhc_cardbus.c,v 1.5.38.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.5 2012/12/20 14:37:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.5.38.1 2020/04/13 08:04:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -137,11 +137,7 @@ sdhc_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate an array big enough to hold all the possible hosts */
 	sc->sc.sc_host = malloc(sizeof(struct sdhc_host *) * nslots,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc.sc_host == NULL) {
-		aprint_error_dev(self, "couldn't alloc memory\n");
-		goto err;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);

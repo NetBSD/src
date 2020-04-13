@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.15 2017/07/03 21:28:48 wiz Exp $
+.\" $NetBSD: cnmagic.9,v 1.15.6.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd June 8, 2010
+.Dd July 7, 2019
 .Dt CNMAGIC 9
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ A different
 .Va cnm_state_t
 should be used for each separate input stream.
 Multiple devices that share the same input stream, such as USB
-keyboards can share the same
+keyboards, can share the same
 .Va cnm_state_t .
 Once a
 .Va cnm_state_t
@@ -145,7 +145,7 @@ points to is no longer needed.
 .Fn cn_set_magic
 encodes a
 .Li nul
-terminated string arbitrary string into values that can be used by
+terminated arbitrary string into values that can be used by
 the state machine and installs it as the global magic sequence.
 The escape sequence is character value
 .Li 0x27
@@ -180,6 +180,7 @@ Returns
 on success or a non-zero error value.
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr sysctl 8 ,
 .Xr cons 9
 .Sh HISTORY

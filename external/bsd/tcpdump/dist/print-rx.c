@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rx.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.8.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -699,7 +699,7 @@ rx_cache_insert(netdissect_options *ndo,
 	UNALIGNED_MEMCPY(&rxent->client, &ip->ip_src, sizeof(uint32_t));
 	UNALIGNED_MEMCPY(&rxent->server, &ip->ip_dst, sizeof(uint32_t));
 	rxent->dport = dport;
-	rxent->serviceId = EXTRACT_32BITS(&rxh->serviceId);
+	rxent->serviceId = EXTRACT_16BITS(&rxh->serviceId);
 	rxent->opcode = EXTRACT_32BITS(bp + sizeof(struct rx_header));
 }
 
@@ -730,7 +730,7 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
 		if (rxent->callnum == EXTRACT_32BITS(&rxh->callNumber) &&
 		    rxent->client.s_addr == clip &&
 		    rxent->server.s_addr == sip &&
-		    rxent->serviceId == EXTRACT_32BITS(&rxh->serviceId) &&
+		    rxent->serviceId == EXTRACT_16BITS(&rxh->serviceId) &&
 		    rxent->dport == sport) {
 
 			/* We got a match! */
@@ -1024,6 +1024,7 @@ fs_print(netdissect_options *ndo,
 			}
 			if (j == 0)
 				ND_PRINT((ndo, " <none!>"));
+			break;
 		}
 		case 65537:	/* Fetch data 64 */
 			FIDOUT();
@@ -1284,6 +1285,7 @@ cb_print(netdissect_options *ndo,
 				bp += sizeof(int32_t);
 				tok2str(cb_types, "type %d", t);
 			}
+			break;
 		}
 		case 214: {
 			ND_PRINT((ndo, " afsuuid"));
@@ -1745,6 +1747,7 @@ vldb_reply_print(netdissect_options *ndo,
 			INTOUT();
 			ND_PRINT((ndo, " nextindex"));
 			INTOUT();
+			/*FALLTHROUGH*/
 		case 503:	/* Get entry by id */
 		case 504:	/* Get entry by name */
 		{	unsigned long nservers, j;
@@ -1794,6 +1797,7 @@ vldb_reply_print(netdissect_options *ndo,
 			INTOUT();
 			ND_PRINT((ndo, " nextindex"));
 			INTOUT();
+			/*FALLTHROUGH*/
 		case 518:	/* Get entry by ID N */
 		case 519:	/* Get entry by name N */
 		{	unsigned long nservers, j;

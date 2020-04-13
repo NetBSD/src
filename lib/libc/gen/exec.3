@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.29 2017/09/18 08:48:23 wiz Exp $
+.\"	$NetBSD: exec.3,v 1.29.4.1 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)exec.3	8.3 (Berkeley) 1/24/94
 .\"
-.Dd September 26, 2014
+.Dd September 1, 2019
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -278,7 +278,11 @@ and
 .Fn execvp
 conform to
 .St -p1003.1-90 .
-.Pp
+.Sh HISTORY
+The
+.Fn exec
+function appeared in
+.At v1 .
 The
 .Fn execlpe
 function appeared first in QNX and the

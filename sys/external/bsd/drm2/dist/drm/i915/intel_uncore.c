@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.6.32.2 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.6.32.3 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.6.32.2 2020/04/08 14:08:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.6.32.3 2020/04/13 08:04:58 martin Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
@@ -1108,7 +1108,7 @@ static void fw_domain_init(struct drm_i915_private *dev_priv,
 		d->val_clear = 0;
 	} else {
 		/* WaRsClearFWBitsAtReset:bdw,skl */
-		d->val_reset = _MASKED_BIT_DISABLE(0xffff);
+		d->val_reset = _MASKED_BIT_DISABLE(0xffffU);
 		d->val_set = _MASKED_BIT_ENABLE(FORCEWAKE_KERNEL);
 		d->val_clear = _MASKED_BIT_DISABLE(FORCEWAKE_KERNEL);
 	}

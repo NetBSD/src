@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.35.14.1 2019/06/10 22:10:43 christos Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.35.14.2 2020/04/13 08:06:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,13 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.35.14.1 2019/06/10 22:10:43 christos Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.35.14.2 2020/04/13 08:06:07 martin Exp $");
 #endif
+
+#include <sys/types.h>
+#include <sys/drvctlio.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
@@ -45,6 +47,9 @@ __RCSID("$NetBSD: usbdevs.c,v 1.35.14.1 2019/06/10 22:10:43 christos Exp $");
 #include <locale.h>
 #include <langinfo.h>
 #include <iconv.h>
+#include <ctype.h>
+#include <inttypes.h>
+
 #include <dev/usb/usb.h>
 
 #define USBDEV "/dev/usb"
@@ -94,7 +99,8 @@ u2t(const char *utf8str, char *termstr)
 	if (ic != (iconv_t)-1) {
 		insz = strlen(utf8str);
 		outsz = MAXLEN - 1;
-		icres = iconv(ic, &utf8str, &insz, &termstr, &outsz);
+		icres = iconv(ic, __UNCONST(&utf8str), &insz, &termstr,
+			&outsz);
 		if (icres != (size_t)-1) {
 			*termstr = '\0';
 			return;
@@ -315,10 +321,54 @@ dumpone(char *name, int f, int addr)
 		usbdump(f);
 }
 
+static int
+getusbcount_device(int fd, const char *dev, int depth)
+{
+	struct devlistargs laa = {
+	    .l_childname = NULL,
+	    .l_children = 0,
+	};
+	size_t i;
+	size_t children;
+	int nbusses = 0;
+
+	if (depth && (dev == NULL || *dev == '\0'))
+		return 0;
+
+	/*
+	 * Look for children that match "usb[0-9]*".  Could maybe
+	 * simply return 1 here, but there's always a chance that
+	 * someone has eg, a USB to PCI bridge, with a USB
+	 * controller behind PCI.
+	 */
+	if (strncmp(dev, "usb", 3) == 0 && isdigit((int)dev[3]))
+		nbusses++;
+
+	strlcpy(laa.l_devname, dev, sizeof(laa.l_devname));
+
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(EXIT_FAILURE, "DRVLISTDEV");
+	children = laa.l_children;
+
+	laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
+	if (laa.l_childname == NULL)
+		err(EXIT_FAILURE, "out of memory");
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(EXIT_FAILURE, "DRVLISTDEV");
+	if (laa.l_children > children)
+		err(EXIT_FAILURE, "DRVLISTDEV: number of children grew");
+
+	for (i = 0; i < laa.l_children; i++) {
+		nbusses += getusbcount_device(fd, laa.l_childname[i], depth+1);
+	}
+
+	return nbusses;
+}
+
 int
 main(int argc, char **argv)
 {
-	int ch, i, f;
+	int ch, i, f, error;
 	char buf[50];
 	char *dev = NULL;
 	int addr = -1;
@@ -327,7 +377,13 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch(ch) {
 		case 'a':
-			addr = atoi(optarg);
+			addr = strtoi(optarg, NULL, 10, 0, USB_MAX_DEVICES - 1,
+			    &error);
+			if (error) {
+				errc(EXIT_FAILURE, error,
+				    "Bad value for device address: `%s'",
+				    optarg);
+			}
 			break;
 		case 'd':
 			showdevs++;
@@ -347,7 +403,17 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (dev == NULL) {
-		for (ncont = 0, i = 0; i < 10; i++) {
+		int nbusses;
+		int fd = open(DRVCTLDEV, O_RDONLY, 0);
+
+		/* If no drvctl configured, default to 16. */
+		if (fd != -1)
+			nbusses = getusbcount_device(fd, "", 0);
+		else
+			nbusses = 16;
+		close(fd);
+
+		for (ncont = 0, i = 0; i < nbusses; i++) {
 			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
@@ -370,5 +436,5 @@ main(int argc, char **argv)
 		else
 			err(1, "%s", dev);
 	}
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }

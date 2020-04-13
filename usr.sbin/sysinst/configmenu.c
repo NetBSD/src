@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.5 2015/05/11 13:07:57 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.5.16.1 2020/04/13 08:06:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -181,9 +181,7 @@ init_config_menu(configinfo *conf, menu_ent *me, configinfo **ce)
 		if (opt == CONFIGOPT_LAST)
 			break;
 		*ce = conf;
-		me->opt_menu = OPT_NOMENU;
-		me->opt_flags = 0;
-		me->opt_name = NULL;  /* NULL so set_config will draw */
+		memset(me, 0, sizeof(*me));
 		me->opt_action = conf->action;
 		configopts++;
 		ce++;
@@ -294,7 +292,6 @@ set_binpkg(struct menudesc *menu, void *arg)
 {
 	configinfo **confp = arg;
 	char additional_pkgs[STRSIZE] = {0};
-	char pattern[STRSIZE];
 	int allok = 0;
 	arg_rv parm;
 
@@ -315,8 +312,8 @@ set_binpkg(struct menudesc *menu, void *arg)
 	} while (allok == 0);
 
 	/* configure pkgin to use $pkgpath as a repository */
-	snprintf(pattern, STRSIZE, "s,^[^#].*$,%s,", pkgpath);
-	replace("/usr/pkg/etc/pkgin/repositories.conf", pattern);
+	replace("/usr/pkg/etc/pkgin/repositories.conf", "s,^[^#].*$,%s,",
+	    pkgpath);
 
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 		"/usr/pkg/bin/pkgin -y update");
@@ -324,9 +321,8 @@ set_binpkg(struct menudesc *menu, void *arg)
 	if (strlen(additional_pkgs) > 0)
 		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 		"/usr/pkg/bin/pkgin -y install %s", additional_pkgs);
-	
-	msg_display(MSG_binpkg_installed);
-	process_menu(MENU_ok, NULL);
+
+	hit_enter_to_continue(MSG_binpkg_installed, NULL);
 
 	confp[menu->cursel]->setting = MSG_DONE;
 	return 0;
@@ -391,8 +387,9 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 	}
 
 	if (!(fp = fopen(target_expand("/etc/rc.conf"), "r"))) {
-		msg_display(MSG_openfail, target_expand("/etc/rc.conf"), strerror(errno));
-		process_menu(MENU_ok, NULL);
+		msg_fmt_display(MSG_openfail, "%s%s",
+		    target_expand("/etc/rc.conf"), strerror(errno));
+		hit_enter_to_continue(NULL, NULL);
 		return 0;
 	}
 
@@ -424,7 +421,7 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 			fprintf(logfp, "replacement pattern is %s\n", pattern);
 			fflush(logfp);
 		}
-		replace("/etc/rc.conf", pattern);
+		replace("/etc/rc.conf", "%s", pattern);
 	}
 
 	return 0;
@@ -437,20 +434,22 @@ configmenu_hdr(struct menudesc *menu, void *arg)
 }
 
 void
-do_configmenu()
+do_configmenu(struct install_partition_desc *install)
 {
 	int		menu_no;
 	int		opts;
 	menu_ent	me[CONFIGOPT_LAST];
 	configinfo	*ce[CONFIGOPT_LAST];
 
+	memset(me, 0, sizeof(me));
+
 	/* if the target isn't mounted already, figure it out. */
-	if (target_mounted() == 0) {
+	if (install != NULL && target_mounted() == 0) {
 		partman_go = 0;
-		if (find_disks(msg_string(MSG_configure_prior)) < 0)
+		if (find_disks(msg_string(MSG_configure_prior), true) < 0)
 			return;
 
-		if (mount_disks() != 0)
+		if (mount_disks(install) != 0)
 			return;
 	}
 
@@ -465,7 +464,7 @@ do_configmenu()
 
 	menu_no = new_menu(NULL, me, opts, 0, -4, 0, 70,
 		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
-		configmenu_hdr, set_config, NULL, "XXX Help String",
+		configmenu_hdr, set_config, NULL, NULL,
 		MSG_doneconfig);
 
 	process_menu(menu_no, ce);

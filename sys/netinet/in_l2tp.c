@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.15.2.3 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.15.2.3 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -91,7 +91,9 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	struct sockaddr_in *sin_dst = satosin(var->lv_pdst);
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	struct rtentry *rt;
-	struct l2tp_ro *lro;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
+
 	int error;
 	uint32_t sess_id;
 
@@ -207,26 +209,23 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	}
 	memcpy(mtod(m, struct ip *), &iphdr, sizeof(struct ip));
 
-	lro = percpu_getref(sc->l2tp_ro_percpu);
-	mutex_enter(lro->lr_lock);
-	if ((rt = rtcache_lookup(&lro->lr_ro, var->lv_pdst)) == NULL) {
-		mutex_exit(lro->lr_lock);
-		percpu_putref(sc->l2tp_ro_percpu);
+	if_tunnel_get_ro(sc->l2tp_ro_percpu, &ro_pc, &lock_pc);
+	if ((rt = rtcache_lookup(ro_pc, var->lv_pdst)) == NULL) {
+		if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 		m_freem(m);
 		error = ENETUNREACH;
 		goto out;
 	}
 
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, &lro->lr_ro);
-		rtcache_free(&lro->lr_ro);
-		mutex_exit(lro->lr_lock);
-		percpu_putref(sc->l2tp_ro_percpu);
+		rtcache_unref(rt, ro_pc);
+		rtcache_free(ro_pc);
+		if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 		m_freem(m);
 		error = ENETUNREACH;	/*XXX*/
 		goto out;
 	}
-	rtcache_unref(rt, &lro->lr_ro);
+	rtcache_unref(rt, ro_pc);
 
 	/*
 	 * To avoid inappropriate rewrite of checksum,
@@ -234,9 +233,8 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	 */
 	m->m_pkthdr.csum_flags  = 0;
 
-	error = ip_output(m, NULL, &lro->lr_ro, 0, NULL, NULL);
-	mutex_exit(lro->lr_lock);
-	percpu_putref(sc->l2tp_ro_percpu);
+	error = ip_output(m, NULL, ro_pc, 0, NULL, NULL);
+	if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 	return error;
 
 looped:

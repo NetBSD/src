@@ -1,7 +1,7 @@
-/*	$NetBSD: h_mem_assist.c,v 1.11.2.2 2019/06/10 22:10:07 christos Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.11.2.3 2020/04/13 08:05:29 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,6 +51,152 @@
 static uint8_t mmiobuf[PAGE_SIZE];
 static uint8_t *instbuf;
 
+/* -------------------------------------------------------------------------- */
+
+static void
+mem_callback(struct nvmm_mem *mem)
+{
+	size_t off;
+
+	if (mem->gpa < 0x1000 || mem->gpa + mem->size > 0x1000 + PAGE_SIZE) {
+		printf("Out of page\n");
+		exit(-1);
+	}
+
+	off = mem->gpa - 0x1000;
+
+	printf("-> gpa = %p\n", (void *)mem->gpa);
+
+	if (mem->write) {
+		memcpy(mmiobuf + off, mem->data, mem->size);
+	} else {
+		memcpy(mem->data, mmiobuf + off, mem->size);
+	}
+}
+
+static int
+handle_memory(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
+{
+	int ret;
+
+	ret = nvmm_assist_mem(mach, vcpu);
+	if (ret == -1) {
+		err(errno, "nvmm_assist_mem");
+	}
+
+	return 0;
+}
+
+static void
+run_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
+{
+	struct nvmm_vcpu_exit *exit = vcpu->exit;
+
+	while (1) {
+		if (nvmm_vcpu_run(mach, vcpu) == -1)
+			err(errno, "nvmm_vcpu_run");
+
+		switch (exit->reason) {
+		case NVMM_VCPU_EXIT_NONE:
+			break;
+
+		case NVMM_VCPU_EXIT_RDMSR:
+			/* Stop here. */
+			return;
+
+		case NVMM_VCPU_EXIT_MEMORY:
+			handle_memory(mach, vcpu);
+			break;
+
+		case NVMM_VCPU_EXIT_SHUTDOWN:
+			printf("Shutting down!\n");
+			return;
+
+		default:
+			printf("Invalid VMEXIT: 0x%lx\n", exit->reason);
+			return;
+		}
+	}
+}
+
+static struct nvmm_assist_callbacks callbacks = {
+	.io = NULL,
+	.mem = mem_callback
+};
+
+/* -------------------------------------------------------------------------- */
+
+struct test {
+	const char *name;
+	uint8_t *code_begin;
+	uint8_t *code_end;
+	uint64_t wanted;
+	uint64_t off;
+};
+
+static void
+run_test(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    const struct test *test)
+{
+	uint64_t *res;
+	size_t size;
+
+	size = (size_t)test->code_end - (size_t)test->code_begin;
+
+	memset(mmiobuf, 0, PAGE_SIZE);
+	memcpy(instbuf, test->code_begin, size);
+
+	run_machine(mach, vcpu);
+
+	res = (uint64_t *)(mmiobuf + test->off);
+	if (*res == test->wanted) {
+		printf("Test '%s' passed\n", test->name);
+	} else {
+		printf("Test '%s' failed, wanted 0x%lx, got 0x%lx\n", test->name,
+		    test->wanted, *res);
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+extern uint8_t test1_begin, test1_end;
+extern uint8_t test2_begin, test2_end;
+extern uint8_t test3_begin, test3_end;
+extern uint8_t test4_begin, test4_end;
+extern uint8_t test5_begin, test5_end;
+extern uint8_t test6_begin, test6_end;
+extern uint8_t test7_begin, test7_end;
+extern uint8_t test8_begin, test8_end;
+extern uint8_t test9_begin, test9_end;
+extern uint8_t test10_begin, test10_end;
+extern uint8_t test11_begin, test11_end;
+extern uint8_t test12_begin, test12_end;
+extern uint8_t test13_begin, test13_end;
+extern uint8_t test14_begin, test14_end;
+extern uint8_t test_64bit_15_begin, test_64bit_15_end;
+extern uint8_t test_64bit_16_begin, test_64bit_16_end;
+
+static const struct test tests64[] = {
+	{ "64bit test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
+	{ "64bit test2 - OR",  &test2_begin, &test2_end, 0x16FF, 0 },
+	{ "64bit test3 - AND", &test3_begin, &test3_end, 0x1FC0, 0 },
+	{ "64bit test4 - XOR", &test4_begin, &test4_end, 0x10CF, 0 },
+	{ "64bit test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00, 0 },
+	{ "64bit test6 - DMO", &test6_begin, &test6_end, 0xFFAB, 0 },
+	{ "64bit test7 - STOS", &test7_begin, &test7_end, 0x00123456, 0 },
+	{ "64bit test8 - LODS", &test8_begin, &test8_end, 0x12345678, 0 },
+	{ "64bit test9 - MOVS", &test9_begin, &test9_end, 0x12345678, 0 },
+	{ "64bit test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078, 0 },
+	{ "64bit test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678, 0 },
+	{ "64bit test12 - CMP", &test12_begin, &test12_end, 0x00000001, 0 },
+	{ "64bit test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF, 0 },
+	{ "64bit test14 - TEST", &test14_begin, &test14_end, 0x00000001, 0 },
+	{ "64bit test15 - XCHG", &test_64bit_15_begin, &test_64bit_15_end, 0x123456, 0 },
+	{ "64bit test16 - XCHG", &test_64bit_16_begin, &test_64bit_16_end,
+	  0x123456, 0 },
+	{ NULL, NULL, NULL, -1, 0 }
+};
+
 static void
 init_seg(struct nvmm_x64_state_seg *seg, int type, int sel)
 {
@@ -68,9 +214,12 @@ init_seg(struct nvmm_x64_state_seg *seg, int type, int sel)
 }
 
 static void
-reset_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
+reset_machine64(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_x64_state *state = vcpu->state;
+
+	if (nvmm_vcpu_getstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
+		err(errno, "nvmm_vcpu_getstate");
 
 	memset(state, 0, sizeof(*state));
 
@@ -120,7 +269,7 @@ reset_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 }
 
 static void
-map_pages(struct nvmm_machine *mach)
+map_pages64(struct nvmm_machine *mach)
 {
 	pt_entry_t *L4, *L3, *L2, *L1;
 	int ret;
@@ -192,148 +341,6 @@ map_pages(struct nvmm_machine *mach)
 	L1[0x1000 / PAGE_SIZE] = PTE_P | PTE_W | 0x1000;
 }
 
-/* -------------------------------------------------------------------------- */
-
-static void
-mem_callback(struct nvmm_mem *mem)
-{
-	size_t off;
-
-	if (mem->gpa < 0x1000 || mem->gpa + mem->size > 0x1000 + PAGE_SIZE) {
-		printf("Out of page\n");
-		exit(-1);
-	}
-
-	off = mem->gpa - 0x1000;
-
-	printf("-> gpa = %p\n", (void *)mem->gpa);
-
-	if (mem->write) {
-		memcpy(mmiobuf + off, mem->data, mem->size);
-	} else {
-		memcpy(mem->data, mmiobuf + off, mem->size);
-	}
-}
-
-static int
-handle_memory(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
-{
-	int ret;
-
-	ret = nvmm_assist_mem(mach, vcpu);
-	if (ret == -1) {
-		err(errno, "nvmm_assist_mem");
-	}
-
-	return 0;
-}
-
-static void
-run_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
-{
-	struct nvmm_exit *exit = vcpu->exit;
-
-	while (1) {
-		if (nvmm_vcpu_run(mach, vcpu) == -1)
-			err(errno, "nvmm_vcpu_run");
-
-		switch (exit->reason) {
-		case NVMM_EXIT_NONE:
-			break;
-
-		case NVMM_EXIT_MSR:
-			/* Stop here. */
-			return;
-
-		case NVMM_EXIT_MEMORY:
-			handle_memory(mach, vcpu);
-			break;
-
-		case NVMM_EXIT_SHUTDOWN:
-			printf("Shutting down!\n");
-			return;
-
-		default:
-			printf("Invalid!\n");
-			return;
-		}
-	}
-}
-
-/* -------------------------------------------------------------------------- */
-
-struct test {
-	const char *name;
-	uint8_t *code_begin;
-	uint8_t *code_end;
-	uint64_t wanted;
-};
-
-static void
-run_test(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
-    const struct test *test)
-{
-	uint64_t *res;
-	size_t size;
-
-	size = (size_t)test->code_end - (size_t)test->code_begin;
-
-	reset_machine(mach, vcpu);
-
-	memset(mmiobuf, 0, PAGE_SIZE);
-	memcpy(instbuf, test->code_begin, size);
-
-	run_machine(mach, vcpu);
-
-	res = (uint64_t *)mmiobuf;
-	if (*res == test->wanted) {
-		printf("Test '%s' passed\n", test->name);
-	} else {
-		printf("Test '%s' failed, wanted 0x%lx, got 0x%lx\n", test->name,
-		    test->wanted, *res);
-	}
-}
-
-/* -------------------------------------------------------------------------- */
-
-extern uint8_t test1_begin, test1_end;
-extern uint8_t test2_begin, test2_end;
-extern uint8_t test3_begin, test3_end;
-extern uint8_t test4_begin, test4_end;
-extern uint8_t test5_begin, test5_end;
-extern uint8_t test6_begin, test6_end;
-extern uint8_t test7_begin, test7_end;
-extern uint8_t test8_begin, test8_end;
-extern uint8_t test9_begin, test9_end;
-extern uint8_t test10_begin, test10_end;
-extern uint8_t test11_begin, test11_end;
-extern uint8_t test12_begin, test12_end;
-extern uint8_t test13_begin, test13_end;
-extern uint8_t test14_begin, test14_end;
-
-static const struct test tests[] = {
-	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004 },
-	{ "test2 - OR",  &test2_begin, &test2_end, 0x16FF },
-	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0 },
-	{ "test4 - XOR", &test4_begin, &test4_end, 0x10CF },
-	{ "test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00 },
-	{ "test6 - DMO", &test6_begin, &test6_end, 0xFFAB },
-	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456 },
-	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678 },
-	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678 },
-	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078 },
-	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678 },
-	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001 },
-	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF },
-	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001 },
-	{ NULL, NULL, NULL, -1 }
-};
-
-static struct nvmm_callbacks callbacks = {
-	.io = NULL,
-	.mem = mem_callback
-};
-
 /*
  * 0x1000: MMIO address, unmapped
  * 0x2000: Instructions, mapped
@@ -342,7 +349,8 @@ static struct nvmm_callbacks callbacks = {
  * 0x5000: L2
  * 0x6000: L1
  */
-int main(int argc, char *argv[])
+static void
+test_vm64(void)
 {
 	struct nvmm_machine mach;
 	struct nvmm_vcpu vcpu;
@@ -352,12 +360,115 @@ int main(int argc, char *argv[])
 		err(errno, "nvmm_machine_create");
 	if (nvmm_vcpu_create(&mach, 0, &vcpu) == -1)
 		err(errno, "nvmm_vcpu_create");
-	nvmm_machine_configure(&mach, NVMM_MACH_CONF_CALLBACKS, &callbacks);
-	map_pages(&mach);
+	nvmm_vcpu_configure(&mach, &vcpu, NVMM_VCPU_CONF_CALLBACKS, &callbacks);
+	map_pages64(&mach);
 
-	for (i = 0; tests[i].name != NULL; i++) {
-		run_test(&mach, &vcpu, &tests[i]);
+	for (i = 0; tests64[i].name != NULL; i++) {
+		reset_machine64(&mach, &vcpu);
+		run_test(&mach, &vcpu, &tests64[i]);
 	}
 
+	if (nvmm_vcpu_destroy(&mach, &vcpu) == -1)
+		err(errno, "nvmm_vcpu_destroy");
+	if (nvmm_machine_destroy(&mach) == -1)
+		err(errno, "nvmm_machine_destroy");
+}
+
+/* -------------------------------------------------------------------------- */
+
+extern uint8_t test_16bit_1_begin, test_16bit_1_end;
+extern uint8_t test_16bit_2_begin, test_16bit_2_end;
+extern uint8_t test_16bit_3_begin, test_16bit_3_end;
+extern uint8_t test_16bit_4_begin, test_16bit_4_end;
+extern uint8_t test_16bit_5_begin, test_16bit_5_end;
+extern uint8_t test_16bit_6_begin, test_16bit_6_end;
+
+static const struct test tests16[] = {
+	{ "16bit test1 - MOV single", &test_16bit_1_begin, &test_16bit_1_end,
+	  0x023, 0x10f1 - 0x1000 },
+	{ "16bit test2 - MOV dual", &test_16bit_2_begin, &test_16bit_2_end,
+	  0x123, 0x10f3 - 0x1000 },
+	{ "16bit test3 - MOV dual+disp", &test_16bit_3_begin, &test_16bit_3_end,
+	  0x678, 0x10f1 - 0x1000 },
+	{ "16bit test4 - Mixed", &test_16bit_4_begin, &test_16bit_4_end,
+	  0x1011, 0x10f6 - 0x1000 },
+	{ "16bit test5 - disp16-only", &test_16bit_5_begin, &test_16bit_5_end,
+	  0x12, 0x1234 - 0x1000 },
+	{ "16bit test6 - XCHG", &test_16bit_6_begin, &test_16bit_6_end,
+	  0x1234, 0x1234 - 0x1000 },
+	{ NULL, NULL, NULL, -1, -1 }
+};
+
+static void
+reset_machine16(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
+{
+	struct nvmm_x64_state *state = vcpu->state;
+
+	if (nvmm_vcpu_getstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
+		err(errno, "nvmm_vcpu_getstate");
+
+	state->segs[NVMM_X64_SEG_CS].base = 0;
+	state->segs[NVMM_X64_SEG_CS].limit = 0x2FFF;
+	state->gprs[NVMM_X64_GPR_RIP] = 0x2000;
+
+	if (nvmm_vcpu_setstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
+		err(errno, "nvmm_vcpu_setstate");
+}
+
+static void
+map_pages16(struct nvmm_machine *mach)
+{
+	int ret;
+
+	instbuf = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0);
+	if (instbuf == MAP_FAILED)
+		err(errno, "mmap");
+
+	if (nvmm_hva_map(mach, (uintptr_t)instbuf, PAGE_SIZE) == -1)
+		err(errno, "nvmm_hva_map");
+	ret = nvmm_gpa_map(mach, (uintptr_t)instbuf, 0x2000, PAGE_SIZE,
+	    PROT_READ|PROT_EXEC);
+	if (ret == -1)
+		err(errno, "nvmm_gpa_map");
+}
+
+/*
+ * 0x1000: MMIO address, unmapped
+ * 0x2000: Instructions, mapped
+ */
+static void
+test_vm16(void)
+{
+	struct nvmm_machine mach;
+	struct nvmm_vcpu vcpu;
+	size_t i;
+
+	if (nvmm_machine_create(&mach) == -1)
+		err(errno, "nvmm_machine_create");
+	if (nvmm_vcpu_create(&mach, 0, &vcpu) == -1)
+		err(errno, "nvmm_vcpu_create");
+	nvmm_vcpu_configure(&mach, &vcpu, NVMM_VCPU_CONF_CALLBACKS, &callbacks);
+	map_pages16(&mach);
+
+	for (i = 0; tests16[i].name != NULL; i++) {
+		reset_machine16(&mach, &vcpu);
+		run_test(&mach, &vcpu, &tests16[i]);
+	}
+
+	if (nvmm_vcpu_destroy(&mach, &vcpu) == -1)
+		err(errno, "nvmm_vcpu_destroy");
+	if (nvmm_machine_destroy(&mach) == -1)
+		err(errno, "nvmm_machine_destroy");
+}
+
+/* -------------------------------------------------------------------------- */
+
+int main(int argc, char *argv[])
+{
+	if (nvmm_init() == -1)
+		err(errno, "nvmm_init");
+	test_vm64();
+	test_vm16();
 	return 0;
 }

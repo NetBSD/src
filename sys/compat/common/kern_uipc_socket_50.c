@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uipc_socket_50.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $	*/
+/*	$NetBSD: kern_uipc_socket_50.c,v 1.2.4.4 2020/04/13 08:04:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.2.4.4 2020/04/13 08:04:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -210,7 +210,7 @@ uipc_socket_50_setopt1(int opt, struct socket *so, const struct sockopt *sopt)
 }
 
 static int
-uipc_socket_50_sbts(int opt, struct mbuf **mp)
+uipc_socket_50_sbts(int opt, struct mbuf ***mp)
 {
 	struct timeval50 tv50;
 	struct timeval tv;
@@ -220,10 +220,10 @@ uipc_socket_50_sbts(int opt, struct mbuf **mp)
 	if (opt & SO_OTIMESTAMP) {
 
 		timeval_to_timeval50(&tv, &tv50);
-		*mp = sbcreatecontrol(&tv50, sizeof(tv50), SCM_OTIMESTAMP,
+		**mp = sbcreatecontrol(&tv50, sizeof(tv50), SCM_OTIMESTAMP,
 		    SOL_SOCKET);
-		if (*mp)
-			mp = &(*mp)->m_next;
+		if (**mp)
+			*mp = &(**mp)->m_next;
 		return 0;
 	} else
 		return EPASSTHROUGH;

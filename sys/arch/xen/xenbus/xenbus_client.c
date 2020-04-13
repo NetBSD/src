@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.13.20.1 2020/04/13 08:04:12 martin Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13.20.1 2020/04/13 08:04:12 martin Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Ex
 #include <sys/types.h>
 #include <sys/null.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <xen/xen.h>
@@ -49,30 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Ex
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
 #include <xen/granttables.h>
-
-
-int
-xenbus_watch_path(struct xenbus_device *dev, char *path,
-		      struct xenbus_watch *watch, 
-		      void (*callback)(struct xenbus_watch *,
-				       const char **, unsigned int))
-{
-	int err;
-
-	watch->node = path;
-	watch->xbw_callback = callback;
-
-	err = register_xenbus_watch(watch);
-
-	if (err) {
-		watch->node = NULL;
-		watch->xbw_callback = NULL;
-		xenbus_dev_fatal(dev, err, "adding watch on %s", path);
-	}
-	err = 0;
-
-	return err;
-}
 
 int
 xenbus_watch_path2(struct xenbus_device *dev, const char *path,
@@ -84,25 +60,37 @@ xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 	char *state;
 
 	DPRINTK("xenbus_watch_path2 path %s path2 %s\n", path, path2);
-	state =
-		malloc(strlen(path) + 1 + strlen(path2) + 1, M_DEVBUF,
-		    M_NOWAIT);
-	if (!state) {
-		xenbus_dev_fatal(dev, ENOMEM, "allocating path for watch");
-		return ENOMEM;
-	}
+
+	watch->node_sz = strlen(path) + 1 + strlen(path2) + 1;
+	state = kmem_alloc(watch->node_sz, KM_SLEEP);
 	strcpy(state, path);
 	strcat(state, "/");
 	strcat(state, path2);
 
-	err = xenbus_watch_path(dev, state, watch, callback);
+	watch->node = state;
+	watch->xbw_callback = callback;
+
+	err = register_xenbus_watch(watch);
 
 	if (err) {
-		free(state, M_DEVBUF);
+		watch->node = NULL;
+		watch->node_sz = 0;
+		watch->xbw_callback = NULL;
+		xenbus_dev_fatal(dev, err, "adding watch on %s", state);
+		kmem_free(state, watch->node_sz);
 	}
 	return err;
 }
 
+void
+xenbus_unwatch_path(struct xenbus_watch *watch)
+{
+	if (watch->node != NULL) {
+		unregister_xenbus_watch(watch);
+		kmem_free(watch->node, watch->node_sz);
+		watch->node = NULL;
+	}
+}
 
 int
 xenbus_switch_state(struct xenbus_device *dev,
@@ -140,13 +128,12 @@ xenbus_switch_state(struct xenbus_device *dev,
  * If the value returned is non-NULL, then it is the caller's to kfree.
  */
 static char *
-error_path(struct xenbus_device *dev)
+error_path(struct xenbus_device *dev, size_t *len)
 {
-	char *path_buffer = malloc(strlen("error/") + strlen(dev->xbusd_path) +
-				    1, M_DEVBUF, M_NOWAIT);
-	if (path_buffer == NULL) {
+	*len = strlen("error/") + strlen(dev->xbusd_path) + 1;
+	char *path_buffer = kmem_alloc(*len, KM_NOSLEEP);
+	if (path_buffer == NULL)
 		return NULL;
-	}
 
 	strcpy(path_buffer, "error/");
 	strcpy(path_buffer + strlen("error/"), dev->xbusd_path);
@@ -162,9 +149,10 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	int ret __diagused;
 	unsigned int len;
 	char *printf_buffer = NULL, *path_buffer = NULL;
+	size_t path_buffer_sz = 0;
 
 #define PRINTF_BUFFER_SIZE 4096
-	printf_buffer = malloc(PRINTF_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	printf_buffer = kmem_alloc(PRINTF_BUFFER_SIZE, KM_NOSLEEP);
 	if (printf_buffer == NULL)
 		goto fail;
 
@@ -174,8 +162,7 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	KASSERT(len + ret < PRINTF_BUFFER_SIZE);
 	dev->xbusd_has_error = 1;
 
-	path_buffer = error_path(dev);
-
+	path_buffer = error_path(dev, &path_buffer_sz);
 	if (path_buffer == NULL) {
 		printk("xenbus: failed to write error node for %s (%s)\n",
 		       dev->xbusd_path, printf_buffer);
@@ -190,9 +177,9 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 
 fail:
 	if (printf_buffer)
-		free(printf_buffer, M_DEVBUF);
+		kmem_free(printf_buffer, PRINTF_BUFFER_SIZE);
 	if (path_buffer)
-		free(path_buffer, M_DEVBUF);
+		kmem_free(path_buffer, path_buffer_sz);
 }
 
 

@@ -277,7 +277,7 @@ extern long r128_compat_ioctl(struct file *filp, unsigned int cmd,
  */
 #define R128_PM4_BUFFER_OFFSET		0x0700
 #define R128_PM4_BUFFER_CNTL		0x0704
-#	define R128_PM4_MASK			(15 << 28)
+#	define R128_PM4_MASK			(15u << 28)
 #	define R128_PM4_NONPM4			(0  << 28)
 #	define R128_PM4_192PIO			(1  << 28)
 #	define R128_PM4_192BM			(2  << 28)
@@ -286,8 +286,8 @@ extern long r128_compat_ioctl(struct file *filp, unsigned int cmd,
 #	define R128_PM4_64PIO_128INDBM		(5  << 28)
 #	define R128_PM4_64BM_128INDBM		(6  << 28)
 #	define R128_PM4_64PIO_64VCBM_64INDBM	(7  << 28)
-#	define R128_PM4_64BM_64VCBM_64INDBM	(8  << 28)
-#	define R128_PM4_64PIO_64VCPIO_64INDPIO	(15 << 28)
+#	define R128_PM4_64BM_64VCBM_64INDBM	(8u  << 28)
+#	define R128_PM4_64PIO_64VCPIO_64INDPIO	(15u << 28)
 #	define R128_PM4_BUFFER_CNTL_NOUPDATE	(1  << 27)
 
 #define R128_PM4_BUFFER_WM_CNTL		0x0708

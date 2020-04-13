@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.357.2.2 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.357.2.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.2 2020/04/08 14:09:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.3 2020/04/13 08:05:21 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,9 +108,9 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.2 2020/04/08 14:09:03 martin 
 #include <ufs/ffs/ffs_extern.h>
 
 #ifdef WAPBL
-MODULE(MODULE_CLASS_VFS, ffs, "wapbl");
+MODULE(MODULE_CLASS_VFS, ffs, "ufs,wapbl");
 #else
-MODULE(MODULE_CLASS_VFS, ffs, NULL);
+MODULE(MODULE_CLASS_VFS, ffs, "ufs");
 #endif
 
 static int ffs_vfs_fsync(vnode_t *, int);

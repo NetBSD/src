@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: geom.c,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -35,17 +35,18 @@
 /* Modified by Philip A. Nelson for use in sysinst. */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdint.h>
 #include <errno.h>
+#include "partutil.h"
 
 #include "defs.h"
 
-static int
-get_label(const char *disk, struct disklabel *l, unsigned long cmd)
+bool
+disk_ioctl(const char *disk, unsigned long cmd, void *d)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
@@ -53,29 +54,69 @@ get_label(const char *disk, struct disklabel *l, unsigned long cmd)
 
 	/* Open the disk. */
 	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0) 
-		return 0;
+	if (fd == -1) 
+		return false;
 
-	if (ioctl(fd, cmd, l) < 0) {
+	if (ioctl(fd, cmd, d) == -1) {
 		sv_errno = errno;
 		(void)close(fd);
 		errno = sv_errno;
-		return 0;
+		return false;
 	}
 	(void)close(fd);
-	return 1;
+	return true;
 }
 
-int
-get_geom(const char *disk, struct disklabel *l)
+bool
+get_wedge_list(const char *disk, struct dkwedge_list *dkwl)
 {
+	struct dkwedge_info *dkw;
+	memset(dkwl, 0, sizeof(*dkwl));
 
-	return get_label(disk, l, DIOCGDEFLABEL);
+	for (;;) {
+		if (!disk_ioctl(disk, DIOCLWEDGES, dkwl))
+			goto out;
+		if (dkwl->dkwl_nwedges == dkwl->dkwl_ncopied)
+			return true;
+		dkwl->dkwl_bufsize = dkwl->dkwl_nwedges * sizeof(*dkw);
+		dkw = realloc(dkwl->dkwl_buf, dkwl->dkwl_bufsize);
+		if (dkw == NULL)
+			goto out;
+		dkwl->dkwl_buf = dkw;
+	}
+out:
+	free(dkwl->dkwl_buf);
+	return false;
 }
 
-int
-get_real_geom(const char *disk, struct disklabel *l)
+bool
+get_wedge_info(const char *disk, struct dkwedge_info *dkw)
 {
 
-	return get_label(disk, l, DIOCGDINFO);
+	return disk_ioctl(disk, DIOCGWEDGEINFO, dkw);
+}
+
+bool
+get_disk_geom(const char *disk, struct disk_geom *d)
+{
+	char buf[MAXPATHLEN];
+	int fd, error;
+	    
+	if ((fd = opendisk(disk, O_RDONLY, buf, sizeof(buf), 0)) == -1)
+		return false;
+  
+	error = getdiskinfo(disk, fd, NULL, d, NULL);
+	close(fd);
+	if (error < 0) {
+		errno = error;
+		return false;
+	}
+	return true;
+}
+
+bool
+get_label_geom(const char *disk, struct disklabel *l)
+{
+
+	return disk_ioctl(disk, DIOCGDINFO, l);
 }

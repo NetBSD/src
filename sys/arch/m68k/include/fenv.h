@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.7 2017/09/13 09:55:35 phx Exp $	*/
+/*	$NetBSD: fenv.h,v 1.7.6.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -107,6 +107,11 @@ typedef struct {
     __asm__ __volatile__ ("fmovem%.l %0,%/fpcr/%/fpsr/%/fpiar" : : "m" (__envp))
 
 __BEGIN_DECLS
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
 
 __fenv_static inline int
 feclearexcept(int __excepts)
@@ -258,6 +263,10 @@ feupdateenv(const fenv_t *__envp)
 	feraiseexcept((int)__fpsr);
 	return 0;
 }
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic pop
+#endif
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 

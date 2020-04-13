@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.102.2.2 2020/04/08 14:08:02 martin Exp $ */
+/* $NetBSD: dksubr.c,v 1.102.2.3 2020/04/13 08:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.102.2.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.102.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,12 @@ dk_open(struct dk_softc *dksc, dev_t dev,
 	 */
 	if (dk->dk_nwedges != 0 && part != RAW_PART) {
 		ret = EBUSY;
+		goto done;
+	}
+
+	/* If no dkdriver attached, bail */
+	if (dkd == NULL) {
+		ret = ENXIO;
 		goto done;
 	}
 
@@ -381,6 +387,7 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	mutex_enter(&dksc->sc_iolock);
 
 	if (bp != NULL) {
+		bp->b_ci = curcpu();
 		disk_wait(&dksc->sc_dkdev);
 		bufq_put(dksc->sc_bufq, bp);
 	}

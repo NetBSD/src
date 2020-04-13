@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.26.16.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.26.16.3 2020/04/13 08:04:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.26.16.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.26.16.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -174,8 +174,9 @@ udsbr_detach(device_t self, int flags)
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
+	if (sc->sc_udev != NULL)
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+		    sc->sc_dev);
 
 	return rv;
 }

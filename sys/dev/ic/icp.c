@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.31 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: icp.c,v 1.31.38.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.31 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.31.38.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	/*
 	 * Allocate and initialize the command control blocks.
 	 */
-	ic = malloc(sizeof(*ic) * ICP_NCCBS, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if ((icp->icp_ccbs = ic) == NULL) {
-		aprint_error_dev(icp->icp_dv, "malloc() failed\n");
-		goto bail_out;
-	}
+	ic = malloc(sizeof(*ic) * ICP_NCCBS, M_DEVBUF, M_WAITOK | M_ZERO);
 	state++;
 
 	for (i = 0; i < ICP_NCCBS; i++, ic++) {
@@ -207,7 +203,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 #endif
 
 	/*
-	 * Initalize the controller.
+	 * Initialize the controller.
 	 */
 	if (!icp_cmd(icp, ICP_SCREENSERVICE, ICP_INIT, 0, 0, 0)) {
 		aprint_error_dev(icp->icp_dv, "screen service init error %d\n",

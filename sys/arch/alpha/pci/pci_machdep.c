@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.23 2014/10/17 18:31:07 uebayasi Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.23.20.1 2020/04/13 08:03:29 martin Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2014/10/17 18:31:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23.20.1 2020/04/13 08:03:29 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,11 @@ pci_display_console(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t
 {
 #if NVGA_PCI || NTGA
 	pcitag_t tag;
-	pcireg_t id, class;
+	pcireg_t id;
 	int match, nmatch;
+#endif
+#if NVGA_PCI
+	pcireg_t class;
 #endif
 	int (*fn)(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 	    int, int, int);
@@ -78,7 +81,9 @@ pci_display_console(bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t
 	if (id == 0 || id == 0xffffffff)
 		panic("pci_display_console: no device at %d/%d/%d",
 		    bus, device, function);
+#  if NVGA_PCI
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+#  endif
 
 	match = 0;
 #endif

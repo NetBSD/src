@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-wb.c,v 1.8.4.1 2020/04/08 14:04:14 martin Exp $");
+__RCSID("$NetBSD: print-wb.c,v 1.8.4.2 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: White Board printer */
@@ -208,7 +208,7 @@ wb_id(netdissect_options *ndo,
 	len -= sizeof(*io) * nid;
 	io = (const struct id_off *)(id + 1);
 	cp = (const char *)(io + nid);
-	if (ND_TTEST2(cp, len)) {
+	if (ND_TTEST2(*cp, len)) {
 		ND_PRINT((ndo, "\""));
 		fn_print(ndo, (const u_char *)cp, (const u_char *)cp + len);
 		ND_PRINT((ndo, "\""));

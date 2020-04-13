@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.1 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_usb.c,v 1.1.36.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 #include <arm/imx/imxusbvar.h>
+#include <arm/imx/imxusbreg.h>
 
 #include <arm/mainbus/mainbus.h>
 
@@ -54,7 +55,7 @@
 #include "locators.h"
 
 struct imx23_usb_softc {
-	struct imxusbc_softc  sc_imxusbc;
+	struct imxusbc_softc  sc_imxusbc; /* Must be first */
 };
 
 static int	imx23_usb_match(device_t, cfdata_t, void *);
@@ -94,9 +95,14 @@ imx23_usb_attach(device_t parent, device_t self, void *aux)
 {
 	struct imxusbc_softc *sc = device_private(self);
 
-	sc->sc_init_md_hook = imx23_usb_init;
-	sc->sc_setup_md_hook = NULL;
+	sc->sc_dev = self;
 	sc->sc_iot = &imx23_bus_space;
+	sc->sc_ehci_size = IMXUSB_EHCI_SIZE;
+	sc->sc_ehci_offset = IMXUSB_EHCI_SIZE;
+
+	sc->sc_init_md_hook = imx23_usb_init;
+	sc->sc_intr_establish_md_hook = NULL;
+	sc->sc_setup_md_hook = NULL;
 
 	if (bus_space_map(sc->sc_iot, AHB_USB, AHB_USB_SIZE, 0, &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "Unable to map bus space");

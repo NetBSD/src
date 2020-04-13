@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.9 2007/10/17 19:55:13 garbled Exp $	*/
+/*	$NetBSD: maccons.c,v 1.9.108.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,11 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.9 2007/10/17 19:55:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.9.108.1 2020/04/13 08:03:57 martin Exp $");
 
+#include "genfb.h"
+#include "macfb.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "zsc.h"
+
+#if (NGENFB + NMACFB) > 1
+#error "genfb(4) and macfb(4) cannot be enabled at the same time"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,13 +45,19 @@ __KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.9 2007/10/17 19:55:13 garbled Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-
 #include <machine/video.h>
+
 #include <dev/cons.h>
-#include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <mac68k/dev/macfbvar.h>
+#include <dev/wscons/wskbdvar.h>
+#if NGENFB > 0
+#include <dev/wsfb/genfbvar.h>
+#endif
+
 #include <mac68k/dev/akbdvar.h>
+#if NMACFB > 0
+#include <mac68k/dev/macfbvar.h>
+#endif
 
 void maccnprobe(struct consdev *);
 void maccninit(struct consdev *);
@@ -84,7 +96,11 @@ maccninit(struct consdev *cp)
 	 * note:  maccons_initted is initialized to (-1).
 	 */
 	if (++maccons_initted > 0) {
+#if NMACFB > 0
 		macfb_cnattach(mac68k_video.mv_phys);
+#elif NGENFB > 0
+		genfb_cnattach();
+#endif
 		akbd_cnattach();
 	}
 }

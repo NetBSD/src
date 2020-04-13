@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.21 2014/03/26 08:52:00 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.21.30.1 2020/04/13 08:03:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2014/03/26 08:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21.30.1 2020/04/13 08:03:34 martin Exp $");
 
 #include "opt_irqstats.h"
 
@@ -338,10 +338,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 #if 0
 	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);
 #endif
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-	    return (NULL);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_linux.h,v 1.6 2011/12/11 14:05:39 nonaka Exp $	*/
+/*	$NetBSD: compat_linux.h,v 1.6.48.1 2020/04/13 08:04:13 martin Exp $	*/
 /*	$OpenBSD: compat_linux.h,v 1.5 2006/01/15 17:58:27 deraadt Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ extern	int register_chrdev(unsigned int, const char *, struct file_operations *)
 extern	int unregister_chrdev(unsigned int, const char *);
 extern	void printk(const char *, ...) __printflike(1, 2);
 extern	void *memcpy(void *, const void *, size_t);
+extern	void *memset(void *, int, size_t);
 
 /* procfs support */
 struct proc_dir_entry {

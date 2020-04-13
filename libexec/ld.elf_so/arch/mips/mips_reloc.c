@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.72.4.1 2020/04/13 08:03:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.72.4.1 2020/04/13 08:03:18 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,8 @@ load_ptr(void *where, size_t len)
 	(void)memcpy(&val, where, len);
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	(void)memcpy((uint8_t *)((&val)+1) - len, where, len);
+	uint8_t *valp = (void *)&val;
+	(void)memcpy(valp + sizeof(val) - len, where, len);
 #endif
 	return (len == sizeof(Elf_Sxword)) ? val : (Elf_Sword)val;
 }
@@ -117,7 +118,8 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 	(void)memcpy(where, &val, len);
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	(void)memcpy(where, (const uint8_t *)((&val)+1) - len, len);
+	const uint8_t *valp = (const void *)&val;
+	(void)memcpy(where, valp + sizeof(val) - len, len);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.84.16.1 2019/06/10 22:05:26 christos Exp $ */
+/*  $NetBSD: ops.c,v 1.84.16.2 2020/04/13 08:03:15 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -955,7 +955,7 @@ perfuse_fs_unmount(struct puffs_usermount *pu, int flags)
 }
 
 int
-perfuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
+perfuse_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *svfsb)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2976,24 +2976,15 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * expect one. E.g.: if we provide none, GlusterFS logs an error
 	 * "0-glusterfs-fuse: xl is NULL"
 	 *
-	 * There is one exception with directories where filehandle
-	 * is not included, because libfuse uses different filehandle
-	 * in opendir/releasedir/readdir/fsyncdir compared to other 
-	 * operations. Who locks a directory anyway?
-	 *
 	 * We need the read file handle if the file is open read only,
 	 * in order to support shared locks on read-only files.
 	 * NB: The kernel always sends advlock for read-only
 	 * files at exit time when the process used lock, see
 	 * sys_exit -> exit1 -> fd_free -> fd_close -> VOP_ADVLOCK
 	 */
-	if (!PN_ISDIR(opc)) {
-		if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
-			error = EBADF;
-			goto out;
-		}
-	} else {
-		fh = FUSE_UNKNOWN_FH;
+	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
+		error = EBADF;
+		goto out;
 	}
 
 	ps = puffs_getspecific(pu);

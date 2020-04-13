@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.106.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.106.2.3 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.106.2.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.106.2.3 2020/04/13 08:05:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -533,8 +533,11 @@ tap_start(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 		cv_broadcast(&sc->sc_cv);
 		selnotify(&sc->sc_rsel, 0, 1);
-		if (sc->sc_flags & TAP_ASYNCIO)
+		if (sc->sc_flags & TAP_ASYNCIO) {
+			kpreempt_disable();
 			softint_schedule(sc->sc_sih);
+			kpreempt_enable();
+		}
 	}
 done:
 	mutex_exit(&sc->sc_lock);
@@ -643,8 +646,11 @@ tap_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~IFF_RUNNING;
 	cv_broadcast(&sc->sc_cv);
 	selnotify(&sc->sc_rsel, 0, 1);
-	if (sc->sc_flags & TAP_ASYNCIO)
+	if (sc->sc_flags & TAP_ASYNCIO) {
+		kpreempt_disable();
 		softint_schedule(sc->sc_sih);
+		kpreempt_enable();
+	}
 	mutex_exit(&sc->sc_lock);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.8 2017/10/07 16:05:32 jdolecek Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.8.4.1 2020/04/13 08:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.8 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.8.4.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,12 +149,16 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 void
 satafis_rhd_construct_atapi(struct ata_xfer *xfer, uint8_t *fis)
 {
+	int bcount16;
 
 	memset(fis, 0, RHD_FISLEN);
 
 	fis[fis_type] = RHD_FISTYPE;
 	fis[rhd_c] = RHD_C;
 	fis[rhd_command] = ATAPI_PKT_CMD;
+	bcount16 = xfer->c_bcount <= 0xffff ? xfer->c_bcount : 0xffff;
+	fis[rhd_lba1] = (bcount16 >> 0) & 0xff;
+	fis[rhd_lba2] = (bcount16 >> 8) & 0xff;
 	fis[rhd_features0] = (xfer->c_flags & C_DMA) ?
 	    ATAPI_PKT_CMD_FTRE_DMA : 0;
 }

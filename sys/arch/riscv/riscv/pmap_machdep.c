@@ -1,9 +1,11 @@
-/*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+/* $NetBSD: pmap_machdep.c,v 1.2.22.3 2020/04/13 08:04:05 martin Exp $ */
+
+/*
+ * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas (of 3am Software Foundry) and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.2 2020/04/08 14:07:51 martin Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.3 2020/04/13 08:04:05 martin Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +42,16 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.2 2020/04/08 14:07:51 martin Exp $");
 #include <riscv/locore.h>
 
 int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+
+vaddr_t pmap_direct_base __read_mostly;
+vaddr_t pmap_direct_end __read_mostly;
+
+void
+pmap_bootstrap(void)
+{
+
+	pmap_bootstrap_common();
+}
 
 void
 pmap_bootstrap(void)
@@ -51,21 +63,21 @@ pmap_bootstrap(void)
 void
 pmap_zero_page(paddr_t pa)
 {
-#ifdef POOL_PHYSTOV
-	memset((void *)POOL_PHYSTOV(pa), 0, PAGE_SIZE);
+#ifdef PMAP_DIRECT_MAP
+	memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
 #else
-#error FIX pmap_zero_page!
+#error "no direct map"
 #endif
 }
 
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-#ifdef POOL_PHYSTOV
-	memcpy((void *)POOL_PHYSTOV(dst), (const void *)POOL_PHYSTOV(src),
+#ifdef PMAP_DIRECT_MAP
+	memcpy((void *)PMAP_DIRECT_MAP(dst), (const void *)PMAP_DIRECT_MAP(src),
 	    PAGE_SIZE);
 #else
-#error FIX pmap_copy_page!
+#error "no direct map"
 #endif
 }
 
@@ -82,7 +94,7 @@ pmap_md_alloc_poolpage(int flags)
 vaddr_t
 pmap_md_map_poolpage(paddr_t pa, vsize_t len)
 {
-	return POOL_PHYSTOV(pa);
+	return PMAP_DIRECT_MAP(pa);
 }
 
 void
@@ -106,34 +118,17 @@ pmap_md_io_vaddr_p(vaddr_t va)
 paddr_t
 pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 {
-	KASSERT(VM_MAX_KERNEL_ADDRESS <= va && (intptr_t) va < 0);
-	const pmap_pdetab_t *ptb = pmap_kernel()->pm_md.md_pdetab;
-	pd_entry_t pde;
-
 #ifdef _LP64
-	pde = ptb->pde_pde[(va >> XSEGSHIFT) & (NPDEPG-1)];
-	if ((pde & PTE_V) == 0) {
-		return -(paddr_t)1;
-	}
-	if ((pde & PTE_T) == 0) {
-		return pde & ~XSEGOFSET;
-	}
-	ptb = (const pmap_pdetab_t *)POOL_PHYSTOV(pte_pde_to_paddr(pde));
+	return PMAP_DIRECT_UNMAP(va);
+#else
+#error "no direct map"
 #endif
-	pde = ptb->pde_pde[(va >> SEGSHIFT) & (NPDEPG-1)];
-	if ((pde & PTE_V) == 0) {
-		return -(paddr_t)1;
-	}
-	if ((pde & PTE_T) == 0) {
-		return pde & ~SEGOFSET;
-	}
-	return -(paddr_t)1;
 }
 
 vaddr_t
 pmap_md_direct_map_paddr(paddr_t pa)
 {
-	return POOL_PHYSTOV(pa);
+	return PMAP_DIRECT_MAP(pa);
 }
 
 void
@@ -168,7 +163,7 @@ pmap_md_pdetab_init(struct pmap *pmap)
 	    pmap_md_direct_mapped_vaddr_to_paddr((vaddr_t)pmap->pm_md.md_pdetab);
 }
 
-// TLB mainenance routines
+/* -------------------------------------------------------------------------- */
 
 tlb_asid_t
 tlb_get_asid(void)
@@ -205,7 +200,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 }
 
 u_int
-tlb_record_asids(u_long *ptr)
+tlb_record_asids(u_long *ptr, tlb_asid_t asid_max)
 {
 	memset(ptr, 0xff, PMAP_TLB_NUM_PIDS / (8 * sizeof(u_long)));
 	ptr[0] = -2UL;

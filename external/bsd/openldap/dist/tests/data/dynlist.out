@@ -198,6 +198,9 @@ memberURL: ldap:///ou=People,dc=example,dc=com??sub?(objectClass=person)
 # Testing list compare...
 TRUE
 
+# Testing list compare... (should return FALSE)
+FALSE
+
 # Testing list compare (should return FALSE)...
 FALSE
 

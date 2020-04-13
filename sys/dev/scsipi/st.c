@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.234.2.2 2020/04/08 14:08:12 martin Exp $ */
+/*	$NetBSD: st.c,v 1.234.2.3 2020/04/13 08:04:48 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.234.2.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.234.2.3 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2426,10 +2426,7 @@ st_touch_tape(struct st_softc *st)
 	int readsize;
 	int error;
 
-	bf = malloc(1024, M_TEMP, M_NOWAIT);
-	if (bf == NULL)
-		return ENOMEM;
-
+	bf = malloc(1024, M_TEMP, M_WAITOK);
 	if ((error = st->ops(st, ST_OPS_MODESENSE, 0)) != 0)
 		goto bad;
 

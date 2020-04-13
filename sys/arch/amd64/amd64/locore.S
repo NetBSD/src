@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166.2.2 2020/04/08 14:07:25 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.166.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1143,13 +1143,10 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rsi
 	callq	_C_LABEL(x86_dbregs_switch)
 
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
+	/* Switch the FPU. */
 	movq	%r13,%rdi
 	movq	%r12,%rsi
-	callq	_C_LABEL(fpu_eagerswitch)
-.Lno_eagerfpu:
+	callq	_C_LABEL(fpu_switch)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
@@ -1169,29 +1166,10 @@ ENTRY(cpu_switchto)
 	movq	%rax,TF_RIP(%rbx)
 .Lno_RAS:
 
-	/*
-	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
-	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
-	 */
 #ifndef XENPV
+	/* Raise the IPL to IPL_HIGH. Dropping the priority is deferred until
+	 * mi_switch(), when cpu_switchto() returns. XXX Still needed? */
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
-	movq	%cr0,%rdx
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	cmpq	CPUVAR(FPCURLWP),%r12
-	je	.Lskip_TS
-	orq	$CR0_TS,%rcx
-.Lskip_TS:
-
-	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpq	%rdx,%rcx
-	je	.Lskip_CR0
-	movq	%rcx,%cr0
-.Lskip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
@@ -1253,6 +1231,7 @@ ENTRY(cpu_switchto)
 
 .Lswitch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
+	KMSAN_INIT_RET(8)
 	movq	%r13,%rax
 	popq	%r15
 	popq	%r14
@@ -1304,6 +1283,8 @@ ENTRY(handle_syscall)
 	jne	.Lspl_error
 #endif
 
+	HANDLE_DEFERRED_FPU
+
 	/*
 	 * Decide if we need to take a slow path. That's the case when we
 	 * want to reload %cs and %ss on a 64bit LWP (MDL_IRET set), or when
@@ -1318,19 +1299,11 @@ ENTRY(handle_syscall)
 	jmp	syscall_sysret
 
 #ifdef DIAGNOSTIC
-	/* Report SPL error */
 .Lspl_error:
 	movabsq	$4f,%rdi
-	movl	TF_RAX(%rsp),%esi
-	movl	TF_RDI(%rsp),%edx
-	movl	%ebx,%ecx
-	movl	CPUVAR(ILEVEL),%r8d
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+	movl	CPUVAR(ILEVEL),%esi
+	call	_C_LABEL(panic)
+4:	.asciz	"spl not lowered on syscall, ilevel=%x"
 #endif
 
 /* AST pending or pmap load needed */
@@ -1345,6 +1318,7 @@ ENTRY(handle_syscall)
 	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 END(handle_syscall)
@@ -1360,8 +1334,10 @@ ENTRY(lwp_trampoline)
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
+	KMSAN_INIT_ARG(16)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
+	KMSAN_INIT_ARG(8)
 	call	*%r12
 	jmp	.Lsyscall_checkast
 END(lwp_trampoline)
@@ -1434,6 +1410,7 @@ IDTVEC(\name)
 	.if	\is_svs
 		SVS_ENTER
 	.endif
+	KMSAN_ENTER
 	jmp	handle_syscall
 IDTVEC_END(\name)
 .endm
@@ -1477,6 +1454,7 @@ IDTVEC_END(osyscall)
 	TEXT_USER_BEGIN
 	_ALIGN_TEXT
 LABEL(syscall_sysret)
+	KMSAN_LEAVE
 	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
@@ -1525,10 +1503,12 @@ ENTRY(sse2_idlezero_page)
 	sfence
 	incl	%eax
 	popq	%rbp
+	KMSAN_INIT_RET(1)
 	ret
 2:
 	sfence
 	popq	%rbp
+	KMSAN_INIT_RET(1)
 	ret
 END(sse2_idlezero_page)
 
@@ -1562,6 +1542,7 @@ END(pagezero)
 	.type intrfastexit,@function
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
+	KMSAN_LEAVE
 
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	.Lkexit

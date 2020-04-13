@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.124.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.124.2.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.124.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.124.2.2 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ void ex_read(struct ex_softc *);
 void ex_reset(struct ex_softc *);
 void ex_set_mc(struct ex_softc *);
 void ex_getstats(struct ex_softc *);
-void ex_printstats(struct ex_softc *);
 void ex_tick(void *);
 
 static int ex_eeprom_busy(struct ex_softc *);
@@ -177,6 +176,7 @@ ex_config(struct ex_softc *sc)
 	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	callout_init(&sc->ex_mii_callout, 0);
+	callout_setfunc(&sc->ex_mii_callout, ex_tick, sc);
 
 	ex_reset(sc);
 
@@ -689,7 +689,7 @@ ex_init(struct ifnet *ifp)
 
 	GO_WINDOW(1);
 
-	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
+	callout_schedule(&sc->ex_mii_callout, hz);
 
  out:
 	if (error) {
@@ -814,7 +814,7 @@ ex_txstat(struct ex_softc *sc)
 		/* Resetting takes a while and we will do more than wait. */
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		++sc->sc_ethercom.ec_if.if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		aprint_error_dev(sc->sc_dev, "%s%s%s",
 		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
 		    (err & TXS_JABBER) ? " jabber" : "",
@@ -834,7 +834,7 @@ ex_txstat(struct ex_softc *sc)
 		}
 		aprint_error("\n");
 		if (err & TXS_MAX_COLLISION)
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 
 		/* Wait for TX_RESET to finish. */
 		ex_waitcmd(sc);
@@ -843,7 +843,7 @@ ex_txstat(struct ex_softc *sc)
 		ex_setup_tx(sc);
 	} else {
 		if (err & TXS_MAX_COLLISION)
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 	}
 
@@ -1084,6 +1084,7 @@ ex_start(struct ifnet *ifp)
 				aprint_error("aborting\n");
 				goto out;
 			}
+			MCLAIM(mn, &sc->sc_ethercom.ec_tx_mowner);
 			if (mb_head->m_pkthdr.len > MHLEN) {
 				MCLGET(mn, M_DONTWAIT);
 				if ((mn->m_flags & M_EXT) == 0) {
@@ -1367,7 +1368,7 @@ ex_intr(void *arg)
 					    ((sc->sc_ethercom.ec_capenable &
 					    ETHERCAP_VLAN_MTU) ?
 					    EX_UPD_ERR_VLAN : EX_UPD_ERR)) {
-						ifp->if_ierrors++;
+						if_statinc(ifp, if_ierrors);
 						m_freem(m);
 						goto rcvloop;
 					}
@@ -1436,7 +1437,7 @@ ex_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ex_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
@@ -1485,20 +1486,26 @@ ex_getstats(struct ex_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint8_t upperok;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	GO_WINDOW(6);
 	upperok = bus_space_read_1(iot, ioh, UPPER_FRAMES_OK);
-	ifp->if_ipackets += bus_space_read_1(iot, ioh, RX_FRAMES_OK);
-	ifp->if_ipackets += (upperok & 0x03) << 8;
-	ifp->if_opackets += bus_space_read_1(iot, ioh, TX_FRAMES_OK);
-	ifp->if_opackets += (upperok & 0x30) << 4;
-	ifp->if_ierrors += bus_space_read_1(iot, ioh, RX_OVERRUNS);
-	ifp->if_collisions += bus_space_read_1(iot, ioh, TX_COLLISIONS);
+	if_statadd_ref(nsr, if_opackets,
+	    bus_space_read_1(iot, ioh, TX_FRAMES_OK));
+	if_statadd_ref(nsr, if_opackets, (upperok & 0x30) << 4);
+	if_statadd_ref(nsr, if_ierrors,
+	    bus_space_read_1(iot, ioh, RX_OVERRUNS));
+	if_statadd_ref(nsr, if_collisions,
+	    bus_space_read_1(iot, ioh, TX_COLLISIONS));
 	/*
 	 * There seems to be no way to get the exact number of collisions,
 	 * this is the number that occurred at the very least.
 	 */
-	ifp->if_collisions += 2 * bus_space_read_1(iot, ioh,
-	    TX_AFTER_X_COLLISIONS);
+	if_statadd_ref(nsr, if_collisions,
+	    2 * bus_space_read_1(iot, ioh, TX_AFTER_X_COLLISIONS));
+
+	IF_STAT_PUTREF(ifp);
+
 	/*
 	 * Interface byte counts are counted by ether_input() and
 	 * ether_output(), so don't accumulate them here.  Just
@@ -1516,24 +1523,10 @@ ex_getstats(struct ex_softc *sc)
 	(void)bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
 	(void)bus_space_read_1(iot, ioh, TX_NO_SQE);
 	(void)bus_space_read_1(iot, ioh, TX_CD_LOST);
+	(void)bus_space_read_1(iot, ioh, RX_FRAMES_OK);
 	GO_WINDOW(4);
 	(void)bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
 	GO_WINDOW(1);
-}
-
-void
-ex_printstats(struct ex_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-	ex_getstats(sc);
-	printf("in %llu out %llu ierror %llu oerror %llu ibytes %llu obytes "
-	    "%llu\n", (unsigned long long)ifp->if_ipackets,
-	    (unsigned long long)ifp->if_opackets,
-	    (unsigned long long)ifp->if_ierrors,
-	    (unsigned long long)ifp->if_oerrors,
-	    (unsigned long long)ifp->if_ibytes,
-	    (unsigned long long)ifp->if_obytes);
 }
 
 void
@@ -1556,7 +1549,7 @@ ex_tick(void *arg)
 
 	splx(s);
 
-	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
+	callout_schedule(&sc->ex_mii_callout, hz);
 }
 
 void
@@ -1582,7 +1575,7 @@ ex_watchdog(struct ifnet *ifp)
 	struct ex_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	ex_reset(sc);
 	ex_init(ifp);
@@ -1698,12 +1691,12 @@ ex_detach(struct ex_softc *sc)
 		mii_detach(&sc->ex_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->ex_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->ex_mii.mii_media);
 
 	for (i = 0; i < EX_NUPD; i++) {
 		rxd = &sc->sc_rxdescs[i];
@@ -1809,6 +1802,7 @@ ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m != NULL) {
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);

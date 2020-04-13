@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.1.22.1 2020/04/13 08:06:03 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -80,12 +80,12 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # cylindry glowice sektory razem sektory  GB
------- -------- ------- ------- ------------- ---
+{BIOS # cylindry glowice sektory razem sektory   GB 
+------ -------- ------- ------- ------------- ---- 
 }
 
 message onebiosmatch_row
-{%#6x %8d %6d %7d %13u %3u\n}
+{%#6x %8d %7d %7d %13u %3u\n}
 
 message This_is_the_correct_geometry
 {To jest prawidlowa geometria}
@@ -100,8 +100,8 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cylindry glowice sektory razem sektory  GB
-   ------ -------- ------- ------- ------------- ---
+{   BIOS # cylindry glowice sektory razem sektory   GB 
+   ------ -------- ------- ------- ------------- ---- 
 }
 
 message biosmultmatch_row
@@ -156,3 +156,4 @@ message updatembr
 kodu rozruchowego NetBSD?}
 
 message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC_KASLR)}

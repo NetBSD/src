@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.15 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.15.50.1 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.15 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.15.50.1 2020/04/13 08:05:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -59,7 +59,7 @@ ipid_random(void)
 }
 
 /*
- * Initalizes the  
+ * Initializes the  
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *

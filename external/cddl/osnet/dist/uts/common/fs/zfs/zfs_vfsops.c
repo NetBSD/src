@@ -121,6 +121,7 @@ VFS_SET(zfs_vfsops, zfs, VFCF_JAIL | VFCF_DELEGADMIN);
 
 #ifdef __NetBSD__
 
+#include <sys/fstrans.h>
 #include <sys/mkdev.h>
 #include <miscfs/genfs/genfs.h>
 
@@ -1984,6 +1985,9 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	if (uap == NULL)
 		return (SET_ERROR(EINVAL));
 
+	if (*data_len < sizeof *uap)
+		return (SET_ERROR(EINVAL));
+
 	if (mvp->v_type != VDIR)
 		return (SET_ERROR(ENOTDIR));
 
@@ -2652,8 +2656,17 @@ zfs_suspend_fs(zfsvfs_t *zfsvfs)
 {
 	int error;
 
+#ifdef __NetBSD__
+	if ((error = vfs_suspend(zfsvfs->z_vfs, 0)) != 0)
+		return error;
+	if ((error = zfsvfs_teardown(zfsvfs, B_FALSE)) != 0) {
+		vfs_resume(zfsvfs->z_vfs);
+		return (error);
+	}
+#else
 	if ((error = zfsvfs_teardown(zfsvfs, B_FALSE)) != 0)
 		return (error);
+#endif
 
 	return (0);
 }
@@ -2665,6 +2678,16 @@ zfs_suspend_fs(zfsvfs_t *zfsvfs)
  * are the same: the relevant objset and associated dataset are owned by
  * zfsvfs, held, and long held on entry.
  */
+#ifdef __NetBSD__
+static bool
+zfs_resume_selector(void *cl, struct vnode *vp)
+{
+
+	if (zfsctl_is_node(vp))
+		return false;
+	return (VTOZ(vp)->z_sa_hdl == NULL);
+}
+#endif
 int
 zfs_resume_fs(zfsvfs_t *zfsvfs, dsl_dataset_t *ds)
 {
@@ -2708,6 +2731,18 @@ bail:
 	/* release the VOPs */
 	rw_exit(&zfsvfs->z_teardown_inactive_lock);
 	rrm_exit(&zfsvfs->z_teardown_lock, FTAG);
+#ifdef __NetBSD__
+	struct vnode_iterator *marker;
+	vnode_t *vp;
+
+	vfs_vnode_iterator_init(zfsvfs->z_vfs, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker,
+	    zfs_resume_selector, NULL))) {
+		vgone(vp);
+	}
+	vfs_vnode_iterator_destroy(marker);
+	vfs_resume(zfsvfs->z_vfs);
+#endif
 
 	if (err) {
 		/*

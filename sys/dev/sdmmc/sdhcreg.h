@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.19 2017/06/23 08:43:59 ryo Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.19.6.1 2020/04/13 08:04:48 martin Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -29,6 +29,7 @@
 #define  SDHC_BLOCK_COUNT_MAX		512
 #define SDHC_ARGUMENT			0x08
 #define SDHC_TRANSFER_MODE		0x0c
+#define  SDHC_TRANSFER_MODE_MASK	0xb7
 #define  SDHC_MULTI_BLOCK_MODE		(1<<5)
 #define  SDHC_READ_MODE			(1<<4)
 #define  SDHC_AUTO_CMD12_ENABLE		(1<<2)
@@ -228,6 +229,7 @@
 #define SDHC_DMA_CTL			0x40c	/* eSDHC */
 #define  SDHC_DMA_SNOOP			0x40
 #define SDHC_MIX_CTRL			0x48	/* uSDHC */
+#define  SDHC_USDHC_NIBBLE_POS			(1<<6)
 #define  SDHC_USDHC_DDR_EN			(1<<3)
 #define SDHC_VEND_SPEC			0xc0	/* uSDHC */
 #define  SDHC_VEND_SPEC_MBO			(1<<29)

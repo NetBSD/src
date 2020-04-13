@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.208.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.208.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.208.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.208.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -252,6 +252,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		break;
 #endif
 	default:
+		hdrlen = 1; /* prevent zero sized segments */
 		goto out;
 	}
 
@@ -384,6 +385,13 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 */
 	if (so) {
 		*txsegsizep = uimin(so->so_snd.sb_hiwat >> 1, *txsegsizep);
+	}
+
+	/*
+	 * A segment must at least store header + options
+	 */
+	if (*txsegsizep < hdrlen + optlen) {
+		return EMSGSIZE;
 	}
 
 	if (*txsegsizep != tp->t_segsz) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.8,v 1.26 2017/11/06 15:15:04 christos Exp $
+.\"	$NetBSD: rtadvd.8,v 1.26.4.1 2020/04/13 08:05:58 martin Exp $
 .\"	$KAME: rtadvd.8,v 1.24 2002/05/31 16:16:08 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 6, 2017
+.Dd November 11, 2019
 .Dt RTADVD 8
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Nd router advertisement daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdfRs
+.Op Fl CDdfRs
 .Op Fl c Ar configfile
 .Op Fl M Ar ifname
 .Op Fl p Ar pidfile
@@ -112,6 +112,10 @@ advertising interface.
 The command line options are:
 .Bl -tag -width indent
 .\"
+.It Fl C
+Don't expire the existing configuration on receipt of SIGHUP.
+This option is only intended to aid the testing of clients that consume
+Router Advertisement messages.
 .It Fl c Ar configfile
 Specify an alternate location,
 .Ar configfile ,
@@ -175,7 +179,9 @@ to reload the configuration file
 .Pa /etc/rtadvd.conf .
 If an invalid parameter is found in the configuration file upon the reload, the
 entry will be ignored and the old configuration will be used.
-When parameters in an existing entry are updated,
+When parameters in an existing entry are updated and the
+.Fl C
+flag is not used,
 .Nm
 will send Router Advertisement messages with the old configuration but zero
 router lifetime to the interface first, and then start to send a new message.

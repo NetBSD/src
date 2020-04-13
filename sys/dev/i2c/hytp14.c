@@ -36,8 +36,32 @@
  *      $FILE/AHHYTM_E2.1.pdf
  */ 
 
+/*
+ * FDT direct configuration fragment to be added to i2cX definition in dtsi file
+ * like in bcm2835-rpi.dtsi or another specific file.
+ *
+ * &i2c1 { 
+ *         pinctrl-names = "default";
+ *         pinctrl-0 = <&i2c1_gpio2>;
+ *         status = "okay";
+ *         clock-frequency = <100000>;
+ *         #address-cells = <1>;
+ *         #size-cells = <0>;
+ *         hythygtemp@28 { 
+ *                         compatible = "ist-ag,i2c-hytp14";
+ *                         reg = <0x28>;
+ *                         status = "okay";
+ *         };
+ *         hythygtemp@29 { 
+ *                         compatible = "ist-ag,i2c-hytp14";
+ *                         reg = <0x29>;
+ *                         status = "okay";
+ *         };
+ * };
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.8 2018/06/16 21:24:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.8.2.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,29 +119,30 @@ static struct hytp14_sensor hytp14_sensors[] = {
 	}
 };
 
+static const struct device_compatible_entry compat_data[] = {
+        { "i2c-hytp14",                   0 },
+        { NULL,                           0 }
+}; 
+
 static int
 hytp14_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, NULL, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 
-	if (ia->ia_addr == 0x28)
-		return I2C_MATCH_ADDRESS_ONLY;
-	
 	/*
-	 * XXXJRT
-	 * This device is an odd-ball; the i2c address can be changed
-	 * at run-time using a command sequence documented in the
-	 * application note, but the timing is critical (within 10ms
-	 * after power-on of the device), and the device always starts
-	 * up at address 0x28.
-	 *
-	 * How should we handle this?
+	 * This device can be reprogrammed to use a different
+	 * I2C address, thus checking for specific addresses 
+	 * is not helpful here.
+         * reprogramming is done via setting new values in
+         * the device EEPROM via the hytctl utility and
+	 * a special GPIO setup - see hythygtemp(4) for more
+	 * information.
 	 */
-	return 0;
+	return I2C_MATCH_ADDRESS_ONLY;
 }
 
 static void

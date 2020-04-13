@@ -1,4 +1,4 @@
-/*	$NetBSD: r600d.h,v 1.1.1.1.32.1 2019/06/10 22:08:25 christos Exp $	*/
+/*	$NetBSD: r600d.h,v 1.1.1.1.32.2 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
@@ -198,7 +198,7 @@
 #define		RB_BUFSZ(x)					((x) << 0)
 #define		RB_BLKSZ(x)					((x) << 8)
 #define		RB_NO_UPDATE					(1 << 27)
-#define		RB_RPTR_WR_ENA					(1 << 31)
+#define		RB_RPTR_WR_ENA					(1U << 31)
 #define		BUF_SWAP_32BIT					(2 << 16)
 #define	CP_RB_RPTR					0x8700
 #define	CP_RB_RPTR_ADDR					0xC10C
@@ -292,7 +292,7 @@
 #       define GRBM_READ_TIMEOUT(x)                     ((x) << 0)
 #define	GRBM_STATUS					0x8010
 #define		CMDFIFO_AVAIL_MASK				0x0000001F
-#define		GUI_ACTIVE					(1<<31)
+#define		GUI_ACTIVE					(1U<<31)
 #define	GRBM_STATUS2					0x8014
 #define	GRBM_SOFT_RESET					0x8020
 #define		SOFT_RESET_CP					(1<<0)
@@ -644,7 +644,7 @@
 #define DMA_MODE                                          0xd0bc
 
 /* async DMA packets */
-#define DMA_PACKET(cmd, t, s, n)	((((cmd) & 0xF) << 28) |	\
+#define DMA_PACKET(cmd, t, s, n)	((((u32)(cmd) & 0xF) << 28) |	\
 					 (((t) & 0x1) << 23) |		\
 					 (((s) & 0x1) << 22) |		\
 					 (((n) & 0xFFFF) << 0))
@@ -665,7 +665,7 @@
 #       define IH_WPTR_WRITEBACK_ENABLE                   (1 << 8)
 #       define IH_WPTR_WRITEBACK_TIMER(x)                 ((x) << 9) /* log2 */
 #       define IH_WPTR_OVERFLOW_ENABLE                    (1 << 16)
-#       define IH_WPTR_OVERFLOW_CLEAR                     (1 << 31)
+#       define IH_WPTR_OVERFLOW_CLEAR                     (1U << 31)
 #define IH_RB_BASE                                        0x3e04
 #define IH_RB_RPTR                                        0x3e08
 #define IH_RB_WPTR                                        0x3e0c
@@ -720,7 +720,7 @@
 #       define TIME_STAMP_INT_ENABLE                      (1 << 26)
 #       define IB2_INT_ENABLE                             (1 << 29)
 #       define IB1_INT_ENABLE                             (1 << 30)
-#       define RB_INT_ENABLE                              (1 << 31)
+#       define RB_INT_ENABLE                              (1U << 31)
 #define CP_INT_STATUS                                     0xc128
 #       define SCRATCH_INT_STAT                           (1 << 25)
 #       define TIME_STAMP_INT_STAT                        (1 << 26)
@@ -935,7 +935,7 @@
 #       define JACK_DETECTION_ENABLE      (1 << 4)
 #       define UNSOLICITED_RESPONSE_ENABLE (1 << 8)
 #       define CODEC_HOT_PLUG_ENABLE      (1 << 12)
-#       define AUDIO_ENABLED              (1 << 31)
+#       define AUDIO_ENABLED              (1U << 31)
 /* DCE3 adds */
 #       define PIN0_JACK_DETECTION_ENABLE (1 << 4)
 #       define PIN1_JACK_DETECTION_ENABLE (1 << 5)

@@ -1,7 +1,7 @@
-/*	$NetBSD: audio.c,v 1.25 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.25.16.1 2020/04/13 08:05:40 martin Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2013, 2015, 2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.25 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.25.16.1 2020/04/13 08:05:40 martin Exp $");
 #endif
 
 
@@ -110,6 +110,8 @@ static const struct {
 	{ AudioEmpeg_l2_packets,AUDIO_ENCODING_MPEG_L2_PACKETS },
 	{ AudioEmpeg_l2_system,	AUDIO_ENCODING_MPEG_L2_SYSTEM },
 	{ AudioEac3,		AUDIO_ENCODING_AC3 },
+	{ "ieee_float32",	AUDIO_ENCODING_LIBAUDIO_FLOAT32 },
+	{ "ieee_float64",	AUDIO_ENCODING_LIBAUDIO_FLOAT64 },
 	{ NULL, -1 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.159 2017/11/20 21:11:36 kre Exp $	*/
+/*	$NetBSD: util.c,v 1.159.4.1 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.159 2017/11/20 21:11:36 kre Exp $");
+__RCSID("$NetBSD: util.c,v 1.159.4.1 2020/04/13 08:05:42 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -1491,6 +1491,7 @@ ftp_poll(struct pollfd *fds, int nfds, int timeout)
 	return poll(fds, nfds, timeout);
 }
 
+#ifndef SMALL
 /*
  * malloc() with inbuilt error checking
  */
@@ -1545,3 +1546,4 @@ ftp_strdup(const char *str)
 		err(1, "Unable to allocate memory for string copy");
 	return (s);
 }
+#endif

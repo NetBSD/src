@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.9.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -363,7 +363,7 @@ bootp_print(netdissect_options *ndo,
 	if (*bp->bp_sname) {
 		ND_PRINT((ndo, "\n\t  sname \""));
 		if (fn_printztn(ndo, bp->bp_sname, (u_int)sizeof bp->bp_sname,
-		    ndo->ndo_snapend)) {
+		    ndo->ndo_snapend) == 0) {
 			ND_PRINT((ndo, "\""));
 			ND_PRINT((ndo, "%s", tstr + 1));
 			return;
@@ -374,7 +374,7 @@ bootp_print(netdissect_options *ndo,
 	if (*bp->bp_file) {
 		ND_PRINT((ndo, "\n\t  file \""));
 		if (fn_printztn(ndo, bp->bp_file, (u_int)sizeof bp->bp_file,
-		    ndo->ndo_snapend)) {
+		    ndo->ndo_snapend) == 0) {
 			ND_PRINT((ndo, "\""));
 			ND_PRINT((ndo, "%s", tstr + 1));
 			return;
@@ -383,7 +383,7 @@ bootp_print(netdissect_options *ndo,
 	}
 
 	/* Decode the vendor buffer */
-	ND_TCHECK(bp->bp_vend[0]);
+	ND_TCHECK2(bp->bp_vend[0], 4);
 	if (memcmp((const char *)bp->bp_vend, vm_rfc1048,
 		    sizeof(uint32_t)) == 0)
 		rfc1048_print(ndo, bp->bp_vend);
@@ -393,6 +393,7 @@ bootp_print(netdissect_options *ndo,
 	else {
 		uint32_t ul;
 
+		ND_TCHECK_32BITS(&bp->bp_vend);
 		ul = EXTRACT_32BITS(&bp->bp_vend);
 		if (ul != 0)
 			ND_PRINT((ndo, "\n\t  Vendor-#0x%x", ul));

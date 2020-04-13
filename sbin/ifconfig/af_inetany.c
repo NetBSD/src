@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.17 2012/12/30 22:52:35 christos Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.17.30.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,14 +27,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.17 2012/12/30 22:52:35 christos Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.17.30.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/nd6.h>

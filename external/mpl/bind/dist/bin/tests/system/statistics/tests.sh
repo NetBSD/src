@@ -155,6 +155,58 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 
 ret=0
+echo_i "checking bind9.xsl vs xml ($n)"
+if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XSLTPROC}" ]  ; then
+    $DIGCMD +notcp +recurse @10.53.0.3 soa . > /dev/null 2>&1
+    $DIGCMD +notcp +recurse @10.53.0.3 soa example > /dev/null 2>&1
+    ${CURL} http://10.53.0.3:${EXTRAPORT1}/xml/v3 > curl.out.${n}.xml 2>/dev/null || ret=1
+    ${CURL} http://10.53.0.3:${EXTRAPORT1}/bind9.xsl > curl.out.${n}.xsl 2>/dev/null || ret=1
+    ${XSLTPROC} curl.out.${n}.xsl - < curl.out.${n}.xml > xsltproc.out.${n} 2>/dev/null || ret=1
+    #
+    # grep for expected sections.
+    #
+    grep "<h1>ISC Bind 9 Configuration and Statistics</h1>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Server Status</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Incoming Requests by DNS Opcode</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>Incoming Queries by Query Type</h3>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Outgoing Queries per view</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>View " xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Server Statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Zone Maintenance Statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Resolver Statistics (Common)</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>Resolver Statistics for View " xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>ADB Statistics for View " xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>Cache Statistics for View " xsltproc.out.${n} >/dev/null || ret=1
+    # grep "<h3>Cache DB RRsets for View " xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Traffic Size Statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>UDP Requests Received</h4>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>UDP Responses Sent</h4>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>TCP Requests Received</h4>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>TCP Responses Sent</h4>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Socket I/O Statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>Zones for View " xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Received QTYPES per view/zone</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>View _default" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>Zone example" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Response Codes per view/zone</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>View _default" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>Zone example" xsltproc.out.${n} >/dev/null || ret=1
+    # grep "<h2>Glue cache statistics</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h3>View _default" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h4>Zone example" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Network Status</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Task Manager Configuration</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Tasks</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Memory Usage Summary</h2>" xsltproc.out.${n} >/dev/null || ret=1
+    grep "<h2>Memory Contexts</h2>" xsltproc.out.${n} >/dev/null || ret=1
+else
+    echo_i "skipping test as libxml2 and/or curl and/or xsltproc was not found"
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+ret=0
 echo_i "checking priming queries are counted ($n)"
 grep "1 priming queries" ns3/named.stats
 if [ $ret != 0 ]; then echo_i "failed"; fi

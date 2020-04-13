@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
+/*	$NetBSD: dighost.c,v 1.4.2.4 2020/04/13 08:02:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1401,6 +1401,7 @@ typedef struct dig_ednsoptname {
 } dig_ednsoptname_t;
 
 dig_ednsoptname_t optnames[] = {
+	{ 1, "LLQ" },		/* draft-sekar-dns-llq */
 	{ 3, "NSID" },		/* RFC 5001 */
 	{ 5, "DAU" },		/* RFC 6975 */
 	{ 6, "DHU" },		/* RFC 6975 */
@@ -1413,6 +1414,8 @@ dig_ednsoptname_t optnames[] = {
 	{ 12, "PAD" },		/* shorthand */
 	{ 13, "CHAIN" },	/* RFC 7901 */
 	{ 14, "KEY-TAG" },	/* RFC 8145 */
+	{ 16, "CLIENT-TAG" },	/* draft-bellis-dnsop-edns-tags */
+	{ 17, "SERVER-TAG" },	/* draft-bellis-dnsop-edns-tags */
 	{ 26946, "DEVICEID" },	/* Brian Hartvigsen */
 };
 
@@ -2197,12 +2200,14 @@ setup_lookup(dig_lookup_t *lookup) {
 	lookup->sendmsg->id = (dns_messageid_t)isc_random16();
 	lookup->sendmsg->opcode = lookup->opcode;
 	lookup->msgcounter = 0;
+
 	/*
-	 * If this is a trace request, completely disallow recursion, since
-	 * it's meaningless for traces.
+	 * If this is a trace request, completely disallow recursion after
+	 * looking up the root name servers, since it's meaningless for traces.
 	 */
-	if (lookup->trace || (lookup->ns_search_only && !lookup->trace_root))
+	if ((lookup->trace || lookup->ns_search_only) && !lookup->trace_root) {
 		lookup->recurse = false;
+	}
 
 	if (lookup->recurse &&
 	    lookup->rdtype != dns_rdatatype_axfr &&
@@ -4382,9 +4387,20 @@ idn_ace_to_locale(const char *src, char **dst) {
 	 */
 	res = idn2_to_unicode_8zlz(utf8_src, &local_src, 0);
 	if (res != IDN2_OK) {
-		fatal("Cannot represent '%s' in the current locale (%s), "
-		      "use +noidnout or a different locale",
-		      src, idn2_strerror(res));
+		static bool warned = false;
+
+		res = idn2_to_ascii_8z(utf8_src, &local_src, 0);
+		if (res != IDN2_OK) {
+			fatal("Cannot represent '%s' "
+			      "in the current locale nor ascii (%s), "
+			      "use +noidnout or a different locale",
+			      src, idn2_strerror(res));
+		} else if (!warned) {
+			fprintf(stderr, ";; Warning: cannot represent '%s' "
+			      "in the current locale",
+			      local_src);
+			warned = true;
+		}
 	}
 
 	/*

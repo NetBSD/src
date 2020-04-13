@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.12.2.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.12.2.3 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,11 +31,13 @@
 
 #include "com.h"
 #include "plcom.h"
+#include "wsdisplay.h"
+#include "genfb.h"
 #include "opt_efi.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.12.2.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.12.2.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +73,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.12.2.2 2019/06/10 22:05:50 chris
 #include <dev/pci/pucvar.h>
 #endif
 
+#if NWSDISPLAY > 0 && NGENFB > 0
+#include <arm/acpi/acpi_simplefb.h>
+#endif
+
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
 #endif
@@ -94,6 +100,16 @@ extern struct bus_space arm_generic_a4x_bs_tag;
 static struct plcom_instance plcom_console;
 #endif
 
+struct arm32_bus_dma_tag acpi_coherent_dma_tag;
+static struct arm32_dma_range acpi_coherent_ranges[] = {
+	[0] = {
+		.dr_sysbase = 0,
+		.dr_busbase = 0,
+		.dr_len = UINTPTR_MAX,
+	 	.dr_flags = _BUS_DMAMAP_COHERENT,
+	}
+};
+
 static const struct pmap_devmap *
 acpi_platform_devmap(void)
 {
@@ -107,6 +123,11 @@ acpi_platform_devmap(void)
 static void
 acpi_platform_bootstrap(void)
 {
+	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+	acpi_coherent_dma_tag = arm_generic_dma_tag;
+	acpi_coherent_dma_tag._ranges = acpi_coherent_ranges;
+	acpi_coherent_dma_tag._nranges = __arraycount(acpi_coherent_ranges);
 }
 
 static void
@@ -152,12 +173,7 @@ acpi_platform_startup(void)
 				plcom_console.pi_iot = &arm_generic_bs_tag;
 				plcom_console.pi_iobase = spcr->SerialPort.Address;
 				plcom_console.pi_size = PL011COM_UART_SIZE;
-				if (spcr->InterfaceType == ACPI_DBG2_ARM_SBSA_32BIT) {
-					plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
-				} else {
-					plcom_console.pi_flags = ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8 ?
-					    0 : PLC_FLAG_32BIT_ACCESS;
-				}
+				plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
 
 				plcomcnattach(&plcom_console, baud_rate, 0, TTYDEF_CFLAG, -1);
 				break;
@@ -222,18 +238,26 @@ acpi_platform_startup(void)
 static void
 acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 {
-	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 	extern struct bus_space arm_generic_bs_tag;
 	extern struct bus_space arm_generic_a4x_bs_tag;
 
 	faa->faa_bst = &arm_generic_bs_tag;
 	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
-	faa->faa_dmat = &arm_generic_dma_tag;
+	faa->faa_dmat = &acpi_coherent_dma_tag;
 }
 
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
+#if NWSDISPLAY > 0 && NGENFB > 0
+	if (device_is_a(self, "armfdt")) {
+		/*
+		 * Setup framebuffer console, if present.
+		 */
+		acpi_simplefb_preattach();
+	}
+#endif
+
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 
@@ -317,4 +341,4 @@ static const struct arm_platform acpi_platform = {
 	.ap_uart_freq = acpi_platform_uart_freq,
 };
 
-ARM_PLATFORM(virt, "netbsd,generic-acpi", &acpi_platform);
+ARM_PLATFORM(acpi, "netbsd,generic-acpi", &acpi_platform);

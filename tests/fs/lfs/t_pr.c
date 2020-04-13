@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.7 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.7.14.1 2020/04/13 08:05:24 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -56,5 +56,5 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, mknod);
-	return 0;
+	return atf_no_error();
 }

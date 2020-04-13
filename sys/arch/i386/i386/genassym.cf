@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.107.4.1 2019/06/10 22:06:20 christos Exp $
+#	$NetBSD: genassym.cf,v 1.107.4.2 2020/04/13 08:03:52 martin Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -132,9 +132,6 @@ include <sys/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
-
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	KSTACK_SIZE		KSTACK_SIZE
@@ -165,7 +162,7 @@ define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_NCSW			offsetof(struct lwp, l_ncsw)
@@ -175,6 +172,8 @@ define	L_KPRIORITY		offsetof(struct lwp, l_kpriority)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+
+define	MDL_FPU_IN_CPU		MDL_FPU_IN_CPU
 
 define	LW_SYSTEM		LW_SYSTEM
 
@@ -200,6 +199,7 @@ define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
 define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
 define	PCB_IOMAP		offsetof(struct pcb, pcb_iomap)
+define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -251,7 +251,6 @@ define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
@@ -271,6 +270,7 @@ define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
@@ -319,6 +319,7 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
+define	IS_MASK_COUNT		offsetof(struct intrsource, is_mask_count)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
@@ -372,8 +373,6 @@ define	L2_SHIFT		L2_SHIFT
 define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
-
-define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)

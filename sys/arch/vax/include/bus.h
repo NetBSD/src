@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.33 2016/04/22 18:13:01 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.33.18.1 2020/04/13 08:04:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -96,11 +96,16 @@
 typedef paddr_t bus_addr_t;
 typedef psize_t bus_size_t;
 
+#define PRIxBUSADDR	PRIxPADDR
+#define PRIxBUSSIZE	PRIxPSIZE
+#define PRIuBUSSIZE	PRIuPSIZE
 /*
  * Access methods for bus resources and address space.
  */
 typedef	struct vax_bus_space *bus_space_tag_t;
 typedef	vaddr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxVADDR
 
 struct vax_bus_space {
 	/* cookie */

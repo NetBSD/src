@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.1.6.2 2019/06/10 22:05:51 christos Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.1.6.3 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.1.6.2 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.1.6.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -79,50 +79,62 @@ arm_efirt_init(paddr_t efi_system_table)
 int
 arm_efirt_gettime(struct efi_tm *tm)
 {
-	efi_status status;
+	int error;
 
 	if (RT == NULL || RT->rt_gettime == NULL)
 		return ENXIO;
 
 	mutex_enter(&efi_lock);
-	status = RT->rt_gettime(tm, NULL);
+	if ((error = arm_efirt_md_enter()) == 0) {
+		if (RT->rt_gettime(tm, NULL) != 0)
+			error = EIO;
+	}
+	arm_efirt_md_exit();
 	mutex_exit(&efi_lock);
-	if (status)
-		return EIO;
 
-	return 0;
+	return error;
 }
 
 int
 arm_efirt_settime(struct efi_tm *tm)
 {
-	efi_status status;
+	int error;
 
 	if (RT == NULL || RT->rt_settime == NULL)
 		return ENXIO;
 
 	mutex_enter(&efi_lock);
-	status = RT->rt_settime(tm);
+	if ((error = arm_efirt_md_enter()) == 0) {
+		if (RT->rt_settime(tm) != 0)
+			error = EIO;
+	}
+	arm_efirt_md_exit();
 	mutex_exit(&efi_lock);
-	if (status)
-		return EIO;
 
-	return 0;
+	return error;
 }
 
 int
 arm_efirt_reset(enum efi_reset type)
 {
-	efi_status status;
+	static int reset_called = false;
+	int error;
 
 	if (RT == NULL || RT->rt_reset == NULL)
 		return ENXIO;
 
 	mutex_enter(&efi_lock);
-	status = RT->rt_reset(type, 0, 0, NULL);
+	if (reset_called == false) {
+		reset_called = true;
+		if ((error = arm_efirt_md_enter()) == 0) {
+			if (RT->rt_reset(type, 0, 0, NULL) != 0)
+				error = EIO;
+		}
+		arm_efirt_md_exit();
+	} else {
+		error = EPERM;
+	}
 	mutex_exit(&efi_lock);
-	if (status)
-		return EIO;
 
-	return 0;
+	return error;
 }

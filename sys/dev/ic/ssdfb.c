@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.6.2.3 2020/04/08 14:08:06 martin Exp $ */
+/* $NetBSD: ssdfb.c,v 1.6.2.4 2020/04/13 08:04:22 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6.2.3 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6.2.4 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,8 @@ static void	ssdfb_eraserows(void *, int, int, long);
 static void	ssdfb_cursor(void *, int, int, int);
 
 /* hardware interface */
-static int	ssdfb_init(struct ssdfb_softc *);
+static int	ssdfb_init_ssd1306(struct ssdfb_softc *);
+static int	ssdfb_init_ssd1322(struct ssdfb_softc *);
 static int	ssdfb_set_contrast(struct ssdfb_softc *, uint8_t, bool);
 static int	ssdfb_set_display_on(struct ssdfb_softc *, bool, bool);
 static int	ssdfb_set_mode(struct ssdfb_softc *, u_int);
@@ -85,8 +86,9 @@ static void	ssdfb_damage(struct ssdfb_softc *);
 static void	ssdfb_thread(void *);
 static void	ssdfb_set_usepoll(struct ssdfb_softc *, bool);
 static int	ssdfb_sync(struct ssdfb_softc *, bool);
-static uint64_t	ssdfb_transpose_block_1bpp(uint8_t *, size_t);
-static uint64_t	ssdfb_transpose_block_8bpp(uint8_t *, size_t);
+static int	ssdfb_sync_ssd1306(struct ssdfb_softc *, bool);
+static int	ssdfb_sync_ssd1322(struct ssdfb_softc *, bool);
+static uint64_t	ssdfb_transpose_block(uint8_t *, size_t);
 
 /* misc helpers */
 static const struct ssdfb_product *
@@ -100,7 +102,8 @@ static void	ssdfb_ddb_trap_callback(int);
 static const char *ssdfb_controller_names[] = {
 	[SSDFB_CONTROLLER_UNKNOWN] =	"unknown",
 	[SSDFB_CONTROLLER_SSD1306] =	"Solomon Systech SSD1306",
-	[SSDFB_CONTROLLER_SH1106] =	"Sino Wealth SH1106"
+	[SSDFB_CONTROLLER_SH1106] =	"Sino Wealth SH1106",
+	[SSDFB_CONTROLLER_SSD1322] =	"Solomon Systech SSD1322"
 };
 
 /*
@@ -113,6 +116,7 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_name =		"generic",
 		.p_width =		128,
 		.p_height =		64,
+		.p_bits_per_pixel =	1,
 		.p_panel_shift =	0,
 		.p_fosc =		0x8,
 		.p_fosc_div =		0,
@@ -123,8 +127,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_vcomh_deselect_level = SSD1306_VCOMH_DESELECT_LEVEL_0_77_VCC,
 		.p_default_contrast =	0x7f,
 		.p_multiplex_ratio =	0x3f,
-		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_init =		ssdfb_init_ssd1306,
+		.p_sync =		ssdfb_sync_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_SH1106_GENERIC,
@@ -132,6 +136,7 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_name =		"generic",
 		.p_width =		128,
 		.p_height =		64,
+		.p_bits_per_pixel =	1,
 		.p_panel_shift =	2,
 		.p_fosc =		0x5,
 		.p_fosc_div =		0,
@@ -142,8 +147,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_vcomh_deselect_level = SH1106_VCOMH_DESELECT_LEVEL_DEFAULT,
 		.p_default_contrast =	0x80,
 		.p_multiplex_ratio =	0x3f,
-		.p_chargepump_cmd =	SH1106_CMD_SET_CHARGE_PUMP_7V4,
-		.p_chargepump_arg =	SSDFB_CMD_NOP
+		.p_init =		ssdfb_init_ssd1306,
+		.p_sync =		ssdfb_sync_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_ADAFRUIT_938,
@@ -151,6 +156,7 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_name =		"Adafruit Industries, LLC product 938",
 		.p_width =		128,
 		.p_height =		64,
+		.p_bits_per_pixel =	1,
 		.p_panel_shift =	0,
 		.p_fosc =		0x8,
 		.p_fosc_div =		0,
@@ -160,8 +166,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_vcomh_deselect_level = 0x40,
 		.p_default_contrast =	0x8f,
 		.p_multiplex_ratio =	0x3f,
-		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_init =		ssdfb_init_ssd1306,
+		.p_sync =		ssdfb_sync_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_ADAFRUIT_931,
@@ -169,6 +175,7 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_name =		"Adafruit Industries, LLC product 931",
 		.p_width =		128,
 		.p_height =		32,
+		.p_bits_per_pixel =	1,
 		.p_panel_shift =	0,
 		.p_fosc =		0x8,
 		.p_fosc_div =		0,
@@ -178,8 +185,24 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_vcomh_deselect_level = 0x40,
 		.p_default_contrast =	0x8f,
 		.p_multiplex_ratio =	0x1f,
-		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_init =		ssdfb_init_ssd1306,
+		.p_sync =		ssdfb_sync_ssd1306
+	},
+	{
+		.p_product_id =		SSDFB_PRODUCT_SSD1322_GENERIC,
+		.p_controller_id =	SSDFB_CONTROLLER_SSD1322,
+		.p_name =		"generic",
+		.p_width =		256,
+		.p_height =		64,
+		.p_bits_per_pixel =	4,
+		.p_panel_shift =	28,
+		.p_vcomh_deselect_level = SSD1322_DEFAULT_VCOMH,
+		.p_fosc =		SSD1322_DEFAULT_FREQUENCY,
+		.p_fosc_div =		SSD1322_DEFAULT_DIVIDER,
+		.p_default_contrast =	SSD1322_DEFAULT_CONTRAST_CURRENT,
+		.p_multiplex_ratio =	0x3f,
+		.p_init =		ssdfb_init_ssd1322,
+		.p_sync =		ssdfb_sync_ssd1322
 	}
 };
 
@@ -193,6 +216,7 @@ static const struct wsdisplay_accessops ssdfb_accessops = {
 
 #define SSDFB_CMD1(c) do { cmd[0] = (c); error = sc->sc_cmd(sc->sc_cookie, cmd, 1, usepoll); } while(0)
 #define SSDFB_CMD2(c, a) do { cmd[0] = (c); cmd[1] = (a); error = sc->sc_cmd(sc->sc_cookie, cmd, 2, usepoll); } while(0)
+#define SSDFB_CMD3(c, a, b) do { cmd[0] = (c); cmd[1] = (a); cmd[2] = (b); error = sc->sc_cmd(sc->sc_cookie, cmd, 3, usepoll); } while(0)
 
 void
 ssdfb_attach(struct ssdfb_softc *sc, int flags)
@@ -202,6 +226,7 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	int error = 0;
 	long defattr;
 	const struct ssdfb_product *p;
+	int kt_flags;
 
 	p = ssdfb_lookup_product(flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK);
 	if (p == NULL) {
@@ -221,7 +246,8 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	sc->sc_upsidedown = flags & SSDFB_ATTACH_FLAG_UPSIDEDOWN ? true : false;
 	sc->sc_backoff = 1;
 	sc->sc_contrast = sc->sc_p->p_default_contrast;
-	sc->sc_gddram_len = sc->sc_p->p_width * sc->sc_p->p_height / 8;
+	sc->sc_gddram_len = sc->sc_p->p_width * sc->sc_p->p_height
+	    * sc->sc_p->p_bits_per_pixel / 8;
 	sc->sc_gddram = kmem_alloc(sc->sc_gddram_len, KM_SLEEP);
 	if (sc->sc_gddram == NULL)
 		goto out;
@@ -241,13 +267,17 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 		aprint_error_dev(sc->sc_dev, "no font\n");
 		goto out;
 	}
+#ifdef SSDFB_USE_NATIVE_DEPTH
+	ri->ri_depth =	sc->sc_p->p_bits_per_pixel;
+#else
 	ri->ri_depth =	8;
+#endif	
 	ri->ri_font =	sc->sc_font;
 	ri->ri_width =	sc->sc_p->p_width;
 	ri->ri_height =	sc->sc_p->p_height;
 	ri->ri_stride =	ri->ri_width * ri->ri_depth / 8;
 	ri->ri_hw =	sc;
-	ri->ri_flg =	RI_FULLCLEAR;
+	ri->ri_flg =	RI_FULLCLEAR | RI_FORCEMONO;
 	sc->sc_ri_bits_len = round_page(ri->ri_stride * ri->ri_height);
 	ri->ri_bits	= (u_char *)uvm_km_alloc(kernel_map, sc->sc_ri_bits_len,
 						 0, UVM_KMF_WIRED);
@@ -294,18 +324,22 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	/*
 	 * Initialize hardware.
 	 */
-	error = ssdfb_init(sc);
+	error = p->p_init(sc);
 	if (error)
 		goto out;
 
 	if (sc->sc_is_console)
 		ssdfb_set_usepoll(sc, true);
 
-	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT,
+	    ISSET(flags, SSDFB_ATTACH_FLAG_MPSAFE) ? IPL_SCHED : IPL_BIO);
 	cv_init(&sc->sc_cond, "ssdfb");
-	error = kthread_create(PRI_SOFTCLOCK, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN,
-	    NULL, ssdfb_thread, sc, &sc->sc_thread, "%s",
-	    device_xname(sc->sc_dev));
+	kt_flags = KTHREAD_MUSTJOIN;
+	/* XXX spi(4) is not MPSAFE yet. */
+	if (ISSET(flags, SSDFB_ATTACH_FLAG_MPSAFE))
+		kt_flags |= KTHREAD_MPSAFE;
+	error = kthread_create(PRI_SOFTCLOCK, kt_flags, NULL, ssdfb_thread, sc,
+	    &sc->sc_thread, "%s", device_xname(sc->sc_dev));
 	if (error) {
 		cv_destroy(&sc->sc_cond);
 		mutex_destroy(&sc->sc_cond_mtx);
@@ -374,7 +408,10 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	struct ssdfb_softc *sc = v;
 	struct wsdisplay_param *wdp;
 	struct wsdisplay_cmap *wc;
-	u_char cmap[] = {0, 0xff};
+	u_char cmap[16];
+	int cmaplen = 1 << sc->sc_p->p_bits_per_pixel;
+	int i;
+	struct wsdisplayio_fbinfo *fbi;
 	int error;
 
 	switch (cmd) {
@@ -386,12 +423,15 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			.width =	sc->sc_ri.ri_width,
 			.height =	sc->sc_ri.ri_height,
 			.depth =	sc->sc_ri.ri_depth,
-			.cmsize =	2
+			.cmsize =	cmaplen
 		};
 		return 0;
 	case WSDISPLAYIO_GET_FBINFO:
-		return wsdisplayio_get_fbinfo(&sc->sc_ri,
-			(struct wsdisplayio_fbinfo *)data);
+		fbi = (struct wsdisplayio_fbinfo *)data;
+		error = wsdisplayio_get_fbinfo(&sc->sc_ri, fbi);
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = cmaplen;
+		/* fbi->fbi_pixeltype = WSFB_GREYSCALE */;
+		return error;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_ri.ri_stride;
 		return 0;
@@ -448,9 +488,12 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	case WSDISPLAYIO_GETCMAP:
 		wc = (struct wsdisplay_cmap *)data;
-		if (wc->index >= __arraycount(cmap) ||
-		    wc->count >  __arraycount(cmap) - wc->index)
+		if (wc->index >= cmaplen ||
+		    wc->count > cmaplen - wc->index)
 			return EINVAL;
+		for(i = 0; i < cmaplen; i++) {
+			cmap[i] = 255 * i / (cmaplen - 1);
+		}
 		error = copyout(&cmap[wc->index], wc->red, wc->count);
 		if (error)
 			return error;
@@ -581,7 +624,7 @@ ssdfb_cursor(void *cookie, int on, int row, int col)
 }
 
 static int
-ssdfb_init(struct ssdfb_softc *sc)
+ssdfb_init_ssd1306(struct ssdfb_softc *sc)
 {
 	int error;
 	uint8_t cmd[2];
@@ -638,20 +681,16 @@ ssdfb_init(struct ssdfb_softc *sc)
 	 * Configure timing characteristics.
 	 */
 	SSDFB_CMD2(SSDFB_CMD_SET_DISPLAY_CLOCK_RATIO,
-	    ((sc->sc_p->p_fosc << SSDFB_DISPLAY_CLOCK_OSCILLATOR_SHIFT) &
-	     SSDFB_DISPLAY_CLOCK_OSCILLATOR_MASK) |
-	    ((sc->sc_p->p_fosc_div << SSDFB_DISPLAY_CLOCK_DIVIDER_SHIFT) &
-	     SSDFB_DISPLAY_CLOCK_DIVIDER_MASK));
+	    __SHIFTIN(sc->sc_p->p_fosc, SSDFB_DISPLAY_CLOCK_OSCILLATOR_MASK) |
+	    __SHIFTIN(sc->sc_p->p_fosc_div, SSDFB_DISPLAY_CLOCK_DIVIDER_MASK));
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_CONTRAST_CONTROL, sc->sc_contrast);
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_PRECHARGE_PERIOD,
-	    ((sc->sc_p->p_precharge << SSDFB_PRECHARGE_SHIFT) &
-	     SSDFB_PRECHARGE_MASK) |
-	    ((sc->sc_p->p_discharge << SSDFB_DISCHARGE_SHIFT) &
-	     SSDFB_DISCHARGE_MASK));
+	    __SHIFTIN(sc->sc_p->p_precharge, SSDFB_PRECHARGE_MASK) |
+	    __SHIFTIN(sc->sc_p->p_discharge, SSDFB_DISCHARGE_MASK));
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_VCOMH_DESELECT_LEVEL,
@@ -660,22 +699,152 @@ ssdfb_init(struct ssdfb_softc *sc)
 		return error;
 
 	/*
-	 * Start charge pump.
+	 * Start charge pumps.
 	 */
-	SSDFB_CMD2(sc->sc_p->p_chargepump_cmd, sc->sc_p->p_chargepump_arg);
-	if (error)
-		return error;
-
 	if (sc->sc_p->p_controller_id == SSDFB_CONTROLLER_SH1106) {
+		SSDFB_CMD1(SH1106_CMD_SET_CHARGE_PUMP_7V4);
+		if (error)
+			return error;
 		SSDFB_CMD2(SH1106_CMD_SET_DC_DC, SH1106_DC_DC_ON);
+		if (error)
+			return error;
+	} else {
+		SSDFB_CMD2(SSD1306_CMD_SET_CHARGE_PUMP,
+		    SSD1306_CHARGE_PUMP_ENABLE);
 		if (error)
 			return error;
 	}
 
 	ssdfb_clear_screen(sc);
+	error = sc->sc_p->p_sync(sc, usepoll);
+	if (error)
+		return error;
+	error = ssdfb_set_display_on(sc, true, usepoll);
+
+	return error;
+}
+
+static int
+ssdfb_init_ssd1322(struct ssdfb_softc *sc)
+{
+	int error;
+	uint8_t cmd[3];
+	bool usepoll = true;
+	uint8_t remap;
+	uint8_t dualcom;
+
+	/*
+	 * Enter sleep.
+	 */
+	SSDFB_CMD2(SSD1322_CMD_SET_COMMAND_LOCK, SSD1322_COMMAND_UNLOCK_MAGIC);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1322_CMD_SET_SLEEP_MODE_ON);
+	if (error)
+		return error;
+
+	/*
+	 * Start charge pumps.
+	 */
+	SSDFB_CMD2(SSD1322_CMD_FUNCTION_SELECTION,
+	    SSD1322_FUNCTION_SELECTION_INTERNAL_VDD);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_VCOMH, sc->sc_p->p_vcomh_deselect_level);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_PRE_CHARGE_VOLTAGE_LEVEL,
+	    SSD1322_DEFAULT_PRE_CHARGE_VOLTAGE_LEVEL);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_GPIO,
+	    SSD1322_GPIO0_DISABLED | SSD1322_GPIO1_DISABLED);
+	if (error)
+		return error;
+
+	/*
+	 * Configure timing characteristics.
+	 */
+	SSDFB_CMD2(SSD1322_CMD_SET_FRONT_CLOCK_DIVIDER,
+	   __SHIFTIN(sc->sc_p->p_fosc, SSD1322_FREQUENCY_MASK) |
+	   __SHIFTIN(sc->sc_p->p_fosc_div, SSD1322_DIVIDER_MASK));
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_PHASE_LENGTH,
+	   __SHIFTIN(SSD1322_DEFAULT_PHASE_2,
+	    SSD1322_PHASE_LENGTH_PHASE_2_MASK) |
+	    __SHIFTIN(SSD1322_DEFAULT_PHASE_1,
+	    SSD1322_PHASE_LENGTH_PHASE_1_MASK));
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_SECOND_PRECHARGE_PERIOD,
+	    SSD1322_DEFAULT_SECOND_PRECHARGE);
+	if (error)
+		return error;
+
+	/*
+	 * Configure physical display panel layout.
+	 */
+	SSDFB_CMD2(SSD1322_CMD_SET_MUX_RATIO, sc->sc_p->p_multiplex_ratio);
+	if (error)
+		return error;
+	if (sc->sc_upsidedown)
+		remap = 0x10;
+	else
+		remap = 0x2;
+	dualcom = 0x1;
+	if (sc->sc_p->p_multiplex_ratio <= 63)
+		dualcom |= 0x10;
+	SSDFB_CMD3(SSD1322_CMD_SET_REMAP_AND_DUAL_COM_LINE_MODE, remap, dualcom);
+	if (error)
+		return error;
+
+	/*
+	 * Contrast settings.
+	 */
+	SSDFB_CMD1(SSD1322_CMD_SET_DEFAULT_GRAY_SCALE_TABLE);
+	if (error)
+		return error;
+	SSDFB_CMD3(SSD1322_CMD_DISPLAY_ENHANCEMENT_A,
+	    SSD1322_DISPLAY_ENHANCEMENT_A_MAGIC1,
+	    SSD1322_DISPLAY_ENHANCEMENT_A_MAGIC2);
+	if (error)
+		return error;
+	SSDFB_CMD3(SSD1322_CMD_DISPLAY_ENHANCEMENT_B,
+	    SSD1322_DISPLAY_ENHANCEMENT_B_MAGIC1,
+	    SSD1322_DISPLAY_ENHANCEMENT_B_MAGIC2);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_CONTRAST_CURRENT,
+	    sc->sc_contrast);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_MASTER_CONTRAST_CURRENT_CONTROL,
+	    SSD1322_DEFAULT_MASTER_CONTRAST_CURRENT_CONTROL);
+	if (error)
+		return error;
+
+	/*
+	 * Reset display engine state.
+	 */
+	SSDFB_CMD2(SSD1322_CMD_SET_DISPLAY_OFFSET, 0x00);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1322_CMD_SET_DISPLAY_START_LINE, 0x00);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1322_CMD_NORMAL_DISPLAY + (uint8_t)sc->sc_inverse);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1322_CMD_EXIT_PARTIAL_DISPLAY);
+	if (error)
+		return error;
+
+	ssdfb_clear_screen(sc);
 	error = ssdfb_sync(sc, usepoll);
 	if (error)
 		return error;
+
 	error = ssdfb_set_display_on(sc, true, usepoll);
 
 	return error;
@@ -685,12 +854,17 @@ static int
 ssdfb_set_contrast(struct ssdfb_softc *sc, uint8_t value, bool usepoll)
 {
 	uint8_t cmd[2];
-	int error;
 
-	sc->sc_contrast = value;
-	SSDFB_CMD2(SSDFB_CMD_SET_CONTRAST_CONTROL, value);
+	switch (sc->sc_p->p_controller_id) {
+	case SSDFB_CONTROLLER_SSD1322:
+		cmd[0] = SSD1322_CMD_SET_CONTRAST_CURRENT;
+		break;
+	default:
+		cmd[0] = SSDFB_CMD_SET_CONTRAST_CONTROL;
+	}
+	cmd[1] = sc->sc_contrast = value;
 
-	return error;
+	return sc->sc_cmd(sc->sc_cookie, cmd, sizeof(cmd), usepoll);
 }
 
 static int
@@ -794,8 +968,10 @@ ssdfb_clear_modify(struct ssdfb_softc *sc)
 	bool ret;
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		mutex_enter(&sc->sc_cond_mtx);
 		ret = sc->sc_modified;
 		sc->sc_modified = false;
+		mutex_exit(&sc->sc_cond_mtx);
 		return ret;
 	}
 
@@ -842,14 +1018,15 @@ ssdfb_thread(void *arg)
 			continue;
 		}
 		sc->sc_backoff = 1;
-		(void) ssdfb_clear_modify(sc);
-		if (sc->sc_usepoll)
-			continue;
 		mutex_exit(&sc->sc_cond_mtx);
-		error = ssdfb_sync(sc, false);
-		if (error)
-			device_printf(sc->sc_dev, "ssdfb_sync: error %d\n",
-			    error);
+		(void) ssdfb_clear_modify(sc);
+		if (!sc->sc_usepoll) {
+			error = ssdfb_sync(sc, false);
+			if (error)
+				device_printf(sc->sc_dev,
+				    "ssdfb_sync: error %d\n",
+				    error);
+		}
 		mutex_enter(&sc->sc_cond_mtx);
 	}
 
@@ -865,6 +1042,12 @@ ssdfb_set_usepoll(struct ssdfb_softc *sc, bool enable)
 
 static int
 ssdfb_sync(struct ssdfb_softc *sc, bool usepoll)
+{
+	return sc->sc_p->p_sync(sc, usepoll);
+}
+
+static int
+ssdfb_sync_ssd1306(struct ssdfb_softc *sc, bool usepoll)
 {
 	struct rasops_info *ri = &sc->sc_ri;
 	int block_size = 8;
@@ -887,12 +1070,10 @@ ssdfb_sync(struct ssdfb_softc *sc, bool usepoll)
 	y1 = height_in_blocks;
 	y2 = -1;
 	for (y = 0; y < height_in_blocks; y++) {
-		src = &ri->ri_bits[y*ri_block_stride];
+		src = &ri->ri_bits[y * ri_block_stride];
 		blockp = &sc->sc_gddram[y * width_in_blocks];
 		for (x = 0; x < width_in_blocks; x++) {
-			raw_block = (ri->ri_depth == 1)
-			   ? ssdfb_transpose_block_1bpp(src, ri->ri_stride)
-			   : ssdfb_transpose_block_8bpp(src, ri->ri_stride);
+			raw_block = ssdfb_transpose_block(src, ri->ri_stride);
 			if (raw_block != blockp->raw) {
 				blockp->raw = raw_block;
 				if (x1 > x)
@@ -921,10 +1102,86 @@ ssdfb_sync(struct ssdfb_softc *sc, bool usepoll)
 	return 0;
 }
 
+static int
+ssdfb_sync_ssd1322(struct ssdfb_softc *sc, bool usepoll)
+{
+	struct rasops_info *ri = &sc->sc_ri;
+	int block_size_w = 4;
+	int width = sc->sc_p->p_width;
+	int height = sc->sc_p->p_height;
+	int width_in_blocks = width / block_size_w;
+	int x, y;
+	uint16_t *blockp;
+	uint16_t raw_block;
+	uint16_t *src;
+	uint32_t *src32;
+	int x1, x2, y1, y2;
+
+	/*
+	 * Transfer rasops bitmap into gddram shadow buffer while keeping track
+	 * of the bounding box of the dirty region we scribbled over.
+	 */
+	x1 = sc->sc_p->p_width;
+	x2 = -1;
+	y1 = sc->sc_p->p_height;
+	y2 = -1;
+	blockp = (uint16_t*)sc->sc_gddram;
+	for (y = 0; y < height; y++) {
+		src = (uint16_t*)&ri->ri_bits[y * ri->ri_stride];
+		src32 = (uint32_t*)src;
+		for (x = 0; x < width_in_blocks; x++) {
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#  ifdef SSDFB_USE_NATIVE_DEPTH
+			raw_block =
+			    ((*src << 12) & 0xf000) |
+			    ((*src << 4) & 0x0f00) |
+			    ((*src >> 4) & 0x00f0) |
+			    ((*src >> 12) & 0x000f);
+			src++;
+#  else
+			raw_block =
+			    ((*src32 <<  8) & 0x0f00) |
+			    ((*src32 <<  4) & 0xf000) |
+			    ((*src32 >> 16) & 0x000f) |
+			    ((*src32 >> 20) & 0x00f0);
+#  endif
+			src32++;
+#else
+#  error please add big endian host support here
+#endif
+			if (raw_block != *blockp) {
+				*blockp = raw_block;
+				if (x1 > x)
+					x1 = x;
+				if (x2 < x)
+					x2 = x;
+				if (y1 > y)
+					y1 = y;
+				if (y2 < y)
+					y2 = y;
+			}
+			blockp++;
+		}
+	}
+
+	blockp = (uint16_t*)sc->sc_gddram;
+	if (x2 != -1)
+		return sc->sc_transfer_rect(sc->sc_cookie,
+		    x1 + sc->sc_p->p_panel_shift,
+		    x2 + sc->sc_p->p_panel_shift,
+		    y1,
+		    y2,
+		    (uint8_t*)&blockp[y1 * width_in_blocks + x1],
+		    width * sc->sc_p->p_bits_per_pixel / 8,
+		    usepoll);
+	return 0;
+}
+
 static uint64_t
-ssdfb_transpose_block_1bpp(uint8_t *src, size_t src_stride)
+ssdfb_transpose_block(uint8_t *src, size_t src_stride)
 {
 	uint64_t x = 0;
+#ifdef SSDFB_USE_NATIVE_DEPTH
 	uint64_t t;
 	int i;
 
@@ -948,14 +1205,7 @@ ssdfb_transpose_block_1bpp(uint8_t *src, size_t src_stride)
 	t = (x ^ (x >>  7)) & 0x00AA00AA00AA00AAULL;
 	x = x ^ t ^ (t <<  7);
 	x = bswap64(x);
-
-	return htole64(x);
-}
-
-static uint64_t
-ssdfb_transpose_block_8bpp(uint8_t *src, size_t src_stride)
-{
-	uint64_t x = 0;
+#else
 	int m, n;
 
 	for (m = 0; m < 8; m++) {
@@ -964,7 +1214,7 @@ ssdfb_transpose_block_8bpp(uint8_t *src, size_t src_stride)
 			x |= src[n * src_stride + m] ? (1ULL << 63) : 0;
 		}
 	}
-
+#endif
 	return htole64(x);
 }
 

@@ -1,5 +1,5 @@
 /* Analysis of polymorphic call context.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -117,7 +117,7 @@ possible_placement_new (tree type, tree expected_type,
    Return true when lookup was sucesful.
 
    When CONSIDER_PLACEMENT_NEW is false, reject contexts that may be made
-   valid only via alocation of new polymorphic type inside by means
+   valid only via allocation of new polymorphic type inside by means
    of placement new.
 
    When CONSIDER_BASES is false, only look for actual fields, not base types
@@ -267,7 +267,8 @@ ipa_polymorphic_call_context::restrict_to_inner_class (tree otr_type,
 	{
 	  for (fld = TYPE_FIELDS (type); fld; fld = DECL_CHAIN (fld))
 	    {
-	      if (TREE_CODE (fld) != FIELD_DECL)
+	      if (TREE_CODE (fld) != FIELD_DECL
+		  || TREE_TYPE (fld) == error_mark_node)
 		continue;
 
 	      pos = int_bit_position (fld);
@@ -575,7 +576,7 @@ decl_maybe_in_construction_p (tree base, tree outer_type,
 	  return true;
       }
 
-  if (!base || (TREE_CODE (base) == VAR_DECL && is_global_var (base)))
+  if (!base || (VAR_P (base) && is_global_var (base)))
     {
       if (TREE_CODE (TREE_TYPE (function)) != METHOD_TYPE
 	  || (!DECL_CXX_CONSTRUCTOR_P (function)

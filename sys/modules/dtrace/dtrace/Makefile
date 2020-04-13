@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.9.2.2 2020/04/13 08:05:11 martin Exp $
 # $FreeBSD: src/sys/modules/dtrace/dtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
 .include "../../Makefile.inc"
@@ -18,6 +19,8 @@ ARCH=${MACHINE_CPU}
 .PATH: ${OSNETDIR}/dist/uts/common/dtrace
 .PATH: ${OSNETDIR}/dev/dtrace
 .PATH: ${OSNETDIR}/dev/dtrace/${ARCH}
+
+COPTS.dtrace.c += ${GCC_NO_CAST_FUNCTION_TYPE}
 
 KMOD=		dtrace
 SRCS=		dtrace.c \

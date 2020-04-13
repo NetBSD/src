@@ -1,10 +1,10 @@
-/*	$NetBSD: distproc.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: distproc.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* distproc.c - implement distributed procedures */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: distproc.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: distproc.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -216,7 +216,10 @@ static int		sc_returnContRef;
 #define get_returnContRef(op)		((op)->o_returnContRef & SLAP_CONTROL_MASK)
 
 static struct berval	slap_EXOP_CHAINEDREQUEST = BER_BVC( LDAP_EXOP_X_CHAINEDREQUEST );
+#ifdef LDAP_DEVEL
 static struct berval	slap_FEATURE_CANCHAINOPS = BER_BVC( LDAP_FEATURE_X_CANCHAINOPS );
+#endif
+
 
 static BackendInfo	*lback;
 

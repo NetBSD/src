@@ -1,4 +1,4 @@
-/* $NetBSD: dwcwdt_fdt.c,v 1.3.4.2 2019/06/10 22:07:07 christos Exp $ */
+/* $NetBSD: dwcwdt_fdt.c,v 1.3.4.3 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.3.4.2 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.3.4.3 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,13 +111,25 @@ dwcwdt_map_period(struct dwcwdt_softc *sc, u_int period,
 
 	for (i = 0; i < __arraycount(wdt_torr); i++) {
 		const u_int ms = (u_int)((((uint64_t)wdt_torr[i] + 1) * 1000) / sc->sc_clkrate);
-		if (ms >= period) {
-			*aperiod = ms;
+		if (ms >= period * 1000) {
+			*aperiod = ms / 1000;
 			return i;
 		}
 	}
 
 	return -1;
+}
+
+static int
+dwcwdt_tickle(struct sysmon_wdog *smw)
+{
+	struct dwcwdt_softc * const sc = smw->smw_cookie;
+	const uint32_t crr =
+	    __SHIFTIN(WDT_CRR_CNT_RESTART_MAGIC, WDT_CRR_CNT_RESTART);
+
+	WR4(sc, WDT_CRR, crr);
+
+	return 0;
 }
 
 static int
@@ -127,8 +139,10 @@ dwcwdt_setmode(struct sysmon_wdog *smw)
 	uint32_t cr, torr;
 	int intv;
 
-	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED)
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		/* Watchdog can only be disarmed by a reset */
 		return EIO;
+	}
 
 	if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 		smw->smw_period = DWCWDT_PERIOD_DEFAULT;
@@ -140,23 +154,11 @@ dwcwdt_setmode(struct sysmon_wdog *smw)
 
 	torr = __SHIFTIN(intv, WDT_TORR_TIMEOUT_PERIOD);
 	WR4(sc, WDT_TORR, torr);
-
+	dwcwdt_tickle(smw);
 	cr = RD4(sc, WDT_CR);
 	cr &= ~WDT_CR_RESP_MODE;
 	cr |= WDT_CR_WDT_EN;
 	WR4(sc, WDT_CR, cr);
-
-	return 0;
-}
-
-static int
-dwcwdt_tickle(struct sysmon_wdog *smw)
-{
-	struct dwcwdt_softc * const sc = smw->smw_cookie;
-	const uint32_t crr =
-	    __SHIFTIN(WDT_CRR_CNT_RESTART_MAGIC, WDT_CRR_CNT_RESTART);
-
-	WR4(sc, WDT_CRR, crr);
 
 	return 0;
 }

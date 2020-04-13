@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.103.6.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.103.6.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.103.6.1 2019/06/10 22:05:23 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.103.6.2 2020/04/13 08:03:12 martin Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -89,8 +89,7 @@ read_init(EditLine *el)
 		return -1;
 
 	ma = &el->el_read->macros;
-	if ((ma->macro = el_malloc(EL_MAXMACRO *
-	    sizeof(*ma->macro))) == NULL) {
+	if ((ma->macro = el_calloc(EL_MAXMACRO, sizeof(*ma->macro))) == NULL) {
 		free(el->el_read);
 		return -1;
 	}

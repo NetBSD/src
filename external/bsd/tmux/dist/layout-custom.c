@@ -60,7 +60,7 @@ layout_checksum(const char *layout)
 char *
 layout_dump(struct layout_cell *root)
 {
-	char	layout[BUFSIZ], *out;
+	char	layout[8192], *out;
 
 	*layout = '\0';
 	if (layout_append(root, layout, sizeof layout) != 0)
@@ -116,13 +116,49 @@ layout_append(struct layout_cell *lc, char *buf, size_t len)
 	return (0);
 }
 
+/* Check layout sizes fit. */
+static int
+layout_check(struct layout_cell *lc)
+{
+	struct layout_cell	*lcchild;
+	u_int			 n = 0;
+
+	switch (lc->type) {
+	case LAYOUT_WINDOWPANE:
+		break;
+	case LAYOUT_LEFTRIGHT:
+		TAILQ_FOREACH(lcchild, &lc->cells, entry) {
+			if (lcchild->sy != lc->sy)
+				return (0);
+			if (!layout_check(lcchild))
+				return (0);
+			n += lcchild->sx + 1;
+		}
+		if (n - 1 != lc->sx)
+			return (0);
+		break;
+	case LAYOUT_TOPBOTTOM:
+		TAILQ_FOREACH(lcchild, &lc->cells, entry) {
+			if (lcchild->sx != lc->sx)
+				return (0);
+			if (!layout_check(lcchild))
+				return (0);
+			n += lcchild->sy + 1;
+		}
+		if (n - 1 != lc->sy)
+			return (0);
+		break;
+	}
+	return (1);
+}
+
 /* Parse a layout string and arrange window as layout. */
 int
 layout_parse(struct window *w, const char *layout)
 {
 	struct layout_cell	*lc, *lcchild;
 	struct window_pane	*wp;
-	u_int			 npanes, ncells, sx, sy;
+	u_int			 npanes, ncells, sx = 0, sy = 0;
 	u_short			 csum;
 
 	/* Check validity. */
@@ -153,8 +189,38 @@ layout_parse(struct window *w, const char *layout)
 		layout_destroy_cell(w, lcchild, &lc);
 	}
 
-	/* Save the old window size and resize to the layout size. */
-	sx = w->sx; sy = w->sy;
+	/*
+	 * It appears older versions of tmux were able to generate layouts with
+	 * an incorrect top cell size - if it is larger than the top child then
+	 * correct that (if this is still wrong the check code will catch it).
+	 */
+	switch (lc->type) {
+	case LAYOUT_WINDOWPANE:
+		break;
+	case LAYOUT_LEFTRIGHT:
+		TAILQ_FOREACH(lcchild, &lc->cells, entry) {
+			sy = lcchild->sy + 1;
+			sx += lcchild->sx + 1;
+		}
+		break;
+	case LAYOUT_TOPBOTTOM:
+		TAILQ_FOREACH(lcchild, &lc->cells, entry) {
+			sx = lcchild->sx + 1;
+			sy += lcchild->sy + 1;
+		}
+		break;
+	}
+	if (lc->type != LAYOUT_WINDOWPANE && (lc->sx != sx || lc->sy != sy)) {
+		log_debug("fix layout %u,%u to %u,%u", lc->sx, lc->sy, sx,sy);
+		layout_print_cell(lc, __func__, 0);
+		lc->sx = sx - 1; lc->sy = sy - 1;
+	}
+
+	/* Check the new layout. */
+	if (!layout_check(lc))
+		return (-1);
+
+	/* Resize to the layout size. */
 	window_resize(w, lc->sx, lc->sy);
 
 	/* Destroy the old layout and swap to the new. */
@@ -166,12 +232,9 @@ layout_parse(struct window *w, const char *layout)
 	layout_assign(&wp, lc);
 
 	/* Update pane offsets and sizes. */
-	layout_fix_offsets(lc);
-	layout_fix_panes(w, lc->sx, lc->sy);
-
-	/* Then resize the layout back to the original window size. */
-	layout_resize(w, sx, sy);
-	window_resize(w, sx, sy);
+	layout_fix_offsets(w);
+	layout_fix_panes(w);
+	recalculate_sizes();
 
 	layout_print_cell(lc, __func__, 0);
 

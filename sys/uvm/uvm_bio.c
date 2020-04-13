@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.97.2.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.97.2.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.97.2.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.97.2.3 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -712,7 +712,7 @@ ubc_release(void *va, int flags)
 			    inactive);
 		}
 	}
-	UVMHIST_LOG(ubchist, "umap %cw#jxp refs %jd", (uintptr_t)umap,
+	UVMHIST_LOG(ubchist, "umap %#jx refs %jd", (uintptr_t)umap,
 	    umap->refcount, 0, 0);
 	rw_exit(ubc_object.uobj.vmobjlock);
 }
@@ -734,8 +734,25 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	    ((flags & UBC_READ) != 0 && uio->uio_rw == UIO_READ));
 
 #ifdef UBC_USE_PMAP_DIRECT
-	if (ubc_direct) {
-		return ubc_uiomove_direct(uobj, uio, todo, advice, flags);
+	if (ubc_direct && UVM_OBJ_IS_VNODE(uobj)) {
+		/*
+		 * during direct access pages need to be held busy to
+		 * prevent them disappearing.  if the LWP reads or writes
+		 * a vnode into a mapped view of same it could deadlock.
+		 * prevent this by disallowing direct access if the vnode
+		 * is visible somewhere via mmap().
+		 *
+		 * the vnode flags are tested here, but at all points UBC is
+		 * called for vnodes, the vnode is locked (thus preventing a
+		 * new mapping via mmap() while busy here).
+		 */
+
+		struct vnode *vp = (struct vnode *)uobj;
+		KASSERT(VOP_ISLOCKED(vp) != LK_NONE);
+		if ((vp->v_vflag & VV_MAPPED) == 0) {
+			return ubc_uiomove_direct(uobj, uio, todo, advice,
+			    flags);
+		}
 	}
 #endif
 
@@ -897,17 +914,12 @@ ubc_direct_release(struct uvm_object *uobj,
 		uvm_pageactivate(pg);
 		uvm_pageunlock(pg);
 
-		/*
-		 * Page was changed, no longer fake and neither clean. 
-		 * There's no managed mapping in the direct case, so 
-		 * mark the page dirty manually.
-		 */
+		/* Page was changed, no longer fake and neither clean. */
 		if (flags & UBC_WRITE) {
 			pg->flags &= ~PG_FAKE;
 			KASSERTMSG(uvm_pagegetdirty(pg) ==
 			    UVM_PAGE_STATUS_DIRTY,
 			    "page %p not dirty", pg);
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		}
 	}
 	uvm_page_unbusy(pgs, npages);

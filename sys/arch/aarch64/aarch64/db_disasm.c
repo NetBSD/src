@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $ */
+/* $NetBSD: db_disasm.c,v 1.2.2.2 2020/04/13 08:03:27 martin Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2.2.1 2019/06/10 22:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2.2.2 2020/04/13 08:03:27 martin Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -75,7 +75,7 @@ strdisasm_readword(uintptr_t address)
 	return *(uint32_t *)address;
 }
 
-static void
+static void __printflike(1, 2)
 strdisasm_printf(const char *fmt, ...)
 {
 	va_list ap;

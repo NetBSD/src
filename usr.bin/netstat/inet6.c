@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.71.2.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: inet6.c,v 1.71.2.2 2020/04/13 08:05:45 martin Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.71.2.1 2019/06/10 22:10:22 christos Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.71.2.2 2020/04/13 08:05:45 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,7 +416,7 @@ tcp6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(tcp6stat);
 
-		if (sysctlbyname("net.inet6.tcp6.stats", &tcp6stat, &size,
+		if (prog_sysctlbyname("net.inet6.tcp6.stats", &tcp6stat, &size,
 		    NULL, 0) == -1)
 			return;
 	} else {
@@ -502,7 +502,7 @@ udp6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(udp6stat);
 
-		if (sysctlbyname("net.inet6.udp6.stats", udp6stat, &size,
+		if (prog_sysctlbyname("net.inet6.udp6.stats", udp6stat, &size,
 		    NULL, 0) == -1)
 			return;
 	} else {
@@ -646,7 +646,7 @@ ip6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(ip6stat);
 
-		if (sysctlbyname("net.inet6.ip6.stats", ip6stat, &size,
+		if (prog_sysctlbyname("net.inet6.ip6.stats", ip6stat, &size,
 		    NULL, 0) == -1)
 			return;
 	} else {
@@ -1132,7 +1132,7 @@ icmp6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(icmp6stat);
 
-		if (sysctlbyname("net.inet6.icmp6.stats", icmp6stat, &size,
+		if (prog_sysctlbyname("net.inet6.icmp6.stats", icmp6stat, &size,
 		    NULL, 0) == -1)
 			return;
 	} else {
@@ -1280,7 +1280,7 @@ pim6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(pim6stat);
 
-		if (sysctlbyname("net.inet6.pim6.stats", pim6stat, &size,
+		if (prog_sysctlbyname("net.inet6.pim6.stats", pim6stat, &size,
 		    NULL, 0) == -1)
 			return;
         } else {
@@ -1313,7 +1313,7 @@ rip6_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(rip6stat);
 
-		if (sysctlbyname("net.inet6.raw6.stats", rip6stat, &size,
+		if (prog_sysctlbyname("net.inet6.raw6.stats", rip6stat, &size,
 		    NULL, 0) == -1)
 			return;
 	} else {

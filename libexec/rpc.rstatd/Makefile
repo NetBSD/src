@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/01/23 21:22:47 christos Exp $
+#	$NetBSD: Makefile,v 1.22.16.1 2020/04/13 08:03:18 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,7 @@ MLINKS=	rpc.rstatd.8 rstatd.8
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
+
+COPTS.rstat_proc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

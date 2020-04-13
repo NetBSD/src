@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.5 2011/09/26 02:36:19 christos Exp $
+$NetBSD: README.mknative,v 1.5.42.1 2020/04/13 08:05:34 martin Exp $
 
 This file describes how to use the cross-compiler to generate the
 native files for GDB on a target platform.
@@ -20,16 +20,13 @@ work.
 1. Set MKMAINTAINERTOOLS=yes in mk.conf.  (Needed so that src/tools/gettext
    gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
 
-2. Build and install a cross toolchain (via "build.sh -m MACHINE tools").
+2. Build and install a cross toolchain (via "build.sh -U -m MACHINE tools").
 
-3. At top level, do "nbmake-MACHINE do-distrib-dirs obj includes".
+3. At top level, do "nbmake-MACHINE obj do-distrib-dirs includes".
 
-4. In src/gnu/lib/crtstuff4 do "nbmake-MACHINE depend all install"
+4. At top level, do "nbmake-MACHINE -C lib build_install".
 
-5. In src/lib/csu, src/gnu/lib/libgcc4, and src/lib, do
-   "nbmake-MACHINE all install".
-
-6. In src/tools/gdb, do "nbmake-MACHINE obj native-gdb".
+5. In src/tools/gdb, do "nbmake-MACHINE obj native-gdb".
 
    This will do a full configury in ${.OBJDIR}/.native that is a "Canadian"
    cross toolchain (--build reflects the host platform, but --host and
@@ -40,8 +37,8 @@ work.
    NOTE: this step writes files under src/external/gpl3/gdb/bin/gdb, so you
    need to do it in a writable src tree!
 
-7. Try out a full build using "nbmake-MACHINE" in
-   src/external/gpl3/bin/gdb; the result should include a native GDB.
+6. Try out a full build using "nbmake-MACHINE" in
+   src/external/gpl3/gdb/bin; the result should include a native GDB.
 
-8. If all is well, commit the glue files and directories added to
+7. If all is well, commit the glue files and directories added to
    src/external/gpl3/gdb/bin/gdb.

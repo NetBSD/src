@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.97.2.2 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: if_se.c,v 1.97.2.3 2020/04/13 08:04:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.97.2.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.97.2.3 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -340,13 +340,8 @@ seattach(device_t parent, device_t self, void *aux)
 	 * Initialize and attach a buffer
 	 */
 	sc->sc_tbuf = malloc(ETHERMTU + sizeof(struct ether_header),
-			     M_DEVBUF, M_NOWAIT);
-	if (sc->sc_tbuf == 0)
-		panic("seattach: can't allocate transmit buffer");
-
-	sc->sc_rbuf = malloc(RBUF_LEN, M_DEVBUF, M_NOWAIT);/* A Guess */
-	if (sc->sc_rbuf == 0)
-		panic("seattach: can't allocate receive buffer");
+			     M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = malloc(RBUF_LEN, M_DEVBUF, M_WAITOK);/* A Guess */
 
 	se_get_addr(sc, myaddr);
 
@@ -1022,11 +1017,7 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_NOWAIT);
-		if (sa == NULL) {
-			error = ENOBUFS;
-			break;
-		}
+		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_WAITOK);
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				error = (cmd == SIOCADDMULTI) ?

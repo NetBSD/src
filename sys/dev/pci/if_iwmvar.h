@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.18 2017/03/14 23:59:26 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.18.18.1 2020/04/13 08:04:26 martin Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -113,7 +113,7 @@ struct iwm_rx_radiotap_header {
 	uint16_t	wr_chan_flags;
 	int8_t		wr_dbm_antsignal;
 	int8_t		wr_dbm_antnoise;
-} __packed;
+};
 
 #define IWM_RX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
@@ -130,7 +130,7 @@ struct iwm_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_hwqueue;
-} __packed;
+};
 
 #define IWM_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\

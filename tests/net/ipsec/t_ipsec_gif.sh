@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.7.4.1 2020/04/08 14:09:12 martin Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.7.4.2 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -107,7 +107,7 @@ test_ipsec4_gif()
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_local/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gwlo_tun/24
-	atf_check -s exit:0 rump.ifconfig gif0 create
+	rump_server_add_iface $SOCK_TUN_LOCAL gif0
 	atf_check -s exit:0 rump.ifconfig gif0 \
 	    tunnel $ip_gwlo_tun $ip_gwre_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
@@ -119,7 +119,7 @@ test_ipsec4_gif()
 	export RUMP_SERVER=$SOCK_TUN_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_remote/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gwre_tun/24
-	atf_check -s exit:0 rump.ifconfig gif0 create
+	rump_server_add_iface $SOCK_TUN_REMOTE gif0
 	atf_check -s exit:0 rump.ifconfig gif0 \
 	    tunnel $ip_gwre_tun $ip_gwlo_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
@@ -260,7 +260,7 @@ test_ipsec6_gif()
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_local/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gwlo_tun/64
-	atf_check -s exit:0 rump.ifconfig gif0 create
+	rump_server_add_iface $SOCK_TUN_LOCAL gif0
 	atf_check -s exit:0 rump.ifconfig gif0 \
 	    tunnel $ip_gwlo_tun $ip_gwre_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
@@ -272,7 +272,7 @@ test_ipsec6_gif()
 	export RUMP_SERVER=$SOCK_TUN_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_remote/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gwre_tun/64
-	atf_check -s exit:0 rump.ifconfig gif0 create
+	rump_server_add_iface $SOCK_TUN_REMOTE gif0
 	atf_check -s exit:0 rump.ifconfig gif0 \
 	    tunnel $ip_gwre_tun $ip_gwlo_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \

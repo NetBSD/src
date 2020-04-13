@@ -16,7 +16,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-eigrp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-eigrp.c,v 1.9.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Enhanced Interior Gateway Routing Protocol (EIGRP) printer */
@@ -358,6 +358,7 @@ eigrp_print(netdissect_options *ndo, register const u_char *pptr, register u_int
             }
             byte_length = (bit_length + 7) / 8; /* variable length encoding */
             memset(prefix, 0, 4);
+            ND_TCHECK2(tlv_ptr.eigrp_tlv_ip_int->destination, byte_length);
             memcpy(prefix,&tlv_ptr.eigrp_tlv_ip_int->destination,byte_length);
 
             ND_PRINT((ndo, "\n\t    IPv4 prefix: %15s/%u, nexthop: ",
@@ -392,6 +393,7 @@ eigrp_print(netdissect_options *ndo, register const u_char *pptr, register u_int
             }
             byte_length = (bit_length + 7) / 8; /* variable length encoding */
             memset(prefix, 0, 4);
+            ND_TCHECK2(tlv_ptr.eigrp_tlv_ip_ext->destination, byte_length);
             memcpy(prefix,&tlv_ptr.eigrp_tlv_ip_ext->destination,byte_length);
 
             ND_PRINT((ndo, "\n\t    IPv4 prefix: %15s/%u, nexthop: ",

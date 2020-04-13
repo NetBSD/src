@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.32 2017/04/22 15:05:02 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.32.12.1 2020/04/13 08:04:47 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
+
+#include <sys/param.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
@@ -72,7 +74,7 @@
 struct rasops_info {
 	/* These must be filled in by the caller */
 	int	ri_depth;	/* depth in bits */
-	u_char	*ri_bits;	/* ptr to bits */
+	uint8_t	*ri_bits;	/* ptr to bits */
 	int	ri_width;	/* width (pels) */
 	int	ri_height;	/* height (pels) */
 	int	ri_stride;	/* stride in bytes */
@@ -81,7 +83,7 @@ struct rasops_info {
 	 * If you want shadow framebuffer support, point ri_hwbits
 	 * to the real framebuffer, and ri_bits to the shadow framebuffer
 	 */
-	u_char	*ri_hwbits;
+	uint8_t	*ri_hwbits;
 
 	/*
 	 * These can optionally be left zeroed out. If you fill ri_font,
@@ -100,13 +102,12 @@ struct rasops_info {
 	 * on depths other than 15, 16, 24 and 32 bits per pel. On
 	 * 24 bit displays, ri_{r,g,b}num must be 8.
 	 */
-	u_char	ri_rnum;
-	/* number of bits for red */
-	u_char	ri_gnum;	/* number of bits for green */
-	u_char	ri_bnum;	/* number of bits for blue */
-	u_char	ri_rpos;	/* which bit red starts at */
-	u_char	ri_gpos;	/* which bit green starts at */
-	u_char	ri_bpos;	/* which bit blue starts at */
+	uint8_t	ri_rnum;	/* number of bits for red */
+	uint8_t	ri_gnum;	/* number of bits for green */
+	uint8_t	ri_bnum;	/* number of bits for blue */
+	uint8_t	ri_rpos;	/* which bit red starts at */
+	uint8_t	ri_gpos;	/* which bit green starts at */
+	uint8_t	ri_bpos;	/* which bit blue starts at */
 
 	/* These are filled in by rasops_init() */
 	int	ri_emuwidth;	/* width we actually care about */
@@ -114,16 +115,32 @@ struct rasops_info {
 	int	ri_emustride;	/* bytes per row we actually care about */
 	int	ri_rows;	/* number of rows (characters, not pels) */
 	int	ri_cols;	/* number of columns (characters, not pels) */
-	int	ri_delta;	/* row delta in bytes */
+#if __NetBSD_Prereq__(9, 99, 1)
+	struct {
+		int	off;	/* offset of underline from bottom */
+		int	height;	/* height of underline */
+	} ri_ul;
+#else
+	/*
+	 * XXX
+	 * hack to keep ABI compatibility for netbsd-9, -8, and -7.
+	 */
+	// int	ri_delta;	/* obsoleted */
+	struct {
+		short	off;
+		short	height;
+	} __packed ri_ul;
+#endif
 	int	ri_pelbytes;	/* bytes per pel (may be zero) */
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
 	int	ri_yscale;	/* fontheight * stride */
-	u_char  *ri_origbits;	/* where screen bits actually start */
-	u_char  *ri_hworigbits;	/* where hw bits actually start */
+	uint8_t	*ri_origbits;	/* where screen bits actually start */
+	uint8_t *ri_hworigbits;	/* where hw bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
-	int32_t	ri_devcmap[16]; /* color -> framebuffer data */
+	uint32_t
+		ri_devcmap[16]; /* color -> framebuffer data */
 
 	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
@@ -132,21 +149,18 @@ struct rasops_info {
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
 
-#if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
-#endif
 };
 
-#define DELTA(p, d, cast) ((p) = (cast)((char *)(p) + (d)))
+#define CHAR_IN_FONT(c, font)						\
+	((c) >= (font)->firstchar &&					\
+	    (c) - (font)->firstchar < (font)->numchars)
 
-#define CHAR_IN_FONT(c,font) 					\
-       ((c) >= (font)->firstchar && 				\
-	((c) - (font)->firstchar) < (font)->numchars)
-
-#define PICK_FONT(ri, c) (((c & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT) && \
-			  (ri->ri_optfont.data != NULL)) ? \
-			 &ri->ri_optfont : ri->ri_font
+#define PICK_FONT(ri, c)						\
+	((((c) & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT &&		\
+	    (ri)->ri_optfont.data != NULL) ?				\
+		&(ri)->ri_optfont : (ri)->ri_font)
 
 /*
  * rasops_init().
@@ -162,9 +176,19 @@ struct rasops_info {
  * to -1 (or a new, valid cookie).
  */
 
+/* rasops.c */
+int	rasops_init(struct rasops_info *, int, int);
+int	rasops_reconfig(struct rasops_info *, int, int);
+void	rasops_unpack_attr(long, int *, int *, int *);
+void	rasops_eraserows(void *, int, int, long);
+void	rasops_erasecols(void *, int, int, int, long);
+int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
+
+extern const uint8_t	rasops_cmap[256 * 3];
+
+#ifdef _RASOPS_PRIVATE
 /*
- * Per-depth initialization functions. These should not be called outside
- * the rasops code.
+ * Per-depth initialization functions.
  */
 void	rasops1_init(struct rasops_info *);
 void	rasops2_init(struct rasops_info *);
@@ -174,17 +198,71 @@ void	rasops15_init(struct rasops_info *);
 void	rasops24_init(struct rasops_info *);
 void	rasops32_init(struct rasops_info *);
 
-/* rasops.c */
-int	rasops_init(struct rasops_info *, int, int);
-int	rasops_reconfig(struct rasops_info *, int, int);
-void	rasops_unpack_attr(long, int *, int *, int *);
-void	rasops_eraserows(void *, int, int, long);
-void	rasops_erasecols(void *, int, int, int, long);
-void	rasops_copycols(void *, int, int, int, int);
-int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
+#define	ATTR_BG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 16) & 0xf])
+#define	ATTR_FG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 24) & 0xf])
 
+#define	ATTR_MASK_BG __BITS(16, 19)
+#define	ATTR_MASK_FG __BITS(24, 27)
 
-extern const u_char	rasops_isgray[16];
-extern const u_char	rasops_cmap[256*3];
+#define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
+
+#define	FBOFFSET(ri, row, col)						\
+	((row) * (ri)->ri_yscale + (col) * (ri)->ri_xscale)
+
+#define	FONT_GLYPH(uc, font, ri)					\
+	((uint8_t *)(font)->data + ((uc) - ((font)->firstchar)) *	\
+	    (ri)->ri_fontscale)
+
+static __inline void
+rasops_memset32(void *p, uint32_t val, size_t bytes)
+{
+	int slop1, slop2, full;
+	uint8_t *dp = (uint8_t *)p;
+
+	if (bytes == 1) {
+		*dp = val;
+		return;
+	}
+
+	slop1 = (4 - ((uintptr_t)dp & 3)) & 3;
+	slop2 = (bytes - slop1) & 3;
+	full = (bytes - slop1 /* - slop2 */) >> 2;
+
+	if (slop1 & 1)
+		*dp++ = val;
+
+	if (slop1 & 2) {
+		*(uint16_t *)dp = val;
+		dp += 2;
+	}
+
+	for (; full; full--) {
+		*(uint32_t *)dp = val;
+		dp += 4;
+	}
+
+	if (slop2 & 2) {
+		*(uint16_t *)dp = val;
+		dp += 2;
+	}
+
+	if (slop2 & 1)
+		*dp = val;
+
+	return;
+}
+
+static __inline uint32_t
+rasops_be32uatoh(uint8_t *p)
+{
+	uint32_t u;
+
+	u  = p[0]; u <<= 8;
+	u |= p[1]; u <<= 8;
+	u |= p[2]; u <<= 8;
+	u |= p[3];
+	return u;
+}
+#endif /* _RASOPS_PRIVATE */
 
 #endif /* _RASOPS_H_ */

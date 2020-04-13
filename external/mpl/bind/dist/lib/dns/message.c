@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.5.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: message.c,v 1.5.2.4 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -905,7 +905,7 @@ getname(dns_name_t *name, isc_buffer_t *source, dns_message_t *msg,
 	 */
 	tries = 0;
 	while (tries < 2) {
-		result = dns_name_fromwire(name, source, dctx, false,
+		result = dns_name_fromwire(name, source, dctx, 0,
 					   scratch);
 
 		if (result == ISC_R_NOSPACE) {
@@ -3437,6 +3437,42 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	return (result);
 }
 
+static isc_result_t
+render_llq(isc_buffer_t *optbuf, isc_buffer_t *target) {
+	char buf[sizeof("18446744073709551615")]; /* 2^64-1 */
+	isc_result_t result = ISC_R_SUCCESS;
+	uint32_t u;
+	uint64_t q;
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, " Version: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, ", Opcode: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, ", Error: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	q = isc_buffer_getuint32(optbuf);
+	q <<= 32;
+	q |= isc_buffer_getuint32(optbuf);
+	ADD_STRING(target, ", Identifier: ");
+	snprintf(buf, sizeof(buf), "%" PRIu64, q);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint32(optbuf);
+	ADD_STRING(target, ", Lifetime: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+ cleanup:
+	return (result);
+}
 
 static isc_result_t
 dns_message_pseudosectiontoyaml(dns_message_t *msg,
@@ -3523,7 +3559,19 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 			optlen = isc_buffer_getuint16(&optbuf);
 			INSIST(isc_buffer_remaininglength(&optbuf) >= optlen);
 
-			if (optcode == DNS_OPT_NSID) {
+			if (optcode == DNS_OPT_LLQ) {
+				INDENT(style);
+				if (optlen == 18U) {
+					ADD_STRING(target, "LLQ: ");
+					result = render_llq(&optbuf, target);
+					if (result != ISC_R_SUCCESS) {
+						goto cleanup;
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
+				ADD_STRING(target, "LLQ");
+			} else if (optcode == DNS_OPT_NSID) {
 				INDENT(style);
 				ADD_STRING(target, "NSID");
 			} else if (optcode == DNS_OPT_COOKIE) {
@@ -3584,6 +3632,32 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 					    optlen -= 2;
 					}
 					ADD_STRING(target, "\n");
+					continue;
+				}
+			} else if (optcode == DNS_OPT_CLIENT_TAG) {
+				uint16_t id;
+				INDENT(style);
+				ADD_STRING(target, "CLIENT-TAG");
+				if (optlen == 2U) {
+					id = isc_buffer_getuint16(&optbuf);
+					snprintf(buf, sizeof(buf), ": %u\n",
+						 id);
+					ADD_STRING(target, buf);
+					optlen -= 2;
+					POST(optlen);
+					continue;
+				}
+			} else if (optcode == DNS_OPT_SERVER_TAG) {
+				uint16_t id;
+				INDENT(style);
+				ADD_STRING(target, "SERVER-TAG");
+				if (optlen == 2U) {
+					id = isc_buffer_getuint16(&optbuf);
+					snprintf(buf, sizeof(buf), ": %u\n",
+						 id);
+					ADD_STRING(target, buf);
+					optlen -= 2;
+					POST(optlen);
 					continue;
 				}
 			} else {
@@ -3779,7 +3853,18 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 
 			INDENT(style);
 
-			if (optcode == DNS_OPT_NSID) {
+			if (optcode == DNS_OPT_LLQ) {
+				if (optlen == 18U) {
+					ADD_STRING(target, "; LLQ:");
+					result = render_llq(&optbuf, target);
+					if (result != ISC_R_SUCCESS) {
+						return (result);
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
+				ADD_STRING(target, "; LLQ");
+			} else if (optcode == DNS_OPT_NSID) {
 				ADD_STRING(target, "; NSID");
 			} else if (optcode == DNS_OPT_COOKIE) {
 				ADD_STRING(target, "; COOKIE");
@@ -3853,6 +3938,30 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 					    optlen -= 2;
 					}
 					ADD_STRING(target, "\n");
+					continue;
+				}
+			} else if (optcode == DNS_OPT_CLIENT_TAG) {
+				uint16_t id;
+				ADD_STRING(target, "; CLIENT-TAG");
+				if (optlen == 2U) {
+					id = isc_buffer_getuint16(&optbuf);
+					snprintf(buf, sizeof(buf), ": %u\n",
+						 id);
+					ADD_STRING(target, buf);
+					optlen -= 2;
+					POST(optlen);
+					continue;
+				}
+			} else if (optcode == DNS_OPT_SERVER_TAG) {
+				uint16_t id;
+				ADD_STRING(target, "; SERVER-TAG");
+				if (optlen == 2U) {
+					id = isc_buffer_getuint16(&optbuf);
+					snprintf(buf, sizeof(buf), ": %u\n",
+						 id);
+					ADD_STRING(target, buf);
+					optlen -= 2;
+					POST(optlen);
 					continue;
 				}
 			} else {

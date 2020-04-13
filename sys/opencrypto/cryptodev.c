@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.4.2 2020/04/08 14:08:59 martin Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.4.3 2020/04/13 08:05:17 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.4.2 2020/04/08 14:08:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.4.3 2020/04/13 08:05:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2254,6 +2254,8 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
+		if (crypto_refcount != 0)
+			return EBUSY;
 		error = config_cfdata_detach(crypto_cfdata);
 		if (error) {
 			return error;

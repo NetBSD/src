@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.9.2.3 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.9.2.4 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.9.2.3 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.9.2.4 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -229,6 +229,8 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		return EINVAL;
 
 	rtm = mtod(m, struct rt_xmsghdr *);
+	if (rtm->rtm_type >= sizeof(rop->rocb_msgfilter) * CHAR_BIT)
+		return EINVAL;
 	/* If the rtm type is filtered out, return a positive. */
 	if (rop->rocb_msgfilter != 0 &&
 	    !(rop->rocb_msgfilter & RTMSGFILTER(rtm->rtm_type)))
@@ -1723,6 +1725,10 @@ COMPATNAME(route_init)(void)
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    COMPATNAME(route_intr), NULL);
 	IFQ_LOCK_INIT(&ri->ri_intrq);
+
+#ifdef MBUFTRACE
+	MOWNER_ATTACH(&COMPATNAME(routedomain).dom_mowner);
+#endif
 }
 
 /*
@@ -1775,4 +1781,7 @@ struct domain COMPATNAME(routedomain) = {
 	.dom_protosw = COMPATNAME(route_protosw),
 	.dom_protoswNPROTOSW =
 	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
+#ifdef MBUFTRACE
+	.dom_mowner = MOWNER_INIT("route", "rtm"),
+#endif
 };

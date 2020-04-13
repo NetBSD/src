@@ -1,5 +1,5 @@
 /* Loop optimizer initialization routines and RTL loop optimization passes.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -560,7 +560,7 @@ public:
   /* opt_pass methods: */
   virtual bool gate (function *)
     {
-      return (flag_peel_loops || flag_unroll_loops || flag_unroll_all_loops);
+      return (flag_unroll_loops || flag_unroll_all_loops);
     }
 
   virtual unsigned int execute (function *);

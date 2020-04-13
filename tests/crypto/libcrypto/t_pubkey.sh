@@ -1,4 +1,4 @@
-# $NetBSD: t_pubkey.sh,v 1.4.14.1 2019/06/10 22:09:59 christos Exp $
+# $NetBSD: t_pubkey.sh,v 1.4.14.2 2020/04/13 08:05:22 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,7 +81,7 @@ atf_test_case ecdsa
 ecdsa_head()
 {
 	atf_set "descr" "Checks ECDSA algorithm"
-	atf_set "timeout" "480"
+	atf_set "timeout" "3000"
 }
 ecdsa_body()
 {

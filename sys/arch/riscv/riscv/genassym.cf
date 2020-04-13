@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.22.2 2020/04/08 14:07:51 martin Exp $
+#	$NetBSD: genassym.cf,v 1.3.22.3 2020/04/13 08:04:05 martin Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -185,12 +185,14 @@ define	PGSHIFT		PGSHIFT
 define	NPDEPG		NPDEPG
 define	NBSEG		NBSEG
 
-define	PTE_T		PTE_T
-define	PTE_V		PTE_V
+define	PTE_D		PTE_D
+define	PTE_A		PTE_A
 define	PTE_G		PTE_G
-define	PTE_SX		PTE_SX
-define	PTE_SW		PTE_SW
-define	PTE_SR		PTE_SR
+define	PTE_U		PTE_U
+define	PTE_X		PTE_X
+define	PTE_W		PTE_W
+define	PTE_R		PTE_R
+define	PTE_V		PTE_V
 
 define	PM_MD_PDETAB	offsetof(struct pmap, pm_md.md_pdetab)
 define	PM_MD_PTBR	offsetof(struct pmap, pm_md.md_ptbr)

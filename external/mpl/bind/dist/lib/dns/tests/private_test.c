@@ -1,4 +1,4 @@
-/*	$NetBSD: private_test.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: private_test.c,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <setjmp.h>
 
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -112,7 +113,7 @@ make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
 	/* for simplicity, we're using a maximum salt length of 4 */
 	salt = htonl(testcase->salt);
 	sp = (unsigned char *) &salt;
-	while (*sp == '\0' && slen > 0) {
+	while (slen > 0 && *sp == '\0') {
 		slen--;
 		sp++;
 	}

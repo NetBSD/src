@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/09/10 22:02:40 dsl Exp $
+#	$NetBSD: Makefile,v 1.8.46.1 2020/04/13 08:05:47 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	sort
@@ -7,5 +7,7 @@ SRCS+=	radix_sort.c
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+
+COPTS.init.c+=		${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

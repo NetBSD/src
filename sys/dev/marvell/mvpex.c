@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.16.18.1 2019/06/10 22:07:13 christos Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.16.18.2 2020/04/13 08:04:23 martin Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.16.18.1 2019/06/10 22:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.16.18.2 2020/04/13 08:04:23 martin Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -671,10 +671,7 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 
 	KASSERT(pin == intrtab->intr_pin);
 
-	pexih = malloc(sizeof(*pexih), M_DEVBUF, M_NOWAIT);
-	if (pexih == NULL)
-		return NULL;
-
+	pexih = malloc(sizeof(*pexih), M_DEVBUF, M_WAITOK);
 	pexih->ih_func = intrhand;
 	pexih->ih_arg = intrarg;
 	pexih->ih_type = ipl;

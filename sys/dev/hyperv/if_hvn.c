@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.3.2.3 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.3.2.4 2020/04/13 08:04:20 martin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.3.2.3 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.3.2.4 2020/04/13 08:04:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -286,6 +286,7 @@ hvn_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_proto >= HVN_NVS_PROTO_VERSION_2) {
 		sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 		sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+		sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 	}
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, HVN_TX_DESC - 1);
@@ -569,7 +570,7 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	case 0:
 		break;
 	case EFBIG:
-		if (m_defrag(m, M_NOWAIT) == 0 &&
+		if (m_defrag(m, M_NOWAIT) != NULL &&
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m,
 		      BUS_DMA_READ | BUS_DMA_NOWAIT) == 0)
 			break;
@@ -913,7 +914,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 		HVN_NVS_PROTO_VERSION_2,
 		HVN_NVS_PROTO_VERSION_1
 	};
-	const int kmemflags = cold ? KM_NOSLEEP : KM_SLEEP;
 	struct hvn_nvs_init cmd;
 	struct hvn_nvs_init_resp *rsp;
 	struct hvn_nvs_ndis_init ncmd;
@@ -922,12 +922,7 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	uint64_t tid;
 	int i;
 
-	sc->sc_nvsbuf = kmem_zalloc(HVN_NVS_BUFSIZE, kmemflags);
-	if (sc->sc_nvsbuf == NULL) {
-		DPRINTF("%s: failed to allocate channel data buffer\n",
-		    device_xname(sc->sc_dev));
-		return -1;
-	}
+	sc->sc_nvsbuf = kmem_zalloc(HVN_NVS_BUFSIZE, KM_SLEEP);
 
 	/* We need to be able to fit all RNDIS control and data messages */
 	ringsize = HVN_RNDIS_CTLREQS *
@@ -936,12 +931,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
 
 	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
-
-	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(sc->sc_dev))) {
-		aprint_error_dev(sc->sc_dev,
-		    "failed to create the interrupt thread\n");
-		return -1;
-	}
 
 	/* Associate our interrupt handler with the channel */
 	if (vmbus_channel_open(sc->sc_chan, ringsize, NULL, 0,

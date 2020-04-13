@@ -4,6 +4,11 @@ objectClass: dcObject
 o: Example, Inc.
 dc: example
 
+dn: cn=Manager,o=Example,c=US
+objectClass: inetOrgPerson
+cn: Manager
+sn: Parson
+
 dn: ou=People,o=Example,c=US
 objectClass: organizationalUnit
 ou: People

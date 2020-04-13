@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2017/01/07 17:27:02 christos Exp $
+# $NetBSD: Makefile,v 1.6.14.1 2020/04/13 08:05:55 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR=		npfctl npfd
 SUBDIR+=	npftest
 .endif
 
-MAN=		npf.7
+MAN=		npf.7 npf-params.7
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

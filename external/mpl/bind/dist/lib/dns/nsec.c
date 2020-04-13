@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.3.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.3.2.3 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -109,6 +109,8 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	unsigned char *nsec_bits, *bm;
 	unsigned int max_type;
 	dns_rdatasetiter_t *rdsiter;
+
+	REQUIRE(target != NULL);
 
 	memset(buffer, 0, DNS_NSEC_BUFFERSIZE);
 	dns_name_toregion(target, &r);

@@ -1,10 +1,10 @@
-/*	$NetBSD: valsort.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: valsort.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* valsort.c - sort attribute values */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -26,7 +26,7 @@
  * them in a search response.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: valsort.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: valsort.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 

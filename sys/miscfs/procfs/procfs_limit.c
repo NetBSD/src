@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_limit.c,v 1.1.4.2 2019/06/10 22:09:06 christos Exp $	*/
+/*	$NetBSD: procfs_limit.c,v 1.1.4.3 2020/04/13 08:05:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_limit.c,v 1.1.4.2 2019/06/10 22:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_limit.c,v 1.1.4.3 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ procfs_dolimit(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		pos += prl(buffer + pos, bufsize - pos, rl[i].rlim_max, '\n');
 	}
 
-	if (uio->uio_offset < pos)
+	if ((uintmax_t)uio->uio_offset < pos)
 		error = uiomove(buffer + uio->uio_offset,
 		    pos - uio->uio_offset, uio);
 	else

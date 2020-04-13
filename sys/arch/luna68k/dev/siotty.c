@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.44 2015/08/21 10:48:06 christos Exp $ */
+/* $NetBSD: siotty.c,v 1.44.18.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.44 2015/08/21 10:48:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.44.18.1 2020/04/13 08:03:56 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -188,11 +188,7 @@ siotty_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_NOSLEEP);
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(self, "unable to allocate ring buffer\n");
-		return;
-	}
+	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_SLEEP);
 	sc->sc_rbufend = sc->sc_rbuf + (siotty_rbuf_size * 2);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = siotty_rbuf_size;
@@ -602,7 +598,7 @@ siopoll(dev_t dev, int events, struct lwp *l)
 
 	sc = device_lookup_private(&siotty_cd, minor(dev));
 	tp = sc->sc_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 int

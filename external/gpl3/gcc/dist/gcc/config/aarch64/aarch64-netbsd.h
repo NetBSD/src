@@ -20,6 +20,10 @@
 #ifndef GCC_AARCH64_NETBSD_H
 #define GCC_AARCH64_NETBSD_H
 
+/* NetBSD malloc(3) does 64, not 128 bytes. */
+#undef MALLOC_ABI_ALIGNMENT
+#define MALLOC_ABI_ALIGNMENT  64
+
 #define TARGET_LINKER_BIG_EMULATION "aarch64nbsdb"
 #define TARGET_LINKER_LITTLE_EMULATION "aarch64nbsd"
 

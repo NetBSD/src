@@ -1,4 +1,4 @@
-/*	$NetBSD: imxi2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $	*/
+/*	$NetBSD: imxi2c.c,v 1.2.18.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxi2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $");
-
-#include "opt_imx.h"
+__KERNEL_RCSID(0, "$NetBSD: imxi2c.c,v 1.2.18.1 2020/04/13 08:03:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,12 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: imxi2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $");
 #include <dev/i2c/motoi2creg.h>
 #include <arm/imx/imxi2cvar.h>
 
-struct clk_div {
+static const struct clk_div {
 	uint8_t ic_val;
 	int div;
-};
-
-static const struct clk_div imxi2c_clk_div[] = {
+} imxi2c_clk_div[] = {
 	{0x20, 22},   {0x21, 24},   {0x22, 26},   {0x23, 28},
 	{0x00, 30},   {0x01, 32},   {0x24, 32},   {0x02, 36},
 	{0x25, 36},   {0x26, 40},   {0x03, 42},   {0x27, 44},

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.18.2.2 2020/04/08 14:08:11 martin Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.18.2.3 2020/04/13 08:04:46 martin Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18.2.2 2020/04/08 14:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18.2.3 2020/04/13 08:04:46 martin Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -323,10 +323,10 @@ cmalo_attach(void *arg)
 	sc->sc_flags |= MALO_FW_LOADED;
 
 	/* allocate command buffer */
-	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
 
 	/* allocate data buffer */
-	sc->sc_data = malloc(MALO_DATA_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	sc->sc_data = malloc(MALO_DATA_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
 
 	/* enable interrupts */
 	cmalo_intr_mask(sc, 1);
@@ -1308,13 +1308,11 @@ cmalo_cmd_rsp_hwspec(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = (struct malo_cmd_header *)sc->sc_cmd;
 	struct malo_cmd_body_spec *body;
-	int i;
 
 	body = (struct malo_cmd_body_spec *)(hdr + 1);
 
 	/* get our MAC address */
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		ic->ic_myaddr[i] = body->macaddr[i];
+	memcpy(ic->ic_myaddr, body->macaddr, ETHER_ADDR_LEN);
 
 	return 0;
 }

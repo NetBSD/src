@@ -16,7 +16,7 @@
 
 #define	NPF_BINAT	(NPF_NATIN | NPF_NATOUT)
 
-#define	RANDOM_PORT	53472
+#define	RANDOM_PORT	46759
 
 static const struct test_case {
 	const char *	src;
@@ -150,14 +150,14 @@ static const struct test_case {
 };
 
 static bool
-nmatch_addr(int af, const char *saddr, const npf_addr_t *addr2)
+match_addr(int af, const char *saddr, const npf_addr_t *addr2)
 {
 	npf_addr_t addr1;
 	size_t len;
 
 	npf_inet_pton(af, saddr, &addr1);
-	len = af == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr); 
-	return memcmp(&addr1, addr2, len) != 0;
+	len = af == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr);
+	return memcmp(&addr1, addr2, len) == 0;
 }
 
 static bool
@@ -204,41 +204,12 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 	in_addr_t sport = forw ? t->tport : t->sport;
 	in_addr_t dport = forw ? t->dport : t->tport;
 
-	bool defect = false;
-	defect |= nmatch_addr(af, saddr, npc.npc_ips[NPF_SRC]);
-	defect |= sport != ntohs(uh->uh_sport);
-	defect |= nmatch_addr(af, daddr, npc.npc_ips[NPF_DST]);
-	defect |= dport != ntohs(uh->uh_dport);
+	CHECK_TRUE(match_addr(af, saddr, npc.npc_ips[NPF_SRC]));
+	CHECK_TRUE(sport == ntohs(uh->uh_sport));
+	CHECK_TRUE(match_addr(af, daddr, npc.npc_ips[NPF_DST]));
+	CHECK_TRUE(dport == ntohs(uh->uh_dport));
 
-	return !defect;
-}
-
-static struct mbuf *
-fill_packet(const struct test_case *t)
-{
-	struct mbuf *m;
-	void *ipsrc, *ipdst;
-	struct udphdr *uh;
-
-	if (t->af == AF_INET6) {
-		struct ip6_hdr *ip6;
-
-		m = mbuf_construct6(IPPROTO_UDP);
-		uh = mbuf_return_hdrs6(m, &ip6);
-		ipsrc = &ip6->ip6_src, ipdst = &ip6->ip6_dst;
-	} else {
-		struct ip *ip;
-
-		m = mbuf_construct(IPPROTO_UDP);
-		uh = mbuf_return_hdrs(m, false, &ip);
-		ipsrc = &ip->ip_src.s_addr, ipdst = &ip->ip_dst.s_addr;
-	}
-
-	npf_inet_pton(t->af, t->src, ipsrc);
-	npf_inet_pton(t->af, t->dst, ipdst);
-	uh->uh_sport = htons(t->sport);
-	uh->uh_dport = htons(t->dport);
-	return m;
+	return true;
 }
 
 bool
@@ -249,7 +220,7 @@ npf_nat_test(bool verbose)
 	for (unsigned i = 0; i < __arraycount(test_cases); i++) {
 		const struct test_case *t = &test_cases[i];
 		ifnet_t *ifp = npf_test_getif(t->ifname);
-		struct mbuf *m = fill_packet(t);
+		struct mbuf *m;
 		int error;
 		bool ret;
 
@@ -257,14 +228,14 @@ npf_nat_test(bool verbose)
 			printf("Interface %s is not configured.\n", t->ifname);
 			return false;
 		}
-		error = npf_packet_handler(npf, &m, ifp, t->di);
+		m = mbuf_get_pkt(t->af, IPPROTO_UDP,
+		    t->src, t->dst, t->sport, t->dport);
+		error = npfk_packet_handler(npf, &m, ifp, t->di);
 		ret = checkresult(verbose, i, m, ifp, error);
 		if (m) {
 			m_freem(m);
 		}
-		if (!ret) {
-			return false;
-		}
+		CHECK_TRUE(ret);
 	}
 	return true;
 }

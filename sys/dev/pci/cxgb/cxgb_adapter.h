@@ -103,7 +103,7 @@ struct port_info {
     struct ifnet    *ifp;
     struct port_device *pd;
     int     port;
-    int     if_flags;
+    u_short     if_flags;
     const struct port_type_info *port_type;
     struct cphy phy;
     struct cmac mac;

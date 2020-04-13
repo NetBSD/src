@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.36.16.1 2019/06/10 22:05:26 christos Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.36.16.2 2020/04/13 08:03:15 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -195,7 +195,7 @@ char *perfuse_fs_mount(int, ssize_t);
  * ops.c - filesystem operations
  */
 int perfuse_fs_unmount(struct puffs_usermount *, int);
-int perfuse_fs_statvfs(struct puffs_usermount *, struct statvfs *);
+int perfuse_fs_statvfs(struct puffs_usermount *, struct puffs_statvfs *);
 int perfuse_fs_sync(struct puffs_usermount *, int,
     const struct puffs_cred *);
 int perfuse_fs_fhtonode(struct puffs_usermount *, void *, size_t,

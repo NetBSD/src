@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.16 2018/06/26 06:03:57 thorpej Exp $	*/
+/*	$NetBSD: deq.c,v 1.16.2.1 2020/04/13 08:03:58 martin Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.16 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.16.2.1 2020/04/13 08:03:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,13 @@ deq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_i2c = ia->ia_tag;
 	if (OF_getprop(sc->sc_node, "compatible", name, 256) <= 0) {
-		/* deq has no 'compatible' on my iBook G4 */
+		/* deq has no 'compatible' on my iBook G4 or Quicksilver */
 		switch (sc->sc_address) {
 			case 0x35:
 				strcpy(name, "tas3004");
+				break;
+			case 0x34:
+				strcpy(name, "tas3001");
 				break;
 			default:
 				strcpy(name, "unknown");

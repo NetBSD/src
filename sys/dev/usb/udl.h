@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.4 2016/10/18 20:17:37 nat Exp $	*/
+/*	$NetBSD: udl.h,v 1.4.16.1 2020/04/13 08:04:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -80,6 +80,12 @@ struct udl_softc {
 	struct usbd_device *	 sc_udev;
 	struct usbd_interface *	 sc_iface;
 	struct usbd_pipe *	 sc_tx_pipeh;
+
+	enum {
+		UDL_INIT_NONE,
+		UDL_INIT_MIDWAY,
+		UDL_INIT_INITED
+	} sc_init_state;
 
 	struct udl_cmdq		 sc_cmdq[UDL_NCMDQ];
 	TAILQ_HEAD(udl_cmdq_head, udl_cmdq)	sc_freecmd,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2013/07/15 00:18:03 khorben Exp $
+#	$NetBSD: Makefile,v 1.39.28.1 2020/04/13 08:03:21 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	init
@@ -16,5 +16,7 @@ CPPFLAGS+=	-DALTSHELL -DSECURE -DCHROOT
 DPADD+=		${LIBCRYPT}
 LDADD+=		-lcrypt
 .endif
+
+COPTS.init.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

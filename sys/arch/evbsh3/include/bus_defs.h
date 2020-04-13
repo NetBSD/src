@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/19 15:44:53 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.54.1 2020/04/13 08:03:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -103,8 +103,14 @@
 typedef	u_long	bus_addr_t;
 typedef	u_long	bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 typedef struct _bus_space *bus_space_tag_t;
 typedef u_long bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 struct _bus_space {
 	/* cookie */

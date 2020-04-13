@@ -1,9 +1,9 @@
-/*	$NetBSD: getdn.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: getdn.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdn.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: getdn.c,v 1.1.1.6.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: getdn.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
 
 #include "ldap-int.h"
 #include "ldap_schema.h"
+#include "ldif.h"
 
 /* extension to UFN that turns trailing "dc=value" rdns in DNS style,
  * e.g. "ou=People,dc=openldap,dc=org" => "People, openldap.org" */
@@ -2480,6 +2481,11 @@ dn2domain( LDAPDN dn, struct berval *bv, int pos, int *iRDN )
 		ava = rdn[ 0 ];
 
 		if ( !LDAP_DN_IS_RDN_DC( rdn ) ) {
+			break;
+		}
+
+		if ( ldif_is_not_printable( ava->la_value.bv_val, ava->la_value.bv_len ) ) {
+			domain = 0;
 			break;
 		}
 

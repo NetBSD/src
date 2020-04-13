@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.6 2011/09/15 11:46:19 blymn Exp $	*/
+/*	$NetBSD: slave.c,v 1.6.42.1 2020/04/13 08:05:28 martin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -67,7 +67,7 @@ process_commands(WINDOW *mainscr)
 		if (read(cmdpipe[READ_PIPE], &type, sizeof(int)) < 0)
 			err(1, "slave command type read failed");
 
-		if (type != ret_string)
+		if (type != data_string)
 			errx(1, "Unexpected type for command, got %d", type);
 
 		if (read(cmdpipe[READ_PIPE], &len, sizeof(int)) < 0)
@@ -102,7 +102,7 @@ process_commands(WINDOW *mainscr)
 					    "failed");
 
 				args = tmpargs;
-				if (type != ret_null) {
+				if (type != data_null) {
 					args[argslen] = malloc(len + 1);
 
 					if (args[argslen] == NULL)
@@ -111,14 +111,14 @@ process_commands(WINDOW *mainscr)
 				}
 
 				if (len == 0) {
-					if (type == ret_null)
+					if (type == data_null)
 						args[argslen] = NULL;
 					else
 						args[argslen][0] = '\0';
 				} else {
 					read(cmdpipe[READ_PIPE], args[argslen],
 					     len);
-					if (type != ret_byte)
+					if (type != data_byte)
 						args[argslen][len] = '\0';
 
 					if (len == 6) {

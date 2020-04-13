@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.280.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.280.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.280.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.280.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -948,11 +948,12 @@ tcp_tcpcb_template(void)
 	    TCPTV_MIN, TCPTV_REXMTMAX);
 
 	/* Keep Alive */
-	tp->t_keepinit = tcp_keepinit;
-	tp->t_keepidle = tcp_keepidle;
-	tp->t_keepintvl = tcp_keepintvl;
-	tp->t_keepcnt = tcp_keepcnt;
-	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
+	tp->t_keepinit = MIN(tcp_keepinit, TCP_TIMER_MAXTICKS);
+	tp->t_keepidle = MIN(tcp_keepidle, TCP_TIMER_MAXTICKS);
+	tp->t_keepintvl = MIN(tcp_keepintvl, TCP_TIMER_MAXTICKS);
+	tp->t_keepcnt = MAX(1, MIN(tcp_keepcnt, TCP_TIMER_MAXTICKS));
+	tp->t_maxidle = tp->t_keepcnt * MIN(tp->t_keepintvl,
+	    TCP_TIMER_MAXTICKS/tp->t_keepcnt);
 
 	/* MSL */
 	tp->t_msl = TCPTV_MSL;
@@ -2012,6 +2013,9 @@ tcp_established(struct tcpcb *tp)
 		break;
 	}
 
+	/* Clamp to a reasonable range.  */
+	tp->t_msl = MIN(tp->t_msl, TCP_MAXMSL);
+
 #ifdef INET6
 	/* The !tp->t_inpcb lets the compiler know it can't be v4 *and* v6 */
 	while (!tp->t_inpcb && tp->t_in6pcb) {
@@ -2041,6 +2045,9 @@ tcp_established(struct tcpcb *tp)
 		tp->t_msl = tcp_msl_remote ? tcp_msl_remote : TCPTV_MSL;
 		break;
 	}
+
+	/* Clamp to a reasonable range.  */
+	tp->t_msl = MIN(tp->t_msl, TCP_MAXMSL);
 #endif
 
 	tp->t_state = TCPS_ESTABLISHED;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.4.1 2019/06/10 22:10:43 christos Exp $
+#	$NetBSD: Makefile,v 1.27.4.2 2020/04/13 08:06:06 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -31,8 +31,6 @@ DPADD+=	${LIBWRAP}
 LDADD+=	-lssl -lcrypto
 
 # Overflow that appears impossible
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.syslogd.c+=        -Wno-error=format-truncation
-.endif
+COPTS.syslogd.c+=        ${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

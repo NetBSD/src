@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.h,v 1.13.2.1 2019/06/10 22:07:28 christos Exp $ */
+/* $NetBSD: ixgbe_api.h,v 1.13.2.2 2020/04/13 08:04:46 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -133,6 +133,7 @@ s32 ixgbe_set_vfta(struct ixgbe_hw *hw, u32 vlan,
 s32 ixgbe_set_vlvf(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 		   bool vlan_on, u32 *vfta_delta, u32 vfta,
 		   bool vlvf_bypass);
+s32 ixgbe_toggle_txdctl(struct ixgbe_hw *hw, u32 vind);
 s32 ixgbe_fc_enable(struct ixgbe_hw *hw);
 s32 ixgbe_setup_fc(struct ixgbe_hw *hw);
 s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 min, u8 build,

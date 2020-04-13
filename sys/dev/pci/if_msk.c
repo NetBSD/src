@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.67.2.2 2020/04/08 14:08:09 martin Exp $ */
+/* $NetBSD: if_msk.c,v 1.67.2.3 2020/04/13 08:04:26 martin Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.67.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.67.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,13 +643,7 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		sc_if->sk_cdata.sk_jslots[i] = ptr;
 		ptr += SK_JLEN;
 		entry = malloc(sizeof(struct sk_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc_if->sk_cdata.sk_jumbo_buf = NULL;
-			aprint_error(": no memory for jumbo buffer queue!");
-			error = ENOBUFS;
-			goto out;
-		}
+		    M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
 				 entry, jpool_entries);
@@ -887,9 +881,26 @@ static void
 mskc_reset(struct sk_softc *sc)
 {
 	uint32_t imtimer_ticks, reg1;
+	uint16_t status;
 	int reg;
 
 	DPRINTFN(2, ("mskc_reset\n"));
+
+	/* Disable ASF */
+	if ((sc->sk_type == SK_YUKON_EX) || (sc->sk_type == SK_YUKON_SUPR)) {
+		CSR_WRITE_4(sc, SK_Y2_CPU_WDOG, 0);
+		status = CSR_READ_2(sc, SK_Y2_ASF_HCU_CCSR);
+		/* Clear AHB bridge & microcontroller reset. */
+		status &= ~(SK_Y2_ASF_HCU_CSSR_ARB_RST |
+		    SK_Y2_ASF_HCU_CSSR_CPU_RST_MODE);
+		/* Clear ASF microcontroller state. */
+		status &= ~SK_Y2_ASF_HCU_CSSR_UC_STATE_MSK;
+		status &= ~SK_Y2_ASF_HCU_CSSR_CPU_CLK_DIVIDE_MSK;
+		CSR_WRITE_2(sc, SK_Y2_ASF_HCU_CCSR, status);
+		CSR_WRITE_4(sc, SK_Y2_CPU_WDOG, 0);
+	} else
+		CSR_WRITE_1(sc, SK_Y2_ASF_CSR, SK_Y2_ASF_RESET);
+	CSR_WRITE_2(sc, SK_CSR, SK_CSR_ASF_OFF);
 
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_RESET);
@@ -962,10 +973,6 @@ mskc_reset(struct sk_softc *sc)
 	DPRINTFN(2, ("mskc_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
 	DPRINTFN(2, ("mskc_reset: sk_link_ctrl=%x\n",
 		     CSR_READ_2(sc, SK_LINK_CTRL)));
-
-	/* Disable ASF */
-	CSR_WRITE_1(sc, SK_Y2_ASF_CSR, SK_Y2_ASF_RESET);
-	CSR_WRITE_2(sc, SK_CSR, SK_CSR_ASF_OFF);
 
 	/* Clear I2C IRQ noise */
 	CSR_WRITE_4(sc, SK_I2CHWIRQ, 1);
@@ -1102,9 +1109,9 @@ msk_reset(struct sk_if_softc *sc_if)
 {
 	/* GMAC and GPHY Reset */
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
+	SK_IF_WRITE_1(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
 	DELAY(1000);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
+	SK_IF_WRITE_1(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
 		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 }
@@ -2118,9 +2125,6 @@ msk_txeof(struct sk_if_softc *sc_if)
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
 
-			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
-			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
-
 			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
 			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
@@ -2128,6 +2132,8 @@ msk_txeof(struct sk_if_softc *sc_if)
 			SIMPLEQ_INSERT_TAIL(&sc_if->sk_txmap_head, entry,
 					  link);
 			sc_if->sk_cdata.sk_tx_map[idx] = NULL;
+			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
+			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, MSK_TX_RING_CNT);
@@ -2411,16 +2417,30 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
-	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON |
-	    SK_RFCTL_FIFO_FLUSH_ON);
+	v =  SK_RFCTL_OPERATION_ON | SK_RFCTL_FIFO_FLUSH_ON;
+	if ((sc->sk_type == SK_YUKON_EX) || (sc->sk_type == SK_YUKON_FE_P))
+		v |= SK_RFCTL_RX_OVER_ON;
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, v);
 
-	/* Increase flush threshold to 64 bytes */
-	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
-	    SK_RFCTL_FIFO_THRESHOLD + 1);
+	if ((sc->sk_type == SK_YUKON_FE_P) &&
+	    (sc->sk_rev == SK_YUKON_FE_P_REV_A0))
+		v = 0x178; /* Magic value */
+	else {
+		/* Increase flush threshold to 64 bytes */
+		v = SK_RFCTL_FIFO_THRESHOLD + 1;
+	}
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD, v);
 
 	/* Configure TX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_CLEAR);
 	SK_IF_WRITE_2(sc_if, 0, SK_TXMF1_CTRL_TEST, SK_TFCTL_OPERATION_ON);
+
+	if ((sc->sk_type == SK_YUKON_FE_P) &&
+	    (sc->sk_rev == SK_YUKON_FE_P_REV_A0)) {
+		v = SK_IF_READ_2(sc_if, 0, SK_TXMF1_END);
+		v &= ~SK_TXEND_WM_ON;
+		SK_IF_WRITE_2(sc_if, 0, SK_TXMF1_END, v);
+	}	
 
 #if 1
 	SK_YU_WRITE_2(sc_if, YUKON_GPCR, YU_GPCR_TXEN | YU_GPCR_RXEN);
@@ -2458,7 +2478,7 @@ msk_init(struct ifnet *ifp)
 	/* Configure transmit arbiter(s) */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_ON);
 #if 0
-	    SK_TXARCTL_ON | SK_TXARCTL_FSYNC_ON);
+/*	    SK_TXARCTL_ON | SK_TXARCTL_FSYNC_ON); */
 #endif
 
 	if (sc->sk_ramsize) {
@@ -2566,6 +2586,13 @@ msk_init(struct ifnet *ifp)
 	SK_IF_WRITE_2(sc_if, 0, SK_RXQ1_Y2_PREF_PUTIDX,
 	    sc_if->sk_cdata.sk_rx_prod);
 
+	
+	if ((sc->sk_type == SK_YUKON_EX) || (sc->sk_type == SK_YUKON_SUPR)) {
+		/* Disable flushing of non-ASF packets. */
+		SK_IF_WRITE_4(sc_if, 0, SK_RXMF1_CTRL_TEST,
+		    SK_RFCTL_RX_MACSEC_FLUSH_OFF);
+	}
+
 	/* Configure interrupt handling */
 	if (sc_if->sk_port == SK_PORT_A)
 		sc->sk_intrmask |= SK_Y2_INTRS1;
@@ -2646,13 +2673,19 @@ msk_stop(struct ifnet *ifp, int disable)
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {
-			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
-			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
+			dma = sc_if->sk_cdata.sk_tx_map[i];
+
+			bus_dmamap_sync(sc->sc_dmatag, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_unload(sc->sc_dmatag, dma->dmamap);
 #if 1
 			SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head,
 			    sc_if->sk_cdata.sk_tx_map[i], link);
 			sc_if->sk_cdata.sk_tx_map[i] = 0;
 #endif
+			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
+			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 		}
 	}
 

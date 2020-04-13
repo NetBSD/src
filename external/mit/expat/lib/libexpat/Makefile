@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/05/14 14:39:39 spz Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2020/04/13 08:02:23 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -36,7 +36,7 @@ dependall: all
 
 expat.pc: expat_config.h expat.pc.in
 	@(V=$$( (echo '#include <expat_config.h>'; echo PACKAGE_VERSION) | \
-	    ${HOST_CC} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
+	    ${CC} ${CPPFLAGS} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
 	    ${TOOL_SED} -e s/@VERSION@/$$V/ < ${.CURDIR}/expat.pc.in \
 	    > ${.TARGET})
 

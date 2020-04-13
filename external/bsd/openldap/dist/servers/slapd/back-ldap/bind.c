@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* bind.c - ldap backend bind function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.1.1.6.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -537,7 +537,7 @@ ldap_back_start_tls(
 	int		*is_tls,
 	const char	*url,
 	unsigned	flags,
-	int		retries,
+	int		timeout,
 	const char	**text )
 {
 	int		rc = LDAP_SUCCESS;
@@ -572,22 +572,14 @@ ldap_back_start_tls(
 			LDAPMessage	*res = NULL;
 			struct timeval	tv;
 
-			LDAP_BACK_TV_SET( &tv );
-
-retry:;
+			if ( timeout ) {
+				tv.tv_sec = timeout;
+				tv.tv_usec = 0;
+			} else {
+				LDAP_BACK_TV_SET( &tv );
+			}
 			rc = ldap_result( ld, msgid, LDAP_MSG_ALL, &tv, &res );
-			if ( rc < 0 ) {
-				rc = LDAP_UNAVAILABLE;
-
-			} else if ( rc == 0 ) {
-				if ( retries != LDAP_BACK_RETRY_NEVER ) {
-					ldap_pvt_thread_yield();
-					if ( retries > 0 ) {
-						retries--;
-					}
-					LDAP_BACK_TV_SET( &tv );
-					goto retry;
-				}
+			if ( rc <= 0 ) {
 				rc = LDAP_UNAVAILABLE;
 
 			} else if ( rc == LDAP_RES_EXTENDED ) {
@@ -759,7 +751,7 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	assert( li->li_uri_mutex_do_not_lock == 0 );
 	li->li_uri_mutex_do_not_lock = 1;
 	rs->sr_err = ldap_back_start_tls( ld, op->o_protocol, &is_tls,
-			li->li_uri, flags, li->li_nretries, &rs->sr_text );
+			li->li_uri, flags, li->li_timeout[ SLAP_OP_BIND ], &rs->sr_text );
 	li->li_uri_mutex_do_not_lock = 0;
 	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -985,6 +977,7 @@ retry_lock:
 		lc = (ldapconn_t *)ch_calloc( 1, sizeof( ldapconn_t ) );
 		lc->lc_flags = li->li_flags;
 		lc->lc_lcflags = lc_curr.lc_lcflags;
+		lc->lc_ldapinfo = li;
 		if ( ldap_back_prepare_conn( lc, op, rs, sendok ) != LDAP_SUCCESS ) {
 			ch_free( lc );
 			return NULL;
@@ -1654,7 +1647,7 @@ ldap_back_default_rebind( LDAP *ld, LDAP_CONST char *url, ber_tag_t request,
 		const char	*text = NULL;
 
 		rc = ldap_back_start_tls( ld, 0, &is_tls, url, lc->lc_flags,
-			LDAP_BACK_RETRY_DEFAULT, &text );
+			lc->lc_ldapinfo->li_timeout[ SLAP_OP_BIND ], &text );
 		if ( rc != LDAP_SUCCESS ) {
 			return rc;
 		}

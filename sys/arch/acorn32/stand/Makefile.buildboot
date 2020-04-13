@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.24 2017/04/09 16:29:46 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.24.14.1 2020/04/13 08:03:28 martin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -40,7 +40,6 @@ CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv3m
-CPPFLAGS+=	-marm
 CPUFLAGS=
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding -fno-unwind-tables

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.27.2.3 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.27.2.4 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27.2.3 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27.2.4 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -260,6 +260,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
+	usc->usc_init_state = ATHN_INIT_NONE;
 	usc->usc_athn_attached = 0;
 	usc->usc_flags = athn_usb_lookup(uaa->uaa_vendor, uaa->uaa_product)->flags;
 	sc->sc_flags |= ATHN_FLAG_USB;
@@ -327,6 +328,8 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, usc->usc_udev, sc->sc_dev);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	usc->usc_init_state = ATHN_INIT_INITED;
 
 	return;
 
@@ -477,6 +480,9 @@ athn_usb_detach(device_t self, int flags)
 	int error;
 
 	DPRINTFN(DBG_FN, usc, "\n");
+
+	if (usc->usc_init_state < ATHN_INIT_INITED)
+		return 0;
 
 	pmf_device_deregister(self);
 

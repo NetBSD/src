@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 2012/10/27 17:18:03 chs Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15.38.1 2020/04/13 08:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2012/10/27 17:18:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15.38.1 2020/04/13 08:04:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,10 +179,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level, int (*ih
 {
 	struct mipsco_intrhand *ih;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		panic("isa_intr_establish: malloc failed");
-
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_fun = ih_fun;
 	ih->ih_arg  = ih_arg;
 	LIST_INSERT_HEAD(&ic->intr_q, ih, ih_q);

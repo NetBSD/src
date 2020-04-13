@@ -1,4 +1,4 @@
-/*	$NetBSD: t_listen.c,v 1.5 2017/01/13 20:41:50 christos Exp $	*/
+/*	$NetBSD: t_listen.c,v 1.5.14.1 2020/04/13 08:05:27 martin Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -132,5 +132,5 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, listen_err);
 	ATF_TP_ADD_TC(tp, listen_low_port);
 
-	return 0;
+	return atf_no_error();
 }

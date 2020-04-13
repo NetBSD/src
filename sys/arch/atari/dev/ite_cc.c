@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.38.38.1 2019/06/10 22:05:58 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.38.38.2 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.38.38.1 2019/06/10 22:05:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.38.38.2 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -105,9 +105,9 @@ static void scrollbmap(bmap_t *, u_short, u_short, u_short, u_short,
 /*
  * grfcc config stuff
  */
-void grfccattach(device_t, device_t, void *);
-int  grfccmatch(device_t, cfdata_t, void *);
-int  grfccprint(void *, const char *);
+static void grfccattach(device_t, device_t, void *);
+static int  grfccmatch(device_t, cfdata_t, void *);
+static int  grfccprint(void *, const char *);
 
 CFATTACH_DECL_NEW(grfcc, sizeof(struct grf_softc),
     grfccmatch, grfccattach, NULL, NULL);
@@ -127,7 +127,7 @@ void	tt_probe_video(MODES *);
 void	falcon_probe_video(MODES *);
 #endif /* FALCON_VIDEO */
 
-int
+static int
 grfccmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int did_consinit = 0;
@@ -194,7 +194,7 @@ grfccmatch(device_t parent, cfdata_t cf, void *aux)
  * attach: initialize the grf-structure and try to attach an ite to us.
  * note  : self is NULL during early console init.
  */
-void
+static void
 grfccattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
@@ -281,7 +281,7 @@ grfccattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 grfccprint(void *aux, const char *pnp)
 {
 

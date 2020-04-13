@@ -1,6 +1,6 @@
 // std::moneypunct implementation details, DragonFly version -*- C++ -*-
 
-// Copyright (C) 2015-2017 Free Software Foundation, Inc.
+// Copyright (C) 2015-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,7 +31,8 @@
 
 #include <locale>
 #include <cstring>
-#include <xlocale.h>
+
+#include "xlocale_port.h"
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -581,7 +582,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
       else
 	{
-	  __c_locale __old = (__c_locale)uselocale((locale_t)__cloc);
 	  // Named locale.
 	  lconv* lc = localeconv_l((locale_t) __cloc);
 
@@ -647,7 +647,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		{
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  __wcs_ps = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs_ps, &__cpossign, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs_ps, &__cpossign, __len + 1, &__state,
+			(locale_t)__cloc);
 		  _M_data->_M_positive_sign = __wcs_ps;
 		}
 	      else
@@ -662,7 +663,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		{
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  __wcs_ns = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs_ns, &__cnegsign, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs_ps, &__cpossign, __len + 1, &__state,
+			(locale_t)__cloc);
 		  _M_data->_M_negative_sign = __wcs_ns;
 		}
 	      else
@@ -676,7 +678,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		{
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  wchar_t* __wcs = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs, &__ccurr, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs, &__ccurr, __len + 1, &__state,
+		      (locale_t)__cloc);
 		  _M_data->_M_curr_symbol = __wcs;
 		}
 	      else
@@ -690,7 +693,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      delete [] __group;
 	      delete [] __wcs_ps;
 	      delete [] __wcs_ns;
-	      uselocale((locale_t)__old);
 	      __throw_exception_again;
 	    }
 
@@ -703,8 +705,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  char __nspace = lc->int_n_sep_by_space;
 	  _M_data->_M_neg_format = _S_construct_pattern(__nprecedes, __nspace,
 							__nposn);
-
-	  uselocale((locale_t)__old);
 	}
     }
 
@@ -741,7 +741,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
       else
 	{
-	  __c_locale __old = (__c_locale)uselocale((locale_t)__cloc);
 	  // Named locale.
 	  lconv* lc = localeconv_l((locale_t) __cloc);
 
@@ -807,7 +806,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
                 {
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  __wcs_ps = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs_ps, &__cpossign, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs_ps, &__cpossign, __len + 1, &__state,
+		    (locale_t)__cloc);
 		  _M_data->_M_positive_sign = __wcs_ps;
 		}
 	      else
@@ -822,7 +822,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		{
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  __wcs_ns = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs_ns, &__cnegsign, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs_ns, &__cnegsign, __len + 1, &__state,
+		    (locale_t)__cloc);
 		  _M_data->_M_negative_sign = __wcs_ns;
 		}
 	      else
@@ -836,7 +837,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		{
 		  memset(&__state, 0, sizeof(mbstate_t));
 		  wchar_t* __wcs = new wchar_t[__len + 1];
-		  mbsrtowcs(__wcs, &__ccurr, __len + 1, &__state);
+		  mbsrtowcs_l(__wcs, &__ccurr, __len + 1, &__state,
+		    (locale_t)__cloc);
 		  _M_data->_M_curr_symbol = __wcs;
 		}
 	      else
@@ -850,7 +852,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      delete [] __group;
 	      delete [] __wcs_ps;
 	      delete [] __wcs_ns;
-	      uselocale((locale_t)__old);
               __throw_exception_again;
 	    }
 
@@ -863,8 +864,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  char __nspace = lc->n_sep_by_space;
 	  _M_data->_M_neg_format = _S_construct_pattern(__nprecedes, __nspace,
 	                                                __nposn);
-
-	  uselocale((locale_t)__old);
 	}
     }
 

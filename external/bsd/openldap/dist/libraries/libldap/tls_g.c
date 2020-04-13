@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_g.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: tls_g.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 

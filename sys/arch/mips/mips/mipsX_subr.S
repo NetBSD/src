@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.104.4.1 2020/04/08 14:07:45 martin Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.104.4.2 2020/04/13 08:04:00 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1659,7 +1659,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	 * Save all the registers but kernel temporaries onto the stack.
 	 */
 	KERN_ENTRY_ERRATA
-	/* k1 already contains cpulwp */
+	/* k1 already contains curlwp */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
 	#REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)

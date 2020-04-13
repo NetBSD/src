@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.11 2011/07/01 16:55:42 dyoung Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.11.54.1 2020/04/13 08:04:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.11 2011/07/01 16:55:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.11.54.1 2020/04/13 08:04:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ pnp_newirq(void *v, struct pnpresources *r, int size)
 	struct _S4_Pack *p = v;
 	struct pnpbus_irq *irq;
 
-	irq = malloc(sizeof(struct pnpbus_irq), M_DEVBUF, M_NOWAIT);
+	irq = malloc(sizeof(struct pnpbus_irq), M_DEVBUF, M_WAITOK);
 
 	irq->mask = le16dec(&p->IRQMask[0]);
 
@@ -123,7 +123,7 @@ pnp_newdma(void *v, struct pnpresources *r, int size)
 	struct _S5_Pack *p = v;
 	struct pnpbus_dma *dma;
 
-	dma = malloc(sizeof(struct pnpbus_dma), M_DEVBUF, M_NOWAIT);
+	dma = malloc(sizeof(struct pnpbus_dma), M_DEVBUF, M_WAITOK);
 
 	dma->mask = le16dec(&p->DMAMask);
 	if (size > 2)
@@ -144,7 +144,7 @@ pnp_newioport(void *v, struct pnpresources *r, int size)
 	struct pnpbus_io *io;
 	uint16_t mask;
 
-	io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_NOWAIT);
+	io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_WAITOK);
 	mask = p->IOInfo & ISAAddr16bit ? 0xffff : 0x03ff;
 	io->minbase = (p->RangeMin[0] | (p->RangeMin[1] << 8)) & mask;
 	io->maxbase = (p->RangeMax[0] | (p->RangeMax[1] << 8)) & mask;
@@ -164,7 +164,7 @@ pnp_newfixedioport(void *v, struct pnpresources *r, int size)
 	struct _S9_Pack *p = v;
 	struct pnpbus_io *io;
 
-	io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_NOWAIT);
+	io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_WAITOK);
 	io->minbase = (p->Range[0] | (p->Range[1] << 8)) & 0x3ff;
 	io->len = p->IONum;
 	io->maxbase = -1;
@@ -184,7 +184,7 @@ pnp_newiomem(void *v, struct pnpresources *r, int size)
 	struct _L1_Pack *pack = v;
 
 	if (pack->Count0 >= 0x9) {
-		mem = malloc(sizeof(struct pnpbus_mem), M_DEVBUF, M_NOWAIT);
+		mem = malloc(sizeof(struct pnpbus_mem), M_DEVBUF, M_WAITOK);
 		mem->minbase = (pack->Data[2] << 16) | (pack->Data[1] << 8);
 		mem->maxbase = (pack->Data[4] << 16) | (pack->Data[3] << 8);
 		mem->align = (pack->Data[6] << 8) | pack->Data[5];
@@ -206,7 +206,7 @@ pnp_newaddr(void *v, struct pnpresources *r, int size)
 	struct _L4_PPCPack *p =  &pack->L4_Data.L4_PPCPack;
 
 	if (p->PPCData[0] == 1) {/* type IO */
-		io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_NOWAIT);
+		io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_WAITOK);
 		io->minbase = (uint16_t)le64dec(&p->PPCData[4]);
 		io->maxbase = -1;
 		io->align = p->PPCData[1];
@@ -217,7 +217,7 @@ pnp_newaddr(void *v, struct pnpresources *r, int size)
 
 		return 0;
 	} else if (p->PPCData[0] == 2) {
-		mem = malloc(sizeof(struct pnpbus_mem), M_DEVBUF, M_NOWAIT);
+		mem = malloc(sizeof(struct pnpbus_mem), M_DEVBUF, M_WAITOK);
 		mem->minbase = (uint32_t)le64dec(&p->PPCData[4]);
 		mem->maxbase = -1;
 		mem->align = p->PPCData[1];
@@ -238,7 +238,7 @@ pnp_newcompatid(void *v, struct pnpresources *r, int size)
 	struct pnpbus_compatid *id;
 	uint32_t cid;
 
-	id = malloc(sizeof(*id), M_DEVBUF, M_NOWAIT);
+	id = malloc(sizeof(*id), M_DEVBUF, M_WAITOK);
 	cid = le32dec(p->CompatId);
 	pnp_devid_to_string(cid, id->idstr);
 	id->next = r->compatids;

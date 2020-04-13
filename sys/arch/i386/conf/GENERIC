@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1180.2.2 2020/04/08 14:07:39 martin Exp $
+# $NetBSD: GENERIC,v 1.1180.2.3 2020/04/13 08:03:52 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1180.2.2 $"
+#ident		"GENERIC-$Revision: 1.1180.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -120,7 +120,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
+#options 	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
+#options 	UBSAN_ALWAYS_FATAL	# (optional) Panic on all kUBSan reports
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -128,7 +129,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Kernel Code Coverage Driver.
 #makeoptions	KCOV=1
-#options	KCOV
+#options 	KCOV
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
@@ -736,6 +737,9 @@ gpiopwm*	at gpio?
 # Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
 #soekrisgpio0	at isa? port 0x680
 
+# Nuvoton NCT5104D SuperIO providing GPIO
+nct0		at isa? port ?
+
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
@@ -1111,6 +1115,8 @@ ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
+jmphy*	at mii? phy ?			# Jmicron JMP202/211 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
@@ -1120,6 +1126,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rdcphy* at mii? phy ?			# RDC R6040 10/100 PHY
 rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+smscphy* at mii? phy ?			# SMSC LAN87xx PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -1131,7 +1138,6 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
-					# xhci is at best experimental
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
@@ -1357,10 +1363,6 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # Trusted Platform Module
 tpm*	at isa? iomem 0xfed40000 irq 7
-#tpm*	at isa? port 0x02e
-#tpm*	at isa? port 0x04e
-#tpm*	at isa? port 0x07e
-#tpm*	at isa? port 0x0ee
 
 # Joysticks
 

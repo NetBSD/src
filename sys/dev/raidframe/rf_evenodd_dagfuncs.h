@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.h,v 1.5 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.h,v 1.5.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * rf_evenodd_dagfuncs.h
  */
@@ -38,26 +38,26 @@ extern RF_RedFuncs_t rf_eoERecoveryFuncs;
 extern RF_RedFuncs_t rf_eoPRecoveryFuncs;
 extern RF_RedFuncs_t rf_eoERecoveryFuncs;
 
-int     rf_RegularPEFunc(RF_DagNode_t * node);
-int     rf_RegularONEFunc(RF_DagNode_t * node);
-int     rf_SimpleONEFunc(RF_DagNode_t * node);
+void    rf_RegularPEFunc(RF_DagNode_t * node);
+void    rf_RegularONEFunc(RF_DagNode_t * node);
+void    rf_SimpleONEFunc(RF_DagNode_t * node);
 void    rf_RegularESubroutine(RF_DagNode_t * node, char *ebuf);
-int     rf_RegularEFunc(RF_DagNode_t * node);
+void    rf_RegularEFunc(RF_DagNode_t * node);
 void    rf_DegrESubroutine(RF_DagNode_t * node, char *ebuf);
-int     rf_Degraded_100_EOFunc(RF_DagNode_t * node);
+void    rf_Degraded_100_EOFunc(RF_DagNode_t * node);
 void
 rf_e_EncOneSect(RF_RowCol_t srcLogicCol, char *srcSecbuf,
     RF_RowCol_t destLogicCol, char *destSecbuf, int bytesPerSector);
 void
 rf_e_encToBuf(RF_Raid_t * raidPtr, RF_RowCol_t srcLogicCol,
     char *srcbuf, RF_RowCol_t destLogicCol, char *destbuf, int numSector);
-int     rf_RecoveryEFunc(RF_DagNode_t * node);
-int     rf_EO_DegradedWriteEFunc(RF_DagNode_t * node);
+void    rf_RecoveryEFunc(RF_DagNode_t * node);
+void    rf_EO_DegradedWriteEFunc(RF_DagNode_t * node);
 void
 rf_doubleEOdecode(RF_Raid_t * raidPtr, char **rrdbuf, char **dest,
     RF_RowCol_t * fcol, char *pbuf, char *ebuf);
-int     rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t * node);
-int     rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t * node);
+void    rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t * node);
+void    rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t * node);
 
 #define rf_EUCol(_layoutPtr_, _addr_ ) \
 ( (_addr_)%( (_layoutPtr_)->dataSectorsPerStripe ) )/((_layoutPtr_)->sectorsPerStripeUnit)

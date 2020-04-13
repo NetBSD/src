@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60.2.2 2020/04/08 14:09:16 martin Exp $
+#	$NetBSD: Makefile,v 1.60.2.3 2020/04/13 08:05:43 martin Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -60,9 +60,11 @@ LDADD+=-lutil
 DPADD+=${LIBUTIL}
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.arch.c += -Wno-error=format-truncation
-.endif
+COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 # A simple unit-test driver to help catch regressions
 accept test: .MAKE

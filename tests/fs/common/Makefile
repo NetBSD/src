@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/04 21:06:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.26.1 2020/04/13 08:05:23 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -40,5 +40,11 @@ CPPFLAGS+=	-DMOUNT_NOMAIN -DMOUNTNFS_RETRYRPC=1
 CPPFLAGS+=	-DUSE_RUMP -DLFS_CLEANER_AS_LIB
 
 CWARNFLAGS.clang+=	-Wno-error=absolute-value
+COPTS.fstest_nfs.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.clnt_bcast.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_vc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_clnt.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpc_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>

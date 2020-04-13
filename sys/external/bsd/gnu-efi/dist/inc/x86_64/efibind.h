@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.2.36.1 2019/06/10 22:08:36 christos Exp $	*/
+/*	$NetBSD: efibind.h,v 1.2.36.2 2020/04/13 08:05:00 martin Exp $	*/
 
 /*++
 
@@ -100,6 +100,7 @@ Revision History
 # define __WCHAR_TYPE__ short
 #endif
 
+#ifndef __ACTYPES_H__
 typedef uint64_t   UINT64;
 typedef int64_t    INT64;
 
@@ -112,6 +113,7 @@ typedef uint16_t   UINT16;
 typedef int16_t    INT16;
 typedef uint8_t    UINT8;
 typedef int8_t     INT8;
+#endif /* __ACTYPES_H__ */
 typedef __WCHAR_TYPE__ WCHAR;
 
 #undef VOID

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdatomic.h,v 1.3.2.2 2019/06/10 22:04:47 christos Exp $	*/
+/*	$NetBSD: stdatomic.h,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -187,7 +187,7 @@ atomic_load_abort() {
 	       : InterlockedExchangeAdd64((atomic_int_fast64_t *)obj, arg))))
 #else
 #define atomic_fetch_add_explicit64(obj, arg, order)	\
-	InterlockedExchange64((atomic_int_fast64_t *)obj, arg)
+	InterlockedExchangeAdd64((atomic_int_fast64_t *)obj, arg)
 #endif
 
 static inline

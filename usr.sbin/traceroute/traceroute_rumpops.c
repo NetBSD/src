@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute_rumpops.c,v 1.1 2010/12/15 00:09:42 pooka Exp $	*/
+/*	$NetBSD: traceroute_rumpops.c,v 1.1.46.1 2020/04/13 08:06:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute_rumpops.c,v 1.1 2010/12/15 00:09:42 pooka Exp $");
+__RCSID("$NetBSD: traceroute_rumpops.c,v 1.1.46.1 2020/04/13 08:06:07 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -56,4 +56,5 @@ const struct prog_ops prog_ops = {
 	.op_connect =	rump_sys_connect,
 	.op_getsockname=rump_sys_getsockname,
 	.op_sysctl =	rump_sys___sysctl,
+	.op_getifaddrs =	getifaddrs,
 };

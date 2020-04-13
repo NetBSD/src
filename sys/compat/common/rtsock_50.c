@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.7.2.2 2020/04/08 14:08:00 martin Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.7.2.3 2020/04/13 08:04:14 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7.2.2 2020/04/08 14:08:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7.2.3 2020/04/13 08:04:14 martin Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7.2.2 2020/04/08 14:08:00 martin Exp
 #include <net/rtsock_shared.c>
 #include <compat/net/route_50.h>
 
-struct sysctllog *clog;
+static struct sysctllog *clog;
 
 void
 compat_50_rt_oifmsg(struct ifnet *ifp)

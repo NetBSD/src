@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.14 2015/08/02 18:18:09 dholland Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.14.16.1 2020/04/13 08:03:22 martin Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "partutil.h"
 
@@ -98,7 +99,8 @@ main(int argc, char **argv)
 		err(1, "%s", fsname);
 	rdevlen = strlen(vfs.f_mntfromname) + 2;
 	rdev = malloc(rdevlen);
-	snprintf(rdev, rdevlen, "/dev/r%s", vfs.f_mntfromname + 5);
+	if (getdiskrawname(rdev, rdevlen, vfs.f_mntfromname) == NULL)
+		err(1, "Could not convert '%s' to raw name", vfs.f_mntfromname);
 	devfd = open(rdev, O_RDONLY);
 	if (devfd < 0)
 		err(1, "open raw device");

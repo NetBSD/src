@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.42 2016/10/19 00:08:42 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42.16.1 2020/04/13 08:04:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2016/10/19 00:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42.16.1 2020/04/13 08:04:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -324,8 +324,7 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI) {
 		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-		    M_DEVBUF, M_NOWAIT);
-		KASSERT(pbi != NULL);
+		    M_DEVBUF, M_WAITOK);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
 		setup_pciintr_map(pbi, bus, dev, func);

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.14.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.14.2.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ struct sk_if_softc {
 	int			sk_ring_nseg;
 	int			sk_status_idx;
 	struct sk_softc		*sk_softc;	/* parent controller */
-	int			sk_if_flags;
+	u_short			sk_if_flags;
 	kmutex_t		sk_jpool_mtx;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;

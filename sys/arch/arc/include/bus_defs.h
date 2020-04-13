@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.54.1 2020/04/13 08:03:31 martin Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -73,6 +73,10 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 #include <mips/locore.h>
 
 #ifdef BUS_SPACE_DEBUG
@@ -107,6 +111,8 @@ typedef u_long bus_size_t;
  */
 typedef uint32_t bus_space_handle_t;
 typedef struct arc_bus_space *bus_space_tag_t;
+
+#define PRIxBSH		"lx"
 
 struct arc_bus_space {
 	const char	*bs_name;

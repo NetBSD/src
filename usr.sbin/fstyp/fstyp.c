@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.2.4.1 2020/04/13 08:05:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,14 +35,17 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.2.4.1 2020/04/13 08:05:52 martin Exp $");
 
+#include <sys/param.h>
 #include <sys/disklabel.h>
-#include <sys/dkio.h>
+#include <sys/disk.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
+#include <iconv.h>
+#include <locale.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -53,7 +56,9 @@ __RCSID("$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $");
 
 #include "fstyp.h"
 
-#define	LABEL_LEN	256
+#define	LABEL_LEN	512
+
+bool show_label = false;
 
 typedef int (*fstyp_function)(FILE *, char *, size_t);
 typedef int (*fsvtyp_function)(const char *, char *, size_t);
@@ -62,24 +67,33 @@ static struct {
 	const char	*name;
 	fstyp_function	function;
 	bool		unmountable;
+	const char	*precache_encoding;
 } fstypes[] = {
-	{ "cd9660", &fstyp_cd9660, false },
-	{ "ext2fs", &fstyp_ext2fs, false },
-	{ "msdosfs", &fstyp_msdosfs, false },
-	{ "ntfs", &fstyp_ntfs, false },
-	{ "ufs", &fstyp_ufs, false },
+	{ "apfs", &fstyp_apfs, true, NULL },
+	{ "cd9660", &fstyp_cd9660, false, NULL },
+	{ "exfat", &fstyp_exfat, false, EXFAT_ENC },
+	{ "ext2fs", &fstyp_ext2fs, false, NULL },
+	{ "hfs+", &fstyp_hfsp, false, NULL },
+	{ "msdosfs", &fstyp_msdosfs, false, NULL },
+	{ "ntfs", &fstyp_ntfs, false, NTFS_ENC },
+	{ "ufs", &fstyp_ufs, false, NULL },
+	{ "hammer", &fstyp_hammer, false, NULL },
+	{ "hammer2", &fstyp_hammer2, false, NULL },
 #ifdef HAVE_ZFS
-	{ "zfs", &fstyp_zfs, true },
+	{ "zfs", &fstyp_zfs, true, NULL },
 #endif
-	{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL }
 };
 
 static struct {
 	const char	*name;
 	fsvtyp_function	function;
 	bool		unmountable;
+	const char	*precache_encoding;
 } fsvtypes[] = {
-	{ NULL, NULL, NULL }
+	{ "hammer", &fsvtyp_hammer, false, NULL }, /* Must be before partial */
+	{ "hammer(partial)", &fsvtyp_hammer_partial, true, NULL },
+	{ NULL, NULL, NULL, NULL }
 };
 
 void *
@@ -151,6 +165,7 @@ type_check(const char *path, FILE *fp)
 	int error, fd;
 	struct stat sb;
 	struct disklabel dl;
+	struct dkwedge_info dkw;
 
 	fd = fileno(fp);
 
@@ -163,6 +178,8 @@ type_check(const char *path, FILE *fp)
 
 	error = ioctl(fd, DIOCGDINFO, &dl);
 	if (error != 0)
+		error = ioctl(fd, DIOCGWEDGEINFO, &dkw);
+	if (error != 0)
 		errx(EXIT_FAILURE, "%s: not a disk", path);
 }
 
@@ -170,9 +187,11 @@ int
 main(int argc, char **argv)
 {
 	int ch, error, i, nbytes;
-	bool ignore_type = false, show_label = false, show_unmountable = false;
+	bool ignore_type = false, show_unmountable = false;
 	char label[LABEL_LEN + 1], strvised[LABEL_LEN * 4 + 1];
-	char *path;
+	char fdpath[MAXPATHLEN];
+	char *p;
+	const char *path;
 	const char *name = NULL;
 	FILE *fp;
 	fstyp_function fstyp_f;
@@ -201,12 +220,31 @@ main(int argc, char **argv)
 
 	path = argv[0];
 
-	fp = fopen(path, "r");
-	if (fp == NULL)
-		goto fsvtyp; /* DragonFly */
+	if (setlocale(LC_CTYPE, "") == NULL)
+		err(1, "setlocale");
+
+	/*
+	 * DragonFly: Filesystems may have syntax to decorate path.
+	 * Make a wild guess.
+	 * XXX devpath is unsupported in NetBSD, but at least parse '@' for fp.
+	 */
+	strlcpy(fdpath, path, sizeof(fdpath));
+	p = strchr(fdpath, '@');
+	if (p)
+		*p = '\0';
+
+	fp = fopen(fdpath, "r");
+	if (fp == NULL) {
+		if (strcmp(path, fdpath))
+			fp = fopen(path, "r");
+		if (fp == NULL)
+			goto fsvtyp; /* DragonFly */
+		else
+			strlcpy(fdpath, path, sizeof(fdpath));
+	}
 
 	if (ignore_type == false)
-		type_check(path, fp);
+		type_check(fdpath, fp);
 
 	memset(label, '\0', sizeof(label));
 

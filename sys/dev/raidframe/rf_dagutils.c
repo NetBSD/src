@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.54.18.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.54.18.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.54.18.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.54.18.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -91,9 +91,9 @@ have a few kicking around.
  *****************************************************************************/
 void
 rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
-    int (*doFunc) (RF_DagNode_t *node),
-    int (*undoFunc) (RF_DagNode_t *node),
-    int (*wakeFunc) (RF_DagNode_t *node, int status),
+    void (*doFunc) (RF_DagNode_t *node),
+    void (*undoFunc) (RF_DagNode_t *node),
+    void (*wakeFunc) (void *node, int status),
     int nSucc, int nAnte, int nParam, int nResult,
     RF_DagHeader_t *hdr, const char *name, RF_AllocListElem_t *alist)
 {

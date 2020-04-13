@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.105 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.105.28.1 2020/04/13 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105 2014/04/20 04:12:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105.28.1 2020/04/13 08:03:50 martin Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105 2014/04/20 04:12:54 tsutsui Exp $
 #endif
 
 #if NSTI_SGC > 0
+#include <hp300/dev/sgcreg.h>
 #include <hp300/dev/sgcvar.h>
 #include <hp300/dev/sti_sgcvar.h>
 #endif
@@ -394,10 +395,7 @@ device_register(device_t dev, void *aux)
 	 * we can mount as root.
 	 */
 
-	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (dd == NULL)
-		panic("device_register: can't allocate dev_data");
-
+	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_WAITOK | M_ZERO);
 	dd->dd_dev = dev;
 
 	/*
@@ -751,6 +749,9 @@ int conscode;
 void *conaddr;
 
 static bool cninit_deferred;
+#if NSTI_SGC > 0
+static int consslot = -1;
+#endif
 
 void
 hp300_cninit(void)
@@ -838,13 +839,18 @@ hp300_cninit(void)
 	    machineid == HP_433) {
 		struct bus_space_tag sgc_tag;
 		bus_space_tag_t sgc_bst;
+		u_int slot;
 
 		sgc_bst = &sgc_tag;
 		memset(sgc_bst, 0, sizeof(struct bus_space_tag));
 		sgc_bst->bustype = HP300_BUS_SPACE_SGC;
-		if (sti_sgc_cnprobe(sgc_bst, sgc_slottopa(0), 0)) {
-			cninit_deferred = true;
-			goto find_kbd;
+		for (slot = 0; slot < SGC_NSLOTS; slot++) {
+			if (sti_sgc_cnprobe(sgc_bst, sgc_slottopa(slot),
+			    slot)) {
+				cninit_deferred = true;
+				consslot = slot;
+				goto find_kbd;
+			}
 		}
 	}
 #endif
@@ -926,8 +932,7 @@ hp300_cninit_deferred(void)
 		sgc_bst = &sgc_tag;
 		memset(sgc_bst, 0, sizeof(struct bus_space_tag));
 		sgc_bst->bustype = HP300_BUS_SPACE_SGC;
-		if (sti_sgc_cnprobe(sgc_bst, sgc_slottopa(0), 0))
-			sti_sgc_cnattach(sgc_bst, sgc_slottopa(0), 0);
+		sti_sgc_cnattach(sgc_bst, sgc_slottopa(consslot), consslot);
 	}
 #endif
 }

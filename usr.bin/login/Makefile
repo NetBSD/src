@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2018/02/25 00:16:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.57.4.1 2020/04/13 08:05:43 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -45,5 +45,7 @@ copyrightstr.c: ${NETBSDSRCDIR}/sys/conf/copyright
 		END { print "\"\\n\";" }\
 	' ${.ALLSRC} > ${.TARGET}
 
+COPTS.parse.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.common.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

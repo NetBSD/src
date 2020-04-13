@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.16.20.1 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.16.20.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -320,23 +320,75 @@ adbms_init_uspeed(struct adbms_softc *sc)
 	sc->sc_res = 200;
 }
 
+static int
+adbms_turbo_csum(uint8_t *d)
+{
+	int i = 0, sum = 0;
+
+	for (i = 0; i < 7; i++)
+		sum ^= d[i];
+	return (sum ^ 0xff);
+}
+
 static void
 adbms_init_turbo(struct adbms_softc *sc)
 {
 	uint8_t addr;
 
 	/* Found Kensington Turbo Mouse */
-	static u_char data1[] =
-		{ 0xe7, 0x8c, 0, 0, 0, 0xff, 0xff, 0x94 };
-	static u_char data2[] =
-		{ 0xa5, 0x14, 0, 0, 0x69, 0xff, 0xff, 0x27 };
+
+/*
+ * byte 1 assigns what which button does
+ - 0x08 - button 1 - 1, button 2 - nothing
+ - 0x09 - both buttons - 1
+ - 0x0a - butoon 1 - 1, button 2 - toggle 1
+ - 0x0b - button 1 - 1, button 2 - nothing
+ - 0x0c - button 1 - 1, button 2 - 2
+ - 0x0e - button 1 - 1, button 2 - 3
+ - 0x0f - button 1 - 1, button 2 - toggle 3
+ - 0x10 - button 1 toggle 1, button 2 nothing
+ - 0x11 - button 1 - toggle 1, button 2 - 1
+ - 0x12 - both toggle 1
+ - 0x14 - button 1 toggle 1, button 2 - 2
+ - 0x21 - button 1 - 2, button 2 - 1
+ - 0x31 - button 1 - 3, button 2 - 1
+ * byte 4 programs a delay for button presses, apparently in 1/100 seconds
+ * byte 7 is a simple XOR checksum, writes will only stick if it's valid
+          as in, b[7] = (b[0] ^ b[1] ^ ... ^ b[6]) ^ 0xff
+ */
+ 
+	/* this seems to be the most reasonable default */
+	static u_char data[] =
+		{ 0xa5, 0x0e, 0, 0, 1, 0xff, 0xff, 0/*0x55*/ };
 
 	addr = sc->sc_adbdev->current_addr;
 
+#ifdef ADBMS_DEBUG
+	{
+		int i;
+		adbms_send_sync(sc, ADBTALK(addr, 2), 0, NULL);
+		printf("reg *");
+		for (i = 0; i < sc->sc_msg_len; i++)
+			printf(" %02x", sc->sc_buffer[i]);
+		printf("\n");
+	}
+#endif
+
 	adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data1);
-	adbms_send_sync(sc, ADBFLUSH(addr), 0, NULL);
-	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data2);
+	data[7] = adbms_turbo_csum(data);
+	adbms_send_sync(sc, ADBLISTEN(addr, 2), 8, data);
+
+
+#ifdef ADBMS_DEBUG
+	int i, reg;
+	for (reg = 1; reg < 4; reg++) {
+		adbms_send_sync(sc, ADBTALK(addr, reg), 0, NULL);
+		printf("reg %d", reg);
+		for (i = 0; i < sc->sc_msg_len; i++)
+			printf(" %02x", sc->sc_buffer[i]);
+		printf("\n");
+	}
+#endif
 }
 
 static void
@@ -564,7 +616,8 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 			break;
 	}
 
-	if (sc->sc_adbdev->handler_id != ADBMS_EXTENDED) {
+	if ((sc->sc_adbdev->handler_id != ADBMS_EXTENDED) &&
+	    (sc->sc_adbdev->handler_id != ADBMS_TURBO)) {
 		dx = ((int)(buffer[1] & 0x3f)) - ((buffer[1] & 0x40) ? 64 : 0);
 		dy = ((int)(buffer[0] & 0x3f)) - ((buffer[0] & 0x40) ? 64 : 0);
 	} else {
@@ -806,7 +859,7 @@ adbms_send_sync(struct adbms_softc *sc, uint8_t cmd, int len, uint8_t *msg)
 		DPRINTF(" %02x", msg[i]);
 	DPRINTF("\n");
 	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, len, msg);
-	adbms_wait(sc, 1000);
+	adbms_wait(sc, 3);
 	return (sc->sc_msg_len != -1);
 }
 

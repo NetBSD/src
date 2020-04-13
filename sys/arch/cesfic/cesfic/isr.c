@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16 2010/12/20 00:25:30 matt Exp $	*/
+/*	$NetBSD: isr.c,v 1.16.60.1 2020/04/13 08:03:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16 2010/12/20 00:25:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16.60.1 2020/04/13 08:03:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,7 @@ isrlink(int (*func)(void *), void *arg, int ipl, int priority)
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("isrlink: bad ipl %d", ipl);
 
-	newisr = (struct isr *)malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
-	if (newisr == NULL)
-		panic("isrlink: can't allocate space for isr");
-
-	/* Fill in the new entry. */
+	newisr = malloc(sizeof(struct isr), M_DEVBUF, M_WAITOK);
 	newisr->isr_func = func;
 	newisr->isr_arg = arg;
 	newisr->isr_ipl = ipl;

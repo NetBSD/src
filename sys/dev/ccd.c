@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.176.2.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: ccd.c,v 1.176.2.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176.2.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,10 +215,6 @@ static	void printiinfo(struct ccdiinfo *);
 
 static LIST_HEAD(, ccd_softc) ccds = LIST_HEAD_INITIALIZER(ccds);
 static kmutex_t ccd_lock;
-
-#ifdef _MODULE
-static struct sysctllog *ccd_clog;
-#endif
 
 SYSCTL_SETUP_PROTO(sysctl_kern_ccd_setup);
 
@@ -1681,7 +1677,6 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 
 		error = devsw_attach("ccd", &ccd_bdevsw, &bmajor,
 		    &ccd_cdevsw, &cmajor);
-		sysctl_kern_ccd_setup(&ccd_clog);
 #endif
 		break;
 
@@ -1696,7 +1691,6 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 			error = devsw_detach(&ccd_bdevsw, &ccd_cdevsw);
 			ccddetach();
 		}
-		sysctl_teardown(&ccd_clog);
 #endif
 		break;
 

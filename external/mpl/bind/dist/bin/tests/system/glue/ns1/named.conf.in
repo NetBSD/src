@@ -19,8 +19,6 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify no;
-	cache-file "cache";
-	check-integrity no;
 };
 
 zone "." {
@@ -35,9 +33,4 @@ zone "root-servers.nil" {
 zone "net" {
 	type master;
 	file "net.db";
-};
-
-zone "mil" {
-	type master;
-	file "mil.db";
 };

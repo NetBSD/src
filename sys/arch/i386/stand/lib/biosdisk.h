@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.10 2018/04/02 09:44:18 nonaka Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.10.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -25,25 +25,36 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define BIOSDISK_PART_NAME_LEN 36
+
 struct biosdisk_partition {
 	daddr_t offset;
 	daddr_t size;
 	int     fstype;
-#ifdef EFIBOOT
+#ifndef NO_GPT
 	const struct gpt_part {
 		const struct uuid *guid;
 		const char *name;
 	} *guid;
 	uint64_t attr;
+	char *part_name; /* maximum BIOSDISK_PART_NAME_LEN */
 #endif
 };
 
+extern struct btinfo_bootdisk bi_disk; 
+extern struct btinfo_bootwedge bi_wedge;
+
 int biosdisk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 int biosdisk_open(struct open_file *, ...);
+int biosdisk_open_name(struct open_file *, const char *);
 int biosdisk_close(struct open_file *);
 int biosdisk_ioctl(struct open_file *, u_long, void *);
-int biosdisk_findpartition(int, daddr_t);
-int biosdisk_readpartition(int, struct biosdisk_partition **, int *);
+int biosdisk_findpartition(int, daddr_t, int *, const char **);
+int biosdisk_readpartition(int, daddr_t, daddr_t,
+     struct biosdisk_partition **, int *);
+
+struct RF_ComponentLabel_s;
+int biosdisk_read_raidframe(int, daddr_t, struct RF_ComponentLabel_s *);
 
 #if !defined(NO_GPT)
 struct uuid;

@@ -1,26 +1,109 @@
-2018-12-06  Release Manager
+2020-03-04  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.4.0 released.
 
-2018-06-22  Jakub Jelinek  <jakub@redhat.com>
+2020-01-01  John David Anglin  <danglin@gcc.gnu.org>
 
-	Backported from mainline
-	2018-04-18  David Malcolm  <dmalcolm@redhat.com>
+	Backport from mainline
+	2019-12-30  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR libgomp/93066
+	* inclhack.def (hpux_c99_inttypes3): Fix defines for INTPTR_MAX
+	and UINTPTR_MAX, and missing define for SIZE_MAX.
+	* fixincl.x: Regenerate.
+	* tests/base/inttypes.h: Update for above fix.
+
+2019-08-25  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-08-18  C.G. Dogan  <gcc+cgdogan.00@gmail.com>
+		    Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR target/83531
+	* inclhack.def (darwin_api_availability): New; strip leading
+	underscores from API_XXXX defines.
+	* fixincl.x: Regenerate.
+	* tests/base/os/availability.h: New file.
+
+2019-08-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* inclhack.def: Replace the complex test using __STRICT_ANSI__ and
+	__STDC_VERSION__ with a test using __DARWIN_NO_LONG_LONG.
+	Ensure that the top level math.h uses <> to wrap included headers
+	rather than "".
+	* fixincl.x: Regenerated.
+	* tests/base/architecture/ppc/math.h: Update test to include the
+	__DARWIN_NO_LONG_LONG case.
+
+2019-08-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* inclhack.def: Guard __has_attribute and __has_extension in
+	os/base.h.
+	Guard Apple blocks syntax in dispatch/object.h.
+	* fixincl.x: Regenerate.
+	* tests/base/dispatch/object.h: New file.
+	* tests/base/os/base.h: New file.
+
+2019-06-01  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-05-11  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR bootstrap/89864
+	* inclhack.def (darwin_ucred__Atomic): Do not supply test_text
+	for wrap fixes.
+	* fixincl.x: Regenerated.
+
+	Backport from mainline.
+	2019-04-18  Erik Schnetter  <schnetter@gmail.com>
+		    Jakub Jelinek  <jakub@redhat.com>
+		    Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR bootstrap/89864
+	* inclhack.def (darwin_ucred__Atomic): New, work around _Atomic keyword
+	use in headers included by C++.
+	* fixincl.x: Regenerated.
+
+2019-02-22  Release Manager
+
+	* GCC 8.3.0 released.
+
+2018-07-26  Release Manager
+
+	* GCC 8.2.0 released.
+
+2018-05-02  Release Manager
+
+	* GCC 8.1.0 released.
+
+2018-04-18  David Malcolm  <dmalcolm@redhat.com>
 
 	PR jit/85384
 	* configure: Regenerate.
 
-2018-01-25  Release Manager
+2018-02-22  David Edelsohn  <dje.gcc@gmail.com>
 
-	* GCC 7.3.0 released.
+	* inclhack.def (aix_stdlib_vec_malloc): New.
+	(aix_stdlib_vec_calloc): New.
+	* fixincl.x: Regenerate.
+	* tests/base/stdlib.h [AIX_STDLIB_VEC_MALLOC]: New test.
+	[AIX_STDLIB_VEC_CALLOC]: New test.
 
-2017-08-14  Release Manager
+2017-10-13  Mike Frysinger  <vapier@chromium.org>
 
-	* GCC 7.2.0 released.
+	* fixinc.in (dirname): Change sed from 's|[^/]*/||' to
+	's|[^/]*//*||'.
 
-2017-05-02  Release Manager
+2017-06-12  Doug Rupp  <rupp@adacore.com>
 
-	* GCC 7.1.0 released.
+	* inclhack.def (AAB_vxworks_stdint): Remove hack.
+	* fixincl.x: Regenerate.
 
 2017-02-25  John David Anglin  <danglin@gcc.gnu.org>
 

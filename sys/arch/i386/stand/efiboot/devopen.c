@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2018/04/11 10:32:09 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5.2.1 2020/04/13 08:03:54 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include "efiboot.h"
 
 #include <lib/libsa/dev_net.h>
+#include <lib/libsa/net.h>
 
 #include <biosdisk.h>
 #include "devopen.h"
@@ -78,8 +79,10 @@ dev2bios(char *devname, int unit, int *biosdev)
 }
 
 void
-bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
+bios2dev(int biosdev, daddr_t sector, char **devname, int *unit,
+	 int *partition, const char **part_name)
 {
+	static char savedevname[MAXDEVNAME+1];
 
 	*unit = biosdev & 0x7f;
 
@@ -96,8 +99,47 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 	} else
 		*devname = "hd";
 
-	*partition = biosdisk_findpartition(biosdev, sector);
+	(void)biosdisk_findpartition(biosdev, sector, partition, part_name);
+	if (part_name != NULL && *part_name != NULL) {
+		snprintf(savedevname, sizeof(savedevname),
+		    "NAME=%s", *part_name);
+		*devname = savedevname;
+	}
 }
+
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+const struct netboot_fstab *
+netboot_fstab_find(const char *name)
+{
+	int i;
+
+	if (strcmp(name, "net") == 0)
+		return &netboot_fstab[0];
+
+	for (i = 0; i < nnetboot_fstab; i++) {
+		if (strcmp(name, netboot_fstab[i].name) == 0)
+			return &netboot_fstab[i];
+	}
+
+	return NULL;
+}
+
+static const struct netboot_fstab *
+netboot_fstab_findn(const char *name, size_t len)
+{
+	int i;
+
+	if (strncmp(name, "net", len) == 0)
+		return &netboot_fstab[0];
+
+	for (i = 0; i < nnetboot_fstab; i++) {
+		if (strncmp(name, netboot_fstab[i].name, len) == 0)
+			return &netboot_fstab[i];
+	}
+
+	return NULL;
+}
+#endif
 
 struct btinfo_bootpath bibp;
 extern bool kernel_loaded;
@@ -108,93 +150,146 @@ extern bool kernel_loaded;
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
-#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
-	static const char *net_devnames[] = {
-#if defined(SUPPORT_NFS)
-	    "nfs",
-#endif
-#if defined(SUPPORT_TFTP)
-	    "tftp",
-#endif
-	};
-#endif
-	struct devdesc desc;
-	struct devsw *dev;
 	char *fsname, *devname;
+	const char *xname = NULL;
 	int unit, partition;
 	int biosdev;
-	int i, n, error;
+	int i, error;
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	struct devdesc desc;
+	const struct netboot_fstab *nf;
+	char *filename;
+	size_t fsnamelen;
+	int n;
+#endif
 
 	error = parsebootfile(fname, &fsname, &devname, &unit, &partition,
 	    (const char **) file);
 	if (error)
 		return error;
 
-	memcpy(file_system, file_system_disk, sizeof(*file_system) * nfsys);
+	memcpy(file_system, file_system_disk,
+	    sizeof(struct fs_ops) * nfsys_disk);
 	nfsys = nfsys_disk;
 
+	/* Search by GPT label or raidframe name */
+	if (strstr(devname, "NAME=") == devname)
+		xname = devname;
+	if (strstr(devname, "raid") == devname)
+		xname = fname;
+
+	if (xname != NULL) {
+		f->f_dev = &devsw[0];		/* must be biosdisk */
+
+		if (!kernel_loaded) {
+			strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+			BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+		}
+
+		error = biosdisk_open_name(f, xname);
+		return error;
+	}
+
+	/*
+	 * Network
+	 */
 #if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
-	for (i = 0; i < __arraycount(net_devnames); i++) {
-		if (strcmp(devname, net_devnames[i]) == 0) {
-			fsname = devname;
-			devname = "net";
-			break;
+	nf = netboot_fstab_find(devname);
+	if (nf != NULL) {
+		n = 0;
+		if (strcmp(devname, "net") == 0) {
+			for (i = 0; i < nnetboot_fstab; i++) {
+				memcpy(&file_system[n++], netboot_fstab[i].ops,
+				    sizeof(struct fs_ops));
+			}
+		} else {
+			memcpy(&file_system[n++], nf->ops,
+			    sizeof(struct fs_ops));
 		}
-	}
+		nfsys = n;
+
+#ifdef SUPPORT_BOOTP
+		try_bootp = 1;
 #endif
 
-	for (i = 1; i < ndevs; i++) {
-		dev = &devsw[i];
-		if (strcmp(devname, DEV_NAME(dev)) == 0) {
-			if (strcmp(devname, "net") == 0) {
-				n = 0;
-#if defined(SUPPORT_NFS)
-				if (strcmp(fsname, "nfs") == 0) {
-					memcpy(&file_system[n++], &file_system_nfs,
-					    sizeof(file_system_nfs));
-				} else
-#endif
-#if defined(SUPPORT_TFTP)
-				if (strcmp(fsname, "tftp") == 0) {
-					memcpy(&file_system[n++], &file_system_tftp,
-					    sizeof(file_system_tftp));
-				} else
-#endif
-				{
-#if defined(SUPPORT_NFS)
-					memcpy(&file_system[n++], &file_system_nfs,
-					    sizeof(file_system_nfs));
-#endif
-#if defined(SUPPORT_TFTP)
-					memcpy(&file_system[n++], &file_system_tftp,
-					    sizeof(file_system_tftp));
-#endif
-				}
-				nfsys = n;
+		/* If we got passed a filename, pass it to the BOOTP server. */
+		if (fname) {
+			filename = strchr(fname, ':');
+			if (filename != NULL)
+				filename++;
+			else
+				filename = (char *)fname;
+			strlcpy(bootfile, filename, sizeof(bootfile));
+		}
 
-				try_bootp = 1;
+		memset(&desc, 0, sizeof(desc));
+		strlcpy(desc.d_name, "net", sizeof(desc.d_name));
+		desc.d_unit = unit;
+
+		f->f_dev = &devsw[1];		/* must be net */
+		if (!kernel_loaded) {
+			strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+			BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+		}
+		error = DEV_OPEN(f->f_dev)(f, &desc);
+		if (error)
+			return error;
+
+		/*
+		 * If the DHCP server provided a file name:
+		 * - If it contains a ":", assume it points to a NetBSD kernel.
+		 * - If not, assume that the DHCP server was not able to pass
+		 *   a separate filename for the kernel. (The name probably was
+		 *   the same as used to load "efiboot".) Ignore it and use
+		 *   the default in this case.
+		 * So we cater to simple DHCP servers while being able to use
+		 * the power of conditional behaviour in modern ones.
+		 */
+		filename = strchr(bootfile, ':');
+		if (filename != NULL) {
+			fname = bootfile;
+
+			fsnamelen = filename - fname;
+			nf = netboot_fstab_findn(fname, fsnamelen);
+			if (nf == NULL ||
+			    strncmp(fname, "net", fsnamelen) == 0) {
+				printf("Invalid file system type specified in "
+				    "%s\n", fname);
+				error = EINVAL;
+				goto neterr;
 			}
 
-			memset(&desc, 0, sizeof(desc));
-			strlcpy(desc.d_name, devname, sizeof(desc.d_name));
-			desc.d_unit = unit;
-
-			f->f_dev = dev;
-			if (!kernel_loaded) {
-				strncpy(bibp.bootpath, *file,
-				    sizeof(bibp.bootpath));
-				BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
-			}
-			return DEV_OPEN(f->f_dev)(f, &desc);
+			memcpy(file_system, nf->ops, sizeof(struct fs_ops));
+			nfsys = 1;
 		}
+
+		filename = fname ? strchr(fname, ':') : NULL;
+		if (filename != NULL) {
+			filename++;
+			if (*filename == '\0') {
+				printf("No file specified in %s\n", fname);
+				error = EINVAL;
+				goto neterr;
+			}
+		} else
+			filename = (char *)fname;
+
+		*file = filename;
+		return 0;
+
+neterr:
+		DEV_CLOSE(f->f_dev)(f);
+		f->f_dev = NULL;
+		return error;
 	}
+#endif
 
 	/*
 	 * biosdisk
 	 */
 	if (strcmp(devname, "esp") == 0) {
 		bios2dev(boot_biosdev, boot_biossector, &devname, &unit,
-		    &partition);
+		    &partition, NULL);
 		if (efidisk_get_efi_system_partition(boot_biosdev, &partition))
 			return ENXIO;
 	}

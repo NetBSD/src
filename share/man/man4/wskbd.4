@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.16 2012/05/27 12:05:40 wiz Exp $
+.\" $NetBSD: wskbd.4,v 1.16.32.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -142,12 +142,12 @@ Set the wscons_event protocol version.
 The default is 0 for binary compatibility.
 The latest version is
 always available as
-.Dv WSKBD_EVENT_VERSION ,
+.Dv WSKBDIO_EVENT_VERSION ,
 and is currently 1.
 All new code should use a call similar to the below to ensure the
 correct version is returned.
 .Bd -literal -offset indent
-int ver = WSKBD_EVENT_VERSION;
+int ver = WSKBDIO_EVENT_VERSION;
 if (ioctl(fd, WSKBDIO_SETVERSION, &ver) == -1)
     err(EXIT_FAILURE, "cannot set version");
 .Ed

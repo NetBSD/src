@@ -1,4 +1,5 @@
-/*	$NetBSD: if_kuereg.h,v 1.20.18.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.20.18.2 2020/04/13 08:04:49 martin Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -76,8 +77,6 @@ struct kue_ether_desc {
 	le16dec((x)->kue_desc.kue_maxseg)
 #define KUE_MCFILTCNT(x)	\
 	(le16dec((x)->kue_desc.kue_mcastfilt) & 0x7FFF)
-#define KUE_MCFILT(x, y)	\
-	(uint8_t *)&(sc->kue_mcfilters[y * ETHER_ADDR_LEN])
 
 #define KUE_STAT_TX_OK			0x00000001
 #define KUE_STAT_RX_OK			0x00000002
@@ -115,71 +114,7 @@ struct kue_ether_desc {
 #define KUE_RXFILT_BROADCAST		0x0008
 #define KUE_RXFILT_MULTICAST		0x0010
 
-#define KUE_TIMEOUT		1000
-#define KUE_BUFSZ		1536
-#define KUE_MIN_FRAMELEN	60
-
-#define KUE_RX_LIST_CNT		1
-#define KUE_TX_LIST_CNT		1
-
 #define KUE_CTL_READ		0x01
 #define KUE_CTL_WRITE		0x02
 
 #define KUE_WARM_REV		0x0202
-
-/*
- * The interrupt endpoint is currently unused
- * by the KLSI part.
- */
-#define KUE_ENDPT_RX		0x0
-#define KUE_ENDPT_TX		0x1
-#define KUE_ENDPT_INTR		0x2
-#define KUE_ENDPT_MAX		0x3
-
-struct kue_type {
-	uint16_t		kue_vid;
-	uint16_t		kue_did;
-};
-
-struct kue_softc;
-
-struct kue_chain {
-	struct kue_softc	*kue_sc;
-	struct usbd_xfer	*kue_xfer;
-	uint8_t			*kue_buf;
-	int			kue_idx;
-};
-
-struct kue_cdata {
-	struct kue_chain	kue_tx_chain[KUE_TX_LIST_CNT];
-	struct kue_chain	kue_rx_chain[KUE_RX_LIST_CNT];
-	int			kue_tx_prod;
-	int			kue_tx_cons;
-	int			kue_tx_cnt;
-	int			kue_rx_prod;
-};
-
-struct kue_softc {
-	device_t kue_dev;
-
-	struct ethercom		kue_ec;
-	krndsource_t	rnd_source;
-#define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
-
-	struct usbd_device *	kue_udev;
-	struct usbd_interface *	kue_iface;
-	uint16_t		kue_vendor;
-	uint16_t		kue_product;
-	struct kue_ether_desc	kue_desc;
-	int			kue_ed[KUE_ENDPT_MAX];
-	struct usbd_pipe *	kue_ep[KUE_ENDPT_MAX];
-	int			kue_if_flags;
-	uint16_t		kue_rxfilt;
-	uint8_t			*kue_mcfilters;
-	struct kue_cdata	kue_cdata;
-
-	bool			kue_dying;
-	bool			kue_attached;
-	u_int			kue_rx_errs;
-	struct timeval		kue_rx_notice;
-};

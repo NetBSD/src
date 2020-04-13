@@ -1,4 +1,4 @@
-/* $NetBSD: plmmc_fdt.c,v 1.1 2017/06/02 11:04:01 jmcneill Exp $ */
+/* $NetBSD: plmmc_fdt.c,v 1.1.14.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plmmc_fdt.c,v 1.1 2017/06/02 11:04:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plmmc_fdt.c,v 1.1.14.1 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,12 @@ plmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
 	sc->sc_dev = self;
 	sc->sc_clock_freq = clk_get_rate(clk);
 	of_getprop_uint32(phandle, "max-frequency", &sc->sc_max_freq);
@@ -104,6 +110,7 @@ plmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;
 	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	plmmc_init(sc);
 }

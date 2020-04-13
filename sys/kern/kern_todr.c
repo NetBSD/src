@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.39.18.1 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.39.18.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.39.18.1 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.39.18.2 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,6 +208,8 @@ todr_set_systime(time_t base)
 	 */
 	if (todr_handle)
 		todr_handle->base_time = base;
+
+	memset(&tv, 0, sizeof(tv));
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||

@@ -1,6 +1,6 @@
 // Allocators -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -75,8 +75,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef void        value_type;
 
       template<typename _Tp1>
-        struct rebind
-        { typedef allocator<_Tp1> other; };
+	struct rebind
+	{ typedef allocator<_Tp1> other; };
 
 #if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -117,8 +117,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef _Tp        value_type;
 
       template<typename _Tp1>
-        struct rebind
-        { typedef allocator<_Tp1> other; };
+	struct rebind
+	{ typedef allocator<_Tp1> other; };
 
 #if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -134,7 +134,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       : __allocator_base<_Tp>(__a) { }
 
       template<typename _Tp1>
-        allocator(const allocator<_Tp1>&) throw() { }
+	allocator(const allocator<_Tp1>&) throw() { }
 
       ~allocator() throw() { }
 

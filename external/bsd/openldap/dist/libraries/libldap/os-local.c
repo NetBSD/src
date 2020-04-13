@@ -1,10 +1,10 @@
-/*	$NetBSD: os-local.c,v 1.9 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: os-local.c,v 1.9.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* os-local.c -- platform-specific domain socket code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: os-local.c,v 1.9 2018/02/06 01:57:23 christos Exp $");
+__RCSID("$NetBSD: os-local.c,v 1.9.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -114,7 +114,7 @@ ldap_pvt_close_socket(LDAP *ld, int s)
 #define TRACE do { \
 	char ebuf[128]; \
 	oslocal_debug(ld, \
-		"ldap_is_socket_ready: errror on socket %d: errno: %d (%s)\n", \
+		"ldap_is_socket_ready: error on socket %d: errno: %d (%s)\n", \
 		s, \
 		errno, \
 		AC_STRERROR_R(errno, ebuf, sizeof ebuf)); \
@@ -364,5 +364,5 @@ ldap_connect_to_path(LDAP *ld, Sockbuf *sb, LDAPURLDesc *srv, int async)
 	return rc;
 }
 #else
-static int dummy;
+static int dummy; /* generate also a warning: 'dummy' defined but not used (at least here) */
 #endif /* LDAP_PF_LOCAL */

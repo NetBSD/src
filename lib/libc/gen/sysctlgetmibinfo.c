@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.13 2016/09/30 06:22:21 dholland Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.13.14.1 2020/04/13 08:03:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.13 2016/09/30 06:22:21 dholland Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.13.14.1 2020/04/13 08:03:10 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -386,16 +386,16 @@ __learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
  * the mib while parsing, and you should try again.  in the case of an
  * invalid node name, cname will be set to contain the offending name.
  */
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && !defined(RUMP_ACTION)
 static mutex_t sysctl_mutex = MUTEX_INITIALIZER;
 static int sysctlgetmibinfo_unlocked(const char *, int *, u_int *, char *,
 				     size_t *, struct sysctlnode **, int);
-#endif /* __REENTRANT */
+#endif /* __REENTRANT && !RUMP_ACTION */
 
 int
 sysctlgetmibinfo(const char *gname, int *iname, u_int *namelenp,
 		 char *cname, size_t *csz, struct sysctlnode **rnode, int v)
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && !defined(RUMP_ACTION)
 {
 	int rc;
 
@@ -411,7 +411,7 @@ static int
 sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 			  char *cname, size_t *csz, struct sysctlnode **rnode,
 			  int v)
-#endif /* _REENTRANT */
+#endif /* _REENTRANT && !RUMP_ACTION */
 {
 	struct sysctlnode *pnode, *node;
 	int name[CTL_MAXNAME], n, haven;

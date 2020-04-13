@@ -1,4 +1,4 @@
-.\"	$NetBSD: mprotect.2,v 1.26 2017/05/14 12:30:37 wiz Exp $
+.\"	$NetBSD: mprotect.2,v 1.26.10.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 27, 2017
+.Dd September 8, 2019
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Fn mprotect "void *addr" "size_t len" "int prot"
 .Sh DESCRIPTION
 The
-.Fn mprotect
+.Nm
 system call
 changes the specified pages to have protection
 .Fa prot .
@@ -55,8 +55,7 @@ The protections (region accessibility) are specified in the
 argument by
 .Tn OR Ns 'ing
 the following values:
-.Pp
-.Bl -tag -width MAP_FIXEDX -offset indent
+.Bl -tag -width "Dv MAP_WRITE" -offset indent
 .It Dv PROT_EXEC
 Pages may be executed.
 .It Dv PROT_READ
@@ -87,7 +86,7 @@ The new protection is less restrictive than the protection originally
 set with
 .Xr mmap 2 .
 .Pp
-PAX mprotect restrictions prohibit the requested protection.
+PaX mprotect restrictions prohibit the requested protection.
 .It Bq Er EINVAL
 An invalid memory range, or invalid parameters were provided.
 .It Bq Er ENOMEM
@@ -101,6 +100,6 @@ A resource shortage occurred while internally calling
 .Xr munmap 2
 .Sh HISTORY
 The
-.Fn mprotect
-function first appeared in
+.Nm
+function first appeared in SunOS 4.0 and subsequently
 .Bx 4.4 .

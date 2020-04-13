@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.67.2.2 2020/04/08 14:07:59 martin Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.67.2.3 2020/04/13 08:04:12 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.3 2020/04/13 08:04:12 martin Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.2 2020/04/08 14:07:59 mart
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -488,11 +487,9 @@ xbdback_xenbus_destroy(void *arg)
 	xbdback_disconnect(xbdi);
 
 	/* unregister watch */
-	if (xbdi->xbdi_watch.node) {
-		unregister_xenbus_watch(&xbdi->xbdi_watch);
-		free(xbdi->xbdi_watch.node, M_DEVBUF);
-		xbdi->xbdi_watch.node = NULL;
-	}
+	if (xbdi->xbdi_watch.node)
+		xenbus_unwatch_path(&xbdi->xbdi_watch);
+
 	/* unmap ring */
 	if (xbdi->xbdi_ring_va != 0) {
 		ungrop.host_addr = xbdi->xbdi_ring_va;
@@ -530,12 +527,12 @@ xbdback_xenbus_destroy(void *arg)
 static int
 xbdback_connect(struct xbdback_instance *xbdi)
 {
-	int len, err;
+	int err;
 	struct gnttab_map_grant_ref grop;
 	struct gnttab_unmap_grant_ref ungrop;
 	evtchn_op_t evop;
 	u_long ring_ref, revtchn;
-	char *xsproto;
+	char xsproto[32];
 	const char *proto;
 	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
 
@@ -558,7 +555,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	}
 	XENPRINTF(("xbdback %s: connect revtchn %lu\n", xbusd->xbusd_path, revtchn));
 	err = xenbus_read(NULL, xbusd->xbusd_otherend, "protocol",
-	    &len, &xsproto);
+	    xsproto, sizeof(xsproto));
 	if (err) {
 		xbdi->xbdi_proto = XBDIP_NATIVE;
 		proto = "unspecified";
@@ -577,10 +574,8 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		} else {
 			aprint_error("xbd domain %d: unknown proto %s\n",
 			    xbdi->xbdi_domid, xsproto);
-			free(xsproto, M_DEVBUF);
 			return -1;
 		}
-		free(xsproto, M_DEVBUF);
 	}
 
 	/* allocate VA space and map rings */
@@ -745,7 +740,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	struct xbdback_instance *xbdi = xbusd->xbusd_u.b.b_cookie;
 	int err;
 	long dev;
-	char *mode;
+	char mode[32];
 	struct xenbus_transaction *xbt;
 	const char *devname;
 	int major;
@@ -773,7 +768,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		return;
 	}
 	xbdi->xbdi_dev = dev;
-	err = xenbus_read(NULL, xbusd->xbusd_path, "mode", NULL, &mode);
+	err = xenbus_read(NULL, xbusd->xbusd_path, "mode", mode, sizeof(mode));
 	if (err) {
 		printf("xbdback: failed to read %s/mode: %d\n",
 		    xbusd->xbusd_path, err);
@@ -783,7 +778,6 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		xbdi->xbdi_ro = false;
 	else
 		xbdi->xbdi_ro = true;
-	free(mode, M_DEVBUF);
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {

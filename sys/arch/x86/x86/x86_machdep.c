@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.117.2.2 2020/04/08 14:07:59 martin Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.117.2.3 2020/04/13 08:04:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117.2.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117.2.3 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1381,9 +1381,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	void sysctl_speculation_init(struct sysctllog **);
 	sysctl_speculation_init(clog);
 #endif
-
-	void sysctl_eagerfpu_init(struct sysctllog **);
-	sysctl_eagerfpu_init(clog);
 
 	/* None of these can ever change once the system has booted */
 	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2012/08/10 12:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.32.1 2020/04/13 08:05:54 martin Exp $
 
 PROG=	mopd
 SRCS=	mopd.c process.c
@@ -9,4 +9,4 @@ DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
 
-COPTS.process.c+=	-Wno-pointer-sign
+COPTS.process.c+=	-Wno-pointer-sign ${GCC_NO_FORMAT_TRUNCATION}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cikd.h,v 1.1.1.1.32.1 2019/06/10 22:08:25 christos Exp $	*/
+/*	$NetBSD: cikd.h,v 1.1.1.1.32.2 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -809,7 +809,7 @@
 #       define IH_WPTR_WRITEBACK_ENABLE                   (1 << 8)
 #       define IH_WPTR_WRITEBACK_TIMER(x)                 ((x) << 9) /* log2 */
 #       define IH_WPTR_OVERFLOW_ENABLE                    (1 << 16)
-#       define IH_WPTR_OVERFLOW_CLEAR                     (1 << 31)
+#       define IH_WPTR_OVERFLOW_CLEAR                     (1U << 31)
 #define IH_RB_BASE                                        0x3e04
 #define IH_RB_RPTR                                        0x3e08
 #define IH_RB_WPTR                                        0x3e0c
@@ -1308,7 +1308,7 @@
 #define		RB_BLKSZ(x)					((x) << 8)
 #define		BUF_SWAP_32BIT					(2 << 16)
 #define		RB_NO_UPDATE					(1 << 27)
-#define		RB_RPTR_WR_ENA					(1 << 31)
+#define		RB_RPTR_WR_ENA					(1U << 31)
 
 #define	CP_RB0_RPTR_ADDR				0xC10C
 #define		RB_RPTR_SWAP_32BIT				(2 << 0)
@@ -1357,7 +1357,7 @@
 #define CP_CPF_DEBUG                                    0xC200
 
 #define CP_PQ_WPTR_POLL_CNTL                            0xC20C
-#define		WPTR_POLL_EN      			(1 << 31)
+#define		WPTR_POLL_EN      			(1U << 31)
 
 #define CP_ME1_PIPE0_INT_CNTL                           0xC214
 #define CP_ME1_PIPE1_INT_CNTL                           0xC218
@@ -1518,7 +1518,7 @@
 #define		DOORBELL_SOURCE      			(1 << 28)
 #define		DOORBELL_SCHD_HIT      			(1 << 29)
 #define		DOORBELL_EN      			(1 << 30)
-#define		DOORBELL_HIT      			(1 << 31)
+#define		DOORBELL_HIT      			(1U << 31)
 #define CP_HQD_PQ_WPTR                                    0xC954
 #define CP_HQD_PQ_CONTROL                                 0xC958
 #define		QUEUE_SIZE(x)				((x) << 0)
@@ -1530,7 +1530,7 @@
 #define		UNORD_DISPATCH      			(1 << 28)
 #define		ROQ_PQ_IB_FLIP      			(1 << 29)
 #define		PRIV_STATE      			(1 << 30)
-#define		KMD_QUEUE      				(1 << 31)
+#define		KMD_QUEUE      				(1U << 31)
 
 #define CP_HQD_IB_BASE_ADDR				0xC95Cu
 #define CP_HQD_IB_BASE_ADDR_HI			0xC960u
@@ -1634,7 +1634,7 @@
 #define		SE_INDEX(x)     			((x) << 16)
 #define		SH_BROADCAST_WRITES      		(1 << 29)
 #define		INSTANCE_BROADCAST_WRITES      		(1 << 30)
-#define		SE_BROADCAST_WRITES      		(1 << 31)
+#define		SE_BROADCAST_WRITES      		(1U << 31)
 
 #define	VGT_ESGS_RING_SIZE				0x30900
 #define	VGT_GSVS_RING_SIZE				0x30904
@@ -1661,8 +1661,8 @@
 #define		CGTS_OVERRIDE				(1 << 21)
 #define		CGTS_LS_OVERRIDE			(1 << 22)
 #define		ON_MONITOR_ADD_EN			(1 << 23)
-#define		ON_MONITOR_ADD(x)			((x) << 24)
-#define		ON_MONITOR_ADD_MASK			(0xff << 24)
+#define		ON_MONITOR_ADD(x)			((uint32_t)(x) << 24)
+#define		ON_MONITOR_ADD_MASK			(0xffU << 24)
 
 #define	CGTS_TCC_DISABLE				0x3c00c
 #define	CGTS_USER_TCC_DISABLE				0x3c010
@@ -1674,10 +1674,10 @@
 /*
  * PM4
  */
-#define	PACKET_TYPE0	0
-#define	PACKET_TYPE1	1
-#define	PACKET_TYPE2	2
-#define	PACKET_TYPE3	3
+#define	PACKET_TYPE0	0U
+#define	PACKET_TYPE1	1U
+#define	PACKET_TYPE2	2U
+#define	PACKET_TYPE3	3U
 
 #define CP_PACKET_GET_TYPE(h) (((h) >> 30) & 3)
 #define CP_PACKET_GET_COUNT(h) (((h) >> 16) & 0x3FFF)

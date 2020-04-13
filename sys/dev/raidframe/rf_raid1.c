@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.35.30.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.35.30.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.35.30.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.35.30.2 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -551,7 +551,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;
 	int     retcode;
-	RF_CallbackDesc_t *cb, *p;
+	RF_CallbackValueDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
 	RF_Raid_t *raidPtr;
 	void *ta;
@@ -646,9 +646,9 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 			RF_PANIC();
 		}
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
-		cb = rf_AllocCallbackDesc();
+		cb = rf_AllocCallbackValueDesc();
 		cb->col = rbuf->col;
-		cb->callbackArg.v = rbuf->parityStripeID;
+		cb->v = rbuf->parityStripeID;
 		cb->next = NULL;
 		if (reconCtrlPtr->bufferWaitList == NULL) {
 			/* we are the wait list- lucky us */

@@ -1,6 +1,6 @@
 /* Plugin for NVPTX execution.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -838,7 +838,11 @@ nvptx_get_num_devices (void)
   /* PR libgomp/65099: Currently, we only support offloading in 64-bit
      configurations.  */
   if (sizeof (void *) != 8)
-    return 0;
+    {
+      GOMP_PLUGIN_debug (0, "Disabling nvptx offloading;"
+			 " only 64-bit configurations are supported\n");
+      return 0;
+    }
 
   /* This function will be called before the plugin has been initialized in
      order to enumerate available devices, but CUDA API routines can't be used
@@ -852,13 +856,25 @@ nvptx_get_num_devices (void)
       /* This is not an error: e.g. we may have CUDA libraries installed but
          no devices available.  */
       if (r != CUDA_SUCCESS)
-        return 0;
+	{
+	  GOMP_PLUGIN_debug (0, "Disabling nvptx offloading; cuInit: %s\n",
+			     cuda_error (r));
+	  return 0;
+	}
     }
 
   CUDA_CALL_ERET (-1, cuDeviceGetCount, &n);
   return n;
 }
 
+static void
+notify_var (const char *var_name, const char *env_var)
+{
+  if (env_var == NULL)
+    GOMP_PLUGIN_debug (0, "%s: <Not defined>\n", var_name);
+  else
+    GOMP_PLUGIN_debug (0, "%s: '%s'\n", var_name, env_var);
+}
 
 static bool
 link_ptx (CUmodule *module, const struct targ_ptx_obj *ptx_objs,
@@ -1081,10 +1097,12 @@ nvptx_exec (void (*fn), size_t mapnum, void **hostaddrs, void **devaddrs,
       pthread_mutex_lock (&ptx_dev_lock);
       if (!default_dims[0])
 	{
+	  const char *var_name = "GOMP_OPENACC_DIM";
 	  /* We only read the environment variable once.  You can't
 	     change it in the middle of execution.  The syntax  is
 	     the same as for the -fopenacc-dim compilation option.  */
-	  const char *env_var = getenv ("GOMP_OPENACC_DIM");
+	  const char *env_var = getenv (var_name);
+	  notify_var (var_name, env_var);
 	  if (env_var)
 	    {
 	      const char *pos = env_var;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.7.30.2 2020/04/08 14:08:27 martin Exp $	*/
+/*	$NetBSD: atomic.h,v 1.7.30.3 2020/04/13 08:04:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ atomic_add_unless(atomic_t *atomic, int addend, int zero)
 		if (value == zero)
 			break;
 	} while (atomic_cas_uint(&atomic->a_u.au_uint, value, (value + addend))
-	    != value);
+	    != (unsigned)value);
 	smp_mb__after_atomic();
 
 	return value != zero;

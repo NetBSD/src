@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.1,v 1.8 2017/07/04 06:33:13 wiz Exp $
+.\"	$NetBSD: cd.1,v 1.8.6.1 2020/04/13 08:03:24 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cd.1	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd August 31, 2019
 .Dt CD 1
 .Os
 .Sh NAME
@@ -40,24 +40,42 @@
 .Nd change working directory
 .Sh SYNOPSIS
 .Nm cd
-.Ar directory
+.Op Ar directory
 .Sh DESCRIPTION
-.Ar Directory
-is an absolute or relative pathname which becomes the new working
-directory.
-The interpretation of a relative pathname by cd depends on the
+Since
+.Nm
+affects the current shell execution environment, it is always provided
+as a shell regular built-in.
+For more information consult the manual page for the shell in use.
+.Pp
+The
+.Ar directory
+operand is an absolute or relative pathname which becomes the new
+working directory.
+The interpretation of a relative pathname by
+.Nm
+depends on the
 .Ev CDPATH
 environment variable (see below).
 .Sh ENVIRONMENT
-The following environment variables affect the execution of cd:
-.Bl -tag -width indent
+The following environment variables affect the execution of
+.Nm :
+.Bl -tag -width Ev
 .It Ev CDPATH
+A colon-separated list of pathnames that refer to directories.
 If the
 .Ar directory
-operand does not begin with a slash (/) character, and the first
-component is not dot (.) or dot-dot (..),
-.Nm cd
-searches for the directory relative to each directory named in the
+operand does not begin with a slash
+.Pq Ql \&/
+character, and the first
+component is not dot
+.Pq Ql \&.
+or dot-dot
+.Pq Ql \&.. ,
+.Nm
+searches for the
+.Ar directory
+relative to each directory named in the
 .Ev CDPATH
 variable, in the order listed.
 The new working directory is set to the first matching directory found.
@@ -73,15 +91,18 @@ is invoked without arguments and the
 .Ev HOME
 environment variable exists and contains a directory name, that directory
 becomes the new working directory.
+.It Ev OLDPWD
+Set to the previous working directory after a directory change.
+Not supported by
+.Xr csh 1 .
+.It Ev PWD
+Set to the current working directory.
 .El
-.Pp
-See
-.Xr csh 1
-for more information on environment variables.
 .Sh EXIT STATUS
 .Ex -std cd
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr ksh 1 ,
 .Xr pwd 1 ,
 .Xr sh 1 ,
 .Xr chdir 2

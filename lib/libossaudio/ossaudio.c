@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33.12.1 2019/06/10 22:05:25 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.33.12.1 2019/06/10 22:05:25 christos Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: ossaudio.c,v 1.33.12.1 2019/06/10 22:05:25 christos Exp $");
 
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
+
+#define GETPRINFO(info, name)	\
+	(((info)->mode == AUMODE_RECORD) \
+	    ? (info)->record.name : (info)->play.name)
 
 static struct audiodevinfo *getdevinfo(int);
 
@@ -104,6 +108,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	char version[32] = "4.01";
 	char license[16] = "NetBSD";
 	u_int u;
+	u_int encoding;
+	u_int precision;
 	int idat, idata;
 	int retval;
 	int i;
@@ -134,7 +140,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		INTARG = tmpinfo.play.sample_rate;
+		INTARG = GETPRINFO(&tmpinfo, sample_rate);
 		break;
 	case SNDCTL_DSP_STEREO:
 		AUDIO_INITINFO(&tmpinfo);
@@ -144,7 +150,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		INTARG = tmpinfo.play.channels - 1;
+		INTARG = GETPRINFO(&tmpinfo, channels) - 1;
 		break;
 	case SNDCTL_DSP_GETBLKSIZE:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -243,7 +249,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		switch (tmpinfo.play.encoding) {
+		encoding = GETPRINFO(&tmpinfo, encoding);
+		precision = GETPRINFO(&tmpinfo, precision);
+		switch (encoding) {
 		case AUDIO_ENCODING_ULAW:
 			idat = AFMT_MU_LAW;
 			break;
@@ -251,33 +259,33 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			idat = AFMT_A_LAW;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (tmpinfo.play.precision == 32)
+			if (precision == 32)
 				idat = AFMT_S32_LE;
-			else if (tmpinfo.play.precision == 24)
+			else if (precision == 24)
 				idat = AFMT_S24_LE;
-			else if (tmpinfo.play.precision == 16)
+			else if (precision == 16)
 				idat = AFMT_S16_LE;
 			else
 				idat = AFMT_S8;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (tmpinfo.play.precision == 32)
+			if (precision == 32)
 				idat = AFMT_S32_BE;
-			else if (tmpinfo.play.precision == 24)
+			else if (precision == 24)
 				idat = AFMT_S24_BE;
-			else if (tmpinfo.play.precision == 16)
+			else if (precision == 16)
 				idat = AFMT_S16_BE;
 			else
 				idat = AFMT_S8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = AFMT_U16_LE;
 			else
 				idat = AFMT_U8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = AFMT_U16_BE;
 			else
 				idat = AFMT_U8;
@@ -303,7 +311,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		INTARG = tmpinfo.play.channels;
+		INTARG = GETPRINFO(&tmpinfo, channels);
 		break;
 	case SOUND_PCM_WRITE_FILTER:
 	case SOUND_PCM_READ_FILTER:

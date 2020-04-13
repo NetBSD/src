@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.6 2019/06/10 22:09:46 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.7 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -35,6 +35,8 @@
 /*
  * IEEE 802.11 ioctls.
  */
+#include <sys/ioccom.h>
+#include <net/if.h>
 #include <net80211/_ieee80211.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>

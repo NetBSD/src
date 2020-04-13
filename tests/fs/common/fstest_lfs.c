@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.5.16.1 2019/06/10 22:10:00 christos Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.5.16.2 2020/04/13 08:05:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ cleaner(void *arg)
 {
 	char thepath[MAXPATHLEN];
 	struct lfstestargs *args = arg;
-	const char *the_argv[7];
+	const char *the_argv[9];
 	char buf[64];
 
 	rump_pub_lwproc_newlwp(rump_sys_getpid());
@@ -139,14 +139,16 @@ cleaner(void *arg)
 	the_argv[1] = "-D"; /* don't fork() & detach */
 	the_argv[2] = "-S";
 	the_argv[3] = buf;
-	the_argv[4] = args->ta_mntpath;
-	the_argv[5] = NULL;
+	the_argv[4] = "-J";
+	the_argv[5] = thepath;
+	the_argv[6] = args->ta_mntpath;
+	the_argv[7] = NULL;
 
 	/* xxxatf */
 	optind = 1;
 	opterr = 1;
 
-	lfs_cleaner_main(5, __UNCONST(the_argv));
+	lfs_cleaner_main(7, __UNCONST(the_argv));
 
 	rump_pub_lwproc_releaselwp();
 

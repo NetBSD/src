@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.3.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,10 +18,12 @@
  ***** Module Info
  *****/
 
-/*! \file dns/acl.h
+/*! \file dns/geoip.h
  * \brief
- * Address match list handling.
+ * GeoIP/GeoIP2 data types and function prototypes.
  */
+
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 
 /***
  *** Imports
@@ -38,12 +40,6 @@
 #include <dns/types.h>
 #include <dns/iptable.h>
 
-#ifdef HAVE_GEOIP
-#include <GeoIP.h>
-#else
-typedef void GeoIP;
-#endif
-
 /***
  *** Types
  ***/
@@ -52,11 +48,15 @@ typedef enum {
 	dns_geoip_countrycode,
 	dns_geoip_countrycode3,
 	dns_geoip_countryname,
+	dns_geoip_continentcode,
+	dns_geoip_continent,
 	dns_geoip_region,
 	dns_geoip_regionname,
 	dns_geoip_country_code,
 	dns_geoip_country_code3,
 	dns_geoip_country_name,
+	dns_geoip_country_continentcode,
+	dns_geoip_country_continent,
 	dns_geoip_region_countrycode,
 	dns_geoip_region_code,
 	dns_geoip_region_name,
@@ -70,6 +70,7 @@ typedef enum {
 	dns_geoip_city_metrocode,
 	dns_geoip_city_areacode,
 	dns_geoip_city_continentcode,
+	dns_geoip_city_continent,
 	dns_geoip_city_timezonecode,
 	dns_geoip_isp_name,
 	dns_geoip_org_name,
@@ -80,25 +81,33 @@ typedef enum {
 
 typedef struct dns_geoip_elem {
 	dns_geoip_subtype_t subtype;
-	GeoIP *db;
+	void *db;
 	union {
 		char as_string[256];
 		int as_int;
 	};
 } dns_geoip_elem_t;
 
-typedef struct dns_geoip_databases {
-	GeoIP *country_v4;			/* DB 1        */
-	GeoIP *city_v4;				/* DB 2 or 6   */
-	GeoIP *region;				/* DB 3 or 7   */
-	GeoIP *isp;				/* DB 4        */
-	GeoIP *org;				/* DB 5        */
-	GeoIP *as;				/* DB 9        */
-	GeoIP *netspeed;			/* DB 10       */
-	GeoIP *domain;				/* DB 11       */
-	GeoIP *country_v6;			/* DB 12       */
-	GeoIP *city_v6;				/* DB 30 or 31 */
-} dns_geoip_databases_t;
+struct dns_geoip_databases {
+#ifdef HAVE_GEOIP2
+	void *country;		/* GeoIP2-Country or GeoLite2-Country */
+	void *city;		/* GeoIP2-CIty or GeoLite2-City */
+	void *domain;		/* GeoIP2-Domain */
+	void *isp;		/* GeoIP2-ISP */
+	void *as;		/* GeoIP2-ASN or GeoLite2-ASN */
+#else /* HAVE_GEOIP */
+	void *country_v4;	/* GeoIP DB 1 */
+	void *city_v4;		/* GeoIP DB 2 or 6 */
+	void *region;		/* GeoIP DB 3 or 7 */
+	void *isp;		/* GeoIP DB 4 */
+	void *org;		/* GeoIP DB 5 */
+	void *as;		/* GeoIP DB 9 */
+	void *netspeed;		/* GeoIP DB 10 */
+	void *domain;		/* GeoIP DB 11 */
+	void *country_v6;	/* GeoIP DB 12 */
+	void *city_v6;		/* GeoIP DB 30 or 31 */
+#endif /* HAVE_GEOIP */
+};
 
 /***
  *** Functions
@@ -115,4 +124,7 @@ void
 dns_geoip_shutdown(void);
 
 ISC_LANG_ENDDECLS
+
+#endif /* HAVE_GEOIP | HAVE_GEOIP2 */
+
 #endif /* DNS_GEOIP_H */

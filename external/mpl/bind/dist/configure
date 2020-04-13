@@ -669,7 +669,6 @@ BIND9_ISCCFG_BUILDINCLUDE
 BIND9_ISCCC_BUILDINCLUDE
 BIND9_ISC_BUILDINCLUDE
 BIND9_TOP_BUILDDIR
-LD_WRAP_TESTS
 KYUA
 UNITTESTS
 CMOCKA_LIBS
@@ -677,8 +676,6 @@ CMOCKA_CFLAGS
 LIBIDN2_LDFLAGS
 LIBIDN2_LIBS
 LIBIDN2_CFLAGS
-XSLT_DBLATEX_FASTBOOK
-XSLT_DBLATEX_STYLE
 XSLT_DOCBOOK_MAKETOC_XHTML
 XSLT_DOCBOOK_MAKETOC_HTML
 XSLT_DOCBOOK_CHUNKTOC_XHTML
@@ -754,6 +751,11 @@ PTHREAD_CC
 ax_pthread_config
 GEOIPLINKOBJS
 GEOIPLINKSRCS
+GEOIP2LINKOBJS
+GEOIP2LINKSRCS
+MAXMINDDB_PREFIX
+MAXMINDDB_LIBS
+MAXMINDDB_CFLAGS
 ISC_PLATFORM_NORETURN_POST
 ISC_PLATFORM_NORETURN_PRE
 expanded_sysconfdir
@@ -804,6 +806,9 @@ FGREP
 SED
 LIBTOOL
 SET_MAKE
+LFS_LIBS
+LFS_LDFLAGS
+LFS_CFLAGS
 EGREP
 GREP
 CPP
@@ -893,6 +898,7 @@ enable_kqueue
 enable_epoll
 enable_devpoll
 with_geoip
+with_geoip2
 with_locktype
 with_libtool
 with_openssl
@@ -953,6 +959,9 @@ LT_SYS_LIBRARY_PATH
 PKG_CONFIG
 PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
+MAXMINDDB_CFLAGS
+MAXMINDDB_LIBS
+MAXMINDDB_PREFIX
 OPENSSL_CFLAGS
 OPENSSL_LIBS
 LIBIDN2_CFLAGS
@@ -1626,17 +1635,18 @@ Optional Packages:
   --with-python=PATH      specify path to Python interpreter
   --with-python-install-dir=PATH
                           installation directory for Python modules
-  --with-geoip=PATH       Build with GeoIP support (yes|no|path)
+  --with-geoip=PATH       Build with legacy GeoIP support (yes|no|path)
+  --with-geoip2=PATH      Build with MaxMind GeoIP2 support (auto|yes|no|path)
+                          [default=no]
   --with-locktype=ARG     Specify mutex lock type (adaptive or standard)
   --with-libtool          use GNU libtool
   --with-openssl=DIR      root of the OpenSSL directory
-  --with-cc-alg=ALG       choose the algorithm for Client Cookie
-                          [aes|sha1|sha256] (default is aes)
+  --with-cc-alg=ALG       deprecated
   --with-pkcs11=PATH      Build with PKCS11 support [no|path] (PATH is for the
                           PKCS11 provider)
   --with-gssapi=PATH|/path/krb5-config
                           Specify path for system-supplied GSSAPI
-                          [default=yes]
+                          [default=auto]
   --with-lmdb=PATH        build with LMDB library [yes|no|path]
   --with-libxml2=PATH     build with libxml2 library [yes|no|path]
   --with-libjson=PATH     build with libjson0 library [yes|no|path]
@@ -1689,6 +1699,12 @@ Some influential environment variables:
               directories to add to pkg-config's search path
   PKG_CONFIG_LIBDIR
               path overriding pkg-config's built-in search path
+  MAXMINDDB_CFLAGS
+              C compiler flags for MAXMINDDB, overriding pkg-config
+  MAXMINDDB_LIBS
+              linker flags for MAXMINDDB, overriding pkg-config
+  MAXMINDDB_PREFIX
+              value of prefix for libmaxminddb, overriding pkg-config
   OPENSSL_CFLAGS
               C compiler flags for OPENSSL, overriding pkg-config
   OPENSSL_LIBS
@@ -3892,6 +3908,14 @@ $as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
   $as_echo "#define _POSIX_PTHREAD_SEMANTICS 1" >>confdefs.h
 
   $as_echo "#define _TANDEM_SOURCE 1" >>confdefs.h
+
+
+
+LFS_CFLAGS=`getconf LFS_CFLAGS 2>/dev/null`
+LFS_LDFLAGS=`getconf LFS_LDFLAGS 2>/dev/null`
+LFS_LIBS=`getconf LFS_LIBS 2>/dev/null`
+
+
 
 
 
@@ -12310,7 +12334,7 @@ fi
 $as_echo_n "checking for Python support... " >&6; }
 	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	      as_fn_error $? "Python required for dnssec-keymgr" "$LINENO" 5
+	      as_fn_error $? "Python >= 2.7 or >= 3.2 and the PLY package are required for dnssec-keymgr and other Python-based tools. PLY may be available from your OS package manager as python-ply or python3-ply; it can also be installed via pip. To build without Python/PLY, use --without-python." "$LINENO" 5
 fi
 fi
 
@@ -13116,6 +13140,23 @@ fi
 
 
 #
+# Using Solaris linker with gcc on Solaris breaks Thread Local Storage
+#
+case $host in #(
+  *-solaris*) :
+
+	    if test "$GCC" = "yes"; then :
+  LDFLAGS="$LDFLAGS -zrelax=transtls"
+		   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: When using GNU C Compiler on Solaris, -zrelax=transtls linker flag is used to fix bug in Thread Local Storage" >&5
+$as_echo "$as_me: WARNING: When using GNU C Compiler on Solaris, -zrelax=transtls linker flag is used to fix bug in Thread Local Storage" >&2;}
+
+fi
+	 ;; #(
+  *) :
+     ;;
+esac
+
+#
 # CCNOOPT defaults to -O0 on gcc and disables optimization when is last
 #
 if test "X$CCNOOPT" = "X" -a "X$GCC" = "Xyes"; then
@@ -13555,17 +13596,15 @@ $as_echo "#define FLEXIBLE_ARRAY_MEMBER /**/" >>confdefs.h
 #
 case $host in #(
   arm*) :
-
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for yield instruction support" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for yield instruction support" >&5
 $as_echo_n "checking for yield instruction support... " >&6; }
-	  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
 main ()
 {
 __asm__ __volatile__ ("yield")
-
   ;
   return 0;
 }
@@ -13573,8 +13612,45 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_ARM_YIELD 1" >>confdefs.h
+
 else
-  as_fn_error $? "no, try adding -march=native or -march=armv7-a to CFLAGS (see PLATFORMS.md for more information)" "$LINENO" 5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext ;; #(
+  *) :
+     ;;
+esac
+
+#
+# Check for pause support on SPARC processors
+#
+case $host in #(
+  sparc*) :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pause instruction support" >&5
+$as_echo_n "checking for pause instruction support... " >&6; }
+	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+__asm__ __volatile__ ("pause")
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_SPARC_PAUSE 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext ;; #(
   *) :
@@ -14110,17 +14186,463 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 #
 # GeoIP support?
 #
-GEOIPLINKSRCS=
-GEOIPLINKOBJS=
+geoip2_default="no"
 
 # Check whether --with-geoip was given.
 if test "${with_geoip+set}" = set; then :
-  withval=$with_geoip; use_geoip="$withval"
+  withval=$with_geoip;
+                            use_geoip="$withval"
+                            geoip2_default="no"
+
 else
   use_geoip="no"
 fi
 
 
+# Check whether --with-geoip2 was given.
+if test "${with_geoip2+set}" = set; then :
+  withval=$with_geoip2;
+else
+  with_geoip2="$geoip2_default"
+fi
+
+
+# specifying both --with-geoip and --with-geoip2 is an error.
+if test "no" != "$with_geoip2" && test "no" != "$use_geoip"; then :
+  as_fn_error $? "--with-geoip and --with-geoip2 are incompatible" "$LINENO" 5
+fi
+
+GEOIP2LINKSRCS=
+GEOIP2LINKOBJS=
+case $with_geoip2 in #(
+  no) :
+     ;; #(
+  auto) :
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmaxminddb" >&5
+$as_echo_n "checking for libmaxminddb... " >&6; }
+
+if test -n "$MAXMINDDB_CFLAGS"; then
+    pkg_cv_MAXMINDDB_CFLAGS="$MAXMINDDB_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_CFLAGS=`$PKG_CONFIG --cflags "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$MAXMINDDB_LIBS"; then
+    pkg_cv_MAXMINDDB_LIBS="$MAXMINDDB_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_LIBS=`$PKG_CONFIG --libs "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        MAXMINDDB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libmaxminddb" 2>&1`
+        else
+	        MAXMINDDB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libmaxminddb" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$MAXMINDDB_PKG_ERRORS" >&5
+
+	:
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	:
+else
+	MAXMINDDB_CFLAGS=$pkg_cv_MAXMINDDB_CFLAGS
+	MAXMINDDB_LIBS=$pkg_cv_MAXMINDDB_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_GEOIP2 1" >>confdefs.h
+
+
+if test -n "$MAXMINDDB_PREFIX"; then
+    pkg_cv_MAXMINDDB_PREFIX="$MAXMINDDB_PREFIX"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_PREFIX=`$PKG_CONFIG --variable="prefix" "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+MAXMINDDB_PREFIX=$pkg_cv_MAXMINDDB_PREFIX
+
+if test "x$MAXMINDDB_PREFIX" = x""; then :
+  as_fn_error $? "libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment" "$LINENO" 5
+fi
+				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+
+fi ;; #(
+  yes) :
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmaxminddb" >&5
+$as_echo_n "checking for libmaxminddb... " >&6; }
+
+if test -n "$MAXMINDDB_CFLAGS"; then
+    pkg_cv_MAXMINDDB_CFLAGS="$MAXMINDDB_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_CFLAGS=`$PKG_CONFIG --cflags "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$MAXMINDDB_LIBS"; then
+    pkg_cv_MAXMINDDB_LIBS="$MAXMINDDB_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_LIBS=`$PKG_CONFIG --libs "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        MAXMINDDB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libmaxminddb" 2>&1`
+        else
+	        MAXMINDDB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libmaxminddb" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$MAXMINDDB_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (libmaxminddb) were not met:
+
+$MAXMINDDB_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables MAXMINDDB_CFLAGS
+and MAXMINDDB_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables MAXMINDDB_CFLAGS
+and MAXMINDDB_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	MAXMINDDB_CFLAGS=$pkg_cv_MAXMINDDB_CFLAGS
+	MAXMINDDB_LIBS=$pkg_cv_MAXMINDDB_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_GEOIP2 1" >>confdefs.h
+
+
+if test -n "$MAXMINDDB_PREFIX"; then
+    pkg_cv_MAXMINDDB_PREFIX="$MAXMINDDB_PREFIX"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libmaxminddb\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libmaxminddb") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_MAXMINDDB_PREFIX=`$PKG_CONFIG --variable="prefix" "libmaxminddb" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+MAXMINDDB_PREFIX=$pkg_cv_MAXMINDDB_PREFIX
+
+if test "x$MAXMINDDB_PREFIX" = x""; then :
+  as_fn_error $? "libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment" "$LINENO" 5
+fi
+				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+
+fi ;; #(
+  *) :
+     # default
+
+
+  CCASFLAGS_geoip2_ax_save_flags=$CCASFLAGS
+
+
+
+  CFLAGS_geoip2_ax_save_flags=$CFLAGS
+
+
+
+  CPPFLAGS_geoip2_ax_save_flags=$CPPFLAGS
+
+
+
+  CXXFLAGS_geoip2_ax_save_flags=$CXXFLAGS
+
+
+
+  ERLCFLAGS_geoip2_ax_save_flags=$ERLCFLAGS
+
+
+
+  FCFLAGS_geoip2_ax_save_flags=$FCFLAGS
+
+
+
+  FCLIBS_geoip2_ax_save_flags=$FCLIBS
+
+
+
+  FFLAGS_geoip2_ax_save_flags=$FFLAGS
+
+
+
+  FLIBS_geoip2_ax_save_flags=$FLIBS
+
+
+
+  GCJFLAGS_geoip2_ax_save_flags=$GCJFLAGS
+
+
+
+  JAVACFLAGS_geoip2_ax_save_flags=$JAVACFLAGS
+
+
+
+  LDFLAGS_geoip2_ax_save_flags=$LDFLAGS
+
+
+
+  LIBS_geoip2_ax_save_flags=$LIBS
+
+
+
+  OBJCFLAGS_geoip2_ax_save_flags=$OBJCFLAGS
+
+
+
+  OBJCXXFLAGS_geoip2_ax_save_flags=$OBJCXXFLAGS
+
+
+
+  UPCFLAGS_geoip2_ax_save_flags=$UPCFLAGS
+
+
+
+  VALAFLAGS_geoip2_ax_save_flags=$VALAFLAGS
+
+
+
+	    MAXMINDDB_CFLAGS="-I$with_geoip2/include"
+	    MAXMINDDB_LIBS="-L$with_geoip2/lib"
+	    CFLAGS="$CFLAGS $MAXMINDDB_CFLAGS"
+	    LDFLAGS="$LDFLAGS $MAXMINDDB_LIBS"
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing MMDB_open" >&5
+$as_echo_n "checking for library containing MMDB_open... " >&6; }
+if ${ac_cv_search_MMDB_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char MMDB_open ();
+int
+main ()
+{
+return MMDB_open ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' maxminddb; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_MMDB_open=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_MMDB_open+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_MMDB_open+:} false; then :
+
+else
+  ac_cv_search_MMDB_open=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_MMDB_open" >&5
+$as_echo "$ac_cv_search_MMDB_open" >&6; }
+ac_res=$ac_cv_search_MMDB_open
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+$as_echo "#define HAVE_GEOIP2 1" >>confdefs.h
+
+			    GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+			    GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+			    MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_mmdb_open"
+			    { $as_echo "$as_me:${as_lineno-$LINENO}: GeoIP2 default database path set to $with_geoip2/share/GeoIP" >&5
+$as_echo "$as_me: GeoIP2 default database path set to $with_geoip2/share/GeoIP" >&6;}
+			    eval MAXMINDDB_PREFIX=\$$with_geoip2
+
+else
+  as_fn_error $? "GeoIP2 requested, but libmaxminddb not found" "$LINENO" 5
+fi
+
+
+  CCASFLAGS=$CCASFLAGS_maxminddb_ax_save_flags
+
+
+  CFLAGS=$CFLAGS_maxminddb_ax_save_flags
+
+
+  CPPFLAGS=$CPPFLAGS_maxminddb_ax_save_flags
+
+
+  CXXFLAGS=$CXXFLAGS_maxminddb_ax_save_flags
+
+
+  ERLCFLAGS=$ERLCFLAGS_maxminddb_ax_save_flags
+
+
+  FCFLAGS=$FCFLAGS_maxminddb_ax_save_flags
+
+
+  FCLIBS=$FCLIBS_maxminddb_ax_save_flags
+
+
+  FFLAGS=$FFLAGS_maxminddb_ax_save_flags
+
+
+  FLIBS=$FLIBS_maxminddb_ax_save_flags
+
+
+  GCJFLAGS=$GCJFLAGS_maxminddb_ax_save_flags
+
+
+  JAVACFLAGS=$JAVACFLAGS_maxminddb_ax_save_flags
+
+
+  LDFLAGS=$LDFLAGS_maxminddb_ax_save_flags
+
+
+  LIBS=$LIBS_maxminddb_ax_save_flags
+
+
+  OBJCFLAGS=$OBJCFLAGS_maxminddb_ax_save_flags
+
+
+  OBJCXXFLAGS=$OBJCXXFLAGS_maxminddb_ax_save_flags
+
+
+  UPCFLAGS=$UPCFLAGS_maxminddb_ax_save_flags
+
+
+  VALAFLAGS=$VALAFLAGS_maxminddb_ax_save_flags
+
+
+
+	 ;;
+esac
+
+
+
+
+
+
+GEOIPLINKSRCS=
+GEOIPLINKOBJS=
 if test "yes" = "$use_geoip"
 then
 	for d in /usr /usr/local /opt/local
@@ -14135,10 +14657,6 @@ fi
 
 case "$use_geoip" in
 	no|'')
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP support" >&5
-$as_echo_n "checking for GeoIP support... " >&6; }
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
 		;;
 	*)
 		if test -d "$use_geoip" -o -L "$use_geoip"
@@ -15334,7 +15852,7 @@ CRYPTO=OpenSSL
 #
 
     found=false
-    default_ssldirs="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /usr/local/opt/openssl /usr/local/opt/libressl /usr"
+    default_ssldirs="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /opt/local /usr/local/opt/openssl /usr/local/opt/libressl /usr"
 
 # Check whether --with-openssl was given.
 if test "${with_openssl+set}" = set; then :
@@ -15701,15 +16219,29 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Ed448 support" >&5
 $as_echo_n "checking for Ed448 support... " >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: broken" >&5
-$as_echo "broken" >&6; }
-#AC_COMPILE_IFELSE(
-#    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
-#		       #include <openssl/ec.h>]],
-#		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
-#    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
-#     AC_MSG_RESULT([yes])],
-#    [AC_MSG_RESULT([no])])
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <openssl/evp.h>
+		       #include <openssl/ec.h>
+int
+main ()
+{
+EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_OPENSSL_ED448 1" >>confdefs.h
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 #
 # Check for OpenSSL SHA-1 support
@@ -15845,35 +16377,17 @@ LDFLAGS="$save_LDFLAGS"
 if test "${with_cc_alg+set}" = set; then :
   withval=$with_cc_alg; :
 else
-  with_cc_alg="aes"
+  with_cc_alg="siphash24"
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the algorithm for Client Cookie" >&5
-$as_echo_n "checking for the algorithm for Client Cookie... " >&6; }
 case $with_cc_alg in #(
-  sha1|SHA1) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: sha1" >&5
-$as_echo "sha1" >&6; }
-
-$as_echo "#define HMAC_SHA1_CC 1" >>confdefs.h
- ;; #(
-  sha256|SHA256) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: sha256" >&5
-$as_echo "sha256" >&6; }
-
-$as_echo "#define HMAC_SHA256_CC 1" >>confdefs.h
- ;; #(
-  aes|AES|auto) :
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: aes" >&5
-$as_echo "aes" >&6; }
-
-$as_echo "#define AES_CC 1" >>confdefs.h
- ;; #(
+  siphash24) :
+    : ;; #(
   *) :
-    as_fn_error $? "Invalid $with_cc_alg algorithm for Client Cookie" "$LINENO" 5 ;;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The Client Cookie is always SipHash 2-4 based" >&5
+$as_echo "$as_me: WARNING: The Client Cookie is always SipHash 2-4 based" >&2;} ;;
 esac
-
 
 PKCS11_TOOLS=
 PKCS11_TEST=
@@ -16031,7 +16545,7 @@ $as_echo_n "checking for GSSAPI library... " >&6; }
 if test "${with_gssapi+set}" = set; then :
   withval=$with_gssapi; use_gssapi="$withval"
 else
-  use_gssapi="yes"
+  use_gssapi="auto"
 fi
 
 
@@ -16171,7 +16685,7 @@ esac
 
 case "$host" in
 *darwin*)
-	if test "yes" = "$use_gssapi"
+	if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 	then
 		use_gssapi=framework
 	fi
@@ -16184,7 +16698,7 @@ esac
 # for the specification of gssapi and krb5 headers in different locations,
 # which probably ought to be fixed although fixing might raise the issue of
 # trying to build with incompatible versions of gssapi and krb5.
-if test "yes" = "$use_gssapi"
+if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 then
 	# first, deal with the obvious
 	if test \( -f /usr/include/kerberosv5/krb5.h -o \
@@ -16208,8 +16722,11 @@ then
 				break
 			fi
 		fi
-		use_gssapi="no"
 	    done
+	    if test "auto" = "$use_gssapi"
+	    then
+		use_gssapi="no"
+	    fi
 	fi
 fi
 
@@ -19101,7 +19618,7 @@ case "$docbook_path" in
 auto)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: auto" >&5
 $as_echo "auto" >&6; }
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
+	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /usr/share/sgml/docbook/xsl-stylesheets /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
 	;;
 *)
 	docbook_xsl_trees="$withval"
@@ -19318,57 +19835,6 @@ then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
 $as_echo "\"not found\"" >&6; };
 	XSLT_DOCBOOK_MAKETOC_XHTML=xhtml/maketoc.xsl
-fi
-
-
-
-#
-# Same dance for dblatex
-#
-dblatex_xsl_trees="/usr/local/share/xml/docbook/stylesheet/dblatex /usr/pkg/share/xml/docbook/stylesheet/dblatex /usr/share/xml/docbook/stylesheet/dblatex"
-
-XSLT_DBLATEX_STYLE=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/docbook.xsl" >&5
-$as_echo_n "checking for xsl/docbook.xsl... " >&6; }
-for d in $dblatex_xsl_trees
-do
-	f=$d/xsl/docbook.xsl
-	if test -f $f
-	then
-		XSLT_DBLATEX_STYLE=$f
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
-$as_echo "$f" >&6; }
-		break
-	fi
-done
-if test "X$XSLT_DBLATEX_STYLE" = "X"
-then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
-$as_echo "\"not found\"" >&6; };
-	XSLT_DBLATEX_STYLE=xsl/docbook.xsl
-fi
-
-
-
-XSLT_DBLATEX_FASTBOOK=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/latex_book_fast.xsl" >&5
-$as_echo_n "checking for xsl/latex_book_fast.xsl... " >&6; }
-for d in $dblatex_xsl_trees
-do
-	f=$d/xsl/latex_book_fast.xsl
-	if test -f $f
-	then
-		XSLT_DBLATEX_FASTBOOK=$f
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
-$as_echo "$f" >&6; }
-		break
-	fi
-done
-if test "X$XSLT_DBLATEX_FASTBOOK" = "X"
-then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
-$as_echo "\"not found\"" >&6; };
-	XSLT_DBLATEX_FASTBOOK=xsl/latex_book_fast.xsl
 fi
 
 
@@ -19835,47 +20301,6 @@ fi
 
 
 #
-# Check for -Wl,--wrap= support
-#
-
-save_LDFLAGS=$LDFLAGS
-LDFLAGS="--wrap=printf"
-
-LD_WRAP_TESTS=false
-enable_ld_wrap=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for linker support for --wrap option" >&5
-$as_echo_n "checking for linker support for --wrap option... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-int
-main ()
-{
-__wrap_printf("success"); return (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  enable_ld_wrap=yes
-     LD_WRAP_TESTS=true
-
-$as_echo "#define LD_WRAP 1" >>confdefs.h
-
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-# AM_CONDITIONAL([LD_WRAP], [test $enable_ld_wrap = yes])
-
-
-LDFLAGS=$save_LDFLAGS
-
-#
 # Check for i18n
 #
 for ac_header in locale.h
@@ -20269,6 +20694,12 @@ fi
 		 SO_CFLAGS="-KPIC"
 		 SO_LDFLAGS="-G -z text"
 		 SO_LD="ld"
+	        ;; #(
+  ia64-hp-hpux*) :
+
+		 SO_CFLAGS="+z"
+	         SO_LDFLAGS="-b"
+		 SO_LD="${CC}"
 	        ;; #(
   *) :
 
@@ -23880,11 +24311,9 @@ report() {
     test "large" = "$use_tuning" && echo "    Large-system tuning (--with-tuning)"
     test "no" = "$use_dnstap" || \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test "no" = "$use_geoip" || echo "    GeoIP access control (--with-geoip)"
+    test -z "$MAXMINDDB_LIBS" || echo "    GeoIP2 access control (--with-geoip2)"
+    test "no" = "$use_geoip" || echo "    Legacy GeoIP access control (--with-geoip)"
     test "no" = "$use_gssapi" || echo "    GSS-API (--with-gssapi)"
-    if test "yes" = "$enable_full_report" -o "aes" != "$with_cc_alg"; then
-	echo "        Algorithm: $with_cc_alg"
-    fi
 
     # these lines are only printed if run with --enable-full-report
     if test "yes" = "$enable_full_report"; then
@@ -23912,7 +24341,7 @@ report() {
 	echo "    Very verbose query trace logging (--enable-querytrace)"
     test "no" = "$with_cmocka" || echo "    CMocka Unit Testing Framework (--with-cmocka)"
 
-    test "no" = "$want_autoval" || echo "    DNSSEC validation active by default (--enable-auto-validation)"
+    test "auto" = "$validation_default" && echo "    DNSSEC validation active by default (--enable-auto-validation)"
 
     test "$CRYPTO" = "pkcs11" && (
 	echo "    Using PKCS#11 for Public-Key Cryptography (--with-native-pkcs11)"
@@ -23944,7 +24373,7 @@ report() {
 
     test "no" = "$use_dnstap" && \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test "no" = "$use_geoip" && echo "    GeoIP access control (--with-geoip)"
+    test -z "$MAXMINDDB_LIBS" && echo "    GeoIP2 access control (--with-geoip2)"
     test "no" = "$use_gssapi" && echo "    GSS-API (--with-gssapi)"
 
     test "no" = "$enable_dnsrps" && \
@@ -23953,10 +24382,10 @@ report() {
     test "yes" = "$enable_fixed" || \
 	echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
 
-    test "no" = "$want_autoval" && echo "    DNSSEC validation requires configuration (--disable-auto-validation)"
+    test "yes" = "$validation_default" && echo "    DNSSEC validation requires configuration (--enablee-auto-validation)"
 
     test "$CRYPTO" = "pkcs11" || (
-	echo "    Using PKCS#11 for Public-Key Cryptography (--without-native-pkcs11)"
+	echo "    Using PKCS#11 for Public-Key Cryptography (--with-native-pkcs11)"
     )
 
     test "yes" = "$enable_backtrace" || \

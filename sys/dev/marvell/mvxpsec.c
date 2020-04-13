@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.2.6.1 2020/04/08 14:08:07 martin Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.2.6.2 2020/04/13 08:04:23 martin Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -647,12 +647,7 @@ mvxpsec_alloc_devmem(struct mvxpsec_softc *sc, paddr_t phys, int size)
 	if (sc == NULL)
 		return NULL;
 
-	devmem = kmem_alloc(sizeof(*devmem), KM_NOSLEEP);
-	if (devmem == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't alloc kmem\n");
-		return NULL;
-	}
-
+	devmem = kmem_alloc(sizeof(*devmem), KM_SLEEP);
 	devmem->size = size;
 
 	if (phys) {
@@ -1102,15 +1097,11 @@ mvxpsec_init_dma(struct mvxpsec_softc *sc, struct marvell_attach_args *mva)
 	/* Init Software DMA Handlers */
 	sc->sc_devmem_desc =
 	    mvxpsec_alloc_devmem(sc, 0, PAGE_SIZE * MVXPSEC_DMA_DESC_PAGES);
-	if (sc->sc_devmem_desc == NULL)
-		panic("Cannot allocate memory\n");
 	ndh = (PAGE_SIZE / sizeof(struct mvxpsec_descriptor))
 	    * MVXPSEC_DMA_DESC_PAGES;
 	sc->sc_desc_ring =
 	    kmem_alloc(sizeof(struct mvxpsec_descriptor_handle) * ndh,
-	        KM_NOSLEEP);
-	if (sc->sc_desc_ring == NULL)
-		panic("Cannot allocate memory\n");
+	        KM_SLEEP);
 	aprint_normal_dev(sc->sc_dev, "%d DMA handles in %zu bytes array\n",
 	    ndh, sizeof(struct mvxpsec_descriptor_handle) * ndh);
 
@@ -3687,4 +3678,3 @@ mvxpsec_dump_acc_maciv(const char *name, uint32_t w)
 	return;
 }
 #endif
-

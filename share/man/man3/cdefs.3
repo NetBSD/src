@@ -1,4 +1,4 @@
-.\" $NetBSD: cdefs.3,v 1.4 2013/10/27 10:05:15 apb Exp $
+.\" $NetBSD: cdefs.3,v 1.4.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2011
+.Dd November 10, 2019
 .Dt CDEFS 3
 .Os
 .Sh NAME
@@ -54,8 +54,15 @@ type qualifier from
 .Tn C99 .
 .It
 Macros and definitions specific to compilers, preprocessors, and linkers; see
+.Xr __BIT 3 ,
+.Xr __BITS 3 ,
 .Xr __CONCAT 3 ,
+.Xr __FPTRCAST 3 ,
+.Xr __SHIFTIN 3 ,
+.Xr __SHIFTOUT 3 ,
+.Xr __SHIFTOUT_MASK 3 ,
 .Xr __UNCONST 3 ,
+.Xr __UNVOLATILE 3 ,
 .Xr __USE 3 ,
 .Xr __insn_barrier 3 ,
 and
@@ -89,7 +96,7 @@ included as the first thing right after any possible copyright texts;
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdefs.3,v 1.4 2013/10/27 10:05:15 apb Exp $");
+__RCSID("$NetBSD: cdefs.3,v 1.4.26.1 2020/04/13 08:03:25 martin Exp $");
 .Ed
 .Pp
 It is possible to identify the

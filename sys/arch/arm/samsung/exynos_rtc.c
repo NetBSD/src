@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_rtc.c,v 1.2 2015/12/21 04:58:50 marty Exp $ */
+/*	$NetBSD: exynos_rtc.c,v 1.2.22.1 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.2 2015/12/21 04:58:50 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.2.22.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,8 +102,8 @@ exynos_rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 

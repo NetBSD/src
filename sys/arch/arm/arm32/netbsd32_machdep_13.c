@@ -29,12 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_13.c,v 1.2.4.2 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_13.c,v 1.2.4.3 2020/04/13 08:03:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_coredump.h"
 #endif
 
 #include <sys/param.h>

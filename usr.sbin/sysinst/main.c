@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.10.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7.10.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,6 +63,9 @@ static int exit_cleanly = 0;	/* Did we finish nicely? */
 FILE *logfp;			/* log file */
 FILE *script;			/* script file */
 
+const char *multname;
+const char *err_outofmem;
+
 #ifdef DEBUG
 extern int log_flip(void);
 #endif
@@ -76,8 +79,6 @@ struct {
 
 /* String defaults and stuff for processing the -f file argument. */
 
-static char bsddiskname[DISKNAME_SIZE]; /* default name for fist selected disk */
-
 struct f_arg {
 	const char *name;
 	const char *dflt;
@@ -86,7 +87,7 @@ struct f_arg {
 };
 
 static const struct f_arg fflagopts[] = {
-	{"release", REL, rel, sizeof rel},
+	{"release", REL, NULL, 0},
 	{"machine", MACH, machine, sizeof machine},
 	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
 	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
@@ -109,7 +110,6 @@ static const struct f_arg fflagopts[] = {
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
 	{"dist postfix", "." SETS_TAR_SUFF, dist_postfix, sizeof dist_postfix},
 	{"dist tgz postfix", ".tgz", dist_tgz_postfix, sizeof dist_tgz_postfix},
-	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
 	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
 	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},
 	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
@@ -134,33 +134,36 @@ init(void)
 	const struct f_arg *arg;
 	
 	sizemult = 1;
-	multname = msg_string(MSG_secname);
-	tmp_ramdisk_size = 0;
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
 	fd_type = "msdos";
-	layoutkind = LY_SETNEW;
 
 	pm_head = (struct pm_head_t) SLIST_HEAD_INITIALIZER(pm_head);
 	SLIST_INIT(&pm_head);
-	pm_new = malloc (sizeof (pm_devs_t));
+	pm_new = malloc(sizeof (struct pm_devs));
 	memset(pm_new, 0, sizeof *pm_new);
 
 	for (arg = fflagopts; arg->name != NULL; arg++) {
+		if (arg->var == NULL)
+			continue;
 		if (arg->var == cdrom_dev)
 			get_default_cdrom(arg->var, arg->size);
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
-	strlcpy(pm_new->bsddiskname, bsddiskname, sizeof pm_new->bsddiskname);
 	pkg.xfer = pkgsrc.xfer = XFER_HTTP;
 	
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
 }
 
-__weakref_visible void prelim_menu(void)
-    __weak_reference(md_prelim_menu);
+static void
+init_lang(void)
+{	
+	sizemult = 1;
+	err_outofmem = msg_string(MSG_out_of_memory);
+	multname = msg_string(MSG_secname);
+}
 
 int
 main(int argc, char **argv)
@@ -168,6 +171,7 @@ main(int argc, char **argv)
 	int ch;
 
 	init();
+
 #ifdef DEBUG
 	log_flip();
 #endif
@@ -190,8 +194,7 @@ main(int argc, char **argv)
 			debug = 1;
 			break;
 		case 'r':
-			/* Release name other than compiled in release. */
-			strncpy(rel, optarg, sizeof rel);
+			/* Release name - ignore for compatibility with older versions */
 			break;
 		case 'f':
 			/* Definition file to read. */
@@ -213,6 +216,9 @@ main(int argc, char **argv)
 		}
 
 	md_init();
+
+	/* Initialize the partitioning subsystem */
+	partitions_init();
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -253,18 +259,20 @@ main(int argc, char **argv)
 
 	select_language();
 	get_kb_encoding();
-
-#ifdef __weak_reference
-	/* if md wants to ask anything before we start, do it now */
-	if (prelim_menu != 0)
-		prelim_menu();
-#endif
+	init_lang();
 
 	/* Menu processing */
 	if (partman_go)
 		partman();
 	else
 		process_menu(MENU_netbsd, NULL);
+
+#ifndef NO_PARTMAN
+	/* clean up internal storage */
+	pm_destroy_all();
+#endif
+
+	partitions_cleanup();
 
 	exit_cleanly = 1;
 	return 0;
@@ -353,7 +361,6 @@ select_language(void)
 
 	for (lang = 0; lang < num_lang; lang++) {
 		opt[lang].opt_name = lang_msg[lang];
-		opt[lang].opt_menu = OPT_NOMENU;
 		opt[lang].opt_action = set_language;
 	}
 
@@ -524,12 +531,16 @@ process_f_flag(char *f_name)
 	int len;
 	const struct f_arg *arg;
 	FILE *fp;
-	char *cp, *cp1;
+	char *cp, *cp1, *err;
 
 	/* open the file */
 	fp = fopen(f_name, "r");
 	if (fp == NULL) {
-		fprintf(stderr, msg_string(MSG_config_open_error), f_name);
+		const char *args[] = { f_name };
+		err = str_arg_subst(msg_string(MSG_config_open_error),
+		    __arraycount(args), args);
+		fprintf(stderr, "%s\n", err);
+		free(err);
 		exit(1);
 	}
 
@@ -540,6 +551,8 @@ process_f_flag(char *f_name)
 		for (arg = fflagopts; arg->name != NULL; arg++) {
 			len = strlen(arg->name);
 			if (memcmp(cp, arg->name, len) != 0)
+				continue;
+			if (arg->var == NULL || arg->size == 0)
 				continue;
 			cp1 = cp + len;
 			cp1 += strspn(cp1, " \t");
@@ -552,7 +565,6 @@ process_f_flag(char *f_name)
 			break;
 		}
 	}
-	strlcpy(pm_new->bsddiskname, bsddiskname, sizeof pm_new->bsddiskname);
 
 	fclose(fp);
 }

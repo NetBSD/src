@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_masks.h,v 1.8 2013/12/02 14:05:51 tsutsui Exp $	*/
+/* 	$NetBSD: rasops_masks.h,v 1.8.30.1 2020/04/13 08:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _RASOPS_MASKS_H_ 1
 
 #include <sys/types.h>
+
 #include <machine/endian.h>
 
 /*
@@ -71,25 +72,24 @@
 	dw = MBL(*(sp), (x));						\
 	if (((x) + (w)) > 32)						\
 		dw |= (MBR((sp)[1], 32 - (x))); 			\
-} while(0);
+} while (0 /* CONSTCOND */)
 
 /* Put a number of bits ( <= 32 ) from sw to *dp */
 #define PUTBITS(sw, x, w, dp) do {					\
 	int n = (x) + (w) - 32;						\
-									\
 	if (n <= 0) {							\
-		n = rasops_pmask[x & 31][w & 31];			\
-		*(dp) = (*(dp) & ~n) | (MBR(sw, x) & n);		\
+		uint32_t mask = rasops_pmask[(x) & 31][(w) & 31];	\
+		*(dp) = (*(dp) & ~mask) | (MBR(sw, x) & mask);		\
 	} else {							\
-		*(dp) = (*(dp) & rasops_rmask[x]) | (MBR((sw), x));	\
+		*(dp) = (*(dp) & rasops_rmask[x]) | (MBR(sw, x));	\
 		(dp)[1] = ((dp)[1] & rasops_rmask[n]) |			\
 			(MBL(sw, 32-(x)) & rasops_lmask[n]);		\
 	}								\
-} while(0);
+} while (0 /* CONSTCOND */)
 
 /* rasops_masks.c */
-extern const uint32_t	rasops_lmask[32+1];
-extern const uint32_t	rasops_rmask[32+1];
+extern const uint32_t	rasops_lmask[32 + 1];
+extern const uint32_t	rasops_rmask[32 + 1];
 extern const uint32_t	rasops_pmask[32][32];
 
 #endif /* _RASOPS_MASKS_H_ */

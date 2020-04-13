@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.5.16.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.5.16.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,8 +79,8 @@ static int script_flip (menudesc *, void *);
 #define BUFSIZE 4096
 
 menu_ent logmenu [2] = {
-	{ .opt_menu=OPT_NOMENU, .opt_action=log_flip},
-	{ .opt_menu=OPT_NOMENU, .opt_action=script_flip}
+	{ .opt_action=log_flip},
+	{ .opt_action=script_flip}
 };
 
 static void
@@ -99,7 +99,7 @@ do_logging(void)
 
 	menu_no = new_menu(MSG_Logging_functions, logmenu, 2, -1, 12,
 		0, 20, MC_SCROLL, NULL, log_menu_label, NULL,
-		MSG_Pick_an_option, NULL);
+		MSG_Pick_an_option, MSG_exit_menu_generic);
 
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");
@@ -131,8 +131,8 @@ log_flip(menudesc *m, void *arg)
 			fflush(logfp);
 		} else {
 			if (mainwin) {
-				msg_display(MSG_openfail, "log file",
-				    strerror(errno));
+				msg_fmt_display(MSG_openfail, "%s%s",
+				    "log file", strerror(errno));
 			} else {
 				fprintf(stderr, "could not open /tmp/sysinst.log: %s\n",
 				    strerror(errno));
@@ -164,7 +164,7 @@ script_flip(menudesc *m, void *arg)
 			    safectime(&tloc));
 			fflush(script);
 		} else {
-			msg_display(MSG_openfail, "script file",
+			msg_fmt_display(MSG_openfail, "%s%s", "script file",
 			    strerror(errno));
 		}
 	}

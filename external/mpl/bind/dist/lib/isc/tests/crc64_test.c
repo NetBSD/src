@@ -1,4 +1,4 @@
-/*	$NetBSD: crc64_test.c,v 1.2.4.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: crc64_test.c,v 1.2.4.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,8 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include <stdlib.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #define UNIT_TESTING

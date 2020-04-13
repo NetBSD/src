@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.45.14.2 2020/04/08 14:07:50 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.45.14.3 2020/04/13 08:04:04 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45.14.2 2020/04/08 14:07:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45.14.3 2020/04/13 08:04:04 martin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -191,8 +191,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-
-	KASSERT(PSL_USEROK_P(mcp->__gregs[_REG_MSR]));
 	return 0;
 }
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: dds.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: dds.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dds.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: dds.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 
@@ -881,6 +881,72 @@ dds_op_rename( Operation *op, SlapReply *rs )
 		}
 	}
 
+	return SLAP_CB_CONTINUE;
+}
+
+/* entryTtl update for client */
+static int
+dds_response( Operation *op, SlapReply *rs )
+{
+	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
+	dds_info_t	*di = on->on_bi.bi_private;
+	int		rc;
+
+	if ( !DDS_OFF( di )
+	     && rs->sr_type == REP_SEARCH
+	     && attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_entryTtl ) )
+	{
+		BerVarray		vals = NULL;
+		struct lutil_tm		tm;
+		struct lutil_timet	tt;
+		char			ttlbuf[STRLENOF("31557600") + 1];
+		struct berval		ttlvalue;
+		time_t			ttl;
+		int			len;
+
+		/* User already has access to entryTtl, skip ACL checks on
+		 * entryExpireTimestamp */
+		rc = backend_attribute( op, NULL, &rs->sr_entry->e_nname,
+			ad_entryExpireTimestamp, &vals, ACL_NONE );
+		if ( rc != LDAP_SUCCESS ) {
+			return rc;
+		}
+
+		assert( vals[0].bv_val[vals[0].bv_len] == '\0' );
+		if ( lutil_parsetime( vals[0].bv_val, &tm ) ) {
+			goto done;
+		}
+
+		lutil_tm2time( &tm, &tt );
+		ttl = tt.tt_sec - op->o_time;
+		ttl = (ttl < 0) ? 0 : ttl;
+		assert( ttl <= DDS_RF2589_MAX_TTL );
+
+		len = snprintf( ttlbuf, sizeof(ttlbuf), "%ld", ttl );
+		if ( len < 0 )
+		{
+			goto done;
+		}
+		ttlvalue.bv_val = ttlbuf;
+		ttlvalue.bv_len = len;
+
+		rs_entry2modifiable( op, rs, on );
+
+		if ( attr_delete( &rs->sr_entry->e_attrs,
+				slap_schema.si_ad_entryTtl ) )
+		{
+			goto done;
+		}
+		if ( attr_merge_normalize_one( rs->sr_entry,
+				slap_schema.si_ad_entryTtl,
+				&ttlvalue, op->o_tmpmemctx ) )
+		{
+			goto done;
+		}
+
+done:;
+		ber_bvarray_free_x( vals, op->o_tmpmemctx );
+	}
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1934,6 +2000,7 @@ dds_initialize()
 	dds.on_bi.bi_op_modify = dds_op_modify;
 	dds.on_bi.bi_op_modrdn = dds_op_rename;
 	dds.on_bi.bi_extended = dds_op_extended;
+	dds.on_response = dds_response;
 
 	dds.on_bi.bi_cf_ocs = dds_ocs;
 

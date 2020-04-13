@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.35.2.1 2019/06/10 22:09:50 christos Exp $
+#	$NetBSD: listsrcdirs,v 1.35.2.2 2020/04/13 08:05:18 martin Exp $
 #
 
 #
@@ -63,8 +63,32 @@ lsrc ()
 	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
 }
 
+include_headerlist ()
+{
+	what=$1
+	pfx=$2
+	shift 2
+
+	if iswanted ${what}; then
+		[ -f headerlist ] \
+			|| { echo 'missing file: headerlist' 1>&2; exit 1; }
+		sed -E -e '/^#/d' -e '/^[  ]*$/d' \
+		    -e "/^\.?\/?/s##src${pfx}#" headerlist \
+		    | egrep -v "^src${pfx}($(echo "$@" | tr ' ' \|))/include"
+	fi
+}
+
 ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 riscv"
 ARCHS_EXTRA="arm/arm32 Makefile"
+# files listed in src/tools/Makefile.nbincludes
+ARCHS_EXTRA="$ARCHS_EXTRA ews4800mips/include/pdinfo.h
+ews4800mips/include/vtoc.h
+dreamcast/include/endian_machdep.h
+evbsh3/include/endian_machdep.h
+hpcsh/include/endian_machdep.h
+landisk/include/endian_machdep.h
+mmeye/include/endian_machdep.h
+sh3/include/endian_machdep.h"
 
 # sources necessary for building rump kernel components.  This list
 # depends on TOOLS_BUILDRUMP=yes.
@@ -93,7 +117,7 @@ lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 # dist directory consisting ~90% (50+MB) of tests unnecessary to us
 lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
-lsrc usr /lib/lib		pthread rmt y z
+lsrc usr /lib/lib		pthread rmt wrap y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
@@ -109,7 +133,7 @@ lsrc usr /sbin/			rndctl route setkey sysctl umount
 lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
 lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
 lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
-lsrc usr /external/bsd/		libelf libnv libpcap tcpdump wpa
+lsrc usr /external/bsd/		libnv libpcap tcpdump wpa
 lsrc usr /crypto/		Makefile.openssl
 lsrc usr /crypto/dist/		ipsec-tools
 lsrc usr /crypto/external/bsd/	openssl
@@ -118,7 +142,12 @@ lsrc usr /crypto/external/bsd/	openssl
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
 if ${cvsmode}; then
-	iswanted sys && echo \!src/sys/arch src/sys
+	iswanted sys && \
+	    echo \!src/sys/arch \
+		 \!src/sys/external/gpl2/dts \
+		 \!src/sys/external/bsd/drm \
+		 \!src/sys/external/bsd/drm2 \
+		src/sys
 
 	iswanted usr && \
 	    echo \!src/external/bsd/libc++/dist/libcxx/test \
@@ -128,6 +157,10 @@ if ${cvsmode}; then
 	for arch in ${ARCHS}; do
 		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
 	done
+	# the includes mentioned in src/tools/headerlist are required.
+	# but pull in only those that have not been pulled in by the previous
+	# loop
+	include_headerlist sys /sys/arch/ ${ARCHS}
 	for extra in ${ARCHS_EXTRA}; do
 		lsrc sys /sys/arch/ ${extra}
 	done

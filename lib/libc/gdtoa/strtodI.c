@@ -1,4 +1,4 @@
-/* $NetBSD: strtodI.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtodI.c,v 1.3.44.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -57,7 +57,7 @@ strtodI(s, sp, dd) CONST char *s; char **sp; double *dd;
 strtodI(CONST char *s, char **sp, double *dd)
 #endif
 {
-	static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static CONST FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	ULong bits[2], sign;
 	Long exp;
 	int j, k;

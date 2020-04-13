@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.24.2.2 2020/04/08 14:07:38 martin Exp $
+#	$NetBSD: NETBOOKPRO,v 1.24.2.3 2020/04/13 08:03:50 martin Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24.2.2 $"
+#ident 		"GENERIC-$Revision: 1.24.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -187,7 +187,7 @@ nbpkbd* at nbppcon? tag 0x00
 hpckbd*	at nbpkbd?
 wskbd0 at hpckbd? mux 1
 
-# integrated MMC/SD contoller
+# integrated MMC/SD controller
 pxamci0 at pxaip? addr 0x41100000
 sdmmc*	at pxamci?
 ld*	at sdmmc?				# MMC/SD/SDHC card

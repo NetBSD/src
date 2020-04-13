@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.17 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_io.c,v 1.17.14.1 2020/04/13 08:05:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ extendbody(const atf_tc_t *tc, off_t seekcnt)
 
 	FSTEST_ENTER();
 	RL(fd = rump_sys_open("testfile",
-	    O_CREAT | O_RDWR | (seekcnt ? O_APPEND : 0)));
+	    O_CREAT | O_RDWR | (seekcnt ? O_APPEND : 0), 0600));
 	RL(rump_sys_ftruncate(fd, seekcnt));
 	RL(rump_sys_fstat(fd, &sb));
 	ATF_REQUIRE_EQ(sb.st_size, seekcnt);

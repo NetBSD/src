@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.22.2.2 2020/04/08 14:07:45 martin Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.22.2.3 2020/04/13 08:04:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.22.2.2 2020/04/08 14:07:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.22.2.3 2020/04/13 08:04:00 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -381,12 +381,6 @@ pmap_bootstrap(void)
 	sysmap_size = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
-#ifdef DEBUG
-	{
-		extern int kmem_guard_depth;
-		sysmap_size += kmem_guard_depth;
-	}
-#endif
 
 #ifdef SYSVSHM
 	sysmap_size += shminfo.shmall;
@@ -652,7 +646,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	const register_t src_va = pmap_md_map_ephemeral_page(src_pg, false,
 	    VM_PROT_READ, &src_pte);
 
-	KASSERT(VM_PAGE_TO_MD(dst_pg)->mdpg_first.pv_pmap == NULL);
+	KASSERT(VM_PAGEMD_PVLIST_EMPTY_P(VM_PAGE_TO_MD(dst_pg)));
 	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
@@ -948,7 +942,7 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 	KASSERT(pv->pv_pmap != NULL);
 	bool ret = false;
 	for (pv_entry_t npv = pv; npv && npv->pv_pmap;) {
-		if (npv->pv_va & PV_KENTER) {
+		if (PV_ISKENTER_P(npv)) {
 			npv = npv->pv_next;
 			continue;
 		}

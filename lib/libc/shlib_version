@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.279.2.1 2019/06/10 22:05:15 christos Exp $
+#	$NetBSD: shlib_version,v 1.279.2.2 2020/04/13 08:03:08 martin Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -54,4 +54,4 @@
 # - move statfs() to libcompat since we have statvfs()
 # - the syscall stubs for the (obsolete) lfs syscalls should be removed
 major=12
-minor=213
+minor=215

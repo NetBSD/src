@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.52 2017/05/18 16:33:57 abhinav Exp $
+.\"	$NetBSD: su.1,v 1.52.10.1 2020/04/13 08:05:48 martin Exp $
 .\"
-.Dd November 20, 2012
+.Dd September 1, 2019
 .Dt SU 1
 .Os
 .Sh NAME
@@ -45,8 +45,7 @@
 .Nm
 .Op Fl dfKlm
 .Op Fl c Ar login-class
-.Oo
-.Ns : Ns Ar group
+.Oo : Ns Ar group
 .Op Ar "shell arguments"
 .Oc
 .Sh DESCRIPTION
@@ -385,8 +384,7 @@ su username -c "command args"
 .Xr environ 7 ,
 .Xr kerberos 8
 .Sh HISTORY
-A
+An
 .Nm
-command existed in
-.At v5
-(and probably earlier).
+utility appeared in
+.At v1

@@ -728,7 +728,7 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 {
 	znode_t *zp = VTOZ(vp);
 	struct uvm_object *uobj = &vp->v_uobj;
-	kmutex_t *mtx = uobj->vmobjlock;
+	krwlock_t *rw = uobj->vmobjlock;
 	int64_t start;
 	caddr_t va;
 	size_t len = nbytes;
@@ -745,9 +745,10 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 
 		pp = NULL;
 		npages = 1;
-		mutex_enter(mtx);
-		found = uvn_findpages(uobj, start, &npages, &pp, UFP_NOALLOC);
-		mutex_exit(mtx);
+		rw_enter(rw, RW_WRITER);
+		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
+		    UFP_NOALLOC);
+		rw_exit(rw);
 
 		/* XXXNETBSD shouldn't access userspace with the page busy */
 		if (found) {
@@ -759,9 +760,9 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 			    uio, bytes);
 		}
 
-		mutex_enter(mtx);
+		rw_enter(rw, RW_WRITER);
 		uvm_page_unbusy(&pp, 1);
-		mutex_exit(mtx);
+		rw_exit(rw);
 
 		len -= bytes;
 		off = 0;
@@ -776,13 +777,13 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
     int segflg, dmu_tx_t *tx)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
-	kmutex_t *mtx = uobj->vmobjlock;
+	krwlock_t *rw = uobj->vmobjlock;
 	caddr_t va;
-	int off;
+	int off, status;
 
 	ASSERT(vp->v_mount != NULL);
 
-	mutex_enter(mtx);
+	rw_enter(rw, RW_WRITER);
 
 	off = start & PAGEOFFSET;
 	for (start &= PAGEMASK; len > 0; start += PAGESIZE) {
@@ -792,22 +793,43 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
 
 		pp = NULL;
 		npages = 1;
-		found = uvn_findpages(uobj, start, &npages, &pp, UFP_NOALLOC);
+		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
+		    UFP_NOALLOC);
 		if (found) {
-			mutex_exit(mtx);
+			/*
+			 * We're about to zap the page's contents and don't
+			 * care about any existing modifications.  We must
+			 * keep track of any new modifications past this
+			 * point.  Clear the modified bit in the pmap, and
+			 * if the page is marked dirty revert to tracking
+			 * the modified bit.
+			 */
+			switch (uvm_pagegetdirty(pp)) {
+			case UVM_PAGE_STATUS_DIRTY:
+				/* Does pmap_clear_modify(). */
+				uvm_pagemarkdirty(pp, UVM_PAGE_STATUS_UNKNOWN);
+				break;
+			case UVM_PAGE_STATUS_UNKNOWN:
+				pmap_clear_modify(pp);
+				break;
+			case UVM_PAGE_STATUS_CLEAN:
+				/* Nothing to do. */
+				break;
+			}
+			rw_exit(rw);
 
 			va = zfs_map_page(pp, S_WRITE);
 			(void) dmu_read(os, oid, start + off, nbytes,
 			    va + off, DMU_READ_PREFETCH);
 			zfs_unmap_page(pp, va);
 
-			mutex_enter(mtx);
+			rw_enter(rw, RW_WRITER);
 			uvm_page_unbusy(&pp, 1);
 		}
 		len -= nbytes;
 		off = 0;
 	}
-	mutex_exit(mtx);
+	rw_exit(rw);
 }
 #endif /* __NetBSD__ */
 
@@ -4444,6 +4466,16 @@ zfs_rename(vnode_t *sdvp, vnode_t **svpp, struct componentname *scnp,
 			if (*tvpp != NULL)
 				cache_purge(*tvpp);
 			cache_purge_negative(tdvp);
+#ifdef __NetBSD__
+			if (*svpp == *tvpp) {
+				VN_KNOTE(sdvp, NOTE_WRITE);
+				VN_KNOTE(*svpp, (szp->z_links == 0 ?
+				    NOTE_DELETE : NOTE_LINK));
+			} else {
+				genfs_rename_knote(sdvp, *svpp, tdvp, *tvpp,
+				    ((tzp != NULL) && (tzp->z_links == 0)));
+			}
+#endif
 		}
 	}
 
@@ -5094,6 +5126,10 @@ zfs_netbsd_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	vnode_t *vp = ap->a_vp;
+	znode_t *zp = VTOZ(vp);
+	struct uio *uio = ap->a_uio;
+	off_t osize = zp->z_size;
+	int error, resid;
 
 	switch (vp->v_type) {
 	case VBLK:
@@ -5105,7 +5141,13 @@ zfs_netbsd_write(void *v)
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
 	}
 
-	return (zfs_write(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
+	resid = uio->uio_resid;
+	error = zfs_write(vp, uio, ioflags(ap->a_ioflag), ap->a_cred, NULL);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE |
+		    (zp->z_size > osize ? NOTE_EXTEND : 0));
+
+	return error;
 }
 
 static int
@@ -5296,7 +5338,10 @@ zfs_netbsd_create(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(*vpp, 0);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5334,7 +5379,10 @@ zfs_netbsd_mknod(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(*vpp, 0);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5363,6 +5411,10 @@ zfs_netbsd_remove(void *v)
 	error = zfs_remove(dvp, vp, nm, cnp->cn_cred);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(vp, NOTE_DELETE);
+		VN_KNOTE(dvp, NOTE_WRITE);
+	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return (error);
@@ -5398,7 +5450,10 @@ zfs_netbsd_mkdir(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(*vpp, 0);
+	if (error == 0)
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5427,6 +5482,10 @@ zfs_netbsd_rmdir(void *v)
 	error = zfs_rmdir(dvp, vp, nm, cnp->cn_cred);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VN_KNOTE(vp, NOTE_DELETE);
+	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return error;
@@ -5445,6 +5504,19 @@ static int
 zfs_netbsd_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
+
+	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
+}
+
+static int
+zfs_spec_fsync(void *v)
+{
+	struct vop_fsync_args *ap = v;
+	int error;
+
+	error = spec_fsync(v);
+	if (error)
+		return error;
 
 	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
 }
@@ -5516,6 +5588,9 @@ zfs_netbsd_setattr(void *v)
 
 	zflags = VTOZ(vp)->z_pflags;
 
+	/* Ignore size changes on device nodes. */
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		xvap.xva_vattr.va_mask &= ~AT_SIZE;
 	if (vap->va_flags != VNOVAL) {
 		int error;
 
@@ -5571,7 +5646,11 @@ zfs_netbsd_setattr(void *v)
 			return error;
 	}
 
-	return (zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL));
+	error = zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL);
+	if (error == 0)
+		VN_KNOTE(vp, NOTE_ATTRIB);
+
+	return error;
 }
 
 static int
@@ -5675,10 +5754,12 @@ zfs_netbsd_symlink(void *v)
 	error = zfs_symlink(dvp, vpp, nm, vap, target, cnp->cn_cred, 0);
 
 	PNBUF_PUT(nm);
-
+	if (error == 0)
+		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(*vpp, 0);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5716,6 +5797,10 @@ zfs_netbsd_link(void *v)
 	    NULL, 0);
 
 	PNBUF_PUT(nm);
+	if (error == 0) {
+		VN_KNOTE(vp, NOTE_LINK);
+		VN_KNOTE(dvp, NOTE_WRITE);
+	}
 	VOP_UNLOCK(vp, 0);
 	return error;
 }
@@ -5759,7 +5844,7 @@ zfs_netbsd_reclaim(void *v)
 	/*
 	 * Process a deferred atime update.
 	 */
-	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
+	if (zp->z_atime_dirty && zp->z_unlinked == 0 && zp->z_sa_hdl != NULL) {
 		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
 
 		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
@@ -5773,10 +5858,10 @@ zfs_netbsd_reclaim(void *v)
 			zp->z_atime_dirty = 0;
 			dmu_tx_commit(tx);
 		}
-	}
 
-	if (zfsvfs->z_log)
-		zil_commit(zfsvfs->z_log, zp->z_id);
+		if (zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+			zil_commit(zfsvfs->z_log, zp->z_id);
+	}
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
@@ -5889,9 +5974,10 @@ zfs_netbsd_getpages(void *v)
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	struct uvm_object * const uobj = &vp->v_uobj;
-	kmutex_t * const mtx = uobj->vmobjlock;
+	krwlock_t * const rw = uobj->vmobjlock;
 	znode_t *zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
+	vfs_t *mp;
 	struct vm_page *pg;
 	caddr_t va;
 	int npages, found, err = 0;
@@ -5901,7 +5987,7 @@ zfs_netbsd_getpages(void *v)
 		ap->a_m[ap->a_centeridx] = NULL;
 		return EBUSY;
 	}
-	mutex_exit(mtx);
+	rw_exit(rw);
 
 	if (async) {
 		return 0;
@@ -5910,39 +5996,47 @@ zfs_netbsd_getpages(void *v)
 		return EBUSY;
 	}
 
+	mp = vp->v_mount;
+	fstrans_start(mp);
+	if (vp->v_mount != mp) {
+		fstrans_done(mp);
+		return ENOENT;
+	}
 	ZFS_ENTER(zfsvfs);
 	ZFS_VERIFY_ZP(zp);
 
-	mutex_enter(mtx);
+	rw_enter(rw, RW_WRITER);
+	if (offset >= vp->v_size) {
+		rw_exit(rw);
+		ZFS_EXIT(zfsvfs);
+		fstrans_done(mp);
+		return EINVAL;
+	}
 	npages = 1;
 	pg = NULL;
-	uvn_findpages(uobj, offset, &npages, &pg, UFP_ALL);
+	uvn_findpages(uobj, offset, &npages, &pg, NULL, UFP_ALL);
 
 	if (pg->flags & PG_FAKE) {
-		mutex_exit(mtx);
+		rw_exit(rw);
 
 		va = zfs_map_page(pg, S_WRITE);
 		err = dmu_read(zfsvfs->z_os, zp->z_id, offset, PAGE_SIZE,
 		    va, DMU_READ_PREFETCH);
 		zfs_unmap_page(pg, va);
 
-		mutex_enter(mtx);
+		rw_enter(rw, RW_WRITER);
 		pg->flags &= ~(PG_FAKE);
-		pmap_clear_modify(pg);
 	}
 
-	if (memwrite) {
-		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
-			vn_syncer_add_to_worklist(vp, filedelay);
-		}
-		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
-			vp->v_iflag |= VI_WRMAPDIRTY;
-		}
+	if (memwrite && uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+		/* For write faults, start dirtiness tracking. */
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
 	}
-	mutex_exit(mtx);
+	rw_exit(rw);
 	ap->a_m[ap->a_centeridx] = pg;
 
 	ZFS_EXIT(zfsvfs);
+	fstrans_done(mp);
 
 	return (err);
 }
@@ -5960,7 +6054,7 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	bool async = (flags & PGO_SYNCIO) == 0;
 	bool *cleanedp;
 	struct uvm_object *uobj = &vp->v_uobj;
-	kmutex_t *mtx = uobj->vmobjlock;
+	krwlock_t *rw = uobj->vmobjlock;
 
 	if (zp->z_sa_hdl == NULL) {
 		err = 0;
@@ -6019,11 +6113,9 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	dmu_tx_commit(tx);
 
 out_unbusy:
-	mutex_enter(mtx);
-	mutex_enter(&uvm_pageqlock);
+	rw_enter(rw, RW_WRITER);
 	uvm_page_unbusy(pp, count);
-	mutex_exit(&uvm_pageqlock);
-	mutex_exit(mtx);
+	rw_exit(rw);
 
 out:
 	return (err);
@@ -6085,7 +6177,7 @@ zfs_netbsd_putpages(void *v)
 			len = UINT64_MAX;
 		else
 			len = offhi - offlo;
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		if (curlwp == uvm.pagedaemon_lwp) {
 			error = fstrans_start_nowait(vp->v_mount);
 			if (error)
@@ -6106,7 +6198,7 @@ zfs_netbsd_putpages(void *v)
 		rrm_enter(&zfsvfs->z_teardown_lock, RW_READER, FTAG);
 
 		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
 	error = genfs_putpages(v);
@@ -6144,7 +6236,7 @@ void
 zfs_netbsd_setsize(vnode_t *vp, off_t size)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
-	kmutex_t *mtx = uobj->vmobjlock;
+	krwlock_t *rw = uobj->vmobjlock;
 	page_t *pg;
 	int count, pgoff;
 	caddr_t va;
@@ -6162,10 +6254,10 @@ zfs_netbsd_setsize(vnode_t *vp, off_t size)
 	 * If there's a partial page, we need to zero the tail.
 	 */
 
-	mutex_enter(mtx);
+	rw_enter(rw, RW_WRITER);
 	count = 1;
 	pg = NULL;
-	if (uvn_findpages(uobj, tsize, &count, &pg, UFP_NOALLOC)) {
+	if (uvn_findpages(uobj, tsize, &count, &pg, NULL, UFP_NOALLOC)) {
 		va = zfs_map_page(pg, S_WRITE);
 		pgoff = size - tsize;
 		memset(va + pgoff, 0, PAGESIZE - pgoff);
@@ -6173,7 +6265,7 @@ zfs_netbsd_setsize(vnode_t *vp, off_t size)
 		uvm_page_unbusy(&pg, 1);
 	}
 
-	mutex_exit(mtx);
+	rw_exit(rw);
 }
 
 static int
@@ -6220,6 +6312,9 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_read_desc,		zfs_netbsd_read },
 	{ &vop_write_desc,		zfs_netbsd_write },
 	{ &vop_ioctl_desc,		zfs_netbsd_ioctl },
+	{ &vop_poll_desc,		genfs_poll },
+	{ &vop_kqfilter_desc,		genfs_kqfilter },
+	{ &vop_revoke_desc,		genfs_revoke },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		zfs_netbsd_remove },
 	{ &vop_link_desc,		zfs_netbsd_link },
@@ -6262,7 +6357,10 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_read_desc,		/**/zfs_netbsd_read },
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_ioctl_desc,		spec_ioctl },
-	{ &vop_fsync_desc,		zfs_netbsd_fsync },
+	{ &vop_poll_desc,		spec_poll },
+	{ &vop_kqfilter_desc,		spec_kqfilter },
+	{ &vop_revoke_desc,		spec_revoke },
+	{ &vop_fsync_desc,		zfs_spec_fsync },
 	{ &vop_remove_desc,		spec_remove },
 	{ &vop_link_desc,		spec_link },
 	{ &vop_lock_desc,		zfs_netbsd_lock },
@@ -6282,6 +6380,8 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_mmap_desc,		spec_mmap },
 	{ &vop_islocked_desc,		zfs_netbsd_islocked },
 	{ &vop_advlock_desc,		spec_advlock },
+	{ &vop_strategy_desc,		spec_strategy },
+	{ &vop_bwrite_desc,		spec_bwrite },
 	{ &vop_print_desc,		zfs_netbsd_print },
 	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
 	{ NULL, NULL }
@@ -6304,6 +6404,9 @@ const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
 	{ &vop_read_desc,		/**/zfs_netbsd_read },
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_ioctl_desc,		vn_fifo_bypass },
+	{ &vop_poll_desc,		vn_fifo_bypass },
+	{ &vop_kqfilter_desc,		vn_fifo_bypass },
+	{ &vop_revoke_desc,		vn_fifo_bypass },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		vn_fifo_bypass },
 	{ &vop_link_desc,		vn_fifo_bypass },

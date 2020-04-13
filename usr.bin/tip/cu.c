@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.23 2016/01/03 15:38:29 christos Exp $	*/
+/*	$NetBSD: cu.c,v 1.23.16.1 2020/04/13 08:05:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 #include <getopt.h>
+#include <inttypes.h>
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.23 2016/01/03 15:38:29 christos Exp $");
+__RCSID("$NetBSD: cu.c,v 1.23.16.1 2020/04/13 08:05:48 martin Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -50,7 +51,7 @@ __dead static void cuusage(void);
 void
 cumain(int argc, char *argv[])
 {
-	int c, i, phonearg = 0;
+	int c, i, phonearg = 0, e;
 	int parity = 0;		/* 0 is no parity */
 	int flow = -1;		/* -1 is "tandem" ^S/^Q */
 	static int helpme = 0, nostop = 0;
@@ -140,7 +141,10 @@ cumain(int argc, char *argv[])
 			useresc = -1;
 			break;
 		case 's':
-			BR = atoi(optarg);
+			BR = (long)strtoi(optarg, NULL, 0, 1, LONG_MAX, &e);
+			if (e)
+				warnc(e, "Conversion of `%s' to a baud rate "
+				    "failed, using %ld", optarg, BR);
 			break;
 		case 'h':
 			HD = TRUE;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/09/11 01:06:26 christos Exp $	
+#	$NetBSD: Makefile,v 1.19.42.1 2020/04/13 08:06:07 martin Exp $	
 
 USE_FORT?= yes	# network client
 
@@ -23,6 +23,10 @@ SRCS+= version.c as.c
 .PATH: ${.CURDIR}/../../lib/libc/net
 RUMPSRCS= getifaddrs.c
 CPPFLAGS+= -DRUMP_ACTION
+
+SANITIZER_RENAME_CLASSES+=	rump
+SANITIZER_RENAME_FILES.rump+=	${PROG}_rumpops.c ${RUMPSRCS}
+SANITIZER_RENAME_SYMBOL.rump+=	getifaddrs
 
 AWKS=	median.awk mean.awk 
 

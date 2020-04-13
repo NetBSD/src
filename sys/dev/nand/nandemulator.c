@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.7.18.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.7.18.2 2020/04/13 08:04:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.7.18.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.7.18.2 2020/04/13 08:04:25 martin Exp $");
 
 /* XXX this code likely needs work */
 
@@ -152,12 +152,7 @@ nandemulatorattach(int n)
 		return;
 	}
 	for (i = 0; i < n; i++) {
-		cf = kmem_alloc(sizeof(struct cfdata), KM_NOSLEEP);
-		if (cf == NULL) {
-			aprint_error("%s: couldn't allocate cfdata\n",
-			    nandemulator_cd.cd_name);
-			continue;
-		}
+		cf = kmem_alloc(sizeof(struct cfdata), KM_SLEEP);
 		cf->cf_name = nandemulator_cd.cd_name;
 		cf->cf_atname = nandemulator_cd.cd_name;
 		cf->cf_unit = i;

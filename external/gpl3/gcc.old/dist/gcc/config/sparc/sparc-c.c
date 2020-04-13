@@ -1,5 +1,5 @@
 /* Subroutines used for macro/preprocessor support on SPARC.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,7 +40,12 @@ sparc_target_macros (void)
       cpp_assert (parse_in, "machine=sparc");
     }
 
-  if (TARGET_VIS4)
+  if (TARGET_VIS4B)
+    {
+      cpp_define (parse_in, "__VIS__=0x410");
+      cpp_define (parse_in, "__VIS=0x410");
+    }
+  else if (TARGET_VIS4)
     {
       cpp_define (parse_in, "__VIS__=0x400");
       cpp_define (parse_in, "__VIS=0x400");

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.150.4.2 2020/04/08 14:08:13 martin Exp $
+#	$NetBSD: files.usb,v 1.150.4.3 2020/04/13 08:04:49 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -74,6 +74,7 @@ defflag opt_usb.h	URTWN_DEBUG: USB_DEBUG
 defflag opt_usb.h	URTW_DEBUG: USB_DEBUG
 defflag opt_usb.h	USCANNER_DEBUG: USB_DEBUG
 defflag opt_usb.h	USLSA_DEBUG: USB_DEBUG
+defflag opt_usb.h	USMSC_DEBUG: USB_DEBUG
 defflag opt_usb.h	USSCANNER_DEBUG: USB_DEBUG
 defflag opt_usb.h	USTIR_DEBUG: USB_DEBUG
 defflag opt_usb.h	UTHUM_DEBUG: USB_DEBUG
@@ -100,6 +101,9 @@ file	dev/usb/usb_quirks.c		usb
 
 define	usb_dma: usb
 file	dev/usb/usb_mem.c		usb_dma			needs-flag
+
+define	usbnet: usb
+file	dev/usb/usbnet.c		usbnet
 
 file	dev/usb/usb_verbose.c		usbverbose & usb
 
@@ -323,59 +327,64 @@ file	dev/usb/uthum.c			uthum
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
-device	aue: arp, ether, ifnet, mii, mii_phy
+device	aue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	aue at usbdevif
 file	dev/usb/if_aue.c		aue
 
 # CDC Ethernet
-device	cdce: arp, ether, ifnet
+device	cdce: arp, ether, ifnet, usbnet
 attach	cdce at usbifif
 file	dev/usb/if_cdce.c		cdce
 
 # CATC USB-EL1201A
-device	cue: arp, ether, ifnet
+device	cue: arp, ether, ifnet, usbnet
 attach	cue at usbdevif
 file	dev/usb/if_cue.c		cue
 
 # Kawasaki LSI KL5KUSB101B
-device	kue: arp, ether, ifnet
+device	kue: arp, ether, ifnet, usbnet
 attach	kue at usbdevif
 file	dev/usb/if_kue.c		kue
 
 # Prolific PL2302 host-host
-device	upl: ifnet
+device	upl: ifnet, usbnet
 attach	upl at usbdevif
 file	dev/usb/if_upl.c		upl
 
 # Realtek RTL8150L(M)
-device	url: arp, ether, ifnet, mii
+device	url: arp, ether, ifnet, mii, usbnet
 attach	url at usbdevif
 file	dev/usb/if_url.c		url
 
 # ASIX AX88172
-device	axe: arp, ether, ifnet, mii, mii_phy
+device	axe: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	axe at usbdevif
 file	dev/usb/if_axe.c		axe
 
 # ASIX AX88178a and AX88179
-device	axen: arp, ether, ifnet, mii
+device	axen: arp, ether, ifnet, mii, usbnet
 attach	axen at usbdevif
 file	dev/usb/if_axen.c		axen
 
+# Moscom MCS7730, MCS7830, and MCS7832
+device	mos: arp, ether, ifnet, mii, mii_phy, usbnet
+attach	mos at usbdevif
+file	dev/usb/if_mos.c		mos
+
 # Microchip LAN750x and LAN85xx
-device	mue: arp, ether, ifnet, mii, mii_phy
+device	mue: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	mue at usbdevif
 file	dev/usb/if_mue.c		mue
-
-# DAVICOM DM9601
-device	udav: arp, ether, ifnet, mii, mii_phy
-attach	udav at usbdevif
-file	dev/usb/if_udav.c		udav
 
 # Atheros AR9170
 device	otus: arp, ether, firmload, ifnet, wlan
 attach	otus at usbdevif
 file	dev/usb/if_otus.c		otus
+
+# DAVICOM DM9601
+device	udav: arp, ether, ifnet, mii, mii_phy, usbnet
+attach	udav at usbdevif
+file	dev/usb/if_udav.c		udav
 
 # Mobile Broadband Interface Model
 device	umb: ifnet
@@ -383,7 +392,7 @@ attach	umb at usbifif
 file	dev/usb/if_umb.c		umb
 
 # RealTek RTL8152 and RTL8153
-device	ure: arp, ether, ifnet, mii, mii_phy
+device	ure: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	ure at usbdevif
 file	dev/usb/if_ure.c		ure
 
@@ -479,7 +488,7 @@ attach	upgt at usbdevif
 file	dev/usb/if_upgt.c		upgt
 
 # SMSC LAN95xx
-device	usmsc: arp, ether, ifnet, mii, mii_phy
+device	usmsc: arp, ether, ifnet, mii, mii_phy, usbnet
 attach	usmsc at usbdevif
 file	dev/usb/if_smsc.c		usmsc
 
@@ -513,7 +522,7 @@ attach	uhso at usbdevif
 file	dev/usb/uhso.c			uhso
 
 # Microsoft RNDIS
-device	urndis: arp, ether, ifnet
+device	urndis: arp, ether, ifnet, usbnet
 attach	urndis at usbifif
 file	dev/usb/if_urndis.c		urndis
 

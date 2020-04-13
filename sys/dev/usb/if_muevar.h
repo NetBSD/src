@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.8.2.2 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.8.2.3 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -20,26 +20,12 @@
 #ifndef _IF_MUEVAR_H_
 #define _IF_MUEVAR_H_
 
-#include <sys/rndsource.h>
-
-struct mue_chain {
-	struct mue_softc	*mue_sc;
-	struct usbd_xfer	*mue_xfer;
-	char			*mue_buf;
-};
-
-struct mue_cdata {
 #ifndef MUE_TX_LIST_CNT
 #define MUE_TX_LIST_CNT	4
 #endif
-	struct mue_chain	mue_tx_chain[MUE_TX_LIST_CNT];
 #ifndef MUE_RX_LIST_CNT
 #define MUE_RX_LIST_CNT	4
 #endif
-	struct mue_chain	mue_rx_chain[MUE_RX_LIST_CNT];
-	int			mue_tx_prod;
-	int			mue_tx_cnt;
-};
 
 struct mue_rxbuf_hdr {
 	uint32_t		rx_cmd_a;
@@ -73,56 +59,5 @@ struct mue_txbuf_hdr {
 #define MUE_TX_CMD_B_MSS_MASK	0x3fff0000
 
 } __packed;
-
-struct mue_softc {
-	device_t		mue_dev;
-	bool			mue_dying;
-
-	uint8_t			mue_enaddr[ETHER_ADDR_LEN];
-	struct ethercom		mue_ec;
-	struct mii_data		mue_mii;
-#define GET_MII(sc)	(&(sc)->mue_mii)
-#define GET_IFP(sc)	(&(sc)->mue_ec.ec_if)
-
-/* The interrupt endpoint is currently unused by the Moschip part. */
-#define MUE_ENDPT_RX	0
-#define MUE_ENDPT_TX	1
-#define MUE_ENDPT_INTR	2
-#define MUE_ENDPT_MAX	3
-	int			mue_ed[MUE_ENDPT_MAX];
-	struct usbd_pipe	*mue_ep[MUE_ENDPT_MAX];
-
-	struct mue_cdata	mue_cdata;
-	callout_t		mue_stat_ch;
-
-	struct usbd_device	*mue_udev;
-	struct usbd_interface	*mue_iface;
-
-	struct usb_task		mue_tick_task;
-
-	kmutex_t		mue_mii_lock;
-
-	struct timeval		mue_rx_notice;
-	struct timeval		mue_tx_notice;
-
-	uint16_t		mue_product;
-	uint16_t		mue_flags;
-	uint32_t		mue_id_rev;
-
-	int			mue_if_flags;
-	int			mue_refcnt;
-
-	krndsource_t		mue_rnd_source;
-
-	int			mue_phyno;
-	uint32_t		mue_rxbufsz;
-	uint32_t		mue_txbufsz;
-	int			mue_link;
-
-	unsigned		mue_rx_list_cnt;
-	unsigned		mue_tx_list_cnt;
-
-	kmutex_t		mue_usb_lock;
-};
 
 #endif /* _IF_MUEVAR_H_ */

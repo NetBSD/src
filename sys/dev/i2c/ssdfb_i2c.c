@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.3.2.2 2019/06/10 22:07:09 christos Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.3.2.3 2020/04/13 08:04:20 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.3.2.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.3.2.3 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,12 +43,16 @@ struct ssdfb_i2c_softc {
 	struct		ssdfb_softc sc;
 	i2c_tag_t	sc_i2c_tag;
 	i2c_addr_t	sc_i2c_addr;
+	size_t		sc_transfer_size;
 };
 
 static int	ssdfb_i2c_match(device_t, cfdata_t, void *);
 static void	ssdfb_i2c_attach(device_t, device_t, void *);
 static int	ssdfb_i2c_detach(device_t, int);
 
+static int	ssdfb_i2c_probe_transfer_size(struct ssdfb_i2c_softc *, bool);
+static int	ssdfb_i2c_transfer(struct ssdfb_i2c_softc *, uint8_t, uint8_t *,
+				size_t, int);
 static int	ssdfb_i2c_cmd(void *, uint8_t *, size_t, bool);
 static int	ssdfb_i2c_transfer_rect(void *, uint8_t, uint8_t, uint8_t,
 				uint8_t, uint8_t *, size_t, bool);
@@ -112,6 +116,7 @@ ssdfb_i2c_attach(device_t parent, device_t self, void *aux)
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)
 		flags |= SSDFB_PRODUCT_SSD1306_GENERIC;
 
+	flags |= SSDFB_ATTACH_FLAG_MPSAFE;
 	sc->sc.sc_dev = self;
 	sc->sc_i2c_tag = ia->ia_tag;
 	sc->sc_i2c_addr = ia->ia_addr;
@@ -128,6 +133,61 @@ ssdfb_i2c_detach(device_t self, int flags)
 	struct ssdfb_i2c_softc *sc = device_private(self);
 
 	return ssdfb_detach(&sc->sc);
+}
+
+static int
+ssdfb_i2c_probe_transfer_size(struct ssdfb_i2c_softc *sc, bool usepoll)
+{
+	int flags = usepoll ? I2C_F_POLL : 0;
+	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
+	int error;
+	uint8_t buf[128];
+	size_t len;
+
+	error = iic_acquire_bus(sc->sc_i2c_tag, flags);
+	if (error)
+		return error;
+	len = sizeof(buf);
+	memset(buf, 0, len);
+	while (len > 0) {
+		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_i2c_addr, &cb, sizeof(cb), buf, len, flags);
+		if (!error) {
+			break;
+		}
+		len >>= 1;
+	}
+	if (!error && len < 2) {
+		error = E2BIG;
+	} else {
+		sc->sc_transfer_size = len;
+	}
+	(void) iic_release_bus(sc->sc_i2c_tag, flags);
+
+	return error;
+}
+
+static int
+ssdfb_i2c_transfer(struct ssdfb_i2c_softc *sc, uint8_t cb, uint8_t *data,
+		   size_t len, int flags)
+{
+	int error;
+	size_t xfer_size = sc->sc_transfer_size;
+
+	while (len >= xfer_size) {
+		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_i2c_addr, &cb, sizeof(cb), data, xfer_size, flags);
+		if (error)
+			return error;
+		len -= xfer_size;
+		data += xfer_size;
+	}
+	if (len > 0) {
+		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_i2c_addr, &cb, sizeof(cb), data, len, flags);
+	}
+
+	return error;
 }
 
 static int
@@ -153,9 +213,6 @@ ssdfb_i2c_transfer_rect(void *cookie, uint8_t fromcol, uint8_t tocol,
     uint8_t frompage, uint8_t topage, uint8_t *p, size_t stride, bool usepoll)
 {
 	struct ssdfb_i2c_softc *sc = (struct ssdfb_i2c_softc *)cookie;
-	int flags = usepoll ? I2C_F_POLL : 0;
-	uint8_t cb = SSDFB_I2C_CTRL_BYTE_DATA_MASK;
-	uint8_t data[] = {0, 0, 0};
 	uint8_t cmd[2];
 	int error;
 
@@ -176,13 +233,12 @@ ssdfb_i2c_transfer_rect(void *cookie, uint8_t fromcol, uint8_t tocol,
 	}
 
 	if (sc->sc.sc_transfer_rect != ssdfb_smbus_transfer_rect) {
-		error = iic_acquire_bus(sc->sc_i2c_tag, flags);
+		error = ssdfb_i2c_probe_transfer_size(sc, usepoll);
 		if (error)
 			return error;
-		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_i2c_addr, &cb, sizeof(cb), data, sizeof(data), flags);
-		(void) iic_release_bus(sc->sc_i2c_tag, flags);
-		if (error) {
+		aprint_verbose_dev(sc->sc.sc_dev, "%zd-byte transfers\n",
+		    sc->sc_transfer_size);
+		if (sc->sc_transfer_size == 2) {
 			sc->sc.sc_transfer_rect = ssdfb_smbus_transfer_rect;
 		}
 	}
@@ -237,8 +293,7 @@ ssdfb_i2c_transfer_rect_ssd1306(void *cookie, uint8_t fromcol, uint8_t tocol,
 	if (error)
 		goto out;
 	while (frompage <= topage) {
-		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_i2c_addr, &cb, sizeof(cb), p, len, flags);
+		error = ssdfb_i2c_transfer(sc, cb, p, len, flags);
 		if (error)
 			goto out;
 		frompage++;
@@ -277,8 +332,7 @@ ssdfb_i2c_transfer_rect_sh1106(void *cookie, uint8_t fromcol, uint8_t tocol,
 		    sc->sc_i2c_addr, &cc, sizeof(cc), cmds, sizeof(cmds), flags);
 		if (error)
 			goto out;
-		error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_i2c_addr, &cb, sizeof(cb), p, len, flags);
+		error = ssdfb_i2c_transfer(sc, cb, p, len, flags);
 		if (error)
 			goto out;
 		frompage++;
@@ -363,5 +417,6 @@ ssdfb_smbus_transfer_rect(void *cookie, uint8_t fromcol, uint8_t tocol,
 	}
 out:
 	(void) iic_release_bus(sc->sc_i2c_tag, flags);
+
 	return error;
 }

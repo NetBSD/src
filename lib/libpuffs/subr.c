@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.27.44.1 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.27.44.1 2020/04/13 08:03:15 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ puffs_fsnop_sync(struct puffs_usermount *dontuse1, int dontuse2,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
+puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct puffs_statvfs *sbp)
 {
 
 	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = DEV_BSIZE;
@@ -142,7 +142,7 @@ puffs_genfs_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
  * NULLs from application code
  */
 void
-puffs_zerostatvfs(struct statvfs *sbp)
+puffs_zerostatvfs(struct puffs_statvfs *sbp)
 {
 
 	puffs_fsnop_statvfs(NULL, sbp);

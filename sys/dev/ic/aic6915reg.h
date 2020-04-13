@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915reg.h,v 1.5 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: aic6915reg.h,v 1.5.88.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ struct sf_tcd {
 	uint32_t	tcd_word0;	/* index, priority, flags */
 };
 
-#define	TCD_DMA_ID		(0x4 << 29)
+#define	TCD_DMA_ID		(0x4U << 29)
 #define	TCD_INDEX(x)		((x) & 0x7fff)
 #define	TCD_PR			(1U << 15)
 #define	TCD_TIMESTAMP(x)	(((x) >> 16) & 0x1fff)

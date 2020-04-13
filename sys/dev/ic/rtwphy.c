@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.16 2013/11/15 14:52:11 nisimura Exp $ */
+/* $NetBSD: rtwphy.c,v 1.16.30.1 2020/04/13 08:04:22 martin Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.16 2013/11/15 14:52:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.16.30.1 2020/04/13 08:04:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,10 +422,7 @@ rtw_sa2400_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
 	struct rtw_rf *rf;
 	struct rtw_bbpset *bb;
 
-	sa = malloc(sizeof(*sa), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sa == NULL)
-		return NULL;
-
+	sa = malloc(sizeof(*sa), M_DEVBUF, M_WAITOK | M_ZERO);
 	sa->sa_digphy = digphy;
 
 	rf = &sa->sa_rf;
@@ -594,9 +591,7 @@ rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write,
 	struct rtw_rf *rf;
 	struct rtw_bbpset *bb;
 
-	gr = malloc(sizeof(*gr), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (gr == NULL)
-		return NULL;
+	gr = malloc(sizeof(*gr), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	rf = &gr->gr_rf;
 	bus = &gr->gr_bus;
@@ -731,10 +726,7 @@ rtw_max2820_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int is_a)
 	struct rtw_rf *rf;
 	struct rtw_bbpset *bb;
 
-	mx = malloc(sizeof(*mx), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (mx == NULL)
-		return NULL;
-
+	mx = malloc(sizeof(*mx), M_DEVBUF, M_WAITOK | M_ZERO);
 	mx->mx_is_a = is_a;
 
 	rf = &mx->mx_rf;

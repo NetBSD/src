@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.132 2017/10/31 10:45:19 martin Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.132.4.1 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.132 2017/10/31 10:45:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.132.4.1 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -408,12 +408,7 @@ zstty_attach(device_t parent, device_t self, void *aux)
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
-	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
-	if (zst->zst_rbuf == NULL) {
-		aprint_error_dev(zst->zst_dev,
-		    "unable to allocate ring buffer\n");
-		return;
-	}
+	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
 	/* Disable the high water mark. */
 	zst->zst_r_hiwat = 0;
@@ -629,7 +624,9 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
+		mutex_spin_exit(&tty_lock);
 		(void) zsparam(tp, &t);
+		mutex_spin_enter(&tty_lock);
 
 		/*
 		 * Note: zsparam has done: cflag, ispeed, ospeed
@@ -1672,9 +1669,7 @@ zstty_stsoft(struct zstty_softc *zst, struct tty *tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		mutex_spin_exit(&tty_lock);
 		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
-		mutex_spin_enter(&tty_lock);
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {

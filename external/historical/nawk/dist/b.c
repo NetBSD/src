@@ -31,15 +31,13 @@ THIS SOFTWARE.
 #define	DEBUG
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "awk.h"
 #include "awkgram.h"
 
-#define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
-				/* NCHARS is 2**n */
 #define MAXLIN 22
 
 #define type(v)		(v)->nobj	/* badly overloaded here */
@@ -73,21 +71,30 @@ static const uschar	*lastre;	/* origin of last re */
 static const uschar	*lastatom;	/* origin of last Atom */
 static const uschar	*starttok;
 static const uschar 	*basestr;	/* starts with original, replaced during
-					   repetition processing */
+				   repetition processing */
 static const uschar 	*firstbasestr;
 
 static	int setcnt;
 static	int poscnt;
 
-uschar	*patbeg;
+const char	*patbeg;
 int	patlen;
 
 #define	NFA	128	/* cache this many dynamic fa's */
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
 
+static int *
+intalloc(size_t n, const char *f)
+{
+	void *p = calloc(n, sizeof(int));
+	if (p == NULL)
+		overflo(f);
+	return p;
+}
+
 static void
-resizesetvec(const char *msg)
+resizesetvec(const char *f)
 {
 	if (maxsetvec == 0)
 		maxsetvec = MAXLIN;
@@ -95,8 +102,8 @@ resizesetvec(const char *msg)
 		maxsetvec *= 4;
 	setvec = realloc(setvec, maxsetvec * sizeof(*setvec));
 	tmpset = realloc(tmpset, maxsetvec * sizeof(*tmpset));
-	if (setvec == 0 || tmpset == 0)
-	    overflo(msg);
+	if (setvec == NULL || tmpset == NULL)
+		overflo(f);
 }
 
 static void
@@ -126,7 +133,7 @@ resize_state(fa *f, int state)
 	f->posns = p;
 
 	for (i = f->state_count; i < new_count; ++i) {
-		f->gototab[i] = calloc(1, NCHARS * sizeof (**f->gototab));
+		f->gototab[i] = calloc(NCHARS, sizeof(**f->gototab));
 		if (f->gototab[i] == NULL)
 			goto out;
 		f->out[i]  = 0;
@@ -135,19 +142,20 @@ resize_state(fa *f, int state)
 	f->state_count = new_count;
 	return;
 out:
-	overflo("out of memory in resize_state");
+	overflo(__func__);
 }
 
-fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
+fa *makedfa(const char *s, bool anchor)	/* returns dfa for reg expr s */
 {
 	int i, use, nuse;
 	fa *pfa;
 	static int now = 1;
 
-	if (setvec == 0)	/* first time through any RE */
-		resizesetvec("out of space initializing makedfa");
+	if (setvec == NULL) {	/* first time through any RE */
+		resizesetvec(__func__);
+	}
 
-	if (compile_time)	/* a constant for sure */
+	if (compile_time != RUNNING)	/* a constant for sure */
 		return mkdfa(s, anchor);
 	for (i = 0; i < nfatab; i++)	/* is it there already? */
 		if (fatab[i]->anchor == anchor
@@ -175,13 +183,13 @@ fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 	return pfa;
 }
 
-fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
-				/* anchor = 1 for anchored matches, else 0 */
+fa *mkdfa(const char *s, bool anchor)	/* does the real work of making a dfa */
+				/* anchor = true for anchored matches, else false */
 {
 	Node *p, *p1;
 	fa *f;
 
-	firstbasestr = s;
+	firstbasestr = (const uschar *) s;
 	basestr = firstbasestr;
 	p = reparse(s);
 	p1 = op2(CAT, op2(STAR, op2(ALL, NIL, NIL), NIL), p);
@@ -191,57 +199,51 @@ fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
 
 	poscnt = 0;
 	penter(p1);	/* enter parent pointers and leaf indices */
-	if ((f = calloc(1, sizeof(*f) + poscnt*sizeof(rrow))) == NULL)
-		overflo("out of space for fa");
+	if ((f = calloc(1, sizeof(fa) + poscnt * sizeof(rrow))) == NULL)
+		overflo(__func__);
 	f->accept = poscnt-1;	/* penter has computed number of positions in re */
 	cfoll(f, p1);	/* set up follow sets */
 	freetr(p1);
 	resize_state(f, 1);
-	if ((f->posns[0] = calloc(1, *(f->re[0].lfollow)*sizeof(int))) == NULL)
-			overflo("out of space in makedfa");
-	if ((f->posns[1] = calloc(1, sizeof(int))) == NULL)
-		overflo("out of space in makedfa");
+	f->posns[0] = intalloc(*(f->re[0].lfollow), __func__);
+	f->posns[1] = intalloc(1, __func__);
 	*f->posns[1] = 0;
 	f->initstat = makeinit(f, anchor);
 	f->anchor = anchor;
 	f->restr = (uschar *) tostring(s);
 	if (firstbasestr != basestr) {
 		if (basestr)
-			free(__UNCONST(basestr));
+			xfree(basestr);
 	}
 	return f;
 }
 
-int makeinit(fa *f, int anchor)
+int makeinit(fa *f, bool anchor)
 {
 	int i, k;
 
-	resize_state(f, 2);
 	f->curstat = 2;
 	f->out[2] = 0;
 	k = *(f->re[0].lfollow);
-	xfree(f->posns[2]);			
-	if ((f->posns[2] = calloc(1, (k+1)*sizeof(int))) == NULL)
-		overflo("out of space in makeinit");
-	for (i=0; i <= k; i++) {
+	xfree(f->posns[2]);
+	f->posns[2] = intalloc(k + 1,  __func__);
+	for (i = 0; i <= k; i++) {
 		(f->posns[2])[i] = (f->re[0].lfollow)[i];
 	}
 	if ((f->posns[2])[1] == f->accept)
 		f->out[2] = 1;
-	for (i=0; i < NCHARS; i++)
+	for (i = 0; i < NCHARS; i++)
 		f->gototab[2][i] = 0;
 	f->curstat = cgoto(f, 2, HAT);
 	if (anchor) {
 		*f->posns[2] = k-1;	/* leave out position 0 */
-		for (i=0; i < k; i++) {
+		for (i = 0; i < k; i++) {
 			(f->posns[0])[i] = (f->posns[2])[i];
 		}
 
 		f->out[0] = f->out[2];
-		if (f->curstat != 2) {
-			resize_state(f, f->curstat);
+		if (f->curstat != 2)
 			--(*f->posns[f->curstat]);
-		}
 	}
 	return f->curstat;
 }
@@ -265,6 +267,8 @@ void penter(Node *p)	/* set up parent pointers and leaf indices */
 		parent(left(p)) = p;
 		parent(right(p)) = p;
 		break;
+	case ZERO:
+		break;
 	default:	/* can't happen */
 		FATAL("can't happen: unknown type %d in penter", type(p));
 		break;
@@ -279,6 +283,7 @@ void freetr(Node *p)	/* free parse tree */
 		xfree(p);
 		break;
 	UNARY
+	case ZERO:
 		freetr(left(p));
 		xfree(p);
 		break;
@@ -333,6 +338,10 @@ int quoted(const uschar **pp)	/* pick up next thing after a \\ */
 		c = '\r';
 	else if (c == 'b')
 		c = '\b';
+	else if (c == 'v')
+		c = '\v';
+	else if (c == 'a')
+		c = '\a';
 	else if (c == '\\')
 		c = '\\';
 	else if (c == 'x') {	/* hexadecimal goo follows */
@@ -354,14 +363,13 @@ int quoted(const uschar **pp)	/* pick up next thing after a \\ */
 char *cclenter(const char *argp)	/* add a character class */
 {
 	int i, c, c2;
-	const uschar *p = (const uschar *) argp;
-	const uschar *op;
+	const uschar *op, *p = (const uschar *) argp;
 	uschar *bp;
-	static uschar *buf = 0;
+	static uschar *buf = NULL;
 	static int bufsz = 100;
 
 	op = p;
-	if (buf == 0 && (buf = malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for character class [%.10s...] 1", p);
 	bp = buf;
 	for (i = 0; (c = *p++) != 0; ) {
@@ -379,7 +387,7 @@ char *cclenter(const char *argp)	/* add a character class */
 					continue;
 				}
 				while (c < c2) {
-					if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, "cclenter1"))
+					if (!adjbuf((char **) &buf, &bufsz, bp-buf+2, 100, (char **) &bp, "cclenter1"))
 						FATAL("out of space for character class [%.10s...] 2", p);
 					*bp++ = ++c;
 					i++;
@@ -387,20 +395,20 @@ char *cclenter(const char *argp)	/* add a character class */
 				continue;
 			}
 		}
-		if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, "cclenter2"))
+		if (!adjbuf((char **) &buf, &bufsz, bp-buf+2, 100, (char **) &bp, "cclenter2"))
 			FATAL("out of space for character class [%.10s...] 3", p);
 		*bp++ = c;
 		i++;
 	}
 	*bp = 0;
 	dprintf( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
-	free(__UNCONST(op));
+	xfree(op);
 	return (char *) tostring((char *) buf);
 }
 
 void overflo(const char *s)
 {
-	FATAL("regular expression too big: %.30s...", s);
+	FATAL("regular expression too big: out of space in %.30s...", s);
 }
 
 void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfollow[leaf] */
@@ -413,14 +421,14 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 	LEAF
 		f->re[info(v)].ltype = type(v);
 		f->re[info(v)].lval.np = right(v);
-		while (f->accept >= maxsetvec) /* guessing here! */
-			resizesetvec("out of space in cfoll()");
+		while (f->accept >= maxsetvec) {	/* guessing here! */
+			resizesetvec(__func__);
+		}
 		for (i = 0; i <= f->accept; i++)
 			setvec[i] = 0;
 		setcnt = 0;
 		follow(v);	/* computes setvec and setcnt */
-		if ((p = calloc(1, (setcnt+1)*sizeof(int))) == NULL)
-			overflo("out of space building follow set");
+		p = intalloc(setcnt + 1, __func__);
 		f->re[info(v)].lfollow = p;
 		*p = setcnt;
 		for (i = f->accept; i >= 0; i--)
@@ -434,6 +442,8 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 	case OR:
 		cfoll(f,left(v));
 		cfoll(f,right(v));
+		break;
+	case ZERO:
 		break;
 	default:	/* can't happen */
 		FATAL("can't happen: unknown type %d in cfoll", type(v));
@@ -449,8 +459,9 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 	ELEAF
 	LEAF
 		lp = info(p);	/* look for high-water mark of subscripts */
-		while (setcnt >= maxsetvec || lp >= maxsetvec) /* guessing here! */
-			resizesetvec("out of space in first()");
+		while (setcnt >= maxsetvec || lp >= maxsetvec) {	/* guessing here! */
+			resizesetvec(__func__);
+		}
 		if (type(p) == EMPTYRE) {
 			setvec[lp] = 0;
 			return(0);
@@ -461,9 +472,10 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 		}
 		if (type(p) == CCL && (*(char *) right(p)) == '\0')
 			return(0);		/* empty CCL */
-		else return(1);
+		return(1);
 	case PLUS:
-		if (first(left(p)) == 0) return(0);
+		if (first(left(p)) == 0)
+			return(0);
 		return(1);
 	case STAR:
 	case QUEST:
@@ -476,6 +488,8 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 		b = first(right(p));
 		if (first(left(p)) == 0 || b == 0) return(0);
 		return(1);
+	case ZERO:
+		return 0;
 	}
 	FATAL("can't happen: unknown type %d in first", type(p));	/* can't happen */
 	return(-1);
@@ -538,9 +552,6 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 			s = ns;
 		else
 			s = cgoto(f, s, *p);
-
-		assert (s < f->state_count);
-
 		if (f->out[s])
 			return(1);
 	} while (*p++ != 0);
@@ -550,12 +561,13 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 {
 	int s, ns;
-	uschar *p = __UNCONST(p0);
-	uschar *q;
+	const uschar *p = (const uschar *) p0;
+	const uschar *q;
 
 	s = f->initstat;
 	assert(s < f->state_count);
-	patbeg = p;
+
+	patbeg = (const char *)p;
 	patlen = -1;
 	do {
 		q = p;
@@ -572,7 +584,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 
 			if (s == 1) {	/* no transition */
 				if (patlen >= 0) {
-					patbeg = p;
+					patbeg = (const char *) p;
 					return(1);
 				}
 				else
@@ -582,24 +594,25 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		if (f->out[s])
 			patlen = q-p-1;	/* don't count $ */
 		if (patlen >= 0) {
-			patbeg = p;
+			patbeg = (const char *) p;
 			return(1);
 		}
 	nextin:
 		s = 2;
-	} while (*p++ != 0);
+	} while (*p++);
 	return (0);
 }
 
 int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 {
 	int s, ns;
-	uschar *p = __UNCONST(p0);
-	uschar *q;
+	const uschar *p = (const uschar *) p0;
+	const uschar *q;
 
 	s = f->initstat;
 	assert(s < f->state_count);
 
+	patbeg = (const char *)p;
 	patlen = -1;
 	while (*p) {
 		q = p;
@@ -611,12 +624,9 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 				s = ns;
 			else
 				s = cgoto(f, s, *q);
-
-			assert(s < f->state_count);
-
 			if (s == 1) {	/* no transition */
 				if (patlen > 0) {
-					patbeg = p;
+					patbeg = (const char *) p;
 					return(1);
 				} else
 					goto nnextin;	/* no nonempty match */
@@ -625,7 +635,7 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 		if (f->out[s])
 			patlen = q-p-1;	/* don't count $ */
 		if (patlen > 0 ) {
-			patbeg = p;
+			patbeg = (const char *) p;
 			return(1);
 		}
 	nnextin:
@@ -647,18 +657,17 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
  *     a match is found, patbeg and patlen are set appropriately.
  *
  * RETURN VALUES
- *     0    No match found.
- *     1    Match found.
- */  
+ *     false    No match found.
+ *     true     Match found.
+ */
 
-int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)	
+bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 {
-	uschar *buf = *pbuf;
+	char *buf = *pbuf;
 	int bufsize = *pbufsize;
 	int c, i, j, k, ns, s;
 
 	s = pfa->initstat;
-	assert(s < pfa->state_count);
 	patlen = 0;
 
 	/*
@@ -675,8 +684,8 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 		do {
 			if (++j == k) {
 				if (k == bufsize)
-					if (!adjbuf(&buf, &bufsize, bufsize+1, quantum, 0, "fnematch"))
-						FATAL("stream '%.30s...' too long", buf);	
+					if (!adjbuf((char **) &buf, &bufsize, bufsize+1, quantum, 0, "fnematch"))
+						FATAL("stream '%.30s...' too long", buf);
 				buf[k++] = (c = getc(f)) != EOF ? c : 0;
 			}
 			c = buf[j];
@@ -686,7 +695,6 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 				s = ns;
 			else
 				s = cgoto(pfa, s, c);
-			assert(s < pfa->state_count);
 
 			if (pfa->out[s]) {	/* final state */
 				patlen = j - i + 1;
@@ -702,7 +710,7 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 	*pbufsize = bufsize;
 
 	if (patlen) {
-		patbeg = buf + i;
+		patbeg = (char *) buf + i;
 		/*
 		 * Under no circumstances is the last character fed to
 		 * the automaton part of the match. It is EOF's nullbyte,
@@ -716,13 +724,13 @@ int fnematch(fa *pfa, FILE *f, uschar **pbuf, int *pbufsize, int quantum)
 		 */
 		do
 			if (buf[--k] && ungetc(buf[k], f) == EOF)
-				FATAL("unable to ungetc '%c'", buf[k]);	
+				FATAL("unable to ungetc '%c'", buf[k]);
 		while (k > i + patlen);
-		buf[k] = 0;
-		return 1;
+		buf[k] = '\0';
+		return true;
 	}
 	else
-		return 0;
+		return false;
 }
 
 Node *reparse(const char *p)	/* parses regular expression pointed to by p */
@@ -841,6 +849,9 @@ Node *unary(Node *np)
 	case QUEST:
 		rtok = relex();
 		return (unary(op2(QUEST, np, NIL)));
+	case ZERO:
+		rtok = relex();
+		return (unary(op2(ZERO, np, NIL)));
 	default:
 		return (np);
 	}
@@ -867,6 +878,14 @@ Node *unary(Node *np)
  */
 
 /* #define HAS_ISBLANK */
+#ifndef HAS_ISBLANK
+
+int (xisblank)(int c)
+{
+	return c==' ' || c=='\t';
+}
+
+#endif
 
 static const struct charclass {
 	const char *cc_name;
@@ -876,7 +895,7 @@ static const struct charclass {
 	{ "alnum",	5,	isalnum },
 	{ "alpha",	5,	isalpha },
 #ifndef HAS_ISBLANK
-	{ "blank",	5,	isspace }, /* was isblank */
+	{ "blank",	5,	xisblank },
 #else
 	{ "blank",	5,	isblank },
 #endif
@@ -904,10 +923,10 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	int i, j;
 	uschar *buf = 0;
 	int ret = 1;
-	int init_q = (firstnum==0);		/* first added char will be ? */
-	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */ 
-	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/ 
-	int suffix_length = strlen(reptok) - reptoklen;	/* string after rep specifier	*/
+	int init_q = (firstnum == 0);		/* first added char will be ? */
+	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */
+	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/
+	int suffix_length = strlen((const char *) reptok) - reptoklen;	/* string after rep specifier	*/
 	int size = prefix_length +  suffix_length;
 
 	if (firstnum > 1) {	/* add room for reps 2 through firstnum */
@@ -922,24 +941,25 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	} else if (special_case == REPEAT_ZERO) {
 		size += 2;	/* just a null ERE: () */
 	}
-	if ((buf = (uschar *) malloc(size+1)) == NULL)
+	if ((buf = malloc(size + 1)) == NULL)
 		FATAL("out of space in reg expr %.10s..", lastre);
-	memcpy(buf, basestr, prefix_length);	/* copy prefix	*/ 
+	memcpy(buf, basestr, prefix_length);	/* copy prefix	*/
 	j = prefix_length;
 	if (special_case == REPEAT_ZERO) {
 		j -= atomlen;
 		buf[j++] = '(';
 		buf[j++] = ')';
 	}
-	for (i=1; i < firstnum; i++) {		/* copy x reps 	*/
+	for (i = 1; i < firstnum; i++) {	/* copy x reps 	*/
 		memcpy(&buf[j], atom, atomlen);
 		j += atomlen;
 	}
 	if (special_case == REPEAT_PLUS_APPENDED) {
 		buf[j++] = '+';
 	} else if (special_case == REPEAT_WITH_Q) {
-		if (init_q) buf[j++] = '?';
-		for (i=0; i < n_q_reps; i++) {	/* copy x? reps */
+		if (init_q)
+			buf[j++] = '?';
+		for (i = init_q; i < n_q_reps; i++) {	/* copy x? reps */
 			memcpy(&buf[j], atom, atomlen);
 			j += atomlen;
 			buf[j++] = '?';
@@ -954,9 +974,9 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	/* free old basestr */
 	if (firstbasestr != basestr) {
 		if (basestr)
-			free(__UNCONST(basestr));
+			xfree(basestr);
 	}
-	basestr = (char *)buf;
+	basestr = buf;
 	prestr  = buf + prefix_length;
 	if (special_case == REPEAT_ZERO) {
 		prestr  -= atomlen;
@@ -978,26 +998,28 @@ static int repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	if (secondnum < 0) {	/* means {n,} -> repeat n-1 times followed by PLUS */
 		if (firstnum < 2) {
 			/* 0 or 1: should be handled before you get here */
+			FATAL("internal error");
 		} else {
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 				firstnum, secondnum, REPEAT_PLUS_APPENDED);
 		}
 	} else if (firstnum == secondnum) {	/* {n} or {n,n} -> simply repeat n-1 times */
 		if (firstnum == 0) {	/* {0} or {0,0} */
-			/* This case is unusual because the resulting 
-			   replacement string might actually be SMALLER than 
+			/* This case is unusual because the resulting
+			   replacement string might actually be SMALLER than
 			   the original ERE */
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_ZERO);
 		} else {		/* (firstnum >= 1) */
-			return replace_repeat(reptok, reptoklen, atom, atomlen, 
+			return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_SIMPLE);
 		}
 	} else if (firstnum < secondnum) {	/* {n,m} -> repeat n-1 times then alternate  */
 		/*  x{n,m}  =>  xx...x{1, m-n+1}  =>  xx...x?x?x?..x?	*/
-		return replace_repeat(reptok, reptoklen, atom, atomlen, 
+		return replace_repeat(reptok, reptoklen, atom, atomlen,
 					firstnum, secondnum, REPEAT_WITH_Q);
 	} else {	/* Error - shouldn't be here (n>m) */
+		FATAL("internal error");
 	}
 	return 0;
 }
@@ -1006,13 +1028,15 @@ int relex(void)		/* lexical analyzer for reparse */
 {
 	int c, n;
 	int cflag;
-	static uschar *buf = 0;
+	static uschar *buf = NULL;
 	static int bufsz = 100;
 	uschar *bp;
 	const struct charclass *cc;
 	int i;
-	int num, m, commafound, digitfound;
+	int num, m;
+	bool commafound, digitfound;
 	const uschar *startreptok;
+	static int parens = 0;
 
 rescan:
 	starttok = prestr;
@@ -1026,17 +1050,26 @@ rescan:
 	case '\0': prestr--; return '\0';
 	case '^':
 	case '$':
-	case '(':
-	case ')':
 		return c;
+	case '(':
+		parens++;
+		return c;
+	case ')':
+		if (parens) {
+			parens--;
+			return c;
+		}
+		/* unmatched close parenthesis; per POSIX, treat as literal */
+		rlxval = c;
+		return CHAR;
 	case '\\':
 		rlxval = quoted(&prestr);
 		return CHAR;
 	default:
 		rlxval = c;
 		return CHAR;
-	case '[': 
-		if (buf == 0 && (buf = malloc(bufsz)) == NULL)
+	case '[':
+		if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 			FATAL("out of space in reg expr %.10s..", lastre);
 		bp = buf;
 		if (*prestr == '^') {
@@ -1046,7 +1079,7 @@ rescan:
 		else
 			cflag = 0;
 		n = 2 * strlen((const char *) prestr)+1;
-		if (!adjbuf(&buf, &bufsz, n, n, &bp, "relex1"))
+		if (!adjbuf((char **) &buf, &bufsz, n, n, (char **) &bp, "relex1"))
 			FATAL("out of space for reg expr %.10s...", lastre);
 		for (; ; ) {
 			if ((c = *prestr++) == '\\') {
@@ -1064,8 +1097,16 @@ rescan:
 				if (cc->cc_name != NULL && prestr[1 + cc->cc_namelen] == ':' &&
 				    prestr[2 + cc->cc_namelen] == ']') {
 					prestr += cc->cc_namelen + 3;
-					for (i = 1; i < NCHARS; i++) {
-						if (!adjbuf(&buf, &bufsz, bp-buf+1, 100, &bp, "relex2"))
+					/*
+					 * BUG: We begin at 1, instead of 0, since we
+					 * would otherwise prematurely terminate the
+					 * string for classes like [[:cntrl:]]. This
+					 * means that we can't match the NUL character,
+					 * not without first adapting the entire
+					 * program to track each string's length.
+					 */
+					for (i = 1; i <= UCHAR_MAX; i++) {
+						if (!adjbuf((char **) &buf, &bufsz, bp-buf+1, 100, (char **) &bp, "relex2"))
 						    FATAL("out of space for reg expr %.10s...", lastre);
 						if (cc->cc_func(i)) {
 							*bp++ = i;
@@ -1098,7 +1139,7 @@ rescan:
 				if (*prestr == '=' && prestr[1] == ']') {
 					prestr += 2;
 					/* Found it: map via locale TBD: for now
-					   simply return this char. This is 
+					   simply return this char. This is
 					   sufficient to pass conformance test
 					   awk.ex 156
 					 */
@@ -1123,15 +1164,15 @@ rescan:
 				*bp++ = c;
 		}
 		break;
-	case '{': 
+	case '{':
 		if (isdigit(*(prestr))) {
 			num = 0;	/* Process as a repetition */
 			n = -1; m = -1;
-			commafound = 0;
-			digitfound = 0;
+			commafound = false;
+			digitfound = false;
 			startreptok = prestr-1;
 			/* Remember start of previous atom here ? */
-	 	} else {        	/* just a { char, not a repetition */
+		} else {        	/* just a { char, not a repetition */
 			rlxval = c;
 			return CHAR;
                 }
@@ -1140,15 +1181,17 @@ rescan:
 				if (commafound) {
 					if (digitfound) { /* {n,m} */
 						m = num;
-						if (m<n)
+						if (m < n)
 							FATAL("illegal repetition expression: class %.20s",
 								lastre);
-						if ((n==0) && (m==1)) {
+						if (n == 0 && m == 1) {
 							return QUEST;
 						}
 					} else {	/* {n,} */
-						if (n==0) return STAR;
-						if (n==1) return PLUS;
+						if (n == 0)
+							return STAR;
+						else if (n == 1)
+							return PLUS;
 					}
 				} else {
 					if (digitfound) { /* {n} same as {n,n} */
@@ -1161,8 +1204,8 @@ rescan:
 				}
 				if (repeat(starttok, prestr-starttok, lastatom,
 					   startreptok - lastatom, n, m) > 0) {
-					if ((n==0) && (m==0)) {
-						return EMPTYRE;
+					if (n == 0 && m == 0) {
+						return ZERO;
 					}
 					/* must rescan input for next token */
 					goto rescan;
@@ -1175,15 +1218,15 @@ rescan:
 					lastre);
 			} else if (isdigit(c)) {
 				num = 10 * num + c - '0';
-				digitfound = 1;
+				digitfound = true;
 			} else if (c == ',') {
 				if (commafound)
 					FATAL("illegal repetition expression: class %.20s",
 						lastre);
 				/* looking for {n,} or {n,m} */
-				commafound = 1;
+				commafound = true;
 				n = num;
-				digitfound = 0; /* reset */
+				digitfound = false; /* reset */
 				num = 0;
 			} else {
 				FATAL("illegal repetition expression: class %.20s",
@@ -1196,12 +1239,13 @@ rescan:
 
 int cgoto(fa *f, int s, int c)
 {
-	int i, j, k;
 	int *p, *q;
+	int i, j, k;
 
 	assert(c == HAT || c < NCHARS);
-	while (f->accept >= maxsetvec) 	/* guessing here! */
-		resizesetvec("out of space in cgoto()");
+	while (f->accept >= maxsetvec) {	/* guessing here! */
+		resizesetvec(__func__);
+	}
 	for (i = 0; i <= f->accept; i++)
 		setvec[i] = 0;
 	setcnt = 0;
@@ -1218,8 +1262,9 @@ int cgoto(fa *f, int s, int c)
 			 || (k == NCCL && !member(c, (char *) f->re[p[i]].lval.up) && c != 0 && c != HAT)) {
 				q = f->re[p[i]].lfollow;
 				for (j = 1; j <= *q; j++) {
-					if (q[j] >= maxsetvec)
-						resizesetvec("cgoto overflow");
+					if (q[j] >= maxsetvec) {
+						resizesetvec(__func__);
+					}
 					if (setvec[q[j]] == 0) {
 						setcnt++;
 						setvec[q[j]] = 1;
@@ -1235,7 +1280,6 @@ int cgoto(fa *f, int s, int c)
 		if (setvec[i]) {
 			tmpset[j++] = i;
 		}
-
 	resize_state(f, f->curstat > s ? f->curstat : s);
 	/* tmpset == previous state? */
 	for (i = 1; i <= f->curstat; i++) {
@@ -1258,8 +1302,7 @@ int cgoto(fa *f, int s, int c)
 	for (i = 0; i < NCHARS; i++)
 		f->gototab[f->curstat][i] = 0;
 	xfree(f->posns[f->curstat]);
-	if ((p = calloc(1, (setcnt+1)*sizeof(int))) == NULL)
-		overflo("out of space in cgoto");
+	p = intalloc(setcnt + 1, __func__);
 
 	f->posns[f->curstat] = p;
 	if (c != HAT)
@@ -1280,14 +1323,14 @@ void freefa(fa *f)	/* free a finite automaton */
 
 	if (f == NULL)
 		return;
-	for (i = 0; i < f->state_count; i++) {
+	for (i = 0; i < f->state_count; i++)
 		xfree(f->gototab[i])
+	for (i = 0; i <= f->curstat; i++)
 		xfree(f->posns[i]);
-	}
 	for (i = 0; i <= f->accept; i++) {
 		xfree(f->re[i].lfollow);
 		if (f->re[i].ltype == CCL || f->re[i].ltype == NCCL)
-			xfree((f->re[i].lval.np));
+			xfree(f->re[i].lval.np);
 	}
 	xfree(f->restr);
 	xfree(f->out);

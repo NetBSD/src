@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.13 2010/07/17 06:27:03 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.13.60.1 2020/04/13 08:04:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -229,7 +229,7 @@ load_file_ino(ino32_t ino, const char *fn, unsigned int addr, struct exec *heade
 	if ((N_GETMAGIC(*header) != OMAGIC) ||
 	    (N_GETMID(*header) != MID_M68K)) {
 		B_PRINT(fn);
-		B_PRINT(": inappropriate format");
+		B_PRINT(": inappropriate format\r\n");
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2019/06/10 22:09:36 christos Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2020/04/13 08:05:13 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -15,7 +15,5 @@ SRCS=	procfs_note.c procfs_status.c procfs_subr.c \
 	procfs_linux.c \
 	procfs_machdep.c procfs_map.c procfs_regs.c procfs_fpregs.c \
 	procfs_mem.c procfs_fd.c procfs_auxv.c
-
-WARNS=	3
 
 .include <bsd.kmodule.mk>

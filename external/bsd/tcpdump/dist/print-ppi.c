@@ -4,7 +4,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ppi.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ppi.c,v 1.3.18.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Oracle DLT_PPI printer */
@@ -73,6 +73,7 @@ ppi_print(netdissect_options *ndo,
 	}
 
 	hdr = (const ppi_header_t *)p;
+	ND_TCHECK_16BITS(&hdr->ppi_len);
 	len = EXTRACT_LE_16BITS(&hdr->ppi_len);
 	if (caplen < len) {
 		/*
@@ -86,6 +87,7 @@ ppi_print(netdissect_options *ndo,
 		ND_PRINT((ndo, "[|ppi]"));
 		return (len);
 	}
+	ND_TCHECK_32BITS(&hdr->ppi_dlt);
 	dlt = EXTRACT_LE_32BITS(&hdr->ppi_dlt);
 
 	if (ndo->ndo_eflag)
@@ -109,6 +111,8 @@ ppi_print(netdissect_options *ndo,
 		hdrlen = 0;
 	}
 	return (len + hdrlen);
+trunc:
+	return (caplen);
 }
 
 /*

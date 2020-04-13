@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $	*/
+/*	$NetBSD: radeon_r600.c,v 1.1.6.4 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.1.6.4 2020/04/13 08:04:58 martin Exp $");
 
 #include <linux/slab.h>
 #include <linux/seq_file.h>
@@ -1009,7 +1009,8 @@ void r600_hpd_init(struct radeon_device *rdev)
 				break;
 			}
 		}
-		enable |= 1 << radeon_connector->hpd.hpd;
+		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			enable |= 1 << radeon_connector->hpd.hpd;
 		radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
 	}
 	radeon_irq_kms_enable_hpd(rdev, enable);
@@ -2225,13 +2226,13 @@ static void r600_gpu_init(struct radeon_device *rdev)
 	sq_config &= ~(PS_PRIO(3) |
 		       VS_PRIO(3) |
 		       GS_PRIO(3) |
-		       ES_PRIO(3));
+		       ES_PRIO(3U));
 	sq_config |= (DX9_CONSTS |
 		      VC_ENABLE |
 		      PS_PRIO(0) |
 		      VS_PRIO(1) |
 		      GS_PRIO(2) |
-		      ES_PRIO(3));
+		      ES_PRIO(3U));
 
 	if ((rdev->family) == CHIP_R600) {
 		sq_gpr_resource_mgmt_1 = (NUM_PS_GPRS(124) |
@@ -2320,15 +2321,15 @@ static void r600_gpu_init(struct radeon_device *rdev)
 	WREG32(PA_SC_AA_SAMPLE_LOCS_4S, (S0_X(0xe) | S0_Y(0xe) |
 					 S1_X(0x2) | S1_Y(0x2) |
 					 S2_X(0xa) | S2_Y(0x6) |
-					 S3_X(0x6) | S3_Y(0xa)));
+					 S3_X(0x6) | S3_Y(0xaU)));
 	WREG32(PA_SC_AA_SAMPLE_LOCS_8S_WD0, (S0_X(0xe) | S0_Y(0xb) |
 					     S1_X(0x4) | S1_Y(0xc) |
 					     S2_X(0x1) | S2_Y(0x6) |
-					     S3_X(0xa) | S3_Y(0xe)));
+					     S3_X(0xa) | S3_Y(0xeU)));
 	WREG32(PA_SC_AA_SAMPLE_LOCS_8S_WD1, (S4_X(0x6) | S4_Y(0x1) |
 					     S5_X(0x0) | S5_Y(0x0) |
 					     S6_X(0xb) | S6_Y(0x4) |
-					     S7_X(0x7) | S7_Y(0x8)));
+					     S7_X(0x7) | S7_Y(0x8U)));
 
 	WREG32(VGT_STRMOUT_EN, 0);
 	tmp = rdev->config.r600.max_pipes * 16;

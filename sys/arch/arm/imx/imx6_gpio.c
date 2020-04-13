@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpio.c,v 1.2 2017/06/09 18:14:59 ryo Exp $ */
+/*	$NetBSD: imx6_gpio.c,v 1.2.8.1 2020/04/13 08:03:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.2 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.2.8.1 2020/04/13 08:03:35 martin Exp $");
+
+#define	_INTR_PRIVATE
 
 #include "opt_imx.h"
 
@@ -45,12 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.2 2017/06/09 18:14:59 ryo Exp $");
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/pic/picvar.h>
 
 #include <sys/bus.h>
 
 #include <arm/imx/imx6_reg.h>
 #include <arm/imx/imx6var.h>
-#include <arm/pic/picvar.h>
 
 #include <arm/imx/imxgpioreg.h>
 #include <arm/imx/imxgpiovar.h>
@@ -88,9 +90,10 @@ imxgpio_match(device_t parent, cfdata_t cfdata, void *aux)
 void
 imxgpio_attach(device_t parent, device_t self, void *aux)
 {
+	struct imxgpio_softc * const gpio = device_private(self);
 	struct axi_attach_args * const aa = aux;
 	bus_space_handle_t ioh;
-	int error, group;
+	int error;
 
 	if (aa->aa_irq == AXICF_IRQ_DEFAULT &&
 	    aa->aa_irqbase != AXICF_IRQBASE_DEFAULT) {
@@ -114,8 +117,21 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	group = (aa->aa_addr - IMX6_AIPS1_BASE - AIPS1_GPIO1_BASE) / 0x4000;
-	imxgpio_attach_common(self, aa->aa_iot, ioh, group,
-	    aa->aa_irq, aa->aa_irqbase);
+	aprint_naive("\n");
+	aprint_normal(": GPIO\n");
+
+	gpio->gpio_memt = aa->aa_iot;
+	gpio->gpio_memh = ioh;
+	gpio->gpio_unit = (aa->aa_addr - IMX6_AIPS1_BASE - AIPS1_GPIO1_BASE) / 0x4000;
+	gpio->gpio_irqbase = aa->aa_irqbase;
+
+	gpio->gpio_is = intr_establish(aa->aa_irq,
+	    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+	KASSERT(gpio->gpio_is != NULL );
+	gpio->gpio_is_high = intr_establish(aa->aa_irq + 1,
+	    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+	KASSERT(gpio->gpio_is_high != NULL);
+
+	imxgpio_attach_common(self);
 }
 

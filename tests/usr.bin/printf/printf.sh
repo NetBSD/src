@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.3.2.2 2019/06/10 22:10:12 christos Exp $
+# $NetBSD: printf.sh,v 1.3.2.3 2020/04/13 08:05:33 martin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -118,7 +118,7 @@ expect()
 		(${WANT})
 		    ;;
 		(*) 
-		    atf_fail "$* ... Expected <<${WANT}>> Received <<${RES}>"
+		    atf_fail "$* ... Expected <<${WANT}>> Received <<${RES}>>"
 		    ;;
 		esac
 	fi
@@ -206,23 +206,21 @@ basic()
 {
 	setmsg basic
 
-	for A in '' -- -@	# hope that '@' is not an option to printf...
+	if (do_printf >/dev/null 2>&1)
+	then
+		atf_fail "with no args successful"
+	fi
+	if test -n "$( do_printf 2>/dev/null )"
+	then
+		atf_fail "with no args produces text on stdout"
+	fi
+	if test -z "$( do_printf 2>&1 )"
+	then
+		atf_fail "with no args no err/usage message"
+	fi
+
+	for A in - -- X 1
 	do
-		if (do_printf $A >/dev/null 2>&1)
-		then
-			atf_fail "${A:-with no args} successful"
-		fi
-		if test -n "$( do_printf 2>/dev/null )"
-		then
-			atf_fail "${A:-with no args} produces text on stdout"
-		fi
-		if test -z "$( do_printf 2>&1 )"
-		then
-			atf_fail "${A:-with no args} no err/usage message"
-		fi
-
-		test -z "$A" && continue
-
 		if (do_printf "%${A}%" >/dev/null 2>&1)
 		then
 			atf_fail "%${A}% successful"
@@ -232,11 +230,10 @@ basic()
 	expect abcd		abcd
 	expect %		%%
 	expect xxx%yyy		xxx%%yyy
-	expect -123		-- -123
+	expect -123		-123
 
 	# technically these are all unspecified, but the only rational thing
 	expect_fail ''		%3%
-	expect_fail ''		-123
 	expect_fail a		a%.%
 	expect_fail ''		'%*%b'	# cannot continue after bad format
 	expect_fail a		a%-%b	# hence 'b' is not part of output
@@ -1126,7 +1123,7 @@ G_floats()
 }
 define G_floats '%G (floating) conversions'
 
-# It is difficul;t to test correct results from the %a conversions,
+# It is difficult to test correct results from the %a conversions,
 # as they depend upon the underlying floating point format (not
 # necessarily IEEE) and other factors chosen by the implementation,
 # eg: the (floating) number 1 could be 0x8p-3 0x4p-2 0x1p-1 even

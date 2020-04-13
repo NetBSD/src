@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.64.4.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.64.4.3 2020/04/13 08:05:15 martin Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.64.4.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.64.4.3 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -164,19 +164,6 @@ static void	pppgetm(struct ppp_softc *sc);
 static void	pppdumpb(u_char *b, int l);
 static void	ppplogchar(struct ppp_softc *, int);
 static void	pppdumpframe(struct ppp_softc *sc, struct mbuf* m, int xmit);
-
-/*
- * Some useful mbuf macros not in mbuf.h.
- */
-#define M_IS_CLUSTER(m)	((m)->m_flags & M_EXT)
-
-#define M_DATASTART(m)	\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_buf : \
-	    (m)->m_flags & M_PKTHDR ? (m)->m_pktdat : (m)->m_dat)
-
-#define M_DATASIZE(m)	\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_size : \
-	    (m)->m_flags & M_PKTHDR ? MHLEN: MLEN)
 
 /*
  * Does c need to be escaped?
@@ -969,7 +956,7 @@ pppgetm(struct ppp_softc *sc)
 	    *mp = m;
 	    MCLGET(m, M_DONTWAIT);
 	}
-	len -= M_DATASIZE(m);
+	len -= M_BUFSIZE(m);
 	mp = &m->m_next;
     }
 }
@@ -1137,7 +1124,7 @@ pppinput(int c, struct tty *tp)
 	}
 	m = sc->sc_m;
 	m->m_len = 0;
-	m->m_data = M_DATASTART(sc->sc_m);
+	MRESETDATA(m);
 	sc->sc_mc = m;
 	sc->sc_mp = mtod(m, char *);
 	sc->sc_fcs = PPP_INITFCS;
@@ -1193,7 +1180,7 @@ pppinput(int c, struct tty *tp)
 	}
 	sc->sc_mc = m = m->m_next;
 	m->m_len = 0;
-	m->m_data = M_DATASTART(m);
+	MRESETDATA(m);
 	sc->sc_mp = mtod(m, char *);
     }
 

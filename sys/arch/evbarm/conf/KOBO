@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.8.14.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: KOBO,v 1.8.14.2 2020/04/13 08:03:42 martin Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -84,6 +84,7 @@ imxgpio2	at axi? addr 0x53f8c000 irqbase 192 irq 54
 imxgpio3	at axi? addr 0x53f90000 irqbase 224 irq 56
 imxgpio4	at axi? addr 0x53fdc000 irqbase 256 irq 103
 imxgpio5	at axi? addr 0x53fe0000 irqbase 288 irq 105
+gpio*		at imxgpio?
 
 # EPDC E-Ink Controller
 #epdc0		at axi? addr 0x41010000 size 0x2000 irq 27

@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.5.4.2 2019/06/10 22:05:51 christos Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.5.4.3 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.5.4.2 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.5.4.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -574,8 +574,6 @@ meson_pinctrl_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_conf->name);
-
-	fdtbus_pinctrl_configure();
 
 	meson_pinctrl_initgpio(sc);
 }

@@ -1,5 +1,5 @@
 /* Part of CPP library.  (Macro and #define handling.)
-   Copyright (C) 1986-2016 Free Software Foundation, Inc.
+   Copyright (C) 1986-2017 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -416,13 +416,24 @@ _cpp_builtin_macro_text (cpp_reader *pfile, cpp_hashnode *node,
 	  time_t tt;
 	  struct tm *tb = NULL;
 
-	  /* (time_t) -1 is a legitimate value for "number of seconds
-	     since the Epoch", so we have to do a little dance to
-	     distinguish that from a genuine error.  */
-	  errno = 0;
-	  tt = time(NULL);
-	  if (tt != (time_t)-1 || errno == 0)
-	    tb = localtime (&tt);
+	  /* Set a reproducible timestamp for __DATE__ and __TIME__ macro
+	     if SOURCE_DATE_EPOCH is defined.  */
+	  if (pfile->source_date_epoch == (time_t) -2
+	      && pfile->cb.get_source_date_epoch != NULL)
+	    pfile->source_date_epoch = pfile->cb.get_source_date_epoch (pfile);
+
+	  if (pfile->source_date_epoch >= (time_t) 0)
+	    tb = gmtime (&pfile->source_date_epoch);
+	  else
+	    {
+	      /* (time_t) -1 is a legitimate value for "number of seconds
+		 since the Epoch", so we have to do a little dance to
+		 distinguish that from a genuine error.  */
+	      errno = 0;
+	      tt = time (NULL);
+	      if (tt != (time_t)-1 || errno == 0)
+		tb = localtime (&tt);
+	    }
 
 	  if (tb)
 	    {
@@ -2936,6 +2947,7 @@ parse_params (cpp_reader *pfile, cpp_macro *macro)
 	    return true;
 
 	  /* Fall through to pick up the error.  */
+	  /* FALLTHRU */
 	case CPP_COMMA:
 	  if (!prev_ident)
 	    {

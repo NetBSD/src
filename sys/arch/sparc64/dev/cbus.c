@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.2 2016/07/18 19:32:44 palle Exp $	*/
+/*	$NetBSD: cbus.c,v 1.2.18.1 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -238,10 +238,7 @@ cbus_alloc_bus_tag(struct cbus_softc *sc, bus_space_tag_t parent)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("could not allocate cbus bus tag");
-
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 	bt->cookie = sc;
 	bt->parent = parent;
 	bt->sparc_bus_map = parent->sparc_bus_map;

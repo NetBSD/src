@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.2 2012/05/07 18:16:38 tsutsui Exp $ */
+/* $NetBSD: bus.h,v 1.2.40.1 2020/04/13 08:03:40 martin Exp $ */
 
 /*
  * XXX: A dummy <machine/bus.h> for MI <sys/bus.h>.
@@ -10,8 +10,14 @@
 typedef paddr_t	bus_addr_t;
 typedef psize_t	bus_size_t;
 
+#define PRIxBUSADDR	PRIxPADDR
+#define PRIxBUSSIZE	PRIxPSIZE
+#define PRIuBUSSIZE	PRIuPSIZE
+
 typedef int     bus_space_tag_t;
 typedef int     bus_space_handle_t;
+
+#define PRIxBSH		"x"
 
 /*
  * There is no bus_dma(9)'fied bus drivers on this port.

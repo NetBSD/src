@@ -159,5 +159,12 @@ sent=`grep "10.53.0.7#.* (.): query '\./NS/IN' approved" ns1/named.run | wc -l`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking recovery from forwarding to a non-recursive server"
+ret=0
+$DIG $DIGOPTS xxx.sld.tld txt @10.53.0.8  > dig.out.f8
+grep "status: NOERROR" dig.out.f8 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

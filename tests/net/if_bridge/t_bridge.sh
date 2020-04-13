@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.18 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.18.4.1 2020/04/13 08:05:30 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -169,7 +169,7 @@ setup6()
 setup_bridge()
 {
 	export RUMP_SERVER=$SOCK2
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	rump_server_add_iface $SOCK2 bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so

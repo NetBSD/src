@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.115 2015/03/01 13:19:39 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.115.18.1 2020/04/13 08:04:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.115 2015/03/01 13:19:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.115.18.1 2020/04/13 08:04:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,8 +675,7 @@ linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, regis
 		 */
 
 		return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
-		    SCARG(uap, mode), SCARG(uap, dev) & 0xffff, retval,
-		    UIO_USERSPACE);
+		    SCARG(uap, mode), SCARG(uap, dev) & 0xffff, UIO_USERSPACE);
 	}
 }
 
@@ -845,3 +844,11 @@ LINUX_NOT_SUPPORTED(linux_sys_flistxattr)
 LINUX_NOT_SUPPORTED(linux_sys_removexattr)
 LINUX_NOT_SUPPORTED(linux_sys_lremovexattr)
 LINUX_NOT_SUPPORTED(linux_sys_fremovexattr)
+
+/*
+ * For now just return EOPNOTSUPP, this makes glibc posix_fallocate()
+ * to fallback to emulation.
+ * XXX Right now no filesystem actually implements fallocate support,
+ * so no need for mapping.
+ */
+LINUX_NOT_SUPPORTED(linux_sys_fallocate)

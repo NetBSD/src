@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.46.2.1 2019/06/10 22:07:33 christos Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.46.2.2 2020/04/13 08:04:49 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -37,61 +37,26 @@
 /*
  * USB Communication Device Class (Ethernet Networking Control Model)
  * http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.46.2.1 2019/06/10 22:07:33 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_inet.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.46.2.2 2020/04/13 08:04:49 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/device.h>
 
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-
-#include <net/bpf.h>
-
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-
-
-#include <dev/usb/usb.h>
-#include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdevs.h>
+#include <dev/usb/usbnet.h>
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/if_cdcereg.h>
 
-Static int	 cdce_tx_list_init(struct cdce_softc *);
-Static int	 cdce_rx_list_init(struct cdce_softc *);
-Static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
-		    struct mbuf *);
-Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-Static void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
-Static void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
-Static void	 cdce_start(struct ifnet *);
-Static int	 cdce_ioctl(struct ifnet *, u_long, void *);
-Static void	 cdce_init(void *);
-Static void	 cdce_watchdog(struct ifnet *);
-Static void	 cdce_stop(struct cdce_softc *);
+struct cdce_type {
+	struct usb_devno	 cdce_dev;
+	uint16_t		 cdce_flags;
+#define CDCE_ZAURUS	1
+#define CDCE_NO_UNION	2
+};
 
-Static const struct cdce_type cdce_devs[] = {
+static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
   {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, CDCE_NO_UNION },
   {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, CDCE_NO_UNION },
@@ -107,15 +72,25 @@ Static const struct cdce_type cdce_devs[] = {
 #define cdce_lookup(v, p) \
 	((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
-int cdce_match(device_t, cfdata_t, void *);
-void cdce_attach(device_t, device_t, void *);
-int cdce_detach(device_t, int);
-int cdce_activate(device_t, enum devact);
+static int	cdce_match(device_t, cfdata_t, void *);
+static void	cdce_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
-    cdce_detach, cdce_activate);
+CFATTACH_DECL_NEW(cdce, sizeof(struct usbnet), cdce_match, cdce_attach,
+    usbnet_detach, usbnet_activate);
 
-int
+static void	cdce_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
+				 uint32_t);
+static unsigned	cdce_uno_tx_prepare(struct usbnet *, struct mbuf *,
+				    struct usbnet_chain *);
+static int	cdce_uno_init(struct ifnet *);
+
+static const struct usbnet_ops cdce_ops = {
+	.uno_tx_prepare = cdce_uno_tx_prepare,
+	.uno_rx_loop = cdce_uno_rx_loop,
+	.uno_init = cdce_uno_init,
+};
+
+static int
 cdce_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -130,14 +105,12 @@ cdce_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 cdce_attach(device_t parent, device_t self, void *aux)
 {
-	struct cdce_softc *sc = device_private(self);
-	struct usbif_attach_arg *uiaa = aux;
+	struct usbnet * const		 un = device_private(self);
+	struct usbif_attach_arg		*uiaa = aux;
 	char				*devinfop;
-	int				 s;
-	struct ifnet			*ifp;
 	struct usbd_device	        *dev = uiaa->uiaa_device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
@@ -146,30 +119,34 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usb_config_descriptor_t		*cd;
 	int				 data_ifcno;
 	int				 i, j, numalts;
-	u_char				 eaddr[ETHER_ADDR_LEN];
 	const usb_cdc_ethernet_descriptor_t *ue;
 	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
 
-	sc->cdce_dev = self;
-
 	aprint_naive("\n");
 	aprint_normal("\n");
-
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->cdce_udev = uiaa->uiaa_device;
-	sc->cdce_ctl_iface = uiaa->uiaa_iface;
+	un->un_dev = self;
+	un->un_udev = dev;
+	un->un_sc = un;
+	un->un_ops = &cdce_ops;
+	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
+	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
+	un->un_rx_list_cnt = CDCE_RX_LIST_CNT;
+	un->un_tx_list_cnt = CDCE_TX_LIST_CNT;
+	un->un_rx_bufsz = CDCE_BUFSZ;
+	un->un_tx_bufsz = CDCE_BUFSZ;
 
 	t = cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (t)
-		sc->cdce_flags = t->cdce_flags;
+		un->un_flags = t->cdce_flags;
 
-	if (sc->cdce_flags & CDCE_NO_UNION)
-		sc->cdce_data_iface = sc->cdce_ctl_iface;
+	if (un->un_flags & CDCE_NO_UNION)
+		un->un_iface = uiaa->uiaa_iface;
 	else {
-		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
+		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(un->un_udev,
 		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
 			aprint_error_dev(self, "no union descriptor\n");
@@ -183,14 +160,13 @@ cdce_attach(device_t parent, device_t self, void *aux)
 				    uiaa->uiaa_ifaces[i]);
 				if (id != NULL && id->bInterfaceNumber ==
 				    data_ifcno) {
-					sc->cdce_data_iface = uiaa->uiaa_ifaces[i];
+					un->un_iface = uiaa->uiaa_ifaces[i];
 					uiaa->uiaa_ifaces[i] = NULL;
 				}
 			}
 		}
 	}
-
-	if (sc->cdce_data_iface == NULL) {
+	if (un->un_iface == NULL) {
 		aprint_error_dev(self, "no data interface\n");
 		return;
 	}
@@ -213,21 +189,21 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	 * available interface settings looking for one with both IN and OUT
 	 * endpoints.
 	 */
-	id = usbd_get_interface_descriptor(sc->cdce_data_iface);
-	cd = usbd_get_config_descriptor(sc->cdce_udev);
+	id = usbd_get_interface_descriptor(un->un_iface);
+	cd = usbd_get_config_descriptor(un->un_udev);
 	numalts = usbd_get_no_alts(cd, id->bInterfaceNumber);
 
 	for (j = 0; j < numalts; j++) {
-		if (usbd_set_interface(sc->cdce_data_iface, j)) {
-			aprint_error_dev(sc->cdce_dev,
+		if (usbd_set_interface(un->un_iface, j)) {
+			aprint_error_dev(un->un_dev,
 					"setting alternate interface failed\n");
 			return;
 		}
 		/* Find endpoints. */
-		id = usbd_get_interface_descriptor(sc->cdce_data_iface);
-		sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
+		id = usbd_get_interface_descriptor(un->un_iface);
+		un->un_ed[USBNET_ENDPT_RX] = un->un_ed[USBNET_ENDPT_TX] = 0;
 		for (i = 0; i < id->bNumEndpoints; i++) {
-			ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
+			ed = usbd_interface2endpoint_descriptor(un->un_iface, i);
 			if (!ed) {
 				aprint_error_dev(self,
 						"could not read endpoint descriptor\n");
@@ -235,10 +211,10 @@ cdce_attach(device_t parent, device_t self, void *aux)
 			}
 			if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 					UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				sc->cdce_bulkin_no = ed->bEndpointAddress;
+				un->un_ed[USBNET_ENDPT_RX] = ed->bEndpointAddress;
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 					UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-				sc->cdce_bulkout_no = ed->bEndpointAddress;
+				un->un_ed[USBNET_ENDPT_TX] = ed->bEndpointAddress;
 			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 					UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 				/* XXX: CDC spec defines an interrupt pipe, but it is not
@@ -248,15 +224,15 @@ cdce_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 		/* If we found something, try and use it... */
-		if ((sc->cdce_bulkin_no != -1) && (sc->cdce_bulkout_no != -1))
+		if (un->un_ed[USBNET_ENDPT_RX] != 0 && un->un_ed[USBNET_ENDPT_TX] != 0)
 			break;
 	}
 
-	if (sc->cdce_bulkin_no == -1) {
+	if (un->un_ed[USBNET_ENDPT_RX] == 0) {
 		aprint_error_dev(self, "could not find data bulk in\n");
 		return;
 	}
-	if (sc->cdce_bulkout_no == -1 ) {
+	if (un->un_ed[USBNET_ENDPT_TX] == 0) {
 		aprint_error_dev(self, "could not find data bulk out\n");
 		return;
 	}
@@ -264,537 +240,82 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
 	    UDESC_CS_INTERFACE, UDESCSUB_CDC_ENF);
 	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str) ||
-	    ether_aton_r(eaddr, sizeof(eaddr), eaddr_str)) {
+	    ether_aton_r(un->un_eaddr, sizeof(un->un_eaddr), eaddr_str)) {
 		aprint_normal_dev(self, "faking address\n");
-		eaddr[0]= 0x2a;
-		memcpy(&eaddr[1], &hardclock_ticks, sizeof(uint32_t));
-		eaddr[5] = (uint8_t)(device_unit(sc->cdce_dev));
+		un->un_eaddr[0] = 0x2a;
+		memcpy(&un->un_eaddr[1], &hardclock_ticks, sizeof(uint32_t));
+		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 
-	s = splnet();
-
-	aprint_normal_dev(self, "address %s\n", ether_sprintf(eaddr));
-
-	ifp = GET_IFP(sc);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = cdce_ioctl;
-	ifp->if_start = cdce_start;
-	ifp->if_watchdog = cdce_watchdog;
-	strlcpy(ifp->if_xname, device_xname(sc->cdce_dev), IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
-
-	if_attach(ifp);
-	ether_ifattach(ifp, eaddr);
-
-	sc->cdce_attached = 1;
-	splx(s);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cdce_udev,
-	    sc->cdce_dev);
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	return;
+	usbnet_attach(un, "cdcedet");
+	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
+            0, NULL);
 }
 
-int
-cdce_detach(device_t self, int flags)
+static int
+cdce_uno_init(struct ifnet *ifp)
 {
-	struct cdce_softc *sc = device_private(self);
-	struct ifnet	*ifp = GET_IFP(sc);
-	int		 s;
+	struct usbnet		*un = ifp->if_softc;
+	int rv;
 
-	pmf_device_deregister(self);
-
-	s = splusb();
-
-	if (!sc->cdce_attached) {
-		splx(s);
-		return 0;
+	usbnet_lock_core(un);
+	if (usbnet_isdying(un))
+		rv = EIO;
+	else {
+		usbnet_stop(un, ifp, 1);
+		rv = usbnet_init_rx_tx(un);
+		usbnet_set_link(un, rv == 0);
 	}
+	usbnet_unlock_core(un);
 
-	if (ifp->if_flags & IFF_RUNNING)
-		cdce_stop(sc);
-
-	ether_ifdetach(ifp);
-
-	if_detach(ifp);
-
-	sc->cdce_attached = 0;
-	splx(s);
-
-	return 0;
+	return rv;
 }
 
-Static void
-cdce_start(struct ifnet *ifp)
+static void
+cdce_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
-	struct cdce_softc	*sc = ifp->if_softc;
-	struct mbuf		*m_head = NULL;
+	struct ifnet		*ifp = usbnet_ifp(un);
 
-	if (sc->cdce_dying || (ifp->if_flags & IFF_OACTIVE))
-		return;
+	usbnet_isowned_rx(un);
 
-	IFQ_POLL(&ifp->if_snd, m_head);
-	if (m_head == NULL)
-		return;
-
-	if (cdce_encap(sc, m_head, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		return;
-	}
-
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
-
-	bpf_mtap(ifp, m_head, BPF_D_OUT);
-
-	ifp->if_flags |= IFF_OACTIVE;
-
-	ifp->if_timer = 6;
-}
-
-Static int
-cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
-{
-	struct cdce_chain	*c;
-	usbd_status		 err;
-	int			 extra = 0;
-
-	c = &sc->cdce_cdata.cdce_tx_chain[idx];
-
-	m_copydata(m, 0, m->m_pkthdr.len, c->cdce_buf);
-	if (sc->cdce_flags & CDCE_ZAURUS) {
-		/* Zaurus wants a 32-bit CRC appended to every frame */
-		uint32_t crc;
-
-		crc = htole32(~ether_crc32_le(c->cdce_buf, m->m_pkthdr.len));
-		memcpy(c->cdce_buf + m->m_pkthdr.len, &crc, sizeof(crc));
-		extra = sizeof(crc);
-	}
-	c->cdce_mbuf = m;
-
-	usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, m->m_pkthdr.len + extra,
-	    USBD_FORCE_SHORT_XFER, 10000, cdce_txeof);
-	err = usbd_transfer(c->cdce_xfer);
-	if (err != USBD_IN_PROGRESS) {
-		cdce_stop(sc);
-		return EIO;
-	}
-
-	sc->cdce_cdata.cdce_tx_cnt++;
-
-	return 0;
-}
-
-Static void
-cdce_stop(struct cdce_softc *sc)
-{
-	usbd_status	 err;
-	struct ifnet	*ifp = GET_IFP(sc);
-	int		 i;
-
-	ifp->if_timer = 0;
-
-	if (sc->cdce_bulkin_pipe != NULL) {
-		err = usbd_abort_pipe(sc->cdce_bulkin_pipe);
-		if (err)
-			printf("%s: abort rx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-	}
-
-	if (sc->cdce_bulkout_pipe != NULL) {
-		err = usbd_abort_pipe(sc->cdce_bulkout_pipe);
-		if (err)
-			printf("%s: abort tx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-	}
-
-	for (i = 0; i < CDCE_RX_LIST_CNT; i++) {
-		if (sc->cdce_cdata.cdce_rx_chain[i].cdce_mbuf != NULL) {
-			m_freem(sc->cdce_cdata.cdce_rx_chain[i].cdce_mbuf);
-			sc->cdce_cdata.cdce_rx_chain[i].cdce_mbuf = NULL;
-		}
-		if (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer != NULL) {
-			usbd_destroy_xfer
-			    (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer);
-			sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer = NULL;
-		}
-	}
-
-	for (i = 0; i < CDCE_TX_LIST_CNT; i++) {
-		if (sc->cdce_cdata.cdce_tx_chain[i].cdce_mbuf != NULL) {
-			m_freem(sc->cdce_cdata.cdce_tx_chain[i].cdce_mbuf);
-			sc->cdce_cdata.cdce_tx_chain[i].cdce_mbuf = NULL;
-		}
-		if (sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer != NULL) {
-			usbd_destroy_xfer(
-				sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer);
-			sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer = NULL;
-		}
-	}
-
-	if (sc->cdce_bulkin_pipe != NULL) {
-		err = usbd_close_pipe(sc->cdce_bulkin_pipe);
-		if (err)
-			printf("%s: close rx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		sc->cdce_bulkin_pipe = NULL;
-	}
-
-	if (sc->cdce_bulkout_pipe != NULL) {
-		err = usbd_close_pipe(sc->cdce_bulkout_pipe);
-		if (err)
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		sc->cdce_bulkout_pipe = NULL;
-	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-}
-
-Static int
-cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
-{
-	struct cdce_softc	*sc = ifp->if_softc;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
-	int			 s, error = 0;
-
-	if (sc->cdce_dying)
-		return EIO;
-
-	s = splnet();
-
-	switch(command) {
-	case SIOCINITIFADDR:
-		ifp->if_flags |= IFF_UP;
-		cdce_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
-			error = 0;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
-		/* XXX re-use ether_ioctl() */
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
-		case IFF_UP:
-			cdce_init(sc);
-			break;
-		case IFF_RUNNING:
-			cdce_stop(sc);
-			break;
-		default:
-			break;
-		}
-		break;
-
-	default:
-		error = ether_ioctl(ifp, command, data);
-		break;
-	}
-
-	splx(s);
-
-	if (error == ENETRESET)
-		error = 0;
-
-	return error;
-}
-
-Static void
-cdce_watchdog(struct ifnet *ifp)
-{
-	struct cdce_softc	*sc = ifp->if_softc;
-
-	if (sc->cdce_dying)
-		return;
-
-	ifp->if_oerrors++;
-	printf("%s: watchdog timeout\n", device_xname(sc->cdce_dev));
-}
-
-Static void
-cdce_init(void *xsc)
-{
-	struct cdce_softc	*sc = xsc;
-	struct ifnet		*ifp = GET_IFP(sc);
-	struct cdce_chain	*c;
-	usbd_status		 err;
-	int			 s, i;
-
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
-	s = splnet();
-
-	/* Maybe set multicast / broadcast here??? */
-
-	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkin_no,
-	    USBD_EXCLUSIVE_USE, &sc->cdce_bulkin_pipe);
-	if (err) {
-		printf("%s: open rx pipe failed: %s\n", device_xname(sc->cdce_dev),
-		    usbd_errstr(err));
-		splx(s);
-		return;
-	}
-
-	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkout_no,
-	    USBD_EXCLUSIVE_USE, &sc->cdce_bulkout_pipe);
-	if (err) {
-		printf("%s: open tx pipe failed: %s\n",
-		    device_xname(sc->cdce_dev), usbd_errstr(err));
-		splx(s);
-		return;
-	}
-
-	if (cdce_tx_list_init(sc)) {
-		printf("%s: tx list init failed\n", device_xname(sc->cdce_dev));
-		splx(s);
-		return;
-	}
-
-	if (cdce_rx_list_init(sc)) {
-		printf("%s: rx list init failed\n", device_xname(sc->cdce_dev));
-		splx(s);
-		return;
-	}
-
-	for (i = 0; i < CDCE_RX_LIST_CNT; i++) {
-		c = &sc->cdce_cdata.cdce_rx_chain[i];
-
-		usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, CDCE_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cdce_rxeof);
-		usbd_transfer(c->cdce_xfer);
-	}
-
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	splx(s);
-}
-
-Static int
-cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
-{
-	struct mbuf	*m_new = NULL;
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", device_xname(sc->cdce_dev));
-			return ENOBUFS;
-		}
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", device_xname(sc->cdce_dev));
-			m_freem(m_new);
-			return ENOBUFS;
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-	c->cdce_mbuf = m_new;
-	return 0;
-}
-
-Static int
-cdce_rx_list_init(struct cdce_softc *sc)
-{
-	struct cdce_cdata	*cd;
-	struct cdce_chain	*c;
-	int			 i;
-
-	cd = &sc->cdce_cdata;
-	for (i = 0; i < CDCE_RX_LIST_CNT; i++) {
-		c = &cd->cdce_rx_chain[i];
-		c->cdce_sc = sc;
-		c->cdce_idx = i;
-		if (cdce_newbuf(sc, c, NULL) == ENOBUFS)
-			return ENOBUFS;
-		if (c->cdce_xfer == NULL) {
-			int err = usbd_create_xfer(sc->cdce_bulkin_pipe,
-			    CDCE_BUFSZ, 0, 0, &c->cdce_xfer);
-			if (err)
-				return err;
-			c->cdce_buf = usbd_get_buffer(c->cdce_xfer);
-		}
-	}
-
-	return 0;
-}
-
-Static int
-cdce_tx_list_init(struct cdce_softc *sc)
-{
-	struct cdce_cdata	*cd;
-	struct cdce_chain	*c;
-	int			 i;
-
-	cd = &sc->cdce_cdata;
-	for (i = 0; i < CDCE_TX_LIST_CNT; i++) {
-		c = &cd->cdce_tx_chain[i];
-		c->cdce_sc = sc;
-		c->cdce_idx = i;
-		c->cdce_mbuf = NULL;
-		if (c->cdce_xfer == NULL) {
-			int err = usbd_create_xfer(sc->cdce_bulkout_pipe,
-			    CDCE_BUFSZ, USBD_FORCE_SHORT_XFER, 0,
-			    &c->cdce_xfer);
-			if (err)
-				return err;
-			c->cdce_buf = usbd_get_buffer(c->cdce_xfer);
-		}
-	}
-
-	return 0;
-}
-
-Static void
-cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
-{
-	struct cdce_chain	*c = priv;
-	struct cdce_softc	*sc = c->cdce_sc;
-	struct ifnet		*ifp = GET_IFP(sc);
-	struct mbuf		*m;
-	int			 total_len = 0;
-	int			 s;
-
-	if (sc->cdce_dying || !(ifp->if_flags & IFF_RUNNING))
-		return;
-
-	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
-			return;
-		if (sc->cdce_rxeof_errors == 0)
-			printf("%s: usb error on rx: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(status));
-		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->cdce_bulkin_pipe);
-		DELAY(sc->cdce_rxeof_errors * 10000);
-		sc->cdce_rxeof_errors++;
-		goto done;
-	}
-
-	sc->cdce_rxeof_errors = 0;
-
-	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
-	if (sc->cdce_flags & CDCE_ZAURUS)
-		total_len -= 4;	/* Strip off CRC added by Zaurus */
-	if (total_len <= 1)
-		goto done;
-
-	m = c->cdce_mbuf;
-	memcpy(mtod(m, char *), c->cdce_buf, total_len);
+	/* Strip off CRC added by Zaurus, if present */
+	if (un->un_flags & CDCE_ZAURUS && total_len > 4)
+		total_len -= 4;
 
 	if (total_len < sizeof(struct ether_header)) {
-		ifp->if_ierrors++;
-		goto done;
-	}
-
-	m->m_pkthdr.len = m->m_len = total_len;
-	m_set_rcvif(m, ifp);
-
-	s = splnet();
-
-	if (cdce_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		goto done1;
-	}
-
-	if_percpuq_enqueue((ifp)->if_percpuq, (m));
-
-done1:
-	splx(s);
-
-done:
-	/* Setup new transfer. */
-	usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, CDCE_BUFSZ,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cdce_rxeof);
-	usbd_transfer(c->cdce_xfer);
-}
-
-Static void
-cdce_txeof(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
-{
-	struct cdce_chain	*c = priv;
-	struct cdce_softc	*sc = c->cdce_sc;
-	struct ifnet		*ifp = GET_IFP(sc);
-	usbd_status		 err;
-	int			 s;
-
-	if (sc->cdce_dying)
-		return;
-
-	s = splnet();
-
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
-			splx(s);
-			return;
-		}
-		ifp->if_oerrors++;
-		printf("%s: usb error on tx: %s\n", device_xname(sc->cdce_dev),
-		    usbd_errstr(status));
-		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->cdce_bulkout_pipe);
-		splx(s);
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
-	usbd_get_xfer_status(c->cdce_xfer, NULL, NULL, NULL, &err);
-
-	if (c->cdce_mbuf != NULL) {
-		m_freem(c->cdce_mbuf);
-		c->cdce_mbuf = NULL;
-	}
-
-	if (err)
-		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
-
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		cdce_start(ifp);
-
-	splx(s);
+	usbnet_enqueue(un, c->unc_buf, total_len, 0, 0, 0);
 }
 
-int
-cdce_activate(device_t self, enum devact act)
+static unsigned
+cdce_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
-	struct cdce_softc *sc = device_private(self);
+	/* Zaurus wants a 32-bit CRC appended to every frame */
+	uint32_t		 crc;
+	unsigned		 extra = 0;
+	unsigned		 length;
 
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		if_deactivate(GET_IFP(sc));
-		sc->cdce_dying = 1;
+	if (un->un_flags & CDCE_ZAURUS)
+		extra = sizeof(crc);
+
+	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - extra)
 		return 0;
-	default:
-		return EOPNOTSUPP;
+	length = m->m_pkthdr.len + extra;
+
+	m_copydata(m, 0, m->m_pkthdr.len, c->unc_buf);
+	if (un->un_flags & CDCE_ZAURUS) {
+		crc = htole32(~ether_crc32_le(c->unc_buf, m->m_pkthdr.len));
+		memcpy(c->unc_buf + m->m_pkthdr.len, &crc, sizeof(crc));
 	}
+
+	return length;
 }
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+USBNET_MODULE(cdce)

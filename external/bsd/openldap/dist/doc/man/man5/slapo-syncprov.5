@@ -1,5 +1,5 @@
 .TH SLAPO-SYNCPROV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2017 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2019 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -21,7 +21,7 @@ memory on startup, and maintained in memory thereafter. Checkpoints may be
 configured to write the contextCSN into the underlying database to minimize
 recovery time after an unclean shutdown.
 
-On databases that support inequality indexing, it is helpful to set an
+On databases that support inequality indexing, it is mandatory to set an
 eq index on the entryCSN attribute when using this overlay.
 .SH CONFIGURATION
 These

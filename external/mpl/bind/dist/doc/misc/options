@@ -107,7 +107,7 @@ options {
         check-wildcard <boolean>;
         cleaning-interval <integer>;
         clients-per-query <integer>;
-        cookie-algorithm ( aes | sha1 | sha256 );
+        cookie-algorithm ( aes | sha1 | sha256 | siphash24 );
         cookie-secret <string>; // may occur multiple times
         coresize ( default | unlimited | <sizeval> );
         datasize ( default | unlimited | <sizeval> );

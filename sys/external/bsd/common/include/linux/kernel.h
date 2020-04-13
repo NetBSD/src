@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.8.18.1 2019/06/10 22:07:44 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.8.18.2 2020/04/13 08:04:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,12 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <asm/byteorder.h>
+#include <asm/div64.h>
+
 #include <linux/bitops.h>
+#include <linux/log2.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
 
@@ -138,13 +143,13 @@
 	__access_once_tmp;						      \
 })
 
-static inline int64_t
+static __inline int64_t
 abs64(int64_t x)
 {
 	return (x < 0? (-x) : x);
 }
 
-static inline uintmax_t
+static __inline uintmax_t
 mult_frac(uintmax_t x, uintmax_t multiplier, uintmax_t divisor)
 {
 	uintmax_t q = (x / divisor);
@@ -155,7 +160,7 @@ mult_frac(uintmax_t x, uintmax_t multiplier, uintmax_t divisor)
 
 static int panic_timeout __unused = 0;
 
-static inline int
+static __inline int __printflike(3, 0)
 vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
 {
 	int ret;
@@ -165,13 +170,13 @@ vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
 		return ret;
 	if (__predict_false(size == 0))
 		return 0;
-	if (__predict_false(size <= ret))
+	if (__predict_false(size <= (size_t)ret))
 		return (size - 1);
 
 	return ret;
 }
 
-static inline int
+static __inline int __printflike(3, 4)
 scnprintf(char *buf, size_t size, const char *fmt, ...)
 {
 	va_list va;
@@ -184,7 +189,7 @@ scnprintf(char *buf, size_t size, const char *fmt, ...)
 	return ret;
 }
 
-static inline int
+static __inline int
 kstrtol(const char *s, unsigned base, long *vp)
 {
 	long long v;
@@ -196,7 +201,19 @@ kstrtol(const char *s, unsigned base, long *vp)
 	return 0;
 }
 
-static inline char *
+static inline long
+simple_strtol(const char *s, char **endp, unsigned base)
+{
+	long v;
+
+	*endp = NULL;		/* paranoia */
+	v = strtoll(s, endp, base);
+	if (v < LONG_MIN || LONG_MAX < v)
+		return 0;
+	return v;
+}
+
+static __inline char * __printflike(2, 0)
 kvasprintf(gfp_t gfp, const char *fmt, va_list va)
 {
 	va_list tva;
@@ -215,7 +232,7 @@ kvasprintf(gfp_t gfp, const char *fmt, va_list va)
 	return str;
 }
 
-static inline char * __printflike(2,3)
+static __inline char * __printflike(2, 3)
 kasprintf(gfp_t gfp, const char *fmt, ...)
 {
 	va_list va;

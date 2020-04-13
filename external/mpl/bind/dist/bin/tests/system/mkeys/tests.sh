@@ -492,7 +492,7 @@ n=`expr $n + 1`
 echo_i "revoke key with bad signature, check revocation is ignored ($n)"
 ret=0
 revoked=`$REVOKE -K ns1 $original`
-rkeyid=`expr $revoked : 'ns1/K\.+00.+0*\([1-9]*[0-9]*[0-9]\)'`
+rkeyid=$(keyfile_to_key_id $revoked)
 rm -f ns1/root.db.signed.jnl
 # We need to activate at least one valid DNSKEY to prevent dnssec-signzone from
 # failing.  Alternatively, we could use -P to disable post-sign verification,
@@ -763,12 +763,12 @@ rm -f ns6/managed-keys.bind*
 nextpart ns6/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns6
 # log when an unsupported algorithm is encountered during startup
-wait_for_log "skipping managed key for 'unsupported\.': algorithm is unsupported" ns6/named.run
+wait_for_log "ignoring managed key for 'unsupported\.': algorithm is unsupported" ns6/named.run
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "skipping unsupported algorithm in managed-keys ($n)"
+echo_i "ignoring unsupported algorithm in managed-keys ($n)"
 ret=0
 mkeys_status_on 6 > rndc.out.$n 2>&1
 # there should still be only two keys listed (for . and rsasha256.)
@@ -793,7 +793,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "skipping unsupported algorithm in rollover ($n)"
+echo_i "ignoring unsupported algorithm in rollover ($n)"
 ret=0
 mkeys_reload_on 1
 mkeys_refresh_on 6

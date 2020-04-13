@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.14.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.14.2 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 /*
  * While the ARM architecture defines Section mappings, large pages,
- * and small pages, the standard page size is (and will always be) 4K.
+ * and small pages, the standard MMU page size is (and will always be) 4K.
  */
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.38 2018/03/19 16:26:26 roy Exp $
+.\"	$NetBSD: recv.2,v 1.38.2.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ The
 call can be used to receive multiple messages in the same call using an array of
 .Fa mmsghdr
 elements with the following form, as defined in
-.Ao Pa sys/socket.h Ac :
+.In sys/socket.h :
 .Bd -literal
 struct mmsghdr {
 	struct msghdr	msg_hdr;	/* the message to be sent */
@@ -173,12 +173,13 @@ The
 argument to a recv call is formed by
 .Em or Ap ing
 one or more of the values:
-.Bl -column MSG_CMSG_CLOEXEC -offset indent
+.Bl -column ".Dv MSG_CMSG_CLOEXEC" -offset indent
 .It Dv MSG_CMSG_CLOEXEC Ta set the close on exec property for passed file descriptors
 .It Dv MSG_OOB Ta process out-of-band data
 .It Dv MSG_PEEK Ta peek at incoming message
 .It Dv MSG_WAITALL Ta wait for full request or error
 .El
+.Pp
 The
 .Dv MSG_OOB
 flag requests receipt of out-of-band data
@@ -205,7 +206,7 @@ call uses a
 .Fa msghdr
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
-.Ao Pa sys/socket.h Ac :
+.In sys/socket.h :
 .Bd -literal
 struct msghdr {
 	void		*msg_name;	/* optional address */
@@ -253,7 +254,7 @@ struct cmsghdr {
 As an example, one could use this to learn of changes in the data-stream
 in XNS/SPP, or in ISO, to obtain user-connection-request data by requesting
 a recvmsg with no data buffer provided immediately after an
-.Fn accept
+.Xr accept 2
 call.
 .Pp
 Open file descriptors are now passed as ancillary data for
@@ -317,7 +318,8 @@ address space.
 The receive was interrupted by delivery of a signal before
 any data were available.
 .It Bq Er EINVAL
-The total length of the I/O is more than can be expressed by the ssize_t
+The total length of the I/O is more than can be expressed by the
+.Vt ssize_t
 return value.
 .It Bq Er ENOBUFS
 A message was not delivered because it would have overflowed the buffer.

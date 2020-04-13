@@ -1,6 +1,6 @@
 /* Offload image generation tool for PTX.
 
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    Contributed by Nathan Sidwell <nathan@codesourcery.com> and
    Bernd Schmidt <bernds@codesourcery.com>.
@@ -338,7 +338,7 @@ process (FILE *in, FILE *out)
   fprintf (out, "static __attribute__((constructor)) void init (void)\n"
 	   "{\n"
 	   "  GOMP_offload_register_ver (%#x, __OFFLOAD_TABLE__,"
-	   "%d/*NVIDIA_PTX*/, &target_data);\n"
+	   " %d/*NVIDIA_PTX*/, &target_data);\n"
 	   "};\n",
 	   GOMP_VERSION_PACK (GOMP_VERSION, GOMP_VERSION_NVIDIA_PTX),
 	   GOMP_DEVICE_NVIDIA_PTX);
@@ -346,7 +346,7 @@ process (FILE *in, FILE *out)
   fprintf (out, "static __attribute__((destructor)) void fini (void)\n"
 	   "{\n"
 	   "  GOMP_offload_unregister_ver (%#x, __OFFLOAD_TABLE__,"
-	   "%d/*NVIDIA_PTX*/, &target_data);\n"
+	   " %d/*NVIDIA_PTX*/, &target_data);\n"
 	   "};\n",
 	   GOMP_VERSION_PACK (GOMP_VERSION, GOMP_VERSION_NVIDIA_PTX),
 	   GOMP_DEVICE_NVIDIA_PTX);
@@ -460,6 +460,7 @@ main (int argc, char **argv)
 
   /* Scan the argument vector.  */
   bool fopenmp = false;
+  bool fopenacc = false;
   for (int i = 1; i < argc; i++)
     {
 #define STR "-foffload-abi="
@@ -476,11 +477,15 @@ main (int argc, char **argv)
 #undef STR
       else if (strcmp (argv[i], "-fopenmp") == 0)
 	fopenmp = true;
+      else if (strcmp (argv[i], "-fopenacc") == 0)
+	fopenacc = true;
       else if (strcmp (argv[i], "-save-temps") == 0)
 	save_temps = true;
       else if (strcmp (argv[i], "-v") == 0)
 	verbose = true;
     }
+  if (!(fopenacc ^ fopenmp))
+    fatal_error (input_location, "either -fopenacc or -fopenmp must be set");
 
   struct obstack argv_obstack;
   obstack_init (&argv_obstack);
@@ -501,6 +506,8 @@ main (int argc, char **argv)
     default:
       gcc_unreachable ();
     }
+  if (fopenmp)
+    obstack_ptr_grow (&argv_obstack, "-mgomp");
 
   for (int ix = 1; ix != argc; ix++)
     {
@@ -517,8 +524,8 @@ main (int argc, char **argv)
     fatal_error (input_location, "cannot open '%s'", ptx_cfile_name);
 
   /* PR libgomp/65099: Currently, we only support offloading in 64-bit
-     configurations.  PR target/67822: OpenMP offloading to nvptx fails.  */
-  if (offload_abi == OFFLOAD_ABI_LP64 && !fopenmp)
+     configurations.  */
+  if (offload_abi == OFFLOAD_ABI_LP64)
     {
       ptx_name = make_temp_file (".mkoffload");
       obstack_ptr_grow (&argv_obstack, "-o");

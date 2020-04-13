@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.27.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.27.2.2 2020/04/13 08:05:15 martin Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -239,7 +239,8 @@ htable_unlink_entry(struct llentry *lle)
 		lle->lle_tbl = NULL;
 		lle->lle_head = NULL;
 #endif
-		KASSERT(lle->lle_tbl->llt_lle_count != 0);
+		KASSERTMSG(lle->lle_tbl->llt_lle_count != 0,
+		    "llt_lle_count=%u", lle->lle_tbl->llt_lle_count);
 		lle->lle_tbl->llt_lle_count--;
 	}
 }

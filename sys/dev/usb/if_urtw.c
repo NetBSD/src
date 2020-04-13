@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.15.2.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.15.2.3 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.15.2.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.15.2.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -614,6 +614,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->uaa_device;
 	sc->sc_hwrev = urtw_lookup(uaa->uaa_vendor, uaa->uaa_product)->rev;
+	sc->sc_init_state = URTW_INIT_NONE;
 
 	aprint_naive("\n");
 	aprint_normal(": ");
@@ -761,6 +762,8 @@ urtw_attach(device_t parent, device_t self, void *aux)
 
 	ieee80211_announce(ic);
 
+	sc->sc_init_state = URTW_INIT_INITED;
+
 	return;
 fail:
 	aprint_error(": %s failed!\n", __func__);
@@ -777,6 +780,9 @@ urtw_detach(device_t self, int flags)
 	s = splusb();
 
 	sc->sc_dying = true;
+
+	if (sc->sc_init_state < URTW_INIT_INITED)
+		goto out;
 
 	callout_halt(&sc->scan_to, NULL);
 	callout_halt(&sc->sc_led_ch, NULL);
@@ -798,8 +804,8 @@ urtw_detach(device_t self, int flags)
 	urtw_free_rx_data_list(sc);
 	urtw_close_pipes(sc);
 
+out:
 	splx(s);
-
 	return 0;
 }
 
@@ -1283,8 +1289,7 @@ urtw_get_rfchip(struct urtw_softc *sc)
 	if (sc->sc_hwrev & URTW_HWREV_8187) {
 		error = urtw_eprom_read32(sc, URTW_EPROM_RFCHIPID, &data);
 		if (error != 0)
-			panic("unsupported RF chip");
-			/* NOTREACHED */
+			return error;
 		switch (data & 0xff) {
 		case URTW_EPROM_RFCHIPID_RTL8225U:
 			error = urtw_8225_isv2(sc, &ret);
@@ -1317,8 +1322,8 @@ urtw_get_rfchip(struct urtw_softc *sc)
 	return 0;
 
 fail:
-	panic("unsupported RF chip %d", data & 0xff);
-	/* NOTREACHED */
+	aprint_error(": unsupported RF chip %d", data & 0xff);
+	return USBD_INVAL;
 }
 
 static usbd_status

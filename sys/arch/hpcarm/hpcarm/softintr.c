@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.15 2013/12/02 18:36:11 joerg Exp $	*/
+/*	$NetBSD: softintr.c,v 1.15.30.1 2020/04/13 08:03:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.15 2013/12/02 18:36:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.15.30.1 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,7 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct softintr_handler *sh;
 
-	sh = malloc(sizeof(*sh), M_DEVBUF, M_NOWAIT);
-	if (sh == NULL)
-		return NULL;
-
+	sh = malloc(sizeof(*sh), M_DEVBUF, M_WAITOK);
 	sh->sh_fun = fun;
 	sh->sh_level = ipl_to_spl(level);
 	sh->sh_arg = arg;

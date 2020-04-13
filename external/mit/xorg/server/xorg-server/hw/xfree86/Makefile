@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36.14.1 2019/06/10 22:02:46 christos Exp $
+#	$NetBSD: Makefile,v 1.36.14.2 2020/04/13 08:02:33 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR=		common ddc dixmods doc dri dri2 i2c loader \
 		x86emu xf86config xkb \
 		drivers
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_CPU} == "powerpc"
 SUBDIR+=	int10 
 .endif
 

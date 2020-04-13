@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.3.2.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -327,7 +328,7 @@ random_test(pvalue_func_t *func, isc_random_func test_func) {
 		case ISC_RANDOM_UNIFORM:
 			uniform_values = (uint16_t *)values;
 			for (i = 0;
-			     i < (sizeof(values) / sizeof(*uniform_values));
+			     i < (sizeof(values) / (sizeof(*uniform_values)));
 			     i++)
 			{
 				uniform_values[i] =

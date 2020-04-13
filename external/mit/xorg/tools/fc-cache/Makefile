@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2019/06/10 22:02:51 christos Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2020/04/13 08:02:33 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -22,7 +22,7 @@ SRCS.fontconfig=	fcatomic.c fccache.c fccfg.c \
 		ftglue.c
 
 .PATH:	${FREETYPE}/src/base
-SRCS.freetype=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
+SRCS.freetype=	ftbase.c ftbbox.c ftbdf.c ftdebug.c \
 		ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 		ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c
 
@@ -118,6 +118,8 @@ HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FONTCONFIG}/../include \
 		-I${DESTDIR}${X11INCDIR} -I. \
 		-I${FONTCONFIG}/../include
+
+HOST_CPPFLAGS+=	-DXML_POOR_ENTROPY
 
 HOST_CPPFLAGS+=	-DTOOL_FCCACHE
 

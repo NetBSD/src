@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:41 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,15 +45,10 @@
 #include "mbr.h"
 
 /* constants and defines */
-#define PREP_BOOT_SIZE	5017600	/* 5MB boot partition */
-#define MIN_PREP_BOOT	2097152 /* 2MB absoule minimum */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_BSD	PART_D
-#define PART_BOOT	PART_E
-#define PART_USR	PART_F	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_G
+#define PREP_BOOT_SIZE	(5*MEG)	/* 5MB boot partition */
+#define MIN_PREP_BOOT	(2*MEG)	/* 2MB absoule minimum */
+#define PART_BOOT	PREP_BOOT_SIZE
+#define	PART_BOOT_TYPE	FS_BOOT
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	48	/* Default root size */
@@ -66,7 +61,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 

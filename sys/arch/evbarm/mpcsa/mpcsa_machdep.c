@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.9.30.1 2019/06/10 22:06:09 christos Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.9.30.1 2019/06/10 22:06:09 christos Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.9.30.2 2020/04/13 08:03:45 martin Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.9.30.2 2020/04/13 08:03:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.9.30.1 2019/06/10 22:06:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.9.30.2 2020/04/13 08:03:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -247,7 +247,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -259,10 +259,10 @@ cpu_reboot(int howto, char *bootstr)
  *   Setting up page tables for the kernel
  *   Initialising interrupt controllers to a sane default state
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
-	u_int ret;
+	vaddr_t sp;
 	/*
 	 * basic AT91 initialization:
 	 */
@@ -283,7 +283,7 @@ initarm(void *arg)
  	bootconfig.dramblocks = 1;
  	bootconfig.dram[0].address = 0x20000000UL;
  	bootconfig.dram[0].pages =   0x04000000UL / PAGE_SIZE;
-	ret = at91bus_setup(&bootconfig);
+	sp = at91bus_setup(&bootconfig);
 
 	if (AT91_CHIP_ID() != AT91RM9200_CHIP_ID)
 		panic("%s: processor is not AT91RM9200", __FUNCTION__);
@@ -292,7 +292,7 @@ initarm(void *arg)
 	evbarm_device_register = mpcsa_device_register;
 
 	/* We return the new stack pointer address */
-	return ret;
+	return sp;
 }
 
 

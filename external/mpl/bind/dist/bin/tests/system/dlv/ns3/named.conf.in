@@ -22,21 +22,121 @@ options {
 	dnssec-enable yes;
 };
 
+/* Root hints. */
 zone "." { type hint; file "hints"; };
-zone "dlv.utld" { type master; file "dlv.signed"; };
-zone "child1.utld" { type master; file "child1.signed"; };	// dlv
-zone "child3.utld" { type master; file "child3.signed"; };	// dlv
-zone "child4.utld" { type master; file "child4.signed"; };	// dlv
-zone "child5.utld" { type master; file "child5.signed"; };	// dlv
-zone "child7.utld" { type master; file "child7.signed"; };	// no dlv
-zone "child8.utld" { type master; file "child8.signed"; };	// no dlv
-zone "child9.utld" { type master; file "child9.signed"; };	// dlv
-zone "child10.utld" { type master; file "child.db.in"; }; 	// dlv unsigned
-zone "child1.druz" { type master; file "child1.druz.signed"; };	// dlv
-zone "child3.druz" { type master; file "child3.druz.signed"; };	// dlv
-zone "child4.druz" { type master; file "child4.druz.signed"; };	// dlv
-zone "child5.druz" { type master; file "child5.druz.signed"; };	// dlv
-zone "child7.druz" { type master; file "child7.druz.signed"; };	// no dlv
-zone "child8.druz" { type master; file "child8.druz.signed"; };	// no dlv
-zone "child9.druz" { type master; file "child9.druz.signed"; };	// dlv
-zone "child10.druz" { type master; file "child.db.in"; }; 	// dlv unsigned
+
+/* DLV zone below unsigned TLD. */
+zone "dlv.utld" { type master; file "dlv.utld.signed"; };
+
+/* DLV zone signed with a disabled algorithm below unsigned TLD. */
+zone "disabled-algorithm-dlv.utld." {
+	type master;
+	file "disabled-algorithm-dlv.utld.signed";
+};
+
+/* DLV zone signed with an unsupported algorithm below unsigned TLD. */
+zone "unsupported-algorithm-dlv.utld." {
+	type master;
+	file "unsupported-algorithm-dlv.utld.signed";
+};
+
+/* Signed zone below unsigned TLD with DLV entry. */
+zone "child1.utld" { type master; file "child1.signed"; };
+
+/*
+ * Signed zone below unsigned TLD with DLV entry in DLV zone that is signed
+ * with a disabled algorithm.
+ */
+zone "child3.utld" { type master; file "child3.signed"; };
+
+/*
+ * Signed zone below unsigned TLD with DLV entry.  This one is slightly
+ * different because its children (the grandchildren) don't have a DS record in
+ * this zone.  The grandchild zones are served by ns6.
+ *
+ */
+zone "child4.utld" { type master; file "child4.signed"; };
+
+/*
+ * Signed zone below unsigned TLD with DLV entry in DLV zone that is signed
+ * with an unsupported algorithm.
+ */
+zone "child5.utld" { type master; file "child5.signed"; };
+
+/* Signed zone below unsigned TLD without DLV entry. */
+zone "child7.utld" { type master; file "child7.signed"; };
+
+/*
+ * Signed zone below unsigned TLD without DLV entry and no DS records for the
+ * grandchildren.
+ */
+zone "child8.utld" { type master; file "child8.signed"; };
+
+/* Signed zone below unsigned TLD with DLV entry. */
+zone "child9.utld" { type master; file "child9.signed"; };
+
+/* Unsigned zone below an unsigned TLD with DLV entry. */
+zone "child10.utld" { type master; file "child.db.in"; };
+
+/*
+ * Zone signed with a disabled algorithm (an algorithm that is disabled in
+ * one of the test resolvers) with DLV entry.
+ */
+zone "disabled-algorithm.utld" {
+	type master;
+	file "disabled-algorithm.utld.signed";
+};
+
+/* Zone signed with an unsupported algorithm with DLV entry. */
+zone "unsupported-algorithm.utld" {
+	type master;
+	file "unsupported-algorithm.utld.signed";
+};
+
+/*
+ * Signed zone below signed TLD with good DLV entry but no chain of
+ * trust.
+ */
+zone "child1.druz" { type master; file "child1.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD with good DLV entry but no chain of
+ * trust.  The DLV zone is signed with a disabled algorithm.
+ */
+zone "child3.druz" { type master; file "child3.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD with good DLV entry but no chain of
+ * trust.  Also there are no DS records for the grandchildren.
+ */
+zone "child4.druz" { type master; file "child4.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD with good DLV entry but no chain of
+ * trust.  The DLV zone is signed with an unsupported algorithm.
+ */
+zone "child5.druz" { type master; file "child5.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD without DLV entry, and no chain of
+ * trust.
+ */
+zone "child7.druz" { type master; file "child7.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD without DLV entry and no DS set.  Also DS
+ * records for the grandchildren are not included in the zone.
+ */
+zone "child8.druz" { type master; file "child8.druz.signed"; };
+
+/*
+ * Signed zone below signed TLD with good DLV entry but no DS set.  Also DS
+ * records for the grandchildren are not included in the zone.
+ */
+zone "child9.druz" { type master; file "child9.druz.signed"; };
+
+/*
+ * Unsigned zone below signed TLD with good DLV entry but no chain of
+ * trust.
+ */
+zone "child10.druz" { type master; file "child.db.in"; };

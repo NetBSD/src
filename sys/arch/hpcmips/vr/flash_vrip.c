@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.10.28.1 2019/06/10 22:06:18 christos Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.10.28.2 2020/04/13 08:03:51 martin Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.10.28.1 2019/06/10 22:06:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.10.28.2 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -262,11 +262,7 @@ flash_attach(device_t parent, device_t self, void *aux)
 			sc->sc_block_size = block_size;
 	}
 	
-	if ((sc->sc_buf = malloc(sc->sc_block_size, M_DEVBUF, M_NOWAIT))
-	    == NULL) {
-		printf(": can't alloc buffer space\n");
-		return;
-	}
+	sc->sc_buf = malloc(sc->sc_block_size, M_DEVBUF, M_WAITOK);
 
 	sc->sc_write_buffer_size
 		= 1 << (sc->sc_cfi_raw[CFI_MAX_WBUF_SIZE_REG0]
@@ -375,8 +371,6 @@ int
 flashwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct flash_softc	*sc;
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
 	bus_size_t		off;
 	int			stat;
 	int			error;
@@ -390,9 +384,6 @@ flashwrite(dev_t dev, struct uio *uio, int flag)
 	if (uio->uio_resid % sc->sc_block_size)
 		return EINVAL;
 
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
-	
 	for (off = uio->uio_offset;
 	     uio->uio_resid > 0;
 	     off += sc->sc_block_size) {

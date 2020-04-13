@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.66.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.66.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.66.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.66.2.2 2020/04/13 08:05:17 martin Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -105,8 +105,8 @@ ipcomp_init(struct secasvar *sav, const struct xformsw *xsp)
 	/* NB: algorithm really comes in alg_enc and not alg_comp! */
 	tcomp = ipcomp_algorithm_lookup(sav->alg_enc);
 	if (tcomp == NULL) {
-		DPRINTF(("%s: unsupported compression algorithm %d\n",
-		    __func__, sav->alg_comp));
+		DPRINTF("unsupported compression algorithm %d\n",
+		    sav->alg_comp);
 		return EINVAL;
 	}
 	sav->alg_comp = sav->alg_enc;		/* set for doing histogram */
@@ -150,21 +150,21 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Get crypto descriptors */
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
-		DPRINTF(("%s: no crypto descriptors\n", __func__));
+		DPRINTF("no crypto descriptors\n");
 		error = ENOBUFS;
 		goto error_m;
 	}
 	/* Get IPsec-specific opaque pointer */
 	tc = pool_cache_get(ipcomp_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
-		DPRINTF(("%s: cannot allocate tdb_crypto\n", __func__));
+		DPRINTF("cannot allocate tdb_crypto\n");
 		error = ENOBUFS;
 		goto error_crp;
 	}
 
 	error = m_makewritable(&m, 0, m->m_pkthdr.len, M_NOWAIT);
 	if (error) {
-		DPRINTF(("%s: m_makewritable failed\n", __func__));
+		DPRINTF("m_makewritable failed\n");
 		goto error_tc;
 	}
 
@@ -279,7 +279,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		}
 
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
-		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		DPRINTF("crypto error %d\n", crp->crp_etype);
 		error = crp->crp_etype;
 		goto bad;
 	}
@@ -308,7 +308,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	 */
 	if (m->m_len < skip + hlen && (m = m_pullup(m, skip + hlen)) == 0) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
-		DPRINTF(("%s: m_pullup failed\n", __func__));
+		DPRINTF("m_pullup failed\n");
 		error = EINVAL;
 		goto bad;
 	}
@@ -320,9 +320,9 @@ ipcomp_input_cb(struct cryptop *crp)
 	case IPPROTO_AH:
 	case IPPROTO_ESP:
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
-		DPRINTF(("%s: nested ipcomp, IPCA %s/%08lx\n", __func__,
+		DPRINTF("nested ipcomp, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi)));
+		    (u_long) ntohl(sav->spi));
 		error = EINVAL;
 		goto bad;
 	default:
@@ -333,9 +333,9 @@ ipcomp_input_cb(struct cryptop *crp)
 	error = m_striphdr(m, skip, hlen);
 	if (error) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
-		DPRINTF(("%s: bad mbuf chain, IPCA %s/%08lx\n", __func__,
+		DPRINTF("bad mbuf chain, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi)));
+		    (u_long) ntohl(sav->spi));
 		goto bad;
 	}
 
@@ -366,7 +366,7 @@ bad:
  */
 static int
 ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct comp_algo *ipcompx;
@@ -385,7 +385,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	/* Don't process the packet if it is too short */
 	if (ralen < ipcompx->minlen) {
 		IPCOMP_STATINC(IPCOMP_STAT_MINLEN);
-		return ipsec_process_done(m, isr, sav);
+		return ipsec_process_done(m, isr, sav, 0);
 	}
 
 	hlen = IPCOMP_HLENGTH;
@@ -406,21 +406,21 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 	default:
 		IPCOMP_STATINC(IPCOMP_STAT_NOPF);
-		DPRINTF(("%s: unknown/unsupported protocol family %d"
-		    ", IPCA %s/%08lx\n", __func__,
+		DPRINTF("unknown/unsupported protocol family %d"
+		    ", IPCA %s/%08lx\n",
 		    sav->sah->saidx.dst.sa.sa_family,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi)));
+		    (u_long) ntohl(sav->spi));
 		error = EPFNOSUPPORT;
 		goto bad;
 	}
 	if (skip + hlen + ralen > maxpacketsize) {
 		IPCOMP_STATINC(IPCOMP_STAT_TOOBIG);
-		DPRINTF(("%s: packet in IPCA %s/%08lx got too big "
-		    "(len %u, max len %u)\n", __func__,
+		DPRINTF("packet in IPCA %s/%08lx got too big "
+		    "(len %u, max len %u)\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
-		    skip + hlen + ralen, maxpacketsize));
+		    skip + hlen + ralen, maxpacketsize);
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -431,10 +431,9 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	m = m_clone(m);
 	if (m == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
-		DPRINTF(("%s: cannot clone mbuf chain, IPCA %s/%08lx\n",
-		    __func__,
+		DPRINTF("cannot clone mbuf chain, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi)));
+		    (u_long) ntohl(sav->spi));
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -445,8 +444,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
-		DPRINTF(("%s: failed to acquire crypto descriptor\n",
-		    __func__));
+		DPRINTF("failed to acquire crypto descriptor\n");
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -465,7 +463,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	tc = pool_cache_get(ipcomp_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
-		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
+		DPRINTF("failed to allocate tdb_crypto\n");
 		crypto_freereq(crp);
 		error = ENOBUFS;
 		goto bad;
@@ -497,6 +495,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
+	tc->tc_flags = flags;
 	tc->tc_sav = sav;
 
 	/* Crypto operation descriptor */
@@ -526,7 +525,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m, *mo;
-	int error, skip, rlen, roff;
+	int error, skip, rlen, roff, flags;
 	uint8_t prot;
 	uint16_t cpi;
 	struct ipcomp * ipcomp;
@@ -554,7 +553,7 @@ ipcomp_output_cb(struct cryptop *crp)
 			return crypto_dispatch(crp);
 		}
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
-		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		DPRINTF("crypto error %d\n", crp->crp_etype);
 		error = crp->crp_etype;
 		goto bad;
 	}
@@ -566,10 +565,10 @@ ipcomp_output_cb(struct cryptop *crp)
 		mo = m_makespace(m, skip, IPCOMP_HLENGTH, &roff);
 		if (mo == NULL) {
 			IPCOMP_STATINC(IPCOMP_STAT_WRAP);
-			DPRINTF(("%s: failed to inject IPCOMP header for "
-			    "IPCA %s/%08lx\n", __func__,
+			DPRINTF("failed to inject IPCOMP header for "
+			    "IPCA %s/%08lx\n",
 			    ipsec_address(&sav->sah->saidx.dst, buf,
-			    sizeof(buf)), (u_long) ntohl(sav->spi)));
+			    sizeof(buf)), (u_long) ntohl(sav->spi));
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -616,28 +615,28 @@ ipcomp_output_cb(struct cryptop *crp)
 #endif
 		default:
 			IPCOMP_STATINC(IPCOMP_STAT_NOPF);
-			DPRINTF(("ipcomp_output: unknown/unsupported protocol "
+			DPRINTF("unknown/unsupported protocol "
 			    "family %d, IPCA %s/%08lx\n",
 			    sav->sah->saidx.dst.sa.sa_family,
 			    ipsec_address(&sav->sah->saidx.dst, buf,
-			    sizeof(buf)), (u_long) ntohl(sav->spi)));
+			    sizeof(buf)), (u_long) ntohl(sav->spi));
 			error = EPFNOSUPPORT;
 			goto bad;
 		}
 	} else {
 		/* compression was useless, we have lost time */
 		IPCOMP_STATINC(IPCOMP_STAT_USELESS);
-		DPRINTF(("ipcomp_output_cb: compression was useless: initial"
-		    "size was %d and compressed size is %d\n", rlen,
-		    crp->crp_olen));
+		DPRINTF("compression was useless: initial size was %d "
+		    "and compressed size is %d\n", rlen, crp->crp_olen);
 	}
 
+	flags = tc->tc_flags;
 	/* Release the crypto descriptor */
 	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	error = ipsec_process_done(m, isr, sav);
+	error = ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();

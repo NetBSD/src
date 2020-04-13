@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rv770_smc.c,v 1.1.6.2 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_rv770_smc.c,v 1.1.6.3 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rv770_smc.c,v 1.1.6.2 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rv770_smc.c,v 1.1.6.3 2020/04/13 08:04:58 martin Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -316,7 +316,7 @@ int rv770_copy_bytes_to_smc(struct radeon_device *rdev,
 	spin_lock_irqsave(&rdev->smc_idx_lock, flags);
 	while (byte_count >= 4) {
 		/* SMC address space is BE */
-		data = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
+		data = ((u32)src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
 
 		ret = rv770_set_smc_sram_address(rdev, addr, limit);
 		if (ret)

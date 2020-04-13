@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7.98.1 2019/06/10 22:10:20 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.7.98.2 2020/04/13 08:05:43 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -169,7 +169,7 @@ parse(int tk) /* tk: the code for the construct scanned */
     case elselit:		/* scanned an else */
 
 	if (ps.p_stack[ps.tos] != ifhead)
-	    diag2(1, "Unmatched 'else'");
+	    diag(1, "Unmatched 'else'");
 	else {
 	    ps.ind_level = ps.il[ps.tos];	/* indentation for else should
 						 * be same as for if */
@@ -188,7 +188,7 @@ parse(int tk) /* tk: the code for the construct scanned */
 	    ps.p_stack[ps.tos] = stmt;
 	}
 	else
-	    diag2(1, "Statement nesting error");
+	    diag(1, "Statement nesting error");
 	break;
 
     case swstmt:		/* had switch (...) */
@@ -212,7 +212,7 @@ parse(int tk) /* tk: the code for the construct scanned */
 	break;
 
     default:			/* this is an error */
-	diag2(1, "Unknown code to parser");
+	diag(1, "Unknown code to parser");
 	return;
 
 

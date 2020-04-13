@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.pm,v 1.1.4.2 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: menus.pm,v 1.1.4.3 2020/04/13 08:06:00 martin Exp $	*/
 /*	NetBSD: menus.mi,v 1.14 2018/09/11 08:05:18 martin Exp 		*/
 
 /*-
@@ -32,136 +32,151 @@
 
 /* Menu system definitions -- extended partitioning */
 
+/* arg is a struct part_entry* */
 menu pmdiskentry, x=50, y=5, exit, default exit;
-	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
-	option MSG_editmbr,		exit, action { md_get_info();
-											md_pre_disklabel();
-											memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);};
-	option MSG_switchgpt,	exit, action { if (pm_gpt_convert(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-	option MSG_renamedisk,	exit, action { pm->unsaved = 1; pm_rename(pm); };
-	option MSG_fmtasraid,	exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWRAID;
-											md_make_bsd_partitions();};
-	option MSG_fmtaslvm,	exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWLVM;
-											md_make_bsd_partitions(); };
-	option MSG_encrypt,		exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWCGD;
-											md_make_bsd_partitions();
-											pm_cgd_edit(0, &(part_entry_t)
-												{.dev_ptr = pm, .dev_num = PART_E}
-											); };
-	option MSG_setbootable,	exit, action { pm->unsaved = 1;
-											pm->bootable = !pm->bootable; };
-	option MSG_erase,		next menu shred_modes;
-	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
-											pm_partusage(pm, -1, 1); };
-	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
-												pm_partusage(pm, -1, 1); };
+	display action { pmdiskentry_enable(menu, arg); };
+	option MSG_edit_parts, exit, action { pm_edit_partitions(arg); };
+	option MSG_switch_parts, exit, action {
+		struct pm_devs *my_pm = pm_from_pe(arg);
+		const char *err;
 
+		if (!convert_scheme(my_pm, false, &err))
+			err_msg_win(err);
+		else
+			pm_partusage(my_pm, -1, 1);
+	};
+	option MSG_fmtasraid, exit, action
+	{
+		pm_whole_disk(arg, SY_NEWRAID);
+	};
+	option MSG_fmtaslvm, exit, action
+	{
+		part_id new_part;
+
+		new_part = pm_whole_disk(arg, SY_NEWLVM);
+		if (new_part != NO_PART)
+			pm_set_lvmpv(pm_from_pe(arg), new_part, true);
+	};
+	option MSG_encrypt, exit, action
+	{
+		part_id new_part;
+		new_part = pm_whole_disk(arg, SY_NEWCGD);
+		if (new_part != NO_PART)
+			 pm_cgd_edit_new(pm_from_pe(arg), new_part);
+	};
+	option MSG_erase,		next menu shred_modes;
+	option MSG_undo,		exit, action {
+				/* label_read(); */ pm->unsaved = 0;
+				pm_partusage(pm, -1, 1);
+	};
+	option MSG_unconfig,	exit, action {
+				if (pm_unconfigure(pm) == 0)
+					pm_partusage(pm, -1, 1);
+	};
+
+/* arg is a struct part_entry* */
 menu pmpartentry, x=50, y=5, exit, default exit;
-	option MSG_edit,		exit, action { 
-									pm->unsaved = 1;
-									int tpfs = pm->bsdlabel[*(int*)arg].pi_fstype;
-									int tplvm = pm->bsdlabel[*(int*)arg].lvmpv;
-									pm_editpart(*(int*)arg);
-									if (tpfs != pm->bsdlabel[*(int*)arg].pi_fstype ||
-										tplvm != pm->bsdlabel[*(int*)arg].lvmpv)
-										/* Oops, partition type changed */
-										pm_partusage(pm, *(int*)arg, 1);
-								};
-	option MSG_fmtasraid,	exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_RAID);
-								};
-	option MSG_fmtaslvm,	exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_BSDFFS);
-								    pm->bsdlabel[*(int*)arg].lvmpv = 1;
-								};
-	option MSG_encrypt,		exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_CGD);
-									pm_cgd_edit(0,
-										&(part_entry_t){.dev_ptr = pm,
-														.dev_num = *(int*)arg});
-								};
-	option MSG_erase,		next menu shred_modes;
-	option MSG_doumount,	exit, action { pm_umount(pm, *(int*)arg); };
-	option MSG_Delete_partition,	exit, action {
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									if (pm->isspecial)
-										pm_unconfigure(pm);
-									else
-										pm->bsdlabel[*(int*)arg].pi_fstype = FS_UNUSED;
-									};
+	option MSG_edit, exit, action
+	{
+		struct part_entry *cur_pe = arg;
+		pm->unsaved = 1;
+		pm_editpart(cur_pe->id);
+		pm_partusage(pm, cur_pe->id, 1);
+	};
+	option MSG_fmtasraid, exit, action {
+		if (pm->no_part) {
+			hit_enter_to_continue(NULL, MSG_notsupported);
+			return -1;
+		}
+		struct part_entry *cur_pe = arg;
+		pm->unsaved = 1;
+		pm_partusage(pm, cur_pe->id, 1);
+		pm_setfstype(pm, cur_pe->id, FS_RAID, 0);
+	};
+	option MSG_fmtaslvm, exit, action {
+		if (pm->no_part) {
+			hit_enter_to_continue(NULL, MSG_notsupported);
+			return -1;
+		}
+		struct part_entry *cur_pe = arg;
+		pm->unsaved = 1;
+		pm_partusage(pm, cur_pe->id, 1);
+		pm_setfstype(pm, cur_pe->id, FS_BSDFFS, 2);
+		pm_set_lvmpv(pm, cur_pe->id, true);
+	};
+	option MSG_encrypt, exit, action {
+		if (pm->no_part) {
+			hit_enter_to_continue(NULL, MSG_notsupported);
+			return -1;
+		}
+		struct part_entry *cur_pe = arg;
+		pm->unsaved = 1;
+		pm_partusage(pm, cur_pe->id, 1);
+		pm_setfstype(pm, cur_pe->id, FS_CGD, 0);
+		pm_cgd_edit_old(cur_pe);
+	};
+	option MSG_erase, next menu shred_modes;
+	option MSG_doumount, exit, action {
+		struct part_entry *cur_pe = arg;
+		pm_umount(pm, cur_pe->id);
+	};
+	option MSG_Delete_partition, exit, action {
+		struct part_entry *cur_pe = arg;
+		pm->unsaved = 1;
+		pm_partusage(pm, cur_pe->id, 1);
+		if (pm->no_part)
+			pm_unconfigure(pm);
+		else
+			pm_setfstype(pm, cur_pe->id, FS_UNUSED, 0);
+	};
 
-menu pmgptentry, x=50, y=8, exit, default exit;
-	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
-	option MSG_switchmbr,	exit, action { if (pm_gpt_convert(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-	option MSG_setbootable,	exit, action { pm->unsaved = 1;
-												pm->bootable = !pm->bootable; };
-	option MSG_erase,		next menu shred_modes;
-	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
-											pm_partusage(pm, -1, 1); };
-	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-
+/* arg is a struct part_entry* */
 menu shred_modes, x=50, y=5, exit, default exit;
-	option MSG_fillzeros,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_ZEROS); };
+	option MSG_fillzeros, exit,
+		action { pm_shred(arg, SHRED_ZEROS); };
 	option MSG_fillrandom,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_RANDOM); };
-	option MSG_fillcrypto,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_CRYPTO); };
+		action { pm_shred(arg, SHRED_RANDOM); };
 
+/* arg is a int pointer for the requested raid level */
 menu raidlevel;
 	option MSG_raid0, exit, action { *(int *)arg = 0; };
 	option MSG_raid1, exit, action { *(int *)arg = 1; };
 	option MSG_raid4, exit, action { *(int *)arg = 4; };
 	option MSG_raid5, exit, action { *(int *)arg = 5; };
 
+/* arg is a const char ** set to the selected encryption type */
 menu cgd_enctype;
-	option "aes-xts",			exit, action { *(const char**)arg = "aes-xts"; };
-	option "aes-cbc",			exit, action { *(const char**)arg = "aes-cbc"; };
-	option "3des-cbc",			exit, action { *(const char**)arg = "3des-cbc"; };
-	option "blowfish-cbc",		exit, action { *(const char**)arg = "blowfish-cbc"; };
+	option "aes-xts", exit, action { *(const char**)arg = "aes-xts"; };
+	option "aes-cbc", exit, action { *(const char**)arg = "aes-cbc"; };
+	option "3des-cbc", exit, action { *(const char**)arg = "3des-cbc"; };
+	option "blowfish-cbc", exit, action
+				{ *(const char**)arg = "blowfish-cbc"; };
 
+/* arg is a const char ** set to the requested iv type */
 menu cgd_ivtype;
-	option "encblkno1",			exit, action { *(const char**)arg = "encblkno1"; };
-	option "encblkno8",			exit, action { *(const char**)arg = "encblkno8"; };
+	option "encblkno1", exit, action { *(const char**)arg = "encblkno1"; };
+	option "encblkno8", exit, action { *(const char**)arg = "encblkno8"; };
 
+/* arg is const char ** set to the key gen type */
 menu cgd_keygentype;
-	option "pkcs5_pbkdf2/sha1",	exit, action { *(const char**)arg = "pkcs5_pbkdf2/sha1"; };
-	option "pkcs5_pbkdf2",		exit, action { *(const char**)arg = "pkcs5_pbkdf2"; };
-	option "storedkey",			exit, action { *(const char**)arg = "storedkey"; };
-	option "randomkey",			exit, action { *(const char**)arg = "randomkey"; };
-	option "urandomkey",		exit, action { *(const char**)arg = "urandomkey"; };
-	option "shell_cmd",			exit, action { *(const char**)arg = "shell_cmd"; };
+	option "pkcs5_pbkdf2/sha1", exit, action
+				 { *(const char**)arg = "pkcs5_pbkdf2/sha1"; };
+	option "pkcs5_pbkdf2", exit, action
+				{ *(const char**)arg = "pkcs5_pbkdf2"; };
+	option "storedkey", exit, action
+				{ *(const char**)arg = "storedkey"; };
+	option "randomkey", exit, action
+				{ *(const char**)arg = "randomkey"; };
+	option "urandomkey", exit, action
+				{ *(const char**)arg = "urandomkey"; };
+	option "shell_cmd", exit, action
+				{ *(const char**)arg = "shell_cmd"; };
 
+/* art is a const char ** set to the requested verification type */
 menu cgd_verifytype;
-	option "none",				exit, action { *(const char**)arg = "none"; };
-	option "disklabel",			exit, action { *(const char**)arg = "disklabel"; };
-	option "ffs",				exit, action { *(const char**)arg = "ffs"; };
-	option "re-enter",			exit, action { *(const char**)arg = "re-enter"; };
+	option "none",		exit, action { *(const char**)arg = "none"; };
+	option "disklabel",	exit, action { *(const char**)arg = "disklabel"; };
+	option "MBR",		exit, action { *(const char**)arg = "mbr"; };
+	option "GPT",		exit, action { *(const char**)arg = "gpt"; };
+	option "ffs",		exit, action { *(const char**)arg = "ffs"; };
+	option "re-enter",	exit, action { *(const char**)arg = "re-enter"; };

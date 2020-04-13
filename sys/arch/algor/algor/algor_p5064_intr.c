@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.28 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.28.30.1 2020/04/13 08:03:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.28 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.28.30.1 2020/04/13 08:03:29 martin Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -445,10 +445,7 @@ algor_p5064_intr_establish(int irq, int (*func)(void *), void *arg)
 
 	KASSERT(irq == irqmap->irqidx);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = 0;

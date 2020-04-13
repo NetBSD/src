@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.28.2.2 2020/04/08 14:08:28 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.28.2.3 2020/04/13 08:05:00 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.28.2.2 2020/04/08 14:08:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.28.2.3 2020/04/13 08:05:00 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1493,6 +1493,8 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # else
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif
+			if (error)
+				*mpp = NULL; /* m0 has been freed */
 		} else {
 			error = EMSGSIZE;
 		}

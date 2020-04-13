@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.4 2011/08/25 11:02:57 jmcneill Exp $ */
+/* $NetBSD: bus.h,v 1.4.54.1 2020/04/13 08:04:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,12 @@ struct bus_space_tag;
 typedef struct bus_space_tag *bus_space_tag_t;
 
 typedef vaddr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxVADDR
+
 typedef paddr_t bus_addr_t;
+
+#define PRIxBUSADDR	PRIxPADDR
 
 bool bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 bool bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,

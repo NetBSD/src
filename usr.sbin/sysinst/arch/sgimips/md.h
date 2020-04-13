@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:42 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,14 +39,7 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_BOOT	PART_D
-#define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_F
-
-#define BOOT_SIZE	(4 * MEG)	/* Enough for a GENERIC kernel */
+#define PART_BOOT	(4 * MEG)	/* Enough for a GENERIC kernel */
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
@@ -73,7 +66,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC32_IP2x"
 #define SET_KERNEL_2_NAME	"kern-GENERIC32_IP3x"

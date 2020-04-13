@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagflags.h,v 1.5 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagflags.h,v 1.5.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,12 +43,12 @@
  * by DoAccess, SelectAlgorithm, and the DAG creation routines.
  *
  * If USE_DAG or USE_ASM is specified, neither the DAG nor the ASM
- * will be modified, which means that you can't SUPRESS if you
+ * will be modified, which means that you can't SUPPRESS if you
  * specify USE_DAG.
  */
 
 #define RF_DAG_FLAGS_NONE             0	/* no flags */
-#define RF_DAG_SUPPRESS_LOCKS     (1<<0)	/* supress all stripe locks in
+#define RF_DAG_SUPPRESS_LOCKS     (1<<0)	/* suppress all stripe locks in
 						 * the DAG */
 #define RF_DAG_NONBLOCKING_IO     (1<<3)	/* cause DoAccess to be
 						 * non-blocking */

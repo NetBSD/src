@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.20 2018/06/06 01:49:08 maya Exp $ */
+/* $NetBSD: omrasops.c,v 1.20.2.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.20 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.20.2.1 2020/04/13 08:03:56 martin Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -1202,7 +1202,6 @@ omrasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
 	ri->ri_rows = ri->ri_emuheight / ri->ri_font->fontheight;
 	ri->ri_emustride = ri->ri_emuwidth * bpp >> 3;
-	ri->ri_delta = ri->ri_stride - ri->ri_emustride;
 	ri->ri_ccol = 0;
 	ri->ri_crow = 0;
 	ri->ri_pelbytes = bpp >> 3;

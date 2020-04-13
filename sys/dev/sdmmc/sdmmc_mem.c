@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.64.4.2 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.64.4.3 2020/04/13 08:04:48 martin Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.64.4.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.64.4.3 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -651,7 +651,7 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, uint32_t ocr, uint32_t *ocrp)
 		}
 
 		error = ETIMEDOUT;
-		sdmmc_delay(10000);
+		sdmmc_pause(10000, NULL);
 	}
 	if (ocrp != NULL) {
 		if (error == 0 &&
@@ -771,7 +771,7 @@ sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			break;
 		case 208000:
 			timing = SDMMC_TIMING_UHS_SDR104;
-			break; 
+			break;
 		default:
 			return 0;
 		}
@@ -1057,7 +1057,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 
 		/*
-		 * HS_TIMING must be set to “0x1” before setting BUS_WIDTH
+		 * HS_TIMING must be set to 0x1 before setting BUS_WIDTH
 		 * for dual data rate operation
 		 */
 		if (ddr &&

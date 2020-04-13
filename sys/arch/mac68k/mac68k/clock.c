@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 2011/02/08 20:20:18 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.56.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2011/02/08 20:20:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.56.1 2020/04/13 08:03:57 martin Exp $");
+
+#include "opt_rtc_offset.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -391,6 +393,12 @@ mac68k_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		mac68k_trust_pram = 0;
 	}
 	tvp->tv_sec = timbuf;
+#if !defined(RTC_OFFSET) || RTC_OFFSET == 0
+	/*
+	 * Adjust GTM bias unless RTC_OFFSET is set explicitly.
+	 */
+	tvp->tv_sec -= macos_gmtbias * 60;
+#endif
 	tvp->tv_usec = 0;
 	return 0;
 }

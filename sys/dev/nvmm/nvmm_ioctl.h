@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.7.2.2 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.7.2.3 2020/04/13 08:04:25 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,6 +62,13 @@ struct nvmm_ioc_vcpu_destroy {
 	nvmm_cpuid_t cpuid;
 };
 
+struct nvmm_ioc_vcpu_configure {
+	nvmm_machid_t machid;
+	nvmm_cpuid_t cpuid;
+	uint64_t op;
+	void *conf;
+};
+
 struct nvmm_ioc_vcpu_setstate {
 	nvmm_machid_t machid;
 	nvmm_cpuid_t cpuid;
@@ -82,7 +89,7 @@ struct nvmm_ioc_vcpu_run {
 	nvmm_machid_t machid;
 	nvmm_cpuid_t cpuid;
 	/* output */
-	struct nvmm_exit exit;
+	struct nvmm_vcpu_exit exit;
 };
 
 struct nvmm_ioc_hva_map {
@@ -115,7 +122,8 @@ struct nvmm_ioc_gpa_unmap {
 
 struct nvmm_ctl_mach_info {
 	nvmm_machid_t machid;
-	size_t nvcpus;
+	uint32_t nvcpus;
+	uint64_t nram;
 	pid_t pid;
 	time_t time;
 };
@@ -134,14 +142,15 @@ struct nvmm_ioc_ctl {
 #define NVMM_IOC_MACHINE_CONFIGURE	_IOW ('N',  3, struct nvmm_ioc_machine_configure)
 #define NVMM_IOC_VCPU_CREATE		_IOW ('N',  4, struct nvmm_ioc_vcpu_create)
 #define NVMM_IOC_VCPU_DESTROY		_IOW ('N',  5, struct nvmm_ioc_vcpu_destroy)
-#define NVMM_IOC_VCPU_SETSTATE		_IOW ('N',  6, struct nvmm_ioc_vcpu_setstate)
-#define NVMM_IOC_VCPU_GETSTATE		_IOW ('N',  7, struct nvmm_ioc_vcpu_getstate)
-#define NVMM_IOC_VCPU_INJECT		_IOW ('N',  8, struct nvmm_ioc_vcpu_inject)
-#define NVMM_IOC_VCPU_RUN		_IOWR('N',  9, struct nvmm_ioc_vcpu_run)
-#define NVMM_IOC_GPA_MAP		_IOW ('N', 10, struct nvmm_ioc_gpa_map)
-#define NVMM_IOC_GPA_UNMAP		_IOW ('N', 11, struct nvmm_ioc_gpa_unmap)
-#define NVMM_IOC_HVA_MAP		_IOW ('N', 12, struct nvmm_ioc_hva_map)
-#define NVMM_IOC_HVA_UNMAP		_IOW ('N', 13, struct nvmm_ioc_hva_unmap)
+#define NVMM_IOC_VCPU_CONFIGURE		_IOW ('N',  6, struct nvmm_ioc_vcpu_configure)
+#define NVMM_IOC_VCPU_SETSTATE		_IOW ('N',  7, struct nvmm_ioc_vcpu_setstate)
+#define NVMM_IOC_VCPU_GETSTATE		_IOW ('N',  8, struct nvmm_ioc_vcpu_getstate)
+#define NVMM_IOC_VCPU_INJECT		_IOW ('N',  9, struct nvmm_ioc_vcpu_inject)
+#define NVMM_IOC_VCPU_RUN		_IOWR('N', 10, struct nvmm_ioc_vcpu_run)
+#define NVMM_IOC_GPA_MAP		_IOW ('N', 11, struct nvmm_ioc_gpa_map)
+#define NVMM_IOC_GPA_UNMAP		_IOW ('N', 12, struct nvmm_ioc_gpa_unmap)
+#define NVMM_IOC_HVA_MAP		_IOW ('N', 13, struct nvmm_ioc_hva_map)
+#define NVMM_IOC_HVA_UNMAP		_IOW ('N', 14, struct nvmm_ioc_hva_unmap)
 
 #define NVMM_IOC_CTL			_IOW ('N', 20, struct nvmm_ioc_ctl)
 

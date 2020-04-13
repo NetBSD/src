@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx7,v 1.6 2018/03/17 18:34:09 ryo Exp $
+#	$NetBSD: files.imx7,v 1.6.2.1 2020/04/13 08:03:34 martin Exp $
 #
 # Configuration info for the Freescale i.MX7
 #
@@ -52,16 +52,15 @@ file	arch/arm/imx/imxwdog.c			imxwdog
 # iMX GPIO
 device	imxgpio: gpiobus
 attach	imxgpio at axi
-file	arch/arm/imx/imxgpio.c			imxgpio	needs-flag
+file	arch/arm/imx/imxgpio.c			imxgpio		needs-flag
 file	arch/arm/imx/imx7_gpio.c		imxgpio
-defflag opt_imxgpio.h				IMX_GPIO_INTR_SPLIT
 
 # iMX7 IOMUX
 device	imxiomux
 attach	imxiomux at axi
 file	arch/arm/imx/imx7_iomux.c		imxiomux
 
-# iMX iic Controler
+# iMX iic controller
 device	imxi2c: motoi2c, i2cbus, i2cexec
 attach	imxi2c at axi
 file	arch/arm/imx/imxi2c.c			imxi2c

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.14.2.2 2020/04/08 14:07:29 martin Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.14.2.3 2020/04/13 08:03:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14.2.2 2020/04/08 14:07:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14.2.3 2020/04/13 08:03:34 martin Exp $");
 
 #include "vlan.h"
 
@@ -132,7 +132,6 @@ static void enet_attach_evcnt(struct enet_softc *);
 static void enet_update_evcnt(struct enet_softc *);
 #endif
 
-static int enet_intr(void *);
 static void enet_tick(void *);
 static int enet_tx_intr(void *);
 static int enet_rx_intr(void *);
@@ -167,33 +166,16 @@ static void enet_drain_rxbuf(struct enet_softc *);
 static int enet_alloc_dma(struct enet_softc *, size_t, void **,
 			  bus_dmamap_t *);
 
-CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
-    enet_match, enet_attach, NULL, NULL);
-
-void
-enet_attach_common(device_t self, bus_space_tag_t iot,
-    bus_dma_tag_t dmat, bus_addr_t addr, bus_size_t size, int irq)
+int
+enet_attach_common(device_t self)
 {
 	struct enet_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_mii;
 
-	sc->sc_dev = self;
-	sc->sc_iot = iot;
-	sc->sc_addr = addr;
-	sc->sc_dmat = dmat;
-
-	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
-	if (bus_space_map(sc->sc_iot, sc->sc_addr, size, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(self, "cannot map registers\n");
-		return;
-	}
-
 	/* allocate dma buffer */
 	if (enet_alloc_ring(sc))
-		return;
+		return -1;
 
 #define IS_ENADDR_ZERO(enaddr)				\
 	((enaddr[0] | enaddr[1] | enaddr[2] |		\
@@ -224,32 +206,6 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	    ether_sprintf(sc->sc_enaddr));
 
 	enet_init_regs(sc, 1);
-
-	/* setup interrupt handlers */
-	if ((sc->sc_ih = intr_establish(irq, IPL_NET,
-	    IST_LEVEL, enet_intr, sc)) == NULL) {
-		aprint_error_dev(self, "unable to establish interrupt\n");
-		goto failure;
-	}
-
-	if (sc->sc_imxtype == 7) {
-		/* i.MX7 use 3 interrupts */
-		if ((sc->sc_ih2 = intr_establish(irq + 1, IPL_NET,
-		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self,
-			    "unable to establish 2nd interrupt\n");
-			intr_disestablish(sc->sc_ih);
-			goto failure;
-		}
-		if ((sc->sc_ih3 = intr_establish(irq + 2, IPL_NET,
-		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self,
-			    "unable to establish 3rd interrupt\n");
-			intr_disestablish(sc->sc_ih2);
-			intr_disestablish(sc->sc_ih);
-			goto failure;
-		}
-	}
 
 	/* callout will be scheduled from enet_init() */
 	callout_init(&sc->sc_tick_ch, 0);
@@ -312,11 +268,7 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 
 	sc->sc_stopping = false;
 
-	return;
-
- failure:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
-	return;
+	return 0;
 }
 
 #ifdef ENET_EVENT_COUNTER
@@ -447,7 +399,7 @@ enet_tick(void *arg)
 	splx(s);
 }
 
-static int
+int
 enet_intr(void *arg)
 {
 	struct enet_softc *sc;
@@ -1006,7 +958,7 @@ enet_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct enet_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
@@ -1589,14 +1541,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 						 * m_dat[] (aligned) to en-
 						 * large trailingspace
 						 */
-						if (mt->m_flags & M_EXT) {
-							ap = mt->m_ext.ext_buf;
-						} else if (mt->m_flags &
-						    M_PKTHDR) {
-							ap = mt->m_pktdat;
-						} else {
-							ap = mt->m_dat;
-						}
+						ap = M_BUFADDR(mt);
 						ap = ALIGN_PTR(ap, ALIGNBYTE);
 						memcpy(ap, mt->m_data,
 						    mt->m_len);
@@ -1837,9 +1782,9 @@ enet_init_regs(struct enet_softc *sc, int init)
 	ENET_REG_WRITE(sc, ENET_MIBC, ENET_MIBC_MIB_CLEAR);
 	ENET_REG_WRITE(sc, ENET_MIBC, 0);
 
-	/* MII speed setup. MDCclk(=2.5MHz) = ENET_PLL/((val+1)*2) */
-	val = ((sc->sc_pllclock) / 500000 - 1) / 10;
-	ENET_REG_WRITE(sc, ENET_MSCR, val << 1);
+	/* MII speed setup. MDCclk(=2.5MHz) = (internal module clock)/((val+1)*2) */
+	val = (sc->sc_clock + (5000000 - 1)) / 5000000 - 1;
+	ENET_REG_WRITE(sc, ENET_MSCR, __SHIFTIN(val, ENET_MSCR_MII_SPEED));
 
 	/* Opcode/Pause Duration */
 	ENET_REG_WRITE(sc, ENET_OPD, 0x00010020);

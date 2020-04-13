@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_dev.c,v 1.3 2010/11/22 19:59:04 plunky Exp $	*/
+/*	$NetBSD: bt_dev.c,v 1.3.46.1 2020/04/13 08:03:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_dev.c,v 1.3 2010/11/22 19:59:04 plunky Exp $");
+__RCSID("$NetBSD: bt_dev.c,v 1.3.46.1 2020/04/13 08:03:08 martin Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -92,7 +92,7 @@ bt_devaddr(const char *name, bdaddr_t *addr)
 		return bt_devname(NULL, addr);
 
 	memset(&btr, 0, sizeof(btr));
-	strncpy(btr.btr_name, name, HCI_DEVNAME_SIZE);
+	strlcpy(btr.btr_name, name, HCI_DEVNAME_SIZE);
 
 	s = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
 	if (s == -1)
@@ -781,7 +781,7 @@ bt__devinfo(int s, const char *name, struct bt_devinfo *info)
 	struct btreq			btr;
 
 	memset(&btr, 0, sizeof(btr));
-	strncpy(btr.btr_name, name, HCI_DEVNAME_SIZE);
+	strlcpy(btr.btr_name, name, HCI_DEVNAME_SIZE);
 
 	if (ioctl(s, SIOCGBTINFO, &btr) == -1)
 		return -1;

@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.15.2.1 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: as3722.c,v 1.15.2.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.15.2.1 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.15.2.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ as3722_wdt_setmode(struct sysmon_wdog *smw)
 	struct as3722_softc * const sc = smw->smw_cookie;
 	int error;
 
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		iic_acquire_bus(sc->sc_i2c, flags);
@@ -409,7 +409,7 @@ as3722_wdt_tickle(struct sysmon_wdog *smw)
 	struct as3722_softc * const sc = smw->smw_cookie;
 	int error;
 
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	error = as3722_set_clear(sc, AS3722_WATCHDOG_SIGNAL_REG,
@@ -426,7 +426,7 @@ as3722_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	uint8_t buf[6];
 	int error = 0;
 
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	error += as3722_read(sc, AS3722_RTC_SECOND_REG, &buf[0], flags);
@@ -468,7 +468,7 @@ as3722_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	buf[4] = bintobcd(dt->dt_mon + 1) & 0x1f;
 	buf[5] = bintobcd(dt->dt_year - AS3722_START_YEAR) & 0x7f;
 
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	error += as3722_write(sc, AS3722_RTC_SECOND_REG, buf[0], flags);
@@ -489,7 +489,7 @@ as3722_regulator_attach(struct as3722_softc *sc)
 	struct as3722reg_attach_args raa;
 	int phandle, child;
 	int error;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t tmp;
 
 	iic_acquire_bus(sc->sc_i2c, flags);
@@ -572,7 +572,7 @@ as3722reg_enable(device_t dev, bool enable)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	int error;
 
 	if (!regdef->enable_mask)
@@ -596,7 +596,7 @@ as3722reg_set_voltage_ldo(device_t dev, u_int min_uvol, u_int max_uvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t set_v = 0x00;
 	u_int uvol;
 	int error;
@@ -633,7 +633,7 @@ as3722reg_get_voltage_ldo(device_t dev, u_int *puvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t v;
 	int error;
 
@@ -663,7 +663,7 @@ as3722reg_set_voltage_sd0(device_t dev, u_int min_uvol, u_int max_uvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t set_v = 0x00;
 	u_int uvol;
 	int error;
@@ -703,7 +703,7 @@ as3722reg_get_voltage_sd0(device_t dev, u_int *puvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t v;
 	int error;
 
@@ -740,7 +740,7 @@ as3722reg_set_voltage_sd4(device_t dev, u_int min_uvol, u_int max_uvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t set_v = 0x00;
 	u_int uvol;
 	int error;
@@ -785,7 +785,7 @@ as3722reg_get_voltage_sd4(device_t dev, u_int *puvol)
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
 	const struct as3722regdef *regdef = sc->sc_regdef;
-	const int flags = (cold ? I2C_F_POLL : 0);
+	const int flags = 0;
 	uint8_t v;
 	int error;
 

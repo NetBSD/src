@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.50 2016/01/03 08:17:24 mlelstv Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.50.18.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.50 2016/01/03 08:17:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.50.18.1 2020/04/13 08:04:47 martin Exp $");
 
 #include <sys/errno.h>
 
@@ -94,8 +94,9 @@ StateName(RF_AccessState_t state)
 #endif
 
 void
-rf_ContinueRaidAccess(RF_RaidAccessDesc_t *desc)
+rf_ContinueRaidAccess(void *v)
 {
+	RF_RaidAccessDesc_t *desc = v;
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
 	RF_AccessState_t current_state = desc->states[current_state_index];
@@ -211,10 +212,8 @@ rf_ContinueDagAccess(RF_DagList_t *dagList)
 int
 rf_State_LastState(RF_RaidAccessDesc_t *desc)
 {
-	void    (*callbackFunc) (RF_CBParam_t) = desc->callbackFunc;
-	RF_CBParam_t callbackArg;
-
-	callbackArg.p = desc->callbackArg;
+	void    (*callbackFunc) (void *) = desc->callbackFunc;
+	void * callbackArg = desc->callbackArg;
 
 	/*
 	 * We don't support non-async IO.
@@ -281,7 +280,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
 #endif
-	RF_CallbackDesc_t *cb;
+	RF_CallbackFuncDesc_t *cb;
 	RF_Raid_t *raidPtr;
 	int     suspended = RF_FALSE;
 	int need_cb, used_cb;
@@ -307,13 +306,13 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	if (need_cb) {
 		/* create a callback if we might need it...
 		   and we likely do. */
-		cb = rf_AllocCallbackDesc();
+		cb = rf_AllocCallbackFuncDesc();
 	}
 
 	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	if (raidPtr->accesses_suspended) {
-		cb->callbackFunc = (void (*) (RF_CBParam_t)) rf_ContinueRaidAccess;
-		cb->callbackArg.p = (void *) desc;
+		cb->callbackFunc = rf_ContinueRaidAccess;
+		cb->callbackArg = desc;
 		cb->next = raidPtr->quiesce_wait_list;
 		raidPtr->quiesce_wait_list = cb;
 		suspended = RF_TRUE;
@@ -322,7 +321,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	if ((need_cb == 1) && (used_cb == 0)) {
-		rf_FreeCallbackDesc(cb);
+		rf_FreeCallbackFuncDesc(cb);
 	}
 
 #if RF_ACC_TRACE > 0
@@ -394,7 +393,7 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 			lastStripeID = asm_p->stripeID;
 
 			RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
-					      (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
+					      rf_ContinueRaidAccess, desc, asm_p,
 					      raidPtr->Layout.dataSectorsPerStripe);
 			if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
 						 &asm_p->lockReqDesc)) {
@@ -409,7 +408,7 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 
 				asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
 				val = rf_ForceOrBlockRecon(raidPtr, asm_p,
-							   (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
+							   rf_ContinueRaidAccess, desc);
 				if (val == 0) {
 					asm_p->flags |= RF_ASM_FLAGS_RECON_BLOCKED;
 				} else {

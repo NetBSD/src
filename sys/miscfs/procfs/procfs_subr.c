@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.112.2.1 2019/06/10 22:09:06 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.112.2.2 2020/04/13 08:05:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.112.2.1 2019/06/10 22:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.112.2.2 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ procfs_rw(void *v)
 int
 vfs_getuserstr(struct uio *uio, char *bf, int *buflenp)
 {
-	int xlen;
+	size_t xlen;
 	int error;
 
 	if (uio->uio_offset != 0)

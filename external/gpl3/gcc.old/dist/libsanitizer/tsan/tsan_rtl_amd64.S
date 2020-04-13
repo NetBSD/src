@@ -1,7 +1,13 @@
 #include "sanitizer_common/sanitizer_asm.h"
-.hidden __tsan_trace_switch
-.globl __tsan_trace_switch_thunk
-__tsan_trace_switch_thunk:
+#if !defined(__APPLE__)
+.section .text
+#else
+.section __TEXT,__text
+#endif
+
+ASM_HIDDEN(__tsan_trace_switch)
+.globl ASM_TSAN_SYMBOL(__tsan_trace_switch_thunk)
+ASM_TSAN_SYMBOL(__tsan_trace_switch_thunk):
   CFI_STARTPROC
   # Save scratch registers.
   push %rax
@@ -41,9 +47,9 @@ __tsan_trace_switch_thunk:
   shl $4, %rsp
 
 #ifdef __PIC__
-  call __tsan_trace_switch@PLT
+  call ASM_TSAN_SYMBOL(__tsan_trace_switch@PLT)
 #else
-  call __tsan_trace_switch
+  call ASM_TSAN_SYMBOL(__tsan_trace_switch)
 #endif
 
   # Unalign stack frame back.
@@ -83,9 +89,9 @@ __tsan_trace_switch_thunk:
   ret
   CFI_ENDPROC
 
-.hidden __tsan_report_race
-.globl __tsan_report_race_thunk
-__tsan_report_race_thunk:
+ASM_HIDDEN(__tsan_report_race)
+.globl ASM_TSAN_SYMBOL(__tsan_report_race_thunk)
+ASM_TSAN_SYMBOL(__tsan_report_race_thunk):
   CFI_STARTPROC
   # Save scratch registers.
   push %rax
@@ -125,9 +131,9 @@ __tsan_report_race_thunk:
   shl $4, %rsp
 
 #ifdef __PIC__
-  call __tsan_report_race@PLT
+  call ASM_TSAN_SYMBOL(__tsan_report_race@PLT)
 #else
-  call __tsan_report_race
+  call ASM_TSAN_SYMBOL(__tsan_report_race)
 #endif
 
   # Unalign stack frame back.
@@ -167,75 +173,95 @@ __tsan_report_race_thunk:
   ret
   CFI_ENDPROC
 
-.hidden __tsan_setjmp
+ASM_HIDDEN(__tsan_setjmp)
+#if !defined(__APPLE__)
 .comm _ZN14__interception11real_setjmpE,8,8
-.globl setjmp
-.type setjmp, @function
-setjmp:
+#endif
+.globl ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp)
+ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp))
+ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp):
   CFI_STARTPROC
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
   // obtain %rsp
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 8(%rsp), %rdi
   mov %rdi, %rsi
-#else
+#elif defined(__APPLE__)
+  lea 16(%rsp), %rdi
+  mov %rdi, %rsi
+#elif defined(__linux__)
   lea 16(%rsp), %rdi
   mov %rdi, %rsi
   xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
   rol $0x11, %rsi
+#else
+# error "Unknown platform"
 #endif
   // call tsan interceptor
-  call __tsan_setjmp
+  call ASM_TSAN_SYMBOL(__tsan_setjmp)
   // restore env parameter
   pop %rdi
   CFI_ADJUST_CFA_OFFSET(-8)
   CFI_RESTORE(%rdi)
   // tail jump to libc setjmp
   movl $0, %eax
+#if !defined(__APPLE__)
   movq _ZN14__interception11real_setjmpE@GOTPCREL(%rip), %rdx
   jmp *(%rdx)
+#else
+  jmp ASM_TSAN_SYMBOL(setjmp)
+#endif
   CFI_ENDPROC
-.size setjmp, .-setjmp
+ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp))
 
 .comm _ZN14__interception12real__setjmpE,8,8
-.globl _setjmp
-.type _setjmp, @function
-_setjmp:
+.globl ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp)
+ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp))
+ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp):
   CFI_STARTPROC
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
   // obtain %rsp
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 8(%rsp), %rdi
   mov %rdi, %rsi
-#else
+#elif defined(__APPLE__)
+  lea 16(%rsp), %rdi
+  mov %rdi, %rsi
+#elif defined(__linux__)
   lea 16(%rsp), %rdi
   mov %rdi, %rsi
   xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
   rol $0x11, %rsi
+#else
+# error "Unknown platform"
 #endif
   // call tsan interceptor
-  call __tsan_setjmp
+  call ASM_TSAN_SYMBOL(__tsan_setjmp)
   // restore env parameter
   pop %rdi
   CFI_ADJUST_CFA_OFFSET(-8)
   CFI_RESTORE(%rdi)
   // tail jump to libc setjmp
   movl $0, %eax
+#if !defined(__APPLE__)
   movq _ZN14__interception12real__setjmpE@GOTPCREL(%rip), %rdx
   jmp *(%rdx)
+#else
+  jmp ASM_TSAN_SYMBOL(_setjmp)
+#endif
   CFI_ENDPROC
-.size _setjmp, .-_setjmp
+ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp))
 
 .comm _ZN14__interception14real_sigsetjmpE,8,8
-.globl sigsetjmp
-.type sigsetjmp, @function
-sigsetjmp:
+.globl ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp)
+ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp))
+ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp):
   CFI_STARTPROC
   // save env parameter
   push %rdi
@@ -249,17 +275,22 @@ sigsetjmp:
   sub $8, %rsp
   CFI_ADJUST_CFA_OFFSET(8)
   // obtain %rsp
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 24(%rsp), %rdi
   mov %rdi, %rsi
-#else
+#elif defined(__APPLE__)
+  lea 32(%rsp), %rdi
+  mov %rdi, %rsi
+#elif defined(__linux__)
   lea 32(%rsp), %rdi
   mov %rdi, %rsi
   xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
   rol $0x11, %rsi
+#else
+# error "Unknown platform"
 #endif
   // call tsan interceptor
-  call __tsan_setjmp
+  call ASM_TSAN_SYMBOL(__tsan_setjmp)
   // unalign stack frame
   add $8, %rsp
   CFI_ADJUST_CFA_OFFSET(-8)
@@ -273,15 +304,20 @@ sigsetjmp:
   CFI_RESTORE(%rdi)
   // tail jump to libc sigsetjmp
   movl $0, %eax
+#if !defined(__APPLE__)
   movq _ZN14__interception14real_sigsetjmpE@GOTPCREL(%rip), %rdx
   jmp *(%rdx)
+#else
+  jmp ASM_TSAN_SYMBOL(sigsetjmp)
+#endif
   CFI_ENDPROC
-.size sigsetjmp, .-sigsetjmp
+ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp))
 
+#if !defined(__APPLE__)
 .comm _ZN14__interception16real___sigsetjmpE,8,8
-.globl __sigsetjmp
-.type __sigsetjmp, @function
-__sigsetjmp:
+.globl ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp)
+ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp))
+ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp):
   CFI_STARTPROC
   // save env parameter
   push %rdi
@@ -295,7 +331,7 @@ __sigsetjmp:
   sub $8, %rsp
   CFI_ADJUST_CFA_OFFSET(8)
   // obtain %rsp
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 24(%rsp), %rdi
   mov %rdi, %rsi
 #else
@@ -305,7 +341,7 @@ __sigsetjmp:
   rol $0x11, %rsi
 #endif
   // call tsan interceptor
-  call __tsan_setjmp
+  call ASM_TSAN_SYMBOL(__tsan_setjmp)
   // unalign stack frame
   add $8, %rsp
   CFI_ADJUST_CFA_OFFSET(-8)
@@ -322,7 +358,8 @@ __sigsetjmp:
   movq _ZN14__interception16real___sigsetjmpE@GOTPCREL(%rip), %rdx
   jmp *(%rdx)
   CFI_ENDPROC
-.size __sigsetjmp, .-__sigsetjmp
+ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp))
+#endif  // !defined(__APPLE__)
 
 #if defined(__FreeBSD__) || defined(__linux__) || defined(__NetBSD__)
 /* We do not need executable stack.  */

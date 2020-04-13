@@ -1,4 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.11 2011/10/20 10:36:42 wiz Exp $
+.\"	$NetBSD: mstohz.9,v 1.11.42.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 20, 2011
+.Dd September 28, 2019
 .Dt MSTOHZ 9
 .Os
 .Sh NAME
@@ -33,10 +33,10 @@
 .Nd convert between milliseconds and system clock ticks
 .Sh SYNOPSIS
 .In sys/param.h
-.Ft int
-.Fn mstohz "int ms"
-.Ft int
-.Fn hztoms "int hz"
+.Ft unsigned int
+.Fn mstohz "unsigned int ms"
+.Ft unsigned int
+.Fn hztoms "unsigned int hz"
 .Sh DESCRIPTION
 The
 .Fn mstohz

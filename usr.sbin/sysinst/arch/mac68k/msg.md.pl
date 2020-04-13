@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.1.28.1 2020/04/13 08:06:03 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -44,7 +44,7 @@ message md_may_remove_boot_medium
 {
 }
 
-message fullpart
+message mac68k_fullpart
 {Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz
 zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
 
@@ -80,14 +80,14 @@ na dysk, dopoki nie ukonczysz ustawiania partycji.
 
 Kontynuowac?}
 
-message part_header
+message mac68k_part_header
 {Part    przesun    rozmiar FStype uzycie    punk montazu (nazwa)
 ---- ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
 {%3s%c %-10d %-10d %-6s %-9s %s\n}
 
-message ovrwrite
+message mac68k_ovrwrite
 {Twoj dysk posiada aktualnie przynajmniej jedna partycje HFS MacOS.
 Nadpisywanie calego dysku spowoduje usuniecie partycji, co moze
 spowodowac ze dysk stanie sie nie uzyteczny pod MacOS. Powinienes
@@ -101,7 +101,7 @@ jak np stary Instalator.
 Czy napewno chcesz nadpisac partycje MacOS HFS?
 }
 
-message editparttable
+message mac68k_editparttable
 {Edycja Mapy Partycji Dysku: Mapa na dysku zostala przeszukana pod katem
 wszystkich partycji uzytkownika, ale tylko te uzyteczne w NetBSD, zostaly
 wyswietlone.

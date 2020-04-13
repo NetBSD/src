@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.14.1 2019/06/10 22:10:24 christos Exp $
+#	$NetBSD: Makefile,v 1.40.14.2 2020/04/13 08:05:48 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -29,8 +29,8 @@ SRCS+=	ip6.c
 
 .include "../../compat/exec.mk"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.df.c += -Wno-error=format-truncation
-.endif
+COPTS.df.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.ifstat.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.ps.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

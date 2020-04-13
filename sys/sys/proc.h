@@ -1,7 +1,7 @@
-/*	$NetBSD: proc.h,v 1.348.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.348.2.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -87,6 +87,7 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
+#include <sys/radixtree.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
@@ -153,8 +154,8 @@ struct emul {
 	const uint32_t	*e_nomodbits;	/* sys_nosys/sys_nomodule flags
 					 * for syscall_disestablish() */
 	const char * const *e_syscallnames; /* System call name array */
+	struct sc_autoload *e_sc_autoload; /* List of autoloadable syscalls */
 					/* Signal sending function */
-	struct sc_autoload *e_sc_autoload;	/* List of autoloadable syscalls */
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
 	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
@@ -222,6 +223,8 @@ struct emul {
  * l:	proc_lock
  * t:	p_stmutex
  * p:	p_lock
+ * r:	p_treelock (only for use by LWPs in the same proc)
+ * p,r:	p_lock + p_treelock to modify, either to inspect
  * (:	updated atomically
  * ::	unlocked, stable
  */
@@ -229,11 +232,7 @@ struct vmspace;
 
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
-
-	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
 	kmutex_t	*p_lock;	/* :: general mutex */
-	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
-	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
 	kcondvar_t	p_waitcv;	/* p: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* p: wait, stop CV on LWPs */
 
@@ -253,7 +252,7 @@ struct proc {
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: PK_* flags */
 	int		p_sflag;	/* p: PS_* flags */
-	int		p_slflag;	/* s, l: PSL_* flags */
+	int		p_slflag;	/* p, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* p: S* process status. */
@@ -266,6 +265,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
 	LIST_HEAD(, lwp) p_lwps;	/* p: List of LWPs. */
+	struct radix_tree p_lwptree;	/* p,r: Tree of LWPs. */
 	struct ras	*p_raslist;	/* a: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
@@ -311,11 +311,7 @@ struct proc {
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
-	pid_t 		p_fpid;		/* :: forked pid */
-	pid_t 		p_vfpid;	/* :: vforked pid */
-	pid_t 		p_vfpid_done;	/* :: vforked done pid */
-	lwpid_t		p_lwp_created;	/* :: lwp created */
-	lwpid_t		p_lwp_exited;	/* :: lwp exited */
+	pid_t		p_oppid;	/* :: cached original parent pid */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
@@ -347,6 +343,14 @@ struct proc {
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
 	struct kdtrace_proc *p_dtrace;	/* :: DTrace-specific data. */
+/*
+ * Locks in their own cache line towards the end.
+ */
+	kmutex_t	p_auxlock	/* :: secondary, longer term lock */
+	    __aligned(COHERENCY_UNIT);
+	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
+	krwlock_t	p_reflock;	/* :: lock for debugger, procfs */
+	krwlock_t	p_treelock;	/* :: lock on p_lwptree */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
@@ -394,7 +398,6 @@ struct proc {
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
-#define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_COREDUMP	0x20000000 /* Process core-dumped */
 #define	PS_CONTINUED	0x40000000 /* Process is continued */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
@@ -411,6 +414,8 @@ struct proc {
 			0x00000008 /* traced process wants LWP create events */
 #define	PSL_TRACELWP_EXIT	\
 			0x00000010 /* traced process wants LWP exit events */
+#define	PSL_TRACEPOSIX_SPAWN	\
+			0x00000020 /* traced process wants posix_spawn events */
 
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */

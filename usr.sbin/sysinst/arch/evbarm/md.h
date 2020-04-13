@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.1 2020/04/13 08:06:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,21 +38,31 @@
 #include "mbr.h"
 
 /* Constants and defines */
-#define PART_BOOT		PART_E
-#define PART_BOOT_MSDOS		PART_BOOT
-#define PART_BOOT_PI_MOUNT	"/boot"
-#define PART_BOOT_PI_FLAGS	PIF_MOUNT
+#define PART_BOOT		(16*MEG)
+#define PART_BOOT_LARGE		(32*MEG)
+#define PART_BOOT_TYPE		FS_MSDOS
+#define	PART_BOOT_SUBT		MBR_PTYPE_FAT16L
+#define PART_BOOT_MOUNT		"/boot"
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
 
+#define	DEFSWAPSIZE	(-1)
+
+/* use UFS2 by default for ffs */
+#define	DEFAULT_UFS2
+
 #define HAVE_UFS2_BOOT
+
+/* allow using tmpfs for /tmp instead of mfs */
+#define HAVE_TMPFS
 
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
+#if 0	/* XXX */
 #define SET_KERNEL_1_NAME	"kern-ADI_BRH"
 #define SET_KERNEL_2_NAME	"kern-INTEGRATOR"
 #define SET_KERNEL_3_NAME	"kern-IQ80310"
@@ -62,7 +72,13 @@
 #define SET_KERNEL_7_NAME	"kern-TS7200"
 #define SET_KERNEL_8_NAME	"kern-RPI"
 #define SET_KERNEL_9_NAME	"kern-KUROBOX_PRO"
-#define SET_KERNEL_RPI		SET_KERNEL_8
+#endif
+
+#ifdef _LP64
+#define SET_KERNEL_1_NAME	"kern-GENERIC64"
+#else
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
+#endif
 
 #define MD_SETS_SELECTED SET_SYSTEM
 
@@ -77,6 +93,28 @@
 #define DISKLABEL_CMD "disklabel -w -r"
 
 /* Special board type routines need a switch */
-#define BOARD_TYPE_NORMAL	0
-#define BOARD_TYPE_RPI		1
+#define BOARD_TYPE_NORMAL	0	/* assume u-boot */
+#define BOARD_TYPE_RPI		1	/* RPi firmware booted us */
+#define	BOARD_TYPE_ACPI		2	/* generic SBSA machine */
 int boardtype;
+
+/*
+ * Size limit for the initial GPT part, in bytes. This allows us to
+ * dd u-boot at 8k into the image for allwinner SoCs.
+ */
+#define	MD_GPT_INITIAL_SIZE		(8*1024)
+
+
+#define	HAVE_GPT_BOOT		/* yes, u-boot can boot us from GPT */
+#define	NO_DISKLABEL_BOOT	/* ... but not directly from disklabel */
+
+#define MD_MAY_SWAP_TO(DISK)	may_swap_if_not_sdmmc(DISK)
+
+int evbarm_extract_finalize(int);
+#define	MD_SET_EXTRACT_FINALIZE(UP)	evbarm_extract_finalize(UP)
+
+void evbarm_part_defaults(struct pm_devs*, struct part_usage_info*,
+            size_t num_usage_infos);
+
+#define MD_PART_DEFAULTS(A,B,C)	evbarm_part_defaults(A,B,C)
+

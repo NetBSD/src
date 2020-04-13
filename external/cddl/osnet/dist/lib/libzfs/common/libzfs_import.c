@@ -1270,9 +1270,7 @@ zpool_find_import_impl(libzfs_handle_t *hdl, importargs_t *iarg)
 			static const char mib_name[] = "hw.disknames";
 			size_t len;
 			char *disknames, *last, *name;
-			char part;
 
-			part = getrawpartition();
 			if (sysctlbyname(mib_name, NULL, &len, NULL, 0) == -1) {
 				zfs_error_aux(hdl, strerror(errno));
 				(void) zfs_error_fmt(hdl, EZFS_BADPATH,
@@ -1285,11 +1283,10 @@ zpool_find_import_impl(libzfs_handle_t *hdl, importargs_t *iarg)
 			disknames = zfs_alloc(hdl, len + 2);
 			(void)sysctlbyname(mib_name, disknames, &len, NULL, 0);
 
-
 			for ((name = strtok_r(disknames, " ", &last)); name;
 			    (name = strtok_r(NULL, " ", &last))) {
 				slice = zfs_alloc(hdl, sizeof (rdsk_node_t));
-				slice->rn_name = zfs_asprintf(hdl, "%s%c", name, 'a' + part);
+				slice->rn_name = zfs_strdup(hdl, name);
 				slice->rn_avl = &slice_cache;
 				slice->rn_dfd = dfd;
 				slice->rn_hdl = hdl;

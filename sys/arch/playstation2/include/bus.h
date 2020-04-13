@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 2014/07/04 07:59:17 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.30.1 2020/04/13 08:04:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -105,11 +105,16 @@
 typedef long bus_addr_t;
 typedef long bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 /*
  * Access methods for bus space.
  */
 typedef const struct playstation2_bus_space *bus_space_tag_t;
 typedef bus_addr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxBUSADDR
 
 struct extent; /* forward declaration */
 

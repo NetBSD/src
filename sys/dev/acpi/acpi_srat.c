@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.c,v 1.5 2017/12/28 08:49:28 maxv Exp $ */
+/* $NetBSD: acpi_srat.c,v 1.5.4.1 2020/04/13 08:04:18 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.5 2017/12/28 08:49:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.5.4.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.5 2017/12/28 08:49:28 maxv Exp $");
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_srat.h>
+
+#include <uvm/uvm_extern.h>
 
 static ACPI_TABLE_SRAT *srat;
 
@@ -79,7 +81,7 @@ static TAILQ_HEAD(, memlist) memlisthead;
 static struct cpulist *
 cpu_alloc(void)
 {
-	return kmem_zalloc(sizeof(struct cpulist), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(struct cpulist), KM_SLEEP);
 }
 
 static void
@@ -91,7 +93,7 @@ cpu_free(struct cpulist *c)
 static struct memlist *
 mem_alloc(void)
 {
-	return kmem_zalloc(sizeof(struct memlist), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(struct memlist), KM_SLEEP);
 }
 
 static void
@@ -334,20 +336,17 @@ acpisrat_refresh(void)
 
 	nnodes = MAX(cnodes, mnodes) + 1;
 
+	if (nnodes == 0 || nmems == 0 || ncpus == 0) {
+		rc = ENOENT;
+		goto fail;
+	}
+
 	node_array = kmem_zalloc(nnodes * sizeof(struct acpisrat_node),
-	    KM_NOSLEEP);
-	if (node_array == NULL)
-		return ENOMEM;
-
+	    KM_SLEEP);
 	cpu_array = kmem_zalloc(ncpus * sizeof(struct acpisrat_cpu),
-	    KM_NOSLEEP);
-	if (cpu_array == NULL)
-		return ENOMEM;
-
+	    KM_SLEEP);
 	mem_array = kmem_zalloc(nmems * sizeof(struct acpisrat_mem),
-	    KM_NOSLEEP);
-	if (mem_array == NULL)
-		return ENOMEM;
+	    KM_SLEEP);
 
 	i = 0;
 	CPU_FOREACH(citer) {
@@ -366,15 +365,20 @@ acpisrat_refresh(void)
 	for (i = 0; i < nnodes; i++) {
 		node_array[i].nodeid = i;
 
-		node_array[i].cpu = kmem_zalloc(node_array[i].ncpus *
-		    sizeof(struct acpisrat_cpu *), KM_NOSLEEP);
-		node_array[i].mem = kmem_zalloc(node_array[i].nmems *
-		    sizeof(struct acpisrat_mem *), KM_NOSLEEP);
+		if (node_array[i].ncpus != 0) {
+			node_array[i].cpu = kmem_zalloc(node_array[i].ncpus *
+			    sizeof(struct acpisrat_cpu *), KM_SLEEP);
+		}
+		if (node_array[i].nmems != 0) {
+			node_array[i].mem = kmem_zalloc(node_array[i].nmems *
+			    sizeof(struct acpisrat_mem *), KM_SLEEP);
+		}
 
 		k = 0;
 		for (j = 0; j < ncpus; j++) {
 			if (cpu_array[j].nodeid != i)
 				continue;
+			KASSERT(node_array[i].cpu != NULL);
 			node_array[i].cpu[k] = &cpu_array[j];
 			k++;
 		}
@@ -383,11 +387,13 @@ acpisrat_refresh(void)
 		for (j = 0; j < nmems; j++) {
 			if (mem_array[j].nodeid != i)
 				continue;
+			KASSERT(node_array[i].mem != NULL);
 			node_array[i].mem[k] = &mem_array[j];
 			k++;
 		}
 	}
 
+ fail:
 	while ((citer = CPU_FIRST()) != NULL) {
 		CPU_REM(citer);
 		cpu_free(citer);
@@ -398,7 +404,7 @@ acpisrat_refresh(void)
 		mem_free(miter);
 	}
 
-	return 0;
+	return rc;
 }
 
 /*
@@ -464,6 +470,28 @@ acpisrat_dump(void)
 			    PRIx64" - 0x%"PRIx64" flags %u)\n",
 			    m.nodeid, j, m.baseaddress,
 			    m.baseaddress + m.length, m.flags);
+		}
+	}
+}
+
+void
+acpisrat_load_uvm(void)
+{
+	uint32_t i, j, nn, nm;
+	struct acpisrat_mem m;
+
+	nn = acpisrat_nodes();
+	aprint_debug("SRAT: %u NUMA nodes\n", nn);
+	for (i = 0; i < nn; i++) {
+		nm = acpisrat_node_memoryranges(i);
+		for (j = 0; j < nm; j++) {
+			acpisrat_mem(i, j, &m);
+			aprint_debug("SRAT: node %u memory range %u (0x%"
+			    PRIx64" - 0x%"PRIx64" flags %u)\n",
+			    m.nodeid, j, m.baseaddress,
+			    m.baseaddress + m.length, m.flags);
+			uvm_page_numa_load(trunc_page(m.baseaddress),
+			    trunc_page(m.length), m.nodeid);
 		}
 	}
 }
@@ -534,4 +562,3 @@ acpisrat_get_node(uint32_t apicid)
 
 	return NULL;
 }
-

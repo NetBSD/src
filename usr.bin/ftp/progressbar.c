@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.22 2012/06/27 22:07:36 riastradh Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.22.32.1 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.22 2012/06/27 22:07:36 riastradh Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.22.32.1 2020/04/13 08:05:42 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -87,6 +87,7 @@ updateprogressmeter(int dummy)
 /*
  * List of order of magnitude suffixes, per IEC 60027-2.
  */
+#if !defined(NO_PROGRESS) || !defined(STANDALONE_PROGRESS)
 static const char * const suffixes[] = {
 	"",	/* 2^0  (byte) */
 	"KiB",	/* 2^10 Kibibyte */
@@ -102,6 +103,7 @@ static const char * const suffixes[] = {
 #endif
 };
 #define NSUFFIXES	(int)(sizeof(suffixes) / sizeof(suffixes[0]))
+#endif
 
 /*
  * Display a transfer progress bar if progress is non-zero.
@@ -139,8 +141,10 @@ progressmeter(int flag)
 			 *	these appropriately.
 			 */
 #endif
+#if !defined(NO_PROGRESS) || !defined(STANDALONE_PROGRESS)
 	size_t		len;
 	char		buf[256];	/* workspace for progress bar */
+#endif
 #ifndef NO_PROGRESS
 #define	BAROVERHEAD	45		/* non `*' portion of progress bar */
 					/*

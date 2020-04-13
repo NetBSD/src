@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.28 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.28.18.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.28 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.28.18.1 2020/04/13 08:03:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,17 +118,11 @@ grf_init(int n)
 		if (grf_softc == NULL)
 			sc = (struct grf_softc *)
 			    malloc(numgrf * sizeof(*sc),
-			    M_DEVBUF, M_NOWAIT);
+			    M_DEVBUF, M_WAITOK);
 		else
 			sc = (struct grf_softc *)
 			    realloc(grf_softc, numgrf * sizeof(*sc),
-			    M_DEVBUF, M_NOWAIT);
-		if (sc == NULL) {
-			printf("WARNING: no memory for grf emulation\n");
-			if (grf_softc != NULL)
-				free(grf_softc, M_DEVBUF);
-			return;
-		}
+			    M_DEVBUF, M_WAITOK);
 		grf_softc = sc;
 
 		/* Initialize per-softc structures. */

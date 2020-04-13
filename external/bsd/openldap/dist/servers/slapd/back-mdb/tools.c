@@ -1,10 +1,10 @@
-/*	$NetBSD: tools.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: tools.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* tools.c - tools for slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011-2017 The OpenLDAP Foundation.
+ * Copyright 2011-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tools.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: tools.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -435,7 +435,6 @@ static int mdb_tool_next_id(
 	struct berval *text,
 	int hole )
 {
-	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
 	struct berval dn = e->e_name;
 	struct berval ndn = e->e_nname;
 	struct berval pdn, npdn, nmatched;
@@ -1324,7 +1323,6 @@ mdb_dn2id_upgrade( BackendDB *be ) {
 	MDB_txn *mt;
 	MDB_cursor *mc = NULL;
 	MDB_val key, data;
-	char *ptr;
 	int rc, writes=0, depth=0;
 	int enable_meter = 0;
 	ID id = 0, *num, count = 0;

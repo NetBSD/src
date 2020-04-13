@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21.16.1 2019/06/10 22:09:34 christos Exp $
+# $NetBSD: Makefile,v 1.21.16.2 2020/04/13 08:05:13 martin Exp $
 #
 # Public Domain.
 #
@@ -11,14 +11,14 @@ KMOD=		npf
 IOCONF=		npf.ioconf
 SRCS=		npf.c npf_alg.c npf_conf.c npf_ctl.c npf_handler.c
 SRCS+=		npf_bpf.c npf_if.c npf_inet.c npf_mbuf.c npf_nat.c
-SRCS+=		npf_ruleset.c npf_conn.c npf_conndb.c npf_rproc.c
+SRCS+=		npf_params.c npf_ruleset.c npf_rproc.c
+SRCS+=		npf_conn.c npf_conndb.c npf_connkey.c npf_portmap.c
 SRCS+=		npf_state.c npf_state_tcp.c npf_tableset.c
-SRCS+=		lpm.c npf_sendpkt.c npf_worker.c npf_ifaddr.c npf_os.c
+SRCS+=		lpm.c npf_sendpkt.c npf_worker.c npf_os.c npf_ifaddr.c
+
 SRCS+=		nvlist.c nvpair.c nv_kern_netbsd.c dnvlist.c
 
 CPPFLAGS+=	-DINET6
 CPPFLAGS+=	-I${S}/external/bsd/libnv/dist
-
-WARNS=		3
 
 .include <bsd.kmodule.mk>

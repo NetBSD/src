@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.5 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.5.2.1 2020/04/13 08:04:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -143,6 +143,11 @@ union __fpscr {
 	} __bits;
 };
 
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 __fenv_static __inline int
 feclearexcept(int __excepts)
 {
@@ -272,6 +277,10 @@ feupdateenv(const fenv_t *__envp)
 	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic pop
+#endif
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 

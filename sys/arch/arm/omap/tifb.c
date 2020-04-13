@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.7 2017/03/01 16:27:25 skrll Exp $	*/
+/*	$NetBSD: tifb.c,v 1.7.14.1 2020/04/13 08:03:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.7 2017/03/01 16:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.7.14.1 2020/04/13 08:03:36 martin Exp $");
 
 #include "opt_omap.h"
 
@@ -816,7 +816,8 @@ tifb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct tifb_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_stride * sc->sc_pi->panel_height) {
+	if (offset >= 0 && offset < sc->sc_palettesize +
+	    sc->sc_stride * sc->sc_pi->panel_height) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
 		    offset, prot, BUS_DMA_PREFETCHABLE);
 		return pa;

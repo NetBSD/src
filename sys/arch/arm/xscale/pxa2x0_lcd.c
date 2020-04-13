@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.36 2015/10/17 16:34:43 jmcneill Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.36.18.1 2020/04/13 08:03:39 martin Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.36 2015/10/17 16:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.36.18.1 2020/04/13 08:03:39 martin Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -515,12 +515,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 		return EINVAL;
 	}
 
-	scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT);
-	if (scr == NULL)
-		return ENOMEM;
-
-	memset(scr, 0, sizeof(*scr));
-
+	scr = malloc(sizeof(*scr), M_DEVBUF, M_WAITOK | M_ZERO);
 	scr->nsegs = 0;
 	scr->depth = depth;
 	scr->buf_size = size;

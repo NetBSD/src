@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.68.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: an.c,v 1.68.2.3 2020/04/13 08:04:21 martin Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.68.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.68.2.3 2020/04/13 08:04:21 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1240,8 +1240,9 @@ an_set_nwkey_eap(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 			 */
 			memset(unibuf, 0, sizeof(unibuf));
 			/* XXX: convert password to unicode */
-			for (i = 0; i < len; i++)
-				unibuf[i] = key->an_key[i];
+			int j;
+			for (j = 0; j < len; j++)
+				unibuf[j] = key->an_key[j];
 			/* set PasswordHash */
 			MD4Init(&ctx);
 			MD4Update(&ctx, (u_int8_t *)unibuf, len * 2);
@@ -1795,11 +1796,11 @@ an_alloc_fid(struct an_softc *sc, int len, int *idp)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_ALLOC)
 			break;
-		if (i == AN_TIMEOUT) {
-			printf("%s: timeout in alloc\n", device_xname(sc->sc_dev));
-			return ETIMEDOUT;
-		}
 		DELAY(10);
+	}
+	if (i == AN_TIMEOUT) {
+		printf("%s: timeout in alloc\n", device_xname(sc->sc_dev));
+		return ETIMEDOUT;
 	}
 
 	*idp = CSR_READ_2(sc, AN_ALLOC_FID);

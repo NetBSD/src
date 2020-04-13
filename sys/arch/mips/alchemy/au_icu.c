@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.29 2012/01/14 16:09:19 kiyohara Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.29.48.1 2020/04/13 08:03:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.29 2012/01/14 16:09:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.29.48.1 2020/04/13 08:03:59 martin Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
@@ -199,10 +199,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	if (req > 1)
 		panic("au_intr_establish: bogus request %d", req);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.30.2.2 2020/04/08 14:08:11 martin Exp $ */
+/* $NetBSD: if_plip.c,v 1.30.2.3 2020/04/13 08:04:46 martin Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.30.2.2 2020/04/08 14:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.30.2.3 2020/04/13 08:04:46 martin Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -398,12 +398,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* Allocate a buffer if necessary */
 			if (sc->sc_ifbuf == NULL) {
 				sc->sc_ifbuf = malloc(sc->sc_if.if_mtu +
-					MLPIPHDRLEN, M_DEVBUF, M_NOWAIT);
-				if (!sc->sc_ifbuf) {
-					error = ENOBUFS;
-					ppbus_release_bus(ppbus, dev, 0, 0);
-					break;
-				}
+					MLPIPHDRLEN, M_DEVBUF, M_WAITOK);
 			}
 
 			ppbus_wctr(ppbus, IRQENABLE);
@@ -422,13 +417,8 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (sc->sc_if.if_mtu == ifr->ifr_mtu)
 			break;
 		ptr = sc->sc_ifbuf;
-		sc->sc_ifbuf = malloc(ifr->ifr_mtu+MLPIPHDRLEN, M_DEVBUF,
-			M_NOWAIT);
-		if (!sc->sc_ifbuf) {
-			sc->sc_ifbuf = ptr;
-			error = ENOBUFS;
-			break;
-		}
+		sc->sc_ifbuf = malloc(ifr->ifr_mtu + MLPIPHDRLEN, M_DEVBUF,
+			M_WAITOK);
 		if (ptr)
 			free(ptr,M_DEVBUF);
 		/*FALLTHROUGH*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.4.2.3 2020/04/08 14:08:03 martin Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.4.2.4 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -76,10 +76,26 @@
 /* #define AUDIO_SUPPORT_TRACK_VOLUME */
 
 /*
- * Whether use C language's "implementation defined" behavior (note that
- * it's not "undefined" behavior).  It improves performance well.
+ * AUDIO_SCALEDOWN()
+ * This macro should be used for audio wave data only.
+ *
+ * The arithmetic shift right (ASR) (in other words, floor()) is good for
+ * this purpose, and will be faster than division on the most platform.
+ * The division (in other words, truncate()) is not so bad alternate for
+ * this purpose, and will be fast enough.
+ * (Using ASR is 1.9 times faster than division on my amd64, and 1.3 times
+ * faster on my m68k.  -- isaki 201801.)
+ *
+ * However, the right shift operator ('>>') for negative integer is
+ * "implementation defined" behavior in C (note that it's not "undefined"
+ * behavior).  So only if implementation defines '>>' as ASR, we use it.
  */
-#define AUDIO_USE_C_IMPLEMENTATION_DEFINED_BEHAVIOR
+#if defined(__GNUC__)
+/* gcc defines '>>' as ASR. */
+#define AUDIO_SCALEDOWN(value, bits)	((value) >> (bits))
+#else
+#define AUDIO_SCALEDOWN(value, bits)	((value) / (1 << (bits)))
+#endif
 
 /* conversion stage */
 typedef struct {
@@ -208,7 +224,16 @@ struct audio_trackmixer {
 
 	int		frames_per_block; /* number of frames in a block */
 
-	u_int		volume;		/* software master volume (0..256) */
+	/*
+	 * software master volume (0..256)
+	 * Must be protected by sc_intr_lock.
+	 */
+	u_int		volume;
+	/*
+	 * Volume recovery timer in auto gain control.
+	 * Must be protected by sc_intr_lock.
+	 */
+	int		voltimer;
 
 	audio_format2_t	mixfmt;
 	void		*mixsample;	/* mixing buf in double-sized int */

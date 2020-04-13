@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.427.2.2 2020/04/08 14:07:22 martin Exp $
+#       $NetBSD: Makefile,v 1.427.2.3 2020/04/13 08:03:26 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -55,15 +55,15 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	spi.9 splraiseipl.9 \
 	suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
+	tcp_congctl.9 thmap.9 threadpool.9 timecounter.9 time_second.9 todr.9 \
 	ts2timo.9 tvtohz.9 \
-	ucas.9 uiomove.9 ucom.9 userret.9 \
+	ubc.9 ucas.9 ucom.9 ufetch.9 uiomove.9 \
+	usbd_status.9 usbdi.9 usbnet.9 \
+	userret.9 ustore.9 \
+	uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
-	video.9 vme.9 \
-	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
-	ubc.9 ufetch.9 usbd_status.9 usbdi.9 ustore.9 uvm.9 uvm_hotplug.9 \
-	uvm_km.9 uvm_map.9 \
-	vmem.9 wapbl.9 wdc.9 workqueue.9 \
+	video.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 vmem.9  \
+	wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
 
@@ -793,6 +793,7 @@ MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=roundup.9 howmany.9 \
 	roundup.9 rounddown.9 \
+	roundup.9 rounddown2.9 \
 	roundup.9 roundup2.9 \
 	roundup.9 powerof2.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \

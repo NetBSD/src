@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2017/04/08 17:40:50 scole Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.14.1 2020/04/13 08:03:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2017/04/08 17:40:50 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.14.1 2020/04/13 08:03:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -94,11 +94,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (id == sapic->Id && eid == sapic->Eid)
 		ci = curcpu();
 	else {
-		ci = (struct cpu_info *)kmem_zalloc(sizeof(*ci), KM_NOSLEEP);
-		if (ci == NULL) {
-			aprint_error_dev(self, "memory alloc failed\n");
-			return;
-		}
+		ci = (struct cpu_info *)kmem_zalloc(sizeof(*ci), KM_SLEEP);
 	}
 	sc->sc_info = ci;
 

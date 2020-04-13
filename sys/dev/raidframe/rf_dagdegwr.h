@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.h,v 1.6 2006/05/14 21:45:00 elad Exp $	*/
+/*	$NetBSD: rf_dagdegwr.h,v 1.6.152.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@ void rf_CreateDegradedWriteDAG(RF_Raid_t * raidPtr,
 void rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-    int nfaults, int (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
+    int nfaults, void (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
 
 void rf_WriteGenerateFailedAccessASMs(RF_Raid_t * raidPtr,
       RF_AccessStripeMap_t * asmap, RF_PhysDiskAddr_t ** pdap,
@@ -49,6 +49,6 @@ void rf_DoubleDegSmallWrite(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
             RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
             RF_AllocListElem_t * allocList, const char *redundantReadNodeName,
             const char *redundantWriteNodeName, const char *recoveryNodeName,
-            int (*recovFunc) (RF_DagNode_t *));
+            void (*recovFunc) (RF_DagNode_t *));
 
 #endif				/* !_RF__RF_DAGDEGWR_H_ */

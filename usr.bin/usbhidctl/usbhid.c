@@ -1,11 +1,11 @@
-/*	$NetBSD: usbhid.c,v 1.37 2017/12/10 20:38:14 bouyer Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.37.4.1 2020/04/13 08:05:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by David Sainty <David.Sainty@dtsp.co.nz>
+ * by David Sainty <dsainty@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.37 2017/12/10 20:38:14 bouyer Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.37.4.1 2020/04/13 08:05:49 martin Exp $");
 #endif
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.68 2012/10/27 17:18:11 chs Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.68.38.1 2020/04/13 08:04:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.68 2012/10/27 17:18:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.68.38.1 2020/04/13 08:04:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -719,8 +719,7 @@ sparc_vme_intr_map(void *cookie, int level, int vec,
 {
 	struct sparc_vme_intr_handle *ih;
 
-	ih = (vme_intr_handle_t)
-	    malloc(sizeof(struct sparc_vme_intr_handle), M_DEVBUF, M_NOWAIT);
+	ih = malloc(sizeof(struct sparc_vme_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->pri = level;
 	ih->vec = vec;
 	ih->sc = cookie;/*XXX*/
@@ -765,9 +764,7 @@ sparc_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int level,
 			break;
 
 	if (ih == NULL) {
-		ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
-		if (ih == NULL)
-			panic("vme_addirq");
+		ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_WAITOK|M_ZERO);
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
 		intr_establish(pil, 0, ih, NULL, false);

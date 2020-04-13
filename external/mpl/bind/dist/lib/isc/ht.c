@@ -1,4 +1,4 @@
-/*	$NetBSD: ht.c,v 1.3.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: ht.c,v 1.3.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -97,6 +97,8 @@ isc_ht_destroy(isc_ht_t **htp) {
 	REQUIRE(htp != NULL);
 
 	ht = *htp;
+	*htp = NULL;
+
 	REQUIRE(ISC_HT_VALID(ht));
 
 	ht->magic = 0;
@@ -118,7 +120,6 @@ isc_ht_destroy(isc_ht_t **htp) {
 	isc_mem_put(ht->mctx, ht->table, ht->size * sizeof(isc_ht_node_t*));
 	isc_mem_putanddetach(&ht->mctx, ht, sizeof(struct isc_ht));
 
-	*htp = NULL;
 }
 
 isc_result_t
@@ -131,7 +132,7 @@ isc_ht_add(isc_ht_t *ht, const unsigned char *key,
 	REQUIRE(ISC_HT_VALID(ht));
 	REQUIRE(key != NULL && keysize > 0);
 
-	hash = isc_hash_function(key, keysize, true, NULL);
+	hash = isc_hash_function(key, keysize, true);
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
@@ -166,7 +167,7 @@ isc_ht_find(const isc_ht_t *ht, const unsigned char *key,
 	REQUIRE(key != NULL && keysize > 0);
 	REQUIRE(valuep == NULL || *valuep == NULL);
 
-	hash = isc_hash_function(key, keysize, true, NULL);
+	hash = isc_hash_function(key, keysize, true);
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
@@ -191,7 +192,7 @@ isc_ht_delete(isc_ht_t *ht, const unsigned char *key, uint32_t keysize) {
 	REQUIRE(key != NULL && keysize > 0);
 
 	prev = NULL;
-	hash = isc_hash_function(key, keysize, true, NULL);
+	hash = isc_hash_function(key, keysize, true);
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
@@ -306,8 +307,7 @@ isc_ht_iter_delcurrent_next(isc_ht_iter_t *it) {
 			it->cur = ht->table[it->i];
 	}
 
-	hash = isc_hash_function(to_delete->key, to_delete->keysize, true,
-				 NULL);
+	hash = isc_hash_function(to_delete->key, to_delete->keysize, true);
 	node = ht->table[hash & ht->mask];
 	while (node != to_delete) {
 		prev = node;

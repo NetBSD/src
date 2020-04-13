@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.h,v 1.13 2018/04/04 08:59:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.h,v 1.13.2.1 2020/04/13 08:04:46 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -146,6 +146,7 @@ s32 ixgbe_set_vlvf_generic(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 			   bool vlvf_bypass);
 s32 ixgbe_clear_vfta_generic(struct ixgbe_hw *hw);
 s32 ixgbe_find_vlvf_slot(struct ixgbe_hw *hw, u32 vlan, bool vlvf_bypass);
+s32 ixgbe_toggle_txdctl_generic(struct ixgbe_hw *hw, u32 vind);
 
 s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw,
 			       ixgbe_link_speed *speed,

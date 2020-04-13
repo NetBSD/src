@@ -148,6 +148,7 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach bus attach.
 	 */
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 	(void) config_found_ia(self, "spibus", &sba, spibus_print);
 }

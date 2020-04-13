@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.35.2.1 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.35.2.2 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -307,7 +307,7 @@ netbsd32_from_mmsghdr(struct netbsd32_mmsghdr *mmsg32,
 }
 
 static __inline void
-netbsd32_from_statvfs(const struct statvfs *sbp, struct netbsd32_statvfs *sb32p)
+netbsd32_from_statvfs90(const struct statvfs *sbp, struct netbsd32_statvfs90 *sb32p)
 {
 	sb32p->f_flag = sbp->f_flag;
 	sb32p->f_bsize = (netbsd32_u_long)sbp->f_bsize;
@@ -343,6 +343,47 @@ netbsd32_from_statvfs(const struct statvfs *sbp, struct netbsd32_statvfs *sb32p)
 	memcpy(sb32p->f_fstypename, sbp->f_fstypename, sizeof(sb32p->f_fstypename));
 	memcpy(sb32p->f_mntonname, sbp->f_mntonname, sizeof(sb32p->f_mntonname));
 	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, sizeof(sb32p->f_mntfromname));
+#endif
+}
+
+static __inline void
+netbsd32_from_statvfs(const struct statvfs *sbp, struct netbsd32_statvfs *sb32p)
+{
+	sb32p->f_flag = sbp->f_flag;
+	sb32p->f_bsize = (netbsd32_u_long)sbp->f_bsize;
+	sb32p->f_frsize = (netbsd32_u_long)sbp->f_frsize;
+	sb32p->f_iosize = (netbsd32_u_long)sbp->f_iosize;
+	sb32p->f_blocks = sbp->f_blocks;
+	sb32p->f_bfree = sbp->f_bfree;
+	sb32p->f_bavail = sbp->f_bavail;
+	sb32p->f_bresvd = sbp->f_bresvd;
+	sb32p->f_files = sbp->f_files;
+	sb32p->f_ffree = sbp->f_ffree;
+	sb32p->f_favail = sbp->f_favail;
+	sb32p->f_fresvd = sbp->f_fresvd;
+	sb32p->f_syncreads = sbp->f_syncreads;
+	sb32p->f_syncwrites = sbp->f_syncwrites;
+	sb32p->f_asyncreads = sbp->f_asyncreads;
+	sb32p->f_asyncwrites = sbp->f_asyncwrites;
+	sb32p->f_fsidx = sbp->f_fsidx;
+	sb32p->f_fsid = (netbsd32_u_long)sbp->f_fsid;
+	sb32p->f_namemax = (netbsd32_u_long)sbp->f_namemax;
+	sb32p->f_owner = sbp->f_owner;
+	sb32p->f_spare[0] = 0;
+	sb32p->f_spare[1] = 0;
+	sb32p->f_spare[2] = 0;
+	sb32p->f_spare[3] = 0;
+#if 1
+	/* May as well do the whole batch in one go */
+	memcpy(sb32p->f_fstypename, sbp->f_fstypename,
+	    sizeof(sb32p->f_fstypename) + sizeof(sb32p->f_mntonname) +
+	    sizeof(sb32p->f_mntfromname) + sizeof(sb32p->f_mntfromlabel));
+#else
+	/* If we want to be careful */
+	memcpy(sb32p->f_fstypename, sbp->f_fstypename, sizeof(sb32p->f_fstypename));
+	memcpy(sb32p->f_mntonname, sbp->f_mntonname, sizeof(sb32p->f_mntonname));
+	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, sizeof(sb32p->f_mntfromname));
+	memcpy(sb32p->f_mntfromlabel, sbp->f_mntfromlabel, sizeof(sb32p->f_mntfromlabel));
 #endif
 }
 
@@ -713,7 +754,7 @@ netbsd32_to_kevent(struct netbsd32_kevent *ke32, struct kevent *ke)
 	ke->flags = ke32->flags;
 	ke->fflags = ke32->fflags;
 	ke->data = ke32->data;
-	ke->udata = ke32->udata;
+	ke->udata = NETBSD32PTR64(ke32->udata);
 }
 
 static __inline void
@@ -724,7 +765,7 @@ netbsd32_from_kevent(struct kevent *ke, struct netbsd32_kevent *ke32)
 	ke32->flags = ke->flags;
 	ke32->fflags = ke->fflags;
 	ke32->data = ke->data;
-	ke32->udata = ke->udata;
+	NETBSD32PTR32(ke32->udata, ke->udata);
 }
 
 static __inline void

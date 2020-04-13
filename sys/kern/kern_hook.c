@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.6 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.6.30.1 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.6 2013/11/22 21:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.6.30.1 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,8 +101,10 @@ hook_proc_run(hook_list_t *list, struct proc *p)
 {
 	struct hook_desc *hd;
 
-	LIST_FOREACH(hd, list, hk_list)
-		((void (*)(struct proc *, void *))*hd->hk_fn)(p, hd->hk_arg);
+	LIST_FOREACH(hd, list, hk_list) {
+		__FPTRCAST(void (*)(struct proc *, void *), *hd->hk_fn)(p,
+		    hd->hk_arg);
+	}
 }
 
 /*
@@ -168,7 +170,8 @@ static hook_list_t mountroothook_list=LIST_HEAD_INITIALIZER(mountroothook_list);
 void *
 mountroothook_establish(void (*fn)(device_t), device_t dev)
 {
-	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
+	return hook_establish(&mountroothook_list, __FPTRCAST(void (*), fn),
+	    dev);
 }
 
 void
@@ -201,7 +204,8 @@ static hook_list_t exechook_list = LIST_HEAD_INITIALIZER(exechook_list);
 void *
 exechook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
-	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
+	return hook_establish(&exechook_list, __FPTRCAST(void (*)(void *), fn),
+	    arg);
 }
 
 void
@@ -228,7 +232,8 @@ exithook_establish(void (*fn)(struct proc *, void *), void *arg)
 	void *rv;
 
 	rw_enter(&exec_lock, RW_WRITER);
-	rv = hook_establish(&exithook_list, (void (*)(void *))fn, arg);
+	rv = hook_establish(&exithook_list, __FPTRCAST(void (*)(void *), fn),
+	    arg);
 	rw_exit(&exec_lock);
 	return rv;
 }
@@ -256,7 +261,8 @@ static hook_list_t forkhook_list = LIST_HEAD_INITIALIZER(forkhook_list);
 void *
 forkhook_establish(void (*fn)(struct proc *, struct proc *))
 {
-	return hook_establish(&forkhook_list, (void (*)(void *))fn, NULL);
+	return hook_establish(&forkhook_list, __FPTRCAST(void (*)(void *), fn),
+	    NULL);
 }
 
 void
@@ -274,7 +280,7 @@ doforkhooks(struct proc *p2, struct proc *p1)
 	struct hook_desc *hd;
 
 	LIST_FOREACH(hd, &forkhook_list, hk_list) {
-		((void (*)(struct proc *, struct proc *))*hd->hk_fn)
+		__FPTRCAST(void (*)(struct proc *, struct proc *), *hd->hk_fn)
 		    (p2, p1);
 	}
 }

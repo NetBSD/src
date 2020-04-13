@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.14 2016/02/21 22:51:30 christos Exp $ */
+/* $NetBSD: mount_udf.c,v 1.14.16.1 2020/04/13 08:03:21 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *          This product includes software developed for the
- *          NetBSD Project.  See http://www.NetBSD.org/ for
- *          information about NetBSD.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.14 2016/02/21 22:51:30 christos Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.14.16.1 2020/04/13 08:03:21 martin Exp $");
 #endif /* not lint */
 
 

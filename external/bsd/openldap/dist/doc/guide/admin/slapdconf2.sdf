@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2005-2017 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2005-2019 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
@@ -468,11 +468,11 @@ DN may refer to a SASL identity.
 
 Entry-based Example:
 
->	olcRootDN: "cn=Manager,dc=example,dc=com"
+>	olcRootDN: cn=Manager,dc=example,dc=com
 
 SASL-based Example:
 
->	olcRootDN: "uid=root,cn=example.com,cn=digest-md5,cn=auth"
+>	olcRootDN: uid=root,cn=example.com,cn=digest-md5,cn=auth
 
 See the {{SECT:SASL Authentication}} section for information on
 SASL authentication identities.
@@ -522,7 +522,7 @@ in the configuration.)
 
 \Example:
 
->	olcSuffix: "dc=example,dc=com"
+>	olcSuffix: dc=example,dc=com
 
 Queries with a DN ending in "dc=example,dc=com"
 will be passed to this backend.
@@ -973,7 +973,7 @@ H4: Sample Entry
 >objectClass: olcDatabaseConfig
 >objectClass: olcHdbConfig
 >olcDatabase: hdb
->olcSuffix: "dc=example,dc=com"
+>olcSuffix: dc=example,dc=com
 >olcDbDirectory: /usr/local/var/openldap-data
 >olcDbCacheSize: 1000
 >olcDbCheckpoint: 1024 10
@@ -1126,9 +1126,9 @@ E: 52.    dn: olcDatabase=bdb,cn=config
 E: 53.    objectClass: olcDatabaseConfig
 E: 54.    objectClass: olcBdbConfig
 E: 55.    olcDatabase: bdb
-E: 56.    olcSuffix: "dc=example,dc=net"
+E: 56.    olcSuffix: dc=example,dc=net
 E: 57.    olcDbDirectory: /usr/local/var/openldap-data-net
-E: 58.    olcRootDN: "cn=Manager,dc=example,dc=com"
+E: 58.    olcRootDN: cn=Manager,dc=example,dc=com
 E: 59.    olcDbIndex: objectClass eq
 E: 60.    olcAccess: to * by users read
 

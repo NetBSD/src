@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.12.2.2 2020/04/08 14:08:06 martin Exp $ */
+/*	$NetBSD: malo.c,v 1.12.2.3 2020/04/13 08:04:21 martin Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.12.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.12.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -616,12 +616,7 @@ malo_alloc_rx_ring(struct malo_softc *sc, struct malo_rx_ring *ring, int count)
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct malo_rx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	    M_WAITOK);
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
@@ -766,14 +761,8 @@ malo_alloc_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof(struct malo_tx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	    M_WAITOK | M_ZERO);
 
-	memset(ring->data, 0, count * sizeof(struct malo_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    MALO_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -2156,7 +2145,7 @@ malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel)
 	body->action = htole16(1);
 	if (powerlevel < 30)
 		body->supportpowerlvl = htole16(5);	/* LOW */
-	else if (powerlevel >= 30 && powerlevel < 60)
+	else if (powerlevel < 60)
 		body->supportpowerlvl = htole16(10);	/* MEDIUM */
 	else
 		body->supportpowerlvl = htole16(15);	/* HIGH */

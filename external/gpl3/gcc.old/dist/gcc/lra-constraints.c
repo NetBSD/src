@@ -1,5 +1,5 @@
 /* Code for RTL transformations to satisfy insn constraints.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
    This file is part of GCC.
@@ -115,6 +115,7 @@
 #include "tree.h"
 #include "predict.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "expmed.h"
 #include "optabs.h"
@@ -182,41 +183,31 @@ get_try_hard_regno (int regno)
   return ira_class_hard_regs[rclass][0];
 }
 
-/* Return final hard regno (plus offset) which will be after
-   elimination.	 We do this for matching constraints because the final
-   hard regno could have a different class.  */
+/* Return the hard regno of X after removing its subreg.  If X is not
+   a register or a subreg of a register, return -1.  If X is a pseudo,
+   use its assignment.  If FINAL_P return the final hard regno which will
+   be after elimination.  */
 static int
-get_final_hard_regno (int hard_regno, int offset)
-{
-  if (hard_regno < 0)
-    return hard_regno;
-  hard_regno = lra_get_elimination_hard_regno (hard_regno);
-  return hard_regno + offset;
-}
-
-/* Return hard regno of X after removing subreg and making
-   elimination.  If X is not a register or subreg of register, return
-   -1.  For pseudo use its assignment.  */
-static int
-get_hard_regno (rtx x)
+get_hard_regno (rtx x, bool final_p)
 {
   rtx reg;
-  int offset, hard_regno;
+  int hard_regno;
 
   reg = x;
-  if (GET_CODE (x) == SUBREG)
+  if (SUBREG_P (x))
     reg = SUBREG_REG (x);
   if (! REG_P (reg))
     return -1;
-  if ((hard_regno = REGNO (reg)) >= FIRST_PSEUDO_REGISTER)
+  if (! HARD_REGISTER_NUM_P (hard_regno = REGNO (reg)))
     hard_regno = lra_get_regno_hard_regno (hard_regno);
   if (hard_regno < 0)
     return -1;
-  offset = 0;
-  if (GET_CODE (x) == SUBREG)
-    offset += subreg_regno_offset (hard_regno, GET_MODE (reg),
-				   SUBREG_BYTE (x),  GET_MODE (x));
-  return get_final_hard_regno (hard_regno, offset);
+  if (final_p)
+    hard_regno = lra_get_elimination_hard_regno (hard_regno);
+  if (SUBREG_P (x))
+    hard_regno += subreg_regno_offset (hard_regno, GET_MODE (reg),
+				       SUBREG_BYTE (x),  GET_MODE (x));
+  return hard_regno;
 }
 
 /* If REGNO is a hard register or has been allocated a hard register,
@@ -228,11 +219,11 @@ get_reg_class (int regno)
 {
   int hard_regno;
 
-  if ((hard_regno = regno) >= FIRST_PSEUDO_REGISTER)
+  if (! HARD_REGISTER_NUM_P (hard_regno = regno))
     hard_regno = lra_get_regno_hard_regno (regno);
   if (hard_regno >= 0)
     {
-      hard_regno = get_final_hard_regno (hard_regno, 0);
+      hard_regno = lra_get_elimination_hard_regno (hard_regno);
       return REGNO_REG_CLASS (hard_regno);
     }
   if (regno >= new_regno_start)
@@ -538,6 +529,8 @@ init_curr_operand_mode (void)
 /* Structure describes input reload of the current insns.  */
 struct input_reload
 {
+  /* True for input reload of matched operands.  */
+  bool match_p;
   /* Reloaded value.  */
   rtx input;
   /* Reload pseudo used.  */
@@ -572,6 +565,7 @@ get_reload_reg (enum op_type type, machine_mode mode, rtx original,
 {
   int i, regno;
   enum reg_class new_class;
+  bool unique_p = false;
 
   if (type == OP_OUT)
     {
@@ -583,39 +577,53 @@ get_reload_reg (enum op_type type, machine_mode mode, rtx original,
      e.g. volatile memory.  */
   if (! side_effects_p (original))
     for (i = 0; i < curr_insn_input_reloads_num; i++)
-      if (rtx_equal_p (curr_insn_input_reloads[i].input, original)
-	  && in_class_p (curr_insn_input_reloads[i].reg, rclass, &new_class))
-	{
-	  rtx reg = curr_insn_input_reloads[i].reg;
-	  regno = REGNO (reg);
-	  /* If input is equal to original and both are VOIDmode,
-	     GET_MODE (reg) might be still different from mode.
-	     Ensure we don't return *result_reg with wrong mode.  */
-	  if (GET_MODE (reg) != mode)
-	    {
-	      if (in_subreg_p)
-		continue;
-	      if (GET_MODE_SIZE (GET_MODE (reg)) < GET_MODE_SIZE (mode))
-		continue;
-	      reg = lowpart_subreg (mode, reg, GET_MODE (reg));
-	      if (reg == NULL_RTX || GET_CODE (reg) != SUBREG)
-		continue;
-	    }
-	  *result_reg = reg;
-	  if (lra_dump_file != NULL)
-	    {
-	      fprintf (lra_dump_file, "	 Reuse r%d for reload ", regno);
-	      dump_value_slim (lra_dump_file, original, 1);
-	    }
-	  if (new_class != lra_get_allocno_class (regno))
-	    lra_change_class (regno, new_class, ", change to", false);
-	  if (lra_dump_file != NULL)
-	    fprintf (lra_dump_file, "\n");
-	  return false;
-	}
-  *result_reg = lra_create_new_reg (mode, original, rclass, title);
+      {
+	if (! curr_insn_input_reloads[i].match_p
+	    && rtx_equal_p (curr_insn_input_reloads[i].input, original)
+	    && in_class_p (curr_insn_input_reloads[i].reg, rclass, &new_class))
+	  {
+	    rtx reg = curr_insn_input_reloads[i].reg;
+	    regno = REGNO (reg);
+	    /* If input is equal to original and both are VOIDmode,
+	       GET_MODE (reg) might be still different from mode.
+	       Ensure we don't return *result_reg with wrong mode.  */
+	    if (GET_MODE (reg) != mode)
+	      {
+		if (in_subreg_p)
+		  continue;
+		if (GET_MODE_SIZE (GET_MODE (reg)) < GET_MODE_SIZE (mode))
+		  continue;
+		reg = lowpart_subreg (mode, reg, GET_MODE (reg));
+		if (reg == NULL_RTX || GET_CODE (reg) != SUBREG)
+		  continue;
+	      }
+	    *result_reg = reg;
+	    if (lra_dump_file != NULL)
+	      {
+		fprintf (lra_dump_file, "	 Reuse r%d for reload ", regno);
+		dump_value_slim (lra_dump_file, original, 1);
+	      }
+	    if (new_class != lra_get_allocno_class (regno))
+	      lra_change_class (regno, new_class, ", change to", false);
+	    if (lra_dump_file != NULL)
+	      fprintf (lra_dump_file, "\n");
+	    return false;
+	  }
+	/* If we have an input reload with a different mode, make sure it
+	   will get a different hard reg.  */
+	else if (REG_P (original)
+		 && REG_P (curr_insn_input_reloads[i].input)
+		 && REGNO (original) == REGNO (curr_insn_input_reloads[i].input)
+		 && (GET_MODE (original)
+		     != GET_MODE (curr_insn_input_reloads[i].input)))
+	  unique_p = true;
+      }
+  *result_reg = (unique_p
+		 ? lra_create_new_reg_with_unique_value
+		 : lra_create_new_reg) (mode, original, rclass, title);
   lra_assert (curr_insn_input_reloads_num < LRA_MAX_INSN_RELOADS);
   curr_insn_input_reloads[curr_insn_input_reloads_num].input = original;
+  curr_insn_input_reloads[curr_insn_input_reloads_num].match_p = false;
   curr_insn_input_reloads[curr_insn_input_reloads_num++].reg = *result_reg;
   return true;
 }
@@ -693,7 +701,7 @@ operands_match_p (rtx x, rtx y, int y_hard_regno)
     {
       int j;
 
-      i = get_hard_regno (x);
+      i = get_hard_regno (x, false);
       if (i < 0)
 	goto slow;
 
@@ -748,7 +756,7 @@ operands_match_p (rtx x, rtx y, int y_hard_regno)
       return false;
 
     case LABEL_REF:
-      return LABEL_REF_LABEL (x) == LABEL_REF_LABEL (y);
+      return label_ref_label (x) == label_ref_label (y);
     case SYMBOL_REF:
       return XSTR (x, 0) == XSTR (y, 0);
 
@@ -870,6 +878,29 @@ regno_val_use_in (unsigned int regno, rtx x)
   return NULL_RTX;
 }
 
+/* Return true if all current insn non-output operands except INS (it
+   has a negaitve end marker) do not use pseudos with the same value
+   as REGNO.  */
+static bool
+check_conflict_input_operands (int regno, signed char *ins)
+{
+  int in;
+  int n_operands = curr_static_id->n_operands;
+
+  for (int nop = 0; nop < n_operands; nop++)
+    if (! curr_static_id->operand[nop].is_operator
+	&& curr_static_id->operand[nop].type != OP_OUT)
+      {
+	for (int i = 0; (in = ins[i]) >= 0; i++)
+	  if (in == nop)
+	    break;
+	if (in < 0
+	    && regno_val_use_in (regno, *curr_id->operand_loc[nop]) != NULL_RTX)
+	  return false;
+      }
+  return true;
+}
+
 /* Generate reloads for matching OUT and INS (array of input operand
    numbers with end marker -1) with reg class GOAL_CLASS, considering
    output operands OUTS (similar array to INS) needing to be in different
@@ -909,7 +940,9 @@ match_reload (signed char out, signed char *ins, signed char *outs,
 	     pseudos as reload pseudos can die although original
 	     pseudos still live where reload pseudos dies.  */
 	  if (REG_P (in_rtx) && (int) REGNO (in_rtx) < lra_new_regno_start
-	      && find_regno_note (curr_insn, REG_DEAD, REGNO (in_rtx)))
+	      && find_regno_note (curr_insn, REG_DEAD, REGNO (in_rtx))
+	      && (!early_clobber_p
+		  || check_conflict_input_operands(REGNO (in_rtx), ins)))
 	    lra_assign_reg_val (REGNO (in_rtx), REGNO (reg));
 	}
       else
@@ -939,7 +972,10 @@ match_reload (signed char out, signed char *ins, signed char *outs,
 		  && (int) REGNO (subreg_reg) < lra_new_regno_start
 		  && GET_MODE (subreg_reg) == outmode
 		  && SUBREG_BYTE (in_rtx) == SUBREG_BYTE (new_in_reg)
-		  && find_regno_note (curr_insn, REG_DEAD, REGNO (subreg_reg)))
+		  && find_regno_note (curr_insn, REG_DEAD, REGNO (subreg_reg))
+		  && (! early_clobber_p
+		      || check_conflict_input_operands (REGNO (subreg_reg),
+							ins)))
 		lra_assign_reg_val (REGNO (subreg_reg), REGNO (reg));
 	    }
 	}
@@ -994,6 +1030,8 @@ match_reload (signed char out, signed char *ins, signed char *outs,
 	= (! early_clobber_p && ins[1] < 0 && REG_P (in_rtx)
 	   && (int) REGNO (in_rtx) < lra_new_regno_start
 	   && find_regno_note (curr_insn, REG_DEAD, REGNO (in_rtx))
+	   && (! early_clobber_p
+	       || check_conflict_input_operands (REGNO (in_rtx), ins))
 	   && (out < 0
 	       || regno_val_use_in (REGNO (in_rtx), out_rtx) == NULL_RTX)
 	   && !out_conflict
@@ -1011,6 +1049,12 @@ match_reload (signed char out, signed char *ins, signed char *outs,
   lra_emit_move (copy_rtx (new_in_reg), in_rtx);
   *before = get_insns ();
   end_sequence ();
+  /* Add the new pseudo to consider values of subsequent input reload
+     pseudos.  */
+  lra_assert (curr_insn_input_reloads_num < LRA_MAX_INSN_RELOADS);
+  curr_insn_input_reloads[curr_insn_input_reloads_num].input = in_rtx;
+  curr_insn_input_reloads[curr_insn_input_reloads_num].match_p = true;
+  curr_insn_input_reloads[curr_insn_input_reloads_num++].reg = new_in_reg;
   for (i = 0; (in = ins[i]) >= 0; i++)
     {
       lra_assert
@@ -1095,9 +1139,9 @@ emit_spill_move (bool to_p, rtx mem_pseudo, rtx val)
 	 dependent macro HARD_REGNO_CALLER_SAVE_MODE.  */
       if (! MEM_P (val))
 	{
-	  val = gen_rtx_SUBREG (GET_MODE (mem_pseudo),
-				GET_CODE (val) == SUBREG ? SUBREG_REG (val) : val,
-				0);
+	  val = gen_lowpart_SUBREG (GET_MODE (mem_pseudo),
+				    GET_CODE (val) == SUBREG
+				    ? SUBREG_REG (val) : val);
 	  LRA_SUBREG_P (val) = 1;
 	}
       else
@@ -1136,6 +1180,7 @@ check_and_process_move (bool *change_p, bool *sec_mem_p ATTRIBUTE_UNUSED)
   sclass = dclass = NO_REGS;
   if (REG_P (dreg))
     dclass = get_reg_class (REGNO (dreg));
+  gcc_assert (dclass < LIM_REG_CLASSES);
   if (dclass == ALL_REGS)
     /* ALL_REGS is used for new pseudos created by transformations
        like reload of SUBREG_REG (see function
@@ -1147,6 +1192,7 @@ check_and_process_move (bool *change_p, bool *sec_mem_p ATTRIBUTE_UNUSED)
     return false;
   if (REG_P (sreg))
     sclass = get_reg_class (REGNO (sreg));
+  gcc_assert (sclass < LIM_REG_CLASSES);
   if (sclass == ALL_REGS)
     /* See comments above.  */
     return false;
@@ -1281,6 +1327,10 @@ static bool goal_alt_swapped;
 /* The chosen insn alternative.	 */
 static int goal_alt_number;
 
+/* True if the corresponding operand is the result of an equivalence
+   substitution.  */
+static bool equiv_substition_p[MAX_RECOG_OPERANDS];
+
 /* The following five variables are used to choose the best insn
    alternative.	 They reflect final characteristics of the best
    alternative.	 */
@@ -1326,7 +1376,22 @@ process_addr_reg (rtx *loc, bool check_only_p, rtx_insn **before, rtx_insn **aft
 
   subreg_p = GET_CODE (*loc) == SUBREG;
   if (subreg_p)
-    loc = &SUBREG_REG (*loc);
+    {
+      reg = SUBREG_REG (*loc);
+      mode = GET_MODE (reg);
+
+      /* For mode with size bigger than ptr_mode, there unlikely to be "mov"
+	 between two registers with different classes, but there normally will
+	 be "mov" which transfers element of vector register into the general
+	 register, and this normally will be a subreg which should be reloaded
+	 as a whole.  This is particularly likely to be triggered when
+	 -fno-split-wide-types specified.  */
+      if (!REG_P (reg)
+	  || in_class_p (reg, cl, &new_class)
+	  || GET_MODE_SIZE (mode) <= GET_MODE_SIZE (ptr_mode))
+       loc = &SUBREG_REG (*loc);
+    }
+
   reg = *loc;
   mode = GET_MODE (reg);
   if (! REG_P (reg))
@@ -1419,6 +1484,7 @@ insert_move_for_subreg (rtx_insn **before, rtx_insn **after, rtx origreg,
 }
 
 static int valid_address_p (machine_mode mode, rtx addr, addr_space_t as);
+static bool process_address (int, bool, rtx_insn **, rtx_insn **);
 
 /* Make reloads for subreg in operand NOP with internal subreg mode
    REG_MODE, add new reloads for further processing.  Return true if
@@ -1443,47 +1509,110 @@ simplify_operand_subreg (int nop, machine_mode reg_mode)
   reg = SUBREG_REG (operand);
   innermode = GET_MODE (reg);
   type = curr_static_id->operand[nop].type;
-  /* If we change address for paradoxical subreg of memory, the
-     address might violate the necessary alignment or the access might
-     be slow.  So take this into consideration.  We should not worry
-     about access beyond allocated memory for paradoxical memory
-     subregs as we don't substitute such equiv memory (see processing
-     equivalences in function lra_constraints) and because for spilled
-     pseudos we allocate stack memory enough for the biggest
-     corresponding paradoxical subreg.  */
-  if (MEM_P (reg)
-      && (! SLOW_UNALIGNED_ACCESS (mode, MEM_ALIGN (reg))
-	  || MEM_ALIGN (reg) >= GET_MODE_ALIGNMENT (mode)))
+  if (MEM_P (reg))
     {
-      rtx subst, old = *curr_id->operand_loc[nop];
-
+      const bool addr_was_valid
+	= valid_address_p (innermode, XEXP (reg, 0), MEM_ADDR_SPACE (reg));
       alter_subreg (curr_id->operand_loc[nop], false);
-      subst = *curr_id->operand_loc[nop];
+      rtx subst = *curr_id->operand_loc[nop];
       lra_assert (MEM_P (subst));
-      if (! valid_address_p (innermode, XEXP (reg, 0),
-			     MEM_ADDR_SPACE (reg))
+
+      if (!addr_was_valid
 	  || valid_address_p (GET_MODE (subst), XEXP (subst, 0),
-			      MEM_ADDR_SPACE (subst)))
-	return true;
-      else if ((get_constraint_type (lookup_constraint
-				     (curr_static_id->operand[nop].constraint))
-		!= CT_SPECIAL_MEMORY)
-	       /* We still can reload address and if the address is
-		  valid, we can remove subreg without reloading its
-		  inner memory.  */
-	       && valid_address_p (GET_MODE (subst),
-				   regno_reg_rtx
-				   [ira_class_hard_regs
-				    [base_reg_class (GET_MODE (subst),
-						     MEM_ADDR_SPACE (subst),
-						     ADDRESS, SCRATCH)][0]],
-				   MEM_ADDR_SPACE (subst)))
-	return true;
+			      MEM_ADDR_SPACE (subst))
+	  || ((get_constraint_type (lookup_constraint
+				    (curr_static_id->operand[nop].constraint))
+	       != CT_SPECIAL_MEMORY)
+	      /* We still can reload address and if the address is
+		 valid, we can remove subreg without reloading its
+		 inner memory.  */
+	      && valid_address_p (GET_MODE (subst),
+				  regno_reg_rtx
+				  [ira_class_hard_regs
+				   [base_reg_class (GET_MODE (subst),
+						    MEM_ADDR_SPACE (subst),
+						    ADDRESS, SCRATCH)][0]],
+				  MEM_ADDR_SPACE (subst))))
+	{
+	  /* If we change the address for a paradoxical subreg of memory, the
+	     new address might violate the necessary alignment or the access
+	     might be slow; take this into consideration.  We need not worry
+	     about accesses beyond allocated memory for paradoxical memory
+	     subregs as we don't substitute such equiv memory (see processing
+	     equivalences in function lra_constraints) and because for spilled
+	     pseudos we allocate stack memory enough for the biggest
+	     corresponding paradoxical subreg.
+
+	     However, do not blindly simplify a (subreg (mem ...)) for
+	     WORD_REGISTER_OPERATIONS targets as this may lead to loading junk
+	     data into a register when the inner is narrower than outer or
+	     missing important data from memory when the inner is wider than
+	     outer.  This rule only applies to modes that are no wider than
+	     a word.  */
+	  if (!(GET_MODE_PRECISION (mode) != GET_MODE_PRECISION (innermode)
+		&& GET_MODE_SIZE (mode) <= UNITS_PER_WORD
+		&& GET_MODE_SIZE (innermode) <= UNITS_PER_WORD
+		&& WORD_REGISTER_OPERATIONS)
+	      && (!(MEM_ALIGN (subst) < GET_MODE_ALIGNMENT (mode)
+		    && SLOW_UNALIGNED_ACCESS (mode, MEM_ALIGN (subst)))
+		  || (MEM_ALIGN (reg) < GET_MODE_ALIGNMENT (innermode)
+		      && SLOW_UNALIGNED_ACCESS (innermode, MEM_ALIGN (reg)))))
+	    return true;
+
+	  *curr_id->operand_loc[nop] = operand;
+
+	  /* But if the address was not valid, we cannot reload the MEM without
+	     reloading the address first.  */
+	  if (!addr_was_valid)
+	    process_address (nop, false, &before, &after);
+
+	  /* INNERMODE is fast, MODE slow.  Reload the mem in INNERMODE.  */
+	  enum reg_class rclass
+	    = (enum reg_class) targetm.preferred_reload_class (reg, ALL_REGS);
+	  if (get_reload_reg (curr_static_id->operand[nop].type, innermode,
+			      reg, rclass, TRUE, "slow mem", &new_reg))
+	    {
+	      bool insert_before, insert_after;
+	      bitmap_set_bit (&lra_subreg_reload_pseudos, REGNO (new_reg));
+
+	      insert_before = (type != OP_OUT
+			       || GET_MODE_SIZE (innermode)
+				    > GET_MODE_SIZE (mode));
+	      insert_after = type != OP_IN;
+	      insert_move_for_subreg (insert_before ? &before : NULL,
+				      insert_after ? &after : NULL,
+				      reg, new_reg);
+	    }
+	  SUBREG_REG (operand) = new_reg;
+
+	  /* Convert to MODE.  */
+	  reg = operand;
+	  rclass
+	    = (enum reg_class) targetm.preferred_reload_class (reg, ALL_REGS);
+	  if (get_reload_reg (curr_static_id->operand[nop].type, mode, reg,
+			      rclass, TRUE, "slow mem", &new_reg))
+	    {
+	      bool insert_before, insert_after;
+	      bitmap_set_bit (&lra_subreg_reload_pseudos, REGNO (new_reg));
+
+	      insert_before = type != OP_OUT;
+	      insert_after = type != OP_IN;
+	      insert_move_for_subreg (insert_before ? &before : NULL,
+				      insert_after ? &after : NULL,
+				      reg, new_reg);
+	    }
+	  *curr_id->operand_loc[nop] = new_reg;
+	  lra_process_new_insns (curr_insn, before, after,
+				 "Inserting slow mem reload");
+	  return true;
+	}
 
       /* If the address was valid and became invalid, prefer to reload
 	 the memory.  Typical case is when the index scale should
 	 correspond the memory.  */
-      *curr_id->operand_loc[nop] = old;
+      *curr_id->operand_loc[nop] = operand;
+      /* Do not return false here as the MEM_P (reg) will be processed
+	 later in this function.  */
     }
   else if (REG_P (reg) && REGNO (reg) < FIRST_PSEUDO_REGISTER)
     {
@@ -1652,7 +1781,7 @@ uses_hard_regs_p (rtx x, HARD_REG_SET set)
 
   if (REG_P (x))
     {
-      x_hard_regno = get_hard_regno (x);
+      x_hard_regno = get_hard_regno (x, true);
       return (x_hard_regno >= 0
 	      && overlaps_hard_reg_set_p (set, mode, x_hard_regno));
     }
@@ -1723,6 +1852,42 @@ prohibited_class_reg_set_mode_p (enum reg_class rclass,
 	  (temp, ira_prohibited_class_mode_regs[rclass][mode]));
 }
 
+
+/* Used to check validity info about small class input operands.  It
+   should be incremented at start of processing an insn
+   alternative.  */
+static unsigned int curr_small_class_check = 0;
+
+/* Update number of used inputs of class OP_CLASS for operand NOP.
+   Return true if we have more such class operands than the number of
+   available regs.  */
+static bool
+update_and_check_small_class_inputs (int nop, enum reg_class op_class)
+{
+  static unsigned int small_class_check[LIM_REG_CLASSES];
+  static int small_class_input_nums[LIM_REG_CLASSES];
+  
+  if (SMALL_REGISTER_CLASS_P (op_class)
+      /* We are interesting in classes became small because of fixing
+	 some hard regs, e.g. by an user through GCC options.  */
+      && hard_reg_set_intersect_p (reg_class_contents[op_class],
+				   ira_no_alloc_regs)
+      && (curr_static_id->operand[nop].type != OP_OUT
+	  || curr_static_id->operand[nop].early_clobber))
+    {
+      if (small_class_check[op_class] == curr_small_class_check)
+	small_class_input_nums[op_class]++;
+      else
+	{
+	  small_class_check[op_class] = curr_small_class_check;
+	  small_class_input_nums[op_class] = 1;
+	}
+      if (small_class_input_nums[op_class] > ira_class_hard_regs_num[op_class])
+	return true;
+    }
+  return false;
+}
+
 /* Major function to choose the current insn alternative and what
    operands should be reloaded and how.	 If ONLY_ALTERNATIVE is not
    negative we should consider only this alternative.  Return false if
@@ -1738,11 +1903,15 @@ process_alt_operands (int only_alternative)
   /* LOSERS counts the operands that don't fit this alternative and
      would require loading.  */
   int losers;
+  int addr_losers;
   /* REJECT is a count of how undesirable this alternative says it is
      if any reloading is required.  If the alternative matches exactly
      then REJECT is ignored, but otherwise it gets this much counted
      against it in addition to the reloading needed.  */
   int reject;
+  /* This is defined by '!' or '?' alternative constraint and added to
+     reject.  But in some cases it can be ignored.  */
+  int static_reject;
   int op_reject;
   /* The number of elements in the following array.  */
   int early_clobbered_regs_num;
@@ -1779,7 +1948,7 @@ process_alt_operands (int only_alternative)
 
       op = no_subreg_reg_operand[nop] = *curr_id->operand_loc[nop];
       /* The real hard regno of the operand after the allocation.  */
-      hard_regno[nop] = get_hard_regno (op);
+      hard_regno[nop] = get_hard_regno (op, true);
 
       operand_reg[nop] = reg = op;
       biggest_mode[nop] = GET_MODE (op);
@@ -1819,7 +1988,9 @@ process_alt_operands (int only_alternative)
       if (!TEST_BIT (preferred, nalt))
 	continue;
 
-      overall = losers = reject = reload_nregs = reload_sum = 0;
+      curr_small_class_check++;
+      overall = losers = addr_losers = 0;
+      static_reject = reject = reload_nregs = reload_sum = 0;
       for (nop = 0; nop < n_operands; nop++)
 	{
 	  int inc = (curr_static_id
@@ -1827,8 +1998,9 @@ process_alt_operands (int only_alternative)
 	  if (lra_dump_file != NULL && inc != 0)
 	    fprintf (lra_dump_file,
 		     "            Staticly defined alt reject+=%d\n", inc);
-	  reject += inc;
+	  static_reject += inc;
 	}
+      reject += static_reject;
       early_clobbered_regs_num = 0;
 
       for (nop = 0; nop < n_operands; nop++)
@@ -1940,7 +2112,7 @@ process_alt_operands (int only_alternative)
 		    lra_assert (nop > m);
 
 		    this_alternative_matches = m;
-		    m_hregno = get_hard_regno (*curr_id->operand_loc[m]);
+		    m_hregno = get_hard_regno (*curr_id->operand_loc[m], false);
 		    /* We are supposed to match a previous operand.
 		       If we do, we win if that one did.  If we do
 		       not, count both of the operands as losers.
@@ -2087,7 +2259,10 @@ process_alt_operands (int only_alternative)
 			 memory, or make other memory by reloading the
 			 address like for 'o'.  */
 		      if (CONST_POOL_OK_P (mode, op)
-			  || MEM_P (op) || REG_P (op))
+			  || MEM_P (op) || REG_P (op)
+			  /* We can restore the equiv insn by a
+			     reload.  */
+			  || equiv_substition_p[nop])
 			badop = false;
 		      constmemok = true;
 		      offmemok = true;
@@ -2260,6 +2435,41 @@ process_alt_operands (int only_alternative)
 			     "            alt=%d: Bad operand -- refuse\n",
 			     nalt);
 		  goto fail;
+		}
+
+	      if (this_alternative != NO_REGS)
+		{
+		  HARD_REG_SET available_regs;
+		  
+		  COPY_HARD_REG_SET (available_regs,
+				     reg_class_contents[this_alternative]);
+		  AND_COMPL_HARD_REG_SET
+		    (available_regs,
+		     ira_prohibited_class_mode_regs[this_alternative][mode]);
+		  AND_COMPL_HARD_REG_SET (available_regs, lra_no_alloc_regs);
+		  if (hard_reg_set_empty_p (available_regs))
+		    {
+		      /* There are no hard regs holding a value of given
+			 mode.  */
+		      if (offmemok)
+			{
+			  this_alternative = NO_REGS;
+			  if (lra_dump_file != NULL)
+			    fprintf (lra_dump_file,
+				     "            %d Using memory because of"
+				     " a bad mode: reject+=2\n",
+				     nop);
+			  reject += 2;
+			}
+		      else
+			{
+			  if (lra_dump_file != NULL)
+			    fprintf (lra_dump_file,
+				     "            alt=%d: Wrong mode -- refuse\n",
+				     nalt);
+			  goto fail;
+			}
+		    }
 		}
 
 	      /* If not assigned pseudo has a class which a subset of
@@ -2475,14 +2685,29 @@ process_alt_operands (int only_alternative)
 	      /* We are trying to spill pseudo into memory.  It is
 		 usually more costly than moving to a hard register
 		 although it might takes the same number of
-		 reloads.  */
-	      if (no_regs_p && REG_P (op) && hard_regno[nop] >= 0)
+		 reloads.
+
+		 Non-pseudo spill may happen also.  Suppose a target allows both
+		 register and memory in the operand constraint alternatives,
+		 then it's typical that an eliminable register has a substition
+		 of "base + offset" which can either be reloaded by a simple
+		 "new_reg <= base + offset" which will match the register
+		 constraint, or a similar reg addition followed by further spill
+		 to and reload from memory which will match the memory
+		 constraint, but this memory spill will be much more costly
+		 usually.
+
+		 Code below increases the reject for both pseudo and non-pseudo
+		 spill.  */
+	      if (no_regs_p
+		  && !(MEM_P (op) && offmemok)
+		  && !(REG_P (op) && hard_regno[nop] < 0))
 		{
 		  if (lra_dump_file != NULL)
 		    fprintf
 		      (lra_dump_file,
-		       "            %d Spill pseudo into memory: reject+=3\n",
-		       nop);
+		       "            %d Spill %spseudo into memory: reject+=3\n",
+		       nop, REG_P (op) ? "" : "Non-");
 		  reject += 3;
 		  if (VECTOR_MODE_P (mode))
 		    {
@@ -2497,6 +2722,23 @@ process_alt_operands (int only_alternative)
 		    }
 		}
 
+	      /* When we use an operand requiring memory in given
+		 alternative, the insn should write *and* read the
+		 value to/from memory it is costly in comparison with
+		 an insn alternative which does not use memory
+		 (e.g. register or immediate operand).  We exclude
+		 memory operand for such case as we can satisfy the
+		 memory constraints by reloading address.  */
+	      if (no_regs_p && offmemok && !MEM_P (op))
+		{
+		  if (lra_dump_file != NULL)
+		    fprintf
+		      (lra_dump_file,
+		       "            Using memory insn operand %d: reject+=3\n",
+		       nop);
+		  reject += 3;
+		}
+	      
 #ifdef SECONDARY_MEMORY_NEEDED
 	      /* If reload requires moving value through secondary
 		 memory, it will need one more insn at least.  */
@@ -2522,6 +2764,18 @@ process_alt_operands (int only_alternative)
 		       nop);
 		  reject++;
 		}
+
+	      if (MEM_P (op) && offmemok)
+		addr_losers++;
+	      else if (curr_static_id->operand[nop].type == OP_INOUT)
+		{
+		  if (lra_dump_file != NULL)
+		    fprintf
+		      (lra_dump_file,
+		       "            %d Input/Output reload: reject+=%d\n",
+		       nop, LRA_LOSER_COST_FACTOR);
+		  reject += LRA_LOSER_COST_FACTOR;
+		}
 	    }
 
 	  if (early_clobber_p && ! scratch_p)
@@ -2536,7 +2790,8 @@ process_alt_operands (int only_alternative)
 	     Should we update the cost (may be approximately) here
 	     because of early clobber register reloads or it is a rare
 	     or non-important thing to be worth to do it.  */
-	  overall = losers * LRA_LOSER_COST_FACTOR + reject;
+	  overall = (losers * LRA_LOSER_COST_FACTOR + reject
+		     - (addr_losers == losers ? static_reject : 0));
 	  if ((best_losers == 0 || losers != 0) && best_overall < overall)
             {
               if (lra_dump_file != NULL)
@@ -2546,6 +2801,14 @@ process_alt_operands (int only_alternative)
               goto fail;
             }
 
+	  if (update_and_check_small_class_inputs (nop, this_alternative))
+	    {
+	      if (lra_dump_file != NULL)
+		fprintf (lra_dump_file,
+			 "            alt=%d, not enough small class regs -- refuse\n",
+			 nalt);
+	      goto fail;
+	    }
 	  curr_alt[nop] = this_alternative;
 	  COPY_HARD_REG_SET (curr_alt_set[nop], this_alternative_set);
 	  curr_alt_win[nop] = this_alternative_win;
@@ -2560,6 +2823,7 @@ process_alt_operands (int only_alternative)
 	  if (early_clobber_p && operand_reg[nop] != NULL_RTX)
 	    early_clobbered_nops[early_clobbered_regs_num++] = nop;
 	}
+
       if (curr_insn_set != NULL_RTX && n_operands == 2
 	  /* Prevent processing non-move insns.  */
 	  && (GET_CODE (SET_SRC (curr_insn_set)) == SUBREG
@@ -2571,9 +2835,17 @@ process_alt_operands (int only_alternative)
 		   || reg_in_class_p (no_subreg_reg_operand[1], curr_alt[0])))
 	      || (! curr_alt_win[0] && curr_alt_win[1]
 		  && REG_P (no_subreg_reg_operand[1])
+		  /* Check that we reload memory not the memory
+		     address.  */
+		  && ! (curr_alt_offmemok[0]
+			&& MEM_P (no_subreg_reg_operand[0]))
 		  && reg_in_class_p (no_subreg_reg_operand[1], curr_alt[0]))
 	      || (curr_alt_win[0] && ! curr_alt_win[1]
 		  && REG_P (no_subreg_reg_operand[0])
+		  /* Check that we reload memory not the memory
+		     address.  */
+		  && ! (curr_alt_offmemok[1]
+			&& MEM_P (no_subreg_reg_operand[1]))
 		  && reg_in_class_p (no_subreg_reg_operand[0], curr_alt[1])
 		  && (! CONST_POOL_OK_P (curr_operand_mode[1],
 					 no_subreg_reg_operand[1])
@@ -2586,8 +2858,11 @@ process_alt_operands (int only_alternative)
 		  && GET_CODE (no_subreg_reg_operand[1]) != PLUS)))
 	{
 	  /* We have a move insn and a new reload insn will be similar
-	     to the current insn.  We should avoid such situation as it
-	     results in LRA cycling.  */
+	     to the current insn.  We should avoid such situation as
+	     it results in LRA cycling.  */
+	  if (lra_dump_file != NULL)
+	    fprintf (lra_dump_file,
+		     "            Cycle danger: overall += LRA_MAX_REJECT\n");
 	  overall += LRA_MAX_REJECT;
 	}
       ok_p = true;
@@ -2678,7 +2953,7 @@ process_alt_operands (int only_alternative)
 	      if (lra_dump_file != NULL)
 		fprintf
 		  (lra_dump_file,
-		   "            %d Matched conflict early clobber reloads:"
+		   "            %d Matched conflict early clobber reloads: "
 		   "reject--\n",
 		   i);
 	      reject--;
@@ -2745,18 +3020,18 @@ base_to_reg (struct address_info *ad)
   rtx_insn *insn;
   rtx_insn *last_insn = get_last_insn();
 
-  lra_assert (ad->base == ad->base_term && ad->disp == ad->disp_term);
+  lra_assert (ad->disp == ad->disp_term);
   cl = base_reg_class (ad->mode, ad->as, ad->base_outer_code,
                        get_index_code (ad));
-  new_reg = lra_create_new_reg (GET_MODE (*ad->base_term), NULL_RTX,
+  new_reg = lra_create_new_reg (GET_MODE (*ad->base), NULL_RTX,
                                 cl, "base");
   new_inner = simplify_gen_binary (PLUS, GET_MODE (new_reg), new_reg,
                                    ad->disp_term == NULL
-                                   ? gen_int_mode (0, ad->mode)
+                                   ? const0_rtx
                                    : *ad->disp_term);
   if (!valid_address_p (ad->mode, new_inner, ad->as))
     return NULL_RTX;
-  insn = emit_insn (gen_rtx_SET (new_reg, *ad->base_term));
+  insn = emit_insn (gen_rtx_SET (new_reg, *ad->base));
   code = recog_memoized (insn);
   if (code < 0)
     {
@@ -2950,7 +3225,11 @@ process_address_1 (int nop, bool check_only_p,
 
   if (insn_extra_address_constraint (cn))
     decompose_lea_address (&ad, curr_id->operand_loc[nop]);
-  else if (MEM_P (op))
+  /* Do not attempt to decompose arbitrary addresses generated by combine
+     for asm operands with loose constraints, e.g 'X'.  */
+  else if (MEM_P (op)
+	   && !(get_constraint_type (cn) == CT_FIXED_FORM
+	        && constraint_satisfied_p (op, cn)))
     decompose_mem_address (&ad, op);
   else if (GET_CODE (op) == SUBREG
 	   && MEM_P (SUBREG_REG (op)))
@@ -3401,6 +3680,7 @@ swap_operands (int nop)
   std::swap (curr_operand_mode[nop], curr_operand_mode[nop + 1]);
   std::swap (original_subreg_reg_mode[nop], original_subreg_reg_mode[nop + 1]);
   std::swap (*curr_id->operand_loc[nop], *curr_id->operand_loc[nop + 1]);
+  std::swap (equiv_substition_p[nop], equiv_substition_p[nop + 1]);
   /* Swap the duplicates too.  */
   lra_update_dup (curr_id, nop);
   lra_update_dup (curr_id, nop + 1);
@@ -3444,7 +3724,13 @@ curr_insn_transform (bool check_only_p)
 
   curr_insn_set = single_set (curr_insn);
   if (curr_insn_set != NULL_RTX && simple_move_p ())
-    return false;
+    {
+      /* We assume that the corresponding insn alternative has no
+	 earlier clobbers.  If it is not the case, don't define move
+	 cost equal to 2 for the corresponding register classes.  */
+      lra_set_used_insn_alternative (curr_insn, LRA_NON_CLOBBERED_ALT);
+      return false;
+    }
 
   no_input_reloads_p = no_output_reloads_p = false;
   goal_alt_number = -1;
@@ -3505,8 +3791,10 @@ curr_insn_transform (bool check_only_p)
 	  old = SUBREG_REG (old);
 	subst = get_equiv_with_elimination (old, curr_insn);
 	original_subreg_reg_mode[i] = VOIDmode;
+	equiv_substition_p[i] = false;
 	if (subst != old)
 	  {
+	    equiv_substition_p[i] = true;
 	    subst = copy_rtx (subst);
 	    lra_assert (REG_P (old));
 	    if (GET_CODE (op) != SUBREG)
@@ -3550,7 +3838,7 @@ curr_insn_transform (bool check_only_p)
   if (change_p)
     /* If we've changed the instruction then any alternative that
        we chose previously may no longer be valid.  */
-    lra_set_used_insn_alternative (curr_insn, -1);
+    lra_set_used_insn_alternative (curr_insn, LRA_UNKNOWN_ALT);
 
   if (! check_only_p && curr_insn_set != NULL_RTX
       && check_and_process_move (&change_p, &sec_mem_p))
@@ -3558,7 +3846,7 @@ curr_insn_transform (bool check_only_p)
 
  try_swapped:
 
-  reused_alternative_num = check_only_p ? -1 : curr_id->used_insn_alternative;
+  reused_alternative_num = check_only_p ? LRA_UNKNOWN_ALT : curr_id->used_insn_alternative;
   if (lra_dump_file != NULL && reused_alternative_num >= 0)
     fprintf (lra_dump_file, "Reusing alternative %d for insn #%u\n",
 	     reused_alternative_num, INSN_UID (curr_insn));
@@ -3596,9 +3884,9 @@ curr_insn_transform (bool check_only_p)
 	fatal_insn ("unable to generate reloads for:", curr_insn);
       error_for_asm (curr_insn,
 		     "inconsistent operand constraints in an %<asm%>");
-      /* Avoid further trouble with this insn.	*/
-      PATTERN (curr_insn) = gen_rtx_USE (VOIDmode, const0_rtx);
-      lra_invalidate_insn_data (curr_insn);
+      /* Avoid further trouble with this insn.  Don't generate use
+	 pattern here as we could use the insn SP offset.  */
+      lra_set_insn_deleted (curr_insn);
       return true;
     }
 
@@ -3940,8 +4228,9 @@ curr_insn_transform (bool check_only_p)
 	      reg = SUBREG_REG (*loc);
 	      byte = SUBREG_BYTE (*loc);
 	      if (REG_P (reg)
-		  /* Strict_low_part requires reload the register not
-		     the sub-register.	*/
+		  /* Strict_low_part requires reloading the register and not
+		     just the subreg.  Likewise for a strict subreg no wider
+		     than a word for WORD_REGISTER_OPERATIONS targets.  */
 		  && (curr_static_id->operand[i].strict_low
 		      || (GET_MODE_SIZE (mode)
 			  <= GET_MODE_SIZE (GET_MODE (reg))
@@ -3953,9 +4242,23 @@ curr_insn_transform (bool check_only_p)
 			  && (goal_alt[i] == NO_REGS
 			      || (simplify_subreg_regno
 				  (ira_class_hard_regs[goal_alt[i]][0],
-				   GET_MODE (reg), byte, mode) >= 0)))))
+				   GET_MODE (reg), byte, mode) >= 0)))
+		      || (GET_MODE_PRECISION (mode)
+			  < GET_MODE_PRECISION (GET_MODE (reg))
+			  && GET_MODE_SIZE (GET_MODE (reg)) <= UNITS_PER_WORD
+			  && WORD_REGISTER_OPERATIONS)))
 		{
-		  if (type == OP_OUT)
+		  /* An OP_INOUT is required when reloading a subreg of a
+		     mode wider than a word to ensure that data beyond the
+		     word being reloaded is preserved.  Also automatically
+		     ensure that strict_low_part reloads are made into
+		     OP_INOUT which should already be true from the backend
+		     constraints.  */
+		  if (type == OP_OUT
+		      && (curr_static_id->operand[i].strict_low
+			  || (GET_MODE_SIZE (GET_MODE (reg)) > UNITS_PER_WORD
+			      && (GET_MODE_SIZE (mode)
+				  < GET_MODE_SIZE (GET_MODE (reg))))))
 		    type = OP_INOUT;
 		  loc = &SUBREG_REG (*loc);
 		  mode = GET_MODE (*loc);
@@ -3992,7 +4295,13 @@ curr_insn_transform (bool check_only_p)
 	}
       else if (curr_static_id->operand[i].type == OP_IN
 	       && (curr_static_id->operand[goal_alt_matched[i][0]].type
-		   == OP_OUT))
+		   == OP_OUT
+		   || (curr_static_id->operand[goal_alt_matched[i][0]].type
+		       == OP_INOUT
+		       && (operands_match_p
+			   (*curr_id->operand_loc[i],
+			    *curr_id->operand_loc[goal_alt_matched[i][0]],
+			    -1)))))
 	{
 	  /* generate reloads for input and matched outputs.  */
 	  match_inputs[0] = i;
@@ -4003,9 +4312,14 @@ curr_insn_transform (bool check_only_p)
 			[goal_alt_number * n_operands + goal_alt_matched[i][0]]
 			.earlyclobber);
 	}
-      else if (curr_static_id->operand[i].type == OP_OUT
+      else if ((curr_static_id->operand[i].type == OP_OUT
+		|| (curr_static_id->operand[i].type == OP_INOUT
+		    && (operands_match_p
+			(*curr_id->operand_loc[i],
+			 *curr_id->operand_loc[goal_alt_matched[i][0]],
+			 -1))))
 	       && (curr_static_id->operand[goal_alt_matched[i][0]].type
-		   == OP_IN))
+		    == OP_IN))
 	/* Generate reloads for output and matched inputs.  */
 	match_reload (i, goal_alt_matched[i], outputs, goal_alt[i], &before,
 		      &after, curr_static_id->operand_alternative
@@ -4037,14 +4351,16 @@ curr_insn_transform (bool check_only_p)
 
       if (optional_p)
 	{
-	  lra_assert (REG_P (op));
-	  regno = REGNO (op);
+	  rtx reg = op;
+
+	  lra_assert (REG_P (reg));
+	  regno = REGNO (reg);
 	  op = *curr_id->operand_loc[i]; /* Substitution.  */
 	  if (GET_CODE (op) == SUBREG)
 	    op = SUBREG_REG (op);
 	  gcc_assert (REG_P (op) && (int) REGNO (op) >= new_regno_start);
 	  bitmap_set_bit (&lra_optional_reload_pseudos, REGNO (op));
-	  lra_reg_info[REGNO (op)].restore_regno = regno;
+	  lra_reg_info[REGNO (op)].restore_rtx = reg;
 	  if (lra_dump_file != NULL)
 	    fprintf (lra_dump_file,
 		     "      Making reload reg %d for reg %d optional\n",
@@ -4362,7 +4678,10 @@ lra_constraints (bool first_p)
       && REGNO (pic_offset_table_rtx) >= FIRST_PSEUDO_REGISTER)
     lra_risky_transformations_p = true;
   else
-    lra_risky_transformations_p = false;
+    /* On the first iteration we should check IRA assignment
+       correctness.  In rare cases, the assignments can be wrong as
+       early clobbers operands are ignored in IRA.  */
+    lra_risky_transformations_p = first_p;
   new_insn_uid_start = get_max_uid ();
   new_regno_start = first_p ? lra_constraint_new_regno_start : max_reg_num ();
   /* Mark used hard regs for target stack size calulations.  */
@@ -4578,11 +4897,15 @@ lra_constraints (bool first_p)
   return changed_p;
 }
 
+static void initiate_invariants (void);
+static void finish_invariants (void);
+
 /* Initiate the LRA constraint pass.  It is done once per
    function.  */
 void
 lra_constraints_init (void)
 {
+  initiate_invariants ();
 }
 
 /* Finalize the LRA constraint pass.  It is done once per
@@ -4590,6 +4913,101 @@ lra_constraints_init (void)
 void
 lra_constraints_finish (void)
 {
+  finish_invariants ();
+}
+
+
+
+/* Structure describes invariants for ineheritance.  */
+struct lra_invariant
+{
+  /* The order number of the invariant.  */
+  int num;
+  /* The invariant RTX.  */
+  rtx invariant_rtx;
+  /* The origin insn of the invariant.  */
+  rtx_insn *insn;
+};
+
+typedef lra_invariant invariant_t;
+typedef invariant_t *invariant_ptr_t;
+typedef const invariant_t *const_invariant_ptr_t;
+
+/* Pointer to the inheritance invariants.  */
+static vec<invariant_ptr_t> invariants;
+
+/* Allocation pool for the invariants.  */
+static object_allocator<lra_invariant> *invariants_pool;
+
+/* Hash table for the invariants.  */
+static htab_t invariant_table;
+
+/* Hash function for INVARIANT.  */
+static hashval_t
+invariant_hash (const void *invariant)
+{
+  rtx inv = ((const_invariant_ptr_t) invariant)->invariant_rtx;
+  return lra_rtx_hash (inv);
+}
+
+/* Equal function for invariants INVARIANT1 and INVARIANT2.  */
+static int
+invariant_eq_p (const void *invariant1, const void *invariant2)
+{
+  rtx inv1 = ((const_invariant_ptr_t) invariant1)->invariant_rtx;
+  rtx inv2 = ((const_invariant_ptr_t) invariant2)->invariant_rtx;
+
+  return rtx_equal_p (inv1, inv2);
+}
+
+/* Insert INVARIANT_RTX into the table if it is not there yet.  Return
+   invariant which is in the table.  */
+static invariant_ptr_t
+insert_invariant (rtx invariant_rtx)
+{
+  void **entry_ptr;
+  invariant_t invariant;
+  invariant_ptr_t invariant_ptr;
+
+  invariant.invariant_rtx = invariant_rtx;
+  entry_ptr = htab_find_slot (invariant_table, &invariant, INSERT);
+  if (*entry_ptr == NULL)
+    {
+      invariant_ptr = invariants_pool->allocate ();
+      invariant_ptr->invariant_rtx = invariant_rtx;
+      invariant_ptr->insn = NULL;
+      invariants.safe_push (invariant_ptr);
+      *entry_ptr = (void *) invariant_ptr;
+    }
+  return (invariant_ptr_t) *entry_ptr;
+}
+
+/* Initiate the invariant table.  */
+static void
+initiate_invariants (void)
+{
+  invariants.create (100);
+  invariants_pool
+    = new object_allocator<lra_invariant> ("Inheritance invariants");
+  invariant_table = htab_create (100, invariant_hash, invariant_eq_p, NULL);
+}
+
+/* Finish the invariant table.  */
+static void
+finish_invariants (void)
+{
+  htab_delete (invariant_table);
+  delete invariants_pool;
+  invariants.release ();
+}
+
+/* Make the invariant table empty.  */
+static void
+clear_invariants (void)
+{
+  htab_empty (invariant_table);
+  invariants_pool->release ();
+  invariants.truncate (0);
 }
 
 
@@ -4721,6 +5139,10 @@ check_secondary_memory_needed_p (enum reg_class inher_cl ATTRIBUTE_UNUSED,
    (inheritance/split pseudos and original registers).	*/
 static bitmap_head check_only_regs;
 
+/* Reload pseudos can not be involded in invariant inheritance in the
+   current EBB.  */
+static bitmap_head invalid_invariant_regs;
+
 /* Do inheritance transformations for insn INSN, which defines (if
    DEF_P) or uses ORIGINAL_REGNO.  NEXT_USAGE_INSNS specifies which
    instruction in the EBB next uses ORIGINAL_REGNO; it has the same
@@ -4842,7 +5264,7 @@ inherit_reload_reg (bool def_p, int original_regno,
   if (lra_dump_file != NULL)
     fprintf (lra_dump_file, "    Original reg change %d->%d (bb%d):\n",
 	     original_regno, REGNO (new_reg), BLOCK_FOR_INSN (insn)->index);
-  lra_reg_info[REGNO (new_reg)].restore_regno = original_regno;
+  lra_reg_info[REGNO (new_reg)].restore_rtx = regno_reg_rtx[original_regno];
   bitmap_set_bit (&check_only_regs, REGNO (new_reg));
   bitmap_set_bit (&check_only_regs, original_regno);
   bitmap_set_bit (&lra_inheritance_pseudos, REGNO (new_reg));
@@ -5092,6 +5514,26 @@ split_reg (bool before_p, int original_regno, rtx_insn *insn,
 	    }
 	  return false;
 	}
+      /* Split_if_necessary can split hard registers used as part of a
+	 multi-register mode but splits each register individually.  The
+	 mode used for each independent register may not be supported
+	 so reject the split.  Splitting the wider mode should theoretically
+	 be possible but is not implemented.  */
+      if (! HARD_REGNO_MODE_OK (hard_regno, mode))
+	{
+	  if (lra_dump_file != NULL)
+	    {
+	      fprintf (lra_dump_file,
+		       "    Rejecting split of %d(%s): unsuitable mode %s\n",
+		       original_regno,
+		       reg_class_names[lra_get_allocno_class (original_regno)],
+		       GET_MODE_NAME (mode));
+	      fprintf
+		(lra_dump_file,
+		 "    ))))))))))))))))))))))))))))))))))))))))))))))))\n");
+	    }
+	  return false;
+	}
       new_reg = lra_create_new_reg (mode, original_reg, rclass, "split");
       reg_renumber[REGNO (new_reg)] = hard_regno;
     }
@@ -5126,7 +5568,7 @@ split_reg (bool before_p, int original_regno, rtx_insn *insn,
       return false;
     }
   after_p = usage_insns[original_regno].after_p;
-  lra_reg_info[REGNO (new_reg)].restore_regno = original_regno;
+  lra_reg_info[REGNO (new_reg)].restore_rtx = regno_reg_rtx[original_regno];
   bitmap_set_bit (&check_only_regs, REGNO (new_reg));
   bitmap_set_bit (&check_only_regs, original_regno);
   bitmap_set_bit (&lra_split_regs, REGNO (new_reg));
@@ -5203,6 +5645,134 @@ split_if_necessary (int regno, machine_mode mode,
 	&& split_reg (before_p, regno + i, insn, next_usage_insns))
     res = true;
   return res;
+}
+
+/* Return TRUE if rtx X is considered as an invariant for
+   inheritance.  */
+static bool
+invariant_p (const_rtx x)
+{
+  machine_mode mode;
+  const char *fmt;
+  enum rtx_code code;
+  int i, j;
+
+  code = GET_CODE (x);
+  mode = GET_MODE (x);
+  if (code == SUBREG)
+    {
+      x = SUBREG_REG (x);
+      code = GET_CODE (x);
+      if (GET_MODE_SIZE (GET_MODE (x)) > GET_MODE_SIZE (mode))
+	mode = GET_MODE (x);
+    }
+
+  if (MEM_P (x))
+    return false;
+
+  if (REG_P (x))
+    {
+      int i, nregs, regno = REGNO (x);
+
+      if (regno >= FIRST_PSEUDO_REGISTER || regno == STACK_POINTER_REGNUM
+	  || TEST_HARD_REG_BIT (eliminable_regset, regno)
+	  || GET_MODE_CLASS (GET_MODE (x)) == MODE_CC)
+	return false;
+      nregs = hard_regno_nregs[regno][mode];
+      for (i = 0; i < nregs; i++)
+	if (! fixed_regs[regno + i]
+	    /* A hard register may be clobbered in the current insn
+	       but we can ignore this case because if the hard
+	       register is used it should be set somewhere after the
+	       clobber.  */
+	    || bitmap_bit_p (&invalid_invariant_regs, regno + i))
+	  return false;
+    }
+  fmt = GET_RTX_FORMAT (code);
+  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'e')
+	{
+	  if (! invariant_p (XEXP (x, i)))
+	    return false;
+	}
+      else if (fmt[i] == 'E')
+	{
+	  for (j = XVECLEN (x, i) - 1; j >= 0; j--)
+	    if (! invariant_p (XVECEXP (x, i, j)))
+	      return false;
+	}
+    }
+  return true;
+}
+
+/* We have 'dest_reg <- invariant'.  Let us try to make an invariant
+   inheritance transformation (using dest_reg instead invariant in a
+   subsequent insn).  */
+static bool
+process_invariant_for_inheritance (rtx dst_reg, rtx invariant_rtx)
+{
+  invariant_ptr_t invariant_ptr;
+  rtx_insn *insn, *new_insns;
+  rtx insn_set, insn_reg, new_reg;
+  int insn_regno;
+  bool succ_p = false;
+  int dst_regno = REGNO (dst_reg);
+  enum machine_mode dst_mode = GET_MODE (dst_reg);
+  enum reg_class cl = lra_get_allocno_class (dst_regno), insn_reg_cl;
+
+  invariant_ptr = insert_invariant (invariant_rtx);
+  if ((insn = invariant_ptr->insn) != NULL_RTX)
+    {
+      /* We have a subsequent insn using the invariant.  */
+      insn_set = single_set (insn);
+      lra_assert (insn_set != NULL);
+      insn_reg = SET_DEST (insn_set);
+      lra_assert (REG_P (insn_reg));
+      insn_regno = REGNO (insn_reg);
+      insn_reg_cl = lra_get_allocno_class (insn_regno);
+
+      if (dst_mode == GET_MODE (insn_reg)
+	  /* We should consider only result move reg insns which are
+	     cheap.  */
+	  && targetm.register_move_cost (dst_mode, cl, insn_reg_cl) == 2
+	  && targetm.register_move_cost (dst_mode, cl, cl) == 2)
+	{
+	  if (lra_dump_file != NULL)
+	    fprintf (lra_dump_file,
+		     "    [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n");
+	  new_reg = lra_create_new_reg (dst_mode, dst_reg,
+					cl, "invariant inheritance");
+	  bitmap_set_bit (&lra_inheritance_pseudos, REGNO (new_reg));
+	  bitmap_set_bit (&check_only_regs, REGNO (new_reg));
+	  lra_reg_info[REGNO (new_reg)].restore_rtx = PATTERN (insn);
+	  start_sequence ();
+	  lra_emit_move (new_reg, dst_reg);
+	  new_insns = get_insns ();
+	  end_sequence ();
+	  lra_process_new_insns (curr_insn, NULL, new_insns,
+				 "Add invariant inheritance<-original");
+	  start_sequence ();
+	  lra_emit_move (SET_DEST (insn_set), new_reg);
+	  new_insns = get_insns ();
+	  end_sequence ();
+	  lra_process_new_insns (insn, NULL, new_insns,
+				 "Changing reload<-inheritance");
+	  lra_set_insn_deleted (insn);
+	  succ_p = true;
+	  if (lra_dump_file != NULL)
+	    {
+	      fprintf (lra_dump_file,
+		       "    Invariant inheritance reuse change %d (bb%d):\n",
+		       REGNO (new_reg), BLOCK_FOR_INSN (insn)->index);
+	      dump_insn_slim (lra_dump_file, insn);
+	      fprintf (lra_dump_file,
+		       "	  ]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]\n");
+	    }
+	}
+    }
+  invariant_ptr->insn = curr_insn;
+  return succ_p;
 }
 
 /* Check only registers living at the current program point in the
@@ -5427,7 +5997,7 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
   int i, src_regno, dst_regno, nregs;
   bool change_p, succ_p, update_reloads_num_p;
   rtx_insn *prev_insn, *last_insn;
-  rtx next_usage_insns, set;
+  rtx next_usage_insns, curr_set;
   enum reg_class cl;
   struct lra_insn_reg *reg;
   basic_block last_processed_bb, curr_bb = NULL;
@@ -5439,8 +6009,10 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
 
   change_p = false;
   curr_usage_insns_check++;
+  clear_invariants ();
   reloads_num = calls_num = 0;
   bitmap_clear (&check_only_regs);
+  bitmap_clear (&invalid_invariant_regs);
   last_processed_bb = NULL;
   CLEAR_HARD_REG_SET (potential_reload_hard_regs);
   COPY_HARD_REG_SET (live_hard_regs, eliminable_regset);
@@ -5488,13 +6060,11 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
 	    }
 	}
       src_regno = dst_regno = -1;
-      if (NONDEBUG_INSN_P (curr_insn)
-	  && (set = single_set (curr_insn)) != NULL_RTX
-	  && REG_P (SET_DEST (set)) && REG_P (SET_SRC (set)))
-	{
-	  src_regno = REGNO (SET_SRC (set));
-	  dst_regno = REGNO (SET_DEST (set));
-	}
+      curr_set = single_set (curr_insn);
+      if (curr_set != NULL_RTX && REG_P (SET_DEST (curr_set)))
+	dst_regno = REGNO (SET_DEST (curr_set));
+      if (curr_set != NULL_RTX && REG_P (SET_SRC (curr_set)))
+	src_regno = REGNO (SET_SRC (curr_set));
       update_reloads_num_p = true;
       if (src_regno < lra_constraint_new_regno_start
 	  && src_regno >= FIRST_PSEUDO_REGISTER
@@ -5515,6 +6085,24 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
 	    change_p = true;
 	  else
 	    setup_next_usage_insn (src_regno, curr_insn, reloads_num, false);
+	  if (hard_reg_set_subset_p (reg_class_contents[cl], live_hard_regs))
+	    IOR_HARD_REG_SET (potential_reload_hard_regs,
+			      reg_class_contents[cl]);
+	}
+      else if (src_regno < 0
+	       && dst_regno >= lra_constraint_new_regno_start
+	       && invariant_p (SET_SRC (curr_set))
+	       && (cl = lra_get_allocno_class (dst_regno)) != NO_REGS
+	       && ! bitmap_bit_p (&invalid_invariant_regs, dst_regno)
+	       && ! bitmap_bit_p (&invalid_invariant_regs,
+				  ORIGINAL_REGNO(regno_reg_rtx[dst_regno])))
+	{
+	  /* 'reload_pseudo <- invariant'.  */
+	  if (ira_class_hard_regs_num[cl] <= max_small_class_regs_num)
+	    reloads_num++;
+	  update_reloads_num_p = false;
+	  if (process_invariant_for_inheritance (SET_DEST (curr_set), SET_SRC (curr_set)))
+	    change_p = true;
 	  if (hard_reg_set_subset_p (reg_class_contents[cl], live_hard_regs))
 	    IOR_HARD_REG_SET (potential_reload_hard_regs,
 			      reg_class_contents[cl]);
@@ -5751,16 +6339,15 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
 	    }
 	}
       if (update_reloads_num_p
-	  && NONDEBUG_INSN_P (curr_insn)
-          && (set = single_set (curr_insn)) != NULL_RTX)
+	  && NONDEBUG_INSN_P (curr_insn) && curr_set != NULL_RTX)
 	{
 	  int regno = -1;
-	  if ((REG_P (SET_DEST (set))
-	       && (regno = REGNO (SET_DEST (set))) >= lra_constraint_new_regno_start
+	  if ((REG_P (SET_DEST (curr_set))
+	       && (regno = REGNO (SET_DEST (curr_set))) >= lra_constraint_new_regno_start
 	       && reg_renumber[regno] < 0
 	       && (cl = lra_get_allocno_class (regno)) != NO_REGS)
-	      || (REG_P (SET_SRC (set))
-	          && (regno = REGNO (SET_SRC (set))) >= lra_constraint_new_regno_start
+	      || (REG_P (SET_SRC (curr_set))
+	          && (regno = REGNO (SET_SRC (curr_set))) >= lra_constraint_new_regno_start
 	          && reg_renumber[regno] < 0
 	          && (cl = lra_get_allocno_class (regno)) != NO_REGS))
 	    {
@@ -5770,6 +6357,29 @@ inherit_in_ebb (rtx_insn *head, rtx_insn *tail)
 		IOR_HARD_REG_SET (potential_reload_hard_regs,
 	                          reg_class_contents[cl]);
 	    }
+	}
+      if (NONDEBUG_INSN_P (curr_insn))
+	{
+	  int regno;
+
+	  /* Invalidate invariants with changed regs.  */
+	  curr_id = lra_get_insn_recog_data (curr_insn);
+	  for (reg = curr_id->regs; reg != NULL; reg = reg->next)
+	    if (reg->type != OP_IN)
+	      {
+		bitmap_set_bit (&invalid_invariant_regs, reg->regno);
+		bitmap_set_bit (&invalid_invariant_regs,
+				ORIGINAL_REGNO (regno_reg_rtx[reg->regno]));
+	      }
+	  curr_static_id = curr_id->insn_static_data;
+	  for (reg = curr_static_id->hard_regs; reg != NULL; reg = reg->next)
+	    if (reg->type != OP_IN)
+	      bitmap_set_bit (&invalid_invariant_regs, reg->regno);
+	  if (curr_id->arg_hard_regs != NULL)
+	    for (i = 0; (regno = curr_id->arg_hard_regs[i]) >= 0; i++)
+	      if (regno >= FIRST_PSEUDO_REGISTER)
+		bitmap_set_bit (&invalid_invariant_regs,
+				regno - FIRST_PSEUDO_REGISTER);
 	}
       /* We reached the start of the current basic block.  */
       if (prev_insn == NULL_RTX || prev_insn == PREV_INSN (head)
@@ -5843,6 +6453,7 @@ lra_inheritance (void)
   for (i = 0; i < lra_constraint_new_regno_start; i++)
     usage_insns[i].check = 0;
   bitmap_initialize (&check_only_regs, &reg_obstack);
+  bitmap_initialize (&invalid_invariant_regs, &reg_obstack);
   bitmap_initialize (&live_regs, &reg_obstack);
   bitmap_initialize (&temp_bitmap, &reg_obstack);
   bitmap_initialize (&ebb_global_regs, &reg_obstack);
@@ -5879,6 +6490,7 @@ lra_inheritance (void)
   bitmap_clear (&ebb_global_regs);
   bitmap_clear (&temp_bitmap);
   bitmap_clear (&live_regs);
+  bitmap_clear (&invalid_invariant_regs);
   bitmap_clear (&check_only_regs);
   free (usage_insns);
 
@@ -5902,8 +6514,9 @@ fix_bb_live_info (bitmap live, bitmap removed_pseudos)
   bitmap_iterator bi;
 
   EXECUTE_IF_SET_IN_BITMAP (removed_pseudos, 0, regno, bi)
-    if (bitmap_clear_bit (live, regno))
-      bitmap_set_bit (live, lra_reg_info[regno].restore_regno);
+    if (bitmap_clear_bit (live, regno)
+	&& REG_P (lra_reg_info[regno].restore_rtx))
+      bitmap_set_bit (live, REGNO (lra_reg_info[regno].restore_rtx));
 }
 
 /* Return regno of the (subreg of) REG. Otherwise, return a negative
@@ -5956,7 +6569,8 @@ static bool
 remove_inheritance_pseudos (bitmap remove_pseudos)
 {
   basic_block bb;
-  int regno, sregno, prev_sregno, dregno, restore_regno;
+  int regno, sregno, prev_sregno, dregno;
+  rtx restore_rtx;
   rtx set, prev_set;
   rtx_insn *prev_insn;
   bool change_p, done_p;
@@ -5985,13 +6599,44 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 
 	  if (sregno >= 0 && dregno >= 0)
 	    {
-	      if ((bitmap_bit_p (remove_pseudos, sregno)
-		   && (lra_reg_info[sregno].restore_regno == dregno
+	      if (bitmap_bit_p (remove_pseudos, dregno)
+		  && ! REG_P (lra_reg_info[dregno].restore_rtx))
+		{
+		  /* invariant inheritance pseudo <- original pseudo */
+		  if (lra_dump_file != NULL)
+		    {
+		      fprintf (lra_dump_file, "	   Removing invariant inheritance:\n");
+		      dump_insn_slim (lra_dump_file, curr_insn);
+		      fprintf (lra_dump_file, "\n");
+		    }
+		  delete_move_and_clobber (curr_insn, dregno);
+		  done_p = true;
+		}
+	      else if (bitmap_bit_p (remove_pseudos, sregno)
+		       && ! REG_P (lra_reg_info[sregno].restore_rtx))
+		{
+		  /* reload pseudo <- invariant inheritance pseudo */
+		  start_sequence ();
+		  /* We can not just change the source.  It might be
+		     an insn different from the move.  */
+		  emit_insn (lra_reg_info[sregno].restore_rtx);
+		  rtx_insn *new_insns = get_insns ();
+		  end_sequence ();
+		  lra_assert (single_set (new_insns) != NULL
+			      && SET_DEST (set) == SET_DEST (single_set (new_insns)));
+		  lra_process_new_insns (curr_insn, NULL, new_insns,
+					 "Changing reload<-invariant inheritance");
+		  delete_move_and_clobber (curr_insn, dregno);
+		  done_p = true;
+		}
+	      else if ((bitmap_bit_p (remove_pseudos, sregno)
+			&& (get_regno (lra_reg_info[sregno].restore_rtx) == dregno
+			    || (bitmap_bit_p (remove_pseudos, dregno)
+				&& get_regno (lra_reg_info[sregno].restore_rtx) >= 0
+				&& (get_regno (lra_reg_info[sregno].restore_rtx)
+				    == get_regno (lra_reg_info[dregno].restore_rtx)))))
 		       || (bitmap_bit_p (remove_pseudos, dregno)
-			   && (lra_reg_info[sregno].restore_regno
-			       == lra_reg_info[dregno].restore_regno))))
-		  || (bitmap_bit_p (remove_pseudos, dregno)
-		      && lra_reg_info[dregno].restore_regno == sregno))
+			   && get_regno (lra_reg_info[dregno].restore_rtx) == sregno))
 		/* One of the following cases:
 		     original <- removed inheritance pseudo
 		     removed inherit pseudo <- another removed inherit pseudo
@@ -6036,13 +6681,16 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 		      && (int) REGNO (SET_DEST (prev_set)) == sregno
 		      && ((prev_sregno = REGNO (SET_SRC (prev_set)))
 			  >= FIRST_PSEUDO_REGISTER)
-		      /* As we consider chain of inheritance or
-			 splitting described in above comment we should
-			 check that sregno and prev_sregno were
-			 inheritance/split pseudos created from the
-			 same original regno.  */
-		      && (lra_reg_info[sregno].restore_regno
-			  == lra_reg_info[prev_sregno].restore_regno)
+		      && (lra_reg_info[prev_sregno].restore_rtx == NULL_RTX
+			  ||
+			  /* As we consider chain of inheritance or
+			     splitting described in above comment we should
+			     check that sregno and prev_sregno were
+			     inheritance/split pseudos created from the
+			     same original regno.  */
+			  (get_regno (lra_reg_info[sregno].restore_rtx) >= 0
+			   && (get_regno (lra_reg_info[sregno].restore_rtx)
+			       == get_regno (lra_reg_info[prev_sregno].restore_rtx))))
 		      && ! bitmap_bit_p (remove_pseudos, prev_sregno))
 		    {
 		      lra_assert (GET_MODE (SET_SRC (prev_set))
@@ -6056,18 +6704,17 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 			 inheritance pseudo for another pseudo.  */
 		      if (bitmap_bit_p (remove_pseudos, dregno)
 			  && bitmap_bit_p (&lra_inheritance_pseudos, dregno)
-			  && (restore_regno
-			      = lra_reg_info[dregno].restore_regno) >= 0)
+			  && (restore_rtx
+			      = lra_reg_info[dregno].restore_rtx) != NULL_RTX)
 			{
 			  if (GET_CODE (SET_DEST (set)) == SUBREG)
-			    SUBREG_REG (SET_DEST (set))
-			      = regno_reg_rtx[restore_regno];
+			    SUBREG_REG (SET_DEST (set)) = restore_rtx;
 			  else
-			    SET_DEST (set) = regno_reg_rtx[restore_regno];
+			    SET_DEST (set) = restore_rtx;
 			}
 		      lra_push_insn_and_update_insn_regno_info (curr_insn);
 		      lra_set_used_insn_alternative_by_uid
-			(INSN_UID (curr_insn), -1);
+			(INSN_UID (curr_insn), LRA_UNKNOWN_ALT);
 		      done_p = true;
 		      if (lra_dump_file != NULL)
 			{
@@ -6087,14 +6734,13 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 	      for (reg = curr_id->regs; reg != NULL; reg = reg->next)
 		{
 		  regno = reg->regno;
-		  restore_regno = lra_reg_info[regno].restore_regno;
-		  if (restore_regno >= 0)
+		  restore_rtx = lra_reg_info[regno].restore_rtx;
+		  if (restore_rtx != NULL_RTX)
 		    {
 		      if (change_p && bitmap_bit_p (remove_pseudos, regno))
 			{
 			  lra_substitute_pseudo_within_insn
-			    (curr_insn, regno, regno_reg_rtx[restore_regno],
-			     false);
+			    (curr_insn, regno, restore_rtx, false);
 			  restored_regs_p = true;
 			}
 		      else
@@ -6107,7 +6753,7 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 		     constraints pass.  */
 		  lra_push_insn_and_update_insn_regno_info (curr_insn);
 		  lra_set_used_insn_alternative_by_uid
-		    (INSN_UID (curr_insn), -1);
+		    (INSN_UID (curr_insn), LRA_UNKNOWN_ALT);
 		}
 	      else if (restored_regs_p)
 		/* The instruction has been restored to the form that
@@ -6145,11 +6791,11 @@ undo_optional_reloads (void)
     {
       keep_p = false;
       /* Keep optional reloads from previous subpasses.  */
-      if (lra_reg_info[regno].restore_regno < 0
+      if (lra_reg_info[regno].restore_rtx == NULL_RTX
 	  /* If the original pseudo changed its allocation, just
 	     removing the optional pseudo is dangerous as the original
 	     pseudo will have longer live range.  */
-	  || reg_renumber[lra_reg_info[regno].restore_regno] >= 0)
+	  || reg_renumber[REGNO (lra_reg_info[regno].restore_rtx)] >= 0)
 	keep_p = true;
       else if (reg_renumber[regno] >= 0)
 	EXECUTE_IF_SET_IN_BITMAP (&lra_reg_info[regno].insn_bitmap, 0, uid, bi2)
@@ -6163,7 +6809,7 @@ undo_optional_reloads (void)
 	      continue;
 	    if (REGNO (dest) == regno
 		/* Ignore insn for optional reloads itself.  */
-		&& lra_reg_info[regno].restore_regno != (int) REGNO (src)
+		&& REGNO (lra_reg_info[regno].restore_rtx) != REGNO (src)
 		/* Check only inheritance on last inheritance pass.  */
 		&& (int) REGNO (src) >= new_regno_start
 		/* Check that the optional reload was inherited.  */
@@ -6196,11 +6842,11 @@ undo_optional_reloads (void)
 	      dest = SET_DEST (set);
 	      if (REG_P (src) && REG_P (dest)
 		  && ((REGNO (src) == regno
-		       && (lra_reg_info[regno].restore_regno
-			   == (int) REGNO (dest)))
+		       && (REGNO (lra_reg_info[regno].restore_rtx)
+			   == REGNO (dest)))
 		      || (REGNO (dest) == regno
-			  && (lra_reg_info[regno].restore_regno
-			      == (int) REGNO (src)))))
+			  && (REGNO (lra_reg_info[regno].restore_rtx)
+			      == REGNO (src)))))
 		{
 		  if (lra_dump_file != NULL)
 		    {
@@ -6218,8 +6864,7 @@ undo_optional_reloads (void)
 		 reload.  */
 	    }
 	  lra_substitute_pseudo_within_insn
-	    (insn, regno, regno_reg_rtx[lra_reg_info[regno].restore_regno],
-	     false);
+	    (insn, regno, lra_reg_info[regno].restore_rtx, false);
 	  lra_update_insn_regno_info (insn);
 	  if (lra_dump_file != NULL)
 	    {
@@ -6231,7 +6876,7 @@ undo_optional_reloads (void)
     }
   /* Clear restore_regnos.  */
   EXECUTE_IF_SET_IN_BITMAP (&lra_optional_reload_pseudos, 0, regno, bi)
-    lra_reg_info[regno].restore_regno = -1;
+    lra_reg_info[regno].restore_rtx = NULL_RTX;
   bitmap_clear (&insn_bitmap);
   bitmap_clear (&removed_optional_reload_pseudos);
   return change_p;
@@ -6243,8 +6888,9 @@ bool
 lra_undo_inheritance (void)
 {
   unsigned int regno;
-  int restore_regno, hard_regno;
+  int hard_regno;
   int n_all_inherit, n_inherit, n_all_split, n_split;
+  rtx restore_rtx;
   bitmap_head remove_pseudos;
   bitmap_iterator bi;
   bool change_p;
@@ -6259,14 +6905,15 @@ lra_undo_inheritance (void)
   bitmap_initialize (&remove_pseudos, &reg_obstack);
   n_inherit = n_all_inherit = 0;
   EXECUTE_IF_SET_IN_BITMAP (&lra_inheritance_pseudos, 0, regno, bi)
-    if (lra_reg_info[regno].restore_regno >= 0)
+    if (lra_reg_info[regno].restore_rtx != NULL_RTX)
       {
 	n_all_inherit++;
 	if (reg_renumber[regno] < 0
 	    /* If the original pseudo changed its allocation, just
 	       removing inheritance is dangerous as for changing
 	       allocation we used shorter live-ranges.  */
-	    && reg_renumber[lra_reg_info[regno].restore_regno] < 0)
+	    && (! REG_P (lra_reg_info[regno].restore_rtx)
+		|| reg_renumber[REGNO (lra_reg_info[regno].restore_rtx)] < 0))
 	  bitmap_set_bit (&remove_pseudos, regno);
 	else
 	  n_inherit++;
@@ -6277,8 +6924,10 @@ lra_undo_inheritance (void)
 	     (double) n_inherit / n_all_inherit * 100);
   n_split = n_all_split = 0;
   EXECUTE_IF_SET_IN_BITMAP (&lra_split_regs, 0, regno, bi)
-    if ((restore_regno = lra_reg_info[regno].restore_regno) >= 0)
+    if ((restore_rtx = lra_reg_info[regno].restore_rtx) != NULL_RTX)
       {
+	int restore_regno = REGNO (restore_rtx);
+
 	n_all_split++;
 	hard_regno = (restore_regno >= FIRST_PSEUDO_REGISTER
 		      ? reg_renumber[restore_regno] : restore_regno);
@@ -6300,9 +6949,9 @@ lra_undo_inheritance (void)
   bitmap_clear (&remove_pseudos);
   /* Clear restore_regnos.  */
   EXECUTE_IF_SET_IN_BITMAP (&lra_inheritance_pseudos, 0, regno, bi)
-    lra_reg_info[regno].restore_regno = -1;
+    lra_reg_info[regno].restore_rtx = NULL_RTX;
   EXECUTE_IF_SET_IN_BITMAP (&lra_split_regs, 0, regno, bi)
-    lra_reg_info[regno].restore_regno = -1;
+    lra_reg_info[regno].restore_rtx = NULL_RTX;
   change_p = undo_optional_reloads () || change_p;
   return change_p;
 }

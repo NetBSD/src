@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.2.4.1 2019/06/10 22:08:29 christos Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.2.4.2 2020/04/13 08:04:58 martin Exp $	*/
 
 #ifndef __DRM_GEM_CMA_HELPER_H__
 #define __DRM_GEM_CMA_HELPER_H__
@@ -20,6 +20,8 @@ struct drm_gem_cma_object {
 	bus_dma_segment_t dmasegs[1];
 	bus_size_t dmasize;
 	bus_dmamap_t dmamap;
+	vmem_t *vmem_pool;
+	vmem_addr_t vmem_addr;
 #else
 	dma_addr_t paddr;
 #endif

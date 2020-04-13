@@ -5296,11 +5296,7 @@ zfs_ioc_diff(zfs_cmd_t *zc)
 
 	off = fp->f_offset;
 
-#ifdef __FreeBSD__
 	error = dmu_diff(zc->zc_name, zc->zc_value, fp, &off);
-#else
-	error = dmu_diff(zc->zc_name, zc->zc_value, fp->f_vnode, &off);
-#endif
 
 	if (off >= 0 && off <= MAXOFFSET_T)
 		fp->f_offset = off;

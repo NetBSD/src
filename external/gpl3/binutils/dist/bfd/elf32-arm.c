@@ -6007,12 +6007,12 @@ cmse_scan (bfd *input_bfd, struct elf32_arm_link_hash_table *htab,
       if (i < ext_start)
 	{
 	  cmse_sym = &local_syms[i];
-	  /* Not a special symbol.  */
-	  if (!ARM_GET_SYM_CMSE_SPCL (cmse_sym->st_target_internal))
-	    continue;
 	  sym_name = bfd_elf_string_from_elf_section (input_bfd,
 						      symtab_hdr->sh_link,
 						      cmse_sym->st_name);
+	  if (!sym_name || !CONST_STRNEQ (sym_name, CMSE_PREFIX))
+	    continue;
+
 	  /* Special symbol with local binding.  */
 	  cmse_invalid = TRUE;
 	}
@@ -6020,9 +6020,7 @@ cmse_scan (bfd *input_bfd, struct elf32_arm_link_hash_table *htab,
 	{
 	  cmse_hash = elf32_arm_hash_entry (sym_hashes[i - ext_start]);
 	  sym_name = (char *) cmse_hash->root.root.root.string;
-
-	  /* Not a special symbol.  */
-	  if (!ARM_GET_SYM_CMSE_SPCL (cmse_hash->root.target_internal))
+	  if (!CONST_STRNEQ (sym_name, CMSE_PREFIX))
 	    continue;
 
 	  /* Special symbol has incorrect binding or type.  */
@@ -15997,7 +15995,8 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
 
 		  /* Assume it is a special symbol.  If not, cmse_scan will
 		     warn about it and user can do something about it.  */
-		  if (ARM_GET_SYM_CMSE_SPCL (cmse_hash->root.target_internal))
+		  if (CONST_STRNEQ (cmse_hash->root.root.root.string,
+				    CMSE_PREFIX))
 		    {
 		      cmse_sec = cmse_hash->root.root.u.def.section;
 		      if (!cmse_sec->gc_mark
@@ -18539,9 +18538,6 @@ elf32_arm_filter_cmse_symbols (bfd *abfd ATTRIBUTE_UNUSED,
 	  || cmse_hash->root.type != STT_FUNC)
 	continue;
 
-      if (!ARM_GET_SYM_CMSE_SPCL (cmse_hash->root.target_internal))
-	continue;
-
       syms[dst_count++] = sym;
     }
   free (cmse_name);
@@ -19866,9 +19862,6 @@ elf32_arm_swap_symbol_in (bfd * abfd,
 			  const void *pshn,
 			  Elf_Internal_Sym *dst)
 {
-  Elf_Internal_Shdr *symtab_hdr;
-  const char *name = NULL;
-
   if (!bfd_elf32_swap_symbol_in (abfd, psrc, pshn, dst))
     return FALSE;
   dst->st_target_internal = 0;
@@ -19896,13 +19889,6 @@ elf32_arm_swap_symbol_in (bfd * abfd,
     ARM_SET_SYM_BRANCH_TYPE (dst->st_target_internal, ST_BRANCH_LONG);
   else
     ARM_SET_SYM_BRANCH_TYPE (dst->st_target_internal, ST_BRANCH_UNKNOWN);
-
-  /* Mark CMSE special symbols.  */
-  symtab_hdr = & elf_symtab_hdr (abfd);
-  if (symtab_hdr->sh_size && dst->st_size != 0)
-    name = bfd_elf_sym_name (abfd, symtab_hdr, dst, NULL);
-  if (name && CONST_STRNEQ (name, CMSE_PREFIX))
-    ARM_SET_SYM_CMSE_SPCL (dst->st_target_internal);
 
   return TRUE;
 }

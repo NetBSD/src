@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.39.10.1 2019/06/10 22:06:47 christos Exp $	*/
+/*	$NetBSD: schizo.c,v 1.39.10.2 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.39.10.1 2019/06/10 22:06:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.39.10.2 2020/04/13 08:04:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -180,10 +180,7 @@ schizo_attach(device_t parent, device_t self, void *aux)
 		   SCZ_ECCCTRL_CE_INTEN;
 	schizo_write(sc, SCZ_ECCCTRL, eccctrl);
 
-	pbm = kmem_zalloc(sizeof(*pbm), KM_NOSLEEP);
-	if (pbm == NULL)
-		panic("schizo: can't alloc schizo pbm");
-
+	pbm = kmem_zalloc(sizeof(*pbm), KM_SLEEP);
 #ifdef DEBUG
 	sc->sc_pbm = pbm;
 #endif
@@ -281,9 +278,7 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	    &_sparc_pci_chipset);
 	pbm->sp_pc->spc_busmax = busranges[1];
 	pbm->sp_pc->spc_busnode = kmem_zalloc(sizeof(*pbm->sp_pc->spc_busnode),
-	    KM_NOSLEEP);
-	if (pbm->sp_pc->spc_busnode == NULL)
-		panic("schizo: kmem_alloc busnode");
+	    KM_SLEEP);
 
 	pba.pba_bus = busranges[0];
 	pba.pba_bridgetag = NULL;
@@ -512,10 +507,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	}
 
 	/* give us a nice name.. */
-	name = (char *)kmem_alloc(32, KM_NOSLEEP);
-	if (name == NULL)
-
-		panic("couldn't kmem_alloc iommu name");
+	name = (char *)kmem_alloc(32, KM_SLEEP);
 	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
@@ -637,11 +629,7 @@ schizo_alloc_bus_tag(struct schizo_pbm *pbm, const char *name, int type)
 	struct schizo_softc *sc = pbm->sp_sc;
 	bus_space_tag_t bt;
 
-	bt = (bus_space_tag_t) kmem_zalloc(sizeof(struct sparc_bus_space_tag),
-		    KM_NOSLEEP);
-	if (bt == NULL)
-		panic("schizo: could not allocate bus tag");
-
+	bt = kmem_zalloc(sizeof(*bt), KM_SLEEP);
 	bt->cookie = pbm;
 	bt->parent = sc->sc_bustag;
 	bt->type = type;
@@ -657,10 +645,7 @@ schizo_alloc_dma_tag(struct schizo_pbm *pbm)
 	struct schizo_softc *sc = pbm->sp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = kmem_zalloc(sizeof(*dt), KM_NOSLEEP);
-	if (dt == NULL)
-		panic("schizo: could not alloc dma tag");
-
+	dt = kmem_zalloc(sizeof(*dt), KM_SLEEP);
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
@@ -686,9 +671,7 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 
-	npc = kmem_alloc(sizeof *npc, KM_NOSLEEP);
-	if (npc == NULL)
-		panic("schizo: could not allocate pci_chipset_tag_t");
+	npc = kmem_alloc(sizeof *npc, KM_SLEEP);
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pbm;
 	npc->rootnode = node;

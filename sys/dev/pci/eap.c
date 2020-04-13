@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.97.10.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.97.10.2 2020/04/13 08:04:26 martin Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.97.10.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.97.10.2 2020/04/13 08:04:26 martin Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -138,8 +138,8 @@ static void	eap1370_set_mixer(struct eap_softc *, int, int);
 static uint32_t eap1371_src_wait(struct eap_softc *);
 static void	eap1371_set_adc_rate(struct eap_softc *, int);
 static void	eap1371_set_dac_rate(struct eap_instance *, int);
-static int	eap1371_src_read(struct eap_softc *, int);
-static void	eap1371_src_write(struct eap_softc *, int, int);
+static int	eap1371_src_read(struct eap_softc *, u_int);
+static void	eap1371_src_write(struct eap_softc *, u_int, int);
 static int	eap1371_query_devinfo(void *, mixer_devinfo_t *);
 
 static int	eap1371_attach_codec(void *, struct ac97_codec_if *);
@@ -382,7 +382,7 @@ eap1371_src_wait(struct eap_softc *sc)
 }
 
 static int
-eap1371_src_read(struct eap_softc *sc, int a)
+eap1371_src_read(struct eap_softc *sc, u_int a)
 {
 	int to;
 	uint32_t src, t;
@@ -407,7 +407,7 @@ eap1371_src_read(struct eap_softc *sc, int a)
 }
 
 static void
-eap1371_src_write(struct eap_softc *sc, int a, int d)
+eap1371_src_write(struct eap_softc *sc, u_int a, int d)
 {
 	uint32_t r;
 

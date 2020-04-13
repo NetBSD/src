@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.15.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: efi.c,v 1.15.2.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15.2.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15.2.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.15.2.1 2019/06/10 22:06:53 christos Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootinfo.h>
+#include <x86/bus_defs.h>
+#include <x86/bus_funcs.h>
 #include <x86/efi.h>
 
 #include <dev/mm.h>
@@ -73,21 +75,14 @@ static vaddr_t
 efi_getva(paddr_t pa)
 {
 	vaddr_t va;
+	int rv;
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	if (mm_md_direct_mapped_phys(pa, &va))
-		return va;
-#endif
-
-	/* XXX This code path is not tested. */
-	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	if (va == 0) {
+	rv = _x86_memio_map(x86_bus_space_mem, pa,     
+	    PAGE_SIZE, 0, (bus_space_handle_t *)&va);   
+	if (rv != 0) {
 		aprint_debug("efi: unable to allocate va\n");
 		return 0;
 	}
-	pmap_kenter_pa(va, pa, VM_PROT_READ, 0);
-	pmap_update(pmap_kernel());
 
 	return va;
 }
@@ -98,19 +93,8 @@ efi_getva(paddr_t pa)
 static void
 efi_relva(paddr_t pa, vaddr_t va)
 {
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	vaddr_t va0 __diagused;
-	if (mm_md_direct_mapped_phys(pa, &va0)) {
-		KASSERT(va0 == va);
-		return;
-	}
-#endif
-
-	/* XXX This code path is not tested. */
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+	(void)_x86_memio_unmap(x86_bus_space_mem, (bus_space_handle_t)va,
+	    PAGE_SIZE, NULL);
 }
 
 /*

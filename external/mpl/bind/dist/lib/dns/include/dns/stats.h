@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.3.2.2 2019/06/10 22:04:37 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -476,16 +476,18 @@ LIBDNS_EXTERNAL_DATA extern const char *dns_statscounter_names[];
  *	attribute is set, the base type is of no use.
  *
  * _STALE
- *	RRset type counters only.  This indicates a record that marked for
- *	removal.
+ *	RRset type counters only.  This indicates a record that is stale
+ *	but may still be served.
  *
- *	Note: incrementing _STALE will decrement the corresponding non-stale
- *	counter.
+ * _ANCIENT
+ *	RRset type counters only.  This indicates a record that is marked for
+ *	removal.
  */
 #define DNS_RDATASTATSTYPE_ATTR_OTHERTYPE	0x0001
 #define DNS_RDATASTATSTYPE_ATTR_NXRRSET		0x0002
 #define DNS_RDATASTATSTYPE_ATTR_NXDOMAIN	0x0004
 #define DNS_RDATASTATSTYPE_ATTR_STALE		0x0008
+#define DNS_RDATASTATSTYPE_ATTR_ANCIENT		0x0010
 
 /*%<
  * Conversion macros among dns_rdatatype_t, attributes and isc_statscounter_t.
@@ -501,8 +503,8 @@ typedef void (*dns_generalstats_dumper_t)(isc_statscounter_t, uint64_t,
 					  void *);
 typedef void (*dns_rdatatypestats_dumper_t)(dns_rdatastatstype_t, uint64_t,
 					    void *);
+typedef void (*dns_dnssecsignstats_dumper_t)(dns_keytag_t, uint64_t, void *);
 typedef void (*dns_opcodestats_dumper_t)(dns_opcode_t, uint64_t, void *);
-
 typedef void (*dns_rcodestats_dumper_t)(dns_rcode_t, uint64_t, void *);
 
 ISC_LANG_BEGINDECLS
@@ -578,6 +580,22 @@ isc_result_t
 dns_rcodestats_create(isc_mem_t *mctx, dns_stats_t **statsp);
 /*%<
  * Create a statistics counter structure per assigned rcode.
+ *
+ * Requires:
+ *\li	'mctx' must be a valid memory context.
+ *
+ *\li	'statsp' != NULL && '*statsp' == NULL.
+ *
+ * Returns:
+ *\li	ISC_R_SUCCESS	-- all ok
+ *
+ *\li	anything else	-- failure
+ */
+
+isc_result_t
+dns_dnssecsignstats_create(isc_mem_t *mctx, dns_stats_t **statsp);
+/*%<
+ * Create a statistics counter structure per assigned DNSKEY id.
  *
  * Requires:
  *\li	'mctx' must be a valid memory context.
@@ -672,6 +690,15 @@ dns_rcodestats_increment(dns_stats_t *stats, dns_opcode_t code);
  */
 
 void
+dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id);
+/*%<
+ * Increment the statistics counter for the DNSKEY 'id'.
+ *
+ * Requires:
+ *\li	'stats' is a valid dns_stats_t created by dns_dnssecsignstats_create().
+ */
+
+void
 dns_generalstats_dump(dns_stats_t *stats, dns_generalstats_dumper_t dump_fn,
 		      void *arg, unsigned int options);
 /*%<
@@ -704,6 +731,21 @@ dns_rdatatypestats_dump(dns_stats_t *stats, dns_rdatatypestats_dumper_t dump_fn,
 void
 dns_rdatasetstats_dump(dns_stats_t *stats, dns_rdatatypestats_dumper_t dump_fn,
 		       void *arg, unsigned int options);
+/*%<
+ * Dump the current statistics counters in a specified way.  For each counter
+ * in stats, dump_fn is called with the corresponding type in the form of
+ * dns_rdatastatstype_t, the current counter value and the given argument
+ * arg.  By default counters that have a value of 0 is skipped; if options has
+ * the ISC_STATSDUMP_VERBOSE flag, even such counters are dumped.
+ *
+ * Requires:
+ *\li	'stats' is a valid dns_stats_t created by dns_generalstats_create().
+ */
+
+void
+dns_dnssecsignstats_dump(dns_stats_t *stats,
+			 dns_dnssecsignstats_dumper_t dump_fn,
+			 void *arg, unsigned int options);
 /*%<
  * Dump the current statistics counters in a specified way.  For each counter
  * in stats, dump_fn is called with the corresponding type in the form of

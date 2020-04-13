@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.18 2013/07/02 11:59:46 joerg Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.18.28.1 2020/04/13 08:05:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -530,7 +530,7 @@ doio(const struct keytabent *ktent, u_char *buf, ssize_t len, int wr)
 
 	buf2 = (u_char *)calloc(1, len);
 	if (buf2 == NULL) {
-		memcpy(err_str, "memory allocation failed", sizeof err_str);
+		strncpy(err_str, "memory allocation failed", sizeof err_str);
 		return (1);
 	}
 

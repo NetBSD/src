@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.11 2013/02/14 18:23:45 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.11.30.1 2020/04/13 08:05:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.11 2013/02/14 18:23:45 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.11.30.1 2020/04/13 08:05:43 martin Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -85,7 +85,8 @@ mime_iconv(iconv_t cd, const char **inb, size_t *inbleft, char **outb, size_t *o
 {
 	size_t sz = 0;
 
-	while ((sz = iconv(cd, inb, inbleft, outb, outbleft)) == (size_t)-1
+	while ((sz = iconv(cd, __UNCONST(inb), inbleft, outb, outbleft))
+		   == (size_t)-1
 			&& errno == EILSEQ) {
 		if (*outbleft > 0) {
 			*(*outb)++ = '?';

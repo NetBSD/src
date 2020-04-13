@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,6 +35,7 @@
 #include "bootcfg.h"
 #include "bootmod.h"
 #include "bootmenu.h"
+#include "biosdisk.h"
 #include "devopen.h"
 
 int errno;
@@ -62,6 +63,7 @@ static const char * const names[][2] = {
 void	command_help(char *);
 void	command_quit(char *);
 void	command_boot(char *);
+void	command_pkboot(char *);
 void	command_consdev(char *);
 void	command_dev(char *);
 void	command_devpath(char *);
@@ -84,6 +86,7 @@ const struct bootblk_command commands[] = {
 	{ "?",		command_help },
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "pkboot",	command_pkboot },
 	{ "consdev",	command_consdev },
 	{ "dev",	command_dev },
 	{ "devpath",	command_devpath },
@@ -108,9 +111,11 @@ const struct bootblk_command commands[] = {
 	{ NULL,		NULL },
 };
 
+static char *default_fsname;
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
+static const char *default_part_name;
 
 static char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
@@ -120,9 +125,19 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
     int *partition, const char **file)
 {
 	const char *col;
+	static char savedevname[MAXDEVNAME+1];
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	const struct netboot_fstab *nf;
+#endif
 
-	*fsname = "ufs";
-	*devname = default_devname;
+	*fsname = default_fsname;
+	if (default_part_name == NULL) {
+		*devname = default_devname;
+	} else {
+		snprintf(savedevname, sizeof(savedevname),
+		    "NAME=%s", default_part_name);
+		*devname = savedevname;
+	}
 	*unit = default_unit;
 	*partition = default_partition;
 	*file = default_filename;
@@ -131,7 +146,6 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		return 0;
 
 	if ((col = strchr(fname, ':')) != NULL) {	/* device given */
-		static char savedevname[MAXDEVNAME+1];
 		int devlen;
 		int u = 0, p = 0;
 		int i = 0;
@@ -139,6 +153,16 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		devlen = col - fname;
 		if (devlen > MAXDEVNAME)
 			return EINVAL;
+
+		if (strstr(fname, "NAME=") == fname) {
+			strlcpy(savedevname, fname, devlen + 1);
+			*fsname = "ufs";
+			*devname = savedevname;
+			*unit = -1;
+			*partition = -1;
+			fname = col + 1;
+			goto out;
+		}
 
 #define isvalidname(c) ((c) >= 'a' && (c) <= 'z')
 		if (!isvalidname(fname[i]))
@@ -169,12 +193,20 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		if (i != devlen)
 			return ENXIO;
 
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+		nf = netboot_fstab_find(savedevname);
+		if (nf != NULL)
+			*fsname = (char *)nf->name;
+		else
+#endif
+		*fsname = "ufs";
 		*devname = savedevname;
 		*unit = u;
 		*partition = p;
 		fname = col + 1;
 	}
 
+out:
 	if (*fname)
 		*file = fname;
 
@@ -191,8 +223,11 @@ snprint_bootdev(char *buf, size_t bufsize, const char *devname, int unit,
 	for (i = 0; i < __arraycount(no_partition_devs); i++)
 		if (strcmp(devname, no_partition_devs[i]) == 0)
 			break;
-	snprintf(buf, bufsize, "%s%d%c", devname, unit,
-	    i < __arraycount(no_partition_devs) ? '\0' : 'a' + partition);
+	if (strstr(devname, "NAME=") == devname)
+		strlcpy(buf, devname, bufsize);
+	else
+		snprintf(buf, bufsize, "%s%d%c", devname, unit,
+		  i < __arraycount(no_partition_devs) ? '\0' : 'a' + partition);
 	return buf;
 }
 
@@ -224,40 +259,16 @@ clearit(void)
 static void
 bootit(const char *filename, int howto)
 {
-	EFI_STATUS status;
-	EFI_PHYSICAL_ADDRESS bouncebuf;
-	UINTN npages;
-	u_long allocsz;
 
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
 
-	if (count_netbsd(filename, &allocsz) < 0) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(errno));
-		return;
-	}
-
-	bouncebuf = EFI_ALLOCATE_MAX_ADDRESS;
-	npages = EFI_SIZE_TO_PAGES(allocsz);
-	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
-	    EfiLoaderData, npages, &bouncebuf);
-	if (EFI_ERROR(status)) {
-		printf("boot: %s: %s\n", sprint_bootsel(filename),
-		       strerror(ENOMEM));
-		return;
-	}
-
-	efi_loadaddr = bouncebuf;
-	if (exec_netbsd(filename, bouncebuf, howto, 0, efi_cleanup) < 0)
+	if (exec_netbsd(filename, efi_loadaddr, howto, 0, efi_cleanup) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
 		printf("boot returned\n");
-
-	(void) uefi_call_wrapper(BS->FreePages, 2, bouncebuf, npages);
-	efi_loadaddr = 0;
 }
 
 void
@@ -279,15 +290,26 @@ boot(void)
 {
 	int currname;
 	int c;
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	const struct netboot_fstab *nf;
+#endif
 
 	boot_modules_enabled = !(boot_params.bp_flags & X86_BP_FLAGS_NOMODULES);
 
 	/* try to set default device to what BIOS tells us */
 	bios2dev(boot_biosdev, boot_biossector, &default_devname, &default_unit,
-	    &default_partition);
+	    &default_partition, &default_part_name);
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
+
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	nf = netboot_fstab_find(default_devname);
+	if (nf != NULL)
+		default_fsname = (char *)nf->name;
+	else
+#endif
+	default_fsname = "ufs";
 
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 #ifdef EFIBOOTCFG_FILENAME
@@ -361,23 +383,32 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
-	       "     (ex. \"hd0a:netbsd.old -s\"\n"
-	       "dev [xd[N[x]]:]\n"
+	       "boot [dev:][filename] [-12acdqsvxz]\n"
+#ifndef NO_RAIDFRAME
+	       "     dev syntax is (hd|fd|cd|raid)[N[x]]\n"
+#else
+	       "     dev syntax is (hd|fd|cd)[N[x]]\n"
+#endif
+#ifndef NO_GPT
+	       "                or NAME=gpt_label\n"
+#endif
+	       "     (ex. \"hd0a:netbsd.old -s\")\n"
+	       "pkboot [dev:][filename] [-12acdqsvxz]\n"
+	       "dev [dev:]\n"
 	       "consdev {pc|com[0123][,{speed}]|com,{ioport}[,{speed}]}\n"
 	       "devpath\n"
 	       "efivar\n"
 	       "gop [{modenum|list}]\n"
 	       "load {path_to_module}\n"
 #if LIBSA_ENABLE_LS_OP
-	       "ls [path]\n"
+	       "ls [dev:][path]\n"
 #endif
-	       "memmap [{sorted|unsorted}]\n"
+	       "memmap [{sorted|unsorted|compact}]\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
 #endif
 	       "modules {on|off|enabled|disabled}\n"
-	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "multiboot [dev:][filename] [<args>]\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "splash {path_to_image_file}\n"
 	       "text [{modenum|list}]\n"
@@ -435,23 +466,38 @@ command_boot(char *arg)
 }
 
 void
+command_pkboot(char *arg)
+{
+	extern int has_prekern;
+	has_prekern = 1;
+	command_boot(arg);
+	has_prekern = 0;
+}
+
+void
 command_dev(char *arg)
 {
 	static char savedevname[MAXDEVNAME + 1];
 	char buf[80];
-	char *fsname, *devname;
+	char *devname;
 	const char *file; /* dummy */
 
 	if (*arg == '\0') {
 		efi_disk_show();
 		efi_net_show();
-		printf("default %s\n", snprint_bootdev(buf, sizeof(buf),
-		    default_devname, default_unit, default_partition));
+	
+		if (default_part_name != NULL)
+			printf("default NAME=%s\n", default_part_name);
+		else
+			printf("default %s\n",
+			       snprint_bootdev(buf, sizeof(buf),
+					       default_devname, default_unit,
+					       default_partition));
 		return;
 	}
 
 	if (strchr(arg, ':') == NULL ||
-	    parsebootfile(arg, &fsname, &devname, &default_unit,
+	    parsebootfile(arg, &default_fsname, &devname, &default_unit,
 	      &default_partition, &file)) {
 		command_help(NULL);
 		return;
@@ -460,6 +506,10 @@ command_dev(char *arg)
 	/* put to own static storage */
 	strncpy(savedevname, devname, MAXDEVNAME + 1);
 	default_devname = savedevname;
+
+	/* +5 to skip leading NAME= */
+	if (strstr(devname, "NAME=") == devname)
+		default_part_name = default_devname + 5;
 }
 
 static const struct cons_devs {
@@ -531,7 +581,7 @@ command_consdev(char *arg)
 						goto error;
 				}
 			}
-			consinit(cdp->tag, ioport, speed);
+			efi_consinit(cdp->tag, ioport, speed);
 			print_banner();
 			return;
 		}
@@ -625,18 +675,21 @@ void
 command_memmap(char *arg)
 {
 	bool sorted = true;
+	bool compact = false;
 
 	if (*arg == '\0' || strcmp(arg, "sorted") == 0)
 		/* Already sorted is true. */;
 	else if (strcmp(arg, "unsorted") == 0)
 		sorted = false;
+	else if (strcmp(arg, "compact") == 0)
+		compact = true;
 	else {
 		printf("invalid flag, "
-		    "must be 'sorted' or 'unsorted'.\n");
+		    "must be 'sorted', 'unsorted' or 'compact'.\n");
 		return;
 	}
 
-	efi_memory_show_map(sorted);
+	efi_memory_show_map(sorted, compact);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-onoe.c,v 1.15 2012/11/08 20:43:55 dyoung Exp $ */
+/*	$NetBSD: athrate-onoe.c,v 1.15.38.1 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.15 2012/11/08 20:43:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.15.38.1 2020/04/13 08:04:21 martin Exp $");
 #endif
 
 /*
@@ -488,9 +488,7 @@ ath_rate_attach(struct ath_softc *sc)
 {
 	struct onoe_softc *osc;
 
-	osc = malloc(sizeof(struct onoe_softc), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (osc == NULL)
-		return NULL;
+	osc = malloc(sizeof(struct onoe_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	osc->arc.arc_space = sizeof(struct onoe_node);
 	callout_init(&osc->timer, 0);
 	ath_rate_sysctlattach(sc);

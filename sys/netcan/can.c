@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.4.2.2 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: can.c,v 1.4.2.3 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.4.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.4.2.3 2020/04/13 08:05:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,12 @@ int	can_recvspace = 40 * (1024 + sizeof(struct sockaddr_can));
 #define	CANHASHSIZE	128
 #endif
 int	canhashsize = CANHASHSIZE;
+
+#ifdef MBUFTRACE
+static struct mowner can_mowner = MOWNER_INIT("can", "");
+static struct mowner can_rx_mowner = MOWNER_INIT("can", "rx");
+static struct mowner can_tx_mowner = MOWNER_INIT("can", "tx");
+#endif
 
 static int can_output(struct mbuf *, struct canpcb *);
 
@@ -923,9 +929,7 @@ can_raw_setop(struct canpcb *canp, struct sockopt *sopt)
 		int nfilters = sopt->sopt_size / sizeof(struct can_filter);
 		if (sopt->sopt_size % sizeof(struct can_filter) != 0)
 			return EINVAL;
-		mutex_enter(&canp->canp_mtx);
 		error = can_pcbsetfilter(canp, sopt->sopt_data, nfilters);
-		mutex_exit(&canp->canp_mtx);
 		break;
 		}
 	default:

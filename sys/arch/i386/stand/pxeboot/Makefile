@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2018/06/02 14:30:07 christos Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2020/04/13 08:03:55 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -13,7 +13,8 @@ RELOC=		0x0
 .PATH.S: ${.CURDIR}/../pxeboot
 .endif
 
-SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
+SRCS= main.c dev_net.c devopen.c conf.c 
+SRCS+=exec.c exec_multiboot1.c exec_multiboot2.c pxe.c pxe_call.S
 # use our own nfs implementation
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
@@ -65,7 +66,7 @@ CPPFLAGS+= -DBOOTPARAM_DEFFLAGS=0x0c
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
-SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x30000
+SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 
 CPPFLAGS+= -DPASS_BIOSGEOM
@@ -82,4 +83,4 @@ VERSIONFILE= ${.CURDIR}/../pxeboot/version
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
-		${RELEASEDIR}/${MACHINE}/installation/misc
+		${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc

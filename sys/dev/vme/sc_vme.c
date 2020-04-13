@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.17 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.17.84.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.17 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.17.84.1 2020/04/13 08:04:52 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -188,10 +188,7 @@ sc_vme_attach(device_t parent, device_t self, void *aux)
 	 * Allocate DMA handles.
 	 */
 	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
-	sc->sc_dma_handles = malloc(i, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_dma_handles == NULL)
-		panic("sc: DMA handle malloc failed");
-
+	sc->sc_dma_handles = malloc(i, M_DEVBUF, M_WAITOK);
 	for (i = 0; i < SUNSCPAL_OPENINGS; i++) {
 		sc->sc_dma_handles[i].dh_flags = 0;
 

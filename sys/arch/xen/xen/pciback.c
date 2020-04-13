@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.14.2.1 2019/06/10 22:06:56 christos Exp $      */
+/*      $NetBSD: pciback.c,v 1.14.2.2 2020/04/13 08:04:12 martin Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.14.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.14.2.2 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.14.2.1 2019/06/10 22:06:56 christos Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
 #include <sys/queue.h>
@@ -290,7 +289,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	snprintf(sc->sc_kernfsname, sizeof(sc->sc_kernfsname),
 	    "0000:%02x:%02x.%x", pa->pa_bus, pa->pa_device, pa->pa_function);
 	kfst = KERNFS_ALLOCTYPE(pciback_dev_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_REG, sc->sc_kernfsname, sc,
 	    kfst, VREG, FILE_MODE);
 	kernfs_addentry(pciback_kern_pkt, dkt);
@@ -405,7 +404,7 @@ pciback_pci_init(void)
 
 	xenbus_backend_register(&pci_backend_driver);
 
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_DIR, "pci", NULL, KFSsubdir, VDIR, DIR_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 	pciback_kern_pkt = KERNFS_ENTOPARENTDIR(dkt);
@@ -450,7 +449,6 @@ pciback_xenbus_create(struct xenbus_device *xbusd)
 {
 	struct pb_xenbus_instance *pbxi;
 	long domid;
-	char *val;
 	char path[10];
 	int i, err;
 	u_long num_devs;
@@ -493,15 +491,15 @@ pciback_xenbus_create(struct xenbus_device *xbusd)
 		goto fail;
 	}
 	for (i = 0; i < num_devs; i++) {
+		char dev[64];
 		snprintf(path, sizeof(path), "dev-%d", i);
 		if ((err = xenbus_read(NULL, xbusd->xbusd_path, path,
-		    NULL, &val)) != 0) {
+		    dev, sizeof(dev))) != 0) {
 			aprint_error("pciback: can' read %s/%s: %d\n",
 			    xbusd->xbusd_path, path, err);
 			goto fail;
 		}
-		pciback_xenbus_export_device(pbxi, val);
-		free(val, M_DEVBUF);
+		pciback_xenbus_export_device(pbxi, dev);
 	}
 	pciback_xenbus_export_roots(pbxi);
 	if ((err = xenbus_switch_state(xbusd, NULL, XenbusStateInitialised))) {

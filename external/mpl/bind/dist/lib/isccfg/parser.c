@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.4.2.3 2020/04/08 14:07:09 martin Exp $	*/
+/*	$NetBSD: parser.c,v 1.4.2.4 2020/04/13 08:03:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,7 +104,7 @@ static void
 parser_complain(cfg_parser_t *pctx, bool is_warning,
 		unsigned int flags, const char *format, va_list args);
 
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 static isc_result_t
 parse_geoip(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
@@ -113,7 +113,7 @@ print_geoip(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 static void
 doc_geoip(cfg_printer_t *pctx, const cfg_type_t *type);
-#endif /* HAVE_GEOIP */
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 /*
  * Data representations.  These correspond to members of the
@@ -1320,7 +1320,7 @@ LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_bracketed_text = {
 	&cfg_rep_string, NULL
 };
 
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 /*
  * "geoip" ACL element:
  * geoip [ db <database> ] search-type <string>
@@ -1336,18 +1336,9 @@ static cfg_type_t cfg_type_geoiptype = {
 	cfg_doc_enum, &cfg_rep_string, &geoiptype_enums
 };
 
-static const char *geoipdb_enums[] = {
-	"asnum", "city", "country", "domain", "isp", "netspeed",
-	"org", "region", NULL
-};
-static cfg_type_t cfg_type_geoipdb = {
-	"geoipdb", cfg_parse_enum, cfg_print_ustring,
-	cfg_doc_enum, &cfg_rep_string, &geoipdb_enums
-};
-
 static cfg_tuplefielddef_t geoip_fields[] = {
 	{ "negated", &cfg_type_void, 0 },
-	{ "db", &cfg_type_geoipdb, 0 },
+	{ "db", &cfg_type_astring, 0 },
 	{ "subtype", &cfg_type_geoiptype, 0 },
 	{ "search", &cfg_type_astring, 0 },
 	{ NULL, NULL, 0 }
@@ -1407,14 +1398,14 @@ static void
 doc_geoip(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
 	cfg_print_cstr(pctx, "[ db ");
-	cfg_doc_enum(pctx, &cfg_type_geoipdb);
+	cfg_doc_obj(pctx, &cfg_type_astring);
 	cfg_print_cstr(pctx, " ]");
 	cfg_print_cstr(pctx, " ");
 	cfg_doc_enum(pctx, &cfg_type_geoiptype);
 	cfg_print_cstr(pctx, " ");
-	cfg_print_cstr(pctx, "<quoted_string>");
+	cfg_doc_obj(pctx, &cfg_type_astring);
 }
-#endif /* HAVE_GEOIP */
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 static cfg_type_t cfg_type_addrmatchelt;
 static cfg_type_t cfg_type_negated;
@@ -1435,7 +1426,7 @@ parse_addrmatchelt(cfg_parser_t *pctx, const cfg_type_t *type,
 			CHECK(cfg_parse_obj(pctx, &cfg_type_keyref, ret));
 		} else if (pctx->token.type == isc_tokentype_string &&
 			   (strcasecmp(TOKEN_STRING(pctx), "geoip") == 0)) {
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 			CHECK(cfg_gettoken(pctx, 0));
 			CHECK(cfg_parse_obj(pctx, &cfg_type_geoip, ret));
 #else
@@ -2239,7 +2230,6 @@ print_symval(cfg_printer_t *pctx, const char *name, cfg_obj_t *obj) {
 
 void
 cfg_print_mapbody(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	isc_result_t result = ISC_R_SUCCESS;
 	const cfg_clausedef_t * const *clauseset;
 
 	REQUIRE(pctx != NULL);
@@ -2255,6 +2245,7 @@ cfg_print_mapbody(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 		for (clause = *clauseset;
 		     clause->name != NULL;
 		     clause++) {
+			isc_result_t result;
 			result = isc_symtab_lookup(obj->value.map.symtab,
 						   clause->name, 0, &symval);
 			if (result == ISC_R_SUCCESS) {

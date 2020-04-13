@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.41 2013/12/28 20:03:22 dholland Exp $
+.\"	$NetBSD: fcntl.2,v 1.41.26.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd January 23, 2012
+.Dd September 26, 2019
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -154,6 +154,14 @@ flag is set in the file descriptor.
 Set or clear the
 .Dv O_NOSIGPIPE
 in the file descriptor.
+.It Dv F_GETPATH
+Place a pathname corresponding to
+.Fa fd
+in the buffer pointed to by
+.Fa arg .
+.Fa arg
+should be pointing to a buffer of at least
+.Fa MAXPATHLEN .
 .El
 .Pp
 The set of valid flags for the
@@ -316,6 +324,28 @@ or an
 request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
+.Sh NOTES
+The
+.Dv F_GETPATH
+functionality is implemented using the reverse
+.Xr namei 9
+cache.
+The implications of this are:
+.Bl -bullet -compact
+.It
+For hard links where the file descriptor can resolve to multiple pathnames,
+the first entry found in the cache is returned.
+.It
+.Dv F_GETPATH
+may fail if the corresponding entry has been evicted from the LRU
+.Xr namei 9
+cache and return
+.Dv ENOENT .
+.It
+File descriptors that don't point to vnodes are not handled, as
+well as symbolic links since there is currently no way to obtain
+a file descriptor pointing to a symbolic link.
+.El
 .Sh RETURN VALUES
 Upon successful completion, the value returned depends on
 .Fa cmd
@@ -390,6 +420,12 @@ error.
 .Fn fcntl
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EACCES
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and read or search permission was denied for a component of the pathname.
 .It Bq Er EAGAIN
 The argument
 .Fa arg
@@ -492,6 +528,12 @@ is
 .Dv F_DUPFD
 and system-wide the maximum allowed number of file descriptors are
 currently open.
+.It Bq Er ENOENT
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and a component of the pathname no longer exists.
 .It Bq Er ENOLCK
 The argument
 .Fa cmd
@@ -501,6 +543,19 @@ or
 .Dv F_SETLKW ,
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
+.It Bq Er ENOMEM
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and insufficient memory is available.
+.It Bq Er ERANGE
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and the resulting path would be greater than
+.Dv MAXPATHLEN .
 .It Bq Er ESRCH
 .Fa cmd
 is

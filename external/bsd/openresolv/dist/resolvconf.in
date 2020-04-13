@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2016 Roy Marples
+# Copyright (c) 2007-2020 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.9.0"
+OPENRESOLV_VERSION="3.10.0"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -34,7 +34,7 @@ RESTARTCMD=@RESTARTCMD@
 
 if [ "$1" = "--version" ]; then
 	echo "openresolv $OPENRESOLV_VERSION"
-	echo "Copyright (c) 2007-2016 Roy Marples"
+	echo "Copyright (c) 2007-2020 Roy Marples"
 	exit 0
 fi
 
@@ -44,7 +44,7 @@ unset interface_order state_dir
 # If you change this, change the test in VFLAG and libc.in as well
 local_nameservers="127.* 0.0.0.0 255.255.255.255 ::1"
 
-dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*"
+dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* wg[0-9]* ppp[0-9]* ippp[0-9]*"
 interface_order="lo lo[0-9]*"
 name_server_blacklist="0.0.0.0"
 
@@ -59,6 +59,7 @@ elif [ -d "$SYSCONFDIR/resolvconf" ]; then
 		interface_order="$(cat "$SYSCONFDIR"/interface-order)"
 	fi
 fi
+
 IFACEDIR="$VARDIR/interfaces"
 METRICDIR="$VARDIR/metrics"
 PRIVATEDIR="$VARDIR/private"
@@ -125,21 +126,22 @@ usage()
 # If you think otherwise, capture a DNS trace and you'll see libc
 # will strip it regardless.
 # This also solves setting up duplicate zones in our subscribers.
-strip_trailing_dots()
+# Also strip any comments denoted by #.
+resolv_strip()
 {
-	local n= d=
-
-	for n; do
-		printf "$d%s" "${n%.}"
-		d=" "
+	space=
+	for word; do
+		case "$word" in
+		\#*) break;;
+		esac
+		printf "%s%s" "$space${word%.}"
+		space=" "
 	done
 	printf "\n"
 }
 
 private_iface()
 {
-	local p
-
 	# Allow expansion
 	cd "$IFACEDIR"
 
@@ -168,12 +170,15 @@ private_iface()
 # for domain name servers, search name servers and global nameservers
 parse_resolv()
 {
-	local line= ns= ds= search= d= n= newns=
-	local new=true iface= private=false p= domain= l= islocal=
-
+	domain=
+	new=true
 	newns=
+	ns=
+	private=false
+	search=
 
 	while read -r line; do
+		stripped_line="$(resolv_strip ${line#* })"
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
@@ -189,25 +194,28 @@ parse_resolv()
 		"nameserver "*)
 			islocal=false
 			for l in $local_nameservers; do
-				case "${line#* }" in
+				case "$stripped_line" in
 				$l)
 					islocal=true
-					echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS ${line#* }\""
 					break
 					;;
 				esac
 			done
-			$islocal || ns="$ns${line#* } "
+			if $islocal; then
+				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS $stripped_line\""
+			else
+				ns="$ns$stripped_line "
+			fi
 			;;
 		"domain "*)
-			search="$(strip_trailing_dots ${line#* })"
+			search="$stripped_line"
 			if [ -z "$domain" ]; then
 				domain="$search"
 				echo "DOMAIN=\"$domain\""
 			fi
 			;;
 		"search "*)
-			search="$(strip_trailing_dots ${line#* })"
+			search="$stripped_line"
 			;;
 		*)
 			[ -n "$line" ] && continue
@@ -236,7 +244,7 @@ parse_resolv()
 
 uniqify()
 {
-	local result=
+	result=
 	while [ -n "$1" ]; do
 		case " $result " in
 		*" $1 "*);;
@@ -249,8 +257,8 @@ uniqify()
 
 dirname()
 {
-	local dir= OIFS="$IFS"
-	local IFS=/
+	OIFS="$IFS"
+	IFS=/
 	set -- $@
 	IFS="$OIFS"
 	if [ -n "$1" ]; then
@@ -267,7 +275,7 @@ dirname()
 
 config_mkdirs()
 {
-	local e=0 f d
+	e=0
 	for f; do
 		[ -n "$f" ] || continue
 		d="$(dirname "$f")"
@@ -295,7 +303,7 @@ detect_init()
 	# Detect the running init system.
 	# As systemd and OpenRC can be installed on top of legacy init
 	# systems we try to detect them first.
-	local status="@STATUSARG@"
+	status="@STATUSARG@"
 	: ${status:=status}
 	if [ -x /bin/systemctl ] && [ -S /run/systemd/private ]; then
 		RESTARTCMD='
@@ -309,8 +317,9 @@ detect_init()
 			then
 				/usr/bin/systemctl restart $1.service
 			fi'
-	elif [ -x /sbin/rc-service ] && [ -s /libexec/rc/init.d/softlevel ] ||
-	     [ -s /run/openrc/softlevel ]
+	elif [ -x /sbin/rc-service ] &&
+	     { [ -s /libexec/rc/init.d/softlevel ] ||
+	     [ -s /run/openrc/softlevel ]; }
 	then
 		RESTARTCMD='/sbin/rc-service -i $1 -- -Ds restart'
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
@@ -385,7 +394,7 @@ detect_init()
 
 echo_resolv()
 {
-	local line= OIFS="$IFS"
+	OIFS="$IFS"
 
 	[ -n "$1" ] && [ -f "$IFACEDIR/$1" ] || return 1
 	echo "# resolv.conf from $1"
@@ -407,11 +416,16 @@ list_resolv()
 {
 	[ -d "$IFACEDIR" ] || return 0
 
-	local report=false list= retval=0 cmd="$1" excl=
+	cmd="$1"
 	shift
+	excl=false
+	list=
+	report=false
+	retval=0
 
 	case "$IF_EXCLUSIVE" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+		excl=true
 		if [ -d "$EXCLUSIVEDIR" ]; then
 			cd "$EXCLUSIVEDIR"
 			for i in *; do
@@ -421,7 +435,6 @@ list_resolv()
 				fi
 			done
 		fi
-		excl=true
 		cd "$IFACEDIR"
 		for i in $inclusive_interfaces; do
 			if [ -f "$i" ] && [ "$list" = "$i" ]; then
@@ -430,9 +443,6 @@ list_resolv()
 				break
 			fi
 		done
-		;;
-	*)
-		excl=false
 		;;
 	esac
 
@@ -460,13 +470,18 @@ list_resolv()
 				fi
 			done
 		done
+		# Interfaces have an implicit metric of 0 if not specified.
+		for i in *; do
+			if [ -f "$i" ] && ! [ -e "$METRICDIR/"*" $i" ]; then
+				list="$list $i"
+			fi
+		done
 		if [ -d "$METRICDIR" ]; then
 			cd "$METRICDIR"
 			for i in *; do
 				[ -f "$i" ] && list="$list ${i#* }"
 			done
 		fi
-		list="$list *"
 	fi
 
 	cd "$IFACEDIR"
@@ -480,6 +495,23 @@ list_resolv()
 			fi
 			continue
 		fi
+
+		if ! $ALLIFACES; then
+			if [ -n "$allow_interfaces" ]; then
+				x=false
+				for j in $allow_interfaces; do
+					if [ "$i" = "$j" ]; then
+						x=true
+					fi
+				done
+				$x || continue
+			fi
+			for j in $deny_interfaces; do
+				if [ "$i" = "$j" ]; then
+					continue 2
+				fi
+			done
+		fi
 		
 		if [ "$cmd" = i ] || [ "$cmd" = "-i" ]; then
 			printf %s "$i "
@@ -492,12 +524,13 @@ list_resolv()
 	return $retval
 }
 
-list_remove() {
-	local list= e= l= result= found= retval=0
-
+list_remove()
+{
 	[ -z "$2" ] && return 0
 	eval list=\"\$$1\"
 	shift
+	result=
+	retval=0
 
 	set -f
 	for e; do
@@ -545,8 +578,6 @@ echo_append()
 
 replace()
 {
-	local r= k= f= v= val= sub=
-
 	while read -r keyword value; do
 		for r in $replace; do
 			k="${r%%/*}"
@@ -586,15 +617,13 @@ replace()
 
 make_vars()
 {
-	local newdomains= d= dn= newns= ns=
-
 	# Clear variables
 	DOMAIN=
 	DOMAINS=
 	SEARCH=
 	NAMESERVERS=
 	LOCALNAMESERVERS=
-	
+
 	if [ -n "${name_servers}${search_domains}" ]; then
 		eval "$(echo_prepend | parse_resolv)"
 	fi
@@ -608,6 +637,7 @@ make_vars()
 	fi
 
 	# Ensure that we only list each domain once
+	newdomains=
 	for d in $DOMAINS; do
 		dn="${d%%:*}"
 		list_remove domain_blacklist "$dn" >/dev/null || continue
@@ -688,9 +718,11 @@ fi
 
 # -l lists our resolv files, optionally for a specific interface
 if [ "$cmd" = l ] || [ "$cmd" = i ]; then
+	ALLIFACES=true
 	list_resolv "$cmd" "$args"
 	exit $?
 fi
+ALLIFACES=false
 
 # Restart a service or echo the command to restart a service
 if [ "$cmd" = r ] || [ "$cmd" = R ]; then
@@ -699,7 +731,8 @@ if [ "$cmd" = r ] || [ "$cmd" = R ]; then
 		set -- $args
 		eval "$RESTARTCMD"
 	else
-		echo "$RESTARTCMD"
+		echo "$RESTARTCMD" |
+			sed -e '/^$/d' -e 's/^			//g'
 	fi
 	exit $?
 fi

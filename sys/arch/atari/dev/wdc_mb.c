@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.40 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.40.4.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.40 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.40.4.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,13 +76,13 @@ struct wdc_mb_softc {
 	void *sc_ih;
 };
 
-int	wdc_mb_probe(device_t, struct cfdata *, void *);
-void	wdc_mb_attach(device_t, device_t, void *);
+static int	wdc_mb_probe(device_t, struct cfdata *, void *);
+static void	wdc_mb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(wdc_mb, sizeof(struct wdc_mb_softc),
     wdc_mb_probe, wdc_mb_attach, NULL, NULL);
 
-int
+static int
 wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	static int wdc_matched = 0;
@@ -141,7 +141,7 @@ wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 	return result;
 }
 
-void
+static void
 wdc_mb_attach(device_t parent, device_t self, void *aux)
 {
 	struct wdc_mb_softc *sc = device_private(self);

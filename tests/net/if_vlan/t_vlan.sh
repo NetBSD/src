@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.11.2.2 2020/04/08 14:09:11 martin Exp $
+#	$NetBSD: t_vlan.sh,v 1.11.2.3 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -33,9 +33,9 @@ IP_LOCAL1=10.0.1.1
 IP_REMOTE0=10.0.0.2
 IP_REMOTE1=10.0.1.2
 IP_MCADDR0=224.0.0.10
-IP6_LOCAL0=fc00:0::1
+IP6_LOCAL0=fc00::1
 IP6_LOCAL1=fc00:1::1
-IP6_REMOTE0=fc00:0::2
+IP6_REMOTE0=fc00::2
 IP6_REMOTE1=fc00:1::2
 IP6_MCADDR0=ff11::10
 ETH_IP_MCADDR0=01:00:5e:00:00:0a
@@ -249,6 +249,133 @@ vlan_basic6_body()
 }
 
 vlan_basic6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+vlan_auto_follow_mtu_body_common()
+{
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local outfile=./out
+	local af=inet
+	local prefix=24
+	local local0=$IP_LOCAL0
+	local remote0=$IP_REMOTE0
+	local ping_cmd="rump.ping -D -n -w 1 -c 1"
+	local mtu=1500
+	local vlan_mtu=`expr $mtu - 4`
+	# ipv4 header=20bytes, icmp header=8bytes
+	local padding=`expr $vlan_mtu - 20 - 8`
+	local over_padding=`expr $vlan_mtu - 20 - 8 + 1`
+	local nonfrag_msg="$local0 > $remote0: ICMP echo request"
+	# unused for ipv4
+	local frag_msg=""
+
+	if [ x"$1" = x"inet6" ]; then
+		af="inet6"
+		prefix=64
+		local0=$IP6_LOCAL0
+		remote0=$IP6_REMOTE0
+		# ipv6 header=40bytes, icmpv6 header=8bytes
+		padding=`expr $vlan_mtu - 40 - 8`
+		over_padding=`expr $vlan_mtu - 40 - 8 + 1`
+		ping_cmd="rump.ping6 -mm -n -c 1 -i 1"
+		nonfrag_msg="$local0 > $remote0: ICMP6, echo request"
+		frag_msg="$local0 > $remote0: frag .* ICMP6, echo request"
+	fi
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig shmif0 up
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig shmif0 up
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig vlan0 create
+
+	# since upper bound of shmif's mtu is 1500,
+	# so we lower vlan's mtu instead of raising shmif's.
+	# to do this, we change the interface's parameter
+	# such as ND_IFINFO(ifp)->maxmtu that is changed by SIOCSIFMTU.
+
+	# $atf_config shmif0 mtu 1600
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 mtu 1400
+	$atf_ifconfig vlan0 -vlanif shmif0
+
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $remote0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
+
+	extract_new_packets $BUS > $outfile
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 -o ignore $ping_cmd -s $padding $remote0
+	extract_new_packets $BUS > $outfile
+	atf_check -s exit:0 -o match:"$nonfrag_msg" cat $outfile
+
+	if [ x"$1" = x"inet6" ]; then
+		atf_check -s exit:0 -o ignore $ping_cmd -s $over_padding $remote0
+		extract_new_packets $BUS > $outfile
+		atf_check -s exit:0 -o match:"$frag_msg" cat $outfile
+	else
+		atf_check -s not-exit:0 -o ignore -e match:"Message too long" \
+				$ping_cmd -s $over_padding $remote0
+	fi
+}
+
+atf_test_case vlan_auto_follow_mtu cleanup
+vlan_auto_follow_mtu_head()
+{
+
+	atf_set "descr" "tests of setting vlan mtu using IPv4"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_auto_follow_mtu_body()
+{
+	rump_server_start $SOCK_LOCAL vlan
+	rump_server_start $SOCK_REMOTE vlan
+
+	vlan_auto_follow_mtu_body_common inet
+}
+
+vlan_auto_follow_mtu_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case vlan_auto_follow_mtu6 cleanup
+vlan_auto_follow_mtu6_head()
+{
+
+	atf_set "descr" "tests of setting vlan mtu using IPv6"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_auto_follow_mtu6_body()
+{
+	rump_server_start $SOCK_LOCAL vlan netinet6
+	rump_server_start $SOCK_REMOTE vlan netinet6
+
+	vlan_auto_follow_mtu_body_common inet6
+}
+
+vlan_auto_follow_mtu6_cleanup()
 {
 
 	$DEBUG && dump
@@ -738,6 +865,7 @@ atf_init_test_cases()
 
 	atf_add_test_case vlan_create_destroy
 	atf_add_test_case vlan_basic
+	atf_add_test_case vlan_auto_follow_mtu
 	atf_add_test_case vlan_vlanid
 	atf_add_test_case vlan_configs
 	atf_add_test_case vlan_bridge
@@ -745,6 +873,7 @@ atf_init_test_cases()
 
 	atf_add_test_case vlan_create_destroy6
 	atf_add_test_case vlan_basic6
+	atf_add_test_case vlan_auto_follow_mtu6
 	atf_add_test_case vlan_vlanid6
 	atf_add_test_case vlan_configs6
 	atf_add_test_case vlan_bridge6

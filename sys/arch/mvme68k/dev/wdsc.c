@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.32 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.32.38.1 2020/04/13 08:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.32 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.32.38.1 2020/04/13 08:04:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ wdsc_pcc_attach(device_t parent, device_t self, void *aux)
 	static struct evcnt evcnt;	/* XXXSCW: Temporary hack */
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = aux;
 
 	bus_space_map(pa->pa_bust, pa->pa_offset, 0x20, 0, &bush);

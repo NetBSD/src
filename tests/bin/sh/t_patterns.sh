@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.4.2.2 2019/06/10 22:09:59 christos Exp $
+# $NetBSD: t_patterns.sh,v 1.4.2.3 2020/04/13 08:05:22 martin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,6 +182,8 @@ filename_expansion_body() {
 	atf_require_prog mv
 	atf_require_prog rm
 	atf_require_prog mkdir
+	atf_require_prog df
+	atf_require_prog awk
 
 	reset filename_expansion
 
@@ -193,6 +195,11 @@ filename_expansion_body() {
 	# should be about 1.2MiB).  Switching to making links would
 	# save inodes, but would require running "ln" many times, so
 	# would be a lot slower.
+
+	free_inodes=$( df -i . | awk '/^Filesystem/{next}; { print $7 }' )
+	if [ $free_inodes -lt 17000 ]; then
+		atf_skip "not enough space"
+	fi
 
 	# This should work on a case insensitive, but preserving,
 	# filesystem - but case sensitive filesystems are preferred.

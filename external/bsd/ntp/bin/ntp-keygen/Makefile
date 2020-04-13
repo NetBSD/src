@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/12/28 03:19:43 christos Exp $
+#	$NetBSD: Makefile,v 1.5.32.1 2020/04/13 07:56:02 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -19,5 +19,7 @@ DIST=${IDIST}/util
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
+
+COPTS.ntp-keygen.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
 
 .include <bsd.prog.mk>

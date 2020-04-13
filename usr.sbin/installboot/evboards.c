@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.2.2.2 2019/06/10 22:10:30 christos Exp $	*/
+/*	$NetBSD: evboards.c,v 1.2.2.3 2020/04/13 08:05:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.2.2.2 2019/06/10 22:10:30 christos Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.2.2.3 2020/04/13 08:05:53 martin Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
+#include <sys/param.h>		/* for roundup() */
 #include <sys/stat.h>
 #include <assert.h>
 #include <err.h>
@@ -199,6 +200,7 @@ __RCSID("$NetBSD: evboards.c,v 1.2.2.2 2019/06/10 22:10:30 christos Exp $");
  *		  --	"u-boot-install-sdmmc"	(for SD cards)
  *		  --	"u-boot-install-emmc"	(for eMMC modules)
  *		  --	"u-boot-install-usb"	(for USB block storage)
+ *		  --	"u-boot-install-spi"	(for SPI NOR flash)
  *		  --
  *		  -- These installation steps will be selectable using
  *		  -- the "media=..." option to installboot(8).
@@ -324,6 +326,91 @@ __RCSID("$NetBSD: evboards.c,v 1.2.2.2 2019/06/10 22:10:30 christos Exp $");
  *			<integer>512</integer>
  *		</dict>
  *	</array>
+ *
+ * There are some addditional directives for installing on raw flash devices:
+ *
+ *	<key>u-boot-install-spi</key>
+ *	<array>
+ *		<!-- This board's SPI NOR flash is 16Mbit (2MB) in size,
+ *		  -- arranged as 32 512Kbit (64KB) blocks.
+ *		<dict>
+ *			<key>file-name</key>
+ *			<string>u-boot-with-spl.bin</string>
+ *
+ *			<!-- Key: "input-block-size".
+ *			  -- Value: an integer specifying how much file
+ *			  --        data to read per input block before
+ *			  --        padding.  Must be used in conjunction
+ *			  --        with "input-pad-size".
+ *			  -- (optional)
+ *			  -->
+ *			<key>input-block-size</key>
+ *			<integer>2048</integer>
+ *
+ *			<!-- Key: "input-pad-size".
+ *			  -- Value: an integer specifing the amount of
+ *			  --        zero padding inserted per input block.
+ *			  --        Must be used in cojunction with
+ *			  --        "input-block-size".
+ *			  -- (optional)
+ *			  -->
+ *			<key>input-pad-size</key>
+ *			<integer>2048</integer>
+ *
+ *			<!-- Key: "output-size".
+ *			  -- Value: an integer specifying the total
+ *			  --        size to be written to the output
+ *			  --        device.  This is used when writing
+ *			  --        a bootloader to a raw flash memory
+ *			  --        device such as a SPI NOR flash.
+ *			  --        The boot loader MUST fit within
+ *			  --        this size and the output will be
+ *			  --        padded to this size with zeros.
+ *			  --
+ *			  --        If the "output-block-size" key (below)
+ *			  --        is also specified, then this value
+ *			  --        must be a multiple of the output block
+ *			  --        size.
+ *			  -- (optional)
+ *			  -->
+ *			<key>output-size</key>
+ *			<integer>2097152</integer>
+ *
+ *			<-- Key: "output-block-size"
+ *			 -- Value: an integer specifying the size of
+ *			 --        the blocks used to write to the
+ *			 --        output device.  If the output device
+ *			 --        simulates a disk block storage device,
+ *			 --        then this value must be a multiple of
+ *			 --        the reported sector size.
+ *			 -- (optional)
+ *			 -->
+ *			<key>output-block-size</key>
+ *			<integer>65536</integer>
+ *		</dict>
+ *	</array>
+ *
+ * For boards that require a media specification to be provided, it
+ * may be the case that two media types have identical steps.  It
+ * could be confusing for users to see a list of media types that does
+ * not include the media type on which they are installing, so there
+ * is an alias capability:
+ *
+ *	<key>u-boot-install-spi</key>
+ *	<array>
+ *		.
+ *		.
+ *		.
+ *	</array>
+ *	<key>u-boot-install-sdmmc</key>
+ *	<array>
+ *		.
+ *		.
+ *		.
+ *	</array>
+ *	<-- Steps for eMMC are identical to SDMMC on this board. -->
+ *	<key>u-boot-install-emmc</key>
+ *	<string>u-boot-install-sdmmc</string>
  */
 
 /*
@@ -466,6 +553,10 @@ static const char step_file_name_key[] = "file-name";
 static const char step_file_offset_key[] = "file-offset";
 static const char step_file_size_key[] = "file-size";
 static const char step_image_offset_key[] = "image-offset";
+static const char step_input_block_size_key[] = "input-block-size";
+static const char step_input_pad_size_key[] = "input-pad-size";
+static const char step_output_size_key[] = "output-size";
+static const char step_output_block_size_key[] = "output-block-size";
 static const char step_preserve_key[] = "preserve";
 
 static bool
@@ -474,11 +565,15 @@ validate_ubstep_object(evb_ubstep obj)
 	/*
 	 * evb_ubstep is a dictionary with the following keys:
 	 *
-	 *	"file-name"	(string) (required)
-	 *	"file-offset"	(number) (optional)
-	 *	"file-size"	(number) (optional)
-	 *	"image-offset"	(number) (optional)
-	 *	"preserve"	(bool)	 (optional)
+	 *	"file-name"         (string) (required)
+	 *	"file-offset"       (number) (optional)
+	 *	"file-size"         (number) (optional)
+	 *	"image-offset"      (number) (optional)
+	 *	"input-block-size"  (number) (optional)
+	 *	"input-pad-size"    (number) (optional)
+	 *	"output-size"       (number) (optional)
+	 *	"output-block-size" (number) (optional)
+	 *	"preserve"          (bool)   (optional)
 	 */
 	if (prop_object_type(obj) != PROP_TYPE_DICTIONARY)
 		return false;
@@ -505,6 +600,37 @@ validate_ubstep_object(evb_ubstep obj)
 	    prop_object_type(v) != PROP_TYPE_NUMBER)
 	    	return false;
 
+	bool have_input_block_size = false;
+	bool have_input_pad_size = false;
+
+	v = prop_dictionary_get(obj, step_input_block_size_key);
+	if (v != NULL) {
+		have_input_block_size = true;
+		if (prop_object_type(v) != PROP_TYPE_NUMBER)
+			return false;
+	}
+
+	v = prop_dictionary_get(obj, step_input_pad_size_key);
+	if (v != NULL) {
+		have_input_pad_size = true;
+		if (prop_object_type(v) != PROP_TYPE_NUMBER)
+			return false;
+	}
+
+	/* Must have both or neither of input-{block,pad}-size. */
+	if (have_input_block_size ^ have_input_pad_size)
+		return false;
+
+	v = prop_dictionary_get(obj, step_output_size_key);
+	if (v != NULL &&
+	    prop_object_type(v) != PROP_TYPE_NUMBER)
+		return false;
+
+	v = prop_dictionary_get(obj, step_output_block_size_key);
+	if (v != NULL &&
+	    prop_object_type(v) != PROP_TYPE_NUMBER)
+		return false;
+
 	v = prop_dictionary_get(obj, step_preserve_key);
 	if (v != NULL &&
 	    prop_object_type(v) != PROP_TYPE_BOOL)
@@ -514,15 +640,34 @@ validate_ubstep_object(evb_ubstep obj)
 }
 
 static bool
-validate_ubinstall_object(evb_ubinstall obj)
+validate_ubinstall_object(evb_board board, evb_ubinstall obj)
 {
 	/*
-	 * evb_ubinstall is an array with one or more evb_ubstep
-	 * objects.
+	 * evb_ubinstall is either:
+	 * -- an array with one or more evb_ubstep objects.
+	 * -- a string representing an alias of another evb_ubinstall
+	 *    object
 	 *
 	 * (evb_ubsteps is just a convenience type for iterating
 	 * over the steps.)
 	 */
+
+	if (prop_object_type(obj) == PROP_TYPE_STRING) {
+		evb_ubinstall tobj = prop_dictionary_get(board,
+		    prop_string_cstring_nocopy((prop_string_t)obj));
+
+		/*
+		 * The target evb_ubinstall object must exist
+		 * and must itself be a proper evb_ubinstall,
+		 * not another alias.
+		 */
+		if (tobj == NULL ||
+		    prop_object_type(tobj) != PROP_TYPE_ARRAY) {
+			return false;
+		}
+		return true;
+	}
+
 	if (prop_object_type(obj) != PROP_TYPE_ARRAY)
 		return false;
 	if (prop_array_count(obj) < 1)
@@ -605,7 +750,7 @@ validate_board_object(evb_board obj, bool is_overlay)
 		}
 		v = prop_dictionary_get_keysym(obj, key);
 		assert(v != NULL);
-		if (!is_overlay || !validate_ubinstall_object(v))
+		if (!is_overlay || !validate_ubinstall_object(obj, v))
 			break;
 	}
 	prop_object_iterator_release(iter);
@@ -1287,8 +1432,18 @@ evb_board_get_uboot_install(ib_params *params, evb_board board)
 	if (n < 0 || (size_t)n >= sizeof(install_key))
 		goto invalid_media;;
 	install = prop_dictionary_get(board, install_key);
-	if (install != NULL)
+	if (install != NULL) {
+		if (prop_object_type(install) == PROP_TYPE_STRING) {
+			/*
+			 * This is an alias.  Fetch the target.  We
+			 * have already validated that the target
+			 * exists.
+			 */
+			install = prop_dictionary_get(board,
+			    prop_string_cstring_nocopy((prop_string_t)install));
+		}
 		return install;
+	}
  invalid_media:
 	warnx("invalid media specification: '%s'", params->media);
  list_media:
@@ -1422,6 +1577,64 @@ evb_ubstep_get_image_offset(ib_params *params, evb_ubstep step)
 }
 
 /*
+ * evb_ubstep_get_input_block_size --
+ *	Returns the input block size to use when reading the boot loader
+ *	file.
+ */
+uint64_t
+evb_ubstep_get_input_block_size(ib_params *params, evb_ubstep step)
+{
+	prop_number_t number = prop_dictionary_get(step,
+						   step_input_block_size_key);
+	if (number != NULL)
+		return prop_number_unsigned_integer_value(number);
+	return 0;
+}
+
+/*
+ * evb_ubstep_get_input_pad_size --
+ *	Returns the input pad size to use when reading the boot loader
+ *	file.
+ */
+uint64_t
+evb_ubstep_get_input_pad_size(ib_params *params, evb_ubstep step)
+{
+	prop_number_t number = prop_dictionary_get(step,
+						   step_input_pad_size_key);
+	if (number != NULL)
+		return prop_number_unsigned_integer_value(number);
+	return 0;
+}
+
+/*
+ * evb_ubstep_get_output_size --
+ *	Returns the total output size that will be written to the
+ *	output device.
+ */
+uint64_t
+evb_ubstep_get_output_size(ib_params *params, evb_ubstep step)
+{
+	prop_number_t number = prop_dictionary_get(step, step_output_size_key);
+	if (number != NULL)
+		return prop_number_unsigned_integer_value(number);
+	return 0;
+}
+
+/*
+ * evb_ubstep_get_output_block_size --
+ *	Returns the block size that must be written to the output device.
+ */
+uint64_t
+evb_ubstep_get_output_block_size(ib_params *params, evb_ubstep step)
+{
+	prop_number_t number = prop_dictionary_get(step,
+						   step_output_block_size_key);
+	if (number != NULL)
+		return prop_number_unsigned_integer_value(number);
+	return 0;
+}
+
+/*
  * evb_ubstep_preserves_partial_block --
  *	Returns true if the step preserves a partial block.
  */
@@ -1461,17 +1674,73 @@ evb_uboot_do_step(ib_params *params, const char *uboot_file, evb_ubstep step)
 {
 	struct stat sb;
 	int ifd = -1;
-	char *blockbuf;
-	size_t thisblock;
+	char *blockbuf = NULL;
 	off_t curoffset;
-	off_t remaining;
+	off_t file_remaining;
 	bool rv = false;
 
 	uint64_t file_size = evb_ubstep_get_file_size(params, step);
 	uint64_t file_offset = evb_ubstep_get_file_offset(params, step);
 	uint64_t image_offset = evb_ubstep_get_image_offset(params, step);
+	uint64_t output_size = evb_ubstep_get_output_size(params, step);
+	size_t   output_block_size =
+			(size_t)evb_ubstep_get_output_block_size(params, step);
+	size_t   input_block_size =
+			(size_t)evb_ubstep_get_input_block_size(params, step);
+	size_t   input_pad_size =
+			(size_t)evb_ubstep_get_input_pad_size(params, step);
+	bool	 preserves_partial_block =
+			evb_ubstep_preserves_partial_block(params, step);
+	const char *uboot_file_name =
+			evb_ubstep_get_file_name(params, step);
 
-	blockbuf = malloc(params->sectorsize);
+	if (input_block_size == 0 && output_block_size == 0) {
+		if (params->flags & IB_VERBOSE) {
+			printf("Defaulting input-block-size and "
+			       "output-block-size to sectorsize "
+			       "(%" PRIu32 ")\n", params->sectorsize);
+		}
+		input_block_size = output_block_size = params->sectorsize;
+	} else if (input_block_size != 0 && output_block_size == 0) {
+		if (params->flags & IB_VERBOSE) {
+			printf("Defaulting output-block-size to "
+			       "input-block-size (%zu)\n",
+			       input_block_size);
+		}
+		output_block_size = input_block_size;
+	} else if (output_block_size != 0 && input_block_size == 0) {
+		if (params->flags & IB_VERBOSE) {
+			printf("Defaulting input-block-size to "
+			       "output-block-size (%zu)\n",
+			       output_block_size);
+		}
+		input_block_size = output_block_size;
+	}
+
+	if (output_block_size % params->sectorsize) {
+		warnx("output-block-size (%zu) is not a multiple of "
+		      "device sector size (%" PRIu32 ")",
+		      output_block_size, params->sectorsize);
+		goto out;
+	}
+
+	if ((input_block_size + input_pad_size) > output_block_size) {
+		warnx("input-{block+pad}-size (%zu) is larger than "
+		      "output-block-size (%zu)",
+		      input_block_size + input_pad_size,
+		      output_block_size);
+		goto out;
+	}
+
+	if (output_block_size % (input_block_size + input_pad_size)) {
+		warnx("output-block-size (%zu) it not a multiple of "
+		      "input-{block+pad}-size (%zu)",
+		      output_block_size,
+		      input_block_size + input_pad_size);
+		goto out;
+	}
+
+	blockbuf = malloc(output_block_size);
 	if (blockbuf == NULL)
 		goto out;
 
@@ -1486,19 +1755,28 @@ evb_uboot_do_step(ib_params *params, const char *uboot_file, evb_ubstep step)
 	}
 
 	if (file_size)
-		remaining = (off_t)file_size;
+		file_remaining = (off_t)file_size;
 	else
-		remaining = sb.st_size - (off_t)file_offset;
+		file_remaining = sb.st_size - (off_t)file_offset;
+
+	if (output_size == 0) {
+		output_size = roundup(file_remaining, output_block_size);
+	} else if ((uint64_t)file_remaining > output_size) {
+		warnx("file size (%lld) is larger than output-size (%" PRIu64
+		      ")", (long long)file_remaining, output_size);
+		goto out;
+	}
 
 	if (params->flags & IB_VERBOSE) {
 		if (file_offset) {
-			printf("Writing '%s' -- %lld @ %" PRIu64 " ==> %" PRIu64 "\n",
-			    evb_ubstep_get_file_name(params, step),
-			    (long long)remaining, file_offset, image_offset);
+			printf("Writing '%s' %lld @ %" PRIu64
+			       "to '%s' @  %" PRIu64 "\n",
+			       uboot_file_name, (long long)file_remaining,
+			       file_offset, params->filesystem, image_offset);
 		} else {
-			printf("Writing '%s' -- %lld ==> %" PRIu64 "\n",
-			    evb_ubstep_get_file_name(params, step),
-			    (long long)remaining, image_offset);
+			printf("Writing '%s' %lld to '%s' @ %" PRIu64 "\n",
+			       uboot_file_name, (long long)file_remaining,
+			       params->filesystem, image_offset);
 		}
 	}
 
@@ -1508,34 +1786,75 @@ evb_uboot_do_step(ib_params *params, const char *uboot_file, evb_ubstep step)
 		goto out;
 	}
 
-	for (curoffset = (off_t)image_offset; remaining > 0;
-	     remaining -= thisblock, curoffset += params->sectorsize) {
-		thisblock = params->sectorsize;
-		if ((off_t)thisblock > remaining)
-			thisblock = (size_t)remaining;
-		if ((thisblock % params->sectorsize) != 0) {
-			memset(blockbuf, 0, params->sectorsize);
-			if (evb_ubstep_preserves_partial_block(params, step)) {
-				if (params->flags & IB_VERBOSE) {
-					printf("(Reading '%s' -- %u @ %lld)\n",
-					    params->filesystem,
-					    params->sectorsize,
-					    (long long)curoffset);
-				}
-				if (pread(params->fsfd, blockbuf,
-					  params->sectorsize, curoffset) < 0) {
-					warn("pread '%s'", params->filesystem);
-					goto out;
-				}
+	for (curoffset = (off_t)image_offset;
+	     output_size != 0;
+	     curoffset += output_block_size, output_size -= output_block_size) {
+
+		size_t outblock_remaining;
+		size_t this_inblock;
+		char *fill;
+
+		/*
+		 * Initialize the output buffer.  We're either
+		 * filling it with zeros, or we're preserving
+		 * device contents that we don't overwrite.
+		 */
+		memset(blockbuf, 0, output_block_size);
+		if (preserves_partial_block) {
+			if (params->flags & IB_VERBOSE) {
+				printf("(Reading '%s' -- %zu @ %lld)\n",
+				       params->filesystem,
+				       output_block_size,
+				       (long long)curoffset);
+			}
+			if (pread(params->fsfd, blockbuf,
+				  output_block_size, curoffset) < 0) {
+				warn("pread '%s'", params->filesystem);
+				goto out;
 			}
 		}
-		if (read(ifd, blockbuf, thisblock) != (ssize_t)thisblock) {
-			warn("read '%s'", uboot_file);
-			goto out;
+
+		/*
+		 * Fill the output buffer with the file contents,
+		 * interleaved with padding as necessary.  (If
+		 * there is no file left, we're going to be left
+		 * with padding to cover the output-size.)
+		 */
+		for (outblock_remaining = output_block_size, fill = blockbuf;
+		     outblock_remaining != 0;
+		     fill += input_block_size + input_pad_size,
+		     outblock_remaining -= input_block_size + input_pad_size) {
+
+			this_inblock = input_block_size;
+			if ((off_t)this_inblock > file_remaining) {
+				this_inblock = file_remaining;
+			}
+
+			if (this_inblock) {
+				if (params->flags & IB_VERBOSE) {
+					printf("(Reading '%s' -- %zu @ %lld)\n",
+					       uboot_file_name,
+					       this_inblock,
+					       (long long)lseek(ifd, 0,
+								SEEK_CUR));
+				}
+				if (read(ifd, fill, this_inblock)
+				    != (ssize_t)this_inblock) {
+					warn("read '%s'", uboot_file);
+					goto out;
+				}
+				file_remaining -= this_inblock;
+			}
+		}
+
+		if (params->flags & IB_VERBOSE) {
+			printf("(Writing '%s' -- %zu @ %lld)\n",
+			       params->filesystem,
+			       output_block_size, (long long)curoffset);
 		}
 		if (!(params->flags & IB_NOWRITE) &&
-		    pwrite(params->fsfd, blockbuf, params->sectorsize,
-			   curoffset) != (ssize_t)params->sectorsize) {
+		    pwrite(params->fsfd, blockbuf, output_block_size,
+			   curoffset) != (ssize_t)output_block_size) {
 			warn("pwrite '%s'", params->filesystem);
 			goto out;
 		}

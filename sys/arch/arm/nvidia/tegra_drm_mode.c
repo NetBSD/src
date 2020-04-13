@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.16.4.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.16.4.2 2020/04/13 08:03:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.16.4.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.16.4.2 2020/04/13 08:03:36 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -699,7 +699,7 @@ tegra_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
     struct drm_framebuffer *old_fb)
 {
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
-	
+
 	tegra_crtc_do_set_base(crtc, old_fb, x, y, 0);
 
 	/* Commit settings */
@@ -1191,7 +1191,7 @@ tegra_connector_init(struct drm_device *ddev, struct drm_encoder *encoder)
 	if (!connector->ddc)
 		DRM_ERROR("failed to find ddc device for connector\n");
 
-	return 0;
+	return drm_connector_register(&connector->base);
 }
 
 static void

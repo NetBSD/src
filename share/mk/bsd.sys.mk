@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.284.2.1 2019/06/10 22:05:42 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.284.2.2 2020/04/13 08:03:26 martin Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -103,7 +103,11 @@ CFLAGS+=	-Wcast-qual -Wwrite-strings
 CFLAGS+=	-Wextra -Wno-unused-parameter
 # Readd -Wno-sign-compare to override -Wextra with clang
 CFLAGS+=	-Wno-sign-compare
+.if "${ACTIVE_CC}" == "gcc" && ${HAVE_GCC} != "8"
+#  XXX: Won't warn about anything.  -Wabi warns about differences from
+#  the most up-to-date ABI, which in g++ 8 is used by default.
 CXXFLAGS+=	-Wabi
+.endif
 CXXFLAGS+=	-Wold-style-cast
 CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Woverloaded-virtual -Wsign-promo -Wsynth
@@ -232,17 +236,9 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
 
-.if ${KLEAK:U0} > 0
-KLEAKFLAGS=	-fsanitize-coverage=trace-pc
-.for f in subr_kleak.c
-KLEAKFLAGS.${f}=	# empty
-.endfor
-CFLAGS+=	${KLEAKFLAGS.${.IMPSRC:T}:U${KLEAKFLAGS}}
-.endif
-
 .if ${KCOV:U0} > 0
 KCOVFLAGS=	-fsanitize-coverage=trace-pc
-.for f in subr_kcov.c subr_lwp_specificdata.c subr_specificdata.c subr_asan.c
+.for f in subr_kcov.c subr_asan.c subr_csan.c subr_msan.c
 KCOVFLAGS.${f}=		# empty
 .endfor
 CFLAGS+=	${KCOVFLAGS.${.IMPSRC:T}:U${KCOVFLAGS}}
@@ -264,7 +260,6 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
-MV?=		mv -f
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
@@ -329,7 +324,7 @@ MV?=		mv -f
 
 # Lex
 LFLAGS+=	${LPREFIX.${.IMPSRC:T}:D-P${LPREFIX.${.IMPSRC:T}}}
-LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
+LFLAGS+=	${LPREFIX:D-P${LPREFIX}} ${LFLAGS.${.IMPSRC:T}}
 
 .l.c:
 	${_MKTARGET_LEX}
@@ -337,7 +332,7 @@ LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
 
 # Yacc
 YFLAGS+=	${YPREFIX.${.IMPSRC:T}:D-p${YPREFIX.${.IMPSRC:T}}} ${YHEADER.${.IMPSRC:T}:D-d}
-YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
+YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d} ${YFLAGS.${.IMPSRC:T}}
 
 .y.c:
 	${_MKTARGET_YACC}

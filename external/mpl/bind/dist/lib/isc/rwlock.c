@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.6.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.6.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,12 +59,11 @@
 # define isc_rwlock_pause() __asm__ __volatile__ ("rep; nop")
 #elif defined(__ia64__)
 # define isc_rwlock_pause() __asm__ __volatile__ ("hint @pause")
-#elif defined(__arm__) && defined(_ARM_ARCH_6)
+#elif defined(__arm__) && (defined(_ARM_ARCH_6) || HAVE_ARM_YIELD)
 # define isc_rwlock_pause() __asm__ __volatile__ ("yield")
 #elif defined(sun) && (defined(__sparc) || defined(__sparc__))
 # define isc_rwlock_pause() smt_pause()
-// Disable pause, only works on v9
-#elif (defined(__sparc) || defined(__sparc__)) && defined(notdef)
+#elif (defined(__sparc) || defined(__sparc__)) && HAVE_SPARC_PAUSE
 # define isc_rwlock_pause() __asm__ __volatile__ ("pause")
 #elif defined(__ppc__) || defined(_ARCH_PPC)  ||			\
 	defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(_POWER)

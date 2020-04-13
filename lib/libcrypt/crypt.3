@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.27 2012/03/23 18:08:35 njoly Exp $
+.\"	$NetBSD: crypt.3,v 1.27.32.1 2020/04/13 08:03:12 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -241,6 +241,26 @@ A valid password looks like this:
 The entire password string is passed as
 .Fa setting
 for interpretation.
+.Ss Argon2 encryption
+Argon2 is a memory-hard hashing algorithm.
+.Fn crypt
+provides all three variants: argon2i, argon2d, and argon2id.
+It is recommended to use argon2id, which provides a hybrid combination
+using argon2i on the first pass, and argon2d on the remaining
+passes.
+We parameterize on three variables.
+First, m_cost (m), specifies the memory usage in KB.
+Second, t_cost (t), specfies the number of iterations.
+Third, parallelism (p) specifies the number of threads.
+A valid Argon2 encoded password looks similar to
+.Bd -literal
+$argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \
+   yeYYrU/rh7E+LI2CAeHTSHVB3iO+OXiNIUHu6NPeTfo
+.Ed
+containing five fields delimited by '$'.
+The fields, in order, are variant name, version, parameter set,
+128-bit salt, and encoded password.
+The complete password string is required to be processed correctly.
 .Ss "Blowfish" crypt
 The
 .Tn Blowfish

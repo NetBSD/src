@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
+/*	$NetBSD: key_25.c,v 1.4.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,29 @@
 #define RRTYPE_KEY_ATTRIBUTES \
 	( DNS_RDATATYPEATTR_ATCNAME | DNS_RDATATYPEATTR_ZONECUTAUTH )
 
+/*
+ * RFC 2535 section 3.1.2 says that if bits 0-1 of the Flags field are
+ * both set, it means there is no key information and the RR stops after
+ * the algorithm octet.  However, this only applies to KEY records, as
+ * indicated by the specifications of the RR types based on KEY:
+ *
+ *     CDNSKEY - RFC 7344
+ *     DNSKEY - RFC 4034
+ *     RKEY - draft-reid-dnsext-rkey-00
+ */
+static inline bool
+generic_key_nokey(dns_rdatatype_t type, unsigned int flags) {
+	switch (type) {
+	case dns_rdatatype_cdnskey:
+	case dns_rdatatype_dnskey:
+	case dns_rdatatype_rkey:
+		return (false);
+	case dns_rdatatype_key:
+	default:
+		return ((flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY);
+	}
+}
+
 static inline isc_result_t
 generic_fromtext_key(ARGS_FROMTEXT) {
 	isc_token_t token;
@@ -28,7 +51,6 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	dns_secproto_t proto;
 	dns_keyflags_t flags;
 
-	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(origin);
 	UNUSED(options);
@@ -38,6 +60,9 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 	RETTOK(dns_keyflags_fromtext(&flags, &token.value.as_textregion));
+	if (type == dns_rdatatype_rkey && flags != 0U) {
+		RETTOK(DNS_R_FORMERR);
+	}
 	RETERR(uint16_tobuffer(flags, target));
 
 	/* protocol */
@@ -53,8 +78,9 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	RETERR(mem_tobuffer(target, &alg, 1));
 
 	/* No Key? */
-	if ((flags & 0xc000) == 0xc000)
+	if (generic_key_nokey(type, flags)) {
 		return (ISC_R_SUCCESS);
+	}
 
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
@@ -101,8 +127,9 @@ generic_totext_key(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 
 	/* No Key? */
-	if ((flags & 0xc000) == 0xc000)
+	if (generic_key_nokey(rdata->type, flags)) {
 		return (ISC_R_SUCCESS);
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0 &&
 	     algorithm == DNS_KEYALG_PRIVATEDNS) {
@@ -162,21 +189,34 @@ generic_totext_key(ARGS_TOTEXT) {
 static inline isc_result_t
 generic_fromwire_key(ARGS_FROMWIRE) {
 	unsigned char algorithm;
+	uint16_t flags;
 	isc_region_t sr;
 
-	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(dctx);
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 4)
+	if (sr.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
+	flags = (sr.base[0] << 8) | sr.base[1];
+
+	if (type == dns_rdatatype_rkey && flags != 0U) {
+		return (DNS_R_FORMERR);
+	}
 
 	algorithm = sr.base[3];
 	RETERR(mem_tobuffer(target, sr.base, 4));
 	isc_region_consume(&sr, 4);
 	isc_buffer_forward(source, 4);
+
+	if (generic_key_nokey(type, flags)) {
+		return (ISC_R_SUCCESS);
+	}
+	if (sr.length == 0) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	if (algorithm == DNS_KEYALG_PRIVATEDNS) {
 		dns_name_t name;
@@ -259,6 +299,10 @@ generic_fromstruct_key(ARGS_FROMSTRUCT) {
 
 	UNUSED(type);
 	UNUSED(rdclass);
+
+	if (type == dns_rdatatype_rkey) {
+		INSIST(key->flags == 0U);
+	}
 
 	/* Flags */
 	RETERR(uint16_tobuffer(key->flags, target));

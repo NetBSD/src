@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.219.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.219.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.219.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.219.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,7 +209,8 @@ tcp_getpcb(struct socket *so, struct inpcb **inp,
 static void
 change_keepalive(struct socket *so, struct tcpcb *tp)
 {
-	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
+	tp->t_maxidle = tp->t_keepcnt * MIN(tp->t_keepintvl,
+	    TCP_TIMER_MAXTICKS / tp->t_keepcnt);
 	TCP_TIMER_DISARM(tp, TCPT_KEEP);
 	TCP_TIMER_DISARM(tp, TCPT_2MSL);
 
@@ -400,7 +401,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &ui, sizeof(ui));
 			if (error)
 				break;
-			if (ui > 0) {
+			if (ui > 0 && ui <= TCP_TIMER_MAXTICKS) {
 				tp->t_keepidle = ui;
 				change_keepalive(so, tp);
 			} else
@@ -411,7 +412,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &ui, sizeof(ui));
 			if (error)
 				break;
-			if (ui > 0) {
+			if (ui > 0 && ui <= TCP_TIMER_MAXTICKS) {
 				tp->t_keepintvl = ui;
 				change_keepalive(so, tp);
 			} else
@@ -422,7 +423,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &ui, sizeof(ui));
 			if (error)
 				break;
-			if (ui > 0) {
+			if (ui > 0 && ui <= TCP_TIMER_MAXTICKS) {
 				tp->t_keepcnt = ui;
 				change_keepalive(so, tp);
 			} else
@@ -433,7 +434,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &ui, sizeof(ui));
 			if (error)
 				break;
-			if (ui > 0) {
+			if (ui > 0 && ui <= TCP_TIMER_MAXTICKS) {
 				tp->t_keepinit = ui;
 				change_keepalive(so, tp);
 			} else
@@ -1960,6 +1961,9 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
+
+	if (!(tmp > 0 && tmp <= TCP_TIMER_MAXTICKS))
+		return EINVAL;
 
 	mutex_enter(softnet_lock);
 

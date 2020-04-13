@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.17 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.17.54.1 2020/04/13 08:03:31 martin Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.17 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.17.54.1 2020/04/13 08:03:31 martin Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -165,7 +165,7 @@ btl_dti_arcstation_bouncemem(u_int *basep, u_int *sizep)
 
 	*sizep = TYNE_S_BOUNCE; /* Good enough? XXX */
 #if 0
-	*basep = (u_int) malloc(*sizep, M_DEVBUF, M_NOWAIT);
+	*basep = (u_int) malloc(*sizep, M_DEVBUF, M_WAITOK);
 #else
 	*basep = (u_int) rpc44_buffer | 0xa0000000;
 #endif

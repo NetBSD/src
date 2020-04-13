@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.29.4.1 2019/06/10 22:07:08 christos Exp $ */
+/*	$NetBSD: ct.c,v 1.29.4.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.29.4.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.29.4.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,7 @@ ctattach(device_t parent, device_t self, void *aux)
 	char name[7];
 	int type, i, n, canstream = 0;
 
+	sc->sc_dev = self;
 	sc->sc_ic = ca->ca_ic;
 	sc->sc_slave = ca->ca_slave;
 	sc->sc_punit = ca->ca_punit;

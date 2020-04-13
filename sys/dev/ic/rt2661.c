@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.39.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.39.2.3 2020/04/13 08:04:22 martin Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.39.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.39.2.3 2020/04/13 08:04:22 martin Exp $");
 
 
 #include <sys/param.h>
@@ -456,14 +456,8 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct rt2661_tx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	    M_WAITOK | M_ZERO);
 
-	memset(ring->data, 0, count * sizeof (struct rt2661_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RT2661_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -596,17 +590,11 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct rt2661_rx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	    M_WAITOK | M_ZERO);
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
-	memset(ring->data, 0, count * sizeof (struct rt2661_rx_data));
 	for (i = 0; i < count; i++) {
 		desc = &sc->rxq.desc[i];
 		data = &sc->rxq.data[i];

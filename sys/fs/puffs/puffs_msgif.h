@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.84 2015/02/15 20:21:29 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.84.18.1 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -112,6 +112,119 @@ enum {
 #define PUFFS_TYPELEN (_VFS_NAMELEN - (sizeof(PUFFS_TYPEPREFIX)+1))
 #define PUFFS_NAMELEN (_VFS_MNAMELEN-1)
 
+/* really statvfs90 */
+struct puffs_statvfs {
+	unsigned long	f_flag;		/* copy of mount exported flags */
+	unsigned long	f_bsize;	/* file system block size */
+	unsigned long	f_frsize;	/* fundamental file system block size */
+	unsigned long	f_iosize;	/* optimal file system block size */
+
+	/* The following are in units of f_frsize */
+	fsblkcnt_t	f_blocks;	/* number of blocks in file system, */
+	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
+	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
+	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
+
+	fsfilcnt_t	f_files;	/* total file nodes in file system */
+	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
+	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
+	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
+
+	uint64_t  	f_syncreads;	/* count of sync reads since mount */
+	uint64_t  	f_syncwrites;	/* count of sync writes since mount */
+
+	uint64_t  	f_asyncreads;	/* count of async reads since mount */
+	uint64_t  	f_asyncwrites;	/* count of async writes since mount */
+
+	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
+	unsigned long	f_fsid;		/* Posix compatible fsid */
+	unsigned long	f_namemax;	/* maximum filename length */
+	uid_t		f_owner;	/* user that mounted the file system */
+
+	uint32_t	f_spare[4];	/* spare space */
+
+	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+};
+
+#ifndef _KERNEL
+#include <string.h>
+#endif
+
+static __inline void
+statvfs_to_puffs_statvfs(const struct statvfs *s, struct puffs_statvfs *ps)
+{
+	ps->f_flag = s->f_flag;
+	ps->f_bsize = s->f_bsize;
+	ps->f_frsize = s->f_frsize;
+	ps->f_iosize = s->f_iosize;
+
+	ps->f_blocks = s->f_blocks;
+	ps->f_bfree = s->f_bfree;
+	ps->f_bavail = s->f_bavail;
+	ps->f_bresvd = s->f_bresvd;
+
+	ps->f_files = s->f_files;
+	ps->f_ffree = s->f_ffree;
+	ps->f_favail = s->f_favail;
+	ps->f_fresvd = s->f_fresvd;
+
+	ps->f_syncreads = s->f_syncreads;
+	ps->f_syncwrites = s->f_syncwrites;
+
+	ps->f_asyncreads = s->f_asyncreads;
+	ps->f_asyncwrites = s->f_asyncwrites;
+
+	ps->f_fsidx = s->f_fsidx;
+	ps->f_fsid = s->f_fsid;
+	ps->f_namemax = s->f_namemax;
+	ps->f_owner = s->f_owner;
+
+	memset(ps->f_spare, 0, sizeof(ps->f_spare));
+
+	memcpy(ps->f_fstypename, s->f_fstypename, sizeof(ps->f_fstypename));
+	memcpy(ps->f_mntonname, s->f_mntonname, sizeof(ps->f_mntonname));
+	memcpy(ps->f_mntfromname, s->f_mntfromname, sizeof(ps->f_mntfromname));
+}
+
+static __inline void
+puffs_statvfs_to_statvfs(const struct puffs_statvfs *ps, struct statvfs *s)
+{
+	s->f_flag = ps->f_flag;
+	s->f_bsize = ps->f_bsize;
+	s->f_frsize = ps->f_frsize;
+	s->f_iosize = ps->f_iosize;
+
+	s->f_blocks = ps->f_blocks;
+	s->f_bfree = ps->f_bfree;
+	s->f_bavail = ps->f_bavail;
+	s->f_bresvd = ps->f_bresvd;
+
+	s->f_files = ps->f_files;
+	s->f_ffree = ps->f_ffree;
+	s->f_favail = ps->f_favail;
+	s->f_fresvd = ps->f_fresvd;
+
+	s->f_syncreads = ps->f_syncreads;
+	s->f_syncwrites = ps->f_syncwrites;
+
+	s->f_asyncreads = ps->f_asyncreads;
+	s->f_asyncwrites = ps->f_asyncwrites;
+
+	s->f_fsidx = ps->f_fsidx;
+	s->f_fsid = ps->f_fsid;
+	s->f_namemax = ps->f_namemax;
+	s->f_owner = ps->f_owner;
+
+	memset(s->f_spare, 0, sizeof(s->f_spare));
+
+	memcpy(s->f_fstypename, ps->f_fstypename, sizeof(s->f_fstypename));
+	memcpy(s->f_mntonname, ps->f_mntonname, sizeof(s->f_mntonname));
+	memcpy(s->f_mntfromname, ps->f_mntfromname, sizeof(s->f_mntfromname));
+	memset(s->f_mntfromlabel, 0, sizeof(s->f_mntfromlabel));
+}
+
 /* 
  * Just a weak typedef for code clarity.  Additionally, we have a
  * more appropriate vanity type for puffs:
@@ -145,7 +258,7 @@ struct puffs_kargs {
 		uint64_t	container;
 	} devunion;
 
-	struct statvfs	pa_svfsb;
+	struct puffs_statvfs	pa_svfsb;
 
 	uint32_t	pa_time32;
 
@@ -296,7 +409,7 @@ struct puffs_vfsmsg_unmount {
 struct puffs_vfsmsg_statvfs {
 	struct puffs_req	pvfsr_pr;
 
-	struct statvfs		pvfsr_sb;
+	struct puffs_statvfs	pvfsr_sb;
 };
 
 struct puffs_vfsmsg_sync {

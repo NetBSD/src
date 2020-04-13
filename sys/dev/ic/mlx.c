@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.66.4.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.66.4.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.66.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.66.4.2 2020/04/13 08:04:21 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "ld.h"
@@ -316,7 +316,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	/*
 	 * Allocate and initialize the CCBs.
 	 */
-	mc = malloc(sizeof(*mc) * MLX_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
+	mc = malloc(sizeof(*mc) * MLX_MAX_QUEUECNT, M_DEVBUF, M_WAITOK);
 	mlx->mlx_ccbs = mc;
 
 	for (i = 0; i < MLX_MAX_QUEUECNT; i++, mc++) {

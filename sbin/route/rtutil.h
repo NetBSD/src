@@ -1,3 +1,5 @@
+/*	$NetBSD: rtutil.h,v 1.3.18.1 2020/04/13 08:03:22 martin Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.310.12.2 2020/04/08 14:08:59 martin Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.310.12.3 2020/04/13 08:05:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.310.12.2 2020/04/08 14:08:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.310.12.3 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2778,11 +2778,9 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 				    if (bigenough) {
 					dp->d_type =
 					   IFTODT(VTTOIF(np->n_vattr->va_type));
-					if (cnp->cn_namelen <= NCHNAMLEN) {
-					    ndp->ni_vp = newvp;
-					    nfs_cache_enter(ndp->ni_dvp,
-						ndp->ni_vp, cnp);
-					}
+					ndp->ni_vp = newvp;
+					nfs_cache_enter(ndp->ni_dvp,
+					    ndp->ni_vp, cnp);
 				    }
 				}
 				error = 0;

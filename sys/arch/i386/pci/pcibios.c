@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.39 2010/07/26 22:33:23 jym Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.39.60.1 2020/04/13 08:03:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.39 2010/07/26 22:33:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.39.60.1 2020/04/13 08:03:53 martin Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -275,11 +275,7 @@ pcibios_pir_init(void)
 		 */
 		memcpy(&pcibios_pir_header, p, 32);
 		pcibios_pir_table = malloc(tablesize - 32, M_DEVBUF,
-		    M_NOWAIT);
-		if (pcibios_pir_table == NULL) {
-			aprint_error("pcibios_pir_init: no memory for $PIR\n");
-			return;
-		}
+		    M_WAITOK);
 		memcpy(pcibios_pir_table, p + 32, tablesize - 32);
 		pcibios_pir_table_nentries = (tablesize - 32) / 16;
 
@@ -288,13 +284,11 @@ pcibios_pir_init(void)
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
-			devinfo = malloc(256, M_DEVBUF, M_NOWAIT);
-			if (devinfo) {
-				pci_devinfo(pcibios_pir_header.compat_router,
-				    0, 0, devinfo, 256);
-				aprint_verbose(" (%s compatible)", devinfo);
-				free(devinfo, M_DEVBUF);
-			}
+			devinfo = malloc(256, M_DEVBUF, M_WAITOK);
+			pci_devinfo(pcibios_pir_header.compat_router,
+			    0, 0, devinfo, 256);
+			aprint_verbose(" (%s compatible)", devinfo);
+			free(devinfo, M_DEVBUF);
 		}
 		aprint_verbose("\n");
 		pcibios_print_exclirq();
@@ -321,11 +315,7 @@ pcibios_pir_init(void)
 	 */
 	pcibios_pir_table_nentries = 32;
 	pcibios_pir_table = malloc(pcibios_pir_table_nentries *
-	    sizeof(*pcibios_pir_table), M_DEVBUF, M_NOWAIT);
-	if (pcibios_pir_table == NULL) {
-		aprint_error("pcibios_pir_init: no memory for $PIR\n");
-		return;
-	}
+	    sizeof(*pcibios_pir_table), M_DEVBUF, M_WAITOK);
 	if (pcibios_get_intr_routing(pcibios_pir_table,
 	    &pcibios_pir_table_nentries,
 	    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.7 2015/02/14 06:31:31 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.7.18.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <luna68k/stand/boot/samachdep.h>
+#include <machine/board.h>
 
 /*
  *  RFCNT register
@@ -97,6 +98,8 @@ union bmd_rfcnt {
 /*
  *  Width & Height
  */
+
+#define BMAP_OFFSET	8
 
 #define PB_WIDTH	2048			/* Plane Width   (Bit) */
 #define PB_HEIGHT	1024			/* Plane Hight   (Bit) */
@@ -282,8 +285,8 @@ bmd_escape_1(int c)
 void
 bmdinit(void)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
-	volatile uint32_t *bmd_bmsel = (uint32_t *)0xB1040000;
+	volatile uint32_t *bmd_rfcnt = (uint32_t *)BMAP_RFCNT;
+	volatile uint32_t *bmd_bmsel = (uint32_t *)BMAP_BMSEL;
 	struct bmd_softc *bp = &bmd_softc;
 	struct bmd_linec *bq;
 	int i;
@@ -294,9 +297,9 @@ bmdinit(void)
 	 */
 
 	/* plane-0 hardware address */
-	bp->bc_raddr = (uint8_t *)0xB10C0008;
+	bp->bc_raddr = (uint8_t *)(BMAP_BMAP0 + BMAP_OFFSET);
 	/* common bitmap hardware address */
-	bp->bc_waddr = (uint8_t *)0xB1080008;
+	bp->bc_waddr = (uint8_t *)(BMAP_BMP   + BMAP_OFFSET);
 
 	rfcnt.p.rfc_hcnt = 7;			/* shift left   16 dot */
 	rfcnt.p.rfc_vcnt = -27;			/* shift down    1 dot */
@@ -339,7 +342,7 @@ bmdinit(void)
 void
 bmdadjust(int16_t hcnt, int16_t vcnt)
 {
-	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
+	volatile uint32_t *bmd_rfcnt = (uint32_t *)BMAP_RFCNT;
 	union bmd_rfcnt rfcnt;
 
 	printf("bmdadjust: hcnt = %d, vcnt = %d\n", hcnt, vcnt);

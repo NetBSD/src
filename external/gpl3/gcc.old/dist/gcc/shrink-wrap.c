@@ -1,5 +1,5 @@
 /* Shrink-wrapping related optimizations.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,12 +28,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "regs.h"
+#include "insn-config.h"
 #include "emit-rtl.h"
 #include "output.h"
 #include "tree-pass.h"
 #include "cfgrtl.h"
+#include "cfgbuild.h"
 #include "params.h"
 #include "bb-reorder.h"
 #include "shrink-wrap.h"
@@ -532,30 +535,49 @@ can_dup_for_shrink_wrapping (basic_block bb, basic_block pro, unsigned max_size)
   return true;
 }
 
-/* If the source of edge E has more than one successor, the verifier for
-   branch probabilities gets confused by the fake edges we make where
-   simple_return statements will be inserted later (because those are not
-   marked as fallthrough edges).  Fix this by creating an extra block just
-   for that fallthrough.  */
+/* Do whatever needs to be done for exits that run without prologue.
+   Sibcalls need nothing done.  Normal exits get a simple_return inserted.  */
 
-static edge
-fix_fake_fallthrough_edge (edge e)
+static void
+handle_simple_exit (edge e)
 {
-  if (EDGE_COUNT (e->src->succs) <= 1)
-    return e;
 
-  basic_block old_bb = e->src;
-  rtx_insn *end = BB_END (old_bb);
-  rtx_note *note = emit_note_after (NOTE_INSN_DELETED, end);
-  basic_block new_bb = create_basic_block (note, note, old_bb);
-  BB_COPY_PARTITION (new_bb, old_bb);
-  BB_END (old_bb) = end;
+  if (e->flags & EDGE_SIBCALL)
+    {
+      /* Tell function.c to take no further action on this edge.  */
+      e->flags |= EDGE_IGNORE;
 
-  redirect_edge_succ (e, new_bb);
-  e->flags |= EDGE_FALLTHRU;
-  e->flags &= ~EDGE_FAKE;
+      e->flags &= ~EDGE_FALLTHRU;
+      emit_barrier_after_bb (e->src);
+      return;
+    }
 
-  return make_edge (new_bb, EXIT_BLOCK_PTR_FOR_FN (cfun), EDGE_FAKE);
+  /* If the basic block the edge comes from has multiple successors,
+     split the edge.  */
+  if (EDGE_COUNT (e->src->succs) > 1)
+    {
+      basic_block old_bb = e->src;
+      rtx_insn *end = BB_END (old_bb);
+      rtx_note *note = emit_note_after (NOTE_INSN_DELETED, end);
+      basic_block new_bb = create_basic_block (note, note, old_bb);
+      BB_COPY_PARTITION (new_bb, old_bb);
+      BB_END (old_bb) = end;
+
+      redirect_edge_succ (e, new_bb);
+      e->flags |= EDGE_FALLTHRU;
+
+      e = make_edge (new_bb, EXIT_BLOCK_PTR_FOR_FN (cfun), 0);
+    }
+
+  e->flags &= ~EDGE_FALLTHRU;
+  rtx_jump_insn *ret = emit_jump_insn_after (targetm.gen_simple_return (),
+					     BB_END (e->src));
+  JUMP_LABEL (ret) = simple_return_rtx;
+  emit_barrier_after_bb (e->src);
+
+  if (dump_file)
+    fprintf (dump_file, "Made simple_return with UID %d in bb %d\n",
+	     INSN_UID (ret), e->src->index);
 }
 
 /* Try to perform a kind of shrink-wrapping, making sure the
@@ -613,13 +635,10 @@ fix_fake_fallthrough_edge (edge e)
    (bb 4 is duplicated to 5; the prologue is inserted on the edge 5->3).
 
    ENTRY_EDGE is the edge where the prologue will be placed, possibly
-   changed by this function.  BB_WITH is a bitmap that, if we do shrink-
-   wrap, will on return contain the interesting blocks that run with
-   prologue.  PROLOGUE_SEQ is the prologue we will insert.  */
+   changed by this function.  PROLOGUE_SEQ is the prologue we will insert.  */
 
 void
-try_shrink_wrapping (edge *entry_edge, bitmap_head *bb_with,
-		     rtx_insn *prologue_seq)
+try_shrink_wrapping (edge *entry_edge, rtx_insn *prologue_seq)
 {
   /* If we cannot shrink-wrap, are told not to shrink-wrap, or it makes
      no sense to shrink-wrap: then do not shrink-wrap!  */
@@ -742,6 +761,7 @@ try_shrink_wrapping (edge *entry_edge, bitmap_head *bb_with,
      reachable from PRO that we already found, and in VEC a stack of
      those we still need to consider (to find successors).  */
 
+  bitmap bb_with = BITMAP_ALLOC (NULL);
   bitmap_set_bit (bb_with, pro->index);
 
   vec<basic_block> vec;
@@ -854,6 +874,7 @@ try_shrink_wrapping (edge *entry_edge, bitmap_head *bb_with,
 
   if (pro == entry)
     {
+      BITMAP_FREE (bb_with);
       free_dominance_info (CDI_DOMINATORS);
       return;
     }
@@ -949,22 +970,13 @@ try_shrink_wrapping (edge *entry_edge, bitmap_head *bb_with,
 	redirect_edge_and_branch_force (e, (basic_block) e->dest->aux);
       }
 
-  /* Change all the exits that should get a simple_return to FAKE.
-     They will be converted later.  */
+  /* Make a simple_return for those exits that run without prologue.  */
 
-  FOR_EACH_BB_FN (bb, cfun)
+  FOR_EACH_BB_REVERSE_FN (bb, cfun)
     if (!bitmap_bit_p (bb_with, bb->index))
       FOR_EACH_EDGE (e, ei, bb->succs)
 	if (e->dest == EXIT_BLOCK_PTR_FOR_FN (cfun))
-	  {
-	    e = fix_fake_fallthrough_edge (e);
-
-	    e->flags &= ~EDGE_FALLTHRU;
-	    if (!(e->flags & EDGE_SIBCALL))
-	      e->flags |= EDGE_FAKE;
-
-	    emit_barrier_after_bb (e->src);
-	  }
+	  handle_simple_exit (e);
 
   /* Finally, we want a single edge to put the prologue on.  Make a new
      block before the PRO block; the edge beteen them is the edge we want.
@@ -997,158 +1009,869 @@ try_shrink_wrapping (edge *entry_edge, bitmap_head *bb_with,
   *entry_edge = make_single_succ_edge (new_bb, pro, EDGE_FALLTHRU);
   force_nonfallthru (*entry_edge);
 
+  BITMAP_FREE (bb_with);
   free_dominance_info (CDI_DOMINATORS);
 }
+
+/* Separate shrink-wrapping
 
-/* If we're allowed to generate a simple return instruction, then by
-   definition we don't need a full epilogue.  If the last basic
-   block before the exit block does not contain active instructions,
-   examine its predecessors and try to emit (conditional) return
-   instructions.  */
+   Instead of putting all of the prologue and epilogue in one spot, we
+   can put parts of it in places where those components are executed less
+   frequently.  The following code does this, for prologue and epilogue
+   components that can be put in more than one location, and where those
+   components can be executed more than once (the epilogue component will
+   always be executed before the prologue component is executed a second
+   time).
 
-edge
-get_unconverted_simple_return (edge exit_fallthru_edge, bitmap_head bb_flags,
-			       vec<edge> *unconverted_simple_returns,
-			       rtx_insn **returnjump)
+   What exactly is a component is target-dependent.  The more usual
+   components are simple saves/restores to/from the frame of callee-saved
+   registers.  This code treats components abstractly (as an sbitmap),
+   letting the target handle all details.
+
+   Prologue components are placed in such a way that for every component
+   the prologue is executed as infrequently as possible.  We do this by
+   walking the dominator tree, comparing the cost of placing a prologue
+   component before a block to the sum of costs determined for all subtrees
+   of that block.
+
+   From this placement, we then determine for each component all blocks
+   where at least one of this block's dominators (including itself) will
+   get a prologue inserted.  That then is how the components are placed.
+   We could place the epilogue components a bit smarter (we can save a
+   bit of code size sometimes); this is a possible future improvement.
+
+   Prologues and epilogues are preferably placed into a block, either at
+   the beginning or end of it, if it is needed for all predecessor resp.
+   successor edges; or placed on the edge otherwise.
+
+   If the placement of any prologue/epilogue leads to a situation we cannot
+   handle (for example, an abnormal edge would need to be split, or some
+   targets want to use some specific registers that may not be available
+   where we want to put them), separate shrink-wrapping for the components
+   in that prologue/epilogue is aborted.  */
+
+
+/* Print the sbitmap COMPONENTS to the DUMP_FILE if not empty, with the
+   label LABEL.  */
+static void
+dump_components (const char *label, sbitmap components)
 {
-  if (optimize)
-    {
-      unsigned i, last;
+  if (bitmap_empty_p (components))
+    return;
 
-      /* convert_jumps_to_returns may add to preds of the exit block
-         (but won't remove).  Stop at end of current preds.  */
-      last = EDGE_COUNT (EXIT_BLOCK_PTR_FOR_FN (cfun)->preds);
-      for (i = 0; i < last; i++)
-	{
-	  edge e = EDGE_I (EXIT_BLOCK_PTR_FOR_FN (cfun)->preds, i);
-	  if (LABEL_P (BB_HEAD (e->src))
-	      && !bitmap_bit_p (&bb_flags, e->src->index)
-	      && !active_insn_between (BB_HEAD (e->src), BB_END (e->src)))
-	    *unconverted_simple_returns
-		  = convert_jumps_to_returns (e->src, true,
-					      *unconverted_simple_returns);
-	}
-    }
+  fprintf (dump_file, " [%s", label);
 
-  if (exit_fallthru_edge != NULL
-      && EDGE_COUNT (exit_fallthru_edge->src->preds) != 0
-      && !bitmap_bit_p (&bb_flags, exit_fallthru_edge->src->index))
-    {
-      basic_block last_bb;
+  for (unsigned int j = 0; j < components->n_bits; j++)
+    if (bitmap_bit_p (components, j))
+      fprintf (dump_file, " %u", j);
 
-      last_bb = emit_return_for_exit (exit_fallthru_edge, true);
-      *returnjump = BB_END (last_bb);
-      exit_fallthru_edge = NULL;
-    }
-  return exit_fallthru_edge;
+  fprintf (dump_file, "]");
 }
 
-/* If there were branches to an empty LAST_BB which we tried to
-   convert to conditional simple_returns, but couldn't for some
-   reason, create a block to hold a simple_return insn and redirect
-   those remaining edges.  */
+/* The data we collect for each bb.  */
+struct sw {
+  /* What components does this BB need?  */
+  sbitmap needs_components;
 
-void
-convert_to_simple_return (edge entry_edge, edge orig_entry_edge,
-			  bitmap_head bb_flags, rtx_insn *returnjump,
-			  vec<edge> unconverted_simple_returns)
+  /* What components does this BB have?  This is the main decision this
+     pass makes.  */
+  sbitmap has_components;
+
+  /* The components for which we placed code at the start of the BB (instead
+     of on all incoming edges).  */
+  sbitmap head_components;
+
+  /* The components for which we placed code at the end of the BB (instead
+     of on all outgoing edges).  */
+  sbitmap tail_components;
+
+  /* The frequency of executing the prologue for this BB, if a prologue is
+     placed on this BB.  This is a pessimistic estimate (no prologue is
+     needed for edges from blocks that have the component under consideration
+     active already).  */
+  gcov_type own_cost;
+
+  /* The frequency of executing the prologue for this BB and all BBs
+     dominated by it.  */
+  gcov_type total_cost;
+};
+
+/* A helper function for accessing the pass-specific info.  */
+static inline struct sw *
+SW (basic_block bb)
 {
+  gcc_assert (bb->aux);
+  return (struct sw *) bb->aux;
+}
+
+/* Create the pass-specific data structures for separately shrink-wrapping
+   with components COMPONENTS.  */
+static void
+init_separate_shrink_wrap (sbitmap components)
+{
+  basic_block bb;
+  FOR_ALL_BB_FN (bb, cfun)
+    {
+      bb->aux = xcalloc (1, sizeof (struct sw));
+
+      SW (bb)->needs_components = targetm.shrink_wrap.components_for_bb (bb);
+
+      /* Mark all basic blocks without successor as needing all components.
+	 This avoids problems in at least cfgcleanup, sel-sched, and
+	 regrename (largely to do with all paths to such a block still
+	 needing the same dwarf CFI info).  */
+      if (EDGE_COUNT (bb->succs) == 0)
+	bitmap_copy (SW (bb)->needs_components, components);
+
+      if (dump_file)
+	{
+	  fprintf (dump_file, "bb %d components:", bb->index);
+	  dump_components ("has", SW (bb)->needs_components);
+	  fprintf (dump_file, "\n");
+	}
+
+      SW (bb)->has_components = sbitmap_alloc (SBITMAP_SIZE (components));
+      SW (bb)->head_components = sbitmap_alloc (SBITMAP_SIZE (components));
+      SW (bb)->tail_components = sbitmap_alloc (SBITMAP_SIZE (components));
+      bitmap_clear (SW (bb)->has_components);
+    }
+}
+
+/* Destroy the pass-specific data.  */
+static void
+fini_separate_shrink_wrap (void)
+{
+  basic_block bb;
+  FOR_ALL_BB_FN (bb, cfun)
+    if (bb->aux)
+      {
+	sbitmap_free (SW (bb)->needs_components);
+	sbitmap_free (SW (bb)->has_components);
+	sbitmap_free (SW (bb)->head_components);
+	sbitmap_free (SW (bb)->tail_components);
+	free (bb->aux);
+	bb->aux = 0;
+      }
+}
+
+/* Place the prologue for component WHICH, in the basic blocks dominated
+   by HEAD.  Do a DFS over the dominator tree, and set bit WHICH in the
+   HAS_COMPONENTS of a block if either the block has that bit set in
+   NEEDS_COMPONENTS, or it is cheaper to place the prologue here than in all
+   dominator subtrees separately.  */
+static void
+place_prologue_for_one_component (unsigned int which, basic_block head)
+{
+  /* The block we are currently dealing with.  */
+  basic_block bb = head;
+  /* Is this the first time we visit this block, i.e. have we just gone
+     down the tree.  */
+  bool first_visit = true;
+
+  /* Walk the dominator tree, visit one block per iteration of this loop.
+     Each basic block is visited twice: once before visiting any children
+     of the block, and once after visiting all of them (leaf nodes are
+     visited only once).  As an optimization, we do not visit subtrees
+     that can no longer influence the prologue placement.  */
+  for (;;)
+    {
+      /* First visit of a block: set the (children) cost accumulator to zero;
+	 if the block does not have the component itself, walk down.  */
+      if (first_visit)
+	{
+	  /* Initialize the cost.  The cost is the block execution frequency
+	     that does not come from backedges.  Calculating this by simply
+	     adding the cost of all edges that aren't backedges does not
+	     work: this does not always add up to the block frequency at
+	     all, and even if it does, rounding error makes for bad
+	     decisions.  */
+	  SW (bb)->own_cost = bb->frequency;
+
+	  edge e;
+	  edge_iterator ei;
+	  FOR_EACH_EDGE (e, ei, bb->preds)
+	    if (dominated_by_p (CDI_DOMINATORS, e->src, bb))
+	      {
+		if (SW (bb)->own_cost > EDGE_FREQUENCY (e))
+		  SW (bb)->own_cost -= EDGE_FREQUENCY (e);
+		else
+		  SW (bb)->own_cost = 0;
+	      }
+
+	  SW (bb)->total_cost = 0;
+
+	  if (!bitmap_bit_p (SW (bb)->needs_components, which)
+	      && first_dom_son (CDI_DOMINATORS, bb))
+	    {
+	      bb = first_dom_son (CDI_DOMINATORS, bb);
+	      continue;
+	    }
+	}
+
+      /* If this block does need the component itself, or it is cheaper to
+	 put the prologue here than in all the descendants that need it,
+	 mark it so.  If this block's immediate post-dominator is dominated
+	 by this block, and that needs the prologue, we can put it on this
+	 block as well (earlier is better).  */
+      if (bitmap_bit_p (SW (bb)->needs_components, which)
+	  || SW (bb)->total_cost > SW (bb)->own_cost)
+	{
+	  SW (bb)->total_cost = SW (bb)->own_cost;
+	  bitmap_set_bit (SW (bb)->has_components, which);
+	}
+      else
+	{
+	  basic_block kid = get_immediate_dominator (CDI_POST_DOMINATORS, bb);
+	  if (dominated_by_p (CDI_DOMINATORS, kid, bb)
+	      && bitmap_bit_p (SW (kid)->has_components, which))
+	    {
+	      SW (bb)->total_cost = SW (bb)->own_cost;
+	      bitmap_set_bit (SW (bb)->has_components, which);
+	    }
+	}
+
+      /* We are back where we started, so we are done now.  */
+      if (bb == head)
+	return;
+
+      /* We now know the cost of the subtree rooted at the current block.
+	 Accumulate this cost in the parent.  */
+      basic_block parent = get_immediate_dominator (CDI_DOMINATORS, bb);
+      SW (parent)->total_cost += SW (bb)->total_cost;
+
+      /* Don't walk the tree down unless necessary.  */
+      if (next_dom_son (CDI_DOMINATORS, bb)
+          && SW (parent)->total_cost <= SW (parent)->own_cost)
+	{
+	  bb = next_dom_son (CDI_DOMINATORS, bb);
+	  first_visit = true;
+	}
+      else
+	{
+	  bb = parent;
+	  first_visit = false;
+	}
+    }
+}
+
+/* Set HAS_COMPONENTS in every block to the maximum it can be set to without
+   setting it on any path from entry to exit where it was not already set
+   somewhere (or, for blocks that have no path to the exit, consider only
+   paths from the entry to the block itself).  */
+static void
+spread_components (sbitmap components)
+{
+  basic_block entry_block = ENTRY_BLOCK_PTR_FOR_FN (cfun);
+  basic_block exit_block = EXIT_BLOCK_PTR_FOR_FN (cfun);
+
+  /* A stack of all blocks left to consider, and a bitmap of all blocks
+     on that stack.  */
+  vec<basic_block> todo;
+  todo.create (n_basic_blocks_for_fn (cfun));
+  bitmap seen = BITMAP_ALLOC (NULL);
+
+  sbitmap old = sbitmap_alloc (SBITMAP_SIZE (components));
+
+  /* Find for every block the components that are *not* needed on some path
+     from the entry to that block.  Do this with a flood fill from the entry
+     block.  Every block can be visited at most as often as the number of
+     components (plus one), and usually much less often.  */
+
+  if (dump_file)
+    fprintf (dump_file, "Spreading down...\n");
+
+  basic_block bb;
+  FOR_ALL_BB_FN (bb, cfun)
+    bitmap_clear (SW (bb)->head_components);
+
+  bitmap_copy (SW (entry_block)->head_components, components);
+
   edge e;
   edge_iterator ei;
 
-  if (!unconverted_simple_returns.is_empty ())
+  todo.quick_push (single_succ (entry_block));
+  bitmap_set_bit (seen, single_succ (entry_block)->index);
+  while (!todo.is_empty ())
     {
-      basic_block simple_return_block_hot = NULL;
-      basic_block simple_return_block_cold = NULL;
-      edge pending_edge_hot = NULL;
-      edge pending_edge_cold = NULL;
-      basic_block exit_pred;
-      int i;
+      bb = todo.pop ();
 
-      gcc_assert (entry_edge != orig_entry_edge);
+      bitmap_copy (old, SW (bb)->head_components);
 
-      /* See if we can reuse the last insn that was emitted for the
-	 epilogue.  */
-      if (returnjump != NULL_RTX
-	  && JUMP_LABEL (returnjump) == simple_return_rtx)
-	{
-	  e = split_block (BLOCK_FOR_INSN (returnjump), PREV_INSN (returnjump));
-	  if (BB_PARTITION (e->src) == BB_HOT_PARTITION)
-	    simple_return_block_hot = e->dest;
-	  else
-	    simple_return_block_cold = e->dest;
-	}
+      FOR_EACH_EDGE (e, ei, bb->preds)
+	bitmap_ior (SW (bb)->head_components, SW (bb)->head_components,
+		    SW (e->src)->head_components);
 
-      /* Also check returns we might need to add to tail blocks.  */
-      FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
-	if (EDGE_COUNT (e->src->preds) != 0
-	    && (e->flags & EDGE_FAKE) != 0
-	    && !bitmap_bit_p (&bb_flags, e->src->index))
-	  {
-	    if (BB_PARTITION (e->src) == BB_HOT_PARTITION)
-	      pending_edge_hot = e;
-	    else
-	      pending_edge_cold = e;
-	  }
+      bitmap_and_compl (SW (bb)->head_components, SW (bb)->head_components,
+			SW (bb)->has_components);
 
-      /* Save a pointer to the exit's predecessor BB for use in
-         inserting new BBs at the end of the function.  Do this
-         after the call to split_block above which may split
-         the original exit pred.  */
-      exit_pred = EXIT_BLOCK_PTR_FOR_FN (cfun)->prev_bb;
+      if (!bitmap_equal_p (old, SW (bb)->head_components))
+	FOR_EACH_EDGE (e, ei, bb->succs)
+	  if (bitmap_set_bit (seen, e->dest->index))
+	    todo.quick_push (e->dest);
 
-      FOR_EACH_VEC_ELT (unconverted_simple_returns, i, e)
-	{
-	  basic_block *pdest_bb;
-	  edge pending;
-
-	  if (BB_PARTITION (e->src) == BB_HOT_PARTITION)
-	    {
-	      pdest_bb = &simple_return_block_hot;
-	      pending = pending_edge_hot;
-	    }
-	  else
-	    {
-	      pdest_bb = &simple_return_block_cold;
-	      pending = pending_edge_cold;
-	    }
-
-	  if (*pdest_bb == NULL && pending != NULL)
-	    {
-	      emit_return_into_block (true, pending->src);
-	      pending->flags &= ~(EDGE_FALLTHRU | EDGE_FAKE);
-	      *pdest_bb = pending->src;
-	    }
-	  else if (*pdest_bb == NULL)
-	    {
-	      basic_block bb;
-
-	      bb = create_basic_block (NULL, NULL, exit_pred);
-	      BB_COPY_PARTITION (bb, e->src);
-	      rtx_insn *ret = targetm.gen_simple_return ();
-	      rtx_jump_insn *start = emit_jump_insn_after (ret, BB_END (bb));
-	      JUMP_LABEL (start) = simple_return_rtx;
-	      emit_barrier_after (start);
-
-	      *pdest_bb = bb;
-	      make_edge (bb, EXIT_BLOCK_PTR_FOR_FN (cfun), 0);
-	    }
-	  redirect_edge_and_branch_force (e, *pdest_bb);
-	}
-      unconverted_simple_returns.release ();
+      bitmap_clear_bit (seen, bb->index);
     }
 
-  if (entry_edge != orig_entry_edge)
-    {
-      FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
-	if (EDGE_COUNT (e->src->preds) != 0
-	    && (e->flags & EDGE_FAKE) != 0
-	    && !bitmap_bit_p (&bb_flags, e->src->index))
-	  {
-	    e = fix_fake_fallthrough_edge (e);
+  /* Find for every block the components that are *not* needed on some reverse
+     path from the exit to that block.  */
 
-	    emit_return_into_block (true, e->src);
-	    e->flags &= ~(EDGE_FALLTHRU | EDGE_FAKE);
-	  }
+  if (dump_file)
+    fprintf (dump_file, "Spreading up...\n");
+
+  /* First, mark all blocks not reachable from the exit block as not needing
+     any component on any path to the exit.  Mark everything, and then clear
+     again by a flood fill.  */
+
+  FOR_ALL_BB_FN (bb, cfun)
+    bitmap_copy (SW (bb)->tail_components, components);
+
+  FOR_EACH_EDGE (e, ei, exit_block->preds)
+    {
+      todo.quick_push (e->src);
+      bitmap_set_bit (seen, e->src->index);
     }
+
+  while (!todo.is_empty ())
+    {
+      bb = todo.pop ();
+
+      if (!bitmap_empty_p (SW (bb)->tail_components))
+	FOR_EACH_EDGE (e, ei, bb->preds)
+	  if (bitmap_set_bit (seen, e->src->index))
+	    todo.quick_push (e->src);
+
+      bitmap_clear (SW (bb)->tail_components);
+
+      bitmap_clear_bit (seen, bb->index);
+    }
+
+  /* And then, flood fill backwards to find for every block the components
+     not needed on some path to the exit.  */
+
+  bitmap_copy (SW (exit_block)->tail_components, components);
+
+  FOR_EACH_EDGE (e, ei, exit_block->preds)
+    {
+      todo.quick_push (e->src);
+      bitmap_set_bit (seen, e->src->index);
+    }
+
+  while (!todo.is_empty ())
+    {
+      bb = todo.pop ();
+
+      bitmap_copy (old, SW (bb)->tail_components);
+
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	bitmap_ior (SW (bb)->tail_components, SW (bb)->tail_components,
+		    SW (e->dest)->tail_components);
+
+      bitmap_and_compl (SW (bb)->tail_components, SW (bb)->tail_components,
+			SW (bb)->has_components);
+
+      if (!bitmap_equal_p (old, SW (bb)->tail_components))
+	FOR_EACH_EDGE (e, ei, bb->preds)
+	  if (bitmap_set_bit (seen, e->src->index))
+	    todo.quick_push (e->src);
+
+      bitmap_clear_bit (seen, bb->index);
+    }
+
+  todo.release ();
+
+  /* Finally, mark everything not not needed both forwards and backwards.  */
+
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      bitmap_and (SW (bb)->head_components, SW (bb)->head_components,
+		  SW (bb)->tail_components);
+      bitmap_and_compl (SW (bb)->has_components, components,
+			SW (bb)->head_components);
+    }
+
+  FOR_ALL_BB_FN (bb, cfun)
+    {
+      if (dump_file)
+	{
+	  fprintf (dump_file, "bb %d components:", bb->index);
+	  dump_components ("has", SW (bb)->has_components);
+	  fprintf (dump_file, "\n");
+	}
+    }
+
+  sbitmap_free (old);
+  BITMAP_FREE (seen);
+}
+
+/* If we cannot handle placing some component's prologues or epilogues where
+   we decided we should place them, unmark that component in COMPONENTS so
+   that it is not wrapped separately.  */
+static void
+disqualify_problematic_components (sbitmap components)
+{
+  sbitmap pro = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap epi = sbitmap_alloc (SBITMAP_SIZE (components));
+
+  basic_block bb;
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      edge e;
+      edge_iterator ei;
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	{
+	  /* Find which components we want pro/epilogues for here.  */
+	  bitmap_and_compl (epi, SW (e->src)->has_components,
+			    SW (e->dest)->has_components);
+	  bitmap_and_compl (pro, SW (e->dest)->has_components,
+			    SW (e->src)->has_components);
+
+	  /* Ask the target what it thinks about things.  */
+	  if (!bitmap_empty_p (epi))
+	    targetm.shrink_wrap.disqualify_components (components, e, epi,
+						       false);
+	  if (!bitmap_empty_p (pro))
+	    targetm.shrink_wrap.disqualify_components (components, e, pro,
+						       true);
+
+	  /* If this edge doesn't need splitting, we're fine.  */
+	  if (single_pred_p (e->dest)
+	      && e->dest != EXIT_BLOCK_PTR_FOR_FN (cfun))
+	    continue;
+
+	  /* If the edge can be split, that is fine too.  */
+	  if ((e->flags & EDGE_ABNORMAL) == 0)
+	    continue;
+
+	  /* We also can handle sibcalls.  */
+	  if (e->dest == EXIT_BLOCK_PTR_FOR_FN (cfun))
+	    {
+	      gcc_assert (e->flags & EDGE_SIBCALL);
+	      continue;
+	    }
+
+	  /* Remove from consideration those components we would need
+	     pro/epilogues for on edges where we cannot insert them.  */
+	  bitmap_and_compl (components, components, epi);
+	  bitmap_and_compl (components, components, pro);
+
+	  if (dump_file && !bitmap_subset_p (epi, components))
+	    {
+	      fprintf (dump_file, "  BAD epi %d->%d", e->src->index,
+		       e->dest->index);
+	      if (e->flags & EDGE_EH)
+		fprintf (dump_file, " for EH");
+	      dump_components ("epi", epi);
+	      fprintf (dump_file, "\n");
+	    }
+
+	  if (dump_file && !bitmap_subset_p (pro, components))
+	    {
+	      fprintf (dump_file, "  BAD pro %d->%d", e->src->index,
+		       e->dest->index);
+	      if (e->flags & EDGE_EH)
+		fprintf (dump_file, " for EH");
+	      dump_components ("pro", pro);
+	      fprintf (dump_file, "\n");
+	    }
+	}
+    }
+
+  sbitmap_free (pro);
+  sbitmap_free (epi);
+}
+
+/* Place code for prologues and epilogues for COMPONENTS where we can put
+   that code at the start of basic blocks.  */
+static void
+emit_common_heads_for_components (sbitmap components)
+{
+  sbitmap pro = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap epi = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap tmp = sbitmap_alloc (SBITMAP_SIZE (components));
+
+  basic_block bb;
+  FOR_ALL_BB_FN (bb, cfun)
+    bitmap_clear (SW (bb)->head_components);
+
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      /* Find which prologue resp. epilogue components are needed for all
+	 predecessor edges to this block.  */
+
+      /* First, select all possible components.  */
+      bitmap_copy (epi, components);
+      bitmap_copy (pro, components);
+
+      edge e;
+      edge_iterator ei;
+      FOR_EACH_EDGE (e, ei, bb->preds)
+	{
+	  if (e->flags & EDGE_ABNORMAL)
+	    {
+	      bitmap_clear (epi);
+	      bitmap_clear (pro);
+	      break;
+	    }
+
+	  /* Deselect those epilogue components that should not be inserted
+	     for this edge.  */
+	  bitmap_and_compl (tmp, SW (e->src)->has_components,
+			    SW (e->dest)->has_components);
+	  bitmap_and (epi, epi, tmp);
+
+	  /* Similar, for the prologue.  */
+	  bitmap_and_compl (tmp, SW (e->dest)->has_components,
+			    SW (e->src)->has_components);
+	  bitmap_and (pro, pro, tmp);
+	}
+
+      if (dump_file && !(bitmap_empty_p (epi) && bitmap_empty_p (pro)))
+	fprintf (dump_file, "  bb %d", bb->index);
+
+      if (dump_file && !bitmap_empty_p (epi))
+	dump_components ("epi", epi);
+      if (dump_file && !bitmap_empty_p (pro))
+	dump_components ("pro", pro);
+
+      if (dump_file && !(bitmap_empty_p (epi) && bitmap_empty_p (pro)))
+	fprintf (dump_file, "\n");
+
+      /* Place code after the BB note.  */
+      if (!bitmap_empty_p (pro))
+	{
+	  start_sequence ();
+	  targetm.shrink_wrap.emit_prologue_components (pro);
+	  rtx_insn *seq = get_insns ();
+	  end_sequence ();
+	  record_prologue_seq (seq);
+
+	  emit_insn_after (seq, bb_note (bb));
+
+	  bitmap_ior (SW (bb)->head_components, SW (bb)->head_components, pro);
+	}
+
+      if (!bitmap_empty_p (epi))
+	{
+	  start_sequence ();
+	  targetm.shrink_wrap.emit_epilogue_components (epi);
+	  rtx_insn *seq = get_insns ();
+	  end_sequence ();
+	  record_epilogue_seq (seq);
+
+	  emit_insn_after (seq, bb_note (bb));
+
+	  bitmap_ior (SW (bb)->head_components, SW (bb)->head_components, epi);
+	}
+    }
+
+  sbitmap_free (pro);
+  sbitmap_free (epi);
+  sbitmap_free (tmp);
+}
+
+/* Place code for prologues and epilogues for COMPONENTS where we can put
+   that code at the end of basic blocks.  */
+static void
+emit_common_tails_for_components (sbitmap components)
+{
+  sbitmap pro = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap epi = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap tmp = sbitmap_alloc (SBITMAP_SIZE (components));
+
+  basic_block bb;
+  FOR_ALL_BB_FN (bb, cfun)
+    bitmap_clear (SW (bb)->tail_components);
+
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      /* Find which prologue resp. epilogue components are needed for all
+	 successor edges from this block.  */
+      if (EDGE_COUNT (bb->succs) == 0)
+	continue;
+
+      /* First, select all possible components.  */
+      bitmap_copy (epi, components);
+      bitmap_copy (pro, components);
+
+      edge e;
+      edge_iterator ei;
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	{
+	  if (e->flags & EDGE_ABNORMAL)
+	    {
+	      bitmap_clear (epi);
+	      bitmap_clear (pro);
+	      break;
+	    }
+
+	  /* Deselect those epilogue components that should not be inserted
+	     for this edge, and also those that are already put at the head
+	     of the successor block.  */
+	  bitmap_and_compl (tmp, SW (e->src)->has_components,
+			    SW (e->dest)->has_components);
+	  bitmap_and_compl (tmp, tmp, SW (e->dest)->head_components);
+	  bitmap_and (epi, epi, tmp);
+
+	  /* Similarly, for the prologue.  */
+	  bitmap_and_compl (tmp, SW (e->dest)->has_components,
+			    SW (e->src)->has_components);
+	  bitmap_and_compl (tmp, tmp, SW (e->dest)->head_components);
+	  bitmap_and (pro, pro, tmp);
+	}
+
+      /* If the last insn of this block is a control flow insn we cannot
+	 put anything after it.  We can put our code before it instead,
+	 but only if that jump insn is a simple jump.  */
+      rtx_insn *last_insn = BB_END (bb);
+      if (control_flow_insn_p (last_insn) && !simplejump_p (last_insn))
+	{
+	  bitmap_clear (epi);
+	  bitmap_clear (pro);
+	}
+
+      if (dump_file && !(bitmap_empty_p (epi) && bitmap_empty_p (pro)))
+	fprintf (dump_file, "  bb %d", bb->index);
+
+      if (dump_file && !bitmap_empty_p (epi))
+	dump_components ("epi", epi);
+      if (dump_file && !bitmap_empty_p (pro))
+	dump_components ("pro", pro);
+
+      if (dump_file && !(bitmap_empty_p (epi) && bitmap_empty_p (pro)))
+	fprintf (dump_file, "\n");
+
+      /* Put the code at the end of the BB, but before any final jump.  */
+      if (!bitmap_empty_p (epi))
+	{
+	  start_sequence ();
+	  targetm.shrink_wrap.emit_epilogue_components (epi);
+	  rtx_insn *seq = get_insns ();
+	  end_sequence ();
+	  record_epilogue_seq (seq);
+
+	  if (control_flow_insn_p (last_insn))
+	    emit_insn_before (seq, last_insn);
+	  else
+	    emit_insn_after (seq, last_insn);
+
+	  bitmap_ior (SW (bb)->tail_components, SW (bb)->tail_components, epi);
+	}
+
+      if (!bitmap_empty_p (pro))
+	{
+	  start_sequence ();
+	  targetm.shrink_wrap.emit_prologue_components (pro);
+	  rtx_insn *seq = get_insns ();
+	  end_sequence ();
+	  record_prologue_seq (seq);
+
+	  if (control_flow_insn_p (last_insn))
+	    emit_insn_before (seq, last_insn);
+	  else
+	    emit_insn_after (seq, last_insn);
+
+	  bitmap_ior (SW (bb)->tail_components, SW (bb)->tail_components, pro);
+	}
+    }
+
+  sbitmap_free (pro);
+  sbitmap_free (epi);
+  sbitmap_free (tmp);
+}
+
+/* Place prologues and epilogues for COMPONENTS on edges, if we haven't already
+   placed them inside blocks directly.  */
+static void
+insert_prologue_epilogue_for_components (sbitmap components)
+{
+  sbitmap pro = sbitmap_alloc (SBITMAP_SIZE (components));
+  sbitmap epi = sbitmap_alloc (SBITMAP_SIZE (components));
+
+  basic_block bb;
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      if (!bb->aux)
+	continue;
+
+      edge e;
+      edge_iterator ei;
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	{
+	  /* Find which pro/epilogue components are needed on this edge.  */
+	  bitmap_and_compl (epi, SW (e->src)->has_components,
+			    SW (e->dest)->has_components);
+	  bitmap_and_compl (pro, SW (e->dest)->has_components,
+			    SW (e->src)->has_components);
+	  bitmap_and (epi, epi, components);
+	  bitmap_and (pro, pro, components);
+
+	  /* Deselect those we already have put at the head or tail of the
+	     edge's dest resp. src.  */
+	  bitmap_and_compl (epi, epi, SW (e->dest)->head_components);
+	  bitmap_and_compl (pro, pro, SW (e->dest)->head_components);
+	  bitmap_and_compl (epi, epi, SW (e->src)->tail_components);
+	  bitmap_and_compl (pro, pro, SW (e->src)->tail_components);
+
+	  if (!bitmap_empty_p (epi) || !bitmap_empty_p (pro))
+	    {
+	      if (dump_file)
+		{
+		  fprintf (dump_file, "  %d->%d", e->src->index,
+			   e->dest->index);
+		  dump_components ("epi", epi);
+		  dump_components ("pro", pro);
+		  if (e->flags & EDGE_SIBCALL)
+		    fprintf (dump_file, "  (SIBCALL)");
+		  else if (e->flags & EDGE_ABNORMAL)
+		    fprintf (dump_file, "  (ABNORMAL)");
+		  fprintf (dump_file, "\n");
+		}
+
+	      /* Put the epilogue components in place.  */
+	      start_sequence ();
+	      targetm.shrink_wrap.emit_epilogue_components (epi);
+	      rtx_insn *seq = get_insns ();
+	      end_sequence ();
+	      record_epilogue_seq (seq);
+
+	      if (e->flags & EDGE_SIBCALL)
+		{
+		  gcc_assert (e->dest == EXIT_BLOCK_PTR_FOR_FN (cfun));
+
+		  rtx_insn *insn = BB_END (e->src);
+		  gcc_assert (CALL_P (insn) && SIBLING_CALL_P (insn));
+		  emit_insn_before (seq, insn);
+		}
+	      else if (e->dest == EXIT_BLOCK_PTR_FOR_FN (cfun))
+		{
+		  gcc_assert (e->flags & EDGE_FALLTHRU);
+		  basic_block new_bb = split_edge (e);
+		  emit_insn_after (seq, BB_END (new_bb));
+		}
+	      else
+		insert_insn_on_edge (seq, e);
+
+	      /* Put the prologue components in place.  */
+	      start_sequence ();
+	      targetm.shrink_wrap.emit_prologue_components (pro);
+	      seq = get_insns ();
+	      end_sequence ();
+	      record_prologue_seq (seq);
+
+	      insert_insn_on_edge (seq, e);
+	    }
+	}
+    }
+
+  sbitmap_free (pro);
+  sbitmap_free (epi);
+
+  commit_edge_insertions ();
+}
+
+/* The main entry point to this subpass.  FIRST_BB is where the prologue
+   would be normally put.  */
+void
+try_shrink_wrapping_separate (basic_block first_bb)
+{
+  if (HAVE_cc0)
+    return;
+
+  if (!(SHRINK_WRAPPING_ENABLED
+	&& flag_shrink_wrap_separate
+	&& optimize_function_for_speed_p (cfun)
+	&& targetm.shrink_wrap.get_separate_components))
+    return;
+
+  /* We don't handle "strange" functions.  */
+  if (cfun->calls_alloca
+      || cfun->calls_setjmp
+      || cfun->can_throw_non_call_exceptions
+      || crtl->calls_eh_return
+      || crtl->has_nonlocal_goto
+      || crtl->saves_all_registers)
+    return;
+
+  /* Ask the target what components there are.  If it returns NULL, don't
+     do anything.  */
+  sbitmap components = targetm.shrink_wrap.get_separate_components ();
+  if (!components)
+    return;
+
+  /* We need LIVE info, not defining anything in the entry block and not
+     using anything in the exit block.  A block then needs a component if
+     the register for that component is in the IN or GEN or KILL set for
+     that block.  */
+  df_scan->local_flags |= DF_SCAN_EMPTY_ENTRY_EXIT;
+  df_update_entry_exit_and_calls ();
+  df_live_add_problem ();
+  df_live_set_all_dirty ();
+  df_analyze ();
+
+  calculate_dominance_info (CDI_DOMINATORS);
+  calculate_dominance_info (CDI_POST_DOMINATORS);
+
+  init_separate_shrink_wrap (components);
+
+  sbitmap_iterator sbi;
+  unsigned int j;
+  EXECUTE_IF_SET_IN_BITMAP (components, 0, j, sbi)
+    place_prologue_for_one_component (j, first_bb);
+
+  spread_components (components);
+
+  disqualify_problematic_components (components);
+
+  /* Don't separately shrink-wrap anything where the "main" prologue will
+     go; the target code can often optimize things if it is presented with
+     all components together (say, if it generates store-multiple insns).  */
+  bitmap_and_compl (components, components, SW (first_bb)->has_components);
+
+  if (bitmap_empty_p (components))
+    {
+      if (dump_file)
+	fprintf (dump_file, "Not wrapping anything separately.\n");
+    }
+  else
+    {
+      if (dump_file)
+	{
+	  fprintf (dump_file, "The components we wrap separately are");
+	  dump_components ("sep", components);
+	  fprintf (dump_file, "\n");
+
+	  fprintf (dump_file, "... Inserting common heads...\n");
+	}
+
+      emit_common_heads_for_components (components);
+
+      if (dump_file)
+	fprintf (dump_file, "... Inserting common tails...\n");
+
+      emit_common_tails_for_components (components);
+
+      if (dump_file)
+	fprintf (dump_file, "... Inserting the more difficult ones...\n");
+
+      insert_prologue_epilogue_for_components (components);
+
+      if (dump_file)
+	fprintf (dump_file, "... Done.\n");
+
+      targetm.shrink_wrap.set_handled_components (components);
+
+      crtl->shrink_wrapped_separate = true;
+    }
+
+  fini_separate_shrink_wrap ();
+
+  sbitmap_free (components);
+  free_dominance_info (CDI_DOMINATORS);
+  free_dominance_info (CDI_POST_DOMINATORS);
+
+  /* All done.  */
+  df_scan->local_flags &= ~DF_SCAN_EMPTY_ENTRY_EXIT;
+  df_update_entry_exit_and_calls ();
+  df_live_set_all_dirty ();
+  df_analyze ();
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2015/03/08 17:10:44 christos Exp $
+	$NetBSD: syscalls.master,v 1.69.18.1 2020/04/13 08:04:16 martin Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -543,7 +543,8 @@
 321	UNIMPL	signalfd
 322	UNIMPL	timerfd_create
 323	UNIMPL	eventfd
-324	UNIMPL	fallocate
+324	STD	{ int|linux32_sys||fallocate(int fd, int mode, \
+			    off_t offset, off_t len); }
 325	UNIMPL	timerfd_settime
 326	UNIMPL	timerfd_gettime
 327	UNIMPL	signalfd4

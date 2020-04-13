@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.3.16.1 2020/04/08 14:07:54 martin Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.3.16.2 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -277,30 +277,16 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 #else
 	lc->lc_txq = ldc_queue_alloc(VDSK_TX_ENTRIES);
 #endif
-	if (lc->lc_txq == NULL) {
-		printf(", can't allocate tx queue\n");
-		return;
-	}
 #if OPENBSD_BUSDMA
 	lc->lc_rxq = ldc_queue_alloc(sc->sc_dmatag, VDSK_RX_ENTRIES);
 #else
 	lc->lc_rxq = ldc_queue_alloc(VDSK_RX_ENTRIES);
 #endif
-	if (lc->lc_rxq == NULL) {
-		printf(", can't allocate rx queue\n");
-		goto free_txqueue;
-	}
-
 #if OPENBSD_BUSDMA
 	sc->sc_lm = ldc_map_alloc(sc->sc_dmatag, 2048);
 #else
 	sc->sc_lm = ldc_map_alloc(2048);
 #endif
-	if (sc->sc_lm == NULL) {
-		printf(", can't allocate LDC mapping table\n");
-		goto free_rxqueue;
-	}
-
 #if OPENBSD_BUSDMA
 	err = hv_ldc_set_map_table(lc->lc_id,
 	    sc->sc_lm->lm_map->dm_segs[0].ds_addr, sc->sc_lm->lm_nentries);
@@ -320,15 +306,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 #else
 	sc->sc_vd = vdsk_dring_alloc(32);
 #endif
-	if (sc->sc_vd == NULL) {
-		printf(", can't allocate dring\n");
-		goto free_map;
-	}
-	sc->sc_vsd = kmem_zalloc(32 * sizeof(*sc->sc_vsd), KM_NOSLEEP);
-	if (sc->sc_vsd == NULL) {
-		printf(", can't allocate software ring\n");
-		goto free_dring;
-	}
+	sc->sc_vsd = kmem_zalloc(32 * sizeof(*sc->sc_vsd), KM_SLEEP);
 
 #if OPENBSD_BUSDMA
 	sc->sc_lm->lm_slot[0].entry = sc->sc_vd->vd_map->dm_segs[0].ds_addr;
@@ -418,30 +396,12 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 
 	return;
 
-free_dring:
-#if OPENBSD_BUSDMA
-	vdsk_dring_free(sc->sc_dmatag, sc->sc_vd);
-#else
-	vdsk_dring_free(sc->sc_vd);
-#endif
 free_map:
 	hv_ldc_set_map_table(lc->lc_id, 0, 0);
 #if OPENBSD_BUSDMA
 	ldc_map_free(sc->sc_dmatag, sc->sc_lm);
 #else
 	ldc_map_free(sc->sc_lm);
-#endif
-free_rxqueue:
-#if OPENBSD_BUSDMA
-	ldc_queue_free(sc->sc_dmatag, lc->lc_rxq);
-#else
-	ldc_queue_free(lc->lc_rxq);
-#endif
-free_txqueue:
-#if OPENBSD_BUSDMA
-	ldc_queue_free(sc->sc_dmatag, lc->lc_txq);
-#else
-	ldc_queue_free(lc->lc_txq);
 #endif
 }
 
@@ -945,9 +905,7 @@ vdsk_dring_alloc(int nentries)
 #endif
 	int i;
 
-	vd = kmem_zalloc(sizeof(struct vdsk_dring), KM_NOSLEEP);
-	if (vd == NULL)
-		return NULL;
+	vd = kmem_zalloc(sizeof(struct vdsk_dring), KM_SLEEP);
 
 	size = roundup(nentries * sizeof(struct vd_desc), PAGE_SIZE);
 
@@ -968,9 +926,7 @@ vdsk_dring_alloc(int nentries)
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 #else
-	va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
-	if (va == 0)
-		goto free;
+	va = (vaddr_t)kmem_zalloc(size, KM_SLEEP);
 #endif
 	vd->vd_desc = (struct vd_desc *)va;
 	vd->vd_nentries = nentries;
@@ -986,9 +942,6 @@ free:
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, vd->vd_map);
-#else
-free:
-	kmem_free(vd, sizeof(struct vdsk_dring));
 #endif
 	return (NULL);
 }
@@ -1384,4 +1337,3 @@ vdsk_scsi_done(struct scsipi_xfer *xs, int error)
 
 	scsipi_done(xs);
 }
-

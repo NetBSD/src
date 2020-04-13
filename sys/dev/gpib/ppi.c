@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.23.4.1 2019/06/10 22:07:08 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.23.4.2 2020/04/13 08:04:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.23.4.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.23.4.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,7 @@ ppiattach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_ic = ga->ga_ic;
 	sc->sc_address = ga->ga_address;
 

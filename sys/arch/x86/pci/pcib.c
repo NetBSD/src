@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.16.4.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.16.4.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16.4.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16.4.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,6 +150,7 @@ pcibmatch(device_t parent, cfdata_t match, void *aux)
 			 */
 			return (0);
 		}
+		break;
 	/*
 	 * The Cyrix cs5530 PCI host bridge does not have a broken
 	 * latch on the i8254 clock core, unlike its predecessors
@@ -167,7 +168,7 @@ pcibmatch(device_t parent, cfdata_t match, void *aux)
 				clock_broken_latch = 0;
 			}
 #endif
-			return(1);
+			return (1);
 		}
 		break;
 	}

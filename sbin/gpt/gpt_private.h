@@ -1,3 +1,5 @@
+/*	$NetBSD: gpt_private.h,v 1.2.12.1 2020/04/13 08:03:20 martin Exp $	*/
+
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.

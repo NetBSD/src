@@ -4557,13 +4557,18 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    <term><command>geoip-directory</command></term>
 	    <listitem>
 	      <para>
-		Specifies the directory containing GeoIP
-		<filename>.dat</filename> database files for GeoIP
-		initialization.  By default, this option is unset
-		and the GeoIP support will use libGeoIP's
-		built-in directory.
-		(For details, see <xref linkend="acl"/> about the
-		<command>geoip</command> ACL.)
+		When <command>named</command> is compiled using the
+		MaxMind GeoIP2 geolocation API, or the legacy GeoIP API,
+		this specifies the directory containing GeoIP
+		database files.  By default, the option is set based on
+		the prefix used to build the <command>libmaxminddb</command>
+		module: for example, if the library is installed in
+		<filename>/usr/local/lib</filename>, then the default
+		<command>geoip-directory</command> will be
+		<filename>/usr/local/share/GeoIP</filename>. On Windows,
+		the default is the <command>named</command> working
+		directory.  See <xref linkend="acl"/> for details about
+		<command>geoip</command> ACLs.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5051,6 +5056,12 @@ options {
 		by the <command>disable-algorithms</command> will be treated
 		as insecure.
 	      </para>
+	      <para>
+		Configured trust anchors in <command>trusted-keys</command>
+		or <command>managed-keys</command> that match a disabled
+		algorithm will be ignored and treated as if they were not
+		configured at all.
+	      </para>
 	    </listitem>
 	  </varlistentry>
 
@@ -5134,7 +5145,9 @@ options {
 	      </para>
 	      <para>
 		Compatible IPv6 prefixes have lengths of 32, 40, 48, 56,
-		64 and 96 as per RFC 6052.
+		64 and 96 as per RFC 6052.  Bits 64..71 inclusive must
+		be zero with the most significate bit of the prefix in
+		position 0.
 	      </para>
 	      <para>
 		Additionally a reverse IP6.ARPA zone will be created for
@@ -5421,6 +5434,8 @@ options {
 		<command>zone-statistics terse</command> or
 		<command>zone-statistics none</command>
 		in the <command>zone</command> statement).
+		These include, for example, DNSSEC signing operations
+	        and the number of authoritative answers per query type.
 		The default is <userinput>terse</userinput>, providing
 		minimal statistics on zones (including name and
 		current serial number, but not query type
@@ -5827,30 +5842,55 @@ options {
 	      <term><command>minimal-responses</command></term>
 	      <listitem>
 		<para>
-		  If set to <userinput>yes</userinput>, then when generating
-		  responses the server will only add records to the authority
-		  and additional data sections when they are required (e.g.
-		  delegations, negative responses).  This may improve the
-		  performance of the server.
+		  This option controls the addition of records to the
+		  authority and additional sections of responses. Such
+		  records may be included in responses to be helpful
+		  to clients; for example, NS or MX records may
+		  have associated address records included in the additional
+		  section, obviating the need for a separate address lookup.
+		  However, adding these records to responses is not mandatory
+		  and requires additional database lookups, causing extra
+		  latency when marshalling responses.
+		  <command>minimal-responses</command> takes one of
+		  four values:
+		</para>
+		<itemizedlist>
+		  <listitem>
+		    <userinput>no</userinput>: the server will be
+		    as complete as possible when generating responses.
+		  </listitem>
+		  <listitem>
+		    <userinput>yes</userinput>: the server will only add
+		    records to the authority and additional sections when
+		    such records are required by the DNS protocol (for
+		    example, when returning delegations or negative
+		    responses). This provides the best server performance
+		    but may result in more client queries.
+		  </listitem>
+		  <listitem>
+		    <userinput>no-auth</userinput>: the server
+		    will omit records from the authority section except
+		    when they are required, but it may still add records
+		    to the additional section.
+		  </listitem>
+		  <listitem>
+		    <userinput>no-auth-recursive</userinput>: the same
+		    as <userinput>no-auth</userinput> when recursion is
+		    requested in the query (RD=1), or the same as
+		    <userinput>no</userinput> if recursion is not
+		    requested.
+		  </listitem>
+		</itemizedlist>
+		<para>
+		  <userinput>no-auth</userinput> and
+		  <userinput>no-auth-recursive</userinput> are useful when
+		  answering stub clients, which usually ignore the
+		  authority section.  <userinput>no-auth-recursive</userinput>
+		  is meant for use in mixed-mode servers that handle both
+		  authoritative and recursive queries.
 		</para>
 		<para>
-		  When set to <userinput>no-auth</userinput>, the
-		  server will omit records from the authority section
-		  unless they are required, but it may still add
-		  records to the additional section.  When set to
-		  <userinput>no-auth-recursive</userinput>, this
-		  is only done if the query is recursive.  When the
-		  query is not recursive, the effect is same as if
-		  <userinput>no</userinput> was specified. These
-		  settings are useful when answering stub clients,
-		  which usually ignore the authority section.
-		  <userinput>no-auth-recursive</userinput> is
-		  designed for mixed-mode servers which handle
-		  both authoritative and recursive queries.
-		</para>
-		<para>
-		  The default is
-		  <userinput>no-auth-recursive</userinput>.
+		  The default is <userinput>no-auth-recursive</userinput>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8686,8 +8726,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	    appear, they are not combined — the last one applies.
 	  </para>
 	  <para>
-	    By default, records are returned in indeterminate but
-	    consistent order (see <command>none</command> above).
+	    By default, records are returned in <command>random</command> order.
 	  </para>
 
 	  <note>
@@ -9017,18 +9056,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  this has the greatest chance of success on the first try.
 		</para>
 		<para>
-		  If the initial response times out, <command>named</command>
-		  will try again with plain DNS, and if that is successful,
-		  it will be taken as evidence that the server does not
-		  support EDNS. After enough failures using EDNS and
-		  successes using plain DNS, <command>named</command>
-		  will default to plain DNS for future communications
-		  with that server.  (Periodically, <command>named</command>
-		  will send an EDNS query to see if the situation has
-		  improved.)
-		</para>
-		<para>
-		  However, if the initial query is successful with
+		  If the initial query is successful with
 		  EDNS advertising a buffer size of 512, then
 		  <command>named</command> will advertise progressively
 		  larger buffer sizes on successive queries, until
@@ -9700,6 +9728,14 @@ deny-answer-aliases { "example.net"; };
 	  </para>
 
 	  <para>
+	    Rules encoded in response policy zones are processed after
+	    <link linkend="access_control">Access Control Lists
+	    (ACLs)</link>.  All queries from clients which are not
+	    permitted access to the resolver will be answered with a
+	    status code of REFUSED, regardless of configured RPZ rules.
+	  </para>
+
+	  <para>
 	    Five policy triggers can be encoded in RPZ records.
 	    <variablelist>
 	      <varlistentry>
@@ -9925,7 +9961,7 @@ deny-answer-aliases { "example.net"; };
 		    The empty set of resource records is specified by
 		    CNAME whose target is the wildcard top-level
 		    domain (*.).
-		    It rewrites the response to NODATA or ANCOUNT=1.
+		    It rewrites the response to NODATA or ANCOUNT=0.
 		  </para>
 		</listitem>
 	      </varlistentry>
@@ -10362,22 +10398,6 @@ example.com                 CNAME   rpz-tcp-only.
 	    (250/1000)*20 or 5.
 	    Responses sent via TCP are not limited
 	    but are counted to compute the query per second rate.
-	  </para>
-
-	  <para>
-	    Rate limiters for different name spaces maintain
-	    separate counters: If, for example, there is a
-	    <command>rate-limit</command> statement for "com" and
-	    another for "example.com", queries matching "example.com"
-	    will not be debited against the rate limiter for "com".
-	  </para>
-
-	  <para>
-	    If a <command>rate-limit</command> statement does not specify a
-	    <command>domain</command>, then it applies to the root domain
-	    (".") and thus affects the entire DNS namespace, except those
-	    portions covered by other <command>rate-limit</command>
-	    statements.
 	  </para>
 
 	  <para>
@@ -15258,14 +15278,29 @@ HOST-127.EXAMPLE. MX 0 .
 		</entry>
 		<entry colname="2">
 		  <para>
-		    The number of RRsets per RR type and nonexistent
-		    names stored in the cache database.
-		    If the exclamation mark (!) is printed for a RR
-		    type, it means that particular type of RRset is
-		    known to be nonexistent (this is also known as
-		    "NXRRSET").  If a hash mark (#) is present then
-		    the RRset is marked for garbage collection.
-		    Maintained per view.
+		    Statistics counters related to cache contents;
+		    maintained per view.
+		  </para>
+		  <para>
+		    The "NXDOMAIN" counter is the number of names
+		    that have been cached as nonexistent.
+		    Counters named for RR types indicate the
+		    number of active RRsets for each type in the cache
+		    database.
+		  </para>
+		  <para>
+		    If an RR type name is preceded by an exclamation
+		    mark (!), it represents the number of records in the
+		    cache which indicate that the type does not exist
+		    for a particular name (this is also known as "NXRRSET").
+		    If an RR type name is preceded by a hash mark (#), it
+		    represents the number of RRsets for this type that are
+		    present in the cache but whose TTLs have expired; these
+		    RRsets may only be used if stale answers are enabled.
+		    If an RR type name is preceded by a tilde (~), it
+		    represents the number of RRsets for this type that are
+		    present in the cache database but are marked for garbage
+		    collection; these RRsets cannot be used.
 		  </para>
 		</entry>
 	      </row>
@@ -15367,6 +15402,15 @@ HOST-127.EXAMPLE. MX 0 .
 	    When a middle column exists between these two columns,
 	    it gives the corresponding counter name of the
 	    <acronym>BIND</acronym> 8 statistics, if applicable.
+	  </para>
+
+	  <para>
+	    Note: BIND statistics counters are signed 64-bit values on
+	    all platforms except one: 32-bit Windows, where they are
+	    signed 32-bit values.  Given that 32-bit values have a
+	    vastly smaller range than 64-bit values, BIND statistics
+	    counters in 32-bit Windows builds overflow significantly
+	    more quickly than on all other platforms.
 	  </para>
 
 	  <section xml:id="stats_counters"><info><title>Name Server Statistics Counters</title></info>
@@ -16832,46 +16876,47 @@ zone "example.com" {
 	  to search for a match.  Available fields are "country",
 	  "region", "city", "continent", "postal" (postal code),
 	  "metro" (metro code), "area" (area code), "tz" (timezone),
-	  "isp", "org", "asnum", "domain" and "netspeed".
+	  "isp", "asnum", and "domain".
 	</para>
 	<para>
 	  <replaceable>value</replaceable> is the value to search
 	  for within the database.  A string may be quoted if it
-	  contains spaces or other special characters.  If this is
-	  an "asnum" search, then the leading "ASNNNN" string can be
-	  used, otherwise the full description must be used (e.g.
-	  "ASNNNN Example Company Name").  If this is a "country"
-	  search and the string is two characters long, then it must
-	  be a standard ISO-3166-1 two-letter country code, and if it
-	  is three characters long then it must be an ISO-3166-1
-	  three-letter country code; otherwise it is the full name
-	  of the country.  Similarly, if this is a "region" search
-	  and the string is two characters long, then it must be a
-	  standard two-letter state or province abbreviation;
-	  otherwise it is the full name of the state or province.
+	  contains spaces or other special characters.  An "asnum"
+	  search for autonomous system number can be specified using
+	  the string "ASNNNN" or the integer NNNN.
+	  When "country" search is specified with a string is two
+	  characters long, then it must be a standard ISO-3166-1
+	  two-letter country code; otherwise it is interpreted as
+	  the full name of the country.  Similarly, if this is a
+	  "region" search and the string is two characters long,
+	  then it treated as a standard two-letter state or province
+	  abbreviation; otherwise it treated as the full name of the
+	  state or province.
 	</para>
 	<para>
 	  The <replaceable>database</replaceable> field indicates which
 	  GeoIP database to search for a match.  In most cases this is
 	  unnecessary, because most search fields can only be found in
-	  a single database.  However, searches for country can be
-	  answered from the "city", "region", or "country" databases,
-	  and searches for region (i.e., state or province) can be
-	  answered from the "city" or "region" databases.  For these
-	  search types, specifying a <replaceable>database</replaceable>
+	  a single database.  However, searches for "continent" or "country"
+	  can be answered from either the "city" or "country" databases,
+	  so for these search types, specifying a
+	  <replaceable>database</replaceable>
 	  will force the query to be answered from that database and no
 	  other.  If <replaceable>database</replaceable> is not
 	  specified, then these queries will be answered from the "city",
-	  database if it is installed, or the "region" database if it is
-	  installed, or the "country" database, in that order.
+	  database if it is installed, or the "country" database if it
+	  is installed, in that order. Valid database names are
+	  "country", "city", "asnum", "isp", and "domain". (If using
+	  the legacy GeoIP API, "netspeed" and "org" databases are also
+	  available.)
 	</para>
 	<para>
 	  Some example GeoIP ACLs:
 	</para>
 	<programlisting>geoip country US;
-geoip country JAP;
+geoip country JP;
 geoip db country country Canada;
-geoip db region region WA;
+geoip region WA;
 geoip city "San Francisco";
 geoip region Oklahoma;
 geoip postal 95062;

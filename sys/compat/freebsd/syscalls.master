@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.72 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.72.4.1 2020/04/13 08:04:14 martin Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -36,6 +36,7 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -277,9 +278,14 @@
 146	NOARGS		{ int|compat_43_sys||killpg(int pgid, int signum); } \
 			    okillpg
 147	NOARGS		{ int|sys||setsid(void); }
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 148	NOARGS		{ int|compat_50_sys||quotactl(char *path, int cmd, \
 			    int uid, void *arg); }
 149	NOARGS		{ int|compat_43_sys||quota(void); } oquota
+#else
+148	EXCL		compat_50_sys_quotactl
+149	EXCL		compat_43_sys_quota
+#endif
 150	NOARGS		{ int|compat_43_sys||getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname
 

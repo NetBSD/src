@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.6 2012/05/21 14:15:19 martin Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.6.40.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -32,13 +32,9 @@
 #ifndef _COMPAT_SYS_UCONTEXT_H_
 #define _COMPAT_SYS_UCONTEXT_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd32.h"
-#endif
-
 #include <compat/sys/sigtypes.h>
 
-#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+#ifdef _KERNEL
 
 typedef struct __ucontext32       ucontext32_t;
 
@@ -57,17 +53,14 @@ struct __ucontext32 {
 __CTASSERT(sizeof(ucontext32_t) == __UCONTEXT32_SIZE);
 #endif
 
-#endif /* COMPAT_NETBSD32 && _KERNEL */
 
-#ifdef _KERNEL
-#ifdef COMPAT_NETBSD32
 struct lwp;
 void	getucontext32(struct lwp *, ucontext32_t *);
 int	setucontext32(struct lwp *, const ucontext32_t *);
 int	cpu_mcontext32_validate(struct lwp *, const mcontext32_t *);
 void	cpu_getmcontext32(struct lwp *, mcontext32_t *, unsigned int *);
 int	cpu_setmcontext32(struct lwp *, const mcontext32_t *, unsigned int);
-#endif /* COMPAT_NETBSD32 */
+
 #endif /* _KERNEL */
 
 #endif /* !_COMPAT_SYS_UCONTEXT_H_ */

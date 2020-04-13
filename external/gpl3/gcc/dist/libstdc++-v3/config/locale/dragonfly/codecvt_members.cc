@@ -1,6 +1,6 @@
 // std::codecvt implementation details, DragonFly version -*- C++ -*-
 
-// Copyright (C) 2015-2017 Free Software Foundation, Inc.
+// Copyright (C) 2015-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,6 +34,8 @@
 #include <cstdlib>  // For MB_CUR_MAX
 #include <climits>  // For MB_LEN_MAX
 
+#include "xlocale_port.h"
+
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
@@ -50,8 +52,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     result __ret = ok;
     state_type __tmp_state(__state);
 
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_codecvt);
-
     // wcsnrtombs is *very* fast but stops if encounters NUL characters:
     // in case we fall back to wcrtomb and then continue, in a loop.
     // NB: wcsnrtombs is a GNU extension
@@ -65,16 +65,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __from_chunk_end = __from_end;
 
 	__from = __from_next;
-	const size_t __conv = wcsnrtombs(__to_next, &__from_next,
+	const size_t __conv = wcsnrtombs_l(__to_next, &__from_next,
 					 __from_chunk_end - __from_next,
-					 __to_end - __to_next, &__state);
+					 __to_end - __to_next, &__state,
+					 (locale_t)_M_c_locale_codecvt);
 	if (__conv == static_cast<size_t>(-1))
 	  {
 	    // In case of error, in order to stop at the exact place we
 	    // have to start again from the beginning with a series of
 	    // wcrtomb.
 	    for (; __from < __from_next; ++__from)
-	      __to_next += wcrtomb(__to_next, *__from, &__tmp_state);
+	      __to_next += wcrtomb_l(__to_next, *__from, &__tmp_state,
+		(locale_t)_M_c_locale_codecvt);
 	    __state = __tmp_state;
 	    __ret = error;
 	  }
@@ -93,7 +95,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  {
 	    extern_type __buf[MB_LEN_MAX];
 	    __tmp_state = __state;
-	    const size_t __conv2 = wcrtomb(__buf, *__from_next, &__tmp_state);
+	    const size_t __conv2 = wcrtomb_l(__buf, *__from_next, &__tmp_state,
+		(locale_t)_M_c_locale_codecvt);
 	    if (__conv2 > static_cast<size_t>(__to_end - __to_next))
 	      __ret = partial;
 	    else
@@ -105,8 +108,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      }
 	  }
       }
-
-    uselocale((locale_t)__old);
 
     return __ret;
   }
@@ -120,8 +121,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
     result __ret = ok;
     state_type __tmp_state(__state);
-
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_codecvt);
 
     // mbsnrtowcs is *very* fast but stops if encounters NUL characters:
     // in case we store a L'\0' and then continue, in a loop.
@@ -138,9 +137,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __from_chunk_end = __from_end;
 
 	__from = __from_next;
-	size_t __conv = mbsnrtowcs(__to_next, &__from_next,
+	size_t __conv = mbsnrtowcs_l(__to_next, &__from_next,
 				   __from_chunk_end - __from_next,
-				   __to_end - __to_next, &__state);
+				   __to_end - __to_next, &__state,
+				   (locale_t)_M_c_locale_codecvt);
 	if (__conv == static_cast<size_t>(-1))
 	  {
 	    // In case of error, in order to stop at the exact place we
@@ -148,8 +148,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    // mbrtowc.
 	    for (;; ++__to_next, __from += __conv)
 	      {
-		__conv = mbrtowc(__to_next, __from, __from_end - __from,
-				 &__tmp_state);
+		__conv = mbrtowc_l(__to_next, __from, __from_end - __from,
+				 &__tmp_state, (locale_t)_M_c_locale_codecvt);
 		if (__conv == static_cast<size_t>(-1)
 		    || __conv == static_cast<size_t>(-2))
 		  break;
@@ -184,8 +184,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  }
       }
 
-    uselocale((locale_t)__old);
-
     return __ret;
   }
 
@@ -195,23 +193,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
     // XXX This implementation assumes that the encoding is
     // stateless and is either single-byte or variable-width.
-    int __ret = 0;
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_codecvt);
-    if (MB_CUR_MAX == 1)
-      __ret = 1;
-    uselocale((locale_t)__old);
-    return __ret;
+    return MB_CUR_MAX_L((locale_t)_M_c_locale_codecvt) == 1 ? 1 : 0;
   }
 
   int
   codecvt<wchar_t, char, mbstate_t>::
   do_max_length() const throw()
   {
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_codecvt);
     // XXX Probably wrong for stateful encodings.
-    int __ret = MB_CUR_MAX;
-    uselocale((locale_t)__old);
-    return __ret;
+    return MB_CUR_MAX_L((locale_t)_M_c_locale_codecvt);
   }
 
   int
@@ -221,8 +211,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
     int __ret = 0;
     state_type __tmp_state(__state);
-
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_codecvt);
 
     // mbsnrtowcs is *very* fast but stops if encounters NUL characters:
     // in case we advance past it and then continue, in a loop.
@@ -242,9 +230,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __from_chunk_end = __end;
 
 	const extern_type* __tmp_from = __from;
-	size_t __conv = mbsnrtowcs(__to, &__from,
+	size_t __conv = mbsnrtowcs_l(__to, &__from,
 				   __from_chunk_end - __from,
-				   __max, &__state);
+				   __max, &__state,
+				   (locale_t)_M_c_locale_codecvt);
 	if (__conv == static_cast<size_t>(-1))
 	  {
 	    // In case of error, in order to stop at the exact place we
@@ -252,8 +241,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    // mbrtowc.
 	    for (__from = __tmp_from;; __from += __conv)
 	      {
-		__conv = mbrtowc(0, __from, __end - __from,
-				 &__tmp_state);
+		__conv = mbrtowc_l(0, __from, __end - __from,
+				 &__tmp_state, (locale_t)_M_c_locale_codecvt);
 		if (__conv == static_cast<size_t>(-1)
 		    || __conv == static_cast<size_t>(-2))
 		  break;
@@ -277,8 +266,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    --__max;
 	  }
       }
-
-    uselocale((locale_t)__old);
 
     return __ret;
   }

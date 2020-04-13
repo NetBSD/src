@@ -1,27 +1,34 @@
-2018-12-06  Release Manager
+2020-03-04  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.4.0 released.
 
-2018-01-25  Release Manager
+2019-02-22  Release Manager
 
-	* GCC 7.3.0 released.
+	* GCC 8.3.0 released.
 
-2017-08-14  Release Manager
+2018-07-26  Release Manager
 
-	* GCC 7.2.0 released.
+	* GCC 8.2.0 released.
 
-2017-07-26  Georg-Johann Lay  <avr@gjlay.de>
+2018-05-02  Release Manager
 
-	Backport from 2017-07-21 trunk r250428.
+	* GCC 8.1.0 released.
+
+2018-04-18  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/85384
+	* configure: Regenerate.
+
+2018-01-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2017-07-21  Georg-Johann Lay  <avr@gjlay.de>
 
 	PR lto/81487
 	* lto-plugin.c (claim_file_handler): Use xasprintf instead of
 	asprintf.
 	[hi!=0]: Swap hi and lo arguments supplied to xasprintf.
-
-2017-05-02  Release Manager
-
-	* GCC 7.1.0 released.
 
 2017-01-17  Jakub Jelinek  <jakub@redhat.com>
 

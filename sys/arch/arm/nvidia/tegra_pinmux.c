@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.c,v 1.1.6.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: tegra_pinmux.c,v 1.1.6.2 2020/04/13 08:03:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.1.6.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.1.6.2 2020/04/13 08:03:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,7 +90,7 @@ tegra_pinmux_lookup_byname(struct tegra_pinmux_softc *sc, const char *name)
 
 	for (n = 0; n < sc->sc_conf->npins; n++) {
 		pin_def = &sc->sc_conf->pins[n];
-		if (strcmp(pin_def->name, name) == 0)
+		if (strcmp(pin_def->tpp_name, name) == 0)
 			return pin_def;
 	}
 
@@ -108,16 +108,16 @@ tegra_pinmux_lookup_func(const struct tegra_pinmux_pins *pin_def, const int phan
 		return -1;
 
 	for (n = 0, valid = 0; n < TEGRA_PINMUX_MAXFUNC; n++) {
-		if (pin_def->functions[n] == NULL)
+		if (pin_def->tpp_functions[n] == NULL)
 			continue;
 		++valid;
-		if (strcmp(pin_def->functions[n], func) == 0)
+		if (strcmp(pin_def->tpp_functions[n], func) == 0)
 			return n;
 	}
 
 	if (valid > 0)
 		aprint_error("%s: pin %s does not support function %s\n",
-		    __func__, pin_def->name, func);
+		    __func__, pin_def->tpp_name, func);
 
 	return -1;
 }
@@ -129,56 +129,79 @@ tegra_pinmux_pin_config(struct tegra_pinmux_softc *sc,
 	uint32_t cfg;
 	u_int val;
 
-	cfg = PINMUX_READ(sc, pin_def->reg);
-	const uint32_t ocfg = cfg;
+	if (pin_def->tpp_type == TEGRA_PINMUX) {
+		cfg = PINMUX_READ(sc, pin_def->tpp_reg);
+		const uint32_t ocfg = cfg;
 
-	const int func = tegra_pinmux_lookup_func(pin_def, phandle);
-	if (func != -1) {
-		cfg &= ~PINMUX_PM;
-		cfg |= __SHIFTIN(func, PINMUX_PM);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,pull", &val) == 0) {
-		cfg &= ~PINMUX_PUPD;
-		cfg |= __SHIFTIN(val, PINMUX_PUPD);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,tristate", &val) == 0) {
-		cfg &= ~PINMUX_TRISTATE;
-		cfg |= __SHIFTIN(val, PINMUX_TRISTATE);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,open-drain", &val) == 0) {
-		cfg &= ~PINMUX_E_OD;
-		cfg |= __SHIFTIN(val, PINMUX_E_OD);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,lock", &val) == 0) {
-		cfg &= ~PINMUX_LOCK;
-		cfg |= __SHIFTIN(val, PINMUX_LOCK);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,io-hv", &val) == 0) {
-		cfg &= ~PINMUX_E_IO_HV;
-		cfg |= __SHIFTIN(val, PINMUX_E_IO_HV);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,high-speed-mode", &val) == 0) {
-		cfg &= ~PINMUX_E_HSM;
-		cfg |= __SHIFTIN(val, PINMUX_E_HSM);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,schmitt", &val) == 0) {
-		cfg &= ~PINMUX_E_SCHMT;
-		cfg |= __SHIFTIN(val, PINMUX_E_SCHMT);
-	}
-	if (of_getprop_uint32(phandle, "nvidia,drive-type", &val) == 0) {
-		cfg &= ~PINMUX_DRV_TYPE;
-		cfg |= __SHIFTIN(val, PINMUX_DRV_TYPE);
+		const int func = tegra_pinmux_lookup_func(pin_def, phandle);
+		if (func != -1) {
+			cfg &= ~PINMUX_PM;
+			cfg |= __SHIFTIN(func, PINMUX_PM);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,pull", &val) == 0) {
+			cfg &= ~PINMUX_PUPD;
+			cfg |= __SHIFTIN(val, PINMUX_PUPD);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,tristate", &val) == 0) {
+			cfg &= ~PINMUX_TRISTATE;
+			cfg |= __SHIFTIN(val, PINMUX_TRISTATE);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,open-drain", &val) == 0) {
+			cfg &= ~PINMUX_E_OD;
+			cfg |= __SHIFTIN(val, PINMUX_E_OD);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,lock", &val) == 0) {
+			cfg &= ~PINMUX_LOCK;
+			cfg |= __SHIFTIN(val, PINMUX_LOCK);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,io-hv", &val) == 0) {
+			cfg &= ~PINMUX_E_IO_HV;
+			cfg |= __SHIFTIN(val, PINMUX_E_IO_HV);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,high-speed-mode", &val) == 0) {
+			cfg &= ~PINMUX_E_HSM;
+			cfg |= __SHIFTIN(val, PINMUX_E_HSM);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,schmitt", &val) == 0) {
+			cfg &= ~PINMUX_E_SCHMT;
+			cfg |= __SHIFTIN(val, PINMUX_E_SCHMT);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,drive-type", &val) == 0) {
+			cfg &= ~PINMUX_DRV_TYPE;
+			cfg |= __SHIFTIN(val, PINMUX_DRV_TYPE);
+		}
+		aprint_debug_dev(sc->sc_dev, "pin %s %08x -> %08x\n",
+		    pin_def->tpp_name, ocfg, cfg);
+		if (cfg != ocfg)
+			PINMUX_WRITE(sc, pin_def->tpp_reg, cfg);
+
+	} else {
+    		cfg = PADCTRL_READ(sc, pin_def->tpp_reg);
+		const uint32_t ocfg = cfg;
+
+		if (of_getprop_uint32(phandle, "nvidia,pull-down-strength", &val) == 0) {
+			cfg &= ~pin_def->tpp_dg.drvdn_mask;
+			cfg |= __SHIFTIN(val, pin_def->tpp_dg.drvdn_mask);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,pull-up-strength", &val) == 0) {
+			cfg &= ~pin_def->tpp_dg.drvup_mask;
+			cfg |= __SHIFTIN(val, pin_def->tpp_dg.drvup_mask);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,slew-rate-falling", &val) == 0) {
+			cfg &= ~pin_def->tpp_dg.slwrf_mask;
+			cfg |= __SHIFTIN(val, pin_def->tpp_dg.slwrf_mask);
+		}
+		if (of_getprop_uint32(phandle, "nvidia,slew-rate-rising", &val) == 0) {
+			cfg &= ~pin_def->tpp_dg.slwrr_mask;
+			cfg |= __SHIFTIN(val, pin_def->tpp_dg.slwrr_mask);
+		}
+
+		aprint_debug_dev(sc->sc_dev, "pin %s %08x -> %08x\n",
+		    pin_def->tpp_name, ocfg, cfg);
+		if (cfg != ocfg)
+			PADCTRL_WRITE(sc, pin_def->tpp_reg, cfg);
 	}
 
-	aprint_debug_dev(sc->sc_dev, "pin %s %08x -> %08x\n", pin_def->name, ocfg, cfg);
-	if (cfg != ocfg)
-		PINMUX_WRITE(sc, pin_def->reg, cfg);
-
-	/*
-	 * Not yet supported (PADCTRL):
-	 *   nvidia,pull-down-strength, nvidia,pull-up-strength
-	 *   nvidia,slew-rate-rising, nvidia,slew-rate-falling
-	 */
 }
 
 static int
@@ -250,8 +273,7 @@ tegra_pinmux_attach(device_t parent, device_t self, void *aux)
 		}
 		error = bus_space_map(sc->sc_bst, addr, size, res, &sc->sc_bsh[res]);
 		if (error) {
-			aprint_error(": couldn't map %#" PRIx64 ": %d",
-			    (uint64_t)addr, error);
+			aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 			return;
 		}
 	}
@@ -262,8 +284,6 @@ tegra_pinmux_attach(device_t parent, device_t self, void *aux)
 
 	for (child = OF_child(phandle); child; child = OF_peer(child))
 		fdtbus_register_pinctrl_config(self, child, &tegra_pinmux_funcs);
-
-	fdtbus_pinctrl_configure();
 }
 
 CFATTACH_DECL_NEW(tegra_pinmux, sizeof(struct tegra_pinmux_softc),

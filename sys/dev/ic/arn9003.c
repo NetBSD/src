@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.13.2.1 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.13.2.2 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.13.2.1 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.13.2.2 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -457,14 +457,10 @@ ar9003_read_rom(struct athn_softc *sc)
 	size_t len, i, j;
 
 	/* Allocate space to store ROM in host memory. */
-	sc->sc_eep = malloc(sc->sc_eep_size, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_eep == NULL)
-		return ENOMEM;
+	sc->sc_eep = malloc(sc->sc_eep_size, M_DEVBUF, M_WAITOK);
 
 	/* Allocate temporary buffer to store ROM blocks. */
-	buf = malloc(2048, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL)
-		return ENOMEM;
+	buf = malloc(2048, M_DEVBUF, M_WAITOK);
 
 	/* Restore vendor-specified ROM blocks. */
 	addr = sc->sc_eep_base;
@@ -755,10 +751,7 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 	struct ar_rx_status *ds;
 	int error, i;
 
-	rxq->bf = malloc(count * sizeof(*bf), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (rxq->bf == NULL)
-		return ENOMEM;
-
+	rxq->bf = malloc(count * sizeof(*bf), M_DEVBUF, M_WAITOK | M_ZERO);
 	rxq->count = count;
 
 	for (i = 0; i < rxq->count; i++) {

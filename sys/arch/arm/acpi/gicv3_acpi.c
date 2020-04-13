@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.3.6.3 2020/04/08 14:07:27 martin Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.3.6.4 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3.6.3 2020/04/08 14:07:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3.6.4 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3.6.3 2020/04/08 14:07:27 martin Ex
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gicv3_its.h>
 #include <arm/cortex/gic_reg.h>
+
+#include <arm/acpi/gic_v2m_acpi.h>
 
 #define	GICD_SIZE	0x10000
 #define	GICR_SIZE	0x20000
@@ -71,7 +73,7 @@ static void	gicv3_acpi_attach(device_t, device_t, void *);
 static int	gicv3_acpi_map_dist(struct gicv3_acpi_softc *);
 static int	gicv3_acpi_map_redist(struct gicv3_acpi_softc *);
 #if NPCI > 0
-static int	gicv3_acpi_map_its(struct gicv3_acpi_softc *);
+static int	gicv3_acpi_map_msi(struct gicv3_acpi_softc *);
 #endif
 
 CFATTACH_DECL_NEW(gicv3_acpi, sizeof(struct gicv3_acpi_softc), gicv3_acpi_match, gicv3_acpi_attach, NULL, NULL);
@@ -132,7 +134,7 @@ gicv3_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NPCI > 0
-	gicv3_acpi_map_its(sc);
+	gicv3_acpi_map_msi(sc);
 #endif
 
 	arm_fdt_irq_set_handler(gicv3_irq_handler);
@@ -200,6 +202,10 @@ gicv3_acpi_map_gicr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		const uint32_t typer = bus_space_read_4(sc->sc_gic.sc_bst, sc->sc_gic.sc_bsh_r[redist], GICR_TYPER);
 		if (typer & GICR_TYPER_Last)
 			break;
+
+		/* If the redistributor supports virtual LPIs, skip the VLPI register region */
+		if (typer & GICR_TYPER_VLPIS)
+			off += GICR_SIZE;
 	}
 
 	return AE_OK;
@@ -306,10 +312,12 @@ gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 }
 
 static int
-gicv3_acpi_map_its(struct gicv3_acpi_softc *sc)
+gicv3_acpi_map_msi(struct gicv3_acpi_softc *sc)
 {
 	acpi_madt_walk(gicv3_acpi_map_gits, sc);
+	acpi_madt_walk(gic_v2m_acpi_find_msi_frame, sc->sc_gic.sc_dev);
 
 	return 0;
 }
+
 #endif

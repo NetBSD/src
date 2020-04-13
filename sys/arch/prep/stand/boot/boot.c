@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2014/08/08 19:45:48 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.20.28.1 2020/04/13 08:04:05 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,7 +46,9 @@
 #include "sdvar.h"
 
 char *names[] = {
+#ifdef SCSI_SUPPORT
 	"sd(0,0,0)netbsd", "sd(0,0,0)onetbsd",
+#endif
 	"in()",
 };
 #define	NUMNAMES (sizeof (names) / sizeof (names[0]))
@@ -142,10 +144,12 @@ boot(void *resp, u_long loadaddr)
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf("\n");
 
+#ifdef SCSI_SUPPORT
 	/*
 	 * Initialize siop@pci0 dev 16 func 0
 	 */
 	siop_init(0, 16, 0);
+#endif
 
 	for (;;) {
 		name = names[n++];

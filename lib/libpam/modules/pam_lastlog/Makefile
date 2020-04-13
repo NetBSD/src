@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2008/10/27 07:57:41 mrg Exp $
+# $NetBSD: Makefile,v 1.8.60.1 2020/04/13 08:03:14 martin Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -34,3 +34,5 @@ CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX -DLOGIN_CAP
 LIBDPLIBS+=	util	${.CURDIR}/../../../libutil
 
 .include "${.CURDIR}/../mod.mk"
+
+COPTS.pam_lastlog.c+=	${GCC_NO_STRINGOP_TRUNCATION}

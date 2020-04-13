@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.27 2015/08/22 14:11:19 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.27.18.1 2020/04/13 08:04:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.27 2015/08/22 14:11:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.27.18.1 2020/04/13 08:04:10 martin Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -142,12 +142,7 @@ bellattach(int num)
 		return;
 	callout_init(&bell_ch, 0);
 	size = num * sizeof(struct bell_softc);
-	bell_softc = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bell_softc == NULL) {
-		printf("WARNING: no memory for opm bell\n");
-		return;
-	}
-
+	bell_softc = malloc(size, M_DEVBUF, M_WAITOK | M_ZERO);
 	for (unit = 0; unit < num; unit++) {
 		sc = &bell_softc[unit];
 		sc->sc_flags = BELLF_ALIVE;

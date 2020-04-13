@@ -320,7 +320,7 @@ sleep 3
 
 echo_i "checking that expired RRSIGs from missing key are not deleted ($n)"
 ret=0
-missing=`sed 's/^K.*+007+0*\([0-9]\)/\1/' < missingzsk.key`
+missing=$(keyfile_to_key_id "$(cat missingzsk.key)")
 $JOURNALPRINT ns3/nozsk.example.db.jnl | \
    awk '{if ($1 == "del" && $5 == "RRSIG" && $12 == id) {exit 1}} END {exit 0}' id=$missing || ret=1
 n=`expr $n + 1`
@@ -329,7 +329,7 @@ status=`expr $status + $ret`
 
 echo_i "checking that expired RRSIGs from inactive key are not deleted ($n)"
 ret=0
-inactive=`sed 's/^K.*+007+0*\([0-9]\)/\1/' < inactivezsk.key`
+inactive=$(keyfile_to_key_id "$(cat inactivezsk.key)")
 $JOURNALPRINT ns3/inaczsk.example.db.jnl | \
    awk '{if ($1 == "del" && $5 == "RRSIG" && $12 == id) {exit 1}} END {exit 0}' id=$inactive || ret=1
 n=`expr $n + 1`
@@ -883,7 +883,7 @@ status=`expr $status + $ret`
 
 echo_i "checking for unpublished key ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < unpub.key`
+id=$(keyfile_to_key_id "$(cat unpub.key)")
 $DIG $DIGOPTS +multi dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep '; key id = '"$id"'$' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -892,7 +892,7 @@ status=`expr $status + $ret`
 
 echo_i "checking for activated but unpublished key ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < activate-now-publish-1day.key`
+id=$(keyfile_to_key_id "$(cat activate-now-publish-1day.key)")
 $DIG $DIGOPTS +multi dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep '; key id = '"$id"'$' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -901,7 +901,7 @@ status=`expr $status + $ret`
 
 echo_i "checking that standby key does not sign records ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < standby.key`
+id=$(keyfile_to_key_id "$(cat standby.key)")
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $id "'\. ' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -910,7 +910,7 @@ status=`expr $status + $ret`
 
 echo_i "checking that deactivated key does not sign records  ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < inact.key`
+id=$(keyfile_to_key_id "$(cat inact.key)")
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $id "'\. ' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -919,7 +919,7 @@ status=`expr $status + $ret`
 
 echo_i "checking insertion of public-only key ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < nopriv.key`
+id=$(keyfile_to_key_id "$(cat nopriv.key)")
 file="ns1/`cat nopriv.key`.key"
 keydata=`grep DNSKEY $file`
 $NSUPDATE > /dev/null 2>&1 <<END	|| status=1
@@ -938,7 +938,7 @@ status=`expr $status + $ret`
 
 echo_i "checking key deletion ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < del.key`
+id=$(keyfile_to_key_id "$(cat del.key)")
 $DIG $DIGOPTS +multi dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep '; key id = '"$id"'$' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -1049,9 +1049,9 @@ rm -f $file
 echo_i "preparing ZSK roll"
 starttime=`$PERL -e 'print time(), "\n";'`
 oldfile=`cat active.key`
-oldid=`sed 's/^K.+007+0*\([0-9]\)/\1/' < active.key`
+oldid=$(keyfile_to_key_id "$(cat active.key)")
 newfile=`cat standby.key`
-newid=`sed 's/^K.+007+0*\([0-9]\)/\1/' < standby.key`
+newid=$(keyfile_to_key_id "$(cat standby.key)")
 $SETTIME -K ns1 -I now+2s -D now+25 $oldfile > /dev/null
 $SETTIME -K ns1 -i 0 -S $oldfile $newfile > /dev/null
 
@@ -1069,7 +1069,7 @@ $RNDCCMD 10.53.0.2 loadkeys bar. 2>&1 | sed 's/^/ns2 /' | cat_i
 echo_i "waiting for changes to take effect"
 sleep 5
 
-echo_i "checking former standby key is now active ($n)"
+echo_i "checking former standby key $newid is now active ($n)"
 ret=0
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
@@ -1213,7 +1213,7 @@ status=`expr $status + $ret`
 
 echo_i "checking private key file removal caused no immediate harm ($n)"
 ret=0
-id=`sed 's/^K.+007+0*\([0-9]\)/\1/' < vanishing.key`
+id=$(keyfile_to_key_id "$(cat vanishing.key)")
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $id "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
@@ -1244,7 +1244,7 @@ status=`expr $status + $ret`
 # event scheduled is within 10 seconds of expected interval.
 check_interval () {
         awk '/next key event/ {print $2 ":" $9}' $1/named.run |
-	sed 's/\.//g' |
+	sed -e 's/\.//g' -e 's/:0\{1,4\}/:/g' |
             awk -F: '
                      {
                        x = ($6+ $5*60000 + $4*3600000) - ($3+ $2*60000 + $1*3600000);

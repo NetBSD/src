@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2.28.1 2020/04/13 08:06:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,8 +60,8 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # cylinders  heads   sectors
------- ---------- ------- -------
+{BIOS # cylinders  heads   sectors 
+------ ---------- ------- ------- 
 }
 
 message onebiosmatch_row
@@ -73,8 +73,8 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cylinders  heads   sectors
-   ------ ---------- ------- -------
+{   BIOS # cylinders  heads   sectors 
+   ------ ---------- ------- ------- 
 }
 
 message biosmultmatch_row

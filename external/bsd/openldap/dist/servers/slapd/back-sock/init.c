@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $	*/
 
 /* init.c - initialize sock backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2017 The OpenLDAP Foundation.
+ * Copyright 2007-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.1.1.6.4.1 2020/04/13 07:56:20 martin Exp $");
 
 #include "portable.h"
 
@@ -58,7 +58,7 @@ sock_back_initialize(
 	bi->bi_op_delete = sock_back_delete;
 	bi->bi_op_abandon = 0;
 
-	bi->bi_extended = 0;
+	bi->bi_extended = sock_back_extended;
 
 	bi->bi_chk_referrals = 0;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.1.6.1 2019/06/10 22:10:10 christos Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.1.6.2 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -402,7 +402,7 @@ test_ipsec_natt_transport_ipv6_without_nat()
 
 	# Create ESP-UDP ipsecif(4) connections
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig ipsec0 create
+	rump_server_add_iface $SOCK_LOCAL ipsec0
 	atf_check -s exit:0 rump.ifconfig ipsec0 link0 # enable nat-t
 	atf_check -s exit:0 rump.ifconfig ipsec0 link2 # ensure IPv6 forward
 	atf_check -s exit:0 rump.ifconfig ipsec0 tunnel $ip_local_phys $ip_remote_phys
@@ -415,7 +415,7 @@ test_ipsec_natt_transport_ipv6_without_nat()
 	    $ip_local_phys 10000 $port
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig ipsec0 create
+	rump_server_add_iface $SOCK_REMOTE ipsec0
 	atf_check -s exit:0 rump.ifconfig ipsec0 link0 # enable nat-t
 	atf_check -s exit:0 rump.ifconfig ipsec0 link2 # ensure IPv6 forward
 	atf_check -s exit:0 rump.ifconfig ipsec0 tunnel $ip_remote_phys $ip_local_phys

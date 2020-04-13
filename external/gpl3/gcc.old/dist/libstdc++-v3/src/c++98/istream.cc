@@ -1,6 +1,6 @@
 // Input streams -*- C++ -*-
 
-// Copyright (C) 2004-2016 Free Software Foundation, Inc.
+// Copyright (C) 2004-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -48,7 +48,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      const int_type __eof = traits_type::eof();
 	      __streambuf_type* __sb = this->rdbuf();
 	      int_type __c = __sb->sgetc();
-	      
+
 	      while (_M_gcount + 1 < __n
 		     && !traits_type::eq_int_type(__c, __eof)
 		     && !traits_type::eq_int_type(__c, __idelim))
@@ -82,7 +82,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		__err |= ios_base::eofbit;
 	      else if (traits_type::eq_int_type(__c, __idelim))
 		{
-		  ++_M_gcount;		  
+		  ++_M_gcount;
 		  __sb->sbumpc();
 		}
 	      else
@@ -112,8 +112,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<char>::
     ignore(streamsize __n, int_type __delim)
     {
+#ifdef _GLIBCXX_COMPAT_
       if (traits_type::eq_int_type(__delim, traits_type::eof()))
 	return ignore(__n);
+#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);
@@ -290,7 +292,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      const int_type __eof = traits_type::eof();
 	      __streambuf_type* __sb = this->rdbuf();
 	      int_type __c = __sb->sgetc();
-	      
+
 	      while (_M_gcount + 1 < __n
 		     && !traits_type::eq_int_type(__c, __eof)
 		     && !traits_type::eq_int_type(__c, __idelim))
@@ -324,7 +326,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		__err |= ios_base::eofbit;
 	      else if (traits_type::eq_int_type(__c, __idelim))
 		{
-		  ++_M_gcount;		  
+		  ++_M_gcount;
 		  __sb->sbumpc();
 		}
 	      else
@@ -354,8 +356,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<wchar_t>::
     ignore(streamsize __n, int_type __delim)
     {
+#ifdef _GLIBCXX_COMPAT_
       if (traits_type::eq_int_type(__delim, traits_type::eof()))
 	return ignore(__n);
+#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);

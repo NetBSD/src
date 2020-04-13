@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2009/10/29 14:41:02 christos Exp $
+#	$NetBSD: Makefile,v 1.18.46.1 2020/04/13 08:06:08 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,9 @@ DPADD+=	${LIBWRAP} ${LIBUTIL}
 
 CPPFLAGS.gethnamaddr.c=	-UYP -D_LIBC
 CPPFLAGS.getnetnamadr.c=-UYP -D_LIBC
+
+SANITIZER_RENAME_SYMBOL+=	gethostbyname2
+
+COPTS.ypserv.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

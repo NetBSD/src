@@ -51,6 +51,7 @@ copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
 copy_setports ns7/named.conf.in ns7/named.conf
 copy_setports ns8/named.conf.in ns8/named.conf
+copy_setports ns9/named.conf.in ns9/named.conf
 
 copy_setports dnsrpzd.conf.in dnsrpzd.conf
 
@@ -73,6 +74,10 @@ done
 cp ns3/manual-update-rpz.db.in ns3/manual-update-rpz.db
 cp ns8/manual-update-rpz.db.in ns8/manual-update-rpz.db
 
+# a zone that expires quickly and then can't be refreshed
+cp ns5/fast-expire.db.in ns5/fast-expire.db
+cp ns5/expire.conf.in ns5/expire.conf
+
 # $1=directory
 # $2=domain name
 # $3=input zone file
@@ -82,10 +87,10 @@ signzone () {
     cat $1/$3 $1/$KEYNAME.key > $1/tmp
     $SIGNER -P -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
     sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trusted-keys {"\1" \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
-    DSFILENAME=dsset-`echo $2 |sed -e "s/\.$//g"`$TP
+    DSFILENAME=dsset-${2}${TP}
     rm $DSFILENAME $1/tmp
 }
-signzone ns2 tld2s. base-tld2s.db tld2s.db
+signzone ns2 tld2s base-tld2s.db tld2s.db
 
 # Performance and a few other checks.
 cat <<EOF >ns5/rpz-switch

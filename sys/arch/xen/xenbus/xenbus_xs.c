@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.23 2012/11/28 16:26:59 royger Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.23.38.1 2020/04/13 08:04:12 martin Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.23 2012/11/28 16:26:59 royger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.23.38.1 2020/04/13 08:04:12 martin Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -173,6 +173,12 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 	splx(s);
 
 	return err;
+}
+
+void
+xenbus_dev_reply_free(struct xsd_sockmsg *msg, void *reply)
+{
+	free(reply, M_DEVBUF);
 }
 
 /* Send message to xs, get kmalloc'ed reply.  ERR_PTR() on error. */
@@ -338,6 +344,12 @@ xenbus_directory(struct xenbus_transaction *t,
 	return 0;
 }
 
+void
+xenbus_directory_free(unsigned int num, char **dir)
+{
+	free(dir, M_DEVBUF);
+}
+
 /* Check if a path exists. Return 1 if it does. */
 int
 xenbus_exists(struct xenbus_transaction *t,
@@ -359,17 +371,29 @@ xenbus_exists(struct xenbus_transaction *t,
  */
 int
 xenbus_read(struct xenbus_transaction *t,
-		  const char *dir, const char *node, unsigned int *len,
-		  char **ret)
+		  const char *dir, const char *node,
+		  char *buffer, size_t bufsz)
 {
 	char *path;
 	int err;
+	char *ret;
+	unsigned int len;
 
 	path = join(dir, node);
 	if (path == NULL)
 		return ENOMEM;
 
-	err = xs_single(t, XS_READ, path, len, ret);
+	err = xs_single(t, XS_READ, path, &len, &ret);
+
+	if (err == 0) {
+		if (len + 1 <= bufsz) {
+			strncpy(buffer, ret, bufsz);
+		} else {
+			err = ENAMETOOLONG;
+		}
+		free(ret, M_DEVBUF);
+	}
+
 	free(path, M_DEVBUF);
 	return err;
 }
@@ -380,18 +404,16 @@ xenbus_read_ul(struct xenbus_transaction *t,
 		  const char *dir, const char *node, unsigned long *val,
 		  int base)
 {
-	char *string, *ep;
+	char string[32], *ep;
 	int err;
 
-	err = xenbus_read(t, dir, node, NULL, &string);
+	err = xenbus_read(t, dir, node, string, sizeof(string));
 	if (err)
 		return err;
 	*val = strtoul(string, &ep, base);
 	if (*ep != '\0') {
-		free(string, M_DEVBUF);
 		return EFTYPE;
 	}
-	free(string, M_DEVBUF);
 	return 0;
 }
 
@@ -401,18 +423,16 @@ xenbus_read_ull(struct xenbus_transaction *t,
 		  const char *dir, const char *node, unsigned long long *val,
 		  int base)
 {
-	char *string, *ep;
+	char string[32], *ep;
 	int err;
 
-	err = xenbus_read(t, dir, node, NULL, &string);
+	err = xenbus_read(t, dir, node, string, sizeof(string));
 	if (err)
 		return err;
 	*val = strtoull(string, &ep, base);
 	if (*ep != '\0') {
-		free(string, M_DEVBUF);
 		return EFTYPE;
 	}
-	free(string, M_DEVBUF);
 	return 0;
 }
 
@@ -513,28 +533,6 @@ int xenbus_transaction_end(struct xenbus_transaction *t, int abort)
 	return err;
 }
 
-/* Single read and scanf: returns -errno or num scanned. */
-int
-xenbus_scanf(struct xenbus_transaction *t,
-		 const char *dir, const char *node, const char *fmt, ...)
-{
-	va_list ap;
-	int ret;
-	char *val;
-
-	ret = xenbus_read(t, dir, node, NULL, &val);
-	if (ret)
-		return ret;
-
-	va_start(ap, fmt);
-	//ret = vsscanf(val, fmt, ap);
-	ret = ENXIO;
-	printf("xb_scanf format %s in %s\n", fmt, val);
-	va_end(ap);
-	free(val, M_DEVBUF);
-	return ret;
-}
-
 /* Single printf and write: returns -errno or 0. */
 int
 xenbus_printf(struct xenbus_transaction *t,
@@ -558,34 +556,6 @@ xenbus_printf(struct xenbus_transaction *t,
 
 	free(printf_buffer, M_DEVBUF);
 
-	return ret;
-}
-
-/* Takes tuples of names, scanf-style args, and void **, NULL terminated. */
-int
-xenbus_gather(struct xenbus_transaction *t, const char *dir, ...)
-{
-	va_list ap;
-	const char *name;
-	int ret = 0;
-
-	va_start(ap, dir);
-	while (ret == 0 && (name = va_arg(ap, char *)) != NULL) {
-		const char *fmt = va_arg(ap, char *);
-		void *result = va_arg(ap, void *);
-		char *p;
-
-		ret = xenbus_read(t, dir, name, NULL, &p);
-		if (ret)
-			break;
-		if (fmt) {
-			// XXX if (sscanf(p, fmt, result) == 0)
-				ret = -EINVAL;
-			free(p, M_DEVBUF);
-		} else
-			*(char **)result = p;
-	}
-	va_end(ap);
 	return ret;
 }
 

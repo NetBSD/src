@@ -1,4 +1,4 @@
-/*	$NetBSD: ht_test.c,v 1.3.2.3 2020/04/08 14:07:09 martin Exp $	*/
+/*	$NetBSD: ht_test.c,v 1.3.2.4 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <setjmp.h>
 
 #include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

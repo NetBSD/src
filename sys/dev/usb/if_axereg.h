@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.19.16.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.19.16.2 2020/04/13 08:04:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -367,7 +367,7 @@ struct axe_csum_hdr {
 #define	AXE_CSUM_RXBYTES(x)	((x) & AXE_CSUM_HDR_LEN_MASK)
 
 /*
- * The interrupt  and CBW endpoints are currently unused byt the driver.
+ * The interrupt and CBW endpoints are currently unused by tthe driver.
  */
 #define AXE_ENDPT_CTRL		0x0
 #define AXE_ENDPT_INTR		0x1
@@ -377,91 +377,3 @@ struct axe_csum_hdr {
 #define AXx72A_ENDPT_TXCBW	0x5	/* AX88172A, and AX88772A */
 #define AX772B_ENDPT_BOTM	0x5	/* AX88772B */
 #define AXE_ENDPT_MAX		0x6
-
-struct axe_type {
-	struct usb_devno	axe_dev;
-	uint16_t		axe_flags;
-};
-
-struct axe_softc;
-
-struct axe_chain {
-	struct axe_softc	*axe_sc;
-	struct usbd_xfer	*axe_xfer;
-	uint8_t			*axe_buf;
-	int			axe_accum;
-	int			axe_idx;
-};
-
-struct axe_cdata {
-	struct axe_chain	axe_tx_chain[AXE_TX_LIST_CNT];
-	struct axe_chain	axe_rx_chain[AXE_RX_LIST_CNT];
-	int			axe_tx_prod;
-	int			axe_tx_cons;
-	int			axe_tx_cnt;
-	int			axe_rx_prod;
-};
-
-struct axe_softc {
-	device_t axe_dev;
-	struct ethercom		axe_ec;
-	struct mii_data		axe_mii;
-	krndsource_t	rnd_source;
-	struct usbd_device *	axe_udev;
-	struct usbd_interface *	axe_iface;
-
-	uint16_t		axe_vendor;
-	uint16_t		axe_product;
-	uint32_t		axe_flags;	/* copied from axe_type */
-#define AX178		__BIT(0)	/* AX88178 */
-#define AX772		__BIT(1)	/* AX88772 */
-#define AX772A		__BIT(2)	/* AX88772A */
-#define AX772B		__BIT(3)	/* AX88772B */
-#define	AXSTD_FRAME	__BIT(12)
-#define	AXCSUM_FRAME	__BIT(13)
-
-	int			axe_ed[AXE_ENDPT_MAX];
-	struct usbd_pipe *	axe_ep[AXE_ENDPT_MAX];
-	int			axe_if_flags;
-	int			axe_phyno;
-	struct axe_cdata	axe_cdata;
-	struct callout axe_stat_ch;
-
-	uint8_t			axe_enaddr[ETHER_ADDR_LEN];
-
-	int			axe_refcnt;
-	bool			axe_dying;
-	bool			axe_attached;
-
-	struct usb_task		axe_tick_task;
-
-	kmutex_t		axe_mii_lock;
-
-	int			axe_link;
-
-	uint8_t			axe_ipgs[3];
-	uint8_t 		axe_phyaddrs[2];
-	uint16_t		sc_pwrcfg;
-	uint16_t		sc_lenmask;
-
-	struct timeval		axe_rx_notice;
-	int			axe_bufsz;
-
-#define sc_if	axe_ec.ec_if
-};
-
-#define	AXE_IS_178_FAMILY(sc)						  \
-	((sc)->axe_flags & (AX772 | AX772A | AX772B | AX178))
-
-#define	AXE_IS_772(sc)							  \
-	((sc)->axe_flags & (AX772 | AX772A | AX772B))
-
-#define AX_RXCSUM					\
-    (IFCAP_CSUM_IPv4_Rx | 				\
-     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |	\
-     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)
-
-#define AX_TXCSUM					\
-    (IFCAP_CSUM_IPv4_Tx | 				\
-     IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |	\
-     IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx)

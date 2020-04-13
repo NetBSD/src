@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.15 2014/12/15 11:02:33 skrll Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.15.18.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.15 2014/12/15 11:02:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.15.18.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,12 +256,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 	/*
 	 * Allocate oosiop_cb.
 	 */
-	cb = malloc(sizeof(struct oosiop_cb) * ncb, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (cb == NULL) {
-		printf(": failed to allocate cb memory\n");
-		err = ENOMEM;
-		goto fail0;
-	}
+	cb = malloc(sizeof(struct oosiop_cb) * ncb, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * Allocate DMA-safe memory for the oosiop_xfer and map it.
@@ -342,7 +337,7 @@ fail3:	while (i--) {
 	bus_dmamem_unmap(sc->sc_dmat, xfer_kva, xfersize);
 fail2:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
 fail1:	free(cb, M_DEVBUF);
-fail0:	KASSERT(err);
+	KASSERT(err);
 	return err;
 }
 

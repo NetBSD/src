@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.7.2.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.7.2.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,7 @@ message sysinst_message_language
 message sysinst_message_locale
 {es_ES.ISO8859-15}
 
+message	out_of_memory	{Out of memory!}
 message Yes {Sí}
 message No {No}
 message All {Todo}
@@ -161,23 +162,55 @@ message secname
 message megname
 {MB}
 
-message layout
-{NetBSD usa una etiqueta de BSD para dividir la porción NetBSD del disco
-en varias particiones BSD.  Ahora debería configurar su etiqueta BSD.
+message gigname
+{GB}
 
-Puede usar un simple editor para establecer los tamaños de las particiones
-NetBSD, o mantener los tamaños de partición y contenidos actuales.
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = partitioning scheme name	Guid Partition Table
+ *  $2 = short version of $1		GPT
+ *  $3 = disk size for NetBSD		3TB
+ *  $4 = full install size min.		127M
+ *  $5 = install with X min.		427M
+ */
+message	layout_prologue_none
+{You can use a simple editor to set the sizes of the NetBSD partitions,
+or apply the default partition sizes and contents.}
 
-Después se la dará la oportunidad de cambiar cualquier campo de la
-etiqueta.
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = partitioning scheme name	Guid Partition Table
+ *  $2 = short version of $1		GPT
+ *  $3 = disk size for NetBSD		3TB
+ *  $4 = full install size min.		127M
+ *  $5 = install with X min.		427M
+ */
 
-La parte NetBSD de su disco es de %d megabytes.
-Una instalación completa requiere al menos %d megabytes sin X y
-al menos %d megabytes si se incluyen los conjuntos de X.
-}
+message	layout_prologue_existing
+{If you do not want to use the existing partitions, you can
+use a simple editor to set the sizes of the NetBSD partitions,
+or remove existing ones and apply the default partition sizes.}
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = partitioning scheme name	Guid Partition Table
+ *  $2 = short version of $1		GPT
+ *  $3 = disk size for NetBSD		3TB
+ *  $4 = full install size min.		127M
+ *  $5 = install with X min.		427M
+ */
+message layout_main
+{
+You will then be given the opportunity to change any of the partition
+details.
+
+The NetBSD (or free) part of your disk ($0) is $3.
+
+A full installation requires at least $4 without X and
+at least $5 if the X sets are included.}
 
 message Choose_your_size_specifier
-{Seleccionar megabytes producirá tamaños de partición cercanos a su
+{Seleccionar mega/gigabytes producirá tamaños de partición cercanos a su
 elección, pero alineados a los limites de los cilindros.
 Seleccionar sectores le permitirá especificar los tamaños de manera
 más precisa.  En discos ZBR modernos, el tamaño real del cilindro varía
@@ -194,13 +227,17 @@ omisión se asigna todo el espacio al sistema de archivos raíz, sin embargo
 usted podría querer separar /usr (ficheros de sistema adicionales), /var
 (ficheros de registro, etc) o /home (directorios de usuario).
 
-El espacio libre sobrante será añadido a la partición marcada con «+».
-}
+El espacio libre sobrante será añadido a la partición marcada con «+».}
 
-message ptnheaders
-{
-       MB         Cilindros	Sectores  Sistema de archivos
-}
+/* Called with: 			Example
+ *  $0 = list of marker explanations	'=' existining, '@' external
+ */
+message ptnsizes_markers		{Other markers: $0 partition.}
+message ptnsizes_mark_existing		{«=» existing}
+message ptnsizes_mark_external		{«@» external}
+
+message ptnheaders_size		{Size}
+message ptnheaders_filesystem	{Sistema de archivos}
 
 message askfsmount
 {¿Punto de montaje?}
@@ -209,7 +246,7 @@ message askfssize
 {¿Tamaño de %s en %s?}
 
 message askunits
-{Cambiar las unidades de entrada (sectores/cilindros/MB)}
+{Cambiar las unidades de entrada (sectores/cilindros/MB/GB)}
 
 message NetBSD_partition_cant_change
 {Partición NetBSD}
@@ -223,11 +260,19 @@ message Boot_partition_cant_change
 message add_another_ptn
 {Añadir una partición definida por el usuario}
 
+/* Called with: 			Example
+ *  $0 = free space			1.4
+ *  $1 = size unit			GB
+ */
 message fssizesok
-{Aceptar los tamaños de las particiones.  Espacio libre %d %s, %d particiones libres.}
+{Go on.  Free space $0 $1.}
 
+/* Called with: 			Example
+ *  $0 = missing space			1.4
+ *  $1 = size unit			GB
+ */
 message fssizesbad
-{Reducir los tamaños de las particiones en %d %s (%u sectores).}
+{Abort.  Not enough space, $0 $1 missing!}
 
 message startoutsidedisk
 {El valor del comienzo que ha especificado está mas allá del final del disco.
@@ -235,80 +280,58 @@ message startoutsidedisk
 
 message endoutsidedisk
 {Con este valor, el final de la partición está mas allá del final del disco.
-El tamaño de la partición se ha truncado a %d %s.
+El tamaño de la partición se ha truncado.}
 
-Presione Intro para continuar
-}
-
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = partitioning scheme name	Master Boot Record (MBR)
+ *  $2 = short version of $1		MBR
+ *  $3 = disk size			3TB
+ *  $4 = size limit			2TB
+ */
 message toobigdisklabel
 {
-This disk is too large for a disklabel partition table to be used
-and hence cannot be used as a bootable disk or to hold the root
-partition.
+This disk ($0) is too large ($3) for a $2 partition table (max $4),
+hence only the start of the disk is usable.
 }
 
+message cvtscheme_hdr		{What would you like to do to the existing partitions?}
+message cvtscheme_keep		{keep (use only part of disk)}
+message cvtscheme_delete	{delete (all data will be lost!)}
+message cvtscheme_convert	{convert to another partitioning method}
+message cvtscheme_abort		{abort}
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = partitioning scheme name	BSD disklabel
+ *  $2 = short version of $1		disklabel
+ *  $3 = optional install flag		(I)nstall,
+ *  $4 = additional flags description	(B)ootable
+ *  $5 = total size			2TB
+ *  $6 = free size			244MB
+ */
 message fspart
-{Sus particiones con etiquetas BSD están ahora así.
+{Sus particiones están ahora así.
 Ésta es su última oportunidad para cambiarlas.
 
-}
+Flags: $3(N)ewfs$4.   Total: $5, free: $6}
 
-message fspart_header
-{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont. 
-   ---------- --------- ---------- ---------- ----- ----- -----------
-}
-
-message fspart_row
-{%10lu %9lu %10lu %-10s %-5s %-5s %s}
-
-message show_all_unused_partitions
-{Mostrar todas las particiones no usadas}
+message ptnheaders_start	{Inicio}
+message ptnheaders_end		{Fin}
+message ptnheaders_fstype	{Tipo FS}
 
 message partition_sizes_ok
 {Tamaños de partición ok}
 
 message edfspart
-{Los valores actuales de la particion `%c' son, 
-Seleccione el campo que desee cambiar:
+{Los valores actuales de la particion son.
 
-                          MB cilindros  sectores
-	             ------- --------- ---------
-}
+Seleccione el campo que desee cambiar:}
 
-message fstype_fmt
-{        FStype: %9s}
-
-message start_fmt
-{        inicio: %9u %8u%c %9u}
-
-message size_fmt
-{        tamaño: %9u %8u%c %9u}
-
-message end_fmt
-{           fin: %9u %8u%c %9u}
-
-message bsize_fmt
-{tamaño  bloque: %9d bytes}
-
-message fsize_fmt
-{   tamaño frag: %9d bytes}
-
-message isize_fmt
-{tam prom archi: %9d bytes (para número de inodos)}
-message isize_fmt_dflt
-{tam prom archi:         4 fragmentos}
-
-message newfs_fmt
-{         newfs: %9s}
-
-message mount_fmt
-{        montar: %9s}
-
-message mount_options_fmt
-{   opc montaje: }
-
-message mountpt_fmt
-{ punto montaje: %9s}
+message ptn_newfs		{newfs}
+message ptn_mount		{montar}
+message ptn_mount_options	{opc montaje}
+message ptn_mountpt		{punto montaje}
 
 message toggle
 {Conmutar}
@@ -322,25 +345,65 @@ message Select_the_type
 message other_types
 {otros tipos}
 
-message label_size
-{%s
-Valores especiales que se pueden introducir para el valor del tamaño:
-    -1:   usar hasta el final de la parte NetBSD del disco
-   a-%c:   terminar esta partición donde empieza la partición X
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = maximum allowed		4292098047
+ *  $2 = size unit			MB
+ */
+message label_size_head
+{Valores especiales que se pueden introducir para el valor del tamaño:
+    -1:   usar hasta el final del disco}
 
-tamaño (%s)}
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = maximum allowed		4292098047
+ *  $2 = size unit			MB
+ */
+message label_size_part_hint
+{   $0:   terminar esta partición donde empieza la partición X}
 
-message label_offset
-{%s
-Valores especiales que se pueden introducir para el valor del desplazamiento:
-    -1:   empezar al principio de la parte NetBSD del disco
-   a-%c:   empezar al final de la partición anterior (a, b, ..., %c)
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = maximum allowed		4292098047
+ *  $2 = size unit			MB
+ */
+message label_size_tail
+{Tamaño (max $1 $2)}
 
-inicio (%s)}
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = valid free space shortcuts	f-h
+ *  $2 = size unit			MB
+ */
+message label_offset_head
+{Valores especiales que se pueden introducir para el valor del desplazamiento:
+    -1:   empezar al principio del disco}
+
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = valid free space shortcuts	f-h
+ *  $2 = size unit			MB
+ */
+message label_offset_part_hint
+{   $0:   empezar al final de la partición anterior}
+
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = valid free space shortcuts	f-h
+ *  $2 = size unit			MB
+ */
+message label_offset_space_hint
+{   $1:   start at the beginning of given free space}
+
+/* Called with:				Example
+ *  $0 = valid partition shortcuts	a-e
+ *  $1 = valid free space shortcuts	f-h
+ *  $2 = size unit			MB
+ */
+message label_offset_tail		{inicio ($2)}
 
 message invalid_sector_number
-{Número de sector mal formado
-}
+{Número mal formado}
 
 message Select_file_system_block_size
 {Seleccione el tamaño de bloque del sistema de archivos}
@@ -376,8 +439,12 @@ message openfail
 {No se ha podido abrir %s, el mensaje de error ha sido: %s.
 }
 
+/* Called with:				Example
+ *  $0 = device name			/dev/wd0a
+ *  $1 = mount path			/usr
+ */
 message mountfail
-{el montaje del dispositivo /dev/%s%c en %s ha fallado.
+{el montaje del dispositivo $0 en $1 ha fallado.
 }
 
 message extractcomplete
@@ -590,16 +657,22 @@ message resolv
 {No se ha podido crear /etc/resolv.conf.  Instalación interrumpida.
 }
 
+/* Called with: 			Example
+ *  $0 = target prefix			/target
+ *  $1 = error message			No such file or directory
+ */
 message realdir
-{No se ha podido cambiar el directorio a %s: %s.  Instalación
-interrumpida.
-}
+{No se ha podido cambiar el directorio a $0: $1
+Instalación interrumpida.}
 
 message delete_xfer_file
 {A eliminar después de la instalación}
 
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
 message notarfile
-{El conjunto %s no existe.}
+{El conjunto $0 no existe.}
 
 message endtarok
 {Todos los conjuntos de distribución han sido desempaquetados
@@ -618,9 +691,8 @@ La instalación ha sido interrumpida.  Por favor, compruebe de nuevo su
 fuente de distribución y considere el reinstalar los conjuntos desde
 el menú principal.}
 
-message abort
-{Sus opciones han hecho imposible instalar NetBSD.  Instalación interrumpida.
-}
+message abort_inst {Instalación interrumpida.}
+message abort_part {Partitioning aborted.}
 
 message abortinst
 {La distribución no ha sido cargada correctamente.  Necesitará proceder
@@ -684,10 +756,15 @@ message makedev
 {Creando nodos de dispositivo ...
 }
 
+/* Called with:				Example
+ *  $0 = device name			/dev/rwd0a
+ *  $1 = file system type		ffs
+ *  $2 = error return code form fsck	8
+ */
 message badfs
-{Parece ser que /dev/%s%c no es un sistema de archivos BSD o bien el
+{Parece ser que $0 no es un sistema de archivos $1 o bien el
 fsck ha fallado.  ¿Desea montarlo de todos modos?  (Código de error:
-%d.)
+$2.)
 }
 
 message rootmissing
@@ -754,6 +831,9 @@ message set_misc
 message set_modules
 {Kernel Modules}
 
+message set_rescue
+{Recovery tools}
+
 message set_tests
 {Programas de prueba}
 
@@ -802,9 +882,6 @@ message set_debug
 message set_xdebug
 {X11 debug symbols}
 
-message cur_distsets_row
-{%-27s %3s}
-
 message select_all
 {Seleccionar todos los conjuntos anteriores}
 
@@ -821,11 +898,19 @@ no estará completo.
 
 ¿Continuar extrayendo conjuntos?}
 
+/* Called with: 			Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
 message must_be_one_root
 {Debe haber una sola partición marcada para ser montada en «/».}
 
+/* Called with: 			Example
+ *  $0 = first partition description	70 - 90 MB, MSDOS
+ *  $1 = second partition description	80 - 1500 MB, 4.2BSD
+ */
 message partitions_overlap
-{las particiones %c y %c se solapan.}
+{las particiones $0 y $1 se solapan.}
 
 message No_Bootcode
 {No hay código de arranque para la partición root}
@@ -842,8 +927,11 @@ menú principal.
 
 ¿Editar la tabla de particiones de nuevo?}
 
+/* Called with: 			Example
+ *  $0 = missing file			/some/path
+ */
 message config_open_error
-{No se ha podido abrir el fichero de configuración %s\n}
+{No se ha podido abrir el fichero de configuración $0}
 
 message choose_timezone
 {Por favor, escoja de la siguiente lista la zona horaria que le convenga.  
@@ -922,8 +1010,27 @@ message Halt_the_system {Detener el sistema}
 message yes_or_no {¿sí o no?}
 message Hit_enter_to_continue {Presione intro para continuar}
 message Choose_your_installation {Seleccione su instalación}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Keep_existing_partitions
+{Use existing $1 partitions}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
 message Set_Sizes {Establecer los tamaños de las particiones NetBSD}
-message Use_Existing {Usar los tamaños de las particiones existentes}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_Default_Parts {Use default partition sizes}
+
+message Gigabytes {Gigabytes}
 message Megabytes {Megabytes}
 message Cylinders {Cilindros}
 message Sectors {Sectores}
@@ -956,6 +1063,7 @@ message Password {Contraseña}
 message Proxy {Proxy}
 message Get_Distribution {Obtener la distribución}
 message Continue {Continuar}
+message Prompt_Continue {¿Continuar?}
 message What_do_you_want_to_do {¿Qué desea hacer?}
 message Try_again {Reintentar}
 message Set_finished {Conjunto finalizado}
@@ -1093,163 +1201,290 @@ message failed {Error}
 message notsupported {Operación no admitida!}
 message askfsmountadv {Punto de montaje o 'raid' o 'CGD' o 'lvm'?}
 message partman {Partición extendida}
-message editbsdpart {Editar particiones BSD}
-message editmbr {Editar y guardar MBR}
-message switchgpt {Cambiar a GPT}
-message switchmbr {Cambiar a MBR}
-message renamedisk {Establece el nombre del disco}
+message edit_parts {Editar particiones}
+message editpart {Editar particiones}
+message switch_parts {Switch partitioning scheme}
 message fmtasraid {Formato como RAID}
 message fmtaslvm {Formato como LVM PV}
-message encrypt {Cifrar}
+message encrypt {Cifrar (CGD)}
 message setbootable {La bandera de arranque}
 message erase {Borrado seguro}
 message undo {Deshacer los cambios}
 message unconfig {Desconfigurar}
 message edit {Editar}
 message doumount {Fuerza umount}
-message fillzeros {Llenar con ceros}
-message fillrandom {Llene los datos al azar}
-message fillcrypto {Rellene los datos de cifrado}
-message raid0 {0 - Sin paridad, creación de bandas sólo es simple.}
-message raid1 {1 - Creación de reflejos. La paridad es el espejo.}
-message raid4 {4 - Striping con paridad almacenada en el último componente. component.}
-message raid5 {5 - Striping con paridad en los componentes de todos. components.}
 
 message fremove {QUITAR}
 message remove {Quitar}
 message add {Añadir}
 message auto {auto}
 
-message removepartswarn {Esta eliminar todas las particiones en el disco. ¿Desea continuar? want to continue?}
+message removepartswarn {Esta eliminar todas las particiones en el disco!}
 message saveprompt {Guarde los cambios antes de terminar?}
 message cantsave {Los cambios no se pueden guardar.}
 message noroot {No hay una partición raíz definida, no puede continuar \n}
-message wannaunblock {El dispositivo está bloqueado. ¿Quiere forzar a desbloquear y continuar? unblock it and continue?}
-message wannatry {¿Quieres probar?}
-message create_cgd {Crear cifrado de volumen (CGD)}
-message create_cnd {Crear imagen de disco virtual (VND)}
-message create_vg {Crear grupo de volúmenes (LVM VG)}
-message create_lv {      Crear volúmenes lógicos}
-message create_raid {Crear RAID por software}
-message updpmlist {Actualizar lista de dispositivos}
-message savepm {Guardar los cambios}
-message pmblocked {BLOQUEADO}
-message pmunchanged {SIN USO}
-message pmsetboot {ARRANCAR}
-message pmused {UTILIZA}
-message pmmounted {(montado)}
-message pmunused {(sin usar)}
-message pmgptdisk {Disco con GPT}
-
-message finishpm {Finalizar el particionado}
-message limitcount {Límite para el número de dispositivos se llegó!}
-message invaliddev {No válido dispositivo!}
-message avdisks {Discos disponibles:}
-message nofreedev {No se puede asignar nodo de dispositivo!}
-message partman_header
-{Partition Manager. Todos los discos, particiones y etc muestra allí.
-Al principio, las particiones MBR hacen, a continuación, hacer etiquetas BSD.
-Si desea utilizar RAID, LVM o CGD, siga estos pasos:
-1) Crear particiones BSD con el tipo necesario;
-2) Crear RAID / LVM VG / CGD el uso de estas particiones; 3) Guárdalo;
-4) Crear particiones de volúmenes RAID / CGD o lógico de LVM.}
-
-message raid_menufmt {   raid%d (nivel %1d) en %-34s %11uM}
-message raid_err_menufmt {   RAID VACIO!}
-message raid_disks_fmt {Discos: %32s}
-message raid_spares_fmt {Piezas de recambio: %20s}
-message raid_level_fmt {RAID de nivel:    %22d}
-message raid_numrow_fmt {numRow:           %22d}
-message raid_numcol_fmt {numCol:           %22d}
-message raid_numspare_fmt {numSpare:         %22d}
-message raid_sectpersu_fmt {sectPerSU:        %22d}
-message raid_superpar_fmt {SUsPerParityUnit: %22d}
-message raid_superrec_fmt {SUsPerReconUnit:  %22d}
-message raid_nomultidim {Matrices multidimensionales no son compatibles!}
-message raid_numrow_ask {numRow?}
-message raid_numcol_ask {numCol?}
-message raid_numspare_ask {numSpare?}
-message raid_sectpersu_ask {sectPerSU?}
-message raid_superpar_ask {SUsPerParityUnit?}
-message raid_superrec_ask {SUsPerReconUnit?}
-message raid_disks {Los discos en RAID:}
-message vnd_err_menufmt {   CAMINO NO DEFINIDO!}
-message vnd_assgn_menufmt {   vnd%1d en %-51s ASSIGN}
-message vnd_menufmt {   vnd%1d en %-45s %11uM}
-message vnd_path_fmt {Ruta del archivo: %22s}
-message vnd_assgn_fmt {Create new image: %14s}
-message vnd_size_fmt {Tamaño:          %22sM}
-message vnd_ro_fmt {Sólo lectura:     %22s}
-message vnd_geom_fmt {Establecer la geometría de la mano: %4s}
-message vnd_bps_fmt {Bytes por sector:     %18s}
-message vnd_spt_fmt {Sectores por pista:   %18s}
-message vnd_tpc_fmt {Pistas por cilindro:  %18s}
-message vnd_cyl_fmt {Cilindros:        %22s}
-message vnd_path_ask {Ruta de acceso?}
-message vnd_size_ask {Tamaño (MB)?}
-message vnd_bps_ask {Bytes por sector?}
-message vnd_spt_ask {Sectores por pista?}
-message vnd_tpc_ask {Pistas por cilindro?}
-message vnd_cyl_ask {Cilindros}
-message cgd_err_menufmt {   DISCO NO SE DEFINE!}
-message cgd_menufmt {   cgd%1d %-48s %11uM}
-message cgd_dev_fmt {Dispositivo de base: %19s}
-message cgd_enc_fmt {Encriptación:        %19s}
-message cgd_key_fmt {Tamaño de la clave:  %19d}
-message cgd_iv_fmt {Algoritmo IV:        %19s}
-message cgd_keygen_fmt {La generación de claves: %15s}
-message cgd_verif_fmt {Método de verificación:  %15s}
-message lvm_disks {Discos en VG:}
-message lvm_menufmt {   %-44s %20sM}
-message lvm_err_menufmt {   VACIAR VG!}
-message lvm_disks_fmt {PV's: %34s}
-message lvm_name_fmt {Nombre: %32s}
-message lvm_maxlv_fmt {MaxLogicalVolumes:  %20s}
-message lvm_maxpv_fmt {MaxPhysicalVolumes: %20s}
-message lvm_extsiz_fmt {PhysicalExtentSize: %20s}
-message lvm_name_ask {Nombre?}
-message lvm_maxlv_ask {MaxLogicalVolumes?}
-message lvm_maxpv_ask {MaxPhysicalVolumes?}
-message lvm_extsiz_ask {PhysicalExtentSize (MB)?}
-message lvmlv_menufmt {      El volumen lógico %-33s% 11uM}
-message lvmlv_name_fmt {Nombre: %32s}
-message lvmlv_size_fmt {Tamaño: %31dM}
-message lvmlv_ro_fmt {Sólo lectura:  %25s}
-message lvmlv_cont_fmt {Contigua:      %25s}
-message lvmlv_extnum_fmt {LogicalExtentsNumber: %18s}
-message lvmlv_minor_fmt {Menor número:  %25s}
-message lvmlv_mirrors_fmt {Espejos:       %25d}
-message lvmlv_regsiz_fmt {MirrorLogRegionSize:  %18s}
-message lvmlv_pers_fmt {Número de persistente menor: %11s}
-message lvmlv_readahsect_fmt {ReadAheadSectors:     %18s}
-message lvmlv_stripes_fmt {Rayas:         %25s}
-message lvmlv_stripesiz_fmt {Stripesize:    %25s}
-message lvmlv_zero_fmt {Puesta a cero de la primera KB: %8s}
-message lvmlv_name_ask {Nombre?}
-message lvmlv_size_ask {Tamaño (MB)?}
-message lvmlv_extnum_ask {LogicalExtentsNumber?}
-message lvmlv_minor_ask {Número menor de edad?}
-message lvmlv_mirrors_ask {Espejos?}
-message lvmlv_regsiz_ask {MirrorLogRegionSize?}
-message lvmlv_readahsect_ask {ReadAheadSectors?}
-message lvmlv_stripes_ask {Rayas?}
 
 message addusername {8 character username to add}
 message addusertowheel {Do you wish to add this user to group wheel?}
 message Delete_partition
 {Borrar partición}
 
-
 message No_filesystem_newfs
 {The selected partition does not seem to have a valid file system. 
 Do you want to newfs (format) it?}
 
+message swap_display	{swap}
+
+/* Called with: 			Example
+ *  $0 = parent device name		sd0
+ *  $1 = swap partition name		my_swap
+ */
 message Auto_add_swap_part
-{A swap partition (named %s) seems to exist on %s. 
+{A swap partition (named $1) 
+seems to exist on $0. 
 Do you want to use that?}
 
-message parttype_mbr {Master Boot Record (MBR)}
-message parttype_mbr_short {MBR}
 message parttype_disklabel {BSD disklabel}
 message parttype_disklabel_short {disklabel}
+/*
+ * This is used on architectures with MBR above disklabel when there is
+ * no MBR on a disk.
+ */
+message parttype_only_disklabel {disklabel (NetBSD only)}
+
+message select_part_scheme
+{The disk seems not to have been partitioned before. Please select
+a partitioning scheme from the available options below. }
+
+message select_other_partscheme
+{Please select a different partitioning scheme from the available
+options below. }
+
+message select_part_limit
+{Some schemes have size limits and can only be used for the start
+of huge disks. The limit is displayed below.}
+
+/* Called with: 			Example
+ *  $0 = device name			ld0
+ *  $1 = size				3 TB
+ */
+message part_limit_disksize
+{This device ($0) is $1 big.}
+
+message size_limit	{Max:}
+
+message	addpart		{Add a partition}
+message	nopart		{      (no partition defined)}
+message	custom_type	{Unknown}
+
+message dl_type_invalid	{Invalid file system type code (0 .. 255)}
+
+message	cancel		{Cancel}
+
+message	out_of_range	{Invalid value}
+message	invalid_guid	{Invalid GUID}
+
+message	reedit_partitions	{Re-edit}
+message abort_installation	{Abort installation}
+
+message dl_get_custom_fstype {File system type code (upto 255)}
+
+message err_too_many_partitions	{Too many partitions}
+
+/* Called with: 			Example
+ *  $0 = mount point			/home
+ */
+message	mp_already_exists	{$0 already defined!}
+
+message ptnsize_replace_existing
+{This is an already existing partition. 
+To change it's size, the partition will need to be deleted and later
+recreated.  All data in this partition will be lost.
+
+Would you like to delete this partition and continue?}
+
+message part_not_deletable	{Non-deletable system partition}
+
+message ptn_type		{tipo}
+message ptn_start		{inicio}
+message ptn_size		{tamaño}
+message ptn_end			{fin}
+
+message No_free_space {Sin espacio libre}
+message Invalid_numeric {Número no válido!}
+message Too_large {Demasiado grande!}
+
+/* Called with:				Example
+ *  $0 = start of free space		500
+ *  $1 = end of free space		599
+ *  $2 = size of free space		100
+ *  $3 = unit in use			MB
+ */
+message free_space_line {Espacio en $0..$1 $3 (tamaño $2 $3)\n}
+
+message	fs_type_ffsv2	{FFSv2}
+message	fs_type_ffs	{FFS}
+message fs_type_ext2old	{Linux Ext2 (old)}
+message	other_fs_type	{Other type}
+
+message	editpack	{Edit name of the disk}
+message	edit_disk_pack_hdr
+{The name of the disk is arbitrary. 
+It is useful for distinguishing between multiple disks.
+It may also be used when auto-creating dk(4) "wedges" for this disk.
+
+Enter disk name}
+
+/* Called with:				Example
+ *  $0 = outer partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message reeditpart
+{¿Quiere reeditar la tabla de particiones $1}
+
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = inner partitioning name	BSD disklabel
+ *  $3 = short version of $1		MBR
+ *  $4 = short version of $2		disklabel
+ *  $5 = size needed for NetBSD		250M
+ *  $6 = size needed to build NetBSD	15G
+ */
+message fullpart
+{Se va a instalar NetBSD en el disco $0.
+
+NetBSD requiere una sola partición en la tabla de particiones $1 del disco,
+que es subsiguientemente dividida por el $2.
+NetBSD también puede acceder a sistemas de ficheros de otras particiones $3.
+
+Si selecciona 'Usar todo el disco', se sobreescribirá el contenido anterior
+del disco, y se usará una sola partición $3 para cubrir todo el disco. 
+Si desea instalar más de un sistema operativo, edite la tabla de particiones
+$3 y cree una partición para NetBSD.
+
+Para una instalación básica bastan unos pocos $5, pero deberá
+dejar espacio extra para programas adicionales y los ficheros de usuario. 
+Proporcione al menos $6 si quiere construir el propio NetBSD.}
+
+message Select_your_choice
+{¿Que le gustaría hacer?}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_only_part_of_the_disk
+{Editar la tabla de particiones $1}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_the_entire_disk
+{Usar todo el disco}
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = total disk size		3000 GB
+ *  $2 = unallocated space		1.2 GB
+ */
+message part_header
+{   Tamaño total del disco $0: $1 - libre: $2}
+message part_header_col_start	{Inicio}
+message part_header_col_size	{Tamaño}
+message part_header_col_flag	{Opc}
+
+message Partition_table_ok
+{Tabla de particiones OK}
+
+message Dont_change
+{No cambiar}
+message Other_kind
+{Otra}
+
+/* Called with:				Example
+ *  $0 = outer partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message nobsdpart
+{No hay ninguna partición NetBSD en la tabla de particiones $1.}
+
+/* Called with:				Example
+ *  $0 = outer partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message multbsdpart
+{Hay varias particiones NetBSD en la tabla de particiones $1.
+Debería marcar la opción "instalar" en la que quiera usar. }
+
+message ovrwrite
+{Su disco tiene actualmente una partición que no es de NetBSD. ¿Realmente
+quiere sobreescribir dicha partición con NetBSD?
+}
+
+message Partition_OK
+{Partición OK}
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = short version of $1		MBR
+ *  $3 = other flag options		d = bootselect default, a = active
+ */
+message editparttable
+{Se muestra a continuación la tabla de particiones $2 actual. 
+Opcn: I => Instalar aquí$3.
+Seleccione la partición que desee editar:
+
+}
+
+message install_flag	{I}
+message newfs_flag	{N}
+
+message ptn_install	{instalar}
+message ptn_instflag_desc	{(I)nstalar, }
+
+message clone_flag	{C}
+message clone_flag_desc	{, (C)lone}
+
+message parttype_gpt {Guid Partition Table (GPT)}
+message parttype_gpt_short {GPT}
+
+message	ptn_label	{Label}
+message ptn_uuid	{UUID}
+message	ptn_gpt_type	{GPT Type}
+message	ptn_boot	{Boot}
+
+/* Called with:				Example
+ *  $0 = outer partitioning name	Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message use_partitions_anyway
+{Use this partitions anyway}
+
+message	gpt_flags	{B}
+message	gpt_flag_desc	{, (B)ootable}
+
+/* Called with:				Example
+ *  $0 = file system type		FFSv2
+ */
+message size_ptn_not_mounted		{(Other: $0)}
+
+message running_system			{current system}
+
+message clone_from_elsewhere		{Clone external partition(s)}
+message select_foreign_part
+{Please select an external source partition:}
+message select_source_hdr
+{Your currently selected source partitions are:}
+message clone_with_data			{Clone with data}
+message	select_source_add		{Add another partition}
+message clone_target_end		{Add at end}
+message clone_target_hdr
+{Insert cloned partitions before:}
+message clone_target_disp		{cloned partition(s)}
+message clone_src_done
+{Source selection OK, proceed to target selection}
 

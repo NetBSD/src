@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.365.2.2 2020/04/08 14:07:28 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.365.2.3 2020/04/13 08:03:32 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365.2.2 2020/04/08 14:07:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365.2.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -6441,7 +6441,7 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va, size_t nptes)
 		pd_entry_t pde = *pdep;
 
 		if (l1pte_section_p(pde)) {
-			__CTASSERT((L1_S_CACHE_MASK & L1_S_V6_SUPER) == 0);
+			KASSERT((L1_S_CACHE_MASK & L1_S_V6_SUPER) == 0);
 			if ((pde & L1_S_CACHE_MASK) != pte_l1_s_cache_mode_pt) {
 				*pdep = (pde & ~L1_S_CACHE_MASK) |
 				    pte_l1_s_cache_mode_pt;

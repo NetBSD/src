@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.25.28.2 2020/04/08 14:07:50 martin Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.25.28.3 2020/04/13 08:04:04 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25.28.2 2020/04/08 14:07:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25.28.3 2020/04/13 08:04:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,9 @@ OF_getproplen(int handle, const char *prop)
 	};
 
 	ofw_stack();
+	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
-	args.prop = prop;
+	args.prop = OF_buf;
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.proplen;
@@ -187,16 +188,17 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 	ofw_stack();
 	if (buflen > PAGE_SIZE)
 		return -1;
+	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
-	args.prop = prop;
-	args.buf = OF_buf;
+	args.prop = OF_buf;
+	args.buf = &OF_buf[33];
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.size > buflen)
 		args.size = buflen;
 	if (args.size > 0)
-		ofbcopy(OF_buf, buf, args.size);
+		ofbcopy(&OF_buf[33], buf, args.size);
 	return args.size;
 }
 
@@ -250,12 +252,13 @@ OF_nextprop(int handle, const char *prop, void *nextprop)
 	};
 
 	ofw_stack();
+	strncpy(OF_buf, prop, 32);
 	args.phandle = handle;
-	args.prop = prop;
-	args.buf = OF_buf;
+	args.prop = OF_buf;
+	args.buf = &OF_buf[33];
 	if (openfirmware(&args) == -1)
 		return -1;
-	strncpy(nextprop, OF_buf, 32);
+	strncpy(nextprop, &OF_buf[33], 32);
 	return args.flag;
 }
 
@@ -275,7 +278,8 @@ OF_finddevice(const char *name)
 	};
 
 	ofw_stack();
-	args.device = name;
+	strncpy(OF_buf, name, NBPG);
+	args.device = OF_buf;
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;

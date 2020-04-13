@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.1.28.1 2020/04/08 14:09:22 martin Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.1.28.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -181,7 +181,7 @@ process(const struct lookfor *item, char *line)
 			}
 			break;
 		case 'c':  /* Call a function with data. */
-			error = (*item->func)(found, numfound);
+			error = (*item->func)(found, numfound, item);
 			if (error != 0)
 				return error;
 			break;

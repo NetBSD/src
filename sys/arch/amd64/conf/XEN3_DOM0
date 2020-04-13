@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.153.2.2 2020/04/08 14:07:25 martin Exp $
+# $NetBSD: XEN3_DOM0,v 1.153.2.3 2020/04/13 08:03:30 martin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.153.2.2 $"
+#ident		"XEN3_DOM0-$Revision: 1.153.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -20,8 +20,6 @@ options 	DOM0OPS
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 # CPU features
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
@@ -568,7 +566,6 @@ wsmouse*	at pms? mux 0
 
 # PCI USB controllers
 xhci*	at pci? dev ? function ?	# eXtensible Host Controller
-					# xhci is at best experimental
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)

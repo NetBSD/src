@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.268.2.2 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.268.2.3 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268.2.3 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1437,7 +1437,9 @@ in6_purgeaddr(struct ifaddr *ifa)
 	mutex_enter(&in6_ifaddr_lock);
 	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 		struct in6_multi *in6m __diagused = imm->i6mm_maddr;
-		KASSERT(in6m == NULL || in6m->in6m_ifp == ifp);
+		KASSERTMSG(in6m == NULL || in6m->in6m_ifp == ifp,
+		    "in6m_ifp=%s ifp=%s", in6m ? in6m->in6m_ifp->if_xname : NULL,
+		    ifp->if_xname);
 		LIST_REMOVE(imm, i6mm_chain);
 		mutex_exit(&in6_ifaddr_lock);
 
@@ -2430,7 +2432,7 @@ static void
 in6_lltable_destroy_lle(struct llentry *lle)
 {
 
-	KASSERT(lle->la_numheld == 0);
+	KASSERTMSG(lle->la_numheld == 0, "la_numheld=%d", lle->la_numheld);
 
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);

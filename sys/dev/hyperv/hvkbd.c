@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.1.2.3 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.1.2.4 2020/04/13 08:04:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.1.2.3 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.1.2.4 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,18 +209,7 @@ hvkbd_attach(device_t parent, device_t self, void *aux)
 	STAILQ_INIT(&sc->sc_ks_queue);
 	hvkbd_alloc_keybuf(sc);
 
-	sc->sc_buf = kmem_zalloc(HVKBD_BUFSIZE, cold ? KM_NOSLEEP : KM_SLEEP);
-	if (sc->sc_buf == NULL) {
-		aprint_error_dev(self,
-		    "failed to allocate channel data buffer\n");
-		return;
-	}
-
-	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(self))) {
-		aprint_error_dev(self,
-		    "failed to create the interrupt thread\n");
-		goto free_buf;
-	}
+	sc->sc_buf = kmem_zalloc(HVKBD_BUFSIZE, KM_SLEEP);
 
 	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
 	if (vmbus_channel_open(sc->sc_chan,
@@ -266,18 +255,8 @@ hvkbd_alloc_keybuf(struct hvkbd_softc *sc)
 	int i;
 
 	for (i = 0; i < HVKBD_KEYBUF_SIZE; i++) {
-		ksi = kmem_zalloc(sizeof(*ksi), cold ? KM_NOSLEEP : KM_SLEEP);
-		if (ksi != NULL) {
-			LIST_INSERT_HEAD(&sc->sc_ks_free, ksi, link);
-			continue;
-		}
-
-		while ((ksi = LIST_FIRST(&sc->sc_ks_free)) != NULL) {
-			LIST_REMOVE(ksi, link);
-			kmem_free(ksi, sizeof(*ksi));
-		}
-		return ENOMEM;
-
+		ksi = kmem_zalloc(sizeof(*ksi), KM_SLEEP);
+		LIST_INSERT_HEAD(&sc->sc_ks_free, ksi, link);
 	}
 
 	return 0;
@@ -317,7 +296,9 @@ hvkbd_set_leds(void *v, int leds)
 static int
 hvkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 	struct hvkbd_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -434,6 +415,7 @@ hvkbd_decode(struct hvkbd_softc *sc, u_int *type, int *scancode)
 	return 1;
 }
 
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 static int
 hvkbd_encode(struct hvkbd_softc *sc, u_char *buf, int *len)
 {
@@ -478,6 +460,7 @@ hvkbd_encode(struct hvkbd_softc *sc, u_char *buf, int *len)
 
 	return 1;
 }
+#endif
 
 static void
 hvkbd_intr(void *xsc)

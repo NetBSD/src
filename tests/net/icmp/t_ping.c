@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.23 2018/03/26 09:11:15 roy Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.23.2.1 2020/04/13 08:05:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.23 2018/03/26 09:11:15 roy Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.23.2.1 2020/04/13 08:05:30 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -280,7 +280,7 @@ ATF_TC_BODY(pingsize, tc)
 {
 	char ifname[IFNAMSIZ];
 	pid_t cpid;
-	int succ, i;
+	int sent, succ, i;
 
 	cpid = fork();
 	rump_init();
@@ -299,21 +299,27 @@ ATF_TC_BODY(pingsize, tc)
 
 	netcfg_rump_if(ifname, "1.1.1.20", "255.255.255.0");
 
-	succ = 0;
+	succ = sent = 0;
 
 	/* small sizes */
-	for (i = 0 ; i < IP_MAXPACKET - 60000; i++)
+	for (i = 0 ; i < IP_MAXPACKET - 60000; i++) {
+		sent++;
 		succ += doping("1.1.1.10", 1, i);
+	}
 
 	/* medium sizes */
-	for (i = IP_MAXPACKET - 60000; i < IP_MAXPACKET - 100; i += 1000)
+	for (i = IP_MAXPACKET - 60000; i < IP_MAXPACKET - 100; i += 1000) {
+		sent++;
 		succ += doping("1.1.1.10", 1, i);
+	}
 
 	/* big sizes */
-	for (i = IP_MAXPACKET - 100; i < IP_MAXPACKET; i += 10)
+	for (i = IP_MAXPACKET - 100; i < IP_MAXPACKET; i += 10) {
+		sent++;
 		succ += doping("1.1.1.10", 1, i);
+	}
 
-	printf("got %d/%d\n", succ, IP_MAXPACKET);
+	printf("got %d/%d\n", succ, sent);
 	kill(cpid, SIGKILL);
 }
 

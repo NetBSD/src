@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.55 2017/03/15 15:33:54 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.55.12.1 2020/04/13 08:05:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.55 2017/03/15 15:33:54 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.55.12.1 2020/04/13 08:05:54 martin Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -178,7 +178,7 @@ static int  cd9660_add_generic_bootimage(iso9660_disk *, const char *);
 
 
 /*
- * Allocate and initalize a cd9660node
+ * Allocate and initialize a cd9660node
  * @returns struct cd9660node * Pointer to new node, or NULL on error
  */
 static cd9660node *

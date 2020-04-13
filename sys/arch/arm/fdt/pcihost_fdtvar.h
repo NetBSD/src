@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdtvar.h,v 1.1.4.3 2020/04/08 14:07:29 martin Exp $ */
+/* $NetBSD: pcihost_fdtvar.h,v 1.1.4.4 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -79,6 +79,11 @@ struct pcihost_softc {
 
 	struct pcih_bus_space	sc_io;
 	struct pcih_bus_space	sc_mem;
+
+	int			sc_pci_flags;
+
+	const u_int		*sc_pci_ranges;
+	u_int			sc_pci_ranges_cells;
 };
 
 void	pcihost_init2(struct pcihost_softc *);

@@ -1,4 +1,4 @@
-/* $NetBSD: onewirereg.h,v 1.3 2006/04/14 18:38:50 riz Exp $ */
+/*	$NetBSD: onewirereg.h,v 1.3.162.1 2020/04/13 08:04:25 martin Exp $	*/
 /*	$OpenBSD: onewirereg.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #define ONEWIRE_ROM_FAMILY_CUSTOM(x)	(((x) >> 7) & 0x1)
 
 /* Serial number */
-#define ONEWIRE_ROM_SN(x)		(((x) >> 8) & 0xffffffffffffULL)
+#define ONEWIRE_ROM_SN(x)		(((x) >> 8) & ((uint64_t)0xffffffffffffULL))
 
 /* CRC */
 #define ONEWIRE_ROM_CRC(x)		(((x) >> 56) & 0xff)

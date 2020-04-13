@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.69.2.1 2019/06/10 22:05:21 christos Exp $
+.\"	$NetBSD: ptrace.2,v 1.69.2.2 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" This file is in the public domain.
-.Dd May 25, 2019
+.Dd January 4, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -193,7 +193,7 @@ This call does not stop the process neither emit
 to parent.
 .It Dv PT_READ_I , Dv PT_READ_D
 These requests read a single
-.Li int
+.Vt int
 of data from the traced process' address space.
 Traditionally,
 .Fn ptrace
@@ -249,9 +249,37 @@ ID of the thread to be resumed, and only that thread executes.
 .It Dv PT_KILL
 The traced process terminates, as if
 .Dv PT_CONTINUE
-had been used with
+has been used with
 .Dv SIGKILL
 given as the signal to be delivered.
+However, unlike
+.Dv PT_CONTINUE ,
+.Dv PT_KILL
+can be used on a non-stopped tracee.
+The
+.Fa addr
+and
+.Fa data
+arguments are ignored.
+.It Dv PT_STOP
+The traced process stops, as if
+.Xr kill 2
+has been used with
+.Dv SIGSTOP
+given as the signal to be delivered.
+.Xr wait 2
+will report the child (again) as stopped even if it was stopped before.
+The
+.Fa addr
+and
+.Fa data
+arguments are ignored.
+Unlike
+.Dv PT_CONTINUE
+call with
+.Dv SIGSTOP ,
+.Dv PT_STOP
+works both on running and stopped processes.
 .It Dv PT_ATTACH
 This request allows a process to gain control of an otherwise unrelated
 process and begin tracing it.
@@ -295,7 +323,7 @@ This request is a more general interface that can be used instead of
 and
 .Dv PT_WRITE_I .
 The I/O request is encoded in a
-.Dq Li "struct ptrace_io_desc"
+.Vt struct ptrace_io_desc
 defined as:
 .Bd -literal -offset indent
 struct ptrace_io_desc {
@@ -350,9 +378,7 @@ field in the I/O descriptor will be updated with the actual number of
 bytes transferred.
 If the requested I/O could not be successfully performed,
 .Fn ptrace
-will return
-.Li \-1
-and set
+will return \-1 and set
 .Va errno .
 .Pp
 This interface returns success for partial and cancelled byte transfers.
@@ -373,7 +399,7 @@ argument should contain the name of the core file to be generated
 and the
 .Fa data
 argument should contain the length of the core filename.
-.It Dv PT_LWPINFO
+.It Dv PT_LWPSTATUS
 Returns information about a thread from the list of threads for the
 process specified in the
 .Fa pid
@@ -381,41 +407,50 @@ argument.
 The
 .Fa addr
 argument should contain a
-.Dq Li "struct ptrace_lwpinfo"
+.Vt struct ptrace_lwpstatus
 defined as:
 .Bd -literal -offset indent
-struct ptrace_lwpinfo {
+struct ptrace_lwpstatus {
 	lwpid_t pl_lwpid;
-	int pl_event;
+	sigset_t pl_sigpend;
+	sigset_t pl_sigmask;
+	char pl_name[20];
+	void *pl_private;
 };
 .Ed
 .Pp
 where
 .Fa pl_lwpid
 contains a thread LWP ID.
-Information is returned for the thread following the one with the
-specified ID in the process thread list, or for the first thread
-if
-.Fa pl_lwpid
-is 0.
-Upon return
-.Fa pl_lwpid
-contains the LWP ID of the thread that was found, or 0 if there is
-no thread after the one whose LWP ID was supplied in the call.
-.Fa pl_event
-contains the event that stopped the thread.
-Possible values are:
-.Pp
-.Bl -tag -width 30n -offset indent -compact
-.It Dv PL_EVENT_NONE
-.It Dv PL_EVENT_SIGNAL
-.It Dv PL_EVENT_SUSPENDED
-.El
+Information is returned for the thread specified in
+.Fa pl_lwpid .
+.Fa pl_sigpend
+contains the signals pending on that LWP.
+.Fa pl_sigmask
+contains the signals masked on that LWP.
+.Fa pl_name
+contains printable name of the LWP.
+The string is always NUL terminated.
+.Fa pl_private
+contains the pointer to TLS base.
 .Pp
 The
 .Fa data
 argument should contain
-.Dq Li "sizeof(struct ptrace_lwpinfo)" .
+.Dq Li sizeof(struct ptrace_lwpinfo) .
+.It Dv PT_LWPNEXT
+Is the same as
+.Dv PT_LWPSTATUS ,
+except that information is returned for the thread following the one with the
+specified ID in the process thread list, or for the first thread
+if
+.Fa pl_lwpid
+is 0.
+.Pp
+Upon return
+.Fa pl_lwpid
+contains the LWP ID of the thread that was found, or 0 if there is
+no thread after the one whose LWP ID was supplied in the call.
 .It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
 Otherwise this operation is the same as
@@ -433,7 +468,7 @@ shall be used.
 This request can be used to specify which events in the traced process
 should be reported to the tracing process.
 These events are specified in a
-.Dq Li "struct ptrace_event"
+.Vt struct ptrace_event
 defined as:
 .Bd -literal -offset indent
 typedef struct ptrace_event {
@@ -458,17 +493,17 @@ Report parent resumed after
 Report thread birth.
 .It PTRACE_LWP_EXIT
 Report thread termination.
+.It PTRACE_POSIX_SPAWN
+Report
+.Xr posix_spawn 3 .
 .El
 .Pp
 The
 .Xr fork 2
 and
 .Xr vfork 2
-events can occur with similar operations,
-like
-.Xr clone 2
-or
-.Xr posix_spawn 3 .
+events can occur with
+.Xr clone 2 .
 The
 .Dv PTRACE_FORK
 value means that process gives birth to its child
@@ -477,7 +512,7 @@ without pending on its termination or
 operation.
 If enabled,
 the child is also traced by the debugger and
-.Dv SIGRAP
+.Dv SIGTRAP
 is generated twice,
 first for the parent and second for the child.
 The
@@ -489,6 +524,16 @@ The
 .Dv PTRACE_VFORK_DONE
 event can be used to report unblocking of the parent.
 .Pp
+.Fn posix_spawn
+on
+.Nx
+directly creates the child process without intermediate fork.
+The
+.Dv PTRACE_POSIX_SPAWN
+event semantics are the same as
+.Dv PTRACE_FORK ,
+but the child is reported with implied execution of a file.
+.Pp
 A pointer to this structure is passed in
 .Fa addr .
 The
@@ -499,7 +544,7 @@ argument should be set to
 This request can be used to determine which events in the traced
 process will be reported.
 The information is read into the
-.Dq Li struct ptrace_event
+.Vt struct ptrace_event
 pointed to by
 .Fa addr .
 The
@@ -510,12 +555,15 @@ argument should be set to
 This request reads the state information associated with the event
 that stopped the traced process.
 The information is reported in a
-.Dq Li "struct ptrace_state"
-defined as:
+.Vt struct ptrace_state
+that is equivalent to:
 .Bd -literal -offset indent
 typedef struct ptrace_state {
 	int	pe_report_event;
-	pid_t	pe_other_pid;
+	union {
+		pid_t	pe_other_pid;
+		lwpid_t	pe_lwp;
+	};
 } ptrace_state_t;
 .Ed
 .Pp
@@ -528,7 +576,7 @@ argument should be set to
 .It Dv PT_SET_SIGINFO
 This request can be used to specify signal information emitted to tracee.
 This signal information is specified in
-.Dq Li "struct ptrace_siginfo"
+.Vt struct ptrace_siginfo
 defined as:
 .Bd -literal -offset indentq
 typedef struct ptrace_siginfo {
@@ -568,7 +616,7 @@ see
 .Xr siginfo 2
 .Pc .
 The information is read into the
-.Dq Li struct ptrace_siginfo
+.Vt struct ptrace_siginfo
 pointed to by
 .Fa addr .
 The
@@ -624,12 +672,25 @@ If the
 argument is less than zero, it contains the negative of the LWP ID of
 the thread to be stepped, and only that thread executes.
 .It Dv PT_SETSTEP
-This request will turn on single stepping of the specified process.
+This request will turn on single stepping of the specified thread.
+.Fa addr
+is unused.
+.Fa data
+specifies the LWP ID of the thread to be stepped.
+The execution does not continue until
+.Dv PT_CONTINUE
+is issued.
+This request permits combining single-stepping with sending signals and
+.Dv PT_SYSCALL .
 .It Dv PT_CLEARSTEP
-This request will turn off single stepping of the specified process.
+This request will turn off single stepping of the specified thread.
+.Fa addr
+is unused.
+.Fa data
+specifies the LWP ID of the thread to disable single-stepping.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
-.Dq Li "struct reg"
+.Vt struct reg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -643,7 +704,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETREGS ;
 it loads the traced process' machine registers from the
-.Dq Li "struct reg"
+.Vt struct reg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -656,7 +717,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETFPREGS
 This request reads the traced process' floating-point registers into
 the
-.Dq Li "struct fpreg"
+.Vt struct fpreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -670,7 +731,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
-.Dq Li "struct fpreg"
+.Vt struct fpreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -683,7 +744,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETDBREGS
 This request reads the traced process' debug registers into
 the
-.Dq Li "struct dbreg"
+.Vt struct dbreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -697,7 +758,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETDBREGS ;
 it loads the traced process' debug registers from the
-.Dq Li "struct dbreg"
+.Vt struct dbreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -710,7 +771,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETXMMREGS
 This request reads the traced process' XMM registers into
 the
-.Dq Li "struct xmmregs"
+.Vt struct xmmregs
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -724,7 +785,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETXMMREGS ;
 it loads the traced process' XMM registers from the
-.Dq Li "struct xmmregs"
+.Vt struct xmmregs
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -737,7 +798,7 @@ If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETVECREGS
 This request reads the traced process' vector registers into
 the
-.Dq Li "struct vreg"
+.Vt struct vreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -751,7 +812,7 @@ If zero is supplied, the first thread of the process is read.
 This request is the converse of
 .Dv PT_GETVECREGS ;
 it loads the traced process' vector registers from the
-.Dq Li "struct vreg"
+.Vt struct vreg
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -761,13 +822,76 @@ The
 argument contains the LWP ID of the thread whose registers are to
 be written.
 If zero is supplied, the first thread of the process is written.
+.It Dv PT_GETXSTATE
+This request reads the traced process' FPU extended state into
+the
+.Vt struct xstate
+(defined in
+.In machine/cpu_extended_state.h ) .
+.Fa addr
+should be a pointer to
+.Vt struct iovec
+(defined in
+.In sys/uio.h )
+specifying the pointer to the aforementioned struct as
+.Fa iov_base
+and its size as
+.Fa iov_len .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.
+If zero is supplied, the first thread of the process is read.
+The struct will be filled up to the specified
+.Fa iov_len .
+The caller needs to check the
+.Fa xs_rfbm
+bitmap in order to determine which fields were provided by the CPU,
+and may check
+.Fa xs_xstate_bv
+to determine which component states were changed from the initial state.
+.It Dv PT_SETXSTATE
+This request is the converse of
+.Dv PT_GETXSTATE ;
+it loads the traced process' extended FPU state from the
+.Vt struct xstate
+(defined in
+.In machine/cpu_extended_state.h ) .
+.Fa addr
+should be a pointer to
+.Vt struct iovec
+(defined in
+.In sys/uio.h )
+specifying the pointer to the aforementioned struct as
+.Fa iov_base
+and its size as
+.Fa iov_len .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+The
+.Fa xs_rfbm
+field of the supplied xstate specifies which state components are to
+be updated.
+Other components (fields) will be ignored.
+The
+.Fa xs_xstate_bv
+field specifies whether component state should be set to provided
+values (when 1) or reset to unitialized (when 0).
+The request will fail if
+.Fa xs_xstate_bv
+is not a subset of
+.Fa xs_rfbm ,
+or any of the specified components is not supported by the CPU or kernel
+(i.e., not returned by
+.Dv PT_GETXSTATE ) .
 .El
 .Sh ERRORS
 Some requests can cause
 .Fn ptrace
-to return
-.Li \-1
-as a non-error value; to disambiguate,
+to return \-1 as a non-error value; to disambiguate,
 .Va errno
 can be set to 0 before the call and checked afterwards.
 The possible errors are:
@@ -809,8 +933,10 @@ was neither 0 nor a legal signal number.
 .Dv PT_GETREGS ,
 .Dv PT_SETREGS ,
 .Dv PT_GETFPREGS ,
+.Dv PT_SETFPREGS ,
+.Dv PT_GETXSTATE ,
 or
-.Dv PT_SETFPREGS
+.Dv PT_SETXSTATE
 was attempted on a process with no valid register set.
 (This is normally true only of system processes.)
 .It
@@ -822,6 +948,13 @@ or
 with
 .Dv vm.user_va0_disable
 set to 1.
+.It
+.Dv PT_SETXSTATE
+attempted to set state components not supported by the kernel,
+or
+.Dv xs_xstate_bv
+was not a subset of
+.Dv xs_rfbm .
 .El
 .It Bq Er EPERM
 .Bl -bullet -compact
@@ -863,10 +996,3 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.Pp
-.Dv PT_SET_SIGINFO ,
-.Dv PT_RESUME
-and
-.Dv PT_SUSPEND
-can change the image of process returned by
-.Dv PT_LWPINFO .

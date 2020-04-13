@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.4 2018/05/05 17:16:23 christos Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.4.2.1 2020/04/13 08:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.4 2018/05/05 17:16:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.4.2.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -68,7 +68,7 @@ acpi_enter_i2c_hid(struct acpi_devnode *devnode, prop_dictionary_t dev)
 	obj[2].Type = ACPI_TYPE_INTEGER;
 	obj[2].Integer.Value = 1;
 
-	obj[3].Type = ACPI_TYPE_ANY;
+	obj[3].Type = ACPI_TYPE_PACKAGE;
 	obj[3].Buffer.Length = 0;
 
 	buf.Pointer = NULL;

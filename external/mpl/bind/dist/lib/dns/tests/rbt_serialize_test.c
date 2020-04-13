@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_serialize_test.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
+/*	$NetBSD: rbt_serialize_test.c,v 1.3.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,20 +20,15 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <stdlib.h>
-#include <inttypes.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
+#include <stdlib.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
-
-#include <dns/rbt.h>
-#include <dns/fixedname.h>
-#include <dns/result.h>
-#include <dns/compress.h>
-#include "dnstest.h"
 
 #include <isc/app.h>
 #include <isc/buffer.h>
@@ -44,18 +39,24 @@
 #include <isc/os.h>
 #include <isc/print.h>
 #include <isc/random.h>
-#include <isc/string.h>
 #include <isc/socket.h>
 #include <isc/stdio.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
+#include <dns/compress.h>
+#include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/name.h>
+#include <dns/rbt.h>
+#include <dns/result.h>
 #include <dns/result.h>
 
 #include <dst/dst.h>
+
+#include "dnstest.h"
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
@@ -337,6 +338,7 @@ serialize_test(void **state) {
 	 * Map in the whole file in one go
 	 */
 	fd = open("zone.bin", O_RDWR);
+	assert_int_not_equal(fd, -1);
 	isc_file_getsizefd(fd, &filesize);
 	base = mmap(NULL, filesize, PROT_READ|PROT_WRITE,
 		    MAP_FILE|MAP_PRIVATE, fd, 0);
@@ -397,6 +399,7 @@ deserialize_corrupt_test(void **state) {
 		dns_rbt_t *rbt_deserialized = NULL;
 
 		fd = open("zone.bin", O_RDWR);
+		assert_int_not_equal(fd, -1);
 		isc_file_getsizefd(fd, &filesize);
 		base = mmap(NULL, filesize, PROT_READ|PROT_WRITE,
 			    MAP_FILE|MAP_PRIVATE, fd, 0);

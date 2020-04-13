@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/01/06 17:25:32 christos Exp $
+#	$NetBSD: Makefile,v 1.20.14.1 2020/04/13 08:06:08 martin Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -14,6 +14,7 @@ TZVERSION=0
 TZVERSION!= ${TOOL_CAT} ${NETBSDSRCDIR}/lib/libc/time/version
 .endif
 CPPFLAGS+=-DPKGVERSION='"(tzcode) "' -DTZVERSION='"${TZVERSION}"'
+CPPFLAGS+=-DZIC_BLOAT_DEFAULT='"slim"'
 
 .PATH: ${NETBSDSRCDIR}/lib/libc/time
 

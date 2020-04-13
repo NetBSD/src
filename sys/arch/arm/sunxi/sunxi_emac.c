@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.15.2.2 2020/04/08 14:07:31 martin Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.15.2.3 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.15.2.2 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.15.2.3 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1280,23 +1280,33 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 	bus_addr_t addr, size;
 
 	/* Map EMAC registers */
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0)
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error_dev(sc->dev, "unable to get registers\n");
 		return ENXIO;
-	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh) != 0)
+	}
+	if (bus_space_map(sc->bst, addr, size, 0, &sc->bsh) != 0) {
+		aprint_error_dev(sc->dev, "unable to map registers\n");
 		return ENXIO;
+	}
 
 	/* Get SYSCON registers */
 	sc->syscon = fdtbus_syscon_acquire(phandle, "syscon");
-	if (sc->syscon == NULL)
+	if (sc->syscon == NULL) {
+		aprint_error_dev(sc->dev, "unable to acquire syscon\n");
 		return ENXIO;
+	}
 
 	/* The "ahb"/"stmmaceth" clock and reset is required */
 	if ((sc->clk_ahb = fdtbus_clock_get(phandle, "ahb")) == NULL &&
-	    (sc->clk_ahb = fdtbus_clock_get(phandle, "stmmaceth")) == NULL)
+	    (sc->clk_ahb = fdtbus_clock_get(phandle, "stmmaceth")) == NULL) {
+		aprint_error_dev(sc->dev, "unable to get clock\n");
 		return ENXIO;
+	}
 	if ((sc->rst_ahb = fdtbus_reset_get(phandle, "ahb")) == NULL &&
-	    (sc->rst_ahb = fdtbus_reset_get(phandle, "stmmaceth")) == NULL)
+	    (sc->rst_ahb = fdtbus_reset_get(phandle, "stmmaceth")) == NULL) {
+		aprint_error_dev(sc->dev, "unable to get reset\n");
 		return ENXIO;
+	}
 
 	/* Internal PHY clock and reset are optional properties. */
 	sc->clk_ephy = fdtbus_clock_get(phandle, "ephy");
@@ -1366,21 +1376,22 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sc->type = of_search_compatible(phandle, compat_data)->data;
 	sc->phy_id = sunxi_emac_get_phyid(sc);
 
+	aprint_naive("\n");
+	aprint_normal(": EMAC\n");
+
 	if (sunxi_emac_get_resources(sc) != 0) {
-		aprint_error(": cannot allocate resources for device\n");
+		aprint_error_dev(self,
+		    "cannot allocate resources for device\n");
 		return;
 	}
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": cannot decode interrupt\n");
+		aprint_error_dev(self, "cannot decode interrupt\n");
 		return;
 	}
 
 	mutex_init(&sc->mtx, MUTEX_DEFAULT, IPL_NET);
 	callout_init(&sc->stat_ch, CALLOUT_FLAGS);
 	callout_setfunc(&sc->stat_ch, sunxi_emac_tick, sc);
-
-	aprint_naive("\n");
-	aprint_normal(": EMAC\n");
 
 	/* Setup clocks and regulators */
 	if (sunxi_emac_setup_resources(sc) != 0)

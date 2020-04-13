@@ -267,6 +267,7 @@ BEGIN
     IDS_UNINSTALL_MESSAGE   "Unregister Messages..."
     IDS_ERR_OPEN_SCM        "Could not open Service Control Manager\n(%s)"
     IDS_ERR_OPEN_SERVICE    "Could not open BIND Service\n(%s)"
+    IDS_ERR_START_SERVICE   "Could not start BIND Service\n(%s)"
     IDS_ERR_STOP_SERVICE    "Could not stop BIND Service\n(%s)"
     IDS_ERR_NONCRIT_FILE    "An error occurred while copying non-critical file %s\n(%s)\nDo you wish to continue?"
     IDS_ERR_COPY_FILE       "An error occurred while copying file %s\n(%s)\nInstallation will be terminated"

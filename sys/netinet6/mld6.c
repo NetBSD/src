@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.99.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: mld6.c,v 1.99.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.99.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.99.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,7 +191,8 @@ mld_starttimer(struct in6_multi *in6m)
 	struct timeval now;
 
 	KASSERT(rw_write_held(&in6_multilock));
-	KASSERT(in6m->in6m_timer != IN6M_TIMER_UNDEF);
+	KASSERTMSG(in6m->in6m_timer != IN6M_TIMER_UNDEF,
+	    "in6m_timer=%d", in6m->in6m_timer);
 
 	microtime(&now);
 	in6m->in6m_timer_expire.tv_sec = now.tv_sec + in6m->in6m_timer / hz;
@@ -233,7 +234,8 @@ mld_timeo(void *arg)
 {
 	struct in6_multi *in6m = arg;
 
-	KASSERT(in6m->in6m_refcount > 0);
+	KASSERTMSG(in6m->in6m_refcount > 0, "in6m_refcount=%d",
+	    in6m->in6m_refcount);
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	rw_enter(&in6_multilock, RW_WRITER);
@@ -774,7 +776,8 @@ in6m_destroy(struct in6_multi *in6m)
 	struct sockaddr_in6 sin6;
 
 	KASSERT(rw_write_held(&in6_multilock));
-	KASSERT(in6m->in6m_refcount == 0);
+	KASSERTMSG(in6m->in6m_refcount == 0, "in6m_refcount=%d",
+	    in6m->in6m_refcount);
 
 	/*
 	 * Unlink from list if it's listed.  This must be done before
@@ -823,7 +826,8 @@ in6_delmulti_locked(struct in6_multi *in6m)
 {
 
 	KASSERT(rw_write_held(&in6_multilock));
-	KASSERT(in6m->in6m_refcount > 0);
+	KASSERTMSG(in6m->in6m_refcount > 0, "in6m_refcount=%d",
+	    in6m->in6m_refcount);
 
 	/*
 	 * The caller should have a reference to in6m. So we don't need to care

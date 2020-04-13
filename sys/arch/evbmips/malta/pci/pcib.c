@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.18 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.18.30.1 2020/04/13 08:03:48 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18.30.1 2020/04/13 08:03:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,10 +508,7 @@ pcib_isa_intr_establish(void *v, int irq, int type, int level,
 		return (NULL);
 	}
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

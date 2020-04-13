@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.157.18.1 2019/06/10 22:06:46 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.157.18.2 2020/04/13 08:04:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.157.18.1 2019/06/10 22:06:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.157.18.2 2020/04/13 08:04:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2101,10 +2101,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 
 		fd_formb = malloc(sizeof(struct ne7_fd_formb),
-		    M_TEMP, M_NOWAIT);
-		if (fd_formb == 0)
-			return (ENOMEM);
-
+		    M_TEMP, M_WAITOK);
 		fd_formb->head = form_cmd->head;
 		fd_formb->cyl = form_cmd->cylinder;
 		fd_formb->transfer_rate = fd->sc_type->rate;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.25.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.25.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.25.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.25.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -427,12 +427,12 @@ tcp_congctl_fillnames(void)
 static void
 tcp_common_congestion_exp(struct tcpcb *tp, int betaa, int betab)
 {
-	u_int win;
+	u_long win;
 
 	/* 
 	 * Reduce the congestion window and the slow start threshold.
 	 */
-	win = uimin(tp->snd_wnd, tp->snd_cwnd) * betaa / betab / tp->t_segsz;
+	win = ulmin(tp->snd_wnd, tp->snd_cwnd) * betaa / betab / tp->t_segsz;
 	if (win < 2)
 		win = 2;
 
@@ -519,7 +519,7 @@ tcp_reno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 static void
 tcp_reno_slow_retransmit(struct tcpcb *tp)
 {
-	u_int win;
+	u_long win;
 
 	/*
 	 * Close the congestion window down to one segment
@@ -546,7 +546,7 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 	 * to go below this.)
 	 */
 
-	win = uimin(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
+	win = ulmin(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 	if (win < 2)
 		win = 2;
 	/* Loss Window MUST be one segment. */

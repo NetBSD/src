@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.16 2018/02/08 17:45:29 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.16.4.1 2020/04/13 08:06:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.16 2018/02/08 17:45:29 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.16.4.1 2020/04/13 08:06:06 martin Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -1450,7 +1450,7 @@ dispatch_socket_accept(int fd, short event, void *ev)
  *
  * I do not know if libevent can tell us the difference
  * between available data and an EOF. But it does not matter
- * because there should not be any incoming data.
+ * because there should not be any incoming data beside metadata.
  * So we close the connection either because the peer closed its
  * side or because the peer broke the protocol by sending us stuff  ;-)
  */
@@ -1460,11 +1460,26 @@ dispatch_tls_eof(int fd, short event, void *arg)
 	struct tls_conn_settings *conn_info = (struct tls_conn_settings *) arg;
 	sigset_t newmask, omask;
 	struct timeval tv;
+	int rc;
+	char buf[1];
 
 	BLOCK_SIGNALS(omask, newmask);
 	DPRINTF((D_TLS|D_EVENT|D_CALL), "dispatch_eof_tls(%d, %d, %p)\n",
 	    fd, event, arg);
 	assert(conn_info->state == ST_TLS_EST);
+
+	/* First check for incoming metadata. */
+	ST_CHANGE(conn_info->state, ST_READING);
+	rc = SSL_read(conn_info->sslptr, buf, sizeof(buf));
+	ST_CHANGE(conn_info->state, ST_TLS_EST);
+	if (rc <= 0 && tls_examine_error("SSL_read()", conn_info->sslptr,
+	    conn_info, rc) == TLS_RETRY_READ) {
+		/* Connection is still alive, rearm and return. */
+		EVENT_ADD(conn_info->event);
+		RESTORE_SIGNALS(omask);
+		return;
+	}
+
 	ST_CHANGE(conn_info->state, ST_EOF);
 	DEL_EVENT(conn_info->event);
 

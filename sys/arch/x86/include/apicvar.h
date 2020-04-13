@@ -1,4 +1,4 @@
-/* 	$NetBSD: apicvar.h,v 1.5 2008/04/28 20:23:40 martin Exp $ */
+/* 	$NetBSD: apicvar.h,v 1.5.88.1 2020/04/13 08:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,14 @@ struct apic_attach_args {
 	int apic_vecbase;
 };
 
-void apic_format_redir(const char *, const char *, int, u_int32_t, u_int32_t);
+/*
+ * Dump function for both LAPIC and I/O APIC.
+ * The 3rd argument is APIC_VECTYPE_*.
+ */
+#define APIC_VECTYPE_LAPIC_LVT	1
+#define APIC_VECTYPE_LAPIC_ICR	2
+#define APIC_VECTYPE_IOAPIC	3
+void apic_format_redir(const char *, const char *, int, int, uint32_t,
+    uint32_t);
 
 #endif /* !_X86_APICVAR_H_ */

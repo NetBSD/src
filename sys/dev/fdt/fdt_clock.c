@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.4.2.1 2019/06/10 22:07:07 christos Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.4.2.2 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.4.2.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.4.2.2 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,8 +133,8 @@ fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 	return fdtbus_clock_get_index(phandle, index);
 }
 
-static u_int
-fdtbus_clock_count_prop(int phandle, const char *prop)
+u_int
+fdtbus_clock_count(int phandle, const char *prop)
 {
 	u_int n, clock_cells;
 	int len, resid;
@@ -159,6 +159,30 @@ struct clk *
 fdtbus_clock_get(int phandle, const char *clkname)
 {
 	return fdtbus_clock_get_prop(phandle, clkname, "clock-names");
+}
+
+int
+fdtbus_clock_enable(int phandle, const char *clkname, bool required)
+{
+	struct clk *clk;
+
+	clk = fdtbus_clock_get(phandle, clkname);
+	if (clk == NULL)
+		return required ? ENOENT : 0;
+
+	return clk_enable(clk);
+}
+
+int
+fdtbus_clock_enable_index(int phandle, u_int index, bool required)
+{
+	struct clk *clk;
+
+	clk = fdtbus_clock_get_index(phandle, index);
+	if (clk == NULL)
+		return required ? ENOENT : 0;
+
+	return clk_enable(clk);
 }
 
 /*
@@ -207,8 +231,8 @@ fdtbus_clock_assign(int phandle)
 	if (rates == NULL)
 		rates_len = 0;
 
-	const u_int nclocks = fdtbus_clock_count_prop(phandle, "assigned-clocks");
-	const u_int nparents = fdtbus_clock_count_prop(phandle, "assigned-clock-parents");
+	const u_int nclocks = fdtbus_clock_count(phandle, "assigned-clocks");
+	const u_int nparents = fdtbus_clock_count(phandle, "assigned-clock-parents");
 	const u_int nrates = rates_len / sizeof(*rates);
 
 	for (index = 0; index < nclocks; index++) {

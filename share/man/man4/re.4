@@ -1,4 +1,4 @@
-.\"	$NetBSD: re.4,v 1.16 2014/03/18 18:20:39 riastradh Exp $
+.\"	$NetBSD: re.4,v 1.16.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd April 6, 2013
+.Dd November 18, 2019
 .Dt RE 4
 .Os
 .Sh NAME
@@ -66,9 +66,13 @@ Corega CG-LAPCIGT Gigabit Ethernet (8169S)
 .It
 D-Link DGE-528T Gigabit Ethernet (8169S)
 .It
+D-Link DGE-530T rev. C & D Gigabit Ethernet (8169)
+.It
 US Robotics (3Com) USR997902 Gigabit Ethernet (8169S)
 .It
 Linksys EG1032 rev. 3 Gigabit Ethernet (8169S)
+.It
+TP-Link TG-3468 v2 & v3 Gigabit Ethernet (8168)
 .El
 .Pp
 NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over
@@ -78,7 +82,7 @@ NICs based on the 8169, 8169S, 8168, and 8110S are capable of 10, 100, and
 .Pp
 All NICs supported by the
 .Nm
-driver have TCP/IP checksum offload and hardware VLAN tagging/insertion
+driver have IP/TCP/UDP checksum offload and hardware VLAN tagging/insertion
 features, and use a descriptor-based DMA mechanism.
 They are also capable of TCP large send (TCP segmentation offload).
 .Pp

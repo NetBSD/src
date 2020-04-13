@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.30 2009/03/23 18:38:54 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.30.64.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.30 2009/03/23 18:38:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.30.64.1 2020/04/13 08:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -71,13 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.30 2009/03/23 18:38:54 oster Exp $
 #include "rf_paritylog.h"
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
-int     (*rf_DiskReadFunc) (RF_DagNode_t *);
-int     (*rf_DiskWriteFunc) (RF_DagNode_t *);
-int     (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
-int     (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
-int     (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
-int     (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
-int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
+void     (*rf_DiskReadFunc) (RF_DagNode_t *);
+void     (*rf_DiskWriteFunc) (RF_DagNode_t *);
+void     (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
+void     (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
+void     (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
+void     (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
+void     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 
 /*****************************************************************************
  * main (only) configuration routine for this module
@@ -102,18 +102,17 @@ rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp)
 /*****************************************************************************
  * the execution function associated with a terminate node
  ****************************************************************************/
-int
+void
 rf_TerminateFunc(RF_DagNode_t *node)
 {
 	RF_ASSERT(node->dagHdr->numCommits == node->dagHdr->numCommitNodes);
 	node->status = rf_good;
-	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
+	rf_FinishNode(node, RF_THREAD_CONTEXT);
 }
 
-int
+void
 rf_TerminateUndoFunc(RF_DagNode_t *node)
 {
-	return (0);
 }
 
 
@@ -130,32 +129,31 @@ rf_TerminateUndoFunc(RF_DagNode_t *node)
  *
  ****************************************************************************/
 
-int
+void
 rf_DiskReadMirrorIdleFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
 
 	rf_SelectMirrorDiskIdle(node);
-	return (rf_DiskReadFunc(node));
+	rf_DiskReadFunc(node);
 }
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0) || (RF_DEBUG_VALIDATE_DAG > 0)
-int
+void
 rf_DiskReadMirrorPartitionFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
 
 	rf_SelectMirrorDiskPartition(node);
-	return (rf_DiskReadFunc(node));
+	rf_DiskReadFunc(node);
 }
 #endif
 
-int
+void
 rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node)
 {
-	return (0);
 }
 
 
@@ -164,7 +162,7 @@ rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node)
 /*****************************************************************************
  * the execution function associated with a parity log update node
  ****************************************************************************/
-int
+void
 rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -181,7 +179,7 @@ rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 #endif
 		logData = rf_CreateParityLogData(RF_UPDATE, pda, bf,
 		    (RF_Raid_t *) (node->dagHdr->raidPtr),
-		    node->wakeFunc, (void *) node,
+		    node->wakeFunc, node,
 		    node->dagHdr->tracerec, timer);
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
@@ -194,14 +192,13 @@ rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
-	return (0);
 }
 
 
 /*****************************************************************************
  * the execution function associated with a parity log overwrite node
  ****************************************************************************/
-int
+void
 rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
@@ -218,7 +215,7 @@ rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 #endif
 		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, bf,
 (RF_Raid_t *) (node->dagHdr->raidPtr),
-		    node->wakeFunc, (void *) node, node->dagHdr->tracerec, timer);
+		    node->wakeFunc, node, node->dagHdr->tracerec, timer);
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
 		else {
@@ -230,44 +227,41 @@ rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
-	return (0);
 }
 
-int
+void
 rf_ParityLogUpdateUndoFunc(RF_DagNode_t *node)
 {
-	return (0);
 }
 
-int
+void
 rf_ParityLogOverwriteUndoFunc(RF_DagNode_t *node)
 {
-	return (0);
 }
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
 /*****************************************************************************
  * the execution function associated with a NOP node
  ****************************************************************************/
-int
+void
 rf_NullNodeFunc(RF_DagNode_t *node)
 {
 	node->status = rf_good;
-	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
+	rf_FinishNode(node, RF_THREAD_CONTEXT);
 }
 
-int
+void
 rf_NullNodeUndoFunc(RF_DagNode_t *node)
 {
 	node->status = rf_undone;
-	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
+	rf_FinishNode(node, RF_THREAD_CONTEXT);
 }
 
 
 /*****************************************************************************
  * the execution function associated with a disk-read node
  ****************************************************************************/
-int
+void
 rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
@@ -284,9 +278,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
-	    bf, parityStripeID, which_ru,
-	    (int (*) (void *, int)) node->wakeFunc,
-	    node,
+	    bf, parityStripeID, which_ru, node->wakeFunc, node,
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
@@ -299,14 +291,13 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 		node->dagFuncData = (void *) req;
 		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
-	return (0);
 }
 
 
 /*****************************************************************************
  * the execution function associated with a disk-write node
  ****************************************************************************/
-int
+void
 rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
@@ -324,9 +315,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 
 	/* normal processing (rollaway or forward recovery) begins here */
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
-	    bf, parityStripeID, which_ru,
-	    (int (*) (void *, int)) node->wakeFunc,
-	    (void *) node,
+	    bf, parityStripeID, which_ru, node->wakeFunc, node,
 #if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
 #else
@@ -341,15 +330,13 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 		node->dagFuncData = (void *) req;
 		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
-
-	return (0);
 }
 /*****************************************************************************
  * the undo function for disk nodes
  * Note:  this is not a proper undo of a write node, only locks are released.
  *        old data is not restored to disk!
  ****************************************************************************/
-int
+void
 rf_DiskUndoFunc(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
@@ -357,9 +344,7 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
-	    0L, 0, NULL, 0L, 0,
-	    (int (*) (void *, int)) node->wakeFunc,
-	    (void *) node,
+	    0L, 0, NULL, 0L, 0, node->wakeFunc, node,
 #if RF_ACC_TRACE > 0
 	     node->dagHdr->tracerec,
 #else
@@ -373,8 +358,6 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 		node->dagFuncData = (void *) req;
 		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 	}
-
-	return (0);
 }
 
 /*****************************************************************************
@@ -382,9 +365,10 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
  * op completes, the routine is called to set the node status and
  * inform the execution engine that the node has fired.
  ****************************************************************************/
-int
-rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
+void
+rf_GenericWakeupFunc(void *v, int status)
 {
+	RF_DagNode_t *node = v;
 
 	switch (node->status) {
 	case rf_fired:
@@ -409,7 +393,7 @@ rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
 	}
 	if (node->dagFuncData)
 		rf_FreeDiskQueueData((RF_DiskQueueData_t *) node->dagFuncData);
-	return (rf_FinishNode(node, RF_INTR_CONTEXT));
+	rf_FinishNode(node, RF_INTR_CONTEXT);
 }
 
 
@@ -438,7 +422,7 @@ rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
  * assume the result field points to a buffer that is the size of one
  * SU, and use the pda params to determine where within the buffer to
  * XOR the input buffers.  */
-int
+void
 rf_RegularXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -465,12 +449,12 @@ rf_RegularXorFunc(RF_DagNode_t *node)
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
 #endif
 	}
-	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
-							 * explicitly since no
-							 * I/O in this node */
+	rf_GenericWakeupFunc(node, retcode);	/* call wake func
+						 * explicitly since no
+						 * I/O in this node */
 }
 /* xor the inputs into the result buffer, ignoring placement issues */
-int
+void
 rf_SimpleXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -496,9 +480,9 @@ rf_SimpleXorFunc(RF_DagNode_t *node)
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
 #endif
 	}
-	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
-							 * explicitly since no
-							 * I/O in this node */
+	rf_GenericWakeupFunc(node, retcode);	/* call wake func
+						 * explicitly since no
+						 * I/O in this node */
 }
 /* this xor is used by the degraded-mode dag functions to recover lost
  * data.  the second-to-last parameter is the PDA for the failed
@@ -507,7 +491,7 @@ rf_SimpleXorFunc(RF_DagNode_t *node)
  * sectors in the failed PDA.  It then uses the other PDAs in the
  * parameter list to determine where within the target buffer the
  * corresponding data should be xored.  */
-int
+void
 rf_RecoveryXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -540,7 +524,7 @@ rf_RecoveryXorFunc(RF_DagNode_t *node)
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
 #endif
 	}
-	return (rf_GenericWakeupFunc(node, retcode));
+	rf_GenericWakeupFunc(node, retcode);
 }
 /*****************************************************************************
  * The next three functions are utilities used by the above

@@ -1,0 +1,97 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcLogLevel: Sync
+olcLogLevel: Stats
+olcPidFile: @TESTDIR@/slapd.1.pid
+olcArgsFile: @TESTDIR@/slapd.1.args
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://@TESTWD@/@SCHEMADIR@/core.ldif
+include: file://@TESTWD@/@SCHEMADIR@/cosine.ldif
+include: file://@TESTWD@/@SCHEMADIR@/inetorgperson.ldif
+
+#mod#dn: cn=module{0},cn=config
+#mod#objectClass: olcModuleList
+#mod#cn: module{0}
+#mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
+#mod#olcModuleLoad: {0}back_@BACKEND@.la
+
+#monitormod#dn: cn=module{1},cn=config
+#monitormod#objectClass: olcModuleList
+#monitormod#cn: module{1}
+#monitormod#olcModulePath: @TESTWD@/../servers/slapd/back-monitor/
+#monitormod#olcModuleLoad: {0}back_monitor.la
+
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAccess: {0}to dn=""  by * read
+olcAccess: {1}to *  by self write  by users read  by anonymous auth
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcRootPW:< file://@TESTDIR@/configpw
+olcAccess: {0}to *  by * none
+
+dn: olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {1}@BACKEND@
+olcSuffix: ou=Accounting,dc=example,dc=com
+olcSubordinate: advertise
+olcRootDN: cn=Manager,dc=example,dc=com
+#~null~#olcDbDirectory: @TESTDIR@/db.1.a
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcDatabase={2}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {2}@BACKEND@
+olcSuffix: ou=Administrative,dc=example,dc=com
+olcSubordinate: advertise
+olcRootDN: cn=Manager,dc=example,dc=com
+#~null~#olcDbDirectory: @TESTDIR@/db.2.a
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcDatabase={3}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {3}@BACKEND@
+olcSuffix: ou=Janitorial,dc=example,dc=com
+olcSubordinate: advertise
+olcRootDN: cn=Manager,dc=example,dc=com
+#~null~#olcDbDirectory: @TESTDIR@/db.3.a
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcDatabase={4}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {4}@BACKEND@
+olcSuffix: dc=example,dc=com
+olcRootDN: cn=Manager,dc=example,dc=com
+olcRootPW: secret
+#~null~#olcDbDirectory: @TESTDIR@/db.4.a
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcOverlay={0}glue,olcDatabase={4}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+olcOverlay: {0}glue

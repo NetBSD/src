@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.55.64.1 2019/06/10 22:07:30 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.55.64.2 2020/04/13 08:04:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.55.64.1 2019/06/10 22:07:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.55.64.2 2020/04/13 08:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ static void decode_cftable_entry(struct pcmcia_tuple *, struct cis_state *);
 static void
 create_pf(struct cis_state *state)
 {
-	state->pf = malloc(sizeof(*state->pf), M_DEVBUF, M_NOWAIT|M_ZERO);
+	state->pf = malloc(sizeof(*state->pf), M_DEVBUF, M_WAITOK|M_ZERO);
 	state->pf->number = state->count++;
 	state->pf->last_config_index = -1;
 	SIMPLEQ_INIT(&state->pf->cfe_head);
@@ -1085,12 +1085,7 @@ decode_cftable_entry(struct pcmcia_tuple *tuple, struct cis_state *state)
 		return;
 	}
 	if (num != state->default_cfe->number) {
-		cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
-		if (cfe == NULL) {
-			printf("Cannot allocate cfe entry\n");
-			return;
-		}
-
+		cfe = malloc(sizeof(*cfe), M_DEVBUF, M_WAITOK);
 		*cfe = *state->default_cfe;
 
 		SIMPLEQ_INSERT_TAIL(&state->pf->cfe_head, cfe, cfe_list);

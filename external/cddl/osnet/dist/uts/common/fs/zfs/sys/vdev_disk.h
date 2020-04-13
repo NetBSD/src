@@ -52,6 +52,7 @@ typedef struct vdev_disk {
 	char            *vd_minor;
 	vnode_t         *vd_vp;
 	struct workqueue *vd_wq;
+	int		vd_maxphys;
 #endif
 } vdev_disk_t;
 #endif

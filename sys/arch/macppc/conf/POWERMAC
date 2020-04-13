@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.69.4.1 2019/06/10 22:06:27 christos Exp $
+#	$NetBSD: POWERMAC,v 1.69.4.2 2020/04/13 08:03:58 martin Exp $
 #
 # POWERMAC config file
 #
@@ -106,6 +106,7 @@ adbkbd* at nadb?			# ADB keyboard
 #options 	ADB_DEBUG
 #options 	ADBKBD_DEBUG
 adbms*	at nadb?
+ktm* 	at nadb?			# Kensington Turbo Mouse
 
 wskbd*	at wskbddev? console ?
 wsmouse* at wsmousedev?

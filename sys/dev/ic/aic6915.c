@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.36.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.36.2.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.36.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.36.2.2 2020/04/13 08:04:21 martin Exp $");
 
 
 #include <sys/param.h>
@@ -143,6 +143,7 @@ sf_attach(struct sf_softc *sc)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_tick_callout, 0);
+	callout_setfunc(&sc->sc_tick_callout, sf_tick, sc);
 
 	/*
 	 * If we're I/O mapped, the functional register handle is
@@ -403,6 +404,7 @@ sf_start(struct ifnet *ifp)
 				    "unable to allocate Tx mbuf\n");
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -467,11 +469,6 @@ sf_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (sc->sc_txpending == (SF_NTXDESC - 1)) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txpending != opending) {
 		KASSERT(last != -1);
 		/*
@@ -502,7 +499,7 @@ sf_watchdog(struct ifnet *ifp)
 	struct sf_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void) sf_init(ifp);
 
@@ -636,8 +633,6 @@ sf_txintr(struct sf_softc *sc)
 	if (consumer == producer)
 		return;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	while (consumer != producer) {
 		SF_CDTXCSYNC(sc, consumer, BUS_DMASYNC_POSTREAD);
 		tcd = le32toh(sc->sc_txcomp[consumer].tcd_word0);
@@ -746,7 +741,7 @@ sf_rxintr(struct sf_softc *sc)
 		 */
 		m = ds->ds_mbuf;
 		if (sf_add_rxbuf(sc, rxidx) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			SF_INIT_RXDESC(sc, rxidx);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -762,12 +757,13 @@ sf_rxintr(struct sf_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			SF_INIT_RXDESC(sc, rxidx);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		if (len > (MHLEN - 2)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -823,7 +819,7 @@ sf_tick(void *arg)
 	sf_stats_update(sc);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_callout, hz, sf_tick, sc);
+	callout_schedule(&sc->sc_tick_callout, hz);
 }
 
 /*
@@ -846,21 +842,26 @@ sf_stats_update(struct sf_softc *sc)
 		sf_genreg_write(sc, SF_STATS_BASE + (i * sizeof(uint32_t)), 0);
 	}
 
-	ifp->if_opackets += stats.TransmitOKFrames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += stats.SingleCollisionFrames +
-	    stats.MultipleCollisionFrames;
+	if_statadd_ref(nsr, if_opackets, stats.TransmitOKFrames);
 
-	ifp->if_oerrors += stats.TransmitAbortDueToExcessiveCollisions +
+	if_statadd_ref(nsr, if_collisions,
+	    stats.SingleCollisionFrames +
+	    stats.MultipleCollisionFrames);
+
+	if_statadd_ref(nsr, if_oerrors,
+	    stats.TransmitAbortDueToExcessiveCollisions +
 	    stats.TransmitAbortDueToExcessingDeferral +
-	    stats.FramesLostDueToInternalTransmitErrors;
+	    stats.FramesLostDueToInternalTransmitErrors);
 
-	ifp->if_ipackets += stats.ReceiveOKFrames;
-
-	ifp->if_ierrors += stats.ReceiveCRCErrors + stats.AlignmentErrors +
+	if_statadd_ref(nsr, if_ierrors,
+	    stats.ReceiveCRCErrors + stats.AlignmentErrors +
 	    stats.ReceiveFramesTooLong + stats.ReceiveFramesTooShort +
 	    stats.ReceiveFramesJabbersError +
-	    stats.FramesLostDueToInternalReceiveErrors;
+	    stats.FramesLostDueToInternalReceiveErrors);
+
+	IF_STAT_PUTREF(ifp);
 }
 
 /*
@@ -1083,17 +1084,16 @@ sf_init(struct ifnet *ifp)
 	    GEC_TxDmaEn | GEC_RxDmaEn | GEC_TransmitEn | GEC_ReceiveEn);
 
 	/* Start the on second clock. */
-	callout_reset(&sc->sc_tick_callout, hz, sf_tick, sc);
+	callout_schedule(&sc->sc_tick_callout, hz);
 
 	/*
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
@@ -1160,7 +1160,7 @@ sf_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)
@@ -1197,6 +1197,7 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {

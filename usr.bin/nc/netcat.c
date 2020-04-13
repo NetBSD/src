@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.5 2017/02/09 21:23:48 christos Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.5.16.1 2020/04/13 08:05:45 martin Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -180,7 +180,12 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	while ((ch = getopt(argc, argv,
-	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z")) != -1) {
+#ifdef CRYPTO
+	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z"
+#else
+	    "46Dde:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+#endif
+	)) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;

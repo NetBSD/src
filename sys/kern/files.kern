@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16.4.3 2020/04/08 14:08:51 martin Exp $
+#	$NetBSD: files.kern,v 1.16.4.4 2020/04/13 08:05:03 martin Exp $
 
 #
 # kernel sources
@@ -107,6 +107,7 @@ file	kern/subr_cprng.c		kern
 file	kern/subr_cpu.c			kern
 file	kern/subr_cpufreq.c		kern
 file	kern/subr_copy.c		kern
+file	kern/subr_csan.c		kcsan
 file	kern/subr_debug.c		debug
 file	kern/subr_device.c		kern
 file	kern/subr_devsw.c		kern
@@ -124,9 +125,7 @@ file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
 file	kern/subr_kcov.c		kcov
-defflag	opt_kmem.h			KMEM_GUARD
-					KMEM_SIZE
-defparam opt_kmem.h			KMEM_GUARD_DEPTH
+defflag	opt_kmem.h			KMEM_SIZE
 file	kern/subr_kmem.c		kern
 file	kern/subr_kobj.c		kern
 file	kern/subr_kobj_vfs.c		kern
@@ -134,6 +133,7 @@ file	kern/subr_localcount.c		kern
 file	kern/subr_lockdebug.c		kern
 file	kern/subr_log.c			kern
 file	kern/subr_lwp_specificdata.c	kern
+file	kern/subr_msan.c		kmsan
 file	kern/subr_once.c		kern
 file	kern/subr_optstr.c		kern
 file	kern/subr_pcq.c			kern

@@ -1,4 +1,4 @@
-/*	$NetBSD: rv770d.h,v 1.1.1.1.32.1 2019/06/10 22:08:27 christos Exp $	*/
+/*	$NetBSD: rv770d.h,v 1.1.1.1.32.2 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
@@ -563,7 +563,7 @@
 #define	SQ_DYN_GPR_SIZE_SIMD_AB_5			0x8DC4
 #define	SQ_DYN_GPR_SIZE_SIMD_AB_6			0x8DC8
 #define	SQ_DYN_GPR_SIZE_SIMD_AB_7			0x8DCC
-#define		ES_PRIO(x)					((x) << 30)
+#define		ES_PRIO(x)					((u32)(x) << 30)
 #define	SQ_GPR_RESOURCE_MGMT_1				0x8C04
 #define		NUM_PS_GPRS(x)					((x) << 0)
 #define		NUM_VS_GPRS(x)					((x) << 16)
@@ -661,7 +661,7 @@
 #define DMA_RB_WPTR                                       0xd00c
 
 /* async DMA packets */
-#define DMA_PACKET(cmd, t, s, n)	((((cmd) & 0xF) << 28) |	\
+#define DMA_PACKET(cmd, t, s, n)	((((u32)(cmd) & 0xF) << 28) |	\
 					 (((t) & 0x1) << 23) |		\
 					 (((s) & 0x1) << 22) |		\
 					 (((n) & 0xFFFF) << 0))

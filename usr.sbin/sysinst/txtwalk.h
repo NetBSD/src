@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,10 +50,11 @@ struct lookfor {
 	const char *head;	/* Line starts this way. */
 	const char *fmt;	/* Expected format. */
 	const char *todo;	/* What to do ... */
-	void *var;	/* Possible var */
-	size_t  nument;    /* Number of entries in the "array" */
-	size_t  size;	/* size of string variables */
-	int (*func) (struct data *list, size_t num);	/* function to call */
+	void *var;		/* Possible var or additional args */
+	size_t  nument;		/* Number of entries in the "array" */
+	size_t  size;		/* size of string variables */
+	int (*func) (struct data *list, size_t num, const struct lookfor*);
+				/* function to call */
 };
 
 /*  Format string for the expected string:

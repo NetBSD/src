@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.64 2018/05/23 01:03:46 christos Exp $
+.\"	$NetBSD: mail.1,v 1.64.2.1 2020/04/13 08:05:43 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd May 22, 2018
+.Dd December 14, 2019
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -61,7 +61,6 @@ is an intelligent mail processing system, which has
 a command syntax reminiscent of
 .Xr \&ed 1
 with lines replaced by messages.
-.Pp
 .Bl -tag -width flag
 .It Fl a
 Attach
@@ -407,7 +406,7 @@ Unexamined messages go back to the post office.
 .Fl f
 option above).
 .Ss Personal and system wide distribution lists
-It is also possible to create a personal distribution lists so that,
+It is also possible to create personal distribution lists so that,
 for instance, you can send mail to
 .Dq Li cohorts
 and have it go
@@ -1136,7 +1135,6 @@ Note:
 .Ic sort
 has no effect on the threading, sorting only on the heads
 of the threads if threads exist.
-.Pp
 .It Ic source
 The
 .Ic source
@@ -1330,7 +1328,7 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
-.It Ic \&~
+.It Ic \&~F Ns Ar messages
 Identical to
 .Ic \&~f ,
 except all message headers are included.
@@ -1500,7 +1498,7 @@ For example, assuming normal headers, something like
   from john@ | fgrep -i ' "Re:' | wc
 .Ed
 .Pp
-could be used to count how may replies were made by senders with
+could be used to count how many replies were made by senders with
 .Ql john@
 in their address and
 .Bd -literal -offset indent
@@ -1783,7 +1781,7 @@ If unset, editing is not enabled.
 support.)
 .It Ar el-history-size
 The number of lines of history to remember.
-If unset, history is not enable.
+If unset, history is not enabled.
 (Requires
 .Xr editline 3
 support.)
@@ -2238,7 +2236,6 @@ parts using
 (assuming it is installed) and add this support to
 .Ql multipart/alternative
 blocks:
-.Pp
 .Bd -literal -offset indent
 set mime-body-text-html="+/usr/pkg/bin/lynx -force_html -dump -stdin"
 .Ed
@@ -2290,7 +2287,7 @@ A
 .Nm
 command
 appeared in
-.At v6 .
+.At v1 .
 This man page is derived from
 .Dq The Mail Reference Manual
 originally written by Kurt Shoens.

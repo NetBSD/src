@@ -1,4 +1,4 @@
-.\" $NetBSD: ure.4,v 1.3.2.2 2019/06/10 22:05:40 christos Exp $
+.\" $NetBSD: ure.4,v 1.3.2.3 2020/04/13 08:03:25 martin Exp $
 .\" $OpenBSD: ure.4,v 1.5 2017/04/16 20:26:34 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd February 9, 2019
+.Dd August 24, 2019
 .Dt URE 4
 .Os
 .Sh NAME
@@ -60,6 +60,10 @@ The RTL8153 has a Gigabit Ethernet MAC and additionally supports
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -69,6 +73,7 @@ For more information on configuring this device, see
 .Xr rlphy 4 ,
 .Xr uhub 4 ,
 .Xr usb 4 ,
+.Xr usbnet 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

@@ -101,6 +101,27 @@ call, call2, call3, call4:
       that is the label STDSCR.  This parameter will be substituted by
       the value of stdscr when the function call is made.
 
+cchar:
+      Defines a variable as a complex character type (cchar_t).  The
+      syntax is:
+
+                cchar var_name attributes elements
+
+      Where attributes is the attributes for the complex character, this
+      can be an integer, a variable or bitwise or'ed list (see below
+      for a description of the syntax). The elements is one or more wide
+      characters that make up the elements of the complex character.  A
+      single element of either a numeric, variable, byte or single
+      character string can simply be wrtten at the end of the line.
+      Multiple elements need to be space separated and enclosed in
+      square ([]) brackets, the types allowed are the same as for the
+      single element case.  In addition an element can be repeated by
+      following an element with a '*' then a number which will cause
+      the last element to be repeatedly added to the array the number
+      of times specified by number.  Once the complex character variable
+      has been defined it can be used in calls to curses routines
+      requiring a complex character type argument.
+
 check:
       Validate the value of a variable.  This allows a variable to be
       checked for an expected return after it has been assigned in a

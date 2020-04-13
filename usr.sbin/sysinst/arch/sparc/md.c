@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:41 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.2.28.1 2020/04/13 08:06:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,6 @@
 /* This file is in close sync with pmax, vax, and x68k md.c */
 
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -65,87 +64,48 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
-	struct disklabel disklabel;
-	int fd;
-	char dev_name[100];
-
-	snprintf(dev_name, 100, "/dev/r%s%c", pm->diskdev, 'a' + getrawpartition());
-
-	fd = open(dev_name, O_RDONLY, 0);
-	if (fd < 0) {
-		if (logfp)
-			(void)fprintf(logfp, "Can't open %s\n", dev_name);
-		endwin();
-		fprintf(stderr, "Can't open %s\n", dev_name);
-		exit(1);
-	}
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		if (logfp)
-			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
-				dev_name);
-		endwin();
-		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
-		close(fd);
-		exit(1);
-	}
-	close(fd);
-
-	pm->dlcyl = disklabel.d_ncylinders;
-	pm->dlhead = disklabel.d_ntracks;
-	pm->dlsec = disklabel.d_nsectors;
-	pm->sectorsize = disklabel.d_secsize;
-	pm->dlcylsize = disklabel.d_secpercyl;
-
-	/*
-	 * Compute whole disk size. Take max of (pm->dlcyl*pm->dlhead*pm->dlsec)
-	 * and secperunit,  just in case the disk is already labelled.
-	 * (If our new label's RAW_PART size ends up smaller than the
-	 * in-core RAW_PART size  value, updating the label will fail.)
-	 */
-	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
-	if (disklabel.d_secperunit > pm->dlsize)
-		pm->dlsize = disklabel.d_secperunit;
-
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	return(make_bsd_partitions());
+	return(make_bsd_partitions(install));
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -156,24 +116,24 @@ md_post_disklabel(void)
  * On the sparc, we use this opportunity to install the boot blocks.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	return (run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", pm->diskdev) ||
 	    run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s",
 		targetroot_mnt));
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -181,21 +141,41 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+
+#ifdef HAVE_GPT
+/*
+ * New GPT partitions have been written, update bootloader or remember
+ * data untill needed in md_post_newfs
+ */
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+
+	return true;
+}
+#endif

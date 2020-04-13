@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_o.c,v 1.6 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: tls_o.c,v 1.6.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* tls_o.c - Handle tls/ssl using OpenSSL */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_o.c,v 1.6 2018/02/06 01:57:23 christos Exp $");
+__RCSID("$NetBSD: tls_o.c,v 1.6.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -48,6 +48,9 @@ __RCSID("$NetBSD: tls_o.c,v 1.6 2018/02/06 01:57:23 christos Exp $");
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/safestack.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/dh.h>
 #elif defined( HAVE_SSL_H )
 #include <ssl.h>
 #endif
@@ -58,6 +61,9 @@ __RCSID("$NetBSD: tls_o.c,v 1.6 2018/02/06 01:57:23 christos Exp $");
 
 typedef SSL_CTX tlso_ctx;
 typedef SSL tlso_session;
+
+static BIO_METHOD * tlso_bio_method = NULL;
+static BIO_METHOD * tlso_bio_setup( void );
 
 static int  tlso_opt_trace = 1;
 
@@ -88,6 +94,13 @@ static void tlso_locking_cb( int mode, int type, const char *file, int line )
 	}
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x0909000
+static void tlso_thread_self( CRYPTO_THREADID *id )
+{
+	CRYPTO_THREADID_set_pointer( id, (void *)ldap_pvt_thread_self() );
+}
+#define CRYPTO_set_id_callback(foo)	CRYPTO_THREADID_set_callback(foo)
+#else
 static unsigned long tlso_thread_self( void )
 {
 	/* FIXME: CRYPTO_set_id_callback only works when ldap_pvt_thread_t
@@ -100,6 +113,7 @@ static unsigned long tlso_thread_self( void )
 
 	return (unsigned long) ldap_pvt_thread_self();
 }
+#endif
 
 static void tlso_thr_init( void )
 {
@@ -116,6 +130,43 @@ static void tlso_thr_init( void )
 #ifdef LDAP_R_COMPILE
 static void tlso_thr_init( void ) {}
 #endif
+#endif /* OpenSSL 1.1 */
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+/*
+ * OpenSSL 1.1 API and later makes the BIO method concrete types internal.
+ */
+
+static BIO_METHOD *
+BIO_meth_new( int type, const char *name )
+{
+	BIO_METHOD *method = LDAP_MALLOC( sizeof(BIO_METHOD) );
+	memset( method, 0, sizeof(BIO_METHOD) );
+
+	method->type = type;
+	method->name = name;
+
+	return method;
+}
+
+static void
+BIO_meth_free( BIO_METHOD *meth )
+{
+	if ( meth == NULL ) {
+		return;
+	}
+
+	LDAP_FREE( meth );
+}
+
+#define BIO_meth_set_write(m, f) (m)->bwrite = (f)
+#define BIO_meth_set_read(m, f) (m)->bread = (f)
+#define BIO_meth_set_puts(m, f) (m)->bputs = (f)
+#define BIO_meth_set_gets(m, f) (m)->bgets = (f)
+#define BIO_meth_set_ctrl(m, f) (m)->ctrl = (f)
+#define BIO_meth_set_create(m, f) (m)->create = (f)
+#define BIO_meth_set_destroy(m, f) (m)->destroy = (f)
+
 #endif /* OpenSSL 1.1 */
 
 static STACK_OF(X509_NAME) *
@@ -173,6 +224,8 @@ tlso_init( void )
 	/* FIXME: mod_ssl does this */
 	X509V3_add_standard_extensions();
 
+	tlso_bio_method = tlso_bio_setup();
+
 	return 0;
 }
 
@@ -183,6 +236,8 @@ static void
 tlso_destroy( void )
 {
 	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();   
+
+	BIO_meth_free( tlso_bio_method );
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000
 	EVP_cleanup();
@@ -332,10 +387,9 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		return -1;
 	}
 
-	if ( lo->ldo_tls_dhfile ) {
-		DH *dh = NULL;
+	if ( is_server && lo->ldo_tls_dhfile ) {
+		DH *dh;
 		BIO *bio;
-		SSL_CTX_set_options( ctx, SSL_OP_SINGLE_DH_USE );
 
 		if (( bio=BIO_new_file( lt->lt_dhfile,"r" )) == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
@@ -354,6 +408,38 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		}
 		BIO_free( bio );
 		SSL_CTX_set_tmp_dh( ctx, dh );
+		SSL_CTX_set_options( ctx, SSL_OP_SINGLE_DH_USE );
+		DH_free( dh );
+	}
+
+	if ( is_server && lo->ldo_tls_ecname ) {
+#ifdef OPENSSL_NO_EC
+		Debug( LDAP_DEBUG_ANY,
+			"TLS: Elliptic Curves not supported.\n", 0,0,0 );
+		return -1;
+#else
+		EC_KEY *ecdh;
+
+		int nid = OBJ_sn2nid( lt->lt_ecname );
+		if ( nid == NID_undef ) {
+			Debug( LDAP_DEBUG_ANY,
+				"TLS: could not use EC name `%s'.\n",
+				lo->ldo_tls_ecname,0,0);
+			tlso_report_error();
+			return -1;
+		}
+		ecdh = EC_KEY_new_by_curve_name( nid );
+		if ( ecdh == NULL ) {
+			Debug( LDAP_DEBUG_ANY,
+				"TLS: could not generate key for EC name `%s'.\n",
+				lo->ldo_tls_ecname,0,0);
+			tlso_report_error();
+			return -1;
+		}
+		SSL_CTX_set_tmp_ecdh( ctx, ecdh );
+		SSL_CTX_set_options( ctx, SSL_OP_SINGLE_ECDH_USE );
+		EC_KEY_free( ecdh );
+#endif
 	}
 
 	if ( tlso_opt_trace ) {
@@ -402,7 +488,20 @@ tlso_session_connect( LDAP *ld, tls_session *sess )
 	tlso_session *s = (tlso_session *)sess;
 
 	/* Caller expects 0 = success, OpenSSL returns 1 = success */
-	return SSL_connect( s ) - 1;
+	int rc = SSL_connect( s ) - 1;
+#ifdef LDAP_USE_NON_BLOCKING_TLS
+	if ( rc < 0 ) {
+		int sockerr = sock_errno();
+		int sslerr = SSL_get_error( s, rc+1 );
+		if ( sslerr == SSL_ERROR_WANT_READ || sslerr == SSL_ERROR_WANT_WRITE ) {
+			rc = 0;
+		} else if ( sslerr == SSL_ERROR_SYSCALL &&
+			( sockerr == EAGAIN || sockerr == ENOTCONN )) {
+			rc = 0;
+		}
+	}
+#endif /* LDAP_USE_NON_BLOCKING_TLS */
+	return rc;
 }
 
 static int
@@ -827,33 +926,21 @@ tlso_bio_puts( BIO *b, const char *str )
 	return tlso_bio_write( b, str, strlen( str ) );
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
-struct bio_method_st {
-    int type;
-    const char *name;
-    int (*bwrite) (BIO *, const char *, int);
-    int (*bread) (BIO *, char *, int);
-    int (*bputs) (BIO *, const char *);
-    int (*bgets) (BIO *, char *, int);
-    long (*ctrl) (BIO *, int, long, void *);
-    int (*create) (BIO *);
-    int (*destroy) (BIO *);
-    long (*callback_ctrl) (BIO *, int, bio_info_cb *);
-};
-#endif
-
-static BIO_METHOD tlso_bio_method =
+static BIO_METHOD *
+tlso_bio_setup( void )
 {
-	( 100 | 0x400 ),		/* it's a source/sink BIO */
-	"sockbuf glue",
-	tlso_bio_write,
-	tlso_bio_read,
-	tlso_bio_puts,
-	tlso_bio_gets,
-	tlso_bio_ctrl,
-	tlso_bio_create,
-	tlso_bio_destroy
-};
+	/* it's a source/sink BIO */
+	BIO_METHOD * method = BIO_meth_new( 100 | 0x400, "sockbuf glue" );
+	BIO_meth_set_write( method, tlso_bio_write );
+	BIO_meth_set_read( method, tlso_bio_read );
+	BIO_meth_set_puts( method, tlso_bio_puts );
+	BIO_meth_set_gets( method, tlso_bio_gets );
+	BIO_meth_set_ctrl( method, tlso_bio_ctrl );
+	BIO_meth_set_create( method, tlso_bio_create );
+	BIO_meth_set_destroy( method, tlso_bio_destroy );
+
+	return method;
+}
 
 static int
 tlso_sb_setup( Sockbuf_IO_Desc *sbiod, void *arg )
@@ -870,7 +957,7 @@ tlso_sb_setup( Sockbuf_IO_Desc *sbiod, void *arg )
 	
 	p->session = arg;
 	p->sbiod = sbiod;
-	bio = BIO_new( &tlso_bio_method );
+	bio = BIO_new( tlso_bio_method );
 	BIO_set_data( bio, p );
 	SSL_set_bio( p->session, bio, bio );
 	sbiod->sbiod_pvt = p;
@@ -1191,11 +1278,13 @@ tlso_seed_PRNG( const char *randfile )
 		 * The fact is that when $HOME is NULL, .rnd is used.
 		 */
 		randfile = RAND_file_name( buffer, sizeof( buffer ) );
-
-	} else if (RAND_egd(randfile) > 0) {
+	}
+#ifndef OPENSSL_NO_EGD
+	else if (RAND_egd(randfile) > 0) {
 		/* EGD socket */
 		return 0;
 	}
+#endif
 
 	if (randfile == NULL) {
 		Debug( LDAP_DEBUG_ANY,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.211.2.2 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.211.2.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.211.2.2 2020/04/08 14:09:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.211.2.3 2020/04/13 08:05:21 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.211.2.2 2020/04/08 14:09:03 mart
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
+MODULE(MODULE_CLASS_VFS, ext2fs, "ufs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_sbfill(struct m_ext2fs *, int);

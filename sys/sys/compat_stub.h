@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.16.2.2 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.16.2.3 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/module_hook.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/sigtypes.h>
 
 /*
  * NOTE: If you make changes here, please remember to update the
@@ -231,7 +232,7 @@ MODULE_HOOK(uipc_socket_50_setopt1_hook, int,
     (int, struct socket *, const struct sockopt *));
 MODULE_HOOK(uipc_socket_50_getopt1_hook, int,
     (int, struct socket *, struct sockopt *));
-MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf **));
+MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf ***));
 
 /*
  * uipc_syscalls_50 compatibility
@@ -353,5 +354,38 @@ MODULE_HOOK(ifmedia_80_post_hook, int, (struct ifreq *, u_long));
  * the main kernel, and not in a compat_netbsd32 module.  (In particular,
  * this is true for i386 and sgimips.)
  */
+struct reg;
 MODULE_HOOK(netbsd32_machine32_hook, const char *, (void));
+MODULE_HOOK(netbsd32_reg_validate_hook, int,
+    (struct lwp *, const struct reg *));
+
+/*
+ * Hook for compat_16 sendsig_sigcontext
+ */
+struct ksiginfo;
+MODULE_HOOK(sendsig_sigcontext_16_hook, void,
+    (const struct ksiginfo *, const sigset_t *));
+
+/*
+ * Hooks for coredumps
+ */
+
+struct uvm_coredump_state;
+MODULE_HOOK(coredump_hook, int, (struct lwp *, const char *));
+MODULE_HOOK(coredump_offset_hook, off_t, (struct coredump_iostate *));
+MODULE_HOOK(coredump_write_hook, int,
+    (struct coredump_iostate *, enum uio_seg, const void *, size_t));
+MODULE_HOOK(coredump_netbsd_hook, int,
+    (struct lwp *, struct coredump_iostate *));
+MODULE_HOOK(uvm_coredump_walkmap_hook, int,
+    (struct proc *, int (*)(struct uvm_coredump_state *), void *));
+MODULE_HOOK(uvm_coredump_count_segs_hook, int, (struct proc *));
+
+/*
+ * Hook for amd64 handler for oosyscall for COMPAT_NETBSD32 && COMPAT_10)
+ */
+struct proc;
+struct trapframe;
+MODULE_HOOK(amd64_oosyscall_hook, int, (struct proc *, struct trapframe *));
+
 #endif	/* _SYS_COMPAT_STUB_H */

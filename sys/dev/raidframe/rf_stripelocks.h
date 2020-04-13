@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.8 2011/05/05 08:21:29 mrg Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.8.56.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ struct RF_LockReqDesc_s {
 	RF_IoType_t type;	/* read or write */
 	RF_int64 start, stop;	/* start and end of range to be locked */
 	RF_int64 start2, stop2;	/* start and end of 2nd range to be locked */
-	void    (*cbFunc) (struct buf *);	/* callback function */
+	void    (*cbFunc) (void *);	/* callback function */
 	void   *cbArg;		/* argument to callback function */
 	RF_LockReqDesc_t *next;	/* next element in chain */
 	RF_LockReqDesc_t *templink;	/* for making short-lived lists of

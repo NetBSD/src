@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.3.2.2 2019/06/10 22:04:46 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,7 +92,9 @@ isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds) {
 	i1.LowPart = temp.dwLowDateTime;
 	i1.HighPart = temp.dwHighDateTime;
 
+	/* cppcheck-suppress unreadVariable */
 	i1.QuadPart += (unsigned __int64)nanoseconds/100;
+	/* cppcheck-suppress unreadVariable */
 	i1.QuadPart += (unsigned __int64)seconds*10000000;
 
 	t->absolute.dwLowDateTime = i1.LowPart;
@@ -142,6 +144,7 @@ isc_time_nowplusinterval(isc_time_t *t, const isc_interval_t *i) {
 	if (UINT64_MAX - i1.QuadPart < (unsigned __int64)i->interval)
 		return (ISC_R_RANGE);
 
+	/* cppcheck-suppress unreadVariable */
 	i1.QuadPart += i->interval;
 
 	t->absolute.dwLowDateTime  = i1.LowPart;
@@ -170,6 +173,7 @@ isc_time_add(const isc_time_t *t, const isc_interval_t *i, isc_time_t *result)
 	if (UINT64_MAX - i1.QuadPart < (unsigned __int64)i->interval)
 		return (ISC_R_RANGE);
 
+	/* cppcheck-suppress unreadVariable */
 	i1.QuadPart += i->interval;
 
 	result->absolute.dwLowDateTime = i1.LowPart;
@@ -191,6 +195,7 @@ isc_time_subtract(const isc_time_t *t, const isc_interval_t *i,
 	if (i1.QuadPart < (unsigned __int64) i->interval)
 		return (ISC_R_RANGE);
 
+	/* cppcheck-suppress unreadVariable */
 	i1.QuadPart -= i->interval;
 
 	result->absolute.dwLowDateTime = i1.LowPart;
@@ -206,9 +211,13 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 
 	REQUIRE(t1 != NULL && t2 != NULL);
 
+	/* cppcheck-suppress unreadVariable */
 	i1.LowPart  = t1->absolute.dwLowDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i1.HighPart = t1->absolute.dwHighDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i2.LowPart  = t2->absolute.dwLowDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i2.HighPart = t2->absolute.dwHighDateTime;
 
 	if (i1.QuadPart <= i2.QuadPart)
@@ -231,9 +240,13 @@ isc_time_seconds(const isc_time_t *t) {
 
 	SystemTimeToFileTime(&epoch1970, &temp);
 
+	/* cppcheck-suppress unreadVariable */
 	i1.LowPart  = t->absolute.dwLowDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i1.HighPart = t->absolute.dwHighDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i2.LowPart  = temp.dwLowDateTime;
+	/* cppcheck-suppress unreadVariable */
 	i2.HighPart = temp.dwHighDateTime;
 
 	i3 = (i1.QuadPart - i2.QuadPart) / 10000000;

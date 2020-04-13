@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9.16.1 2019/06/10 22:10:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9.16.2 2020/04/13 08:06:00 martin Exp $
 #
 # Makefile for sysinst
 
@@ -7,19 +7,22 @@
 .endif
 
 PROG=		sysinst
-NOMAN=		# defined
+MAN=		sysinst.8
 
 WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c sizemultname.c configmenu.c checkrc.c
+	label.c target.c md.c sizemultname.c configmenu.c checkrc.c \
+	disklabel.c partitions.c part_edit.c
 
 SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
-SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
 SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
-SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
+SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c}
 SRCS+=	${NOPARTMAN:D:Upartman.c}
+
+.PATH: ${.CURDIR}/../../../../sbin/fsck
+SRCS+=partutil.c
 
 DPSRCS+= defs.h
 
@@ -28,6 +31,21 @@ LANGUAGES?=	de en es fr pl
 
 MENUS_MI=	menus.mi
 MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
+
+.if ${NO_GPT:Uno} != "yes"
+CPPFLAGS+=	-DHAVE_GPT
+GPT_DIR=${.CURDIR}/../../../../sbin/gpt
+SRCS+=	gpt.c gpt_uuid.c
+CPPFLAGS.gpt_uuid.c+=	-I${GPT_DIR}
+CPPFLAGS.gpt.c+=	-I${GPT_DIR}
+.endif
+.if ${NO_MBR:Uyes} != "yes"
+CPPFLAGS+=	-DHAVE_MBR
+SRCS+=	mbr.c
+.endif
+.if ${NO_CLONES:Uno} == "yes"
+CPPFLAGS+=	-DNO_CLONES
+.endif
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
@@ -41,26 +59,30 @@ DISTRIBVERDEP=	${NETBSDSRCDIR}/sys/sys/param.h \
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
-DPADD=		${LIBCURSES} ${LIBTERMLIB} ${LIBUTIL}
-LDADD=		-lcurses -ltermlib -lutil
+DPADD=		${LIBCURSES} ${LIBTERMLIB} ${LIBPROP} ${LIBUTIL}
+LDADD=		-lcurses -ltermlib -lprop -lutil
 
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
+MSG_CMP_SH=	${.CURDIR}/../../msg_cmp.sh
 
 SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
 
+.if ${MKBSDTAR:Uno} == "no"
+CPPFLAGS+=	-DUSING_PAXASTAR
+.endif
+
 CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
+		-I${.CURDIR}/../../../../sbin/fsck \
 		-DSETS_TAR_SUFF=${SETS_TAR_SUFF:Q} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
 		${NOPARTMAN:D-DNO_PARTMAN}
 
-.if ${MACHINE} == "evbarm" \
-    || ${MACHINE} == "evbmips" \
-    || ${MACHINE} == "evbsh3"
-CPPFLAGS+=	-DARCH_SUBDIR="\"${MACHINE}-${MACHINE_ARCH}\""
+.if ${RELEASEMACHINEDIR} != ${MACHINE}
+CPPFLAGS+=	-DARCH_SUBDIR="\"${RELEASEMACHINEDIR}\""
 CPPFLAGS+=	-DPKG_ARCH_SUBDIR="\"${MACHINE_ARCH}\""
 .endif
 
@@ -74,13 +96,14 @@ CPPFLAGS+= -DSYSINST_HTTP_HOST=\"nycdn.NetBSD.org\"
 CPPFLAGS+= -DREL_PATH=\"HEAD\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/\.99\.[0-9]*[_A-Z]*$//}.0\""
 .elif (${DISTRIBVER:M*.[0-9].[0-9]*})
-CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//:S/./-/}\"
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*[0-9]*$//:S/./-/}\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .elif (${DISTRIBVER:M*.[0-9]*})
-CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//}\"
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*[0-9]*$//}\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .endif
 .endif
+CPPFLAGS+= -DNETBSD_MAJOR='"${DISTRIBVER:C/\..*//}"'
 
 .if !defined(DEBUG)
 CPPFLAGS+=	-DCATALOG_DIR=\"${CATALOGDIR}\"
@@ -94,33 +117,18 @@ O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
 CPPFLAGS+=-DDEBUG
 DBG +=-g -O0 ${O0TRACKING}
-.endif
-
-.if empty(DBG:M-g)
+.else
+.if defined(SMALLPROG)
 COPTS += -Os
+.endif
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=-Wno-format-truncation	# most useless gcc warning ever
-.endif
-
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
-COPTS.label.c+=	-Wno-pointer-sign
-.endif
-COPTS.main.c += -Wno-format-nonliteral
-COPTS.disks.c += -Wno-format-nonliteral
-COPTS.util.c += -Wno-format-nonliteral
-COPTS.label.c += -Wno-format-nonliteral
-COPTS.target.c += -Wno-format-nonliteral
-COPTS.mbr.c += -Wno-format-nonliteral
-COPTS.msg_defs.c += -Wno-format-nonliteral
-COPTS.bsddisklabel.c += -Wno-format-nonliteral
-COPTS.md.c += -Wno-format-nonliteral
-COPTS.partman.c += -Wno-format-nonliteral -Wno-stack-protector
+COPTS+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.disklabel.c+= ${GCC_NO_STRINGOP_TRUNCATION}
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
@@ -180,6 +188,10 @@ msg_defs.c: msg.def
 msgtouch: ${DISTRIBVERDEP}
 	touch ${.TARGET}
 
+.if !defined(NOPARTMAN)
+MSG_MD+=	msg.pm.${SYSINSTLANG}	
+.endif
+
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	${_MKTARGET_CREATE}
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
@@ -212,5 +224,15 @@ DPSRCS+=	sysinstmsgs.${LANG}
 # FILES+=		sysinstmsgs.${LANG}
 # FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
 .endfor
+
+.PHONY:	check-lang
+check-lang:	msg.def msg_defs.h
+	${_MKTARGET_CREATE}
+	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" msg.def | \
+	${TOOL_SED} "s/@@MACHINE@@/${MACHINE}/" | \
+	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
+	${HOST_SH} ${MSG_XLAT_SH} -i > /tmp/sysinst.en
+	${HOST_SH} ${MSG_CMP_SH} msg_defs.h /tmp/sysinst.en sysinstmsgs.${LANG}
+	@rm /tmp/sysinst.en
 
 .include <bsd.prog.mk>

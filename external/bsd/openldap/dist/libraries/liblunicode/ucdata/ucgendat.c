@@ -1,9 +1,9 @@
-/*	$NetBSD: ucgendat.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: ucgendat.c,v 1.1.1.6.4.1 2020/04/13 07:56:15 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 /* Id: ucgendat.c,v 1.4 2001/01/02 18:46:20 mleisher Exp " */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucgendat.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $");
+__RCSID("$NetBSD: ucgendat.c,v 1.1.1.6.4.1 2020/04/13 07:56:15 martin Exp $");
 
 #include "portable.h"
 #include "ldap_config.h"
@@ -541,6 +541,13 @@ add_title(ac_uint4 code)
      */
     cases[2] = code;
 
+    /*
+     * If the upper case character is not present, then make it the same as
+     * the title case.
+     */
+    if (cases[0] == 0)
+      cases[0] = code;
+
     if (title_used == title_size) {
         if (title_size == 0)
           title = (_case_t *) malloc(sizeof(_case_t) << 3);
@@ -823,7 +830,7 @@ read_cdata(FILE *in)
 {
     ac_uint4 i, lineno, skip, code, ccl_code;
     short wnum, neg, number[2], compat;
-    char line[512], *s, *e;
+    char line[512], *s, *e, *first_prop;
 
     lineno = skip = 0;
     while (fgets(line, sizeof(line), in)) {
@@ -967,6 +974,8 @@ read_cdata(FILE *in)
               i++;
         }
         for (e = s; *e && *e != ';'; e++) ;
+
+        first_prop = s;
     
         ordered_range_insert(code, s, e - s);
 
@@ -1114,7 +1123,7 @@ read_cdata(FILE *in)
             if (*s == ';')
               s++;
         }
-        if (cases[0] && cases[1])
+        if (!strncmp(first_prop,"Lt",2) && (cases[0] || cases[1]))
           /*
            * Add the upper and lower mappings for a title case character.
            */

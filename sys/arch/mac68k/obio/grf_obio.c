@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.58 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.58.38.1 2020/04/13 08:03:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,13 +60,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.58 2012/10/27 17:18:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.58.38.1 2020/04/13 08:03:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kmem.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.58 2012/10/27 17:18:00 chs Exp $");
 #include <machine/video.h>
 
 #include <mac68k/nubus/nubus.h>
+#include <mac68k/obio/grf_obioreg.h>
 #include <mac68k/obio/obiovar.h>
 #include <mac68k/dev/grfvar.h>
 
@@ -86,15 +87,13 @@ static int	grfiv_mode(struct grf_softc *, int, void *);
 static int	grfiv_match(device_t, cfdata_t, void *);
 static void	grfiv_attach(device_t, device_t, void *);
 
+static void	dafb_set_mapreg(void *, int, int, int, int);
+static void	civic_set_mapreg(void *, int, int, int, int);
+static void	valkyrie_set_mapreg(void *, int, int, int, int);
+static void	rbv_set_mapreg(void *, int, int, int, int);
+
 CFATTACH_DECL_NEW(intvid, sizeof(struct grfbus_softc),
     grfiv_match, grfiv_attach, NULL, NULL);
-
-#define	DAFB_BASE		0xf9000000
-#define DAFB_CONTROL_BASE	0xf9800000
-#define	CIVIC_BASE		0x50100000
-#define CIVIC_CONTROL_BASE	0x50036000
-#define	VALKYRIE_BASE		0xf9000000
-#define VALKYRIE_CONTROL_BASE	0x50f2a000
 
 static int
 grfiv_match(device_t parent, cfdata_t cf, void *aux)
@@ -208,7 +207,7 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ2:
 		if (current_mac_model->machineid != MACH_MACLC575) {
-			sc->sc_basepa = VALKYRIE_BASE;
+			sc->sc_basepa = VALKYRIE_FB_BASE;
 			length = 0x00100000;		/* 1MB */
 
 			if (sc->sc_basepa <= mac68k_video.mv_phys &&
@@ -222,6 +221,10 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 				    m68k_page_offset(mac68k_video.mv_phys);
 				length = mac68k_video.mv_len + sc->sc_fbofs;
 			}
+
+			if (bus_space_map(sc->sc_tag, VALKYRIE_CMAP_BASE,
+			    VALKYRIE_CMAP_LEN, 0, &sc->sc_cmh) == 0)
+				sc->sc_set_mapreg = valkyrie_set_mapreg;
 
 			printf(" @ %lx: Valkyrie video subsystem\n",
 			    sc->sc_basepa + sc->sc_fbofs);
@@ -237,7 +240,7 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		sc->sc_basepa = DAFB_BASE;
+		sc->sc_basepa = DAFB_FB_BASE;
 		length = 0x00100000;		/* 1MB */
 
 		/* Compute the current frame buffer offset */
@@ -264,6 +267,15 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 		vbase2 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x4) & 0xf;
 		sc->sc_fbofs = (vbase1 << 9) | (vbase2 << 5);
 
+		if (bus_space_map(sc->sc_tag, DAFB_CMAP_BASE, DAFB_CMAP_LEN,
+		    0, &sc->sc_cmh) == 0) {
+			uint8_t *buf = kmem_zalloc(256 * 3, KM_SLEEP);
+			sc->sc_cmap.red = buf;
+			sc->sc_cmap.green = buf + 256;
+			sc->sc_cmap.blue = buf + 256 * 2;
+			sc->sc_set_mapreg = dafb_set_mapreg;
+		}
+
 		printf(" @ %lx: DAFB video subsystem, monitor sense %x\n",
 		    sc->sc_basepa + sc->sc_fbofs,
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
@@ -271,7 +283,7 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
 		break;
 	case MACH_CLASSAV:
-		sc->sc_basepa = CIVIC_BASE;
+		sc->sc_basepa = CIVIC_FB_BASE;
 		length = 0x00200000;		/* 2MB */
 		if (mac68k_video.mv_phys >= sc->sc_basepa &&
 		    mac68k_video.mv_phys < (sc->sc_basepa + length)) {
@@ -282,6 +294,10 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 			length = mac68k_video.mv_len + sc->sc_fbofs;
 		}
 
+		if (bus_space_map(sc->sc_tag, CIVIC_CMAP_BASE, CIVIC_CMAP_LEN,
+		    0, &sc->sc_cmh) == 0)
+			sc->sc_set_mapreg = civic_set_mapreg;
+
 		printf(" @ %lx: CIVIC video subsystem\n",
 		    sc->sc_basepa + sc->sc_fbofs);
 		break;
@@ -290,6 +306,10 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 		sc->sc_basepa = m68k_trunc_page(mac68k_video.mv_phys);
 		sc->sc_fbofs = m68k_page_offset(mac68k_video.mv_phys);
 		length = mac68k_video.mv_len + sc->sc_fbofs;
+
+		if (bus_space_map(sc->sc_tag, RBV_CMAP_BASE, RBV_CMAP_LEN,
+		    0, &sc->sc_cmh) == 0)
+			sc->sc_set_mapreg = rbv_set_mapreg;
 
 		printf(" @ %lx: RBV video subsystem, ",
 		    sc->sc_basepa + sc->sc_fbofs);
@@ -317,6 +337,8 @@ grfiv_attach(device_t parent, device_t self, void *aux)
 		sc->sc_basepa = m68k_trunc_page(mac68k_video.mv_phys);
 		sc->sc_fbofs = m68k_page_offset(mac68k_video.mv_phys);
 		length = mac68k_video.mv_len + sc->sc_fbofs;
+
+		/* XXX setpalette? */
 
 		printf(" @ %lx: On-board video\n",
 		    sc->sc_basepa + sc->sc_fbofs);
@@ -368,3 +390,121 @@ grfiv_mode(struct grf_softc *sc, int cmd, void *arg)
 	}
 	return EINVAL;
 }
+
+#define	CHECK_INDEX(index)						\
+	do {								\
+		size_t depth = mac68k_video.mv_depth;			\
+		if (depth == 1 || depth > 8 || (index) >= (1 << depth))	\
+			return;						\
+	} while (0 /* CONSTCOND */)
+
+static void
+dafb_set_mapreg(void *cookie, int index, int r, int g, int b)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)cookie;
+	static int last = -2;
+
+	CHECK_INDEX(index);
+
+#define	dafb_write_lut(val)	\
+    bus_space_write_1(sc->sc_tag, sc->sc_cmh, DAFB_CMAP_LUT, val)
+
+	if (index != last + 1) {
+		bus_space_write_4(sc->sc_tag, sc->sc_cmh, DAFB_CMAP_RESET, 0);
+		for (int i = 0; i < index; i++) {
+			dafb_write_lut(sc->sc_cmap.red[i]);
+			dafb_write_lut(sc->sc_cmap.green[i]);
+			dafb_write_lut(sc->sc_cmap.blue[i]);
+		}
+	}
+
+	dafb_write_lut(r);
+	dafb_write_lut(g);
+	dafb_write_lut(b);
+
+	last = index;
+	sc->sc_cmap.red[index] = r;
+	sc->sc_cmap.green[index] = g;
+	sc->sc_cmap.blue[index] = b;
+
+#undef	dafb_write_lut
+
+}
+
+static void
+civic_set_mapreg(void *cookie, int index, int r, int g, int b)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)cookie;
+	uint8_t status, junk = 0;
+
+	CHECK_INDEX(index);
+
+#define	civic_read_lut		\
+    bus_space_read_1(sc->sc_tag, sc->sc_cmh, CIVIC_CMAP_LUT)
+#define	civic_write_lut(val)	\
+    bus_space_write_1(sc->sc_tag, sc->sc_cmh, CIVIC_CMAP_LUT, val)
+
+	bus_space_write_1(sc->sc_tag, sc->sc_cmh, CIVIC_CMAP_ADDR, index);
+	status = bus_space_read_1(sc->sc_tag, sc->sc_cmh, CIVIC_CMAP_STATUS2);
+	if (status & 0x08) {
+		junk = civic_read_lut;
+		junk = civic_read_lut;
+		junk = civic_read_lut;
+		junk = civic_read_lut;
+		if (status & 0x0d) {
+			civic_write_lut(0);
+			civic_write_lut(0);
+		}
+	}
+	civic_write_lut(r);
+	civic_write_lut(g);
+	civic_write_lut(b);
+	civic_write_lut(junk);
+
+#undef	civic_read_lut
+#undef	civic_write_lut
+
+}
+
+static void
+valkyrie_set_mapreg(void *cookie, int index, int r, int g, int b)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)cookie;
+
+	CHECK_INDEX(index);
+
+#define	valkyrie_write_lut(val)	\
+    bus_space_write_1(sc->sc_tag, sc->sc_cmh, VALKYRIE_CMAP_LUT, val)
+
+	bus_space_write_1(sc->sc_tag, sc->sc_cmh, VALKYRIE_CMAP_ADDR, index);
+	delay(1);
+	valkyrie_write_lut(r);
+	valkyrie_write_lut(g);
+	valkyrie_write_lut(b);
+
+#undef	valkyrie_write_lut
+
+}
+
+static void
+rbv_set_mapreg(void *cookie, int index, int r, int g, int b)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)cookie;
+
+	CHECK_INDEX(index);
+
+#define	rbv_write_lut(val)	\
+    bus_space_write_1(sc->sc_tag, sc->sc_cmh, RBV_CMAP_LUT, val)
+
+	index += 256 - (1 << mac68k_video.mv_depth);
+	bus_space_write_1(sc->sc_tag, sc->sc_cmh, RBV_CMAP_CNTL, 0xff);
+	bus_space_write_1(sc->sc_tag, sc->sc_cmh, RBV_CMAP_ADDR, index);
+	rbv_write_lut(r);
+	rbv_write_lut(g);
+	rbv_write_lut(b);
+
+#undef	rbv_write_lut
+
+}
+
+#undef	CHECK_INDEX

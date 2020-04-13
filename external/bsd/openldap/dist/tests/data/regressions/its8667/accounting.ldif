@@ -1,0 +1,63 @@
+dn: ou=Accounting,dc=example,dc=com
+objectClass: organizationalunit
+objectClass: top
+ou: Accounting
+
+dn: cn=May Gaul,ou=Accounting,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: May Gaul
+sn: Gaul
+carLicense: 1BMCX31
+departmentNumber: 5148
+description: This is May Gaul's description
+employeeType: Temp
+facsimileTelephoneNumber: +1 804 673-8690
+givenName: May
+homePhone: +1 415 245-8979
+initials: M. G.
+l: Sunnyvale
+mail: May_Gaul@example.com
+manager: cn=Fqa McMannen
+mobile: +1 818 141-8493
+ou: Accounting
+pager: +1 804 480-4264
+postalAddress: example # 930
+roomNumber: 5933
+secretary: cn=Daniel Encomenderos
+telephoneNumber: +1 408 696-5756
+title: Associate Accounting Developer
+uid: May_Gaul
+userPassword:: bHVhR3lhTQ==
+
+dn: cn=Ann Tully,ou=Accounting,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Ann Tully
+sn: Tully
+carLicense: 3BM6G8F
+departmentNumber: 1672
+description: This is Ann Tully's description
+employeeType: Employee
+facsimileTelephoneNumber: +1 213 206-5551
+givenName: Ann
+homePhone: +1 213 246-2575
+initials: A. T.
+l: Cambridge
+mail: Ann_Tully@example.com
+manager: cn=Buddy Wingfield
+mobile: +1 213 889-1457
+ou: Accounting
+pager: +1 71 105-8458
+postalAddress: example # 784
+roomNumber: 538
+secretary: cn=Minny Vahdat
+telephoneNumber: +1 415 208-1794
+title: Supreme Accounting Admin
+uid: Ann_Tully
+userPassword:: eWxsdVRubkE=
+

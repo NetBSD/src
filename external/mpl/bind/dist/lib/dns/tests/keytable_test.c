@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable_test.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: keytable_test.c,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,10 +19,11 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include <stdlib.h>
+#include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdio.h>
-#include <inttypes.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
@@ -678,15 +679,17 @@ nta_test(void **state) {
 	/* Should be secure */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.secure.example"),
-					 now, true, &issecure);
+					 now, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(covered);
 	assert_true(issecure);
 
 	/* Should not be secure */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.insecure.example"),
-					 now, true, &issecure);
+					 now, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(covered);
 	assert_false(issecure);
 
 	/* NTA covered */
@@ -702,14 +705,16 @@ nta_test(void **state) {
 	/* As of now + 2, the NTA should be clear */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.insecure.example"),
-					 now + 2, true, &issecure);
+					 now + 2, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(covered);
 	assert_true(issecure);
 
 	/* Now check deletion */
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, true, &issecure);
+					 now, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(covered);
 	assert_true(issecure);
 
 	result = dns_ntatable_add(ntatable, str2name("new.example"),
@@ -717,16 +722,18 @@ nta_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, true, &issecure);
+					 now, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(covered);
 	assert_false(issecure);
 
 	result = dns_ntatable_delete(ntatable, str2name("new.example"));
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, true, &issecure);
+					 now, true, &covered, &issecure);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(covered);
 	assert_true(issecure);
 
 	/* Clean up */

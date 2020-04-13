@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.17 2014/01/11 20:29:03 jakllsch Exp $ */
+/* $NetBSD: pckbport.c,v 1.17.30.1 2020/04/13 08:04:46 martin Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.17 2014/01/11 20:29:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.17.30.1 2020/04/13 08:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,7 @@ pckbport_attach(void *cookie, struct pckbport_accessops const *ops)
 	if (cookie == pckbport_cntag.t_cookie &&
 	    ops == pckbport_cntag.t_ops)
 		return &pckbport_cntag;
-	t = malloc(sizeof(struct pckbport_tag), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (t == NULL) return NULL;
+	t = malloc(sizeof(struct pckbport_tag), M_DEVBUF, M_WAITOK | M_ZERO);
 	callout_init(&t->t_cleanup, 0);
 	t->t_cookie = cookie;
 	t->t_ops = ops;
@@ -146,11 +145,7 @@ pckbport_attach_slot(device_t dev, pckbport_tag_t t,
 
 	if (t->t_slotdata[slot] == NULL) {
 		sdata = malloc(sizeof(struct pckbport_slotdata),
-		    M_DEVBUF, M_NOWAIT);
-		if (sdata == NULL) {
-			aprint_error_dev(dev, "no memory\n");
-			return 0;
-		}
+		    M_DEVBUF, M_WAITOK);
 		t->t_slotdata[slot] = sdata;
 		pckbport_init_slotdata(t->t_slotdata[slot]);
 		alloced++;

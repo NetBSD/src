@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.59.14.2 2020/04/08 14:07:23 martin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.59.14.3 2020/04/13 08:03:26 martin Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -11,6 +11,11 @@ CFLAGS+=	-g
 # Only need symbols for ctf, strip them after converting to CTF
 CTFFLAGS=	-L VERSION
 CTFMFLAGS=	-t -L VERSION
+# Keep symbols if built with "-g"
+.if !empty(COPTS:M*-g*)
+CTFFLAGS+=	-g
+CTFMFLAGS+=	-g
+.endif
 .endif
 
 .include <bsd.sys.mk>

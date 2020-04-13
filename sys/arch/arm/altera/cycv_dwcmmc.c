@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_dwcmmc.c,v 1.3.2.3 2020/04/08 14:07:27 martin Exp $ */
+/* $NetBSD: cycv_dwcmmc.c,v 1.3.2.4 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.3.2.3 2020/04/08 14:07:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.3.2.4 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,8 +125,8 @@ cycv_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d\n",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d\n",
+		    addr, error);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.241.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.241.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.241.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.241.2.2 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -129,11 +129,11 @@ if_addrflags(struct ifaddr *ifa)
 	switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 	case AF_INET:
-		return ((struct in_ifaddr *)ifa)->ia4_flags;
+		return ifatoia(ifa)->ia4_flags;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		return ((struct in6_ifaddr *)ifa)->ia6_flags;
+		return ifatoia6(ifa)->ia6_flags;
 #endif
 	default:
 		return 0;
@@ -145,32 +145,32 @@ if_addrflags(struct ifaddr *ifa)
  * Send a routing message as mimicing that a cloned route is added.
  */
 void
-rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
-    const struct rtentry *rt)
+rt_clonedmsg(int type, const struct sockaddr *src, const struct sockaddr *dst,
+    const uint8_t *lladdr, const struct ifnet *ifp)
 {
 	struct rt_addrinfo info;
 	/* Mimic flags exactly */
 #define RTF_LLINFO	0x400
 #define RTF_CLONED	0x2000
-	int flags = RTF_UP | RTF_HOST | RTF_DONE | RTF_LLINFO | RTF_CLONED;
+	int flags = RTF_DONE;
 	union {
 		struct sockaddr sa;
 		struct sockaddr_storage ss;
 		struct sockaddr_dl sdl;
 	} u;
-	uint8_t namelen = strlen(ifp->if_xname);
-	uint8_t addrlen = ifp->if_addrlen;
 
-	if (rt == NULL)
-		return; /* XXX */
-
+	if (type != RTM_MISS)
+		flags |= RTF_HOST | RTF_CLONED | RTF_LLINFO;
+	if (type == RTM_ADD || type == RTM_CHANGE)
+		flags |= RTF_UP;
 	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_AUTHOR] = src;
 	info.rti_info[RTAX_DST] = dst;
 	sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index, ifp->if_type,
-	    NULL, namelen, NULL, addrlen);
+	    NULL, 0, lladdr, ifp->if_addrlen);
 	info.rti_info[RTAX_GATEWAY] = &u.sa;
 
-	rt_missmsg(RTM_ADD, &info, flags, 0);
+	rt_missmsg(type, &info, flags, 0);
 #undef RTF_LLINFO
 #undef RTF_CLONED
 }
@@ -240,7 +240,7 @@ sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
 	ifm = (struct if_xmsghdr *)w->w_tmem;
 	ifm->ifm_index = ifp->if_index;
 	ifm->ifm_flags = ifp->if_flags;
-	ifm->ifm_data = ifp->if_data;
+	if_export_if_data(ifp, &ifm->ifm_data, false);
 	ifm->ifm_addrs = info->rti_addrs;
 	if ((error = copyout(ifm, w->w_where, len)) == 0)
 		w->w_where = (char *)w->w_where + len;

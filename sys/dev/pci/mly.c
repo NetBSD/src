@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.50.18.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.50.18.2 2020/04/13 08:04:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50.18.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50.18.2 2020/04/13 08:04:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1632,7 +1632,7 @@ mly_alloc_ccbs(struct mly_softc *mly)
 		return (rv);
 
 	mly->mly_ccbs = malloc(sizeof(struct mly_ccb) * mly->mly_ncmds,
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	for (i = 0; i < mly->mly_ncmds; i++) {
 		mc = mly->mly_ccbs + i;

@@ -16,6 +16,14 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 AC_USE_SYSTEM_EXTENSIONS
 
+LFS_CFLAGS=`getconf LFS_CFLAGS 2>/dev/null`
+LFS_LDFLAGS=`getconf LFS_LDFLAGS 2>/dev/null`
+LFS_LIBS=`getconf LFS_LIBS 2>/dev/null`
+
+AC_SUBST([LFS_CFLAGS])
+AC_SUBST([LFS_LDFLAGS])
+AC_SUBST([LFS_LIBS])
+
 # Enable RFC 3542 APIs on macOS
 AC_DEFINE([__APPLE_USE_RFC_3542], [1], [Select RFC3542 IPv6 API on macOS])
 
@@ -252,7 +260,15 @@ AS_IF([test "$with_python" = "no"],
        AS_IF([test "X$PYTHON" = "X"],
 	     [AC_MSG_CHECKING([for Python support])
 	      AC_MSG_RESULT([no])
-	      AC_MSG_ERROR([Python required for dnssec-keymgr])])])
+	      AC_MSG_ERROR([m4_normalize(
+				[Python >= 2.7 or >= 3.2 and the PLY package
+                                 are required for dnssec-keymgr and other
+                                 Python-based tools. PLY may be
+                                 available from your OS package manager
+                                 as python-ply or python3-ply; it can also
+                                 be installed via pip. To build without
+                                 Python/PLY, use --without-python.]
+			    )])])])
 
 PYTHON_TOOLS=''
 CHECKDS=''
@@ -340,6 +356,17 @@ AC_PROG_CC
 AC_PROG_CC_C99
 
 #
+# Using Solaris linker with gcc on Solaris breaks Thread Local Storage
+#
+AS_CASE([$host],
+	[*-solaris*],[
+	    AS_IF([test "$GCC" = "yes"],
+		  [LDFLAGS="$LDFLAGS -zrelax=transtls"
+		   AC_MSG_WARN([When using GNU C Compiler on Solaris, -zrelax=transtls linker flag is used to fix bug in Thread Local Storage])
+		  ])
+	])
+
+#
 # CCNOOPT defaults to -O0 on gcc and disables optimization when is last
 #
 if test "X$CCNOOPT" = "X" -a "X$GCC" = "Xyes"; then
@@ -406,15 +433,29 @@ AC_C_FLEXIBLE_ARRAY_MEMBER
 # Check for yield support on ARM processors
 #
 AS_CASE([$host],
-	[arm*],[
-	  AC_MSG_CHECKING([for yield instruction support])
-	  AC_COMPILE_IFELSE(
-	    [AC_LANG_PROGRAM(
-	       [[]],
-	       [[__asm__ __volatile__ ("yield")]]
-	     )],
-	    [AC_MSG_RESULT([yes])],
-	    [AC_MSG_ERROR([no, try adding -march=native or -march=armv7-a to CFLAGS (see PLATFORMS.md for more information)])])])
+	[arm*],
+	[AC_MSG_CHECKING([for yield instruction support])
+	 AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM([[]],
+			     [[__asm__ __volatile__ ("yield")]])],
+	     [AC_MSG_RESULT([yes])
+	      AC_DEFINE([HAVE_ARM_YIELD], [1],
+			[define if the ARM yield instruction is available])],
+	     [AC_MSG_RESULT([no])])])
+
+#
+# Check for pause support on SPARC processors
+#
+AS_CASE([$host],
+	[sparc*],
+	[AC_MSG_CHECKING([for pause instruction support])
+	 AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM([[]],
+			     [[__asm__ __volatile__ ("pause")]])],
+	     [AC_MSG_RESULT([yes])
+	      AC_DEFINE([HAVE_SPARC_PAUSE], [1],
+			[define if the SPARC pause instruction is available])],
+	     [AC_MSG_RESULT([no])])])
 
 AC_CHECK_FUNCS([sysctlbyname])
 
@@ -512,13 +553,65 @@ AC_C_BIGENDIAN
 #
 # GeoIP support?
 #
-GEOIPLINKSRCS=
-GEOIPLINKOBJS=
+geoip2_default="no"
 AC_ARG_WITH(geoip,
 	    AS_HELP_STRING([--with-geoip=PATH],
-			   [Build with GeoIP support (yes|no|path)]),
-    use_geoip="$withval", use_geoip="no")
+			   [Build with legacy GeoIP support (yes|no|path)]),
+                           [
+                            use_geoip="$withval"
+                            geoip2_default="no"
+                           ],
+                           [use_geoip="no"])
+AC_ARG_WITH([geoip2],
+	    [AS_HELP_STRING([--with-geoip2=PATH],
+			    [Build with MaxMind GeoIP2 support (auto|yes|no|path) [default=no]])],
+	    [], with_geoip2="$geoip2_default")
 
+# specifying both --with-geoip and --with-geoip2 is an error.
+AS_IF([test "no" != "$with_geoip2" && test "no" != "$use_geoip"],
+      [AC_MSG_ERROR([--with-geoip and --with-geoip2 are incompatible])])
+
+GEOIP2LINKSRCS=
+GEOIP2LINKOBJS=
+AS_CASE([$with_geoip2],
+	[no],[],
+	[auto],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
+				      [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+				       PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
+				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+				      ],[:])],
+	[yes],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
+				      [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+				       PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
+				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+				      ])],
+	[ # default
+	    AX_SAVE_FLAGS([geoip2])
+	    MAXMINDDB_CFLAGS="-I$with_geoip2/include"
+	    MAXMINDDB_LIBS="-L$with_geoip2/lib"
+	    CFLAGS="$CFLAGS $MAXMINDDB_CFLAGS"
+	    LDFLAGS="$LDFLAGS $MAXMINDDB_LIBS"
+	    AC_SEARCH_LIBS([MMDB_open], [maxminddb],
+			   [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+			    GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+			    GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+			    MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_mmdb_open"
+			    AC_MSG_NOTICE([GeoIP2 default database path set to $with_geoip2/share/GeoIP])
+			    AS_VAR_COPY([MAXMINDDB_PREFIX], [$with_geoip2])
+			   ],
+			   [AC_MSG_ERROR([GeoIP2 requested, but libmaxminddb not found])])
+	    AX_RESTORE_FLAGS([maxminddb])
+	])
+AC_ARG_VAR([MAXMINDDB_PREFIX], [value of prefix for MAXMINDDB, overriding pkg-config])
+AC_SUBST([MAXMINDDB_CFLAGS])
+AC_SUBST([MAXMINDDB_LIBS])
+AC_SUBST([GEOIP2LINKSRCS])
+AC_SUBST([GEOIP2LINKOBJS])
+
+GEOIPLINKSRCS=
+GEOIPLINKOBJS=
 if test "yes" = "$use_geoip"
 then
 	for d in /usr /usr/local /opt/local
@@ -533,8 +626,6 @@ fi
 
 case "$use_geoip" in
 	no|'')
-		AC_MSG_CHECKING([for GeoIP support])
-		AC_MSG_RESULT([disabled])
 		;;
 	*)
 		if test -d "$use_geoip" -o -L "$use_geoip"
@@ -782,14 +873,13 @@ AC_COMPILE_IFELSE(
     [AC_MSG_RESULT([no])])
 
 AC_MSG_CHECKING([for Ed448 support])
-AC_MSG_RESULT([broken])
-#AC_COMPILE_IFELSE(
-#    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
-#		       #include <openssl/ec.h>]],
-#		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
-#    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
-#     AC_MSG_RESULT([yes])],
-#    [AC_MSG_RESULT([no])])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/ec.h>]],
+		     [[EC_KEY *key = EC_KEY_new_by_curve_name(NID_ED448);]])],
+    [AC_DEFINE([HAVE_OPENSSL_ED448], [1], [define if OpenSSL supports Ed448])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
 
 #
 # Check for OpenSSL SHA-1 support
@@ -841,21 +931,12 @@ AC_SUBST([OPENSSL_LDFLAGS])
 # Client Cookie algorithm choice
 #
 AC_ARG_WITH([cc-alg],
-	    [AS_HELP_STRING([--with-cc-alg=ALG],
-			   [choose the algorithm for Client Cookie
-			    [aes|sha1|sha256] (default is aes)])],
-	    [:], [with_cc_alg="aes"])
+	    [AS_HELP_STRING([--with-cc-alg=ALG], [deprecated])],
+	    [:], [with_cc_alg="siphash24"])
 
-AC_MSG_CHECKING([for the algorithm for Client Cookie])
 AS_CASE([$with_cc_alg],
-	[sha1|SHA1],[AC_MSG_RESULT([sha1])
-		     AC_DEFINE([HMAC_SHA1_CC], [1], [Use HMAC-SHA1 for Client Cookie generation])],
-	[sha256|SHA256],[AC_MSG_RESULT([sha256])
-			 AC_DEFINE([HMAC_SHA256_CC], [1], [Use HMAC-SHA256 for Client Cookie generation])],
-	[aes|AES|auto],[AC_MSG_RESULT([aes])
-		       AC_DEFINE([AES_CC], [1], [Use AES for Client Cookie generation])],
-	[AC_MSG_ERROR([Invalid $with_cc_alg algorithm for Client Cookie])])
-
+	[siphash24],[:],
+	[AC_MSG_WARN([The Client Cookie is always SipHash 2-4 based])])
 
 PKCS11_TOOLS=
 PKCS11_TEST=
@@ -922,8 +1003,8 @@ AC_MSG_CHECKING(for GSSAPI library)
 AC_ARG_WITH(gssapi,
 	    AS_HELP_STRING([--with-gssapi=[PATH|[/path/]krb5-config]],
 			   [Specify path for system-supplied GSSAPI
-				[default=yes]]),
-	    use_gssapi="$withval", use_gssapi="yes")
+				[default=auto]]),
+	    use_gssapi="$withval", use_gssapi="auto")
 
 # first try using krb5-config, if that does not work then fall back to "yes" method.
 
@@ -977,7 +1058,7 @@ esac
 
 case "$host" in
 *darwin*)
-	if test "yes" = "$use_gssapi"
+	if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 	then
 		use_gssapi=framework
 	fi
@@ -990,7 +1071,7 @@ esac
 # for the specification of gssapi and krb5 headers in different locations,
 # which probably ought to be fixed although fixing might raise the issue of
 # trying to build with incompatible versions of gssapi and krb5.
-if test "yes" = "$use_gssapi"
+if test "yes" = "$use_gssapi" -o "auto" = "$use_gssapi"
 then
 	# first, deal with the obvious
 	if test \( -f /usr/include/kerberosv5/krb5.h -o \
@@ -1014,8 +1095,11 @@ then
 				break
 			fi
 		fi
-		use_gssapi="no"
 	    done
+	    if test "auto" = "$use_gssapi"
+	    then
+		use_gssapi="no"
+	    fi
 	fi
 fi
 
@@ -2266,7 +2350,7 @@ AC_ARG_WITH(docbook-xsl,
 case "$docbook_path" in
 auto)
 	AC_MSG_RESULT(auto)
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
+	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /usr/share/sgml/docbook/xsl-stylesheets /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
 	;;
 *)
 	docbook_xsl_trees="$withval"
@@ -2287,13 +2371,6 @@ NOM_PATH_FILE(XSLT_DOCBOOK_CHUNKTOC_HTML, html/chunktoc.xsl, $docbook_xsl_trees)
 NOM_PATH_FILE(XSLT_DOCBOOK_CHUNKTOC_XHTML, xhtml/chunktoc.xsl, $docbook_xsl_trees)
 NOM_PATH_FILE(XSLT_DOCBOOK_MAKETOC_HTML, html/maketoc.xsl, $docbook_xsl_trees)
 NOM_PATH_FILE(XSLT_DOCBOOK_MAKETOC_XHTML, xhtml/maketoc.xsl, $docbook_xsl_trees)
-
-#
-# Same dance for dblatex
-#
-dblatex_xsl_trees="/usr/local/share/xml/docbook/stylesheet/dblatex /usr/pkg/share/xml/docbook/stylesheet/dblatex /usr/share/xml/docbook/stylesheet/dblatex"
-NOM_PATH_FILE(XSLT_DBLATEX_STYLE, xsl/docbook.xsl, $dblatex_xsl_trees)
-NOM_PATH_FILE(XSLT_DBLATEX_FASTBOOK, xsl/latex_book_fast.xsl, $dblatex_xsl_trees)
 
 #
 # IDN support using libidn2
@@ -2366,28 +2443,6 @@ AS_IF([test "$with_cmocka" != "no"],
             [AC_MSG_WARN([kyua test execution engine not found])])])
 
 AC_SUBST([KYUA])
-
-#
-# Check for -Wl,--wrap= support
-#
-
-save_LDFLAGS=$LDFLAGS
-LDFLAGS="--wrap=printf"
-
-LD_WRAP_TESTS=false
-enable_ld_wrap=no
-AC_MSG_CHECKING([for linker support for --wrap option])
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([#include <stdio.h>], [__wrap_printf("success"); return (0);])],
-    [enable_ld_wrap=yes
-     LD_WRAP_TESTS=true
-     AC_DEFINE([LD_WRAP], [1], [define if the linker supports --wrap option])
-     AC_MSG_RESULT([yes])],
-    [AC_MSG_RESULT([no])])
-# AM_CONDITIONAL([LD_WRAP], [test $enable_ld_wrap = yes])
-AC_SUBST([LD_WRAP_TESTS])
-
-LDFLAGS=$save_LDFLAGS
 
 #
 # Check for i18n
@@ -2642,6 +2697,11 @@ AS_IF([test "$with_dlopen" = "yes"],
 		 SO_CFLAGS="-KPIC"
 		 SO_LDFLAGS="-G -z text"
 		 SO_LD="ld"
+	       ],
+	       [ia64-hp-hpux*],[
+		 SO_CFLAGS="+z"
+	         SO_LDFLAGS="-b"
+		 SO_LD="${CC}"
 	       ],
 	       [
 		 SO_CFLAGS="-fPIC"
@@ -3089,11 +3149,9 @@ report() {
     test "large" = "$use_tuning" && echo "    Large-system tuning (--with-tuning)"
     test "no" = "$use_dnstap" || \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test "no" = "$use_geoip" || echo "    GeoIP access control (--with-geoip)"
+    test -z "$MAXMINDDB_LIBS" || echo "    GeoIP2 access control (--with-geoip2)"
+    test "no" = "$use_geoip" || echo "    Legacy GeoIP access control (--with-geoip)"
     test "no" = "$use_gssapi" || echo "    GSS-API (--with-gssapi)"
-    if test "yes" = "$enable_full_report" -o "aes" != "$with_cc_alg"; then
-	echo "        Algorithm: $with_cc_alg"
-    fi
 
     # these lines are only printed if run with --enable-full-report
     if test "yes" = "$enable_full_report"; then
@@ -3121,7 +3179,7 @@ report() {
 	echo "    Very verbose query trace logging (--enable-querytrace)"
     test "no" = "$with_cmocka" || echo "    CMocka Unit Testing Framework (--with-cmocka)"
 
-    test "no" = "$want_autoval" || echo "    DNSSEC validation active by default (--enable-auto-validation)"
+    test "auto" = "$validation_default" && echo "    DNSSEC validation active by default (--enable-auto-validation)"
 
     test "$CRYPTO" = "pkcs11" && (
 	echo "    Using PKCS#11 for Public-Key Cryptography (--with-native-pkcs11)"
@@ -3153,7 +3211,7 @@ report() {
 
     test "no" = "$use_dnstap" && \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test "no" = "$use_geoip" && echo "    GeoIP access control (--with-geoip)"
+    test -z "$MAXMINDDB_LIBS" && echo "    GeoIP2 access control (--with-geoip2)"
     test "no" = "$use_gssapi" && echo "    GSS-API (--with-gssapi)"
 
     test "no" = "$enable_dnsrps" && \
@@ -3162,10 +3220,10 @@ report() {
     test "yes" = "$enable_fixed" || \
 	echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
 
-    test "no" = "$want_autoval" && echo "    DNSSEC validation requires configuration (--disable-auto-validation)"
+    test "yes" = "$validation_default" && echo "    DNSSEC validation requires configuration (--enablee-auto-validation)"
 
     test "$CRYPTO" = "pkcs11" || (
-	echo "    Using PKCS#11 for Public-Key Cryptography (--without-native-pkcs11)"
+	echo "    Using PKCS#11 for Public-Key Cryptography (--with-native-pkcs11)"
     )
 
     test "yes" = "$enable_backtrace" || \

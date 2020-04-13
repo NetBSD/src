@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.12 2017/04/14 01:30:38 riastradh Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.12.12.1 2020/04/13 08:05:24 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -186,7 +186,7 @@ ATF_TC_BODY(devnull1, tc)
 	    &unionargs, sizeof(unionargs)) == -1)
 		atf_tc_fail_errno("union mount");
 
-	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_TRUNC);
+	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
 	if (fd == -1)
 		atf_tc_fail_errno("open");
@@ -220,7 +220,7 @@ ATF_TC_BODY(devnull2, tc)
 	    &unionargs, sizeof(unionargs)) == -1)
 		atf_tc_fail_errno("union mount");
 
-	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_APPEND);
+	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_APPEND, 0600);
 	if (fd == -1)
 		atf_tc_fail_errno("open");
 

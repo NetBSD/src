@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.4 2014/01/03 02:03:12 tsutsui Exp $	*/
+/*	$NetBSD: sio.c,v 1.4.30.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -75,6 +75,7 @@
 #define NSIO 2
 
 #include <sys/param.h>
+#include <machine/board.h>
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/sioreg.h>
 #include <luna68k/stand/boot/rcvbuf.h>
@@ -135,8 +136,8 @@ siointr(int unit)
 void
 siocnprobe(struct consdev *cp)
 {
-	sio_addr[0] = (struct siodevice *)0x51000000;
-	sio_addr[1] = (struct siodevice *)0x51000004;
+	sio_addr[0] = (struct siodevice *)(OBIO_SIO + 0);
+	sio_addr[1] = (struct siodevice *)(OBIO_SIO + 4);
 
 	/* make sure hardware exists */
 	if (badaddr((short *)sio_addr[0])) {

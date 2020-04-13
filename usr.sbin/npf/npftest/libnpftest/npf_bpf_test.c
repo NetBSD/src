@@ -42,48 +42,29 @@
 
 static bool	lverbose = false;
 
-static struct mbuf *
-fill_packet(int proto)
-{
-	struct mbuf *m;
-	struct ip *ip;
-	struct tcphdr *th;
-
-	m = mbuf_construct(proto);
-	th = mbuf_return_hdrs(m, false, &ip);
-	ip->ip_src.s_addr = inet_addr("192.168.2.100");
-	ip->ip_dst.s_addr = inet_addr("10.0.0.1");
-	th->th_sport = htons(15000);
-	th->th_dport = htons(80);
-	return m;
-}
-
 static int
 test_bpf_code(void *code, size_t size)
 {
-	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
-	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf_getkernctx() };
 	uint32_t memstore[BPF_MEMWORDS];
 	bpf_args_t bc_args;
+	npf_cache_t *npc;
 	struct mbuf *m;
-	nbuf_t nbuf;
 	int ret, jret;
 	void *jcode;
 
 	/* Layer 3 (IP + TCP). */
-	m = fill_packet(IPPROTO_TCP);
-	nbuf_init(npf_getkernctx(), &nbuf, m, dummy_ifp);
-	npc.npc_nbuf = &nbuf;
-	npf_cache_all(&npc);
+	m = mbuf_get_pkt(AF_INET, IPPROTO_TCP,
+	    "192.168.2.100", "10.0.0.1", 15000, 80);
+	npc = get_cached_pkt(m, NULL);
 #ifdef _NPF_STANDALONE
-	bc_args.pkt = (const uint8_t *)nbuf_dataptr(&nbuf);
+	bc_args.pkt = (const uint8_t *)nbuf_dataptr(npc->npc_nbuf);
 #else
 	bc_args.pkt = (const uint8_t *)m;
 #endif
 	bc_args.buflen = m_length(m);
 	bc_args.wirelen = bc_args.buflen;
 	bc_args.mem = memstore;
-	bc_args.arg = &npc;
+	bc_args.arg = npc;
 
 	ret = npf_bpf_filter(&bc_args, code, NULL);
 
@@ -96,13 +77,12 @@ test_bpf_code(void *code, size_t size)
 	} else if (lverbose) {
 		printf("JIT-compilation failed\n");
 	}
-	m_freem(m);
-
+	put_cached_pkt(npc);
 	return ret;
 }
 
 static uint32_t
-npf_bpfcop_run(u_int reg)
+npf_bpfcop_run(unsigned reg)
 {
 	struct bpf_insn insns_npf_bpfcop[] = {
 		BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
@@ -115,35 +95,28 @@ npf_bpfcop_run(u_int reg)
 static bool
 npf_bpfcop_test(void)
 {
-	bool fail = false;
-
 	/* A <- IP version (4 or 6) */
 	struct bpf_insn insns_ipver[] = {
 		BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
-	fail |= (test_bpf_code(&insns_ipver, sizeof(insns_ipver)) != IPVERSION);
+	CHECK_TRUE(test_bpf_code(&insns_ipver, sizeof(insns_ipver)) == IPVERSION);
 
 	/* BPF_MW_IPVERI <- IP version */
-	fail |= (npf_bpfcop_run(BPF_MW_IPVER) != IPVERSION);
+	CHECK_TRUE(npf_bpfcop_run(BPF_MW_IPVER) == IPVERSION);
 
 	/* BPF_MW_L4OFF <- L4 header offset */
-	fail |= (npf_bpfcop_run(BPF_MW_L4OFF) != sizeof(struct ip));
+	CHECK_TRUE(npf_bpfcop_run(BPF_MW_L4OFF) == sizeof(struct ip));
 
 	/* BPF_MW_L4PROTO <- L4 protocol */
-	fail |= (npf_bpfcop_run(BPF_MW_L4PROTO) != IPPROTO_TCP);
+	CHECK_TRUE(npf_bpfcop_run(BPF_MW_L4PROTO) == IPPROTO_TCP);
 
-	return fail;
+	return true;
 }
 
 bool
 npf_bpf_test(bool verbose)
 {
-	bool fail = false;
-
 	lverbose = verbose;
-
-	fail |= npf_bpfcop_test();
-
-	return !fail;
+	return npf_bpfcop_test();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.19 2012/11/08 20:43:55 dyoung Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.19.38.1 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.19 2012/11/08 20:43:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.19.38.1 2020/04/13 08:04:21 martin Exp $");
 #endif
 
 
@@ -799,9 +799,7 @@ ath_rate_attach(struct ath_softc *sc)
 	struct sample_softc *osc;
 	
 	DPRINTF(sc, "%s:\n", __func__);
-	osc = malloc(sizeof(struct sample_softc), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (osc == NULL)
-		return NULL;
+	osc = malloc(sizeof(struct sample_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	osc->arc.arc_space = sizeof(struct sample_node);
 	osc->ath_smoothing_rate = 95;	/* ewma percentage (out of 100) */
 	osc->ath_sample_rate = 10;	/* send a different bit-rate 1/X packets */

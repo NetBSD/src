@@ -1,5 +1,5 @@
 /* Compute different info about registers.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "tree.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -449,6 +450,7 @@ init_reg_sets_1 (void)
     }
 
   COPY_HARD_REG_SET (call_fixed_reg_set, fixed_reg_set);
+  COPY_HARD_REG_SET (fixed_nonglobal_reg_set, fixed_reg_set);
 
   /* Preserve global registers if called more than once.  */
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
@@ -466,19 +468,29 @@ init_reg_sets_1 (void)
   memset (contains_reg_of_mode, 0, sizeof (contains_reg_of_mode));
   for (m = 0; m < (unsigned int) MAX_MACHINE_MODE; m++)
     {
-      HARD_REG_SET ok_regs;
+      HARD_REG_SET ok_regs, ok_regs2;
       CLEAR_HARD_REG_SET (ok_regs);
+      CLEAR_HARD_REG_SET (ok_regs2);
       for (j = 0; j < FIRST_PSEUDO_REGISTER; j++)
-	if (!fixed_regs [j] && HARD_REGNO_MODE_OK (j, (machine_mode) m))
-	  SET_HARD_REG_BIT (ok_regs, j);
+	if (!TEST_HARD_REG_BIT (fixed_nonglobal_reg_set, j)
+	    && HARD_REGNO_MODE_OK (j, (machine_mode) m))
+	  {
+	    SET_HARD_REG_BIT (ok_regs, j);
+	    if (!fixed_regs[j])
+	      SET_HARD_REG_BIT (ok_regs2, j);
+	  }
 
       for (i = 0; i < N_REG_CLASSES; i++)
 	if ((targetm.class_max_nregs ((reg_class_t) i, (machine_mode) m)
 	     <= reg_class_size[i])
 	    && hard_reg_set_intersect_p (ok_regs, reg_class_contents[i]))
 	  {
-	     contains_reg_of_mode [i][m] = 1;
-	     have_regs_of_mode [m] = 1;
+	     contains_reg_of_mode[i][m] = 1;
+	     if (hard_reg_set_intersect_p (ok_regs2, reg_class_contents[i]))
+	       {
+		 have_regs_of_mode[m] = 1;
+		 contains_allocatable_reg_of_mode[i][m] = 1;
+	       }
 	  }
      }
 }
@@ -1148,7 +1160,7 @@ reg_scan_mark_refs (rtx x, rtx_insn *insn)
       if (REG_P (dest) && !REG_ATTRS (dest))
 	set_reg_attrs_from_value (dest, SET_SRC (x));
 
-      /* ... fall through ...  */
+      /* fall through */
 
     default:
       {

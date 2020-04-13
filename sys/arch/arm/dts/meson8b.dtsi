@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b.dtsi,v 1.5.6.2 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: meson8b.dtsi,v 1.5.6.3 2020/04/13 08:03:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,16 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#define	CLKID_PERIPH	126
-
 / {
-	timer@c4300200 {
-		compatible = "arm,cortex-a5-global-timer";
-		reg = <0xc4300200 0x20>;
-		interrupts = <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_EDGE_RISING)>;
-		clocks = <&clkc CLKID_PERIPH>;
-	};
-
 	genfb: fb@c8006000 {
 		compatible = "amlogic,meson8b-fb";
 		reg = <0xc8006000 0x400>,	/* DMC */
@@ -43,84 +34,6 @@
 		      <0xd0100000 0x100000>;	/* VPU */
 		status = "disabled";
 	};
-
-	cpu_opp_table: opp-table {
-		compatible = "operating-points-v2";
-		opp-shared;
-
-		opp-96000000 {
-			opp-hz = /bits/ 64 <96000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-192000000 {
-			opp-hz = /bits/ 64 <192000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-312000000 {
-			opp-hz = /bits/ 64 <312000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-408000000 {
-			opp-hz = /bits/ 64 <408000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-504000000 {
-			opp-hz = /bits/ 64 <504000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-600000000 {
-			opp-hz = /bits/ 64 <600000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-720000000 {
-			opp-hz = /bits/ 64 <720000000>;
-			opp-microvolt = <860000>;
-		};
-		opp-816000000 {
-			opp-hz = /bits/ 64 <816000000>;
-			opp-microvolt = <900000>;
-		};
-		opp-1008000000 {
-			opp-hz = /bits/ 64 <1008000000>;
-			opp-microvolt = <1140000>;
-		};
-		opp-1200000000 {
-			opp-hz = /bits/ 64 <1200000000>;
-			opp-microvolt = <1140000>;
-		};
-		opp-1320000000 {
-			opp-hz = /bits/ 64 <1320000000>;
-			opp-microvolt = <1140000>;
-		};
-		opp-1488000000 {
-			opp-hz = /bits/ 64 <1488000000>;
-			opp-microvolt = <1140000>;
-		};
-		opp-1536000000 {
-			opp-hz = /bits/ 64 <1536000000>;
-			opp-microvolt = <1140000>;
-		};
-	};
-};
-
-&cpu0 {
-	operating-points-v2 = <&cpu_opp_table>;
-	clocks = <&clkc CLKID_CPUCLK>;
-};
-
-&cpu1 {
-	operating-points-v2 = <&cpu_opp_table>;
-	clocks = <&clkc CLKID_CPUCLK>;
-};
-
-&cpu2 {
-	operating-points-v2 = <&cpu_opp_table>;
-	clocks = <&clkc CLKID_CPUCLK>;
-};
-
-&cpu3 {
-	operating-points-v2 = <&cpu_opp_table>;
-	clocks = <&clkc CLKID_CPUCLK>;
 };
 
 &pinctrl_cbus {

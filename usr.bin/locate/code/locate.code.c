@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.code.c,v 1.11 2011/09/04 20:28:40 joerg Exp $	*/
+/*	$NetBSD: locate.code.c,v 1.11.42.1 2020/04/13 08:05:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: locate.code.c,v 1.11 2011/09/04 20:28:40 joerg Exp $");
+__RCSID("$NetBSD: locate.code.c,v 1.11.42.1 2020/04/13 08:05:43 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -119,7 +119,8 @@ main(int argc, char *argv[])
 		usage();
 
 	/* First copy bigram array to stdout. */
-	strncpy(bigrams, argv[0], BGBUFSIZE + 1);
+	strncpy(bigrams, argv[0], BGBUFSIZE);
+	bigrams[BGBUFSIZE] = '\0';
 	if (fwrite(bigrams, 1, BGBUFSIZE, stdout) != BGBUFSIZE)
 		err(1, "stdout");
 

@@ -1,18 +1,40 @@
-2018-12-06  Release Manager
+2020-03-04  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.4.0 released.
 
-2018-01-25  Release Manager
+2019-08-29  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 7.3.0 released.
+	Backported from mainline
+	2019-05-10  Jakub Jelinek  <jakub@redhat.com>
 
-2017-08-14  Release Manager
+	PR pch/90326
+	* config-lang.in (gtfiles): Don't add c-family/c-cppbuiltin.c.
 
-	* GCC 7.2.0 released.
+2019-02-22  Release Manager
 
-2017-05-02  Release Manager
+	* GCC 8.3.0 released.
 
-	* GCC 7.1.0 released.
+2018-07-26  Release Manager
+
+	* GCC 8.2.0 released.
+
+2018-05-02  Release Manager
+
+	* GCC 8.1.0 released.
+
+2018-01-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2017-07-03  Nathan Sidwell  <nathan@acm.org>
+
+	* config-lang.in: Source cp/config-lang.in, sort objc++ gtfiles list.
+
+2017-06-02  Nathan Sidwell  <nathan@acm.org>
+
+	* objcp-decl.h (SIZEOF_OBJC_TYPE_LANG_SPECIFIC): Use lang_type.
+	(ALLOC_OBJC_TYPE_LANG_SPECIFIC): Use it.  Don't set
+	u.c.h.is_lang_type_class.
 
 2017-01-01  Jakub Jelinek  <jakub@redhat.com>
 
@@ -536,7 +558,7 @@
 	* objcp-lang.c: Likewise.
 
 
-Copyright (C) 2005-2017 Free Software Foundation, Inc.
+Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

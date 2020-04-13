@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2012/07/20 15:23:02 matt Exp $
+# $NetBSD: Makefile,v 1.26.40.1 2020/04/13 08:03:30 martin Exp $
 
 PROG = netboot
 
@@ -33,4 +33,4 @@ ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 release: check_RELEASEDIR .WAIT ${PROG}
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${PROG} \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot

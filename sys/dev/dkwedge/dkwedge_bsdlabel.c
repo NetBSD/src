@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.23 2014/11/04 07:45:45 mlelstv Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.23.20.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.23 2014/11/04 07:45:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.23.20.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -227,6 +227,9 @@ addwedges(const mbr_args_t *a, const struct disklabel *lp)
 
 		if (p->p_fstype == FS_UNUSED)
 			continue;
+
+		memset(&dkw, 0, sizeof(dkw));
+
 		ptype = bsdlabel_fstype_to_str(p->p_fstype);
 		if (ptype == NULL)
 			snprintf(dkw.dkw_ptype, sizeof(dkw.dkw_ptype),

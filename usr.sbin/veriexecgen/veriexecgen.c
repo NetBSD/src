@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.18.4.1 2019/06/10 22:10:43 christos Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.18.4.2 2020/04/13 08:06:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.18.4.1 2019/06/10 22:10:43 christos Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.18.4.2 2020/04/13 08:06:07 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,8 @@ typedef struct veriexecgen_t {
 	int	 scan_system_dirs;	/* just scan system directories */
 	int	 verbose;	/* verbosity level */
 	int	 stamp;		/* put a timestamp */
+	FILE	*from_file;	/* read from a file or stdin */
+	char	*from_filename;
 } veriexecgen_t;
 
 /* this struct describes a directory entry to generate a hash for */
@@ -123,7 +125,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage:  %s [-AaDrSTvW] [-d dir] [-o fingerprintdb] [-p prefix]\n"
+	    "usage:  %s [-AaDrSTvW] [-d dir] [-f file] [-o fingerprintdb] [-p prefix]\n"
 	    "\t\t    [-t algorithm]\n"
 	    "\t%s [-h]\n", getprogname(), getprogname());
 }
@@ -136,8 +138,15 @@ banner(veriexecgen_t *vp, hash_t *hash_type, char **search_path)
 
 	(void)printf("Fingerprinting ");
 
-	for (j = 0; search_path[j] != NULL; j++)
-		(void)printf("%s ", search_path[j]);
+	if (search_path) {
+		for (j = 0; search_path[j] != NULL; j++)
+			(void)printf("%s ", search_path[j]);
+	} else if (vp->from_file == stdin) {
+		(void)printf("files from stdin ");
+	} else {
+		(void)printf("files from %s ",
+			vp->from_filename ? vp->from_filename : "???");
+	}
 
 	(void)printf("(%s) (%s) using %s\n",
 	    vp->all_files ? "all files" : "executables only",
@@ -194,7 +203,41 @@ check_dup(char *filename)
 
 /* add a new entry to the list for `file' */
 static void
-add_new_entry(veriexecgen_t *vp, FTSENT *file, hash_t *hash)
+add_new_path_entry(veriexecgen_t *vp, const char *file, hash_t *hash)
+{
+	struct stat sb;
+	struct fentry *e;
+
+	if (stat(file, &sb) == -1) {
+		gripe(vp, "Cannot stat file `%s'", file);
+		return;
+	}
+
+	if (!vp->all_files && !IS_EXEC(sb.st_mode))
+		return;
+
+	e = ecalloc(1UL, sizeof(*e));
+
+	if (realpath(file, e->filename) == NULL) {
+		gripe(vp, "Cannot find absolute path `%s'", file);
+		return;
+	}
+	if (check_dup(e->filename)) {
+		free(e);
+		return;
+	}
+	if ((e->hash_val = do_hash(e->filename, hash)) == NULL) {
+		gripe(vp, "Cannot calculate hash `%s'", e->filename);
+		return;
+	}
+	e->flags = figure_flags(e->filename, sb.st_mode);
+
+	TAILQ_INSERT_TAIL(&fehead, e, f);
+}
+
+/* add a new entry to the list for `file' */
+static void
+add_new_ftsent_entry(veriexecgen_t *vp, FTSENT *file, hash_t *hash)
 {
 	struct fentry *e;
 	struct stat sb;
@@ -263,11 +306,31 @@ walk_dir(veriexecgen_t *vp, char **search_path, hash_t *hash)
 				    strerror(file->fts_errno));
 			}
 		} else {
-			add_new_entry(vp, file, hash);
+			add_new_ftsent_entry(vp, file, hash);
 		}
 	}
 
 	fts_close(fh);
+}
+
+/* read files from `file' */
+static void
+read_from_file(veriexecgen_t *vp, hash_t *hash, FILE *file)
+{
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
+
+	while ((linelen = getline(&line, &linesize, file)) != -1) {
+		if (linelen > 0 && line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+		add_new_path_entry(vp, line, hash);
+	}
+
+	if (ferror(stdin)) {
+		gripe(vp, "Error reading from stdin `%s'", strerror(errno));
+		return;
+	}
 }
 
 /* return a string representation of the flags */
@@ -383,7 +446,7 @@ main(int argc, char **argv)
 	/* error out if we have a dangling symlink or other fs problem */
 	v.exit_on_error = 1;
 
-	while ((ch = getopt(argc, argv, "AaDd:ho:p:rSTt:vW")) != -1) {
+	while ((ch = getopt(argc, argv, "AaDd:f:ho:p:rSTt:vW")) != -1) {
 		switch (ch) {
 		case 'A':
 			v.append_output = 1;
@@ -405,6 +468,20 @@ main(int argc, char **argv)
 			Fflag = 1;
 			break;
 #endif /* notyet */
+		case 'f':
+			if (strcmp(optarg, "-") == 0) {
+				v.from_file = stdin;
+				v.from_filename = NULL;
+			} else {
+				v.from_file = fopen(optarg, "r");
+				if (v.from_file == NULL) {
+					errx(EXIT_FAILURE,
+						"Error opening file %s",
+						optarg);
+				}
+				v.from_filename = strdup(optarg);
+			}
+			break;
 		case 'h':
 			usage();
 			return EXIT_SUCCESS;
@@ -452,7 +529,7 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&fehead);
 
-	if (search_path == NULL)
+	if (search_path == NULL && !v.from_file)
 		v.scan_system_dirs = 1;
 
 	if (v.scan_system_dirs) {
@@ -469,10 +546,21 @@ main(int argc, char **argv)
 		walk_dir(&v, search_path, hash);
 	}
 
+	if (v.from_file) {
+		if (v.verbose)
+			banner(&v, hash, NULL);
+		read_from_file(&v, hash, v.from_file);
+	}
+
 	store_entries(&v, hash);
 
 	if (make_immutable && chflags(v.dbfile, SF_IMMUTABLE) != 0)
 		err(EXIT_FAILURE, "Can't set immutable flag");
+
+	if (v.from_file && v.from_file != stdin) {
+		fclose(v.from_file);
+		free(v.from_filename);
+	}
 
 	return EXIT_SUCCESS;
 }

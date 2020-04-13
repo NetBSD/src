@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.103.2.2 2020/04/08 14:08:50 martin Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.103.2.3 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.103.2.2 2020/04/08 14:08:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.103.2.3 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -436,6 +436,7 @@ tmpfs_construct_node(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 
 	VOP_UNLOCK(*vpp);
 
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return 0;
 }
 

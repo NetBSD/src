@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.147.2.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.147.2.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.147.2.1 2019/06/10 22:05:23 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.147.2.2 2020/04/13 08:03:12 martin Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -515,13 +515,13 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 		} else
 			s++;
 	}
-	r = result = el_malloc((len + 1) * sizeof(*r));
+	r = result = el_calloc(len + 1, sizeof(*r));
 	if (result == NULL)
 		return NULL;
 	s = str;
 	while (*s) {
 		if (*s == *what && !strncmp(s, what, what_len)) {
-			(void)strncpy(r, with, with_len);
+			memcpy(r, with, with_len);
 			r += with_len;
 			s += what_len;
 			if (!globally) {
@@ -605,10 +605,9 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	else if (len == 0)
 		return NULL;
 	else {
-		if ((pat = el_malloc((len + 1) * sizeof(*pat))) == NULL)
+		if ((pat = el_calloc(len + 1, sizeof(*pat))) == NULL)
 			return NULL;
-		(void)strncpy(pat, cmd + begin, len);
-		pat[len] = '\0';
+		(void)strlcpy(pat, cmd + begin, len + 1);
 	}
 
 	if (history(h, &ev, H_CURR) != 0) {
@@ -699,11 +698,10 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 	} else {
 		if (command[offs + 1] == '#') {
 			/* use command so far */
-			if ((aptr = el_malloc((offs + 1) * sizeof(*aptr)))
+			if ((aptr = el_calloc(offs + 1, sizeof(*aptr)))
 			    == NULL)
 				return -1;
-			(void)strncpy(aptr, command, offs);
-			aptr[offs] = '\0';
+			(void)strlcpy(aptr, command, offs + 1);
 			idx = 1;
 		} else {
 			int	qchar;
@@ -933,7 +931,7 @@ history_expand(char *str, char **output)
 	*output = NULL;
 	if (str[0] == history_subst_char) {
 		/* ^foo^foo2^ is equivalent to !!:s^foo^foo2^ */
-		*output = el_malloc((strlen(str) + 4 + 1) * sizeof(**output));
+		*output = el_calloc(strlen(str) + 4 + 1, sizeof(**output));
 		if (*output == NULL)
 			return 0;
 		(*output)[0] = (*output)[1] = history_expansion_char;
@@ -960,9 +958,8 @@ history_expand(char *str, char **output)
 			}						\
 			result = nresult;				\
 		}							\
-		(void)strncpy(&result[idx], what, len);			\
+		(void)strlcpy(&result[idx], what, len + 1);		\
 		idx += len;						\
-		result[idx] = '\0';					\
 	}
 
 	result = NULL;
@@ -1081,7 +1078,7 @@ history_arg_extract(int start, int end, const char *str)
 	for (i = (size_t)start, len = 0; i <= (size_t)end; i++)
 		len += strlen(arr[i]) + 1;
 	len++;
-	result = el_malloc(len * sizeof(*result));
+	result = el_calloc(len, sizeof(*result));
 	if (result == NULL)
 		goto out;
 
@@ -1143,15 +1140,14 @@ history_tokenize(const char *str)
 			result = nresult;
 		}
 		len = (size_t)i - (size_t)start;
-		temp = el_malloc((size_t)(len + 1) * sizeof(*temp));
+		temp = el_calloc(len + 1, sizeof(*temp));
 		if (temp == NULL) {
 			for (i = 0; i < idx; i++)
 				el_free(result[i]);
 			el_free(result);
 			return NULL;
 		}
-		(void)strncpy(temp, &str[start], len);
-		temp[len] = '\0';
+		(void)strlcpy(temp, &str[start], len + 1);
 		result[idx++] = temp;
 		result[idx] = NULL;
 		if (str[i])
@@ -1477,8 +1473,10 @@ add_history(const char *line)
 	(void)history(h, &ev, H_GETSIZE);
 	if (ev.num == history_length)
 		history_base++;
-	else
+	else {
+		history_offset++;
 		history_length = ev.num;
+	}
 	return 0;
 }
 
@@ -2267,7 +2265,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 
 	len = 1;
 	max = 10;
-	if ((list = el_malloc(max * sizeof(*list))) == NULL)
+	if ((list = el_calloc(max, sizeof(*list))) == NULL)
 		return NULL;
 
 	while ((match = (*fun)(str, (int)(len - 1))) != NULL) {
@@ -2302,7 +2300,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 		if ((list[0] = strdup(str)) == NULL)
 			goto out;
 	} else {
-		if ((list[0] = el_malloc((min + 1) * sizeof(*list[0]))) == NULL)
+		if ((list[0] = el_calloc(min + 1, sizeof(*list[0]))) == NULL)
 			goto out;
 		(void)memcpy(list[0], list[1], min);
 		list[0][min] = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.52 2016/12/11 05:27:00 nat Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.52.16.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.52 2016/12/11 05:27:00 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.52.16.1 2020/04/13 08:04:47 martin Exp $");
 
 #include <sys/errno.h>
 
@@ -684,14 +684,11 @@ ProcessNode(RF_DagNode_t *node, int context)
  * This routine is called by each node execution function to mark the node
  * as complete and fire off any successors that have been enabled.
  */
-int
+void
 rf_FinishNode(RF_DagNode_t *node, int context)
 {
-	int     retcode = RF_FALSE;
 	node->dagHdr->numNodesCompleted++;
 	ProcessNode(node, context);
-
-	return (retcode);
 }
 
 

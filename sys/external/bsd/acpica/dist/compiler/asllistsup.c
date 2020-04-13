@@ -133,7 +133,7 @@ LsDumpAsciiInComment (
             {
                 /* Insert a space to break the sequence */
 
-                FlPrintFile (FileId, ".", BufChar);
+                FlPrintFile (FileId, " ");
             }
 
             FlPrintFile (FileId, "%c", BufChar);

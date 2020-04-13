@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.46 2016/04/03 10:36:00 mlelstv Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.46.18.1 2020/04/13 08:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.46 2016/04/03 10:36:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.46.18.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -565,7 +565,7 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 
 	for (i = 0; i < 32; i++) {
 		param[0].Integer.Value = i + 1;
-		param[1].Integer.Value = (((1 << i) & mask) != 0);
+		param[1].Integer.Value = ((__BIT(i) & mask) != 0);
 
 		rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "MHKM",
 		    &params, NULL);

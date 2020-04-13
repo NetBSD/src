@@ -1,5 +1,5 @@
 ;;- Machine description for HP PA-RISC architecture for GCC compiler
-;;   Copyright (C) 1992-2017 Free Software Foundation, Inc.
+;;   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 ;;   Contributed by the Center for Software Science at the University
 ;;   of Utah.
 
@@ -9668,7 +9668,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
 
       emit_library_call_value (canonicalize_funcptr_for_compare_libfunc,
       			       operands[0], LCT_NORMAL, Pmode,
-			       1, operands[1], Pmode);
+			       operands[1], Pmode);
       DONE;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.7.4.2 2019/06/10 22:08:38 christos Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.7.4.3 2020/04/13 08:05:01 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.7.4.2 2019/06/10 22:08:38 christos Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.7.4.3 2020/04/13 08:05:01 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1507,7 +1507,7 @@ nvlist_add_nvpair(nvlist_t *nvl, const nvpair_t *nvp)
 	nvpair_insert(&nvl->nvl_head, newnvp, nvl);
 }
 
-#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(__NetBSD__)
+#if !defined(_STANDALONE)
 void
 nvlist_add_stringf(nvlist_t *nvl, const char *name, const char *valuefmt, ...)
 {

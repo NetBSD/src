@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.43.30.2 2020/04/08 14:07:26 martin Exp $ */
+/*	$NetBSD: aucc.c,v 1.43.30.3 2020/04/13 08:03:31 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -46,7 +46,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.43.30.2 2020/04/08 14:07:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.43.30.3 2020/04/13 08:03:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ int
 aucc_get_props(void *addr)
 {
 
-	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE;
+	return AUDIO_PROP_PLAYBACK;
 }
 
 

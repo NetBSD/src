@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.7.6.1 2019/06/10 22:06:53 christos Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.7.6.2 2020/04/13 08:04:11 martin Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -50,7 +50,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7.6.1 2019/06/10 22:06:53 christos Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7.6.2 2020/04/13 08:04:11 martin Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,7 @@ struct amdzentemp_softc {
 	envsys_data_t *sc_sensor;
 	size_t sc_sensor_len;
         size_t sc_numsensors;
+	int32_t sc_offset;
 };
 
 
@@ -123,7 +124,7 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_smn = parent;
-     
+
 	amdzentemp_family17_init(sc);
 
 	aprint_normal("\n");
@@ -190,7 +191,19 @@ amdzentemp_detach(device_t self, int flags)
 static void
 amdzentemp_family17_init(struct amdzentemp_softc *sc) 
 {
+
 	sc->sc_numsensors = 1;
+	sc->sc_offset = 0;
+
+	if (strstr(cpu_brand_string, "AMD Ryzen 5 1600X")
+	    || strstr(cpu_brand_string, "AMD Ryzen 7 1700X")
+	    || strstr(cpu_brand_string, "AMD Ryzen 7 1800X"))
+		sc->sc_offset = -20000000;
+	else if (strstr(cpu_brand_string, "AMD Ryzen 7 2700X"))
+		sc->sc_offset = -10000000;
+	else if (strstr(cpu_brand_string, "AMD Ryzen Threadripper 19")
+	    || strstr(cpu_brand_string, "AMD Ryzen Threadripper 29"))
+		sc->sc_offset = -27000000;
 }
 
 static void
@@ -222,6 +235,7 @@ amdzentemp_family17_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* adjust for possible offset of 49K */
 	if (temp & 0x80000) 
 		edata->value_cur -= 49000000;
+	edata->value_cur += sc->sc_offset;
 }
 
 MODULE(MODULE_CLASS_DRIVER, amdzentemp, "sysmon_envsys,amdsmn");

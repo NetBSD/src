@@ -1,4 +1,4 @@
-/* $NetBSD: iomdkbc.c,v 1.5 2012/05/14 10:38:08 skrll Exp $ */
+/* $NetBSD: iomdkbc.c,v 1.5.40.1 2020/04/13 08:03:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.5 2012/05/14 10:38:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.5.40.1 2020/04/13 08:03:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,11 +134,7 @@ iomdkbc_attach(device_t parent, device_t self, void *aux)
 			t = &iomdkbc_cntag;
 		} else {
 			t = malloc(sizeof(struct iomdkbc_internal), M_DEVBUF,
-			    M_NOWAIT | M_ZERO);
-			if (t == NULL) {
-				aprint_error(": no memory");
-				return;
-			}
+			    M_WAITOK | M_ZERO);
 			t->t_haveport[PCKBPORT_KBD_SLOT] = 1;
 			t->t_iot = ka->ka_iot;
 			t->t_ioh[PCKBPORT_KBD_SLOT] = ka->ka_ioh;
@@ -156,11 +152,7 @@ iomdkbc_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(pa->pa_name, "opms") == 0) {
 		if (t == NULL) {
 			t = malloc(sizeof(struct iomdkbc_internal), M_DEVBUF,
-			    M_NOWAIT | M_ZERO);
-			if (t == NULL) {
-				aprint_error(": no memory");
-				return;
-			}
+			    M_WAITOK | M_ZERO);
 		}
 		t->t_haveport[PCKBPORT_AUX_SLOT] = 1;
 		t->t_iot = pa->pa_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.6 2017/06/09 08:23:45 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.6.6.1 2020/04/13 08:05:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.6 2017/06/09 08:23:45 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.6.6.1 2020/04/13 08:05:29 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -721,7 +721,7 @@ ATF_TC(canbindunknown);
 ATF_TC_HEAD(canbindunknown, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "check that bind to unkown interface fails");
+	atf_tc_set_md_var(tc, "descr", "check that bind to unknown interface fails");
 	atf_tc_set_md_var(tc, "timeout", "5");
 }
 

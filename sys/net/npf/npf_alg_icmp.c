@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.30.2.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.30.2.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -453,33 +453,36 @@ err:
  * and module interface.
  */
 
-static int
-npf_alg_icmp_init(void)
+int
+npf_alg_icmp_init(npf_t *npf)
 {
 	static const npfa_funcs_t icmp = {
 		.match		= npfa_icmp_match,
 		.translate	= npfa_icmp_nat,
 		.inspect	= npfa_icmp_conn,
 	};
-	alg_icmp = npf_alg_register(npf_getkernctx(), "icmp", &icmp);
+	alg_icmp = npf_alg_register(npf, "icmp", &icmp);
 	return alg_icmp ? 0 : ENOMEM;
 }
 
-static int
-npf_alg_icmp_fini(void)
+int
+npf_alg_icmp_fini(npf_t *npf)
 {
 	KASSERT(alg_icmp != NULL);
-	return npf_alg_unregister(npf_getkernctx(), alg_icmp);
+	return npf_alg_unregister(npf, alg_icmp);
 }
 
+#ifdef _KERNEL
 static int
 npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 {
+	npf_t *npf = npf_getkernctx();
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return npf_alg_icmp_init();
+		return npf_alg_icmp_init(npf);
 	case MODULE_CMD_FINI:
-		return npf_alg_icmp_fini();
+		return npf_alg_icmp_fini(npf);
 	case MODULE_CMD_AUTOUNLOAD:
 		return EBUSY;
 	default:
@@ -487,3 +490,4 @@ npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 	}
 	return 0;
 }
+#endif

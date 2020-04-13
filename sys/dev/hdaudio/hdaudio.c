@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.8.6.1 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: hdaudio.c,v 1.8.6.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8.6.1 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8.6.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1164,10 +1164,6 @@ hdaudio_stream_reset(struct hdaudio_stream *st)
 			break;
 		hda_delay(10);
 	} while (--retry > 0);
-	if (retry == 0) {
-		hda_error(sc, "timeout entering stream reset state\n");
-		return;
-	}
 
 	ctl0 &= ~HDAUDIO_CTL_SRST;
 	hda_write1(sc, HDAUDIO_SD_CTL0(snum), ctl0);

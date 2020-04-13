@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-mtread.c,v 1.1.1.3 2018/02/06 01:53:12 christos Exp $	*/
+/*	$NetBSD: slapd-mtread.c,v 1.1.1.3.4.1 2020/04/13 07:56:25 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapd-mtread.c,v 1.1.1.3 2018/02/06 01:53:12 christos Exp $");
+__RCSID("$NetBSD: slapd-mtread.c,v 1.1.1.3.4.1 2020/04/13 07:56:25 martin Exp $");
 
 #include "portable.h"
 
@@ -581,7 +581,7 @@ do_conn( char *uri, char *manager, struct berval *passwd,
 {
 	LDAP	*ld = NULL;
 	int	version = LDAP_VERSION3;
-	int  	i = 0, do_retry = maxretries;
+	int  	do_retry = maxretries;
 	int     rc = LDAP_SUCCESS;
 	char	thrstr[BUFSIZ];
 
@@ -717,7 +717,7 @@ do_random2( LDAP *ld,
 	int     rc = LDAP_SUCCESS;
 	int		lo, hi, range;
 	int	flen;
-	LDAPMessage *res = NULL, *e = NULL;
+	LDAPMessage *res = NULL;
 	char	*ptr, *ftail;
 	char	thrstr[BUFSIZ];
 	char	fbuf[BUFSIZ];

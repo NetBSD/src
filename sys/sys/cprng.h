@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.14 2018/04/29 11:42:09 maxv Exp $ */
+/*	$NetBSD: cprng.h,v 1.14.2.1 2020/04/13 08:05:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 #include <sys/types.h>
 
-#include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
+#include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 #include <crypto/cprng_fast/cprng_fast.h>
 
 /*
- * NIST SP800-90 says 2^19 bytes per request for the CTR_DRBG.
+ * NIST SP800-90 says 2^19 bytes per request for the Hash_DRBG.
  */
 #define CPRNG_MAX_LEN	524288
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: sdb.c,v 1.3.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -713,6 +713,82 @@ destroynode(dns_sdbnode_t *node) {
 }
 
 static isc_result_t
+getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
+	dns_sdb_t *sdb = (dns_sdb_t *)db;
+	dns_sdbnode_t *node = NULL;
+	isc_result_t result;
+	isc_buffer_t b;
+	char namestr[DNS_NAME_MAXTEXT + 1];
+	dns_sdbimplementation_t *imp;
+	dns_name_t relname;
+	dns_name_t *name;
+
+	REQUIRE(VALID_SDB(sdb));
+	REQUIRE(nodep != NULL && *nodep == NULL);
+
+	imp = sdb->implementation;
+	name = &sdb->common.origin;
+
+	if (imp->methods->lookup2 != NULL) {
+		if ((imp->flags & DNS_SDBFLAG_RELATIVEOWNER) != 0) {
+			dns_name_init(&relname, NULL);
+			name = &relname;
+		}
+	} else {
+		isc_buffer_init(&b, namestr, sizeof(namestr));
+		if ((imp->flags & DNS_SDBFLAG_RELATIVEOWNER) != 0) {
+
+			dns_name_init(&relname, NULL);
+			result = dns_name_totext(&relname, true, &b);
+			if (result != ISC_R_SUCCESS) {
+				return (result);
+			}
+		} else {
+			result = dns_name_totext(name, true, &b);
+			if (result != ISC_R_SUCCESS) {
+				return (result);
+			}
+		}
+		isc_buffer_putuint8(&b, 0);
+	}
+
+	result = createnode(sdb, &node);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+
+	MAYBE_LOCK(sdb);
+	if (imp->methods->lookup2 != NULL) {
+		result = imp->methods->lookup2(&sdb->common.origin, name,
+					       sdb->dbdata, node, NULL, NULL);
+	} else {
+		result = imp->methods->lookup(sdb->zone, namestr, sdb->dbdata,
+					      node, NULL, NULL);
+	}
+	MAYBE_UNLOCK(sdb);
+	if (result != ISC_R_SUCCESS &&
+	    !(result == ISC_R_NOTFOUND &&
+	      imp->methods->authority != NULL))
+	{
+		destroynode(node);
+		return (result);
+	}
+
+	if (imp->methods->authority != NULL) {
+		MAYBE_LOCK(sdb);
+		result = imp->methods->authority(sdb->zone, sdb->dbdata, node);
+		MAYBE_UNLOCK(sdb);
+		if (result != ISC_R_SUCCESS) {
+			destroynode(node);
+			return (result);
+		}
+	}
+
+	*nodep = node;
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
 findnodeext(dns_db_t *db, const dns_name_t *name, bool create,
 	    dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo,
 	    dns_dbnode_t **nodep)
@@ -1265,7 +1341,7 @@ static dns_dbmethods_t sdb_methods = {
 	ispersistent,
 	overmem,
 	settask,
-	NULL,			/* getoriginnode */
+	getoriginnode,		/* getoriginnode */
 	NULL,			/* transfernode */
 	NULL,			/* getnsec3parameters */
 	NULL,			/* findnsec3node */

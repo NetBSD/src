@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.91.16.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.91.16.2 2020/04/13 08:03:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91.16.1 2019/06/10 22:05:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91.16.2 2020/04/13 08:03:28 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -392,7 +392,7 @@ canonicalise_bootconfig(struct bootconfig *bootconf, struct bootconfig *raw_boot
 }
 
 
-u_int
+vaddr_t
 initarm(void *cookie)
 {
 	struct bootconfig *raw_bootconf = cookie;
@@ -518,7 +518,7 @@ initarm(void *cookie)
 #endif
 	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
 #ifdef VERBOSE_INIT_ARM
-		printf("0x0x%x + 0x%0x, type = 0x%08x\n", bootconfig.dram[loop].address,
+		printf("0x%x + 0x%0x, type = 0x%08x\n", bootconfig.dram[loop].address,
 				 bootconfig.dram[loop].pages * PAGE_SIZE,
 				 bootconfig.dram[loop].flags);
 #endif

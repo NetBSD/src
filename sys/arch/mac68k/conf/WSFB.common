@@ -1,0 +1,40 @@
+# $NetBSD: WSFB.common,v 1.3.8.2 2020/04/13 08:03:57 martin Exp $
+
+genfb* at intvid?
+genfb* at macvid?
+wsdisplay* at wsemuldisplaydev?
+
+options RASOPS_APPLE_PALETTE
+
+# At the expense of memory, boost display output drastically for
+# some depth/font settings.
+# XXX
+# This may have the opposite effect. Specify with care!
+#
+#options GENFB_SHADOWFB
+
+options WSDISPLAY_DEFAULTSCREENS=1
+
+# Mimic macppc color/font settings.
+#
+options WS_DEFAULT_FG=WSCOL_BLACK
+options WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options WS_KERNEL_FG=WSCOL_GREEN
+options WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options FONT_QVSS8x15
+
+pseudo-device wsfont
+pseudo-device wsmux
+
+no options WSDISPLAY_COMPAT_ITEFONT
+no options RCONS_2BPP
+no options RCONS_4BPP
+no options RCONS_16BPP
+no options GRF_COMPAT
+
+no macfb* at intvid?
+no macfb* at macvid?
+no wsdisplay* at macfb?
+
+no pseudo-device grf
+no pseudo-device ite

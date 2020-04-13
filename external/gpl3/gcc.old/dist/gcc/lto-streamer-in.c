@@ -1,6 +1,6 @@
 /* Read the GIMPLE representation from a file stream.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
    Re-implemented by Diego Novillo <dnovillo@google.com>
 
@@ -710,21 +710,6 @@ make_new_block (struct function *fn, unsigned int index)
 }
 
 
-/* Read a wide-int.  */
-
-static widest_int
-streamer_read_wi (struct lto_input_block *ib)
-{
-  HOST_WIDE_INT a[WIDE_INT_MAX_ELTS];
-  int i;
-  int prec ATTRIBUTE_UNUSED = streamer_read_uhwi (ib);
-  int len = streamer_read_uhwi (ib);
-  for (i = 0; i < len; i++)
-    a[i] = streamer_read_hwi (ib);
-  return widest_int::from_array (a, len);
-}
-
-
 /* Read the CFG for function FN from input block IB.  */
 
 static void
@@ -834,10 +819,13 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
       loop->estimate_state = streamer_read_enum (ib, loop_estimation, EST_LAST);
       loop->any_upper_bound = streamer_read_hwi (ib);
       if (loop->any_upper_bound)
-	loop->nb_iterations_upper_bound = streamer_read_wi (ib);
+	loop->nb_iterations_upper_bound = streamer_read_widest_int (ib);
+      loop->any_likely_upper_bound = streamer_read_hwi (ib);
+      if (loop->any_likely_upper_bound)
+	loop->nb_iterations_likely_upper_bound = streamer_read_widest_int (ib);
       loop->any_estimate = streamer_read_hwi (ib);
       if (loop->any_estimate)
-	loop->nb_iterations_estimate = streamer_read_wi (ib);
+	loop->nb_iterations_estimate = streamer_read_widest_int (ib);
 
       /* Read OMP SIMD related info.  */
       loop->safelen = streamer_read_hwi (ib);
@@ -881,10 +869,13 @@ input_ssa_names (struct lto_input_block *ib, struct data_in *data_in,
 
       is_default_def = (streamer_read_uchar (ib) != 0);
       name = stream_read_tree (ib, data_in);
-      ssa_name = make_ssa_name_fn (fn, name, gimple_build_nop ());
+      ssa_name = make_ssa_name_fn (fn, name, NULL);
 
       if (is_default_def)
-	set_ssa_default_def (cfun, SSA_NAME_VAR (ssa_name), ssa_name);
+	{
+	  set_ssa_default_def (cfun, SSA_NAME_VAR (ssa_name), ssa_name);
+	  SSA_NAME_DEF_STMT (ssa_name) = gimple_build_nop ();
+	}
 
       i = streamer_read_uhwi (ib);
     }
@@ -954,7 +945,8 @@ fixup_call_stmt_edges (struct cgraph_node *orig, gimple **stmts)
   if (orig->clones)
     for (node = orig->clones; node != orig;)
       {
-	fixup_call_stmt_edges_1 (node, stmts, fn);
+	if (!node->thunk.thunk_p)
+	  fixup_call_stmt_edges_1 (node, stmts, fn);
 	if (node->clones)
 	  node = node->clones;
 	else if (node->next_sibling_clone)
@@ -1048,6 +1040,9 @@ input_function (tree fn_decl, struct data_in *data_in,
 
   /* Read the tree of lexical scopes for the function.  */
   DECL_INITIAL (fn_decl) = stream_read_tree (ib, data_in);
+  unsigned block_leaf_count = streamer_read_uhwi (ib);
+  while (block_leaf_count--)
+    stream_read_tree (ib, data_in);
 
   if (!streamer_read_uhwi (ib))
     return;
@@ -1115,15 +1110,59 @@ input_function (tree fn_decl, struct data_in *data_in,
       while (!gsi_end_p (bsi))
 	{
 	  gimple *stmt = gsi_stmt (bsi);
+	  bool remove = false;
 	  /* If we're recompiling LTO objects with debug stmts but
 	     we're not supposed to have debug stmts, remove them now.
 	     We can't remove them earlier because this would cause uid
 	     mismatches in fixups, but we can do it at this point, as
-	     long as debug stmts don't require fixups.  */
-	  if (!MAY_HAVE_DEBUG_STMTS && !flag_wpa && is_gimple_debug (stmt))
+	     long as debug stmts don't require fixups.
+	     Similarly remove all IFN_*SAN_* internal calls   */
+	  if (!flag_wpa)
+	    {
+	      if (!MAY_HAVE_DEBUG_STMTS && is_gimple_debug (stmt))
+		remove = true;
+	      if (is_gimple_call (stmt)
+		  && gimple_call_internal_p (stmt))
+		{
+		  switch (gimple_call_internal_fn (stmt))
+		    {
+		    case IFN_UBSAN_NULL:
+		      if ((flag_sanitize
+			  & (SANITIZE_NULL | SANITIZE_ALIGNMENT)) == 0)
+			remove = true;
+		      break;
+		    case IFN_UBSAN_BOUNDS:
+		      if ((flag_sanitize & SANITIZE_BOUNDS) == 0)
+			remove = true;
+		      break;
+		    case IFN_UBSAN_VPTR:
+		      if ((flag_sanitize & SANITIZE_VPTR) == 0)
+			remove = true;
+		      break;
+		    case IFN_UBSAN_OBJECT_SIZE:
+		      if ((flag_sanitize & SANITIZE_OBJECT_SIZE) == 0)
+			remove = true;
+		      break;
+		    case IFN_ASAN_MARK:
+		      if ((flag_sanitize & SANITIZE_ADDRESS) == 0)
+			remove = true;
+		      break;
+		    case IFN_TSAN_FUNC_EXIT:
+		      if ((flag_sanitize & SANITIZE_THREAD) == 0)
+			remove = true;
+		      break;
+		    default:
+		      break;
+		    }
+		  gcc_assert (!remove || gimple_call_lhs (stmt) == NULL_TREE);
+		}
+	    }
+	  if (remove)
 	    {
 	      gimple_stmt_iterator gsi = bsi;
 	      gsi_next (&bsi);
+	      unlink_stmt_vdef (stmt);
+	      release_defs (stmt);
 	      gsi_remove (&gsi, true);
 	    }
 	  else
@@ -1299,10 +1338,6 @@ lto_read_tree_1 (struct lto_input_block *ib, struct data_in *data_in, tree expr)
       && TREE_CODE (expr) != TRANSLATION_UNIT_DECL)
     DECL_INITIAL (expr) = stream_read_tree (ib, data_in);
 
-  /* We should never try to instantiate an MD or NORMAL builtin here.  */
-  if (TREE_CODE (expr) == FUNCTION_DECL)
-    gcc_assert (!streamer_handle_as_builtin_p (expr));
-
 #ifdef LTO_STREAMER_DEBUG
   /* Remove the mapping to RESULT's original address set by
      streamer_alloc_tree.  */
@@ -1365,7 +1400,6 @@ lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
 	  if (tag == LTO_null
 	      || (tag >= LTO_field_decl_ref && tag <= LTO_global_decl_ref)
 	      || tag == LTO_tree_pickle_reference
-	      || tag == LTO_builtin_decl
 	      || tag == LTO_integer_cst
 	      || tag == LTO_tree_scc)
 	    gcc_unreachable ();
@@ -1416,12 +1450,6 @@ lto_input_tree_1 (struct lto_input_block *ib, struct data_in *data_in,
       /* If TAG is a reference to a previously read tree, look it up in
 	 the reader cache.  */
       result = streamer_get_pickled_tree (ib, data_in);
-    }
-  else if (tag == LTO_builtin_decl)
-    {
-      /* If we are going to read a built-in function, all we need is
-	 the code and class.  */
-      result = streamer_get_builtin_tree (ib, data_in);
     }
   else if (tag == LTO_integer_cst)
     {

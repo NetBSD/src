@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: ld.c,v 1.104.4.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.104.4.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,12 @@ ldattach(struct ld_softc *sc, const char *default_strategy)
 	cv_init(&sc->sc_drain, "lddrain");
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
+		return;
+	}
+
+	/* don't attach a disk that we cannot handle */
+	if (sc->sc_secsize < DEV_BSIZE) {
+		sc->sc_flags &= ~LDF_ENABLED;
 		return;
 	}
 

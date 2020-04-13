@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.12.4.1 2019/06/10 22:06:17 christos Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.12.4.2 2020/04/13 08:03:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.12.4.1 2019/06/10 22:06:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.12.4.2 2020/04/13 08:03:51 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -135,7 +135,7 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 u_int cpu_get_control(void);
 
-u_int init_sa11x0(int, char **, struct bootinfo *);
+vaddr_t init_sa11x0(int, char **, struct bootinfo *);
 
 #ifdef BOOT_DUMP
 void    dumppages(char *, int);
@@ -175,7 +175,7 @@ static const struct pmap_devmap sa11x0_devmap[] = {
  *   Initializing the physical console so characters can be printed.
  *   Setting up page tables for the kernel.
  */
-u_int
+vaddr_t
 init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 {
 	u_int kerneldatasize, symbolsize;
@@ -571,7 +571,7 @@ init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 #endif /* DDB */
 
 	/* We return the new stack pointer address */
-	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void

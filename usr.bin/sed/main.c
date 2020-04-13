@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2015/03/12 12:40:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34.16.1 2020/04/13 08:05:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.34 2015/03/12 12:40:41 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.34.16.1 2020/04/13 08:05:47 martin Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -268,6 +268,8 @@ again:
 			s = script->s;
 			state = ST_STRING;
 			goto again;
+		default:
+			abort();
 		}
 	case ST_FILE:
 		if ((p = fgets(buf, n, f)) != NULL) {

@@ -67,6 +67,7 @@ parse_nbuf_chain(struct mbuf *m)
 		n += sizeof(uint32_t);
 	}
 	mbuf_consistency_check(&nbuf);
+	m_freem(nbuf_head_mbuf(&nbuf));
 	return s;
 }
 
@@ -74,7 +75,7 @@ static char *
 mbuf_getstring(struct mbuf *m)
 {
 	char *s = kmem_zalloc(MBUF_CHAIN_LEN + 1, KM_SLEEP);
-	u_int tlen = 0;
+	unsigned tlen = 0;
 
 	while (m) {
 		int len = m->m_len;
@@ -106,7 +107,7 @@ static struct mbuf *
 mbuf_bytesize(size_t clen)
 {
 	struct mbuf *m0 = NULL, *m = NULL;
-	u_int i, n;
+	unsigned i, n;
 
 	/* Chain of clen (e.g. 128) mbufs, each storing 1 byte of data. */
 	for (i = 0, n = 0; i < clen; i++) {
@@ -130,16 +131,16 @@ mbuf_bytesize(size_t clen)
 }
 
 /*
- * Generate random amount of mbufs, with random offsets and lengths.
+ * Generate random number of mbufs, with random offsets and lengths.
  */
 static struct mbuf *
 mbuf_random_len(size_t chain_len)
 {
 	struct mbuf *m0 = NULL, *m = NULL;
-	u_int tlen = 0, n = 0;
+	unsigned tlen = 0, n = 0;
 
 	while (tlen < chain_len) {
-		u_int off, len;
+		unsigned off, len;
 		char *d;
 
 		/* Random offset and length range: 1 .. 16. */
@@ -174,34 +175,40 @@ mbuf_random_len(size_t chain_len)
 }
 
 static bool
-validate_mbuf_data(bool verbose, char *bufa, char *bufb)
+validate_mbuf_data(char *bufa, char *bufb)
 {
-	bool ret = (strcmp(bufa, bufb) == 0);
+	bool ok = strcmp(bufa, bufb) == 0;
 
-	if (verbose) {
+	if (!ok) {
 		printf("Buffer A: %s\nBuffer B: %s\n", bufa, bufb);
 	}
 	kmem_free(bufa, MBUF_CHAIN_LEN + 1);
 	kmem_free(bufb, MBUF_CHAIN_LEN + 1);
-	return ret;
+	return ok;
 }
 
 bool
 npf_nbuf_test(bool verbose)
 {
-	struct mbuf *m1, *m2;
+	struct mbuf *m;
 	char *bufa, *bufb;
-	bool fail = false;
+	unsigned n = 10000;
+	bool ok;
 
-	m1 = mbuf_random_len(MBUF_CHAIN_LEN);
-	bufa = mbuf_getstring(m1);
-	bufb = parse_nbuf_chain(m1);
-	fail |= !validate_mbuf_data(verbose, bufa, bufb);
+	while (n--) {
+		m = mbuf_random_len(MBUF_CHAIN_LEN);
+		bufa = mbuf_getstring(m);
+		bufb = parse_nbuf_chain(m);
+		ok = validate_mbuf_data(bufa, bufb);
+		CHECK_TRUE(ok);
+	}
 
-	m2 = mbuf_bytesize(MBUF_CHAIN_LEN);
-	bufa = mbuf_getstring(m2);
-	bufb = parse_nbuf_chain(m2);
-	fail |= !validate_mbuf_data(verbose, bufa, bufb);
+	m = mbuf_bytesize(MBUF_CHAIN_LEN);
+	bufa = mbuf_getstring(m);
+	bufb = parse_nbuf_chain(m);
+	ok = validate_mbuf_data(bufa, bufb);
+	CHECK_TRUE(ok);
 
-	return !fail;
+	(void)verbose;
+	return true;
 }

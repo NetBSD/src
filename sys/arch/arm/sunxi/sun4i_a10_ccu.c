@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.9.2.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.9.2.2 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.9.2.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.9.2.2 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,8 +59,12 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.9.2.1 2019/06/10 22:05:56 christ
 #define	SD1_SCLK_CFG_REG        0x08c
 #define	SD2_SCLK_CFG_REG        0x090
 #define	SD3_SCLK_CFG_REG	0x094
+#define	SPI0_CLK_CFG_REG	0x0a0
+#define	SPI1_CLK_CFG_REG	0x0a4
+#define	SPI2_CLK_CFG_REG	0x0a8
 #define	SATA_CFG_REG		0x0c8
 #define	USBPHY_CFG_REG		0x0cc
+#define	SPI3_CLK_CFG_REG	0x0d4
 #define	DRAM_GATING_REG		0x100
 #define	BE0_CFG_REG		0x104
 #define	BE1_CFG_REG		0x108
@@ -264,6 +268,38 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 
 	SUNXI_CCU_NM(A10_CLK_NAND, "nand", mod_parents,
 	    NAND_SCLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A10_CLK_SPI0, "spi0", mod_parents,
+	    SPI0_CLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A10_CLK_SPI1, "spi1", mod_parents,
+	    SPI1_CLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A10_CLK_SPI2, "spi2", mod_parents,
+	    SPI2_CLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A10_CLK_SPI3, "spi3", mod_parents,
+	    SPI3_CLK_CFG_REG,		/* reg */
 	    __BITS(17,16),		/* n */
 	    __BITS(3,0),		/* m */
 	    __BITS(25,24),		/* sel */

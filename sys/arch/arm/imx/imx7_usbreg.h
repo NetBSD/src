@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_usbreg.h,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_usbreg.h,v 1.1.22.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2016 Ryo Shimizu <ryo@nerv.org>
@@ -83,7 +83,9 @@
 #define  USB_X_USBMODE_CM			__BITS(1,0)
 
 /* USB Non-Core */
-#define USBNC_N_CTRL1				0x00000200
+#define USBNC_BASE				0x00000200
+#define USBNC_SIZE				0x00000060
+#define USBNC_N_CTRL1				0x00000000
 #define  USBNC_N_CTRL1_WIR			__BIT(31)
 #define  USBNC_N_CTRL1_WKUP_DPDM_EN		__BIT(29)
 #define  USBNC_N_CTRL1_WKUP_VBUS_EN		__BIT(17)
@@ -94,13 +96,13 @@
 #define  USBNC_N_CTRL1_PWR_POL			__BIT(9)
 #define  USBNC_N_CTRL1_OVER_CUR_POL		__BIT(8)
 #define  USBNC_N_CTRL1_OVER_CUR_DIS		__BIT(7)
-#define USBNC_N_CTRL2				0x00000204
-#define USBNC_N_PHY_CFG1			0x00000230
-#define USBNC_N_PHY_CFG2			0x00000234
-#define USBNC_N_PHY_STATUS			0x0000023c
+#define USBNC_N_CTRL2				0x00000004
+#define USBNC_N_PHY_CFG1			0x00000030
+#define USBNC_N_PHY_CFG2			0x00000034
+#define USBNC_N_PHY_STATUS			0x0000003c
 
-#define USBNC_ADP_CFG1				0x00000250
-#define USBNC_ADP_CFG2				0x00000254
-#define USBNC_ADP_STATUS			0x00000258
+#define USBNC_ADP_CFG1				0x00000050
+#define USBNC_ADP_CFG2				0x00000054
+#define USBNC_ADP_STATUS			0x00000058
 
 #endif /* _ARM_IMX_IMX7_USBREG_H_ */

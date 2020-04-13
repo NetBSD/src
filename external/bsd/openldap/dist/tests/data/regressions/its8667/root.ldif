@@ -1,0 +1,46 @@
+dn: dc=example,dc=com
+objectClass: dcObject
+objectClass: organization
+objectClass: top
+dc: example
+o: example
+
+dn: ou=NonSub00,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: NonSub00
+
+dn: ou=NonSub01,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: NonSub01
+
+dn: ou=NonSub02,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: NonSub02
+
+dn: cn=NonSubTestPerson00,ou=NonSub00,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: NonSubTestPerson00
+sn: TP00
+
+dn: cn=NonSubTestPerson01,ou=NonSub01,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: NonSubTestPerson01
+sn: TP01
+
+dn: cn=NonSubTestPerson02,ou=NonSub02,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: NonSubTestPerson02
+sn: TP02
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_select_50.c,v 1.1.62.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_select_50.c,v 1.1.62.2 2020/04/13 08:04:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.1.62.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_select_50.c,v 1.1.62.2 2020/04/13 08:04:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -114,6 +114,10 @@ compat_50_sys_select(struct lwp *l,
 		error = copyin(SCARG(uap, tv), (void *)&atv50, sizeof(atv50));
 		if (error)
 			return error;
+
+		if (atv50.tv_usec < 0 || atv50.tv_usec >= 1000000)
+			return EINVAL;
+
 		ats.tv_sec = atv50.tv_sec;
 		ats.tv_nsec = atv50.tv_usec * 1000;
 		ts = &ats;

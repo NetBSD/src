@@ -1,4 +1,4 @@
-/* $NetBSD: strtopd.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtopd.c,v 1.3.44.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtopd(s, sp, d) char *s; char **sp; double *d;
 strtopd(CONST char *s, char **sp, double *d)
 #endif
 {
-	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	ULong bits[2];
 	Long expt;
 	int k;

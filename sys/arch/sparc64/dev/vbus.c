@@ -1,4 +1,4 @@
-/*	$NetBSD: vbus.c,v 1.3 2017/02/17 20:53:17 palle Exp $	*/
+/*	$NetBSD: vbus.c,v 1.3.16.1 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -155,9 +155,7 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 	len = OF_getproplen(parent, "interrupt-map-mask");
 	if (len < (address_cells + interrupt_cells) * sizeof(int))
 		return (-1);
-	imap_mask = malloc(len, M_DEVBUF, M_NOWAIT);
-	if (imap_mask == NULL)
-		return (-1);
+	imap_mask = malloc(len, M_DEVBUF, M_WAITOK);
 	if (OF_getprop(parent, "interrupt-map-mask", imap_mask, len) != len)
 		goto out;
 
@@ -263,10 +261,7 @@ vbus_alloc_bus_tag(struct vbus_softc *sc, bus_space_tag_t parent)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("could not allocate vbus bus tag");
-
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 	bt->cookie = sc;
 	bt->parent = parent;
 	bt->sparc_bus_map = parent->sparc_bus_map;

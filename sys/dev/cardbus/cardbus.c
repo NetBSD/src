@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.108 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.108.54.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.108 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.108.54.1 2020/04/13 08:04:19 martin Exp $");
 
 #include "opt_cardbus.h"
 
@@ -557,11 +557,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 		 * We need to allocate the ct here, since we might
 		 * need it when reading the CIS
 		 */
-		if ((ct = malloc(sizeof(struct cardbus_devfunc),
-		    M_DEVBUF, M_NOWAIT)) == NULL) {
-			panic("no room for cardbus_tag");
-		}
-
+		ct = malloc(sizeof(struct cardbus_devfunc),
+		    M_DEVBUF, M_WAITOK);
 		ct->ct_bhlc = bhlc;
 		ct->ct_cc = sc->sc_cc;
 		ct->ct_cf = sc->sc_cf;

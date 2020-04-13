@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muereg.h,v 1.5.4.2 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_muereg.h,v 1.5.4.3 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -24,8 +24,10 @@
 #include <net/if_ether.h>
 
 /* XXX for IP_MAXPACKET */
+#include <netinet/in.h>
 #include <netinet/ip.h>
-
+/* XXX for struct ip6_hdr */
+#include <netinet/ip6.h>
 /* XXX for struct mue_txbuf_hdr */
 #include <dev/usb/if_muevar.h>
 

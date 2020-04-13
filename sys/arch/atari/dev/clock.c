@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: clock.c,v 1.59.28.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59.28.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -157,7 +157,7 @@ static int	profmin;	/* profclock divisor - variance/2	*/
 static int	clk2min;	/* current, from above choices		*/
 #endif
 
-int
+static int
 clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
@@ -169,7 +169,8 @@ clockmatch(device_t parent, cfdata_t cf, void *aux)
 /*
  * Start the real-time clock.
  */
-void clockattach(device_t parent, device_t self, void *aux)
+static void
+clockattach(device_t parent, device_t self, void *aux)
 {
 	struct clock_softc *sc = device_private(self);
 	struct todr_chip_handle	*tch;
@@ -221,7 +222,8 @@ void clockattach(device_t parent, device_t self, void *aux)
 #endif /* STATCLOCK */
 }
 
-void cpu_initclocks(void)
+void
+cpu_initclocks(void)
 {
 
 	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
@@ -316,7 +318,7 @@ init_delay(void)
 	 */
 	MFP->mf_tbcr  = 0;		/* Stop timer			*/
 	MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
-	MFP->mf_tbdr  = 0;	
+	MFP->mf_tbdr  = 0;
 	MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
 }
 
@@ -559,9 +561,9 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	 */
 	length = uio->uio_resid;
 	if (uio->uio_offset || (length != sizeof(buffer)
-	  && length != sizeof(buffer) - 1))
+	    && length != sizeof(buffer) - 1))
 		return EINVAL;
-	
+
 	if ((error = uiomove((void *)buffer, sizeof(buffer), uio)))
 		return error;
 
@@ -580,7 +582,7 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	clkregs[MC_DOM]   = twodigits(buffer, 6);
 	clkregs[MC_MONTH] = twodigits(buffer, 4);
 	s = twodigits(buffer, 0) * 100 + twodigits(buffer, 2);
-	clkregs[MC_YEAR]  = s - GEMSTARTOFTIME; 
+	clkregs[MC_YEAR]  = s - GEMSTARTOFTIME;
 
 	s = splclock();
 	MC146818_PUTTOD(RTC, &clkregs);

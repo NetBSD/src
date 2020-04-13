@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.40 2009/05/12 13:21:22 cegger Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.40.64.1 2020/04/13 08:04:49 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.40 2009/05/12 13:21:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.40.64.1 2020/04/13 08:04:49 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,7 +248,7 @@ zs_ioasic_attach(device_t parent, device_t self, void *aux)
 			zs_args.hwflags |= ZS_HWFLAG_CONSOLE;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-					M_DEVBUF, M_NOWAIT|M_ZERO);
+				M_DEVBUF, M_WAITOK | M_ZERO);
 			zs_lock_init(cs);
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (volatile void *)&zc->zc_csr;

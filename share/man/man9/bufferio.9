@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.17 2017/03/18 19:01:01 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.17.12.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2015
+.Dd September 12, 2019
 .Dt BUFFERIO 9
 .Os
 .Sh NAME
@@ -42,18 +42,18 @@
 .Sh SYNOPSIS
 .In sys/buf.h
 .Ft void
-.Fn biodone "struct buf *bp"
+.Fn biodone "buf_t *bp"
 .Ft int
-.Fn biowait "struct buf *bp"
-.Ft struct buf *
+.Fn biowait "buf_t *bp"
+.Ft buf_t *
 .Fn getiobuf "struct vnode *vp" "bool waitok"
 .Ft void
-.Fn putiobuf "struct buf *bp"
+.Fn putiobuf "buf_t *bp"
 .Ft void
-.Fn nestiobuf_setup "struct buf *mbp" "struct buf *bp" "int offset" \
+.Fn nestiobuf_setup "buf_t *mbp" "buf_t *bp" "int offset" \
         "size_t size"
 .Ft void
-.Fn nestiobuf_done "struct buf *mbp" "int donebytes" "int error"
+.Fn nestiobuf_done "buf_t *mbp" "int donebytes" "int error"
 .Sh DESCRIPTION
 The
 .Nm
@@ -82,10 +82,10 @@ The parameters to an I/O transfer described by
 are specified by the following
 .Vt "struct buf"
 fields:
-.Bl -tag -offset abcd
+.Bl -tag -width 6n -offset abcd
 .It Fa bp Ns Li "->b_flags"
 Flags specifying the type of transfer.
-.Bl -tag -compact
+.Bl -tag -width 6n -compact
 .It Dv B_READ
 Transfer is read from device.
 If not set, transfer is write to device.
@@ -283,10 +283,10 @@ member of
 .Pq Xr driver 9 ,
 to queue a buffer for disk I/O.
 The inputs to the strategy method are:
-.Bl -tag -offset abcd
+.Bl -tag -width 6n -offset abcd
 .It Fa bp Ns Li "->b_flags"
 Flags specifying the type of transfer.
-.Bl -tag -compact
+.Bl -tag -width 6n -compact
 .It Dv B_READ
 Transfer is read from device.
 If not set, transfer is write to device.
@@ -305,7 +305,7 @@ it must additionally initialize the following fields before queueing
 .Fa bp
 with
 .Xr bufq_put 9 :
-.Bl -tag -offset abcd
+.Bl -tag -width 6n -offset abcd
 .It Fa bp Ns Li "->b_rawblkno"
 Block number relative to volume start.
 .El

@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.23.14.1 2019/06/10 22:05:22 christos Exp $	*/
+/*	$NetBSD: attributes.c,v 1.23.14.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.23.14.1 2019/06/10 22:05:22 christos Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.23.14.2 2020/04/13 08:03:12 martin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -43,6 +43,7 @@ static void __wcolor_set(WINDOW *, attr_t);
 
 
 #ifndef _CURSES_USE_MACROS
+#ifdef HAVE_WCHAR
 /*
  * attr_get --
  *	Get wide attributes and color pair from stdscr
@@ -97,6 +98,7 @@ color_set(short pair, void *opts)
 {
 	return wcolor_set(stdscr, pair, opts);
 }
+#endif /* HAVE_WCHAR */
 
 /*
  * attron --
@@ -130,6 +132,8 @@ attrset(int attr)
 }
 #endif	/* _CURSES_USE_MACROS */
 
+
+#ifdef HAVE_WCHAR
 /*
  * wattr_get --
  *	Get wide attributes and colour pair from window
@@ -223,6 +227,8 @@ wcolor_set(WINDOW *win, short pair, void *opts)
 	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
 	return OK;
 }
+#endif /* HAVE_WCHAR */
+
 
 /*
  * getattrs --
@@ -318,6 +324,8 @@ termattrs(void)
 	return ch;
 }
 
+
+#ifdef HAVE_WCHAR
 /*
  * term_attrs --
  *	Get terminal wide attributes
@@ -367,6 +375,7 @@ term_attrs(void)
 
 	return attr;
 }
+#endif /* HAVE_WCHAR */
 
 
 static int

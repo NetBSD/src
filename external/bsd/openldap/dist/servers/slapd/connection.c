@@ -1,9 +1,9 @@
-/*	$NetBSD: connection.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $	*/
+/*	$NetBSD: connection.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 
@@ -559,7 +559,7 @@ Connection * connection_init(
 	c->c_close_reason = "?";			/* should never be needed */
 
 	c->c_ssf = c->c_transport_ssf = ssf;
-	c->c_tls_ssf = 0;
+	c->c_tls_ssf = c->c_sasl_ssf = 0;
 
 #ifdef HAVE_TLS
 	if ( flags & CONN_IS_TLS ) {

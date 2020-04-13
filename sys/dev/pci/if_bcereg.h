@@ -1,4 +1,4 @@
-/* $NetBSD: if_bcereg.h,v 1.4 2005/12/11 12:22:49 christos Exp $	 */
+/* $NetBSD: if_bcereg.h,v 1.4.164.1 2020/04/13 08:04:26 martin Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -71,7 +71,10 @@
 /* Ethernet MAC Control */
 #define BCE_MACCTL			0x00A8	/* ethernet mac control */
 /* mac control bits */
-#define BCE_EMC_CG			0x00000001	/* crc32 generation */
+#define BCE_EMC_CRC32_ENAB		0x00000001	/* crc32 generation */
+#define BCE_EMC_PDOWN			0x00000004	/* PHY powerdown */
+#define BCE_EMC_EDET			0x00000008	/* PHY energy detect */
+#define BCE_EMC_LED			0x000000e0	/* PHY LED control */
 
 /* DMA Interrupt control */
 #define BCE_DMAI_CTL			0x0100

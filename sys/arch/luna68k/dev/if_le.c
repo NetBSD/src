@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $ */
+/* $NetBSD: if_le.c,v 1.7.30.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7.30.1 2020/04/13 08:03:56 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $");
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 
 #include <luna68k/luna68k/isr.h>
 
@@ -103,6 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7 2013/09/23 17:27:09 tsutsui Exp $");
 #include <dev/ic/am7990var.h>
 
 #include "ioconf.h"
+
+#define TRI_PORT_RAM_LANCE_OFFSET	0x10000 /* first 64KB is used by XP */
+#define TRI_PORT_RAM_LANCE_SIZE		0x10000	/* 64KB */
 
 /*
  * LANCE registers.
@@ -152,7 +156,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
-	return (val);
+	return val;
 }
 
 static int
@@ -161,9 +165,9 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	if (strcmp(ma->ma_name, le_cd.cd_name))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -178,10 +182,10 @@ le_attach(device_t parent, device_t self, void *aux)
 	/* Map control registers. */
 	lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;	/* LANCE */
 
-	sc->sc_mem = (void *)0x71010000;		/* SRAM */
+	sc->sc_mem = (void *)(TRI_PORT_RAM + TRI_PORT_RAM_LANCE_OFFSET);
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
-	sc->sc_memsize = 64 * 1024;			/* 64KB */
+	sc->sc_memsize = TRI_PORT_RAM_LANCE_SIZE;
 
 	myetheraddr(sc->sc_enaddr);
 

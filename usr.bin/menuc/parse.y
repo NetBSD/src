@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.16.32.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.16.32.2 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 static id_rec *cur_menu;
 static optn_info *cur_optn;
+#define OPT_NOMENU 0
 
 %}
 
@@ -107,8 +108,7 @@ menu_def  :  MENU NAME
 		  if (cur_menu->info != NULL)
 			  yyerror ("Menu %s defined twice", $2);
 		  else {
-			  cur_menu->info =
-				  (menu_info *) malloc (sizeof (menu_info));
+			  cur_menu->info = malloc (sizeof (menu_info));
 			  *(cur_menu->info) = default_info;
 		  }
 		}
@@ -166,15 +166,8 @@ option_list : option
 	  ;
 
 option	  : OPTION
-		{ cur_optn = (optn_info *) malloc (sizeof(optn_info));
-		  cur_optn->menu = -1;
-		  cur_optn->name = NULL;
-		  cur_optn->name_is_code = FALSE;
-		  cur_optn->issub = FALSE;
-		  cur_optn->doexit = FALSE;
+		{ cur_optn = calloc(1, sizeof(*cur_optn));
 		  cur_optn->optact.code = "";
-		  cur_optn->optact.endwin = FALSE;
-		  cur_optn->next = NULL;
 		}
 	    option_legend ","
 	    elem_list ";"
@@ -190,7 +183,7 @@ elem_list : elem
 
 elem	  : NEXT MENU NAME
 		{ id_rec *t = get_menu ($3);
-		  if (cur_optn->menu != -1)
+		  if (cur_optn->menu != OPT_NOMENU)
 			  yyerror ("Double sub/next menu definition");
 		  else {
 			  cur_optn->menu = t->menu_no;
@@ -198,7 +191,7 @@ elem	  : NEXT MENU NAME
 		}
 	  | SUB MENU NAME
 		{ id_rec *t = get_menu ($3);
-		  if (cur_optn->menu != -1)
+		  if (cur_optn->menu != OPT_NOMENU)
 			  yyerror ("Double sub/next menu definition");
 		  else {
 			  cur_optn->menu = t->menu_no;

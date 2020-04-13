@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.12.1 2020/04/08 14:09:06 martin Exp $
+#	$NetBSD: Makefile,v 1.19.12.2 2020/04/13 08:05:23 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -20,6 +20,7 @@ TESTS_SH+=	${name}
 TESTS_SH_SRC_${name}=	ffs_common.sh quotas_common.sh ${name}.sh
 .endfor
 
+TESTS_C+=	t_extattr
 TESTS_C+=	t_fifos
 TESTS_C+=	t_snapshot
 TESTS_C+=	t_snapshot_log

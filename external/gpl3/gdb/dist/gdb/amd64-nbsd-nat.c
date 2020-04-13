@@ -32,16 +32,6 @@
 #include <machine/pcb.h>
 #include <machine/reg.h>
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-
-#include "gregset.h"
-
 /* Mapping between the general-purpose registers in NetBSD/amd64
    `struct reg' format and GDB's register cache layout for
    NetBSD/i386.

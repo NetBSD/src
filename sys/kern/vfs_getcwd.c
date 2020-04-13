@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.52.4.1 2020/04/08 14:08:52 martin Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.52.4.2 2020/04/13 08:05:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.52.4.1 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.52.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,6 +540,8 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	error = getcwd_common(dvp, NULL, &bp, path, len / 2,
 	    GETCWD_CHECK_ACCESS, curl);
 	vrele(dvp);
+	if (error != 0)
+		return error;
 
 	/*
 	 * Strip off emulation path for emulated processes looking at
@@ -555,7 +557,7 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	lenused = bend - bp;
 
 	memcpy(path, bp, lenused);
-	path[lenused] = 0;
+	path[lenused] = '\0';
 
 	return 0;
 }

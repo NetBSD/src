@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.1.4.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: rk_cru.h,v 1.1.4.2 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -200,10 +200,13 @@ struct rk_cru_composite {
 	uint32_t	div_mask;
 	bus_size_t	gate_reg;
 	uint32_t	gate_mask;
+	bus_size_t	frac_reg;
 	const char	**parents;
 	u_int		nparents;
 	u_int		flags;
 #define	RK_COMPOSITE_ROUND_DOWN		0x01
+#define	RK_COMPOSITE_SET_RATE_PARENT	0x02
+#define	RK_COMPOSITE_FRACDIV		0x04
 };
 
 int	rk_cru_composite_enable(struct rk_cru_softc *, struct rk_cru_clk *, int);
@@ -212,7 +215,7 @@ int	rk_cru_composite_set_rate(struct rk_cru_softc *, struct rk_cru_clk *, u_int)
 const char *rk_cru_composite_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 int	rk_cru_composite_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char *);
 
-#define	RK_COMPOSITE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, _flags) \
+#define	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, _frac_reg, _flags) \
 	{							\
 		.id = (_id),					\
 		.type = RK_CRU_COMPOSITE,			\
@@ -225,6 +228,7 @@ int	rk_cru_composite_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, cons
 		.u.composite.div_mask = (_div_mask),		\
 		.u.composite.gate_reg = (_gate_reg),		\
 		.u.composite.gate_mask = (_gate_mask),		\
+		.u.composite.frac_reg = (_frac_reg),		\
 		.u.composite.flags = (_flags),			\
 		.enable = rk_cru_composite_enable,		\
 		.get_rate = rk_cru_composite_get_rate,		\
@@ -233,14 +237,20 @@ int	rk_cru_composite_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, cons
 		.set_parent = rk_cru_composite_set_parent,	\
 	}
 
+#define	RK_COMPOSITE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, _flags) \
+	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, 0, _flags)
+
 #define	RK_COMPOSITE_NOMUX(_id, _name, _parent, _div_reg, _div_mask, _gate_reg, _gate_mask, _flags) \
-	RK_COMPOSITE(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, _gate_reg, _gate_mask, _flags)
+	_RK_COMPOSITE_INIT(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, _gate_reg, _gate_mask, 0, _flags)
 
 #define	RK_COMPOSITE_NOGATE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _flags) \
-	RK_COMPOSITE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, 0, 0, _flags)
+	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, 0, 0, 0, _flags)
+
+#define	RK_COMPOSITE_FRAC(_id, _name, _parent, _frac_reg, _flags) \
+	_RK_COMPOSITE_INIT(_id, _name, (const char *[]){ _parent }, 0, 0, 0, 0, 0, _frac_reg, (_flags) | RK_COMPOSITE_FRACDIV)
 
 #define	RK_DIV(_id, _name, _parent, _div_reg, _div_mask, _flags) \
-	RK_COMPOSITE(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, 0, 0, _flags)
+	_RK_COMPOSITE_INIT(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, 0, 0, 0, _flags)
 
 /* Gate clocks */
 
@@ -265,6 +275,15 @@ const char *rk_cru_gate_get_parent(struct rk_cru_softc *,
 		.u.gate.reg = (_reg),				\
 		.u.gate.mask = __BIT(_bit),			\
 		.enable = rk_cru_gate_enable,			\
+		.get_parent = rk_cru_gate_get_parent,		\
+	}
+
+#define	RK_SECURE_GATE(_id, _name, _pname)			\
+	{							\
+		.id = (_id),					\
+		.type = RK_CRU_GATE,				\
+		.base.name = (_name),				\
+		.u.gate.parent = (_pname),			\
 		.get_parent = rk_cru_gate_get_parent,		\
 	}
 

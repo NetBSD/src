@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.99.2.2 2020/04/08 14:08:10 martin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.99.2.3 2020/04/13 08:04:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.99.2.2 2020/04/08 14:08:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.99.2.3 2020/04/13 08:04:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2934,6 +2934,7 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	uint32_t		reg;
 	uint8_t			*data8;
 	uint16_t		*data16;
+	uint32_t		*data32;
 	void			*data;
 
 	if (dp->rd_wsmode != WSDISPLAYIO_MODE_EMUL)
@@ -3009,6 +3010,16 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				bus_space_write_stream_4(sc->sc_regt, 
 				    sc->sc_regh, RADEON_HOST_DATA0, reg);
 				data16++;
+			}
+			break;
+		}
+		case 4: {
+			data32 = data;
+			for (i = 0; i < h; i++) {
+				reg = *data32;
+				bus_space_write_stream_4(sc->sc_regt, 
+				    sc->sc_regh, RADEON_HOST_DATA0, reg);
+				data32++;
 			}
 			break;
 		}

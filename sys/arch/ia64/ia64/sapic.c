@@ -1,4 +1,4 @@
-/*	$NetBSD: sapic.c,v 1.2 2012/10/27 17:29:03 chs Exp $	*/
+/*	$NetBSD: sapic.c,v 1.2.38.1 2020/04/13 08:03:55 martin Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -144,10 +144,7 @@ sapic_create(u_int id, u_int base, uint64_t address)
 	struct sapic *sa;
 	u_int i;
 
-	sa = kmem_zalloc(sizeof(struct sapic), KM_NOSLEEP);
-	if (sa == NULL)
-		return NULL;
-
+	sa = kmem_zalloc(sizeof(struct sapic), KM_SLEEP);
 	sa->sa_id = id;
 	sa->sa_base = base;
 	sa->sa_registers = IA64_PHYS_TO_RR6(address);

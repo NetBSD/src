@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: vmem.9,v 1.17.6.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd February 28, 2016
+.Dd November 5, 2019
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -52,7 +52,7 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft int
 .Fn vmem_add \
-"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags" "vmem_addr_t *addrp"
+"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft int
 .Fn vmem_xalloc \
@@ -82,7 +82,6 @@ other than virtual memory.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_create
 creates a new vmem arena.
-.Pp
 .Bl -tag -offset indent -width qcache_max
 .It Fa name
 The string to describe the vmem.
@@ -184,7 +183,6 @@ Interrupt level to be blocked for allocating from vmem.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_xcreate
 creates a new vmem arena.
-.Pp
 .Bl -tag -offset indent -width qcache_max
 .It Fa name
 The string to describe the vmem.
@@ -317,7 +315,6 @@ if there are not enough resources available.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_xalloc
 allocates a resource from the arena.
-.Pp
 .Bl -tag -offset indent -width nocross
 .It Fa vm
 The arena which we allocate from.
@@ -391,7 +388,6 @@ overwrites it with the start address of the allocated span.
 frees resource allocated by
 .Fn vmem_xalloc
 to the arena.
-.Pp
 .Bl -tag -offset indent -width addr
 .It Fa vm
 The arena which we free to.
@@ -413,7 +409,6 @@ argument used for
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_alloc
 allocates a resource from the arena.
-.Pp
 .Bl -tag -offset indent -width flags
 .It Fa vm
 The arena which we allocate from.
@@ -455,7 +450,6 @@ overwrites it with the start address of the allocated span.
 frees resource allocated by
 .Fn vmem_alloc
 to the arena.
-.Pp
 .Bl -tag -offset indent -width addr
 .It Fa vm
 The arena which we free to.
@@ -477,7 +471,6 @@ argument used for
 .\" ------------------------------------------------------------
 .Fn vmem_destroy
 destroys a vmem arena.
-.Pp
 .Bl -tag -offset indent -width vm
 .It Fa vm
 The vmem arena being destroyed.
@@ -524,7 +517,6 @@ This implementation of
 was written by
 .An YAMAMOTO Takashi .
 .Sh BUGS
-.Pp
 .Nm
 relies on
 .Xr malloc 9 ,

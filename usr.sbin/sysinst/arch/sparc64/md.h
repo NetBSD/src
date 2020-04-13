@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:42 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,11 +54,18 @@
 #define XNEEDMB		300	/* Extra megs for full X installation */
 #define DEBNEEDMB	1200	/* Extra megs for debug sets */
 
+/* sunlabels force track alignment (true = no further processing) */
+#define	MD_DISKLABEL_SET_ALIGN_PRE(align, track)	\
+	(align) = (track), true
+
 /* use UFS2 by default for ffs */
 #define	DEFAULT_UFS2
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
+
+/* have support for booting from GPT disks */
+/* #define	HAVE_GPT_BOOT	*/	/* not yet */
 
 /* allow using tmpfs for /tmp instead of mfs */
 #define HAVE_TMPFS

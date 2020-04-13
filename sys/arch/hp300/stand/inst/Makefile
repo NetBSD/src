@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/12/11 12:17:23 christos Exp $
+#	$NetBSD: Makefile,v 1.9.166.1 2020/04/13 08:03:50 martin Exp $
 
 PROGAOUT=	inst
 PROGSOURCE=	inst.c
@@ -18,4 +18,4 @@ install:
 
 release: check_RELEASEDIR .WAIT inst.lif
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} inst.lif \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc/SYS_INST
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/SYS_INST

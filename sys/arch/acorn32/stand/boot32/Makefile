@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/04/01 19:08:08 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5.156.1 2020/04/13 08:03:28 martin Exp $
 
 PROG=		boot32
 PROGSOURCE=	rmheader.S rmvers.c srt0.S boot32.c start.S
@@ -16,5 +16,7 @@ rmvers.c: ${.CURDIR}/version
 .PHONY: rmvers.c
 
 CLEANFILES+=	rmvers.c
+
+AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .include "../Makefile.buildboot"

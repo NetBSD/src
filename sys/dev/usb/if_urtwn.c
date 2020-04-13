@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.8 2019/06/26 16:51:29 phil Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.9 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.8 2019/06/26 16:51:29 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.9 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -212,6 +212,7 @@ static const struct urtwn_dev {
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188EU),
 	URTWN_RTL8188E_DEV(ABOCOM, RTL8188EU),
 	URTWN_RTL8188E_DEV(TPLINK, RTL8188EU),
+	URTWN_RTL8188E_DEV(DLINK, DWA121B1),
 
 	/* URTWN_RTL8192EU */
 	URTWN_RTL8192EU_DEV(DLINK,	DWA131E),
@@ -987,7 +988,7 @@ urtwn_write_region_1(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf,
 	USETW(req.wLength, len);
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(DBG_REG, ("%s: %s: error=%d: addr=0x%x, len=%d\n",
+		DPRINTFN(DBG_REG, ("%s: %s: error=%d: addr=%#x, len=%d\n",
 		    device_xname(sc->sc_dev), __func__, error, addr, len));
 	}
 	return error;
@@ -997,7 +998,7 @@ static void
 urtwn_write_1(struct urtwn_softc *sc, uint16_t addr, uint8_t val)
 {
 
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 
 	urtwn_write_region_1(sc, addr, &val, 1);
@@ -1008,7 +1009,7 @@ urtwn_write_2(struct urtwn_softc *sc, uint16_t addr, uint16_t val)
 {
 	uint8_t buf[2];
 
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 
 	buf[0] = (uint8_t)val;
@@ -1021,7 +1022,7 @@ urtwn_write_4(struct urtwn_softc *sc, uint16_t addr, uint32_t val)
 {
 	uint8_t buf[4];
 
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 
 	buf[0] = (uint8_t)val;
@@ -1035,7 +1036,7 @@ static int
 urtwn_write_region(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf, int len)
 {
 
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, len=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, len=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, len));
 
 	return urtwn_write_region_1(sc, addr, buf, len);
@@ -1055,7 +1056,7 @@ urtwn_read_region_1(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf,
 	USETW(req.wLength, len);
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(DBG_REG, ("%s: %s: error=%d: addr=0x%x, len=%d\n",
+		DPRINTFN(DBG_REG, ("%s: %s: error=%d: addr=%#x, len=%d\n",
 		    device_xname(sc->sc_dev), __func__, error, addr, len));
 	}
 	return error;
@@ -1069,7 +1070,7 @@ urtwn_read_1(struct urtwn_softc *sc, uint16_t addr)
 	if (urtwn_read_region_1(sc, addr, &val, 1) != USBD_NORMAL_COMPLETION)
 		return 0xff;
 
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 	return val;
 }
@@ -1084,7 +1085,7 @@ urtwn_read_2(struct urtwn_softc *sc, uint16_t addr)
 		return 0xffff;
 
 	val = LE_READ_2(&buf[0]);
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 	return val;
 }
@@ -1099,7 +1100,7 @@ urtwn_read_4(struct urtwn_softc *sc, uint16_t addr)
 		return 0xffffffff;
 
 	val = LE_READ_4(&buf[0]);
-	DPRINTFN(DBG_REG, ("%s: %s: addr=0x%x, val=0x%x\n",
+	DPRINTFN(DBG_REG, ("%s: %s: addr=%#x, val=%#x\n",
 	    device_xname(sc->sc_dev), __func__, addr, val));
 	return val;
 }
@@ -1385,11 +1386,11 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 {
 
 	aprint_normal_dev(sc->sc_dev,
-	    "id 0x%04x, dbg_sel 0x%x, vid 0x%x, pid 0x%x\n",
+	    "id 0x%04x, dbg_sel %#x, vid %#x, pid %#x\n",
 	    rp->id, rp->dbg_sel, rp->vid, rp->pid);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "usb_opt 0x%x, ep_setting 0x%x, usb_phy 0x%x\n",
+	    "usb_opt %#x, ep_setting %#x, usb_phy %#x\n",
 	    rp->usb_opt, rp->ep_setting, rp->usb_phy);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -1399,7 +1400,7 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 	    rp->macaddr[4], rp->macaddr[5]);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "string %s, subcustomer_id 0x%x\n",
+	    "string %s, subcustomer_id %#x\n",
 	    rp->string, rp->subcustomer_id);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -1454,11 +1455,11 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 	    rp->xtal_calib, rp->tssi[0], rp->tssi[1], rp->thermal_meter);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "rf_opt1 0x%x, rf_opt2 0x%x, rf_opt3 0x%x, rf_opt4 0x%x\n",
+	    "rf_opt1 %#x, rf_opt2 %#x, rf_opt3 %#x, rf_opt4 %#x\n",
 	    rp->rf_opt1, rp->rf_opt2, rp->rf_opt3, rp->rf_opt4);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "channnel_plan %d, version %d customer_id 0x%x\n",
+	    "channnel_plan %d, version %d customer_id %#x\n",
 	    rp->channel_plan, rp->version, rp->curstomer_id);
 }
 #endif
@@ -1486,7 +1487,7 @@ urtwn_read_rom(struct urtwn_softc *sc)
 	sc->regulatory = MS(rom->rf_opt1, R92C_ROM_RF1_REGULATORY);
 
 	DPRINTFN(DBG_INIT,
-	    ("%s: %s: PA setting=0x%x, board=0x%x, regulatory=%d\n",
+	    ("%s: %s: PA setting=%#x, board=%#x, regulatory=%d\n",
 	    device_xname(sc->sc_dev), __func__, sc->pa_setting,
 	    sc->board_type, sc->regulatory));
 
@@ -1653,7 +1654,7 @@ urtwn_ra_init(struct ieee80211vap *vap)
 	} else {
 		mode = R92C_RAID_11BG;
 	}
-	DPRINTFN(DBG_INIT, ("%s: %s: mode=0x%x rates=0x%x, basicrates=0x%x, "
+	DPRINTFN(DBG_INIT, ("%s: %s: mode=%#x rates=%#x, basicrates=%#x, "
 	    "maxrate=%zx, maxbasicrate=%zx\n",
 	    device_xname(sc->sc_dev), __func__, mode, rates, basicrates,
 	    maxrate, maxbasicrate));
@@ -4276,7 +4277,7 @@ urtwn_r92c_dma_init(struct urtwn_softc *sc)
 	/* Get Tx queues to USB endpoints mapping. */
 	hashq = hasnq = haslq = 0;
 	reg = urtwn_read_2(sc, R92C_USB_EP + 1);
-	DPRINTFN(DBG_INIT, ("%s: %s: USB endpoints mapping 0x%x\n",
+	DPRINTFN(DBG_INIT, ("%s: %s: USB endpoints mapping %#x\n",
 	    device_xname(sc->sc_dev), __func__, reg));
 	if (MS(reg, R92C_USB_EP_HQ) != 0)
 		hashq = 1;

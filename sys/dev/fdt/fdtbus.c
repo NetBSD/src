@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.19.2.2 2020/04/08 14:08:04 martin Exp $ */
+/* $NetBSD: fdtbus.c,v 1.19.2.3 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.19.2.2 2020/04/08 14:08:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.19.2.3 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ struct fdt_node {
 
 	u_int		n_order;
 
+	bool		n_pinctrl_init;
+
 	TAILQ_ENTRY(fdt_node) n_nodes;
 };
 
@@ -80,6 +82,8 @@ static cfdata_t	fdt_scan_best(struct fdt_softc *, struct fdt_node *);
 static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
+static void	fdt_pre_attach(struct fdt_node *);
+static void	fdt_post_attach(struct fdt_node *);
 
 static const char * const fdtbus_compatible[] =
     { "simple-bus", NULL };
@@ -383,14 +387,20 @@ fdt_scan(struct fdt_softc *sc, int pass)
 			/*
 			 * Attach the device.
 			 */
+			fdt_pre_attach(node);
 			node->n_dev = config_attach_loc(node->n_bus, cf_pass, locs,
 			    &faa, fdtbus_print);
+			if (node->n_dev != NULL)
+				fdt_post_attach(node);
 		} else {
 			/*
 			 * Default pass.
 			 */
+			fdt_pre_attach(node);
 			node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
 			    &faa, fdtbus_print, fdt_scan_submatch);
+			if (node->n_dev != NULL)
+				fdt_post_attach(node);
 		}
 
 		if (node->n_dev) {
@@ -398,6 +408,40 @@ fdt_scan(struct fdt_softc *sc, int pass)
 			if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
 				prop_dictionary_set_cstring(dict, "fdt-path", buf);
 		}
+	}
+}
+
+static void
+fdt_pre_attach(struct fdt_node *node)
+{
+	const char *cfgname;
+	int error;
+
+	node->n_pinctrl_init = fdtbus_pinctrl_has_config(node->n_phandle, "init");
+
+	cfgname = node->n_pinctrl_init ? "init" : "default";
+
+	aprint_debug_dev(node->n_bus, "set %s config for %s\n", cfgname, node->n_name);
+
+	error = fdtbus_pinctrl_set_config(node->n_phandle, cfgname);
+	if (error != 0 && error != ENOENT)
+		aprint_debug_dev(node->n_bus,
+		    "failed to set %s config on %s: %d\n",
+		    cfgname, node->n_name, error);
+}
+
+static void
+fdt_post_attach(struct fdt_node *node)
+{
+	int error;
+
+	if (node->n_pinctrl_init) {
+		aprint_debug_dev(node->n_bus, "set default config for %s\n", node->n_name);
+		error = fdtbus_pinctrl_set_config(node->n_phandle, "default");
+		if (error != 0 && error != ENOENT)
+			aprint_debug_dev(node->n_bus,
+			    "failed to set default config on %s: %d\n",
+			    node->n_name, error);
 	}
 }
 

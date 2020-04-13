@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.70 2017/10/29 17:57:21 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.70.4.1 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.70 2017/10/29 17:57:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.70.4.1 2020/04/13 08:04:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -1290,7 +1290,7 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 		return EINVAL;
 	}
 #endif
-	memcpy(&sysex, b, sizeof sysex);
+	memcpy(&sysex, b, sizeof(*b));
 	dev = sysex.device_no;
 	if (/* dev < 0 || */ dev >= sc->nmidi)
 		return (ENXIO);

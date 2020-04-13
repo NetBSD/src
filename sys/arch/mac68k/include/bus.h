@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26.88.1 2020/04/08 14:07:43 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.26.88.2 2020/04/13 08:03:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 /*
  * Access methods for bus resources and address space.
  */
@@ -81,7 +84,7 @@ typedef struct bus_space_handle_s {
 	u_long	base;
 	int	swapped;
 	int	stride;
-	
+
 	u_int8_t	(*bsr1)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int16_t	(*bsr2)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int32_t	(*bsr4)(bus_space_tag_t, BSH_T *, bus_size_t);
@@ -785,6 +788,13 @@ __MAC68K_copy_region_N(4)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ */
+#define	bus_space_vaddr(t, h)	((void)(t), (void *)(h.base))
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 

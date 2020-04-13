@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.14 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.14.28.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -200,6 +200,10 @@ THIS SOFTWARE.
 #include "gd_qnan.h"
 #ifdef Honor_FLT_ROUNDS
 #include <fenv.h>
+__unused __weakref_visible int __libc_fegetround_ref(void)
+  __weak_reference(fegetround);
+#define fegetround()							\
+	(__libc_fegetround_ref ? __libc_fegetround_ref() : FE_TONEAREST)
 #endif
 
 #ifdef DEBUG
@@ -621,7 +625,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern Bigint *s2b ANSI((CONST char*, int, int, ULong, size_t));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));
- extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));
+ extern int strtoIg ANSI((CONST char*, char**, CONST FPI*, Long*, Bigint**, int*));
  extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
  extern int trailz ANSI((CONST Bigint*));
