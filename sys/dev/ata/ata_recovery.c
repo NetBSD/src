@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_recovery.c,v 1.3 2020/04/04 22:30:02 jdolecek Exp $	*/
+/*	$NetBSD: ata_recovery.c,v 1.4 2020/04/13 10:49:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.3 2020/04/04 22:30:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.4 2020/04/13 10:49:34 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -103,11 +103,9 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = sizeof(chp->recovery_blk);
 
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		rv = EAGAIN;
-		goto out;
-	}
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
+
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		rv = EINVAL;
 		goto out;
