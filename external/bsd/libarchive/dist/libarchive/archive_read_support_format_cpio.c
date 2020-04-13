@@ -165,7 +165,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_cpio.c 20116
 struct links_entry {
         struct links_entry      *next;
         struct links_entry      *previous;
-        int                      links;
+        unsigned int             links;
         dev_t                    dev;
         int64_t                  ino;
         char                    *name;
@@ -633,6 +633,13 @@ header_newc(struct archive_read *a, struct cpio *cpio,
 	/* Pad name to 2 more than a multiple of 4. */
 	*name_pad = (2 - *namelength) & 3;
 
+	/* Make sure that the padded name length fits into size_t. */
+	if (*name_pad > SIZE_MAX - *namelength) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		    "cpio archive has invalid namelength");
+		return (ARCHIVE_FATAL);
+	}
+
 	/*
 	 * Note: entry_bytes_remaining is at least 64 bits and
 	 * therefore guaranteed to be big enough for a 33-bit file
@@ -948,8 +955,7 @@ archive_read_format_cpio_cleanup(struct archive_read *a)
         while (cpio->links_head != NULL) {
                 struct links_entry *lp = cpio->links_head->next;
 
-                if (cpio->links_head->name)
-                        free(cpio->links_head->name);
+                free(cpio->links_head->name);
                 free(cpio->links_head);
                 cpio->links_head = lp;
         }

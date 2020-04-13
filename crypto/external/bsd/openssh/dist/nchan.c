@@ -1,5 +1,5 @@
-/*	$NetBSD: nchan.c,v 1.9.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: nchan.c,v 1.69 2018/10/04 07:47:35 djm Exp $ */
+/*	$NetBSD: nchan.c,v 1.9.4.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: nchan.c,v 1.70 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.9.4.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.9.4.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -381,7 +381,7 @@ chan_shutdown_write(struct ssh *ssh, Channel *c)
 	    c->self, __func__, c->istate, c->ostate, c->sock, c->wfd, c->efd,
 	    channel_format_extended_usage(c));
 	if (c->sock != -1) {
-		if (shutdown(c->sock, SHUT_WR) < 0) {
+		if (shutdown(c->sock, SHUT_WR) == -1) {
 			debug2("channel %d: %s: shutdown() failed for "
 			    "fd %d [i%d o%d]: %.100s", c->self, __func__,
 			    c->sock, c->istate, c->ostate,
@@ -406,7 +406,7 @@ chan_shutdown_read(struct ssh *ssh, Channel *c)
 	    c->self, __func__, c->istate, c->ostate, c->sock, c->rfd, c->efd,
 	    channel_format_extended_usage(c));
 	if (c->sock != -1) {
-		if (shutdown(c->sock, SHUT_RD) < 0) {
+		if (shutdown(c->sock, SHUT_RD) == -1) {
 			error("channel %d: %s: shutdown() failed for "
 			    "fd %d [i%d o%d]: %.100s",
 			    c->self, __func__, c->sock, c->istate, c->ostate,

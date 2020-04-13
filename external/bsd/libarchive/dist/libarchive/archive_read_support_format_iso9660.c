@@ -409,7 +409,8 @@ static int	next_entry_seek(struct archive_read *, struct iso9660 *,
 		    struct file_info **);
 static struct file_info *
 		parse_file_info(struct archive_read *a,
-		    struct file_info *parent, const unsigned char *isodirrec);
+		    struct file_info *parent, const unsigned char *isodirrec,
+		    size_t reclen);
 static int	parse_rockridge(struct archive_read *a,
 		    struct file_info *file, const unsigned char *start,
 		    const unsigned char *end);
@@ -1022,7 +1023,7 @@ read_children(struct archive_read *a, struct file_info *parent)
 			if (*(p + DR_name_len_offset) == 1
 			    && *(p + DR_name_offset) == '\001')
 				continue;
-			child = parse_file_info(a, parent, p);
+			child = parse_file_info(a, parent, p, b - p);
 			if (child == NULL) {
 				__archive_read_consume(a, skip_size);
 				return (ARCHIVE_FATAL);
@@ -1112,7 +1113,7 @@ choose_volume(struct archive_read *a, struct iso9660 *iso9660)
 	 */
 	seenJoliet = iso9660->seenJoliet;/* Save flag. */
 	iso9660->seenJoliet = 0;
-	file = parse_file_info(a, NULL, block);
+	file = parse_file_info(a, NULL, block, vd->size);
 	if (file == NULL)
 		return (ARCHIVE_FATAL);
 	iso9660->seenJoliet = seenJoliet;
@@ -1144,7 +1145,7 @@ choose_volume(struct archive_read *a, struct iso9660 *iso9660)
 			return (ARCHIVE_FATAL);
 		}
 		iso9660->seenJoliet = 0;
-		file = parse_file_info(a, NULL, block);
+		file = parse_file_info(a, NULL, block, vd->size);
 		if (file == NULL)
 			return (ARCHIVE_FATAL);
 		iso9660->seenJoliet = seenJoliet;
@@ -1723,8 +1724,7 @@ archive_read_format_iso9660_cleanup(struct archive_read *a)
 	free(iso9660->read_ce_req.reqs);
 	archive_string_free(&iso9660->pathname);
 	archive_string_free(&iso9660->previous_pathname);
-	if (iso9660->pending_files.files)
-		free(iso9660->pending_files.files);
+	free(iso9660->pending_files.files);
 #ifdef HAVE_ZLIB_H
 	free(iso9660->entry_zisofs.uncompressed_buffer);
 	free(iso9660->entry_zisofs.block_pointers);
@@ -1749,7 +1749,7 @@ archive_read_format_iso9660_cleanup(struct archive_read *a)
  */
 static struct file_info *
 parse_file_info(struct archive_read *a, struct file_info *parent,
-    const unsigned char *isodirrec)
+    const unsigned char *isodirrec, size_t reclen)
 {
 	struct iso9660 *iso9660;
 	struct file_info *file, *filep;
@@ -1763,16 +1763,20 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
 
 	iso9660 = (struct iso9660 *)(a->format->data);
 
-	dr_len = (size_t)isodirrec[DR_length_offset];
+	if (reclen != 0)
+		dr_len = (size_t)isodirrec[DR_length_offset];
+	/*
+	 * Sanity check that reclen is not zero and dr_len is greater than
+	 * reclen but at least 34
+	 */
+	if (reclen == 0 || reclen < dr_len || dr_len < 34) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			"Invalid length of directory record");
+		return (NULL);
+	}
 	name_len = (size_t)isodirrec[DR_name_len_offset];
 	location = archive_le32dec(isodirrec + DR_extent_offset);
 	fsize = toi(isodirrec + DR_size_offset, DR_size_size);
-	/* Sanity check that dr_len needs at least 34. */
-	if (dr_len < 34) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Invalid length of directory record");
-		return (NULL);
-	}
 	/* Sanity check that name_len doesn't exceed dr_len. */
 	if (dr_len - 33 < name_len || name_len == 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
@@ -2097,6 +2101,7 @@ parse_rockridge(struct archive_read *a, struct file_info *file,
     const unsigned char *p, const unsigned char *end)
 {
 	struct iso9660 *iso9660;
+	int entry_seen = 0;
 
 	iso9660 = (struct iso9660 *)(a->format->data);
 
@@ -2252,8 +2257,16 @@ parse_rockridge(struct archive_read *a, struct file_info *file,
 		}
 
 		p += p[2];
+		entry_seen = 1;
 	}
-	return (ARCHIVE_OK);
+
+	if (entry_seen)
+		return (ARCHIVE_OK);
+	else {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+				  "Tried to parse Rockridge extensions, but none found");
+		return (ARCHIVE_WARN);
+	}
 }
 
 static int
@@ -3021,10 +3034,10 @@ heap_add_entry(struct archive_read *a, struct heap_queue *heap,
 			    ENOMEM, "Out of memory");
 			return (ARCHIVE_FATAL);
 		}
-		memcpy(new_pending_files, heap->files,
-		    heap->allocated * sizeof(new_pending_files[0]));
-		if (heap->files != NULL)
-			free(heap->files);
+		if (heap->allocated)
+			memcpy(new_pending_files, heap->files,
+			    heap->allocated * sizeof(new_pending_files[0]));
+		free(heap->files);
 		heap->files = new_pending_files;
 		heap->allocated = new_size;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64.S,v 1.3 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_xor_64.S,v 1.3.30.1 2020/04/13 07:45:07 martin Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,6 +57,6 @@ END(_atomic_xor_64_nv)
 STRONG_ALIAS(_atomic_xor_64,_atomic_xor_64_nv)
 ATOMIC_OP_ALIAS(atomic_xor_64_nv,_atomic_xor_64_nv)
 ATOMIC_OP_ALIAS(atomic_xor_64,_atomic_xor_64)
-CRT_ALIAS(__sync_xor_and_fetch_8,_atomic_xor_64)
+CRT_ALIAS(__sync_xor_and_fetch_8,_atomic_xor_64_nv)
 
 #endif /* _ARM_ARCH_6 */

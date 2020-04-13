@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.3 2018/02/04 20:22:17 mrg Exp $	*/
+/*	$NetBSD: strcat.c,v 1.3.4.1 2020/04/13 07:45:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strcat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcat.c,v 1.3 2018/02/04 20:22:17 mrg Exp $");
+__RCSID("$NetBSD: strcat.c,v 1.3.4.1 2020/04/13 07:45:08 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: strcat.c,v 1.3 2018/02/04 20:22:17 mrg Exp $");
 #include <lib/libkern/libkern.h>
 #endif
 
-#ifdef _FORTIFY_SOURCE
+#if defined(_FORTIFY_SOURCE) || defined(KASAN)
 #undef strcat
 #endif
 

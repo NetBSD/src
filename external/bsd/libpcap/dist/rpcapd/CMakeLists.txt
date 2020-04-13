@@ -59,7 +59,7 @@ if(WIN32 OR ((CMAKE_USE_PTHREADS_INIT OR PTHREADS_FOUND) AND HAVE_CRYPT))
   add_executable(rpcapd
     daemon.c
     fileconf.c
-    log-stderr.c
+    log.c
     rpcapd.c
     ${pcap_SOURCE_DIR}/rpcap-protocol.c
     ${pcap_SOURCE_DIR}/sockutils.c
@@ -69,6 +69,41 @@ if(WIN32 OR ((CMAKE_USE_PTHREADS_INIT OR PTHREADS_FOUND) AND HAVE_CRYPT))
 
   if(NOT C_ADDITIONAL_FLAGS STREQUAL "")
     set_target_properties(rpcapd PROPERTIES COMPILE_FLAGS ${C_ADDITIONAL_FLAGS})
+  endif()
+
+  #
+  # By default, build rpcapd universal with the appropriate set of
+  # architectures for the OS on which we're doing the build.
+  #
+  if(APPLE AND "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+    #
+    # Get the major version of Darwin.
+    #
+    string(REGEX MATCH "^([0-9]+)" SYSTEM_VERSION_MAJOR "${CMAKE_SYSTEM_VERSION}")
+
+    if(SYSTEM_VERSION_MAJOR EQUAL 9)
+      #
+      # Leopard.  Build for 32-bit x86 and 32-bit PowerPC, with
+      # 32-bit x86 first.
+      #
+      set(OSX_PROGRAM_ARCHITECTURES "i386;ppc")
+    elseif(SYSTEM_VERSION_MAJOR EQUAL 10)
+      #
+      # Snow Leopard.  Build for x86-64 and 32-bit x86, with
+      # x86-64 first.
+      #
+      set(OSX_PROGRAM_ARCHITECTURES "x86_64;i386")
+    else()
+      #
+      # Post-Snow Leopard.  Build only for x86-64.
+      # XXX - update if and when Apple adds ARM-based Macs.
+      # (You're on your own for iOS etc.)
+      #
+      set(OSX_PROGRAM_ARCHITECTURES "x86_64")
+    endif()
+
+    set_target_properties(rpcapd PROPERTIES
+      OSX_ARCHITECTURES "${OSX_PROGRAM_ARCHITECTURES}")
   endif()
 
   if(WIN32)
@@ -92,6 +127,8 @@ if(WIN32 OR ((CMAKE_USE_PTHREADS_INIT OR PTHREADS_FOUND) AND HAVE_CRYPT))
 
   set(MANADMIN_EXPAND rpcapd.manadmin.in)
 
+  set(MANFILE_EXPAND rpcapd-config.manfile.in)
+
   if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     install(TARGETS rpcapd DESTINATION bin/amd64)
   else(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -114,5 +151,13 @@ if(WIN32 OR ((CMAKE_USE_PTHREADS_INIT OR PTHREADS_FOUND) AND HAVE_CRYPT))
         set(MANADMIN ${MANADMIN} ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE})
     endforeach(TEMPLATE_MANPAGE)
     install(FILES ${MANADMIN} DESTINATION ${CMAKE_INSTALL_MANDIR}/man${MAN_ADMIN_COMMANDS})
+
+    set(MANFILE "")
+    foreach(TEMPLATE_MANPAGE ${MANFILE_EXPAND})
+        string(REPLACE ".manfile.in" ".${MAN_FILE_FORMATS}" MANPAGE ${TEMPLATE_MANPAGE})
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${TEMPLATE_MANPAGE} ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE} @ONLY)
+        set(MANFILE ${MANFILE} ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE})
+    endforeach(TEMPLATE_MANPAGE)
+    install(FILES ${MANFILE} DESTINATION ${CMAKE_INSTALL_MANDIR}/man${MAN_FILE_FORMATS})
   endif(NOT MSVC)
 endif(WIN32 OR ((CMAKE_USE_PTHREADS_INIT OR PTHREADS_FOUND) AND HAVE_CRYPT))

@@ -1,6 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,84 +26,17 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#ifdef __sun
-#include <sys/sysmacros.h>
-#endif
+#include <sys/statvfs.h>
 
-#include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#ifdef BSD
-#  include <paths.h>
-#endif
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "common.h"
 #include "dhcpcd.h"
 #include "if-options.h"
 #include "logerr.h"
-
-/* Most route(4) messages are less than 256 bytes. */
-#define IOVEC_BUFSIZ	256
-
-ssize_t
-setvar(char **e, const char *prefix, const char *var, const char *value)
-{
-	size_t len = strlen(var) + strlen(value) + 3;
-
-	if (prefix)
-		len += strlen(prefix) + 1;
-	if ((*e = malloc(len)) == NULL) {
-		logerr(__func__);
-		return -1;
-	}
-	if (prefix)
-		snprintf(*e, len, "%s_%s=%s", prefix, var, value);
-	else
-		snprintf(*e, len, "%s=%s", var, value);
-	return (ssize_t)len;
-}
-
-ssize_t
-setvard(char **e, const char *prefix, const char *var, size_t value)
-{
-
-	char buffer[32];
-
-	snprintf(buffer, sizeof(buffer), "%zu", value);
-	return setvar(e, prefix, var, buffer);
-}
-
-ssize_t
-addvar(char ***e, const char *prefix, const char *var, const char *value)
-{
-	ssize_t len;
-
-	len = setvar(*e, prefix, var, value);
-	if (len != -1)
-		(*e)++;
-	return (ssize_t)len;
-}
-
-ssize_t
-addvard(char ***e, const char *prefix, const char *var, size_t value)
-{
-	char buffer[32];
-
-	snprintf(buffer, sizeof(buffer), "%zu", value);
-	return addvar(e, prefix, var, buffer);
-}
 
 const char *
 hwaddr_ntoa(const void *hwaddr, size_t hwlen, char *buf, size_t buflen)
@@ -199,4 +133,19 @@ read_hwaddr_aton(uint8_t **data, const char *path)
 	}
 	fclose(fp);
 	return len;
+}
+
+int
+is_root_local(void)
+{
+#ifdef ST_LOCAL
+	struct statvfs vfs;
+
+	if (statvfs("/", &vfs) == -1)
+		return -1;
+	return vfs.f_flag & ST_LOCAL ? 1 : 0;
+#else
+	errno = ENOTSUP;
+	return -1;
+#endif
 }

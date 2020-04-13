@@ -1,4 +1,4 @@
-$NetBSD: virtualization,v 1.5 2012/01/15 02:45:42 agc Exp $
+$NetBSD: virtualization,v 1.5.40.1 2020/04/13 07:45:37 martin Exp $
 
 NetBSD Virtualization Roadmap
 =============================
@@ -9,7 +9,6 @@ side of the operating system.
 Features that will be in 6.0:
 1. NetBSD/usermode
 5. Xen domU migration, suspend and resume
-6. Xen balloon driver support
 
 Features which may make future releases:
 2. virtualization jails via secmodel
@@ -73,17 +72,6 @@ virtual arp address migrates with the domU itself). jym has committed
 this code, and it will be in 6.0
 
 Responsible: jym, bouyer
-
-6. Xen balloon driver support
------------------------------
-
-The balloon driver allows more memory to be added to a running Xen domU
-instance; this allows extra memory to be used by the domU for resource
-peak needs. cherry has made a preliminary balloon driver and this has been
-further updated and tested by jym. This will be in 6.0.
-
-Responsible: jym, cherry
-
 
 Alistair Crooks
 Sat Jan 14 11:38:50 PST 2012

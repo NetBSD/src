@@ -1,7 +1,10 @@
-# $NetBSD: md.evbarm,v 1.2.14.1 2019/06/10 21:42:31 christos Exp $
-./usr/X11R7/lib/libdrm_nouveau.so		-unknown-		xorg
-./usr/X11R7/lib/libdrm_nouveau.so.3		-unknown-		xorg
-./usr/X11R7/lib/libdrm_nouveau.so.3.0		-unknown-		xorg
-./usr/X11R7/lib/libvdpau.so			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libvdpau.so.1			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libvdpau.so.1.0			-unknown-		xorg,compatx11file
+# $NetBSD: md.evbarm,v 1.2.14.2 2020/04/13 07:45:33 martin Exp $
+./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.so.1.0		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_nouveau.so		xbase-libdrm_nouveau-lib		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.3		xbase-libdrm_nouveau-lib		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.3.0		xbase-libdrm_nouveau-lib		xorg
+./usr/X11R7/lib/libvdpau.so			xbase-libvdpau-lib		xorg,compatx11file
+./usr/X11R7/lib/libvdpau.so.1			xbase-libvdpau-lib		xorg,compatx11file
+./usr/X11R7/lib/libvdpau.so.1.0			xbase-libvdpau-lib		xorg,compatx11file

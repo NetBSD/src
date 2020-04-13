@@ -218,7 +218,7 @@ parse_signal(const std::string& str)
     if (signo == INT_MIN) {
         try {
             return atf::text::to_type< int >(str);
-        } catch (std::runtime_error) {
+        } catch (std::runtime_error &e) {
             throw atf::application::usage_error("Invalid signal name or number "
                 "in -s option");
         }
@@ -498,7 +498,7 @@ decode(const std::string& s)
                 {
                     int count = 3;
                     c = 0;
-                    while (--count >= 0 && (unsigned)(s[i] - '0') < 8)
+                    while (--count >= 0 && static_cast<unsigned>(s[i] - '0') < 8)
                         c = (c << 3) + (s[i++] - '0');
                     break;
                 }

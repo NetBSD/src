@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -43,11 +44,10 @@ struct ipv4ll_state {
 	struct in_addr pickedaddr;
 	struct ipv4_addr *addr;
 	struct arp_state *arp;
-	unsigned int conflicts;
-	struct timespec defend;
 	char randomstate[128];
 	bool seeded;
-	uint8_t down;
+	bool down;
+	size_t conflicts;
 };
 
 #define	IPV4LL_STATE(ifp)						       \
@@ -58,12 +58,13 @@ struct ipv4ll_state {
 	(IPV4LL_CSTATE((ifp)) && !IPV4LL_CSTATE((ifp))->down &&		       \
 	(IPV4LL_CSTATE((ifp))->addr != NULL))
 
-int ipv4ll_subnetroute(struct rt_head *, struct interface *);
-int ipv4ll_defaultroute(struct rt_head *,struct interface *);
-ssize_t ipv4ll_env(char **, const char *, const struct interface *);
+int ipv4ll_subnetroute(rb_tree_t *, struct interface *);
+int ipv4ll_defaultroute(rb_tree_t *,struct interface *);
+ssize_t ipv4ll_env(FILE *, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);
 void ipv4ll_handle_failure(void *);
+struct ipv4_addr *ipv4ll_handleifa(int, struct ipv4_addr *, pid_t pid);
 #ifdef HAVE_ROUTE_METRIC
 int ipv4ll_recvrt(int, const struct rt *);
 #endif

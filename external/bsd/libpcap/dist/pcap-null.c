@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-null.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: pcap-null.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-null.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $");
+__RCSID("$NetBSD: pcap-null.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -37,12 +37,12 @@ static char nosup[] = "live packet capture not supported on this system";
 pcap_t *
 pcap_create_interface(const char *device _U_, char *ebuf)
 {
-	(void)strlcpy(ebuf, nosup, PCAP_ERRBUF_SIZE);
+	(void)pcap_strlcpy(ebuf, nosup, PCAP_ERRBUF_SIZE);
 	return (NULL);
 }
 
 int
-pcap_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
+pcap_platform_finddevs(pcap_if_list_t *devlistp _U_, char *errbuf _U_)
 {
 	/*
 	 * There are no interfaces on which we can capture.
@@ -55,7 +55,7 @@ int
 pcap_lookupnet(const char *device _U_, bpf_u_int32 *netp _U_,
     bpf_u_int32 *maskp _U_, char *errbuf)
 {
-	(void)strlcpy(errbuf, nosup, PCAP_ERRBUF_SIZE);
+	(void)pcap_strlcpy(errbuf, nosup, PCAP_ERRBUF_SIZE);
 	return (-1);
 }
 #endif

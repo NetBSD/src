@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2010/04/23 19:41:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.39.48.1 2020/04/13 07:45:06 martin Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ LDADD+= -lutil
 .endif
 .endif
 
-MAN=	pax.1 tar.1 cpio.1
+MAN=	pax.1
 
 .if defined(HOSTPROG)
 CPPFLAGS+=	-DHOSTPROG
@@ -35,9 +35,11 @@ CPPFLAGS+=	-DHAVE_SYS_MTIO_H
 .if ${MKBSDTAR} == "no"
 LINKS+=	${BINDIR}/pax ${BINDIR}/tar
 SYMLINKS+=${BINDIR}/tar /usr/bin/tar
+MAN+=tar.1
 
 LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 SYMLINKS+=${BINDIR}/cpio /usr/bin/cpio
+MAN+=cpio.1
 .endif
 .endif	# }	! HOSTPROG
 
@@ -47,5 +49,7 @@ CPPFLAGS+=	-DSUPPORT_RMT
 LDADD+=	-lrmt
 DPADD+=	${LIBRMT}
 .endif
+
+COPTS.tar.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/12/05 09:09:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.48.1 2020/04/13 07:46:10 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,10 @@ pcap-config: pcap-config.in
 	@rm -f ${.TARGET}
 	${TOOL_SED} -e 's,@libdir@,/usr/lib,g' \
 	    -e 's,@includedir@,/usr/include,g' \
+	    -e 's,@PACKAGE_NAME@,pcap,g' \
+	    -e 's,@prefix@,/usr,g' \
+	    -e 's,@exec_prefix@,/usr,g' \
+	    -e 's/@V_RPATH_OPT@/-Wl,-rpath,/g' \
 	    -e 's,@LIBS@,,g' < ${.ALLSRC} > ${.TARGET}
 	chmod a+x ${.TARGET}
 

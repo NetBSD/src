@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.2 2012/05/07 00:41:46 wiz Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.2.36.1 2020/04/13 07:45:51 martin Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -10,8 +10,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.6 of 6 September 2010
-   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
+   bzip2/libbzip2 version 1.0.8 of 13 July 2019
+   Copyright (C) 1996-2019 Julian Seward <jseward@acm.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
@@ -456,7 +456,7 @@ void sendMTFValues ( EState* s )
 
    AssertH( nGroups < 8, 3002 );
    AssertH( nSelectors < 32768 &&
-            nSelectors <= (2 + (900000 / BZ_G_SIZE)),
+            nSelectors <= BZ_MAX_SELECTORS,
             3003 );
 
 

@@ -1,6 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -30,11 +31,18 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <stdint.h>
 #include <stdio.h>
 
-#include "config.h"
-#include "defs.h"
-#include "dhcpcd.h"
+/* Define eloop queues here, as other apps share eloop.h */
+#define	ELOOP_DHCPCD		1 /* default queue */
+#define	ELOOP_DHCP		2
+#define	ELOOP_ARP		3
+#define	ELOOP_IPV4LL		4
+#define	ELOOP_IPV6		5
+#define	ELOOP_IPV6ND		6
+#define	ELOOP_IPV6RA_EXPIRE	7
+#define	ELOOP_DHCP6		8
 
 #ifndef HOSTNAME_MAX_LEN
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
@@ -53,65 +61,10 @@
 #define ROUNDUP4(a)		(1 + (((a) - 1) |  3))
 #define ROUNDUP8(a)		(1 + (((a) - 1) |  7))
 
-#define USEC_PER_SEC		1000000L
-#define USEC_PER_NSEC		1000L
-#define NSEC_PER_SEC		1000000000L
-#define NSEC_PER_MSEC		1000000L
-#define MSEC_PER_SEC		1000L
-#define CSEC_PER_SEC		100L
-#define NSEC_PER_CSEC		10000000L
-
 /* Some systems don't define timespec macros */
 #ifndef timespecclear
 #define timespecclear(tsp)      (tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
 #define timespecisset(tsp)      ((tsp)->tv_sec || (tsp)->tv_nsec)
-#define timespeccmp(tsp, usp, cmp)                                      \
-        (((tsp)->tv_sec == (usp)->tv_sec) ?                             \
-            ((tsp)->tv_nsec cmp (usp)->tv_nsec) :                       \
-            ((tsp)->tv_sec cmp (usp)->tv_sec))
-#define timespecadd(tsp, usp, vsp)                                      \
-        do {                                                            \
-                (vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;          \
-                (vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;       \
-                if ((vsp)->tv_nsec >= 1000000000L) {                    \
-                        (vsp)->tv_sec++;                                \
-                        (vsp)->tv_nsec -= 1000000000L;                  \
-                }                                                       \
-        } while (/* CONSTCOND */ 0)
-#define timespecsub(tsp, usp, vsp)                                      \
-        do {                                                            \
-                (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;          \
-                (vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;       \
-                if ((vsp)->tv_nsec < 0) {                               \
-                        (vsp)->tv_sec--;                                \
-                        (vsp)->tv_nsec += 1000000000L;                  \
-                }                                                       \
-        } while (/* CONSTCOND */ 0)
-#endif
-
-#define timespec_to_double(tv)						     \
-	((double)(tv)->tv_sec + (double)((tv)->tv_nsec) / 1000000000.0)
-#define timespecnorm(tv) do {						     \
-	while ((tv)->tv_nsec >=  NSEC_PER_SEC) {			     \
-		(tv)->tv_sec++;						     \
-		(tv)->tv_nsec -= NSEC_PER_SEC;				     \
-	}								     \
-} while (0 /* CONSTCOND */);
-#define ts_to_ms(ms, tv) do {						     \
-	ms = (tv)->tv_sec * MSEC_PER_SEC;				     \
-	ms += (tv)->tv_nsec / NSEC_PER_MSEC;				     \
-} while (0 /* CONSTCOND */);
-#define ms_to_ts(tv, ms) do {						     \
-	(tv)->tv_sec = ms / MSEC_PER_SEC;				     \
-	(tv)->tv_nsec = (suseconds_t)(ms - ((tv)->tv_sec * MSEC_PER_SEC))    \
-	    * NSEC_PER_MSEC;						     \
-} while (0 /* CONSTCOND */);
-
-#ifndef TIMEVAL_TO_TIMESPEC
-#define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
-	(ts)->tv_sec = (tv)->tv_sec;					\
-	(ts)->tv_nsec = (tv)->tv_usec * USEC_PER_NSEC;			\
-} while (0 /* CONSTCOND */)
 #endif
 
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
@@ -129,6 +82,29 @@
 #  define __unused
 # endif
 #endif
+
+/* Needed for rbtree(3) compat */
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
+#ifndef __predict_false
+# if __GNUC__ > 2
+#  define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
+#  define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
+#else
+#  define	__predict_true(exp)	(exp)
+#  define	__predict_false(exp)	(exp)
+# endif
+#endif
+#ifndef __BEGIN_DECLS
+# if defined(__cplusplus)
+#  define	__BEGIN_DECLS		extern "C" {
+#  define	__END_DECLS		};
+# else /* __BEGIN_DECLS */
+#  define	__BEGIN_DECLS
+#  define	__END_DECLS
+# endif /* __BEGIN_DECLS */
+#endif /* __BEGIN_DECLS */
 
 #ifndef __fallthrough
 # if __GNUC__ >= 7
@@ -169,16 +145,8 @@
 # endif
 #endif
 
-void get_line_free(void);
-extern int clock_monotonic;
-int get_monotonic(struct timespec *);
-
-ssize_t setvar(char **, const char *, const char *, const char *);
-ssize_t setvard(char **, const char *, const char *, size_t);
-ssize_t addvar(char ***, const char *, const char *, const char *);
-ssize_t addvard(char ***, const char *, const char *, size_t);
-
 const char *hwaddr_ntoa(const void *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);
 size_t read_hwaddr_aton(uint8_t **, const char *);
+int is_root_local(void);
 #endif

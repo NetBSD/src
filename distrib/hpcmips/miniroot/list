@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2013/11/30 08:27:17 nakayama Exp $
+#	$NetBSD: list,v 1.18.26.1 2020/04/13 07:45:27 martin Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -13,6 +13,7 @@ PROG	sbin/fdisk
 PROG	sbin/fsck_msdos
 PROG	sbin/mount_msdos
 PROG	sbin/newfs_msdos
+PROG	sbin/sysctl
 
 # extras in /usr.bin
 PROG	usr/bin/netstat

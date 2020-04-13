@@ -1,6 +1,5 @@
-/*	$NetBSD: sshpty.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sshpty.c,v 1.31 2016/11/29 03:54:50 dtucker Exp $ */
-
+/*	$NetBSD: sshpty.c,v 1.7.12.1 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.34 2019/07/04 16:20:10 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.7.12.1 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -52,7 +51,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 	int i;
 
 	i = openpty(ptyfd, ttyfd, buf, NULL, NULL);
-	if (i < 0) {
+	if (i == -1) {
 		error("openpty: %.100s", strerror(errno));
 		return 0;
 	}
@@ -65,9 +64,9 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 void
 pty_release(const char *tty)
 {
-	if (chown(tty, (uid_t) 0, (gid_t) 0) < 0)
+	if (chown(tty, (uid_t) 0, (gid_t) 0) == -1)
 		error("chown %.100s 0 0 failed: %.100s", tty, strerror(errno));
-	if (chmod(tty, (mode_t) 0666) < 0)
+	if (chmod(tty, (mode_t) 0666) == -1)
 		error("chmod %.100s 0666 failed: %.100s", tty, strerror(errno));
 }
 
@@ -86,7 +85,7 @@ pty_make_controlling_tty(int *ttyfd, const char *tty)
 		close(fd);
 	}
 #endif /* TIOCNOTTY */
-	if (setsid() < 0)
+	if (setsid() == -1)
 		error("setsid: %.100s", strerror(errno));
 
 	/*
@@ -101,18 +100,18 @@ pty_make_controlling_tty(int *ttyfd, const char *tty)
 	/* Make it our controlling tty. */
 #ifdef TIOCSCTTY
 	debug("Setting controlling tty using TIOCSCTTY.");
-	if (ioctl(*ttyfd, TIOCSCTTY, NULL) < 0)
+	if (ioctl(*ttyfd, TIOCSCTTY, NULL) == -1)
 		error("ioctl(TIOCSCTTY): %.100s", strerror(errno));
 #endif /* TIOCSCTTY */
 	fd = open(tty, O_RDWR);
-	if (fd < 0)
+	if (fd == -1)
 		error("%.100s: %.100s", tty, strerror(errno));
 	else
 		close(fd);
 
 	/* Verify that we now have a controlling tty. */
 	fd = open(_PATH_TTY, O_WRONLY);
-	if (fd < 0)
+	if (fd == -1)
 		error("open /dev/tty failed - could not set controlling tty: %.100s",
 		    strerror(errno));
 	else
@@ -145,6 +144,8 @@ pty_setowner(struct passwd *pw, const char *tty)
 
 	/* Determine the group to make the owner of the tty. */
 	grp = getgrnam("tty");
+	if (grp == NULL)
+		fatal("no tty group");
 	gid = (grp != NULL) ? grp->gr_gid : pw->pw_gid;
 	mode = (grp != NULL) ? 0620 : 0600;
 
@@ -153,12 +154,12 @@ pty_setowner(struct passwd *pw, const char *tty)
 	 * Warn but continue if filesystem is read-only and the uids match/
 	 * tty is owned by root.
 	 */
-	if (stat(tty, &st))
+	if (stat(tty, &st) == -1)
 		fatal("stat(%.100s) failed: %.100s", tty,
 		    strerror(errno));
 
 	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
-		if (chown(tty, pw->pw_uid, gid) < 0) {
+		if (chown(tty, pw->pw_uid, gid) == -1) {
 			if (errno == EROFS &&
 			    (st.st_uid == pw->pw_uid || st.st_uid == 0))
 				debug("chown(%.100s, %u, %u) failed: %.100s",
@@ -172,7 +173,7 @@ pty_setowner(struct passwd *pw, const char *tty)
 	}
 
 	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
-		if (chmod(tty, mode) < 0) {
+		if (chmod(tty, mode) == -1) {
 			if (errno == EROFS &&
 			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
 				debug("chmod(%.100s, 0%o) failed: %.100s",

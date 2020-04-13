@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2.42.1 2019/06/10 21:42:33 christos Exp $
+#	$NetBSD: Makefile,v 1.2.42.2 2020/04/13 07:45:35 martin Exp $
 CDBASE=		sparccd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 
 # for PRINTOBJDIR

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.73.4.1 2019/06/10 21:42:29 christos Exp $
+# $NetBSD: md.alpha,v 1.73.4.2 2020/04/13 07:45:32 martin Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -73,8 +73,9 @@
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
+./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/crtfm.o				comp-c-lib
 ./usr/lib/libalpha.a				comp-c-lib

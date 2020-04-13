@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.433.2.2 2020/04/08 14:03:56 martin Exp $
+#	$NetBSD: Makefile,v 1.433.2.3 2020/04/13 07:45:38 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -343,7 +343,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
 	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
 		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
-    			/dev/null ${DESTDIR}${file}; \
+			/dev/null ${DESTDIR}${file}; \
 	else true; fi
 .endfor
 .for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
@@ -370,7 +370,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #	Install var/db/obsolete set lists; this is performed by "make build"
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
-OBSOLETE.files=		base comp etc games man misc text
+OBSOLETE.files=		base comp etc games man misc rescue text
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	debug
 .endif
@@ -590,7 +590,7 @@ build_kernels: .PHONY
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
-	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
+	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} distclean
 .endif

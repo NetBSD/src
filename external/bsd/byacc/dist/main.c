@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.14.6.1 2019/06/10 21:44:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.14.6.2 2020/04/13 07:45:50 martin Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.14.6.1 2019/06/10 21:44:41 christos Exp $");
-/* Id: main.c,v 1.61 2017/12/04 17:50:02 erik.b.andersen Exp  */
+__RCSID("$NetBSD: main.c,v 1.14.6.2 2020/04/13 07:45:50 martin Exp $");
+/* Id: main.c,v 1.65 2019/06/16 19:59:58 tom Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -38,6 +38,7 @@ static MY_TMPFILES *my_tmpfiles;
 #endif /* USE_MKSTEMP */
 
 char dflag;
+char dflag2;
 char gflag;
 char iflag;
 char lflag;
@@ -156,7 +157,7 @@ done(int k)
     if (rflag)
 	DO_FREE(code_file_name);
 
-    if (dflag)
+    if (dflag && !dflag2)
 	DO_FREE(defines_file_name);
 
     if (iflag)
@@ -216,6 +217,7 @@ usage(void)
 	,"  -b file_prefix        set filename prefix (default \"y.\")"
 	,"  -B                    create a backtracking parser"
 	,"  -d                    write definitions (" DEFINES_SUFFIX ")"
+	,"  -H defines_file       write definitions to defines_file"
 	,"  -i                    write interface (y.tab.i)"
 	,"  -g                    write a graphical description"
 	,"  -l                    suppress #line directives"
@@ -236,7 +238,7 @@ usage(void)
     for (n = 0; n < sizeof(msg) / sizeof(msg[0]); ++n)
 	fprintf(stderr, "%s\n", msg[n]);
 
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 static void
@@ -254,6 +256,7 @@ setflag(int ch)
 
     case 'd':
 	dflag = 1;
+	dflag2 = 0;
 	break;
 
     case 'g':
@@ -342,6 +345,16 @@ getargs(int argc, char *argv[])
 		file_prefix = s;
 	    else if (++i < argc)
 		file_prefix = argv[i];
+	    else
+		usage();
+	    continue;
+
+	case 'H':
+	    dflag = dflag2 = 1;
+	    if (*++s)
+		defines_file_name = s;
+	    else if (++i < argc)
+		defines_file_name = argv[i];
 	    else
 		usage();
 	    continue;
@@ -483,7 +496,7 @@ create_file_names(void)
     else
 	code_file_name = output_file_name;
 
-    if (dflag)
+    if (dflag && !dflag2)
     {
 	if (explicit_file_name)
 	{
@@ -715,7 +728,7 @@ open_files(void)
 	fprintf(graph_file, "\t*/\n");
     }
 
-    if (dflag)
+    if (dflag || dflag2)
     {
 	defines_file = fopen(defines_file_name, "w");
 	if (defines_file == 0)

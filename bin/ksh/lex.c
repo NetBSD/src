@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.23 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: lex.c,v 1.23.2.1 2020/04/13 07:45:06 martin Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.23 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: lex.c,v 1.23.2.1 2020/04/13 07:45:06 martin Exp $");
 #endif
 
 
@@ -254,7 +254,7 @@ yylex(cf)
 						*wp++ = QCHAR, *wp++ = c;
 						break;
 					}
-					/* FALLTROUGH */
+					/* FALLTHROUGH */
 				  default:
 					Xcheck(ws, wp);
 					if (c) { /* trailing \ is lost */

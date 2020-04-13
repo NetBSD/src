@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.15 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.34 2017/05/08 22:57:38 djm Exp $ */
+/*	$NetBSD: mac.c,v 1.15.4.1 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: mac.c,v 1.35 2019/09/06 04:53:27 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,12 +25,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.15 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.15.4.1 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 
 #include <string.h>
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
 
 #include "digest.h"
 #include "hmac.h"

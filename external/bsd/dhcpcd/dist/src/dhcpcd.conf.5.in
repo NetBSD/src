@@ -1,4 +1,6 @@
-.\" Copyright (c) 2006-2019 Roy Marples
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.\" Copyright (c) 2006-2020 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 24, 2019
+.Dd February 19, 2020
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -57,6 +59,26 @@ When discovering interfaces, the interface name must not match
 .Ar pattern
 which is a space or comma separated list of patterns passed to
 .Xr fnmatch 3 .
+.It Ic anonymous
+Enables Anonymity Profiles for DHCP, RFC 7844.
+This implementation forces a hardware address randomisaton when
+the interface link is down and that ClientID's are only LL.
+Any DUID is ignored.
+All non essential options are then masked at this point,
+but they could be unmasked by explicitly requesting the option
+.Sy after
+the
+.Ic anonymous
+option is processed.
+As such, the
+.Ic anonymous
+option
+.Sy should
+be the last option in the configuration unless you really want to
+send something which could identify you.
+.Nm dhcpcd
+will not try and reboot an old lease, it will go straight into
+DISCOVER/SOLICIT.
 .It Ic arping Ar address Op address
 .Nm dhcpcd
 will arping each address in order before attempting DHCP.
@@ -83,7 +105,7 @@ is
 .Ar token
 then
 .Ar algorithm is
-snd_secretid/rcv_secretid so you can send and recieve different tokens.
+snd_secretid/rcv_secretid so you can send and receive different tokens.
 .It Ic authtoken Ar secretid Ar realm Ar expire Ar key
 Define a shared key for use in authentication.
 .Ar realm
@@ -137,7 +159,7 @@ In most cases,
 will set this automatically.
 .It Ic controlgroup Ar group
 Sets the group ownership of
-.Pa @RUNDIR@/dhcpcd.sock
+.Pa @RUNDIR@/sock
 so that users other than root can connect to
 .Nm dhcpcd .
 .It Ic debug
@@ -428,10 +450,17 @@ globally but needs to be enabled for one interface.
 .It Ic leasetime Ar seconds
 Request a leasetime of
 .Ar seconds .
+.It Ic link_rcvbuf Ar size
+Override the size of the link receive buffer from the kernel default.
+While
+.Nm dhcpcd
+will recover from link buffer overflows,
+this may not be desirable on heavily loaded systems.
 .It Ic logfile Ar logfile
 Writes to the specified
-.Ar logfile
-rather than
+.Ar logfile .
+.Nm dhcpcd
+still writes to
 .Xr syslog 3 .
 The
 .Ar logfile
@@ -446,7 +475,7 @@ Metrics are used to prefer an interface over another one, lowest wins.
 will supply a default metric of 200 +
 .Xr if_nametoindex 3 .
 An extra 100 will be added for wireless interfaces.
-.It Ic mudurl Ar url 
+.It Ic mudurl Ar url
 Specifies the URL for a Manufacturer Usage Description (MUD).
 The description is used by upstream network devices to instantiate any
 desired access lists.
@@ -614,7 +643,7 @@ with an infinite lease time.
 If you set
 .Ic ip6_address ,
 .Nm dhcpcd
-will continue auto-configuation as normal.
+will continue auto-configuration as normal.
 .Pp
 Here is an example which configures two static address, overriding the default
 IPv4 broadcast address, an IPv4 router, DNS and disables IPv6 auto-configuration.
@@ -661,8 +690,17 @@ If using IPv4LL then
 start the IPv4LL process after the timeout and then wait a little longer
 before really timing out.
 .It Ic userclass Ar string
-Tag the DHCPv4 messages with the userclass.
+Tag the DHCPv4 message with the userclass.
 You can specify more than one.
+.It Ic msuserclass Ar string
+Tag the DHCPv4 mesasge with the Microsoft userclass.
+Unlike the
+.Ic userclass
+option, this one can only be added once.
+It should only be used for Microsoft DHCP servers and the
+.Ic vendorclassid
+should be set to "MSFT 98" or "MSFT 5.0".
+This option is not RFC compliant.
 .It Ic vendor Ar code , Ns Ar value
 Add an encapsulated vendor option.
 .Ar code
@@ -697,9 +735,7 @@ Number
 with the
 .Ar data .
 This option can be set more than once to add more data, but the behaviour,
-as per
-.Xr RFC 3925
-is undefined if the Enterprise Number differs.
+as per RFC 3925 is undefined if the Enterprise Number differs.
 .It Ic waitip Op 4 | 6
 Wait for an address to be assigned before forking to the background.
 4 means wait for an IPv4 address to be assigned.
@@ -719,7 +755,7 @@ DHCP, ND and DHCPv6 allow for the use of custom options, and RFC 3925 vendor
 options for DHCP can also be supplied.
 Each option needs to be started with the
 .Ic define ,
-.Ic definend,
+.Ic definend ,
 .Ic define6
 or
 .Ic vendopt

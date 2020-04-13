@@ -2328,6 +2328,8 @@ je_realloc(void *ptr, size_t size) {
 	LOG("core.realloc.entry", "ptr: %p, size: %zu\n", ptr, size);
 
 	if (unlikely(size == 0)) {
+#if 0
+	// http://www.open-std.org/jtc1/sc22/wg14/www/docs/summary.htm#dr_400
 		if (ptr != NULL) {
 			/* realloc(ptr, 0) is equivalent to free(ptr). */
 			UTRACE(ptr, 0, 0);
@@ -2343,6 +2345,7 @@ je_realloc(void *ptr, size_t size) {
 			LOG("core.realloc.exit", "result: %p", NULL);
 			return NULL;
 		}
+#endif
 		size = 1;
 	}
 

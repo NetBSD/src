@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.18 2016/10/30 15:47:06 riastradh Exp $
+# $NetBSD: postfix,v 1.18.14.1 2020/04/13 07:45:46 martin Exp $
 #
 
 # PROVIDE: mail
@@ -64,6 +64,8 @@ postfix_precmd()
 			;;
 		esac
 	done
+
+	echo "Starting ${name}."
 }
 
 postfix_op()

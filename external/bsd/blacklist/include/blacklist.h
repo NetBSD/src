@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.h,v 1.3 2015/01/23 18:48:56 christos Exp $	*/
+/*	$NetBSD: blacklist.h,v 1.3.18.1 2020/04/13 07:45:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,5 +42,14 @@ int blacklist_sa(int, int, const struct sockaddr *, socklen_t, const char *);
 int blacklist_sa_r(struct blacklist *, int, int,
     const struct sockaddr *, socklen_t, const char *);
 __END_DECLS
+
+/* action values for user applications */
+#define BLACKLIST_API_ENUM	1
+enum {
+        BLACKLIST_AUTH_OK = 0,
+        BLACKLIST_AUTH_FAIL,
+        BLACKLIST_ABUSIVE_BEHAVIOR,
+        BLACKLIST_BAD_USER
+};
 
 #endif /* _BLACKLIST_H */

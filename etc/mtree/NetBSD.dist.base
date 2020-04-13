@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.170.2.1 2019/06/10 21:42:45 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.170.2.2 2020/04/13 07:45:45 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -75,9 +75,13 @@
 ./libdata/firmware/if_rtwn
 ./libdata/firmware/if_urtwn
 ./libdata/firmware/if_wpi
+./libdata/firmware/nouveau
+./libdata/firmware/nouveau/nvidia
+./libdata/firmware/nouveau/nvidia/gm206
 ./libdata/firmware/nvidia
 ./libdata/firmware/nvidia/tegra124
 ./libdata/firmware/nvidia/tegra210
+./libdata/firmware/qat
 ./libdata/firmware/radeon
 ./libdata/firmware/ral
 ./libdata/firmware/rum
@@ -107,7 +111,8 @@
 ./usr/include/c++
 ./usr/include/c++/experimental
 ./usr/include/c++/ext
-./usr/include/clang-7.0
+./usr/include/cbor
+./usr/include/clang-9.0
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -117,7 +122,6 @@
 ./usr/include/dev/dm
 ./usr/include/dev/dmover
 ./usr/include/dev/dtv
-./usr/include/dev/filemon
 ./usr/include/dev/hdaudio
 ./usr/include/dev/hdmicec
 ./usr/include/dev/hid
@@ -144,6 +148,7 @@
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
 ./usr/include/event2
+./usr/include/fido
 ./usr/include/filecorefs
 ./usr/include/fs
 ./usr/include/fs/autofs
@@ -194,10 +199,10 @@
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
 ./usr/include/g++/tr2
-./usr/include/gcc-6
-./usr/include/gcc-6/sanitizer
 ./usr/include/gcc-7
 ./usr/include/gcc-7/sanitizer
+./usr/include/gcc-8
+./usr/include/gcc-8/sanitizer
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
@@ -254,6 +259,14 @@
 ./usr/include/ufs/ufs
 ./usr/include/uvm
 ./usr/lib
+./usr/lib/clang
+./usr/lib/clang/9.0.0
+./usr/lib/clang/9.0.0/include
+./usr/lib/clang/9.0.0/include/sanitizer
+./usr/lib/clang/9.0.0/include/xray
+./usr/lib/clang/9.0.0/lib
+./usr/lib/clang/9.0.0/lib/netbsd
+./usr/lib/clang/9.0.0/share
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.3
@@ -397,10 +410,10 @@
 ./usr/share/examples/racoon/roadwarrior
 ./usr/share/examples/racoon/roadwarrior/client
 ./usr/share/examples/racoon/roadwarrior/server
+./usr/share/examples/rpcapd
 ./usr/share/examples/rtadvd
 ./usr/share/examples/slip
 ./usr/share/examples/smbfs
-./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
@@ -1264,11 +1277,17 @@
 ./var/at/spool			mode=0700
 ./var/backups
 ./var/chroot
+./var/chroot/dhcpcd
+./var/chroot/dhcpcd/etc
+./var/chroot/dhcpcd/var
+./var/chroot/dhcpcd/var/run
+./var/chroot/dhcpcd/var/db
+./var/chroot/dhcpcd/var/db/dhcpcd	mode=0775 uname=_dhcpcd gname=_dhcpcd
 ./var/chroot/ftp-proxy		mode=0755
 ./var/chroot/named
 ./var/chroot/named/dev
 ./var/chroot/named/etc
-./var/chroot/named/etc/namedb
+./var/chroot/named/etc/namedb		mode=0755 uname=named gname=named
 ./var/chroot/named/etc/namedb/cache	mode=0775 uname=named gname=named
 ./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/etc/namedb/nta	type=dir mode=0775 uname=named gname=named
@@ -1308,7 +1327,6 @@
 ./var/cron
 ./var/cron/tabs			mode=0700
 ./var/db
-./var/db/dhcpcd
 ./var/db/ns
 ./var/db/obsolete
 ./var/db/postfix		uname=postfix gname=postfix mode=0755

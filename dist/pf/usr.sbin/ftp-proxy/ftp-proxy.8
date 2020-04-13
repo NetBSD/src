@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.5 2009/04/24 16:48:58 reed Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.5.48.1 2020/04/13 07:45:23 martin Exp $
 .\"	$OpenBSD: ftp-proxy.8,v 1.10 2007/08/01 15:45:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 1, 2007
+.Dd September 21, 2019
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ rdr $int_if any port 21 -\*[Gt] 127.0.0.1 port 8021 tcp
 .Xr ipnat 4
 and
 .Xr pf 4
-does not allow the ruleset to be modified if the system is running at a
+do not allow the ruleset to be modified if the system is running at a
 securelevel higher than 1.
 At that level
 .Nm ftp-proxy

@@ -1,0 +1,4 @@
+To generate .partial files for https://developers.yubico.com/:
+
+$ make -C build man_symlink_html_partial
+$ (cd build/man && pax -p p -r -w *.partial /tmp/partial)

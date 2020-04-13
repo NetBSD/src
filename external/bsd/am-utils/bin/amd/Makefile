@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/05/21 15:28:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.12.10.1 2020/04/13 07:45:48 martin Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -73,5 +73,6 @@ build_version.h: get_args.c
 	echo '#define BUILD_HOST "'unknown'"' >> ${.TARGET}
 	echo '#define BUILD_DATE "'unknown'"' >> ${.TARGET}
 
+COPTS.sun_map.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,9 +1,10 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>bzip2 and libbzip2, version 1.0.6</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
-<style type="text/css" media="screen">/* Colours:
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>bzip2 and libbzip2, version 1.0.8</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="stylesheet" type="text/css" href="bzip.css" />
+  <style type="text/css" media="screen">/* Colours:
 #74240f  dark brown      h1, h2, h3, h4
 #336699  medium blue     links
 #339999  turquoise       link hover colour
@@ -30,7 +31,7 @@ dd {
 /* -- ruler -- */
 div.hr_blue { 
   height:  3px; 
-  background:#ffffff url("/images/hr_blue.png") repeat-x; }
+  background:#ffffff url("../images/hr_blue.png") repeat-x; }
 div.hr_blue hr { display:none; }
 
 /* release styles */
@@ -43,7 +44,7 @@ div.hr_blue hr { display:none; }
 ul  { 
  margin:     0px 4px 16px 16px;
  padding:    0px;
- list-style: url("/images/li-blue.png"); 
+ list-style: url("../images/li-blue.png"); 
 }
 ul li { 
  margin-bottom: 10px;
@@ -79,29 +80,29 @@ div.literallayout, pre.programlisting, pre.screen {
 }
 </style>
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="book" title="bzip2 and libbzip2, version 1.0.6">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="book">
 <div class="titlepage">
 <div>
 <div><h1 class="title">
-<a name="userman"></a>bzip2 and libbzip2, version 1.0.6</h1></div>
+<a name="userman"></a>bzip2 and libbzip2, version 1.0.8</h1></div>
 <div><h2 class="subtitle">A program and library for data compression</h2></div>
 <div><div class="authorgroup"><div class="author">
 <h3 class="author">
 <span class="firstname">Julian</span> <span class="surname">Seward</span>
 </h3>
-<div class="affiliation"><span class="orgname">http://www.bzip.org<br></span></div>
+<div class="affiliation"><span class="orgname">https://sourceware.org/bzip2/<br></span></div>
 </div></div></div>
-<div><p class="releaseinfo">Version 1.0.6 of 6 September 2010</p></div>
-<div><p class="copyright">Copyright © 1996-2010 Julian Seward</p></div>
-<div><div class="legalnotice" title="Legal Notice">
-<a name="id537185"></a><p>This program, <code class="computeroutput">bzip2</code>, the
+<div><p class="releaseinfo">Version 1.0.8 of 13 July 2019</p></div>
+<div><p class="copyright">Copyright Â© 1996-2019 Julian Seward</p></div>
+<div><div class="legalnotice">
+<a name="legal"></a><p>This program, <code class="computeroutput">bzip2</code>, the
   associated library <code class="computeroutput">libbzip2</code>, and
-  all documentation, are copyright © 1996-2010 Julian Seward.
+  all documentation, are copyright Â© 1996-2019 Julian Seward.
   All rights reserved.</p>
 <p>Redistribution and use in source and binary forms, with
   or without modification, are permitted provided that the
   following conditions are met:</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p>Redistributions of source code must retain the
    above copyright notice, this list of conditions and the
    following disclaimer.</p></li>
@@ -142,7 +143,7 @@ div.literallayout, pre.programlisting, pre.screen {
 </div>
 <div class="toc">
 <p><b>Table of Contents</b></p>
-<dl>
+<dl class="toc">
 <dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt>
 <dt><span class="chapter"><a href="#using">2. How to use bzip2</a></span></dt>
 <dd><dl>
@@ -211,9 +212,9 @@ Programming with <code class="computeroutput">libbzip2</code>
 </dl></dd>
 </dl>
 </div>
-<div class="chapter" title="1. Introduction">
-<div class="titlepage"><div><div><h2 class="title">
-<a name="intro"></a>1. Introduction</h2></div></div></div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="intro"></a>1.Â Introduction</h1></div></div></div>
 <p><code class="computeroutput">bzip2</code> compresses files
 using the Burrows-Wheeler block-sorting text compression
 algorithm, and Huffman coding.  Compression is generally
@@ -228,24 +229,24 @@ describes both how to use the program and how to work with the
 library interface.  Most of the manual is devoted to this
 library, not the program, which is good news if your interest is
 only in the program.</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
-<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#using" title="2. How to use bzip2">How to use bzip2</a> describes how to use
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#using" title="2.Â How to use bzip2">How to use bzip2</a> describes how to use
  <code class="computeroutput">bzip2</code>; this is the only part
  you need to read if you just want to know how to operate the
  program.</p></li>
-<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#libprog" title="3.  Programming with libbzip2">Programming with libbzip2</a> describes the
+<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#libprog" title="3.Â  Programming with libbzip2">Programming with libbzip2</a> describes the
  programming interfaces in detail, and</p></li>
-<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#misc" title="4. Miscellanea">Miscellanea</a> records some
+<li class="listitem" style="list-style-type: disc"><p><a class="xref" href="#misc" title="4.Â Miscellanea">Miscellanea</a> records some
  miscellaneous notes which I thought ought to be recorded
  somewhere.</p></li>
 </ul></div>
 </div>
-<div class="chapter" title="2. How to use bzip2">
-<div class="titlepage"><div><div><h2 class="title">
-<a name="using"></a>2. How to use bzip2</h2></div></div></div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="using"></a>2.Â How to use bzip2</h1></div></div></div>
 <div class="toc">
 <p><b>Table of Contents</b></p>
-<dl>
+<dl class="toc">
 <dt><span class="sect1"><a href="#name">2.1. NAME</a></span></dt>
 <dt><span class="sect1"><a href="#synopsis">2.2. SYNOPSIS</a></span></dt>
 <dt><span class="sect1"><a href="#description">2.3. DESCRIPTION</a></span></dt>
@@ -260,23 +261,23 @@ only in the program.</p>
 <p>This chapter contains a copy of the
 <code class="computeroutput">bzip2</code> man page, and nothing
 else.</p>
-<div class="sect1" title="2.1. NAME">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="name"></a>2.1. NAME</h2></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<a name="name"></a>2.1.Â NAME</h2></div></div></div>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">bzip2</code>,
   <code class="computeroutput">bunzip2</code> - a block-sorting file
-  compressor, v1.0.6</p></li>
+  compressor, v1.0.8</p></li>
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">bzcat</code> -
    decompresses files to stdout</p></li>
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">bzip2recover</code> -
    recovers data from damaged bzip2 files</p></li>
 </ul></div>
 </div>
-<div class="sect1" title="2.2. SYNOPSIS">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="synopsis"></a>2.2. SYNOPSIS</h2></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<a name="synopsis"></a>2.2.Â SYNOPSIS</h2></div></div></div>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">bzip2</code> [
   -cdfkqstvzVL123456789 ] [ filenames ...  ]</p></li>
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">bunzip2</code> [
@@ -287,9 +288,9 @@ else.</p>
   filename</p></li>
 </ul></div>
 </div>
-<div class="sect1" title="2.3. DESCRIPTION">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="description"></a>2.3. DESCRIPTION</h2></div></div></div>
+<a name="description"></a>2.3.Â DESCRIPTION</h2></div></div></div>
 <p><code class="computeroutput">bzip2</code> compresses files
 using the Burrows-Wheeler block sorting text compression
 algorithm, and Huffman coding.  Compression is generally
@@ -329,7 +330,7 @@ ignored, and a warning issued.
 <code class="computeroutput">bzip2</code> attempts to guess the
 filename for the decompressed file from that of the compressed
 file as follows:</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p><code class="computeroutput">filename.bz2 </code>
   becomes
   <code class="computeroutput">filename</code></p></li>
@@ -407,10 +408,10 @@ to indicate a corrupt compressed file, 3 for an internal
 consistency error (eg, bug) which caused
 <code class="computeroutput">bzip2</code> to panic.</p>
 </div>
-<div class="sect1" title="2.4. OPTIONS">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="options"></a>2.4. OPTIONS</h2></div></div></div>
-<div class="variablelist"><dl>
+<a name="options"></a>2.4.Â OPTIONS</h2></div></div></div>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="computeroutput">-c --stdout</code></span></dt>
 <dd><p>Compress or decompress to standard
   output.</p></dd>
@@ -458,7 +459,7 @@ consistency error (eg, bug) which caused
   the same figure, at the expense of your compression ratio.  In
   short, if your machine is low on memory (8 megabytes or less),
   use <code class="computeroutput">-s</code> for everything.  See
-  <a class="xref" href="#memory-management" title="2.5. MEMORY MANAGEMENT">MEMORY MANAGEMENT</a> below.</p>
+  <a class="xref" href="#memory-management" title="2.5.Â MEMORY MANAGEMENT">MEMORY MANAGEMENT</a> below.</p>
 </dd>
 <dt><span class="term"><code class="computeroutput">-q --quiet</code></span></dt>
 <dd><p>Suppress non-essential warning messages.
@@ -478,7 +479,7 @@ consistency error (eg, bug) which caused
  <code class="computeroutput">-9</code> (or
  <code class="computeroutput">-best</code>)</span></dt>
 <dd><p>Set the block size to 100 k, 200 k ...  900 k
-  when compressing.  Has no effect when decompressing.  See <a class="xref" href="#memory-management" title="2.5. MEMORY MANAGEMENT">MEMORY MANAGEMENT</a> below.  The
+  when compressing.  Has no effect when decompressing.  See <a class="xref" href="#memory-management" title="2.5.Â MEMORY MANAGEMENT">MEMORY MANAGEMENT</a> below.  The
   <code class="computeroutput">--fast</code> and
   <code class="computeroutput">--best</code> aliases are primarily
   for GNU <code class="computeroutput">gzip</code> compatibility.
@@ -502,9 +503,9 @@ consistency error (eg, bug) which caused
   renders these flags irrelevant.</p></dd>
 </dl></div>
 </div>
-<div class="sect1" title="2.5. MEMORY MANAGEMENT">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="memory-management"></a>2.5. MEMORY MANAGEMENT</h2></div></div></div>
+<a name="memory-management"></a>2.5.Â MEMORY MANAGEMENT</h2></div></div></div>
 <p><code class="computeroutput">bzip2</code> compresses large
 files in blocks.  The block size affects both the compression
 ratio achieved, and the amount of memory needed for compression
@@ -574,9 +575,9 @@ Flag     usage      usage       -s usage     Size
  -8      6800k      3300k        2100k      828642
  -9      7600k      3700k        2350k      828642</pre>
 </div>
-<div class="sect1" title="2.6. RECOVERING DATA FROM DAMAGED FILES">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="recovering"></a>2.6. RECOVERING DATA FROM DAMAGED FILES</h2></div></div></div>
+<a name="recovering"></a>2.6.Â RECOVERING DATA FROM DAMAGED FILES</h2></div></div></div>
 <p><code class="computeroutput">bzip2</code> compresses files in
 blocks, usually 900kbytes long.  Each block is handled
 independently.  If a media or transmission error causes a
@@ -612,9 +613,9 @@ cannot be recovered.  If you wish to minimise any potential data
 loss through media or transmission errors, you might consider
 compressing with a smaller block size.</p>
 </div>
-<div class="sect1" title="2.7. PERFORMANCE NOTES">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="performance"></a>2.7. PERFORMANCE NOTES</h2></div></div></div>
+<a name="performance"></a>2.7.Â PERFORMANCE NOTES</h2></div></div></div>
 <p>The sorting phase of compression gathers together similar
 strings in the file.  Because of this, files containing very long
 runs of repeated symbols, like "aabaabaabaab ..."  (repeated
@@ -638,14 +639,14 @@ performance improvements.  I imagine
 <code class="computeroutput">bzip2</code> will perform best on
 machines with very large caches.</p>
 </div>
-<div class="sect1" title="2.8. CAVEATS">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="caveats"></a>2.8. CAVEATS</h2></div></div></div>
+<a name="caveats"></a>2.8.Â CAVEATS</h2></div></div></div>
 <p>I/O error messages are not as helpful as they could be.
 <code class="computeroutput">bzip2</code> tries hard to detect I/O
 errors and exit cleanly, but the details of what the problem is
 sometimes seem rather misleading.</p>
-<p>This manual page pertains to version 1.0.6 of
+<p>This manual page pertains to version 1.0.8 of
 <code class="computeroutput">bzip2</code>.  Compressed data created by
 this version is entirely forwards and backwards compatible with the
 previous public releases, versions 0.1pl2, 0.9.0 and 0.9.5, 1.0.0,
@@ -665,11 +666,11 @@ build yourself an unlimited version if you can recompile it with
 <code class="computeroutput">MaybeUInt64</code> set to be an
 unsigned 64-bit integer.</p>
 </div>
-<div class="sect1" title="2.9. AUTHOR">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="author"></a>2.9. AUTHOR</h2></div></div></div>
+<a name="author"></a>2.9.Â AUTHOR</h2></div></div></div>
 <p>Julian Seward,
-<code class="computeroutput">jseward@bzip.org</code></p>
+<code class="computeroutput">jseward@acm.org</code></p>
 <p>The ideas embodied in
 <code class="computeroutput">bzip2</code> are due to (at least) the
 following people: Michael Burrows and David Wheeler (for the
@@ -690,14 +691,14 @@ patches, helped with portability problems, lent machines, gave
 advice and were generally helpful.</p>
 </div>
 </div>
-<div class="chapter" title="3.  Programming with libbzip2">
-<div class="titlepage"><div><div><h2 class="title">
-<a name="libprog"></a>3. 
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="libprog"></a>3.Â 
 Programming with <code class="computeroutput">libbzip2</code>
-</h2></div></div></div>
+</h1></div></div></div>
 <div class="toc">
 <p><b>Table of Contents</b></p>
-<dl>
+<dl class="toc">
 <dt><span class="sect1"><a href="#top-level">3.1. Top-level structure</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="#ll-summary">3.1.1. Low-level summary</a></span></dt>
@@ -744,10 +745,10 @@ Programming with <code class="computeroutput">libbzip2</code>
 <code class="computeroutput">libbzip2</code>.</p>
 <p>For general background information, particularly about
 memory use and performance aspects, you'd be well advised to read
-<a class="xref" href="#using" title="2. How to use bzip2">How to use bzip2</a> as well.</p>
-<div class="sect1" title="3.1. Top-level structure">
+<a class="xref" href="#using" title="2.Â How to use bzip2">How to use bzip2</a> as well.</p>
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="top-level"></a>3.1. Top-level structure</h2></div></div></div>
+<a name="top-level"></a>3.1.Â Top-level structure</h2></div></div></div>
 <p><code class="computeroutput">libbzip2</code> is a flexible
 library for compressing and decompressing data in the
 <code class="computeroutput">bzip2</code> data format.  Although
@@ -765,9 +766,9 @@ library clients.</p>
 <p>To use any part of the library, you need to
 <code class="computeroutput">#include &lt;bzlib.h&gt;</code>
 into your sources.</p>
-<div class="sect2" title="3.1.1. Low-level summary">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="ll-summary"></a>3.1.1. Low-level summary</h3></div></div></div>
+<a name="ll-summary"></a>3.1.1.Â Low-level summary</h3></div></div></div>
 <p>This interface provides services for compressing and
 decompressing data in memory.  There's no provision for dealing
 with files, streams or any other I/O mechanisms, just straight
@@ -800,9 +801,9 @@ to these functions.  This is a flexible mechanism allowing a
 consumer-pull style of activity, or producer-push, or a mixture
 of both.</p>
 </div>
-<div class="sect2" title="3.1.2. High-level summary">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="hl-summary"></a>3.1.2. High-level summary</h3></div></div></div>
+<a name="hl-summary"></a>3.1.2.Â High-level summary</h3></div></div></div>
 <p>This interface provides some handy wrappers around the
 low-level interface to facilitate reading and writing
 <code class="computeroutput">bzip2</code> format files
@@ -839,9 +840,9 @@ respectively.  That avoids portability problems associated with
 file operations and file attributes, whilst not being much of an
 imposition on the programmer.</p>
 </div>
-<div class="sect2" title="3.1.3. Utility functions summary">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="util-fns-summary"></a>3.1.3. Utility functions summary</h3></div></div></div>
+<a name="util-fns-summary"></a>3.1.3.Â Utility functions summary</h3></div></div></div>
 <p>For very simple needs,
 <code class="computeroutput">BZ2_bzBuffToBuffCompress</code> and
 <code class="computeroutput">BZ2_bzBuffToBuffDecompress</code> are
@@ -871,9 +872,9 @@ I hope to document them properly when time permits.</p>
 library to be built as a Windows DLL.</p>
 </div>
 </div>
-<div class="sect1" title="3.2. Error handling">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="err-handling"></a>3.2. Error handling</h2></div></div></div>
+<a name="err-handling"></a>3.2.Â Error handling</h2></div></div></div>
 <p>The library is designed to recover cleanly in all
 situations, including the worst-case situation of decompressing
 random data.  I'm not 100% sure that it can always do this, so
@@ -901,7 +902,7 @@ value may be returned -- those descriptions are given later.
 Rather, it is intended to convey the rough meaning of each return
 value.  The first five actions are normal and not intended to
 denote an error situation.</p>
-<div class="variablelist"><dl>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="computeroutput">BZ_OK</code></span></dt>
 <dd><p>The requested action was completed
    successfully.</p></dd>
@@ -918,7 +919,7 @@ denote an error situation.</p>
 </dl></div>
 <p>The following return values indicate an error of some
 kind.</p>
-<div class="variablelist"><dl>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="computeroutput">BZ_CONFIG_ERROR</code></span></dt>
 <dd><p>Indicates that the library has been improperly
    compiled on your platform -- a major configuration error.
@@ -1008,12 +1009,12 @@ kind.</p>
    buffer provided.</p></dd>
 </dl></div>
 </div>
-<div class="sect1" title="3.3. Low-level interface">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="low-level"></a>3.3. Low-level interface</h2></div></div></div>
-<div class="sect2" title="3.3.1. BZ2_bzCompressInit">
+<a name="low-level"></a>3.3.Â Low-level interface</h2></div></div></div>
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzcompress-init"></a>3.3.1. BZ2_bzCompressInit</h3></div></div></div>
+<a name="bzcompress-init"></a>3.3.1.Â BZ2_bzCompressInit</h3></div></div></div>
 <pre class="programlisting">typedef struct {
   char *next_in;
   unsigned int avail_in;
@@ -1137,9 +1138,9 @@ BZ_OK
   if BZ_OK is returned
   no specific action needed in case of error</pre>
 </div>
-<div class="sect2" title="3.3.2. BZ2_bzCompress">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzCompress"></a>3.3.2. BZ2_bzCompress</h3></div></div></div>
+<a name="bzCompress"></a>3.3.2.Â BZ2_bzCompress</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzCompress ( bz_stream *strm, int action );</pre>
 <p>Provides more input and/or output buffer space for the
 library.  The caller maintains input and output buffers, and
@@ -1329,9 +1330,9 @@ a bug in your programming.</p>
 <pre class="programlisting">BZ_PARAM_ERROR
   if strm is NULL, or strm-&gt;s is NULL</pre>
 </div>
-<div class="sect2" title="3.3.3. BZ2_bzCompressEnd">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzCompress-end"></a>3.3.3. BZ2_bzCompressEnd</h3></div></div></div>
+<a name="bzCompress-end"></a>3.3.3.Â BZ2_bzCompressEnd</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzCompressEnd ( bz_stream *strm );</pre>
 <p>Releases all memory associated with a compression
 stream.</p>
@@ -1339,9 +1340,9 @@ stream.</p>
 <pre class="programlisting">BZ_PARAM_ERROR  if strm is NULL or strm-&gt;s is NULL
 BZ_OK           otherwise</pre>
 </div>
-<div class="sect2" title="3.3.4. BZ2_bzDecompressInit">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzDecompress-init"></a>3.3.4. BZ2_bzDecompressInit</h3></div></div></div>
+<a name="bzDecompress-init"></a>3.3.4.Â BZ2_bzDecompressInit</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzDecompressInit ( bz_stream *strm, int verbosity, int small );</pre>
 <p>Prepares for decompression.  As with
 <code class="computeroutput">BZ2_bzCompressInit</code>, a
@@ -1364,7 +1365,7 @@ internal state will have been initialised, and
 library will use an alternative decompression algorithm which
 uses less memory but at the cost of decompressing more slowly
 (roughly speaking, half the speed, but the maximum memory
-requirement drops to around 2300k).  See <a class="xref" href="#using" title="2. How to use bzip2">How to use bzip2</a>
+requirement drops to around 2300k).  See <a class="xref" href="#using" title="2.Â How to use bzip2">How to use bzip2</a>
 for more information on memory management.</p>
 <p>Note that the amount of memory needed to decompress a
 stream cannot be determined until the stream's header has been
@@ -1386,9 +1387,9 @@ BZ_MEM_ERROR
   if BZ_OK was returned
   no specific action required in case of error</pre>
 </div>
-<div class="sect2" title="3.3.5. BZ2_bzDecompress">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzDecompress"></a>3.3.5. BZ2_bzDecompress</h3></div></div></div>
+<a name="bzDecompress"></a>3.3.5.Â BZ2_bzDecompress</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzDecompress ( bz_stream *strm );</pre>
 <p>Provides more input and/out output buffer space for the
 library.  The caller maintains input and output buffers, and uses
@@ -1461,9 +1462,9 @@ BZ_OK
 BZ2_bzDecompressEnd
   otherwise</pre>
 </div>
-<div class="sect2" title="3.3.6. BZ2_bzDecompressEnd">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzDecompress-end"></a>3.3.6. BZ2_bzDecompressEnd</h3></div></div></div>
+<a name="bzDecompress-end"></a>3.3.6.Â BZ2_bzDecompressEnd</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzDecompressEnd ( bz_stream *strm );</pre>
 <p>Releases all memory associated with a decompression
 stream.</p>
@@ -1476,13 +1477,13 @@ BZ_OK
 <pre class="programlisting">  None.</pre>
 </div>
 </div>
-<div class="sect1" title="3.4. High-level interface">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="hl-interface"></a>3.4. High-level interface</h2></div></div></div>
+<a name="hl-interface"></a>3.4.Â High-level interface</h2></div></div></div>
 <p>This interface provides functions for reading and writing
 <code class="computeroutput">bzip2</code> format files.  First, some
 general points.</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p>All of the functions take an
   <code class="computeroutput">int*</code> first argument,
   <code class="computeroutput">bzerror</code>.  After each call,
@@ -1532,9 +1533,9 @@ general points.</p>
   facility for user-defined memory allocators in the file I/O
   functions (could easily be added, though).</p></li>
 </ul></div>
-<div class="sect2" title="3.4.1. BZ2_bzReadOpen">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzreadopen"></a>3.4.1. BZ2_bzReadOpen</h3></div></div></div>
+<a name="bzreadopen"></a>3.4.1.Â BZ2_bzReadOpen</h3></div></div></div>
 <pre class="programlisting">typedef void BZFILE;
 
 BZFILE *BZ2_bzReadOpen( int *bzerror, FILE *f, 
@@ -1594,9 +1595,9 @@ NULL
 BZ2_bzClose
   otherwise</pre>
 </div>
-<div class="sect2" title="3.4.2. BZ2_bzRead">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzread"></a>3.4.2. BZ2_bzRead</h3></div></div></div>
+<a name="bzread"></a>3.4.2.Â BZ2_bzRead</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzRead ( int *bzerror, BZFILE *b, void *buf, int len );</pre>
 <p>Reads up to <code class="computeroutput">len</code>
 (uncompressed) bytes from the compressed file
@@ -1668,9 +1669,9 @@ collect data from buf, then BZ2_bzReadClose or BZ2_bzReadGetUnused
 BZ2_bzReadClose
   otherwise</pre>
 </div>
-<div class="sect2" title="3.4.3. BZ2_bzReadGetUnused">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzreadgetunused"></a>3.4.3. BZ2_bzReadGetUnused</h3></div></div></div>
+<a name="bzreadgetunused"></a>3.4.3.Â BZ2_bzReadGetUnused</h3></div></div></div>
 <pre class="programlisting">void BZ2_bzReadGetUnused( int* bzerror, BZFILE *b, 
                           void** unused, int* nUnused );</pre>
 <p>Returns data which was read from the compressed file but
@@ -1697,9 +1698,9 @@ BZ_OK
 <p>Allowable next actions:</p>
 <pre class="programlisting">BZ2_bzReadClose</pre>
 </div>
-<div class="sect2" title="3.4.4. BZ2_bzReadClose">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzreadclose"></a>3.4.4. BZ2_bzReadClose</h3></div></div></div>
+<a name="bzreadclose"></a>3.4.4.Â BZ2_bzReadClose</h3></div></div></div>
 <pre class="programlisting">void BZ2_bzReadClose ( int *bzerror, BZFILE *b );</pre>
 <p>Releases all memory pertaining to the compressed file
 <code class="computeroutput">b</code>.
@@ -1717,9 +1718,9 @@ BZ_OK
 <p>Allowable next actions:</p>
 <pre class="programlisting">none</pre>
 </div>
-<div class="sect2" title="3.4.5. BZ2_bzWriteOpen">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzwriteopen"></a>3.4.5. BZ2_bzWriteOpen</h3></div></div></div>
+<a name="bzwriteopen"></a>3.4.5.Â BZ2_bzWriteOpen</h3></div></div></div>
 <pre class="programlisting">BZFILE *BZ2_bzWriteOpen( int *bzerror, FILE *f, 
                          int blockSize100k, int verbosity,
                          int workFactor );</pre>
@@ -1763,9 +1764,9 @@ NULL
 BZ2_bzWriteClose
   otherwise</pre>
 </div>
-<div class="sect2" title="3.4.6. BZ2_bzWrite">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzwrite"></a>3.4.6. BZ2_bzWrite</h3></div></div></div>
+<a name="bzwrite"></a>3.4.6.Â BZ2_bzWrite</h3></div></div></div>
 <pre class="programlisting">void BZ2_bzWrite ( int *bzerror, BZFILE *b, void *buf, int len );</pre>
 <p>Absorbs <code class="computeroutput">len</code> bytes from the
 buffer <code class="computeroutput">buf</code>, eventually to be
@@ -1781,9 +1782,9 @@ BZ_IO_ERROR
 BZ_OK
   otherwise</pre>
 </div>
-<div class="sect2" title="3.4.7. BZ2_bzWriteClose">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzwriteclose"></a>3.4.7. BZ2_bzWriteClose</h3></div></div></div>
+<a name="bzwriteclose"></a>3.4.7.Â BZ2_bzWriteClose</h3></div></div></div>
 <pre class="programlisting">void BZ2_bzWriteClose( int *bzerror, BZFILE* f,
                        int abandon,
                        unsigned int* nbytes_in,
@@ -1833,13 +1834,13 @@ BZ_IO_ERROR
 BZ_OK
   otherwise</pre>
 </div>
-<div class="sect2" title="3.4.8. Handling embedded compressed data streams">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="embed"></a>3.4.8. Handling embedded compressed data streams</h3></div></div></div>
+<a name="embed"></a>3.4.8.Â Handling embedded compressed data streams</h3></div></div></div>
 <p>The high-level library facilitates use of
 <code class="computeroutput">bzip2</code> data streams which form
 some part of a surrounding, larger data stream.</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p>For writing, the library takes an open file handle,
   writes compressed data to it,
   <code class="computeroutput">fflush</code>es it but does not
@@ -1882,9 +1883,9 @@ can be used.  If you require extra flexibility, you'll have to
 bite the bullet and get to grips with the low-level
 interface.</p>
 </div>
-<div class="sect2" title="3.4.9. Standard file-reading/writing code">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="std-rdwr"></a>3.4.9. Standard file-reading/writing code</h3></div></div></div>
+<a name="std-rdwr"></a>3.4.9.Â Standard file-reading/writing code</h3></div></div></div>
 <p>Here's how you'd write data to a compressed file:</p>
 <pre class="programlisting">FILE*   f;
 BZFILE* b;
@@ -1949,12 +1950,12 @@ if ( bzerror != BZ_STREAM_END ) {
 }</pre>
 </div>
 </div>
-<div class="sect1" title="3.5. Utility functions">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="util-fns"></a>3.5. Utility functions</h2></div></div></div>
-<div class="sect2" title="3.5.1. BZ2_bzBuffToBuffCompress">
+<a name="util-fns"></a>3.5.Â Utility functions</h2></div></div></div>
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzbufftobuffcompress"></a>3.5.1. BZ2_bzBuffToBuffCompress</h3></div></div></div>
+<a name="bzbufftobuffcompress"></a>3.5.1.Â BZ2_bzBuffToBuffCompress</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzBuffToBuffCompress( char*         dest,
                               unsigned int* destLen,
                               char*         source,
@@ -2005,9 +2006,9 @@ BZ_OUTBUFF_FULL
 BZ_OK
   otherwise</pre>
 </div>
-<div class="sect2" title="3.5.2. BZ2_bzBuffToBuffDecompress">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="bzbufftobuffdecompress"></a>3.5.2. BZ2_bzBuffToBuffDecompress</h3></div></div></div>
+<a name="bzbufftobuffdecompress"></a>3.5.2.Â BZ2_bzBuffToBuffDecompress</h3></div></div></div>
 <pre class="programlisting">int BZ2_bzBuffToBuffDecompress( char*         dest,
                                 unsigned int* destLen,
                                 char*         source,
@@ -2065,9 +2066,9 @@ BZ_OK
   otherwise</pre>
 </div>
 </div>
-<div class="sect1" title="3.6. zlib compatibility functions">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="zlib-compat"></a>3.6. zlib compatibility functions</h2></div></div></div>
+<a name="zlib-compat"></a>3.6.Â zlib compatibility functions</h2></div></div></div>
 <p>Yoshioka Tsuneo has contributed some functions to give
 better <code class="computeroutput">zlib</code> compatibility.
 These functions are <code class="computeroutput">BZ2_bzopen</code>,
@@ -2108,12 +2109,12 @@ and <code class="computeroutput">fclose</code>.</p>
 <code class="computeroutput">*errnum</code> to its numerical
 value.</p>
 </div>
-<div class="sect1" title="3.7. Using the library in a stdio-free environment">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="stdio-free"></a>3.7. Using the library in a stdio-free environment</h2></div></div></div>
-<div class="sect2" title="3.7.1. Getting rid of stdio">
+<a name="stdio-free"></a>3.7.Â Using the library in a stdio-free environment</h2></div></div></div>
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="stdio-bye"></a>3.7.1. Getting rid of stdio</h3></div></div></div>
+<a name="stdio-bye"></a>3.7.1.Â Getting rid of stdio</h3></div></div></div>
 <p>In a deeply embedded application, you might want to use
 just the memory-to-memory functions.  You can do this
 conveniently by compiling the library with preprocessor symbol
@@ -2131,9 +2132,9 @@ functions:</p>
 <p>When compiled like this, all functions will ignore
 <code class="computeroutput">verbosity</code> settings.</p>
 </div>
-<div class="sect2" title="3.7.2. Critical error handling">
+<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="critical-error"></a>3.7.2. Critical error handling</h3></div></div></div>
+<a name="critical-error"></a>3.7.2.Â Critical error handling</h3></div></div></div>
 <p><code class="computeroutput">libbzip2</code> contains a number
 of internal assertion checks which should, needless to say, never
 be activated.  Nevertheless, if an assertion should fail,
@@ -2143,13 +2144,13 @@ behaviour depends on whether or not the library was compiled with
 message:</p>
 <div class="blockquote"><blockquote class="blockquote">
 <p>bzip2/libbzip2: internal error number N.</p>
-<p>This is a bug in bzip2/libbzip2, 1.0.6 of 6 September 2010.
-Please report it to me at: jseward@bzip.org.  If this happened
+<p>This is a bug in bzip2/libbzip2, 1.0.8 of 13 July 2019.
+Please report it to: bzip2-devel@sourceware.org.  If this happened
 when you were using some program which uses libbzip2 as a
 component, you should also report this bug to the author(s)
 of that program.  Please make an effort to report this bug;
 timely and accurate bug reports eventually lead to higher
-quality software.  Thanks.  Julian Seward, 6 September 2010.
+quality software.  Thanks.
 </p>
 </blockquote></div>
 <p>where <code class="computeroutput">N</code> is some error code
@@ -2176,14 +2177,14 @@ are indicated via error return codes from functions, and can be
 recovered from.</p>
 </div>
 </div>
-<div class="sect1" title="3.8. Making a Windows DLL">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="win-dll"></a>3.8. Making a Windows DLL</h2></div></div></div>
+<a name="win-dll"></a>3.8.Â Making a Windows DLL</h2></div></div></div>
 <p>Everything related to Windows has been contributed by
 Yoshioka Tsuneo
 (<code class="computeroutput">tsuneo@rr.iij4u.or.jp</code>), so
-you should send your queries to him (but perhaps Cc: me,
-<code class="computeroutput">jseward@bzip.org</code>).</p>
+you should send your queries to him (but please Cc:
+<code class="computeroutput">bzip2-devel@sourceware.org</code>).</p>
 <p>My vague understanding of what to do is: using Visual C++
 5.0, open the project file
 <code class="computeroutput">libbz2.dsp</code>, and build.  That's
@@ -2218,12 +2219,12 @@ Otherwise the resulting binary won't work correctly.</p>
 plausible.</p>
 </div>
 </div>
-<div class="chapter" title="4. Miscellanea">
-<div class="titlepage"><div><div><h2 class="title">
-<a name="misc"></a>4. Miscellanea</h2></div></div></div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="misc"></a>4.Â Miscellanea</h1></div></div></div>
 <div class="toc">
 <p><b>Table of Contents</b></p>
-<dl>
+<dl class="toc">
 <dt><span class="sect1"><a href="#limits">4.1. Limitations of the compressed file format</a></span></dt>
 <dt><span class="sect1"><a href="#port-issues">4.2. Portability issues</a></span></dt>
 <dt><span class="sect1"><a href="#bugs">4.3. Reporting bugs</a></span></dt>
@@ -2233,9 +2234,9 @@ plausible.</p>
 </div>
 <p>These are just some random thoughts of mine.  Your mileage
 may vary.</p>
-<div class="sect1" title="4.1. Limitations of the compressed file format">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="limits"></a>4.1. Limitations of the compressed file format</h2></div></div></div>
+<a name="limits"></a>4.1.Â Limitations of the compressed file format</h2></div></div></div>
 <p><code class="computeroutput">bzip2-1.0.X</code>,
 <code class="computeroutput">0.9.5</code> and
 <code class="computeroutput">0.9.0</code> use exactly the same file
@@ -2250,7 +2251,7 @@ work since the release of
 shown complexities in the file format which slow down
 decompression and, in retrospect, are unnecessary.  These
 are:</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p>The run-length encoder, which is the first of the
    compression transformations, is entirely irrelevant.  The
    original purpose was to protect the sorting algorithm from the
@@ -2298,7 +2299,7 @@ properly and fully understood the performance consequences of
 doing so.</p>
 <p>Improvements which I was able to incorporate into 0.9.0,
 despite using the same file format, are:</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc"><p>Single array implementation of the inverse BWT.  This
   significantly speeds up decompression, presumably because it
   reduces the number of cache misses.</p></li>
@@ -2316,9 +2317,9 @@ despite using the same file format, are:</p>
 access into files.  This will require some careful design of
 compressed file formats.</p>
 </div>
-<div class="sect1" title="4.2. Portability issues">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="port-issues"></a>4.2. Portability issues</h2></div></div></div>
+<a name="port-issues"></a>4.2.Â Portability issues</h2></div></div></div>
 <p>After some consideration, I have decided not to use GNU
 <code class="computeroutput">autoconf</code> to configure 0.9.5 or
 1.0.</p>
@@ -2366,9 +2367,9 @@ and <code class="computeroutput">BZ_LCCWIN32</code> to 1, in the
 file <code class="computeroutput">bzip2.c</code>, before compiling.
 Otherwise the resulting binary won't work correctly.</p>
 </div>
-<div class="sect1" title="4.3. Reporting bugs">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="bugs"></a>4.3. Reporting bugs</h2></div></div></div>
+<a name="bugs"></a>4.3.Â Reporting bugs</h2></div></div></div>
 <p>I tried pretty hard to make sure
 <code class="computeroutput">bzip2</code> is bug free, both by
 design and by testing.  Hopefully you'll never need to read this
@@ -2379,7 +2380,7 @@ failure, it will ask you to email me a bug report.  Experience from
 years of feedback of bzip2 users indicates that almost all these
 problems can be traced to either compiler bugs or hardware
 problems.</p>
-<div class="itemizedlist"><ul class="itemizedlist" type="bullet">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
 <p>Recompile the program with no optimisation, and
   see if it works.  And/or try a different compiler.  I heard all
@@ -2447,9 +2448,9 @@ is the file that you were trying to compress or decompress at the
 time the problem happened.  Without that, my ability to do
 anything more than speculate about the cause, is limited.</p>
 </div>
-<div class="sect1" title="4.4. Did you get the right package?">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="package"></a>4.4. Did you get the right package?</h2></div></div></div>
+<a name="package"></a>4.4.Â Did you get the right package?</h2></div></div></div>
 <p><code class="computeroutput">bzip2</code> is a resource hog.
 It soaks up large amounts of CPU cycles and memory.  Also, it
 gives very large latencies.  In the worst case, you can feed many
@@ -2472,47 +2473,47 @@ X J Oberhumer's <code class="computeroutput">LZO</code> real-time
 compression/decompression library, at 
 <a class="ulink" href="http://www.oberhumer.com/opensource" target="_top">http://www.oberhumer.com/opensource</a>.</p>
 </div>
-<div class="sect1" title="4.5. Further Reading">
+<div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="reading"></a>4.5. Further Reading</h2></div></div></div>
+<a name="reading"></a>4.5.Â Further Reading</h2></div></div></div>
 <p><code class="computeroutput">bzip2</code> is not research
 work, in the sense that it doesn't present any new ideas.
 Rather, it's an engineering exercise based on existing
 ideas.</p>
 <p>Four documents describe essentially all the ideas behind
 <code class="computeroutput">bzip2</code>:</p>
-<div class="literallayout"><p>Michael Burrows and D. J. Wheeler:<br>
-  "A block-sorting lossless data compression algorithm"<br>
-   10th May 1994. <br>
-   Digital SRC Research Report 124.<br>
-   ftp://ftp.digital.com/pub/DEC/SRC/research-reports/SRC-124.ps.gz<br>
-   If you have trouble finding it, try searching at the<br>
-   New Zealand Digital Library, http://www.nzdl.org.<br>
+<div class="literallayout"><p>MichaelÂ BurrowsÂ andÂ D.Â J.Â Wheeler:<br>
+Â Â "AÂ block-sortingÂ losslessÂ dataÂ compressionÂ algorithm"<br>
+Â Â Â 10thÂ MayÂ 1994.Â <br>
+Â Â Â DigitalÂ SRCÂ ResearchÂ ReportÂ 124.<br>
+Â Â Â ftp://ftp.digital.com/pub/DEC/SRC/research-reports/SRC-124.ps.gz<br>
+Â Â Â IfÂ youÂ haveÂ troubleÂ findingÂ it,Â tryÂ searchingÂ atÂ the<br>
+Â Â Â NewÂ ZealandÂ DigitalÂ Library,Â http://www.nzdl.org.<br>
 <br>
-Daniel S. Hirschberg and Debra A. LeLewer<br>
-  "Efficient Decoding of Prefix Codes"<br>
-   Communications of the ACM, April 1990, Vol 33, Number 4.<br>
-   You might be able to get an electronic copy of this<br>
-   from the ACM Digital Library.<br>
+DanielÂ S.Â HirschbergÂ andÂ DebraÂ A.Â LeLewer<br>
+Â Â "EfficientÂ DecodingÂ ofÂ PrefixÂ Codes"<br>
+Â Â Â CommunicationsÂ ofÂ theÂ ACM,Â AprilÂ 1990,Â VolÂ 33,Â NumberÂ 4.<br>
+Â Â Â YouÂ mightÂ beÂ ableÂ toÂ getÂ anÂ electronicÂ copyÂ ofÂ this<br>
+Â Â Â fromÂ theÂ ACMÂ DigitalÂ Library.<br>
 <br>
-David J. Wheeler<br>
-   Program bred3.c and accompanying document bred3.ps.<br>
-   This contains the idea behind the multi-table Huffman coding scheme.<br>
-   ftp://ftp.cl.cam.ac.uk/users/djw3/<br>
+DavidÂ J.Â Wheeler<br>
+Â Â Â ProgramÂ bred3.cÂ andÂ accompanyingÂ documentÂ bred3.ps.<br>
+Â Â Â ThisÂ containsÂ theÂ ideaÂ behindÂ theÂ multi-tableÂ HuffmanÂ codingÂ scheme.<br>
+Â Â Â ftp://ftp.cl.cam.ac.uk/users/djw3/<br>
 <br>
-Jon L. Bentley and Robert Sedgewick<br>
-  "Fast Algorithms for Sorting and Searching Strings"<br>
-   Available from Sedgewick's web page,<br>
-   www.cs.princeton.edu/~rs<br>
+JonÂ L.Â BentleyÂ andÂ RobertÂ Sedgewick<br>
+Â Â "FastÂ AlgorithmsÂ forÂ SortingÂ andÂ SearchingÂ Strings"<br>
+Â Â Â AvailableÂ fromÂ Sedgewick'sÂ webÂ page,<br>
+Â Â Â www.cs.princeton.edu/~rs<br>
 </p></div>
 <p>The following paper gives valuable additional insights into
 the algorithm, but is not immediately the basis of any code used
 in bzip2.</p>
-<div class="literallayout"><p>Peter Fenwick:<br>
-   Block Sorting Text Compression<br>
-   Proceedings of the 19th Australasian Computer Science Conference,<br>
-     Melbourne, Australia.  Jan 31 - Feb 2, 1996.<br>
-   ftp://ftp.cs.auckland.ac.nz/pub/peter-f/ACSC96paper.ps</p></div>
+<div class="literallayout"><p>PeterÂ Fenwick:<br>
+Â Â Â BlockÂ SortingÂ TextÂ Compression<br>
+Â Â Â ProceedingsÂ ofÂ theÂ 19thÂ AustralasianÂ ComputerÂ ScienceÂ Conference,<br>
+Â Â Â Â Â Melbourne,Â Australia.Â Â JanÂ 31Â -Â FebÂ 2,Â 1996.<br>
+Â Â Â ftp://ftp.cs.auckland.ac.nz/pub/peter-f/ACSC96paper.ps</p></div>
 <p>Kunihiko Sadakane's sorting algorithm, mentioned above, is
 available from:</p>
 <div class="literallayout"><p>http://naomi.is.s.u-tokyo.ac.jp/~sada/papers/Sada98b.ps.gz<br>
@@ -2524,15 +2525,15 @@ described in a paper available from:</p>
 <p>Finally, the following papers document some
 investigations I made into the performance of sorting
 and decompression algorithms:</p>
-<div class="literallayout"><p>Julian Seward<br>
-   On the Performance of BWT Sorting Algorithms<br>
-   Proceedings of the IEEE Data Compression Conference 2000<br>
-     Snowbird, Utah.  28-30 March 2000.<br>
+<div class="literallayout"><p>JulianÂ Seward<br>
+Â Â Â OnÂ theÂ PerformanceÂ ofÂ BWTÂ SortingÂ Algorithms<br>
+Â Â Â ProceedingsÂ ofÂ theÂ IEEEÂ DataÂ CompressionÂ ConferenceÂ 2000<br>
+Â Â Â Â Â Snowbird,Â Utah.Â Â 28-30Â MarchÂ 2000.<br>
 <br>
-Julian Seward<br>
-   Space-time Tradeoffs in the Inverse B-W Transform<br>
-   Proceedings of the IEEE Data Compression Conference 2001<br>
-     Snowbird, Utah.  27-29 March 2001.<br>
+JulianÂ Seward<br>
+Â Â Â Space-timeÂ TradeoffsÂ inÂ theÂ InverseÂ B-WÂ Transform<br>
+Â Â Â ProceedingsÂ ofÂ theÂ IEEEÂ DataÂ CompressionÂ ConferenceÂ 2001<br>
+Â Â Â Â Â Snowbird,Â Utah.Â Â 27-29Â MarchÂ 2001.<br>
 </p></div>
 </div>
 </div>

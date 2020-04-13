@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.2 2015/08/28 11:38:57 joerg Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.2.16.1 2020/04/13 07:45:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -197,7 +197,7 @@ amu_ldap_unbind(LDAP *ld)
 {
   int e;
 #ifdef HAVE_SIGACTION
-  struct sigaction sa;
+  struct sigaction sa, osa;
 #else /* not HAVE_SIGACTION */
   void (*handler)(int);
 #endif /* not HAVE_SIGACTION */
@@ -209,7 +209,7 @@ amu_ldap_unbind(LDAP *ld)
   sa.sa_flags = 0;
   sigemptyset(&(sa.sa_mask));
   sigaddset(&(sa.sa_mask), SIGPIPE);
-  sigaction(SIGPIPE, &sa, &sa);	/* set IGNORE, and get old action */
+  sigaction(SIGPIPE, &sa, &osa);	/* set IGNORE, and get old action */
 #else /* not HAVE_SIGACTION */
   handler = signal(SIGPIPE, SIG_IGN);
 #endif /* not HAVE_SIGACTION */
@@ -217,9 +217,9 @@ amu_ldap_unbind(LDAP *ld)
   e = ldap_unbind(ld);
 
 #ifdef HAVE_SIGACTION
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGPIPE);
-  sigaction(SIGPIPE, &sa, NULL);
+  sigemptyset(&(osa.sa_mask));
+  sigaddset(&(osa.sa_mask), SIGPIPE);
+  sigaction(SIGPIPE, &osa, NULL);
 #else /* not HAVE_SIGACTION */
   (void) signal(SIGPIPE, handler);
 #endif /* not HAVE_SIGACTION */

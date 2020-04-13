@@ -121,7 +121,7 @@ static void printusage(void)
 #ifndef _WIN32
 	"[-i] "
 #endif
-	"[-s <config_file>] [-f <config_file>]\n\n"
+        "[-D] [-s <config_file>] [-f <config_file>]\n\n"
 	"  -b <address>    the address to bind to (either numeric or literal).\n"
 	"                  Default: binds to all local IPv4 and IPv6 addresses\n\n"
 	"  -p <port>       the port to bind to.\n"
@@ -144,6 +144,7 @@ static void printusage(void)
 #ifndef _WIN32
 	"  -i              run in inetd mode (UNIX only)\n\n"
 #endif
+	"  -D              log debugging messages\n\n"
 	"  -s <config_file> save the current configuration to file\n\n"
 	"  -f <config_file> load the current configuration from file; all switches\n"
 	"                  specified from the command line are ignored\n\n"
@@ -160,10 +161,12 @@ static void printusage(void)
 int main(int argc, char *argv[])
 {
 	char savefile[MAX_LINE + 1];		// name of the file on which we have to save the configuration
+	int log_to_systemlog = 0;		// Non-zero if we should log to the "system log" rather than the standard error
 	int isdaemon = 0;			// Non-zero if the user wants to run this program as a daemon
 #ifndef _WIN32
 	int isrunbyinetd = 0;			// Non-zero if this is being run by inetd or something inetd-like
 #endif
+	int log_debug_messages = 0;		// Non-zero if the user wants debug messages logged
 	int retval;				// keeps the returning value from several functions
 	char errbuf[PCAP_ERRBUF_SIZE + 1];	// keeps the error string, prior to be printed
 #ifndef _WIN32
@@ -177,12 +180,6 @@ int main(int argc, char *argv[])
 	// Initialize errbuf
 	memset(errbuf, 0, sizeof(errbuf));
 
-	if (sock_init(errbuf, PCAP_ERRBUF_SIZE) == -1)
-	{
-		SOCK_DEBUG_MESSAGE(errbuf);
-		exit(-1);
-	}
-
 	strncpy(address, RPCAP_DEFAULT_NETADDR, MAX_LINE);
 	strncpy(port, RPCAP_DEFAULT_NETPORT, MAX_LINE);
 
@@ -194,10 +191,14 @@ int main(int argc, char *argv[])
 	mainhints.ai_socktype = SOCK_STREAM;
 
 	// Getting the proper command line options
-	while ((retval = getopt(argc, argv, "b:dhip:4l:na:s:f:v")) != -1)
+	while ((retval = getopt(argc, argv, "b:dDhip:4l:na:s:f:v")) != -1)
 	{
 		switch (retval)
 		{
+			case 'D':
+				log_debug_messages = 1;
+				rpcapd_log_set(log_to_systemlog, log_debug_messages);
+				break;
 			case 'b':
 				strncpy(address, optarg, MAX_LINE);
 				break;
@@ -209,6 +210,8 @@ int main(int argc, char *argv[])
 				break;
 			case 'd':
 				isdaemon = 1;
+				log_to_systemlog = 1;
+				rpcapd_log_set(log_to_systemlog, log_debug_messages);
 				break;
 			case 'i':
 #ifdef _WIN32
@@ -216,6 +219,8 @@ int main(int argc, char *argv[])
 				exit(1);
 #else
 				isrunbyinetd = 1;
+				log_to_systemlog = 1;
+				rpcapd_log_set(log_to_systemlog, log_debug_messages);
 #endif
 				break;
 			case 'n':
@@ -241,12 +246,12 @@ int main(int argc, char *argv[])
 				{
 					tmpport = pcap_strtok_r(NULL, RPCAP_HOSTLIST_SEP, &lasts);
 
-					strlcpy(activelist[i].address, tmpaddress, MAX_LINE);
+					pcap_strlcpy(activelist[i].address, tmpaddress, MAX_LINE);
 
 					if ((tmpport == NULL) || (strcmp(tmpport, "DEFAULT") == 0)) // the user choose a custom port
-						strlcpy(activelist[i].port, RPCAP_DEFAULT_NETPORT_ACTIVE, MAX_LINE);
+						pcap_strlcpy(activelist[i].port, RPCAP_DEFAULT_NETPORT_ACTIVE, MAX_LINE);
 					else
-						strlcpy(activelist[i].port, tmpport, MAX_LINE);
+						pcap_strlcpy(activelist[i].port, tmpport, MAX_LINE);
 
 					tmpaddress = pcap_strtok_r(NULL, RPCAP_HOSTLIST_SEP, &lasts);
 
@@ -254,38 +259,44 @@ int main(int argc, char *argv[])
 				}
 
 				if (i > MAX_ACTIVE_LIST)
-					SOCK_DEBUG_MESSAGE("Only MAX_ACTIVE_LIST active connections are currently supported.");
+					rpcapd_log(LOGPRIO_ERROR, "Only MAX_ACTIVE_LIST active connections are currently supported.");
 
 				// I don't initialize the remaining part of the structure, since
 				// it is already zeroed (it is a global var)
 				break;
 			}
 			case 'f':
-				strlcpy(loadfile, optarg, MAX_LINE);
+				pcap_strlcpy(loadfile, optarg, MAX_LINE);
 				break;
 			case 's':
-				strlcpy(savefile, optarg, MAX_LINE);
+				pcap_strlcpy(savefile, optarg, MAX_LINE);
 				break;
 			case 'h':
 				printusage();
 				exit(0);
-				break;
+				/*NOTREACHED*/
 			default:
 				exit(1);
-				break;
+				/*NOTREACHED*/
 		}
 	}
 
 #ifndef _WIN32
 	if (isdaemon && isrunbyinetd)
 	{
-		fprintf(stderr, "rpcapd: -d and -i can't be used together\n");
+		rpcapd_log(LOGPRIO_ERROR, "rpcapd: -d and -i can't be used together");
 		exit(1);
 	}
 #endif
 
+	if (sock_init(errbuf, PCAP_ERRBUF_SIZE) == -1)
+	{
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
+		exit(-1);
+	}
+
 	if (savefile[0] && fileconf_save(savefile))
-		SOCK_DEBUG_MESSAGE("Error when saving the configuration to file");
+		rpcapd_log(LOGPRIO_DEBUG, "Error when saving the configuration to file");
 
 	// If the file does not exist, it keeps the settings provided by the command line
 	if (loadfile[0])
@@ -299,9 +310,9 @@ int main(int argc, char *argv[])
 	state_change_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (state_change_event == NULL)
 	{
-		sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-		rpcapd_log(LOGPRIO_ERROR, "Can't create state change event: %s",
-		    errbuf);
+		sock_geterror("Can't create state change event", errbuf,
+		    PCAP_ERRBUF_SIZE);
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 		exit(2);
 	}
 
@@ -310,9 +321,9 @@ int main(int argc, char *argv[])
 	//
 	if (!SetConsoleCtrlHandler(main_ctrl_event, TRUE))
 	{
-		sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-		rpcapd_log(LOGPRIO_ERROR, "Can't set control handler: %s",
-		    errbuf);
+		sock_geterror("Can't set control handler", errbuf,
+		    PCAP_ERRBUF_SIZE);
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 		exit(2);
 	}
 #else
@@ -339,36 +350,30 @@ int main(int argc, char *argv[])
 		// by inetd or something that can run network daemons
 		// as if it were inetd (xinetd, launchd, systemd, etc.).
 		//
-		// Our standard input is the input side of a connection,
-		// and our standard output is the output side of a
-		// connection.
+		// We assume that the program that launched us just
+		// duplicated a single socket for the connection
+		// to our standard input, output, and error, so we
+		// can just use the standard input as our control
+		// socket.
 		//
-		int sockctrl_in, sockctrl_out;
+		int sockctrl;
 		int devnull_fd;
 
 		//
-		// Duplicate the standard input and output, making them
-		// the input and output side of the control connection.
+		// Duplicate the standard input as the control socket.
 		//
-		sockctrl_in = dup(0);
-		if (sockctrl_in == -1)
+		sockctrl = dup(0);
+		if (sockctrl == -1)
 		{
-			sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-			rpcapd_log(LOGPRIO_ERROR, "Can't dup standard input: %s",
-			    errbuf);
-			exit(2);
-		}
-		sockctrl_out = dup(1);
-		if (sockctrl_out == -1)
-		{
-			sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-			rpcapd_log(LOGPRIO_ERROR, "Can't dup standard output: %s",
-			    errbuf);
+			sock_geterror("Can't dup standard input", errbuf,
+			    PCAP_ERRBUF_SIZE);
+			rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 			exit(2);
 		}
 
 		//
-		// Try to set the standard input and output to /dev/null.
+		// Try to set the standard input, output, and error
+		// to /dev/null.
 		//
 		devnull_fd = open("/dev/null", O_RDWR);
 		if (devnull_fd != -1)
@@ -378,6 +383,7 @@ int main(int argc, char *argv[])
 			//
 			(void)dup2(devnull_fd, 0);
 			(void)dup2(devnull_fd, 1);
+			(void)dup2(devnull_fd, 2);
 			close(devnull_fd);
 		}
 
@@ -386,7 +392,13 @@ int main(int argc, char *argv[])
 		// This is passive mode, so we don't care whether we were
 		// told by the client to close.
 		//
-		(void)daemon_serviceloop(sockctrl_in, sockctrl_out, 0,
+		char *hostlist_copy = strdup(hostlist);
+		if (hostlist_copy == NULL)
+		{
+			rpcapd_log(LOGPRIO_ERROR, "Out of memory copying the host/port list");
+			exit(0);
+		}
+		(void)daemon_serviceloop(sockctrl, 0, hostlist_copy,
 		    nullAuthAllowed);
 
 		//
@@ -443,7 +455,7 @@ int main(int argc, char *argv[])
 		// If this call succeeds, it is blocking on Win32
 		//
 		if (svc_start() != 1)
-			SOCK_DEBUG_MESSAGE("Unable to start the service");
+			rpcapd_log(LOGPRIO_DEBUG, "Unable to start the service");
 
 		// When the previous call returns, the entire application has to be stopped.
 		exit(0);
@@ -504,7 +516,7 @@ void main_startup(void)
 		    (void *)&activelist[i], 0, NULL);
 		if (threadId == 0)
 		{
-			SOCK_DEBUG_MESSAGE("Error creating the active child threads");
+			rpcapd_log(LOGPRIO_DEBUG, "Error creating the active child threads");
 			continue;
 		}
 		CloseHandle(threadId);
@@ -539,7 +551,7 @@ void main_startup(void)
 		//
 		if (sock_initaddress((address[0]) ? address : NULL, port, &mainhints, &addrinfo, errbuf, PCAP_ERRBUF_SIZE) == -1)
 		{
-			SOCK_DEBUG_MESSAGE(errbuf);
+			rpcapd_log(LOGPRIO_DEBUG, "%s", errbuf);
 			return;
 		}
 
@@ -618,7 +630,7 @@ void main_startup(void)
 	//
 	// We're done; exit.
 	//
-	SOCK_DEBUG_MESSAGE(PROGRAM_NAME " is closing.\n");
+	rpcapd_log(LOGPRIO_DEBUG, PROGRAM_NAME " is closing.\n");
 
 #ifndef _WIN32
 	//
@@ -662,8 +674,9 @@ send_state_change_event(void)
 
 	if (!SetEvent(state_change_event))
 	{
-		sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-		rpcapd_log(LOGPRIO_ERROR, "SetEvent on shutdown event failed: %s", errbuf);
+		sock_geterror("SetEvent on shutdown event failed", errbuf,
+		    PCAP_ERRBUF_SIZE);
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 	}
 }
 
@@ -762,7 +775,7 @@ static void main_reap_children(int sign _U_)
 	// For reference, Stevens, pg 128
 
 	while ((pid = waitpid(-1, &exitstat, WNOHANG)) > 0)
-		SOCK_DEBUG_MESSAGE("Child terminated");
+		rpcapd_log(LOGPRIO_DEBUG, "Child terminated");
 
 	return;
 }
@@ -829,14 +842,16 @@ accept_connections(void)
 		event = WSACreateEvent();
 		if (event == WSA_INVALID_EVENT)
 		{
-			sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-			rpcapd_log(LOGPRIO_ERROR, "Can't create socket event: %s", errbuf);
+			sock_geterror("Can't create socket event", errbuf,
+			    PCAP_ERRBUF_SIZE);
+			rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 			exit(2);
 		}
 		if (WSAEventSelect(sock_info->sock, event, FD_ACCEPT) == SOCKET_ERROR)
 		{
-			sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-			rpcapd_log(LOGPRIO_ERROR, "Can't setup socket event: %s", errbuf);
+			sock_geterror("Can't setup socket event", errbuf,
+			    PCAP_ERRBUF_SIZE);
+			rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 			exit(2);
 		}
 		events[i] = event;
@@ -853,8 +868,9 @@ accept_connections(void)
 		    WSA_INFINITE, FALSE);
 		if (ret == WSA_WAIT_FAILED)
 		{
-			sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-			rpcapd_log(LOGPRIO_ERROR, "WSAWaitForMultipleEvents failed: %s", errbuf);
+			sock_geterror("WSAWaitForMultipleEvents failed", errbuf,
+			    PCAP_ERRBUF_SIZE);
+			rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 			exit(2);
 		}
 
@@ -892,8 +908,9 @@ accept_connections(void)
 			if (WSAEnumNetworkEvents(sock_info->sock,
 			    events[i], &network_events) == SOCKET_ERROR)
 			{
-				sock_geterror(NULL, errbuf, PCAP_ERRBUF_SIZE);
-				rpcapd_log(LOGPRIO_ERROR, "WSAEnumNetworkEvents failed: %s", errbuf);
+				sock_geterror("WSAEnumNetworkEvents failed",
+				    errbuf, PCAP_ERRBUF_SIZE);
+				rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 				exit(2);
 			}
 			if (network_events.lNetworkEvents & FD_ACCEPT)
@@ -906,11 +923,11 @@ accept_connections(void)
 					//
 					// Yes - report it and keep going.
 					//
-					sock_fmterror(NULL,
+					sock_fmterror("Socket error",
 					    network_events.iErrorCode[FD_ACCEPT_BIT],
 					    errbuf,
 					    PCAP_ERRBUF_SIZE);
-					rpcapd_log(LOGPRIO_ERROR, "Socket error: %s", errbuf);
+					rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 					continue;
 				}
 
@@ -1033,6 +1050,20 @@ accept_connections(void)
 	sock_cleanup();
 }
 
+#ifdef _WIN32
+//
+// A structure to hold the parameters to the daemon service loop
+// thread on Windows.
+//
+// (On UN*X, there is no need for this explicit copy since the
+// fork "inherits" the parent stack.)
+//
+struct params_copy {
+	SOCKET sockctrl;
+	char *hostlist;
+};
+#endif
+
 //
 // Accept a connection and start a worker thread, on Windows, or a
 // worker process, on UN*X, to handle the connection.
@@ -1048,7 +1079,7 @@ accept_connection(SOCKET listen_sock)
 #ifdef _WIN32
 	HANDLE threadId;			// handle for the subthread
 	u_long off = 0;
-	SOCKET *sockctrl_temp;
+	struct params_copy *params_copy = NULL;
 #else
 	pid_t pid;
 #endif
@@ -1081,20 +1112,9 @@ accept_connection(SOCKET listen_sock)
 
 		// Don't check for errors here, since the error can be due to the fact that the thread
 		// has been killed
-		sock_geterror("accept(): ", errbuf, PCAP_ERRBUF_SIZE);
+		sock_geterror("accept()", errbuf, PCAP_ERRBUF_SIZE);
 		rpcapd_log(LOGPRIO_ERROR, "Accept of control connection from client failed: %s",
 		    errbuf);
-		return;
-	}
-
-	//
-	// We have a connection.
-	// Check whether the connecting host is among the ones allowed.
-	//
-	if (sock_check_hostlist(hostlist, RPCAP_HOSTLIST_SEP, &from, errbuf, PCAP_ERRBUF_SIZE) < 0)
-	{
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_HOSTNOAUTH, errbuf, NULL);
-		sock_close(sockctrl, NULL, 0);
 		return;
 	}
 
@@ -1108,56 +1128,75 @@ accept_connection(SOCKET listen_sock)
 	// First, we have to un-WSAEventSelect() this socket, and then
 	// we can turn non-blocking mode off.
 	//
+	// If this fails, we aren't guaranteed that, for example, any
+	// of the error message will be sent - if it can't be put in
+	// the socket queue, the send will just fail.
+	//
+	// So we just log the message and close the connection.
+	//
 	if (WSAEventSelect(sockctrl, NULL, 0) == SOCKET_ERROR)
 	{
-		sock_geterror("ioctlsocket(FIONBIO): ", errbuf, PCAP_ERRBUF_SIZE);
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_HOSTNOAUTH, errbuf, NULL);
+		sock_geterror("WSAEventSelect()", errbuf, PCAP_ERRBUF_SIZE);
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 		sock_close(sockctrl, NULL, 0);
 		return;
 	}
 	if (ioctlsocket(sockctrl, FIONBIO, &off) == SOCKET_ERROR)
 	{
-		sock_geterror("ioctlsocket(FIONBIO): ", errbuf, PCAP_ERRBUF_SIZE);
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_HOSTNOAUTH, errbuf, NULL);
+		sock_geterror("ioctlsocket(FIONBIO)", errbuf, PCAP_ERRBUF_SIZE);
+		rpcapd_log(LOGPRIO_ERROR, "%s", errbuf);
 		sock_close(sockctrl, NULL, 0);
 		return;
 	}
 
 	//
-	// Allocate a location to hold the value of sockctrl.
+	// Make a copy of the host list to pass to the new thread, so that
+	// if we update it in the main thread, it won't catch us in the
+	// middle of updating it.
+	//
+	// daemon_serviceloop() will free it once it's done with it.
+	//
+	char *hostlist_copy = strdup(hostlist);
+	if (hostlist_copy == NULL)
+	{
+		rpcapd_log(LOGPRIO_ERROR, "Out of memory copying the host/port list");
+		sock_close(sockctrl, NULL, 0);
+		return;
+	}
+
+	//
+	// Allocate a location to hold the values of sockctrl.
 	// It will be freed in the newly-created thread once it's
 	// finished with it.
-	// I guess we *could* just cast sockctrl to a void *, but that's
-	// a bit ugly.
 	//
-	sockctrl_temp = (SOCKET *)malloc(sizeof (SOCKET));
-	if (sockctrl_temp == NULL)
+	params_copy = malloc(sizeof(*params_copy));
+	if (params_copy == NULL)
 	{
-		pcap_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
-		    errno, "malloc() failed");
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_OPEN, errbuf, NULL);
+		rpcapd_log(LOGPRIO_ERROR, "Out of memory allocating the parameter copy structure");
+		free(hostlist_copy);
 		sock_close(sockctrl, NULL, 0);
 		return;
 	}
-	*sockctrl_temp = sockctrl;
+	params_copy->sockctrl = sockctrl;
+	params_copy->hostlist = hostlist_copy;
 
 	threadId = (HANDLE)_beginthreadex(NULL, 0,
-	    main_passive_serviceloop_thread, (void *) sockctrl_temp, 0, NULL);
+	    main_passive_serviceloop_thread, (void *) params_copy, 0, NULL);
 	if (threadId == 0)
 	{
-		pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE, "Error creating the child thread");
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_OPEN, errbuf, NULL);
+		rpcapd_log(LOGPRIO_ERROR, "Error creating the child thread");
+		free(params_copy);
+		free(hostlist_copy);
 		sock_close(sockctrl, NULL, 0);
-		free(sockctrl_temp);
 		return;
 	}
 	CloseHandle(threadId);
-#else
+#else /* _WIN32 */
 	pid = fork();
 	if (pid == -1)
 	{
-		pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE, "Error creating the child process");
-		rpcap_senderror(sockctrl, 0, PCAP_ERR_OPEN, errbuf, NULL);
+		rpcapd_log(LOGPRIO_ERROR, "Error creating the child process: %s",
+		    strerror(errno));
 		sock_close(sockctrl, NULL, 0);
 		return;
 	}
@@ -1190,10 +1229,14 @@ accept_connection(SOCKET listen_sock)
 		// This is passive mode, so we don't care whether we were
 		// told by the client to close.
 		//
-		(void)daemon_serviceloop(sockctrl, sockctrl, 0,
+		char *hostlist_copy = strdup(hostlist);
+		if (hostlist_copy == NULL)
+		{
+			rpcapd_log(LOGPRIO_ERROR, "Out of memory copying the host/port list");
+			exit(0);
+		}
+		(void)daemon_serviceloop(sockctrl, 0, hostlist_copy,
 		    nullAuthAllowed);
-
-		close(sockctrl);
 
 		exit(0);
 	}
@@ -1201,7 +1244,7 @@ accept_connection(SOCKET listen_sock)
 	// I am the parent
 	// Close the socket for this session (must be open only in the child)
 	closesocket(sockctrl);
-#endif
+#endif /* _WIN32 */
 }
 
 /*!
@@ -1235,10 +1278,9 @@ main_active(void *ptr)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_family = activepars->ai_family;
 
-	pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE, "Connecting to host %s, port %s, using protocol %s",
-			activepars->address, activepars->port, (hints.ai_family == AF_INET) ? "IPv4":
-			(hints.ai_family == AF_INET6) ? "IPv6" : "Unspecified");
-	SOCK_DEBUG_MESSAGE(errbuf);
+	rpcapd_log(LOGPRIO_DEBUG, "Connecting to host %s, port %s, using protocol %s",
+	    activepars->address, activepars->port, (hints.ai_family == AF_INET) ? "IPv4":
+	    (hints.ai_family == AF_INET6) ? "IPv6" : "Unspecified");
 
 	// Initialize errbuf
 	memset(errbuf, 0, sizeof(errbuf));
@@ -1246,7 +1288,7 @@ main_active(void *ptr)
 	// Do the work
 	if (sock_initaddress(activepars->address, activepars->port, &hints, &addrinfo, errbuf, PCAP_ERRBUF_SIZE) == -1)
 	{
-		SOCK_DEBUG_MESSAGE(errbuf);
+		rpcapd_log(LOGPRIO_DEBUG, "%s", errbuf);
 		return 0;
 	}
 
@@ -1256,23 +1298,34 @@ main_active(void *ptr)
 
 		if ((sockctrl = sock_open(addrinfo, SOCKOPEN_CLIENT, 0, errbuf, PCAP_ERRBUF_SIZE)) == INVALID_SOCKET)
 		{
-			SOCK_DEBUG_MESSAGE(errbuf);
+			rpcapd_log(LOGPRIO_DEBUG, "%s", errbuf);
 
 			pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE, "Error connecting to host %s, port %s, using protocol %s",
 					activepars->address, activepars->port, (hints.ai_family == AF_INET) ? "IPv4":
 					(hints.ai_family == AF_INET6) ? "IPv6" : "Unspecified");
 
-			SOCK_DEBUG_MESSAGE(errbuf);
+			rpcapd_log(LOGPRIO_DEBUG, "%s", errbuf);
 
 			sleep_secs(RPCAP_ACTIVE_WAIT);
 
 			continue;
 		}
 
-		activeclose = daemon_serviceloop(sockctrl, sockctrl, 1,
-		    nullAuthAllowed);
-
-		sock_close(sockctrl, NULL, 0);
+		char *hostlist_copy = strdup(hostlist);
+		if (hostlist_copy == NULL)
+		{
+			rpcapd_log(LOGPRIO_ERROR, "Out of memory copying the host/port list");
+			activeclose = 0;
+			sock_close(sockctrl, NULL, 0);
+		}
+		else
+		{
+			//
+			// daemon_serviceloop() will free the copy.
+			//
+			activeclose = daemon_serviceloop(sockctrl, 1,
+			    hostlist_copy, nullAuthAllowed);
+		}
 
 		// If the connection is closed by the user explicitely, don't try to connect to it again
 		// just exit the program
@@ -1290,9 +1343,7 @@ main_active(void *ptr)
 //
 unsigned __stdcall main_passive_serviceloop_thread(void *ptr)
 {
-	SOCKET sockctrl;
-
-	sockctrl = *((SOCKET *)ptr);
+	struct params_copy params = *(struct params_copy *)ptr;
 	free(ptr);
 
 	//
@@ -1300,9 +1351,8 @@ unsigned __stdcall main_passive_serviceloop_thread(void *ptr)
 	// This is passive mode, so we don't care whether we were
 	// told by the client to close.
 	//
-	(void)daemon_serviceloop(sockctrl, sockctrl, 0, nullAuthAllowed);
-
-	sock_close(sockctrl, NULL, 0);
+	(void)daemon_serviceloop(params.sockctrl, 0, params.hostlist,
+	    nullAuthAllowed);
 
 	return 0;
 }

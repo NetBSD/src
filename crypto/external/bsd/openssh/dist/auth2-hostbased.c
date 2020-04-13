@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.13.2.1 2019/06/10 21:41:11 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.40 2019/01/19 21:43:56 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.13.2.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.42 2019/11/25 00:51:37 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,9 +25,10 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.13.2.1 2019/06/10 21:41:11 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.13.2.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <pwd.h>
 #include <string.h>
 #include <stdarg.h>
@@ -151,7 +152,7 @@ userauth_hostbased(struct ssh *ssh)
 	if (PRIVSEP(hostbased_key_allowed(ssh, authctxt->pw, cuser,
 	    chost, key)) &&
 	    PRIVSEP(sshkey_verify(key, sig, slen,
-	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat)) == 0)
+	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat, NULL)) == 0)
 		authenticated = 1;
 
 	auth2_record_key(authctxt, authenticated, key);

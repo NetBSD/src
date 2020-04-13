@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.c,v 1.5 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: blacklist.c,v 1.5.18.1 2020/04/13 07:45:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklist.c,v 1.5 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: blacklist.c,v 1.5.18.1 2020/04/13 07:45:49 martin Exp $");
 
 #include <stdio.h>
 #include <bl.h>
@@ -61,7 +61,27 @@ int
 blacklist_sa_r(struct blacklist *bl, int action, int rfd,
 	const struct sockaddr *sa, socklen_t slen, const char *msg)
 {
-	return bl_send(bl, action ? BL_ADD : BL_DELETE, rfd, sa, slen, msg);
+	bl_type_t internal_action;
+
+	/* internal values are not the same as user application values */
+	switch (action) {
+	case BLACKLIST_AUTH_FAIL:
+		internal_action = BL_ADD;
+		break;
+	case BLACKLIST_AUTH_OK:
+		internal_action = BL_DELETE;
+		break;
+	case BLACKLIST_ABUSIVE_BEHAVIOR:
+		internal_action = BL_ABUSE;
+		break;
+	case BLACKLIST_BAD_USER:
+		internal_action = BL_BADUSER;
+		break;
+	default:
+		internal_action = BL_INVALID;
+		break;
+	}
+	return bl_send(bl, internal_action, rfd, sa, slen, msg);
 }
 
 int

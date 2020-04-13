@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207.2.2 2020/04/08 14:03:53 martin Exp $
+# $NetBSD: mi,v 1.207.2.3 2020/04/13 07:45:33 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1366,7 +1366,7 @@
 ./usr/share/examples/dhcpcd/hooks/10-wpa_supplicant	misc-dhcpcd-examples	share
 ./usr/share/examples/dhcpcd/hooks/15-timezone	misc-dhcpcd-examples	share
 ./usr/share/examples/dhcpcd/hooks/29-lookup-hostname	misc-dhcpcd-examples	share
-./usr/share/examples/dhcpcd/hooks/50-ypbind	misc-dhcpcd-examples	share
+./usr/share/examples/dhcpcd/hooks/50-ypbind	misc-dhcpcd-examples	share,yp
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-obsolete		obsolete
@@ -1612,11 +1612,11 @@
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.de.netbsd.org	misc-obsolete		obsolete
-./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.no.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-obsolete		obsolete
-./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-obsolete	obsolete
 ./usr/share/examples/syslogd/all.debug		misc-sysutil-examples	share
 ./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples	share
 ./usr/share/examples/tmux			misc-tmux-examples

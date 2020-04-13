@@ -1,8 +1,9 @@
-# $NetBSD: ad.hppa,v 1.12.4.1 2019/06/10 21:42:29 christos Exp $
+# $NetBSD: ad.hppa,v 1.12.4.2 2020/04/13 07:45:32 martin Exp $
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
+./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
 ./usr/include/hppa				comp-c-include
 ./usr/include/hppa/ansi.h			comp-c-include
 ./usr/include/hppa/aout_machdep.h		comp-c-include

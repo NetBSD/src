@@ -120,7 +120,8 @@ archive_read_new(void)
  * Record the do-not-extract-to file. This belongs in archive_read_extract.c.
  */
 void
-archive_read_extract_set_skip_file(struct archive *_a, int64_t d, int64_t i)
+archive_read_extract_set_skip_file(struct archive *_a, la_int64_t d,
+    la_int64_t i)
 {
 	struct archive_read *a = (struct archive_read *)_a;
 
@@ -610,6 +611,15 @@ choose_filters(struct archive_read *a)
 	return (ARCHIVE_FATAL);
 }
 
+int
+__archive_read_header(struct archive_read *a, struct archive_entry *entry)
+{
+	if (a->filter->read_header)
+		return a->filter->read_header(a->filter, entry);
+	else
+		return (ARCHIVE_OK);
+}
+
 /*
  * Read header of next entry.
  */
@@ -747,7 +757,7 @@ choose_format(struct archive_read *a)
  * Return the file offset (within the uncompressed data stream) where
  * the last header started.
  */
-int64_t
+la_int64_t
 archive_read_header_position(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
@@ -820,7 +830,7 @@ archive_read_format_capabilities(struct archive *_a)
  * DO NOT intermingle calls to this function and archive_read_data_block
  * to read a single entry body.
  */
-ssize_t
+la_ssize_t
 archive_read_data(struct archive *_a, void *buff, size_t s)
 {
 	struct archive *a = (struct archive *)_a;
@@ -881,14 +891,16 @@ archive_read_data(struct archive *_a, void *buff, size_t s)
 			len = a->read_data_remaining;
 			if (len > s)
 				len = s;
-			memcpy(dest, a->read_data_block, len);
-			s -= len;
-			a->read_data_block += len;
-			a->read_data_remaining -= len;
-			a->read_data_output_offset += len;
-			a->read_data_offset += len;
-			dest += len;
-			bytes_read += len;
+			if (len) {
+				memcpy(dest, a->read_data_block, len);
+				s -= len;
+				a->read_data_block += len;
+				a->read_data_remaining -= len;
+				a->read_data_output_offset += len;
+				a->read_data_offset += len;
+				dest += len;
+				bytes_read += len;
+			}
 		}
 	}
 	a->read_data_is_posix_read = 0;
@@ -942,7 +954,7 @@ archive_read_data_skip(struct archive *_a)
 	return (r);
 }
 
-int64_t
+la_int64_t
 archive_seek_data(struct archive *_a, int64_t offset, int whence)
 {
 	struct archive_read *a = (struct archive_read *)_a;
@@ -1625,7 +1637,8 @@ __archive_read_filter_seek(struct archive_read_filter *filter, int64_t offset,
 	switch (whence) {
 	case SEEK_CUR:
 		/* Adjust the offset and use SEEK_SET instead */
-		offset += filter->position;			
+		offset += filter->position;
+		__LA_FALLTHROUGH;
 	case SEEK_SET:
 		cursor = 0;
 		while (1)

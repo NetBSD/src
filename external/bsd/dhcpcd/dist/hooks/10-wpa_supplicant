@@ -1,7 +1,9 @@
 # Start, reconfigure and stop wpa_supplicant per wireless interface.
-# This is needed because wpa_supplicant lacks hotplugging of any kind
-# and the user should not be expected to have to wire it into their system
-# if the base system doesn't do this itself.
+#
+# This is only needed when using wpa_supplicant-2.5 or older, OR
+# when wpa_supplicant has not been built with CONFIG_MATCH_IFACE, OR
+# wpa_supplicant was launched without the -M flag to activate
+# interface matching.
 
 if [ -z "$wpa_supplicant_conf" ]; then
 	for x in \
@@ -93,7 +95,7 @@ wpa_supplicant_stop()
 	err=$(wpa_cli -i"$interface" terminate 2>&1)
 	errn=$?
 	if [ $errn != 0 ]; then
-		syslog err "failed to start wpa_supplicant"
+		syslog err "failed to stop wpa_supplicant"
 		syslog err "$err"
 	fi
 	return $errn

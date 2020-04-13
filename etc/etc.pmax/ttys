@@ -1,11 +1,11 @@
-#	$NetBSD: ttys,v 1.15 2012/06/13 20:49:14 martin Exp $
+#	$NetBSD: ttys,v 1.15.34.1 2020/04/13 07:45:44 martin Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty std.9600"	vt220	on secure
-constty	"/usr/libexec/getty std.9600"	vt220	off secure
+console	"/usr/libexec/getty std.9600"	vt220	off secure
+constty	"/usr/libexec/getty std.9600"	vt220	on secure
 #
 # Workstation console.  Currently, only the px and pxg drivers support
 # virtual terminals.

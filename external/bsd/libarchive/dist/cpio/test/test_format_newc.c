@@ -115,7 +115,7 @@ DEFINE_TEST(test_format_newc)
 
 	/* "symlink" */
 	if (canSymlink()) {
-		assertMakeSymlink("symlink", "file1");
+		assertMakeSymlink("symlink", "file1", 0);
 		fprintf(list, "symlink\n");
 	}
 
@@ -125,26 +125,42 @@ DEFINE_TEST(test_format_newc)
 
 	/* Setup result message. */
 	memset(result, 0, sizeof(result));
-	if (is_LargeInode("file1"))
+	if (is_LargeInode("file1")) {
 		strncat(result,
-		    "bsdcpio: file1: large inode number truncated: "
-		    "Numerical result out of range\n",
+		    "bsdcpio: file1: large inode number truncated: ",
 		    sizeof(result) - strlen(result) -1);
-	if (canSymlink() && is_LargeInode("symlink"))
+		strncat(result, strerror(ERANGE),
+		    sizeof(result) - strlen(result) -1);
+		strncat(result, "\n",
+		    sizeof(result) - strlen(result) -1);
+	}
+	if (canSymlink() && is_LargeInode("symlink")) {
 		strncat(result,
-		    "bsdcpio: symlink: large inode number truncated: "
-			"Numerical result out of range\n",
+		    "bsdcpio: symlink: large inode number truncated: ",
 		    sizeof(result) - strlen(result) -1);
-	if (is_LargeInode("dir"))
+		strncat(result, strerror(ERANGE),
+		    sizeof(result) - strlen(result) -1);
+		strncat(result, "\n",
+		    sizeof(result) - strlen(result) -1);
+	}
+	if (is_LargeInode("dir")) {
 		strncat(result,
-		    "bsdcpio: dir: large inode number truncated: "
-		    "Numerical result out of range\n",
+		    "bsdcpio: dir: large inode number truncated: ",
 		    sizeof(result) - strlen(result) -1);
-	if (is_LargeInode("hardlink"))
+		strncat(result, strerror(ERANGE),
+		    sizeof(result) - strlen(result) -1);
+		strncat(result, "\n",
+		    sizeof(result) - strlen(result) -1);
+	}
+	if (is_LargeInode("hardlink")) {
 		strncat(result,
-		    "bsdcpio: hardlink: large inode number truncated: "
-		    "Numerical result out of range\n",
+		    "bsdcpio: hardlink: large inode number truncated: ",
 		    sizeof(result) - strlen(result) -1);
+		strncat(result, strerror(ERANGE),
+		    sizeof(result) - strlen(result) -1);
+		strncat(result, "\n",
+		    sizeof(result) - strlen(result) -1);
+	}
 
 	/* Record some facts about what we just created: */
 	now = time(NULL); /* They were all created w/in last two seconds. */
@@ -222,7 +238,12 @@ DEFINE_TEST(test_format_newc)
 		assert(is_hex(e, 110));
 		assertEqualMem(e + 0, "070701", 6); /* Magic */
 		assert(is_hex(e + 6, 8)); /* ino */
+#if defined(_WIN32) && !defined(CYGWIN)
+		/* Mode: Group members bits and others bits do not work. */
+		assertEqualInt(0xa180, from_hex(e + 14, 8) & 0xffc0);
+#else
 		assertEqualInt(0xa1ff, from_hex(e + 14, 8)); /* Mode */
+#endif
 		assertEqualInt(from_hex(e + 22, 8), uid); /* uid */
 		assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 		assertEqualMem(e + 38, "00000001", 8); /* nlink */

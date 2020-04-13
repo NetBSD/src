@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.10 2018/06/08 14:44:21 sevan Exp $
+# $NetBSD: mountall,v 1.10.2.1 2020/04/13 07:45:46 martin Exp $
 #
 
 # REQUIRE: mountcritremote named ypbind
@@ -15,32 +15,26 @@ stop_cmd="mountall_stop"
 mountall_start()
 {
 	echo 'Mounting all file systems...'
-	if [ -f /etc/zfs/zpool.cache ]; then
-		# Get ZFS module loaded (and thereby, zvols created).
-		zfs list > /dev/null 2>&1
-		# Mount file systems noted in fstab.
-		mount -a
-		# Mount ZFS file systems.
+
+	# Mount ZFS filesystems first because fstab
+	# may try and null mount paths on ZFS.
+	if checkyesno zfs; then
 		zfs mount -a
-	else
-		# Mount file systems noted in fstab.
-		mount -a
 	fi
+
+	# Mount file systems noted in fstab.
+	mount -a
 }
 
 mountall_stop()
 {
 	echo 'Unmounting all file systems...'
-	if [ -f /etc/zfs/zpool.cache ]; then
-		# Unmount ZFS file systems.
+	# Unmount file systems noted in fstab.
+	umount -a
+
+	# Unmount ZFS file systems.
+	if checkyesno zfs; then
 		zfs unmount -a
-		# Unmount file systems noted in fstab.
-		umount -a
-		# Unload ZFS module, so disk devices are closed.
-		modunload zfs
-	else
-		# Otherwise, just deal with fstab.
-		umount -a
 	fi
 }
 

@@ -1,3 +1,0 @@
-# $NetBSD: rescue.sparc,v 1.5 2017/01/05 13:45:51 wiz Exp $
-./rescue/edlabel				base-obsolete	obsolete
-./rescue/ldconfig				base-rescue-root	pic

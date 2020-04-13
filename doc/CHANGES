@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2405.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2405.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -23,373 +23,149 @@
 #
 # ----------------------------------------------------------------------------
 
-Changes from NetBSD 8.0 to NetBSD 9.0:
-	byacc: Update to 20170430. [christos 20170605]
-	vax: Add support for VAXstation 4000 TURBOchannel. [flxd 20170609]
-	wsbell(4): Added console bell support for all speaker devices, not
-		only those attached at pcppi. [nat 20170612]
-	bind: Import version 9.10.5-P1. [christos 20170615]
-	dts: Import dts files from Linux 4.11.5. [jmcneill 20170615]
-	amd64: Support 16TB of PA, and 32TB of kernel VA on the architecture
-		side. [maxv 20170617]
-	expat: Import 2.2.1 (security fixes). [christos 20170617]
-	evbarm: Add support for Allwinner H3 SoC. [jmcneill 20170628]
-	bind: Import version 9.10.5-P2. [christos 20170630]
-	sunxiemac(4): Add support for Allwinner Gigabit Ethernet (EMAC).
-		[jmcneill 20170701]
-	fsdb(8): Add "saveblks" command. [mrg 20170804]
-	wbsio(4): Add support for Winbond W83627DHG-P, W83627SF, W83627UHG,
-		W83667HGB, W83687THF, W83697UG,	Nuvoton NCT5104D, NCT6775,
-		NCT6779, NCT6791, NCT6792 and NCT6793. [msaitoh 20170707]
-	evbarm: Add support for Allwinner A83T SoC. [jmcneill 20170707]
-	MAKEDEV(8): Regenerate, documenting lua, dk, plcom, wmcom, hdmicec, mfi,
-		nvme, nvme ns, tpm, and dtrace devices. [sevan 20170710]
-	wbsio(4): Add support for NCT6795. [msaitoh 20170711]
-	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
-		[msaitoh 20170711]
-	evbarm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
-	evbarm: Add support for Allwinner A64 SoC. [jmcneill 20170723]
-	gzip(1): Add SIGINFO support. [mrg 20170804]
-	i386: Remove vm86. [maxv 20170812]
-	itesio(4): Add support IT8628E. [hauke 20170814]
-	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
-	ismt(4): Add support for Intel C3000. [msaitoh 20170817]
-	powerpc: Bump MAXTSIZ to 128MB for OEA based systems. [sevan 20170818]
-	GMP/MPFR/MPC: Update to 6.1.2, 3.1.5 and 1.0.3. [mrg 20170821]
-	ixg(4), ixv(4): Add C3000 support. Add bypass function support for
-		bypass adapters. [msaitoh 20170830]
-	file(1): Upgraded to 5.32. [christos 20170908]
-	tcpdump(8): Import 4.9.2. [christos 20170908]
-	veriexecgen(8): Drop support for MD5, SHA1, RMD160. [sevan 20170909]
-	itesio(4): Add support IT8728GF and IT877[12]E [hauke 20170814]
-	evbarm: Add support for Allwinner A13 and R8 SoCs. [jmcneill 20170825]
-	veriexec(4): Drop support for VERIFIED_EXEC_FP_MD5,
-		VERIFIED_EXEC_FP_SHA1, and VERIFIED_EXEC_FP_RMD160 options.
-		[sevan 20170913]
-	acpi(4): Updated ACPICA to 20170831. [christos 20170915]
-	dtrace: Install dtruss, execsnoop, opensnoop, and procsystime from the
-		DTrace Toolkit if DTrace support is enabled. [sevan 20170917]
-	dhcpcd(8): Import dhcpcd-7.0.0-rc3. [roy 20171007]
-	ahcisata(4), siisata(4): Add support for NCQ. [jdolecek 20171007]
-	mvsata(4): Add support for NCQ, and enable ATAPI support.
-		[jdolecek 20171007]
-	OpenSSH: Imported 7.6. [christos 20171007]
-	amd64: Add support for Kernel ASLR [maxv 20171010]
-	evbarm: Add support for Allwinner H5 SoC. [jmcneill 20171011]
-	tmux(1): Imported 2.6. [christos 20171012]
-	amd64: Add support for SMAP. [maxv 20171017]
-	amd64: Add support for USER_LDT. [maxv 20171021]
-	tzdata Updated to 2017c. [kre 20171024]
-	libc: Update to tzcode2017c. [christos 20171024]
-	bwfm(4): Add driver for Broadcom BCM43xxx "FullMAC" USB wireless
-		adapters. [jmcneill 20171025]
-	kernhist(9): Reworked the export-via-sysctl code to use uintptr_t
-		arguments, PR kern/52639.  Requires contemporaneous update
-		of vmstat(1). [pgoyette 20171028]
-	evbarm: Add support for NextThing GR8 SoC. [jmcneill 20171106]
-	acpi(4): Updated ACPICA to 20171110. [christos 20171111]
-	sunxinand(4): Add driver for Allwinner NAND Flash Controller.
-		[jmcneill 20171113]
-	gcc(1): Import GCC 5.5.  [mrg 20171113]
-	libtre: Update to the latest git source. [rin 20171117]
-	qemufwcfg(4): Add driver for QEMU Firmware Configuration device.
-		[jmcneill 20171125]
-	gdb(1): Updated to 8.0.1.  [christos 20171128]
-	dhcpcd(8): Import dhcpcd-7.0.0-rc4. [roy 20171206]
-	ihidev(4), ims(4): Added drivers for i2c HID mice. [bouyer 20171210]
-	sparc: Fix time goes backwards. [mrg 20180112]
-	lua: Applied 6th bugfix to Lua 5.3.4 from lua.org/bugs.html.
-		[mbalmer 20171213]
-	sstk: Remove the "stack section size change" syscall [kamil 20171219]
-	sbrk(2): Remove the "data section size change" syscall [kamil 20171219]
-	ovadvise: Remove the old vadvise syscall header [kamil 20171219]
-	dhcpcd(8): Import dhcpcd-7.0.0 [roy 20180101]
-	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 878.1
-		[christos 20180114]
-	cpuctl(8): Add cpuctl identify support for sparc and sparc64.
-		[mrg 20180116]
-	macppc: Enable Veriexec support in the GENERIC kernel [sevan 20180117]
-	raid(4): Add support for 32-bit on 64-bit kernel.  [mrg 20180117]
-	zoneinfo: Import tzdata2018c (skipping 2018a & 2018b). [kre 20180124]
-	libc: Update to tzcode2018c. [christos 20180125]
-	i386: Add support for SMAP. [maxv 20180128]
-	dhcpcd(8): Import dhcpcd-7.0.1 [roy 20180129]
-	gcc(1): Import GCC 6.4.  [mrg 20180201]
-	openldap: Import 2.4.45. [christos 20180205]
-	unbound(8): Import 1.6.8. [christos 20180205]
-	nsd: import 4.1.19 [christos 20180209]
-	ddb(4):	Introduce dumpstack sysctl for printing a stack trace on panic,
-		enable by default. [sevan 20180217]
-	sdtemp(4): Add Microchp EMC1501, another device ID of Maxim MAX6604
-		support. [msaitoh 20180222]
-	ichsmb(4): Add support for Intel C620 devices. [msaitoh 20180222]
-	macppc: Enable support for "per-priority cyclical scan" buffer queue
-		strategy. [sevan 20180223]
-	macppc: Enable awacs(4) by default in kernel configs. [sevan 20180224]
-	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 878.30.4
-		[christos 20180225]
-	macppc: Remove macofcons(4). [sevan 20180226]
-	amd64: Add SVS (Meltdown mitigation). [maxv 20180226]
-	imcsmb(4): For amd64 and i386 on Intel {Ivy,Sandy}bridge and
-		{Broad,Has}well CPUs, enable access to Integrated Memory
-		Controller-based SMBus [pgoyette 20170228]
-	ichsmb(4): Add Apollo Lake and Gemini Lake devices. [msaitoh 20180302]
-	lm(4): Add NCT6796D support. [msaitoh 20180308]
-	macppc: Enable Bluetooth support by default in GENERIC kernel.
-		[sevan 20180316]
-	tzdata: Updated to 2017d. [kre 20180324]
-	dhcpcd(8): Import 7.0.2. [roy 20180327]
-	aarch64: Add initial support for aarch64. [ryo 20180401]
-	amd64: Add SpectreV2 mitigations, based on IBRS and the DIS_IND
-		bit. [maxv 20180404]
-	dhcpcd(8): Import 7.0.3. [roy 20180406]
-	OpenSSH: Imported 7.7. [christos 20180406]
-	OpenSSL: Imported 1.1.0h. [christos 20180406]
-	ntp: Import ntp 4.2.8p11. [christos 20180406]
-	acpi(4): Updated ACPICA to 20180313. [christos 20180407]
-	dhcp: Import version 4.4.1 (move to MPL). [christos 20180407]
-	bind: Import version 9.10.7. [christos 20180407]
-	x86: Enable retpoline by default (SpectreV2 mitigation). [mrg 20180408]
-	ichsmb(4): Add Intel 300 series chipset support. [msaitoh 20180409]
-	wm(4): Enable I219 support. [msaitoh 20180413]
-	puc(4): Add Intel 300 series chipset support. [msaitoh 20180413]
-	file(1): Upgraded to 5.33. [christos 20180415]
-	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
-	evbarm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
-	dhcpcd(8): Import 7.0.4. [roy 20180502]
-	midiplay: Add -s option to send all sounds off. [mrg 20180503]
-	libbozohttpd(3): Add the embeddable version of bozohttpd [sevan 20180503]
-	bozohttpd(3lua): Add Lua binding for libbozohttpd(3lua) [sevan 20180503]
-	tzdata: Updated to 2017e. [kre 20180504]
-	libc: Update to tzcode2018e. [christos 20180504]
-	acpi(4): Updated ACPICA to 20180427. [christos 20180504]
-	gpio(4): Overhauled interrupt support.  Added GPIO interrupt
-		capability for Broadcom BCM283x SoCs (e.g.
-		Raspberry Pi). [thorpej 20180519]
-	x86: Add SpectreV4 mitigations. [maxv 20180522]
-	macppc: Enable ipsec(4) and ipsecif(4) support in GENERIC kernel by
-		default. [sevan 20180602]
-	dhcpcd(8): Import 7.0.5b. [roy 20180604]
-	virtio(4): Add MMIO transport and fdt(4) attachment. [jakllsch 20180606]
-	evbarm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
-	evbarm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
-	dhcpcd(8): Import 7.0.6. [roy 20180621]
-	bpf(4): Add the BPF direction filter (BIOC[GS]DIRECTION).
-		[msaitoh 20180626]
-	gcc(1): add lsan the Leak Sanitizer [christos 20180626]
-	aarch64: Add support for SMP. [ryo 20180709]
-	viadrm(4): Removed, superseded by viadrmums. [maya 20180710]
-	ssh-agent(1): /usr/pkg/lib* whitelisted by default for PKCS11 related
-		libraries, in place of /usr/local/lib*. [sevan 20180710]
-	x86: Support for -static -pie binaries. [joerg 20180712]
-	kernel: Remove pmc(9) and X86PMC. [maxv 20180714]
-	tprof(4): Revamped. tpfmt(1) merged into tprof(8). [maxv 20180714]
-	kernel: Remove ipkdb(4). [maxv 20180714]
-	evbarm: Add support for ARMv8 performance event monitoring with tprof(4).
-		[jmcneill 20180715]
-	evbarm: Add support for ARMv7 performance event monitoring with tprof(4).
-		[jmcneill 20180715]
-	dhcpcd(8): Import 7.0.7. [roy 20180724]
-	i386: Remove the XEN3_DOM0 and XEN3_DOMU configurations, and drop
-		support for non-PAE-32bit-PV, to leave only PAE-32bit-PV.
-		[maxv 20180726]
-	tea5767radio(4): Add Philips/NXP TEA5767 I2C-controlled stereo FM radio
-		driver. [rkujawa 20180727]
-	UBSan: Imported a clean-room reimplementation of the sanitizer runtime
-		called micro-UBSan. [kamil 20180803]
-	uUBSan: Added support for micro-UBSan (user-UBSan) in MKLIBCSANITIZER.
-		[kamil 20180803]
-	kUBSan: Added support for micro-UBSan (kernel-UBSan) as KUBSAN.
-		[kamil 20180803]
-	lua: Import version 5.3.5. [alnsn 20180804]
-	evbarm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
-	kernel: Remove the n8 driver. [maya 20180808]
-	usb(4): Many fixes to abort issues fixed for all USB controllers.
-		[mrg/skrll/riastradh 20180809]
-	nullfs(4): Add 32-bit support. [mrg 20180811]
-	bind: Import version 9.12.2-P1. [christos 20180812]
-	evbarm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
-	amd64: Randomize by default all the randomizable VM areas in the kernel.
-		[maxv 20180812]
-	mdocml: Import 1.14.4. [christos 20180814]
-	kernel: Remove etherip(4), replaced by l2tp(4). [maxv 20180814]
-	gnu-efi: Import version 3.0.8. [jmcneill 20180816]
-	OpenSSL: Imported 1.1.0i. [christos 20180818]
-	acpi(4): Updated ACPICA to 20180810. [christos 20180818]
-	dhcpcd(8): Import 7.0.8. [roy 20180820]
-	amd64: Add support for kASan - Kernel Address Sanitizer.
-		[maxv 20180820]
-	evbarm: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
-	kernel: Remove NDIS. [maxv 20180825]
-	mue(4): Add driver for Microchip LAN75xx/LAN78xx (Raspberry Pi 3 B+)
-		from OpenBSD. [rin 20180825]
-	OpenSSH: Imported 7.8. [christos 20180826]
-	rkpmic(4): Add driver for Rockchip RK808 Power Management IC.
-		[jmcneill 20180901]
-	nsd: Import 4.1.24 [christos 20180903]
-	unbound(8): Import 1.7.3. [christos 20180803]
-	libpcap: Import 1.9.0. [christos 20180903]
-	mpfr: Updated to version 4.0.1. [mrg 20180904]
-	mpc: Updated to version 1.1.0. [mrg 20180904]
-	kernel: Remove en(4). [maxv 20180906]
-	kernel: Remove the NATM code. [maxv 20180906]
-	libnv: Imported from FreeBSD [christos 20180908]
-	i915(4): Pull in support for KabyLake CPUs. [mrg 20180913]
-	usb(4): Handle most cases of early boot USB keyboard. [mrg 20180916]
-	rkpmic(4): Add support for Rockchip RK805 Power Management IC.
-		[jmcneill 20180920]
-	kernel: Remove the ISDN code, including daic(4), iavc(4), isic(4),
-		ifpci(4), ifritz, iwic(4), and all the ISDN-related
-		userland tools. [maxv 20180923]
-	npf(7): Converted to use libnv [rmind 20180929]
-	ntp: Import ntp 4.2.8p12. [christos 20180929]
-	aarch64: add support for compat_netbsd32(8). [ryo 20181012]
-	newsmips: Add support for NWS-4000.  Based on nonaka@'s porting effort
-		back in 2002.  [tsutsui 20181014]
-	file(1): Upgraded to 5.35. [christos 20181013]
-	evbarm: Provide generic start code that allows a GENERIC kernel to be used
-		on FDTised boards. [skrll 20181018]
-	tzdata: Updated to 2018f. [kre 20181019]
-	amdccp(4): Add driver for AMD Cryptographic Coprocessor RNG.
-		[jakllsch 20181019]
-	libc: Update to tzcode2018f. [christos 20181019]
-	tzdata: Updated to 2018g. [kre 20181027]
-	libc: Update to tzcode2018g. [christos 20181027]
-	kernel: Add NVMM, the NetBSD virtualization driver, with initial
-		support for x86. [maxv 20181107]
-	aarch64: Add support for kASan. [maxv 20181108]
-	gcc(1): Import GCC 6.5.  [mrg 20181103]
-	aarch64: Add support for ARM Server Base System Architecture (SBSA).
-		The SBSA is a hardware system architecture for servers based on
-		64-bit ARM processors. The Server Base Boot Requirements (SBBR)
-		specification defines a UEFI + ACPI interface for OS bootstrap,
-		which is supported by a combination of a new UEFI bootloader
-		(bootaa64.efi) and the addition of ACPI support in the
-		GENERIC64 kernel config. [jmcneill 20181124]
-	ena(4): Add support for Amazon.com Elastic Network Adapter (ENA).
-		[netbsd 20181130]
-	kernel: Add KLEAK, a feature that can detect kernel information
-		leaks. [maxv 20181202]
-	atactl(8): Add support to automatically detect Micron/Crucial devices
-		and their vendor-specific SMART status values.  [mrg 20181205]
-	OpenSSL: Imported 1.1.1a. [christos 20181208]
-	kernel: Remove the lmc(4) driver, and its associated lmcconfig(8)
-		tool. [maxv 20181212]
-	sh(1): Many bug fixes and enhancements.  [kre 20181212]
-	amdtemp(4): Add support for AMD family 16h temperature sensors.
-		[is 20181213]
-	evbarm: Add support for NVIDIA Tegra X1 SoC SATA. [skrll 20181214]
-	httpd(8): Update to bozohttpd-20181215. [mrg 20181215]
-	kernel: Remove COMPAT_SVR4 and COMPAT_SVR4_32. [maxv 20181219]
-	sqlite3(1): Import 3.26.0. [christos 20181219]
-	network: Add SIOCSETHERCAP ioctl. [msaitoh 20181221]
-	byacc: Update to 20180609. [christos 20181223]
-	flex(1): Import flex-2.6.4. [christos 20181223]
-	threadpool(9): Added threadpool(9) API. [thorpej 20181224]
-	systat(1): Extend vmstat display for better insight about bufcache.
-		[sevan 20181226]
-	aarch64: Support kernel crash dumps on arm64 platforms.  [mrg 20181227]
-	kernel: Remove M_ALIGN, MH_ALIGN, M_COPY_PKTHDR and M_MOVE_PKTHDR.
-		[maxv 20181228]
-	cgdroot: Support mounting boot partition from a wedge labelled cgd.conf.
-		[alnsn 20181229]
-	kernel: Remove COMPAT_IBCS2. [maxv 20181229]
-	tzdata: Updated to 2018h. [kre 20181230]
-	evbmips: Enable support for "per-priority cyclical scan" buffer queue
-		strategy. [sevan 20181230]
-	tzdata: Updated to 2018i. [kre 20181231]
-	tzcode: Updated to 2018i. [christos 20181231]
-	binutils: Updated to FSF binutils 2.31.1.  [christos 20181231]
-	services(5), protocols(5): Pull iana-generated services and protocols.
-		[christos 20190103]
-	evbarm: Add SMP support for Allwinner multi-cluster SoCs (A83T, A80).
-		[jmcneill 20190103]
-	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
-	acpi(4): Updated ACPICA to 20181213. [christos 20190104]
-	tmux(1): Imported 2.8. [christos 20190104]
-	TrouSerS: Import trousers-0.3.14 [christos 20190107]
-	tpm-tools: Import tpm-tools-1.3.9.1 [christos 20190107]
-	compiler-rt: Import compiler-rt r350590 LLVM sanitizers [kamil 20190108]
-	bind: Import version 9.13.2-P1. [christos 20190109]
-	crashme(9): Add framework for testing kernel crash dumps. [mrg 20190109]
-	sgimips: Import irisboot, yet another bootloader for pre-ARC sgimips
-		machines. Submitted by Naruaki Etomi via PR port-sgimips/53539.
-		[tsutsui 20190112]
-	npf(7): Major NPF improvements (added support for dynamic NAT address,
-		NETMAP algorithm for static NAT, lock-free lookup for 'ipset'
-		tables, lock-free state lookup, incremental state G/C, etc).
-		[rmind 20190119]
-	gcc(1): Import GCC 7.4.  [mrg 20190119]
-	evbarm: Update Amlogic S805 SoC support to use FDT based configuration.
-		[jmcneill 20190119]
-	dhcpcd(8): Import dhcpcd-7.1.0. [roy 20190122]
-	kernel: Remove the satlink driver. [maxv 20190127]
-	kernel: Merged [pgoyette-compat] branch - for details, see
-		src/doc/TODO.compat-module.  Includes splitting of the
-		monolithic compat-netbsd module into several version-
-		specific modules, introduction of MP-safe module hook
-		mechanism, and removal of various limitations within
-		the kernel module framework. [pgoyette 20190127]
-	macppc: Include EDID block for Clamshell iBook G3 displays.
-		[sevan 20190128]
-	ure(4): Add driver for Realtek RTL8152/RTL8153 from OpenBSD.
-		[rin 20190206]
-	dhcpcd(8): Import dhcpcd-7.1.1 [roy 20190207]
-	nsd: Import 4.1.26 [prlw1 20190212]
-	macppc: The kernels for the G5s are now built by default. These are
-		currently intended for netbooting via TFTP. [sevan 20190219]
-	bge(4): Add support for BCM5762, BCM5725, BCM5727, BCM57764, BCM57767
-		and BCM57787 [msaitoh 20190220]
-	bind: Import version 9.13.7. [christos 20190224]
-	evbarm: Add support for Amlogic GXBB family SoCs. [jmcneill 20190225]
-	jemalloc(3): Import 5.1.0 [christos 20190304]
-	kcov(4): Added driver for kernel coverage tracing [kamil 20190310]
-	mdocml: Import 1.14.5. [christos 20190310]
-	OpenSSL: Imported 1.1.1b. [christos 20190312]
-	ssdfb(4): Added driver for SSD1306 & SH1106 displays [tnn 20190317]
-	kernel: Remove COMPAT_OSF1. [maxv 20190325]
-	tzdata Updated to 2019a. [kre 20190326]
-	evbarm: Add UEFI bootloader support (bootarm.efi). [jmcneill 20190330]
-	indent(1): Upgraded to the FreeBSD HEAD checkout [kamil 20190404]
-	tzcode: Updated to 2019a. [christos 20190404]
-	pkg_install: Updated to 20190405. [sevan 20190406]
-	npf(7): Include npf_boot rc script which loads npf.boot.conf to protect
-		host during early stages of startup. [sevan 20190410]
-	dhcpcd(8): Import dhcpcd-7.2.0 [roy 20190418]
-	evbarm: Add support for Amlogic GXL family SoCs. [jmcneill 20190419]
-	OpenSSH: Import 8.0 [christos 20180420]
-	evbarm: Add support for boot configuration (efiboot.plist) and
-		applying device tree overlays to efiboot. [thorpej 20190421]
-	libpthread(3): Import C11 thread support library [kamil 20190424]
-	dhcpcd(8): Import dhcpcd-7.2.1 [roy 20190426]
-	carp(4): Enabled by default in GENERIC kernel config of all tier 1 &
-		most tier 2 ports. See system specific config otherwise.
-		[sevan 20190426]
-	veriexec(4): Enabled by default in GENERIC kernel config of all tier 1
-		& most tier 2 ports. See system specific config otherwise.
-		[sevan 20190426]
-	bufq_priocscan(9): Enabled by default in GENERIC kernel config of all
-		tier 1 & most tier 2 ports. See system specific config otherwise.
-		[sevan 20190426]
-	rktsadc(4): New thermal sensor driver for RockChip RK3328 and RK3399
-		on-CPU sensors.  [mrg 20190426]
-	bind: Import version 9.14.1. [christos 20190427]
-	acpi(4): Updated ACPICA to 20190405. [christos 20190428]
-	dhcpcd(8): Import dhcpcd-7.2.2 [roy 20190504]
-	siginfo(2): Ship with MI syscall information of a debugged process for
-		SIGTRAP and si_code TRAP_SCE/TRAP_SCX. [kamil 20190506]
-	installboot(8): Add support for NetBSD/evbarm boards that use
-		u-boot for bootstrap. [thorpej 20190506]
-	ifmedia(4): Extend Ethernet's ifmedia word's subword up to 255.
-		[msaitoh 20190517]
-	mount_9p(8): Initial support for 9P2000.u [ozaki-r 20190517]
-	file(1): Upgraded to 5.37. [christos 20190522]
-	mount_portal(8): in portal.conf # only introduces a comment at
-		start of line, or after whitespace (start word) [kre 20190523]
-	dts: Import dts files from Linux 5.1.4. [jmcneill 20190525]
-	nsd: Import 4.1.27 [christos 20190525]
-	unbound(8): Import 1.9.1. [christos 20190525]
-	gdb(1): Updated to 8.3.  [christos 20190528]
-	evbarm: Add support for the Banana Pi BPI-P2 Zero. [thorpej 20190604]
-	mac68k: Switch page size to 8KB. [jklos 20190606]
-	OpenSSL: Imported 1.1.1c. [christos 20190609]
+Changes from NetBSD 9.0 to NetBSD 10.0:
+	openldap: Import 2.4.48. [christos 20190808]
+	boot(8): GPT and RAIDframe support for x86 bootstrap [manu 20190818]
+	dhcpcd(8): Import dhcpcd-8.0.3 [roy 20190821]
+	inet6: Fix sending RTM_MISS for unresolvable addresses and restore
+		ND6_LLINFO_WAITDELETE so that any send at this point can
+		return EHOSTDOWN to match inet behaviour. [roy 20190901]
+	inet: Fix sending RTM_MISS for unresolvable addresses. [roy 20190901]
+	dhcpcd(8): Import dhcpcd-8.0.4 [roy 20190904]
+	bind: Import version 9.14.5. [christos 20190905]
+	resolvconf(8): Import openresolv-3.9.2 [roy 20190908]
+	boot(8): multiboot 2 support, Xen can now boot from EFI [manu 20190913]
+	dhcpcd(8): Import dhcpcd-8.0.6 [roy 20190913]
+	kernel: Add vHCI, a driver that allows to send and receive USB
+		packets from userland. [maxv 20190914]
+	mos(4): Ported driver for MosChip MCS7730/7830/7832 USB ethernet.
+		[mrg 20190920]
+	libpcap: Import 1.9.1. [christos 20191001]
+	tcpdump(8): Import 4.9.3. [christos 20191001]
+	rescue(8): Moved into a separate, rescue-only set. [maya 20191001]
+	byacc: Update to 20190617. [christos 20191006]
+	tzdata updates from 2019a to 2019c (incl 2019b) [kre 20191008]
+	services(5): Update to version 2019-10-04 from IANA.
+		[sevan 20191009]
+	dhcpcd(8): Import dhcpcd-8.1.0 [roy 20191011]
+	OpenSSH: Import 8.1. [christos 20191012]
+	acpi(4): Updated ACPICA to 20190816. [christos 20191015]
+	sup: removed, use ftp://ftp.astron.com/pub/sup [christos 20191015]
+	dhcpcd(8): Import dhcpcd-8.1.1 [roy 20191016]
+	evbarm: Add support for the NanoPi R1 and Duo2. [bad 20191016]
+	bind: Import version 9.14.7. [christos 20191017]
+	libc: Changed the iconv(3) function signature to the POSIX variation
+		[kamil 20191024]
+	nct(4): Add Nuvoton NCT5104D GPIO driver. [ad 20191025]
+	vio9p(4): Add virtio-9p front-end driver. [ozaki-r 20191028]
+	mount_9p(8): Enable to mount a filesystem exported via virtio-9p.
+		[ozaki-r 20191028]
+	evbarm: Update TI AM335x SoC support to use FDT based configuration.
+		[jmcneill 20191028]
+	evbarm: Update TI OMAP3 SoC support to use FDT based configuration.
+		[jmcneill 20191101]
+	amd64: Add support for kCSan - Kernel Concurrency Sanitizer.
+		[maxv 20191105]
+	tmux(1): Imported 2.9a. [christos 20191112]
+	dhcpcd(8): Import 8.1.2. [roy 20191113]
+	amd64: Add support for kMSan - Kernel Memory Sanitizer.
+		[maxv 20191114]
+	qat(4): Add opencrypto driver for Intel QuickAssist.
+		Atom C2XXX, C3XXX, Xeon D-21XX and D-15XX, C62X chipsets and
+		QuickAssist Adapter 8960/8970.
+		[hikaru 20191120]
+	select(2), poll(2): Performance and scalability improvements
+		[ad 20191121]
+	amd64, i386: Performance and scalability improvements for TLB
+		shootdown [ad 20191121]
+	bind: Import version 9.14.8. [christos 20191127]
+	terminfo: Import 20190609 [christos 20191127]
+	onewire(4), owtemp(4): Improve reliability and reduce CPU overhead
+		slightly. [ad 20191130]
+	scheduler: Improve performance and interactivity. [ad 20191201]
+	vfs: Reduce false sharing and lock overhead during normal operation.
+		[ad 20191201]
+	ixl(4): Ported driver for Intel Ethernet 700 series
+		[yamaguchi 20191210]
+	acpi(4): Updated ACPICA to 20191213. [christos 20191214]
+	uvm: Replace red-black tree page lookup with radix tree lookup,
+		including tagging and gang lookup of pages.  Original work
+		done by yamt@. [ad 20191214]
+	nsd: Import 4.2.4. [christos 20191215]
+	unbound(8): Import 1.9.6. [christos 20191215]
+	openpam(3): update to 20190224 (tabebuia) [christos 20191215]
+ 	kerberos(8): Update to Heimdal-7.7.0 [christos 20191215]
+	file(1): Upgraded to 5.38. [christos 20191216]
+	uvm: Replace global counters with per-CPU counters, significantly
+		reducing system time on workloads that are VM-system heavy.
+		[ad 20191216]
+	anxdp(4): Add driver for Analogix DisplayPort core found in
+		Rockchip RK3399. [jakllsch 20191219]
+	net80211: Require SSID configuration to associate with an open AP.
+		[jakllsch 20191219]
+	dhcpcd(8): Import dhcpcd-8.1.4 [roy 20191220]
+	uvm: Rewrite the page allocator to be more efficient and somewhat CPU
+		topology aware.  Add preliminary NUMA support.  [ad 20191227]
+	crunchgen(1): Added the ability to pass variables in the submake
+		command line, and removed all command like flags that are
+		not needed anymore [christos 20191229]
+	uvm: Reduce lock contention by making the maintentance of page
+		replacement state more concurrent. [ad 20191231]
+	aq(4): Add Aquantia 10G network adapter driver [ryo 20200101]
+	dhcpcd(8): Import dhcpcd-8.1.5 [roy 20200103]
+	tmux(1): Imported 3.0a. [christos 20200106]
+	amd64, i386: Replace the global PV hash table with radix trees,
+		yielding significant performance and scalability benefits.
+		[ad 20200112]
+	scheduler: Make the scheduler topology aware.  It understands and
+		makes good use of HyperThreading/SMT, spreads the load evenly
+		across different physical CPU packages, and can effectively
+		run asymmetric systems with slow and fast CPUs [ad 20200113]
+	evbarm: Add support for NXP i.MX 8M family SoCs. [jmcneill 20200114]
+	arm: Add support for cpu topology for ARMv7 and ARMv8 CPUs.
+		[mrg 20200114]
+	uvm: More precisely track clean/dirty pages, and change how they are
+		indexed, speeding up fsync() on large files by orders of
+		magnitude.  Original work done by yamt@. [ad 20200115]
+	uyurex(4): Removed from the tree. [maya 20200117]
+	strip(4): Removed from the tree. [thorpej 20200118]
+	hippi and esh(4): Removed from the tree. [thorpej 20200118]
+	de(4): Removed from the tree. [thorpej 20200119]
+	token ring and tr(4): Removed from the tree. [thorpej 20200119]
+	fddi, fpa(4), fta(4), fea(4): Removed from the tree. [thorpej 20200120]
+	OpenSSL: Imported 1.1.1d. [christos 20200122]
+	dhcpcd(8): Import dhcpcd-8.1.6 [roy 20200127]
+	openresolv(8): Import openresolv-3.10.0 [roy 20200127]
+	urio(4): Removed from the tree. [maya 20200129]
+	Collect network interface statistics using per-cpu counters
+		that are collated when they are queried. [thorpej 20200201]
+	realpath(1): Ported from FreeBSD. [kamil 20200202]
+	kernel: Remove azalia(4). [jmcneill 20200209]
+	awk(1): Import 20200218 [christos 20200218]
+	genet(4): Add support for Broadcom GENETv5 ethernet controllers, found
+		in the Raspberry Pi 4. [jmcneill 20200222]
+	OpenSSH: Import 8.2. [christos 20200226]
+	ld.elf_so(1): Implement DT_GNU_HASH [kamil 20200229]
+	amiga: Fix word accesses on Gayle (A1200) pcmcia. [is 20200302]
+	libcbor: Import for libfido2 support [christos 20200302]
+	libfido2: Import for pam-u2f support [christos 20200302]
+	pam-u2f: Import token authenticator [christos 20200302]
+	terminfo: Support numeric parameters as int [roy 20200313]
+	postfix(1): Import version 3.5.0. [christos 20200318]
+	OpenSSL: Imported 1.1.1e. [christos 20200321]
+	amd64, i386: Significant performance improvements in the pmap module
+		[ad 20200322]
+	namecache: Change the namecache to index names using per directory
+		red-black trees. [ad 20200322]
+	uvm: Process concurrent page faults on individual objects in parallel,
+		where the relevant pages are already in-core.  [ad 20200322]
+	bwfm: Update firmware to linux-firmware-20200316. [thorpej 20200322]
+	acpi(4): Updated ACPICA to 20200326. [christos 20200328]
+	ioctlprint(1): Add ioctl descriptive printer. [kamil 20200402]
+	dhcpcd(8): Import version 9.0.0 [roy 20200402]
+	binutils: Updated to FSF binutils 2.34. [christos 20200404]
+	mount_smbfs(8): Removed from the tree [jdolecek 20200404]
+	nsmb(4): Removed from the tree [jdolecek 20200404]
+	xen: remove legacy rx-flip support from xennet(4) and xvif(4)
+		[jdolecek 20200405]
+	OpenSSL: Imported 1.1.1f. [christos 20200405]

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.46.4.2 2020/04/08 14:03:47 martin Exp $
+#	$NetBSD: install.sub,v 1.46.4.3 2020/04/13 07:45:29 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,9 +35,9 @@ ROOTDISK=""				# filled in below
 VERSION=89936
 export VERSION
 
-ALLSETS="base comp etc games man misc text"	# default install sets
-UPGRSETS="base comp games man misc text"	# default upgrade sets
-THESETS=					# one of the above
+ALLSETS="base comp etc games man misc rescue text"	# default install sets
+UPGRSETS="base comp games man misc text"		# default upgrade sets
+THESETS=						# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
 					# on the local filesystems

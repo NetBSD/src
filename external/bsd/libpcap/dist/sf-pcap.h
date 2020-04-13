@@ -1,4 +1,4 @@
-/*	$NetBSD: sf-pcap.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: sf-pcap.h,v 1.2.16.1 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -33,7 +33,7 @@
 #ifndef sf_pcap_h
 #define	sf_pcap_h
 
-extern pcap_t *pcap_check_header(bpf_u_int32 magic, FILE *fp,
+extern pcap_t *pcap_check_header(const uint8_t *magic, FILE *fp,
     u_int precision, char *errbuf, int *err);
 
 #endif

@@ -1,6 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.11.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.73 2018/07/16 03:09:13 djm Exp $ */
-
+/*	$NetBSD: hostfile.c,v 1.11.4.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.77 2020/01/25 00:21:08 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.11.4.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.11.4.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -124,7 +123,7 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	struct ssh_hmac_ctx *ctx;
 	u_char salt[256], result[256];
 	char uu_salt[512], uu_result[512];
-	static char encoded[1024];
+	static char encoded[2048];
 	u_int len;
 
 	len = ssh_digest_bytes(SSH_DIGEST_SHA1);
@@ -165,13 +164,12 @@ int
 hostfile_read_key(char **cpp, u_int *bitsp, struct sshkey *ret)
 {
 	char *cp;
-	int r;
 
 	/* Skip leading whitespace. */
 	for (cp = *cpp; *cp == ' ' || *cp == '\t'; cp++)
 		;
 
-	if ((r = sshkey_read(ret, &cp)) != 0)
+	if (sshkey_read(ret, &cp) != 0)
 		return 0;
 
 	/* Skip trailing whitespace. */
@@ -547,8 +545,8 @@ hostfile_replace_entries(const char *filename, const char *host, const char *ip,
 	/*
 	 * Prepare temporary file for in-place deletion.
 	 */
-	if ((r = asprintf(&temp, "%s.XXXXXXXXXXX", filename)) < 0 ||
-	    (r = asprintf(&back, "%s.old", filename)) < 0) {
+	if ((r = asprintf(&temp, "%s.XXXXXXXXXXX", filename)) == -1 ||
+	    (r = asprintf(&back, "%s.old", filename)) == -1) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto fail;
 	}
@@ -570,6 +568,7 @@ hostfile_replace_entries(const char *filename, const char *host, const char *ip,
 	/* Remove all entries for the specified host from the file */
 	if ((r = hostkeys_foreach(filename, host_delete, &ctx, host, ip,
 	    HKF_WANT_PARSE_KEY)) != 0) {
+		oerrno = errno;
 		error("%s: hostkeys_foreach failed: %s", __func__, ssh_err(r));
 		goto fail;
 	}

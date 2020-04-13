@@ -1,4 +1,4 @@
-/*	$NetBSD: kqueue.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $	*/
+/*	$NetBSD: kqueue.c,v 1.1.1.3.12.1 2020/04/13 07:46:06 martin Exp $	*/
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kqueue.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
+__RCSID("$NetBSD: kqueue.c,v 1.1.1.3.12.1 2020/04/13 07:46:06 martin Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_KQUEUE
@@ -53,7 +53,10 @@ __RCSID("$NetBSD: kqueue.c,v 1.1.1.3 2017/01/31 21:14:52 christos Exp $");
 /* Some platforms apparently define the udata field of struct kevent as
  * intptr_t, whereas others define it as void*.  There doesn't seem to be an
  * easy way to tell them apart via autoconf, so we need to use OS macros. */
-#if defined(EVENT__HAVE_INTTYPES_H) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__) && !defined(__CloudABI__)
+#if defined(__NetBSD__)
+#define PTR_TO_UDATA(x) ((typeof(((struct kevent *)0)->udata))(x))
+#define INT_TO_UDATA(x) ((typeof(((struct kevent *)0)->udata))(intptr_t)(x))
+#elif defined(EVENT__HAVE_INTTYPES_H) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__) && !defined(__CloudABI__)
 #define PTR_TO_UDATA(x)	((intptr_t)(x))
 #define INT_TO_UDATA(x) ((intptr_t)(x))
 #else

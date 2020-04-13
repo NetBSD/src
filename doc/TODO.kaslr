@@ -46,4 +46,4 @@
 -- Sort the kernel sections by size, from largest to smallest, to save
    memory.
 
--- Add the "pkboot" command in the EFI bootloader.
+[DONE] -- Add the "pkboot" command in the EFI bootloader.

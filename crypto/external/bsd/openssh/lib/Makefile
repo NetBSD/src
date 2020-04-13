@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.25.2.1 2019/06/10 21:41:13 christos Exp $
+#	$NetBSD: Makefile,v 1.25.2.2 2020/04/13 07:45:21 martin Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
 
+CWARNFLAGS.clang+=	-Wno-error=sizeof-array-div
+CWARNFLAGS.clang+=	-Wno-error=format-nonliteral
 LIB=	ssh
 SRCS=\
 addrmatch.c \
@@ -20,7 +22,6 @@ cipher-chachapoly.c \
 cipher.c \
 cleanup.c \
 compat.c \
-crc32.c \
 dh.c \
 dispatch.c \
 dns.c \
@@ -56,11 +57,14 @@ sc25519.c \
 smult_curve25519_ref.c \
 sntrup4591761.c \
 ssh-ed25519.c \
+ssh-ed25519-sk.c \
 ssh-pkcs11.c \
+ssh-sk-client.c \
 ssh-xmss.c \
 sshbuf-getput-basic.c \
 sshbuf-getput-crypto.c \
 sshbuf-misc.c \
+sshbuf-io.c \
 sshbuf.c \
 ssherr.c \
 sshkey-xmss.c \
@@ -70,7 +74,6 @@ uidswap.c \
 umac.c \
 umac128.c \
 utf8.c \
-uuencode.c \
 verify.c \
 xmalloc.c \
 xmss_commons.c \
@@ -84,6 +87,7 @@ digest-openssl.c \
 kexc25519.c \
 ssh-dss.c \
 ssh-ecdsa.c \
+ssh-ecdsa-sk.c \
 ssh-rsa.c
 
 SRCS+=	fmt_scaled.c
@@ -121,5 +125,8 @@ COPTS.channels.c+=	-fno-strict-aliasing
 COPTS.poly1305.c+=	-O0
 COPTS.umac.c+=		-O0
 .endif
+
+COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>

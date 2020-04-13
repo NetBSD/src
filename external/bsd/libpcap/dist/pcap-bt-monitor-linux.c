@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bt-monitor-linux.c,v 1.4.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: pcap-bt-monitor-linux.c,v 1.4.12.2 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.4.12.1 2019/06/10 21:44:59 christos Exp $");
+__RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.4.12.2 2020/04/13 07:46:11 martin Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -154,7 +154,8 @@ bt_monitor_read(pcap_t *handle, int max_packets _U_, pcap_handler callback, u_ch
 static int
 bt_monitor_inject(pcap_t *handle, const void *buf _U_, size_t size _U_)
 {
-    pcap_snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "inject not supported yet");
+    pcap_snprintf(handle->errbuf, PCAP_ERRBUF_SIZE,
+        "Packet injection is not supported yet on Bluetooth monitor devices");
     return -1;
 }
 

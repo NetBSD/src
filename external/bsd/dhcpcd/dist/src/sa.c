@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Socket Address handling for dhcpcd
  * Copyright (c) 2015-2020 Roy Marples <roy@marples.name>
@@ -37,6 +38,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -91,6 +93,30 @@ sa_addrlen(const struct sockaddr *sa)
 		return 0;
 	}
 }
+
+#ifndef HAVE_SA_LEN
+socklen_t
+sa_len(const struct sockaddr *sa)
+{
+
+	switch (sa->sa_family) {
+#ifdef AF_LINK
+	case AF_LINK:
+		return sizeof(struct sockaddr_dl);
+#endif
+#ifdef AF_PACKET
+	case AF_PACKET:
+		return sizeof(struct sockaddr_ll);
+#endif
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+	default:
+		return sizeof(struct sockaddr);
+	}
+}
+#endif
 
 bool
 sa_is_unspecified(const struct sockaddr *sa)
@@ -262,11 +288,9 @@ sa_toprefix(const struct sockaddr *sa)
 #ifndef NDEBUG
 	/* Ensure the calculation is correct */
 	if (!sa_inprefix) {
-		union sa_ss ss;
+		union sa_ss ss = { .sa.sa_family = sa->sa_family };
 
 		sa_inprefix = true;
-		memset(&ss, 0, sizeof(ss));
-		ss.sa.sa_family = sa->sa_family;
 		sa_fromprefix(&ss.sa, prefix);
 		assert(sa_cmp(sa, &ss.sa) == 0);
 		sa_inprefix = false;
@@ -339,6 +363,13 @@ sa_addrtop(const struct sockaddr *sa, char *buf, socklen_t len)
 	const void *addr;
 
 	assert(buf != NULL);
+	assert(len > 0);
+
+	if (sa->sa_family == 0) {
+		*buf = '\0';
+		return NULL;
+	}
+
 #ifdef AF_LINK
 #ifndef CLLADDR
 #define CLLADDR(sdl) (const void *)((sdl)->sdl_data + (sdl)->sdl_nlen)

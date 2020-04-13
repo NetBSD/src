@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.1 2019/06/10 21:41:55 christos Exp $
+#	$NetBSD: Makefile,v 1.16.2.2 2020/04/13 07:45:22 martin Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -27,7 +27,7 @@ USE_FIPS=	no
 
 # XXX: There's a bit of work to do before we can enable warnings.
 WARNS=0
-CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses
+CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-implicit-int-float-conversion
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
 

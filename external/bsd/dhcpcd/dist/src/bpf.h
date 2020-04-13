@@ -1,6 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd: BPF arp and bootp filtering
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,11 +32,34 @@
 #define	BPF_READING		(1U << 0)
 #define	BPF_EOF			(1U << 1)
 #define	BPF_PARTIALCSUM		(1U << 2)
+#define	BPF_BCAST		(1U << 3)
+
+/*
+ * Even though we program the BPF filter should we trust it?
+ * On Linux at least there is a window between opening the socket,
+ * binding the interface and setting the filter where we receive data.
+ * This data is NOT checked OR flushed and IS returned when reading.
+ * We have no way of flushing it other than reading these packets!
+ * But we don't know if they passed the filter or not ..... so we need
+ * to validate each and every packet that comes through ourselves as well.
+ * Even if Linux does fix this sorry state, who is to say other kernels
+ * don't have bugs causing a similar effect?
+ *
+ * As such, let's strive to keep the filters just for pattern matching
+ * to avoid waking dhcpcd up.
+ *
+ * If you want to be notified of any packet failing the BPF filter,
+ * define BPF_DEBUG below.
+ */
+//#define	BPF_DEBUG
 
 #include "dhcpcd.h"
 
 extern const char *bpf_name;
 size_t bpf_frame_header_len(const struct interface *);
+void *bpf_frame_header_src(const struct interface *, void *, size_t *);
+void *bpf_frame_header_dst(const struct interface *, void *, size_t *);
+int bpf_frame_bcast(const struct interface *, const char *frame);
 int bpf_open(struct interface *, int (*)(struct interface *, int));
 int bpf_close(struct interface *, int);
 int bpf_attach(int, void *, unsigned int);

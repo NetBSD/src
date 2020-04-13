@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.45.16.1 2019/06/10 21:41:02 christos Exp $ */
+/* $NetBSD: utils.c,v 1.45.16.2 2020/04/13 07:45:05 martin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.45.16.1 2019/06/10 21:41:02 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.45.16.2 2020/04/13 07:45:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,84 +174,80 @@ copy_file(FTSENT *entp, int dne)
 
 	rval = 0;
 
-	/*
+	/* 
 	 * There's no reason to do anything other than close the file
-	 * now if it's empty, so let's not bother.
+	 * now if it's regular and empty, so let's not bother.
 	 */
-	if (fs->st_size > 0) {
-		struct finfo fi;
+	bool need_copy = !S_ISREG(fs->st_mode) || fs->st_size > 0;
 
-		fi.from = entp->fts_path;
-		fi.to = to.p_path;
-		fi.size = fs->st_size;
+	struct finfo fi;
 
-		/*
-		 * Mmap and write if less than 8M (the limit is so
-		 * we don't totally trash memory on big files).
-		 * This is really a minor hack, but it wins some CPU back.
-		 */
-		bool use_read;
+	fi.from = entp->fts_path;
+	fi.to = to.p_path;
+	fi.size = fs->st_size;
 
-		use_read = true;
-		if (fs->st_size <= MMAP_MAX_SIZE) {
-			size_t fsize = (size_t)fs->st_size;
-			p = mmap(NULL, fsize, PROT_READ, MAP_FILE|MAP_SHARED,
-			    from_fd, (off_t)0);
-			if (p != MAP_FAILED) {
-				size_t remainder;
+	/*
+	 * Mmap and write if less than 8M (the limit is so
+	 * we don't totally trash memory on big files).
+	 * This is really a minor hack, but it wins some CPU back.
+	 */
+	if (S_ISREG(fs->st_mode) && fs->st_size && fs->st_size <= MMAP_MAX_SIZE) {
+		size_t fsize = (size_t)fs->st_size;
+		p = mmap(NULL, fsize, PROT_READ, MAP_FILE|MAP_SHARED,
+		    from_fd, (off_t)0);
+		if (p != MAP_FAILED) {
+			size_t remainder;
 
-				use_read = false;
+			need_copy = false;
 
-				(void) madvise(p, (size_t)fs->st_size,
-				     MADV_SEQUENTIAL);
+			(void) madvise(p, (size_t)fs->st_size, MADV_SEQUENTIAL);
 
-				/*
-				 * Write out the data in small chunks to
-				 * avoid locking the output file for a
-				 * long time if the reading the data from
-				 * the source is slow.
-				 */
-				remainder = fsize;
-				do {
-					ssize_t chunk;
+			/*
+			 * Write out the data in small chunks to
+			 * avoid locking the output file for a
+			 * long time if the reading the data from
+			 * the source is slow.
+			 */
+			remainder = fsize;
+			do {
+				ssize_t chunk;
 
-					chunk = (remainder > MMAP_MAX_WRITE) ?
-					    MMAP_MAX_WRITE : remainder;
-					if (write(to_fd, &p[fsize - remainder],
-					    chunk) != chunk) {
-						warn("%s", to.p_path);
-						rval = 1;
-						break;
-					}
-					remainder -= chunk;
-					ptotal += chunk;
-					if (pinfo)
-						progress(&fi, ptotal);
-				} while (remainder > 0);
-
-				if (munmap(p, fsize) < 0) {
-					warn("%s", entp->fts_path);
-					rval = 1;
-				}
-			}
-		}
-
-		if (use_read) {
-			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
-				wcount = write(to_fd, buf, (size_t)rcount);
-				if (rcount != wcount || wcount == -1) {
+				chunk = (remainder > MMAP_MAX_WRITE) ?
+				    MMAP_MAX_WRITE : remainder;
+				if (write(to_fd, &p[fsize - remainder],
+				    chunk) != chunk) {
 					warn("%s", to.p_path);
 					rval = 1;
 					break;
 				}
-				ptotal += wcount;
+				remainder -= chunk;
+				ptotal += chunk;
 				if (pinfo)
 					progress(&fi, ptotal);
-			}
-			if (rcount < 0) {
+			} while (remainder > 0);
+
+			if (munmap(p, fsize) < 0) {
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
+		}
+	}
+
+	if (need_copy) {
+		while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
+			wcount = write(to_fd, buf, (size_t)rcount);
+			if (rcount != wcount || wcount == -1) {
+				warn("%s", to.p_path);
+				rval = 1;
+				break;
+			}
+			ptotal += wcount;
+			if (pinfo)
+				progress(&fi, ptotal);
+		}
+		if (rcount < 0) {
+			warn("%s", entp->fts_path);
+			rval = 1;
 		}
 	}
 

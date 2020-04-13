@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.16.2.1 2019/06/10 21:41:12 christos Exp $
+.\"	$NetBSD: scp.1,v 1.16.2.2 2020/04/13 07:45:20 martin Exp $
 .\"  -*- nroff -*-
 .\"
 .\" scp.1
@@ -10,14 +10,14 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.85 2019/01/26 22:41:28 djm Exp $
+.\" $OpenBSD: scp.1,v 1.87 2019/11/30 07:07:59 jmc Exp $
 .\"
-.Dd January 26 2019
+.Dd November 30 2019
 .Dt SCP 1
 .Os
 .Sh NAME
 .Nm scp
-.Nd secure copy (remote file copy program)
+.Nd OpenSSH secure file copy
 .Sh SYNOPSIS
 .Nm scp
 .Op Fl 346BCpqrTv
@@ -166,7 +166,7 @@ For full details of the options listed below, and their possible values, see
 .It HostbasedKeyTypes
 .It HostKeyAlgorithms
 .It HostKeyAlias
-.It HostName
+.It Hostname
 .It IdentitiesOnly
 .It IdentityAgent
 .It IdentityFile

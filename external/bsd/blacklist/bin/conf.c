@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24.16.1 2020/04/08 14:04:02 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.24.16.2 2020/04/13 07:45:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.24.16.1 2020/04/08 14:04:02 martin Exp $");
+__RCSID("$NetBSD: conf.c,v 1.24.16.2 2020/04/13 07:45:49 martin Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -1199,6 +1199,7 @@ conf_parse(const char *f)
 				confset_free(&lc);
 				confset_free(&rc);
 				fclose(fp);
+				free(line);
 				return;
 			}
 		}

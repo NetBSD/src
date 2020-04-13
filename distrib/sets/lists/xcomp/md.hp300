@@ -1,14 +1,14 @@
-# $NetBSD: md.hp300,v 1.5.16.1 2019/06/10 21:42:31 christos Exp $
-./usr/libdata/lint/llib-ldbe.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-ldri.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-ldri2.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lexa.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lextmod.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lfb.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lglx.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lrecord.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lshadow.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lshadowfb.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lvbe.ln		-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lvgahw.ln	-unknown-	lint,xorg,obsolete
-./usr/libdata/lint/llib-lxaa.ln		-unknown-	lint,xorg,obsolete
+# $NetBSD: md.hp300,v 1.5.16.2 2020/04/13 07:45:34 martin Exp $
+./usr/libdata/lint/llib-ldbe.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-ldri.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-ldri2.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lexa.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lextmod.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lfb.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lglx.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lrecord.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lshadow.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lshadowfb.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lvbe.ln		xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lvgahw.ln	xcomp-obsolete	lint,xorg,obsolete
+./usr/libdata/lint/llib-lxaa.ln		xcomp-obsolete	lint,xorg,obsolete

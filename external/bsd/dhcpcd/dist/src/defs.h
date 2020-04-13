@@ -1,6 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +29,11 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"7.2.2"
+#define VERSION			"9.0.0"
+
+#ifndef PRIVSEP_USER
+# define PRIVSEP_USER		"_" PACKAGE
+#endif
 
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
@@ -52,13 +57,13 @@
 # define LEASEFILE6		LEASEFILE "6"
 #endif
 #ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s%s.pid"
+# define PIDFILE		RUNDIR "/%s%s%spid"
 #endif
 #ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE "%s%s.sock"
+# define CONTROLSOCKET		RUNDIR "/%s%ssock"
 #endif
 #ifndef UNPRIVSOCKET
-# define UNPRIVSOCKET		RUNDIR "/" PACKAGE ".unpriv.sock"
+# define UNPRIVSOCKET		RUNDIR "/unpriv.sock"
 #endif
 #ifndef RDM_MONOFILE
 # define RDM_MONOFILE		DBDIR "/rdm_monotonic"

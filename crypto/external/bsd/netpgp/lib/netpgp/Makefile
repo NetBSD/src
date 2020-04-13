@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2018/02/04 03:19:52 christos Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2020/04/13 07:45:19 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -25,5 +25,7 @@ LIBDPLIBS+=	mj		${.CURDIR}/../../libmj
 LIBDPLIBS+=	crypto		${OPENSSL}/lib/libcrypto
 LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
 LIBDPLIBS+=	bz2		${NETBSDSRCDIR}/lib/libbz2
+
+COPTS.crypto.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 
 .include <bsd.lib.mk>

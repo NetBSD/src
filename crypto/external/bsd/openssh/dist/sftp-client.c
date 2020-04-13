@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.20.2.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.133 2019/01/24 16:52:17 dtucker Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.20.2.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.135 2019/10/04 04:31:59 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.20.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.20.2.2 2020/04/13 07:45:20 martin Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -622,8 +622,7 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 				    __func__, ssh_err(r));
 				free(filename);
 				free(longname);
-				sshbuf_free(msg);
-				return -1;
+				goto out;
 			}
 
 			if (print_flag)
@@ -1194,7 +1193,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 	struct sshbuf *msg;
 	u_char *handle;
 	int local_fd = -1, write_error;
-	int read_error, write_errno, reordered = 0, r;
+	int read_error, write_errno, lmodified = 0, reordered = 0, r;
 	u_int64_t offset = 0, size, highwater;
 	u_int mode, id, buflen, num_req, max_req, status = SSH2_FX_OK;
 	off_t progress_counter;
@@ -1365,6 +1364,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 			if (len > req->len)
 				fatal("Received more data than asked for "
 				    "%zu > %zu", len, req->len);
+			lmodified = 1;
 			if ((lseek(local_fd, req->offset, SEEK_SET) == -1 ||
 			    atomicio(vwrite, local_fd, data, len) != len) &&
 			    !write_error) {
@@ -1464,7 +1464,9 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 				error("Can't set times on \"%s\": %s",
 				    local_path, strerror(errno));
 		}
-		if (fsync_flag) {
+		if (resume_flag && !lmodified)
+			logit("File \"%s\" was not modified", local_path);
+		else if (fsync_flag) {
 			debug("syncing \"%s\"", local_path);
 			if (fsync(local_fd) == -1)
 				error("Couldn't sync file \"%s\": %s",

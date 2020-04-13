@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -62,13 +63,21 @@
     * While it supports DaD, to seems to only expose IFF_DUPLICATE
     * so we have no way of knowing if it's tentative or not.
     * I don't even know if Solaris has any special treatment for tentative. */
+#  define IN_IFF_TENTATIVE	0x01
 #  define IN_IFF_DUPLICATED	0x02
-#  define IN_IFF_NOTUSEABLE	IN_IFF_DUPLICATED
+#  define IN_IFF_DETACHED	0x00
 #endif
 
 #ifdef IN_IFF_TENTATIVE
 #define IN_IFF_NOTUSEABLE \
         (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED | IN_IFF_DETACHED)
+#endif
+
+#define IN_ARE_ADDR_EQUAL(a, b)		((a)->s_addr == (b)->s_addr)
+#define IN_IS_ADDR_UNSPECIFIED(a)	((a)->s_addr == INADDR_ANY)
+
+#ifdef __linux__
+#define IP_LIFETIME
 #endif
 
 struct ipv4_addr {
@@ -79,6 +88,10 @@ struct ipv4_addr {
 	struct interface *iface;
 	int addr_flags;
 	unsigned int flags;
+#ifdef IP_LIFETIME
+	uint32_t vltime;
+	uint32_t pltime;
+#endif
 	char saddr[INET_ADDRSTRLEN + 3];
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
@@ -87,6 +100,7 @@ struct ipv4_addr {
 TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
 
 #define	IPV4_AF_STALE		(1U << 0)
+#define	IPV4_AF_NEW		(1U << 1)
 
 #define	IPV4_ADDR_EQ(a1, a2)	((a1) && (a1)->addr.s_addr == (a2)->addr.s_addr)
 #define	IPV4_MASK1_EQ(a1, a2)	((a1) && (a1)->mask.s_addr == (a2)->mask.s_addr)
@@ -115,14 +129,15 @@ int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
 int ipv4_hasaddr(const struct interface *);
 
-bool inet_getroutes(struct dhcpcd_ctx *, struct rt_head *);
+bool inet_getroutes(struct dhcpcd_ctx *, rb_tree_t *);
 
 #define STATE_ADDED		0x01
 #define STATE_FAKE		0x02
 
 int ipv4_deladdr(struct ipv4_addr *, int);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *);
+    const struct in_addr *, const struct in_addr *, const struct in_addr *,
+    uint32_t, uint32_t);
 void ipv4_applyaddr(void *);
 
 struct ipv4_addr *ipv4_iffindaddr(struct interface *,

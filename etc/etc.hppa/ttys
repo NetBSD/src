@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.1 2014/02/24 07:23:40 skrll Exp $
+#	$NetBSD: ttys,v 1.1.30.1 2020/04/13 07:45:41 martin Exp $
 #
 #	$OpenBSD: ttys,v 1.1 1999/11/30 21:25:39 mickey Exp $
 #
@@ -6,8 +6,8 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console "/usr/libexec/getty Pc"		vt100	on  secure
-constty "/usr/libexec/getty Pc"		vt100	off  secure
+console "/usr/libexec/getty Pc"		vt100	off secure
+constty "/usr/libexec/getty Pc"		vt100	on  secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.

@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: automount,v 1.1 2018/01/09 03:31:14 christos Exp $
+# $NetBSD: automount,v 1.1.4.1 2020/04/13 07:45:46 martin Exp $
 #
 
 # PROVIDE: automount
 # REQUIRE: automountd
 # KEYWORD: nojail shutdown
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="automount"
 rcvar="autofs"

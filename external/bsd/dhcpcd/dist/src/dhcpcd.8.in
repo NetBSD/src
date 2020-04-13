@@ -1,4 +1,6 @@
-.\" Copyright (c) 2006-2019 Roy Marples
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.\" Copyright (c) 2006-2020 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 2, 2019
+.Dd March 27, 2020
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -69,7 +71,7 @@
 .Fl k , Fl Fl release
 .Op interface
 .Nm
-.Fl U, Fl Fl dumplease
+.Fl U , Fl Fl dumplease
 .Ar interface
 .Nm
 .Fl Fl version
@@ -201,6 +203,15 @@ changes the routes to use the interface with the same route and the lowest
 metric.
 See options below for controlling which interfaces we allow and deny through
 the use of patterns.
+.Pp
+Non-ethernet interfaces and some virtual ethernet interfaces
+such as TAP and bridge are ignored by default,
+as is the FireWire interface.
+To work with these devices they either need to be specified on the command line,
+be listed in
+.Fl Fl allowinterfaces
+or have an interface directive in
+.Pa @SYSCONFDIR@/dhcpcd.conf .
 .Ss Hooking into events
 .Nm
 runs
@@ -232,12 +243,11 @@ and need to be copied to
 .Pa @HOOKDIR@
 if you intend to use them.
 For example, you could install
-.Pa 10-wpa_supplicant
+.Pa 29-lookup-hostname
 so that
 .Nm
-can ensure that
-.Xr wpa_supplicant 8
-is always running on a hot-plugged wireless interface.
+can lookup the hostname of the IP address in DNS if no hostname
+is given by the lease and one is not already set.
 .Ss Fine tuning
 You can fine-tune the behaviour of
 .Nm
@@ -259,7 +269,7 @@ otheriwse if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 This, plus the IAID will be used as the
-.Fl I, Fl Fl clientid .
+.Fl I , Fl Fl clientid .
 The DUID generated will be held in
 .Pa @DBDIR@/duid
 and should not be copied to other hosts.
@@ -347,12 +357,13 @@ Some badly configured DHCP servers reject unknown vendorclassids.
 To work around it, try and impersonate Windows by using the MSFT vendorclassid.
 .It Fl j , Fl Fl logfile Ar logfile
 Writes to the specified
-.Ar logfile
-rather than
+.Ar logfile .
+.Nm
+still writes to
 .Xr syslog 3 .
 The
 .Ar logfile
-is s reopened when
+is reopened when
 .Nm
 receives the
 .Dv SIGUSR2
@@ -402,10 +413,6 @@ is specified then this applies to all interfaces in Master mode.
 If
 .Nm
 is not running, then it starts up as normal.
-This may also cause
-.Xr wpa_supplicant 8
-to reload its configuration for each interface as well if the
-relevant hook script has been installed.
 .It Fl N , Fl Fl renew Op Ar interface
 Notifies
 .Nm
@@ -473,7 +480,7 @@ This option is only needed when
 .Nm
 is not processing IPv6RA messages and the need for DHCPv6 Information Request
 exists.
-.It Fl S, Fl Fl static Ar value
+.It Fl S , Fl Fl static Ar value
 Configures a static DHCP
 .Ar value .
 If you set
@@ -663,7 +670,7 @@ Quiet
 .Nm
 on the command line, only warnings and errors will be displayed.
 The messages are still logged though.
-.It Fl T, Fl Fl test
+.It Fl T , Fl Fl test
 On receipt of DHCP messages just call
 .Pa @SCRIPT@
 with the reason of TEST which echos the DHCP variables found in the message
@@ -676,30 +683,29 @@ option is not sent in TEST mode so that the server does not lease an address.
 To test INFORM the interface needs to be configured with the desired address
 before starting
 .Nm .
-.It Fl U, Fl Fl dumplease Ar interface
-Dumps the last lease for the
+.It Fl U , Fl Fl dumplease Ar interface
+Dumps the current lease for the
 .Ar interface
 to stdout.
-If omitted, standard input is used to read a DHCP wire formatted message.
 Use the
 .Fl 4
 or
 .Fl 6
 flags to specify an address family.
-.It Fl V, Fl Fl variables
+.It Fl V , Fl Fl variables
 Display a list of option codes, the associated variable and encoding for use in
 .Xr dhcpcd-run-hooks 8 .
 Variables are prefixed with new_ and old_ unless the option number is -.
 Variables without an option are part of the DHCP message and cannot be
 directly requested.
-.It Fl W, Fl Fl whitelist Ar address Ns Op /cidr
+.It Fl W , Fl Fl whitelist Ar address Ns Op /cidr
 Only accept packets from
 .Ar address Ns Op /cidr .
-.Fl X, Fl Fl blacklist
+.Fl X , Fl Fl blacklist
 is ignored if
-.Fl W, Fl Fl whitelist
+.Fl W , Fl Fl whitelist
 is set.
-.It Fl X, Fl Fl blacklist Ar address Ns Op Ar /cidr
+.It Fl X , Fl Fl blacklist Ar address Ns Op Ar /cidr
 Ignore all packets from
 .Ar address Ns Op Ar /cidr .
 .It Fl Z , Fl Fl denyinterfaces Ar pattern
@@ -774,6 +780,7 @@ If you always use the same options, put them here.
 .It Pa @SCRIPT@
 Bourne shell script that is run to configure or de-configure an interface.
 .It Pa @LIBDIR@/dhcpcd/dev
+Linux
 .Pa /dev
 management modules.
 .It Pa @HOOKDIR@
@@ -797,20 +804,20 @@ lease and use the file's mtime as when it was issued.
 Stores the monotonic counter used in the
 .Ar replay
 field in Authentication Options.
-.It Pa @RUNDIR@/dhcpcd.pid
+.It Pa @RUNDIR@/pid
 Stores the PID of
 .Nm
 running on all interfaces.
-.It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .pid
+.It Pa @RUNDIR@/ Ns Ar interface Ns .pid
 Stores the PID of
 .Nm
 running on the
 .Ar interface .
-.It Pa @RUNDIR@/dhcpcd.sock
+.It Pa @RUNDIR@/sock
 Control socket to the master daemon.
-.It Pa @RUNDIR@/dhcpcd.unpriv.sock
+.It Pa @RUNDIR@/unpriv.sock
 Unprivileged socket to the master daemon, only allows state retrieval.
-.It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .sock
+.It Pa @RUNDIR@/ Ns Ar interface Ns .sock
 Control socket to per interface daemon.
 .El
 .Sh SEE ALSO
@@ -821,14 +828,22 @@ Control socket to per interface daemon.
 .Xr dhcpcd-run-hooks 8 ,
 .Xr resolvconf 8
 .Sh STANDARDS
-RFC\ 951, RFC\ 1534, RFC\ 2104, RFC\ 2131, RFC\ 2132, RFC\ 2563, RFC\ 2855, 
+RFC\ 951, RFC\ 1534, RFC\ 2104, RFC\ 2131, RFC\ 2132, RFC\ 2563, RFC\ 2855,
 RFC\ 3004, RFC\ 3118, RFC\ 3203, RFC\ 3315, RFC\ 3361, RFC\ 3633, RFC\ 3396,
 RFC\ 3397, RFC\ 3442, RFC\ 3495, RFC\ 3925, RFC\ 3927, RFC\ 4039, RFC\ 4075,
 RFC\ 4242, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4074, RFC\ 4861, RFC\ 4833,
 RFC\ 4941, RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6355,
-RFC\ 6603, RFC\ 6704, RFC\ 7217, RFC\ 7550.
+RFC\ 6603, RFC\ 6704, RFC\ 7217, RFC\ 7550, RFC\ 7844.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
+If
+.Nm
+is running in a
+.Xr chroot 2
+then re-opening the
+.Fl Fl logfile
+from SIGUSR2 may not work.
+.Pp
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd

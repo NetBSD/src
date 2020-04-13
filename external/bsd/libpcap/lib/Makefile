@@ -1,25 +1,14 @@
-# $NetBSD: Makefile,v 1.16.2.1 2019/06/10 21:45:03 christos Exp $	
+# $NetBSD: Makefile,v 1.16.2.2 2020/04/13 07:46:12 martin Exp $	
 
 USE_SHLIBDIR=yes
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 USE_FORT?= yes	# network protocol library
 
-CWARNFLAGS.clang+=	-Wno-format-extra-args \
-			-Wno-unneeded-internal-declaration
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.gencode.c+=	-Wno-error=implicit-fallthrough
-.endif
-
-CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -I${.OBJDIR}
+CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -DENABLE_REMOTE
+CPPFLAGS+= -DPCAP_SUPPORT_RPCAP
+CPPFLAGS+= -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
-
-__sed: .USE
-	@rm -f ${.TARGET}
-	${TOOL_SED} -e 's,@MAN_FILE_FORMATS@,5,g' \
-	    -e 's,@MAN_MISC_INFO@,7,g' \
-	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 .3pcap.3:
 	@rm -f ${.TARGET}
@@ -30,19 +19,15 @@ __sed: .USE
 
 # Search first in the kernel for bpf_filter.c
 .PATH:	${NETBSDSRCDIR}/sys/net
-SRCDIR=		${.CURDIR}/../dist
-.PATH:		${SRCDIR}
+.PATH:	${SRCDIR}
 
-LIB=		pcap
+LIB=	pcap
 MAN3= \
-pcap.3pcap \
 pcap_activate.3pcap \
 pcap_breakloop.3pcap \
 pcap_can_set_rfmon.3pcap \
 pcap_close.3pcap \
-pcap_compile.3pcap \
 pcap_create.3pcap \
-pcap_datalink.3pcap \
 pcap_datalink_name_to_val.3pcap \
 pcap_datalink_val_to_name.3pcap \
 pcap_dump.3pcap \
@@ -50,35 +35,29 @@ pcap_dump_close.3pcap \
 pcap_dump_file.3pcap \
 pcap_dump_flush.3pcap \
 pcap_dump_ftell.3pcap \
-pcap_dump_open.3pcap \
 pcap_file.3pcap \
 pcap_fileno.3pcap \
 pcap_findalldevs.3pcap \
 pcap_freecode.3pcap \
+pcap_get_required_select_timeout.3pcap \
 pcap_get_selectable_fd.3pcap \
 pcap_geterr.3pcap \
 pcap_inject.3pcap \
 pcap_is_swapped.3pcap \
 pcap_lib_version.3pcap \
-pcap_list_datalinks.3pcap \
-pcap_list_tstamp_types.3pcap \
 pcap_lookupdev.3pcap \
 pcap_lookupnet.3pcap \
 pcap_loop.3pcap \
 pcap_major_version.3pcap \
 pcap_next_ex.3pcap \
 pcap_offline_filter.3pcap \
-pcap_open_dead.3pcap \
 pcap_open_live.3pcap \
-pcap_open_offline.3pcap \
 pcap_set_buffer_size.3pcap \
 pcap_set_datalink.3pcap \
-pcap_set_immediate_mode.3pcap \
 pcap_set_promisc.3pcap \
 pcap_set_rfmon.3pcap \
 pcap_set_snaplen.3pcap \
 pcap_set_timeout.3pcap \
-pcap_set_tstamp_type.3pcap \
 pcap_setdirection.3pcap \
 pcap_setfilter.3pcap \
 pcap_setnonblock.3pcap \
@@ -87,8 +66,8 @@ pcap_stats.3pcap \
 pcap_statustostr.3pcap \
 pcap_strerror.3pcap \
 pcap_tstamp_type_name_to_val.3pcap \
-pcap_tstamp_type_val_to_name.3pcap
-
+pcap_tstamp_type_val_to_name.3pcap \
+${MAN3IN:.in=}
 
 MAN3IN= \
 pcap.3pcap.in \
@@ -100,14 +79,19 @@ pcap_list_datalinks.3pcap.in \
 pcap_list_tstamp_types.3pcap.in \
 pcap_open_dead.3pcap.in \
 pcap_open_offline.3pcap.in \
+pcap_set_immediate_mode.3pcap.in \
 pcap_set_tstamp_precision.3pcap.in \
 pcap_set_tstamp_type.3pcap.in
+
+MANFILEIN= \
+pcap-savefile.manfile.in
 
 MANMISCIN= \
 pcap-filter.manmisc.in \
 pcap-linktype.manmisc.in \
-pcap-tstamp.manmisc.in
-MANFILEIN= pcap-savefile.manfile.in
+pcap-tstamp.manmisc.in 
+
+
 CLEANFILES+= ${MAN}
 
 MAN=	${MAN3:S/3pcap/3/g} ${MAN3IN:S/3pcap.in/3/g} \
@@ -153,15 +137,20 @@ nametoaddr.c \
 optimize.c \
 pcap-bpf.c \
 pcap-common.c \
+pcap-new.c \
+pcap-rpcap.c \
+pcap-rpcap-unix.c \
 pcap.c \
+rpcap-protocol.c \
 savefile.c \
 scanner.l \
 sf-pcap.c \
-sf-pcapng.c
+sf-pcapng.c \
+sockutils.c
 
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
-	pcap/pcap-inttypes.h pcap/compiler-tests.h
+	pcap/pcap-inttypes.h pcap/compiler-tests.h pcap/socket.h
 INCSDIR=	/usr/include
 INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
 INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h
@@ -173,10 +162,16 @@ tokdefs.h: grammar.h
 	cp $? $@
 
 CLEANFILES+=	tokdefs.h scanner.h
-COPTS.bpf_image.c = -Wno-format-nonliteral
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.pcap.c+=	-Wno-error=format-truncation
-.endif
+COPTS.bpf_image.c+=	-Wno-format-nonliteral
+
+COPTS.gencode.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}
+COPTS.pcap.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.pcap-bpf.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.pcap-new.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.pcap-rpcap.c+=	${GCC_NO_FORMAT_TRUNCATION}
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args \
+			-Wno-unneeded-internal-declaration
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.c,v 1.6 2018/02/04 20:22:17 mrg Exp $	*/
+/*	$NetBSD: strchr.c,v 1.6.4.1 2020/04/13 07:45:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)index.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strchr.c,v 1.6 2018/02/04 20:22:17 mrg Exp $");
+__RCSID("$NetBSD: strchr.c,v 1.6.4.1 2020/04/13 07:45:08 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,6 +44,10 @@ __RCSID("$NetBSD: strchr.c,v 1.6 2018/02/04 20:22:17 mrg Exp $");
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#endif
+
+#if defined(KASAN)
+#undef strchr
 #endif
 
 __strong_alias(index, strchr)

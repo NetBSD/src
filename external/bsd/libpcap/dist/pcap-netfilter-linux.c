@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-netfilter-linux.c,v 1.4.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: pcap-netfilter-linux.c,v 1.4.12.2 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 Jakub Zawadzki
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-netfilter-linux.c,v 1.4.12.1 2019/06/10 21:44:59 christos Exp $");
+__RCSID("$NetBSD: pcap-netfilter-linux.c,v 1.4.12.2 2020/04/13 07:46:11 martin Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -306,7 +306,8 @@ netfilter_stats_linux(pcap_t *handle, struct pcap_stat *stats)
 static int
 netfilter_inject_linux(pcap_t *handle, const void *buf _U_, size_t size _U_)
 {
-	pcap_snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "inject not supported on netfilter devices");
+	pcap_snprintf(handle->errbuf, PCAP_ERRBUF_SIZE,
+	    "Packet injection is not supported on netfilter devices");
 	return (-1);
 }
 
@@ -320,6 +321,7 @@ static int
 netfilter_send_config_msg(const pcap_t *handle, uint16_t msg_type, int ack, u_int8_t family, u_int16_t res_id, const struct my_nfattr *mynfa)
 {
 	char buf[1024] __attribute__ ((aligned));
+	memset(buf, 0, sizeof(buf));
 
 	struct nlmsghdr *nlh = (struct nlmsghdr *) buf;
 	struct nfgenmsg *nfg = (struct nfgenmsg *) (buf + sizeof(struct nlmsghdr));

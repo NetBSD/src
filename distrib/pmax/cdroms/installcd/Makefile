@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.26.1 2019/06/10 21:42:28 christos Exp $
+#	$NetBSD: Makefile,v 1.3.26.2 2020/04/13 07:45:30 martin Exp $
 CDBASE=		pmaxcd			# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 .if ${MACHINE_ARCH} == "mipsel"
 CDKERNELS=	netbsd-INSTALL.gz netbsd
