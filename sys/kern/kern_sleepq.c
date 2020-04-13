@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.64 2020/04/10 17:16:21 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.65 2020/04/13 15:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.64 2020/04/10 17:16:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.65 2020/04/13 15:54:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,7 +151,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	}
 
 	/* Update sleep time delta, call the wake-up handler of scheduler */
-	l->l_slpticksum += (hardclock_ticks - l->l_slpticks);
+	l->l_slpticksum += (getticks() - l->l_slpticks);
 	sched_wakeup(l);
 
 	/* Look for a CPU to wake up */
@@ -228,7 +228,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 	sleepq_insert(sq, l, sobj);
 
 	/* Save the time when thread has slept */
-	l->l_slpticks = hardclock_ticks;
+	l->l_slpticks = getticks();
 	sched_slept(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.59 2020/03/21 02:32:37 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.60 2020/04/13 15:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.59 2020/03/21 02:32:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.60 2020/04/13 15:54:45 maxv Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -839,7 +839,7 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 	int b;
 
 #ifndef CRASH
-	db_printf("hardclock_ticks now: %d\n", hardclock_ticks);
+	db_printf("hardclock_ticks now: %d\n", getticks());
 #endif
 	db_printf("    ticks  wheel               arg  func\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.45 2020/04/10 17:16:21 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.46 2020/04/13 15:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.45 2020/04/10 17:16:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.46 2020/04/13 15:54:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,13 +340,13 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */
@@ -383,13 +383,13 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait_sig(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */

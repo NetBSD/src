@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.118 2020/04/04 20:54:42 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.119 2020/04/13 15:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.118 2020/04/04 20:54:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.119 2020/04/13 15:54:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -483,7 +483,7 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	 */
 	vip = VNODE_TO_VIMPL(vp);
 	if (listhd == vip->vi_lrulisthd &&
-	    (hardclock_ticks - vip->vi_lrulisttm) < hz) {
+	    (getticks() - vip->vi_lrulisttm) < hz) {
 	    	return;
 	}
 
@@ -494,7 +494,7 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	else
 		d++;
 	vip->vi_lrulisthd = listhd;
-	vip->vi_lrulisttm = hardclock_ticks;
+	vip->vi_lrulisttm = getticks();
 	if (vip->vi_lrulisthd != NULL)
 		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
 	else
@@ -540,7 +540,7 @@ vrele_flush(struct mount *mp)
 		KASSERT(vip->vi_lrulisthd == &lru_list[LRU_VRELE]);
 		TAILQ_REMOVE(vip->vi_lrulisthd, vip, vi_lrulist);
 		vip->vi_lrulisthd = &lru_list[LRU_HOLD];
-		vip->vi_lrulisttm = hardclock_ticks;
+		vip->vi_lrulisttm = getticks();
 		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
 		mutex_exit(&vdrain_lock);
 
@@ -622,7 +622,7 @@ vdrain_vrele(vnode_t *vp)
 	KASSERT(vip->vi_lrulisthd == &lru_list[LRU_VRELE]);
 	TAILQ_REMOVE(vip->vi_lrulisthd, vip, vi_lrulist);
 	vip->vi_lrulisthd = &lru_list[LRU_HOLD];
-	vip->vi_lrulisttm = hardclock_ticks;
+	vip->vi_lrulisttm = getticks();
 	TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
 
 	vdrain_retry = true;
