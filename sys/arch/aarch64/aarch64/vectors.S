@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.13 2020/04/12 07:49:58 maxv Exp $	*/
+/*	$NetBSD: vectors.S,v 1.14 2020/04/13 05:40:25 maxv Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -23,7 +23,7 @@
  * Template for the handler functions.
  */
 .macro	vector_func, func, el, label, tpidr
-ENTRY_NP(\func)
+ENTRY_NBTI(\func)
 	.align 7	/* cacheline-aligned */
 
 	.if \el == 1
@@ -143,7 +143,7 @@ vector_func	el0_32error_handler, 0, trap_el0_32error, ro
  * The vector table. Must be aligned to 2048.
  */
 	.align 11
-ENTRY_NP(el1_vectors)
+ENTRY_NBTI(el1_vectors)
 	/*
 	 * Exception taken from current Exception Level with SP_EL0.
 	 * (These shouldn't happen)
