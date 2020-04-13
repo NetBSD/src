@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.90 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.91 2020/04/13 19:23:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.90 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.91 2020/04/13 19:23:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -382,7 +382,7 @@ int
 rump_vp_getref(struct vnode *vp)
 {
 
-	return vp->v_usecount;
+	return vrefcnt(vp);
 }
 
 void
