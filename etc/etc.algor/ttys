@@ -1,11 +1,11 @@
-#	$NetBSD: ttys,v 1.5 2008/10/07 10:00:01 abs Exp $
+#	$NetBSD: ttys,v 1.5.62.1 2020/04/13 07:45:39 martin Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty default"	vt100	on secure
-constty	"/usr/libexec/getty default"	vt100	off secure
+console	"/usr/libexec/getty default"	vt100	off secure
+constty	"/usr/libexec/getty default"	vt100	on secure
 #
 # 16550-compatible serial ports
 #

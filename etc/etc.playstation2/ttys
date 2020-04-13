@@ -1,8 +1,9 @@
 #
-#	$NetBSD: ttys,v 1.6 2014/03/31 11:25:48 martin Exp $
+#	$NetBSD: ttys,v 1.6.28.1 2020/04/13 07:45:44 martin Exp $
 #
 # name	getty				type	status		comments
 
+console	"/usr/libexec/getty std.9600"	vt100	off secure
 constty	"/usr/libexec/getty std.9600"	vt100	off secure
 
 # Workstation console (framebuffer) ttys

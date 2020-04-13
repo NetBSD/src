@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>

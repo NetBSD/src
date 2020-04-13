@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9.2.2 2019/06/10 21:44:57 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.3 2020/04/13 07:46:02 martin Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -38,7 +38,10 @@ witness.c
 .SUFFIXES: .3
 .PATH.3: ${JEMALLOC}/dist/doc
 .for i in ${JEMALLOC_SRCS}
-CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
+# helps in tracking bad malloc/pointer usage, but has a serious
+# performance penalty:
+#   CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG
+CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD
 COPTS.${i}+= -fvisibility=hidden -funroll-loops
 COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment :}
 .endfor
@@ -47,6 +50,14 @@ COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
+
+.if ${MACHINE} == "alpha"
+# These files need to be compiled with -O0, or build everything with
+# -DJEMALLOC_DEBUG. Otherwise, userland binaries crash randomly, as
+# reported in port-alpha/54307.
+COPTS.rtree.c+=-O0
+COPTS.tcache.c+=-O0
+.endif
 
 .if ${MACHINE_ARCH} == "vax"
 # in merge_overlapping_regs, at regrename.c

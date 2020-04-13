@@ -1,4 +1,4 @@
-/* $NetBSD: stty.c,v 1.23 2013/09/12 19:47:23 christos Exp $ */
+/* $NetBSD: stty.c,v 1.23.26.1 2020/04/13 07:45:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.23 2013/09/12 19:47:23 christos Exp $");
+__RCSID("$NetBSD: stty.c,v 1.23.26.1 2020/04/13 07:45:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,10 +97,10 @@ main(int argc, char *argv[])
 args:	argc -= optind;
 	argv += optind;
 
-	if (ioctl(i.fd, TIOCGLINED, i.ldisc) < 0)
-		err(1, "TIOCGLINED");
 	if (tcgetattr(i.fd, &i.t) < 0)
 		err(1, "tcgetattr");
+	if (ioctl(i.fd, TIOCGLINED, i.ldisc) < 0)
+		warn("TIOCGLINED");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
 		warn("TIOCGWINSZ");
 	if (ioctl(i.fd, TIOCGQSIZE, &i.queue) < 0)

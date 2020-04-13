@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.3.36.1 2019/06/10 21:44:43 christos Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.3.36.2 2020/04/13 07:45:51 martin Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- Block recoverer program for bzip2                   ---*/
@@ -9,8 +9,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.6 of 6 September 2010
-   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
+   bzip2/libbzip2 version 1.0.8 of 13 July 2019
+   Copyright (C) 1996-2019 Julian Seward <jseward@acm.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
@@ -324,11 +324,12 @@ Int32 main ( Int32 argc, Char** argv )
    UInt32      buffHi, buffLo, blockCRC;
    Char*       p;
 
-   strcpy ( progName, argv[0] );
+   strncpy ( progName, argv[0], BZ_MAX_FILENAME-1);
+   progName[BZ_MAX_FILENAME-1]='\0';
    inFileName[0] = outFileName[0] = 0;
 
    fprintf ( stderr, 
-             "bzip2recover 1.0.6: extracts blocks from damaged .bz2 files.\n" );
+             "bzip2recover 1.0.8: extracts blocks from damaged .bz2 files.\n" );
 
    if (argc != 2) {
       fprintf ( stderr, "%s: usage is `%s damaged_file_name'.\n",

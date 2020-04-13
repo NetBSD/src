@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.91 2018/04/11 18:52:29 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.91.2.1 2020/04/13 07:45:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.91 2018/04/11 18:52:29 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.91.2.1 2020/04/13 07:45:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -525,6 +525,11 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+
+#ifdef __NO_LEAKS
+	free(pinfo);
+#endif
+
 	return eval;
 }
 

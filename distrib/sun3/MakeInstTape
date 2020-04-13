@@ -3,12 +3,12 @@
 # Here is a generic script that makes a Sun3 boot tape using
 # the files in ../binary
 #
-# $NetBSD: MakeInstTape,v 1.2 1997/12/20 02:52:54 gwr Exp $
+# $NetBSD: MakeInstTape,v 1.2.114.1 2020/04/13 07:45:35 martin Exp $
 
 T=${1:-/dev/nrst0}
 
 # Remember, skip "etc" for an upgrade.
-sets="etc base comp games man misc text"
+sets="etc base comp games man misc rescue text"
 
 # Entertain...
 set -x

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17.14.1 2019/06/10 21:42:37 christos Exp $
+# $NetBSD: Makefile,v 1.17.14.2 2020/04/13 07:45:36 martin Exp $
 # Small zcat (i.e. for install media)
 #
 
@@ -26,7 +26,7 @@ CPPFLAGS+=	-I${LIBC}/include
 CPPFLAGS+=	-Dsnprintf=snprintf_ss -Dsprintf=sprintf_ss
 CPPFLAGS+=	-Dstrerror=strerror_ss
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.inflate.c+=	-Wno-error=implicit-fallthrough
 .endif
 

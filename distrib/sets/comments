@@ -57,11 +57,11 @@ base-locale-es Spanish language locale support
 base-locale-et Estonian language locale support
 base-locale-fi Finnish language locale support
 base-locale-fr French language locale support
-base-locale-gl	Galician language locale support
+base-locale-gl Galician language locale support
 base-locale-he Hebrew language locale support
 base-locale-hr Croatian language locale support
 base-locale-hu Hungarian language locale support
-base-locale-id	Indonesian language locale support
+base-locale-id Indonesian language locale support
 base-locale-is Icelandic language locale support
 base-locale-it Italian language locale support
 base-locale-ja Japanese language locale support
@@ -76,7 +76,7 @@ base-locale-share /usr/share file system support for all locales
 base-locale-sk Slovak language locale support
 base-locale-sl Slovenian language locale support
 base-locale-sv Swedish language locale support
-base-locale-tr	Turkish language locale support
+base-locale-tr Turkish language locale support
 base-locale-uk Ukrainian language locale support
 base-locale-zh Chinese language locale support
 base-lpr-bin utilities for printing support
@@ -101,7 +101,7 @@ base-nis-bin progams and utilities for the NIS network information system
 base-nis-root root file system support for the NIS network information system
 base-ntfs-root root file system support for the Windows NT file system
 base-ntp-bin utilities for network time protocol support
-base-ntp-root	basic directories for network time protocol support
+base-ntp-root basic directories for network time protocol support
 base-objc-usr /usr file system support for the Objective C programming language
 base-pf-bin utilities for the PF packet filter
 base-pf-root directories for the PF packet filter
@@ -146,7 +146,7 @@ base-texinfo-share shared data files for the GNU texinfo software
 base-texinfo_locale-cs Czech language support for the GNU texinfo software
 base-texinfo_locale-da Danish language support for the GNU texinfo software
 base-texinfo_locale-de German language support for the GNU texinfo software
-base-texinfo_locale-eo	Esperanto language support for the GNU texinfo software
+base-texinfo_locale-eo Esperanto language support for the GNU texinfo software
 base-texinfo_locale-fr French language support for the GNU texinfo software
 base-texinfo_locale-he Hebrew language support for the GNU texinfo software
 base-texinfo_locale-hr Croatian language support for the GNU texinfo software
@@ -159,23 +159,23 @@ base-texinfo_locale-tr Turkish language support for the GNU texinfo software
 base-texinfo_locale-zh Chinese language support for the GNU texinfo software
 base-timed-bin utilities for the timed(8) network time daemon
 base-tn3270-bin utilities for connecting to IBM VM/CMS systems
-base-tpm-bin	utilities for the Trusted Platform Module
+base-tpm-bin utilities for the Trusted Platform Module
 base-usd-share directory structure for the User's Supplementary Documentation
 base-util-bin standard utilities for use by users
 base-util-root root file system support for standard user utilities
 base-util-share shared data files for standard user utilities
-base-util_locale-cs	Czech language support for standard utilities
+base-util_locale-cs Czech language support for standard utilities
 base-util_locale-de German language support for standard utilities
 base-util_locale-el Greek language support for standard utilities
-base-util_locale-eo	Esperanto language support for standard utilities
+base-util_locale-eo Esperanto language support for standard utilities
 base-util_locale-es Spanish language support for standard utilities
 base-util_locale-et Estonian language support for standard utilities
 base-util_locale-fr French language support for standard utilities
-base-util_locale-gl	Galician language support for standard utilities
-base-util_locale-hr	Croatian language support for standard utilities
-base-util_locale-id	Indonesian language support for standard utilities
-base-util_locale-it	Italian language support for standard utilities
-base-util_locale-ja	Japanese language support for standard utilities
+base-util_locale-gl Galician language support for standard utilities
+base-util_locale-hr Croatian language support for standard utilities
+base-util_locale-id Indonesian language support for standard utilities
+base-util_locale-it Italian language support for standard utilities
+base-util_locale-ja Japanese language support for standard utilities
 base-util_locale-sv Swedish language support for standard utilities
 comp-c-bin compilers and tools for the C programming language
 comp-c-catman formatted manual pages
@@ -187,7 +187,7 @@ comp-c-piclib PIC libraries for C language shared library generation
 comp-c-proflib profiling libraries for the C programming language
 comp-c-root root file system symlinks for software development
 comp-c-share reference files for C language programmers
-comp-c-shlib	shared libraries for binary file utilities and machine opcodes
+comp-c-shlib shared libraries for binary file utilities and machine opcodes
 comp-c_locale-da Danish language locale support for development utilities
 comp-c_locale-de German language locale support for development utilities
 comp-c_locale-es Spanish language locale support for development utilities
@@ -224,10 +224,10 @@ comp-i18n-lib static libraries and shared library links for compiling applicatio
 comp-ipf-include header files for the IPfilter C API
 comp-krb5-catman formatted manual pages for Kerberos V support
 comp-krb5-include header files for Kerberos V support
-comp-krb5-lib 	libraries to support Kerberos V compilation
-comp-krb5-man 	source manual pages for Kerberos V support 
-comp-krb5-proflib 	profiling libraries for Kerberos V support 
-comp-krb5c-catman 	pre-formatted manual pages for Kerberos V C support
+comp-krb5-lib  libraries to support Kerberos V compilation
+comp-krb5-man  source manual pages for Kerberos V support 
+comp-krb5-proflib  profiling libraries for Kerberos V support 
+comp-krb5c-catman  pre-formatted manual pages for Kerberos V C support
 comp-objc-bin compilers and tools for the Objective C programming language
 comp-objc-lib static libraries and shared library links for the Objective C programming language
 comp-objc-piclib PIC libraries for Objective C language shared library generation
@@ -235,7 +235,7 @@ comp-objc-proflib profiling libraries for the Objective C programming language
 comp-nis-include Headers for bulding NIS applications
 comp-sys-catman formatted manual pages for kernel programming
 comp-sys-man manual pages source for kernel programming
-comp-sys-shlib	shared library support for basic i386 math and utility libs
+comp-sys-shlib shared library support for basic i386 math and utility libs
 comp-sysutil-catman formatted manual pages for system utilities
 comp-sysutil-man manual pages source for system utilities
 comp-sysutil-root manual pages source for system utilities
@@ -297,7 +297,7 @@ etc-sys-rc standard system startup scripts
 etc-sys-root required root file system structure for system software
 etc-sysutil-etc configuration files for miscellaneous system utilities
 etc-sysutil-log empty log files for miscellaneous system utilities
-etc-sysutil-rc	startup scripts for miscellaneous system utilities
+etc-sysutil-rc startup scripts for miscellaneous system utilities
 etc-timed-rc startup script for the timed(8) network time daemon
 etc-util-etc configuration file for standard system utilities
 etc-x11-rc startup scripts for the X11 X Window System
@@ -408,8 +408,8 @@ man-shlib-catman formatted manual pages for shared library support
 man-shlib-man manual pages source for shared library support
 man-slip-catman formatted manual pages for SLIP (serial line IP) remote access protocol
 man-slip-man manual pages source for SLIP (serial line IP) remote access protocol
-man-smbfs-catman	formatted manual pages for SMB filesystem
-man-smbfs-man	source manual pages for SMB filesystem
+man-smbfs-catman formatted manual pages for SMB filesystem
+man-smbfs-man source manual pages for SMB filesystem
 man-sup-catman formatted manual pages for the sup(8) software update protocol
 man-sup-man manual pages source for the sup(8) software update protocol
 man-sys-catman formatted manual pages for base operating system functionality
@@ -417,16 +417,16 @@ man-sys-info the GNU texinfo software
 man-sys-man manual pages source for base operating system functionality
 man-sysutil-catman formatted manual pages for system utilities
 man-sysutil-man manual pages source for system utilities
-man-texinfo-catman	formatted manual pages for texinfo utilities
+man-texinfo-catman formatted manual pages for texinfo utilities
 man-texinfo-info texinfo documentation for texinfo utilities
-man-texinfo-man	source manual pages for texinfo utilities
+man-texinfo-man source manual pages for texinfo utilities
 man-timed-catman formatted manual pages for the timed(8) network time daemon
 man-timed-man manual pages source for the timed(8) network time daemon
 man-tn3270-catman formatted manual pages for utilities for connecting to IBM VM/CMS systems
 man-tn3270-man manual pages source for utilities for connecting to IBM VM/CMS systems
-man-tpm-catman	formated manual pages for the Trusted Platform Module utilities
-man-tpm-htmlman	HTML documentation for the Trusted Platform Module utilities
-man-tpm-man	documentation for the Trusted Platform Module utilities
+man-tpm-catman formated manual pages for the Trusted Platform Module utilities
+man-tpm-htmlman HTML documentation for the Trusted Platform Module utilities
+man-tpm-man documentation for the Trusted Platform Module utilities
 man-util-catman formatted manual pages for basic user utilities
 man-util-info the GNU texinfo software
 man-util-man manual pages source for basic user utilities
@@ -443,7 +443,7 @@ misc-netutil-examples example configuration files for network software
 misc-ntp-htmldoc HTML documentation for ntp(8) software
 misc-pf-examples
 misc-postfix-examples example configuration files for postfix
-misc-postfix-htmldoc	HTML documentation for postfix 
+misc-postfix-htmldoc HTML documentation for postfix 
 misc-psd-doc the Programmer's Supplementary Documentation for BSD
 misc-reference-share miscellaneous reference documents
 misc-router-examples example configuration files for routing daemons
@@ -460,4 +460,11 @@ text-groff-font fonts for the groff family of text formatters
 text-groff-man manual page source for the groff family of text formatters
 text-groff-share macros and data files for the groff family of text formatters
 text-texinfo-bin the GNU texinfo software
-text-texinfo-share	shared files for the GNU texinfo software
+text-texinfo-share shared files for the GNU texinfo software
+xbase-i810-lib Intel i810 video driver
+xbase-libdrm-amdgpu AMD RADEON GPU video driver
+xbase-libdrm-intel Intel integrated graphics chipsets
+xbase-libdrm-nouveau NVIDIA video driver
+xbase-libvdpau-lib Video Decode and Presentation API for Unix
+xbase-openchrome-lib video driver for VIA Unichrome
+xbase-xvmc-lib X-Video Motion Compensation

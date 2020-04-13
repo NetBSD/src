@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.13.2.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.112 2018/09/13 02:08:33 djm Exp $ */
+/*	$NetBSD: cipher.c,v 1.13.2.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: cipher.c,v 1.114 2020/01/23 10:24:29 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.13.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.13.2.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -50,6 +50,9 @@ __RCSID("$NetBSD: cipher.c,v 1.13.2.1 2019/06/10 21:41:12 christos Exp $");
 #include "ssherr.h"
 #include "digest.h"
 
+#ifndef WITH_OPENSSL
+#define EVP_CIPHER_CTX void
+#endif
 
 struct sshcipher_ctx {
 	int	plaintext;
@@ -133,6 +136,17 @@ cipher_alg_list(char sep, int auth_only)
 		rlen += nlen;
 	}
 	return ret;
+}
+
+const char *
+compression_alg_list(int compression)
+{
+#ifdef WITH_ZLIB
+	return compression ? "zlib@openssh.com,zlib,none" :
+	    "none,zlib@openssh.com,zlib";
+#else
+	return "none";
+#endif
 }
 
 u_int

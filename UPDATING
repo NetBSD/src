@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.295.2.1 2019/06/10 21:41:01 christos Exp $
+$NetBSD: UPDATING,v 1.295.2.2 2020/04/13 07:45:05 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,125 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20200311:
+	GCC 8 ports will need cleaning in src/tools/gcc and
+	src/external/gpl3/gcc due to GCC 8.4 update.
+
+20191118:
+	More architectures were switched to gcc8:
+	    i386, ia64 powerpc64, sparc, sparc64, arm
+	The same comments as in 20191022 apply.
+
+20191112:
+	The LLVM update requires a clean rebuild for all architectures using
+	LLVM during the tools build phase (i386, amd64, aarch64).
+
+20191022:
+	Ports amd64 and aarch64 switched to GCC 8.3 by default.
+	In-place ("expert mode", build.sh -E) builds are not supported
+	when going from a GCC 7 userland to GCC 8. Do a regular
+	build to a different DESTDIR (or preferably: build.sh -U) at least
+	once and install sets, or download comp.{tar.xz,tgz} from the
+	daily builds and install that before doing the next in-place build.
+
+20191001:
+	GCC 8.3 was imported.  Builds of src/tools/gcc may fail if
+	old builds with GCC 7 output now uses GCC 8.  Clean this
+	directory, and also clean src/external/gpl3/gcc.
+
+20190903:
+	Files with names that coincide with existing files' names on
+	case-insensitive file systems were inadvertently committed, for
+	radeon GPU firmware.  We cannot mark these as obsolete for
+	postinstall to fix, so if you updated src since 2019-08-26, and
+	ran build.sh distribution or ran build.sh release, you must
+	manually delete the following files in your DESTDIR (which is
+	usually $OBJDIR/destir.$ARCH), or from / if you have installed
+	them:
+
+		/libdata/firmware/radeon/bonaire_ce.bin
+		/libdata/firmware/radeon/bonaire_mc.bin
+		/libdata/firmware/radeon/bonaire_me.bin
+		/libdata/firmware/radeon/bonaire_mec.bin
+		/libdata/firmware/radeon/bonaire_pfp.bin
+		/libdata/firmware/radeon/bonaire_rlc.bin
+		/libdata/firmware/radeon/bonaire_sdma.bin
+		/libdata/firmware/radeon/bonaire_smc.bin
+		/libdata/firmware/radeon/bonaire_uvd.bin
+		/libdata/firmware/radeon/hainan_ce.bin
+		/libdata/firmware/radeon/hainan_mc.bin
+		/libdata/firmware/radeon/hainan_me.bin
+		/libdata/firmware/radeon/hainan_pfp.bin
+		/libdata/firmware/radeon/hainan_rlc.bin
+		/libdata/firmware/radeon/hainan_smc.bin
+		/libdata/firmware/radeon/hawaii_ce.bin
+		/libdata/firmware/radeon/hawaii_mc.bin
+		/libdata/firmware/radeon/hawaii_me.bin
+		/libdata/firmware/radeon/hawaii_mec.bin
+		/libdata/firmware/radeon/hawaii_pfp.bin
+		/libdata/firmware/radeon/hawaii_rlc.bin
+		/libdata/firmware/radeon/hawaii_sdma.bin
+		/libdata/firmware/radeon/hawaii_smc.bin
+		/libdata/firmware/radeon/kabini_ce.bin
+		/libdata/firmware/radeon/kabini_me.bin
+		/libdata/firmware/radeon/kabini_mec.bin
+		/libdata/firmware/radeon/kabini_pfp.bin
+		/libdata/firmware/radeon/kabini_rlc.bin
+		/libdata/firmware/radeon/kabini_sdma.bin
+		/libdata/firmware/radeon/kaveri_ce.bin
+		/libdata/firmware/radeon/kaveri_me.bin
+		/libdata/firmware/radeon/kaveri_mec.bin
+		/libdata/firmware/radeon/kaveri_mec2.bin
+		/libdata/firmware/radeon/kaveri_pfp.bin
+		/libdata/firmware/radeon/kaveri_rlc.bin
+		/libdata/firmware/radeon/kaveri_sdma.bin
+		/libdata/firmware/radeon/mullins_ce.bin
+		/libdata/firmware/radeon/mullins_me.bin
+		/libdata/firmware/radeon/mullins_mec.bin
+		/libdata/firmware/radeon/mullins_pfp.bin
+		/libdata/firmware/radeon/mullins_rlc.bin
+		/libdata/firmware/radeon/mullins_sdma.bin
+		/libdata/firmware/radeon/oland_ce.bin
+		/libdata/firmware/radeon/oland_mc.bin
+		/libdata/firmware/radeon/oland_me.bin
+		/libdata/firmware/radeon/oland_pfp.bin
+		/libdata/firmware/radeon/oland_rlc.bin
+		/libdata/firmware/radeon/oland_smc.bin
+		/libdata/firmware/radeon/pitcairn_ce.bin
+		/libdata/firmware/radeon/pitcairn_mc.bin
+		/libdata/firmware/radeon/pitcairn_me.bin
+		/libdata/firmware/radeon/pitcairn_pfp.bin
+		/libdata/firmware/radeon/pitcairn_rlc.bin
+		/libdata/firmware/radeon/pitcairn_smc.bin
+		/libdata/firmware/radeon/tahiti_ce.bin
+		/libdata/firmware/radeon/tahiti_mc.bin
+		/libdata/firmware/radeon/tahiti_me.bin
+		/libdata/firmware/radeon/tahiti_pfp.bin
+		/libdata/firmware/radeon/tahiti_rlc.bin
+		/libdata/firmware/radeon/tahiti_smc.bin
+		/libdata/firmware/radeon/verde_ce.bin
+		/libdata/firmware/radeon/verde_mc.bin
+		/libdata/firmware/radeon/verde_me.bin
+		/libdata/firmware/radeon/verde_pfp.bin
+		/libdata/firmware/radeon/verde_rlc.bin
+		/libdata/firmware/radeon/verde_smc.bin
+
+	We will re-import these radeon firmware images another way
+	later.
+
+20190727:
+	The uefi bootloader has gained tftp support and needs a clean
+	build. If you do update builds, manually clean its object
+	directory by something like:
+	cd sys/arch/i386/stand/efiboot && make clean
+
+20190723:
+	The jemalloc allocator in libc is now build without extended
+	debugging (for performance reasons). In update builds make sure
+	to rebuild it completly, by removing all affected object files,
+	including compat builds, something like:
+	cd /usr/obj && find . -type d -name jemalloc|xargs rm -rf
 
 20190207:
 	GCC 7 switched for many ports.  Update builds are likely to fail.

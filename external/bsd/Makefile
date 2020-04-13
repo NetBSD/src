@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59.2.2 2020/04/08 14:04:01 martin Exp $
+#	$NetBSD: Makefile,v 1.59.2.3 2020/04/13 07:45:48 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -26,9 +26,6 @@ SUBDIR+= openldap
 .endif
 .if (${MKLIBCXX} != "no")
 SUBDIR+= libc++
-.endif
-.if (${MKLLVM} != "no" || ${MKLLVMRT} != "no")
-SUBDIR+= llvm
 .endif
 .if (${MKNSD} != "no")
 SUBDIR+= nsd

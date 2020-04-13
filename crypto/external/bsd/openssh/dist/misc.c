@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.17.2.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.137 2019/01/23 21:50:56 dtucker Exp $ */
+/*	$NetBSD: misc.c,v 1.17.2.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: misc.c,v 1.146 2020/01/28 01:49:36 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.17.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17.2.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -88,7 +88,7 @@ set_nonblock(int fd)
 	int val;
 
 	val = fcntl(fd, F_GETFL);
-	if (val < 0) {
+	if (val == -1) {
 		error("fcntl(%d, F_GETFL): %s", fd, strerror(errno));
 		return (-1);
 	}
@@ -112,7 +112,7 @@ unset_nonblock(int fd)
 	int val;
 
 	val = fcntl(fd, F_GETFL);
-	if (val < 0) {
+	if (val == -1) {
 		error("fcntl(%d, F_GETFL): %s", fd, strerror(errno));
 		return (-1);
 	}
@@ -223,12 +223,12 @@ set_rdomain(int fd, const char *name)
 }
 
 /*
- * Wait up to *timeoutp milliseconds for fd to be readable. Updates
+ * Wait up to *timeoutp milliseconds for events on fd. Updates
  * *timeoutp with time remaining.
  * Returns 0 if fd ready or -1 on timeout or error (see errno).
  */
-int
-waitrfd(int fd, int *timeoutp)
+static int
+waitfd(int fd, int *timeoutp, short events)
 {
 	struct pollfd pfd;
 	struct timeval t_start;
@@ -236,7 +236,7 @@ waitrfd(int fd, int *timeoutp)
 
 	monotime_tv(&t_start);
 	pfd.fd = fd;
-	pfd.events = POLLIN;
+	pfd.events = events;
 	for (; *timeoutp >= 0;) {
 		r = poll(&pfd, 1, *timeoutp);
 		oerrno = errno;
@@ -252,6 +252,16 @@ waitrfd(int fd, int *timeoutp)
 	/* timeout */
 	errno = ETIMEDOUT;
 	return -1;
+}
+
+/*
+ * Wait up to *timeoutp milliseconds for fd to be readable. Updates
+ * *timeoutp with time remaining.
+ * Returns 0 if fd ready or -1 on timeout or error (see errno).
+ */
+int
+waitrfd(int fd, int *timeoutp) {
+	return waitfd(fd, timeoutp, POLLIN);
 }
 
 /*
@@ -280,7 +290,7 @@ timeout_connect(int sockfd, const struct sockaddr *serv_addr,
 	} else if (errno != EINPROGRESS)
 		return -1;
 
-	if (waitrfd(sockfd, timeoutp) == -1)
+	if (waitfd(sockfd, timeoutp, POLLIN | POLLOUT) == -1)
 		return -1;
 
 	/* Completed or failed */
@@ -529,7 +539,7 @@ put_host_port(const char *host, u_short port)
 
 	if (port == 0 || port == SSH_DEFAULT_PORT)
 		return(xstrdup(host));
-	if (asprintf(&hoststr, "[%s]:%d", host, (int)port) < 0)
+	if (asprintf(&hoststr, "[%s]:%d", host, (int)port) == -1)
 		fatal("put_host_port: asprintf: %s", strerror(errno));
 	debug3("put_host_port: %s", hoststr);
 	return hoststr;
@@ -1034,13 +1044,18 @@ char *
 percent_expand(const char *string, ...)
 {
 #define EXPAND_MAX_KEYS	16
-	u_int num_keys, i, j;
+	u_int num_keys, i;
 	struct {
 		const char *key;
 		const char *repl;
 	} keys[EXPAND_MAX_KEYS];
-	char buf[4096];
+	struct sshbuf *buf;
 	va_list ap;
+	int r;
+	char *ret;
+
+	if ((buf = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
 
 	/* Gather keys */
 	va_start(ap, string);
@@ -1057,14 +1072,13 @@ percent_expand(const char *string, ...)
 	va_end(ap);
 
 	/* Expand string */
-	*buf = '\0';
 	for (i = 0; *string != '\0'; string++) {
 		if (*string != '%') {
  append:
-			buf[i++] = *string;
-			if (i >= sizeof(buf))
-				fatal("%s: string too long", __func__);
-			buf[i] = '\0';
+			if ((r = sshbuf_put_u8(buf, *string)) != 0) {
+				fatal("%s: sshbuf_put_u8: %s",
+				    __func__, ssh_err(r));
+			}
 			continue;
 		}
 		string++;
@@ -1073,18 +1087,23 @@ percent_expand(const char *string, ...)
 			goto append;
 		if (*string == '\0')
 			fatal("%s: invalid format", __func__);
-		for (j = 0; j < num_keys; j++) {
-			if (strchr(keys[j].key, *string) != NULL) {
-				i = strlcat(buf, keys[j].repl, sizeof(buf));
-				if (i >= sizeof(buf))
-					fatal("%s: string too long", __func__);
+		for (i = 0; i < num_keys; i++) {
+			if (strchr(keys[i].key, *string) != NULL) {
+				if ((r = sshbuf_put(buf, keys[i].repl,
+				    strlen(keys[i].repl))) != 0) {
+					fatal("%s: sshbuf_put: %s",
+					    __func__, ssh_err(r));
+				}
 				break;
 			}
 		}
-		if (j >= num_keys)
+		if (i >= num_keys)
 			fatal("%s: unknown key %%%c", __func__, *string);
 	}
-	return (xstrdup(buf));
+	if ((ret = sshbuf_dup_string(buf)) == NULL)
+		fatal("%s: sshbuf_dup_string failed", __func__);
+	sshbuf_free(buf);
+	return ret;
 #undef EXPAND_MAX_KEYS
 }
 
@@ -1118,7 +1137,7 @@ tun_open(int tun, int mode, char **ifname)
 		return -1;
 	}
 
-	if (fd < 0) {
+	if (fd == -1) {
 		debug("%s: %s open: %s", __func__, name, strerror(errno));
 		return -1;
 	}
@@ -1214,6 +1233,33 @@ tohex(const void *vp, size_t l)
 	}
 	return (r);
 }
+
+/*
+ * Extend string *sp by the specified format. If *sp is not NULL (or empty),
+ * then the separator 'sep' will be prepended before the formatted arguments.
+ * Extended strings are heap allocated.
+ */
+void
+xextendf(char **sp, const char *sep, const char *fmt, ...)
+{
+	va_list ap;
+	char *tmp1, *tmp2;
+
+	va_start(ap, fmt);
+	xvasprintf(&tmp1, fmt, ap);
+	va_end(ap);
+
+	if (*sp == NULL || **sp == '\0') {
+		free(*sp);
+		*sp = tmp1;
+		return;
+	}
+	xasprintf(&tmp2, "%s%s%s", *sp, sep == NULL ? "" : sep, tmp1);
+	free(tmp1);
+	free(*sp);
+	*sp = tmp2;
+}
+
 
 u_int64_t
 get_u64(const void *vp)
@@ -1479,6 +1525,9 @@ static const struct {
 	{ "cs6", IPTOS_DSCP_CS6 },
 	{ "cs7", IPTOS_DSCP_CS7 },
 	{ "ef", IPTOS_DSCP_EF },
+#ifdef IPTOS_DSCP_LE
+	{ "le", IPTOS_DSCP_LE },
+#endif
 	{ "lowdelay", IPTOS_LOWDELAY },
 	{ "throughput", IPTOS_THROUGHPUT },
 	{ "reliability", IPTOS_RELIABILITY },
@@ -1543,7 +1592,7 @@ unix_listener(const char *path, int backlog, int unlink_first)
 	}
 
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
+	if (sock == -1) {
 		saved_errno = errno;
 		error("%s: socket: %.100s", __func__, strerror(errno));
 		errno = saved_errno;
@@ -1553,7 +1602,7 @@ unix_listener(const char *path, int backlog, int unlink_first)
 		if (unlink(path) != 0 && errno != ENOENT)
 			error("unlink(%s): %.100s", path, strerror(errno));
 	}
-	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0) {
+	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) == -1) {
 		saved_errno = errno;
 		error("%s: cannot bind to path %s: %s",
 		    __func__, path, strerror(errno));
@@ -1561,7 +1610,7 @@ unix_listener(const char *path, int backlog, int unlink_first)
 		errno = saved_errno;
 		return -1;
 	}
-	if (listen(sock, backlog) < 0) {
+	if (listen(sock, backlog) == -1) {
 		saved_errno = errno;
 		error("%s: cannot listen on path %s: %s",
 		    __func__, path, strerror(errno));
@@ -1831,7 +1880,7 @@ safe_path(const char *name, struct stat *stp, const char *pw_dir,
 		}
 		strlcpy(buf, cp, sizeof(buf));
 
-		if (stat(buf, &st) < 0 ||
+		if (stat(buf, &st) == -1 ||
 		    (st.st_uid != 0 && st.st_uid != uid) ||
 		    (st.st_mode & 022) != 0) {
 			snprintf(err, errlen,
@@ -1866,7 +1915,7 @@ safe_path_fd(int fd, const char *file, struct passwd *pw,
 	struct stat st;
 
 	/* check the open file to avoid races */
-	if (fstat(fd, &st) < 0) {
+	if (fstat(fd, &st) == -1) {
 		snprintf(err, errlen, "cannot stat file %s: %s",
 		    file, strerror(errno));
 		return -1;
@@ -2064,4 +2113,103 @@ int
 path_absolute(const char *path)
 {
 	return (*path == '/') ? 1 : 0;
+}
+
+void
+skip_space(char **cpp)
+{
+	char *cp;
+
+	for (cp = *cpp; *cp == ' ' || *cp == '\t'; cp++)
+		;
+	*cpp = cp;
+}
+
+/* authorized_key-style options parsing helpers */
+
+/*
+ * Match flag 'opt' in *optsp, and if allow_negate is set then also match
+ * 'no-opt'. Returns -1 if option not matched, 1 if option matches or 0
+ * if negated option matches.
+ * If the option or negated option matches, then *optsp is updated to
+ * point to the first character after the option.
+ */
+int
+opt_flag(const char *opt, int allow_negate, const char **optsp)
+{
+	size_t opt_len = strlen(opt);
+	const char *opts = *optsp;
+	int negate = 0;
+
+	if (allow_negate && strncasecmp(opts, "no-", 3) == 0) {
+		opts += 3;
+		negate = 1;
+	}
+	if (strncasecmp(opts, opt, opt_len) == 0) {
+		*optsp = opts + opt_len;
+		return negate ? 0 : 1;
+	}
+	return -1;
+}
+
+char *
+opt_dequote(const char **sp, const char **errstrp)
+{
+	const char *s = *sp;
+	char *ret;
+	size_t i;
+
+	*errstrp = NULL;
+	if (*s != '"') {
+		*errstrp = "missing start quote";
+		return NULL;
+	}
+	s++;
+	if ((ret = malloc(strlen((s)) + 1)) == NULL) {
+		*errstrp = "memory allocation failed";
+		return NULL;
+	}
+	for (i = 0; *s != '\0' && *s != '"';) {
+		if (s[0] == '\\' && s[1] == '"')
+			s++;
+		ret[i++] = *s++;
+	}
+	if (*s == '\0') {
+		*errstrp = "missing end quote";
+		free(ret);
+		return NULL;
+	}
+	ret[i] = '\0';
+	s++;
+	*sp = s;
+	return ret;
+}
+
+int
+opt_match(const char **opts, const char *term)
+{
+	if (strncasecmp((*opts), term, strlen(term)) == 0 &&
+	    (*opts)[strlen(term)] == '=') {
+		*opts += strlen(term) + 1;
+		return 1;
+	}
+	return 0;
+}
+
+sshsig_t
+ssh_signal(int signum, sshsig_t handler)
+{
+	struct sigaction sa, osa;
+
+	/* mask all other signals while in handler */
+	bzero(&sa, sizeof(sa));
+	sa.sa_handler = handler;
+	sigfillset(&sa.sa_mask);
+	if (signum != SIGALRM)
+		sa.sa_flags = SA_RESTART;
+	if (sigaction(signum, &sa, &osa) == -1) {
+		debug3("sigaction(%s): %s", strsignal(signum), strerror(errno));
+		return SIG_ERR;
+	}
+	return osa.sa_handler;
 }

@@ -2089,7 +2089,7 @@ iscsi_target_listen(iscsi_target_t *tgt)
 	target_session_t	*sess;
 	socklen_t		remoteAddrLen;
 	socklen_t		localAddrLen;
-	char			targetaddress[1024];
+	char			targetaddress[2 * 1024];
 	char			remote[1024];
 	char			local[1024];
 	char			*config;

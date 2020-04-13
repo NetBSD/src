@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.16.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.107 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kex.h,v 1.16.4.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: kex.h,v 1.109 2019/09/06 05:23:55 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -30,9 +30,17 @@
 #include "mac.h"
 #include "crypto_api.h"
 
-#ifdef WITH_LEAKMALLOC
-#include "leakmalloc.h"
-#endif
+#ifdef WITH_OPENSSL
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#else /* OPENSSL */
+#define BIGNUM		void
+#define DH		void
+#define EC_KEY		void
+#define EC_GROUP	void
+#endif /* WITH_OPENSSL */
 
 #define KEX_COOKIE_LEN	16
 

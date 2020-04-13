@@ -386,6 +386,11 @@ _warc_read(struct archive_read *a, const void **buf, size_t *bsz, int64_t *off)
 		return (ARCHIVE_EOF);
 	}
 
+	if (w->unconsumed) {
+		__archive_read_consume(a, w->unconsumed);
+		w->unconsumed = 0U;
+	}
+
 	rab = __archive_read_ahead(a, 1U, &nrd);
 	if (nrd < 0) {
 		*bsz = 0U;
@@ -739,8 +744,9 @@ _warc_rdlen(const char *buf, size_t bsz)
 	/* there must be at least one digit */
 	if (!isdigit((unsigned char)*val))
 		return -1;
+	errno = 0;
 	len = strtol(val, &on, 10);
-	if (on != eol) {
+	if (errno != 0 || on != eol) {
 		/* line must end here */
 		return -1;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46.12.1 2020/04/08 14:03:55 martin Exp $
+#	$NetBSD: Makefile,v 1.46.12.2 2020/04/13 07:45:36 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 .include <bsd.kernobj.mk>
 
 IMAGE=		miniroot.fs
-IMAGESIZE=	6m
+IMAGESIZE=	6500k
 MAKEFS_FLAGS+=	-o density=8k
 
 KERNEL3=	${KERNOBJDIR}/INSTALL/netbsd
@@ -14,6 +14,7 @@ KERNEL3X=	${KERNOBJDIR}/INSTALL3X/netbsd
 
 WARNS=		1
 DBG=		-Os
+USE_WIDECHAR=	no
 
 CRUNCHBIN=	instbin
 
@@ -45,6 +46,8 @@ IMAGE_RELEASEDIR=	installation/miniroot
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACK_CURSES=yes
+.MAKEFLAGS+=	USE_WIDECHAR=no
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
 

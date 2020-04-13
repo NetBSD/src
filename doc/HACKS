@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.187.10.1 2019/06/10 21:42:38 christos Exp $
+# $NetBSD: HACKS,v 1.187.10.2 2020/04/13 07:45:37 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -127,7 +127,6 @@ file	dist/ntp/ntpd/ntp_request.c	: 1.4
 file	dist/ntp/ntpd/refclock_shm.c	: 1.4
 file	dist/ntp/sntp/timing.c		: 1.3
 file	dist/pppd/pppstats/pppstats.c	: 1.3
-file	dist/smbfs/lib/smb/rap.c	: 1.6
 file	dist/tcpdump/print-zephyr.c	: 1.5
 file	distrib/utils/sysinst/aout2elf.c : 1.12
 file	gnu/libexec/uucp/uucico/uucico.c : 1.6
@@ -234,7 +233,6 @@ file	sbin/fdisk/Makefile		: 1.35
 file	sbin/fsck_ext2fs/Makefile	: 1.11
 file	sbin/fsck_ffs/Makefile		: 1.29
 file	sbin/fsdb/Makefile		: 1.18
-file	sbin/mount_smbfs/Makefile	: 1.4
 file	sbin/newfs/Makefile		: 1.30
 file	sbin/newfs_sysvbfs/Makefile	: 1.2
 file	sbin/restore/Makefile		: 1.23
@@ -894,6 +892,39 @@ file	src/sys/arch/vax/boot/boot/Makefile: 1.41
 descr	/boot does not work when compiled with -O2 and gcc 4.8
 kcah
 
+port	vax
+hack	compile nir.c in gallium with -O1
+cdate	Mon Oct 28 14:39:35 EDT 2019
+who	christos
+file	/cvsroot/src/external/mit/xorg/lib/gallium/Makefile 1.36
+descr	gallium does not compile.
+kcah
+
+port	aarch64
+hack	compile ex_filter.c in vi with -O0
+cdate	Mon Oct 28 14:39:35 EDT 2019
+who	christos
+file	/cvsroot/src/external/bsd/nvi/usr.bin/nvi/Makefile 1.20
+descr	":%! sort" core-dumps, tm is NULL but was not NULL on entry.
+kcah
+
+port	sh3
+hack	compile parse.c in battlestar with -Wno-restrict
+cdate	Mon Oct 28 14:39:35 EDT 2019
+who	christos
+file	/cvsroot/src/games/battlestar/Makefile 1.11
+descr	fails to compile, confused by char words[][];
+	strcpy(words[n - 1], words[n + 1]);
+kcah
+
+port	sh3
+hack	compile ddns.c in dhcpcd with no-stringop-overflow
+cdate	Tue Oct 29 20:25:59 EDT 2019
+who	christos
+file	/cvsroot/src/external/mpl/dhcp/bin/server/Makefile 1.2
+descr	fails to compile, confused by builtin_object_size in strcat(p, ".in..")
+kcah
+
 port	arm
 hack	avoid using labels in a 12-bit constant.
 who	matt
@@ -928,4 +959,27 @@ who	christos
 file	src/libexec/ld.elf_so/Makefile: 1.141
 descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
 	second pass loop with elm == 0xffffffff
+kcah
+
+port	alpha
+hack	GCC 7.4/8.3: userland binaries crash randomly (port-alpha/54307)
+cdate	Fri Nov  1 20:43:35 UTC 2019
+who	rin
+file	src/external/bsd/jemalloc/lib/Makefile.inc: 1.11
+descr	rtree.c and tcache.c need to be compiled with -O0, alternatively,
+	you can compile whole jemalloc with -DJEMALLOC_DEBUG.
+kcah
+
+port	powerpc
+hack	compile tc.c, logerr.c, ubsan.c with -O0 for clang
+cdate	Wed Jan 29 17:40:19 EST 2020
+who	christos
+file	src/external/bsd/atf/lib/libatf-c/Makefile: 1.22
+file	src/external/bsd/dhcpcd/sbin/dhcpcd/Makefile: 1.49
+file	src/tests/lib/libc/misc/Makefile: 1.5
+
+descr	Disable optimization on tc.c, logerr.c, ubsan.c crashes:
+	lib/libLLVMCodeGen/../../llvm/../../external/apache2/llvm/lib/..\
+	/dist/llvm/include/llvm/CodeGen/MachineFrameInfo.h", line 495, \
+	function "__int64_t llvm::MachineFrameInfo::getObjectOffset(int) const"
 kcah

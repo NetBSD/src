@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.319.2.2 2020/04/08 14:03:53 martin Exp $
+# $NetBSD: shl.mi,v 1.319.2.3 2020/04/13 07:45:32 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,7 +7,7 @@
 ./usr/lib/crtendS.o				comp-c-lib		compatfile
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
+./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,cxx,gcc
 ./usr/lib/libasn1_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib		compatfile,picinstall,atf
 ./usr/lib/libatf-c_pic.a			comp-atf-piclib		compatfile,picinstall,atf
@@ -49,7 +49,7 @@
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete
-./usr/lib/libgcc_eh.a				comp-c-lib		compatfile,gcccmds
+./usr/lib/libgcc_eh.a				comp-c-lib		compatfile,gcc
 ./usr/lib/libgcc_eh_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_eh_pic.a			comp-obsolete		obsolete
 ./usr/lib/libgcc_pic.a				comp-obsolete		obsolete
@@ -88,7 +88,7 @@
 ./usr/lib/liblber_pic.a				comp-ldap-piclib	compatfile,picinstall,ldap
 ./usr/lib/libldap_pic.a				comp-ldap-piclib	compatfile,picinstall,ldap
 ./usr/lib/libldap_r_pic.a			comp-ldap-piclib	compatfile,picinstall,ldap
-./usr/lib/liblsan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
+./usr/lib/liblsan_pic.a				comp-c-piclib		compatfile,picinstall,cxx,gcc
 ./usr/lib/liblua_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/liblutok_pic.a			comp-c-piclib		compatfile,picinstall,kyua
 ./usr/lib/liblwres_pic.a			comp-obsolete		obsolete
@@ -271,7 +271,7 @@
 ./usr/lib/libtpm_unseal_pic.a			comp-tpm-lib		compatfile,picinstall,tpm
 ./usr/lib/libtre_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libtspi_pic.a				comp-c-piclib		compatfile,picinstall,tpm
-./usr/lib/libubsan_pic.a			comp-c-piclib		compatfile,picinstall,gcc
+./usr/lib/libubsan_pic.a			comp-c-piclib		compatfile,picinstall,cxx,gcc
 ./usr/lib/libukfs_pic.a				comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/libumem_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libunbound_pic.a			comp-c-piclib		compatfile,picinstall,unbound

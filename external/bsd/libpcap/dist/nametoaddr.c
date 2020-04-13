@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nametoaddr.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -236,7 +236,22 @@ pcap_nametonetaddr(const char *name)
 	int h_errnoval;
 	int err;
 
-	err = getnetbyname_r(name, &result_buf, buf, sizeof buf, &np,
+	/*
+	 * Apparently, the man page at
+	 *
+	 *    http://man7.org/linux/man-pages/man3/getnetbyname_r.3.html
+	 *
+	 * lies when it says
+	 *
+	 *    If the function call successfully obtains a network record,
+	 *    then *result is set pointing to result_buf; otherwise, *result
+	 *    is set to NULL.
+	 *
+	 * and, in fact, at least in some versions of GNU libc, it does
+	 * *not* always get set if getnetbyname_r() succeeds.
+	 */
+	np = NULL;
+ 	err = getnetbyname_r(name, &result_buf, buf, sizeof buf, &np,
 	    &h_errnoval);
 	if (err != 0) {
 		/*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.5 2015/12/28 19:32:22 khorben Exp $
+.\"	$NetBSD: ipf.5,v 1.5.16.1 2020/04/13 07:46:01 martin Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -880,7 +880,7 @@ through without needing to explicitly allow all fragment body packets.
 An example of how this is done is as follows:
 .PP
 .nf
-pass in proto udp from any prot = 2049 to any with frags keep fags
+pass in proto udp from any prot = 2049 to any with frags keep frags
 .fi
 .SH Building a tree of rules
 .PP

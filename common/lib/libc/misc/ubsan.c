@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.5.2.2 2019/06/10 21:41:07 christos Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.5.2.3 2020/04/13 07:45:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.5.2.2 2019/06/10 21:41:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.5.2.3 2020/04/13 07:45:08 martin Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.5.2.2 2019/06/10 21:41:07 christos Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.5.2.3 2020/04/13 07:45:08 martin Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -77,6 +77,12 @@ __RCSID("$NetBSD: ubsan.c,v 1.5.2.2 2019/06/10 21:41:07 christos Exp $");
 #define SET(t, f)	((t) |= (f))
 #define ISSET(t, f)	((t) & (f))
 #define CLR(t, f)	((t) &= ~(f))
+#endif
+
+#ifdef UBSAN_ALWAYS_FATAL
+static const bool alwaysFatal = true;
+#else
+static const bool alwaysFatal = false;
 #endif
 
 #define REINTERPRET_CAST(__dt, __st)	((__dt)(__st))
@@ -232,6 +238,19 @@ struct CFloatCastOverflowData {
 	struct CTypeDescriptor *mToType;
 };
 
+struct CImplicitConversionData {
+	struct CSourceLocation mLocation;
+	struct CTypeDescriptor *mFromType;
+	struct CTypeDescriptor *mToType;
+	uint8_t mKind;
+};
+
+struct CAlignmentAssumptionData {
+	struct CSourceLocation mLocation;
+	struct CSourceLocation mAssumptionLocation;
+	struct CTypeDescriptor *mType;
+};
+
 /* Local utility functions */
 static void Report(bool isFatal, const char *pFormat, ...) __printflike(2, 3);
 static bool isAlreadyReported(struct CSourceLocation *pLocation);
@@ -255,6 +274,7 @@ static void DeserializeNumber(char *szLocation, char *pBuffer, size_t zBUfferLen
 static const char *DeserializeTypeCheckKind(uint8_t hhuTypeCheckKind);
 static const char *DeserializeBuiltinCheckKind(uint8_t hhuBuiltinCheckKind);
 static const char *DeserializeCFICheckKind(uint8_t hhuCFICheckKind);
+static const char *DeserializeImplicitConversionCheckKind(uint8_t hhuImplicitConversionCheckKind);
 static bool isNegativeNumber(char *szLocation, struct CTypeDescriptor *pType, unsigned long ulNumber);
 static bool isShiftExponentTooLarge(char *szLocation, struct CTypeDescriptor *pType, unsigned long ulNumber, size_t zWidth);
 
@@ -264,6 +284,8 @@ intptr_t __ubsan_vptr_type_cache[128];
 /* Public symbols used in the instrumentation of the code generation part */
 void __ubsan_handle_add_overflow(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS);
 void __ubsan_handle_add_overflow_abort(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS);
+void __ubsan_handle_alignment_assumption(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
+void __ubsan_handle_alignment_assumption_abort(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
 void __ubsan_handle_builtin_unreachable(struct CUnreachableData *pData);
 void __ubsan_handle_cfi_bad_type(struct CCFICheckFailData *pData, unsigned long ulVtable, bool bValidVtable, bool FromUnrecoverableHandler, unsigned long ProgramCounter, unsigned long FramePointer);
 void __ubsan_handle_cfi_check_fail(struct CCFICheckFailData *pData, unsigned long ulValue, unsigned long ulValidVtable);
@@ -276,6 +298,8 @@ void __ubsan_handle_float_cast_overflow(struct CFloatCastOverflowData *pData, un
 void __ubsan_handle_float_cast_overflow_abort(struct CFloatCastOverflowData *pData, unsigned long ulFrom);
 void __ubsan_handle_function_type_mismatch(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction);
 void __ubsan_handle_function_type_mismatch_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction);
+void __ubsan_handle_function_type_mismatch_v1(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI);
+void __ubsan_handle_function_type_mismatch_v1_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI);
 void __ubsan_handle_invalid_builtin(struct CInvalidBuiltinData *pData);
 void __ubsan_handle_invalid_builtin_abort(struct CInvalidBuiltinData *pData);
 void __ubsan_handle_load_invalid_value(struct CInvalidValueData *pData, unsigned long ulVal);
@@ -307,6 +331,8 @@ void __ubsan_handle_type_mismatch_v1(struct CTypeMismatchData_v1 *pData, unsigne
 void __ubsan_handle_type_mismatch_v1_abort(struct CTypeMismatchData_v1 *pData, unsigned long ulPointer);
 void __ubsan_handle_vla_bound_not_positive(struct CVLABoundData *pData, unsigned long ulBound);
 void __ubsan_handle_vla_bound_not_positive_abort(struct CVLABoundData *pData, unsigned long ulBound);
+void __ubsan_handle_implicit_conversion(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo);
+void __ubsan_handle_implicit_conversion_abort(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo);
 void __ubsan_get_current_report_data(const char **ppOutIssueKind, const char **ppOutMessage, const char **ppOutFilename, uint32_t *pOutLine, uint32_t *pOutCol, char **ppOutMemoryAddr);
 
 static void HandleOverflow(bool isFatal, struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS, const char *szOperation);
@@ -326,6 +352,7 @@ static void HandleMissingReturn(bool isFatal, struct CUnreachableData *pData);
 static void HandleNonnullArg(bool isFatal, struct CNonNullArgData *pData);
 static void HandleNonnullReturn(bool isFatal, struct CNonNullReturnData *pData, struct CSourceLocation *pLocationPointer);
 static void HandlePointerOverflow(bool isFatal, struct CPointerOverflowData *pData, unsigned long ulBase, unsigned long ulResult);
+static void HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
 
 static void
 HandleOverflow(bool isFatal, struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS, const char *szOperation)
@@ -678,6 +705,54 @@ HandlePointerOverflow(bool isFatal, struct CPointerOverflowData *pData, unsigned
 	       szLocation, ulBase, ulResult);
 }
 
+static void
+HandleImplicitConversion(bool isFatal, struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+	char szLocation[LOCATION_MAXLEN];
+	char szFrom[NUMBER_MAXLEN];
+	char szTo[NUMBER_MAXLEN];
+
+	ASSERT(pData);
+
+	if (isAlreadyReported(&pData->mLocation))
+		return;
+
+	DeserializeLocation(szLocation, LOCATION_MAXLEN, &pData->mLocation);
+	DeserializeNumber(szLocation, szFrom, NUMBER_MAXLEN, pData->mFromType, ulFrom);
+	DeserializeNumber(szLocation, szTo, NUMBER_MAXLEN, pData->mToType, ulTo);
+
+	Report(isFatal, "UBSan: Undefined Behavior in %s, %s from %s %zu-bit %s (%s) to %s changed the value to %s %zu-bit %s\n",
+	       szLocation, DeserializeImplicitConversionCheckKind(pData->mKind), szFrom, zDeserializeTypeWidth(pData->mFromType), ISSET(pData->mFromType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned", pData->mFromType->mTypeName, pData->mToType->mTypeName, szTo, zDeserializeTypeWidth(pData->mToType), ISSET(pData->mToType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned");
+}
+
+static void
+HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
+{
+	char szLocation[LOCATION_MAXLEN];
+	char szAssumptionLocation[LOCATION_MAXLEN];
+	unsigned long ulRealPointer;
+
+	ASSERT(pData);
+
+	if (isAlreadyReported(&pData->mLocation))
+		return;
+
+	DeserializeLocation(szLocation, LOCATION_MAXLEN, &pData->mLocation);
+
+	ulRealPointer = ulPointer - ulOffset;
+
+	if (pData->mAssumptionLocation.mFilename != NULL) {
+		DeserializeLocation(szAssumptionLocation, LOCATION_MAXLEN,
+		    &pData->mAssumptionLocation);
+		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx), asumption made in %s\n",
+		    szLocation, ulAlignment, ulRealPointer, ulOffset,
+		    szAssumptionLocation);
+	} else {
+		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx)\n",
+		    szLocation, ulAlignment, ulRealPointer, ulOffset);
+	}
+}
+
 /* Definions of public symbols emitted by the instrumentation code */
 void
 __ubsan_handle_add_overflow(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS)
@@ -695,6 +770,24 @@ __ubsan_handle_add_overflow_abort(struct COverflowData *pData, unsigned long ulL
 	ASSERT(pData);
 
 	HandleOverflow(true, pData, ulLHS, ulRHS, PLUS_STRING);
+}
+
+void
+__ubsan_handle_alignment_assumption(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
+{
+
+	ASSERT(pData);
+
+	HandleAlignmentAssumption(false, pData, ulPointer, ulAlignment, ulOffset);
+}
+
+void
+__ubsan_handle_alignment_assumption_abort(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
+{
+
+	ASSERT(pData);
+
+	HandleAlignmentAssumption(true, pData, ulPointer, ulAlignment, ulOffset);
 }
 
 void
@@ -802,7 +895,45 @@ __ubsan_handle_function_type_mismatch_abort(struct CFunctionTypeMismatchData *pD
 
 	ASSERT(pData);
 
+	HandleFunctionTypeMismatch(true, pData, ulFunction);
+}
+
+void
+__ubsan_handle_function_type_mismatch_v1(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI)
+{
+
+	ASSERT(pData);
+#if 0
+	/*
+	 * Unimplemented.
+	 *
+	 * This UBSan handler is special as the check has to be impelemented
+	 * in an implementation. In order to handle it there is need to
+	 * introspect into C++ ABI internals (RTTI) and use low-level
+	 * C++ runtime interfaces.
+	 */
+
 	HandleFunctionTypeMismatch(false, pData, ulFunction);
+#endif
+}
+
+void
+__ubsan_handle_function_type_mismatch_v1_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI)
+{
+
+	ASSERT(pData);
+#if 0
+	/*
+	 * Unimplemented.
+	 *
+	 * This UBSan handler is special as the check has to be impelemented
+	 * in an implementation. In order to handle it there is need to
+	 * introspect into C++ ABI internals (RTTI) and use low-level
+	 * C++ runtime interfaces.
+	 */
+
+	HandleFunctionTypeMismatch(true, pData, ulFunction);
+#endif
 }
 
 void
@@ -1089,6 +1220,23 @@ __ubsan_handle_vla_bound_not_positive_abort(struct CVLABoundData *pData, unsigne
 }
 
 void
+__ubsan_handle_implicit_conversion(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+
+	ASSERT(pData);
+
+	HandleImplicitConversion(false, pData, ulFrom, ulTo);
+}
+
+void
+__ubsan_handle_implicit_conversion_abort(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+	ASSERT(pData);
+
+	HandleImplicitConversion(true, pData, ulFrom, ulTo);
+}
+
+void
 __ubsan_get_current_report_data(const char **ppOutIssueKind, const char **ppOutMessage, const char **ppOutFilename, uint32_t *pOutLine, uint32_t *pOutCol, char **ppOutMemoryAddr)
 {
 	/*
@@ -1122,7 +1270,7 @@ Report(bool isFatal, const char *pFormat, ...)
 
 	va_start(ap, pFormat);
 #if defined(_KERNEL)
-	if (isFatal)
+	if (isFatal || alwaysFatal)
 		vpanic(pFormat, ap);
 	else
 		vprintf(pFormat, ap);
@@ -1190,7 +1338,7 @@ Report(bool isFatal, const char *pFormat, ...)
 		ubsan_vsyslog(LOG_DEBUG | LOG_USER, &SyslogData, pFormat, tmp);
 		va_end(tmp);
 	}
-	if (isFatal || ISSET(ubsan_flags, UBSAN_ABORT)) {
+	if (isFatal || alwaysFatal || ISSET(ubsan_flags, UBSAN_ABORT)) {
 		abort();
 		__unreachable();
 		/* NOTREACHED */
@@ -1397,7 +1545,8 @@ DeserializeFloatInlined(char *pBuffer, size_t zBUfferLength, struct CTypeDescrip
 
 	switch (zDeserializeTypeWidth(pType)) {
 	case WIDTH_64:
-		memcpy(&D, &ulNumber, sizeof(double));
+		ASSERT(sizeof(D) == sizeof(ulNumber));
+		memcpy(&D, &ulNumber, sizeof(ulNumber));
 		snprintf(pBuffer, zBUfferLength, "%g", D);
 		break;
 	case WIDTH_32:
@@ -1632,6 +1781,22 @@ DeserializeCFICheckKind(uint8_t hhuCFICheckKind)
 	ASSERT(__arraycount(rgczCFICheckKinds) > hhuCFICheckKind);
 
 	return rgczCFICheckKinds[hhuCFICheckKind];
+}
+
+static const char *
+DeserializeImplicitConversionCheckKind(uint8_t hhuImplicitConversionCheckKind)
+{
+	const char *rgczImplicitConversionCheckKind[] = {
+		"integer truncation",			/* Not used since 2018 October 11th */
+		"unsigned integer truncation",
+		"signed integer truncation",
+		"integer sign change",
+		"signed integer trunctation or sign change",
+	};
+
+	ASSERT(__arraycount(rgczImplicitConversionCheckKind) > hhuImplicitConversionCheckKind);
+
+	return rgczImplicitConversionCheckKind[hhuImplicitConversionCheckKind];
 }
 
 static bool

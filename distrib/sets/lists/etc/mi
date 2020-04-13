@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.251.4.1 2019/06/10 21:42:30 christos Exp $
+# $NetBSD: mi,v 1.251.4.2 2020/04/13 07:45:32 martin Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -323,6 +323,7 @@
 ./etc/rc.d/yppasswdd				etc-nis-rc		yp
 ./etc/rc.d/ypserv				etc-nis-rc		yp
 ./etc/rc.d/ypset				etc-obsolete		obsolete
+./etc/rc.d/zfs					etc-sys-rc		zfs
 ./etc/rc.lkm					etc-obsolete		obsolete
 ./etc/rc.local					etc-sys-rc
 ./etc/rc.shutdown				etc-sys-rc

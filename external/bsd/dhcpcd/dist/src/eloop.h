@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -88,6 +89,7 @@ int eloop_signal_mask(struct eloop *, sigset_t *oldset);
 
 struct eloop * eloop_new(void);
 int eloop_requeue(struct eloop *);
+void eloop_clear(struct eloop *);
 void eloop_free(struct eloop *);
 void eloop_exit(struct eloop *, int);
 int eloop_start(struct eloop *, sigset_t *);

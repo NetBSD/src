@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2008/05/01 01:58:10 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.9.64.1 2020/04/13 07:45:43 martin Exp $
 #
 #	etc.ofppc/Makefile.inc -- ofppc-specific etc Makefile targets
 #
@@ -6,9 +6,17 @@
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
+.if ${MACHINE_ARCH} == "powerpc"
+
 KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS+=		INSTALL
+
+.else
+
+KERNEL_SETS=		GENERIC64
+
+.endif
 
 MD_INSTALLATION_DIRS=	installation/netboot
 

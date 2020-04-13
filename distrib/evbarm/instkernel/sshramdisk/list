@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2013/03/19 22:16:53 garbled Exp $
+#	$NetBSD: list,v 1.1.36.1 2020/04/13 07:45:26 martin Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin crypto/external/bsd/openssh/bin/sshd usr.bin usr.sbin
 
@@ -88,4 +88,4 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 COPY	${CURDIR}/dot.profile		.profile
 COPY	${CURDIR}/inst.profile		inst/.profile
 COPY	${CURDIR}/sshd_config		etc/ssh/sshd_config
-COPY	${CURDIR}/ssh_host_dsa_key	etc/ssh/ssh_host_dsa_key 600
+COPY	${CURDIR}/ssh_host_rsa_key	etc/ssh/ssh_host_rsa_key 600

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.ramdisk,v 1.13 2018/03/13 02:22:43 mrg Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.13.2.1 2020/04/13 07:45:28 martin Exp $
+
+NOSANITIZER=	# defined
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.47.6.1 2019/06/10 21:41:02 christos Exp $
+.\"	$NetBSD: df.1,v 1.47.6.2 2020/04/13 07:45:05 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd August 27, 2018
+.Dd September 23, 2019
 .Dt DF 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl agln
+.Op Fl aglnW
 .Op Fl Ghkm | Fl ihkm | Fl Pk
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
@@ -62,7 +62,7 @@ options below).
 Note that the printed count of available blocks takes
 .Va minfree
 into account, and thus will be negative when the number of free blocks
-on the filesystem is less than
+on the file system is less than
 .Va minfree .
 .Pp
 The following options are available:
@@ -162,16 +162,26 @@ option may not be specified with
 .Fl P .
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
-filesystems of the specified type.
+file systems of the specified type.
 More than one type may be specified in a comma-separated list.
-The list of filesystem types can be prefixed with
+The list of file system types can be prefixed with
 .Dq no
-to specify the filesystem types for which action should
+to specify the file system types for which action should
 .Em not
 be taken.
 If a file system is given on the command line that is not of
 the specified type, a warning is issued and no information is given on
 that file system.
+.It Fl W
+Print the wedge name instead of the mounted from device for wedges.
+The wedge name is prefixed with
+.Dq NAME=
+as in
+.Xr fstab 5 .
+If the wedge information cannot be obtained for one or more
+file systems, the
+.Fl W
+option is silently ignored for those file systems.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE

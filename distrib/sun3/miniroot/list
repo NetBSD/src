@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.29 2013/11/30 08:27:18 nakayama Exp $
+# $NetBSD: list,v 1.29.26.1 2020/04/13 07:45:36 martin Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -150,4 +150,4 @@ SPECIAL	edlabel		srcdir	distrib/utils/edlabel
 ARGVLN	sh -sh
 
 LIBS	libhack.o
-LIBS	-lrmt -ledit -lutil -lcurses -lterminfo -lcrypt -ll -lm -lkvm -lz -lprop
+LIBS	-lrmt -ledit -lutil -lcrypt -ll -lm -lkvm -lz -lprop

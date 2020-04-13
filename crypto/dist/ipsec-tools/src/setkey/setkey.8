@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.34.34.1 2019/06/10 21:41:09 christos Exp $
+.\"	$NetBSD: setkey.8,v 1.34.34.2 2020/04/13 07:45:08 martin Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 19, 2018
+.Dd July 23, 2019
 .Dt SETKEY 8
 .Os
 .\"
@@ -161,59 +161,77 @@ Lines starting with hash signs
 are treated as comment lines.
 .Bl -tag -width Ds
 .It Cm add Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
-Oo Ar extensions Oc Ar algorithm ... Li ;
+Oo Ar extensions Oc Ar algorithm ... ;
 Add an SAD entry.
 .Cm add
 can fail for multiple reasons, including when the key length does
 not match the specified algorithm.
 .\"
-.It Cm get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
+.It Cm getspi Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+Oo Ar extensions Oc ;
+Add a larval SAD entry.
+If
+.Ar spi
+is not zero, tell the kernel use the SPI as-is.
+Otherwise, the kernel picks a random SPI.
+.\"
+.It Cm update Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+Oo Ar extensions Oc Ar algorithm ... ;
+Update an existing SAD entry.
+It must be used together with
+.Cm add
+or
+.Cm getspi
+in a series of operations because the API requires that a process
+updating an SAD entry is the same as one created the SAD entry.
+.\"
+.It Cm get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi ;
 Show an SAD entry.
 .\"
-.It Cm delete Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
+.It Cm delete Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi ;
 Remove an SAD entry.
 .\"
-.It Cm deleteall Oo Fl 46n Oc Ar src Ar dst Ar protocol Li ;
+.It Cm deleteall Oo Fl 46n Oc Ar src Ar dst Ar protocol ;
 Remove all SAD entries that match the specification.
 .\"
-.It Cm flush Oo Ar protocol Oc Li ;
+.It Cm flush Oo Ar protocol Oc ;
 Clear all SAD entries matched by the options.
 .Fl F
 on the command line achieves the same functionality.
 .\"
-.It Cm dump Oo Ar protocol Oc Li ;
+.It Cm dump Oo Ar protocol Oc ;
 Dumps all SAD entries matched by the options.
 .Fl D
 on the command line achieves the same functionality.
 .\"
 .It Cm spdadd Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
-Ar label Ar policy Li ;
+Ar label Ar policy ;
 Add an SPD entry.
 .\"
-.It Cm spdadd tagged Ar tag Ar policy Li ;
+.It Cm spdadd tagged Ar tag Ar policy ;
 Add an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
 .It Cm spdupdate Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
-Ar label Ar policy Li ;
+Ar label Ar policy ;
 Updates an SPD entry.
 .\"
-.It Cm spdupdate tagged Ar tag Ar policy Li ;
+.It Cm spdupdate tagged Ar tag Ar policy ;
 Update an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
 .It Cm spddelete Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
-Fl P Ar direction Li ;
+Fl P Ar direction ;
 Delete an SPD entry.
 .\"
-.It Cm spdflush Li ;
+.It Cm spdflush ;
 Clear all SPD entries.
 .Fl FP
 on the command line achieves the same functionality.
 .\"
-.It Cm spddump Li ;
+.It Cm spddump ;
 Dumps all SPD entries.
 .Fl DP
 on the command line achieves the same functionality.
@@ -404,7 +422,7 @@ These select the communications that should be secured by IPsec.
 They can be an IPv4/v6 address or an IPv4/v6 address range, and
 may be accompanied by a TCP/UDP port specification.
 This takes the following form:
-.Bd -literal -offset
+.Bd -literal -offset 4n
 .Ar address
 .Ar address/prefixlen
 .Ar address[port]
@@ -648,7 +666,7 @@ multiple endpoints behind the same NAT).
 When using ESP over UDP, you can specify port numbers in the endpoint
 addresses to get the correct matching.
 Here is an example:
-.Bd -literal -offset
+.Bd -literal -offset 4n
 spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any \-P out ipsec
     esp/tunnel/192.168.0.1[4500]-192.168.1.2[30000]/require ;
 
@@ -684,7 +702,6 @@ in
 of the
 .Ar protocol
 parameter:
-.Pp
 .Bd -literal -offset indent
 algorithm	keylen (bits)
 hmac-md5	128		ah: rfc2403
@@ -716,7 +733,6 @@ in
 of the
 .Ar protocol
 parameter:
-.Pp
 .Bd -literal -offset indent
 algorithm	keylen (bits)
 des-cbc		64		esp-old: rfc1829, esp: rfc2405
@@ -751,7 +767,6 @@ in
 of the
 .Ar protocol
 parameter:
-.Pp
 .Bd -literal -offset indent
 algorithm
 deflate		rfc2394
@@ -786,11 +801,11 @@ policy inserted
 .Cm fwd
 policies
 .El
-.Sh RETURN VALUES
-The command exits with 0 on success, and non-zero on errors.
+.Sh EXIT STATUS
+.Ex -std setkey
 .\"
 .Sh EXAMPLES
-.Bd -literal -offset
+.Bd -literal -offset 4n
 add 3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
 	\-E des-cbc 0x3ffe05014819ffff ;
 

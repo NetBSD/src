@@ -1,11 +1,11 @@
-#	$NetBSD: ttys,v 1.1 2013/05/01 13:12:00 kiyohara Exp $
+#	$NetBSD: ttys,v 1.1.34.1 2020/04/13 07:45:40 martin Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty default"	vt100	on secure
-constty	"/usr/libexec/getty default"	vt100	off secure
+console	"/usr/libexec/getty default"	vt100	off secure
+constty	"/usr/libexec/getty default"	vt100	on secure
 ttyE0	"/usr/libexec/getty Pc"		wsvt25	off secure
 ttyE1	"/usr/libexec/getty Pc"		wsvt25	off secure
 ttyE2	"/usr/libexec/getty Pc"		wsvt25	off secure

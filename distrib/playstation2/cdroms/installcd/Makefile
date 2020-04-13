@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.28.1 2019/06/10 21:42:27 christos Exp $
+#	$NetBSD: Makefile,v 1.3.28.2 2020/04/13 07:45:30 martin Exp $
 CDBASE=		playstation2cd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"

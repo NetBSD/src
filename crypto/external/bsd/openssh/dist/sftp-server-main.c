@@ -1,6 +1,5 @@
-/*	$NetBSD: sftp-server-main.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sftp-server-main.c,v 1.5 2016/02/15 09:47:49 dtucker Exp $ */
-
+/*	$NetBSD: sftp-server-main.c,v 1.7.12.1 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: sftp-server-main.c,v 1.6 2019/06/06 05:13:13 otto Exp $ */
 /*
  * Copyright (c) 2008 Markus Friedl.  All rights reserved.
  *
@@ -18,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server-main.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sftp-server-main.c,v 1.7.12.1 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -42,7 +41,6 @@ main(int argc, char **argv)
 {
 	struct passwd *user_pw;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 

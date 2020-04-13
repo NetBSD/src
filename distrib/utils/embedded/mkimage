@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.69 2017/11/28 02:56:44 kre Exp $
+# $NetBSD: mkimage,v 1.69.4.1 2020/04/13 07:45:36 martin Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
-sets="base comp etc games man misc modules tests text"
+sets="base comp etc games man misc modules rescue tests text"
 xsets="xbase xcomp xetc xfont xserver" 
 minfree="10%"
 bar="==="
@@ -217,7 +217,14 @@ populate
 
 if [ -n "${msdosid}" ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
-	${MAKEFS} -N ${release}/etc -t msdos -o volume_label=NETBSD \
+	case $(( ${msdosid} )) in
+	1)	fat_opt=",fat_type=12";;
+	4|6|14)	fat_opt=",fat_type=16";;
+	11|12)	fat_opt=",fat_type=32";;
+	*)	fat_opt=;;
+	esac
+	${MAKEFS} -N ${release}/etc -t msdos \
+	    -o "volume_label=NETBSD${fat_opt}" \
 	    -O $((${init} / 2))m -s $((${boot} / 2))m \
 	    ${image} ${mnt}/boot
 fi

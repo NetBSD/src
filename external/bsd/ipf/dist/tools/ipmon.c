@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.8 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8.4.1 2020/04/13 07:46:01 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1097,7 +1097,7 @@ print_ipflog(config_t *conf, const iplog_t *ipl, const  void *buf, size_t blen)
 	{
 	char	ifname[sizeof(ipf.fl_ifname) + 1];
 
-	strncpy(ifname, ipf.fl_ifname, sizeof(ipf.fl_ifname));
+	strncpy(ifname, ipf.fl_ifname, sizeof(ifname)-1);
 	ifname[sizeof(ipf.fl_ifname)] = '\0';
 	sprintf(t, "%s", ifname);
 	t += strlen(t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.51.14.1 2019/06/10 21:41:02 christos Exp $	*/
+/*	$NetBSD: dd.c,v 1.51.14.2 2020/04/13 07:45:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.51.14.1 2019/06/10 21:41:02 christos Exp $");
+__RCSID("$NetBSD: dd.c,v 1.51.14.2 2020/04/13 07:45:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,7 +456,7 @@ dd_in(void)
 				++st.swab;
 				--n;
 			}
-			swab(in.dbp, in.dbp, n);
+			dd_swab(in.dbp, in.dbp, n);
 		}
 
 		in.dbp += in.dbrcnt;

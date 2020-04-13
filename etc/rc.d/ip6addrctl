@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: ip6addrctl,v 1.2.16.1 2020/04/08 14:03:57 martin Exp $
+# $NetBSD: ip6addrctl,v 1.2.16.2 2020/04/13 07:45:46 martin Exp $
 # FreeBSD: head/etc/rc.d/ip6addrctl 270836 2014-08-30 07:08:10Z hrs
 #
 
 # PROVIDE: ip6addrctl
 # REQUIRE: root bootconf mountcritlocal tty
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="ip6addrctl"
 rcvar="ip6addrctl"

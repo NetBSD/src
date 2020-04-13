@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.345.2.2 2020/04/08 14:03:55 martin Exp $
+#	$NetBSD: BRANCHES,v 1.345.2.3 2020/04/13 07:45:37 martin Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -317,6 +317,17 @@ Status:		Active
 Start Date:	2017-06-04
 End Date:
 Base Tag:	netbsd-8-base
+Maintainer:	Release Engineering <releng@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-9
+Description:	The NetBSD 9 release branch
+Status:		Active
+Start Date:	2019-07-30
+End Date:
+Base Tag:	netbsd-9-base
 Maintainer:	Release Engineering <releng@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
@@ -654,6 +665,17 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
+
+Branch:		phil-wifi
+Description:	Refresh WiFi code from FreeBSD
+Status:		Active
+Start Date:	2018-06-28
+End Date:	-
+Base Tag:	phil-wifi-base
+Maintainer:	phil, martin
+Scope:		src
+Notes:		Please check with martin before commiting,
+		but no formal commit restrictions.
 
 Branch:		rmind-smpnet
 Description:	MP safe network stack (milestone 1): IPv4, UDP and ICMP

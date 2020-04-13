@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.15.2.1 2019/06/10 21:42:38 christos Exp $ */
+/* $NetBSD: TODO.modules,v 1.15.2.2 2020/04/13 07:45:37 martin Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -219,3 +219,20 @@ christos and pgoyette.
     detail, but I have to wonder how code that compiles cleanly in a
     normal kernel has these issues when compiled in a module, when both
     are done with WARNS=5).
+
+23. The current process of "load all the emulation/exec modules in case
+    one of them might handle the image currently being exec'd" isn't
+    really cool.  (See sys/kern/kern_exec.c?)  It ends up auto-loading
+    a whole bunch of modules, involving file-system access, just to have
+    most of the modules getting unloaded a few seconds later.  We don't
+    have any way to identify which module is needed for which image (ie,
+    we can't determine that an image needs compat_linux vs some other
+    module).
+
+24. Details are no longer remembered, but there are some issues with
+    building xen-variant modules (on amd4, and likely i386).  In some
+    cases, wrong headers are included (because a XEN-related #define
+    is missing), but even if you add the definition some headers get
+    included in the wrong order.  On particular fallout from this is
+    the inability to have a compat version of x86_64 cpu-microcode
+    module.

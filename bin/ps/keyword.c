@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.56 2018/04/11 18:52:05 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.56.2.1 2020/04/13 07:45:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.56 2018/04/11 18:52:05 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.56.2.1 2020/04/13 07:45:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,13 +59,6 @@ __RCSID("$NetBSD: keyword.c,v 1.56 2018/04/11 18:52:05 christos Exp $");
 
 static VAR *findvar(const char *);
 static int  vcmp(const void *, const void *);
-
-#if 0 	/* kernel doesn't calculate these */
-	PUVAR("idrss", "IDRSS", 0, p_uru_idrss, UINT64, PRIu64),
-	PUVAR("isrss", "ISRSS", 0, p_uru_isrss, UINT64, PRId64),
-	PUVAR("ixrss", "IXRSS", 0, p_uru_ixrss, UINT64, PRId64),
-	PUVAR("maxrss", "MAXRSS", 0, p_uru_maxrss, UINT64, PRIu64),
-#endif
 
 /* Compute offset in common structures. */
 #define	POFF(x)	offsetof(struct kinfo_proc2, x)
@@ -135,9 +128,12 @@ VAR var[] = {
 	VAR4("groups", "GROUPS", LJUST, groups),
 	/* holdcnt: unused, left for compat. */
 	LVAR("holdcnt", "HOLDCNT", 0, l_holdcnt, INT, "d"),
+	PUVAR("idrss", "IDRSS", 0, p_uru_idrss, UINT64, PRIu64),
 	VAR3("ignored", "sigignore", ALIAS),
 	PUVAR("inblk", "INBLK", 0, p_uru_inblock, UINT64, PRIu64),
 	VAR3("inblock", "inblk", ALIAS),
+	PUVAR("isrss", "ISRSS", 0, p_uru_isrss, UINT64, PRId64),
+	PUVAR("ixrss", "IXRSS", 0, p_uru_ixrss, UINT64, PRId64),
 	PVAR("jobc", "JOBC", 0, p_jobc, SHORT, "d"),
 	PVAR("ktrace", "KTRACE", 0, p_traceflag, INT, "x"),
 /*XXX*/	PVAR("ktracep", "KTRACEP", 0, p_tracep, KPTR, PRIx64),
@@ -151,6 +147,7 @@ VAR var[] = {
 	VAR4("lstate", "STAT", LJUST|LWP, lstate),
 	VAR6("ltime", "LTIME", LWP, lcputime, 0, CPUTIME),
 	PUVAR("majflt", "MAJFLT", 0, p_uru_majflt, UINT64, PRIu64),
+	PUVAR("maxrss", "MAXRSS", 0, p_uru_maxrss, UINT64, PRIu64),
 	PUVAR("minflt", "MINFLT", 0, p_uru_minflt, UINT64, PRIu64),
 	PUVAR("msgrcv", "MSGRCV", 0, p_uru_msgrcv, UINT64, PRIu64),
 	PUVAR("msgsnd", "MSGSND", 0, p_uru_msgsnd, UINT64, PRIu64),

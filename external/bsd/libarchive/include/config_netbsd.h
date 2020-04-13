@@ -152,13 +152,13 @@
 /* #undef ARCHIVE_XATTR_LINUX */
 
 /* Version number of bsdcat */
-#define BSDCAT_VERSION_STRING "3.3.2dev"
+#define BSDCAT_VERSION_STRING "3.4.0"
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "3.3.2dev"
+#define BSDCPIO_VERSION_STRING "3.4.0"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "3.3.2dev"
+#define BSDTAR_VERSION_STRING "3.4.0"
 
 /* Define to 1 if the system has the type `ace_t'. */
 /* #undef HAVE_ACE_T */
@@ -282,6 +282,9 @@
 
 /* Define to 1 if you have the <bcrypt.h> header file. */
 /* #undef HAVE_BCRYPT_H */
+
+/* Define to 1 if you have the <blake2.h> header file. */
+/* #undef HAVE_BLAKE2_H */
 
 /* Define to 1 if you have the <bzlib.h> header file. */
 #define HAVE_BZLIB_H 1
@@ -599,6 +602,9 @@
 /* Define to 1 if you have the `acl' library (-lacl). */
 /* #undef HAVE_LIBACL */
 
+/* Define to 1 if you have the `b2' library (-lb2). */
+/* #undef HAVE_LIBB2 */
+
 /* Define to 1 if you have the `bz2' library (-lbz2). */
 #define HAVE_LIBBZ2 1
 
@@ -655,6 +661,9 @@
 
 /* Define to 1 if you have the `z' library (-lz). */
 #define HAVE_LIBZ 1
+
+/* Define to 1 if you have the `zstd' library (-lzstd). */
+/* #undef HAVE_LIBZSTD */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -814,7 +823,7 @@
 #define HAVE_PIPE 1
 
 /* Define to 1 if you have the `PKCS5_PBKDF2_HMAC_SHA1' function. */
-/* #undef HAVE_PKCS5_PBKDF2_HMAC_SHA1 */
+#define HAVE_PKCS5_PBKDF2_HMAC_SHA1 1
 
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1
@@ -911,7 +920,7 @@
 
 /* Define to 1 if `stat' has the bug that it succeeds when given the
    zero-length file name argument. */
-/* #undef HAVE_STAT_EMPTY_STRING_BUG */
+#define HAVE_STAT_EMPTY_STRING_BUG 1
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
@@ -1053,6 +1062,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
+/* Define to 1 if you have the <sys/sysmacros.h> header file. */
+/* #undef HAVE_SYS_SYSMACROS_H */
+
 /* Define to 1 if you have the <sys/time.h> header file. */
 #define HAVE_SYS_TIME_H 1
 
@@ -1088,6 +1100,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the `unlinkat' function. */
+#define HAVE_UNLINKAT 1
 
 /* Define to 1 if you have the `unsetenv' function. */
 #define HAVE_UNSETENV 1
@@ -1167,6 +1182,9 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
 
+/* Define to 1 if you have the <zstd.h> header file. */
+/* #undef HAVE_ZSTD_H */
+
 /* Define to 1 if you have the `_ctime64_s' function. */
 /* #undef HAVE__CTIME64_S */
 
@@ -1183,20 +1201,19 @@
 /* #undef HAVE__MKGMTIME64 */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+#define ICONV_CONST
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION_NUMBER "3003002"
+#define LIBARCHIVE_VERSION_NUMBER "3004000"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "3.3.2dev"
+#define LIBARCHIVE_VERSION_STRING "3.4.0"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
@@ -1220,7 +1237,7 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 3.3.2dev"
+#define PACKAGE_STRING "libarchive 3.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
@@ -1229,7 +1246,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.3.2dev"
+#define PACKAGE_VERSION "3.4.0"
 
 /* Define to 1 if PCRE_STATIC needs to be defined. */
 /* #undef PCRE_STATIC */
@@ -1269,7 +1286,7 @@
 
 
 /* Version number of package */
-#define VERSION "3.3.2dev"
+#define VERSION "3.4.0"
 
 /* Define to '0x0502' for Windows Server 2003 APIs. */
 /* #undef WINVER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.12.2.2 2020/04/13 07:45:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.42 2018/09/12 01:21:34 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.47 2020/01/25 23:02:13 djm Exp $ */
 
 #include "includes.h"
-__RCSID("$NetBSD: krl.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.12.2.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: krl.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "sshbuf.h"
 #include "ssherr.h"
@@ -738,7 +739,7 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 
 int
 ssh_krl_to_blob(struct ssh_krl *krl, struct sshbuf *buf,
-    const struct sshkey **sign_keys, u_int nsign_keys)
+    struct sshkey **sign_keys, u_int nsign_keys)
 {
 	int r = SSH_ERR_INTERNAL_ERROR;
 	struct revoked_certs *rc;
@@ -818,7 +819,7 @@ ssh_krl_to_blob(struct ssh_krl *krl, struct sshbuf *buf,
 			goto out;
 
 		if ((r = sshkey_sign(sign_keys[i], &sblob, &slen,
-		    sshbuf_ptr(buf), sshbuf_len(buf), NULL, 0)) != 0)
+		    sshbuf_ptr(buf), sshbuf_len(buf), NULL, NULL, 0)) != 0)
 			goto out;
 		KRL_DBG(("%s: signature sig len %zu", __func__, slen));
 		if ((r = sshbuf_put_string(buf, sblob, slen)) != 0)
@@ -1084,7 +1085,7 @@ ssh_krl_from_blob(struct sshbuf *buf, struct ssh_krl **krlp,
 		}
 		/* Check signature over entire KRL up to this point */
 		if ((r = sshkey_verify(key, blob, blen,
-		    sshbuf_ptr(buf), sig_off, NULL, 0)) != 0)
+		    sshbuf_ptr(buf), sig_off, NULL, 0, NULL)) != 0)
 			goto out;
 		/* Check if this key has already signed this KRL */
 		for (i = 0; i < nca_used; i++) {
@@ -1341,19 +1342,11 @@ ssh_krl_file_contains_key(const char *path, const struct sshkey *key)
 {
 	struct sshbuf *krlbuf = NULL;
 	struct ssh_krl *krl = NULL;
-	int oerrno = 0, r, fd;
+	int oerrno = 0, r;
 
 	if (path == NULL)
 		return 0;
-
-	if ((krlbuf = sshbuf_new()) == NULL)
-		return SSH_ERR_ALLOC_FAIL;
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		r = SSH_ERR_SYSTEM_ERROR;
-		oerrno = errno;
-		goto out;
-	}
-	if ((r = sshkey_load_file(fd, krlbuf)) != 0) {
+	if ((r = sshbuf_load_file(path, &krlbuf)) != 0) {
 		oerrno = errno;
 		goto out;
 	}
@@ -1362,8 +1355,6 @@ ssh_krl_file_contains_key(const char *path, const struct sshkey *key)
 	debug2("%s: checking KRL %s", __func__, path);
 	r = ssh_krl_check_key(krl, key);
  out:
-	if (fd != -1)
-		close(fd);
 	sshbuf_free(krlbuf);
 	ssh_krl_free(krl);
 	if (r != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.25 2018/06/12 14:13:55 kamil Exp $	*/
+/*	$NetBSD: eval.c,v 1.25.2.1 2020/04/13 07:45:06 martin Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.25 2018/06/12 14:13:55 kamil Exp $");
+__RCSID("$NetBSD: eval.c,v 1.25.2.1 2020/04/13 07:45:06 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -493,6 +493,7 @@ expand(cp, wp, f)
 		  case XARGSEP:
 			type = XARG;
 			quote = 1;
+			/* FALLTHROUGH */
 		  case XARG:
 			if ((c = *x.str++) == '\0') {
 				/* force null words to be created so

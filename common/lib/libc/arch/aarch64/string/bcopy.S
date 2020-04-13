@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy.S,v 1.1 2018/02/04 21:52:16 skrll Exp $ */
+/* $NetBSD: bcopy.S,v 1.1.4.1 2020/04/13 07:45:07 martin Exp $ */
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: bcopy.S,v 1.1 2018/02/04 21:52:16 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.1.4.1 2020/04/13 07:45:07 martin Exp $")
 #endif
 
 #if defined(MEMCOPY)
@@ -207,32 +207,60 @@ copy_backward:
 #endif /* (STP_ALIGN > 8) */
 9:
 
+backward_copy1k:
+	/* while (len >= 1024) */
+	/* { src -= 1024; dst -= 1024; copy1024(dst, src); len -= 1024; } */
 	cmp	LEN, #1024
-	bhs	backward_copy1k
-backward_less1k:
-	/* copy 16*n bytes */
-	and	TMP_D, LEN, #(1023-15)		/* len &= 1023; len &= ~15; */
-	adr	TMP_X, 8f
-	sub	LEN, LEN, TMP_D
-	sub	TMP_X, TMP_X, TMP_D, lsr #1	/* jump to (8f - len/2) */
-	br	TMP_X
-backward_copy1k:	/* copy 16*64 bytes */
+	blo	9f
+1:
 	sub	LEN, LEN, #1024
 	.rept	(1024 / 16)
 	ldp	DATA0, DATA1, [SRC0, #-16]!	/* *--dst = *--src; */
 	stp	DATA0, DATA1, [DST, #-16]!
 	.endr
-8:
-	cbz	LEN, done
 	cmp	LEN, #1024
-	bhs	backward_copy1k
-	cmp	LEN, #16
-	bhs	backward_less1k
+	bhs	1b
+9:
 
+	/* if (len & 512) { src -= 512; dst -= 512; copy512(dst, src); } */
+	tbz	LEN, #9, 1f
+	.rept	(512 / 16)
+	ldp	DATA0, DATA1, [SRC0, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
+	.endr
+1:
+	/* if (len & 256) { src -= 256; dst -= 256; copy256(dst, src); } */
+	tbz	LEN, #8, 1f
+	.rept	(256 / 16)
+	ldp	DATA0, DATA1, [SRC0, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
+	.endr
+1:
+	/* if (len & 128) { src -= 128; dst -= 128; copy128(dst, src); } */
+	tbz	LEN, #7, 1f
+	.rept	(128 / 16)
+	ldp	DATA0, DATA1, [SRC0, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
+	.endr
+1:
+	/* if (len & 64) { src -= 64; dst -= 64; copy64(dst, src); } */
+	tbz	LEN, #6, 1f
+	.rept	(64 / 16)
+	ldp	DATA0, DATA1, [SRC0, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
+	.endr
+1:
+	/* if (len & 32) { src -= 32; dst -= 32; copy32(dst, src); } */
+	tbz	LEN, #5, 1f
+	.rept	(32 / 16)
+	ldp	DATA0, DATA1, [SRC0, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
+	.endr
+1:
 	/* if (len & 16) { *--(uint128_t *)dst = *--(uint128_t *)src; } */
 	tbz	LEN, #4, 1f
 	ldp	DATA0, DATA1, [SRC0, #-16]!
-	ldp	DATA0, DATA1, [DST, #-16]!
+	stp	DATA0, DATA1, [DST, #-16]!
 1:
 	/* if (len & 8) { *--(uint64_t *)dst = *--(uint64_t *)src; } */
 	tbz	LEN, #3, 1f
@@ -271,14 +299,10 @@ backward_copy:
 	bcs	9f
 backward_tiny:
 	/* copy 1-10 bytes */
-	adr	TMP_X, 8f
-	sub	TMP_X, TMP_X, LEN, lsl #3	/* jump to (8f - len*2) */
-	br	TMP_X
-	.rept	10
+1:	sub	LEN, LEN, #1
 	ldrb	TMP_Xw, [SRC0, #-1]!
 	strb	TMP_Xw, [DST, #-1]!
-	.endr
-8:
+	cbz	LEN, 1b
 	ret
 9:
 	/* length is small(<32), and src or dst may be unaligned */
@@ -548,14 +572,10 @@ ENTRY(FUNCTION)
 	bcs	9f
 forward_tiny:
 	/* copy 1-10 bytes */
-	adr	TMP_X, 8f
-	sub	TMP_X, TMP_X, LEN, lsl #3	/* jump to (8f - len*2) */
-	br	TMP_X
-	.rept	10
+1:	sub	LEN, LEN, #1
 	ldrb	TMP_Xw, [SRC0], #1
 	strb	TMP_Xw, [DST], #1
-	.endr
-8:
+	cbz	LEN, 1b
 	ret
 9:
 	/* length is small(<32), and src or dst may be unaligned */
@@ -938,28 +958,56 @@ copy_forward:
 #endif /* (STP_ALIGN > 8) */
 9:
 
+forward_copy1k:
+	/* while (len >= 1024) */
+	/* { copy1024(dst, src); src += 1024; dst += 1024; len -= 1024; } */
 	cmp	LEN, #1024
-	bhs	forward_copy1k
-forward_less1k:
-	/* copy 16*n bytes */
-	and	TMP_D, LEN, #(1023-15)		/* len &= 1023; len &= ~15; */
-	adr	TMP_X, 8f
-	sub	LEN, LEN, TMP_D
-	sub	TMP_X, TMP_X, TMP_D, lsr #1	/* jump to (8f - len/2) */
-	br	TMP_X
-forward_copy1k:	/* copy 16*64 bytes */
+	blo	9f
+1:
 	sub	LEN, LEN, #1024
 	.rept	(1024 / 16)
 	ldp	DATA0, DATA1, [SRC0], #16	/* *dst++ = *src++; */
 	stp	DATA0, DATA1, [DST], #16
 	.endr
-8:
-	cbz	LEN, done
 	cmp	LEN, #1024
-	bhs	forward_copy1k
-	cmp	LEN, #16
-	bhs	forward_less1k
+	bhs	1b
+9:
 
+	/* if (len & 512) { copy512(dst, src); src += 512; dst += 512; */
+	tbz	LEN, #9, 1f
+	.rept	(512 / 16)
+	ldp	DATA0, DATA1, [SRC0], #16
+	stp	DATA0, DATA1, [DST], #16
+	.endr
+1:
+	/* if (len & 256) { copy256(dst, src); src += 256; dst += 256; */
+	tbz	LEN, #8, 1f
+	.rept	(256 / 16)
+	ldp	DATA0, DATA1, [SRC0], #16
+	stp	DATA0, DATA1, [DST], #16
+	.endr
+1:
+	/* if (len & 128) { copy128(dst, src); src += 128; dst += 128; */
+	tbz	LEN, #7, 1f
+	.rept	(128 / 16)
+	ldp	DATA0, DATA1, [SRC0], #16
+	stp	DATA0, DATA1, [DST], #16
+	.endr
+1:
+	/* if (len & 64) { copy64(dst, src); src += 64; dst += 64; */
+	tbz	LEN, #6, 1f
+	.rept	(64 / 16)
+	ldp	DATA0, DATA1, [SRC0], #16
+	stp	DATA0, DATA1, [DST], #16
+	.endr
+1:
+	/* if (len & 32) { copy32(dst, src); src += 32; dst += 32; */
+	tbz	LEN, #5, 1f
+	.rept	(32 / 16)
+	ldp	DATA0, DATA1, [SRC0], #16
+	stp	DATA0, DATA1, [DST], #16
+	.endr
+1:
 	/* if (len & 16) { *(uint128_t *)dst++ = *(uint128_t *)src++; } */
 	tbz	LEN, #4, 1f
 	ldp	DATA0, DATA1, [SRC0], #16

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-libdlpi.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: pcap-libdlpi.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-libdlpi.c,v 1.3.12.1 2019/06/10 21:44:59 christos Exp $");
+__RCSID("$NetBSD: pcap-libdlpi.c,v 1.3.12.2 2020/04/13 07:46:11 martin Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -85,7 +85,7 @@ list_interfaces(const char *linkname, void *arg)
 		lwp->lw_err = ENOMEM;
 		return (B_TRUE);
 	}
-	(void) strlcpy(entry->linkname, linkname, DLPI_LINKNAME_MAX);
+	(void) pcap_strlcpy(entry->linkname, linkname, DLPI_LINKNAME_MAX);
 
 	if (lwp->lw_list == NULL) {
 		lwp->lw_list = entry;

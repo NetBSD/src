@@ -1,4 +1,4 @@
-/* $NetBSD: features.c,v 1.1 2014/02/27 09:37:02 matt Exp $ */
+/* $NetBSD: features.c,v 1.1.30.1 2020/04/13 07:45:07 martin Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 #if defined (HAVE_THUMB2) || defined (__ARM_ARCH_6__) || \
     defined (__ARM_ARCH_6J__)  || defined (__ARM_ARCH_6K__) || \
     defined (__ARM_ARCH_6Z__)  || defined (__ARM_ARCH_6ZK__) || \
-    defined (__ARM_ARCH_6ZM__)
+    defined (__ARM_ARCH_6KZ__) || defined (__ARM_ARCH_6ZM__)
 #define HAVE_LDREX
 #endif
 

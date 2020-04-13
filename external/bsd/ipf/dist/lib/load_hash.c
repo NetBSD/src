@@ -1,4 +1,4 @@
-/*	$NetBSD: load_hash.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.2.34.1 2020/04/13 07:46:01 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -67,8 +67,8 @@ load_hash(iphp, list, iocfunc)
 			}
 	}
 
-	strncpy(iph.iph_name, op.iplo_name, sizeof(op.iplo_name));
-	strncpy(iphp->iph_name, op.iplo_name, sizeof(op.iplo_name));
+	strncpy(iph.iph_name, op.iplo_name, sizeof(iph.iph_name) - 1);
+	strncpy(iphp->iph_name, op.iplo_name, sizeof(iphp->iph_name) - 1);
 
 	if (opts & OPT_VERBOSE) {
 		iph.iph_table = calloc(size, sizeof(*iph.iph_table));

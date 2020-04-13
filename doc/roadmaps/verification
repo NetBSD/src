@@ -1,4 +1,4 @@
-$NetBSD: verification,v 1.1 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: verification,v 1.1.14.1 2020/04/13 07:45:37 martin Exp $
 
 NetBSD Verification Roadmap
 ===========================
@@ -9,7 +9,6 @@ to verification and quality control.
 The following elements, projects, and goals are relatively near-term:
 
  1. Cut down the Coverity backlog
- 2. Deploy asan/ubsan
  3. Deploy clang-static-analyzer
 
 The following elements, projects, and goals are longer-term:
@@ -37,18 +36,6 @@ finds are pretty easily fixed, or are false positives.
    also fixes these.
  - There is currently no clear timeframe or release target.
  - Contact christos for further information.
-
-
-2. Deploy asan/ubsan
-
-It ought to be possible to build any program in NetBSD, or the whole
-world, using asan and/or ubsan. Currently there isn't an easy way to
-do this. We should also do regular test runs with asan and ubsan
-engaged.
-
- - As of January 2017 nobody is known to be working on this.
- - There is currently no clear timeframe or release target.
- - Contact joerg (?) for further information.
 
 
 3. Deploy clang-static-analyzer

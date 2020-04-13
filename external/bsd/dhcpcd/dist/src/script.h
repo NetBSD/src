@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -30,6 +31,7 @@
 
 #include "control.h"
 
+__printflike(2, 3) int efprintf(FILE *, const char *, ...);
 void if_printoptions(void);
 char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
 pid_t script_exec(const struct dhcpcd_ctx *, char *const *, char *const *);

@@ -102,8 +102,7 @@ static
 int
 const_execvp(const char *file, const char *const *argv)
 {
-#define UNCONST(a) ((void *)(unsigned long)(const void *)(a))
-    return ::execvp(file, (char* const*)(UNCONST(argv)));
+    return ::execvp(file, const_cast<char* const*>(argv));
 #undef UNCONST
 }
 

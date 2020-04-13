@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.2 2012/12/24 01:14:40 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.2.32.1 2020/04/13 07:45:23 martin Exp $	*/
 
 /*
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,20 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/pfvar.h>
-#include <net/npf_ncode.h>
+#include <net/bpf.h>
+
+#define NPF_BPFCOP
 #include <npf.h>
 
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <err.h>
@@ -75,7 +80,6 @@ const ftp_proxy_ops_t npf_fprx_ops = {
 #define	sa_to_32(sa)		(((struct sockaddr_in *)sa)->sin_addr.s_addr)
 
 #define	NPF_DEV_PATH		"/dev/npf"
-#define	NPF_FP_RULE_TAG		"ftp-proxy"
 
 typedef struct fp_ent {
 	LIST_ENTRY(fp_ent)	fpe_list;
@@ -88,48 +92,66 @@ typedef struct fp_ent {
 char *				npfopts;
 
 static LIST_HEAD(, fp_ent)	fp_ent_list;
-static fp_ent_t *		fp_ent_hint;
 static struct sockaddr_in	fp_server_sa;
-static u_int			fp_if_idx;
+static char *			fp_ifname;
 static int			npf_fd;
 
-static uint32_t ncode[ ] = {
-	/* from <shost> to <dhost> port <dport> */
-	NPF_OPCODE_IP4MASK,	0x01,	0xdeadbeef,	0xffffffff,
-	NPF_OPCODE_BNE,		15,
-	NPF_OPCODE_IP4MASK,	0x00,	0xdeadbeef,	0xffffffff,
-	NPF_OPCODE_BNE,		9,
-	NPF_OPCODE_TCP_PORTS,	0x00,	0xdeadbeef,
-	NPF_OPCODE_BNE,		4,
-	/* Success (0x0) and failure (0xff) paths. */
-	NPF_OPCODE_RET,		0x00,
-	NPF_OPCODE_RET,		0xff
+#define	NPF_BPF_SUCCESS		((u_int)-1)
+#define	NPF_BPF_FAILURE		0
+
+#define INSN_IPSRC	5
+#define INSN_IPDST	7
+#define INSN_DPORT	10
+
+static struct bpf_insn insns[13] = {
+	/* Want IPv4. */
+	BPF_STMT(BPF_LD+BPF_MEM, BPF_MW_IPVER),
+	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 4, 0, 10),
+	/* Want TCP. */
+	BPF_STMT(BPF_LD+BPF_MEM, BPF_MW_L4PROTO),
+	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, IPPROTO_TCP, 0, 8),
+	/* Check source IP. */
+	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, offsetof(struct ip, ip_src)),
+	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xDEADBEEF, 0, 6),
+	/* Check destination IP. */
+	BPF_STMT(BPF_LD+BPF_W+BPF_ABS, offsetof(struct ip, ip_dst)),
+	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xDEADBEEF, 0, 4),
+	/* Check port. */
+	BPF_STMT(BPF_LDX+BPF_MEM, BPF_MW_L4OFF),
+	BPF_STMT(BPF_LD+BPF_H+BPF_IND, offsetof(struct tcphdr, th_dport)),
+	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xDEADBEEF, 0, 1),
+	/* Success. */
+	BPF_STMT(BPF_RET+BPF_K, NPF_BPF_SUCCESS),
+	/* Failure. */
+	BPF_STMT(BPF_RET+BPF_K, NPF_BPF_FAILURE),
 };
 
 static void
-ftp_proxy_modify_nc(in_addr_t shost, in_addr_t dhost, in_port_t dport)
+modify_bytecode(in_addr_t shost, in_addr_t dhost, in_port_t dport)
 {
+	/*
+	 * Replace the 0xDEADBEEF by actual values. Note that BPF is in
+	 * host order.
+	 */
+
 	/* Source address to match. */
-	ncode[2] = shost;
+	insns[INSN_IPSRC].k = shost;
 	/* Destination address to match. */
-	ncode[8] = shost;
+	insns[INSN_IPDST].k = dhost;
 	/* Destination port to match. */
-	ncode[14] = ((uint32_t)dport << 16) | dport;
+	insns[INSN_DPORT].k = dport;
 }
 
 static fp_ent_t *
-ftp_proxy_lookup(uint32_t id)
+proxy_lookup(uint32_t id)
 {
 	fp_ent_t *fpe;
 
-	/* Look for FTP proxy entry.  First, try hint (last used). */
-	if (fp_ent_hint && fp_ent_hint->fpe_id == id) {
-		return fp_ent_hint;
-	}
 	LIST_FOREACH(fpe, &fp_ent_list, fpe_list) {
 		if (fpe->fpe_id == id)
 			break;
 	}
+
 	return fpe;
 }
 
@@ -137,24 +159,22 @@ static void
 npf_init_filter(char *opt_qname, char *opt_tagname, int opt_verbose)
 {
 	char *netif = npfopts, *saddr, *port;
+	int kernver, idx;
 
 	/* XXX get rid of this */
-	saddr = strchr(netif, ':');
-	if (saddr == NULL) {
+	if ((saddr = strchr(netif, ':')) == NULL) {
 		errx(EXIT_FAILURE, "invalid -N option string: %s", npfopts);
 	}
 	*saddr++ = '\0';
-	if (saddr == NULL || (port = strchr(saddr, ':')) == NULL) {
+	if ((port = strchr(saddr, ':')) == NULL) {
 		errx(EXIT_FAILURE, "invalid -N option string: %s", npfopts);
 	}
 	*port++ = '\0';
-	if (port == NULL) {
-		errx(EXIT_FAILURE, "invalid -N option string: %s", npfopts);
-	}
 
-	fp_if_idx = if_nametoindex(netif);
-	if (fp_if_idx == 0) {
-		errx(EXIT_FAILURE, "invalid network interface '%s'", netif);
+	fp_ifname = netif;
+	idx = if_nametoindex(fp_ifname);
+	if (idx == 0) {
+		errx(EXIT_FAILURE, "invalid network interface '%s'", fp_ifname);
 	}
 
 	memset(&fp_server_sa, 0, sizeof(struct sockaddr_in));
@@ -167,8 +187,17 @@ npf_init_filter(char *opt_qname, char *opt_tagname, int opt_verbose)
 	if (npf_fd == -1) {
 		err(EXIT_FAILURE, "cannot open '%s'", NPF_DEV_PATH);
 	}
+	if (ioctl(npf_fd, IOC_NPF_VERSION, &kernver) == -1) {
+		err(EXIT_FAILURE, "ioctl failed on IOC_NPF_VERSION");
+	}
+	if (kernver != NPF_VERSION) {
+		errx(EXIT_FAILURE,
+		    "incompatible NPF interface version (%d, kernel %d)\n"
+		    "Hint: update %s?", NPF_VERSION, kernver,
+		    kernver > NPF_VERSION ? "userland" : "kernel");
+	}
+
 	LIST_INIT(&fp_ent_list);
-	fp_ent_hint = NULL;
 }
 
 static int
@@ -177,7 +206,7 @@ npf_prepare_commit(uint32_t id)
 	fp_ent_t *fpe;
 
 	/* Check if already exists. */
-	fpe = ftp_proxy_lookup(id);
+	fpe = proxy_lookup(id);
 	if (fpe) {
 		/* Destroy existing rules and reset the values. */
 		npf_rule_destroy(fpe->fpe_rl);
@@ -185,13 +214,14 @@ npf_prepare_commit(uint32_t id)
 		npf_rule_destroy(fpe->fpe_rdr);
 		goto reset;
 	}
+
 	/* Create a new one, if not found. */
 	fpe = malloc(sizeof(fp_ent_t));
-	if (fpe == NULL) {
+	if (fpe == NULL)
 		return -1;
-	}
 	LIST_INSERT_HEAD(&fp_ent_list, fpe, fpe_list);
 	fpe->fpe_id = id;
+
 reset:
 	fpe->fpe_rl = NULL;
 	fpe->fpe_nat = NULL;
@@ -211,96 +241,126 @@ npf_add_filter(uint32_t id, uint8_t pf_dir, struct sockaddr *src,
 		errno = EINVAL;
 		return -1;
 	}
-	fpe = ftp_proxy_lookup(id);
+	fpe = proxy_lookup(id);
 	assert(fpe != NULL);
 
 	di = (pf_dir == PF_OUT) ? NPF_RULE_OUT : NPF_RULE_IN;
-	rl = npf_rule_create(NULL, di | NPF_RULE_PASS | NPF_RULE_FINAL, 0);
+	rl = npf_rule_create(NULL, di | NPF_RULE_PASS | NPF_RULE_FINAL, NULL);
 	if (rl == NULL) {
 		errno = ENOMEM;
 		return -1;
 	}
-	ftp_proxy_modify_nc(sa_to_32(src), sa_to_32(dst), htons(dport));
-	errno = npf_rule_setcode(rl, NPF_CODE_NCODE, ncode, sizeof(ncode));
+
+	modify_bytecode(sa_to_32(src), sa_to_32(dst), dport);
+	errno = npf_rule_setcode(rl, NPF_CODE_BPF, insns, sizeof(insns));
 	if (errno) {
 		npf_rule_destroy(rl);
 		return -1;
 	}
+
 	assert(fpe->fpe_rl == NULL);
 	fpe->fpe_rl = rl;
 	return 0;
 }
 
+/*
+ * Note: we don't use plow and phigh. In NPF they are not per-rule, but global,
+ * under the "portmap.min_port" and "portmap.max_port" params.
+ */
 static int
 npf_add_nat(uint32_t id, struct sockaddr *src, struct sockaddr *dst,
     uint16_t dport, struct sockaddr *snat, uint16_t plow, uint16_t phigh)
 {
+	npf_addr_t addr;
 	fp_ent_t *fpe;
 	nl_nat_t *nt;
-	npf_addr_t addr;
 
 	if (!src || !dst || !dport || !snat || !plow ||
 	    (src->sa_family != snat->sa_family)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
-	fpe = ftp_proxy_lookup(id);
+	fpe = proxy_lookup(id);
 	assert(fpe != NULL);
 
+	memset(&addr, 0, sizeof(npf_addr_t));
 	memcpy(&addr, &sa_to_32(snat), sizeof(struct in_addr));
-	nt = npf_nat_create(NPF_NATOUT, NPF_NAT_PORTS | NPF_NAT_PORTMAP, 0,
-	    &addr, AF_INET, htons(plow));
+
+	nt = npf_nat_create(NPF_NATOUT, NPF_NAT_PORTS | NPF_NAT_PORTMAP, NULL);
 	if (nt == NULL) {
 		errno = ENOMEM;
 		return -1;
 	}
-	ftp_proxy_modify_nc(sa_to_32(src), sa_to_32(dst), htons(dport));
-	errno = npf_rule_setcode(nt, NPF_CODE_NCODE, ncode, sizeof(ncode));
+	errno = npf_nat_setaddr(nt, AF_INET, &addr, 0);
 	if (errno) {
-		npf_rule_destroy(nt);
-		return -1;
+		goto err;
 	}
+
+	modify_bytecode(sa_to_32(src), sa_to_32(dst), dport);
+	errno = npf_rule_setcode(nt, NPF_CODE_BPF, insns, sizeof(insns));
+	if (errno) {
+		goto err;
+	}
+
 	assert(fpe->fpe_nat == NULL);
 	fpe->fpe_nat = nt;
 	return 0;
+
+err:
+	npf_rule_destroy(nt);
+	return -1;
 }
 
 static int
 npf_add_rdr(uint32_t id, struct sockaddr *src, struct sockaddr *dst,
     uint16_t dport, struct sockaddr *rdr, uint16_t rdr_port)
 {
+	npf_addr_t addr;
 	fp_ent_t *fpe;
 	nl_nat_t *nt;
-	npf_addr_t addr;
 
 	if (!src || !dst || !dport || !rdr || !rdr_port ||
 	    (src->sa_family != rdr->sa_family)) {
 		errno = EINVAL;
 		return -1;
 	}
-	fpe = ftp_proxy_lookup(id);
+	fpe = proxy_lookup(id);
 	assert(fpe != NULL);
 
+	memset(&addr, 0, sizeof(npf_addr_t));
 	memcpy(&addr, &sa_to_32(rdr), sizeof(struct in_addr));
-	nt = npf_nat_create(NPF_NATIN, NPF_NAT_PORTS, 0,
-	    &addr, AF_INET, htons(rdr_port));
+
+	nt = npf_nat_create(NPF_NATIN, NPF_NAT_PORTS, NULL);
 	if (nt == NULL) {
 		errno = ENOMEM;
 		return -1;
 	}
-	ftp_proxy_modify_nc(sa_to_32(src), sa_to_32(dst), htons(dport));
-	errno = npf_rule_setcode(nt, NPF_CODE_NCODE, ncode, sizeof(ncode));
+	errno = npf_nat_setaddr(nt, AF_INET, &addr, 0);
 	if (errno) {
-		npf_rule_destroy(nt);
-		return -1;
+		goto err;
 	}
+	errno = npf_nat_setport(nt, htons(rdr_port));
+	if (errno) {
+		goto err;
+	}
+
+	modify_bytecode(sa_to_32(src), sa_to_32(dst), dport);
+	errno = npf_rule_setcode(nt, NPF_CODE_BPF, insns, sizeof(insns));
+	if (errno) {
+		goto err;
+	}
+
 	assert(fpe->fpe_rdr == NULL);
 	fpe->fpe_rdr = nt;
 	return 0;
+
+err:
+	npf_rule_destroy(nt);
+	return -1;
 }
 
 static int
-npf_server_lookup(struct sockaddr *c, struct sockaddr *proxy,
+npf_server_lookup(struct sockaddr *client, struct sockaddr *proxy,
     struct sockaddr *server)
 {
 
@@ -311,27 +371,50 @@ npf_server_lookup(struct sockaddr *c, struct sockaddr *proxy,
 static int
 npf_do_commit(void)
 {
-#if 0
+	nl_config_t *ncf;
 	nl_rule_t *group;
 	fp_ent_t *fpe;
 	pri_t pri;
 
-	group = npf_rule_create(NPF_FP_RULE_TAG, NPF_RULE_PASS | NPF_RULE_IN |
-	    NPF_RULE_OUT | NPF_RULE_FINAL, fp_if_idx);
-	if (group == NULL) {
+	ncf = npf_config_create();
+	if (ncf == NULL) {
+		errno = ENOMEM;
 		return -1;
 	}
+
+	group = npf_rule_create(NULL, NPF_RULE_GROUP | NPF_RULE_PASS |
+	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_FINAL, fp_ifname);
+	if (group == NULL) {
+		errno = ENOMEM;
+		goto err;
+	}
+
 	pri = 1;
 	LIST_FOREACH(fpe, &fp_ent_list, fpe_list) {
-		npf_rule_insert(NULL, group, fpe->fpe_rl, pri++);
+		if (fpe->fpe_rl == NULL) {
+			/* Empty. */
+			continue;
+		}
+		npf_rule_setprio(fpe->fpe_rl, pri++);
+		npf_rule_insert(NULL, group, fpe->fpe_rl);
+		/*
+		 * XXX: Mmh, aren't we supposed to insert fpe_nat and fpe_rdr
+		 * too here?
+		 */
 	}
-	npf_update_rule(npf_fd, NPF_FP_RULE_TAG, group);
-	npf_rule_destroy(group);
+	npf_rule_insert(ncf, NULL, group);
+
+	errno = npf_config_submit(ncf, npf_fd, NULL);
+	if (errno != 0)
+		goto err;
+
+	npf_config_destroy(ncf);
 	return 0;
-#else
-	errno = ENOTSUP;
+
+err:
+	if (ncf != NULL)
+		npf_config_destroy(ncf);
 	return -1;
-#endif
 }
 
 static int

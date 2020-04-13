@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.2.28.1 2020/04/13 07:45:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -55,8 +55,8 @@ static int
 error_cmp(void *a, void *b)
 {
     struct heim_error *ap = a, *bp = b;
-    if (ap->error_code == ap->error_code)
-	return ap->error_code - ap->error_code;
+    if (ap->error_code == bp->error_code)
+	return 0;
     return heim_cmp(ap->msg, bp->msg);
 }
 

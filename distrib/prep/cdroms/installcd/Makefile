@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.42.1 2019/06/10 21:42:28 christos Exp $
+#	$NetBSD: Makefile,v 1.3.42.2 2020/04/13 07:45:31 martin Exp $
 CDBASE=		prepcd		# gives ${CDBASE}.iso
-CDRELEASE=	true		# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true		# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 CDMAKEFSOPTIONS=bootimage=powerpc;cdrom/prep/installation/floppy/sysinst_com0.fs
 

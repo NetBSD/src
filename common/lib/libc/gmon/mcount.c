@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.13 2016/02/28 02:56:39 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.13.16.1 2020/04/13 07:45:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.13 2016/02/28 02:56:39 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.13.16.1 2020/04/13 07:45:07 martin Exp $");
 #endif
 #endif
 
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: mcount.c,v 1.13 2016/02/28 02:56:39 christos Exp $");
 #include "reentrant.h"
 #endif
 
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && !defined(_RUMPKERNEL)
 extern thread_key_t _gmonkey;
 extern struct gmonparam _gmondummy;
 struct gmonparam *_m_gmon_alloc(void);
@@ -143,7 +143,7 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 	int s;
 #endif
 
-#if defined(_REENTRANT) && !defined(_KERNEL)
+#if defined(_REENTRANT) && !defined(_KERNEL) && !defined(_RUMPKERNEL)
 	if (__isthreaded) {
 		/* prevent re-entry via thr_getspecific */
 		if (_gmonparam.state != GMON_PROF_ON)

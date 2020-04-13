@@ -339,7 +339,7 @@ archive_write_gnutar_header(struct archive_write *a,
 		 * case getting WCS failed. On POSIX, this is a
 		 * normal operation.
 		 */
-		if (p != NULL && p[strlen(p) - 1] != '/') {
+		if (p != NULL && p[0] != '\0' && p[strlen(p) - 1] != '/') {
 			struct archive_string as;
 
 			archive_string_init(&as);
@@ -565,8 +565,7 @@ archive_write_gnutar_header(struct archive_write *a,
 	gnutar->entry_bytes_remaining = archive_entry_size(entry);
 	gnutar->entry_padding = 0x1ff & (-(int64_t)gnutar->entry_bytes_remaining);
 exit_write_header:
-	if (entry_main)
-		archive_entry_free(entry_main);
+	archive_entry_free(entry_main);
 	return (ret);
 }
 

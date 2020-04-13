@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.27.6.1 2019/06/10 21:42:37 christos Exp $
+# $NetBSD: Makefile.inc,v 1.27.6.2 2020/04/13 07:45:36 martin Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -20,12 +20,44 @@
 
 CPPFLAGS+=	-DSMALL
 CPPFLAGS+=	-DLIBHACK
+
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
-		strerror.o strsignal.o syslog.o utmp.o
+		nl_langinfo.o strcasecmp.o \
+		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o
 
 .if (${USE_YP} != "no")
 HACKOBJS+=	yplib.o
+.endif
+
+.if ${HACK_CURSES:Uno} == "yes"
+CURSES_SRC!=	cd ${HACKSRC}/../../../lib/libcurses && \
+		${MAKE} DISABLE_WCHAR=yes -v SRCS
+
+.for s in ${CURSES_SRC}
+CPPFLAGS.${s}+=	-DDISABLE_WCHAR -DSMALL \
+		-I${HACKSRC}/../../../lib/libcurses \
+		-I${HACKSRC}/../../../lib/libterminfo
+HACKOBJS+=	${s:S/.c/.o/}
+${s:S/.c/.o/}:	${HACKSRC}/../../../lib/libcurses/${s}
+.endfor
+
+TERMINFO_SRC!=	cd ${HACKSRC}/../../../lib/libterminfo && \
+		${MAKE} SMALLPROG=1 -v SRCS
+TERMINFO_PATH!=	cd ${HACKSRC}/../../../lib/libterminfo && \
+		${MAKE} -v .OBJDIR
+
+.for s in ${TERMINFO_SRC}
+CPPFLAGS.${s}+=	-DDISABLE_WCHAR -DSMALL \
+		-I${HACKSRC}/../../../lib/libterminfo \
+		-I${TERMINFO_PATH}
+HACKOBJS+=	${s:S/.c/.o/}
+.if ${s:Mhash*} != ""
+${s:S/.c/.o/}:	${TERMINFO_PATH}/${s}
+.else
+${s:S/.c/.o/}:	${HACKSRC}/../../../lib/libterminfo/${s}
+.endif
+.endfor
 .endif
 
 CPPFLAGS.runetable.c+= -I${HACKSRC}/../../../lib/libc/citrus \

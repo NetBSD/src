@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.16.12.1 2019/06/10 21:42:38 christos Exp $
+#	$NetBSD: Makefile,v 1.16.12.2 2020/04/13 07:45:37 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
+CDDEV_POPULATE=	true			# populate /dev on the CD
 CDRELEASE_NODEBUG=	true
-CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
+CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
 CDRELEASE_NOISOS=true
 CD_SETS=	base etc	# no modules for VAX
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.12 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.73 2016/03/07 19:02:43 djm Exp $ */
+/*	$NetBSD: canohost.c,v 1.12.12.1 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: canohost.c,v 1.74 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.12 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.12.12.1 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -134,12 +134,12 @@ get_sock_port(int sock, int local)
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));
 	if (local) {
-		if (getsockname(sock, (struct sockaddr *)&from, &fromlen) < 0) {
+		if (getsockname(sock, (struct sockaddr *)&from, &fromlen) == -1) {
 			error("getsockname failed: %.100s", strerror(errno));
 			return 0;
 		}
 	} else {
-		if (getpeername(sock, (struct sockaddr *)&from, &fromlen) < 0) {
+		if (getpeername(sock, (struct sockaddr *)&from, &fromlen) == -1) {
 			debug("getpeername failed: %.100s", strerror(errno));
 			return -1;
 		}

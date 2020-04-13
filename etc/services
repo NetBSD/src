@@ -1,8 +1,8 @@
-# $NetBSD: services,v 1.99.16.1 2019/06/10 21:42:39 christos Exp $
+# $NetBSD: services,v 1.99.16.2 2020/04/13 07:45:38 martin Exp $
 # See also: services(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #  Last Updated
-#          2018-12-19
+#          2019-10-04
 # 
 #  Expert(s)
 # 
@@ -479,8 +479,8 @@ namp                167/tcp    # NAMP                         [Marty_Schoffstahl
 namp                167/udp    # NAMP                         [Marty_Schoffstahl]                                   [Marty_Schoffstahl]
 rsvd                168/tcp    # RSVD                         [Alan_Sandell]                                        [Alan_Sandell]                                                         2008-05-01
 rsvd                168/udp    # RSVD                         [Alan_Sandell]                                        [Alan_Sandell]                                                         2008-05-01
-send                169/tcp    # SEND                         [William_Oldwin]                                      [William_Oldwin]                                                       2013-06-17
-send                169/udp    # SEND                         [William_Oldwin]                                      [William_Oldwin]                                                       2013-06-17
+send                169/tcp    # SEND                         [William_Oldwin]                                      [William_Oldwin]                                                       2019-04-22
+send                169/udp    # SEND                         [William_Oldwin]                                      [William_Oldwin]                                                       2019-04-22
 print-srv           170/tcp    # Network PostScript           [Brian_Reid]                                          [Brian_Reid]
 print-srv           170/udp    # Network PostScript           [Brian_Reid]                                          [Brian_Reid]
 multiplex           171/tcp    # Network Innovations
@@ -1736,9 +1736,9 @@ dlep                854/udp    # Dynamic Link Exchange        [IESG]            
 iscsi               860/tcp    # iSCSI                        [IESG]                                                [IETF_Chair]                                                           2013-08-27   [RFC7143]
 iscsi               860/udp    # iSCSI                        [IESG]                                                [IETF_Chair]                                                           2013-08-27   [RFC7143]
 owamp-control       861/tcp    # OWAMP-Control                [IESG]                                                [IETF_Chair]                                                                        [RFC4656]
-owamp-test          861/udp    # OWAMP-Test                   [IESG]                                                [IETF_Chair]                                                           2018-12-21   [RFC-ietf-ippm-port-twamp-test-04]
+owamp-test          861/udp    # OWAMP-Test                   [IESG]                                                [IETF_Chair]                                                           2018-12-21   [RFC8545]
 twamp-control       862/tcp    # TWAMP-Control                [IESG]                                                [IETF_Chair]                                                                        [RFC5357]
-twamp-test          862/udp    # TWAMP-Test Receiver Port     [IESG]                                                [IETF_Chair]                                                           2018-12-21   [RFC-ietf-ippm-port-twamp-test-04]
+twamp-test          862/udp    # TWAMP-Test Receiver Port     [IESG]                                                [IETF_Chair]                                                           2018-12-21   [RFC8545]
 #                 863-872             Unassigned
 rsync               873/tcp    # rsync                        [Andrew_Tridgell]                                     [Andrew_Tridgell]
 rsync               873/udp    # rsync                        [Andrew_Tridgell]                                     [Andrew_Tridgell]
@@ -4379,8 +4379,8 @@ onehome-remote     2198/tcp    # OneHome Remote Access
 onehome-remote     2198/udp    # OneHome Remote Access
 onehome-help       2199/tcp    # OneHome Service Port         [Jim_Herman]                                          [Jim_Herman]                                              2005-08
 onehome-help       2199/udp    # OneHome Service Port         [Jim_Herman]                                          [Jim_Herman]                                              2005-08
-ici                2200/tcp    # ICI                          [Brent_Hines]                                         [Brent_Hines]
-ici                2200/udp    # ICI                          [Brent_Hines]                                         [Brent_Hines]
+#                  2200        tcp    Reserved                                                                                                                                                                                                                                    This entry has been removed on 2019-07-05.
+#                  2200        udp    Reserved                                                                                                                                                                                                                                    This entry has been removed on 2019-07-05.
 ats                2201/tcp    # Advanced Training System
 ats                2201/udp    # Advanced Training System
 imtc-map           2202/tcp    # Int. Multimedia              [Pat_Galvin]                                          [Pat_Galvin]
@@ -4970,8 +4970,8 @@ rapido-ip          2457/tcp    # Rapido_IP                    [Man_Shuen_Cheung]
 rapido-ip          2457/udp    # Rapido_IP                    [Man_Shuen_Cheung]                                    [Man_Shuen_Cheung]
 griffin            2458/tcp    # griffin                      [Tom_Taylor]                                          [Tom_Taylor]
 griffin            2458/udp    # griffin                      [Tom_Taylor]                                          [Tom_Taylor]
-community          2459/tcp    # Community                    [David_Schwartz]                                      [David_Schwartz]
-community          2459/udp    # Community                    [David_Schwartz]                                      [David_Schwartz]
+xrpl               2459/tcp    # Community                    [David_Schwartz]                                      [David_Schwartz]                                                       2019-08-09
+xrpl               2459/udp    # Community                    [David_Schwartz]                                      [David_Schwartz]                                                       2019-08-09
 ms-theater         2460/tcp    # ms-theater                   [Anton_Kucer]                                         [Anton_Kucer]
 ms-theater         2460/udp    # ms-theater                   [Anton_Kucer]                                         [Anton_Kucer]
 qadmifoper         2461/tcp    # qadmifoper
@@ -7153,11 +7153,11 @@ nppmp              3476/tcp    # NVIDIA Mgmt Protocol         [Gilbert_Yeung]   
 nppmp              3476/udp    # NVIDIA Mgmt Protocol         [Gilbert_Yeung]                                       [Gilbert_Yeung]                                           2002-04
 ecomm              3477/tcp    # eComm link port              [Thomas_Soerensen]                                    [Thomas_Soerensen]                                        2002-04
 ecomm              3477/udp    # eComm link port              [Thomas_Soerensen]                                    [Thomas_Soerensen]                                        2002-04
-stun               3478/tcp    # Session Traversal Utilities                                                                                                                                            [RFC5389]
+stun               3478/tcp    # Session Traversal Utilities  [IESG]                                                [IETF_Chair]                                                           2019-03-28   [RFC-ietf-tram-stunbis-21]
 #                                     for NAT (STUN) port
-stun               3478/udp    # Session Traversal Utilities                                                                                                                                            [RFC5389]
-turn               3478/tcp    # TURN over TCP                                                                                                                                                          [RFC5766]
-turn               3478/udp    # TURN over UDP                                                                                                                                                          [RFC5766]
+stun               3478/udp    # Session Traversal Utilities  [IESG]                                                [IETF_Chair]                                                           2019-03-28   [RFC-ietf-tram-stunbis-21]
+turn               3478/tcp    # TURN over TCP                                                                                                                                             2019-08-02   [RFC-ietf-tram-turnbis-29]
+turn               3478/udp    # TURN over UDP                                                                                                                                             2019-08-02   [RFC-ietf-tram-turnbis-29]
 stun-behavior      3478/tcp    # STUN Behavior Discovery over                                                                                                                                           [RFC5780]
 #                                     TCP
 stun-behavior      3478/udp    # STUN Behavior Discovery over                                                                                                                                           [RFC5780]
@@ -7342,8 +7342,8 @@ dof-eps            3567/tcp    # DOF Protocol Stack           [OpenDOF]         
 dof-eps            3567/udp    # DOF Protocol Stack           [OpenDOF]                                             [Bryant_Eastham]                                          2002-08      2015-04-23
 dof-tunnel-sec     3568/tcp    # DOF Secure Tunnel            [OpenDOF]                                             [Bryant_Eastham]                                          2003-01      2015-04-23
 dof-tunnel-sec     3568/udp    # DOF Secure Tunnel            [OpenDOF]                                             [Bryant_Eastham]                                          2003-01      2015-04-23
-mbg-ctrl           3569/tcp    # Meinberg Control Service     [Martin_Burnicki]                                     [Martin_Burnicki]                                         2002-08
-mbg-ctrl           3569/udp    # Meinberg Control Service     [Martin_Burnicki]                                     [Martin_Burnicki]                                         2002-08
+mbg-ctrl           3569/tcp    # Meinberg Control Service     [Meinberg_Funkuhren_GmbH_Co_KG]                       [Meinberg_IANA_Registrations]                             2002-08      2019-04-23
+mbg-ctrl           3569/udp    # Meinberg Control Service     [Meinberg_Funkuhren_GmbH_Co_KG]                       [Meinberg_IANA_Registrations]                             2002-08      2019-04-23
 mccwebsvr-port     3570/tcp    # MCC Web Server Port
 mccwebsvr-port     3570/udp    # MCC Web Server Port
 megardsvr-port     3571/tcp    # MegaRAID Server Port
@@ -7428,8 +7428,8 @@ echonet            3610/tcp    # ECHONET                      [Takeshi_Saito]   
 echonet            3610/udp    # ECHONET                      [Takeshi_Saito]                                       [Takeshi_Saito]                                           2002-09
 six-degrees        3611/tcp    # Six Degrees Port             [Zach_Nies]                                           [Zach_Nies]                                               2002-09
 six-degrees        3611/udp    # Six Degrees Port             [Zach_Nies]                                           [Zach_Nies]                                               2002-09
-hp-dataprotect     3612/tcp    # HP Data Protector            [Hewlett_Packard_2]                                   [Oliver_Breyel]                                           2002-09      2013-02-07
-hp-dataprotect     3612/udp    # HP Data Protector            [Hewlett_Packard_2]                                   [Oliver_Breyel]                                           2002-09      2013-02-07
+dataprotector      3612/tcp    # Micro Focus Data Protector   [Micro_Focus]                                         [Shishir_Misra]                                           2002-09      2019-09-30
+dataprotector      3612/udp    # Micro Focus Data Protector   [Micro_Focus]                                         [Shishir_Misra]                                           2002-09      2019-09-30
 alaris-disc        3613/tcp    # Alaris Device Discovery      [Chris_Dern]                                          [Chris_Dern]                                              2004-06
 alaris-disc        3613/udp    # Alaris Device Discovery      [Chris_Dern]                                          [Chris_Dern]                                              2004-06
 sigma-port         3614/tcp    # Satchwell Sigma              [Dave_Chapman]                                        [Dave_Chapman]                                            2011-06-06
@@ -8809,7 +8809,8 @@ ktickets-rest      4331/tcp    # management and ticketing     [KeyTicket_Solutio
 #                                     systems (embedded POS
 #                                     devices)
 #                  4331        udp    Reserved
-#                  4332               Unassigned
+getty-focus        4332/tcp    # Getty Images FOCUS service   [Matthew_Margolis]                                    [Bryan_Ramirez]                                           2019-04-18
+#                  4332        udp    Reserved
 ahsp               4333/tcp    # ArrowHead Service Protocol   [QuantuMatriX_Technologies]                           [Matthew_Schultz]                                         2014-04-10
 #                                     (AHSP)
 ahsp               4333/udp    # ArrowHead Service Protocol   [QuantuMatriX_Technologies]                           [Matthew_Schultz]                                         2014-04-10
@@ -9962,7 +9963,7 @@ pk                 5272/udp    # PK                           [Patrick_Kara]    
 xmpp-bosh          5280/tcp    # Bidirectional-streams Over   [Peter_Saint_Andre]                                   [Peter_Saint_Andre]                                       2009-11-25
 #                                     Synchronous HTTP (BOSH)
 #                  5280        udp    Reserved
-undo-lm            5281/tcp    # Undo License Manager         [Julian_Smith]                                        [Julian_Smith]                                            2010-04-19
+undo-lm            5281/tcp    # Undo License Manager         [Undo_Ltd]                                            [Edward_Moffett]                                          2010-04-19   2019-01-25
 #                  5281        udp    Reserved
 transmit-port      5282/tcp    # Marimba Transmitter Port     [Johan_Eriksson]                                      [Johan_Eriksson]                                          2002-04
 transmit-port      5282/udp    # Marimba Transmitter Port     [Johan_Eriksson]                                      [Johan_Eriksson]                                          2002-04
@@ -10023,10 +10024,11 @@ kfserver           5343/udp    # Sculptor Database Server     [Keith_Ashman]    
 xkotodrcp          5344/tcp    # xkoto DRCP                   [Jeff_Heisz]                                          [Jeff_Heisz]                                              2006-02
 xkotodrcp          5344/udp    # xkoto DRCP                   [Jeff_Heisz]                                          [Jeff_Heisz]                                              2006-02
 #                5345-5348            Unassigned
-stuns              5349/tcp    # STUN over TLS                                                                                                                                                          [RFC5389]
+stuns              5349/tcp    # Session Traversal Utilities  [IESG]                                                [IETF_Chair]                                                           2019-03-28   [RFC-ietf-tram-stunbis-21]
 stuns              5349/udp    # STUN over DTLS               [IESG]                                                [IETF_Chair]                                                           2014-07-03   [RFC7350]                                                            This service name was initially created by [RFC5389].
-turns              5349/tcp    # TURN over TLS                                                                                                                                                          [RFC5766]
-turns              5349/udp    # TURN over DTLS               [IESG]                                                [IETF_Chair]                                                           2014-07-03   [RFC7350]                                                            This service name was initially created by [RFC5766].
+turns              5349/tcp    # TURN over TLS                                                                                                                                             2019-08-02   [RFC-ietf-tram-turnbis-29]
+turns              5349/udp    # TURN over DTLS               [IESG]                                                [IETF_Chair]                                                           2019-08-02   [RFC7350]                                                            This service name was initially created by
+#                                                                                                                                                                                                                                                                                 [RFC-ietf-tram-turnbis-29].
 stun-behaviors     5349/tcp    # STUN Behavior Discovery over                                                                                                                                           [RFC5780]
 #                                     TLS
 stun-behaviors     5349/udp    # Reserved for a future                                                                                                                                                  [RFC5780]
@@ -10036,8 +10038,8 @@ pcp-multicast      5350/udp    # Port Control Protocol        [IESG]            
 #                                     Multicast
 #                  5351        tcp    Reserved
 pcp                5351/udp    # Port Control Protocol        [IESG]                                                [IETF_Chair]                                                                        [RFC6887]
-dns-llq            5352/tcp    # DNS Long-Lived Queries       [Kiren_Sekar]                                         [Kiren_Sekar]                                             2005-08
-dns-llq            5352/udp    # DNS Long-Lived Queries       [Kiren_Sekar]                                         [Kiren_Sekar]                                             2005-08
+dns-llq            5352/tcp    # DNS Long-Lived Queries       [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2005-08      2019-08-26   [RFC-sekar-dns-llq-06]
+dns-llq            5352/udp    # DNS Long-Lived Queries       [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2005-08      2019-08-26   [RFC-sekar-dns-llq-06]
 mdns               5353/tcp    # Multicast DNS                [IESG]                                                [IETF_Chair]                                                                        [RFC6762]
 mdns               5353/udp    # Multicast DNS                [IESG]                                                [IETF_Chair]                                                                        [RFC6762]
 mdnsresponder      5354/tcp    # Multicast DNS Responder IPC  [Stuart_Cheshire_3]                                   [Stuart_Cheshire_3]                                       2004-06
@@ -10239,7 +10241,7 @@ freeciv            5556/udp    # Freeciv gameplay             [Reinier_Post_and_
 farenet            5557/tcp    # Sandlab FARENET              [Kay_T_Labinsky]                                      [Kay_T_Labinsky]                                          2010-05-03
 #                  5557        udp    Reserved
 #                5558-5564            Unassigned
-hpe-dp-bura        5565/tcp    # HPE Advanced BURA            [Hewlett_Packard_Enterprise]                          [Silvia_Veronese]                                         2016-01-13
+dp-bura            5565/tcp    # Data Protector BURA          [Micro_Focus]                                         [Shishir_Misra]                                           2016-01-13   2019-10-04
 #                  5565        udp    Reserved
 westec-connect     5566/tcp    # Westec Connect               [Jon_Bolen]                                           [Jon_Bolen]                                               2009-03-18
 #                  5566        udp    Reserved
@@ -10795,8 +10797,8 @@ bmc_ctd_ldap       6301/tcp    # BMC CONTROL-D LDAP SERVER    [Portnoy_Boxman_2]
 bmc-ctd-ldap       6301/udp    # IANA assigned this           [Portnoy_Boxman_2]                                    [Portnoy_Boxman_2]                                        2006-09
 bmc_ctd_ldap       6301/udp    # BMC CONTROL-D LDAP SERVER    [Portnoy_Boxman_2]                                    [Portnoy_Boxman_2]                                        2006-09                                                                                        historic, not usable for use with many common service
 #                6302-6305            Unassigned
-ufmp               6306/tcp    # Unified Fabric Management    [Albert_Berlovitch]                                   [Albert_Berlovitch]                                       2009-12-17
-ufmp               6306/udp    # Unified Fabric Management    [Albert_Berlovitch]                                   [Albert_Berlovitch]                                       2009-12-17
+ufmp               6306/tcp    # Unified Fabric Management    [Mellanox]                                            [Shachar_Dor]                                             2009-12-17   2019-07-02
+ufmp               6306/udp    # Unified Fabric Management    [Mellanox]                                            [Shachar_Dor]                                             2009-12-17   2019-07-02
 #                6307-6314            Unassigned
 scup               6315/tcp    # Sensor Control Unit Protocol [Sven_Kopacz]                                         [Sven_Kopacz]                                             2010-09-01
 scup-disc          6315/udp    # Sensor Control Unit Protocol [Sven_Kopacz]                                         [Sven_Kopacz]                                             2010-09-01
@@ -10808,8 +10810,8 @@ nav-data-cmd       6317/tcp    # Navtech Radar Sensor Data    [Navtech_Radar_Ltd
 #                                     Command
 nav-data           6317/udp    # Navtech Radar Sensor Data    [Navtech_Radar_Ltd]                                   [Guy_Avery]                                               2013-02-20
 #                6318-6319            Unassigned
-repsvc             6320/tcp    # Double-Take Replication      [James_Wilkinson]                                     [James_Wilkinson]                                         2006-04
-repsvc             6320/udp    # Double-Take Replication      [James_Wilkinson]                                     [James_Wilkinson]                                         2006-04
+repsvc             6320/tcp    # Double-Take Replication      [Carbonite_Inc]                                       [James_Wilkinson]                                         2006-04      2019-08-23
+repsvc             6320/udp    # Double-Take Replication      [Carbonite_Inc]                                       [James_Wilkinson]                                         2006-04      2019-08-23
 emp-server1        6321/tcp    # Empress Software             [Srdjan_Holovac]                                      [Srdjan_Holovac]
 #                                     Connectivity Server 1
 emp-server1        6321/udp    # Empress Software             [Srdjan_Holovac]                                      [Srdjan_Holovac]
@@ -10820,9 +10822,9 @@ emp-server2        6322/udp    # Empress Software             [Srdjan_Holovac]  
 hrd-ncs            6324/tcp    # HR Device Network            [Hall_Research]                                       [Vishal_Dharmadhikari]                                    2011-11-29
 #                                     Configuration Service
 hrd-ns-disc        6324/udp    # HR Device Network service    [Hall_Research]                                       [Vishal_Dharmadhikari]                                    2011-11-29
-dt-mgmtsvc         6325/tcp    # Double-Take Management       [Vision_Solutions]                                    [James_Wilkinson2]                                        2012-06-06
+dt-mgmtsvc         6325/tcp    # Double-Take Management       [Carbonite_Inc]                                       [James_Wilkinson]                                         2012-06-06   2019-08-23
 #                  6325        udp    Reserved
-dt-vra             6326/tcp    # Double-Take Virtual Recovery [Vision_Solutions]                                    [James_Wilkinson2]                                        2012-10-08
+dt-vra             6326/tcp    # Double-Take Virtual Recovery [Carbonite_Inc]                                       [James_Wilkinson]                                         2012-10-08   2019-08-23
 #                                     Assistant
 #                  6326        udp    Reserved
 #                6327-6342            Unassigned
@@ -11950,7 +11952,13 @@ http-alt           8008/tcp    # HTTP Alternate               [James_Gettys]    
 http-alt           8008/udp    # HTTP Alternate               [James_Gettys]                                        [James_Gettys]
 nvme-disc          8009/tcp    # NVMe over Fabrics Discovery  [NVM_Express_Inc]                                     [Amber_Huffman]                                           2018-03-27
 #                  8009        udp    Reserved
-#                8010-8018            Unassigned
+#                  8010               Reserved                                                                                                                                                  2018-01-09                                                           yes
+#                8011-8014            Unassigned
+cfg-cloud          8015/tcp    # Configuration Cloud Service  [admin_at_cfg_cloud]                                  [Goksel_Darcan]                                           2019-01-09
+#                  8015        udp    Reserved
+ads-s              8016/tcp    # Beckhoff Automation Device   [Beckhoff_Automation_GmbH_Co_KG]                      [Henning_Mersch_2]                                        2019-02-28
+#                  8016        udp    Reserved
+#                8017-8018            Unassigned
 qbdb               8019/tcp    # QB DB Dynamic Port           [Sridhar_Krishnamurth]                                [Sridhar_Krishnamurth]                                    2008-02-15
 qbdb               8019/udp    # QB DB Dynamic Port           [Sridhar_Krishnamurth]                                [Sridhar_Krishnamurth]                                    2008-02-15
 intu-ec-svcdisc    8020/tcp    # Intuit Entitlement Service   [Daniel_C_McGloin]                                    [Daniel_C_McGloin]                                        2005-05
@@ -12040,7 +12048,10 @@ us-cli             8082/tcp    # Utilistor (Client)           [Andy_Brewerton]  
 us-cli             8082/udp    # Utilistor (Client)           [Andy_Brewerton]                                      [Andy_Brewerton]                                          2005-08
 us-srv             8083/tcp    # Utilistor (Server)           [Andy_Brewerton]                                      [Andy_Brewerton]                                          2005-08
 us-srv             8083/udp    # Utilistor (Server)           [Andy_Brewerton]                                      [Andy_Brewerton]                                          2005-08
-#                8084-8085            Unassigned
+websnp             8084/tcp    # Snarl Network Protocol over  [full_phat_products]                                  [Chris_Peel_2]                                            2019-08-08
+#                                     HTTP
+#                  8084        udp    Reserved
+#                  8085               Unassigned
 d-s-n              8086/tcp    # Distributed SCADA Networking [Gary_Hampton]                                        [Gary_Hampton]                                            2008-02-27
 #                                     Rendezvous Port
 d-s-n              8086/udp    # Distributed SCADA Networking [Gary_Hampton]                                        [Gary_Hampton]                                            2008-02-27
@@ -12064,7 +12075,10 @@ ldoms-migr         8101/tcp    # Logical Domains Migration    [Liam_Merwick]    
 kz-migr            8102/tcp    # Oracle Kernel zones          [Oracle_4]                                            [John_Levon]                                              2013-12-24
 #                                     migration server
 #                  8102        udp    Reserved
-#                8103-8114            Unassigned
+#                8103-8110            Unassigned
+#                  8111        tcp    Reserved
+skynetflow         8111/udp    # Skynetflow network services  [skynetflow.com]                                      [Dmitrii_Ogarkov]                                         2019-05-28
+#                8112-8114            Unassigned
 mtl8000-matrix     8115/tcp    # MTL8000 Matrix               [David_Pinch]                                         [David_Pinch]                                             2002-04
 mtl8000-matrix     8115/udp    # MTL8000 Matrix               [David_Pinch]                                         [David_Pinch]                                             2002-04
 cp-cluster         8116/tcp    # Check Point Clustering       [Roni_Moshitzky]                                      [Roni_Moshitzky]
@@ -12358,7 +12372,10 @@ ultraseek-http     8765/tcp    # Ultraseek HTTP               [Walter_Underwood]
 ultraseek-http     8765/udp    # Ultraseek HTTP               [Walter_Underwood]                                    [Walter_Underwood]
 amcs               8766/tcp    # Agilent Connectivity Service [Keysight_Technologies_Inc]                           [Tom_Fay]                                                 2013-01-16   2016-09-12
 amcs               8766/udp    # Agilent Connectivity Service [Keysight_Technologies_Inc]                           [Tom_Fay]                                                 2013-01-16   2016-09-12
-#                8767-8769            Unassigned
+core-of-source     8767/tcp    # Online mobile multiplayer    [Alt_Solve_Sdn_Bhd]                                   [Almaz_Hong]                                              2019-07-24
+#                                     game
+#                  8767        udp    Reserved
+#                8768-8769            Unassigned
 dpap               8770/tcp    # Digital Photo Access         [Amandeep_Jawa_2]                                     [Amandeep_Jawa_2]                                         2004-11                                                                                        Defined TXT keys: txtvers, Version, iPSh Version, Machine ID,
 #                                     Protocol (iPhoto)                                                                                                                                                                                                                           Machine Name, Password
 dpap               8770/udp    # Digital Photo Access         [Amandeep_Jawa_2]                                     [Amandeep_Jawa_2]                                         2004-11                                                                                        Defined TXT keys: txtvers, Version, iPSh Version, Machine ID,
@@ -12390,7 +12407,10 @@ pfcp               8805/udp    # Destination Port number for  [Kimmo_Kymalainen]
 hes-clip           8807/udp    # HES-CLIP Interoperability    [Tim_Schoechle]                                       [Ludo_Bertsch]                                            2018-09-07
 #                  8808        tcp    Reserved
 ssports-bcast      8808/udp    # STATSports Broadcast Service [Statsports_International]                            [Catalin_Caranfil]                                        2016-12-22
-#                8809-8872            Unassigned
+#                  8809        tcp    Reserved
+3gpp-monp          8809/udp    # MCPTT Off-Network Protocol   [ThreeGPP_3]                                          [Frederic_Firmin]                                         2019-04-15
+#                                     (MONP)
+#                8810-8872            Unassigned
 dxspider           8873/tcp    # dxspider linking protocol    [Dirk_Koopman]                                        [Dirk_Koopman]                                            2005-08
 dxspider           8873/udp    # dxspider linking protocol    [Dirk_Koopman]                                        [Dirk_Koopman]                                            2005-08
 #                8874-8879            Unassigned
@@ -12693,7 +12713,10 @@ secure-ts          9318/udp    # PKIX TimeStamp over TLS      [Niklas_Weiss]    
 #                9319-9320            Unassigned
 guibase            9321/tcp    # guibase                      [Yutaka_Ono]                                          [Yutaka_Ono]
 guibase            9321/udp    # guibase                      [Yutaka_Ono]                                          [Yutaka_Ono]
-#                9322-9342            Unassigned
+#                9322-9338            Unassigned
+gnmi-gnoi          9339/tcp    # gRPC Network Mgmt/Operations [Google_Netops]                                       [gNxi_Maintainers]                                        2019-05-09
+#                  9339        udp    Reserved
+#                9340-9342            Unassigned
 mpidcmgr           9343/tcp    # MpIdcMgr                     [Yutaka_Ono]                                          [Yutaka_Ono]
 mpidcmgr           9343/udp    # MpIdcMgr                     [Yutaka_Ono]                                          [Yutaka_Ono]
 mphlpdmc           9344/tcp    # Mphlpdmc                     [Yutaka_Ono]                                          [Yutaka_Ono]
@@ -12858,7 +12881,8 @@ davsrcs            9802/udp    # WebDAV Source TLS/SSL        [Rob_Isaac]       
 sapv1              9875/tcp    # Session Announcement v1                                                                                                                                                [RFC2974]
 sapv1              9875/udp    # Session Announcement v1                                                                                                                                                [RFC2974]
 sd                 9876/tcp    # Session Director             [Van_Jacobson]                                        [Van_Jacobson]
-#                  9877               Unassigned
+x510               9877/tcp    # The X.510 wrapper protocol   [ITU/TSB_(ITU-T_Study_Group_17)]                      [Erik_Andersen]                                           2019-09-30                [ITU-T X.510 / ISO/IEC 9584-11]
+#                  9877        udp    Reserved
 #                                     The KX509 Kerberized                                                                                                                                                                                                                        Historically, this service has been referred to as
 kca-service        9878/udp    # Certificate Issuance         [IESG]                                                [IETF_Chair]                                              2012-07-12                [RFC6717]                                                            "kca_service", but this service name does not meet the
 #                                     Protocol in Use in 2012                                                                                                                                                                                                                     registry requirements.
@@ -13243,7 +13267,10 @@ x2e-disc           11877/udp    # X2E service discovery        [Hannes_K]       
 #               11878-11966           Unassigned
 sysinfo-sp         11967/tcp    # SysInfo Service Protocol     [Mike_Cooper]                                         [Mike_Cooper]                                             2003-03
 sysinfo-sp         11967/udp    # SysInfo Service Protocol     [Mike_Cooper]                                         [Mike_Cooper]                                             2003-03
-#               11968-11996           Unassigned
+#               11968-11970           Unassigned
+tibsd              11971/tcp    # TiBS Service                 [Teradactyl_LLC]                                      [Kristen_Webb]                                            2019-05-17
+#                  11971       udp    Reserved
+#               11972-11996           Unassigned
 wmereceiving       11997/sctp    # WorldMailExpress             [Greg_Foutz]                                          [Greg_Foutz]                                              2006-03
 wmedistribution    11998/sctp    # WorldMailExpress             [Greg_Foutz]                                          [Greg_Foutz]                                              2006-03
 wmereporting       11999/sctp    # WorldMailExpress             [Greg_Foutz]                                          [Greg_Foutz]                                              2006-03
@@ -13786,7 +13813,9 @@ notezilla-lan      21010/tcp    # Notezilla.Lan Server         [Conceptworld_Cor
 trinket-agent      21212/tcp    # Distributed artificial       [Holvonix_LLC]                                        [Advay_Mengle]                                            2017-11-29
 #                                     intelligence
 #                  21212       udp    Reserved
-#               21213-21220           Unassigned
+cohesity-agent     21213/tcp    # Cohesity backup agents       [Cohesity_Inc]                                        [Sashi_Madduri]                                           2019-08-01
+#                  21213       udp    Reserved
+#               21214-21220           Unassigned
 aigairserver       21221/tcp    # Services for Air Server      [AIG_S.L.]                                            [Edelmiro_Gonzalez_Martinez]                              2017-03-16
 #                  21221       udp    Reserved
 #               21222-21552           Unassigned
@@ -14081,10 +14110,12 @@ exonet             26489/udp    # EXOnet                       [Urban_Fosseus]  
 flex-lmadmin       27010/tcp    # A protocol for managing      [Flexera]                                             [Paul_Bland]                                              2018-08-22
 #                                     license services
 #                  27010       udp    Reserved
-#                                                                                                                                                                                                                                                                    Use Known on
-#               27011-27344           Unassigned                                                                                                                                                                                                                     ports 27017,
-#                                                                                                                                                                                                                                                                    27018 and
-#                                                                                                                                                                                                                                                                    27019
+#               27011-27016           Unassigned
+mongodb            27017/tcp    # Mongo database system        [MongoDB_Inc.]                                        [Akshay_Kumar]                                            2019-02-21
+#                  27017       udp    Reserved
+#               27018-27344           Unassigned                                                                                                                                                                                                                     Use Known on
+#                                                                                                                                                                                                                                                                    ports 27018
+#                                                                                                                                                                                                                                                                    and 27019
 imagepump          27345/tcp    # ImagePump                    [Richard_Minner]                                      [Richard_Minner]
 imagepump          27345/udp    # ImagePump                    [Richard_Minner]                                      [Richard_Minner]
 #               27346-27441           Unassigned
@@ -14108,6 +14139,7 @@ nxlmd              28000/tcp    # NX License Manager           [Anthony_Greatore
 nxlmd              28000/udp    # NX License Manager           [Anthony_Greatorex]                                   [Anthony_Greatorex]                                       2004-11
 pqsp               28001/tcp    # PQ Service                   [Peter_Laschtowitz]                                   [Peter_Laschtowitz]                                       2009-09-15
 #                  28001       udp    Reserved
+#                                                                                                                                                                                                                                                                    Use Known on
 #               28002-28118           Unassigned                                                                                                                                                                                                                     ports 28017,
 #                                                                                                                                                                                                                                                                    28018 and
 #                                                                                                                                                                                                                                                                    28019
@@ -14289,8 +14321,11 @@ speedtrace-disc    33334/udp    # SpeedTrace TraceAgent        [Holger_Heinrich]
 traceroute         33434/tcp    # traceroute use               [IANA]                                                [IANA]
 traceroute         33434/udp    # traceroute use               [IANA]                                                [IANA]
 #                  33435       tcp    Reserved
-mtrace             33435/udp    # IP Multicast Traceroute      [IESG]                                                [IETF_Chair]                                              2017-12-13   2018-07-31   [RFC8487]
-#               33436-33655           Unassigned
+mtrace             33435/udp    # IP Multicast Traceroute      [IESG]                                                [IETF_Chair]                                              2017-12-13   2019-08-09   [RFC8487]                                               Unauthorized
+#                                                                                                                                                                                                                                                                    33435
+#               33436-33655           Unassigned                                                                                                                                                                                                                     Unauthorized
+#                                                                                                                                                                                                                                                                    Use on ports
+#                                                                                                                                                                                                                                                                    33436-33534
 snip-slave         33656/tcp    # SNIP Slave                   [Dr_Chris_Tucker]                                     [Dr_Chris_Tucker]                                         2005-08
 snip-slave         33656/udp    # SNIP Slave                   [Dr_Chris_Tucker]                                     [Dr_Chris_Tucker]                                         2005-08
 #               33657-34248           Unassigned
@@ -14641,7 +14676,7 @@ nimbusdb           48004/tcp    # NimbusDB Connector           [Stephen_Harrison
 nimbusdbctrl       48005/tcp    # NimbusDB Control             [Stephen_Harrison]                                    [Stephen_Harrison]                                        2011-01-24
 #                  48005       udp    Reserved
 #               48006-48047           Unassigned
-juliar             48048/tcp    # Juliar Programming Language  [Juliar]                                              [Andrei_Mak]                                              2018-02-16
+juka               48048/tcp    # Juliar Programming Language  [Juliar]                                              [Andrei_Mak]                                              2018-02-16   2019-03-08
 #                  48048       udp    Reserved
 3gpp-cbsp          48049/tcp    # 3GPP Cell Broadcast Service  [Gert_Thomasen]                                       [Gert_Thomasen]                                           2009-12-07
 #                  48049       udp    Reserved
@@ -14901,6 +14936,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # axis-nvr                       tcp    Axis Network Video Recorders [Axis_Communications_AB]                              [Erik_Linge]                                              2018-05-24                                                                                     Defined TXT keys: None
 # axis-nvr                       udp    Axis Network Video Recorders [Axis_Communications_AB]                              [Erik_Linge]                                              2018-05-24                                                                                     Defined TXT keys: None
 # axis-video                            Axis Video Cameras           [Kristina_Sten]                                       [Kristina_Sten]                                                                                                                                          Defined TXT keys: None
+# autotunnel                     udp    IPSEC VPN tunnel over UDP    [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-04                [RFC6281]                                                            Defined TXT Keys: None
 # b3d-convince                          3M Unitek Digital            [Rajiv_Aaron_Manglani]                                [Rajiv_Aaron_Manglani]                                                                                                                                   Defined TXT keys: txtvers=1, protovers=<api version>,
 #                                     Orthodontic System                                                                                                                                                                                                                          guid=<32 hex digits>
 # babyphone                             BabyPhone                    [Johan_Kool]                                          [Johan_Kool]                                                                                                                                             Defined TXT keys: None
@@ -14992,6 +15028,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     support                                                                                                                                                                                                                                     chat, video communication, video conference, file transfer
 # com-ocs-es-mcc                        ElectraStar media centre     [OC]                                                  [OC]                                                                                                                                                     Defined TXT keys: None
 #                                     control protocol
+# conecube                       udp    DNS SRV service for          [cone_smart_solution]                                 [Christoph_Bimminger]                                     2019-04-22                                                                                     Defined TXT keys: none
+#                                     smarthome server
 # contactserver                         Now Contact                                                                                                                                                                                                                                 Defined TXT keys: None
 # coolanetaudio                  tcp    Coolatoola Network Audio     [Coolatoola.com]                                      [Tim_Hewett]                                              2014-01-03                                                                                     Defined TXT keys: None
 # corroboree                            Corroboree Server            [Heath_Raftery]                                       [Heath_Raftery]                                                                                                                                          Defined TXT keys: None
@@ -15030,7 +15068,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # demoncamremote                 tcp    Peer-to-peer real-time video [James_Alan_Bush]                                     [James_Alan_Bush]                                         2017-09-26                                                                                     Defined TXT keys: None
 #                                     streaming
 # demoncamremote                 udp    Peer-to-peer real-time video [James_Alan_Bush]                                     [James_Alan_Bush]                                         2017-09-26                                                                                     Defined TXT keys: None
-# device-info                           Device Info                  [Stuart_Cheshire_5][Marc_Krochmal]                    [Stuart_Cheshire_5][Marc_Krochmal]                                                                                                                       Not a service type. Special name reserved for DNS-SD device
+# device-info                           Device Info                  [Stuart_Cheshire][Marc_Krochmal]                      [Stuart_Cheshire][Marc_Krochmal]                                                                                                                         Not a service type. Special name reserved for DNS-SD device
 #                                                                                                                                                                                                                                                                                 info.
 # devonsync                      tcp    DEVONthink synchronization   [DEVONtechnologies_LLC]                               [Rob_Rix][Eric_Boehnisch-Volkmann]                        2011-10-18                                                                                     Defined TXT keys: None at present
 # dhanda-g                       tcp    DHANDAg is going for a site  [DHANDAg]                                             [Deepam]                                                  2017-12-29                                                                                     Defined TXT keys: None
@@ -15049,15 +15087,21 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # dlpx-sp                        tcp    Delphix Session Protocol     [Delphix_Corp]                                        [Peng_Dai]                                                2012-10-02                                                                                     Defined TXT keys: None
 # dltimesync                     udp    Local Area Dynamic Time      [Geoff_Back_3]                                        [Geoff_Back_3]                                                                                                                                           Defined TXT keys: None
 #                                     Synchronisation Protocol
-# dns-sd                                DNS Service Discovery        [Stuart_Cheshire_5][Marc_Krochmal]                    [Stuart_Cheshire_5][Marc_Krochmal]                                                                                                                       Not a service type. Special name reserved for DNS-SD meta
+# dns-llq-tls                    tcp    DNS Long-Lived Queries over  [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-04                [RFC6281]                                                            Defined TXT Keys: None
+#                                     DNS queries to the
+# dns-query-tls                  tcp    authoritative server over    [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-04                                                                                     Defined TXT Keys: None
+# dns-sd                                DNS Service Discovery        [Stuart_Cheshire][Marc_Krochmal]                      [Stuart_Cheshire][Marc_Krochmal]                                                                                                                         Not a service type. Special name reserved for DNS-SD meta
 #                                                                                                                                                                                                                                                                                 queries.
 #                                                                                                                                                                                                                                                                                 DNS Dynamic Update Service for a given domain may not
 #                                                                                                                                                                                                                                                                                 necessarily be provided by the principal name servers as
 #                                                                                                                                                                                                                                                                                 advertised by the domain's "NS" records, and may not
-# dns-update                     udp    DNS Dynamic Update Service   [Kiren_Sekar_2]                                       [Kiren_Sekar_2]                                                                                                                                          necessarily always be provided on port 53. The
+# dns-update                     tcp    DNS Dynamic Update Service   [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-04                                                                                     necessarily always be provided on port 53. The
 #                                                                                                                                                                                                                                                                                 "_dns-update._udp.<domain>." SRV record gives the target host
 #                                                                                                                                                                                                                                                                                 and port where DNS Dynamic Update Service is provided for the
 #                                                                                                                                                                                                                                                                                 named domain.
+# dns-update                     udp    DNS Dynamic Update Service   [Stuart_Cheshire]                                     [Stuart_Cheshire]                                                      2019-05-04                                                                        necessarily always be provided on port 53. The
+#                                     DNS Dynamic Update Service                                                                                                                                                                                                                  advertised by the domain's "NS" records, and may not
+# dns-update-tls                 tcp    over TLS                     [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-04                [RFC6281]                                                            necessarily always be provided on port 53. The
 # dop                                   Roar (Death of Productivity) [Massive_Flow_Product]                                [Massive_Flow_Product]                                                                                                                                   Defined TXT keys: name=<full username>
 # dropcopy                              DropCopy                     [base_t_Interactive]                                  [base_t_Interactive]                                                                                                                                     Defined TXT keys: None
 # dsgsync                               Datacolor SpyderGallery      [Datacolor]                                           [Heath_Barber]                                            2011-10-14                                                                                     Defined TXT keys: Proprietary
@@ -15114,6 +15158,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # evs-notif                             EVS Notification Center      [Eric_Gillet]                                         [Eric_Gillet]                                                                                                                                            Defined TXT keys: ID, Address
 # ewalletsync                           Synchronization Protocol for [Dan_Amstutz]                                         [Dan_Amstutz]                                                                                                                                            Defined TXT keys: name=<friendly device name>
 #                                     Ilium Software's eWallet
+# ewelink                        tcp    eWeLink devices supporting   [Shenzhen_CoolKit_Technology_Co._Ltd.]                [Michael_Hu]                                              2019-01-17                                                                                     Defined TXT keys: txtvers, id, type, apivers, encrypt, data1,
+#                                     LAN Control                                                                                                                                                                                                                                 data2, data3, data4, iv
 #                                                                                                                                                                                                                                                                                 Not a real service type. Special 'pretend' service types
 # example                               Example Service Type                                                                                                                                                                                                                        ("_example._udp" and "_example._tcp") reserved for use in
 #                                                                                                                                                                                                                                                                                 illustrative examples in books and other documentation.
@@ -15154,6 +15200,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                                                                                                                                                                                                                                                                 key>
 # fv-key                         udp    Fairview Key                 [Jim_Lyle_2]                                          [Jim_Lyle_2]                                                                                                                                             Defined TXT keys: KeyID=<device id>
 # fv-time                        udp    Fairview Time/Date           [Jim_Lyle_2]                                          [Jim_Lyle_2]                                                                                                                                             Defined TXT keys: None
+# g2metric-lynx                  tcp    Used for the Lynx System     [G2_Metric]                                           [Paul_Forsans]                                            2019-06-13                                                                                     Defined TXT keys: None
 # garagepad                             Entrackment Client Service   [Talkative_AB]                                        [Talkative_AB]                                                                                                                                           Defined TXT keys: None
 # giffer                         tcp    gif collection browsing      [Taber_Buhl]                                          [Taber_Buhl]                                              2015-09-24                                                                                     Defined TXT keys: version=<protocol version>
 #                                     G-Force Control via
@@ -15191,7 +15238,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     box remote control
 #                                     Image Data Transfer API for
 # gucam-http                     tcp    Wi-Fi Camera Devices over    [Ripplex_Inc]                                         [Hiroshi_Matsuda]                                         2013-03-04                                                                                     Defined TXT keys: device-name=<name of camera device>
-#                                     HTTP
 #                                                                                                                                                                                                                                                                                 Defined TXT keys: Varies; Depends on type of service being
 #                                                                                                                                                                                                                                                                                 offered/resolved Although DNS-SD does not recommend or
 #                                                                                                                                                                                                                                                                                 advocate using GUIDs as the primary name of an offered
@@ -15276,7 +15322,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                                                                                                                                                                                                                                                                 per-connection basis (like content-type negotiation today)
 #                                                                                                                                                                                                                                                                                 rather than being an entirely separate thing.
 # htvncconf                      udp    HomeTouch Vnc Configuration  [Yuval_Rakavy]                                        [Yuval_Rakavy]                                            2012-07-10                                                                                     Defined TXT keys: None
-# hue                            tcp    Philips hue protocol         [Philips_Lighting]                                    [Walter_Slegers]                                          2017-11-01                                                                                     Defined TXT keys: bridgeid, modelid
+# hue                            tcp    Philips hue protocol         [Signify]                                             [Walter_Slegers]                                          2017-11-01   2019-08-09                                                                        Defined TXT keys: bridgeid, modelid
+# huesync                        tcp    Philips Hue Sync control     [Signify]                                             [Twan_Kamp]                                               2019-07-31                                                                                     Defined TXT keys: name, devicetype, uniqueid, path
 # hyperstream                           Atempo HyperStream           [Laurent_Charmet]                                     [Laurent_Charmet]                                                                                                                                        Defined TXT keys: version=x.y.z.w uuid=<36 bytes UUID string>
 #                                     deduplication server                                                                                                                                                                                                                        host=<real host name>
 # iad1                                  BBN IAD                                                                                                                                                   2013-05-24                                                                        This service name is no longer in use.
@@ -15288,6 +15335,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # ican                                  Northrup Grumman/TASC/ICAN   [Laurent_Mihalkovic]                                  [Laurent_Mihalkovic]                                                                                                                                     Defined TXT keys: None
 # ichalkboard                           iChalk                       [Math_Game_House_Soft]                                [Math_Game_House_Soft]                                                                                                                                   Defined TXT keys: None
 # ichat                                 iChat 1.0                    [Jens_Alfke]                                          [Jens_Alfke]                                                                                                                                             Defined TXT keys: Proprietary
+# ici                                   ICI                          [Brent_Hines]                                         [Brent_Hines]
 # iconquer                              iConquer                     [Andrew_Zamler_Carhar]                                [Andrew_Zamler_Carhar]                                                                                                                                   Defined TXT keys: None
 #                                     A Remote Control Application
 # icontrolbox                    tcp    service used to control      [Umair_Cheema]                                        [Umair_Cheema]                                            2013-07-08                                                                                     Defined TXT keys: None
@@ -15317,6 +15365,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     Video Recorders
 # infboard                       tcp    InfBoard interactive         [Eric_Sean_Conner]                                    [Eric_Sean_Conner]                                        2011-10-17                                                                                     Defined TXT keys: Proprietary
 #                                     whiteboard protocol
+# informacast                    tcp    Listing Singlewire           [Singlewire_Software_LLC]                             [Jerry_Steinhauer]                                        2019-03-11                                                                                     Defined TXT keys: None
+#                                     InformaCast servers
 # innergroup                     tcp    Service for a Communications [Santo_Porpiglia]                                     [Santo_Porpiglia]                                         2015-05-28                                                                                     Defined TXT keys: None
 #                                     App
 # inova-ontrack                         Inova Solutions OnTrack                                                                                                                                                                                                                     Defined TXT keys: None
@@ -15355,7 +15405,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # jcan                                  Northrup Grumman/TASC/JCAN   [Laurent_Mihalkovic]                                  [Laurent_Mihalkovic]                                                                                                                                     Defined TXT keys: None
 # jeditx                                Jedit X                      [Satoshi_Matsumoto]                                   [Satoshi_Matsumoto]                                                                                                                                      Defined TXT keys: None
 # jini                                  Jini Service Discovery       [Daniel_Steinberg]                                    [Daniel_Steinberg]                                                                                                                                       Defined TXT keys: None
-# jmap                           tcp    JSON Mail Access Protocol    [JMAP_editor]                                         [Robert_Norris]                                           2016-01-22                                                                                     Defined TXT keys: None
+#                                     JSON Meta Application                                                                                                                                                                                                                       This service name was previously assigned under the name
+# jmap                           tcp    Protocol                     [IESG]                                                [IETF_Chair]                                              2016-01-22   2019-07-16   [RFC8620]                                                            "JSON Mail Access Protocol". This has been de-assigned and
+#                                                                                                                                                                                                                                                                                 re-assigned with the approval of the previous assignee.
 #                                                                                                                                                                                                                                                                                 Defined TXT keys: hash=<40hex characters> salt=<40hex
 #                                     jollys keychain cloud sync                                                                                                                                                                                                                  characters> uuid=<40hex characters> Example:
 # jnx-kcsync                     tcp    protocol                     [Patrick_Stein]                                       [Patrick_Stein]                                           2011-10-24                                                                                     hash=5e7580598c0d7064d4fc79faaeb42585e1a675f8
@@ -15379,6 +15431,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # labyrinth                      udp    Labyrinth local multiplayer  [Andreas_Alptun]                                      [Andreas_Alptun]                                                                                                                                         Defined TXT keys: None
 # lan2p                                 Lan2P Peer-to-Peer Network   [Ben_Guild]                                           [Ben_Guild]                                                                                                                                              Defined TXT keys: None
 # lapse                                 Gawker                       [Phil_Piwonka]                                        [Phil_Piwonka]                                                                                                                                           Defined TXT keys: None
+# larvaio-control                tcp    Larva IP Controller          [larva.io_ltd]                                        [Reijo_Sirila]                                            2019-02-11                                                                                     Defined TXT keys: None
+# larvaio-control                udp    Larva IP Controller          [larva.io_ltd]                                        [Reijo_Sirila]                                            2019-02-11                                                                                     Defined TXT keys: None
 # leaf                                  Lua Embedded Application     [Ico_Doornekamp]                                      [Ico_Doornekamp]                                                                                                                                         Defined TXT keys: name=<readable name> product=<product
 #                                     Framework                                                                                                                                                                                                                                   name/model> version=<version number>
 # lexicon                               Lexicon Vocabulary Sharing   [Jacob_Godwin_Jones]                                  [Jacob_Godwin_Jones]                                                                                                                                     Defined TXT keys: None
@@ -15685,7 +15739,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     games
 # pvaccess                       tcp    Experimental Physics and     [Matej_Sekoranja]                                     [Matej_Sekoranja]                                         2012-03-23                                                                                     Defined TXT keys: None
 # qbox                                  QBox Appliance Locator       [Geoff_Back_4]                                        [Geoff_Back_4]                                                                                                                                           Defined TXT keys: None
-# qttp                                  QuickTime Transfer Protocol  [Stuart_Cheshire_5]                                   [Stuart_Cheshire_5]                                                                                                                                      Defined TXT keys: u=<username> p=<password> path=<path to
+# qttp                                  QuickTime Transfer Protocol  [Stuart_Cheshire]                                     [Stuart_Cheshire]                                                                                                                                        Defined TXT keys: u=<username> p=<password> path=<path to
 #                                                                                                                                                                                                                                                                                 document> (Same as for _http._tcp)
 # quad                           tcp    Distributed Game Data        [Niall_Hogg]                                          [Niall_Hogg]                                              2011-10-25                                                                                     Defined TXT keys: Proprietary
 # quinn                                 Quinn Game Server            [Simon_Haertel]                                       [Simon_Haertel]                                                                                                                                          Defined TXT keys: None
@@ -15809,7 +15863,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     Pure Data
 # servereye                             ServerEye AgentContainer     [Andreas_Behr]                                        [Andreas_Behr]                                                                                                                                           Defined TXT keys: None
 # servermgr                             Mac OS X Server Admin        [Jeff_Albouze]                                        [Jeff_Albouze]                                                                                                                                           Defined TXT keys: None
-# services                              DNS Service Discovery        [Stuart_Cheshire_5][Marc_Krochmal]                    [Stuart_Cheshire_5][Marc_Krochmal]                                                                                                                       Not a service type. Special name reserved for DNS-SD meta
+# services                              DNS Service Discovery        [Stuart_Cheshire][Marc_Krochmal]                      [Stuart_Cheshire][Marc_Krochmal]                                                                                                                         Not a service type. Special name reserved for DNS-SD meta
 # sessionfs                             Session File Sharing         [Anthony_Williams]                                    [Anthony_Williams]                                                                                                                                       Defined TXT keys: Text keys are the file extensions of any
 #                                                                                                                                                                                                                                                                                 file the user plans to share, i.e. pdf, doc, mp3.
 # setlistmaker-rc                tcp    Remote Control for Set List  [Arlo_Leach]                                          [Arlo_Leach]                                              2017-04-21                                                                                     Defined TXT keys: None
@@ -15851,7 +15905,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     Mac OS X computer
 # skillscapture                  udp    transfer database records    [Legentis_Ltd]                                        [David_Elliman]                                           2013-07-01                                                                                     Defined TXT keys: None
 # skype                                 Skype                                                                                                                                                                                                                                       Defined TXT keys: platform, status, auth, rversion, version
-# sleep-proxy                    udp    Sleep Proxy Server           [Stuart_Cheshire_5][Marc_Krochmal]                    [Stuart_Cheshire_5][Marc_Krochmal]                                                                                                                       Defined TXT keys: None
+# sleep-proxy                    udp    Sleep Proxy Server           [Stuart_Cheshire][Marc_Krochmal]                      [Stuart_Cheshire][Marc_Krochmal]                                                                                                                         Defined TXT keys: None
 # sleeptracker                   tcp    Sleeptracker(R) The loT      [Fullpower_Technologies_Inc]                          [Corporate_Compliance_Officer]                            2016-08-17                                                                                     Defined TXT keys: serial=<serial> hostname=<host> osVer=<ver>
 #                                     Smartbed Platform                                                                                                                                                                                                                           appVer=<ver> unit=<name> environment=<env>
 # slimcli                               SliMP3 Server Command-Line   [Dean_Blackketter_2]                                  [Dean_Blackketter_2]                                                                                                                                     Defined TXT keys: None
@@ -15921,6 +15975,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                     discovering shared books
 # stickynotes                           Sticky Notes                 [Johnnie_Walker]                                      [Johnnie_Walker]                                                                                                                                         Defined TXT keys: None
 # stotp                          tcp    One Time Pad Synchronisation [softthere_com]                                       [James_Crosby]                                            2011-10-17                                                                                     Defined TXT keys: None
+# strobe-sync                    tcp    Strobe Synchronization       [Jasper_Morgal]                                       [Richard_Morgal]                                          2019-06-13                                                                                     Defined TXT keys: Application will rely upon Bonjour version
+#                                                                                                                                                                                                                                                                                 3.1.0.1
 #                                     Remote control protocol for
 # sugarlock-rcp                  tcp    Sugarlock consumer           [Sugarlock_LLC]                                       [Don_Woodward-Sugarlock]                                  2016-01-22                                                                                     Defined TXT keys: txtvers=1
 #                                     electronics devices
@@ -15946,6 +16002,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # syncqdea                              Synchronize! X Plus 2.0      [Qdea]                                                [Qdea]                                                                                                                                                   Defined TXT keys: None
 # synergy                               Synergy Peer Discovery       [Karl_Timmermann]                                     [Karl_Timmermann]                                                                                                                                        Defined TXT keys: None
 # synksharing                           SynkSharing synchronization  [Benjamin_Rister]                                     [Benjamin_Rister]                                                                                                                                        Defined TXT keys: None
+#                                     This service name is used to
+# sztp                           tcp    label "_sztp" for            [IESG]                                                [IETF_Chair]                                              2019-01-17                [RFC8572]                                                            This protocol uses HTTPS as a substrate.
+#                                     discovering SZTP bootstrap
 # taccounting                           Data Transmission and        [John_MacMullin]                                      [John_MacMullin]                                                                                                                                         Defined TXT keys: None
 # tango                                 Tango Remote Control         [Tony_Amundson]                                       [Tony_Amundson]                                                                                                                                          Defined TXT keys: None
 # tapinoma-ecs                          Tapinoma Easycontact         [Bonjour]                                             [Bonjour]                                                                                                                                                Defined TXT keys: None
@@ -15967,9 +16026,12 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # tera-mp                               Terascala Maintenance        [Mike_Nuss]                                           [Mike_Nuss]                                                                                                                                              Defined TXT keys: Proprietary
 # test-ok                        tcp    Test Controller Card         [TEST-OK_BV]                                          [Jeroen_Ommering]                                         2012-09-05                                                                                     Defined TXT keys: TEST-OK Test Controller Card TCCxxxx
 # tf-redeye                             ThinkFlood RedEye IR bridge  [Matt_Eagar]                                          [Matt_Eagar]                                                                                                                                             Defined TXT keys: None
+# thing                          tcp    Internet of things service   [Aaltronav]                                           [ICT_Manager]                                             2019-10-02                                                                                     Defined TXT keys: version, url, location, privacy, support,
+#                                     discovery                                                                                                                                                                                                                                   vendor, about
+# thing                          udp    Internet of things service   [Aaltronav]                                           [ICT_Manager]                                             2019-10-02                                                                                     Defined TXT keys: version, url, location, privacy, support,
 # thumbwrestling                        tinkerbuilt Thumb Wrestling  [Jamie_Halmick]                                       [Jamie_Halmick]                                                                                                                                          Defined TXT keys: None
-#                                     game
 # ticonnectmgr                          TI Connect Manager Discovery [Stephen_Reid]                                        [Stephen_Reid]                                                                                                                                           Defined TXT keys: None
+# tic-tac-toe                    tcp    Tic Tac Toe game             [Stuart_Cheshire]                                     [Stuart_Cheshire]                                         2019-05-31                                                                                     Defined TXT keys: None
 # timezone                       tcp    Time Zone Data Distribution  [IESG]                                                [IETF_Chair]                                              2015-08-03                [RFC7808]                                                            This is an extension of the http service. Defined TXT keys:
 #                                     Service - non-TLS                                                                                                                                                                                                                           path=<context path> (as per Section 6 of [RFC6763]).
 # timezones                      tcp    Time Zone Data Distribution  [IESG]                                                [IETF_Chair]                                              2015-08-03                [RFC7808]                                                            This is an extension of the https service. Defined TXT keys:
@@ -16058,6 +16120,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                                                                                                                                                                                                                                                                 Defined TXT keys: Version=<service version> Type=<service
 # visel                                 visel Q-System services      [Lehpaner_Sasa]                                       [Lehpaner_Sasa]                                                                                                                                          type> Name=<service Name> Zone=<service zone> ID=<serviceID>
 #                                                                                                                                                                                                                                                                                 SString=<serviceString> SString1=<serviceString>
+# voalte2                        tcp    Server location via DNS-SD   [Voalte_Inc]                                          [John_Simpson]                                            2019-01-22                                                                                     Defined TXT keys: txtvers, name, (others not publicly
+#                                                                                                                                                                                                                                                                                 documented)
+# voalte3                        tcp    Server location via DNS-SD   [Voalte_Inc]                                          [John_Simpson]                                            2019-01-22                                                                                     Defined TXT keys: txtvers, name, (others not publicly
 #                                     Virtual Object System (using                                                                                                                                                                                                                Defined TXT keys: url=<Object URL with full path>
 # vos                                   VOP/TCP)                     [Reed_Hedges][Peter_Amstutz]                          [Reed_Hedges][Peter_Amstutz]                                                                                                                             type=<Comma-seperated list of object types> title=<Short
 #                                                                                                                                                                                                                                                                                 title of service> descr=<Short description of service>
@@ -16071,6 +16136,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # wd-2go                         tcp    NAS Service Protocol         [Western_Digital]                                     [Rajesh_Batra]                                            2012-07-11                                                                                     Defined TXT keys: None
 # wdp                            tcp    Windows Device Portal        [Microsoft_Corporation_5]                             [Hirsch_Singhal]                                          2016-03-03                                                                                     Defined TXT keys: D (device type), S (https port), A
 #                                                                                                                                                                                                                                                                                 (architecture), T (tags)
+# web-xi                         tcp    HTTP-based protocol for DAQ  [Spectris_plc]                                        [Carsten_Hansen]                                          2019-02-13                                                                                     Defined TXT keys: name, version
 #                                     Cisco WebEx serials products
 # webex                          tcp    will release Bonjour based   [Mobile_Team]                                         [Aulion_Huang]                                            2018-02-09                                                                                     Defined TXT keys: None
 # webex                          udp    will release Bonjour based   [Mobile_Team]                                         [Aulion_Huang]                                            2018-02-09                                                                                     Defined TXT keys: None
@@ -16111,6 +16177,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # wtc-wpr                               Wyatt Technology Corporation [Brent_Fulgham]                                       [Brent_Fulgham]                                                                                                                                          Defined TXT keys: None
 #                                     DynaPro Plate Reader
 # wwdcpic                               PictureSharing sample code   [Marc_Krochmal]                                       [Marc_Krochmal]                                                                                                                                          Defined TXT keys: None
+# x510                           tcp    Security service to          [ITU-T_Study_Group_17]                                [Erik_Andersen]                                           2019-08-13                                                                                     Defined TXT keys: None
+#                                     protocols
 # x-on                                  x-on services                [Matthias_Burghardt]                                  [Matthias_Burghardt]                                                                                                                                     Defined TXT keys: Proprietary
 # x-plane9                       udp    x-plane9                     [Austin_Meyer]                                        [Austin_Meyer]                                                                                                                                           Defined TXT keys: None
 # xcodedistcc                           Xcode Distributed Compiler   [Scott_Tooker]                                        [Scott_Tooker]                                                                                                                                           Defined TXT keys: None
@@ -16153,6 +16221,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [A_Blake_Cooper]                                          A. Blake Cooper                                     mailto:blake&cluebie.net                                      2003-06
 # [A_Boninn]                                                A. Boninn                                           mailto:aboninn&hotmail.com
 # [A_P_Hobson]                                              A.P. Hobson                                         mailto:A.P.Hobson&bra0112.wins.icl.co.uk
+# [Aaltronav]                                                                          Aaltronav                mailto:hostmaster&aaltronav.eu                                2019-10-02
 # [Aaron_Ballman]                                           Aaron Ballman                                       mailto:aaron&realsoftware.com                                 2004-11
 # [Aaron_Bilbrey]                                           Aaron Bilbrey                                       mailto:abilbrey&commvault.com
 # [Aaron_Brick]                                             Aaron Brick                                         mailto:aa&lithic.org
@@ -16187,6 +16256,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Adan_Munoz]                                              Adan Muñoz                 MUNDO READER SL          mailto:adan.munoz&bq.com                                      2014-09-05
 # [AddressBookServer]                                                                  AddressBookServer.com    mailto:iana&addressbookserver.com                             2011-10-18
 # [Adi_Ruppin]                                              Adi Ruppin                                          mailto:adi.ruppin&data-pod.com                                2005-08
+# [admin_at_cfg_cloud]                                                                 admin_at_cfg_cloud       mailto:gdarcan&gmail.com                                      2019-01-09
 # [Administrator]                                           Administrator                                       mailto:admin&ipcore.co.za                                     2005-12
 # [Adnan_Senyurt]                                           Adnan Senyurt              Coviot                   mailto:adnansenyurt&coviot.com                                2017-05-19
 # [Adobe_Systems]                                                                      Adobe Systems Inc.       mailto:mikeharr&adobe.com                                     2012-04-17
@@ -16212,6 +16282,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Akira_Ide]                                               Akira Ide                                           mailto:ide.akira&jp.fujitsu.com                               2006-09
 # [Akira_Saito]                                             Akira Saito                                         mailto:admin&kobu.com                                         2003-04
 # [Akiyoshi_Ochi]                                           Akiyoshi Ochi                                       mailto:akiyoshi&net.paso.fujitsu.co.jp
+# [Akshay_Kumar]                                            Akshay Kumar               MongoDB, Inc.            mailto:akshay&mongodb.com                                     2019-02-21
 # [Al_Amet]                                                 Al Amet                                             mailto:aamet&point-inc.com
 # [Al_Guetzlaff]                                            Al Guetzlaff                                        mailto:aeg&teamquest.com
 # [Alain_Durand]                                            Alain Durand                                        mailto:Alain.Durand&imag.fr
@@ -16236,7 +16307,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Alan_Yates]                                              Alan Yates                                          mailto:alany&ay.com.au
 # [Alanax_Technologies_Inc]                                                            Alanax Technologies, Inc mailto:brian.barritt&alanax.com                               2013-01-14
 # [Alazar_Technologies]                                                                Alazar Technologies      mailto:support&alazartech.com                                 2016-05-26
-# [Albert_Berlovitch]                                       Albert Berlovitch                                   mailto:albertb&voltaire.com                                   2009-12-17
 # [Albert_C_Yang]                                           Albert C. Yang                                      mailto:albert.yang&ezmeeting.com                              2002-03
 # [Albert_Cester]                                           Albert Cester                                       mailto:albert.cester&assyst-intl.com                          2008-08-26
 # [Albert_G_Broscius]                                       Albert G. Broscius                                  mailto:broscius&dsl.cis.upenn.edu
@@ -16312,6 +16382,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Allen_Wei]                                               Allen Wei                                           mailto:Allen_Wei&arborsoft.com
 # [Allied_Electronics]                                                                 Allied Electronics       mailto:Rob&AlliedElectronics.com                              2016-11-29
 # [Allison_Carleton]                                        Allison Carleton                                    mailto:acarleto&naper1.napervilleil.ncr.com
+# [Almaz_Hong]                                              Almaz Hong                                          mailto:almaz.hong&altsolve.com                                2019-07-24
 # [Almira]                                                  Almira                                              mailto:almira_niciu&intuit.com                                2003-07
 # [Alois_Reisinger]                                         Alois Reisinger            European Fiscal          mailto:alois.reisinger&efsta.org                              2013-08-13
 #                                                                                    Standards Association
@@ -16321,6 +16392,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 #                                                                                    LTD.
 # [Alstom_Transport_Preston]                                                           Alstom Transport,        mailto:paul.steane&transport.alstom.com                       2012-12-14
 #                                                                                    Preston
+# [Alt_Solve_Sdn_Bhd]                                                                  Alt Solve Sdn Bhd        mailto:support&altsolve.com                                   2019-07-24
 # [Altova]                                                                             Altova                   mailto:has&altova.com                                         2005-08
 # [Alvaro_P_Dominguez]                                      Alvaro P. Dominguez                                 mailto:alpado&gmail.com                                       2006-02
 # [Alwin_Egger]                                             Alwin Egger                                         mailto:alwin.egger&tegonal.com                                2003-11
@@ -16594,6 +16666,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Baskaran_Subramaniam]                                    Baskaran Subramaniam                                mailto:baskaran&apple.com
 # [Beats_Electronics_LLC]                                                              Beats Electronics LLC.   mailto:eddie&beatsbydre.com                                   2013-06-03
 # [Beats_Electronics_LLC_2]                                                            Beats Electronics LLC.   mailto:yunho.huh&beatsbydre.com                               2014-06-27
+# [Beckhoff_Automation_GmbH_Co_KG]                                                     Beckhoff Automation GmbH mailto:legal&beckhoff.com                                     2019-02-28
+#                                                                                    & Co. KG
 # [Ben]                                                     Ben                                                 mailto:ben&acaciatreesoftware.com
 # [Ben_Darnell]                                                                                                 mailto:ben&cockroachlabs.com                                  2015-09-29
 # [Ben_Guild]                                               Ben Guild                                           mailto:smash&smashsworld.com
@@ -16831,6 +16905,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Bryan_Cole]                                              Bryan Cole                                          mailto:bryan.cole&teraview.com
 # [Bryan_Heden]                                             Bryan Heden                                         mailto:bheden&nagios.com                                      2017-09-06
 # [Bryan_Otey]                                              Bryan Otey                                          mailto:bwo&softdesk.com
+# [Bryan_Ramirez]                                           Bryan Ramirez                                       mailto:bryan.ramirez&gettyimages.com                          2019-04-18
 # [Bryan_Vergato]                                           Bryan Vergato                                       mailto:iana&ivocalize.com                                     2006-05
 # [Bryan_Wilcutt]                                           Bryan Wilcutt                                       mailto:bwilcutt&comtechefdata.com                             2005-06
 # [Bryant_Eastham]                                          Bryant Eastham             OenDOF                   mailto:protocol&opendof.org                                   2015-04-23
@@ -16861,6 +16936,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Canto]                                                                              Canto                    mailto:tschleu&canto.com                                      2014-02-26
 # [Caprice_Productions]                                                                Caprice Productions      mailto:ldrake&caprice.com                                     2012-07-05
 # [CardiffTec]                                              CardiffTec                                          mailto:beninjam174&gmail.com                                  2016-05-19
+# [Carbonite_Inc]                                           Carbonite, Inc.                                     mailto:jwilkinson&carbonite.com                               2019-08-23
 # [Carl_Banzhof]                                            Carl Banzhof                                        mailto:cbanzhof&citadel.com                                   2003-06
 # [Carl_Blundell]                                           Carl Blundell                                       mailto:cblundell&celador.co.uk                                2002-05
 # [Carl_Cedergren]                                          Carl Cedergren                                      mailto:asperon&home.se
@@ -16885,6 +16961,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Carstein_Seeberg]                                        Carstein Seeberg                                    mailto:case&boole.no
 # [Carstein_Seeberg_2]                                      Carstein Seeberg                                    mailto:case&nimsoft.no
 # [Carsten_Falticska]                                       Carsten Falticska                                   mailto:falticska&freenet.de                                   2003-11
+# [Carsten_Hansen]                                          Carsten Hansen             Spectris plc             mailto:Carsten.Hansen&bksv.com                                2019-02-13
 # [Carsten_Strotmann]                                       Carsten Strotmann                                   mailto:carsten.strotmann&menandmice.com                       2009-05-20
 # [Casey_Harrington]                                        Casey Harrington                                    mailto:charrington&isxinc.com                                 2006-01
 # [Casper_Stoel]                                            Casper Stoel                                        mailto:cbs&ascinc.com
@@ -17014,6 +17091,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Christof_J._Reetz_2]                                     Christof J. Reetz          Cruse Spezialmaschinen   mailto:cjr&crusescanner.com                                   2014-08-15
 #                                                                                    GmbH
 # [Christoph_Anton_Mitt]                                    Christoph Anton Mitterer                            mailto:calestyo&scientia.net                                  2009-03-10
+# [Christoph_Bimminger]                                     Christoph Bimminger        cone smart solution      mailto:christoph.bimminger&cone.at                            2019-04-22
 # [Christoph_Hipp]                                          Christoph Hipp             SOFTPRO GmbH             mailto:christoph.hipp&softpro.de                              2013-08-02
 # [Christoph_Kukulies]                                      Christoph Kukulies                                  mailto:info&exapt.de                                          2003-04
 # [Christophe_Allie]                                        Christophe Allie                                    mailto:callie&apple.com                                       2006-08
@@ -17093,6 +17171,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Cockroach_Labs_Inc]                                                                 Cockroach Labs, Inc.     mailto:iana-contact&cockroachlabs.com                         2015-09-29
 # [Cody_Bumgardner]                                         Cody Bumgardner            University of Kentucky   mailto:cody&uky.edu                                           2014-11-21
 # [Cognex]                                                                             Cognex Corporation       mailto:contactus&cognex.com                                   2012-08-28
+# [Cohesity_Inc]                                                                       Cohesity Inc             mailto:support&cohesity.com                                   2019-08-01
 # [Coleman_Brumley]                                         Coleman Brumley                                     mailto:cbrumley&polarsoft.biz                                 2011-02-10
 # [Colin_Barry]                                             Colin Barry                                         mailto:cbarry&gbahn.com
 # [Colin_Buchanan]                                          Colin Buchanan             Epipole Limited          mailto:colin&epipole.com                                      2014-11-13
@@ -17112,6 +17191,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Computer_Software_Gm]                                                               Computer Software GmbH   mailto:BrunoRistok&cs-ag.de                                   2002-10
 # [Comtech]                                                                            Comtech                  mailto:njeffords&comtechefdata.com                            2014-01-23
 # [Conceptworld_Corporation]                                                           Conceptworld Corporation mailto:admin&conceptworld.com                                 2013-08-20
+# [cone_smart_solution]                                                                cone smart solution      mailto:office&cone.at                                         2019-04-22
 # [Connie_Qiu]                                              Connie Qiu                                          mailto:connie&scdb.com
 # [Conny_Larsson]                                           Conny Larsson                                       mailto:cocke&vnet.ibm.com
 # [Control_Technology_Inc]                                                             Control Technology Inc.  mailto:ceskew&controltechnology.com                           2011-10-28
@@ -17386,7 +17466,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [David_Riggle]                                            David Riggle                                        mailto:dave&busymac.com                                       2008-01-07
 # [David_Roberts]                                           David Roberts                                       mailto:David.Roberts&ca.com                                   2005-05
 # [David_Rouchet]                                           David Rouchet                                       mailto:david.rouchet&medialon.com                             2007-05
-# [David_Schwartz]                                          David Schwartz                                      mailto:davids&webmaster.com
+# [David_Schwartz]                                          David Schwartz                                      mailto:davidjoelschwartz&gmail.com                            2019-08-09
 # [David_Schwartz_2]                                        David Schwartz                                      mailto:david.schwartz&marathontechnologies.com                2009-06-18
 # [David_Sechrest]                                          David Sechrest                                      mailto:david.sechrest&oracle.com                              2010-09-22
 # [David_Shaw]                                              David Shaw                                          mailto:dshaw&jabberwocky.com                                  2003-05
@@ -17514,6 +17594,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Dirk_Steinmetz]                                          Dirk Steinmetz                                      mailto:ds&generalsync.com                                     2014-04-17
 # [Dirk_Stoop]                                              Dirk Stoop                                          mailto:dirk&madebysofa.com                                    2007-04
 # [Dmitri_Znosko]                                           Dmitri Znosko                                       mailto:support&radmin.com                                     2003-03
+# [Dmitrii_Ogarkov]                                         Dmitrii Ogarkov                                     mailto:df&skynetflow.com                                      2019-05-28
 # [Dmitry_Brant]                                            Dmitry Brant                                        mailto:dmitry_brant&lincolnelectric.com                       2007-03
 # [Dmitry_Isakbayev]                                        Dmitry Isakbayev                                    mailto:dmitry&transnexus.com                                  2010-03-05
 # [Dmitry_Krasnonosenki]                                    Dmitry Krasnonosenkikh                              mailto:Dmitry_Krasnonosenkih&nmss.com
@@ -17633,6 +17714,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Eduardo_Rosenberg_de]                                    Eduardo Rosenberg de Moura                          mailto:eduardor&spacenet.com.br
 # [Edward_Browdy]                                           Edward Browdy                                       mailto:ebrowdy&cryptek.com                                    2002-07
 # [Edward_Macomber]                                         Edward Macomber            OPNET Technologies Inc   mailto:tmacomber&opnet.com                                    2011-09-21
+# [Edward_Moffett]                                          Edward Moffett             Undo Ltd                 mailto:office.manager&undo.io                                 2019-01-25
 # [Edward_R_Boedecker]                                      Edward R. Boedecker                                 mailto:boedeck1&flash.net                                     2003-11
 # [Edward_Reus]                                             Edward Reus                                         mailto:edwardr&microsoft.com
 # [Edward_T_O_Shea]                                         Edward T. O'Shea                                    mailto:oshea&bellsouth.net
@@ -17720,6 +17802,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Erica_Liu]                                               Erica Liu                                           mailto:liue&isolation.com
 # [Ericko_Shimada]                                          Ericko Shimada                                      mailto:eriko&kel.fujitsu.co.jp
 # [Ericsson]                                                                           Ericsson                 mailto:erik.hugne&ericsson.com                                2012-09-05
+# [Erik_Andersen]                                           Erik Andersen                                       mailto:era&x500.eu                                            2019-08-13
 # [Erik_Blume]                                              Erik Blume                                          mailto:erikb&caciasl.com
 # [Erik_Hugne]                                              Erik Hugne                 Ericsson                 mailto:erik.hugne&ericsson.com                                2012-09-05
 # [Erik_Kragh_Jensen]                                       Erik Kragh Jensen                                   mailto:kragh&inet.uni2.dk
@@ -17841,7 +17924,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Friedman_Wagner_Dobl]                                    Friedman Wagner-Dobler                              mailto:Friedman.Wagner-Dobler&gdc4s.com                       2005-09
 # [Frode_Randers]                                           Frode Randers                                       mailto:Frode.Randers&tietoenator.com                          2006-01
 # [Frontrow_Calypso_LLC]                                    Frontrow Calypso, LLC                               mailto:eng&gofrontrow.com                                     2016-04-13
+# [full_phat_products]                                      full phat products                                  mailto:chris.gsi&fullphat.net                                 2019-08-08
 # [Fullpower_Technologies_Inc]                              Fullpower Technologies,                             mailto:domains&fullpower.com                                  2016-08-22
+# [G2_Metric]                                                                          G2 Metric                mailto:contact&g2metric.com                                   2019-06-13
 # [GPP_Specifications]                                      John M Meredith            3GPP Specifications      mailto:john.meredith&etsi.org                                 2009-06-11
 # [G_E_Ozz_Nixon_Jr]                                        G.E. Ozz Nixon Jr.                                  mailto:ozznixon&gmail.com                                     2009-01-13
 # [G_Runfeldt]                                              G√∂ran Runfeldt                                     mailto:goran&netadmin.se                                      2007-07-10
@@ -17971,9 +18056,12 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Glenn_Russell]                                           Glenn Russell                                       mailto:grussell&cablelabs.com
 # [Global_Relay]                                                                       Global Relay             mailto:Michael.Sample&GlobalRelay.net                         2012-11-28
 #                                                                                    Communications Inc
+# [gNxi_Maintainers]                                        gNxi Maintainers                                    mailto:gnxi-maintainers&google.com                            2019-05-09
 # [Gobby_0x539]                                                                        0x539 dev group          http://darcs.0x539.de/trac/obby/cgi-bin/trac.cgi
 # [GOG.com]                                                                            GOG.com                  mailto:admin&gog.com                                          2014-07-31
+# [Goksel_Darcan]                                           Goksel Darcan                                       mailto:gdarcan&gmail.com                                      2019-01-09
 # [Google_Inc]                                                                         Google Inc.              mailto:numbers&google.com                                     2015-07-31
+# [Google_Netops]                                                                      Google Netops            mailto:gnxi-maintainers&google.com                            2019-05-09
 # [Gopikrishna_Sandra]                                      Gopikrishna Sandra                                  mailto:v-gosand&microsoft.com                                 2005-02
 # [GoPro]                                                                              GoPro                    mailto:jenke&gopro.com                                        2014-10-13
 # [Goran_Runfeldt]                                          Göran Runfeldt                                      mailto:goran&netadmin.se                                      2006-12
@@ -18013,7 +18101,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Greg_McLaughlin]                                         Greg McLaughlin                                     mailto:ggregm&moremobilesoftware.com
 # [Greg_Pflaum]                                             Greg Pflaum                                         mailto:iris.com!Greg_Pflaum&uunet.uu.net                      1992-07
 # [Greg_Porter]                                             Greg Porter                                         mailto:gporter&powerschool.com
-# [Greg_Pringle]                                            Greg Pringle                                        mailto:admin&corvedia.com
+# [Greg_Pringle]                                            Greg Pringle                                        mailto:gpringle&corvedia.com                                  2019-01-25
 # [Greg_Robson_Garth]                                       Greg Robson-Garth                                   mailto:gregr&alphalink.com.au
 # [Greg_Rose]                                               Greg Rose                                           mailto:Greg_Rose&sydney.sterling.com
 # [Greg_Rose_2]                                             Greg Rose                                           mailto:ggr&qualcomm.com                                       2002-02
@@ -18102,6 +18190,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Hennie_van_der_Merwe]                                    Hennie van der Merwe                                mailto:hvandermerwe&tellumat.com                              2002-07
 # [Henning_Meier_Geinit]                                    Henning Meier-Geinitz                               mailto:henning&meier-geinitz.de                               2002-10
 # [Henning_Mersch]                                          Henning Mersch                                      mailto:h.mersch&plt.rwth-aachen.de                            2010-12-07
+# [Henning_Mersch_2]                                        Henning Mersch                                      mailto:support&beckhoff.com                                   2019-02-28
 # [Henning_Schulzrinne]                                     Henning Schulzrinne                                 mailto:hgs&cs.columbia.edu
 # [Henning_Smith]                                           Henning Smith                                       mailto:henning.smith&ca.com                                   2006-07
 # [Henri_Moelard]                                           Henri Moelard                                       mailto:moelard&lucent.com
@@ -18120,7 +18209,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [heroicrobotics.com]                                                                 heroicrobotics.com       mailto:jasmine&heroicrobotics.com                             2014-06-24
 # [Hesham_Soliman]                                          Hesham Soliman                                      mailto:H.Soliman&flarion.com                                  2005-11
 # [Hewlett_Packard]                                                                    Hewlett Packard
-# [Hewlett_Packard_2]                                                                  Hewlett Packard          mailto:oliver.breyel&hp.com                                   2013-02-07
 # [Hewlett_Packard_Enterprise]                                                         Hewlett Packard                                                                        2016-04-14
 #                                                                                    Enterprise
 # [Hewlett_Packard_Enterprise_2]                                                       Hewlett Packard          mailto:rda-port&hpe.com                                       2018-11-02
@@ -18221,6 +18309,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Ibtsam_Mahfouz]                                          Ibtsam Mahfouz                                      mailto:imahfouz&cisco.com
 # [Ico_Doornekamp]                                          Ico Doornekamp                                      mailto:ico&saedra.nl
 # [iConstruct_Aus_Pty_Ltd]                                                             iConstruct (Aus) Pty Ltd mailto:jafari&pdcwa.com.au                                    2012-12-21
+# [ICT_Manager]                                             ICT Manager                Aaltronav                mailto:hostmaster&aaltronav.eu                                2019-10-02
 # [IDEAQUEST_Inc.]                                                                     IDEAQUEST Inc.           mailto:engineering&ideaquest4u.com                            2016-12-12
 # [Ido_Ben_David]                                           Ido Ben-David                                       mailto:dgntcom&netvision.net.il
 # [IEC_Central_Office]                                                                 IEC Central Office       mailto:cj&iec.ch                                              2015-07-24
@@ -18275,6 +18364,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Issam_Toufik]                                            Issam Toufik               Huawei Technologies      mailto:yangxudong&huawei.com                                  2018-11-06
 # [Itai_Greenberg]                                          Itai Greenberg                                      mailto:itaig&microsoft.com                                    2004-11
 # [Itaru_Kimura]                                            Itaru Kimura                                        mailto:kimura&kel.fujitsu.co.jp
+# [ITU-T_Study_Group_17]                                                               ITU-T Study Group 17     mailto:era&x500.eu                                            2019-08-13
+# [ITU/TSB_(ITU-T_Study_Group_17)]                                                     ITU/TSB (ITU-T Study     mailto:tsbsg17&itu.int                                        2019-09-30
+#                                                                                    Group 17)
 # [Ivan_Berardinelli]                                       Ivan Berardinelli                                   mailto:ivan&gestweb.com
 # [Ivana_Cuozzo]                                            Ivana Cuozzo                                        mailto:Ivana.Cuozzo&tivoli.com
 # [Ivo_Timmermans]                                          Ivo Timmermans                                      mailto:itimmermans&bigfoot.com
@@ -18351,8 +18443,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [James_Rice]                                              James Rice                                          mailto:RICE&sumex-aim.stanford.edu
 # [James_Tavares]                                           James Tavares              Log On America           mailto:krontor&loa.com
 # [James_W_Walker]                                          James W. Walker                                     mailto:jamesw&frameforge3d.com
-# [James_Wilkinson]                                         James Wilkinson                                     mailto:jwilkinson&doubletake.com                              2006-04
-# [James_Wilkinson2]                                        James Wilkinson            Vision Solutions, Inc.   mailto:james.wilkinson&visionsolutions.com                    2012-06-06
+# [James_Wilkinson]                                         James Wilkinson                                     mailto:jwilkinson&carbonite.com                               2019-08-23
 # [James_Yonan]                                             James Yonan                                         mailto:jim&yonan.net                                          2004-11
 # [Jamie_Halmick]                                           Jamie Halmick                                       mailto:jamie&tinkerbuilt.com
 # [Jamie_Lokier]                                            Jamie Lokier                                        mailto:jamie&jlokier.co.uk                                    2006-05
@@ -18396,6 +18487,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Jason_Thorpe]                                            Jason Thorpe                                        mailto:thorpej&apple.com                                      2015-09-29
 # [Jason_Volk]                                              Jason Volk                                          mailto:jason&teknidude.com
 # [Jason_van_Zyl]                                           Jason van Zyl                                       mailto:jvanzyl&zenplex.com                                    2002-03
+# [Jasper_Morgal]                                           Jasper Morgal                                       mailto:jpmorgal8&gmail.com                                    2019-06-13
 # [Jauvane_C_de_Olivei]                                     Jauvane C. de Oliveira                              mailto:jauvane&acm.org
 # [Javier_Jimenez]                                          Javier Jimenez
 # [Javier_Jiminez]                                          Javier Jiminez                                      mailto:javier_l_jimenez&dell.com
@@ -18502,6 +18594,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Jerome_Laheurte]                                         Jerome Laheurte                                     mailto:fraca7&users.sourceforge.net
 # [Jerome_Seydoux]                                          Jerome Seydoux                                      mailto:jerome&ctmdev.com
 # [Jerrilynn_Okamura]                                       Jerrilynn Okamura
+# [Jerry_Steinhauer]                                        Jerry Steinhauer           Singlewire Software, LLC mailto:jerry.steinhauer&singlewire.com                        2019-03-11
 # [Jerry_Whitaker]                                          Jerry Whitaker                                      mailto:jwhitaker&atsc.org                                     2008-10-27
 # [Jesse_Curry]                                             Jesse Curry                Bout Fitness, LLC        mailto:jesse&boutfitness.com                                  2014-06-16
 # [Jesse_Gross]                                             Jesse Gross                                         mailto:jesse&kernel.org                                       2018-10-23
@@ -18683,6 +18776,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [John_Ryan]                                               John Ryan                                           mailto:john&cybertrace.com
 # [John_Scalo]                                              John Scalo                                          mailto:scalo&apple.com
 # [John_Schilling]                                          John Schilling                                      mailto:john&jschilling.net
+# [John_Simpson]                                            John Simpson               Voalte, Inc.             mailto:jms1&voalte.com                                        2019-01-22
 # [John_Skidmore]                                           John Skidmore                                       mailto:JSkidmore&vicon-cctv.com                               2002-07
 # [John_Stephen]                                            John Stephen                                        mailto:iana&mundocani.com                                     2002-07
 # [John_Sygulla]                                            John Sygulla               SGI                      mailto:jsygulla&sgi.com                                       2013-01-07
@@ -18961,8 +19055,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Kin_Chan_2]                                              Kin Chan                                            mailto:kchan&net2net.com
 # [Kipp_E_B_Hickman]                                        Kipp E.B. Hickman                                   mailto:kipp&mcom.com
 # [Kipp_E_B_Hickman_2]                                      Kipp E.B. Hickman                                   mailto:kipp&netscape.com
-# [Kiren_Sekar]                                             Kiren Sekar                                         mailto:kiren&apple.com                                        2005-08
-# [Kiren_Sekar_2]                                           Kiren Sekar                                         mailto:kiren&apple.com
 # [Kirill_Marinushkin]                                      Kirill Marinushkin         Argus-Spectr             mailto:k.marinushkin&argus-spectr.ru                          2013-10-25
 # [Kirk_Lougheed]                                           Kirk Lougheed                                       mailto:LOUGHEED&mathom.cisco.com
 # [Kirk_MacLean]                                            Kirk MacLean                                        mailto:kmaclean&ea.com
@@ -18989,6 +19081,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Kouichi_Takeda_2]                                        Kouichi Takeda                                      mailto:KHB05271&nifty.com
 # [Kouji_Sugisawa]                                          Kouji Sugisawa                                      mailto:sugisawa.kouji&soft.fujitsu.com                        2003-01
 # [Kraig_Beahn_Jr]                                          Kraig Beahn Jr.                                     mailto:kraig&enguity.com                                      2017-06-28
+# [Kristen_Webb]                                            Kristen Webb                                        mailto:kwebb&teradactyl.com                                   2019-05-17
 # [Kristean_Heisler]                                        Kristean Heisler                                    mailto:kh&rib.de
 # [Kristean_Heisler_2]                                      Kristean Heisler                                    mailto:Kristean.Heisler&rib-software.com                      2009-12-16
 # [Kristian_A_Bognaes]                                      Kristian A. Bognaes        Norman Safeground AS     mailto:kristian.bognaes&norman.com                            2014-01-15
@@ -19032,6 +19125,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Lars_Eilebrecht]                                         Lars Eilebrecht                                     mailto:le+iana&leogic.com                                     2003-10
 # [Lars_Goran_Magnusson]                                    Lars-Goran Magnusson                                mailto:lars-goran.magnusson&seisy.mail.abb.com
 # [Lars_Struwe_Christen]                                    Lars Struwe Christensen                             mailto:lsc&giritech.com                                       2004-01
+# [larva.io_ltd]                                                                       larva.io ltd.            mailto:hi&larva.io                                            2019-02-11
 # [Laurence_Flath]                                          Laurence Flath                                      mailto:lflath&luxsolis.com
 # [Laurent_Charmet]                                         Laurent Charmet                                     mailto:laurent.charmet&atempo.com
 # [Laurent_Domenech]                                        Laurent Domenech           Opalis                   mailto:ldomenech&opalis.com
@@ -19311,7 +19405,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Martin_Bestmann]                                         Martin Bestmann                                     mailto:martin&datawatch.de
 # [Martin_Bestmann_2]                                       Martin Bestmann                                     mailto:martin&no.netopia.com                                  2004-03
 # [Martin_Bestmann_3]                                       Martin Bestmann                                     mailto:martin&poleposition-sw.com                             2005-08
-# [Martin_Burnicki]                                         Martin Burnicki                                     mailto:martin.burnicki&meinberg.de                            2002-08
 # [Martin_Daly]                                             Martin Daly                                         mailto:martin.daly&cadcorp.com                                2006-11
 # [Martin_Ellis]                                            Martin Ellis                                        mailto:martin&clanleagues.net                                 2004-11
 # [Martin_Forssen]                                          Martin Forssen                                      mailto:maf&appgate.com                                        2004-11
@@ -19363,6 +19456,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Matahari_Project]                                                                   Matahari Project         mailto:matahari&lists.fedorahosted.org                        2011-08-31
 # [Matej_Sekoranja]                                         Matej Sekoranja                                     mailto:matej.sekoranja&cosylab.com                            2012-03-23
 # [Math_Game_House_Soft]                                    Math Game House Software                            mailto:mathgamehouse&mac.com
+# [Matthew_Margolis]                                        Matthew Margolis                                    mailto:matthew.margolis&gettyimages.com                       2019-04-18
 # [Mathew_Pitchforth]                                       Mathew Pitchforth                                   mailto:mathew&adinstruments.co.nz                             2005-08
 # [Mathew_Waters]                                           Mathew Waters              Geode Software Ltd       mailto:mathew_waters&geode.co.uk                              2014-05-14
 # [Mathieu_Baissac]                                         Mathieu Baissac                                     mailto:mbaissac&flexerasoftware.com                           2016-07-19
@@ -19431,6 +19525,10 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Megan_Woods]                                             Megan Woods                                         mailto:meganwoods&datafast.net.au
 # [Meggie_Garica_Woodru]                                    Meggie Garica-Woodruff                              mailto:ipulse&ericsson.com
 # [Mehrdad_Ashtiani]                                        Mehrdad Ashtiani                                    mailto:mashtiani&ieeinc.com                                   2009-10-19
+# [Meinberg_Funkuhren_GmbH_Co_KG]                           Meinberg Funkuhren GmbH &                           mailto:martin.burnicki&meinberg.de                            2019-04-23
+#                                                         Co. KG
+# [Meinberg_IANA_Registrations]                             Meinberg IANA                                       mailto:iana-admin&meinberg.de                                 2019-04-23
+#                                                         Registrations
 # [Meindert_Sprang]                                         Meindert Sprang                                     mailto:ms&customware.nl                                       2009-02-18
 # [Mel_Oyler]                                               Mel Oyler                                           mailto:mel&novell.com
 # [Melanie_Kacerek]                                         Melanie Kacerek                                     mailto:melanie.kacerek&quest.com                              2008-12-16
@@ -19438,6 +19536,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Melinda_Shore]                                           Melinda Shore                                       mailto:mshore&cisco.com                                       2006-05
 # [Melinda_Tsao]                                            Melinda Tsao                                        mailto:melinda&tpe1.sercomm.com.tw
 # [Melinda_Tsao_2]                                          Melinda Tsao                                        mailto:melinda_tsao&mail.sercomm.com.tw
+# [Mellanox]                                                                           Mellanox Technologies,   mailto:info&mellanox.com                                      2019-07-02
 # [Menno_Zweistra]                                          Menno Zweistra                                      mailto:m.zweistra&metatude.com
 # [MERG]                                                                               MERG                     mailto:merg&upsys.co.uk                                       2017-01-03
 # [Metod_Celestina]                                         Metod Celestina            IMS merilni sistemi      mailto:metod.celestina&ims.si                                 2012-08-24
@@ -19480,6 +19579,8 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Michael_Ginn]                                            Michael Ginn                                        mailto:ginn&tyxar.com
 # [Michael_Gleicher]                                        Michael Gleicher                                    mailto:mgleicher&comcast.net
 # [Michael_Haeuptle]                                        Michael Haeuptle                                    mailto:Michael_Haeuptle&hp.com
+# [Michael_Hu]                                              Michael Hu                 Shenzhen CoolKit         mailto:michael.hu&coolkit.cn                                  2019-01-17
+#                                                                                    Technology Co., Ltd.
 # [Michael_Hunter]                                          Michael Hunter                                      mailto:mphunter&qnx.com
 # [Michael_J_Hoy]                                           Michael J Hoy                                       mailto:mhoy&canberra-abq.com
 # [Michael_J_Primeaux]                                      Michael J Primeaux                                  mailto:michael.primeaux&renkara.com
@@ -19508,7 +19609,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Michael_Padrezas]                                        Michael Padrezas                                    mailto:mpaderzas&bluelance.com
 # [Michael_Purser]                                          Michael Purser                                      mailto:mrp&mincom.com                                         2006-06
 # [Michael_R_Pizolato]                                      Michael R. Pizolato                                 mailto:michael&afs.com
-# [Michael_R_Young]                                         Michael R. Young                                    mailto:michael.young&tor.sunpub.com
+# [Michael_R_Young]                                         Michael R. Young                                    mailto:michael.young&streetperfect.com                        2019-02-15
 # [Michael_Rathmann]                                        Michael Rathmann                                    mailto:rathmann_ia&milesinfo.com
 # [Michael_Richardson]                                      Michael Richardson                                  mailto:mcr&sandelman.ca                                       2011-02-08
 # [Michael_S_Amirault]                                      Michael S Amirault                                  mailto:ambi&world.std.com
@@ -19553,6 +19654,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Michel_Stam_2]                                           Michel Stam                                         mailto:michel.iana&reverze.net                                2012-11-20
 # [Michiel_Terpstra]                                        Michiel Terpstra                                    mailto:terpstra.m&interactionnext.nl                          2013-11-13
 # [Mick_Conley]                                             Mick Conley                Wi-Fi Alliance           mailto:mconley&wi-fi.org                                      2013-12-31
+# [Micro_Focus]                                                                        Micro Focus              mailto:swpdl.dp.rd&microfocus.com                             2019-09-30
 # [Micromat]                                                Micromat                                            mailto:support&micromat.com
 # [Microlite_Corporation]                                   Microlite Corporation                               mailto:tom&microlite.com                                      2015-11-04
 # [Microsoft_Corporation]                                                              Microsoft Corporation    mailto:pratshar&microsoft.com                                 2011-08-04
@@ -19661,6 +19763,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Mohsen_Banan_2]                                          Mohsen Banan                                        mailto:mohsen&neda.com
 # [Moises_E_Hernandez]                                      Moises E. Hernandez                                 mailto:moises&accugraph.com
 # [Monette_Maano]                                           Monette Maano                                       mailto:mmaano&openit.com                                      2016-11-17
+# [MongoDB_Inc.]                                                                       MongoDB, Inc.            mailto:akshay&mongodb.com                                     2019-02-21
 # [Montgomery_Zukowski]                                     Montgomery Zukowski                                 mailto:monty&nextnorth.acs.ohio-state.edu
 # [Monty]                                                   Monty                                               mailto:monty&analytikerna.se
 # [Moon_Ho_Chung]                                           Moon Ho Chung                                       mailto:mchung&esps.com
@@ -19833,7 +19936,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Oleksandr_Zakharchuk]                                    Oleksandr Zakharchuk                                mailto:zakharchuk&dialogtech.com
 # [Oliver_Anan]                                             Oliver Anan                                         mailto:oliver&ananit.de                                       2010-09-02
 # [Oliver_Bailey]                                           Oliver Bailey                                       mailto:zzf66jjlm&time-lines.com                               2003-01
-# [Oliver_Breyel]                                           Oliver Breyel                                       mailto:oliver.breyel&hp.com                                   2013-02-07
 # [Oliver_Heinz]                                            Oliver Heinz                                        mailto:heinz&arago.de                                         2005-08
 # [Oliver_Korfmacher]                                       Oliver Korfmacher                                   mailto:okorf&netcs.com
 # [Oliver_Lewis]                                            Oliver Lewis                                        mailto:o.lewis&icerobotics.co.uk                              2006-08
@@ -19949,6 +20051,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Paul_Dollemore]                                          Paul Dollemore                                      mailto:pauld&anthonydata.com
 # [Paul_Fonte]                                              Paul Fonte                                          mailto:paul_fonte&mediastation.com
 # [Paul_Ford_Hutchinson]                                    Paul Ford-Hutchinson                                mailto:paulfordh&uk.ibm.com                                   2003-01
+# [Paul_Forsans]                                            Paul Forsans                                        mailto:pro.forsans.paul&gmail.com                             2019-06-13
 # [Paul_Funk]                                               Paul Funk                                           mailto:paul&funk.com
 # [Paul_Glaubitz]                                           Paul Glaubitz                                       mailto:Paul.Glaubitz&mt.com
 # [Paul_Greenfield]                                         Paul Greenfield                                     mailto:paul.greenfield&unisys.com
@@ -20115,7 +20218,6 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Philip_Budne]                                            Philip Budne                                        mailto:budne&auroratech.com
 # [Philip_N_Bergstress]                                     Philip N. Bergstresser                              mailto:phil&bergstresser.org
 # [Philip_Stephenson]                                       Philip Stephenson                                   mailto:Philip.stephenson&oracle.com                           2005-08
-# [Philips_Lighting]                                                                   Philips Lighting         mailto:leon.bouwmeester&lighting.com                          2017-11-01
 # [Philipp_Dreiss]                                          Philipp Dreiss                                      mailto:dreiss&isparx.de
 # [Philipp_Marcel_Albre]                                    Philipp Marcel Albrecht                             mailto:phipi&gmx.ch                                           2009-07-06
 # [Philippe_Binet]                                          Philippe Binet                                      mailto:phbinet&vnet.ibm.com
@@ -20277,6 +20379,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Rehan_Mahmood]                                           Rehan Mahmood                                       mailto:rehan&matrixmultimedia.co.uk                           2009-03-18
 # [Reid_B_Ligon]                                            Reid B. Ligon                                       mailto:Reid.Ligon&datalogic.com                               2014-07-31
 # [Reid_Ligon]                                              Reid Ligon                                          mailto:reid&connectrf.com
+# [Reijo_Sirila]                                            Reijo Sirila                                        mailto:reijo&larva.io                                         2019-02-19
 # [Reinder_Feenstra]                                        Reinder Feenstra                                    mailto:r.feenstra&tiepie.nl                                   2016-04-01
 # [Reinhard_Doelz]                                          Reinhard Doelz                                      mailto:doelz&comp.bioz.unibas.ch
 # [Reinhard_Wolf]                                           Reinhard Wolf              Adsoft AG                mailto:adsoft&vtxmail.ch                                      2010-08-19
@@ -20325,6 +20428,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Richard_McDonald]                                        Richard McDonald                                    mailto:ve3nvm&spamcop.net                                     2006-01
 # [Richard_Mills]                                           Richard Mills                                       mailto:ramills&us.ibm.com                                     2002-02
 # [Richard_Minner]                                          Richard Minner                                      http://xippix.com
+# [Richard_Morgal]                                          Richard Morgal                                      mailto:rmorgal&wildblue.net                                   2019-06-13
 # [Richard_Nabavi]                                          Richard Nabavi                                      mailto:nabavi&microapl.co.uk                                  2006-02
 # [Richard_Offer]                                           Richard Offer              HotLink Corporation      mailto:roffer&hotlink.com                                     2014-12-18
 # [Richard_Olsen]                                           Richard Olsen                                       mailto:olsen.richard&yahoo.com
@@ -20642,6 +20746,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Sarene_Caiazza]                                          Sarene Caiazza                                      mailto:scaiazza&proquesys.com                                 2010-04-27
 # [Sascha_Kuemmel]                                          Sascha Kuemmel                                      mailto:kuemmel&vidsoft.de
 # [Sasha_Hilton]                                            Sasha Hilton                                        mailto:sashahilton00&gmail.com                                2016-06-02
+# [Sashi_Madduri]                                           Sashi Madduri                                       mailto:sashi&cohesity.com                                     2019-08-01
 # [Satoshi_Matsumoto]                                       Satoshi Matsumoto                                   mailto:satoshi&artman21.co.jp
 # [Saugata_Guha]                                            Saugata Guha                                        mailto:sguha&veritas.com                                      2004-05
 # [ScaleFT_Inc]                                             ScaleFT, Inc                                        mailto:notices&scaleft.com                                    2016-04-07
@@ -20700,7 +20805,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Sensics]                                                                            Sensics                  mailto:vrpn&sensics.com                                       2015-05-04
 # [Senthil_Ponnuswamy]                                      Senthil Ponnuswamy                                  mailto:senthil&veritas.com
 # [Serge_DE_LUCA]                                           Serge DE LUCA                                       mailto:sdeluca&lacie.com
-# [Serge_Vacquier]                                          Serge Vacquier                                      mailto:vacquier&systar.fr                                     2009-05-20
+# [Serge_Vacquier]                                          Serge Vacquier                                      mailto:svacquier&axway.com                                    2019-03-29
 # [Sergei_Ivanov]                                           Sergei Ivanov                                       mailto:sergei&microsoft.com                                   2003-10
 # [Sergei_Zjaikin]                                          Sergei Zjaikin                                      mailto:serge&previo.ee                                        2002-02
 # [Sergey_Bolshedvorsky]                                    Sergey Bolshedvorsky       Smart Apps LTD           mailto:info&smartapps.co                                      2011-10-11
@@ -20715,6 +20820,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Service_Desk_Product]                                    Service Desk Product                                mailto:info&hp.com                                            2006-05
 # [SEVENSTAX_GmbH]                                          SEVENSTAX GmbH                                      mailto:info&sevenstax.de                                      2015-11-05
 # [Severn_Tsui]                                             Severn Tsui                                         mailto:severn&pravala.com                                     2016-06-01
+# [Shachar_Dor]                                             Shachar Dor                Mellanox Technologies,   mailto:shachard&mellanox.com                                  2019-07-02
 # [Shahriar_Pourazin]                                       Shahriar Pourazin                                   mailto:pourazin&sepehrs.com                                   2008-12-02
 # [Shai_Herzog]                                             Shai Herzog                                         mailto:herzog&iphighway.com
 # [Shailesh_S_Bavadeka]                                     Shailesh S. Bavadekar                               mailto:shailesh.bavadekar&sun.com                             2002-04
@@ -20735,12 +20841,14 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Shawn_Emery]                                             Shawn Emery                                         mailto:shawn.emery&oracle.com                                 2016-09-15
 # [Sheila_Devins]                                           Sheila Devins                                       mailto:sheila_devins&vnet.ibm.com
 # [Shekar_Pasumarthi]                                       Shekar Pasumarthi                                   mailto:shekarp&firstfloor.com
+# [Shenzhen_CoolKit_Technology_Co._Ltd.]                                               Shenzhen CoolKit         mailto:admin&coolkit.cn                                       2019-01-17
 # [Shifted_Current]                                                                    Shifted Current LLC      mailto:ask&shiftedcurrent.com                                 2012-09-11
 # [Shigenaka_Kanemitsu]                                     Shigenaka Kanemitsu                                 mailto:Shigenaka_Kanemitsu&ypd.kyocera.co.jp
 # [Shingo_Kimura]                                           Shingo Kimura                                       mailto:Shingo.Kimura&jp.sony.com                              2005-08
 # [Shinji_Yamanaka]                                         Shinji Yamanaka                                     mailto:syamanaka&jci.co.jp
 # [Shinya_Abe]                                              Shinya Abe                                          mailto:abeabe&pfu.co.jp
 # [Shiro_Tamoto]                                            Shiro Tamoto                                        mailto:tamoto.shiro&jp.panasonic.com                          2003-10
+# [Shishir_Misra]                                           Shishir Misra                                       mailto:shishir.misra&microfocus.com                           2019-09-30
 # [Shivakumar_S_Govind]                                     Shivakumar S.                                       mailto:shivak&eng.sun.com
 #                                                         Govindarajapuram
 # [Shivaun_Albright]                                        Shivaun Albright                                    mailto:shivaun_albright&hp.com                                2002-04
@@ -20758,6 +20866,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Sigma_Designs_Inc]                                                                  Sigma Designs, Inc.      mailto:anders_brandt&sigmadesigns.com                         2011-10-03
 # [Sigma_Designs_Inc_2]                                                                Sigma Designs, Inc.      mailto:pr&sdesigns.com                                        2012-11-08
 # [Sigma_Designs_3]                                                                    Sigma Designs            mailto:anders_brandt&sigmadesigns.com                         2015-06-26
+# [Signify]                                                                            Signify                  mailto:leon.bouwmeester&signify.com                           2019-08-09
 # [Signwave_Networking]                                     Signwave Networking                                 mailto:mail&signwave.co.uk
 #                                                         Development Team
 # [Silvano_Maffeis]                                         Silvano Maffeis                                     mailto:maffeis&softwired.ch
@@ -20792,6 +20901,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Simon_Wunderlich]                                        Simon Wunderlich                                    mailto:siwu&hrz.tu-chemnitz.de                                2007-08-30
 # [Simone_Molendini]                                        Simone Molendini                                    mailto:simone.molendini&unile.it                              2003-11
 # [Simson_L_Garfinkel]                                      Simson L. Garfinkel                                 mailto:simsong&next.cambridge.ma.us
+# [Singlewire_Software_LLC]                                                            Singlewire Software, LLC mailto:jerry.steinhauer&singlewire.com                        2019-03-11
 # [Sinnadurai_Dharshan]                                     Sinnadurai Dharshan                                 mailto:sinnadurai.dharshan&ni.com                             2002-07
 # [Siva_Poobalasingam]                                      Siva Poobalasingam                                  mailto:siva&towersoft.com.au                                  2006-03
 # [Siva_Poobalasingam_2]                                    Siva Poobalasingam                                  mailto:Siva.Poobalasingam&towersoft.com.au                    2007-02
@@ -20801,6 +20911,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Skip_Levens]                                             Skip Levens                                         mailto:skip&activestoragelabs.com
 # [Sky_Schulz]                                              Sky Schulz                                          mailto:sky&edgeofreality.com                                  2011-05-09
 # [Skycatch_Inc.]                                                                      Skycatch, Inc.           mailto:dev&skycatch.com                                       2018-02-09
+# [skynetflow.com]                                                                     skynetflow.com           mailto:info&skynetflow.com                                    2019-05-28
 # [Slava_Monich]                                            Slava Monich                                        mailto:Slava.Monich&nokia.com                                 2003-01
 # [Slawomir_Krzesinski]                                     Slawomir Krzesinski                                 mailto:slavek&optiwave.com
 # [Small_Cell_Forum]                                                                   Small Cell Forum         mailto:Richard&smallcellforum.org                             2017-01-24
@@ -20825,6 +20936,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Soren_Weber]                                             Soren Weber                                         mailto:sw&ditec-gmbh.de
 # [Soumitra_Sarkar]                                         Soumitra Sarkar                                     mailto:sarkar&vnet.ibm.com
 # [Sowmini_Varadhan]                                        Sowmini Varadhan           Oracle Corp              mailto:sowmini.varadhan&oracle.com                            2015-04-30
+# [Spectris_plc]                                                                       Spectris plc             mailto:Carsten.Hansen&bksv.com                                2019-02-13
 # [Spencer_Teran]                                           Spencer Teran                                       mailto:steran&dotalot.com                                     2005-08
 # [Spencer_Teran_2]                                         Spencer Teran                                       mailto:steran&ars.com                                         2004-11
 # [SPG_Controls_Ltd]                                                                   SPG Controls Ltd         mailto:steveb&spgcontrols.com                                 2017-03-27
@@ -20976,10 +21088,9 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Stu_Mark]                                                Stu Mark                                            mailto:fordii&j51.com
 # [Stuart_Allen]                                            Stuart Allen                                        mailto:stuart&jacl.animats.net                                2002-02
 # [Stuart_Button]                                           Stuart Button                                       mailto:button&promis.com
-# [Stuart_Cheshire]                                         Stuart Cheshire                                     mailto:cheshire&apple.com                                     2007-12-03
+# [Stuart_Cheshire]                                         Stuart Cheshire                                     mailto:cheshire&apple.com                                     2019-05-31
 # [Stuart_Cheshire_3]                                       Stuart Cheshire                                     mailto:mdnsresponder-ipc&multicastdns.org                     2004-06
 # [Stuart_Cheshire_4]                                       Stuart Cheshire                                     mailto:pdl-datastream&apple.com                               2002-09
-# [Stuart_Cheshire_5]                                       Stuart Cheshire                                     mailto:cheshire&apple.com
 # [Stuart_J_Kerry]                                          Stuart J. Kerry            Chair IEEE 802.11 WG     mailto:stuart&ok-brit.com                                     2002-05
 # [Stuart_Lynne]                                            Stuart Lynne                                        mailto:sl&wimsey.com
 # [Stuart_Schaefer]                                         Stuart Schaefer                                     mailto:sschaefer&softricity.com
@@ -21073,6 +21184,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [TeleTrusT_Deutschlan]                                                               TeleTrusT Deutschland    mailto:info&teletrust.de                                      2006-04
 #                                                                                    e.V.
 # [Tenir_Software]                                                                     Tenir Software           mailto:sgums&tenirsoftware.com                                2011-10-27
+# [Teradactyl_LLC]                                                                     Teradactyl LLC           mailto:vendors&teradactyl.com                                 2019-05-17
 # [Teradici]                                                                           Teradici                 mailto:jdillabough&teradici.com                               2012-03-06
 # [Teradici_2]                                                                         Teradici                 mailto:phelter&teradici.com                                   2014-04-28
 # [Terrence_J_Talbot]                                       Terrence J. Talbot                                  mailto:lexcube!tjt&bu.edu
@@ -21322,6 +21434,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Tung_Nguyen]                                             Tung Nguyen                                         mailto:dash&ricochet.net
 # [Tunstall_Healthcare_UK_Ltd]                                                         Tunstall Healthcare (UK) mailto:robert.moore&tunstall.com                              2014-12-10
 # [Tuomo_Makinen]                                           Tuomo Makinen                                       mailto:tmakinen&pp.htv.fi                                     2002-02
+# [Twan_Kamp]                                               Twan Kamp                                           mailto:twan.kamp&signify.com                                  2019-07-31
 # [Ty_Ellis]                                                Ty Ellis                                            mailto:tellis&novell.com                                      2006-05
 # [Tyba_Design_Limited]                                                                Tyba Design Limited      mailto:info&tyba.co.ik                                        2018-08-24
 # [Tzvika_Chumash]                                          Tzvika Chumash                                      mailto:tzvikac&netvision.net.il
@@ -21334,6 +21447,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Ulrich_Kortenkamp]                                       Ulrich Kortenkamp                                   mailto:kortenkamp&cinderella.de                               2003-06
 # [Ulysses_G_Smith_Jr]                                      Ulysses G. Smith Jr.                                mailto:ugsmith&cesi.com
 # [Umair_Cheema]                                            Umair Cheema                                        mailto:cheema&edumid.com                                      2013-07-08
+# [Undo_Ltd]                                                                           Undo Ltd                 mailto:office.manager&undo.io                                 2019-01-25
 # [University_Corporation_for_Atmospheric_Research]                                    Corporation for          mailto:support&unidata.ucar.edu                               2012-05-07
 # [University_Corporation_for_Atmospheric_Research2]                                   Corporation for          mailto:support-ldm&unidata.ucar.edu                           2012-05-18
 # [University_of_California_Berkeley]                       University of California,                           mailto:m.andersen&cs.berkeley.edu                             2016-06-13
@@ -21413,13 +21527,13 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Vishal_Dharmadhikari]                                    Vishal Dharmadhikari       Hall Research            mailto:vishal&hallresearch.com                                2011-11-29
 # [Vishnu_Varadaraj]                                        Vishnu Varadaraj                                    mailto:vishnuv&parabay.com
 # [Vishwas_Lele]                                            Vishwas Lele                                        mailto:Vishwas_Lele&appliedis.com
-# [Vision_Solutions]                                                                   Vision Solutions, Inc.   mailto:james.wilkinson&visionsolutions.com                    2012-06-06
 # [Vitali_Fomine]                                           Vitali Fomine                                       mailto:info&winpopup-lan-messenger.com                        2005-11
 # [Vitaly_Revsin]                                           Vitaly Revsin                                       mailto:vitaly&webmanage.com
 # [Vitaly_Revsin_2]                                         Vitaly Revsin                                       mailto:vitaly&netapp.com
 # [Volodymyr_Bykov]                                         Volodymyr_Bykov                                     mailto:vbickov&gmail.com                                      2016-11-23
 # [Vladimir_Legalov]                                        Vladimir Legalov                                    mailto:legalov&sgi.com
 # [Vladimir_Legalov_2]                                      Vladimir Legalov                                    mailto:vlegalov&riverbed.com                                  2007-09-04
+# [Voalte_Inc]                                                                         Voalte, Inc.             mailto:engops&voalte.com                                      2019-01-22
 # [Voiko_Loukanov]                                          Voiko Loukanov                                      mailto:v.loukanov&dvelectronics.com                           2003-10
 # [Volker_Wiegand]                                          Volker Wiegand                                      mailto:volker.wiegand&t-online.de                             2007-07-10
 # [Volker_Wiegand_2]                                        Volker Wiegand                                      mailto:volker&railduino.de                                    2018-01-08
@@ -21438,7 +21552,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [Walter_Goodwin]                                          Walter Goodwin                                      mailto:wpgoodwin&asna.com
 # [Walter_K_Eichelburg]                                     Walter K. Eichelburg                                mailto:walter.eichelburg&sat-automation.com
 # [Walter_Poxon]                                            Walter Poxon                                        mailto:wdp&ironwood.cray.com
-# [Walter_Slegers]                                          Walter Slegers                                      mailto:Walter.Slegers&philips.com                             2017-11-01
+# [Walter_Slegers]                                          Walter Slegers                                      mailto:walter.slegers&signify.com                             2019-08-09
 # [Walter_Underwood]                                        Walter Underwood                                    mailto:wunder&infoseek.com
 # [Warren_Alexander]                                        Warren Alexander                                    mailto:warren&chameleon-creative.co.uk
 # [Wason_Technology_LLC]                                                               Wason Technology, LLC    mailto:wason&wasontech.com                                    2014-01-27
@@ -21486,7 +21600,7 @@ inspider           49150/tcp    # InSpider System              [AnRobot]        
 # [William_Lupton]                                          William Lupton                                      mailto:wlupton&broadband-forum.org                            2017-02-22
 # [William_McDonald]                                        William McDonald                                    mailto:billmc&atc.boeing.com
 # [William_Mullaney]                                        William Mullaney                                    mailto:mullanwi&usa.net
-# [William_Oldwin]                                          William Oldwin                                      mailto:william&ultrahypertech.xyz                             2016-05-03
+# [William_Oldwin]                                          William Oldwin                                      mailto:william&patalogic.ie                                   2019-04-22
 # [William_Orme]                                            William Orme                                        mailto:bill&repliweb.com
 # [William_Phelps]                                          William Phelps                                      mailto:william&meier-phelps.com                               2010-03-22
 # [William_Polites]                                         William Polites                                     mailto:wpolites&mitre.org
@@ -21705,6 +21819,7 @@ zephyr-hm-srv   2105/udp		# Zephyr hm-serv connection
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 iscsi		3260/tcp
 fud		4201/udp		# Cyrus IMAP finger-like service
+ttcp		5037/tcp 
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
 kamanda		10081/udp		# Amanda with Kerberos

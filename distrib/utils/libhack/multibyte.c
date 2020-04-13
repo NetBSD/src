@@ -1,4 +1,4 @@
-/*      $NetBSD: multibyte.c,v 1.7 2014/11/15 19:15:51 htodd Exp $      */
+/*      $NetBSD: multibyte.c,v 1.7.16.1 2020/04/13 07:45:36 martin Exp $      */
 
 /*
  * Ignore all multibyte sequences, removes all the citrus code.
@@ -7,7 +7,10 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
+#include <wctype.h>
+#include <ctype.h>
 
 size_t
 mbrtowc(wchar_t *wc, const char *str, size_t max_sz, mbstate_t *ps)
@@ -145,3 +148,171 @@ _mb_cur_max_l(locale_t loc)
 {
 	return MB_CUR_MAX;
 }
+
+wint_t
+fgetwc(FILE *stream)
+{
+	return fgetc(stream);
+}
+
+wint_t
+fputwc(wchar_t wc, FILE *stream)
+{
+	return fputc(wc & 0xFF, stream);
+}
+ 
+wint_t __fputwc_unlock(wchar_t wc, FILE *stream);
+wint_t
+__fputwc_unlock(wchar_t wc, FILE *stream)
+{
+	return __sputc(wc & 0xFF, stream);
+}
+
+#define	MAPSINGLE(CT)	\
+	int	\
+	isw##CT(wint_t wc)	\
+	{	\
+		return is##CT(wc & 0xFF);	\
+	}
+
+MAPSINGLE(alnum)
+MAPSINGLE(alpha)
+MAPSINGLE(blank)
+MAPSINGLE(cntrl)
+MAPSINGLE(digit)
+MAPSINGLE(graph)
+MAPSINGLE(lower)
+MAPSINGLE(print)
+MAPSINGLE(punct)
+MAPSINGLE(space)
+MAPSINGLE(upper)
+MAPSINGLE(xdigit)
+
+int
+iswspace_l(wint_t wc, locale_t loc)
+{
+	return iswspace(wc);
+}
+
+struct wct_entry_hack {
+	const char *name;
+	int (*predicate)(wint_t);
+};
+
+#define	WCTENTRY(T)	{ .name= #T , .predicate= isw##T },
+static const struct wct_entry_hack my_wcts[] = {
+	{ .name = NULL },
+	WCTENTRY(alnum)
+	WCTENTRY(alpha)
+	WCTENTRY(blank)
+	WCTENTRY(cntrl)
+	WCTENTRY(digit)
+	WCTENTRY(graph)
+	WCTENTRY(lower)
+	WCTENTRY(print)
+	WCTENTRY(punct)
+	WCTENTRY(space)
+	WCTENTRY(upper)
+	WCTENTRY(xdigit)
+};
+
+wctype_t
+wctype(const char *charclass)
+{
+
+	for (size_t i = 1; i < __arraycount(my_wcts); i++)
+		if (strcmp(charclass, my_wcts[i].name) == 0)
+			return (wctype_t)i;
+
+	return (wctype_t)0;
+}
+
+int
+iswctype(wint_t wc, wctype_t charclass)
+{
+	size_t ndx = (size_t)charclass;
+
+	if (ndx < 1 || ndx >= __arraycount(my_wcts))
+		return 0;
+
+	return my_wcts[ndx].predicate(wc);
+}
+
+size_t
+wcslen(const wchar_t *s)
+{
+	size_t l;
+
+	if (s == NULL)
+		return 0;
+
+	for (l = 0; *s; l++)
+		s++;
+
+	return l;
+}
+
+int
+wcswidth(const wchar_t *pwcs, size_t n)
+{
+	int cols;
+
+	if (pwcs == NULL)
+		return 0;
+
+	if (*pwcs == 0)
+		return 0;
+
+	for (cols = 0; *pwcs && n > 0; cols++)
+		if (!isprint(*pwcs & 0xFF))
+			return -1;
+	return cols;
+}
+
+int
+wcwidth(wchar_t wc)
+{
+	if (wc == 0)
+		return 0;
+	if (!isprint(wc & 0xFF))
+		return -1;
+	return 1;
+}
+
+wchar_t *
+wmemchr(const wchar_t *s, wchar_t c, size_t n)
+{
+
+	if (s == NULL)
+		return NULL;
+	while (*s != 0 && *s != c)
+		s++;
+	if (*s != 0)
+		return __UNCONST(s);
+	return NULL;
+}
+
+wchar_t *
+wmemcpy(wchar_t * restrict s1, const wchar_t * restrict s2, size_t n)
+{
+	wchar_t *p;
+
+	for (p = s1; n > 0; n--)
+		*p++ = *s2++;
+
+	return s1;
+}
+
+wint_t
+towlower(wint_t wc)
+{
+	return tolower(wc & 0xFF);
+}
+
+wint_t
+towupper(wint_t wc)
+{
+	return toupper(wc & 0xFF);
+}
+
+

@@ -503,7 +503,7 @@ write_archive(struct archive *a, struct bsdtar *bsdtar)
 			}
 			set_chdir(bsdtar, arg);
 		} else {
-			if (*arg != '/' && (arg[0] != '@' || arg[1] != '/'))
+			if (*arg != '/')
 				do_chdir(bsdtar); /* Handle a deferred -C */
 			if (*arg == '@') {
 				if (append_archive_filename(bsdtar, a,
@@ -540,8 +540,7 @@ write_archive(struct archive *a, struct bsdtar *bsdtar)
 			lafe_warnc(archive_errno(disk),
 			    "%s", archive_error_string(disk));
 			bsdtar->return_value = 1;
-			archive_entry_free(entry);
-			continue;
+			goto next_entry;
 		}
 
 		/*
@@ -557,15 +556,14 @@ write_archive(struct archive *a, struct bsdtar *bsdtar)
 			    "%s", archive_error_string(disk));
 			if (r == ARCHIVE_FATAL)
 				bsdtar->return_value = 1;
-			else
-				archive_read_close(disk);
-			archive_entry_free(entry);
-			continue;
+			archive_read_close(disk);
+			goto next_entry;
 		}
 
 		write_file(bsdtar, a, entry);
-		archive_entry_free(entry);
 		archive_read_close(disk);
+next_entry:
+		archive_entry_free(entry);
 		entry = NULL;
 		archive_entry_linkify(bsdtar->resolver, &entry, &sparse_entry);
 	}

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.190.2.2 2020/04/08 14:03:55 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.190.2.3 2020/04/13 07:45:38 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -285,6 +285,7 @@
 #	twe	3ware Escalade control interface
 #	uk*	unknown SCSI device
 #	veriexec Veriexec fingerprint loader
+#	vhci	virtual host controller interface
 #	video*	video capture devices
 #	view*	generic interface to graphic displays (Amiga)
 #	wsfont*	console font control
@@ -498,6 +499,7 @@ setup()
 	g_gpio="%gid__gpio%"
 	g_kmem="%gid_kmem%"
 	g_ntpd="%gid_ntpd%"
+	g_nvmm="%gid_nvmm%"
 	g_operator="%gid_operator%"
 	g_wheel="%gid_wheel%"
 	dialin=0
@@ -914,6 +916,7 @@ ramdisk)
 
 usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	makedev usb8 usb9 usb10 usb11 usb12 usb13 usb14 usb15
 	makedev uhid0 uhid1 uhid2 uhid3 uhid4 uhid5
 	makedev uhid6 uhid7 uhid8 uhid9 uhid10 uhid11
 	makedev uhid12 uhid13 uhid14 uhid15
@@ -1211,6 +1214,7 @@ spiflash[0-9]*)
 	unit=${i#spiflash}
 	spiflash=spiflash$unit
 	mkdev spiflash$unit b %spiflash_blk% $unit
+	mkdev rspiflash$unit c %spiflash_chr% $unit
 	;;
 
 altmem[0-9]*)
@@ -1752,6 +1756,11 @@ qemufwcfg[0-9]*)
 	mkdev qemufwcfg$unit c %qemufwcfg_chr% $unit 660
 	;;
 
+vio9p[0-9]*)
+	unit=${i#vio9p}
+	mkdev vio9p$unit c %vio9p_chr% $unit 660
+	;;
+
 nvram)
 	mkdev nvram c %nvram_chr% 0 644
 	;;
@@ -1774,6 +1783,10 @@ dmoverio)
 
 veriexec)
 	mkdev veriexec c %veriexec_chr% 0 600
+	;;
+
+vhci)
+	mkdev vhci c %vhci_chr% 0
 	;;
 
 ttyv[0-9]*)
@@ -2201,7 +2214,7 @@ nvme[0-9]*)
 	;;
 
 nvmm)
-	mkdev nvmm c %nvmm_chr% 0
+	mkdev nvmm c %nvmm_chr% 0 640 $g_nvmm
 	;;
 
 autofs)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.12.1 2020/04/08 14:03:45 martin Exp $
+#	$NetBSD: Makefile,v 1.12.12.2 2020/04/13 07:45:27 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,6 +25,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACK_CURSES=	yes
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
 

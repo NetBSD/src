@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.h,v 1.12.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: cipher.h,v 1.53 2018/09/13 02:08:33 djm Exp $ */
+/*	$NetBSD: cipher.h,v 1.12.4.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: cipher.h,v 1.55 2020/01/23 10:24:29 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,9 @@
 #define CIPHER_H
 
 #include <sys/types.h>
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
+#endif
 #include "cipher-chachapoly.h"
 #include "cipher-aesctr.h"
 
@@ -64,6 +66,7 @@ const struct sshcipher *cipher_by_name(const char *);
 const char *cipher_warning_message(const struct sshcipher_ctx *);
 int	 ciphers_valid(const char *);
 char	*cipher_alg_list(char, int);
+const char *compression_alg_list(int);
 int	 cipher_init(struct sshcipher_ctx **, const struct sshcipher *,
     const u_char *, u_int, const u_char *, u_int, int);
 int	 cipher_crypt(struct sshcipher_ctx *, u_int, u_char *, const u_char *,

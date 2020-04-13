@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pf_boot,v 1.4 2008/11/22 20:23:33 tsutsui Exp $
+# $NetBSD: pf_boot,v 1.4.50.1 2020/04/13 07:45:46 martin Exp $
 #
 
 # PROVIDE: pf_boot
@@ -16,10 +16,6 @@ stop_cmd=":"
 
 pf_boot_start()
 {
-	if [ "$autoboot" != "yes" ]; then
-		err 1 "This script should only be executed at boot time."
-	fi
-
 	if [ -f /etc/pf.boot.conf ]; then
 		/sbin/pfctl -q -f /etc/pf.boot.conf
 	elif [ -f /etc/defaults/pf.boot.conf ]; then

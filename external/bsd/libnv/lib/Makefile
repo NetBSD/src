@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.2 2019/06/10 21:44:58 christos Exp $
+# $NetBSD: Makefile,v 1.2.2.3 2020/04/13 07:46:10 martin Exp $
 
 WARNS?=		5
 
@@ -16,6 +16,7 @@ LIB=		nv
 #INCSDIR=	/usr/include
 #MAN=		nv.3
 
-SRCS=		dnvlist.c msgio.c nvlist.c nvpair.c nv_kern_netbsd.c
+.include "srcs.mk"
+SRCS=		${LIBNV_SRCS}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.1.2.2 2019/06/10 21:41:05 christos Exp $	*/
+/*	$NetBSD: xdr.h,v 1.1.2.3 2020/04/13 07:45:06 martin Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -364,7 +364,7 @@ extern bool_t xdrrec_skiprecord(XDR *);
 
 /* true if no more input */
 extern bool_t xdrrec_eof(XDR *);
-extern unsigned xdrrec_readbytes(XDR *, caddr_t, unsigned int);
+extern unsigned xdrrec_readbytes(XDR *, char *, unsigned int);
 __END_DECLS
 
 #endif /* !_RPC_XDR_H_ */

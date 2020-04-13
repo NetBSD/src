@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -36,8 +37,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <arpa/nameser.h> /* after normal includes for sunos */
-
 #include "config.h"
 
 #include "common.h"
@@ -46,13 +45,7 @@
 #include "if.h"
 #include "ipv6.h"
 #include "logerr.h"
-
-/* Support very old arpa/nameser.h as found in OpenBSD */
-#ifndef NS_MAXDNAME
-#define NS_MAXCDNAME MAXCDNAME
-#define NS_MAXDNAME MAXDNAME
-#define NS_MAXLABEL MAXLABEL
-#endif
+#include "script.h"
 
 const char *
 dhcp_get_hostname(char *buf, size_t buf_len, const struct if_options *ifo)
@@ -207,6 +200,10 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 	while ((token = strsep(&p, ", "))) {
 		if (*token == '\0')
 			continue;
+		if (strncmp(token, "dhcp6_", 6) == 0)
+			token += 6;
+		if (strncmp(token, "nd6_", 4) == 0)
+			token += 4;
 		match = 0;
 		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
 			if (opt->var == NULL || opt->option == 0)
@@ -624,95 +621,77 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 	return (ssize_t)sz;
 }
 
-/* It's possible for DHCPv4 to contain an IPv6 address */
 static ssize_t
-ipv6_printaddr(char *s, size_t sl, const uint8_t *d, const char *ifname)
-{
-	char buf[INET6_ADDRSTRLEN];
-	const char *p;
-	size_t l;
-
-	p = inet_ntop(AF_INET6, d, buf, sizeof(buf));
-	if (p == NULL)
-		return -1;
-
-	l = strlen(p);
-	if (d[0] == 0xfe && (d[1] & 0xc0) == 0x80)
-		l += 1 + strlen(ifname);
-
-	if (s == NULL)
-		return (ssize_t)l;
-
-	if (sl < l) {
-		errno = ENOMEM;
-		return -1;
-	}
-
-	s += strlcpy(s, p, sl);
-	if (d[0] == 0xfe && (d[1] & 0xc0) == 0x80) {
-		*s++ = '%';
-		s += strlcpy(s, ifname, sl);
-	}
-	*s = '\0';
-	return (ssize_t)l;
-}
-
-static ssize_t
-print_option(char *s, size_t len, const struct dhcp_opt *opt,
+print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
+    int vname,
     const uint8_t *data, size_t dl, const char *ifname)
 {
+	fpos_t fp_pos;
 	const uint8_t *e, *t;
 	uint16_t u16;
 	int16_t s16;
 	uint32_t u32;
 	int32_t s32;
 	struct in_addr addr;
-	ssize_t bytes = 0, sl;
+	ssize_t sl;
 	size_t l;
-#ifdef INET
-	char *tmp;
-#endif
+
+	/* Ensure a valid length */
+	dl = (size_t)dhcp_optlen(opt, dl);
+	if ((ssize_t)dl == -1)
+		return 0;
+
+	if (fgetpos(fp, &fp_pos) == -1)
+		return -1;
+	if (fprintf(fp, "%s", prefix) == -1)
+		goto err;
+
+	/* We printed something, so always goto err from now-on
+	 * to terminate the string. */
+	if (vname) {
+		if (fprintf(fp, "_%s", opt->var) == -1)
+			goto err;
+	}
+	if (fputc('=', fp) == EOF)
+		goto err;
+	if (dl == 0)
+		goto done;
 
 	if (opt->type & OT_RFC1035) {
-		sl = decode_rfc1035(s, len, data, dl);
-		if (sl == 0 || sl == -1)
-			return sl;
-		if (s != NULL) {
-			if (valid_domainname(s, opt->type) == -1)
-				return -1;
-		}
-		return sl;
+		char domain[NS_MAXDNAME];
+
+		sl = decode_rfc1035(domain, sizeof(domain), data, dl);
+		if (sl == -1)
+			goto err;
+		if (sl == 0)
+			goto done;
+		if (valid_domainname(domain, opt->type) == -1)
+			goto err;
+		return efprintf(fp, "%s", domain);
 	}
 
 #ifdef INET
-	if (opt->type & OT_RFC3361) {
-		if ((tmp = decode_rfc3361(data, dl)) == NULL)
-			return -1;
-		l = strlen(tmp);
-		sl = print_string(s, len, opt->type, (uint8_t *)tmp, l);
-		free(tmp);
-		return sl;
-	}
+	if (opt->type & OT_RFC3361)
+		return print_rfc3361(fp, data, dl);
 
 	if (opt->type & OT_RFC3442)
-		return decode_rfc3442(s, len, data, dl);
+		return print_rfc3442(fp, data, dl);
 #endif
 
-	if (opt->type & OT_STRING)
-		return print_string(s, len, opt->type, data, dl);
+	if (opt->type & OT_STRING) {
+		char buf[1024];
 
-	if (opt->type & OT_FLAG) {
-		if (s) {
-			*s++ = '1';
-			*s = '\0';
-		}
-		return 1;
+		if (print_string(buf, sizeof(buf), opt->type, data, dl) == -1)
+			goto err;
+		return efprintf(fp, "%s", buf);
 	}
+
+	if (opt->type & OT_FLAG)
+		return efprintf(fp, "1");
 
 	if (opt->type & OT_BITFLAG) {
 		/* bitflags are a string, MSB first, such as ABCDEFGH
 		 * where A is 10000000, B is 01000000, etc. */
-		bytes = 0;
 		for (l = 0, sl = sizeof(opt->bitflags) - 1;
 		    l < sizeof(opt->bitflags);
 		    l++, sl--)
@@ -722,109 +701,83 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 			    opt->bitflags[l] != '0' &&
 			    *data & (1 << sl))
 			{
-				if (s)
-					*s++ = opt->bitflags[l];
-				bytes++;
+				if (fputc(opt->bitflags[l], fp) == EOF)
+					goto err;
 			}
 		}
-		if (s)
-			*s = '\0';
-		return bytes;
-	}
-
-	if (!s) {
-		if (opt->type & OT_UINT8)
-			l = 3;
-		else if (opt->type & OT_INT8)
-			l = 4;
-		else if (opt->type & OT_UINT16) {
-			l = 5;
-			dl /= 2;
-		} else if (opt->type & OT_INT16) {
-			l = 6;
-			dl /= 2;
-		} else if (opt->type & OT_UINT32) {
-			l = 10;
-			dl /= 4;
-		} else if (opt->type & OT_INT32) {
-			l = 11;
-			dl /= 4;
-		} else if (opt->type & OT_ADDRIPV4) {
-			l = 16;
-			dl /= 4;
-		} else if (opt->type & OT_ADDRIPV6) {
-			e = data + dl;
-			l = 0;
-			while (data < e) {
-				if (l)
-					l++; /* space */
-				sl = ipv6_printaddr(NULL, 0, data, ifname);
-				if (sl == -1)
-					return l == 0 ? -1 : (ssize_t)l;
-				l += (size_t)sl;
-				data += 16;
-			}
-			return (ssize_t)l;
-		} else {
-			errno = EINVAL;
-			return -1;
-		}
-		return (ssize_t)(l * dl);
+		goto done;
 	}
 
 	t = data;
 	e = data + dl;
 	while (data < e) {
 		if (data != t) {
-			*s++ = ' ';
-			bytes++;
-			len--;
+			if (fputc(' ', fp) == EOF)
+				goto err;
 		}
 		if (opt->type & OT_UINT8) {
-			sl = snprintf(s, len, "%u", *data);
+			if (fprintf(fp, "%u", *data) == -1)
+				goto err;
 			data++;
 		} else if (opt->type & OT_INT8) {
-			sl = snprintf(s, len, "%d", *data);
+			if (fprintf(fp, "%d", *data) == -1)
+				goto err;
 			data++;
 		} else if (opt->type & OT_UINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			u16 = ntohs(u16);
-			sl = snprintf(s, len, "%u", u16);
+			if (fprintf(fp, "%u", u16) == -1)
+				goto err;
 			data += sizeof(u16);
 		} else if (opt->type & OT_INT16) {
 			memcpy(&u16, data, sizeof(u16));
 			s16 = (int16_t)ntohs(u16);
-			sl = snprintf(s, len, "%d", s16);
+			if (fprintf(fp, "%d", s16) == -1)
+				goto err;
 			data += sizeof(u16);
 		} else if (opt->type & OT_UINT32) {
 			memcpy(&u32, data, sizeof(u32));
 			u32 = ntohl(u32);
-			sl = snprintf(s, len, "%u", u32);
+			if (fprintf(fp, "%u", u32) == -1)
+				goto err;
 			data += sizeof(u32);
 		} else if (opt->type & OT_INT32) {
 			memcpy(&u32, data, sizeof(u32));
 			s32 = (int32_t)ntohl(u32);
-			sl = snprintf(s, len, "%d", s32);
+			if (fprintf(fp, "%d", s32) == -1)
+				goto err;
 			data += sizeof(u32);
 		} else if (opt->type & OT_ADDRIPV4) {
 			memcpy(&addr.s_addr, data, sizeof(addr.s_addr));
-			sl = snprintf(s, len, "%s", inet_ntoa(addr));
+			if (fprintf(fp, "%s", inet_ntoa(addr)) == -1)
+				goto err;
 			data += sizeof(addr.s_addr);
 		} else if (opt->type & OT_ADDRIPV6) {
-			sl = ipv6_printaddr(s, len, data, ifname);
+			char buf[INET6_ADDRSTRLEN];
+
+			if (inet_ntop(AF_INET6, data, buf, sizeof(buf)) == NULL)
+				goto err;
+			if (fprintf(fp, "%s", buf) == -1)
+				goto err;
+			if (data[0] == 0xfe && (data[1] & 0xc0) == 0x80) {
+				if (fprintf(fp,"%%%s", ifname) == -1)
+					goto err;
+			}
 			data += 16;
 		} else {
 			errno = EINVAL;
-			return -1;
+			goto err;
 		}
-		if (sl == -1)
-			return bytes == 0 ? -1 : bytes;
-		len -= (size_t)sl;
-		bytes += sl;
-		s += sl;
 	}
 
-	return bytes;
+done:
+	if (fputc('\0', fp) == EOF)
+		return -1;
+	return 1;
+
+err:
+	(void)fsetpos(fp, &fp_pos);
+	return -1;
 }
 
 int
@@ -859,61 +812,15 @@ dhcp_set_leasefile(char *leasefile, size_t len, int family,
 	    ifp->name, ssid);
 }
 
-static size_t
-dhcp_envoption1(char **env, const char *prefix,
-    const struct dhcp_opt *opt, int vname, const uint8_t *od, size_t ol,
-    const char *ifname)
-{
-	ssize_t len;
-	size_t e;
-	char *v, *val;
-	int r;
-
-	/* Ensure a valid length */
-	ol = (size_t)dhcp_optlen(opt, ol);
-	if ((ssize_t)ol == -1)
-		return 0;
-
-	len = print_option(NULL, 0, opt, od, ol, ifname);
-	if (len < 0)
-		return 0;
-	if (vname)
-		e = strlen(opt->var) + 1;
-	else
-		e = 0;
-	if (prefix)
-		e += strlen(prefix);
-	e += (size_t)len + 2;
-	if (env == NULL)
-		return e;
-	v = val = *env = malloc(e);
-	if (v == NULL)
-		return 0;
-	if (vname)
-		r = snprintf(val, e, "%s_%s=", prefix, opt->var);
-	else
-		r = snprintf(val, e, "%s=", prefix);
-	if (r != -1 && len != 0) {
-		v += r;
-		if (print_option(v, (size_t)len + 1, opt, od, ol, ifname) == -1)
-			r = -1;
-	}
-	if (r == -1) {
-		free(val);
-		return 0;
-	}
-	return e;
-}
-
-size_t
-dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
+void
+dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
     const char *ifname, struct dhcp_opt *opt,
     const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
     size_t *, unsigned int *, size_t *,
     const uint8_t *, size_t, struct dhcp_opt **),
     const uint8_t *od, size_t ol)
 {
-	size_t e, i, n, eos, eol;
+	size_t i, eos, eol;
 	ssize_t eo;
 	unsigned int eoc;
 	const uint8_t *eod;
@@ -923,52 +830,36 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 
 	/* If no embedded or encapsulated options, it's easy */
 	if (opt->embopts_len == 0 && opt->encopts_len == 0) {
-		if (!(opt->type & OT_RESERVED)) {
-			if (dhcp_envoption1(env == NULL ? NULL : &env[0],
-			    prefix, opt, 1, od, ol, ifname))
-				return 1;
-			else
-				logerr("%s: %s %d",
-				    ifname, __func__, opt->option);
-		}
-		return 0;
+		if (opt->type & OT_RESERVED)
+			return;
+		if (print_option(fp, prefix, opt, 1, od, ol, ifname) == -1)
+			logerr("%s: %s %d", ifname, __func__, opt->option);
+		return;
 	}
 
 	/* Create a new prefix based on the option */
-	if (env) {
-		if (opt->type & OT_INDEX) {
-			if (opt->index > 999) {
-				errno = ENOBUFS;
-				logerr(__func__);
-				return 0;
-			}
-		}
-		e = strlen(prefix) + strlen(opt->var) + 2 +
-		    (opt->type & OT_INDEX ? 3 : 0);
-		pfx = malloc(e);
-		if (pfx == NULL) {
-			logerr(__func__);
-			return 0;
-		}
-		if (opt->type & OT_INDEX)
-			snprintf(pfx, e, "%s_%s%d", prefix,
-			    opt->var, ++opt->index);
-		else
-			snprintf(pfx, e, "%s_%s", prefix, opt->var);
-	} else
-		pfx = NULL;
+	if (opt->type & OT_INDEX) {
+		if (asprintf(&pfx, "%s_%s%d",
+		    prefix, opt->var, ++opt->index) == -1)
+			pfx = NULL;
+	} else {
+		if (asprintf(&pfx, "%s_%s", prefix, opt->var) == -1)
+			pfx = NULL;
+	}
+	if (pfx == NULL) {
+		logerr(__func__);
+		return;
+	}
 
 	/* Embedded options are always processed first as that
 	 * is a fixed layout */
-	n = 0;
 	for (i = 0, eopt = opt->embopts; i < opt->embopts_len; i++, eopt++) {
 		eo = dhcp_optlen(eopt, ol);
 		if (eo == -1) {
-			if (env == NULL)
-				logerrx("%s: %s %d.%d/%zu: "
-				    "malformed embedded option",
-				    ifname, __func__, opt->option,
-				    eopt->option, i);
+			logerrx("%s: %s %d.%d/%zu: "
+			    "malformed embedded option",
+			    ifname, __func__, opt->option,
+			    eopt->option, i);
 			goto out;
 		}
 		if (eo == 0) {
@@ -977,9 +868,9 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			 * This may not be an error as some options like
 			 * DHCP FQDN in RFC4702 have a string as the last
 			 * option which is optional. */
-			if (env == NULL &&
-			    (ol != 0 || !(eopt->type & OT_OPTIONAL)))
-				logerrx("%s: %s %d.%d/%zu: missing embedded option",
+			if (ol != 0 || !(eopt->type & OT_OPTIONAL))
+				logerrx("%s: %s %d.%d/%zu: "
+				    "missing embedded option",
 				    ifname, __func__, opt->option,
 				    eopt->option, i);
 			goto out;
@@ -989,10 +880,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		 * This avoids new_fqdn_fqdn which would be silly. */
 		if (!(eopt->type & OT_RESERVED)) {
 			ov = strcmp(opt->var, eopt->var);
-			if (dhcp_envoption1(env == NULL ? NULL : &env[n],
-			    pfx, eopt, ov, od, (size_t)eo, ifname))
-				n++;
-			else if (env == NULL)
+			if (print_option(fp, pfx, eopt, ov, od, (size_t)eo,
+			    ifname) == -1)
 				logerr("%s: %s %d.%d/%zu",
 				    ifname, __func__,
 				    opt->option, eopt->option, i);
@@ -1023,19 +912,16 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			    i < opt->encopts_len;
 			    i++, eopt++)
 			{
-				if (eopt->option == eoc) {
-					if (eopt->type & OT_OPTION) {
-						if (oopt == NULL)
-							/* Report error? */
-							continue;
-					}
-					n += dhcp_envoption(ctx,
-					    env == NULL ? NULL : &env[n], pfx,
-					    ifname,
-					    eopt->type & OT_OPTION ? oopt:eopt,
-					    dgetopt, eod, eol);
-					break;
+				if (eopt->option != eoc)
+					continue;
+				if (eopt->type & OT_OPTION) {
+					if (oopt == NULL)
+						/* Report error? */
+						continue;
 				}
+				dhcp_envoption(ctx, fp, pfx, ifname,
+				    eopt->type & OT_OPTION ? oopt:eopt,
+				    dgetopt, eod, eol);
 			}
 			od += eos + eol;
 			ol -= eos + eol;
@@ -1043,11 +929,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 	}
 
 out:
-	if (env)
-		free(pfx);
-
-	/* Return number of options found */
-	return n;
+	free(pfx);
 }
 
 void
@@ -1070,7 +952,7 @@ dhcp_read_lease_fd(int fd, void **lease)
 	size_t sz;
 	void *buf;
 	ssize_t len;
-	
+
 	if (fstat(fd, &st) != 0)
 		goto out;
 	if (!S_ISREG(st.st_mode)) {
@@ -1083,6 +965,8 @@ dhcp_read_lease_fd(int fd, void **lease)
 	}
 
 	sz = (size_t)st.st_size;
+	if (sz == 0)
+		goto out;
 	if ((buf = malloc(sz)) == NULL)
 		goto out;
 	if ((len = read(fd, buf, sz)) == -1) {

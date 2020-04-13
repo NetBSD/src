@@ -1,0 +1,3 @@
+# $NetBSD: spec.in,v 1.1.2.2 2020/04/13 07:45:37 martin Exp $
+./netbsd.c700	type=file mode=0755 uname=root gname=wheel
+./dos		type=dir mode=0755 uname=root gname=wheel

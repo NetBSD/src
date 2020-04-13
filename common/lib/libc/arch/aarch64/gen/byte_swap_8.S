@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap_8.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: byte_swap_8.S,v 1.1.26.1 2020/04/13 07:45:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,3 @@ ENTRY(FUNC)
 	rev		x0, x0
 	ret
 END(FUNC)
-#if BYTE_ORDER == LITTLE_ENDIAN
-STRONG_ALIAS(_C_LABEL(ntohll), FUNC)
-STRONG_ALIAS(_C_LABEL(htonll), FUNC)
-#endif

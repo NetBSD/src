@@ -1,3 +1,14 @@
-#	$NetBSD: NetBSD.dist.arm,v 1.1.2.2 2019/06/10 21:42:45 christos Exp $
+#	$NetBSD: NetBSD.dist.arm,v 1.1.2.3 2020/04/13 07:45:45 martin Exp $
 
+./usr/include/acorn32
 ./usr/include/arm
+./usr/include/arm/arm32
+./usr/include/arm/footbridge
+./usr/include/cats
+./usr/include/epoc32
+./usr/include/evbarm
+./usr/include/hpcarm
+./usr/include/iyonix
+./usr/include/netwinder
+./usr/include/shark
+./usr/include/zaurus

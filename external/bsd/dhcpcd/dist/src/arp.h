@@ -1,6 +1,7 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -53,29 +54,34 @@
 
 struct arp_msg {
 	uint16_t op;
-	unsigned char sha[HWADDR_LEN];
+	uint8_t sha[HWADDR_LEN];
 	struct in_addr sip;
-	unsigned char tha[HWADDR_LEN];
+	uint8_t tha[HWADDR_LEN];
 	struct in_addr tip;
+	/* Frame header and sender to diagnose failures */
+	uint8_t fsha[HWADDR_LEN];
+	uint8_t ftha[HWADDR_LEN];
 };
 
 struct arp_state {
 	TAILQ_ENTRY(arp_state) next;
 	struct interface *iface;
 
-	void (*probed_cb)(struct arp_state *);
+	void (*found_cb)(struct arp_state *, const struct arp_msg *);
+	void (*not_found_cb)(struct arp_state *);
 	void (*announced_cb)(struct arp_state *);
-	void (*conflicted_cb)(struct arp_state *, const struct arp_msg *);
+	void (*defend_failed_cb)(struct arp_state *);
 	void (*free_cb)(struct arp_state *);
 
 	struct in_addr addr;
 	int probes;
 	int claims;
-	struct in_addr failed;
+	struct timespec defend;
 };
 TAILQ_HEAD(arp_statehead, arp_state);
 
 struct iarp_state {
+	struct interface *ifp;
 	int bpf_fd;
 	unsigned int bpf_flags;
 	struct arp_statehead arp_states;
@@ -87,20 +93,17 @@ struct iarp_state {
 	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef ARP
-int arp_open(struct interface *);
-ssize_t arp_request(const struct interface *, in_addr_t, in_addr_t);
-void arp_probe(struct arp_state *);
-void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);
+void arp_packet(struct interface *, uint8_t *, size_t);
 struct arp_state *arp_new(struct interface *, const struct in_addr *);
-struct arp_state *arp_find(struct interface *, const struct in_addr *);
+void arp_change(struct arp_state *, const struct in_addr *);
+void arp_probe(struct arp_state *);
 void arp_announce(struct arp_state *);
 void arp_announceaddr(struct dhcpcd_ctx *, const struct in_addr *);
 void arp_ifannounceaddr(struct interface *, const struct in_addr *);
 void arp_cancel(struct arp_state *);
+struct arp_state * arp_find(struct interface *, const struct in_addr *);
 void arp_free(struct arp_state *);
-void arp_free_but(struct arp_state *);
+void arp_freeaddr(struct interface *, const struct in_addr *);
 void arp_drop(struct interface *);
-
-void arp_handleifa(int, struct ipv4_addr *);
 #endif /* ARP */
 #endif /* ARP_H */

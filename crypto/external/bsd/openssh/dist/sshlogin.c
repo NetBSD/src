@@ -1,6 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.9.12.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.33 2018/07/09 21:26:02 markus Exp $ */
-
+/*	$NetBSD: sshlogin.c,v 1.9.12.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.34 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.9.12.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.9.12.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -107,7 +106,7 @@ get_last_login_time(uid_t uid, const char *logname,
 #endif
 #ifdef SUPPORT_UTMP
 	fd = open(_PATH_LASTLOG, O_RDONLY);
-	if (fd < 0)
+	if (fd == -1)
 		return 0;
 
 	pos = (off_t)uid * sizeof(ll);

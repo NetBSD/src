@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.13.4.1 2019/06/10 21:41:11 christos Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.50 2018/07/11 18:55:11 markus Exp $ */
-
+/*	$NetBSD: auth2-chall.c,v 1.13.4.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.52 2019/11/13 04:47:52 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -27,11 +26,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.13.4.1 2019/06/10 21:41:11 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.13.4.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "ssh2.h"

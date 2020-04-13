@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -142,13 +143,18 @@ struct dhcpcd_ctx {
 	size_t duid_len;
 	struct if_head *ifaces;
 
-	struct rt_head routes;	/* our routes */
-	struct rt_head kroutes;	/* all kernel routes */
-	struct rt_head froutes;	/* free routes for re-use */
+	rb_tree_t routes;	/* our routes */
+#ifdef RT_FREE_ROUTE_TABLE
+	rb_tree_t froutes;	/* free routes for re-use */
+#endif
+	size_t rt_order;	/* route order storage */
 
 	int pf_inet_fd;
 	void *priv;
 	int link_fd;
+#ifndef SMALL
+	int link_rcvbuf;
+#endif
 	int seq;	/* route message sequence no */
 	int sseq;	/* successful seq no sent */
 
@@ -156,6 +162,14 @@ struct dhcpcd_ctx {
 	sigset_t sigset;
 #endif
 	struct eloop *eloop;
+
+#ifdef HAVE_OPEN_MEMSTREAM
+	FILE *script_fp;
+#endif
+	char *script_buf;
+	size_t script_buflen;
+	char **script_env;
+	size_t script_envlen;
 
 	int control_fd;
 	int control_unpriv_fd;

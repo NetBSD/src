@@ -188,6 +188,18 @@ typedef packedstruct
 // ptr is the address of the pointer to the start of the field.
 // it is advanced to point to the next field, or the end of the message
 
+// Keep these out of the general namespace -- they're only used internally
+// by the library.
+#define put_uint32		__dnssd_ipc_put_uint32
+#define get_uint32		__dnssd_ipc_get_uint32
+#define put_uint16		__dnssd_ipc_put_uint16
+#define get_uint16		__dnssd_ipc_get_uint16
+#define put_string		__dnssd_ipc_put_string
+#define get_string		__dnssd_ipc_get_string
+#define put_rdata		__dnssd_ipc_put_rdata
+#define get_rdata		__dnssd_ipc_get_rdata
+#define ConvertHeaderBytes	__dnssd_ipc_ConvertHeaderBytes
+
 void put_uint32(const uint32_t l, char **ptr);
 uint32_t get_uint32(const char **ptr, const char *end);
 

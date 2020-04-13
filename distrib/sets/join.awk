@@ -1,4 +1,4 @@
-#	$NetBSD: join.awk,v 1.6 2014/10/24 22:19:44 riz Exp $
+#	$NetBSD: join.awk,v 1.6.16.1 2020/04/13 07:45:31 martin Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,9 @@
 # join.awk F1 F2
 #	Similar to join(1), this reads a list of words from F1
 #	and outputs lines in F2 with a first word that is in F1.
-#	Neither file needs to be sorted
+#	For purposes of matching the first word, both instances are
+#	canonicalised via unvis(word); the version from F2 is printed.
+#	Neither file needs to be sorted.
 
 function unvis(s) \
 {
@@ -79,17 +81,16 @@ BEGIN \
 		exit 1
 	}
 	while ( (getline < ARGV[1]) > 0) {
-		$1 = unvis($1)
-		words[$1] = $0
+		f1 = unvis($1)
+		words[f1] = $0
 	}
 	delete ARGV[1]
 }
 
-// { $1 = unvis($1) }
+{ f1 = unvis($1) }
 
-$1 in words \
+f1 in words \
 {
-	f1=$1
 	$1=""
 	print words[f1] $0
 }

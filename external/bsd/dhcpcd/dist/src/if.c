@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -61,7 +62,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include "common.h"
 #include "dev.h"
@@ -74,6 +74,12 @@
 #include "ipv6nd.h"
 #include "logerr.h"
 #include "privsep.h"
+
+#ifdef __sun
+/* It has the ioctl, but the member is missing from the struct?
+ * No matter, our getifaddrs foo in if-sun.c will DTRT. */
+#undef SIOCGIFHWADDR
+#endif
 
 void
 if_free(struct interface *ifp)
@@ -298,6 +304,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 		case AF_INET6:
 			sin6 = (void *)ifa->ifa_addr;
 			net6 = (void *)ifa->ifa_netmask;
+
 #ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				/* Remove the scope from the address */
@@ -375,18 +382,18 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	struct if_head *ifs;
 	struct interface *ifp;
 	struct if_spec spec;
+	bool if_noconf;
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
-#ifdef SIOCGIFPRIORITY
-	struct ifreq ifr;
-#endif
 #ifdef IFLR_ACTIVE
 	struct if_laddrreq iflr = { .flags = IFLR_PREFIX };
 	int link_fd;
 #endif
-
 #elif AF_PACKET
 	const struct sockaddr_ll *sll;
+#endif
+#if defined(SIOCGIFPRIORITY) || defined(SIOCGIFHWADDR)
+	struct ifreq ifr;
 #endif
 
 	if ((ifs = malloc(sizeof(*ifs))) == NULL) {
@@ -469,19 +476,23 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			continue;
 #endif
 
-		/* Don't allow loopback or pointopoint unless explicit */
-		if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) {
-			if ((argc == 0 || argc == -1) &&
-			    ctx->ifac == 0 && !if_hasconf(ctx, spec.devname))
-				active = IF_INACTIVE;
-		}
-
 		if (if_vimaster(ctx, spec.devname) == 1) {
 			int loglevel = argc != 0 ? LOG_ERR : LOG_DEBUG;
 			logmessage(loglevel,
 			    "%s: is a Virtual Interface Master, skipping",
 			    spec.devname);
 			continue;
+		}
+
+		if_noconf = ((argc == 0 || argc == -1) && ctx->ifac == 0 &&
+		    !if_hasconf(ctx, spec.devname));
+
+		/* Don't allow loopback or pointopoint unless explicit.
+		 * Don't allow some reserved interface names unless explicit. */
+		if (if_noconf) {
+			if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT) ||
+			    if_ignore(ctx, spec.devname))
+				active = IF_INACTIVE;
 		}
 
 		ifp = calloc(1, sizeof(*ifp));
@@ -518,27 +529,23 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #ifdef IFT_BRIDGE
 			case IFT_BRIDGE: /* FALLTHROUGH */
 #endif
-#ifdef IFT_PPP
-			case IFT_PPP: /* FALLTHROUGH */
-#endif
 #ifdef IFT_PROPVIRTUAL
-			case IFT_PROPVIRTUAL:
+			case IFT_PROPVIRTUAL: /* FALLTHROUGH */
 #endif
-#if defined(IFT_BRIDGE) || defined(IFT_PPP) || defined(IFT_PROPVIRTUAL)
+#ifdef IFT_TUNNEL
+			case IFT_TUNNEL: /* FALLTHROUGH */
+#endif
+			case IFT_PPP:
 				/* Don't allow unless explicit */
-				if ((argc == 0 || argc == -1) &&
-				    ctx->ifac == 0 && active &&
-				    !if_hasconf(ctx, ifp->name))
-				{
+				if (if_noconf) {
 					logdebugx("%s: ignoring due to"
 					    " interface type and"
 					    " no config",
 					    ifp->name);
 					active = IF_INACTIVE;
 				}
-				__fallthrough; /* Appease gcc-7 */
+				__fallthrough; /* appease gcc */
 				/* FALLTHROUGH */
-#endif
 #ifdef IFT_L2VLAN
 			case IFT_L2VLAN: /* FALLTHROUGH */
 #endif
@@ -560,13 +567,11 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #endif
 			default:
 				/* Don't allow unless explicit */
-				if ((argc == 0 || argc == -1) &&
-				    ctx->ifac == 0 &&
-				    !if_hasconf(ctx, ifp->name))
+				if (if_noconf)
 					active = IF_INACTIVE;
 				if (active)
 					logwarnx("%s: unsupported"
-					    " interface type %.2x",
+					    " interface type 0x%.2x",
 					    ifp->name, sdl->sdl_type);
 				/* Pretend it's ethernet */
 				ifp->family = ARPHRD_ETHER;
@@ -583,10 +588,21 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
 #endif
 		}
-#ifdef __linux__
-		/* PPP addresses on Linux don't have hardware addresses */
-		else
-			ifp->index = if_nametoindex(ifp->name);
+#ifdef SIOCGIFHWADDR
+		else {
+			/* This is a huge bug in getifaddrs(3) as there
+			 * is no reason why this can't be returned in
+			 * ifa_addr. */
+			memset(&ifr, 0, sizeof(ifr));
+			strlcpy(ifr.ifr_name, ifa->ifa_name,
+			    sizeof(ifr.ifr_name));
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFHWADDR, &ifr) == -1)
+				logerr("%s: SIOCGIFHWADDR", ifa->ifa_name);
+			ifp->family = ifr.ifr_hwaddr.sa_family;
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFINDEX, &ifr) == -1)
+				logerr("%s: SIOCGIFINDEX", ifa->ifa_name);
+			ifp->index = (unsigned int)ifr.ifr_ifindex;
+		}
 #endif
 
 		/* Ensure hardware address is valid. */
@@ -607,6 +623,9 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #ifdef ARPHRD_PPP
 			case ARPHRD_PPP:
 #endif
+#ifdef ARPHRD_NONE
+			case ARPHRD_NONE:
+#endif
 				/* We don't warn for supported families */
 				break;
 
@@ -615,7 +634,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			default:
 				if (active)
 					logwarnx("%s: unsupported"
-					    " interface family %.2x",
+					    " interface family 0x%.2x",
 					    ifp->name, ifp->family);
 				break;
 #endif
@@ -797,58 +816,6 @@ if_domtu(const struct interface *ifp, short int mtu)
 	return ifr.ifr_mtu;
 }
 
-/* Interface comparer for working out ordering. */
-static int
-if_cmp(const struct interface *si, const struct interface *ti)
-{
-#ifdef INET
-	int r;
-#endif
-
-	/* Check active first */
-	if (si->active > ti->active)
-		return -1;
-	if (si->active < ti->active)
-		return 1;
-
-	/* Check carrier status next */
-	if (si->carrier > ti->carrier)
-		return -1;
-	if (si->carrier < ti->carrier)
-		return 1;
-#ifdef INET
-	if (D_STATE_RUNNING(si) && !D_STATE_RUNNING(ti))
-		return -1;
-	if (!D_STATE_RUNNING(si) && D_STATE_RUNNING(ti))
-		return 1;
-#endif
-#ifdef INET6
-	if (RS_STATE_RUNNING(si) && !RS_STATE_RUNNING(ti))
-		return -1;
-	if (!RS_STATE_RUNNING(si) && RS_STATE_RUNNING(ti))
-		return 1;
-#endif
-#ifdef DHCP6
-	if (D6_STATE_RUNNING(si) && !D6_STATE_RUNNING(ti))
-		return -1;
-	if (!D6_STATE_RUNNING(si) && D6_STATE_RUNNING(ti))
-		return 1;
-#endif
-
-#ifdef INET
-	/* Special attention needed here due to states and IPv4LL. */
-	if ((r = ipv4_ifcmp(si, ti)) != 0)
-		return r;
-#endif
-
-	/* Finally, metric */
-	if (si->metric < ti->metric)
-		return -1;
-	if (si->metric > ti->metric)
-		return 1;
-	return 0;
-}
-
 #ifdef ALIAS_ADDR
 int
 if_makealias(char *alias, size_t alias_len, const char *ifname, int lun)
@@ -860,43 +827,18 @@ if_makealias(char *alias, size_t alias_len, const char *ifname, int lun)
 }
 #endif
 
-/* Sort the interfaces into a preferred order - best first, worst last. */
-void
-if_sortinterfaces(struct dhcpcd_ctx *ctx)
-{
-	struct if_head sorted;
-	struct interface *ifp, *ift;
-
-	if (ctx->ifaces == NULL ||
-	    (ifp = TAILQ_FIRST(ctx->ifaces)) == NULL ||
-	    TAILQ_NEXT(ifp, next) == NULL)
-		return;
-
-	TAILQ_INIT(&sorted);
-	TAILQ_REMOVE(ctx->ifaces, ifp, next);
-	TAILQ_INSERT_HEAD(&sorted, ifp, next);
-	while ((ifp = TAILQ_FIRST(ctx->ifaces))) {
-		TAILQ_REMOVE(ctx->ifaces, ifp, next);
-		TAILQ_FOREACH(ift, &sorted, next) {
-			if (if_cmp(ifp, ift) == -1) {
-				TAILQ_INSERT_BEFORE(ift, ifp, next);
-				break;
-			}
-		}
-		if (ift == NULL)
-			TAILQ_INSERT_TAIL(&sorted, ifp, next);
-	}
-	TAILQ_CONCAT(ctx->ifaces, &sorted, next);
-}
-
 struct interface *
 if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 {
 	struct cmsghdr *cm;
 	unsigned int ifindex = 0;
 	struct interface *ifp;
-#if defined(INET) && defined(IP_PKTINFO)
+#ifdef INET
+#ifdef IP_RECVIF
+	struct sockaddr_dl sdl;
+#else
 	struct in_pktinfo ipi;
+#endif
 #endif
 #ifdef INET6
 	struct in6_pktinfo ipi6;
@@ -908,15 +850,27 @@ if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 	     cm;
 	     cm = (struct cmsghdr *)CMSG_NXTHDR(msg, cm))
 	{
-#if defined(INET) && defined(IP_PKTINFO)
+#ifdef INET
 		if (cm->cmsg_level == IPPROTO_IP) {
 			switch(cm->cmsg_type) {
+#ifdef IP_RECVIF
+			case IP_RECVIF:
+				if (cm->cmsg_len <
+				    offsetof(struct sockaddr_dl, sdl_index) +
+				    sizeof(sdl.sdl_index))
+					continue;
+				memcpy(&sdl, CMSG_DATA(cm),
+				    MIN(sizeof(sdl), cm->cmsg_len));
+				ifindex = sdl.sdl_index;
+				break;
+#else
 			case IP_PKTINFO:
 				if (cm->cmsg_len != CMSG_LEN(sizeof(ipi)))
 					continue;
 				memcpy(&ipi, CMSG_DATA(cm), sizeof(ipi));
 				ifindex = (unsigned int)ipi.ipi_ifindex;
 				break;
+#endif
 			}
 		}
 #endif

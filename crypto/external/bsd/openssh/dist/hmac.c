@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.12 2015/03/24 20:03:44 markus Exp $ */
+/* $OpenBSD: hmac.c,v 1.13 2019/09/06 04:53:27 djm Exp $ */
 /*
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
  *
@@ -15,10 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: hmac.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.6.18.1 2020/04/13 07:45:20 martin Exp $");
 
 #include <sys/types.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "sshbuf.h"
 #include "digest.h"

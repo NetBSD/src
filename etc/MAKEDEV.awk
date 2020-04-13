@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.25 2014/09/19 09:01:05 matt Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.25.16.1 2020/04/13 07:45:38 martin Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,7 @@ BEGIN {
 
 	# file with major definitions
 	majors[0] = "conf/majors"
-	if (index(maarch, "arm") != 0 && system("test -f '" top "arch/" machine "/conf/majors." machine "'") != 0)
+	if ((index(maarch, "arm") != 0 || index(maarch, "aarch64")) && system("test -f '" top "arch/" machine "/conf/majors." machine "'") != 0)
 		majors[1] = "arch/arm/conf/majors.arm32";
 	else if (machine == "sbmips")
 		majors[1] = "arch/evbmips/conf/majors.evbmips";
@@ -135,7 +135,18 @@ BEGIN {
 				diskpartitions = $3
 			else if ($1 == "#define" && $2 == "OLDMAXPARTITIONS")
 				diskbackcompat = $3
-			else if ($1 == "#define" && $2 == "RAW_PART")
+			else if ($1 == "#ifndef" && $2 == "RAW_PART" &&
+			    RAWDISK_OFF) {
+				# special case to ignore #ifndef RAW_PART
+				# sections (e.g. in arm/include/disklabel.h,
+				# when it is already set in
+				# zaurus/include/disklabel.h)
+				while (getline < inc) {
+					# skip all lines upto the next #endif
+					if ($1 == "#endif")
+						break;
+				}
+			} else if ($1 == "#define" && $2 == "RAW_PART")
 				RAWDISK_OFF = $3
 			else if ($1 == "#include" && 
 				 $2 ~ "<.*/disklabel.h>" &&
@@ -214,7 +225,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.25 2014/09/19 09:01:05 matt Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.25.16.1 2020/04/13 07:45:38 martin Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -305,7 +316,7 @@ BEGIN {
 		# or block device definition remains within the entry,
 		# print it to output, otherwise scrap it.
 		parsed = ""
-		while (match(deventry, /%[a-z]*_(blk|chr)%/)) {
+		while (match(deventry, /%[a-z0-9]*_(blk|chr)%/)) {
 			nam = substr(deventry, RSTART + 1, RLENGTH - 6);
 			typ = substr(deventry, RSTART + RLENGTH - 4, 3);
 			if (typ == "blk") {

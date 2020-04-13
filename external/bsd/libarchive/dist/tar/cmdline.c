@@ -85,6 +85,7 @@ static const struct bsdtar_option {
 	{ "disable-copyfile",	  0, OPTION_NO_MAC_METADATA },
 	{ "exclude",              1, OPTION_EXCLUDE },
 	{ "exclude-from",         1, 'X' },
+	{ "exclude-vcs",	  0, OPTION_EXCLUDE_VCS },
 	{ "extract",              0, 'x' },
 	{ "fast-read",            0, 'q' },
 	{ "fflags",               0, OPTION_FFLAGS },
@@ -160,6 +161,7 @@ static const struct bsdtar_option {
 	{ "version",              0, OPTION_VERSION },
 	{ "xattrs",               0, OPTION_XATTRS },
 	{ "xz",                   0, 'J' },
+	{ "zstd",                 0, OPTION_ZSTD },
 	{ NULL, 0, 0 }
 };
 

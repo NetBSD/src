@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.4.1 2019/06/10 21:44:58 christos Exp $
+#	$NetBSD: Makefile,v 1.8.4.2 2020/04/13 07:46:05 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -14,6 +14,8 @@ LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
 		z	${NETBSDSRCDIR}/lib/libz
 
 SRCS=		archive_acl.c \
+		archive_blake2sp_ref.c \
+		archive_blake2s_ref.c \
 		archive_check_magic.c \
 		archive_cmdline.c \
 		archive_cryptor.c \
@@ -32,17 +34,18 @@ SRCS=		archive_acl.c \
 		archive_pack_dev.c \
 		archive_pathmatch.c \
 		archive_ppmd7.c \
+		archive_ppmd8.c \
 		archive_random.c \
 		archive_rb.c \
-		archive_read.c \
 		archive_read_add_passphrase.c \
 		archive_read_append_filter.c \
+		archive_read.c \
 		archive_read_data_into_fd.c \
 		archive_read_disk_entry_from_file.c \
 		archive_read_disk_posix.c \
 		archive_read_disk_set_standard_lookup.c \
-		archive_read_extract.c \
 		archive_read_extract2.c \
+		archive_read_extract.c \
 		archive_read_open_fd.c \
 		archive_read_open_file.c \
 		archive_read_open_filename.c \
@@ -62,6 +65,7 @@ SRCS=		archive_acl.c \
 		archive_read_support_filter_rpm.c \
 		archive_read_support_filter_uu.c \
 		archive_read_support_filter_xz.c \
+		archive_read_support_filter_zstd.c \
 		archive_read_support_format_7zip.c \
 		archive_read_support_format_all.c \
 		archive_read_support_format_ar.c \
@@ -72,6 +76,7 @@ SRCS=		archive_acl.c \
 		archive_read_support_format_iso9660.c \
 		archive_read_support_format_lha.c \
 		archive_read_support_format_mtree.c \
+		archive_read_support_format_rar5.c \
 		archive_read_support_format_rar.c \
 		archive_read_support_format_raw.c \
 		archive_read_support_format_tar.c \
@@ -83,11 +88,10 @@ SRCS=		archive_acl.c \
 		archive_util.c \
 		archive_version_details.c \
 		archive_virtual.c \
-		archive_write.c \
-		archive_write_add_filter.c \
 		archive_write_add_filter_b64encode.c \
 		archive_write_add_filter_by_name.c \
 		archive_write_add_filter_bzip2.c \
+		archive_write_add_filter.c \
 		archive_write_add_filter_compress.c \
 		archive_write_add_filter_grzip.c \
 		archive_write_add_filter_gzip.c \
@@ -98,16 +102,18 @@ SRCS=		archive_acl.c \
 		archive_write_add_filter_program.c \
 		archive_write_add_filter_uuencode.c \
 		archive_write_add_filter_xz.c \
+		archive_write_add_filter_zstd.c \
+		archive_write.c \
 		archive_write_disk_posix.c \
 		archive_write_disk_set_standard_lookup.c \
 		archive_write_open_fd.c \
 		archive_write_open_file.c \
 		archive_write_open_filename.c \
 		archive_write_open_memory.c \
-		archive_write_set_format.c \
 		archive_write_set_format_7zip.c \
 		archive_write_set_format_ar.c \
 		archive_write_set_format_by_name.c \
+		archive_write_set_format.c \
 		archive_write_set_format_cpio.c \
 		archive_write_set_format_cpio_newc.c \
 		archive_write_set_format_filter_by_ext.c \
@@ -133,6 +139,7 @@ INCSDIR=	/usr/include
 MAN=		archive_entry.3 \
 		archive_entry_acl.3 \
 		archive_entry_linkify.3 \
+		archive_entry_misc.3 \
 		archive_entry_paths.3 \
 		archive_entry_perms.3 \
 		archive_entry_stat.3 \
@@ -447,5 +454,8 @@ COPTS.archive_read.c += -Wno-error=implicit-fallthrough
 COPTS.archive_read_support_format_7zip.c += -Wno-error=implicit-fallthrough
 COPTS.archive_read_support_format_mtree.c += -Wno-error=implicit-fallthrough
 .endif
+
+COPTS.target.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.archive_write_set_format_iso9660.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

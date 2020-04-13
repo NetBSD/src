@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.84.2.1 2019/06/10 21:42:29 christos Exp $
+# $NetBSD: ad.arm,v 1.84.2.2 2020/04/13 07:45:31 martin Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -304,8 +304,10 @@
 ./usr/include/clang-4.0/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-7.0/arm_neon.h		comp-c-include		llvm
+./usr/include/clang-7.0/arm_acle.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/arm_neon.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-9.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/epoc32				comp-c-include
 ./usr/include/epoc32/ansi.h			comp-obsolete		obsolete
 ./usr/include/epoc32/aout_machdep.h		comp-obsolete		obsolete
@@ -413,11 +415,11 @@
 ./usr/include/gcc-5/mmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/unwind-arm-common.h		comp-obsolete		obsolete
-./usr/include/gcc-6/arm_acle.h			comp-c-include		gcc=6
-./usr/include/gcc-6/arm_neon.h			comp-c-include		gcc=6
-./usr/include/gcc-6/mmintrin.h			comp-c-include		gcc=6
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
-./usr/include/gcc-6/unwind-arm-common.h		comp-c-include		gcc=6,eabi
+./usr/include/gcc-6/arm_acle.h			comp-c-include		obsolete
+./usr/include/gcc-6/arm_neon.h			comp-c-include		obsolete
+./usr/include/gcc-6/mmintrin.h			comp-c-include		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-6/unwind-arm-common.h		comp-c-include		obsolete
 ./usr/include/gcc-7/arm_acle.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/arm_cmse.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/arm_fp16.h			comp-c-include		gcc=7
@@ -425,6 +427,12 @@
 ./usr/include/gcc-7/mmintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/unwind-arm-common.h		comp-c-include		obsolete,gcc=7,eabi
+./usr/include/gcc-8/arm_acle.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_cmse.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_fp16.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_neon.h			comp-c-include		gcc=8
+./usr/include/gcc-8/mmintrin.h			comp-c-include		gcc=8
+./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/aout_machdep.h		comp-obsolete		obsolete

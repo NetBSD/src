@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.14.12.1 2019/06/10 21:44:41 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.14.12.2 2020/04/13 07:45:50 martin Exp $	*/
 
 /* Id: reader.c,v 1.74 2017/12/04 17:50:02 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.14.12.1 2019/06/10 21:44:41 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.14.12.2 2020/04/13 07:45:50 martin Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -66,6 +66,12 @@ char line_format[] = "#line %d \"%s\"\n";
 
 param *lex_param;
 param *parse_param;
+
+static const char *code_keys[] = {
+	"", "requires", "provides", "top", "imports",
+};
+
+struct code_lines code_lines[CODE_MAX];
 
 #if defined(YYBTYACC)
 int destructor = 0;	/* =1 if at least one %destructor */
@@ -447,6 +453,7 @@ static struct keyword
 }
 keywords[] = {
     { "binary",      NONASSOC },
+    { "code",        XCODE },
     { "debug",       XXXDEBUG },
 #if defined(YYBTYACC)
     { "destructor",  DESTRUCTOR },
@@ -664,6 +671,115 @@ copy_comment(void)
 	}
     }
     return msdone(temp);
+}
+
+static int
+check_key(int pos)
+{
+    const char *key = code_keys[pos];
+    while (*cptr && *key)
+	if (*key++ != *cptr++)
+	    return 0;
+    if (*key || (!isspace(UCH(*cptr)) && *cptr != L_CURL))
+	return 0;
+    cptr--;
+    return 1;
+}
+
+
+static void
+copy_code(void)
+{
+    int c;
+    int curl;
+    int cline = 0;
+    int pos = CODE_HEADER;
+    struct mstring *code_mstr;
+
+    /* read %code <keyword> { */
+    for (;;)
+    {
+	c = *++cptr;
+	if (c == EOF)
+	    unexpected_EOF();
+	if (isspace(UCH(c)))
+	    continue;
+
+	if (c == L_CURL)
+	    break;
+
+	if (pos == CODE_HEADER)
+	{
+	    switch (UCH(c))
+	    {
+	    case 'r':
+		pos = CODE_REQUIRES;
+		break;
+	    case 'p':
+		pos = CODE_PROVIDES;
+		break;
+	    case 't':
+		pos = CODE_TOP;
+		break;
+	    case 'i':
+		pos = CODE_IMPORTS;
+		break;
+	    default: 
+		break;
+	    }
+
+	    if (pos == -1 || !check_key(pos))
+	    {
+		syntax_error(lineno, line, cptr);
+		return;
+	    }
+	}
+    }
+
+    cptr++;	/* skip initial curl */
+    while (*cptr && isspace(UCH(*cptr)))	/* skip space */
+	cptr++;
+    curl = 1;	/* nesting count */
+
+    /* gather text */
+    code_mstr = msnew();
+    cline++;
+    msprintf(code_mstr, "/* %%code %s block start */\n", code_keys[pos]);
+    for (;;)
+    {
+	c = *cptr++;
+	switch (c)
+	{
+	case '\0':
+	    get_line();
+	    if (line == NULL)
+	    {
+		unexpected_EOF();
+		return;
+	    }
+	    continue;
+	case '\n':
+	    cline++;
+	    break;
+	case L_CURL:
+	    curl++;
+	    break;
+	case R_CURL:
+	    if (--curl == 0)
+	    {
+		cline++;
+		msprintf(code_mstr, "/* %%code %s block end */\n",
+		    code_keys[pos]);
+		code_lines[pos].lines = msdone(code_mstr);
+		code_lines[pos].num = cline;
+		return;
+	    }
+	    break;
+	default:
+	    break;
+	}
+	mputc(code_mstr, c);
+    }
 }
 
 static void
@@ -1691,6 +1807,10 @@ read_declarations(void)
 	    copy_ident();
 	    break;
 
+	case XCODE:
+	    copy_code();
+	    break;
+
 	case TEXT:
 	    copy_text();
 	    break;
@@ -2255,6 +2375,10 @@ advance_to_start(void)
 	s_cptr = cptr;
 	switch (keyword())
 	{
+	case XCODE:
+	    copy_code();
+	    break;
+
 	case MARK:
 	    no_grammar();
 

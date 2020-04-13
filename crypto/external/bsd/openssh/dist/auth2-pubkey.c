@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.20.2.1 2019/06/10 21:41:11 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.87 2019/01/22 11:26:16 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.20.2.2 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.99 2020/02/06 22:30:54 naddy Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,10 +25,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.20.2.1 2019/06/10 21:41:11 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.20.2.2 2020/04/13 07:45:20 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -72,6 +73,7 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.20.2.1 2019/06/10 21:41:11 christos Exp $")
 #include "ssherr.h"
 #include "channels.h" /* XXX for session.h */
 #include "session.h" /* XXX for child_set_env(); refactor? */
+#include "sk-api.h"
 
 /* import */
 extern ServerOptions options;
@@ -100,8 +102,9 @@ userauth_pubkey(struct ssh *ssh)
 	u_char *pkblob = NULL, *sig = NULL, have_sig;
 	size_t blen, slen;
 	int r, pktype;
-	int authenticated = 0;
+	int req_presence = 0, authenticated = 0;
 	struct sshauthopt *authopts = NULL;
+	struct sshkey_sig_details *sig_details = NULL;
 
 	if ((r = sshpkt_get_u8(ssh, &have_sig)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &pkalg, NULL)) != 0 ||
@@ -114,7 +117,7 @@ userauth_pubkey(struct ssh *ssh)
 
 		if ((pkbuf = sshbuf_from(pkblob, blen)) == NULL)
 			fatal("%s: sshbuf_from failed", __func__);
-		if ((keystring = sshbuf_dtob64(pkbuf)) == NULL)
+		if ((keystring = sshbuf_dtob64_string(pkbuf, 0)) == NULL)
 			fatal("%s: sshbuf_dtob64 failed", __func__);
 		debug2("%s: %s user %s %s public key %s %s", __func__,
 		    authctxt->valid ? "valid" : "invalid", authctxt->user,
@@ -217,8 +220,30 @@ userauth_pubkey(struct ssh *ssh)
 		    PRIVSEP(sshkey_verify(key, sig, slen,
 		    sshbuf_ptr(b), sshbuf_len(b),
 		    (ssh->compat & SSH_BUG_SIGTYPE) == 0 ? pkalg : NULL,
-		    ssh->compat)) == 0) {
+		    ssh->compat, &sig_details)) == 0) {
 			authenticated = 1;
+		}
+		if (authenticated == 1 && sig_details != NULL) {
+			auth2_record_info(authctxt, "signature count = %u",
+			    sig_details->sk_counter);
+			debug("%s: sk_counter = %u, sk_flags = 0x%02x",
+			    __func__, sig_details->sk_counter,
+			    sig_details->sk_flags);
+			req_presence = (options.pubkey_auth_options &
+			    PUBKEYAUTH_TOUCH_REQUIRED) ||
+			    !authopts->no_require_user_presence;
+			if (req_presence && (sig_details->sk_flags &
+			    SSH_SK_USER_PRESENCE_REQD) == 0) {
+				error("public key %s signature for %s%s from "
+				    "%.128s port %d rejected: user presence "
+				    "(authenticator touch) requirement "
+				    "not met ", key_s,
+				    authctxt->valid ? "" : "invalid user ",
+				    authctxt->user, ssh_remote_ipaddr(ssh),
+				    ssh_remote_port(ssh));
+				authenticated = 0;
+				goto done;
+			}
 		}
 		auth2_record_key(authctxt, authenticated, key);
 	} else {
@@ -270,6 +295,7 @@ done:
 	free(key_s);
 	free(ca_s);
 	free(sig);
+	sshkey_sig_details_free(sig_details);
 	return authenticated;
 }
 
@@ -423,7 +449,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	pid_t pid;
 	char *tmp, *username = NULL, *command = NULL, **av = NULL;
 	char *ca_fp = NULL, *key_fp = NULL, *catext = NULL, *keytext = NULL;
-	char serial_s[16], uidstr[32];
+	char serial_s[32], uidstr[32];
 	void (*osigchld)(int);
 
 	if (authoptsp != NULL)
@@ -440,7 +466,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	 * NB. all returns later this function should go via "out" to
 	 * ensure the original SIGCHLD handler is restored properly.
 	 */
-	osigchld = signal(SIGCHLD, SIG_DFL);
+	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
 
 	/* Prepare and verify the user for the command */
 	username = percent_expand(options.authorized_principals_command_user,
@@ -455,12 +481,12 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	/* Turn the command into an argument vector */
 	if (argv_split(options.authorized_principals_command, &ac, &av) != 0) {
 		error("AuthorizedPrincipalsCommand \"%s\" contains "
-		    "invalid quotes", command);
+		    "invalid quotes", options.authorized_principals_command);
 		goto out;
 	}
 	if (ac == 0) {
 		error("AuthorizedPrincipalsCommand \"%s\" yielded no arguments",
-		    command);
+		    options.authorized_principals_command);
 		goto out;
 	}
 	if ((ca_fp = sshkey_fingerprint(cert->signature_key,
@@ -528,7 +554,7 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
  out:
 	if (f != NULL)
 		fclose(f);
-	signal(SIGCHLD, osigchld);
+	ssh_signal(SIGCHLD, osigchld);
 	for (i = 0; i < ac; i++)
 		free(av[i]);
 	free(av);
@@ -541,38 +567,6 @@ match_principals_command(struct ssh *ssh, struct passwd *user_pw,
 	free(catext);
 	free(keytext);
 	return found_principal;
-}
-
-static void
-skip_space(char **cpp)
-{
-	char *cp;
-
-	for (cp = *cpp; *cp == ' ' || *cp == '\t'; cp++)
-		;
-	*cpp = cp;
-}
-
-/*
- * Advanced *cpp past the end of key options, defined as the first unquoted
- * whitespace character. Returns 0 on success or -1 on failure (e.g.
- * unterminated quotes).
- */
-static int
-advance_past_options(char **cpp)
-{
-	char *cp = *cpp;
-	int quoted = 0;
-
-	for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
-		if (*cp == '\\' && cp[1] == '"')
-			cp++;	/* Skip both */
-		else if (*cp == '"')
-			quoted = !quoted;
-	}
-	*cpp = cp;
-	/* return failure for unterminated quotes */
-	return (*cp == '\0' && quoted) ? -1 : 0;
 }
 
 /*
@@ -605,7 +599,7 @@ check_authkey_line(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 		/* no key?  check for options */
 		debug2("%s: check options: '%s'", loc, cp);
 		key_options = cp;
-		if (advance_past_options(&cp) != 0) {
+		if (sshkey_advance_past_options(&cp) != 0) {
 			reason = "invalid key option string";
 			goto fail_reason;
 		}
@@ -988,7 +982,7 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 	 * NB. all returns later this function should go via "out" to
 	 * ensure the original SIGCHLD handler is restored properly.
 	 */
-	osigchld = signal(SIGCHLD, SIG_DFL);
+	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
 
 	/* Prepare and verify the user for the command */
 	username = percent_expand(options.authorized_keys_command_user,
@@ -1077,7 +1071,7 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
  out:
 	if (f != NULL)
 		fclose(f);
-	signal(SIGCHLD, osigchld);
+	ssh_signal(SIGCHLD, osigchld);
 	for (i = 0; i < ac; i++)
 		free(av[i]);
 	free(av);
@@ -1097,9 +1091,10 @@ int
 user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
     int auth_attempt, struct sshauthopt **authoptsp)
 {
-	u_int success, i;
+	u_int success = 0, i;
 	char *file;
 	struct sshauthopt *opts = NULL;
+
 	if (authoptsp != NULL)
 		*authoptsp = NULL;
 
@@ -1108,6 +1103,21 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	if (sshkey_is_cert(key) &&
 	    auth_key_is_revoked(key->cert->signature_key))
 		return 0;
+
+	for (i = 0; !success && i < options.num_authkeys_files; i++) {
+		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
+			continue;
+		file = expand_authorized_keys(
+		    options.authorized_keys_files[i], pw);
+		success = user_key_allowed2(ssh, pw, key, file, &opts);
+		free(file);
+		if (!success) {
+			sshauthopt_free(opts);
+			opts = NULL;
+		}
+	}
+	if (success)
+		goto out;
 
 	if ((success = user_cert_trusted_ca(ssh, pw, key, &opts)) != 0)
 		goto out;
@@ -1118,15 +1128,6 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 		goto out;
 	sshauthopt_free(opts);
 	opts = NULL;
-
-	for (i = 0; !success && i < options.num_authkeys_files; i++) {
-		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
-			continue;
-		file = expand_authorized_keys(
-		    options.authorized_keys_files[i], pw);
-		success = user_key_allowed2(ssh, pw, key, file, &opts);
-		free(file);
-	}
 
  out:
 	if (success && authoptsp != NULL) {

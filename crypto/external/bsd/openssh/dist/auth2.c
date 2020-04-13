@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.16.2.2 2020/04/08 14:03:18 martin Exp $	*/
-/* $OpenBSD: auth2.c,v 1.155 2019/03/25 22:34:52 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.16.2.3 2020/04/13 07:45:20 martin Exp $	*/
+/* $OpenBSD: auth2.c,v 1.157 2019/09/06 04:53:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.16.2.2 2020/04/08 14:03:18 martin Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.16.2.3 2020/04/13 07:45:20 martin Exp $");
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -38,6 +39,7 @@ __RCSID("$NetBSD: auth2.c,v 1.16.2.2 2020/04/08 14:03:18 martin Exp $");
 #include <unistd.h>
 #include <time.h>
 
+#include "stdlib.h"
 #include "atomicio.h"
 #include "xmalloc.h"
 #include "ssh2.h"
@@ -727,7 +729,7 @@ auth2_record_info(Authctxt *authctxt, const char *fmt, ...)
 	i = vasprintf(&authctxt->auth_method_info, fmt, ap);
 	va_end(ap);
 
-	if (i < 0 || authctxt->auth_method_info == NULL)
+	if (i == -1)
 		fatal("%s: vasprintf failed", __func__);
 }
 

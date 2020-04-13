@@ -1,4 +1,4 @@
-|	$NetBSD: aes-m68k.S,v 1.3 2018/03/07 06:55:01 mlelstv Exp $
+|	$NetBSD: aes-m68k.S,v 1.3.2.1 2020/04/13 07:45:22 martin Exp $
 
 | Copyright (C) 2016 Tetsuya Isaki. All rights reserved.
 | Copyright (C) 2016 Y.Sugahara (moveccr). All rights reserved.
@@ -828,7 +828,7 @@ AES_encrypt:
 
 	moveml	%sp@+,%d2-%d7/%a2-%a5
 	rts
-	.size	AES_set_decrypt_key, .-AES_set_decrypt_key
+	.size	AES_encrypt, .-AES_encrypt
 
 | void
 | AES_decrypt(const unsigned char *in,

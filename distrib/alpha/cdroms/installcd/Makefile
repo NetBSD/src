@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2.42.1 2019/06/10 21:42:16 christos Exp $
+#	$NetBSD: Makefile,v 1.2.42.2 2020/04/13 07:45:23 martin Exp $
 CDBASE=		alphacd		# gives ${CDBASE}.iso
 CDINSTKERNEL=	../../instkernel/instkernel
 CDKERNELS=	netbsd netbsd
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 
 #make the CD bootable

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Socket Address handling for dhcpcd
  * Copyright (c) 2015-2020 Roy Marples <roy@marples.name>
@@ -29,6 +30,7 @@
 #define SA_H
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 
 union sa_ss {
 	struct sockaddr		sa;
@@ -54,6 +56,11 @@ union sa_ss {
 
 socklen_t sa_addroffset(const struct sockaddr *sa);
 socklen_t sa_addrlen(const struct sockaddr *sa);
+#ifdef HAVE_SA_LEN
+#define	sa_len(sa)	((sa)->sa_len)
+#else
+socklen_t sa_len(const struct sockaddr *sa);
+#endif
 bool sa_is_unspecified(const struct sockaddr *);
 bool sa_is_allones(const struct sockaddr *);
 bool sa_is_loopback(const struct sockaddr *);

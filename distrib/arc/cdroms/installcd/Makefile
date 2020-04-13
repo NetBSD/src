@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.64.1 2019/06/10 21:42:18 christos Exp $
+#	$NetBSD: Makefile,v 1.3.64.2 2020/04/13 07:45:24 martin Exp $
 CDBASE=		arccd			# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 CDKERNELS=	netbsd-RAMDISK.gz netbsd
 CDINSTKERNEL=	../../instkernel

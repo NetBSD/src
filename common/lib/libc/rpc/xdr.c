@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.2.2.2 2019/06/10 21:41:07 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.2.2.3 2020/04/13 07:45:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.2.2.2 2019/06/10 21:41:07 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.2.2.3 2020/04/13 07:45:08 martin Exp $");
 #endif
 #endif
 
@@ -546,7 +546,7 @@ xdr_enum(XDR *xdrs, enum_t *ep)
  * cp points to the opaque object and cnt gives the byte length.
  */
 bool_t
-xdr_opaque(XDR *xdrs, caddr_t cp, u_int cnt)
+xdr_opaque(XDR *xdrs, char *cp, u_int cnt)
 {
 	u_int rndup;
 	static int crud[BYTES_PER_XDR_UNIT];
@@ -572,7 +572,7 @@ xdr_opaque(XDR *xdrs, caddr_t cp, u_int cnt)
 		}
 		if (rndup == 0)
 			return (TRUE);
-		return (XDR_GETBYTES(xdrs, (caddr_t)(void *)crud, rndup));
+		return (XDR_GETBYTES(xdrs, (void *)crud, rndup));
 	}
 
 	if (xdrs->x_op == XDR_ENCODE) {
