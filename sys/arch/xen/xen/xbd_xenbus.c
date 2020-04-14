@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.109 2020/04/14 09:27:28 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.110 2020/04/14 13:02:40 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.109 2020/04/14 09:27:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.110 2020/04/14 13:02:40 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -393,6 +393,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 	mutex_enter(&sc->sc_lock);
 	while (xengnt_status(sc->sc_ring_gntref))
 		cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz/2);
+	mutex_exit(&sc->sc_lock);
 
 	xengnt_revoke_access(sc->sc_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
