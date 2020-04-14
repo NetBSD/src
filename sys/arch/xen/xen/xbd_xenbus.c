@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.110 2020/04/14 13:02:40 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.111 2020/04/14 13:10:43 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.110 2020/04/14 13:02:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.111 2020/04/14 13:10:43 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -137,6 +137,9 @@ struct xbd_xenbus_softc {
 	struct xbd_req sc_reqs[XBD_RING_SIZE];
 	SLIST_HEAD(,xbd_req) sc_xbdreq_head; /* list of free requests */
 
+	vmem_addr_t sc_unalign_buffer;
+	bool sc_unalign_free;
+
 	int sc_backend_status; /* our status with backend */
 #define BLKIF_STATE_DISCONNECTED 0
 #define BLKIF_STATE_CONNECTED    1
@@ -159,6 +162,8 @@ struct xbd_xenbus_softc {
 #define BLKIF_FEATURE_BITS		\
 	"\20\1CACHE-FLUSH\2BARRIER\3PERSISTENT"
 	struct evcnt sc_cnt_map_unalign;
+	struct evcnt sc_cnt_unalign_busy;
+	struct evcnt sc_cnt_queue_full;
 };
 
 #if 0
@@ -180,8 +185,8 @@ static void xbd_iosize(device_t, int *);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
-static int  xbd_map_align(struct xbd_req *);
-static void xbd_unmap_align(struct xbd_req *);
+static int  xbd_map_align(struct xbd_xenbus_softc *, struct xbd_req *);
+static void xbd_unmap_align(struct xbd_xenbus_softc *, struct xbd_req *, bool);
 
 static void xbdminphys(struct buf *);
 
@@ -297,6 +302,10 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_cnt_map_unalign, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "map unaligned");
+	evcnt_attach_dynamic(&sc->sc_cnt_unalign_busy, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "map unaligned");
+	evcnt_attach_dynamic(&sc->sc_cnt_queue_full, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "queue full");
 
 	for (i = 0; i < XBD_RING_SIZE; i++) {
 		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat,
@@ -307,6 +316,13 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
+
+	if (uvm_km_kmem_alloc(kmem_va_arena,
+	    MAXPHYS, VM_SLEEP | VM_INSTANTFIT, &sc->sc_unalign_buffer) != 0) {
+		aprint_error_dev(self, "can't alloc align buffer\n");
+		return;
+	}
+	sc->sc_unalign_free = true;
 
 	/* resume shared structures and tell backend that we are ready */
 	if (xbd_xenbus_resume(self, PMF_Q_NONE) == false) {
@@ -407,9 +423,16 @@ xbd_xenbus_detach(device_t dev, int flags)
 		}
 	}
 
+	if (sc->sc_unalign_buffer != 0) {
+		uvm_km_kmem_free(kmem_va_arena, sc->sc_unalign_buffer, MAXPHYS);
+		sc->sc_unalign_buffer = 0;
+	}
+
 	mutex_destroy(&sc->sc_lock);
 
 	evcnt_detach(&sc->sc_cnt_map_unalign);
+	evcnt_detach(&sc->sc_cnt_unalign_busy);
+	evcnt_detach(&sc->sc_cnt_queue_full);
 
 	pmf_device_deregister(dev);
 
@@ -740,7 +763,7 @@ again:
 		    bp, (long)bp->b_bcount));
 
 		if (__predict_false(bp->b_data != xbdreq->req_data))
-			xbd_unmap_align(xbdreq);
+			xbd_unmap_align(sc, xbdreq, true);
 		xbdreq->req_bp = xbdreq->req_data = NULL;
 
 		/* b_resid was set in dk_start, only override on error */
@@ -1005,6 +1028,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 
 	xbdreq = SLIST_FIRST(&sc->sc_xbdreq_head);
 	if (__predict_false(xbdreq == NULL)) {
+		sc->sc_cnt_queue_full.ev_count++;
 		DPRINTF(("xbd_diskstart: no req\n"));
 		error = EAGAIN;
 		goto out;
@@ -1018,7 +1042,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 
 		sc->sc_cnt_map_unalign.ev_count++;
 
-		if (__predict_false(xbd_map_align(xbdreq) != 0)) {
+		if (__predict_false(xbd_map_align(sc, xbdreq) != 0)) {
 			DPRINTF(("xbd_diskstart: no align\n"));
 			error = EAGAIN;
 			goto out;
@@ -1028,7 +1052,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 	if (__predict_false(bus_dmamap_load(sc->sc_xbusd->xbusd_dmat,
 	    xbdreq->req_dmamap, xbdreq->req_data, bp->b_bcount, NULL,
 	    BUS_DMA_NOWAIT) != 0)) {
-		printf("%s: %s: xengnt_grant_access failed",
+		printf("%s: %s: bus_dmamap_load failed",
 		    device_xname(sc->sc_dksc.sc_dev), __func__);
 		error = EINVAL;
 		goto out;
@@ -1071,6 +1095,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 			}
 			bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat,
 			    xbdreq->req_dmamap);
+			if (__predict_false(bp->b_data != xbdreq->req_data))
+				xbd_unmap_align(sc, xbdreq, false);
 			SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
 			    req_next);
 			error = EFAULT;
@@ -1092,15 +1118,16 @@ out:
 }
 
 static int
-xbd_map_align(struct xbd_req *req)
+xbd_map_align(struct xbd_xenbus_softc *sc, struct xbd_req *req)
 {
-	int rc;
+	if (!sc->sc_unalign_free) {
+		sc->sc_cnt_unalign_busy.ev_count++;
+		return EAGAIN;
+	}
+	sc->sc_unalign_free = false;
 
-	rc = uvm_km_kmem_alloc(kmem_va_arena,
-	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
-	    (vmem_addr_t *)&req->req_data);
-	if (__predict_false(rc != 0))
-		return ENOMEM;
+	KASSERT(req->req_bp->b_bcount < MAXPHYS);
+	req->req_data = (void *)sc->sc_unalign_buffer;
 	if ((req->req_bp->b_flags & B_READ) == 0)
 		memcpy(req->req_data, req->req_bp->b_data,
 		    req->req_bp->b_bcount);
@@ -1108,10 +1135,10 @@ xbd_map_align(struct xbd_req *req)
 }
 
 static void
-xbd_unmap_align(struct xbd_req *req)
+xbd_unmap_align(struct xbd_xenbus_softc *sc, struct xbd_req *req, bool sync)
 {
-	if (req->req_bp->b_flags & B_READ)
+	if (sync && req->req_bp->b_flags & B_READ)
 		memcpy(req->req_bp->b_data, req->req_data,
 		    req->req_bp->b_bcount);
-	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
+	sc->sc_unalign_free = true;
 }
