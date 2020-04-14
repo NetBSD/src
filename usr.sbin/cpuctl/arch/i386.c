@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104.2.4 2019/11/19 13:15:57 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.104.2.5 2020/04/14 17:15:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104.2.4 2019/11/19 13:15:57 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.104.2.5 2020/04/14 17:15:02 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,6 @@ struct cpu_info {
 	uint8_t		ci_coreid;
 	uint8_t		ci_smtid;
 	uint32_t	ci_initapicid;
-	uint32_t	ci_max_ext_cpuid;
 
 	uint32_t	ci_cur_xsave;
 	uint32_t	ci_max_xsave;
@@ -1944,7 +1943,7 @@ identifycpu_cpuids_amd(struct cpu_info *ci)
 		x86_cpuid(1, descs);
 		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 
-		if (cpu_family >= 0x10 && ci->ci_max_ext_cpuid >= 0x8000008) {
+		if (cpu_family >= 0x10 && ci->ci_cpuid_extlevel >= 0x8000008) {
 			x86_cpuid(0x8000008, descs);
 			core_max = (descs[2] & 0xff) + 1;
 			n = (descs[2] >> 12) & 0x0f;
@@ -2287,22 +2286,18 @@ identifycpu(int fd, const char *cpuname)
 		    cpuname, descs[0]);
 	}
 
-	if (cpu_vendor == CPUVENDOR_AMD) {
-		x86_cpuid(0x80000000, descs);
-		if (descs[0] >= 0x80000000)
-			ci->ci_max_ext_cpuid = descs[0];
-		else
-			ci->ci_max_ext_cpuid = 0;
-		if (ci->ci_max_ext_cpuid >= 0x80000007)
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+		if (ci->ci_cpuid_extlevel >= 0x80000007)
 			powernow_probe(ci);
 
-		if (ci->ci_max_ext_cpuid >= 0x80000008) {
+	if (cpu_vendor == CPUVENDOR_AMD) {
+		if (ci->ci_cpuid_extlevel >= 0x80000008) {
 			x86_cpuid(0x80000008, descs);
 			print_bits(cpuname, "AMD Extended features",
 			    CPUID_CAPEX_FLAGS, descs[1]);
 		}
 
-		if ((ci->ci_max_ext_cpuid >= 0x8000000a)
+		if ((ci->ci_cpuid_extlevel >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
@@ -2312,7 +2307,7 @@ identifycpu(int fd, const char *cpuname)
 			print_bits(cpuname, "SVM features",
 			    CPUID_AMD_SVM_FLAGS, descs[3]);
 		}
-		if (ci->ci_max_ext_cpuid >= 0x8000001f) {
+		if (ci->ci_cpuid_extlevel >= 0x8000001f) {
 			x86_cpuid(0x8000001f, descs);
 			print_bits(cpuname, "Encrypted Memory features",
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
@@ -2572,8 +2567,7 @@ powernow_probe(struct cpu_info *ci)
 	x86_cpuid(0x80000007, regs);
 
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
-	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
-	    buf);
+	aprint_normal_dev(ci->ci_dev, "Power Management features: %s\n", buf);
 }
 
 bool
