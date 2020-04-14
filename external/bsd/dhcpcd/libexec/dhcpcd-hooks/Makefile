@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2020/04/03 15:02:11 roy Exp $
+# $NetBSD: Makefile,v 1.6 2020/04/14 03:16:27 kre Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@
 HOOKSRC=	${DIST}/hooks
 .PATH:		${HOOKSRC}
 
-FILES=		01-test 02-dump 20-resolv.conf 30-hostname
+FILES=		01-test 20-resolv.conf 30-hostname
 FILES+=		50-ntp.conf
 
 FILESDIR=	/libexec/dhcpcd-hooks
