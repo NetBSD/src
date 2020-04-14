@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.27 2020/03/25 06:17:23 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.28 2020/04/14 07:59:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.27 2020/03/25 06:17:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.28 2020/04/14 07:59:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -109,22 +109,24 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 const struct db_command db_machine_command_table[] = {
+#ifdef _KERNEL
+#if defined(MULTIPROCESSOR)
+	{ DDB_ADD_CMD("cpu",	db_switch_cpu_cmd,	0,
+			"switch to a different cpu",
+		     	NULL,NULL) },
+#endif /* MULTIPROCESSOR */
+	{ DDB_ADD_CMD("fault",	db_show_fault_cmd,	0,
+			"Displays the fault registers",
+		     	NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0,
 			"Displays the contents of a trapframe",
 			"[address]",
 			"   address:\taddress of trapfame to display")},
 #ifdef _KERNEL
-	{ DDB_ADD_CMD("fault",	db_show_fault_cmd,	0,
-			"Displays the fault registers",
-		     	NULL,NULL) },
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7)
 	{ DDB_ADD_CMD("tlb",	db_show_tlb_cmd,	0,
 			"Displays the TLB",
-		     	NULL,NULL) },
-#endif
-#if defined(MULTIPROCESSOR)
-	{ DDB_ADD_CMD("cpu",	db_switch_cpu_cmd,	0,
-			"switch to a different cpu",
 		     	NULL,NULL) },
 #endif
 #endif /* _KERNEL */
