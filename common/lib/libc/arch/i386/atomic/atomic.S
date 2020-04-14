@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.23 2018/07/18 13:39:36 bouyer Exp $	*/
+/*	$NetBSD: atomic.S,v 1.23.8.1 2020/04/14 16:51:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ END(_membar_sync)
 ENDLABEL(membar_sync_end)
 
 #if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
-#ifdef XEN
+#ifdef XENPV
 STRONG_ALIAS(_atomic_cas_64,_atomic_cas_cx8)
 #else
 ENTRY(_atomic_cas_64)
