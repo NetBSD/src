@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.180.2.1 2020/04/11 18:26:07 bouyer Exp $
+#	$NetBSD: files.xen,v 1.180.2.2 2020/04/14 16:53:57 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -150,6 +150,7 @@ file	arch/x86/x86/idt.c		machdep
 file	arch/x86/x86/intr.c		machdep & xenpvhvm
 file	arch/x86/x86/x86_softintr.c	machdep
 file	arch/x86/x86/ipi.c		xenpvhvm
+file 	arch/x86/x86/patch.c		machdep & ! xenpv
 file	arch/x86/x86/pmap.c		machdep
 file	arch/x86/x86/x86_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
@@ -390,7 +391,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS
+defflag	opt_xen.h			DOM0OPS XENPV
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	(xenpvhvm | hypervisor) & pci & ( dom0ops | xenpvhvm )
