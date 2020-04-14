@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.111 2020/04/14 13:10:43 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.112 2020/04/14 14:06:24 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.111 2020/04/14 13:10:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.112 2020/04/14 14:06:24 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -745,6 +745,23 @@ again:
 			continue;
 		}
 
+		bp = xbdreq->req_bp;
+		KASSERT(bp != NULL && bp->b_data != NULL);
+		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
+		    bp, (long)bp->b_bcount));
+
+		if (rep->status != BLKIF_RSP_OKAY) {
+			bp->b_error = EIO;
+			bp->b_resid = bp->b_bcount;
+		} else {
+			KASSERTMSG(xbdreq->req_dmamap->dm_mapsize <=
+			    bp->b_resid, "mapsize %d > b_resid %d",
+			    (int)xbdreq->req_dmamap->dm_mapsize,
+			    (int)bp->b_resid);
+			bp->b_resid -= xbdreq->req_dmamap->dm_mapsize;
+			KASSERT(bp->b_resid == 0);
+		}
+
 		for (seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
 			/*
 			 * We are not allowing persistent mappings, so
@@ -757,20 +774,9 @@ again:
 
 		bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat, xbdreq->req_dmamap);
 
-		bp = xbdreq->req_bp;
-		KASSERT(bp != NULL && bp->b_data != NULL);
-		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
-		    bp, (long)bp->b_bcount));
-
 		if (__predict_false(bp->b_data != xbdreq->req_data))
 			xbd_unmap_align(sc, xbdreq, true);
 		xbdreq->req_bp = xbdreq->req_data = NULL;
-
-		/* b_resid was set in dk_start, only override on error */
-		if (rep->status != BLKIF_RSP_OKAY) {
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount;
-		}
 
 		dk_done(&sc->sc_dksc, bp);
 
@@ -1067,7 +1073,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 	req->sector_number = bp->b_rawblkno;
 	req->handle = sc->sc_handle;
 
-	bp->b_resid = 0;
+	bp->b_resid = bp->b_bcount;
 	for (seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
 		bus_dma_segment_t *dmaseg = &xbdreq->req_dmamap->dm_segs[seg];
 
