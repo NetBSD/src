@@ -1,4 +1,4 @@
-# $NetBSD: files.onewire,v 1.3 2006/04/14 18:38:50 riz Exp $
+# $NetBSD: files.onewire,v 1.4 2020/04/14 13:35:24 macallan Exp $
 
 define	onewire {}
 
@@ -13,3 +13,8 @@ file	dev/onewire/onewire_bitbang.c	onewire_bitbang
 device	owtemp: sysmon_envsys
 attach	owtemp at onewire
 file	dev/onewire/owtemp.c		owtemp
+
+# 256bit EEPROM
+device 	oweeprom
+attach 	oweeprom at onewire
+file 	dev/onewire/oweeprom.c		oweeprom
