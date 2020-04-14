@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.33 2020/04/10 21:03:20 jdolecek Exp $      */
+/*      $NetBSD: xengnt.c,v 1.34 2020/04/14 07:38:12 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.33 2020/04/10 21:03:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.34 2020/04/14 07:38:12 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,7 +191,7 @@ xengnt_map_status(void)
 
 	KASSERT(mutex_owned(&grant_lock));
 
-	sz = gnt_status_frames * sizeof(u_long);
+	sz = gnt_status_frames * sizeof(uint64_t);
 	pages = kmem_alloc(sz, KM_NOSLEEP);
 	if (pages == NULL)
 		return ENOMEM;
