@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.79 2020/04/13 19:23:18 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.80 2020/04/14 12:47:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.79 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.80 2020/04/14 12:47:44 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -167,6 +167,11 @@ udf_done(void)
  */
 #define UDF_VERBOSE_SYSCTLOPT        1
 
+/*
+ * XXX the "24" below could be dynamic, thereby eliminating one
+ * more instance of the "number to vfs" mapping problem, but
+ * "24" is the order as taken from sys/mount.h
+ */
 SYSCTL_SETUP(udf_sysctl_setup, "udf sysctl")
 {
 	const struct sysctlnode *node;
@@ -197,11 +202,6 @@ udf_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&udf_vfsops);
 		if (error != 0)
 			break;
-		/*
-		 * XXX the "24" below could be dynamic, thereby eliminating one
-		 * more instance of the "number to vfs" mapping problem, but
-		 * "24" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&udf_vfsops);
