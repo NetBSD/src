@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.32 2020/04/12 15:36:18 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.33 2020/04/14 05:43:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.32 2020/04/12 15:36:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.33 2020/04/14 05:43:57 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -241,7 +241,7 @@ pmap_tlb_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 {
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "(ti=%#jx, pai=%#jx, pm=%#jx): asid %u",
-	    ti, (uintptr_t)pai, (uintptr_t)pm, pai->pai_asid);
+	    (uintptr_t)ti, (uintptr_t)pai, (uintptr_t)pm, pai->pai_asid);
 
 	/*
 	 * We must have an ASID but it must not be onproc (on a processor).
