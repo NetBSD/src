@@ -1,6 +1,6 @@
 #/bin/sh
 #
-#	$NetBSD: zfsroot.rc,v 1.4 2020/02/25 20:05:10 roy Exp $
+#	$NetBSD: zfsroot.rc,v 1.5 2020/04/14 12:14:59 roy Exp $
 
 # Assumption - boot.cfg loads this ramdisk.
 # Assumption - The needed kernel modules: solaris and zfs; are either on this
@@ -18,11 +18,6 @@ rroot=ROOT
 export HOME=/
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 022
-
-# FIXME XXX Sometimes zpool import gets SIGBUS
-# Ensure that we are in a writable directory to try and capture a coredump
-# Not that we actually get a coredump ....
-cd /tmp
 
 echo "Importing $rpool"
 /sbin/zpool import -f -N "$rpool"
