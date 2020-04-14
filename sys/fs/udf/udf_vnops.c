@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.110 2020/04/13 19:23:18 ad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.111 2020/04/14 11:45:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.110 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.111 2020/04/14 11:45:42 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1992,7 +1992,7 @@ udf_rmdir(void *v)
 	struct udf_mount *ump = dir_node->ump;
 	int error, isempty;
 
-	DPRINTF(NOTIMPL, ("udf_rmdir '%s' called\n", cnp->cn_nameptr));
+	DPRINTF(CALL, ("udf_rmdir '%s' called\n", cnp->cn_nameptr));
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == udf_node) {
