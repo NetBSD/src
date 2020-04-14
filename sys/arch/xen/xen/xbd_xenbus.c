@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.107 2020/04/13 20:09:13 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.108 2020/04/14 08:21:59 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.107 2020/04/13 20:09:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.108 2020/04/14 08:21:59 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -1049,6 +1049,12 @@ xbd_diskstart(device_t self, struct buf *bp)
 		    &xbdreq->req_gntref[seg]))) {
 			printf("%s: %s: xengnt_grant_access failed",
 			    device_xname(sc->sc_dksc.sc_dev), __func__);
+			if (seg > 0) {
+				for (; --seg >= 0; ) {
+					xengnt_revoke_access(
+					    xbdreq->req_gntref[seg]);
+				}
+			}
 			bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat,
 			    xbdreq->req_dmamap);
 			SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
