@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.108 2020/04/14 08:21:59 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.109 2020/04/14 09:27:28 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.108 2020/04/14 08:21:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.109 2020/04/14 09:27:28 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -176,6 +176,7 @@ static bool xbd_xenbus_resume(device_t, const pmf_qual_t *);
 
 static int  xbd_handler(void *);
 static int  xbd_diskstart(device_t, struct buf *);
+static void xbd_iosize(device_t, int *);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
@@ -231,6 +232,7 @@ static struct dkdriver xbddkdriver = {
 	.d_open = xbdopen,
 	.d_close = xbdclose,
 	.d_diskstart = xbd_diskstart,
+	.d_iosize = xbd_iosize,
 };
 
 static int
@@ -773,6 +775,17 @@ xbdminphys(struct buf *bp)
 		bp->b_bcount = XBD_MAX_XFER;
 	}
 	minphys(bp);
+}
+
+static void
+xbd_iosize(device_t dev, int *maxxfer)
+{
+	/*
+	 * Always restrict dumps to XBD_MAX_XFER to avoid indirect segments,
+	 * so that it uses as little memory as possible. 
+	 */
+	if (*maxxfer > XBD_MAX_XFER)
+		*maxxfer = XBD_MAX_XFER;
 }
 
 int
