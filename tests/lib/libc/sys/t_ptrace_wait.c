@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.170 2020/04/14 22:37:24 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.170 2020/04/14 22:37:24 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7579,6 +7579,7 @@ syscall_body(const char *op)
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
+	atf_tc_set_md_var(tc, "timeout", "15");				\
 	atf_tc_set_md_var(tc, "descr",					\
 	    "Verify that getpid(2) can be traced with PT_SYSCALL %s",	\
 	   #op );							\
