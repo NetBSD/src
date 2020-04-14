@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1239 2020/04/04 19:50:53 christos Exp $
+# $NetBSD: mi,v 1.1240 2020/04/14 03:16:26 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -476,7 +476,7 @@
 ./libexec/devpubd-run-hooks			base-sysutil-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
-./libexec/dhcpcd-hooks/02-dump			base-dhcpcd-root
+./libexec/dhcpcd-hooks/02-dump			base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/10-mtu			base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete      obsolete
