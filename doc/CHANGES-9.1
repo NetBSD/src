@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.34 2020/04/12 17:34:34 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.35 2020/04/14 17:30:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -898,3 +898,44 @@ doc/3RDPARTY					(apply patch)
 
 	Update to dhcpcd-8.1.8 which fixes a compile issue.
 	[roy, ticket #830]
+
+sys/dev/mii/miidevs				1.162-1.165, 1.167
+sys/dev/mii/brgphy.c				1.87
+sys/dev/mii/rdcphy.c				1.6, 1.8
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	- Add support Broadcom BCM54213PE.
+	- Add support some new RDC devices. From Andrius V.
+	- Rename RDC to xxRDC.
+	- Use xxVIA instead of VIA.
+	[msaitoh, ticket #831]
+
+sys/dev/ic/spdmem.c				1.32-1.35
+sys/dev/ic/spdmemvar.h				1.15,1.16
+
+	- Print DDR3's row and column correctly.
+	- Use fine timebase parameters for time calculation on DDR3. This
+	  change makes PC3-XXXX value more precisely on newer DDR3.
+	- Calculate DDR3's tRAS correctly.
+	[msaitoh, ticket #832]
+
+sys/arch/x86/include/specialreg.h		1.159-1.161
+sys/arch/x86/x86/procfs_machdep.c		1.35,1.36
+sys/arch/x86/x86/tsc.c				1.40
+usr.sbin/cpuctl/arch/i386.c			1.109,1.110
+
+	- Print Fast Short Rep Mov(fsrm), AVX512_VP2INTERSECT, SERIALIZE and
+	  TSXLDTRK.
+	- Rename CPUID Fn8000_0007 %edx bit 8 from "TSC" to "ITSC"
+	  (Invariant TSC) to avoid confusion.
+	- Print CPUID 0x80000007 %edx on both Intel and AMD.
+	- Remove ci_max_ext_cpuid from usr.sbin/cpuctl/arch/i386.c because it's
+	  the same as ci_cpuid_extlevel.
+	[msaitoh, ticket #833]
+
+sys/netinet6/nd6_rtr.c				1.148
+
+	PR kern/55091, PR bin/54997: fix default route selection.
+	[kim, ticket #834]
+
