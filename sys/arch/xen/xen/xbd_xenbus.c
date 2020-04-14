@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.112 2020/04/14 14:06:24 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.113 2020/04/14 15:16:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.112 2020/04/14 14:06:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.113 2020/04/14 15:16:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -1132,7 +1132,7 @@ xbd_map_align(struct xbd_xenbus_softc *sc, struct xbd_req *req)
 	}
 	sc->sc_unalign_free = false;
 
-	KASSERT(req->req_bp->b_bcount < MAXPHYS);
+	KASSERT(req->req_bp->b_bcount <= MAXPHYS);
 	req->req_data = (void *)sc->sc_unalign_buffer;
 	if ((req->req_bp->b_flags & B_READ) == 0)
 		memcpy(req->req_data, req->req_bp->b_data,
