@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.3 2020/04/12 19:53:37 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.4 2020/04/14 16:52:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.3 2020/04/12 19:53:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.4 2020/04/14 16:52:35 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -495,7 +495,6 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 }
 
 #if !defined(XENPVHVM)
-__strong_alias(spllower, xen_spllower);
 __strong_alias(x86_read_psl, xen_read_psl);
 __strong_alias(x86_write_psl, xen_write_psl);
 
