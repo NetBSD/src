@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.403 2020/04/13 00:27:16 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.404 2020/04/14 07:31:52 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.403 2020/04/13 00:27:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.404 2020/04/14 07:31:52 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2966,7 +2966,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		pmap_acquire_page_lock(md);
 #ifdef MULTIPROCESSOR
 		/*
-		 * Restart of the beginning of the list.
+		 * Restart at the beginning of the list.
 		 */
 		pvp = &SLIST_FIRST(&md->pvh_list);
 #endif
