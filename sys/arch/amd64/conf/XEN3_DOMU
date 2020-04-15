@@ -1,9 +1,11 @@
-# $NetBSD: XEN3_DOMU,v 1.90.6.1 2020/04/08 17:56:08 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.90.6.2 2020/04/15 16:04:06 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
 options		XENPV		# PV domU support
 options 	MULTIPROCESSOR
+
+options 	HZ=20
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -11,7 +13,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.90.6.1 $"
+#ident		"XEN3_DOMU-$Revision: 1.90.6.2 $"
 
 maxusers	32		# estimated number of users
 
