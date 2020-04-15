@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.35 2020/04/14 17:30:43 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.36 2020/04/15 14:16:27 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -938,4 +938,9 @@ sys/netinet6/nd6_rtr.c				1.148
 
 	PR kern/55091, PR bin/54997: fix default route selection.
 	[kim, ticket #834]
+
+sys/dev/wsfb/genfb.c				1.72
+
+	Get genfb's address offset correctly when the value >= 4G.
+	[msaitoh, ticket #835]
 
