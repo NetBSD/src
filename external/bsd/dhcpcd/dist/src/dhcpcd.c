@@ -2207,7 +2207,8 @@ printpidfile:
 		goto run_loop;
 #endif
 
-	if (control_start(&ctx,
+	if (!(ctx.options & DHCPCD_TEST) &&
+	    control_start(&ctx,
 	    ctx.options & DHCPCD_MASTER ? NULL : argv[optind]) == -1)
 	{
 		logerr("%s: control_start", __func__);
