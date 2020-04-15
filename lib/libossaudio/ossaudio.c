@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.38 2019/11/03 11:13:45 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.39 2020/04/15 14:54:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.38 2019/11/03 11:13:45 isaki Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.39 2020/04/15 14:54:34 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -95,7 +95,7 @@ static int
 audio_ioctl(int fd, unsigned long com, void *argp)
 {
 
-	struct audio_info tmpinfo;
+	struct audio_info tmpinfo, hwfmt;
 	struct audio_offset tmpoffs;
 	struct audio_buf_info bufinfo;
 	struct count_info cntinfo;
@@ -134,7 +134,35 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/*
+		 * The default NetBSD behavior if an unsupported sample rate
+		 * is set is to return an error code and keep the rate at the
+		 * default of 8000 Hz.
+		 * 
+		 * However, OSS specifies that a sample rate supported by the
+		 * hardware is returned if the exact rate could not be set.
+		 * 
+		 * So, if the chosen sample rate is invalid, set and return
+		 * the current hardware rate.
+		 */
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			/* Don't care that SETINFO failed the first time... */
+			errno = 0;
+			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
+			if (retval < 0)
+				return retval;
+			retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+			tmpinfo.play.sample_rate =
+			tmpinfo.record.sample_rate =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.sample_rate :
+			    hwfmt.play.sample_rate;
+			retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+		}
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);

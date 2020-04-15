@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.78 2019/11/03 11:13:46 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.79 2020/04/15 14:54:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.78 2019/11/03 11:13:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.79 2020/04/15 14:54:34 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -175,7 +175,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 	} */
 	file_t *fp;
 	u_long com;
-	struct audio_info tmpinfo;
+	struct audio_info tmpinfo, hwfmt;
 	struct audio_offset tmpoffs;
 	struct oss_audio_buf_info bufinfo;
 	struct oss_count_info cntinfo;
@@ -230,11 +230,41 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = idat;
 		DPRINTF(("%s: SNDCTL_DSP_SPEED > %d\n", __func__, idat));
-		error = ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
-		if (error) {
-			DPRINTF(("%s: SNDCTL_DSP_SPEED %d = %d\n",
-			     __func__, idat, error));
-			goto out;
+		/*
+		 * The default NetBSD behavior if an unsupported sample rate
+		 * is set is to return an error code and keep the rate at the
+		 * default of 8000 Hz.
+		 *
+		 * However, the OSS expectation is a sample rate supported by
+		 * the hardware is returned if the exact rate could not be set.
+		 *
+		 * So, if the chosen sample rate is invalid, set and return
+		 * the current hardware rate.
+		 */
+		if (ioctlf(fp, AUDIO_SETINFO, &tmpinfo) != 0) {
+			error = ioctlf(fp, AUDIO_GETFORMAT, &hwfmt);
+			if (error) {
+				DPRINTF(("%s: AUDIO_GETFORMAT %d\n",
+				     __func__, error));
+				goto out;
+			}
+			error = ioctlf(fp, AUDIO_GETINFO, &tmpinfo);
+			if (error) {
+				DPRINTF(("%s: AUDIO_GETINFO %d\n",
+				     __func__, error));
+				goto out;
+			}
+			tmpinfo.play.sample_rate =
+			tmpinfo.record.sample_rate =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.sample_rate :
+			    hwfmt.play.sample_rate;
+			error = ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
+			if (error) {
+				DPRINTF(("%s: SNDCTL_DSP_SPEED %d = %d\n",
+				     __func__, idat, error));
+				goto out;
+			}
 		}
 		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_RATE:
