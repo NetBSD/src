@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.80 2020/04/15 15:25:33 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.81 2020/04/15 16:39:06 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.80 2020/04/15 15:25:33 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.81 2020/04/15 16:39:06 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,6 +68,7 @@ static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, in
 static int enum_to_ord(struct audiodevinfo *di, int enm);
 static int enum_to_mask(struct audiodevinfo *di, int enm);
 
+static void setchannels(file_t *, int, int);
 static void setblocksize(file_t *, struct audio_info *);
 
 #ifdef AUDIO_DEBUG
@@ -487,15 +488,13 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		tmpinfo.play.channels =
-		tmpinfo.record.channels = idat;
-		DPRINTF(("%s: SNDCTL_DSP_CHANNELS > %d\n", __func__, idat));
-		error = ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
+		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
-			DPRINTF(("%s: AUDIO_SETINFO %d\n",
+			DPRINTF(("%s: AUDIO_GETBUFINFO %d\n",
 			     __func__, error));
 			goto out;
 		}
+		setchannels(fp, tmpinfo.mode, idat);
 		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_CHANNELS:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
@@ -1529,6 +1528,54 @@ oss_ioctl_sequencer(struct lwp *l, const struct oss_sys_ioctl_args *uap, registe
  out:
 	fd_putfile(SCARG(uap, fd));
 	return error;
+}
+
+/*
+ * When AUDIO_SETINFO fails to set a channel count, the application's chosen
+ * number is out of range of what the kernel allows.
+ *
+ * When this happens, we use the current hardware settings. This is just in
+ * case an application is abusing SNDCTL_DSP_CHANNELS - OSSv4 always sets and
+ * returns a reasonable value, even if it wasn't what the user requested.
+ *
+ * XXX: If a device is opened for both playback and recording, and supports
+ * fewer channels for recording than playback, applications that do both will
+ * behave very strangely. OSS doesn't allow for reporting separate channel
+ * counts for recording and playback. This could be worked around by always
+ * mixing recorded data up to the same number of channels as is being used
+ * for playback.
+ */
+static void
+setchannels(file_t *fp, int mode, int nchannels)
+{
+	struct audio_info tmpinfo, hwfmt;
+	int (*ioctlf)(file_t *, u_long, void *);
+
+	ioctlf = fp->f_ops->fo_ioctl;
+
+	if (ioctlf(fp, AUDIO_GETFORMAT, &hwfmt) < 0) {
+		hwfmt.record.channels = hwfmt.play.channels = 2;
+	}
+
+	if (mode & AUMODE_PLAY) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.play.channels = nchannels;
+		if (ioctlf(fp, AUDIO_SETINFO, &tmpinfo) < 0) {
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.play.channels = hwfmt.play.channels;
+			(void)ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
+
+	if (mode & AUMODE_RECORD) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.record.channels = nchannels;
+		if (ioctlf(fp, AUDIO_SETINFO, &tmpinfo) < 0) {
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.record.channels = hwfmt.record.channels;
+			(void)ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
 }
 
 /*
