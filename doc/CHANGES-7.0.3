@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.160 2020/02/12 20:24:07 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.161 2020/04/15 14:59:54 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5945,4 +5945,9 @@ external/bsd/ppp/dist/pppd/eap.c		1.5
 
 	pppd: Fix bounds check in EAP code
 	[christos, ticket #1722]
+
+sys/netinet6/nd6_rtr.c				1.148 (via patch)
+
+	PR kern/55091 and PR bin/54997: fix default route selection.
+	[kim, ticket #1727]
 
