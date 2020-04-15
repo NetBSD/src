@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.40 2020/04/15 15:25:33 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.40 2020/04/15 15:25:33 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: ossaudio.c,v 1.40 2020/04/15 15:25:33 nia Exp $");
 
 static struct audiodevinfo *getdevinfo(int);
 
+static void setchannels(int, int, int);
 static void setblocksize(int, struct audio_info *);
 
 static int audio_ioctl(int, unsigned long, void *);
@@ -350,12 +351,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_CHANNELS:
-		AUDIO_INITINFO(&tmpinfo);
-		tmpinfo.play.channels = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		AUDIO_INITINFO(&tmpinfo);
-		tmpinfo.record.channels = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		setchannels(fd, tmpinfo.mode, INTARG);
 		/* FALLTHRU */
 	case SOUND_PCM_READ_CHANNELS:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -1046,6 +1045,54 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	}
 	INTARG = (int)idat;
 	return 0;
+}
+
+/*
+ * When AUDIO_SETINFO fails to set a channel count, the application's chosen
+ * number is out of range of what the kernel allows.
+ *
+ * When this happens, we use the current hardware settings. This is just in
+ * case an application is abusing SNDCTL_DSP_CHANNELS - OSSv4 always sets and
+ * returns a reasonable value, even if it wasn't what the user requested.
+ *
+ * XXX: If a device is opened for both playback and recording, and supports
+ * fewer channels for recording than playback, applications that do both will
+ * behave very strangely. OSS doesn't allow for reporting separate channel
+ * counts for recording and playback. This could be worked around by always
+ * mixing recorded data up to the same number of channels as is being used
+ * for playback.
+ */
+static void
+setchannels(int fd, int mode, int nchannels)
+{
+	struct audio_info tmpinfo, hwfmt;
+
+	if (ioctl(fd, AUDIO_GETFORMAT, &hwfmt) < 0) {
+		errno = 0;
+		hwfmt.record.channels = hwfmt.play.channels = 2;
+	}
+
+	if (mode & AUMODE_PLAY) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.play.channels = nchannels;
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			errno = 0;
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.play.channels = hwfmt.play.channels;
+			(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
+
+	if (mode & AUMODE_RECORD) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.record.channels = nchannels;
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			errno = 0;
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.record.channels = hwfmt.record.channels;
+			(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
 }
 
 /*
