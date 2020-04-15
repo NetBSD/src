@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.1 2020/04/14 15:50:28 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.2 2020/04/15 14:46:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -7,5 +7,60 @@ external/gpl2/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 8.2_STABLE.
-	[snj]
+	[martin]
+
+sys/dev/ic/spdmem.c				1.31-1.35
+sys/dev/ic/spdmemvar.h				1.15,1.16
+
+	- Print DDR3's row and column correctly.  
+	- Use fine timebase parameters for time calculation on DDR3. This
+	  change makes PC3-XXXX value more precisely on newer DDR3.
+	- Calculate DDR3's tRAS correctly.
+	- Fix spelling of symmetric. 
+	[msaitoh, ticket #1528]
+
+sys/dev/mii/miidevs				1.154, 1.162-1.167
+sys/dev/mii/miidevs.h				regen 
+sys/dev/mii/miidevs_data.h			regen
+sys/dev/mii/atphy.c				1.28 via patch
+sys/dev/mii/brgphy.c				1.87 via patch
+sys/dev/mii/etphy.c				1.5, 1.6 via patch
+sys/dev/mii/rdcphy.c				1.6, 1.8 via patch
+
+	- Add support Broadcom BCM54213PE and some new RDC devices.
+	- Rename RDC to xxRDC.
+	- Use xxVIA instead of VIA.
+	- etphy(4):
+	  - Rename ET1011 to ET1011C and add ET1011 support.
+	  - Use mii_phy_flowstatus() to reflect flow status from negotiated
+	    result.
+	- Use static.
+	- KNF.
+	[msaitoh, ticket #1529]
+
+sys/arch/x86/x86/procfs_machdep.c		1.33-1.36  
+sys/arch/x86/x86/tsc.c				1.40
+sys/arch/x86/x86/specialreg.h			1.159-1.161
+usr.sbin/cpuctl/arch/i386.c			1.109-1.110 via patch
+
+	- Print avx512ifma, cqm_mbm_total, cqm_mbm_local, waitpkg, rdpru,
+	  Fast Short Rep Mov(fsrm), AVX512_VP2INTERSECT, SERIALIZE and
+	  TSXLDTRK.
+	- Rename CPUID Fn8000_0007 %edx bit 8 from "TSC" to "ITSC"
+	  (Invariant TSC) to avoid confusion.
+	- Print CPUID 0x80000007 %edx on both Intel and AMD.
+	- Remove ci_max_ext_cpuid from usr.sbin/cpuctl/arch/i386.c because it's 
+	  the same as ci_cpuid_extlevel.
+	- Use unsigned to avoid undefined behavior in procfs_getonefeatreg().
+	[msaitoh, ticket #1529]
+
+sys/netinet6/nd6_rtr.c				1.148
+
+	PR kern/55091 and PR bin/54997:	fix default route selection.
+	[kim, ticket #1531]
+
+sys/dev/wsfb/genfb.c				1.72
+
+	Get genfb's address offset correctly when the value >= 4G.
+	[msaitoh, ticket #1532]
 
