@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.39 2020/04/15 14:54:34 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.40 2020/04/15 15:25:33 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.39 2020/04/15 14:54:34 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.40 2020/04/15 15:25:33 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -238,24 +238,19 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
+		/*
+		 * XXX: When the kernel supports 24-bit LPCM by default,
+		 * the 24-bit formats should be handled properly instead
+		 * of falling back to 32 bits.
+		 */
 		case AFMT_S24_LE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 24;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			break;
-		case AFMT_S24_BE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 24;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			break;
 		case AFMT_S32_LE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 32;
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
 			break;
+		case AFMT_S24_BE:
 		case AFMT_S32_BE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 32;
@@ -269,9 +264,36 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
 			break;
 		default:
-			return EINVAL;
+			/*
+			 * OSSv4 specifies that if an invalid format is chosen
+			 * by an application then a sensible format supported
+			 * by the hardware is returned.
+			 *
+			 * In this case, we pick the current hardware format.
+			 */
+			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
+			if (retval < 0)
+				return retval;
+			retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.encoding : hwfmt.play.encoding;
+			tmpinfo.play.precision =
+			tmpinfo.record.precision =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.precision : hwfmt.play.precision ;
+			break;
 		}
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/*
+		 * In the post-kernel-mixer world, assume that any error means
+		 * it's fatal rather than an unsupported format being selected.
+		 */
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
 		/* FALLTHRU */
 	case SOUND_PCM_READ_BITS:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
