@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.93.2.3 2015/05/02 18:23:25 martin Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.93.2.4 2020/04/15 14:52:28 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.3 2015/05/02 18:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.4 2020/04/15 14:52:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,6 +472,10 @@ defrouter_addreq(struct nd_defrouter *new)
 	}
 	if (error == 0)
 		new->installed = 1;
+	else
+		log(LOG_ERR, "defrouter_addreq: "
+		    "error %d adding default router %s on %s\n",
+		    error, ip6_sprintf(&new->rtaddr), new->ifp->if_xname);
 	splx(s);
 	return;
 }
@@ -559,6 +563,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 		struct sockaddr sa;
 	} def, mask, gw;
 	struct rtentry *oldrt = NULL;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (dr == NULL)
@@ -577,7 +582,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	gw.sin6.sin6_scope_id = 0;	/* XXX */
 #endif
 
-	rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
+	error = rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
@@ -591,7 +596,12 @@ defrouter_delreq(struct nd_defrouter *dr)
 		}
 	}
 
-	dr->installed = 0;
+	if (error == 0)
+		dr->installed = 0;
+	else
+		log(LOG_ERR, "defrouter_delreq: "
+		    "error %d deleting default router %s on %s\n",
+		    error, ip6_sprintf(&dr->rtaddr), dr->ifp->if_xname);
 }
 
 /*
@@ -672,8 +682,16 @@ defrouter_select(void)
 	 */
 	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
 	     dr = TAILQ_NEXT(dr, dr_entry)) {
+		if (dr->installed && !installed_dr)
+			installed_dr = dr;
+		else if (dr->installed && installed_dr) {
+			/* this should not happen.  warn for diagnosis. */
+			log(LOG_ERR, "defrouter_select: more than one router"
+			    " is installed\n");
+		}
+
 		ndi = ND_IFINFO(dr->ifp);
-		if (nd6_accepts_rtadv(ndi))
+		if (!nd6_accepts_rtadv(ndi))
 			continue;
 
 		if (selected_dr == NULL &&
@@ -681,14 +699,6 @@ defrouter_select(void)
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) != NULL &&
 		    ND6_IS_LLINFO_PROBREACH(ln)) {
 			selected_dr = dr;
-		}
-
-		if (dr->installed && !installed_dr)
-			installed_dr = dr;
-		else if (dr->installed && installed_dr) {
-			/* this should not happen.  warn for diagnosis. */
-			log(LOG_ERR, "defrouter_select: more than one router"
-			    " is installed\n");
 		}
 	}
 	/*
