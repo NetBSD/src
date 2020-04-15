@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.39 2020/04/13 20:44:39 wiz Exp $
+.\"	$NetBSD: rtsold.8,v 1.40 2020/04/15 20:31:58 kim Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,10 +46,23 @@ have been removed from
 as their functionality is now included in
 .Xr dhcpcd 8 .
 .Pp
-For example to send a routing solicitation message and print information
-about it without changing the actual routing table:
+For example to send a router solicitation message and print information
+about the response without changing the actual routing table:
 .Pp
 .Dl dhcpcd -dB6T --nodhcp6 < Ns Ar interface Ns \^>
+.Pp
+To quietly send a router solicitation message:
+.Pp
+.Dl dhcpcd -q6T --nodhcp6 < Ns Ar interface Ns \^>
+.Pp
+The
+.Xr ifconfig.if 5
+network interface configuration files and variables can also use an
+.Dq rtsol
+keyword to invoke
+.Xr dhcpcd 8
+to send a router solicitation message, without running it as daemon.
 .\"
 .Sh SEE ALSO
-.Xr dhcpcd 8
+.Xr dhcpcd 8 ,
+.Xr ifconfig.if 5
