@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.267 2020/04/13 00:27:17 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.268 2020/04/15 17:16:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.267 2020/04/13 00:27:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.268 2020/04/15 17:16:22 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -87,6 +87,10 @@ static struct pool phpool[PHPOOL_MAX];
 #define POOL_REDZONE
 #endif
 
+#if defined(POOL_QUARANTINE)
+#define POOL_NOCACHE
+#endif
+
 #ifdef POOL_REDZONE
 # ifdef KASAN
 #  define POOL_REDZONE_SIZE 8
@@ -121,12 +125,16 @@ static void pool_quarantine_init(struct pool *);
 static void pool_quarantine_flush(struct pool *);
 static bool pool_put_quarantine(struct pool *, void *,
     struct pool_pagelist *);
-static bool pool_cache_put_quarantine(pool_cache_t, void *, paddr_t);
 #else
 #define pool_quarantine_init(a)			__nothing
 #define pool_quarantine_flush(a)		__nothing
 #define pool_put_quarantine(a, b, c)		false
-#define pool_cache_put_quarantine(a, b, c)	false
+#endif
+
+#ifdef POOL_NOCACHE
+static bool pool_cache_put_nocache(pool_cache_t, void *);
+#else
+#define pool_cache_put_nocache(a, b)		false
 #endif
 
 #define NO_CTOR	__FPTRCAST(int (*)(void *, void *, int), nullop)
@@ -2705,7 +2713,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		pc_phinpage_check(pc, object);
 	}
 
-	if (pool_cache_put_quarantine(pc, object, pa)) {
+	if (pool_cache_put_nocache(pc, object)) {
 		return;
 	}
 
@@ -2961,9 +2969,11 @@ pool_put_quarantine(struct pool *pp, void *v, struct pool_pagelist *pq)
 
 	return true;
 }
+#endif
 
+#ifdef POOL_NOCACHE
 static bool
-pool_cache_put_quarantine(pool_cache_t pc, void *p, paddr_t pa)
+pool_cache_put_nocache(pool_cache_t pc, void *p)
 {
 	pool_cache_destruct_object(pc, p);
 	return true;
