@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50.4.5 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.6 2020/04/15 16:04:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.5 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.6 2020/04/15 16:04:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -67,6 +67,7 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
+#ifndef XENPV
 /*
  * void spllower(int s);
  *
@@ -110,8 +111,10 @@ ENTRY(spllower)
 	.align	32
 LABEL(spllower_end)
 END(spllower)
+#else  /* XENPV */
+STRONG_ALIAS(spllower, cx8_spllower)
+#endif /* !XENPV */
 
-#ifndef XENPV
 /*
  * void	cx8_spllower(int s);
  *
@@ -150,8 +153,6 @@ LABEL(cx8_spllower_patch)
 	.align	32
 LABEL(cx8_spllower_end)
 END(cx8_spllower)
-
-#endif /* XENPV */
 
 /*
  * void Xspllower(int s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.6 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.7 2020/04/15 16:04:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -227,50 +227,12 @@ IDTVEC_END(resume_preempt)
 /*
  * void spllower(int s);
  *
- * Must be the same size as cx8_spllower().  This must use
- * pushf/cli/popf as it is used early in boot where interrupts
- * are disabled via eflags/IE.
- */
-ENTRY(spllower)
-	cmpl	CPUVAR(ILEVEL),%edi
-	jae	1f
-	movl	CPUVAR(IUNMASK)(,%rdi,4),%edx
-	PUSHF(ax)
-	CLI(ax)
-	testl	CPUVAR(IPENDING),%edx
-	jnz	2f
-	movl	%edi,CPUVAR(ILEVEL)
-	POPF	/* clobbers %rdi */
-1:
-	ret
-	ret
-2:
-#ifdef XENPV
-	/*
-	 * no need to call stipending, we're going to CLI again
-	 * just drop the saved value on stack
-	 */
-	addq	$8,%rsp
-#else
-	popf
-#endif
-	jmp	_C_LABEL(Xspllower)
-3:
-	.space 16
-	.align	16
-END(spllower)
-LABEL(spllower_end)
-
-#ifndef XENPV
-/*
- * void	cx8_spllower(int s);
- *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
  * edx : eax = old level / old ipending
  * ecx : ebx = new level / old ipending
  */
-ENTRY(cx8_spllower)
+ENTRY(spllower)
 	movl	CPUVAR(ILEVEL),%edx
 	movq	%rbx,%r8
 	cmpl	%edx,%edi			/* new level is lower? */
@@ -292,15 +254,11 @@ ENTRY(cx8_spllower)
 	ret
 2:
 	movq	%r8,%rbx
-	.type	_C_LABEL(cx8_spllower_patch), @function
-LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 
 	.align	16
-END(cx8_spllower_patch)
-END(cx8_spllower)
-LABEL(cx8_spllower_end)
-#endif /* !XENPV */
+END(spllower)
+LABEL(spllower_end)
 
 /*
  * void Xspllower(int s);
