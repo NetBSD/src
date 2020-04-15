@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2020/04/15 09:41:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2020/04/15 15:22:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2020/04/15 09:41:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2020/04/15 15:22:37 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -537,13 +537,13 @@ pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 		    (pte & PTE_PROT(TLB_WRITE))) {
 
 			DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-                            ("%s: aliased writable mapping 0x%x:0x%lx\n",
-                            __func__, pve->pv_pmap->pm_space, pve->pv_va));
+			    ("%s: aliased writable mapping 0x%x:0x%lx\n",
+			    __func__, pve->pv_pmap->pm_space, pve->pv_va));
 			ret++;
 		}
 	}
 
-        return (ret);
+	return (ret);
 }
 
 /*
@@ -1295,7 +1295,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			}
 			panic("%s: no pv entries available", __func__);
 		}
-                pte |= PTE_PROT(pmap_prot(pmap, prot));
+		pte |= PTE_PROT(pmap_prot(pmap, prot));
 		if (pmap_check_alias(pg, va, pte))
 			pmap_page_remove(pg);
 		pmap_pv_enter(pg, pve, pmap, va, ptp, 0);
