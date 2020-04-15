@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.79 2020/04/15 14:54:34 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.80 2020/04/15 15:25:33 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.79 2020/04/15 14:54:34 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.80 2020/04/15 15:25:33 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -395,10 +395,19 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
 			break;
 		default:
-			DPRINTF(("%s: SNDCTL_DSP_SETFMT bad fmt %d\n",
-			     __func__, idat));
-			error = EINVAL;
-			goto out;
+			/*
+			 * OSSv4 specifies that if an invalid format is chosen
+			 * by an application then a sensible format supported
+			 * by the hardware is returned.
+			 *
+			 * In this case, we pick S16LE since it's reasonably
+			 * assumed to be supported by applications.
+			 */
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			break;
 		}
 		DPRINTF(("%s: SNDCTL_DSP_SETFMT > 0x%x\n",
 		    __func__, idat));
