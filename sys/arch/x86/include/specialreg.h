@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.18 2020/01/31 10:53:29 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.19 2020/04/15 14:25:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -428,9 +428,12 @@
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOV */
+#define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8)
 #define CPUID_SEF_MD_CLEAR	__BIT(10)
 #define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
+#define CPUID_SEF_SERIALIZE	__BIT(14)
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
+#define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
 #define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
@@ -442,8 +445,9 @@
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 	"\5" "FSREP_MOV"						\
-				"\13" "MD_CLEAR"			\
-			"\16" "TSX_FORCE_ABORT"		"\20" "HYBRID"	\
+	"\11" "VP2INTERSECT"	"\13" "MD_CLEAR"			\
+			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	\
+	"\21" "TSXLDTRK"						\
 	"\25" "CET_IBT"							\
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
@@ -646,8 +650,10 @@
 	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
 
 /*
- * AMD Advanced Power Management
+ * Advanced Power Management
  * CPUID Fn8000_0007 %edx
+ *
+ * Only ITSC is for both Intel and AMD. Others are only for AMD.
  */
 #define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
 #define CPUID_APM_FID	0x00000002	/* Frequency ID control */
@@ -657,7 +663,7 @@
 #define CPUID_APM_STC	0x00000020	/* Software thermal control (STC) */
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
-#define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+#define CPUID_APM_ITSC	0x00000100	/* invariant TSC */
 #define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 #define CPUID_APM_EFF	0x00000400	/* Effective Frequency (read-only) */
 #define CPUID_APM_PROCFI 0x00000800	/* Proc Feedback Interface */
@@ -668,7 +674,7 @@
 #define CPUID_APM_FLAGS		"\20"					      \
 	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP"	      \
 	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP"	      \
-	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
+	"\11" "ITSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
 	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
 /*
