@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.61 2017/06/01 02:45:12 chs Exp $ */
+/*	$NetBSD: genfb.c,v 1.61.2.1 2020/04/15 14:44:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.61 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.61.2.1 2020/04/15 14:44:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
 	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, br_cb, fbaddr;
-	uint32_t fboffset;
+	uint64_t fboffset;
 	bool console;
 
 	dict = device_properties(sc->sc_dev);
@@ -117,13 +117,12 @@ genfb_init(struct genfb_softc *sc)
 		return;
 	}
 
-	/* XXX should be a 64bit value */
-	if (!prop_dictionary_get_uint32(dict, "address", &fboffset)) {
+	if (!prop_dictionary_get_uint64(dict, "address", &fboffset)) {
 		GPRINTF("no address property\n");
 		return;
 	}
 
-	sc->sc_fboffset = fboffset;
+	sc->sc_fboffset = (bus_addr_t)fboffset;
 
 	sc->sc_fbaddr = NULL;
 	if (prop_dictionary_get_uint64(dict, "virtual_address", &fbaddr)) {
