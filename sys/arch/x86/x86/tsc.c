@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.36.22.1 2020/04/15 14:25:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.36.22.1 2020/04/15 14:25:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ tsc_is_invariant(void)
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
-			invariant = (descs[3] & CPUID_APM_TSC) != 0;
+			invariant = (descs[3] & CPUID_APM_ITSC) != 0;
 		}
 	}
 

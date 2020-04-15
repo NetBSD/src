@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.9 2020/01/31 10:53:29 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.10 2020/04/15 14:25:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.9 2020/01/31 10:53:29 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.10 2020/04/15 14:25:09 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2212,25 +2212,18 @@ identifycpu(int fd, const char *cpuname)
 		    cpuname, descs[0]);
 	}
 
-	if (cpu_vendor == CPUVENDOR_AMD) {
-		uint32_t ci_max_ext_cpuid;
-
-		x86_cpuid(0x80000000, descs);
-		if (descs[0] >= 0x80000000)
-			ci_max_ext_cpuid = descs[0];
-		else
-			ci_max_ext_cpuid = 0;
-
-		if (ci_max_ext_cpuid >= 0x80000007)
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+		if (ci->ci_cpuid_extlevel >= 0x80000007)
 			powernow_probe(ci);
 
-		if (ci_max_ext_cpuid >= 0x80000008) {
+	if (cpu_vendor == CPUVENDOR_AMD) {
+		if (ci->ci_cpuid_extlevel >= 0x80000008) {
 			x86_cpuid(0x80000008, descs);
 			print_bits(cpuname, "AMD Extended features",
 			    CPUID_CAPEX_FLAGS, descs[1]);
 		}
 
-		if ((ci_max_ext_cpuid >= 0x8000000a)
+		if ((ci->ci_cpuid_extlevel >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
@@ -2240,7 +2233,7 @@ identifycpu(int fd, const char *cpuname)
 			print_bits(cpuname, "SVM features",
 			    CPUID_AMD_SVM_FLAGS, descs[3]);
 		}
-		if (ci_max_ext_cpuid >= 0x8000001f) {
+		if (ci->ci_cpuid_extlevel >= 0x8000001f) {
 			x86_cpuid(0x8000001f, descs);
 			print_bits(cpuname, "Encrypted Memory features",
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
@@ -2500,8 +2493,7 @@ powernow_probe(struct cpu_info *ci)
 	x86_cpuid(0x80000007, regs);
 
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
-	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
-	    buf);
+	aprint_normal_dev(ci->ci_dev, "Power Management features: %s\n", buf);
 }
 
 int
