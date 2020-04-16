@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.2 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.3 2020/04/16 17:50:52 bouyer Exp $	*/
 
 /*
  *
@@ -54,11 +54,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.2 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.3 2020/04/16 17:50:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -215,7 +216,9 @@ evt_do_hypervisor_callback(unsigned int port, unsigned int l1i,
 {
 	KASSERT(args != NULL);
 
+#ifdef DOM0OPS
 	struct cpu_info *ci = curcpu();
+#endif
 	struct intrframe *regs = args;
 
 #ifdef PORT_DEBUG
@@ -223,9 +226,8 @@ evt_do_hypervisor_callback(unsigned int port, unsigned int l1i,
 		printf("do_hypervisor_callback event %d\n", port);
 #endif
 	if (evtsource[port]) {
-		ci->ci_idepth++;
+		KASSERT(cpu_intr_p());
 		evtchn_do_event(port, regs);
-		ci->ci_idepth--;
 	}
 #ifdef DOM0OPS
 	else  {
@@ -233,9 +235,8 @@ evt_do_hypervisor_callback(unsigned int port, unsigned int l1i,
 			/* fast path */
 			int oipl = ci->ci_ilevel;
 			ci->ci_ilevel = IPL_HIGH;
-			ci->ci_idepth++;			
+			KASSERT(cpu_intr_p());
 			xenevt_event(port);
-			ci->ci_idepth--;
 			ci->ci_ilevel = oipl;
 		} else {
 			/* set pending event */

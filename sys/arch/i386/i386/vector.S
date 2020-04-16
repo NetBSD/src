@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85.6.5 2020/04/16 08:46:34 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.85.6.6 2020/04/16 17:50:52 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.5 2020/04/16 08:46:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.6 2020/04/16 17:50:52 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1013,11 +1013,12 @@ IDTVEC(hypervisor_pvhvm_callback)
 	pushl	$T_ASTFLT
 	INTRENTRY
 	pushl	CPUVAR(ILEVEL)
-	push	%esp
-	call	do_hypervisor_callback
-	add	$4,%esp
 	IDEPTH_INCR
-	CLI(%eax)
+	/* IDEPTH_INCR puts %esp on stack; we use it as argument to
+	 * do_hypervisor_callback. But don't restore the stack after,
+	 * Xdoreti needs it too.
+	 */
+	call	do_hypervisor_callback
 	jmp	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
