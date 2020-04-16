@@ -1,4 +1,4 @@
-.\" $NetBSD: imcsmb.4,v 1.8 2020/04/16 18:51:47 pgoyette Exp $
+.\" $NetBSD: imcsmb.4,v 1.9 2020/04/16 18:56:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,9 +61,9 @@
 .Nm imcsmb
 .Nd Intel integrated Memory Controller (iMC) SMBus controller driver
 .Sh SYNOPSIS
-.Cd imc* at pci? dev? func?
-.Cd imcsmb* at imc?
-.Cd iic* at i2cbus?
+.Cd "imc* at pci? dev ? func ?"
+.Cd "imcsmb* at imc?"
+.Cd "iic* at i2cbus?"
 .Pp
 Alternatively, to load the driver as a module at boot time, place the following
 line in
