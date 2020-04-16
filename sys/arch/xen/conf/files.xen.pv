@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen.pv,v 1.1.2.1 2020/04/16 08:46:35 bouyer Exp $
+#	$NetBSD: files.xen.pv,v 1.1.2.2 2020/04/16 19:23:50 bouyer Exp $
 
 file	arch/xen/x86/autoconf.c		xenpv
 file	arch/xen/x86/x86_xpmap.c	xenpv
@@ -6,7 +6,6 @@ file	arch/xen/x86/xen_pmap.c		xenpv
 file	arch/xen/x86/xenfunc.c		xenpv
 file	arch/xen/xen/xen_acpi_machdep.c	acpi & xenpv
 
-file	arch/xen/xen/clock.c		xenpv
 file	arch/xen/x86/xen_bus_dma.c	machdep & xenpv
 file	arch/xen/x86/consinit.c		machdep & xenpv
 file	arch/xen/x86/pintr.c		machdep & dom0ops & xenpv
