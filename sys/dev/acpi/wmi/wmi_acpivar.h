@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpivar.h,v 1.6 2020/04/16 21:56:42 rin Exp $	*/
+/*	$NetBSD: wmi_acpivar.h,v 1.7 2020/04/16 23:29:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -29,6 +29,9 @@
 
 #ifndef _SYS_DEV_ACPI_WMI_WMI_ACPIVAR_H
 #define _SYS_DEV_ACPI_WMI_WMI_ACPIVAR_H
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.7 2020/04/16 23:29:52 rin Exp $");
 
 ACPI_STATUS	acpi_wmi_event_register(device_t, ACPI_NOTIFY_HANDLER);
 ACPI_STATUS	acpi_wmi_event_deregister(device_t);

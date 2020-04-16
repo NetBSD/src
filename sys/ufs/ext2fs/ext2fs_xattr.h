@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.h,v 1.3 2020/04/16 21:56:43 rin Exp $	*/
+/*	$NetBSD: ext2fs_xattr.h,v 1.4 2020/04/16 23:29:53 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _UFS_EXT2FS_EXT2FS_XATTR_H_
 #define _UFS_EXT2FS_EXT2FS_XATTR_H_
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.h,v 1.4 2020/04/16 23:29:53 rin Exp $");
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlvar.h,v 1.10 2020/04/16 21:56:43 rin Exp $	*/
+/*	$NetBSD: rlvar.h,v 1.11 2020/04/16 23:29:53 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -28,6 +28,9 @@
  * RL11/RLV11/RLV12 disk controller driver and
  * RL01/RL02 disk device driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.11 2020/04/16 23:29:53 rin Exp $");
 
 struct rlc_softc {
 	device_t sc_dev;
