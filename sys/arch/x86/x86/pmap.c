@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.381 2020/04/05 00:21:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.381.2.1 2020/04/16 09:45:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381 2020/04/05 00:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381.2.1 2020/04/16 09:45:57 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3001,7 +3001,7 @@ static void
 pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
     vaddr_t startva, vaddr_t blkendva)
 {
-#ifndef XEN
+#ifndef XENPV
 	struct pv_entry *pve;
 	struct vm_page *pg;
 	struct pmap_page *pp;
@@ -3111,13 +3111,13 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #ifdef DIAGNOSTIC
 	rb_tree_init(tree, &pmap_rbtree_ops);
 #endif
-#else	/* !XEN */
+#else	/* !XENPV */
 	/*
 	 * XXXAD For XEN, it's not clear to me that we can do this, because
 	 * I guess the hypervisor keeps track of PTEs too.
 	 */
 	pmap_remove_ptes(pmap, ptp, (vaddr_t)pte, startva, blkendva);
-#endif	/* !XEN */
+#endif	/* !XENPV */
 }
 
 /*
@@ -5517,7 +5517,7 @@ x86_mmap_flags(paddr_t mdpgno)
 	return pflag;
 }
 
-#if defined(__HAVE_DIRECT_MAP) && defined(__x86_64__) && !defined(XEN)
+#if defined(__HAVE_DIRECT_MAP) && defined(__x86_64__) && !defined(XENPV)
 
 /*
  * -----------------------------------------------------------------------------
@@ -6384,4 +6384,4 @@ pmap_ept_transform(struct pmap *pmap)
 	memset(pmap->pm_pdir, 0, PAGE_SIZE);
 }
 
-#endif /* __HAVE_DIRECT_MAP && __x86_64__ && !XEN */
+#endif /* __HAVE_DIRECT_MAP && __x86_64__ && !XENPV */

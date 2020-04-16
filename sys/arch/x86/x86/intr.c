@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.150.6.2 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.150.6.3 2020/04/16 09:45:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.2 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.3 2020/04/16 09:45:57 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -166,7 +166,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.2 2020/04/12 17:25:52 bouyer Exp $"
 #include "lapic.h"
 #include "pci.h"
 #include "acpica.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #if NHYPERV > 0
 #include <dev/hyperv/hypervvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.181.4.1 2020/04/10 14:37:54 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.1 2020/04/10 14:37:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.1 2020/04/10 14:37:54 bouyer Exp $")
 
 #include "tsc.h"
 
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #if NHYPERV > 0
 #include <x86/x86/hypervvar.h>
