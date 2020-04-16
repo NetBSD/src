@@ -653,14 +653,20 @@ struct blkif_request_indirect {
     uint8_t        operation;    /* BLKIF_OP_INDIRECT                    */
     uint8_t        indirect_op;  /* BLKIF_OP_{READ/WRITE}                */
     uint16_t       nr_segments;  /* number of segments                   */
+#ifndef __i386__
+    uint32_t	   _pad1;
+#endif
     uint64_t       id;           /* private guest value, echoed in resp  */
     blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
     blkif_vdev_t   handle;       /* same as for read/write requests      */
+    uint16_t       _pad2;
     grant_ref_t    indirect_grefs[BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST];
-#ifdef __i386__
-    uint64_t       pad;          /* Make it 64 byte aligned on i386      */
+#ifndef __i386__
+    uint32_t       _pad3;        /* Make it 64 byte aligned */
+#else
+    uint64_t       _pad3;        /* Make it 64 byte aligned */
 #endif
-};
+} __packed;
 typedef struct blkif_request_indirect blkif_request_indirect_t;
 
 struct blkif_response {
