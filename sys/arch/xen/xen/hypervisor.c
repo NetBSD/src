@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.73.2.4 2020/04/16 19:23:50 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73.2.5 2020/04/16 20:21:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.4 2020/04/16 19:23:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.5 2020/04/16 20:21:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,6 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 		/* XXX: vtophys(&hypercall_page) */
 		wrmsr(descs[1], (uintptr_t)&hypercall_page - KERNBASE);
 
-		vm_guest = VM_GUEST_XENPVHVM; /* Be more specific */
-
 	} else {
 		return 0;
 	}
@@ -427,7 +425,7 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	bi.common.len = sizeof(struct btinfo_rootdevice);
 
 	/* From i386/multiboot.c */
-	/*	$NetBSD: hypervisor.c,v 1.73.2.4 2020/04/16 19:23:50 bouyer Exp $	*/
+	/*	$NetBSD: hypervisor.c,v 1.73.2.5 2020/04/16 20:21:04 bouyer Exp $	*/
 	int i, len;
 	vaddr_t data;
 	extern struct bootinfo	bootinfo;
@@ -456,6 +454,8 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	events_default_setup();
 	delay_func = xen_delay;
 	initclock_func = xen_initclocks;
+	vm_guest = VM_GUEST_XENPVHVM; /* Be more specific */
+
 #endif /* XENPVHVM */
 
 	/* If we got here, it must mean we matched */
