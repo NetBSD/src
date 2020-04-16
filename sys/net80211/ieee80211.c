@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56.18.8 2020/04/13 08:05:15 martin Exp $ */
+/*	$NetBSD: ieee80211.c,v 1.56.18.9 2020/04/16 15:30:00 nat Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.56.18.8 2020/04/13 08:05:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.56.18.9 2020/04/16 15:30:00 nat Exp $");
 #endif
 
 /*
@@ -2016,7 +2016,13 @@ ieee80211_media_init(struct ieee80211com *ic,
 	ifm_change_cb_t media_change, ifm_stat_cb_t media_stat)
 {
 
-	ieee80211_media_init_with_lock(ic, media_change, media_stat, NULL);
+	struct ieee80211vap *vap;
+
+	vap = TAILQ_FIRST(&ic->ic_vaps);
+	KASSERT(vap != NULL, ("media vap is null"));
+
+	ifmedia_init_with_lock(&vap->iv_media, 0, media_change,
+	    media_stat, NULL);
 }
 
 void
@@ -2030,8 +2036,8 @@ ieee80211_announce(struct ieee80211com *ic)
 	for (mode = IEEE80211_MODE_AUTO+1; mode < IEEE80211_MODE_11NA; mode++) {
 		if (isclr(ic->ic_modecaps, mode))
 			continue;
-		aprint_debug("%s: %s rates: ", ifp->if_xname,
-		    ieee80211_phymode_name[mode]);
+		//aprint_debug("%s: %s rates: ", ifp->if_xname,
+		 //   ieee80211_phymode_name[mode]);
 		ic_printf(ic, "%s rates: ", ieee80211_phymode_name[mode]);
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
