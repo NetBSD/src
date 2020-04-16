@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.31.2.9 2019/11/19 19:17:16 phil Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.31.2.10 2020/04/16 15:30:00 nat Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.9 2019/11/19 19:17:16 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.10 2020/04/16 15:30:00 nat Exp $");
 #endif
 
 /*
@@ -1183,45 +1183,59 @@ wlan_iflladdr(void *arg __unused, struct ifnet *ifp)
 }
 #endif
 
+int64_t
+if_get_counter_default(struct ifnet * ifp, ift_counter cnt)
+{
+	struct if_data if_stats;
+	int64_t result;
+
+	if_stats_to_if_data(ifp, &if_stats, false);
+
+	result = (cnt == IFCOUNTER_OERRORS ? if_stats.ifi_oerrors :
+	    (cnt == IFCOUNTER_IERRORS ? if_stats.ifi_ierrors : 0 ));
+
+	return result;
+}
+
 void
 if_inc_counter(struct ifnet *ifp, ift_counter ifc, int64_t value)
 {
 	switch (ifc) {
 	case IFCOUNTER_IPACKETS:
-		ifp->if_data.ifi_ipackets += value;
+		if_statadd(ifp, if_ipackets, value);
 		break;
 	case IFCOUNTER_IERRORS:
-		ifp->if_data.ifi_ierrors += value;
+		if_statadd(ifp, if_ierrors, value);
 		break;
 	case IFCOUNTER_OPACKETS:
-		ifp->if_data.ifi_opackets += value;
+		if_statadd(ifp, if_opackets, value);
 		break;
 	case IFCOUNTER_OERRORS:
-		ifp->if_data.ifi_oerrors += value;
+		if_statadd(ifp, if_oerrors, value);
 		break;
         case IFCOUNTER_COLLISIONS:
-		ifp->if_data.ifi_collisions += value;
+		if_statadd(ifp, if_collisions, value);
 		break;
         case IFCOUNTER_IBYTES:
-		ifp->if_data.ifi_ibytes += value;
+		if_statadd(ifp, if_ibytes, value);
 		break;
         case IFCOUNTER_OBYTES:
-		ifp->if_data.ifi_obytes += value;
+		if_statadd(ifp, if_obytes, value);
 		break;
         case IFCOUNTER_IMCASTS:
-		ifp->if_data.ifi_imcasts += value;
+		if_statadd(ifp, if_imcasts, value);
 		break;
         case IFCOUNTER_OMCASTS:
-		ifp->if_data.ifi_omcasts += value;
+		if_statadd(ifp, if_omcasts, value);
 		break;
         case IFCOUNTER_IQDROPS:
-		ifp->if_data.ifi_iqdrops += value;
+		if_statadd(ifp, if_iqdrops, value);
 		break;
         case IFCOUNTER_OQDROPS:
 		/* ifp->if_data.ifi_oqdrops += value; No such field, just ignore it q*/
 		break;
         case IFCOUNTER_NOPROTO:
-		ifp->if_data.ifi_noproto += value;
+		if_statadd(ifp, if_noproto, value);
 		break;
 	default:
 		panic("if_inc_counter: non-existant counter");

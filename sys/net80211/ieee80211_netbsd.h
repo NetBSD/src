@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.21.2.11 2020/04/13 08:05:16 martin Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.21.2.12 2020/04/16 15:30:00 nat Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -172,10 +172,7 @@ typedef enum {
         IFCOUNTERS /* Array size. */
 } ift_counter;
 void       if_inc_counter(struct ifnet *, ift_counter, int64_t);
-
-#define if_get_counter_default(ipf,cnt)                 \
-	(cnt == IFCOUNTER_OERRORS ? ipf->if_oerrors :   \
-	    (cnt == IFCOUNTER_IERRORS ? ipf->if_ierrors : 0 ))
+int64_t    if_get_counter_default(struct ifnet *, ift_counter);
 
 #define IF_LLADDR(ifp)     (((struct ieee80211vap *)ifp->if_softc)->iv_myaddr)
 
