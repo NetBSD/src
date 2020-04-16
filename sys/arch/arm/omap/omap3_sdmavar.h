@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmavar.h,v 1.1 2013/01/09 03:35:11 macallan Exp $ */
+/*	$NetBSD: omap3_sdmavar.h,v 1.2 2020/04/16 21:56:41 rin Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -25,9 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdmavar.h,v 1.1 2013/01/09 03:35:11 macallan Exp $");
 
 #ifndef OMAPDMA_VAR_H
 #define OMAPDMA_VAR_H

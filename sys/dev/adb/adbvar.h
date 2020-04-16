@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: adbvar.h,v 1.3 2020/04/16 21:56:42 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -25,9 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
 
 #ifndef ADBVAR_H
 #define ADBVAR_H

@@ -34,11 +34,9 @@
 #ifndef ENA_PLAT_H_
 #define ENA_PLAT_H_
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.4 2018/11/28 19:15:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
