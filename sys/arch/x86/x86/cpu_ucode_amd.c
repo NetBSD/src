@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.10.6.1 2020/04/16 08:46:35 bouyer Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.10.6.2 2020/04/16 09:45:56 bouyer Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.10.6.1 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.10.6.2 2020/04/16 09:45:56 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -302,4 +302,4 @@ err1:
 	kmem_free(mc.mc_amd, sizeof(*mc.mc_amd));
 	return error;
 }
-#endif /* ! XEN */
+#endif /* ! XENPV */

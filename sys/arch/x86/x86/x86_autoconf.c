@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.79 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.79.6.1 2020/04/16 09:45:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.79 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.79.6.1 2020/04/16 09:45:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.79 2019/11/10 21:16:34 chs Exp $"
 
 #include "acpica.h"
 #include "wsdisplay.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.31 2019/05/31 03:10:31 nonaka Exp $	*/
+/*	$NetBSD: consinit.c,v 1.31.8.1 2020/04/16 09:45:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.31 2019/05/31 03:10:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.31.8.1 2020/04/16 09:45:56 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.31 2019/05/31 03:10:31 nonaka Exp $")
 #include <dev/usb/ukbdvar.h>
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 #include "hvkbd.h"
 #if NHVKBD > 0
 #include <dev/hyperv/hvkbdvar.h>

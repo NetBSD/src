@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.200.4.1 2020/04/08 17:59:16 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.200.4.2 2020/04/16 09:45:56 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1110,7 +1110,7 @@ ENTRY(cpu_switchto)
 .Lskip_svs:
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	movq	%r13,%rdi
 	movq	%r12,%rsi
 	callq	_C_LABEL(speculation_barrier)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.346.4.1 2020/04/09 16:12:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.346.4.2 2020/04/16 09:45:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.1 2020/04/09 16:12:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.2 2020/04/16 09:45:56 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1696,7 +1696,7 @@ init_x86_64(paddr_t first_avail)
 	svs_init();
 #endif
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XEN
+#ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
