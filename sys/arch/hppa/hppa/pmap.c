@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2020/04/15 15:50:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2020/04/16 05:22:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2020/04/15 15:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2020/04/16 05:22:59 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2020/04/15 15:50:15 skrll Exp $");
 #include <machine/iomod.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
-#include <machine/pte.h>
 #include <machine/psl.h>
+#include <machine/pte.h>
 #include <machine/reg.h>
 
 #include <hppa/hppa/hpt.h>
