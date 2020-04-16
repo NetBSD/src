@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.6.12.1 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.6.12.2 2020/04/16 17:46:44 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.6.12.1 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.6.12.2 2020/04/16 17:46:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,20 +121,31 @@ xen_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	union xen_mainbus_attach_args mba;
 
+	switch(vm_guest) {
+	case VM_GUEST_XENPV:
 #if NIPMI > 0 && defined(XENPV)
-	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
-	mba.mba_ipmi.iaa_iot = x86_bus_space_io;
-	mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
-	if (ipmi_probe(&mba.mba_ipmi))
-		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
+		memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
+		mba.mba_ipmi.iaa_iot = x86_bus_space_io;
+		mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
+		if (ipmi_probe(&mba.mba_ipmi))
+			config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
 #endif
+	/* FALLTHROUGH */
+	case VM_GUEST_XENHVM:
+		mba.mba_haa.haa_busname = "hypervisor";
+		config_found_ia(self, "hypervisorbus",
+		    &mba.mba_haa, xen_mainbus_print);
+		break;
+	default:
+		return;
+	}
 
-	mba.mba_haa.haa_busname = "hypervisor";
-	config_found_ia(self, "hypervisorbus", &mba.mba_haa, xen_mainbus_print);
-
-	/* save/restore for Xen */
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	if (vm_guest == VM_GUEST_XENPV) {
+		/* save/restore for Xen */
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n");
+	}
 }
 
 static int
