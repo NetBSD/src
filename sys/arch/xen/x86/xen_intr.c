@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.4 2020/04/14 16:52:35 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.5 2020/04/16 08:46:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.4 2020/04/14 16:52:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.5 2020/04/16 08:46:35 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.4 2020/04/14 16:52:35 bouyer Exp
 #include <sys/cpu.h>
 #include <sys/device.h>
 
+#include <xen/intr.h>
 #include <xen/evtchn.h>
 #include <xen/xenfunc.h>
 
@@ -444,7 +445,7 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 {
 	int ih = 0;
 
-#if NPCI > 0
+#if NPCI > 0 && defined(XENPV)
 #if defined(__HAVE_PCI_MSI_MSIX)
 	if ((pic->pic_type == PIC_MSI) || (pic->pic_type == PIC_MSIX)) {
 		uint64_t pih;

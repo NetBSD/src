@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.3 2020/04/12 17:25:53 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.4 2020/04/16 08:46:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.3 2020/04/12 17:25:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.4 2020/04/16 08:46:36 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.3 2020/04/12 17:25:53 bouyer Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/intrdefs.h>
+#include <xen/intr.h>
 
 #include <xen/xen.h>
 #include <xen/hypervisor.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.22 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.22.10.1 2020/04/16 08:46:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.22 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.22.10.1 2020/04/16 08:46:36 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.22 2019/03/09 08:42:25 maxv Exp $"
 #include <sys/pmf.h>
 #include <sys/xcall.h>
 
+#include <xen/intr.h>
 #include <xen/hypervisor.h>
 #include <xen/shutdown_xenbus.h>
 #include <xen/include/public/version.h>

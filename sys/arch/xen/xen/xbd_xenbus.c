@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.97.2.1 2020/04/16 08:46:36 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97.2.1 2020/04/16 08:46:36 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp
 
 #include <uvm/uvm.h>
 
+#include <xen/intr.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>

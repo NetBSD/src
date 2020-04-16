@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85.6.4 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.85.6.5 2020/04/16 08:46:34 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.4 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.5 2020/04/16 08:46:34 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.4 2020/04/12 17:25:52 bouyer Exp $
 
 #include "ioapic.h"
 #include "lapic.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #endif
 

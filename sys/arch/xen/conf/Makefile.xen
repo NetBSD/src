@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.48 2019/02/02 12:32:54 cherry Exp $
+#	$NetBSD: Makefile.xen,v 1.48.10.1 2020/04/16 08:46:35 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -67,21 +67,24 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o spl.o copy.o vector.o
-.if ${XEN_BUILD} == amd64
-MD_OBJS+=	amd64_trap.o
+
+MD_OBJS=
+.if ${XEN_BUILD} == i386
+MD_OBJS+=	locore.o spl.o copy.o vector.o lock_stubs.o
 .endif
 MD_CFILES=
 
-MD_SFILES=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S \
+MD_SFILES=
+.if ${XEN_BUILD} == i386
+MD_SFILES+=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S \
 		$S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S \
 		$S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S \
-		$S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/lock_stubs.S
 
-.if ${XEN_BUILD} == amd64
-MD_SFILES+=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/amd64_trap.S
 .endif
 
+.if ${XEN_BUILD} == i386
 copy.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S assym.h
 	${NORMAL_S}
 
@@ -94,8 +97,7 @@ spl.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S assym.h
 vector.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
 
-.if ${XEN_BUILD} == amd64
-amd64_trap.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/amd64_trap.S assym.h
+lock_stubs.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/lock_stubs.S assym.h
 	${NORMAL_S}
 .endif
 

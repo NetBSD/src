@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.6 2019/02/14 08:18:26 cherry Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.6.12.1 2020/04/16 08:46:35 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.6 2019/02/14 08:18:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.6.12.1 2020/04/16 08:46:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,8 @@ int mp_verbose = 0;
 extern bool acpi_present;
 extern bool mpacpi_active;
 
-int	xen_mainbus_match(device_t, cfdata_t, void *);
 void	xen_mainbus_attach(device_t, device_t, void *);
-int	xen_mainbus_print(void *, const char *);
+static int	xen_mainbus_print(void *, const char *);
 
 union xen_mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -115,26 +114,14 @@ union xen_mainbus_attach_args {
 };
 
 /*
- * Probe for the mainbus; always succeeds.
- */
-int
-xen_mainbus_match(device_t parent, cfdata_t match, void *aux)
-{
-
-	return 1;
-}
-
-/*
  * Attach the mainbus.
  */
 void
 xen_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NIPMI > 0 || NHYPERVISOR > 0
 	union xen_mainbus_attach_args mba;
-#endif
 
-#if NIPMI > 0
+#if NIPMI > 0 && defined(XENPV)
 	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
 	mba.mba_ipmi.iaa_iot = x86_bus_space_io;
 	mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
@@ -142,17 +129,15 @@ xen_mainbus_attach(device_t parent, device_t self, void *aux)
 		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
 #endif
 
-#if NHYPERVISOR > 0
 	mba.mba_haa.haa_busname = "hypervisor";
 	config_found_ia(self, "hypervisorbus", &mba.mba_haa, xen_mainbus_print);
-#endif
 
 	/* save/restore for Xen */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-int
+static int
 xen_mainbus_print(void *aux, const char *pnp)
 {
 	union xen_mainbus_attach_args *mba = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.825.4.1 2020/04/09 16:12:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.825.4.2 2020/04/16 08:46:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.1 2020/04/09 16:12:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.2 2020/04/16 08:46:34 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -988,7 +988,7 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdtstore[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#if NBIOSCALL > 0
+#if NBIOSCALL > 0 && !defined(XENPV)
 	/* bios trampoline GDT entries */
 	setsegment(&gdtstore[GBIOSCODE_SEL].sd, 0, 0xfffff,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
@@ -1134,11 +1134,11 @@ init386(paddr_t first_avail)
 	extern paddr_t local_apic_pa;
 	union descriptor *tgdt;
 	struct region_descriptor region;
-#endif
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
+#endif /* !XENPV */
 	struct pcb *pcb;
 
 	KASSERT(first_avail % PAGE_SIZE == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.49.10.1 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.49.10.2 2020/04/16 08:46:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -58,6 +58,8 @@
 #include "isa.h"
 #include "pci.h"
 
+void xen_mainbus_attach(device_t, device_t, void *);
+
 struct hypervisor_attach_args {
 	const char 		*haa_busname;
 };
@@ -108,7 +110,7 @@ struct xen_npx_attach_args {
 #define xen_wmb() membar_consumer()
 #endif /* __XEN_INTERFACE_VERSION */
 
-#include <machine/hypercalls.h>
+#include <machine/xen/hypercalls.h>
 
 #undef u8
 #undef u16

@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.35.6.2 2020/04/12 17:17:38 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.2 2020/04/12 17:17:38 bouyer Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.2 2020/04/12 17:17:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,7 +74,7 @@ static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ast(struct cpu_info *, struct intrframe *);
 static void xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe *);
 
-static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
+static void (*xen_ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
 	xen_ipi_synch_fpu,
@@ -100,6 +100,8 @@ xen_ipi_handler(void *arg)
 
 	ci = curcpu();
 	regs = arg;
+
+	KASSERT(ci == arg);
 	
 	pending = atomic_swap_32(&ci->ci_ipis, 0);
 
@@ -108,10 +110,10 @@ xen_ipi_handler(void *arg)
 		bit--;
 		pending &= ~(1 << bit);
 		ci->ci_ipi_events[bit].ev_count++;
-		if (ipifunc[bit] != NULL) {
-			(*ipifunc[bit])(ci, regs);
+		if (xen_ipifunc[bit] != NULL) {
+			(*xen_ipifunc[bit])(ci, regs);
 		} else {
-			panic("ipifunc[%d] unsupported!\n", bit);
+			panic("xen_ipifunc[%d] unsupported!\n", bit);
 			/* NOTREACHED */
 		}
 	}
@@ -296,42 +298,12 @@ xen_ipi_ast(struct cpu_info *ci, struct intrframe *intrf)
 	aston(ci->ci_onproc);
 }
 
-void
-xc_send_ipi(struct cpu_info *ci)
-{
-
-	KASSERT(kpreempt_disabled());
-	KASSERT(curcpu() != ci);
-	if (ci) {
-		if (0 != xen_send_ipi(ci, XEN_IPI_XCALL)) {
-			panic("xen_send_ipi(XEN_IPI_XCALL) failed\n");
-		}
-	} else {
-		xen_broadcast_ipi(XEN_IPI_XCALL);
-	}
-}
-
 static void
 xen_ipi_generic(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
-
 	ipi_cpu_handler();
-}
-
-void
-cpu_ipi(struct cpu_info *ci)
-{
-	KASSERT(kpreempt_disabled());
-	KASSERT(curcpu() != ci);
-	if (ci) {
-		if (0 != xen_send_ipi(ci, XEN_IPI_GENERIC)) {
-			panic("xen_send_ipi(XEN_IPI_GENERIC) failed\n");
-		}
-	} else {
-		xen_broadcast_ipi(XEN_IPI_GENERIC);
-	}
 }
 
 static void
@@ -350,3 +322,34 @@ xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe * intrf)
 {
 	softint_trigger(1 << SIR_PREEMPT);
 }
+
+#ifdef XENPV
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+	if (ci) {
+		if (0 != xen_send_ipi(ci, XEN_IPI_XCALL)) {
+			panic("xen_send_ipi(XEN_IPI_XCALL) failed\n");
+		}
+	} else {
+		xen_broadcast_ipi(XEN_IPI_XCALL);
+	}
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+	if (ci) {
+		if (0 != xen_send_ipi(ci, XEN_IPI_GENERIC)) {
+			panic("xen_send_ipi(XEN_IPI_GENERIC) failed\n");
+		}
+	} else {
+		xen_broadcast_ipi(XEN_IPI_GENERIC);
+	}
+}
+#endif /* XENPV */
