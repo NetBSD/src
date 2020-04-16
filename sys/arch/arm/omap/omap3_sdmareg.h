@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmareg.h,v 1.5 2020/04/16 21:56:41 rin Exp $ */
+/*	$NetBSD: omap3_sdmareg.h,v 1.6 2020/04/16 23:29:52 rin Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.6 2020/04/16 23:29:52 rin Exp $");
 
 #ifndef OMAPDMA_REG_H
 #define OMAPDMA_REG_H
