@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.115 2020/04/16 09:51:40 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.116 2020/04/16 16:38:43 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.115 2020/04/16 09:51:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.116 2020/04/16 16:38:43 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -103,6 +103,12 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.115 2020/04/16 09:51:40 jdolecek Ex
 CTASSERT((MAXPHYS <= 2*XBD_MAX_CHUNK));
 CTASSERT(XEN_BSIZE == DEV_BSIZE);
 
+struct xbd_indirect {
+	SLIST_ENTRY(xbd_indirect) in_next;
+	struct blkif_request_segment *in_addr;
+	grant_ref_t in_gntref;
+};
+
 struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
 	uint16_t req_id; /* ID passed to backend */
@@ -114,6 +120,7 @@ struct xbd_req {
 		grant_ref_t req_gntref[XBD_XFER_LIMIT >> PAGE_SHIFT];
 		struct buf *req_bp; /* buffer associated with this request */
 		void *req_data; /* pointer to the data buffer */
+		struct xbd_indirect *req_indirect;	/* indirect page */
 	    } req_rw;
 	    struct {
 		int s_error;
@@ -124,6 +131,7 @@ struct xbd_req {
 #define req_gntref	u.req_rw.req_gntref
 #define req_bp		u.req_rw.req_bp
 #define req_data	u.req_rw.req_data
+#define req_indirect	u.req_rw.req_indirect
 #define req_sync	u.req_sync
 
 struct xbd_xenbus_softc {
@@ -143,6 +151,9 @@ struct xbd_xenbus_softc {
 
 	struct xbd_req sc_reqs[XBD_RING_SIZE];
 	SLIST_HEAD(,xbd_req) sc_xbdreq_head; /* list of free requests */
+
+	struct xbd_indirect sc_indirect[XBD_RING_SIZE];
+	SLIST_HEAD(,xbd_indirect) sc_indirect_head;
 
 	vmem_addr_t sc_unalign_buffer;
 	struct xbd_req *sc_unalign_used;
@@ -166,11 +177,13 @@ struct xbd_xenbus_softc {
 #define BLKIF_FEATURE_CACHE_FLUSH	0x1
 #define BLKIF_FEATURE_BARRIER		0x2
 #define BLKIF_FEATURE_PERSISTENT	0x4
+#define BLKIF_FEATURE_INDIRECT		0x8
 #define BLKIF_FEATURE_BITS		\
-	"\20\1CACHE-FLUSH\2BARRIER\3PERSISTENT"
+	"\20\1CACHE-FLUSH\2BARRIER\3PERSISTENT\4INDIRECT"
 	struct evcnt sc_cnt_map_unalign;
 	struct evcnt sc_cnt_unalign_busy;
 	struct evcnt sc_cnt_queue_full;
+	struct evcnt sc_cnt_indirect;
 };
 
 #if 0
@@ -191,9 +204,12 @@ static int  xbd_diskstart(device_t, struct buf *);
 static void xbd_iosize(device_t, int *);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
+static void xbd_features(struct xbd_xenbus_softc *);
 
 static void xbd_diskstart_submit(struct xbd_xenbus_softc *, int,
 	struct buf *bp, int, bus_dmamap_t, grant_ref_t *);
+static void xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *,
+	struct xbd_req *, struct buf *bp);
 static int  xbd_map_align(struct xbd_xenbus_softc *, struct xbd_req *);
 static void xbd_unmap_align(struct xbd_xenbus_softc *, struct xbd_req *, bool);
 
@@ -293,12 +309,30 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_detach_cv, "xbddetach");
 	cv_init(&sc->sc_suspend_cv, "xbdsuspend");
 
+	xbd_features(sc);
+
 	/* initialize free requests list */
 	SLIST_INIT(&sc->sc_xbdreq_head);
 	for (i = 0; i < XBD_RING_SIZE; i++) {
 		sc->sc_reqs[i].req_id = i;
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, &sc->sc_reqs[i],
 		    req_next);
+	}
+
+	if (sc->sc_features & BLKIF_FEATURE_INDIRECT) {
+		/* initialize indirect page list */
+		for (i = 0; i < XBD_RING_SIZE; i++) {
+			vmem_addr_t va;
+			if (uvm_km_kmem_alloc(kmem_va_arena,
+			    PAGE_SIZE, VM_SLEEP | VM_INSTANTFIT, &va) != 0) {
+				aprint_error_dev(self,
+				    "can't alloc indirect pages\n");
+				return;
+			}
+			sc->sc_indirect[i].in_addr = (void *)va;
+			SLIST_INSERT_HEAD(&sc->sc_indirect_head,
+			    &sc->sc_indirect[i], in_next);
+		}
 	}
 
 	sc->sc_backend_status = BLKIF_STATE_DISCONNECTED;
@@ -315,6 +349,8 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	    NULL, device_xname(self), "map unaligned");
 	evcnt_attach_dynamic(&sc->sc_cnt_queue_full, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "queue full");
+	evcnt_attach_dynamic(&sc->sc_cnt_indirect, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "indirect segment");
 
 	for (i = 0; i < XBD_RING_SIZE; i++) {
 		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat,
@@ -341,7 +377,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
 }
 
 static int
@@ -441,6 +476,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 	evcnt_detach(&sc->sc_cnt_map_unalign);
 	evcnt_detach(&sc->sc_cnt_unalign_busy);
 	evcnt_detach(&sc->sc_cnt_queue_full);
+	evcnt_detach(&sc->sc_cnt_indirect);
 
 	pmf_device_deregister(dev);
 
@@ -508,6 +544,22 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_ring_gntref);
 	if (error)
 		goto abort_resume;
+
+	if (sc->sc_features & BLKIF_FEATURE_INDIRECT) {
+		for (int i = 0; i < XBD_RING_SIZE; i++) {
+			vaddr_t va = (vaddr_t)sc->sc_indirect[i].in_addr;
+			KASSERT(va != 0);
+			KASSERT((va & PAGE_MASK) == 0);
+			(void)pmap_extract_ma(pmap_kernel(), va, &ma);
+			if (xengnt_grant_access(
+			    sc->sc_xbusd->xbusd_otherend_id,
+			    ma, true, &sc->sc_indirect[i].in_gntref)) {
+				aprint_error_dev(dev,
+				    "indirect page grant failed\n");
+				goto abort_resume;
+			}
+		}
+	}
 
 	error = xenbus_alloc_evtchn(sc->sc_xbusd, &sc->sc_evtchn);
 	if (error)
@@ -581,7 +633,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct disk_geom *dg;
 
-	char buf[32];
+	char buf[64];
 	DPRINTF(("%s: new backend state %d\n",
 	    device_xname(sc->sc_dksc.sc_dev), new_state));
 
@@ -662,7 +714,6 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 {
 	int err;
 	unsigned long long sectors;
-	u_long val;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
@@ -691,6 +742,15 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 
+	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
+}
+
+static void
+xbd_features(struct xbd_xenbus_softc *sc)
+{
+	int err;
+	u_long val;
+
 	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	    "feature-flush-cache", &val, 10);
 	if (err)
@@ -712,7 +772,14 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	if (val > 0)
 		sc->sc_features |= BLKIF_FEATURE_PERSISTENT;
 
-	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-max-indirect-segments", &val, 10);
+	if (err)
+		val = 0;
+	if (val > (MAXPHYS >> PAGE_SHIFT)) {
+		/* We can use indirect segments, the limit is big enough */
+		sc->sc_features |= BLKIF_FEATURE_INDIRECT;
+	}
 }
 
 static int
@@ -723,6 +790,7 @@ xbd_handler(void *arg)
 	RING_IDX resp_prod, i;
 	int more_to_do;
 	int seg;
+	grant_ref_t gntref;
 
 	DPRINTF(("xbd_handler(%s)\n", device_xname(sc->sc_dksc.sc_dev)));
 
@@ -795,8 +863,13 @@ again:
 			 * expect the backend to release the grant
 			 * immediately.
 			 */
-			KASSERT(xengnt_status(xbdreq->req_gntref[seg]) == 0);
-			xengnt_revoke_access(xbdreq->req_gntref[seg]);
+			if (xbdreq->req_indirect) {
+				gntref =
+				    xbdreq->req_indirect->in_addr[seg].gref;
+			} else
+				gntref = xbdreq->req_gntref[seg];
+			KASSERT(xengnt_status(gntref) == 0);
+			xengnt_revoke_access(gntref);
 		}
 
 		bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat, xbdreq->req_dmamap);
@@ -807,6 +880,16 @@ again:
 
 		dk_done(&sc->sc_dksc, bp);
 
+		if (xbdreq->req_indirect) {
+			/* No persistent mappings, so check that
+			 * backend unmapped the indirect segment grant too.
+			 */
+			KASSERT(xengnt_status(xbdreq->req_indirect->in_gntref)
+			    == 0);
+			SLIST_INSERT_HEAD(&sc->sc_indirect_head,
+			    xbdreq->req_indirect, in_next);
+			xbdreq->req_indirect = NULL;
+		}
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 
@@ -1064,7 +1147,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 		goto out;
 	}
 
-	if (bp->b_bcount > XBD_MAX_CHUNK) {
+	if ((sc->sc_features & BLKIF_FEATURE_INDIRECT) == 0
+	    && bp->b_bcount > XBD_MAX_CHUNK) {
 		if (!SLIST_NEXT(xbdreq, req_next)) {
 			DPRINTF(("%s: need extra req\n", __func__));
 			error = EAGAIN;
@@ -1124,6 +1208,13 @@ xbd_diskstart(device_t self, struct buf *bp)
 
 	/* We are now committed to the transfer */
 	SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
+
+	if ((sc->sc_features & BLKIF_FEATURE_INDIRECT) != 0 &&
+	    bp->b_bcount > XBD_MAX_CHUNK) {
+		xbd_diskstart_submit_indirect(sc, xbdreq, bp);
+		goto push;
+	}
+
 	xbd_diskstart_submit(sc, xbdreq->req_id,
 	    bp, 0, xbdreq->req_dmamap, xbdreq->req_gntref);
 
@@ -1141,6 +1232,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 		    xbdreq->req_gntref);
 	}
 
+push:
 	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring, notify);
 	if (notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
@@ -1202,6 +1294,56 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 	}
 	req->nr_segments = segidx;
 	sc->sc_ring.req_prod_pvt++;
+}
+
+static void
+xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
+    struct xbd_req *xbdreq, struct buf *bp)
+{
+	blkif_request_indirect_t *req;
+	paddr_t ma;
+	int nsects, nbytes, dmaseg, first_sect;
+	struct blkif_request_segment *reqseg;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	req = (blkif_request_indirect_t *)RING_GET_REQUEST(&sc->sc_ring,
+	    sc->sc_ring.req_prod_pvt);
+	req->id = xbdreq->req_id;
+	req->operation = BLKIF_OP_INDIRECT;
+	req->indirect_op =
+	    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
+	req->sector_number = bp->b_rawblkno;
+	req->handle = sc->sc_handle;
+
+	xbdreq->req_indirect = SLIST_FIRST(&sc->sc_indirect_head);
+	KASSERT(xbdreq->req_indirect != NULL);	/* always as many as reqs */
+	SLIST_REMOVE_HEAD(&sc->sc_indirect_head, in_next);
+	req->indirect_grefs[0] = xbdreq->req_indirect->in_gntref;
+
+	reqseg = xbdreq->req_indirect->in_addr;
+	for (dmaseg = 0; dmaseg < xbdreq->req_dmamap->dm_nsegs; dmaseg++) {
+		bus_dma_segment_t *ds = &xbdreq->req_dmamap->dm_segs[dmaseg];
+
+		ma = ds->ds_addr;
+		nbytes = ds->ds_len;
+
+		first_sect = (ma & PAGE_MASK) >> XEN_BSHIFT;
+		nsects = nbytes >> XEN_BSHIFT;
+
+		reqseg->first_sect = first_sect;
+		reqseg->last_sect = first_sect + nsects - 1;
+		reqseg->gref = xbdreq->req_gntref[dmaseg];
+
+		KASSERT(reqseg->first_sect <= reqseg->last_sect);
+		KASSERT(reqseg->last_sect < (PAGE_SIZE / XEN_BSIZE));
+
+		reqseg++;
+	}
+	req->nr_segments = dmaseg;
+	sc->sc_ring.req_prod_pvt++;
+
+	sc->sc_cnt_indirect.ev_count++;
 }
 
 static int
