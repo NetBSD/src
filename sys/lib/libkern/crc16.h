@@ -1,4 +1,4 @@
-/*	$NetBSD: crc16.h,v 1.1 2016/08/20 19:44:46 jdolecek Exp $	*/
+/*	$NetBSD: crc16.h,v 1.2 2020/04/16 21:56:43 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -28,9 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crc16.h,v 1.1 2016/08/20 19:44:46 jdolecek Exp $");
 
 /* CRC table for standard ANSI CRC-16 with polynom 0x8005 */
 static const uint16_t crc16_lookup[] = {

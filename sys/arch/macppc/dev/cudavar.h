@@ -24,9 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.3 2014/08/13 09:41:50 macallan Exp $");
-
 #ifndef CUDAVAR_H
 #define CUDAVAR_H
 
