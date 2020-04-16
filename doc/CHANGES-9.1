@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.36 2020/04/15 14:16:27 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.37 2020/04/16 14:03:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -943,4 +943,10 @@ sys/dev/wsfb/genfb.c				1.72
 
 	Get genfb's address offset correctly when the value >= 4G.
 	[msaitoh, ticket #835]
+
+sys/dev/pci/machfb.c				1.98
+
+	port-sparc64/55173: cean up the video mode selection logic,
+	switch modes only when actually necessary.
+	[jdc, ticket #836]
 
