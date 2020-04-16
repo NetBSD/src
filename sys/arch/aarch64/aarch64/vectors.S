@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.14 2020/04/13 05:40:25 maxv Exp $	*/
+/*	$NetBSD: vectors.S,v 1.15 2020/04/16 08:59:16 skrll Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -23,8 +23,9 @@
  * Template for the handler functions.
  */
 .macro	vector_func, func, el, label, tpidr
-ENTRY_NBTI(\func)
 	.align 7	/* cacheline-aligned */
+
+ENTRY_NBTI(\func)
 
 	.if \el == 1
 	/* need to allocate stack on el1 */
