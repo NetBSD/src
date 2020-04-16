@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.107.10.1 2020/04/11 18:26:07 bouyer Exp $
+#	$NetBSD: files.x86,v 1.107.10.2 2020/04/16 08:46:34 bouyer Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -35,8 +35,8 @@ file	arch/x86/x86/bios32.c		bios32 needs-flag
 #
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
-file 	arch/x86/x86/cpu.c 		cpu
-file	arch/x86/x86/cpu_rng.c		cpu
+file 	arch/x86/x86/cpu.c 		cpu & !xenpv
+file	arch/x86/x86/cpu_rng.c		cpu | vcpu
 
 device	acpicpu: acpi
 attach	acpicpu at cpufeaturebus
@@ -82,7 +82,7 @@ file	arch/x86/x86/hyperv.c		hyperv needs-flag
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c		machdep
 file	arch/x86/x86/bus_space.c	machdep
-file	arch/x86/x86/consinit.c		machdep
+file	arch/x86/x86/consinit.c		machdep & !xenpv
 file	arch/x86/x86/core_machdep.c	coredump
 file	arch/x86/x86/cpu_topology.c	machdep
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
@@ -91,15 +91,15 @@ file	arch/x86/x86/efi.c		machdep
 file	arch/x86/x86/errata.c		machdep
 file	arch/x86/x86/genfb_machdep.c	machdep
 file	arch/x86/x86/identcpu.c		machdep
-file	arch/x86/x86/i8259.c		machdep
-file	arch/x86/x86/intr.c		machdep
+file	arch/x86/x86/i8259.c		machdep & (!xenpv | dom0ops)
+file	arch/x86/x86/intr.c		machdep & !xenpv
 file	arch/x86/x86/x86_softintr.c	machdep
 file	arch/x86/x86/kgdb_machdep.c	kgdb
 file	arch/x86/x86/nmi.c		machdep
 file	arch/x86/x86/idt.c		machdep
-file	arch/x86/x86/ipi.c		machdep
-file	arch/x86/x86/mtrr_i686.c	mtrr
-file 	arch/x86/x86/patch.c		machdep
+file	arch/x86/x86/ipi.c		machdep & ( !xenpv | dom0ops )
+file	arch/x86/x86/mtrr_i686.c	mtrr & !xenpv
+file 	arch/x86/x86/patch.c		machdep & !xenpv
 file	arch/x86/x86/platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/x86_tlb.c		machdep
@@ -109,7 +109,7 @@ file	arch/x86/x86/sys_machdep.c	machdep
 file	arch/x86/x86/syscall.c		machdep
 file	arch/x86/x86/tsc.c		machdep
 file	arch/x86/x86/vm_machdep.c	machdep
-file	arch/x86/x86/x86_autoconf.c	machdep
+file	arch/x86/x86/x86_autoconf.c	machdep & !xenpv
 file	arch/x86/x86/x86_userconf.c	userconf
 file	arch/x86/x86/x86_machdep.c	machdep
 
@@ -137,14 +137,14 @@ file 	arch/x86/x86/mp.c		acpi | mpbios
 file 	arch/x86/x86/mpacpi.c		acpi
 
 file	arch/x86/acpi/acpi_pdc.c	acpi
-file	arch/x86/acpi/acpi_wakeup.c	acpi
+file	arch/x86/acpi/acpi_wakeup.c	acpi & !xenpv
 file	arch/x86/acpi/acpi_machdep.c	acpi
 
-file	arch/x86/isa/isa_machdep.c
+file	arch/x86/isa/isa_machdep.c	isa
 
 # PC clock
-file 	arch/x86/isa/clock.c
-file	arch/x86/isa/rtc.c
+file 	arch/x86/isa/clock.c	!xenpv
+file	arch/x86/isa/rtc.c  	isa
 
 # Stubs for x86 routines not included in the system
 file	arch/x86/x86/x86_stub.c

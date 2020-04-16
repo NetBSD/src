@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.17 2020/04/07 16:10:48 jdolecek Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.17.2.1 2020/04/16 08:46:36 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.17 2020/04/07 16:10:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.17.2.1 2020/04/16 08:46:36 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.17 2020/04/07 16:10:48 jdolecek Exp
 
 #include <xen/kernfs_machdep.h>
 
+#include <xen/intr.h>
 #include <xen/hypervisor.h>
 #include <xen/xenbus.h>
 #include "xenbus_comms.h"

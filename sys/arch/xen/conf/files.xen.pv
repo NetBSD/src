@@ -1,0 +1,47 @@
+#	$NetBSD: files.xen.pv,v 1.1.2.1 2020/04/16 08:46:35 bouyer Exp $
+
+file	arch/xen/x86/autoconf.c		xenpv
+file	arch/xen/x86/x86_xpmap.c	xenpv
+file	arch/xen/x86/xen_pmap.c		xenpv
+file	arch/xen/x86/xenfunc.c		xenpv
+file	arch/xen/xen/xen_acpi_machdep.c	acpi & xenpv
+
+file	arch/xen/xen/clock.c		xenpv
+file	arch/xen/x86/xen_bus_dma.c	machdep & xenpv
+file	arch/xen/x86/consinit.c		machdep & xenpv
+file	arch/xen/x86/pintr.c		machdep & dom0ops & xenpv
+
+#
+# System bus types
+#
+
+# Xen event peudo-device
+defpseudo xenevt
+defpseudo xvif
+defpseudo xbdback
+
+# PCI frontend
+device xpci: pcibus
+attach xpci at xenbus with xpci_xenbus
+file	arch/xen/xen/xpci_xenbus.c	xpci_xenbus
+
+# Xen Balloon driver
+device	balloon
+attach	balloon at xenbus
+file	arch/xen/xen/balloon.c		balloon
+
+device	pciback {unit = -1}
+attach	pciback at pci
+file	arch/xen/xen/pciback.c		pciback
+
+device vcpu
+attach vcpu at xendevbus
+file	arch/xen/x86/cpu.c		xenpv & vcpu
+
+# Domain-0 operations
+defflag	opt_xen.h			DOM0OPS XENPV
+file	arch/xen/xen/privcmd.c		dom0ops
+file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
+file	arch/xen/xen/xenevt.c		xenevt & (dom0ops | xenpvhvm)
+file	arch/xen/xen/xennetback_xenbus.c xvif
+file	arch/xen/xen/xbdback_xenbus.c xbdback

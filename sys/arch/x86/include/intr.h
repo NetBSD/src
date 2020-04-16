@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.61.6.2 2020/04/11 18:26:07 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.61.6.3 2020/04/16 08:46:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -46,6 +46,11 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/intrdefs.h>
+
+#ifdef XEN
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
+#endif /* XEN */
 
 #ifndef _LOCORE
 #include <machine/pic.h>

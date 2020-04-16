@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.10 2019/10/15 00:13:52 chs Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.10.6.1 2020/04/16 08:46:35 bouyer Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.10 2019/10/15 00:13:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.10.6.1 2020/04/16 08:46:35 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -138,7 +138,7 @@ cpu_ucode_amd_firmware_open(firmware_handle_t *fwh, const char *fwname)
 	return firmware_open(fw_path, "microcode_amd.bin", fwh);
 }
 
-#ifndef XEN
+#ifndef XENPV
 struct mc_buf {
 	uint8_t *mc_buf;
 	uint32_t mc_equiv_cpuid;

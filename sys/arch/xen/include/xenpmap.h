@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.42 2019/10/30 07:40:06 maxv Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.42.6.1 2020/04/16 08:46:35 bouyer Exp $	*/
 
 /*
  *
@@ -122,7 +122,6 @@ xpmap_ptom_isvalid(paddr_t ppa)
 	    != INVALID_P2M_ENTRY);
 }
 
-#endif /* XENPV */
 
 static inline void
 MULTI_update_va_mapping(
@@ -170,5 +169,6 @@ MULTI_update_va_mapping_otherdomain(
 #if defined(__x86_64__)
 void xen_set_user_pgd(paddr_t);
 #endif
+#endif /* XENPV */
 
 #endif /* _XEN_XENPMAP_H_ */

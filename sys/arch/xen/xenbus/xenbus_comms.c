@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.21 2018/12/24 14:55:42 cherry Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.21.10.1 2020/04/16 08:46:36 bouyer Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.21 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.21.10.1 2020/04/16 08:46:36 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.21 2018/12/24 14:55:42 cherry Exp
 #include <sys/systm.h>
 
 #include <xen/xen.h>	/* for xendomain_is_dom0() */
+#include <xen/intr.h>	/* for xendomain_is_dom0() */
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>

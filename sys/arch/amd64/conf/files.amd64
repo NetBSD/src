@@ -1,9 +1,7 @@
-#	$NetBSD: files.amd64,v 1.115 2020/01/09 00:42:24 manu Exp $
+#	$NetBSD: files.amd64,v 1.115.4.1 2020/04/16 08:46:34 bouyer Exp $
 #
 # new style config file for amd64 architecture
 #
-
-ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16
@@ -37,7 +35,7 @@ file	arch/amd64/amd64/copy.S			machdep
 file	arch/amd64/amd64/spl.S			machdep
 
 file	arch/amd64/amd64/amd64_trap.S		machdep
-file	arch/amd64/amd64/autoconf.c		machdep
+file	arch/amd64/amd64/autoconf.c		machdep & !xenpv
 file	arch/amd64/amd64/busfunc.S		machdep
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/cpufunc.S		machdep
@@ -53,11 +51,11 @@ file	arch/amd64/amd64/process_machdep.c	machdep
 file	arch/amd64/amd64/trap.c			machdep
 file	arch/x86/x86/fpu.c			machdep
 file	arch/x86/x86/dbregs.c			machdep
-file	arch/x86/x86/spectre.c			machdep
+file	arch/x86/x86/spectre.c			machdep & !xenpv
 file	arch/amd64/amd64/lock_stubs.S		machdep
 file	dev/cons.c				machdep
 
-file	arch/amd64/amd64/mptramp.S        multiprocessor
+file	arch/amd64/amd64/mptramp.S        multiprocessor & !xenpv
 
 #
 # Stack-less Just-In-Time compiler
@@ -91,9 +89,10 @@ include	"dev/i2o/files.i2o"
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
+device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus,
+	ipmibus, hypervisorbus
 attach	mainbus at root
-file	arch/amd64/amd64/amd64_mainbus.c	mainbus
+file	arch/amd64/amd64/amd64_mainbus.c	mainbus & !xenpv
 file	arch/x86/x86/mainbus.c			mainbus
 
 #
@@ -186,7 +185,7 @@ include "dev/sdmmc/files.sdmmc"
 include "dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
-file	arch/amd64/acpi/acpi_wakeup_low.S	acpi
+file	arch/amd64/acpi/acpi_wakeup_low.S	acpi & !xenpv
 
 # Microsoft Hyper-V
 include "dev/hyperv/files.hyperv"
@@ -195,4 +194,3 @@ attach	vmbus at acpinodebus with vmbus_acpi
 file	dev/acpi/vmbus_acpi.c			vmbus_acpi
 
 include	"arch/amd64/conf/majors.amd64"
-endif #xen

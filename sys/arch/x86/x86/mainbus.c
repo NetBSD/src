@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3.12.1 2020/04/11 21:21:49 bouyer Exp $ */
+/* $NetBSD: mainbus.c,v 1.3.12.2 2020/04/16 08:46:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.1 2020/04/11 21:21:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.2 2020/04/16 08:46:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.1 2020/04/11 21:21:49 bouyer Exp 
 #include <machine/cpuvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
+#include <xen/hypervisor.h>
 
 #include "pci.h"
 #include "isa.h"
@@ -94,10 +95,6 @@ void i386_mainbus_attach(device_t, device_t, void *);
 
 #if defined(__x86_64__) && !defined(XENPV)
 void amd64_mainbus_attach(device_t, device_t, void *);
-#endif
-
-#if defined(XEN)
-void xen_mainbus_attach(device_t, device_t, void *);
 #endif
 
 static int

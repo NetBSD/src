@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.82 2020/04/04 07:03:57 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.82.2.1 2020/04/16 08:46:34 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -76,6 +76,8 @@ KMSANFLAGS.${f}=	# empty
 .endfor
 CFLAGS+=	${KMSANFLAGS.${.IMPSRC:T}:U${KMSANFLAGS}}
 .endif
+
+EXTRA_INCLUDES= -I$S/external/mit/xen-include-public/dist/
 
 ##
 ## (3) libkern and compat

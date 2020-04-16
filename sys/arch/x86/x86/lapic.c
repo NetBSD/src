@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $	*/
+/*	$NetBSD: lapic.c,v 1.76.6.2 2020/04/16 08:46:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.2 2020/04/16 08:46:35 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
+#include "opt_xen.h"
+
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $"
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
+#ifndef XENPV
 #if NACPICA > 0
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
@@ -963,3 +966,9 @@ lapic_dump(void)
 
 #undef APIC_LVT_PRIINT
 }
+#else /* XENPV */
+void
+lapic_boot_init(paddr_t lapic_base)
+{
+}
+#endif /* XENPV */

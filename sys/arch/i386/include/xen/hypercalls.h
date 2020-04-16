@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.19 2019/02/10 11:10:34 cherry Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.1.2.1 2020/04/16 08:46:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -257,6 +257,7 @@ HYPERVISOR_memory_op(unsigned int cmd, void *arg)
     return ret;
 }
 
+#ifdef XENPV
 static __inline int
 HYPERVISOR_update_va_mapping(unsigned long page_nr, pt_entry_t new_val,
     unsigned long flags)
@@ -280,6 +281,26 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, pt_entry_t new_val,
 
     return ret;
 }
+
+static __inline int
+HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
+    pt_entry_t new_val, unsigned long flags, domid_t domid)
+{
+    int ret;
+    unsigned long ign1, ign2, ign3, ign4, ign5;
+    unsigned long pte_low, pte_hi;
+
+    pte_low = new_val & 0xffffffff;
+    pte_hi = new_val >> 32;
+
+    _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
+	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags), "5" (domid)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
+	    "=D" (ign5)));
+
+    return ret;
+}
+#endif /* XENPV */
 
 static __inline int
 HYPERVISOR_xen_version(int cmd, void *arg)
@@ -306,24 +327,6 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
     return ret;
 }
 
-static __inline int
-HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
-    pt_entry_t new_val, unsigned long flags, domid_t domid)
-{
-    int ret;
-    unsigned long ign1, ign2, ign3, ign4, ign5;
-    unsigned long pte_low, pte_hi;
-
-    pte_low = new_val & 0xffffffff;
-    pte_hi = new_val >> 32;
-
-    _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
-	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags), "5" (domid)),
-	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
-	    "=D" (ign5)));
-
-    return ret;
-}
 
 static __inline int
 HYPERVISOR_vcpu_op(int cmd, int vcpuid, void *extra_args)

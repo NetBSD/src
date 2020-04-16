@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.73.6.3 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.73.6.4 2020/04/16 08:46:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
 #include "ioapic.h"
 #include "lapic.h"
 #include "assym.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #endif
 
@@ -108,6 +108,7 @@
  * segment registers.
  */
 
+#ifndef XENPV
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 IDTVEC(recurse_lapic_ipi)
@@ -309,7 +310,6 @@ IDTVEC_END(intr_hyperv_hypercall)
 
 #endif /* NLAPIC > 0 */
 
-#ifndef XENPV
 /*
  * TLB shootdown handler.
  */

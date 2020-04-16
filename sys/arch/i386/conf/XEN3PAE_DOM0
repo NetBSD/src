@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.21.2.1 2020/04/08 17:56:08 bouyer Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.21.2.2 2020/04/16 08:46:34 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -6,6 +6,7 @@ include 	"arch/xen/conf/std.xen"
 
 options		XENPV		# PV dom0 support
 #options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
+options 	NO_PREEMPTION
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -212,6 +213,7 @@ balloon*	at xenbus?		# Xen balloon device
 # PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
+options 	NO_PCI_MSI_MSIX
 
 # PCI bridges
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
