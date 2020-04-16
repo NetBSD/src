@@ -24,9 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.9 2016/06/01 05:27:40 macallan Exp $");
-
 #ifndef PMUVAR_H
 #define PMUVAR_H
 

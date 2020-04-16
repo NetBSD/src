@@ -24,9 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefbreg.h,v 1.3 2018/02/16 18:12:45 macallan Exp $");
-
 #ifndef VALKYRIEFBREG_H
 #define VALKYRIEFBREG_H
 

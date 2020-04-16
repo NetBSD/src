@@ -24,9 +24,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.3 2018/05/04 17:17:48 macallan Exp $");
-
 #ifndef OBIOVAR_H
 #define OBIOVAR_H
 

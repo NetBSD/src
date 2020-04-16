@@ -36,9 +36,6 @@
  *   http://www.onsemi.com/pub_link/Collateral/ADM1026-D.PDF
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026reg.h,v 1.3 2019/12/11 21:00:11 jdc Exp $");
-
 #define ADM1026_ADDR1		0x2c
 
 #define ADM1026_CONF1		0x00

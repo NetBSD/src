@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_reg.h,v 1.7 2013/08/07 19:38:45 soren Exp $ */
+/*	$NetBSD: dbcool_reg.h,v 1.8 2020/04/16 21:56:42 rin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,9 +35,6 @@
 
 #ifndef DBCOOLREG_H
 #define DBCOOLREG_H
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.7 2013/08/07 19:38:45 soren Exp $");
 
 #define DBCOOL_ADDRMASK		0x3fc
 #define	DBCOOL_ADDR		0x2c	/* Some chips have multiple addrs */

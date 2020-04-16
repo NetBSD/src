@@ -1,4 +1,4 @@
-/*	$NetBSD: gffbreg.h,v 1.3 2013/10/23 13:15:47 macallan Exp $	*/
+/*	$NetBSD: gffbreg.h,v 1.4 2020/04/16 21:56:42 rin Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -30,9 +30,6 @@
  * tested on macppc only so far
  * register definitions are mostly from the xf86-video-nv driver
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.3 2013/10/23 13:15:47 macallan Exp $");
 
 #ifndef GFFBREG_H
 #define GFFBREG_H
