@@ -1,6 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.2 2011/08/10 06:30:59 cherry Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.2.64.1 2020/04/16 17:44:54 bouyer Exp $	*/
 
 #include <x86/intrdefs.h>
-#ifdef XEN
 #include <xen/intrdefs.h>
-#endif /* XEN */
