@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117.4.4 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.5 2020/04/16 17:44:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -262,9 +262,13 @@ struct cpu_info {
 	vaddr_t		ci_svs_utls;
 #endif
 
+#ifndef XENPV
+	struct evcnt ci_ipi_events[X86_NIPI];
+#else
+	struct evcnt ci_ipi_events[XEN_NIPIS];
+#endif
 #ifdef XEN
 	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-	struct evcnt ci_ipi_events[XEN_NIPIS];
 	evtchn_port_t ci_ipi_evtchn;
 #if defined(XENPV)
 #if defined(PAE) || defined(__x86_64__)
@@ -299,9 +303,6 @@ struct cpu_info {
 	 */
 	uint64_t	ci_xen_systime_ns_skew;
 
-	/* Xen periodic timer interrupt handle.  */
-	struct intrhand	*ci_xen_timer_intrhand;
-
 	/*
 	 * Clockframe for timer interrupt handler.
 	 * Saved at entry via event callback.
@@ -316,11 +317,11 @@ struct cpu_info {
 	struct evcnt	ci_xen_raw_systime_backwards_evcnt;
 	struct evcnt	ci_xen_systime_backwards_hardclock_evcnt;
 	struct evcnt	ci_xen_missed_hardclock_evcnt;
-#else   /* XEN */
-	struct evcnt ci_ipi_events[X86_NIPI];
 #endif	/* XEN */
-
 };
+#ifndef XENPV
+	__CTASSERT(XEN_NIPIS <= X86_NIPI);
+#endif
 
 /*
  * Macros to handle (some) trapframe registers for common x86 code.
