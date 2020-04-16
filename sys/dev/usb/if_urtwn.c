@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.10 2020/04/16 15:33:07 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.11 2020/04/16 17:24:49 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.10 2020/04/16 15:33:07 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.11 2020/04/16 17:24:49 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2923,7 +2923,10 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	/* Get the number of encapsulated frames. */
 	stat = (struct r92c_rx_desc_usb *)buf;
-	npkts = MS(le32toh(stat->rxdw2), R92C_RXDW2_PKTCNT);
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		npkts = MS(le32toh(stat->rxdw2), R92E_RXDW2_PKTCNT);
+	else
+		npkts = MS(le32toh(stat->rxdw2), R92C_RXDW2_PKTCNT);
 	DPRINTFN(DBG_RX, ("%s: %s: Rx %d frames in one chunk\n",
 	    device_xname(sc->sc_dev), __func__, npkts));
 
