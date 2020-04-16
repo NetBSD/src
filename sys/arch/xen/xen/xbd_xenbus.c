@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.114 2020/04/15 10:16:47 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.115 2020/04/16 09:51:40 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.114 2020/04/15 10:16:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.115 2020/04/16 09:51:40 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -1207,8 +1207,11 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 static int
 xbd_map_align(struct xbd_xenbus_softc *sc, struct xbd_req *req)
 {
-	/* Only can get here if this is physio() request */
-	KASSERT(req->req_bp->b_saveaddr != NULL);
+	/*
+	 * Only can get here if this is physio() request, block I/O
+	 * uses DEV_BSIZE-aligned buffers.
+	 */
+	KASSERT((req->req_bp->b_flags & B_PHYS) != 0);
 
 	sc->sc_cnt_map_unalign.ev_count++;
 
