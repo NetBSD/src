@@ -20,6 +20,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platinumfbreg.h,v 1.3 2020/04/16 23:29:52 rin Exp $");
+
 #ifndef PLATINUMFBREG_H
 #define PLATINUMFBREG_H
 
