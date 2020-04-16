@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.404 2020/04/14 07:31:52 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.405 2020/04/16 21:20:43 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.404 2020/04/14 07:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.405 2020/04/16 21:20:43 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2405,7 +2405,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
 	 */
-	SLIST_FOREACH(pv, &md->pvh_list, pv_link) {
+	for (pv = SLIST_FIRST(&md->pvh_list); pv != NULL;) {
 		pmap_t pm = pv->pv_pmap;
 		const vaddr_t va = pv->pv_va;
 		const u_int oflags = pv->pv_flags;
@@ -2414,19 +2414,43 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		 * Kernel entries are unmanaged and as such not to be changed.
 		 */
 		if (PV_IS_KENTRY_P(oflags))
-			continue;
-#endif
-		pv->pv_flags &= ~maskbits;
-
-		pmap_release_page_lock(md);
-		pmap_acquire_pmap_lock(pm);
-
-		struct l2_bucket * const l2b = pmap_get_l2_bucket(pm, va);
-		if (l2b == NULL) {
-			pmap_release_pmap_lock(pm);
-			pmap_acquire_page_lock(md);
+			pv = SLIST_NEXT(pv, pv_link);
 			continue;
 		}
+#endif
+
+		/*
+		 * Anything to do?
+		 */
+		if ((oflags & maskbits) == 0) {
+			pv = SLIST_NEXT(pv, pv_link);
+			continue;
+		}
+
+		/*
+		 * Try to get a hold on the pmap's lock.  We must do this
+		 * while still holding the page locked, to know that the
+		 * page is still associated with the pmap and the mapping is
+		 * in place.  If a hold can't be had, unlock and wait for
+		 * the pmap's lock to become available and retry.  The pmap
+		 * must be ref'd over this dance to stop it disappearing
+		 * behind us.
+		 */
+		if (!mutex_tryenter(&pm->pm_lock)) {
+			pmap_reference(pm);
+			pmap_release_page_lock(md);
+			pmap_acquire_pmap_lock(pm);
+			/* nothing, just wait for it */
+			pmap_release_pmap_lock(pm);
+			pmap_destroy(pm);
+			/* Restart from the beginning. */
+			pmap_acquire_page_lock(md);
+			pv = SLIST_FIRST(&md->pvh_list);
+			continue;
+		}
+		pv->pv_flags &= ~maskbits;
+
+		struct l2_bucket * const l2b = pmap_get_l2_bucket(pm, va);
 		KASSERTMSG(l2b != NULL, "%#lx", va);
 
 		pt_entry_t * const ptep = &l2b->l2b_kva[l2pte_index(va)];
@@ -2476,11 +2500,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 			/* make the pte read only */
 			npte = l2pte_set_readonly(npte);
 
-			pmap_acquire_page_lock(md);
-#ifdef MULTIPROCESSOR
-			pv = pmap_find_pv(md, pm, va);
-#endif
-			if (pv != NULL && (maskbits & oflags & PVF_WRITE)) {
+			if ((maskbits & oflags & PVF_WRITE)) {
 				/*
 				 * Keep alias accounting up to date
 				 */
@@ -2506,7 +2526,6 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 #endif
 #endif /* PMAP_CACHE_VIPT */
 			}
-			pmap_release_page_lock(md);
 		}
 
 		if (maskbits & PVF_REF) {
@@ -2548,11 +2567,13 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		}
 
 		pmap_release_pmap_lock(pm);
-		pmap_acquire_page_lock(md);
 
 		NPDEBUG(PDB_BITS,
 		    printf("pmap_clearbit: pm %p va 0x%lx opte 0x%08x npte 0x%08x\n",
 		    pm, va, opte, npte));
+
+		/* Move to next entry. */
+		pv = SLIST_NEXT(pv, pv_link);
 	}
 
 #if defined(PMAP_CACHE_VIPT)
@@ -2560,9 +2581,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	 * If we need to sync the I-cache and we haven't done it yet, do it.
 	 */
 	if (need_syncicache) {
-		pmap_release_page_lock(md);
 		pmap_syncicache_page(md, pa);
-		pmap_acquire_page_lock(md);
 		PMAPCOUNT(exec_synced_clearbit);
 	}
 #ifndef ARM_MMU_EXTENDED
@@ -2900,25 +2919,47 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 	pmap_clean_page(md, false);
 #endif
 
-	while ((pv = *pvp) != NULL) {
+	for (pv = *pvp; pv != NULL;) {
 		pmap_t pm = pv->pv_pmap;
 #ifndef ARM_MMU_EXTENDED
 		if (flush == false && pmap_is_current(pm))
 			flush = true;
 #endif
 
+#ifdef PMAP_CACHE_VIPT
+		if (pm == pmap_kernel() && PV_IS_KENTRY_P(pv->pv_flags)) {
+			/* If this was unmanaged mapping, it must be ignored. */
+			pvp = &SLIST_NEXT(pv, pv_link);
+			pv = *pvp;
+			continue;
+		}
+#endif
+
+		/*
+		 * Try to get a hold on the pmap's lock.  We must do this
+		 * while still holding the page locked, to know that the
+		 * page is still associated with the pmap and the mapping is
+		 * in place.  If a hold can't be had, unlock and wait for
+		 * the pmap's lock to become available and retry.  The pmap
+		 * must be ref'd over this dance to stop it disappearing
+		 * behind us.
+		 */
+		if (!mutex_tryenter(&pm->pm_lock)) {
+			pmap_reference(pm);
+			pmap_release_page_lock(md);
+			pmap_acquire_pmap_lock(pm);
+			/* nothing, just wait for it */
+			pmap_release_pmap_lock(pm);
+			pmap_destroy(pm);
+			/* Restart from the beginning. */
+			pmap_acquire_page_lock(md);
+			pvp = &SLIST_FIRST(&md->pvh_list);
+			pv = *pvp;
+			continue;
+		}
+
 		if (pm == pmap_kernel()) {
 #ifdef PMAP_CACHE_VIPT
-			/*
-			 * If this was unmanaged mapping, it must be preserved.
-			 * Move it back on the list and advance the end-of-list
-			 * pointer.
-			 */
-			if (PV_IS_KENTRY_P(pv->pv_flags)) {
-				*pvp = pv;
-				pvp = &SLIST_NEXT(pv, pv_link);
-				continue;
-			}
 			if (pv->pv_flags & PVF_WRITE)
 				md->krw_mappings--;
 			else
@@ -2930,7 +2971,6 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		PMAPCOUNT(unmappings);
 
 		pmap_release_page_lock(md);
-		pmap_acquire_pmap_lock(pm);
 
 		l2b = pmap_get_l2_bucket(pm, pv->pv_va);
 		KASSERTMSG(l2b != NULL, "%#lx", pv->pv_va);
@@ -2964,12 +3004,12 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 
 		pool_put(&pmap_pv_pool, pv);
 		pmap_acquire_page_lock(md);
-#ifdef MULTIPROCESSOR
+
 		/*
 		 * Restart at the beginning of the list.
 		 */
 		pvp = &SLIST_FIRST(&md->pvh_list);
-#endif
+		pv = *pvp;
 	}
 	/*
 	 * if we reach the end of the list and there are still mappings, they
