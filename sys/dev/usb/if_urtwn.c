@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.9 2020/04/13 08:04:49 martin Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.10 2020/04/16 15:33:07 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.9 2020/04/13 08:04:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.10 2020/04/16 15:33:07 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2762,7 +2762,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		 */
 		DPRINTFN(DBG_RX, ("%s: %s: CRC error\n",
 		    device_xname(sc->sc_dev), __func__));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -2775,13 +2775,13 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		DPRINTFN(DBG_RX, ("%s: %s: packet too short %d\n",
 		    device_xname(sc->sc_dev), __func__, pktlen));
 		vap->iv_stats.is_rx_tooshort++;
-		ifp->if_ierrors++;
+		if_statinc(ifp,if_ierrors);
 		return;
 	}
 	if (__predict_false(pktlen > MCLBYTES)) {
 		DPRINTFN(DBG_RX, ("%s: %s: packet too big %d\n",
 		    device_xname(sc->sc_dev), __func__, pktlen));
-		ifp->if_ierrors++;
+               	if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -2805,7 +2805,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	if (__predict_false(m == NULL)) {
 		aprint_error_dev(sc->sc_dev, "couldn't allocate rx mbuf\n");
 		vap->iv_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
+               	if_statinc(ifp, if_ierrors);
 		return;
 	}
 	if (pktlen > (int)MHLEN) {
@@ -2815,7 +2815,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 			    "couldn't allocate rx mbuf cluster\n");
 			m_freem(m);
 			vap->iv_stats.is_rx_nobuf++;
-			ifp->if_ierrors++;
+                	if_statinc(ifp, if_ierrors);
 			return;
 		}
 	}
@@ -3000,13 +3000,13 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(pipe);
 			}
 			printf("ERROR1\n");
-			ifp->if_oerrors++;
+                	if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
 		return;
 	}
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 	urtwn_start(ifp); 
 	splx(s);
 
@@ -3308,7 +3308,7 @@ urtwn_start(struct ifnet *ifp)
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
 			printf("ERROR6\n");
-			ifp->if_oerrors++;
+                	if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
@@ -3316,7 +3316,7 @@ urtwn_start(struct ifnet *ifp)
 		if (ni == NULL) {
 			m_freem(m);
 			printf("ERROR5\n");
-			ifp->if_oerrors++;
+                	if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -3327,7 +3327,7 @@ urtwn_start(struct ifnet *ifp)
 			m_freem(m);
 			ieee80211_free_node(ni);
 			printf("ERROR3\n");
-			ifp->if_oerrors++;
+                	if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		m_freem(m);
@@ -3352,7 +3352,7 @@ urtwn_watchdog(struct ifnet *ifp)
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* urtwn_init(ifp); XXX needs a process context! */
 			printf("ERROR2\n");
-			ifp->if_oerrors++;
+                	if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;
@@ -3449,7 +3449,7 @@ urtwn_parent(struct ieee80211com *ic)
 static void
 urtwn_scan_start(struct ieee80211com *ic)
 {
-	struct urtwn_softc *sc = ic->ic_softc;
+	//struct urtwn_softc *sc = ic->ic_softc;
 	//uint32_t reg;
 	//int s;
 
@@ -3512,7 +3512,7 @@ urtwn_scan_start(struct ieee80211com *ic)
 static void
 urtwn_scan_end(struct ieee80211com *ic)
 {
-	struct urtwn_softc *sc = ic->ic_softc;
+	//struct urtwn_softc *sc = ic->ic_softc;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
 
@@ -3565,9 +3565,9 @@ urtwn_transmit(struct ieee80211com *ic, struct mbuf *m)
 
         IF_ENQUEUE(&sc->sc_sendq, m);
 
-        vap->iv_ifp->if_obytes += pktlen;
+        if_statadd(vap->iv_ifp, if_obytes, pktlen);
         if (mcast)
-                vap->iv_ifp->if_omcasts++;
+                if_statinc(vap->iv_ifp, if_omcasts);
 
         if ((vap->iv_ifp->if_flags & IFF_OACTIVE) == 0)
                 if_start_lock(vap->iv_ifp);
@@ -3626,7 +3626,7 @@ urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
 	error = urtwn_tx(sc, m, ni, data);
 	if (error != 0) {
 		printf("ERROR3\n");
-		vap->iv_ifp->if_oerrors++;
+                if_statinc(vap->iv_ifp, if_oerrors);
 	} else {
 		sc->tx_timer = 5;
 		vap->iv_ifp->if_timer = 1;
