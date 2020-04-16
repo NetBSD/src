@@ -1,4 +1,4 @@
-/*	$NetBSD: deqvar.h,v 1.4 2020/04/16 21:56:41 rin Exp $	*/
+/*	$NetBSD: deqvar.h,v 1.5 2020/04/16 23:29:52 rin Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -34,6 +34,9 @@
 #ifndef DEQVAR_H
 #define DEQVAR_H
  
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: deqvar.h,v 1.5 2020/04/16 23:29:52 rin Exp $");
+
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <dev/i2c/i2cvar.h>

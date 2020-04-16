@@ -1,4 +1,4 @@
-/*	$NetBSD: i128var.h,v 1.4 2020/04/16 21:56:42 rin Exp $ */
+/*	$NetBSD: i128var.h,v 1.5 2020/04/16 23:29:53 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i128var.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
 
 /* 
  * register definition for Number Nine Imagine 128 graphics controllers

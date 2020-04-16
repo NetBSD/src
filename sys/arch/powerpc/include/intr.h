@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2020/04/16 21:56:42 rin Exp $ */
+/*	$NetBSD: intr.h,v 1.17 2020/04/16 23:29:52 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -25,6 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _LOCORE
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.17 2020/04/16 23:29:52 rin Exp $");
+#endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
 #define _POWERPC_INTR_MACHDEP_H_

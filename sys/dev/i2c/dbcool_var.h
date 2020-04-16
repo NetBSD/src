@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.15 2020/04/16 21:56:42 rin Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.16 2020/04/16 23:29:53 rin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #ifdef DEBUG
 #define DBCOOL_DEBUG
 #endif
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.16 2020/04/16 23:29:53 rin Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
