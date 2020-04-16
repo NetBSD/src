@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.10.16.5 2020/04/13 08:04:49 martin Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.10.16.6 2020/04/16 15:32:24 nat Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -18,6 +18,8 @@
  */
 #ifndef _IF_URTWNVAR_H_
 #define _IF_URTWNVAR_H_
+
+#include <sys/rndsource.h>
 
 /*
  * Driver definitions.
