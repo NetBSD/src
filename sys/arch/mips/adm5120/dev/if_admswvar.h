@@ -1,4 +1,4 @@
-/* $NetBSD: if_admswvar.h,v 1.6 2018/09/03 16:29:25 riastradh Exp $ */
+/* $NetBSD: if_admswvar.h,v 1.7 2020/04/16 21:56:41 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,9 +32,6 @@
  */
 #ifndef	_IF_ADMSWVAR_H_
 #define	_IF_ADMSWVAR_H_
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.6 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
