@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.151 2020/03/21 22:45:47 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.152 2020/04/17 14:33:42 kamil Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -172,9 +172,9 @@
 					       __CONCAT(_,b))
 #endif
 #define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	\
-	typedef struct { \
-		unsigned int y ## z : /*CONSTCOND*/(x) ? 1 : -1; \
+#define	__CTASSERT1(x, y, z)						\
+	typedef struct y ## z ## _struct __unused {			\
+		unsigned int y ## z : /*CONSTCOND*/(x) ? 1 : -1;	\
 	} y ## z ## _struct __unused
 
 /*
