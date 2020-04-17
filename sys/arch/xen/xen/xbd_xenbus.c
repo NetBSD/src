@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.116 2020/04/16 16:38:43 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.117 2020/04/17 10:32:19 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.116 2020/04/16 16:38:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.117 2020/04/17 10:32:19 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -185,12 +185,6 @@ struct xbd_xenbus_softc {
 	struct evcnt sc_cnt_queue_full;
 	struct evcnt sc_cnt_indirect;
 };
-
-#if 0
-/* too big to be on stack */
-static multicall_entry_t rq_mcl[XBD_RING_SIZE+1];
-static paddr_t rq_pages[XBD_RING_SIZE];
-#endif
 
 static int  xbd_xenbus_match(device_t, cfdata_t, void *);
 static void xbd_xenbus_attach(device_t, device_t, void *);
