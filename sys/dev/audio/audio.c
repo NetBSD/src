@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.65 2020/03/26 13:32:03 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.66 2020/04/17 07:48:35 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.65 2020/03/26 13:32:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.66 2020/04/17 07:48:35 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5468,7 +5468,9 @@ audio_pintr(void *arg)
 		return;
 	if (sc->sc_pbusy == false) {
 #if defined(DIAGNOSTIC)
-		device_printf(sc->sc_dev, "stray interrupt\n");
+		device_printf(sc->sc_dev,
+		    "DIAGNOSTIC: %s raised stray interrupt\n",
+		    device_xname(sc->hw_dev));
 #endif
 		return;
 	}
@@ -5737,7 +5739,9 @@ audio_rintr(void *arg)
 		return;
 	if (sc->sc_rbusy == false) {
 #if defined(DIAGNOSTIC)
-		device_printf(sc->sc_dev, "stray interrupt\n");
+		device_printf(sc->sc_dev,
+		    "DIAGNOSTIC: %s raised stray interrupt\n",
+		    device_xname(sc->hw_dev));
 #endif
 		return;
 	}
