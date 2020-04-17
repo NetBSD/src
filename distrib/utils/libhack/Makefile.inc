@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.35 2020/04/05 11:18:02 martin Exp $
+# $NetBSD: Makefile.inc,v 1.36 2020/04/17 14:55:24 jdolecek Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -24,7 +24,8 @@ CPPFLAGS+=	-DLIBHACK
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
 		nl_langinfo.o strcasecmp.o \
-		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o
+		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o \
+	    aligned_alloc.o
 
 .if (${USE_YP} != "no")
 HACKOBJS+=	yplib.o
@@ -90,6 +91,7 @@ localeconv.o:	${HACKSRC}/localeconv.c
 multibyte.o:	${HACKSRC}/multibyte.c
 perror.o:	${HACKSRC}/perror.c
 jemalloc.o:	${HACKSRC}/../../../lib/libc/stdlib/jemalloc.c
+aligned_alloc.o:	${HACKSRC}/../../../lib/libc/stdlib/aligned_alloc.c
 runetable.o:	${HACKSRC}/../../../lib/libc/locale/runetable.c
 setlocale.o:	${HACKSRC}/setlocale.c
 strerror.o:	${HACKSRC}/strerror.c
