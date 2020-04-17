@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.405 2020/04/16 21:20:43 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.406 2020/04/17 08:17:06 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.405 2020/04/16 21:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.406 2020/04/17 08:17:06 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -3133,9 +3133,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pv_entry *old_pv = NULL;
 	int error = 0;
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, " (pm %#jx va %#jx pa %#jx prot %#jx",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm %#jx va %#jx pa %#jx prot %#jx",
 	    (uintptr_t)pm, va, pa, prot);
 	UVMHIST_LOG(maphist, "  flag %#jx", flags, 0, 0, 0);
 
@@ -3503,8 +3502,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
 	SLIST_HEAD(,pv_entry) opv_list;
 	struct pv_entry *pv, *npv;
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
 	    (uintptr_t)pm, sva, eva, 0);
 
 #ifdef PMAP_FAULTINFO
@@ -3751,9 +3750,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	UVMHIST_FUNC(__func__);
 
 	if (pmap_initialized) {
-		UVMHIST_CALLED(maphist);
-		UVMHIST_LOG(maphist, " (va=%#jx, pa=%#jx, prot=%#jx, flags=%#jx",
-		    va, pa, prot, flags);
+		UVMHIST_CALLARGS(maphist,
+		    "va=%#jx, pa=%#jx, prot=%#jx, flags=%#jx", va, pa, prot,
+		     flags);
 	}
 
 	pmap_t kpm = pmap_kernel();
@@ -3908,9 +3907,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	PMAPCOUNT(kenter_unmappings);
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, " (va=%#jx, len=%#jx)", va, len, 0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, " (va=%#jx, len=%#jx)", va, len, 0, 0);
 
 	const vaddr_t eva = va + len;
 	pmap_t kpm = pmap_kernel();
@@ -4425,14 +4423,14 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	const size_t l1slot = l1pte_index(va);
 	int rv = 0;
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm=%#jx, va=%#jx, ftype=%#jx, user=%jd",
+	    (uintptr_t)pm, va, ftype, user);
 
 	va = trunc_page(va);
 
 	KASSERT(!user || (pm != pmap_kernel()));
 
-	UVMHIST_LOG(maphist, " (pm=%#jx, va=%#jx, ftype=%#jx, user=%jd)",
-	    (uintptr_t)pm, va, ftype, user);
 #ifdef ARM_MMU_EXTENDED
 	UVMHIST_LOG(maphist, " ti=%#jx pai=%#jx asid=%#jx",
 	    (uintptr_t)cpu_tlb_info(curcpu()),
@@ -4897,7 +4895,12 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 void
 pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	UVMHIST_CALLARGS(maphist, "pm %#jx (pm->pm_l1_pa %08jx asid %ju)",
+	    (uintptr_t)pm, pm->pm_l1_pa, pai->pai_asid, 0);
 
 	/*
 	 * Assume that TTBR1 has only global mappings and TTBR0 only
@@ -4911,9 +4914,6 @@ pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 	arm_isb();
 
 	pmap_tlb_asid_acquire(pm, l);
-
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 
 	cpu_setttb(pm->pm_l1_pa, pai->pai_asid);
 	/*
@@ -4939,7 +4939,8 @@ void
 pmap_md_pdetab_deactivate(pmap_t pm)
 {
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
 
 	kpreempt_disable();
 	struct cpu_info * const ci = curcpu();
@@ -4967,10 +4968,9 @@ pmap_activate(struct lwp *l)
 	extern int block_userspace_access;
 	pmap_t npm = l->l_proc->p_vmspace->vm_map.pmap;
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(l=%#jx) pm=%#jx", (uintptr_t)l, (uintptr_t)npm,
-	    0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "l=%#jx pm=%#jx", (uintptr_t)l,
+	    (uintptr_t)npm, 0, 0);
 
 	struct cpu_info * const ci = curcpu();
 
@@ -5125,10 +5125,9 @@ pmap_deactivate(struct lwp *l)
 {
 	pmap_t pm = l->l_proc->p_vmspace->vm_map.pmap;
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(l=%#jx) pm=%#jx", (uintptr_t)l, (uintptr_t)pm,
-	    0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "l=%#jx (pm=%#jx)", (uintptr_t)l,
+		(uintptr_t)pm, 0, 0);
 
 #ifdef ARM_MMU_EXTENDED
 	pmap_md_pdetab_deactivate(pm);
@@ -5150,9 +5149,8 @@ void
 pmap_update(pmap_t pm)
 {
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
 	    pm->pm_remove_all, 0, 0);
 
 #ifndef ARM_MMU_EXTENDED
@@ -5263,13 +5261,12 @@ pmap_remove_all(pmap_t pm)
 void
 pmap_destroy(pmap_t pm)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
+	    pm ? pm->pm_remove_all : 0, 0, 0);
 
 	if (pm == NULL)
 		return;
-
-	UVMHIST_LOG(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
-	    pm->pm_remove_all, 0, 0);
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
