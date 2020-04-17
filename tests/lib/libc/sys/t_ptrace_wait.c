@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.170 2020/04/14 22:37:24 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.171 2020/04/17 22:53:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.170 2020/04/14 22:37:24 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.171 2020/04/17 22:53:52 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -74,18 +74,14 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.170 2020/04/14 22:37:24 kamil Exp $");
 #ifdef ENABLE_TESTS
 
 /* Assumptions in the kernel code that must be kept. */
-static_assert(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
-    sizeof(((siginfo_t *)0)->si_pe_report_event),
-    "pe_report_event and si_pe_report_event must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
-    sizeof(((siginfo_t *)0)->si_pe_other_pid),
-    "pe_other_pid and si_pe_other_pid must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_lwp) ==
-    sizeof(((siginfo_t *)0)->si_pe_lwp),
-    "pe_lwp and si_pe_lwp must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
-    sizeof(((struct ptrace_state *)0)->pe_lwp),
-    "pe_other_pid and pe_lwp must be of the same size");
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
+    sizeof(((siginfo_t *)0)->si_pe_report_event));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((siginfo_t *)0)->si_pe_other_pid));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_lwp) ==
+    sizeof(((siginfo_t *)0)->si_pe_lwp));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((struct ptrace_state *)0)->pe_lwp));
 
 #include "h_macros.h"
 
