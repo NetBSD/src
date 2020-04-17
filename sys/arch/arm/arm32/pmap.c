@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.406 2020/04/17 08:17:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.407 2020/04/17 11:21:06 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.406 2020/04/17 08:17:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.407 2020/04/17 11:21:06 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2413,7 +2413,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		/*
 		 * Kernel entries are unmanaged and as such not to be changed.
 		 */
-		if (PV_IS_KENTRY_P(oflags))
+		if (PV_IS_KENTRY_P(oflags)) {
 			pv = SLIST_NEXT(pv, pv_link);
 			continue;
 		}
