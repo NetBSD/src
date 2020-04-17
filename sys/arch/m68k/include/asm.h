@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.33 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.34 2020/04/17 14:19:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -139,8 +139,8 @@
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
 
-#define RCSID(x)	.pushsection ".ident"	;	\
-			.asciz x		;	\
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
 			.popsection
 
 /*
