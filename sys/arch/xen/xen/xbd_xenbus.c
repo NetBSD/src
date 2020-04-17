@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.117 2020/04/17 10:32:19 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.118 2020/04/17 10:35:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.117 2020/04/17 10:32:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.118 2020/04/17 10:35:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -250,7 +250,7 @@ const struct cdevsw xbd_cdevsw = {
 
 extern struct cfdriver xbd_cd;
 
-static struct dkdriver xbddkdriver = {
+static const struct dkdriver xbddkdriver = {
         .d_strategy = xbdstrategy,
 	.d_minphys = xbdminphys,
 	.d_open = xbdopen,
