@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.11 2020/04/16 17:24:49 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.12 2020/04/17 13:44:37 martin Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.11 2020/04/16 17:24:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.12 2020/04/17 13:44:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3452,7 +3452,9 @@ urtwn_parent(struct ieee80211com *ic)
 static void
 urtwn_scan_start(struct ieee80211com *ic)
 {
-	//struct urtwn_softc *sc = ic->ic_softc;
+#ifdef URTWN_DEBUG
+	struct urtwn_softc *sc = ic->ic_softc;
+#endif
 	//uint32_t reg;
 	//int s;
 
@@ -3515,7 +3517,9 @@ urtwn_scan_start(struct ieee80211com *ic)
 static void
 urtwn_scan_end(struct ieee80211com *ic)
 {
-	//struct urtwn_softc *sc = ic->ic_softc;
+#ifdef URTWN_DEBUG
+	struct urtwn_softc *sc = ic->ic_softc;
+#endif
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
 
