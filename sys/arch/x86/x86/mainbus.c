@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3.12.2 2020/04/16 08:46:35 bouyer Exp $ */
+/* $NetBSD: mainbus.c,v 1.3.12.3 2020/04/18 15:06:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.2 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.3 2020/04/18 15:06:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+#if defined(XENPVHVM)
+	xen_hvm_init(); /* before attaching CPUs */
+#endif
+
 #if defined(XENPV)
 	if (xendomain_is_dom0()) {
 #endif /* XENPV */
@@ -226,6 +230,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* XENPV */
 #if defined(XEN)
+	/*
+	 * before isa/pci probe, so that PV devices are not probed again
+	 * as emulated
+	 */
 	xen_mainbus_attach(parent, self, aux);
 #endif
 #if defined(__i386__) && !defined(XENPV)

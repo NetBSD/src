@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.49.10.2 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.49.10.3 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -58,6 +58,10 @@
 #include "isa.h"
 #include "pci.h"
 
+struct cpu_info;
+
+int xen_hvm_init(void);
+int xen_hvm_init_cpu(struct cpu_info *);
 void xen_mainbus_attach(device_t, device_t, void *);
 
 struct hypervisor_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.181.4.3 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.3 2020/04/18 15:06:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $")
 
 #include "acpica.h"		/* for NACPICA, for mp_verbose */
 
+#include <x86/machdep.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -128,6 +129,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.2 2020/04/16 09:45:56 bouyer Exp $")
 #if NHYPERV > 0
 #include <x86/x86/hypervvar.h>
 #endif
+#endif
+
+#ifdef XEN
+#include <xen/hypervisor.h>
 #endif
 
 static int	cpu_match(device_t, cfdata_t, void *);
@@ -442,7 +447,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			/* Enable lapic. */
 			lapic_enable();
 			lapic_set_lvt();
-			lapic_calibrate_timer(ci);
+			if (vm_guest != VM_GUEST_XENPVHVM)
+				lapic_calibrate_timer(ci);
 		}
 #endif
 		/* Make sure DELAY() is initialized. */
@@ -459,6 +465,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_identify(ci);
 		x86_errata();
 		x86_cpu_idle_init();
+		(*x86_cpu_initclock_func)();
+#ifdef XENPVHVM
+		xen_hvm_init_cpu(ci);
+#endif
 		break;
 
 	case CPU_ROLE_BP:
@@ -466,6 +476,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_identify(ci);
 		x86_errata();
 		x86_cpu_idle_init();
+#ifdef XENPVHVM
+		xen_hvm_init_cpu(ci);
+#endif
+		(*x86_cpu_initclock_func)();
 		break;
 
 #ifdef MULTIPROCESSOR
@@ -971,7 +985,6 @@ cpu_hatch(void *v)
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
-	lapic_initclocks();
 #endif
 
 	fpuinit(ci);
@@ -984,6 +997,10 @@ cpu_hatch(void *v)
 	 * above.
 	 */
 	cpu_init(ci);
+#ifdef XENPVHVM
+	xen_hvm_init_cpu(ci);
+#endif
+	(*x86_cpu_initclock_func)();
 	cpu_get_tsc_freq(ci);
 
 	s = splhigh();

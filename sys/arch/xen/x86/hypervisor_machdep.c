@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.3 2020/04/16 17:50:52 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.4 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.3 2020/04/16 17:50:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.4 2020/04/18 15:06:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.3 2020/04/16 17:50:52 
 
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+
+#include <x86/machdep.h>
+#include <x86/cpuvar.h>
 
 #include <xen/xen.h>
 #include <xen/intr.h>
@@ -315,8 +318,8 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 		hypervisor_force_callback();
 	} else {
 		if (__predict_false(xen_send_ipi(ci, XEN_IPI_HVCB))) {
-			panic("xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
-			    (int) ci->ci_cpuid);
+			panic("xen_send_ipi(cpu%d id %d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid, ci->ci_vcpuid);
 		}
 	}
 }
@@ -422,8 +425,8 @@ hypervisor_set_ipending(uint32_t imask, int l1, int l2)
 	if (__predict_false(ci != curcpu())) {
 		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
 			panic("hypervisor_set_ipending: "
-			    "xen_send_ipi(cpu%d, XEN_IPI_HVCB) failed\n",
-			    (int) ci->ci_cpuid);
+			    "xen_send_ipi(cpu%d id %d, XEN_IPI_HVCB) failed\n",
+			    (int) ci->ci_cpuid, ci->ci_vcpuid);
 		}
 	}
 }
@@ -448,6 +451,35 @@ hypervisor_machdep_resume(void)
 	if (!xendomain_is_dom0())
 		update_p2m_frame_list_list();
 #endif
+}
+
+/*
+ * idle_block()
+ *
+ *	Called from the idle loop when we have nothing to do but wait
+ *	for an interrupt.
+ */
+static void
+idle_block(void)
+{
+	KASSERT(curcpu()->ci_ipending == 0);
+	HYPERVISOR_block();
+	KASSERT(curcpu()->ci_ipending == 0);
+}
+
+void
+x86_cpu_idle_xen(void)
+{
+	struct cpu_info *ci = curcpu();
+	
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
+	x86_disable_intr();
+	if (!__predict_false(ci->ci_want_resched)) {
+		idle_block();
+	} else {
+		x86_enable_intr();
+	}
 }
 
 #ifdef XENPV

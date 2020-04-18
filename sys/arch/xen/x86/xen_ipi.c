@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.3 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -132,7 +132,7 @@ xen_ipi_init(void)
 
 	ci = curcpu();
 
-	vcpu = ci->ci_cpuid;
+	vcpu = ci->ci_vcpuid;
 	KASSERT(vcpu < XEN_LEGACY_MAX_VCPUS);
 
 	evtchn = bind_vcpu_to_evtch(vcpu);
@@ -231,7 +231,7 @@ xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci == curcpu());
 	KASSERT(ci != NULL);
-	if (HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL)) {
+	if (HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_vcpuid, NULL)) {
 		panic("%s shutdown failed.\n", device_xname(ci->ci_dev));
 	}
 
