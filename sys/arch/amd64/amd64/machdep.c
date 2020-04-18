@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.346.4.2 2020/04/16 09:45:56 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.346.4.3 2020/04/18 14:47:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.2 2020/04/16 09:45:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.3 2020/04/18 14:47:55 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -278,14 +278,6 @@ extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
 #ifdef XENPV
 extern paddr_t pmap_pa_start, pmap_pa_end;
-#endif
-
-#ifndef XENPV
-void (*delay_func)(unsigned int) = i8254_delay;
-void (*initclock_func)(void) = i8254_initclocks;
-#else /* XENPV */
-void (*delay_func)(unsigned int) = xen_delay;
-void (*initclock_func)(void) = xen_initclocks;
 #endif
 
 struct nmistore {
@@ -2127,12 +2119,6 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		return EINVAL;
 
 	return 0;
-}
-
-void
-cpu_initclocks(void)
-{
-	(*initclock_func)();
 }
 
 int
