@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.20 2020/04/18 09:45:45 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.20 2020/04/18 09:45:45 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -562,7 +562,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	struct extfile_entry *efe;
 	uint64_t inf_len, obj_size;
 	uint32_t l_ea, l_ad;
-	uint32_t desc_size;
 	uint16_t crclen;
 	uint8_t *data, *pos;
 
@@ -576,7 +575,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &fe->icbtag;
 		inf_len   = udf_rw64(fe->inf_len);
 		obj_size  = 0;
-		desc_size = sizeof(struct file_entry);
 	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
 		efe       = &dscr->efe;
 		data      = efe->data;
@@ -585,7 +583,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &efe->icbtag;
 		inf_len   = udf_rw64(efe->inf_len);
 		obj_size  = udf_rw64(efe->obj_size);
-		desc_size = sizeof(struct extfile_entry);
 	} else {
 		errx(1, "Bad tag passed to udf_file_inject_blob");
 	}
