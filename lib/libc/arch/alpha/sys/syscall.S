@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.S,v 1.2 2000/06/14 06:49:03 cgd Exp $ */
+/* $NetBSD: syscall.S,v 1.3 2020/04/18 23:55:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,4 +29,4 @@
 
 #include "SYS.h"
 
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)
