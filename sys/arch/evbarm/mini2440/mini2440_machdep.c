@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.16 2019/11/10 21:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.17 2020/04/18 10:55:45 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -546,7 +546,7 @@ initarm(void *arg)
 
 	/*
 	 * Set up the variables that define the availablilty of
-	 * physical memory. 
+	 * physical memory.
          * We use the 2MB between the physical start and the kernel to
          * begin with. Allocating from 0x30200000 and downwards
 	 * If we get too close to the bottom of SDRAM, we

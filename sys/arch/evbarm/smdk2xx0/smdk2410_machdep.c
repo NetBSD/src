@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.42 2019/11/10 21:16:26 chs Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.43 2020/04/18 10:55:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.42 2019/11/10 21:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.43 2020/04/18 10:55:46 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -438,9 +438,9 @@ initarm(void *arg)
 	 * memory controller is set correctly.  (USB download firmware
 	 * doesn't do this right) Also, we use WAIT signal for them.
 	 */
-	ioreg_write32(S3C2410_MEMCTL_BASE + MEMCTL_BWSCON, 
+	ioreg_write32(S3C2410_MEMCTL_BASE + MEMCTL_BWSCON,
 	    (BWSCON_ST|BWSCON_WS) << BWSCON_BANK_SHIFT(2) |
-	    (BWSCON_ST|BWSCON_WS) << BWSCON_BANK_SHIFT(3) | 
+	    (BWSCON_ST|BWSCON_WS) << BWSCON_BANK_SHIFT(3) |
 	    ioreg_read32(S3C2410_MEMCTL_BASE + MEMCTL_BWSCON));
 	/* tweak access timing for CS8900A */
 	ioreg_write32(S3C2410_MEMCTL_BASE + MEMCTL_BANKCON(3),
@@ -539,7 +539,7 @@ initarm(void *arg)
 #else
 	/* Reserve physmem for ram disk */
 	md_root_start = ((physical_end - MD_ROOT_SIZE) & ~(L1_S_SIZE-1));
-	printf("Reserve %ld bytes for memory disk\n",  
+	printf("Reserve %ld bytes for memory disk\n",
 	    physical_end - md_root_start);
 	/* copy fs contents */
 	memcpy((void *)md_root_start, (void *)MEMORY_DISK_ROOT_ADDR,
@@ -875,7 +875,7 @@ initarm(void *arg)
 #endif
 	{
 		uint8_t  gpio = ~gpio_read8(GPIO_PFDAT);
-		
+
 		if (gpio & (1<<0)) /* SW1 (EINT0) */
 			boothowto ^= RB_SINGLE;
 		if (gpio & (1<<2)) /* SW2 (EINT2) */

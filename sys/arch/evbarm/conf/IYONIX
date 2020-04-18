@@ -1,4 +1,4 @@
-#	$NetBSD: IYONIX,v 1.4 2020/03/25 17:06:18 jdolecek Exp $
+#	$NetBSD: IYONIX,v 1.5 2020/04/18 10:55:44 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/evbarm/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -189,7 +189,7 @@ cpu0 at mainbus?
 iopxs*          at mainbus?
 
 iopaau*         at iopxs?               # Application Accelerator Unit
-iopiic*         at iopxs?               # I2C Controller Unit(s) 
+iopiic*         at iopxs?               # I2C Controller Unit(s)
 iic0            at iopiic?
 iic1            at iopiic?
 iopwdog*        at iopxs?               # Watchdog timer
