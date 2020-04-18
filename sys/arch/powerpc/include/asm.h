@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.50 2020/04/17 14:19:44 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.51 2020/04/18 10:37:37 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -156,7 +156,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 
 #undef __RCSID
 #define RCSID(x)	__RCSID(x)
-#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+#define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
 
