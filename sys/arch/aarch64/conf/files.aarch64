@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.21 2020/04/13 07:09:50 maxv Exp $
+#	$NetBSD: files.aarch64,v 1.22 2020/04/18 11:00:37 skrll Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -47,9 +47,6 @@ file	arch/arm/arm/psci_arm.S			psci
 # EFI support
 defflag	opt_efi.h		EFI_RUNTIME
 file	arch/arm/arm/efi_runtime.c		efi_runtime
-
-# PMAP_DEBUG (heavily abused option)
-defflag				PMAP_DEBUG
 
 # PMAP options
 defflag opt_pmap.h		PMAPHIST : KERNHIST

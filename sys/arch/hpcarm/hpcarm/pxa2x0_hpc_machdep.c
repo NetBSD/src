@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.28 2020/04/18 10:55:46 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.29 2020/04/18 11:00:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.28 2020/04/18 10:55:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.29 2020/04/18 11:00:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -112,10 +111,6 @@ extern paddr_t physical_end;
 extern paddr_t msgbufphys;
 
 extern int end;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif /* PMAP_DEBUG */
 
 #define	KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define	KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
@@ -544,11 +539,10 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
-		    kernelstack.pv_pa);
-#endif /* PMAP_DEBUG */
+#ifdef VERBOSE_INIT_ARM
+	printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
+	    kernelstack.pv_pa);
+#endif /* VERBOSE_INIT_ARM */
 
 	/*
 	 * Well we should set a data abort handler.

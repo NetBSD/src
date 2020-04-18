@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.26 2020/04/18 10:55:43 skrll Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.27 2020/04/18 11:00:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.26 2020/04/18 10:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.27 2020/04/18 11:00:37 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 #include "locators.h"
 
 /* Define various stack sizes in pages */
@@ -106,10 +105,6 @@ u_int free_pages;
 paddr_t msgbufphys;
 
 //static struct arm32_dma_range dma_ranges[4];
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping vectors page */
 
