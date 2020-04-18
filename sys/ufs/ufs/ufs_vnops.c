@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.251 2020/04/13 19:23:20 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.252 2020/04/18 19:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.251 2020/04/13 19:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.252 2020/04/18 19:18:34 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -556,7 +556,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = ufs_truncate_retry(vp, vap->va_size, cred);
+			error = ufs_truncate_retry(vp, 0, vap->va_size, cred);
 			if (error)
 				goto out;
 			break;

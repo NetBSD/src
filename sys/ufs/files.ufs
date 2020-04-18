@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.46 2020/04/11 17:43:54 jdolecek Exp $
+#	$NetBSD: files.ufs,v 1.47 2020/04/18 19:18:33 christos Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -52,6 +52,7 @@ define	ffs: vfs, ufs
 file	ufs/ffs/ffs_alloc.c		ffs
 file	ufs/ffs/ffs_balloc.c		ffs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
+file	ufs/ffs/ffs_extattr.c		ffs & ufs_extattr
 file	ufs/ffs/ffs_inode.c		ffs
 file	ufs/ffs/ffs_snapshot.c		ffs
 file	ufs/ffs/ffs_subr.c		ffs

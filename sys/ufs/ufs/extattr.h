@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.11 2014/12/19 10:59:21 manu Exp $	*/
+/*	$NetBSD: extattr.h,v 1.12 2020/04/18 19:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -71,6 +71,39 @@ struct ufs_extattr_header {
 	uint32_t	ueh_i_gen;	/* generation number for sanity */
 	/* data follows the header */
 };
+
+/*
+ * This structure defines the required fields of an extended-attribute header.
+ */
+struct extattr {
+	uint32_t ea_length;	    /* length of this attribute */
+	uint8_t	ea_namespace;	    /* name space of this attribute */
+	uint8_t	ea_contentpadlen;   /* bytes of padding at end of attribute */
+	uint8_t	ea_namelength;	    /* length of attribute name */
+	char	ea_name[1];	    /* attribute name (NOT nul-terminated) */
+	/* padding, if any, to align attribute content to 8 byte boundary */
+	/* extended attribute content follows */
+};
+
+/*
+ * These macros are used to access and manipulate an extended attribute:
+ *
+ * EXTATTR_NEXT(eap) returns a pointer to the next extended attribute
+ *	following eap.
+ * EXTATTR_CONTENT(eap) returns a pointer to the extended attribute
+ *	content referenced by eap.
+ * EXTATTR_CONTENT_SIZE(eap) returns the size of the extended attribute
+ *	content referenced by eap.
+ */
+#define	EXTATTR_NEXT(eap) \
+	((struct extattr *)(((u_char *)(eap)) + (eap)->ea_length))
+#define	EXTATTR_CONTENT(eap) \
+	(void *)(((u_char *)(eap)) + EXTATTR_BASE_LENGTH(eap))
+#define	EXTATTR_CONTENT_SIZE(eap) \
+	((eap)->ea_length - EXTATTR_BASE_LENGTH(eap) - (eap)->ea_contentpadlen)
+/* -1 below compensates for ea_name[1] */
+#define	EXTATTR_BASE_LENGTH(eap) \
+	roundup2((sizeof(struct extattr) - 1 + (eap)->ea_namelength), 8)
 
 #ifdef _KERNEL
 
