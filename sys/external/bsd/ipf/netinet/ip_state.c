@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.11 2018/06/03 10:37:23 maxv Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.12 2020/04/18 17:02:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.11 2018/06/03 10:37:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.12 2020/04/18 17:02:00 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -2411,7 +2411,7 @@ ipf_matchsrcdst(fr_info_t *fin, ipstate_t *is, i6addr_t *src, i6addr_t *dst,
 
 	if (tcp != NULL) {
 		sp = htons(fin->fin_sport);
-		dp = ntohs(fin->fin_dport);
+		dp = htons(fin->fin_dport);
 	}
 	if (!rev) {
 		if (tcp != NULL) {
