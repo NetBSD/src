@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.73.6.5 2020/04/16 17:50:51 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.73.6.6 2020/04/18 20:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -772,6 +772,14 @@ IDTVEC(hypervisor_pvhvm_callback)
 	incl	CPUVAR(IDEPTH)
 	movq	%rsp,%rdi
 	call	do_hypervisor_callback
+#ifndef XENPV
+	movzbl	_C_LABEL(xenhvm_use_percpu_callback),%edi
+	testl	%edi, %edi
+	jz 1f
+	movq	_C_LABEL(local_apic_va),%rdi
+	movl	$0,LAPIC_EOI(%rdi)
+1:
+#endif
 	jmp 	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
 	TEXT_USER_END

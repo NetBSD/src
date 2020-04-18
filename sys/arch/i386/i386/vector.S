@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85.6.6 2020/04/16 17:50:52 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.85.6.7 2020/04/18 20:03:02 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.6 2020/04/16 17:50:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.7 2020/04/18 20:03:02 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1019,6 +1019,14 @@ IDTVEC(hypervisor_pvhvm_callback)
 	 * Xdoreti needs it too.
 	 */
 	call	do_hypervisor_callback
+#ifndef XENPV
+	movzbl	_C_LABEL(xenhvm_use_percpu_callback),%eax
+	testl	%eax, %eax
+	jz	1f
+	movl	_C_LABEL(local_apic_va),%eax
+	movl	$0, LAPIC_EOI(%eax)
+1:
+#endif
 	jmp	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
