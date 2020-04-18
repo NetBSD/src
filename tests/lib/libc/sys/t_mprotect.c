@@ -1,7 +1,7 @@
-/* $NetBSD: t_mprotect.c,v 1.8 2019/07/16 17:29:18 martin Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.9 2020/04/18 17:44:53 christos Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.8 2019/07/16 17:29:18 martin Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.9 2020/04/18 17:44:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: t_mprotect.c,v 1.8 2019/07/16 17:29:18 martin Exp $");
 #include <atf-c.h>
 
 #include "../common/exec_prot.h"
+#include "t_mprotect_helper.h"
 
 static long	page = 0;
 static char	path[] = "mmap";
@@ -243,8 +244,8 @@ ATF_TC_BODY(mprotect_pax, tc)
 	 *   (3) making a non-executable mapping executable
 	 *
 	 *   (4) making an executable/read-only file mapping
-	 *       writable except for performing relocations
-	 *       on an ET_DYN ELF file (non-PIC shared library)
+	 *	 writable except for performing relocations
+	 *	 on an ET_DYN ELF file (non-PIC shared library)
 	 *
 	 *  The following will test only the case (3).
 	 *
@@ -383,6 +384,60 @@ ATF_TC_BODY(mprotect_mremap_exec, tc)
 	ATF_REQUIRE(munmap(map2, page) == 0);
 }
 
+ATF_TC(mprotect_mremap_fork_exec);
+ATF_TC_HEAD(mprotect_mremap_fork_exec, tc)
+{
+       atf_tc_set_md_var(tc, "descr",
+	   "Test mremap(2)+fork(2)+mprotect(2) executable space protections");
+}
+
+ATF_TC_BODY(mprotect_mremap_fork_exec, tc)
+{
+	void *map, *map2;
+	pid_t pid;
+
+	atf_tc_expect_fail("PR lib/55177");
+
+	/*
+	 * Map a page read/write/exec and duplicate it.
+	 * Map the copy executable.
+	 * Copy a function to the writeable mapping and execute it
+	 * Fork a child and wait for it
+	 * Copy a different function to the writeable mapping and execute it
+	 * The original function shouldn't be called
+	 */
+
+	map = mmap(NULL, page, PROT_READ|PROT_WRITE|PROT_MPROTECT(PROT_EXEC),
+	    MAP_ANON, -1, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+	map2 = mremap(map, page, NULL, page, MAP_REMAPDUP);
+	ATF_REQUIRE(map2 != MAP_FAILED);
+	ATF_REQUIRE(mprotect(map2, page, PROT_EXEC|PROT_READ) == 0);
+
+	memcpy(map, (void *)return_1,
+	    (uintptr_t)return_2 - (uintptr_t)return_1);
+	__builtin___clear_cache(map, (void *)((uintptr_t)map + page));
+
+	ATF_REQUIRE(((int (*)(void))map2)() == 1);
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0)
+		_exit(0);
+
+	(void)wait(NULL);
+
+	memcpy(map, (void *)return_2,
+	    (uintptr_t)return_3 - (uintptr_t)return_2);
+	__builtin___clear_cache(map, (void *)((uintptr_t)map + page));
+
+	ATF_REQUIRE(((int (*)(void))map2)() == 2);
+
+	ATF_REQUIRE(munmap(map, page) == 0);
+	ATF_REQUIRE(munmap(map2, page) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	page = sysconf(_SC_PAGESIZE);
@@ -394,6 +449,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mprotect_pax);
 	ATF_TP_ADD_TC(tp, mprotect_write);
 	ATF_TP_ADD_TC(tp, mprotect_mremap_exec);
+	ATF_TP_ADD_TC(tp, mprotect_mremap_fork_exec);
 
 	return atf_no_error();
 }
