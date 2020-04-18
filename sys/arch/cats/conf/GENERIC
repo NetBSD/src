@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.178 2020/01/29 18:39:01 maya Exp $
+# $NetBSD: GENERIC,v 1.179 2020/04/18 10:55:43 skrll Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.

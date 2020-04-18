@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.69 2020/01/19 01:25:03 thorpej Exp $
+#	$NetBSD: EB7500ATX,v 1.70 2020/04/18 10:55:43 skrll Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.69 $"
+#ident		"EB7500ATX-$Revision: 1.70 $"
 
 # estimated number of users
 maxusers	32
@@ -222,7 +222,7 @@ atapibus* at atapi?
 cs*	at rsbus?
 
 # Builtin DS1687 clock
-# Not functioning (yet) 
+# Not functioning (yet)
 #ds1687rtc*	at rsbus?
 
 pseudo-device	loop			# network loopback
