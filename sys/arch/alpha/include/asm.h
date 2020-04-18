@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.37 2020/04/17 14:19:43 joerg Exp $ */
+/* $NetBSD: asm.h,v 1.38 2020/04/18 10:30:49 martin Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -644,7 +644,7 @@ label:	ASCIZ msg;						\
  */
 #define	__SECTIONSTRING(_sec, _str)				\
 	.pushsection _sec,"MS",@progbits,1;			\
-	.asciz x;						\
+	.asciz _str;						\
 	.popsection
 
 #ifdef _KERNEL
