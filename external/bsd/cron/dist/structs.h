@@ -37,6 +37,7 @@ typedef	struct _entry {
 #define	WHEN_REBOOT	0x10
 #define	DONT_LOG	0x20
 #define	MAIL_WHEN_ERR	0x40
+#define	SINGLE_JOB	0x80
 } entry;
 
 			/* the crontab database will be a list of the
