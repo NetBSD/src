@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.33 2020/04/18 10:55:46 skrll Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.34 2020/04/18 11:00:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,13 +94,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.33 2020/04/18 10:55:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.34 2020/04/18 11:00:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,10 +168,6 @@ pv_addr_t minidataclean;
 paddr_t msgbufphys;
 
 extern int end;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
