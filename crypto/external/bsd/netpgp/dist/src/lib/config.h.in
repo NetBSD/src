@@ -39,6 +39,9 @@
 /* Define to 1 if you have the <openssl/aes.h> header file. */
 #undef HAVE_OPENSSL_AES_H
 
+/* Define to 1 if you have the <openssl/blowfish.h> header file. */
+#undef HAVE_OPENSSL_BLOWFISH_H
+
 /* Define to 1 if you have the <openssl/bn.h> header file. */
 #undef HAVE_OPENSSL_BN_H
 
@@ -120,8 +123,7 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Name of package */
