@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.118 2020/04/17 10:35:06 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.119 2020/04/18 16:58:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.118 2020/04/17 10:35:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.119 2020/04/18 16:58:00 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -281,12 +281,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	struct xenbusdev_attach_args *xa = aux;
 	blkif_sring_t *ring;
 	RING_IDX i;
-#ifdef XBD_DEBUG
-	char **dir, *val;
-	int dir_n = 0;
-	char id_str[20];
-	int err;
-#endif
 
 	config_pending_incr(self);
 	aprint_normal(": Xen Virtual Block Device Interface\n");
@@ -933,7 +927,7 @@ xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if ((flags & FWRITE) && (sc->sc_info & VDISK_READONLY))
 		return EROFS;
 
-	DPRINTF(("xbdopen(0x%04x, %d)\n", dev, flags));
+	DPRINTF(("xbdopen(%" PRIx64 ", %d)\n", dev, flags));
 	return dk_open(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
@@ -944,7 +938,7 @@ xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
 
-	DPRINTF(("xbdclose(%d, %d)\n", dev, flags));
+	DPRINTF(("xbdclose(%" PRIx64 ", %d)\n", dev, flags));
 	return dk_close(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
@@ -979,7 +973,7 @@ xbdsize(dev_t dev)
 {
 	struct	xbd_xenbus_softc *sc;
 
-	DPRINTF(("xbdsize(%d)\n", dev));
+	DPRINTF(("xbdsize(%" PRIx64 ")\n", dev));
 
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	if (sc == NULL || sc->sc_shutdown != BLKIF_SHUTDOWN_RUN)
@@ -1024,7 +1018,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	blkif_request_t *req;
 	int notify;
 
-	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
+	DPRINTF(("xbdioctl(%" PRIx64 ", %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
 
@@ -1093,7 +1087,7 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (sc == NULL)
 		return (ENXIO);
 
-	DPRINTF(("xbddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
+	DPRINTF(("xbddump(%" PRIx64 ", %" PRId64 ", %p, %lu)\n", dev, blkno, va,
 	    (unsigned long)size));
 	return dk_dump(&sc->sc_dksc, dev, blkno, va, size, 0);
 }
