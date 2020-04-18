@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.19 2019/02/03 03:19:31 mrg Exp $ */
+/* $NetBSD: udf.c,v 1.20 2020/04/18 09:45:45 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.19 2019/02/03 03:19:31 mrg Exp $");
+__RCSID("$NetBSD: udf.c,v 1.20 2020/04/18 09:45:45 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -514,6 +514,7 @@ static uint32_t
 udf_datablocks(off_t sz)
 {
 	/* predictor if it can be written inside the node */
+	/* XXX the predictor assumes NO extended attributes in the node */
 	if (sz < context.sector_size - UDF_EXTFENTRY_SIZE - 16)
 		return 0;
 
@@ -561,7 +562,7 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	struct extfile_entry *efe;
 	uint64_t inf_len, obj_size;
 	uint32_t l_ea, l_ad;
-	uint32_t free_space, desc_size;
+	uint32_t desc_size;
 	uint16_t crclen;
 	uint8_t *data, *pos;
 
@@ -590,10 +591,9 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
 
-	/* calculate free space */
-	free_space = context.sector_size - (l_ea + l_ad) - desc_size;
+	/* check if it will fit internally */
 	if (udf_datablocks(size)) {
-		assert(free_space < size);
+		/* the predictor tells it won't fit internally */
 		return 1;
 	}
 
@@ -602,7 +602,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
 			UDF_ICB_INTERN_ALLOC);
 
-	// assert(free_space >= size);
 	pos = data + l_ea + l_ad;
 	memcpy(pos, blob, size);
 	l_ad   += size;
