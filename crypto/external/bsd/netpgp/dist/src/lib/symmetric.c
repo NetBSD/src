@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.18 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.19 2020/04/18 19:27:48 jhigh Exp $");
 #endif
 
 #include "crypto.h"
@@ -80,6 +80,10 @@ __RCSID("$NetBSD: symmetric.c,v 1.18 2010/11/07 08:39:59 agc Exp $");
 
 #ifdef HAVE_OPENSSL_CAMELLIA_H
 #include <openssl/camellia.h>
+#endif
+
+#ifdef HAVE_OPENSSL_BLOWFISH_H
+#include <openssl/blowfish.h>
 #endif
 
 #include "crypto.h"
@@ -191,6 +195,81 @@ static pgp_crypt_t cast5 =
 	std_finish,
 	TRAILER
 };
+
+#ifdef HAVE_OPENSSL_BLOWFISH_H
+
+/* RFC 4880 9.2 Blowfish 128 */
+#define BLOWFISH_KEY_LENGTH	16
+
+static int
+blowfish_init(pgp_crypt_t *crypt)
+{
+        if (crypt->encrypt_key) {
+                free(crypt->encrypt_key);
+        }
+        if (crypt->keysize != BLOWFISH_KEY_LENGTH) {
+               (void) fprintf(stderr, "blowfish_init: keysize wrong\n");
+               return 0;
+        }
+        if ((crypt->encrypt_key = calloc(1, sizeof(BF_KEY))) == NULL) {
+                (void) fprintf(stderr, "blowfish_init: alloc failure\n");
+                return 0;
+        }
+        BF_set_key(crypt->encrypt_key, (int)crypt->keysize, crypt->key);
+        if ((crypt->decrypt_key = calloc(1, sizeof(BF_KEY))) == NULL) {
+                (void) fprintf(stderr, "blowfish_init: alloc failure\n");
+                return 0;
+        }
+        BF_set_key(crypt->decrypt_key, (int)crypt->keysize, crypt->key);
+        return 1;
+}
+
+static void
+blowfish_block_encrypt(pgp_crypt_t *crypt, void *out, const void *in)
+{
+        BF_ecb_encrypt(in, out, crypt->encrypt_key, BF_ENCRYPT);
+}
+
+static void
+blowfish_block_decrypt(pgp_crypt_t *crypt, void *out, const void *in)
+{
+        BF_ecb_encrypt(in, out, crypt->encrypt_key, BF_DECRYPT);
+}
+
+static void
+blowfish_cfb_encrypt(pgp_crypt_t *crypt, void *out, const void *in, size_t count)
+{
+        BF_cfb64_encrypt(in, out, (long)count,
+                         crypt->encrypt_key, crypt->iv, &crypt->num,
+                         BF_ENCRYPT);
+}
+
+static void
+blowfish_cfb_decrypt(pgp_crypt_t *crypt, void *out, const void *in, size_t count)
+{
+        BF_cfb64_encrypt(in, out, (long)count,
+                         crypt->encrypt_key, crypt->iv, &crypt->num,
+                         BF_DECRYPT);
+}
+
+static pgp_crypt_t blowfish =
+{
+        PGP_SA_BLOWFISH,
+        BF_BLOCK,
+        BLOWFISH_KEY_LENGTH,
+        std_set_iv,
+        std_set_key,
+        blowfish_init,
+        std_resync,
+        blowfish_block_encrypt,
+        blowfish_block_decrypt,
+        blowfish_cfb_encrypt,
+        blowfish_cfb_decrypt,
+        std_finish,
+        TRAILER
+};
+
+#endif /* HAVE_OPENSSL_BLOWFISH_H */
 
 #ifndef OPENSSL_NO_IDEA
 static int 
@@ -633,6 +712,11 @@ get_proto(pgp_symm_alg_t alg)
 #endif
 	case PGP_SA_TRIPLEDES:
 		return &tripledes;
+#if defined HAVE_OPENSSL_BLOWFISH_H
+	case PGP_SA_BLOWFISH:
+		return &blowfish;
+#endif
+
 	default:
 		(void) fprintf(stderr, "Unknown algorithm: %d (%s)\n",
 			alg, pgp_show_symm_alg(alg));
@@ -756,6 +840,9 @@ pgp_is_sa_supported(pgp_symm_alg_t alg)
 	case PGP_SA_AES_128:
 	case PGP_SA_AES_256:
 	case PGP_SA_CAST5:
+#if defined(HAVE_OPENSSL_BLOWFISH_H)
+	case PGP_SA_BLOWFISH:
+#endif
 	case PGP_SA_TRIPLEDES:
 #if defined(HAVE_OPENSSL_CAMELLIA_H) && !defined(OPENSSL_NO_CAMELLIA)
 	case PGP_SA_CAMELLIA_128:
