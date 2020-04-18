@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.42 2018/11/13 14:52:30 mlelstv Exp $");
+__RCSID("$NetBSD: misc.c,v 1.43 2020/04/18 19:27:48 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -816,6 +816,7 @@ static str2cipher_t	str2cipher[] = {
 	{	"idea",			PGP_SA_IDEA		},
 	{	"aes128",		PGP_SA_AES_128		},
 	{	"aes256",		PGP_SA_AES_256		},
+	{	"blowfish",		PGP_SA_BLOWFISH		},
 	{	"camellia128",		PGP_SA_CAMELLIA_128	},
 	{	"camellia256",		PGP_SA_CAMELLIA_256	},
 	{	"tripledes",		PGP_SA_TRIPLEDES	},
