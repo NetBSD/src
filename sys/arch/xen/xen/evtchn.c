@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.4 2020/04/16 08:46:36 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.5 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.4 2020/04/16 08:46:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.5 2020/04/18 15:06:18 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -564,7 +564,7 @@ bind_virq_to_evtch(int virq)
 	}
 
 	if (virq == VIRQ_TIMER) {
-		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
+		evtchn = virq_timer_to_evtch[ci->ci_vcpuid];
 	} else {
 		evtchn = virq_to_evtch[virq];
 	}
@@ -573,7 +573,7 @@ bind_virq_to_evtch(int virq)
 	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
-		op.u.bind_virq.vcpu = ci->ci_cpuid;
+		op.u.bind_virq.vcpu = ci->ci_vcpuid;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
@@ -581,7 +581,7 @@ bind_virq_to_evtch(int virq)
 
 	/* Set event channel */
 	if (virq == VIRQ_TIMER) {
-		virq_timer_to_evtch[ci->ci_cpuid] = evtchn;
+		virq_timer_to_evtch[ci->ci_vcpuid] = evtchn;
 	} else {
 		virq_to_evtch[virq] = evtchn;
 	}
@@ -603,7 +603,7 @@ unbind_virq_from_evtch(int virq)
 	struct cpu_info *ci = curcpu();
 
 	if (virq == VIRQ_TIMER) {
-		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
+		evtchn = virq_timer_to_evtch[ci->ci_vcpuid];
 	}
 	else {
 		evtchn = virq_to_evtch[virq];
@@ -623,7 +623,7 @@ unbind_virq_from_evtch(int virq)
 			panic("Failed to unbind virtual IRQ %d\n", virq);
 
 		if (virq == VIRQ_TIMER) {
-			virq_timer_to_evtch[ci->ci_cpuid] = -1;
+			virq_timer_to_evtch[ci->ci_vcpuid] = -1;
 		} else {
 			virq_to_evtch[virq] = -1;
 		}

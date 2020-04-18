@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.133 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.133.4.1 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2020/02/24 12:20:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133.4.1 2020/04/18 15:06:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -317,7 +317,7 @@ static int
 vcpu_is_up(struct cpu_info *ci)
 {
 	KASSERT(ci != NULL);
-	return HYPERVISOR_vcpu_op(VCPUOP_is_up, ci->ci_cpuid, NULL);
+	return HYPERVISOR_vcpu_op(VCPUOP_is_up, ci->ci_vcpuid, NULL);
 }
 
 static void
@@ -390,6 +390,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 	ci->ci_dev = self;
 	ci->ci_cpuid = cpunum;
+	ci->ci_vcpuid = cpunum;
 
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	KASSERT(cpunum < XEN_LEGACY_MAX_VCPUS);
@@ -455,12 +456,14 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
+		xen_cpu_initclocks();
 		break;
 
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
+		xen_cpu_initclocks();
 		break;
 
 	case CPU_ROLE_AP:
@@ -723,7 +726,7 @@ cpu_hatch(void *v)
 
 	xen_ipi_init();
 
-	xen_initclocks();
+	xen_cpu_initclocks();
 
 #ifdef __x86_64__
 	fpuinit(ci);
@@ -764,7 +767,7 @@ cpu_debug_dump(void)
 		db_printf("%p	%s	%ld	%x	%x	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
-		    (long)ci->ci_cpuid,
+		    (long)ci->ci_vcpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curlwp);
 	}
@@ -1011,7 +1014,7 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 #endif
 
 	/* Initialise the given vcpu to execute cpu_hatch(ci); */
-	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_cpuid, &vcpuctx))) {
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_vcpuid, &vcpuctx))) {
 		aprint_error(": context initialisation failed. errno = %d\n", hyperror);
 		return hyperror;
 	}
@@ -1019,12 +1022,12 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 	/* Start it up */
 
 	/* First bring it down */
-	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL))) {
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_vcpuid, NULL))) {
 		aprint_error(": VCPUOP_down hypervisor command failed. errno = %d\n", hyperror);
 		return hyperror;
 	}
 
-	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_up, ci->ci_cpuid, NULL))) {
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_up, ci->ci_vcpuid, NULL))) {
 		aprint_error(": VCPUOP_up hypervisor command failed. errno = %d\n", hyperror);
 		return hyperror;
 	}
@@ -1084,21 +1087,6 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	else
 		freq = freq >> tinfo->tsc_shift;
 	ci->ci_data.cpu_cc_freq = freq;
-}
-
-void
-x86_cpu_idle_xen(void)
-{
-	struct cpu_info *ci = curcpu();
-	
-	KASSERT(ci->ci_ilevel == IPL_NONE);
-
-	x86_disable_intr();
-	if (!__predict_false(ci->ci_want_resched)) {
-		idle_block();
-	} else {
-		x86_enable_intr();
-	}
 }
 
 /*

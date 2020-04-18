@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.1.2.2 2020/04/16 20:21:44 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.1.2.3 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.1.2.2 2020/04/16 20:21:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.1.2.3 2020/04/18 15:06:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,20 +113,6 @@ static void	xen_timepush_init(void);
 static void	xen_timepush_intr(void *);
 static int	sysctl_xen_timepush(SYSCTLFN_ARGS);
 #endif
-
-/*
- * idle_block()
- *
- *	Called from the idle loop when we have nothing to do but wait
- *	for an interrupt.
- */
-void
-idle_block(void)
-{
-	KASSERT(curcpu()->ci_ipending == 0);
-	HYPERVISOR_block();
-	KASSERT(curcpu()->ci_ipending == 0);
-}
 
 /*
  * xen_rdtsc()
@@ -521,6 +507,11 @@ xen_delay(unsigned n)
 	/* Bind to the CPU so we don't compare tsc on different CPUs.  */
 	bound = curlwp_bind();
 
+	if (curcpu()->ci_vcpu == NULL) {
+		curlwp_bindx(bound);
+		return;
+	}
+
 	/* Short wait (<500us) or long wait?  */
 	if (n < 500000) {
 		/*
@@ -655,7 +646,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* Disarm the periodic timer on Xen>=3.1 which is allegedly buggy.  */
 	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
 		error = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
-		    ci->ci_cpuid, NULL);
+		    ci->ci_vcpuid, NULL);
 		KASSERT(error == 0);
 	}
 
@@ -738,12 +729,12 @@ again:
 }
 
 /*
- * xen_initclocks()
+ * xen_cpu_initclocks()
  *
  *	Initialize the Xen clocks on the current CPU.
  */
 void
-xen_initclocks(void)
+xen_cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -751,15 +742,6 @@ xen_initclocks(void)
 	if (ci == &cpu_info_primary) {
 		/* Initialize the systemwide Xen timecounter.  */
 		tc_init(&xen_timecounter);
-
-#ifdef DOM0OPS
-		/*
-		 * If this is a privileged dom0, start pushing the wall
-		 * clock time back to the Xen hypervisor.
-		 */
-		if (xendomain_is_privileged())
-			xen_timepush_init();
-#endif
 	}
 
 	/* Attach the event counters.  */
@@ -784,6 +766,24 @@ xen_initclocks(void)
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
+}
+
+/*
+ * xen_initclocks()
+ *
+ *	Initialize the Xen global clock
+ */
+void
+xen_initclocks(void)
+{
+#ifdef DOM0OPS
+	/*
+	 * If this is a privileged dom0, start pushing the wall
+	 * clock time back to the Xen hypervisor.
+	 */
+	if (xendomain_is_privileged())
+		xen_timepush_init();
+#endif
 }
 
 #ifdef DOM0OPS

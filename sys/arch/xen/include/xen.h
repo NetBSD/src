@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.44 2019/05/09 17:09:50 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.44.8.1 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  *
@@ -69,8 +69,6 @@ void	xen_shm_init(void);
 void	xenevt_event(int);
 void	xenevt_setipending(int, int);
 void	xenevt_notify(void);
-
-void	idle_block(void);
 
 /* xen_machdep.c */
 void	sysctl_xen_suspend_setup(void);

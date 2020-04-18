@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117.4.5 2020/04/16 17:44:54 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.6 2020/04/18 15:06:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -223,6 +223,7 @@ struct cpu_info {
 	uint32_t 	ci_flags __aligned(64);/* general flags */
 	uint32_t 	ci_acpiid;	/* our ACPI/MADT ID */
 	uint32_t 	ci_initapicid;	/* our initial APIC ID */
+	uint32_t 	ci_vcpuid;	/* our CPU id for hypervisor */
 	cpuid_t		ci_cpuid;	/* our CPU ID */
 	struct cpu_info	*ci_next;	/* next cpu */
 
@@ -530,6 +531,7 @@ void	lwp_trampoline(void);
 void	xen_startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
+void	xen_cpu_initclocks(void);
 void	xen_suspendclocks(struct cpu_info *);
 void	xen_resumeclocks(struct cpu_info *);
 #endif /* XEN */
