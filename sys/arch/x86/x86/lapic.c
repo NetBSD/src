@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.76.6.2 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: lapic.c,v 1.76.6.3 2020/04/18 14:47:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.2 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.3 2020/04/18 14:47:56 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.2 2020/04/16 08:46:35 bouyer Exp $"
 
 #include <dev/ic/i8253reg.h>
 
+#include <x86/machdep.h>
 #include <machine/cpu.h>
 #include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
@@ -594,9 +595,6 @@ lapic_initclocks(void)
 	lapic_writereg(LAPIC_EOI, 0);
 }
 
-extern u_long rtclock_tval; /* XXX put in header file */
-extern void (*initclock_func)(void); /* XXX put in header file */
-
 /*
  * Calibrate the local apic count-down timer (which is running at
  * bus-clock speed) vs. the i8254 counter/timer (which is running at
@@ -638,7 +636,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
 		cur_i8254 = gettick();
 		if (cur_i8254 > initial_i8254)
-			delta = rtclock_tval - (cur_i8254 - initial_i8254);
+			delta = x86_rtclock_tval - (cur_i8254 - initial_i8254);
 		else
 			delta = initial_i8254 - cur_i8254;
 		initial_i8254 = cur_i8254;
@@ -703,7 +701,8 @@ calibrate_done:
 		 * for all our timing needs..
 		 */
 		delay_func = lapic_delay;
-		initclock_func = lapic_initclocks;
+		x86_cpu_initclock_func = lapic_initclocks;
+		x86_initclock_func = x86_dummy_initclock;
 		initrtclock(0);
 
 		if (lapic_timecounter.tc_frequency == 0) {

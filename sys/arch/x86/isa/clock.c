@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.36.6.1 2020/04/18 14:47:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.6.1 2020/04/18 14:47:56 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -214,7 +214,7 @@ static struct timecounter i8254_timecounter = {
 	NULL,			/* next */
 };
 
-u_long rtclock_tval;		/* i8254 reload value for countdown */
+u_long x86_rtclock_tval;	/* i8254 reload value for countdown */
 int    rtclock_init = 0;
 
 int clock_broken_latch = 0;
@@ -286,7 +286,7 @@ gettick_broken_latch(void)
 		return (v2);
 
 	w1 = v2 - v3;
-	w2 = v3 - v1 + rtclock_tval;
+	w2 = v3 - v1 + x86_rtclock_tval;
 	w3 = v1 - v2;
 	if (w1 >= w2) {
 		if (w1 >= w3)
@@ -319,7 +319,7 @@ initrtclock(u_long freq)
 	outb(IO_TIMER1+TIMER_CNTR0, tval % 256);
 	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
 
-	rtclock_tval = tval ? tval : 0xFFFF;
+	x86_rtclock_tval = tval ? tval : 0xFFFF;
 	rtclock_init = 1;
 }
 
@@ -357,12 +357,13 @@ tickle_tc(void)
 	if (CPU_IS_PRIMARY(ci) == 0)
 		return;
 #endif
-	if (rtclock_tval && timecounter->tc_get_timecount == i8254_get_timecount) {
+	if (x86_rtclock_tval &&
+	    timecounter->tc_get_timecount == i8254_get_timecount) {
 		__cpu_simple_lock(&tmr_lock);
 		if (i8254_ticked)
 			i8254_ticked    = 0;
 		else {
-			i8254_offset   += rtclock_tval;
+			i8254_offset   += x86_rtclock_tval;
 			i8254_lastcount = 0;
 		}
 		__cpu_simple_unlock(&tmr_lock);
@@ -402,11 +403,11 @@ i8254_get_timecount(struct timecounter *tc)
 	/* insb to make the read atomic */
 	rdval = inb(IO_TIMER1+TIMER_CNTR0);
 	rdval |= (inb(IO_TIMER1+TIMER_CNTR0) << 8);
-	count = rtclock_tval - rdval;
-	if (rtclock_tval && (count < i8254_lastcount &&
-			     (!i8254_ticked || rtclock_tval == 0xFFFF))) {
+	count = x86_rtclock_tval - rdval;
+	if (x86_rtclock_tval && (count < i8254_lastcount &&
+			     (!i8254_ticked || x86_rtclock_tval == 0xFFFF))) {
 		i8254_ticked = 1;
-		i8254_offset += rtclock_tval;
+		i8254_offset += x86_rtclock_tval;
 	}
 	i8254_lastcount = count;
 	count += i8254_offset;
@@ -481,10 +482,10 @@ i8254_delay(unsigned int n)
 		int delta;
 		cur_tick = gettick();
 		if (cur_tick > initial_tick)
-			delta = rtclock_tval - (cur_tick - initial_tick);
+			delta = x86_rtclock_tval - (cur_tick - initial_tick);
 		else
 			delta = initial_tick - cur_tick;
-		if (delta < 0 || delta >= rtclock_tval / 2) {
+		if (delta < 0 || delta >= x86_rtclock_tval / 2) {
 			DPRINTF(("delay: ignore ticks %.4x-%.4x",
 				 initial_tick, cur_tick));
 			if (clock_broken_latch) {
@@ -499,7 +500,7 @@ i8254_delay(unsigned int n)
 #else
 		cur_tick = gettick();
 		if (cur_tick > initial_tick)
-			remaining -= rtclock_tval - (cur_tick - initial_tick);
+			remaining -= x86_rtclock_tval - (cur_tick - initial_tick);
 		else
 			remaining -= initial_tick - cur_tick;
 #endif

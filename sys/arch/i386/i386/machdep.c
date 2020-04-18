@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.825.4.2 2020/04/16 08:46:34 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.825.4.3 2020/04/18 14:47:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.2 2020/04/16 08:46:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.3 2020/04/18 14:47:55 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -233,14 +233,6 @@ extern paddr_t avail_start, avail_end;
 extern paddr_t pmap_pa_start, pmap_pa_end;
 void hypervisor_callback(void);
 void failsafe_callback(void);
-#endif
-
-#ifdef XENPV
-void (*delay_func)(unsigned int) = xen_delay;
-void (*initclock_func)(void) = xen_initclocks;
-#else
-void (*delay_func)(unsigned int) = i8254_delay;
-void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
 /*
@@ -1622,13 +1614,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 	return (0);
-}
-
-void
-cpu_initclocks(void)
-{
-
-	(*initclock_func)();
 }
 
 #define	DEV_IO 14		/* iopl for compat_10 */

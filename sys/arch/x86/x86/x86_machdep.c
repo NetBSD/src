@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.137.2.4 2020/04/16 09:45:57 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.137.2.5 2020/04/18 14:47:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.137.2.4 2020/04/16 09:45:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.137.2.5 2020/04/18 14:47:56 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -98,6 +98,16 @@ static char x86_cpu_idle_text[16];
 #ifdef XEN
 char module_machine_amd64_xen[] = "amd64-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
+#endif
+
+#ifndef XENPV
+void (*delay_func)(unsigned int) = i8254_delay;
+void (*x86_initclock_func)(void) = i8254_initclocks;
+void (*x86_cpu_initclock_func)(void) = x86_dummy_initclock;
+#else /* XENPV */
+void (*delay_func)(unsigned int) = xen_delay;
+void (*x86_initclock_func)(void) = xen_initclocks;
+void (*x86_cpu_initclock_func)(void) = xen_cpu_initclocks;
 #endif
 
 
@@ -1433,3 +1443,14 @@ intr_findpic(int num)
 }
 #endif
 
+void
+cpu_initclocks(void)
+{
+
+	(*x86_initclock_func)();
+}
+
+void
+x86_dummy_initclock(void)
+{
+}
