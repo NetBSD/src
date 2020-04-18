@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179.2.2 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.179.2.3 2020/04/18 14:49:57 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179.2.2 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179.2.3 2020/04/18 14:49:57 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1478,7 +1478,7 @@ IDTVEC(syscall)
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz	14f
 	call	_C_LABEL(stipending)
@@ -1500,7 +1500,7 @@ IDTVEC(syscall)
 17:	movl	%ebx, CPUVAR(ILEVEL)	/* restore cpl  */
 	jmp	.Lsyscall_checkast
 14:
-#endif /* XEN */
+#endif /* XENPV */
 
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
