@@ -1,5 +1,5 @@
-/*	$Id: mmnet_machdep.c,v 1.5 2020/04/18 10:55:45 skrll Exp $	*/
-/*	$NetBSD: mmnet_machdep.c,v 1.5 2020/04/18 10:55:45 skrll Exp $	*/
+/*	$Id: mmnet_machdep.c,v 1.6 2020/04/18 11:00:40 skrll Exp $	*/
+/*	$NetBSD: mmnet_machdep.c,v 1.6 2020/04/18 11:00:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -78,11 +78,10 @@
 /* Adaptation for Propox MMnet by Aymeric Vincent is in the public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.5 2020/04/18 10:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.6 2020/04/18 11:00:40 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
