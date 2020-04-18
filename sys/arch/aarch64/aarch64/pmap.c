@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2020/04/13 05:40:25 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2020/04/18 11:00:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2020/04/13 05:40:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2020/04/18 11:00:37 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2020/04/13 05:40:25 maxv Exp $");
 #include <ddb/db_access.h>
 #endif
 
-//#define PMAP_DEBUG
 //#define PMAP_PV_DEBUG
 
 #ifdef VERBOSE_INIT_ARM

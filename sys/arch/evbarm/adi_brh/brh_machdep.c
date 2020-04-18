@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.49 2020/04/18 10:55:43 skrll Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.50 2020/04/18 11:00:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,12 +73,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.49 2020/04/18 10:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.50 2020/04/18 11:00:38 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -150,10 +149,6 @@ int max_processes = 64;			/* Default number */
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 

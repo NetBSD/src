@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2020/04/18 10:55:43 skrll Exp $
+# $NetBSD: GENERIC,v 1.180 2020/04/18 11:00:38 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -164,7 +164,6 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internal consistency checks
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table

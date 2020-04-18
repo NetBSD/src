@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.12 2020/04/18 10:55:45 skrll Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.12 2020/04/18 10:55:45 skrll Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.12 2020/04/18 10:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

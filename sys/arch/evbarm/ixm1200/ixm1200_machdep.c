@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.64 2020/04/18 10:55:45 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.65 2020/04/18 11:00:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,13 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.64 2020/04/18 10:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.65 2020/04/18 11:00:40 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,10 +161,6 @@ int max_processes = 64;                 /* Default number */
 paddr_t msgbufphys;
 
 extern int end;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif  /* PMAP_DEBUG */
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
@@ -362,10 +357,6 @@ initarm(void *arg)
 	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
-
-#ifdef PMAP_DEBUG
-	pmap_debug(-1);
-#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
         if (! memcmp(&end, "\177ELF", 4)) {
@@ -638,11 +629,10 @@ initarm(void *arg)
 	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
-		    kernelstack.pv_pa);
-#endif  /* PMAP_DEBUG */
+#ifdef VERBOSE_INIT_ARM
+	printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
+	    kernelstack.pv_pa);
+#endif  /* VERBOSE_INIT_ARM */
 
 	/*
 	 * Well we should set a data abort handler.

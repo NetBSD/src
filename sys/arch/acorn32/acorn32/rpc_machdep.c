@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.97 2020/04/18 10:55:43 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.98 2020/04/18 11:00:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -49,13 +49,12 @@
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 #include "vidcvideo.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.97 2020/04/18 10:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.98 2020/04/18 11:00:37 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -141,10 +140,6 @@ int max_processes = 64;		/* Default number */
 u_int videodram_size = 0;	/* Amount of DRAM to reserve for video */
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif	/* PMAP_DEBUG */
 
 #define	KERNEL_PT_VMEM		0 /* Page table for mapping video memory */
 #define	KERNEL_PT_SYS		1 /* Page table for mapping proc0 zero page */
@@ -417,7 +412,6 @@ initarm(void *cookie)
 	/* if the wscons interface is used, switch off VERBOSE booting :( */
 #if NVIDCVIDEO>0
 #	undef VERBOSE_INIT_ARM
-#	undef PMAP_DEBUG
 #endif
 
 	/*
@@ -873,11 +867,10 @@ initarm(void *cookie)
 	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
-		    kernelstack.pv_pa);
-#endif	/* PMAP_DEBUG */
+#ifdef VERBOSE_INIT_ARM
+	printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
+	    kernelstack.pv_pa);
+#endif	/* VERBOSE_INIT_ARM */
 
 	/*
 	 * Well we should set a data abort handler.

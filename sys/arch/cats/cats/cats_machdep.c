@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.88 2019/07/16 14:41:44 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.89 2020/04/18 11:00:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,11 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.88 2019/07/16 14:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.89 2020/04/18 11:00:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 
 #include "isadma.h"
 
@@ -114,12 +113,6 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
-
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 
 /* Prototypes */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2020/04/18 10:55:47 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2020/04/18 11:00:42 skrll Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,12 +107,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2020/04/18 10:55:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2020/04/18 11:00:42 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "ksyms.h"
@@ -213,10 +212,6 @@ int max_processes = 64;			/* Default number */
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.48 2020/04/18 10:55:46 skrll Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.49 2020/04/18 11:00:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,12 +106,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.48 2020/04/18 10:55:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.49 2020/04/18 11:00:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_console.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "pci.h"
 
@@ -190,10 +189,6 @@ int max_processes = 64;		/* Default number */
 #endif				/* !PMAP_STATIC_L1S */
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */

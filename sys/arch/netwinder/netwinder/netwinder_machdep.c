@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.89 2020/04/18 10:55:47 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.90 2020/04/18 11:00:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.89 2020/04/18 10:55:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.90 2020/04/18 11:00:42 skrll Exp $");
 
 #include "opt_ddb.h"
-#include "opt_pmap_debug.h"
 
 #define	_ARM32_BUS_DMA_PRIVATE
 
@@ -135,10 +134,6 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
