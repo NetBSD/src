@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.119 2020/04/18 16:58:00 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.120 2020/04/18 23:24:49 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.119 2020/04/18 16:58:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.120 2020/04/18 23:24:49 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -702,6 +702,18 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 {
 	int err;
 	unsigned long long sectors;
+	u_long val;
+
+	/*
+	 * Must read feature-persistent later, e.g. Linux Dom0 writes
+	 * this together with the device info.
+	 */
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-persistent", &val, 10);
+	if (err)
+		val = 0;
+	if (val > 0)
+		sc->sc_features |= BLKIF_FEATURE_PERSISTENT;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
@@ -752,13 +764,6 @@ xbd_features(struct xbd_xenbus_softc *sc)
 		val = 0;
 	if (val > 0)
 		sc->sc_features |= BLKIF_FEATURE_BARRIER;
-
-	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
-	    "feature-persistent", &val, 10);
-	if (err)
-		val = 0;
-	if (val > 0)
-		sc->sc_features |= BLKIF_FEATURE_PERSISTENT;
 
 	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	    "feature-max-indirect-segments", &val, 10);
