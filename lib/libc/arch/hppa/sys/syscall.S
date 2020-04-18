@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.2 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: syscall.S,v 1.3 2020/04/18 23:55:50 thorpej Exp $	*/
 
 /*	$OpenBSD: syscall.S,v 1.4 2001/03/29 01:43:53 mickey Exp $	*/
 
@@ -31,9 +31,9 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: syscall.S,v 1.2 2009/11/03 05:07:25 snj Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.3 2020/04/18 23:55:50 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)
 
 	.end

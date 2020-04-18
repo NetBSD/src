@@ -36,10 +36,10 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-RCSID("$NetBSD: syscall.S,v 1.7 2011/01/25 02:38:15 matt Exp $")
+RCSID("$NetBSD: syscall.S,v 1.8 2020/04/18 23:55:51 thorpej Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
-ENTRY(syscall, 0)
+ENTRY(_syscall, 0)
 	movl	4(%ap),%r0	# syscall number
 	subl3	$1,(%ap)+,(%ap)	# one fewer arguments
 	chmk	%r0
@@ -47,4 +47,5 @@ ENTRY(syscall, 0)
 	ret
 1:
 	jmp	CERROR+2
-END(syscall)
+END(_syscall)
+WEAK_ALIAS(syscall,_syscall)

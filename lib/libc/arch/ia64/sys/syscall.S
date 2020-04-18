@@ -1,7 +1,7 @@
-/* $NetBSD: syscall.S,v 1.2 2006/09/22 12:09:25 cherry Exp $ */
+/* $NetBSD: syscall.S,v 1.3 2020/04/18 23:55:50 thorpej Exp $ */
 	
 #include "SYS.h"
 
 	
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)
 

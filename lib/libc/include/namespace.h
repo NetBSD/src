@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.197 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.198 2020/04/18 23:55:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -723,6 +723,7 @@
 #define sysctlbyname		_sysctlbyname
 #define sysctlgetmibinfo	_sysctlgetmibinfo
 #define sysctlnametomib		_sysctlnametomib
+#define syscall			_syscall
 #define syslog			_syslog
 #define syslog_r		_syslog_r
 #define syslog_ss		_syslog_ss

@@ -1,4 +1,4 @@
-/*	$NetBSD: __syscall.S,v 1.1 2014/09/03 19:34:26 matt Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2 2020/04/18 23:55:51 thorpej Exp $	*/
 
 #include <machine/asm.h>
 
@@ -21,4 +21,5 @@ ENTRY(__syscall)
 	l.nop
 END(__syscall)
 
-STRONG_ALIAS(syscall, __syscall)
+STRONG_ALIAS(_syscall,__syscall)
+WEAK_ALIAS(syscall,__syscall)
