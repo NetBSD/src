@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.5 2020/04/18 15:06:18 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.6 2020/04/18 20:36:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.5 2020/04/18 15:06:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.6 2020/04/18 20:36:31 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -341,14 +341,13 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 
 	KASSERTMSG(evtsource[evtch] != NULL, "unknown event %d", evtch);
+
+	if (evtsource[evtch]->ev_cpu != ci)
+		return 0;
+
 	ci->ci_data.cpu_nintr++;
 	evtsource[evtch]->ev_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
-
-	if (evtsource[evtch]->ev_cpu != ci /* XXX: get stats */) {
-		hypervisor_send_event(evtsource[evtch]->ev_cpu, evtch);
-		return 0;
-	}
 
 	if (evtsource[evtch]->ev_maxlevel <= ilevel) {
 #ifdef IRQ_DEBUG
