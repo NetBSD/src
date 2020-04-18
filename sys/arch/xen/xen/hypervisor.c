@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.73.2.6 2020/04/18 15:06:18 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.6 2020/04/18 15:06:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,8 @@ enum {
 
 
 #ifdef XENPVHVM
+
+bool xenhvm_use_percpu_callback = 0;
 
 static bool
 xen_check_hypervisordev(void)
@@ -373,7 +375,6 @@ xen_hvm_init(void)
 	delay_func = xen_delay;
 	x86_initclock_func = xen_initclocks;
 	x86_cpu_initclock_func = xen_cpu_initclocks;
-	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", true);
 	vm_guest = VM_GUEST_XENPVHVM; /* Be more specific */
 	return 1;
 }
@@ -383,6 +384,8 @@ xen_hvm_init_cpu(struct cpu_info *ci)
 {
 	u_int32_t descs[4];
 	struct xen_hvm_param xen_hvm_param;
+	int error;
+	static bool again = 0;
 
 	if (vm_guest != VM_GUEST_XENPVHVM)
 		return 0;
@@ -410,13 +413,43 @@ xen_hvm_init_cpu(struct cpu_info *ci)
 	/* val[63:56] = 2, val[7:0] = vec */
 	xen_hvm_param.value = ((int64_t)0x2 << 56) | xen_hvm_vec;
 
+	/* First try to set up a per-cpu vector. */
+	if (!again || xenhvm_use_percpu_callback) {
+		struct xen_hvm_evtchn_upcall_vector xen_hvm_uvec;
+		xen_hvm_uvec.vcpu = ci->ci_vcpuid;
+		xen_hvm_uvec.vector = xen_hvm_vec;
+
+		xenhvm_use_percpu_callback = 1;
+		error = HYPERVISOR_hvm_op(
+		    HVMOP_set_evtchn_upcall_vector, &xen_hvm_uvec);
+		if (error < 0) {
+			aprint_error_dev(ci->ci_dev,
+			    "failed to set event upcall vector: %d\n", error);
+			if (again)
+				panic("event upcall vector");
+			aprint_error_dev(ci->ci_dev,
+			    "falling back to global vector\n");
+		} else {
+			/*
+			 * From FreeBSD:
+			 * Trick toolstack to think we are enlightened
+			 */
+			aprint_verbose_dev(ci->ci_dev,
+			    "using event upcall vector: %d\n", xen_hvm_vec );
+			xen_hvm_param.value = 1;
+		}
+	}
+
+	if (again)
+		return 1;
+
 	if (HYPERVISOR_hvm_op(HVMOP_set_param, &xen_hvm_param) < 0) {
 		aprint_error_dev(ci->ci_dev,
 		    "Xen HVM: Unable to register event callback vector\n");
 		vm_guest = VM_GUEST_XENHVM;
 		return 0;
 	}
-
+	again = 1;
 	return 1;
 }
 
@@ -488,7 +521,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	bi.common.len = sizeof(struct btinfo_rootdevice);
 
 	/* From i386/multiboot.c */
-	/*	$NetBSD: hypervisor.c,v 1.73.2.6 2020/04/18 15:06:18 bouyer Exp $	*/
+	/*	$NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $	*/
 	int i, len;
 	vaddr_t data;
 	extern struct bootinfo	bootinfo;
