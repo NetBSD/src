@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.3 2020/04/18 19:32:19 christos Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -30,6 +30,7 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #include <bitstring.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.10 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.11 2020/04/18 19:32:19 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.10 2017/06/09 17:36:30 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.11 2020/04/18 19:32:19 christos Exp $");
 #endif
 #endif
 
@@ -532,6 +532,7 @@ sigchld_reaper(void) {
 			Debug(DPROC,
 			      ("[%ld] sigchld...pid #%ld died, stat=%d\n",
 			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)));
+			job_exit(pid);
 			break;
 		}
 	}

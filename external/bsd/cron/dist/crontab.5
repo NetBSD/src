@@ -1,4 +1,4 @@
-.\" $NetBSD: crontab.5,v 1.9 2020/04/17 19:42:14 pgoyette Exp $
+.\" $NetBSD: crontab.5,v 1.10 2020/04/18 19:32:19 christos Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -227,6 +227,13 @@ option is an attempt to cure potentially copious volumes of mail coming from
 .Xr cron 8 .
 .It Fl q Ar command
 Execution will not be logged.
+.It Fl s Ar command
+Only a single instance of
+.Ar command
+will be run concurrently.
+Additional instances of
+.Ar command
+will not be scheduled until the earlier one completes.
 .El
 .Pp
 Commands are executed by

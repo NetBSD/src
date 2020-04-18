@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.6 2018/06/14 22:04:28 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.7 2020/04/18 19:32:19 christos Exp $	*/
 
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
@@ -32,7 +32,8 @@ void		set_cron_uid(void),
 		open_logfile(void),
 		sigpipe_func(void),
 		job_add(entry *, user *, time_t),
-		do_command(entry *, user *),
+		job_remove(entry *, user *),
+		job_exit(pid_t),
 		link_user(cron_db *, user *),
 		unlink_user(cron_db *, user *),
 		free_user(user *),
@@ -48,6 +49,8 @@ void		set_cron_uid(void),
 void
 		log_itx(const char *, int, const char *, const char *, ...)
 		    __printflike(4, 5);
+
+pid_t		do_command(entry *, user *);
 
 int		job_runqueue(void),
 		set_debug_flags(const char *),

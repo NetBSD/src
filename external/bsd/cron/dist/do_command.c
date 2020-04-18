@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.14 2019/08/03 07:06:47 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.15 2020/04/18 19:32:19 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.14 2019/08/03 07:06:47 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.15 2020/04/18 19:32:19 christos Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: do_command.c,v 1.14 2019/08/03 07:06:47 christos Exp $");
 static int		child_process(entry *);
 static int		safe_p(const char *, const char *);
 
-void
+pid_t
 do_command(entry *e, user *u) {
 	int retval;
 
@@ -66,9 +66,14 @@ do_command(entry *e, user *u) {
 		break;
 	default:
 		/* parent process */
+		if ((e->flags & SINGLE_JOB) == 0)
+			jobpid = -1;
 		break;
 	}
 	Debug(DPROC, ("[%ld] main process returning to work\n",(long)getpid()));
+
+	/* only return pid if a singleton */
+	return jobpid;
 }
 
 static void
