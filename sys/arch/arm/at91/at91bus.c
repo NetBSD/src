@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.25 2019/07/16 14:41:43 skrll Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.26 2020/04/18 10:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.25 2019/07/16 14:41:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.26 2020/04/18 10:55:43 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -115,7 +115,7 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
-					/* L2 tables for mapping kernel VM */ 
+					/* L2 tables for mapping kernel VM */
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
@@ -319,20 +319,20 @@ at91bus_setup(BootConfig *mem)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables.  Save physical_freeend for when we give whats left 
+	 * page tables.  Save physical_freeend for when we give whats left
 	 * of memory below 2Mbyte to UVM.
 	 */
 
@@ -616,11 +616,11 @@ at91bus_attach(device_t parent, device_t self, void *aux)
 	       AT91_PLLBCLK / 1000000U, (AT91_PLLBCLK / 1000U) % 1000U);
 
 	/*
-	 *  Attach devices 
+	 *  Attach devices
 	 */
 	at91_search_peripherals(self, at91bus_found);
 
-	
+
 	struct at91bus_attach_args sa;
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_iot = sc->sc_iot;
