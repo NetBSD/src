@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.4 2003/08/07 16:42:26 agc Exp $	*/
+/*	$NetBSD: syscall.S,v 1.5 2020/04/18 23:55:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,10 +40,10 @@
 #if 0
 	.asciz "@(#)syscall.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: syscall.S,v 1.4 2003/08/07 16:42:26 agc Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.5 2020/04/18 23:55:51 thorpej Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)

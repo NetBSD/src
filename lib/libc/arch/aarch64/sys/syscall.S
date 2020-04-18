@@ -1,6 +1,7 @@
-/* $NetBSD: syscall.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: syscall.S,v 1.2 2020/04/18 23:55:50 thorpej Exp $ */
 
-#define FUNCNAME	syscall
+#define FUNCNAME	_syscall
 #define	SYSTRAP_SYSCALL	SYSTRAP(syscall)
 
 #include "__syscall.S"
+WEAK_ALIAS(syscall,_syscall)
