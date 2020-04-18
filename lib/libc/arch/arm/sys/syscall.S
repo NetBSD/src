@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.4 2003/08/07 16:42:05 agc Exp $	*/
+/*	$NetBSD: syscall.S,v 1.5 2020/04/18 23:55:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,4 +33,4 @@
 
 #include "SYS.h"
 
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)
