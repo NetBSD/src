@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.379 2020/04/18 03:27:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.380 2020/04/18 17:22:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.379 2020/04/18 03:27:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.380 2020/04/18 17:22:26 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2613,7 +2613,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		dstaddr = vm_map_min(dstmap);
-		if (!uvm_map_reserve(dstmap, len, start, 
+		if (!uvm_map_reserve(dstmap, len, start,
 		    atop(start) & uvmexp.colormask, &dstaddr,
 		    UVM_FLAG_COLORMATCH))
 			return (ENOMEM);
@@ -4171,7 +4171,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 
 		/*
 		 * now unmap the old program.
-		 * 
+		 *
 		 * XXX set VM_MAP_DYING for the duration, so pmap_update()
 		 * is not called until the pmap has been totally cleared out
 		 * after pmap_remove_all(), or it can confuse some pmap
@@ -5020,12 +5020,12 @@ uvm_voaddr_compare(const struct uvm_voaddr * const voaddr1,
 
 	KASSERT(voaddr2->type == UVM_VOADDR_TYPE_OBJECT ||
 		voaddr2->type == UVM_VOADDR_TYPE_ANON);
-	
+
 	if (voaddr1->type < voaddr2->type)
 		return -1;
 	if (voaddr1->type > voaddr2->type)
 		return 1;
-	
+
 	/* These fields are unioned together. */
 	CTASSERT(offsetof(struct uvm_voaddr, uobj) ==
 		 offsetof(struct uvm_voaddr, anon));
@@ -5036,12 +5036,12 @@ uvm_voaddr_compare(const struct uvm_voaddr * const voaddr1,
 		return -1;
 	if (addr1 > addr2)
 		return 1;
-	
+
 	if (voaddr1->offset < voaddr2->offset)
 		return -1;
 	if (voaddr1->offset > voaddr2->offset)
 		return 1;
-	
+
 	return 0;
 }
 
