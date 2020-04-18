@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.153 2020/04/18 10:55:44 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.154 2020/04/18 11:00:38 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -147,10 +147,9 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 options 	INCLUDE_CONFIG_FILE
-#options 	UVMHIST
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.

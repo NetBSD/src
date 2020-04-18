@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.30 2020/04/18 10:55:46 skrll Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.31 2020/04/18 11:00:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.30 2020/04/18 10:55:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.31 2020/04/18 11:00:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,10 +162,6 @@ static struct arm32_dma_range tsarm_dma_ranges[4];
 
 #if NISA > 0
 extern void isa_tsarm_init(u_int, u_int);
-#endif
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
 #endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping vectors page */
