@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.82 2020/04/19 13:44:51 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.83 2020/04/19 21:37:00 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.82 2020/04/19 13:44:51 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.83 2020/04/19 21:37:00 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1103,6 +1103,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 			    __func__, error));
 			goto out;
 		}
+		memset(&omi, 0, sizeof omi);
 		omi.modify_counter = 1;
 		strncpy(omi.id, adev.name, sizeof omi.id);
 		strncpy(omi.name, adev.name, sizeof omi.name);
