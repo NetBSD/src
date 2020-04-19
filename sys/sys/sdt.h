@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.13 2020/04/19 03:12:26 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.14 2020/04/19 03:12:35 riastradh Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -79,6 +79,7 @@
 
 #else /* _KERNEL */
 
+#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 
