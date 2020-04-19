@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.13 2020/04/16 14:39:58 joerg Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.14 2020/04/19 01:06:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.13 2020/04/16 14:39:58 joerg Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.14 2020/04/19 01:06:15 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,10 +48,10 @@ __weak_alias(fork, _fork)
 #endif /* __weak_alias */
 
 pid_t	__fork(void);	/* XXX */
-pid_t	__atomic_fork(void) __weak; /* XXX */
+pid_t	__locked_fork(int *) __weak; /* XXX */
 
 pid_t
-__atomic_fork(void)
+__locked_fork(int *my_errno)
 {
 	return __fork();
 }
@@ -164,7 +164,7 @@ fork(void)
 	SIMPLEQ_FOREACH(iter, &prepareq, next)
 		(*iter->fn)();
 
-	ret = __atomic_fork();
+	ret = __locked_fork(&errno);
 
 	if (ret != 0) {
 		/*
