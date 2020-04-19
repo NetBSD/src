@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.81 2020/04/15 16:39:06 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.82 2020/04/19 13:44:51 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.81 2020/04/15 16:39:06 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.82 2020/04/19 13:44:51 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -715,7 +715,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = OSS_DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = OSS_DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= OSS_DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
@@ -730,7 +730,26 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			goto out;
 		}
 		break;
-#if 0
+	case OSS_SNDCTL_DSP_SETTRIGGER:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error) {
+			DPRINTF(("%s: SNDCTL_DSP_SETTRIGGER: %d\n",
+			     __func__, error));
+			goto out;
+		}
+		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
+		if (error) {
+			DPRINTF(("%s: AUDIO_GETBUFINFO %d\n",
+			     __func__, error));
+			goto out;
+		}
+		AUDIO_INITINFO(&tmpinfo);
+		if (tmpinfo.mode & AUMODE_PLAY)
+			tmpinfo.play.pause = (idat & OSS_PCM_ENABLE_OUTPUT) == 0;
+		if (tmpinfo.mode & AUMODE_RECORD)
+			tmpinfo.record.pause = (idat & OSS_PCM_ENABLE_INPUT) == 0;
+		(void)ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
+		/* FALLTHRU */
 	case OSS_SNDCTL_DSP_GETTRIGGER:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -738,56 +757,18 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = (tmpinfo.play.pause ? 0 : OSS_PCM_ENABLE_OUTPUT) |
-		       (tmpinfo.record.pause ? 0 : OSS_PCM_ENABLE_INPUT);
+		idat = 0;
+		if ((tmpinfo.mode & AUMODE_PLAY) && !tmpinfo.play.pause)
+			idat |= OSS_PCM_ENABLE_OUTPUT;
+		if ((tmpinfo.mode & AUMODE_RECORD) && !tmpinfo.record.pause)
+			idat |= OSS_PCM_ENABLE_INPUT;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
-			DPRINTF(("%s: SNDCTL_DSP_SETRIGGER %x = %d\n",
+			DPRINTF(("%s: SNDCTL_DSP_GETTRIGGER = %x = %d\n",
 			    __func__, idat, error));
 			goto out;
 		}
 		break;
-	case OSS_SNDCTL_DSP_SETTRIGGER:
-		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo, p);
-		if (error) {
-			DPRINTF(("%s: AUDIO_GETBUFINFO %d\n",
-			     __func__, error));
-			goto out;
-		}
-		error = copyin(SCARG(uap, data), &idat, sizeof idat);
-		if (error) {
-			DPRINTF(("%s: AUDIO_GETBUFINFO %d\n",
-			     __func__, error));
-			goto out;
-		}
-		tmpinfo.play.pause = (idat & OSS_PCM_ENABLE_OUTPUT) == 0;
-		tmpinfo.record.pause = (idat & OSS_PCM_ENABLE_INPUT) == 0;
-		error = ioctlf(fp, AUDIO_SETINFO, &tmpinfo);
-		if (error) {
-			DPRINTF(("%s: AUDIO_SETINFO %d\n",
-			     __func__, error));
-			goto out;
-		}
-		error = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (error) {
-			DPRINTF(("%s: SNDCTL_DSP_SETRIGGER %x = %d\n",
-			    __func__, idat, error));
-			goto out;
-		}
-		break;
-#else
-	case OSS_SNDCTL_DSP_GETTRIGGER:
-	case OSS_SNDCTL_DSP_SETTRIGGER:
-		/* XXX Do nothing for now. */
-		idat = OSS_PCM_ENABLE_OUTPUT;
-		error = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (error) {
-			DPRINTF(("%s: SNDCTL_DSP_{GET,SET}RIGGER %x = %d\n",
-			    __func__, idat, error));
-			goto out;
-		}
-		break;
-#endif
 	case OSS_SNDCTL_DSP_GETIPTR:
 		error = ioctlf(fp, AUDIO_GETIOFFS, &tmpoffs);
 		if (error) {
