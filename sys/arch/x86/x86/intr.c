@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.150.6.4 2020/04/19 11:40:30 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.150.6.5 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.4 2020/04/19 11:40:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.5 2020/04/19 19:39:10 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1962,11 +1962,8 @@ intr_get_handler(const char *intrid)
 	return isp->is_handlers;
 }
 
-/*
- * MI interface for subr_interrupt.c
- */
 uint64_t
-interrupt_get_count(const char *intrid, u_int cpu_idx)
+x86_intr_get_count(const char *intrid, u_int cpu_idx)
 {
 	struct cpu_info *ci;
 	struct intrsource *isp;
@@ -1976,10 +1973,9 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 	int i, slot;
 	uint64_t count = 0;
 
+	KASSERT(mutex_owned(&cpu_lock));
 	ci = cpu_lookup(cpu_idx);
 	cpuid = ci->ci_cpuid;
-
-	mutex_enter(&cpu_lock);
 
 	ih = intr_get_handler(intrid);
 	if (ih == NULL) {
@@ -2003,6 +1999,59 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 	}
 
  out:
+	return count;
+}
+
+void
+x86_intr_get_assigned(const char *intrid, kcpuset_t *cpuset)
+{
+	struct cpu_info *ci;
+	struct intrhand *ih;
+
+	KASSERT(mutex_owned(&cpu_lock));
+	kcpuset_zero(cpuset);
+
+	ih = intr_get_handler(intrid);
+	if (ih == NULL)
+		return;
+
+	ci = ih->ih_cpu;
+	kcpuset_set(cpuset, cpu_index(ci));
+}
+
+void
+x86_intr_get_devname(const char *intrid, char *buf, size_t len)
+{
+	struct intrsource *isp;
+	struct intrhand *ih;
+	int slot;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	ih = intr_get_handler(intrid);
+	if (ih == NULL) {
+		buf[0] = '\0';
+		return;
+	}
+	slot = ih->ih_slot;
+	isp = ih->ih_cpu->ci_isources[slot];
+	strlcpy(buf, isp->is_xname, len);
+
+}
+
+/*
+ * MI interface for subr_interrupt.c
+ */
+uint64_t
+interrupt_get_count(const char *intrid, u_int cpu_idx)
+{
+	struct intrsource *isp;
+	uint64_t count = 0;
+
+	mutex_enter(&cpu_lock);
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL)
+		count = isp->is_pic->pic_intr_get_count(intrid, cpu_idx);
 	mutex_exit(&cpu_lock);
 	return count;
 }
@@ -2013,21 +2062,12 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 void
 interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 {
-	struct cpu_info *ci;
-	struct intrhand *ih;
-
-	kcpuset_zero(cpuset);
+	struct intrsource *isp;
 
 	mutex_enter(&cpu_lock);
-
-	ih = intr_get_handler(intrid);
-	if (ih == NULL)
-		goto out;
-
-	ci = ih->ih_cpu;
-	kcpuset_set(cpuset, cpu_index(ci));
-
- out:
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL) 
+		isp->is_pic->pic_intr_get_assigned(intrid, cpuset);
 	mutex_exit(&cpu_lock);
 }
 
@@ -2058,21 +2098,17 @@ void
 interrupt_get_devname(const char *intrid, char *buf, size_t len)
 {
 	struct intrsource *isp;
-	struct intrhand *ih;
-	int slot;
 
 	mutex_enter(&cpu_lock);
-
-	ih = intr_get_handler(intrid);
-	if (ih == NULL) {
-		buf[0] = '\0';
-		goto out;
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL) {
+		if (isp->is_pic->pic_intr_get_devname == NULL) {
+			printf("NULL get_devname intrid %s pic %s\n",
+			    intrid, isp->is_pic->pic_name);
+		} else {
+			isp->is_pic->pic_intr_get_devname(intrid, buf, len);
+		}
 	}
-	slot = ih->ih_slot;
-	isp = ih->ih_cpu->ci_isources[slot];
-	strlcpy(buf, isp->is_xname, len);
-
- out:
 	mutex_exit(&cpu_lock);
 }
 

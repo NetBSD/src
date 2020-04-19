@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.6 2020/04/19 11:40:30 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.7 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.6 2020/04/19 11:40:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.7 2020/04/19 19:39:10 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -142,7 +142,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		    intrstr, xname, known_mpsafe);
 
 		if (rih == NULL) {
-			printf("%s: can't establish interrupt", __func__);
+			printf("%s: can't establish interrupt\n", __func__);
 			return NULL;
 		}
 
@@ -481,7 +481,7 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 	return NULL; /* No pic found! */
 }
 
-#if !defined(XENPVHVM)
+#if defined(XENPV)
 __strong_alias(x86_read_psl, xen_read_psl);
 __strong_alias(x86_write_psl, xen_write_psl);
 
@@ -495,4 +495,4 @@ __strong_alias(intr_disestablish, xen_intr_disestablish);
 __strong_alias(cpu_intr_redistribute, xen_cpu_intr_redistribute);
 __strong_alias(cpu_intr_count, xen_cpu_intr_count);
 __strong_alias(cpu_intr_init, xen_cpu_intr_init);
-#endif /* !XENPVHVM */
+#endif /* XENPV */

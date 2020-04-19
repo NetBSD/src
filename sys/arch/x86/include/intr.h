@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.61.6.4 2020/04/19 11:40:30 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.61.6.5 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/types.h>
+#include <sys/kcpuset.h>
 #else
 #include <stdbool.h>
 #endif
@@ -236,6 +237,10 @@ void x86_intr_calculatemasks(struct cpu_info *);
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
+
+void x86_intr_get_devname(const char *, char *, size_t);
+void x86_intr_get_assigned(const char *, kcpuset_t *);
+uint64_t x86_intr_get_count(const char *, u_int);
 
 #ifndef XENPV
 extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);

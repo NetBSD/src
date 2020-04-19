@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.7 2020/04/19 11:40:30 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.8 2020/04/19 19:39:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.7 2020/04/19 11:40:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.8 2020/04/19 19:39:11 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -121,7 +121,9 @@ static void xen_evtchn_unmask(struct pic *, int);
 static void xen_evtchn_addroute(struct pic *, struct cpu_info *, int, int, int);
 static void xen_evtchn_delroute(struct pic *, struct cpu_info *, int, int, int);
 static bool xen_evtchn_trymask(struct pic *, int);
-
+static void xen_intr_get_devname(const char *, char *, size_t);
+static void xen_intr_get_assigned(const char *, kcpuset_t *);
+static uint64_t xen_intr_get_count(const char *, u_int);
 
 struct pic xen_pic = {
 	.pic_name = "xenev0",
@@ -136,6 +138,9 @@ struct pic xen_pic = {
 	.pic_trymask = xen_evtchn_trymask,
 	.pic_level_stubs = xenev_stubs,
 	.pic_edge_stubs = xenev_stubs,
+	.pic_intr_get_devname = xen_intr_get_devname,
+	.pic_intr_get_assigned = xen_intr_get_assigned,
+	.pic_intr_get_count = xen_intr_get_count,
 };
 	
 /*
@@ -365,6 +370,8 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
+	KASSERT(ci->ci_ilevel >= IPL_VM);
+	KASSERT(cpu_intr_p());
 	x86_enable_intr();
 	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
@@ -418,7 +425,6 @@ xen_evtchn_mask(struct pic *pic, int pin)
 	KASSERT(evtchn < NR_EVENT_CHANNELS);
 
 	hypervisor_mask_event(evtchn);
-	
 }
 
 static void
@@ -732,7 +738,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	ih->arg = arg;
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, intrname,
-	    xname, known_mpsafe) != 0) {
+	    xname, known_mpsafe) == NULL) {
 		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
@@ -885,6 +891,11 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 			}
 		}
 		mutex_spin_exit(&evtlock[evtch]);
+#ifndef XENPV
+		mutex_enter(&cpu_lock);
+		evts->ev_isl->is_handlers = evts->ev_handlers;
+		mutex_exit(&cpu_lock);
+#endif
 	}
 
 
@@ -895,6 +906,16 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	intr_calculatemasks(evts, evtch, ci);
 	splx(s);
+#ifndef XENPV
+	mutex_enter(&cpu_lock);
+	if (evts->ev_isl == NULL) {
+		evts->ev_isl = intr_allocate_io_intrsource(intrname);
+		evts->ev_isl->is_pic = &xen_pic;
+	}
+	evts->ev_isl->is_handlers = evts->ev_handlers;
+	mutex_exit(&cpu_lock);
+#endif
+
 
 	return ih;
 }
@@ -968,8 +989,19 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 		panic("event_remove_handler");
 	*ihp = ih->ih_next;
 	mutex_spin_exit(&evtlock[evtch]);
+#ifndef XENPV
+	mutex_enter(&cpu_lock);
+	evts->ev_isl->is_handlers = evts->ev_handlers;
+	mutex_exit(&cpu_lock);
+#endif
 	kmem_free(ih, sizeof (struct intrhand));
 	if (evts->ev_handlers == NULL) {
+#ifndef XENPV
+		KASSERT(evts->ev_isl->is_handlers == NULL);
+		mutex_enter(&cpu_lock);
+		intr_free_io_intrsource(evts->ev_intrname);
+		mutex_exit(&cpu_lock);
+#endif
 		xen_atomic_clear_bit(&ci->ci_evtmask[0], evtch);
 		evcnt_detach(&evts->ev_evcnt);
 		kmem_free(evts, sizeof (struct evtsource));
@@ -1055,7 +1087,6 @@ xen_debug_handler(void *arg)
 	return 0;
 }
 
-#ifdef XENPV
 static struct evtsource *
 event_get_handler(const char *intrid)
 {
@@ -1072,11 +1103,8 @@ event_get_handler(const char *intrid)
 	return NULL;
 }
 
-/*
- * MI interface for subr_interrupt.c
- */
-uint64_t
-interrupt_get_count(const char *intrid, u_int cpu_idx)
+static uint64_t
+xen_intr_get_count(const char *intrid, u_int cpu_idx)
 {
 	int count = 0;
 	struct evtsource *evp;
@@ -1092,11 +1120,8 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 	return count;
 }
 
-/*
- * MI interface for subr_interrupt.c
- */
-void
-interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
+static void
+xen_intr_get_assigned(const char *intrid, kcpuset_t *cpuset)
 {
 	struct evtsource *evp;
 
@@ -1111,11 +1136,8 @@ interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 	mutex_spin_exit(&evtchn_lock);
 }
 
-/*
- * MI interface for subr_interrupt.c
- */
-void
-interrupt_get_devname(const char *intrid, char *buf, size_t len)
+static void
+xen_intr_get_devname(const char *intrid, char *buf, size_t len)
 {
 	struct evtsource *evp;
 
@@ -1127,6 +1149,7 @@ interrupt_get_devname(const char *intrid, char *buf, size_t len)
 	mutex_spin_exit(&evtchn_lock);
 }
 
+#ifdef XENPV
 /*
  * MI interface for subr_interrupt.
  */
@@ -1180,7 +1203,12 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		off++;
 	}
 	mutex_spin_exit(&evtchn_lock);
-
 	return ii_handler;
 }
+__strong_alias(interrupt_get_count, xen_intr_get_count);
+__strong_alias(interrupt_get_assigned, xen_intr_get_assigned);
+__strong_alias(interrupt_get_devname, xen_intr_get_devname);
+__strong_alias(x86_intr_get_count, xen_intr_get_count);
+__strong_alias(x86_intr_get_assigned, xen_intr_get_assigned);
+__strong_alias(x86_intr_get_devname, xen_intr_get_devname);
 #endif /* XENPV */
