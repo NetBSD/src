@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2020/04/19 13:22:58 maxv Exp $
+# $NetBSD: Makefile,v 1.2 2020/04/19 18:07:00 kre Exp $
 
 .include <bsd.own.mk>
 
-.if ${MACHINE} == "amd64"
 TESTSDIR=	${TESTSBASE}/lib/libi386
+
+.if ${MACHINE} == "amd64"
 COPTS+=		-m32
 LDFLAGS+=	-m32
 LDADD+=		-li386
