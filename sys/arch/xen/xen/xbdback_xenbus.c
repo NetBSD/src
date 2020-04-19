@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.79 2020/04/19 18:47:40 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.80 2020/04/19 20:53:20 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.79 2020/04/19 18:47:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.80 2020/04/19 20:53:20 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -449,6 +449,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	xbusd->xbusd_otherend_changed = xbdback_frontend_changed;
 	xbdi->xbdi_xbusd = xbusd;
 
+	SLIST_INIT(&xbdi->xbdi_va_free);
 	for (i = 0; i < BLKIF_RING_SIZE; i++) {
 		xbdi->xbdi_va[i].xv_vaddr = uvm_km_alloc(kernel_map,
 		    VBD_VA_SIZE, 0, UVM_KMF_VAONLY|UVM_KMF_WAITVA);
