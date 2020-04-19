@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.1 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.2 2020/04/19 13:59:13 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.1 2020/04/18 19:18:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.2 2020/04/19 13:59:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -478,34 +478,13 @@ ffs_rdextattr(u_char **p, struct vnode *vp, int extra)
 static void
 ffs_lock_ea(struct vnode *vp)
 {
-#if 0
-	struct inode *ip;
-
-	ip = VTOI(vp);
-	VI_LOCK(vp);
-	while (ip->i_flag & IN_EA_LOCKED) {
-		UFS_INODE_SET_FLAG(ip, IN_EA_LOCKWAIT);
-		msleep(&ip->i_ea_refs, &vp->v_interlock, PINOD + 2, "ufs_ea",
-		    0);
-	}
-	UFS_INODE_SET_FLAG(ip, IN_EA_LOCKED);
-	VI_UNLOCK(vp);
-#endif
+	genfs_node_wrlock(vp);
 }
 
 static void
 ffs_unlock_ea(struct vnode *vp)
 {
-#if 0
-	struct inode *ip;
-
-	ip = VTOI(vp);
-	VI_LOCK(vp);
-	if (ip->i_flag & IN_EA_LOCKWAIT)
-		wakeup(&ip->i_ea_refs);
-	ip->i_flag &= ~(IN_EA_LOCKED | IN_EA_LOCKWAIT);
-	VI_UNLOCK(vp);
-#endif
+	genfs_node_unlock(vp);
 }
 
 static int
@@ -573,16 +552,17 @@ ffs_close_ea(struct vnode *vp, int commit, kauth_cred_t cred)
 		luio.uio_resid = ip->i_ea_len;
 		luio.uio_vmspace = vmspace_kernel();
 		luio.uio_rw = UIO_WRITE;
-		if ((error = UFS_WAPBL_BEGIN(vp->v_mount)) != 0) {
-			ffs_unlock_ea(vp);
-			return error;
-		}
 
 		/* XXX: I'm not happy about truncating to zero size */
-		if (ip->i_ea_len < dp->di_extsize)
+		if (ip->i_ea_len < dp->di_extsize) {
+			if ((error = UFS_WAPBL_BEGIN(vp->v_mount)) != 0) {
+				ffs_unlock_ea(vp);
+				return error;
+			}
 			error = ffs_truncate(vp, 0, IO_EXT, cred);
+			UFS_WAPBL_END(vp->v_mount);
+		}
 		error = ffs_extwrite(vp, &luio, IO_EXT | IO_SYNC, cred);
-		UFS_WAPBL_END(vp->v_mount);
 	}
 	if (--ip->i_ea_refs == 0) {
 		free(ip->i_ea_area, M_TEMP);
