@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.120 2020/04/18 23:24:49 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.121 2020/04/19 16:45:08 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.120 2020/04/18 23:24:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.121 2020/04/19 16:45:08 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -850,6 +850,7 @@ again:
 		if (bp->b_error == 0)
 			bp->b_resid = 0;
 
+		KASSERT(xbdreq->req_dmamap->dm_nsegs > 0);
 		for (seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
 			/*
 			 * We are not allowing persistent mappings, so
@@ -1045,6 +1046,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_enter(&sc->sc_lock);
 		while ((xbdreq = SLIST_FIRST(&sc->sc_xbdreq_head)) == NULL)
 			cv_wait(&sc->sc_req_cv, &sc->sc_lock);
+		KASSERT(!RING_FULL(&sc->sc_ring));
 
 		SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
 		req = RING_GET_REQUEST(&sc->sc_ring,
@@ -1139,6 +1141,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 		error = EAGAIN;
 		goto out;
 	}
+	KASSERT(!RING_FULL(&sc->sc_ring));
 
 	if ((sc->sc_features & BLKIF_FEATURE_INDIRECT) == 0
 	    && bp->b_bcount > XBD_MAX_CHUNK) {
@@ -1170,6 +1173,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 		error = EINVAL;
 		goto out;
 	}
+	KASSERTMSG(xbdreq->req_dmamap->dm_nsegs > 0,
+	    "dm_nsegs == 0 with bcount %d", bp->b_bcount);
 
 	for (int seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
 		KASSERT(seg < __arraycount(xbdreq->req_gntref));
@@ -1212,6 +1217,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 	    bp, 0, xbdreq->req_dmamap, xbdreq->req_gntref);
 
 	if (bp->b_bcount > XBD_MAX_CHUNK) {
+		KASSERT(!RING_FULL(&sc->sc_ring));
 		struct xbd_req *xbdreq2 = SLIST_FIRST(&sc->sc_xbdreq_head);
 		KASSERT(xbdreq2 != NULL); /* Checked earlier */
 		SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
@@ -1258,7 +1264,7 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 		bus_dma_segment_t *ds = &dmamap->dm_segs[dmaseg];
 
 		ma = ds->ds_addr;
-		nbytes = imin(ds->ds_len, size);
+		nbytes = ds->ds_len;
 
 		if (start > 0) {
 			if (start >= nbytes) {
@@ -1285,6 +1291,7 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 
 		reqseg->gref = gntref[dmaseg];
 	}
+	KASSERT(segidx > 0);
 	req->nr_segments = segidx;
 	sc->sc_ring.req_prod_pvt++;
 }
