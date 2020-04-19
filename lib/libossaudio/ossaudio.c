@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.42 2020/04/19 11:27:40 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.43 2020/04/19 13:44:50 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.42 2020/04/19 11:27:40 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.43 2020/04/19 13:44:50 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -501,43 +501,35 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
 		INTARG = idat;
 		break;
-#if 0
+	case SNDCTL_DSP_SETTRIGGER:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		AUDIO_INITINFO(&tmpinfo);
+		if (tmpinfo.mode & AUMODE_PLAY)
+			tmpinfo.play.pause = (INTARG & PCM_ENABLE_OUTPUT) == 0;
+		if (tmpinfo.mode & AUMODE_RECORD)
+			tmpinfo.record.pause = (INTARG & PCM_ENABLE_INPUT) == 0;
+		(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/* FALLTHRU */
 	case SNDCTL_DSP_GETTRIGGER:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
-		       (tmpinfo.record.pause ? 0 : PCM_ENABLE_INPUT);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
+		idat = 0;
+		if ((tmpinfo.mode & AUMODE_PLAY) && !tmpinfo.play.pause)
+			idat |= PCM_ENABLE_OUTPUT;
+		if ((tmpinfo.mode & AUMODE_RECORD) && !tmpinfo.record.pause)
+			idat |= PCM_ENABLE_INPUT;
+		INTARG = idat;
 		break;
-	case SNDCTL_DSP_SETTRIGGER:
-		AUDIO_INITINFO(&tmpinfo);
-		retval = copyin(SCARG(uap, data), &idat, sizeof idat);
-		if (retval < 0)
-			return retval;
-		tmpinfo.play.pause = (idat & PCM_ENABLE_OUTPUT) == 0;
-		tmpinfo.record.pause = (idat & PCM_ENABLE_INPUT) == 0;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
-		break;
-#else
-	case SNDCTL_DSP_GETTRIGGER:
-	case SNDCTL_DSP_SETTRIGGER:
-		/* XXX Do nothing for now. */
-		INTARG = PCM_ENABLE_OUTPUT;
-		break;
-#endif
 	case SNDCTL_DSP_GETIPTR:
 		retval = ioctl(fd, AUDIO_GETIOFFS, &tmpoffs);
 		if (retval < 0)
