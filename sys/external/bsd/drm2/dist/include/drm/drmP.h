@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.40 2020/04/19 17:19:13 maya Exp $	*/
+/*	$NetBSD: drmP.h,v 1.41 2020/04/19 17:49:41 maya Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -67,6 +67,7 @@
 #include <uapi/drm/drm_mode.h>
 
 #ifdef __NetBSD__
+#include <dev/sysmon/sysmonvar.h>
 #include <drm/drm_os_netbsd.h>
 #include <asm/barrier.h>
 #include <asm/bug.h>
