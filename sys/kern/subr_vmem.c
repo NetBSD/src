@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.101 2020/04/19 21:11:42 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.102 2020/04/19 21:55:37 ad Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.101 2020/04/19 21:11:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.102 2020/04/19 21:55:37 ad Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -920,7 +920,7 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align,
 /* ---- vmem API */
 
 /*
- * vmem_create_internal: creates a vmem arena.
+ * vmem_init: creates a vmem arena.
  */
 
 vmem_t *
