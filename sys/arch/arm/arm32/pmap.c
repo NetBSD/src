@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.409 2020/04/19 08:50:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.410 2020/04/19 19:36:49 kre Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.409 2020/04/19 08:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.410 2020/04/19 19:36:49 kre Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2760,8 +2760,8 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 
 	KASSERT(!(md->pvh_attrs & PVF_NC));
 
-	UVMHIST_LOG(maphist, "md %#jx (attrs=%#jx)",(uintptr_t)md,
-	    md->pvh_attrs);
+	UVMHIST_LOG(maphist, "md %#jx (attrs=%#jx)", (uintptr_t)md,
+	    md->pvh_attrs, 0, 0);
 
 	const size_t scache_line_size = arm_scache.dcache_line_size;
 
