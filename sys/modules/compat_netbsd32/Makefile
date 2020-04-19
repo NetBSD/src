@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.32 2020/03/12 15:02:29 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.33 2020/04/19 17:40:49 maya Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
 
 KMOD=	compat_netbsd32
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-NETBSD32_DRMKMS?=yes
-.endif
+#.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+#NETBSD32_DRMKMS?=yes
+#.endif
 
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
