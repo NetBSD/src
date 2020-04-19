@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.42 2020/04/19 11:27:40 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.42 2020/04/19 11:27:40 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $");
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "soundcard.h"
 #undef ioctl
@@ -62,6 +63,9 @@ __RCSID("$NetBSD: ossaudio.c,v 1.41 2020/04/15 16:39:06 nia Exp $");
 	    ? (info)->record.name : (info)->play.name)
 
 static struct audiodevinfo *getdevinfo(int);
+
+static int getvol(u_int, u_char);
+static void setvol(int, int, bool);
 
 static void setchannels(int, int, int);
 static void setblocksize(int, struct audio_info *);
@@ -635,41 +639,23 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpaudioinfo->next_rec_engine = 0;
 		argp = tmpaudioinfo;
 		break;
-	case SNDCTL_DSP_GETPLAYVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		*(uint *)argp = tmpinfo.play.gain;
-		break;
 	case SNDCTL_DSP_SETPLAYVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		setvol(fd, INTARG, false);
+		/* FALLTHRU */
+	case SNDCTL_DSP_GETPLAYVOL:
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		if (*(uint *)argp > 255)
-			tmpinfo.play.gain = 255;
-		else
-			tmpinfo.play.gain = *(uint *)argp;
-		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		break;
-	case SNDCTL_DSP_GETRECVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		*(uint *)argp = tmpinfo.record.gain;
+		INTARG = getvol(tmpinfo.play.gain, tmpinfo.play.balance);
 		break;
 	case SNDCTL_DSP_SETRECVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		setvol(fd, INTARG, true);
+		/* FALLTHRU */
+	case SNDCTL_DSP_GETRECVOL:
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		if (*(uint *)argp > 255)
-			tmpinfo.record.gain = 255;
-		else
-			tmpinfo.record.gain = *(uint *)argp;
-		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		INTARG = getvol(tmpinfo.record.gain, tmpinfo.record.balance);
 		break;
 	case SNDCTL_DSP_SKIP:
 	case SNDCTL_DSP_SILENCE:
@@ -1045,6 +1031,53 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	}
 	INTARG = (int)idat;
 	return 0;
+}
+
+static int
+getvol(u_int gain, u_char balance)
+{
+	u_int l, r;
+
+	if (balance == AUDIO_MID_BALANCE) {
+		l = r = gain;
+	} else if (balance < AUDIO_MID_BALANCE) {
+		l = gain;
+		r = (balance * gain) / AUDIO_MID_BALANCE;
+	} else {
+		r = gain;
+		l = ((AUDIO_RIGHT_BALANCE - balance) * gain)
+		    / AUDIO_MID_BALANCE;
+	}
+
+	return TO_OSSVOL(l) | (TO_OSSVOL(r) << 8);
+}
+
+static void
+setvol(int fd, int volume, bool record)
+{
+	u_int lgain, rgain;
+	struct audio_info tmpinfo;
+	struct audio_prinfo *prinfo;
+
+	AUDIO_INITINFO(&tmpinfo);
+	prinfo = record ? &tmpinfo.record : &tmpinfo.play;
+
+	lgain = FROM_OSSVOL((volume >> 0) & 0xff);
+	rgain = FROM_OSSVOL((volume >> 8) & 0xff);
+
+	if (lgain == rgain) {
+		prinfo->gain = lgain;
+		prinfo->balance = AUDIO_MID_BALANCE;
+	} else if (lgain < rgain) {
+		prinfo->gain = rgain;
+		prinfo->balance = AUDIO_RIGHT_BALANCE -
+		    (AUDIO_MID_BALANCE * lgain) / rgain;
+	} else {
+		prinfo->gain = lgain;
+		prinfo->balance = (AUDIO_MID_BALANCE * rgain) / lgain;
+	}
+
+	(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 }
 
 /*
