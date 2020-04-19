@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.6 2020/04/18 20:36:31 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.7 2020/04/19 11:40:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.6 2020/04/18 20:36:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.7 2020/04/19 11:40:30 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -800,7 +800,7 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 	mutex_spin_exit(&evtlock[evtch]);
 }
 
-int
+struct intrhand *
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
     const char *intrname, const char *xname, bool mpsafe)
 {
@@ -827,12 +827,14 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		panic("can't allocate fixed interrupt source");
 
 
+	ih->ih_pic = &xen_pic;
 	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = func;
 	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_evt_next = NULL;
 	ih->ih_next = NULL;
 	ih->ih_cpu = ci;
+	ih->ih_pin = evtch;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = xen_intr_biglock_wrapper;
@@ -894,7 +896,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	intr_calculatemasks(evts, evtch, ci);
 	splx(s);
 
-	return 0;
+	return ih;
 }
 
 void

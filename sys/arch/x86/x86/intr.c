@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.150.6.3 2020/04/16 09:45:57 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.150.6.4 2020/04/19 11:40:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.3 2020/04/16 09:45:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.4 2020/04/19 11:40:30 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -880,6 +880,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		/* nothing */;
 	}
 
+	ih->ih_pic = pic;
 	ih->ih_fun = ih->ih_realfun = handler;
 	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_prevp = p;
@@ -1302,6 +1303,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
+	fake_timer_intrhand.ih_pic = &local_pic;
 	fake_timer_intrhand.ih_level = IPL_CLOCK;
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
@@ -1315,6 +1317,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
+	fake_ipi_intrhand.ih_pic = &local_pic;
 	fake_ipi_intrhand.ih_level = IPL_HIGH;
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;

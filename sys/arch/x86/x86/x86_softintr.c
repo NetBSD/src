@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_softintr.c,v 1.1.2.1 2020/04/11 18:26:07 bouyer Exp $	*/
+/*	$NetBSD: x86_softintr.c,v 1.1.2.2 2020/04/19 11:40:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.1.2.1 2020/04/11 18:26:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.1.2.2 2020/04/19 11:40:30 bouyer Exp $");
 
 #include <sys/kmem.h>
 #include <sys/proc.h>
@@ -226,6 +226,7 @@ x86_init_preempt(struct cpu_info *ci)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_preempt;
 	isp->is_resume = Xresume_preempt;
+	fake_preempt_intrhand.ih_pic = &softintr_pic;
 	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
 	isp->is_handlers = &fake_preempt_intrhand;
 	isp->is_pic = &softintr_pic;
@@ -256,21 +257,25 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	switch (level) {
 	case SOFTINT_BIO:
 		sir = SIR_BIO;
+		fake_softbio_intrhand.ih_pic = &softintr_pic;
 		fake_softbio_intrhand.ih_level = IPL_SOFTBIO;
 		isp->is_handlers = &fake_softbio_intrhand;
 		break;
 	case SOFTINT_NET:
 		sir = SIR_NET;
+		fake_softnet_intrhand.ih_pic = &softintr_pic;
 		fake_softnet_intrhand.ih_level = IPL_SOFTNET;
 		isp->is_handlers = &fake_softnet_intrhand;
 		break;
 	case SOFTINT_SERIAL:
 		sir = SIR_SERIAL;
+		fake_softserial_intrhand.ih_pic = &softintr_pic;
 		fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
 		isp->is_handlers = &fake_softserial_intrhand;
 		break;
 	case SOFTINT_CLOCK:
 		sir = SIR_CLOCK;
+		fake_softclock_intrhand.ih_pic = &softintr_pic;
 		fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
 		isp->is_handlers = &fake_softclock_intrhand;
 		break;

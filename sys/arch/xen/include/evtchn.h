@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.28 2020/04/06 19:26:00 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.28.2.1 2020/04/19 11:40:30 bouyer Exp $	*/
 
 /*
  *
@@ -62,7 +62,8 @@ evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
 	/* See comments in x86/include/intr.h:struct intrhand {} */
-	int pic_type;
+	struct pic *pic;
+	struct intrhand *ih;
 	int pirq;
 	int evtch;
 	int (*func)(void *);

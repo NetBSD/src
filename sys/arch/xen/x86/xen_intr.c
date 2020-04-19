@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.5 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.6 2020/04/19 11:40:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.5 2020/04/16 08:46:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.6 2020/04/19 11:40:30 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -138,28 +138,14 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		intrstr = intr_create_intrid(legacy_irq, pic, pin, intrstr_buf,
 		    sizeof(intrstr_buf));
 
-		event_set_handler(pin, handler, arg, level, intrstr, xname,
-		    known_mpsafe);
+		rih = event_set_handler(pin, handler, arg, level,
+		    intrstr, xname, known_mpsafe);
 
-		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
 		if (rih == NULL) {
-			printf("%s: can't allocate handler info\n", __func__);
+			printf("%s: can't establish interrupt", __func__);
 			return NULL;
 		}
 
-		/*
-		 * XXX:
-		 * This is just a copy for API conformance.
-		 * The real ih is lost in the innards of
-		 * event_set_handler(); where the details of
-		 * biglock_wrapper etc are taken care of.
-		 * All that goes away when we nuke event_set_handler()
-		 * et. al. and unify with x86/intr.c
-		 */
-		rih->ih_pin = pin; /* port */
-		rih->ih_fun = rih->ih_realfun = handler;
-		rih->ih_arg = rih->ih_realarg = arg;
-		rih->pic_type = pic->pic_type;
 		return rih;
 	} 	/* Else we assume pintr */
 
@@ -201,7 +187,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,
 			     intrstr, xname, known_mpsafe);
-	pih->pic_type = pic->pic_type;
+	pih->pic = pic;
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */
 
@@ -236,10 +222,10 @@ void
 xen_intr_disestablish(struct intrhand *ih)
 {
 
-	if (ih->pic_type == PIC_XEN) {
+	if (ih->ih_pic->pic_type == PIC_XEN) {
 		event_remove_handler(ih->ih_pin, ih->ih_realfun,
 		    ih->ih_realarg);
-		kmem_free(ih, sizeof(*ih));
+		/* event_remove_handler frees ih */
 		return;
 	}
 #if defined(DOM0OPS)
