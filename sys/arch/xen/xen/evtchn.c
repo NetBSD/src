@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.8 2020/04/19 19:39:11 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.9 2020/04/19 20:29:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.8 2020/04/19 19:39:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.9 2020/04/19 20:29:30 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -376,12 +376,15 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	mutex_spin_enter(&evtlock[evtch]);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
+		KASSERT(ih->ih_cpu == ci);
+#if 0
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
 			iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
 			ih = ih->ih_evt_next;
 			continue;
 		}
+#endif
 		if (ih->ih_level <= ilevel) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)

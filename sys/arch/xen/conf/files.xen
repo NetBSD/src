@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.180.2.4 2020/04/16 19:23:50 bouyer Exp $
+#	$NetBSD: files.xen,v 1.180.2.5 2020/04/19 20:29:30 bouyer Exp $
 
 defflag	opt_xen.h			XEN XENPVH XENPVHVM
 
@@ -7,7 +7,6 @@ file	arch/xen/x86/xen_intr.c			xen
 file	arch/xen/xen/xen_machdep.c		xen
 file	arch/xen/xen/evtchn.c			xen
 file	arch/xen/xen/xengnt.c			xen
-file	arch/xen/x86/xen_ipi.c			multiprocessor & xen
 file	arch/xen/x86/xen_mainbus.c		xen
 file	arch/xen/xen/xen_clock.c		xen
 
