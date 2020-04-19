@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.60 2020/04/13 15:54:45 maxv Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.61 2020/04/19 20:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.60 2020/04/13 15:54:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.61 2020/04/19 20:35:29 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -539,7 +539,7 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 			l->l_kpriority = true;
 			sleepq_enter(&cc->cc_sleepq, l, cc->cc_lock);
 			sleepq_enqueue(&cc->cc_sleepq, cc, "callout",
-			    &sleep_syncobj);
+			    &sleep_syncobj, false);
 			sleepq_block(0, false);
 		}
 
