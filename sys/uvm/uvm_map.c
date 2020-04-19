@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.380 2020/04/18 17:22:26 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.381 2020/04/19 08:59:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.380 2020/04/18 17:22:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.381 2020/04/19 08:59:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4960,7 +4960,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 	if (result) {
 		UVMHIST_LOG(maphist,
 		    "<- done OK (type=%jd,owner=#%jx,offset=%jx)",
-		    voaddr->type, voaddr->uobj, voaddr->offset, 0);
+		    voaddr->type, (uintptr_t)voaddr->uobj, voaddr->offset, 0);
 	} else {
 		UVMHIST_LOG(maphist,"<- done (failed)",0,0,0,0);
 	}
