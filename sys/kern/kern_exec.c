@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.496 2020/04/14 22:42:18 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.497 2020/04/19 20:31:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.496 2020/04/14 22:42:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.497 2020/04/19 20:31:59 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2397,6 +2397,10 @@ out:
 	return error;
 }
 
+/*
+ * N.B. increments nprocs upon success.  Callers need to drop nprocs if
+ * they fail for some other reason.
+ */
 int
 check_posix_spawn(struct lwp *l1)
 {
@@ -2751,6 +2755,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	rlim_t max_fileactions;
 	proc_t *p = l1->l_proc;
 
+	/* check_posix_spawn() increments nprocs for us. */
 	error = check_posix_spawn(l1);
 	if (error) {
 		*retval = error;
