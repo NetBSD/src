@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.120 2020/04/13 19:23:18 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.121 2020/04/19 13:25:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.120 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.121 2020/04/19 13:25:00 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -519,8 +519,9 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 		 */
 		numvnodes += d;
 	}
-	if (numvnodes > desiredvnodes || listhd == &lru_list[LRU_VRELE])
-		cv_broadcast(&vdrain_cv);
+	if ((d > 0 && numvnodes > desiredvnodes) ||
+	    listhd == &lru_list[LRU_VRELE])
+		cv_signal(&vdrain_cv);
 	mutex_exit(&vdrain_lock);
 }
 
@@ -686,9 +687,7 @@ vdrain_thread(void *cookie)
 		}
 
 		if (vdrain_retry) {
-			mutex_exit(&vdrain_lock);
-			yield();
-			mutex_enter(&vdrain_lock);
+			kpause("vdrainrt", false, 1, &vdrain_lock);
 		} else {
 			vdrain_gen++;
 			cv_broadcast(&vdrain_gen_cv);
