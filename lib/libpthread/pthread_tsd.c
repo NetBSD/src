@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.20 2020/02/16 17:45:11 kamil Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.21 2020/04/19 20:46:04 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.20 2020/02/16 17:45:11 kamil Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.21 2020/04/19 20:46:04 joerg Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -73,6 +73,12 @@ pthread_tsd_postfork(void)
 	pthread_mutex_unlock(&tsd_mutex);
 }
 
+static void
+pthread_tsd_postfork_child(void)
+{
+	pthread_mutex_init(&tsd_mutex, NULL);
+}
+
 void *
 pthread_tsd_init(size_t *tlen)
 {
@@ -80,7 +86,7 @@ pthread_tsd_init(size_t *tlen)
 	size_t alen;
 	char *arena;
 
-	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork);
+	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork_child);
 
 	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
 		pthread_keys_max = (int)strtol(pkm, NULL, 0);
