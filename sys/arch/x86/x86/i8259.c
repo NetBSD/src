@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.23.10.1 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: i8259.c,v 1.23.10.2 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.23.10.1 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.23.10.2 2020/04/19 19:39:10 bouyer Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -118,6 +118,9 @@ struct pic i8259_pic = {
 	.pic_delroute = i8259_setup,
 	.pic_level_stubs = legacy_stubs,
 	.pic_edge_stubs = legacy_stubs,
+	.pic_intr_get_devname = x86_intr_get_devname,
+	.pic_intr_get_assigned = x86_intr_get_assigned,
+	.pic_intr_get_count = x86_intr_get_count,
 };
 
 void

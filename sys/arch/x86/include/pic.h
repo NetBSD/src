@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.h,v 1.9 2017/11/04 10:26:14 cherry Exp $	*/
+/*	$NetBSD: pic.h,v 1.9.14.1 2020/04/19 19:39:10 bouyer Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
@@ -23,6 +23,10 @@ struct pic {
 	struct intrstub *pic_edge_stubs;
 	struct ioapic_softc *pic_ioapic; /* if pic_type == PIC_IOAPIC */
 	struct msipic *pic_msipic; /* if (pic_type == PIC_MSI) || (pic_type == PIC_MSIX) */
+	/* interface for subr_interrupt.c */
+	void (*pic_intr_get_devname)(const char *, char *, size_t);
+	void (*pic_intr_get_assigned)(const char *, kcpuset_t *);
+	uint64_t (*pic_intr_get_count)(const char *, u_int);
 };
 
 /*

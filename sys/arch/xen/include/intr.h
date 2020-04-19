@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.53.6.2 2020/04/16 08:46:35 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.53.6.3 2020/04/19 19:39:10 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -58,8 +58,9 @@ struct evtsource {
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	struct cpu_info *ev_cpu;        /* cpu on which this event is bound */
-	char ev_intrname[32];		/* interrupt string */
-	char ev_xname[64];		/* handler device list */
+	char ev_intrname[INTRIDBUF];	/* interrupt string */
+	char ev_xname[INTRDEVNAMEBUF];	/* handler device list */
+	struct intrsource *ev_isl;	/* entry in intr sources list */
 };
 
 extern struct intrstub xenev_stubs[];

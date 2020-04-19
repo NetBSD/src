@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.76.6.3 2020/04/18 14:47:56 bouyer Exp $	*/
+/*	$NetBSD: lapic.c,v 1.76.6.4 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.3 2020/04/18 14:47:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.4 2020/04/19 19:39:10 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -115,6 +115,9 @@ struct pic local_pic = {
 	.pic_hwunmask = lapic_hwunmask,
 	.pic_addroute = lapic_setup,
 	.pic_delroute = lapic_setup,
+	.pic_intr_get_devname = x86_intr_get_devname,
+	.pic_intr_get_assigned = x86_intr_get_assigned,
+	.pic_intr_get_count = x86_intr_get_count,
 };
 
 static int i82489_ipi(int vec, int target, int dl);

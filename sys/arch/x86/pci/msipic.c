@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.20 2019/12/02 03:06:51 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.20.6.1 2020/04/19 19:39:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.20 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.20.6.1 2020/04/19 19:39:10 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -436,6 +436,9 @@ static struct pic msi_pic_tmpl = {
 	.pic_hwunmask = msi_hwunmask,
 	.pic_addroute = msi_addroute,
 	.pic_delroute = msi_delroute,
+	.pic_intr_get_devname = x86_intr_get_devname,
+	.pic_intr_get_assigned = x86_intr_get_assigned,
+	.pic_intr_get_count = x86_intr_get_count,
 };
 
 /*
@@ -611,6 +614,9 @@ static struct pic msix_pic_tmpl = {
 	.pic_hwunmask = msix_hwunmask,
 	.pic_addroute = msix_addroute,
 	.pic_delroute = msix_delroute,
+	.pic_intr_get_devname = x86_intr_get_devname,
+	.pic_intr_get_assigned = x86_intr_get_assigned,
+	.pic_intr_get_count = x86_intr_get_count,
 };
 
 struct pic *
