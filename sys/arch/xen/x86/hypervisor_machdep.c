@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.4 2020/04/18 15:06:18 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.5 2020/04/19 20:29:30 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.4 2020/04/18 15:06:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.5 2020/04/19 20:29:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,7 @@ do_hypervisor_callback(struct intrframe *regs)
 #endif
 }
 
+#if 0
 void
 hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 {
@@ -323,6 +324,7 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 		}
 	}
 }
+#endif
 
 void
 hypervisor_unmask_event(unsigned int ev)
@@ -422,6 +424,8 @@ hypervisor_set_ipending(uint32_t imask, int l1, int l2)
 	KASSERT(ci->ci_isources[sir] != NULL);
 	ci->ci_isources[sir]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[sir]->ipl_evt_mask2[l1] |= 1UL << l2;
+	KASSERT(ci == curcpu());
+#if 0
 	if (__predict_false(ci != curcpu())) {
 		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
 			panic("hypervisor_set_ipending: "
@@ -429,6 +433,7 @@ hypervisor_set_ipending(uint32_t imask, int l1, int l2)
 			    (int) ci->ci_cpuid, ci->ci_vcpuid);
 		}
 	}
+#endif
 }
 
 void
