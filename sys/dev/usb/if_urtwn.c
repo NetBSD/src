@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.12 2020/04/17 13:44:37 martin Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.13 2020/04/19 13:57:23 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.12 2020/04/17 13:44:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.13 2020/04/19 13:57:23 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1651,9 +1651,10 @@ urtwn_ra_init(struct ieee80211vap *vap)
 	}
 	if (ic->ic_curmode == IEEE80211_MODE_11B) {
 		mode = R92C_RAID_11B;
-	} else {
+	} else if (ic->ic_curmode == IEEE80211_MODE_11G) {
 		mode = R92C_RAID_11BG;
-	}
+	} else /* mode = IEEE80211_MODE_11NG */
+		mode = R92C_RAID_11GN;
 	DPRINTFN(DBG_INIT, ("%s: %s: mode=%#x rates=%#x, basicrates=%#x, "
 	    "maxrate=%zx, maxbasicrate=%zx\n",
 	    device_xname(sc->sc_dev), __func__, mode, rates, basicrates,
@@ -2153,10 +2154,11 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 
 		if (ic->ic_curmode == IEEE80211_MODE_11B) {
 			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 0);
-		} else {
+		} else if (ic->ic_curmode == IEEE80211_MODE_11G) {
 			/* 802.11b/g */
 			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 3);
-		}
+		} else /* IEEE_MODE_11NG */
+			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 12); /* MCS 0 */
 
 		/* Enable Rx of data frames. */
 		urtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
@@ -2464,10 +2466,11 @@ urtwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 
 		if (ic->ic_curmode == IEEE80211_MODE_11B) {
 			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 0);
-		} else {
+		} else if (ic->ic_curmode == IEEE80211_MODE_11G) {
 			/* 802.11b/g */
 			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 3);
-		}
+		} else /* IEEE_MODE_11NG */
+			urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, 12); /* MCS 0 */
 
 		/* Enable Rx of data frames. */
 		urtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
@@ -3090,6 +3093,9 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		    R92C_TXDW0_OWN | R92C_TXDW0_FSG | R92C_TXDW0_LSG);
 	}
 
+	if (ic->ic_curmode == IEEE80211_MODE_11NG)
+		txd->txdw5 |= htole32(R92C_TXDW5_SGI);
+
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1))
 		txd->txdw0 |= htole32(R92C_TXDW0_BMCAST);
 
@@ -3104,8 +3110,10 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    type == IEEE80211_FC0_TYPE_DATA) {
 		if (ic->ic_curmode == IEEE80211_MODE_11B)
 			raid = R92C_RAID_11B;
-		else
+		else if (ic->ic_curmode == IEEE80211_MODE_11G)
 			raid = R92C_RAID_11BG;
+		else	/* IEEE80211_MODE_11NG */
+			raid = R92C_RAID_11GN;
 		DPRINTFN(DBG_TX,
 		    ("%s: %s: data packet: tid=%d, raid=%d\n",
 		    device_xname(sc->sc_dev), __func__, tid, raid));
@@ -3657,6 +3665,7 @@ urtwn_getradiocaps(struct ieee80211com *ic,
 	memset(bands, 0, sizeof(bands));
 	setbit(bands, IEEE80211_MODE_11B);
 	setbit(bands, IEEE80211_MODE_11G);
+	setbit(bands, IEEE80211_MODE_11NG);
 	ieee80211_add_channel_list_2ghz(chans, maxchans, nchans,
 	    urtwn_chan_2ghz, nitems(urtwn_chan_2ghz), bands, 0);
 }
