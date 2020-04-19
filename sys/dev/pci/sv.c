@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.57 2019/10/28 18:38:43 joerg Exp $ */
+/*      $NetBSD: sv.c,v 1.58 2020/04/19 08:18:19 isaki Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.57 2019/10/28 18:38:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.58 2020/04/19 08:18:19 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,7 +679,10 @@ sv_round_blocksize(void *addr, int blk, int mode,
     const audio_params_t *param)
 {
 
-	return blk & -32;	/* keep good alignment */
+	blk = blk & -32;	/* keep good alignment */
+	if (blk < 32)
+		blk = 32;
+	return blk;
 }
 
 static int
