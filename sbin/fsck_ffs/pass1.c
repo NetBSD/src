@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.58 2018/02/13 11:20:08 hannken Exp $	*/
+/*	$NetBSD: pass1.c,v 1.59 2020/04/19 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.58 2018/02/13 11:20:08 hannken Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.59 2020/04/19 19:37:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,7 +423,6 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	else
 		idesc->id_type = ADDR;
 	(void)ckinode(dp, idesc);
-#ifdef notyet
 	if (is_ufs2 && iswap32(dp->dp2.di_extsize) > 0) {
 		int ret, offset;
 		idesc->id_type = ADDR;
@@ -443,7 +442,6 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 				break;
 		}
 	}
-#endif
 	idesc->id_entryno *= btodb(sblock->fs_fsize);
 	if (is_ufs2)
 		blocks = iswap64(dp->dp2.di_blocks);
