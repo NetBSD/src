@@ -1,10 +1,13 @@
-# $NetBSD: std.xen,v 1.1.4.2 2020/04/20 11:28:57 bouyer Exp $
+# $NetBSD: std.xen,v 1.1.4.3 2020/04/20 19:38:54 bouyer Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
-machine xen i386
+machine xen i386 x86
 include		"conf/std"	# MI standard options
+include		"arch/xen/conf/files.xen.pv"
+
+options 	XEN	#Xen support
 
 include		"arch/xen/conf/std.xenversion"
 
