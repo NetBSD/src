@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.10 2020/04/20 11:29:01 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.11 2020/04/20 19:46:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.10 2020/04/20 11:29:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.11 2020/04/20 19:46:44 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -885,10 +885,11 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		if (bind) {
 			op.cmd = EVTCHNOP_bind_vcpu;
 			op.u.bind_vcpu.port = evtch;
-			op.u.bind_vcpu.vcpu = ci->ci_cpuid;
+			op.u.bind_vcpu.vcpu = ci->ci_vcpuid;
 			if (HYPERVISOR_event_channel_op(&op) != 0) {
-				panic("Failed to bind event %d to "
-				    "VCPU %"PRIuCPUID, evtch, ci->ci_cpuid);
+				panic("Failed to bind event %d to VCPU  %s %d",
+				    evtch, device_xname(ci->ci_dev),
+				    ci->ci_vcpuid);
 			}
 		}
 	} else {
@@ -955,15 +956,14 @@ event_set_iplhandler(struct cpu_info *ci,
 		ipls->is_recurse = xenev_stubs[level - IPL_VM].ist_recurse;
 		ipls->is_resume = xenev_stubs[level - IPL_VM].ist_resume;
 		ipls->is_handlers = ih;
-		ipls->is_maxlevel = level;
 		ipls->is_pic = &xen_pic;
 		ci->ci_isources[sir] = ipls;
-		x86_intr_calculatemasks(ci);
 	} else {
 		ipls = ci->ci_isources[sir];
 		ih->ih_next = ipls->is_handlers;
 		ipls->is_handlers = ih;
 	}
+	x86_intr_calculatemasks(ci);
 }
 
 int
