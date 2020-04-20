@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.43 2020/04/19 13:44:50 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.44 2020/04/20 12:01:44 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.43 2020/04/19 13:44:50 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.44 2020/04/20 12:01:44 nia Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -594,7 +594,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
