@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.8 2020/04/20 11:29:01 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.9 2020/04/20 20:19:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.8 2020/04/20 11:29:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.9 2020/04/20 20:19:07 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -357,7 +357,7 @@ xen_intr_string(int port, char *buf, size_t len, struct pic *pic)
 	KASSERT(port >= 0);
 	KASSERT(port < NR_EVENT_CHANNELS);
 
-	snprintf(buf, len, "%s channel %d", pic->pic_name, port);
+	snprintf(buf, len, "%s chan %d", pic->pic_name, port);
 
 	return buf;
 }
