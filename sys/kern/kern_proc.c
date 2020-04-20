@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.244 2020/04/19 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.245 2020/04/20 16:32:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.244 2020/04/19 20:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.245 2020/04/20 16:32:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -554,6 +554,7 @@ proc_sessrele(struct session *ss)
 {
 
 	KASSERT(mutex_owned(proc_lock));
+	KASSERT(ss->s_count > 0);
 	/*
 	 * We keep the pgrp with the same id as the session in order to
 	 * stop a process being given the same pid.  Since the pgrp holds
@@ -1181,8 +1182,11 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 		if (entering) {
 			pgrp->pg_jobc++;
 			p->p_lflag &= ~PL_ORPHANPG;
-		} else if (--pgrp->pg_jobc == 0)
-			orphanpg(pgrp);
+		} else {
+			KASSERT(pgrp->pg_jobc > 0);
+			if (--pgrp->pg_jobc == 0)
+				orphanpg(pgrp);
+		}
 	}
 
 	/*
@@ -1197,8 +1201,11 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 			if (entering) {
 				child->p_lflag &= ~PL_ORPHANPG;
 				hispgrp->pg_jobc++;
-			} else if (--hispgrp->pg_jobc == 0)
-				orphanpg(hispgrp);
+			} else {
+				KASSERT(hispgrp->pg_jobc > 0);
+				if (--hispgrp->pg_jobc == 0)
+					orphanpg(hispgrp);
+			}
 		}
 	}
 }
