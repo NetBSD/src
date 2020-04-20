@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.77.2.2 2020/04/20 18:50:46 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.77.2.3 2020/04/20 19:40:51 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77.2.2 2020/04/20 18:50:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77.2.3 2020/04/20 19:40:51 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1049,7 +1049,6 @@ xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
 {
 	int work_to_do;
 
-	KASSERT(xbdi->xbdio_io == NULL);
 	RING_FINAL_CHECK_FOR_REQUESTS(&xbdi->xbdi_ring.ring_n, work_to_do);
 	if (work_to_do)
 		xbdi->xbdi_cont = xbdback_co_main;
@@ -1233,7 +1232,6 @@ static void *
 xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 {
 	struct xbdback_io *xbd_io = xbdi->xbdi_io;
-	int nsegs __diagused;
 
 	switch (xbd_io->xio_operation) {
 	case BLKIF_OP_FLUSH_DISKCACHE:
