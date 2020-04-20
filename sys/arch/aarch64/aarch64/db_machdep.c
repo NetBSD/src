@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.20 2020/02/29 21:30:19 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.20.4.1 2020/04/20 11:28:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.20 2020/02/29 21:30:19 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.20.4.1 2020/04/20 11:28:50 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -936,6 +936,7 @@ kdb_trap(int type, struct trapframe *tf)
 	case DB_TRAP_BKPT_INSN:
 	case DB_TRAP_WATCHPOINT:
 	case DB_TRAP_SW_STEP:
+	case -1:	/* from pic_ipi_ddb() */
 		break;
 	default:
 		if (db_recover != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.233 2020/04/04 20:20:12 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.233.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.233 2020/04/04 20:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.233.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -740,13 +740,11 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		}
 
 		/*
-		 * Break out if the process is exiting, or if all LWPs are
-		 * in _lwp_wait().  There are other ways to hang the process
-		 * with _lwp_wait(), but the sleep is interruptable so
-		 * little point checking for them.
+		 * Break out if all LWPs are in _lwp_wait().  There are
+		 * other ways to hang the process with _lwp_wait(), but the
+		 * sleep is interruptable so little point checking for them.
 		 */
-		if ((p->p_sflag & PS_WEXIT) != 0 ||
-		    p->p_nlwpwait == p->p_nlwps) {
+		if (p->p_nlwpwait == p->p_nlwps) {
 			error = EDEADLK;
 			break;
 		}

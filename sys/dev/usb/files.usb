@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.172 2020/02/09 15:46:15 maya Exp $
+#	$NetBSD: files.usb,v 1.172.4.1 2020/04/20 11:29:08 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -54,7 +54,6 @@ defflag opt_usb.h	UHSO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAD_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAQ_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIRDA_DEBUG: USB_DEBUG
-defflag opt_usb.h	UISDATA_DEBUG: USB_DEBUG
 defflag opt_usb.h	UKBD_DEBUG: USB_DEBUG
 defflag opt_usb.h	UKYOPON_DEBUG: USB_DEBUG
 defflag opt_usb.h	ULPT_DEBUG: USB_DEBUG
@@ -199,10 +198,9 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 
 
 # Mass storage
-device	umass: scsi, atapi, ata_hl
+device	umass: scsi, atapi
 attach	umass at usbifif
 file	dev/usb/umass.c			umass
-file	dev/usb/umass_isdata.c		umass & wd & atabus
 file	dev/usb/umass_quirks.c		umass
 file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 
@@ -428,6 +426,11 @@ file	dev/usb/umcs.c			umcs
 device	uvscom: ucombus
 attach	uvscom at usbdevif
 file	dev/usb/uvscom.c		uvscom
+
+# Exar XR21V141x serial driver (mostly CDC)
+device	uxrcom: ucombus, umodem_common
+attach	uxrcom at usbifif
+file	dev/usb/uxrcom.c		uxrcom
 
 # Belkin & other serial driver
 define	ubsa_common

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.132 2020/02/15 08:16:11 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.132.4.1 2020/04/20 11:28:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.132 2020/02/15 08:16:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.132.4.1 2020/04/20 11:28:52 bouyer Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.132 2020/02/15 08:16:11 skrll Ex
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_multiprocessor.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 
@@ -565,13 +564,6 @@ parse_mi_bootargs(char *args)
 	    || get_bootconf_option(args, "-a", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= RB_ASKNAME;
-
-#ifdef PMAP_DEBUG
-	if (get_bootconf_option(args, "pmapdebug", BOOTOPT_TYPE_INT, &integer)) {
-		pmap_debug_level = integer;
-		pmap_debug(pmap_debug_level);
-	}
-#endif	/* PMAP_DEBUG */
 
 /*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
 		bufpages = integer;*/

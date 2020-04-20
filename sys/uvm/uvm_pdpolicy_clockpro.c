@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.24 2020/03/14 13:53:26 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.24.2.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 /*
  * CLOCK-Pro replacement policy:
- *	http://www.cs.wm.edu/hpcs/WWW/HTML/publications/abs05-3.html
+ *	http://web.cse.ohio-state.edu/hpcs/WWW/HTML/publications/abs05-3.html
  *
  * approximation of the list of non-resident pages using hash:
  *	http://linux-mm.org/ClockProApproximation
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.24 2020/03/14 13:53:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.24.2.1 2020/04/20 11:29:14 bouyer Exp $");
 
 #include "opt_ddb.h"
 

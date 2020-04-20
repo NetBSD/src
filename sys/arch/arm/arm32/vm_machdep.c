@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75 2018/07/12 12:48:50 jakllsch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75.10.1 2020/04/20 11:28:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2018/07/12 12:48:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75.10.1 2020/04/20 11:28:52 bouyer Exp $");
 
 #include "opt_armfpe.h"
-#include "opt_pmap_debug.h"
 #include "opt_cputypes.h"
 
 #include <sys/param.h>
@@ -110,10 +109,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	const struct pcb * const pcb1 = lwp_getpcb(l1);
 	struct pcb * const pcb2 = lwp_getpcb(l2);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
-#endif	/* PMAP_DEBUG */
+#ifdef XXXDEBUG
+	printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
+#endif	/* DEBUG */
 
 	/* Copy the pcb */
 	*pcb2 = *pcb1;
@@ -139,14 +137,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0) {
-		printf("l1: pcb=%p pid=%d pmap=%p\n",
-		    pcb1, l1->l_lid, l1->l_proc->p_vmspace->vm_map.pmap);
-		printf("l2: pcb=%p pid=%d pmap=%p\n",
-		    pcb2, l2->l_lid, l2->l_proc->p_vmspace->vm_map.pmap);
-	}
-#endif	/* PMAP_DEBUG */
+#ifdef XXXDEBUG
+	printf("l1: pcb=%p pid=%d pmap=%p\n",
+	    pcb1, l1->l_lid, l1->l_proc->p_vmspace->vm_map.pmap);
+	printf("l2: pcb=%p pid=%d pmap=%p\n",
+	    pcb2, l2->l_lid, l2->l_proc->p_vmspace->vm_map.pmap);
+#endif	/* DEBUG */
 
 	struct trapframe *tf = (struct trapframe *)pcb2->pcb_ksp - 1;
 	lwp_settrapframe(l2, tf);
@@ -211,11 +207,10 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 	KASSERT(pm != pmap_kernel());
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
-		    (u_int)bp->b_data, (u_int)len);
-#endif	/* PMAP_DEBUG */
+#ifdef XXXDEBUG
+	printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
+	    (u_int)bp->b_data, (u_int)len);
+#endif	/* XXXDEBUG */
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -253,11 +248,10 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
-		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
-#endif	/* PMAP_DEBUG */
+#ifdef XXXDEBUG
+	printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
+	    (u_int)bp, (u_int)bp->b_data, (u_int)len);
+#endif	/* XXXDEBUG */
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");

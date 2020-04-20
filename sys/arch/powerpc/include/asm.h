@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.49 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: asm.h,v 1.49.4.1 2020/04/20 11:28:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -156,7 +156,9 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 
 #undef __RCSID
 #define RCSID(x)	__RCSID(x)
-#define	__RCSID(x)	.pushsection .ident; .asciz x; .popsection
+#define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.popsection
 
 #ifdef __ELF__
 # define WEAK_ALIAS(alias,sym)						\

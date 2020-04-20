@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.30 2019/12/18 11:27:56 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.30.6.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.30 2019/12/18 11:27:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.30.6.1 2020/04/20 11:29:14 bouyer Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -69,13 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.30 2019/12/18 11:27:56 skrll Exp $");
  *
  * Each pmap has two bitmaps: pm_active and pm_onproc.  Each bit in pm_active
  * indicates whether that pmap has an allocated ASID for a CPU.  Each bit in
- * pm_onproc indicates that pmap's ASID is active (equal to the ASID in COP 0
- * register EntryHi) on a CPU.  The bit number comes from the CPU's cpu_index().
- * Even though these bitmaps contain the bits for all CPUs, the bits that
- * correspond to the bits belonging to the CPUs sharing a TLB can only be
- * manipulated while holding that TLB's lock.  Atomic ops must be used to
- * update them since multiple CPUs may be changing different sets of bits at
- * same time but these sets never overlap.
+ * pm_onproc indicates that the pmap's ASID is in use, i.e. a CPU has it in its
+ * "current ASID" field, e.g. the ASID field of the COP 0 register EntryHi for
+ * MIPS, or the ASID field of TTBR0 for AA64.  The bit number used in these
+ * bitmaps comes from the CPU's cpu_index().  Even though these bitmaps contain
+ * the bits for all CPUs, the bits that  correspond to the bits belonging to
+ * the CPUs sharing a TLB can only be manipulated while holding that TLB's
+ * lock.  Atomic ops must be used to update them since multiple CPUs may be
+ * changing different sets of bits at same time but these sets never overlap.
  *
  * When a change to the local TLB may require a change in the TLB's of other
  * CPUs, we try to avoid sending an IPI if at all possible.  For instance, if
@@ -238,8 +239,8 @@ static void
 pmap_tlb_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 	struct pmap *pm)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "(ti=%#jx, pai=%#jx, pm=%#jx): asid %u",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(ti=%#jx, pai=%#jx, pm=%#jx): asid %u",
 	    (uintptr_t)ti, (uintptr_t)pai, (uintptr_t)pm, pai->pai_asid);
 
 	/*
@@ -420,8 +421,8 @@ pmap_tlb_asid_count(struct pmap_tlb_info *ti)
 static void
 pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "(ti=%#jx, op=%ju)", (uintptr_t)ti, op, 0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(ti=%#jx, op=%ju)", (uintptr_t)ti, op, 0, 0);
 
 	pmap_tlb_pai_check(ti, true);
 
@@ -639,7 +640,8 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	 * We don't need to deal with our own TLB.
 	 */
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
 
 	kcpuset_t *pm_active;
 	kcpuset_clone(&pm_active, pm->pm_active);
@@ -733,9 +735,8 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	int rv = -1;
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,
-	    " (pm=%#jx va=%#jx, pte=%#jx flags=%#jx)",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, " (pm=%#jx va=%#jx, pte=%#jx flags=%#jx)",
 	    (uintptr_t)pm, va, pte_value(pte), flags);
 
 	KASSERT(kpreempt_disabled());
@@ -774,8 +775,8 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, " (pm=%#jx va=%#jx) ti=%#jx asid=%#jx",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, " (pm=%#jx va=%#jx) ti=%#jx asid=%#jx",
 	    (uintptr_t)pm, va, (uintptr_t)ti, pai->pai_asid);
 
 	KASSERT(kpreempt_disabled());
@@ -899,8 +900,8 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "(pm=%#jx, l=%#jx, ti=%#jx)", (uintptr_t)pm,
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(pm=%#jx, l=%#jx, ti=%#jx)", (uintptr_t)pm,
 	    (uintptr_t)l, (uintptr_t)ti, 0);
 
 	KASSERT(kpreempt_disabled());
@@ -965,7 +966,8 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 void
 pmap_tlb_asid_deactivate(pmap_t pm)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(kpreempt_disabled());
 #if defined(MULTIPROCESSOR)
@@ -1001,8 +1003,8 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 void
 pmap_tlb_asid_release_all(struct pmap *pm)
 {
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "(pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(pm != pmap_kernel());
 #if defined(MULTIPROCESSOR)

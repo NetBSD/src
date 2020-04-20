@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfbreg.h,v 1.1 2016/06/16 14:46:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfbreg.h,v 1.1.32.1 2020/04/20 11:28:58 bouyer Exp $");
 
 #ifndef PLATINUMFBREG_H
 #define PLATINUMFBREG_H

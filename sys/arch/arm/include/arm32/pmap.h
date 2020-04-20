@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.166 2020/03/29 21:34:33 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.166.2.1 2020/04/20 11:28:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -339,7 +339,6 @@ extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
 /*
  * Commonly referenced structures
  */
-extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 extern int		arm_poolpage_vmfreelist;
 
 /*
@@ -407,7 +406,6 @@ bool	pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 bool	pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 
-void	pmap_debug(int);
 void	pmap_postinit(void);
 
 void	vector_page_setprot(int);

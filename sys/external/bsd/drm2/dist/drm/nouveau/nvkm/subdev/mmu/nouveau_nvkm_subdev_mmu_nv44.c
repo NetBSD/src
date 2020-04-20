@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3 2018/08/27 07:41:09 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3.14.1 2020/04/20 11:29:09 bouyer Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3 2018/08/27 07:41:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3.14.1 2020/04/20 11:29:09 bouyer Exp $");
 
 #include "nv04.h"
 
@@ -193,7 +193,7 @@ fail1:		bus_dmamem_free(dmat, &mmu->nullseg, 1);
 
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamem_map(dmat, &mmu->nullseg, 1, nullsz,
-	    &mmu->nullp, BUS_DMA_WAITOK);
+	    &mmu->nullp, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (ret) {
 fail2:		bus_dmamap_destroy(dmat, mmu->nullmap);
 		goto fail1;

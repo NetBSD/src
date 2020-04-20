@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.22 2020/02/20 08:27:38 skrll Exp $
+# $NetBSD: genassym.cf,v 1.22.4.1 2020/04/20 11:28:50 bouyer Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,6 +150,10 @@ define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 define	L_MD_CPACR		offsetof(struct lwp, l_md.md_cpacr)
 define	L_MD_ONFAULT		offsetof(struct lwp, l_md.md_onfault)
+define	L_MD_IA_KERN_LO		offsetof(struct lwp, l_md.md_ia_kern_lo)
+define	L_MD_IA_KERN_HI		offsetof(struct lwp, l_md.md_ia_kern_hi)
+define	L_MD_IA_USER_LO		offsetof(struct lwp, l_md.md_ia_user_lo)
+define	L_MD_IA_USER_HI		offsetof(struct lwp, l_md.md_ia_user_hi)
 
 define	FB_X19			FB_X19
 define	FB_X20			FB_X20

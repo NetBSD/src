@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.221 2020/04/06 08:20:05 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.221.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.221 2020/04/06 08:20:05 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.221.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -511,10 +511,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
+	if (tracefork(p1, flags) || tracevfork(p1, flags))
 		proc_changeparent(p2, p1->p_pptr);
-		p2->p_oppid = p1->p_pid;
-	}
+
+	p2->p_oppid = p1->p_pid; /* Remember the original parent id. */
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);

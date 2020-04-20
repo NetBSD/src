@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.55 2020/04/04 21:36:15 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.55.2.1 2020/04/20 11:29:03 bouyer Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.55 2020/04/04 21:36:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.55.2.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include "opt_mvsata.h"
 
@@ -121,9 +121,9 @@ static void mvsata_probe_drive(struct ata_channel *);
 
 #ifndef MVSATA_WITHOUTDMA
 static void mvsata_reset_channel(struct ata_channel *, int);
-static int mvsata_bio(struct ata_drive_datas *, struct ata_xfer *);
+static void mvsata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static void mvsata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
-static int mvsata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
+static void mvsata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 static int mvsata_addref(struct ata_drive_datas *);
 static void mvsata_delref(struct ata_drive_datas *);
 static void mvsata_killpending(struct ata_drive_datas *);
@@ -985,7 +985,7 @@ static const struct ata_xfer_ops mvsata_bio_xfer_ops = {
 	.c_kill_xfer = mvsata_bio_kill_xfer,
 };
 
-static int
+static void
 mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -1009,7 +1009,6 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->ops = &mvsata_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 static int
@@ -1601,12 +1600,11 @@ static const struct ata_xfer_ops mvsata_wdc_cmd_xfer_ops = {
 	.c_kill_xfer = mvsata_wdc_cmd_kill_xfer,
 };
 
-static int
+static void
 mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	int rv, s;
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS,
 	    ("%s:%d: mvsata_exec_command: drive=%d, bcount=%d,"
@@ -1625,24 +1623,8 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
 	xfer->ops = &mvsata_wdc_cmd_xfer_ops;
-	s = splbio();
+
 	ata_exec_xfer(chp, xfer);
-#ifdef DIAGNOSTIC
-	if ((ata_c->flags & AT_POLL) != 0 &&
-	    (ata_c->flags & AT_DONE) == 0)
-		panic("mvsata_exec_command: polled command not done");
-#endif
-	if (ata_c->flags & AT_DONE)
-		rv = ATACMD_COMPLETE;
-	else {
-		if (ata_c->flags & AT_WAIT) {
-			ata_wait_cmd(chp, xfer);
-			rv = ATACMD_COMPLETE;
-		} else
-			rv = ATACMD_QUEUED;
-	}
-	splx(s);
-	return rv;
 }
 
 static int

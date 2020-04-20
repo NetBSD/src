@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.30 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.30.6.1 2020/04/20 11:28:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.30 2019/11/23 19:40:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.30.6.1 2020/04/20 11:28:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,3 +303,18 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 		setsoftast(l);
 	}
 }
+
+#ifdef MODULAR
+struct lwp *
+hppa_curlwp(void)
+{
+	return curlwp;
+}
+
+struct cpu_info *
+hppa_curcpu(void)
+{
+	return curcpu();
+}
+#endif
+

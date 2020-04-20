@@ -1,4 +1,4 @@
-$NetBSD: onewiredevs,v 1.2 2009/01/21 14:27:58 jnemeth Exp $
+$NetBSD: onewiredevs,v 1.2.78.1 2020/04/20 11:29:04 bouyer Exp $
 /* $OpenBSD: onewiredevs,v 1.1 2006/03/04 16:27:03 grange Exp $ */
 
 /*
@@ -35,5 +35,6 @@ family	DS1982		0x09	1kb EPROM
 family	DS1995		0x0a	16kb NVRAM
 family	DS1996		0x0c	64kb NVRAM
 family	DS1920		0x10	Temperature
+family	DS2430		0x14	256bit EEPROM
 family	DS1822		0x22	Temperature
 family	DS18B20		0x28	Temperature

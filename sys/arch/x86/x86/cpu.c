@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.181.4.3 2020/04/18 15:06:18 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.181.4.4 2020/04/20 11:29:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.3 2020/04/18 15:06:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.4 2020/04/20 11:29:00 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -203,9 +203,9 @@ static vaddr_t cmos_data_mapping;
 struct cpu_info *cpu_starting;
 
 #ifdef MULTIPROCESSOR
-void    	cpu_hatch(void *);
-static void    	cpu_boot_secondary(struct cpu_info *ci);
-static void    	cpu_start_secondary(struct cpu_info *ci);
+void		cpu_hatch(void *);
+static void	cpu_boot_secondary(struct cpu_info *ci);
+static void	cpu_start_secondary(struct cpu_info *ci);
 #if NLAPIC > 0
 static void	cpu_copy_trampoline(paddr_t);
 #endif
@@ -281,7 +281,7 @@ cpu_vm_init(struct cpu_info *ci)
 		cai = &ci->ci_cinfo[i];
 
 		tcolors = atop(cai->cai_totalsize);
-		switch(cai->cai_associativity) {
+		switch (cai->cai_associativity) {
 		case 0xff:
 			tcolors = 1; /* fully associative */
 			break;
@@ -305,7 +305,7 @@ cpu_vm_init(struct cpu_info *ci)
 			}
 			if (picked == 1) {
 				panic("desired number of cache colors %d is "
-			      	" > 1, but not even!", ncolors);
+				" > 1, but not even!", ncolors);
 			}
 			ncolors = picked;
 		}
@@ -1033,7 +1033,7 @@ cpu_debug_dump(void)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	const char sixtyfour64space[] = 
+	const char sixtyfour64space[] =
 #ifdef _LP64
 			   "        "
 #endif

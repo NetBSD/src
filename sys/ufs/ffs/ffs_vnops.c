@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.130 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.130.4.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.130 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.130.4.1 2020/04/20 11:29:14 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -611,161 +611,4 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	} else {
 		*eobp = ffs_blkroundup(fs, size);
 	}
-}
-
-int
-ffs_openextattr(void *v)
-{
-	struct vop_openextattr_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
-
-	/* Not supported for UFS1 file systems. */
-	if (fs->fs_magic == FS_UFS1_MAGIC)
-		return (EOPNOTSUPP);
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
-}
-
-int
-ffs_closeextattr(void *v)
-{
-	struct vop_closeextattr_args /* {
-		struct vnode *a_vp;
-		int a_commit;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
-
-	/* Not supported for UFS1 file systems. */
-	if (fs->fs_magic == FS_UFS1_MAGIC)
-		return (EOPNOTSUPP);
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
-}
-
-int
-ffs_getextattr(void *v)
-{
-	struct vop_getextattr_args /* {
-		struct vnode *a_vp;
-		int a_attrnamespace;
-		const char *a_name;
-		struct uio *a_uio;
-		size_t *a_size;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-#ifdef UFS_EXTATTR
-		int error;
-
-		error = ufs_getextattr(ap);
-		return error;
-#else
-		return (EOPNOTSUPP);
-#endif
-	}
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
-}
-
-int
-ffs_setextattr(void *v)
-{
-	struct vop_setextattr_args /* {
-		struct vnode *a_vp;
-		int a_attrnamespace;
-		const char *a_name;
-		struct uio *a_uio;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-#ifdef UFS_EXTATTR
-		int error;
-
-		error = ufs_setextattr(ap);
-		return error;
-#else
-		return (EOPNOTSUPP);
-#endif
-	}
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
-}
-
-int
-ffs_listextattr(void *v)
-{
-	struct vop_listextattr_args /* {
-		struct vnode *a_vp;
-		int a_attrnamespace;
-		struct uio *a_uio;
-		size_t *a_size;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
-
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-#ifdef UFS_EXTATTR
-		int error;
-
-		error = ufs_listextattr(ap);
-		return error;
-#else
-		return (EOPNOTSUPP);
-#endif
-	}
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
-}
-
-int
-ffs_deleteextattr(void *v)
-{
-	struct vop_deleteextattr_args /* {
-		struct vnode *a_vp;
-		int a_attrnamespace;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-#ifdef UFS_EXTATTR
-		int error;
-
-		error = ufs_deleteextattr(ap);
-		return error;
-#else
-		return (EOPNOTSUPP);
-#endif
-	}
-
-	/* XXX Not implemented for UFS2 file systems. */
-	return (EOPNOTSUPP);
 }

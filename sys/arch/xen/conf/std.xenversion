@@ -1,0 +1,6 @@
+# $NetBSD: std.xenversion,v 1.2.4.2 2020/04/20 11:29:00 bouyer Exp $
+#
+# Xen options shared for all archs (i386, amd64)
+
+options 	__XEN_INTERFACE_VERSION__=0x0003020a # Xen 3.2.10 interface
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11 2020/01/15 08:34:04 mrg Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11.4.1 2020/04/20 11:28:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -67,6 +67,10 @@ struct aarch64_cache_info {
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
+
+extern int aarch64_pac_enabled;
+
+void aarch64_pac_init(int);
 
 int set_cpufuncs(void);
 void aarch64_getcacheinfo(int);

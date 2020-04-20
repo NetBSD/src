@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.243 2020/04/06 08:20:05 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.243.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.243 2020/04/06 08:20:05 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.243.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -866,8 +866,6 @@ proc_free_pid(pid_t pid)
 		last_free_pt = pid;
 		pid_alloc_cnt--;
 	}
-
-	atomic_dec_uint(&nprocs);
 }
 
 void

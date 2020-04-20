@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.225 2019/08/06 15:48:18 riastradh Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.225.6.1 2020/04/20 11:29:12 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.225 2019/08/06 15:48:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.225.6.1 2020/04/20 11:29:12 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -256,7 +256,7 @@ tcp_fill_info(struct tcpcb *tp, struct tcp_info *ti)
 	}
 
 	ti->tcpi_rto = tp->t_rxtcur * tick;
-	ti->tcpi_last_data_recv = (long)(hardclock_ticks -
+	ti->tcpi_last_data_recv = (long)(getticks() -
 					 (int)tp->t_rcvtime) * tick;
 	ti->tcpi_rtt = ((u_int64_t)tp->t_srtt * tick) >> TCP_RTT_SHIFT;
 	ti->tcpi_rttvar = ((u_int64_t)tp->t_rttvar * tick) >> TCP_RTTVAR_SHIFT;

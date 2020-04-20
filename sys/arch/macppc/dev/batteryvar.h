@@ -1,4 +1,4 @@
-/*	$NetBSD: batteryvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: batteryvar.h,v 1.2.98.1 2020/04/20 11:28:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: batteryvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: batteryvar.h,v 1.2.98.1 2020/04/20 11:28:58 bouyer Exp $");
 
 #ifndef BATTERY_VAR_H
 #define BATTERY_VAR_H

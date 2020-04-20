@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.10 2019/07/24 12:33:18 hkenken Exp $
+#	$NetBSD: KOBO,v 1.10.8.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -26,6 +26,7 @@ options 	CONSPEED=115200	# Console speed
 
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -34,7 +35,6 @@ makeoptions	COPY_SYMTAB=1
 #  single		Boot to single user only
 #  kndb			Give control to kernel debugger
 #  ask			Ask for file name to reboot from
-#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output

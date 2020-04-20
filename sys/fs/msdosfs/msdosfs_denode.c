@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.57 2018/05/28 21:04:37 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.57.12.1 2020/04/20 11:29:09 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.57 2018/05/28 21:04:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.57.12.1 2020/04/20 11:29:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,8 +611,8 @@ out:
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n",
-		vp->v_usecount, dep->de_Name[0]);
+	printf("msdosfs_inactive(): usecount %d, de_Name[0] %x\n",
+		vrefcnt(vp), dep->de_Name[0]);
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
 

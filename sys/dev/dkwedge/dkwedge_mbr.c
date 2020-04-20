@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.11 2019/07/09 17:06:46 maxv Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.11.8.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.11 2019/07/09 17:06:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.11.8.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.11 2019/07/09 17:06:46 maxv Exp $"
 #include <sys/errno.h>
 #include <sys/disk.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/buf.h>
 
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.11 2019/07/09 17:06:46 maxv Exp $"
 typedef struct mbr_args {
 	struct disk	*pdk;
 	struct vnode	*vp;
-	void		*buf;
+	struct buf	*bp;
 	int		error;
 	uint32_t	secsize;
 	int		mbr_count;
@@ -88,7 +88,7 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 	const char *ptype;
 	int i, error;
 
-	error = dkwedge_read(a->pdk, a->vp, off, a->buf, a->secsize);
+	error = dkwedge_read(a->pdk, a->vp, off, a->bp->b_data, a->secsize);
 	if (error) {
 		aprint_error("%s: unable to read MBR @ %u/%u, "
 		    "error = %d\n", a->pdk->dk_name, off, a->secsize, a->error);
@@ -96,7 +96,7 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 		return;
 	}
 
-	mbr = a->buf;
+	mbr = a->bp->b_data;
 	if (mbr->mbr_magic != htole16(MBR_MAGIC))
 		return;
 
@@ -175,10 +175,11 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 {
 	mbr_args_t a;
 
+	memset(&a, 0, sizeof(a));
 	a.pdk = pdk;
 	a.secsize = DEV_BSIZE << pdk->dk_blkshift;  
 	a.vp = vp;
-	a.buf = malloc(a.secsize, M_DEVBUF, M_WAITOK);
+	a.bp = geteblk(a.secsize);
 	a.error = 0;
 	a.mbr_count = 0;
 
@@ -188,7 +189,7 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 	else if (a.error == 0)
 		a.error = ESRCH;	/* no MBRs found */
 
-	free(a.buf, M_DEVBUF);
+	brelse(a.bp, 0);
 	return (a.error);
 }
 

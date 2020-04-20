@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.36 2017/01/14 21:58:17 christos Exp $ */
+/* $NetBSD: asm.h,v 1.36.26.1 2020/04/20 11:28:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -643,7 +643,9 @@ label:	ASCIZ msg;						\
  * Kernel RCS ID tag and copyright macros
  */
 #define	__SECTIONSTRING(_sec, _str)				\
-	.pushsection _sec ; .asciz _str ; .popsection
+	.pushsection _sec,"MS",@progbits,1;			\
+	.asciz _str;						\
+	.popsection
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.185 2020/02/19 16:05:41 riastradh Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.185.4.1 2020/04/20 11:29:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.185 2020/02/19 16:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.185.4.1 2020/04/20 11:29:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -141,10 +141,7 @@ scsipi_init(void)
 	/* Initialize the scsipi_xfer pool. */
 	pool_init(&scsipi_xfer_pool, sizeof(struct scsipi_xfer), 0,
 	    0, 0, "scxspl", NULL, IPL_BIO);
-	if (pool_prime(&scsipi_xfer_pool,
-	    PAGE_SIZE / sizeof(struct scsipi_xfer)) == ENOMEM) {
-		printf("WARNING: not enough memory for scsipi_xfer_pool\n");
-	}
+	pool_prime(&scsipi_xfer_pool, 1);
 
 	scsipi_ioctl_init();
 }

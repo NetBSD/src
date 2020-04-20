@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.95 2020/03/21 16:30:39 pgoyette Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.95.2.1 2020/04/20 11:29:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.95 2020/03/21 16:30:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.95.2.1 2020/04/20 11:29:11 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,7 +119,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if (rtvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+	if (vrefcnt(rtvp) > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);

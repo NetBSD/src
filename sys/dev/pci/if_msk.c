@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.98 2020/02/04 05:44:14 thorpej Exp $ */
+/* $NetBSD: if_msk.c,v 1.98.4.1 2020/04/20 11:29:04 bouyer Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.98 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.98.4.1 2020/04/20 11:29:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,17 +456,13 @@ msk_init_rx_ring(struct sk_if_softc *sc_if)
 static int
 msk_init_tx_ring(struct sk_if_softc *sc_if)
 {
-	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_chain_data	*cd = &sc_if->sk_cdata;
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	struct msk_tx_desc	*t;
-	bus_dmamap_t		dmamap;
-	struct sk_txmap_entry	*entry;
 	int			i, nexti;
 
 	memset(rd->sk_tx_ring, 0, sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
 
-	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		cd->sk_tx_chain[i].sk_le = &rd->sk_tx_ring[i];
 		if (i == (MSK_TX_RING_CNT - 1))
@@ -474,18 +470,6 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 		else
 			nexti = i + 1;
 		cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[nexti];
-
-		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
-		   SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap))
-			return ENOBUFS;
-
-		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
-		if (!entry) {
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-			return ENOBUFS;
-		}
-		entry->dmamap = dmamap;
-		SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head, entry, link);
 	}
 
 	sc_if->sk_cdata.sk_tx_prod = 0;
@@ -1135,6 +1119,8 @@ msk_attach(device_t parent, device_t self, void *aux)
 	struct sk_if_softc *sc_if = device_private(self);
 	struct sk_softc *sc = device_private(parent);
 	struct skc_attach_args *sa = aux;
+	bus_dmamap_t dmamap;
+	struct sk_txmap_entry *entry;
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc_if->sk_mii;
 	void *kva;
@@ -1211,6 +1197,23 @@ msk_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't load dma map\n");
 		goto fail_3;
 	}
+
+	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
+	for (i = 0; i < MSK_TX_RING_CNT; i++) {
+		sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
+
+		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
+		    SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap)) {
+			aprint_error_dev(sc_if->sk_dev,
+			    "Can't create TX dmamap\n");
+			goto fail_3;
+		}
+
+		entry = malloc(sizeof(*entry), M_DEVBUF, M_WAITOK);
+		entry->dmamap = dmamap;
+		SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head, entry, link);
+	}
+
 	sc_if->sk_rdata = (struct msk_ring_data *)kva;
 	memset(sc_if->sk_rdata, 0, sizeof(struct msk_ring_data));
 
@@ -1312,12 +1315,19 @@ msk_detach(device_t self, int flags)
 {
 	struct sk_if_softc *sc_if = device_private(self);
 	struct sk_softc *sc = sc_if->sk_softc;
+	struct sk_txmap_entry *entry;
 	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
 
 	if (sc->sk_if[sc_if->sk_port] == NULL)
 		return 0;
 
 	msk_stop(ifp, 1);
+
+	while ((entry = SIMPLEQ_FIRST(&sc_if->sk_txmap_head))) {
+		SIMPLEQ_REMOVE_HEAD(&sc_if->sk_txmap_head, link);
+		bus_dmamap_destroy(sc->sc_dmatag, entry->dmamap);
+		free(entry, M_DEVBUF);
+	}
 
 	if (--sc->rnd_attached == 0)
 		rnd_detach_source(&sc->rnd_source);
@@ -2679,23 +2689,15 @@ msk_stop(struct ifnet *ifp, int disable)
 			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 			bus_dmamap_unload(sc->sc_dmatag, dma->dmamap);
-#if 1
+
 			SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head,
 			    sc_if->sk_cdata.sk_tx_map[i], link);
 			sc_if->sk_cdata.sk_tx_map[i] = 0;
-#endif
+
 			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 		}
 	}
-
-#if 1
-	while ((dma = SIMPLEQ_FIRST(&sc_if->sk_txmap_head))) {
-		SIMPLEQ_REMOVE_HEAD(&sc_if->sk_txmap_head, link);
-		bus_dmamap_destroy(sc->sc_dmatag, dma->dmamap);
-		free(dma, M_DEVBUF);
-	}
-#endif
 }
 
 CFATTACH_DECL3_NEW(mskc, sizeof(struct sk_softc), mskc_probe, mskc_attach,

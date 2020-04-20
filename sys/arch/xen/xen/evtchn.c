@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.9 2020/04/19 20:29:30 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.10 2020/04/20 11:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.9 2020/04/19 20:29:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.10 2020/04/20 11:29:01 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -741,7 +741,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	ih->arg = arg;
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, intrname,
-	    xname, known_mpsafe) == NULL) {
+	    xname, known_mpsafe, true) == NULL) {
 		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
@@ -811,12 +811,13 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 
 struct intrhand *
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
-    const char *intrname, const char *xname, bool mpsafe)
+    const char *intrname, const char *xname, bool mpsafe, bool bind)
 {
 	struct cpu_info *ci = curcpu(); /* XXX: pass in ci ? */
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
 	int s;
+	char intrstr_buf[INTRIDBUF];
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
@@ -825,7 +826,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
 	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
 	    "evtch number %d > NR_EVENT_CHANNELS", evtch);
-	KASSERT(intrname != NULL && xname != NULL);
+	KASSERT(xname != NULL);
 
 #if 0
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
@@ -858,6 +859,10 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
+		evtchn_op_t op;
+		if (intrname == NULL)
+			intrname = intr_create_intrid(-1, &xen_pic, evtch,
+			    intrstr_buf, sizeof(intrstr_buf));
 		evts = kmem_zalloc(sizeof (struct evtsource),
 		    KM_NOSLEEP);
 		if (evts == NULL)
@@ -877,6 +882,15 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
 		    device_xname(ci->ci_dev), evts->ev_intrname);
+		if (bind) {
+			op.cmd = EVTCHNOP_bind_vcpu;
+			op.u.bind_vcpu.port = evtch;
+			op.u.bind_vcpu.vcpu = ci->ci_cpuid;
+			if (HYPERVISOR_event_channel_op(&op) != 0) {
+				panic("Failed to bind event %d to "
+				    "VCPU %"PRIuCPUID, evtch, ci->ci_cpuid);
+			}
+		}
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.90.6.2 2020/04/15 16:04:06 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.90.6.3 2020/04/20 11:28:51 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,12 +13,11 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.90.6.2 $"
+#ident		"XEN3_DOMU-$Revision: 1.90.6.3 $"
 
 maxusers	32		# estimated number of users
 
 #
-options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
 
 #options 	MTRR		# memory-type range register syscall support

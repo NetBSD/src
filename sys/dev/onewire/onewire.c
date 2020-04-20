@@ -1,4 +1,4 @@
-/*	$NetBSD: onewire.c,v 1.18 2019/11/30 23:04:12 ad Exp $	*/
+/*	$NetBSD: onewire.c,v 1.18.6.1 2020/04/20 11:29:04 bouyer Exp $	*/
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.18 2019/11/30 23:04:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.18.6.1 2020/04/20 11:29:04 bouyer Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.18 2019/11/30 23:04:12 ad Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/module.h>
+
+#ifdef _KERNEL_OPT
+#include "opt_onewire.h"
+#endif
 
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>

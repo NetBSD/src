@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.70.2.1 2020/04/20 11:29:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.70.2.1 2020/04/20 11:29:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ ov_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if (overlay_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+	if (vrefcnt(overlay_rootvp) > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, overlay_rootvp, flags)) != 0)
 		return (error);

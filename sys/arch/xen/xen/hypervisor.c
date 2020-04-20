@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73.2.8 2020/04/20 11:29:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.8 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	bi.common.len = sizeof(struct btinfo_rootdevice);
 
 	/* From i386/multiboot.c */
-	/*	$NetBSD: hypervisor.c,v 1.73.2.7 2020/04/18 20:03:02 bouyer Exp $	*/
 	int i, len;
 	vaddr_t data;
 	extern struct bootinfo	bootinfo;
@@ -625,8 +624,10 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* MULTIPROCESSOR */
 
 #if NXENBUS > 0
+	extern struct x86_bus_dma_tag xenbus_bus_dma_tag;
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_xenbus.xa_device = "xenbus";
+	hac.hac_xenbus.xa_dmat = &xenbus_bus_dma_tag;
 	config_found_ia(self, "xendevbus", &hac.hac_xenbus, hypervisor_print);
 #endif
 #if NXENCONS > 0
@@ -698,7 +699,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 	if (xendomain_is_privileged()) {
 		xenprivcmd_init();
-		xen_shm_init();
 	}
 #endif /* DOM0OPS */
 

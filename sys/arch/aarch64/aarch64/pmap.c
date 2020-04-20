@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2020/04/08 00:13:40 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69.2.1 2020/04/20 11:28:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2020/04/08 00:13:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.1 2020/04/20 11:28:50 bouyer Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2020/04/08 00:13:40 ryo Exp $");
 #include <ddb/db_access.h>
 #endif
 
-//#define PMAP_DEBUG
 //#define PMAP_PV_DEBUG
 
 #ifdef VERBOSE_INIT_ARM
@@ -221,6 +220,8 @@ bool pmap_devmap_bootstrap_done = false;
 static struct pool_cache _pmap_cache;
 static struct pool_cache _pmap_pv_pool;
 
+/* Set to LX_BLKPAG_GP if supported. */
+uint64_t pmap_attr_gp = 0;
 
 static inline void
 pmap_pv_lock(struct pmap_page *pp)

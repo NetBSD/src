@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.16 2016/06/03 15:15:22 dholland Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.16.28.1 2020/04/20 11:29:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 /*
  * <sys/ieee754.h> defines the layout of IEEE 754 floating point types.
  * Only single-precision and double-precision types are defined here;
- * 128-bit long doubles are define here IFF __HAVE_LONG_DOUBLE equals 128.
+ * 128-bit long doubles are defined here IFF __HAVE_LONG_DOUBLE equals 128.
  * Otherwise extended types, if available, are defined in the machine-dependent
  * header.
  */

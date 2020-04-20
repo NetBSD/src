@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.484 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.484.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.484 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.484.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1104,7 +1104,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_mount, vp->v_mountedhere);
 	(*pr)("%susecount %d writecount %d holdcount %d\n", prefix,
-	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
+	    vrefcnt(vp), vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
 	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vip->vi_lock);

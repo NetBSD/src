@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2014/03/14 17:36:03 cherry Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.40.1 2020/04/20 11:28:57 bouyer Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -203,7 +203,9 @@ label:	ASCIZ msg;				\
 
 
 #ifdef __ELF__
-#define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.popsection
 #else
 #define RCSID(name)		.asciz name
 #endif

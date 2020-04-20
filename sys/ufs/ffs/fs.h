@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.66 2015/02/14 09:06:11 maxv Exp $	*/
+/*	$NetBSD: fs.h,v 1.66.28.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -692,6 +692,14 @@ struct ocg {
 	((fsb) & ((fs)->fs_frag - 1))
 #define	ffs_blknum(fs, fsb)	/* calculates rounddown(fsb, fs->fs_frag) */ \
 	((fsb) &~ ((fs)->fs_frag - 1))
+#define ffs_getdb(fs, ip, lb) \
+    ((fs)->fs_magic == FS_UFS2_MAGIC ? \
+	(daddr_t)ufs_rw64((ip)->i_ffs2_db[lb], UFS_FSNEEDSWAP(fs)) : \
+	(daddr_t)ufs_rw32((ip)->i_ffs1_db[lb], UFS_FSNEEDSWAP(fs)))
+#define ffs_getib(fs, ip, lb) \
+    ((fs)->fs_magic == FS_UFS2_MAGIC ? \
+	(daddr_t)ufs_rw64((ip)->i_ffs2_ib[lb], UFS_FSNEEDSWAP(fs)) : \
+	(daddr_t)ufs_rw32((ip)->i_ffs1_ib[lb], UFS_FSNEEDSWAP(fs)))
 
 /*
  * Determine the number of available frags given a

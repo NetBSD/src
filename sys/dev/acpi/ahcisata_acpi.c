@@ -1,4 +1,4 @@
-/* $NetBSD: ahcisata_acpi.c,v 1.4 2018/11/16 23:18:17 jmcneill Exp $ */
+/* $NetBSD: ahcisata_acpi.c,v 1.4.12.1 2020/04/20 11:29:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.4 2018/11/16 23:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.4.12.1 2020/04/20 11:29:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,7 @@ ahcisata_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
+	uint32_t cap;
 	void *ih;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
@@ -95,12 +96,20 @@ ahcisata_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_atac.atac_dev = self;
-	sc->sc_dmat = aa->aa_dmat;
 	sc->sc_ahcit = aa->aa_memt;
 	sc->sc_ahcis = mem->ar_length;
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0, &sc->sc_ahcih) != 0) {
 		aprint_error(": couldn't map registers\n");
 		goto done;
+	}
+
+	cap = AHCI_READ(sc, AHCI_CAP);
+	if ((cap & AHCI_CAP_64BIT) != 0 && BUS_DMA_TAG_VALID(aa->aa_dmat64)) {
+		aprint_verbose_dev(self, "using 64-bit DMA\n");
+		sc->sc_dmat = aa->aa_dmat64;
+	} else {
+		aprint_verbose_dev(self, "using 32-bit DMA\n");
+		sc->sc_dmat = aa->aa_dmat;
 	}
 
 	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,

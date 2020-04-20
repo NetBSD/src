@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_probe_helper.c,v 1.4 2020/02/14 14:34:57 maya Exp $	*/
+/*	$NetBSD: drm_probe_helper.c,v 1.4.4.1 2020/04/20 11:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_probe_helper.c,v 1.4 2020/02/14 14:34:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_probe_helper.c,v 1.4.4.1 2020/04/20 11:29:08 bouyer Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -328,6 +328,9 @@ EXPORT_SYMBOL(drm_helper_probe_single_connector_modes_nomerge);
  */
 void drm_kms_helper_hotplug_event(struct drm_device *dev)
 {
+#ifdef __NetBSD__
+	sysmon_pswitch_event(&dev->sc_monitor_hotplug, PSWITCH_EVENT_PRESSED);
+#endif
 	/* send a uevent + call fbdev */
 	drm_sysfs_hotplug_event(dev);
 	if (dev->mode_config.funcs->output_poll_changed)

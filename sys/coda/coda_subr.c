@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.31 2015/01/06 11:24:46 hannken Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.31.28.1 2020/04/20 11:29:01 bouyer Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.31 2015/01/06 11:24:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.31.28.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ coda_testflush_selector(void *cl, struct vnode *vp)
 
 	if (cp != NULL)
 		myprintf(("Live cnode fid %s count %d\n",
-		     coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount));
+		     coda_f2s(&cp->c_fid), vrefcnt(CTOV(cp))));
 
 	return false;
 }
@@ -370,8 +370,8 @@ int handleDownCall(int opcode, union outputArgs *out)
 		  error = coda_vmflush(cp);
 	      CODADEBUG(CODA_ZAPFILE, myprintf((
 		    "zapfile: fid = %s, refcnt = %d, error = %d\n",
-		    coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount - 1, error)););
-	      if (CTOV(cp)->v_usecount == 1) {
+		    coda_f2s(&cp->c_fid), vrefcnt(CTOV(cp)) - 1, error)););
+	      if (vrefcnt(CTOV(cp)) == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
 	      mutex_exit(&cp->c_lock);
@@ -394,8 +394,8 @@ int handleDownCall(int opcode, union outputArgs *out)
 
 	      CODADEBUG(CODA_ZAPDIR, myprintf((
 		    "zapdir: fid = %s, refcnt = %d\n",
-		    coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount - 1)););
-	      if (CTOV(cp)->v_usecount == 1) {
+		    coda_f2s(&cp->c_fid), vrefcnt(CTOV(cp)) - 1)););
+	      if (vrefcnt(CTOV(cp)) == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
 	      mutex_exit(&cp->c_lock);
@@ -427,8 +427,8 @@ int handleDownCall(int opcode, union outputArgs *out)
 	      }
 	      CODADEBUG(CODA_PURGEFID, myprintf((
 			 "purgefid: fid = %s, refcnt = %d, error = %d\n",
-			 coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount - 1, error)););
-	      if (CTOV(cp)->v_usecount == 1) {
+			 coda_f2s(&cp->c_fid), vrefcnt(CTOV(cp)) - 1, error)););
+	      if (vrefcnt(CTOV(cp)) == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
 	      mutex_exit(&cp->c_lock);

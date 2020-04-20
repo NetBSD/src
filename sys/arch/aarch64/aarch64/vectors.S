@@ -1,9 +1,12 @@
-/*	$NetBSD: vectors.S,v 1.11 2020/02/12 07:02:08 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.11.4.1 2020/04/20 11:28:50 bouyer Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
+
+	ARMV8_DEFINE_OPTIONS
 
 #ifdef KDTRACE_HOOKS
 /*
@@ -16,11 +19,13 @@
 #define	TRAP_FRAMESIZE	TF_SIZE
 #endif
 
-	/*
-	 * vector_entry macro must be small enough to fit 0x80 bytes!
-	 */
-	.macro	vector_entry, el, label, tpidr
-	.align 7	/* aligned 0x80 */
+/*
+ * Template for the handler functions.
+ */
+.macro	vector_func, func, el, label, tpidr
+	.align 7	/* cacheline-aligned */
+
+ENTRY_NBTI(\func)
 
 	.if \el == 1
 	/* need to allocate stack on el1 */
@@ -80,6 +85,18 @@
 	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
 	mrs	x0, tpidr\tpidr\()_el0
 	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
+
+#ifdef ARMV83_PAC
+	/* Switch to the kern PAC key. */
+	adrl	x4, _C_LABEL(aarch64_pac_enabled)
+	ldr	w4, [x4]
+	cbz	w4, 1f
+	ldr	x5, [x1, #L_MD_IA_KERN_LO]
+	ldr	x6, [x1, #L_MD_IA_KERN_HI]
+	msr	APIAKeyLo_EL1, x5
+	msr	APIAKeyHi_EL1, x6
+1:
+#endif
 	.endif
 
 	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
@@ -88,44 +105,79 @@
 	mov	x29, sp			/* for backtrace */
 #endif
 	b	\label
-	.endm
-
-
-	.align 11	/* vector table must be aligned 2048 */
-ENTRY_NP(el1_vectors)
-/*
- * Exception taken from current Exception Level with SP_EL0.
- * (These shouldn't happen)
- */
-	vector_entry	1, trap_el1t_sync
-	vector_entry	1, trap_el1t_irq
-	vector_entry	1, trap_el1t_fiq
-	vector_entry	1, trap_el1t_error
+END(\func)
+.endm
 
 /*
- * Exception taken from current Exception Level with SP_EL1.
- * There are entries for exceptions caused in EL1 (kernel exceptions).
+ * The vector_entry macro must be small enough to fit 0x80 bytes! We just jump
+ * into the proper function, so this constraint is always respected.
  */
-	vector_entry	1, trap_el1h_sync
-	vector_entry	1, interrupt
-	vector_entry	1, trap_el1h_fiq
-	vector_entry	1, trap_el1h_error
+.macro	vector_entry, func
+	.align 7	/* aligned 0x80 */
+	b	\func
+.endm
 
 /*
- * Exception taken from lower Exception Level which is using AArch64
- * There are entries for exceptions caused in EL0 (native user exceptions).
+ * The functions.
  */
-	vector_entry	0, trap_el0_sync
-	vector_entry	0, interrupt
-	vector_entry	0, trap_el0_fiq
-	vector_entry	0, trap_el0_error
+vector_func	el1t_sync_handler,  1, trap_el1t_sync
+vector_func	el1t_irq_handler,   1, trap_el1t_irq
+vector_func	el1t_fiq_handler,   1, trap_el1t_fiq
+vector_func	el1t_error_handler, 1, trap_el1t_error
+
+vector_func	el1h_sync_handler,  1, trap_el1h_sync
+vector_func	el1h_intr_handler,  1, interrupt
+vector_func	el1h_fiq_handler,   1, trap_el1h_fiq
+vector_func	el1h_error_handler, 1, trap_el1h_error
+
+vector_func	el0_sync_handler,  0, trap_el0_sync
+vector_func	el0_intr_handler,  0, interrupt
+vector_func	el0_fiq_handler,   0, trap_el0_fiq
+vector_func	el0_error_handler, 0, trap_el0_error
+
+vector_func	el0_32sync_handler,  0, trap_el0_32sync, ro
+vector_func	el0_32intr_handler,  0, interrupt, ro
+vector_func	el0_32fiq_handler,   0, trap_el0_32fiq, ro
+vector_func	el0_32error_handler, 0, trap_el0_32error, ro
 
 /*
- * Exception taken from lower Exception Level which is using AArch32
- * There are entries for exceptions caused in EL0 (compat user exceptions).
+ * The vector table. Must be aligned to 2048.
  */
-	vector_entry	0, trap_el0_32sync, ro
-	vector_entry	0, interrupt, ro
-	vector_entry	0, trap_el0_32fiq, ro
-	vector_entry	0, trap_el0_32error, ro
+	.align 11
+ENTRY_NBTI(el1_vectors)
+	/*
+	 * Exception taken from current Exception Level with SP_EL0.
+	 * (These shouldn't happen)
+	 */
+	vector_entry	el1t_sync_handler
+	vector_entry	el1t_irq_handler
+	vector_entry	el1t_fiq_handler
+	vector_entry	el1t_error_handler
+
+	/*
+	 * Exception taken from current Exception Level with SP_EL1.
+	 * There are entries for exceptions caused in EL1 (kernel exceptions).
+	 */
+	vector_entry	el1h_sync_handler
+	vector_entry	el1h_intr_handler
+	vector_entry	el1h_fiq_handler
+	vector_entry	el1h_error_handler
+
+	/*
+	 * Exception taken from lower Exception Level which is using AArch64.
+	 * There are entries for exceptions caused in EL0 (native user exceptions).
+	 */
+	vector_entry	el0_sync_handler
+	vector_entry	el0_intr_handler
+	vector_entry	el0_fiq_handler
+	vector_entry	el0_error_handler
+
+	/*
+	 * Exception taken from lower Exception Level which is using AArch32.
+	 * There are entries for exceptions caused in EL0 (compat user exceptions).
+	 */
+	vector_entry	el0_32sync_handler
+	vector_entry	el0_32intr_handler
+	vector_entry	el0_32fiq_handler
+	vector_entry	el0_32error_handler
 END(el1_vectors)

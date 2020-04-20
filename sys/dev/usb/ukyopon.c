@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.25 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.25.6.1 2020/04/20 11:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.25 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.25.6.1 2020/04/20 11:29:08 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -129,6 +129,8 @@ ukyopon_attach(device_t parent, device_t self, void *aux)
 	struct ukyopon_softc *sc = device_private(self);
 	struct usbif_attach_arg *uiaa = aux;
 	struct ucom_attach_args ucaa;
+
+	memset(&ucaa, 0, sizeof(ucaa));
 
 	ucaa.ucaa_portno = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.55 2020/03/22 00:25:01 kamil Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.55.2.1 2020/04/20 11:29:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -136,12 +136,12 @@
 
 #if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm(".pushsection " #_sec "\n"				\
+	__asm(".pushsection " #_sec ",\"MS\",@progbits,1\n"		\
 	      ".asciz \"" _str "\"\n"					\
 	      ".popsection")
 #else
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm(".pushsection _sec\n"					\
+	__asm(".pushsection " _sec ",\"MS\",@progbits,1\n"		\
 	      ".asciz \"" _str "\"\n"					\
 	      ".popsection")
 #endif

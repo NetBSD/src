@@ -1,4 +1,4 @@
-#	$NetBSD: vdump,v 1.6 2016/12/14 15:48:55 hannken Exp $
+#	$NetBSD: vdump,v 1.6.26.1 2020/04/20 11:29:10 bouyer Exp $
 
 #	@(#)vdump	8.1 (Berkeley) 6/10/93
 #
@@ -8,7 +8,7 @@ define dumpvnodes
 	set $vp = (struct vnode *)$arg0
 	set $vi = (struct vnode_impl *)$arg0
 	while ($vp)
-		printf "vnode=0x%x lruf=0x%x mountf=0x%x usecount=%d\n", $vp, $vi->vi_lrulist.tqe_next, $vp->v_mntvnodes.tqe_next, $vp->v_uobj.uo_refs
+		printf "vnode=0x%x lruf=0x%x mountf=0x%x usecount=%d\n", $vp, $vi->vi_lrulist.tqe_next, $vi->vi_mntvnodes.tqe_next, $vp->v_uobj.uo_refs
 		set $vi = (struct vnode_impl *)$vi->vi_lrulist.tqe_next
 		set $vp = (struct vnode *)$vi
 	end

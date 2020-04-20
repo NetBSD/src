@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.65 2020/02/15 08:16:12 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.65.4.1 2020/04/20 11:28:54 bouyer Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -145,7 +145,6 @@
 #include "opt_gumstix.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
-#include "opt_pmap_debug.h"
 #if defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
 #include "opt_omap.h"
 

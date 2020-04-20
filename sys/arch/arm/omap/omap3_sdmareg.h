@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmareg.h,v 1.4 2014/07/30 12:45:44 macallan Exp $ */
+/*	$NetBSD: omap3_sdmareg.h,v 1.4.38.1 2020/04/20 11:28:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.4 2014/07/30 12:45:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.4.38.1 2020/04/20 11:28:53 bouyer Exp $");
 
 #ifndef OMAPDMA_REG_H
 #define OMAPDMA_REG_H

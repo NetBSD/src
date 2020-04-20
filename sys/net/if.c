@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.473 2020/02/21 00:26:23 joerg Exp $	*/
+/*	$NetBSD: if.c,v 1.473.4.1 2020/04/20 11:29:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.473 2020/02/21 00:26:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.473.4.1 2020/04/20 11:29:12 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2519,10 +2519,21 @@ _if_down(struct ifnet *ifp)
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
 
+	/*
+	 * Modification of if_link_cansched is serialized with the
+	 * ifnet ioctl lock.
+	 *
+	 * The link state change lock is taken to synchronize with the
+	 * read in if_link_state_change_work_schedule().  Once we set
+	 * this to false, our if_link_work won't be scheduled.  But
+	 * we need to wait for our if_link_work to drain in case we
+	 * lost that race.
+	 */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
 	ifp->if_link_cansched = false;
-	workqueue_wait(ifnet_link_state_wq, &ifp->if_link_work);
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+
+	workqueue_wait(ifnet_link_state_wq, &ifp->if_link_work);
 
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0

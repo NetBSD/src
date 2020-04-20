@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.15 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.15.10.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.15 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.15.10.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,13 +72,10 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value,
 	xfer->c_ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
 
 	ata_channel_unlock(chp);
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-	    xfer) != ATACMD_COMPLETE) {
-		aprint_error_dev(chp->atabus,
-		    "PMP port %d register %d read failed\n", port, reg);
-		error = EIO;
-		goto out;
-	}
+
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
+
 	if (xfer->c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d read failed, flags 0x%x\n",
@@ -148,13 +145,10 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value,
 	xfer->c_ata_c.flags = AT_LBA48 | AT_WAIT;
 
 	ata_channel_unlock(chp);
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-	    xfer) != ATACMD_COMPLETE) {
-		aprint_error_dev(chp->atabus,
-		    "PMP port %d register %d write failed\n", port, reg);
-		error = EIO;
-		goto out;
-	}
+
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
+
 	if (xfer->c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d write failed, flags 0x%x\n",

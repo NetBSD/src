@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.77 2019/07/16 14:41:46 skrll Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.77.8.1 2020/04/20 11:28:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,12 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.77 2019/07/16 14:41:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.77.8.1 2020/04/20 11:28:54 bouyer Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -242,7 +241,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -449,7 +448,7 @@ consinit(void)
 static void
 integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 {
-	volatile unsigned long *cm_sdram 
+	volatile unsigned long *cm_sdram
 	    = (volatile unsigned long *)0x10000020;
 	volatile unsigned long *cm_stat
 	    = (volatile unsigned long *)0x10000010;

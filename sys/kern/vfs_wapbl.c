@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.106 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.106.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.106 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.106.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -226,7 +226,7 @@ struct wapbl {
 	u_long wl_inohashmask;
 	int wl_inohashcnt;
 
-	SIMPLEQ_HEAD(, wapbl_entry) wl_entries; /* On disk transaction
+	SIMPLEQ_HEAD(, wapbl_entry) wl_entries; /* m: On disk transaction
 						   accounting */
 
 	/* buffers for wapbl_buffered_write() */
@@ -777,21 +777,23 @@ wapbl_discard(struct wapbl *wl)
 	mutex_enter(&wl->wl_mtx);
 	while ((bp = TAILQ_FIRST(&wl->wl_bufs)) != NULL) {
 		if (bbusy(bp, 0, 0, &wl->wl_mtx) == 0) {
+			KASSERT(bp->b_flags & B_LOCKED);
+			KASSERT(bp->b_oflags & BO_DELWRI);
 			/*
+			 * Buffer is already on BQ_LOCKED queue.
 			 * The buffer will be unlocked and
-			 * removed from the transaction in brelse
+			 * removed from the transaction in brelsel()
 			 */
 			mutex_exit(&wl->wl_mtx);
-			brelsel(bp, 0);
+			bremfree(bp);
+			brelsel(bp, BC_INVAL);
 			mutex_enter(&wl->wl_mtx);
 		}
 	}
-	mutex_exit(&wl->wl_mtx);
-	mutex_exit(&bufcache_lock);
 
 	/*
 	 * Remove references to this wl from wl_entries, free any which
-	 * no longer have buffers, others will be freed in wapbl_biodone
+	 * no longer have buffers, others will be freed in wapbl_biodone()
 	 * when they no longer have any buffers.
 	 */
 	while ((we = SIMPLEQ_FIRST(&wl->wl_entries)) != NULL) {
@@ -806,6 +808,9 @@ wapbl_discard(struct wapbl *wl)
 			pool_put(&wapbl_entry_pool, we);
 		}
 	}
+
+	mutex_exit(&wl->wl_mtx);
+	mutex_exit(&bufcache_lock);
 
 	/* Discard list of deallocs */
 	while ((wd = TAILQ_FIRST(&wl->wl_dealloclist)) != NULL)
@@ -1604,10 +1609,14 @@ void
 wapbl_biodone(struct buf *bp)
 {
 	struct wapbl_entry *we = bp->b_private;
-	struct wapbl *wl = we->we_wapbl;
+	struct wapbl *wl;
 #ifdef WAPBL_DEBUG_BUFBYTES
 	const int bufsize = bp->b_bufsize;
 #endif
+
+	mutex_enter(&bufcache_lock);
+	wl = we->we_wapbl;
+	mutex_exit(&bufcache_lock);
 
 	/*
 	 * Handle possible flushing of buffers after log has been

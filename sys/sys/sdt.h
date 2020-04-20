@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.12 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: sdt.h,v 1.12.6.1 2020/04/20 11:29:13 bouyer Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -37,48 +37,49 @@
 
 #define	_DTRACE_VERSION	1
 
-#define	DTRACE_PROBE(prov, name) {				\
+#define	DTRACE_PROBE(prov, name) do {				\
 	extern void __dtrace_##prov##___##name(void);		\
 	__dtrace_##prov##___##name();				\
-}
+} while (0)
 
-#define	DTRACE_PROBE1(prov, name, arg1) {			\
+#define	DTRACE_PROBE1(prov, name, arg1) do {			\
 	extern void __dtrace_##prov##___##name(unsigned long);	\
 	__dtrace_##prov##___##name((unsigned long)arg1);	\
-}
+} while (0)
 
-#define	DTRACE_PROBE2(prov, name, arg1, arg2) {			\
+#define	DTRACE_PROBE2(prov, name, arg1, arg2) do {		\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long);					\
 	__dtrace_##prov##___##name((unsigned long)arg1,		\
 	    (unsigned long)arg2);				\
-}
+} while (0)
 
-#define	DTRACE_PROBE3(prov, name, arg1, arg2, arg3) {		\
+#define	DTRACE_PROBE3(prov, name, arg1, arg2, arg3) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long, unsigned long);			\
 	__dtrace_##prov##___##name((unsigned long)arg1,		\
 	    (unsigned long)arg2, (unsigned long)arg3);		\
-}
+} while (0)
 
-#define	DTRACE_PROBE4(prov, name, arg1, arg2, arg3, arg4) {	\
+#define	DTRACE_PROBE4(prov, name, arg1, arg2, arg3, arg4) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long, unsigned long, unsigned long);	\
 	__dtrace_##prov##___##name((unsigned long)arg1,		\
 	    (unsigned long)arg2, (unsigned long)arg3,		\
 	    (unsigned long)arg4);				\
-}
+} while (0)
 
-#define	DTRACE_PROBE5(prov, name, arg1, arg2, arg3, arg4, arg5) {	\
+#define	DTRACE_PROBE5(prov, name, arg1, arg2, arg3, arg4, arg5) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,		\
 	    unsigned long, unsigned long, unsigned long, unsigned long);\
 	__dtrace_##prov##___##name((unsigned long)arg1,			\
 	    (unsigned long)arg2, (unsigned long)arg3,			\
 	    (unsigned long)arg4, (unsigned long)arg5);			\
-}
+} while (0)
 
 #else /* _KERNEL */
 
+#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 

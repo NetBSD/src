@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/08/19 09:31:30 christos Exp $
+#	$NetBSD: Makefile,v 1.13.6.1 2020/04/20 11:29:12 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-DUFS_EXTATTR
 CWARNFLAGS.clang=	-Wno-conversion
 
 SRCS+=	ffs_alloc.c ffs_balloc.c ffs_inode.c ffs_subr.c ffs_tables.c \
-	ffs_vfsops.c ffs_vnops.c ffs_snapshot.c \
+	ffs_vfsops.c ffs_vnops.c ffs_snapshot.c ffs_extattr.c \
 	ffs_bswap.c ffs_wapbl.c ffs_appleufs.c ffs_quota2.c
 
 WARNS=	3

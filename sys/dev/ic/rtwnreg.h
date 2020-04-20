@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwnreg.h,v 1.2 2019/07/25 14:31:35 msaitoh Exp $	*/
+/*	$NetBSD: rtwnreg.h,v 1.2.8.1 2020/04/20 11:29:03 bouyer Exp $	*/
 /*	$OpenBSD: r92creg.h,v 1.16 2017/09/22 13:41:56 kevlo Exp $	*/
 
 /*-
@@ -1341,6 +1341,8 @@ struct r92c_rx_desc_usb {
 
 #define R92C_RXDW2_PKTCNT_M	0x00ff0000
 #define R92C_RXDW2_PKTCNT_S	16
+#define R92E_RXDW2_PKTCNT_M	0x3fc00000
+#define R92E_RXDW2_PKTCNT_S	22
 
 #define R92C_RXDW3_RATE_M	0x0000003f
 #define R92C_RXDW3_RATE_S	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.247 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.247.6.1 2020/04/20 11:29:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.247 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.247.6.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1360,7 +1360,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
 	si.freeswap = 
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
-	si.procs = nprocs;
+	si.procs = atomic_load_relaxed(&nprocs);
 
 	/* The following are only present in newer Linux kernels. */
 	si.totalbig = 0;

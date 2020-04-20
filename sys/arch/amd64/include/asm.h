@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2014/05/22 14:59:01 uebayasi Exp $	*/
+/*	$NetBSD: asm.h,v 1.19.38.1 2020/04/20 11:28:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,7 +112,9 @@
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.popsection
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\

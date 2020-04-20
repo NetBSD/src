@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.77.2.1 2020/04/20 11:29:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77.2.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -61,18 +61,18 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek
 #define XENPRINTF(x)
 #endif
 
-#define BLKIF_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#define BLKIF_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
 
 /*
  * Backend block device driver for Xen
  */
 
-/* Max number of pages per request. The request may not be page aligned */
-#define BLKIF_MAX_PAGES_PER_REQUEST (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1)
-
 /* Values are expressed in 512-byte sectors */
 #define VBD_BSIZE 512
 #define VBD_MAXSECT ((PAGE_SIZE / VBD_BSIZE) - 1)
+
+/* Need to alloc one extra page to account for possible mapping offset */
+#define VBD_VA_SIZE	(MAXPHYS + PAGE_SIZE)
 
 struct xbdback_request;
 struct xbdback_io;
@@ -150,6 +150,11 @@ enum xbdi_proto {
 	XBDIP_64
 };
 
+struct xbdback_va {
+	SLIST_ENTRY(xbdback_va) xv_next;
+	vaddr_t xv_vaddr;
+};
+
 /* we keep the xbdback instances in a linked list */
 struct xbdback_instance {
 	SLIST_ENTRY(xbdback_instance) next;
@@ -162,6 +167,9 @@ struct xbdback_instance {
 	kmutex_t xbdi_lock;
 	kcondvar_t xbdi_cv;	/* wait channel for thread work */
 	xbdback_state_t xbdi_status; /* thread's status */
+	/* KVA for mapping transfers */
+	struct xbdback_va xbdi_va[BLKIF_RING_SIZE];
+	SLIST_HEAD(, xbdback_va) xbdi_va_free;
 	/* backing device parameters */
 	dev_t xbdi_dev;
 	const struct bdevsw *xbdi_bdevsw; /* pointer to the device's bdevsw */
@@ -185,7 +193,6 @@ struct xbdback_instance {
 	 */
 	RING_IDX xbdi_req_prod; /* limit on request indices */
 	xbdback_cont_t xbdi_cont, xbdi_cont_aux;
-	SIMPLEQ_ENTRY(xbdback_instance) xbdi_on_hold; /* waiting on resources */
 	/* _request state: track requests fetched from ring */
 	struct xbdback_request *xbdi_req; /* if NULL, ignore following */
 	blkif_request_t xbdi_xen_req;
@@ -246,6 +253,7 @@ struct xbdback_io {
 			SLIST_HEAD(, xbdback_fragment) xio_rq;
 			/* the virtual address to map the request at */
 			vaddr_t xio_vaddr;
+			struct xbdback_va *xio_xv;
 			/* grants to map */
 			grant_ref_t xio_gref[XENSHM_MAX_PAGES_PER_REQUEST];
 			/* grants release */
@@ -259,6 +267,7 @@ struct xbdback_io {
 #define xio_buf		u.xio_rw.xio_buf
 #define xio_rq		u.xio_rw.xio_rq
 #define xio_vaddr	u.xio_rw.xio_vaddr
+#define xio_xv		u.xio_rw.xio_xv
 #define xio_gref	u.xio_rw.xio_gref
 #define xio_gh		u.xio_rw.xio_gh
 #define xio_nrma	u.xio_rw.xio_nrma
@@ -283,20 +292,16 @@ struct xbdback_fragment {
  * submitted by frontend.
  */
 /* XXXSMP */
-struct xbdback_pool {
+static struct xbdback_pool {
 	struct pool_cache pc;
 	struct timeval last_warning;
 } xbdback_request_pool, xbdback_io_pool, xbdback_fragment_pool;
 
-SIMPLEQ_HEAD(xbdback_iqueue, xbdback_instance);
-static struct xbdback_iqueue xbdback_shmq;
-static int xbdback_shmcb; /* have we already registered a callback? */
-
 /* Interval between reports of I/O errors from frontend */
-struct timeval xbdback_err_intvl = { 1, 0 };
+static const struct timeval xbdback_err_intvl = { 1, 0 };
 
 #ifdef DEBUG
-struct timeval xbdback_fragio_intvl = { 60, 0 };
+static const struct timeval xbdback_fragio_intvl = { 60, 0 };
 #endif
        void xbdbackattach(int);
 static int  xbdback_xenbus_create(struct xenbus_device *);
@@ -333,9 +338,6 @@ static void *xbdback_co_io_gotfrag2(struct xbdback_instance *, void *);
 static void *xbdback_co_map_io(struct xbdback_instance *, void *);
 static void *xbdback_co_do_io(struct xbdback_instance *, void *);
 
-static void *xbdback_co_wait_shm_callback(struct xbdback_instance *, void *);
-
-static int  xbdback_shm_callback(void *);
 static void xbdback_io_error(struct xbdback_io *, int);
 static void xbdback_iodone(struct buf *);
 static void xbdback_send_reply(struct xbdback_instance *, uint64_t , int , int);
@@ -366,8 +368,6 @@ xbdbackattach(int n)
 	 */
 	SLIST_INIT(&xbdback_instances);
 	mutex_init(&xbdback_lock, MUTEX_DEFAULT, IPL_NONE);
-	SIMPLEQ_INIT(&xbdback_shmq);
-	xbdback_shmcb = 0;
 
 	pool_cache_bootstrap(&xbdback_request_pool.pc,
 	    sizeof(struct xbdback_request), 0, 0, 0, "xbbrp", NULL,
@@ -380,13 +380,10 @@ xbdbackattach(int n)
 	    IPL_SOFTBIO, NULL, NULL, NULL);
 
 	/* we allocate enough to handle a whole ring at once */
-	if (pool_prime(&xbdback_request_pool.pc.pc_pool, BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime request pool\n");
-	if (pool_prime(&xbdback_io_pool.pc.pc_pool, BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime io pool\n");
-	if (pool_prime(&xbdback_fragment_pool.pc.pc_pool,
-            BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime fragment pool\n");
+	pool_prime(&xbdback_request_pool.pc.pc_pool, BLKIF_RING_SIZE);
+	pool_prime(&xbdback_io_pool.pc.pc_pool, BLKIF_RING_SIZE);
+	pool_prime(&xbdback_fragment_pool.pc.pc_pool,
+            BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE);
 
 	xenbus_backend_register(&xbd_backend_driver);
 }
@@ -451,6 +448,14 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	xbusd->xbusd_u.b.b_detach = xbdback_xenbus_destroy;
 	xbusd->xbusd_otherend_changed = xbdback_frontend_changed;
 	xbdi->xbdi_xbusd = xbusd;
+
+	SLIST_INIT(&xbdi->xbdi_va_free);
+	for (i = 0; i < BLKIF_RING_SIZE; i++) {
+		xbdi->xbdi_va[i].xv_vaddr = uvm_km_alloc(kernel_map,
+		    VBD_VA_SIZE, 0, UVM_KMF_VAONLY|UVM_KMF_WAITVA);
+		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, &xbdi->xbdi_va[i],
+		    xv_next);
+	}
 
 	error = xenbus_watch_path2(xbusd, xbusd->xbusd_path, "physical-device",
 	    &xbdi->xbdi_watch, xbdback_backend_changed);
@@ -518,6 +523,15 @@ xbdback_xenbus_destroy(void *arg)
 	mutex_enter(&xbdback_lock);
 	SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
 	mutex_exit(&xbdback_lock);
+
+	for (int i = 0; i < BLKIF_RING_SIZE; i++) {
+		if (xbdi->xbdi_va[i].xv_vaddr != 0) {
+			uvm_km_free(kernel_map, xbdi->xbdi_va[i].xv_vaddr,
+			    VBD_VA_SIZE, UVM_KMF_VAONLY);
+			xbdi->xbdi_va[i].xv_vaddr = 0;
+		}
+	}
+
 	mutex_destroy(&xbdi->xbdi_lock);
 	cv_destroy(&xbdi->xbdi_cv);
 	kmem_free(xbdi, sizeof(*xbdi));
@@ -1409,7 +1423,8 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_operation = xbdi->xbdi_xen_req.operation;
 
 	start_offset = xbdi->xbdi_this_fs * VBD_BSIZE;
-	
+	KASSERT(start_offset < PAGE_SIZE);
+
 	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
 		buf_flags = B_WRITE;
 	} else {
@@ -1534,6 +1549,8 @@ static void *
 xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 {
 	struct xbdback_io *xbd_io = xbdi->xbdi_io;
+	vaddr_t start_offset;
+	int nsegs __diagused;
 
 	switch (xbd_io->xio_operation) {
 	case BLKIF_OP_FLUSH_DISKCACHE:
@@ -1562,26 +1579,19 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 	}
 	case BLKIF_OP_READ:
 	case BLKIF_OP_WRITE:
+		start_offset = (vaddr_t)xbd_io->xio_buf.b_data;
+		KASSERT(xbd_io->xio_buf.b_bcount + start_offset < VBD_VA_SIZE);
 		xbd_io->xio_buf.b_data = (void *)
-		    ((vaddr_t)xbd_io->xio_buf.b_data + xbd_io->xio_vaddr);
+		    (start_offset + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
-		{
-		vaddr_t bdata = (vaddr_t)xbd_io->xio_buf.b_data;
-		int nsegs =
-		    ((((bdata + xbd_io->xio_buf.b_bcount - 1) & ~PAGE_MASK) -
-		    (bdata & ~PAGE_MASK)) >> PAGE_SHIFT) + 1;
-		if ((bdata & ~PAGE_MASK) != (xbd_io->xio_vaddr & ~PAGE_MASK)) {
-			printf("xbdback_co_do_io: vaddr %#" PRIxVADDR
-			    " bdata %#" PRIxVADDR "\n",
-			    xbd_io->xio_vaddr, bdata);
-			panic("xbdback_co_do_io: bdata page change");
-		}
+		nsegs = round_page(start_offset + xbd_io->xio_buf.b_bcount)
+		    >> PAGE_SHIFT;
 		if (nsegs > xbd_io->xio_nrma) {
 			printf("xbdback_co_do_io: vaddr %#" PRIxVADDR
 			    " bcount %#x doesn't fit in %d pages\n",
-			    bdata, xbd_io->xio_buf.b_bcount, xbd_io->xio_nrma);
+			    start_offset, xbd_io->xio_buf.b_bcount,
+			    xbd_io->xio_nrma);
 			panic("xbdback_co_do_io: not enough pages");
-		}
 		}
 #endif
 		if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
@@ -1748,7 +1758,7 @@ xbdback_send_reply(struct xbdback_instance *xbdi, uint64_t id,
 static void *
 xbdback_map_shm(struct xbdback_io *xbd_io)
 {
-	struct xbdback_instance *xbdi;
+	struct xbdback_instance *xbdi = xbd_io->xio_xbdi;
 	struct xbdback_request *xbd_rq;
 	int error, s;
 
@@ -1762,11 +1772,17 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 
 	KASSERT(xbd_io->xio_mapped == 0);
 
-	xbdi = xbd_io->xio_xbdi;
+	s = splvm();	/* XXXSMP */
 	xbd_rq = SLIST_FIRST(&xbd_io->xio_rq)->car;
 
+	xbd_io->xio_xv = SLIST_FIRST(&xbdi->xbdi_va_free);
+	KASSERT(xbd_io->xio_xv != NULL);
+	SLIST_REMOVE_HEAD(&xbdi->xbdi_va_free, xv_next);
+	xbd_io->xio_vaddr = xbd_io->xio_xv->xv_vaddr;
+	splx(s);
+
 	error = xen_shm_map(xbd_io->xio_nrma, xbdi->xbdi_domid,
-	    xbd_io->xio_gref, &xbd_io->xio_vaddr, xbd_io->xio_gh, 
+	    xbd_io->xio_gref, xbd_io->xio_vaddr, xbd_io->xio_gh, 
 	    (xbd_rq->rq_operation == BLKIF_OP_WRITE) ? XSHM_RO : 0);
 
 	switch(error) {
@@ -1780,100 +1796,16 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 #endif
 		xbd_io->xio_mapped = 1;
 		return xbdi;
-	case ENOMEM:
-		s = splvm(); /* XXXSMP */
-		if (!xbdback_shmcb) {
-			if (xen_shm_callback(xbdback_shm_callback, xbdi)
-			    != 0) {
-				splx(s);
-				panic("xbdback_map_shm: "
-				      "xen_shm_callback failed");
-			}
-			xbdback_shmcb = 1;
-		}
-		SIMPLEQ_INSERT_TAIL(&xbdback_shmq, xbdi, xbdi_on_hold);
-		splx(s);
-		/* Put the thread to sleep until the callback is called */
-		xbdi->xbdi_cont = xbdback_co_wait_shm_callback;
-		return NULL;
 	default:
 		if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
 			printf("xbdback_map_shm: xen_shm error %d ", error);
 		}
 		xbdback_io_error(xbdi->xbdi_io, error);
+		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, xbd_io->xio_xv, xv_next);
+		xbd_io->xio_xv = NULL;
 		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
 		return xbdi;
-	}
-}
-
-static int
-xbdback_shm_callback(void *arg)
-{
-        int error, s;
-
-	/*
-	 * The shm callback may be executed at any level, including
-	 * IPL_BIO and IPL_NET levels. Raise to the lowest priority level
-	 * that can mask both.
-	 */
-	s = splvm(); /* XXXSMP */
-	while(!SIMPLEQ_EMPTY(&xbdback_shmq)) {
-		struct xbdback_instance *xbdi;
-		struct xbdback_io *xbd_io;
-		struct xbdback_request *xbd_rq;
-		
-		xbdi = SIMPLEQ_FIRST(&xbdback_shmq);
-		xbd_io = xbdi->xbdi_io;
-		xbd_rq = SLIST_FIRST(&xbd_io->xio_rq)->car;
-		KASSERT(xbd_io->xio_mapped == 0);
-		
-		error = xen_shm_map(xbd_io->xio_nrma,
-		    xbdi->xbdi_domid, xbd_io->xio_gref,
-		    &xbd_io->xio_vaddr, xbd_io->xio_gh, 
-		    XSHM_CALLBACK |
-		    ((xbd_rq->rq_operation == BLKIF_OP_WRITE) ? XSHM_RO: 0));
-		switch(error) {
-		case ENOMEM:
-			splx(s);
-			return -1; /* will try again later */
-		case 0:
-			SIMPLEQ_REMOVE_HEAD(&xbdback_shmq, xbdi_on_hold);
-			xbd_io->xio_mapped = 1;
-			xbdback_wakeup_thread(xbdi);
-			break;
-		default:
-			SIMPLEQ_REMOVE_HEAD(&xbdback_shmq, xbdi_on_hold);
-			printf("xbdback_shm_callback: xen_shm error %d\n",
-			       error);
-			xbdback_io_error(xbd_io, error);
-			xbdi->xbdi_io = NULL;
-			xbdback_wakeup_thread(xbdi);
-			break;
-		}
-	}
-	xbdback_shmcb = 0;
-	splx(s);
-	return 0;
-}
-
-/*
- * Allows waiting for the shm callback to complete.
- */
-static void *
-xbdback_co_wait_shm_callback(struct xbdback_instance *xbdi, void *obj)
-{
-
-	if (xbdi->xbdi_io == NULL || xbdi->xbdi_io->xio_mapped == 1) {
-		/*
-		 * Only proceed to next step when the callback reported
-		 * success or failure.
-		 */
-		xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
-		return xbdi;
-	} else {
-		/* go back to sleep */
-		return NULL;
 	}
 }
 
@@ -1881,6 +1813,8 @@ xbdback_co_wait_shm_callback(struct xbdback_instance *xbdi, void *obj)
 static void
 xbdback_unmap_shm(struct xbdback_io *xbd_io)
 {
+	struct xbdback_instance *xbdi = xbd_io->xio_xbdi;
+
 #ifdef XENDEBUG_VBD
 	int i;
 	printf("xbdback_unmap_shm handle ");
@@ -1894,6 +1828,8 @@ xbdback_unmap_shm(struct xbdback_io *xbd_io)
 	xbd_io->xio_mapped = 0;
 	xen_shm_unmap(xbd_io->xio_vaddr, xbd_io->xio_nrma,
 	    xbd_io->xio_gh);
+	SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, xbd_io->xio_xv, xv_next);
+	xbd_io->xio_xv = NULL;
 	xbd_io->xio_vaddr = -1;
 }
 

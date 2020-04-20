@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.4 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.4.8.1 2020/04/20 11:28:57 bouyer Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.4 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.4.8.1 2020/04/20 11:28:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,11 +378,6 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	int rseg;
 	int rv;
 	uint8_t myaddr[ETHER_ADDR_LEN];
-#ifdef PMAPDEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-	pmapdebug = 0;
-#endif
 
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		gsc->flags |= IEGSC_GECKO;
@@ -506,9 +501,6 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		bus_dmamem_free(gsc->iemt, &seg, rseg);
 		return;
 	}
-#ifdef PMAPDEBUG
-	pmapdebug = opmapdebug;
-#endif
 	if (!rv)
 		return;
 

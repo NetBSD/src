@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.2 2019/07/16 14:41:46 skrll Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.2.8.1 2020/04/20 11:28:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,11 +73,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.2 2019/07/16 14:41:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.2.8.1 2020/04/20 11:28:55 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,10 +165,6 @@ pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
@@ -178,7 +173,7 @@ extern int pmap_debug_level;
 					/* L2 table for mapping i80321 */
 #define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 
-					/* L2 tables for mapping kernel VM */ 
+					/* L2 tables for mapping kernel VM */
 #define KERNEL_PT_VMDATA	(KERNEL_PT_IOPXS + 1)
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
@@ -302,7 +297,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -609,13 +604,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
@@ -665,7 +660,7 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
+
 		logical = 0;	/* offset of kernel in RAM */
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
@@ -847,7 +842,7 @@ consinit(void)
 	    strncmp(boot_consdev, "com", 3))
 	        strcpy(boot_consdev, DEFAULT_CONSDEV);
 
-	if (!strncmp(boot_consdev, "com", 3)) 
+	if (!strncmp(boot_consdev, "com", 3))
 		consinit_com(boot_consdev);
 	else
 		consinit_genfb(boot_consdev);

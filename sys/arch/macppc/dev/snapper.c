@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.53 2019/09/20 21:24:34 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.53.6.1 2020/04/20 11:28:58 bouyer Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.53 2019/09/20 21:24:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.53.6.1 2020/04/20 11:28:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -497,7 +497,7 @@ static bus_size_t amp_mute;
 static bus_size_t headphone_mute;
 static bus_size_t audio_hw_reset;
 static bus_size_t headphone_detect;
-static uint8_t headphone_detect_active;
+static uint8_t headphone_detect_active = 0;
 
 
 /* I2S registers */
@@ -2091,9 +2091,10 @@ snapper_init(struct snapper_softc *sc, int node)
 		/* extint-gpio15 */
 		if (strcmp(audio_gpio, "headphone-detect") == 0 ||
 		    strcmp(name, "headphone-detect") == 0) {
+		    	uint32_t act;
 			headphone_detect = addr;
-			OF_getprop(gpio, "audio-gpio-active-state",
-			    &headphone_detect_active, 4);
+			OF_getprop(gpio, "audio-gpio-active-state", &act, 4);
+			headphone_detect_active = act;
 			if (OF_getprop(gpio, "interrupts", intr, 8) == 8) {
 				headphone_detect_intr = intr[0];
 			}

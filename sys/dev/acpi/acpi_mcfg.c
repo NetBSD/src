@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.18 2020/02/02 16:31:25 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.18.4.1 2020/04/20 11:29:02 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.18 2020/02/02 16:31:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.18.4.1 2020/04/20 11:29:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -750,7 +750,8 @@ acpimcfg_configure_bus_cb(ACPI_RESOURCE *res, void *ctx)
 		}
 		ex = pcires->memext;
 		s = "non-prefetchable";
-	} else if (res->Data.Address.ResourceType == ACPI_IO_RANGE) {
+	} else {
+		KASSERT(res->Data.Address.ResourceType == ACPI_IO_RANGE);
 		if (pcires->ioext == NULL) {
 			pcires->ioext = extent_create("pciio", 0, ULONG_MAX,
 			    NULL, 0, EX_WAITOK);
@@ -764,7 +765,6 @@ acpimcfg_configure_bus_cb(ACPI_RESOURCE *res, void *ctx)
 		}
 		ex = pcires->ioext;
 		s = "i/o";
-		
 	}
 
 	switch (res->Type) {

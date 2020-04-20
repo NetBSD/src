@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.29 2019/07/16 14:41:48 skrll Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.29.8.1 2020/04/20 11:28:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.29 2019/07/16 14:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.29.8.1 2020/04/20 11:28:56 bouyer Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,18 +161,14 @@ paddr_t msgbufphys;
 static struct arm32_dma_range tsarm_dma_ranges[4];
 
 #if NISA > 0
-extern void isa_tsarm_init(u_int, u_int); 
-#endif
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
+extern void isa_tsarm_init(u_int, u_int);
 #endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping vectors page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
-					/* L2 tables for mapping kernel VM */ 
+					/* L2 tables for mapping kernel VM */
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
@@ -265,7 +260,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -300,7 +295,7 @@ cpu_reboot(int howto, char *bootstr)
 			"mov r1, #0x1\n"
 			"strh r0, [%0]\n"
 			"strh r1, [%1]\n"
-			: 
+			:
 			: "r" (feed), "r" (ctrl)
 			: "r0", "r1"
 		);
@@ -411,7 +406,7 @@ initarm(void *arg)
 	 * We are currently running with the MMU enabled
 	 */
 
-#ifdef FIXME 
+#ifdef FIXME
 	/*
 	 * Fetch the SDRAM start/size from the i80321 SDRAM configuration
 	 * registers.
@@ -452,7 +447,7 @@ initarm(void *arg)
 	 * XXX pmap_bootstrap() needs an enema.
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = bootconfig.dram[0].address + 
+	physical_end = bootconfig.dram[0].address +
 		(bootconfig.dram[0].pages * PAGE_SIZE);
 
 	physical_freestart = 0x00009000UL;
@@ -538,20 +533,20 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables.  Save physical_freeend for when we give whats left 
+	 * page tables.  Save physical_freeend for when we give whats left
 	 * of memory below 2Mbyte to UVM.
 	 */
 
@@ -595,7 +590,7 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
+
 		logical = 0x00200000;	/* offset of kernel in RAM */
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
@@ -736,9 +731,9 @@ initarm(void *arg)
 	    0, atop(physical_freeend_low),
 	    VM_FREELIST_DEFAULT);
 	/*
-	 * There is 32 Mb of memory on the TS-7200 in 4 8Mb chunks, so far 
-	 * we've only been working with the first one mapped at 0x0.  Tell 
-	 * UVM about the others.	
+	 * There is 32 Mb of memory on the TS-7200 in 4 8Mb chunks, so far
+	 * we've only been working with the first one mapped at 0x0.  Tell
+	 * UVM about the others.
 	 */
 	uvm_page_physload(atop(0x1000000), atop(0x1800000),
 	    atop(0x1000000), atop(0x1800000),
@@ -751,7 +746,7 @@ initarm(void *arg)
 	    VM_FREELIST_DEFAULT);
 
 	physmem = 0x2000000 / PAGE_SIZE;
-	
+
 
 	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
@@ -771,7 +766,7 @@ initarm(void *arg)
 	printf("isa ");
 #endif
 	isa_tsarm_init(TS7XXX_IO16_VBASE + TS7XXX_ISAIO,
-		TS7XXX_IO16_VBASE + TS7XXX_ISAMEM);	
+		TS7XXX_IO16_VBASE + TS7XXX_ISAMEM);
 #endif
 
 #ifdef VERBOSE_INIT_ARM
@@ -811,7 +806,7 @@ consinit(void)
 	pmap_devmap_register(tsarm_devmap);
 #if 0
 	isa_tsarm_init(TS7XXX_IO16_VBASE + TS7XXX_ISAIO,
-		TS7XXX_IO16_VBASE + TS7XXX_ISAMEM);	
+		TS7XXX_IO16_VBASE + TS7XXX_ISAMEM);
 
         if (comcnattach(&isa_io_bs_tag, 0x3e8, comcnspeed,
             COM_FREQ, COM_TYPE_NORMAL, comcnmode))
@@ -821,9 +816,9 @@ consinit(void)
 #endif
 
 #if NEPCOM > 0
-	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1, 
+	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1,
 		EP93XX_APB_UART_SIZE, 0, &ioh);
-        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1, 
+        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_UART1,
 		ioh, comcnspeed, comcnmode))
 	{
 		panic("can't init serial console");
@@ -851,7 +846,7 @@ ep93xx_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		tsarm_dma_ranges[i].dr_sysbase = bootconfig.dram[i].address;
 		tsarm_dma_ranges[i].dr_busbase = bootconfig.dram[i].address;
-		tsarm_dma_ranges[i].dr_len = bootconfig.dram[i].pages * 
+		tsarm_dma_ranges[i].dr_len = bootconfig.dram[i].pages *
 			PAGE_SIZE;
 	}
 
