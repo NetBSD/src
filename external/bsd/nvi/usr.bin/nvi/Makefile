@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2020/04/12 17:28:57 martin Exp $
+#	$NetBSD: Makefile,v 1.22 2020/04/20 13:04:10 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
 .endif
+CWARNFLAGS.clang+=	-Wno-error=string-compare
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I.
 CPPFLAGS+=-DGTAGS -DIMCTRL
