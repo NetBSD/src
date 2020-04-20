@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.105 2020/04/19 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.106 2020/04/20 05:11:00 htodd Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.105 2020/04/19 20:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.106 2020/04/20 05:11:00 htodd Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.105 2020/04/19 20:31:59 thorpej 
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <miscfs/genfs/genfs.h>
 
