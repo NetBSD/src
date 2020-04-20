@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.79 2020/04/19 13:26:17 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.80 2020/04/20 21:39:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.79 2020/04/19 13:26:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.80 2020/04/20 21:39:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1093,7 +1093,7 @@ vfs_sync_all(struct lwp *l)
 	do_sys_sync(l);
 
 	/* Wait for sync to finish. */
-	if (buf_syncwait() != 0) {
+	if (vfs_syncwait() != 0) {
 #if defined(DDB) && defined(DEBUG_HALT_BUSY)
 		Debugger();
 #endif
