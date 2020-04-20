@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.106 2020/04/20 05:11:00 htodd Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.107 2020/04/20 05:22:28 htodd Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,29 +76,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.106 2020/04/20 05:11:00 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.107 2020/04/20 05:22:28 htodd Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/sysctl.h>
-#include <sys/proc.h>
+#include <sys/atomic.h>
 #include <sys/buf.h>
-#include <sys/syslog.h>
-#include <sys/mount.h>
 #include <sys/dirent.h>
-#include <sys/signalvar.h>
-#include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/module.h>
-#include <sys/atomic.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs.h>
 
