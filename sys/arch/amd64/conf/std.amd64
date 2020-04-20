@@ -1,9 +1,10 @@
-# $NetBSD: std.amd64,v 1.11.26.1 2020/04/16 08:46:34 bouyer Exp $
+# $NetBSD: std.amd64,v 1.11.26.2 2020/04/20 19:43:32 bouyer Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
 machine amd64 x86 xen
 include 	"conf/std"	# MI standard options
+include 	"arch/xen/conf/std.xenversion"
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
@@ -13,8 +14,6 @@ options 	MULTIPROCESSOR
 
 options 	CHILD_MAX=1024	# 160 is too few
 options 	OPEN_MAX=1024	# 128 is too few
-
-options         __XEN_INTERFACE_VERSION__=0x00030208 # Xen 3.1 interface
 
 mainbus0 at root
 cpu* at mainbus?
