@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.7 2020/04/20 11:03:02 simonb Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.8 2020/04/20 13:02:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.7 2020/04/20 11:03:02 simonb Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.8 2020/04/20 13:02:57 joerg Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU
@@ -134,7 +134,7 @@ amdsmn_attach(device_t parent, device_t self, void *aux)
 	struct amdsmn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	int flags = 0;
-	int i;
+	size_t i;
 
 	mutex_init(&sc->smn_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->pa = *pa;
