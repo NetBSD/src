@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.84 2020/04/20 19:20:35 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.85 2020/04/20 19:29:09 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.84 2020/04/20 19:20:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.85 2020/04/20 19:29:09 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -245,9 +245,6 @@ static struct pool_cache xbdback_io_pool;
 /* Interval between reports of I/O errors from frontend */
 static const struct timeval xbdback_err_intvl = { 1, 0 };
 
-#ifdef DEBUG
-static const struct timeval xbdback_fragio_intvl = { 60, 0 };
-#endif
        void xbdbackattach(int);
 static int  xbdback_xenbus_create(struct xenbus_device *);
 static int  xbdback_xenbus_destroy(void *);
