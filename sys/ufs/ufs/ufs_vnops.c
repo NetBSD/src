@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.250 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.250.2.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.250 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.250.2.1 2020/04/20 11:29:14 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -250,7 +250,7 @@ ufs_close(void *v)
 	struct vnode	*vp;
 
 	vp = ap->a_vp;
-	if (vp->v_usecount > 1)
+	if (vrefcnt(vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (0);
 }
@@ -556,7 +556,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = ufs_truncate_retry(vp, vap->va_size, cred);
+			error = ufs_truncate_retry(vp, 0, vap->va_size, cred);
 			if (error)
 				goto out;
 			break;
@@ -1669,7 +1669,7 @@ ufsspec_close(void *v)
 	struct vnode	*vp;
 
 	vp = ap->a_vp;
-	if (vp->v_usecount > 1)
+	if (vrefcnt(vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
@@ -1730,7 +1730,7 @@ ufsfifo_close(void *v)
 	struct vnode	*vp;
 
 	vp = ap->a_vp;
-	if (ap->a_vp->v_usecount > 1)
+	if (vrefcnt(ap->a_vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }

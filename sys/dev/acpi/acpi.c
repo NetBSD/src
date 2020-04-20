@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.283 2020/01/17 17:06:32 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.283.4.1 2020/04/20 11:29:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.283 2020/01/17 17:06:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.283.4.1 2020/04/20 11:29:02 bouyer Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1809,7 +1809,7 @@ acpi_madt_walk(ACPI_STATUS (*func)(ACPI_SUBTABLE_HEADER *, void *), void *aux)
 
 		hdrp = (ACPI_SUBTABLE_HEADER *)where;
 
-		if (ACPI_FAILURE(func(hdrp, aux)))
+		if (hdrp->Length == 0 || ACPI_FAILURE(func(hdrp, aux)))
 			break;
 
 		where += hdrp->Length;
@@ -1829,7 +1829,7 @@ acpi_gtdt_walk(ACPI_STATUS (*func)(ACPI_GTDT_HEADER *, void *), void *aux)
 
 		hdrp = (ACPI_GTDT_HEADER *)where;
 
-		if (ACPI_FAILURE(func(hdrp, aux)))
+		if (hdrp->Length == 0 || ACPI_FAILURE(func(hdrp, aux)))
 			break;
 
 		where += hdrp->Length;

@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: db_trace.c,v 1.8.10.1 2020/04/20 11:28:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8.10.1 2020/04/20 11:28:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -236,6 +236,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		lastfp = lastlr = lr = fp = 0;
 		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+		lr = ptr_strip_pac(lr);
 
 		pr_traceaddr("fp", fp, lr - 4, flags, pr);
 	}
@@ -251,6 +252,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		 */
 		db_read_bytes(lastfp + 0, sizeof(fp), (char *)&fp);
 		db_read_bytes(lastfp + 8, sizeof(lr), (char *)&lr);
+		lr = ptr_strip_pac(lr);
 
 		if (!trace_user && IN_USER_VM_ADDRESS(lr))
 			break;
@@ -268,6 +270,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			lr = fp = 0;
 			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+			lr = ptr_strip_pac(lr);
 
 			/*
 			 * no need to display the frame of el0_trap

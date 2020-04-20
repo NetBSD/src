@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.26 2020/02/20 12:15:33 rin Exp $ */
+/* $NetBSD: trap.c,v 1.26.4.1 2020/04/20 11:28:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.26 2020/02/20 12:15:33 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.26.4.1 2020/04/20 11:28:50 bouyer Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -238,6 +238,7 @@ trap_el1h_sync(struct trapframe *tf)
 	case ESR_EC_PC_ALIGNMENT:
 	case ESR_EC_SP_ALIGNMENT:
 	case ESR_EC_ILL_STATE:
+	case ESR_EC_BTE_A64:
 	default:
 		panic("Trap: fatal %s: pc=%016" PRIx64 " sp=%016" PRIx64
 		    " esr=%08x", eclass_trapname(eclass), tf->tf_pc, tf->tf_sp,

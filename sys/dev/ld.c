@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.109 2020/03/01 03:21:54 riastradh Exp $	*/
+/*	$NetBSD: ld.c,v 1.109.4.1 2020/04/20 11:29:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.109 2020/03/01 03:21:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.109.4.1 2020/04/20 11:29:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ const struct cdevsw ld_cdevsw = {
 	.d_flag = D_DISK | D_MPSAFE
 };
 
-static struct	dkdriver lddkdriver = {
+static const struct	dkdriver lddkdriver = {
 	.d_open = ldopen,
 	.d_close = ldclose,
 	.d_strategy = ldstrategy,

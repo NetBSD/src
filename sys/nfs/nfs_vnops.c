@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.313 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.313.4.1 2020/04/20 11:29:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.313 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.313.4.1 2020/04/20 11:29:12 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1729,7 +1729,7 @@ again:
  * To try and make nfs semantics closer to ufs semantics, a file that has
  * other processes using the vnode is renamed instead of removed and then
  * removed later on the last close.
- * - If v_usecount > 1
+ * - If vrefcnt(vp) > 1
  *	  If a rename is not already in the works
  *	     call nfs_sillyrename() to set it up
  *     else
@@ -1752,12 +1752,12 @@ nfs_remove(void *v)
 	struct vattr vattr;
 
 #ifndef DIAGNOSTIC
-	if (vp->v_usecount < 1)
-		panic("nfs_remove: bad v_usecount");
+	if (vrefcnt(vp) < 1)
+		panic("nfs_remove: bad vrefcnt(vp)");
 #endif
 	if (vp->v_type == VDIR)
 		error = EPERM;
-	else if (vp->v_usecount == 1 || (np->n_sillyrename &&
+	else if (vrefcnt(vp) == 1 || (np->n_sillyrename &&
 	    VOP_GETATTR(vp, &vattr, cnp->cn_cred) == 0 &&
 	    vattr.va_nlink > 1)) {
 		/*
@@ -1886,7 +1886,7 @@ nfs_rename(void *v)
 	 * so that we don't lose the file if the rename fails, and so
 	 * that there's no window when the "to" file doesn't exist.
 	 */
-	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
+	if (tvp && vrefcnt(tvp) > 1 && !VTONFS(tvp)->n_sillyrename &&
 	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp, true)) {
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
@@ -3443,7 +3443,7 @@ nfsspec_close(void *v)
 
 	if (np->n_flag & (NACC | NUPD)) {
 		np->n_flag |= NCHG;
-		if (vp->v_usecount == 1 &&
+		if (vrefcnt(vp) == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			vattr_null(&vattr);
 			if (np->n_flag & NACC)
@@ -3527,7 +3527,7 @@ nfsfifo_close(void *v)
 		if (np->n_flag & NUPD)
 			np->n_mtim = ts;
 		np->n_flag |= NCHG;
-		if (vp->v_usecount == 1 &&
+		if (vrefcnt(vp) == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			vattr_null(&vattr);
 			if (np->n_flag & NACC)

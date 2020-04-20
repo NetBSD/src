@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2019/12/31 13:07:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.6.1 2020/04/20 11:28:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2019/12/31 13:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.6.1 2020/04/20 11:28:57 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -125,10 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2019/12/31 13:07:10 ad Exp $");
 #include <hppa/hppa/machdep.h>
 #include <hppa/hppa/pim.h>
 #include <hppa/dev/cpudevs.h>
-
-#ifdef PMAPDEBUG
-#include <hppa/hppa/hpt.h>
-#endif
 
 #include "ksyms.h"
 #include "lcd.h"
@@ -898,12 +894,7 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[3][9];
-#ifdef PMAPDEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
 
-	pmapdebug = 0;
-#endif
 	/* Initialize the message buffer. */
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
@@ -940,9 +931,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
 
-#ifdef PMAPDEBUG
-	pmapdebug = opmapdebug;
-#endif
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvm_availmem()));
 	printf("avail mem = %s\n", pbuf[0]);
 }

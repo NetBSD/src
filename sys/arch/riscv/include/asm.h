@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.4.2.1 2020/04/20 11:28:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -115,7 +115,9 @@
 	.asciiz str;			\
 	.align	3
 
-#define	__RCSID(name)	.pushsection ".ident"; .asciz name; .popsection
+#define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.popsection
 #define RCSID(name)	__RCSID(name)
 
 #if defined(_LP64)

@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.35.6.5 2020/04/20 11:29:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,9 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.4 2020/04/18 15:06:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.5 2020/04/20 11:29:01 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -143,8 +142,8 @@ xen_ipi_init(void)
 	snprintf(intr_xname, sizeof(intr_xname), "%s ipi",
 	    device_xname(ci->ci_dev));
 
-	if (xen_intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
-		xen_ipi_handler, ci, true, intr_xname) == NULL) {
+	if (event_set_handler(evtchn, xen_ipi_handler, ci, IPL_HIGH, NULL,
+	    intr_xname, true, false) != 0) {
 		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}

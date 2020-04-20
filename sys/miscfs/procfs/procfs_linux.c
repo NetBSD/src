@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.80 2020/01/02 15:42:27 thorpej Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.80.6.1 2020/04/20 11:29:11 bouyer Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.80 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.80.6.1 2020/04/20 11:29:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ procfs_doloadavg(struct lwp *curl, struct proc *p,
 		(int)(averunnable.ldavg[2] / averunnable.fscale),
 		(int)(averunnable.ldavg[2] * 100 / averunnable.fscale % 100),
 		1,		/* number of ONPROC processes */
-		nprocs,
+		atomic_load_relaxed(&nprocs),
 		30000);		/* last pid */
 	if (len == 0)
 		goto out;

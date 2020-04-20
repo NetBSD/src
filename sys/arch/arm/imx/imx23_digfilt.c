@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.2 2019/05/08 13:40:14 isaki Exp $ */
+/* $Id: imx23_digfilt.c,v 1.2.8.1 2020/04/20 11:28:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -380,6 +380,8 @@ const audio_params_t *param)
 		blocksize = DIGFILT_BLOCKSIZE_MAX;
 	else
 		blocksize = bs & ~(DIGFILT_BLOCKSIZE_ROUND-1);
+	if (blocksize < DIGFILT_BLOCKSIZE_ROUND)
+		blocksize = DIGFILT_BLOCKSIZE_ROUND;
 
 	return blocksize;
 }

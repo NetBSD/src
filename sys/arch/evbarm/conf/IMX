@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IMX,v 1.4 2019/08/19 11:41:36 hkenken Exp $
+#	$NetBSD: IMX,v 1.4.6.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	NXP(Freescale) I.MX family SoCs
 #
@@ -30,8 +30,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
-#options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # CONSADDR is required for early init messages from VERBOSE_INIT_ARM.

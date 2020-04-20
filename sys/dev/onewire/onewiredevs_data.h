@@ -1,10 +1,10 @@
-/*	$NetBSD: onewiredevs_data.h,v 1.2 2006/04/07 18:56:37 riz Exp $	*/
+/*	$NetBSD: onewiredevs_data.h,v 1.2.176.1 2020/04/20 11:29:04 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	NetBSD: onewiredevs,v 1.1 2006/04/07 18:55:22 riz Exp 
+ *	NetBSD: onewiredevs,v 1.2 2009/01/21 14:27:58 jnemeth Exp 
  */
 
 static const struct onewire_family onewire_famtab[] = {
@@ -17,6 +17,7 @@ static const struct onewire_family onewire_famtab[] = {
 	{ ONEWIRE_FAMILY_DS1995, "16kb NVRAM" },
 	{ ONEWIRE_FAMILY_DS1996, "64kb NVRAM" },
 	{ ONEWIRE_FAMILY_DS1920, "Temperature" },
+	{ ONEWIRE_FAMILY_DS2430, "256bit EEPROM" },
 	{ ONEWIRE_FAMILY_DS1822, "Temperature" },
 	{ ONEWIRE_FAMILY_DS18B20, "Temperature" },
 	{ 0, NULL }

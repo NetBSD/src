@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ZEDBOARD,v 1.6 2019/08/11 19:34:04 skrll Exp $
+#	$NetBSD: ZEDBOARD,v 1.6.6.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	ZedBoard -- Xilinx Zynq Eval Board Kernel
 #
@@ -35,7 +35,6 @@ makeoptions	COPY_SYMTAB=1
 #  single		Boot to single user only
 #  kdb			Give control to kernel debugger
 #  ask			Ask for file name to reboot from
-#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output

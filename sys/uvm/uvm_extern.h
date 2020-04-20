@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.222 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.222.2.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -606,6 +606,40 @@ extern struct vm_map *kernel_map;
 extern struct vm_map *phys_map;
 
 /*
+ *	uvm_voaddr:
+ *
+ *	This structure encapsulates UVM's unique virtual object address
+ *	for an individual byte inside a pageable page. Pageable pages can
+ *	be owned by either a uvm_object (UVM_VOADDR_TYPE_OBJECT) or a
+ *	vm_anon (UVM_VOADDR_TYPE_ANON).
+ *
+ *	In each case, the byte offset into the owning object
+ *	(uvm_object or vm_anon) is included in the ID, so that
+ *	two different offsets into the same page have distinct
+ *	IDs.
+ *
+ *	Note that the page does not necessarily have to be resident
+ *	in order to know the virtual object address.  However, it
+ *	is required that any pending copy-on-write is resolved.
+ *
+ *	When someone wants a virtual object address, an extra reference
+ *	is taken on the owner while the caller uses the ID.  This
+ *	ensures that the identity is stable for the duration of its
+ *	use.
+ */
+struct uvm_voaddr {
+	enum {
+		UVM_VOADDR_TYPE_OBJECT = 1,
+		UVM_VOADDR_TYPE_ANON = 2,
+	} type;
+	union {
+		struct uvm_object *uobj;
+		struct vm_anon *anon;
+	};
+	voff_t offset;
+};
+
+/*
  * macros
  */
 
@@ -709,6 +743,12 @@ void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
 void			uvmspace_unshare(struct lwp *);
+
+bool			uvm_voaddr_acquire(struct vm_map *, vaddr_t,
+			    struct uvm_voaddr *);
+void			uvm_voaddr_release(struct uvm_voaddr *);
+int			uvm_voaddr_compare(const struct uvm_voaddr *,
+			    const struct uvm_voaddr *);
 
 void			uvm_whatis(uintptr_t, void (*)(const char *, ...));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.57 2020/04/04 20:49:30 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.57.2.1 2020/04/20 11:29:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.57 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.57.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,7 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	char *bp, *bend;
 	struct vnode *dvp;
 
-	KASSERT(vp->v_usecount > 0);
+	KASSERT(vrefcnt(vp) > 0);
 
 	bp = bend = &path[len];
 	*(--bp) = '\0';

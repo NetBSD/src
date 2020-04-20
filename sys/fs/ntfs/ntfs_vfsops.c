@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.109 2020/01/17 20:08:08 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.109.4.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.109 2020/01/17 20:08:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.109.4.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,7 @@ ntfs_unmount(struct mount *mp, int mntflags)
 	/* Check if only system vnodes are rest */
 	for (i = 0; i < NTFS_SYSNODESNUM; i++)
 		if ((ntmp->ntm_sysvn[i]) &&
-		    (ntmp->ntm_sysvn[i]->v_usecount > 1))
+		    (vrefcnt(ntmp->ntm_sysvn[i]) > 1))
 			return (EBUSY);
 
 	/* Dereference all system vnodes */

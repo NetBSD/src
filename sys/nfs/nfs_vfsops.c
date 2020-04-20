@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.240 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.240.2.1 2020/04/20 11:29:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.240 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.240.2.1 2020/04/20 11:29:12 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -863,7 +863,7 @@ nfs_unmount(struct mount *mp, int mntflags)
 	if (error != 0)
 		goto err;
 
-	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 1) {
+	if ((mntflags & MNT_FORCE) == 0 && vrefcnt(vp) > 1) {
 		VOP_UNLOCK(vp);
 		error = EBUSY;
 		goto err;

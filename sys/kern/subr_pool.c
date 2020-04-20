@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.266 2020/02/08 07:07:07 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.266.4.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.266 2020/02/08 07:07:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.266.4.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -87,6 +87,10 @@ static struct pool phpool[PHPOOL_MAX];
 #define POOL_REDZONE
 #endif
 
+#if defined(POOL_QUARANTINE)
+#define POOL_NOCACHE
+#endif
+
 #ifdef POOL_REDZONE
 # ifdef KASAN
 #  define POOL_REDZONE_SIZE 8
@@ -121,12 +125,16 @@ static void pool_quarantine_init(struct pool *);
 static void pool_quarantine_flush(struct pool *);
 static bool pool_put_quarantine(struct pool *, void *,
     struct pool_pagelist *);
-static bool pool_cache_put_quarantine(pool_cache_t, void *, paddr_t);
 #else
 #define pool_quarantine_init(a)			__nothing
 #define pool_quarantine_flush(a)		__nothing
 #define pool_put_quarantine(a, b, c)		false
-#define pool_cache_put_quarantine(a, b, c)	false
+#endif
+
+#ifdef POOL_NOCACHE
+static bool pool_cache_put_nocache(pool_cache_t, void *);
+#else
+#define pool_cache_put_nocache(a, b)		false
 #endif
 
 #define NO_CTOR	__FPTRCAST(int (*)(void *, void *, int), nullop)
@@ -293,7 +301,8 @@ struct pool_item {
 };
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
-	((pp)->pr_nitems < (pp)->pr_minitems)
+	((pp)->pr_nitems < (pp)->pr_minitems ||				\
+	 (pp)->pr_npages < (pp)->pr_minpages)
 #define	POOL_OBJ_TO_PAGE(pp, v)						\
 	(void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask)
 
@@ -1261,7 +1270,8 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	 */
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
-		if (pp->pr_npages > pp->pr_minpages &&
+		if (pp->pr_nitems - pp->pr_itemsperpage >= pp->pr_minitems &&
+		    pp->pr_npages > pp->pr_minpages &&
 		    pp->pr_npages > pp->pr_maxpages) {
 			pr_rmpage(pp, ph, pq);
 		} else {
@@ -1386,35 +1396,17 @@ out:
 	return ENOMEM;
 }
 
-/*
- * Add N items to the pool.
- */
-int
+void
 pool_prime(struct pool *pp, int n)
 {
-	int newpages;
-	int error = 0;
 
 	mutex_enter(&pp->pr_lock);
-
-	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
-
-	while (newpages > 0) {
-		error = pool_grow(pp, PR_NOWAIT);
-		if (error) {
-			if (error == ERESTART)
-				continue;
-			break;
-		}
-		pp->pr_minpages++;
-		newpages--;
-	}
-
-	if (pp->pr_minpages >= pp->pr_maxpages)
+	pp->pr_minpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+	if (pp->pr_maxpages <= pp->pr_minpages)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
-
+	while (pp->pr_npages < pp->pr_minpages)
+		(void) pool_grow(pp, PR_WAITOK);
 	mutex_exit(&pp->pr_lock);
-	return error;
 }
 
 /*
@@ -1542,11 +1534,7 @@ pool_setlowat(struct pool *pp, int n)
 {
 
 	mutex_enter(&pp->pr_lock);
-
 	pp->pr_minitems = n;
-	pp->pr_minpages = (n == 0)
-		? 0
-		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	/* Make sure we're caught up with the newly-set low water mark. */
 	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
@@ -1566,9 +1554,7 @@ pool_sethiwat(struct pool *pp, int n)
 
 	mutex_enter(&pp->pr_lock);
 
-	pp->pr_maxpages = (n == 0)
-		? 0
-		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+	pp->pr_maxitems = n;
 
 	mutex_exit(&pp->pr_lock);
 }
@@ -1585,13 +1571,7 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
-	/*
-	 * In-line version of pool_sethiwat(), because we don't want to
-	 * release the lock.
-	 */
-	pp->pr_maxpages = (n == 0)
-		? 0
-		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+	pp->pr_maxpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	mutex_exit(&pp->pr_lock);
 }
@@ -1657,11 +1637,11 @@ pool_reclaim(struct pool *pp)
 			continue;
 
 		/*
-		 * If freeing this page would put us below
-		 * the low water mark, stop now.
+		 * If freeing this page would put us below the minimum free items
+		 * or the minimum pages, stop now.
 		 */
-		if ((pp->pr_nitems - pp->pr_itemsperpage) <
-		    pp->pr_minitems)
+		if (pp->pr_nitems - pp->pr_itemsperpage < pp->pr_minitems ||
+		    pp->pr_npages - 1 < pp->pr_minpages)
 			break;
 
 		pr_rmpage(pp, ph, &pq);
@@ -2428,6 +2408,13 @@ pool_cache_sethardlimit(pool_cache_t pc, int n, const char *warnmess, int rateca
 	pool_sethardlimit(&pc->pc_pool, n, warnmess, ratecap);
 }
 
+void
+pool_cache_prime(pool_cache_t pc, int n)
+{
+
+	pool_prime(&pc->pc_pool, n);
+}
+
 static bool __noinline
 pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 		    paddr_t *pap, int flags)
@@ -2726,7 +2713,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		pc_phinpage_check(pc, object);
 	}
 
-	if (pool_cache_put_quarantine(pc, object, pa)) {
+	if (pool_cache_put_nocache(pc, object)) {
 		return;
 	}
 
@@ -2982,9 +2969,11 @@ pool_put_quarantine(struct pool *pp, void *v, struct pool_pagelist *pq)
 
 	return true;
 }
+#endif
 
+#ifdef POOL_NOCACHE
 static bool
-pool_cache_put_quarantine(pool_cache_t pc, void *p, paddr_t pa)
+pool_cache_put_nocache(pool_cache_t pc, void *p)
 {
 	pool_cache_destruct_object(pc, p);
 	return true;

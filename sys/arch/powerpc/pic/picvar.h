@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.10 2018/05/11 22:39:59 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.10.12.1 2020/04/20 11:28:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.10 2018/05/11 22:39:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.10.12.1 2020/04/20 11:28:59 bouyer Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H

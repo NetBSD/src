@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.55 2018/09/04 00:01:41 mrg Exp $	*/
+/*	$NetBSD: asm.h,v 1.55.10.1 2020/04/20 11:28:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,9 @@ _C_LABEL(x):
 	.asciz str;			\
 	.align	3
 
-#define	RCSID(name)	.pushsection ".ident"; .asciz name; .popsection
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.popsection
 
 /*
  * XXX retain dialects XXX

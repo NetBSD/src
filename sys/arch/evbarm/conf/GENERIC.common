@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.35 2020/02/27 16:35:39 riastradh Exp $
+#	$NetBSD: GENERIC.common,v 1.35.4.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -111,7 +111,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1

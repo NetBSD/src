@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmixvar.h,v 1.2 2008/05/08 02:32:48 macallan Exp $	*/
+/*	$NetBSD: sgsmixvar.h,v 1.2.98.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -27,7 +27,7 @@
 #define SGSMIXVAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmixvar.h,v 1.2 2008/05/08 02:32:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmixvar.h,v 1.2.98.1 2020/04/20 11:29:03 bouyer Exp $");
 
 void sgsmix_set_speaker_vol(void *, int, int);
 void sgsmix_set_headphone_vol(void *, int, int);

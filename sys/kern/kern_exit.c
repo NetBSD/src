@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.287 2020/04/04 20:20:12 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.287.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.287 2020/04/04 20:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.287.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1216,6 +1216,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 	 * Let pid be reallocated.
 	 */
 	proc_free_pid(p->p_pid);
+	atomic_dec_uint(&nprocs);
 
 	/*
 	 * Unlink process from its process group.

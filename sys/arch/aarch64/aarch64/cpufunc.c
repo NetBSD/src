@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.16 2020/04/05 22:54:51 jmcneill Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.16.2.1 2020/04/20 11:28:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -26,10 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cpuoptions.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.16 2020/04/05 22:54:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.16.2.1 2020/04/20 11:28:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +46,8 @@ u_int arm_dcache_maxline;
 
 u_int aarch64_cache_vindexsize;
 u_int aarch64_cache_prefer_mask;
+
+int aarch64_pac_enabled __read_mostly;
 
 /* cache info per cluster. the same cluster has the same cache configuration? */
 #define MAXCPUPACKAGES	MAXCPUS		/* maximum of ci->ci_package_id */
@@ -437,4 +440,45 @@ set_cpufuncs(void)
 #endif
 
 	return 0;
+}
+
+/*
+ * TODO: this function should have a "no-pac" attribute. Right now it
+ * doesn't use PAC so that's fine.
+ */
+void
+aarch64_pac_init(int primary)
+{
+#ifdef ARMV83_PAC
+	uint64_t reg, sctlr;
+
+	/* CPU0 does the detection. */
+	if (primary) {
+		reg = reg_id_aa64isar1_el1_read();
+		if (__SHIFTOUT(reg, ID_AA64ISAR1_EL1_APA) !=
+		    ID_AA64ISAR1_EL1_APA_NONE)
+			aarch64_pac_enabled = 1;
+		if (__SHIFTOUT(reg, ID_AA64ISAR1_EL1_API) !=
+		    ID_AA64ISAR1_EL1_API_NONE)
+			aarch64_pac_enabled = 1;
+		if (__SHIFTOUT(reg, ID_AA64ISAR1_EL1_GPA) !=
+		    ID_AA64ISAR1_EL1_GPA_NONE)
+			aarch64_pac_enabled = 1;
+		if (__SHIFTOUT(reg, ID_AA64ISAR1_EL1_GPI) !=
+		    ID_AA64ISAR1_EL1_GPI_NONE)
+			aarch64_pac_enabled = 1;
+	}
+
+	if (!aarch64_pac_enabled)
+		return;
+
+	/* Enable PAC on the CPU. */
+	sctlr = reg_sctlr_el1_read();
+	sctlr |= SCTLR_EnIA;
+	reg_sctlr_el1_write(sctlr);
+
+	/* Set the key. Curlwp here is the CPU's idlelwp. */
+	reg_APIAKeyLo_EL1_write(curlwp->l_md.md_ia_kern_lo);
+	reg_APIAKeyHi_EL1_write(curlwp->l_md.md_ia_kern_hi);
+#endif
 }

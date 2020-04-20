@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.126 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.126.4.1 2020/04/20 11:29:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.126 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.126.4.1 2020/04/20 11:29:14 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -209,10 +209,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[UFS_NIADDR], indir_lbn[UFS_NIADDR];
-	daddr_t blks[UFS_NDADDR + UFS_NIADDR];
+	daddr_t blks[UFS_NDADDR + UFS_NIADDR], oldblks[UFS_NDADDR + UFS_NIADDR];
 	struct fs *fs;
+	int extblocks;
 	int offset, pgoffset, level;
-	int64_t blocksreleased = 0;
+	int64_t blocksreleased = 0, datablocks;
 	int i, aflag, nblocks;
 	int error, allerror = 0;
 	off_t osize;
@@ -231,9 +232,44 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (length < 0)
 		return (EINVAL);
 
+	fs = oip->i_fs;
+#define i_din2 i_din.ffs2_din
+	extblocks = 0;
+	datablocks = DIP(oip, blocks);
+	if (fs->fs_magic == FS_UFS2_MAGIC && oip->i_din2->di_extsize > 0) {
+		extblocks = btodb(ffs_fragroundup(fs, oip->i_din2->di_extsize));
+		datablocks -= extblocks;
+	}
+	if ((ioflag & IO_EXT) && extblocks > 0) {
+		if (length != 0)
+			panic("ffs_truncate: partial trunc of extdata");
+		{
+#ifdef QUOTA
+			(void) chkdq(oip, -extblocks, NOCRED, FORCE);
+#endif
+			vinvalbuf(ovp, 0, cred, curlwp, 0, 0);
+			osize = oip->i_din2->di_extsize;
+			oip->i_din2->di_blocks -= extblocks;
+			oip->i_din2->di_extsize = 0;
+			for (i = 0; i < UFS_NXADDR; i++) {
+				oldblks[i] = oip->i_din2->di_extb[i];
+				oip->i_din2->di_extb[i] = 0;
+			}
+			oip->i_flag |= IN_CHANGE;
+			if ((error = ffs_update(ovp, NULL, NULL, 0)))
+				return (error);
+			for (i = 0; i < UFS_NXADDR; i++) {
+				if (oldblks[i] == 0)
+					continue;
+				ffs_blkfree(fs, oip->i_devvp, oldblks[i],
+				    ffs_sblksize(fs, osize, i), oip->i_number);
+			}
+			extblocks = 0;
+		}
+	}
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < ump->um_maxsymlinklen ||
-	     (ump->um_maxsymlinklen == 0 && DIP(oip, blocks) == 0))) {
+	     (ump->um_maxsymlinklen == 0 && datablocks == 0))) {
 		KDASSERT(length == 0);
 		memset(SHORTLINK(oip), 0, (size_t)oip->i_size);
 		oip->i_size = 0;
@@ -247,7 +283,6 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
-	fs = oip->i_fs;
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);
 
@@ -415,10 +450,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - FFS_NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - FFS_NINDIR(fs) * FFS_NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		if (oip->i_ump->um_fstype == UFS1)
-			bn = ufs_rw32(oip->i_ffs1_ib[level],UFS_FSNEEDSWAP(fs));
-		else
-			bn = ufs_rw64(oip->i_ffs2_ib[level],UFS_FSNEEDSWAP(fs));
+		bn = ffs_getib(fs, oip, level);
 		if (bn != 0) {
 			if (lastiblock[level] < 0 &&
 			    oip->i_ump->um_mountp->mnt_wapbl) {
@@ -461,10 +493,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	for (i = UFS_NDADDR - 1; i > lastblock; i--) {
 		long bsize;
 
-		if (oip->i_ump->um_fstype == UFS1)
-			bn = ufs_rw32(oip->i_ffs1_db[i], UFS_FSNEEDSWAP(fs));
-		else
-			bn = ufs_rw64(oip->i_ffs2_db[i], UFS_FSNEEDSWAP(fs));
+		bn = ffs_getdb(fs, oip, i);
 		if (bn == 0)
 			continue;
 
@@ -488,10 +517,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * Finally, look for a change in size of the
 	 * last direct block; release any frags.
 	 */
-	if (oip->i_ump->um_fstype == UFS1)
-		bn = ufs_rw32(oip->i_ffs1_db[lastblock], UFS_FSNEEDSWAP(fs));
-	else
-		bn = ufs_rw64(oip->i_ffs2_db[lastblock], UFS_FSNEEDSWAP(fs));
+	bn = ffs_getdb(fs, oip, lastblock);
 	if (bn != 0) {
 		long oldspace, newspace;
 
@@ -536,9 +562,9 @@ done:
 		KASSERTMSG((blks[i] == DIP(oip, db[i])),
 		    "itrunc2 blk mismatch: %jx != %jx",
 		    (uintmax_t)blks[i], (uintmax_t)DIP(oip, db[i]));
-	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
+	KASSERTMSG((length != 0 || extblocks || LIST_EMPTY(&ovp->v_cleanblkhd)),
 	    "itrunc3: zero length and nonempty cleanblkhd");
-	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_dirtyblkhd)),
+	KASSERTMSG((length != 0 || extblocks || LIST_EMPTY(&ovp->v_dirtyblkhd)),
 	    "itrunc3: zero length and nonempty dirtyblkhd");
 
 out:

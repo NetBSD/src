@@ -1,4 +1,4 @@
-# $NetBSD: std.xen,v 1.11.10.1 2020/04/16 08:46:34 bouyer Exp $
+# $NetBSD: std.xen,v 1.11.10.2 2020/04/20 11:28:51 bouyer Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
@@ -8,8 +8,8 @@ include 	"conf/std"	# MI standard options
 include		"arch/xen/conf/files.xen.pv"
 
 options 	XEN	#Xen support
-options 	__XEN_INTERFACE_VERSION__=0x00030208 # Xen 3.1 interface
-#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+
+include		"arch/xen/conf/std.xenversion"
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries

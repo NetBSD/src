@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.63.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.63.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,7 +151,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	}
 
 	/* Update sleep time delta, call the wake-up handler of scheduler */
-	l->l_slpticksum += (hardclock_ticks - l->l_slpticks);
+	l->l_slpticksum += (getticks() - l->l_slpticks);
 	sched_wakeup(l);
 
 	/* Look for a CPU to wake up */
@@ -210,13 +210,15 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
  *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
  */
 void
-sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
+sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj,
+    bool catch_p)
 {
 	lwp_t *l = curlwp;
 
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
+	KASSERT((l->l_flag & LW_SINTR) == 0);
 
 	l->l_syncobj = sobj;
 	l->l_wchan = wchan;
@@ -224,11 +226,13 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 	l->l_wmesg = wmesg;
 	l->l_slptime = 0;
 	l->l_stat = LSSLEEP;
+	if (catch_p)
+		l->l_flag |= LW_SINTR;
 
 	sleepq_insert(sq, l, sobj);
 
 	/* Save the time when thread has slept */
-	l->l_slpticks = hardclock_ticks;
+	l->l_slpticks = getticks();
 	sched_slept(l);
 }
 
@@ -257,7 +261,6 @@ sleepq_block(int timo, bool catch_p)
 	 * core dump events.
 	 */
 	if (catch_p) {
-		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
 			error = EINTR;
@@ -270,7 +273,15 @@ sleepq_block(int timo, bool catch_p)
 		/* lwp_unsleep() will release the lock */
 		lwp_unsleep(l, true);
 	} else {
+		/*
+		 * The LWP may have already been awoken if the caller
+		 * dropped the sleep queue lock between sleepq_enqueue() and
+		 * sleepq_block().  If that happends l_stat will be LSONPROC
+		 * and mi_switch() will treat this as a preemption.  No need
+		 * to do anything special here.
+		 */
 		if (timo) {
+			l->l_flag &= ~LW_STIMO;
 			callout_schedule(&l->l_timeout_ch, timo);
 		}
 		spc_lock(l->l_cpu);
@@ -286,8 +297,8 @@ sleepq_block(int timo, bool catch_p)
 			 * order to keep the callout & its cache lines
 			 * co-located on the CPU with the LWP.
 			 */
-			if (callout_halt(&l->l_timeout_ch, NULL))
-				error = EWOULDBLOCK;
+			(void)callout_halt(&l->l_timeout_ch, NULL);
+			error = (l->l_flag & LW_STIMO) ? EWOULDBLOCK : 0;
 		}
 	}
 
@@ -390,6 +401,7 @@ sleepq_timeout(void *arg)
 		return;
 	}
 
+	l->l_flag |= LW_STIMO;
 	lwp_unsleep(l, true);
 }
 

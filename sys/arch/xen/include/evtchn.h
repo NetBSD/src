@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.28.2.1 2020/04/19 11:40:30 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.28.2.2 2020/04/20 11:29:00 bouyer Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@ unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *,
-    const char *, bool);
+    const char *, bool, bool);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 struct cpu_info;

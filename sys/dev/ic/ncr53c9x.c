@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.152 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.152.6.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.152 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.152.6.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,9 +499,7 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
 		    "ncr53c9x_ecb", NULL, IPL_BIO);
 		/* make sure to always have some items to play with */
-		if (pool_prime(&ecb_pool, 1) == ENOMEM) {
-			printf("WARNING: not enough memory for ncr53c9x_ecb\n");
-		}
+		pool_prime(&ecb_pool, 1);
 		ecb_pool_initialized = 1;
 	}
 

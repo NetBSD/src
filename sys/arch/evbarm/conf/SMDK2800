@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.62 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: SMDK2800,v 1.62.4.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -112,7 +112,7 @@ options 	USERCONF	# userconf(4) support
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 #options 	KGDB
 #options  	DEBUG_KGDB

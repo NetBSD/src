@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.7 2020/04/19 19:39:10 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.8 2020/04/20 11:29:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.7 2020/04/19 19:39:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.8 2020/04/20 11:29:01 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -139,7 +139,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		    sizeof(intrstr_buf));
 
 		rih = event_set_handler(pin, handler, arg, level,
-		    intrstr, xname, known_mpsafe);
+		    intrstr, xname, known_mpsafe, true);
 
 		if (rih == NULL) {
 			printf("%s: can't establish interrupt\n", __func__);

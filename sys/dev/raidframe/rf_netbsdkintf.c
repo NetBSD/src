@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.381 2020/03/21 06:02:13 riastradh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.381.2.1 2020/04/20 11:29:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.381 2020/03/21 06:02:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.381.2.1 2020/04/20 11:29:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3506,13 +3506,10 @@ void
 rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 	     size_t xmin, size_t xmax)
 {
-	int error;
 
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
-	if ((error = pool_prime(p, xmin)) != 0)
-		panic("%s: failed to prime pool: %d", __func__, error);
-	pool_setlowat(p, xmin);
+	pool_prime(p, xmin);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.37 2014/11/09 18:08:07 maxv Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.37.30.1 2020/04/20 11:29:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.37 2014/11/09 18:08:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.37.30.1 2020/04/20 11:29:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ layer_node_create(struct mount *mp, struct vnode *lowervp, struct vnode **nvpp)
 	 * reference to the lower node.
 	 */
 	vrele(lowervp);
-	KASSERT(lowervp->v_usecount > 0);
+	KASSERT(vrefcnt(lowervp) > 0);
 
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -167,7 +167,7 @@ layer_checkvp(struct vnode *vp, const char *fil, int lno)
 		/* wait for debugger */
 		panic("layer_checkvp");
 	}
-	if (a->layer_lowervp->v_usecount < 1) {
+	if (vrefcnt(a->layer_lowervp) < 1) {
 		int i; u_long *p;
 		printf("vp = %p, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
@@ -178,8 +178,8 @@ layer_checkvp(struct vnode *vp, const char *fil, int lno)
 	};
 #ifdef notnow
 	printf("layer %p/%d -> %p/%d [%s, %d]\n",
-	        LAYERTOV(a), LAYERTOV(a)->v_usecount,
-		a->layer_lowervp, a->layer_lowervp->v_usecount,
+	        LAYERTOV(a), vrefcnt(LAYERTOV(a)),
+		a->layer_lowervp, vrefcnt(a->layer_lowervp),
 		fil, lno);
 #endif
 	return a->layer_lowervp;

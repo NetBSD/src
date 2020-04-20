@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.34 2019/12/04 05:36:34 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.34.6.1 2020/04/20 11:29:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.34 2019/12/04 05:36:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.34.6.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -249,6 +249,22 @@ cprng_strong(struct cprng_strong *cprng, void *buffer, size_t bytes, int flags)
 
 out:	mutex_exit(&cprng->cs_lock);
 	return result;
+}
+
+uint32_t
+cprng_strong32(void)
+{
+	uint32_t r;
+	cprng_strong(kern_cprng, &r, sizeof(r), 0);
+	return r;
+}
+
+uint64_t
+cprng_strong64(void)
+{
+	uint64_t r;
+	cprng_strong(kern_cprng, &r, sizeof(r), 0);
+	return r;
 }
 
 static void

@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.3 2014/08/13 09:41:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cudavar.h,v 1.3.30.1 2020/04/20 11:28:58 bouyer Exp $");
 
 #ifndef CUDAVAR_H
 #define CUDAVAR_H

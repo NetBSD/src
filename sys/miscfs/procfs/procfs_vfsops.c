@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.104 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.104.2.1 2020/04/20 11:29:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,28 +76,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.104 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.104.2.1 2020/04/20 11:29:11 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/sysctl.h>
-#include <sys/proc.h>
+#include <sys/atomic.h>
 #include <sys/buf.h>
-#include <sys/syslog.h>
-#include <sys/mount.h>
 #include <sys/dirent.h>
-#include <sys/signalvar.h>
-#include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -236,9 +237,9 @@ procfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_frsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
 	sbp->f_blocks = 1;
-	sbp->f_files = maxproc;			/* approx */
-	sbp->f_ffree = maxproc - nprocs;	/* approx */
-	sbp->f_favail = maxproc - nprocs;	/* approx */
+	sbp->f_files = maxproc;					/* approx */
+	sbp->f_ffree = maxproc - atomic_load_relaxed(&nprocs);	/* approx */
+	sbp->f_favail = maxproc - atomic_load_relaxed(&nprocs);	/* approx */
 
 	return (0);
 }

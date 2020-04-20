@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.41 2020/02/19 16:04:39 riastradh Exp $ */
+/* $NetBSD: siisata.c,v 1.41.4.1 2020/04/20 11:29:03 bouyer Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.41 2020/02/19 16:04:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.41.4.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static void siisata_intr_port(struct siisata_channel *);
 void siisata_probe_drive(struct ata_channel *);
 void siisata_setup_channel(struct ata_channel *);
 
-int siisata_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
+void siisata_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
 void siisata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void siisata_reset_channel(struct ata_channel *, int);
 int siisata_ata_addref(struct ata_drive_datas *);
@@ -160,7 +160,7 @@ int siisata_bio_complete(struct ata_channel *, struct ata_xfer *, int);
 void siisata_bio_poll(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
-int siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
+void siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
 static int siisata_reinit_port(struct ata_channel *, int);
 static void siisata_device_reset(struct ata_channel *);
@@ -930,13 +930,11 @@ static const struct ata_xfer_ops siisata_cmd_xfer_ops = {
 	.c_kill_xfer = siisata_cmd_kill_xfer,
 };
 
-int
+void
 siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	int ret;
-	int s;
 
 	SIISATA_DEBUG_PRINT(("%s: %s begins\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
@@ -950,28 +948,12 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
 	xfer->ops = &siisata_cmd_xfer_ops;
-	s = splbio();
+
 	ata_exec_xfer(chp, xfer);
-#ifdef DIAGNOSTIC
-	if ((ata_c->flags & AT_POLL) != 0 &&
-	    (ata_c->flags & AT_DONE) == 0)
-		panic("%s: polled command not done", __func__);
-#endif
-	if (ata_c->flags & AT_DONE) {
-		ret = ATACMD_COMPLETE;
-	} else {
-		if (ata_c->flags & AT_WAIT) {
-			ata_wait_cmd(chp, xfer);
-			ret = ATACMD_COMPLETE;
-		} else {
-			ret = ATACMD_QUEUED;
-		}
-	}
-	splx(s);
+
 	SIISATA_DEBUG_PRINT( ("%s: %s ends\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
-	return ret;
 }
 
 int
@@ -1190,7 +1172,7 @@ static const struct ata_xfer_ops siisata_bio_xfer_ops = {
 	.c_kill_xfer = siisata_bio_kill_xfer,
 };
 
-int
+void
 siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -1200,8 +1182,6 @@ siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
 
-	if (xfer == NULL)
-		return ATACMD_TRY_AGAIN;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->c_drive = drvp->drive;
@@ -1209,8 +1189,6 @@ siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->ops = &siisata_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ?
-	    ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 int

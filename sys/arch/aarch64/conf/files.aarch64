@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.20 2020/02/15 08:16:10 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.20.4.1 2020/04/20 11:28:51 bouyer Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -48,9 +48,6 @@ file	arch/arm/arm/psci_arm.S			psci
 defflag	opt_efi.h		EFI_RUNTIME
 file	arch/arm/arm/efi_runtime.c		efi_runtime
 
-# PMAP_DEBUG (heavily abused option)
-defflag				PMAP_DEBUG
-
 # PMAP options
 defflag opt_pmap.h		PMAPHIST : KERNHIST
 defflag opt_pmap.h		PMAPCOUNTERS PMAP_STEAL_MEMORY
@@ -86,6 +83,7 @@ file	arch/aarch64/aarch64/bus_space_notimpl.S
 file	arch/arm/arm/arm_cpu_topology.c
 file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bootconfig.c
+file	arch/arm/arm/bus_stubs.c
 file	arch/arm/arm/cpu_subr.c
 file	arch/arm/arm32/bus_dma.c
 file	arch/aarch64/aarch64/aarch64_machdep.c

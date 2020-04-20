@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.274 2020/02/23 15:46:39 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.274.4.1 2020/04/20 11:29:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.274 2020/02/23 15:46:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.274.4.1 2020/04/20 11:29:02 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -235,9 +235,9 @@ CFATTACH_DECL3_NEW(vnd, sizeof(struct vnd_softc),
     vnd_match, vnd_attach, vnd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 static struct vnd_softc	*vnd_spawn(int);
-int	vnd_destroy(device_t);
+static int	vnd_destroy(device_t);
 
-static struct	dkdriver vnddkdriver = {
+static const struct	dkdriver vnddkdriver = {
 	.d_strategy = vndstrategy,
 	.d_minphys = minphys
 };
@@ -308,7 +308,7 @@ vnd_spawn(int unit)
 	return device_private(config_attach_pseudo(cf));
 }
 
-int
+static int
 vnd_destroy(device_t dev)
 {
 	int error;
@@ -1216,6 +1216,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	case DIOCKLABEL:
 	case DIOCWLABEL:
+	case DIOCCACHESYNC:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 	}
@@ -1231,6 +1232,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+	case DIOCGCACHE:
+	case DIOCGSTRATEGY:
 	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -1645,6 +1648,23 @@ unlock_and_exit:
 		break;
 #endif
 
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+
+		/* No lock needed, never changed */
+		strlcpy(dks->dks_name,
+		    bufq_getstrategyname(vnd->sc_tab),
+		    sizeof(dks->dks_name));
+		dks->dks_paramlen = 0;
+		break;
+	    }
+	case DIOCGCACHE:
+	    {
+		int *bits = (int *)data;
+		*bits |= DKCACHE_READ | DKCACHE_WRITE;
+		break;
+	    }
 	case DIOCCACHESYNC:
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,

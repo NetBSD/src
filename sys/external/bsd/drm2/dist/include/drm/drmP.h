@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.39 2020/03/05 08:36:53 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.39.2.1 2020/04/20 11:29:09 bouyer Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -67,6 +67,7 @@
 #include <uapi/drm/drm_mode.h>
 
 #ifdef __NetBSD__
+#include <dev/sysmon/sysmonvar.h>
 #include <drm/drm_os_netbsd.h>
 #include <asm/barrier.h>
 #include <asm/bug.h>
@@ -903,6 +904,7 @@ struct drm_device {
 	int irq;
 #ifdef __NetBSD__
 	struct drm_bus_irq_cookie *irq_cookie;
+	struct sysmon_pswitch sc_monitor_hotplug;
 #endif
 
 	/*

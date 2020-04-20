@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.37 2019/12/06 18:33:19 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.37.6.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.37 2019/12/06 18:33:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.37.6.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -255,7 +255,7 @@ sched_pstats_hook(struct lwp *l, int batch)
 
 	/* If thread was not ran a second or more - set a high priority */
 	if (l->l_stat == LSRUN) {
-		if (l->l_rticks && (hardclock_ticks - l->l_rticks >= hz))
+		if (l->l_rticks && (getticks() - l->l_rticks >= hz))
 			prio = high_pri[prio];
 		/* Re-enqueue the thread if priority has changed */
 		if (prio != l->l_priority)

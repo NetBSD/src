@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.13 2020/02/01 02:33:08 riastradh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.13.4.1 2020/04/20 11:29:07 bouyer Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,7 +79,7 @@ ixgbe_dmamap_destroy(ixgbe_dma_tag_t *dt, bus_dmamap_t dmam)
 void
 ixgbe_dmamap_sync(ixgbe_dma_tag_t *dt, bus_dmamap_t dmam, int ops)
 {
-        bus_dmamap_sync(dt->dt_dmat, dmam, 0, dt->dt_maxsize, ops);
+	bus_dmamap_sync(dt->dt_dmat, dmam, 0, dt->dt_maxsize, ops);
 }
 
 void

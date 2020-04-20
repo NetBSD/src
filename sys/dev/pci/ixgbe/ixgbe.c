@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.227 2020/03/15 23:04:50 thorpej Exp $ */
+/* $NetBSD: ixgbe.c,v 1.227.2.1 2020/04/20 11:29:07 bouyer Exp $ */
 
 /******************************************************************************
 
@@ -3227,7 +3227,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 	if (rate > 0 && rate < 500000) {
 		if (rate < 1000)
 			rate = 1000;
-		reg |= ((4000000/rate) & 0xff8);
+		reg |= ((4000000 / rate) & 0xff8);
 		/*
 		 * When RSC is used, ITR interval must be larger than
 		 * RSC_DELAY. Currently, we use 2us for RSC_DELAY.

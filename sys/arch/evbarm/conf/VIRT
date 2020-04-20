@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VIRT,v 1.9 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: VIRT,v 1.9.10.1 2020/04/20 11:28:54 bouyer Exp $
 #
 #	QEMU ARM 'virt' virtual machine
 #
@@ -18,7 +18,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
 

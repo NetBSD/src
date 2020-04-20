@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.46.2.1 2020/04/20 11:29:01 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.46.2.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek E
 #include <xen/shutdown_xenbus.h>
 
 #include "xenbus_comms.h"
-
-extern struct semaphore xenwatch_mutex;
-
-#define streq(a, b) (strcmp((a), (b)) == 0)
 
 static int  xenbus_match(device_t, cfdata_t, void *);
 static void xenbus_attach(device_t, device_t, void *);
@@ -85,6 +81,7 @@ CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
 
 device_t xenbus_dev;
+bus_dma_tag_t xenbus_dmat;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 SLIST_HEAD(, xenbus_backend_driver) xenbus_backend_driver_list =
@@ -103,10 +100,12 @@ xenbus_match(device_t parent, cfdata_t match, void *aux)
 static void
 xenbus_attach(device_t parent, device_t self, void *aux)
 {
+	struct xenbus_attach_args *xa = (struct xenbus_attach_args *)aux;
 	int err;
 
 	aprint_normal(": Xen Virtual Bus Interface\n");
 	xenbus_dev = self;
+	xenbus_dmat = xa->xa_dmat;
 	config_pending_incr(self);
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
@@ -388,6 +387,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 		msize = sizeof(*xbusd) + strlen(path) + strlen(dir[i]) + 2;
 		xbusd = kmem_zalloc(msize, KM_SLEEP);
 		xbusd->xbusd_sz = msize;
+		xbusd->xbusd_dmat = xenbus_dmat;
 
 		snprintf(__UNCONST(xbusd->xbusd_path),
 		    msize - sizeof(*xbusd) + 1, "%s/%s", path, dir[i]);

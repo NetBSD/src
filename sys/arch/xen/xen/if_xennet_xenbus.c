@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.109.2.1 2020/04/16 08:46:36 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.109.2.2 2020/04/20 11:29:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.109.2.1 2020/04/16 08:46:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.109.2.2 2020/04/20 11:29:01 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -144,21 +144,6 @@ int xennet_debug = 0xff;
 #define DPRINTFN(n,x)
 #endif
 
-#ifdef XENPVHVM
-/* Glue for p2m table stuff. Should be removed eventually */
-#define xpmap_mtop_masked(mpa) (mpa & ~PAGE_MASK)
-#define xpmap_mtop(mpa) (mpa & ~PTE_4KFRAME)
-#define xpmap_ptom_masked(mpa) (mpa & ~PAGE_MASK)
-#define xpmap_ptom(mpa) (mpa & ~PTE_4KFRAME)
-#define xpmap_ptom_map(ppa, mpa)
-#define xpmap_ptom_unmap(ppa)
-#define xpmap_ptom_isvalid 1 /* XXX: valid PA check */
-#define xpmap_pg_nx pmap_pg_nx /* We use the native setting */
-#define xpq_flush_queue() tlbflush()
-#endif /* XENPVHVM */
-
-extern pt_entry_t xpmap_pg_nx;
-
 #define GRANT_INVALID_REF -1 /* entry is free */
 
 #define NET_TX_RING_SIZE __CONST_RING_SIZE(netif_tx, PAGE_SIZE)
@@ -169,21 +154,21 @@ struct xennet_txreq {
 	uint16_t txreq_id; /* ID passed to backend */
 	grant_ref_t txreq_gntref; /* grant ref of this request */
 	struct mbuf *txreq_m; /* mbuf being transmitted */
+	bus_dmamap_t txreq_dmamap;
 };
 
 struct xennet_rxreq {
 	SLIST_ENTRY(xennet_rxreq) rxreq_next;
 	uint16_t rxreq_id; /* ID passed to backend */
 	grant_ref_t rxreq_gntref; /* grant ref of this request */
-/* va/pa for this receive buf. ma will be provided by backend */
-	paddr_t rxreq_pa;
-	vaddr_t rxreq_va;
+	struct mbuf *rxreq_m;
+	bus_dmamap_t rxreq_dmamap;
 };
 
 struct xennet_xenbus_softc {
 	device_t sc_dev;
 	struct ethercom sc_ethercom;
-	uint8_t sc_enaddr[6];
+	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	struct xenbus_device *sc_xbusd;
 
 	netif_tx_front_ring_t sc_tx_ring;
@@ -273,11 +258,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	unsigned long uval;
 	extern int ifqmaxlen; /* XXX */
 	char mac[32];
-#ifdef XENNET_DEBUG
-	char **dir;
-	int dir_n = 0;
-	char id_str[20];
-#endif
 
 	aprint_normal(": Xen Virtual Network Interface\n");
 	sc->sc_dev = self;
@@ -296,7 +276,14 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_tx_lock, MUTEX_DEFAULT, IPL_NET);
 	SLIST_INIT(&sc->sc_txreq_head);
 	for (i = 0; i < NET_TX_RING_SIZE; i++) {
-		sc->sc_txreqs[i].txreq_id = i;
+		struct xennet_txreq *txreq = &sc->sc_txreqs[i];
+	
+		txreq->txreq_id = i;
+		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &txreq->txreq_dmamap) != 0)
+			break;
+
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, &sc->sc_txreqs[i],
 		    txreq_next);
 	}
@@ -306,9 +293,9 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
 		rxreq->rxreq_id = i;
-		rxreq->rxreq_va = (vaddr_t)pool_cache_get_paddr(
-		    if_xennetrxbuf_cache, PR_WAITOK, &rxreq->rxreq_pa);
-		if (rxreq->rxreq_va == 0)
+		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &rxreq->rxreq_dmamap) != 0)
 			break;
 		rxreq->rxreq_gntref = GRANT_INVALID_REF;
 		SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq, rxreq_next);
@@ -425,7 +412,9 @@ xennet_xenbus_detach(device_t self, int flags)
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
 
 	/* stop interface */
+	IFNET_LOCK(ifp);
 	xennet_stop(ifp, 1);
+	IFNET_UNLOCK(ifp);
 	if (sc->sc_ih != NULL) {
 		xen_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -444,10 +433,9 @@ xennet_xenbus_detach(device_t self, int flags)
 	xennet_free_rx_buffer(sc);
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
-		if (rxreq->rxreq_va != 0) {
-			pool_cache_put_paddr(if_xennetrxbuf_cache,
-			    (void *)rxreq->rxreq_va, rxreq->rxreq_pa);
-			rxreq->rxreq_va = 0;
+		if (rxreq->rxreq_m != NULL) {
+			m_freem(rxreq->rxreq_m);
+			rxreq->rxreq_m = NULL;
 		}
 	}
 	mutex_exit(&sc->sc_rx_lock);
@@ -693,7 +681,6 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
  * in the ring. This allows the backend to use them to communicate with
  * frontend when some data is destined to frontend
  */
-
 static void
 xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 {
@@ -701,6 +688,10 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	RING_IDX i;
 	struct xennet_rxreq *req;
 	int otherend_id, notify;
+	struct mbuf *m;
+	vaddr_t va;
+	paddr_t pa, ma;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	KASSERT(mutex_owned(&sc->sc_rx_lock));
 
@@ -710,14 +701,54 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 		req  = SLIST_FIRST(&sc->sc_rxreq_head);
 		KASSERT(req != NULL);
 		KASSERT(req == &sc->sc_rxreqs[req->rxreq_id]);
+		KASSERT(req->rxreq_m == NULL);
+		KASSERT(req->rxreq_gntref = GRANT_INVALID_REF);
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (__predict_false(m == NULL)) {
+			printf("%s: rx no mbuf\n", ifp->if_xname);
+			break;
+		}
+ 
+		va = (vaddr_t)pool_cache_get_paddr(
+		    if_xennetrxbuf_cache, PR_NOWAIT, &pa);
+		if (__predict_false(va == 0)) {
+			printf("%s: rx no cluster\n", ifp->if_xname);
+			m_freem(m);
+			break;
+		}
+
+ 		MEXTADD(m, va, PAGE_SIZE,
+ 		    M_DEVBUF, xennet_rx_mbuf_free, NULL);
+		m->m_len = m->m_pkthdr.len = PAGE_SIZE;
+ 		m->m_ext.ext_paddr = pa;
+ 		m->m_flags |= M_EXT_RW; /* we own the buffer */
+
+		/* Set M_EXT_CLUSTER so that load_mbuf uses m_ext.ext_paddr */
+		m->m_flags |= M_EXT_CLUSTER;
+		if (__predict_false(bus_dmamap_load_mbuf(
+		    sc->sc_xbusd->xbusd_dmat,
+		    req->rxreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
+			printf("%s: rx mbuf load failed", ifp->if_xname);
+			m->m_flags &= ~M_EXT_CLUSTER;
+			m_freem(m);
+			break;
+		}
+		m->m_flags &= ~M_EXT_CLUSTER;
+
+		KASSERT(req->rxreq_dmamap->dm_nsegs == 1);
+		ma = req->rxreq_dmamap->dm_segs[0].ds_addr;
+
+		if (xengnt_grant_access(otherend_id, trunc_page(ma),
+		    0, &req->rxreq_gntref) != 0) {
+			m_freem(m);
+			break;
+		}
+
+		req->rxreq_m = m;
+
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->id =
 		    req->rxreq_id;
-
-		if (xengnt_grant_access(otherend_id,
-		    xpmap_ptom_masked(req->rxreq_pa),
-		    0, &req->rxreq_gntref) != 0) {
-			goto out_loop;
-		}
 
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->gref =
 		    req->rxreq_gntref;
@@ -726,16 +757,13 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 		sc->sc_free_rxreql--;
 	}
 
-out_loop:
-	if (i == 0) {
-		return;
+	/* Notify backend if more Rx is possible */
+	if (i > 0) {
+		sc->sc_rx_ring.req_prod_pvt = req_prod + i;
+		RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_rx_ring, notify);
+		if (notify)
+			hypervisor_notify_via_evtchn(sc->sc_evtchn);
 	}
-
-	sc->sc_rx_ring.req_prod_pvt = req_prod + i;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_rx_ring, notify);
-	if (notify)
-		hypervisor_notify_via_evtchn(sc->sc_evtchn);
-	return;
 }
 
 /*
@@ -766,6 +794,10 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 			rxreq->rxreq_gntref = GRANT_INVALID_REF;
 		}
 
+		if (rxreq->rxreq_m != NULL) {
+			m_freem(rxreq->rxreq_m);
+			rxreq->rxreq_m = NULL;
+		}
 	}
 	DPRINTF(("%s: xennet_free_rx_buffer done\n", device_xname(sc->sc_dev)));
 }
@@ -828,6 +860,8 @@ again:
 		KASSERT(req->txreq_id ==
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id);
 		KASSERT(xengnt_status(req->txreq_gntref) == 0);
+		KASSERT(req->txreq_m != NULL);
+
 		if (__predict_false(
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->status !=
 		    NETIF_RSP_OKAY))
@@ -835,7 +869,9 @@ again:
 		else
 			if_statinc(ifp, if_opackets);
 		xengnt_revoke_access(req->txreq_gntref);
+		bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat, req->txreq_dmamap);
 		m_freem(req->txreq_m);
+		req->txreq_m = NULL;
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 	}
 
@@ -861,10 +897,7 @@ xennet_handler(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	RING_IDX resp_prod, i;
 	struct xennet_rxreq *req;
-	paddr_t pa;
-	vaddr_t va;
 	struct mbuf *m;
-	void *pktp;
 	int more_to_do;
 
 	if (sc->sc_backend_status != BEST_CONNECTED)
@@ -892,47 +925,16 @@ again:
 		xengnt_revoke_access(req->rxreq_gntref);
 		req->rxreq_gntref = GRANT_INVALID_REF;
 
-		pa = req->rxreq_pa;
-		va = req->rxreq_va;
+		m = req->rxreq_m;
+		req->rxreq_m = NULL;
 
-		pktp = (void *)(va + rx->offset);
-#ifdef XENNET_DEBUG_DUMP
-		xennet_hex_dump(pktp, rx->status, "r", rx->id);
-#endif
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (__predict_false(m == NULL)) {
-			printf("%s: rx no mbuf\n", ifp->if_xname);
-			if_statinc(ifp, if_ierrors);
-			xennet_rx_free_req(sc, req);
-			continue;
-		}
+		m->m_len = m->m_pkthdr.len = rx->status;
+		bus_dmamap_sync(sc->sc_xbusd->xbusd_dmat, req->rxreq_dmamap, 0,
+		     m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
-
 		m_set_rcvif(m, ifp);
-		if (rx->status <= MHLEN) {
-			/* small packet; copy to mbuf data area */
-			m_copyback(m, 0, rx->status, pktp);
-			KASSERT(m->m_pkthdr.len == rx->status);
-			KASSERT(m->m_len == rx->status);
-		} else {
-			/* large packet; attach buffer to mbuf */
-			req->rxreq_va = (vaddr_t)pool_cache_get_paddr(
-			    if_xennetrxbuf_cache, PR_NOWAIT, &req->rxreq_pa);
-			if (__predict_false(req->rxreq_va == 0)) {
-				printf("%s: rx no buf\n", ifp->if_xname);
-				if_statinc(ifp, if_ierrors);
-				req->rxreq_va = va;
-				req->rxreq_pa = pa;
-				xennet_rx_free_req(sc, req);
-				m_freem(m);
-				continue;
-			}
-			m->m_len = m->m_pkthdr.len = rx->status;
-			MEXTADD(m, pktp, rx->status,
-			    M_DEVBUF, xennet_rx_mbuf_free, NULL);
-			m->m_ext.ext_paddr = pa;
-			m->m_flags |= M_EXT_RW; /* we own the buffer */
-		}
+
 		if (rx->flags & NETRXF_csum_blank)
 			xennet_checksum_fill(ifp, m);
 		else if (rx->flags & NETRXF_data_validated)
@@ -968,7 +970,7 @@ xennet_start(struct ifnet *ifp)
 	struct mbuf *m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
-	paddr_t pa;
+	paddr_t ma;
 	struct xennet_txreq *req;
 	int notify;
 	int do_notify = 0;
@@ -991,34 +993,16 @@ xennet_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
-		case M_EXT|M_EXT_CLUSTER:
-			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-			pa = m->m_ext.ext_paddr +
-				(m->m_data - m->m_ext.ext_buf);
-			break;
-		case 0:
-			KASSERT(m->m_paddr != M_PADDR_INVALID);
-			pa = m->m_paddr + M_BUFOFFSET(m) +
-				(m->m_data - M_BUFADDR(m));
-			break;
-		default:
-			if (__predict_false(
-			    !pmap_extract(pmap_kernel(), (vaddr_t)m->m_data,
-			    &pa))) {
-				panic("xennet_start: no pa");
-			}
-			break;
-		}
-
 		if ((m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) != 0) {
 			txflags = NETTXF_csum_blank;
 		} else {
 			txflags = NETTXF_data_validated;
 		}
 
-		if (m->m_pkthdr.len != m->m_len ||
-		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PTE_4KFRAME) {
+		/* Try to load the mbuf as-is, if that fails allocate new */
+		if (__predict_false(bus_dmamap_load_mbuf(
+		    sc->sc_xbusd->xbusd_dmat,
+		    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
 			struct mbuf *new_m;
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
@@ -1043,39 +1027,44 @@ xennet_start(struct ifnet *ifp)
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(new_m, void *));
 			new_m->m_len = new_m->m_pkthdr.len = m->m_pkthdr.len;
 			m_freem(m);
-
-			if ((new_m->m_flags & M_EXT) != 0) {
-				pa = new_m->m_ext.ext_paddr;
-				KASSERT(new_m->m_data == new_m->m_ext.ext_buf);
-				KASSERT(pa != M_PADDR_INVALID);
-			} else {
-				pa = new_m->m_paddr;
-				KASSERT(pa != M_PADDR_INVALID);
-				KASSERT(new_m->m_data == M_BUFADDR(new_m));
-				pa += M_BUFOFFSET(new_m);
-			}
 			m = new_m;
+
+			if (__predict_false(bus_dmamap_load_mbuf(
+			    sc->sc_xbusd->xbusd_dmat,
+			    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
+				printf("%s: cannot load new mbuf\n",
+				       device_xname(sc->sc_dev));
+				m_freem(m);
+				break;
+			}
 		}
+
+		KASSERT(req->txreq_dmamap->dm_nsegs == 1);
+		ma = req->txreq_dmamap->dm_segs[0].ds_addr;
+		KASSERT(((ma ^ (ma + m->m_pkthdr.len - 1)) & PTE_4KFRAME) == 0);
 
 		if (__predict_false(xengnt_grant_access(
 		    sc->sc_xbusd->xbusd_otherend_id,
-		    xpmap_ptom_masked(pa),
+		    trunc_page(ma),
 		    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
+			bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat,
+			    req->txreq_dmamap);
 			m_freem(m);
 			break;
 		}
 
+		/* We are now committed to transmit the packet */
+		bus_dmamap_sync(sc->sc_xbusd->xbusd_dmat, req->txreq_dmamap, 0,
+		     m->m_pkthdr.len, BUS_DMASYNC_POSTWRITE);
 		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
-
-		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PTE_4KFRAME) == 0);
 
 		SLIST_REMOVE_HEAD(&sc->sc_txreq_head, txreq_next);
 		req->txreq_m = m;
 
 		DPRINTFN(XEDB_MBUF, ("xennet_start id %d, "
-		    "mbuf %p, buf %p/%p/%p, size %d\n",
-		    req->txreq_id, m, mtod(m, void *), (void *)pa,
-		    (void *)xpmap_ptom_masked(pa), m->m_pkthdr.len));
+		    "mbuf %p, buf %p/%p, size %d\n",
+		    req->txreq_id, m, mtod(m, void *), (void *)ma,
+		    m->m_pkthdr.len));
 
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
@@ -1085,7 +1074,7 @@ xennet_start(struct ifnet *ifp)
 		txreq = RING_GET_REQUEST(&sc->sc_tx_ring, req_prod);
 		txreq->id = req->txreq_id;
 		txreq->gref = req->txreq_gntref;
-		txreq->offset = pa & ~PTE_4KFRAME;
+		txreq->offset = ma & ~PTE_4KFRAME;
 		txreq->size = m->m_pkthdr.len;
 		txreq->flags = txflags;
 
@@ -1160,9 +1149,9 @@ xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
-	IFNET_LOCK(ifp);
+	KASSERT(IFNET_LOCKED(ifp));
+
 	ifp->if_flags &= ~IFF_RUNNING;
-	IFNET_UNLOCK(ifp);
 	hypervisor_mask_event(sc->sc_evtchn);
 }
 

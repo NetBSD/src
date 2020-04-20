@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.11 2019/07/16 14:41:47 skrll Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.11 2019/07/16 14:41:47 skrll Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.11.8.1 2020/04/20 11:28:55 bouyer Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.11.8.1 2020/04/20 11:28:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.11 2019/07/16 14:41:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.11.8.1 2020/04/20 11:28:55 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -218,7 +217,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -305,7 +304,7 @@ at91_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		mpcsa_dma_ranges[i].dr_sysbase = bootconfig.dram[i].address;
 		mpcsa_dma_ranges[i].dr_busbase = bootconfig.dram[i].address;
-		mpcsa_dma_ranges[i].dr_len = bootconfig.dram[i].pages * 
+		mpcsa_dma_ranges[i].dr_len = bootconfig.dram[i].pages *
 			PAGE_SIZE;
 	}
 

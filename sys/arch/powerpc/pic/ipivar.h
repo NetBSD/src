@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.10 2019/11/24 15:49:12 ad Exp $ */
+/* $NetBSD: ipivar.h,v 1.10.6.1 2020/04/20 11:28:59 bouyer Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.10 2019/11/24 15:49:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.10.6.1 2020/04/20 11:28:59 bouyer Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_

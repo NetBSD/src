@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.17 2020/03/04 19:28:04 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.17.2.1 2020/04/20 11:28:51 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -39,9 +39,23 @@ CFLAGS+=	-fno-omit-frame-pointer
 CFLAGS+=	-mno-omit-leaf-frame-pointer
 #CFLAGS+=	-mno-unaligned-access
 
+.if ${HAVE_LLVM:Uno} == "yes"
+.if ${ARMV83_PAC:U0} > 0 && ${ARMV85_BTI:U0} > 0
+CFLAGS+=	-mbranch-protection=pac-ret+bti
+.else
+.if ${ARMV83_PAC:U0} > 0
+CFLAGS+=	-mbranch-protection=pac-ret
+.endif
+.if ${ARMV85_BTI:U0} > 0
+CFLAGS+=	-mbranch-protection=bti
+.endif
+.endif
+.endif
+
 .if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
 KASANFLAGS=	-fsanitize=kernel-address \
 		--param asan-globals=1 --param asan-stack=1 \
+		--param asan-instrument-allocas=1 \
 		-fsanitize-address-use-after-scope \
 		-fasan-shadow-offset=0xDFFF600000000000
 .for f in subr_asan.c

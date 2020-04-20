@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.54 2020/04/07 08:14:42 jdolecek Exp $ */
+/* $NetBSD: privcmd.c,v 1.54.2.1 2020/04/20 11:29:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.54 2020/04/07 08:14:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.54.2.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ privcmd_ioctl(void *v)
 	return error;
 }
 
-static struct uvm_pagerops privpgops = {
+static const struct uvm_pagerops privpgops = {
   .pgo_reference = privpgop_reference,
   .pgo_detach = privpgop_detach,
   .pgo_fault = privpgop_fault,

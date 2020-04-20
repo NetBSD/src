@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.19 2018/06/24 20:28:58 jdolecek Exp $ */
+/* $NetBSD: balloon.c,v 1.19.12.1 2020/04/20 11:29:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.19 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.19.12.1 2020/04/20 11:29:01 bouyer Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -378,7 +378,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	xen_pfn_t *mfn_list = sc->sc_mfn_list;
 
 	struct xen_memory_reservation reservation = {
-		.address_bits = 0,
+		.mem_flags = 0,
 		.extent_order = 0,
 		.domid        = DOMID_SELF
 	};
@@ -449,7 +449,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	xen_pfn_t *mfn_list = sc->sc_mfn_list;
 
 	struct xen_memory_reservation reservation = {
-		.address_bits = 0,
+		.mem_flags = 0,
 		.extent_order = 0,
 		.domid        = DOMID_SELF
 	};

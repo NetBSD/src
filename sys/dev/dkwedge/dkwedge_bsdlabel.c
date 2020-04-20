@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.24 2019/07/09 17:06:46 maxv Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.24.8.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.24 2019/07/09 17:06:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.24.8.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.24 2019/07/09 17:06:46 maxv E
 #include <sys/errno.h>
 #include <sys/disk.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/buf.h>
 
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
@@ -135,7 +135,7 @@ static const struct disklabel_location {
 typedef struct mbr_args {
 	struct disk	*pdk;
 	struct vnode	*vp;
-	void		*buf;
+	struct buf	*bp;
 	int		error;
 	uint32_t	secsize;
 } mbr_args_t;
@@ -278,7 +278,8 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	int error, swapped;
 	uint16_t npartitions;
 
-	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, a->secsize);
+	error = dkwedge_read(a->pdk, a->vp, label_sector, a->bp->b_data,
+	    a->secsize);
 	if (error) {
 		aprint_error("%s: unable to read BSD disklabel @ %" PRId64
 		    ", error = %d\n", a->pdk->dk_name, label_sector, error);
@@ -291,12 +292,12 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	 * consistently in the old code, requiring us to do the search
 	 * in the sector.
 	 */
-	lp = a->buf;
-	lp_lim = (char *)a->buf + a->secsize - DISKLABEL_MINSIZE;
+	lp = a->bp->b_data;
+	lp_lim = (char *)a->bp->b_data + a->secsize - DISKLABEL_MINSIZE;
 	for (;; lp = (void *)((char *)lp + sizeof(uint32_t))) {
 		if ((char *)lp > (char *)lp_lim)
 			return (SCAN_CONTINUE);
-		label_offset = (size_t)((char *)lp - (char *)a->buf);
+		label_offset = (size_t)((char *)lp - (char *)a->bp->b_data);
 		if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
 			if (lp->d_magic != bswap32(DISKMAGIC) ||
 			    lp->d_magic2 != bswap32(DISKMAGIC))
@@ -311,7 +312,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 
 		/* Validate label length. */
 		if ((char *)lp + DISKLABEL_SIZE(npartitions) >
-		    (char *)a->buf + a->secsize) {
+		    (char *)a->bp->b_data + a->secsize) {
 			aprint_error("%s: BSD disklabel @ "
 			    "%" PRId64 "+%zd has bogus partition count (%u)\n",
 			    a->pdk->dk_name, label_sector, label_offset,
@@ -354,7 +355,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *,
 	ext_base = 0;
 	this_ext = 0;
 	for (;;) {
-		a->error = dkwedge_read(a->pdk, a->vp, this_ext, a->buf,
+		a->error = dkwedge_read(a->pdk, a->vp, this_ext, a->bp->b_data,
 					a->secsize);
 		if (a->error) {
 			aprint_error("%s: unable to read MBR @ %u, "
@@ -363,7 +364,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *,
 			return (SCAN_ERROR);
 		}
 
-		mbr = a->buf;
+		mbr = a->bp->b_data;
 		if (mbr->mbr_magic != htole16(MBR_MAGIC))
 			return (SCAN_CONTINUE);
 
@@ -435,14 +436,6 @@ look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot,
 	return (SCAN_CONTINUE);
 }
  
-#ifdef _KERNEL
-#define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
-#define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
-#else
-#define	DKW_MALLOC(SZ)	malloc((SZ))
-#define	DKW_FREE(PTR)	free((PTR))
-#endif
-
 static int
 dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 {
@@ -453,7 +446,7 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	a.pdk = pdk;
 	a.secsize = DEV_BSIZE << pdk->dk_blkshift;
 	a.vp = vp;
-	a.buf = DKW_MALLOC(a.secsize);
+	a.bp = geteblk(a.secsize);
 	a.error = 0;
 
 	/* MBR search. */
@@ -477,7 +470,7 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	/* No NetBSD disklabel found. */
 	a.error = ESRCH;
  out:
-	DKW_FREE(a.buf);
+	brelse(a.bp, 0);
 	return (a.error);
 }
 

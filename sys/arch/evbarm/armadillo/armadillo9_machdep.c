@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.34 2019/07/16 14:41:44 skrll Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.34.8.1 2020/04/20 11:28:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,13 +110,12 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.34 2019/07/16 14:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.34.8.1 2020/04/20 11:28:53 bouyer Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -218,18 +217,14 @@ paddr_t msgbufphys;
 static struct arm32_dma_range armadillo9_dma_ranges[4];
 
 #if NISA > 0
-extern void isa_armadillo9_init(u_int, u_int); 
-#endif
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
+extern void isa_armadillo9_init(u_int, u_int);
 #endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping vectors page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
-					/* L2 tables for mapping kernel VM */ 
+					/* L2 tables for mapping kernel VM */
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
@@ -351,7 +346,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -476,7 +471,7 @@ initarm(void *arg)
 	consinit();
 
 	/* identify model */
-	devcfg = *((volatile unsigned long*)(EP93XX_APB_HWBASE 
+	devcfg = *((volatile unsigned long*)(EP93XX_APB_HWBASE
 					     + EP93XX_APB_SYSCON
 					     + EP93XX_SYSCON_DeviceCfg));
 	for (armadillo_model = &armadillo_model_table[0];
@@ -625,20 +620,20 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables.  Save physical_freeend for when we give whats left 
+	 * page tables.  Save physical_freeend for when we give whats left
 	 * of memory below 2Mbyte to UVM.
 	 */
 
@@ -850,7 +845,7 @@ initarm(void *arg)
 	printf("isa ");
 #endif
 	isa_armadillo9_init(ARMADILLO9_IO16_VBASE + ARMADILLO9_ISAIO,
-		ARMADILLO9_IO16_VBASE + ARMADILLO9_ISAMEM);	
+		ARMADILLO9_IO16_VBASE + ARMADILLO9_ISAMEM);
 #endif
 
 #ifdef VERBOSE_INIT_ARM
@@ -895,9 +890,9 @@ consinit(void)
 	pmap_devmap_register(armadillo9_devmap);
 
 #if NEPCOM > 0
-	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT], 
+	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT],
 		EP93XX_APB_UART_SIZE, 0, &ioh);
-        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT], 
+        if (epcomcnattach(&ep93xx_bs_tag, EP93XX_APB_HWBASE + comaddr[CONUNIT],
 		ioh, comcnspeed, comcnmode))
 	{
 		panic("can't init serial console");
@@ -925,7 +920,7 @@ ep93xx_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		armadillo9_dma_ranges[i].dr_sysbase = bootconfig.dram[i].address;
 		armadillo9_dma_ranges[i].dr_busbase = bootconfig.dram[i].address;
-		armadillo9_dma_ranges[i].dr_len = bootconfig.dram[i].pages * 
+		armadillo9_dma_ranges[i].dr_len = bootconfig.dram[i].pages *
 			PAGE_SIZE;
 	}
 

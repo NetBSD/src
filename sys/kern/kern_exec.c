@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.495 2020/04/06 08:20:05 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.495.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.495 2020/04/06 08:20:05 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.495.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2397,6 +2397,10 @@ out:
 	return error;
 }
 
+/*
+ * N.B. increments nprocs upon success.  Callers need to drop nprocs if
+ * they fail for some other reason.
+ */
 int
 check_posix_spawn(struct lwp *l1)
 {
@@ -2658,10 +2662,10 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	p2->p_exitsig = SIGCHLD;	/* signal for parent on exit */
 
 	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
-	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
+	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED))
 		proc_changeparent(p2, p1->p_pptr);
-		p2->p_oppid = p1->p_pid;
-	}
+
+	p2->p_oppid = p1->p_pid;  /* Remember the original parent id. */
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
@@ -2751,6 +2755,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	rlim_t max_fileactions;
 	proc_t *p = l1->l_proc;
 
+	/* check_posix_spawn() increments nprocs for us. */
 	error = check_posix_spawn(l1);
 	if (error) {
 		*retval = error;

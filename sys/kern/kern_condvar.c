@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.44 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.44.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.44 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.44.2.1 2020/04/20 11:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,41 +77,7 @@ syncobj_t cv_syncobj = {
 	.sobj_owner	= syncobj_noowner,
 };
 
-lockops_t cv_lockops = {
-	.lo_name = "Condition variable",
-	.lo_type = LOCKOPS_CV,
-	.lo_dump = NULL,
-};
-
 static const char deadcv[] = "deadcv";
-#ifdef LOCKDEBUG
-static const char nodebug[] = "nodebug";
-
-#define CV_LOCKDEBUG_HANDOFF(l, cv) cv_lockdebug_handoff(l, cv)
-#define CV_LOCKDEBUG_PROCESS(l, cv) cv_lockdebug_process(l, cv)
-
-static inline void
-cv_lockdebug_handoff(lwp_t *l, kcondvar_t *cv)
-{
-
-	if (CV_DEBUG_P(cv))
-		l->l_flag |= LW_CVLOCKDEBUG;
-}
-
-static inline void
-cv_lockdebug_process(lwp_t *l, kcondvar_t *cv)
-{
-
-	if ((l->l_flag & LW_CVLOCKDEBUG) == 0)
-		return;
-
-	l->l_flag &= ~LW_CVLOCKDEBUG;
-	LOCKDEBUG_UNLOCKED(true, cv, CV_RA, 0);
-}
-#else
-#define CV_LOCKDEBUG_HANDOFF(l, cv) __nothing
-#define CV_LOCKDEBUG_PROCESS(l, cv) __nothing
-#endif
 
 /*
  * cv_init:
@@ -121,16 +87,7 @@ cv_lockdebug_process(lwp_t *l, kcondvar_t *cv)
 void
 cv_init(kcondvar_t *cv, const char *wmesg)
 {
-#ifdef LOCKDEBUG
-	bool dodebug;
 
-	dodebug = LOCKDEBUG_ALLOC(cv, &cv_lockops,
-	    (uintptr_t)__builtin_return_address(0));
-	if (!dodebug) {
-		/* XXX This will break vfs_lockf. */
-		wmesg = nodebug;
-	}
-#endif
 	KASSERT(wmesg != NULL);
 	CV_SET_WMESG(cv, wmesg);
 	sleepq_init(CV_SLEEPQ(cv));
@@ -145,9 +102,9 @@ void
 cv_destroy(kcondvar_t *cv)
 {
 
-	LOCKDEBUG_FREE(CV_DEBUG_P(cv), cv);
 #ifdef DIAGNOSTIC
 	KASSERT(cv_is_valid(cv));
+	KASSERT(!cv_has_waiters(cv));
 	CV_SET_WMESG(cv, deadcv);
 #endif
 }
@@ -159,7 +116,7 @@ cv_destroy(kcondvar_t *cv)
  *	condition variable, and increment the number of waiters.
  */
 static inline void
-cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
+cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, bool catch_p)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
@@ -168,39 +125,13 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	KASSERT(!cpu_intr_p());
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
-	LOCKDEBUG_LOCKED(CV_DEBUG_P(cv), cv, mtx, CV_RA, 0);
-
 	l->l_kpriority = true;
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
 	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj);
+	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj, catch_p);
 	mutex_exit(mtx);
 	KASSERT(cv_has_waiters(cv));
-}
-
-/*
- * cv_exit:
- *
- *	After resuming execution, check to see if we have been restarted
- *	as a result of cv_signal().  If we have, but cannot take the
- *	wakeup (because of eg a pending Unix signal or timeout) then try
- *	to ensure that another LWP sees it.  This is necessary because
- *	there may be multiple waiters, and at least one should take the
- *	wakeup if possible.
- */
-static inline int
-cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
-{
-
-	mutex_enter(mtx);
-	if (__predict_false(error != 0))
-		cv_signal(cv);
-
-	LOCKDEBUG_UNLOCKED(CV_DEBUG_P(cv), cv, CV_RA, 0);
-	KASSERT(cv_is_valid(cv));
-
-	return error;
 }
 
 /*
@@ -238,15 +169,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
-
-	/*
-	 * We can't use cv_exit() here since the cv might be destroyed before
-	 * this thread gets a chance to run.  Instead, hand off the lockdebug
-	 * responsibility to the thread that wakes us up.
-	 */
-
-	CV_LOCKDEBUG_HANDOFF(l, cv);
+	cv_enter(cv, mtx, l, false);
 	(void)sleepq_block(0, false);
 	mutex_enter(mtx);
 }
@@ -267,9 +190,10 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, true);
 	error = sleepq_block(0, true);
-	return cv_exit(cv, mtx, l, error);
+	mutex_enter(mtx);
+	return error;
 }
 
 /*
@@ -289,9 +213,10 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, false);
 	error = sleepq_block(timo, false);
-	return cv_exit(cv, mtx, l, error);
+	mutex_enter(mtx);
+	return error;
 }
 
 /*
@@ -313,9 +238,10 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, true);
 	error = sleepq_block(timo, true);
-	return cv_exit(cv, mtx, l, error);
+	mutex_enter(mtx);
+	return error;
 }
 
 /*
@@ -414,13 +340,13 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */
@@ -457,13 +383,13 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait_sig(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */
@@ -482,7 +408,6 @@ void
 cv_signal(kcondvar_t *cv)
 {
 
-	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
 	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))
@@ -503,23 +428,29 @@ cv_wakeup_one(kcondvar_t *cv)
 	kmutex_t *mp;
 	lwp_t *l;
 
-	KASSERT(cv_is_valid(cv));
-
+	/*
+	 * Keep waking LWPs until a non-interruptable waiter is found.  An
+	 * interruptable waiter could fail to do something useful with the
+	 * wakeup due to an error return from cv_[timed]wait_sig(), and the
+	 * caller of cv_signal() may not expect such a scenario.
+	 *
+	 * This isn't a problem for non-interruptable waits (untimed and
+	 * timed), because if such a waiter is woken here it will not return
+	 * an error.
+	 */
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	l = LIST_FIRST(sq);
-	if (__predict_false(l == NULL)) {
-		mutex_spin_exit(mp);
-		return;
+	while ((l = LIST_FIRST(sq)) != NULL) {
+		KASSERT(l->l_sleepq == sq);
+		KASSERT(l->l_mutex == mp);
+		KASSERT(l->l_wchan == cv);
+		if ((l->l_flag & LW_SINTR) == 0) {
+			sleepq_remove(sq, l);
+			break;
+		} else
+			sleepq_remove(sq, l);
 	}
-	KASSERT(l->l_sleepq == sq);
-	KASSERT(l->l_mutex == mp);
-	KASSERT(l->l_wchan == cv);
-	CV_LOCKDEBUG_PROCESS(l, cv);
-	sleepq_remove(sq, l);
 	mutex_spin_exit(mp);
-
-	KASSERT(cv_is_valid(cv));
 }
 
 /*
@@ -532,7 +463,6 @@ void
 cv_broadcast(kcondvar_t *cv)
 {
 
-	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
 	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))  
@@ -551,23 +481,17 @@ cv_wakeup_all(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
-	lwp_t *l, *next;
-
-	KASSERT(cv_is_valid(cv));
+	lwp_t *l;
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	for (l = LIST_FIRST(sq); l != NULL; l = next) {
+	while ((l = LIST_FIRST(sq)) != NULL) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
-		next = LIST_NEXT(l, l_sleepchain);
-		CV_LOCKDEBUG_PROCESS(l, cv);
 		sleepq_remove(sq, l);
 	}
 	mutex_spin_exit(mp);
-
-	KASSERT(cv_is_valid(cv));
 }
 
 /*

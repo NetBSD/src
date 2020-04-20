@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.114 2020/04/04 21:36:15 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.114.2.1 2020/04/20 11:29:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.114 2020/04/04 21:36:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.114.2.1 2020/04/20 11:29:03 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -102,7 +102,7 @@ extern int wdcdebug_wd_mask; /* inited in wd.c */
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
-static int	wdc_ata_bio(struct ata_drive_datas*, struct ata_xfer *);
+static void	wdc_ata_bio(struct ata_drive_datas*, struct ata_xfer *);
 static int	wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
 static int	_wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
 static void	wdc_ata_bio_poll(struct ata_channel *,struct ata_xfer *);
@@ -140,10 +140,9 @@ static const struct ata_xfer_ops wdc_bio_xfer_ops = {
 };
 
 /*
- * Handle block I/O operation. Return ATACMD_COMPLETE, ATACMD_QUEUED, or
- * ATACMD_TRY_AGAIN. Must be called at splbio().
+ * Handle block I/O operation.
  */
-static int
+static void
 wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -171,7 +170,6 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->ops = &wdc_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 static int

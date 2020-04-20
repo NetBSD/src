@@ -1,7 +1,7 @@
-/*	$NetBSD: vnode.h,v 1.294 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.294.2.1 2020/04/20 11:29:13 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -516,6 +516,7 @@ int	vdead_check(struct vnode *, int);
 void	vrevoke(struct vnode *);
 void	vremfree(struct vnode *);
 void	vshareilock(struct vnode *, struct vnode *);
+int	vrefcnt(struct vnode *);
 int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
 int	vcache_new(struct mount *, struct vnode *,
 	    struct vattr *, kauth_cred_t, void *, struct vnode **);

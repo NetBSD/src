@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.15 2019/09/02 20:09:30 riastradh Exp $ */
+/*	$NetBSD: cprng.h,v 1.15.6.1 2020/04/20 11:29:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -71,20 +71,7 @@ int	cprng_strong_poll(cprng_strong_t *, int); /* XXX " */
 
 extern cprng_strong_t	*kern_cprng;
 
-static __inline uint32_t
-cprng_strong32(void)
-{
-	uint32_t r;
-	cprng_strong(kern_cprng, &r, sizeof(r), 0);
-	return r;
-}
-
-static __inline uint64_t
-cprng_strong64(void)
-{
-	uint64_t r;
-	cprng_strong(kern_cprng, &r, sizeof(r), 0);
-	return r;
-}
+uint32_t cprng_strong32(void);
+uint64_t cprng_strong64(void);
 
 #endif	/* _CPRNG_H */

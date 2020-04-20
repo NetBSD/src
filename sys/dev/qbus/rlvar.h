@@ -1,4 +1,4 @@
-/*	$NetBSD: rlvar.h,v 1.9 2017/05/22 17:22:29 ragge Exp $	*/
+/*	$NetBSD: rlvar.h,v 1.9.22.1 2020/04/20 11:29:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.9 2017/05/22 17:22:29 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.9.22.1 2020/04/20 11:29:07 bouyer Exp $");
 
 struct rlc_softc {
 	device_t sc_dev;

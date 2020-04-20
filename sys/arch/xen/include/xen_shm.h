@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.10 2019/01/08 19:59:24 jdolecek Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.10.10.1 2020/04/20 11:29:00 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -27,7 +27,7 @@
 
 #include "opt_xen.h"
 
-#define XENSHM_MAX_PAGES_PER_REQUEST (MAXPHYS >> PAGE_SHIFT)
+#define XENSHM_MAX_PAGES_PER_REQUEST ((MAXPHYS + PAGE_SIZE) >> PAGE_SHIFT)
 
 /*
  * Helper routines for the backend drivers. This implement the necessary
@@ -35,10 +35,8 @@
  * space, do I/O to it, and unmap it.
  */
 
-int  xen_shm_map(int, int, grant_ref_t *, vaddr_t *, grant_handle_t *, int);
+int  xen_shm_map(int, int, grant_ref_t *, vaddr_t, grant_handle_t *, int);
 void xen_shm_unmap(vaddr_t, int, grant_handle_t *);
-int xen_shm_callback(int (*)(void *), void *);
 
 /* flags for xen_shm_map() */
-#define XSHM_CALLBACK 0x01	/* called from a callback */
 #define XSHM_RO 0x02		/* map the guest's memory read-only */

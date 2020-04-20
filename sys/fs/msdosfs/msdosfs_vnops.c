@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.100 2020/02/23 15:46:40 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.100.4.1 2020/04/20 11:29:09 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.100 2020/02/23 15:46:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.100.4.1 2020/04/20 11:29:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ msdosfs_close(void *v)
 	struct denode *dep = VTODE(vp);
 
 	mutex_enter(vp->v_interlock);
-	if (vp->v_usecount > 1)
+	if (vrefcnt(vp) > 1)
 		DETIMES(dep, NULL, NULL, NULL, dep->de_pmp->pm_gmtoff);
 	mutex_exit(vp->v_interlock);
 	return (0);
@@ -731,8 +731,8 @@ msdosfs_remove(void *v)
 	else
 		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %p, v_usecount %d\n",
-		dep, ap->a_vp->v_usecount);
+	printf("msdosfs_remove(), dep %p, usecount %d\n",
+		dep, vrefcnt(ap->a_vp));
 #endif
 	VN_KNOTE(ap->a_vp, NOTE_DELETE);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);

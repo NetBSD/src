@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1264 2020/04/04 19:02:53 jdolecek Exp $
+#	$NetBSD: files,v 1.1264.2.1 2020/04/20 11:29:02 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -37,6 +37,7 @@ defflag				KMSAN
 defflag opt_kmsan.h		KMSAN_PANIC
 defflag				KCOV
 defflag opt_pool.h		POOL_QUARANTINE
+defflag opt_pool.h		POOL_NOCACHE
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
