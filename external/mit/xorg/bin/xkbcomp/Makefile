@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/07/20 23:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2020/04/20 13:04:10 joerg Exp $
 
 .include <bsd.own.mk>
 .include "Makefile.common"
@@ -28,7 +28,7 @@ DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
 
-CWARNFLAGS.clang+=	-Wno-parentheses
+CWARNFLAGS.clang+=	-Wno-parentheses -Wno-string-compare
 
 .include "../../xorg-pkg-ver.mk"
 
