@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.80 2020/04/19 20:53:20 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.81 2020/04/20 03:00:33 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.80 2020/04/19 20:53:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.81 2020/04/20 03:00:33 msaitoh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1580,7 +1580,7 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 	case BLKIF_OP_READ:
 	case BLKIF_OP_WRITE:
 		start_offset = (vaddr_t)xbd_io->xio_buf.b_data;
-		KASSERT(xbd_io->xio_buf.b_bcount + start_offset < VDB_VA_SIZE);
+		KASSERT(xbd_io->xio_buf.b_bcount + start_offset < VBD_VA_SIZE);
 		xbd_io->xio_buf.b_data = (void *)
 		    (start_offset + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
