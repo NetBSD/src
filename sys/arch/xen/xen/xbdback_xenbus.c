@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.81 2020/04/20 03:00:33 msaitoh Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.82 2020/04/20 14:11:04 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.81 2020/04/20 03:00:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.82 2020/04/20 14:11:04 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1804,7 +1804,8 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, xbd_io->xio_xv, xv_next);
 		xbd_io->xio_xv = NULL;
 		xbdi->xbdi_io = NULL;
-		xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
+		// do not retry
+		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
 	}
 }
