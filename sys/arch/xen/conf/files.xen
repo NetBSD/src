@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.180.2.5 2020/04/19 20:29:30 bouyer Exp $
+#	$NetBSD: files.xen,v 1.180.2.6 2020/04/20 19:40:24 bouyer Exp $
 
 defflag	opt_xen.h			XEN XENPVH XENPVHVM
 
@@ -9,6 +9,7 @@ file	arch/xen/xen/evtchn.c			xen
 file	arch/xen/xen/xengnt.c			xen
 file	arch/xen/x86/xen_mainbus.c		xen
 file	arch/xen/xen/xen_clock.c		xen
+file	arch/xen/x86/xen_bus_dma.c		xen
 
 define hypervisorbus {}
 define xendevbus {}
