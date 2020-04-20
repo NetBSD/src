@@ -1,11 +1,10 @@
-# $NetBSD: GENERIC_XENHVM,v 1.1.2.1 2020/04/16 08:46:34 bouyer Exp $
+# $NetBSD: GENERIC_XENHVM,v 1.1.2.2 2020/04/20 19:46:04 bouyer Exp $
 
 include "arch/i386/conf/GENERIC"
 
 options 	XENPVHVM
 options 	XEN
 
-options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 hypervisor*	at mainbus?		# Xen hypervisor
 #vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*	 	at hypervisor?		# Xen virtual bus
