@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.51 2019/05/28 03:53:28 kamil Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.52 2020/04/21 15:04:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.51 2019/05/28 03:53:28 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.52 2020/04/21 15:04:12 christos Exp $");
 
 #include <sys/param.h>
 
@@ -195,7 +195,7 @@ ffs_isblock(struct fs *fs, u_char *cp, int32_t h)
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
 	default:
-		panic("ffs_isblock: unknown fs_fragshift %d",
+		panic("%s: unknown fs_fragshift %d", __func__,
 		    (int)fs->fs_fragshift);
 	}
 }
@@ -219,7 +219,7 @@ ffs_isfreeblock(struct fs *fs, u_char *cp, int32_t h)
 	case 0:
 		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
 	default:
-		panic("ffs_isfreeblock: unknown fs_fragshift %d",
+		panic("%s: unknown fs_fragshift %d", __func__,
 		    (int)fs->fs_fragshift);
 	}
 }
@@ -245,7 +245,7 @@ ffs_clrblock(struct fs *fs, u_char *cp, int32_t h)
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_clrblock: unknown fs_fragshift %d",
+		panic("%s: unknown fs_fragshift %d", __func__,
 		    (int)fs->fs_fragshift);
 	}
 }
@@ -271,7 +271,7 @@ ffs_setblock(struct fs *fs, u_char *cp, int32_t h)
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_setblock: unknown fs_fragshift %d",
+		panic("%s: unknown fs_fragshift %d", __func__,
 		    (int)fs->fs_fragshift);
 	}
 }
