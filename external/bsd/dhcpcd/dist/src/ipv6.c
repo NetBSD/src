@@ -744,7 +744,7 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 	if (ia->flags & IPV6_AF_TEMPORARY &&
 	    ia->prefix_pltime &&
 	    ia->prefix_vltime &&
-	    ip6_use_tempaddr(ifp->name))
+	    ifp->options->options & DHCPCD_SLAACTEMP)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
 		    ia->prefix_pltime - REGEN_ADVANCE,
 		    ipv6_regentempaddr, ia);
@@ -1866,7 +1866,7 @@ static void
 ipv6_regen_desync(struct interface *ifp, bool force)
 {
 	struct ipv6_state *state;
-	unsigned int max, pref;
+	unsigned int max;
 
 	state = IPV6_STATE(ifp);
 
@@ -1874,14 +1874,13 @@ ipv6_regen_desync(struct interface *ifp, bool force)
 	 * greater than TEMP_VALID_LIFETIME - REGEN_ADVANCE.
 	 * I believe this is an error and it should be never be greater than
 	 * TEMP_PREFERRED_LIFETIME - REGEN_ADVANCE. */
-	pref = (unsigned int)ip6_temp_preferred_lifetime(ifp->name);
-	max = pref - REGEN_ADVANCE;
+	max = TEMP_PREFERRED_LIFETIME - REGEN_ADVANCE;
 	if (state->desync_factor && !force && state->desync_factor < max)
 		return;
 	if (state->desync_factor == 0)
 		state->desync_factor =
 		    arc4random_uniform(MIN(MAX_DESYNC_FACTOR, max));
-	max = pref - state->desync_factor - REGEN_ADVANCE;
+	max = TEMP_PREFERRED_LIFETIME - state->desync_factor - REGEN_ADVANCE;
 	eloop_timeout_add_sec(ifp->ctx->eloop, max, ipv6_regentempaddrs, ifp);
 }
 
@@ -1917,7 +1916,6 @@ ipv6_createtempaddr(struct ipv6_addr *ia0, const struct timespec *now)
 	struct ipv6_state *state;
 	struct interface *ifp = ia0->iface;
 	struct ipv6_addr *ia;
-	uint32_t i;
 
 	ia = ipv6_newaddr(ifp, &ia0->prefix, ia0->prefix_len,
 	    IPV6_AF_AUTOCONF | IPV6_AF_TEMPORARY);
@@ -1932,11 +1930,9 @@ ipv6_createtempaddr(struct ipv6_addr *ia0, const struct timespec *now)
 
 	/* RFC4941 Section 3.3.4 */
 	state = IPV6_STATE(ia->iface);
-	i = (uint32_t)ip6_temp_preferred_lifetime(ifp->name) -
-	    state->desync_factor;
-	ia->prefix_pltime = MIN(ia0->prefix_pltime, i);
-	i = (uint32_t)ip6_temp_valid_lifetime(ifp->name);
-	ia->prefix_vltime = MIN(ia0->prefix_vltime, i);
+	ia->prefix_pltime = MIN(ia0->prefix_pltime,
+	    TEMP_PREFERRED_LIFETIME - state->desync_factor);
+	ia->prefix_vltime = MIN(ia0->prefix_vltime, TEMP_VALID_LIFETIME);
 	if (ia->prefix_pltime <= REGEN_ADVANCE ||
 	    ia->prefix_pltime > ia0->prefix_vltime)
 	{
@@ -1994,7 +1990,7 @@ ipv6_settemptime(struct ipv6_addr *ia, int flags)
 			ext = (unsigned int)ia->acquired.tv_sec
 			    + ia->prefix_pltime;
 			max = (unsigned int)(ap->created.tv_sec +
-			    ip6_temp_preferred_lifetime(ap->iface->name) -
+			    TEMP_PREFERRED_LIFETIME -
 			    state->desync_factor);
 			if (ext < max)
 				ap->prefix_pltime = ia->prefix_pltime;
@@ -2006,7 +2002,7 @@ valid:
 			ext = (unsigned int)ia->acquired.tv_sec +
 			    ia->prefix_vltime;
 			max = (unsigned int)(ap->created.tv_sec +
-			    ip6_temp_valid_lifetime(ap->iface->name));
+			    TEMP_VALID_LIFETIME);
 			if (ext < max)
 				ap->prefix_vltime = ia->prefix_vltime;
 			else
@@ -2073,10 +2069,13 @@ ipv6_regentempaddrs(void *arg)
 	struct ipv6_state *state;
 	struct ipv6_addr *ia;
 
+	state = IPV6_STATE(ifp);
+	if (state == NULL)
+		return;
+
 	ipv6_regen_desync(ifp, true);
 
 	clock_gettime(CLOCK_MONOTONIC, &tv);
-	state = IPV6_STATE(ifp);
 	TAILQ_FOREACH(ia, &state->addrs, next) {
 		if (ia->flags & IPV6_AF_TEMPORARY &&
 		    !(ia->flags & IPV6_AF_STALE))
