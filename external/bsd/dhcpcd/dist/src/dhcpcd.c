@@ -2207,7 +2207,8 @@ printpidfile:
 		goto run_loop;
 #endif
 
-	if (control_start(&ctx,
+	if (!(ctx.options & DHCPCD_TEST) &&
+	    control_start(&ctx,
 	    ctx.options & DHCPCD_MASTER ? NULL : argv[optind]) == -1)
 	{
 		logerr("%s: control_start", __func__);
@@ -2273,6 +2274,7 @@ printpidfile:
 			loglevel = ctx.options & DHCPCD_INACTIVE ?
 			    LOG_DEBUG : LOG_ERR;
 			logmessage(loglevel, "no valid interfaces found");
+			dhcpcd_daemonise(&ctx);
 		} else
 			goto exit_failure;
 		if (!(ctx.options & DHCPCD_LINK)) {

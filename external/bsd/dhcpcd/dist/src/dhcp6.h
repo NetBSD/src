@@ -211,7 +211,10 @@ struct dhcp6_state {
 	const char *reason;
 	uint16_t lerror; /* Last error received from DHCPv6 reply. */
 	bool has_no_binding;
+	bool failed; /* Entered the failed state - used to rate limit log. */
+#ifdef AUTH
 	struct authstate auth;
+#endif
 };
 
 #define D6_STATE(ifp)							       \
