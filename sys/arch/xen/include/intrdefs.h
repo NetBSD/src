@@ -1,4 +1,4 @@
-/* $NetBSD: intrdefs.h,v 1.15 2020/04/03 22:20:36 ad Exp $ */
+/* $NetBSD: intrdefs.h,v 1.16 2020/04/21 18:25:11 ad Exp $ */
 
 /* This file co-exists, and is included via machine/intrdefs.h */
 
@@ -6,7 +6,6 @@
 #define _XEN_INTRDEFS_H_
 
 /* Xen IPI types */
-#define XEN_IPI_KICK		0x00000000
 #define XEN_IPI_HALT		0x00000001
 #define XEN_IPI_SYNCH_FPU	0x00000002
 #define XEN_IPI_DDB		0x00000004
