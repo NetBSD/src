@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.133 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.134 2020/04/21 18:22:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2020/02/24 12:20:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2020/04/21 18:22:29 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1094,7 +1094,7 @@ x86_cpu_idle_xen(void)
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	x86_disable_intr();
-	if (!__predict_false(ci->ci_want_resched)) {
+	if (__predict_false(!ci->ci_want_resched)) {
 		idle_block();
 	} else {
 		x86_enable_intr();
