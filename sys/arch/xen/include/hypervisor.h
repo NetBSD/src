@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.49 2019/02/04 18:14:53 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.50 2020/04/21 20:13:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -147,10 +147,6 @@ extern volatile shared_info_t *HYPERVISOR_shared_info;
 struct intrframe;
 struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
-#if NPCI > 0 || NISA > 0
-void hypervisor_prime_pirq_event(int, unsigned int);
-void hypervisor_ack_pirq_event(unsigned int);
-#endif /* NPCI > 0 || NISA > 0 */
 
 extern int xen_version;
 #define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)
