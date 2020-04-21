@@ -33,7 +33,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.1 2020/04/21 02:56:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.2 2020/04/21 07:08:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -110,7 +110,7 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 			x86_cpuid(0x16, descs);
 			if (descs[0] != 0) {
 				aprint_verbose_dev(ci->ci_dev,
-				    "CPU base freq %" PRIu64 "\n",
+				    "CPU base freq %" PRIu64 " Hz\n",
 				    (uint64_t)descs[0] * 1000000);
 
 				/*
@@ -125,7 +125,7 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 			}
 			if (descs[1] != 0) {
 				aprint_verbose_dev(ci->ci_dev,
-				    "CPU max freq %" PRIu64 "\n",
+				    "CPU max freq %" PRIu64 " Hz\n",
 				    (uint64_t)descs[1] * 1000000);
 			}
 		}
@@ -139,7 +139,7 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 #endif
 	}
 	if (freq != 0)
-		aprint_verbose_dev(ci->ci_dev, "TSC freq %" PRIu64 "\n",
+		aprint_verbose_dev(ci->ci_dev, "TSC freq %" PRIu64 " Hz\n",
 		    freq);
 
 	return freq;
