@@ -156,15 +156,7 @@
 
 /* Non-empty if the tls_model attribute is supported. */
 #if !defined(__vax__) && !defined(__mc68010__)
-# if defined(__clang__) && defined(__ppc__) && defined(__pic__)
-/*
- * XXX: In pic mode clang generates PPC32_GOT instead of PPC32_PICGOT for
- * tls model initial-exec. It shouldn't; see PPCISelLowering.h
- */
-#  define JEMALLOC_TLS_MODEL __attribute__((tls_model("global-dynamic")))
-# else
 #  define JEMALLOC_TLS_MODEL __attribute__((tls_model("initial-exec")))
-# endif
 #endif
 
 /*
