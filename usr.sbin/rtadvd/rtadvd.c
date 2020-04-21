@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.72 2020/04/21 12:05:54 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.73 2020/04/21 12:16:47 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ rtmsg_input(void)
 				}
 				break;
 			}
-			make_prefix(rai, ifindex, addr, plen);
+			add_prefix(rai, ifindex, addr, plen);
 			prefixchange = 1;
 			break;
 		case RTM_DELETE:
