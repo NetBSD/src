@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.37 2020/04/21 20:13:40 jdolecek Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.37 2020/04/21 20:13:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,9 +378,6 @@ evt_enable_event(unsigned int port, unsigned int l1i,
 {
 	KASSERT(args == NULL);
 	hypervisor_unmask_event(port);
-#if NPCI > 0 || NISA > 0
-	hypervisor_ack_pirq_event(port);
-#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void
