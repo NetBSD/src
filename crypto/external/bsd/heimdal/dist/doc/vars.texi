@@ -1,0 +1,9 @@
+
+@c $NetBSD: vars.texi,v 1.2.4.4 2020/04/21 19:37:57 martin Exp $
+@c
+@c Variables depending on installation
+@c
+
+@set dbdir /var/heimdal
+@set dbtype db3
+@set PACKAGE_VERSION 7.7.0
