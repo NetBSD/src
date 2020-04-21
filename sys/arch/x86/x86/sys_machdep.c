@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.53 2020/04/21 20:20:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.53 2020/04/21 20:20:39 jdolecek Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -377,16 +377,15 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		iopl = SEL_KPL;
 
     {
-	struct physdev_op physop;
 	struct pcb *pcb;
 
 	pcb = lwp_getpcb(l);
 	pcb->pcb_iopl = iopl;
 
 	/* Force the change at ring 0. */
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = iopl;
-	HYPERVISOR_physdev_op(&physop);
+	struct physdev_set_iopl set_iopl;
+	set_iopl.iopl = iopl;
+	HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl);
     }
 #elif defined(__x86_64__)
 	if (ua.iopl)
