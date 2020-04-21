@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.67 2020/04/21 21:42:47 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.68 2020/04/21 21:46:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -164,13 +164,21 @@ typedef struct filedesc {
 	uint32_t	fd_dlomap[NDENTRIES];
 } filedesc_t;
 
+/*
+ * Working directory, root and umask information.  Serialization:
+ *
+ * a	atomic operations
+ * l	cwdi_lock
+ */
 typedef struct cwdinfo {
-	struct vnode	*cwdi_cdir;	/* current directory */
-	struct vnode	*cwdi_rdir;	/* root directory */
-	struct vnode	*cwdi_edir;	/* emulation root (if known) */
-	krwlock_t	cwdi_lock;	/* lock on entire struct */
-	u_int		cwdi_cmask;	/* mask for file creation */
-	u_int		cwdi_refcnt;	/* reference count */
+	struct vnode	*cwdi_cdir;	/* l: current directory */
+	struct vnode	*cwdi_rdir;	/* l: root directory */
+	struct vnode	*cwdi_edir;	/* l: emulation root (if known) */
+	u_int		cwdi_cmask;	/* a: mask for file creation */
+	u_int		cwdi_refcnt;	/* a: reference count */
+
+	krwlock_t	cwdi_lock	/* :: lock on struct */
+	    __aligned(COHERENCY_UNIT);	/* -> gets own cache line */
 } cwdinfo_t;
 
 #ifdef _KERNEL
