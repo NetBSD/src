@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.184 2020/04/20 04:23:23 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.184 2020/04/20 04:23:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1291,12 +1291,20 @@ cpu_shutdown(device_t dv, int how)
 	return cpu_stop(dv);
 }
 
+/* Get the TSC frequency and set it to ci->ci_data.cpu_cc_freq. */
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-	uint64_t last_tsc;
+	uint64_t freq = 0, last_tsc;
 
-	if (cpu_hascounter()) {
+	if (cpu_hascounter())
+		freq = cpu_tsc_freq_cpuid(ci);
+
+	if (freq != 0) {
+		/* Use TSC frequency taken from CPUID. */
+		ci->ci_data.cpu_cc_freq = freq;
+	} else {
+		/* Calibrate TSC frequency. */
 		last_tsc = cpu_counter_serializing();
 		x86_delay(100000);
 		ci->ci_data.cpu_cc_freq =
