@@ -2274,6 +2274,7 @@ printpidfile:
 			loglevel = ctx.options & DHCPCD_INACTIVE ?
 			    LOG_DEBUG : LOG_ERR;
 			logmessage(loglevel, "no valid interfaces found");
+			dhcpcd_daemonise(&ctx);
 		} else
 			goto exit_failure;
 		if (!(ctx.options & DHCPCD_LINK)) {

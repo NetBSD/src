@@ -3494,8 +3494,9 @@ dhcp_packet(struct interface *ifp, uint8_t *data, size_t len)
 			    __func__, ifp->name);
 			return;
 		}
-		data += fl;
 		len -= fl;
+		/* Move the data to avoid alignment errors. */
+		memmove(data, data + fl, len);
 	}
 
 	/* Validate filter. */
@@ -3608,15 +3609,18 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 		.iov_base = buf,
 		.iov_len = sizeof(buf),
 	};
+	union {
+		struct cmsghdr hdr;
 #ifdef IP_RECVIF
-	unsigned char ctl[CMSG_SPACE(sizeof(struct sockaddr_dl))] = { 0 };
+		uint8_t buf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
 #else
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in_pktinfo))] = { 0 };
+		uint8_t buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 #endif
+	} cmsgbuf = { .buf = { 0 } };
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	    .msg_control = buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	int s;
 	ssize_t bytes;
