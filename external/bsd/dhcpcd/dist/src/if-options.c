@@ -2193,12 +2193,20 @@ invalid_token:
 		break;
 	case O_SLAAC:
 		ARG_REQUIRED;
+		np = strwhite(arg);
+		if (np != NULL) {
+			*np++ = '\0';
+			np = strskipwhite(np);
+		}
 		if (strcmp(arg, "private") == 0 ||
 		    strcmp(arg, "stableprivate") == 0 ||
 		    strcmp(arg, "stable") == 0)
 			ifo->options |= DHCPCD_SLAACPRIVATE;
 		else
 			ifo->options &= ~DHCPCD_SLAACPRIVATE;
+		if (np != NULL &&
+		    (strcmp(np, "temp") == 0 || strcmp(np, "temporary") == 0))
+			ifo->options |= DHCPCD_SLAACTEMP;
 		break;
 	case O_BOOTP:
 		ifo->options |= DHCPCD_BOOTP;
