@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.73 2020/04/21 12:16:47 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.74 2020/04/21 12:21:27 wiz Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	pid_t pid;
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dDfM:p:s"
+#define OPTIONS "Cc:dDfp:s"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -214,8 +214,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc == 0) {
-		fprintf(stderr, "Ysage: %s [-DdfRs] [-c conffile]"
-		    " [-M ifname] [-p pidfile] interface ...\n", getprogname());
+		fprintf(stderr, "Ysage: %s [-CDdfs] [-c conffile]"
+		    " [-p pidfile] interface ...\n", getprogname());
 		return EXIT_FAILURE;
 	}
 
