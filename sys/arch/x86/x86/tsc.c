@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.40 2020/04/06 09:24:50 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.41 2020/04/21 02:56:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.40 2020/04/06 09:24:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.41 2020/04/21 02:56:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,11 @@ tsc_is_invariant(void)
 	return invariant;
 }
 
+/*
+ * Initialize timecounter(9) of TSC.
+ * This function is called after all secondary processors were up and
+ * calculated the drift.
+ */
 void
 tsc_tc_init(void)
 {

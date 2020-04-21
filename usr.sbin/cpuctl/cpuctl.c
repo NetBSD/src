@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.30 2019/05/11 11:59:21 maxv Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.31 2020/04/21 02:56:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.30 2019/05/11 11:59:21 maxv Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.31 2020/04/21 02:56:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -382,3 +382,4 @@ aprint_normal_dev(const char *dev, const char *fmt, ...)
 }
 __strong_alias(aprint_verbose_dev,aprint_normal_dev)
 __strong_alias(aprint_error_dev,aprint_normal_dev)
+__strong_alias(aprint_debug_dev,aprint_normal_dev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.111 2020/04/16 01:52:34 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.112 2020/04/21 02:56:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.111 2020/04/16 01:52:34 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.112 2020/04/21 02:56:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,6 @@ __RCSID("$NetBSD: i386.c,v 1.111 2020/04/16 01:52:34 msaitoh Exp $");
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
-#include <x86/cacheinfo.h>
 #include <x86/cpu_ucode.h>
 
 #include "../cpuctl.h"
@@ -89,43 +88,6 @@ __RCSID("$NetBSD: i386.c,v 1.111 2020/04/16 01:52:34 msaitoh Exp $");
 
 /* Size of buffer for printing humanized numbers */
 #define HUMAN_BUFSIZE sizeof("999KB")
-
-struct cpu_info {
-	const char	*ci_dev;
-	int32_t		ci_cpu_type;	 /* for cpu's without cpuid */
-	uint32_t	ci_signature;	 /* X86 cpuid type */
-	uint32_t	ci_vendor[4];	 /* vendor string */
-	int32_t		ci_max_cpuid;	 /* highest cpuid supported */
-	uint32_t	ci_max_ext_cpuid; /* highest cpuid extended func lv */
-	uint32_t	ci_family;	 /* from ci_signature */
-	uint32_t	ci_model;	 /* from ci_signature */
-	uint32_t	ci_feat_val[10]; /* X86 CPUID feature bits
-					  *	[0] basic features %edx
-					  *	[1] basic features %ecx
-					  *	[2] extended features %edx
-					  *	[3] extended features %ecx
-					  *	[4] VIA padlock features
-					  *	[5] structure ext. feat. %ebx
-					  *	[6] structure ext. feat. %ecx
-					  *     [7] structure ext. feat. %edx
-					  *	[8] XCR0 bits (d:0 %eax)
-					  *	[9] xsave flags (d:1 %eax)
-					  */
-	uint32_t	ci_cpu_class;	 /* CPU class */
-	uint32_t	ci_brand_id;	 /* Intel brand id */
-	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
-	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
-	uint8_t		ci_packageid;
-	uint8_t		ci_coreid;
-	uint8_t		ci_smtid;
-	uint32_t	ci_initapicid;	/* our initial APIC ID */
-
-	uint32_t	ci_cur_xsave;
-	uint32_t	ci_max_xsave;
-
-	struct x86_cache_info ci_cinfo[CAI_COUNT];
-	void		(*ci_info)(struct cpu_info *);
-};
 
 struct cpu_nocpuid_nameclass {
 	int cpu_vendor;
@@ -197,7 +159,7 @@ static const char * const amd_brand[] = {
 	"4"		/* AMD Athlon(tm) 4 */
 };
 
-static int cpu_vendor;
+int cpu_vendor;
 static char cpu_brand_string[49];
 static char amd_brand_name[48];
 static int use_pae, largepagesize;
@@ -2164,6 +2126,8 @@ identifycpu(int fd, const char *cpuname)
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
 	aprint_normal("\n");
 
+	(void)cpu_tsc_freq_cpuid(ci);
+	
 	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
 	    ci->ci_family, ci->ci_model, CPUID_TO_STEPPING(ci->ci_signature));
 	if (ci->ci_signature != 0)
