@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.22 2020/04/13 22:54:12 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.23 2020/04/21 19:03:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.22 2020/04/13 22:54:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.23 2020/04/21 19:03:51 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -67,6 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.22 2020/04/13 22:54:12 bouyer Exp $")
 
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
+#ifdef __HAVE_PCI_MSI_MSIX
+#include <x86/pci/msipic.h>
+#include <x86/pci/pci_msi_machdep.h>
+#endif
 #endif
 
 #if defined(MULTIPROCESSOR)
@@ -527,6 +531,21 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 	return NULL; /* No pic found! */
 }
 
+static struct intrsource xen_dummy_intrsource;
+
+struct intrsource *
+xen_intr_allocate_io_intrsource(const char *intrid)
+{
+	/* Nothing to do, required by MSI code */
+	return &xen_dummy_intrsource;
+}
+
+void
+xen_intr_free_io_intrsource(const char *intrid)
+{
+	/* Nothing to do, required by MSI code */
+}
+
 #if !defined(XENPVHVM)
 __strong_alias(spllower, xen_spllower);
 __strong_alias(x86_read_psl, xen_read_psl);
@@ -542,4 +561,6 @@ __strong_alias(intr_disestablish, xen_intr_disestablish);
 __strong_alias(cpu_intr_redistribute, xen_cpu_intr_redistribute);
 __strong_alias(cpu_intr_count, xen_cpu_intr_count);
 __strong_alias(cpu_intr_init, xen_cpu_intr_init);
+__strong_alias(intr_allocate_io_intrsource, xen_intr_allocate_io_intrsource);
+__strong_alias(intr_free_io_intrsource, xen_intr_free_io_intrsource);
 #endif /* !XENPVHVM */

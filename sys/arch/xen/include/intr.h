@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.53 2019/12/23 13:35:37 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.54 2020/04/21 19:03:51 jdolecek Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -94,6 +94,9 @@ void *xen_intr_establish(int, struct pic *, int, int, int, int (*)(void *),
 void xen_intr_mask(struct intrhand *);
 void xen_intr_unmask(struct intrhand *);
 void xen_intr_disestablish(struct intrhand *);
+
+struct intrsource *xen_intr_allocate_io_intrsource(const char *);
+void xen_intr_free_io_intrsource(const char *);
 
 #endif /* !_LOCORE */
 
