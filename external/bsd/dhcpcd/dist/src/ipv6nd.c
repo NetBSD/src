@@ -1169,7 +1169,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 	 * much needless log spam. */
 	if (rap->willexpire)
 		new_data = true;
-	loglevel = new_data || !rap->isreachable ? LOG_INFO : LOG_DEBUG,
+	loglevel = new_rap || rap->willexpire || !rap->isreachable ?
+	    LOG_INFO : LOG_DEBUG,
 	logmessage(loglevel, "%s: Router Advertisement from %s",
 	    ifp->name, rap->sfrom);
 
@@ -1337,7 +1338,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 #ifdef IPV6_MANAGETEMPADDR
 			/* RFC4941 Section 3.3.3 */
 			if (ia->flags & IPV6_AF_AUTOCONF &&
-			    ip6_use_tempaddr(ia->iface->name) &&
+			    ia->iface->options->options & DHCPCD_SLAACTEMP &&
 			    IA6_CANAUTOCONF(ia))
 			{
 				if (!new_ia) {
@@ -1908,11 +1909,15 @@ ipv6nd_handledata(void *arg)
 		.iov_base = buf,
 		.iov_len = sizeof(buf),
 	};
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(int))] = { 0 };
+	union {
+		struct cmsghdr hdr;
+		uint8_t buf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		    CMSG_SPACE(sizeof(int))];
+	} cmsgbuf = { .buf = { 0 } };
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	    .msg_control = cmsgbuf.buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	ssize_t len;
 
