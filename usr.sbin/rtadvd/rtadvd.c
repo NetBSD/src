@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.74 2020/04/21 12:21:27 wiz Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.75 2020/04/21 12:23:13 wiz Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -725,7 +725,6 @@ rtadvd_input(void)
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi = NULL;
 	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
-	struct in6_addr dst = in6addr_any;
 	struct rainfo *rai;
 
 	/*
@@ -750,7 +749,6 @@ rtadvd_input(void)
 		    cm->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo))) {
 			pi = (struct in6_pktinfo *)(CMSG_DATA(cm));
 			ifindex = pi->ipi6_ifindex;
-			dst = pi->ipi6_addr;
 		}
 		if (cm->cmsg_level == IPPROTO_IPV6 &&
 		    cm->cmsg_type == IPV6_HOPLIMIT &&
