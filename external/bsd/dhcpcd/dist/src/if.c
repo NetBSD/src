@@ -161,19 +161,17 @@ int
 if_setflag(struct interface *ifp, short setflag, short unsetflag)
 {
 	struct ifreq ifr = { .ifr_flags = 0 };
-	short f;
-
-	if (if_getflags(ifp) == -1)
-		return -1;
-
-	f = (short)ifp->flags;
-	if ((f & setflag) == setflag && (f & unsetflag) == 0)
-		return 0;
+	short oflags;
 
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
+		return -1;
+
+	oflags = ifr.ifr_flags;
 	ifr.ifr_flags |= setflag;
 	ifr.ifr_flags &= (short)~unsetflag;
-	if (if_ioctl(ifp->ctx, SIOCSIFFLAGS, &ifr, sizeof(ifr)) == -1)
+	if (ifr.ifr_flags != oflags &&
+	    if_ioctl(ifp->ctx, SIOCSIFFLAGS, &ifr, sizeof(ifr)) == -1)
 		return -1;
 
 	ifp->flags = (unsigned int)ifr.ifr_flags;
