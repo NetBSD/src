@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.109.4.2 2020/04/13 08:05:21 martin Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.109.4.3 2020/04/21 18:42:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.109.4.2 2020/04/13 08:05:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.109.4.3 2020/04/21 18:42:46 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -998,9 +998,9 @@ uvmpd_pool_drain_thread(void *arg)
 		 */
 		mutex_enter(&uvmpd_lock);
 		if (!uvmpd_pool_drain_run) {
-			lastslept = hardclock_ticks;
+			lastslept = getticks();
 			cv_wait(&uvmpd_pool_drain_cv, &uvmpd_lock);
-			if (hardclock_ticks != lastslept) {
+			if (getticks() != lastslept) {
 				cycled = false;
 				firstpool = NULL;
 			}

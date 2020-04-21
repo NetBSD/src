@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.149.10.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.149.10.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149.10.1 2020/04/08 14:09:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149.10.2 2020/04/21 18:42:45 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -443,16 +443,14 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	if (error)
 		return EACCES;
 
-	if (vp->v_size != 0) {
-		/*
-		 * Must completely truncate the file here. Allocated
-		 * blocks on a snapshot mean that block has been copied
-		 * on write, see ffs_copyonwrite() testing "blkno != 0"
-		 */
-		error = ufs_truncate_retry(vp, 0, NOCRED);
-		if (error)
-			return error;
-	}
+	/*
+	 * Must completely truncate the file here. Allocated
+	 * blocks on a snapshot mean that block has been copied
+	 * on write, see ffs_copyonwrite() testing "blkno != 0"
+	 */
+	error = ufs_truncate_all(vp);
+	if (error)
+		return error;
 
 	/* Change inode to snapshot type file. */
 	error = UFS_WAPBL_BEGIN(mp);

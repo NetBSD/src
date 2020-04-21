@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.3.4.2 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: asan.h,v 1.3.4.3 2020/04/21 18:42:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -92,29 +92,60 @@ __md_palloc(void)
 	else
 		pa = pmap_get_physpage();
 
+	/* The page is zeroed. */
 	return pa;
+}
+
+static inline paddr_t
+__md_palloc_large(void)
+{
+	struct pglist pglist;
+	int ret;
+
+	if (__predict_false(__md_early))
+		return 0;
+	if (!uvm.page_init_done)
+		return 0;
+
+	ret = uvm_pglistalloc(NBPD_L2, 0, ~0UL, NBPD_L2, 0,
+	    &pglist, 1, 0);
+	if (ret != 0)
+		return 0;
+
+	/* The page may not be zeroed. */
+	return VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 }
 
 static void
 kasan_md_shadow_map_page(vaddr_t va)
 {
+	const pt_entry_t pteflags = PTE_W | pmap_pg_nx | PTE_P;
 	paddr_t pa;
 
 	if (!pmap_valid_entry(L4_BASE[pl4_i(va)])) {
 		pa = __md_palloc();
-		L4_BASE[pl4_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
+		L4_BASE[pl4_i(va)] = pa | pteflags;
 	}
 	if (!pmap_valid_entry(L3_BASE[pl3_i(va)])) {
 		pa = __md_palloc();
-		L3_BASE[pl3_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
+		L3_BASE[pl3_i(va)] = pa | pteflags;
 	}
 	if (!pmap_valid_entry(L2_BASE[pl2_i(va)])) {
+		if ((pa = __md_palloc_large()) != 0) {
+			L2_BASE[pl2_i(va)] = pa | pteflags | PTE_PS |
+			    pmap_pg_g;
+			__insn_barrier();
+			__builtin_memset((void *)va, 0, NBPD_L2);
+			return;
+		}
 		pa = __md_palloc();
-		L2_BASE[pl2_i(va)] = pa | PTE_W | pmap_pg_nx | PTE_P;
+		L2_BASE[pl2_i(va)] = pa | pteflags;
+	} else if (L2_BASE[pl2_i(va)] & PTE_PS) {
+		return;
 	}
 	if (!pmap_valid_entry(L1_BASE[pl1_i(va)])) {
 		pa = __md_palloc();
-		L1_BASE[pl1_i(va)] = pa | PTE_W | pmap_pg_g | pmap_pg_nx | PTE_P;
+		L1_BASE[pl1_i(va)] = pa | pteflags | pmap_pg_g;
 	}
 }
 

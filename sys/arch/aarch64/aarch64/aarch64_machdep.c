@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.4.2.2 2020/04/13 08:03:27 martin Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.4.2.3 2020/04/21 18:42:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4.2.2 2020/04/13 08:03:27 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4.2.3 2020/04/21 18:42:02 martin Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
@@ -112,6 +113,24 @@ uint32_t dumpmag = 0x8fca0101;  /* magic number for savecore */
 int     dumpsize = 0;           /* also for savecore */
 long    dumplo = 0;
 
+int aarch64_bti_enabled __read_mostly;
+
+static void
+bti_init(void)
+{
+#ifdef ARMV85_BTI
+	extern uint64_t pmap_attr_gp;
+	uint64_t reg;
+
+	reg = reg_id_aa64pfr1_el1_read();
+
+	if (reg >= ID_AA64PFR1_EL1_BT_SUPPORTED) {
+		pmap_attr_gp = LX_BLKPAG_GP;
+		aarch64_bti_enabled = 1;
+	}
+#endif
+}
+
 void
 cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused)
 {
@@ -120,6 +139,8 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	extern char __data_start[];
 	extern char __rodata_start[];
 	u_int blk;
+
+	bti_init();
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
@@ -455,6 +476,22 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTLTYPE_INT, "tagged_address",
 	    SYSCTL_DESCR("top byte ignored in the address calculation"),
 	    sysctl_machdep_tagged_address, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_INT, "pac",
+	    SYSCTL_DESCR("Whether Pointer Authentication is enabled"),
+	    NULL, 0,
+	    &aarch64_pac_enabled, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_INT, "bti",
+	    SYSCTL_DESCR("Whether Branch Target Identification is enabled"),
+	    NULL, 0,
+	    &aarch64_bti_enabled, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.2.104.3 2020/04/13 08:03:52 martin Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.2.104.4 2020/04/21 18:42:09 martin Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -149,8 +149,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
-
-options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs

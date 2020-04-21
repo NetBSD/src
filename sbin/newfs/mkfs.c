@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.128 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.128.12.1 2020/04/21 18:42:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.128 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.128.12.1 2020/04/21 18:42:00 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,10 +200,12 @@ mkfs(const char *fsys, int fi, int fo,
 			exit(12);
 	}
 #endif
-	if ((fsun = calloc(1, sizeof(*fsun))) == NULL)
+	if ((fsun = aligned_alloc(DEV_BSIZE, sizeof(*fsun))) == NULL)
 		exit(12);
-	if ((cgun = calloc(1, sizeof(*cgun))) == NULL)
+	memset(fsun, 0, sizeof(*fsun));
+	if ((cgun = aligned_alloc(DEV_BSIZE, sizeof(*cgun))) == NULL)
 		exit(12);
+	memset(cgun, 0, sizeof(*cgun));
 
 	fsi = fi;
 	fso = fo;
@@ -633,7 +635,7 @@ mkfs(const char *fsys, int fi, int fo,
 
 #ifndef NO_APPLE_UFS
 		if (isappleufs) {
-			struct appleufslabel appleufs;
+			struct appleufslabel appleufs __aligned(DEV_BSIZE);
 			ffs_appleufs_set(&appleufs, appleufs_volname,
 			    tv.tv_sec, 0);
 			wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,
@@ -1034,7 +1036,7 @@ int
 fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	union dinode node;
-	union Buffer buf;
+	union Buffer buf __aligned(DEV_BSIZE);
 	int i;
 	int qblocks = 0;
 	int qinos = 0;
@@ -1584,7 +1586,7 @@ static void
 zap_old_sblock(int sblkoff)
 {
 	static int cg0_data;
-	uint32_t oldfs[SBLOCKSIZE / 4];
+	uint32_t oldfs[SBLOCKSIZE / 4] __aligned(DEV_BSIZE);
 	static const struct fsm {
 		uint32_t	offset;
 		uint32_t	magic;

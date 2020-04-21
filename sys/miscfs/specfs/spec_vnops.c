@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.174.6.2 2020/04/13 08:05:05 martin Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.174.6.3 2020/04/21 18:42:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.174.6.2 2020/04/13 08:05:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.174.6.3 2020/04/21 18:42:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -717,7 +717,7 @@ spec_read(void *v)
 			return (EINVAL);
 
 		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
-			bsize = pi.pi_bsize;
+			bsize = imin(imax(pi.pi_bsize, DEV_BSIZE), MAXBSIZE);
 		else
 			bsize = BLKDEV_IOSIZE;
 
@@ -786,7 +786,7 @@ spec_write(void *v)
 			return (EINVAL);
 
 		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
-			bsize = pi.pi_bsize;
+			bsize = imin(imax(pi.pi_bsize, DEV_BSIZE), MAXBSIZE);
 		else
 			bsize = BLKDEV_IOSIZE;
 

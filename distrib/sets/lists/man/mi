@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1594.2.2 2020/04/13 07:45:33 martin Exp $
+# $NetBSD: mi,v 1.1594.2.3 2020/04/21 18:41:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1957,6 +1957,7 @@
 ./usr/share/man/cat4/uvideo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvisor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvscom.0			man-sys-catman		.cat
+./usr/share/man/cat4/uxrcom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyap.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyurex.0			man-obsolete		obsolete
 ./usr/share/man/cat4/vald.0			man-sys-catman		.cat
@@ -5101,6 +5102,7 @@
 ./usr/share/man/html4/uvideo.html		man-sys-htmlman		html
 ./usr/share/man/html4/uvisor.html		man-sys-htmlman		html
 ./usr/share/man/html4/uvscom.html		man-sys-htmlman		html
+./usr/share/man/html4/uxrcom.html		man-sys-htmlman		html
 ./usr/share/man/html4/uyap.html			man-sys-htmlman		html
 ./usr/share/man/html4/uyurex.html		man-obsolete		obsolete
 ./usr/share/man/html4/vald.html			man-sys-htmlman		html
@@ -8169,6 +8171,7 @@
 ./usr/share/man/man4/uvideo.4			man-sys-man		.man
 ./usr/share/man/man4/uvisor.4			man-sys-man		.man
 ./usr/share/man/man4/uvscom.4			man-sys-man		.man
+./usr/share/man/man4/uxrcom.4			man-sys-man		.man
 ./usr/share/man/man4/uyap.4			man-sys-man		.man
 ./usr/share/man/man4/uyurex.4			man-obsolete		obsolete
 ./usr/share/man/man4/vald.4			man-sys-man		.man

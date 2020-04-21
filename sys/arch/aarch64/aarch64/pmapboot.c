@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.3.4.4 2020/04/13 08:03:27 martin Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.3.4.5 2020/04/21 18:42:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.4 2020/04/13 08:03:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.5 2020/04/21 18:42:02 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -50,11 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.4 2020/04/13 08:03:27 martin Exp 
 static void
 pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
 {
+	extern uint64_t pmap_attr_gp;
+
 	if (clrprot & VM_PROT_READ)
 		*pte &= ~LX_BLKPAG_AF;
 	if (clrprot & VM_PROT_WRITE) {
 		*pte &= ~LX_BLKPAG_AP;
 		*pte |= LX_BLKPAG_AP_RO;
+		*pte |= pmap_attr_gp;
 	}
 	if (clrprot & VM_PROT_EXECUTE)
 		*pte |= LX_BLKPAG_UXN|LX_BLKPAG_PXN;

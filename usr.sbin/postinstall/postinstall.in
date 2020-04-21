@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.19.2.2 2020/04/13 08:05:56 martin Exp $
+# $NetBSD: postinstall.in,v 1.19.2.3 2020/04/21 18:42:48 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -750,8 +750,8 @@ contents_owner()
 		fi
 	elif [ "${_op}" = "fix" ]; then
 		find "${_dir}" \( \( ! -user "${_user}" \) -o \
-		\( ! -group "${_grp}" \) \) -a -print0 \
-		| xargs -0 chown "${_user}:${_grp}"
+		\( ! -group "${_grp}" \) \) \
+		-exec chown "${_user}:${_grp}" -- {} \;
 	fi
 }
 

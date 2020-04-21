@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.341.6.2 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.341.6.3 2020/04/21 18:42:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.341.6.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.341.6.3 2020/04/21 18:42:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ const struct cdevsw cd_cdevsw = {
 	.d_flag = D_DISK | D_MPSAFE
 };
 
-static struct dkdriver cddkdriver = {
+static const struct dkdriver cddkdriver = {
 	.d_open = cdopen,
 	.d_close = cdclose,
 	.d_strategy = cdstrategy,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.82.4.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.82.4.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -126,13 +126,14 @@ struct pool {
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
 	unsigned int	pr_itemoffset;	/* offset of the item space */
-	unsigned int	pr_minitems;	/* minimum # of items to keep */
-	unsigned int	pr_minpages;	/* same in page units */
+	unsigned int	pr_minitems;	/* minimum # of free items to keep */
+	unsigned int	pr_maxitems;	/* maximum # of free items to keep */
+	unsigned int	pr_minpages;	/* minimum # of pages to keep */
 	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
 	unsigned int	pr_npages;	/* # of pages allocated */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
 	unsigned int	pr_poolid;	/* id of the pool */
-	unsigned int	pr_nitems;	/* number of available items in pool */
+	unsigned int	pr_nitems;	/* number of free items in pool */
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
@@ -314,7 +315,7 @@ void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);
 
-int		pool_prime(struct pool *, int);
+void		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
@@ -353,6 +354,7 @@ void		pool_cache_set_drain_hook(pool_cache_t,
 void		pool_cache_setlowat(pool_cache_t, int);
 void		pool_cache_sethiwat(pool_cache_t, int);
 void		pool_cache_sethardlimit(pool_cache_t, int, const char *, int);
+void		pool_cache_prime(pool_cache_t, int);
 void		pool_cache_cpu_init(struct cpu_info *);
 
 #define		pool_cache_get(pc, f) pool_cache_get_paddr((pc), (f), NULL)

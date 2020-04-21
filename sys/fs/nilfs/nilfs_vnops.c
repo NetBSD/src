@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.37.10.1 2020/04/08 14:08:49 martin Exp $ */
+/*	$NetBSD: nilfs_vnops.c,v 1.37.10.2 2020/04/21 18:42:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.37.10.1 2020/04/08 14:08:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.37.10.2 2020/04/21 18:42:41 martin Exp $");
 #endif /* not lint */
 
 
@@ -976,8 +976,8 @@ nilfs_close(void *v)
 	nilfs_node = nilfs_node;	/* shut up gcc */
 
 	mutex_enter(vp->v_interlock);
-		if (vp->v_usecount > 1)
-			nilfs_itimes(nilfs_node, NULL, NULL, NULL);
+	if (vrefcnt(vp) > 1)
+		nilfs_itimes(nilfs_node, NULL, NULL, NULL);
 	mutex_exit(vp->v_interlock);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.204.2.3 2020/04/13 08:05:21 martin Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.204.2.4 2020/04/21 18:42:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.204.2.3 2020/04/13 08:05:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.204.2.4 2020/04/21 18:42:46 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1184,10 +1184,15 @@ uvm_fault_check(
 		if (amap)
 			uvmfault_anonflush(*ranons, nback);
 
-		/* flush object? */
+		/*
+		 * flush object?  change lock type to RW_WRITER, to avoid
+		 * excessive competition between read/write locks if many
+		 * threads doing "sequential access".
+		 */
 		if (uobj) {
 			voff_t uoff;
 
+			flt->lower_lock_type = RW_WRITER;
 			uoff = ufi->entry->offset + eoff;
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			(void) (uobj->pgops->pgo_put)(uobj, uoff, uoff +

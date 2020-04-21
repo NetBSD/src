@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2017/02/08 16:11:39 rin Exp $
+# $NetBSD: Makefile,v 1.1.14.1 2020/04/21 18:41:54 martin Exp $
 # Build a smaller fsck_ffs (i.e. for boot media).
 # Support for Endian-Independent FFS and Apple UFS is dropped unless FFS_EI=1
 # and APPLE_UFS=1 are added to CRUNCHENV, respectively.
@@ -20,6 +20,8 @@ SRCS+=		ffs_appleufs.c
 .else
 CPPFLAGS+=	-DNO_APPLE_UFS
 .endif
+
+CPPFLAGS+=	-DNO_IOBUF_ALIGNED
 
 .PATH:		${SRCDIR}
 

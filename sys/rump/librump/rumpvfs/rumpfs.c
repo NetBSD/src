@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.153.2.1 2020/04/08 14:09:01 martin Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.153.2.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.153.2.1 2020/04/08 14:09:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.153.2.2 2020/04/21 18:42:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1906,7 +1906,7 @@ rumpfs_unmount(struct mount *mp, int mntflags)
 	if (panicstr || mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if (rfsmp->rfsmp_rvp->v_usecount > 1 && (flags & FORCECLOSE) == 0)
+	if (vrefcnt(rfsmp->rfsmp_rvp) > 1 && (flags & FORCECLOSE) == 0)
 		return EBUSY;
 
 	if ((error = vflush(mp, rfsmp->rfsmp_rvp, flags)) != 0)

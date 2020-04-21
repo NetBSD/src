@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.58.10.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.58.10.2 2020/04/21 18:42:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.58.10.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.58.10.2 2020/04/21 18:42:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ mfs_strategy(void *v)
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 
-	if (vp->v_type != VBLK || vp->v_usecount == 0)
+	if (vp->v_type != VBLK || vrefcnt(vp) == 0)
 		panic("mfs_strategy: bad dev");
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */

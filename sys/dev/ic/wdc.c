@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288.4.3 2020/04/13 08:04:22 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.4.4 2020/04/21 18:42:16 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.3 2020/04/13 08:04:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.4 2020/04/21 18:42:16 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1391,12 +1391,11 @@ static const struct ata_xfer_ops wdc_cmd_xfer_ops = {
 	.c_kill_xfer = __wdccommand_kill_xfer,
 };
 
-int
+void
 wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	int s, ret;
 
 	ATADEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
@@ -1414,25 +1413,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_c->bcount;
 	xfer->ops = &wdc_cmd_xfer_ops;
 
-	s = splbio();
 	ata_exec_xfer(chp, xfer);
-#ifdef DIAGNOSTIC
-	if ((ata_c->flags & AT_POLL) != 0 &&
-	    (ata_c->flags & AT_DONE) == 0)
-		panic("wdc_exec_command: polled command not done");
-#endif
-	if (ata_c->flags & AT_DONE) {
-		ret = ATACMD_COMPLETE;
-	} else {
-		if (ata_c->flags & AT_WAIT) {
-			ata_wait_cmd(chp, xfer);
-			ret = ATACMD_COMPLETE;
-		} else {
-			ret = ATACMD_QUEUED;
-		}
-	}
-	splx(s);
-	return ret;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.26.18.1 2020/04/08 14:07:39 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.26.18.2 2020/04/21 18:42:08 martin Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -102,8 +102,5 @@ extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
-
-/* XXX temporary */
-#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _HPPA_TYPES_H_ */

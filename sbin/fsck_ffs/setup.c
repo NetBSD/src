@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.101.12.1 2019/06/10 22:05:33 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.101.12.2 2020/04/21 18:42:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.101.12.1 2019/06/10 22:05:33 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.101.12.2 2020/04/21 18:42:00 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,10 +126,10 @@ setup(const char *dev, const char *origdev)
 	lfdir = 0;
 	initbarea(&sblk);
 	initbarea(&asblk);
-	sblk.b_un.b_buf = malloc(SBLOCKSIZE);
-	sblock = malloc(SBLOCKSIZE);
-	asblk.b_un.b_buf = malloc(SBLOCKSIZE);
-	altsblock = malloc(SBLOCKSIZE);
+	sblk.b_un.b_buf = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
+	sblock = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
+	asblk.b_un.b_buf = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
+	altsblock = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
 		errexit("Cannot allocate space for superblock");
@@ -458,12 +458,14 @@ setup(const char *dev, const char *origdev)
 	 * read in the summary info.
 	 */
 	asked = 0;
-	sblock->fs_csp = (struct csum *)calloc(1, sblock->fs_cssize);
+	sblock->fs_csp = (struct csum *)aligned_alloc(DEV_BSIZE,
+	    sblock->fs_cssize);
 	if (sblock->fs_csp == NULL) {
 		pwarn("cannot alloc %u bytes for summary info\n",
 		    sblock->fs_cssize);	
 		goto badsblabel;
 	}
+	memset(sblock->fs_csp, 0, sblock->fs_cssize);
 	for (i = 0, j = 0; i < sblock->fs_cssize; i += sblock->fs_bsize, j++) {
 		size = sblock->fs_cssize - i < sblock->fs_bsize ?
 		    sblock->fs_cssize - i : sblock->fs_bsize;
@@ -492,12 +494,13 @@ setup(const char *dev, const char *origdev)
 	 * allocate and initialize the necessary maps
 	 */
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = calloc((unsigned)bmapsize, sizeof (char));
+	blockmap = aligned_alloc(DEV_BSIZE, (unsigned)bmapsize);
 	if (blockmap == NULL) {
 		pwarn("cannot alloc %u bytes for blockmap\n",
 		    (unsigned)bmapsize);
 		goto badsblabel;
 	}
+	memset(blockmap, 0, bmapsize);
 	inostathead = calloc((unsigned)(sblock->fs_ncg),
 	    sizeof(struct inostatlist));
 	if (inostathead == NULL) {
@@ -526,7 +529,7 @@ setup(const char *dev, const char *origdev)
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
-	cgrp = malloc(sblock->fs_cgsize);
+	cgrp = aligned_alloc(DEV_BSIZE, sblock->fs_cgsize);
 	if (cgrp == NULL) {
 		pwarn("cannot alloc %u bytes for cylinder group\n",
 		    sblock->fs_cgsize);

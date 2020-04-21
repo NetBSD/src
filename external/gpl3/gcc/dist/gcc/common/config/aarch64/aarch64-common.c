@@ -285,9 +285,9 @@ aarch64_option_init_struct (struct gcc_options *opts ATTRIBUTE_UNUSED)
        to calculate the feature strings is called on every options push,
        pop and attribute change (arm_neon headers, lto etc all cause this to
        happen quite frequently).  It is a trade-off between time and space and
-       so time won.  */
+       so time won.  Keep NULL entry last.  */
     int n_extensions
-      = sizeof (all_extensions) / sizeof (struct aarch64_option_extension);
+      = sizeof (all_extensions_by_on) / sizeof (all_extensions_by_on[0]) - 1;
     qsort (&all_extensions_by_on, n_extensions,
 	   sizeof (struct aarch64_option_extension), opt_ext_cmp);
 }

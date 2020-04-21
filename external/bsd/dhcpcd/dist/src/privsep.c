@@ -115,6 +115,7 @@ ps_init(struct dhcpcd_ctx *ctx)
 
 	/* If we pickup the _dhcp user refuse the default directory */
 	if (strcmp(pw->pw_dir, "/var/empty") == 0) {
+		ctx->options &= ~DHCPCD_PRIVSEP;
 		logerrx("refusing chroot: %s: %s", PRIVSEP_USER, pw->pw_dir);
 		errno = 0;
 		return -1;
@@ -226,7 +227,9 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		logerr("%s: eloop_signal_set_cb", __func__);
 		goto errexit;
 	}
-	if (eloop_signal_mask(ctx->eloop, &ctx->sigset) == -1) {
+
+	/* ctx->sigset aready has the initial sigmask set in main() */
+	if (eloop_signal_mask(ctx->eloop, NULL) == -1) {
 		logerr("%s: eloop_signal_mask", __func__);
 		goto errexit;
 	}
@@ -240,7 +243,9 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	if (callback(recv_ctx) == -1)
 		goto errexit;
 
-	if (!(ctx->options & (DHCPCD_TEST | DHCPCD_DEBUG))) {
+	if (!(ctx->options & DHCPCD_DEBUG) &&
+	   (!(ctx->options & DHCPCD_TEST) || loggetopts() & LOGERR_QUIET))
+	{
 		freopen(_PATH_DEVNULL, "w", stdout);
 		freopen(_PATH_DEVNULL, "w", stderr);
 	}

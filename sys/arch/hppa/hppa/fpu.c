@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.24.40.1 2019/06/10 22:06:19 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24.40.2 2020/04/21 18:42:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24.40.1 2019/06/10 22:06:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24.40.2 2020/04/21 18:42:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ hppa_fpu_flush(struct lwp *l)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct cpu_info *ci = curcpu();
 
-	KASSERT(fpu_present);
+	if (!fpu_present)
+		return;
 
 	/*
 	 * If this process' state is currently in hardware, swap it out.

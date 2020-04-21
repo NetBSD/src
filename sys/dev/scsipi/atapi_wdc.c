@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129.4.3 2020/04/13 08:04:48 martin Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.4.4 2020/04/21 18:42:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.4.3 2020/04/13 08:04:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.4.4 2020/04/21 18:42:38 martin Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -222,12 +222,10 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	xfer->c_ata_c.r_st_pmask = 0;
 	xfer->c_ata_c.flags = AT_WAIT | AT_POLL;
 	xfer->c_ata_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], xfer) != ATACMD_COMPLETE) {
-		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
-		    " drive %s:%d:%d: driver failed\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, drive);
-		panic("wdc_atapi_get_params");
-	}
+
+	wdc_exec_command(&chp->ch_drive[drive], xfer);
+	ata_wait_cmd(chp, xfer);
+
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",

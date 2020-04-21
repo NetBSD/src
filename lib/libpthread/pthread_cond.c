@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.65.4.1 2020/04/08 14:07:15 martin Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.65.4.2 2020/04/21 18:42:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.65.4.1 2020/04/08 14:07:15 martin Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.65.4.2 2020/04/21 18:42:00 martin Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -58,11 +58,6 @@ __RCSID("$NetBSD: pthread_cond.c,v 1.65.4.1 2020/04/08 14:07:15 martin Exp $");
 #include "reentrant.h"
 
 int	_sys___nanosleep50(const struct timespec *, struct timespec *);
-
-extern int pthread__started;
-
-static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
-    pthread_cond_t *, const struct timespec *);
 
 int	_pthread_cond_has_waiters_np(pthread_cond_t *);
 
@@ -149,10 +144,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	self = pthread__self();
 
-	/* Just hang out for a while if threads aren't running yet. */
-	if (__predict_false(pthread__started == 0)) {
-		return pthread_cond_wait_nothread(self, mutex, cond, abstime);
-	}
 	if (__predict_false(self->pt_cancel)) {
 		pthread__cancelled();
 	}
@@ -431,38 +422,3 @@ pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared)
 	return EINVAL;
 }
 #endif
-
-/* Utility routine to hang out for a while if threads haven't started yet. */
-static int
-pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
-    pthread_cond_t *cond, const struct timespec *abstime)
-{
-	struct timespec now, diff;
-	int retval;
-
-	if (abstime == NULL) {
-		diff.tv_sec = 99999999;
-		diff.tv_nsec = 0;
-	} else {
-		clockid_t clck = pthread_cond_getclock(cond);
-		clock_gettime(clck, &now);
-		if  (timespeccmp(abstime, &now, <))
-			timespecclear(&diff);
-		else
-			timespecsub(abstime, &now, &diff);
-	}
-
-	do {
-		pthread__testcancel(self);
-		pthread_mutex_unlock(mutex);
-		retval = _sys___nanosleep50(&diff, NULL);
-		pthread_mutex_lock(mutex);
-	} while (abstime == NULL && retval == 0);
-	pthread__testcancel(self);
-
-	if (retval == 0)
-		return ETIMEDOUT;
-	else
-		/* spurious wakeup */
-		return 0;
-}

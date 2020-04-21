@@ -99,37 +99,37 @@ ps_inet_startcb(void *arg)
 	close(ctx->ps_data_fd);
 	ctx->ps_data_fd = -1;
 
+	errno = 0;
+
 #ifdef INET
 	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MASTER)) ==
 	    (DHCPCD_IPV4 | DHCPCD_MASTER))
 	{
 		ctx->udp_fd = dhcp_openudp(NULL);
-		if (ctx->udp_fd == -1) {
+		if (ctx->udp_fd == -1)
 			logerr("%s: dhcp_open", __func__);
-			return -1;
-		}
-		if (eloop_event_add(ctx->eloop, ctx->udp_fd,
+		else if (eloop_event_add(ctx->eloop, ctx->udp_fd,
 		    ps_inet_recvbootp, ctx) == -1)
 		{
 			logerr("%s: eloop_event_add DHCP", __func__);
-			return -1;
-		}
-		ret++;
+			close(ctx->udp_fd);
+			ctx->udp_fd = -1;
+		} else
+			ret++;
 	}
 #endif
 #if defined(INET6) && !defined(__sun)
 	if (ctx->options & DHCPCD_IPV6) {
-		if (ipv6nd_open(ctx) == -1) {
+		if (ipv6nd_open(ctx) == -1)
 			logerr("%s: ipv6nd_open", __func__);
-			return -1;
-		}
-		if (eloop_event_add(ctx->eloop, ctx->nd_fd,
+		else if (eloop_event_add(ctx->eloop, ctx->nd_fd,
 		    ps_inet_recvra, ctx) == -1)
 		{
 			logerr("%s: eloop_event_add RA", __func__);
-			return -1;
-		}
-		ret++;
+			close(ctx->nd_fd);
+			ctx->nd_fd = -1;
+		} else
+			ret++;
 	}
 #endif
 #ifdef DHCP6
@@ -137,21 +137,20 @@ ps_inet_startcb(void *arg)
 	    (DHCPCD_DHCP6 | DHCPCD_MASTER))
 	{
 		ctx->dhcp6_fd = dhcp6_openudp(0, NULL);
-		if (ctx->dhcp6_fd == -1) {
+		if (ctx->dhcp6_fd == -1)
 			logerr("%s: dhcp6_open", __func__);
-			return -1;
-		}
-		if (eloop_event_add(ctx->eloop, ctx->dhcp6_fd,
+		else if (eloop_event_add(ctx->eloop, ctx->dhcp6_fd,
 		    ps_inet_recvdhcp6, ctx) == -1)
 		{
 			logerr("%s: eloop_event_add DHCP6", __func__);
-			return -1;
-		}
-		ret++;
+			close(ctx->dhcp6_fd);
+			ctx->dhcp6_fd = -1;
+		} else
+			ret++;
 	}
 #endif
 
-	if (ret == 0) {
+	if (ret == 0 && errno == 0) {
 		errno = ENXIO;
 		return -1;
 	}

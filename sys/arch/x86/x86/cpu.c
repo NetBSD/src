@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.158.2.2 2020/04/13 08:04:11 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.158.2.3 2020/04/21 18:42:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.158.2.2 2020/04/13 08:04:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.158.2.3 2020/04/21 18:42:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -198,9 +198,9 @@ static vaddr_t cmos_data_mapping;
 struct cpu_info *cpu_starting;
 
 #ifdef MULTIPROCESSOR
-void    	cpu_hatch(void *);
-static void    	cpu_boot_secondary(struct cpu_info *ci);
-static void    	cpu_start_secondary(struct cpu_info *ci);
+void		cpu_hatch(void *);
+static void	cpu_boot_secondary(struct cpu_info *ci);
+static void	cpu_start_secondary(struct cpu_info *ci);
 #if NLAPIC > 0
 static void	cpu_copy_trampoline(paddr_t);
 #endif
@@ -276,7 +276,7 @@ cpu_vm_init(struct cpu_info *ci)
 		cai = &ci->ci_cinfo[i];
 
 		tcolors = atop(cai->cai_totalsize);
-		switch(cai->cai_associativity) {
+		switch (cai->cai_associativity) {
 		case 0xff:
 			tcolors = 1; /* fully associative */
 			break;
@@ -300,7 +300,7 @@ cpu_vm_init(struct cpu_info *ci)
 			}
 			if (picked == 1) {
 				panic("desired number of cache colors %d is "
-			      	" > 1, but not even!", ncolors);
+				" > 1, but not even!", ncolors);
 			}
 			ncolors = picked;
 		}
@@ -1018,7 +1018,7 @@ cpu_debug_dump(void)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	const char sixtyfour64space[] = 
+	const char sixtyfour64space[] =
 #ifdef _LP64
 			   "        "
 #endif
@@ -1291,12 +1291,20 @@ cpu_shutdown(device_t dv, int how)
 	return cpu_stop(dv);
 }
 
+/* Get the TSC frequency and set it to ci->ci_data.cpu_cc_freq. */
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-	uint64_t last_tsc;
+	uint64_t freq = 0, last_tsc;
 
-	if (cpu_hascounter()) {
+	if (cpu_hascounter())
+		freq = cpu_tsc_freq_cpuid(ci);
+
+	if (freq != 0) {
+		/* Use TSC frequency taken from CPUID. */
+		ci->ci_data.cpu_cc_freq = freq;
+	} else {
+		/* Calibrate TSC frequency. */
 		last_tsc = cpu_counter_serializing();
 		x86_delay(100000);
 		ci->ci_data.cpu_cc_freq =

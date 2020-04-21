@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.26.10.1 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.26.10.2 2020/04/21 18:42:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.26.10.1 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.26.10.2 2020/04/21 18:42:41 martin Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -138,7 +138,7 @@ v7fs_lookup(void *v)
 		if ((nameiop == RENAME) && islastcn) {
 			return EISDIR; /* t_vnops rename_dir(3) */
 		}
-		vref(dvp); /* v_usecount++ */
+		vref(dvp); /* usecount++ */
 		*a->a_vpp = dvp;
 		DPRINTF("done.(.)\n");
 		return 0;
@@ -717,9 +717,9 @@ v7fs_remove(void *v)
 
 out:
 	if (dvp == vp)
-		vrele(vp); /* v_usecount-- of unlocked vp */
+		vrele(vp); /* usecount-- of unlocked vp */
 	else
-		vput(vp); /* unlock vp and then v_usecount-- */
+		vput(vp); /* unlock vp and then usecount-- */
 
 	return error;
 }

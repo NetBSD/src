@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.91.16.2 2020/04/13 08:03:28 martin Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.91.16.3 2020/04/21 18:42:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -49,13 +49,12 @@
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 #include "vidcvideo.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91.16.2 2020/04/13 08:03:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91.16.3 2020/04/21 18:42:02 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -142,16 +141,12 @@ u_int videodram_size = 0;	/* Amount of DRAM to reserve for video */
 
 paddr_t msgbufphys;
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif	/* PMAP_DEBUG */
-
 #define	KERNEL_PT_VMEM		0 /* Page table for mapping video memory */
 #define	KERNEL_PT_SYS		1 /* Page table for mapping proc0 zero page */
 #define	KERNEL_PT_KERNEL	2 /* Page table for mapping kernel 0-4MB*/
 #define	KERNEL_PT_KERNEL_4MB	3 /* Page table for mapping kernel 4-8MB*/
 #define	KERNEL_PT_VMDATA	4 /* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	4 /* start with 16MB of KVM */	
+#define	KERNEL_PT_VMDATA_NUM	4 /* start with 16MB of KVM */
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -336,7 +331,7 @@ cpu_reboot(int howto, char *bootstr)
 /*
  * Mapping table for core kernel memory. This memory is mapped at init
  * time with section mappings.
- * 
+ *
  * XXX One big assumption in the current architecture seems that the kernel is
  * XXX supposed to be mapped into bootconfig.dram[0].
  */
@@ -417,7 +412,6 @@ initarm(void *cookie)
 	/* if the wscons interface is used, switch off VERBOSE booting :( */
 #if NVIDCVIDEO>0
 #	undef VERBOSE_INIT_ARM
-#	undef PMAP_DEBUG
 #endif
 
 	/*
@@ -431,9 +425,9 @@ initarm(void *cookie)
 	videomemory.vidm_vbase = bootconfig.display_start;
 	videomemory.vidm_pbase = bootconfig.display_phys;
 	videomemory.vidm_size = bootconfig.display_size;
-	if (bootconfig.vram[0].pages) 
+	if (bootconfig.vram[0].pages)
 		videomemory.vidm_type = VIDEOMEM_TYPE_VRAM;
-	else 
+	else
 		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	vidc_base = (int *) VIDC_HW_BASE;
 	iomd_base =         IOMD_HW_BASE;
@@ -475,7 +469,7 @@ initarm(void *cookie)
 	 * The initarm() has the responsibility for creating the kernel
 	 * page tables.
 	 * It must also set up various memory pointers that are used
-	 * by pmap etc. 
+	 * by pmap etc.
 	 */
 
 #ifdef FORCE_VERBOSE_INIT_ARM
@@ -489,7 +483,7 @@ initarm(void *cookie)
 #define VERBOSE_INIT_ARM
 #endif
 	/* START OF REAL NEW STUFF */
-	
+
 	/* Check to make sure the page size is correct */
 	if (PAGE_SIZE != bootconfig.pagesize)
 		panic2(("Page size is %d bytes instead of %d !! (huh?)\n",
@@ -500,7 +494,7 @@ initarm(void *cookie)
 
 	/*
 	 * Now set up the page tables for the kernel ... this part is copied
-	 * in a (modified?) way from the EBSA machine port.... 
+	 * in a (modified?) way from the EBSA machine port....
 	 */
 
 #ifdef VERBOSE_INIT_ARM
@@ -511,7 +505,7 @@ initarm(void *cookie)
 	 * memory
 	 */
 	physical_start = 0xffffffff;
-	physical_end = 0; 
+	physical_end = 0;
 	kinetic_physical_start = 0xffffffff;
 #ifdef VERBOSE_INIT_ARM
 	printf("memory blocks:\n");
@@ -567,7 +561,7 @@ initarm(void *cookie)
 	physical_freestart = kernel_start;
 	free_pages = bootconfig.drampages;
 	physical_freeend = physical_end;
- 
+
 	/*
 	 * AHUM !! set this variable ... it was set up in the old 1st
 	 * stage bootloader
@@ -578,7 +572,7 @@ initarm(void *cookie)
 	physical_freestart +=
 	    bootconfig.kernsize + bootconfig.scratchsize;
 	free_pages -= (bootconfig.kernsize + bootconfig.scratchsize) / PAGE_SIZE;
-  
+
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)						\
 	alloc_pages((var).pv_pa, (np));					\
@@ -627,13 +621,13 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("Setting up stacks :\n");
 	printf("IRQ stack: p0x%08lx v0x%08lx\n",
-	    irqstack.pv_pa, irqstack.pv_va); 
+	    irqstack.pv_pa, irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n",
-	    abtstack.pv_pa, abtstack.pv_va); 
+	    abtstack.pv_pa, abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n",
-	    undstack.pv_pa, undstack.pv_va); 
+	    undstack.pv_pa, undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n",
-	    kernelstack.pv_pa, kernelstack.pv_va); 
+	    kernelstack.pv_pa, kernelstack.pv_va);
 	printf("\n");
 #endif
 
@@ -818,7 +812,7 @@ initarm(void *cookie)
 	 */
 	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
-	/* 
+	/*
 	 * if there is support for a serial console ...we should now
 	 * reattach it
 	 */
@@ -873,11 +867,10 @@ initarm(void *cookie)
 	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_UND32_MODE,
 	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
-		    kernelstack.pv_pa);
-#endif	/* PMAP_DEBUG */
+#ifdef VERBOSE_INIT_ARM
+	printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
+	    kernelstack.pv_pa);
+#endif	/* VERBOSE_INIT_ARM */
 
 	/*
 	 * Well we should set a data abort handler.
@@ -901,7 +894,7 @@ initarm(void *cookie)
 	 * We now have the kernel in physical memory from the bottom upwards.
 	 * Kernel page tables are physically above this.
 	 * The kernel is mapped to 0xf0000000
-	 * The kernel data PTs will handle the mapping of 
+	 * The kernel data PTs will handle the mapping of
 	 *   0xf1000000-0xf5ffffff (80 Mb)
 	 * 2Meg of VRAM is mapped to 0xf7000000
 	 * The page tables are mapped to 0xefc00000
@@ -1014,7 +1007,7 @@ initarm(void *cookie)
 
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110)
-		rpc_sa110_cc_setup();	
+		rpc_sa110_cc_setup();
 #endif	/* CPU_SA110 */
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)

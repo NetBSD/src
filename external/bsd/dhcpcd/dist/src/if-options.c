@@ -573,6 +573,8 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		return;
 	}
 #endif
+#else
+	UNUSED(arg);
 #endif
 
 #ifdef INET
@@ -1275,6 +1277,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		memset(ifo->nomask6, 0xff, sizeof(ifo->nomask6));
 
 		/* Allow the bare minimum through */
+#ifdef INET
 		del_option_mask(ifo->nomask, DHO_SUBNETMASK);
 		del_option_mask(ifo->nomask, DHO_CSR);
 		del_option_mask(ifo->nomask, DHO_ROUTER);
@@ -1286,11 +1289,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		del_option_mask(ifo->nomask, DHO_RENEWALTIME);
 		del_option_mask(ifo->nomask, DHO_REBINDTIME);
 		del_option_mask(ifo->nomask, DHO_DNSSEARCH);
+#endif
 
+#ifdef INET6
 		del_option_mask(ifo->nomask6, D6_OPTION_DNS_SERVERS);
 		del_option_mask(ifo->nomask6, D6_OPTION_DOMAIN_LIST);
 		del_option_mask(ifo->nomask6, D6_OPTION_SOL_MAX_RT);
 		del_option_mask(ifo->nomask6, D6_OPTION_INF_MAX_RT);
+#endif
 
 		break;
 #ifdef INET
@@ -2187,12 +2193,20 @@ invalid_token:
 		break;
 	case O_SLAAC:
 		ARG_REQUIRED;
+		np = strwhite(arg);
+		if (np != NULL) {
+			*np++ = '\0';
+			np = strskipwhite(np);
+		}
 		if (strcmp(arg, "private") == 0 ||
 		    strcmp(arg, "stableprivate") == 0 ||
 		    strcmp(arg, "stable") == 0)
 			ifo->options |= DHCPCD_SLAACPRIVATE;
 		else
 			ifo->options &= ~DHCPCD_SLAACPRIVATE;
+		if (np != NULL &&
+		    (strcmp(np, "temp") == 0 || strcmp(np, "temporary") == 0))
+			ifo->options |= DHCPCD_SLAACTEMP;
 		break;
 	case O_BOOTP:
 		ifo->options |= DHCPCD_BOOTP;

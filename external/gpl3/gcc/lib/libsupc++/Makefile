@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.16.1 2019/06/10 21:55:38 christos Exp $
+#	$NetBSD: Makefile,v 1.11.16.2 2020/04/21 18:41:56 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -24,6 +24,15 @@ SHLIB_MINOR=	0
 
 SRCS=		${LIBSUPCXXSRCS} xmalloc.c
 CXXFLAGS+=	${G_SECTION_FLAGS}
+
+# XXX PR#54660
+.if ${MACHINE} == "sparc"
+SRCS+=		atomicity.cc
+DIST=		${GCCDIST}
+GLIBCXX_SRCDIR=	${DIST}/libstdc++-v3
+BUILDSYMLINKS+=	\
+	${GLIBCXX_SRCDIR}/${G_ATOMICITY_SRCDIR}/atomicity.h atomicity.cc
+.endif
 
 COPTS.cp-demangle.c = -Wno-stack-protector -Wno-unused-function
 

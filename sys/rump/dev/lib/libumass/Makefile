@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.10.18.1 2020/04/21 18:42:44 martin Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -9,7 +9,7 @@ COMMENT=USB mass storage driver
 IOCONF=	UMASS.ioconf
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
-SRCS=	umass.c umass_isdata.c umass_quirks.c umass_scsipi.c
+SRCS=	umass.c umass_quirks.c umass_scsipi.c
 
 SRCS+=	umass_component.c
 .else

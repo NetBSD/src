@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.83.16.1 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.83.16.2 2020/04/21 18:42:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -111,7 +111,8 @@ int	ufs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 /* ufs_inode.c */
 int	ufs_reclaim(struct vnode *);
 int	ufs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
-int	ufs_truncate_retry(struct vnode *, uint64_t, kauth_cred_t);
+int	ufs_truncate_all(struct vnode *);
+int	ufs_truncate_retry(struct vnode *, int, uint64_t, kauth_cred_t);
 
 /* ufs_lookup.c */
 void	ufs_dirbad(struct inode *, doff_t, const char *);

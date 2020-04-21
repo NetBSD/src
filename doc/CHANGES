@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2405.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2405.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -169,3 +169,15 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xen: remove legacy rx-flip support from xennet(4) and xvif(4)
 		[jdolecek 20200405]
 	OpenSSL: Imported 1.1.1f. [christos 20200405]
+	xennet(4): Make the driver MP-safe [jdolecek 20200406]
+	aarch64: Add support for Pointer Authentication (PAC).
+		[maxv 20200412]
+	aarch64: Add support for Branch Target Identification (BTI).
+		[maxv 20200413]
+	umass(4): Removed obsolete ISD-ATA support [jdolecek 202000413]
+	dhcpcd(8): Import version 9.0.1 [roy 20200413]
+	xbd(4): Make the driver MP-safe [jdolecek 20200413]
+	xbd(4): Support regular 64KB MAXPHYS [jdolecek 20200415]
+	xbd(4): Support indirect segments [jdolecek 20200416]
+	dhcpcd(8): Import version 9.0.2 [roy 20200421]
+	xbdback(4): Support indirect segments [jdolecek 20200421]

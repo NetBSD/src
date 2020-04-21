@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.25.16.2 2020/04/13 08:03:47 martin Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.25.16.3 2020/04/21 18:42:07 martin Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -19,7 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependent functions for kernel setup for 
+ * Machine dependent functions for kernel setup for
  * Intel DBPXA250 evaluation board (a.k.a. Lubbock).
  * Based on iq80310_machhdep.c
  */
@@ -112,13 +112,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.25.16.2 2020/04/13 08:03:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.25.16.3 2020/04/21 18:42:07 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "lcd.h"
@@ -192,10 +191,6 @@ pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
@@ -238,7 +233,7 @@ static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 	{ 44, GPIO_ALT_FN_1_IN },	/* BTCST */
 	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRST */
 
-	{ -1 } 
+	{ -1 }
 };
 static struct pxa2x0_gpioconf *viper_gpioconf[] = {
 	pxa25x_com_btuart_gpioconf,
@@ -298,7 +293,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -549,13 +544,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	/*
@@ -607,7 +602,7 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
+
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
@@ -851,7 +846,7 @@ consinit(void)
 		/* port is reserved for kgdb */
 	} else
 #endif
-	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
+	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
 		     comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
 
 #if 0

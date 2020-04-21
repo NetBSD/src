@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.85.16.2 2020/04/13 08:04:01 martin Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.85.16.3 2020/04/21 18:42:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85.16.2 2020/04/13 08:04:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85.16.3 2020/04/21 18:42:10 martin Exp $");
 
 #include "opt_ddb.h"
-#include "opt_pmap_debug.h"
 
 #define	_ARM32_BUS_DMA_PRIVATE
 
@@ -135,10 +134,6 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
@@ -270,7 +265,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -541,13 +536,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
@@ -903,7 +898,7 @@ consinit(void)
 
 		/*
 		 * XXX: uwe: special case mapping for the igsfb memory space.
-		 * 
+		 *
 		 * The problem with this is that when footbridge is
 		 * attached during normal autoconfiguration the bus
 		 * space tags will be reinited and these hooks lost.

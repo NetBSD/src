@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.17.18.1 2020/04/08 14:09:01 martin Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.17.18.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.17.18.1 2020/04/08 14:09:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.17.18.2 2020/04/21 18:42:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -62,7 +62,8 @@ sleepq_init(sleepq_t *sq)
 }
 
 void
-sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob)
+sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob,
+    bool catch_p)
 {
 	struct lwp *l = curlwp;
 

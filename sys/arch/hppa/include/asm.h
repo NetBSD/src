@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15.30.1 2019/06/10 22:06:19 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.15.30.2 2020/04/21 18:42:08 martin Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -99,8 +99,8 @@
 #define ALTENTRY(x) ! .export x, entry ! .label x
 #define EXIT(x) ! .exit ! .procend ! .size x, .-x
 
-#define RCSID(x)	.pushsection ".ident"		!\
-			.asciz x			!\
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
 			.popsection
 
 #define WEAK_ALIAS(alias,sym)				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: user.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.2.48.1 2020/04/21 18:41:55 martin Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: user.c,v 1.5 2004/01/23 18:56:43 vixie Exp";
 +#else
-+__RCSID("$NetBSD: user.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
++__RCSID("$NetBSD: user.c,v 1.2.48.1 2020/04/21 18:41:55 martin Exp $");
 #endif
 #endif
 
@@ -41,6 +41,7 @@ free_user(user *u) {
 	free(u->name);
 	for (e = u->crontab;  e != NULL;  e = ne) {
 		ne = e->next;
+		job_remove(e, u);
 		free_entry(e);
 	}
 	free(u);

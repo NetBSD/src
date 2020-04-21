@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.41.4.2 2020/04/13 08:05:03 martin Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.41.4.3 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.41.4.2 2020/04/13 08:05:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.41.4.3 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ cv_destroy(kcondvar_t *cv)
  *	condition variable, and increment the number of waiters.
  */
 static inline void
-cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
+cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, bool catch_p)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
@@ -129,7 +129,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
 	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj);
+	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj, catch_p);
 	mutex_exit(mtx);
 	KASSERT(cv_has_waiters(cv));
 }
@@ -169,7 +169,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, false);
 	(void)sleepq_block(0, false);
 	mutex_enter(mtx);
 }
@@ -190,7 +190,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, true);
 	error = sleepq_block(0, true);
 	mutex_enter(mtx);
 	return error;
@@ -213,7 +213,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, false);
 	error = sleepq_block(timo, false);
 	mutex_enter(mtx);
 	return error;
@@ -238,7 +238,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 
 	KASSERT(mutex_owned(mtx));
 
-	cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l, true);
 	error = sleepq_block(timo, true);
 	mutex_enter(mtx);
 	return error;
@@ -340,13 +340,13 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */
@@ -383,13 +383,13 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
 
 	/*
-	 * hardclock_ticks is technically int, but nothing special
+	 * getticks() is technically int, but nothing special
 	 * happens instead of overflow, so we assume two's-complement
 	 * wraparound and just treat it as unsigned.
 	 */
-	start = hardclock_ticks;
+	start = getticks();
 	error = cv_timedwait_sig(cv, mtx, bintime2timo(bt));
-	end = hardclock_ticks;
+	end = getticks();
 
 	slept = timo2bintime(end - start);
 	/* bt := bt - slept */

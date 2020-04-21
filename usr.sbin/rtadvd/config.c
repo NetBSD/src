@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.40.2.1 2020/04/13 08:05:58 martin Exp $	*/
+/*	$NetBSD: config.c,v 1.40.2.2 2020/04/21 18:42:48 martin Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -875,49 +875,6 @@ makeentry(char *buf, size_t len, int id, const char *string)
 }
 
 /*
- * Add a prefix to the list of specified interface and reconstruct
- * the outgoing packet.
- * The prefix must not be in the list.
- * XXX: other parameters of the prefix(e.g. lifetime) should be
- * able to be specified.
- */
-static void
-add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
-{
-	struct prefix *prefix;
-	char ntopbuf[INET6_ADDRSTRLEN];
-
-	if ((prefix = calloc(1, sizeof(*prefix))) == NULL) {
-		logit(LOG_ERR, "<%s> memory allocation failed",
-		       __func__);
-		return;		/* XXX: error or exit? */
-	}
-	prefix->prefix = ipr->ipr_prefix.sin6_addr;
-	prefix->prefixlen = ipr->ipr_plen;
-	prefix->validlifetime = ipr->ipr_vltime;
-	prefix->preflifetime = ipr->ipr_pltime;
-	prefix->onlinkflg = ipr->ipr_raf_onlink;
-	prefix->autoconfflg = ipr->ipr_raf_auto;
-	prefix->origin = PREFIX_FROM_DYNAMIC;
-
-	prefix->rainfo = rai;
-	TAILQ_INSERT_TAIL(&rai->prefix, prefix, next);
-	rai->pfxs++;
-
-	logit(LOG_DEBUG, "<%s> new prefix %s/%d was added on %s",
-	       __func__, inet_ntop(AF_INET6, &ipr->ipr_prefix.sin6_addr,
-				       ntopbuf, INET6_ADDRSTRLEN),
-	       ipr->ipr_plen, rai->ifname);
-
-	/* free the previous packet */
-	free(rai->ra_data);
-	rai->ra_data = NULL;
-
-	/* reconstruct the packet */
-	make_packet(rai);
-}
-
-/*
  * Delete a prefix to the list of specified interface and reconstruct
  * the outgoing packet.
  * The prefix must be in the list.
@@ -1001,73 +958,45 @@ update_prefix(struct prefix * prefix)
 }
 
 /*
- * Try to get an in6_prefixreq contents for a prefix which matches
- * ipr->ipr_prefix and ipr->ipr_plen and belongs to
- * the interface whose name is ipr->ipr_name[].
+ * Add a prefix to the list of specified interface and reconstruct
+ * the outgoing packet.
+ * The prefix must not be in the list.
+ * XXX: other parameters of the prefix(e.g. lifetime) should be
+ * able to be specified.
  */
-static int
-init_prefix(struct in6_prefixreq *ipr)
-{
-#if 0
-	int s;
-
-	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		logit(LOG_ERR, "<%s> socket: %m", __func__);
-		exit(1);
-	}
-
-	if (prog_ioctl(s, SIOCGIFPREFIX_IN6, ipr) < 0) {
-		logit(LOG_INFO, "<%s> ioctl:SIOCGIFPREFIX: %m", __func__);
-
-		ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;
-		ipr->ipr_pltime = DEF_ADVPREFERREDLIFETIME;
-		ipr->ipr_raf_onlink = 1;
-		ipr->ipr_raf_auto = 1;
-		/* omit other field initialization */
-	}
-	else if (ipr->ipr_origin < PR_ORIG_RR) {
-		char ntopbuf[INET6_ADDRSTRLEN];
-
-		logit(LOG_WARNING, "<%s> Added prefix(%s)'s origin %d is"
-		       "lower than PR_ORIG_RR(router renumbering)."
-		       "This should not happen if I am router", __func__,
-		       inet_ntop(AF_INET6, &ipr->ipr_prefix.sin6_addr, ntopbuf,
-				 sizeof(ntopbuf)), ipr->ipr_origin);
-		prog_close(s);
-		return 1;
-	}
-
-	prog_close(s);
-	return 0;
-#else
-	ipr->ipr_vltime = DEF_ADVVALIDLIFETIME;
-	ipr->ipr_pltime = DEF_ADVPREFERREDLIFETIME;
-	ipr->ipr_raf_onlink = 1;
-	ipr->ipr_raf_auto = 1;
-	return 0;
-#endif
-}
-
 void
-make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
+add_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 {
-	struct in6_prefixreq ipr;
+	struct prefix *prefix;
+	char ntopbuf[INET6_ADDRSTRLEN];
 
-	memset(&ipr, 0, sizeof(ipr));
-	if (if_indextoname(ifindex, ipr.ipr_name) == NULL) {
-		logit(LOG_ERR, "<%s> Prefix added interface No.%d doesn't"
-		       "exist. This should not happen: %m", __func__,
-		       ifindex);
-		exit(1);
+	if ((prefix = calloc(1, sizeof(*prefix))) == NULL) {
+		logit(LOG_ERR, "<%s> memory allocation failed",
+		       __func__);
+		return;		/* XXX: error or exit? */
 	}
-	ipr.ipr_prefix.sin6_len = sizeof(ipr.ipr_prefix);
-	ipr.ipr_prefix.sin6_family = AF_INET6;
-	ipr.ipr_prefix.sin6_addr = *addr;
-	ipr.ipr_plen = plen;
+	prefix->prefix = *addr;
+	prefix->prefixlen = plen;
+	prefix->validlifetime = DEF_ADVVALIDLIFETIME;
+	prefix->preflifetime = DEF_ADVPREFERREDLIFETIME;
+	prefix->onlinkflg = 1;
+	prefix->autoconfflg = 0;
+	prefix->origin = PREFIX_FROM_DYNAMIC;
 
-	if (init_prefix(&ipr))
-		return; /* init failed by some error */
-	add_prefix(rai, &ipr);
+	prefix->rainfo = rai;
+	TAILQ_INSERT_TAIL(&rai->prefix, prefix, next);
+	rai->pfxs++;
+
+	logit(LOG_DEBUG, "<%s> new prefix %s/%d was added on %s",
+	       __func__, inet_ntop(AF_INET6, addr, ntopbuf, INET6_ADDRSTRLEN),
+	       plen, rai->ifname);
+
+	/* free the previous packet */
+	free(rai->ra_data);
+	rai->ra_data = NULL;
+
+	/* reconstruct the packet */
+	make_packet(rai);
 }
 
 void

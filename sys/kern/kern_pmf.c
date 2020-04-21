@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.40.2.1 2020/04/08 14:08:51 martin Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.40.2.2 2020/04/21 18:42:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.40.2.1 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.40.2.2 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -317,7 +317,7 @@ pmf_system_suspend(const pmf_qual_t *qual)
 	if (doing_shutdown == 0 && panicstr == NULL) {
 		printf("Flushing disk caches: ");
 		do_sys_sync(&lwp0);
-		if (buf_syncwait() != 0)
+		if (vfs_syncwait() != 0)
 			printf("giving up\n");
 		else
 			printf("done\n");

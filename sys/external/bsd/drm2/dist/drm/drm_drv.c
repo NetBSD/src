@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.1.2.30.2 2020/04/08 14:08:22 martin Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.1.2.30.3 2020/04/21 18:42:40 martin Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.1.2.30.2 2020/04/08 14:08:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.1.2.30.3 2020/04/21 18:42:40 martin Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -660,6 +660,14 @@ struct drm_device *drm_dev_alloc(struct drm_driver *driver,
 	kref_init(&dev->ref);
 	dev->dev = parent;
 	dev->driver = driver;
+#ifdef __NetBSD__
+	dev->sc_monitor_hotplug.smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
+	dev->sc_monitor_hotplug.smpsw_type = PSWITCH_TYPE_HOTKEY;
+
+	ret = sysmon_pswitch_register(&dev->sc_monitor_hotplug);
+	if (ret)
+		goto err_pswitch;
+#endif
 
 	INIT_LIST_HEAD(&dev->filelist);
 	INIT_LIST_HEAD(&dev->ctxlist);
@@ -727,6 +735,10 @@ err_free:
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->ctxlist_mutex);
 	mutex_destroy(&dev->struct_mutex);
+#ifdef __NetBSD__
+err_pswitch:
+	sysmon_pswitch_unregister(&dev->sc_monitor_hotplug);
+#endif
 	kfree(dev);
 	return NULL;
 }
@@ -738,6 +750,10 @@ static void drm_dev_release(struct kref *ref)
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_destroy(dev);
+
+#ifdef __NetBSD__
+	sysmon_pswitch_unregister(&dev->sc_monitor_hotplug);
+#endif
 
 	drm_legacy_ctxbitmap_cleanup(dev);
 	drm_ht_remove(&dev->map_hash);

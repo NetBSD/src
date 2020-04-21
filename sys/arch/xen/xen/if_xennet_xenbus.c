@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.77.2.3 2020/04/13 08:04:12 martin Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.77.2.4 2020/04/21 18:42:13 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77.2.3 2020/04/13 08:04:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77.2.4 2020/04/21 18:42:13 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -411,7 +411,9 @@ xennet_xenbus_detach(device_t self, int flags)
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
 
 	/* stop interface */
+	IFNET_LOCK(ifp);
 	xennet_stop(ifp, 1);
+	IFNET_UNLOCK(ifp);
 	if (sc->sc_ih != NULL) {
 		xen_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -1146,9 +1148,9 @@ xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
-	IFNET_LOCK(ifp);
+	KASSERT(IFNET_LOCKED(ifp));
+
 	ifp->if_flags &= ~IFF_RUNNING;
-	IFNET_UNLOCK(ifp);
 	hypervisor_mask_event(sc->sc_evtchn);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.9.4.2 2020/04/13 08:05:04 martin Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.9.4.3 2020/04/21 18:42:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.9.4.2 2020/04/13 08:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.9.4.3 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.9.4.2 2020/04/13 08:05:04 martin Exp
 #include <uvm/uvm.h>
 
 static void kmsan_printf(const char *, ...);
+
+void kmsan_init_arg(size_t);
+void kmsan_init_ret(size_t);
 
 #ifdef KMSAN_PANIC
 #define REPORT panic
@@ -355,9 +358,6 @@ kmsan_shadow_check(const void *addr, size_t size, const char *hook)
 		break;
 	}
 }
-
-void kmsan_init_arg(size_t);
-void kmsan_init_ret(size_t);
 
 void
 kmsan_init_arg(size_t n)

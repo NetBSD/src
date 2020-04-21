@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.6 2006/01/06 01:27:23 uwe Exp $	*/
+/*	$NetBSD: syscall.S,v 1.6.86.1 2020/04/21 18:41:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,9 +36,9 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: syscall.S,v 1.6 2006/01/06 01:27:23 uwe Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.6.86.1 2020/04/21 18:41:58 martin Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-RSYSCALL(syscall)
+WSYSCALL(syscall,_syscall)

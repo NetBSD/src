@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.151.2.3 2020/04/13 07:45:45 martin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.151.2.4 2020/04/21 18:41:54 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -108,6 +108,7 @@
 ./usr/libdata/debug/usr/tests/lib/libexecinfo
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
+./usr/libdata/debug/usr/tests/lib/libi386
 ./usr/libdata/debug/usr/tests/lib/liblutok
 ./usr/libdata/debug/usr/tests/lib/libm
 ./usr/libdata/debug/usr/tests/lib/libnvmm
@@ -303,6 +304,7 @@
 ./usr/tests/lib/libbpfjit
 ./usr/tests/lib/libevent
 ./usr/tests/lib/libexecinfo
+./usr/tests/lib/libi386
 ./usr/tests/lib/liblutok
 ./usr/tests/lib/libm
 ./usr/tests/lib/libnvmm

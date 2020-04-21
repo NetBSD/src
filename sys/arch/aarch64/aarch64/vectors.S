@@ -1,9 +1,12 @@
-/*	$NetBSD: vectors.S,v 1.5.2.3 2020/04/13 08:03:27 martin Exp $	*/
+/*	$NetBSD: vectors.S,v 1.5.2.4 2020/04/21 18:42:02 martin Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
+
+	ARMV8_DEFINE_OPTIONS
 
 #ifdef KDTRACE_HOOKS
 /*
@@ -20,8 +23,9 @@
  * Template for the handler functions.
  */
 .macro	vector_func, func, el, label, tpidr
-ENTRY_NP(\func)
 	.align 7	/* cacheline-aligned */
+
+ENTRY_NBTI(\func)
 
 	.if \el == 1
 	/* need to allocate stack on el1 */
@@ -81,6 +85,18 @@ ENTRY_NP(\func)
 	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
 	mrs	x0, tpidr\tpidr\()_el0
 	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
+
+#ifdef ARMV83_PAC
+	/* Switch to the kern PAC key. */
+	adrl	x4, _C_LABEL(aarch64_pac_enabled)
+	ldr	w4, [x4]
+	cbz	w4, 1f
+	ldr	x5, [x1, #L_MD_IA_KERN_LO]
+	ldr	x6, [x1, #L_MD_IA_KERN_HI]
+	msr	APIAKeyLo_EL1, x5
+	msr	APIAKeyHi_EL1, x6
+1:
+#endif
 	.endif
 
 	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
@@ -128,7 +144,7 @@ vector_func	el0_32error_handler, 0, trap_el0_32error, ro
  * The vector table. Must be aligned to 2048.
  */
 	.align 11
-ENTRY_NP(el1_vectors)
+ENTRY_NBTI(el1_vectors)
 	/*
 	 * Exception taken from current Exception Level with SP_EL0.
 	 * (These shouldn't happen)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.71.2.2 2020/04/13 08:03:30 martin Exp $
+#	$NetBSD: Makefile.amd64,v 1.71.2.3 2020/04/21 18:42:03 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -49,12 +49,21 @@ CFLAGS+=      -mindirect-branch=thunk-inline
 CFLAGS+=      -mindirect-branch-register
 .endif
 
-.if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+.if ${KASAN:U0} > 0
+.if ${HAVE_GCC:U0} > 0
 KASANFLAGS=	-fsanitize=kernel-address \
 		--param asan-globals=1 --param asan-stack=1 \
 		--param asan-instrument-allocas=1 \
 		-fsanitize-address-use-after-scope \
 		-fasan-shadow-offset=0xDFFF900000000000
+.elif ${HAVE_LLVM:Uno} == "yes"
+KASANFLAGS=	-fsanitize=kernel-address \
+		-mllvm -asan-globals=1 -mllvm -asan-stack=1 \
+		-mllvm -asan-instrument-dynamic-allocas=1 \
+		-mllvm -asan-use-after-scope=1 \
+		-mllvm -asan-instrumentation-with-call-threshold=0 \
+		-mllvm -asan-mapping-offset=0xDFFF900000000000
+.endif
 .for f in subr_asan.c subr_kcov.c
 KASANFLAGS.${f}=	# empty
 .endfor

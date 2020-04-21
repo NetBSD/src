@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.41.4.2 2020/04/13 08:05:04 martin Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.41.4.3 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41.4.2 2020/04/13 08:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41.4.3 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ state_check:
 		l->l_selflag = SEL_BLOCKING;
 		l->l_kpriority = true;
 		sleepq_enter(&sc->sc_sleepq, l, lock);
-		sleepq_enqueue(&sc->sc_sleepq, sc, opname, &select_sobj);
+		sleepq_enqueue(&sc->sc_sleepq, sc, opname, &select_sobj, true);
 		error = sleepq_block(timo, true);
 		if (error != 0) {
 			break;

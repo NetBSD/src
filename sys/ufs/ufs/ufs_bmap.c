@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.52 2017/03/18 05:33:06 riastradh Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.52.14.1 2020/04/21 18:42:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.52 2017/03/18 05:33:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.52.14.1 2020/04/21 18:42:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,13 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			}
 		}
 		return (0);
+	} else if (bn < 0 && bn >= -UFS_NXADDR) {
+		KASSERT(ump->um_fstype == UFS2);
+		daddr = ufs_rw64(ip->i_ffs2_extb[-1 - bn], UFS_MPNEEDSWAP(ump));
+		*bnp = blkptrtodb(ump, daddr);
+		if (*bnp == 0)
+			*bnp = -1;
+		return 0;
 	}
 
 	xap = ap == NULL ? a : ap;

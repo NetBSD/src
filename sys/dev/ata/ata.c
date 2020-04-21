@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.4.3 2020/04/13 08:04:18 martin Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.4.4 2020/04/21 18:42:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.3 2020/04/13 08:04:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.4 2020/04/21 18:42:15 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -847,13 +847,8 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.flags = AT_READ | flags;
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = ATA_BSIZE;
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
-		    DEBUG_FUNCS|DEBUG_PROBE);
-		rv = CMD_AGAIN;
-		goto out;
-	}
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    xfer->c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
@@ -937,11 +932,8 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 	xfer->c_ata_c.r_count = mode;
 	xfer->c_ata_c.flags = flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		rv = CMD_AGAIN;
-		goto out;
-	}
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		rv = CMD_ERR;
 		goto out;

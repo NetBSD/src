@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.187.10.2 2020/04/13 07:45:37 martin Exp $
+# $NetBSD: HACKS,v 1.187.10.3 2020/04/21 18:41:54 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -898,14 +898,6 @@ cdate	Mon Oct 28 14:39:35 EDT 2019
 who	christos
 file	/cvsroot/src/external/mit/xorg/lib/gallium/Makefile 1.36
 descr	gallium does not compile.
-kcah
-
-port	aarch64
-hack	compile ex_filter.c in vi with -O0
-cdate	Mon Oct 28 14:39:35 EDT 2019
-who	christos
-file	/cvsroot/src/external/bsd/nvi/usr.bin/nvi/Makefile 1.20
-descr	":%! sort" core-dumps, tm is NULL but was not NULL on entry.
 kcah
 
 port	sh3

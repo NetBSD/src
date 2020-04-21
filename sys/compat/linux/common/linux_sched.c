@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.71.2.1 2020/04/13 08:04:15 martin Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.71.2.2 2020/04/21 18:42:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.71.2.1 2020/04/13 08:04:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.71.2.2 2020/04/21 18:42:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -182,7 +182,7 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	void *parent_tidptr, *tls, *child_tidptr;
 	vaddr_t uaddr;
 	lwpid_t lid;
-	int flags, tnprocs, error;
+	int flags, error;
 
 	p = l->l_proc;
 	flags = SCARG(uap, flags);
@@ -190,17 +190,8 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	tls = SCARG(uap, tls);
 	child_tidptr = SCARG(uap, child_tidptr);
 
-	tnprocs = atomic_inc_uint_nv(&nprocs);
-	if (__predict_false(tnprocs >= maxproc) ||
-	    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_FORK, p,
-	    KAUTH_ARG(tnprocs), NULL, NULL) != 0) {
-		atomic_dec_uint(&nprocs);
-		return EAGAIN;
-	}
-
 	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
-		atomic_dec_uint(&nprocs);
 		return ENOMEM;
 	}
 
@@ -209,7 +200,6 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	    &l->l_sigmask, &l->l_sigstk);
 	if (__predict_false(error)) {
 		DPRINTF(("%s: lwp_create error=%d\n", __func__, error));
-		atomic_dec_uint(&nprocs);
 		uvm_uarea_free(uaddr);
 		return error;
 	}

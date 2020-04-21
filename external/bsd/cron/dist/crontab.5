@@ -1,4 +1,4 @@
-.\" $NetBSD: crontab.5,v 1.7 2018/06/15 23:15:56 wiz Exp $
+.\" $NetBSD: crontab.5,v 1.7.2.1 2020/04/21 18:41:55 martin Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -21,7 +21,7 @@
 .\"
 .\" $OpenBSD: crontab.5,v 1.36 2018/06/13 13:27:37 jmc Exp $
 .\"
-.Dd June 14, 2018
+.Dd April 17, 2020
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -146,7 +146,26 @@ For example,
 .Ar hour
 entry specifies execution at hours 8, 9, 10 and 11.
 .Pp
-Step values can be used in conjunction with ranges.
+A field may begin with a question mark
+.Pq Sq \&? ,
+which indicates a single value randomly selected when the crontab
+file is read.
+If the field contains only a question mark, the value is randomly
+selected from the range of all possible values for the field.
+If the question mark precedes a range, the value is randomly selected
+from the range.
+For example,
+.Dq ? ?2-5 * * *
+specifies that a task will be performed daily between 2:00am and
+and 5:59am at a time randomly selected when the crontab file is
+first read.
+As just one example, this feature can be used to prevent a large
+number of hosts from contacting a server simultaneously and
+overloading it by staggering the time at which a download script
+is executed.
+.Pp
+Step values can be used in conjunction with ranges (but not random ranges
+which represent a single number).
 Following a range with
 .No / Ns Ar number
 specifies skips of
@@ -208,6 +227,13 @@ option is an attempt to cure potentially copious volumes of mail coming from
 .Xr cron 8 .
 .It Fl q Ar command
 Execution will not be logged.
+.It Fl s Ar command
+Only a single instance of
+.Ar command
+will be run concurrently.
+Additional instances of
+.Ar command
+will not be scheduled until the earlier one completes.
 .El
 .Pp
 Commands are executed by

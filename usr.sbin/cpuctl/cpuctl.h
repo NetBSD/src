@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.h,v 1.6 2018/01/16 08:23:18 mrg Exp $	*/
+/*	$NetBSD: cpuctl.h,v 1.6.4.1 2020/04/21 18:42:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,12 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cpuio.h>
+
 int	aprint_normal(const char *, ...) __printflike(1, 2);
 int	aprint_verbose(const char *, ...) __printflike(1, 2);
 int	aprint_error(const char *, ...) __printflike(1, 2);
 int	aprint_normal_dev(const char *, const char *, ...) __printflike(2, 3);
 int	aprint_verbose_dev(const char *, const char *, ...) __printflike(2, 3);
 int	aprint_error_dev(const char *, const char *, ...) __printflike(2, 3);
+int	aprint_debug_dev(const char *, const char *, ...) __printflike(2, 3);
 
 void	identifycpu(int, const char *);
 bool	identifycpu_bind(void);

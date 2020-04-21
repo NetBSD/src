@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.25.2.3 2020/04/13 08:04:12 martin Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.25.2.4 2020/04/21 18:42:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25.2.3 2020/04/13 08:04:12 martin Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25.2.4 2020/04/21 18:42:13 martin Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25.2.3 2020/04/13 08:04:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25.2.4 2020/04/21 18:42:13 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,6 +98,8 @@ xen_ipi_handler(void *arg)
 
 	ci = curcpu();
 	regs = arg;
+
+	KASSERT(ci == arg);
 	
 	pending = atomic_swap_32(&ci->ci_ipis, 0);
 
@@ -139,8 +141,8 @@ xen_ipi_init(void)
 	snprintf(intr_xname, sizeof(intr_xname), "%s ipi",
 	    device_xname(ci->ci_dev));
 
-	if (xen_intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
-		xen_ipi_handler, ci, true, intr_xname) == NULL) {
+	if (event_set_handler(evtchn, xen_ipi_handler, ci, IPL_HIGH, NULL,
+	    intr_xname, true, false) != 0) {
 		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}
@@ -314,7 +316,6 @@ xen_ipi_generic(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
-
 	ipi_cpu_handler();
 }
 

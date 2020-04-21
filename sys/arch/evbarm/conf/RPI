@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.78.4.3 2020/04/13 08:03:42 martin Exp $
+#	$NetBSD: RPI,v 1.78.4.4 2020/04/21 18:42:05 martin Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -49,7 +49,6 @@ options 	PLCONSOLE
 #  single		Boot to single user only
 #  kdb			Give control to kernel debugger
 #  ask			Ask for file name to reboot from
-#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output

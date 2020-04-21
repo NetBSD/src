@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.14.10.1 2019/06/10 22:05:57 christos Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.14.10.2 2020/04/21 18:42:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -593,7 +593,10 @@ static int
 acu_round_blocksize(void *arg, int blk, int mode, const audio_params_t *param)
 {
 
-	return (blk & ~0x1f);
+	blk = (blk & ~0x1f);
+	if (blk < 0x20)
+		blk = 0x20;
+	return blk;
 }
 
 static int

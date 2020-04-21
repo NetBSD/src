@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.18.12.1 2019/06/10 22:10:33 christos Exp $ */
+/* $NetBSD: udf.c,v 1.18.12.2 2020/04/21 18:42:47 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.18.12.1 2019/06/10 22:10:33 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.18.12.2 2020/04/21 18:42:47 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -514,6 +514,7 @@ static uint32_t
 udf_datablocks(off_t sz)
 {
 	/* predictor if it can be written inside the node */
+	/* XXX the predictor assumes NO extended attributes in the node */
 	if (sz < context.sector_size - UDF_EXTFENTRY_SIZE - 16)
 		return 0;
 
@@ -561,7 +562,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	struct extfile_entry *efe;
 	uint64_t inf_len, obj_size;
 	uint32_t l_ea, l_ad;
-	uint32_t free_space, desc_size;
 	uint16_t crclen;
 	uint8_t *data, *pos;
 
@@ -575,7 +575,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &fe->icbtag;
 		inf_len   = udf_rw64(fe->inf_len);
 		obj_size  = 0;
-		desc_size = sizeof(struct file_entry);
 	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
 		efe       = &dscr->efe;
 		data      = efe->data;
@@ -584,16 +583,14 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		icb       = &efe->icbtag;
 		inf_len   = udf_rw64(efe->inf_len);
 		obj_size  = udf_rw64(efe->obj_size);
-		desc_size = sizeof(struct extfile_entry);
 	} else {
 		errx(1, "Bad tag passed to udf_file_inject_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
 
-	/* calculate free space */
-	free_space = context.sector_size - (l_ea + l_ad) - desc_size;
+	/* check if it will fit internally */
 	if (udf_datablocks(size)) {
-		assert(free_space < size);
+		/* the predictor tells it won't fit internally */
 		return 1;
 	}
 
@@ -602,7 +599,6 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
 			UDF_ICB_INTERN_ALLOC);
 
-	// assert(free_space >= size);
 	pos = data + l_ea + l_ad;
 	memcpy(pos, blob, size);
 	l_ad   += size;

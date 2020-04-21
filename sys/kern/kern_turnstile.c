@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.32.40.1 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.32.40.2 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.32.40.1 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.32.40.2 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -429,7 +429,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	obase = l->l_kpribase;
 	if (obase < PRI_KTHREAD)
 		l->l_kpribase = PRI_KTHREAD;
-	sleepq_enqueue(sq, obj, "tstile", sobj);
+	sleepq_enqueue(sq, obj, "tstile", sobj, false);
 
 	/*
 	 * Disable preemption across this entire block, as we may drop

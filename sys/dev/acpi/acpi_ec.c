@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.75.14.1 2020/04/13 08:04:18 martin Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.75.14.2 2020/04/21 18:42:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.14.1 2020/04/13 08:04:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.14.2 2020/04/21 18:42:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -657,36 +657,42 @@ static ACPI_STATUS
 acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
     uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
-	device_t dv = arg;
+	device_t dv;
 	ACPI_STATUS rv;
-	uint8_t addr;
-	uint8_t *reg;
+	uint8_t addr, reg;
+	unsigned int i;
 
-	if ((func != ACPI_READ) && (func != ACPI_WRITE)) {
-		aprint_error("%s: invalid Address Space function called: %x\n",
-		    device_xname(dv), (unsigned int)func);
-		return AE_BAD_PARAMETER;
-	}
-	if (paddr > 0xff || width % 8 != 0 || value == NULL || arg == NULL ||
-	    paddr + width / 8 > 0x100)
+	if (paddr > 0xff || width % 8 != 0 || width > sizeof(ACPI_INTEGER)*8 ||
+	    value == NULL || arg == NULL || paddr + width / 8 > 0x100)
 		return AE_BAD_PARAMETER;
 
 	addr = paddr;
-	reg = (uint8_t *)value;
+	dv = arg;
 
 	rv = AE_OK;
 
-	if (func == ACPI_READ)
+	switch (func) {
+	case ACPI_READ:
 		*value = 0;
-
-	for (addr = paddr; addr < (paddr + width / 8); addr++, reg++) {
-		if (func == ACPI_READ)
-			rv = acpiec_read(dv, addr, reg);
-		else
-			rv = acpiec_write(dv, addr, *reg);
-
-		if (rv != AE_OK)
-			break;
+		for (i = 0; i < width; i += 8, ++addr) {
+			rv = acpiec_read(dv, addr, &reg);
+			if (rv != AE_OK)
+				break;
+			*value |= (ACPI_INTEGER)reg << i;
+		}
+		break;
+	case ACPI_WRITE:
+		for (i = 0; i < width; i += 8, ++addr) {
+			reg = (*value >> i) & 0xff;
+			rv = acpiec_write(dv, addr, reg);
+			if (rv != AE_OK)
+				break;
+		}
+		break;
+	default:
+		aprint_error("%s: invalid Address Space function called: %x\n",
+		    device_xname(dv), (unsigned int)func);
+		return AE_BAD_PARAMETER;
 	}
 
 	return rv;

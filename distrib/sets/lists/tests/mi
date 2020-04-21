@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.788.2.2 2020/04/13 07:45:33 martin Exp $
+# $NetBSD: mi,v 1.788.2.3 2020/04/21 18:41:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -126,6 +126,7 @@
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libexecinfo				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/liblutok				tests-lutok-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libi386				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libnvmm				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug		compattestfile,atf
@@ -3467,6 +3468,9 @@
 ./usr/tests/lib/libexecinfo/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libexecinfo/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libexecinfo/t_backtrace		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libi386				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libi386/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libi386/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/liblutok			tests-lutok-tests	compattestfile,atf
 ./usr/tests/lib/liblutok/Atffile		tests-lutok-tests	compattestfile,atf,kyua
 ./usr/tests/lib/liblutok/Kyuafile		tests-lutok-tests	compattestfile,atf,kyua

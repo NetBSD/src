@@ -317,16 +317,16 @@ dword_le_load:
 .long	0
 
 
-.globl	SHA3_absorb
-.type	SHA3_absorb,@function
+.globl	SHA3_absorb_vsx
+.type	SHA3_absorb_vsx,@function
 .section	".opd","aw"
 .align	3
-SHA3_absorb:
-.quad	.SHA3_absorb,.TOC.@tocbase,0
+SHA3_absorb_vsx:
+.quad	.SHA3_absorb_vsx,.TOC.@tocbase,0
 .previous
 
 .align	5
-.SHA3_absorb:
+.SHA3_absorb_vsx:
 	stdu	1,-272(1)
 	mflr	0
 	std	14,128(1)
@@ -546,16 +546,16 @@ SHA3_absorb:
 .byte	0,12,4,1,0x80,18,4,0
 .long	0
 
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,@function
+.globl	SHA3_squeeze_vsx
+.type	SHA3_squeeze_vsx,@function
 .section	".opd","aw"
 .align	3
-SHA3_squeeze:
-.quad	.SHA3_squeeze,.TOC.@tocbase,0
+SHA3_squeeze_vsx:
+.quad	.SHA3_squeeze_vsx,.TOC.@tocbase,0
 .previous
 
 .align	5
-.SHA3_squeeze:
+.SHA3_squeeze_vsx:
 	stdu	1,-80(1)
 	mflr	0
 	std	28,48(1)

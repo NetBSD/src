@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.25.2.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.25.2.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -60,7 +60,8 @@ typedef struct sleeptab {
 
 void	sleepq_init(sleepq_t *);
 void	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, struct syncobj *);
+void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, struct syncobj *,
+    bool);
 void	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
 void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.16.6.2 2020/04/08 14:07:15 martin Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.16.6.3 2020/04/21 18:42:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.16.6.2 2020/04/08 14:07:15 martin Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.16.6.3 2020/04/21 18:42:00 martin Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -73,6 +73,12 @@ pthread_tsd_postfork(void)
 	pthread_mutex_unlock(&tsd_mutex);
 }
 
+static void
+pthread_tsd_postfork_child(void)
+{
+	pthread_mutex_init(&tsd_mutex, NULL);
+}
+
 void *
 pthread_tsd_init(size_t *tlen)
 {
@@ -80,7 +86,7 @@ pthread_tsd_init(size_t *tlen)
 	size_t alen;
 	char *arena;
 
-	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork);
+	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork_child);
 
 	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
 		pthread_keys_max = (int)strtol(pkm, NULL, 0);
@@ -167,14 +173,17 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
  * elements. When an element is used it is inserted into the appropriate
  * key bucket of pthread__tsd_list. This means that ptqe_prev == NULL,
  * means that the element is not threaded, ptqe_prev != NULL it is
- * already part of the list. When we set to a NULL value we delete from the
- * list if it was in the list, and when we set to non-NULL value, we insert
- * in the list if it was not already there.
+ * already part of the list. If a key is set to a non-NULL value for the
+ * first time, it is added to the list.
  *
  * We keep this global array of lists of threads that have called
  * pthread_set_specific with non-null values, for each key so that
  * we don't have to check all threads for non-NULL values in
- * pthread_key_destroy
+ * pthread_key_destroy.
+ *
+ * The assumption here is that a concurrent pthread_key_delete is already
+ * undefined behavior. The mutex is taken only once per thread/key
+ * combination.
  *
  * We could keep an accounting of the number of specific used
  * entries per thread, so that we can update pt_havespecific when we delete
@@ -187,21 +196,15 @@ pthread__add_specific(pthread_t self, pthread_key_t key, const void *value)
 
 	pthread__assert(key >= 0 && key < pthread_keys_max);
 
-	pthread_mutex_lock(&tsd_mutex);
 	pthread__assert(pthread__tsd_destructors[key] != NULL);
 	pt = &self->pt_specific[key];
 	self->pt_havespecific = 1;
-	if (value) {
-		if (pt->pts_next.ptqe_prev == NULL)
-			PTQ_INSERT_HEAD(&pthread__tsd_list[key], pt, pts_next);
-	} else {
-		if (pt->pts_next.ptqe_prev != NULL) {
-			PTQ_REMOVE(&pthread__tsd_list[key], pt, pts_next);
-			pt->pts_next.ptqe_prev = NULL;
-		}
+	if (value && !pt->pts_next.ptqe_prev) {
+		pthread_mutex_lock(&tsd_mutex);
+		PTQ_INSERT_HEAD(&pthread__tsd_list[key], pt, pts_next);
+		pthread_mutex_unlock(&tsd_mutex);
 	}
 	pt->pts_value = __UNCONST(value);
-	pthread_mutex_unlock(&tsd_mutex);
 
 	return 0;
 }
@@ -367,7 +370,7 @@ pthread__destroy_tsd(pthread_t self)
 				destructor = NULL;
 
 			pthread_mutex_unlock(&tsd_mutex);
-			if (destructor != NULL) {
+			if (destructor != NULL && val != NULL) {
 				done = 0;
 				(*destructor)(val);
 			}

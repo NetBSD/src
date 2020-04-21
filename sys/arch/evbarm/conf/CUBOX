@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.7.2.2 2020/04/08 14:07:34 martin Exp $
+# $NetBSD: CUBOX,v 1.7.2.3 2020/04/21 18:42:05 martin Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -51,7 +51,7 @@ options 	BUFQ_PRIOCSCAN
 options 	DIAGNOSTIC	# internally consistency checks
 
 #options 	DEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	LOCKDEBUG	# expensive locking checks/support
 options 	IRQSTATS	# manage IRQ statistics
 #options 	NO_POWERSAVE	# uncomment this to run under ICE

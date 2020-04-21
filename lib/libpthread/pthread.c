@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.151.4.2 2020/04/08 14:07:15 martin Exp $	*/
+/*	$NetBSD: pthread.c,v 1.151.4.3 2020/04/21 18:42:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.151.4.2 2020/04/08 14:07:15 martin Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.151.4.3 2020/04/21 18:42:00 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -84,8 +84,6 @@ static void	pthread__scrubthread(pthread_t, char *, int);
 static void	pthread__initmain(pthread_t *);
 static void	pthread__fork_callback(void);
 static void	pthread__reap(pthread_t);
-static void	pthread__child_callback(void);
-static void	pthread__start(void);
 
 void	pthread__init(void);
 
@@ -274,36 +272,6 @@ pthread__fork_callback(void)
 	self->pt_lid = _lwp_self();
 }
 
-static void
-pthread__child_callback(void)
-{
-
-	/*
-	 * Clean up data structures that a forked child process might
-	 * trip over. Note that if threads have been created (causing
-	 * this handler to be registered) the standards say that the
-	 * child will trigger undefined behavior if it makes any
-	 * pthread_* calls (or any other calls that aren't
-	 * async-signal-safe), so we don't really have to clean up
-	 * much. Anything that permits some pthread_* calls to work is
-	 * merely being polite.
-	 */
-	pthread__started = 0;
-}
-
-static void
-pthread__start(void)
-{
-
-	/*
-	 * Per-process timers are cleared by fork(); despite the
-	 * various restrictions on fork() and threads, it's legal to
-	 * fork() before creating any threads.
-	 */
-	pthread_atfork(NULL, NULL, pthread__child_callback);
-}
-
-
 /* General-purpose thread data structure sanitization. */
 /* ARGSUSED */
 static void
@@ -424,21 +392,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		return __libc_thr_create_stub(thread, attr, startfunc, arg);
 	}
 
-	/*
-	 * It's okay to check this without a lock because there can
-	 * only be one thread before it becomes true.
-	 */
-	if (pthread__started == 0) {
-		pthread__start();
-		pthread__started = 1;
-	}
-
 	if (attr == NULL)
 		nattr = pthread_default_attr;
 	else if (attr->pta_magic == PT_ATTR_MAGIC)
 		nattr = *attr;
 	else
 		return EINVAL;
+
+	pthread__started = 1;
 
 	/* Fetch misc. attributes from the attr structure. */
 	name = NULL;

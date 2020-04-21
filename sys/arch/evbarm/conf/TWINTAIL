@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.72.4.3 2020/04/13 08:03:42 martin Exp $
+#	$NetBSD: TWINTAIL,v 1.72.4.4 2020/04/21 18:42:05 martin Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -108,7 +108,7 @@ options 	SCSIVERBOSE	# Verbose SCSI errors
 
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

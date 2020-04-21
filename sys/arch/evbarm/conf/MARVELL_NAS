@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.29.4.2 2020/04/08 14:07:34 martin Exp $
+#	$NetBSD: MARVELL_NAS,v 1.29.4.3 2020/04/21 18:42:05 martin Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -214,7 +214,7 @@ umass*	at uhub? port ? configuration ? interface ?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
 ucom*   at uplcom? portno ?
 
-# Wedge support   
+# Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
@@ -228,7 +228,7 @@ options 	BUFQ_PRIOCSCAN
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=0

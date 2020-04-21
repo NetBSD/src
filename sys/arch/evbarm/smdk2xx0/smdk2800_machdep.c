@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.43.16.2 2020/04/13 08:03:46 martin Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.43.16.3 2020/04/21 18:42:07 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,12 +106,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.43.16.2 2020/04/13 08:03:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.43.16.3 2020/04/21 18:42:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_console.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "pci.h"
 
@@ -190,10 +189,6 @@ int max_processes = 64;		/* Default number */
 #endif				/* !PMAP_STATIC_L1S */
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
@@ -442,7 +437,7 @@ initarm(void *arg)
 #else
 	/* Reserve physmem for ram disk */
 	md_root_start = ((physical_end - MD_ROOT_SIZE) & ~(L1_S_SIZE-1));
-	printf("Reserve %ld bytes for memory disk\n",  
+	printf("Reserve %ld bytes for memory disk\n",
 	    physical_end - md_root_start);
 	/* copy fs contents */
 	memcpy((void *)md_root_start, (void *)MEMORY_DISK_ROOT_ADDR,
@@ -791,7 +786,7 @@ initarm(void *arg)
 #endif
 	{
 		uint8_t  gpio = ~gpio8(GPIO_PDATF);
-		
+
 		if (gpio & (1<<5)) /* SW3 */
 			boothowto ^= RB_SINGLE;
 		if (gpio & (1<<7)) /* SW7 */
@@ -887,7 +882,7 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE), 
+		s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE),
 		    NULL, NULL, &pclk);
 
 		s3c2800_sscom_kgdb_attach(&s3c2xx0_bs_tag,

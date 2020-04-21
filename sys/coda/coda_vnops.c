@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.106.10.2 2020/04/08 14:08:00 martin Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.106.10.3 2020/04/21 18:42:13 martin Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.106.10.2 2020/04/08 14:08:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.106.10.3 2020/04/21 18:42:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ coda_close(void *v)
 	if (cp->c_ovp) {
 #ifdef	CODA_VERBOSE
 	    printf("%s: destroying container %d, ufs vp %p of vp %p/cp %p\n",
-		__func__, vp->v_usecount, cp->c_ovp, vp, cp);
+		__func__, vrefcnt(vp), cp->c_ovp, vp, cp);
 #endif
 #ifdef	hmm
 	    vgone(cp->c_ovp);
@@ -465,7 +465,7 @@ coda_rdwr(vnode_t *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 
     /* Have UFS handle the call. */
     CODADEBUG(CODA_RDWR, myprintf(("%s: fid = %s, refcnt = %d\n", __func__,
-	coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount)); )
+	coda_f2s(&cp->c_fid), vrefcnt(CTOV(cp)))); )
 
     if (rw == UIO_READ) {
 	error = VOP_READ(cfvp, uiop, ioflag, cred);
@@ -850,8 +850,8 @@ coda_inactive(void *v)
 
 #ifdef CODA_VERBOSE
     /* Sanity checks that perhaps should be panic. */
-    if (vp->v_usecount > 1)
-	printf("%s: %p usecount %d\n", __func__, vp, vp->v_usecount);
+    if (vrefcnt(vp) > 1)
+	printf("%s: %p usecount %d\n", __func__, vp, vrefcnt(vp));
     if (cp->c_ovp != NULL)
 	printf("%s: %p ovp != NULL\n", __func__, vp);
 #endif
@@ -1569,7 +1569,7 @@ coda_readdir(void *v)
 
 	/* Have UFS handle the call. */
 	CODADEBUG(CODA_READDIR, myprintf(("%s: fid = %s, refcnt = %d\n",
-	    __func__, coda_f2s(&cp->c_fid), vp->v_usecount)); )
+	    __func__, coda_f2s(&cp->c_fid), vrefcnt(vp))); )
 	saved_type = vp->v_type;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_type = VDIR; /* pretend the container file is a dir */
@@ -1661,7 +1661,7 @@ coda_reclaim(void *v)
 #endif
     } else {
 #ifdef OLD_DIAGNOSTIC
-	if (vp->v_usecount != 0)
+	if (vrefcnt(vp) != 0)
 	    print("%s: pushing active %p\n", __func__, vp);
 	if (VTOC(vp)->c_ovp) {
 	    panic("%s: c_ovp not void", __func__);

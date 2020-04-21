@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 19, 2020
+.Dd April 19, 2020
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -442,7 +442,7 @@ will only fork to the background if the RA contains at least one unexpired
 RDNSS option and a valid prefix or no DHCPv6 instruction.
 Set this option so to make
 .Nm dhcpcd
-always fork on an RA.
+always fork on a RA.
 .It Ic ipv6rs
 Enables IPv6 Router Advertisement solicitation.
 This is on by default, but is documented here in the case where it is disabled
@@ -626,11 +626,14 @@ instead of the default
 .It Ic ssid Ar ssid
 Subsequent options are only parsed for this wireless
 .Ar ssid .
-.It Ic slaac Op Ar hwaddr | Ar private
+.It Ic slaac Ar hwaddr | Ar private Op Ar temp | Ar temporary
 Selects the interface identifier used for SLAAC generated IPv6 addresses.
 If
 .Ar private
-is used, an RFC 7217 address is generated.
+is used, a RFC 7217 address is generated.
+The
+.Ar temporary
+directive will create a temporary address for the prefix as well.
 .It Ic static Ar value
 Configures a static
 .Ar value .

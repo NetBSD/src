@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.7.2.1 2020/04/13 08:03:35 martin Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.7.2.2 2020/04/21 18:42:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -638,29 +638,17 @@ bs_po_8_proto(f);
 struct mbuf;
 struct uio;
 
-#define	bus_dmamap_create(t, s, n, m, b, f, p)			\
-	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
-#define	bus_dmamap_destroy(t, p)				\
-	(*(t)->_dmamap_destroy)((t), (p))
-#define	bus_dmamap_load(t, m, b, s, p, f)			\
-	(*(t)->_dmamap_load)((t), (m), (b), (s), (p), (f))
-#define	bus_dmamap_load_mbuf(t, m, b, f)			\
-	(*(t)->_dmamap_load_mbuf)((t), (m), (b), (f))
-#define	bus_dmamap_load_uio(t, m, u, f)				\
-	(*(t)->_dmamap_load_uio)((t), (m), (u), (f))
-#define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
-	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
-#define	bus_dmamap_unload(t, p)					\
-	(*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, o, l, ops)			\
-do {									\
-	if (((ops) & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0	\
-	    && (t)->_dmamap_sync_pre != NULL)				\
-		(*(t)->_dmamap_sync_pre)((t), (p), (o), (l), (ops));	\
-	else if (((ops) & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0 \
-		 && (t)->_dmamap_sync_post != NULL)			     \
-		(*(t)->_dmamap_sync_post)((t), (p), (o), (l), (ops));	     \
-} while (/*CONSTCOND*/0)
+int bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t, bus_size_t,
+    int, bus_dmamap_t *);
+void bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
+int bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *, int);
+int bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
+int bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+    int, bus_size_t, int);
+void bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))

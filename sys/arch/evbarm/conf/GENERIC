@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.1.4.2 2020/04/13 08:03:42 martin Exp $
+#	$NetBSD: GENERIC,v 1.1.4.3 2020/04/21 18:42:05 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -284,7 +284,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 
 options 	MSGBUFSIZE=32768
 
