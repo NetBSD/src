@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.218 2020/04/21 21:42:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.218 2020/04/21 21:42:47 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -536,6 +536,7 @@ namei_getstartdir(struct namei_state *state)
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
+	struct lwp *self = curlwp;	/* thread doing namei() */
 	struct vnode *rootdir, *erootdir, *curdir, *startdir;
 
 	if (state->root_referenced) {
@@ -546,8 +547,8 @@ namei_getstartdir(struct namei_state *state)
 		state->root_referenced = 0;
 	}
 
-	/* NB: must not block while inspecting the cwdinfo. */
-	cwdi = cwdenter(RW_READER);
+	cwdi = self->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
 
 	/* root dir */
 	if (cwdi->cwdi_rdir == NULL || (cnp->cn_flags & NOCHROOT)) {
@@ -605,7 +606,7 @@ namei_getstartdir(struct namei_state *state)
 		vref(state->ndp->ni_erootdir);
 	state->root_referenced = 1;
 
-	cwdexit(cwdi);
+	rw_exit(&cwdi->cwdi_lock);
 	return startdir;
 }
 
