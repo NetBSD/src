@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.36 2020/04/13 22:54:12 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.36 2020/04/13 22:54:12 bouyer Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.36 2020/04/13 22:54:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -156,7 +156,7 @@ valid_ipimask(uint32_t ipimask)
 {
 	uint32_t masks = XEN_IPI_GENERIC | XEN_IPI_HVCB | XEN_IPI_XCALL |
 		 XEN_IPI_DDB | XEN_IPI_SYNCH_FPU |
-		 XEN_IPI_HALT | XEN_IPI_KICK | XEN_IPI_AST;
+		 XEN_IPI_HALT | XEN_IPI_AST;
 
 	if (ipimask & ~masks) {
 		return false;
