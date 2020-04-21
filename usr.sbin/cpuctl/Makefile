@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/01/23 21:22:50 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2020/04/21 02:56:37 msaitoh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,12 @@ SRCS+=	noarch.c
 .endif
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}-asm.S)
 SRCS+=	${MACHINE_ARCH}-asm.S
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch
+.PATH.c: ${NETBSDSRCDIR}/sys/arch/x86/x86
+SRCS+=	identcpu_subr.c
 .endif
 
 CPPFLAGS+=	-D_KERNTYPES
