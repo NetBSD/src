@@ -1,0 +1,8 @@
+.\" $NetBSD: referargs,v 1.1.28.2 2020/04/21 19:37:35 martin Exp $
+.\"
+.\" Arguments for refer; these were previously passed on the refer(1)
+.\" command line: -e -p Rv7man
+.R1
+accumulate
+database Rv7man
+.R2

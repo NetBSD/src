@@ -1,0 +1,4 @@
+/* $NetBSD: bcopy.S,v 1.1.70.2 2020/04/21 19:37:45 martin Exp $ */
+
+#define _BCOPY
+#include "memmove.S"

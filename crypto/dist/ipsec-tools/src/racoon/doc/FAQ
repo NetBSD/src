@@ -1,0 +1,114 @@
+This document is derived from the KAME racoon FAQ. Some answers do not
+apply to ipsec-tools (they are obsolete or not up to date). They are
+tagged [KAME]
+
+Q: With what other IKE/IPsec implementation racoon is known to be interoperable?
+
+A: [KAME]
+	See "IMPLEMENTATION" document supplied with KAME kit, or:
+	http://www.kame.net/dev/cvsweb.cgi/kame/IMPLEMENTATION
+	As we have tested/got test reports in the past, and our end and
+	the other end may have changed their implemenations, we are not sure
+	if we can interoperate with them today (we hope them to interoperate,
+	but we are not sure).
+	Also note that, IKE interoperability highly depends on configuration
+	on both ends.  You must configure both ends exactly the same.
+
+Q: How can I make racoon interoperate with <IKE/IPsec implementation>?
+
+A:
+	Configure both ends exactly the same.  With just a tiny little
+	difference, you will be in trouble.
+
+Q: How to build racoon on my platform?
+
+A: 
+	As usual: configure && make && make install
+	ipsec-tools is also available as a package in the NetBSD pkgsrc
+
+Q: Describe me the options to "configure".
+
+A:
+	--enable-adminport:
+		Lets racoon to listen to racoon admin port, which is to
+		be contacted by racoonctl(8).
+	--enable-natt:
+		Enable NAT-Traversal. This needs kernel support, which is
+		available on Linux. On NetBSD, NAT-Traversal kernel support
+		has not been integrated yet, you can get it from here:
+		http://ipsec-tools.sourceforge.net/netbsd_nat-t.diff
+		If you live in a country where software patents are legal,
+		using NAT-Traversal might infringe a patent. 
+	--enable-broken-natt:
+		When ipsec-tools is built with --enable-natt, racoon 
+		sets IKE ports in SAD and SPD so that the kernel is 
+		able to ditinguish peers hidden behind the same NAT.
+		Some kernel will not cope with that ports. Use that
+		option to force the ports to 0 in SAD ans SPD. Of 
+		course this means that you cannot have multiple peers
+		behind the same NAT.
+	--enable-frag:
+		Enable IKE fragmentation, which is a workaround for 
+		broken routers that drop fragmented packets
+	--enable-hybrid:
+		Enable hybrid authentication, and ISAKMP mode config and
+		Xauth as well. Note that plain Xauth (without hybrid auth)
+		is not implemented.
+	--with-libradius:
+		Enable the use of RADIUS with hybrid authentication on the
+		server side. RADIUS is used for authentication, configuration
+		and accounting.
+	--with-libpam:
+		Enable the use of PAM with hybrid authentication on the 
+		server side. PAM can be used for authentication and accounting.
+	--enable-gssapi:
+		Enable GSS-API, for Kerberos V support.
+	--enable-stats:	
+		Enable statistics logging function.
+	--enable-samode-unspec:	
+		Enable to use unspecified a mode of SA.
+	--enable-ipv6:
+		Enable IPv6 support.
+	--with-kernel-headers:
+		Supply the location of Linux kernel headers.
+	--with-readline:
+		Support readline input (yes by default).
+	--with-openssl:
+		Specify OpenSSL directory.
+	--sysconfdir:
+		Where racoon config file goes. Default is /etc, which means
+		that racoon will look for /etc/racoon.conf
+	--localstatedir:
+		Where is the directory where racoon stores the control socket
+		(when using --enable-adminport). Default is /var, which 
+		means racoon will use /var/racoon/racoon.sock
+	--prefix:
+		Where racoon gets installed. 
+
+Q: How can I get help?
+
+A: 
+	Always identify your operating system platforms, the versions you are
+	using (like "ipsec-tools-0.5"), and information to repeat the
+	problem.  The more revelant information you supply, the better your 
+	chances of getting help are. Useful informations include, depending
+	of the problem: 
+	- version identification
+	- trace from racoon, taken by "racoon -d 0xffffffff"
+		(maximum debug level)
+	- configuration file you are using
+	- probabaly, tcpdump trace
+	http://orange.kame.net/dev/send-pr.html has the guideline.
+
+	If your question is not confidential, send your questions to:
+	<ipsec-tools-devel@lists.sourceforge.net>
+
+	If your question is confidential, send your questions to:
+	<ipsec-tools-core@lists.sourceforge.net>
+
+Q: Other documents to look at?
+
+A:
+	http://www.NetBSD.org/docs/network/ipsec/
+	http://www.kame.net/
+	http://www.kame.net/newsletter/

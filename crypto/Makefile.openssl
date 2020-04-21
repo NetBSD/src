@@ -1,0 +1,12 @@
+#	$NetBSD: Makefile.openssl,v 1.11.4.3 2020/04/21 19:37:53 martin Exp $
+
+.ifndef _MAKEFILE_OPENSSL_INCLUDED
+_MAKEFILE_OPENSSL_INCLUDED=1
+
+.include <bsd.own.mk>
+
+OPENSSLSRC=	${CRYPTODIST}/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/dist
+CPPFLAGS+=	-DOPENSSLDIR=\"/etc/openssl\"
+CPPFLAGS+=	-DENGINESDIR=\"/usr/lib/openssl\"
+
+.endif
