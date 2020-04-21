@@ -1585,6 +1585,7 @@ dhcp6_startdiscover(void *arg)
 {
 	struct interface *ifp;
 	struct dhcp6_state *state;
+	int llevel;
 
 	ifp = arg;
 	state = D6_STATE(ifp);
@@ -1592,7 +1593,11 @@ dhcp6_startdiscover(void *arg)
 	if (state->reason == NULL || strcmp(state->reason, "TIMEOUT6") != 0)
 		dhcp6_delete_delegates(ifp);
 #endif
-	loginfox("%s: soliciting a DHCPv6 lease", ifp->name);
+	if (state->new == NULL && !state->failed)
+		llevel = LOG_INFO;
+	else
+		llevel = LOG_DEBUG;
+	logmessage(llevel, "%s: soliciting a DHCPv6 lease", ifp->name);
 	state->state = DH6S_DISCOVER;
 	state->RTC = 0;
 	state->IMD = SOL_MAX_DELAY;
@@ -1616,11 +1621,15 @@ dhcp6_startinform(void *arg)
 {
 	struct interface *ifp;
 	struct dhcp6_state *state;
+	int llevel;
 
 	ifp = arg;
 	state = D6_STATE(ifp);
-	if (state->new == NULL || ifp->options->options & DHCPCD_DEBUG)
-		loginfox("%s: requesting DHCPv6 information", ifp->name);
+	if (state->new == NULL && !state->failed)
+		llevel = LOG_INFO;
+	else
+		llevel = LOG_DEBUG;
+	logmessage(llevel, "%s: requesting DHCPv6 information", ifp->name);
 	state->state = DH6S_INFORM;
 	state->RTC = 0;
 	state->IMD = INF_MAX_DELAY;
@@ -1677,6 +1686,8 @@ dhcp6_fail(struct interface* ifp)
 {
 	struct dhcp6_state *state = D6_STATE(ifp);
 
+	state->failed = true;
+
 	/* RFC3315 18.1.2 says that prior addresses SHOULD be used on failure.
 	 * RFC2131 3.2.3 says that MAY chose to use the prior address.
 	 * Because dhcpcd was written first for RFC2131, we have the LASTLEASE
@@ -1711,33 +1722,43 @@ dhcp6_fail(struct interface* ifp)
 	}
 }
 
+static int
+dhcp6_failloglevel(struct interface *ifp)
+{
+	const struct dhcp6_state *state = D6_CSTATE(ifp);
+
+	return state->failed ? LOG_DEBUG : LOG_ERR;
+}
+
 static void
 dhcp6_failconfirm(void *arg)
 {
-	struct interface *ifp;
+	struct interface *ifp = arg;
+	int llevel = dhcp6_failloglevel(ifp);
 
-	ifp = arg;
-	logerrx("%s: failed to confirm prior address", ifp->name);
+	logmessage(llevel, "%s: failed to confirm prior DHCPv6 address",
+	    ifp->name);
 	dhcp6_fail(ifp);
 }
 
 static void
 dhcp6_failrequest(void *arg)
 {
-	struct interface *ifp;
+	struct interface *ifp = arg;
+	int llevel = dhcp6_failloglevel(ifp);
 
-	ifp = arg;
-	logerrx("%s: failed to request address", ifp->name);
+	logmessage(llevel, "%s: failed to request DHCPv6 address", ifp->name);
 	dhcp6_fail(ifp);
 }
 
 static void
 dhcp6_failinform(void *arg)
 {
-	struct interface *ifp;
+	struct interface *ifp = arg;
+	int llevel = dhcp6_failloglevel(ifp);
 
-	ifp = arg;
-	logerrx("%s: failed to request information", ifp->name);
+	logmessage(llevel, "%s: failed to request DHCPv6 information",
+	    ifp->name);
 	dhcp6_fail(ifp);
 }
 
@@ -1745,10 +1766,9 @@ dhcp6_failinform(void *arg)
 static void
 dhcp6_failrebind(void *arg)
 {
-	struct interface *ifp;
+	struct interface *ifp = arg;
 
-	ifp = arg;
-	logerrx("%s: failed to rebind prior delegation", ifp->name);
+	logerrx("%s: failed to rebind prior DHCPv6 delegation", ifp->name);
 	dhcp6_fail(ifp);
 }
 
@@ -3124,6 +3144,7 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 			state->state = DH6S_INFORMED;
 		else
 			state->state = DH6S_BOUND;
+		state->failed = false;
 
 		if (state->renew && state->renew != ND6_INFINITE_LIFETIME)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
@@ -3621,11 +3642,14 @@ dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 		.iov_base = buf,
 		.iov_len = sizeof(buf),
 	};
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in6_pktinfo))] = { 0 };
+	union {
+		struct cmsghdr hdr;
+		uint8_t buf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+	} cmsgbuf = { .buf = { 0 } };
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	    .msg_control = cmsgbuf.buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	int s;
 	ssize_t bytes;
@@ -3857,6 +3881,7 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 gogogo:
 	state->state = init_state;
 	state->lerror = 0;
+	state->failed = false;
 	dhcp_set_leasefile(state->leasefile, sizeof(state->leasefile),
 	    AF_INET6, ifp);
 	if (ipv6_linklocal(ifp) == NULL) {
