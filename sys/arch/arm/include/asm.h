@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.32 2020/04/17 14:19:43 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.33 2020/04/21 11:35:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@
 #define	PIC_SYM(x,y)	x
 #endif	/* __PIC__ */
 
-#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+#define RCSID(x)	.pushsection ".ident","MS",%progbits,1;		\
 			.asciz x;					\
 			.popsection
 
