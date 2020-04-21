@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.12 2019/02/10 11:10:34 cherry Exp $ */
+/* $NetBSD: hypercalls.h,v 1.13 2020/04/21 20:13:39 jdolecek Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -274,9 +274,9 @@ HYPERVISOR_console_io(
 }
 
 static inline int
-HYPERVISOR_physdev_op(void *op)
+HYPERVISOR_physdev_op(int cmd, void *op)
 {
-	return _hypercall1(int, physdev_op_compat, op);
+	return _hypercall2(int, physdev_op, cmd, op);
 }
 
 static inline int
