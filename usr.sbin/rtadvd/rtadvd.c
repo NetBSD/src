@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.71 2019/11/11 13:42:49 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.72 2020/04/21 12:05:54 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -62,7 +62,6 @@
 #include <pwd.h>
 
 #include "rtadvd.h"
-#include "rrenum.h"
 #include "advcap.h"
 #include "timer.h"
 #include "if.h"
@@ -85,10 +84,8 @@ struct iovec rcviov[2];
 struct iovec sndiov[2];
 struct sockaddr_in6 rcvfrom;
 static const char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX configurable */
-static char *mcastif;
 int sock;
 int rtsock = -1;
-int accept_rr = 0;
 int Cflag = 0, dflag = 0, sflag = 0, Dflag;
 
 static char **if_argv;
@@ -187,7 +184,7 @@ main(int argc, char *argv[])
 	pid_t pid;
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dDfM:p:Rs"
+#define OPTIONS "c:dDfM:p:s"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -206,17 +203,8 @@ main(int argc, char *argv[])
 		case 'f':
 			fflag = 1;
 			break;
-		case 'M':
-			mcastif = optarg;
-			break;
 		case 'p':
 			pidfilepath = optarg;
-			break;
-		case 'R':
-			fprintf(stderr, "rtadvd: "
-				"the -R option is currently ignored.\n");
-			/* accept_rr = 1; */
-			/* run anyway... */
 			break;
 		case 's':
 			sflag = 1;
@@ -888,16 +876,6 @@ rtadvd_input(void)
 			return;
 		}
 		ra_input(i, (struct nd_router_advert *)icp, pi, &rcvfrom);
-		break;
-	case ICMP6_ROUTER_RENUMBERING:
-		if (accept_rr == 0) {
-			logit(LOG_ERR, "%s: received a router renumbering "
-			    "message, but not allowed to be accepted",
-			    __func__);
-			break;
-		}
-		rr_input(i, (struct icmp6_router_renum *)icp, pi, &rcvfrom,
-			 &dst);
 		break;
 	default:
 		/*
@@ -1572,8 +1550,6 @@ sock_open(void)
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
-	if (accept_rr)
-		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
 	if (prog_setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 		       sizeof(filt)) == -1) {
 		logit(LOG_ERR, "%s: IICMP6_FILTER: %m", __func__);
@@ -1597,39 +1573,6 @@ sock_open(void)
 			logit(LOG_ERR, "%s: IPV6_JOIN_GROUP(link) on %s: %m",
 			       __func__, ra->ifname);
 			continue;
-		}
-	}
-
-	/*
-	 * When attending router renumbering, join all-routers site-local
-	 * multicast group.
-	 */
-	if (accept_rr) {
-		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
-		     mreq.ipv6mr_multiaddr.s6_addr) != 1)
-		{
-			logit(LOG_ERR, "%s: inet_pton failed(library bug?)",
-			    __func__);
-			exit(EXIT_FAILURE);
-		}
-		ra = TAILQ_FIRST(&ralist);
-		if (mcastif) {
-			if ((mreq.ipv6mr_interface = if_nametoindex(mcastif))
-			    == 0) {
-				logit(LOG_ERR,
-				       "%s: invalid interface: %s",
-				       __func__, mcastif);
-				exit(EXIT_FAILURE);
-			}
-		} else
-			mreq.ipv6mr_interface = ra->ifindex;
-		if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-			       &mreq, sizeof(mreq)) == -1) {
-			logit(LOG_ERR,
-			       "%s: IPV6_JOIN_GROUP(site) on %s: %m",
-			       __func__,
-			       mcastif ? mcastif : ra->ifname);
-			exit(EXIT_FAILURE);
 		}
 	}
 
