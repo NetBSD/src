@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52.2.2 2020/04/13 08:05:27 martin Exp $
+# $NetBSD: Makefile,v 1.52.2.3 2020/04/21 18:42:47 martin Exp $
 
 MKMAN=	no
 
@@ -85,7 +85,7 @@ TESTS_C+=		t_wait_noproc
 TESTS_C+=		t_wait_noproc_wnohang
 TESTS_C+=		t_write
 
-SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
+SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 
 LDADD.t_getpid+=        -lpthread
 

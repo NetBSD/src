@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.130.2.3 2020/04/13 08:05:43 martin Exp $	*/
+/*	$NetBSD: kdump.c,v 1.130.2.4 2020/04/21 18:42:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.130.2.3 2020/04/13 08:05:43 martin Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.130.2.4 2020/04/21 18:42:47 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1213,6 +1213,36 @@ ktruser_soname(const char *name, const void *buf, size_t len)
 }
 
 static void
+ktruser_xattr_name(const char *name, const void *buf, size_t len)
+{
+	printf("%.*s: [%*s]\n", KTR_USER_MAXIDLEN, name, (int)len,
+	    (const char *)buf);
+}
+
+static void
+ktruser_xattr_val(const char *name, const void *buf, size_t len)
+{
+	const uint8_t *p = buf;
+	printf("%.*s: ", KTR_USER_MAXIDLEN, name);
+	for (size_t i = 0; i < len; i++)
+		printf("%.2x", *p++);
+	printf("\n");
+}
+
+static void
+ktruser_xattr_list(const char *name, const void *buf, size_t len)
+{
+	const uint8_t *p = buf, *ep = p + len;
+	printf("%.*s:", KTR_USER_MAXIDLEN, name);
+	while (p < ep) {
+		int l = *p++;
+		printf(" %.*s", l, p);
+		p += l;
+	}
+	printf("\n");
+}
+
+static void
 ktruser_control(const char *name, const void *buf, size_t len)
 {
 	struct cmsghdr m;
@@ -1266,6 +1296,9 @@ static struct {
 	{ "mbsoname", ktruser_soname },
 	{ "mbcontrol", ktruser_control },
 	{ "malloc", ktruser_malloc },
+	{ "xattr-name", ktruser_xattr_name },
+	{ "xattr-val", ktruser_xattr_val },
+	{ "xattr-list", ktruser_xattr_list },
 	{ NULL,	ktruser_misc },
 };
 

@@ -1015,29 +1015,22 @@ if_ioctl6(struct dhcpcd_ctx *ctx, unsigned long req, void *data, size_t len)
 int
 if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 {
-	struct in6_aliasreq ifa;
+	struct in6_aliasreq ifa = { .ifra_flags = 0 };
 	struct in6_addr mask;
 	struct dhcpcd_ctx *ctx = ia->iface->ctx;
 
-	memset(&ifa, 0, sizeof(ifa));
 	strlcpy(ifa.ifra_name, ia->iface->name, sizeof(ifa.ifra_name));
-	/*
-	 * We should not set IN6_IFF_TENTATIVE as the kernel should be
-	 * able to work out if it's a new address or not.
-	 *
-	 * We should set IN6_IFF_AUTOCONF, but the kernel won't let us.
-	 * This is probably a safety measure, but still it's not entirely right
-	 * either.
-	 */
-#if 0
-	if (ia->autoconf)
-		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
-#endif
 #if defined(__FreeBSD__) || defined(__DragonFly__)
+	/* This is a bug - the kernel should work this out. */
 	if (ia->addr_flags & IN6_IFF_TENTATIVE)
 		ifa.ifra_flags |= IN6_IFF_TENTATIVE;
 #endif
-#ifdef IPV6_MANGETEMPADDR
+// #if (defined(__NetBSD__) && __NetBSD_Version__ >= 999005700) ||
+#if    (defined(__OpenBSD__) && OpenBSD >= 201605)
+	if (ia->flags & IPV6_AF_AUTOCONF)
+		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
+#endif
+#ifdef IPV6_MANAGETEMPADDR
 	if (ia->flags & IPV6_AF_TEMPORARY)
 		ifa.ifra_flags |= IN6_IFF_TEMPORARY;
 #endif
@@ -1524,6 +1517,8 @@ if_missfilter0(struct dhcpcd_ctx *ctx, struct interface *ifp,
 #ifdef INET6
 	if (sa->sa_family == AF_INET6)
 		ifa_setscope(satosin6(sa), ifp->index);
+#else
+	UNUSED(ifp);
 #endif
 
 	cp = ctx->rt_missfilter + ctx->rt_missfilterlen;
@@ -1624,7 +1619,6 @@ if_machinearch(char *str, size_t len)
 
 #ifdef INET6
 #if (defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)) || \
-    defined(IPV6CTL_USETEMPADDR) || defined(IPV6CTL_TEMPVLTIME) || \
     defined(IPV6CTL_FORWARDING)
 #define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
 #define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
@@ -1685,8 +1679,7 @@ if_applyra(const struct ra *rap)
 #endif
 }
 
-#ifdef IPV6_MANAGETEMPADDR
-#if !defined(IPV6CTL_TEMPVLTIME) && !defined(__OpenBSD__)
+#ifndef IPV6CTL_FORWARDING
 #define get_inet6_sysctlbyname(code) inet6_sysctlbyname(code, 0, 0)
 #define set_inet6_sysctlbyname(code, val) inet6_sysctlbyname(code, val, 1)
 static int
@@ -1704,81 +1697,6 @@ inet6_sysctlbyname(const char *name, int val, int action)
 		return -1;
 	return val;
 }
-#endif
-
-#ifdef __OpenBSD__
-int
-ip6_use_tempaddr(const char *ifname)
-{
-	int s, r;
-	struct ifreq ifr;
-
-	s = socket(PF_INET6, SOCK_DGRAM, 0); /* XXX Not efficient */
-	if (s == -1)
-		return -1;
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	r = ioctl(s, SIOCGIFXFLAGS, &ifr);
-	close(s);
-	if (r == -1)
-		return -1;
-	return ifr.ifr_flags & IFXF_INET6_NOPRIVACY ? 0 : 1;
-}
-
-int
-ip6_temp_preferred_lifetime(__unused const char *ifname)
-{
-
-	return ND6_PRIV_PREFERRED_LIFETIME;
-}
-
-int
-ip6_temp_valid_lifetime(__unused const char *ifname)
-{
-
-	return ND6_PRIV_VALID_LIFETIME;
-}
-
-#else /* __OpenBSD__ */
-
-int
-ip6_use_tempaddr(__unused const char *ifname)
-{
-	int val;
-
-#ifdef IPV6CTL_USETEMPADDR
-	val = get_inet6_sysctl(IPV6CTL_USETEMPADDR);
-#else
-	val = get_inet6_sysctlbyname("net.inet6.ip6.use_tempaddr");
-#endif
-	return val == -1 ? 0 : val;
-}
-
-int
-ip6_temp_preferred_lifetime(__unused const char *ifname)
-{
-	int val;
-
-#ifdef IPV6CTL_TEMPPLTIME
-	val = get_inet6_sysctl(IPV6CTL_TEMPPLTIME);
-#else
-	val = get_inet6_sysctlbyname("net.inet6.ip6.temppltime");
-#endif
-	return val < 0 ? TEMP_PREFERRED_LIFETIME : val;
-}
-
-int
-ip6_temp_valid_lifetime(__unused const char *ifname)
-{
-	int val;
-
-#ifdef IPV6CTL_TEMPVLTIME
-	val = get_inet6_sysctl(IPV6CTL_TEMPVLTIME);
-#else
-	val = get_inet6_sysctlbyname("net.inet6.ip6.tempvltime");
-#endif
-	return val < 0 ? TEMP_VALID_LIFETIME : val;
-}
-#endif /* !__OpenBSD__ */
 #endif
 
 int
@@ -1944,7 +1862,7 @@ if_setup_inet6(const struct interface *ifp)
 		logerr("%s: set_ifxflags", ifp->name);
 #endif
 
-#if defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV)
+#ifdef SIOCSRTRFLUSH_IN6
 	/* Flush the kernel knowledge of advertised routers
 	 * and prefixes so the kernel does not expire prefixes
 	 * and default routes we are trying to own. */
@@ -1955,12 +1873,14 @@ if_setup_inet6(const struct interface *ifp)
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 		if (if_ioctl6(ifp->ctx, SIOCSRTRFLUSH_IN6,
 		    &ifr, sizeof(ifr)) == -1 &&
-		    errno != ENOTSUP)
-			logwarn("SIOCSRTRFLUSH_IN6");
+		    errno != ENOTSUP && errno != ENOTTY)
+			logwarn("SIOCSRTRFLUSH_IN6 %d", errno);
+#ifdef SIOCSPFXFLUSH_IN6
 		if (if_ioctl6(ifp->ctx, SIOCSPFXFLUSH_IN6,
 		    &ifr, sizeof(ifr)) == -1 &&
-		    errno != ENOTSUP)
+		    errno != ENOTSUP && errno != ENOTTY)
 			logwarn("SIOCSPFXFLUSH_IN6");
+#endif
 	}
 #endif
 }

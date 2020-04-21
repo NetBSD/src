@@ -1,7 +1,11 @@
-/* $NetBSD: asm.h,v 1.2.2.2 2020/04/13 08:03:27 martin Exp $ */
+/* $NetBSD: asm.h,v 1.2.2.3 2020/04/21 18:42:02 martin Exp $ */
 
 #ifndef _AARCH64_ASM_H_
 #define _AARCH64_ASM_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_cpuoptions.h"
+#endif
 
 #include <arm/asm.h>
 
@@ -24,6 +28,20 @@
  */
 #define	ERET	\
 	eret; dsb sy; isb
+
+/*
+ * ARMv8 options to be made available for the compiler to use. Should be
+ * inserted at the beginning of the ASM files that need them.
+ *
+ * For now the only option is PAC, needed for the compiler to recognize
+ * the key registers.
+ */
+#ifdef ARMV83_PAC
+#define ARMV8_DEFINE_OPTIONS	\
+	.arch armv8.3-a+pac
+#else
+#define ARMV8_DEFINE_OPTIONS	/* nothing */
+#endif
 
 #endif
 

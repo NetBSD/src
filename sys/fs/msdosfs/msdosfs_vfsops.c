@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.129.4.2 2020/04/08 14:08:49 martin Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.129.4.3 2020/04/21 18:42:41 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129.4.2 2020/04/08 14:08:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129.4.3 2020/04/21 18:42:41 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -926,7 +926,7 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
 		printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
-		    vp->v_vflag | vp->v_iflag | vp->v_uflag, vp->v_usecount,
+		    vp->v_vflag | vp->v_iflag | vp->v_uflag, vrefcnt(vp),
 		    vp->v_writecount, vp->v_holdcnt);
 		printf("mount %p, op %p\n",
 		    vp->v_mount, vp->v_op);

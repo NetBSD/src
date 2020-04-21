@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.52.12.2 2020/04/08 14:07:18 martin Exp $	*/
+/*	$NetBSD: fsck.h,v 1.52.12.3 2020/04/21 18:42:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -394,3 +394,7 @@ iswap64(u_int64_t x)
 #define	iswap32(x) (x)
 #define	iswap64(x) (x)
 #endif /* NO_FFS_EI */
+
+#ifdef NO_IOBUF_ALIGNED
+#define	aligned_alloc(align, size)	malloc((size))
+#endif

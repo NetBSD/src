@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.61.4.2 2020/04/08 14:07:34 martin Exp $
+#	$NetBSD: ZAO425,v 1.61.4.3 2020/04/21 18:42:05 martin Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -114,7 +114,7 @@ options 	USERCONF	# userconf(4) support
 
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

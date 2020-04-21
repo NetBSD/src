@@ -1,5 +1,4 @@
-
-/*	$NetBSD: vnode.h,v 1.14.2.1 2019/06/10 21:52:04 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.14.2.2 2020/04/21 18:41:56 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -156,7 +155,7 @@ int	vn_is_readonly(vnode_t *);
 #define	vn_vfsunlock(vp)	do { } while (0)
 #define	vn_ismntpt(vp)		((vp)->v_type == VDIR && (vp)->v_mountedhere != NULL)
 #define	vn_mountedvfs(vp)	((vp)->v_mountedhere)
-#define vn_has_cached_data(vp)	((vp)->v_uobj.uo_npages != 0)
+#define vn_has_cached_data(vp)	(((vp)->v_iflag & VI_PAGES) != 0)
 #define	vn_exists(vp)		do { } while (0)
 #define	vn_invalid(vp)		do { } while (0)
 #define	vn_free(vp)		do { } while (0)
@@ -166,7 +165,7 @@ int	vn_is_readonly(vnode_t *);
 #define	VN_HOLD(v)	vref(v)
 #define	VN_RELE(v)						      \
 do {								      \
-	if ((v)->v_usecount == 0) {				      \
+	if (vrefcnt(v) == 0) {					      \
 		printf("VN_RELE(%s,%d): %p unused\n", __FILE__, __LINE__, v); \
 		vprint("VN_RELE", (v));				      \
 		panic("VN_RELE");				      \

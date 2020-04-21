@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188.4.2 2020/04/08 14:07:57 martin Exp $
+# $NetBSD: GENERIC,v 1.188.4.3 2020/04/21 18:42:12 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188.4.2 $"
+#ident 		"GENERIC-$Revision: 1.188.4.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -332,7 +332,7 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 # Option N.V. Wireless WAN modems
 #uhso*	at uhub? port ? configuration ?
 
-# USB Mass Storage; wd not supported
+# USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
 #atapibus* at umass?
 #scsibus* at umass?

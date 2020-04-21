@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.315.2.3 2020/04/13 08:05:04 martin Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.315.2.4 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315.2.3 2020/04/13 08:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315.2.4 2020/04/21 18:42:42 martin Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -173,6 +173,7 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 	kmutex_t *mp;
+	bool catch_p;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
@@ -183,10 +184,11 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 	}
 
 	l->l_kpriority = true;
+	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
-	return sleepq_block(timo, priority & PCATCH);
+	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
+	return sleepq_block(timo, catch_p);
 }
 
 int
@@ -196,6 +198,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 	kmutex_t *mp;
+	bool catch_p;
 	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
@@ -207,11 +210,12 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	}
 
 	l->l_kpriority = true;
+	catch_p = priority & PCATCH;
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
 	mutex_exit(mtx);
-	error = sleepq_block(timo, priority & PCATCH);
+	error = sleepq_block(timo, catch_p);
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
@@ -238,7 +242,7 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	l->l_kpriority = true;
 	lwp_lock(l);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
-	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj);
+	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj, intr);
 	error = sleepq_block(timo, intr);
 	if (mtx != NULL)
 		mutex_enter(mtx);

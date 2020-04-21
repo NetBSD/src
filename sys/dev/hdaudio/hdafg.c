@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.15.4.2 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: hdafg.c,v 1.15.4.3 2020/04/21 18:42:15 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.15.4.2 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.15.4.3 2020/04/21 18:42:15 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3942,12 +3942,28 @@ hdafg_set_format(void *opaque, int setmode,
 	return 0;
 }
 
+/* LCM for round_blocksize */
+static u_int gcd(u_int, u_int);
+static u_int lcm(u_int, u_int);
+
+static u_int gcd(u_int a, u_int b)
+{
+
+	return (b == 0) ? a : gcd(b, a % b);
+}
+static u_int lcm(u_int a, u_int b)
+{
+
+	return a * b / gcd(a, b);
+}
+
 static int
 hdafg_round_blocksize(void *opaque, int blksize, int mode,
     const audio_params_t *param)
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
+	u_int minblksize;
 	int bufsize;
 
 	st = (mode == AUMODE_PLAY) ? ad->ad_playback : ad->ad_capture;
@@ -3957,6 +3973,15 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 		return 128;
 	}
 
+	if (blksize > 8192)
+		blksize = 8192;
+
+	/* Make sure there are enough BDL descriptors */
+	bufsize = st->st_data.dma_size;
+	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
+		blksize = bufsize / HDAUDIO_BDL_MAX;
+	}
+
 	/*
 	 * HD audio's buffer constraint looks like following:
 	 * - The buffer MUST start on a 128bytes boundary.
@@ -3964,13 +3989,15 @@ hdafg_round_blocksize(void *opaque, int blksize, int mode,
 	 * - The buffer size is preferred multiple of 128bytes for efficiency.
 	 *
 	 * https://www.intel.co.jp/content/www/jp/ja/standards/high-definition-audio-specification.html , p70.
+	 *
+	 * Also, the audio layer requires that the blocksize must be a
+	 * multiple of the number of channels.
 	 */
+	minblksize = lcm(128, param->channels);
+	blksize = rounddown(blksize, minblksize);
+	if (blksize < minblksize)
+		blksize = minblksize;
 
-	/* Make sure there are enough BDL descriptors */
-	bufsize = st->st_data.dma_size;
-	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
-		blksize = bufsize / HDAUDIO_BDL_MAX;
-	}
 	return blksize;
 }
 

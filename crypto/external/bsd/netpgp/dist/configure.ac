@@ -1,10 +1,10 @@
-# $NetBSD: configure.ac,v 1.42 2014/03/09 00:33:50 agc Exp $
+# $NetBSD: configure.ac,v 1.42.26.1 2020/04/21 18:41:51 martin Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT([netpgp],[20140220],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ(2.69)
-AC_REVISION([$Revision: 1.42 $])
+AC_REVISION([$Revision: 1.42.26.1 $])
 
 AS_SHELL_SANITIZE
 
@@ -60,7 +60,7 @@ AC_CHECK_HEADERS([dmalloc.h direct.h errno.h fcntl.h \
 AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/camellia.h openssl/cast.h \
 		  openssl/des.h openssl/dsa.h openssl/err.h openssl/idea.h \
 		  openssl/md5.h openssl/rand.h openssl/rsa.h openssl/sha.h \
-		  openssl/err.h openssl/sha.h])
+		  openssl/err.h openssl/sha.h openssl/blowfish.h])
 AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/mman.h sys/param.h \
                   sys/resource.h sys/uio.h])
 

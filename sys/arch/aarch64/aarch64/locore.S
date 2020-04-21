@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7.2.2 2020/04/13 08:03:27 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.7.2.3 2020/04/21 18:42:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.7.2.2 2020/04/13 08:03:27 martin Exp $")
+RCSID("$NetBSD: locore.S,v 1.7.2.3 2020/04/21 18:42:02 martin Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -177,6 +177,10 @@ vstart:
 	adrl	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
+
+	/* init PAC if supported */
+	mov	x0, #1
+	bl	aarch64_pac_init
 
 	/* set topology information */
 	mrs	x0, tpidr_el1		/* curcpu */
@@ -502,8 +506,12 @@ mp_vstart:
 	add	x2, x2, #(UPAGES * PAGE_SIZE)
 	sub	sp, x2, #TF_SIZE	/* sp = pcb + USPACE - TF_SIZE */
 
+	/* init PAC if supported */
+	mov	x0, #0
+	bl	aarch64_pac_init
 
 	mov	fp, xzr			/* trace back starts here */
+	mrs	x0, tpidr_el1		/* curcpu() */
 	bl	_C_LABEL(cpu_hatch)
 	mov	x0, xzr
 	b	_C_LABEL(idle_loop)	/* never to return */

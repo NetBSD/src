@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.59.18.2 2020/04/13 08:04:26 martin Exp $      */
+/*      $NetBSD: esm.c,v 1.59.18.3 2020/04/21 18:42:16 martin Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.59.18.2 2020/04/13 08:04:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.59.18.3 2020/04/21 18:42:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1186,6 +1186,8 @@ esm_round_blocksize(void *sc, int blk, int mode,
 	    ("esm_round_blocksize(%p, 0x%x)", sc, blk));
 
 	blk &= ~0x3f;		/* keep good alignment */
+	if (blk < 0x40)
+		blk = 0x40;
 
 	DPRINTF(ESM_DEBUG_PARAM, (" = 0x%x\n", blk));
 

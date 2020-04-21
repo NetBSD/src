@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.30.4.2 2020/04/13 08:03:26 martin Exp $
+#	$NetBSD: inter.phone,v 1.30.4.3 2020/04/21 18:42:01 martin Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 7:317:Akmola:Republic of Kazakhstan
 7:329:Aktau:Republic of Kazakhstan
@@ -50,19 +50,19 @@
 27:21:Cape Town:South Africa
 27:31:Durban:South Africa
 27:51:Bloemfontein:South Africa
-30:1:Athens:Greece
-30:1:Piraeus:Greece
-30:241:Rhodes:Greece
-30:31:Thessaloniki:Greece
-30:321:Serrai:Greece
-30:41:Larissa:Greece
-30:421:Volos:Greece
-30:51:Kavala:Greece
-30:521:Drama:Greece
-30:61:Patrai:Greece
-30:651:Ioannina:Greece
-30:721:Kalamata:Greece
-30:81:Iraklion (Crete):Greece
+30:21:Athens:Greece
+30:21:Piraeus:Greece
+30:2241:Rhodes:Greece
+30:231:Thessaloniki:Greece
+30:2321:Serrai:Greece
+30:241:Larissa:Greece
+30:2421:Volos:Greece
+30:251:Kavala:Greece
+30:2521:Drama:Greece
+30:261:Patrai:Greece
+30:2651:Ioannina:Greece
+30:2721:Kalamata:Greece
+30:281:Iraklion (Crete):Greece
 31:10:Rotterdam:Netherlands
 31:13:Tilburg:Netherlands
 31:20:Amsterdam:Netherlands

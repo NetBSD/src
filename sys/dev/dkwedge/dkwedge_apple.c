@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_apple.c,v 1.3.14.1 2020/04/13 08:04:19 martin Exp $	*/
+/*	$NetBSD: dkwedge_apple.c,v 1.3.14.2 2020/04/21 18:42:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.3.14.1 2020/04/13 08:04:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.3.14.2 2020/04/21 18:42:15 martin Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.3.14.1 2020/04/13 08:04:19 marti
 #include <sys/errno.h>
 #include <sys/disk.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/bitops.h>
+#include <sys/buf.h>
 
 #include <sys/bootblock.h>
 
@@ -123,14 +123,6 @@ swap_apple_blockzeroblock(struct apple_blockzeroblock *ap)
 
 #define ASIZE	16384
  
-#ifdef _KERNEL
-#define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
-#define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
-#else
-#define	DKW_MALLOC(SZ)	malloc((SZ))
-#define	DKW_FREE(PTR)	free((PTR))
-#endif
-
 static struct {
 	const char *name;
 	const char *type;
@@ -145,20 +137,20 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 {
 	size_t i, n;
 	int error;
-	void *buf;
+	struct buf *bp;
 	uint32_t blocksize, blockcount, offset, rsize;
 	struct apple_drvr_map *am;
 	struct apple_part_map_entry *ae;
 	struct apple_blockzeroblock ab;
 	const char *ptype;
 
-	buf = DKW_MALLOC(ASIZE);
-	if ((error = dkwedge_read(pdk, vp, 0, buf, ASIZE)) != 0) {
+	bp = geteblk(ASIZE);
+	if ((error = dkwedge_read(pdk, vp, 0, bp->b_data, ASIZE)) != 0) {
 		DPRINTF("%s: read @%u %d\n", __func__, 0, error);
 		goto out;
 	}
 
-	am = buf;
+	am = bp->b_data;
 	swap_apple_drvr_map(am);
 
 	error = ESRCH;
@@ -186,12 +178,12 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 		blockcount = 512;
 	}
 
-	ae = buf;
+	ae = bp->b_data;
 	offset = blocksize;
 	for (n = 0; n < blockcount; n++, offset += rsize) {
 		DPRINTF("%s: offset %x rsize %x\n", __func__, offset, rsize);
-		if ((error = dkwedge_read(pdk, vp, offset / DEV_BSIZE, buf,
-		    rsize)) != 0) {
+		if ((error = dkwedge_read(pdk, vp, offset / DEV_BSIZE,
+		    bp->b_data, rsize)) != 0) {
 			DPRINTF("%s: read @%u %d\n", __func__, offset,
 			    error);
 			goto out;
@@ -244,7 +236,7 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 	}
 
 out:
-	DKW_FREE(buf);
+	brelse(bp, 0);
 	DPRINTF("%s: return %d\n", __func__, error);
 	return error;
 }

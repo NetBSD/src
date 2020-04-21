@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.94.12.2 2020/04/08 14:08:53 martin Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.94.12.3 2020/04/21 18:42:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94.12.2 2020/04/08 14:08:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94.12.3 2020/04/21 18:42:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ nullfs_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if (null_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+	if (vrefcnt(null_rootvp) > 1 && (mntflags & MNT_FORCE) == 0)
 		return EBUSY;
 
 	if ((error = vflush(mp, null_rootvp, flags)) != 0)

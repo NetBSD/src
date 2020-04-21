@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.13.4.4 2020/04/13 08:03:33 martin Exp $ */
+/* $NetBSD: gicv3.c,v 1.13.4.5 2020/04/21 18:42:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13.4.4 2020/04/13 08:03:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13.4.5 2020/04/21 18:42:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -178,7 +178,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			gicr_write_4(sc, n, GICR_ICFGRn(is->is_irq / 16), icfg);
 
 			ipriority = gicr_read_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4));
-			ipriority &= ~(0xff << ipriority_shift);
+			ipriority &= ~(0xffU << ipriority_shift);
 			ipriority |= (ipriority_val << ipriority_shift);
 			gicr_write_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4), ipriority);
 		}
@@ -202,7 +202,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 
 		/* Update interrupt priority */
 		ipriority = gicd_read_4(sc, GICD_IPRIORITYRn(is->is_irq / 4));
-		ipriority &= ~(0xff << ipriority_shift);
+		ipriority &= ~(0xffU << ipriority_shift);
 		ipriority |= (ipriority_val << ipriority_shift);
 		gicd_write_4(sc, GICD_IPRIORITYRn(is->is_irq / 4), ipriority);
 	}
@@ -277,7 +277,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 		for (o = 0; o < 4; o++, byte_shift += 8) {
 			struct intrsource * const is = sc->sc_pic.pic_sources[n + o];
 			if (is == NULL)
-				priority |= 0xff << byte_shift;
+				priority |= (0xffU << byte_shift);
 			else {
 				const u_int ipriority_val = IPL_TO_PRIORITY(sc, is->is_ipl);
 				priority |= ipriority_val << byte_shift;

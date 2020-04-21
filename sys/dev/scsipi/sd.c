@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.325.6.2 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: sd.c,v 1.325.6.3 2020/04/21 18:42:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.325.6.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.325.6.3 2020/04/21 18:42:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -185,7 +185,7 @@ const struct cdevsw sd_cdevsw = {
 	.d_flag = D_DISK | D_MPSAFE
 };
 
-static struct dkdriver sddkdriver = {
+static const struct dkdriver sddkdriver = {
 	.d_open = sdopen,
 	.d_close = sdclose,
 	.d_strategy = sdstrategy,

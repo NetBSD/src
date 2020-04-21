@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.17 2016/02/14 18:12:30 dholland Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.17.18.1 2020/04/21 18:42:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.17 2016/02/14 18:12:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.17.18.1 2020/04/21 18:42:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -458,6 +458,10 @@ ofwoea_bootstrap_console(void)
 	if (OF_getprop(chosen, "stdin", &stdin,
 	    sizeof(stdin)) != sizeof(stdin))
 		goto nocons;
+	if (stdout == 0) {
+		 /* screen should be console, but it is not open */
+		 stdout = OF_open("screen");
+	}
 	node = OF_instance_to_package(stdout);
 	console_node = node;
 	console_instance = stdout;

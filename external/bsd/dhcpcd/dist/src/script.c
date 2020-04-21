@@ -84,7 +84,7 @@ if_printoptions(void)
 }
 
 pid_t
-script_exec(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
+script_exec(char *const *argv, char *const *env)
 {
 	pid_t pid = 0;
 	posix_spawnattr_t attr;
@@ -105,11 +105,10 @@ script_exec(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 	flags = POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF;
 	posix_spawnattr_setflags(&attr, flags);
 	sigemptyset(&defsigs);
+	posix_spawnattr_setsigmask(&attr, &defsigs);
 	for (i = 0; i < dhcpcd_signals_len; i++)
 		sigaddset(&defsigs, dhcpcd_signals[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
-	sigemptyset(&defsigs);
-	posix_spawnattr_setsigmask(&attr, &defsigs);
 #endif
 	errno = 0;
 	r = posix_spawn(&pid, argv[0], NULL, &attr, argv, env);
@@ -658,7 +657,7 @@ script_run(struct dhcpcd_ctx *ctx, char **argv)
 	pid_t pid;
 	int status = 0;
 
-	pid = script_exec(ctx, argv, ctx->script_env);
+	pid = script_exec(argv, ctx->script_env);
 	if (pid == -1)
 		logerr("%s: %s", __func__, argv[0]);
 	else if (pid != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.63.2.2 2020/04/13 08:05:27 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.63.2.3 2020/04/21 18:42:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.63.2.2 2020/04/13 08:05:27 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.63.2.3 2020/04/21 18:42:47 martin Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -74,18 +74,14 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.63.2.2 2020/04/13 08:05:27 martin Exp $");
 #ifdef ENABLE_TESTS
 
 /* Assumptions in the kernel code that must be kept. */
-static_assert(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
-    sizeof(((siginfo_t *)0)->si_pe_report_event),
-    "pe_report_event and si_pe_report_event must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
-    sizeof(((siginfo_t *)0)->si_pe_other_pid),
-    "pe_other_pid and si_pe_other_pid must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_lwp) ==
-    sizeof(((siginfo_t *)0)->si_pe_lwp),
-    "pe_lwp and si_pe_lwp must be of the same size");
-static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
-    sizeof(((struct ptrace_state *)0)->pe_lwp),
-    "pe_other_pid and pe_lwp must be of the same size");
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
+    sizeof(((siginfo_t *)0)->si_pe_report_event));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((siginfo_t *)0)->si_pe_other_pid));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_lwp) ==
+    sizeof(((siginfo_t *)0)->si_pe_lwp));
+__CTASSERT(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((struct ptrace_state *)0)->pe_lwp));
 
 #include "h_macros.h"
 
@@ -7579,6 +7575,7 @@ syscall_body(const char *op)
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
+	atf_tc_set_md_var(tc, "timeout", "15");				\
 	atf_tc_set_md_var(tc, "descr",					\
 	    "Verify that getpid(2) can be traced with PT_SYSCALL %s",	\
 	   #op );							\

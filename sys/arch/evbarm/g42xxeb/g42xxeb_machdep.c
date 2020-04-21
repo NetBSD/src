@@ -1,7 +1,7 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.30.16.2 2020/04/13 08:03:43 martin Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.30.16.3 2020/04/21 18:42:05 martin Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
+ * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
  * All rights reserved.
  *
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -30,9 +30,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependent functions for kernel setup for Genetec G4250EBX 
+ * Machine dependent functions for kernel setup for Genetec G4250EBX
  * evaluation board.
- * 
+ *
  * Based on iq80310_machhdep.c
  */
 /*
@@ -111,7 +111,6 @@
 #include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "lcd.h"
@@ -183,10 +182,6 @@ int max_processes = 64;			/* Default number */
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
@@ -293,7 +288,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -443,8 +438,8 @@ initarm(void *arg)
 	/*
 	 * Okay, RedBoot has provided us with the following memory map:
 	 *
-	 * Physical Address Range     Description 
-	 * -----------------------    ---------------------------------- 
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
 	 * 0x00000000 - 0x01ffffff    flash Memory   (32MB)
 	 * 0x04000000 - 0x05ffffff    Application flash Memory  (32MB)
 	 * 0x08000000 - 0x080000ff    I/O baseboard registers
@@ -454,16 +449,16 @@ initarm(void *arg)
 	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB)
 	 *
 	 *
-	 * Virtual Address Range    X C B  Description 
-	 * -----------------------  - - -  ---------------------------------- 
-	 * 0x00000000 - 0x00003fff  N Y Y  SDRAM 
+	 * Virtual Address Range    X C B  Description
+	 * -----------------------  - - -  ----------------------------------
+	 * 0x00000000 - 0x00003fff  N Y Y  SDRAM
 	 * 0x00004000 - 0x01ffffff  N Y N  ROM
 	 * 0x08000000 - 0x080fffff  N N N  I/O baseboard registers
 	 * 0x0a000000 - 0x0a0fffff  N N N  SRAM
 	 * 0x40000000 - 0x480fffff  N N N  Processor Registers
-	 * 0xa0000000 - 0xa000ffff  N Y N  RedBoot SDRAM 
+	 * 0xa0000000 - 0xa000ffff  N Y N  RedBoot SDRAM
 	 * 0xa0017000 - 0xa3ffffff  Y Y Y  SDRAM
-	 * 0xc0000000 - 0xcfffffff  Y Y Y  Cache Flush Region 
+	 * 0xc0000000 - 0xcfffffff  Y Y Y  Cache Flush Region
 	 * (done by this routine)
 	 * 0xfd000000 - 0xfd0000ff  N N N  I/O baseboard registers
 	 * 0xfd100000 - 0xfd3fffff  N N N  Processor Registers.
@@ -622,13 +617,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	/*
@@ -680,7 +675,7 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
+
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
@@ -953,9 +948,9 @@ consinit(void)
 #ifdef KGDB
 	if (0 == strcmp(kgdb_devname, "ffuart")){
 		/* port is reserved for kgdb */
-	} else 
+	} else
 #endif
-	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
+	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
 		comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
 #if 0
 		pxa2x0_clkman_config(CKEN_FFUART, 1);

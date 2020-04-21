@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.67.6.1 2020/04/08 14:08:53 martin Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.67.6.2 2020/04/21 18:42:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67.6.1 2020/04/08 14:08:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67.6.2 2020/04/21 18:42:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,7 +692,7 @@ layer_revoke(void *v)
 	int error;
 
 	/*
-	 * We will most likely end up in vclean which uses the v_usecount
+	 * We will most likely end up in vclean which uses the usecount
 	 * to determine if a vnode is active.  Take an extra reference on
 	 * the lower vnode so it will always close and inactivate.
 	 */

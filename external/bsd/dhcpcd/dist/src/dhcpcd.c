@@ -781,8 +781,10 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			 * maybe on a new network. */
 			ipv6nd_startexpire(ifp);
 #endif
+#ifdef IPV6_MANAGETEMPADDR
 			/* RFC4941 Section 3.5 */
-			ipv6_gentempifid(ifp);
+			ipv6_regentempaddrs(ifp);
+#endif
 #endif
 			dhcpcd_startinterface(ifp);
 		}
@@ -1552,26 +1554,39 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 		ctx->options |= DHCPCD_DUMPLEASE;
 		size_t nifaces = 0;
 
-		for (oi = optind; oi < argc; oi++) {
-			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
-				continue;
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if (!ifp->active)
 				continue;
-			opt = send_interface(NULL, ifp, af);
-			if (opt != -1)
+			for (oi = optind; oi < argc; oi++) {
+				if (strcmp(ifp->name, argv[oi]) == 0)
+					break;
+			}
+			if (optind == argc || oi < argc) {
+				opt = send_interface(NULL, ifp, af);
+				if (opt == -1)
+					goto dumperr;
 				nifaces += (size_t)opt;
+			}
 		}
 		if (write(fd->fd, &nifaces, sizeof(nifaces)) != sizeof(nifaces))
-			return -1;
-		for (oi = optind; oi < argc; oi++) {
-			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
-				continue;
+			goto dumperr;
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if (!ifp->active)
 				continue;
-			send_interface(fd, ifp, af);
+			for (oi = optind; oi < argc; oi++) {
+				if (strcmp(ifp->name, argv[oi]) == 0)
+					break;
+			}
+			if (optind == argc || oi < argc) {
+				if (send_interface(fd, ifp, af) == -1)
+					goto dumperr;
+			}
 		}
 		ctx->options &= ~DHCPCD_DUMPLEASE;
 		return 0;
+dumperr:
+		ctx->options &= ~DHCPCD_DUMPLEASE;
+		return -1;
 	}
 
 	/* Only privileged users can control dhcpcd via the socket. */
@@ -1618,14 +1633,20 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 	return 0;
 }
 
+static const char *dumpskip[] = {
+	"PATH=",
+	"pid=",
+	"chroot=",
+};
+
 static int
 dhcpcd_readdump(struct dhcpcd_ctx *ctx)
 {
 	int error = 0;
-	size_t nifaces, buflen = 0, dlen;
+	size_t nifaces, buflen = 0, dlen, i;
 	ssize_t len;
 	char *buf = NULL, *dp, *de;
-	bool print;
+	const char *skip;
 
 again1:
 	len = read(ctx->control_fd, &nifaces, sizeof(nifaces));
@@ -1660,6 +1681,11 @@ again2:
 			buf = nbuf;
 			buflen = dlen;
 		}
+		if (dlen == 0) {
+			errno = EINVAL;
+			error = -1;
+			goto out;
+		}
 again3:
 		if (read(ctx->control_fd, buf, dlen) != (ssize_t)dlen) {
 			if (errno == EAGAIN)
@@ -1669,28 +1695,23 @@ again3:
 		}
 		dp = buf;
 		de = dp + dlen;
+		if (*(dp - 1) != '\0') {
+			errno = EINVAL;
+			error = -1;
+			goto out;
+		}
 		while (dp < de) {
-			if (dp + 6 >= de) /* _new and = something */
-				break;
-			if (dp[0] == 'n' && dp[3] == '_') {
-				if (dp[1] == 'e' && dp[2] == 'w') {
-					print = true;
-					dp += 4;
-				} else if (dp[1] == 'd' &&
-				    isdigit((unsigned char)dp[2]))
-					print = true;
-				else
-					print = false;
-			} else
-				print = false;
-			while (dp < de && *dp != '\0') {
-				if (print)
-					putchar(*dp);
-				dp++;
+			for (i = 0; i < __arraycount(dumpskip); i++) {
+				skip = dumpskip[i];
+				if (strncmp(dp, skip, strlen(skip)) == 0)
+					break;
 			}
-			if (print)
-				putchar('\n');
-			dp++;
+			if (i == __arraycount(dumpskip)) {
+				if (strncmp(dp, "new_", 4) == 0)
+					dp += 4;
+				printf("%s\n", dp);
+			}
+			dp += strlen(dp) + 1;
 		}
 		fflush(stdout);
 		if (nifaces != 1)
@@ -2107,16 +2128,11 @@ printpidfile:
 	}
 #endif
 
-	logdebugx(PACKAGE "-" VERSION " starting");
+	loginfox(PACKAGE "-" VERSION " starting");
 	freopen(_PATH_DEVNULL, "r", stdin);
 
 #ifdef PRIVSEP
-	if (ps_init(&ctx) == -1) {
-		if (errno != 0) {
-			logerr("ps_init");
-			goto exit_failure;
-		}
-	} else
+	if (ps_init(&ctx) == 0)
 		script_runchroot(&ctx, ifo->script);
 #endif
 
@@ -2169,7 +2185,7 @@ printpidfile:
 	}
 #endif
 
-#ifdef BSD
+#if defined(BSD) && defined(INET6)
 	/* Disable the kernel RTADV sysctl as early as possible. */
 	if (ctx.options & DHCPCD_IPV6 && ctx.options & DHCPCD_IPV6RS)
 		if_disable_rtadv();
@@ -2191,7 +2207,8 @@ printpidfile:
 		goto run_loop;
 #endif
 
-	if (control_start(&ctx,
+	if (!(ctx.options & DHCPCD_TEST) &&
+	    control_start(&ctx,
 	    ctx.options & DHCPCD_MASTER ? NULL : argv[optind]) == -1)
 	{
 		logerr("%s: control_start", __func__);
@@ -2257,6 +2274,7 @@ printpidfile:
 			loglevel = ctx.options & DHCPCD_INACTIVE ?
 			    LOG_DEBUG : LOG_ERR;
 			logmessage(loglevel, "no valid interfaces found");
+			dhcpcd_daemonise(&ctx);
 		} else
 			goto exit_failure;
 		if (!(ctx.options & DHCPCD_LINK)) {

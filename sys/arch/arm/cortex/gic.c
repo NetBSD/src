@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.34.2.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: gic.c,v 1.34.2.2 2020/04/21 18:42:04 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.34.2.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.34.2.2 2020/04/21 18:42:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -415,7 +415,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * There are 4 irqs per TARGETS register.  For now bind
 		 * to the primary cpu.
 		 */
-		targets &= ~(0xff << byte_shift);
+		targets &= ~(0xffU << byte_shift);
 #if 0
 #ifdef MULTIPROCESSOR
 		if (is->is_mpsafe) {
@@ -455,7 +455,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	 */
 	const bus_size_t priority_reg = GICD_IPRIORITYRn(is->is_irq / 4);
 	uint32_t priority = gicd_read(sc, priority_reg);
-	priority &= ~(0xff << byte_shift);
+	priority &= ~(0xffU << byte_shift);
 	priority |= armgic_ipl_to_priority(is->is_ipl) << byte_shift;
 	gicd_write(sc, priority_reg, priority);
 }

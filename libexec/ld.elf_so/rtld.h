@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.133.2.2 2020/04/08 14:07:17 martin Exp $	 */
+/*	$NetBSD: rtld.h,v 1.133.2.3 2020/04/21 18:42:00 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -369,6 +369,8 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
 
 __dso_public void *_dlauxinfo(void) __pure;
 __dso_public void __dl_cxa_refcount(void *addr, ssize_t delta);
+
+__dso_public pid_t __locked_fork(int *);
 
 #if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 /*

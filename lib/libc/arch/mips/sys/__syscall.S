@@ -1,10 +1,12 @@
-/*	$NetBSD: __syscall.S,v 1.2 2014/01/31 18:06:26 matt Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2.26.1 2020/04/21 18:41:58 martin Exp $	*/
 
 #include "SYS.h"
 
 #ifdef __mips_o32
+
 RSYSCALL(__syscall)
-#else
+
+#else /* ! __mips_o32 */
 
 LEAF(__syscall)
         PIC_PROLOGUE(__syscall)
@@ -23,5 +25,7 @@ LEAF(__syscall)
 1:
         PIC_TAILCALL(__cerror)
 END(__syscall)
-STRONG_ALIAS(syscall, __syscall)
-#endif
+STRONG_ALIAS(_syscall,__syscall)
+WEAK_ALIAS(syscall,__syscall)
+
+#endif /* __mips_o32 */

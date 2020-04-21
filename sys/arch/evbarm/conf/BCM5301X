@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.30.2.2 2020/04/13 08:03:42 martin Exp $
+#	$NetBSD: BCM5301X,v 1.30.2.3 2020/04/21 18:42:05 martin Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -128,7 +128,7 @@ options 	RNDVERBOSE	# Verbose rnd messages
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
-#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1
@@ -150,7 +150,6 @@ options UHUB_DEBUG
 #  single		Boot to single user only
 #  kdb			Give control to kernel debugger
 #  ask			Ask for file name to reboot from
-#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output

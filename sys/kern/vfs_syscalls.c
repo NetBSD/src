@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.518.4.3 2020/04/13 08:05:04 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518.4.4 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.4.3 2020/04/13 08:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.4.4 2020/04/21 18:42:42 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -670,6 +670,72 @@ do_sys_sync(struct lwp *l)
 	if (syncprt)
 		vfs_bufstats();
 #endif /* DEBUG */
+}
+
+static bool
+sync_vnode_filter(void *cookie, vnode_t *vp)
+{
+
+	if (vp->v_numoutput > 0) {
+		++*(int *)cookie;
+	}
+	return false;
+}
+
+int
+vfs_syncwait(void)
+{
+	int nbusy, nbusy_prev, iter;
+	struct vnode_iterator *vniter;
+	mount_iterator_t *mpiter;
+	struct mount *mp;
+
+	for (nbusy_prev = 0, iter = 0; iter < 20;) {
+		nbusy = 0;
+		mountlist_iterator_init(&mpiter);
+		while ((mp = mountlist_iterator_next(mpiter)) != NULL) {
+			vnode_t *vp __diagused;
+			vfs_vnode_iterator_init(mp, &vniter);
+			vp = vfs_vnode_iterator_next(vniter,
+			    sync_vnode_filter, &nbusy);
+			KASSERT(vp == NULL);
+			vfs_vnode_iterator_destroy(vniter);
+		}
+		mountlist_iterator_destroy(mpiter);
+
+		if (nbusy == 0)
+			break;
+		if (nbusy_prev == 0)
+			nbusy_prev = nbusy;
+		printf("%d ", nbusy);
+		kpause("syncwait", false, MAX(1, hz / 25 * iter), NULL);
+		if (nbusy >= nbusy_prev) /* we didn't flush anything */
+			iter++;
+		else
+			nbusy_prev = nbusy;
+	}
+
+	if (nbusy) {
+#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
+		printf("giving up\nPrinting vnodes for busy buffers\n");
+		mountlist_iterator_init(&mpiter);
+		while ((mp = mountlist_iterator_next(mpiter)) != NULL) {
+			vnode_t *vp;
+			vfs_vnode_iterator_init(mp, &vniter);
+			vp = vfs_vnode_iterator_next(vniter,
+			    NULL, NULL);
+			mutex_enter(vp->v_interlock);
+			if (vp->v_numoutput > 0)
+				vprint(NULL, vp);
+			mutex_exit(vp->v_interlock);
+			vrele(vp);
+			vfs_vnode_iterator_destroy(vniter);
+		}
+		mountlist_iterator_destroy(mpiter);
+#endif
+	}
+
+	return nbusy;
 }
 
 /* ARGSUSED */

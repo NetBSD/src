@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.6.12.2 2020/04/08 14:08:24 martin Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.6.12.3 2020/04/21 18:42:40 martin Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.6.12.2 2020/04/08 14:08:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.6.12.3 2020/04/21 18:42:40 martin Exp $");
 
 #include <linux/dma-mapping.h>
 
@@ -297,7 +297,7 @@ nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,
 	}
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamem_map(dmat, &dmac->dmaseg, 1, PAGE_SIZE, &dmac->dmakva,
-	    BUS_DMA_WAITOK);
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (ret) {
 		bus_dmamap_destroy(dmat, dmac->dmamap);
 		bus_dmamem_free(dmat, &dmac->dmaseg, 1);

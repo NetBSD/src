@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.321.4.3 2020/04/13 08:05:21 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.321.4.4 2020/04/21 18:42:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.3 2020/04/13 08:05:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.4 2020/04/21 18:42:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1346,7 +1346,7 @@ lfs_close(void *v)
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
-	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
+	if (vrefcnt(vp) > 1 && vp != ip->i_lfs->lfs_ivnode) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
 	return (0);
@@ -1373,7 +1373,7 @@ lfsspec_close(void *v)
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	ip = VTOI(vp);
-	if (vp->v_usecount > 1) {
+	if (vrefcnt(vp) > 1) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
@@ -1400,7 +1400,7 @@ lfsfifo_close(void *v)
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	ip = VTOI(vp);
-	if (ap->a_vp->v_usecount > 1) {
+	if (vrefcnt(ap->a_vp) > 1) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));

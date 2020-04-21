@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.4.2.3 2020/04/08 14:07:58 martin Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.4.2.4 2020/04/21 18:42:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.4.2.3 2020/04/08 14:07:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.4.2.4 2020/04/21 18:42:12 martin Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -67,6 +67,7 @@ __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:1
 #include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/cpu_counter.h>
+#include <x86/apicvar.h>
 #include <x86/efi.h>
 
 #include <dev/wsfb/genfbvar.h>
@@ -571,11 +572,8 @@ hyperv_init(void)
 
 #if NLAPIC > 0
 	if ((hyperv_features & CPUID_HV_MSR_TIME_FREQ) &&
-	    (hyperv_features3 & CPUID3_HV_TIME_FREQ)) {
-		extern uint32_t lapic_per_second;
-
+	    (hyperv_features3 & CPUID3_HV_TIME_FREQ))
 		lapic_per_second = rdmsr(MSR_HV_APIC_FREQUENCY);
-	}
 #endif
 
 	return hyperv_init_hypercall();

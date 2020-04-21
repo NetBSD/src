@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.20 2017/03/25 23:33:11 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.20.12.1 2020/04/21 18:41:53 martin Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -63,7 +63,7 @@ up to 128 MB RAM)
 .Ql SERVICE/NORMAL
 .Em "switch on the back panel is turned to"
 .Ql SERVICE
-.Em "potision."
+.Em "position."
 .It
 433s, 433t, 433dl (33 MHz 68040 with built-in SCSI, up to 128 MB RAM)
 .bullet)

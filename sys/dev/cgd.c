@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.116.4.1 2020/04/08 14:08:02 martin Exp $ */
+/* $NetBSD: cgd.c,v 1.116.4.2 2020/04/21 18:42:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.116.4.1 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.116.4.2 2020/04/21 18:42:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,7 +233,7 @@ static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
 			   size_t, daddr_t, size_t, int);
 
-static struct dkdriver cgddkdriver = {
+static const struct dkdriver cgddkdriver = {
         .d_minphys  = minphys,
         .d_open = cgdopen,
         .d_close = cgdclose,

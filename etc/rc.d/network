@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.73.6.2 2020/04/08 14:03:58 martin Exp $
+# $NetBSD: network,v 1.73.6.3 2020/04/21 18:41:54 martin Exp $
 #
 
 # PROVIDE: network
@@ -215,7 +215,8 @@ network_start_interfaces()
 	# For each line from the $ifconfig_xxN variable or the
 	# /etc/ifconfig.xxN file, we ignore comments and blank lines,
 	# treat lines beginning with "!" as commands to execute, treat
-	# "dhcp" as a special case to invoke dhcpcd, and for any other
+	# "dhcp" as a special case to invoke dhcpcd, treat "rtsol" as
+	# a special case to send a router solicitation, and for any other
 	# line we run "ifconfig xxN", using each line of the file as the
 	# arguments for a separate "ifconfig" invocation.
 	#
@@ -320,6 +321,13 @@ network_start_interfaces()
 				if ! checkyesno dhcpcd; then
 					/sbin/dhcpcd -n \
 						${dhcpcd_flags} $int
+				fi
+				;;
+			rtsol)
+				if ! checkyesno dhcpcd; then
+					/sbin/sysctl -qw \
+						net.inet6.ip6.accept_rtadv=1
+					/sbin/dhcpcd -q6T --nodhcp6 $int
 				fi
 				;;
 			*)

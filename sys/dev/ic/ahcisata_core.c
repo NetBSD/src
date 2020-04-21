@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.60.4.3 2020/04/13 08:04:21 martin Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.60.4.4 2020/04/21 18:42:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.3 2020/04/13 08:04:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.4 2020/04/21 18:42:16 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -57,12 +57,12 @@ int ahcidebug_mask = 0;
 static void ahci_probe_drive(struct ata_channel *);
 static void ahci_setup_channel(struct ata_channel *);
 
-static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
+static void ahci_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_do_reset_drive(struct ata_channel *, int, int, uint32_t *,
 	uint8_t);
 static void ahci_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static void ahci_reset_channel(struct ata_channel *, int);
-static int  ahci_exec_command(struct ata_drive_datas *, struct ata_xfer *);
+static void  ahci_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_ata_addref(struct ata_drive_datas *);
 static void ahci_ata_delref(struct ata_drive_datas *);
 static void ahci_killpending(struct ata_drive_datas *);
@@ -1101,13 +1101,11 @@ static const struct ata_xfer_ops ahci_cmd_xfer_ops = {
 	.c_kill_xfer = ahci_cmd_kill_xfer,
 };
 
-static int
+static void
 ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	int ret;
-	int s;
 
 	AHCIDEBUG_PRINT(("ahci_exec_command port %d CI 0x%x\n",
 	    chp->ch_channel,
@@ -1121,25 +1119,8 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
 	xfer->ops = &ahci_cmd_xfer_ops;
-	s = splbio();
+
 	ata_exec_xfer(chp, xfer);
-#ifdef DIAGNOSTIC
-	if ((ata_c->flags & AT_POLL) != 0 &&
-	    (ata_c->flags & AT_DONE) == 0)
-		panic("ahci_exec_command: polled command not done");
-#endif
-	if (ata_c->flags & AT_DONE) {
-		ret = ATACMD_COMPLETE;
-	} else {
-		if (ata_c->flags & AT_WAIT) {
-			ata_wait_cmd(chp, xfer);
-			ret = ATACMD_COMPLETE;
-		} else {
-			ret = ATACMD_QUEUED;
-		}
-	}
-	splx(s);
-	return ret;
 }
 
 static int
@@ -1374,7 +1355,7 @@ static const struct ata_xfer_ops ahci_bio_xfer_ops = {
 	.c_kill_xfer = ahci_bio_kill_xfer,
 };
 
-static int
+static void
 ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -1391,7 +1372,6 @@ ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->ops = &ahci_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.7.68.2 2020/04/13 08:04:16 martin Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.7.68.3 2020/04/21 18:42:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.7.68.2 2020/04/13 08:04:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.7.68.3 2020/04/21 18:42:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ linux32_sys_sysinfo(struct lwp *l, const struct linux32_sys_sysinfo_args *uap, r
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
 	si.freeswap = 
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
-	si.procs = nprocs;
+	si.procs = atomic_load_relaxed(&nprocs);
 
 	/* The following are only present in newer Linux kernels. */
 	si.totalbig = 0;

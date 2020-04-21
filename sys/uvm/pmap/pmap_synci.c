@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.3.20.1 2020/04/08 14:09:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.3.20.2 2020/04/21 18:42:46 martin Exp $");
 
 #define __PMAP_PRIVATE
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.3.20.1 2020/04/08 14:09:05 martin E
 #include <sys/cpu.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
- 
+
 #include <uvm/uvm.h>
 
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.100.4.2 2020/04/13 07:45:32 martin Exp $
+# $NetBSD: md.amd64,v 1.100.4.3 2020/04/21 18:41:53 martin Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
@@ -25,5 +25,6 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait6.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/lib/libi386/t_user_ldt.debug	tests-lib-debug	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libnvmm/h_io_assist.debug	tests-lib-debug	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libnvmm/h_mem_assist.debug	tests-lib-debug	debug,atf

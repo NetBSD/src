@@ -48,7 +48,7 @@ int	fieldssize = RECSIZE;
 
 Cell	**fldtab;	/* pointers to Cells */
 static size_t	len_inputFS = 0;
-static char	*inputFS = NULL; /* FS at time of input, for field splitting */
+static char	*inputFS; /* FS at time of input, for field splitting */
 
 #define	MAXFLD	2
 int	nfields	= MAXFLD;	/* last allocated slot for $i */
@@ -75,6 +75,7 @@ void recinit(unsigned int n)
 	fldtab[0]->sval = record;
 	fldtab[0]->nval = tostring("0");
 	makefields(1, nfields);
+	inputFS = strdup("");
 }
 
 void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */

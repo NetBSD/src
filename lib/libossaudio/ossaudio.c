@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.12.3 2020/04/21 18:41:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.33.12.3 2020/04/21 18:41:59 martin Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $");
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "soundcard.h"
 #undef ioctl
@@ -63,6 +64,10 @@ __RCSID("$NetBSD: ossaudio.c,v 1.33.12.2 2020/04/13 08:03:14 martin Exp $");
 
 static struct audiodevinfo *getdevinfo(int);
 
+static int getvol(u_int, u_char);
+static void setvol(int, int, bool);
+
+static void setchannels(int, int, int);
 static void setblocksize(int, struct audio_info *);
 
 static int audio_ioctl(int, unsigned long, void *);
@@ -95,7 +100,7 @@ static int
 audio_ioctl(int fd, unsigned long com, void *argp)
 {
 
-	struct audio_info tmpinfo;
+	struct audio_info tmpinfo, hwfmt;
 	struct audio_offset tmpoffs;
 	struct audio_buf_info bufinfo;
 	struct count_info cntinfo;
@@ -134,7 +139,35 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/*
+		 * The default NetBSD behavior if an unsupported sample rate
+		 * is set is to return an error code and keep the rate at the
+		 * default of 8000 Hz.
+		 * 
+		 * However, OSS specifies that a sample rate supported by the
+		 * hardware is returned if the exact rate could not be set.
+		 * 
+		 * So, if the chosen sample rate is invalid, set and return
+		 * the current hardware rate.
+		 */
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			/* Don't care that SETINFO failed the first time... */
+			errno = 0;
+			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
+			if (retval < 0)
+				return retval;
+			retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+			tmpinfo.play.sample_rate =
+			tmpinfo.record.sample_rate =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.sample_rate :
+			    hwfmt.play.sample_rate;
+			retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+		}
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -210,24 +243,19 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
+		/*
+		 * XXX: When the kernel supports 24-bit LPCM by default,
+		 * the 24-bit formats should be handled properly instead
+		 * of falling back to 32 bits.
+		 */
 		case AFMT_S24_LE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 24;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			break;
-		case AFMT_S24_BE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 24;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			break;
 		case AFMT_S32_LE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 32;
 			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
 			break;
+		case AFMT_S24_BE:
 		case AFMT_S32_BE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 32;
@@ -241,9 +269,36 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
 			break;
 		default:
-			return EINVAL;
+			/*
+			 * OSSv4 specifies that if an invalid format is chosen
+			 * by an application then a sensible format supported
+			 * by the hardware is returned.
+			 *
+			 * In this case, we pick the current hardware format.
+			 */
+			retval = ioctl(fd, AUDIO_GETFORMAT, &hwfmt);
+			if (retval < 0)
+				return retval;
+			retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+			if (retval < 0)
+				return retval;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.encoding : hwfmt.play.encoding;
+			tmpinfo.play.precision =
+			tmpinfo.record.precision =
+			    (tmpinfo.mode == AUMODE_RECORD) ?
+			    hwfmt.record.precision : hwfmt.play.precision ;
+			break;
 		}
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/*
+		 * In the post-kernel-mixer world, assume that any error means
+		 * it's fatal rather than an unsupported format being selected.
+		 */
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
 		/* FALLTHRU */
 	case SOUND_PCM_READ_BITS:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -300,12 +355,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_CHANNELS:
-		AUDIO_INITINFO(&tmpinfo);
-		tmpinfo.play.channels = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		AUDIO_INITINFO(&tmpinfo);
-		tmpinfo.record.channels = INTARG;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		setchannels(fd, tmpinfo.mode, INTARG);
 		/* FALLTHRU */
 	case SOUND_PCM_READ_CHANNELS:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -448,43 +501,35 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
 		INTARG = idat;
 		break;
-#if 0
+	case SNDCTL_DSP_SETTRIGGER:
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		AUDIO_INITINFO(&tmpinfo);
+		if (tmpinfo.mode & AUMODE_PLAY)
+			tmpinfo.play.pause = (INTARG & PCM_ENABLE_OUTPUT) == 0;
+		if (tmpinfo.mode & AUMODE_RECORD)
+			tmpinfo.record.pause = (INTARG & PCM_ENABLE_INPUT) == 0;
+		(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		/* FALLTHRU */
 	case SNDCTL_DSP_GETTRIGGER:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
-		       (tmpinfo.record.pause ? 0 : PCM_ENABLE_INPUT);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
+		idat = 0;
+		if ((tmpinfo.mode & AUMODE_PLAY) && !tmpinfo.play.pause)
+			idat |= PCM_ENABLE_OUTPUT;
+		if ((tmpinfo.mode & AUMODE_RECORD) && !tmpinfo.record.pause)
+			idat |= PCM_ENABLE_INPUT;
+		INTARG = idat;
 		break;
-	case SNDCTL_DSP_SETTRIGGER:
-		AUDIO_INITINFO(&tmpinfo);
-		retval = copyin(SCARG(uap, data), &idat, sizeof idat);
-		if (retval < 0)
-			return retval;
-		tmpinfo.play.pause = (idat & PCM_ENABLE_OUTPUT) == 0;
-		tmpinfo.record.pause = (idat & PCM_ENABLE_INPUT) == 0;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
-		break;
-#else
-	case SNDCTL_DSP_GETTRIGGER:
-	case SNDCTL_DSP_SETTRIGGER:
-		/* XXX Do nothing for now. */
-		INTARG = PCM_ENABLE_OUTPUT;
-		break;
-#endif
 	case SNDCTL_DSP_GETIPTR:
 		retval = ioctl(fd, AUDIO_GETIOFFS, &tmpoffs);
 		if (retval < 0)
@@ -549,7 +594,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
@@ -586,41 +631,23 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpaudioinfo->next_rec_engine = 0;
 		argp = tmpaudioinfo;
 		break;
-	case SNDCTL_DSP_GETPLAYVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		*(uint *)argp = tmpinfo.play.gain;
-		break;
 	case SNDCTL_DSP_SETPLAYVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		setvol(fd, INTARG, false);
+		/* FALLTHRU */
+	case SNDCTL_DSP_GETPLAYVOL:
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		if (*(uint *)argp > 255)
-			tmpinfo.play.gain = 255;
-		else
-			tmpinfo.play.gain = *(uint *)argp;
-		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		break;
-	case SNDCTL_DSP_GETRECVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
-		*(uint *)argp = tmpinfo.record.gain;
+		INTARG = getvol(tmpinfo.play.gain, tmpinfo.play.balance);
 		break;
 	case SNDCTL_DSP_SETRECVOL:
-		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
+		setvol(fd, INTARG, true);
+		/* FALLTHRU */
+	case SNDCTL_DSP_GETRECVOL:
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		if (*(uint *)argp > 255)
-			tmpinfo.record.gain = 255;
-		else
-			tmpinfo.record.gain = *(uint *)argp;
-		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		if (retval < 0)
-			return retval;
+		INTARG = getvol(tmpinfo.record.gain, tmpinfo.record.balance);
 		break;
 	case SNDCTL_DSP_SKIP:
 	case SNDCTL_DSP_SILENCE:
@@ -996,6 +1023,101 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	}
 	INTARG = (int)idat;
 	return 0;
+}
+
+static int
+getvol(u_int gain, u_char balance)
+{
+	u_int l, r;
+
+	if (balance == AUDIO_MID_BALANCE) {
+		l = r = gain;
+	} else if (balance < AUDIO_MID_BALANCE) {
+		l = gain;
+		r = (balance * gain) / AUDIO_MID_BALANCE;
+	} else {
+		r = gain;
+		l = ((AUDIO_RIGHT_BALANCE - balance) * gain)
+		    / AUDIO_MID_BALANCE;
+	}
+
+	return TO_OSSVOL(l) | (TO_OSSVOL(r) << 8);
+}
+
+static void
+setvol(int fd, int volume, bool record)
+{
+	u_int lgain, rgain;
+	struct audio_info tmpinfo;
+	struct audio_prinfo *prinfo;
+
+	AUDIO_INITINFO(&tmpinfo);
+	prinfo = record ? &tmpinfo.record : &tmpinfo.play;
+
+	lgain = FROM_OSSVOL((volume >> 0) & 0xff);
+	rgain = FROM_OSSVOL((volume >> 8) & 0xff);
+
+	if (lgain == rgain) {
+		prinfo->gain = lgain;
+		prinfo->balance = AUDIO_MID_BALANCE;
+	} else if (lgain < rgain) {
+		prinfo->gain = rgain;
+		prinfo->balance = AUDIO_RIGHT_BALANCE -
+		    (AUDIO_MID_BALANCE * lgain) / rgain;
+	} else {
+		prinfo->gain = lgain;
+		prinfo->balance = (AUDIO_MID_BALANCE * rgain) / lgain;
+	}
+
+	(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+}
+
+/*
+ * When AUDIO_SETINFO fails to set a channel count, the application's chosen
+ * number is out of range of what the kernel allows.
+ *
+ * When this happens, we use the current hardware settings. This is just in
+ * case an application is abusing SNDCTL_DSP_CHANNELS - OSSv4 always sets and
+ * returns a reasonable value, even if it wasn't what the user requested.
+ *
+ * XXX: If a device is opened for both playback and recording, and supports
+ * fewer channels for recording than playback, applications that do both will
+ * behave very strangely. OSS doesn't allow for reporting separate channel
+ * counts for recording and playback. This could be worked around by always
+ * mixing recorded data up to the same number of channels as is being used
+ * for playback.
+ */
+static void
+setchannels(int fd, int mode, int nchannels)
+{
+	struct audio_info tmpinfo, hwfmt;
+
+	if (ioctl(fd, AUDIO_GETFORMAT, &hwfmt) < 0) {
+		errno = 0;
+		hwfmt.record.channels = hwfmt.play.channels = 2;
+	}
+
+	if (mode & AUMODE_PLAY) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.play.channels = nchannels;
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			errno = 0;
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.play.channels = hwfmt.play.channels;
+			(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
+
+	if (mode & AUMODE_RECORD) {
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.record.channels = nchannels;
+		if (ioctl(fd, AUDIO_SETINFO, &tmpinfo) < 0) {
+			errno = 0;
+			AUDIO_INITINFO(&tmpinfo);
+			tmpinfo.record.channels = hwfmt.record.channels;
+			(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		}
+	}
 }
 
 /*

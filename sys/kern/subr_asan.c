@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.9.2.3 2020/04/13 08:05:04 martin Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.9.2.4 2020/04/21 18:42:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.9.2.3 2020/04/13 08:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.9.2.4 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1069,8 +1069,6 @@ ASAN_BUS_WRITE_FUNC(8, 64)
 
 /* -------------------------------------------------------------------------- */
 
-#ifdef __HAVE_KASAN_INSTR_DMA
-
 #include <sys/mbuf.h>
 
 static void
@@ -1161,8 +1159,6 @@ kasan_dma_load(bus_dmamap_t map, void *buf, bus_size_t buflen, int type)
 	map->dm_buflen = buflen;
 	map->dm_buftype = type;
 }
-
-#endif /* __HAVE_KASAN_INSTR_DMA */
 
 /* -------------------------------------------------------------------------- */
 

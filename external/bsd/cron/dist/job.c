@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.2.48.1 2020/04/21 18:41:55 martin Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -26,20 +26,21 @@
 #if 0
 static char rcsid[] = "Id: job.c,v 1.6 2004/01/23 18:56:43 vixie Exp";
 #else
-__RCSID("$NetBSD: job.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.2.48.1 2020/04/21 18:41:55 martin Exp $");
 #endif
 #endif
 
 #include "cron.h"
 
 typedef	struct _job {
-	struct _job	*next;
+	SIMPLEQ_ENTRY(_job) entries;
 	entry		*e;
 	user		*u;
 	time_t		t;
+	pid_t		pid;
 } job;
 
-static job	*jhead = NULL, *jtail = NULL;
+static SIMPLEQ_HEAD(job_queue, _job) jobs = SIMPLEQ_HEAD_INITIALIZER(jobs);
 
 static int okay_to_go(job *);
 
@@ -48,48 +49,86 @@ job_add(entry *e, user *u, time_t target_time) {
 	job *j;
 
 	/* if already on queue, keep going */
-	for (j = jhead; j != NULL; j = j->next)
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
 		if (j->e == e && j->u == u) {
 			j->t = target_time;
 			return;
 		}
+	}
 
 	/* build a job queue element */
-	if ((j = malloc(sizeof(*j))) == NULL)
+	if ((j = calloc(1, sizeof(*j))) == NULL)
 		return;
-	j->next = NULL;
 	j->e = e;
 	j->u = u;
 	j->t = target_time;
+	j->pid = -1;
 
 	/* add it to the tail */
-	if (jhead == NULL)
-		jhead = j;
-	else
-		jtail->next = j;
-	jtail = j;
+	SIMPLEQ_INSERT_TAIL(&jobs, j, entries);
+}
+
+void
+job_remove(entry *e, user *u)
+{
+	job *j, *prev = NULL;
+
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
+		if (j->e == e && j->u == u) {
+			if (prev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&jobs, entries);
+			else
+				SIMPLEQ_REMOVE_AFTER(&jobs, prev, entries);
+			free(j);
+			break;
+		}
+		prev = j;
+	}
+}
+
+void
+job_exit(pid_t jobpid)
+{
+	job *j, *prev = NULL;
+
+	/* If a singleton exited, remove and free it. */
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
+		if (jobpid == j->pid) {
+			if (prev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&jobs, entries);
+			else
+				SIMPLEQ_REMOVE_AFTER(&jobs, prev, entries);
+			free(j);
+			break;
+		}
+		prev = j;
+	}
 }
 
 int
 job_runqueue(void) {
-	job *j, *jn;
+	struct job_queue singletons = SIMPLEQ_HEAD_INITIALIZER(singletons);
+	job *j;
 	int run = 0;
 
-	for (j = jhead; j; j = jn) {
-		if (okay_to_go(j))
-			do_command(j->e, j->u);
-		else {
+	while ((j = SIMPLEQ_FIRST(&jobs))) {
+		SIMPLEQ_REMOVE_HEAD(&jobs, entries);
+		if (okay_to_go(j)) {
+			j->pid = do_command(j->e, j->u);
+			run++;
+		} else {
 			char *x = mkprints(j->e->cmd, strlen(j->e->cmd));
 			char *usernm = env_get("LOGNAME", j->e->envp);
 
 			log_it(usernm, getpid(), "CMD (skipped)", x);
 			free(x);
 		}
-		jn = j->next;
-		free(j);
-		run++;
+		if (j->pid != -1)
+			SIMPLEQ_INSERT_TAIL(&singletons, j, entries);
+		else
+			free(j);
 	}
-	jhead = jtail = NULL;
+	SIMPLEQ_CONCAT(&jobs, &singletons);
 	return (run);
 }
 
@@ -99,6 +138,9 @@ okay_to_go(job *j)
 {
 	char *within, *t;
 	long delta;
+
+	if (j->pid != -1)
+		return 0;
 
 	if (j->e->flags & WHEN_REBOOT)
 		return (1);

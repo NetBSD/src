@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.33 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.33.20.1 2020/04/21 18:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.33 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.33.20.1 2020/04/21 18:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	cnt = nbytes;
 
 	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
-	ktrkuser("xattr-val", __UNCONST(data), nbytes);
+	ktruser("xattr-val", __UNCONST(data), nbytes, 0);
 
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, l->l_cred);
 	cnt -= auio.uio_resid;
@@ -314,7 +314,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
 
-		ktrkuser("xattr-val", data, cnt);
+		ktruser("xattr-val", data, cnt, 0);
 	} else
 		retval[0] = size;
 
@@ -392,7 +392,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
 
-		ktrkuser("xattr-list", data, cnt);
+		ktruser("xattr-list", data, cnt, 0);
 	} else
 		retval[0] = size;
 

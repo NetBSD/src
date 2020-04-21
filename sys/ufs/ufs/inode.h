@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.76 2017/08/20 12:09:06 maya Exp $	*/
+/*	$NetBSD: inode.h,v 1.76.4.1 2020/04/21 18:42:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -156,6 +156,14 @@ struct inode {
 	struct dirhash *i_dirhash;	/* Hashing for large directories */
 
 	/*
+	 * Data for extended attribute modification.
+ 	 */
+	u_char	  *i_ea_area;	/* Pointer to malloced copy of EA area */
+	unsigned  i_ea_len;	/* Length of i_ea_area */
+	int	  i_ea_error;	/* First errno in transaction */
+	int	  i_ea_refs;	/* Number of users of EA area */
+
+	/*
 	 * The on-disk dinode itself.
 	 */
 	union {
@@ -216,16 +224,16 @@ struct inode {
 #define	IN_UPDATE	0x0004		/* Inode written to; update mtime. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* 	   unused	0x0020 */	/* was IN_RENAME */
+/*	unused		0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-/*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
-/*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
+/*	unused		0x0100 */	/* was LFS-only IN_CLEANING */
+/*	unused		0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-/*	   unused	0x0800 */	/* what was that? */
-/*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
+/*	unused		0x0800 */	/* what was that? */
+/*	unused		0x1000 */	/* was LFS-only IN_PAGING */
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
-/*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
+/*	unused		0x4000 */	/* was LFS-only IN_CDIROP */
 
 #if defined(_KERNEL)
 

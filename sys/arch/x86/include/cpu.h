@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92.2.2 2020/04/13 08:04:11 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.92.2.3 2020/04/21 18:42:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -307,9 +307,6 @@ struct cpu_info {
 	 */
 	uint64_t	ci_xen_systime_ns_skew;
 
-	/* Xen periodic timer interrupt handle.  */
-	struct intrhand	*ci_xen_timer_intrhand;
-
 	/*
 	 * Clockframe for timer interrupt handler.
 	 * Saved at entry via event callback.
@@ -492,6 +489,9 @@ void 	tmx86_init_longrun(void);
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 void	identify_hypervisor(void);
+
+/* identcpu_subr.c */
+uint64_t cpu_tsc_freq_cpuid(struct cpu_info *);
 
 typedef enum vm_guest {
 	VM_GUEST_NO = 0,

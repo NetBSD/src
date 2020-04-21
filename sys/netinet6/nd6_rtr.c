@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.143.2.3 2020/04/13 08:05:17 martin Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.143.2.4 2020/04/21 18:42:44 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.143.2.3 2020/04/13 08:05:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.143.2.4 2020/04/21 18:42:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -487,6 +487,11 @@ defrouter_addreq(struct nd_defrouter *newdr)
 	if (error == 0) {
 		nd6_numroutes++;
 		newdr->installed = 1;
+	} else {
+		char ip6buf[INET6_ADDRSTRLEN];
+		log(LOG_ERR, "defrouter_addreq: "
+		    "error %d adding default router %s on %s\n",
+		    error, IN6_PRINT(ip6buf, &newdr->rtaddr), newdr->ifp->if_xname);
 	}
 #ifndef NET_MPSAFE
 	splx(s);
@@ -596,10 +601,15 @@ defrouter_delreq(struct nd_defrouter *dr)
 
 	error = rtrequest_newmsg(RTM_DELETE, &def.sa, &gw.sa, &mask.sa,
 	    RTF_GATEWAY);
-	if (error == 0)
+	if (error == 0) {
 		nd6_numroutes--;
-
-	dr->installed = 0;
+		dr->installed = 0;
+	} else {
+		char ip6buf[INET6_ADDRSTRLEN];
+		log(LOG_ERR, "defrouter_delreq: "
+		    "error %d deleting default router %s on %s\n",
+		    error, IN6_PRINT(ip6buf, &dr->rtaddr), dr->ifp->if_xname);
+	}
 }
 
 /*
@@ -675,14 +685,6 @@ nd6_defrouter_select(void)
 	 * the ordering rule of the list described in defrtrlist_update().
 	 */
 	ND_DEFROUTER_LIST_FOREACH(dr) {
-		ndi = ND_IFINFO(dr->ifp);
-		if (nd6_accepts_rtadv(ndi))
-			continue;
-
-		if (selected_dr == NULL &&
-		    nd6_is_llinfo_probreach(dr))
-			selected_dr = dr;
-
 		if (dr->installed && !installed_dr)
 			installed_dr = dr;
 		else if (dr->installed && installed_dr) {
@@ -690,6 +692,14 @@ nd6_defrouter_select(void)
 			log(LOG_ERR, "nd6_defrouter_select: more than one router"
 			    " is installed\n");
 		}
+
+		ndi = ND_IFINFO(dr->ifp);
+		if (!nd6_accepts_rtadv(ndi))
+			continue;
+
+		if (selected_dr == NULL &&
+		    nd6_is_llinfo_probreach(dr))
+			selected_dr = dr;
 	}
 	/*
 	 * If none of the default routers was found to be reachable,

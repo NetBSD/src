@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.16.2 2020/04/13 08:04:13 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.16.3 2020/04/21 18:42:13 martin Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -13,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependent functions for kernel setup for 
+ * Machine dependent functions for kernel setup for
  * Intel DBPXA250 evaluation board (a.k.a. Lubbock).
  * Based on iq80310_machhdep.c
  */
@@ -107,12 +107,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.16.2 2020/04/13 08:04:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.16.3 2020/04/21 18:42:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-#include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "ksyms.h"
@@ -213,10 +212,6 @@ int max_processes = 64;			/* Default number */
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */

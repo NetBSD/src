@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.10.18.2 2020/04/13 08:04:20 martin Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.10.18.3 2020/04/21 18:42:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10.18.2 2020/04/13 08:04:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10.18.3 2020/04/21 18:42:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,10 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 	int error = 0;
 	if (tag->ic_acquire_bus) {
 		error = (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
+	}
+
+	if (__predict_false(error)) {
+		mutex_exit(&tag->ic_bus_lock);
 	}
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.8.2.1 2019/06/10 21:44:43 christos Exp $	*/
+/*	$OpenBSD: entry.c,v 1.51 2020/04/16 17:51:56 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.8.2.1 2019/06/10 21:44:43 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.8.2.2 2020/04/21 18:41:55 martin Exp $");
 #endif
 #endif
 
@@ -360,6 +360,14 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 				goto eof;
 			}
 			e->flags |= DONT_LOG;
+			break;
+		case 's':
+			/* only allow the user to set the option once */
+			if ((e->flags & SINGLE_JOB) == SINGLE_JOB) {
+				ecode = e_option;
+				goto eof;
+			}
+			e->flags |= SINGLE_JOB;
 			break;
 		default:
 			ecode = e_option;

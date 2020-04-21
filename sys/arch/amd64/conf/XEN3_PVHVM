@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_PVHVM,v 1.1.4.3 2020/04/13 08:03:30 martin Exp $
+# $NetBSD: XEN3_PVHVM,v 1.1.4.4 2020/04/21 18:42:03 martin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,10 +12,9 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_PVHVM-$Revision: 1.1.4.3 $"
+#ident		"XEN3_PVHVM-$Revision: 1.1.4.4 $"
 
 maxusers	32		# estimated number of users
-options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576

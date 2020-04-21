@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.40.18.1 2019/06/10 22:09:53 christos Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.40.18.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40.18.1 2019/06/10 22:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.40.18.2 2020/04/21 18:42:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -178,7 +178,8 @@ lwproc_proc_free(struct proc *p)
 
 	LIST_REMOVE(p, p_list);
 	LIST_REMOVE(p, p_sibling);
-	proc_free_pid(p->p_pid); /* decrements nprocs */
+	proc_free_pid(p->p_pid);
+	atomic_dec_uint(&nprocs);
 	proc_leavepgrp(p); /* releases proc_lock */
 
 	cred = p->p_cred;

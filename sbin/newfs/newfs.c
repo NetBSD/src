@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.115 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: newfs.c,v 1.115.12.1 2020/04/21 18:42:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.115 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.115.12.1 2020/04/21 18:42:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -619,9 +619,10 @@ main(int argc, char *argv[])
 		} else
 			bufsize = sfs.f_iosize;
 
-		if ((buf = calloc(1, bufsize)) == NULL)
+		if ((buf = aligned_alloc(DEV_BSIZE, bufsize)) == NULL)
 			err(1, "can't malloc buffer of %d",
 			bufsize);
+		memset(buf, 0, bufsize);
 		bufrem = fssize * sectorsize;
 		if (verbosity > 0)
 			printf( "Creating file system image in `%s', "

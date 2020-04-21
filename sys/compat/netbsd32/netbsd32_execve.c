@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.38.30.2 2020/04/13 08:04:16 martin Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.38.30.3 2020/04/21 18:42:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.38.30.2 2020/04/13 08:04:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.38.30.3 2020/04/21 18:42:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ netbsd32_posix_spawn(struct lwp *l,
 	rlim_t max_fileactions;
 	proc_t *p = l->l_proc;
 
+	/* check_posix_spawn() increments nprocs for us. */
 	error = check_posix_spawn(l);
 	if (error) {
 		*retval = error;

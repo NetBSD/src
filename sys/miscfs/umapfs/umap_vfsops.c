@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.99.12.3 2020/04/13 08:05:05 martin Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.99.12.4 2020/04/21 18:42:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.3 2020/04/13 08:05:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.4 2020/04/21 18:42:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if (rtvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+	if (vrefcnt(rtvp) > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);

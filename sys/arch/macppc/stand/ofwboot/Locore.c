@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.31.2.1 2019/06/10 22:06:28 christos Exp $	*/
+/*	$NetBSD: Locore.c,v 1.31.2.2 2020/04/21 18:42:10 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -679,6 +679,11 @@ setup(void)
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
+
+	if (stdout == 0) {
+		/* screen should be console, but it is not open */
+		stdout = OF_open("screen");
+	}
 
 #ifdef HEAP_VARIABLE
 	uint32_t pvr, vers, hsize = HEAP_SIZE;

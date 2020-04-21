@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67.2.2 2020/04/13 08:04:12 martin Exp $	*/
+/*	$NetBSD: clock.c,v 1.67.2.3 2020/04/21 18:42:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.2 2020/04/13 08:04:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.3 2020/04/21 18:42:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -722,14 +722,13 @@ xen_suspendclocks(struct cpu_info *ci)
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
-	KASSERT(ci->ci_xen_timer_intrhand != NULL);
 
 	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	xen_intr_disestablish(ci->ci_xen_timer_intrhand);
-	ci->ci_xen_timer_intrhand = NULL;
+	event_remove_handler(evtch, 
+	    __FPTRCAST(int (*)(void *), xen_timer_handler), ci);
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
 
@@ -755,7 +754,6 @@ xen_resumeclocks(struct cpu_info *ci)
 
 	KASSERT(ci == curcpu());
 	KASSERT(kpreempt_disabled());
-	KASSERT(ci->ci_xen_timer_intrhand == NULL);
 
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
@@ -763,11 +761,9 @@ xen_resumeclocks(struct cpu_info *ci)
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
 	/* XXX sketchy function pointer cast -- fix the API, please */
-	ci->ci_xen_timer_intrhand = xen_intr_establish_xname(-1, &xen_pic,
-	    evtch, IST_LEVEL, IPL_CLOCK,
+	if (event_set_handler(evtch,
 	    __FPTRCAST(int (*)(void *), xen_timer_handler),
-	    ci, true, intr_xname);
-	if (ci->ci_xen_timer_intrhand == NULL)
+	    ci, IPL_CLOCK, NULL, intr_xname, true, false) != 0)
 		panic("failed to establish timer interrupt handler");
 
 	hypervisor_unmask_event(evtch);

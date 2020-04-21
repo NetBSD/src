@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.48.2.3 2020/04/13 08:04:46 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.48.2.4 2020/04/21 18:42:37 martin Exp $ */
 
 /******************************************************************************
 
@@ -919,7 +919,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	vlan_macip_lens |= ip_hlen;
 
 	/* No support for offloads for non-L4 next headers */
- 	switch (ipproto) {
+	switch (ipproto) {
 	case IPPROTO_TCP:
 		if (mp->m_pkthdr.csum_flags &
 		    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
@@ -2220,7 +2220,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/* First, allocate the top level queue structs */
 	adapter->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-            adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	    adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Second, allocate the TX ring struct memory */
 	adapter->tx_rings = malloc(sizeof(struct tx_ring) *
@@ -2272,7 +2272,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 			    "Critical Failure setting up transmit buffers\n");
 			error = ENOMEM;
 			goto err_tx_desc;
-        	}
+		}
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 			/* Allocate a buf ring */
 			txr->txr_interq = pcq_create(IXGBE_BR_SIZE, KM_SLEEP);

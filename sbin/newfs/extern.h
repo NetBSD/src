@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2017/02/08 18:05:25 rin Exp $	*/
+/*	$NetBSD: extern.h,v 1.18.12.1 2020/04/21 18:42:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -72,3 +72,8 @@ extern char	*appleufs_volname;	/* Apple UFS volume name */
 /* Disable Apple UFS support for install media */
 #define		isappleufs		(0)
 #endif
+
+#ifdef NO_IOBUF_ALIGNED
+#define	aligned_alloc(align, size)	malloc((size))
+#endif
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.84.14.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.84.14.2 2020/04/21 18:42:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -89,8 +89,8 @@ __BEGIN_DECLS
 /* ffs_alloc.c */
 int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
-int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
-		      kauth_cred_t, struct buf **, daddr_t *);
+int	ffs_realloccg(struct inode *, daddr_t, daddr_t, daddr_t, int, int,
+		      int, kauth_cred_t, struct buf **, daddr_t *);
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, ino_t *);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
@@ -135,16 +135,29 @@ int	ffs_spec_fsync(void *);
 int	ffs_reclaim(void *);
 int	ffs_getpages(void *);
 void	ffs_gop_size(struct vnode *, off_t, off_t *, int);
+int	ffs_lock(void *);
+int	ffs_unlock(void *);
+int	ffs_islocked(void *);
+int	ffs_full_fsync(struct vnode *, int);
+
+/* ffs_extattr.c */
+#ifdef UFS_EXTATTR
 int	ffs_openextattr(void *);
 int	ffs_closeextattr(void *);
 int	ffs_getextattr(void *);
 int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
-int	ffs_lock(void *);
-int	ffs_unlock(void *);
-int	ffs_islocked(void *);
-int	ffs_full_fsync(struct vnode *, int);
+int	ffsext_strategy(void *);
+#else
+#define	ffs_openextattr		genfs_eopnotsupp
+#define	ffs_closeextattr	genfs_eopnotsupp
+#define	ffs_getextattr		genfs_eopnotsupp
+#define	ffs_setextattr		genfs_eopnotsupp
+#define	ffs_listextattr		genfs_eopnotsupp
+#define	ffs_deleteextattr	genfs_eopnotsupp
+#define	ffsext_strategy		vn_fifo_bypass
+#endif
 
 /*
  * Snapshot function prototypes.

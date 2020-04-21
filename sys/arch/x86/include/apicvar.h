@@ -1,4 +1,4 @@
-/* 	$NetBSD: apicvar.h,v 1.5.88.1 2020/04/13 08:04:11 martin Exp $ */
+/* 	$NetBSD: apicvar.h,v 1.5.88.2 2020/04/21 18:42:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,5 +53,8 @@ struct apic_attach_args {
 #define APIC_VECTYPE_IOAPIC	3
 void apic_format_redir(const char *, const char *, int, int, uint32_t,
     uint32_t);
+
+/* For lapic.c */
+extern uint32_t lapic_per_second;
 
 #endif /* !_X86_APICVAR_H_ */

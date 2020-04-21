@@ -1,4 +1,4 @@
-/*	$NetBSD: __syscall.S,v 1.2 2014/08/23 02:24:22 matt Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2.16.1 2020/04/21 18:41:58 martin Exp $	*/
 
 #include "SYS.h"
 
@@ -19,4 +19,5 @@ ENTRY(__syscall)
 	BRANCH_TO_CERROR()
 END(__syscall)
 
-STRONG_ALIAS(syscall, __syscall)
+STRONG_ALIAS(_syscall,__syscall)
+WEAK_ALIAS(syscall,__syscall)

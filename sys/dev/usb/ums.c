@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.91.4.2 2020/04/13 08:04:50 martin Exp $	*/
+/*	$NetBSD: ums.c,v 1.91.4.3 2020/04/21 18:42:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.4.2 2020/04/13 08:04:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.4.3 2020/04/21 18:42:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -164,6 +164,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	if (uha->uiaa->uiaa_vendor == USB_VENDOR_MICROSOFT) {
 		int fixpos;
+		int woffset = 8;
 		/*
 		 * The Microsoft Wireless Laser Mouse 6000 v2.0 and the
 		 * Microsoft Comfort Mouse 2.0 report a bad position for
@@ -173,10 +174,12 @@ ums_attach(device_t parent, device_t self, void *aux)
 		switch (uha->uiaa->uiaa_product) {
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR10:
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR20:
-		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR70:
-		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR80:
 		case USB_PRODUCT_MICROSOFT_NATURAL_6000:
 			fixpos = 24;
+			break;
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR80:
+			fixpos = 40;
+			woffset = sc->sc_ms.hidms_loc_z.size;
 			break;
 		case USB_PRODUCT_MICROSOFT_CM6000:
 			fixpos = 40;
@@ -192,7 +195,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 			if ((sc->sc_ms.flags & HIDMS_W) &&
 			    sc->sc_ms.hidms_loc_w.pos == 0)
 				sc->sc_ms.hidms_loc_w.pos =
-				    sc->sc_ms.hidms_loc_z.pos + 8;
+				    sc->sc_ms.hidms_loc_z.pos + woffset;
 		}
 	}
 

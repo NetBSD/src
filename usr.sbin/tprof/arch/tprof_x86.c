@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.8.2.3 2020/04/13 08:06:06 martin Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.8.2.4 2020/04/21 18:42:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ init_intel_generic(void)
 			table->next = init_intel_silvermont_airmont();
 			break;
 		case 0x5C: /* Goldmont (Apollo Lake) */
-		case 0x5F: /* Goldmont (Denvertion) */
+		case 0x5F: /* Goldmont (Denverton) */
 			table->next = init_intel_goldmont();
 			break;
 		case 0x7A: /* Goldmont Plus (Gemini Lake) */

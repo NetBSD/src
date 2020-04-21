@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.3 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.3.32.1 2020/04/21 18:42:45 martin Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -95,7 +95,9 @@ struct vmem {
 	struct vmem_seglist vm_seglist;
 	struct vmem_freelist vm_freelist[VMEM_MAXORDER];
 	size_t vm_hashsize;
+	size_t vm_hashmask;
 	size_t vm_nbusytag;
+	size_t vm_maxbusytag;
 	struct vmem_hashlist *vm_hashlist;
 	struct vmem_hashlist vm_hash0;
 	size_t vm_quantum_mask;

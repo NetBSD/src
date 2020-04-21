@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.750.2.3 2020/04/13 08:04:50 martin Exp $
+$NetBSD: usbdevs,v 1.750.2.4 2020/04/21 18:42:38 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor HUANHSIN		0x04dc	Huan Hsin
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
+vendor EXAR		0x04e2	Exar
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor SAMSUNG		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
@@ -1582,6 +1583,11 @@ product EPSON 1670		0x011f	Perfection 1670 scanner
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
+
+/* Exar products */
+product EXAR XR21V1410		0x1410	XR21V1410 1 channel UART
+product EXAR XR21V1412		0x1412	XR21V1412 2 channel UART
+product EXAR XR21V1414		0x1414	XR21V1414 4 channel UART
 
 /* Extended Systems products */
 product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA

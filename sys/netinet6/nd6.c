@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.249.2.2 2020/04/13 08:05:17 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.249.2.3 2020/04/21 18:42:44 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.249.2.2 2020/04/13 08:05:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.249.2.3 2020/04/21 18:42:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -458,12 +458,11 @@ nd6_llinfo_timer(void *arg)
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
 	bool send_ns = false;
-	struct in6_addr mdaddr6 = zeroin6_addr;
 	const struct in6_addr *daddr6 = NULL;
 	const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
 	struct sockaddr_in6 dsin6, tsin6;
-	struct sockaddr *sa;
 	struct mbuf *m = NULL;
+	bool missed = false;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
@@ -493,6 +492,9 @@ nd6_llinfo_timer(void *arg)
 			break;
 		}
 
+		missed = true;
+		sockaddr_in6_init(&tsin6, taddr6, 0, 0, 0);
+
 		if (ln->ln_hold) {
 			struct mbuf *m0;
 
@@ -507,15 +509,6 @@ nd6_llinfo_timer(void *arg)
 			ln->ln_hold = m0;
 			clear_llinfo_pqueue(ln);
 		}
-
-		sockaddr_in6_init(&tsin6, taddr6, 0, 0, 0);
-		if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
-			sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
-			sa = sin6tosa(&dsin6);
-		} else
-			sa = NULL;
-
-		rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
 
 		/*
 		 * Move to the ND6_LLINFO_WAITDELETE state for another
@@ -586,9 +579,19 @@ out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
-	if (m) {
-		icmp6_error2(m, ICMP6_DST_UNREACH,
-		    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+	if (missed) {
+		struct in6_addr mdaddr6 = zeroin6_addr;
+		struct sockaddr *sa;
+
+		if (m != NULL)
+			icmp6_error2(m, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+		if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
+			sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
+			sa = sin6tosa(&dsin6);
+		} else
+			sa = NULL;
+		rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
 	}
 }
 

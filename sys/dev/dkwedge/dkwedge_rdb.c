@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.4.22.1 2020/04/13 08:04:19 martin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.4.22.2 2020/04/21 18:42:15 martin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,16 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4.22.1 2020/04/13 08:04:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4.22.2 2020/04/21 18:42:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
 #include <sys/disk.h>
 #include <sys/endian.h>
-#include <sys/malloc.h>
-#ifdef _KERNEL
 #include <sys/systm.h>
-#endif
+#include <sys/buf.h>
 
 /*
  * In /usr/src/sys/dev/scsipi/sd.c, routine sdstart() adjusts the
@@ -96,16 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4.22.1 2020/04/13 08:04:19 martin 
 #define	ADJUST_NR(x)	(x)
 #endif
 
-#ifdef _KERNEL
-#define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
-#define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
-#define	DKW_REALLOC(PTR, NEWSZ)	realloc((PTR), (NEWSZ), M_DEVBUF, M_WAITOK)
-#else
-#define	DKW_MALLOC(SZ)	malloc((SZ))
-#define	DKW_FREE(PTR)	free((PTR))
-#define	DKW_REALLOC(PTR, NEWSZ)	realloc((PTR), (NEWSZ))
-#endif
-
 static unsigned rdbchksum(void *);
 static unsigned char getarchtype(unsigned);
 static const char *archtype_to_ptype(unsigned char);
@@ -116,7 +104,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	struct dkwedge_info dkw;
 	struct partblock *pbp;
 	struct rdblock *rbp;
-	void *bp;
+	struct buf *bp;
 	int error;
 	unsigned blk_per_cyl, bufsize, newsecsize, nextb, secsize, tabsize;
 	const char *ptype;
@@ -126,7 +114,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	secsize = DEV_BSIZE << pdk->dk_blkshift;
 	bufsize = roundup(MAX(sizeof(struct partblock), sizeof(struct rdblock)),
 	    secsize);
-	bp = DKW_MALLOC(bufsize);
+	bp = geteblk(bufsize);
 
 	/*
 	 * find the RDB block
@@ -162,7 +150,8 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 		secsize = newsecsize;
 		bufsize = roundup(MAX(sizeof(struct partblock),
 		    sizeof(struct rdblock)), secsize);
-		bp = DKW_REALLOC(bp, bufsize);
+		brelse(bp, 0);
+		bp = geteblk(bufsize);
 	}
 
 	memset(&dkw, 0, sizeof(dkw));
@@ -279,7 +268,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	else
 		error = ESRCH;
 done:
-	DKW_FREE(bp);
+	brelse(bp, 0);
 	return error;
 }
 

@@ -1,5 +1,5 @@
-/*	$Id: mmnet_machdep.c,v 1.2.40.2 2020/04/13 08:03:45 martin Exp $	*/
-/*	$NetBSD: mmnet_machdep.c,v 1.2.40.2 2020/04/13 08:03:45 martin Exp $	*/
+/*	$Id: mmnet_machdep.c,v 1.2.40.3 2020/04/21 18:42:07 martin Exp $	*/
+/*	$NetBSD: mmnet_machdep.c,v 1.2.40.3 2020/04/21 18:42:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -78,11 +78,10 @@
 /* Adaptation for Propox MMnet by Aymeric Vincent is in the public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.2.40.2 2020/04/13 08:03:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.2.40.3 2020/04/21 18:42:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,7 +194,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -282,7 +281,7 @@ at91_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		mmnet_dma_ranges[i].dr_sysbase = bootconfig.dram[i].address;
 		mmnet_dma_ranges[i].dr_busbase = bootconfig.dram[i].address;
-		mmnet_dma_ranges[i].dr_len = bootconfig.dram[i].pages * 
+		mmnet_dma_ranges[i].dr_len = bootconfig.dram[i].pages *
 			PAGE_SIZE;
 	}
 
