@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.15 2019/12/27 10:20:02 msaitoh Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.16 2020/04/22 23:46:02 joerg Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -92,7 +92,7 @@ struct stat statbuf;
 char    pathname[MAXPATHLEN];
 char    new_pathname[MAXPATHLEN];
 char    sp_name[MAXPATHLEN] = SPOOLDIR;
-char    tempstr[256];
+static char tempstr[256];
 char    delims[] = " \t\r\n:()";
 
 pr_list printers = NULL;
