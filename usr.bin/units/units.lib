@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.20 2017/03/21 01:21:59 scole Exp $
+/	$NetBSD: units.lib,v 1.21 2020/04/22 16:21:37 scole Exp $
 
 / primitive units
 
@@ -652,9 +652,30 @@ worstedyarncount	1680 ft/pound
 metricyarncount		meter/gram
 jewlerspoint		2 milligram
 
-/ thai measurements
+/ Thai length
 
-wah			2 m
-ngan			400 m2
-rai			1600 m2
+krabiat			0.5208 cm
+nio			4 krabiat
+khuep			12 nio
+sok			2 khuep
+wa			4 sok
+wah			wa
+sen			20 wa
+yot			400 sen
+
+/ Thai area
+
+tarangwah		4 m2
+talangwah		tarangwah
+ngan			100 tarangwah
+rai			4 ngan
+
+/ Thai weight
+
+salueng			3.75 gm
+baht			4 salueng
+bat			baht
+tamlueng		4 baht
+chang			20 tamlueng
+hap			50 chang
 
