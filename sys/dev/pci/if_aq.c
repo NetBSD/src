@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.11 2020/02/15 12:20:35 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.12 2020/04/22 22:54:43 christos Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.11 2020/02/15 12:20:35 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.12 2020/04/22 22:54:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1154,6 +1154,10 @@ static const struct aq_product {
 	  "Aquantia AQC109 2.5 Gigabit Network Adapter",
 	  AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 	},
+        { PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100,
+          "Aquantia AQC100 10 Gigabit Network Adapter",
+          AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
+        },
 	{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111,
 	  "Aquantia AQC111 5 Gigabit Network Adapter",
 	  AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
