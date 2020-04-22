@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.21 2020/04/22 16:21:37 scole Exp $
+/	$NetBSD: units.lib,v 1.22 2020/04/22 16:35:47 scole Exp $
 
 / primitive units
 
@@ -658,15 +658,13 @@ krabiat			0.5208 cm
 nio			4 krabiat
 khuep			12 nio
 sok			2 khuep
-wa			4 sok
-wah			wa
-sen			20 wa
+wah			4 sok
+sen			20 wah
 yot			400 sen
 
 / Thai area
 
 tarangwah		4 m2
-talangwah		tarangwah
 ngan			100 tarangwah
 rai			4 ngan
 
@@ -674,7 +672,6 @@ rai			4 ngan
 
 salueng			3.75 gm
 baht			4 salueng
-bat			baht
 tamlueng		4 baht
 chang			20 tamlueng
 hap			50 chang
