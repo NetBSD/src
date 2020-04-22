@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.153 2020/04/17 14:59:23 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.154 2020/04/22 09:23:21 rin Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -481,12 +481,12 @@
 #endif
 #endif /* !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L) */
 
-#if defined(_KERNEL)
-#if defined(NO_KERNEL_RCSIDS)
-#undef __KERNEL_RCSID
-#define	__KERNEL_RCSID(_n, _s)		/* nothing */
-#endif /* NO_KERNEL_RCSIDS */
-#endif /* _KERNEL */
+#if defined(_KERNEL) && defined(NO_KERNEL_RCSIDS)
+#undef	__KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)	/* nothing */
+#undef	__RCSID
+#define	__RCSID(_s)		/* nothing */
+#endif
 
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
