@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.200 2017/09/09 18:18:28 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.201 2020/04/22 23:32:25 joerg Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -203,3 +203,7 @@ errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= errlist.c
+
+# Ownership of globals from crt0.o is shared with libc for historic reasons.
+# __progname is also necessary as global here for the nbcompat case.
+COPTS.getprogname.c+=	-fcommon
