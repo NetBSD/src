@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.34 2017/04/12 17:02:51 roy Exp $ */
+/* $NetBSD: socketops.c,v 1.35 2020/04/22 23:53:27 joerg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@
 #include "mpls_routes.h"
 #include "ldp_errors.h"
 #include "socketops.h"
+
+struct hello_info_head hello_info_head;
+static SLIST_HEAD(,hello_socket) hello_socket_head;
 
 int ls;				/* TCP listening socket on port 646 */
 int route_socket;		/* used to see when a route is added/deleted */

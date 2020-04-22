@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.4 2013/10/17 18:10:23 kefren Exp $ */
+/* $NetBSD: conffile.h,v 1.5 2020/04/22 23:53:27 joerg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct conf_neighbour {
 	int authenticate;	/* RFC 2385 */
 	SLIST_ENTRY(conf_neighbour) neilist;
 };
-SLIST_HEAD(,conf_neighbour) conei_head;
+extern SLIST_HEAD(conei_head,conf_neighbour) conei_head;
 
 struct conf_interface {
 	char if_name[IF_NAMESIZE];
@@ -57,7 +57,7 @@ struct conf_interface {
 	int passive;
 	SLIST_ENTRY(conf_interface) iflist;
 };
-SLIST_HEAD(,conf_interface) coifs_head;
+extern SLIST_HEAD(coifs_head,conf_interface) coifs_head;
 
 int conf_parsefile(const char *fname);
 

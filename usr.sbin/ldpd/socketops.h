@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.6 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: socketops.h,v 1.7 2020/04/22 23:53:27 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,12 +62,11 @@ struct	hello_info {
 	int keepalive;
 	SLIST_ENTRY(hello_info) infos;
 };
-SLIST_HEAD(,hello_info) hello_info_head;
+extern SLIST_HEAD(hello_info_head,hello_info) hello_info_head;
 
 struct	hello_socket {
 	int type, socket;
 	SLIST_ENTRY(hello_socket) listentry;
 };
-SLIST_HEAD(,hello_socket) hello_socket_head;
 
 #endif	/* !_SOCKETOPS_H_ */
