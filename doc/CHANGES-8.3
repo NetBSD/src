@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.2 2020/04/15 14:46:38 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.3 2020/04/22 18:21:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -63,4 +63,21 @@ sys/dev/wsfb/genfb.c				1.72
 
 	Get genfb's address offset correctly when the value >= 4G.
 	[msaitoh, ticket #1532]
+
+sys/arch/macppc/stand/ofwboot/Locore.c		1.34 (via patch)
+sys/arch/powerpc/oea/ofw_consinit.c		1.18
+
+	Fix booting with auto-boot == true on some macppc machines.
+	[rin, ticket #1533]
+
+lib/libc/sys/fdatasync.2			1.17
+sys/kern/vfs_syscalls.c				1.544
+
+	Allow fdatasync on non-writable fds (POSIX conformance fix).
+	[gdt, ticket #1534]
+
+sys/compat/ossaudio/ossaudio.c			1.83
+
+	ossaudio: Avoid giving userland uninitialized memory.
+	[maxv, ticket #1535]
 
