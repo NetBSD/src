@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.20 2012/10/13 19:19:39 dholland Exp $	*/
+/*	$NetBSD: back.h,v 1.21 2020/04/22 23:36:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -123,6 +123,8 @@ extern	const char	*const color[];
 extern	const char	*const *colorptr;	/* color of current player */
 extern	const char	*const *Colorptr;	/* color of current player, capitalized */
 extern	int	colen;		/* length of color of current player */
+
+extern int buffnum;
 
 extern	struct termios	old, noech, raw;/* original tty status */
 
