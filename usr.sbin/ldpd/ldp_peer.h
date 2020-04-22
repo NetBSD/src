@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.8 2013/08/02 07:29:56 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.9 2020/04/22 23:53:27 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct ldp_peer {
 
 	SLIST_ENTRY(ldp_peer) peers;
 };
-SLIST_HEAD(,ldp_peer) ldp_peer_head;
+extern SLIST_HEAD(ldp_peer_head,ldp_peer) ldp_peer_head;
 
 struct peer_map {
 	struct ldp_peer *peer;

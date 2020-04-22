@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.16 2013/08/02 07:29:56 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.17 2020/04/22 23:53:27 joerg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include "ldp_peer.h"
 
 extern int ldp_holddown_time;
+struct ldp_peer_head ldp_peer_head;
 
 static struct label_mapping *ldp_peer_get_lm(struct ldp_peer *,
     const struct sockaddr *, uint);
