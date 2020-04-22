@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.77 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.78 2020/04/22 21:22:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.77 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.78 2020/04/22 21:22:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,14 +171,6 @@ sys__lwp_self(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
-	return 0;
-}
-
-int
-sys__lwp_gettid(struct lwp *l, const void *v, register_t *retval)
-{
-
-	*retval = lwp_gettid();
 	return 0;
 }
 
