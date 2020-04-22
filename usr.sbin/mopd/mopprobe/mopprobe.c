@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.13 2016/06/08 01:17:54 christos Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.14 2020/04/22 23:57:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.13 2016/06/08 01:17:54 christos Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.14 2020/04/22 23:57:56 joerg Exp $");
 #endif
 
 /*
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: mopprobe.c,v 1.13 2016/06/08 01:17:54 christos Exp $");
  * The list of all interfaces that are being listened to.  rarp_loop()
  * "selects" on the descriptors in this list.
  */
-struct if_info *iflist;
+extern struct if_info *iflist;
 
 __dead static void	Usage(void);
 void	mopProcess(struct if_info *, u_char *);
