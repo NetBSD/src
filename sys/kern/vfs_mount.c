@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.70.4.1 2020/04/22 18:05:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.70.4.1 2020/04/22 18:05:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -113,6 +113,8 @@ static struct vnode *vfs_vnode_iterator_next1(struct vnode_iterator *,
 
 /* Root filesystem. */
 vnode_t *			rootvnode;
+
+extern struct mount		*dead_rootmount;
 
 /* Mounted filesystem list. */
 static TAILQ_HEAD(mountlist, mountlist_entry) mountlist;
@@ -1000,6 +1002,7 @@ bool
 vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 {
 	struct mount *mp;
+	mount_iterator_t *iter;
 	bool any_error = false, progress = false;
 	uint64_t gen;
 	int error;
@@ -1034,6 +1037,24 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
 	}
+
+	/* If the mountlist is empty destroy anonymous device vnodes. */
+	mountlist_iterator_init(&iter);
+	if (mountlist_iterator_next(iter) == NULL) {
+		struct vnode_iterator *marker;
+		vnode_t *vp;
+
+		vfs_vnode_iterator_init(dead_rootmount, &marker);
+		while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+			if (vp->v_type == VCHR || vp->v_type == VBLK)
+				vgone(vp);
+			else
+				vrele(vp);
+		}
+		vfs_vnode_iterator_destroy(marker);
+	}
+	mountlist_iterator_destroy(iter);
+
 	return progress;
 }
 
