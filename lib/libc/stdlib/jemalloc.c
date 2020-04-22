@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.49 2020/04/21 22:22:55 joerg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.50 2020/04/22 08:45:06 rin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -117,7 +117,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.49 2020/04/21 22:22:55 joerg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.50 2020/04/22 08:45:06 rin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -775,14 +775,14 @@ static __attribute__((tls_model("initial-exec")))
 __thread arena_t	**arenas_map;
 #else
 static arena_t	**arenas_map;
-static thread_key_t arenas_map_key = -1;
 #endif
 
 #if !defined(NO_TLS) || !defined(_REENTRANT)
 # define	get_arenas_map()	(arenas_map)
 # define	set_arenas_map(x)	(arenas_map = x)
-#else
+#else /* NO_TLS && _REENTRANT */
 
+static thread_key_t arenas_map_key = -1;
 
 static inline arena_t **
 get_arenas_map(void)
@@ -823,7 +823,7 @@ set_arenas_map(arena_t **a)
 	thr_setspecific(arenas_map_key, a);
 #endif
 }
-#endif
+#endif /* NO_TLS && _REENTRANT */
 
 #ifdef MALLOC_STATS
 /* Chunk statistics. */
