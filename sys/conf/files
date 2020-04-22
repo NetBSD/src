@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1265 2020/04/15 17:16:22 maxv Exp $
+#	$NetBSD: files,v 1.1266 2020/04/22 09:15:40 rin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -452,7 +452,7 @@ define	arcnet
 define	ether
 define	ieee1394
 define	sppp
-define	wlan
+define	wlan: rijndael
 define	crypto
 
 # TPM
@@ -1394,7 +1394,7 @@ file	dev/ic/amdccp.c			amdccp
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudodev cgd:	disk, des, blowfish, cast128
+defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
 defpseudodev md:	disk
 defpseudodev fss:	disk
 
