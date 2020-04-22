@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.108 2020/04/21 02:56:36 msaitoh Exp $
+#	$NetBSD: files.x86,v 1.109 2020/04/22 09:15:40 rin Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -59,7 +59,7 @@ device	odcm
 attach	odcm at cpufeaturebus
 file	arch/x86/x86/odcm.c		odcm
 
-device	padlock: opencrypto
+device	padlock: opencrypto, rijndael
 attach	padlock at cpufeaturebus
 file	arch/x86/x86/via_padlock.c	padlock
 
