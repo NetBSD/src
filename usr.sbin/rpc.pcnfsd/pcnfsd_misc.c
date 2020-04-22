@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.16 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.17 2020/04/22 23:46:02 joerg Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -64,8 +64,6 @@ int     wtmp_enabled = 1;
 */
 
 #define	zchar		0x5b
-
-char    tempstr[256];
 
 char   *mapfont(char, char, char);
 void	myhandler(int);
