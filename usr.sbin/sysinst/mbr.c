@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.31 2020/02/06 18:07:22 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.32 2020/04/22 23:43:12 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,7 +144,7 @@ static const size_t first_part_type = MBR_PTYPE_NETBSD;
 /* all partition types (we are lucky, only a fixed number is possible) */
 struct mbr_part_type_info mbr_gen_type_desc[256];
 
-const struct disk_partitioning_scheme disklabel_parts;
+extern const struct disk_partitioning_scheme disklabel_parts;
 
 static void convert_mbr_chs(int, int, int, uint8_t *, uint8_t *,
 				 uint8_t *, uint32_t);

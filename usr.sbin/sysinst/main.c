@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2020/03/04 11:15:06 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2020/04/22 23:43:12 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,45 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 #include "txtwalk.h"
+
+int debug;
+char machine[SSTRSIZE];
+int ignorerror;
+int ttysig_ignore;
+pid_t ttysig_forward;
+uint sizemult;
+int partman_go;
+FILE *logfp;
+FILE *script;
+daddr_t root_limit;
+struct pm_head_t pm_head;
+struct pm_devs *pm;
+struct pm_devs *pm_new;
+char xfer_dir[STRSIZE];
+int  clean_xfer_dir;
+char ext_dir_bin[STRSIZE];
+char ext_dir_src[STRSIZE];
+char ext_dir_pkgsrc[STRSIZE];
+char set_dir_bin[STRSIZE];
+char set_dir_src[STRSIZE];
+char pkg_dir[STRSIZE];
+char pkgsrc_dir[STRSIZE];
+const char *ushell;
+struct ftpinfo ftp, pkg, pkgsrc;
+int (*fetch_fn)(const char *);
+char nfs_host[STRSIZE];
+char nfs_dir[STRSIZE];
+char cdrom_dev[SSTRSIZE];
+char fd_dev[SSTRSIZE];
+const char *fd_type;
+char localfs_dev[SSTRSIZE];
+char localfs_fs[SSTRSIZE];
+char localfs_dir[STRSIZE];
+char targetroot_mnt[SSTRSIZE];
+int  mnt2_mounted;
+char dist_postfix[SSTRSIZE];
+char dist_tgz_postfix[SSTRSIZE];
+WINDOW *mainwin;
 
 static void select_language(void);
 __dead static void usage(void);

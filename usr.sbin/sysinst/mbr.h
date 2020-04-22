@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.4 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: mbr.h,v 1.5 2020/04/22 23:43:12 joerg Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ struct mbr_info_t {
 };
 
 #ifdef BOOTSEL
-struct mbr_bootsel *mbs;
+extern struct mbr_bootsel *mbs;
 
 	/* sync with src/sbin/fdisk/fdisk.c */
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
