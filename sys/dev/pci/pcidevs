@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1407 2020/04/18 07:09:33 simonb Exp $
+$NetBSD: pcidevs,v 1.1408 2020/04/22 06:35:01 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1289,16 +1289,19 @@ product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 product APPLE BCM5701		0x1645	BCM5701
 
 /* Aquantia Corp. */
+product AQUANTIA AQC100		0x00b1	AQC100 10 Gigabit Network Adapter
 product AQUANTIA AQC107		0x07b1	AQC107 10 Gigabit Network Adapter
 product AQUANTIA AQC108		0x08b1	AQC108 5 Gigabit Network Adapter
 product AQUANTIA AQC109		0x09b1	AQC109 2.5 Gigabit Network Adapter
 product AQUANTIA AQC111		0x11b1	AQC111 5 Gigabit Network Adapter
 product AQUANTIA AQC112		0x12b1	AQC112 2.5 Gigabit Network Adapter
+product AQUANTIA AQC100S	0x80b1	AQC100S 10 Gigabit Network Adapter
 product AQUANTIA AQC107S	0x87b1	AQC107S 10 Gigabit Network Adapter
 product AQUANTIA AQC108S	0x88b1	AQC108S 5 Gigabit Network Adapter
 product AQUANTIA AQC109S	0x89b1	AQC109S 2.5 Gigabit Network Adapter
 product AQUANTIA AQC111S	0x91b1	AQC111S 5 Gigabit Network Adapter
 product AQUANTIA AQC112S	0x92b1	AQC112S 2.5 Gigabit Network Adapter
+product AQUANTIA D100		0xd100	D100 10 Gigabit Network Adapter
 product AQUANTIA D107		0xd107	D107 10 Gigabit Network Adapter
 product AQUANTIA D108		0xd108	D108 5 Gigabit Network Adapter
 product AQUANTIA D109		0xd109	D109 2.5 Gigabit Network Adapter
