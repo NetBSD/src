@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-linux2.c,v 1.2 2019/12/07 04:55:01 christos Exp $	*/
+/*	$NetBSD: loop-linux2.c,v 1.3 2020/04/22 23:55:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: loop-linux2.c,v 1.2 2019/12/07 04:55:01 christos Exp $");
+__RCSID("$NetBSD: loop-linux2.c,v 1.3 2020/04/22 23:55:29 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -82,7 +82,7 @@ mopReadDL(void)
  * The list of all interfaces that are being listened to.  loop()
  * "selects" on the descriptors in this list.
  */
-struct if_info *iflist;
+extern struct if_info *iflist;
 
 void   mopProcess(struct if_info *, u_char *);
 
