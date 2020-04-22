@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.38 2020/04/22 18:22:23 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.39 2020/04/22 18:26:06 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -979,4 +979,9 @@ sys/compat/ossaudio/ossaudio.c			1.83
 
 	ossaudio: Avoid giving userland uninitialized memory.
 	[maxv, ticket #841]
+
+external/gpl3/gcc/lib/libsupc++/Makefile	1.13
+
+	PR 54660: pull in atomicity.h (atomicity.cc) on sparc.
+	[mrg, ticket #843]
 
