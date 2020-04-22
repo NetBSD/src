@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.12 2017/01/10 21:02:38 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.13 2020/04/22 23:53:27 joerg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
 
 #define NextCommand(x) strsep(&x, " ")
 #define LINEMAXSIZE 1024
+
+struct coifs_head coifs_head;
+struct conei_head conei_head;
 
 char *mapped, *nextline;
 size_t mapsize;
