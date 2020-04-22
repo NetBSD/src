@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.14 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: fancy.c,v 1.15 2020/04/22 23:36:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.14 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.15 2020/04/22 23:36:26 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,6 @@ static int *linect;		/* array of lengths of lines on screen (the
 static char tcap[] = "bccdceclcmhomcmlndup";
  /* corresponding strings */
 static char **tstr[] = {&BC, &CD, &CE, &CL, &CM, &HO, &MC, &ML, &ND, &UP};
-
-int     buffnum;		/* pointer to output buffer */
 
 static char tbuf[1024];		/* buffer for decoded termcap entries */
 
