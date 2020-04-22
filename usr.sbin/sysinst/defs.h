@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.57 2020/03/16 06:48:17 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.58 2020/04/22 23:43:12 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -360,31 +360,31 @@ struct install_partition_desc {
 
 /* variables */
 
-int debug;		/* set by -D option */
+extern int debug;		/* set by -D option */
 
-char machine[SSTRSIZE];
+extern char machine[SSTRSIZE];
 
-int ignorerror;
-int ttysig_ignore;
-pid_t ttysig_forward;
-uint sizemult;
+extern int ignorerror;
+extern int ttysig_ignore;
+extern pid_t ttysig_forward;
+extern uint sizemult;
 extern const char *multname;
 extern const char *err_outofmem;
-int partman_go; /* run extended partition manager */
+extern int partman_go; /* run extended partition manager */
 
 /* logging variables */
 
-FILE *logfp;
-FILE *script;
+extern FILE *logfp;
+extern FILE *script;
 
 #define MAX_DISKS 15
 
-daddr_t root_limit;    /* BIOS (etc) read limit */
+extern daddr_t root_limit;    /* BIOS (etc) read limit */
 
 enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM };
 
 /* All information that is unique for each drive */
-SLIST_HEAD(pm_head_t, pm_devs) pm_head;
+extern SLIST_HEAD(pm_head_t, pm_devs) pm_head;
 
 struct pm_devs {
 	/*
@@ -453,8 +453,8 @@ struct pm_devs {
 
 	SLIST_ENTRY(pm_devs) l;
 };
-struct pm_devs *pm; /* Pointer to current device with which we work */
-struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
+extern struct pm_devs *pm; /* Pointer to current device with which we work */
+extern struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
 
 /* Generic structure for partman */
 struct part_entry {
@@ -469,8 +469,8 @@ struct part_entry {
 };
 
 /* Relative file name for storing a distribution. */
-char xfer_dir[STRSIZE];
-int  clean_xfer_dir;
+extern char xfer_dir[STRSIZE];
+extern int  clean_xfer_dir;
 
 #if !defined(SYSINST_FTP_HOST)
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
@@ -530,28 +530,28 @@ int  clean_xfer_dir;
 #endif
 
 /* Abs. path we extract binary sets from */
-char ext_dir_bin[STRSIZE];
+extern char ext_dir_bin[STRSIZE];
 
 /* Abs. path we extract source sets from */
-char ext_dir_src[STRSIZE];
+extern char ext_dir_src[STRSIZE];
 
 /* Abs. path we extract pkgsrc from */
-char ext_dir_pkgsrc[STRSIZE];
+extern char ext_dir_pkgsrc[STRSIZE];
 
 /* Place we look for binary sets in all fs types */
-char set_dir_bin[STRSIZE];
+extern char set_dir_bin[STRSIZE];
 
 /* Place we look for source sets in all fs types */
-char set_dir_src[STRSIZE];
+extern char set_dir_src[STRSIZE];
 
 /* Place we look for pkgs in all fs types */
-char pkg_dir[STRSIZE];
+extern char pkg_dir[STRSIZE];
 
 /* Place we look for pkgsrc in all fs types */
-char pkgsrc_dir[STRSIZE];
+extern char pkgsrc_dir[STRSIZE];
 
 /* User shell */
-const char *ushell;
+extern const char *ushell;
 
 #define	XFER_FTP	0
 #define	XFER_HTTP	1
@@ -567,26 +567,26 @@ struct ftpinfo {
 };
 
 /* use the same struct for sets ftp and to build pkgpath */
-struct ftpinfo ftp, pkg, pkgsrc;
+extern struct ftpinfo ftp, pkg, pkgsrc;
 
-int (*fetch_fn)(const char *);
-char nfs_host[STRSIZE];
-char nfs_dir[STRSIZE];
+extern int (*fetch_fn)(const char *);
+extern char nfs_host[STRSIZE];
+extern char nfs_dir[STRSIZE];
 
-char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
-char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
-const char *fd_type;			/* "msdos", "ffs" or maybe "ados" */
+extern char cdrom_dev[SSTRSIZE];		/* Typically "cd0a" */
+extern char fd_dev[SSTRSIZE];			/* Typically "/dev/fd0a" */
+extern const char *fd_type;			/* "msdos", "ffs" or maybe "ados" */
 
-char localfs_dev[SSTRSIZE];
-char localfs_fs[SSTRSIZE];
-char localfs_dir[STRSIZE];
+extern char localfs_dev[SSTRSIZE];
+extern char localfs_fs[SSTRSIZE];
+extern char localfs_dir[STRSIZE];
 
-char targetroot_mnt[SSTRSIZE];
+extern char targetroot_mnt[SSTRSIZE];
 
-int  mnt2_mounted;
+extern int  mnt2_mounted;
 
-char dist_postfix[SSTRSIZE];
-char dist_tgz_postfix[SSTRSIZE];
+extern char dist_postfix[SSTRSIZE];
+extern char dist_tgz_postfix[SSTRSIZE];
 
 /* needed prototypes */
 void set_menu_numopts(int, int);
@@ -951,7 +951,7 @@ void	do_configmenu(struct install_partition_desc*);
 /* from checkrc.c */
 int	check_rcvar(const char *);
 int	check_rcdefault(const char *);
-	WINDOW *mainwin;
+extern	WINDOW *mainwin;
 
 /* in menus.mi */
 void expand_all_option_texts(menudesc *menu, void *arg);
