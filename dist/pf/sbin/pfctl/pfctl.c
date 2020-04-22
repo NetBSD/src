@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl.c,v 1.5 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pfctl.c,v 1.6 2020/04/22 23:40:40 joerg Exp $	*/
 /*	$OpenBSD: pfctl.c,v 1.268 2007/06/30 18:25:08 henning Exp $ */
 
 /*
@@ -96,8 +96,8 @@ int	 pfctl_load_ruleset(struct pfctl *, char *,
 int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
 
-struct pf_anchor_global	 pf_anchors;
-struct pf_anchor	 pf_main_anchor;
+extern struct pf_anchor_global	 pf_anchors;
+extern struct pf_anchor	 pf_main_anchor;
 
 const char	*clearopt;
 char		*rulesopt;
