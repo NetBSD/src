@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_yacc.y,v 1.5 2012/03/15 02:02:23 joerg Exp $	*/
+/* 	$NetBSD: config_yacc.y,v 1.6 2020/04/22 23:51:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.5 2012/03/15 02:02:23 joerg Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.6 2020/04/22 23:51:34 joerg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ int yyerror(const char *, ...) __printflike(1, 2);
 void yyrestart(FILE *);
 
 int yyline;
-char *yytext;
+extern char *yytext;
 static prop_dictionary_t kdict;
 
 %}
