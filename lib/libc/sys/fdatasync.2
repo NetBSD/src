@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdatasync.2,v 1.16 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: fdatasync.2,v 1.16.56.1 2020/04/22 18:18:26 martin Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ function will fail if:
 .It Bq Er EBADF
 The
 .Fa fd
-argument is not a valid file descriptor open for writing.
+argument is not a valid file descriptor.
 .It Bq Er EINVAL
 This implementation does not support synchronized I/O for this file.
 .It Bq Er ENOSYS
@@ -93,4 +93,4 @@ and outstanding I/O operations are not guaranteed to have been completed.
 The
 .Fn fdatasync
 function conforms to
-.St -p1003.1b-93 .
+.St -p1003.1-2008 .
