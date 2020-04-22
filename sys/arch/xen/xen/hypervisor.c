@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.73.2.8 2020/04/20 11:29:01 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73.2.9 2020/04/22 20:49:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.8 2020/04/20 11:29:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.9 2020/04/22 20:49:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,8 +399,6 @@ xen_hvm_init_cpu(struct cpu_info *ci)
 		vm_guest = VM_GUEST_XENHVM;
 		return 0;
 	}
-	printf("cpu %s ci_acpiid %d vcpuid %d domid %d\n",
-	    device_xname(ci->ci_dev), ci->ci_acpiid, descs[1], descs[2]);
 
 	ci->ci_vcpuid = descs[1];
 	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[ci->ci_vcpuid];
@@ -434,9 +432,9 @@ xen_hvm_init_cpu(struct cpu_info *ci)
 			 * From FreeBSD:
 			 * Trick toolstack to think we are enlightened
 			 */
+			xen_hvm_param.value = 1;
 			aprint_verbose_dev(ci->ci_dev,
 			    "using event upcall vector: %d\n", xen_hvm_vec );
-			xen_hvm_param.value = 1;
 		}
 	}
 
@@ -476,14 +474,14 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	return 1;
 }
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && defined(XENPV)
 static int
 hypervisor_vcpu_print(void *aux, const char *parent)
 {
 	/* Unconfigured cpus are ignored quietly. */
 	return (QUIET);
 }
-#endif /* MULTIPROCESSOR */
+#endif /* MULTIPROCESSOR && XENPV */
 
 /*
  * Attach the hypervisor.
@@ -591,6 +589,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	xengnt_init();
 	events_init();
 
+#ifdef XENPV
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_vcaa.vcaa_name = "vcpu";
 	hac.hac_vcaa.vcaa_caa.cpu_number = 0;
@@ -622,6 +621,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	}
 
 #endif /* MULTIPROCESSOR */
+#endif /* XENPV */
 
 #if NXENBUS > 0
 	extern struct x86_bus_dma_tag xenbus_bus_dma_tag;
