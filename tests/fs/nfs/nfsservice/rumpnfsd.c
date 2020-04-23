@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.9 2015/11/08 02:45:16 christos Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.10 2020/04/23 00:31:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ int nfsd_main(int, char **);
 
 sem_t gensem;
 
+#define RUMPNFSD_NOATF
 #include "../../../net/config/netconfig.c"
 #include "../../common/h_fsmacros.h"
 #include "svc_fdset.h"
@@ -64,9 +65,6 @@ main(int argc, char *argv[])
 	void *fsarg;
 	pthread_t t;
 	int rv;
-
-	/* for netcfg */
-	noatf = 1;
 
 	/* use defaults? */
 	if (argc == 1) {
