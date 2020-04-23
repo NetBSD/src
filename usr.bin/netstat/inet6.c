@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.73 2019/08/18 04:14:40 kamil Exp $	*/
+/*	$NetBSD: inet6.c,v 1.74 2020/04/23 00:24:16 joerg Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.73 2019/08/18 04:14:40 kamil Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.74 2020/04/23 00:24:16 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,6 @@ struct	tcp6cb tcp6cb;
 #else
 struct	tcpcb tcpcb;
 #endif
-struct	socket sockb;
 
 char	*inet6name(const struct in6_addr *);
 void	inet6print(const struct in6_addr *, int, const char *);
@@ -283,8 +282,9 @@ print_vtw_v6(const vtw_t *vtw)
 
 
 static struct kinfo_pcb *
-getpcblist_kmem(u_long off, const char *name, size_t *len) {
-
+getpcblist_kmem(u_long off, const char *name, size_t *len)
+{
+	struct socket sockb;
 	struct inpcbtable table;
 	struct inpcb_hdr *next, *prev;
 	int istcp = strcmp(name, "tcp6") == 0;
