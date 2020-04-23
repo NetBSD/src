@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.38 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.39 2020/04/23 21:47:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.38 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.39 2020/04/23 21:47:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ efs_read(void *v)
 		len = MIN(len, eip->ei_size - uio->uio_offset);
 
 		err = ubc_uiomove(&ap->a_vp->v_uobj, uio, len, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(ap->a_vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(ap->a_vp));
 		if (err) {
 			EFS_DPRINTF(("efs_read: uiomove error %d\n",
 			    err));
