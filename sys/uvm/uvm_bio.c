@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.110 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.111 2020/04/23 21:53:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.110 2020/04/23 21:47:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.111 2020/04/23 21:53:01 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -64,7 +64,7 @@ static int __noinline ubc_uiomove_direct(struct uvm_object *, struct uio *, vsiz
 			  int, int);
 static void __noinline ubc_zerorange_direct(struct uvm_object *, off_t, size_t, int);
 
-bool ubc_direct = false; /* XXX */
+bool ubc_direct = true;
 #endif
 
 /*
