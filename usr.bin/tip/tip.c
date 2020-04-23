@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.62 2019/02/28 17:41:27 gson Exp $	*/
+/*	$NetBSD: tip.c,v 1.63 2020/04/23 00:35:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.62 2019/02/28 17:41:27 gson Exp $");
+__RCSID("$NetBSD: tip.c,v 1.63 2020/04/23 00:35:14 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -53,6 +53,70 @@ __RCSID("$NetBSD: tip.c,v 1.62 2019/02/28 17:41:27 gson Exp $");
  */
 #include "tip.h"
 #include "pathnames.h"
+
+struct termios	term;
+struct termios	defterm;
+struct termios	defchars;
+
+FILE	*fscript;
+
+int	attndes[2];
+int	fildes[2];
+int	repdes[2];
+int	FD;
+#ifndef __lint__  /* not used by hayes.c, but used by some other dialers */
+int	AC;
+#endif /*__lint__*/
+int	sfd;
+int	pid;
+uid_t	uid, euid;
+gid_t	gid, egid;
+int	stop;
+int	quit;
+int	stoprompt;
+int	timedout;
+int	cumode;
+int	bits8;
+#define STRIP_PAR	(bits8 ? 0377 : 0177)
+
+char	fname[80];
+char	copyname[80];
+char	ccc;
+
+int	odisc;
+int	vflag;
+
+char	*DV;
+char	*EL;
+char	*CM;
+char	*IE;
+char	*OE;
+char	*CU;
+char	*AT;
+char	*PN;
+char	*DI;
+char	*PA;
+
+char	*PH;
+char	*RM;
+char	*HO;
+
+long	BR;
+long	FS;
+
+long	DU;
+long	HW;
+char	*ES;
+char	*EX;
+char	*FO;
+char	*RC;
+char	*RE;
+char	*PR;
+long	DL;
+long	CL;
+long	ET;
+long	HD;
+char	DC;
 
 __dead static void	tipusage(void);
 
