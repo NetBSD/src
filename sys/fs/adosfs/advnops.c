@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52 2020/04/23 09:58:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.52 2020/04/23 09:58:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,7 @@ adosfs_strategy(void *v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			bp->b_flags = error;
+			bp->b_error = error;
 			biodone(bp);
 			goto reterr;
 		}
