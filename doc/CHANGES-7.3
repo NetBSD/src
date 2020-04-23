@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.79 2020/04/15 14:52:56 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.80 2020/04/23 14:18:09 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -831,4 +831,10 @@ sys/netinet6/nd6_rtr.c				1.148 (via patch)
 
 	PR kern/55091 and PR bin/54997: fix default route selection.
 	[kim, ticket #1727]
+
+external/bsd/bind/include/config.h		(apply patch)
+
+	Fix BIND configuration for big-endian hosts.
+	This should make DNSSEC work on such hosts as well.
+	[he, ticket #1728]
 
