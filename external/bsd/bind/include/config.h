@@ -594,6 +594,11 @@ int sigwait(const unsigned int *set, int *sig);
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
+#else /* __NetBSD__ */
+# include <sys/endian.h>
+# if _BYTE_ORDER == _BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+# endif
 #endif
 
 /* Define to empty if `const' does not conform to ANSI C. */
