@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.109 2020/04/23 21:12:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.109 2020/04/23 21:12:06 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -910,8 +910,16 @@ ubc_direct_release(struct uvm_object *uobj,
 	for (int i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
+		pg->flags &= ~PG_BUSY;
+		UVM_PAGE_OWN(pg, NULL);
+		if (pg->flags & PG_RELEASED) {
+			pg->flags &= ~PG_RELEASED;
+			uvm_pagefree(pg);
+			continue;
+		}
 		uvm_pagelock(pg);
 		uvm_pageactivate(pg);
+		uvm_pagewakeup(pg);
 		uvm_pageunlock(pg);
 
 		/* Page was changed, no longer fake and neither clean. */
@@ -922,7 +930,6 @@ ubc_direct_release(struct uvm_object *uobj,
 			    "page %p not dirty", pg);
 		}
 	}
-	uvm_page_unbusy(pgs, npages);
 	rw_exit(uobj->vmobjlock);
 }
 
