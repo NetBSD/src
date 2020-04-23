@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 2018/06/06 22:56:25 uwe Exp $	*/
+/*	$NetBSD: boot.c,v 1.30 2020/04/23 00:12:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ extern void __syncicache(void *, size_t); /* in libkern */
 #endif
 
 char bootdev[MAXBOOTPATHLEN];
-char bootfile[MAXBOOTPATHLEN];
+extern char bootfile[MAXBOOTPATHLEN];
 int boothowto;
 bool floppyboot;
 int ofw_version = 0;
