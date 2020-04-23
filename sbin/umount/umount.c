@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.52 2016/06/26 04:01:30 dholland Exp $	*/
+/*	$NetBSD: umount.c,v 1.53 2020/04/23 04:21:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.52 2016/06/26 04:01:30 dholland Exp $");
+__RCSID("$NetBSD: umount.c,v 1.53 2020/04/23 04:21:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: umount.c,v 1.52 2016/06/26 04:01:30 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
@@ -90,6 +91,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, errs, all = 0, raw = 0;
+	char mntfromname[MAXPATHLEN];
 #ifndef SMALL
 	int mnts;
 	struct statvfs *mntbuf;
@@ -168,9 +170,13 @@ main(int argc, char *argv[])
 		}
 	} else 
 #endif /* !SMALL */
-		for (errs = 0; *argv != NULL; ++argv)
-			if (umountfs(*argv, typelist, raw) != 0)
+		for (errs = 0; *argv != NULL; ++argv) {
+			if (getfsspecname(mntfromname, sizeof(mntfromname),
+			    *argv) == NULL)
+				err(EXIT_FAILURE, "%s", mntfromname);
+			if (umountfs(mntfromname, typelist, raw) != 0)
 				errs = 1;
+		}
 	return errs;
 }
 
@@ -339,6 +345,7 @@ getmntname(const char *name, mntwhat what, char **type)
 {
 	static struct statvfs *mntbuf;
 	static int mntsize;
+	static char mntfromname[MAXPATHLEN];
 	int i;
 
 	if (mntbuf == NULL &&
@@ -355,7 +362,10 @@ getmntname(const char *name, mntwhat what, char **type)
 		if ((what == MNTFROM) && !strcmp(mntbuf[i].f_mntonname, name)) {
 			if (type)
 				*type = mntbuf[i].f_fstypename;
-			return (mntbuf[i].f_mntfromname);
+			if (getfsspecname(mntfromname, sizeof(mntfromname),
+			    mntbuf[i].f_mntfromname) == NULL)
+				err(EXIT_FAILURE, "%s", mntfromname);
+			return mntfromname;
 		}
 	}
 	return (NULL);
