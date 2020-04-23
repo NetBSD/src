@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.11 2020/04/23 16:37:39 tnn Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.12 2020/04/23 17:21:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.11 2020/04/23 16:37:39 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.12 2020/04/23 17:21:53 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -270,7 +270,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_reg[13] = (uint32_t)(uintptr_t)fp;		/* sp */
 	tf->tf_reg[14] = (uint32_t)(uintptr_t)sdesc->sd_tramp;	/* lr */
 
-	/* Remember if we'ere now on the signal stack */
+	/* Remember if we're now on the signal stack */
 	if (onstack_p)
 		ss->ss_flags |= SS_ONSTACK;
 }
