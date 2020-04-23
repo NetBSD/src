@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.2 2019/01/13 00:11:29 tnn Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.3 2020/04/23 03:15:47 rin Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -29,8 +29,8 @@
  */
 
 /*
- * kern_crashme.c:  special debugging routines only enabled in DEBUG
- * enabled kernels, designed for debugging kernel crashes.
+ * kern_crashme.c:  special debugging routines, designed for debugging
+ * kernel crashes.
  *
  * supports crashme sysctl nodes, to test various ways the system can
  * panic or crash.  you can add and remove nodes.
