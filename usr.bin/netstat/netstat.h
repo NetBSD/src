@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.51 2014/11/06 21:30:09 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.52 2020/04/23 00:24:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,37 +34,37 @@
 #include <sys/cdefs.h>
 #include <kvm.h>
 
-int	Aflag;		/* show addresses of protocol control block */
-int	aflag;		/* show all sockets (including servers) */
-int	Bflag;		/* show Berkeley Packet Filter information */
-int	bflag;		/* show i/f byte stats */
-int	dflag;		/* show i/f dropped packets */
+extern int	Aflag;		/* show addresses of protocol control block */
+extern int	aflag;		/* show all sockets (including servers) */
+extern int	Bflag;		/* show Berkeley Packet Filter information */
+extern int	bflag;		/* show i/f byte stats */
+extern int	dflag;		/* show i/f dropped packets */
 #ifndef SMALL
-int	gflag;		/* show group (multicast) routing or stats */
+extern int	gflag;		/* show group (multicast) routing or stats */
 #endif
-int	hflag;		/* humanize byte counts */
-int	iflag;		/* show interfaces */
-int	Lflag;		/* don't show LLINFO entries */
-int	lflag;		/* show routing table with use and ref */
-int	mflag;		/* show memory stats */
-int	numeric_addr;	/* show addresses numerically */
-int	numeric_port;	/* show ports numerically */
-int	nflag;		/* same as above, for show.c compat */
-int	Pflag;		/* dump a PCB */
-int	pflag;		/* show given protocol */
-int	qflag;		/* show softintrq */
-int	rflag;		/* show routing tables (or routing stats) */
-int	sflag;		/* show protocol statistics */
-int	tagflag;	/* show route tags */
-int	tflag;		/* show i/f watchdog timers */
-int	Vflag;		/* show Vestigial TIME_WAIT (VTW) information */
-int	vflag;		/* verbose route information or don't truncate names */
+extern int	hflag;		/* humanize byte counts */
+extern int	iflag;		/* show interfaces */
+extern int	Lflag;		/* don't show LLINFO entries */
+extern int	lflag;		/* show routing table with use and ref */
+extern int	mflag;		/* show memory stats */
+extern int	numeric_addr;	/* show addresses numerically */
+extern int	numeric_port;	/* show ports numerically */
+extern int	nflag;		/* same as above, for show.c compat */
+extern int	Pflag;		/* dump a PCB */
+extern int	pflag;		/* show given protocol */
+extern int	qflag;		/* show softintrq */
+extern int	rflag;		/* show routing tables (or routing stats) */
+extern int	sflag;		/* show protocol statistics */
+extern int	tagflag;	/* show route tags */
+extern int	tflag;		/* show i/f watchdog timers */
+extern int	Vflag;		/* show Vestigial TIME_WAIT (VTW) information */
+extern int	vflag;		/* verbose route information or don't truncate names */
 
-char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
+extern char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
 
-int	af;		/* address family */
-int	use_sysctl;	/* use sysctl instead of kmem */
-int	force_sysctl;	/* force use of sysctl (or exit) - for testing */
+extern int	af;		/* address family */
+extern int	use_sysctl;	/* use sysctl instead of kmem */
+extern int	force_sysctl;	/* force use of sysctl (or exit) - for testing */
 
 
 int	kread(u_long addr, char *buf, int size);
