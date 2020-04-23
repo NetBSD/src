@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.13 2020/04/23 06:27:21 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.14 2020/04/23 06:28:34 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.13 2020/04/23 06:27:21 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.14 2020/04/23 06:28:34 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1142,6 +1142,10 @@ static const struct aq_product {
 	enum aq_media_type aq_media_type;
 	aq_link_speed_t aq_available_rates;
 } aq_products[] = {
+	{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100,
+	  "Aquantia AQC100 10 Gigabit Network Adapter",
+	  AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
+	},
 	{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC107,
 	  "Aquantia AQC107 10 Gigabit Network Adapter",
 	  AQ_MEDIA_TYPE_TP, AQ_LINK_ALL
@@ -1154,10 +1158,6 @@ static const struct aq_product {
 	  "Aquantia AQC109 2.5 Gigabit Network Adapter",
 	  AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 	},
-        { PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100,
-          "Aquantia AQC100 10 Gigabit Network Adapter",
-          AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
-        },
 	{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111,
 	  "Aquantia AQC111 5 Gigabit Network Adapter",
 	  AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
