@@ -1,4 +1,4 @@
-/* $NetBSD: parse.y,v 1.2 2013/10/19 17:16:38 christos Exp $ */
+/* $NetBSD: parse.y,v 1.3 2020/04/23 00:29:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: parse.y,v 1.2 2013/10/19 17:16:38 christos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.3 2020/04/23 00:29:00 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -49,6 +49,11 @@ __RCSID("$NetBSD: parse.y,v 1.2 2013/10/19 17:16:38 christos Exp $");
 #include <netinet/tcp_fsm.h>
 
 #include "parser.h"
+
+int lineno;
+
+struct pfioc_states* states;
+size_t allocated;
 
 // XXX it is really correct ?
 extern const char * const tcpstates[];
