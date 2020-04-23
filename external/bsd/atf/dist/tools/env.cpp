@@ -53,7 +53,7 @@ impl::get(const std::string& name)
     if (val != NULL)
 	return val;
     if (strcmp(n, "PATH") == 0)
-	return "/bin:/usr/bin";
+	return "/bin:/usr/bin:/sbin:/usr/sbin";
 	
     throw tools::system_error(IMPL_NAME "::set",
 			    "Cannot get environment variable '" + name +
