@@ -1,4 +1,4 @@
-/* 	$NetBSD: get_net.c,v 1.2 2015/12/24 01:41:19 christos Exp $	 */
+/* 	$NetBSD: get_net.c,v 1.3 2020/04/23 00:22:01 joerg Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: get_net.c,v 1.2 2015/12/24 01:41:19 christos Exp $");
+__RCSID("$NetBSD: get_net.c,v 1.3 2020/04/23 00:22:01 joerg Exp $");
 
 #include <sys/types.h>
 #include <netdb.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: get_net.c,v 1.2 2015/12/24 01:41:19 christos Exp $");
 #ifdef TEST
 int      opt_flags;
 const int ninumeric = NI_NUMERICHOST;
-int      debug = 1;
+int      mountd_debug = 1;
 #endif
 
 static int 
@@ -145,7 +145,7 @@ get_net(char *cp, struct netmsk *net, int maskflg)
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof sin;
 		sin.sin_addr = inet_makeaddr(inet_network(cp), 0);
-		if (debug)
+		if (mountd_debug)
 			fprintf(stderr, "get_net: '%s' v4 addr %x\n",
 			    cp, sin.sin_addr.s_addr);
 		sa = (struct sockaddr *)&sin;
