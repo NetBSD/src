@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.33 2013/10/21 14:47:46 christos Exp $	*/
+/*	$NetBSD: tip.h,v 1.34 2020/04/23 00:35:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,37 +59,37 @@
 /*
  * Remote host attributes
  */
-char	*DV;			/* UNIX device(s) to open */
-char	*EL;			/* chars marking an EOL */
-char	*CM;			/* initial connection message */
-char	*IE;			/* EOT to expect on input */
-char	*OE;			/* EOT to send to complete FT */
-char	*CU;			/* call unit if making a phone call */
-char	*AT;			/* acu type */
-char	*PN;			/* phone number(s) */
-char	*DI;			/* disconnect string */
-char	*PA;			/* parity to be generated */
+extern char	*DV;			/* UNIX device(s) to open */
+extern char	*EL;			/* chars marking an EOL */
+extern char	*CM;			/* initial connection message */
+extern char	*IE;			/* EOT to expect on input */
+extern char	*OE;			/* EOT to send to complete FT */
+extern char	*CU;			/* call unit if making a phone call */
+extern char	*AT;			/* acu type */
+extern char	*PN;			/* phone number(s) */
+extern char	*DI;			/* disconnect string */
+extern char	*PA;			/* parity to be generated */
 
-char	*PH;			/* phone number file */
-char	*RM;			/* remote file name */
-char	*HO;			/* host name */
+extern char	*PH;			/* phone number file */
+extern char	*RM;			/* remote file name */
+extern char	*HO;			/* host name */
 
-long	BR;			/* line speed for conversation */
-long	FS;			/* frame size for transfers */
+extern long	BR;			/* line speed for conversation */
+extern long	FS;			/* frame size for transfers */
 
-long	DU;			/* this host is dialed up */
-long	HW;			/* this device is hardwired, see hunt.c */
-char	*ES;			/* escape character */
-char	*EX;			/* exceptions */
-char	*FO;			/* force (literal next) char*/
-char	*RC;			/* raise character */
-char	*RE;			/* script record file */
-char	*PR;			/* remote prompt */
-long	DL;			/* line delay for file transfers to remote */
-long	CL;			/* char delay for file transfers to remote */
-long	ET;			/* echocheck timeout */
-long	HD;			/* this host is half duplex - do local echo */
-char	DC;			/* this host is directly connected. */
+extern long	DU;			/* this host is dialed up */
+extern long	HW;			/* this device is hardwired, see hunt.c */
+extern char	*ES;			/* escape character */
+extern char	*EX;			/* exceptions */
+extern char	*FO;			/* force (literal next) char*/
+extern char	*RC;			/* raise character */
+extern char	*RE;			/* script record file */
+extern char	*PR;			/* remote prompt */
+extern long	DL;			/* line delay for file transfers to remote */
+extern long	CL;			/* char delay for file transfers to remote */
+extern long	ET;			/* echocheck timeout */
+extern long	HD;			/* this host is half duplex - do local echo */
+extern char	DC;			/* this host is directly connected. */
 
 /*
  * String value table
@@ -223,37 +223,36 @@ extern value_t	vtable[];	/* variable table */
 #define	PARITY		31
 #define	HARDWAREFLOW	32
 
-struct termios	term;		/* current mode of terminal */
-struct termios	defterm;	/* initial mode of terminal */
-struct termios	defchars;	/* current mode with initial chars */
+extern struct termios	term;		/* current mode of terminal */
+extern struct termios	defterm;	/* initial mode of terminal */
+extern struct termios	defchars;	/* current mode with initial chars */
 
-FILE	*fscript;		/* FILE for scripting */
+extern FILE	*fscript;		/* FILE for scripting */
 
-int	attndes[2];		/* coprocess wakeup channel */
-int	fildes[2];		/* file transfer synchronization channel */
-int	repdes[2];		/* read process synchronization channel */
-int	FD;			/* open file descriptor to remote host */
+extern int	attndes[2];		/* coprocess wakeup channel */
+extern int	fildes[2];		/* file transfer synchronization channel */
+extern int	repdes[2];		/* read process synchronization channel */
+extern int	FD;			/* open file descriptor to remote host */
 #ifndef __lint__  /* not used by hayes.c, but used by some other dialers */
-int	AC;			/* open file descriptor to dialer (v831 only) */
+extern int	AC;			/* open file descriptor to dialer (v831 only) */
 #endif /*__lint__*/
-int	vflag;			/* print .tiprc initialization sequence */
-int	sfd;			/* for ~< operation */
-int	pid;			/* pid of tipout */
-uid_t	uid, euid;		/* real and effective user id's */
-gid_t	gid, egid;		/* real and effective group id's */
-int	stop;			/* stop transfer session flag */
-int	quit;			/* same; but on other end */
-int	stoprompt;		/* for interrupting a prompt session */
-int	timedout;		/* ~> transfer timedout */
-int	cumode;			/* simulating the "cu" program */
-int	bits8;			/* terminal is in 8-bit mode */
+extern int	sfd;			/* for ~< operation */
+extern int	pid;			/* pid of tipout */
+extern uid_t	uid, euid;		/* real and effective user id's */
+extern gid_t	gid, egid;		/* real and effective group id's */
+extern int	stop;			/* stop transfer session flag */
+extern int	quit;			/* same; but on other end */
+extern int	stoprompt;		/* for interrupting a prompt session */
+extern int	timedout;		/* ~> transfer timedout */
+extern int	cumode;			/* simulating the "cu" program */
+extern int	bits8;			/* terminal is in 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
 
-char	fname[80];		/* file name buffer for ~< */
-char	copyname[80];		/* file name buffer for ~> */
-char	ccc;			/* synchronization character */
+extern char	fname[80];		/* file name buffer for ~< */
+extern char	copyname[80];		/* file name buffer for ~> */
+extern char	ccc;			/* synchronization character */
 
-int	odisc;			/* initial tty line discipline */
+extern int	odisc;			/* initial tty line discipline */
 
 extern acu_t		acutable[];
 extern esctable_t	etable[];
