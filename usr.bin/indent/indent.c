@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.26 2019/10/19 15:44:31 christos Exp $	*/
+/*	$NetBSD: indent.c,v 1.27 2020/04/23 00:17:34 joerg Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.26 2019/10/19 15:44:31 christos Exp $");
+__RCSID("$NetBSD: indent.c,v 1.27 2020/04/23 00:17:34 joerg Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -68,6 +68,60 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include "indent_globs.h"
 #include "indent_codes.h"
 #include "indent.h"
+
+struct options opt;
+struct parser_state ps;
+
+char       *labbuf;
+char       *s_lab;
+char       *e_lab;
+char       *l_lab;
+
+char       *codebuf;
+char       *s_code;
+char       *e_code;
+char       *l_code;
+
+char       *combuf;
+char       *s_com;
+char       *e_com;
+char       *l_com;
+
+char       *tokenbuf;
+char	   *s_token;
+char       *e_token;
+char	   *l_token;
+
+char       *in_buffer;
+char	   *in_buffer_limit;
+char       *buf_ptr;
+char       *buf_end;
+
+char        sc_buf[sc_size];
+char       *save_com;
+char       *sc_end;
+
+char       *bp_save;
+char       *be_save;
+
+int         found_err;
+int         n_real_blanklines;
+int         prefix_blankline_requested;
+int         postfix_blankline_requested;
+int         break_comma;
+float       case_ind;
+int         code_lines;
+int         had_eof;
+int         line_no;
+int         inhibit_formatting;
+int         suppress_blanklines;
+
+int         ifdef_level;
+struct parser_state state_stack[5];
+struct parser_state match_state[5];
+
+FILE       *input;
+FILE       *output;
 
 static void bakcopy(void);
 static void indent_declaration(int, int);

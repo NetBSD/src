@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.11 2019/04/04 15:22:13 kamil Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.12 2020/04/23 00:17:34 joerg Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -51,8 +51,8 @@
 #define true  1
 
 
-FILE       *input;		/* the fid for the input file */
-FILE       *output;		/* the output file */
+extern FILE       *input;		/* the fid for the input file */
+extern FILE       *output;		/* the output file */
 
 #define CHECK_SIZE_CODE(desired_size) \
 	if (e_code + (desired_size) >= l_code) { \
@@ -106,44 +106,44 @@ FILE       *output;		/* the output file */
 	    s_token = tokenbuf + 1; \
 	}
 
-char       *labbuf;		/* buffer for label */
-char       *s_lab;		/* start ... */
-char       *e_lab;		/* .. and end of stored label */
-char       *l_lab;		/* limit of label buffer */
+extern char       *labbuf;		/* buffer for label */
+extern char       *s_lab;		/* start ... */
+extern char       *e_lab;		/* .. and end of stored label */
+extern char       *l_lab;		/* limit of label buffer */
 
-char       *codebuf;		/* buffer for code section */
-char       *s_code;		/* start ... */
-char       *e_code;		/* .. and end of stored code */
-char       *l_code;		/* limit of code section */
+extern char       *codebuf;		/* buffer for code section */
+extern char       *s_code;		/* start ... */
+extern char       *e_code;		/* .. and end of stored code */
+extern char       *l_code;		/* limit of code section */
 
-char       *combuf;		/* buffer for comments */
-char       *s_com;		/* start ... */
-char       *e_com;		/* ... and end of stored comments */
-char       *l_com;		/* limit of comment buffer */
+extern char       *combuf;		/* buffer for comments */
+extern char       *s_com;		/* start ... */
+extern char       *e_com;		/* ... and end of stored comments */
+extern char       *l_com;		/* limit of comment buffer */
 
 #define token s_token
-char       *tokenbuf;		/* the last token scanned */
-char	   *s_token;
-char       *e_token;
-char	   *l_token;
+extern char       *tokenbuf;		/* the last token scanned */
+extern char	   *s_token;
+extern char       *e_token;
+extern char	   *l_token;
 
-char       *in_buffer;		/* input buffer */
-char	   *in_buffer_limit;	/* the end of the input buffer */
-char       *buf_ptr;		/* ptr to next character to be taken from
+extern char       *in_buffer;		/* input buffer */
+extern char	   *in_buffer_limit;	/* the end of the input buffer */
+extern char       *buf_ptr;		/* ptr to next character to be taken from
 				 * in_buffer */
-char       *buf_end;		/* ptr to first after last char in in_buffer */
+extern char       *buf_end;		/* ptr to first after last char in in_buffer */
 
-char        sc_buf[sc_size];	/* input text is saved here when looking for
+extern char        sc_buf[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
-char       *save_com;		/* start of the comment stored in sc_buf */
-char       *sc_end;		/* pointer into save_com buffer */
+extern char       *save_com;		/* start of the comment stored in sc_buf */
+extern char       *sc_end;		/* pointer into save_com buffer */
 
-char       *bp_save;		/* saved value of buf_ptr when taking input
+extern char       *bp_save;		/* saved value of buf_ptr when taking input
 				 * from save_com */
-char       *be_save;		/* similarly saved value of buf_end */
+extern char       *be_save;		/* similarly saved value of buf_end */
 
 
-struct options {
+extern struct options {
     int         blanklines_around_conditional_compilation;
     int         blanklines_after_declarations_at_proctop; /* this is vaguely
 				 * similar to blanklines_after_decla except
@@ -221,24 +221,24 @@ struct options {
 				 * are printed */
 } opt;
 
-int         found_err;
-int         n_real_blanklines;
-int         prefix_blankline_requested;
-int         postfix_blankline_requested;
-int         break_comma;	/* when true and not in parens, break after a
+extern int         found_err;
+extern int         n_real_blanklines;
+extern int         prefix_blankline_requested;
+extern int         postfix_blankline_requested;
+extern int         break_comma;	/* when true and not in parens, break after a
 				 * comma */
-float       case_ind;		/* indentation level to be used for a "case
+extern float       case_ind;		/* indentation level to be used for a "case
 				 * n:" */
-int         code_lines;		/* count of lines with code */
-int         had_eof;		/* set to true when input is exhausted */
-int         line_no;		/* the current line number. */
-int         inhibit_formatting;	/* true if INDENT OFF is in effect */
-int         suppress_blanklines;/* set iff following blanklines should be
+extern int         code_lines;		/* count of lines with code */
+extern int         had_eof;		/* set to true when input is exhausted */
+extern int         line_no;		/* the current line number. */
+extern int         inhibit_formatting;	/* true if INDENT OFF is in effect */
+extern int         suppress_blanklines;/* set iff following blanklines should be
 				 * suppressed */
 
 #define	STACKSIZE 256
 
-struct parser_state {
+extern struct parser_state {
     int         last_token;
     int         p_stack[STACKSIZE];	/* this is the parsers stack */
     int         il[STACKSIZE];	/* this stack stores indentation levels */
@@ -316,6 +316,6 @@ struct parser_state {
     int         just_saw_decl;
 }           ps;
 
-int         ifdef_level;
-struct parser_state state_stack[5];
-struct parser_state match_state[5];
+extern int         ifdef_level;
+extern struct parser_state state_stack[5];
+extern struct parser_state match_state[5];
