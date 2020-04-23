@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $	*/
 
 /*
- * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
+ * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $");
 #include "lapic.h"
 #include "ioapic.h"
 #include "acpica.h"
+#include "hpet.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2020/04/21 02:56:37 msaitoh Exp $");
 #endif
 
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/hpetvar.h>
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
@@ -196,6 +198,8 @@ paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 static vaddr_t cmos_data_mapping;
 #endif
 struct cpu_info *cpu_starting;
+
+int (*cpu_nullop_ptr)(void *) = nullop;
 
 #ifdef MULTIPROCESSOR
 void		cpu_hatch(void *);
@@ -428,8 +432,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * must be done to allow booting other processors.
 	 */
 	if (!again) {
-		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
+		/* Make sure DELAY() (likely i8254_delay()) is initialized. */
+		DELAY(1);
+
 		/* Basic init. */
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
@@ -445,8 +452,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			lapic_calibrate_timer(ci);
 		}
 #endif
-		/* Make sure DELAY() is initialized. */
-		DELAY(1);
 		kcsan_cpu_init(ci);
 		again = true;
 	}
@@ -704,7 +709,6 @@ cpu_init(struct cpu_info *ci)
 
 	if (ci != &cpu_info_primary) {
 		/* Synchronize TSC */
-		wbinvd();
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 		tsc_sync_ap(ci);
 	} else {
@@ -719,6 +723,14 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	kcpuset_t *cpus;
 	u_long i;
+
+#if NHPET > 0
+	/* Use HPET delay, and re-calibrate TSC on boot CPU using HPET. */
+	if (hpet_delay_p() && x86_delay == i8254_delay) {
+		delay_func = x86_delay = hpet_delay;
+		cpu_get_tsc_freq(curcpu());
+	}
+#endif
 
 #ifndef XEN
 	/* Now that we know the number of CPUs, patch the text segment. */
@@ -830,7 +842,6 @@ cpu_start_secondary(struct cpu_info *ci)
 		 */
 		psl = x86_read_psl();
 		x86_disable_intr();
-		wbinvd();
 		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 	}
@@ -861,7 +872,6 @@ cpu_boot_secondary(struct cpu_info *ci)
 		drift = ci->ci_data.cpu_cc_skew;
 		psl = x86_read_psl();
 		x86_disable_intr();
-		wbinvd();
 		tsc_sync_bp(ci);
 		x86_write_psl(psl);
 		drift -= ci->ci_data.cpu_cc_skew;
@@ -907,7 +917,6 @@ cpu_hatch(void *v)
 	 * Synchronize the TSC for the first time. Note that interrupts are
 	 * off at this point.
 	 */
-	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	tsc_sync_ap(ci);
 
@@ -1295,7 +1304,8 @@ cpu_shutdown(device_t dv, int how)
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-	uint64_t freq = 0, last_tsc;
+	uint64_t freq = 0, t0, t1;
+	int64_t overhead;
 
 	if (cpu_hascounter())
 		freq = cpu_tsc_freq_cpuid(ci);
@@ -1304,11 +1314,31 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		/* Use TSC frequency taken from CPUID. */
 		ci->ci_data.cpu_cc_freq = freq;
 	} else {
-		/* Calibrate TSC frequency. */
-		last_tsc = cpu_counter_serializing();
+		/*
+		 * Work out the approximate overhead involved below.
+		 * Discard the result of the first go around the loop.
+		 */
+		overhead = 0;		
+		for (int i = 0; i <= 8; i++) {
+			__insn_barrier();
+			t0 = cpu_counter_serializing();
+			(*cpu_nullop_ptr)(NULL);
+			t1 = cpu_counter_serializing();
+			__insn_barrier();
+			if (i > 0) {
+				overhead += (t1 - t0);
+			}
+		}
+		overhead >>= 3;
+
+		/* Now warm up x86_delay() and do the calibration. */
+		x86_delay(1);
+		__insn_barrier();
+		t0 = cpu_counter_serializing();
 		x86_delay(100000);
-		ci->ci_data.cpu_cc_freq =
-		    (cpu_counter_serializing() - last_tsc) * 10;
+		t1 = cpu_counter_serializing();
+		__insn_barrier();
+		ci->ci_data.cpu_cc_freq = (t1 - t0 - overhead) * 10;
 	}
 }
 
