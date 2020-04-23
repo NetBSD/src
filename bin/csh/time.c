@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.21 2017/07/15 14:35:55 christos Exp $ */
+/* $NetBSD: time.c,v 1.22 2020/04/23 07:54:53 simonb Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.21 2017/07/15 14:35:55 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.22 2020/04/23 07:54:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: time.c,v 1.21 2017/07/15 14:35:55 christos Exp $");
 /*
  * C Shell - routines handling process timing and niceing
  */
-static void pdeltat(FILE *, struct timeval *, struct timeval *);
+static void pdeltat(FILE *, int, struct timeval *, struct timeval *);
 static void pcsecs(FILE *, long);
 
 #ifndef NOT_CSH
@@ -138,12 +138,13 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timespec *e,
 	cp = short2str(vp->vec[1]);
     else
 	cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
-    prusage1(fp, cp, r0, r1, e, b);
+    prusage1(fp, cp, 1, r0, r1, e, b);
 }
 #endif
 
 void
-prusage1(FILE *fp, const char *cp, struct rusage *r0, struct rusage *r1,
+prusage1(FILE *fp, const char *cp, int prec,
+    struct rusage *r0, struct rusage *r1,
     struct timespec *e, struct timespec *b)
 {
     long i;
@@ -201,10 +202,10 @@ prusage1(FILE *fp, const char *cp, struct rusage *r0, struct rusage *r1,
 		(void)fprintf(fp, "%ld", r1->ru_minflt - r0->ru_minflt);
 		break;
 	    case 'S':		/* system CPU time used */
-		pdeltat(fp, &r1->ru_stime, &r0->ru_stime);
+		pdeltat(fp, prec, &r1->ru_stime, &r0->ru_stime);
 		break;
 	    case 'U':		/* user CPU time used */
-		pdeltat(fp, &r1->ru_utime, &r0->ru_utime);
+		pdeltat(fp, prec, &r1->ru_utime, &r0->ru_utime);
 		break;
 	    case 'W':		/* number of swaps */
 		i = r1->ru_nswap - r0->ru_nswap;
@@ -234,13 +235,13 @@ prusage1(FILE *fp, const char *cp, struct rusage *r0, struct rusage *r1,
 }
 
 static void
-pdeltat(FILE *fp, struct timeval *t1, struct timeval *t0)
+pdeltat(FILE *fp, int prec, struct timeval *t1, struct timeval *t0)
 {
     struct timeval td;
 
     timersub(t1, t0, &td);
-    (void)fprintf(fp, "%ld.%01ld", (long)td.tv_sec,
-	(long)(td.tv_usec / 100000));
+    (void)fprintf(fp, "%ld.%0*ld", (long)td.tv_sec,
+	prec, (long)(td.tv_usec / 100000));
 }
 
 #define  P2DIG(fp, i) (void)fprintf(fp, "%ld%ld", (i) / 10, (i) % 10)

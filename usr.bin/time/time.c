@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.23 2017/07/15 14:34:08 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.24 2020/04/23 07:54:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.23 2017/07/15 14:34:08 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.24 2020/04/23 07:54:53 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ int
 main(int argc, char ** volatile argv)
 {
 	int pid;
-	int ch, status;
+	int ch, status, prec;
 	int volatile portableflag;
 	int volatile lflag;
 	const char *decpt;
@@ -79,20 +79,21 @@ main(int argc, char ** volatile argv)
 	(void)setlocale(LC_ALL, "");
 
 	lflag = portableflag = 0;
+	prec = 1;
 	fmt = NULL;
-	while ((ch = getopt(argc, argv, "cf:lp")) != -1) {
+	while ((ch = getopt(argc, argv, "cf:lpt")) != -1) {
 		switch (ch) {
 		case 'f':
 			fmt = optarg;
 			portableflag = 0;
 			lflag = 0;
 			break;
-		case 'c':
+		case 'c':	/* csh format */
 			fmt = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
 			portableflag = 0;
 			lflag = 0;
 			break;
-		case 'p':
+		case 'p':	/* POSIX.2 format */
 			portableflag = 1;
 			fmt = NULL;
 			lflag = 0;
@@ -101,6 +102,12 @@ main(int argc, char ** volatile argv)
 			lflag = 1;
 			portableflag = 0;
 			fmt = NULL;
+			break;
+		case 't':	/* tcsh format */
+			fmt = "%Uu %Ss %E %P\t%X+%Dk %I+%Oio %Fpf+%Ww";
+			prec = 3;
+			portableflag = 0;
+			lflag = 0;
 			break;
 		case '?':
 		default:
@@ -143,7 +150,7 @@ main(int argc, char ** volatile argv)
 		static struct rusage null_ru;
 		before.tv_sec = 0;
 		before.tv_nsec = 0;
-		prusage1(stderr, fmt, &null_ru, &ru, &after, &before);
+		prusage1(stderr, fmt, prec, &null_ru, &ru, &after, &before);
 	} else if (portableflag) {
 		prts("real ", decpt, &after, "\n");
 		prtv("user ", decpt, &ru.ru_utime, "\n");
@@ -184,7 +191,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-clp] [-f <fmt>] utility [argument ...]\n",
+	(void)fprintf(stderr,
+	    "Usage: %s [-clpt] [-f <fmt>] utility [argument ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
