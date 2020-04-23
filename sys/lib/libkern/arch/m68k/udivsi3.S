@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.5 2020/04/22 11:58:26 rin Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.6 2020/04/23 03:12:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,13 @@
 #if 0
 	RCSID("from: @(#)udivsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: udivsi3.S,v 1.5 2020/04/22 11:58:26 rin Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.6 2020/04/23 03:12:49 rin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* unsigned / unsigned */
 #ifndef __mc68010__
-#error
+/* XXX sun3 need this for bootloader */
 ENTRY(__udivsi3)
 	movel	4(%sp),%d0
 	divul	8(%sp),%d0
