@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.100 2020/04/23 00:24:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.100 2020/04/23 00:24:50 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,38 @@ __RCSID("$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $");
 #include "netstat.h"
 #include "rtutil.h"
 #include "prog_ops.h"
+
+int	Aflag;
+int	aflag;
+int	Bflag;
+int	bflag;
+int	dflag;
+#ifndef SMALL
+int	gflag;
+#endif
+int	hflag;
+int	iflag;
+int	Lflag;
+int	lflag;
+int	mflag;
+int	numeric_addr;
+int	numeric_port;
+int	nflag;
+int	Pflag;
+int	pflag;
+int	qflag;
+int	rflag;
+int	sflag;
+int	tagflag;
+int	tflag;
+int	Vflag;
+int	vflag;
+
+char	*interface;
+
+int	af;
+int	use_sysctl;
+int	force_sysctl;
 
 struct nlist nl[] = {
 #define	N_MBSTAT	0
