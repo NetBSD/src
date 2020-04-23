@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.3 2020/04/22 18:21:41 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.4 2020/04/23 14:13:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -80,4 +80,24 @@ sys/compat/ossaudio/ossaudio.c			1.83
 
 	ossaudio: Avoid giving userland uninitialized memory.
 	[maxv, ticket #1535]
+
+etc/rc.d/network				1.75
+share/man/man5/rc.conf.5			1.172
+
+	Allow rc.conf to setup resolv.conf via resolvconf(8).
+	[kim, ticket #1537]
+
+etc/rc.d/network				1.77,1.78 (plus patch)
+share/man/man5/ifconfig.if.5			1.19,1.20
+usr.sbin/rtsold/rtsold.8			1.37-1.42
+
+	Add an "rtsol" keyword to ifconfig.if for enabling IPv6 RS/RA.
+	[kim, ticket #1538]
+
+external/bsd/bind/include/config.h		(apply patch)
+
+	Fix BIND configuration for big-endian hosts.
+	This should make DNSSEC work on such hosts as well.
+	[he, ticket #1539]
+
 
