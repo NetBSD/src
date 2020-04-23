@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.89 2020/04/23 08:09:25 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.90 2020/04/23 09:16:21 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,9 +26,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.89 2020/04/23 08:09:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.90 2020/04/23 09:16:21 jdolecek Exp $");
 
-#include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/condvar.h>
 #include <sys/conf.h>
@@ -227,11 +226,11 @@ struct xbdback_instance {
 	struct timeval xbdi_lasterr_time;    /* error time tracking */
 };
 /* Manipulation of the above reference count. */
-#define xbdi_get(xbdip) atomic_inc_uint(&(xbdip)->xbdi_refcnt)
-#define xbdi_put(xbdip)                                      \
-do {                                                         \
-	if (atomic_dec_uint_nv(&(xbdip)->xbdi_refcnt) == 0)  \
-               xbdback_finish_disconnect(xbdip);             \
+#define xbdi_get(xbdip) (xbdip)->xbdi_refcnt++
+#define xbdi_put(xbdip)						\
+do {								\
+	if (--((xbdip)->xbdi_refcnt) == 0)  			\
+               xbdback_finish_disconnect(xbdip);		\
 } while (/* CONSTCOND */ 0)
 
 static SLIST_HEAD(, xbdback_instance) xbdback_instances;
@@ -269,6 +268,8 @@ static void *xbdback_co_do_io(struct xbdback_instance *, void *);
 
 static void xbdback_io_error(struct xbdback_io *, int);
 static void xbdback_iodone(struct buf *);
+static void xbdback_iodone_locked(struct xbdback_instance *,
+		struct xbdback_io *, struct buf *);
 static void xbdback_send_reply(struct xbdback_instance *, uint64_t , int , int);
 
 static void *xbdback_map_shm(struct xbdback_io *);
@@ -336,10 +337,6 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		return EFTYPE;
 	}
 
-	/* XXXSMP unlocked search */
-	if (xbdif_lookup(domid, handle)) {
-		return EEXIST;
-	}
 	xbdi = kmem_zalloc(sizeof(*xbdi), KM_SLEEP);
 
 	xbdi->xbdi_domid = domid;
@@ -347,15 +344,21 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	snprintf(xbdi->xbdi_name, sizeof(xbdi->xbdi_name), "xbdb%di%d",
 	    xbdi->xbdi_domid, xbdi->xbdi_handle);
 
+	mutex_enter(&xbdback_lock);
+	if (xbdif_lookup(domid, handle)) {
+		mutex_exit(&xbdback_lock);
+		kmem_free(xbdi, sizeof(*xbdi));
+		return EEXIST;
+	}
+	SLIST_INSERT_HEAD(&xbdback_instances, xbdi, next);
+	mutex_exit(&xbdback_lock);
+
 	/* initialize status and reference counter */
 	xbdi->xbdi_status = DISCONNECTED;
 	xbdi_get(xbdi);
 
 	mutex_init(&xbdi->xbdi_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&xbdi->xbdi_cv, xbdi->xbdi_name);
-	mutex_enter(&xbdback_lock);
-	SLIST_INSERT_HEAD(&xbdback_instances, xbdi, next);
-	mutex_exit(&xbdback_lock);
 
 	xbusd->xbusd_u.b.b_cookie = xbdi;	
 	xbusd->xbusd_u.b.b_detach = xbdback_xenbus_destroy;
@@ -852,7 +855,7 @@ xbdback_finish_disconnect(struct xbdback_instance *xbdi)
 
 	xbdi->xbdi_status = DISCONNECTED;
 
-	cv_signal(&xbdi->xbdi_cv);
+	cv_broadcast(&xbdi->xbdi_cv);
 }
 
 static bool
@@ -861,14 +864,14 @@ xbdif_lookup(domid_t dom , uint32_t handle)
 	struct xbdback_instance *xbdi;
 	bool found = false;
 
-	mutex_enter(&xbdback_lock);
+	KASSERT(mutex_owned(&xbdback_lock));
+
 	SLIST_FOREACH(xbdi, &xbdback_instances, next) {
 		if (xbdi->xbdi_domid == dom && xbdi->xbdi_handle == handle) {
 			found = true;
 			break;
 		}
 	}
-	mutex_exit(&xbdback_lock);
 
 	return found;
 }
@@ -881,7 +884,9 @@ xbdback_evthandler(void *arg)
 	XENPRINTF(("xbdback_evthandler domain %d: cont %p\n",
 	    xbdi->xbdi_domid, xbdi->xbdi_cont));
 
+	mutex_enter(&xbdi->xbdi_lock);
 	xbdback_wakeup_thread(xbdi);
+	mutex_exit(&xbdi->xbdi_lock);
 
 	return 1;
 }
@@ -895,16 +900,14 @@ xbdback_thread(void *arg)
 {
 	struct xbdback_instance *xbdi = arg;
 
+	mutex_enter(&xbdi->xbdi_lock);
 	for (;;) {
-		mutex_enter(&xbdi->xbdi_lock);
 		switch (xbdi->xbdi_status) {
 		case WAITING:
 			cv_wait(&xbdi->xbdi_cv, &xbdi->xbdi_lock);
-			mutex_exit(&xbdi->xbdi_lock);
 			break;
 		case RUN:
 			xbdi->xbdi_status = WAITING; /* reset state */
-			mutex_exit(&xbdi->xbdi_lock);
 
 			if (xbdi->xbdi_cont == NULL) {
 				xbdi->xbdi_cont = xbdback_co_main;
@@ -916,22 +919,24 @@ xbdback_thread(void *arg)
 			if (xbdi->xbdi_pendingreqs > 0) {
 				/* there are pending I/Os. Wait for them. */
 				cv_wait(&xbdi->xbdi_cv, &xbdi->xbdi_lock);
-				mutex_exit(&xbdi->xbdi_lock);
-				break;
+				continue;
 			}
 			
 			/* All I/Os should have been processed by now,
 			 * xbdi_refcnt should drop to 0 */
 			xbdi_put(xbdi);
 			KASSERT(xbdi->xbdi_refcnt == 0);
-			mutex_exit(&xbdi->xbdi_lock);
-			kthread_exit(0);
-			break;
+			goto out;
+			/* NOTREACHED */
 		default:
 			panic("%s: invalid state %d",
 			    xbdi->xbdi_name, xbdi->xbdi_status);
 		}
 	}
+out:
+	mutex_exit(&xbdi->xbdi_lock);
+
+	kthread_exit(0);
 }
 
 static void *
@@ -1042,29 +1047,18 @@ fail:
  * we want to disconnect, leave continuation now.
  */
 static void *
-xbdback_co_main_incr(struct xbdback_instance *xbdi, void *obj)
+xbdback_co_main_incr(struct xbdback_instance *xbdi, void *obj __unused)
 {
-	(void)obj;
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
+
 	blkif_back_ring_t *ring = &xbdi->xbdi_ring.ring_n;
 
 	ring->req_cons++;
 
-	/*
-	 * Do not bother with locking here when checking for xbdi_status: if
-	 * we get a transient state, we will get the right value at
-	 * the next increment.
-	 */
 	if (xbdi->xbdi_status == DISCONNECTING)
 		xbdi->xbdi_cont = NULL;
 	else
 		xbdi->xbdi_cont = xbdback_co_main_loop;
-
-	/*
-	 * Each time the thread processes a full ring of requests, give
-	 * a chance to other threads to process I/Os too
-	 */
-	if ((ring->req_cons % BLKIF_RING_SIZE) == 0)
-		yield();
 
 	return xbdi;
 }
@@ -1250,8 +1244,10 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	size_t bcount;
 	blkif_request_t *req;
 
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
+
 	xbdi_get(xbdi);
-	atomic_inc_uint(&xbdi->xbdi_pendingreqs);
+	xbdi->xbdi_pendingreqs++;
 	
 	req = &xbdi->xbdi_xen_req;
 	xbd_io = obj;
@@ -1331,8 +1327,12 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 static void
 xbdback_io_error(struct xbdback_io *xbd_io, int error)
 {
-	xbd_io->xio_buf.b_error = error;
-	xbdback_iodone(&xbd_io->xio_buf);
+	KASSERT(mutex_owned(&xbd_io->xio_xbdi->xbdi_lock));
+
+	struct buf *bp = &xbd_io->xio_buf;
+
+	bp->b_error = error;
+	xbdback_iodone_locked(xbd_io->xio_xbdi, xbd_io, bp);
 }
 
 /*
@@ -1350,8 +1350,11 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 		int error;
 		int force = 1;
 
+		KASSERT(mutex_owned(&xbdi->xbdi_lock));
+		mutex_exit(&xbdi->xbdi_lock);
 		error = VOP_IOCTL(xbdi->xbdi_vp, DIOCCACHESYNC, &force, FWRITE,
 		    kauth_cred_get());
+		mutex_enter(&xbdi->xbdi_lock);
 		if (error) {
 			aprint_error("xbdback %s: DIOCCACHESYNC returned %d\n",
 			    xbdi->xbdi_xbusd->xbusd_path, error);
@@ -1392,23 +1395,35 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 /*
  * Called from softint(9) context when an I/O is done: for each request, send
  * back the associated reply to the domain.
- *
- * This gets reused by xbdback_io_error to report errors from other sources.
  */
 static void
 xbdback_iodone(struct buf *bp)
 {
 	struct xbdback_io *xbd_io;
 	struct xbdback_instance *xbdi;
-	int status;
-
-	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 
 	xbd_io = bp->b_private;
+	KASSERT(bp == &xbd_io->xio_buf);
 	xbdi = xbd_io->xio_xbdi;
+
+	mutex_enter(&xbdi->xbdi_lock);
+	xbdback_iodone_locked(xbdi, xbd_io, bp);
+	mutex_exit(&xbdi->xbdi_lock);
+}
+
+/*
+ * This gets reused by xbdback_io_error to report errors from other sources.
+ */
+static void
+xbdback_iodone_locked(struct xbdback_instance *xbdi, struct xbdback_io *xbd_io,
+    struct buf *bp)
+{
+	int status;
 
 	XENPRINTF(("xbdback_io domain %d: iodone ptr 0x%lx\n",
 		   xbdi->xbdi_domid, (long)xbd_io));
+
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
 
 	KASSERT(bp->b_error != 0 || xbd_io->xio_xv != NULL);
 	if (xbd_io->xio_xv != NULL)
@@ -1424,12 +1439,12 @@ xbdback_iodone(struct buf *bp)
 	xbdback_send_reply(xbdi, xbd_io->xio_id, xbd_io->xio_operation, status);
 
 	xbdi_put(xbdi);
-	atomic_dec_uint(&xbdi->xbdi_pendingreqs);
+	KASSERT(xbdi->xbdi_pendingreqs > 0);
+	xbdi->xbdi_pendingreqs--;
 	buf_destroy(&xbd_io->xio_buf);
 	xbdback_io_put(xbdi, xbd_io);
 
 	xbdback_wakeup_thread(xbdi);
-	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 }
 
 /*
@@ -1438,13 +1453,12 @@ xbdback_iodone(struct buf *bp)
 static void
 xbdback_wakeup_thread(struct xbdback_instance *xbdi)
 {
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
 
-	mutex_enter(&xbdi->xbdi_lock);
 	/* only set RUN state when we are WAITING for work */
 	if (xbdi->xbdi_status == WAITING)
 	       xbdi->xbdi_status = RUN;
-	cv_broadcast(&xbdi->xbdi_cv);
-	mutex_exit(&xbdi->xbdi_lock);
+	cv_signal(&xbdi->xbdi_cv);
 }
 
 /*
@@ -1460,12 +1474,13 @@ xbdback_send_reply(struct xbdback_instance *xbdi, uint64_t id,
 	blkif_x86_64_response_t *resp64;
 	int notify;
 
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
+
 	/*
 	 * The ring can be accessed by the xbdback thread, xbdback_iodone()
 	 * handler, or any handler that triggered the shm callback. So
 	 * protect ring access via the xbdi_lock mutex.
 	 */
-	mutex_enter(&xbdi->xbdi_lock);
 	switch (xbdi->xbdi_proto) {
 	case XBDIP_NATIVE:
 		resp_n = RING_GET_RESPONSE(&xbdi->xbdi_ring.ring_n,
@@ -1491,7 +1506,6 @@ xbdback_send_reply(struct xbdback_instance *xbdi, uint64_t id,
 	}
 	xbdi->xbdi_ring.ring_n.rsp_prod_pvt++;
 	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&xbdi->xbdi_ring.ring_n, notify);
-	mutex_exit(&xbdi->xbdi_lock);
 
 	if (notify) {
 		XENPRINTF(("xbdback_send_reply notify %d\n", xbdi->xbdi_domid));
@@ -1507,7 +1521,7 @@ static void *
 xbdback_map_shm(struct xbdback_io *xbd_io)
 {
 	struct xbdback_instance *xbdi = xbd_io->xio_xbdi;
-	int error, s;
+	int error;
 
 #ifdef XENDEBUG_VBD
 	int i;
@@ -1517,12 +1531,12 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 	}
 #endif
 
-	s = splvm();	/* XXXSMP */
+	KASSERT(mutex_owned(&xbdi->xbdi_lock));
+
 	xbd_io->xio_xv = SLIST_FIRST(&xbdi->xbdi_va_free);
 	KASSERT(xbd_io->xio_xv != NULL);
 	SLIST_REMOVE_HEAD(&xbdi->xbdi_va_free, xv_next);
 	xbd_io->xio_vaddr = xbd_io->xio_xv->xv_vaddr;
-	splx(s);
 
 	error = xen_shm_map(xbd_io->xio_nrma, xbdi->xbdi_domid,
 	    xbd_io->xio_gref, xbd_io->xio_vaddr, xbd_io->xio_gh, 
