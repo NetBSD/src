@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.33 2020/04/21 11:35:02 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.34 2020/04/23 23:22:41 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -145,7 +145,10 @@
 
 #ifdef GPROF
 # define _PROF_PROLOGUE	\
-	mov x9, x30; bl __mcount
+	stp	x29, x30, [sp, #-16]!;	\
+	mov	fp, sp;			\
+	bl	__mcount; 		\
+	ldp	x29, x30, [sp], #16;
 #else
 # define _PROF_PROLOGUE
 #endif
