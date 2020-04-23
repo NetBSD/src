@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: profile.h,v 1.2 2020/04/23 23:22:41 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,20 +51,18 @@
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm("sub	sp, sp, #80");					\
-	__asm("stp	x29, x30, [sp, #64]");				\
-	__asm("add	x29, sp, #64");					\
-	__asm("stp	x0, x1, [x29, #0]");				\
-	__asm("stp	x2, x3, [x29, #16]");				\
-	__asm("stp	x4, x5, [x29, #32]");				\
-	__asm("stp	x6, x7, [x29, #48]");				\
+	__asm("stp	x29, x30, [sp, #-80]!");			\
+	__asm("stp	x0, x1, [sp, #16]");				\
+	__asm("stp	x2, x3, [sp, #32]");				\
+	__asm("stp	x4, x5, [sp, #48]");				\
+	__asm("stp	x6, x7, [sp, #64]");				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm("mov	x0, x19");					\
+	__asm("ldr	x0, [x29, #8]");				\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
@@ -76,12 +74,11 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("ldp	x0, x1, [x29, #0]");				\
-	__asm("ldp	x2, x3, [x29, #16]");				\
-	__asm("ldp	x4, x5, [x29, #32]");				\
-	__asm("ldp	x6, x7, [x29, #48]");				\
-	__asm("ldp	x29, x30, [x29, #64]");				\
-	__asm("add	sp, sp, #80");					\
+	__asm("ldp	x0, x1, [sp, #16]");				\
+	__asm("ldp	x2, x3, [sp, #32]");				\
+	__asm("ldp	x4, x5, [sp, #48]");				\
+	__asm("ldp	x6, x7, [sp, #64]");				\
+	__asm("ldp	x29, x30, [sp], #80");				\
 	__asm("ret");							\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 
