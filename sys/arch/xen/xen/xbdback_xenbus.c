@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.86 2020/04/21 13:56:18 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.87 2020/04/23 07:24:40 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.86 2020/04/21 13:56:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.87 2020/04/23 07:24:40 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.86 2020/04/21 13:56:18 jdolecek
 
 CTASSERT(XENSHM_MAX_PAGES_PER_REQUEST >= VBD_MAX_INDIRECT_SEGMENTS);
 
-struct xbdback_io;
 struct xbdback_instance;
 
 /*
@@ -186,8 +185,6 @@ struct xbdback_instance {
 	struct blkif_request_segment xbdi_seg[VBD_MAX_INDIRECT_SEGMENTS];
 	bus_dmamap_t xbdi_seg_dmamap;
 	grant_ref_t xbdi_in_gntref;
-	/* _io state: I/O associated to this instance */
-	struct xbdback_io *xbdi_io;
 	/* other state */
 	int xbdi_same_page; /* are we merging two segments on the same page? */
 	uint xbdi_pendingreqs; /* number of I/O in fly */
@@ -1043,7 +1040,6 @@ fail:
 			break;
 		}
 	} else {
-		KASSERT(xbdi->xbdi_io == NULL);
 		xbdi->xbdi_cont = xbdback_co_main_done2;
 	}
 	return xbdi;
@@ -1090,7 +1086,6 @@ xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
 {
 	int work_to_do;
 
-	KASSERT(xbdi->xbdi_io == NULL);
 	RING_FINAL_CHECK_FOR_REQUESTS(&xbdi->xbdi_ring.ring_n, work_to_do);
 	if (work_to_do)
 		xbdi->xbdi_cont = xbdback_co_main;
@@ -1126,12 +1121,12 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
 	struct xbdback_io *xbd_io;
 
 	XENPRINTF(("xbdback_co_cache_doflush %p %p\n", xbdi, obj));
-	xbd_io = xbdi->xbdi_io = obj;
+	xbd_io = obj;
 	xbd_io->xio_xbdi = xbdi;
 	xbd_io->xio_operation = xbdi->xbdi_xen_req.operation;
 	xbd_io->xio_id = xbdi->xbdi_xen_req.id;
 	xbdi->xbdi_cont = xbdback_co_do_io;
-	return xbdi;
+	return xbd_io;
 }
 
 /*
@@ -1235,7 +1230,6 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	if (req->nr_segments < 1)
 		goto bad_nr_segments;
 
-	KASSERT(xbdi->xbdi_io == NULL);
 	xbdi->xbdi_cont = xbdback_co_io_gotio;
 	return xbdback_pool_get(&xbdback_io_pool, xbdi);
 
@@ -1268,7 +1262,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	atomic_inc_uint(&xbdi->xbdi_pendingreqs);
 	
 	req = &xbdi->xbdi_xen_req;
-	xbd_io = xbdi->xbdi_io = obj;
+	xbd_io = obj;
 	memset(xbd_io, 0, sizeof(*xbd_io));
 	buf_init(&xbd_io->xio_buf);
 	xbd_io->xio_xbdi = xbdi;
@@ -1339,7 +1333,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_buf.b_private = xbd_io;
 
 	xbdi->xbdi_cont = xbdback_co_do_io;
-	return xbdback_map_shm(xbdi->xbdi_io);
+	return xbdback_map_shm(xbd_io);
 }
 
 static void
@@ -1356,7 +1350,7 @@ xbdback_io_error(struct xbdback_io *xbd_io, int error)
 static void *
 xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 {
-	struct xbdback_io *xbd_io = xbdi->xbdi_io;
+	struct xbdback_io *xbd_io = obj;
 
 	switch (xbd_io->xio_operation) {
 	case BLKIF_OP_FLUSH_DISKCACHE:
@@ -1379,7 +1373,6 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 		    xbd_io->xio_operation, error);
 		xbdback_pool_put(&xbdback_io_pool, xbd_io);
 		xbdi_put(xbdi);
-		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
 	}
@@ -1395,7 +1388,6 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 		}
 		/* will call xbdback_iodone() asynchronously when done */
 		bdev_strategy(&xbd_io->xio_buf);
-		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
 	default:
@@ -1553,16 +1545,16 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 		}
 		printf("\n");
 #endif
-		return xbdi;
+		return xbd_io;
 	default:
 		if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
 			printf("xbdback_map_shm: xen_shm error %d ", error);
 		}
-		xbdback_io_error(xbdi->xbdi_io, error);
+		/* this will also free xbd_io via xbdback_iodone() */
+		xbdback_io_error(xbd_io, error);
 		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, xbd_io->xio_xv, xv_next);
 		xbd_io->xio_xv = NULL;
-		xbdi->xbdi_io = NULL;
-		// do not retry
+		/* do not retry */
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
 	}
