@@ -1,4 +1,4 @@
-/* $NetBSD: parser.h,v 1.2 2011/08/31 13:32:39 joerg Exp $ */
+/* $NetBSD: parser.h,v 1.3 2020/04/23 00:29:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,9 +34,9 @@ __dead void yyfatal(const char*);
 int parse(FILE*, struct pfioc_states*);
 int yyparse(void);
 
-int lineno;
+extern int lineno;
 
-struct pfioc_states* states;
-size_t allocated;
+extern struct pfioc_states* states;
+extern size_t allocated;
 
 #endif /* _PARSER_H_*/
