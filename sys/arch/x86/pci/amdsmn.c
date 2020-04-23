@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.8 2020/04/20 13:02:57 joerg Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.9 2020/04/23 13:40:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.8 2020/04/20 13:02:57 joerg Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.9 2020/04/23 13:40:36 simonb Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU
@@ -107,7 +107,7 @@ static int
 amdsmn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	unsigned int i;
+	size_t i;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
 		return 0;
