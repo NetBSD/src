@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.71.8.1 2020/04/23 13:43:42 martin Exp $
+# $NetBSD: network,v 1.71.8.2 2020/04/23 13:59:32 martin Exp $
 #
 
 # PROVIDE: network
@@ -215,7 +215,8 @@ network_start_interfaces()
 	# For each line from the $ifconfig_xxN variable or the
 	# /etc/ifconfig.xxN file, we ignore comments and blank lines,
 	# treat lines beginning with "!" as commands to execute, treat
-	# "dhcp" as a special case to invoke dhcpcd, and for any other
+	# "dhcp" as a special case to invoke dhcpcd, treat "rtsol" as
+	# a special case to send a router solicitation, and for any other
 	# line we run "ifconfig xxN", using each line of the file as the
 	# arguments for a separate "ifconfig" invocation.
 	#
@@ -320,6 +321,14 @@ network_start_interfaces()
 				if ! checkyesno dhcpcd; then
 					/sbin/dhcpcd -n \
 						${dhcpcd_flags} $int
+				fi
+				;;
+			rtsol)
+				if ! checkyesno dhcpcd; then
+					/sbin/sysctl -qw \
+						net.inet6.ip6.accept_rtadv=1
+					/sbin/dhcpcd -q6T --nodhcp6 $int \
+						>/dev/null
 				fi
 				;;
 			*)
@@ -447,10 +456,9 @@ network_start_ipv6_autoconf()
 
 network_wait_dad()
 {
-	# Wait for the DAD flags to clear form all addresses.
+	# Wait for the DAD flags to clear from all addresses.
 	if [ -n "$ifconfig_wait_dad_flags" ]; then
-		echo 'Waiting for DAD to complete for' \
-		    'statically configured addresses...'
+		echo "Waiting for duplicate address detection to finish..."
 		ifconfig $ifconfig_wait_dad_flags
 	fi
 }
