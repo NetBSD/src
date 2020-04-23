@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.16 2019/09/19 11:31:57 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.17 2020/04/23 00:30:08 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -152,7 +152,7 @@ static const char *input_functions[] = {
 static const unsigned ninput_functions =
 	sizeof(input_functions) / sizeof(char *);
 
-saved_data_t saved_output;
+extern saved_data_t saved_output;
 
 %}
 
