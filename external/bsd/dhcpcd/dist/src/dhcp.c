@@ -3308,7 +3308,7 @@ is_packet_udp_bootp(void *packet, size_t plen)
 	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
 	if (ntohs(udp.uh_ulen) < sizeof(udp))
 		return false;
-	if (ip_hlen + (size_t)ntohs(udp.uh_ulen) > plen)
+	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */
@@ -3453,12 +3453,16 @@ dhcp_readbpf(void *arg)
 			}
 			break;
 		}
-		if (bytes < fl) {
-			logerrx("%s: %s: short frame header",
-			    __func__, ifp->name);
-			break;
+		if (fl != 0) {
+			if (bytes < fl) {
+				logerrx("%s: %s: short frame header",
+				    __func__, ifp->name);
+				break;
+			}
+			bytes -= fl;
+			memmove(buf, buf + fl, (size_t)bytes);
 		}
-		dhcp_packet(ifp, buf + fl, (size_t)(bytes - fl));
+		dhcp_packet(ifp, buf, (size_t)bytes);
 		/* Check we still have a state after processing. */
 		if ((state = D_STATE(ifp)) == NULL)
 			break;
@@ -3506,15 +3510,18 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 		.iov_base = buf,
 		.iov_len = sizeof(buf),
 	};
+	union {
+		struct cmsghdr hdr;
 #ifdef IP_RECVIF
-	unsigned char ctl[CMSG_SPACE(sizeof(struct sockaddr_dl))] = { 0 };
+		uint8_t buf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
 #else
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in_pktinfo))] = { 0 };
+		uint8_t buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 #endif
+	} cmsgbuf = { .buf = { 0 } };
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	    .msg_control = buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	int s;
 	ssize_t bytes;
