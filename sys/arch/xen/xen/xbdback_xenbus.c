@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.88 2020/04/23 07:39:07 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.89 2020/04/23 08:09:25 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.88 2020/04/23 07:39:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.89 2020/04/23 08:09:25 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -142,6 +142,41 @@ struct xbdback_va {
 	vaddr_t xv_vaddr;
 };
 
+/*
+ * For each I/O operation associated with one of those requests, an
+ * xbdback_io is allocated from a pool.  It may correspond to multiple
+ * Xen disk requests, or parts of them, if several arrive at once that
+ * can be coalesced.
+ */
+struct xbdback_io {
+	SLIST_ENTRY(xbdback_io) xio_next;
+	/* The instance pointer is duplicated for convenience. */
+	struct xbdback_instance *xio_xbdi; /* our xbd instance */
+	uint8_t xio_operation;
+	uint64_t xio_id;
+	union {
+		struct {
+			struct buf xio_buf; /* our I/O */
+			/* the virtual address to map the request at */
+			vaddr_t xio_vaddr;
+			struct xbdback_va *xio_xv;
+			vaddr_t xio_start_offset;	/* I/O start offset */
+			/* grants to map */
+			grant_ref_t xio_gref[VBD_MAX_INDIRECT_SEGMENTS];
+			/* grants release */
+			grant_handle_t xio_gh[VBD_MAX_INDIRECT_SEGMENTS];
+			uint16_t xio_nrma; /* number of guest pages */
+		} xio_rw;
+	} u;
+};
+#define xio_buf		u.xio_rw.xio_buf
+#define xio_vaddr	u.xio_rw.xio_vaddr
+#define xio_start_offset	u.xio_rw.xio_start_offset
+#define xio_xv		u.xio_rw.xio_xv
+#define xio_gref	u.xio_rw.xio_gref
+#define xio_gh		u.xio_rw.xio_gh
+#define xio_nrma	u.xio_rw.xio_nrma
+
 /* we keep the xbdback instances in a linked list */
 struct xbdback_instance {
 	SLIST_ENTRY(xbdback_instance) next;
@@ -154,7 +189,9 @@ struct xbdback_instance {
 	kmutex_t xbdi_lock;
 	kcondvar_t xbdi_cv;	/* wait channel for thread work */
 	xbdback_state_t xbdi_status; /* thread's status */
-	/* KVA for mapping transfers */
+	/* context and KVA for mapping transfers */
+	struct xbdback_io xbdi_io[BLKIF_RING_SIZE];
+	SLIST_HEAD(, xbdback_io) xbdi_io_free;
 	struct xbdback_va xbdi_va[BLKIF_RING_SIZE];
 	SLIST_HEAD(, xbdback_va) xbdi_va_free;
 	/* backing device parameters */
@@ -200,46 +237,6 @@ do {                                                         \
 static SLIST_HEAD(, xbdback_instance) xbdback_instances;
 static kmutex_t xbdback_lock;
 
-/*
- * For each I/O operation associated with one of those requests, an
- * xbdback_io is allocated from a pool.  It may correspond to multiple
- * Xen disk requests, or parts of them, if several arrive at once that
- * can be coalesced.
- */
-struct xbdback_io {
-	/* The instance pointer is duplicated for convenience. */
-	struct xbdback_instance *xio_xbdi; /* our xbd instance */
-	uint8_t xio_operation;
-	uint64_t xio_id;
-	union {
-		struct {
-			struct buf xio_buf; /* our I/O */
-			/* the virtual address to map the request at */
-			vaddr_t xio_vaddr;
-			struct xbdback_va *xio_xv;
-			vaddr_t xio_start_offset;	/* I/O start offset */
-			/* grants to map */
-			grant_ref_t xio_gref[VBD_MAX_INDIRECT_SEGMENTS];
-			/* grants release */
-			grant_handle_t xio_gh[VBD_MAX_INDIRECT_SEGMENTS];
-			uint16_t xio_nrma; /* number of guest pages */
-		} xio_rw;
-	} u;
-};
-#define xio_buf		u.xio_rw.xio_buf
-#define xio_vaddr	u.xio_rw.xio_vaddr
-#define xio_start_offset	u.xio_rw.xio_start_offset
-#define xio_xv		u.xio_rw.xio_xv
-#define xio_gref	u.xio_rw.xio_gref
-#define xio_gh		u.xio_rw.xio_gh
-#define xio_nrma	u.xio_rw.xio_nrma
-
-/*
- * Pools to manage the chain of block requests and I/Os fragments
- * submitted by frontend.
- */
-static struct pool_cache xbdback_io_pool;
-
 /* Interval between reports of I/O errors from frontend */
 static const struct timeval xbdback_err_intvl = { 1, 0 };
 
@@ -277,9 +274,8 @@ static void xbdback_send_reply(struct xbdback_instance *, uint64_t , int , int);
 static void *xbdback_map_shm(struct xbdback_io *);
 static void xbdback_unmap_shm(struct xbdback_io *);
 
-static void *xbdback_pool_get(struct pool_cache *,
-			      struct xbdback_instance *);
-static void xbdback_pool_put(struct pool_cache *, void *);
+static struct xbdback_io *xbdback_io_get(struct xbdback_instance *);
+static void xbdback_io_put(struct xbdback_instance *, struct xbdback_io *);
 static void xbdback_thread(void *);
 static void xbdback_wakeup_thread(struct xbdback_instance *);
 static void xbdback_trampoline(struct xbdback_instance *, void *);
@@ -300,13 +296,6 @@ xbdbackattach(int n)
 	 */
 	SLIST_INIT(&xbdback_instances);
 	mutex_init(&xbdback_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	pool_cache_bootstrap(&xbdback_io_pool,
-	    sizeof(struct xbdback_io), 0, 0, 0, "xbbip", NULL,
-	    IPL_SOFTBIO, NULL, NULL, NULL);
-
-	/* we allocate enough to handle a whole ring at once */
-	pool_prime(&xbdback_io_pool.pc_pool, BLKIF_RING_SIZE);
 
 	xenbus_backend_register(&xbd_backend_driver);
 }
@@ -346,7 +335,8 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path);
 		return EFTYPE;
 	}
-			
+
+	/* XXXSMP unlocked search */
 	if (xbdif_lookup(domid, handle)) {
 		return EEXIST;
 	}
@@ -394,6 +384,12 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		    VBD_VA_SIZE, 0, UVM_KMF_VAONLY|UVM_KMF_WAITVA);
 		SLIST_INSERT_HEAD(&xbdi->xbdi_va_free, &xbdi->xbdi_va[i],
 		    xv_next);
+	}
+
+	SLIST_INIT(&xbdi->xbdi_io_free);
+	for (i = 0; i < BLKIF_RING_SIZE; i++) {
+		SLIST_INSERT_HEAD(&xbdi->xbdi_io_free, &xbdi->xbdi_io[i],
+		    xio_next);
 	}
 
 	error = xenbus_watch_path2(xbusd, xbusd->xbusd_path, "physical-device",
@@ -1107,7 +1103,7 @@ xbdback_co_cache_flush(struct xbdback_instance *xbdi, void *obj __unused)
 		return NULL;
 	}
 	xbdi->xbdi_cont = xbdback_co_cache_doflush;
-	return xbdback_pool_get(&xbdback_io_pool, xbdi);
+	return xbdback_io_get(xbdi);
 }
 
 /* Start the flush work */
@@ -1227,7 +1223,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 		goto bad_nr_segments;
 
 	xbdi->xbdi_cont = xbdback_co_io_gotio;
-	return xbdback_pool_get(&xbdback_io_pool, xbdi);
+	return xbdback_io_get(xbdi);
 
  bad_nr_segments:
 	if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
@@ -1367,7 +1363,7 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 			error = BLKIF_RSP_OKAY;
 		xbdback_send_reply(xbdi, xbd_io->xio_id,
 		    xbd_io->xio_operation, error);
-		xbdback_pool_put(&xbdback_io_pool, xbd_io);
+		xbdback_io_put(xbdi, xbd_io);
 		xbdi_put(xbdi);
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
@@ -1430,7 +1426,7 @@ xbdback_iodone(struct buf *bp)
 	xbdi_put(xbdi);
 	atomic_dec_uint(&xbdi->xbdi_pendingreqs);
 	buf_destroy(&xbd_io->xio_buf);
-	xbdback_pool_put(&xbdback_io_pool, xbd_io);
+	xbdback_io_put(xbdi, xbd_io);
 
 	xbdback_wakeup_thread(xbdi);
 	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
@@ -1580,18 +1576,21 @@ xbdback_unmap_shm(struct xbdback_io *xbd_io)
 }
 
 /* Obtain memory from a pool */
-static void *
-xbdback_pool_get(struct pool_cache *pc,
-			      struct xbdback_instance *xbdi)
+static struct xbdback_io *
+xbdback_io_get(struct xbdback_instance *xbdi)
 {
-	return pool_cache_get(pc, PR_WAITOK);
+	struct xbdback_io *xbd_io = SLIST_FIRST(&xbdi->xbdi_io_free);
+	KASSERT(xbd_io != NULL);
+	SLIST_REMOVE_HEAD(&xbdi->xbdi_io_free, xio_next);
+	return xbd_io;
 }
 
 /* Restore memory to a pool */
 static void
-xbdback_pool_put(struct pool_cache *pc, void *item)
+xbdback_io_put(struct xbdback_instance *xbdi, struct xbdback_io *xbd_io)
 {
-	pool_cache_put(pc, item);
+	KASSERT(xbd_io != NULL);
+	SLIST_INSERT_HEAD(&xbdi->xbdi_io_free, xbd_io, xio_next);
 }
 
 /*
