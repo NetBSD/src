@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.114 2020/04/12 13:57:07 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.115 2020/04/23 14:54:48 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.114 2020/04/12 13:57:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.115 2020/04/23 14:54:48 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -195,8 +195,6 @@ struct xennet_xenbus_softc {
 	bool sc_ipv6_csum;	/* whether backend support IPv6 csum offload */
 	krndsource_t sc_rnd_source;
 };
-#define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
-			    (sc)->sc_rx_ring.sring->rsp_prod)
 
 static pool_cache_t if_xennetrxbuf_cache;
 static int if_xennetrxbuf_cache_inited=0;
