@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.115 2020/04/23 14:54:48 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.116 2020/04/23 15:06:49 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.115 2020/04/23 14:54:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.116 2020/04/23 15:06:49 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -573,6 +573,12 @@ again:
 	    "feature-rx-notify", "%u", 1);
 	if (error) {
 		errmsg = "writing feature-rx-notify";
+		goto abort_transaction;
+	}
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "feature-ipv6-csum-offload", "%u", 1);
+	if (error) {
+		errmsg = "writing feature-ipv6-csum-offload";
 		goto abort_transaction;
 	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
