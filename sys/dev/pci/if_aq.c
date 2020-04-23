@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.12 2020/04/22 22:54:43 christos Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.13 2020/04/23 06:27:21 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.12 2020/04/22 22:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.13 2020/04/23 06:27:21 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1309,6 +1309,14 @@ aq_attach(device_t parent, device_t self, void *aux)
 		/* giving up using MSI-X */
 		sc->sc_msix = false;
 	}
+
+	/* XXX: on FIBRE, linkstat interrupt does not occur on boot? */
+	if (aqp->aq_media_type == AQ_MEDIA_TYPE_FIBRE)
+		sc->sc_poll_linkstat = true;
+
+#ifdef AQ_FORCE_POLL_LINKSTAT
+	sc->sc_poll_linkstat = true;
+#endif
 
 	aprint_debug_dev(sc->sc_dev,
 	    "ncpu=%d, pci_msix_count=%d."
