@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.compiler-rt,v 1.10 2019/09/29 23:44:59 mrg Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.11 2020/04/23 03:09:18 rin Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -65,9 +65,14 @@ GENERIC_SRCS+= \
 .if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
 GENERIC_SRCS+= \
 	divmodsi4.c \
+	udivmodsi4.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha" && \
+    ${MACHINE_ARCH} != "m68k"
+GENERIC_SRCS+= \
 	divsi3.c \
 	modsi3.c \
-	udivmodsi4.c \
 	udivsi3.c \
 	umodsi3.c
 .endif
