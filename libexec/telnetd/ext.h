@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.22 2012/01/10 23:39:11 joerg Exp $	*/
+/*	$NetBSD: ext.h,v 1.23 2020/04/23 00:03:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -179,7 +179,7 @@ extern char	*nclearto;
  * The following are some clocks used to decide how to interpret
  * the relationship between various variables.
  */
-extern struct {
+extern struct clockstate {
     int
 	system,			/* what the current time is */
 	echotoggle,		/* last time user entered echo character */

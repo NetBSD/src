@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.8 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: global.c,v 1.9 2020/04/23 00:03:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: global.c,v 1.8 2003/08/07 09:46:51 agc Exp $");
+__RCSID("$NetBSD: global.c,v 1.9 2020/04/23 00:03:40 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,5 +47,50 @@ __RCSID("$NetBSD: global.c,v 1.8 2003/08/07 09:46:51 agc Exp $");
  */
 
 #include <defs.h>
-#define extern
 #include <ext.h>
+
+char	options[256];
+char	do_dont_resp[256];
+char	will_wont_resp[256];
+int	linemode;	/* linemode on/off */
+#ifdef	LINEMODE
+int	uselinemode;	/* what linemode to use (on/off) */
+int	editmode;	/* edit modes in use */
+int	useeditmode;	/* edit modes to use */
+int	alwayslinemode;	/* command line option */
+# ifdef	KLUDGELINEMODE
+int	lmodetype;	/* Client support for linemode */
+# endif	/* KLUDGELINEMODE */
+#endif	/* LINEMODE */
+int	flowmode;	/* current flow control state */
+int	restartany;	/* restart output on any character state */
+#ifdef DIAGNOSTICS
+int	diagnostic;	/* telnet diagnostic capabilities */
+#endif /* DIAGNOSTICS */
+#ifdef SECURELOGIN
+int	require_secure_login;
+#endif
+#ifdef AUTHENTICATION
+int	auth_level;
+#endif
+
+slcfun	slctab[NSLC + 1];	/* slc mapping table */
+char	terminaltype[41];
+
+/*
+ * I/O data buffers, pointers, and counters.
+ */
+char	ptyobuf[BUFSIZ+NETSLOP], *pfrontp, *pbackp;
+char	netibuf[BUFSIZ], *netip;
+char	netobuf[BUFSIZ+NETSLOP], *nfrontp, *nbackp;
+char	*neturg;		/* one past last bye of urgent data */
+int	pcc, ncc;
+int	pty, net;
+char	*line;
+int	SYNCHing;		/* we are in TELNET SYNCH mode */
+
+#ifdef	ENCRYPTION
+char	*nclearto;
+#endif	/* ENCRYPTION */
+
+struct clockstate clocks;
