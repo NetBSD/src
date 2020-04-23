@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.h,v 1.3 2015/12/29 04:30:43 pgoyette Exp $ */
+/* 	$NetBSD: mountd.h,v 1.4 2020/04/23 00:22:01 joerg Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
 #define	OP_MASKLEN	0x200
 
 extern int opt_flags;
-extern int debug;
+extern int mountd_debug;
 extern const int ninumeric;
 
 struct netmsk {
