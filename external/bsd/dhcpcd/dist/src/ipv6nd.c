@@ -1832,11 +1832,15 @@ ipv6nd_handledata(void *arg)
 		.iov_base = buf,
 		.iov_len = sizeof(buf),
 	};
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(int))] = { 0 };
+	union {
+		struct cmsghdr hdr;
+		uint8_t buf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		    CMSG_SPACE(sizeof(int))];
+	} cmsgbuf = { .buf = { 0 } };
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
 	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	    .msg_control = cmsgbuf.buf, .msg_controllen = sizeof(cmsgbuf.buf),
 	};
 	ssize_t len;
 
