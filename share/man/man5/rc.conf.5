@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.166.6.1 2019/05/14 11:33:43 martin Exp $
+.\"	$NetBSD: rc.conf.5,v 1.166.6.2 2020/04/23 13:43:42 martin Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 14, 2019
+.Dd April 23, 2020
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -249,6 +249,30 @@ If empty or not set, then the contents of
 A space separated list of interface names.
 These interfaces will be configured down when going from multiuser to single-user
 mode or on system shutdown.
+.It Sy dns_domain
+A string.
+Sets domain in
+.Pa /etc/resolv.conf .
+.It Sy dns_search
+A string.
+Sets search in
+.Pa /etc/resolv.conf .
+.It Sy dns_nameservers
+A string of space seperated domain name servers.
+Sets nameserver for each value in
+.Pa /etc/resolv.conf .
+.It Sy dns_sortlist
+A string.
+Sets sortlist in
+.Pa /etc/resolv.conf .
+.It Sy dns_options
+A string.
+Sets options in
+.Pa /etc/resolv.conf .
+.It Sy dns_metric
+An unsigned integer.
+Sets the priority of the above DNS to other sources, lowest wins.
+Defaults to 0.
 .Pp
 This is important for some stateful interfaces, for example PPP over ISDN
 connections that cost money by connection time or PPPoE interfaces which
