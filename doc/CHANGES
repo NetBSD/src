@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2677 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2678 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -181,3 +181,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xbd(4): Support indirect segments [jdolecek 20200416]
 	dhcpcd(8): Import version 9.0.2 [roy 20200421]
 	xbdback(4): Support indirect segments [jdolecek 20200421]
+	xbdback(4): Make the driver MP-safe [jdolecek 20200423]
