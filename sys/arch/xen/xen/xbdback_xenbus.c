@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.87 2020/04/23 07:24:40 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.88 2020/04/23 07:39:07 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.87 2020/04/23 07:24:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.88 2020/04/23 07:39:07 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -186,12 +186,8 @@ struct xbdback_instance {
 	bus_dmamap_t xbdi_seg_dmamap;
 	grant_ref_t xbdi_in_gntref;
 	/* other state */
-	int xbdi_same_page; /* are we merging two segments on the same page? */
 	uint xbdi_pendingreqs; /* number of I/O in fly */
 	struct timeval xbdi_lasterr_time;    /* error time tracking */
-#ifdef DEBUG
-	struct timeval xbdi_lastfragio_time; /* fragmented I/O tracking */
-#endif
 };
 /* Manipulation of the above reference count. */
 #define xbdi_get(xbdip) atomic_inc_uint(&(xbdip)->xbdi_refcnt)
