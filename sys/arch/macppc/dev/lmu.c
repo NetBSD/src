@@ -1,4 +1,4 @@
- /* $NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.3 2020/04/23 09:47:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.3 2020/04/23 09:47:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $");
 #include <sys/bus.h>
 #include <sys/time.h>
 #include <sys/callout.h>
-
-#include <dev/ofw/openfirm.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -56,7 +54,7 @@ struct lmu_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
 	callout_t	sc_adjust;
-	int sc_thresh, sc_hyst, sc_level;
+	int		sc_thresh, sc_hyst, sc_level;
 	int		sc_lid_state, sc_video_state;
 };
 
