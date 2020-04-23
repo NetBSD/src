@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.3 2020/04/22 11:58:26 rin Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.4 2020/04/23 03:12:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,13 @@
 #if 0
 	RCSID("from: @(#)modsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: modsi3.S,v 1.3 2020/04/22 11:58:26 rin Exp $")
+	RCSID("$NetBSD: modsi3.S,v 1.4 2020/04/23 03:12:49 rin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int % int */
 #ifndef __mc68010__
-#error
+/* XXX sun3 need this for bootloader */
 ENTRY(__modsi3)
 	movel	4(%sp),%d1
 #ifdef __mcoldfire__
