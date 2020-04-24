@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.498 2020/04/21 21:42:47 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.499 2020/04/24 03:22:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.498 2020/04/21 21:42:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.499 2020/04/24 03:22:06 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1147,10 +1147,6 @@ emulexec(struct lwp *l, struct exec_package *epp)
 	if (p->p_emul && p->p_emul->e_proc_exit
 	    && p->p_emul != epp->ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
-
-	/* This is now LWP 1.  Re-number the LWP if needed. */
-	if (l->l_lid != 1)
-		lwp_renumber(l, 1);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -2495,10 +2491,18 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * Allocate new proc. Borrow proc0 vmspace for it, we will
 	 * replace it with its own before returning to userland
 	 * in the child.
+	 */
+	p2 = proc_alloc();
+	if (p2 == NULL) {
+		/* We were unable to allocate a process ID. */
+		error = EAGAIN;
+		goto error_exit;
+	}
+
+	/*
 	 * This is a point of no return, we will have to go through
 	 * the child proc to properly clean it up past this point.
 	 */
-	p2 = proc_alloc();
 	pid = p2->p_pid;
 
 	/*
@@ -2533,7 +2537,6 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
-	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
