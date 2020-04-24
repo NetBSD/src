@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.134 2020/04/23 16:16:14 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.135 2020/04/24 16:27:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.134 2020/04/23 16:16:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.135 2020/04/24 16:27:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.134 2020/04/23 16:16:14 chris
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
 #include <machine/userret.h>
+#include <machine/gdt.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -628,7 +629,7 @@ x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
 	ua.start = ua32.start;
 	ua.num = ua32.num;
 
-	if (ua.num < 0 || ua.num > 8192)
+	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_WAITOK);
@@ -656,7 +657,7 @@ x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
 	ua.start = ua32.start;
 	ua.num = ua32.num;
 
-	if (ua.num < 0 || ua.num > 8192)
+	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
