@@ -1,4 +1,4 @@
-/* $NetBSD: hpetvar.h,v 1.5 2020/04/23 20:33:57 ad Exp $ */
+/* $NetBSD: hpetvar.h,v 1.6 2020/04/24 23:29:17 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -41,6 +41,7 @@ struct hpet_softc {
 	bool			sc_mapped;
 	uint32_t		sc_config;
 	int32_t			sc_period;
+	int64_t			sc_adj;
 	struct			timecounter sc_tc;
 };
 
