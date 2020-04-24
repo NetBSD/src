@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.14 2020/04/23 20:33:57 ad Exp $ */
+/* $NetBSD: hpet.c,v 1.15 2020/04/24 22:25:07 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.14 2020/04/23 20:33:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.15 2020/04/24 22:25:07 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -79,7 +79,7 @@ hpet_attach_subr(device_t dv)
 	struct hpet_softc *sc = device_private(dv);
 	struct timecounter *tc;
 	uint64_t tmp;
-	uint32_t val;
+	uint32_t val, sval, eval;
 	int i;
 
 	tc = &sc->sc_tc;
@@ -130,6 +130,19 @@ hpet_attach_subr(device_t dv)
 
 	if (device_unit(dv) == 0)
 		hpet0 = sc;
+
+	/*
+	 * Determine approximately how long it takes to read the counter
+	 * register once, and compute an ajustment for hpet_delay() based on
+	 * that.
+	 */
+	(void)bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	sval = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	for (i = 0; i < 998; i++)
+		(void)bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	eval = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	val = eval - sval;
+	sc->sc_adj = (int64_t)val * sc->sc_period / 1000;
 }
 
 static u_int
@@ -168,13 +181,13 @@ hpet_delay(unsigned int us)
 	int64_t delta;
 
 	/*
-	 * Read timer before slow division.  Assume that each read of the
-	 * HPET costs ~500ns.  Aim for the middle and subtract 750ns for
-	 * overhead.
+	 * Read timer before slow division.  Convert microseconds to
+	 * femtoseconds, subtract the cost of 1 counter register access,
+	 * and convert to HPET units.
 	 */
 	sc = hpet0;
 	otick = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
-	delta = (((int64_t)us * 1000000000) - 750000000) / sc->sc_period;
+	delta = (((int64_t)us * 1000000000) - sc->sc_adj) / sc->sc_period;
 
 	while (delta > 0) {
 		SPINLOCK_BACKOFF_HOOK;
