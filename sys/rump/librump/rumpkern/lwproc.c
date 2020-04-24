@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.46 2020/04/24 03:56:12 thorpej Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.47 2020/04/24 13:34:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.46 2020/04/24 03:56:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.47 2020/04/24 13:34:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.46 2020/04/24 03:56:12 thorpej Exp $");
 #include "rump_curlwp.h"
 
 struct lwp lwp0 = {
-	.l_lid = 1,
+	.l_lid = 0,
 	.l_proc = &proc0,
 	.l_fd = &filedesc0,
 };
