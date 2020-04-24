@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.172 2020/04/24 03:25:20 thorpej Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.173 2020/04/24 12:17:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.172 2020/04/24 03:25:20 thorpej Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.173 2020/04/24 12:17:45 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7506,11 +7506,8 @@ syscall_body(const char *op)
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	/*
-	 * N.B. 9.99.59 and later - single-LWP processes lwpid==pid.
-	 */
 	DPRINTF("Before checking siginfo_t and lwpid\n");
-	ATF_REQUIRE(info.psi_lwpid == 1 || info.psi_lwpid == child);
+	ATF_REQUIRE(info.psi_lwpid > 0);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
@@ -7552,13 +7549,8 @@ syscall_body(const char *op)
 			    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
 			    != -1);
 
-			/*
-			 * N.B. 9.99.59 and later - single-LWP processes
-			 * lwpid==pid.
-			 */
 			DPRINTF("Before checking siginfo_t and lwpid\n");
-			ATF_REQUIRE(info.psi_lwpid == 1 ||
-				    info.psi_lwpid == child);
+			ATF_REQUIRE(info.psi_lwpid > 0);
 			ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
@@ -8678,10 +8670,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 	ATF_CHECK_EQ(procinfo.cpi_rgid, getgid());
 	ATF_CHECK_EQ(procinfo.cpi_egid, getegid());
 	ATF_CHECK_EQ(procinfo.cpi_nlwps, 1);
-	/*
-	 * N.B. 9.99.59 and later - single-LWP processes lwpid==pid.
-	 */
-	ATF_CHECK(procinfo.cpi_siglwp == 1 || procinfo.cpi_siglwp == child);
+	ATF_CHECK(procinfo.cpi_siglwp > 0);
 
 	unlink(core_path);
 
