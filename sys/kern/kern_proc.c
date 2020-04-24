@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.247 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.248 2020/04/24 05:21:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.247 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.248 2020/04/24 05:21:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -143,10 +143,10 @@ struct pid_table {
 	pid_t		pt_pid;
 };
 
-#define	PT_F_FREE		__BIT(0)
+#define	PT_F_FREE		((uintptr_t)__BIT(0))
 #define	PT_F_LWP		0	/* pseudo-flag */
-#define	PT_F_PROC		__BIT(1)
-#define	PT_F_HIDDEN		__BIT(2)
+#define	PT_F_PROC		((uintptr_t)__BIT(1))
+#define	PT_F_HIDDEN		((uintptr_t)__BIT(2))
 
 #define	PT_F_TYPEBITS		(PT_F_FREE|PT_F_PROC)
 #define	PT_F_ALLBITS		(PT_F_FREE|PT_F_PROC|PT_F_HIDDEN)
