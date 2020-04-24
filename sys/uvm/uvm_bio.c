@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.111 2020/04/23 21:53:01 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.112 2020/04/24 19:47:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.111 2020/04/23 21:53:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.112 2020/04/24 19:47:03 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -888,6 +888,11 @@ again:
 
 		/* Page must be writable by now */
 		KASSERT((pg->flags & PG_RDONLY) == 0 || (flags & UBC_WRITE) == 0);
+
+		/* No managed mapping - mark the page dirty. */
+		if ((flags & UBC_WRITE) != 0) {
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);	
+		}
 	}
 	rw_exit(uobj->vmobjlock);
 
@@ -916,10 +921,10 @@ ubc_direct_release(struct uvm_object *uobj,
 
 		/* Page was changed, no longer fake and neither clean. */
 		if (flags & UBC_WRITE) {
-			pg->flags &= ~PG_FAKE;
 			KASSERTMSG(uvm_pagegetdirty(pg) ==
 			    UVM_PAGE_STATUS_DIRTY,
 			    "page %p not dirty", pg);
+			pg->flags &= ~PG_FAKE;
 		}
 	}
 	rw_exit(uobj->vmobjlock);
