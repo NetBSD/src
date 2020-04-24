@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.24 2020/02/20 23:57:16 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.25 2020/04/24 03:25:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -3050,7 +3050,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			ATF_REQUIRE(regs < FPREGS_MM);
 			DPRINTF("Parse core file for PT_GETREGS\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
-			    "NetBSD-CORE@1", PT_GETREGS, &gpr, sizeof(gpr)),
+			    "NetBSD-CORE@*", PT_GETREGS, &gpr, sizeof(gpr)),
 			    sizeof(gpr));
 			break;
 		case TEST_XMMREGS:
@@ -3071,14 +3071,14 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 			DPRINTF("Parse core file for PT_GETFPREGS\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
-			    "NetBSD-CORE@1", PT_GETFPREGS, &fpr, sizeof(fpr)),
+			    "NetBSD-CORE@*", PT_GETFPREGS, &fpr, sizeof(fpr)),
 			    sizeof(fpr));
 			break;
 		case TEST_XSTATE:
 			ATF_REQUIRE(regs >= FPREGS_MM);
 			DPRINTF("Parse core file for PT_GETXSTATE\n");
 			ATF_REQUIRE_EQ(core_find_note(core_path,
-			    "NetBSD-CORE@1", PT_GETXSTATE, &xst, sizeof(xst)),
+			    "NetBSD-CORE@*", PT_GETXSTATE, &xst, sizeof(xst)),
 			    sizeof(xst));
 			ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
 			    == xst_flags);
