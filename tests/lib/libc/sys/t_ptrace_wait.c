@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.171 2020/04/17 22:53:52 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.172 2020/04/24 03:25:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.171 2020/04/17 22:53:52 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.172 2020/04/24 03:25:20 thorpej Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7506,8 +7506,11 @@ syscall_body(const char *op)
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
+	/*
+	 * N.B. 9.99.59 and later - single-LWP processes lwpid==pid.
+	 */
 	DPRINTF("Before checking siginfo_t and lwpid\n");
-	ATF_REQUIRE_EQ(info.psi_lwpid, 1);
+	ATF_REQUIRE(info.psi_lwpid == 1 || info.psi_lwpid == child);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
@@ -7549,8 +7552,13 @@ syscall_body(const char *op)
 			    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
 			    != -1);
 
+			/*
+			 * N.B. 9.99.59 and later - single-LWP processes
+			 * lwpid==pid.
+			 */
 			DPRINTF("Before checking siginfo_t and lwpid\n");
-			ATF_REQUIRE_EQ(info.psi_lwpid, 1);
+			ATF_REQUIRE(info.psi_lwpid == 1 ||
+				    info.psi_lwpid == child);
 			ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
@@ -8502,6 +8510,13 @@ USER_VA0_DISABLE(user_va0_disable_pt_detach, PT_DETACH)
  * buf_len.  The actual length of the note is returned (which can be greater
  * than buf_len, indicating that it has been truncated).  If the note is not
  * found, -1 is returned.
+ *
+ * If the note_name ends in '*', then we find the first note that matches
+ * the note_name prefix up to the '*' character, e.g.:
+ *
+ *	NetBSD-CORE@*
+ *
+ * finds the first note whose name prefix matches "NetBSD-CORE@".
  */
 static ssize_t core_find_note(const char *core_path,
     const char *note_name, uint64_t note_type, void *buf, size_t buf_len)
@@ -8510,8 +8525,16 @@ static ssize_t core_find_note(const char *core_path,
 	Elf *core_elf;
 	size_t core_numhdr, i;
 	ssize_t ret = -1;
-	/* note: we assume note name will be null-terminated */
-	size_t name_len = strlen(note_name) + 1;
+	size_t name_len = strlen(note_name);
+	bool prefix_match = false;
+
+	if (note_name[name_len - 1] == '*') {
+		prefix_match = true;
+		name_len--;
+	} else {
+		/* note: we assume note name will be null-terminated */
+		name_len++;
+	}
 
 	SYSCALL_REQUIRE((core_fd = open(core_path, O_RDONLY)) != -1);
 	SYSCALL_REQUIRE(elf_version(EV_CURRENT) != EV_NONE);
@@ -8554,7 +8577,10 @@ static ssize_t core_find_note(const char *core_path,
 			/* indicates end of notes */
 			if (note_hdr.n_namesz == 0 || note_hdr.n_descsz == 0)
 				break;
-			if (note_hdr.n_namesz == name_len &&
+			if (((prefix_match &&
+			      note_hdr.n_namesz > name_len) ||
+			     (!prefix_match &&
+			      note_hdr.n_namesz == name_len)) &&
 			    note_hdr.n_namesz <= sizeof(name_buf)) {
 				SYSCALL_REQUIRE(pread(core_fd, name_buf,
 				    note_hdr.n_namesz, offset)
@@ -8652,7 +8678,10 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 	ATF_CHECK_EQ(procinfo.cpi_rgid, getgid());
 	ATF_CHECK_EQ(procinfo.cpi_egid, getegid());
 	ATF_CHECK_EQ(procinfo.cpi_nlwps, 1);
-	ATF_CHECK_EQ(procinfo.cpi_siglwp, 1);
+	/*
+	 * N.B. 9.99.59 and later - single-LWP processes lwpid==pid.
+	 */
+	ATF_CHECK(procinfo.cpi_siglwp == 1 || procinfo.cpi_siglwp == child);
 
 	unlink(core_path);
 
