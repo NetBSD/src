@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.96 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.96.6.1 2020/04/24 16:15:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96.6.1 2020/04/24 16:15:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1152,21 +1152,23 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 dklastclose(struct dkwedge_softc *sc)
 {
-	int error = 0, doclose;
+	struct vnode *vp;
+	int error = 0;
 
-	doclose = 0;
+	vp = NULL;
 	if (sc->sc_parent->dk_rawopens > 0) {
-		if (--sc->sc_parent->dk_rawopens == 0)
-			doclose = 1;
+		if (--sc->sc_parent->dk_rawopens == 0) {
+			KASSERT(sc->sc_parent->dk_rawvp != NULL);
+			vp = sc->sc_parent->dk_rawvp;
+			sc->sc_parent->dk_rawvp = NULL;
+		}
 	}
 
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
-	if (doclose) {
-		KASSERT(sc->sc_parent->dk_rawvp != NULL);
-		dk_close_parent(sc->sc_parent->dk_rawvp, FREAD | FWRITE);
-		sc->sc_parent->dk_rawvp = NULL;
+	if (vp) {
+		dk_close_parent(vp, FREAD | FWRITE);
 	}
 
 	return error;
