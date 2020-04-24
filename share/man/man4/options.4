@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.510 2020/04/04 15:32:42 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.511 2020/04/24 13:47:50 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1965,8 +1965,9 @@ This option assumes the presence of
 .Em pseudo-device ipfilter .
 .It Cd options MBUFTRACE
 This option can help track down mbuf leaks.
-When enabled, mbufs are tagged with the devices and protocols using them,
-which slightly decreases network performance.
+When enabled, mbufs are tagged with the devices and protocols using them.
+This can significantly decrease network performance, particularly
+on MP systems.
 This additional information can be viewed with
 .Xr netstat 1 :
 .Dl Ic netstat Fl mssv
