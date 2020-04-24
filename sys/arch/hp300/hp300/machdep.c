@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2019/03/14 16:59:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.4.1 2020/04/24 17:25:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2019/03/14 16:59:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230.4.1 2020/04/24 17:25:10 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -433,6 +433,7 @@ identifycpu(void)
 	/*
 	 * ...and the FPU type.
 	 */
+	fpu[0] = '\0';
 	switch (fputype) {
 	case FPU_68040:
 		strlcpy(fpu, "+FPU", sizeof(fpu));
@@ -458,6 +459,7 @@ identifycpu(void)
 	/*
 	 * ...and finally, the cache type.
 	 */
+	cache[0] = '\0';
 	if (cputype == CPU_68040)
 		snprintf(cache, sizeof(cache),
 		    ", 4k on-chip physical I/D caches");
