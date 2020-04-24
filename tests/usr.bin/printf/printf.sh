@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.5 2019/11/12 18:59:51 kre Exp $
+# $NetBSD: printf.sh,v 1.6 2020/04/24 14:29:19 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -178,7 +178,7 @@ expect_fail()
 	test -z "${RES}" &&
 		atf_fail "$*  ... failed (${STAT}) without error message"
 
-	RES="$( do_printf "$@" 2>/dev/null ; echo X )"
+	RES="$( do_printf "$@" 2>/dev/null || : ; echo X )"
 	RES=${RES%X}	# hack to defeat \n removal from $() output
 
 	case "${RES}" in
