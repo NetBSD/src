@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.238 2020/04/24 22:07:12 jdolecek Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.239 2020/04/24 22:50:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.238 2020/04/24 22:07:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.239 2020/04/24 22:50:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -534,6 +534,7 @@ m_get(int how, int type)
 	    how == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
+	KASSERT(((vaddr_t)m->m_dat & PAGE_MASK) + MLEN <= PAGE_SIZE);
 
 	mbstat_type_add(type, 1);
 
@@ -586,6 +587,9 @@ m_clget(struct mbuf *m, int how)
 
 	if (m->m_ext_storage.ext_buf == NULL)
 		return;
+
+	KASSERT(((vaddr_t)m->m_ext_storage.ext_buf & PAGE_MASK) + mclbytes
+	    <= PAGE_SIZE);
 
 	MCLINITREFERENCE(m);
 	m->m_data = m->m_ext.ext_buf;
