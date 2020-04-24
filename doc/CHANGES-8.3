@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.4 2020/04/23 14:13:05 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.5 2020/04/24 16:18:06 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -100,4 +100,14 @@ external/bsd/bind/include/config.h		(apply patch)
 	This should make DNSSEC work on such hosts as well.
 	[he, ticket #1539]
 
+sys/arch/hp300/hp300/machdep.c			1.233
+
+	Fix garbages in dmesg caused by uninitialized variables.
+	[tsutsui, ticket #1540]
+
+sys/dev/dkwedge/dk.c				1.98
+
+	PR kern/55026: fix a race condition that could cause a crash
+	on last close of a wedge.
+	[maya, ticket #1541]
 
