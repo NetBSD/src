@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.40 2020/04/23 13:33:05 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.41 2020/04/24 17:48:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -999,4 +999,61 @@ sys/netinet6/nd6_nbr.c				1.178
 	inet6: avoid setting llentry to an invalid state when processing a
 	solicited ND6 packet.
 	[roy, ticket #845]
+
+distrib/amd64/uefi-installimage/Makefile	1.7
+distrib/amd64/uefi-installimage/Makefile.bootimage 1.13
+distrib/amd64/uefi-installimage/Makefile.installimage 1.3
+distrib/common/bootimage/Makefile.bootimage	1.23,1.24
+distrib/common/bootimage/Makefile.installimage	1.6
+distrib/common/bootimage/diskproto.mbrfat.in	1.1
+distrib/hpcarm/Makefile				1.7
+distrib/hpcarm/liveimage/Makefile		1.1
+distrib/hpcarm/liveimage/fstab.in		1.1
+distrib/hpcarm/liveimage/spec.in		1.1
+distrib/zaurus/Makefile				1.3
+distrib/zaurus/liveimage/Makefile		1.1
+distrib/zaurus/liveimage/fstab.in		1.1
+distrib/zaurus/liveimage/spec.in		1.1
+
+	Add "live-image with a FAT partition for bootstrap files" support.
+	Add "build.sh live-image" support for zaurus and hpcarm.
+	[tsutsui, ticket #846]
+
+sys/arch/hp300/hp300/machdep.c			1.233
+
+	Fix garbages in dmesg caused by uninitialized variables.
+	[tsutsui, ticket #847]
+
+sys/dev/usb/if_urtwn.c				1.85
+sys/dev/usb/usbdevs				1.778
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add D-Link DWA-121 rev B1 to list of supported devices.
+	[maya, ticket #848]
+
+distrib/common/Makefile.bootcd			1.43
+distrib/vax/cdroms/installcd/Makefile		1.19 (patch)
+
+	PR port-amd64/54776:
+	Do not populate /dev on CD images by default, instead rely on init
+	doing the tmpfs / MAKEDEV magic.
+	On images for machines with serious ram shortage (where the additional
+	tmpfs hurts, like VAX) override this with CDDEV_POPULATE=true.
+	[maya, ticket #849]
+
+sys/dev/dkwedge/dk.c				1.98
+
+	PR kern/55026: fix a race condition that could cause a crash
+	on last close of a wedge.
+	[maya, ticket #850]
+
+share/man/man4/man4.x86/amdsmn.4		1.4
+share/man/man4/man4.x86/amdzentemp.4		1.7
+sys/arch/x86/pci/amdsmn.c			1.7-1.9
+sys/arch/x86/pci/amdzentemp.c			1.10
+
+
+	Add support for newer AMD Family 15 temperature sensors.
+	[simonb, ticket #851]
 
