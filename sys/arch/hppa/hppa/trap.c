@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 2015/03/02 11:05:12 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.107.10.1 2020/04/25 10:54:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2015/03/02 11:05:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107.10.1 2020/04/25 10:54:23 martin Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -850,7 +850,7 @@ do_onfault:
 		}
 
 		/* Never call uvm_fault in interrupt context. */
-		KASSERT(curcpu()->ci_cpl == 0);
+		KASSERT(curcpu()->ci_intr_depth == 0);
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
