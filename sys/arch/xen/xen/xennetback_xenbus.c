@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.96 2020/04/11 11:48:20 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.97 2020/04/25 11:33:28 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.96 2020/04/11 11:48:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.97 2020/04/25 11:33:28 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -860,44 +860,6 @@ xennetback_ifstart(struct ifnet *ifp)
 	xennetback_ifsoftstart_copy(xneti);
 }
 
-/*
- * sighly different from m_dup(); for some reason m_dup() can return
- * a chain where the data area can cross a page boundary.
- * This doesn't happens with the function below.
- */
-static struct mbuf *
-xennetback_copymbuf(struct mbuf *m)
-{
-	struct mbuf *new_m;
-
-	MGETHDR(new_m, M_DONTWAIT, MT_DATA);
-	if (__predict_false(new_m == NULL)) {
-		m_freem(m);
-		return NULL;
-	}
-	if (m->m_pkthdr.len > MHLEN) {
-		MCLGET(new_m, M_DONTWAIT);
-		if (__predict_false((new_m->m_flags & M_EXT) == 0)) {
-			m_freem(new_m);
-			m_freem(m);
-			return NULL;
-		}
-	}
-	m_copydata(m, 0, m->m_pkthdr.len,
-	    mtod(new_m, void *));
-	new_m->m_len = new_m->m_pkthdr.len =
-	    m->m_pkthdr.len;
-
-	/*
-	 * Need to retain csum flags to know if csum was actually computed.
-	 * This is used to set NETRXF_csum_blank/NETRXF_data_validated.
-	 */
-	new_m->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
-
-	m_freem(m);
-	return new_m;
-}
-
 static void
 xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 {
@@ -953,12 +915,11 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 			if (bus_dmamap_load_mbuf(
 			    xneti->xni_xbusd->xbusd_dmat,
 			    xst->xs_dmamap, m, BUS_DMA_NOWAIT) != 0) {
-				/* Not possible to load, must copy */
-				m = xennetback_copymbuf(m);
-				if (__predict_false(m == NULL)) {
+				if (m_defrag(m, M_DONTWAIT) == NULL) {
+					m_freem(m);
 					static struct timeval lasttime;
 					if (ratecheck(&lasttime, &xni_pool_errintvl))
-						printf("%s: cannot allocate new mbuf\n",
+						printf("%s: fail defrag mbuf\n",
 						    ifp->if_xname);
 					abort = true;
 					break;
