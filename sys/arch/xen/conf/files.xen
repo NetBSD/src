@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.180.2.8 2020/04/25 13:16:48 bouyer Exp $
+#	$NetBSD: files.xen,v 1.180.2.9 2020/04/25 15:01:41 bouyer Exp $
 
 defflag	opt_xen.h			XEN XENPVH XENPVHVM PAE
 
@@ -10,3 +10,37 @@ file	arch/xen/xen/xengnt.c			xen
 file	arch/xen/x86/xen_mainbus.c		xen
 file	arch/xen/xen/xen_clock.c		xen
 file	arch/xen/x86/xen_bus_dma.c		xen
+
+define hypervisorbus {}
+define xendevbus {}
+
+# Xen hypervisor
+device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
+attach hypervisor at hypervisorbus
+file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
+file	arch/xen/xen/shutdown_xenbus.c	hypervisor
+
+# Xenbus
+device xenbus {[id = -1]}
+attach xenbus at xendevbus
+file arch/xen/xenbus/xenbus_client.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_dev.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
+
+# Xen console support
+device	xencons: tty
+attach	xencons at xendevbus
+file	arch/xen/xen/xencons.c		xencons needs-flag
+
+# Xen Network driver
+device	xennet: arp, ether, ifnet
+attach xennet at xenbus
+file	arch/xen/xen/if_xennet_xenbus.c xennet needs-flag
+file	arch/xen/xen/xennet_checksum.c	xvif | xennet
+
+# Xen Block device driver and wd/sd/cd identities
+device	xbd: disk
+attach	xbd at xenbus
+file	arch/xen/xen/xbd_xenbus.c	xbd
