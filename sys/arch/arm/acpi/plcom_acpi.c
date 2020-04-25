@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_acpi.c,v 1.2 2018/11/16 23:18:00 jmcneill Exp $ */
+/* $NetBSD: plcom_acpi.c,v 1.3 2020/04/25 21:34:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.2 2018/11/16 23:18:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.3 2020/04/25 21:34:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ plcom_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	sc->sc_hwflags = PLCOM_HW_TXFIFO_DISABLE;
+	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
 	sc->sc_pi.pi_type = PLCOM_TYPE_PL011;
