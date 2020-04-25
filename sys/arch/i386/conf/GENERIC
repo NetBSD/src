@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1227.2.1 2020/04/20 19:38:11 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1227.2.2 2020/04/25 15:03:18 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1227.2.1 $"
+#ident		"GENERIC-$Revision: 1.1227.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -43,6 +43,15 @@ hyperv0		at cpu0		# Microsoft Hyper-V
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
+
+#Xen PV support for HVM guests
+options 	XENPVHVM
+options 	XEN
+hypervisor*	at mainbus?		# Xen hypervisor
+xenbus*	 	at hypervisor?		# Xen virtual bus
+xencons*	at hypervisor?		# Xen virtual console
+xennet*  	at xenbus?		# Xen virtual network interface
+xbd*		at xenbus?		# Xen virtual block device
 
 options 	MTRR		# memory-type range register syscall support
 
