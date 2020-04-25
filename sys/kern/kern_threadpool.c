@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.17 2020/02/09 22:57:39 riastradh Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.18 2020/04/25 17:43:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.17 2020/02/09 22:57:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.18 2020/04/25 17:43:23 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -933,7 +933,12 @@ void
 threadpool_cancel_job(struct threadpool *pool, struct threadpool_job *job)
 {
 
-	ASSERT_SLEEPABLE();
+	/*
+	 * We may sleep here, but we can't ASSERT_SLEEPABLE() because
+	 * the job lock (used to interlock the cv_wait()) may in fact
+	 * legitimately be a spin lock, so the assertion would fire
+	 * as a false-positive.
+	 */
 
 	KASSERT(mutex_owned(job->job_lock));
 
