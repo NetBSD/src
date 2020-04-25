@@ -1,4 +1,4 @@
-.\"	$NetBSD: jot.1,v 1.16 2018/06/25 14:29:17 christos Exp $
+.\"	$NetBSD: jot.1,v 1.17 2020/04/25 11:11:33 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 25, 2018
+.Dd April 25, 2020
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -54,6 +54,7 @@ The
 .Nm jot
 utility is used to print out increasing, decreasing, random,
 or redundant data (usually numbers) one per line.
+The default is to produce sequential data.
 .Pp
 The following options are available:
 .Bl -tag -width indent
@@ -83,7 +84,7 @@ option is overridden by whatever appears in a
 conversion following
 .Fl w .
 .It Fl r
-Generate random data instead of sequential data, the default.
+Generate random data.
 .It Fl s Ar string
 Print data separated by
 .Ar string .
@@ -120,8 +121,10 @@ and
 .Ar end
 are given.
 .Pp
-Defaults for the four arguments are, respectively,
-100, 1, 100, and 1, except that when random data are requested,
+When sequential data are requested the defaults for the four arguments
+are 100 data, a lower bound of 1, an upper bound of 100 and a step size
+of 1.
+When random data are requested
 .Ar s
 defaults to a seed depending upon the time of day.
 .Ar reps
