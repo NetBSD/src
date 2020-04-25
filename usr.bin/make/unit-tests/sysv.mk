@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.2 2014/08/30 22:21:08 sjg Exp $
+# $Id: sysv.mk,v 1.3 2020/04/25 18:20:57 christos Exp $
 
 FOO ?=
 FOOBAR = ${FOO:=bar}
@@ -11,7 +11,7 @@ FUN = ${B}${S}fun
 SUN = the Sun
 
 # we expect nothing when FOO is empty
-all: foo fun
+all: foo fun sam
 
 foo:
 	@echo FOOBAR = ${FOOBAR}
@@ -24,3 +24,15 @@ fun:
 	@echo ${FUN:${B}${S}fun=fun}
 	@echo ${FUN:${B}${S}%=%}
 	@echo ${In:L:%=% ${SUN}}
+
+
+SAM=sam.c
+
+sam:
+	@echo ${SAM:s%.c=acme}
+	@echo ${SAM:s%.c=a%.d}
+	@echo ${SAM:s.c=a%.d}
+	@echo ${SAM:sam.c=a%.c}
+	@echo ${SAM:%=a%.c}
+	@echo ${SAM:%.c=a%.c}
+	@echo ${SAM:sam%=a%.c}
