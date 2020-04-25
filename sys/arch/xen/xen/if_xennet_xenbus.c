@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.116 2020/04/23 15:06:49 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.117 2020/04/25 11:33:28 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.116 2020/04/23 15:06:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.117 2020/04/25 11:33:28 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1002,41 +1002,23 @@ xennet_start(struct ifnet *ifp)
 			txflags = NETTXF_data_validated;
 		}
 
-		/* Try to load the mbuf as-is, if that fails allocate new */
+		/* Try to load the mbuf as-is, if that fails defrag */
 		if (__predict_false(bus_dmamap_load_mbuf(
 		    sc->sc_xbusd->xbusd_dmat,
 		    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
-			struct mbuf *new_m;
-
-			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
-			if (__predict_false(new_m == NULL)) {
-				printf("%s: cannot allocate new mbuf\n",
-				       device_xname(sc->sc_dev));
+			if (__predict_false(m_defrag(m, M_DONTWAIT) == NULL)) {
+				DPRINTF(("%s: defrag failed\n",
+				    device_xname(sc->sc_dev)));
 				m_freem(m);
 				break;
 			}
-			if (m->m_pkthdr.len > MHLEN) {
-				MCLGET(new_m, M_DONTWAIT);
-				if (__predict_false(
-				    (new_m->m_flags & M_EXT) == 0)) {
-					DPRINTF(("%s: no mbuf cluster\n",
-					    device_xname(sc->sc_dev)));
-					m_freem(new_m);
-					m_freem(m);
-					break;
-				}
-			}
-
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(new_m, void *));
-			new_m->m_len = new_m->m_pkthdr.len = m->m_pkthdr.len;
-			m_freem(m);
-			m = new_m;
 
 			if (__predict_false(bus_dmamap_load_mbuf(
 			    sc->sc_xbusd->xbusd_dmat,
 			    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
-				printf("%s: cannot load new mbuf\n",
-				       device_xname(sc->sc_dev));
+				printf("%s: cannot load new mbuf len %d\n",
+				    device_xname(sc->sc_dev),
+				    m->m_pkthdr.len);
 				m_freem(m);
 				break;
 			}
