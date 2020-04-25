@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.6 2020/04/25 05:17:16 maxv Exp $	*/
+/*	$NetBSD: kcore.h,v 1.7 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

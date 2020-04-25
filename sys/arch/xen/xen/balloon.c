@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.20 2020/04/09 19:26:38 jdolecek Exp $ */
+/* $NetBSD: balloon.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.20 2020/04/09 19:26:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>

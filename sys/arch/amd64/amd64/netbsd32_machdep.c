@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.135 2020/04/24 16:27:27 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.136 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.135 2020/04/24 16:27:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.136 2020/04/25 15:26:16 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"

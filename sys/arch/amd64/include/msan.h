@@ -1,4 +1,4 @@
-/*	$NetBSD: msan.h,v 1.2 2020/04/15 16:28:29 maxv Exp $	*/
+/*	$NetBSD: msan.h,v 1.3 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.

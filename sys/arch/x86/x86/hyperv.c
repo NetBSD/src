@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.7 2020/04/21 02:56:37 msaitoh Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.8 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.7 2020/04/21 02:56:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.8 2020/04/25 15:26:18 bouyer Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
