@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/04/18 19:18:33 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2020/04/25 15:42:15 bouyer Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs

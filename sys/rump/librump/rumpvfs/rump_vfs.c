@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.92 2020/04/20 21:39:05 ad Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.93 2020/04/25 15:42:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.92 2020/04/20 21:39:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.93 2020/04/25 15:42:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
