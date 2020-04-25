@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.125 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.125.4.1 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.125 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.125.4.1 2020/04/25 11:24:08 bouyer Exp $");
 
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -106,7 +106,7 @@ READ(void *v)
 		if (bytelen == 0)
 			break;
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 	}
@@ -408,7 +408,7 @@ WRITE(void *v)
 		 */
 
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-		    IO_ADV_DECODE(ioflag), ubc_flags | UBC_UNMAP_FLAG(vp));
+		    IO_ADV_DECODE(ioflag), ubc_flags | UBC_VNODE_FLAGS(vp));
 
 		/*
 		 * update UVM's notion of the size now that we've

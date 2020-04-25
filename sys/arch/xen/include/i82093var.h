@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093var.h,v 1.5 2017/11/04 09:31:08 cherry Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.5.14.1 2020/04/25 11:23:57 bouyer Exp $ */
 
 #ifndef _XEN_I82093VAR_H_
 #define _XEN_I82093VAR_H_
@@ -11,31 +11,29 @@
 static inline  uint32_t
 ioapic_read_ul(struct ioapic_softc *sc, int regid)
 {
-	physdev_op_t op;
+	struct physdev_apic apic_op;
 	int ret;
 
-        op.cmd = PHYSDEVOP_APIC_READ;
-	op.u.apic_op.apic_physbase = sc->sc_pa;
-	op.u.apic_op.reg = regid;
-	ret = HYPERVISOR_physdev_op(&op);
+	apic_op.apic_physbase = sc->sc_pa;
+	apic_op.reg = regid;
+	ret = HYPERVISOR_physdev_op(PHYSDEVOP_apic_read, &apic_op);
 	if (ret) {
 		printf("PHYSDEVOP_APIC_READ ret %d\n", ret);
 		panic("PHYSDEVOP_APIC_READ");
 	}
-	return op.u.apic_op.value;      
+	return apic_op.value;      
 }
 
 static inline void
 ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 {
-	physdev_op_t op;
+	struct physdev_apic apic_op;
 	int ret;
 
-        op.cmd = PHYSDEVOP_APIC_WRITE;
-	op.u.apic_op.apic_physbase = sc->sc_pa;
-	op.u.apic_op.reg = regid;
-	op.u.apic_op.value = val;
-	ret = HYPERVISOR_physdev_op(&op);
+	apic_op.apic_physbase = sc->sc_pa;
+	apic_op.reg = regid;
+	apic_op.value = val;
+	ret = HYPERVISOR_physdev_op(PHYSDEVOP_apic_write, &apic_op);
 	if (ret)
 		printf("PHYSDEVOP_APIC_WRITE ret %d\n", ret);
 }

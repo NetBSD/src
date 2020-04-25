@@ -1,7 +1,7 @@
-#	$Id: files.netipsec,v 1.13 2018/01/10 10:56:30 knakahara Exp $
+#	$Id: files.netipsec,v 1.13.14.1 2020/04/25 11:24:06 bouyer Exp $
 #
 #
-defflag opt_ipsec.h	IPSEC:	opencrypto
+defflag opt_ipsec.h	IPSEC:	opencrypto, rijndael
 defflag opt_ipsec.h	IPSEC_DEBUG
 defflag opt_ipsec.h	IPSEC_TX_TOS_CLEAR
 

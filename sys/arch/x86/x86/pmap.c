@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.381.2.1 2020/04/16 09:45:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.381.2.2 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381.2.1 2020/04/16 09:45:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381.2.2 2020/04/25 11:23:57 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1208,7 +1208,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	kcpuset_create(&kpm->pm_kernel_cpus, true);
 
 	kpm->pm_ldt = NULL;
-	kpm->pm_ldt_len = 0;
 	kpm->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	/*
@@ -2857,7 +2856,6 @@ pmap_create(void)
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
-	pmap->pm_ldt_len = 0;
 	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	return (pmap);
@@ -2952,7 +2950,7 @@ pmap_destroy(struct pmap *pmap)
 #ifdef USER_LDT
 	if (pmap->pm_ldt != NULL) {
 		/*
-		 * no need to switch the LDT; this address space is gone,
+		 * No need to switch the LDT; this address space is gone,
 		 * nothing is using it.
 		 *
 		 * No need to lock the pmap for ldt_free (or anything else),
@@ -2963,7 +2961,7 @@ pmap_destroy(struct pmap *pmap)
 		ldt_free(pmap->pm_ldt_sel);
 		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
-		    pmap->pm_ldt_len, UVM_KMF_WIRED);
+		    MAX_USERLDT_SIZE, UVM_KMF_WIRED);
 	}
 #endif
 
@@ -3209,7 +3207,6 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 {
 #ifdef USER_LDT
 	union descriptor *new_ldt;
-	size_t len;
 	int sel;
 
 	if (__predict_true(pmap1->pm_ldt == NULL)) {
@@ -3219,18 +3216,16 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	/*
 	 * Copy the LDT into the new process.
 	 *
-	 * Read pmap1's ldt pointer and length unlocked; if it changes
-	 * behind our back we'll retry. This will starve if there's a
-	 * stream of LDT changes in another thread but that should not
-	 * happen.
+	 * Read pmap1's ldt pointer unlocked; if it changes behind our back
+	 * we'll retry. This will starve if there's a stream of LDT changes
+	 * in another thread but that should not happen.
 	 */
 
- retry:
+retry:
 	if (pmap1->pm_ldt != NULL) {
-		len = pmap1->pm_ldt_len;
 		/* Allocate space for the new process's LDT */
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
-		    UVM_KMF_WIRED);
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
+		    MAX_USERLDT_SIZE, 0, UVM_KMF_WIRED);
 		if (new_ldt == NULL) {
 			printf("WARNING: %s: unable to allocate LDT space\n",
 			    __func__);
@@ -3238,51 +3233,48 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		}
 		mutex_enter(&cpu_lock);
 		/* Get a GDT slot for it */
-		sel = ldt_alloc(new_ldt, len);
+		sel = ldt_alloc(new_ldt, MAX_USERLDT_SIZE);
 		if (sel == -1) {
 			mutex_exit(&cpu_lock);
-			uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
-			    UVM_KMF_WIRED);
+			uvm_km_free(kernel_map, (vaddr_t)new_ldt,
+			    MAX_USERLDT_SIZE, UVM_KMF_WIRED);
 			printf("WARNING: %s: unable to allocate LDT selector\n",
 			    __func__);
 			return;
 		}
 	} else {
 		/* Wasn't anything there after all. */
-		len = -1;
 		new_ldt = NULL;
 		sel = -1;
 		mutex_enter(&cpu_lock);
 	}
 
- 	/* If there's still something there now that we have cpu_lock... */
+ 	/*
+	 * Now that we have cpu_lock, ensure the LDT status is the same.
+	 */
  	if (pmap1->pm_ldt != NULL) {
-		if (len != pmap1->pm_ldt_len) {
-			/* Oops, it changed. Drop what we did and try again */
-			if (len != -1) {
-				ldt_free(sel);
-				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
-				    len, UVM_KMF_WIRED);
-			}
+		if (new_ldt == NULL) {
+			/* A wild LDT just appeared. */
 			mutex_exit(&cpu_lock);
 			goto retry;
 		}
 
 		/* Copy the LDT data and install it in pmap2 */
-		memcpy(new_ldt, pmap1->pm_ldt, len);
+		memcpy(new_ldt, pmap1->pm_ldt, MAX_USERLDT_SIZE);
 		pmap2->pm_ldt = new_ldt;
-		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
 		pmap2->pm_ldt_sel = sel;
-		len = -1;
-	}
-
-	if (len != -1) {
-		/* There wasn't still something there, so mop up */
-		ldt_free(sel);
 		mutex_exit(&cpu_lock);
-		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
-		    UVM_KMF_WIRED);
 	} else {
+		if (new_ldt != NULL) {
+			/* The LDT disappeared, drop what we did. */
+			ldt_free(sel);
+			mutex_exit(&cpu_lock);
+			uvm_km_free(kernel_map, (vaddr_t)new_ldt,
+			    MAX_USERLDT_SIZE, UVM_KMF_WIRED);
+			return;
+		}
+
+		/* We're good, just leave. */
 		mutex_exit(&cpu_lock);
 	}
 #endif /* USER_LDT */
@@ -3337,9 +3329,8 @@ void
 pmap_ldt_cleanup(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-	union descriptor *dp = NULL;
-	size_t len = 0;
-	int sel = -1;
+	union descriptor *ldt;
+	int sel;
 
 	if (__predict_true(pmap->pm_ldt == NULL)) {
 		return;
@@ -3348,14 +3339,13 @@ pmap_ldt_cleanup(struct lwp *l)
 	mutex_enter(&cpu_lock);
 	if (pmap->pm_ldt != NULL) {
 		sel = pmap->pm_ldt_sel;
-		dp = pmap->pm_ldt;
-		len = pmap->pm_ldt_len;
+		ldt = pmap->pm_ldt;
 		pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 		pmap->pm_ldt = NULL;
-		pmap->pm_ldt_len = 0;
 		pmap_ldt_sync(pmap);
 		ldt_free(sel);
-		uvm_km_free(kernel_map, (vaddr_t)dp, len, UVM_KMF_WIRED);
+		uvm_km_free(kernel_map, (vaddr_t)ldt, MAX_USERLDT_SIZE,
+		    UVM_KMF_WIRED);
 	}
 	mutex_exit(&cpu_lock);
 }

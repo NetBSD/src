@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.3 2018/07/17 00:36:30 christos Exp $ */
+/* $NetBSD: sig_machdep.c,v 1.3.10.1 2020/04/25 11:23:54 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.3 2018/07/17 00:36:30 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.3.10.1 2020/04/25 11:23:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -108,7 +108,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_pc = handler;
 
 	/*
-	 * Remember if we'ere now on the signal stack.
+	 * Remember if we're now on the signal stack.
 	 */
 	if (onstack_p)
 		ss->ss_flags |= SS_ONSTACK;

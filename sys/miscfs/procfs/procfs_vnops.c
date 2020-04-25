@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.210 2020/02/24 20:47:41 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.210.4.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.210 2020/02/24 20:47:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.210.4.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -558,7 +558,7 @@ static void
 procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
     char *path, size_t len)
 {
-	const struct cwdinfo *cwdi;
+	struct cwdinfo *cwdi;
 	struct vnode *vp, *rvp;
 	char *bp;
 
@@ -567,25 +567,26 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	 * we are interested in to prevent it from disappearing
 	 * before getcwd_common() below.
 	 */
-	cwdi = cwdlock(target);
+	rw_enter(&target->p_cwdi->cwdi_lock, RW_READER);
 	switch (t) {
 	case PFScwd:
-		vp = cwdi->cwdi_cdir;
+		vp = target->p_cwdi->cwdi_cdir;
 		break;
 	case PFSchroot:
-		vp = cwdi->cwdi_rdir;
+		vp = target->p_cwdi->cwdi_rdir;
 		break;
 	default:
-		cwdunlock(target);
+		rw_exit(&target->p_cwdi->cwdi_lock);
 		return;
 	}
 	if (vp != NULL)
 		vref(vp);
-	cwdunlock(target);
+	rw_exit(&target->p_cwdi->cwdi_lock);
 
-	KASSERT(caller == curlwp);
+	cwdi = caller->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
 
-	rvp = cwdrdir();
+	rvp = cwdi->cwdi_rdir;
 	bp = bpp ? *bpp : NULL;
 
 	/*
@@ -598,15 +599,12 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 			*bpp = bp;
 		}
 		vrele(vp);
-		if (rvp != NULL)
-			vrele(rvp);
+		rw_exit(&cwdi->cwdi_lock);
 		return;
 	}
 
-	if (rvp == NULL) {
+	if (rvp == NULL)
 		rvp = rootvnode;
-		vref(rvp);
-	}
 	if (vp == NULL || getcwd_common(vp, rvp, bp ? &bp : NULL, path,
 	    len / 2, 0, caller) != 0) {
 		if (bpp) {
@@ -620,8 +618,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 
 	if (vp != NULL)
 		vrele(vp);
-	if (rvp != NULL)
-		vrele(rvp);
+	rw_exit(&cwdi->cwdi_lock);
 }
 
 /*
@@ -1650,7 +1647,7 @@ procfs_readlink(void *v)
 		len = strlen(bp);
 	} else {
 		file_t *fp;
-		struct vnode *vxp, *rvp;
+		struct vnode *vxp, *vp;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
@@ -1683,13 +1680,14 @@ procfs_readlink(void *v)
 			if (vxp->v_tag == VT_PROCFS) {
 				*--bp = '/';
 			} else {
-				if ((rvp = cwdrdir()) == NULL) {
-					rvp = rootvnode;
-					vref(rvp);
-				}
-				error = getcwd_common(vxp, rvp, &bp, path,
+				rw_enter(&curproc->p_cwdi->cwdi_lock,
+				    RW_READER);
+				vp = curproc->p_cwdi->cwdi_rdir;
+				if (vp == NULL)
+					vp = rootvnode;
+				error = getcwd_common(vxp, vp, &bp, path,
 				    MAXPATHLEN / 2, 0, curlwp);
-				vrele(rvp);
+				rw_exit(&curproc->p_cwdi->cwdi_lock);
 			}
 			if (error)
 				break;

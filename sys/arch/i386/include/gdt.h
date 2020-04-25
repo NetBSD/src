@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.16 2017/07/02 09:02:06 maxv Exp $	*/
+/*	$NetBSD: gdt.h,v 1.16.16.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,5 +44,6 @@ void ldt_free(int);
 
 #endif /* LOCORE */
 
-#define	MINGDTSIZ	PAGE_SIZE
-#define	MAXGDTSIZ	65536
+#define MAXGDTSIZ		65536
+#define MAX_USERLDT_SIZE	PAGE_SIZE
+#define MAX_USERLDT_SLOTS	(int)(MAX_USERLDT_SIZE / sizeof(union descriptor))

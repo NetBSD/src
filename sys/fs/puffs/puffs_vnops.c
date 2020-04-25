@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.214 2020/02/23 15:46:40 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.214.4.1 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.214 2020/02/23 15:46:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.214.4.1 2020/04/25 11:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1158,7 +1158,7 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 		return;
 
 	vsize_t len = round_page(off) - off;
-	ubc_zerorange(&vp->v_uobj, off, len, UBC_WRITE|UBC_UNMAP_FLAG(vp));
+	ubc_zerorange(&vp->v_uobj, off, len, UBC_WRITE|UBC_VNODE_FLAGS(vp));
 }
 
 static int
@@ -2297,7 +2297,7 @@ puffs_vnop_read(void *v)
 				break;
 
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error)
 				break;
 		}
@@ -2407,7 +2407,7 @@ puffs_vnop_write(void *v)
 	if (vp->v_type == VREG && 
 	    PUFFS_USE_PAGECACHE(pmp) &&
 	    !(pn->pn_stat & PNODE_WDIRECT)) {
-		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
+		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp);
 
 		while (uio->uio_resid > 0) {
 			oldoff = uio->uio_offset;

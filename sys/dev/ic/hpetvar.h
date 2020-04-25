@@ -1,4 +1,4 @@
-/* $NetBSD: hpetvar.h,v 1.4 2011/06/14 16:33:51 jruoho Exp $ */
+/* $NetBSD: hpetvar.h,v 1.4.66.1 2020/04/25 11:23:59 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -31,6 +31,8 @@
 #ifndef _DEV_IC_HPETVAR_H_
 #define _DEV_IC_HPETVAR_H_
 
+#include <sys/timetc.h>
+
 struct hpet_softc {
 	bus_size_t		sc_mems;
 	bus_space_tag_t		sc_memt;
@@ -38,10 +40,14 @@ struct hpet_softc {
 
 	bool			sc_mapped;
 	uint32_t		sc_config;
+	int32_t			sc_period;
+	int64_t			sc_adj;
 	struct			timecounter sc_tc;
 };
 
 void	hpet_attach_subr(device_t);
 int	hpet_detach(device_t, int flags);
+void	hpet_delay(unsigned int);
+bool	hpet_delay_p(void);
 
 #endif /* _DEV_IC_HPETVAR_H_ */

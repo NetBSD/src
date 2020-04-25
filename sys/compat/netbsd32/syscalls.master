@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.134 2020/04/04 20:20:12 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.134.2.1 2020/04/25 11:23:58 bouyer Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -747,7 +747,7 @@
 				netbsd32_charp name, netbsd32_size_t len); }
 325	STD 		{ int|netbsd32||_lwp_ctl(int features, \
 				netbsd32_pointer_t address); }
-326	NOARGS 		{ lwptid_t|sys||_lwp_gettid(void); }
+326	UNIMPL
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL

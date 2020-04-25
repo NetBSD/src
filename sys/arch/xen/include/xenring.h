@@ -1,4 +1,4 @@
-/* $NetBSD: xenring.h,v 1.4 2019/04/07 12:23:54 bouyer Exp $ */
+/* $NetBSD: xenring.h,v 1.4.12.1 2020/04/25 11:23:57 bouyer Exp $ */
 
 /*
  * Glue goop for xbd ring request/response protocol structures.
@@ -51,6 +51,19 @@ struct blkif_x86_32_response {
 } __packed;
 typedef struct blkif_x86_32_response blkif_x86_32_response_t;
 
+struct blkif_x86_32_request_indirect {
+    uint8_t        operation;    /* BLKIF_OP_INDIRECT                    */
+    uint8_t        indirect_op;  /* BLKIF_OP_{READ/WRITE}                */
+    uint16_t       nr_segments;  /* number of segments                   */
+    uint64_t       id;		 /* private guest value, echoed in resp  */
+    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+    blkif_vdev_t   handle;       /* only for read/write requests         */
+    uint16_t	   _pad2;
+    grant_ref_t    indirect_grefs[BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST];
+    uint64_t       _pad3;	 /* make it 64 byte aligned */
+} __packed;
+typedef struct blkif_x86_32_request_indirect blkif_x86_32_request_indirect_t;
+
 /* amd64-type requests/responses (always used in frontends ) */
 
 struct blkif_x86_64_request {
@@ -69,6 +82,25 @@ struct blkif_x86_64_response {
     int16_t         status;          /* BLKIF_RSP_???       */
 };
 typedef struct blkif_x86_64_response blkif_x86_64_response_t;
+
+struct blkif_x86_64_request_indirect {
+    uint8_t        operation;    /* BLKIF_OP_INDIRECT                    */
+    uint8_t        indirect_op;  /* BLKIF_OP_{READ/WRITE}                */
+    uint16_t       nr_segments;  /* number of segments                   */
+    uint32_t       _pad1;
+    uint64_t       id;           /* private guest value, echoed in resp  */
+    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+    blkif_vdev_t   handle;       /* only for read/write requests         */
+    uint16_t	   _pad2;
+    grant_ref_t    indirect_grefs[BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST];
+    uint32_t       _pad3;	 /* make it 64 byte aligned */
+} __packed;
+typedef struct blkif_x86_64_request_indirect blkif_x86_64_request_indirect_t;
+
+CTASSERT(sizeof(struct blkif_x86_32_request_indirect)
+	== sizeof(struct blkif_x86_64_request_indirect));
+CTASSERT(sizeof(struct blkif_request_indirect)
+	== sizeof(struct blkif_x86_64_request_indirect));
 
 DEFINE_RING_TYPES(blkif_x86_32, struct blkif_x86_32_request, struct blkif_x86_32_response);
 DEFINE_RING_TYPES(blkif_x86_64, struct blkif_x86_64_request, struct blkif_x86_64_response);

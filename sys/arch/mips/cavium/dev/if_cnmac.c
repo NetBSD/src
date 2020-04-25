@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.17 2020/02/18 15:00:42 thorpej Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.17.4.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.17 2020/02/18 15:00:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.17.4.1 2020/04/25 11:23:56 bouyer Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -292,6 +292,8 @@ octeon_eth_attach(device_t parent, device_t self, void *aux)
 	struct octeon_eth_softc *sc = device_private(self);
 	struct octeon_gmx_attach_args *ga = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	prop_dictionary_t dict;
+	prop_object_t clk;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
@@ -399,6 +401,15 @@ octeon_eth_attach(device_t parent, device_t self, void *aux)
 
 	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_evcnt_entries,
 	    device_xname(sc->sc_dev));
+
+	dict = device_properties(sc->sc_gmx->sc_dev);
+
+	clk = prop_dictionary_get(dict, "rgmii-tx");
+	KASSERT(clk != NULL);
+	sc->sc_gmx_port->sc_clk_tx_setting = prop_number_integer_value(clk);
+	clk = prop_dictionary_get(dict, "rgmii-rx");
+	KASSERT(clk != NULL);
+	sc->sc_gmx_port->sc_clk_rx_setting = prop_number_integer_value(clk);
 }
 
 /* ---- submodules */

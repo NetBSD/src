@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.131.6.1 2020/04/20 11:29:13 bouyer Exp $ */
+/*     $NetBSD: buf.h,v 1.131.6.2 2020/04/25 11:24:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -299,7 +299,6 @@ void	minphys(buf_t *);
 void	brelvp(buf_t *);
 void	reassignbuf(buf_t *, struct vnode *);
 void	bgetvp(struct vnode *, buf_t *);
-int	buf_syncwait(void);
 u_long	buf_memcalc(void);
 int	buf_drain(int);
 int	buf_setvalimit(vsize_t);

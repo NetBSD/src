@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.34 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.34.20.1 2020/04/25 11:24:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.34 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.34.20.1 2020/04/25 11:24:04 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -852,7 +852,7 @@ hfs_vop_read(void *v)
 			break;
 		
 		error = ubc_uiomove(&vp->v_uobj, uio, len, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 	}
 
 	return error;

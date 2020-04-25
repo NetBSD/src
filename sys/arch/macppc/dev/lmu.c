@@ -1,4 +1,4 @@
- /* $NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.2.6.1 2020/04/25 11:23:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.2.6.1 2020/04/25 11:23:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.2 2020/02/06 02:17:24 macallan Exp $");
 #include <sys/bus.h>
 #include <sys/time.h>
 #include <sys/callout.h>
-
-#include <dev/ofw/openfirm.h>
+#include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#ifdef LMU_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF if (0) printf
+#endif
 
 struct lmu_softc {
 	device_t	sc_dev;
@@ -56,7 +61,9 @@ struct lmu_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
 	callout_t	sc_adjust;
-	int sc_thresh, sc_hyst, sc_level;
+	int		sc_thresh, sc_hyst, sc_level, sc_target, sc_current;
+	int		sc_lux[2];
+	time_t		sc_last;
 	int		sc_lid_state, sc_video_state;
 };
 
@@ -67,6 +74,8 @@ static void	lmu_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	lmu_set_brightness(struct lmu_softc *, int);
 static int	lmu_get_brightness(struct lmu_softc *, int);
 static void	lmu_adjust(void *);
+static int 	lmu_sysctl(SYSCTLFN_ARGS);
+static int 	lmu_sysctl_thresh(SYSCTLFN_ARGS);
 
 CFATTACH_DECL_NEW(lmu, sizeof(struct lmu_softc),
     lmu_match, lmu_attach, NULL, NULL);
@@ -76,6 +85,11 @@ static const struct device_compatible_entry compat_data[] = {
 	{ "lmu-controller",	0 },
 	{ NULL,			0 }
 };
+
+/* time between polling the light sensors */
+#define LMU_POLL	(hz * 2)
+/* time between updates to keyboard brightness */
+#define LMU_FADE	(hz / 16)
 
 static void
 lmu_lid_open(device_t dev)
@@ -127,11 +141,13 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	struct lmu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	envsys_data_t *s;
+	const struct sysctlnode *me;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_node = ia->ia_cookie;
+	sc->sc_last = 0;
 
 	aprint_naive("\n");
 	aprint_normal(": ambient light sensor\n");
@@ -163,7 +179,7 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	s->state = ENVSYS_SINVALID;
 	s->units = ENVSYS_LUX;
 	strcpy(s->desc, "left");
-	s->private = 2;
+	s->private = 1;
 	sysmon_envsys_sensor_attach(sc->sc_sme, s);
 
 	sysmon_envsys_register(sc->sc_sme);
@@ -171,7 +187,30 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	/* TODO: make this adjustable via sysctl */
 	sc->sc_thresh = 300;
 	sc->sc_hyst = 30;
-	sc->sc_level = 100;
+	sc->sc_level = 16;
+	sc->sc_target = 0;
+	sc->sc_current = 0;
+
+	sysctl_createv(NULL, 0, NULL, &me,
+		CTLFLAG_READWRITE,
+		CTLTYPE_NODE, "lmu",
+		SYSCTL_DESCR("LMU driver"),
+		NULL, 0, NULL, 0,
+		CTL_HW, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		CTLFLAG_READWRITE,
+		CTLTYPE_INT, "level",
+		SYSCTL_DESCR("keyboard brightness"),
+		lmu_sysctl, 0, (void *)sc, 0,
+		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		CTLFLAG_READWRITE,
+		CTLTYPE_INT, "threshold",
+		SYSCTL_DESCR("environmental light threshold"),
+		lmu_sysctl_thresh, 1, (void *)sc, 0,
+		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	callout_init(&sc->sc_adjust, 0);
 	callout_setfunc(&sc->sc_adjust, lmu_adjust, sc);
@@ -195,28 +234,38 @@ lmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static int
 lmu_get_brightness(struct lmu_softc *sc, int reg)
 {
-	int error;
-	uint16_t buf;
-	uint8_t cmd = reg;
+	int error, i;
+	uint16_t buf[2];
+	uint8_t cmd = 0;
+
+	if (reg > 1) return -1;
+	if (time_second == sc->sc_last)
+		return sc->sc_lux[reg];
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-		sc->sc_addr, &cmd, 1, &buf, 2, 0);
+		sc->sc_addr, &cmd, 1, buf, 4, 0);
 	iic_release_bus(sc->sc_i2c, 0);
 	if (error) return -1;
-	return be16toh(buf);
+	sc->sc_last = time_second;
+
+	for (i = 0; i < 2; i++)
+		sc->sc_lux[i] = be16toh(buf[i]);
+
+	DPRINTF("<%d %04x %04x>", reg, buf[0], buf[1]);
+	
+	return (sc->sc_lux[reg]);
 }
 
 static void
 lmu_set_brightness(struct lmu_softc *sc, int b)
 {
-	int bb;
 	uint8_t cmd[3];
 
 	cmd[0] = 1;
-	bb = b * 255;
-	cmd[1] = (bb & 0xff00) >> 8;
-	cmd[2] =  bb & 0xff;
+
+	cmd[1] = (b & 0xff);
+	cmd[2] = (b & 0xff) >> 8;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
@@ -228,18 +277,85 @@ static void
 lmu_adjust(void *cookie)
 {
 	struct lmu_softc *sc = cookie;
-	int left, right, b;
+	int left, right, b, offset;
 
-	left = lmu_get_brightness(sc, 2);
+	left = lmu_get_brightness(sc, 1);
 	right = lmu_get_brightness(sc, 0);
 	b = left > right ? left : right;
 
 	if ((b > (sc->sc_thresh + sc->sc_hyst)) ||
 	   !(sc->sc_lid_state && sc->sc_video_state)) {
-		lmu_set_brightness(sc, 0);
+		sc->sc_target = 0;
 	} else if (b < sc->sc_thresh) {
-		lmu_set_brightness(sc, sc->sc_level);
+		sc->sc_target = sc->sc_level;
 	}
 
-	callout_schedule(&sc->sc_adjust, hz * 2);	
+	if (sc->sc_target == sc->sc_current) {
+		/* no update needed, check again later */
+		callout_schedule(&sc->sc_adjust, LMU_POLL);
+		return;
+	}	
+
+
+	offset = ((sc->sc_target - sc->sc_current) > 0) ? 2 : -2;
+	sc->sc_current += offset;
+	if (sc->sc_current > sc->sc_level) sc->sc_current = sc->sc_level;
+	if (sc->sc_current < 0) sc->sc_current = 0;
+
+	DPRINTF("[%d]", sc->sc_current);
+
+	lmu_set_brightness(sc, sc->sc_current);
+
+	if (sc->sc_target == sc->sc_current) {
+		/* no update needed, check again later */
+		callout_schedule(&sc->sc_adjust, LMU_POLL);
+		return;
+	}	
+
+	/* more updates upcoming */
+	callout_schedule(&sc->sc_adjust, LMU_FADE);
+}
+
+static int
+lmu_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct lmu_softc *sc = node.sysctl_data;
+	int target;
+
+	target = sc->sc_level;
+	node.sysctl_data = &target;
+	if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+		int new_reg;
+
+		new_reg = *(int *)node.sysctl_data;
+		if (new_reg != sc->sc_target) {
+			sc->sc_level = target;
+			sc->sc_target = target;
+			
+		}
+		return 0;
+	}
+	return EINVAL;
+}
+
+static int
+lmu_sysctl_thresh(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct lmu_softc *sc = node.sysctl_data;
+	int thresh;
+
+	thresh = sc->sc_thresh;
+	node.sysctl_data = &thresh;
+	if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+		int new_reg;
+
+		new_reg = *(int *)node.sysctl_data;
+		if (new_reg != sc->sc_thresh && new_reg > 0) {
+			sc->sc_thresh = new_reg;
+		}
+		return 0;
+	}
+	return EINVAL;
 }

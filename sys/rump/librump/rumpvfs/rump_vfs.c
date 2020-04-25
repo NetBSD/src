@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.90.4.1 2020/04/20 11:29:13 bouyer Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.90.4.2 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.90.4.1 2020/04/20 11:29:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.90.4.2 2020/04/25 11:24:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -470,7 +470,7 @@ rump_vfs_syncwait(struct mount *mp)
 {
 	int n;
 
-	n = buf_syncwait();
+	n = vfs_syncwait();
 	if (n)
 		printf("syncwait: unsynced buffers: %d\n", n);
 }

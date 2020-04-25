@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.274.4.1 2020/04/20 11:29:02 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.274.4.2 2020/04/25 11:23:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.274.4.1 2020/04/20 11:29:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.274.4.2 2020/04/25 11:23:58 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -724,7 +724,7 @@ vndthread(void *arg)
 
 		bp = &vnx->vx_buf;
 		buf_init(bp);
-		bp->b_flags = (obp->b_flags & B_READ);
+		bp->b_flags = (obp->b_flags & (B_READ | B_PHYS | B_RAW));
 		bp->b_oflags = obp->b_oflags;
 		bp->b_cflags = obp->b_cflags;
 		bp->b_iodone = vndiodone;

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.27.4.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.27.4.2 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.27.4.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.27.4.2 2020/04/25 11:24:05 bouyer Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -592,7 +592,7 @@ v7fs_read(void *v)
 			break;
 
 		error = ubc_uiomove(&vp->v_uobj, uio, sz, advice, UBC_READ |
-		    UBC_PARTIALOK | UBC_UNMAP_FLAG(v));
+		    UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error) {
 			break;
 		}
@@ -644,7 +644,7 @@ v7fs_write(void *v)
 	while (uio->uio_resid > 0) {
 		sz = uio->uio_resid;
 		if ((error = ubc_uiomove(&vp->v_uobj, uio, sz, advice,
-			    UBC_WRITE | UBC_UNMAP_FLAG(v))))
+			    UBC_WRITE | UBC_VNODE_FLAGS(vp))))
 			break;
 		DPRINTF("write %zubyte\n", sz);
 	}

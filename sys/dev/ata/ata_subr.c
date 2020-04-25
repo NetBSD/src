@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.9 2020/04/04 22:30:02 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.9.2.1 2020/04/25 11:23:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.9 2020/04/04 22:30:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.9.2.1 2020/04/25 11:23:59 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -195,8 +195,11 @@ ata_queue_free(struct ata_queue *chq)
 void
 ata_channel_init(struct ata_channel *chp)
 {
+	int error __diagused;
+
 	mutex_init(&chp->ch_lock, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&chp->ch_thr_idle, "atath");
+	error = threadpool_get(&chp->ch_tp, PRI_NONE);
+	KASSERT(error == 0);			/* XXX */
 
 	callout_init(&chp->c_timo_callout, 0); 	/* XXX MPSAFE */
 
@@ -220,7 +223,7 @@ ata_channel_destroy(struct ata_channel *chp)
 	mutex_exit(&chp->ch_lock);
 
 	mutex_destroy(&chp->ch_lock);
-	cv_destroy(&chp->ch_thr_idle);
+	threadpool_put(chp->ch_tp, PRI_NONE);
 }
 
 void

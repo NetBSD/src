@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.88.20.1 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.88.20.1 2020/04/25 11:24:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 
 		/* XXXUBC we should handle more than just VREG */
 		ubc_zerorange(&ovp->v_uobj, length, size - offset,
-		    UBC_UNMAP_FLAG(ovp));
+		    UBC_VNODE_FLAGS(ovp));
 	}
 	(void)ext2fs_setsize(oip, length);
 	uvm_vnp_setsize(ovp, length);

@@ -1,7 +1,7 @@
-/*	$NetBSD: tsc.c,v 1.40 2020/04/06 09:24:50 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.40.2.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.40 2020/04/06 09:24:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.40.2.1 2020/04/25 11:23:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,11 @@ tsc_is_invariant(void)
 	return invariant;
 }
 
+/*
+ * Initialize timecounter(9) of TSC.
+ * This function is called after all secondary processors were up and
+ * calculated the drift.
+ */
 void
 tsc_tc_init(void)
 {
@@ -224,13 +229,17 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 void
 tsc_sync_bp(struct cpu_info *ci)
 {
-	uint64_t bptsc, aptsc;
+	int64_t bptsc, aptsc, bsum = 0, asum = 0;
 
 	tsc_read_bp(ci, &bptsc, &aptsc); /* discarded - cache effects */
-	tsc_read_bp(ci, &bptsc, &aptsc);
+	for (int i = 0; i < 8; i++) {
+		tsc_read_bp(ci, &bptsc, &aptsc);
+		bsum += bptsc;
+		asum += aptsc;
+	}
 
 	/* Compute final value to adjust for skew. */
-	ci->ci_data.cpu_cc_skew = bptsc - aptsc;
+	ci->ci_data.cpu_cc_skew = (bsum - asum) >> 3;
 }
 
 /*
@@ -265,7 +274,9 @@ tsc_sync_ap(struct cpu_info *ci)
 {
 
 	tsc_post_ap(ci);
-	tsc_post_ap(ci);
+	for (int i = 0; i < 8; i++) {
+		tsc_post_ap(ci);
+	}
 }
 
 static void

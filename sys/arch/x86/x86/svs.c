@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.32 2020/01/31 08:55:38 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.32.4.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.32 2020/01/31 08:55:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.32.4.1 2020/04/25 11:23:57 bouyer Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -474,7 +474,8 @@ cpu_svs_init(struct cpu_info *ci)
 
 #ifdef USER_LDT
 	mutex_enter(&cpu_lock);
-	ci->ci_svs_ldt_sel = ldt_alloc(&pcpuarea->ent[cid].ldt, MAXGDTSIZ);
+	ci->ci_svs_ldt_sel = ldt_alloc(&pcpuarea->ent[cid].ldt,
+	    MAX_USERLDT_SIZE);
 	mutex_exit(&cpu_lock);
 #endif
 }
@@ -512,13 +513,27 @@ void
 svs_ldt_sync(struct pmap *pmap)
 {
 	struct cpu_info *ci = curcpu();
-	int sel = pmap->pm_ldt_sel;
+	void *ldt;
+	int sel;
 
 	KASSERT(kpreempt_disabled());
 
+	/*
+	 * Another LWP could concurrently modify the LDT via x86_set_ldt1().
+	 * The LWP will wait for pmap_ldt_sync() to finish before destroying
+	 * the outdated LDT.
+	 *
+	 * We have preemption disabled here, so it is guaranteed that even
+	 * if the LDT we are syncing is the outdated one, it is still valid.
+	 *
+	 * pmap_ldt_sync() will execute later once we have preemption enabled,
+	 * and will install the new LDT.
+	 */
+	sel = atomic_load_relaxed(&pmap->pm_ldt_sel);
 	if (__predict_false(sel != GSYSSEL(GLDT_SEL, SEL_KPL))) {
-		memcpy(&pcpuarea->ent[cpu_index(ci)].ldt, pmap->pm_ldt,
-		    pmap->pm_ldt_len);
+		ldt = atomic_load_relaxed(&pmap->pm_ldt);
+		memcpy(&pcpuarea->ent[cpu_index(ci)].ldt, ldt,
+		    MAX_USERLDT_SIZE);
 		sel = ci->ci_svs_ldt_sel;
 	}
 

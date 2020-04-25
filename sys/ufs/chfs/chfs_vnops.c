@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.37 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.37.2.1 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -675,8 +675,7 @@ chfs_read(void *v)
 			if (bytelen == 0)
 				break;
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK |
-			    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error)
 				break;
 
@@ -933,7 +932,7 @@ chfs_write(void *v)
 		 * copy the data.
 		 */
 
-		ubc_flags |= UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		ubc_flags |= UBC_VNODE_FLAGS(vp);
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
 		    IO_ADV_DECODE(ioflag), ubc_flags);
 

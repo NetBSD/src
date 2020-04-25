@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.80.6.1 2020/04/20 11:29:11 bouyer Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.80.6.2 2020/04/25 11:24:06 bouyer Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.80.6.1 2020/04/20 11:29:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.80.6.2 2020/04/25 11:24:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>

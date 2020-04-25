@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.h,v 1.6 2018/12/26 22:16:27 thorpej Exp $	*/
+/*	$NetBSD: threadpool.h,v 1.6.12.1 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/queue.h>
 
 struct threadpool;

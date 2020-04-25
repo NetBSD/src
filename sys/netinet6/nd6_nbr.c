@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.177 2020/03/09 21:20:56 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.177.2.1 2020/04/25 11:24:06 bouyer Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.177 2020/03/09 21:20:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.177.2.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -735,7 +735,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 
 	rt_cmd = 0;
-	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
+	if (ln->ln_state <= ND6_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
 		 * discard the packet.

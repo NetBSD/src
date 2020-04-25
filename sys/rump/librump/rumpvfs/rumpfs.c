@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.155.2.1 2020/04/20 11:29:13 bouyer Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.155.2.2 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.155.2.1 2020/04/20 11:29:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.155.2.2 2020/04/25 11:24:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1403,7 +1403,7 @@ rump_vop_read(void *v)
 		if (chunk == 0)
 			break;
 		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 	}
@@ -1505,7 +1505,7 @@ rump_vop_write(void *v)
 		if (chunk == 0)
 			break;
 		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
-		    UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_WRITE | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 	}

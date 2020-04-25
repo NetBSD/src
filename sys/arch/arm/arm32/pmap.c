@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.402.2.1 2020/04/20 11:28:52 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.402.2.2 2020/04/25 11:23:55 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402.2.1 2020/04/20 11:28:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402.2.2 2020/04/25 11:23:55 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2372,14 +2372,6 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 			continue;
 		}
 #endif
-
-		/*
-		 * Anything to do?
-		 */
-		if ((oflags & maskbits) == 0 && execbits == 0) {
-			pv = SLIST_NEXT(pv, pv_link);
-			continue;
-		}
 
 		/*
 		 * Try to get a hold on the pmap's lock.  We must do this

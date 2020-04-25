@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.197 2020/02/23 22:14:03 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.197.4.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.197 2020/02/23 22:14:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.197.4.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1395,7 +1395,6 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 {
 	struct cmsghdr * const cm = mtod(rights, struct cmsghdr *);
 	struct proc * const p = l->l_proc;
-	struct vnode *rvp = NULL;
 	file_t **rp;
 	int error = 0;
 
@@ -1405,11 +1404,9 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		goto noop;
 
 	int * const fdp = kmem_alloc(nfds * sizeof(int), KM_SLEEP);
-
-	KASSERT(l == curlwp);
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
 	/* Make sure the recipient should be able to see the files.. */
-	rvp = cwdrdir();
 	rp = (file_t **)CMSG_DATA(cm);
 	for (size_t i = 0; i < nfds; i++) {
 		file_t * const fp = *rp++;
@@ -1423,15 +1420,16 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		 * sure it's inside the subtree we're allowed
 		 * to access.
 		 */
-		if (rvp != NULL && fp->f_type == DTYPE_VNODE) {
+		if (p->p_cwdi->cwdi_rdir != NULL && fp->f_type == DTYPE_VNODE) {
 			vnode_t *vp = fp->f_vnode;
-			if ((vp->v_type == VDIR) && !vn_isunder(vp, rvp, l)) {
+			if ((vp->v_type == VDIR) &&
+			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 				error = EPERM;
 				goto out;
 			}
 		}
 	}
-	
+
  restart:
 	/*
 	 * First loop -- allocate file descriptor table slots for the
@@ -1508,6 +1506,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		cm->cmsg_len = CMSG_LEN(0);
 		rights->m_len = CMSG_SPACE(0);
 	}
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	kmem_free(fdp, nfds * sizeof(int));
 
  noop:
@@ -1517,10 +1516,6 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	KASSERT(cm->cmsg_len <= rights->m_len);
 	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
 	    cm->cmsg_len);
-
-	/* Async release since in the networking code. */
-	if (rvp != NULL)
-		vrele_async(rvp);
 	return error;
 }
 

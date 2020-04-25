@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $	*/
+/*	$NetBSD: advnops.c,v 1.51.4.1 2020/04/25 11:24:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.51.4.1 2020/04/25 11:24:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ adosfs_read(void *v)
 				break;
 			}
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error) {
 				break;
 			}
@@ -387,7 +387,7 @@ adosfs_strategy(void *v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			bp->b_flags = error;
+			bp->b_error = error;
 			biodone(bp);
 			goto reterr;
 		}

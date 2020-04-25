@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.110 2020/02/02 06:41:27 macallan Exp $
+#	$NetBSD: files.i2c,v 1.110.4.1 2020/04/25 11:23:59 bouyer Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -310,6 +310,11 @@ file	dev/i2c/fcu.c				fcu	needs-flag
 device	adadc: sysmon_envsys
 attach	adadc at iic
 file	dev/i2c/adadc.c				adadc
+
+# Apple Sudden Motion Sensor
+device	asms: sysmon_envsys
+attach	asms at iic
+file	dev/i2c/asms.c				asms
 
 # HID over i2c
 # HID "bus"

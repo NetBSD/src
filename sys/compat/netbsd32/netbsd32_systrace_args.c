@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.41 2020/04/04 20:27:27 thorpej Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.41.2.1 2020/04/25 11:23:58 bouyer Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2311,11 +2311,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[0] = SCARG(p, features); /* int */
 		uarg[1] = (intptr_t) SCARG(p, address).i32; /* netbsd32_pointer_t */
 		*n_args = 2;
-		break;
-	}
-	/* sys__lwp_gettid */
-	case 326: {
-		*n_args = 0;
 		break;
 	}
 	/* netbsd32___sigaction_sigtramp */
@@ -7316,9 +7311,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys__lwp_gettid */
-	case 326:
-		break;
 	/* netbsd32___sigaction_sigtramp */
 	case 340:
 		switch(ndx) {
@@ -10868,8 +10860,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys__lwp_gettid */
-	case 326:
 	/* netbsd32___sigaction_sigtramp */
 	case 340:
 		if (ndx == 0 || ndx == 1)

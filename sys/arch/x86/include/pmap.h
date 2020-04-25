@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.117 2020/04/05 00:21:11 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.117.2.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -191,9 +191,13 @@ extern struct slotspace slotspace;
 #define MAXGDTSIZ 65536 /* XXX */
 #endif
 
+#ifndef MAX_USERLDT_SIZE
+#define MAX_USERLDT_SIZE PAGE_SIZE /* XXX */
+#endif
+
 struct pcpu_entry {
 	uint8_t gdt[MAXGDTSIZ];
-	uint8_t ldt[MAXGDTSIZ];
+	uint8_t ldt[MAX_USERLDT_SIZE];
 	uint8_t tss[PAGE_SIZE];
 	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
@@ -268,8 +272,9 @@ struct pmap {
 #endif /* !defined(__x86_64__) */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
-	size_t pm_ldt_len;		/* size of LDT in bytes */
+	size_t pm_ldt_len;		/* XXX unused, remove */
 	int pm_ldt_sel;			/* LDT selector */
+
 	kcpuset_t *pm_cpus;		/* mask of CPUs using pmap */
 	kcpuset_t *pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */

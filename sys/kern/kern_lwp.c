@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.233.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.233.2.2 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -83,6 +83,16 @@
  *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
  *
+ *	LSLARVAL:
+ *
+ *		Born, but not fully mature: the LWP is in the process
+ *		of being constructed.  This state exists so that the
+ *		LWP can occupy a slot in the PID table, but without
+ *		having to worry about being touched; lookups of the
+ *		LWP will fail while in this state.  The LWP will become
+ *		visible in the PID table once its state transitions
+ *		to LSIDL.
+ *
  *	LSZOMB:
  *
  *		Dead or dying: the LWP has released most of its resources
@@ -119,6 +129,8 @@
  *	LWP can be set runnable again by a signal.
  *
  *	LWPs may transition states in the following ways:
+ *
+ *	 LARVAL ----> IDL
  *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
  *		    				    > SLEEP
@@ -211,7 +223,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.233.2.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.233.2.2 2020/04/25 11:24:05 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -245,7 +257,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.233.2.1 2020/04/20 11:29:10 bouyer Ex
 #include <sys/psref.h>
 #include <sys/msan.h>
 #include <sys/kcov.h>
-#include <sys/thmap.h>
 #include <sys/cprng.h>
 
 #include <uvm/uvm_extern.h>
@@ -258,59 +269,27 @@ struct lwplist		alllwp		__cacheline_aligned;
  * Lookups by global thread ID operate outside of the normal LWP
  * locking protocol.
  *
- * We are using a thmap, which internally can perform lookups lock-free.
- * However, we still need to serialize lookups against LWP exit.  We
- * achieve this as follows:
- *
- * => Assignment of TID is performed lazily by the LWP itself, when it
- *    is first requested.  Insertion into the thmap is done completely
- *    lock-free (other than the internal locking performed by thmap itself).
- *    Once the TID is published in the map, the l___tid field in the LWP
- *    is protected by p_lock.
- *
- * => When we look up an LWP in the thmap, we take lwp_threadid_lock as
+ * => When we look up an LWP in the table, we take lwp_threadid_lock as
  *    a READER.  While still holding the lock, we add a reference to
  *    the LWP (using atomics).  After adding the reference, we drop the
  *    lwp_threadid_lock.  We now take p_lock and check the state of the
- *    LWP.  If the LWP is draining its references or if the l___tid field
- *    has been invalidated, we drop the reference we took and return NULL.
- *    Otherwise, the lookup has succeeded and the LWP is returned with a
- *    reference count that the caller is responsible for dropping.
- *
- * => When a LWP is exiting it releases its TID.  While holding the
- *    p_lock, the entry is deleted from the thmap and the l___tid field
- *    invalidated.  Once the field is invalidated, p_lock is released.
- *    It is done in this sequence because the l___tid field is used as
- *    the lookup key storage in the thmap in order to conserve memory.
- *    Even if a lookup races with this process and succeeds only to have
- *    the TID invalidated, it's OK because it also results in a reference
- *    that will be drained later.
- *
- * => Deleting a node also requires GC of now-unused thmap nodes.  The
- *    serialization point between stage_gc and gc is performed by simply
- *    taking the lwp_threadid_lock as a WRITER and immediately releasing
- *    it.  By doing this, we know that any busy readers will have drained.
+ *    LWP.  If the LWP is draining its references, we drop the reference
+ *    we took and return NULL.  Otherwise, the lookup has succeeded and
+ *    the LWP is returned with a reference count that the caller is
+ *    responsible for dropping.
  *
  * => When a LWP is exiting, it also drains off any references being
  *    held by others.  However, the reference in the lookup path is taken
  *    outside the normal locking protocol.  There needs to be additional
  *    serialization so that EITHER lwp_drainrefs() sees the incremented
- *    reference count so that it knows to wait, OR lwp_getref_tid() sees
+ *    reference count so that it knows to wait, OR lwp_getref_lwpid() sees
  *    that the LWP is waiting to drain and thus drops the reference
  *    immediately.  This is achieved by taking lwp_threadid_lock as a
  *    WRITER when setting LPR_DRAINING.  Note the locking order:
  *
  *		p_lock -> lwp_threadid_lock
- *
- * Note that this scheme could easily use pserialize(9) in place of the
- * lwp_threadid_lock rwlock lock.  However, this would require placing a
- * pserialize_perform() call in the LWP exit path, which is arguably more
- * expensive than briefly taking a global lock that should be relatively
- * uncontended.  This issue can be revisited if the rwlock proves to be
- * a performance problem.
  */
 static krwlock_t	lwp_threadid_lock	__cacheline_aligned;
-static thmap_t *	lwp_threadid_map	__read_mostly;
 
 static void		lwp_dtor(void *, void *);
 
@@ -330,7 +309,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_md = LWP0_MD_INITIALIZER,
 #endif
 	.l_proc = &proc0,
-	.l_lid = 1,
+	.l_lid = 0,		/* we own proc0's slot in the pid table */
 	.l_flag = LW_SYSTEM,
 	.l_stat = LSONPROC,
 	.l_ts = &turnstile0,
@@ -407,7 +386,6 @@ lwp0_init(void)
 	struct lwp *l = &lwp0;
 
 	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
-	KASSERT(l->l_lid == proc0.p_nlwpid);
 
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
@@ -646,8 +624,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 * it's not detached.
 		 */
 		if (lid != 0) {
-			l2 = radix_tree_lookup_node(&p->p_lwptree,
-			    (uint64_t)(lid - 1));
+			l2 = proc_find_lwp(p, lid);
 			if (l2 == NULL) {
 				error = ESRCH;
 				break;
@@ -767,8 +744,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	 * so that they can re-check for zombies and for deadlock.
 	 */
 	if (lid != 0) {
-		l2 = radix_tree_lookup_node(&p->p_lwptree,
-		    (uint64_t)(lid - 1));
+		l2 = proc_find_lwp(p, lid);
 		KASSERT(l2 == NULL || l2->l_lid == lid);
 
 		if (l2 != NULL && l2->l_waiter == curlid)
@@ -779,43 +755,6 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	cv_broadcast(&p->p_lwpcv);
 
 	return error;
-}
-
-/*
- * Find an unused LID for a new LWP.
- */
-static lwpid_t
-lwp_find_free_lid(struct proc *p)
-{
-	struct lwp *gang[32];
-	lwpid_t lid;
-	unsigned n;
-
-	KASSERT(mutex_owned(p->p_lock));
-	KASSERT(p->p_nlwpid > 0);
-
-	/*
-	 * Scoot forward through the tree in blocks of LIDs doing gang
-	 * lookup with dense=true, meaning the lookup will terminate the
-	 * instant a hole is encountered.  Most of the time the first entry
-	 * (p->p_nlwpid) is free and the lookup fails fast.
-	 */
-	for (lid = p->p_nlwpid;;) {
-		n = radix_tree_gang_lookup_node(&p->p_lwptree, lid - 1,
-		    (void **)gang, __arraycount(gang), true);
-		if (n == 0) {
-			/* Start point was empty. */
-			break;
-		}
-		KASSERT(gang[0]->l_lid == lid);
-		lid = gang[n - 1]->l_lid + 1;
-		if (n < __arraycount(gang)) {
-			/* Scan encountered a hole. */
-			break;
-		}
-	}
-
-	return (lwpid_t)lid;
 }
 
 /*
@@ -831,7 +770,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 {
 	struct lwp *l2;
 	turnstile_t *ts;
-	lwpid_t lid;
 
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
 
@@ -876,14 +814,32 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		mutex_exit(p2->p_lock);
 		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
-		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
+		ts = l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
 		SLIST_INIT(&l2->l_pi_lenders);
 	}
 
-	l2->l_stat = LSIDL;
+	l2->l_stat = LSLARVAL;
 	l2->l_proc = p2;
 	l2->l_refcnt = 0;
 	l2->l_class = sclass;
+
+	/*
+	 * Allocate a process ID for this LWP.  We need to do this now
+	 * while we can still unwind if it fails.  Beacuse we're marked
+	 * as LARVAL, no lookups by the ID will succeed.
+	 *
+	 * N.B. this will always succeed for the first LWP in a process,
+	 * because proc_alloc_lwpid() will usurp the slot.  Also note
+	 * that l2->l_proc MUST be valid so that lookups of the proc
+	 * will succeed, even if the LWP itself is not visible.
+	 */
+	if (__predict_false(proc_alloc_lwpid(p2, l2) == -1)) {
+		if (ts != &turnstile0)
+			pool_cache_put(turnstile_cache, ts);
+		l2->l_ts = NULL;
+		pool_cache_put(lwp_cache, l2);
+		return EAGAIN;
+	}
 
 	/*
 	 * If vfork(), we want the LWP to run fast and on the same CPU
@@ -959,55 +915,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
-	if ((flags & LWP_PIDLID) != 0) {
-		/* Linux threads: use a PID. */
-		lid = proc_alloc_pid(p2);
-		l2->l_pflag |= LP_PIDLID;
-	} else if (p2->p_nlwps == 0) {
-		/*
-		 * First LWP in process.  Copy the parent's LID to avoid
-		 * causing problems for fork() + threads.  Don't give
-		 * subsequent threads the distinction of using LID 1.
-		 */
-		lid = l1->l_lid;
-		p2->p_nlwpid = 2;
-	} else {
-		/* Scan the radix tree for a free LID. */
-		lid = 0;
-	}
+	mutex_enter(p2->p_lock);
 
 	/*
-	 * Allocate LID if needed, and insert into the radix tree.  The
-	 * first LWP in most processes has a LID of 1.  It turns out that if
-	 * you insert an item with a key of zero to a radixtree, it's stored
-	 * directly in the root (p_lwptree) and no extra memory is
-	 * allocated.  We therefore always subtract 1 from the LID, which
-	 * means no memory is allocated for the tree unless the program is
-	 * using threads.  NB: the allocation and insert must take place
-	 * under the same hold of p_lock.
+	 * This renders l2 visible in the pid table once p2->p_lock is
+	 * released.
 	 */
-	mutex_enter(p2->p_lock);
-	for (;;) {
-		int error;
-
-		l2->l_lid = (lid == 0 ? lwp_find_free_lid(p2) : lid);
-
-		rw_enter(&p2->p_treelock, RW_WRITER);
-		error = radix_tree_insert_node(&p2->p_lwptree,
-		    (uint64_t)(l2->l_lid - 1), l2);
-		rw_exit(&p2->p_treelock);
-
-		if (__predict_true(error == 0)) {
-			if (lid == 0)
-				p2->p_nlwpid = l2->l_lid + 1;
-			break;
-		}
-
-		KASSERT(error == ENOMEM);
-		mutex_exit(p2->p_lock);
-		radix_tree_await_memory();
-		mutex_enter(p2->p_lock);
-	}
+	l2->l_stat = LSIDL;
 
 	if ((flags & LWP_DETACHED) != 0) {
 		l2->l_prflag = LPR_DETACHED;
@@ -1189,8 +1103,8 @@ lwp_exit(struct lwp *l)
 
 	/*
 	 * Perform any required thread cleanup.  Do this early so
-	 * anyone wanting to look us up by our global thread ID
-	 * will fail to find us.
+	 * anyone wanting to look us up with lwp_getref_lwpid() will
+	 * fail to find us before we become a zombie.
 	 *
 	 * N.B. this will unlock p->p_lock on our behalf.
 	 */
@@ -1238,9 +1152,6 @@ lwp_exit(struct lwp *l)
 	}
 
 	LIST_REMOVE(l, l_list);
-	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid) {
-		proc_free_pid(l->l_lid);
-	}
 	mutex_exit(proc_lock);
 
 	/*
@@ -1328,7 +1239,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 {
 	struct proc *p = l->l_proc;
 	struct rusage *ru;
-	struct lwp *l2 __diagused;
 	ksiginfoq_t kq;
 
 	KASSERT(l != curlwp);
@@ -1364,14 +1274,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		if ((l->l_prflag & LPR_DETACHED) != 0)
 			p->p_ndlwps--;
 
-		/* Make note of the LID being free, and remove from tree. */
-		if (l->l_lid < p->p_nlwpid)
-			p->p_nlwpid = l->l_lid;
-		rw_enter(&p->p_treelock, RW_WRITER);
-		l2 = radix_tree_remove_node(&p->p_lwptree,
-		    (uint64_t)(l->l_lid - 1));
-		KASSERT(l2 == l);
-		rw_exit(&p->p_treelock);
+		/* Free the LWP ID. */
+		proc_free_lwpid(p, l->l_lid);
 
 		/*
 		 * Have any LWPs sleeping in lwp_wait() recheck for
@@ -1550,7 +1454,7 @@ lwp_find(struct proc *p, lwpid_t id)
 
 	KASSERT(mutex_owned(p->p_lock));
 
-	l = radix_tree_lookup_node(&p->p_lwptree, (uint64_t)(id - 1));
+	l = proc_find_lwp(p, id);
 	KASSERT(l == NULL || l->l_lid == id);
 
 	/*
@@ -1761,13 +1665,15 @@ lwp_need_userret(struct lwp *l)
 /*
  * Add one reference to an LWP.  Interlocked against lwp_drainrefs()
  * either by holding the proc's lock or by holding lwp_threadid_lock.
+ * If callers don't hold the proc's lock, then they must check for a
+ * larva after acquiring the reference.  References can't be added to
+ * zombies because references have already been drained off before the
+ * state changes to LSZOMB.
  */
 static void
 lwp_addref2(struct lwp *l)
 {
-
 	KASSERT(l->l_stat != LSZOMB);
-
 	atomic_inc_uint(&l->l_refcnt);
 }
 
@@ -1778,7 +1684,6 @@ lwp_addref2(struct lwp *l)
 void
 lwp_addref(struct lwp *l)
 {
-
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 	lwp_addref2(l);
 }
@@ -1828,11 +1733,11 @@ lwp_drainrefs(struct lwp *l)
 	KASSERT(mutex_owned(p->p_lock));
 
 	/*
-	 * Lookups in the lwp_threadid_map hold lwp_threadid_lock
-	 * as a reader, increase l_refcnt, release it, and then
-	 * acquire p_lock to check for LPR_DRAINING.  By taking
-	 * lwp_threadid_lock as a writer here we ensure that either
-	 * we see the increase in l_refcnt or that they see LPR_DRAINING.
+	 * Lookups by thread ID hold lwp_threadid_lock as a reader,
+	 * increase l_refcnt, release it, and then acquire p_lock to
+	 * check for LPR_DRAINING.  By taking lwp_threadid_lock as a
+	 * writer here we ensure that either we see the increase in
+	 * l_refcnt or that they see LPR_DRAINING.
 	 */
 	rw_enter(&lwp_threadid_lock, RW_WRITER);
 	l->l_prflag |= LPR_DRAINING;
@@ -2125,131 +2030,10 @@ lwp_setprivate(struct lwp *l, void *ptr)
 	return error;
 }
 
-/*
- * Renumber the first and only LWP in a process on exec() or fork().
- * Don't bother with p_treelock here as this is the only live LWP in
- * the proc right now.
- */
-void
-lwp_renumber(lwp_t *l, lwpid_t lid)
-{
-	lwp_t *l2 __diagused;
-	proc_t *p = l->l_proc;
-	int error;
-
-	KASSERT(p->p_nlwps == 1);
-
-	while (l->l_lid != lid) {
-		mutex_enter(p->p_lock);
-		error = radix_tree_insert_node(&p->p_lwptree, lid - 1, l);
-		if (error == 0) {
-			l2 = radix_tree_remove_node(&p->p_lwptree,
-			    (uint64_t)(l->l_lid - 1));
-			KASSERT(l2 == l);
-			p->p_nlwpid = lid + 1;
-			l->l_lid = lid;
-		}
-		mutex_exit(p->p_lock);
-
-		if (error == 0)
-			break;
-
-		KASSERT(error == ENOMEM);
-		radix_tree_await_memory();
-	}
-}
-
-#define	LWP_TID_MASK	0x3fffffff		/* placeholder */
-
 static void
 lwp_threadid_init(void)
 {
 	rw_init(&lwp_threadid_lock);
-	lwp_threadid_map = thmap_create(0, NULL, THMAP_NOCOPY);
-}
-
-static void
-lwp_threadid_alloc(struct lwp * const l)
-{
-
-	KASSERT(l == curlwp);
-	KASSERT(l->l___tid == 0);
-
-	for (;;) {
-		l->l___tid = cprng_fast32() & LWP_TID_MASK;
-		if (l->l___tid != 0 &&
-		    /*
-		     * There is no need to take the lwp_threadid_lock
-		     * while inserting into the map: internally, the
-		     * map is already concurrency-safe, and the lock
-		     * is only needed to serialize removal with respect
-		     * to lookup.
-		     */
-		    thmap_put(lwp_threadid_map,
-			      &l->l___tid, sizeof(l->l___tid), l) == l) {
-			/* claimed! */
-			return;
-		}
-		preempt_point();
-	}
-}
-
-static inline void
-lwp_threadid_gc_serialize(void)
-{
-
-	/*
-	 * By acquiring the lock as a writer, we will know that
-	 * all of the existing readers have drained away and thus
-	 * the GC is safe.
-	 */
-	rw_enter(&lwp_threadid_lock, RW_WRITER);
-	rw_exit(&lwp_threadid_lock);
-}
-
-static void
-lwp_threadid_free(struct lwp * const l)
-{
-
-	KASSERT(l == curlwp);
-	KASSERT(l->l___tid != 0);
-
-	/*
-	 * Ensure that anyone who finds this entry in the lock-free lookup
-	 * path sees that the key has been deleted by serialzing with the
-	 * examination of l___tid.
-	 *
-	 * N.B. l___tid field must be zapped *after* deleting from the map
-	 * because that field is being used as the key storage by thmap.
-	 */
-	KASSERT(mutex_owned(l->l_proc->p_lock));
-	struct lwp * const ldiag __diagused = thmap_del(lwp_threadid_map,
-	    &l->l___tid, sizeof(l->l___tid));
-	l->l___tid = 0;
-	mutex_exit(l->l_proc->p_lock);
-
-	KASSERT(l == ldiag);
-
-	void * const gc_ref = thmap_stage_gc(lwp_threadid_map);
-	lwp_threadid_gc_serialize();
-	thmap_gc(lwp_threadid_map, gc_ref);
-}
-
-/*
- * Return the current LWP's global thread ID.  Only the current LWP
- * should ever use this value, unless it is guaranteed that the LWP
- * is paused (and then it should be accessed directly, rather than
- * by this accessor).
- */
-lwpid_t
-lwp_gettid(void)
-{
-	struct lwp * const l = curlwp;
-
-	if (l->l___tid == 0)
-		lwp_threadid_alloc(l);
-
-	return l->l___tid;
 }
 
 /*
@@ -2259,12 +2043,17 @@ lwp_gettid(void)
  * with lwp_delref().
  */
 struct lwp *
-lwp_getref_tid(lwpid_t tid)
+lwp_getref_lwpid(lwpid_t tid)
 {
-	struct lwp *l, *rv;
+	struct lwp *l;
 
+	/*
+	 * We rely on lwp_thread_cleanup() to hide LWP IDs from us
+	 * to ensure that we cannot add a reference do an exiting
+	 * LWP.
+	 */
 	rw_enter(&lwp_threadid_lock, RW_READER);
-	l = thmap_get(lwp_threadid_map, &tid, sizeof(&tid));
+	l = proc_seek_lwpid(tid);
 	if (__predict_false(l == NULL)) {
 		rw_exit(&lwp_threadid_lock);
 		return NULL;
@@ -2281,17 +2070,16 @@ lwp_getref_tid(lwpid_t tid)
 	/*
 	 * Now verify that our reference is valid.
 	 */
-	mutex_enter(l->l_proc->p_lock);
-	if (__predict_false((l->l_prflag & LPR_DRAINING) != 0 ||
-			    l->l___tid == 0)) {
+	struct proc *p = l->l_proc;
+	mutex_enter(p->p_lock);
+	if (__predict_false(l->l_stat == LSLARVAL ||
+			    (l->l_prflag & LPR_DRAINING) != 0)) {
 		lwp_delref2(l);
-		rv = NULL;
-	} else {
-		rv = l;
+		l = NULL;
 	}
-	mutex_exit(l->l_proc->p_lock);
+	mutex_exit(p->p_lock);
 
-	return rv;
+	return l;
 }
 
 /*
@@ -2303,23 +2091,18 @@ void
 lwp_thread_cleanup(struct lwp *l)
 {
 	KASSERT(l == curlwp);
-	const lwpid_t tid = l->l___tid;
+	const lwpid_t tid = l->l_lid;
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
-	if (__predict_false(tid != 0)) {
-		/*
-		 * Drop our thread ID.  This will also unlock
-		 * our proc.
-		 */
-		lwp_threadid_free(l);
-	} else {
-		/*
-		 * No thread cleanup was required; just unlock
-		 * the proc.
-		 */
-		mutex_exit(l->l_proc->p_lock);
-	}
+	/*
+	 * Hide this LWP from seekers (namely lwp_getref_lwpid())
+	 * to prevent them from attempting to acquire a reference
+	 * on a zombie.
+	 */
+	proc_hide_lwpid(tid);
+
+	mutex_exit(l->l_proc->p_lock);
 }
 
 #if defined(DDB)

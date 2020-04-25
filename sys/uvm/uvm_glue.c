@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.177 2020/03/05 12:21:00 rin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.177.2.1 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.177 2020/03/05 12:21:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.177.2.1 2020/04/25 11:24:08 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -503,6 +503,18 @@ uvm_scheduler(void)
 
 	/* Start the freelist cache. */
 	uvm_pgflcache_start();
+
+#ifdef PMAP_DIRECT
+	/*
+	 * XXX Temporary ugly hack.  Just before boot, disable ubc_direct if
+	 * there's more than a couple of CPUs, since it has concurrency
+	 * problems.
+	 */
+	if (ncpu > 2) {
+		extern bool ubc_direct;
+		ubc_direct = false;
+	}
+#endif
 
 	for (;;) {
 		/* Update legacy stats for post-mortem debugging. */

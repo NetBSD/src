@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.66.4.1 2020/04/20 11:29:04 bouyer Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.66.4.2 2020/04/25 11:23:59 bouyer Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.66.4.1 2020/04/20 11:29:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.66.4.2 2020/04/25 11:23:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,6 +127,7 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_100SERIES_LP_SMB:
 		case PCI_PRODUCT_INTEL_2HS_SMB:
 		case PCI_PRODUCT_INTEL_3HS_SMB:
+		case PCI_PRODUCT_INTEL_3HS_U_SMB:
 		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
 		case PCI_PRODUCT_INTEL_CORE5G_M_SMB:
 		case PCI_PRODUCT_INTEL_CMTLK_SMB:

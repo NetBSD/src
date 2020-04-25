@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.545 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.545.2.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.545 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.545.2.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -672,6 +672,72 @@ do_sys_sync(struct lwp *l)
 #endif /* DEBUG */
 }
 
+static bool
+sync_vnode_filter(void *cookie, vnode_t *vp)
+{
+
+	if (vp->v_numoutput > 0) {
+		++*(int *)cookie;
+	}
+	return false;
+}
+
+int
+vfs_syncwait(void)
+{
+	int nbusy, nbusy_prev, iter;
+	struct vnode_iterator *vniter;
+	mount_iterator_t *mpiter;
+	struct mount *mp;
+
+	for (nbusy_prev = 0, iter = 0; iter < 20;) {
+		nbusy = 0;
+		mountlist_iterator_init(&mpiter);
+		while ((mp = mountlist_iterator_next(mpiter)) != NULL) {
+			vnode_t *vp __diagused;
+			vfs_vnode_iterator_init(mp, &vniter);
+			vp = vfs_vnode_iterator_next(vniter,
+			    sync_vnode_filter, &nbusy);
+			KASSERT(vp == NULL);
+			vfs_vnode_iterator_destroy(vniter);
+		}
+		mountlist_iterator_destroy(mpiter);
+
+		if (nbusy == 0)
+			break;
+		if (nbusy_prev == 0)
+			nbusy_prev = nbusy;
+		printf("%d ", nbusy);
+		kpause("syncwait", false, MAX(1, hz / 25 * iter), NULL);
+		if (nbusy >= nbusy_prev) /* we didn't flush anything */
+			iter++;
+		else
+			nbusy_prev = nbusy;
+	}
+
+	if (nbusy) {
+#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
+		printf("giving up\nPrinting vnodes for busy buffers\n");
+		mountlist_iterator_init(&mpiter);
+		while ((mp = mountlist_iterator_next(mpiter)) != NULL) {
+			vnode_t *vp;
+			vfs_vnode_iterator_init(mp, &vniter);
+			vp = vfs_vnode_iterator_next(vniter,
+			    NULL, NULL);
+			mutex_enter(vp->v_interlock);
+			if (vp->v_numoutput > 0)
+				vprint(NULL, vp);
+			mutex_exit(vp->v_interlock);
+			vrele(vp);
+			vfs_vnode_iterator_destroy(vniter);
+		}
+		mountlist_iterator_destroy(mpiter);
+#endif
+	}
+
+	return nbusy;
+}
+
 /* ARGSUSED */
 int
 sys_sync(struct lwp *l, const void *v, register_t *retval)
@@ -1100,32 +1166,37 @@ int
 dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
     int root)
 {
-	struct vnode *rvp;
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	bool chrooted;
 	int error = 0;
+
+	KASSERT(l == curlwp);
+
+	/*
+	 * This is safe unlocked.  cwdi_rdir never goes non-NULL -> NULL,
+	 * since it would imply chroots can be escaped.  Just make sure this
+	 * routine is self-consistent.
+	 */
+	chrooted = (atomic_load_relaxed(&cwdi->cwdi_rdir) != NULL);
 
 	/*
 	 * If MNT_NOWAIT or MNT_LAZY is specified, do not
 	 * refresh the fsstat cache. MNT_WAIT or MNT_LAZY
 	 * overrides MNT_NOWAIT.
 	 */
-	KASSERT(l == curlwp);
-	rvp = cwdrdir();
 	if (flags == MNT_NOWAIT	|| flags == MNT_LAZY ||
 	    (flags != MNT_WAIT && flags != 0)) {
 		memcpy(sp, &mp->mnt_stat, sizeof(*sp));
 	} else {
 		/* Get the filesystem stats now */
 		memset(sp, 0, sizeof(*sp));
-		if ((error = VFS_STATVFS(mp, sp)) != 0) {
-			if (rvp)
-				vrele(rvp);
+		if ((error = VFS_STATVFS(mp, sp)) != 0)
 			return error;
-		}
-		if (rvp == NULL)
+		if (!chrooted)
 			(void)memcpy(&mp->mnt_stat, sp, sizeof(mp->mnt_stat));
 	}
 
-	if (rvp != NULL) {
+	if (chrooted) {
 		size_t len;
 		char *bp;
 		char c;
@@ -1133,11 +1204,12 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
-		error = getcwd_common(rvp, rootvnode, &bp, path,
+		rw_enter(&cwdi->cwdi_lock, RW_READER);
+		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
+		rw_exit(&cwdi->cwdi_lock);
 		if (error) {
 			PNBUF_PUT(path);
-			vrele(rvp);
 			return error;
 		}
 		len = strlen(bp);
@@ -1162,7 +1234,6 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
 			}
 		}
 		PNBUF_PUT(path);
-		vrele(rvp);
 	}
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;
@@ -1332,6 +1403,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	/* {
 		syscallarg(int) fd;
 	} */
+	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
@@ -1371,7 +1443,8 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	 * Disallow changing to a directory not under the process's
 	 * current root directory (if there is one).
 	 */
-	cwdi = cwdenter(RW_WRITER);
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir && !vn_isunder(vp, NULL, l)) {
 		vrele(vp);
 		error = EPERM;	/* operation not permitted */
@@ -1379,7 +1452,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		vrele(cwdi->cwdi_cdir);
 		cwdi->cwdi_cdir = vp;
 	}
-	cwdexit(cwdi);
+	rw_exit(&cwdi->cwdi_lock);
 
  out:
 	fd_putfile(fd);
@@ -1430,19 +1503,19 @@ sys_chdir(struct lwp *l, const struct sys_chdir_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
+	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	int error;
-	struct vnode *vp, *ovp;
+	struct vnode *vp;
 
-	error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE, &vp, l);
-	if (error != 0)
+	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
+				  &vp, l)) != 0)
 		return (error);
-
-	cwdi = cwdenter(RW_WRITER);
-	ovp = cwdi->cwdi_cdir;
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	vrele(cwdi->cwdi_cdir);
 	cwdi->cwdi_cdir = vp;
-	cwdexit(cwdi);
-	vrele(ovp);
+	rw_exit(&cwdi->cwdi_lock);
 	return (0);
 }
 
@@ -1476,14 +1549,14 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 void
 change_root(struct vnode *vp)
 {
-	struct cwdinfo *cwdi;
 	kauth_cred_t ncred;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct cwdinfo *cwdi = p->p_cwdi;
 
 	ncred = kauth_cred_alloc();
 
-	cwdi = cwdenter(RW_WRITER);
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
 	cwdi->cwdi_rdir = vp;
@@ -1502,7 +1575,7 @@ change_root(struct vnode *vp)
 		vref(vp);
 		cwdi->cwdi_cdir = vp;
 	}
-	cwdexit(cwdi);
+	rw_exit(&cwdi->cwdi_lock);
 
 	/* Get a write lock on the process credential. */
 	proc_crmod_enter();

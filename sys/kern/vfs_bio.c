@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.290.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.290.2.2 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.290.2.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.290.2.2 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1706,57 +1706,6 @@ biointr(void *cookie)
 		s = splvm();
 	}
 	splx(s);
-}
-
-/*
- * Wait for all buffers to complete I/O
- * Return the number of "stuck" buffers.
- */
-int
-buf_syncwait(void)
-{
-	buf_t *bp;
-	int iter, nbusy, nbusy_prev = 0, ihash;
-
-	BIOHIST_FUNC(__func__); BIOHIST_CALLED(biohist);
-
-	for (iter = 0; iter < 20;) {
-		mutex_enter(&bufcache_lock);
-		nbusy = 0;
-		for (ihash = 0; ihash < bufhash+1; ihash++) {
-		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
-			if ((bp->b_cflags & (BC_BUSY|BC_INVAL)) == BC_BUSY)
-				nbusy += ((bp->b_flags & B_READ) == 0);
-		    }
-		}
-		mutex_exit(&bufcache_lock);
-
-		if (nbusy == 0)
-			break;
-		if (nbusy_prev == 0)
-			nbusy_prev = nbusy;
-		printf("%d ", nbusy);
-		kpause("bflush", false, MAX(1, hz / 25 * iter), NULL);
-		if (nbusy >= nbusy_prev) /* we didn't flush anything */
-			iter++;
-		else
-			nbusy_prev = nbusy;
-	}
-
-	if (nbusy) {
-#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
-		printf("giving up\nPrinting vnodes for busy buffers\n");
-		for (ihash = 0; ihash < bufhash+1; ihash++) {
-		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
-			if ((bp->b_cflags & (BC_BUSY|BC_INVAL)) == BC_BUSY &&
-			    (bp->b_flags & B_READ) == 0)
-				vprint(NULL, bp->b_vp);
-		    }
-		}
-#endif
-	}
-
-	return nbusy;
 }
 
 static void

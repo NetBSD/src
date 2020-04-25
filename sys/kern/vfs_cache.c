@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.137.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.137.2.2 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.137.2.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.137.2.2 2020/04/25 11:24:06 bouyer Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -664,10 +664,13 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 * before we get its lock.
 	 *
 	 * Note that the two locks can be the same if looking up a dot, for
-	 * example: /usr/bin/.
+	 * example: /usr/bin/.  If looking up the parent (..) we can't wait
+	 * on the lock as child -> parent is the wrong direction.
 	 */
 	if (*plock != &dvi->vi_nc_lock) {
-		rw_enter(&dvi->vi_nc_lock, RW_READER);
+		if (!rw_tryenter(&dvi->vi_nc_lock, RW_READER)) {
+			return false;
+		}
 		if (*plock != NULL) {
 			rw_exit(*plock);
 		}

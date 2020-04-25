@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.5 2010/10/05 23:48:16 jym Exp $	*/
+/*	$NetBSD: kcore.h,v 1.5.70.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -50,7 +50,7 @@ typedef struct cpu_kcore_hdr {
  * To avoid any kind of conflict with existing MMU bits, we chose one
  * ignored by hardware
  */
-#define I386_KCORE_PAE	PG_AVAIL1
+#define I386_KCORE_PAE	PTE_AVL1
 
 #ifdef _KERNEL
 void	dumpsys(void);
