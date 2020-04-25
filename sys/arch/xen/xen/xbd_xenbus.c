@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.97.2.2 2020/04/20 11:29:01 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.97.2.3 2020/04/25 11:23:58 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97.2.2 2020/04/20 11:29:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97.2.3 2020/04/25 11:23:58 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -770,7 +770,7 @@ xbd_features(struct xbd_xenbus_softc *sc)
 	    "feature-max-indirect-segments", &val, 10);
 	if (err)
 		val = 0;
-	if (val > (MAXPHYS >> PAGE_SHIFT)) {
+	if (val >= (MAXPHYS >> PAGE_SHIFT) + 1) {
 		/* We can use indirect segments, the limit is big enough */
 		sc->sc_features |= BLKIF_FEATURE_INDIRECT;
 	}

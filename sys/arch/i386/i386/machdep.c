@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.825.4.3 2020/04/18 14:47:55 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.825.4.4 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.3 2020/04/18 14:47:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.4 2020/04/25 11:23:56 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -486,15 +486,14 @@ void
 i386_switch_context(lwp_t *l)
 {
 	struct pcb *pcb;
-	struct physdev_op physop;
 
 	pcb = lwp_getpcb(l);
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
+	struct physdev_set_iopl set_iopl;
+	set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.205.2.1 2020/04/20 11:29:13 bouyer Exp $	*/
+/*	$NetBSD: lwp.h,v 1.205.2.2 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -136,22 +136,8 @@ struct lwp {
 	bool		l_vforkwaiting;	/* a: vfork() waiting */
 
 	/* User-space synchronization. */
-	uintptr_t	l___reserved;	/* reserved for future use */
-	/*
-	 * The global thread ID has special locking and access
-	 * considerations.  Because many LWPs may never need one,
-	 * global thread IDs are allocated lazily in lwp_gettid().
-	 * l___tid is not bean to be accessed directly unless
-	 * the accessor has specific knowledge that doing so
-	 * is safe.  l___tid is only assigned by the LWP itself.
-	 * Once assigned, it is stable until the LWP exits.
-	 * An LWP assigns its own thread ID unlocked before it
-	 * reaches visibility to the rest of the system, and
-	 * can access its own thread ID unlocked.  But once
-	 * published, it must hold the proc's lock to change
-	 * the value.
-	 */
-	lwpid_t		l___tid;	/* p: global thread id */
+	uintptr_t	l___rsvd0;	/* reserved for future use */
+	uint32_t	l___rsvd1;	/* reserved for future use */
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
@@ -287,7 +273,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
-#define	LP_PIDLID	0x00000008 /* free LID from PID space on exit */
+	/* 		0x00000008    was LP_PIDLID */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
@@ -325,6 +311,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
  *
  * These values are set in stone and must not be reused with future changes.
  */
+#define	LSLARVAL	0	/* in pid table, but partially constructed */
 #define	LSIDL		1	/* Process being created by fork. */
 #define	LSRUN		2	/* Currently runnable. */
 #define	LSSLEEP		3	/* Sleeping on an address. */
@@ -362,13 +349,13 @@ kmutex_t *lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
+lwp_t *	lwp_getref_lwpid(lwpid_t);
 void	lwp_delref(lwp_t *);
 void	lwp_delref2(lwp_t *);
 bool	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
-void	lwp_renumber(lwp_t *, lwpid_t);
 int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
@@ -389,8 +376,6 @@ int	lwp_setprivate(lwp_t *, void *);
 int	do_lwp_create(lwp_t *, void *, u_long, lwp_t **, const sigset_t *,
     const stack_t *);
 
-lwpid_t	lwp_gettid(void);
-lwp_t *	lwp_getref_tid(lwpid_t);
 void	lwp_thread_cleanup(lwp_t *);
 
 void	lwpinit_specificdata(void);
@@ -606,7 +591,7 @@ curlwp_bindx(int bound)
 #define	LWP_SUSPENDED	0x00000080
 
 /* Kernel-internal flags for LWP creation. */
-#define	LWP_PIDLID	0x40000000
+	/*		0x40000000	was LWP_PIDLID */
 #define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

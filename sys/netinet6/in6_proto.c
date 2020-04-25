@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.126 2018/08/14 14:49:14 maxv Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.126.10.1 2020/04/25 11:24:06 bouyer Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.126 2018/08/14 14:49:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.126.10.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -335,6 +335,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = sctp6_input,
 	.pr_ctlinput = sctp6_ctlinput,
 	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp6_usrreqs,
 	.pr_drain = sctp_drain,
 },
 {	.pr_type = SOCK_STREAM,
@@ -344,6 +345,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = sctp6_input,
 	.pr_ctlinput = sctp6_ctlinput,
 	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp6_usrreqs,
 	.pr_drain = sctp_drain,
 },
 #endif /* SCTP */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.2 2020/01/11 21:43:10 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.2.4.1 2020/04/25 11:23:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.2 2020/01/11 21:43:10 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.2.4.1 2020/04/25 11:23:59 bouyer Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -279,8 +279,8 @@ Static const keysym_t hidkbd_keydesc_us_colemak[] = {
 
 Static const keysym_t hidkbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
-    KC(57), 			KS_Control_L,
-    KC(224), KS_Cmd1,		KS_Caps_Lock,
+    KC(57),  KS_Cmd1,		KS_Control_L,
+    KC(224), 			KS_Caps_Lock,
 };
 
 Static const keysym_t hidkbd_keydesc_de[] = {

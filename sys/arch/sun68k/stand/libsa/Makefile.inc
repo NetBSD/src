@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2017/04/09 18:46:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5.24.1 2020/04/25 11:23:57 bouyer Exp $
 
 S!=	cd ${SA_EXTRADIR}/../../../..; pwd
 
@@ -16,7 +16,10 @@ SRCS+=	ctrlsp.S
 
 # XXX libkern builds these only on m68000
 .PATH.S: ${S}/../common/lib/libc/arch/m68k/gen
-SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
+SRCS+=	mulsi3.S
+
+.PATH.S: ${S}/lib/libkern/arch/m68k
+SRCS+=	divsi3.S udivsi3.S modsi3.S umodsi3.S
 
 VERSIONFILE=${SA_EXTRADIR}/version
 .include "${S}/conf/newvers_stand.mk"

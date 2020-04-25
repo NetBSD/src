@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.44 2020/03/02 16:00:54 riastradh Exp $
+#	$NetBSD: files.kern,v 1.44.4.1 2020/04/25 11:24:05 bouyer Exp $
 
 #
 # kernel sources
@@ -183,7 +183,7 @@ file	kern/tty_tty.c			kern
 file	kern/uipc_accf.c		kern
 file	kern/uipc_domain.c		kern
 file	kern/uipc_mbuf.c		kern
-file	kern/uipc_mbufdebug.c		kern & ether
+file	kern/uipc_mbufdebug.c		kern & ether & ddb
 file	net/link_proto.c		kern	# XXX
 file	kern/uipc_proto.c		kern
 file	kern/uipc_sem.c			kern

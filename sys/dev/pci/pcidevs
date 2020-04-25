@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1404.2.1 2020/04/20 11:29:04 bouyer Exp $
+$NetBSD: pcidevs,v 1.1404.2.2 2020/04/25 11:23:59 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1109,7 +1109,7 @@ product AMD PCSCSI_PCI		0x2020	PCscsi-PCI SCSI
 product AMD GEODELX_PCHB	0x2080	Geode LX Host-PCI Bridge
 product AMD GEODELX_VGA 	0x2081	Geode LX VGA Controller
 product AMD GEODELX_AES 	0x2082	Geode LX AES Security Block
-product	AMD CS5536_PCISB	0x208f	CS5536 GeodeLink PCI South Bridge
+product AMD CS5536_PCISB	0x208f	CS5536 GeodeLink PCI South Bridge
 product AMD CS5536_PCIB		0x2090	CS5536 PCI-ISA Bridge
 product AMD CS5536_FLASH	0x2091	CS5536 Flash
 product AMD CS5536_AUDIO	0x2093	CS5536 Audio
@@ -1289,16 +1289,19 @@ product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 product APPLE BCM5701		0x1645	BCM5701
 
 /* Aquantia Corp. */
+product AQUANTIA AQC100		0x00b1	AQC100 10 Gigabit Network Adapter
 product AQUANTIA AQC107		0x07b1	AQC107 10 Gigabit Network Adapter
 product AQUANTIA AQC108		0x08b1	AQC108 5 Gigabit Network Adapter
 product AQUANTIA AQC109		0x09b1	AQC109 2.5 Gigabit Network Adapter
 product AQUANTIA AQC111		0x11b1	AQC111 5 Gigabit Network Adapter
 product AQUANTIA AQC112		0x12b1	AQC112 2.5 Gigabit Network Adapter
+product AQUANTIA AQC100S	0x80b1	AQC100S 10 Gigabit Network Adapter
 product AQUANTIA AQC107S	0x87b1	AQC107S 10 Gigabit Network Adapter
 product AQUANTIA AQC108S	0x88b1	AQC108S 5 Gigabit Network Adapter
 product AQUANTIA AQC109S	0x89b1	AQC109S 2.5 Gigabit Network Adapter
 product AQUANTIA AQC111S	0x91b1	AQC111S 5 Gigabit Network Adapter
 product AQUANTIA AQC112S	0x92b1	AQC112S 2.5 Gigabit Network Adapter
+product AQUANTIA D100		0xd100	D100 10 Gigabit Network Adapter
 product AQUANTIA D107		0xd107	D107 10 Gigabit Network Adapter
 product AQUANTIA D108		0xd108	D108 5 Gigabit Network Adapter
 product AQUANTIA D109		0xd109	D109 2.5 Gigabit Network Adapter
@@ -5201,6 +5204,7 @@ product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
 product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 product INTEL AMBLK_Y_GT2_2	0x87c0	UHD Graphics 617 (GT2)
+product INTEL AMBLK_Y_IGD	0x87ca	UHD Graphics
 product INTEL EG20T_PCIB	0x8800	EG20T PCH PCIe Bridge
 product INTEL EG20T_PCTHUB	0x8801	EG20T PCH Packet Hub
 product INTEL EG20T_GBE		0x8802	EG20T PCH Gigabit Ether
@@ -5471,6 +5475,60 @@ product INTEL 100SERIES_LP_I2C_5 0x9d65	100 Series I2C 5
 product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
 product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
 product INTEL 2HS_U_HDA		0x9d71	200 Series HD Audio
+product INTEL WIFI_LINK_9560_1	0x9df0	Dual Band Wireless AC 9560
+product INTEL 3HS_Y_P_LPC	0x9d83	300 Series Premiun-Y LPC
+product INTEL 3HS_U_P_LPC	0x9d84	300 Series Premium-U LPC
+product INTEL 3HS_U_M_LPC	0x9d84	300 Series Mainstream/Base U LPC
+product INTEL 3HS_U_P2SB	0x9da0	300 Series P2SB
+product INTEL 3HS_U_PMC		0x9da1	300 Series PMC
+product INTEL 3HS_U_SMB		0x9da3	300 Series SMBus
+product INTEL 3HS_U_SPI_FLASH	0x9da4	300 Series SPI (flash)
+product INTEL 3HS_U_TRACE	0x9da6	300 Series Trace Hub
+product INTEL 3HS_U_UART_0	0x9da8	300 Series UART #0
+product INTEL 3HS_U_UART_1	0x9da9	300 Series UART #1
+product INTEL 3HS_U_SPI_0	0x9daa	300 Series SPI #0
+product INTEL 3HS_U_SPI_1	0x9dab	300 Series SPI #1
+product INTEL 3HS_U_PCIE_9	0x9db0	300 Series PCIe Root Port 9
+product INTEL 3HS_U_PCIE_10	0x9db1	300 Series PCIe Root Port 10
+product INTEL 3HS_U_PCIE_11	0x9db2	300 Series PCIe Root Port 11
+product INTEL 3HS_U_PCIE_12	0x9db3	300 Series PCIe Root Port 12
+product INTEL 3HS_U_PCIE_13	0x9db4	300 Series PCIe Root Port 13
+product INTEL 3HS_U_PCIE_14	0x9db5	300 Series PCIe Root Port 14
+product INTEL 3HS_U_PCIE_15	0x9db6	300 Series PCIe Root Port 15
+product INTEL 3HS_U_PCIE_16	0x9db7	300 Series PCIe Root Port 16
+product INTEL 3HS_U_PCIE_1	0x9db8	300 Series PCIe Root Port 1
+product INTEL 3HS_U_PCIE_2	0x9db9	300 Series PCIe Root Port 2
+product INTEL 3HS_U_PCIE_3	0x9dba	300 Series PCIe Root Port 3
+product INTEL 3HS_U_PCIE_4	0x9dbb	300 Series PCIe Root Port 4
+product INTEL 3HS_U_PCIE_5	0x9dbc	300 Series PCIe Root Port 5
+product INTEL 3HS_U_PCIE_6	0x9dbd	300 Series PCIe Root Port 6
+product INTEL 3HS_U_PCIE_7	0x9dbe	300 Series PCIe Root Port 7
+product INTEL 3HS_U_PCIE_8	0x9dbf	300 Series PCIe Root Port 8
+product INTEL 3HS_U_EMMC	0x9dc4	300 Series eMMC
+product INTEL 3HS_U_I2C_4	0x9dc5	300 Series I2C #4
+product INTEL 3HS_U_I2C_5	0x9dc6	300 Series I2C #5
+product INTEL 3HS_U_UART_2	0x9dc7	300 Series UART #2
+product INTEL 3HS_U_HDA		0x9dc8	300 Series HD Audio
+product INTEL 3HS_U_AHCI	0x9dd3	300 Series SATA AHCI
+product INTEL 3HS_U_RAID_1	0x9dd5	300 Series SATA RAID
+product INTEL 3HS_U_RAID_2	0x9dd7	300 Series SATA RAID premium
+product INTEL 3HS_U_MEI_1	0x9de0	300 Series MEI #1
+product INTEL 3HS_U_MEI_2	0x9de1	300 Series MEI #2
+product INTEL 3HS_U_IDER	0x9de2	300 Series IDE-R
+product INTEL 3HS_U_KT		0x9de3	300 Series KT
+product INTEL 3HS_U_MEI_3	0x9de4	300 Series MEI #3
+product INTEL 3HS_U_MEI_4	0x9de5	300 Series MEI #4
+product INTEL 3HS_U_I2C_0	0x9de8	300 Series I2C #0
+product INTEL 3HS_U_I2C_1	0x9de9	300 Series I2C #1
+product INTEL 3HS_U_I2C_2	0x9dea	300 Series I2C #2
+product INTEL 3HS_U_I2C_3	0x9deb	300 Series I2C #3
+product INTEL 3HS_U_XHCI	0x9ded	300 Series USB 3.1 xHCI
+product INTEL 3HS_U_SSRAM	0x9def	300 Series Shared SRAM
+product INTEL WL_9560_1		0x9df0	Dual Band Wireless AC 9560
+product INTEL 3HS_U_SDXC	0x9df5	300 Series SDXC
+product INTEL 3HS_U_THERM	0x9df9	300 Series Thermal
+product INTEL 3HS_U_SPI_2	0x9dfb	300 Series SPI #2
+product INTEL 3HS_U_ISH		0x9dfc	300 Series Image Sensor Hub
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_IGD_1	0xa002	Pineview Integrated Graphics Device
@@ -6747,6 +6805,7 @@ product NVIDIA	NVS_4200M2	0x1057	GeForce NVS 4200M
 product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
 product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
 product NVIDIA	GT610M		0x105A	GeForce GT 610M
+product NVIDIA	GF_GTX680	0x1180 	GeForce GTX 680
 product NVIDIA	GF116		0x1244	GeForce GTX 550 Ti
 product NVIDIA	GF_GTX960	0x1401 	GeForce GTX 960
 product NVIDIA	GF_GTX950	0x1402 	GeForce GTX 950
@@ -7154,6 +7213,7 @@ product REALTEK RTS5208		0x5208	RTS5208 PCI-E Card Reader
 product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader
 product REALTEK RTS5227		0x5227	RTS5227 PCI-E Card Reader
 product REALTEK RTS5229		0x5229	RTS5229 PCI-E Card Reader
+product REALTEK RTS522A		0x522A	RTS522A PCI-E Card Reader
 product REALTEK RTS5249		0x5249	RTS5249 PCI-E Card Reader
 product REALTEK RTS525A		0x525A	RTS525A PCI-E Card Reader
 product REALTEK RTL8402		0x5286	RTL8402 PCI-E Card Reader

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.217.2.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.217.2.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -536,6 +536,7 @@ namei_getstartdir(struct namei_state *state)
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
+	struct lwp *self = curlwp;	/* thread doing namei() */
 	struct vnode *rootdir, *erootdir, *curdir, *startdir;
 
 	if (state->root_referenced) {
@@ -546,8 +547,8 @@ namei_getstartdir(struct namei_state *state)
 		state->root_referenced = 0;
 	}
 
-	/* NB: must not block while inspecting the cwdinfo. */
-	cwdi = cwdenter(RW_READER);
+	cwdi = self->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
 
 	/* root dir */
 	if (cwdi->cwdi_rdir == NULL || (cnp->cn_flags & NOCHROOT)) {
@@ -605,7 +606,7 @@ namei_getstartdir(struct namei_state *state)
 		vref(state->ndp->ni_erootdir);
 	state->root_referenced = 1;
 
-	cwdexit(cwdi);
+	rw_exit(&cwdi->cwdi_lock);
 	return startdir;
 }
 
@@ -1285,14 +1286,19 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		}
 
 		/*
-		 * Can't deal with dotdot lookups, because it means lock
-		 * order reversal, and there are checks in lookup_once()
-		 * that need to be made.  Also check for missing mountpoints.
+		 * Can't deal with DOTDOT lookups if NOCROSSMOUNT or the
+		 * lookup is chrooted.
 		 */
-		if ((cnp->cn_flags & ISDOTDOT) != 0 ||
-		    searchdir->v_mount == NULL) {
-			error = EOPNOTSUPP;
-			break;
+		if ((cnp->cn_flags & ISDOTDOT) != 0) {
+			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
+			    (cnp->cn_flags & NOCROSSMOUNT)) {
+			    	error = EOPNOTSUPP;
+				break;
+			}
+			if (ndp->ni_rootdir != rootvnode) {
+			    	error = EOPNOTSUPP;
+				break;
+			}
 		}
 
 		/*
@@ -1308,13 +1314,6 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			}
 		}
 
-		/* Can't deal with -o union lookups. */
-		if ((searchdir->v_vflag & VV_ROOT) != 0 &&
-		    (searchdir->v_mount->mnt_flag & MNT_UNION) != 0) {
-		    	error = EOPNOTSUPP;
-		    	break;
-		}
-
 		/*
 		 * Good, now look for it in cache.  cache_lookup_linked()
 		 * will fail if there's nothing there, or if there's no
@@ -1328,9 +1327,18 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		}
 		KASSERT(plock != NULL && rw_lock_held(plock));
 
-		/* Scored a hit.  Negative is good too (ENOENT). */
+		/*
+		 * Scored a hit.  Negative is good too (ENOENT).  If there's
+		 * a '-o union' mount here, punt and let lookup_once() deal
+		 * with it.
+		 */
 		if (foundobj == NULL) {
-			error = ENOENT;
+			if ((searchdir->v_vflag & VV_ROOT) != 0 &&
+			    (searchdir->v_mount->mnt_flag & MNT_UNION) != 0) {
+			    	error = EOPNOTSUPP;
+			} else {
+				error = ENOENT;
+			}
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117.4.6 2020/04/18 15:06:18 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.7 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -486,6 +486,9 @@ void 	tmx86_init_longrun(void);
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 void	identify_hypervisor(void);
+
+/* identcpu_subr.c */
+uint64_t cpu_tsc_freq_cpuid(struct cpu_info *);
 
 typedef enum vm_guest {
 	VM_GUEST_NO = 0,

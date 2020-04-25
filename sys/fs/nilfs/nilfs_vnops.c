@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.38.6.1 2020/04/20 11:29:09 bouyer Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.38.6.2 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.38.6.1 2020/04/20 11:29:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.38.6.2 2020/04/25 11:24:05 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -179,7 +179,7 @@ nilfs_read(void *v)
 
 		/* ubc, here we come, prepare to trap */
 		error = ubc_uiomove(uobj, uio, len, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 	}
@@ -269,7 +269,7 @@ nilfs_write(void *v)
 
 		/* ubc, here we come, prepare to trap */
 		error = ubc_uiomove(uobj, uio, len, advice,
-		    UBC_WRITE | UBC_UNMAP_FLAG(vp));
+		    UBC_WRITE | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 	}

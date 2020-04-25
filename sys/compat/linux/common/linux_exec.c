@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.121 2020/02/15 17:13:55 ad Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.121.4.1 2020/04/25 11:23:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008, 2020
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.121 2020/02/15 17:13:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.121.4.1 2020/04/25 11:23:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,6 @@ linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 	}
 
 	KASSERT(p->p_nlwps == 1);
-	l = LIST_FIRST(&p->p_lwps);
-	lwp_renumber(l, p->p_pid);
 }
 
 void
@@ -152,7 +150,6 @@ linux_e_proc_fork(struct proc *p2, struct lwp *l1, int flags)
 
 	KASSERT(p2->p_nlwps == 1);
 	l2 = LIST_FIRST(&p2->p_lwps);
-	lwp_renumber(l2, p2->p_pid);
 	led1 = l1->l_emuldata;
 	led2 = l2->l_emuldata;
 	led2->led_child_tidptr = led1->led_child_tidptr;

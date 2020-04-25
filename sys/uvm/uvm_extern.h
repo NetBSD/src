@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.222.2.1 2020/04/20 11:29:14 bouyer Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.222.2.2 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -226,6 +226,7 @@ b\32UNMAP\0\
 #define UBC_FAULTBUSY	0x004	/* nobody else is using these pages, so busy
 				 * them at alloc and unbusy at release (e.g.,
 				 * for writes extending a file) */
+#define	UBC_ISMAPPED	0x008	/* object may be mapped by a process */
 
 /*
  * flags for ubc_release()
@@ -549,11 +550,13 @@ extern bool vm_page_zero_enable;
  * helpers for calling ubc_release()
  */
 #ifdef PMAP_CACHE_VIVT
-#define UBC_WANT_UNMAP(vp) (((vp)->v_iflag & VI_TEXT) != 0)
+#define UBC_VNODE_FLAGS(vp) \
+    ((((vp)->v_iflag & VI_TEXT) != 0 ? UBC_UNMAP : 0) |
+    (((vp)->v_vflag & VV_MAPPED) != 0 ? UBC_ISMAPPED : 0))
 #else
-#define UBC_WANT_UNMAP(vp) false
+#define UBC_VNODE_FLAGS(vp) \
+    (((vp)->v_vflag & VV_MAPPED) != 0 ? UBC_ISMAPPED : 0)
 #endif
-#define UBC_UNMAP_FLAG(vp) (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0)
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 /*

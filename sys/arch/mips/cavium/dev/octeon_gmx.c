@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.8 2020/01/29 05:30:14 thorpej Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.8.4.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.8 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.8.4.1 2020/04/25 11:23:56 bouyer Exp $");
 
 #include "opt_octeon.h"
 
@@ -847,9 +847,6 @@ octeon_gmx_rgmii_speed_speed(struct octeon_gmx_port_softc *sc)
 static int
 octeon_gmx_rgmii_timing(struct octeon_gmx_port_softc *sc)
 {
-	prop_dictionary_t dict = device_properties(sc->sc_port_gmx->sc_dev);
-	prop_object_t clk;
-	int clk_tx_setting, clk_rx_setting;
 	uint64_t rx_frm_ctl;
 
 	/* RGMII TX Threshold Registers
@@ -887,14 +884,9 @@ octeon_gmx_rgmii_timing(struct octeon_gmx_port_softc *sc)
 	/* RGMII TX Clock-Delay Registers
 	 * Delay setting to place n TXC (RGMII transmit clock) delay line.
 	 */
-	clk = prop_dictionary_get(dict, "rgmii-tx");
-	KASSERT(clk != NULL);
-	clk_tx_setting = prop_number_integer_value(clk);
-	clk = prop_dictionary_get(dict, "rgmii-rx");
-	KASSERT(clk != NULL);
-	clk_rx_setting = prop_number_integer_value(clk);
 
-	octeon_asx_clk_set(sc->sc_port_asx, clk_tx_setting, clk_rx_setting);
+	octeon_asx_clk_set(sc->sc_port_asx,
+			   sc->sc_clk_tx_setting, sc->sc_clk_rx_setting);
 
 	return 0;
 }

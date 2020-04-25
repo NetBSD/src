@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/01/12 15:26:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17.40.1 2020/04/25 11:23:56 bouyer Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
@@ -9,6 +9,11 @@ CPPFLAGS+=	-DBOOTXX -DLIBSA_NO_CLOSE
 STRIPFLAG=
 LINKFLAGS=	-N -Ttext ${RELOC_BOOTXX} -e start
 CLEANFILES+=	${PROG}.sym
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=

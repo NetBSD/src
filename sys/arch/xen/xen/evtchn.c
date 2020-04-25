@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.11 2020/04/20 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.12 2020/04/25 11:23:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.11 2020/04/20 19:46:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.12 2020/04/25 11:23:58 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -108,12 +108,7 @@ static int virq_to_evtch[NR_VIRQS];
 #if NPCI > 0 || NISA > 0
 /* event-channel <-> PIRQ mapping */
 static int pirq_to_evtch[NR_PIRQS];
-/* PIRQ needing notify */
-static uint32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
 int pirq_interrupt(void *);
-physdev_op_t physdev_op_notify = {
-	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
-};
 #endif
 
 static void xen_evtchn_mask(struct pic *, int);
@@ -244,8 +239,6 @@ events_default_setup(void)
 	/* No PIRQ -> event mappings. */
 	for (i = 0; i < NR_PIRQS; i++)
 		pirq_to_evtch[i] = -1;
-	for (i = 0; i < NR_EVENT_CHANNELS / 32; i++)
-		pirq_needs_unmask_notify[i] = 0;
 #endif
 
 	/* No event-channel are 'live' right now. */
@@ -276,9 +269,6 @@ events_init(void)
 	evtsource[debug_port] = (void *)-1;
 	xen_atomic_set_bit(&curcpu()->ci_evtmask[0], debug_port);
 	hypervisor_unmask_event(debug_port);
-#if NPCI > 0 || NISA > 0
-	hypervisor_ack_pirq_event(debug_port);
-#endif /* NPCI > 0 || NISA > 0 */
 #endif /* XENPV */
 	x86_enable_intr();		/* at long last... */
 }
@@ -339,9 +329,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	if (__predict_false(evtch == debug_port)) {
 		xen_debug_handler(NULL);
 		hypervisor_unmask_event(debug_port);
-#if NPCI > 0 || NISA > 0
-		hypervisor_ack_pirq_event(debug_port);
-#endif /* NPCI > 0 || NISA > 0 */		
 		return 0;
 	}
 
@@ -406,9 +393,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	mutex_spin_exit(&evtlock[evtch]);
 	x86_disable_intr();
 	hypervisor_unmask_event(evtch);
-#if NPCI > 0 || NISA > 0
-	hypervisor_ack_pirq_event(evtch);
-#endif /* NPCI > 0 || NISA > 0 */		
 
 splx:
 	ci->ci_ilevel = ilevel;
@@ -746,9 +730,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		return NULL;
 	}
 
-	hypervisor_prime_pirq_event(pirq, evtch);
 	hypervisor_unmask_event(evtch);
-	hypervisor_ack_pirq_event(evtch);
 	return ih;
 }
 
@@ -1028,42 +1010,6 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	}
 	return 0;
 }
-
-#if NPCI > 0 || NISA > 0
-void
-hypervisor_prime_pirq_event(int pirq, unsigned int evtch)
-{
-	physdev_op_t physdev_op;
-	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
-	physdev_op.u.irq_status_query.irq = pirq;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
-	if (physdev_op.u.irq_status_query.flags &
-	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
-		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
-#ifdef IRQ_DEBUG
-		printf("pirq %d needs notify\n", pirq);
-#endif
-	}
-}
-
-void
-hypervisor_ack_pirq_event(unsigned int evtch)
-{
-#ifdef IRQ_DEBUG
-	if (evtch == IRQ_DEBUG)
-		printf("%s: evtch %d\n", __func__, evtch);
-#endif
-
-	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
-#ifdef  IRQ_DEBUG
-		if (evtch == IRQ_DEBUG)
-		    printf("pirq_notify(%d)\n", evtch);
-#endif
-		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
-	}
-}
-#endif /* NPCI > 0 || NISA > 0 */
 
 int
 xen_debug_handler(void *arg)

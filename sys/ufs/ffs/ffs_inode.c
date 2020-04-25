@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.126.4.1 2020/04/20 11:29:14 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.126.4.2 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.126.4.1 2020/04/20 11:29:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.126.4.2 2020/04/25 11:24:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -364,7 +364,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		eoz = MIN(MAX(ffs_lblktosize(fs, lbn) + size, round_page(pgoffset)),
 		    osize);
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
-		    UBC_UNMAP_FLAG(ovp));
+		    UBC_VNODE_FLAGS(ovp));
 		if (round_page(eoz) > round_page(length)) {
 			rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(ovp, round_page(length),

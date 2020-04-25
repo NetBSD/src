@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.108.2.1 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.108.2.1 2020/04/25 11:24:08 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -64,7 +64,7 @@ static int __noinline ubc_uiomove_direct(struct uvm_object *, struct uio *, vsiz
 			  int, int);
 static void __noinline ubc_zerorange_direct(struct uvm_object *, off_t, size_t, int);
 
-bool ubc_direct = false; /* XXX */
+bool ubc_direct = true;
 #endif
 
 /*
@@ -734,25 +734,17 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	    ((flags & UBC_READ) != 0 && uio->uio_rw == UIO_READ));
 
 #ifdef UBC_USE_PMAP_DIRECT
-	if (ubc_direct && UVM_OBJ_IS_VNODE(uobj)) {
-		/*
-		 * during direct access pages need to be held busy to
-		 * prevent them disappearing.  if the LWP reads or writes
-		 * a vnode into a mapped view of same it could deadlock.
-		 * prevent this by disallowing direct access if the vnode
-		 * is visible somewhere via mmap().
-		 *
-		 * the vnode flags are tested here, but at all points UBC is
-		 * called for vnodes, the vnode is locked (thus preventing a
-		 * new mapping via mmap() while busy here).
-		 */
+	/*
+	 * during direct access pages need to be held busy to prevent them
+	 * changing identity, and therefore if we read or write an object
+	 * into a mapped view of same we could deadlock while faulting. 
+	 *
+	 * avoid the problem by disallowing direct access if the object
+	 * might be visible somewhere via mmap().
+	 */
 
-		struct vnode *vp = (struct vnode *)uobj;
-		KASSERT(VOP_ISLOCKED(vp) != LK_NONE);
-		if ((vp->v_vflag & VV_MAPPED) == 0) {
-			return ubc_uiomove_direct(uobj, uio, todo, advice,
-			    flags);
-		}
+	if (ubc_direct && (flags & UBC_ISMAPPED) == 0) {
+		return ubc_uiomove_direct(uobj, uio, todo, advice, flags);
 	}
 #endif
 
@@ -896,6 +888,11 @@ again:
 
 		/* Page must be writable by now */
 		KASSERT((pg->flags & PG_RDONLY) == 0 || (flags & UBC_WRITE) == 0);
+
+		/* No managed mapping - mark the page dirty. */
+		if ((flags & UBC_WRITE) != 0) {
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);	
+		}
 	}
 	rw_exit(uobj->vmobjlock);
 
@@ -910,19 +907,26 @@ ubc_direct_release(struct uvm_object *uobj,
 	for (int i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
+		pg->flags &= ~PG_BUSY;
+		UVM_PAGE_OWN(pg, NULL);
+		if (pg->flags & PG_RELEASED) {
+			pg->flags &= ~PG_RELEASED;
+			uvm_pagefree(pg);
+			continue;
+		}
 		uvm_pagelock(pg);
 		uvm_pageactivate(pg);
+		uvm_pagewakeup(pg);
 		uvm_pageunlock(pg);
 
 		/* Page was changed, no longer fake and neither clean. */
 		if (flags & UBC_WRITE) {
-			pg->flags &= ~PG_FAKE;
 			KASSERTMSG(uvm_pagegetdirty(pg) ==
 			    UVM_PAGE_STATUS_DIRTY,
 			    "page %p not dirty", pg);
+			pg->flags &= ~PG_FAKE;
 		}
 	}
-	uvm_page_unbusy(pgs, npages);
 	rw_exit(uobj->vmobjlock);
 }
 

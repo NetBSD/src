@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.9 2009/10/21 23:12:09 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.9.74.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,7 +60,7 @@
 
 #include <sparc/stand/common/promdev.h>
 
-char		rootpath[FNAME_SIZE];
+extern char	rootpath[FNAME_SIZE];
 
 int	netdev_sock = -1;
 static	int open_count;

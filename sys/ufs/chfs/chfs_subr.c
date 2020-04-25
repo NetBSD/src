@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.11 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.11.6.1 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -232,7 +232,7 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 	}
 
 	if (size != 0) {
-		ubc_zerorange(&vp->v_uobj, size, ip->size - size, UBC_UNMAP_FLAG(vp));
+		ubc_zerorange(&vp->v_uobj, size, ip->size - size, UBC_VNODE_FLAGS(vp));
 	}
 	
 	/* drop unused fragments */

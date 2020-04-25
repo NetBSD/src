@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.346.4.3 2020/04/18 14:47:55 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.346.4.4 2020/04/25 11:23:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.3 2020/04/18 14:47:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.4 2020/04/25 11:23:55 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -420,10 +420,9 @@ void
 x86_64_switch_context(struct pcb *new)
 {
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
-	struct physdev_op physop;
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = new->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
+	struct physdev_set_iopl set_iopl;
+	set_iopl.iopl = new->pcb_iopl;
+	HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl);
 }
 
 void
@@ -481,14 +480,13 @@ x86_64_proc0_pcb_ldt_init(void)
 #if !defined(XENPV)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 #else
-	struct physdev_op physop;
 	xen_set_ldt((vaddr_t)ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
+	struct physdev_set_iopl set_iopl;
+	set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl);
 #endif
 }
 

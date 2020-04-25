@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55 2019/07/12 17:18:30 maxv Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55.8.1 2020/04/25 11:24:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.55 2019/07/12 17:18:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.55.8.1 2020/04/25 11:24:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ cd9660_read(void *v)
 			if (bytelen == 0)
 				break;
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error)
 				break;
 		}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.366 2020/03/28 08:35:36 isaki Exp $
+# $NetBSD: GENERIC,v 1.366.2.1 2020/04/25 11:23:56 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.366 $"
+#ident 		"GENERIC-$Revision: 1.366.2.1 $"
 
 maxusers	32
 
@@ -373,13 +373,14 @@ iic*	at ki2c?
 # I2C devices
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
 lmtemp* 	at iic?		# temperature sensor, found in PowerBook5,6
-deq* 		at iic?		# mixer/equalizer, used by snapper
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
 psoc* 		at iic?		# fan controller found in TiBooks
 lmu* 		at iic?		# ambient / keyboard lights
+asms* 		at iic?		# sudden motion sensor, various later *Books
 videopll*	at iic?		# for valkyriefb
 sgsmix* 	at iic?		# Additional mixer found in beige G3
 				# use with awacs.
+deq* 		at iic?		# mixer/equalizer, used by snapper
 
 wi* 		at obio?	# AirMac
 snapper* 	at obio?	# Snapper audio device

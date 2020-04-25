@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.47 2020/04/04 00:01:28 riastradh Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.47.2.1 2020/04/25 11:23:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.47 2020/04/04 00:01:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.47.2.1 2020/04/25 11:23:59 bouyer Exp $");
 
 #include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -396,8 +396,7 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 		panic("vga_raster_init: couldn't map 6845 io");
 
 	if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000,
-	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE,
-	    &vh->vh_allmemh))
+	    BUS_SPACE_MAP_CACHEABLE, &vh->vh_allmemh))
 		panic("vga_init: couldn't map memory");
 
 	if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh, 0, 0x10000,

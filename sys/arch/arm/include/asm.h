@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.30.10.1 2020/04/20 11:28:52 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.30.10.2 2020/04/25 11:23:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -145,7 +145,10 @@
 
 #ifdef GPROF
 # define _PROF_PROLOGUE	\
-	mov x9, x30; bl __mcount
+	stp	x29, x30, [sp, #-16]!;	\
+	mov	fp, sp;			\
+	bl	__mcount; 		\
+	ldp	x29, x30, [sp], #16;
 #else
 # define _PROF_PROLOGUE
 #endif
@@ -221,7 +224,7 @@
 #define	PIC_SYM(x,y)	x
 #endif	/* __PIC__ */
 
-#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+#define RCSID(x)	.pushsection ".ident","MS",%progbits,1;		\
 			.asciz x;					\
 			.popsection
 

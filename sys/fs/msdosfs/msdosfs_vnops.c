@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.100.4.1 2020/04/20 11:29:09 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.100.4.2 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.100.4.1 2020/04/20 11:29:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.100.4.2 2020/04/25 11:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,7 @@ msdosfs_read(void *v)
 			if (bytelen == 0)
 				break;
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error)
 				break;
 		}
@@ -624,7 +624,7 @@ msdosfs_write(void *v)
 		rem = round_page(dep->de_FileSize) - dep->de_FileSize;
 		if (rem > 0)
 			ubc_zerorange(&vp->v_uobj, (off_t)dep->de_FileSize,
-			    rem, UBC_UNMAP_FLAG(vp));
+			    rem, UBC_VNODE_FLAGS(vp));
 		extended = 1;
 	}
 
@@ -633,7 +633,7 @@ msdosfs_write(void *v)
 		bytelen = uio->uio_resid;
 
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-		    IO_ADV_DECODE(ioflag), UBC_WRITE | UBC_UNMAP_FLAG(vp));
+		    IO_ADV_DECODE(ioflag), UBC_WRITE | UBC_VNODE_FLAGS(vp));
 		if (error)
 			break;
 

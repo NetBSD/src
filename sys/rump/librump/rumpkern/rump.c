@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.344 2020/03/23 14:49:50 pgoyette Exp $	*/
+/*	$NetBSD: rump.c,v 1.344.2.1 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.344 2020/03/23 14:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.344.2.1 2020/04/25 11:24:07 bouyer Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -114,7 +114,7 @@ static  char rump_msgbuf[16*1024] __aligned(256);
 
 bool rump_ttycomponent = false;
 
-pool_cache_t pnbuf_cache;
+extern pool_cache_t pnbuf_cache;
 
 static int rump_inited;
 

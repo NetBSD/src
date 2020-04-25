@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.12.10.1 2020/04/25 11:23:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -119,28 +119,6 @@ typedef uint64_t pt_entry_t;		/* PTE */
 
 #define PTE_FRAME	PTE_4KFRAME
 #define PTE_LGFRAME	PTE_2MFRAME
-
-/* XXX To be deleted. */
-#define PG_V		PTE_P
-#define PG_RW		PTE_W
-#define PG_u		PTE_U
-#define PG_WT		PTE_PWT
-#define PG_N		PTE_PCD
-#define PG_U		PTE_A
-#define PG_M		PTE_D
-#define PG_PAT		PTE_PAT
-#define PG_PS		PTE_PS
-#define PG_G		PTE_G
-#define PG_AVAIL1	PTE_AVL1
-#define PG_AVAIL2	PTE_AVL2
-#define PG_AVAIL3	PTE_AVL3
-#define PG_LGPAT	PTE_LGPAT
-#define PG_FRAME	PTE_FRAME
-#define PG_NX		PTE_NX
-#define PG_2MFRAME	PTE_2MFRAME
-#define PG_1GFRAME	PTE_1GFRAME
-#define PG_LGFRAME	PTE_LGFRAME
-#define PG_KW		PTE_W
 
 #include <x86/pte.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.armada,v 1.4 2019/10/01 17:35:09 chs Exp $
+#	$NetBSD: files.armada,v 1.4.6.1 2020/04/25 11:23:59 bouyer Exp $
 # Configuration info for Marvell ARMADA integrated peripherals
 
 # ARMADA XP Buffer Manger
@@ -10,5 +10,5 @@ device	mvxpe: mvxpbm, ether, ifnet, arp, mii
 file	dev/marvell/if_mvxpe.c			mvxpe		needs-flag
 
 # ARMADA XP Cryptographic Engines and Security Accelerator
-device	mvxpsec: opencrypto
+device	mvxpsec: opencrypto, rijndael
 file	dev/marvell/mvxpsec.c			mvxpsec		needs-flag

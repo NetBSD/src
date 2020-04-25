@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.237 2020/03/15 23:14:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.237.2.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.237 2020/03/15 23:14:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.237.2.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -534,6 +534,7 @@ m_get(int how, int type)
 	    how == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
+	KASSERT(((vaddr_t)m->m_dat & PAGE_MASK) + MLEN <= PAGE_SIZE);
 
 	mbstat_type_add(type, 1);
 
@@ -586,6 +587,9 @@ m_clget(struct mbuf *m, int how)
 
 	if (m->m_ext_storage.ext_buf == NULL)
 		return;
+
+	KASSERT(((vaddr_t)m->m_ext_storage.ext_buf & PAGE_MASK) + mclbytes
+	    <= PAGE_SIZE);
 
 	MCLINITREFERENCE(m);
 	m->m_data = m->m_ext.ext_buf;
@@ -1671,6 +1675,40 @@ m_defrag(struct mbuf *m, int how)
 
 	if (m->m_next == NULL)
 		return m;
+
+	/* Defrag to single mbuf if at all possible */
+	if ((m->m_flags & M_EXT) == 0) {
+		if (m->m_pkthdr.len <= MHLEN) {
+			if (M_TRAILINGSPACE(m) < (m->m_pkthdr.len - m->m_len)) {
+				KASSERT(M_LEADINGSPACE(m) >=
+				    (m->m_pkthdr.len - m->m_len));
+				memmove(m->m_pktdat, m->m_data, m->m_len);
+				m->m_data = m->m_pktdat;
+			}
+
+			KASSERT(M_TRAILINGSPACE(m) >=
+			    (m->m_pkthdr.len - m->m_len));
+			if (__predict_false(!m_ensure_contig(&m,
+			    m->m_pkthdr.len))) {
+				panic("m_ensure_contig(%d) failed\n",
+				    m->m_pkthdr.len);
+			}
+			return m;
+		} else if (m->m_pkthdr.len <= MCLBYTES) {
+			void *odata = m->m_data;
+
+			MCLGET(m, how);
+			if ((m->m_flags & M_EXT) == 0)
+				return NULL;
+			memcpy(m->m_data, odata, m->m_len);
+			if (m_pulldown(m, m->m_len, m->m_pkthdr.len - m->m_len,
+			    NULL) == NULL) {
+				panic("m_pulldown(%d, %d) failed\n",
+				    m->m_len, m->m_pkthdr.len - m->m_len);
+			}
+			return m;
+		}
+	}
 
 	m0 = m_get(how, MT_DATA);
 	if (m0 == NULL)

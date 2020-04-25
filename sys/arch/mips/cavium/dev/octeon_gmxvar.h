@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.2.12.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -68,6 +68,9 @@ struct octeon_gmx_port_softc {
 	struct octeon_asx_softc	*sc_port_asx;
 	struct octeon_ipd_softc	*sc_ipd;
 	int			sc_port_flowflags;
+
+	int			sc_clk_tx_setting;
+	int			sc_clk_rx_setting;
 
 #if defined(OCTEON_DEBUG) || defined(OCTEON_ETH_DEBUG)
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.76.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.76.2.2 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.76.2.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.76.2.2 2020/04/25 11:24:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,14 +171,6 @@ sys__lwp_self(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
-	return 0;
-}
-
-int
-sys__lwp_gettid(struct lwp *l, const void *v, register_t *retval)
-{
-
-	*retval = lwp_gettid();
 	return 0;
 }
 
@@ -423,8 +415,7 @@ sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap,
 		 * We can't use lwp_find() here because the target might
 		 * be a zombie.
 		 */
-		t = radix_tree_lookup_node(&p->p_lwptree,
-		    (uint64_t)(target - 1));
+		t = proc_find_lwp(p, target);
 		KASSERT(t == NULL || t->l_lid == target);
 	}
 
@@ -466,7 +457,6 @@ sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap,
 int
 lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 {
-	uint64_t id;
 	u_int target;
 	int error;
 	proc_t *p;
@@ -475,21 +465,40 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 	p = curproc;
 	error = 0;
 
-	rw_enter(&p->p_treelock, RW_READER);
+	mutex_enter(p->p_lock);
 	for (target = 0; target < ntargets; target++) {
 		/*
-		 * We don't bother excluding zombies or idle LWPs here, as
+		 * We don't bother excluding idle LWPs here, as
 		 * setting LW_UNPARKED on them won't do any harm.
 		 */
-		id = (uint64_t)(tp[target] - 1);
-		t = radix_tree_lookup_node(&p->p_lwptree, id);
-		if (t == NULL) {
+		t = proc_find_lwp(p, tp[target]);
+		if (__predict_false(t == NULL)) {
 			error = ESRCH;
 			continue;
 		}
 
+		/*
+		 * The locking order is p::p_lock -> l::l_mutex,
+		 * but it may not be unsafe to release p::p_lock
+		 * while l::l_mutex is held because l::l_mutex is
+		 * a scheduler lock and we don't want to get tied
+		 * in knots while unwinding priority inheritance.
+		 * So, get a reference count on the LWP and then
+		 * unlock p::p_lock before acquiring l::l_mutex.
+		 */
+		if (__predict_false(t->l_stat == LSZOMB)) {
+			continue;
+		}
+ 		lwp_addref(t);
+ 		mutex_exit(p->p_lock);
+
+		/*
+		 * Note the LWP cannot become a zombie while we
+		 * hold a reference.
+		 */
+
 		lwp_lock(t);
-		if (t->l_syncobj == &lwp_park_syncobj) {
+		if (__predict_true(t->l_syncobj == &lwp_park_syncobj)) {
 			/*
 			 * As expected it's parked, so wake it up. 
 			 * lwp_unsleep() will release the LWP lock.
@@ -507,8 +516,10 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 			t->l_flag |= LW_UNPARKED;
 			lwp_unlock(t);
 		}
+		mutex_enter(p->p_lock);
+		lwp_delref2(t);
 	}
-	rw_exit(&p->p_treelock);
+	mutex_exit(p->p_lock);
 
 	return error;
 }

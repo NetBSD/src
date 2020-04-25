@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.195 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.195.2.1 2020/04/25 11:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.195 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.195.2.1 2020/04/25 11:24:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -158,7 +158,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 			bytelen =
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+			    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 			if (error) {
 				/*
 				 * XXXkludge
@@ -531,7 +531,7 @@ nfs_write(void *v)
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
 		    UVM_ADV_RANDOM, UBC_WRITE | UBC_PARTIALOK |
 		    (overwrite ? UBC_FAULTBUSY : 0) |
-		    UBC_UNMAP_FLAG(vp));
+		    UBC_VNODE_FLAGS(vp));
 		if (error) {
 			uvm_vnp_setwritesize(vp, vp->v_size);
 			if (overwrite && np->n_size != oldsize) {

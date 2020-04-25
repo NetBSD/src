@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.64 2020/01/17 20:08:08 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.64.4.1 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.64 2020/01/17 20:08:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.64.4.1 2020/04/25 11:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -448,7 +448,7 @@ sysvbfs_read(void *arg)
 			break;
 
 		err = ubc_uiomove(&v->v_uobj, uio, sz, advice,
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(v));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(v));
 		if (err)
 			break;
 		DPRINTF("%s: read %ldbyte\n", __func__, sz);
@@ -495,7 +495,7 @@ sysvbfs_write(void *arg)
 	while (uio->uio_resid > 0) {
 		sz = uio->uio_resid;
 		err = ubc_uiomove(&v->v_uobj, uio, sz, advice,
-		    UBC_WRITE | UBC_UNMAP_FLAG(v));
+		    UBC_WRITE | UBC_VNODE_FLAGS(v));
 		if (err)
 			break;
 		DPRINTF("%s: write %ldbyte\n", __func__, sz);

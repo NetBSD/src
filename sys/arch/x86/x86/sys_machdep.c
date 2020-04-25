@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.52.6.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.52.6.1 2020/04/25 11:23:57 bouyer Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -97,7 +97,7 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
 
-	if (ua.num < 0 || ua.num > 8192)
+	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
@@ -137,8 +137,9 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	if (error)
 		return error;
 
-	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
-	    ua->start + ua->num > 8192)
+	if (ua->start < 0 || ua->num < 0 ||
+	    ua->start > MAX_USERLDT_SLOTS || ua->num > MAX_USERLDT_SLOTS ||
+	    ua->start + ua->num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	if (ua->start * sizeof(union descriptor) < min_ldt_size)
@@ -147,7 +148,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	mutex_enter(&cpu_lock);
 
 	if (pmap->pm_ldt != NULL) {
-		nldt = pmap->pm_ldt_len / sizeof(*lp);
+		nldt = MAX_USERLDT_SIZE / sizeof(*lp);
 		lp = pmap->pm_ldt;
 	} else {
 #ifdef __x86_64__
@@ -187,7 +188,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
 
-	if (ua.num < 0 || ua.num > 8192)
+	if (ua.num < 0 || ua.num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_WAITOK);
@@ -211,7 +212,6 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	int error, i, n, old_sel, new_sel;
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	size_t old_len, new_len;
 	union descriptor *old_ldt, *new_ldt;
 
 #ifdef __x86_64__
@@ -225,8 +225,9 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	if (error)
 		return error;
 
-	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
-	    ua->start + ua->num > 8192)
+	if (ua->start < 0 || ua->num < 0 ||
+	    ua->start > MAX_USERLDT_SLOTS || ua->num > MAX_USERLDT_SLOTS ||
+	    ua->start + ua->num > MAX_USERLDT_SLOTS)
 		return EINVAL;
 
 	if (ua->start * sizeof(union descriptor) < min_ldt_size)
@@ -278,36 +279,22 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	}
 
 	/*
-	 * Install selected changes.  We perform a copy, write, swap dance
-	 * here to ensure that all updates happen atomically.
+	 * Install selected changes.
 	 */
 
 	/* Allocate a new LDT. */
-	for (;;) {
-		new_len = (ua->start + ua->num) * sizeof(union descriptor);
-		new_len = uimax(new_len, pmap->pm_ldt_len);
-		new_len = uimax(new_len, min_ldt_size);
-		new_len = round_page(new_len);
-		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
-		mutex_enter(&cpu_lock);
-		if (pmap->pm_ldt_len <= new_len) {
-			break;
-		}
-		mutex_exit(&cpu_lock);
-		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
-		    UVM_KMF_WIRED);
-	}
+	new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
+	    MAX_USERLDT_SIZE, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
+
+	mutex_enter(&cpu_lock);
 
 	/* Copy existing entries, if any. */
 	if (pmap->pm_ldt != NULL) {
 		old_ldt = pmap->pm_ldt;
-		old_len = pmap->pm_ldt_len;
 		old_sel = pmap->pm_ldt_sel;
-		memcpy(new_ldt, old_ldt, old_len);
+		memcpy(new_ldt, old_ldt, MAX_USERLDT_SIZE);
 	} else {
 		old_ldt = NULL;
-		old_len = 0;
 		old_sel = -1;
 		memcpy(new_ldt, ldtstore, min_ldt_size);
 	}
@@ -318,20 +305,19 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	}
 
 	/* Allocate LDT selector. */
-	new_sel = ldt_alloc(new_ldt, new_len);
+	new_sel = ldt_alloc(new_ldt, MAX_USERLDT_SIZE);
 	if (new_sel == -1) {
 		mutex_exit(&cpu_lock);
-		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
+		uvm_km_free(kernel_map, (vaddr_t)new_ldt, MAX_USERLDT_SIZE,
 		    UVM_KMF_WIRED);
 		return ENOMEM;
 	}
 
 	/* All changes are now globally visible.  Swap in the new LDT. */
-	pmap->pm_ldt_len = new_len;
-	pmap->pm_ldt_sel = new_sel;
+	atomic_store_relaxed(&pmap->pm_ldt_sel, new_sel);
 	/* membar_store_store for pmap_fork() to read these unlocked safely */
 	membar_producer();
-	pmap->pm_ldt = new_ldt;
+	atomic_store_relaxed(&pmap->pm_ldt, new_ldt);
 
 	/* Switch existing users onto new LDT. */
 	pmap_ldt_sync(pmap);
@@ -341,7 +327,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		ldt_free(old_sel);
 		/* exit the mutex before free */
 		mutex_exit(&cpu_lock);
-		uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
+		uvm_km_free(kernel_map, (vaddr_t)old_ldt, MAX_USERLDT_SIZE,
 		    UVM_KMF_WIRED);
 	} else {
 		mutex_exit(&cpu_lock);
@@ -377,16 +363,15 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		iopl = SEL_KPL;
 
     {
-	struct physdev_op physop;
 	struct pcb *pcb;
 
 	pcb = lwp_getpcb(l);
 	pcb->pcb_iopl = iopl;
 
 	/* Force the change at ring 0. */
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = iopl;
-	HYPERVISOR_physdev_op(&physop);
+	struct physdev_set_iopl set_iopl;
+	set_iopl.iopl = iopl;
+	HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl);
     }
 #elif defined(__x86_64__)
 	if (ua.iopl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.100.6.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.100.6.2 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.100.6.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.100.6.2 2020/04/25 11:24:06 bouyer Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -662,7 +662,7 @@ static void
 vmem_bootstrap(void)
 {
 
-	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vmem_btag_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&vmem_btag_refill_lock, MUTEX_DEFAULT, IPL_VM);
 

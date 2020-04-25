@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.2.2.2 2020/04/20 11:29:14 bouyer Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.2.2.3 2020/04/25 11:24:08 bouyer Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.2.2.2 2020/04/20 11:29:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.2.2.3 2020/04/25 11:24:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -153,8 +153,8 @@ ffs_extattr_check_cred(struct vnode *vp, int attrnamespace, kauth_cred_t cred,
 	 */
 	switch (attrnamespace) {
 	case EXTATTR_NAMESPACE_SYSTEM:
-		/* Potentially with privs */
-		return EPERM;
+		return kauth_authorize_system(cred, KAUTH_SYSTEM_FS_EXTATTR,
+		    0, vp->v_mount, NULL, NULL);
 	case EXTATTR_NAMESPACE_USER:
 		return VOP_ACCESS(vp, accmode, cred);
 	default:
@@ -392,8 +392,10 @@ ffs_extwrite(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t ucred)
 	}
 	if (error) {
 		if (ioflag & IO_UNIT) {
+			genfs_node_unlock(vp);	// XXX: need our own lock
 			(void)ffs_truncate(vp, osize,
 			    IO_EXT | (ioflag&IO_SYNC), ucred);
+			genfs_node_wrlock(vp);
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
@@ -559,7 +561,9 @@ ffs_close_ea(struct vnode *vp, int commit, kauth_cred_t cred)
 				ffs_unlock_ea(vp);
 				return error;
 			}
+			genfs_node_unlock(vp);	// XXX: need our own lock
 			error = ffs_truncate(vp, 0, IO_EXT, cred);
+			genfs_node_wrlock(vp);
 			UFS_WAPBL_END(vp->v_mount);
 		}
 		error = ffs_extwrite(vp, &luio, IO_EXT | IO_SYNC, cred);
@@ -935,7 +939,6 @@ ffs_deleteextattr(void *v)
 	error = ffs_extattr_check_cred(ap->a_vp, ap->a_attrnamespace,
 	    ap->a_cred, VWRITE);
 	if (error) {
-
 		/*
 		 * ffs_lock_ea is not needed there, because the vnode
 		 * must be exclusively locked.

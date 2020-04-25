@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.31 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.31.10.1 2020/04/25 11:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -113,10 +113,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define L2_FRAME	(L3_FRAME | L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
-/* XXX To be deleted. */
-#define PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
-#define PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
-
 #define PTE_4KFRAME	0x000ffffffffff000ULL
 #define PTE_2MFRAME	0x000fffffffe00000ULL
 
@@ -139,10 +135,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 
 #define L2_FRAME	(L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
-
-/* XXX To be deleted. */
-#define PG_FRAME	0xfffff000	/* page frame mask */
-#define PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
 
 #define PTE_4KFRAME	0xfffff000
 #define PTE_4MFRAME	0xffc00000
@@ -174,24 +166,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #else
 #define PTE_NX		0		/* Dummy */
 #endif
-
-/* XXX To be deleted. */
-#define PG_V		PTE_P
-#define PG_RW		PTE_W
-#define PG_u		PTE_U
-#define PG_WT		PTE_PWT
-#define PG_N		PTE_PCD
-#define PG_U		PTE_A
-#define PG_M		PTE_D
-#define PG_PAT		PTE_PAT
-#define PG_PS		PTE_PS
-#define PG_G		PTE_G
-#define PG_AVAIL1	PTE_AVL1
-#define PG_AVAIL2	PTE_AVL2
-#define PG_AVAIL3	PTE_AVL3
-#define PG_LGPAT	PTE_LGPAT
-#define PG_KW		PTE_W
-#define PG_NX		PTE_NX
 
 #include <x86/pte.h>
 

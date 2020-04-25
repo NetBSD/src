@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.161 2020/04/06 09:24:49 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.161.2.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -772,7 +772,9 @@
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
 #define CPUID_AMD_SVM_GMET		0x00020000
-#define CPUID_AMD_SVM_FLAGS	 "\20" \
+#define CPUID_AMD_SVM_SPEC_CTRL		__BIT(20)
+
+#define CPUID_AMD_SVM_FLAGS	 "\20"					\
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
 	"\5" "TSCRate"	"\6" "VMCBCleanBits" 				\
 			        "\7" "FlushByASID" "\10" "DecodeAssist"	\
@@ -780,7 +782,7 @@
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
 	"\21" "VGIF"	"\22" "GMET"					\
-	"\25" "B20"
+	"\25" "SPEC_CTRL"
 
 /*
  * AMD Fn8000_0001d Cache Topology Information.
@@ -795,6 +797,7 @@
  * %eax: flags
  * %ebx:  5-0: Cbit Position
  *       11-6: PhysAddrReduction
+ *      15-12: NumVMPL
  * %ecx: 31-0: NumEncryptedGuests
  * %edx: 31-0: MinSevNoEsAsid
  */
@@ -802,10 +805,21 @@
 #define CPUID_AMD_ENCMEM_SEV	__BIT(1)   /* Secure Encrypted Virtualiz. */
 #define CPUID_AMD_ENCMEM_PGFLMSR __BIT(2)  /* Page Flush MSR */
 #define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
+#define CPUID_AMD_ENCMEM_SEV_SNP __BIT(4)  /* Secure Nested Paging */
+#define CPUID_AMD_ENCMEM_VMPL	__BIT(5)   /* Virtual Machine Privilege Lvl */
+#define CPUID_AMD_ENCMEM_HECC	__BIT(10) /* HW Enf Cache Coh across enc dom */
+#define CPUID_AMD_ENCMEM_64BH	__BIT(11)  /* 64Bit Host */
+#define CPUID_AMD_ENCMEM_RSTRINJ __BIT(12) /* Restricted Injection */
+#define CPUID_AMD_ENCMEM_ALTINJ	__BIT(13)  /* Alternate Injection */
+#define CPUID_AMD_ENCMEM_DBGSWAP __BIT(14) /* Debug Swap */
+#define CPUID_AMD_ENCMEM_PREVHOSTIBS __BIT(15) /* Prevent Host IBS */
 #define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
 
 #define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
 	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
+	"\5" "SEV-SNP"	"\6" "VMPL"					      \
+					"\13HwEnfCacheCoh"  "\14" "64BitHost" \
+	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostlbs" \
 	"\21" "VTE"
 
 /*

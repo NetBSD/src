@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.135 2020/03/14 13:39:36 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.135.2.1 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.135 2020/03/14 13:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.135.2.1 2020/04/25 11:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -546,7 +546,7 @@ tmpfs_read(void *v)
 			break;
 		}
 		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
-		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
+		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 	}
 
 	tmpfs_update(vp, TMPFS_UPDATE_ATIME);
@@ -608,7 +608,7 @@ tmpfs_write(void *v)
 			break;
 		}
 		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
-		    UBC_WRITE | UBC_UNMAP_FLAG(vp));
+		    UBC_WRITE | UBC_VNODE_FLAGS(vp));
 	}
 	if (error) {
 		(void)tmpfs_reg_resize(vp, oldsize);

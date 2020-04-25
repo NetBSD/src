@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.495.2.1 2020/04/20 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.495.2.2 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.495.2.1 2020/04/20 11:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.495.2.2 2020/04/25 11:24:05 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -672,7 +672,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	char *path, *bp;
 	size_t len, tlen;
 	int error;
-	struct vnode *dvp;
+	struct cwdinfo *cwdi;
 
 	path = PNBUF_GET();
 	if (seg == UIO_SYSSPACE) {
@@ -698,10 +698,11 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	memmove(bp, path, len);
 	*(--bp) = '/';
 
-	dvp = cwdcdir();
-	error = getcwd_common(dvp, NULL, &bp, path, MAXPATHLEN / 2,
+	cwdi = l->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, MAXPATHLEN / 2,
 	    GETCWD_CHECK_ACCESS, l);
-	vrele(dvp);
+	rw_exit(&cwdi->cwdi_lock);
 
 	if (error)
 		goto err;
@@ -1118,7 +1119,6 @@ static void
 emulexec(struct lwp *l, struct exec_package *epp)
 {
 	struct proc		*p = l->l_proc;
-	struct cwdinfo		*cwdi;
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -1127,10 +1127,9 @@ emulexec(struct lwp *l, struct exec_package *epp)
 		emul_find_root(l, epp);
 
 	/* Any old emulation root got removed by fdcloseexec */
-	KASSERT(p == curproc);
-	cwdi = cwdenter(RW_WRITER);
-	cwdi->cwdi_edir = epp->ep_emul_root;
-	cwdexit(cwdi);
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
+	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	epp->ep_emul_root = NULL;
 	if (epp->ep_interp != NULL)
 		vrele(epp->ep_interp);
@@ -1148,10 +1147,6 @@ emulexec(struct lwp *l, struct exec_package *epp)
 	if (p->p_emul && p->p_emul->e_proc_exit
 	    && p->p_emul != epp->ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
-
-	/* This is now LWP 1.  Re-number the LWP if needed. */
-	if (l->l_lid != 1)
-		lwp_renumber(l, 1);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -2496,10 +2491,18 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * Allocate new proc. Borrow proc0 vmspace for it, we will
 	 * replace it with its own before returning to userland
 	 * in the child.
+	 */
+	p2 = proc_alloc();
+	if (p2 == NULL) {
+		/* We were unable to allocate a process ID. */
+		error = EAGAIN;
+		goto error_exit;
+	}
+
+	/*
 	 * This is a point of no return, we will have to go through
 	 * the child proc to properly clean it up past this point.
 	 */
-	p2 = proc_alloc();
 	pid = p2->p_pid;
 
 	/*
@@ -2534,7 +2537,6 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
-	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 

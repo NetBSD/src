@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.108 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.108.2.1 2020/04/25 11:24:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.108 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.108.2.1 2020/04/25 11:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -929,7 +929,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		size_t zerolen;
 
 		zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
-		ubc_zerorange(uobj, newsize, zerolen, UBC_UNMAP_FLAG(vp));
+		ubc_zerorange(uobj, newsize, zerolen, UBC_VNODE_FLAGS(vp));
 	}
 
 	node->tn_spec.tn_reg.tn_aobj_pages = newpages;

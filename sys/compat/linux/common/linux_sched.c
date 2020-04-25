@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.73.6.1 2020/04/20 11:29:01 bouyer Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.73.6.2 2020/04/25 11:23:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.73.6.1 2020/04/20 11:29:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.73.6.2 2020/04/25 11:23:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -195,7 +195,7 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 		return ENOMEM;
 	}
 
-	error = lwp_create(l, p, uaddr, LWP_DETACHED | LWP_PIDLID,
+	error = lwp_create(l, p, uaddr, LWP_DETACHED,
 	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class,
 	    &l->l_sigmask, &l->l_sigstk);
 	if (__predict_false(error)) {

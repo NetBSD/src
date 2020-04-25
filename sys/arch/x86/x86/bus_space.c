@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.43 2019/12/03 04:57:25 riastradh Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.43.6.1 2020/04/25 11:23:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.43 2019/12/03 04:57:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.43.6.1 2020/04/25 11:23:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,10 +136,10 @@ x86_bus_space_init(void)
 #ifdef XENPV
 	/* We are privileged guest os - should have IO privileges. */
 	if (xendomain_is_privileged()) {
-		struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = 1;
-		if (HYPERVISOR_physdev_op(&physop) != 0)
+		struct physdev_set_iopl set_iopl;
+		memset(&set_iopl, 0, sizeof(set_iopl));
+		set_iopl.iopl = 1;
+		if (HYPERVISOR_physdev_op(PHYSDEVOP_set_iopl, &set_iopl) != 0)
 			panic("Unable to obtain IOPL, "
 			    "despite being SIF_PRIVILEGED");
 	}

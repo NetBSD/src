@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.5 2020/02/23 22:14:03 ad Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.5.4.1 2020/04/25 11:24:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.5 2020/02/23 22:14:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.5.4.1 2020/04/25 11:24:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/xcall.h>
 
 static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
@@ -65,8 +64,9 @@ cwdinit(void)
 	struct cwdinfo *copy;
 
 	cwdi = pool_cache_get(cwdi_cache, PR_WAITOK);
+	copy = curproc->p_cwdi;
 
-	copy = cwdenter(RW_READER);
+	rw_enter(&copy->cwdi_lock, RW_READER);
 	cwdi->cwdi_cdir = copy->cwdi_cdir;
 	if (cwdi->cwdi_cdir)
 		vref(cwdi->cwdi_cdir);
@@ -78,7 +78,7 @@ cwdinit(void)
 		vref(cwdi->cwdi_edir);
 	cwdi->cwdi_cmask = copy->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
-	cwdexit(copy);
+	rw_exit(&copy->cwdi_lock);
 
 	return (cwdi);
 }
@@ -88,7 +88,7 @@ cwdi_ctor(void *arg, void *obj, int flags)
 {
 	struct cwdinfo *cwdi = obj;
 
-	mutex_init(&cwdi->cwdi_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&cwdi->cwdi_lock);
 
 	return 0;
 }
@@ -98,7 +98,7 @@ cwdi_dtor(void *arg, void *obj)
 {
 	struct cwdinfo *cwdi = obj;
 
-	mutex_destroy(&cwdi->cwdi_lock);
+	rw_destroy(&cwdi->cwdi_lock);
 }
 
 /*
@@ -158,121 +158,4 @@ cwdexec(struct proc *p)
 	if (p->p_cwdi->cwdi_edir) {
 		vrele(p->p_cwdi->cwdi_edir);
 	}
-}
-
-/*
- * Used when curlwp wants to use or update its cwdinfo, and needs to prevent
- * concurrent changes.
- *
- * "op" is either RW_READER or RW_WRITER indicating the kind of lock
- * required.  If a read lock on the cwdinfo is requested, then curlwp must
- * not block while holding the lock, or the cwdinfo could become stale. 
- * It's okay to block while holding a write lock.
- */
-struct cwdinfo *
-cwdenter(krw_t op)
-{
-	struct cwdinfo *cwdi = curproc->p_cwdi;
-
-	if (__predict_true(op == RW_READER)) {
-		/*
-		 * Disable preemption to hold off the writer side's xcall,
-		 * then observe the lock.  If it's already taken, we need to
-		 * join in the melee.  Otherwise we're good to go; keeping
-		 * the xcall at bay with kpreempt_disable() will prevent any
-		 * changes while the caller is pondering the cwdinfo.
-		 */
-		kpreempt_disable();
-		if (__predict_true(mutex_owner(&cwdi->cwdi_lock) == NULL)) {
-			membar_consumer();
-			return cwdi;
-		}
-		kpreempt_enable();
-		mutex_enter(&cwdi->cwdi_lock);
-	} else {
-		/*
-		 * About to make changes.  If there's more than one
-		 * reference on the cwdinfo, or curproc has more than one
-		 * LWP, then LWPs other than curlwp can also see the
-		 * cwdinfo.  Run a cross call to get all LWPs out of the
-		 * read section.
-		 */
-		mutex_enter(&cwdi->cwdi_lock);
-		if (cwdi->cwdi_refcnt + curproc->p_nlwps > 2)
-			xc_barrier(0);
-	}
-	return cwdi;
-}
-
-/*
- * Release a lock previously taken with cwdenter().
- */
-void
-cwdexit(struct cwdinfo *cwdi)
-{
-	struct lwp *l = curlwp;
-
-	KASSERT(cwdi == l->l_proc->p_cwdi);
-
-	if (__predict_true(mutex_owner(&cwdi->cwdi_lock) != l))
-		kpreempt_enable();
-	else
-		mutex_exit(&cwdi->cwdi_lock);
-}
-
-/*
- * Called when there is a need to inspect some other process' cwdinfo.  Used
- * by procfs and sysctl.  This gets you a read lock; the cwdinfo must NOT be
- * changed.
- */
-const struct cwdinfo *
-cwdlock(struct proc *p)
-{
-	struct cwdinfo *cwdi = p->p_cwdi;
-
-	mutex_enter(&cwdi->cwdi_lock);
-	return cwdi;
-}
-
-/*
- * Release a lock acquired with cwdlock().
- */
-void
-cwdunlock(struct proc *p)
-{
-	struct cwdinfo *cwdi = p->p_cwdi;
-
-	mutex_exit(&cwdi->cwdi_lock);
-}
-
-/*
- * Get a reference to the current working directory and return it.
- */
-struct vnode *
-cwdcdir(void)
-{
-	struct cwdinfo *cwdi;
-	struct vnode *vp;
-
-	cwdi = cwdenter(RW_READER);
-	if ((vp = cwdi->cwdi_cdir) != NULL)
-		vref(vp);
-	cwdexit(cwdi);
-	return vp;
-}
-
-/*
- * Get a reference to the root directory and return it.
- */
-struct vnode *
-cwdrdir(void)
-{
-	struct cwdinfo *cwdi;
-	struct vnode *vp;
-
-	cwdi = cwdenter(RW_READER);
-	if ((vp = cwdi->cwdi_rdir) != NULL)
-		vref(vp);
-	cwdexit(cwdi);
-	return vp;
 }
