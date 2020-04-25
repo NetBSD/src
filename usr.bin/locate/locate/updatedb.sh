@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.16 2020/02/06 08:45:44 simonb Exp $
+#	$NetBSD: updatedb.sh,v 1.17 2020/04/25 10:06:42 simonb Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 #	@(#)updatedb.csh	8.4 (Berkeley) 10/27/94
 #
 
+PROG="$(basename "${0}")"
 LIBDIR="/usr/libexec"			# for subprograms
 TMPDIR="/tmp"				# for temp files
 FCODES="/var/db/locate.database"	# the database
@@ -96,25 +97,22 @@ shell_quote()
 	printf "%s\n" "$result"
 )}
 
-args=`getopt c: $*`
-if [ $? -ne 0 ]; then
-	progname=`basename $0`
-	echo 'Usage: ...'
-	echo "usage: ${progname} [-c config]"
-	exit 2
-fi
-set -- $args
-while [ $# -gt 0 ]; do
-	case "$1" in
-		-c)
-			CONF=$2; shift
-			;;
-		--)
-			shift; break
-			;;
+usage()
+{
+	echo "usage: $PROG [-c config]" >&2
+	exit 1
+}
+
+while getopts c: f; do
+	case "$f" in
+	c)
+		CONF="$OPTARG" ;;
+	*)
+		usage ;;
 	esac
-	shift
 done
+shift $((OPTIND - 1))
+[ $# -ne 0 ] && usage
 
 # read configuration file
 if [ -f "$CONF" ]; then
