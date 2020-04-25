@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetreg.h,v 1.2 2020/02/22 13:41:41 jmcneill Exp $ */
+/* $NetBSD: bcmgenetreg.h,v 1.3 2020/04/25 10:21:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -138,7 +138,12 @@
 #define	 GENET_RX_DESC_STATUS_OWN	__BIT(15)
 #define	 GENET_RX_DESC_STATUS_EOP	__BIT(14)
 #define	 GENET_RX_DESC_STATUS_SOP	__BIT(13)
-#define	 GENET_RX_DESC_STATUS_RX_ERROR	__BIT(2)
+#define	 GENET_RX_DESC_STATUS_ALL_ERRS	__BITS(4,0)
+#define	 GENET_RX_DESC_STATUS_LEN_ERR	__BIT(4)
+#define	 GENET_RX_DESC_STATUS_FRAME_ERR	__BIT(3)
+#define	 GENET_RX_DESC_STATUS_RX_ERR	__BIT(2)
+#define	 GENET_RX_DESC_STATUS_CRC_ERR	__BIT(1)
+#define	 GENET_RX_DESC_STATUS_OVRUN_ERR	__BIT(0)
 #define	GENET_RX_DESC_ADDRESS_LO(idx)	(GENET_RX_BASE + GENET_DMA_DESC_SIZE * (idx) + 0x04)
 #define	GENET_RX_DESC_ADDRESS_HI(idx)	(GENET_RX_BASE + GENET_DMA_DESC_SIZE * (idx) + 0x08)
 
