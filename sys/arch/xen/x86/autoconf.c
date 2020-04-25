@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -126,9 +126,8 @@ cpu_configure(void)
 		/* identify hypervisor type from SMBIOS */
 		identify_hypervisor();
 #endif /* NBIOS32 > 0 */
-	} else
+	}
 #endif /* DOM0OPS */
-		vm_guest = VM_GUEST_XEN;
 #ifdef PCIBIOS
 	pcibios_init();
 #endif

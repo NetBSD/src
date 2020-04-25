@@ -1,9 +1,10 @@
-# $NetBSD: std.i386,v 1.35 2017/01/12 05:24:36 ryo Exp $
+# $NetBSD: std.i386,v 1.36 2020/04/25 15:26:16 bouyer Exp $
 #
 # standard, required NetBSD/i386 'options'
 
-machine i386 x86
+machine i386 x86 xen
 include		"conf/std"	# MI standard options
+include 	"arch/xen/conf/std.xenversion"
 
 options 	CPU_IN_CKSUM
 options 	EXEC_AOUT	# exec a.out binaries
