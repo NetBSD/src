@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.21 2015/01/17 10:57:51 gson Exp $ */
+/*	$NetBSD: progress.c,v 1.22 2020/04/25 11:12:39 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.21 2015/01/17 10:57:51 gson Exp $");
+__RCSID("$NetBSD: progress.c,v 1.22 2020/04/25 11:12:39 simonb Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,6 @@ usage(void)
 	    getprogname(), (int) strlen(getprogname()), "");
 	exit(EXIT_FAILURE);
 }
-
 
 int
 main(int argc, char *argv[])
