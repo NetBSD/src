@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.73 2019/12/30 23:32:29 thorpej Exp $	*/
+/*	$NetBSD: vector.S,v 1.74 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
 #include "ioapic.h"
 #include "lapic.h"
 #include "assym.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #endif
 
@@ -108,6 +108,7 @@
  * segment registers.
  */
 
+#ifndef XENPV
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 IDTVEC(recurse_lapic_ipi)
@@ -309,7 +310,6 @@ IDTVEC_END(intr_hyperv_hypercall)
 
 #endif /* NLAPIC > 0 */
 
-#ifndef XENPV
 /*
  * TLB shootdown handler.
  */
@@ -693,19 +693,19 @@ END(name ## _stubs)
 
 #if defined(XEN)
 /* Resume/recurse procedures for spl() */
-#define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_ ## name ## num)						;\
+#define	XENINTRSTUB(name, sir, level, unmask) \
+IDTVEC(recurse_ ## name ## sir)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTR_RECURSE_ENTRY						;\
-IDTVEC(resume_ ## name ## num)						\
+IDTVEC(resume_ ## name ## sir)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
-	movq	CPUVAR(XSOURCES) + (num) * 8,%r14			;\
+	movq	CPUVAR(ISOURCES) + (sir) * 8,%r14			;\
 1:									\
 	pushq	%r13							;\
-	movl	$num,CPUVAR(ILEVEL)					;\
+	movl	$level,CPUVAR(ILEVEL)					;\
 	STI(si)								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
@@ -718,48 +718,18 @@ IDTVEC(resume_ ## name ## num)						\
 	jnz	6b							;\
 5:									\
 	CLI(si)								;\
-	unmask(num)			/* unmask it in hardware */	;\
-	late_ack(num)							;\
+	unmask(sir)			/* unmask it in hardware */	;\
 	STI(si)								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 
 /* The unmask func for Xen events */
-#define hypervisor_asm_unmask(num)			\
-	movq	$num,%rdi				;\
-	call	_C_LABEL(hypervisor_enable_ipl)
+#define hypervisor_asm_unmask(sir)			\
+	movq	$sir,%rdi				;\
+	call	_C_LABEL(hypervisor_enable_sir)
 
-XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,1,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,2,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,3,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,4,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,5,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,6,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,7,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,8,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,9,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,10,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,11,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,12,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,13,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,14,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,15,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,16,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,17,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,18,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,19,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,20,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,21,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,22,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,23,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,24,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,25,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,26,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,27,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,28,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,SIR_XENIPL_VM,IPL_VM,hypervisor_asm_unmask)
+XENINTRSTUB(xenev,SIR_XENIPL_SCHED,IPL_SCHED,hypervisor_asm_unmask)
+XENINTRSTUB(xenev,SIR_XENIPL_HIGH,IPL_HIGH,hypervisor_asm_unmask)
 
 /* On Xen, the xenev_stubs are purely for spl entry, since there is no
  * vector based mechanism. We however provide the entrypoint to ensure
@@ -771,39 +741,14 @@ LABEL(entry_xenev)
 	callq _C_LABEL(panic)
 END(entry_xenev)
 
+#define XENINTRSTUB_ENTRY(name, sir) \
+	.quad entry_xenev , _C_LABEL(Xrecurse_ ## name ## sir); \
+	.quad _C_LABEL(Xresume_ ## name ## sir);
+
 LABEL(xenev_stubs)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
-	.quad entry_xenev, _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_VM) ;
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_SCHED) ;
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_HIGH) ;
 END(xenev_stubs)
 
 /*
@@ -811,23 +756,33 @@ END(xenev_stubs)
  */
 
 /* Hypervisor callback */
+
 ENTRY(hypervisor_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp
+	jmp _C_LABEL(Xhypervisor_pvhvm_callback)
+	TEXT_USER_BEGIN
 IDTVEC(hypervisor_pvhvm_callback)
 	pushq	$0		/* Dummy error code */
 	pushq	$T_ASTFLT
 	INTRENTRY
-	/* sti?? */
+	movl    CPUVAR(ILEVEL),%edi
+	pushq   %rdi /* for Xdoreti */
+	incl	CPUVAR(IDEPTH)
 	movq	%rsp,%rdi
-	subq	$8,%rdi;	/* don't forget if_ppl */
 	call	do_hypervisor_callback
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	doreti_checkast
+#ifndef XENPV
+	movzbl	_C_LABEL(xenhvm_use_percpu_callback),%edi
+	testl	%edi, %edi
+	jz 1f
+	movq	_C_LABEL(local_apic_va),%rdi
+	movl	$0,LAPIC_EOI(%rdi)
 1:
-	INTRFASTEXIT
+#endif
+	jmp 	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
+	TEXT_USER_END
 END(hypervisor_callback)
 #endif /* XEN */
 

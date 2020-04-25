@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093var.h,v 1.6 2020/04/21 20:13:39 jdolecek Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.7 2020/04/25 15:26:17 bouyer Exp $ */
 
 #ifndef _XEN_I82093VAR_H_
 #define _XEN_I82093VAR_H_

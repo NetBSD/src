@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.44 2020/04/21 20:20:39 jdolecek Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.44 2020/04/21 20:20:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

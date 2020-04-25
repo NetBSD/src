@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.17 2019/05/10 18:21:01 maxv Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.17 2019/05/10 18:21:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -106,7 +106,7 @@ cpu_ucode_intel_firmware_open(firmware_handle_t *fwh, const char *fwname)
 	return firmware_open(fw_path, cpuspec, fwh);
 }
 
-#ifndef XEN
+#ifndef XENPV
 static int
 cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
     struct intel1_ucode_header *buf)
