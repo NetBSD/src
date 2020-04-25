@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.39 2019/12/01 23:53:49 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.40 2020/04/25 18:20:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.39 2019/12/01 23:53:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.40 2020/04/25 18:20:57 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.39 2019/12/01 23:53:49 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.40 2020/04/25 18:20:57 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -452,12 +452,14 @@ thisCharOK:	++pattern;
  *-----------------------------------------------------------------------
  */
 char *
-Str_SYSVMatch(const char *word, const char *pattern, int *len)
+Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
+    Boolean *hasPercent)
 {
     const char *p = pattern;
     const char *w = word;
     const char *m;
 
+    *hasPercent = FALSE;
     if (*p == '\0') {
 	/* Null pattern is the whole string */
 	*len = strlen(w);
@@ -465,6 +467,7 @@ Str_SYSVMatch(const char *word, const char *pattern, int *len)
     }
 
     if ((m = strchr(p, '%')) != NULL) {
+	*hasPercent = TRUE;
 	/* check that the prefix matches */
 	for (; p != m && *w && *w == *p; w++, p++)
 	     continue;
@@ -509,19 +512,21 @@ Str_SYSVMatch(const char *word, const char *pattern, int *len)
  *-----------------------------------------------------------------------
  */
 void
-Str_SYSVSubst(Buffer *buf, char *pat, char *src, int len)
+Str_SYSVSubst(Buffer *buf, char *pat, char *src, size_t len,
+    Boolean lhsHasPercent)
 {
     char *m;
 
-    if ((m = strchr(pat, '%')) != NULL) {
+    if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
 	/* Copy the prefix */
 	Buf_AddBytes(buf, m - pat, pat);
 	/* skip the % */
 	pat = m + 1;
     }
-
-    /* Copy the pattern */
-    Buf_AddBytes(buf, len, src);
+    if (m != NULL || !lhsHasPercent) {
+	/* Copy the pattern */
+	Buf_AddBytes(buf, len, src);
+    }
 
     /* append the rest */
     Buf_AddBytes(buf, strlen(pat), pat);
