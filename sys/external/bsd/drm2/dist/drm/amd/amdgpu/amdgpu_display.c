@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_display.c,v 1.6 2020/02/14 04:38:13 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_display.c,v 1.7 2020/04/25 12:39:15 simonb Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_display.c,v 1.6 2020/02/14 04:38:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_display.c,v 1.7 2020/04/25 12:39:15 simonb Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -78,7 +78,7 @@ static void amdgpu_flip_work_func(struct work_struct *__work)
 	struct drm_crtc *crtc = &amdgpuCrtc->base;
 	unsigned long flags;
 	unsigned i, repcnt = 4;
-	int vpos, hpos, stat, min_udelay = 0;
+	int vpos, hpos, stat = 0, min_udelay = 0;
 	struct drm_vblank_crtc *vblank = &crtc->dev->vblank[work->crtc_id];
 
 	amdgpu_flip_wait_fence(adev, &work->excl);
