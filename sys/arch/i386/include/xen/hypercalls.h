@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.1.2.1 2020/04/16 08:46:34 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.1.2.2 2020/04/25 15:01:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -536,13 +536,13 @@ HYPERVISOR_console_io(int cmd, int count, char *str)
 }
 
 static __inline int
-HYPERVISOR_physdev_op(void *physdev_op)
+HYPERVISOR_physdev_op(int cmd, void *physdev_op)
 {
     int ret;
-    unsigned long ign1;
+    unsigned long ign1, ign2;
 
-    _hypercall(__HYPERVISOR_physdev_op, _harg("1" (physdev_op)),
-	_harg("=a" (ret), "=b" (ign1)));
+    _hypercall(__HYPERVISOR_physdev_op, _harg("1" (cmd), "2" (physdev_op)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
