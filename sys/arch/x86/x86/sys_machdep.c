@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.54 2020/04/24 16:27:28 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.55 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.54 2020/04/24 16:27:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.55 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"

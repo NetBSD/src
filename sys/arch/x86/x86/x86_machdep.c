@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.137 2020/04/04 19:50:54 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.138 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.137 2020/04/04 19:50:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.138 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -98,6 +98,16 @@ static char x86_cpu_idle_text[16];
 #ifdef XEN
 char module_machine_amd64_xen[] = "amd64-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
+#endif
+
+#ifndef XENPV
+void (*delay_func)(unsigned int) = i8254_delay;
+void (*x86_initclock_func)(void) = i8254_initclocks;
+void (*x86_cpu_initclock_func)(void) = x86_dummy_initclock;
+#else /* XENPV */
+void (*delay_func)(unsigned int) = xen_delay;
+void (*x86_initclock_func)(void) = xen_initclocks;
+void (*x86_cpu_initclock_func)(void) = xen_cpu_initclocks;
 #endif
 
 
@@ -307,7 +317,11 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 #ifdef __HAVE_PREEMPTION
 	if ((flags & RESCHED_KPREEMPT) != 0) {
 		if ((flags & RESCHED_REMOTE) != 0) {
+#ifdef XENPV
+			xen_send_ipi(ci, XEN_IPI_KPREEMPT);
+#else
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
+#endif
 		} else {
 			softint_trigger(1 << SIR_PREEMPT);
 		}
@@ -1255,7 +1269,10 @@ sysctl_machdep_tsc_enable(SYSCTLFN_ARGS)
 static const char * const vm_guest_name[VM_LAST] = {
 	[VM_GUEST_NO] =		"none",
 	[VM_GUEST_VM] =		"generic",
-	[VM_GUEST_XEN] =	"Xen",
+	[VM_GUEST_XENPV] =	"XenPV",
+	[VM_GUEST_XENPVH] =	"XenPVH",
+	[VM_GUEST_XENHVM] =	"XenHVM",
+	[VM_GUEST_XENPVHVM] =	"XenPVHVM",
 	[VM_GUEST_HV] =		"Hyper-V",
 	[VM_GUEST_VMWARE] =	"VMware",
 	[VM_GUEST_KVM] =	"KVM",
@@ -1266,7 +1283,7 @@ sysctl_machdep_hypervisor(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	const char *t = NULL;
-	char buf[8];
+	char buf[10];
 
 	node = *rnode;
 	node.sysctl_data = buf;
@@ -1377,7 +1394,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_CREATE, CTL_EOL);
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	void sysctl_speculation_init(struct sysctllog **);
 	sysctl_speculation_init(clog);
 #endif
@@ -1426,3 +1443,14 @@ intr_findpic(int num)
 }
 #endif
 
+void
+cpu_initclocks(void)
+{
+
+	(*x86_initclock_func)();
+}
+
+void
+x86_dummy_initclock(void)
+{
+}

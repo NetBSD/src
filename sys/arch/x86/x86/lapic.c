@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.77 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.77 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
+#include "opt_xen.h"
+
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
 
 #include <dev/ic/i8253reg.h>
 
+#include <x86/machdep.h>
 #include <machine/cpu.h>
 #include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
@@ -70,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
+#ifndef XENPV
 #if NACPICA > 0
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
@@ -111,6 +115,9 @@ struct pic local_pic = {
 	.pic_hwunmask = lapic_hwunmask,
 	.pic_addroute = lapic_setup,
 	.pic_delroute = lapic_setup,
+	.pic_intr_get_devname = x86_intr_get_devname,
+	.pic_intr_get_assigned = x86_intr_get_assigned,
+	.pic_intr_get_count = x86_intr_get_count,
 };
 
 static int i82489_ipi(int vec, int target, int dl);
@@ -278,7 +285,7 @@ lapic_setup_bsp(paddr_t lapic_base)
 			    !ISSET(regs[0], VCPUINFO_LEGACY_X2APIC))
 				reason = "inside VMWare without intr "
 				    "redirection";
-		} else if (vm_guest == VM_GUEST_XEN) {
+		} else if (vm_guest == VM_GUEST_XENHVM) {
 			reason = "due to running under XEN";
 		} else if (vm_guest == VM_GUEST_NO &&
 		    CPUID_TO_FAMILY(curcpu()->ci_signature) == 6 &&
@@ -591,9 +598,6 @@ lapic_initclocks(void)
 	lapic_writereg(LAPIC_EOI, 0);
 }
 
-extern u_long rtclock_tval; /* XXX put in header file */
-extern void (*initclock_func)(void); /* XXX put in header file */
-
 /*
  * Calibrate the local apic count-down timer (which is running at
  * bus-clock speed) vs. the i8254 counter/timer (which is running at
@@ -635,7 +639,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
 		cur_i8254 = gettick();
 		if (cur_i8254 > initial_i8254)
-			delta = rtclock_tval - (cur_i8254 - initial_i8254);
+			delta = x86_rtclock_tval - (cur_i8254 - initial_i8254);
 		else
 			delta = initial_i8254 - cur_i8254;
 		initial_i8254 = cur_i8254;
@@ -700,7 +704,8 @@ calibrate_done:
 		 * for all our timing needs..
 		 */
 		delay_func = lapic_delay;
-		initclock_func = lapic_initclocks;
+		x86_cpu_initclock_func = lapic_initclocks;
+		x86_initclock_func = x86_dummy_initclock;
 		initrtclock(0);
 
 		if (lapic_timecounter.tc_frequency == 0) {
@@ -963,3 +968,9 @@ lapic_dump(void)
 
 #undef APIC_LVT_PRIINT
 }
+#else /* XENPV */
+void
+lapic_boot_init(paddr_t lapic_base)
+{
+}
+#endif /* XENPV */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.187 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.187 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $");
 
 #include "acpica.h"		/* for NACPICA, for mp_verbose */
 
+#include <x86/machdep.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -125,11 +126,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2020/04/23 21:35:18 ad Exp $");
 
 #include "tsc.h"
 
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #if NHYPERV > 0
 #include <x86/x86/hypervvar.h>
 #endif
+#endif
+
+#ifdef XEN
+#include <xen/hypervisor.h>
 #endif
 
 static int	cpu_match(device_t, cfdata_t, void *);
@@ -449,7 +454,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			/* Enable lapic. */
 			lapic_enable();
 			lapic_set_lvt();
-			lapic_calibrate_timer(ci);
+			if (vm_guest != VM_GUEST_XENPVHVM)
+				lapic_calibrate_timer(ci);
 		}
 #endif
 		kcsan_cpu_init(ci);
@@ -464,6 +470,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_identify(ci);
 		x86_errata();
 		x86_cpu_idle_init();
+		(*x86_cpu_initclock_func)();
+#ifdef XENPVHVM
+		xen_hvm_init_cpu(ci);
+#endif
 		break;
 
 	case CPU_ROLE_BP:
@@ -471,6 +481,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_identify(ci);
 		x86_errata();
 		x86_cpu_idle_init();
+#ifdef XENPVHVM
+		xen_hvm_init_cpu(ci);
+#endif
+		(*x86_cpu_initclock_func)();
 		break;
 
 #ifdef MULTIPROCESSOR
@@ -732,10 +746,8 @@ cpu_boot_secondary_processors(void)
 	}
 #endif
 
-#ifndef XEN
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
-#endif
 
 #if NACPICA > 0
 	/* Finished with NUMA info for now. */
@@ -982,7 +994,6 @@ cpu_hatch(void *v)
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
-	lapic_initclocks();
 #endif
 
 	fpuinit(ci);
@@ -995,6 +1006,10 @@ cpu_hatch(void *v)
 	 * above.
 	 */
 	cpu_init(ci);
+#ifdef XENPVHVM
+	xen_hvm_init_cpu(ci);
+#endif
+	(*x86_cpu_initclock_func)();
 	cpu_get_tsc_freq(ci);
 
 	s = splhigh();

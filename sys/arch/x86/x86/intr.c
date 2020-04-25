@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.150 2019/12/30 23:32:30 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.151 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150 2019/12/30 23:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.151 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -166,7 +166,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150 2019/12/30 23:32:30 thorpej Exp $");
 #include "lapic.h"
 #include "pci.h"
 #include "acpica.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #if NHYPERV > 0
 #include <dev/hyperv/hypervvar.h>
@@ -206,16 +206,6 @@ extern void Xrecurse_hyperv_hypercall(void);
 #else
 #define DPRINTF(msg)
 #endif
-
-struct pic softintr_pic = {
-	.pic_name = "softintr_fakepic",
-	.pic_type = PIC_SOFT,
-	.pic_vecbase = 0,
-	.pic_apicid = 0,
-	.pic_lock = __SIMPLELOCK_UNLOCKED,
-};
-
-static void intr_calculatemasks(struct cpu_info *);
 
 static SIMPLEQ_HEAD(, intrsource) io_interrupt_sources =
 	SIMPLEQ_HEAD_INITIALIZER(io_interrupt_sources);
@@ -287,73 +277,6 @@ x86_nmi(void)
 {
 
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-}
-
-/*
- * Recalculate the interrupt masks from scratch.
- * During early boot, anything goes and we are always called on the BP.
- * When the system is up and running:
- *
- * => called with ci == curcpu()
- * => cpu_lock held by the initiator
- * => interrupts disabled on-chip (PSL_I)
- *
- * Do not call printf(), kmem_free() or other "heavyweight" routines
- * from here.  This routine must be quick and must not block.
- */
-static void
-intr_calculatemasks(struct cpu_info *ci)
-{
-	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
-	struct intrhand *q;
-
-	/* First, figure out which levels each IRQ uses. */
-	unusedirqs = 0xffffffff;
-	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
-		int levels = 0;
-
-		if (ci->ci_isources[irq] == NULL) {
-			intrlevel[irq] = 0;
-			continue;
-		}
-		for (q = ci->ci_isources[irq]->is_handlers; q; q = q->ih_next)
-			levels |= 1U << q->ih_level;
-		intrlevel[irq] = levels;
-		if (levels)
-			unusedirqs &= ~(1U << irq);
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < MAX_INTR_SOURCES; irq++)
-			if (intrlevel[irq] & (1U << level))
-				irqs |= 1U << irq;
-		ci->ci_imask[level] = irqs | unusedirqs;
-	}
-
-	for (level = 0; level<(NIPL-1); level++)
-		ci->ci_imask[level+1] |= ci->ci_imask[level];
-
-	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
-		int maxlevel = IPL_NONE;
-		int minlevel = IPL_HIGH;
-
-		if (ci->ci_isources[irq] == NULL)
-			continue;
-		for (q = ci->ci_isources[irq]->is_handlers; q;
-		     q = q->ih_next) {
-			if (q->ih_level < minlevel)
-				minlevel = q->ih_level;
-			if (q->ih_level > maxlevel)
-				maxlevel = q->ih_level;
-		}
-		ci->ci_isources[irq]->is_maxlevel = maxlevel;
-		ci->ci_isources[irq]->is_minlevel = minlevel;
-	}
-
-	for (level = 0; level < NIPL; level++)
-		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
 
 /*
@@ -801,7 +724,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 
 	/* Link in the handler and re-calculate masks. */
 	*(ih->ih_prevp) = ih;
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 
 	/* Hook in new IDT vector and SPL state. */
 	if (source->is_resume == NULL || source->is_idtvec != idt_vec) {
@@ -957,6 +880,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		/* nothing */;
 	}
 
+	ih->ih_pic = pic;
 	ih->ih_fun = ih->ih_realfun = handler;
 	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_prevp = p;
@@ -1186,7 +1110,7 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 
 	*p = q->ih_next;
 
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 	/*
 	 * If there is no any handler, 1) do delroute because it has no
 	 * any source and 2) dont' hwunmask to prevent spurious interrupt.
@@ -1265,7 +1189,7 @@ xen_intr_string(int port, char *buf, size_t len, struct pic *pic)
 
 	KASSERT(port >= 0);
 
-	snprintf(buf, len, "%s channel %d", pic->pic_name, port);
+	snprintf(buf, len, "%s chan %d", pic->pic_name, port);
 
 	return buf;
 }
@@ -1327,15 +1251,10 @@ intr_string(intr_handle_t ih, char *buf, size_t len)
 
 /*
  * Fake interrupt handler structures for the benefit of symmetry with
- * other interrupt sources, and the benefit of intr_calculatemasks()
+ * other interrupt sources, and the benefit of x86_intr_calculatemasks()
  */
-struct intrhand fake_softclock_intrhand;
-struct intrhand fake_softnet_intrhand;
-struct intrhand fake_softserial_intrhand;
-struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
-struct intrhand fake_preempt_intrhand;
 #if NHYPERV > 0
 struct intrhand fake_hyperv_intrhand;
 #endif
@@ -1369,7 +1288,7 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if (NLAPIC > 0) || defined(MULTIPROCESSOR) || defined(__HAVE_PREEMPTION) || \
+#if (NLAPIC > 0) || defined(MULTIPROCESSOR) || \
     (NHYPERV > 0)
 	struct intrsource *isp;
 #endif
@@ -1384,6 +1303,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
+	fake_timer_intrhand.ih_pic = &local_pic;
 	fake_timer_intrhand.ih_level = IPL_CLOCK;
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
@@ -1397,6 +1317,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
+	fake_ipi_intrhand.ih_pic = &local_pic;
 	fake_ipi_intrhand.ih_level = IPL_HIGH;
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;
@@ -1423,16 +1344,10 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 #if defined(__HAVE_PREEMPTION)
-	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	isp->is_recurse = Xrecurse_preempt;
-	isp->is_resume = Xresume_preempt;
-	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
-	isp->is_handlers = &fake_preempt_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_PREEMPT] = isp;
+	x86_init_preempt(ci);
 
 #endif
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
 	vaddr_t istack;
@@ -1460,13 +1375,6 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 	ci->ci_idepth = -1;
-
-#ifdef XENPVHVM
-	ci->ci_xunmask[0] = 0xfffffffe;
-	for (int i = 1; i < NIPL; i++)
-		ci->ci_xunmask[i] = ci->ci_xunmask[i - 1] & ~(1 << i);
-#endif
-
 }
 
 #if defined(INTRDEBUG) || defined(DDB)
@@ -1521,55 +1429,6 @@ intr_printconfig(void)
 
 #endif
 
-#if defined(__HAVE_FAST_SOFTINTS)
-void
-softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
-{
-	struct intrsource *isp;
-	struct cpu_info *ci;
-	u_int sir;
-
-	ci = l->l_cpu;
-
-	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	isp->is_recurse = Xsoftintr;
-	isp->is_resume = Xsoftintr;
-	isp->is_pic = &softintr_pic;
-
-	switch (level) {
-	case SOFTINT_BIO:
-		sir = SIR_BIO;
-		fake_softbio_intrhand.ih_level = IPL_SOFTBIO;
-		isp->is_handlers = &fake_softbio_intrhand;
-		break;
-	case SOFTINT_NET:
-		sir = SIR_NET;
-		fake_softnet_intrhand.ih_level = IPL_SOFTNET;
-		isp->is_handlers = &fake_softnet_intrhand;
-		break;
-	case SOFTINT_SERIAL:
-		sir = SIR_SERIAL;
-		fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-		isp->is_handlers = &fake_softserial_intrhand;
-		break;
-	case SOFTINT_CLOCK:
-		sir = SIR_CLOCK;
-		fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
-		isp->is_handlers = &fake_softclock_intrhand;
-		break;
-	default:
-		panic("softint_init_md");
-	}
-
-	KASSERT(ci->ci_isources[sir] == NULL);
-
-	*machdep = (1 << sir);
-	ci->ci_isources[sir] = isp;
-	ci->ci_isources[sir]->is_lwp = l;
-
-	intr_calculatemasks(ci);
-}
-#endif /* __HAVE_FAST_SOFTINTS */
 /*
  * Save current affinitied cpu's interrupt count.
  */
@@ -1628,7 +1487,7 @@ intr_redistribute_xc_t(void *arg1, void *arg2)
 
 	/* Hook it in and re-calculate masks. */
 	ci->ci_isources[slot] = isp;
-	intr_calculatemasks(curcpu());
+	x86_intr_calculatemasks(curcpu());
 
 	/* Re-enable interrupts locally. */
 	x86_write_psl(psl);
@@ -1682,7 +1541,7 @@ intr_redistribute_xc_s2(void *arg1, void *arg2)
 
 	/* Patch out the source and re-calculate masks. */
 	ci->ci_isources[slot] = NULL;
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 
 	/* Re-enable interrupts locally. */
 	x86_write_psl(psl);
@@ -1872,7 +1731,7 @@ intr_activate_xcall(void *arg1, void *arg2)
 	psl = x86_read_psl();
 	x86_disable_intr();
 
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 
 	if (source->is_type == IST_LEVEL) {
 		stubp = &source->is_pic->pic_level_stubs[slot];
@@ -1917,7 +1776,7 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 		ci->ci_nintrhand--;
 	}
 
-	intr_calculatemasks(ci);
+	x86_intr_calculatemasks(ci);
 
 	/*
 	 * Skip unsetgate(), because the same itd[] entry is overwritten in
@@ -2103,11 +1962,8 @@ intr_get_handler(const char *intrid)
 	return isp->is_handlers;
 }
 
-/*
- * MI interface for subr_interrupt.c
- */
 uint64_t
-interrupt_get_count(const char *intrid, u_int cpu_idx)
+x86_intr_get_count(const char *intrid, u_int cpu_idx)
 {
 	struct cpu_info *ci;
 	struct intrsource *isp;
@@ -2117,10 +1973,9 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 	int i, slot;
 	uint64_t count = 0;
 
+	KASSERT(mutex_owned(&cpu_lock));
 	ci = cpu_lookup(cpu_idx);
 	cpuid = ci->ci_cpuid;
-
-	mutex_enter(&cpu_lock);
 
 	ih = intr_get_handler(intrid);
 	if (ih == NULL) {
@@ -2144,6 +1999,59 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 	}
 
  out:
+	return count;
+}
+
+void
+x86_intr_get_assigned(const char *intrid, kcpuset_t *cpuset)
+{
+	struct cpu_info *ci;
+	struct intrhand *ih;
+
+	KASSERT(mutex_owned(&cpu_lock));
+	kcpuset_zero(cpuset);
+
+	ih = intr_get_handler(intrid);
+	if (ih == NULL)
+		return;
+
+	ci = ih->ih_cpu;
+	kcpuset_set(cpuset, cpu_index(ci));
+}
+
+void
+x86_intr_get_devname(const char *intrid, char *buf, size_t len)
+{
+	struct intrsource *isp;
+	struct intrhand *ih;
+	int slot;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	ih = intr_get_handler(intrid);
+	if (ih == NULL) {
+		buf[0] = '\0';
+		return;
+	}
+	slot = ih->ih_slot;
+	isp = ih->ih_cpu->ci_isources[slot];
+	strlcpy(buf, isp->is_xname, len);
+
+}
+
+/*
+ * MI interface for subr_interrupt.c
+ */
+uint64_t
+interrupt_get_count(const char *intrid, u_int cpu_idx)
+{
+	struct intrsource *isp;
+	uint64_t count = 0;
+
+	mutex_enter(&cpu_lock);
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL)
+		count = isp->is_pic->pic_intr_get_count(intrid, cpu_idx);
 	mutex_exit(&cpu_lock);
 	return count;
 }
@@ -2154,21 +2062,12 @@ interrupt_get_count(const char *intrid, u_int cpu_idx)
 void
 interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 {
-	struct cpu_info *ci;
-	struct intrhand *ih;
-
-	kcpuset_zero(cpuset);
+	struct intrsource *isp;
 
 	mutex_enter(&cpu_lock);
-
-	ih = intr_get_handler(intrid);
-	if (ih == NULL)
-		goto out;
-
-	ci = ih->ih_cpu;
-	kcpuset_set(cpuset, cpu_index(ci));
-
- out:
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL) 
+		isp->is_pic->pic_intr_get_assigned(intrid, cpuset);
 	mutex_exit(&cpu_lock);
 }
 
@@ -2199,21 +2098,17 @@ void
 interrupt_get_devname(const char *intrid, char *buf, size_t len)
 {
 	struct intrsource *isp;
-	struct intrhand *ih;
-	int slot;
 
 	mutex_enter(&cpu_lock);
-
-	ih = intr_get_handler(intrid);
-	if (ih == NULL) {
-		buf[0] = '\0';
-		goto out;
+	isp = intr_get_io_intrsource(intrid);
+	if (isp != NULL) {
+		if (isp->is_pic->pic_intr_get_devname == NULL) {
+			printf("NULL get_devname intrid %s pic %s\n",
+			    intrid, isp->is_pic->pic_name);
+		} else {
+			isp->is_pic->pic_intr_get_devname(intrid, buf, len);
+		}
 	}
-	slot = ih->ih_slot;
-	isp = ih->ih_cpu->ci_isources[slot];
-	strlcpy(buf, isp->is_xname, len);
-
- out:
 	mutex_exit(&cpu_lock);
 }
 

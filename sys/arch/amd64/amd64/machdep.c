@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.347 2020/04/21 20:13:39 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.348 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.347 2020/04/21 20:13:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.348 2020/04/25 15:26:16 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -278,14 +278,6 @@ extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
 #ifdef XENPV
 extern paddr_t pmap_pa_start, pmap_pa_end;
-#endif
-
-#ifndef XENPV
-void (*delay_func)(unsigned int) = i8254_delay;
-void (*initclock_func)(void) = i8254_initclocks;
-#else /* XENPV */
-void (*delay_func)(unsigned int) = xen_delay;
-void (*initclock_func)(void) = xen_initclocks;
 #endif
 
 struct nmistore {
@@ -727,9 +719,12 @@ haltsys:
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
-#ifdef XENPV
-		HYPERVISOR_shutdown();
-#endif /* XENPV */
+#ifdef XEN
+		if (vm_guest == VM_GUEST_XENPV ||
+		    vm_guest == VM_GUEST_XENPVH ||
+		    vm_guest == VM_GUEST_XENPVHVM)
+			HYPERVISOR_shutdown();
+#endif /* XEN */
 	}
 
 	cpu_broadcast_halt();
@@ -1691,7 +1686,7 @@ init_x86_64(paddr_t first_avail)
 	svs_init();
 #endif
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XEN
+#ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
@@ -2122,12 +2117,6 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		return EINVAL;
 
 	return 0;
-}
-
-void
-cpu_initclocks(void)
-{
-	(*initclock_func)();
 }
 
 int

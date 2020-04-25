@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.15 2020/04/19 18:47:40 jdolecek Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.16 2020/04/25 15:26:17 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.15 2020/04/19 18:47:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.16 2020/04/25 15:26:17 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

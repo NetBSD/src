@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.9 2020/04/23 13:40:36 simonb Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.10 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.9 2020/04/23 13:40:36 simonb Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.10 2020/04/25 15:26:18 bouyer Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.61 2019/12/22 15:09:39 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.62 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -32,15 +32,14 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
-#if !defined(XEN)
 #define	__HAVE_FAST_SOFTINTS
 #if !defined(NO_PREEMPTION)
 #define	__HAVE_PREEMPTION
 #endif /* !defined(NO_PREEMPTION) */
-#endif /*  !defined(XEN) */
 
 #ifdef _KERNEL
 #include <sys/types.h>
+#include <sys/kcpuset.h>
 #else
 #include <stdbool.h>
 #endif
@@ -48,6 +47,11 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/intrdefs.h>
+
+#ifdef XEN
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
+#endif /* XEN */
 
 #ifndef _LOCORE
 #include <machine/pic.h>
@@ -127,19 +131,7 @@ struct intrsource {
  */
 
 struct intrhand {
-#if defined(XEN)
-	/*
-	 * Note: This is transitional and will go away.
-	 * The only current consumer is xen_intr_disestablish()
-	 *
-	 * We ought to use a union here, but too much effort.
-	 * We use this field to tear down the cookie handed to us
-	 * via x86/intr.c:intr_disestablish();
-	 * Interestingly, the intr_establish_xname() function returns
-	 * a "void *" - so we abuse this for now.
-	 */
-	int	pic_type; /* Overloading wrt struct pintrhand */
-#endif
+	struct pic *ih_pic;
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
@@ -239,9 +231,16 @@ const char *intr_create_intrid(int, struct pic *, int, char *, size_t);
 struct intrsource *intr_allocate_io_intrsource(const char *);
 void intr_free_io_intrsource(const char *);
 
+void x86_init_preempt(struct cpu_info *);
+void x86_intr_calculatemasks(struct cpu_info *);
+
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
+
+void x86_intr_get_devname(const char *, char *, size_t);
+void x86_intr_get_assigned(const char *, kcpuset_t *);
+uint64_t x86_intr_get_count(const char *, u_int);
 
 #ifndef XENPV
 extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);

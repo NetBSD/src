@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43 2020/01/08 17:38:41 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.44 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,7 +91,6 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
-#ifndef XEN
 /*
  * Xsoftintr()
  *
@@ -148,11 +147,11 @@ IDTVEC(softintr)
 	movq	PCB_RSP0(%rdx),%rsp
 
 	/* dispatch */
-	sti
+	STI(di)
 	movq	%r15,%rdi		/* interrupted LWP */
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
-	cli
+	CLI(di)
 
 	/* restore old context */
 	movq	L_PCB(%r15),%rcx
@@ -174,7 +173,7 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	cli
+	CLI(ax)		/* %rax not used by Xspllower/Xdoreti */
 	jmp	*%r13			/* back to Xspllower/Xdoreti */
 END(softintr_ret)
 
@@ -196,11 +195,11 @@ END(softint_trigger)
  */
 IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(di)
 	xorq	%rdi,%rdi
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)
-	cli
+	CLI(di)
 	jmp	*%r13			/* back to Xspllower */
 IDTVEC_END(recurse_preempt)
 
@@ -211,60 +210,29 @@ IDTVEC_END(recurse_preempt)
  */
 IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(ax)
 	testq	$SEL_RPL,TF_CS(%rsp)
 	jnz	1f
 	movq	TF_RIP(%rsp),%rdi
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)	/* from kernel */
-	cli
+	CLI(ax)
 	jmp	*%r13			/* back to Xdoreti */
 1:
 	call	_C_LABEL(preempt)	/* from user */
-	cli
+	CLI(ax)
 	jmp	*%r13			/* back to Xdoreti */
 IDTVEC_END(resume_preempt)
-#endif /* XEN */
 
-#ifndef XENPV
 /*
  * void spllower(int s);
- *
- * Must be the same size as cx8_spllower().  This must use
- * pushf/cli/popf as it is used early in boot where interrupts
- * are disabled via eflags/IE.
- */
-ENTRY(spllower)
-	cmpl	CPUVAR(ILEVEL),%edi
-	jae	1f
-	movl	CPUVAR(IUNMASK)(,%rdi,4),%edx
-	pushf
-	cli
-	testl	CPUVAR(IPENDING),%edx
-	jnz	2f
-	movl	%edi,CPUVAR(ILEVEL)
-	popf
-1:
-	ret
-	ret
-2:
-	popf
-	jmp	_C_LABEL(Xspllower)
-3:
-	.space 16
-	.align	16
-END(spllower)
-LABEL(spllower_end)
-
-/*
- * void	cx8_spllower(int s);
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
  * edx : eax = old level / old ipending
  * ecx : ebx = new level / old ipending
  */
-ENTRY(cx8_spllower)
+ENTRY(spllower)
 	movl	CPUVAR(ILEVEL),%edx
 	movq	%rbx,%r8
 	cmpl	%edx,%edi			/* new level is lower? */
@@ -286,15 +254,11 @@ ENTRY(cx8_spllower)
 	ret
 2:
 	movq	%r8,%rbx
-	.type	_C_LABEL(cx8_spllower_patch), @function
-LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 
 	.align	16
-END(cx8_spllower_patch)
-END(cx8_spllower)
-LABEL(cx8_spllower_end)
-#endif /* !XENPV */
+END(spllower)
+LABEL(spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -322,8 +286,8 @@ IDTVEC(spllower)
 	pushq	%r12
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
-1:	movl	%ebx,%eax		/* get cpl */
-#if !defined(XENPV)
+1:
+	movl	%ebx,%eax		/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
@@ -332,19 +296,7 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
-#endif
 2:
-#if defined(XEN)
-	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
-	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
-	jz	3f
-	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
-	jmp	*IS_RECURSE(%rax)
-#endif
-3:
 	movl	%ebx,CPUVAR(ILEVEL)
 	STI(si)
 	popq	%r12
@@ -366,8 +318,8 @@ IDTVEC(doreti)
 	popq	%rbx			/* get previous priority */
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
-1:	movl	%ebx,%eax
-#if !defined(XENPV)
+1:
+	movl    %ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
@@ -376,19 +328,7 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RESUME(%rax)
-#endif
-2:
-#if defined(XEN)
-	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
-	andl	CPUVAR(XPENDING),%eax
-	jz	3f
-	bsrl	%eax,%eax		/* slow, but not worth optimizing */
-	btrl	%eax,CPUVAR(XPENDING)
-	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
-	jmp	*IS_RESUME(%rax)
-#endif
-3:	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$SEL_RPL,TF_CS(%rsp)

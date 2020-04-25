@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.55 2020/04/19 20:07:53 jdolecek Exp $ */
+/* $NetBSD: privcmd.c,v 1.56 2020/04/25 15:26:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.55 2020/04/19 20:07:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.56 2020/04/25 15:26:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

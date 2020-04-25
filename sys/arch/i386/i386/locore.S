@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.180 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.180 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1115,6 +1115,8 @@ begin:
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 
+	movl    $VM_GUEST_XENPV, RELOC(vm_guest)
+
 	/*
 	 * Use a temporary GDT page. We'll re-add it to uvm(9) once we're done
 	 * using it.
@@ -1476,7 +1478,7 @@ IDTVEC(syscall)
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz	14f
 	call	_C_LABEL(stipending)
@@ -1488,17 +1490,17 @@ IDTVEC(syscall)
 	movl	$.Lsyscall_resume, %esi /* address to resume loop at */
 .Lsyscall_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
 	jz	17f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(IPENDING)
+	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 17:	movl	%ebx, CPUVAR(ILEVEL)	/* restore cpl  */
 	jmp	.Lsyscall_checkast
 14:
-#endif /* XEN */
+#endif /* XENPV */
 
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)

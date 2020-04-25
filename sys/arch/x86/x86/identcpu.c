@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.106 2020/04/20 04:17:51 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.107 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.106 2020/04/20 04:17:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.107 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.106 2020/04/20 04:17:51 msaitoh Exp $
 #include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
 #include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
 
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #if NHYPERV > 0
 #include <x86/x86/hypervvar.h>
@@ -461,7 +461,7 @@ cpu_probe_cyrix_cmn(struct cpu_info *ci)
 	 * even be in here, it should be in there. XXX
 	 */
 	uint8_t c3;
-#ifndef XEN
+#ifndef XENPV
 	extern int clock_broken_latch;
 
 	switch (ci->ci_signature) {
@@ -974,7 +974,7 @@ cpu_probe(struct cpu_info *ci)
 		cpu_probe_fpu(ci);
 	}
 
-#ifndef XEN
+#ifndef XENPV
 	x86_cpu_topology(ci);
 #endif
 
@@ -991,7 +991,7 @@ cpu_probe(struct cpu_info *ci)
 			cpu_feature[i] = ci->ci_feat_val[i];
 		}
 		identify_hypervisor();
-#ifndef XEN
+#ifndef XENPV
 		/* Early patch of text segment. */
 		x86_patch(true);
 #endif
@@ -1130,7 +1130,7 @@ identify_hypervisor(void)
 			} else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
 				vm_guest = VM_GUEST_KVM;
 			else if (memcmp(hv_vendor, "XenVMMXenVMM", 12) == 0)
-				vm_guest = VM_GUEST_XEN;
+				vm_guest = VM_GUEST_XENHVM;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
 			/* NetBSD nvmm:   "___ NVMM ___" */

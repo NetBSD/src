@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85 2019/12/30 23:32:29 thorpej Exp $	*/
+/*	$NetBSD: vector.S,v 1.86 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85 2019/12/30 23:32:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.86 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85 2019/12/30 23:32:29 thorpej Exp $");
 
 #include "ioapic.h"
 #include "lapic.h"
-#ifndef XEN
+#ifndef XENPV
 #include "hyperv.h"
 #endif
 
@@ -940,18 +940,17 @@ END(x2apic_level_stubs)
 #if defined(XEN)
 #define voidop(num)
 
-#define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_ ## name ## num)						;\
+#define	XENINTRSTUB(name, sir, level, unmask) \
+IDTVEC(recurse_ ## name ## sir)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movl	$_C_LABEL(Xdoreti), %esi; /* we now have a trap frame, so loop using doreti instead */ ;\
-IDTVEC(resume_ ## name ## num)						\
+IDTVEC(resume_ ## name ## sir)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
-	movl	CPUVAR(XSOURCES) + (num) * 4,%ebp			;\
-	movl	$num,CPUVAR(ILEVEL)					;\
+	movl	CPUVAR(ISOURCES) + (sir) * 4,%ebp			;\
+	movl	$level,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
@@ -964,54 +963,22 @@ IDTVEC(resume_ ## name ## num)						\
 	jnz	6b							;\
 									\
 	CLI(%eax)							;\
-	unmask(num)			/* unmask it in hardware */	;\
-	late_ack(num)							;\
-	IDEPTH_DECR							;\
-	popl	%ebx							;\
-	jmp	*%esi			/* lower spl and do ASTs */	;\
+	unmask(sir)			/* unmask it in hardware */	;\
+	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 
 /*
  * Just unmasking the event isn't enough, we also need to
  * reassert the event pending bit if needed. For now just call
  * the C function doing it, maybe rewrite in inline assembly ?
  */
-#define hypervisor_asm_unmask(num)			\
-	pushl	$num					;\
-	call	_C_LABEL(hypervisor_enable_ipl)		;\
+#define hypervisor_asm_unmask(sir)			\
+	pushl	$sir					;\
+	call	_C_LABEL(hypervisor_enable_sir)		;\
 	addl	$4,%esp
 
-XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,1,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,2,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,3,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,4,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,5,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,6,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,7,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,8,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,9,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,10,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,11,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,12,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,13,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,14,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,15,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,16,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,17,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,18,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,19,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,20,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,21,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,22,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,23,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,24,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,25,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,26,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,27,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,28,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
+XENINTRSTUB(xenev,SIR_XENIPL_VM,IPL_VM,hypervisor_asm_unmask)
+XENINTRSTUB(xenev,SIR_XENIPL_SCHED,IPL_SCHED,hypervisor_asm_unmask)
+XENINTRSTUB(xenev,SIR_XENIPL_HIGH,IPL_HIGH,hypervisor_asm_unmask)
 
 /* On Xen, the xenev_stubs are purely for spl entry, since there is no
  * vector based mechanism. We however provide the entrypoint to ensure
@@ -1023,40 +990,15 @@ LABEL(entry_xenev)
 	call  _C_LABEL(panic)
 END(entry_xenev)
 
+#define XENINTRSTUB_ENTRY(name, sir) \
+	.long entry_xenev , _C_LABEL(Xrecurse_ ## name ## sir); \
+	.long _C_LABEL(Xresume_ ## name ## sir);
+
 	.type	_C_LABEL(xenev_stubs), @object
 LABEL(xenev_stubs)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
-	.long entry_xenev, _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_VM) ;
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_SCHED) ;
+	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_HIGH) ;
 END(xenev_stubs)
 
 #endif /* XEN */
@@ -1065,81 +1007,27 @@ END(xenev_stubs)
 
 #ifdef XEN
 
-/*
- * A note on the "critical region" in our callback handler.
- * We want to avoid stacking callback handlers due to events occurring
- * during handling of the last event. To do this, we keep events disabled
- * until weve done all processing. HOWEVER, we must enable events before
- * popping the stack frame (cant be done atomically) and so it would still
- * be possible to get enough handler activations to overflow the stack.
- * Although unlikely, bugs of that kind are hard to track down, so wed
- * like to avoid the possibility.
- * So, on entry to the handler we detect whether we interrupted an
- * existing activation in its critical region -- if so, we pop the current
- * activation and restart the handler using the previous one.
- */
 ENTRY(hypervisor_callback)
 IDTVEC(hypervisor_pvhvm_callback)	
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	TF_EIP(%esp),%eax
-	cmpl	$scrit,%eax
-	jb	11f
-	cmpl	$ecrit,%eax
-	jb	critical_region_fixup
-11:	pushl	CPUVAR(ILEVEL)
-	push	%esp
+	pushl	CPUVAR(ILEVEL)
+	IDEPTH_INCR
+	/* IDEPTH_INCR puts %esp on stack; we use it as argument to
+	 * do_hypervisor_callback. But don't restore the stack after,
+	 * Xdoreti needs it too.
+	 */
 	call	do_hypervisor_callback
-	add	$8,%esp
-	xorl	%eax,%eax
-	movb	TF_CS(%esp),%cl
-	test	$CHK_UPL,%cl		/* slow return to ring 2 or 3 */
-	je	safesti
-	movl	CPUVAR(ILEVEL),%ebx
-	jmp	doreti_checkast
-safesti:
-	movl	CPUVAR(VCPU),%esi
-	XEN_UNBLOCK_EVENTS(%esi)	/* reenable event callbacks */
-scrit:	/**** START OF CRITICAL REGION ****/
-	XEN_TEST_PENDING(%esi)
-	jnz	14f		/* process more events if necessary... */
-	INTRFASTEXIT
-critiret:
-14:	XEN_BLOCK_EVENTS(%esi)
-	jmp	11b
-ecrit:	/**** END OF CRITICAL REGION ****/
-/*
- * [How we do the fixup]. We want to merge the current stack frame with the
- * just-interrupted frame. How we do this depends on where in the critical
- * region the interrupted handler was executing, and so how many saved
- * registers are in each frame. We do this quickly using the lookup table
- * 'critical_fixup_table'. For each byte offset in the critical region, it
- * provides the number of bytes which have already been popped from the
- * interrupted stack frame.
- */
-critical_region_fixup:
-	cmpl	$(critiret-1),%eax	/* eip points to iret? */
-	jne	1f
-	movl	$(TF_PUSHSIZE+0x8),%eax
-	jmp	2f
-1:	xorl	%eax,%eax
-2:
-	/* %eax contains num bytes popped */
-	mov	%esp,%esi
-	add	%eax,%esi		/* %esi points at end of src region */
-	mov	%esp,%edi
-	add	$(TF_PUSHSIZE+0x8+0xC),%edi /* %edi points at end of dst region */
-	mov	%eax,%ecx
-	shr	$2,%ecx		/* convert words to bytes */
-	je	16f		/* skip loop if nothing to copy */
-15:	subl	$4,%esi		/* pre-decrementing copy loop */
-	subl	$4,%edi
-	movl	(%esi),%eax
-	movl	%eax,(%edi)
-	loop	15b
-16:	movl	%edi,%esp	/* final %edi is top of merged stack */
-	jmp	11b
+#ifndef XENPV
+	movzbl	_C_LABEL(xenhvm_use_percpu_callback),%eax
+	testl	%eax, %eax
+	jz	1f
+	movl	_C_LABEL(local_apic_va),%eax
+	movl	$0, LAPIC_EOI(%eax)
+1:
+#endif
+	jmp	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
 

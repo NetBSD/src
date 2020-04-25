@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.30 2020/04/10 14:54:33 jdolecek Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.31 2020/04/25 15:26:17 bouyer Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.30 2020/04/10 14:54:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.31 2020/04/25 15:26:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.30 2020/04/10 14:54:33 jdolecek Ex
 
 #include <uvm/uvm.h>
 
-extern paddr_t avail_end;
+#include "opt_xen.h"
 
 /* No special needs */
 struct x86_bus_dma_tag xenbus_bus_dma_tag = {
@@ -55,6 +55,10 @@ struct x86_bus_dma_tag xenbus_bus_dma_tag = {
 	._bounce_alloc_hi	= 0,
 	._may_bounce		= NULL,
 };
+
+#ifdef XENPV
+
+extern paddr_t avail_end;
 
 /* Pure 2^n version of get_order */
 static inline int get_order(unsigned long size)
@@ -318,3 +322,4 @@ dorealloc:
 		return error;
 	goto again;
 }
+#endif /* XENPV */

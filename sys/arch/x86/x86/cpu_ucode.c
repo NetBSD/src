@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.12 2019/02/11 14:59:33 cherry Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.13 2020/04/25 15:26:18 bouyer Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.12 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.13 2020/04/25 15:26:18 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_cpu_ucode.h"
@@ -158,4 +158,4 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	sc->sc_blobsize = 0;
 	return error;
 }
-#endif
+#endif /* XEN */

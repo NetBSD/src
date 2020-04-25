@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.11 2020/04/24 16:27:28 maxv Exp $	*/
+/*	$NetBSD: gdt.h,v 1.12 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

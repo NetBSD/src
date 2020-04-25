@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.32 2020/04/25 05:17:16 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.33 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

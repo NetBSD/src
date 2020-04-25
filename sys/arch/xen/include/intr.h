@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.54 2020/04/21 19:03:51 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.55 2020/04/25 15:26:17 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -33,7 +33,7 @@
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_
 
-#include <machine/intrdefs.h>
+#include <xen/intrdefs.h>
 
 #ifndef _LOCORE
 #include <xen/include/public/xen.h>
@@ -58,12 +58,10 @@ struct evtsource {
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	struct cpu_info *ev_cpu;        /* cpu on which this event is bound */
-	char ev_intrname[32];		/* interrupt string */
-	char ev_xname[64];		/* handler device list */
+	char ev_intrname[INTRIDBUF];	/* interrupt string */
+	char ev_xname[INTRDEVNAMEBUF];	/* handler device list */
+	struct intrsource *ev_isl;	/* entry in intr sources list */
 };
-
-#define XMASK(ci,level) (ci)->ci_xmask[(level)]
-#define XUNMASK(ci,level) (ci)->ci_xunmask[(level)]
 
 extern struct intrstub xenev_stubs[];
 extern int irq2port[NR_EVENT_CHANNELS]; /* actually port + 1, so that 0 is invaid */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.42 2020/04/23 20:38:33 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.43 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.42 2020/04/23 20:38:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.43 2020/04/25 15:26:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

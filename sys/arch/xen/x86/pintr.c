@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.12 2020/04/21 20:13:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.13 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"

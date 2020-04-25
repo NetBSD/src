@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.10 2020/04/20 11:03:02 simonb Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.11 2020/04/25 15:26:18 bouyer Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.10 2020/04/20 11:03:02 simonb Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.11 2020/04/25 15:26:18 bouyer Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>

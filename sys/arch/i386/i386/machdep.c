@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.826 2020/04/21 20:13:39 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.827 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.826 2020/04/21 20:13:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.827 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -233,14 +233,6 @@ extern paddr_t avail_start, avail_end;
 extern paddr_t pmap_pa_start, pmap_pa_end;
 void hypervisor_callback(void);
 void failsafe_callback(void);
-#endif
-
-#ifdef XENPV
-void (*delay_func)(unsigned int) = xen_delay;
-void (*initclock_func)(void) = xen_initclocks;
-#else
-void (*delay_func)(unsigned int) = i8254_delay;
-void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
 /*
@@ -792,10 +784,12 @@ haltsys:
 #else
 		__USE(s);
 #endif
-#ifdef XENPV
-		HYPERVISOR_shutdown();
-		for (;;);
-#endif
+#ifdef XEN
+		if (vm_guest == VM_GUEST_XENPV ||
+		    vm_guest == VM_GUEST_XENPVH ||
+		    vm_guest == VM_GUEST_XENPVHVM)
+			HYPERVISOR_shutdown();
+#endif /* XEN */
 	}
 
 #ifdef MULTIPROCESSOR
@@ -985,7 +979,7 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdtstore[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#if NBIOSCALL > 0
+#if NBIOSCALL > 0 && !defined(XENPV)
 	/* bios trampoline GDT entries */
 	setsegment(&gdtstore[GBIOSCODE_SEL].sd, 0, 0xfffff,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
@@ -1131,11 +1125,11 @@ init386(paddr_t first_avail)
 	extern paddr_t local_apic_pa;
 	union descriptor *tgdt;
 	struct region_descriptor region;
-#endif
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
+#endif /* !XENPV */
 	struct pcb *pcb;
 
 	KASSERT(first_avail % PAGE_SIZE == 0);
@@ -1619,13 +1613,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 	return (0);
-}
-
-void
-cpu_initclocks(void)
-{
-
-	(*initclock_func)();
 }
 
 #define	DEV_IO 14		/* iopl for compat_10 */

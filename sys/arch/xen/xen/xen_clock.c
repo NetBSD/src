@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.81 2020/04/13 22:54:12 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.81 2020/04/13 22:54:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,11 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.81 2020/04/13 22:54:12 bouyer Exp $");
 
 static uint64_t	xen_vcputime_systime_ns(void);
 static uint64_t	xen_vcputime_raw_systime_ns(void);
-static void	xen_wallclock_time(struct timespec *);
 static uint64_t	xen_global_systime_ns(void);
 static unsigned	xen_get_timecount(struct timecounter *);
-static int	xen_rtc_get(struct todr_chip_handle *, struct timeval *);
-static int	xen_rtc_set(struct todr_chip_handle *, struct timeval *);
 static int	xen_timer_handler(void *, struct clockframe *);
 
 /*
@@ -100,16 +97,6 @@ static struct timecounter xen_timecounter = {
  */
 static volatile uint64_t xen_global_systime_ns_stamp __cacheline_aligned;
 
-/*
- * xen time of day register:
- *
- *	Xen wall clock time, plus a Xen vCPU system time adjustment.
- */
-static struct todr_chip_handle xen_todr_chip = {
-	.todr_gettime = xen_rtc_get,
-	.todr_settime = xen_rtc_set,
-};
-
 #ifdef DOM0OPS
 /*
  * xen timepush state:
@@ -126,45 +113,6 @@ static void	xen_timepush_init(void);
 static void	xen_timepush_intr(void *);
 static int	sysctl_xen_timepush(SYSCTLFN_ARGS);
 #endif
-
-/*
- * startrtclock()
- *
- *	Initialize the real-time clock from x86 machdep autoconf.
- */
-void
-startrtclock(void)
-{
-
-	todr_attach(&xen_todr_chip);
-}
-
-/*
- * setstatclockrate(rate)
- *
- *	Set the statclock to run at rate, in units of ticks per second.
- *
- *	Currently Xen does not have a separate statclock, so this is a
- *	noop; instad the statclock runs in hardclock.
- */
-void
-setstatclockrate(int rate)
-{
-}
-
-/*
- * idle_block()
- *
- *	Called from the idle loop when we have nothing to do but wait
- *	for an interrupt.
- */
-void
-idle_block(void)
-{
-
-	KASSERT(curcpu()->ci_xpending == 0);
-	HYPERVISOR_block();
-}
 
 /*
  * xen_rdtsc()
@@ -490,34 +438,6 @@ xen_wallclock_exit(struct xen_wallclock_ticket *tp)
 }
 
 /*
- * xen_wallclock_time(tsp)
- *
- *	Return a snapshot of the current low-resolution wall clock
- *	time, as reported by the hypervisor, in tsp.
- */
-static void
-xen_wallclock_time(struct timespec *tsp)
-{
-	struct xen_wallclock_ticket ticket;
-	uint64_t systime_ns;
-
-	/* Read the last wall clock sample from the hypervisor. */
-	do {
-		xen_wallclock_enter(&ticket);
-		tsp->tv_sec = HYPERVISOR_shared_info->wc_sec;
-		tsp->tv_nsec = HYPERVISOR_shared_info->wc_nsec;
-	} while (!xen_wallclock_exit(&ticket));
-
-	/* Get the global system time.  */
-	systime_ns = xen_global_systime_ns();
-
-	/* Add the system time to the wall clock time.  */
-	systime_ns += tsp->tv_nsec;
-	tsp->tv_sec += systime_ns / 1000000000ull;
-	tsp->tv_nsec = systime_ns % 1000000000ull;
-}
-
-/*
  * xen_global_systime_ns()
  *
  *	Return a global monotonic view of the system time in
@@ -530,7 +450,6 @@ xen_global_systime_ns(void)
 {
 	struct cpu_info *ci;
 	uint64_t local, global, result;
-	int bound;
 
 	/*
 	 * Find the local timecount on this CPU, and make sure it does
@@ -540,7 +459,7 @@ xen_global_systime_ns(void)
 	 *
 	 * XXX Can we avoid retrying if the CAS fails?
 	 */
-	bound = curlwp_bind();
+	int s = splsched(); /* make sure we won't be interrupted */
 	ci = curcpu();
 	do {
 		local = xen_vcputime_systime_ns();
@@ -555,7 +474,7 @@ xen_global_systime_ns(void)
 	} while (atomic_cas_64(&xen_global_systime_ns_stamp, global, result)
 	    != global);
 	KASSERT(ci == curcpu());
-	curlwp_bindx(bound);
+	splx(s);
 
 	return result;
 }
@@ -576,57 +495,6 @@ xen_get_timecount(struct timecounter *tc)
 }
 
 /*
- * xen_rtc_get(todr, tv)
- *
- *	Get the current real-time clock from the Xen wall clock time
- *	and vCPU system time adjustment.
- */
-static int
-xen_rtc_get(struct todr_chip_handle *todr, struct timeval *tvp)
-{
-	struct timespec ts;
-
-	xen_wallclock_time(&ts);
-	TIMESPEC_TO_TIMEVAL(tvp, &ts);
-
-	return 0;
-}
-
-/*
- * xen_rtc_set(todr, tv)
- *
- *	Set the Xen wall clock time, if we can.
- */
-static int
-xen_rtc_set(struct todr_chip_handle *todr, struct timeval *tvp)
-{
-#ifdef DOM0OPS
-	struct clock_ymdhms dt;
-	xen_platform_op_t op;
-	uint64_t systime_ns;
-
-	if (xendomain_is_privileged()) {
-		/* Convert to ymdhms and set the x86 ISA RTC.  */
-		clock_secs_to_ymdhms(tvp->tv_sec, &dt);
-		rtc_set_ymdhms(NULL, &dt);
-
-		/* Get the global system time so we can preserve it.  */
-		systime_ns = xen_global_systime_ns();
-
-		/* Set the hypervisor wall clock time.  */
-		op.cmd = XENPF_settime;
-		op.u.settime.secs = tvp->tv_sec;
-		op.u.settime.nsecs = tvp->tv_usec * 1000;
-		op.u.settime.system_time = systime_ns;
-		return HYPERVISOR_platform_op(&op);
-	}
-#endif
-
-	/* XXX Should this fail if not on privileged dom0?  */
-	return 0;
-}
-
-/*
  * xen_delay(n)
  *
  *	Wait approximately n microseconds.
@@ -638,6 +506,11 @@ xen_delay(unsigned n)
 
 	/* Bind to the CPU so we don't compare tsc on different CPUs.  */
 	bound = curlwp_bind();
+
+	if (curcpu()->ci_vcpu == NULL) {
+		curlwp_bindx(bound);
+		return;
+	}
 
 	/* Short wait (<500us) or long wait?  */
 	if (n < 500000) {
@@ -763,7 +636,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* XXX sketchy function pointer cast -- fix the API, please */
 	if (event_set_handler(evtch,
 	    __FPTRCAST(int (*)(void *), xen_timer_handler),
-	    ci, IPL_CLOCK, NULL, intr_xname, true, false) != 0)
+	    ci, IPL_CLOCK, NULL, intr_xname, true, false) == NULL)
 		panic("failed to establish timer interrupt handler");
 
 	hypervisor_unmask_event(evtch);
@@ -773,7 +646,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* Disarm the periodic timer on Xen>=3.1 which is allegedly buggy.  */
 	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
 		error = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
-		    ci->ci_cpuid, NULL);
+		    ci->ci_vcpuid, NULL);
 		KASSERT(error == 0);
 	}
 
@@ -808,7 +681,9 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 	KASSERT(cpu_intr_p());
 	KASSERT(cookie == ci);
 
+#if defined(DIAGNOSTIC) && defined(XENPV)
 	frame = NULL; /* We use values cached in curcpu()  */
+#endif
 again:
 	/*
 	 * Find how many nanoseconds of Xen system time has elapsed
@@ -854,12 +729,12 @@ again:
 }
 
 /*
- * xen_initclocks()
+ * xen_cpu_initclocks()
  *
  *	Initialize the Xen clocks on the current CPU.
  */
 void
-xen_initclocks(void)
+xen_cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -867,15 +742,6 @@ xen_initclocks(void)
 	if (ci == &cpu_info_primary) {
 		/* Initialize the systemwide Xen timecounter.  */
 		tc_init(&xen_timecounter);
-
-#ifdef DOM0OPS
-		/*
-		 * If this is a privileged dom0, start pushing the wall
-		 * clock time back to the Xen hypervisor.
-		 */
-		if (xendomain_is_privileged())
-			xen_timepush_init();
-#endif
 	}
 
 	/* Attach the event counters.  */
@@ -900,6 +766,24 @@ xen_initclocks(void)
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
+}
+
+/*
+ * xen_initclocks()
+ *
+ *	Initialize the Xen global clock
+ */
+void
+xen_initclocks(void)
+{
+#ifdef DOM0OPS
+	/*
+	 * If this is a privileged dom0, start pushing the wall
+	 * clock time back to the Xen hypervisor.
+	 */
+	if (xendomain_is_privileged())
+		xen_timepush_init();
+#endif
 }
 
 #ifdef DOM0OPS
@@ -1005,3 +889,125 @@ sysctl_xen_timepush(SYSCTLFN_ARGS)
 }
 
 #endif	/* DOM0OPS */
+
+#ifdef XENPV
+static int	xen_rtc_get(struct todr_chip_handle *, struct timeval *);
+static int	xen_rtc_set(struct todr_chip_handle *, struct timeval *);
+static void	xen_wallclock_time(struct timespec *);
+/*
+ * xen time of day register:
+ *
+ *	Xen wall clock time, plus a Xen vCPU system time adjustment.
+ */
+static struct todr_chip_handle xen_todr_chip = {
+	.todr_gettime = xen_rtc_get,
+	.todr_settime = xen_rtc_set,
+};
+
+/*
+ * startrtclock()
+ *
+ *	Initialize the real-time clock from x86 machdep autoconf.
+ */
+void
+startrtclock(void)
+{
+
+	todr_attach(&xen_todr_chip);
+}
+
+/*
+ * setstatclockrate(rate)
+ *
+ *	Set the statclock to run at rate, in units of ticks per second.
+ *
+ *	Currently Xen does not have a separate statclock, so this is a
+ *	noop; instad the statclock runs in hardclock.
+ */
+void
+setstatclockrate(int rate)
+{
+}
+
+/*
+ * xen_rtc_get(todr, tv)
+ *
+ *	Get the current real-time clock from the Xen wall clock time
+ *	and vCPU system time adjustment.
+ */
+static int
+xen_rtc_get(struct todr_chip_handle *todr, struct timeval *tvp)
+{
+	struct timespec ts;
+
+	xen_wallclock_time(&ts);
+	TIMESPEC_TO_TIMEVAL(tvp, &ts);
+
+	return 0;
+}
+
+/*
+ * xen_rtc_set(todr, tv)
+ *
+ *	Set the Xen wall clock time, if we can.
+ */
+static int
+xen_rtc_set(struct todr_chip_handle *todr, struct timeval *tvp)
+{
+#ifdef DOM0OPS
+	struct clock_ymdhms dt;
+	xen_platform_op_t op;
+	uint64_t systime_ns;
+
+	if (xendomain_is_privileged()) {
+		/* Convert to ymdhms and set the x86 ISA RTC.  */
+		clock_secs_to_ymdhms(tvp->tv_sec, &dt);
+		rtc_set_ymdhms(NULL, &dt);
+
+		/* Get the global system time so we can preserve it.  */
+		systime_ns = xen_global_systime_ns();
+
+		/* Set the hypervisor wall clock time.  */
+		op.cmd = XENPF_settime;
+		op.u.settime.secs = tvp->tv_sec;
+		op.u.settime.nsecs = tvp->tv_usec * 1000;
+		op.u.settime.system_time = systime_ns;
+		return HYPERVISOR_platform_op(&op);
+	}
+#endif
+
+	/* XXX Should this fail if not on privileged dom0?  */
+	return 0;
+}
+
+/*
+ * xen_wallclock_time(tsp)
+ *
+ *	Return a snapshot of the current low-resolution wall clock
+ *	time, as reported by the hypervisor, in tsp.
+ */
+static void
+xen_wallclock_time(struct timespec *tsp)
+{
+	struct xen_wallclock_ticket ticket;
+	uint64_t systime_ns;
+
+	int s = splsched(); /* make sure we won't be interrupted */
+	/* Read the last wall clock sample from the hypervisor. */
+	do {
+		xen_wallclock_enter(&ticket);
+		tsp->tv_sec = HYPERVISOR_shared_info->wc_sec;
+		tsp->tv_nsec = HYPERVISOR_shared_info->wc_nsec;
+	} while (!xen_wallclock_exit(&ticket));
+
+	/* Get the global system time.  */
+	systime_ns = xen_global_systime_ns();
+	splx(s);
+
+	/* Add the system time to the wall clock time.  */
+	systime_ns += tsp->tv_nsec;
+	tsp->tv_sec += systime_ns / 1000000000ull;
+	tsp->tv_nsec = systime_ns % 1000000000ull;
+}
+
+#endif /* XENPV */

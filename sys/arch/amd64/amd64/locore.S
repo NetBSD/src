@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.200 2020/01/15 18:47:23 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.201 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -942,6 +942,8 @@ longmode_hi:
 	cpuid
 	movl	%eax,_C_LABEL(cpuid_level)
 
+	movl	$VM_GUEST_XENPV, _C_LABEL(vm_guest)
+
 	movq	$cpu_info_primary,%rdi
 	movq	%rdi,CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
 	movq	$1,%rsi
@@ -1108,7 +1110,7 @@ ENTRY(cpu_switchto)
 .Lskip_svs:
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	movq	%r13,%rdi
 	movq	%r12,%rsi
 	callq	_C_LABEL(speculation_barrier)

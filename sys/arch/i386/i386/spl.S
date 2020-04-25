@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50 2020/01/08 17:38:41 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.51 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50 2020/01/08 17:38:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.51 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -68,7 +68,6 @@ ENTRY(splraise)
 END(splraise)
 
 #ifndef XENPV
-
 /*
  * void spllower(int s);
  *
@@ -90,20 +89,31 @@ ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL),%ecx
 	jae	1f
 	movl	CPUVAR(IUNMASK)(,%ecx,4),%edx
-	pushf
-	cli
+	PUSHF(%eax)
+	CLI(%eax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
 	movl	%ecx,CPUVAR(ILEVEL)
-	popf
+	POPF(%eax)
 1:
 	ret
 2:
+#ifdef XENPV
+	/*
+	 * no need to call stipending, we're going to CLI again
+	 * just drop the saved value on stack
+	 */
+	addl	$4,%esp
+#else
 	popf
+#endif
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(spllower_end)
 END(spllower)
+#else  /* XENPV */
+STRONG_ALIAS(spllower, cx8_spllower)
+#endif /* !XENPV */
 
 /*
  * void	cx8_spllower(int s);
@@ -143,8 +153,6 @@ LABEL(cx8_spllower_patch)
 	.align	32
 LABEL(cx8_spllower_end)
 END(cx8_spllower)
-
-#endif /* XENPV */
 
 /*
  * void Xspllower(int s);
@@ -201,7 +209,6 @@ IDTVEC(spllower)
 	jz	.Lspllower_panic
 #endif /* XENPV */
 #endif /* defined(DEBUG) */
-#if !defined(XENPV)
 	movl	%ebx,%eax			/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax		/* any non-masked bits left? */
@@ -210,21 +217,9 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
-#endif
 2:
-#if defined(XEN)
-	movl	%ebx,%eax			/* get cpl */
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax		/* any non-masked bits left? */
-	jz	3f
-	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
-	jmp	*IS_RECURSE(%eax)
-#endif
-3:
 	movl	%ebx,CPUVAR(ILEVEL)
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz 4f
 	call	_C_LABEL(stipending)
@@ -248,7 +243,7 @@ IDTVEC(spllower)
 IDTVEC_END(spllower)
 
 /*
- * Handle return from interrupt after device handler finishes.
+ * Xdoreti: Handle return from interrupt after device handler finishes.
  *
  * Important registers:
  *   ebx - cpl to restore
@@ -258,10 +253,8 @@ IDTVEC_END(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
-#ifndef XENPV
 	IDEPTH_DECR
 	popl	%ebx			/* get previous priority */
-#endif
 .Ldoreti_resume_stic:
 	movl	$.Ldoreti_resume,%esi	/* address to resume loop at */
 .Ldoreti_resume:
@@ -280,7 +273,6 @@ IDTVEC(doreti)
 #endif /* XENPV */
 #endif /* defined(DEBUG) */
 
-#if !defined(XENPV)
 	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax
@@ -289,19 +281,7 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
-#endif
-2:
-#if defined(XEN)
-	movl	%ebx,%eax
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax
-	jz	3f
-	bsrl	%eax,%eax		/* slow, but not worth optimizing */
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax, 4),%eax
-	jmp	*IS_RESUME(%eax)
-#endif
-3:	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$CHK_UPL,TF_CS(%esp)
@@ -328,7 +308,7 @@ END(doreti_checkast)
 	jnz	9f
 	HANDLE_DEFERRED_FPU
 6:
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz	4f
 	call	_C_LABEL(stipending)
@@ -353,7 +333,6 @@ END(doreti_checkast)
 #endif
 IDTVEC_END(doreti)
 
-#ifndef XEN
 /*
  * Xsoftintr()
  *
@@ -371,6 +350,7 @@ IDTVEC(softintr)
 	pushl	%esi
 	pushl	%edi
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	STI(%esi)
 	movl	CPUVAR(CURLWP),%esi
 	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
 	movl	%edi,CPUVAR(CURLWP)
@@ -379,12 +359,11 @@ IDTVEC(softintr)
 	movl	%esp,PCB_ESP(%ecx)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
-	sti
 	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
 	pushl	%esi
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
-	cli
+	CLI(%ecx)
 	movl	L_PCB(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
@@ -404,7 +383,7 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	cli
+	CLI(%eax)
 	jmp	*%esi			/* back to splx/doreti */
 END(softintr_ret)
 
@@ -426,11 +405,11 @@ END(softint_trigger)
  */
 IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(%eax)
 	pushl	$0
 	call	_C_LABEL(kpreempt)
 	addl	$4,%esp
-	cli
+	CLI(%eax)
 	jmp	*%esi
 IDTVEC_END(recurse_preempt)
 
@@ -441,18 +420,17 @@ IDTVEC_END(recurse_preempt)
  */
 IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(%eax)
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	1f
 	movl	TF_EIP(%esp),%eax
 	pushl	%eax
 	call	_C_LABEL(kpreempt)		/* from kernel */
 	addl	$4,%esp
-	cli
+	CLI(%eax)
 	jmp	*%esi
 1:
 	call	_C_LABEL(preempt)		/* from user */
-	cli
+	CLI(%eax)
 	jmp	*%esi
 IDTVEC_END(resume_preempt)
-#endif /* !XEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2020/04/17 14:19:43 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
