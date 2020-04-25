@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.41 2020/04/24 17:48:01 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.42 2020/04/25 10:53:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -1056,4 +1056,24 @@ sys/arch/x86/pci/amdzentemp.c			1.10
 
 	Add support for newer AMD Family 15 temperature sensors.
 	[simonb, ticket #851]
+
+sys/dev/hdaudio/hdafg.c				1.22
+
+	PR kern/54474: make round_blocksize satisfy old, new and 6 channel
+	hardware requirements.
+	[isaki, ticket #852]
+
+bin/csh/extern.h				1.32
+bin/csh/time.c					1.22
+usr.bin/time/ext.h				1.4
+usr.bin/time/time.1				1.29
+usr.bin/time/time.c				1.24
+
+	time(1): add '-t' option for tcsh-style time output.
+	[simonb, ticket #853]
+
+sys/arch/hppa/hppa/trap.c			1.115
+
+	Fix incorrect KASSERT.
+	[skrll, ticket #854]
 
