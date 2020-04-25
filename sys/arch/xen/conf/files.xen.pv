@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen.pv,v 1.1.2.4 2020/04/20 19:40:24 bouyer Exp $
+#	$NetBSD: files.xen.pv,v 1.1.2.5 2020/04/25 10:52:26 bouyer Exp $
 
 file	arch/xen/x86/autoconf.c		xenpv
 file	arch/xen/x86/x86_xpmap.c	xenpv
@@ -10,6 +10,8 @@ file	arch/xen/x86/consinit.c		machdep & xenpv
 file	arch/xen/x86/pintr.c		machdep & dom0ops & xenpv
 
 file	arch/xen/x86/xen_ipi.c			multiprocessor & xenpv
+
+include "arch/xen/conf/files.compat"
 
 #
 # System bus types

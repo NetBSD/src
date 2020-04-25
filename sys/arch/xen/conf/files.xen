@@ -1,6 +1,6 @@
-#	$NetBSD: files.xen,v 1.180.2.6 2020/04/20 19:40:24 bouyer Exp $
+#	$NetBSD: files.xen,v 1.180.2.7 2020/04/25 10:52:26 bouyer Exp $
 
-defflag	opt_xen.h			XEN XENPVH XENPVHVM
+defflag	opt_xen.h			XEN XENPVH XENPVHVM PAE
 
 file	arch/xen/x86/hypervisor_machdep.c	xen
 file	arch/xen/x86/xen_intr.c			xen
