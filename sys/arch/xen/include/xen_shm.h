@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.11 2020/04/19 18:47:40 jdolecek Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.12 2020/04/25 15:26:17 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.

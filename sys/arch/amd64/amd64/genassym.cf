@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82 2020/02/17 09:09:48 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.83 2020/04/25 15:26:16 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -246,13 +246,11 @@ define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curprior
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
-if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
-endif
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
@@ -325,6 +323,8 @@ define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_NET			IPL_NET
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_VM			IPL_VM
+define	IPL_SCHED		IPL_SCHED
 define	IPL_HIGH		IPL_HIGH
 
 define	LIR_IPI			LIR_IPI
@@ -360,12 +360,13 @@ define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 
 define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
+define	VM_GUEST_XENPV		VM_GUEST_XENPV
+
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
-define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
-define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
-define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
-define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
+define SIR_XENIPL_VM		SIR_XENIPL_VM
+define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
+define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 ifdef XENPV
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    

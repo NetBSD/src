@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.35 2019/12/08 20:00:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.36 2020/04/25 15:26:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -126,18 +126,10 @@ ENTRY(mutex_spin_exit)
 	jnz	1f
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
-#if !defined(XENPV)
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
 	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
-#endif
-#if defined(XEN)
-	movl	CPU_INFO_XUNMASK(%r8,%rdi,4), %esi
-	CLI(ax)
-	testl	CPU_INFO_XPENDING(%r8), %esi
-	jnz	_C_LABEL(Xspllower)
-#endif
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
 	STI(ax)
 1:	rep					/* double byte ret as branch */
@@ -155,22 +147,12 @@ ENTRY(mutex_spin_exit)
 	cmpl	%edx,%ecx			/* new level is lower? */
 	jae	2f
 1:
-#if !defined(XENPV)
 	movl	CPU_INFO_IPENDING(%rsi),%eax
 	testl	%eax,CPU_INFO_IUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
 	jnz	3f
 	movl	%eax,%ebx
 	cmpxchg8b CPU_INFO_ISTATE(%rsi)		/* swap in new ilevel */
 	jnz	4f
-#endif
-#if defined(XEN)
-	movl	CPU_INFO_XPENDING(%rsi),%eax
-	testl	%eax,CPU_INFO_XUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
-	jnz	3f
-	movl	%edx, %eax
-	cmpxchgl %ecx, CPU_INFO_ILEVEL(%rsi)
-	jnz	4f
-#endif
 2:
 	popq	%rbx
 	ret

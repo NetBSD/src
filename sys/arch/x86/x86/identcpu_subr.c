@@ -33,7 +33,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.2 2020/04/21 07:08:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.3 2020/04/25 15:26:18 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.29 2020/04/13 22:54:12 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.30 2020/04/25 15:26:17 bouyer Exp $	*/
 
 /*
  *
@@ -41,8 +41,8 @@ bool events_resume(void);
 unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);
-int event_set_handler(int, int (*func)(void *), void *, int, const char *,
-    const char *, bool, bool);
+struct intrhand *event_set_handler(int, int (*func)(void *), void *,
+    int, const char *, const char *, bool, bool);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 struct cpu_info;
@@ -62,7 +62,8 @@ evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
 	/* See comments in x86/include/intr.h:struct intrhand {} */
-	int pic_type;
+	struct pic *pic;
+	struct intrhand *ih;
 	int pirq;
 	int evtch;
 	int (*func)(void *);

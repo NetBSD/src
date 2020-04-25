@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.38 2020/04/25 15:26:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,9 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.37 2020/04/21 18:24:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.38 2020/04/25 15:26:17 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,8 +71,9 @@ static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ast(struct cpu_info *, struct intrframe *);
+static void xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe *);
 
-static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
+static void (*xen_ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
 	xen_ipi_synch_fpu,
@@ -85,7 +85,8 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_xcall,
 	xen_ipi_hvcb,
 	xen_ipi_generic,
-	xen_ipi_ast
+	xen_ipi_ast,
+	xen_ipi_kpreempt
 };
 
 static int
@@ -108,10 +109,10 @@ xen_ipi_handler(void *arg)
 		bit--;
 		pending &= ~(1 << bit);
 		ci->ci_ipi_events[bit].ev_count++;
-		if (ipifunc[bit] != NULL) {
-			(*ipifunc[bit])(ci, regs);
+		if (xen_ipifunc[bit] != NULL) {
+			(*xen_ipifunc[bit])(ci, regs);
 		} else {
-			panic("ipifunc[%d] unsupported!\n", bit);
+			panic("xen_ipifunc[%d] unsupported!\n", bit);
 			/* NOTREACHED */
 		}
 	}
@@ -130,7 +131,7 @@ xen_ipi_init(void)
 
 	ci = curcpu();
 
-	vcpu = ci->ci_cpuid;
+	vcpu = ci->ci_vcpuid;
 	KASSERT(vcpu < XEN_LEGACY_MAX_VCPUS);
 
 	evtchn = bind_vcpu_to_evtch(vcpu);
@@ -142,7 +143,7 @@ xen_ipi_init(void)
 	    device_xname(ci->ci_dev));
 
 	if (event_set_handler(evtchn, xen_ipi_handler, ci, IPL_HIGH, NULL,
-	    intr_xname, true, false) != 0) {
+	    intr_xname, true, false) == NULL) {
 		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */
 	}
@@ -156,7 +157,7 @@ valid_ipimask(uint32_t ipimask)
 {
 	uint32_t masks = XEN_IPI_GENERIC | XEN_IPI_HVCB | XEN_IPI_XCALL |
 		 XEN_IPI_DDB | XEN_IPI_SYNCH_FPU |
-		 XEN_IPI_HALT | XEN_IPI_AST;
+		 XEN_IPI_HALT | XEN_IPI_AST | XEN_IPI_KPREEMPT;
 
 	if (ipimask & ~masks) {
 		return false;
@@ -229,7 +230,7 @@ xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci == curcpu());
 	KASSERT(ci != NULL);
-	if (HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL)) {
+	if (HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_vcpuid, NULL)) {
 		panic("%s shutdown failed.\n", device_xname(ci->ci_dev));
 	}
 
@@ -296,6 +297,32 @@ xen_ipi_ast(struct cpu_info *ci, struct intrframe *intrf)
 	aston(ci->ci_onproc);
 }
 
+static void
+xen_ipi_generic(struct cpu_info *ci, struct intrframe *intrf)
+{
+	KASSERT(ci != NULL);
+	KASSERT(intrf != NULL);
+	ipi_cpu_handler();
+}
+
+static void
+xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
+{
+	KASSERT(ci != NULL);
+	KASSERT(intrf != NULL);
+	KASSERT(ci == curcpu());
+	KASSERT(!ci->ci_vcpu->evtchn_upcall_mask);
+
+	hypervisor_force_callback();
+}
+
+static void
+xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe * intrf)
+{
+	softint_trigger(1 << SIR_PREEMPT);
+}
+
+#ifdef XENPV
 void
 xc_send_ipi(struct cpu_info *ci)
 {
@@ -311,14 +338,6 @@ xc_send_ipi(struct cpu_info *ci)
 	}
 }
 
-static void
-xen_ipi_generic(struct cpu_info *ci, struct intrframe *intrf)
-{
-	KASSERT(ci != NULL);
-	KASSERT(intrf != NULL);
-	ipi_cpu_handler();
-}
-
 void
 cpu_ipi(struct cpu_info *ci)
 {
@@ -332,14 +351,4 @@ cpu_ipi(struct cpu_info *ci)
 		xen_broadcast_ipi(XEN_IPI_GENERIC);
 	}
 }
-
-static void
-xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
-{
-	KASSERT(ci != NULL);
-	KASSERT(intrf != NULL);
-	KASSERT(ci == curcpu());
-	KASSERT(!ci->ci_vcpu->evtchn_upcall_mask);
-
-	hypervisor_force_callback();
-}
+#endif /* XENPV */
