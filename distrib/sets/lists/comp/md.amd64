@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.276 2020/02/07 18:48:58 kamil Exp $
+# $NetBSD: md.amd64,v 1.277 2020/04/25 15:46:59 bouyer Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1002,6 +1002,7 @@
 ./usr/include/x86/trap.h			comp-c-include
 ./usr/include/x86/via_padlock.h			comp-c-include
 ./usr/include/xen				comp-c-include
+./usr/include/xen/intrdefs.h			comp-c-include
 ./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete

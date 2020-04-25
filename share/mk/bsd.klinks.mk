@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.14 2017/12/06 02:06:45 christos Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.15 2020/04/25 15:46:59 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,9 +23,9 @@ KLINKFILES+=	sun68k
 .elif ${KLINK_MACHINE} == "sparc64"
 KLINKFILES+=	sparc
 .elif ${KLINK_MACHINE} == "i386"
-KLINKFILES+=	x86
+KLINKFILES+=	x86 xen
 .elif ${KLINK_MACHINE} == "amd64"
-KLINKFILES+=	x86 i386
+KLINKFILES+=	x86 i386 xen
 .elif ${KLINK_MACHINE} == "evbmips"
 KLINKFILES+=	algor sbmips
 .elif ${MACHINE_CPU} == "aarch64"
