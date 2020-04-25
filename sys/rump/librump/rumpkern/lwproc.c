@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.47 2020/04/24 13:34:47 thorpej Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.48 2020/04/25 15:42:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.47 2020/04/24 13:34:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.48 2020/04/25 15:42:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

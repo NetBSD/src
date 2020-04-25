@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.345 2020/04/23 00:34:29 joerg Exp $	*/
+/*	$NetBSD: rump.c,v 1.346 2020/04/25 15:42:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.345 2020/04/23 00:34:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.346 2020/04/25 15:42:15 bouyer Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
