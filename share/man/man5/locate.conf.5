@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.9 2011/07/10 13:42:49 apb Exp $
+.\"	$NetBSD: locate.conf.5,v 1.10 2020/04/25 10:56:53 simonb Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2011
+.Dd April 25, 2020
 .Dt LOCATE.CONF 5
 .Os
 .Sh NAME
@@ -59,6 +59,12 @@ in the middle of a line does not start a comment.
 .Pp
 The configuration options are as follows:
 .Bl -tag -width XXXXXX
+.It Sy database Ar filename
+Specify the location of the
+.Xr locate 1
+database to be created.
+.Pp
+Default: /var/db/locate.database
 .It Sy ignore Ar pattern ...
 Ignore files or directories.
 When building the database,
