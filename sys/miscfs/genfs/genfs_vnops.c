@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.202 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.203 2020/04/25 22:28:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.202 2020/02/23 22:14:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.203 2020/04/25 22:28:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,9 +904,13 @@ int
 genfs_can_extattr(kauth_cred_t cred, int access_mode, vnode_t *vp,
     const char *attr)
 {
-	/* We can't allow privileged namespaces. */
-	if (strncasecmp(attr, "system", 6) == 0)
-		return EPERM;
+	/*
+	 * This string comparison is bogus: see xattr_native in vfs_xattr.c;
+	 * it is going to go away soon.
+	 */
+	if (strncasecmp(attr, "system.", 7) == 0)
+	       return kauth_authorize_system(cred, KAUTH_SYSTEM_FS_EXTATTR,
+		   0, vp->v_mount, NULL, NULL);
 
 	return VOP_ACCESS(vp, access_mode, cred);
 }
