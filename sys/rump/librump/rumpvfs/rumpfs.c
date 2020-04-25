@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.157 2020/04/23 21:47:08 ad Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.158 2020/04/25 15:42:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.157 2020/04/23 21:47:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.158 2020/04/25 15:42:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
