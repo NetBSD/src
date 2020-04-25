@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.91 2020/04/25 15:26:18 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.92 2020/04/25 20:05:25 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.91 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.92 2020/04/25 20:05:25 jdolecek Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -966,9 +966,13 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused)
 	blkif_request_t *req, *reqn;
 	blkif_x86_32_request_t *req32;
 	blkif_x86_64_request_t *req64;
-	blkif_request_indirect_t *rin;
+	blkif_request_indirect_t *rinn;
+	blkif_x86_32_request_indirect_t *rin32;
+	blkif_x86_64_request_indirect_t *rin64;
 
 	if (xbdi->xbdi_ring.ring_n.req_cons != xbdi->xbdi_req_prod) {
+		uint8_t real_op = 0xff;
+
 		req = &xbdi->xbdi_xen_req;
 		memset(req, 0, sizeof(*req));
 
@@ -976,19 +980,31 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused)
 		case XBDIP_NATIVE:
 			reqn = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_n,
 			    xbdi->xbdi_ring.ring_n.req_cons);
-			req->operation = reqn->operation;
+			real_op = req->operation = reqn->operation;
+			if (real_op == BLKIF_OP_INDIRECT) {
+				rinn = (blkif_request_indirect_t *)reqn;
+				real_op = rinn->indirect_op;
+			}
 			req->id = reqn->id;
 			break;
 		case XBDIP_32:
 			req32 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_32,
 			    xbdi->xbdi_ring.ring_n.req_cons);
-			req->operation = req32->operation;
+			real_op = req->operation = req32->operation;
+			if (real_op == BLKIF_OP_INDIRECT) {
+				rin32 = (blkif_x86_32_request_indirect_t*)req32;
+				real_op = rin32->indirect_op;
+			}
 			req->id = req32->id;
 			break;
 		case XBDIP_64:
 			req64 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_64,
 			    xbdi->xbdi_ring.ring_n.req_cons);
-			req->operation = req64->operation;
+			real_op = req->operation = req64->operation;
+			if (real_op == BLKIF_OP_INDIRECT) {
+				rin64 = (blkif_x86_64_request_indirect_t*)req64;
+				real_op = rin64->indirect_op;
+			}
 			req->id = req64->id;
 			break;
 		}
@@ -1002,16 +1018,13 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused)
 		switch (req->operation) {
 		case BLKIF_OP_INDIRECT:
 			/* just check indirect_op, rest is handled later */
-			rin = (blkif_request_indirect_t *)
-			    RING_GET_REQUEST(&xbdi->xbdi_ring.ring_n,
-				xbdi->xbdi_ring.ring_n.req_cons);
-			if (rin->indirect_op != BLKIF_OP_READ &&
-			    rin->indirect_op != BLKIF_OP_WRITE) {
+			if (real_op != BLKIF_OP_READ &&
+			    real_op != BLKIF_OP_WRITE) {
 				if (ratecheck(&xbdi->xbdi_lasterr_time,
 				    &xbdback_err_intvl)) {
 					printf("%s: unknown ind operation %d\n",
 					    xbdi->xbdi_name,
-					    rin->indirect_op);
+					    real_op);
 				}
 				goto fail;
 			}
@@ -1031,7 +1044,7 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj __unused)
 				    xbdi->xbdi_name, req->operation);
 			}
 fail:
-			xbdback_send_reply(xbdi, req->id, req->operation,
+			xbdback_send_reply(xbdi, req->id, real_op,
 			    BLKIF_RSP_ERROR);
 			xbdi->xbdi_cont = xbdback_co_main_incr;
 			break;
@@ -1136,12 +1149,6 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	KASSERT(req->operation == BLKIF_OP_READ ||
 	    req->operation == BLKIF_OP_WRITE ||
 	    req->operation == BLKIF_OP_INDIRECT);
-	if (req->operation == BLKIF_OP_WRITE) {
-		if (xbdi->xbdi_ro) {
-			error = EROFS;
-			goto end;
-		}
-	}
 
 	/* copy request segments */
 	switch (xbdi->xbdi_proto) {
@@ -1212,6 +1219,13 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 		break;
 	}
 
+	if (req->operation == BLKIF_OP_WRITE) {
+		if (xbdi->xbdi_ro) {
+			error = EROFS;
+			goto end;
+		}
+	}
+
 	/* Max value checked already earlier */
 	if (req->nr_segments < 1)
 		goto bad_nr_segments;
@@ -1228,8 +1242,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	/* FALLTHROUGH */
 
  end:
-	xbdback_send_reply(xbdi, xbdi->xbdi_xen_req.id,
-	    xbdi->xbdi_xen_req.operation,
+	xbdback_send_reply(xbdi, req->id, req->operation,
 	    (error == EROFS) ? BLKIF_RSP_EOPNOTSUPP : BLKIF_RSP_ERROR);
 	xbdi->xbdi_cont = xbdback_co_main_incr;
 	return xbdi;
