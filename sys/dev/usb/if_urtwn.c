@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.14 2020/04/21 18:42:38 martin Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.15 2020/04/25 09:32:16 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.14 2020/04/21 18:42:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.15 2020/04/25 09:32:16 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -514,6 +514,21 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* Short slot time supported. */
 	    IEEE80211_C_WME |		/* 802.11e */
 	    IEEE80211_C_WPA;		/* 802.11i */
+
+	ic->ic_htcaps =
+	    IEEE80211_HTC_HT |
+	    IEEE80211_HTCAP_SHORTGI20 |		/* short GI in 20MHz */
+#if 0
+	    IEEE80211_HTCAP_MAXAMSDU_3839 |	/* max A-MSDU length */
+#endif
+	    IEEE80211_HTCAP_SMPS_OFF;		/* SM PS mode disabled */
+#if 0
+	    IEEE80211_HTCAP_CHWIDTH40 |		/* 40 MHz channel width */
+	    IEEE80211_HTCAP_SHORTGI40;		/* short GI in 40MHz */
+#endif
+
+	ic->ic_txstream = sc->ntxchains;
+	ic->ic_rxstream = sc->nrxchains;
 
 	ic->ic_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
@@ -3667,7 +3682,8 @@ urtwn_getradiocaps(struct ieee80211com *ic,
 	setbit(bands, IEEE80211_MODE_11G);
 	setbit(bands, IEEE80211_MODE_11NG);
 	ieee80211_add_channel_list_2ghz(chans, maxchans, nchans,
-	    urtwn_chan_2ghz, nitems(urtwn_chan_2ghz), bands, 0);
+	    urtwn_chan_2ghz, nitems(urtwn_chan_2ghz), bands, IEEE80211_CHAN_HT20 |
+	    IEEE80211_CHAN_HT40U | IEEE80211_CHAN_HT40D);
 }
 
 
