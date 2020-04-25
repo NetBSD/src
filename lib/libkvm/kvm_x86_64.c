@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_x86_64.c,v 1.11 2020/03/08 00:14:18 chs Exp $	*/
+/*	$NetBSD: kvm_x86_64.c,v 1.12 2020/04/25 05:17:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_x86_64.c,v 1.11 2020/03/08 00:14:18 chs Exp $");
+__RCSID("$NetBSD: kvm_x86_64.c,v 1.12 2020/04/25 05:17:16 maxv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_syserr(kd, 0, "could not read PT level 4 entry");
 		goto lose;
 	}
-	if ((pde & PG_V) == 0) {
+	if ((pde & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid level 4 PDE)");
 		goto lose;
 	}
@@ -126,45 +126,45 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	/*
 	 * Level 3.
 	 */
-	pde_pa = (pde & PG_FRAME) + (pl3_pi(va) * sizeof(pd_entry_t));
+	pde_pa = (pde & PTE_FRAME) + (pl3_pi(va) * sizeof(pd_entry_t));
 	if (_kvm_pread(kd, kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PT level 3 entry");
 		goto lose;
 	}
-	if ((pde & PG_V) == 0) {
+	if ((pde & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid level 3 PDE)");
 		goto lose;
 	}
-	if (pde & PG_PS) {
+	if (pde & PTE_PS) {
 		page_off = va & (NBPD_L3 - 1);
-		*pa = (pde & PG_1GFRAME) + page_off;
+		*pa = (pde & PTE_1GFRAME) + page_off;
 		return (int)(NBPD_L3 - page_off);
 	}
 
 	/*
 	 * Level 2.
 	 */
-	pde_pa = (pde & PG_FRAME) + (pl2_pi(va) * sizeof(pd_entry_t));
+	pde_pa = (pde & PTE_FRAME) + (pl2_pi(va) * sizeof(pd_entry_t));
 	if (_kvm_pread(kd, kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PT level 2 entry");
 		goto lose;
 	}
-	if ((pde & PG_V) == 0) {
+	if ((pde & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid level 2 PDE)");
 		goto lose;
 	}
-	if (pde & PG_PS) {
+	if (pde & PTE_PS) {
 		page_off = va & (NBPD_L2 - 1);
-		*pa = (pde & PG_2MFRAME) + page_off;
+		*pa = (pde & PTE_2MFRAME) + page_off;
 		return (int)(NBPD_L2 - page_off);
 	}
 
 	/*
 	 * Level 1.
 	 */
-	pte_pa = (pde & PG_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
+	pte_pa = (pde & PTE_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
 	if (_kvm_pread(kd, kd->pmfd, (void *) &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
@@ -173,12 +173,12 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	/*
 	 * Validate the PTE and return the physical address.
 	 */
-	if ((pte & PG_V) == 0) {
+	if ((pte & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid PTE)");
 		goto lose;
 	}
 	page_off = va & PGOFSET;
-	*pa = (pte & PG_FRAME) + page_off;
+	*pa = (pte & PTE_FRAME) + page_off;
 	return (int)(NBPG - page_off);
 
  lose:

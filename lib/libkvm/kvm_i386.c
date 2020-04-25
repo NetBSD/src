@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.30 2014/02/19 20:21:22 dsl Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.31 2020/04/25 05:17:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.30 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.31 2020/04/25 05:17:16 maxv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,7 +148,7 @@ _kvm_kvatop_i386(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	 * Find and read the page directory entry.
 	 * pdppaddr being PAGE_SIZE aligned, we mask the option bits.
 	 */
-	pde_pa = (cpu_kh->pdppaddr & PG_FRAME) + (pl2_pi(va) * sizeof(pde));
+	pde_pa = (cpu_kh->pdppaddr & PTE_FRAME) + (pl2_pi(va) * sizeof(pde));
 	if (_kvm_pread(kd, kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PDE");
@@ -158,19 +158,19 @@ _kvm_kvatop_i386(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	/*
 	 * Find and read the page table entry.
 	 */
-	if ((pde & PG_V) == 0) {
+	if ((pde & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid PDE)");
 		goto lose;
 	}
-	if ((pde & PG_PS) != 0) {
+	if ((pde & PTE_PS) != 0) {
 		/*
 		 * This is a 4MB page.
 		 */
-		page_off = va & ~PG_LGFRAME;
-		*pa = (pde & PG_LGFRAME) + page_off;
+		page_off = va & ~PTE_LGFRAME;
+		*pa = (pde & PTE_LGFRAME) + page_off;
 		return (int)(NBPD_L2 - page_off);
 	}
-	pte_pa = (pde & PG_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
+	pte_pa = (pde & PTE_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
 	if (_kvm_pread(kd, kd->pmfd, (void *) &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
@@ -180,11 +180,11 @@ _kvm_kvatop_i386(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	/*
 	 * Validate the PTE and return the physical address.
 	 */
-	if ((pte & PG_V) == 0) {
+	if ((pte & PTE_P) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid PTE)");
 		goto lose;
 	}
-	*pa = (pte & PG_FRAME) + page_off;
+	*pa = (pte & PTE_FRAME) + page_off;
 	return (int)(NBPG - page_off);
 
  lose:
