@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.6 2020/04/25 11:23:57 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.7 2020/04/25 13:16:48 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.6 2020/04/25 11:23:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.7 2020/04/25 13:16:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ x86_cpu_idle_xen(void)
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	x86_disable_intr();
-	if (!__predict_false(ci->ci_want_resched)) {
+	if (__predict_false(!ci->ci_want_resched)) {
 		idle_block();
 	} else {
 		x86_enable_intr();
