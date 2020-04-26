@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.249 2020/04/26 15:49:10 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.250 2020/04/26 18:53:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.249 2020/04/26 15:49:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.250 2020/04/26 18:53:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.249 2020/04/26 15:49:10 thorpej Exp 
 #include <sys/exec.h>
 #include <sys/cpu.h>
 #include <sys/compat_stub.h>
+#include <sys/futex.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -889,6 +890,9 @@ expand_pid_table(void)
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
 	new_pt_mask = pt_size * 2 - 1;
 
+	/* XXX For now.  The pratical limit is much lower anyway. */
+	KASSERT(new_pt_mask <= FUTEX_TID_MASK);
+
 	rw_enter(&pid_table_lock, RW_WRITER);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
@@ -1038,6 +1042,9 @@ proc_alloc_pid_slot(struct proc *p, uintptr_t slot)
 	if ((uint)pid > (uint)pid_max)
 		pid &= pid_tbl_mask;
 	next_free_pt = nxt & pid_tbl_mask;
+
+	/* XXX For now.  The pratical limit is much lower anyway. */
+	KASSERT(pid <= FUTEX_TID_MASK);
 
 	/* Grab table slot */
 	pt->pt_slot = slot;

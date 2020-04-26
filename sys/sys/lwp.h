@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.207 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: lwp.h,v 1.208 2020/04/26 18:53:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -136,7 +136,7 @@ struct lwp {
 	bool		l_vforkwaiting;	/* a: vfork() waiting */
 
 	/* User-space synchronization. */
-	uintptr_t	l___rsvd0;	/* reserved for future use */
+	uintptr_t	l_robust_head;	/* !: list of robust futexes */
 	uint32_t	l___rsvd1;	/* reserved for future use */
 
 #if PCU_UNIT_COUNT > 0
