@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.27 2019/11/15 12:38:09 msaitoh Exp $ */
+/* $NetBSD: if_skreg.h,v 1.28 2020/04/26 15:39:04 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1701,7 +1701,7 @@ struct msk_rx_desc {
 	u_int16_t		sk_len;
 	u_int8_t		sk_ctl;
 	u_int8_t		sk_opcode;
-} __packed;
+} __packed __aligned(8);
 
 #define SK_Y2_RXOPC_BUFFER	0x40
 #define SK_Y2_RXOPC_PACKET	0x41
@@ -1712,7 +1712,7 @@ struct msk_tx_desc {
 	u_int16_t		sk_len;
 	u_int8_t		sk_ctl;
 	u_int8_t		sk_opcode;
-} __packed;
+} __packed __aligned(8);
 
 #define SK_Y2_TXCTL_LASTFRAG	0x80
 
@@ -1725,7 +1725,7 @@ struct msk_status_desc {
 	u_int16_t		sk_len;
 	u_int8_t		sk_link;
 	u_int8_t		sk_opcode;
-} __packed;
+} __packed __aligned(8);
 
 #define SK_Y2_STOPC_RXSTAT	0x60
 #define SK_Y2_STOPC_TXSTAT	0x68
