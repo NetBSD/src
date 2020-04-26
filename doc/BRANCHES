@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.353 2020/04/06 18:15:57 martin Exp $
+#	$NetBSD: BRANCHES,v 1.354 2020/04/26 12:15:37 martin Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -668,14 +668,15 @@ Notes:		A more flexible infrastructure for third-party packages by
 
 Branch:		phil-wifi
 Description:	Refresh WiFi code from FreeBSD
-Status:		Active
+Status:		Abandoned
 Start Date:	2018-06-28
 End Date:	-
 Base Tag:	phil-wifi-base
 Maintainer:	phil, martin
 Scope:		src
-Notes:		Please check with martin before commiting,
-		but no formal commit restrictions.
+Notes:		This branch has been superseeded by the topic 'wifi'
+		in the src-draft mercurial repository.
+		See https://wiki.netbsd.org/Wifi_renewal_on_hg/
 
 Branch:		rmind-smpnet
 Description:	MP safe network stack (milestone 1): IPv4, UDP and ICMP
