@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.20 2020/04/26 13:54:03 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.21 2020/04/26 13:59:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,10 +40,10 @@
 
 #ifdef _HARDKERNEL
 #include <machine/frameasm.h>
-#define	LOCK(n)		HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
-#define	LOCK(n)		lock
+#define	LOCK		lock
 #define	ENDLABEL(a)	/* nothing */
 #endif
 
@@ -52,21 +52,21 @@
 /* 32-bit */
 
 ENTRY(_atomic_add_32)
-	LOCK(1)
+	LOCK
 	addl	%esi, (%rdi)
 	ret
 END(_atomic_add_32)
 
 ENTRY(_atomic_add_32_nv)
 	movl	%esi, %eax
-	LOCK(2)
+	LOCK
 	xaddl	%eax, (%rdi)
 	addl	%esi, %eax
 	ret
 END(_atomic_add_32_nv)
 
 ENTRY(_atomic_and_32)
-	LOCK(3)
+	LOCK
 	andl	%esi, (%rdi)
 	ret
 END(_atomic_and_32)
@@ -76,7 +76,7 @@ ENTRY(_atomic_and_32_nv)
 1:
 	movl	%eax, %ecx
 	andl	%esi, %ecx
-	LOCK(4)
+	LOCK
 	cmpxchgl %ecx, (%rdi)
 	jnz	1b
 	movl	%ecx, %eax
@@ -84,35 +84,35 @@ ENTRY(_atomic_and_32_nv)
 END(_atomic_and_32_nv)
 
 ENTRY(_atomic_dec_32)
-	LOCK(5)
+	LOCK
 	decl	(%rdi)
 	ret
 END(_atomic_dec_32)
 
 ENTRY(_atomic_dec_32_nv)
 	movl	$-1, %eax
-	LOCK(6)
+	LOCK
 	xaddl	%eax, (%rdi)
 	decl	%eax
 	ret
 END(_atomic_dec_32_nv)
 
 ENTRY(_atomic_inc_32)
-	LOCK(7)
+	LOCK
 	incl	(%rdi)
 	ret
 END(_atomic_inc_32)
 
 ENTRY(_atomic_inc_32_nv)
 	movl	$1, %eax
-	LOCK(8)
+	LOCK
 	xaddl	%eax, (%rdi)
 	incl	%eax
 	ret
 END(_atomic_inc_32_nv)
 
 ENTRY(_atomic_or_32)
-	LOCK(9)
+	LOCK
 	orl	%esi, (%rdi)
 	ret
 END(_atomic_or_32)
@@ -122,7 +122,7 @@ ENTRY(_atomic_or_32_nv)
 1:
 	movl	%eax, %ecx
 	orl	%esi, %ecx
-	LOCK(10)
+	LOCK
 	cmpxchgl %ecx, (%rdi)
 	jnz	1b
 	movl	%ecx, %eax
@@ -137,7 +137,7 @@ END(_atomic_swap_32)
 
 ENTRY(_atomic_cas_32)
 	movl	%esi, %eax
-	LOCK(12)
+	LOCK
 	cmpxchgl %edx, (%rdi)
 	/* %eax now contains the old value */
 	ret
@@ -153,21 +153,21 @@ END(_atomic_cas_32_ni)
 /* 64-bit */
 
 ENTRY(_atomic_add_64)
-	LOCK(13)
+	LOCK
 	addq	%rsi, (%rdi)
 	ret
 END(_atomic_add_64)
 
 ENTRY(_atomic_add_64_nv)
 	movq	%rsi, %rax
-	LOCK(14)
+	LOCK
 	xaddq	%rax, (%rdi)
 	addq	%rsi, %rax
 	ret
 END(_atomic_add_64_nv)
 
 ENTRY(_atomic_and_64)
-	LOCK(15)
+	LOCK
 	andq	%rsi, (%rdi)
 	ret
 END(_atomic_and_64)
@@ -177,7 +177,7 @@ ENTRY(_atomic_and_64_nv)
 1:
 	movq	%rax, %rcx
 	andq	%rsi, %rcx
-	LOCK(16)
+	LOCK
 	cmpxchgq %rcx, (%rdi)
 	jnz	1b
 	movq	%rcx, %rax
@@ -185,35 +185,35 @@ ENTRY(_atomic_and_64_nv)
 END(_atomic_and_64_nv)
 
 ENTRY(_atomic_dec_64)
-	LOCK(17)
+	LOCK
 	decq	(%rdi)
 	ret
 END(_atomic_dec_64)
 
 ENTRY(_atomic_dec_64_nv)
 	movq	$-1, %rax
-	LOCK(18)
+	LOCK
 	xaddq	%rax, (%rdi)
 	decq	%rax
 	ret
 END(_atomic_dec_64_nv)
 
 ENTRY(_atomic_inc_64)
-	LOCK(19)
+	LOCK
 	incq	(%rdi)
 	ret
 END(_atomic_inc_64)
 
 ENTRY(_atomic_inc_64_nv)
 	movq	$1, %rax
-	LOCK(20)
+	LOCK
 	xaddq	%rax, (%rdi)
 	incq	%rax
 	ret
 END(_atomic_inc_64_nv)
 
 ENTRY(_atomic_or_64)
-	LOCK(21)
+	LOCK
 	orq	%rsi, (%rdi)
 	ret
 END(_atomic_or_64)
@@ -223,7 +223,7 @@ ENTRY(_atomic_or_64_nv)
 1:
 	movq	%rax, %rcx
 	orq	%rsi, %rcx
-	LOCK(22)
+	LOCK
 	cmpxchgq %rcx, (%rdi)
 	jnz	1b
 	movq	%rcx, %rax
@@ -238,7 +238,7 @@ END(_atomic_swap_64)
 
 ENTRY(_atomic_cas_64)
 	movq	%rsi, %rax
-	LOCK(24)
+	LOCK
 	cmpxchgq %rdx, (%rdi)
 	/* %eax now contains the old value */
 	ret
@@ -254,7 +254,7 @@ END(_atomic_cas_64_ni)
 /* memory barriers */
 
 ENTRY(_membar_consumer)
-	LOCK(25)
+	LOCK
 	addq	$0, -8(%rsp)
 	ret
 END(_membar_consumer)
@@ -267,7 +267,7 @@ ENTRY(_membar_producer)
 END(_membar_producer)
 
 ENTRY(_membar_sync)
-	LOCK(26)
+	LOCK
 	addq	$0, -8(%rsp)
 	ret
 END(_membar_sync)
