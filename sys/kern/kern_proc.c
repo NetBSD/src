@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.248 2020/04/24 05:21:18 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.249 2020/04/26 15:49:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.248 2020/04/24 05:21:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.249 2020/04/26 15:49:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -882,9 +882,9 @@ expand_pid_table(void)
 	KASSERT(rw_write_held(&pid_table_lock));
 
 	/* Unlock the pid_table briefly to allocate memory. */
+	pt_size = pid_tbl_mask + 1;
 	rw_exit(&pid_table_lock);
 
-	pt_size = pid_tbl_mask + 1;
 	tsz = pt_size * 2 * sizeof(struct pid_table);
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
 	new_pt_mask = pt_size * 2 - 1;
