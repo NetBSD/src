@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.303 2020/04/26 18:53:33 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.304 2020/04/26 19:15:55 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -352,9 +352,13 @@
 164	COMPAT_09 MODULAR compat	\
 		{ int|sys||uname(struct outsname *name); } ouname
 165	STD		{ int|sys||sysarch(int op, void *parms); }
-166	UNIMPL
-167	UNIMPL
-168	UNIMPL
+166	STD		{ int|sys||__futex(int *uaddr, int op, int val, \
+			    const struct timespec *timeout, \
+			    int *uaddr2, int val2, int val3); }
+167	STD		{ int|sys||__futex_set_robust_list(void *head, \
+			    size_t len); }
+168	STD		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
+			    void **headp, size_t *lenp); }
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if !defined(_LP64)
 169	COMPAT_10 MODULAR compat_sysv_10	\
@@ -1015,10 +1019,3 @@
 			    struct statvfs *buf, int flags); }
 486	STD	RUMP	{ int|sys|90|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
-487	STD		{ int|sys||__futex(int *uaddr, int op, int val, \
-			    const struct timespec *timeout, \
-			    int *uaddr2, int val2, int val3); }
-488	STD		{ int|sys||__futex_set_robust_list(void *head, \
-			    size_t len); }
-489	STD		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
-			    void **headp, size_t *lenp); }
