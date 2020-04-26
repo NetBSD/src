@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.136 2020/04/26 18:53:33 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.137 2020/04/26 19:18:36 thorpej Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -398,9 +398,13 @@
 164	COMPAT_09 MODULAR compat_netbsd32_09	\
 			{ int|netbsd32||uname(netbsd32_outsnamep_t name); }
 165	STD		{ int|netbsd32||sysarch(int op, netbsd32_voidp parms); }
-166	UNIMPL
-167	UNIMPL
-168	UNIMPL
+166	STD		{ int|netbsd32||__futex(netbsd32_intp uaddr, int op, \
+			    int val, const netbsd32_timespecp_t timeout, \
+			    netbsd32_intp uaddr2, int val2, int val3); }
+167	STD		{ int|netbsd32||__futex_set_robust_list( \
+			    netbsd32_voidp head, netbsd32_size_t len); }
+168	STD		{ int|netbsd32||__futex_get_robust_list(lwpid_t lwpid, \
+			    netbsd32_voidp headp, netbsd32_size_tp lenp); }
 169	COMPAT_10 MODULAR compat_netbsd32_sysvipc_10	\
 			{ int|netbsd32||semsys(int which, int a2, int a3, \
 			    int a4, int a5); } osemsys
@@ -1168,10 +1172,3 @@
 486	STD 		{ int|netbsd32|90|fhstatvfs1(netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statvfsp_t buf, \
 			    int flags); }
-487	STD		{ int|netbsd32||__futex(netbsd32_intp uaddr, int op, \
-			    int val, const netbsd32_timespecp_t timeout, \
-			    netbsd32_intp uaddr2, int val2, int val3); }
-488	STD		{ int|netbsd32||__futex_set_robust_list( \
-			    netbsd32_voidp head, netbsd32_size_t len); }
-489	STD		{ int|netbsd32||__futex_get_robust_list(lwpid_t lwpid, \
-			    netbsd32_voidp headp, netbsd32_size_tp lenp); }
