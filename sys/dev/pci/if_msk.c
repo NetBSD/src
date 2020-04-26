@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.100 2020/04/22 14:26:27 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.101 2020/04/26 16:14:14 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.100 2020/04/22 14:26:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.101 2020/04/26 16:14:14 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,17 +419,12 @@ msk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct msk_chain_data	*cd = &sc_if->sk_cdata;
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	struct msk_rx_desc	*r;
-	int			i, nexti;
+	int			i;
 
 	memset(rd->sk_rx_ring, 0, sizeof(struct msk_rx_desc) * MSK_RX_RING_CNT);
 
 	for (i = 0; i < MSK_RX_RING_CNT; i++) {
 		cd->sk_rx_chain[i].sk_le = &rd->sk_rx_ring[i];
-		if (i == (MSK_RX_RING_CNT - 1))
-			nexti = 0;
-		else
-			nexti = i + 1;
-		cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[nexti];
 	}
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
@@ -459,17 +454,12 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct msk_chain_data	*cd = &sc_if->sk_cdata;
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	struct msk_tx_desc	*t;
-	int			i, nexti;
+	int			i;
 
 	memset(rd->sk_tx_ring, 0, sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		cd->sk_tx_chain[i].sk_le = &rd->sk_tx_ring[i];
-		if (i == (MSK_TX_RING_CNT - 1))
-			nexti = 0;
-		else
-			nexti = i + 1;
-		cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[nexti];
 	}
 
 	sc_if->sk_cdata.sk_tx_prod = 0;
