@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.18 2019/02/17 07:34:44 isaki Exp $	*/
+/*	$NetBSD: atomic.S,v 1.19 2020/04/26 13:37:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 #endif
 
 #ifdef _HARDKERNEL
-#define	LOCK(n)		.Lpatch ## n:	lock
+#include <machine/frameasm.h>
+#define	LOCK(n)		HOTPATCH(HP_NAME_NOLOCK, 1); lock
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
@@ -285,15 +286,6 @@ ENTRY(sse2_mfence)
 	ret
 END(sse2_mfence)
 ENDLABEL(sse2_mfence_end)
-
-atomic_lockpatch:
-	.globl	atomic_lockpatch
-	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
-	.quad	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
-	.quad	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15
-	.quad	.Lpatch16, .Lpatch17, .Lpatch18, .Lpatch19, .Lpatch20
-	.quad	.Lpatch21, .Lpatch22, .Lpatch24, .Lpatch25
-	.quad	.Lpatch26, 0
 #endif	/* _HARDKERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)

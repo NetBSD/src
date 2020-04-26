@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.40 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: patch.c,v 1.41 2020/04/26 13:37:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.40 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.41 2020/04/26 13:37:14 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -82,8 +82,6 @@ void	_atomic_cas_64(void);
 void	_atomic_cas_64_end(void);
 void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
-
-extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
@@ -211,8 +209,6 @@ x86_patch(bool early)
 
 		/* lock -> nop */
 		x86_hotpatch(HP_NAME_NOLOCK, bytes, sizeof(bytes));
-		for (int i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], bytes, sizeof(bytes));
 #endif
 	}
 
