@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.2 2020/04/26 21:04:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.2 2020/04/26 21:04:46 mlelstv Exp $");
 
 /*
  * Futexes
@@ -971,7 +971,7 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 {
 	struct futex_wait *fw, *fw_next;
 	unsigned nwoken = 0;
-	int hold_error;
+	int hold_error __diagused;
 
 	KASSERT(mutex_owned(&f->fx_qlock));
 	KASSERT(f2 == NULL || mutex_owned(&f2->fx_qlock));
