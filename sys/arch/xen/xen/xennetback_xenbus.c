@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.97 2020/04/25 11:33:28 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.98 2020/04/26 13:09:52 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.97 2020/04/25 11:33:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.98 2020/04/26 13:09:52 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -269,6 +269,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_init = xennetback_ifinit;
 	ifp->if_stop = xennetback_ifstop;
 	ifp->if_timer = 0;
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(2 * NET_TX_RING_SIZE, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -911,6 +912,15 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 				break;
 
 			xst = &xneti->xni_xstate[i];
+
+			/*
+			 * For short packets it's always way faster passing
+			 * single defragmented packet, even with feature-sg.
+			 * Try to defragment first if the result is likely
+			 * to fit into a single mbuf.
+			 */
+			if (m->m_pkthdr.len < MCLBYTES && m->m_next)
+				(void)m_defrag(m, M_DONTWAIT);
 
 			if (bus_dmamap_load_mbuf(
 			    xneti->xni_xbusd->xbusd_dmat,
