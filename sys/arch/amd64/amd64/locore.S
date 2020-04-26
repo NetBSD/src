@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.201 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.202 2020/04/26 14:07:43 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1586,6 +1586,8 @@ do_iret:
 END(intrfastexit)
 
 	TEXT_USER_END
+
+	.section .rodata
 
 #ifdef SVS
 	.globl	svs_enter, svs_enter_end
