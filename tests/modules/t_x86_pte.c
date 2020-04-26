@@ -1,4 +1,4 @@
-/*	$NetBSD: t_x86_pte.c,v 1.1 2020/04/26 09:08:40 maxv Exp $	*/
+/*	$NetBSD: t_x86_pte.c,v 1.2 2020/04/26 11:56:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_x86_pte.c,v 1.1 2020/04/26 09:08:40 maxv Exp $");
+__RCSID("$NetBSD: t_x86_pte.c,v 1.2 2020/04/26 11:56:38 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -45,88 +45,158 @@ __RCSID("$NetBSD: t_x86_pte.c,v 1.1 2020/04/26 09:08:40 maxv Exp $");
 #define MODULE_PATH	"/usr/tests/modules/x86_pte_tester/x86_pte_tester.kmod"
 #define MODULE_NAME	"x86_pte_tester"
 
-static bool module_loaded;
+static struct {
+	size_t n_rwx;
+	size_t n_shstk;
+	bool kernel_map_with_low_ptes;
+	bool pte_is_user_accessible;
+	size_t n_user_space_is_kernel;
+	size_t n_kernel_space_is_user;
+	size_t n_svs_g_bit_set;
+} x86_pte_results;
 
 static void
-load_module(void)
+fetch_results(void)
 {
-#ifndef SKIP_MODULE
-	if (module_loaded)
-		return;
-
+	static bool fetched = false;
+	size_t len = sizeof(x86_pte_results);
+	char module_name[] = MODULE_NAME;
 	modctl_load_t params = {
 		.ml_filename = MODULE_PATH,
 		.ml_flags = MODCTL_NO_PROP,
 	};
-
-	if (modctl(MODCTL_LOAD, &params) != 0) {
-		warn("failed to load module '%s'", MODULE_PATH);
-	} else {
-		module_loaded = true;
-	}
-#else
-	module_loaded = true;
-#endif /* ! SKIP_MODULE */
-}
-
-static void
-unload_module(void)
-{
-#ifndef SKIP_MODULE
-	char module_name[] = MODULE_NAME;
-
-	if (modctl(MODCTL_UNLOAD, module_name) != 0) {
-		warn("failed to unload module '%s'", MODULE_NAME);
-	} else {
-		module_loaded = false;
-	}
-#endif /* ! SKIP_MODULE */
-}
-
-ATF_TC_WITH_CLEANUP(x86_pte);
-ATF_TC_HEAD(x86_pte, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "testing the PTEs for correctness");
-}
-ATF_TC_BODY(x86_pte, tc)
-{
-	struct {
-		size_t n_rwx;
-		bool kernel_map_with_low_ptes;
-		bool pte_is_user_accessible;
-		size_t n_user_space_is_kernel;
-		size_t n_kernel_space_is_user;
-		size_t n_svs_g_bit_set;
-	} results;
-	size_t len = sizeof(results);
 	int rv;
 
-	load_module();
-	if (!module_loaded) {
-		atf_tc_skip("loading '%s' module failed.", MODULE_NAME);
-	}
+	if (fetched)
+		return;
 
-	rv = sysctlbyname(mib_name, &results, &len, 0, 0);
+	if (modctl(MODCTL_LOAD, &params) != 0)
+		atf_tc_skip("loading '%s' module failed.", MODULE_NAME);
+
+	rv = sysctlbyname(mib_name, &x86_pte_results, &len, 0, 0);
 	ATF_REQUIRE_EQ(rv, 0);
 
-	ATF_REQUIRE_EQ(results.n_rwx, 0);
-	ATF_REQUIRE_EQ(results.kernel_map_with_low_ptes, false);
-	ATF_REQUIRE_EQ(results.pte_is_user_accessible, false);
-	ATF_REQUIRE_EQ(results.n_user_space_is_kernel, 0);
-	ATF_REQUIRE_EQ(results.n_kernel_space_is_user, 0);
-	if (results.n_svs_g_bit_set != (size_t)-1) {
-		ATF_REQUIRE_EQ(results.n_svs_g_bit_set, 0);
+	if (modctl(MODCTL_UNLOAD, module_name) != 0)
+		warn("failed to unload module '%s'", MODULE_NAME);
+
+	fetched = true;
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(rwx);
+ATF_TC_HEAD(rwx, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure there is no RWX page in the kernel");
+}
+ATF_TC_BODY(rwx, tc)
+{
+	fetch_results();
+	ATF_REQUIRE_EQ(x86_pte_results.n_rwx, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(shstk);
+ATF_TC_HEAD(shstk, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure there is no SHSTK page in the kernel");
+}
+ATF_TC_BODY(shstk, tc)
+{
+	fetch_results();
+	atf_tc_expect_fail("there are %zu SHSTK pages",
+	    x86_pte_results.n_shstk);
+	ATF_REQUIRE_EQ(x86_pte_results.n_shstk, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(kernel_map_with_low_ptes);
+ATF_TC_HEAD(kernel_map_with_low_ptes, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure the kernel map has no user mapping");
+}
+ATF_TC_BODY(kernel_map_with_low_ptes, tc)
+{
+	fetch_results();
+	ATF_REQUIRE_EQ(x86_pte_results.kernel_map_with_low_ptes, false);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(pte_is_user_accessible);
+ATF_TC_HEAD(pte_is_user_accessible, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure the PTE space does not have user permissions");
+}
+ATF_TC_BODY(pte_is_user_accessible, tc)
+{
+	fetch_results();
+	ATF_REQUIRE_EQ(x86_pte_results.pte_is_user_accessible, false);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(user_space_is_kernel);
+ATF_TC_HEAD(user_space_is_kernel, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure no page in the user space has kernel permissions");
+}
+ATF_TC_BODY(user_space_is_kernel, tc)
+{
+	fetch_results();
+	ATF_REQUIRE_EQ(x86_pte_results.n_user_space_is_kernel, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(kernel_space_is_user);
+ATF_TC_HEAD(kernel_space_is_user, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure no page in the kernel space has user permissions");
+}
+ATF_TC_BODY(kernel_space_is_user, tc)
+{
+	fetch_results();
+	ATF_REQUIRE_EQ(x86_pte_results.n_kernel_space_is_user, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+
+ATF_TC(svs_g_bit_set);
+ATF_TC_HEAD(svs_g_bit_set, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "ensure that no page in the SVS map has the G bit set");
+}
+ATF_TC_BODY(svs_g_bit_set, tc)
+{
+	fetch_results();
+	if (x86_pte_results.n_svs_g_bit_set != (size_t)-1) {
+		ATF_REQUIRE_EQ(x86_pte_results.n_svs_g_bit_set, 0);
+	} else {
+		atf_tc_skip("SVS is disabled.");
 	}
 }
-ATF_TC_CLEANUP(x86_pte, tc)
-{
-	unload_module();
-}
+
+/* -------------------------------------------------------------------------- */
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, x86_pte);
+	ATF_TP_ADD_TC(tp, rwx);
+	ATF_TP_ADD_TC(tp, shstk);
+	ATF_TP_ADD_TC(tp, kernel_map_with_low_ptes);
+	ATF_TP_ADD_TC(tp, pte_is_user_accessible);
+	ATF_TP_ADD_TC(tp, user_space_is_kernel);
+	ATF_TP_ADD_TC(tp, kernel_space_is_user);
+	ATF_TP_ADD_TC(tp, svs_g_bit_set);
 
 	return atf_no_error();
 }
