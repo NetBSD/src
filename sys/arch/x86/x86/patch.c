@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.41 2020/04/26 13:37:14 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.42 2020/04/26 14:49:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.41 2020/04/26 13:37:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.42 2020/04/26 14:49:17 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -68,15 +68,6 @@ void	mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
-
-void	membar_consumer(void);
-void	membar_consumer_end(void);
-void	membar_sync(void);
-void	membar_sync_end(void);
-void	sse2_lfence(void);
-void	sse2_lfence_end(void);
-void	sse2_mfence(void);
-void	sse2_mfence_end(void);
 
 void	_atomic_cas_64(void);
 void	_atomic_cas_64_end(void);
@@ -219,16 +210,18 @@ x86_patch(bool early)
 		 * ordinary non-temporal stores are always issued in
 		 * program order to main memory and to other CPUs.
 		 */
-		patchfunc(
-		    sse2_lfence, sse2_lfence_end,
-		    membar_consumer, membar_consumer_end,
-		    NULL
-		);
-		patchfunc(
-		    sse2_mfence, sse2_mfence_end,
-		    membar_sync, membar_sync_end,
-		    NULL
-		);
+		extern uint8_t sse2_lfence, sse2_lfence_end;
+		extern uint8_t sse2_mfence, sse2_mfence_end;
+		uint8_t *bytes;
+		size_t size;
+
+		bytes = &sse2_lfence;
+		size = (size_t)&sse2_lfence_end - (size_t)&sse2_lfence;
+		x86_hotpatch(HP_NAME_SSE2_LFENCE, bytes, size);
+
+		bytes = &sse2_mfence;
+		size = (size_t)&sse2_mfence_end - (size_t)&sse2_mfence;
+		x86_hotpatch(HP_NAME_SSE2_MFENCE, bytes, size);
 	}
 
 #ifdef i386

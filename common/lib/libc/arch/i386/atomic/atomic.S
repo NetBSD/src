@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.27 2020/04/26 13:59:44 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.28 2020/04/26 14:49:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,11 +45,15 @@
 #ifdef _HARDKERNEL
 #include "opt_xen.h"
 #include <machine/frameasm.h>
-#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
-#define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
+#define LOCK			HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#define HOTPATCH_SSE2_LFENCE	HOTPATCH(HP_NAME_SSE2_LFENCE, 7);
+#define HOTPATCH_SSE2_MFENCE	HOTPATCH(HP_NAME_SSE2_MFENCE, 7);
+#define ENDLABEL(a)		_ALIGN_TEXT; LABEL(a)
 #else
-#define	LOCK		lock
-#define	ENDLABEL(a)	/* nothing */
+#define LOCK			lock
+#define HOTPATCH_SSE2_LFENCE	/* nothing */
+#define HOTPATCH_SSE2_MFENCE	/* nothing */
+#define ENDLABEL(a)		/* nothing */
 #endif
 
 	.text
@@ -177,11 +181,12 @@ ENTRY(_atomic_cas_32_ni)
 END(_atomic_cas_32_ni)
 
 ENTRY(_membar_consumer)
+	HOTPATCH_SSE2_LFENCE
+	/* 7 bytes of instructions */
 	LOCK
 	addl	$0, -4(%esp)
 	ret
 END(_membar_consumer)
-ENDLABEL(membar_consumer_end)
 
 ENTRY(_membar_producer)
 	/* A store is enough */
@@ -190,11 +195,12 @@ ENTRY(_membar_producer)
 END(_membar_producer)
 
 ENTRY(_membar_sync)
+	HOTPATCH_SSE2_MFENCE
+	/* 7 bytes of instructions */
 	LOCK
 	addl	$0, -4(%esp)
 	ret
 END(_membar_sync)
-ENDLABEL(membar_sync_end)
 
 #if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
 #ifdef XENPV
@@ -256,20 +262,6 @@ ENTRY(_atomic_cas_cx8)
 END(_atomic_cas_cx8)
 ENDLABEL(_atomic_cas_cx8_end)
 #endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
-
-#ifdef _HARDKERNEL
-ENTRY(sse2_lfence)
-	lfence
-	ret
-END(sse2_lfence)
-ENDLABEL(sse2_lfence_end)
-
-ENTRY(sse2_mfence)
-	mfence
-	ret
-END(sse2_mfence)
-ENDLABEL(sse2_mfence_end)
-#endif	/* _HARDKERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
 ALIAS(atomic_add_int,_atomic_add_32)
@@ -402,3 +394,19 @@ STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32_ni)
 
 STRONG_ALIAS(_membar_enter,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_producer)
+
+#ifdef _HARDKERNEL
+	.section .rodata
+
+LABEL(sse2_lfence)
+	lfence
+	ret
+	nop; nop; nop;
+LABEL(sse2_lfence_end)
+
+LABEL(sse2_mfence)
+	mfence
+	ret
+	nop; nop; nop;
+LABEL(sse2_mfence_end)
+#endif	/* _HARDKERNEL */

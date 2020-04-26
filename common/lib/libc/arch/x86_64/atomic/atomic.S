@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.21 2020/04/26 13:59:44 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.22 2020/04/26 14:49:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,11 +40,13 @@
 
 #ifdef _HARDKERNEL
 #include <machine/frameasm.h>
-#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
-#define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
+#define LOCK			HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#define HOTPATCH_SSE2_LFENCE	HOTPATCH(HP_NAME_SSE2_LFENCE, 8);
+#define HOTPATCH_SSE2_MFENCE	HOTPATCH(HP_NAME_SSE2_MFENCE, 8);
 #else
-#define	LOCK		lock
-#define	ENDLABEL(a)	/* nothing */
+#define LOCK			lock
+#define HOTPATCH_SSE2_LFENCE	/* nothing */
+#define HOTPATCH_SSE2_MFENCE	/* nothing */
 #endif
 
 	.text
@@ -254,11 +256,12 @@ END(_atomic_cas_64_ni)
 /* memory barriers */
 
 ENTRY(_membar_consumer)
+	HOTPATCH_SSE2_LFENCE
+	/* 8 bytes of instructions */
 	LOCK
 	addq	$0, -8(%rsp)
 	ret
 END(_membar_consumer)
-ENDLABEL(membar_consumer_end)
 
 ENTRY(_membar_producer)
 	/* A store is enough */
@@ -267,25 +270,12 @@ ENTRY(_membar_producer)
 END(_membar_producer)
 
 ENTRY(_membar_sync)
+	HOTPATCH_SSE2_MFENCE
+	/* 8 bytes of instructions */
 	LOCK
 	addq	$0, -8(%rsp)
 	ret
 END(_membar_sync)
-ENDLABEL(membar_sync_end)
-
-#ifdef _HARDKERNEL
-ENTRY(sse2_lfence)
-	lfence
-	ret
-END(sse2_lfence)
-ENDLABEL(sse2_lfence_end)
-
-ENTRY(sse2_mfence)
-	mfence
-	ret
-END(sse2_mfence)
-ENDLABEL(sse2_mfence_end)
-#endif	/* _HARDKERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
 ALIAS(atomic_add_64,_atomic_add_64)
@@ -425,3 +415,19 @@ STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64_ni)
 
 STRONG_ALIAS(_membar_enter,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_producer)
+
+#ifdef _HARDKERNEL
+	.section .rodata
+
+LABEL(sse2_lfence)
+	lfence
+	ret
+	nop; nop; nop; nop;
+LABEL(sse2_lfence_end)
+
+LABEL(sse2_mfence)
+	mfence
+	ret
+	nop; nop; nop; nop;
+LABEL(sse2_mfence_end)
+#endif	/* _HARDKERNEL */
