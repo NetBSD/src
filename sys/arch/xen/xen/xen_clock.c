@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.3 2020/04/26 20:41:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.3 2020/04/26 20:41:30 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,6 +382,7 @@ xen_vcputime_raw_systime_ns(void)
 	return raw_systime_ns;
 }
 
+#ifdef XENPV
 /*
  * struct xen_wallclock_ticket
  *
@@ -436,6 +437,7 @@ xen_wallclock_exit(struct xen_wallclock_ticket *tp)
 
 	return tp->version == HYPERVISOR_shared_info->wc_version;
 }
+#endif
 
 /*
  * xen_global_systime_ns()
