@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.123 2019/11/09 23:44:32 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.124 2020/04/26 18:53:32 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -511,11 +511,10 @@
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 310	UNIMPL		unshare
-311	STD		{ int|linux_sys||set_robust_list( \
-			    struct linux_robust_list_head *head, size_t len); }
-312	STD		{ int|linux_sys||get_robust_list(int pid, \
-			    struct linux_robust_list_head **head, \
-			    size_t *len); }
+311	NOARGS		{ int|sys||__futex_set_robust_list(void *head, \
+			    size_t len); }
+312	NOARGS		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
+			    void **headp, size_t *lenp); }
 313	UNIMPL		splice
 314	UNIMPL		sync_file_range
 315	UNIMPL		tee
