@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.19 2020/04/26 13:37:14 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.20 2020/04/26 13:54:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -265,7 +265,6 @@ ENTRY(_membar_producer)
 	movq	$0, -8(%rsp)
 	ret
 END(_membar_producer)
-ENDLABEL(membar_producer_end)
 
 ENTRY(_membar_sync)
 	LOCK(26)
