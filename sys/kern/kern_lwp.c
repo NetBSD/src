@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.235 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.236 2020/04/26 18:53:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -223,7 +223,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.235 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.236 2020/04/26 18:53:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -258,6 +258,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.235 2020/04/24 03:22:06 thorpej Exp $
 #include <sys/msan.h>
 #include <sys/kcov.h>
 #include <sys/cprng.h>
+#include <sys/futex.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -2093,6 +2094,7 @@ lwp_thread_cleanup(struct lwp *l)
 	KASSERT(l == curlwp);
 	const lwpid_t tid = l->l_lid;
 
+	KASSERT((tid & FUTEX_TID_MASK) == tid);
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 	/*
@@ -2103,6 +2105,14 @@ lwp_thread_cleanup(struct lwp *l)
 	proc_hide_lwpid(tid);
 
 	mutex_exit(l->l_proc->p_lock);
+
+	/*
+	 * If the LWP has robust futexes, release them all
+	 * now.
+	 */
+	if (__predict_false(l->l_robust_head != 0)) {
+		futex_release_all_lwp(l, tid);
+	}
 }
 
 #if defined(DDB)

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.836 2020/04/19 13:22:58 maxv Exp $
+# $NetBSD: mi,v 1.837 2020/04/26 18:53:32 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3120,6 +3120,8 @@
 ./usr/tests/lib/libc/sys/t_dup			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fork			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fsync		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_futex_ops		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_futex_robust		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getcontext		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getgroups		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getitimer		tests-lib-tests		compattestfile,atf
