@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_pte_tester.c,v 1.1 2020/04/26 09:08:41 maxv Exp $	*/
+/*	$NetBSD: x86_pte_tester.c,v 1.2 2020/04/26 11:56:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ static struct {
 	} coord;
 	struct {
 		size_t n_rwx;
+		size_t n_shstk;
 		bool kernel_map_with_low_ptes;
 		bool pte_is_user_accessible;
 		size_t n_user_space_is_kernel;
@@ -220,6 +221,38 @@ count_krwx(pd_entry_t pde, size_t slot, int lvl)
 }
 
 /*
+ * Rule: the number of kernel SHSTK pages should be zero.
+ */
+static walk_type
+count_kshstk(pd_entry_t pde, size_t slot, int lvl)
+{
+	if (lvl == NLEVEL && slot < 256) {
+		return WALK_SKIP;
+	}
+
+	if (is_flag(pde, PTE_PS) || lvl == 1) {
+		if (!is_flag(pde, PTE_W) && is_flag(pde, PTE_D)) {
+			if (lvl == 4) {
+				tester_ctx.results.n_shstk += (NBPD_L4 / PAGE_SIZE);
+			} else if (lvl == 3) {
+				tester_ctx.results.n_shstk += (NBPD_L3 / PAGE_SIZE);
+			} else if (lvl == 2) {
+				tester_ctx.results.n_shstk += (NBPD_L2 / PAGE_SIZE);
+			} else if (lvl == 1) {
+				tester_ctx.results.n_shstk += (NBPD_L1 / PAGE_SIZE);
+			}
+		}
+		return WALK_SKIP;
+	}
+
+	if (!is_flag(pde, PTE_W)) {
+		return WALK_SKIP;
+	}
+
+	return WALK_NEXT;
+}
+
+/*
  * Rule: the lower half of the kernel map must be zero.
  */
 static walk_type
@@ -362,6 +395,7 @@ x86_pte_run_scans(void)
 	/* Scan the kernel map. */
 	pa0 = (paddr_t)kpm->pm_pdirpa[0];
 	scan_tree(pa0, &count_krwx);
+	scan_tree(pa0, &count_kshstk);
 	scan_tree(pa0, &check_kernel_map);
 }
 
