@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.22 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.23 2020/04/26 16:14:14 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@ struct sk_jpool_entry {
 struct sk_chain {
 	void			*sk_le;
 	struct mbuf		*sk_mbuf;
-	struct sk_chain		*sk_next;
 };
 
 /*
