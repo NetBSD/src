@@ -1,4 +1,4 @@
-/*	$NetBSD: t_user_ldt.c,v 1.1 2020/04/19 13:22:58 maxv Exp $	*/
+/*	$NetBSD: t_user_ldt.c,v 1.2 2020/04/26 12:13:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #include <machine/vmparam.h>
+
+#define _LOCORE /* XXX a bit of a hack, but whatever */
+#include <machine/gdt.h>
+#undef _LOCORE
 
 #include <atf-c.h>
 
@@ -166,6 +170,13 @@ ATF_TC_BODY(filter_ops, tc)
 		ATF_REQUIRE_EQ(i386_set_ldt(256, &desc, 1), -1);
 		ATF_REQUIRE_EQ(errno, EACCES);
 	}
+
+	/* Check the slot limit. */
+	build_desc(&desc, ldt_base, PAGE_SIZE, SDT_MEMRW, SEL_UPL, 1, 0);
+	ATF_REQUIRE_EQ(i386_set_ldt(MAX_USERLDT_SLOTS-1, &desc, 1),
+	    MAX_USERLDT_SLOTS-1);
+	ATF_REQUIRE_EQ(i386_set_ldt(MAX_USERLDT_SLOTS, &desc, 1), -1);
+	ATF_REQUIRE_EQ(errno, EINVAL);
 }
 
 /* -------------------------------------------------------------------------- */
