@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_emuldata.h,v 1.19 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: futex_private.h,v 1.1 2020/04/26 18:53:32 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,23 +29,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_EMULDATA_H
-#define _COMMON_LINUX_EMULDATA_H
+#ifndef __LIBC_FUTEX_PRIVATE
+#define __LIBC_FUTEX_PRIVATE
 
-/*
- * This is auxillary data the linux compat code
- * needs to do its work.  A pointer to it is
- * stored in the emuldata field of the proc
- * structure.
- */
+#if defined(_LIBC)
+#include "namespace.h"
+#endif
 
-struct linux_emuldata {
-	int	led_debugreg[8];	/* GDB information for ptrace - for use, */
-				/* see ../arch/i386/linux_ptrace.c */
+#include <sys/cdefs.h>
+#include <sys/syscall.h>
+#include <sys/futex.h>
+#include <unistd.h>
 
-	void	*led_child_tidptr;	/* Used during clone() */
-	void	*led_clear_tid;		/* Own TID to clear on exit */
-	long	led_personality;
-};
+static inline int __unused
+__futex(volatile int *uaddr, int op, int val, const struct timespec *timeout,
+	volatile int *uaddr2, int val2, int val3)
+{
+	return syscall(SYS___futex, uaddr, op, val, timeout, uaddr2,
+			val2, val3);
+}
 
-#endif /* !_COMMON_LINUX_EMULDATA_H */
+static inline int __unused
+__futex_set_robust_list(void *head, size_t len)
+{
+	return syscall(SYS___futex_set_robust_list, head, len);
+}
+
+static inline int __unused
+__futex_get_robust_list(lwpid_t lwpid, void **headp, size_t *lenp)
+{
+	return syscall(SYS___futex_get_robust_list, lwpid, headp, lenp);
+}
+
+#endif /* __LIBC_FUTEX_PRIVATE */

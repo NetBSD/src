@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.27 2019/08/23 13:49:12 maxv Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.28 2020/04/26 18:53:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.27 2019/08/23 13:49:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.28 2020/04/26 18:53:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.27 2019/08/23 13:49:12 maxv Exp $
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/poll.h>
+#include <sys/futex.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -61,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.27 2019/08/23 13:49:12 maxv Exp $
 #include <compat/linux/common/linux_statfs.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
-#include <compat/linux/common/linux_futex.h>
 #include <compat/linux/linux_syscallargs.h>
 
 extern const struct linux_mnttypes linux_fstypes[];
@@ -243,66 +243,30 @@ linux32_sys_futex(struct lwp *l,
 		syscallarg(linux32_intp_t) uaddr2;
 		syscallarg(int) val3;
 	} */
-	struct linux_sys_futex_args ua;
 	struct linux32_timespec lts;
-	struct timespec ts = { 0, 0 };
+	struct timespec ts, *tsp = NULL;
+	int val2 = 0;
 	int error;
 
-	NETBSD32TOP_UAP(uaddr, int);
-	NETBSD32TO64_UAP(op);
-	NETBSD32TO64_UAP(val);
-	NETBSD32TOP_UAP(timeout, struct linux_timespec);
-	NETBSD32TOP_UAP(uaddr2, int);
-	NETBSD32TO64_UAP(val3);
-	if ((SCARG(uap, op) & ~LINUX_FUTEX_PRIVATE_FLAG) == LINUX_FUTEX_WAIT &&
+	/*
+	 * Linux overlays the "timeout" field and the "val2" field.
+	 * "timeout" is only valid for FUTEX_WAIT on Linux.
+	 */
+	if ((SCARG(uap, op) & FUTEX_CMD_MASK) == FUTEX_WAIT &&
 	    SCARG_P32(uap, timeout) != NULL) {
-		if ((error = copyin((void *)SCARG_P32(uap, timeout), 
+		if ((error = copyin(SCARG_P32(uap, timeout),
 		    &lts, sizeof(lts))) != 0) {
 			return error;
 		}
 		linux32_to_native_timespec(&ts, &lts);
+		tsp = &ts;
+	} else {
+		val2 = (int)(uintptr_t)SCARG_P32(uap, timeout);
 	}
-	return linux_do_futex(l, &ua, &ts, retval);
-}
 
-int
-linux32_sys_set_robust_list(struct lwp *l,
-    const struct linux32_sys_set_robust_list_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(linux32_robust_list_headp_t) head;
-		syscallarg(linux32_size_t) len;
-	} */
-	struct linux_sys_set_robust_list_args ua;
-	struct linux_emuldata *led;
-
-	if (SCARG(uap, len) != 12)
-		return EINVAL;
-
-	NETBSD32TOP_UAP(head, struct robust_list_head);
-	NETBSD32TOX64_UAP(len, size_t);
-
-	led = l->l_emuldata;
-	led->led_robust_head = SCARG(&ua, head);
-	*retval = 0;
-	return 0;
-}
-
-int
-linux32_sys_get_robust_list(struct lwp *l,
-    const struct linux32_sys_get_robust_list_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(linux32_pid_t) pid;
-		syscallarg(linux32_robust_list_headpp_t) head;
-		syscallarg(linux32_sizep_t) len;
-	} */
-	struct linux_sys_get_robust_list_args ua;
-
-	NETBSD32TOX_UAP(pid, int);
-	NETBSD32TOP_UAP(head, struct robust_list_head *);
-	NETBSD32TOP_UAP(len, size_t *);
-	return linux_sys_get_robust_list(l, &ua, retval);
+	return do_futex(SCARG_P32(uap, uaddr), SCARG(uap, op),
+	    SCARG(uap, val), tsp, SCARG_P32(uap, uaddr2), val2,
+	    SCARG(uap, val3), retval);
 }
 
 int
