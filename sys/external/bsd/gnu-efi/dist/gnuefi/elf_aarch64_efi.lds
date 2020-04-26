@@ -1,15 +1,8 @@
-/*	$NetBSD: elf_aarch64_efi.lds,v 1.2 2018/12/29 04:05:47 christos Exp $	*/
+/*	$NetBSD: elf_aarch64_efi.lds,v 1.3 2020/04/26 06:56:46 rin Exp $	*/
 
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
 ENTRY(_start)
-
-PHDRS
-{
-  text PT_LOAD;
-  headers PT_PHDR FILEHDR PHDRS;
-}
-
 SECTIONS
 {
   .text 0x0 : {
@@ -21,7 +14,7 @@ SECTIONS
     *(.srodata)
     *(.rodata*)
     . = ALIGN(16);
-  } :text
+  }
   _etext = .;
   _text_size = . - _text;
   .dynamic  : { *(.dynamic) }
