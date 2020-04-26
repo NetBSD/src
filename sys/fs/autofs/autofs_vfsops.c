@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.10 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.11 2020/04/26 17:00:31 tkusumi Exp $");
 
 
 #include "autofs.h"
@@ -194,7 +194,7 @@ autofs_unmount(struct mount *mp, int mntflags)
 		flags |= FORCECLOSE;
 	error = vflush(mp, NULL, flags);
 	if (error) {
-		AUTOFS_WARN("vflush failed with error %d", error);
+		AUTOFS_DEBUG("vflush failed with error %d", error);
 		return error;
 	}
 
