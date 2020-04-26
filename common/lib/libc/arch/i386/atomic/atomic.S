@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.26 2020/04/26 13:54:02 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.27 2020/04/26 13:59:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@
 #ifdef _HARDKERNEL
 #include "opt_xen.h"
 #include <machine/frameasm.h>
-#define	LOCK(n)		HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
-#define	LOCK(n)		lock
+#define	LOCK		lock
 #define	ENDLABEL(a)	/* nothing */
 #endif
 
@@ -57,7 +57,7 @@
 ENTRY(_atomic_add_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
-	LOCK(1)
+	LOCK
 	addl	%eax, (%edx)
 	ret
 END(_atomic_add_32)
@@ -66,7 +66,7 @@ ENTRY(_atomic_add_32_nv)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	%eax, %ecx
-	LOCK(2)
+	LOCK
 	xaddl	%eax, (%edx)
 	addl	%ecx, %eax
 	ret
@@ -75,7 +75,7 @@ END(_atomic_add_32_nv)
 ENTRY(_atomic_and_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
-	LOCK(3)
+	LOCK
 	andl	%eax, (%edx)
 	ret
 END(_atomic_and_32)
@@ -86,7 +86,7 @@ ENTRY(_atomic_and_32_nv)
 0:
 	movl	%eax, %ecx
 	andl	8(%esp), %ecx
-	LOCK(4)
+	LOCK
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	movl	%ecx, %eax
@@ -97,7 +97,7 @@ END(_atomic_and_32_nv)
 
 ENTRY(_atomic_dec_32)
 	movl	4(%esp), %edx
-	LOCK(5)
+	LOCK
 	decl	(%edx)
 	ret
 END(_atomic_dec_32)
@@ -105,7 +105,7 @@ END(_atomic_dec_32)
 ENTRY(_atomic_dec_32_nv)
 	movl	4(%esp), %edx
 	movl	$-1, %eax
-	LOCK(6)
+	LOCK
 	xaddl	%eax, (%edx)
 	decl	%eax
 	ret
@@ -113,7 +113,7 @@ END(_atomic_dec_32_nv)
 
 ENTRY(_atomic_inc_32)
 	movl	4(%esp), %edx
-	LOCK(7)
+	LOCK
 	incl	(%edx)
 	ret
 END(_atomic_inc_32)
@@ -121,7 +121,7 @@ END(_atomic_inc_32)
 ENTRY(_atomic_inc_32_nv)
 	movl	4(%esp), %edx
 	movl	$1, %eax
-	LOCK(8)
+	LOCK
 	xaddl	%eax, (%edx)
 	incl	%eax
 	ret
@@ -130,7 +130,7 @@ END(_atomic_inc_32_nv)
 ENTRY(_atomic_or_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
-	LOCK(9)
+	LOCK
 	orl	%eax, (%edx)
 	ret
 END(_atomic_or_32)
@@ -141,7 +141,7 @@ ENTRY(_atomic_or_32_nv)
 0:
 	movl	%eax, %ecx
 	orl	8(%esp), %ecx
-	LOCK(10)
+	LOCK
 	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	movl	%ecx, %eax
@@ -161,7 +161,7 @@ ENTRY(_atomic_cas_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
-	LOCK(12)
+	LOCK
 	cmpxchgl %ecx, (%edx)
 	/* %eax now contains the old value */
 	ret
@@ -177,7 +177,7 @@ ENTRY(_atomic_cas_32_ni)
 END(_atomic_cas_32_ni)
 
 ENTRY(_membar_consumer)
-	LOCK(13)
+	LOCK
 	addl	$0, -4(%esp)
 	ret
 END(_membar_consumer)
@@ -190,7 +190,7 @@ ENTRY(_membar_producer)
 END(_membar_producer)
 
 ENTRY(_membar_sync)
-	LOCK(14)
+	LOCK
 	addl	$0, -4(%esp)
 	ret
 END(_membar_sync)
@@ -241,7 +241,7 @@ ENTRY(_atomic_cas_cx8)
 	movl	20(%esp), %edx
 	movl	24(%esp), %ebx
 	movl	28(%esp), %ecx
-	LOCK(15)
+	LOCK
 	cmpxchg8b (%edi)
 	popl	%ebx
 	popl	%edi
