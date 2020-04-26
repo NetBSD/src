@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.7 2019/11/09 23:45:08 jdolecek Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.8 2020/04/26 19:20:58 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1820,20 +1820,20 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
-	/* linux32_sys_set_robust_list */
+	/* netbsd32___futex_set_robust_list */
 	case 311: {
-		const struct linux32_sys_set_robust_list_args *p = params;
-		uarg[0] = (intptr_t) SCARG(p, head).i32; /* linux32_robust_list_headp_t */
-		iarg[1] = SCARG(p, len); /* linux32_size_t */
+		const struct netbsd32___futex_set_robust_list_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, head).i32; /* netbsd32_voidp */
+		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		*n_args = 2;
 		break;
 	}
-	/* linux32_sys_get_robust_list */
+	/* netbsd32___futex_get_robust_list */
 	case 312: {
-		const struct linux32_sys_get_robust_list_args *p = params;
-		iarg[0] = SCARG(p, pid); /* linux32_pid_t */
-		uarg[1] = (intptr_t) SCARG(p, head).i32; /* linux32_robust_list_headpp_t */
-		uarg[2] = (intptr_t) SCARG(p, len).i32; /* linux32_sizep_t */
+		const struct netbsd32___futex_get_robust_list_args *p = params;
+		iarg[0] = SCARG(p, lwpid); /* lwpid_t */
+		uarg[1] = (intptr_t) SCARG(p, headp).i32; /* netbsd32_voidp */
+		uarg[2] = (intptr_t) SCARG(p, lenp).i32; /* netbsd32_size_tp */
 		*n_args = 3;
 		break;
 	}
@@ -4830,30 +4830,30 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* linux32_sys_set_robust_list */
+	/* netbsd32___futex_set_robust_list */
 	case 311:
 		switch(ndx) {
 		case 0:
-			p = "linux32_robust_list_headp_t";
+			p = "netbsd32_voidp";
 			break;
 		case 1:
-			p = "linux32_size_t";
+			p = "netbsd32_size_t";
 			break;
 		default:
 			break;
 		};
 		break;
-	/* linux32_sys_get_robust_list */
+	/* netbsd32___futex_get_robust_list */
 	case 312:
 		switch(ndx) {
 		case 0:
-			p = "linux32_pid_t";
+			p = "lwpid_t";
 			break;
 		case 1:
-			p = "linux32_robust_list_headpp_t";
+			p = "netbsd32_voidp";
 			break;
 		case 2:
-			p = "linux32_sizep_t";
+			p = "netbsd32_size_tp";
 			break;
 		default:
 			break;
@@ -5991,12 +5991,12 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* linux32_sys_set_robust_list */
+	/* netbsd32___futex_set_robust_list */
 	case 311:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* linux32_sys_get_robust_list */
+	/* netbsd32___futex_get_robust_list */
 	case 312:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
