@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.45 2020/04/22 09:18:42 rin Exp $
+#	$NetBSD: files.kern,v 1.46 2020/04/26 18:53:33 thorpej Exp $
 
 #
 # kernel sources
@@ -154,6 +154,7 @@ file	kern/subr_workqueue.c		kern
 file	kern/subr_xcall.c		kern
 file	kern/sys_aio.c			aio
 file	kern/sys_descrip.c		kern
+file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern
 file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue

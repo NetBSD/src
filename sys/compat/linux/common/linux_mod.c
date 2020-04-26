@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.13 2020/03/21 16:28:56 pgoyette Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.14 2020/04/26 18:53:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.13 2020/03/21 16:28:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.14 2020/04/26 18:53:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.13 2020/03/21 16:28:56 pgoyette Exp 
 #include <sys/sysctl.h>
 
 #include <compat/linux/common/linux_sysctl.h>
-#include <compat/linux/common/linux_futex.h>
 #include <compat/linux/common/linux_exec.h>
 
 #if defined(EXEC_ELF32) && ELFSIZE == 32
@@ -163,7 +162,6 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		linux_futex_init();
 		error = exec_add(linux_execsw, __arraycount(linux_execsw));
 		return error;
 
@@ -172,7 +170,6 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			return error;
 		linux_sysctl_fini();
-		linux_futex_fini();
 		return 0;
 
 	default:

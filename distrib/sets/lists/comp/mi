@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2321 2020/04/04 19:26:51 christos Exp $
+#	$NetBSD: mi,v 1.2322 2020/04/26 18:53:31 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3059,6 +3059,7 @@
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
 ./usr/include/sys/fstypes.h			comp-c-include
+./usr/include/sys/futex.h			comp-c-include
 ./usr/include/sys/gcq.h				comp-c-include
 ./usr/include/sys/gmon.h			comp-c-include
 ./usr/include/sys/gpio.h			comp-c-include

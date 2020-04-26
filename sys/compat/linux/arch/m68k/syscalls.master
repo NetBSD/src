@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.94 2019/11/09 23:44:32 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.95 2020/04/26 18:53:32 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -519,11 +519,15 @@
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 303	UNIMPL		unshare
-304	STD		{ int|linux_sys||set_robust_list( \
-			    struct linux_robust_list_head *head, size_t len); }
-305	STD		{ int|linux_sys||get_robust_list(int pid, \
-			    struct linux_robust_list_head **head, \
-			    size_t *len); }
+			;
+			; The NetBSD native robust list calls have different
+			; argument names / types, but they are ABI-compatible
+			; with Linux.
+			;
+304	NOARGS		{ int|sys||__futex_set_robust_list(void *head, \
+			    size_t len); }
+305	NOARGS		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
+			    void **headp, size_t *lenp); }
 306	UNIMPL		splice
 307	UNIMPL		sync_file_range
 308	UNIMPL		tee

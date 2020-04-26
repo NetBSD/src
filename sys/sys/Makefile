@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172 2020/03/22 14:27:33 ad Exp $
+#	$NetBSD: Makefile,v 1.173 2020/04/26 18:53:33 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	endian.h envsys.h errno.h evcnt.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
 	fcntl.h fd_set.h fdio.h featuretest.h file.h filedesc.h filio.h \
-	flashio.h float_ieee754.h fstypes.h gcq.h gmon.h gpio.h hash.h \
+	flashio.h float_ieee754.h fstypes.h futex.h gcq.h gmon.h gpio.h hash.h \
 	idtype.h ieee754.h intr.h intrio.h inttypes.h ioccom.h ioctl.h \
 	ioctl_compat.h iostat.h ipc.h ipmi.h \
 	joystick.h \
