@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.10 2020/03/22 11:20:59 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.11 2020/04/26 12:38:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.10 2020/03/22 11:20:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.11 2020/04/26 12:38:21 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -224,6 +224,8 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	if (m->m_pkthdr.csum_flags != 0) {
+		if (sw_csum)
+			xn_cksum_undefer.ev_count++;
 		xn_cksum_defer.ev_count++;
 #ifdef M_CSUM_BLANK
 		m->m_pkthdr.csum_flags |= M_CSUM_BLANK;
