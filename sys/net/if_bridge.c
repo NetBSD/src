@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.170 2020/03/27 16:47:00 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.171 2020/04/27 20:46:01 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.170 2020/03/27 16:47:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.171 2020/04/27 20:46:01 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -830,8 +830,15 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	switch (ifs->if_type) {
 	case IFT_ETHER:
 		if (sc->sc_if.if_mtu != ifs->if_mtu) {
-			error = EINVAL;
-			goto out;
+			/* Change MTU of added interface to bridge MTU */
+			struct ifreq ifr;
+			memset(&ifr, 0, sizeof(ifr));
+			ifr.ifr_mtu = sc->sc_if.if_mtu;
+			IFNET_LOCK(ifs);
+			error = ether_ioctl(ifs, SIOCSIFMTU, &ifr);
+			IFNET_UNLOCK(ifs);
+			if (error != 0)
+				goto out;
 		}
 		/* FALLTHROUGH */
 	case IFT_L2TP:
