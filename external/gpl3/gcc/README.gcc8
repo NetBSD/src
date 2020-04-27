@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.7 2020/02/07 07:16:32 mrg Exp $
+$NetBSD: README.gcc8,v 1.8 2020/04/27 03:29:57 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -42,15 +42,15 @@ earmv7		y	?	y	y		?		?	?	y
 earmv7eb	y	?	y	y		?		?	?	y
 earmv7hf	y	y	y	y		y		y	n[3]	y
 earmv7hfeb	y	?	y	y		?		?	?	y
-hppa		y	?	y	y		?		?	?	?
+hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	n[4]	y
 m68000		y	?	y	y		?		?	?	?
 m68k		y	y	y	y		y		?	?	?
-mipseb		y	y	y	y		?		?	?	?
-mipsel		y	?	y	y		?		?	?	?
-mips64eb	y	y	y	y		y		y	y[2]	?
-mips64el	y	?	y	y		?		?	?	?
+mipseb		y	y	y	y		?		?	?	y
+mipsel		y	?	y	y		?		?	?	y
+mips64eb	y	y	y	y		y		y	y[2]	y
+mips64el	y	?	y	y		?		?	?	y
 powerpc		y	y	y	y		y		y	y[1]	y
 powerpc64	y	n	y	y		y		y	y	y
 sh3eb		y	y	y	y		y		y	y	?
