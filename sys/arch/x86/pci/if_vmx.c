@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.59 2020/03/24 09:27:46 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.60 2020/04/27 23:40:37 yamaguchi Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,12 +19,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.59 2020/03/24 09:27:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.60 2020/04/27 23:40:37 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/bitops.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -466,23 +467,11 @@ CFATTACH_DECL3_NEW(vmx, sizeof(struct vmxnet3_softc),
 static int
 vmxnet3_calc_queue_size(int n)
 {
-	int v, q;
 
-	v = n;
-	while (v != 0) {
-		if (powerof2(n) != 0)
-			break;
-		v /= 2;
-		q = rounddown2(n, v);
-		if (q != 0) {
-			n = q;
-			break;
-		}
-	}
-	if (n == 0)
-		n = 1;
+	if (__predict_false(n <= 0))
+		return 1;
 
-	return n;
+	return (1U << (fls32(n) - 1));
 }
 
 static inline void
