@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.16 2020/02/14 04:38:24 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.17 2020/04/27 16:57:31 tsutsui Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.16 2020/02/14 04:38:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.17 2020/04/27 16:57:31 tsutsui Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -923,6 +923,11 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 #endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
+#ifdef __NetBSD__
+	if (slave && ttm->sg) {
+		bus_dmamap_unload(ttm->bdev->dmat, gtt->ttm.dma_address);
+	}
+#endif
 	if (gtt && gtt->userptr) {
 		kfree(ttm->sg);
 		ttm->page_flags &= ~TTM_PAGE_FLAG_SG;
