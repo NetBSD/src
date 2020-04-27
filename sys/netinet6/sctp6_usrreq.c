@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.21 2020/04/27 19:21:43 rjs Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.22 2020/04/27 19:33:48 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.21 2020/04/27 19:21:43 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.22 2020/04/27 19:33:48 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1275,9 +1275,7 @@ sctp6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 static int
 sctp6_accept(struct socket *so, struct sockaddr *nam)
 {
-	KASSERT(solocked(so));
-
-	return EOPNOTSUPP;
+	return sctp_accept(so, nam);
 }
 
 static int
