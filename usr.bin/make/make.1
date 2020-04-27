@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.279 2020/02/04 16:28:29 wiz Exp $
+.\"	$NetBSD: make.1,v 1.280 2020/04/27 20:03:08 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 16, 2019
+.Dd April 27, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1428,6 +1428,29 @@ is the substring of
 .Ar old_string
 to be replaced in
 .Ar new_string .
+If only
+.Ar old_string
+contains the pattern matching character
+.Ar % ,
+and 
+.Ar old_string
+matches, then the result is the
+.Ar new_string .
+If only the
+.Ar new_string
+contains the pattern matching character
+.Ar % ,
+then it is not treated specially and it is printed as a literal
+.Ar %
+on match.
+If there is more than one pattern matching character
+.Ar ( % )
+in either the
+.Ar new_string
+or
+.Ar old_string ,
+only the first instance is treated specially (as the pattern character);
+all subsequent instances are treated as regular characters
 .Pp
 Variable expansion occurs in the normal fashion inside both
 .Ar old_string
