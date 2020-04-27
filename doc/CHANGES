@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2681 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2682 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -184,3 +184,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xbdback(4): Make the driver MP-safe [jdolecek 20200423]
 	OpenSSL: Imported 1.1.1g. [christos 20200424]
 	tzdata updated to 2020a  [kre 20200425]
+	amd64, i386: Added support for Xen PV drivers under HVM guests.
+		[bouyer 20200425]
