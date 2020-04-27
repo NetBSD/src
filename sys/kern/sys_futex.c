@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.2 2020/04/26 21:04:46 mlelstv Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.3 2020/04/27 05:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.2 2020/04/26 21:04:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.3 2020/04/27 05:28:17 thorpej Exp $");
 
 /*
  * Futexes
@@ -676,8 +676,6 @@ futex_lookup(int *uaddr, bool shared, struct futex **fp)
 	if ((va & 3) != 0)
 		return EINVAL;
 
-	CTASSERT((PAGE_SIZE & 3) == 0);
-
 	/* Look it up. */
 	error = futex_key_init(&fk, vm, va, shared);
 	if (error)
@@ -725,8 +723,6 @@ futex_get(int *uaddr, bool shared, struct futex **fp)
 	 */
 	if ((va & 3) != 0)
 		return EINVAL;
-
-	CTASSERT((PAGE_SIZE & 3) == 0);
 
 	error = futex_key_init(&fk, vm, va, shared);
 	if (error)
