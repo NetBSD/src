@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_sta.c,v 1.1.2.6 2019/06/10 22:09:46 christos Exp $ */
+/*	$NetBSD: ieee80211_sta.c,v 1.1.2.7 2020/04/27 07:40:50 nat Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_sta.c,v 1.1.2.6 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_sta.c,v 1.1.2.7 2020/04/27 07:40:50 nat Exp $");
 #endif
 
 
@@ -298,6 +298,7 @@ sta_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 		default:
 			break;
 		}
+		ostate = vap->iv_state;
 		if (ostate != IEEE80211_S_INIT) {
 			/* NB: optimize INIT -> INIT case */
 			ieee80211_reset_bss(vap);
@@ -464,6 +465,7 @@ sta_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 			goto invalid;
 		}
 		ieee80211_sync_curchan(ic);
+		ostate = vap->iv_state;
 		if (ostate != IEEE80211_S_RUN)
 			sta_swbmiss_start(vap);
 		/*
