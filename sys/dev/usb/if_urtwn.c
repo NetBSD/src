@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.16 2020/04/25 14:40:11 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.17 2020/04/27 07:37:01 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.16 2020/04/25 14:40:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.17 2020/04/27 07:37:01 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -814,19 +814,23 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_rx_list(struct urtwn_softc *sc)
 {
+	struct urtwn_rx_data *data = NULL;
 	struct usbd_xfer *xfer;
-	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
 	for (size_t j = 0; j < sc->rx_npipe; j++) {
-		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
+		mutex_enter(&sc->sc_rx_mtx); 
+		while (!TAILQ_EMPTY(&sc->rx_free_list[j])) {
+			data = TAILQ_FIRST(&sc->rx_free_list[j]);
+			TAILQ_REMOVE(&sc->rx_free_list[j], data, next);
 			CTASSERT(sizeof(xfer) == sizeof(void *));
-			xfer = atomic_swap_ptr(&sc->rx_data[j][i].xfer, NULL);
+			xfer = atomic_swap_ptr(&data->xfer, NULL);
 			if (xfer != NULL)
 				usbd_destroy_xfer(xfer);
 		}
+		mutex_exit(&sc->sc_rx_mtx);
 	}
 }
 
@@ -875,19 +879,23 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_tx_list(struct urtwn_softc *sc)
 {
+	struct urtwn_tx_data *data = NULL;
 	struct usbd_xfer *xfer;
-	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
 	for (size_t j = 0; j < sc->tx_npipe; j++) {
-		for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
+		mutex_enter(&sc->sc_tx_mtx); 
+		while (!TAILQ_EMPTY(&sc->tx_free_list[j])) {
+			data = TAILQ_FIRST(&sc->tx_free_list[j]);
+			TAILQ_REMOVE(&sc->tx_free_list[j], data, next);
 			CTASSERT(sizeof(xfer) == sizeof(void *));
-			xfer = atomic_swap_ptr(&sc->tx_data[j][i].xfer, NULL);
+			xfer = atomic_swap_ptr(&data->xfer, NULL);
 			if (xfer != NULL)
 				usbd_destroy_xfer(xfer);
 		}
+		mutex_exit(&sc->sc_tx_mtx);
 	}
 }
 
