@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.35.14.1 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: pfil.c,v 1.35.14.2 2020/04/27 07:27:35 nat Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.35.14.1 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.35.14.2 2020/04/27 07:27:35 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -398,6 +398,11 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	int ret = 0;
 
 	KASSERT(dir == PFIL_IN || dir == PFIL_OUT);
+	
+	if (__predict_false(ph == NULL)) {
+		return ret;
+	}
+
 	if (__predict_false((phlistset = pfil_hook_get(dir, ph)) == NULL)) {
 		return ret;
 	}
