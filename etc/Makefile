@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.443 2020/04/05 00:36:25 christos Exp $
+#	$NetBSD: Makefile,v 1.444 2020/04/27 01:07:27 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -627,7 +627,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 		done; \
 		[ $${kern_tgz} -nt "$${newest}" ] || { \
 			echo "echo $${kernels} | $${pax_cmd}"; \
-			if [ ${KERNELDIR} = "yes" ]; then \
+			if [ ${KERNEL_DIR} = "yes" ]; then \
 				tmpdir=kernel$$; \
 				trap "rm -fr $${tmpdir}" 0 1 2 3 15; \
 				mkdir -p $${tmpdir}/netbsd; \
