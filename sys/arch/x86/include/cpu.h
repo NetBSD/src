@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123 2020/04/27 16:29:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,9 +111,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
-#ifdef XEN
-	volatile struct vcpu_info *ci_vcpu; /* for XEN */
-#endif
 
 	/*
 	 * Private members.
@@ -269,6 +266,7 @@ struct cpu_info {
 	struct evcnt ci_ipi_events[XEN_NIPIS];
 #endif
 #ifdef XEN
+	volatile struct vcpu_info *ci_vcpu; /* for XEN */
 	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
 	evtchn_port_t ci_ipi_evtchn;
 #if defined(XENPV)
