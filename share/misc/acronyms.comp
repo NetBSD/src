@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.300 2020/03/26 18:28:09 leot Exp $
+$NetBSD: acronyms.comp,v 1.301 2020/04/27 09:10:45 plunky Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -534,6 +534,7 @@ EPIC	explicitly parallel instruction computing
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
+EPT	extended page tables
 ERC	error recovery control
 ERD	emergency recovery disk
 ERD	entity relationship diagram
