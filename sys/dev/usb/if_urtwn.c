@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.17 2020/04/27 07:37:01 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.18 2020/04/27 07:38:25 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.17 2020/04/27 07:37:01 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.18 2020/04/27 07:38:25 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -526,6 +526,11 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	    IEEE80211_HTCAP_CHWIDTH40 |		/* 40 MHz channel width */
 	    IEEE80211_HTCAP_SHORTGI40;		/* short GI in 40MHz */
 #endif
+
+	ic->ic_cryptocaps =
+		IEEE80211_CRYPTO_WEP |
+		IEEE80211_CRYPTO_TKIP |
+		IEEE80211_CRYPTO_AES_CCM;
 
 	ic->ic_txstream = sc->ntxchains;
 	ic->ic_rxstream = sc->nrxchains;
