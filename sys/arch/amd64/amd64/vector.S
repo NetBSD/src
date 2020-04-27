@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.74 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.75 2020/04/27 16:55:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -761,12 +761,10 @@ ENTRY(hypervisor_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp
-	jmp _C_LABEL(Xhypervisor_pvhvm_callback)
-	TEXT_USER_BEGIN
-IDTVEC(hypervisor_pvhvm_callback)
 	pushq	$0		/* Dummy error code */
 	pushq	$T_ASTFLT
 	INTRENTRY
+IDTVEC(handle_hypervisor_callback)
 	movl    CPUVAR(ILEVEL),%edi
 	pushq   %rdi /* for Xdoreti */
 	incl	CPUVAR(IDEPTH)
@@ -781,9 +779,17 @@ IDTVEC(hypervisor_pvhvm_callback)
 1:
 #endif
 	jmp 	_C_LABEL(Xdoreti)
+IDTVEC_END(handle_hypervisor_callback)
+END(hypervisor_callback)
+
+	TEXT_USER_BEGIN
+IDTVEC(hypervisor_pvhvm_callback)
+	pushq	$0		/* Dummy error code */
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp _C_LABEL(Xhandle_hypervisor_callback)
 IDTVEC_END(hypervisor_pvhvm_callback)
 	TEXT_USER_END
-END(hypervisor_callback)
 #endif /* XEN */
 
 #ifdef XENPV
