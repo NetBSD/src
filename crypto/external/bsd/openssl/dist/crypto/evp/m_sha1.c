@@ -14,8 +14,8 @@
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
-#include "internal/evp_int.h"
-#include "internal/sha.h"
+#include "crypto/evp.h"
+#include "crypto/sha.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
@@ -116,21 +116,16 @@ static int init224(EVP_MD_CTX *ctx)
     return SHA224_Init(EVP_MD_CTX_md_data(ctx));
 }
 
-static int update224(EVP_MD_CTX *ctx, const void *data, size_t count)
-{
-    return SHA224_Update(EVP_MD_CTX_md_data(ctx), data, count);
-}
-
-static int final224(EVP_MD_CTX *ctx, unsigned char *md)
-{
-    return SHA224_Final(md, EVP_MD_CTX_md_data(ctx));
-}
-
 static int init256(EVP_MD_CTX *ctx)
 {
     return SHA256_Init(EVP_MD_CTX_md_data(ctx));
 }
 
+/*
+ * Even though there're separate SHA224_[Update|Final], we call
+ * SHA256 functions even in SHA224 context. This is what happens
+ * there anyway, so we can spare few CPU cycles:-)
+ */
 static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     return SHA256_Update(EVP_MD_CTX_md_data(ctx), data, count);
@@ -147,8 +142,8 @@ static const EVP_MD sha224_md = {
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init224,
-    update224,
-    final224,
+    update256,
+    final256,
     NULL,
     NULL,
     SHA256_CBLOCK,

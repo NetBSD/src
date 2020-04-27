@@ -4,7 +4,8 @@
 	    ${MACHINE_ARCH} == "armeb" || \
 	    ${MACHINE_ARCH} == "arm"
 ARM_MAX_ARCH=4
-.	elif ${MACHINE_ARCH} == "earm" || \
+.	elif !empty(MACHINE_ARCH:Mearmv5*) || \
+	    ${MACHINE_ARCH} == "earm" || \
 	    ${MACHINE_ARCH} == "earmhf" || \
 	    ${MACHINE_ARCH} == "earmeb" || \
 	    ${MACHINE_ARCH} == "earmhfeb"
