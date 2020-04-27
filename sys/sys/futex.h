@@ -1,4 +1,4 @@
-/*	$NetBSD: futex.h,v 1.1 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: futex.h,v 1.2 2020/04/27 02:54:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
@@ -154,10 +154,8 @@
 #define _FUTEX_ROBUST_HEAD_NWORDS	3
 #define _FUTEX_ROBUST_HEAD_SIZE		(_FUTEX_ROBUST_HEAD_NWORDS * \
 					 sizeof(u_long))
-#ifdef _LP64
 #define _FUTEX_ROBUST_HEAD_SIZE32	(_FUTEX_ROBUST_HEAD_NWORDS * \
 					 sizeof(uint32_t))
-#endif /* _LP64 */
 #define	_FUTEX_ROBUST_ENTRY_PI		__BIT(0)
 
 #ifdef __LIBC_FUTEX_PRIVATE
