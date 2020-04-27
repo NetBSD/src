@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.8 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.9 2020/04/27 23:06:34 jmcneill Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.8 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.9 2020/04/27 23:06:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +79,7 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	case PCI_PRODUCT_REALTEK_RTS5209:
 	case PCI_PRODUCT_REALTEK_RTS5227:
 	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTS522A:
 	case PCI_PRODUCT_REALTEK_RTS525A:
 	case PCI_PRODUCT_REALTEK_RTL8402:
 	case PCI_PRODUCT_REALTEK_RTL8411:
