@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.20 2020/04/27 03:26:09 riastradh Exp $	*/
+/*	$NetBSD: crc.c,v 1.21 2020/04/27 07:30:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.20 2020/04/27 03:26:09 riastradh Exp $");
+__RCSID("$NetBSD: crc.c,v 1.21 2020/04/27 07:30:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ crc(int fd, u_int32_t *cval, off_t *clen)
 	thecrc = 0;
 	len = 0;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0) {
-		thecrc = crc_buf(thecrc, buf, nr);
+		thecrc = crc_buf(thecrc, buf, (size_t)nr);
 		len += nr;
 	}
 	if (nr < 0)
