@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.9 2020/04/13 08:05:16 martin Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.10 2020/04/27 07:45:57 nat Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.18.9 2020/04/13 08:05:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.18.10 2020/04/27 07:45:57 nat Exp $");
 #endif
 
 /*
@@ -3638,11 +3638,11 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 		if (IS_UP_AUTO(vap))
 #if __FreeBSD__
 			ieee80211_init(vap);
+		error = 0;
 #elif __NetBSD__
 			/* arg is a vap in 802.11 code */ 
 			ieee80211_init((struct ifnet *)vap);
 #endif
-		error = 0;
 	}
 	return error;
 }
