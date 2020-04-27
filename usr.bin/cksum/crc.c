@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.19 2014/10/29 18:09:35 uebayasi Exp $	*/
+/*	$NetBSD: crc.c,v 1.20 2020/04/27 03:26:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,11 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.19 2014/10/29 18:09:35 uebayasi Exp $");
+__RCSID("$NetBSD: crc.c,v 1.20 2020/04/27 03:26:09 riastradh Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/endian.h>
+
 #include <unistd.h>
 
 #include "extern.h"
@@ -114,20 +116,17 @@ static const u_int32_t crctab[] = {
 int
 crc(int fd, u_int32_t *cval, off_t *clen)
 {
-	u_char *p;
 	ssize_t nr;
 	u_int32_t thecrc;
 	off_t len;
 	u_char buf[16 * 1024];
 
-#define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
-
 	thecrc = 0;
 	len = 0;
-	while ((nr = read(fd, buf, sizeof(buf))) > 0)
-		for (len += nr, p = buf; nr--; ++p) {
-			COMPUTE(thecrc, *p);
-		}
+	while ((nr = read(fd, buf, sizeof(buf))) > 0) {
+		thecrc = crc_buf(thecrc, buf, nr);
+		len += nr;
+	}
 	if (nr < 0)
 		return 1;
 
@@ -135,11 +134,29 @@ crc(int fd, u_int32_t *cval, off_t *clen)
 
 	/* Include the length of the file. */
 	for (; len != 0; len >>= 8) {
-		COMPUTE(thecrc, len & 0xff);
+		thecrc = crc_byte(thecrc, len & 0xff);
 	}
 
 	*cval = ~thecrc;
 	return 0;
+}
+
+#define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
+
+static uint32_t crcslice[15][256];
+
+static void
+tables(void)
+{
+	int a, b;
+
+	for (a = 0; a < 256; a++) {
+		uint32_t crc = crctab[a];
+		for (b = 0; b < 15; b++) {
+			COMPUTE(crc, 0);
+			crcslice[b][a] = crc;
+		}
+	}
 }
 
 /* These two are rather more useful to the outside world */
@@ -149,8 +166,37 @@ crc_buf(uint32_t thecrc, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
 
-	for (p = buf; len; p++, len--)
+	/* Compute the tables once.  */
+	if (crcslice[14][255] == 0)
+		tables();
+
+	for (; len >= 16; p += 16, len -= 16) {
+		uint32_t a = be32dec(p + 0) ^ thecrc;
+		uint32_t b = be32dec(p + 4);
+		uint32_t c = be32dec(p + 8);
+		uint32_t d = be32dec(p + 12);
+		thecrc =
+		    crcslice[14][a >> 24 & 0xff] ^
+		    crcslice[13][a >> 16 & 0xff] ^
+		    crcslice[12][a >> 8 & 0xff] ^
+		    crcslice[11][a >> 0 & 0xff] ^
+		    crcslice[10][b >> 24 & 0xff] ^
+		    crcslice[9][b >> 16 & 0xff] ^
+		    crcslice[8][b >> 8 & 0xff] ^
+		    crcslice[7][b >> 0 & 0xff] ^
+		    crcslice[6][c >> 24 & 0xff] ^
+		    crcslice[5][c >> 16 & 0xff] ^
+		    crcslice[4][c >> 8 & 0xff] ^
+		    crcslice[3][c >> 0 & 0xff] ^
+		    crcslice[2][d >> 24 & 0xff] ^
+		    crcslice[1][d >> 16 & 0xff] ^
+		    crcslice[0][d >> 8 & 0xff] ^
+		    crctab[d >> 0 & 0xff];
+	}
+
+	for (; len; p++, len--)
 		COMPUTE(thecrc, *p);
+
 	return thecrc;
 }
 
