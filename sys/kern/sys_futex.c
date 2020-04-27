@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.3 2020/04/27 05:28:17 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.4 2020/04/27 23:54:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.3 2020/04/27 05:28:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.4 2020/04/27 23:54:43 riastradh Exp $");
 
 /*
  * Futexes
@@ -195,6 +195,7 @@ struct futex_wait {
 	TAILQ_ENTRY(futex_wait)	fw_entry;	/* queue lock */
 	LIST_ENTRY(futex_wait)	fw_abort;	/* queue abortlock */
 	int			fw_bitset;
+	bool			fw_aborting;	/* fw_lock */
 };
 
 /*
@@ -800,6 +801,7 @@ futex_wait_init(struct futex_wait *fw, int bitset)
 	cv_init(&fw->fw_cv, "futex");
 	fw->fw_futex = NULL;
 	fw->fw_bitset = bitset;
+	fw->fw_aborting = false;
 }
 
 /*
@@ -830,6 +832,7 @@ futex_wait_enqueue(struct futex_wait *fw, struct futex *f)
 	KASSERT(mutex_owned(&f->fx_qlock));
 	KASSERT(mutex_owned(&fw->fw_lock));
 	KASSERT(fw->fw_futex == NULL);
+	KASSERT(!fw->fw_aborting);
 
 	fw->fw_futex = f;
 	TAILQ_INSERT_TAIL(&f->fx_queue, fw, fw_entry);
@@ -858,15 +861,14 @@ futex_wait_dequeue(struct futex_wait *fw, struct futex *f)
  * futex_wait_abort(fw)
  *
  *	Caller is no longer waiting for fw.  Remove it from any queue
- *	if it was on one.
+ *	if it was on one.  Caller must hold fw->fw_lock.
  */
 static void
 futex_wait_abort(struct futex_wait *fw)
 {
 	struct futex *f;
 
-	/* Acquire fw_lock so that the content of fw won't change.  */
-	mutex_enter(&fw->fw_lock);
+	KASSERT(mutex_owned(&fw->fw_lock));
 
 	/*
 	 * Grab the futex queue.  It can't go away as long as we hold
@@ -880,12 +882,20 @@ futex_wait_abort(struct futex_wait *fw)
 	LIST_INSERT_HEAD(&f->fx_abortlist, fw, fw_abort);
 	mutex_exit(&f->fx_abortlock);
 
+	/*
+	 * Mark fw as aborting so it won't lose wakeups and won't be
+	 * transferred to any other queue.
+	 */
+	fw->fw_aborting = true;
+
 	/* f is now stable, so we can release fw_lock.  */
 	mutex_exit(&fw->fw_lock);
 
 	/* Now we can remove fw under the queue lock.  */
 	mutex_enter(&f->fx_qlock);
-	TAILQ_REMOVE(&f->fx_queue, fw, fw_entry);
+	mutex_enter(&fw->fw_lock);
+	futex_wait_dequeue(fw, f);
+	mutex_exit(&fw->fw_lock);
 	mutex_exit(&f->fx_qlock);
 
 	/*
@@ -897,6 +907,20 @@ futex_wait_abort(struct futex_wait *fw)
 	if (LIST_EMPTY(&f->fx_abortlist))
 		cv_broadcast(&f->fx_abortcv);
 	mutex_exit(&f->fx_abortlock);
+
+	/*
+	 * Release our reference to the futex now that we are not
+	 * waiting for it.
+	 */
+	futex_rele(f);
+
+	/*
+	 * Reacquire the fw lock as caller expects.  Verify that we're
+	 * aborting and no longer associated with a futex.
+	 */
+	mutex_enter(&fw->fw_lock);
+	KASSERT(fw->fw_aborting);
+	KASSERT(fw->fw_futex == NULL);
 }
 
 /*
@@ -905,7 +929,8 @@ futex_wait_abort(struct futex_wait *fw)
  *	fw must be a waiter on a futex's queue.  Wait until deadline on
  *	the clock clkid, or forever if deadline is NULL, for a futex
  *	wakeup.  Return 0 on explicit wakeup or destruction of futex,
- *	ETIMEDOUT on timeout, EINTR/ERESTART on signal.
+ *	ETIMEDOUT on timeout, EINTR/ERESTART on signal.  Either way, fw
+ *	will no longer be on a futex queue on return.
  */
 static int
 futex_wait(struct futex_wait *fw, const struct timespec *deadline,
@@ -915,7 +940,18 @@ futex_wait(struct futex_wait *fw, const struct timespec *deadline,
 
 	/* Test and wait under the wait lock.  */
 	mutex_enter(&fw->fw_lock);
-	while (fw->fw_bitset && fw->fw_futex != NULL) {
+
+	for (;;) {
+		/* If we're done yet, stop and report success.  */
+		if (fw->fw_bitset == 0 || fw->fw_futex == NULL) {
+			error = 0;
+			break;
+		}
+
+		/* If anything went wrong in the last iteration, stop.  */
+		if (error)
+			break;
+
 		/* Not done yet.  Wait.  */
 		if (deadline) {
 			struct timespec ts;
@@ -941,13 +977,20 @@ futex_wait(struct futex_wait *fw, const struct timespec *deadline,
 			/* Wait indefinitely, allowing signals. */
 			error = cv_wait_sig(&fw->fw_cv, &fw->fw_lock);
 		}
-		if (error) {
-			/* Convert EWOULDBLOCK to ETIMEDOUT.  */
-			if (error == EWOULDBLOCK)
-				error = ETIMEDOUT;
-			break;
-		}
 	}
+
+	/*
+	 * If we were woken up, the waker will have removed fw from the
+	 * queue.  But if anything went wrong, we must remove fw from
+	 * the queue ourselves.  While here, convert EWOULDBLOCK to
+	 * ETIMEDOUT.
+	 */
+	if (error) {
+		futex_wait_abort(fw);
+		if (error == EWOULDBLOCK)
+			error = ETIMEDOUT;
+	}
+
 	mutex_exit(&fw->fw_lock);
 
 	return error;
@@ -976,12 +1019,17 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 	TAILQ_FOREACH_SAFE(fw, &f->fx_queue, fw_entry, fw_next) {
 		if ((fw->fw_bitset & bitset) == 0)
 			continue;
-		if (nwake-- > 0) {
+		if (nwake > 0) {
 			mutex_enter(&fw->fw_lock);
+			if (__predict_false(fw->fw_aborting)) {
+				mutex_exit(&fw->fw_lock);
+				continue;
+			}
 			futex_wait_dequeue(fw, f);
 			fw->fw_bitset = 0;
 			cv_broadcast(&fw->fw_cv);
 			mutex_exit(&fw->fw_lock);
+			nwake--;
 			nwoken++;
 			/*
 			 * Drop the futex reference on behalf of the
@@ -1000,11 +1048,16 @@ futex_wake(struct futex *f, unsigned nwake, struct futex *f2,
 		TAILQ_FOREACH_SAFE(fw, &f->fx_queue, fw_entry, fw_next) {
 			if ((fw->fw_bitset & bitset) == 0)
 				continue;
-			if (nrequeue-- > 0) {
+			if (nrequeue > 0) {
 				mutex_enter(&fw->fw_lock);
+				if (__predict_false(fw->fw_aborting)) {
+					mutex_exit(&fw->fw_lock);
+					continue;
+				}
 				futex_wait_dequeue(fw, f);
 				futex_wait_enqueue(fw, f2);
 				mutex_exit(&fw->fw_lock);
+				nrequeue--;
 				/*
 				 * Transfer the reference from f to f2.
 				 * As above, we assert that we are not
@@ -1204,10 +1257,8 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 
 	/* Wait. */
 	error = futex_wait(fw, deadline, clkid);
-	if (error) {
-		futex_wait_abort(fw);
+	if (error)
 		goto out;
-	}
 
 	/* Return 0 on success, error on failure. */
 	*retval = 0;
