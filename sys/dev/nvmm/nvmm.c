@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.22.2.1 2019/11/10 12:58:30 martin Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.22.2.2 2020/04/27 14:56:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.1 2019/11/10 12:58:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.2 2020/04/27 14:56:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1040,6 +1040,8 @@ nvmm_open(dev_t dev, int flags, int type, struct lwp *l)
 	struct file *fp;
 	int error, fd;
 
+	if (__predict_false(nvmm_impl == NULL))
+		return ENXIO;
 	if (minor(dev) != 0)
 		return EXDEV;
 	if (!(flags & O_CLOEXEC))
