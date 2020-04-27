@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.19 2019/06/25 15:33:56 rjs Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.20 2020/04/27 19:21:43 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.19 2019/06/25 15:33:56 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.20 2020/04/27 19:21:43 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1143,7 +1143,7 @@ sctp_count_max_addresses(struct sctp_inpcb *inp)
 	return (cnt);
 }
 
-static int
+int
 sctp_do_connect_x(struct socket *so, struct sctp_connectx_addrs *sca,
     struct lwp *l, int delay)
 {
