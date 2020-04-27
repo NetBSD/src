@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.224 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.225 2020/04/27 02:47:26 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -551,7 +551,7 @@ extern bool vm_page_zero_enable;
  */
 #ifdef PMAP_CACHE_VIVT
 #define UBC_VNODE_FLAGS(vp) \
-    ((((vp)->v_iflag & VI_TEXT) != 0 ? UBC_UNMAP : 0) |
+    ((((vp)->v_iflag & VI_TEXT) != 0 ? UBC_UNMAP : 0) | \
     (((vp)->v_vflag & VV_MAPPED) != 0 ? UBC_ISMAPPED : 0))
 #else
 #define UBC_VNODE_FLAGS(vp) \
