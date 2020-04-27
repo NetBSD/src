@@ -28,7 +28,7 @@ extern "C" {
     { \
         return OPENSSL_sk_num((const OPENSSL_STACK *)(const void *)sk); \
     } \
-    static ossl_unused ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1) *sk, int idx) \
+    static ossl_unused ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1)*sk, int idx) \
     { \
         return (t2 *)(void *)OPENSSL_sk_value((const OPENSSL_STACK *)(const void *)sk, idx); \
     } \

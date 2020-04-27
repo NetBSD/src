@@ -107,23 +107,6 @@ OPENSSL_atomic_add:
 .align	4
 OPENSSL_rdtsc_mftb:
 	mftb	3
-	mfspr	0,287
-	srwi	0,0,0x10
-	cmplwi	0,0x1
-	bgt	.Loop_rdtsc
-.Loop_rdtsc_601:
-	mfrtcu	5
-	mfrtcl	3
-	mfrtcu	4
-	.long	0x7c042840
-	bne	.Loop_rdtsc_601
-	blr	
-.Loop_rdtsc:
-	mftbu	5
-	mftb	3
-	mftbu	4
-	.long	0x7c042840
-	bne	.Loop_rdtsc
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0

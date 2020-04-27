@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -374,10 +374,10 @@ ___
 my ($A_jagged,$inp,$len,$bsz) = map("r$_",(3..6));
 
 $code.=<<___;
-.globl	SHA3_absorb
-.type	SHA3_absorb,\@function
+.globl	SHA3_absorb_vsx
+.type	SHA3_absorb_vsx,\@function
 .align	5
-SHA3_absorb:
+SHA3_absorb_vsx:
 	$STU	$sp,-$FRAME($sp)
 	li	r10,`15+6*$SIZE_T`
 	li	r11,`31+6*$SIZE_T`
@@ -674,17 +674,17 @@ SHA3_absorb:
 	.long	0
 	.byte	0,12,0x04,1,0x80,0,4,0
 	.long	0
-.size	SHA3_absorb,.-SHA3_absorb
+.size	SHA3_absorb_vsx,.-SHA3_absorb_vsx
 ___
 }
 {
 my ($A_jagged,$out,$len,$bsz) = map("r$_",(3..6));
 
 $code.=<<___;
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,\@function
+.globl	SHA3_squeeze_vsx
+.type	SHA3_squeeze_vsx,\@function
 .align	5
-SHA3_squeeze:
+SHA3_squeeze_vsx:
 	mflr	r9			; r9 is not touched by KeccakF1600
 	subi	$out,$out,1		; prepare for stbu
 	addi	r8,$A_jagged,4		; prepare volatiles
@@ -770,7 +770,7 @@ SHA3_squeeze:
 	.long	0
 	.byte	0,12,0x14,0,0,0,4,0
 	.long	0
-.size	SHA3_squeeze,.-SHA3_squeeze
+.size	SHA3_squeeze_vsx,.-SHA3_squeeze_vsx
 ___
 }
 $code.=<<___;
@@ -847,4 +847,4 @@ foreach  (split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";
