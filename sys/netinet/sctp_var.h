@@ -1,5 +1,5 @@
 /*	$KAME: sctp_var.h,v 1.24 2005/03/06 16:04:19 itojun Exp $	*/
-/*	$NetBSD: sctp_var.h,v 1.3 2018/09/14 05:09:51 maxv Exp $ */
+/*	$NetBSD: sctp_var.h,v 1.4 2020/04/27 19:21:43 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -161,6 +161,8 @@ void ip_2_ip6_hdr(struct ip6_hdr *, struct ip *);
 
 int sctp_bindx(struct socket *, int, struct sockaddr_storage *,
 	int, int, struct lwp *);
+int sctp_do_connect_x(struct socket *, struct sctp_connectx_addrs *,
+	struct lwp *, int);
 
 /* can't use sctp_assoc_t here */
 int sctp_peeloff(struct socket *, struct socket *, int, vaddr_t, int *);
