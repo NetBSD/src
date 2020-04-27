@@ -72,10 +72,14 @@ define modules
 	set $e = $h.tqh_first
 	while ($e != 0)
 		if ($e->mod_kobj != 0)
-			printf "module %s\t0x%016lx-0x%016lx\n", \
+			printf "module %s\n\t  text=0x%016lx/%u\n\t  data=0x%016lx/%u\n\trodata=0x%016lx/%u\n", \
 			    $e->mod_info.mi_name, \
-			    $e->mod_kobj->ko_address, \
-			    $e->mod_kobj->ko_address + $e->mod_kobj->ko_size
+			    $e->mod_kobj->ko_text_address, \
+			    $e->mod_kobj->ko_text_size, \
+			    $e->mod_kobj->ko_data_address, \
+			    $e->mod_kobj->ko_data_size, \
+			    $e->mod_kobj->ko_rodata_address, \
+			    $e->mod_kobj->ko_rodata_size
 		else
 			printf "module %s\n", \
 			    $e->mod_info.mi_name
