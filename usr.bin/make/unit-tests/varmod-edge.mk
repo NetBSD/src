@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.6 2019/12/02 01:01:08 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.7 2020/04/27 14:07:22 christos Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -140,7 +140,7 @@ EXP.eq-q=	file.o:Q file.cc
 # The = in the := modifier can be escaped.
 TESTS+=		eq-bs
 INP.eq-bs=	file.c file.c=%.o
-MOD.eq-bs=	${INP.eq-bs:%.c\=%.o=.ext}
+MOD.eq-bs=	${INP.eq-bs:%.c\=%.o=%.ext}
 EXP.eq-bs=	file.c file.ext
 
 # Having only an escaped = results in a parse error.
