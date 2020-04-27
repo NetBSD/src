@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.20 2019/06/25 15:33:56 rjs Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.21 2020/04/27 19:21:43 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.20 2019/06/25 15:33:56 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.21 2020/04/27 19:21:43 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1244,20 +1244,30 @@ sctp6_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	int error = 0;
 	int family;
 
-	family = so->so_proto->pr_domain->dom_family;
-	switch (family) {
+	if (cmd == SIOCCONNECTX) {
+		solock(so);
+		error = sctp_do_connect_x(so, nam, curlwp, 0);
+		sounlock(so);
+	} else if (cmd == SIOCCONNECTXDEL) {
+		solock(so);
+		error = sctp_do_connect_x(so, nam, curlwp, 1);
+		sounlock(so);
+	} else {
+		family = so->so_proto->pr_domain->dom_family;
+		switch (family) {
 #ifdef INET
-	case PF_INET:
-		error = in_control(so, cmd, nam, ifp);
-		break;
+		case PF_INET:
+			error = in_control(so, cmd, nam, ifp);
+			break;
 #endif
 #ifdef INET6
-	case PF_INET6:
-		error = in6_control(so, cmd, nam, ifp);
-		break;
+		case PF_INET6:
+			error = in6_control(so, cmd, nam, ifp);
+			break;
 #endif
-	default:
-		error = EAFNOSUPPORT;
+		default:
+			error = EAFNOSUPPORT;
+		}
 	}
 	return (error);
 }
