@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.294 2020/04/20 21:39:05 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.295 2020/04/27 07:51:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.294 2020/04/20 21:39:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.295 2020/04/27 07:51:02 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -2026,7 +2026,7 @@ nestiobuf_iodone(buf_t *bp)
 void
 nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 {
-	const int b_pass = mbp->b_flags & (B_READ|B_MEDIA_FLAGS);
+	const int b_pass = mbp->b_flags & (B_READ|B_PHYS|B_RAW|B_MEDIA_FLAGS);
 	struct vnode *vp = mbp->b_vp;
 
 	KASSERT(mbp->b_bcount >= offset + size);
