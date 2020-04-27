@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.9 2019/06/02 08:55:00 blymn Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.10 2020/04/27 22:31:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -89,6 +89,12 @@ struct synaptics_softc {
 	int	history_x[SYN_MAX_FINGERS][SYN_HIST_SIZE];
 	int	history_y[SYN_MAX_FINGERS][SYN_HIST_SIZE];
 	int	history_z[SYN_MAX_FINGERS][SYN_HIST_SIZE];
+
+	char	ext_left;
+	char	ext_right;
+	char	ext_middle;
+	char	ext_up;
+	char	ext_down;
 };
 
 int pms_synaptics_probe_init(void *vsc);
