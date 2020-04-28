@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.107 2020/04/28 00:19:23 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.108 2020/04/28 14:27:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.107 2020/04/28 00:19:23 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.108 2020/04/28 14:27:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -399,8 +399,6 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 		kd->dump_size = (size_t)st.st_size;
 		kd->dump_mem = mmap(NULL, kd->dump_size, PROT_READ|PROT_WRITE, 
 		    MAP_FILE|MAP_PRIVATE, kd->pmfd, 0);
-		if (kd->dump_mem == MAP_FAILED)
-			goto failed;
 	}
 	return (kd);
 failed:
