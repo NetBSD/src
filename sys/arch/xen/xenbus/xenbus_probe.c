@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.50 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.51 2020/04/28 13:21:01 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.50 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.51 2020/04/28 13:21:01 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -399,7 +399,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 		err = xenbus_read_ul(NULL, xbusd->xbusd_path, "state",
 		    &state, 10);
 		if (err) {
-			printf("xenbus: can't get state "
+			aprint_error_dev(xenbus_dev, "can't get state "
 			    "for %s (%d)\n", xbusd->xbusd_path, err);
 			kmem_free(xbusd, xbusd->xbusd_sz);
 			err = 0;
@@ -418,8 +418,9 @@ xenbus_probe_device_type(const char *path, const char *type,
 			xbusd->xbusd_type = XENBUS_BACKEND_DEVICE;
 			err = read_frontend_details(xbusd);
 			if (err != 0) {
-				printf("xenbus: can't get frontend details "
-				    "for %s (%d)\n", xbusd->xbusd_path, err);
+				aprint_error_dev(xenbus_dev,
+				    "can't get frontend details for %s (%d)\n",
+				    xbusd->xbusd_path, err);
 				break;
 			}
 			if (create(xbusd)) {
@@ -432,16 +433,36 @@ xenbus_probe_device_type(const char *path, const char *type,
 			xa.xa_type = type;
 			xa.xa_id = strtoul(dir[i], &ep, 0);
 			if (dir[i][0] == '\0' || *ep != '\0') {
-				printf("xenbus device type %s: id %s is not a"
-				    " number\n", type, dir[i]);
+				aprint_error_dev(xenbus_dev,
+				    "device type %s: id %s is not a number\n",
+				    type, dir[i]);
 				err = EFTYPE;
 				kmem_free(xbusd, xbusd->xbusd_sz);
 				break;
 			}
+			if (strcmp(xa.xa_type, "vbd") == 0) {
+				char dtype[10];
+				if (xenbus_read(NULL, xbusd->xbusd_path,
+				    "device-type", dtype, sizeof(dtype)) !=0) {
+					aprint_error_dev(xenbus_dev,
+					    "%s: can't read device-type\n",
+					    xbusd->xbusd_path);
+					kmem_free(xbusd, xbusd->xbusd_sz);
+					break;
+				}
+				if (strcmp(dtype, "cdrom") == 0) {
+					aprint_verbose_dev(xenbus_dev,
+					    "ignoring %s type cdrom\n",
+					    xbusd->xbusd_path);
+					kmem_free(xbusd, xbusd->xbusd_sz);
+					continue;
+				}
+			}
 			err = read_backend_details(xbusd);
 			if (err != 0) {
-				printf("xenbus: can't get backend details "
-				    "for %s (%d)\n", xbusd->xbusd_path, err);
+				aprint_error_dev(xenbus_dev,
+				    "can't get backend details for %s (%d)\n",
+				    xbusd->xbusd_path, err);
 				kmem_free(xbusd, xbusd->xbusd_sz);
 				break;
 			}
