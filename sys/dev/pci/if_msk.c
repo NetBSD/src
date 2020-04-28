@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.102 2020/04/28 17:15:48 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.103 2020/04/28 17:26:01 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.102 2020/04/28 17:15:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.103 2020/04/28 17:26:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.102 2020/04/28 17:15:48 jakllsch Exp $"
 #include <sys/sysctl.h>
 #include <sys/endian.h>
 #ifdef __NetBSD__
- #define letoh16 htole16
- #define letoh32 htole32
+ #define letoh16 le16toh
+ #define letoh32 le32toh
 #endif
 
 #include <net/if.h>
