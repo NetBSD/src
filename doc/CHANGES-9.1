@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.44 2020/04/28 16:15:34 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.45 2020/04/28 16:30:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2264,4 +2264,21 @@ usr.bin/calendar/calendars/calendar.netbsd	1.44-1.46
 
 	Sync calendars with HEAD.
 	[sevan, ticket #859]
+
+sys/dev/pckbport/synaptics.c			1.65
+sys/dev/pckbport/synapticsvar.h			1.10
+
+	pms(4): synaptics: fix extended button reporting.
+	[jmcneill, ticket #863]
+
+share/man/man4/rtsx.4				1.6
+sys/dev/pci/pcidevs				1.1410
+sys/dev/pci/rtsx_pci.c				1.9
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add an eclectic mix of GeForce GTX 680, RTS522A PCI-E Card Reader,
+	intel wifi 9560.
+	Add support for Realtek RTS522A.
+	[jmcneill, ticket #864]
 
