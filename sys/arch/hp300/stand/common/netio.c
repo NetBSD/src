@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.16 2016/06/11 06:20:11 dholland Exp $	*/
+/*	$NetBSD: netio.c,v 1.17 2020/04/28 14:45:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -158,7 +158,6 @@ netstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
 int
 netmountroot(struct open_file *f, char *devname)
 {
-	int error;
 	struct iodesc *d;
 
 #ifdef DEBUG
@@ -260,7 +259,8 @@ netmountroot(struct open_file *f, char *devname)
 
  do_nfs_mount:
 	/* Get the NFS file handle (mount). */
-	error = nfs_mount(netdev_sock, rootip, rootpath);
+	if (nfs_mount(netdev_sock, rootip, rootpath))
+		return errno;
 
-	return error;
+	return 0;
 }
