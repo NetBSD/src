@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.76 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.77 2020/04/28 13:27:29 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.76 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.77 2020/04/28 13:27:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,15 +219,12 @@ xen_check_hypervisordev(void)
 			case FSTATE_NOTFOUND:
 			case FSTATE_FOUND:
 			case FSTATE_STAR:
-				printf("xen_check_hypervisordev: enabled\n");
 				return true;
 			default:
-				printf("xen_check_hypervisordev: disabled\n");
 				return false;
 			}
 		}
 	}
-	printf("xen_check_hypervisordev: notfound\n");
 	return 0;
 }
 int
