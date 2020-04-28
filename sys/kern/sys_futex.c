@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.4 2020/04/27 23:54:43 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.5 2020/04/28 00:54:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.4 2020/04/27 23:54:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.5 2020/04/28 00:54:24 riastradh Exp $");
 
 /*
  * Futexes
@@ -588,7 +588,7 @@ futex_rele_not_last(struct futex *f)
  *	Return ENFILE if reference count too high.
  *
  *	Internal lookup routine shared by futex_lookup() and
- *	futex_get().
+ *	futex_lookup_create().
  */
 static int
 futex_lookup_by_key(union futex_key *fk, bool shared, struct futex **fp)
@@ -660,7 +660,7 @@ out:	mutex_exit(&futex_tab.lock);
  *	process's VM space.  On success, return the futex in f and
  *	increment its reference count.
  *
- *	Caller must call futex_put when done.
+ *	Caller must call futex_rele when done.
  */
 static int
 futex_lookup(int *uaddr, bool shared, struct futex **fp)
@@ -701,16 +701,16 @@ futex_lookup(int *uaddr, bool shared, struct futex **fp)
 }
 
 /*
- * futex_get(uaddr, shared, &f)
+ * futex_lookup_create(uaddr, shared, &f)
  *
  *	Find or create a futex at the userland pointer uaddr in the
  *	current process's VM space.  On success, return the futex in f
  *	and increment its reference count.
  *
- *	Caller must call futex_put when done.
+ *	Caller must call futex_rele when done.
  */
 static int
-futex_get(int *uaddr, bool shared, struct futex **fp)
+futex_lookup_create(int *uaddr, bool shared, struct futex **fp)
 {
 	union futex_key fk;
 	struct vmspace *vm = curproc->p_vmspace;
@@ -771,18 +771,6 @@ out:	if (f != NULL)
 	KASSERT(error || *fp != NULL);
 	KASSERT(error || atomic_load_relaxed(&(*fp)->fx_refcnt) != 0);
 	return error;
-}
-
-/*
- * futex_put(f)
- *
- *	Release a futex acquired with futex_get or futex_lookup.
- */
-static void
-futex_put(struct futex *f)
-{
-
-	futex_rele(f);
 }
 
 /*
@@ -1221,7 +1209,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	}
 
 	/* Get the futex, creating it if necessary.  */
-	error = futex_get(uaddr, shared, &f);
+	error = futex_lookup_create(uaddr, shared, &f);
 	if (error)
 		return error;
 	KASSERT(f);
@@ -1264,7 +1252,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	*retval = 0;
 
 out:	if (f != NULL)
-		futex_put(f);
+		futex_rele(f);
 	futex_wait_fini(fw);
 	return error;
 }
@@ -1305,7 +1293,7 @@ futex_func_wake(bool shared, int *uaddr, int val, int val3, register_t *retval)
 	futex_queue_unlock(f);
 
 	/* Release the futex.  */
-	futex_put(f);
+	futex_rele(f);
 
 out:
 	/* Return the number of waiters woken.  */
@@ -1347,7 +1335,7 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 	 * We may need to create the destination futex because it's
 	 * entirely possible it does not currently have any waiters.
 	 */
-	error = futex_get(uaddr2, shared, &f2);
+	error = futex_lookup_create(uaddr2, shared, &f2);
 	if (error)
 		goto out;
 
@@ -1370,9 +1358,9 @@ out:
 
 	/* Release the futexes if we got them.  */
 	if (f2)
-		futex_put(f2);
+		futex_rele(f2);
 	if (f)
-		futex_put(f);
+		futex_rele(f);
 	return error;
 }
 
@@ -1568,9 +1556,9 @@ out:
 
 	/* Release the futexes, if we got them. */
 	if (f2)
-		futex_put(f2);
+		futex_rele(f2);
 	if (f)
-		futex_put(f);
+		futex_rele(f);
 	return error;
 }
 
@@ -1849,7 +1837,7 @@ release_futex(uintptr_t const uptr, lwpid_t const tid, bool const is_pi,
 
 	/* Unlock the queue and release the futex.  */
 out:	futex_queue_unlock(f);
-	futex_put(f);
+	futex_rele(f);
 }
 
 /*
