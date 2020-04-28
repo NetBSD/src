@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.6 2020/04/28 16:22:25 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.7 2020/04/28 17:27:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.6 2020/04/28 16:22:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.7 2020/04/28 17:27:03 riastradh Exp $");
 
 /*
  * Futexes
@@ -1202,7 +1202,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	 * us, then don't set anything up to wait -- just stop here.
 	 */
 	if (val3 == 0)
-		return 0;
+		return EINVAL;
 
 	/* Optimistically test before anything else.  */
 	if (!futex_test(uaddr, val))

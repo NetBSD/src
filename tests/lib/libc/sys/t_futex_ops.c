@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.2 2020/04/28 17:27:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.2 2020/04/28 17:27:03 riastradh Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -632,9 +632,9 @@ ATF_TC_BODY(futex_wait_pointless_bitset, tc)
 {
 
 	futex_word = 1;
-	/* This won't block because no bits are set. */
-	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAIT_BITSET | FUTEX_PRIVATE_FLAG,
-			    1, NULL, NULL, 0, 0) == 0);
+	ATF_REQUIRE_ERRNO(EINVAL,
+	    __futex(&futex_word, FUTEX_WAIT_BITSET | FUTEX_PRIVATE_FLAG,
+		1, NULL, NULL, 0, 0) == -1);
 }
 
 static void
