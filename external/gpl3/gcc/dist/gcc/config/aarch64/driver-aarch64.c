@@ -191,8 +191,6 @@ host_detect_local_cpu (int argc, const char **argv)
   unsigned long default_flags = 0;
   FILE *f = NULL;
 
-#ifndef __NetBSD__
-
   gcc_assert (argc);
 
   if (!argv[0])
@@ -208,6 +206,8 @@ host_detect_local_cpu (int argc, const char **argv)
 
   if (!arch && !tune && !cpu)
     goto not_found;
+
+#ifndef __NetBSD__
 
   f = fopen ("/proc/cpuinfo", "r");
 
@@ -308,22 +308,6 @@ host_detect_local_cpu (int argc, const char **argv)
   char impl_buf[8];
   int mib[2], ncpu;
 
-  gcc_assert (argc);
-
-  if (!argv[0])
-    goto not_found;
-
-  /* Are we processing -march, mtune or mcpu?  */
-  arch = strcmp (argv[0], "arch") == 0;
-  if (!arch)
-    tune = strcmp (argv[0], "tune") == 0;
-
-  if (!arch && !tune)
-    cpu = strcmp (argv[0], "cpu") == 0;
-
-  if (!arch && !tune && !cpu)
-    goto not_found;
-
   mib[0] = CTL_HW;
   mib[1] = HW_NCPU; 
   len = sizeof(ncpu);
@@ -370,29 +354,112 @@ host_detect_local_cpu (int argc, const char **argv)
 
       if (!tune && !processed_exts)
         {
+          std::string exts;
+
+	  /* These are all the extensions from aarch64-option-extensions.def.  */
+          if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_FP) == ID_AA64PFR0_EL1_FP_IMPL)
+	    {
+	      exts += "fp ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD) == ID_AA64PFR0_EL1_ADV_SIMD_IMPL)
+	    {
+	      exts += "asimd ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_RDM) == ID_AA64ISAR0_EL1_RDM_SQRDML)
+	    {
+	      exts += "asimdrdm ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_DP) == ID_AA64ISAR0_EL1_DP_UDOT)
+	    {
+	      exts += "asimddp ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_FHM) == ID_AA64ISAR0_EL1_FHM_FMLAL)
+	    {
+	      exts += "asimdfml ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES) == ID_AA64ISAR0_EL1_AES_AES)
+	    {
+	      exts += "aes ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES) == ID_AA64ISAR0_EL1_AES_PMUL)
+	    {
+	      exts += "aes pmull ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_CRC32) == ID_AA64ISAR0_EL1_CRC32_CRC32X)
+	    {
+	      exts += "crc32 ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_ATOMIC) == ID_AA64ISAR0_EL1_ATOMIC_SWP)
+	    {
+	      exts += "atomics ";
+	    }
+          if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA1) & ID_AA64ISAR0_EL1_SHA1_SHA1CPMHSU) != 0)
+	    {
+	      exts += "sha1 ";
+	    }
+          if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2) & ID_AA64ISAR0_EL1_SHA2_SHA256HSU) != 0)
+	    {
+	      exts += "sha2 ";
+	    }
+          if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2) & ID_AA64ISAR0_EL1_SHA2_SHA512HSU) != 0)
+	    {
+	      exts += "sha512 ";
+	    }
+          if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA3) & ID_AA64ISAR0_EL1_SHA3_EOR3) != 0)
+	    {
+	      exts += "sha3 ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SM3) == ID_AA64ISAR0_EL1_SM3_SM3)
+	    {
+	      exts += "sm3 ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SM4) == ID_AA64ISAR0_EL1_SM4_SM4)
+	    {
+	      exts += "sm4 ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_SVE) == ID_AA64PFR0_EL1_SVE_IMPL)
+	    {
+	      exts += "sve ";
+	    }
+          if (__SHIFTOUT(id.ac_aa64isar1, ID_AA64ISAR1_EL1_LRCPC) == ID_AA64ISAR1_EL1_LRCPC_PR)
+	    {
+	      exts += "lrcpc ";
+	    }
+
+	  strncpy(buf, exts.c_str(), sizeof(buf) - 1);
+	  buf[sizeof(buf) - 1] = '\0';
+
           for (i = 0; i < num_exts; i++)
             {
-              bool enabled;
+	      const char *p = aarch64_extensions[i].feat_string;
 
-              if (strcmp(aarch64_extensions[i].ext, "fp") == 0)
-                enabled = (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_FP)
-			   == ID_AA64PFR0_EL1_FP_IMPL);
-              else if (strcmp(aarch64_extensions[i].ext, "simd") == 0)
-                enabled = (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)
-			   == ID_AA64PFR0_EL1_ADV_SIMD_IMPL);
-              else if (strcmp(aarch64_extensions[i].ext, "crypto") == 0)
-                enabled = (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES)
-			   & ID_AA64ISAR0_EL1_AES_AES) != 0;
-              else if (strcmp(aarch64_extensions[i].ext, "crc") == 0)
-                enabled = (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_CRC32)
-			   == ID_AA64ISAR0_EL1_CRC32_CRC32X);
-              else if (strcmp(aarch64_extensions[i].ext, "lse") == 0)
-                enabled = false;
-              else
+	      /* If the feature contains no HWCAPS string then ignore it for the
+		 auto detection.  */
+	      if (*p == '\0')
+		continue;
+
+	      bool enabled = true;
+
+	      /* This may be a multi-token feature string.  We need
+		 to match all parts, which could be in any order.  */
+	      size_t len = strlen (buf);
+	      do
 		{
-                  warning(0, "Unknown extension '%s'", aarch64_extensions[i].ext);
-		  goto not_found;
+		  const char *end = strchr (p, ' ');
+		  if (end == NULL)
+		    end = strchr (p, '\0');
+		  if (memmem (buf, len, p, end - p) == NULL)
+		    {
+		      /* Failed to match this token.  Turn off the
+			 features we'd otherwise enable.  */
+		      enabled = false;
+		      break;
+		    }
+		  if (*end == '\0')
+		    break;
+		  p = end + 1;
 		}
+	      while (1);
 
               if (enabled)
                 extension_flags |= aarch64_extensions[i].flag;
