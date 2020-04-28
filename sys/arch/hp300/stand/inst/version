@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.13 2016/01/17 08:05:20 tsutsui Exp $
+$NetBSD: version,v 1.14 2020/04/28 14:45:24 tsutsui Exp $
 
 1.1:	Initial version
 1.2:	Added support for HP-IB cartridge tapes
@@ -13,3 +13,4 @@ $NetBSD: version,v 1.13 2016/01/17 08:05:20 tsutsui Exp $
 1.11:	Add support for framebuffers on HP362 and HP382.
 1.12:	Add and fix support for HP425e mcclock, sti framebuffer, apci and dnkbd.
 1.13:	Disable slow gunzip CRC32 calculation.
+1.14:	Fix wrong errno when nfs_mount() fails.
