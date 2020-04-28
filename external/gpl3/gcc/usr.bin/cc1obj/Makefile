@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/02/12 00:36:37 fox Exp $
+#	$NetBSD: Makefile,v 1.15 2020/04/28 07:47:54 mrg Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -58,6 +58,10 @@ COPTS.c-ada-spec.c+=-O0
 COPTS.cilk.c+=-O0
 COPTS.c-ubsan.c+=-O0
 COPTS.cc1obj-checksum.c+=-O0
+.endif
+
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+COPTS.c-common.c+=-O3
 .endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm

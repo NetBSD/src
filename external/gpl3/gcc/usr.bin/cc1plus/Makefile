@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2019/02/01 10:34:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2020/04/28 07:47:54 mrg Exp $
 
 PROG=		cc1plus
 SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -52,6 +52,9 @@ COPTS.c-ubsan.c+=-O0
 COPTS.cc1plus-checksum.c+=-O0
 .endif
 
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+COPTS.c-common.c+=-O3
+.endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}
