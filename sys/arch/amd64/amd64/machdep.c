@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.348 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.349 2020/04/28 21:35:35 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.348 2020/04/25 15:26:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349 2020/04/28 21:35:35 jmcneill Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1703,6 +1703,8 @@ init_x86_64(paddr_t first_avail)
 #if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif
+
+	pat_init(&cpu_info_primary);
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
