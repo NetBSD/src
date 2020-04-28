@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.20 2011/09/12 21:11:32 christos Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.21 2020/04/28 00:12:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,6 +72,8 @@ struct __kvm {
 	size_t	cpu_dsize;
 	void	*cpu_data;
 	off_t	dump_off;	/* Where the actual dump starts	*/
+	void	*dump_mem;
+	size_t	dump_size;
 
 	/*
 	 * Kernel virtual address translation state.  This only gets filled
