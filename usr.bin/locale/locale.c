@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.8 2012/01/20 16:31:30 joerg Exp $	*/
+/*	$NetBSD: locale.c,v 1.9 2020/04/28 22:29:32 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.8 2012/01/20 16:31:30 joerg Exp $");
+__RCSID("$NetBSD: locale.c,v 1.9 2020/04/28 22:29:32 ginsbach Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 	/* validate arguments */
 	if (all_locales && all_charmaps)
 		usage();
-	if ((all_locales || all_charmaps) && argc > 0) 
+	if ((all_locales || all_charmaps) && argc > 0)
 		usage();
 	if ((all_locales || all_charmaps) && (prt_categories || prt_keywords))
 		usage();
@@ -335,8 +335,8 @@ scmp(const void *s1, const void *s2)
 /*
  * Output information about all available charmaps
  *
- * XXX this function is doing a task in hackish way, i.e. by scaning
- *     list of locales, spliting their codeset part and building list of
+ * XXX this function is doing a task in hackish way, i.e. by scanning
+ *     list of locales, splitting their codeset part and building list of
  *     them.
  */
 void
@@ -423,7 +423,7 @@ init_locales_list(void)
 
         /* make sure that 'POSIX' and 'C' locales are present in the list.
 	 * POSIX 1003.1-2001 requires presence of 'POSIX' name only here, but
-         * we also list 'C' for constistency
+         * we also list 'C' for consistency
          */
 	if (sl_find(locales, "POSIX") == NULL)
 		sl_add(locales, "POSIX");
@@ -498,10 +498,10 @@ showlocale(void)
 				&& strcmp(lang, vval)) {
 			/*
 			 * Appropriate environment variable set, its value
-			 * is valid and not overriden by LC_ALL
+			 * is valid and not overridden by LC_ALL
 			 *
 			 * XXX: possible side effect: if both LANG and
-			 * overriden environment variable are set into same
+			 * overridden environment variable are set into same
 			 * value, then it'll be assumed as 'implied'
 			 */
 			printf("%s=\"%s\"\n", lcinfo[i].name, vval);
