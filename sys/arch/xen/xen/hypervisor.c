@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.77 2020/04/28 13:27:29 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.78 2020/04/28 15:43:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.77 2020/04/28 13:27:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.78 2020/04/28 15:43:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,41 +499,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	const struct sysctlnode *node = NULL;
 
 #ifdef XENPVHVM
-	/*
-	 * Set the boot device to xbd0a.
-	 * We claim this is a reasonable default which is picked up
-	 * later as the rootfs device.
-	 *
-	 * We need to do this because the HVM domain loader uses the
-	 * regular BIOS based native boot(8) procedure, which sets the
-	 * boot device to the native driver/partition of whatever was
-	 * detected by the native bootloader.
-	 */
-
-	struct btinfo_rootdevice bi;
-	snprintf(bi.devname, 6, "xbd0a");
-	bi.common.type = BTINFO_ROOTDEVICE;
-	bi.common.len = sizeof(struct btinfo_rootdevice);
-
-	/* From i386/multiboot.c */
-	int i, len;
-	vaddr_t data;
-	extern struct bootinfo	bootinfo;
-	struct bootinfo *bip = (struct bootinfo *)&bootinfo;
-	len = bi.common.len;
-
-	data = (vaddr_t)&bip->bi_data;
-	for (i = 0; i < bip->bi_nentries; i++) {
-		struct btinfo_common *tmp;
-
-		tmp = (struct btinfo_common *)data;
-		data += tmp->len;
-	}
-	if (data + len < (vaddr_t)&bip->bi_data + sizeof(bip->bi_data)) {
-		memcpy((void *)data, &bi, len);
-		bip->bi_nentries++;
-	}
-
 	/* disable emulated devices */
 	if (inw(XEN_MAGIC_IOPORT) == XMI_MAGIC) {
 		outw(XEN_MAGIC_IOPORT, XMI_UNPLUG_IDE_DISKS | XMI_UNPLUG_NICS);
