@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.106 2020/04/28 00:12:01 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.107 2020/04/28 00:19:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.106 2020/04/28 00:12:01 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.107 2020/04/28 00:19:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -176,6 +176,15 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 	size_t dsize;
 	ssize_t rv;
 	off_t doff;
+
+	if (kd->dump_mem != MAP_FAILED) {
+		if (size + off > kd->dump_size) {
+			errno = EINVAL;
+			return -1;
+		}
+		memcpy(buf, (char *)kd->dump_mem + off, size);
+		return size;
+	}
 
 	/* If aligned nothing to do. */
  	if (((off % kd->fdalign) | (size % kd->fdalign)) == 0) {
