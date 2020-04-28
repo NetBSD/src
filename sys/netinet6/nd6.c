@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.269 2020/04/12 12:13:52 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.270 2020/04/28 15:12:28 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.269 2020/04/12 12:13:52 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.270 2020/04/28 15:12:28 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1462,8 +1462,22 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		return;
 	}
 
-	if ((rt->rt_flags & RTF_GATEWAY) != 0)
+	if ((rt->rt_flags & RTF_GATEWAY) != 0) {
+		if (req != RTM_ADD)
+			return;
+		/*
+		 * linklayers with particular MTU limitation.
+		 */
+		switch(ifp->if_type) {
+#if NARCNET > 0
+		case IFT_ARCNET:
+			if (rt->rt_rmx.rmx_mtu > ARC_PHDS_MAXMTU) /* RFC2497 */
+				rt->rt_rmx.rmx_mtu = ARC_PHDS_MAXMTU;
+			break;
+#endif
+		}
 		return;
+	}
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
 		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
