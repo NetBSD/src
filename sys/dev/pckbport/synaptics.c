@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.50.2.3 2020/04/02 19:23:41 martin Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.50.2.4 2020/04/28 16:22:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.3 2020/04/02 19:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.4 2020/04/28 16:22:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1009,19 +1009,29 @@ pms_synaptics_parse(struct pms_softc *psc)
 			    psc->packet[3], psc->packet[4], psc->packet[5]);
 
 			if ((psc->packet[4] & SYN_1BUTMASK) != 0)
-				sp.sp_left = PMS_LBUTMASK;
+				sc->ext_left = PMS_LBUTMASK;
+			else
+				sc->ext_left = 0;
 
 			if ((psc->packet[4] & SYN_3BUTMASK) != 0)
-				sp.sp_middle = PMS_MBUTMASK;
+				sc->ext_middle = PMS_MBUTMASK;
+			else
+				sc->ext_middle = 0;
 
 			if ((psc->packet[5] & SYN_2BUTMASK) != 0)
-				sp.sp_right = PMS_RBUTMASK;
+				sc->ext_right = PMS_RBUTMASK;
+			else
+				sc->ext_right = 0;
 
 			if ((psc->packet[5] & SYN_4BUTMASK) != 0)
-				sp.sp_up = 1;
+				sc->ext_up = 1;
+			else
+				sc->ext_up = 0;
 
 			if ((psc->packet[4] & SYN_5BUTMASK) != 0)
-				sp.sp_down = 1;
+				sc->ext_down = 1;
+			else
+				sc->ext_down = 0;
 		} else {
 			/* Left/Right button handling. */
 			sp.sp_left = psc->packet[0] & PMS_LBUTMASK;
@@ -1100,6 +1110,13 @@ pms_synaptics_parse(struct pms_softc *psc)
 		} else if (synaptics_up_down_emul != 1) {
 			sp.sp_middle = 0;
 		}
+
+		/* Overlay extended button state */
+		sp.sp_left |= sc->ext_left;
+		sp.sp_right |= sc->ext_right;
+		sp.sp_middle |= sc->ext_middle;
+		sp.sp_up |= sc->ext_up;
+		sp.sp_down |= sc->ext_down;
 
 		switch (synaptics_up_down_emul) {
 		case 1:
