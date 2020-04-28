@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.65 2020/04/27 22:31:47 jmcneill Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.66 2020/04/28 19:22:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.65 2020/04/27 22:31:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.66 2020/04/28 19:22:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,8 +483,6 @@ pms_synaptics_enable(void *vsc)
 	if ((sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) ||
 	    (sc->flags & SYN_FLAG_HAS_ADV_GESTURE_MODE))
 		synaptics_special_write(psc, SYNAPTICS_WRITE_DELUXE_3, 0x3); 
-
-	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
 
 	sc->up_down = 0;
 	sc->prev_fingers = 0;
