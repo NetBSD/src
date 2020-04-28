@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.80 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.81 2020/04/28 15:43:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.80 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.81 2020/04/28 15:43:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ is_valid_disk(device_t dv)
 		device_is_a(dv, "sd") ||
 		device_is_a(dv, "wd") ||
 		device_is_a(dv, "ld") ||
+		device_is_a(dv, "xbd") ||
 		device_is_a(dv, "ed"));
 }
 
