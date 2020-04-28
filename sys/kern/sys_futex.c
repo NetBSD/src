@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.5 2020/04/28 00:54:24 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.6 2020/04/28 16:22:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.5 2020/04/28 00:54:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.6 2020/04/28 16:22:25 riastradh Exp $");
 
 /*
  * Futexes
@@ -785,6 +785,8 @@ static void
 futex_wait_init(struct futex_wait *fw, int bitset)
 {
 
+	KASSERT(bitset);
+
 	mutex_init(&fw->fw_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&fw->fw_cv, "futex");
 	fw->fw_futex = NULL;
@@ -801,6 +803,8 @@ futex_wait_init(struct futex_wait *fw, int bitset)
 static void
 futex_wait_fini(struct futex_wait *fw)
 {
+
+	KASSERT(fw->fw_futex == NULL);
 
 	cv_destroy(&fw->fw_cv);
 	mutex_destroy(&fw->fw_lock);
@@ -1192,6 +1196,13 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	struct timespec ts;
 	const struct timespec *deadline;
 	int error;
+
+	/*
+	 * If there's nothing to wait for, and nobody will ever wake
+	 * us, then don't set anything up to wait -- just stop here.
+	 */
+	if (val3 == 0)
+		return 0;
 
 	/* Optimistically test before anything else.  */
 	if (!futex_test(uaddr, val))
