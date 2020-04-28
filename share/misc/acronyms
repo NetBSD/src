@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.287.2.1 2019/12/24 17:42:18 martin Exp $
+$NetBSD: acronyms,v 1.287.2.2 2020/04/28 18:00:56 martin Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -44,7 +44,7 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
 ATW	around the world
-AVB	alcohol by volume
+ABV	alcohol by volume
 AVI	automatic vehicle identification
 AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
@@ -100,6 +100,7 @@ CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
+CPA	cyproterone acetate
 CPC	cost per click
 CPE	customer premises equipment
 CPR	car plate recognition
@@ -346,6 +347,7 @@ M&O	management & operations
 M8	mate
 MAD	mutually assured destruction
 MBA	master of business administration
+MDMA	methylenedioxy methamphetamine
 MFW	my face when
 MIA	missing in action
 MLPR	mobile license plate reader
@@ -470,6 +472,9 @@ RCD	residual current device
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
+RFI	request for information
+RFP	request for proposal
+RIF	reduction in force
 RIP	rest in peace
 RL	real life
 RLC	rod length check
@@ -545,6 +550,7 @@ TLA	three letter acronym
 TLA	true love always
 TLC	tender loving care
 TLDR	too long, didn't read
+TLDW	too long, didn't watch
 TM	trademark
 TM	trust me
 TMA	too many abbreviations
@@ -599,8 +605,10 @@ WFH	working from home
 WFM	works for me
 WIBNI	wouldn't it be nice if
 WIP	work in progress
+WLW	women-loving women
 WMNC	watch me not care
 WOMBAT	waste of money, brain, and time
+WP	well played
 WRR	weighted round robin
 WRT	with respect to
 WTB	{waiting,want,willing} to buy
