@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.43 2020/04/27 14:57:31 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.44 2020/04/28 16:15:34 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2251,4 +2251,17 @@ sys/dev/nvmm/nvmm.c				1.26
 	Fix initialization for certain kernel configs and non-supported
 	CPU types.
 	[maxv, ticket #857]
+
+sys/dev/pci/if_mcx.c				1.13
+
+	mcx(4): various fixes.	
+	[jmcneill, ticket #858]
+
+usr.bin/calendar/calendars/calendar.birthday	1.37-1.41
+usr.bin/calendar/calendars/calendar.computer	1.10-1.12
+usr.bin/calendar/calendars/calendar.music	1.21-1.23
+usr.bin/calendar/calendars/calendar.netbsd	1.44-1.46
+
+	Sync calendars with HEAD.
+	[sevan, ticket #859]
 
