@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.101 2020/04/26 16:14:14 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.102 2020/04/28 17:15:48 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.101 2020/04/26 16:14:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.102 2020/04/28 17:15:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.101 2020/04/26 16:14:14 jakllsch Exp $"
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
