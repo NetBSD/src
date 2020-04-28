@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.283.2.1 2019/12/24 17:42:18 martin Exp $
+$NetBSD: acronyms.comp,v 1.283.2.2 2020/04/28 18:00:56 martin Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -214,6 +214,7 @@ CAV	constant angular velocity
 CBC	cipher block chaining
 CBR	constant bit rate
 CC	carbon copy
+CCC	Chaos Computer Club
 CCD	charge coupled device
 CCI	co-channel interferer
 CCNUMA	cache-coherent non-uniform memory access
@@ -282,6 +283,7 @@ CORBA	common object request broker architecture
 COS	class of service
 COW	copy-on-write
 CP	continuous pilot
+CPA	chosen-plaintext attack
 CPB	core performance boost
 CPC	central processor complex
 CPC	cpu performance counters
@@ -532,6 +534,7 @@ EPIC	explicitly parallel instruction computing
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
+EPT	extended page tables
 ERC	error recovery control
 ERD	emergency recovery disk
 ERD	entity relationship diagram
@@ -666,6 +669,7 @@ HMI	human-machine interface
 HOOD	hierarchical object oriented design
 HP	Hewlett-Packard
 HPC	high performance computing
+HPD	hot plug detection
 HPET	high precision event timer
 HSM	hardware security module
 HSM	hierarchical storage management 
@@ -809,6 +813,7 @@ KVM	kernel virtual machine
 KVM	kernel virtual memory
 KVM	keyboard, video, [and] mouse
 L2CAP	link layer control and adaptation protocol
+LAG	link aggregation group
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
 LAPIC	local advanced programmable interrupt controller
@@ -911,7 +916,7 @@ MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	Multi-Color Graphics Array
 MCH	memory controller hub
-MCLAG	multi-chassis link aggregation
+MCLAG	multi-chassis link aggregation group
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
@@ -953,6 +958,7 @@ ML	machine learning
 ML	mailing list
 ML	markup language
 ML	maximum likelihood
+MLAG	multi-chassis link aggregation group
 MLC	multi-level cell
 MLD	multicast listener discovery
 MLHP	micro loop heat pipe
@@ -1096,6 +1102,7 @@ OQL	Object Query Language
 ORB	object request broker
 ORM	object-relational mapping
 OS	operating system
+OSD	object-based storage device
 OSD	open source definition
 OSF	open software foundation
 OSI	Open Source Initiative
@@ -1134,6 +1141,7 @@ PC	program counter
 PCB	printed circuit board
 PCB	process control block
 PCB	Protocol Control Block
+PCBC	propagating cipher block chaining
 PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	path computation element
@@ -1525,6 +1533,7 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSI	server side includes
 SSID	service set identifier
+SSTP 	secure socket tunneling protocol
 SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
