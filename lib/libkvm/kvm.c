@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.105 2020/03/08 00:06:42 chs Exp $	*/
+/*	$NetBSD: kvm.c,v 1.106 2020/04/28 00:12:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.105 2020/03/08 00:06:42 chs Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.106 2020/04/28 00:12:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: kvm.c,v 1.105 2020/03/08 00:06:42 chs Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/mman.h>
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -205,6 +206,19 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 	return size;
 }
 
+static ssize_t
+_kvm_pwrite(kvm_t *kd, const void *buf, size_t size, off_t off)
+{
+	char *mem = kd->dump_mem;
+
+	if (size + off > kd->dump_size) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(mem + off, buf, size);
+	return size;
+}
+
 /*
  * Wrapper around the pread(2) system call; calls _kvm_syserr() for us
  * in the event of emergency.
@@ -256,6 +270,8 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	kd->iobuf = NULL;
 	kd->iobufsz = 0;
 	kd->errbuf[0] = '\0';
+	kd->dump_mem = MAP_FAILED;
+	kd->dump_size = 0;
 
 	if (flag & KVM_NO_FILES) {
 		kd->alive = KVM_ALIVE_SYSCTL;
@@ -371,6 +387,11 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			if (_kvm_initvtop(kd) < 0)
 				goto failed;
 		}
+		kd->dump_size = (size_t)st.st_size;
+		kd->dump_mem = mmap(NULL, kd->dump_size, PROT_READ|PROT_WRITE, 
+		    MAP_FILE|MAP_PRIVATE, kd->pmfd, 0);
+		if (kd->dump_mem == MAP_FAILED)
+			goto failed;
 	}
 	return (kd);
 failed:
@@ -758,6 +779,8 @@ kvm_close(kvm_t *kd)
 		free(kd->argv);
 	if (kd->iobuf != 0)
 		free(kd->iobuf);
+	if (kd->dump_mem != MAP_FAILED)
+		munmap(kd->dump_mem, kd->dump_size);
 	free(kd);
 
 	return (error);
@@ -891,6 +914,7 @@ ssize_t
 kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 {
 	int cc;
+	const void *cp;
 
 	if (ISKMEM(kd)) {
 		/*
@@ -909,9 +933,43 @@ kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 		    "can't use kvm_write");
 		return (-1);
 	} else {
-		_kvm_err(kd, kd->program,
-		    "kvm_write not implemented for dead kernels");
-		return (-1);
+		if (kd->dump_mem == MAP_FAILED) {
+			_kvm_err(kd, kd->program,
+			    "kvm_write not implemented for dead kernels");
+			return (-1);
+		}
+		cp = buf;
+		while (len > 0) {
+			paddr_t	pa;
+			off_t	foff;
+
+			cc = _kvm_kvatop(kd, (vaddr_t)kva, &pa);
+			if (cc == 0) {
+				_kvm_err(kd, kd->program, "_kvm_kvatop(%lx)", kva);
+				return (-1);
+			}
+			if (cc > len)
+				cc = len;
+			foff = _kvm_pa2off(kd, pa);
+			errno = 0;
+			cc = _kvm_pwrite(kd, cp, (size_t)cc, foff);
+			if (cc < 0) {
+				_kvm_syserr(kd, kd->program, "kvm_pwrite");
+				break;
+			}
+			/*
+			 * If kvm_kvatop returns a bogus value or our core
+			 * file is truncated, we might wind up seeking beyond
+			 * the end of the core file in which case the read will
+			 * return 0 (EOF).
+			 */
+			if (cc == 0)
+				break;
+			cp = (const char *)cp + cc;
+			kva += cc;
+			len -= cc;
+		}
+		return ((const char *)cp - (const char *)buf);
 	}
 	/* NOTREACHED */
 }
