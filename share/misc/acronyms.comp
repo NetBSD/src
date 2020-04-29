@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.301 2020/04/27 09:10:45 plunky Exp $
+$NetBSD: acronyms.comp,v 1.302 2020/04/29 22:17:38 rtr Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -882,6 +882,7 @@ LSL	load segment limit
 LSM	log structured merge
 LSN	Large Scale NAT
 LSN	log sequence number
+LSO	large send offload
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
 LTO	linear tape-open
