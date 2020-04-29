@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.103 2020/04/28 17:26:01 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.104 2020/04/29 18:52:03 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.103 2020/04/28 17:26:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.104 2020/04/29 18:52:03 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,13 +418,8 @@ msk_init_rx_ring(struct sk_if_softc *sc_if)
 	struct msk_chain_data	*cd = &sc_if->sk_cdata;
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	struct msk_rx_desc	*r;
-	int			i;
 
 	memset(rd->sk_rx_ring, 0, sizeof(struct msk_rx_desc) * MSK_RX_RING_CNT);
-
-	for (i = 0; i < MSK_RX_RING_CNT; i++) {
-		cd->sk_rx_chain[i].sk_le = &rd->sk_rx_ring[i];
-	}
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
@@ -453,13 +448,8 @@ msk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct msk_chain_data	*cd = &sc_if->sk_cdata;
 	struct msk_ring_data	*rd = sc_if->sk_rdata;
 	struct msk_tx_desc	*t;
-	int			i;
 
 	memset(rd->sk_tx_ring, 0, sizeof(struct msk_tx_desc) * MSK_TX_RING_CNT);
-
-	for (i = 0; i < MSK_TX_RING_CNT; i++) {
-		cd->sk_tx_chain[i].sk_le = &rd->sk_tx_ring[i];
-	}
 
 	sc_if->sk_cdata.sk_tx_prod = 0;
 	sc_if->sk_cdata.sk_tx_cons = 0;
@@ -515,7 +505,7 @@ msk_newbuf(struct sk_if_softc *sc_if, bus_dmamap_t dmamap)
 
 	if (sc_if->sk_cdata.sk_rx_hiaddr != MSK_ADDR_HI(addr)) {
 		c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
-		r = c->sk_le;
+		r = &sc_if->sk_rdata->sk_rx_ring[sc_if->sk_cdata.sk_rx_prod];
 		c->sk_mbuf = NULL;
 		r->sk_addr = htole32(MSK_ADDR_HI(addr));
 		r->sk_len = 0;
@@ -535,7 +525,7 @@ msk_newbuf(struct sk_if_softc *sc_if, bus_dmamap_t dmamap)
 	}
 
 	c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
-	r = c->sk_le;
+	r = &sc_if->sk_rdata->sk_rx_ring[sc_if->sk_cdata.sk_rx_prod];
 	c->sk_mbuf = m_new;
 	r->sk_addr = htole32(MSK_ADDR_LO(addr));
 	r->sk_len = htole16(SK_JLEN);
