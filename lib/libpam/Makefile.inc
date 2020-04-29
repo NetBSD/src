@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.18 2017/05/06 19:52:25 christos Exp $
+# $NetBSD: Makefile.inc,v 1.19 2020/04/29 02:16:56 riastradh Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -41,10 +41,6 @@ MODLIBDIR=/usr/lib/security
 CPPFLAGS+= -DOPENPAM_MODULES_DIRECTORY=\"${MODLIBDIR}\"
 # No debugging
 #CPPFLAGS+= -DDEBUG
-
-# ...and don't do either of those on the shared library.
-# XXX CSHLIBFLAGS isn't perfect, but it'll do for now.
-CSHLIBFLAGS+= -DNO_STATIC_MODULES
 
 # Define the shared library version here.  libpam and the modules share a
 # version, and we need these variables early for module install rules.
