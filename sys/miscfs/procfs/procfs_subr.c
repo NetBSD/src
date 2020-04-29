@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.114 2019/09/26 17:34:08 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.115 2020/04/29 01:56:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.114 2019/09/26 17:34:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.115 2020/04/29 01:56:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,8 @@ procfs_rw(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
+	if ((error =
+	     procfs_proc_lock(vp->v_mount, pfs->pfs_pid, &p, ESRCH)) != 0)
 		return error;
 
 	curl = curlwp;
@@ -408,8 +409,25 @@ procfs_revoke_vnodes(struct proc *p, void *arg)
 	vfs_vnode_iterator_destroy(marker);
 }
 
+bool
+procfs_use_linux_compat(struct mount *mp)
+{
+	const int flags = VFSTOPROC(mp)->pmnt_flags;
+
+	return (flags & PROCFSMNT_LINUXCOMPAT) ? true : false;
+}
+
+struct proc *
+procfs_proc_find(struct mount *mp, pid_t pid)
+{
+	KASSERT(mutex_owned(proc_lock));
+	return procfs_use_linux_compat(mp) ? proc_find_lwpid(pid)
+					   : proc_find(pid);
+}
+
 int
-procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
+procfs_proc_lock(struct mount *mp, int pid, struct proc **bunghole,
+		 int notfound)
 {
 	struct proc *tp;
 	int error = 0;
@@ -418,7 +436,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 
 	if (pid == 0)
 		tp = &proc0;
-	else if ((tp = proc_find(pid)) == NULL)
+	else if ((tp = procfs_proc_find(mp, pid)) == NULL)
 		error = notfound;
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;
