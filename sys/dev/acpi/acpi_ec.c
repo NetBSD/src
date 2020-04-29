@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.75.20.2 2020/04/12 08:48:56 martin Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.75.20.3 2020/04/29 13:33:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.20.2 2020/04/12 08:48:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.20.3 2020/04/29 13:33:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -659,32 +659,30 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 {
 	device_t dv;
 	ACPI_STATUS rv;
-	uint8_t addr, reg;
+	uint8_t addr, *buf;
 	unsigned int i;
 
-	if (paddr > 0xff || width % 8 != 0 || width > sizeof(ACPI_INTEGER)*8 ||
+	if (paddr > 0xff || width % 8 != 0 ||
 	    value == NULL || arg == NULL || paddr + width / 8 > 0x100)
 		return AE_BAD_PARAMETER;
 
 	addr = paddr;
 	dv = arg;
+	buf = (uint8_t *)value;
 
 	rv = AE_OK;
 
 	switch (func) {
 	case ACPI_READ:
-		*value = 0;
-		for (i = 0; i < width; i += 8, ++addr) {
-			rv = acpiec_read(dv, addr, &reg);
+		for (i = 0; i < width; i += 8, ++addr, ++buf) {
+			rv = acpiec_read(dv, addr, buf);
 			if (rv != AE_OK)
 				break;
-			*value |= (ACPI_INTEGER)reg << i;
 		}
 		break;
 	case ACPI_WRITE:
-		for (i = 0; i < width; i += 8, ++addr) {
-			reg = (*value >> i) & 0xff;
-			rv = acpiec_write(dv, addr, reg);
+		for (i = 0; i < width; i += 8, ++addr, ++buf) {
+			rv = acpiec_write(dv, addr, *buf);
 			if (rv != AE_OK)
 				break;
 		}
