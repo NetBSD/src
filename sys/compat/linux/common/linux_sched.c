@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.75 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.76 2020/04/29 01:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.75 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.76 2020/04/29 01:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -608,6 +608,7 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
 	} */
+	struct proc *p;
 	struct lwp *t;
 	kcpuset_t *kcset;
 	size_t size;
@@ -618,15 +619,23 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 	if (SCARG(uap, len) < size)
 		return EINVAL;
 
-	/* Lock the LWP */
-	t = lwp_find2(SCARG(uap, pid), l->l_lid);
-	if (t == NULL)
-		return ESRCH;
+	if (SCARG(uap, pid) == 0) {
+		p = curproc;
+		mutex_enter(p->p_lock);
+		t = curlwp;
+	} else {
+		t = lwp_find2(-1, SCARG(uap, pid));
+		if (__predict_false(t == NULL)) {
+			return ESRCH;
+		}
+		p = t->l_proc;
+		KASSERT(mutex_owned(p->p_lock));
+	}
 
 	/* Check the permission */
 	if (kauth_authorize_process(l->l_cred,
-	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
-		mutex_exit(t->l_proc->p_lock);
+	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, p, NULL, NULL, NULL)) {
+		mutex_exit(p->p_lock);
 		return EPERM;
 	}
 
@@ -644,7 +653,7 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 			kcpuset_set(kcset, i);
 	}
 	lwp_unlock(t);
-	mutex_exit(t->l_proc->p_lock);
+	mutex_exit(p->p_lock);
 	error = kcpuset_copyout(kcset, (cpuset_t *)SCARG(uap, mask), size);
 	kcpuset_unuse(kcset, NULL);
 	*retval = size;
@@ -661,13 +670,28 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	} */
 	struct sys__sched_setaffinity_args ssa;
 	size_t size;
+	pid_t pid;
 
 	size = LINUX_CPU_MASK_SIZE;
 	if (SCARG(uap, len) < size)
 		return EINVAL;
 
-	SCARG(&ssa, pid) = SCARG(uap, pid);
-	SCARG(&ssa, lid) = l->l_lid;
+	if (SCARG(uap, pid) != 0) {
+		/* Get the canonical PID for the process. */
+		mutex_enter(proc_lock);
+		struct proc *p = proc_find_lwpid(SCARG(uap, pid));
+		if (p == NULL) {
+			mutex_exit(proc_lock);
+			return ESRCH;
+		}
+		pid = p->p_pid;
+		mutex_exit(proc_lock);
+	} else {
+		pid = 0;
+	}
+
+	SCARG(&ssa, pid) = pid;
+	SCARG(&ssa, lid) = SCARG(uap, pid);
 	SCARG(&ssa, size) = size;
 	SCARG(&ssa, cpuset) = (cpuset_t *)SCARG(uap, mask);
 
