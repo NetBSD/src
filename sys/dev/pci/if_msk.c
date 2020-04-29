@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.104 2020/04/29 18:52:03 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.105 2020/04/29 20:03:52 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.104 2020/04/29 18:52:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.105 2020/04/29 20:03:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1099,7 +1099,6 @@ msk_attach(device_t parent, device_t self, void *aux)
 	struct sk_softc *sc = device_private(parent);
 	struct skc_attach_args *sa = aux;
 	bus_dmamap_t dmamap;
-	struct sk_txmap_entry *entry;
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc_if->sk_mii;
 	void *kva;
@@ -1177,7 +1176,6 @@ msk_attach(device_t parent, device_t self, void *aux)
 		goto fail_3;
 	}
 
-	SIMPLEQ_INIT(&sc_if->sk_txmap_head);
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 
@@ -1188,9 +1186,7 @@ msk_attach(device_t parent, device_t self, void *aux)
 			goto fail_3;
 		}
 
-		entry = malloc(sizeof(*entry), M_DEVBUF, M_WAITOK);
-		entry->dmamap = dmamap;
-		SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head, entry, link);
+		sc_if->sk_cdata.sk_tx_chain[i].sk_dmamap = dmamap;
 	}
 
 	sc_if->sk_rdata = (struct msk_ring_data *)kva;
@@ -1294,18 +1290,17 @@ msk_detach(device_t self, int flags)
 {
 	struct sk_if_softc *sc_if = device_private(self);
 	struct sk_softc *sc = sc_if->sk_softc;
-	struct sk_txmap_entry *entry;
 	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
+	int i;
 
 	if (sc->sk_if[sc_if->sk_port] == NULL)
 		return 0;
 
 	msk_stop(ifp, 1);
 
-	while ((entry = SIMPLEQ_FIRST(&sc_if->sk_txmap_head))) {
-		SIMPLEQ_REMOVE_HEAD(&sc_if->sk_txmap_head, link);
-		bus_dmamap_destroy(sc->sc_dmatag, entry->dmamap);
-		free(entry, M_DEVBUF);
+	for (i = 0; i < MSK_TX_RING_CNT; i++) {
+		bus_dmamap_destroy(sc->sc_dmatag,
+		    sc_if->sk_cdata.sk_tx_chain[i].sk_dmamap);
 	}
 
 	if (--sc->rnd_attached == 0)
@@ -1786,18 +1781,12 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 	uint32_t		frag, cur, hiaddr, old_hiaddr, total;
 	uint32_t		entries = 0;
 	size_t			i;
-	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
 	bus_addr_t		addr;
 
 	DPRINTFN(2, ("msk_encap\n"));
 
-	entry = SIMPLEQ_FIRST(&sc_if->sk_txmap_head);
-	if (entry == NULL) {
-		DPRINTFN(2, ("msk_encap: no txmap available\n"));
-		return ENOBUFS;
-	}
-	txmap = entry->dmamap;
+	txmap = sc_if->sk_cdata.sk_tx_chain[*txidx].sk_dmamap;
 
 	cur = frag = *txidx;
 
@@ -1880,10 +1869,11 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 	}
 	KASSERTMSG(entries == total, "entries %u total %u", entries, total);
 
+	sc_if->sk_cdata.sk_tx_chain[*txidx].sk_dmamap =
+		sc_if->sk_cdata.sk_tx_chain[cur].sk_dmamap;
 	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
-	SIMPLEQ_REMOVE_HEAD(&sc_if->sk_txmap_head, link);
+	sc_if->sk_cdata.sk_tx_chain[cur].sk_dmamap = txmap;
 
-	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |= SK_Y2_TXCTL_LASTFRAG;
 
 	/* Sync descriptors before handing to chip */
@@ -2087,7 +2077,7 @@ msk_txeof(struct sk_if_softc *sc_if)
 	struct msk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
 	uint32_t		idx, reg, sk_ctl;
-	struct sk_txmap_entry	*entry;
+	bus_dmamap_t		dmamap;
 
 	DPRINTFN(2, ("msk_txeof\n"));
 
@@ -2114,15 +2104,12 @@ msk_txeof(struct sk_if_softc *sc_if)
 		if (sk_ctl & SK_Y2_TXCTL_LASTFRAG)
 			if_statinc(ifp, if_opackets);
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
-			entry = sc_if->sk_cdata.sk_tx_map[idx];
+			dmamap = sc_if->sk_cdata.sk_tx_chain[idx].sk_dmamap;
 
-			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
-			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_sync(sc->sc_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_unload(sc->sc_dmatag, entry->dmamap);
-			SIMPLEQ_INSERT_TAIL(&sc_if->sk_txmap_head, entry,
-					  link);
-			sc_if->sk_cdata.sk_tx_map[idx] = NULL;
+			bus_dmamap_unload(sc->sc_dmatag, dmamap);
 			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
 		}
@@ -2611,7 +2598,7 @@ msk_stop(struct ifnet *ifp, int disable)
 {
 	struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;
-	struct sk_txmap_entry	*dma;
+	bus_dmamap_t		dmamap;
 	int			i;
 
 	DPRINTFN(2, ("msk_stop\n"));
@@ -2664,16 +2651,12 @@ msk_stop(struct ifnet *ifp, int disable)
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {
-			dma = sc_if->sk_cdata.sk_tx_map[i];
+			dmamap = sc_if->sk_cdata.sk_tx_chain[i].sk_dmamap;
 
-			bus_dmamap_sync(sc->sc_dmatag, dma->dmamap, 0,
-			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_sync(sc->sc_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_unload(sc->sc_dmatag, dma->dmamap);
-
-			SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head,
-			    sc_if->sk_cdata.sk_tx_map[i], link);
-			sc_if->sk_cdata.sk_tx_map[i] = 0;
+			bus_dmamap_unload(sc->sc_dmatag, dmamap);
 
 			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;

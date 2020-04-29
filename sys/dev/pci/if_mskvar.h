@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.24 2020/04/29 18:52:03 jakllsch Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.25 2020/04/29 20:03:52 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct sk_jpool_entry {
 
 struct sk_chain {
 	struct mbuf		*sk_mbuf;
+	bus_dmamap_t		sk_dmamap;
 };
 
 /*
@@ -101,16 +102,9 @@ struct sk_chain {
  */
 #define SK_NTXSEG      30
 
-struct sk_txmap_entry {
-	bus_dmamap_t			dmamap;
-	SIMPLEQ_ENTRY(sk_txmap_entry)	link;
-};
-
 struct msk_chain_data {
 	struct sk_chain		sk_tx_chain[MSK_TX_RING_CNT];
 	struct sk_chain		sk_rx_chain[MSK_RX_RING_CNT];
-	struct sk_txmap_entry	*sk_tx_map[MSK_TX_RING_CNT];
-	bus_dmamap_t		sk_rx_map[MSK_RX_RING_CNT];
 	bus_dmamap_t		sk_rx_jumbo_map;
 	unsigned		sk_tx_prod;
 	unsigned		sk_tx_cons;
@@ -241,7 +235,6 @@ struct sk_if_softc {
 	kmutex_t		sk_jpool_mtx;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
-	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_head;
 };
 
 struct skc_attach_args {
