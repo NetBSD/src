@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.39 2020/04/26 18:53:33 thorpej Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.40 2020/04/29 01:44:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.39 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.40 2020/04/29 01:44:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,9 +66,11 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
 
 	/*
 	 * Linux overlays the "timeout" field and the "val2" field.
-	 * "timeout" is only valid for FUTEX_WAIT on Linux.
+	 * "timeout" is only valid for FUTEX_WAIT and FUTEX_WAIT_BITSET
+	 * on Linux.
 	 */
-	if ((SCARG(uap, op) & FUTEX_CMD_MASK) == FUTEX_WAIT &&
+	const int op = (SCARG(uap, op) & FUTEX_CMD_MASK);
+	if ((op == FUTEX_WAIT || op == FUTEX_WAIT_BITSET) &&
 	    SCARG(uap, timeout) != NULL) {
 		if ((error = copyin(SCARG(uap, timeout), 
 		    &lts, sizeof(lts))) != 0) {
