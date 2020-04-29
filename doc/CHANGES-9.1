@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.46 2020/04/28 18:13:49 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.47 2020/04/29 13:56:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2299,4 +2299,64 @@ share/misc/inter.phone				1.32
 
 	Fix some polish entries.
 	[sevan, ticket #862]
+
+sys/dev/pckbport/synaptics.c			1.66
+
+	pms(4): synaptics: fix mouse lockup at X startup.
+	[jmcneill, ticket #865]
+
+sys/dev/acpi/acpi_ec.c				1.82
+
+	kern/55206: fix alignment of buffer passed to the EC.
+	[jmcneill, ticket #866]
+
+sys/dev/acpi/acpi_display.c			1.17
+
+	acpi: display: remove unnecessary error prints in dmesg.
+	[jmcneill, ticket #867]
+
+sys/arch/amd64/amd64/machdep.c			1.349
+sys/arch/x86/x86/pmap.c				1.384
+
+	amd64: speed up early console framebuffer.
+	[jmcneill, ticket #868]
+
+sys/dev/hdaudio/hdaudiodevs			1.4
+sys/dev/hdaudio/hdaudiodevs.h			(regen)
+sys/dev/hdaudio/hdaudiodevs_data.h		(regen)
+
+	Add Realtek ALC293.
+	[jmcneill, ticket #869]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.16
+
+	Fix zfs call to minphys.
+	[riastradh, ticket #870]
+
+external/cddl/osnet/sys/sys/cred.h		1.7
+sys/sys/kauth.h					1.84
+
+	Fix crash in zfs access control.
+	[riastradh, ticket #871]
+
+sys/dev/hdaudio/hdaudiodevs			1.5
+sys/dev/hdaudio/hdaudiodevs.h			(regen)
+sys/dev/hdaudio/hdaudiodevs_data.h		(regen)
+
+	hdaudiodevs: Add Realtek ALC292
+	[nia, ticket #872]
+
+sys/dev/usb/usbdevs				1.782
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	usbdevs: more Intel Integrated Rate Matching Hub IDs.
+	[nia, ticket #873]
+
+sys/dev/usb/usbdevs				1.782
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	usbdevs: more Intel Integrated Rate Matching Hub IDs.
+	[nia, ticket #873]
 
