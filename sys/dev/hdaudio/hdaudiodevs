@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.2.26.1 2020/01/27 07:09:31 martin Exp $
+$NetBSD: hdaudiodevs,v 1.2.26.2 2020/04/29 13:42:21 martin Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,6 +77,7 @@ product	REALTEK		ALC270		0x0270	ALC270
 product	REALTEK		ALC272		0x0272	ALC272
 product	REALTEK		ALC275		0x0275	ALC275
 product	REALTEK		ALC280		0x0280	ALC280
+product	REALTEK		ALC293		0x0293	ALC293
 product	REALTEK		ALC660_VD	0x0660	ALC660-VD
 product	REALTEK		ALC662		0x0662	ALC662
 product	REALTEK		ALC663		0x0663	ALC663
