@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.236 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.237 2020/04/29 01:52:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -223,7 +223,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.236 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.237 2020/04/29 01:52:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -266,32 +266,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.236 2020/04/26 18:53:33 thorpej Exp $
 static pool_cache_t	lwp_cache	__read_mostly;
 struct lwplist		alllwp		__cacheline_aligned;
 
-/*
- * Lookups by global thread ID operate outside of the normal LWP
- * locking protocol.
- *
- * => When we look up an LWP in the table, we take lwp_threadid_lock as
- *    a READER.  While still holding the lock, we add a reference to
- *    the LWP (using atomics).  After adding the reference, we drop the
- *    lwp_threadid_lock.  We now take p_lock and check the state of the
- *    LWP.  If the LWP is draining its references, we drop the reference
- *    we took and return NULL.  Otherwise, the lookup has succeeded and
- *    the LWP is returned with a reference count that the caller is
- *    responsible for dropping.
- *
- * => When a LWP is exiting, it also drains off any references being
- *    held by others.  However, the reference in the lookup path is taken
- *    outside the normal locking protocol.  There needs to be additional
- *    serialization so that EITHER lwp_drainrefs() sees the incremented
- *    reference count so that it knows to wait, OR lwp_getref_lwpid() sees
- *    that the LWP is waiting to drain and thus drops the reference
- *    immediately.  This is achieved by taking lwp_threadid_lock as a
- *    WRITER when setting LPR_DRAINING.  Note the locking order:
- *
- *		p_lock -> lwp_threadid_lock
- */
-static krwlock_t	lwp_threadid_lock	__cacheline_aligned;
-
 static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
@@ -325,7 +299,6 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 
-static void lwp_threadid_init(void);
 static int sysctl_kern_maxlwp(SYSCTLFN_PROTO);
 
 /*
@@ -378,7 +351,6 @@ lwpinit(void)
 
 	maxlwp = cpu_maxlwp();
 	sysctl_kern_lwp_setup();
-	lwp_threadid_init();
 }
 
 void
@@ -1405,10 +1377,20 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	lwp_unlock(l);
 }
 
+#define	lwp_find_exclude(l)					\
+	((l)->l_stat == LSIDL || (l)->l_stat == LSZOMB)
+
 /*
  * Find the LWP in the process.  Arguments may be zero, in such case,
  * the calling process and first LWP in the list will be used.
  * On success - returns proc locked.
+ *
+ * => pid == 0 -> look in curproc.
+ * => pid == -1 -> match any proc.
+ * => otherwise look up the proc.
+ *
+ * => lid == 0 -> first LWP in the proc
+ * => otherwise specific LWP
  */
 struct lwp *
 lwp_find2(pid_t pid, lwpid_t lid)
@@ -1416,27 +1398,62 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	proc_t *p;
 	lwp_t *l;
 
-	/* Find the process. */
-	if (pid != 0) {
-		mutex_enter(proc_lock);
-		p = proc_find(pid);
-		if (p == NULL) {
-			mutex_exit(proc_lock);
+	/* First LWP of specified proc. */
+	if (lid == 0) {
+		switch (pid) {
+		case -1:
+			/* No lookup keys. */
 			return NULL;
+		case 0:
+			p = curproc;
+			mutex_enter(p->p_lock);
+			break;
+		default:
+			mutex_enter(proc_lock);
+			p = proc_find(pid);
+			if (__predict_false(p == NULL)) {
+				mutex_exit(proc_lock);
+				return NULL;
+			}
+			mutex_enter(p->p_lock);
+			mutex_exit(proc_lock);
+			break;
 		}
-		mutex_enter(p->p_lock);
-		mutex_exit(proc_lock);
-	} else {
-		p = curlwp->l_proc;
-		mutex_enter(p->p_lock);
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (__predict_true(!lwp_find_exclude(l)))
+				break;
+		}
+		goto out;
 	}
-	/* Find the thread. */
-	if (lid != 0) {
-		l = lwp_find(p, lid);
-	} else {
-		l = LIST_FIRST(&p->p_lwps);
+
+	l = proc_find_lwp_acquire_proc(lid, &p);
+	if (l == NULL)
+		return NULL;
+	KASSERT(p != NULL);
+	KASSERT(mutex_owned(p->p_lock));
+
+	if (__predict_false(lwp_find_exclude(l))) {
+		l = NULL;
+		goto out;
 	}
-	if (l == NULL) {
+
+	/* Apply proc filter, if applicable. */
+	switch (pid) {
+	case -1:
+		/* Match anything. */
+		break;
+	case 0:
+		if (p != curproc)
+			l = NULL;
+		break;
+	default:
+		if (p->p_pid != pid)
+			l = NULL;
+		break;
+	}
+
+ out:
+	if (__predict_false(l == NULL)) {
 		mutex_exit(p->p_lock);
 	}
 	return l;
@@ -1462,7 +1479,7 @@ lwp_find(struct proc *p, lwpid_t id)
 	 * No need to lock - all of these conditions will
 	 * be visible with the process level mutex held.
 	 */
-	if (l != NULL && (l->l_stat == LSIDL || l->l_stat == LSZOMB))
+	if (__predict_false(l != NULL && lwp_find_exclude(l)))
 		l = NULL;
 
 	return l;
@@ -1664,21 +1681,6 @@ lwp_need_userret(struct lwp *l)
 }
 
 /*
- * Add one reference to an LWP.  Interlocked against lwp_drainrefs()
- * either by holding the proc's lock or by holding lwp_threadid_lock.
- * If callers don't hold the proc's lock, then they must check for a
- * larva after acquiring the reference.  References can't be added to
- * zombies because references have already been drained off before the
- * state changes to LSZOMB.
- */
-static void
-lwp_addref2(struct lwp *l)
-{
-	KASSERT(l->l_stat != LSZOMB);
-	atomic_inc_uint(&l->l_refcnt);
-}
-
-/*
  * Add one reference to an LWP.  This will prevent the LWP from
  * exiting, thus keep the lwp structure and PCB around to inspect.
  */
@@ -1686,7 +1688,8 @@ void
 lwp_addref(struct lwp *l)
 {
 	KASSERT(mutex_owned(l->l_proc->p_lock));
-	lwp_addref2(l);
+	KASSERT(l->l_stat != LSZOMB);
+	l->l_refcnt++;
 }
 
 /*
@@ -1715,9 +1718,9 @@ lwp_delref2(struct lwp *l)
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
-	KASSERT(atomic_load_relaxed(&l->l_refcnt) > 0);
+	KASSERT(l->l_refcnt > 0);
 
-	if (atomic_dec_uint_nv(&l->l_refcnt) == 0)
+	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_lwpcv);
 }
 
@@ -1733,18 +1736,9 @@ lwp_drainrefs(struct lwp *l)
 
 	KASSERT(mutex_owned(p->p_lock));
 
-	/*
-	 * Lookups by thread ID hold lwp_threadid_lock as a reader,
-	 * increase l_refcnt, release it, and then acquire p_lock to
-	 * check for LPR_DRAINING.  By taking lwp_threadid_lock as a
-	 * writer here we ensure that either we see the increase in
-	 * l_refcnt or that they see LPR_DRAINING.
-	 */
-	rw_enter(&lwp_threadid_lock, RW_WRITER);
 	l->l_prflag |= LPR_DRAINING;
-	rw_exit(&lwp_threadid_lock);
 
-	while (atomic_load_relaxed(&l->l_refcnt) > 0) {
+	while (l->l_refcnt > 0) {
 		rv = true;
 		cv_wait(&p->p_lwpcv, p->p_lock);
 	}
@@ -2031,58 +2025,6 @@ lwp_setprivate(struct lwp *l, void *ptr)
 	return error;
 }
 
-static void
-lwp_threadid_init(void)
-{
-	rw_init(&lwp_threadid_lock);
-}
-
-/*
- * Lookup an LWP by global thread ID.  Care must be taken because
- * callers of this are operating outside the normal locking protocol.
- * We return the LWP with an additional reference that must be dropped
- * with lwp_delref().
- */
-struct lwp *
-lwp_getref_lwpid(lwpid_t tid)
-{
-	struct lwp *l;
-
-	/*
-	 * We rely on lwp_thread_cleanup() to hide LWP IDs from us
-	 * to ensure that we cannot add a reference do an exiting
-	 * LWP.
-	 */
-	rw_enter(&lwp_threadid_lock, RW_READER);
-	l = proc_seek_lwpid(tid);
-	if (__predict_false(l == NULL)) {
-		rw_exit(&lwp_threadid_lock);
-		return NULL;
-	}
-
-	/*
-	 * Acquire a reference on the lwp.  It is safe to do this unlocked
-	 * here because lwp_drainrefs() serializes with us by taking the
-	 * lwp_threadid_lock as a writer.
-	 */
-	lwp_addref2(l);
-	rw_exit(&lwp_threadid_lock);
-
-	/*
-	 * Now verify that our reference is valid.
-	 */
-	struct proc *p = l->l_proc;
-	mutex_enter(p->p_lock);
-	if (__predict_false(l->l_stat == LSLARVAL ||
-			    (l->l_prflag & LPR_DRAINING) != 0)) {
-		lwp_delref2(l);
-		l = NULL;
-	}
-	mutex_exit(p->p_lock);
-
-	return l;
-}
-
 /*
  * Perform any thread-related cleanup on LWP exit.
  * N.B. l->l_proc->p_lock must be HELD on entry but will
@@ -2096,13 +2038,6 @@ lwp_thread_cleanup(struct lwp *l)
 
 	KASSERT((tid & FUTEX_TID_MASK) == tid);
 	KASSERT(mutex_owned(l->l_proc->p_lock));
-
-	/*
-	 * Hide this LWP from seekers (namely lwp_getref_lwpid())
-	 * to prevent them from attempting to acquire a reference
-	 * on a zombie.
-	 */
-	proc_hide_lwpid(tid);
 
 	mutex_exit(l->l_proc->p_lock);
 

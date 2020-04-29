@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.250 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.251 2020/04/29 01:52:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.250 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.251 2020/04/29 01:52:26 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -147,17 +147,14 @@ struct pid_table {
 #define	PT_F_FREE		((uintptr_t)__BIT(0))
 #define	PT_F_LWP		0	/* pseudo-flag */
 #define	PT_F_PROC		((uintptr_t)__BIT(1))
-#define	PT_F_HIDDEN		((uintptr_t)__BIT(2))
 
 #define	PT_F_TYPEBITS		(PT_F_FREE|PT_F_PROC)
-#define	PT_F_ALLBITS		(PT_F_FREE|PT_F_PROC|PT_F_HIDDEN)
+#define	PT_F_ALLBITS		(PT_F_FREE|PT_F_PROC)
 
 #define	PT_VALID(s)		(((s) & PT_F_FREE) == 0)
 #define	PT_RESERVED(s)		((s) == 0)
-#define	PT_HIDDEN(s)		((s) & PT_F_HIDDEN)
 #define	PT_NEXT(s)		((u_int)(s) >> 1)
 #define	PT_SET_FREE(pid)	(((pid) << 1) | PT_F_FREE)
-#define	PT_SET_HIDDEN(s)	((s) | PT_F_HIDDEN)
 #define	PT_SET_LWP(l)		((uintptr_t)(l))
 #define	PT_SET_PROC(p)		(((uintptr_t)(p)) | PT_F_PROC)
 #define	PT_SET_RESERVED		0
@@ -708,53 +705,53 @@ proc_find_lwp(proc_t *p, pid_t pid)
 }
 
 /*
- * proc_seek_lwpid: locate an lwp by only the ID.
+ * proc_find_lwp_acquire_proc: locate an lwp and acquire a lock
+ * on its containing proc.
  *
- * => This is a specialized interface used for looking up an LWP
- *    without holding a lock on its owner process.
- * => Callers of this interface MUST provide a separate synchronization
- *    mechanism to ensure the validity of the returned LWP.  LARVAL LWPs
- *    are found there, so callers must check for them!
- * => Only returns LWPs whose ID has not been hidden from us.
+ * => Similar to proc_find_lwp(), but does not require you to have
+ *    the proc a priori.
+ * => Also returns proc * to caller, with p::p_lock held.
+ * => Same caveats apply.
  */
 struct lwp *
-proc_seek_lwpid(pid_t pid)
+proc_find_lwp_acquire_proc(pid_t pid, struct proc **pp)
 {
 	struct pid_table *pt;
+	struct proc *p = NULL;
 	struct lwp *l = NULL;
 	uintptr_t slot;
 
+	KASSERT(pp != NULL);
+	mutex_enter(proc_lock);
 	rw_enter(&pid_table_lock, RW_READER);
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	slot = pt->pt_slot;
-	if (__predict_true(PT_IS_LWP(slot) && pt->pt_pid == pid &&
-			   !PT_HIDDEN(slot))) {
+	if (__predict_true(PT_IS_LWP(slot) && pt->pt_pid == pid)) {
+		/*
+		 * Locking order is p::p_lock -> pid_table_lock, but
+		 * we're already holding pid_table_lock; we need to
+		 * release it before acquiring p::p_lock.  This is
+		 * safe because p will be stable by virtue of holding
+		 * proc_lock.
+		 */
 		l = PT_GET_LWP(slot);
+		p = l->l_proc;
+		rw_exit(&pid_table_lock);
+		mutex_enter(p->p_lock);
+		if (__predict_false(l->l_stat == LSLARVAL)) {
+			mutex_exit(p->p_lock);
+			l = NULL;
+			p = NULL;
+		}
+	} else {
+		rw_exit(&pid_table_lock);
 	}
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
 
+	KASSERT(p == NULL || mutex_owned(p->p_lock));
+	*pp = p;
 	return l;
-}
-
-/*
- * proc_hide_lwpid: hide an lwp ID from seekers.
- */
-void
-proc_hide_lwpid(pid_t pid)
-{
-	struct pid_table *pt;
-	uintptr_t slot;
-
-	rw_enter(&pid_table_lock, RW_WRITER);
-	pt = &pid_table[pid & pid_tbl_mask];
-
-	slot = pt->pt_slot;
-	KASSERT(PT_IS_LWP(slot));
-	KASSERT(pt->pt_pid == pid);
-	pt->pt_slot = PT_SET_HIDDEN(slot);
-
-	rw_exit(&pid_table_lock);
 }
 
 /*
@@ -764,7 +761,7 @@ proc_hide_lwpid(pid_t pid)
  *    at least held for reading.
  */
 static proc_t *
-proc_find_raw_pid_table_locked(pid_t pid)
+proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
 {
 	struct pid_table *pt;
 	proc_t *p = NULL;
@@ -784,7 +781,7 @@ proc_find_raw_pid_table_locked(pid_t pid)
 		 * valid here.
 		 */
 		p = PT_GET_LWP(slot)->l_proc;
-		if (__predict_false(p->p_pid != pid))
+		if (__predict_false(p->p_pid != pid && !any_lwpid))
 			p = NULL;
 	} else if (PT_IS_PROC(slot) && pt->pt_pid == pid) {
 		p = PT_GET_PROC(slot);
@@ -797,19 +794,19 @@ proc_find_raw(pid_t pid)
 {
 	KASSERT(mutex_owned(proc_lock));
 	rw_enter(&pid_table_lock, RW_READER);
-	proc_t *p = proc_find_raw_pid_table_locked(pid);
+	proc_t *p = proc_find_raw_pid_table_locked(pid, false);
 	rw_exit(&pid_table_lock);
 	return p;
 }
 
 static proc_t *
-proc_find_pid_table_locked(pid_t pid)
+proc_find_pid_table_locked(pid_t pid, bool any_lwpid)
 {
 	proc_t *p;
 
 	KASSERT(mutex_owned(proc_lock));
 
-	p = proc_find_raw_pid_table_locked(pid);
+	p = proc_find_raw_pid_table_locked(pid, any_lwpid);
 	if (__predict_false(p == NULL)) {
 		return NULL;
 	}
@@ -824,14 +821,26 @@ proc_find_pid_table_locked(pid_t pid)
 	return NULL;
 }
 
-proc_t *
-proc_find(pid_t pid)
+static proc_t *
+proc_find_internal(pid_t pid, bool any_lwpid)
 {
 	KASSERT(mutex_owned(proc_lock));
 	rw_enter(&pid_table_lock, RW_READER);
-	proc_t *p = proc_find_pid_table_locked(pid);
+	proc_t *p = proc_find_pid_table_locked(pid, any_lwpid);
 	rw_exit(&pid_table_lock);
 	return p;
+}
+
+proc_t *
+proc_find(pid_t pid)
+{
+	return proc_find_internal(pid, false);
+}
+
+proc_t *
+proc_find_lwpid(pid_t pid)
+{
+	return proc_find_internal(pid, true);
 }
 
 /*
@@ -1227,7 +1236,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	/* Can only set another process under restricted circumstances. */
 	if (pid != curp->p_pid) {
 		/* Must exist and be one of our children... */
-		p = proc_find_pid_table_locked(pid);
+		p = proc_find_pid_table_locked(pid, false);
 		if (p == NULL || !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.363 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.364 2020/04/29 01:52:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -497,11 +497,11 @@ extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 int		proc_find_locked(struct lwp *, struct proc **, pid_t);
 proc_t *	proc_find_raw(pid_t);
 proc_t *	proc_find(pid_t);		/* Find process by ID */
+proc_t *	proc_find_lwpid(pid_t);		/* Find process by LWP ID */
 struct lwp *	proc_find_lwp(proc_t *, pid_t);	/* Find LWP in proc by ID */
+						/* Find LWP, acquire proc */
+struct lwp *	proc_find_lwp_acquire_proc(pid_t, proc_t **);
 struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
-
-struct lwp *	proc_seek_lwpid(pid_t);		/* Find LWP by ID only */
-void		proc_hide_lwpid(pid_t);		/* Hide LWP ID from seekers */
 
 void	procinit(void);
 void	procinit_sysctl(void);
