@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.79 2020/04/29 01:56:54 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.80 2020/04/29 07:18:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -209,11 +209,12 @@ struct vfs_namemap {
 int vfs_getuserstr(struct uio *, char *, int *);
 const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, const char *, int);
 
+struct mount;
+
 struct proc *procfs_proc_find(struct mount *, pid_t);
 bool procfs_use_linux_compat(struct mount *);
 int procfs_proc_lock(struct mount *, int, struct proc **, int);
 void procfs_proc_unlock(struct proc *);
-struct mount;
 int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int);
 int procfs_donote(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
