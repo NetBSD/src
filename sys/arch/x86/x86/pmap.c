@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334.2.1 2020/04/29 13:39:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334 2019/06/01 08:12:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.1 2020/04/29 13:39:23 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -818,7 +818,6 @@ pat_init(struct cpu_info *ci)
 
 	wrmsr(MSR_CR_PAT, pat);
 	cpu_pat_enabled = true;
-	aprint_debug_dev(ci->ci_dev, "PAT enabled\n");
 }
 
 static pt_entry_t
