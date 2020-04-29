@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.6 2019/02/06 17:56:57 christos Exp $	*/
+/*	$NetBSD: cred.h,v 1.7 2020/04/29 05:54:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -31,6 +31,11 @@
 #ifndef _OPENSOLARIS_SYS_CRED_H_
 #define	_OPENSOLARIS_SYS_CRED_H_
 
+#ifdef _KERNEL
+/* Needed for access to cr_groups.  */
+#define	__KAUTH_PRIVATE
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -57,21 +62,10 @@ extern kauth_cred_t	cred0;
 	kauth_cred_setegid(cr, g), \
 	kauth_cred_setsvuid(cr, u), \
 	kauth_cred_setsvgid(cr, g), 0)
+#define crgetgroups(cr)		((cr)->cr_groups)
 #define	crsetgroups(cr, gc, ga)	\
     kauth_cred_setgroups(cr, ga, gc, 0, UIO_SYSSPACE)
 #define crgetsid(cr, i) (NULL)
-
-static __inline gid_t *
-crgetgroups(cred_t *cr)
-{
-	static gid_t gids[NGROUPS_MAX];
-
-	memset(gids, 0, sizeof(gids));
-	if (kauth_cred_getgroups(cr, gids, NGROUPS_MAX, UIO_SYSSPACE) != 0) 
-		return NULL;
-	
-	return gids;
-}
 
 static __inline int
 groupmember(gid_t gid, cred_t *cr) 
