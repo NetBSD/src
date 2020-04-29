@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.47 2020/01/27 22:05:10 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.48 2020/04/29 01:53:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.47 2020/01/27 22:05:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.48 2020/04/29 01:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -230,6 +230,9 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	struct sched_param lparams;
 	struct lwp *t;
 	int error, lpolicy;
+
+	if (pid < 0 || lid < 0)
+		return EINVAL;
 
 	t = lwp_find2(pid, lid); /* acquire p_lock */
 	if (t == NULL)
@@ -497,6 +500,9 @@ sys__sched_getaffinity(struct lwp *l,
 	struct lwp *t;
 	kcpuset_t *kcset;
 	int error;
+
+	if (SCARG(uap, pid) < 0 || SCARG(uap, lid) < 0)
+		return EINVAL;
 
 	error = genkcpuset(&kcset, SCARG(uap, cpuset), SCARG(uap, size));
 	if (error)
