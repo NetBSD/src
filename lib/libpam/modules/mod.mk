@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.15 2020/02/27 02:56:46 christos Exp $
+#	$NetBSD: mod.mk,v 1.16 2020/04/29 02:16:57 riastradh Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -21,6 +21,7 @@ LIBDPLIBS+=   pam     ${NETBSDSRCDIR}/lib/libpam/libpam
 libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 .else
 libinstall::
+CPPFLAGS+=	-DOPENPAM_STATIC_MODULES
 .endif
 
 .include <bsd.lib.mk>

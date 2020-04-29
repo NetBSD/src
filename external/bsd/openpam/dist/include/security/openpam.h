@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam.h,v 1.9 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam.h,v 1.10 2020/04/29 02:16:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -359,7 +359,7 @@ struct pam_module {
 # define PAM_SOEXT ".so"
 #endif
 
-#if (defined(__GNUC__) || defined(__PCC__)) && !defined(NO_STATIC_MODULES)
+#if (defined(__GNUC__) || defined(__PCC__)) && defined(OPENPAM_STATIC_MODULES)
 # include <sys/cdefs.h>
 # ifdef __FreeBSD__
 #  include <linker_set.h>
@@ -369,7 +369,6 @@ struct pam_module {
 #  define SET_DECLARE(a, b) __link_set_decl(a, b)
 #  define SET_FOREACH(a, b) __link_set_foreach(a, b)
 # endif
-# define OPENPAM_STATIC_MODULES
 # define PAM_EXTERN static
 # define PAM_MODULE_ENTRY(name)						\
 	static char _pam_name[] = name PAM_SOEXT;			\
