@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.82 2019/04/10 18:49:04 maxv Exp $ */
+/* $NetBSD: kauth.h,v 1.82.4.1 2020/04/29 13:47:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -55,7 +55,11 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 typedef	struct kauth_key       *kauth_key_t;
 
 #ifdef __KAUTH_PRIVATE	/* For the debugger */
-/* 
+
+#include <sys/types.h>
+#include <sys/specificdata.h>
+
+/*
  * Credentials.
  *
  * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
@@ -84,6 +88,7 @@ struct kauth_cred {
 	gid_t cr_groups[NGROUPS];	/* group memberships */
 	specificdata_reference cr_sd;	/* specific data */
 };
+
 #endif
 
 /*
