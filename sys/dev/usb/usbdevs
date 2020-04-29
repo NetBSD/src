@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770.4.5 2020/04/24 17:28:21 martin Exp $
+$NetBSD: usbdevs,v 1.770.4.6 2020/04/29 13:53:51 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1923,6 +1923,12 @@ product INTEL TESTBOARD		0x9890	82930 test board
 
 product INTEL2 RMH		0x0020	Rate Matching Hub
 product INTEL2 RMH2		0x0024	Rate Matching Hub
+product INTEL2 RMH3		0x8000	Rate Matching Hub
+product INTEL2 RMH4		0x8001	Rate Matching Hub
+product INTEL2 RMH5		0x8002	Rate Matching Hub
+product INTEL2 RMH6		0x8008	Rate Matching Hub
+product INTEL2 RMH7		0x8009	Rate Matching Hub
+product INTEL2 RMH8		0x800a	Rate Matching Hub
 product INTEL2 N_6235_BT	0x07da	Advanced-N 6235 Combo Bluetooth
 
 /* Intersil products */
