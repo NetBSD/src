@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.16 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.16.16.1 2020/04/29 13:36:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.16 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.16.16.1 2020/04/29 13:36:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1549,8 +1549,8 @@ acpidisp_vga_bind_outdevs(struct acpidisp_vga_softc *asc)
 			}
 		}
 		if (i == oi->oi_dev_count)
-			aprint_error_dev(asc->sc_dev,
-			    "unknown output device %s\n",
+			aprint_debug_dev(asc->sc_dev,
+			    "output device %s not connected\n",
 			    device_xname(osc->sc_dev));
 	}
 }
