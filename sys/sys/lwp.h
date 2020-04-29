@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.208 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: lwp.h,v 1.209 2020/04/29 01:52:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -349,7 +349,6 @@ kmutex_t *lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
-lwp_t *	lwp_getref_lwpid(lwpid_t);
 void	lwp_delref(lwp_t *);
 void	lwp_delref2(lwp_t *);
 bool	lwp_drainrefs(lwp_t *);
