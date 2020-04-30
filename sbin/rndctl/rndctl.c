@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.31 2019/12/06 14:43:18 riastradh Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.32 2020/04/30 03:24:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,13 +33,14 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.31 2019/12/06 14:43:18 riastradh Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.32 2020/04/30 03:24:48 riastradh Exp $");
 #endif
 
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/rndio.h>
 #include <sys/sha3.h>
 
@@ -192,9 +193,8 @@ do_save(const char *filename, const void *extra, size_t nextra,
 	    MIN(sizeof(rs.data), UINT32_MAX/NBBY)*NBBY);
 
 	/*
-	 * Compute the checksum on the 32-bit entropy count, in host
-	 * byte order (XXX this means it is not portable across
-	 * different-endian platforms!), followed by the seed data.
+	 * Compute the checksum on the 32-bit entropy count, followed
+	 * by the seed data.
 	 */
 	SHA1Init(&s);
 	SHA1Update(&s, (const uint8_t *)&rs.entropy, sizeof(rs.entropy));
@@ -307,6 +307,17 @@ do_load(const char *filename)
 		 */
 		warnx("bad checksum");
 		rs.entropy = 0;
+	}
+
+	/*
+	 * If the entropy is insensibly large, try byte-swapping.
+	 * Otherwise assume the file is corrupted and act as though it
+	 * has zero entropy.
+	 */
+	if (howmany(rs.entropy, NBBY) > sizeof(rs.data)) {
+		rs.entropy = bswap32(rs.entropy);
+		if (howmany(rs.entropy, NBBY) > sizeof(rs.data))
+			rs.entropy = 0;
 	}
 
 	/* Format the ioctl request.  */
