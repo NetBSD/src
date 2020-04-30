@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.47 2020/04/29 13:56:12 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.48 2020/04/30 16:20:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2359,4 +2359,32 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	usbdevs: more Intel Integrated Rate Matching Hub IDs.
 	[nia, ticket #873]
+
+sys/kern/subr_cprng.c				1.34
+
+	Disable rngtest on output of cprng_strong.
+	[riastradh, ticket #874]
+
+share/man/man4/audio.4				1.102,1.103
+sys/dev/audio/audio.c				1.43,1.59
+
+	Fix playing multi channel audio files on non multi channel hardware.
+	[isaki, ticket #875]
+
+sys/dev/audio/audio.c				1.60,1.62
+
+	Restore backward compatibility with netbsd-7 audio.
+	[isaki, ticket #876]
+
+sys/dev/audio/audio.c				1.41,1.48,1.55,1.63 (patch),
+						1.64
+sys/dev/audio/audiovar.h			1.7, 1.11
+
+	auido(4): fix several potential problems.
+	[isaki, ticket #877]
+
+crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.16
+
+	Fix the detection of KERN_ARND by OpenSSL.
+	[nia, ticket #878]
 
