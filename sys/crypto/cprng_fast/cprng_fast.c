@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.14 2020/04/30 03:29:35 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.15 2020/04/30 03:29:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.14 2020/04/30 03:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.15 2020/04/30 03:29:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.14 2020/04/30 03:29:35 riastradh Ex
 #include <sys/cprng.h>
 #include <sys/cpu.h>
 #include <sys/entropy.h>
+#include <sys/evcnt.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/percpu.h>
 
 /* ChaCha core */
@@ -198,6 +200,7 @@ struct cprng_fast {
 	uint32_t 	buffer[crypto_core_OUTPUTWORDS];
 	uint32_t 	key[crypto_core_KEYWORDS];
 	uint32_t 	nonce[crypto_core_INPUTWORDS];
+	struct evcnt	*reseed_evcnt;
 	unsigned	epoch;
 };
 
@@ -221,14 +224,14 @@ cprng_fast_init(void)
 {
 
 	crypto_core_selftest();
-	cprng_fast_percpu = percpu_alloc(sizeof(struct cprng_fast));
-	percpu_foreach(cprng_fast_percpu, &cprng_fast_init_cpu, NULL);
+	cprng_fast_percpu = percpu_create(sizeof(struct cprng_fast),
+	    cprng_fast_init_cpu, NULL, NULL);
 	cprng_fast_softint = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    &cprng_fast_intr, NULL);
 }
 
 static void
-cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
+cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci)
 {
 	struct cprng_fast *const cprng = p;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
@@ -237,6 +240,11 @@ cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
 	cprng_strong(kern_cprng, seed, sizeof seed, 0);
 	cprng_fast_seed(cprng, seed);
 	(void)explicit_memset(seed, 0, sizeof seed);
+
+	cprng->reseed_evcnt = kmem_alloc(sizeof(*cprng->reseed_evcnt),
+	    KM_SLEEP);
+	evcnt_attach_dynamic(cprng->reseed_evcnt, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "cprng_fast reseed");
 }
 
 static inline int
@@ -285,6 +293,7 @@ cprng_fast_intr(void *cookie __unused)
 	s = splvm();
 	cprng_fast_seed(cprng, seed);
 	cprng->epoch = epoch;
+	cprng->reseed_evcnt->ev_count++;
 	splx(s);
 	percpu_putref(cprng_fast_percpu);
 
