@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.138 2020/04/30 12:17:01 thorpej Exp $	*/
+/*	$NetBSD: kdump.c,v 1.139 2020/04/30 15:12:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.138 2020/04/30 12:17:01 thorpej Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.139 2020/04/30 15:12:25 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -661,7 +661,7 @@ futexput(u_long op)
 	const char *s = "";
 
 	if (opname == NULL) {
-		printf("%#lx", op & FUTEX_CMD_MASK);
+		printf("%#lx", op & (u_long)FUTEX_CMD_MASK);
 	} else {
 		fputs(opname, stdout);
 	}
