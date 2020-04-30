@@ -1,4 +1,4 @@
-/*	$NetBSD: pollpal.c,v 1.1 2020/04/30 00:48:10 christos Exp $	*/ 
+/*	$NetBSD: pollpal.c,v 1.2 2020/04/30 07:07:22 mrg Exp $	*/ 
 
 /*-
 * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,12 +27,13 @@
 */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.1 2020/04/30 00:48:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.2 2020/04/30 07:07:22 mrg Exp $");
 
 #include <sys/module.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 
 #include <sys/condvar.h>
 #include <sys/conf.h>
