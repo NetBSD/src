@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.195 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: emul.c,v 1.196 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.195 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.196 2020/04/30 03:28:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -128,8 +128,6 @@ struct emul emul_netbsd = {
 #endif
 	.e_sc_autoload = netbsd_syscalls_autoload,
 };
-
-cprng_strong_t *kern_cprng;
 
 /* not used, but need the symbols for pointer comparisons */
 syncobj_t mutex_syncobj, rw_syncobj;

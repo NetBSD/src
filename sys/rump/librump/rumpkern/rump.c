@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.346 2020/04/25 15:42:15 bouyer Exp $	*/
+/*	$NetBSD: rump.c,v 1.347 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.346 2020/04/25 15:42:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.347 2020/04/30 03:28:19 riastradh Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -321,10 +321,6 @@ rump_init(void)
 #endif /* RUMP_USE_CTOR */
 
 	rnd_init();
-	cprng_init();
-	kern_cprng = cprng_strong_create("kernel", IPL_VM,
-	    CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
-
 	rump_hyperentropy_init();
 
 	procinit();
@@ -392,6 +388,7 @@ rump_init(void)
 	ncpuonline = ncpu;
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
+	cprng_init();
 	cprng_fast_init();
 
 	mp_online = true;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.47 2019/12/14 17:24:43 riastradh Exp $
+#	$NetBSD: Makefile.libkern,v 1.48 2020/04/30 03:28:19 riastradh Exp $
 
 #
 # Variable definitions for libkern.
@@ -35,6 +35,7 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libppath/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
+CPPFLAGS+=	-I${KERNDIR}/../../../common/libc/hash/sha3
 
 .PATH.c: ${KERNDIR}
 .if exists ($M/Makefile.inc)
@@ -93,6 +94,8 @@ SRCS+=	hexdump.c
 
 # for crypto
 SRCS+=	explicit_memset.c consttime_memequal.c
+
+SRCS+=	entpool.c
 
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 SRCS+=	cdbr.c
