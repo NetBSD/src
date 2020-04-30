@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.4 2020/04/30 16:50:00 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.5 2020/04/30 17:16:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.4 2020/04/30 16:50:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.5 2020/04/30 17:16:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2000,7 +2000,9 @@ entropy_ioctl(unsigned long cmd, void *data)
 				break;
 		}
 		while (i < stat->count && rs != NULL) {
+			mutex_exit(&E->lock);
 			rndsource_to_user(rs, &stat->source[i++]);
+			mutex_enter(&E->lock);
 			rs = LIST_NEXT(rs, list);
 		}
 		KASSERT(i <= stat->count);
