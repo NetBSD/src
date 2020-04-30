@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.2 2020/04/30 03:42:23 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.3 2020/04/30 16:43:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.2 2020/04/30 03:42:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.3 2020/04/30 16:43:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -932,29 +932,32 @@ entropy_softintr(void *cookie)
 static void
 entropy_thread(void *cookie)
 {
+	bool consolidate;
 
 	for (;;) {
 		/*
-		 * Wait until someone wants to consolidate or there's
-		 * full entropy somewhere among the CPUs, as confirmed
-		 * at most once per minute.
+		 * Wait until there's full entropy somewhere among the
+		 * CPUs, as confirmed at most once per minute, or
+		 * someone wants to consolidate.
 		 */
-		mutex_enter(&E->lock);
-		for (;;) {
-			if (E->consolidate ||
-			    entropy_pending() >= ENTROPY_CAPACITY*NBBY) {
-				E->consolidate = false;
-				break;
-			}
-			cv_timedwait(&E->cv, &E->lock, 60*hz);
+		if (entropy_pending() >= ENTROPY_CAPACITY*NBBY) {
+			consolidate = true;
+		} else {
+			mutex_enter(&E->lock);
+			if (!E->consolidate)
+				cv_timedwait(&E->cv, &E->lock, 60*hz);
+			consolidate = E->consolidate;
+			E->consolidate = false;
+			mutex_exit(&E->lock);
 		}
-		mutex_exit(&E->lock);
 
-		/* Do it.  */
-		entropy_consolidate();
+		if (consolidate) {
+			/* Do it.  */
+			entropy_consolidate();
 
-		/* Mitigate abuse.  */
-		kpause("entropy", false, hz, NULL);
+			/* Mitigate abuse.  */
+			kpause("entropy", false, hz, NULL);
+		}
 	}
 }
 
@@ -969,7 +972,6 @@ entropy_pending(void)
 	uint32_t pending = 0;
 
 	percpu_foreach(entropy_percpu, &entropy_pending_cpu, &pending);
-
 	return pending;
 }
 
