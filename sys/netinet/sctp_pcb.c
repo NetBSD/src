@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.20 2020/01/19 20:51:13 riastradh Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.21 2020/04/30 03:30:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.20 2020/01/19 20:51:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.21 2020/04/30 03:30:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.20 2020/01/19 20:51:13 riastradh Exp 
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
-#include <sys/rnd.h>
 #include <sys/callout.h>
 
 #include <machine/limits.h>
