@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.27 2019/12/07 12:26:05 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.28 2020/04/30 03:28:18 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 10, 2014
+.Dd April 25, 2020
 .Dt RND 9
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nd functions to make a device available for entropy collection
 .Sh SYNOPSIS
 .In sys/rndsource.h
+.Vt typedef struct krndsource krndsource_t;
 .Ft void
 .Fn rndsource_setcb "krndsource_t *rnd_source" "void (*callback)(size_t, void *)" "void *cookie"
 .Ft void
@@ -53,45 +54,87 @@
 .Ft void
 .Fn rnd_add_uint32 "krndsource_t *rnd_source" "uint32_t datum"
 .Sh DESCRIPTION
-These
+The
 .Nm
-functions make a device available for entropy collection for
-the kernel entropy pool, which provides key material for the
+functions enable drivers to collect samples of physical observations,
+such as network packet timings or hardware random number generator
+outputs, into a kernel entropy pool to derive key material for
 .Xr cprng 9
 and
 .Xr rnd 4
-.Pa ( /dev/random )
-interfaces.
+.Pq Pa /dev/random , Pa /dev/urandom .
 .Pp
-The caller must zero an
-.Fa rnd_source
-object before using it.
-Ideally the first argument
-.Fa rnd_source
-of these functions gets included in the devices' entity struct,
-but any means to permanently (statically) attach one such argument
-to one incarnation of the device is ok.
-Do not share
-.Fa rnd_source
-structures between two devices, and make sure to serialize all access
-to each
-.Fa rnd_source ,
-for example with
-.Xr mutex 9 .
-.Bl -tag -width 8n
-.It Fn rndsource_setcb "krndsource_t *rnd_source" "void (*callback)(size_t, void *)" "void *cookie"
-This function sets a callback to be invoked when the kernel entropy
-pool is hungry.
-It is optional; if used, it must be used
+Usage model:
+.Bl -enum -compact
+.It
+Allocate and zero a
+.Vt struct krndsource
+object before using the
+.Nm
+functions.
+.It
+Optionally, set a callback with
+.Fn rndsource_setcb
+if appropriate, e.g. for an on-demand hardware random number
+generator.
+.It
+Attach the random source with
+.Fn rnd_attach_source .
+.It
+Enter data with
+.Fn rnd_add_data
+or
+.Fn rnd_add_uint32 ,
+or, if in the callback,
+.Fn rnd_add_data_sync .
+.It
+When the driver is done, detach it with
+.Fn rnd_detach_source .
+.El
+.Pp
+The following types of random sources are defined:
+.Bl -tag -width "Dv RND_TYPE_UNKNOWN" -compact
+.It Dv RND_TYPE_DISK
+Disk devices, typically sampling seek timings.
+.It Dv RND_TYPE_ENV
+Environmental sensors.
+.It Dv RND_TYPE_POWER
+Power sensors and timing of power-related events.
+.It Dv RND_TYPE_NET
+Network interfaces, typically sampling packet timings.
+By default, sample from network interfaces are ignored, for hysterical
+raisins.
+.It Dv RND_TYPE_RNG
+Hardware random number generators.
+.It Dv RND_TYPE_SKEW
+Skew between clocks.
+.It Dv RND_TYPE_TAPE
+Tape devices, typically sampling I/O timings.
+.It Dv RND_TYPE_TTY
+Tty devices, typically sampling interrupt timings.
+.It Dv RND_TYPE_VM
+Virtual memory fault timings.
+.It Dv RND_TYPE_UNKNOWN
+Unknown sources, or sources not otherwise classified.
+.El
+.Sh FUNCTIONS
+.Bl -tag -width abcd
+.It Fn rndsource_setcb "rnd_source" "callback" "cookie"
+Sets a callback to be invoked when the entropy pool is hungry
+to draw data from this source on demand.
+Optional; if used, must be used
 .Em before
 .Fn rnd_attach_source ,
 and the caller must pass
 .Dv RND_FLAG_HASCB
 to
-.Fn rnd_attach_source
-in order for the callback to be used.
+.Fn rnd_attach_source .
+.Pp
 The callback is invoked as
-.Fa callback ( Fa nbytes , Fa cookie ) ,
+.Fo callback
+.Fa nbytes
+.Fa cookie
+.Fc ,
 where
 .Fa nbytes
 is the number of bytes requested for the entropy pool, and
@@ -122,131 +165,101 @@ not
 or
 .Fn rnd_add_uint32 .
 .El
-.It Fn rnd_attach_source "krndsource_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
-This function announces the availability of a device for entropy collection.
-It must be called before the source struct pointed to by
+.It Fn rnd_attach_source "rnd_source" "devname" "type" "flags"
+Makes
+.Fa rnd_source
+available for entropy collection.
+Must be called
+.Em before
+the source struct pointed to by
 .Fa rnd_source
 is used in any of the following functions.
+If a callback was specified with
+.Fn rndsource_setcb ,
+the kernel may invoke it at any time after
+.Fn rnd_attach_source
+until
+.Fn rnd_detach_source ,
+so the callback must be ready to be invoked
+.Em before
+calling
+.Fn rnd_attach_source .
 .Pp
+The
 .Fa devname
-is the name of the device.
-It is used to print a message (if the kernel is compiled with
-``options RND_VERBOSE'') and also for status information printed with
-.Xr rndctl 8 .
-.Pp
-.Fa source_type
-is
-.Dv RND_TYPE_NET
-for network devices,
-.Dv RND_TYPE_DISK
-for physical disks,
-.Dv RND_TYPE_TAPE
-for a tape drive,
-.Dv RND_TYPE_TTY
-for a tty,
-.Dv RND_TYPE_RNG
-for a random number generator, and
-.Dv RND_TYPE_ENV
-for an environment sensor.
-.Dv RND_TYPE_UNKNOWN
-is not to be used as a type.
-It is used internally to the rnd system.
-.Pp
-.Fa flags
-are the logical OR of
-.Dv RND_FLAG_COLLECT_VALUE
-(mix data provided by this source into the pool)
-.Dv RND_FLAG_COLLECT_TIME
-(mix timestamps from this source into the pool)
-.Dv RND_FLAG_ESTIMATE_VALUE
-(use a delta estimator to count bits of entropy from this source's data towards
-the pool estimate)
-.Dv RND_FLAG_ESTIMATE_TIME
-(use a delta estimator to count bits of entropy from this source's timestamps
-towards the pool estimate)
-.Dv RND_FLAG_HASCB
-(caller specified a callback with
-.Fn rndsource_setcb ) .
-For many devices,
-.Dv RND_FLAG_DEFAULT
-.Dv ( RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME | RND_FLAG_ESTIMATE_TIME )
-is the best choice.
-Note that devices of type
-.Dv RND_TYPE_NET
-default to
-.Dv RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME
-(no entropy counted).
-.It Fn rnd_detach_source "krndsource_t *rnd_source"
-This function disconnects the device from entropy collection.
-.It Fn rnd_add_uint32 "krndsource_t *rnd_source" "uint32_t datum"
-This function adds the value of
-.Va datum
-to the entropy pool.
-No entropy is assumed to be collected from this value, it merely helps
-stir the entropy pool.
-All entropy is gathered from jitter between the timing of events.
-.Pp
-Note that using a constant for
-.Va datum
-does not weaken security, but it does
-not help.
-Try to use something that can change, such as an interrupt status register
-which might have a bit set for receive ready or transmit ready, or other
-device status information.
-.Pp
-To allow the system to gather the timing information accurately, this call
-should be placed within the actual hardware interrupt service routine.
-Care must be taken to ensure that the interrupt was actually serviced by
-the interrupt handler, since on some systems interrupts can be shared.
-.Pp
-This function loses nearly all usefulness if it is called from a scheduled
-software interrupt.
-If that is the only way to add the device as an entropy source, don't.
-.Pp
-If it is desired to mix in the
-.Va datum
-and to add in a timestamp, but not to actually estimate entropy from a source
-of randomness, passing
-.Dv NULL
-for
-.Va rnd_source
-is permitted, and the device does not need to be attached.
-.Pp
-.Fn rnd_add_uint32
-.Em must not
-be used during a callback as set with
-.Fn rndsource_setcb ;
-use
-.Fn rnd_add_data_sync
-instead.
-.It Fn rnd_add_data "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
-adds (hopefully) random
-.Fa data
-to the entropy pool.
-.Fa len
-is the number of bytes in
-.Fa data
+is exposed via
+.Xr rnd 4
 and
-.Fa entropy
-is an "entropy quality" measurement.
-If every bit of
+.Xr rndctl 8 .
+The
+.Fa type
+must be one of the
+.Dv RND_TYPE_*
+constants above.
+The
+.Fa flags
+are the bitwise-or of any of the following constants:
+.Bl -tag -width abcd
+.It Dv RND_FLAG_HASCB
+The random source has a callback, which must have been set with
+.Fn rndsource_setcb .
+.It Dv RND_FLAG_COLLECT_TIME
+Enter the timing of each
+.Fn rnd_add_*
+call into the entropy pool.
+If not set, at most only the data arguments to
+.Fn rnd_add_*
+will be entered.
+.It Dv RND_FLAG_COLLECT_VALUE
+Enter the data arguments passed to the
+.Fn rnd_add_*
+functions into the pool.
+If not set, the data will be ignored; at most the timing of the sample
+will be entered.
+.It Dv RND_FLAG_DEFAULT
+Equivalent to
+.Dv RND_FLAG_COLLECT_TIME | RND_FLAG_COLLECT_VALUE .
+.It Dv RND_FLAG_ESTIMATE_TIME , RND_FLAG_ESTIMATE_VALUE
+Legacy options no longer used.
+.El
+.It Fn rnd_detach_source "rnd_source"
+Disconnects
+.Fa rnd_source
+from entropy collection.
+The kernel will cease to invoke the callback, if any, and the caller
+must not use
+.Fa rnd_source
+with any of the
+.Fn rnd_add_*
+functions after
+.Fn rnd_detach_source .
+The caller may release the memory for
+.Fa rnd_source
+afterward.
+.It Fn rnd_add_data "rnd_source" "data" "len" "entropy"
+Enters
+.Fa len
+bytes at
 .Fa data
-is known to be random,
+into the entropy pool, if
+.Dv RND_FLAG_COLLECT_VALUE
+was specified for
+.Fa rnd_source ,
+and a timestamp, if
+.Dv RND_FLAG_COLLECT_TIME
+was specified.
+.Pp
+The argument
 .Fa entropy
-is the number of bits in
-.Fa data .
-.Pp
-Timing information is also used to add entropy into the system, using
-inter-event timings.
-.Pp
-If it is desired to mix in the
-.Va data
-and to add in a timestamp, but not to actually estimate entropy from a source
-of randomness, passing
-.Dv NULL
-for
-.Va rnd_source
-is permitted, and the device does not need to be attached.
+provides a conservative estimate for the number of bits of entropy in
+the
+.Em physical process
+that generated the data, given all the past samples.
+Drivers for devices for which this is not known should pass zero;
+typically only drivers for hardware random number generators pass
+nonzero values.
+Hardware random number generator drivers should perform on-line
+self-tests before advertising nonzero entropy for samples.
 .Pp
 .Fn rnd_add_data
 .Em must not
@@ -255,45 +268,86 @@ be used during a callback as set with
 use
 .Fn rnd_add_data_sync
 instead.
+.It Fn rnd_add_data_sync "rnd_source" "data" "len" "entropy"
+Like
+.Fn rnd_add_data ,
+but may be used in a callback as set with
+.Fn rndsource_setcb .
+.It Fn rnd_add_uint32 "rnd_source" "datum"
+Equivalent to
+.Li "rnd_add_data(" Ns Fa rnd_source Ns Li ", &" Ns datum Ns Li ", 4, 0)" .
+.Pp
+.Fn rnd_add_uint32
+.Em must not
+be used during a callback as set with
+.Fn rndsource_setcb ;
+use
+.Fn rnd_add_data_sync
+instead.
 .El
-.Sh INTERNAL ENTROPY POOL MANAGEMENT
-When a hardware event occurs (such as completion of a hard drive
-transfer or an interrupt from a network device) a timestamp is
-generated.
-This timestamp is compared to the previous timestamp
-recorded for the device, and the first, second, and third order
-differentials are calculated.
-.Pp
-If any of these differentials is zero, no entropy is assumed to
-have been gathered.
-If all are non-zero, one bit is assumed.
-Next, data is mixed into the entropy pool using an LFSR (linear
-feedback shift register).
-.Pp
-To extract data from the entropy pool, a cryptographically strong hash
-function is used.
-The output of this hash is mixed back into the pool using the LFSR,
-and then folded in half before being returned to the caller.
-.Pp
-Mixing the actual hash into the pool causes the next extraction to
-return a different value, even if no timing events were added to the
-pool.
-Folding the data in half prevents the caller to derive the
-actual hash of the pool, preventing some attacks.
-.Pp
-In the
-.Nx
-kernel, values should be extracted from the entropy pool
-.Em only
-via the
-.Xr cprng 9
-interface.
-Direct access to the entropy pool is unsupported and may be dangerous.
-There is no supported API for direct access to the output of the entropy pool.
-.\" .Sh ERRORS
 .Sh FILES
 These functions are declared in src/sys/sys/rndsource.h and defined in
-src/sys/kern/kern_rndq.c.
+src/sys/kern/kern_entropy.c.
+.Sh EXAMPLES
+.Bd -literal
+struct xyz_softc {
+	...
+	struct krndsource	sc_rndsource;
+};
+
+static void
+xyz_attach(device_t parent, device_t self, void *aux)
+{
+	struct xyz_softc *sc = device_private(self);
+	...
+	rndsource_setcb(&sc->sc_rndsource, xyz_get, sc);
+	rnd_attach_source(&sc->sc_rndsource, device_xname(self),
+	    RND_TYPE_RNG, RND_FLAG_DEFAULT);
+}
+
+static int
+xyz_detach(device_t self, int flags)
+{
+	...
+	rnd_detach_source(&sc->sc_rndsource);
+	...
+	return 0;
+}
+
+static void
+xyz_get(size_t nbytes, void *cookie)
+{
+	struct xyz_softc *sc = cookie;
+	uint32_t v;
+	unsigned timo = 10;
+
+	while (nbytes) {
+		while (bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+			XYZ_RNGREADY) == 0) {
+			if (--timo == 0)
+				return;
+			DELAY(10);
+		}
+		v = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    XYZ_RNGDATUM);
+		/* data sheet sez 18 bits entropy in 32-bit sample */
+		rnd_add_data_sync(&sc->sc_rndsource, &v, sizeof v, 18);
+		nbytes -= 18/NBBY;
+	}
+}
+
+static void
+xyz_intr(void *cookie)
+{
+	struct xyz_softc *sc = cookie;
+	uint32_t isr;
+
+	isr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XYZ_ISR);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XYZ_ISR, isr);
+	rnd_add_uint32(&sc->sc_rndsource, isr);
+	...
+}
+.Ed
 .Sh SEE ALSO
 .Xr rnd 4 ,
 .Xr rndctl 8 ,
@@ -301,12 +355,10 @@ src/sys/kern/kern_rndq.c.
 .Sh HISTORY
 The random device was introduced in
 .Nx 1.3 .
+It was substantially rewritten in
+.Nx 6.0 ,
+and again in
+.Nx 10.0 .
 .Sh AUTHORS
 This implementation was written by
-.An Michael Graff Aq Mt explorer@flame.org
-using ideas and algorithms gathered from many sources, including
-the driver written by Ted Ts'o.
-.Sh BUGS
-The only good sources of randomness are quantum mechanical, and most
-computers avidly avoid having true sources of randomness included.
-Don't expect to surpass "pretty good".
+.An Taylor R Campbell Aq Mt riastradh@NetBSD.org .
