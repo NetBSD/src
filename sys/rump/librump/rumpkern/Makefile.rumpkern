@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.182 2020/01/15 17:55:44 ad Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.183 2020/04/30 03:28:19 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -70,6 +70,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_cfglock.c		\
 	kern_clock.c		\
 	kern_descrip.c		\
+	kern_entropy.c		\
 	kern_event.c		\
 	kern_hook.c		\
 	kern_ksyms.c		\
@@ -83,9 +84,6 @@ SRCS+=	init_sysctl_base.c	\
 	kern_rate.c		\
 	kern_reboot.c		\
 	kern_resource.c		\
-	kern_rndpool.c		\
-	kern_rndq.c		\
-	kern_rndsink.c		\
 	kern_rwlock_obj.c	\
 	kern_scdebug.c		\
 	kern_stub.c		\

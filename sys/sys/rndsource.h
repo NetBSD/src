@@ -1,12 +1,11 @@
-/*	$NetBSD: rndsource.h,v 1.6 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.7 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.  This code uses ideas and
- * algorithms from the Linux driver written by Ted Ts'o.
+ * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,11 +37,17 @@
 #endif
 
 #include <sys/types.h>
-#include <sys/null.h>
-#include <sys/rndio.h>		/* RND_TYPE_*, RND_FLAG_* */
-#include <sys/rngtest.h>
 #include <sys/queue.h>
+#include <sys/rndio.h>
+#include <sys/rngtest.h>
 
+struct percpu;
+
+/*
+ * struct rnd_delta_estimator
+ *
+ *	Unused.  Preserved for ABI compatibility.
+ */
 typedef struct rnd_delta_estimator {
 	uint64_t	x;
 	uint64_t	dx;
@@ -51,72 +56,45 @@ typedef struct rnd_delta_estimator {
 	uint64_t	outbits;
 } rnd_delta_t;
 
-typedef struct krndsource {
+/*
+ * struct krndsource
+ *
+ *	State for an entropy source.  To be allocated by a driver for a
+ *	hardware entropy source, and treated as opaque.
+ *
+ *	There are a number of unused fields in order to preserve ABI
+ *	compatibility with the old implementation.
+ */
+struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
         char            name[16];       /* device name */
-	rnd_delta_t	time_delta;	/* time delta estimator */
-	rnd_delta_t	value_delta;	/* value delta estimator */
-        uint32_t        total;          /* entropy from this source */
-        uint32_t        type;           /* type */
-        uint32_t        flags;          /* flags */
-        void            *state;         /* state information */
-        size_t          test_cnt;       /* how much test data accumulated? */
+	rnd_delta_t	time_delta;	/* unused */
+	rnd_delta_t	value_delta;	/* unused */
+        uint32_t        total;          /* number of bits added while cold */
+        uint32_t        type;           /* type, RND_TYPE_* */
+        uint32_t        flags;          /* flags, RND_FLAG_* */
+        void            *state;         /* percpu (struct rndsource_cpu *) */
+        size_t          test_cnt;       /* unused */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
-	void		(*enable)(struct krndsource *, bool); /* turn on/off */
-	rngtest_t	*test;		/* test data for RNG type sources */
-	unsigned	refcnt;
-} krndsource_t;
+	void		(*enable)(struct krndsource *, bool); /* unused */
+	rngtest_t	*test;		/* unused */
+	unsigned	refcnt;		/* unused */
+};
 
-static __inline void
-rndsource_setcb(struct krndsource *const rs, void (*const cb)(size_t, void *),
-    void *const arg)
-{
-	rs->get = cb;
-	rs->getarg = arg;
-}
+typedef struct krndsource krndsource_t;
 
-static __inline void
-rndsource_setenable(struct krndsource *const rs, void *const cb)
-{
-	rs->enable = cb;
-}
+void	rndsource_setcb(struct krndsource *, void (*)(size_t, void *), void *);
+void	rnd_attach_source(struct krndsource *, const char *, uint32_t,
+	    uint32_t);
+void	rnd_detach_source(struct krndsource *);
 
-#define RND_ENABLED(rp) \
-        (((rp)->flags & RND_FLAG_NO_COLLECT) == 0)
+void	_rnd_add_uint32(struct krndsource *, uint32_t); /* legacy */
+void	_rnd_add_uint64(struct krndsource *, uint64_t); /* legacy */
 
-void		_rnd_add_uint32(krndsource_t *, uint32_t);
-void		_rnd_add_uint64(krndsource_t *, uint64_t);
-void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
-		    uint32_t);
-void		rnd_add_data_sync(krndsource_t *, const void *, uint32_t,
-		    uint32_t);
-void		rnd_attach_source(krndsource_t *, const char *,
-		    uint32_t, uint32_t);
-void		rnd_detach_source(krndsource_t *);
-
-static __inline void
-rnd_add_uint32(krndsource_t *kr, uint32_t val)
-{
-	if (__predict_true(kr)) {
-		if (RND_ENABLED(kr)) {
-			_rnd_add_uint32(kr, val);
-		}
-	} else {
-		rnd_add_data(NULL, &val, sizeof(val), 0);
-	}
-}
-
-static __inline void
-rnd_add_uint64(krndsource_t *kr, uint64_t val)
-{
-	if (__predict_true(kr)) {
-		if (RND_ENABLED(kr)) {
-			_rnd_add_uint64(kr, val);
-		}
-	} else {
-		rnd_add_data(NULL, &val, sizeof(val), 0);
-	}
-}
+void	rnd_add_uint32(struct krndsource *, uint32_t);
+void	rnd_add_data(struct krndsource *, const void *, uint32_t, uint32_t);
+void	rnd_add_data_sync(struct krndsource *, const void *, uint32_t,
+	    uint32_t);
 
 #endif	/* _SYS_RNDSOURCE_H */

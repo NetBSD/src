@@ -1,12 +1,11 @@
-/*      $NetBSD: rnd_private.h,v 1.11 2015/04/14 13:14:20 riastradh Exp $     */
+/*	$NetBSD: entropy.h,v 1.1 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.  This code uses ideas and
- * algorithms from the Linux driver written by Ted Ts'o.
+ * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,41 +29,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_RNDPRIVATE_H
-#define _DEV_RNDPRIVATE_H
+#ifndef	_SYS_ENTROPY_H
+#define	_SYS_ENTROPY_H
 
-#include <sys/types.h>
-#include <sys/mutex.h>
-#include <sys/queue.h>
-#include <sys/rndio.h>
-#include <sys/rndpool.h>
-#include <sys/rndsource.h>
-
-/*
- * Number of bytes returned per hash.  This value is used in both
- * rnd.c and rndpool.c to decide when enough entropy exists to do a
- * hash to extract it.
- */
-#define RND_ENTROPY_THRESHOLD   10
-
-bool	rnd_extract(void *, size_t);
-bool	rnd_tryextract(void *, size_t);
-void	rnd_getmore(size_t);
-
-/*
- * Flag indicating rnd_init has run.
- */
-extern int		rnd_ready;
-
-/*
- * Debugging flags.
- */
-#ifdef RND_DEBUG
-extern int rnd_debug;
-#define	RND_DEBUG_WRITE		0x0001
-#define	RND_DEBUG_READ		0x0002
-#define	RND_DEBUG_IOCTL		0x0004
-#define	RND_DEBUG_SNOOZE	0x0008
+#ifndef _KERNEL
+#error This header is known to the state of California to cause cancer in users.
 #endif
 
-#endif	/* _DEV_RNDPRIVATE_H */
+#include <sys/types.h>
+
+#include <lib/libkern/entpool.h>
+
+struct knote;
+
+#define	ENTROPY_CAPACITY	ENTPOOL_CAPACITY	/* bytes */
+
+#define	ENTROPY_WAIT	0x01
+#define	ENTROPY_SIG	0x02
+
+void	entropy_bootrequest(void);
+unsigned entropy_epoch(void);
+int	entropy_extract(void *, size_t, int);
+int	entropy_poll(int);
+int	entropy_kqfilter(struct knote *);
+int	entropy_ioctl(unsigned long, void *);
+
+extern bool	entropy_depletion;
+
+#endif	/* _SYS_ENTROPY_H */
