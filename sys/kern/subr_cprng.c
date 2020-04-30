@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.27.10.2 2019/11/25 16:03:08 martin Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.27.10.3 2020/04/30 15:35:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.27.10.2 2019/11/25 16:03:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.27.10.3 2020/04/30 15:35:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.27.10.2 2019/11/25 16:03:08 martin 
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/rndsink.h>
-#if DIAGNOSTIC
-#include <sys/rngtest.h>
-#endif
 
 #include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 
@@ -66,9 +63,6 @@ static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
 static void	cprng_strong_reseed(struct cprng_strong *);
 static void	cprng_strong_reseed_from(struct cprng_strong *, const void *,
 		    size_t, bool);
-#if DIAGNOSTIC
-static void	cprng_strong_rngtest(struct cprng_strong *);
-#endif
 
 static rndsink_callback_t	cprng_strong_rndsink_callback;
 
@@ -450,47 +444,7 @@ cprng_strong_reseed_from(struct cprng_strong *cprng,
 		/* XXX Fix nist_hash_drbg API so this can't happen.  */
 		panic("cprng %s: NIST Hash_DRBG reseed failed",
 		    cprng->cs_name);
-
-#if DIAGNOSTIC
-	cprng_strong_rngtest(cprng);
-#endif
 }
-
-#if DIAGNOSTIC
-/*
- * Generate some output and apply a statistical RNG test to it.
- */
-static void
-cprng_strong_rngtest(struct cprng_strong *cprng)
-{
-
-	KASSERT(mutex_owned(&cprng->cs_lock));
-
-	/* XXX Switch to a pool cache instead?  */
-	rngtest_t *const rt = kmem_intr_alloc(sizeof(*rt), KM_NOSLEEP);
-	if (rt == NULL)
-		/* XXX Warn?  */
-		return;
-
-	(void)strlcpy(rt->rt_name, cprng->cs_name, sizeof(rt->rt_name));
-
-	if (nist_hash_drbg_generate(&cprng->cs_drbg, rt->rt_b,
-		sizeof(rt->rt_b), NULL, 0))
-		panic("cprng %s: NIST Hash_DRBG failed after reseed",
-		    cprng->cs_name);
-
-	if (rngtest(rt)) {
-		printf("cprng %s: failed statistical RNG test\n",
-		    cprng->cs_name);
-		/* XXX Not clear that this does any good...  */
-		cprng->cs_ready = false;
-		rndsink_schedule(cprng->cs_rndsink);
-	}
-
-	explicit_memset(rt, 0, sizeof(*rt)); /* paranoia */
-	kmem_intr_free(rt, sizeof(*rt));
-}
-#endif
 
 /*
  * Feed entropy from an rndsink request into the CPRNG for which the
