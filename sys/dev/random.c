@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.1 2020/04/30 03:28:18 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.2 2020/04/30 04:26:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,10 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.1 2020/04/30 03:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.2 2020/04/30 04:26:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/cprng.h>
 #include <sys/entropy.h>
