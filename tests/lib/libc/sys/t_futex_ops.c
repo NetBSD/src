@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.2 2020/04/28 17:27:03 riastradh Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.3 2020/04/30 04:18:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.2 2020/04/28 17:27:03 riastradh Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.3 2020/04/30 04:18:07 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: t_futex_ops.c,v 1.2 2020/04/28 17:27:03 riastradh Exp $");
 #include <lwp.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <time.h>
 #include <limits.h>
 #include <unistd.h>
@@ -166,12 +167,15 @@ simple_test_waiter_lwp(void *arg)
 
 	d->threadid = _lwp_self();
 
+	membar_producer();
 	atomic_inc_uint(&nlwps_running);
 	membar_sync();
 
 	if (__futex(d->futex_ptr, d->wait_op | d->op_flags,
 		    d->block_val, NULL, NULL, 0, d->bitset) == -1) {
 		d->futex_error = errno;
+		membar_sync();
+		atomic_dec_uint(&nlwps_running);
 		_lwp_exit();
 	} else {
 		d->futex_error = 0;
@@ -1262,6 +1266,74 @@ ATF_TC_BODY(futex_wait_timeout_deadline_rt, tc)
 
 /*****************************************************************************/
 
+static void
+sig_noop(int sig __unused)
+{
+}
+
+static void (*old_act)(int) = SIG_DFL;
+
+static void
+do_futex_wait_evil_unmapped(int map_flags)
+{
+	int i;
+
+	create_bs(map_flags);
+
+	old_act = signal(SIGUSR1, sig_noop);
+	ATF_REQUIRE(old_act != SIG_ERR);
+
+	setup_lwp_context(&lwp_data[0], simple_test_waiter_lwp);
+	lwp_data[0].op_flags = 0;
+	lwp_data[0].futex_error = -1;
+	lwp_data[0].futex_ptr = &bs_addr[0];
+	lwp_data[0].block_val = 0;
+	lwp_data[0].bitset = 0;
+	lwp_data[0].wait_op = FUTEX_WAIT;
+	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
+				&lwp_data[0].lwpid) == 0);
+
+	for (i = 0; i < 5; i++) {
+		membar_sync();
+		if (nlwps_running == 1)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "waiters failed to start");
+
+	/* Ensure it's blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+
+	/* Rudely unmap the backing store. */
+	cleanup_bs();
+
+	/* Signal the waiter so that it leaves the futex. */
+	ATF_REQUIRE(_lwp_kill(lwp_data[0].threadid, SIGUSR1) == 0);
+
+	/* Yay! No panic! */
+
+	reap_lwp_waiter(&lwp_data[0]);
+}
+
+ATF_TC_WITH_CLEANUP(futex_wait_evil_unmapped_anon);
+ATF_TC_HEAD(futex_wait_evil_unmapped_anon, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests futex WAIT while futex is unmapped - anon memory");
+}
+ATF_TC_BODY(futex_wait_evil_unmapped_anon, tc)
+{
+	do_futex_wait_evil_unmapped(MAP_ANON);
+}
+ATF_TC_CLEANUP(futex_wait_evil_unmapped_anon, tc)
+{
+	signal(SIGUSR1, old_act);
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, futex_basic_wait_wake_private);
@@ -1283,6 +1355,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, futex_wait_timeout_relative_rt);
 	ATF_TP_ADD_TC(tp, futex_wait_timeout_deadline);
 	ATF_TP_ADD_TC(tp, futex_wait_timeout_deadline_rt);
+
+	ATF_TP_ADD_TC(tp, futex_wait_evil_unmapped_anon);
 
 	ATF_TP_ADD_TC(tp, futex_requeue);
 	ATF_TP_ADD_TC(tp, futex_cmp_requeue);

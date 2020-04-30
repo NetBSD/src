@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.381 2020/04/19 08:59:53 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.382 2020/04/30 04:18:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.381 2020/04/19 08:59:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.382 2020/04/30 04:18:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4934,6 +4934,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 		if (anon) {
  found_anon:		KASSERT(anon->an_lock == entry->aref.ar_amap->am_lock);
 			anon->an_ref++;
+			rw_obj_hold(anon->an_lock);
 			KASSERT(anon->an_ref != 0);
 			voaddr->type = UVM_VOADDR_TYPE_ANON;
 			voaddr->anon = anon;
@@ -4987,16 +4988,16 @@ uvm_voaddr_release(struct uvm_voaddr * const voaddr)
 	    }
 	case UVM_VOADDR_TYPE_ANON: {
 		struct vm_anon * const anon = voaddr->anon;
+		krwlock_t *lock;
 
 		KASSERT(anon != NULL);
-		rw_enter(anon->an_lock, RW_WRITER);
+		rw_enter((lock = anon->an_lock), RW_WRITER);
 	    	KASSERT(anon->an_ref > 0);
-		anon->an_ref--;
-		if (anon->an_ref == 0) {
-			uvm_anon_release(anon);
-		} else {
-			rw_exit(anon->an_lock);
+		if (--anon->an_ref == 0) {
+			uvm_anfree(anon);
 		}
+		rw_exit(lock);
+		rw_obj_free(lock);
 	    	break;
 	    }
 	default:
