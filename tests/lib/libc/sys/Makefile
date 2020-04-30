@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.63 2020/04/26 18:53:33 thorpej Exp $
+# $NetBSD: Makefile,v 1.64 2020/04/30 11:03:29 ryo Exp $
 
 MKMAN=	no
 
@@ -70,6 +70,7 @@ TESTS_C+=		t_sendrecv
 TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
 TESTS_C+=		t_sigaction
+TESTS_C+=		t_sigaltstack
 TESTS_C+=		t_sigqueue
 TESTS_C+=		t_sigtimedwait
 TESTS_C+=		t_socketpair
