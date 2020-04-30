@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.523 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.524 2020/04/30 03:28:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.523 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.524 2020/04/30 03:28:18 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.523 2020/04/26 18:53:33 thorpej Exp 
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 #include "opt_ptrace.h"
-#include "opt_rnd_printf.h"
 #include "opt_splash.h"
 #include "opt_kernhist.h"
 #include "opt_gprof.h"
@@ -245,8 +244,6 @@ int	cold __read_mostly = 1;		/* still working on startup */
 int	shutting_down __read_mostly;	/* system is shutting down */
 
 int	start_init_exec;		/* semaphore for start_init() */
-
-cprng_strong_t	*kern_cprng;
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
@@ -398,8 +395,6 @@ main(void)
 	 */
 	rnd_init();		/* initialize entropy pool */
 
-	cprng_init();		/* initialize cryptographic PRNG */
-
 	/* Initialize process and pgrp structures. */
 	procinit();
 	lwpinit();
@@ -512,10 +507,6 @@ main(void)
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
 
-	/* Initialize the kernel strong PRNG. */
-	kern_cprng = cprng_strong_create("kernel", IPL_VM,
-					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
-
 	/* Initialize pfil */
 	pfil_init();
 
@@ -537,6 +528,8 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+
+	cprng_init();		/* initialize cryptographic PRNG */
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
@@ -561,11 +554,6 @@ main(void)
 
 	/* Enable deferred processing of RNG samples */
 	rnd_init_softint();
-
-#ifdef RND_PRINTF
-	/* Enable periodic injection of console output into entropy pool */
-	kprintf_init_callout();
-#endif
 
 	vmem_rehash_start();	/* must be before exec_init */
 

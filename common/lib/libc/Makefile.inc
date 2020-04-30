@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2019/06/04 15:07:55 hannken Exp $
+# $NetBSD: Makefile.inc,v 1.20 2020/04/30 03:28:18 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -45,3 +45,4 @@ CPPFLAGS+=-I${COMMON_DIR}/quad -I${COMMON_DIR}/string
 .if defined(COMMON_ARCHSUBDIR)
 CPPFLAGS+=-I${COMMON_ARCHDIR}/string
 .endif
+CPPFLAGS+=-I${COMMON_DIR}/hash/sha3

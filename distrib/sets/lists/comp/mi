@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2322 2020/04/26 18:53:31 thorpej Exp $
+#	$NetBSD: mi,v 1.2323 2020/04/30 03:28:18 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11814,7 +11814,7 @@
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_extract_data.0		comp-sys-catman		.cat
-./usr/share/man/cat9/rndsink.0			comp-sys-catman		.cat
+./usr/share/man/cat9/rndsink.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/rootconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/round_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
@@ -19744,7 +19744,7 @@
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_extract_data.html	comp-sys-htmlman	html
-./usr/share/man/html9/rndsink.html		comp-sys-htmlman	html
+./usr/share/man/html9/rndsink.html		comp-obsolete		obsolete
 ./usr/share/man/html9/rootconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/round_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
@@ -27855,7 +27855,7 @@
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_extract_data.9		comp-sys-man		.man
-./usr/share/man/man9/rndsink.9			comp-sys-man		.man
+./usr/share/man/man9/rndsink.9			comp-obsolete		obsolete
 ./usr/share/man/man9/rootconf.9			comp-sys-man		.man
 ./usr/share/man/man9/round_page.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
