@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.2 2016/12/17 15:24:35 riastradh Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.2 2016/12/17 15:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.2 2016/12/17 15:24:35 riastradh Ex
 #include <sys/conf.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <arm/omap/am335x_prcm.h>
@@ -119,8 +118,6 @@ trng_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	trng_callback(RND_POOLBITS / NBBY, sc);
 }
 
 static void
