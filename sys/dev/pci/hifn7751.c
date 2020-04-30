@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.66 2020/04/30 03:24:15 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.67 2020/04/30 03:40:53 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.66 2020/04/30 03:24:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.67 2020/04/30 03:40:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.66 2020/04/30 03:24:15 riastradh Exp 
 #else
 #include <opencrypto/cryptodev.h>
 #include <sys/cprng.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/sha1.h>
 #endif
@@ -439,7 +438,6 @@ hifn_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG)) {
 		hifn_init_pubrng(sc);
-		sc->sc_rng_need = RND_POOLBITS / NBBY;
 	}
 
 #ifdef	__OpenBSD__
@@ -619,9 +617,6 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		sc->sc_dmaier |= HIFN_DMAIER_PUBDONE;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
-
-	/* Call directly into the RNG once to prime the pool. */
-	hifn_rng(sc);   /* Sets callout/timeout at end */
 
 	return (0);
 }
