@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.36 2020/04/30 03:28:18 riastradh Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.37 2020/04/30 17:36:06 nia Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.36 2020/04/30 03:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.37 2020/04/30 17:36:06 nia Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -172,7 +172,7 @@ sysctl_kern_arandom(SYSCTLFN_ARGS)
 	 * the past, so let's not break compatibility.
 	 */
 	if (*oldlenp > 256)	/* size_t, so never negative */
-		return E2BIG;
+		*oldlenp = 256;
 
 	/* Generate data.  */
 	cprng_strong(user_cprng, buf, *oldlenp, 0);
