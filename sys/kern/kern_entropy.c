@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.6 2020/04/30 19:34:37 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.7 2020/04/30 20:06:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.6 2020/04/30 19:34:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.7 2020/04/30 20:06:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1596,7 +1596,7 @@ rnd_unlock_sources(void)
  *	True if we hold the list of rndsources locked, for diagnostic
  *	assertions.
  */
-static bool
+static bool __diagused
 rnd_sources_locked(void)
 {
 
