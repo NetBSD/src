@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.53 2020/04/30 16:50:17 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.54 2020/04/30 16:56:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.53 2020/04/30 16:50:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.54 2020/04/30 16:56:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ vmx_vmclear(paddr_t *pa)
 #define		INTR_INFO_ERROR			__BIT(11)
 #define		INTR_INFO_VALID			__BIT(31)
 #define VMCS_ENTRY_EXCEPTION_ERROR		0x00004018
-#define VMCS_ENTRY_INST_LENGTH			0x0000401A
+#define VMCS_ENTRY_INSTRUCTION_LENGTH		0x0000401A
 #define VMCS_TPR_THRESHOLD			0x0000401C
 #define VMCS_PROCBASED_CTLS2			0x0000401E
 #define		PROC_CTLS2_VIRT_APIC_ACCESSES	__BIT(0)
@@ -1896,7 +1896,7 @@ vmx_htlb_flush_ack(struct vmx_cpudata *cpudata, uint64_t machgen)
 static inline void
 vmx_exit_evt(struct vmx_cpudata *cpudata)
 {
-	uint64_t info, err;
+	uint64_t info, err, inslen;
 
 	cpudata->evt_pending = false;
 
@@ -1908,6 +1908,14 @@ vmx_exit_evt(struct vmx_cpudata *cpudata)
 
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
 	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, err);
+
+	switch (__SHIFTOUT(info, INTR_INFO_TYPE)) {
+	case INTR_TYPE_SW_INT:
+	case INTR_TYPE_PRIV_SW_EXC:
+	case INTR_TYPE_SW_EXC:
+		inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
+		vmx_vmwrite(VMCS_ENTRY_INSTRUCTION_LENGTH, inslen);
+	}
 
 	cpudata->evt_pending = true;
 }
