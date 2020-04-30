@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.9 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ualea.c,v 1.10 2020/04/30 03:24:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.9 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.10 2020/04/30 03:24:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -198,12 +198,9 @@ ualea_xfer(struct ualea_softc *sc)
 		return;
 
 	/* Issue xfer or complain if we can't.  */
-	/*
-	 * XXX Does USBD_NORMAL_COMPLETION (= 0) make sense here?  The
-	 * xfer can't complete synchronously because of the lock.
-	 */
 	status = usbd_transfer(sc->sc_xfer);
-	if (status && status != USBD_IN_PROGRESS) {
+	KASSERT(status != USBD_NORMAL_COMPLETION); /* asynchronous xfer */
+	if (status != USBD_IN_PROGRESS) {
 		aprint_error_dev(sc->sc_dev, "failed to issue xfer: %d\n",
 		    status);
 		/* We failed -- let someone else have a go.  */
