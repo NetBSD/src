@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.171 2020/04/27 20:46:01 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.172 2020/04/30 10:04:54 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.171 2020/04/27 20:46:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.172 2020/04/30 10:04:54 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -640,6 +640,14 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 
+        case SIOCGIFCAP:
+	    {
+		struct ifcapreq *ifcr = (struct ifcapreq *)data;
+                ifcr->ifcr_capabilities = sc->sc_capenable;
+                ifcr->ifcr_capenable = sc->sc_capenable;
+		break;
+	    }
+
 	default:
 		error = ifioctl_common(ifp, cmd, data);
 		break;
@@ -781,13 +789,16 @@ bridge_calc_csum_flags(struct bridge_softc *sc)
 	struct bridge_iflist *bif;
 	struct ifnet *ifs;
 	int flags = ~0;
+	int capenable = ~0;
 
 	BRIDGE_LOCK(sc);
 	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
 		ifs = bif->bif_ifp;
 		flags &= ifs->if_csum_flags_tx;
+		capenable &= ifs->if_capenable;
 	}
 	sc->sc_csum_flags_tx = flags;
+	sc->sc_capenable = capenable;
 	BRIDGE_UNLOCK(sc);
 }
 
