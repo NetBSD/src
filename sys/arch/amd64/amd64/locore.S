@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.202 2020/04/26 14:07:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.203 2020/04/30 17:17:33 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1588,6 +1588,26 @@ END(intrfastexit)
 	TEXT_USER_END
 
 	.section .rodata
+
+	/*
+	 * Hotpatch templates.
+	 */
+
+LABEL(hp_nolock)
+	nop
+LABEL(hp_nolock_end)
+
+LABEL(hp_retfence)
+	lfence
+LABEL(hp_retfence_end)
+
+LABEL(hp_clac)
+	clac
+LABEL(hp_clac_end)
+
+LABEL(hp_stac)
+	stac
+LABEL(hp_stac_end)
 
 #ifdef SVS
 	.globl	svs_enter, svs_enter_end

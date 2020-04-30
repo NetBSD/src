@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.42 2020/04/26 14:49:17 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.43 2020/04/30 17:17:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.42 2020/04/26 14:49:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.43 2020/04/30 17:17:33 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -174,6 +174,8 @@ void
 x86_patch(bool early)
 {
 	static bool first, second;
+	uint8_t *bytes;
+	size_t size;
 	u_long psl;
 	u_long cr0;
 
@@ -194,12 +196,11 @@ x86_patch(bool early)
 		/*
 		 * Uniprocessor: kill LOCK prefixes.
 		 */
-		const uint8_t bytes[] = {
-			X86_NOP
-		};
+		extern uint8_t hp_nolock, hp_nolock_end;
 
-		/* lock -> nop */
-		x86_hotpatch(HP_NAME_NOLOCK, bytes, sizeof(bytes));
+		bytes = &hp_nolock;
+		size = (size_t)&hp_nolock_end - (size_t)&hp_nolock;
+		x86_hotpatch(HP_NAME_NOLOCK, bytes, size);
 #endif
 	}
 
@@ -212,8 +213,6 @@ x86_patch(bool early)
 		 */
 		extern uint8_t sse2_lfence, sse2_lfence_end;
 		extern uint8_t sse2_mfence, sse2_mfence_end;
-		uint8_t *bytes;
-		size_t size;
 
 		bytes = &sse2_lfence;
 		size = (size_t)&sse2_lfence_end - (size_t)&sse2_lfence;
@@ -265,35 +264,30 @@ x86_patch(bool early)
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xe ||
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xf &&
 	    CPUID_TO_EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
-		const uint8_t bytes[] = {
-			0x0F, 0xAE, 0xE8 /* lfence */
-		};
+		extern uint8_t hp_retfence, hp_retfence_end;
 
-		/* ret,nop,nop -> lfence */
-		x86_hotpatch(HP_NAME_RETFENCE, bytes, sizeof(bytes));
+		bytes = &hp_retfence;
+		size = (size_t)&hp_retfence_end - (size_t)&hp_retfence;
+		x86_hotpatch(HP_NAME_RETFENCE, bytes, size);
 	}
 
 	/*
 	 * If SMAP is present then patch the prepared holes with clac/stac
 	 * instructions.
-	 *
-	 * clac = 0x0f, 0x01, 0xca
-	 * stac = 0x0f, 0x01, 0xcb
 	 */
 	if (!early && cpu_feature[5] & CPUID_SEF_SMAP) {
+		extern uint8_t hp_clac, hp_clac_end;
+		extern uint8_t hp_stac, hp_stac_end;
+
 		KASSERT(rcr4() & CR4_SMAP);
-		const uint8_t clac_bytes[] = {
-			0x0F, 0x01, 0xCA /* clac */
-		};
-		const uint8_t stac_bytes[] = {
-			0x0F, 0x01, 0xCB /* stac */
-		};
 
-		/* nop,nop,nop -> clac */
-		x86_hotpatch(HP_NAME_CLAC, clac_bytes, sizeof(clac_bytes));
+		bytes = &hp_clac;
+		size = (size_t)&hp_clac_end - (size_t)&hp_clac;
+		x86_hotpatch(HP_NAME_CLAC, bytes, size);
 
-		/* nop,nop,nop -> stac */
-		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
+		bytes = &hp_stac;
+		size = (size_t)&hp_stac_end - (size_t)&hp_stac;
+		x86_hotpatch(HP_NAME_STAC, bytes, size);
 	}
 
 	x86_patch_window_close(psl, cr0);
