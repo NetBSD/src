@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.3 2020/04/30 16:43:12 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.4 2020/04/30 16:50:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.3 2020/04/30 16:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.4 2020/04/30 16:50:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -161,13 +161,13 @@ struct {
 	unsigned	epoch;		/* (A) changes when needed -> 0 */
 	kcondvar_t	cv;		/* notifies state changes */
 	struct selinfo	selq;		/* notifies needed -> 0 */
+	struct lwp	*sourcelock;	/* lock on list of sources */
 	LIST_HEAD(,krndsource) sources;	/* list of entropy sources */
 	enum entropy_stage {
 		ENTROPY_COLD = 0, /* single-threaded */
 		ENTROPY_WARM,	  /* multi-threaded at boot before CPUs */
 		ENTROPY_HOT,	  /* multi-threaded multi-CPU */
 	}		stage;
-	bool		requesting;	/* busy requesting from sources */
 	bool		consolidate;	/* kick thread to consolidate */
 	bool		seed_rndsource;	/* true if seed source is attached */
 	bool		seeded;		/* true if seed file already loaded */
@@ -1514,15 +1514,92 @@ rnd_detach_source(struct krndsource *rs)
 	/* We may have to wait for entropy_request.  */
 	ASSERT_SLEEPABLE();
 
-	/* Remove it from the list and wait for entropy_request.  */
+	/* Wait until the source list is not in use, and remove it.  */
 	mutex_enter(&E->lock);
-	LIST_REMOVE(rs, list);
-	while (E->requesting)
+	while (E->sourcelock)
 		cv_wait(&E->cv, &E->lock);
+	LIST_REMOVE(rs, list);
 	mutex_exit(&E->lock);
 
 	/* Free the per-CPU data.  */
 	percpu_free(rs->state, sizeof(struct rndsource_cpu));
+}
+
+/*
+ * rnd_lock_sources()
+ *
+ *	Prevent changes to the list of rndsources while we iterate it.
+ *	Interruptible.  Caller must hold the global entropy lock.  If
+ *	successful, no rndsource will go away until rnd_unlock_sources
+ *	even while the caller releases the global entropy lock.
+ */
+static int
+rnd_lock_sources(void)
+{
+	int error;
+
+	KASSERT(mutex_owned(&E->lock));
+
+	while (E->sourcelock) {
+		error = cv_wait_sig(&E->cv, &E->lock);
+		if (error)
+			return error;
+	}
+
+	E->sourcelock = curlwp;
+	return 0;
+}
+
+/*
+ * rnd_trylock_sources()
+ *
+ *	Try to lock the list of sources, but if it's already locked,
+ *	fail.  Caller must hold the global entropy lock.  If
+ *	successful, no rndsource will go away until rnd_unlock_sources
+ *	even while the caller releases the global entropy lock.
+ */
+static bool
+rnd_trylock_sources(void)
+{
+
+	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
+
+	if (E->sourcelock)
+		return false;
+	E->sourcelock = curlwp;
+	return true;
+}
+
+/*
+ * rnd_unlock_sources()
+ *
+ *	Unlock the list of sources after rnd_lock_sources or
+ *	rnd_trylock_sources.  Caller must hold the global entropy lock.
+ */
+static void
+rnd_unlock_sources(void)
+{
+
+	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
+
+	KASSERTMSG(E->sourcelock == curlwp, "lwp %p releasing lock held by %p",
+	    curlwp, E->sourcelock);
+	E->sourcelock = NULL;
+	if (E->stage >= ENTROPY_WARM)
+		cv_broadcast(&E->cv);
+}
+
+/*
+ * rnd_sources_locked()
+ *
+ *	True if we hold the list of rndsources locked, for diagnostic
+ *	assertions.
+ */
+static bool
+rnd_sources_locked(void)
+{
+
+	return E->sourcelock == curlwp;
 }
 
 /*
@@ -1535,7 +1612,7 @@ rnd_detach_source(struct krndsource *rs)
 static void
 entropy_request(size_t nbytes)
 {
-	struct krndsource *rs, *next;
+	struct krndsource *rs;
 
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
 
@@ -1544,16 +1621,15 @@ entropy_request(size_t nbytes)
 	 * Otherwise, note that a request is in progress to avoid
 	 * reentry and to block rnd_detach_source until we're done.
 	 */
-	if (E->requesting)
+	if (!rnd_trylock_sources())
 		return;
-	E->requesting = true;
 	entropy_request_evcnt.ev_count++;
 
 	/* Clamp to the maximum reasonable request.  */
 	nbytes = MIN(nbytes, ENTROPY_CAPACITY);
 
 	/* Walk the list of sources.  */
-	LIST_FOREACH_SAFE(rs, &E->sources, list, next) {
+	LIST_FOREACH(rs, &E->sources, list) {
 		/* Skip sources without callbacks.  */
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
 			continue;
@@ -1567,9 +1643,7 @@ entropy_request(size_t nbytes)
 	}
 
 	/* Notify rnd_detach_source that the request is done.  */
-	E->requesting = false;
-	if (E->stage >= ENTROPY_WARM)
-		cv_broadcast(&E->cv);
+	rnd_unlock_sources();
 }
 
 /*
@@ -1740,7 +1814,7 @@ rndsource_entropybits(struct krndsource *rs)
 	unsigned nbits = rs->total;
 
 	KASSERT(E->stage >= ENTROPY_WARM);
-	KASSERT(mutex_owned(&E->lock));
+	KASSERT(rnd_sources_locked());
 	percpu_foreach(rs->state, rndsource_entropybits_cpu, &nbits);
 	return nbits;
 }
@@ -1766,7 +1840,7 @@ rndsource_to_user(struct krndsource *rs, rndsource_t *urs)
 {
 
 	KASSERT(E->stage >= ENTROPY_WARM);
-	KASSERT(mutex_owned(&E->lock));
+	KASSERT(rnd_sources_locked());
 
 	/* Avoid kernel memory disclosure.  */
 	memset(urs, 0, sizeof(*urs));
@@ -1789,7 +1863,7 @@ rndsource_to_user_est(struct krndsource *rs, rndsource_est_t *urse)
 {
 
 	KASSERT(E->stage >= ENTROPY_WARM);
-	KASSERT(mutex_owned(&E->lock));
+	KASSERT(rnd_sources_locked());
 
 	/* Avoid kernel memory disclosure.  */
 	memset(urse, 0, sizeof(*urse));
@@ -1916,6 +1990,11 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * as requested, and report how many we copied out.
 		 */
 		mutex_enter(&E->lock);
+		error = rnd_lock_sources();
+		if (error) {
+			mutex_exit(&E->lock);
+			return error;
+		}
 		LIST_FOREACH(rs, &E->sources, list) {
 			if (start++ == stat->start)
 				break;
@@ -1926,6 +2005,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		}
 		KASSERT(i <= stat->count);
 		stat->count = i;
+		rnd_unlock_sources();
 		mutex_exit(&E->lock);
 		break;
 	}
@@ -1944,16 +2024,24 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * as requested, and report how many we copied out.
 		 */
 		mutex_enter(&E->lock);
+		error = rnd_lock_sources();
+		if (error) {
+			mutex_exit(&E->lock);
+			return error;
+		}
 		LIST_FOREACH(rs, &E->sources, list) {
 			if (start++ == estat->start)
 				break;
 		}
 		while (i < estat->count && rs != NULL) {
+			mutex_exit(&E->lock);
 			rndsource_to_user_est(rs, &estat->source[i++]);
+			mutex_enter(&E->lock);
 			rs = LIST_NEXT(rs, list);
 		}
 		KASSERT(i <= estat->count);
 		estat->count = i;
+		rnd_unlock_sources();
 		mutex_exit(&E->lock);
 		break;
 	}
@@ -1968,14 +2056,23 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * out; if not found, fail with ENOENT.
 		 */
 		mutex_enter(&E->lock);
+		error = rnd_lock_sources();
+		if (error) {
+			mutex_exit(&E->lock);
+			return error;
+		}
 		LIST_FOREACH(rs, &E->sources, list) {
 			if (strncmp(rs->name, nstat->name, n) == 0)
 				break;
 		}
-		if (rs != NULL)
+		if (rs != NULL) {
+			mutex_exit(&E->lock);
 			rndsource_to_user(rs, &nstat->source);
-		else
+			mutex_enter(&E->lock);
+		} else {
 			error = ENOENT;
+		}
+		rnd_unlock_sources();
 		mutex_exit(&E->lock);
 		break;
 	}
@@ -1990,14 +2087,23 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * out; if not found, fail with ENOENT.
 		 */
 		mutex_enter(&E->lock);
+		error = rnd_lock_sources();
+		if (error) {
+			mutex_exit(&E->lock);
+			return error;
+		}
 		LIST_FOREACH(rs, &E->sources, list) {
 			if (strncmp(rs->name, enstat->name, n) == 0)
 				break;
 		}
-		if (rs != NULL)
+		if (rs != NULL) {
+			mutex_exit(&E->lock);
 			rndsource_to_user_est(rs, &enstat->source);
-		else
+			mutex_enter(&E->lock);
+		} else {
 			error = ENOENT;
+		}
+		rnd_unlock_sources();
 		mutex_exit(&E->lock);
 		break;
 	}
