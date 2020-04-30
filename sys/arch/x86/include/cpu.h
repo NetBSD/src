@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123 2020/04/27 16:29:17 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124 2020/04/30 22:05:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -318,7 +318,8 @@ struct cpu_info {
 	struct evcnt	ci_xen_missed_hardclock_evcnt;
 #endif	/* XEN */
 };
-#ifndef XENPV
+
+#if defined(XEN) && !defined(XENPV)
 	__CTASSERT(XEN_NIPIS <= X86_NIPI);
 #endif
 
