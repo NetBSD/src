@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.15 2016/05/21 14:59:45 riastradh Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.16 2020/04/30 03:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.15 2016/05/21 14:59:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.16 2020/04/30 03:40:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <rump-sys/kern.h>
@@ -41,28 +40,27 @@ __KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.15 2016/05/21 14:59:45 riastradh 
 static kmutex_t rndsrc_lock;
 static krndsource_t rndsrc;
 
-#define MAXGET (RND_POOLBITS/NBBY)
 static void
 feedrandom(size_t bytes, void *cookie __unused)
 {
 	uint8_t *rnddata;
 	size_t n, nread;
 
-	rnddata = kmem_intr_alloc(MAXGET, KM_SLEEP);
+	rnddata = kmem_intr_alloc(bytes, KM_SLEEP);
 	n = 0;
-	while (n < MIN(MAXGET, bytes)) {
-		if (rumpuser_getrandom(rnddata + n, MIN(MAXGET, bytes) - n,
+	while (n < bytes) {
+		if (rumpuser_getrandom(rnddata + n, bytes - n,
 			RUMPUSER_RANDOM_HARD|RUMPUSER_RANDOM_NOWAIT, &nread)
 		    != 0)
 			break;
-		n += MIN(nread, MIN(MAXGET, bytes) - n);
+		n += MIN(nread, bytes - n);
 	}
 	if (n) {
 		mutex_enter(&rndsrc_lock);
 		rnd_add_data_sync(&rndsrc, rnddata, n, NBBY*n);
 		mutex_exit(&rndsrc_lock);
 	}
-	kmem_intr_free(rnddata, MAXGET);
+	kmem_intr_free(rnddata, bytes);
 }
 
 void
@@ -74,5 +72,4 @@ rump_hyperentropy_init(void)
 	rndsource_setcb(&rndsrc, &feedrandom, NULL);
 	rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-	feedrandom(MAXGET, NULL);
 }

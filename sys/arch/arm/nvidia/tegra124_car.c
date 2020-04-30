@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.19 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.20 2020/04/30 03:40:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.19 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.20 2020/04/30 03:40:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.19 2019/10/13 06:11:31 skrll Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -919,7 +918,6 @@ tegra124_car_rnd_attach(device_t self)
 	rndsource_setcb(&sc->sc_rndsource, tegra124_car_rnd_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-	tegra124_car_rnd_callback(RND_POOLBITS / NBBY, sc);
 }
 
 static void

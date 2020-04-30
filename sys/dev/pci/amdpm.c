@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.40 2020/04/30 03:24:15 riastradh Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.41 2020/04/30 03:40:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.40 2020/04/30 03:24:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.41 2020/04/30 03:40:53 riastradh Exp $");
 
 #include "opt_amdpm.h"
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.40 2020/04/30 03:24:15 riastradh Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/mutex.h>
 
@@ -207,8 +206,6 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 			rnd_attach_source(&sc->sc_rnd_source,
 			    device_xname(self), RND_TYPE_RNG,
 			    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-			sc->sc_rnd_need = RND_POOLBITS / NBBY;
-			amdpm_rnd_callout(sc);
 		}
 	}
 }

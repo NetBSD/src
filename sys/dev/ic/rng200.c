@@ -1,4 +1,4 @@
-/*	$NetBSD: rng200.c,v 1.1 2019/09/01 14:44:14 mlelstv Exp $	*/
+/*	$NetBSD: rng200.c,v 1.2 2020/04/30 03:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/mutex.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <dev/ic/rng200var.h>
@@ -111,8 +110,6 @@ rng200_attach(struct rng200_softc *sc)
 	rndsource_setcb(&sc->sc_rndsource, rng200_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, sc->sc_name,
 		RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-
-	rng200_get(RND_POOLBITS / NBBY, sc);
 }
 
 void

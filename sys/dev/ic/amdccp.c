@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $ */
+/* $NetBSD: amdccp.c,v 1.2 2020/04/30 03:40:53 riastradh Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,13 +28,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.2 2020/04/30 03:40:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/bus.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <dev/ic/amdccpvar.h>
@@ -49,7 +48,6 @@ amdccp_common_attach(struct amdccp_softc *sc)
 	rndsource_setcb(&sc->sc_rndsource, amdccp_rnd_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-	amdccp_rnd_callback(RND_POOLBITS / NBBY, sc);
 }
 
 static uint32_t

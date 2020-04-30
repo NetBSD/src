@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.49 2020/04/30 03:24:15 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.50 2020/04/30 03:40:53 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.49 2020/04/30 03:24:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.50 2020/04/30 03:40:53 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.49 2020/04/30 03:24:15 riastradh Exp $")
 #else
  #include <sys/cprng.h>
  #include <sys/md5.h>
- #include <sys/rndpool.h>
  #include <sys/rndsource.h>
 #endif
 #include <sys/sha1.h>
@@ -426,7 +425,6 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_rng_need = RND_POOLBITS / NBBY;
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	SIMPLEQ_INIT(&sc->sc_freequeue);
@@ -516,9 +514,6 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 				  RND_TYPE_RNG,
 				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-#ifdef __NetBSD__
-		callout_schedule(&sc->sc_rngto, sc->sc_rnghz);
-#endif
 
  skip_rng:
 		if (sc->sc_rnghz)

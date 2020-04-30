@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.25 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.26 2020/04/30 03:40:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.25 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.26 2020/04/30 03:40:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.25 2019/10/13 06:11:31 skrll Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
