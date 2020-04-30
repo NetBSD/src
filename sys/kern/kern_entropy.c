@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.1 2020/04/30 03:28:18 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.2 2020/04/30 03:42:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.1 2020/04/30 03:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.2 2020/04/30 03:42:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -514,8 +514,6 @@ entropy_seed(rndsave_t *seed)
 	 * but ignore the entropy estimate -- the file may have been
 	 * incompletely written with garbage, which is harmless to add
 	 * but may not be as unpredictable as alleged.
-	 *
-	 * XXX There is a byte order dependency here...
 	 */
 	SHA1Init(&ctx);
 	SHA1Update(&ctx, (const void *)&seed->entropy, sizeof(seed->entropy));
@@ -526,8 +524,19 @@ entropy_seed(rndsave_t *seed)
 		printf("entropy: invalid seed checksum\n");
 		seed->entropy = 0;
 	}
-	explicit_memset(&ctx, 0, sizeof &ctx);
+	explicit_memset(&ctx, 0, sizeof ctx);
 	explicit_memset(digest, 0, sizeof digest);
+
+	/*
+	 * If the entropy is insensibly large, try byte-swapping.
+	 * Otherwise assume the file is corrupted and act as though it
+	 * has zero entropy.
+	 */
+	if (howmany(seed->entropy, NBBY) > sizeof(seed->data)) {
+		seed->entropy = bswap32(seed->entropy);
+		if (howmany(seed->entropy, NBBY) > sizeof(seed->data))
+			seed->entropy = 0;
+	}
 
 	/* Make sure the seed source is attached.  */
 	attach_seed_rndsource();
