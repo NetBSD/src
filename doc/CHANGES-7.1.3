@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.69 2020/04/15 14:59:15 martin Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.70 2020/04/30 16:24:26 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -676,3 +676,10 @@ sys/netinet6/nd6_rtr.c				1.148 (via patch)
 	PR kern/55091 and PR bin/54997: fix default route selection.
 	[kim, ticket #1727]
 
+games/fortune/strfile/strfile.c			1.39
+games/fortune/unstr/unstr.c			1.15
+
+	Fix potential buffer overflows in fortune tools.
+	[nia, ticket #1729]
+
+ 
