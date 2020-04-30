@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.h,v 1.2 2018/07/21 06:09:13 maxv Exp $ */
+/* $NetBSD: cpu_rng.h,v 1.3 2020/04/30 03:29:19 riastradh Exp $ */
 
 #ifndef _X86_CPU_RNG_H_
 #define _X86_CPU_RNG_H_
@@ -32,12 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-
-typedef uint64_t cpu_rng_t;
-
-bool cpu_rng_init(void);
-size_t cpu_rng(cpu_rng_t *);
-void cpu_earlyrng(void *, size_t);
+void cpu_rng_init(void);
 
 #endif /* _X86_CPU_RNG_H_ */
