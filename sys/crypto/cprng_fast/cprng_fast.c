@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.14 2020/04/30 03:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.14 2020/04/30 03:29:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/cprng.h>
 #include <sys/cpu.h>
+#include <sys/entropy.h>
 #include <sys/intr.h>
 #include <sys/percpu.h>
-#include <sys/rnd.h>		/* rnd_initial_entropy */
 
 /* ChaCha core */
 
@@ -198,7 +198,7 @@ struct cprng_fast {
 	uint32_t 	buffer[crypto_core_OUTPUTWORDS];
 	uint32_t 	key[crypto_core_KEYWORDS];
 	uint32_t 	nonce[crypto_core_INPUTWORDS];
-	bool		have_initial;
+	unsigned	epoch;
 };
 
 __CTASSERT(sizeof ((struct cprng_fast *)0)->key == CPRNG_FAST_SEED_BYTES);
@@ -233,9 +233,9 @@ cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
 	struct cprng_fast *const cprng = p;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 
+	cprng->epoch = entropy_epoch();
 	cprng_strong(kern_cprng, seed, sizeof seed, 0);
 	cprng_fast_seed(cprng, seed);
-	cprng->have_initial = rnd_initial_entropy;
 	(void)explicit_memset(seed, 0, sizeof seed);
 }
 
@@ -248,7 +248,7 @@ cprng_fast_get(struct cprng_fast **cprngp)
 	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
 	s = splvm();
 
-	if (__predict_false(!cprng->have_initial))
+	if (__predict_false(cprng->epoch != entropy_epoch()))
 		cprng_fast_schedule_reseed(cprng);
 
 	return s;
@@ -274,6 +274,7 @@ cprng_fast_schedule_reseed(struct cprng_fast *cprng __unused)
 static void
 cprng_fast_intr(void *cookie __unused)
 {
+	unsigned epoch = entropy_epoch();
 	struct cprng_fast *cprng;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 	int s;
@@ -283,7 +284,7 @@ cprng_fast_intr(void *cookie __unused)
 	cprng = percpu_getref(cprng_fast_percpu);
 	s = splvm();
 	cprng_fast_seed(cprng, seed);
-	cprng->have_initial = rnd_initial_entropy;
+	cprng->epoch = epoch;
 	splx(s);
 	percpu_putref(cprng_fast_percpu);
 
