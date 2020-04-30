@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.32 2020/04/30 03:24:48 riastradh Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.33 2020/04/30 03:27:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -28,30 +28,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-#include <sys/types.h>
-#include <sha1.h>
 
+#include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.32 2020/04/30 03:24:48 riastradh Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.33 2020/04/30 03:27:15 riastradh Exp $");
 #endif
 
-
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/endian.h>
+#include <sys/ioctl.h>
 #include <sys/rndio.h>
 #include <sys/sha3.h>
 
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <sha1.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <err.h>
-#include <paths.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct {
 	const char *a_name;
