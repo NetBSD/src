@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.37 2016/01/23 22:31:20 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.38 2020/04/30 20:48:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,7 +69,6 @@ typedef	int		__register_t;
 #define	__SIMPLELOCK_LOCKED	0x80
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#define	__HAVE_AST_PERPROC
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_SYSCALL_INTERN

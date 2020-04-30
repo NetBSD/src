@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.55 2019/04/06 03:06:24 thorpej Exp $ */
+/* $NetBSD: types.h,v 1.56 2020/04/30 20:48:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,7 +74,6 @@ typedef __register_t	register_t;
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
-#define	__HAVE_AST_PERPROC
 #define	__HAVE_ATOMIC64_OPS
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
