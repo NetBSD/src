@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.98 2020/04/26 13:09:52 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.99 2020/04/30 11:23:44 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.98 2020/04/26 13:09:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.99 2020/04/30 11:23:44 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.98 2020/04/26 13:09:52 jdole
  * transmit at once).
  */
 #define NB_XMIT_PAGES_BATCH 64
+CTASSERT(NB_XMIT_PAGES_BATCH >= XEN_NETIF_NR_SLOTS_MIN);
 
 /* ratecheck(9) for pool allocation failures */
 static const struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
@@ -91,9 +92,10 @@ typedef enum {
 
 struct xnetback_xstate {
 	bus_dmamap_t xs_dmamap;
+	bool xs_loaded;
 	struct mbuf *xs_m;
-	int xs_id;
-	int xs_flags;
+	struct netif_tx_request xs_tx;
+	uint16_t xs_tx_size;		/* Size of data in this Tx fragment */
 };
 
 /* we keep the xnetback instances in a linked list */
@@ -235,8 +237,9 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	/* Initialize DMA map, used only for loading PA */
 	for (i = 0; i < __arraycount(xneti->xni_xstate); i++) {
-		if (bus_dmamap_create(xneti->xni_xbusd->xbusd_dmat, PAGE_SIZE,
-		    1, PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(xneti->xni_xbusd->xbusd_dmat,
+		    ETHER_MAX_LEN_JUMBO, XEN_NETIF_NR_SLOTS_MIN,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &xneti->xni_xstate[i].xs_dmamap)
 		    != 0) {
 			aprint_error_ifnet(ifp,
@@ -249,7 +252,11 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	/* create pseudo-interface */
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
-	xneti->xni_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	xneti->xni_ec.ec_capabilities |= ETHERCAP_VLAN_MTU
+#ifdef notyet
+		| ETHERCAP_JUMBO_MTU
+#endif
+	;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
@@ -309,6 +316,16 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
+#if notyet
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "feature-sg", "%d", 1);
+		if (err) {
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-sg: %d\n",
+			    xbusd->xbusd_path, err);
+			goto abort_xbt;
+		}
+#endif
 	} while ((err = xenbus_transaction_end(xbt, 0)) == EAGAIN);
 	if (err) {
 		aprint_error_ifnet(ifp,
@@ -624,80 +641,182 @@ xennetback_tx_response(struct xnetback_instance *xneti, int id, int status)
 	}
 }
 
-static inline const char *
-xennetback_tx_check_packet(const netif_tx_request_t *txreq, int vlan)
+static const char *
+xennetback_tx_check_packet(const netif_tx_request_t *txreq)
 {
-	if (__predict_false(txreq->size < ETHER_HDR_LEN))
-		return "too small";
+	if (__predict_false((txreq->flags & NETTXF_more_data) == 0 &&
+	    txreq->offset + txreq->size > PAGE_SIZE))
+		return "crossing page boundary";
 
-	if (__predict_false(txreq->offset + txreq->size > PAGE_SIZE))
-		return "crossing a page boundary";
-
-	int maxlen = ETHER_MAX_LEN - ETHER_CRC_LEN;
-	if (vlan)
-		maxlen += ETHER_VLAN_ENCAP_LEN;
-	if (__predict_false(txreq->size > maxlen))
-		return "too big";
-
-	/* Somewhat duplicit, MCLBYTES is > ETHER_MAX_LEN */
-	if (__predict_false(txreq->size > MCLBYTES))
-		return "bigger than MCLBYTES";
+	if (__predict_false(txreq->size > ETHER_MAX_LEN_JUMBO))
+		return "bigger then jumbo";
 
 	return NULL;
+}
+
+static int
+xennetback_copy(struct ifnet *ifp, gnttab_copy_t *gop, int copycnt)
+{
+	/*
+	 * Copy the data and ack it. Delaying it until the mbuf is
+	 * freed will stall transmit.
+	 */
+	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, gop, copycnt) != 0) {
+		printf("%s: GNTTABOP_copy Tx failed", ifp->if_xname);
+		return EINVAL;
+	}
+
+	for (int i = 0; i < copycnt; i++) {
+		if (gop->status != GNTST_okay) {
+			printf("%s GNTTABOP_copy[%d] Tx %d\n",
+			    ifp->if_xname, i, gop->status);
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static void
+xennetback_tx_copy_abort(struct ifnet *ifp, struct xnetback_instance *xneti,
+	int queued)
+{
+	struct xnetback_xstate *xst;
+
+	for (int i = 0; i < queued; i++) {
+		xst = &xneti->xni_xstate[i];
+
+		if (xst->xs_loaded) {
+			KASSERT(xst->xs_m != NULL);
+			bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+			    xst->xs_dmamap);
+			xst->xs_loaded = false;
+			m_freem(xst->xs_m);
+		}
+
+		xennetback_tx_response(xneti, xst->xs_tx.id, NETIF_RSP_ERROR);
+		if_statinc(ifp, if_ierrors);
+	}
 }
 
 static void
 xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 	int queued)
 {
-	int i = 0;
 	gnttab_copy_t *gop;
 	struct xnetback_xstate *xst;
+	int copycnt = 0, seg = 0;
+	size_t goff = 0, segoff = 0, gsize, take;
+	bus_dmamap_t dm = NULL;
+	paddr_t ma;
 
-	/*
-	 * Copy the data and ack it. Delaying it until the mbuf is
-	 * freed will stall transmit.
-	 */
-	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, xneti->xni_gop_copy,
-	    queued) != 0) {
-		printf("%s: GNTTABOP_copy Tx failed", ifp->if_xname);
-		goto abort;
-	}
-
-	for (; i < queued; i++) {
-		gop = &xneti->xni_gop_copy[i];
+	for (int i = 0; i < queued; i++) {
 		xst = &xneti->xni_xstate[i];
 
-		if (gop->status != GNTST_okay) {
-			printf("%s GNTTABOP_copy[%d] Tx %d\n",
-			    ifp->if_xname, i, gop->status);
-			goto abort;
+		if (xst->xs_m != NULL) {
+			KASSERT(xst->xs_m->m_pkthdr.len == xst->xs_tx.size);
+			if (__predict_false(bus_dmamap_load_mbuf(
+			    xneti->xni_xbusd->xbusd_dmat,
+			    xst->xs_dmamap, xst->xs_m, BUS_DMA_NOWAIT) != 0))
+				goto abort;
+			xst->xs_loaded = true;
+			dm = xst->xs_dmamap;
+			seg = 0;
+			goff = segoff = 0;
 		}
 
-		xennetback_tx_response(xneti, xst->xs_id, NETIF_RSP_OKAY);
+		gsize = xst->xs_tx_size;
+		for (; seg < dm->dm_nsegs && gsize > 0; seg++) {
+			bus_dma_segment_t *ds = &dm->dm_segs[seg];
+			ma = ds->ds_addr;
+			take = uimin(gsize, ds->ds_len);
 
-		if (xst->xs_flags & NETTXF_csum_blank)
-			xennet_checksum_fill(ifp, xst->xs_m);
-		else if (xst->xs_flags & NETTXF_data_validated)
-			xst->xs_m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
-		m_set_rcvif(xst->xs_m, ifp);
+			KASSERT(copycnt <= NB_XMIT_PAGES_BATCH);
+			if (copycnt == NB_XMIT_PAGES_BATCH) {
+				if (xennetback_copy(ifp, xneti->xni_gop_copy,
+				    copycnt) != 0)
+					goto abort;
+				copycnt = 0;
+			}
 
-		if_percpuq_enqueue(ifp->if_percpuq, xst->xs_m);
+			/* Queue for the copy */
+			gop = &xneti->xni_gop_copy[copycnt++];
+			memset(gop, 0, sizeof(*gop));
+			gop->flags = GNTCOPY_source_gref;
+			gop->len = take;
 
-		bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
-                    xst->xs_dmamap);
+			gop->source.u.ref = xst->xs_tx.gref;
+			gop->source.offset = xst->xs_tx.offset + goff;
+			gop->source.domid = xneti->xni_domid;
+
+			gop->dest.offset = (ma & PAGE_MASK) + segoff;
+			KASSERT(gop->dest.offset <= PAGE_SIZE);
+			gop->dest.domid = DOMID_SELF;
+			gop->dest.u.gmfn = ma >> PAGE_SHIFT;
+
+			goff += take;
+			gsize -= take;
+			if (take + segoff < ds->ds_len) {
+				segoff += take;
+				/* Segment not completely consumed yet */
+				break;
+			}
+			segoff = 0;
+		}
+		KASSERT(gsize == 0);
+	}
+	if (copycnt > 0) {
+		if (xennetback_copy(ifp, xneti->xni_gop_copy, copycnt) != 0)
+			goto abort;
+		copycnt = 0;
+	}
+
+	/* If we got here, the whole copy was successful */
+	for (int i = 0; i < queued; i++) {
+		xst = &xneti->xni_xstate[i];
+
+		xennetback_tx_response(xneti, xst->xs_tx.id, NETIF_RSP_OKAY);
+
+		if (xst->xs_m != NULL) {
+			KASSERT(xst->xs_loaded);
+			bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+			    xst->xs_dmamap);
+
+			if (xst->xs_tx.flags & NETTXF_csum_blank)
+				xennet_checksum_fill(ifp, xst->xs_m);
+			else if (xst->xs_tx.flags & NETTXF_data_validated) {
+				xst->xs_m->m_pkthdr.csum_flags =
+				    XN_M_CSUM_SUPPORTED;
+			}
+			m_set_rcvif(xst->xs_m, ifp);
+
+			if_percpuq_enqueue(ifp->if_percpuq, xst->xs_m);
+		}
 	}
 
 	return;
 
 abort:
-	for (; i < queued; i++) {
-		xst = &xneti->xni_xstate[i];
+	xennetback_tx_copy_abort(ifp, xneti, queued);
+}
 
-		m_freem(xst->xs_m);
-		xennetback_tx_response(xneti, xst->xs_id, NETIF_RSP_ERROR);
-		if_statinc(ifp, if_ierrors);
-	}
+static int
+xennetback_tx_m0len_fragment(struct xnetback_instance *xneti,
+    int m0_len, int req_cons, int *cntp)
+{
+	netif_tx_request_t *txreq;
+
+	/* This assumes all the requests are already pushed into the ring */ 
+	*cntp = 1;
+	do {
+		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
+		KASSERT(m0_len > txreq->size);
+		m0_len -= txreq->size;
+		req_cons++;
+		(*cntp)++;
+	} while (txreq->flags & NETTXF_more_data);
+
+	return m0_len;
 }
 
 static int
@@ -706,17 +825,16 @@ xennetback_evthandler(void *arg)
 	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
 	netif_tx_request_t txreq;
-	struct mbuf *m;
+	struct mbuf *m, *m0 = NULL, *mlast = NULL;
 	int receive_pending;
 	RING_IDX req_cons;
-	gnttab_copy_t *gop;
-	paddr_t ma;
-	int queued = 0;
+	int queued = 0, m0_len = 0;
 	struct xnetback_xstate *xst;
+	const bool discard = ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING));
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
-	xen_rmb();
 	while (1) {
 		xen_rmb(); /* be sure to read the request before updating */
 		xneti->xni_txring.req_cons = req_cons;
@@ -725,24 +843,24 @@ xennetback_evthandler(void *arg)
 		    receive_pending);
 		if (receive_pending == 0)
 			break;
-		RING_COPY_REQUEST(&xneti->xni_txring, req_cons, &txreq);
+		RING_COPY_REQUEST(&xneti->xni_txring, req_cons,
+		    &txreq);
 		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
 		    txreq.size));
 		req_cons++;
-		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
-		    (IFF_UP | IFF_RUNNING))) {
-			/* interface not up, drop */
+		if (__predict_false(discard)) {
+			/* interface not up, drop all requests */
+			if_statinc(ifp, if_iqdrops);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			continue;
 		}
 
 		/*
-		 * Do some sanity checks, and map the packet's page.
+		 * Do some sanity checks, and queue copy of the data.
 		 */
-		const char *msg = xennetback_tx_check_packet(&txreq,
-		    xneti->xni_ec.ec_capenable & ETHERCAP_VLAN_MTU);
+		const char *msg = xennetback_tx_check_packet(&txreq);
 		if (__predict_false(msg != NULL)) {
 			printf("%s: packet with size %d is %s\n",
 			    ifp->if_xname, txreq.size, msg);
@@ -752,79 +870,129 @@ xennetback_evthandler(void *arg)
 			continue;
 		}
 
-		/* get a mbuf for this packet */
+		/* get a mbuf for this fragment */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
 			static struct timeval lasttime;
+mbuf_fail:
 			if (ratecheck(&lasttime, &xni_pool_errintvl))
 				printf("%s: mbuf alloc failed\n",
 				    ifp->if_xname);
+			xennetback_tx_copy_abort(ifp, xneti, queued);
+			queued = 0;
+			m0 = NULL;
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			if_statinc(ifp, if_ierrors);
 			continue;
 		}
-		if (txreq.size > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (__predict_false(m->m_ext_storage.ext_buf == NULL)) {
-				m_freem(m);
-				xennetback_tx_response(xneti, txreq.id,
-				    NETIF_RSP_DROPPED);
-				if_statinc(ifp, if_ierrors);
-				continue;
+		m->m_len = m->m_pkthdr.len = txreq.size;
+
+		if (!m0 && (txreq.flags & NETTXF_more_data)) {
+			/*
+			 * The first fragment of multi-fragment Tx request
+			 * contains total size. Need to read whole
+			 * chain to determine actual size of the first
+			 * (i.e. current) fragment.
+			 */
+			int cnt;
+			m0_len = xennetback_tx_m0len_fragment(xneti,
+			    txreq.size, req_cons, &cnt);
+			m->m_len = m0_len;
+			KASSERT(cnt <= XEN_NETIF_NR_SLOTS_MIN);
+
+			if (queued + cnt >= NB_XMIT_PAGES_BATCH) {
+				/*
+				 * Flush queue if too full to fit this
+				 * new packet whole.
+				 */
+				xennetback_tx_copy_process(ifp, xneti, queued);
+				queued = 0;
 			}
 		}
-		m->m_len = m->m_pkthdr.len = txreq.size;
+
+		if (m->m_len > MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if (__predict_false((m->m_flags & M_EXT) == 0)) {
+				m_freem(m);
+				goto mbuf_fail;
+			}
+			if (__predict_false(m->m_len > MCLBYTES)) {
+				/* one more mbuf necessary */
+				struct mbuf *mn;
+				MGET(mn, M_DONTWAIT, MT_DATA);
+				if (__predict_false(mn == NULL)) {
+					m_freem(m);
+					goto mbuf_fail;
+				}
+				if (m->m_len - MCLBYTES > MLEN) {
+					MCLGET(mn, M_DONTWAIT);
+					if ((mn->m_flags & M_EXT) == 0) {
+						m_freem(mn);
+						m_freem(m);
+						goto mbuf_fail;
+					}
+				}
+				mn->m_len = m->m_len - MCLBYTES;
+				m->m_len = MCLBYTES;
+				m->m_next = mn;
+				KASSERT(mn->m_len <= MCLBYTES);
+			}
+			KASSERT(m->m_len <= MCLBYTES);
+		}
+
+		if (m0 || (txreq.flags & NETTXF_more_data)) {
+			if (m0 == NULL) {
+				m0 = m;
+				mlast = (m->m_next) ? m->m_next : m;
+				KASSERT(mlast->m_next == NULL);
+			} else {
+				/* Coalesce like m_cat(), but without copy */
+				KASSERT(mlast != NULL);
+				if (M_TRAILINGSPACE(mlast) >= m->m_pkthdr.len) {
+					mlast->m_len +=  m->m_pkthdr.len;
+					m_freem(m);
+				} else {
+					mlast->m_next = m;
+					mlast = (m->m_next) ? m->m_next : m;
+					KASSERT(mlast->m_next == NULL);
+				}
+			}
+		}
 
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq.offset,
 		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
 
 		xst = &xneti->xni_xstate[queued];
-		xst->xs_m = m;
-		xst->xs_id = txreq.id;
-		xst->xs_flags = txreq.flags;
-
-		if (bus_dmamap_load_mbuf(xneti->xni_xbusd->xbusd_dmat,
-		    xst->xs_dmamap, m, BUS_DMA_NOWAIT) != 0) {
-			printf("%s: mbuf load failed\n", ifp->if_xname);
-			m_freem(m);
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_DROPPED);
-			if_statinc(ifp, if_ierrors);
-			continue;
-		}
-		ma = xst->xs_dmamap->dm_segs[0].ds_addr;
-
-		/* Queue for the copy */
-		gop = &xneti->xni_gop_copy[queued];
-		memset(gop, 0, sizeof(*gop));
-		gop->flags = GNTCOPY_source_gref;
-		gop->len = txreq.size;
-
-		gop->source.u.ref = txreq.gref;
-		gop->source.offset = txreq.offset;
-		gop->source.domid = xneti->xni_domid;
-
-		gop->dest.offset = ma & PAGE_MASK;
-		gop->dest.domid = DOMID_SELF;
-		gop->dest.u.gmfn = ma >> PAGE_SHIFT;
-
-		m->m_len = m->m_pkthdr.len = txreq.size;
-
+		xst->xs_m = (m0 == NULL || m == m0) ? m : NULL;
+		xst->xs_tx = txreq;
+		/* Fill the length of _this_ fragment */
+		xst->xs_tx_size = (m == m0) ? m0_len : m->m_pkthdr.len;
 		queued++;
 
 		KASSERT(queued <= NB_XMIT_PAGES_BATCH);
+		if (__predict_false(m0 &&
+		    (txreq.flags & NETTXF_more_data) == 0)) {
+			/* Last fragment, stop appending mbufs */
+			m0 = NULL;
+		}
 		if (queued == NB_XMIT_PAGES_BATCH) {
+			KASSERT(m0 == NULL);
 			xennetback_tx_copy_process(ifp, xneti, queued);
 			queued = 0;
 		}
 	}
+	if (m0) {
+		/* Queue empty, and still unfinished multi-fragment request */
+		printf("%s: dropped unfinished multi-fragment\n",
+		    ifp->if_xname);
+		xennetback_tx_copy_abort(ifp, xneti, queued);
+		queued = 0;
+		m0 = NULL;
+	}
 	if (queued > 0)
 		xennetback_tx_copy_process(ifp, xneti, queued);
-	xen_rmb(); /* be sure to read the request before updating pointer */
-	xneti->xni_txring.req_cons = req_cons;
-	xen_wmb();
 
 	/* check to see if we can transmit more packets */
 	if_schedule_deferred_start(ifp);
