@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.106 2020/04/30 01:52:08 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.107 2020/04/30 13:51:43 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.106 2020/04/30 01:52:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.107 2020/04/30 13:51:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1740,7 +1740,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(", %s", sc->sk_name);
 	if (revstr != NULL)
 		aprint_normal(" rev. %s", revstr);
-	aprint_normal(" (0x%x): %s\n", sc->sk_rev, intrstr);
+	aprint_normal(" (0x%x)\n", sc->sk_rev);
 
 	aprint_normal_dev(sc->sk_dev, "interrupting at %s\n", intrstr);
 
