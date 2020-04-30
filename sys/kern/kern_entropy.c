@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.5 2020/04/30 17:16:00 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.6 2020/04/30 19:34:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.5 2020/04/30 17:16:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.6 2020/04/30 19:34:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1566,7 +1566,7 @@ rnd_trylock_sources(void)
 
 	if (E->sourcelock)
 		return false;
-	E->sourcelock = curlwp;
+	E->sourcelock = (curcpu_available() ? (void *)1 : curlwp);
 	return true;
 }
 
@@ -1582,8 +1582,9 @@ rnd_unlock_sources(void)
 
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
 
-	KASSERTMSG(E->sourcelock == curlwp, "lwp %p releasing lock held by %p",
-	    curlwp, E->sourcelock);
+	KASSERTMSG(E->sourcelock == (curcpu_available() ? (void *)1 : curlwp),
+	    "lwp %p releasing lock held by %p",
+	    (curcpu_available() ? (void *)1 : curlwp), E->sourcelock);
 	E->sourcelock = NULL;
 	if (E->stage >= ENTROPY_WARM)
 		cv_broadcast(&E->cv);
@@ -1599,7 +1600,7 @@ static bool
 rnd_sources_locked(void)
 {
 
-	return E->sourcelock == curlwp;
+	return E->sourcelock == (curcpu_available() ? (void *)1 : curlwp);
 }
 
 /*
