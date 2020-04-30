@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.349 2020/04/28 21:35:35 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.350 2020/04/30 03:29:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349 2020/04/28 21:35:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350 2020/04/30 03:29:19 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -167,6 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349 2020/04/28 21:35:35 jmcneill Exp $
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_rng.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
 #include <machine/intr.h>
@@ -1682,6 +1683,7 @@ init_x86_64(paddr_t first_avail)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
+	cpu_rng_init();
 #ifdef SVS
 	svs_init();
 #endif
