@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.6 2020/04/25 10:55:11 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.7 2020/04/30 16:22:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -115,4 +115,15 @@ sys/arch/hppa/hppa/trap.c			1.115
 
 	Fix incorrect KASSERT.
 	[skrll, ticket #1542]
+
+sys/kern/subr_cprng.c				1.34
+
+	Disable rngtest on output of cprng_strong.
+	[riastradh, ticket #1543]
+
+games/fortune/strfile/strfile.c			1.39
+games/fortune/unstr/unstr.c			1.15
+
+	Fix potential buffer overflows in fortune tools.
+	[nia, ticket #1544]
 
