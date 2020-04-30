@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.3 2020/02/05 14:10:46 pgoyette Exp $	*/
+/*	$NetBSD: ping.c,v 1.4 2020/04/30 00:48:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,13 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ping.c,v 1.3 2020/02/05 14:10:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ping.c,v 1.4 2020/04/30 00:48:10 christos Exp $");
 
+#define DDB
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
+#include <sys/systm.h>
 
 #include "ping.h"
 
@@ -99,6 +101,7 @@ ping_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 	switch(cmd) {
 	case CMD_PING:
 		printf("ping: pong!\n");
+		Debugger();
 		return 0;
 	default:
 		return ENOTTY;
