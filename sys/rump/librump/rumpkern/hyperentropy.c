@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.16 2020/04/30 03:40:53 riastradh Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.17 2020/04/30 03:41:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,18 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.16 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.17 2020/04/30 03:41:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
-#include <sys/mutex.h>
 #include <sys/rndsource.h>
 
 #include <rump-sys/kern.h>
 
 #include <rump/rumpuser.h>
 
-static kmutex_t rndsrc_lock;
 static krndsource_t rndsrc;
 
 static void
@@ -56,9 +54,7 @@ feedrandom(size_t bytes, void *cookie __unused)
 		n += MIN(nread, bytes - n);
 	}
 	if (n) {
-		mutex_enter(&rndsrc_lock);
 		rnd_add_data_sync(&rndsrc, rnddata, n, NBBY*n);
-		mutex_exit(&rndsrc_lock);
 	}
 	kmem_intr_free(rnddata, bytes);
 }
@@ -66,8 +62,6 @@ feedrandom(size_t bytes, void *cookie __unused)
 void
 rump_hyperentropy_init(void)
 {
-
-	mutex_init(&rndsrc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	rndsource_setcb(&rndsrc, &feedrandom, NULL);
 	rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
