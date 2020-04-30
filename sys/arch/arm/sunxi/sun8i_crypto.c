@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.12 2020/02/06 19:52:09 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.13 2020/04/30 03:40:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.12 2020/02/06 19:52:09 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.13 2020/04/30 03:40:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.12 2020/02/06 19:52:09 riastradh 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/sysctl.h>
 #include <sys/workqueue.h>
