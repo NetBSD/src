@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.203 2020/04/30 12:32:16 rin Exp $
+# $NetBSD: HACKS,v 1.204 2020/04/30 12:35:01 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -511,7 +511,6 @@ port	vax
 	file	sbin/fsdb/Makefile : 1.36
 	file	sbin/newfs_ext2fs/Makefile : 1.6
 	file	sbin/ping/Makefile : 1.17
-	file	usr.sbin/lmcconfig/Makefile : 1.2 (file removed)
 	file	usr.sbin/mtrace/Makefile : 1.11
 	descr
 		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
@@ -527,9 +526,6 @@ port	vax
 		at postreload.c:1561
 		external/gpl3/gdb/dist/libdecnumber/decNumber.c:7214:3:
 		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		usr.sbin/lmcconfig/lmcconfig.c:939:3:
-		internal compiler error: in reload_combine_note_use,
-		at postreload.c:1561
 		usr.sbin/mtrace/mtrace.c:1655:1:
 		internal compiler error: in change_address_1, at emit-rtl.c:2019
 	kcah
