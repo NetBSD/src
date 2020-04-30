@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.38 2013/09/19 00:34:00 uwe Exp $	*/
+/*	$NetBSD: strfile.c,v 1.38.6.1 2020/04/30 21:24:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.38 2013/09/19 00:34:00 uwe Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.38.6.1 2020/04/30 21:24:25 martin Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -267,6 +267,7 @@ getargs(int argc, char **argv)
 	int	ch;
 	extern	int optind;
 	extern	char *optarg;
+	size_t	len;
 
 	while ((ch = getopt(argc, argv, "c:iorsx")) != -1)
 		switch(ch) {
@@ -300,14 +301,25 @@ getargs(int argc, char **argv)
 
 	if (*argv) {
 		Infile = *argv;
-		if (*++argv)
-			(void) strcpy(Outfile, *argv);
+		if (*++argv) {
+			len = strlen(*argv);
+			if (len >= sizeof(Outfile)) {
+				puts("Bad output filename");
+				usage();
+			}
+			(void) memcpy(Outfile, *argv, len + 1);
+		}
 	}
 	if (!Infile) {
 		puts("No input file name");
 		usage();
 	}
 	if (*Outfile == '\0') {
+		len = strlen(Infile) + sizeof(".dat");
+		if (len > sizeof(Outfile)) {
+			puts("Bad input filename");
+			usage();
+		}
 		(void) strcpy(Outfile, Infile);
 		(void) strcat(Outfile, ".dat");
 	}
