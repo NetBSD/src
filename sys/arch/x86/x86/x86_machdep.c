@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.138 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.139 2020/04/30 22:09:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.138 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.139 2020/04/30 22:09:32 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -95,7 +95,7 @@ void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
 
-#ifdef XEN
+#ifdef XENPV
 char module_machine_amd64_xen[] = "amd64-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
 #endif
@@ -222,7 +222,7 @@ module_init_md(void)
 	struct bi_modulelist_entry *bi, *bimax;
 
 	/* setup module path for XEN kernels */
-#ifdef XEN
+#ifdef XENPV
 #ifdef __x86_64__
 	module_machine = module_machine_amd64_xen;
 #else
