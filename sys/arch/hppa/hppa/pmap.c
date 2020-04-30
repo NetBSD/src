@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2020/04/16 09:51:56 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2020/04/30 06:16:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2020/04/16 09:51:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2020/04/30 06:16:47 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -184,7 +184,8 @@ static inline void pmap_pv_unlock(const struct vm_page_md *md);
 static inline bool pmap_pv_locked(const struct vm_page_md *md);
 
 static inline void pmap_flush_page(struct vm_page *, bool);
-static int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
+static void pmap_resolve_alias(struct vm_page *, struct pmap *, vaddr_t,
+    pt_entry_t);
 static void pmap_syncicache_page(struct vm_page *, pmap_t, vaddr_t);
 
 static void pmap_page_physload(paddr_t, paddr_t);
@@ -537,17 +538,126 @@ pmap_dump_pv(paddr_t pa)
 }
 #endif
 
-static int
-pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
+static void
+pmap_resolve_alias(struct vm_page *pg, struct pmap *pm, vaddr_t va,
+    pt_entry_t pte)
 {
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	struct pv_entry *pve;
-	int ret = 0;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "pg %#jx va %#jx pte %#jx", (uintptr_t)pg,
-	    va, pte, 0);
+	UVMHIST_CALLARGS(maphist, "pg %#jx pm %#jx va %#jx pte %#jx",
+	    (uintptr_t)pg, (uintptr_t)pm, va, pte);
 
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+	struct pv_entry *pve, *npve, **pvp;
+
+ restart:
+	pmap_pv_lock(md);
+	pvp = &md->pvh_list;
+	for (pve = md->pvh_list; pve; pve = npve) {
+		const pmap_t ppm = pve->pv_pmap;
+		const vaddr_t pva = pve->pv_va & PV_VAMASK;
+
+		UVMHIST_LOG(maphist, "... pm %#jx va %#jx", (uintptr_t)ppm,
+		    pva, 0, 0);
+
+		npve = pve->pv_next;
+
+		volatile pt_entry_t *pde;
+		pt_entry_t ppte;
+		if (pve->pv_va & PV_KENTER) {
+			/* Get the pte for this mapping */
+			pde = pmap_pde_get(ppm->pm_pdir, pva);
+			ppte = pmap_pte_get(pde, pva);
+		} else {
+			/*
+			 * We have to seamlessly get a hold on the pmap's lock
+			 * while holding the PV head lock, to know that the
+			 * mapping is still in place and we can operate on it.
+			 * If that can't be had, drop the PV head lock, wait
+			 * for the pmap's lock to become available, and then
+			 * try again.
+			 */
+			UVMHIST_LOG(maphist, "... pm %#jx va %#jx... checking",
+			    (uintptr_t)ppm, pva, 0, 0);
+
+			bool locked = true;
+			if (pm != ppm) {
+				pmap_reference(ppm);
+				locked = pmap_trylock(ppm);
+			}
+
+			if (!locked) {
+				pmap_pv_unlock(md);
+				pmap_lock(ppm);
+				/* nothing */
+				pmap_unlock(ppm);
+				pmap_destroy(ppm);
+
+				UVMHIST_LOG(maphist, "... failed lock", 0, 0, 0,
+				    0);
+				goto restart;
+			}
+			pde = pmap_pde_get(ppm->pm_pdir, pva);
+			ppte = pmap_pte_get(pde, pva);
+
+			md->pvh_attrs |= pmap_pvh_attrs(ppte);
+		}
+
+		const bool writeable =
+		    ((pte | ppte) & PTE_PROT(TLB_WRITE)) != 0;
+
+		if ((va & HPPA_PGAOFF) != (pva & HPPA_PGAOFF) && writeable) {
+			UVMHIST_LOG(maphist,
+			    "aliased writeable mapping %#jx:%#jx",
+			    ppm->pm_space, pva, 0, 0);
+
+			pmap_pte_flush(ppm, pva, ppte);
+			if (ppte & PTE_PROT(TLB_WIRED))
+				ppm->pm_stats.wired_count--;
+			ppm->pm_stats.resident_count--;
+
+			if (pve->pv_va & PV_KENTER) {
+				/*
+				 * This is an unmanaged mapping, it must be
+				 * preserved.  Move it back on the list and
+				 * advance the end-of-list pointer.
+				 */
+				*pvp = pve;
+				pvp = &pve->pv_next;
+			} else {
+				pmap_pte_set(pde, pva, 0);
+
+				/* Remove pve from list */
+				*pvp = npve;
+
+				pmap_pv_unlock(md);
+				pmap_pv_free(pve);
+				if (pm != ppm) {
+					pmap_unlock(ppm);
+					pmap_destroy(ppm);
+
+				}
+				UVMHIST_LOG(maphist, "... removed", 0,
+				    0, 0, 0);
+				goto restart;
+			}
+		} else {
+			UVMHIST_LOG(maphist, "not aliased writeable mapping",
+			    0,0,0,0);
+
+			if (!(pve->pv_va & PV_KENTER) && pm != ppm) {
+				pmap_unlock(ppm);
+				pmap_destroy(ppm);
+			}
+			*pvp = pve;
+			pvp = &pve->pv_next;
+		}
+	}
+	md->pvh_attrs &= ~PVF_EXEC;
+	*pvp = NULL;
+
+#ifdef DEBUG
+	int ret = 0;
 	/* check for non-equ aliased mappings */
 	for (pve = md->pvh_list; pve; pve = pve->pv_next) {
 		vaddr_t pva = pve->pv_va & PV_VAMASK;
@@ -565,10 +675,14 @@ pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 			ret++;
 		}
 	}
+	UVMHIST_LOG(maphist, "check returned %jd", ret, 0, 0, 0);
+#endif
 
-	UVMHIST_LOG(maphist, "<--- done (%jd)", ret, 0, 0, 0);
+	pmap_pv_unlock(md);
 
-	return (ret);
+	UVMHIST_LOG(maphist, "<--- done", 0, 0, 0, 0);
+
+	return;
 }
 
 /*
@@ -1319,8 +1433,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			panic("%s: no pv entries available", __func__);
 		}
 		pte |= PTE_PROT(pmap_prot(pmap, prot));
-		if (pmap_check_alias(pg, va, pte))
-			pmap_page_remove(pg);
+		pmap_resolve_alias(pg, pmap, va, pte);
+
 		pmap_pv_lock(md);
 		pmap_pv_enter(pg, pve, pmap, va, ptp, 0);
 		pmap_pv_unlock(md);
@@ -1893,8 +2007,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		UVMHIST_LOG(maphist, "va %#jx pa %#jx pte %#jx TLB_KENTER",
 		    va, pa, pte, 0);
 
-		if (pmap_check_alias(pg, va, pte))
-			pmap_page_remove(pg);
+		pmap_resolve_alias(pg, pmap_kernel(), va, pte);
 
 		pmap_pv_lock(md);
 		pmap_pv_enter(pg, pve, pmap_kernel(), va, NULL, PV_KENTER);
