@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.14 2020/04/04 21:15:04 kamil Exp $
+	$NetBSD: README,v 1.15 2020/04/30 00:48:10 christos Exp $
 
                            Kernel Developer's Manual
 
@@ -17,6 +17,7 @@ DESCRIPTION
      * ping            - basic ioctl(9)
      * ping_block      - basic ioctl(9) with a block device
      * properties      - handle incoming properties during the module load
+     * pollpal         - implementation of basic poll(9) using palindrome
      * readhappy       - basic implementation of read(9) with happy numbers
      * readhappy_mpsafe- demonstrates how to make a module MPSAFE
      * sysctl          - demonstrates adding a sysctl handle dynamically
@@ -81,6 +82,9 @@ HISTORY
 
      The current_time module first appeared in NetBSD 10.0 and was authored by
      Apurva Nandan.
+
+     The pollpall module first appeared in NetBSD 10.0 and was authored by
+     Ayushi Sharma.
 
 AUTHORS
      This document was written by Kamil Rytarowski.
