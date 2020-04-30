@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.9 2020/02/29 21:27:19 thorpej Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.10 2020/04/30 00:32:16 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.9 2020/02/29 21:27:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.10 2020/04/30 00:32:16 sevan Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -1448,7 +1448,7 @@ rge_set_phy_power(struct rge_softc *sc, int on)
 		rge_write_phy(sc, 0, MII_BMCR, BMCR_AUTOEN);
 
 		for (i = 0; i < RGE_TIMEOUT; i++) {
-			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0080) == 3)
+			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0007) == 3)
 				break;
 			DELAY(1000);
 		}
@@ -1889,7 +1889,7 @@ rge_exit_oob(struct rge_softc *sc)
 
 	if (rge_read_mac_ocp(sc, 0xd42c) & 0x0100) {
 		for (i = 0; i < RGE_TIMEOUT; i++) {
-			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0080) == 2)
+			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0007) == 2)
 				break;
 			DELAY(1000);
 		}
