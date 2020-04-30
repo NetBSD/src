@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.4.2.2 2020/03/21 15:47:01 martin Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.4.2.3 2020/04/30 16:05:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -158,34 +158,37 @@ struct audio_softc {
 
 	/*
 	 * Blocksize in msec.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	int sc_blk_ms;
 
 	/*
 	 * Track mixer for playback and recording.
 	 * If null, the mixer is disabled.
+	 * Must be protected by sc_exlock.
 	 */
 	audio_trackmixer_t *sc_pmixer;
 	audio_trackmixer_t *sc_rmixer;
 
 	/*
 	 * Opening track counter.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_lock && sc_exlock for modifying.
+	 * Must be protected by sc_lock || sc_exlock for reference.
 	 */
 	int sc_popens;
 	int sc_ropens;
 
 	/*
 	 * true if the track mixer is running.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock && sc_intr_lock for modifying.
+	 * Must be protected by sc_exlock || sc_intr_lock for reference.
 	 */
 	bool sc_pbusy;
 	bool sc_rbusy;
 
 	/*
 	 * These four are the parameters sustained with /dev/sound.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	audio_format2_t sc_sound_pparams;
 	audio_format2_t sc_sound_rparams;
@@ -204,13 +207,15 @@ struct audio_softc {
 	struct selinfo sc_rsel;
 
 	/*
-	 * processes who want mixer SIGIO.
-	 * Must be protected by sc_lock.
+	 * Processes who want mixer SIGIO.
+	 * sc_am is an array of pids, or NULL if empty.
+	 * sc_am_capacity is the number of allocated elements.
+	 * sc_am_used is the number of elements actually used.
+	 * Must be protected by sc_exlock.
 	 */
-	struct	mixer_asyncs {
-		struct mixer_asyncs *next;
-		pid_t	pid;
-	} *sc_async_mixer;
+	pid_t *sc_am;
+	int sc_am_capacity;
+	int sc_am_used;
 
 	/*
 	 * Thread lock and interrupt lock obtained by get_locks().
@@ -240,7 +245,7 @@ struct audio_softc {
 	/*
 	 * If multiuser is false, other users who have different euid
 	 * than the first user cannot open this device.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	bool sc_multiuser;
 	kauth_cred_t sc_cred;
