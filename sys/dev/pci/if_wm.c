@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.675 2020/04/30 03:41:31 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.676 2020/04/30 03:42:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.675 2020/04/30 03:41:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.676 2020/04/30 03:42:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -239,7 +239,7 @@ static int wm_watchdog_timeout = WM_WATCHDOG_TIMEOUT;
  * packet.  We allocate 256 receive descriptors, each with a 2k
  * buffer (MCLBYTES), which gives us room for 50 jumbo packets.
  */
-#define	WM_NRXDESC		256
+#define	WM_NRXDESC		256U
 #define	WM_NRXDESC_MASK		(WM_NRXDESC - 1)
 #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
 #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
