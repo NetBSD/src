@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.80 2020/04/23 14:18:09 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.81 2020/04/30 16:23:32 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -837,4 +837,10 @@ external/bsd/bind/include/config.h		(apply patch)
 	Fix BIND configuration for big-endian hosts.
 	This should make DNSSEC work on such hosts as well.
 	[he, ticket #1728]
+
+games/fortune/strfile/strfile.c			1.39
+games/fortune/unstr/unstr.c			1.15
+
+	Fix potential buffer overflows in fortune tools.
+	[nia, ticket #1729]
 
