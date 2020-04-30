@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.49 2020/04/30 03:30:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.49 2020/04/30 03:30:10 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoy
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/rnd.h>
 #include <sys/compat_stub.h>
 #include <sys/module_hook.h>
 
