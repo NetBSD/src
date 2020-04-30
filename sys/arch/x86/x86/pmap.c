@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.384 2020/04/28 21:35:35 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.385 2020/04/30 03:29:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.384 2020/04/28 21:35:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.385 2020/04/30 03:29:20 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -153,6 +153,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.384 2020/04/28 21:35:35 jmcneill Exp $");
 #include <sys/kcore.h>
 #include <sys/asan.h>
 #include <sys/msan.h>
+#include <sys/entropy.h>
 
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
@@ -164,7 +165,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.384 2020/04/28 21:35:35 jmcneill Exp $");
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/cputypes.h>
-#include <machine/cpu_rng.h>
 
 #include <x86/pmap.h>
 #include <x86/pmap_pv.h>
@@ -1478,7 +1478,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 	}
 
 	/* Select a hole. */
-	cpu_earlyrng(&hole, sizeof(hole));
+	entropy_extract(&hole, sizeof(hole), 0);
 #ifdef NO_X86_ASLR
 	hole = 0;
 #endif
@@ -1488,7 +1488,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 	startva = VA_SIGN_NEG(startsl * NBPD_L4);
 
 	/* Select an area within the hole. */
-	cpu_earlyrng(&va, sizeof(va));
+	entropy_extract(&va, sizeof(va), 0);
 #ifdef NO_X86_ASLR
 	va = 0;
 #endif
