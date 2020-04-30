@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.180 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.181 2020/04/30 17:17:33 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.180 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.181 2020/04/30 17:17:33 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1612,3 +1612,24 @@ ENTRY(intrfastexit)
 	iret
 END(intrfastexit)
 
+	.section .rodata
+
+	/*
+	 * Hotpatch templates.
+	 */
+
+LABEL(hp_nolock)
+	nop
+LABEL(hp_nolock_end)
+
+LABEL(hp_retfence)
+	lfence
+LABEL(hp_retfence_end)
+
+LABEL(hp_clac)
+	clac
+LABEL(hp_clac_end)
+
+LABEL(hp_stac)
+	stac
+LABEL(hp_stac_end)
