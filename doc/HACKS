@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.202 2020/04/29 11:08:40 rin Exp $
+# $NetBSD: HACKS,v 1.203 2020/04/30 12:32:16 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -81,7 +81,7 @@ kcah
 hack	wi-at-big-endian-bus
 cdate	15 Mar 2002
 who	martin
-file	dev/ic/wireg.h
+file	dev/ic/wireg.h : 1.20
 descr	Add an option to access the underlying bus in big endian byte order
 	to work around deficiencies in bus_space_{read,write}_* macros.
 	Those don't allow the implementation of a proper pcmcia bus space
@@ -407,9 +407,9 @@ kcah
 port	vax
 
 	hack	gcc4/vax ICE
-	cdate	
+	cdate	Sat Dec 22 08:17:57 2007 UTC
 	who	tsutsui
-	file	sys/arch/vax/conf/Makefile.vax
+	file	sys/arch/vax/conf/Makefile.vax : 1.79
 	descr
 		GCC4 on vax gets ICE on compiling sys/ddb/db_command.c.
 		-fno-tree-ter prevents it so add it to COPTS.
@@ -504,15 +504,15 @@ port	vax
 	hack	gcc 4.8 gcc miscompiles
 	date	Sat Nov  9 16:35:18 EST 2013
 	who	christos
-	file	distrib/utils/x_ping/Makefile
-	file	distrib/vax/miniroot/Makefile.inc
-	file	distrib/vax/ramdisk/Makefile
-	file	external/gpl3/gdb/lib/libdecnumber/Makefile
-	file	sbin/fsdb/Makefile
-	file	sbin/newfs_ext2fs/Makefile
-	file	sbin/ping/Makefile
-	file	usr.sbin/lmcconfig/Makefile
-	file	usr.sbin/mtrace/Makefile
+	file	distrib/utils/x_ping/Makefile : 1.8
+	file	distrib/vax/miniroot/Makefile.inc : ?
+	file	distrib/vax/ramdisk/Makefile : ?
+	file	external/gpl3/gdb/lib/libdecnumber/Makefile : 1.3
+	file	sbin/fsdb/Makefile : 1.36
+	file	sbin/newfs_ext2fs/Makefile : 1.6
+	file	sbin/ping/Makefile : 1.17
+	file	usr.sbin/lmcconfig/Makefile : 1.2 (file removed)
+	file	usr.sbin/mtrace/Makefile : 1.11
 	descr
 		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
 		internal compiler error: in change_address_1, at emit-rtl.c:2019
@@ -611,7 +611,7 @@ port	arm
 	hack	gcc-4.5 arm without -fno-tree-vrp generate broken code
 	cdate	Wed Nov 14 13:02:02 JST 2012
 	who	msaitoh
-	file	lib/libc/softfloat/Makefile.inc
+	file	lib/libc/softfloat/Makefile.inc : 1.11 (hack removed)
 	pr	46953
 	regress	src/tests/lib/libm/t_cbrt
 	regress	src/tests/lib/libm/t_ceil
@@ -746,6 +746,7 @@ port	x86
 		we are pass the wrong arguments to biosdisk_read(). 
 		$ cd /usr/src/sys/arch/i386/floppies/bootflopp-com
 		$ qemu-system-i386 -nographic -fda boot-com1.fs -boot a
+	cdate	Mon Apr 7 21:09:55 2014 UTC
 	who	christos
 	file	src/sys/arch/i386/stand/lib/Makefile : 1.38
 	descr
@@ -769,7 +770,7 @@ port	powerpc
 		properly.
 	cdate	Sat Mar 12 08:00:00 UTC 2011
 	who	matt
-	file	src/gnu/dist/gcc4/gcc/config/rs6000/netbsd.h
+	file	src/gnu/dist/gcc4/gcc/config/rs6000/netbsd.h : 1.7
 	descr
 		see above
 	kcah
@@ -843,7 +844,7 @@ port	x68k
 hack	fallback to /usr/bin/clang-cpp in rpcgen
 cdate	Wed Jun  5 15:49:27 CEST 2013
 who	joerg
-file	src/usr.bin/rpcgen/rpc_main.c
+file	src/usr.bin/rpcgen/rpc_main.c : 1.35
 descr
 	It is undecided which compiler owns /usr/bin/cpp and whether it should
 	exist in a MKGCC=no world. To allow rpcgen to work out-of-the-box,
@@ -919,6 +920,7 @@ kcah
 
 port	arm
 hack	avoid using labels in a 12-bit constant.
+cdate	Mon Mar 30 05:26:47 2015 UTC
 who	matt
 file	crypto/external/bsd/openssl/lib/libcrypto/arch/arm/aes-armv4.S: 1.2
 descr	workaround for clang misassembling an instruction
@@ -927,6 +929,7 @@ kcah
 port	sparc64
 hack	during profiling with -m32 (and ASLR) labels are not generated
 	consistently
+cdate	Sat Feb 11 04:56:37 2017 UTC
 who	christos
 file	/cvsroot/src/crypto/external/bsd/heimdal/lib/libasn1/Makefile: 1.4
 desc 	asn1_krb5_asn1.po does not produce the same results during successive
@@ -936,6 +939,7 @@ kcah
 
 port	ia64
 hack	ski emulator crashes
+cdate	Sat Apr 8 18:10:43 2017 UTC
 who	scole
 file	/cvsroot/src/sys/external/bsd/acpica/dist/tables/tbxfload.c: 1.6
 desc
