@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_rng.c,v 1.4 2016/02/17 20:12:42 macallan Exp $ */
+/*	$NetBSD: ingenic_rng.c,v 1.5 2020/04/30 03:40:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael McConville
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.4 2016/02/17 20:12:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.5 2020/04/30 03:40:53 riastradh Exp $");
 
 /*
  * adapted from Jared McNeill's amlogic_rng.c
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.4 2016/02/17 20:12:42 macallan Exp
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <mips/ingenic/ingenic_var.h>
@@ -103,8 +102,6 @@ ingenic_rng_attach(device_t parent, device_t self, void *aux)
 	rndsource_setcb(&sc->sc_rndsource, ingenic_rng_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-
-	ingenic_rng_get(RND_POOLBITS / NBBY, sc);
 }
 
 static void

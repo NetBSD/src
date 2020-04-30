@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.12 2020/04/30 03:30:10 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.13 2020/04/30 03:40:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/sha2.h>
 
@@ -250,27 +249,26 @@ cpu_rng(enum cpu_rng_mode mode, uint64_t *out)
 static void
 cpu_rng_get(size_t nbytes, void *cookie)
 {
-	const unsigned N = howmany(RND_POOLBITS, 64);
+	const unsigned N = howmany(256, 64);
 	uint64_t buf[2*N];
 	unsigned i, nbits = 0;
 
-	/*
-	 * Draw a sample large enough to (a) fill the pool if it had
-	 * full entropy, and (b) run a repeated-output test; then test
-	 * it.  If RND_POOLBITS is at least 256, the fraction of
-	 * outputs this rejects in correct operation is 1/2^256, which
-	 * is close enough to zero that we round it to having no effect
-	 * on the number of bits of entropy.
-	 */
-	for (i = 0; i < __arraycount(buf); i++)
-		nbits += cpu_rng(cpu_rng_mode, &buf[i]);
-	if (consttime_memequal(buf, buf + N, N)) {
-		printf("cpu_rng %s: failed repetition test\n",
-		    cpu_rng_name[cpu_rng_mode]);
-		nbits = 0;
+	for (; nbytes; nbytes -= MIN(nbytes, sizeof buf)) {
+		/*
+		 * The fraction of outputs this rejects in correct
+		 * operation is 1/2^256, which is close enough to zero
+		 * that we round it to having no effect on the number
+		 * of bits of entropy.
+		 */
+		for (i = 0; i < __arraycount(buf); i++)
+			nbits += cpu_rng(cpu_rng_mode, &buf[i]);
+		if (consttime_memequal(buf, buf + N, N)) {
+			printf("cpu_rng %s: failed repetition test\n",
+			    cpu_rng_name[cpu_rng_mode]);
+			nbits = 0;
+		}
+		rnd_add_data_sync(&cpu_rng_source, buf, sizeof buf, nbits);
 	}
-
-	rnd_add_data_sync(&cpu_rng_source, buf, sizeof buf, nbits);
 }
 
 void

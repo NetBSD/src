@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rng.c,v 1.2 2019/04/21 14:13:55 jmcneill Exp $ */
+/* $NetBSD: meson_rng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.2 2019/04/21 14:13:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.2 2019/04/21 14:13:55 jmcneill Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
-#include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -107,8 +106,6 @@ meson_rng_attach(device_t parent, device_t self, void *aux)
 	rndsource_setcb(&sc->sc_rndsource, meson_rng_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-
-	meson_rng_get(RND_POOLBITS / NBBY, sc);
 }
 
 static void
