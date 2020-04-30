@@ -1,11 +1,11 @@
-/*	$NetBSD: subr_cprng.c,v 1.35 2020/04/12 07:16:09 maxv Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.36 2020/04/30 03:28:18 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Thor Lancelot Simon and Taylor R. Campbell.
+ * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,142 +29,173 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.35 2020/04/12 07:16:09 maxv Exp $");
+/*
+ * cprng_strong
+ *
+ *	Per-CPU NIST Hash_DRBG, reseeded automatically from the entropy
+ *	pool when we transition to full entropy, never blocking.  This
+ *	is slightly different from the old cprng_strong API, but the
+ *	only users of the old one fell into three categories:
+ *
+ *	1. never-blocking, oughta-be-per-CPU (kern_cprng, sysctl_prng)
+ *	2. never-blocking, used per-CPU anyway (/dev/urandom short reads)
+ *	3. /dev/random
+ *
+ *	This code serves the first two categories without having extra
+ *	logic for /dev/random.
+ *
+ *	kern_cprng - available at IPL_VM or lower
+ *	user_cprng - available only at IPL_NONE in thread context
+ *
+ *	The name kern_cprng is for hysterical raisins.  The name
+ *	user_cprng serves only to contrast with kern_cprng.
+ */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.36 2020/04/30 03:28:18 riastradh Exp $");
+
 #include <sys/types.h>
-#include <sys/condvar.h>
 #include <sys/cprng.h>
+#include <sys/cpu.h>
+#include <sys/entropy.h>
 #include <sys/errno.h>
-#include <sys/event.h>		/* XXX struct knote */
-#include <sys/fcntl.h>		/* XXX FNONBLOCK */
-#include <sys/kernel.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/lwp.h>
-#include <sys/once.h>
 #include <sys/percpu.h>
-#include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
-#include <sys/select.h>
-#include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/rndsink.h>
+#include <sys/systm.h>
 
 #include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 
-#if defined(__HAVE_CPU_COUNTER)
-#include <machine/cpu_counter.h>
-#endif
+/*
+ * struct cprng_strong
+ */
+struct cprng_strong {
+	struct percpu		*cs_percpu; /* struct cprng_cpu */
+	ipl_cookie_t		cs_iplcookie;
+};
 
-static int sysctl_kern_urnd(SYSCTLFN_PROTO);
-static int sysctl_kern_arnd(SYSCTLFN_PROTO);
+/*
+ * struct cprng_cpu
+ *
+ *	Per-CPU state for a cprng_strong.  The DRBG and evcnt are
+ *	allocated separately because percpu(9) sometimes moves per-CPU
+ *	objects around without zeroing them.
+ */
+struct cprng_cpu {
+	struct nist_hash_drbg	*cc_drbg;
+	struct {
+		struct evcnt	reseed;
+		struct evcnt	intr;
+	}			*cc_evcnt;
+	unsigned		cc_epoch;
+};
 
-static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
-static void	cprng_strong_reseed(struct cprng_strong *);
-static void	cprng_strong_reseed_from(struct cprng_strong *, const void *,
-		    size_t, bool);
+static int	sysctl_kern_urandom(SYSCTLFN_ARGS);
+static int	sysctl_kern_arandom(SYSCTLFN_ARGS);
+static void	cprng_init_cpu(void *, void *, struct cpu_info *);
+static void	cprng_fini_cpu(void *, void *, struct cpu_info *);
 
-static rndsink_callback_t	cprng_strong_rndsink_callback;
+/* Well-known CPRNG instances */
+struct cprng_strong *kern_cprng __read_mostly; /* IPL_VM */
+struct cprng_strong *user_cprng __read_mostly; /* IPL_NONE */
+
+static struct sysctllog *cprng_sysctllog __read_mostly;
 
 void
 cprng_init(void)
 {
-	static struct sysctllog *random_sysctllog;
 
-	if (nist_hash_drbg_initialize() != 0)
+	if (__predict_false(nist_hash_drbg_initialize() != 0))
 		panic("NIST Hash_DRBG failed self-test");
 
-	sysctl_createv(&random_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "urandom",
-		       SYSCTL_DESCR("Random integer value"),
-		       sysctl_kern_urnd, 0, NULL, 0,
-		       CTL_KERN, KERN_URND, CTL_EOL);
-	sysctl_createv(&random_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "arandom",
-		       SYSCTL_DESCR("n bytes of random data"),
-		       sysctl_kern_arnd, 0, NULL, 0,
-		       CTL_KERN, KERN_ARND, CTL_EOL);
+	/*
+	 * Create CPRNG instances at two IPLs: IPL_VM for kernel use
+	 * that may occur inside IPL_VM interrupt handlers (!!??!?!?),
+	 * and IPL_NONE for userland use which need not block
+	 * interrupts.
+	 */
+	kern_cprng = cprng_strong_create("kern", IPL_VM, 0);
+	user_cprng = cprng_strong_create("user", IPL_NONE, 0);
+
+	/* Create kern.urandom and kern.arandom sysctl nodes.  */
+	sysctl_createv(&cprng_sysctllog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT, "urandom",
+	    SYSCTL_DESCR("Independent uniform random 32-bit integer"),
+	    sysctl_kern_urandom, 0, NULL, 0, CTL_KERN, KERN_URND, CTL_EOL);
+	sysctl_createv(&cprng_sysctllog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT /*lie*/, "arandom",
+	    SYSCTL_DESCR("Independent uniform random bytes, up to 256 bytes"),
+	    sysctl_kern_arandom, 0, NULL, 0, CTL_KERN, KERN_ARND, CTL_EOL);
 }
 
-static inline uint32_t
-cprng_counter(void)
+/*
+ * sysctl kern.urandom
+ *
+ *	Independent uniform random 32-bit integer.  Read-only.
+ */
+static int
+sysctl_kern_urandom(SYSCTLFN_ARGS)
 {
-	struct timeval tv;
+	struct sysctlnode node = *rnode;
+	int v;
+	int error;
 
-#if defined(__HAVE_CPU_COUNTER)
-	if (cpu_hascounter())
-		return cpu_counter32();
-#endif
-	if (__predict_false(cold)) {
-		static int ctr;
-		/* microtime unsafe if clock not running yet */
-		return ctr++;
-	}
-	getmicrotime(&tv);
-	return (tv.tv_sec * 1000000 + tv.tv_usec);
+	/* Generate an int's worth of data.  */
+	cprng_strong(user_cprng, &v, sizeof v, 0);
+
+	/* Do the sysctl dance.  */
+	node.sysctl_data = &v;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/* Clear the buffer before returning the sysctl error.  */
+	explicit_memset(&v, 0, sizeof v);
+	return error;
 }
 
-struct cprng_strong {
-	char		cs_name[16];
-	int		cs_flags;
-	kmutex_t	cs_lock;
-	percpu_t	*cs_percpu;
-	kcondvar_t	cs_cv;
-	struct selinfo	cs_selq;
-	struct rndsink	*cs_rndsink;
-	bool		cs_ready;
-	NIST_HASH_DRBG	cs_drbg;
+/*
+ * sysctl kern.arandom
+ *
+ *	Independent uniform random bytes, up to 256 bytes.  Read-only.
+ */
+static int
+sysctl_kern_arandom(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	uint8_t buf[256];
+	int error;
 
-	/* XXX Kludge for /dev/random `information-theoretic' properties.   */
-	unsigned int	cs_remaining;
-};
+	/*
+	 * Clamp to a reasonably small size.  256 bytes is kind of
+	 * arbitrary; 32 would be more reasonable, but we used 256 in
+	 * the past, so let's not break compatibility.
+	 */
+	if (*oldlenp > 256)	/* size_t, so never negative */
+		return E2BIG;
+
+	/* Generate data.  */
+	cprng_strong(user_cprng, buf, *oldlenp, 0);
+
+	/* Do the sysctl dance.  */
+	node.sysctl_data = buf;
+	node.sysctl_size = *oldlenp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/* Clear the buffer before returning the sysctl error.  */
+	explicit_memset(buf, 0, sizeof buf);
+	return error;
+}
 
 struct cprng_strong *
 cprng_strong_create(const char *name, int ipl, int flags)
 {
-	const uint32_t cc = cprng_counter();
-	struct cprng_strong *const cprng = kmem_alloc(sizeof(*cprng),
-	    KM_SLEEP);
+	struct cprng_strong *cprng;
 
-	/*
-	 * rndsink_request takes a spin lock at IPL_VM, so we can be no
-	 * higher than that.
-	 */
-	KASSERT(ipl != IPL_SCHED && ipl != IPL_HIGH);
-
-	/* Initialize the easy fields.  */
-	memset(cprng->cs_name, 0, sizeof(cprng->cs_name));
-	(void)strlcpy(cprng->cs_name, name, sizeof(cprng->cs_name));
-	cprng->cs_flags = flags;
-	mutex_init(&cprng->cs_lock, MUTEX_DEFAULT, ipl);
-	cv_init(&cprng->cs_cv, cprng->cs_name);
-	selinit(&cprng->cs_selq);
-	cprng->cs_rndsink = rndsink_create(NIST_HASH_DRBG_MIN_SEEDLEN_BYTES,
-	    &cprng_strong_rndsink_callback, cprng);
-
-	/* Get some initial entropy.  Record whether it is full entropy.  */
-	uint8_t seed[NIST_HASH_DRBG_MIN_SEEDLEN_BYTES];
-	mutex_enter(&cprng->cs_lock);
-	cprng->cs_ready = rndsink_request(cprng->cs_rndsink, seed,
-	    sizeof(seed));
-	if (nist_hash_drbg_instantiate(&cprng->cs_drbg, seed, sizeof(seed),
-		&cc, sizeof(cc), cprng->cs_name, sizeof(cprng->cs_name)))
-		/* XXX Fix nist_hash_drbg API so this can't happen.  */
-		panic("cprng %s: NIST Hash_DRBG instantiation failed",
-		    cprng->cs_name);
-	explicit_memset(seed, 0, sizeof(seed));
-
-	if (ISSET(flags, CPRNG_HARD))
-		cprng->cs_remaining = NIST_HASH_DRBG_MIN_SEEDLEN_BYTES;
-	else
-		cprng->cs_remaining = 0;
-
-	if (!cprng->cs_ready && !ISSET(flags, CPRNG_INIT_ANY))
-		printf("cprng %s: creating with partial entropy\n",
-		    cprng->cs_name);
-	mutex_exit(&cprng->cs_lock);
+	cprng = kmem_alloc(sizeof(*cprng), KM_SLEEP);
+	cprng->cs_iplcookie = makeiplcookie(ipl);
+	cprng->cs_percpu = percpu_create(sizeof(struct cprng_cpu),
+	    cprng_init_cpu, cprng_fini_cpu, __UNCONST(name));
 
 	return cprng;
 }
@@ -173,82 +204,125 @@ void
 cprng_strong_destroy(struct cprng_strong *cprng)
 {
 
-	/*
-	 * Destroy the rndsink first to prevent calls to the callback.
-	 */
-	rndsink_destroy(cprng->cs_rndsink);
-
-	KASSERT(!cv_has_waiters(&cprng->cs_cv));
-#if 0
-	KASSERT(!select_has_waiters(&cprng->cs_selq)) /* XXX ? */
-#endif
-
-	nist_hash_drbg_destroy(&cprng->cs_drbg);
-	seldestroy(&cprng->cs_selq);
-	cv_destroy(&cprng->cs_cv);
-	mutex_destroy(&cprng->cs_lock);
-
-	explicit_memset(cprng, 0, sizeof(*cprng)); /* paranoia */
+	percpu_free(cprng->cs_percpu, sizeof(struct cprng_cpu));
 	kmem_free(cprng, sizeof(*cprng));
 }
 
-/*
- * Generate some data from cprng.  Block or return zero bytes,
- * depending on flags & FNONBLOCK, if cprng was created without
- * CPRNG_REKEY_ANY.
- */
-size_t
-cprng_strong(struct cprng_strong *cprng, void *buffer, size_t bytes, int flags)
+static void
+cprng_init_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 {
-	size_t result;
-
-	/* Caller must loop for more than CPRNG_MAX_LEN bytes.  */
-	bytes = MIN(bytes, CPRNG_MAX_LEN);
-
-	mutex_enter(&cprng->cs_lock);
-
-	if (ISSET(cprng->cs_flags, CPRNG_REKEY_ANY)) {
-		if (!cprng->cs_ready)
-			cprng_strong_reseed(cprng);
-	} else {
-		while (!cprng->cs_ready) {
-			if (ISSET(flags, FNONBLOCK) ||
-			    !ISSET(cprng->cs_flags, CPRNG_USE_CV) ||
-			    cv_wait_sig(&cprng->cs_cv, &cprng->cs_lock)) {
-				result = 0;
-				goto out;
-			}
-		}
-	}
+	struct cprng_cpu *cc = ptr;
+	const char *name = cookie;
+	uint8_t zero[NIST_HASH_DRBG_SEEDLEN_BYTES] = {0};
+	char namebuf[64];	/* XXX size? */
 
 	/*
-	 * Debit the entropy if requested.
-	 *
-	 * XXX Kludge for /dev/random `information-theoretic' properties.
+	 * Format the name as, e.g., kern/8 if we're on cpu8.  This
+	 * doesn't get displayed anywhere; it just ensures that if
+	 * there were a bug causing us to use the same otherwise secure
+	 * seed on multiple CPUs, we would still get independent output
+	 * from the NIST Hash_DRBG.
 	 */
-	if (__predict_false(ISSET(cprng->cs_flags, CPRNG_HARD))) {
-		KASSERT(0 < cprng->cs_remaining);
-		KASSERT(cprng->cs_remaining <=
-		    NIST_HASH_DRBG_MIN_SEEDLEN_BYTES);
-		if (bytes < cprng->cs_remaining) {
-			cprng->cs_remaining -= bytes;
-		} else {
-			bytes = cprng->cs_remaining;
-			cprng->cs_remaining = NIST_HASH_DRBG_MIN_SEEDLEN_BYTES;
-			cprng->cs_ready = false;
-			rndsink_schedule(cprng->cs_rndsink);
-		}
-		KASSERT(bytes <= NIST_HASH_DRBG_MIN_SEEDLEN_BYTES);
-		KASSERT(0 < cprng->cs_remaining);
-		KASSERT(cprng->cs_remaining <=
-		    NIST_HASH_DRBG_MIN_SEEDLEN_BYTES);
+	snprintf(namebuf, sizeof namebuf, "%s/%u", name, cpu_index(ci));
+
+	/*
+	 * Allocate the struct nist_hash_drbg and struct evcnt
+	 * separately, since percpu(9) may move objects around in
+	 * memory without zeroing.
+	 */
+	cc->cc_drbg = kmem_zalloc(sizeof(*cc->cc_drbg), KM_SLEEP);
+	cc->cc_evcnt = kmem_alloc(sizeof(*cc->cc_evcnt), KM_SLEEP);
+
+	/*
+	 * Initialize the DRBG with no seed.  We do this in order to
+	 * defer reading from the entropy pool as long as possible.
+	 */
+	if (__predict_false(nist_hash_drbg_instantiate(cc->cc_drbg,
+		    zero, sizeof zero, NULL, 0, namebuf, strlen(namebuf))))
+		panic("nist_hash_drbg_instantiate");
+
+	/* Attach the event counters.  */
+	evcnt_attach_dynamic(&cc->cc_evcnt->intr, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "cprng_strong intr");
+	evcnt_attach_dynamic(&cc->cc_evcnt->reseed, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "cprng_strong reseed");
+
+	/* Set the epoch uninitialized so we reseed on first use.  */
+	cc->cc_epoch = 0;
+}
+
+static void
+cprng_fini_cpu(void *ptr, void *cookie, struct cpu_info *ci)
+{
+	struct cprng_cpu *cc = ptr;
+
+	evcnt_detach(&cc->cc_evcnt->reseed);
+	evcnt_detach(&cc->cc_evcnt->intr);
+	if (__predict_false(nist_hash_drbg_destroy(cc->cc_drbg)))
+		panic("nist_hash_drbg_destroy");
+
+	kmem_free(cc->cc_evcnt, sizeof(*cc->cc_evcnt));
+	kmem_free(cc->cc_drbg, sizeof(*cc->cc_drbg));
+}
+
+size_t
+cprng_strong(struct cprng_strong *cprng, void *buf, size_t len, int flags)
+{
+	uint32_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
+	struct cprng_cpu *cc;
+	unsigned epoch;
+	int s;
+
+	/*
+	 * Verify maximum request length.  Caller should really limit
+	 * their requests to 32 bytes to avoid spending much time with
+	 * preemption disabled -- use the 32 bytes to seed a private
+	 * DRBG instance if you need more data.
+	 */
+	KASSERT(len <= CPRNG_MAX_LEN);
+
+	/* Verify legacy API use.  */
+	KASSERT(flags == 0);
+
+	/* Acquire per-CPU state and block interrupts.  */
+	cc = percpu_getref(cprng->cs_percpu);
+	s = splraiseipl(cprng->cs_iplcookie);
+
+	if (cpu_intr_p())
+		cc->cc_evcnt->intr.ev_count++;
+
+	/* If the entropy epoch has changed, (re)seed.  */
+	epoch = entropy_epoch();
+	if (__predict_false(epoch != cc->cc_epoch)) {
+		entropy_extract(seed, sizeof seed, 0);
+		cc->cc_evcnt->reseed.ev_count++;
+		if (__predict_false(nist_hash_drbg_reseed(cc->cc_drbg,
+			    seed, sizeof seed, NULL, 0)))
+			panic("nist_hash_drbg_reseed");
+		explicit_memset(seed, 0, sizeof seed);
+		cc->cc_epoch = epoch;
 	}
 
-	cprng_strong_generate(cprng, buffer, bytes);
-	result = bytes;
+	/* Generate data.  Failure here means it's time to reseed.  */
+	if (__predict_false(nist_hash_drbg_generate(cc->cc_drbg, buf, len,
+		    NULL, 0))) {
+		entropy_extract(seed, sizeof seed, 0);
+		cc->cc_evcnt->reseed.ev_count++;
+		if (__predict_false(nist_hash_drbg_reseed(cc->cc_drbg,
+			    seed, sizeof seed, NULL, 0)))
+			panic("nist_hash_drbg_reseed");
+		explicit_memset(seed, 0, sizeof seed);
+		if (__predict_false(nist_hash_drbg_generate(cc->cc_drbg,
+			    buf, len, NULL, 0)))
+			panic("nist_hash_drbg_generate");
+	}
 
-out:	mutex_exit(&cprng->cs_lock);
-	return result;
+	/* Release state and interrupts.  */
+	splx(s);
+	percpu_putref(cprng->cs_percpu);
+
+	/* Return the number of bytes generated, for hysterical raisins.  */
+	return len;
 }
 
 uint32_t
@@ -265,319 +339,4 @@ cprng_strong64(void)
 	uint64_t r;
 	cprng_strong(kern_cprng, &r, sizeof(r), 0);
 	return r;
-}
-
-static void
-filt_cprng_detach(struct knote *kn)
-{
-	struct cprng_strong *const cprng = kn->kn_hook;
-
-	mutex_enter(&cprng->cs_lock);
-	SLIST_REMOVE(&cprng->cs_selq.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(&cprng->cs_lock);
-}
-
-static int
-filt_cprng_read_event(struct knote *kn, long hint)
-{
-	struct cprng_strong *const cprng = kn->kn_hook;
-	int ret;
-
-	if (hint == NOTE_SUBMIT)
-		KASSERT(mutex_owned(&cprng->cs_lock));
-	else
-		mutex_enter(&cprng->cs_lock);
-	if (cprng->cs_ready) {
-		kn->kn_data = CPRNG_MAX_LEN; /* XXX Too large?  */
-		ret = 1;
-	} else {
-		ret = 0;
-	}
-	if (hint == NOTE_SUBMIT)
-		KASSERT(mutex_owned(&cprng->cs_lock));
-	else
-		mutex_exit(&cprng->cs_lock);
-
-	return ret;
-}
-
-static int
-filt_cprng_write_event(struct knote *kn, long hint)
-{
-	struct cprng_strong *const cprng = kn->kn_hook;
-
-	if (hint == NOTE_SUBMIT)
-		KASSERT(mutex_owned(&cprng->cs_lock));
-	else
-		mutex_enter(&cprng->cs_lock);
-
-	kn->kn_data = 0;
-
-	if (hint == NOTE_SUBMIT)
-		KASSERT(mutex_owned(&cprng->cs_lock));
-	else
-		mutex_exit(&cprng->cs_lock);
-
-	return 0;
-}
-
-static const struct filterops cprng_read_filtops = {
-	.f_isfd = 1,
-	.f_attach = NULL,
-	.f_detach = filt_cprng_detach,
-	.f_event = filt_cprng_read_event,
-};
-
-static const struct filterops cprng_write_filtops = {
-	.f_isfd = 1,
-	.f_attach = NULL,
-	.f_detach = filt_cprng_detach,
-	.f_event = filt_cprng_write_event,
-};
-
-int
-cprng_strong_kqfilter(struct cprng_strong *cprng, struct knote *kn)
-{
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		kn->kn_fop = &cprng_read_filtops;
-		break;
-	case EVFILT_WRITE:
-		kn->kn_fop = &cprng_write_filtops;
-		break;
-	default:
-		return EINVAL;
-	}
-
-	kn->kn_hook = cprng;
-	mutex_enter(&cprng->cs_lock);
-	SLIST_INSERT_HEAD(&cprng->cs_selq.sel_klist, kn, kn_selnext);
-	mutex_exit(&cprng->cs_lock);
-	return 0;
-}
-
-int
-cprng_strong_poll(struct cprng_strong *cprng, int events)
-{
-	int revents;
-
-	if (!ISSET(events, (POLLIN | POLLRDNORM)))
-		return 0;
-
-	mutex_enter(&cprng->cs_lock);
-	if (cprng->cs_ready) {
-		revents = (events & (POLLIN | POLLRDNORM));
-	} else {
-		selrecord(curlwp, &cprng->cs_selq);
-		revents = 0;
-	}
-	mutex_exit(&cprng->cs_lock);
-
-	return revents;
-}
-
-/*
- * XXX Move nist_hash_drbg_reseed_advised_p and
- * nist_hash_drbg_reseed_needed_p into the nist_hash_drbg API and make
- * the NIST_HASH_DRBG structure opaque.
- */
-static bool
-nist_hash_drbg_reseed_advised_p(NIST_HASH_DRBG *drbg)
-{
-
-	return (drbg->reseed_counter > (NIST_HASH_DRBG_RESEED_INTERVAL / 2));
-}
-
-static bool
-nist_hash_drbg_reseed_needed_p(NIST_HASH_DRBG *drbg)
-{
-
-	return (drbg->reseed_counter >= NIST_HASH_DRBG_RESEED_INTERVAL);
-}
-
-/*
- * Generate some data from the underlying generator.
- */
-static void
-cprng_strong_generate(struct cprng_strong *cprng, void *buffer, size_t bytes)
-{
-	const uint32_t cc = cprng_counter();
-
-	KASSERT(bytes <= CPRNG_MAX_LEN);
-	KASSERT(mutex_owned(&cprng->cs_lock));
-
-	/*
-	 * Generate some data from the NIST Hash_DRBG.  Caller
-	 * guarantees reseed if we're not ready, and if we exhaust the
-	 * generator, we mark ourselves not ready.  Consequently, this
-	 * call to the Hash_DRBG should not fail.
-	 */
-	if (__predict_false(nist_hash_drbg_generate(&cprng->cs_drbg, buffer,
-		    bytes, &cc, sizeof(cc))))
-		panic("cprng %s: NIST Hash_DRBG failed", cprng->cs_name);
-
-	/*
-	 * If we've been seeing a lot of use, ask for some fresh
-	 * entropy soon.
-	 */
-	if (__predict_false(nist_hash_drbg_reseed_advised_p(&cprng->cs_drbg)))
-		rndsink_schedule(cprng->cs_rndsink);
-
-	/*
-	 * If we just exhausted the generator, inform the next user
-	 * that we need a reseed.
-	 */
-	if (__predict_false(nist_hash_drbg_reseed_needed_p(&cprng->cs_drbg))) {
-		cprng->cs_ready = false;
-		rndsink_schedule(cprng->cs_rndsink); /* paranoia */
-	}
-}
-
-/*
- * Reseed with whatever we can get from the system entropy pool right now.
- */
-static void
-cprng_strong_reseed(struct cprng_strong *cprng)
-{
-	uint8_t seed[NIST_HASH_DRBG_MIN_SEEDLEN_BYTES];
-
-	KASSERT(mutex_owned(&cprng->cs_lock));
-
-	const bool full_entropy = rndsink_request(cprng->cs_rndsink, seed,
-	    sizeof(seed));
-	cprng_strong_reseed_from(cprng, seed, sizeof(seed), full_entropy);
-	explicit_memset(seed, 0, sizeof(seed));
-}
-
-/*
- * Reseed with the given seed.  If we now have full entropy, notify waiters.
- */
-static void
-cprng_strong_reseed_from(struct cprng_strong *cprng,
-    const void *seed, size_t bytes, bool full_entropy)
-{
-	const uint32_t cc = cprng_counter();
-
-	KASSERT(bytes == NIST_HASH_DRBG_MIN_SEEDLEN_BYTES);
-	KASSERT(mutex_owned(&cprng->cs_lock));
-
-	/*
-	 * Notify anyone interested in the partiality of entropy in our
-	 * seed -- anyone waiting for full entropy, or any system
-	 * operators interested in knowing when the entropy pool is
-	 * running on fumes.
-	 */
-	if (full_entropy) {
-		if (!cprng->cs_ready) {
-			cprng->cs_ready = true;
-			cv_broadcast(&cprng->cs_cv);
-			selnotify(&cprng->cs_selq, (POLLIN | POLLRDNORM),
-			    NOTE_SUBMIT);
-		}
-	} else {
-		/*
-		 * XXX Is there is any harm in reseeding with partial
-		 * entropy when we had full entropy before?  If so,
-		 * remove the conditional on this message.
-		 */
-		if (!cprng->cs_ready &&
-		    !ISSET(cprng->cs_flags, CPRNG_REKEY_ANY))
-			printf("cprng %s: reseeding with partial entropy\n",
-			    cprng->cs_name);
-	}
-
-	if (nist_hash_drbg_reseed(&cprng->cs_drbg, seed, bytes, &cc,
-		sizeof(cc)))
-		/* XXX Fix nist_hash_drbg API so this can't happen.  */
-		panic("cprng %s: NIST Hash_DRBG reseed failed",
-		    cprng->cs_name);
-}
-
-/*
- * Feed entropy from an rndsink request into the CPRNG for which the
- * request was issued.
- */
-static void
-cprng_strong_rndsink_callback(void *context, const void *seed, size_t bytes)
-{
-	struct cprng_strong *const cprng = context;
-
-	mutex_enter(&cprng->cs_lock);
-	/* Assume that rndsinks provide only full-entropy output.  */
-	cprng_strong_reseed_from(cprng, seed, bytes, true);
-	mutex_exit(&cprng->cs_lock);
-}
-
-static ONCE_DECL(sysctl_prng_once);
-static cprng_strong_t *sysctl_prng;
-
-static int
-makeprng(void)
-{
-
-	/* can't create in cprng_init(), too early */
-	sysctl_prng = cprng_strong_create("sysctl", IPL_NONE,
-					  CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
-	return 0;
-}
-
-/*
- * sysctl helper routine for kern.urandom node. Picks a random number
- * for you.
- */
-static int
-sysctl_kern_urnd(SYSCTLFN_ARGS)
-{
-	int v, rv;
-
-	RUN_ONCE(&sysctl_prng_once, makeprng);
-	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
-	if (rv == sizeof(v)) {
-		struct sysctlnode node = *rnode;
-		node.sysctl_data = &v;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	}
-	else
-		return (EIO);	/*XXX*/
-}
-
-/*
- * sysctl helper routine for kern.arandom node.  Fills the supplied
- * structure with random data for you.
- *
- * This node was originally declared as type "int" but its implementation
- * in OpenBSD, whence it came, would happily return up to 8K of data if
- * requested.  Evidently this was used to key RC4 in userspace.
- *
- * In NetBSD, the libc stack-smash-protection code reads 64 bytes
- * from here at every program startup.  Third-party software also often
- * uses this to obtain a key for CSPRNG, reading 32 bytes or more, while
- * avoiding the need to open /dev/urandom.
- */
-static int
-sysctl_kern_arnd(SYSCTLFN_ARGS)
-{
-	int error;
-	void *v;
-	struct sysctlnode node = *rnode;
-	size_t n __diagused;
-
-	switch (*oldlenp) {
-	    case 0:
-		return 0;
-	    default:
-		if (*oldlenp > 256) {
-			return E2BIG;
-		}
-		RUN_ONCE(&sysctl_prng_once, makeprng);
-		v = kmem_alloc(*oldlenp, KM_SLEEP);
-		n = cprng_strong(sysctl_prng, v, *oldlenp, 0);
-		KASSERT(n == *oldlenp);
-		node.sysctl_data = v;
-		node.sysctl_size = *oldlenp;
-		error = sysctl_lookup(SYSCTLFN_CALL(&node));
-		kmem_free(v, *oldlenp);
-		return error;
-	}
 }

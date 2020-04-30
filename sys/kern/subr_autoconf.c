@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.269 2020/02/27 20:16:38 macallan Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.270 2020/04/30 03:28:18 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.269 2020/02/27 20:16:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.270 2020/04/30 03:28:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -121,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.269 2020/02/27 20:16:38 macallan
 /*
  * Device autoconfiguration timings are mixed into the entropy pool.
  */
-extern krndsource_t rnd_autoconf_source;
+static krndsource_t rnd_autoconf_source;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -355,6 +355,9 @@ config_init(void)
 
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
+
+	rnd_attach_source(&rnd_autoconf_source, "autoconf", RND_TYPE_UNKNOWN,
+	    RND_FLAG_COLLECT_TIME);
 
 	config_initialized = true;
 }

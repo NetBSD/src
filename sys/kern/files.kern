@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.46 2020/04/26 18:53:33 thorpej Exp $
+#	$NetBSD: files.kern,v 1.47 2020/04/30 03:28:18 riastradh Exp $
 
 #
 # kernel sources
@@ -40,6 +40,7 @@ file	kern/kern_cpu.c			kern
 #file	kern/kern_ctf.c			kdtrace_hooks
 
 file	kern/kern_descrip.c		kern
+file	kern/kern_entropy.c		kern
 file	kern/kern_event.c		kern
 file	kern/kern_exec.c		kern
 file	kern/kern_exit.c		kern
@@ -69,9 +70,6 @@ file	kern/kern_ras.c			kern
 file	kern/kern_rate.c		kern
 file	kern/kern_reboot.c		kern
 file	kern/kern_resource.c		kern
-file	kern/kern_rndpool.c		kern
-file	kern/kern_rndq.c		kern
-file	kern/kern_rndsink.c		kern
 file	kern/kern_runq.c		kern
 file	kern/kern_rwlock.c		kern
 file	kern/kern_rwlock_obj.c		kern

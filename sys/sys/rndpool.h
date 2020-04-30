@@ -1,12 +1,11 @@
-/*	$NetBSD: rndpool.h,v 1.3 2015/04/14 13:14:20 riastradh Exp $	*/
+/*	$NetBSD: rndpool.h,v 1.4 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.  This code uses ideas and
- * algorithms from the Linux driver written by Ted Ts'o.
+ * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,35 +37,10 @@
 #endif
 
 #include <sys/types.h>
-#include <sys/rndio.h>		/* rndpoolstat_t */
 
-/*
- * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
- * change this unless you really know what you are doing...
- */
-#ifndef RND_POOLWORDS
-#define RND_POOLWORDS	128
-#endif
-#define RND_POOLBITS	(RND_POOLWORDS * 32)
+#include <lib/libkern/entpool.h>
 
-typedef struct {
-        uint32_t        cursor;         /* current add point in the pool */
-        uint32_t        rotate;         /* how many bits to rotate by */
-        rndpoolstat_t   stats;          /* current statistics */
-        uint32_t        pool[RND_POOLWORDS]; /* random pool data */
-} rndpool_t;
-
-/* Mode for rnd_extract_data.  */
-#define RND_EXTRACT_ANY		0  /* extract as many bits as requested */
-#define RND_EXTRACT_GOOD	1  /* extract as many bits as we have counted
-				    * entropy */
-
-void		rndpool_init(rndpool_t *);
-uint32_t	rndpool_get_entropy_count(rndpool_t *);
-void		rndpool_set_entropy_count(rndpool_t *, uint32_t);
-void		rndpool_get_stats(rndpool_t *, void *, int);
-void		rndpool_add_data(rndpool_t *,
-				 const void *const , uint32_t, uint32_t);
-uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
+/* Legacy name for API compatibility.  */
+#define	RND_POOLBITS	(ENTPOOL_CAPACITY*NBBY)
 
 #endif	/* _SYS_RNDPOOL_H */

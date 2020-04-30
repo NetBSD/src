@@ -1,6 +1,6 @@
-.\"	$NetBSD: rnd.4,v 1.28 2019/09/04 05:37:06 wiz Exp $
+.\"	$NetBSD: rnd.4,v 1.29 2020/04/30 03:28:18 riastradh Exp $
 .\"
-.\" Copyright (c) 2014 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -30,9 +30,11 @@
 .Dd September 3, 2019
 .Dt RND 4
 .Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm rnd
 .Nd random number generator
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
 .Pa /dev/random
@@ -93,6 +95,7 @@ can guess:
 .Pp
 (Sequence generated from a genuine US quarter dollar, guaranteed
 random.)
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SECURITY MODEL
 The
 .Nm
@@ -119,6 +122,7 @@ means it is conjectured of the cryptography in
 that any computationally bounded attacker who tries to distinguish
 outputs from uniform random cannot do more than negligibly better than
 uniform random guessing.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh ENTROPY
 The operating system continuously makes observations of hardware
 devices, such as network packet timings, disk seek delays, and
@@ -163,8 +167,11 @@ An utterance from an accounting troll who always says
 has zero bits of entropy.
 .El
 .Pp
-Note that entropy is a property of an observable physical process, not
-of a particular sample obtained by observing it.
+Note that entropy is a property of an observable physical process, like
+a coin toss, or of a state of knowledge about that physical process; it
+is not a property of a specific sample obtained by observing it, like
+the string
+.Sq tthhhhht .
 There are also kinds of entropy in information theory other than
 min-entropy, including the more well-known Shannon entropy, but they
 are not relevant here.
@@ -199,11 +206,12 @@ kernel has started.
 For those that don't, the
 .Xr rndctl 8
 command can do it once userland has started, for example by setting
-.Dq Va random_seed=YES
+.Dq Li random_seed=YES
 in
 .Pa /etc/rc.conf ,
 which is enabled by default; see
 .Xr rc.conf 5 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh LIMITATIONS
 Some people worry about recovery from state compromise \(em that is,
 ensuring that even if an attacker sees the entire state of the
@@ -238,6 +246,7 @@ The only way to prevent this attack would be for the operator to
 disable all entropy sources that may be colluding with an attacker.
 If you're not sure which ones are not, you can always disable all of
 them and fall back to the coin in your pocket.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh IOCTLS
 The
 .Pa /dev/random
@@ -383,6 +392,74 @@ typedef struct {
 .Pp
 Return various statistics about entropy.
 .El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYSCTLS
+The following
+.Xr sysctl 8
+variables provided by
+.Nm
+can be set by privileged users:
+.Bl -tag -width abcd
+.It Dv kern.entropy.collection Pq Vt bool
+(Default on.)
+Enables entering data into the entropy pool.
+If disabled, no new data can be entered into the entropy pool, whether
+by device drivers, by writes to
+.Pa /dev/random
+or
+.Pa /dev/urandom ,
+or by the
+.Dv RNDADDDATA
+ioctl.
+.It Dv kern.entropy.depletion Pq Vt bool
+(Default off.)
+Enables
+.Sq entropy depletion ,
+meaning that even after attaining full entropy, the kernel subtracts
+the number of bits read out of the entropy pool from its estimate of
+the system entropy.
+This is not justified by modern cryptography \(em an adversary will
+never guess the 256-bit secret in a Keccak sponge no matter how much
+output from the sponge they see \(em but may be useful for testing.
+.It Dv kern.entropy.consolidate Pq Vt int
+Trigger for entropy consolidation: executing
+.Dl # sysctl -w kern.entropy.consolidate=1
+causes the system to consolidate pending entropy from per-CPU pools
+into the global pool, and waits until done.
+.El
+.Pp
+The following read-only
+.Xr sysctl 8
+variables provide information to privileged users about the state of
+the entropy pool:
+.Bl -tag -width abcd
+.It Dv kern.entropy.needed Pq Vt unsigned int
+Number of bits of entropy the system is waiting for in the global pool
+before reads from
+.Pa /dev/random
+will return without blocking.
+When zero, the system is considered to have full entropy.
+.It Dv kern.entropy.pending Pq Vt unsigned int
+Number of bits of entropy pending in per-CPU pools.
+This is the amount of entropy that will be contributed to the global
+pool at the next consolidation, such as from triggering
+.Dv kern.entropy.consolidate .
+.It Dv kern.entropy.epoch Pq Vt unsigned int
+Number of times system has reached full entropy, or entropy has been
+consolidated with
+.Dv kern.entropy.consolidate , as an unsigned 32-bit integer.
+Consulted inside the kernel by subsystems such as
+.Xr cprng 9
+to decide whether to reseed.
+Initially set to 2^32 - 1
+.Pq i.e., Li "(unsigned)-1"
+meaning the system has never reached full entropy and the entropy has
+never been consolidated; never again set to 2^32 - 1.
+Never zero, so applications can initialize a cache of the epoch to zero
+to ensure they reseed the next time they check whether it is different
+from the stored epoch.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh IMPLEMENTATION NOTES
 (This section describes the current implementation of the
 .Nm
@@ -394,84 +471,71 @@ and
 .Pa /dev/urandom
 devices.)
 .Pp
-Samples from entropy sources are fed 32 bits at a time into the entropy
-pool, which is an array of 4096 bits, or 128 32-bit words, representing
-32 linear feedback shift registers each 128 bits long.
-.\" XXX Finish this description so it is implementable.
+Device drivers gather samples from entropy sources and absorb them into
+a collection of per-CPU Keccak sponges called
+.Sq entropy pools
+using the
+.Xr rnd 9
+kernel API.
+The device driver furnishes an estimate for the entropy of the sampling
+process, under the assumption that each sample is independent.
+When the estimate of entropy pending among the per-CPU entropy pools
+reaches a threshold of 256 bits, the entropy is drawn from the per-CPU
+pools and consolidated into a global pool.
+Keys for
+.Pa /dev/random ,
+.Pa /dev/urandom ,
+and the in-kernel
+.Xr cprng 9
+subsystem are extracted from the global pool.
 .Pp
-When a user process opens
-.Pa /dev/random
-or
+Early after boot, before CPUs have been detected, device drivers
+instead enter directly into the global pool.
+If anything in the system extracts data from the pool before the
+threshold has been reached at least once, the system will print a
+warning to the console and reset the entropy estimate to zero.
+The reason for resetting the entropy estimate to zero in this case is
+that an adversary who can witness output from the pool with partial
+entropy \(em say, 32 bits \(em can undergo a feasible brute force
+search to ascertain the complete state of the pool; as such, the
+entropy of the adversary's state of knowledge about the pool is zero.
+.Pp
+If the operator is confident that the drivers' estimates of the entropy
+of the sampling processes are too conservative, the operator can issue
+.Dl # sysctl -w kern.entropy.consolidate=1
+to force consolidation into the ready pool.
+The operator can also fool the system into thinking it has more entropy
+than it does by feeding data from
 .Pa /dev/urandom
-and first reads from it, the kernel draws from the entropy pool to seed
-a cryptographic pseudorandom number generator, the NIST Hash_DRBG
-(hash-based deterministic random bit generator) with SHA-256 as the
-hash function, and uses that to generate data.
+into
+.Pa /dev/random ,
+but this voids the security model and should be limited to testing
+purposes.
 .Pp
-To draw a seed from the entropy pool, the kernel
-.Bl -bullet -offset abcd -compact
-.It
-computes the SHA-1 hash of the entropy pool,
-.It
-feeds the SHA-1 hash word-by-word back into the entropy pool like an
-entropy source, and
-.It
-yields the xor of bytes
-.Pf 0.. Fa n
-with bytes
-.Fa n Ns +0.. Ns Fa n Ns Pf + Fa n
-of the hash, where
-.Fa n
-is
-.Dv RND_ENTROPY_THRESHOLD
-(currently 10).
-.El
-The kernel repeats the process, concatenating the results, until it has
-filled the seed.
-.Pp
-For each entropy source, the kernel estimates based on the previous
-samples how much entropy the source is providing in each new sample.
-The kernel maintains a count of the
-.Sq amount of entropy
-or
-.Sq number of bits of entropy
-in the pool.
-Each sample
-.Sq credits
-to the amount of entropy.
-Every time the kernel draws a PRNG seed from the entropy pool, it
-.Sq debits
-from the amount of entropy.
-.Pp
-Every open from
-.Pa /dev/urandom
-seeds an independent PRNG which is reseeded at the convenience of the
-kernel after a billion requests for output.
-Reads from
-.Pa /dev/urandom
-never block, even if the kernel estimates its state to be totally
-predictable.
-.Pp
-Every open from
-.Pa /dev/random
-seeds an independent PRNG which is reseeded after every 16 bytes of
-output.
-Reads from
-.Pa /dev/random
-block if the PRNG needs to be (re)seeded and the kernel's entropy
-estimate is too low.
-.Pp
-It is possible to fool the kernel's entropy estimator, in which case
+.Em Short
 reads from
-.Pa /dev/random
-may return immediately even if the kernel is in a totally predictable
-state.
-.Pp
-Writes to
+.Pa /dev/urandom
+are served by a persistent per-CPU Hash_DRBG instance that is
+reseeded from the entropy pool after any entropy consolidation.
+Reads from
 .Pa /dev/random
 and
+.Em long
+reads from
 .Pa /dev/urandom
-devices do not change the kernel's entropy estimate.
+are served by a temporary Hash_DRBG seeded from the entropy pool on
+each read.
+.Pp
+When
+.Sq entropy depletion
+is enabled by
+setting the sysctl variable
+.Dv kern.entropy.depletion Ns Li \&=1 ,
+every read from
+.Pa /dev/random
+is limited to 256 bits, since reading more than that would nearly
+always block again.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh FILES
 .Bl -tag -width /dev/urandom -compact
 .It Pa /dev/random
@@ -481,18 +545,102 @@ May block.
 Uniform random byte source.
 Never blocks.
 .El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DIAGNOSTICS
+The
+.Nm
+subsystem may print the following warnings to the console likely
+indicating security issues:
+.Bl -diag -offset indent
+.It entropy: WARNING: extracting entropy too early
+Something requested extraction of entropy from the pool before it
+has ever reached full entropy in the system's estimation.
+.Pp
+The entropy may be low enough that an adversary who sees the output
+could guess the state of the pool by brute force, so in this event the
+system resets its estimate of entropy to none.
+.Pp
+This message is rate-limited to happen no more often than once per
+minute, so if you want to make sure it is gone you should consult
+.Dv kern.entropy.needed
+to confirm it is zero.
+.It entropy: WARNING: consolidating less than full entropy
+The operator triggered consolidation of entropy pending in per-CPU
+pools into the global pool when the system's estimate of the amount of
+entropy was still below the 256-bit threshold.
+.Pp
+This message can be safely ignored if the operator knows something the
+system doesn't, e.g. if the operator has flipped a coin 256 times and
+written the outcomes to
+.Pa /dev/random .
+.Pp
+This message is rate-limited to happen no more often than once per
+minute.
+.El
+.Pp
+The
+.Nm
+subsystem may print any of various messages about obtaining an entropy
+seed from the bootloader to diagnose saving and loading seeds on disk:
+.Bl -diag -offset indent
+.It entropy: entering seed from bootloader
+The bootloader provided an entropy seed to the kernel.
+.It entropy: no seed from bootloader
+The bootloader did not provide an entropy seed to the kernel before
+starting the kernel.
+This does not necessarily indicate a problem; not all bootloaders
+support the option, and the
+.Xr rc.conf 5
+setting
+.Li random_seed=YES
+can serve instead.
+.It entropy: invalid seed length N, expected sizeof(rndsave_t) = M
+The bootloader provided an entropy seed of the wrong size to the
+kernel.
+This may indicate a bug in
+.Xr rndctl 8 .
+The seed will be ignored.
+.It entropy: invalid seed checksum
+The entropy seed provided by the bootloader was malformed.
+The seed will be entered into the entropy pool, but it will be
+considered to contribute no entropy.
+.It entropy: double-seeded by bootloader
+A buggy bootloader tried to provide an entropy seed more than once to
+the kernel.
+Subsequent seeds will be entered into the entropy pool, but they will
+be considered to contribute no entropy.
+.It entropy: ready
+The system has full entropy for the first time.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr rndctl 8 ,
-.Xr cprng 9
+.Xr cprng 9 ,
+.Xr rnd 9
 .Rs
 .%A Elaine Barker
 .%A John Kelsey
 .%T Recommendation for Random Number Generation Using Deterministic Random Bit Generators
 .%D June 2015
+.%Q United States Department of Commerce
 .%I National Institute of Standards and Technology
 .%O NIST Special Publication 800-90A, Revision 1
 .%U https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final
+.Re
+.Rs
+.%A Meltem S\(:onmez Turan
+.%A Elaine Barker
+.%A John Kelsey
+.%A Kerry A. McKay
+.%A Mary L. Baish
+.%A Mike Boyle
+.%T Recommendations for the Entropy Sources Used for Random Bit Generation
+.%D January 2018
+.%Q United States Department of Commerce
+.%I National Institute of Standards and Technology
+.%O NIST Special Publication 800-90B
+.%U https://csrc.nist.gov/publications/detail/sp/800-90b/final
 .Re
 .Rs
 .%A Daniel J. Bernstein
@@ -513,6 +661,14 @@ Never blocks.
 .%U https://www.usenix.org/conference/usenixsecurity12/technical-sessions/presentation/heninger
 .%U https://factorable.net/
 .Re
+.Rs
+.%A Edwin T. Jaynes
+.%B Probability Theory: The Logic of Science
+.%I Cambridge University Press
+.%D 2003
+.%U https://bayes.wustl.edu/
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh HISTORY
 The
 .Pa /dev/random
@@ -520,64 +676,21 @@ and
 .Pa /dev/urandom
 devices first appeared in
 .Nx 1.3 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh AUTHORS
 The
 .Nm
 subsystem was first implemented by
 .An Michael Graff Aq Mt explorer@flame.org ,
-and was then largely rewritten by
-.An Thor Lancelot Simon Aq Mt tls@NetBSD.org
-with later contributions by
+was then largely rewritten by
+.An Thor Lancelot Simon Aq Mt tls@NetBSD.org ,
+and was most recently largely rewritten by
 .An Taylor R. Campbell Aq Mt riastradh@NetBSD.org .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh BUGS
-There is no way to disable all entropy sources, in this and subsequent
-boots and no matter what USB devices you plug in against your mother's
-sage advice, in order to defend against the colluding hardware attack.
-.Pp
-The implementation confuses the number of bits in the entropy pool's
-physical representation, as a set of 32 128-bit LFSRs, with the number
-of bits of entropy that a system needs in order to be unpredictable, so
-even if entropy estimates were accurate and high, it takes unreasonably
-long for
-.Pa /dev/random
-to stop blocking.
-.Pp
 Many people are confused about what
 .Pa /dev/random
 and
 .Pa /dev/urandom
 mean.
 Unfortunately, no amount of software engineering can fix that.
-.Sh ENTROPY ACCOUNTING
-The entropy accounting described here is not grounded in any
-cryptography theory.
-.Sq Entropy estimation
-doesn't mean much: the kernel hypothesizes an extremely simple-minded
-parametric model for all entropy sources which bears little relation to
-any physical processes, implicitly fits parameters from data, and
-accounts for the entropy of the fitted model.
-.Pp
-Past versions of the
-.Nm
-subsystem were concerned with
-.Sq information-theoretic
-security, under the premise that the number of bits of entropy out must
-not exceed the number of bits of entropy in \(em never mind that its
-.Sq entropy estimation
-is essentially meaningless without a model for the physical processes
-the system is observing.
-.Pp
-But every cryptographic protocol in practice, including HTTPS, SSH,
-PGP, etc., expands short secrets deterministically into long streams of
-bits, and their security relies on conjectures that a computationally
-bounded attacker cannot distinguish the long streams from uniform
-random.
-If we couldn't do that for
-.Fa /dev/random ,
-it would be hopeless to assume we could for HTTPS, SSH, PGP, etc.
-.Pp
-History is littered with examples of broken entropy sources and failed
-system engineering for random number generators.
-Nobody has ever reported distinguishing SHA-256 hashes with secret
-inputs from uniform random, nor reported computing SHA-1 preimages
-faster than brute force.

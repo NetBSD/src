@@ -1,7 +1,7 @@
-/*	$NetBSD: rndsink.h,v 1.1 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: entpool.h,v 1.1 2020/04/30 03:28:19 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,25 +29,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_RNDSINK_H
-#define	_SYS_RNDSINK_H
+#ifndef	ENTPOOL_H
+#define	ENTPOOL_H
 
-#ifndef _KERNEL			/* XXX */
-#error <sys/rndsink.h> is meant for kernel consumers only.
+#include <sys/types.h>
+#include <sys/endian.h>
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/stdbool.h>
+#else
+#include <stdbool.h>
 #endif
 
-#define	RNDSINK_MAX_BYTES	32
+#if ENTPOOL_SMALL
+#define	ENTPOOL_HEADER		<gimli.h>
+#define	ENTPOOL_PERMUTE		gimli
+#define	ENTPOOL_SIZE		48
+#define	ENTPOOL_WORD		uint32_t
+#define	ENTPOOL_WTOH		le32toh
+#define	ENTPOOL_HTOW		htole32
+#define	ENTPOOL_SECURITY	16
+#else
+#define	ENTPOOL_HEADER		<keccak.h>
+#define	ENTPOOL_PERMUTE		keccakf1600
+#define	ENTPOOL_SIZE		200
+#define	ENTPOOL_WORD		uint64_t
+#define	ENTPOOL_WTOH		le64toh
+#define	ENTPOOL_HTOW		htole64
+#define	ENTPOOL_SECURITY	16
+#endif
 
-struct rndsink;
+#define	ENTPOOL_CAPACITY	(2*ENTPOOL_SECURITY)
+#define	ENTPOOL_RATE		(ENTPOOL_SIZE - ENTPOOL_CAPACITY)
 
-typedef void rndsink_callback_t(void *, const void *, size_t);
+struct entpool {
+	union {
+		uint8_t		u8[ENTPOOL_SIZE];
+		ENTPOOL_WORD	w[ENTPOOL_SIZE/sizeof(ENTPOOL_WORD)];
+	}		s;
+	unsigned	i;
+};
 
-void	rndsinks_init(void);
-void	rndsinks_distribute(void);
-struct rndsink *
-	rndsink_create(size_t, rndsink_callback_t *, void *);
-void	rndsink_destroy(struct rndsink *);
-bool	rndsink_request(struct rndsink *, void *, size_t);
-void	rndsink_schedule(struct rndsink *);
+int	entpool_selftest(void);
+void	entpool_enter(struct entpool *, const void *, size_t);
+bool	entpool_enter_nostir(struct entpool *, const void *, size_t);
+void	entpool_stir(struct entpool *);
+void	entpool_extract(struct entpool *, void *, size_t);
 
-#endif	/* _SYS_RNDSINK_H */
+#endif	/* ENTPOOL_H */
