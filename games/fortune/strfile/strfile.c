@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.39 2020/04/29 20:45:05 nia Exp $	*/
+/*	$NetBSD: strfile.c,v 1.40 2020/04/30 12:32:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.39 2020/04/29 20:45:05 nia Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.40 2020/04/30 12:32:26 christos Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: strfile.c,v 1.39 2020/04/29 20:45:05 nia Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,7 +132,7 @@ static STR *Firstch;			/* first chars of each string */
 
 static uint32_t h2nl(uint32_t h);
 static void getargs(int argc, char **argv);
-static void usage(void) __dead;
+static void usage(const char *, ...) __dead __printflike(1, 2);
 static void add_offset(FILE *fp, off_t off);
 static void do_order(void);
 static int cmp_str(const void *vp1, const void *vp2);
@@ -295,39 +296,39 @@ getargs(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage();
+			usage(NULL);
 		}
 	argv += optind;
 
 	if (*argv) {
 		Infile = *argv;
 		if (*++argv) {
-			len = strlen(*argv);
+			len = strlcpy(Outfile, *argv, sizeof(Outfile));
 			if (len >= sizeof(Outfile)) {
-				puts("Bad output filename");
-				usage();
+				usage("Too long output filename");
 			}
-			(void) memcpy(Outfile, *argv, len + 1);
 		}
 	}
 	if (!Infile) {
-		puts("No input file name");
-		usage();
+		usage("No input file name");
 	}
 	if (*Outfile == '\0') {
-		len = strlen(Infile) + sizeof(".dat");
-		if (len > sizeof(Outfile)) {
-			puts("Bad input filename");
-			usage();
+		len = snprintf(Outfile, sizeof(Outfile), "%s.dat", Infile);
+		if (len >= sizeof(Outfile)) {
+			usage("Too long input filename");
 		}
-		(void) strcpy(Outfile, Infile);
-		(void) strcat(Outfile, ".dat");
 	}
 }
 
 static void
-usage(void)
+usage(const char *fmt, ...)
 {
+	if (fmt) {
+		va_list ap;
+		va_start(ap, fmt);
+		vwarnx(fmt, ap);
+		va_end(ap);
+	}
 	(void) fprintf(stderr,
 	    "Usage: %s [-iorsx] [-c char] sourcefile [datafile]\n",
 	    getprogname());
