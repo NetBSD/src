@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.11 2020/04/30 03:29:20 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.12 2020/04/30 03:30:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <sys/rnd.h>
 #include <sys/rndpool.h>
 #include <sys/rndsource.h>
 #include <sys/sha2.h>
