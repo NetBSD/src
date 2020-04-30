@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.15 2020/04/29 21:00:42 nia Exp $	*/
+/*	$NetBSD: unstr.c,v 1.16 2020/04/30 12:40:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: unstr.c,v 1.15 2020/04/29 21:00:42 nia Exp $");
+__RCSID("$NetBSD: unstr.c,v 1.16 2020/04/30 12:40:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,19 +59,19 @@ __RCSID("$NetBSD: unstr.c,v 1.15 2020/04/29 21:00:42 nia Exp $");
  *	Ken Arnold		Aug 13, 1978
  */
 
-# include	<sys/types.h>
-# include	<sys/param.h>
-# include	<sys/endian.h>
-# include	<ctype.h>
-# include	<err.h>
-# include	<stdio.h>
-# include	<stdlib.h>
-# include	<string.h>
-# include	"strfile.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/endian.h>
+#include <ctype.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "strfile.h"
 
-# ifndef MAXPATHLEN
-# define	MAXPATHLEN	1024
-# endif	/* MAXPATHLEN */
+#ifndef MAXPATHLEN
+#define	MAXPATHLEN	1024
+#endif	/* MAXPATHLEN */
 
 char	*Infile,			/* name of input file */
 	Datafile[MAXPATHLEN],		/* name of data file */
@@ -91,9 +91,9 @@ main(int ac __unused, char **av)
 
 	getargs(av);
 	if ((Inf = fopen(Infile, "r")) == NULL)
-		err(1, "fopen %s", Infile);
+		err(EXIT_FAILURE, "fopen %s", Infile);
 	if ((Dataf = fopen(Datafile, "r")) == NULL)
-		err(1, "fopen %s", Datafile);
+		err(EXIT_FAILURE, "fopen %s", Datafile);
 	(void) fread((char *) &tbl, sizeof tbl, 1, Dataf);
 	BE32TOH(tbl.str_version);
 	BE32TOH(tbl.str_numstr);
@@ -108,19 +108,19 @@ main(int ac __unused, char **av)
 	order_unstr(&tbl);
 	(void) fclose(Inf);
 	(void) fclose(Dataf);
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 void
 getargs(char *av[])
 {
-	if (!*++av || (strlen(*av) + sizeof(".dat")) > sizeof(Datafile)) {
-		(void) fprintf(stderr, "usage: unstr datafile\n");
-		exit(1);
+	if (!*++av ||
+	    (size_t)snprintf(Datafile, sizeof(Datafile), "%s.dat", Infile) >
+	    sizeof(Datafile)) {
+		(void) fprintf(stderr, "Usage: %s datafile\n", getprogname());
+		exit(EXIT_FAILURE);
 	}
 	Infile = *av;
-	(void) strcpy(Datafile, Infile);
-	(void) strcat(Datafile, ".dat");
 }
 
 void
