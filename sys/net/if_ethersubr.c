@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.283 2020/03/15 23:14:41 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.284 2020/04/30 03:29:55 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.283 2020/03/15 23:14:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.284 2020/04/30 03:29:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.283 2020/03/15 23:14:41 thorpej E
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/entropy.h>
 #include <sys/rndsource.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
@@ -603,7 +603,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	etype = ntohs(eh->ether_type);
 	ehlen = sizeof(*eh);
 
-	if (__predict_false(earlypkts < 100 || !rnd_initial_entropy)) {
+	if (__predict_false(earlypkts < 100 ||
+		entropy_epoch() == (unsigned)-1)) {
 		rnd_add_data(NULL, eh, ehlen, 0);
 		earlypkts++;
 	}
