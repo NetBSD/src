@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.65 2020/02/29 16:36:25 mlelstv Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.66 2020/04/30 03:24:15 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.65 2020/02/29 16:36:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.66 2020/04/30 03:24:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,13 +595,6 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		 */
 		DELAY(4000);
 
-#ifdef __NetBSD__
-		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
-		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-				  RND_TYPE_RNG,
-				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-#endif
-
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
@@ -611,6 +604,13 @@ hifn_init_pubrng(struct hifn_softc *sc)
 #else	/* !__OpenBSD__ */
 		callout_init(&sc->sc_rngto, CALLOUT_MPSAFE);
 #endif	/* !__OpenBSD__ */
+
+#ifdef __NetBSD__
+		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
+		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
+				  RND_TYPE_RNG,
+				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+#endif
 	}
 
 	/* Enable public key engine, if available */
