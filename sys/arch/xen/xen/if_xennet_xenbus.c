@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.119 2020/04/26 12:58:28 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.120 2020/04/30 11:19:39 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.119 2020/04/26 12:58:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.120 2020/04/30 11:19:39 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1105,13 +1105,15 @@ xennet_submit_tx_request(struct xennet_xenbus_softc *sc, struct mbuf *m,
 		txreq->id = req->txreq_id;
 		txreq->gref = req->txreq_gntref;
 		txreq->offset = ds->ds_addr & PAGE_MASK;
-		/* For Tx, first fragment has size always set to total size */
+		/* For Tx, first fragment size is always set to total size */
 		txreq->size = (i == 0) ? m->m_pkthdr.len : ds->ds_len;
 		txreq->flags = 0;
-		if ((m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) != 0) {
-			txreq->flags |= NETTXF_csum_blank;
-		} else {
-			txreq->flags |= NETTXF_data_validated;
+		if (i == 0) {
+			if (m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) {
+				txreq->flags |= NETTXF_csum_blank;
+			} else {
+				txreq->flags |= NETTXF_data_validated;
+			}
 		}
 		if (multiseg && i < lastseg)
 			txreq->flags |= NETTXF_more_data;
