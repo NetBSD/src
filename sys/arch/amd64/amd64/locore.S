@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.203 2020/04/30 17:17:33 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.204 2020/04/30 17:21:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1610,11 +1610,6 @@ LABEL(hp_stac)
 LABEL(hp_stac_end)
 
 #ifdef SVS
-	.globl	svs_enter, svs_enter_end
-	.globl	svs_enter_altstack, svs_enter_altstack_end
-	.globl	svs_leave, svs_leave_end
-	.globl	svs_leave_altstack, svs_leave_altstack_end
-
 LABEL(svs_enter)
 	movabs	SVS_UTLS+UTLS_KPDIRPA,%rax
 	movq	%rax,%cr3
@@ -1656,9 +1651,6 @@ LABEL(svs_leave_nmi)
 LABEL(svs_leave_nmi_end)
 #endif
 
-	.globl	ibrs_enter, ibrs_enter_end
-	.globl	ibrs_leave, ibrs_leave_end
-
 	/* IBRS <- 1 */
 LABEL(ibrs_enter)
 	movl	$MSR_IA32_SPEC_CTRL,%ecx
@@ -1682,8 +1674,6 @@ LABEL(noibrs_enter_end)
 LABEL(noibrs_leave)
 	NOIBRS_LEAVE
 LABEL(noibrs_leave_end)
-
-	.globl	mds_leave, mds_leave_end
 
 LABEL(mds_leave)
 	pushq	$GSEL(GDATA_SEL, SEL_KPL)
