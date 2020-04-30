@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.39 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.40 2020/04/30 03:24:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.39 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.40 2020/04/30 03:24:15 riastradh Exp $");
 
 #include "opt_amdpm.h"
 
@@ -191,11 +191,6 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 			    "random number generator enabled (apprx. %dms)\n",
 			    i);
 			callout_init(&sc->sc_rnd_ch, CALLOUT_MPSAFE);
-			rndsource_setcb(&sc->sc_rnd_source,
-					amdpm_rnd_get, sc);
-			rnd_attach_source(&sc->sc_rnd_source,
-			    device_xname(self), RND_TYPE_RNG,
-			    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 #ifdef AMDPM_RND_COUNTERS
 			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
 			    NULL, device_xname(self), "rnd hits");
@@ -207,6 +202,11 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 				    "rnd data");
 			}
 #endif
+			rndsource_setcb(&sc->sc_rnd_source,
+					amdpm_rnd_get, sc);
+			rnd_attach_source(&sc->sc_rnd_source,
+			    device_xname(self), RND_TYPE_RNG,
+			    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 			sc->sc_rnd_need = RND_POOLBITS / NBBY;
 			amdpm_rnd_callout(sc);
 		}
