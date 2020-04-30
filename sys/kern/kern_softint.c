@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.64 2020/03/27 00:13:52 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.65 2020/04/30 20:54:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  *	and so has a number of restrictions:
  *
  *	1) The software interrupts are not currently preemptive, so
- *	must wait for the currently executing LWP to yield the CPU. 
+ *	must wait for the currently executing LWP to yield the CPU.
  *	This can introduce latency.
  *
  *	2) An expensive context switch is required for a software
@@ -162,7 +162,7 @@
  *
  *	Once the soft interrupt has fired (and even if it has blocked),
  *	no further soft interrupts at that level will be triggered by
- *	MI code until the soft interrupt handler has ceased execution. 
+ *	MI code until the soft interrupt handler has ceased execution.
  *	If a soft interrupt handler blocks and is resumed, it resumes
  *	execution as a normal LWP (kthread) and gains VM context.  Only
  *	when it has completed and is ready to fire again will it
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.64 2020/03/27 00:13:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.65 2020/04/30 20:54:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -481,7 +481,7 @@ softint_schedule(void *arg)
 	 * If this assert fires, rather than disabling preemption explicitly
 	 * to make it stop, consider that you are probably using a softint
 	 * when you don't need to.
-	 */	
+	 */
 	KASSERT(kpreempt_disabled());
 
 	/* Find the handler record for this CPU. */
@@ -583,7 +583,7 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 			(*sh->sh_func)(sh->sh_arg);
 			KERNEL_UNLOCK_ONE(l);
 		}
-		
+
 		/* Diagnostic: check that spin-locks have not leaked. */
 		KASSERTMSG(curcpu()->ci_mtx_count == 0,
 		    "%s: ci_mtx_count (%d) != 0, sh_func %p\n",
