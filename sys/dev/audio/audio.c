@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.9 2020/03/21 15:47:00 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.10 2020/04/30 15:40:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.9 2020/03/21 15:47:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.10 2020/04/30 15:40:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -543,7 +543,7 @@ static __inline int audio_track_readablebytes(const audio_track_t *);
 static int audio_file_setinfo(struct audio_softc *, audio_file_t *,
 	const struct audio_info *);
 static int audio_track_setinfo_check(audio_format2_t *,
-	const struct audio_prinfo *);
+	const struct audio_prinfo *, const audio_format2_t *);
 static void audio_track_setinfo_water(audio_track_t *,
 	const struct audio_info *);
 static int audio_hw_setinfo(struct audio_softc *, const struct audio_info *,
@@ -6546,6 +6546,18 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	if (error)
 		return error;
 
+	/*
+	 * Reinitialize the sticky parameters for /dev/sound.
+	 * If the number of the hardware channels becomes less than the number
+	 * of channels that sticky parameters remember, subsequent /dev/sound
+	 * open will fail.  To prevent this, reinitialize the sticky
+	 * parameters whenever the hardware format is changed.
+	 */
+	sc->sc_sound_pparams = params_to_format2(&audio_default);
+	sc->sc_sound_rparams = params_to_format2(&audio_default);
+	sc->sc_sound_ppause = false;
+	sc->sc_sound_rpause = false;
+
 	return 0;
 }
 
@@ -6800,7 +6812,8 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 	}
 
 	if (ptrack) {
-		pchanges = audio_track_setinfo_check(&pfmt, pi);
+		pchanges = audio_track_setinfo_check(&pfmt, pi,
+		    &sc->sc_pmixer->hwbuf.fmt);
 		if (pchanges == -1) {
 #if defined(AUDIO_DEBUG)
 			char fmtbuf[64];
@@ -6814,7 +6827,8 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 			pchanges = 1;
 	}
 	if (rtrack) {
-		rchanges = audio_track_setinfo_check(&rfmt, ri);
+		rchanges = audio_track_setinfo_check(&rfmt, ri,
+		    &sc->sc_rmixer->hwbuf.fmt);
 		if (rchanges == -1) {
 #if defined(AUDIO_DEBUG)
 			char fmtbuf[64];
@@ -6926,7 +6940,8 @@ abort1:
  * Return value of -1 indicates that error EINVAL has occurred.
  */
 static int
-audio_track_setinfo_check(audio_format2_t *fmt, const struct audio_prinfo *info)
+audio_track_setinfo_check(audio_format2_t *fmt, const struct audio_prinfo *info,
+	const audio_format2_t *hwfmt)
 {
 	int changes;
 
@@ -6950,6 +6965,13 @@ audio_track_setinfo_check(audio_format2_t *fmt, const struct audio_prinfo *info)
 		changes = 1;
 	}
 	if (SPECIFIED(info->channels)) {
+		/*
+		 * We can convert between monaural and stereo each other.
+		 * We can reduce than the number of channels that the hardware
+		 * supports.
+		 */
+		if (info->channels > 2 && info->channels > hwfmt->channels)
+			return -1;
 		fmt->channels = info->channels;
 		changes = 1;
 	}
