@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.142 2019/11/16 17:33:09 nia Exp $
+.\"	$NetBSD: sysctl.7,v 1.143 2020/05/01 10:06:09 nia Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -390,7 +390,7 @@ non-blocking cryptographically secure random data.
 The used random number generator
 .Pf ( RNG )
 is based on
-.Xr arc4random 3 .
+.Xr cprng_strong 9 .
 .It Li kern.argmax ( Dv KERN_ARGMAX )
 The maximum bytes of argument to
 .Xr execve 2 .
