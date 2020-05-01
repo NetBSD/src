@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.11 2020/05/01 05:45:57 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.11 2020/05/01 05:45:57 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -3582,9 +3582,8 @@ test_kqueue_mode(int openmode, int filt, int expected)
 	XP_SYS_EQ(0, r);
 }
 DEF(kqueue_mode_RDONLY_READ) {
-	/* Should not raise yet (NetBSD7 has bugs?) */
-	int expected = (netbsd < 8) ? 1 : 0;
-	test_kqueue_mode(O_RDONLY, EVFILT_READ, expected);
+	/* Should raise */
+	test_kqueue_mode(O_RDONLY, EVFILT_READ, 1);
 }
 DEF(kqueue_mode_RDONLY_WRITE) {
 	/* Should never raise (NetBSD7 has bugs) */
@@ -3600,8 +3599,8 @@ DEF(kqueue_mode_WRONLY_WRITE) {
 	test_kqueue_mode(O_WRONLY, EVFILT_WRITE, 1);
 }
 DEF(kqueue_mode_RDWR_READ) {
-	/* Should not raise yet (NetBSD7 is something strange) */
-	int expected = (netbsd < 8 && hw_fulldup()) ? 1 : 0;
+	/* Should raise on fulldup but not on halfdup, on NetBSD9 */
+	int expected = hw_fulldup() ? 1 : 0;
 	test_kqueue_mode(O_RDWR, EVFILT_READ, expected);
 }
 DEF(kqueue_mode_RDWR_WRITE) {
@@ -5149,16 +5148,16 @@ DEF(AUDIO_SETINFO_params_simul)
 	XP_SYS_EQ(0, r);
 
 	/*
-	 * On bi-directional device, the 2nd one has both track so that
+	 * On full-duplex device, the 2nd one has both track so that
 	 * both track are not affected by sticky parameter.
-	 * On uni-directional device, the 2nd one has only playback track
-	 * so that playback track is not affected by sticky parameter.
+	 * Otherwise, the 2nd one has only playback track so that
+	 * playback track is not affected by sticky parameter.
 	 */
 	memset(&ai, 0, sizeof(ai));
 	r = IOCTL(fd1, AUDIO_GETBUFINFO, &ai, "");
 	XP_SYS_EQ(0, r);
 	XP_EQ(11025, ai.play.sample_rate);
-	if (hw_bidir()) {
+	if (hw_fulldup()) {
 		XP_EQ(11025, ai.record.sample_rate);
 	} else {
 		XP_EQ(16000, ai.record.sample_rate);
