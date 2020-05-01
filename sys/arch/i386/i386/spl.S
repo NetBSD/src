@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.53 2020/05/01 09:23:43 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.54 2020/05/01 09:40:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.53 2020/05/01 09:23:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.54 2020/05/01 09:40:47 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -71,11 +71,12 @@ END(splraise)
 /*
  * void spllower(int s);
  *
- * spllower() for i486 and Pentium.  Must be the same size as
- * cx8_spllower().  This must use pushf/cli/popf as it is used
- * early in boot where interrupts are disabled via eflags/IE.
+ * spllower() for i486 and Pentium. Must be the same size as cx8_spllower(),
+ * that is, 64 bytes. This must use pushf/cli/popf as it is used early in boot
+ * where interrupts are disabled via eflags/IE.
  */
 ENTRY(spllower)
+	HOTPATCH(HP_NAME_SPLLOWER, 64)
 #ifdef SPLDEBUG
 	movl	4(%esp),%ecx
 	pushl	%ebp
@@ -101,7 +102,6 @@ ENTRY(spllower)
 	popf
 	jmp	_C_LABEL(Xspllower)
 	.align	32
-LABEL(spllower_end)
 END(spllower)
 #else  /* XENPV */
 STRONG_ALIAS(spllower, cx8_spllower)
@@ -110,10 +110,10 @@ STRONG_ALIAS(spllower, cx8_spllower)
 /*
  * void	cx8_spllower(int s);
  *
- * spllower() optimized for Pentium Pro and later, which have long
- * pipelines that will be stalled by pushf/cli/popf.  Must be the
- * same size as spllower().  Does not need to restore eflags/IE as
- * is patched in once autoconf is underway.
+ * spllower() optimized for Pentium Pro and later, which have long pipelines
+ * that will be stalled by pushf/cli/popf.  Must be the same size as
+ * spllower(), ie 64 bytes.  Does not need to restore eflags/IE as is patched
+ * in once autoconf is underway.
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
