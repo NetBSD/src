@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.357 2020/02/01 15:24:04 skrll Exp $ */
+/* $NetBSD: com.c,v 1.358 2020/05/01 07:27:51 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.357 2020/02/01 15:24:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.358 2020/05/01 07:27:51 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2442,11 +2442,11 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	}
 
 	rate = comspeed(rate, frequency, type);
-	if (__predict_true(rate != -1)) {
+	if (rate != -1) {
 		if (type == COM_TYPE_AU1x00) {
+			/* no EFR on alchemy */
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
-			/* no EFR on alchemy */
 			if ((type != COM_TYPE_16550_NOERS) && 
 			    (type != COM_TYPE_INGENIC)) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
