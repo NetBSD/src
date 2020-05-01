@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1412 2020/04/23 04:17:37 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1413 2020/05/01 10:38:35 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -654,6 +654,7 @@ vendor AMAZON		0x1d0f	Amazon.com, Inc.
 vendor AQUANTIA		0x1d6a	Aquantia
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor AMPERE		0x1def	Ampere Computing
 vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
@@ -1218,6 +1219,16 @@ product AMD RS780_PPB7		0x960b	RS780 PCI-PCIE Bridge (ext gfx port 1)
 product AMI MEGARAID3		0x1960	MegaRAID 3
 product AMI MEGARAID		0x9010	MegaRAID
 product AMI MEGARAID2		0x9060	MegaRAID 2
+
+/* Ampere Computing products */
+product AMPERE EMAG_PCIE_0	0xe005	eMAG PCIe Root Port 0
+product AMPERE EMAG_PCIE_1	0xe006	eMAG PCIe Root Port 1
+product AMPERE EMAG_PCIE_2	0xe007	eMAG PCIe Root Port 2
+product AMPERE EMAG_PCIE_3	0xe008	eMAG PCIe Root Port 3
+product AMPERE EMAG_PCIE_4	0xe009	eMAG PCIe Root Port 4
+product AMPERE EMAG_PCIE_5	0xe00a	eMAG PCIe Root Port 5
+product AMPERE EMAG_PCIE_6	0xe00b	eMAG PCIe Root Port 6
+product AMPERE EMAG_PCIE_7	0xe00c	eMAG PCIe Root Port 7
 
 /* Analog Devices products */
 product ANALOG AD1889	0x1889	AD1889 PCI SoundMAX Controller
