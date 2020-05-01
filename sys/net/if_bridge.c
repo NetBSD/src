@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.172 2020/04/30 10:04:54 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.173 2020/05/01 22:27:42 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.172 2020/04/30 10:04:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.173 2020/05/01 22:27:42 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -787,7 +787,7 @@ void
 bridge_calc_csum_flags(struct bridge_softc *sc)
 {
 	struct bridge_iflist *bif;
-	struct ifnet *ifs;
+	struct ifnet *ifs = NULL;
 	int flags = ~0;
 	int capenable = ~0;
 
@@ -798,7 +798,7 @@ bridge_calc_csum_flags(struct bridge_softc *sc)
 		capenable &= ifs->if_capenable;
 	}
 	sc->sc_csum_flags_tx = flags;
-	sc->sc_capenable = capenable;
+	sc->sc_capenable = (ifs != NULL) ? capenable : 0;
 	BRIDGE_UNLOCK(sc);
 }
 
