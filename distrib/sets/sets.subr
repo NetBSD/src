@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.188 2020/04/04 19:50:53 christos Exp $
+#	$NetBSD: sets.subr,v 1.189 2020/05/01 22:21:49 christos Exp $
 #
 
 #
@@ -184,7 +184,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.188 2020/04/04 19:50:53 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.189 2020/05/01 22:21:49 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -557,6 +557,8 @@ list_set_lists_module()
 	[ "$module" != "no" ] || return
 	echo_if_exist $setdir/module.mi
 	echo_if_exist $setdir/module.${MACHINE}
+	echo_if_exist $setdir/module.ad.${MACHINE}
+	echo_if_exist $setdir/module.md.${MACHINE}
 	# XXX module never has .shl
 	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
 	list_set_lists_common_ad $1 module
