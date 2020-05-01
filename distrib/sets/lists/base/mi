@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1241 2020/04/25 12:18:47 kre Exp $
+# $NetBSD: mi,v 1.1242 2020/05/01 22:25:18 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1370,6 +1370,7 @@
 ./usr/libdata/debug/lib/npf			base-sys-usr		compatfile
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
+./usr/libdata/debug/stand			base-sys-usr
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
