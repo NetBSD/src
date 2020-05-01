@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.62 2019/01/07 22:00:33 jdolecek Exp $    */
+/*      $NetBSD: param.h,v 1.63 2020/05/01 08:21:27 isaki Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -118,6 +118,10 @@ void	delay(int);
 
 #define	DELAY(x) delay(x)
 #define	MAXEXEC	1
+
+/* Default audio blocksize in msec.  See sys/dev/audio/audio.c */
+#define	__AUDIO_BLK_MS (40)
+
 #endif /* _KERNEL */
 
 #endif /* _VAX_PARAM_H_ */

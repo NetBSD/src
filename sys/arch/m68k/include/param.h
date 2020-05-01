@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 2019/01/07 22:00:31 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.23 2020/05/01 08:21:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,5 +94,10 @@
 #define	m68k_page_offset(x)	((vaddr_t)(x) & PGOFSET)
 #define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
+
+/* Default audio blocksize in msec.  See sys/dev/audio/audio.c */
+#if defined(_KERNEL)
+#define	__AUDIO_BLK_MS (40)
+#endif
 
 #endif	/* !_M68K_PARAM_H_ */

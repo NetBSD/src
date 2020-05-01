@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2020/03/21 17:00:47 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.27 2020/05/01 08:21:27 isaki Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -88,3 +88,8 @@
 
 #define btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define ptob(x)		((unsigned long)(x) << PGSHIFT)
+
+/* Default audio blocksize in msec.  See sys/dev/audio/audio.c */
+#if defined(_KERNEL)
+#define	__AUDIO_BLK_MS (40)
+#endif
