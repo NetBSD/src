@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_robust.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $ */
+/* $NetBSD: t_futex_robust.c,v 1.2 2020/05/01 01:44:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_robust.c,v 1.1 2020/04/26 18:53:33 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_robust.c,v 1.2 2020/05/01 01:44:30 thorpej Exp $");
 
 #include <sys/mman.h>
 #include <errno.h>
@@ -396,12 +396,10 @@ ATF_TC_CLEANUP(futex_robust_bad_pending, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-#if 0
 	ATF_TP_ADD_TC(tp, futex_robust_positive);
 	ATF_TP_ADD_TC(tp, futex_robust_negative);
 	ATF_TP_ADD_TC(tp, futex_robust_unmapped);
 	ATF_TP_ADD_TC(tp, futex_robust_evil_circular);
-#endif
 	ATF_TP_ADD_TC(tp, futex_robust_bad_pending);
 
 	return atf_no_error();
