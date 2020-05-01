@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.139 2020/04/30 22:09:32 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.140 2020/05/01 14:16:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.139 2020/04/30 22:09:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.140 2020/05/01 14:16:15 hannken Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -959,7 +959,8 @@ init_x86_vm(paddr_t pa_kend)
 		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
 #ifdef DEBUG_MEMLOAD
 			printf("split kernel overlapping to "
-			    "%" PRIx64 " - %lx and %lx - %" PRIx64 "\n",
+			    "%" PRIx64 " - %" PRIxPADDR " and "
+			    "%" PRIxPADDR " - %" PRIx64 "\n",
 			    seg_start, pa_kstart, pa_kend, seg_end);
 #endif
 			seg_start1 = pa_kend;
@@ -991,7 +992,8 @@ init_x86_vm(paddr_t pa_kend)
 		    pa_kend < seg_end) {
 #ifdef DEBUG_MEMLOAD
 			printf("discard leading kernel overlap "
-			    "%" PRIx64 " - %lx\n", seg_start, pa_kend);
+			    "%" PRIx64 " - %" PRIxPADDR "\n",
+			    seg_start, pa_kend);
 #endif
 			seg_start = pa_kend;
 		}
@@ -1006,7 +1008,8 @@ init_x86_vm(paddr_t pa_kend)
 		    seg_end < pa_kend) {
 #ifdef DEBUG_MEMLOAD
 			printf("discard trailing kernel overlap "
-			    "%lx - %" PRIx64 "\n", pa_kstart, seg_end);
+			    "%" PRIxPADDR " - %" PRIx64 "\n",
+			    pa_kstart, seg_end);
 #endif
 			seg_end = pa_kstart;
 		}
