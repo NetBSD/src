@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.52 2020/05/01 09:17:58 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.53 2020/05/01 09:23:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.52 2020/05/01 09:17:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.53 2020/05/01 09:23:43 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -98,15 +98,7 @@ ENTRY(spllower)
 1:
 	ret
 2:
-#ifdef XENPV
-	/*
-	 * no need to call stipending, we're going to CLI again
-	 * just drop the saved value on stack
-	 */
-	addl	$4,%esp
-#else
 	popf
-#endif
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(spllower_end)
