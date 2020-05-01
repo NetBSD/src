@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.213 2020/04/02 12:58:49 roy Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.214 2020/05/01 22:26:11 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -280,6 +280,7 @@
 ./usr/libdata/debug/lib/npf
 ./usr/libdata/debug/libexec
 ./usr/libdata/debug/sbin
+./usr/libdata/debug/stand
 ./usr/libdata/debug/usr
 ./usr/libdata/debug/usr/bin
 ./usr/libdata/debug/usr/games
