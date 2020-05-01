@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.308 2020/04/30 11:03:29 ryo Exp $
+# $NetBSD: mi,v 1.309 2020/05/01 17:14:28 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -534,10 +534,10 @@
 ./usr/libdata/debug/usr/bin/expand.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/f77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/fgen.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fido2-assert.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fido2-cred.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fido2-token.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		debug
@@ -1717,8 +1717,8 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_wait6.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitid.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitpid.debug	tests-obsolete		obsolete,compattestfile
-./usr/libdata/debug/usr/tests/kernel/h_fpufork.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_fexecve.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/h_fpufork.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_getprocpath.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings1.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings2.debug		tests-kernel-tests	debug,atf,compattestfile
@@ -2335,6 +2335,11 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_ifunc.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/modules/k_helper3.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_builtin.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_kcov.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug	tests-sys-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/modules/t_ufetchstore.debug	tests-sys-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_mbuf.debug		tests-net-debug		debug,atf,rump
