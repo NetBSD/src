@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.48 2020/04/30 16:20:21 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.49 2020/05/01 07:29:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2387,4 +2387,10 @@ crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.16
 
 	Fix the detection of KERN_ARND by OpenSSL.
 	[nia, ticket #878]
+
+games/fortune/strfile/strfile.c			1.39
+games/fortune/unstr/unstr.c			1.15
+
+	Fix potential buffer overflows in fortune tools.
+	[nia, ticket #879]
 
