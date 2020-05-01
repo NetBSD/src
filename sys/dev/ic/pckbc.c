@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.61 2019/11/10 21:16:35 chs Exp $ */
+/* $NetBSD: pckbc.c,v 1.62 2020/05/01 01:34:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.61 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.62 2020/05/01 01:34:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,9 +262,12 @@ pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 		t->t_slotdata[slot] = NULL;
 	}
 
-	if (child != NULL && t->t_slotdata[slot] != NULL)
+	if (child != NULL && t->t_slotdata[slot] != NULL) {
+		memset(&t->t_slotdata[slot]->rnd_source, 0,
+		    sizeof(t->t_slotdata[slot]->rnd_source));
 		rnd_attach_source(&t->t_slotdata[slot]->rnd_source,
 		    device_xname(child), RND_TYPE_TTY, RND_FLAG_DEFAULT);
+	}
 
 	return child != NULL;
 }
