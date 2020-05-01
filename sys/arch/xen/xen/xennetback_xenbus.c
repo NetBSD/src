@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.99 2020/04/30 11:23:44 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.100 2020/05/01 19:53:17 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.99 2020/04/30 11:23:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.100 2020/05/01 19:53:17 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.99 2020/04/30 11:23:44 jdole
 #include <xen/xennet_checksum.h>
 
 #include <uvm/uvm.h>
+
+/* #define notyet 1 */
 
 /*
  * Backend network device driver for Xen.
@@ -124,6 +126,10 @@ struct xnetback_instance {
 	/* arrays used in xennetback_ifstart(), used for both Rx and Tx */
 	gnttab_copy_t     	xni_gop_copy[NB_XMIT_PAGES_BATCH];
 	struct xnetback_xstate	xni_xstate[NB_XMIT_PAGES_BATCH];
+
+	/* event counters */
+	struct evcnt xni_cnt_rx_cksum_blank;
+	struct evcnt xni_cnt_rx_cksum_undefer;
 };
 #define xni_if    xni_ec.ec_if
 #define xni_bpf   xni_if.if_bpf
@@ -249,6 +255,11 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		}
 	}
 
+	evcnt_attach_dynamic(&xneti->xni_cnt_rx_cksum_blank, EVCNT_TYPE_MISC,
+	    NULL, ifp->if_xname, "Rx csum blank");
+	evcnt_attach_dynamic(&xneti->xni_cnt_rx_cksum_undefer, EVCNT_TYPE_MISC,
+	    NULL, ifp->if_xname, "Rx csum undeferred");
+
 	/* create pseudo-interface */
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
@@ -371,6 +382,9 @@ xennetback_xenbus_destroy(void *arg)
 
 	ether_ifdetach(&xneti->xni_if);
 	if_detach(&xneti->xni_if);
+
+	evcnt_detach(&xneti->xni_cnt_rx_cksum_blank);
+	evcnt_detach(&xneti->xni_cnt_rx_cksum_undefer);
 
 	if (xneti->xni_txring.sring) {
 		op.host_addr = xneti->xni_tx_ring_va;
@@ -782,9 +796,11 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 			bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
 			    xst->xs_dmamap);
 
-			if (xst->xs_tx.flags & NETTXF_csum_blank)
-				xennet_checksum_fill(ifp, xst->xs_m);
-			else if (xst->xs_tx.flags & NETTXF_data_validated) {
+			if (xst->xs_tx.flags & NETTXF_csum_blank) {
+				xennet_checksum_fill(ifp, xst->xs_m,
+				    &xneti->xni_cnt_rx_cksum_blank,
+				    &xneti->xni_cnt_rx_cksum_undefer);
+			} else if (xst->xs_tx.flags & NETTXF_data_validated) {
 				xst->xs_m->m_pkthdr.csum_flags =
 				    XN_M_CSUM_SUPPORTED;
 			}
