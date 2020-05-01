@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.8 2020/02/23 08:53:14 riastradh Exp $
+# $NetBSD: random_seed,v 1.9 2020/05/01 15:52:38 riastradh Exp $
 #
 
 # PROVIDE: random_seed
@@ -92,8 +92,6 @@ random_save()
 {
 	oum="$(umask)"
 	umask 077
-
-	rm -Pf "${random_file}"
 
 	if ! fs_safe "$(dirname "${random_file}")"; then
 		umask "${oum}"
