@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.11 2020/04/26 12:38:21 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.12 2020/05/01 19:53:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.11 2020/04/26 12:38:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.12 2020/05/01 19:53:17 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,14 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.11 2020/04/26 12:38:21 jdolece
 
 #include <xen/xennet_checksum.h>
 
-static struct evcnt xn_cksum_defer = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "xennet", "csum blank");
-static struct evcnt xn_cksum_undefer = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "xennet", "csum undeferred");
-
-EVCNT_ATTACH_STATIC(xn_cksum_defer);
-EVCNT_ATTACH_STATIC(xn_cksum_undefer);
-
 #ifdef XENNET_DEBUG
 /* ratecheck(9) for checksum validation failures */
 static const struct timeval xn_cksum_errintvl = { 600, 0 };  /* 10 min, each */
@@ -79,7 +71,8 @@ m_extract(struct mbuf *m, int off, int len)
  * for hw offload to do it
  */
 int
-xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m)
+xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
+    struct evcnt *cksum_blank, struct evcnt *cksum_undefer)
 {
 	const struct ether_header *eh;
 	struct ip *iph = NULL;
@@ -225,13 +218,13 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m)
 
 	if (m->m_pkthdr.csum_flags != 0) {
 		if (sw_csum)
-			xn_cksum_undefer.ev_count++;
-		xn_cksum_defer.ev_count++;
+			cksum_undefer->ev_count++;
+		cksum_blank->ev_count++;
 #ifdef M_CSUM_BLANK
 		m->m_pkthdr.csum_flags |= M_CSUM_BLANK;
 #endif
 	} else {
-		xn_cksum_undefer.ev_count++;
+		cksum_undefer->ev_count++;
 	}
 
     out:
