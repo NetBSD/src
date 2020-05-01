@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.73 2019/05/15 16:59:10 christos Exp $ */
+/*	$NetBSD: param.h,v 1.74 2020/05/01 08:21:27 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,5 +154,8 @@ extern void	delay(unsigned int);
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
 #endif
+
+/* Default audio blocksize in msec.  See sys/dev/audio/audio.c */
+#define	__AUDIO_BLK_MS (40)
 
 #endif /* _KERNEL || _STANDALONE */
