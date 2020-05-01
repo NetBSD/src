@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.65 2020/04/04 23:19:08 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.66 2020/05/01 22:23:00 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -12,9 +12,9 @@ CFLAGS+=	-g
 CTFFLAGS=	-L VERSION
 CTFMFLAGS=	-t -L VERSION
 # Keep symbols if built with "-g"
-.if !empty(COPTS:M*-g*)
-CTFFLAGS+=	-g
-CTFMFLAGS+=	-g
+.if !empty(COPTS:M*-g*) || ${MKDEBUG:Uno} == "yes"
+CTFFLAGS+=     -g
+CTFMFLAGS+=    -g
 .endif
 .endif
 
@@ -108,6 +108,10 @@ KMODSCRIPT=	${KMODSCRIPTSRC}
 .endif
 
 PROG?=		${KMOD}.kmod
+.if ${MKDEBUG:Uno} != "no" && !defined(NODEBUG) && !commands(${PROG}) && \
+    empty(SRCS:M*.sh)
+PROGDEBUG:=      ${PROG}.debug
+.endif  
 
 ##### Build rules
 realall:	${PROG}
@@ -169,55 +173,76 @@ ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS}
 .endif
 
+.if defined(PROGDEBUG)
+${PROGDEBUG}: ${PROG}
+	${_MKTARGET_CREATE}
+	(  ${OBJCOPY} --only-keep-debug ${PROG} ${PROGDEBUG} \
+	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+		--add-gnu-debuglink=${PROGDEBUG} ${PROG} \
+	) || (rm -f ${PROGDEBUG}; false)
+.endif
+
 ##### Install rules
 .if !target(kmodinstall)
 .if !defined(KMODULEDIR)
 .if ${KERNEL_DIR:Uno} == "yes"
-KMODULEDIR=	${DESTDIR}/netbsd/modules/${KMOD}
-_INST_DIRS=	${DESTDIR}/netbsd
-_INST_DIRS+=	${DESTDIR}/netbsd/modules
-_INST_DIRS+=	${DESTDIR}/netbsd/modules/${KMOD}
+_INST_DIRS=	/netbsd
+_INST_DIRS+=	/netbsd/modules
+KMODULEDIR=	/netbsd/modules/${KMOD}
 .else
 # Ensure these are recorded properly in METALOG on unprived installes:
 _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
 KMODULEARCHDIR?= ${MACHINE}
-_INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
-_INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}
-_INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules
-KMODULEDIR=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules/${KMOD}
+_INST_DIRS=	/stand/${KMODULEARCHDIR}
+_INST_DIRS+=	/stand/${KMODULEARCHDIR}/${_OSRELEASE}
+_INST_DIRS+=	/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules
+KMODULEDIR=	/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules/${KMOD}
 .endif
 .endif
-_PROG:=		${KMODULEDIR}/${PROG} # installed path
 
+_INST_DIRS+=	${KMODULEDIR}
+_PROG:=		${DESTDIR}${KMODULEDIR}/${PROG} # installed path
+
+.if defined(PROGDEBUG)
+.for i in ${_INST_DIRS}
+_DEBUG_INST_DIRS += ${DEBUGDIR}${i}
+.endfor
+_INST_DIRS += ${_DEBUG_INST_DIRS}
+_PROGDEBUG:=	${DESTDIR}${DEBUGDIR}${KMODULEDIR}/${PROG}.debug
+.endif
+
+.for _P P in ${_PROG} ${PROG} ${_PROGDEBUG} ${PROGDEBUG}
 .if ${MKUPDATE} == "no"
-${_PROG}! ${PROG}					# install rule
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${_PROG}!	.MADE					# no build at install
+${_P}! ${P}					# install rule
+.if !defined(BUILD) && !make(all) && !make(${P})
+${_P}!	.MADE					# no build at install
 .endif
 .else
-${_PROG}: ${PROG}					# install rule
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${_PROG}:	.MADE					# no build at install
+${_P}: ${P}					# install rule
+.if !defined(BUILD) && !make(all) && !make(${P})
+${_P}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
 	dirs=${_INST_DIRS:Q}; \
 	for d in $$dirs; do \
-		${INSTALL_DIR} $$d; \
+		${INSTALL_DIR} ${DESTDIR}$$d; \
 	done
-	${INSTALL_DIR} ${KMODULEDIR}
 	${INSTALL_FILE} -o ${KMODULEOWN} -g ${KMODULEGRP} -m ${KMODULEMODE} \
 		${.ALLSRC} ${.TARGET}
 
-kmodinstall::	${_PROG}
+kmodinstall::	${_P}
 .PHONY:		kmodinstall
-.PRECIOUS:	${_PROG}				# keep if install fails
+.PRECIOUS:	${_P}				# keep if install fails
+.endfor
 
-.undef _PROG
+.undef _PPROG
+.undef _PPROGDEBUG
 .endif # !target(kmodinstall)
 
 ##### Clean rules
 CLEANFILES+= a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS}
+CLEANFILES+= ${PROGDEBUG}
 CLEANFILES+= ${PROG}.map
 .if ${MKLDSCRIPT} == "yes"
 CLEANFILES+= kldscript
