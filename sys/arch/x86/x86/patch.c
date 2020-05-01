@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.43 2020/04/30 17:17:33 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.44 2020/05/01 08:32:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.43 2020/04/30 17:17:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.44 2020/05/01 08:32:50 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -69,14 +69,6 @@ void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
 
-void	_atomic_cas_64(void);
-void	_atomic_cas_64_end(void);
-void	_atomic_cas_cx8(void);
-void	_atomic_cas_cx8_end(void);
-
-#define	X86_NOP		0x90
-#define	X86_REP		0xf3
-#define	X86_RET		0xc3
 #define	X86_CS		0x2e
 #define	X86_DS		0x3e
 #define	X86_GROUP_0F	0x0f
@@ -229,11 +221,11 @@ x86_patch(bool early)
 	 * may be gone.
 	 */
 	if ((cpu_feature[0] & CPUID_CX8) != 0) {
-		patchfunc(
-		    _atomic_cas_cx8, _atomic_cas_cx8_end,
-		    _atomic_cas_64, _atomic_cas_64_end,
-		    NULL
-		);
+		extern uint8_t _atomic_cas_cx8, _atomic_cas_cx8_end;
+
+		bytes = &_atomic_cas_cx8;
+		size = (size_t)&_atomic_cas_cx8_end - (size_t)&_atomic_cas_cx8;
+		x86_hotpatch(HP_NAME_CAS_64, bytes, size);
 	}
 
 #if !defined(SPLDEBUG)

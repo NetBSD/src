@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.28 2020/04/26 14:49:17 maxv Exp $	*/
+/*	$NetBSD: atomic.S,v 1.29 2020/05/01 08:32:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
 #define LOCK			HOTPATCH(HP_NAME_NOLOCK, 1); lock
 #define HOTPATCH_SSE2_LFENCE	HOTPATCH(HP_NAME_SSE2_LFENCE, 7);
 #define HOTPATCH_SSE2_MFENCE	HOTPATCH(HP_NAME_SSE2_MFENCE, 7);
-#define ENDLABEL(a)		_ALIGN_TEXT; LABEL(a)
+#define HOTPATCH_CAS_64		HOTPATCH(HP_NAME_CAS_64, 49);
 #else
 #define LOCK			lock
 #define HOTPATCH_SSE2_LFENCE	/* nothing */
 #define HOTPATCH_SSE2_MFENCE	/* nothing */
-#define ENDLABEL(a)		/* nothing */
+#define HOTPATCH_CAS_64		/* nothing */
 #endif
 
 	.text
@@ -207,10 +207,12 @@ END(_membar_sync)
 STRONG_ALIAS(_atomic_cas_64,_atomic_cas_cx8)
 #else
 ENTRY(_atomic_cas_64)
+	HOTPATCH_CAS_64
+	/* 49 bytes of instructions */
 #ifdef _HARDKERNEL
 	pushf
 	cli
-#endif /* _HARDKERNEL */
+#endif
 	pushl	%edi
 	pushl	%ebx
 	movl	12(%esp), %edi
@@ -229,17 +231,17 @@ ENTRY(_atomic_cas_64)
 	popl	%edi
 #ifdef _HARDKERNEL
 	popf
-#endif /* _HARDKERNEL */
+#endif
 	ret
 2:
 	movl	0(%edi), %eax
 	movl	4(%edi), %edx
 	jmp	1b
 END(_atomic_cas_64)
-ENDLABEL(_atomic_cas_64_end)
-#endif /* !XEN */
+#endif /* !XENPV */
 
 ENTRY(_atomic_cas_cx8)
+	/* 49 bytes of instructions */
 	pushl	%edi
 	pushl	%ebx
 	movl	12(%esp), %edi
@@ -253,14 +255,10 @@ ENTRY(_atomic_cas_cx8)
 	popl	%edi
 	ret
 #ifdef _HARDKERNEL
-#ifdef GPROF
-	.space	16, 0x90
-#else
-	.space	32, 0x90
+	.space	20, 0xCC
 #endif
-#endif /* _HARDKERNEL */
 END(_atomic_cas_cx8)
-ENDLABEL(_atomic_cas_cx8_end)
+LABEL(_atomic_cas_cx8_end)
 #endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
