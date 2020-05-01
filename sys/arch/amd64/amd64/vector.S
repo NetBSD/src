@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.75 2020/04/27 16:55:50 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.76 2020/05/01 07:03:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -630,6 +630,7 @@ INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
  */
 #define INTRSTUB_ARRAY_16(name) 		; \
 	.type _C_LABEL(name ## _stubs), @object	; \
+	.align 8				; \
 LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 0)		; \
 	INTRSTUB_ENTRY(name ## 1)		; \
@@ -654,6 +655,7 @@ END(name ## _stubs)
  */
 #define INTRSTUB_ARRAY_32(name) 		; \
 	.type _C_LABEL(name ## _stubs), @object	; \
+	.align 8				; \
 LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 0)		; \
 	INTRSTUB_ENTRY(name ## 1)		; \
@@ -745,6 +747,7 @@ END(entry_xenev)
 	.quad entry_xenev , _C_LABEL(Xrecurse_ ## name ## sir); \
 	.quad _C_LABEL(Xresume_ ## name ## sir);
 
+	.align 8
 LABEL(xenev_stubs)
 	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_VM) ;
 	XENINTRSTUB_ENTRY(xenev, SIR_XENIPL_SCHED) ;
