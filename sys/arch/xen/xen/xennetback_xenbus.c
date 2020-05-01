@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.100 2020/05/01 19:53:17 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.101 2020/05/01 19:59:47 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.100 2020/05/01 19:53:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.101 2020/05/01 19:59:47 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -385,6 +385,15 @@ xennetback_xenbus_destroy(void *arg)
 
 	evcnt_detach(&xneti->xni_cnt_rx_cksum_blank);
 	evcnt_detach(&xneti->xni_cnt_rx_cksum_undefer);
+
+	/* Destroy DMA maps */
+	for (int i = 0; i < __arraycount(xneti->xni_xstate); i++) {
+		if (xneti->xni_xstate[i].xs_dmamap != NULL) {
+			bus_dmamap_destroy(xneti->xni_xbusd->xbusd_dmat,
+			    xneti->xni_xstate[i].xs_dmamap);
+			xneti->xni_xstate[i].xs_dmamap = NULL;
+		}
+	}
 
 	if (xneti->xni_txring.sring) {
 		op.host_addr = xneti->xni_tx_ring_va;
