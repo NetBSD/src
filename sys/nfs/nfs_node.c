@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.125 2020/02/24 20:11:45 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.126 2020/05/01 08:43:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.125 2020/02/24 20:11:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.126 2020/05/01 08:43:00 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -185,6 +185,9 @@ nfs_inactive(void *v)
 	struct nfsnode *np;
 	struct sillyrename *sp;
 	struct vnode *vp = ap->a_vp;
+
+	/* If we have a delayed truncation, do it now. */
+	nfs_delayedtruncate(vp);
 
 	np = VTONFS(vp);
 	if (vp->v_type != VDIR) {
