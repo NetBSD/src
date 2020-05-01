@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.51 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.52 2020/05/01 09:17:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.51 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.52 2020/05/01 09:17:58 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -147,10 +147,11 @@ ENTRY(cx8_spllower)
 2:
 	popl	%ebx
 
-	.type	_C_LABEL(cx8_spllower_patch), @function
-LABEL(cx8_spllower_patch)
-	jmp	_C_LABEL(Xspllower)
-	.align	32
+	/* The reference must be absolute, hence the indirect jump. */
+	movl	$Xspllower,%eax
+	jmp	*%eax
+
+	.align	32, 0xCC
 LABEL(cx8_spllower_end)
 END(cx8_spllower)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.44 2020/05/01 08:32:50 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.45 2020/05/01 09:17:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.44 2020/05/01 08:32:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.45 2020/05/01 09:17:58 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -62,35 +62,13 @@ void	spllower(int);
 void	spllower_end(void);
 void	cx8_spllower(int);
 void	cx8_spllower_end(void);
-void	cx8_spllower_patch(void);
 
 void	mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
-void	i686_mutex_spin_exit_patch(void);
-
-#define	X86_CS		0x2e
-#define	X86_DS		0x3e
-#define	X86_GROUP_0F	0x0f
-
-static void
-adjust_jumpoff(uint8_t *ptr, void *from_s, void *to_s)
-{
-
-	/* Branch hints */
-	if (ptr[0] == X86_CS || ptr[0] == X86_DS)
-		ptr++;
-	/* Conditional jumps */
-	if (ptr[0] == X86_GROUP_0F)
-		ptr++;		
-	/* 4-byte relative jump or call */
-	*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
-	    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
-}
 
 static void __unused
-patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
-	  void *pcrel)
+patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
 {
 
 	if ((uintptr_t)from_e - (uintptr_t)from_s !=
@@ -98,8 +76,6 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 		panic("patchfunc: sizes do not match (from=%p)", from_s);
 
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
-	if (pcrel != NULL)
-		adjust_jumpoff(pcrel, from_s, to_s);
 }
 
 static inline void __unused
@@ -233,14 +209,12 @@ x86_patch(bool early)
 		/* Faster splx(), mutex_spin_exit(). */
 		patchfunc(
 		    cx8_spllower, cx8_spllower_end,
-		    spllower, spllower_end,
-		    cx8_spllower_patch
+		    spllower, spllower_end
 		);
 #if !defined(LOCKDEBUG)
 		patchfunc(
 		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
-		    mutex_spin_exit, mutex_spin_exit_end,
-		    i686_mutex_spin_exit_patch
+		    mutex_spin_exit, mutex_spin_exit_end
 		);
 #endif	/* !LOCKDEBUG */
 	}

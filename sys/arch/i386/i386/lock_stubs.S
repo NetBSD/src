@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.33 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.34 2020/05/01 09:17:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.33 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.34 2020/05/01 09:17:58 maxv Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -271,13 +271,14 @@ ENTRY(mutex_spin_exit)
 	movl	%ecx, CPUVAR(ILEVEL)
 	sti
 1:	ret
-	.space 32
+	.space	32, 0xCC
 	.align	32
 LABEL(mutex_spin_exit_end)
 END(mutex_spin_exit)
 #else  /* XENPV */
 STRONG_ALIAS(mutex_spin_exit, i686_mutex_spin_exit)
 #endif	/* !XENPV */
+
 /*
  * Patch for i686 CPUs where cli/sti is prohibitively expensive.
  * Must be the same size as mutex_spin_exit().
@@ -302,9 +303,12 @@ ENTRY(i686_mutex_spin_exit)
 2:
 	popl	%ebx
 	movl	%ecx,4(%esp)
-LABEL(i686_mutex_spin_exit_patch)
-	jmp	_C_LABEL(Xspllower)
-	.space 16
+
+	/* The reference must be absolute, hence the indirect jump. */
+	movl	$Xspllower,%eax
+	jmp	*%eax
+
+	.space	16, 0xCC
 	.align	32
 LABEL(i686_mutex_spin_exit_end)
 END(i686_mutex_spin_exit)
