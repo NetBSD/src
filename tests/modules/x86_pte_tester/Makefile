@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2020/04/26 09:08:41 maxv Exp $
+#	$NetBSD: Makefile,v 1.2 2020/05/01 22:24:19 christos Exp $
 
 .include <bsd.own.mk>
 
 KMOD=		x86_pte_tester
-KMODULEDIR=	${DESTDIR}/${TESTSBASE}/modules/${KMOD}
+KMODULEDIR=	${TESTSBASE}/modules/${KMOD}
 
 SRCS=		x86_pte_tester.c
 
