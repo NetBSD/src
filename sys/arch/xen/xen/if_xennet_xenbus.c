@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.120 2020/04/30 11:19:39 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.121 2020/05/01 19:53:17 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.120 2020/04/30 11:19:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.121 2020/05/01 19:53:17 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -204,6 +204,8 @@ struct xennet_xenbus_softc {
 	struct evcnt sc_cnt_tx_drop;
 	struct evcnt sc_cnt_tx_frag;
 	struct evcnt sc_cnt_rx_frag;
+	struct evcnt sc_cnt_rx_cksum_blank;
+	struct evcnt sc_cnt_rx_cksum_undefer;
 };
 
 static pool_cache_t if_xennetrxbuf_cache;
@@ -433,6 +435,10 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	    NULL, device_xname(sc->sc_dev), "Tx queue full");
 	evcnt_attach_dynamic(&sc->sc_cnt_rx_frag, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Rx multi-segment packet");
+	evcnt_attach_dynamic(&sc->sc_cnt_rx_cksum_blank, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx csum blank");
+	evcnt_attach_dynamic(&sc->sc_cnt_rx_cksum_undefer, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx csum undeferred");
 
 	if (!pmf_device_register(self, xennet_xenbus_suspend,
 	    xennet_xenbus_resume))
@@ -493,6 +499,8 @@ xennet_xenbus_detach(device_t self, int flags)
 	evcnt_detach(&sc->sc_cnt_tx_drop);
 	evcnt_detach(&sc->sc_cnt_tx_queue_full);
 	evcnt_detach(&sc->sc_cnt_rx_frag);
+	evcnt_detach(&sc->sc_cnt_rx_cksum_blank);
+	evcnt_detach(&sc->sc_cnt_rx_cksum_undefer);
 
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
@@ -1034,9 +1042,10 @@ again:
 			rxflags = m0_rxflags;
 		}
 
-		if (rxflags & NETRXF_csum_blank)
-			xennet_checksum_fill(ifp, m);
-		else if (rxflags & NETRXF_data_validated)
+		if (rxflags & NETRXF_csum_blank) {
+			xennet_checksum_fill(ifp, m, &sc->sc_cnt_rx_cksum_blank,
+			    &sc->sc_cnt_rx_cksum_undefer);
+		} else if (rxflags & NETRXF_data_validated)
 			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
 
 		/* We'are done with req */
