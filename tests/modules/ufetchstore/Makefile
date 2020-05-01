@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2019/04/15 23:41:23 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/05/01 22:24:19 christos Exp $
 
 .include <bsd.own.mk>
 
 KMOD=		ufetchstore_tester
-KMODULEDIR=	${DESTDIR}/${TESTSBASE}/modules/${KMOD}
+KMODULEDIR=	${TESTSBASE}/modules/${KMOD}
 
 SRCS=		ufetchstore_tester.c
 

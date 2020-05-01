@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2019/01/25 18:33:59 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/05/01 22:24:19 christos Exp $
 
 .include <bsd.own.mk>
 
 KMOD=		threadpool_tester
-KMODULEDIR=	${DESTDIR}/${TESTSBASE}/modules/${KMOD}
+KMODULEDIR=	${TESTSBASE}/modules/${KMOD}
 
 SRCS=		threadpool_tester.c
 
