@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.49 2020/05/01 07:29:03 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.50 2020/05/01 11:55:45 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2393,4 +2393,18 @@ games/fortune/unstr/unstr.c			1.15
 
 	Fix potential buffer overflows in fortune tools.
 	[nia, ticket #879]
+
+sys/arch/hp300/stand/common/netio.c		1.17
+sys/arch/hp300/stand/inst/version		1.14
+sys/arch/hp300/stand/uboot/version		1.21
+
+	hp300: fix bootloader error message.
+	[tsutsui, ticket #880]
+
+sys/kern/vfs_mount.c				1.82
+
+	Undo Rev. 1.79, it breaks root-on-raid where it destroys the component
+	disks before the raid.
+	Reopens PR kern/54969: Disk cache is no longer flushed on shutdown.
+	[hannken, ticket #881]
 
