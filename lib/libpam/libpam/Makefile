@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2020/04/29 02:16:56 riastradh Exp $
+# $NetBSD: Makefile,v 1.25 2020/05/01 21:58:16 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -39,6 +39,14 @@
 NOPROFILE=	# Don't build a profiling library
 
 .include <bsd.own.mk>
+
+.if ${MACHINE} == "vax"
+# On VAX everything is PIC so we don't need to build a separate _pic.a
+# libraries so we set MKPICLIB.vax=no in bsd.own.mk to save time and space.
+# But in libpam.a we include the static modules which we don't want in the
+# shared library, so we force the build system to build a separate _pic.a.
+MKPICLIB=yes
+.endif
 
 DIST=   ${NETBSDSRCDIR}/external/bsd/openpam/dist
 LIB=	pam
