@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.59 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.60 2020/05/01 08:43:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.59 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.60 2020/05/01 08:43:37 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -247,7 +247,8 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, int lktype, struct vnode **vpp)
 	}
 	ip = VTOI(nvp);
 	KASSERT(ip != NULL);
-	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
+	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen ||
+	    ((ip->i_mode & IFMT) == IFDIR && ip->i_size == 0)) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);
