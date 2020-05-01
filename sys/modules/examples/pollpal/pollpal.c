@@ -1,4 +1,4 @@
-/*	$NetBSD: pollpal.c,v 1.2 2020/04/30 07:07:22 mrg Exp $	*/ 
+/*	$NetBSD: pollpal.c,v 1.3 2020/05/01 21:42:34 christos Exp $	*/ 
 
 /*-
 * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.2 2020/04/30 07:07:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.3 2020/05/01 21:42:34 christos Exp $");
 
 #include <sys/module.h>
 #include <sys/param.h>
@@ -281,9 +281,9 @@ pollpal_poll(struct file *fp, int events)
 		}
 		break;
 	case WRITE_WAITING:
-		if (events && (POLLIN | POLLRDNORM)) {
+		if (events & (POLLIN | POLLRDNORM)) {
 			/* When device is in WRITE_WAITING state it can read. */
-			revents |= POLLIN;
+			revents |= POLLIN | POLLRDNORM;
 		} else {
 			/* Record the request if it wasn't satisfied. */
 			selrecord(curlwp, &pl->psel);
