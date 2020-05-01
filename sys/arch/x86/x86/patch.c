@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.45 2020/05/01 09:17:58 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.46 2020/05/01 09:40:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.45 2020/05/01 09:17:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.46 2020/05/01 09:40:47 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -57,26 +57,6 @@ struct hotpatch {
 	uint8_t size;
 	void *addr;
 } __packed;
-
-void	spllower(int);
-void	spllower_end(void);
-void	cx8_spllower(int);
-void	cx8_spllower_end(void);
-
-void	mutex_spin_exit_end(void);
-void	i686_mutex_spin_exit(int);
-void	i686_mutex_spin_exit_end(void);
-
-static void __unused
-patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
-{
-
-	if ((uintptr_t)from_e - (uintptr_t)from_s !=
-	    (uintptr_t)to_e - (uintptr_t)to_s)
-		panic("patchfunc: sizes do not match (from=%p)", from_s);
-
-	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
-}
 
 static inline void __unused
 patchbytes(void *addr, const uint8_t *bytes, size_t size)
@@ -207,16 +187,18 @@ x86_patch(bool early)
 #if !defined(SPLDEBUG)
 	if (!early && (cpu_feature[0] & CPUID_CX8) != 0) {
 		/* Faster splx(), mutex_spin_exit(). */
-		patchfunc(
-		    cx8_spllower, cx8_spllower_end,
-		    spllower, spllower_end
-		);
+		extern uint8_t cx8_spllower, cx8_spllower_end;
+		extern uint8_t i686_mutex_spin_exit, i686_mutex_spin_exit_end;
+
+		bytes = &cx8_spllower;
+		size = (size_t)&cx8_spllower_end - (size_t)&cx8_spllower;
+		x86_hotpatch(HP_NAME_SPLLOWER, bytes, size);
+
 #if !defined(LOCKDEBUG)
-		patchfunc(
-		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
-		    mutex_spin_exit, mutex_spin_exit_end
-		);
-#endif	/* !LOCKDEBUG */
+		bytes = &i686_mutex_spin_exit;
+		size = (size_t)&i686_mutex_spin_exit_end - (size_t)&i686_mutex_spin_exit;
+		x86_hotpatch(HP_NAME_MUTEX_EXIT, bytes, size);
+#endif
 	}
 #endif /* !SPLDEBUG */
 #endif	/* i386 */
