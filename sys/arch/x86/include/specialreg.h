@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.163 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.164 2020/05/01 04:07:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -730,6 +730,7 @@
  * %eax: Long Mode Size Identifiers
  * %ebx: Extended Feature Identifiers
  * %ecx: Size Identifiers
+ * %edx: RDPRU Register Identifier Range
  */
 
 /* %ebx */
@@ -773,6 +774,7 @@
 #define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
 #define CPUID_AMD_SVM_GMET		0x00020000
 #define CPUID_AMD_SVM_SPEC_CTRL		__BIT(20)
+#define CPUID_AMD_SVM_TLBICTL		__BIT(24)  /* TLB Inttercept Control */
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
@@ -782,10 +784,11 @@
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
 	"\21" "VGIF"	"\22" "GMET"					\
-	"\25" "SPEC_CTRL"
+	"\25" "SPEC_CTRL"						\
+	"\31" "TLBICTL"
 
 /*
- * AMD Fn8000_0001d Cache Topology Information.
+ * AMD Fn8000_001d Cache Topology Information.
  * It's almost the same as Intel Deterministic Cache Parameter Leaf(0x04)
  * except the following:
  *	No Cores/package (%eax bit 31..26)
@@ -793,7 +796,7 @@
  */
 
 /*
- * AMD Fn8000_0001f Encrypted Memory Capabilities.
+ * AMD Fn8000_001f Encrypted Memory Capabilities.
  * %eax: flags
  * %ebx:  5-0: Cbit Position
  *       11-6: PhysAddrReduction
