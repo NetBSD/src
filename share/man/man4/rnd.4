@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.31 2020/05/01 12:43:33 nia Exp $
+.\"	$NetBSD: rnd.4,v 1.32 2020/05/01 19:54:37 riastradh Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,32 +51,28 @@ Will block early at boot if the system's state is known to be
 predictable.
 .El
 .Pp
-Applications can read from
-.Pa /dev/urandom
-when they need randomly generated data, e.g. key material for
-cryptography or seeds for simulations, and the device is known
-to be available.
-.Pp
-A
+Applications should read from
+.Pa /dev/urandom ,
+or the
 .Xr sysctl 7
-variable,
+variable
 .Li kern.arandom ,
-provides equivalent functionality to
+when they need randomly generated data, e.g. key material for
+cryptography or seeds for simulations.
+(The
+.Xr sysctl 7
+variable
+.Li kern.arandom
+is limited to 256 bytes per read, but is otherwise equivalent to
+reading from
 .Pa /dev/urandom
-and will never block.  However, it only returns up to 256 bytes per call.
-This is expected to be enough for seeding most cryptographically secure
-random number generators and ciphers, and if more data is required the
-variable can be queried again.
-.Pp
-Applications should read from the sysctl variable when a high level of
-reliability is required, or the runtime environment cannot be predicted,
-e.g. in a library.  It is possible that
-.Pa /dev/urandom
-is unavailable due to the application being in a
+and always works even in a
 .Xr chroot 8
-environment, or when other restrictions such as those enforced by
-.Xr setrlimit 2
-apply.
+environment without requiring a populated
+.Pa /dev
+tree and without opening a file descriptor, so
+.Li kern.arandom
+may be preferable to use in libraries.)
 .Pp
 Systems should be engineered to judiciously read at least once from
 .Pa /dev/random
