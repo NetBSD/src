@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaltstack.c,v 1.1 2020/04/30 11:03:29 ryo Exp $ */
+/* $NetBSD: t_sigaltstack.c,v 1.2 2020/05/01 21:35:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigaltstack.c,v 1.1 2020/04/30 11:03:29 ryo Exp $");
+__RCSID("$NetBSD: t_sigaltstack.c,v 1.2 2020/05/01 21:35:30 christos Exp $");
 
 #include <signal.h>
 #include <stdbool.h>
@@ -43,7 +43,7 @@ static bool handler_use_altstack;
 static void
 handler(int signo __unused)
 {
-	char *sp = alloca(128);
+	char sp[128];
 
 	handler_called = true;
 
