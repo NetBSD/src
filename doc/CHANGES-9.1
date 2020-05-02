@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.50 2020/05/01 11:55:45 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.51 2020/05/02 16:31:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2407,4 +2407,21 @@ sys/kern/vfs_mount.c				1.82
 	disks before the raid.
 	Reopens PR kern/54969: Disk cache is no longer flushed on shutdown.
 	[hannken, ticket #881]
+
+etc/rc.d/random_seed				1.9
+
+	Fix random_seed interruption window.
+	[riastradh, ticket #882]
+
+sys/arch/aarch64/aarch64/netbsd32_machdep.c	1.11
+
+	PR evbarm/55200: fix inverted logic in NETBSD32 user signal stack
+	handling.
+	[tnn, ticket #883]
+
+sys/arch/aarch64/aarch64/cpu_machdep.c		1.9
+sys/arch/aarch64/aarch64/sig_machdep.c		1.5
+
+	aarch64: fix sigaltstack(2)
+	[tnn, ticket #884]
 
