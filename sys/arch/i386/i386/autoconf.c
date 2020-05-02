@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.106 2019/12/27 12:51:56 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.107 2020/05/02 16:44:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2019/12/27 12:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.107 2020/05/02 16:44:35 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -105,7 +105,14 @@ cpu_configure(void)
 {
 	struct pcb *pcb;
 
+#ifdef XEN
+       if (vm_guest == VM_GUEST_XENPVH)
+	       xen_startrtclock();
+       else
+		startrtclock();
+#else
 	startrtclock();
+#endif
 
 #if NBIOS32 > 0
 	efi_init();

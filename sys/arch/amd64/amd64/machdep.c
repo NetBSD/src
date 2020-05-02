@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.351 2020/05/02 16:28:37 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.352 2020/05/02 16:44:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.351 2020/05/02 16:28:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2020/05/02 16:44:34 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1483,22 +1483,20 @@ extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
 extern vector *x86_exceptions[];
 
+#ifndef XENPV
 static void
 init_x86_64_ksyms(void)
 {
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern int end;
 	extern int *esym;
-#ifndef XENPV
 	struct btinfo_symtab *symtab;
 	vaddr_t tssym, tesym;
-#endif
 
 #ifdef DDB
 	db_machine_init();
 #endif
 
-#ifndef XENPV
 	symtab = lookup_bootinfo(BTINFO_SYMTAB);
 	if (symtab) {
 #ifdef KASLR
@@ -1512,15 +1510,9 @@ init_x86_64_ksyms(void)
 	} else
 		ksyms_addsyms_elf(*(long *)(void *)&end,
 		    ((long *)(void *)&end) + 1, esym);
-#else  /* XENPV */
-	esym = xen_start_info.mod_start ?
-	    (void *)xen_start_info.mod_start :
-	    (void *)xen_start_info.mfn_list;
-	ksyms_addsyms_elf(*(int *)(void *)&end,
-	    ((int *)(void *)&end) + 1, esym);
-#endif /* XENPV */
 #endif
 }
+#endif /* XENPV */
 
 void __noasan
 init_bootspace(void)
@@ -1676,6 +1668,10 @@ init_x86_64(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH)
+		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
+#endif
 	init_pte();
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
@@ -1903,7 +1899,16 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_idt();
 
-	init_x86_64_ksyms();
+#ifdef XENPV
+	xen_init_ksyms();
+#else /* XENPV */
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH)
+		xen_init_ksyms();
+	else
+#endif /* XEN */
+		init_x86_64_ksyms();
+#endif /* XENPV */
 
 #ifndef XENPV
 	intr_default_setup();

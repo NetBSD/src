@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.29 2019/12/22 15:57:07 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.30 2020/05/02 16:44:35 bouyer Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.29 2019/12/22 15:57:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.30 2020/05/02 16:44:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.29 2019/12/22 15:57:07 thorpej Ex
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 #include "opt_vga.h"
+
+#ifdef XEN
+#include <xen/hypervisor.h>
+#endif
 
 /*
  * Default VBIOS reset method for non-HW accelerated VGA drivers.
@@ -151,6 +155,13 @@ out:
 			return PhysicalAddress;
 	}
 #else
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH) {
+		PhysicalAddress = hvm_start_info->rsdp_paddr;
+		if (PhysicalAddress)
+			return PhysicalAddress;
+	}
+#endif
 	/* 
 	 * Get the ACPI RSDP from EFI SystemTable. This works when the 
 	 * kernel was loaded from EFI bootloader.

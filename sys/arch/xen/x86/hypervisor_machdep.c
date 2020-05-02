@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.38 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.39 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  *
@@ -54,12 +54,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.38 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.39 2020/05/02 16:44:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -76,8 +77,18 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.38 2020/04/25 15:26:17 bouy
 #include <xen/xenpmap.h>
 
 #include "opt_xen.h"
+#include "opt_modular.h"
+#include "opt_ddb.h"
 #include "isa.h"
 #include "pci.h"
+#include "ksyms.h"
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
+#endif
 
 #ifdef XENPV
 /*
@@ -569,3 +580,24 @@ update_p2m_frame_list_list(void)
 
 }
 #endif /* XENPV */
+
+void
+xen_init_ksyms(void)
+{
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	extern int end;
+	extern int *esym;
+#ifdef DDB
+	db_machine_init();
+#endif
+
+#ifdef XENPV
+	esym = xen_start_info.mod_start ?
+	    (void *)xen_start_info.mod_start :
+	    (void *)xen_start_info.mfn_list;
+#endif /* XENPV */
+	/* for PVH, esym is set in locore.S */
+	ksyms_addsyms_elf(*(int *)(void *)&end,
+	    ((int *)(void *)&end) + 1, esym);
+#endif
+}
