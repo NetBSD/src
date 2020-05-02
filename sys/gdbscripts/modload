@@ -1,7 +1,5 @@
-# $NetBSD: modload,v 1.2 2020/05/01 17:00:42 christos Exp $
+# $NetBSD: modload,v 1.3 2020/05/02 12:58:46 christos Exp $
 # Load the symbol files for all active modules
-# Note that you need to re-run add-symbol-file netbsd.gdb after you
-# load the modules.
 define modload
 	set $h = module_list
 	set $e = $h.tqh_first
