@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.188 2020/04/29 22:03:09 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.189 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.188 2020/04/29 22:03:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.189 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -447,7 +447,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			/* Enable lapic. */
 			lapic_enable();
 			lapic_set_lvt();
-			if (vm_guest != VM_GUEST_XENPVHVM)
+			if (!vm_guest_is_xenpvh_or_pvhvm())
 				lapic_calibrate_timer(ci);
 		}
 #endif
@@ -824,7 +824,7 @@ cpu_start_secondary(struct cpu_info *ci)
 	KASSERT(cpu_starting == NULL);
 	cpu_starting = ci;
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i > 0; i--) {
-		x86_delay(10);
+		delay_func(10);
 	}
 
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
@@ -860,7 +860,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i > 0; i--) {
-		x86_delay(10);
+		delay_func(10);
 	}
 	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		aprint_error_dev(ci->ci_dev, "failed to start\n");
@@ -1143,7 +1143,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 			    __func__);
 			return error;
 		}
-		x86_delay(10000);
+		delay_func(10000);
 
 		error = x86_ipi_startup(ci->ci_cpuid, target / PAGE_SIZE);
 		if (error != 0) {
@@ -1151,7 +1151,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 			    __func__);
 			return error;
 		}
-		x86_delay(200);
+		delay_func(200);
 
 		error = x86_ipi_startup(ci->ci_cpuid, target / PAGE_SIZE);
 		if (error != 0) {
@@ -1159,7 +1159,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 			    __func__);
 			return error;
 		}
-		x86_delay(200);
+		delay_func(200);
 	}
 
 	return 0;
@@ -1321,7 +1321,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	} else {
 		/* Calibrate TSC frequency. */
 		last_tsc = cpu_counter_serializing();
-		x86_delay(100000);
+		delay_func(100000);
 		ci->ci_data.cpu_cc_freq =
 		    (cpu_counter_serializing() - last_tsc) * 10;
 	}

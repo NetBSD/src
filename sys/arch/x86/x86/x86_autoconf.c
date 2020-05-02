@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.81 2020/04/28 15:43:34 bouyer Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.82 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.81 2020/04/28 15:43:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.82 2020/05/02 16:44:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.81 2020/04/28 15:43:34 bouyer Exp
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/pio.h>
+
+#include <xen/xen.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -535,6 +537,12 @@ findroot(void)
 void
 cpu_bootconf(void)
 {
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH) {
+		xen_bootconf();
+		return;
+	}
+#endif
 	findroot();
 	matchbiosdisks();
 }

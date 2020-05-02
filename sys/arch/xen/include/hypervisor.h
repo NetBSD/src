@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.51 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.52 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -99,6 +99,7 @@ struct xen_npx_attach_args {
 #include <xen/include/public/memory.h>
 #include <xen/include/public/io/netif.h>
 #include <xen/include/public/io/blkif.h>
+#include <xen/include/public/arch-x86/hvm/start_info.h>
 
 #if __XEN_INTERFACE_VERSION < 0x00030208
 /* Undo namespace damage from xen/include/public/io/ring.h
@@ -138,8 +139,13 @@ union start_info_union
 extern union start_info_union start_info_union;
 #define xen_start_info (start_info_union.start_info)
 
+extern struct hvm_start_info *hvm_start_info;
+
 /* For use in guest OSes. */
 extern volatile shared_info_t *HYPERVISOR_shared_info;
+
+/* console */
+extern volatile struct xencons_interface *xencons_interface;
 
 
 /* Structural guest handles introduced in 0x00030201. */
@@ -196,5 +202,7 @@ hypervisor_notify_via_evtchn(unsigned int port)
 	op.u.send.port = port;
 	(void)HYPERVISOR_event_channel_op(&op);
 }
+
+void xen_init_ksyms(void);
 
 #endif /* _XEN_HYPERVISOR_H_ */

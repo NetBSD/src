@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.386 2020/05/02 16:28:37 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.387 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.386 2020/05/02 16:28:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.387 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1335,8 +1335,10 @@ pmap_bootstrap(vaddr_t kva_start)
 	extern volatile struct xencons_interface *xencons_interface; /* XXX */
 	extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
-	HYPERVISOR_shared_info = (void *) pmap_bootstrap_valloc(1);
-	HYPERVISOR_shared_info_pa = pmap_bootstrap_palloc(1);
+	if (vm_guest != VM_GUEST_XENPVH) {
+		HYPERVISOR_shared_info = (void *) pmap_bootstrap_valloc(1);
+		HYPERVISOR_shared_info_pa = pmap_bootstrap_palloc(1);
+	}
 	xencons_interface = (void *) pmap_bootstrap_valloc(1);
 	xenstore_interface = (void *) pmap_bootstrap_valloc(1);
 #endif

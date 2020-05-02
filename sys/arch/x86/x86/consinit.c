@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.32 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.33 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.32 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.33 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.32 2020/04/25 15:26:18 bouyer Exp $")
 #if NHVKBD > 0
 #include <dev/hyperv/hvkbdvar.h>
 #endif
+#endif
+
+#ifdef XENPVHVM
+#include <xen/xen.h>
 #endif
 
 #ifndef CONSDEVNAME
@@ -166,6 +171,12 @@ consinit(void)
 	int rv;
 #endif
 
+#ifdef XENPVHVM
+	if (vm_guest == VM_GUEST_XENPVH) {
+		xen_pvh_consinit();
+		return;
+	}
+#endif
 	if (initted)
 		return;
 	initted = 1;
