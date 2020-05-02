@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2682 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2683 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -186,3 +186,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata updated to 2020a  [kre 20200425]
 	amd64, i386: Added support for Xen PV drivers under HVM guests.
 		[bouyer 20200425]
+	xen: Added support for Xen PVH. [bouyer 20200502]
