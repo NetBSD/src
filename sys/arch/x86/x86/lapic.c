@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.77 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: lapic.c,v 1.78 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.77 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.78 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -789,7 +789,7 @@ i82489_ipi_init(int target)
 
 	i82489_writereg(LAPIC_ICRLO, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 	i82489_icr_wait();
-	x86_delay(10000);
+	delay_func(10000);
 	i82489_writereg(LAPIC_ICRLO,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGMODE_LEVEL | LAPIC_LEVEL_DEASSERT);
 	i82489_icr_wait();
@@ -861,7 +861,7 @@ x2apic_ipi_init(int target)
 
 	x2apic_write_icr(target, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 
-	x86_delay(10000);
+	delay_func(10000);
 
 	x2apic_write_icr(0,
 	    LAPIC_DLMODE_INIT | LAPIC_TRIGMODE_LEVEL | LAPIC_LEVEL_DEASSERT);
