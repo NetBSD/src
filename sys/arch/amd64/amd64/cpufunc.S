@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.49 2019/11/21 19:23:58 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.50 2020/05/02 11:37:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -380,3 +380,41 @@ ENTRY(outl)
 	outl	%eax, %dx
 	ret
 END(outl)
+
+/*
+ * %rdi = name
+ * %rsi = sel
+ */
+ENTRY(x86_hotpatch)
+	/* save RFLAGS, and disable intrs */
+	pushfq
+	cli
+
+	/* save CR0, and disable WP */
+	movq	%cr0,%rcx
+	pushq	%rcx
+	andq	$~CR0_WP,%rcx
+	movq	%rcx,%cr0
+
+	callq	_C_LABEL(x86_hotpatch_apply)
+
+	/* write back and invalidate cache */
+	wbinvd
+
+	/* restore CR0 */
+	popq	%rcx
+	movq	%rcx,%cr0
+
+	/* flush instruction pipeline */
+	pushq	%rax
+	callq	x86_flush
+	popq	%rax
+
+	/* clean up */
+	movq	%rax,%rdi
+	callq	_C_LABEL(x86_hotpatch_cleanup)
+
+	/* restore RFLAGS */
+	popfq
+	ret
+END(x86_hotpatch)
