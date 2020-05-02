@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.401 2020/04/04 23:54:06 christos Exp $
+#	$NetBSD: bsd.README,v 1.402 2020/05/02 19:46:58 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -143,6 +143,9 @@ MKCOMPATTESTS  	If "yes", build and install the NetBSD test suite when
 MKCOMPATX11  	If "yes", build and install the X11 libraries when
 		building and installing src/compat.
 		Default: no
+
+MKCOMPATMODULES	If "no", don't build compat modules (xen, etc.)
+		Default: yes
 
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
