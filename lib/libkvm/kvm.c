@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.108 2020/04/28 14:27:41 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.109 2020/05/02 14:31:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.108 2020/04/28 14:27:41 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.109 2020/05/02 14:31:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -182,7 +182,7 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 			errno = EINVAL;
 			return -1;
 		}
-		memcpy(buf, (char *)kd->dump_mem + off, size);
+		memcpy(buf, (char *)kd->dump_mem + (size_t)off, size);
 		return size;
 	}
 
@@ -224,7 +224,7 @@ _kvm_pwrite(kvm_t *kd, const void *buf, size_t size, off_t off)
 		errno = EINVAL;
 		return -1;
 	}
-	memcpy(mem + off, buf, size);
+	memcpy(mem + (size_t)off, buf, size);
 	return size;
 }
 
