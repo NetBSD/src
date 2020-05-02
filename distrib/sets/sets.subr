@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.189 2020/05/01 22:21:49 christos Exp $
+#	$NetBSD: sets.subr,v 1.190 2020/05/02 19:44:59 christos Exp $
 #
 
 #
@@ -184,7 +184,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.189 2020/05/01 22:21:49 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.190 2020/05/02 19:44:59 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -254,6 +254,17 @@ list_set_files()
 	fi
 	print_set_lists "$@" | \
 	${AWK} -v obsolete=${obsolete} '
+		function addkmod(line, fname, prefix, pat, patlen) {
+			if (substr(line, 1, patlen) != pat) {
+				return;
+			}
+			for (d in kmodarchdirs) {
+				xd = prefix kmodarchdirs[d]
+				xfile = xd substr(line, patlen + 1)
+				tmp = xd substr(fname, patlen + 1)
+				list[xfile] = tmp;
+			}
+		}
 		BEGIN {
 			if (obsolete)
 				wanted["obsolete"] = 1
@@ -298,8 +309,12 @@ list_set_files()
 
 			if (("kmod" in wanted) && ("compatmodules" in wanted)) {
 				split("'"${KMODARCHDIRS}"'", kmodarchdirs, ",");
-				kmodpat = "./stand/" ENVIRON["MACHINE"]
+				kmodprefix = "./stand/"
+				kmodpat = kmodprefix ENVIRON["MACHINE"]
 				l_kmodpat = length(kmodpat)
+				kmoddbprefix = "./usr/libdata/debug/stand/" 
+				kmoddbpat = kmoddbprefix ENVIRON["MACHINE"]
+				l_kmoddbpat = length(kmoddbpat)
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
@@ -391,13 +406,9 @@ list_set_files()
 				next
 
 			list[$1] = $0
-			if (havekmod > 0 && substr($1,1,l_kmodpat) == kmodpat) {
-				for (d in kmodarchdirs) {
-					xd = "./stand/" kmodarchdirs[d]
-					xfile = xd substr($1, l_kmodpat+1)
-					tmp = xd substr($0, l_kmodpat+1)
-					list[xfile] = tmp;
-				}
+			if (havekmod > 0) {
+				addkmod($0, $1, kmodprefix, kmodpat, l_kmodpat)
+				addkmod($0, $1, kmoddbprefix, kmoddbpat, l_kmoddbpat)
 				next
 			}
 
