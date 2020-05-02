@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.47 2020/05/02 11:37:17 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.48 2020/05/02 16:25:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.47 2020/05/02 11:37:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.48 2020/05/02 16:25:47 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.47 2020/05/02 11:37:17 maxv Exp $");
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 #include <machine/frameasm.h>
+
+#include <uvm/uvm.h>
+#include <machine/pmap.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
@@ -256,6 +259,45 @@ x86_hotpatch_apply(uint8_t name, uint8_t sel)
 	return 0;
 }
 
+#ifdef __x86_64__
+/*
+ * The CPU added the D bit on the text pages while we were writing to them.
+ * Remove that bit. Kinda annoying, but we can't avoid it.
+ */
+static void
+remove_d_bit(void)
+{
+	extern struct bootspace bootspace;
+	pt_entry_t pte;
+	vaddr_t va;
+	size_t i, n;
+
+	for (i = 0; i < BTSPACE_NSEGS; i++) {
+		if (bootspace.segs[i].type != BTSEG_TEXT)
+			continue;
+		va = bootspace.segs[i].va;
+		n = 0;
+		while (n < bootspace.segs[i].sz) {
+			if (L2_BASE[pl2_i(va)] & PTE_PS) {
+				pte = L2_BASE[pl2_i(va)] & ~PTE_D;
+				pmap_pte_set(&L2_BASE[pl2_i(va)], pte);
+				n += NBPD_L2;
+				va += NBPD_L2;
+			} else {
+				pte = L1_BASE[pl1_i(va)] & ~PTE_D;
+				pmap_pte_set(&L1_BASE[pl1_i(va)], pte);
+				n += NBPD_L1;
+				va += NBPD_L1;
+			}
+		}
+	}
+
+	tlbflushg();
+}
+#else
+#define remove_d_bit()	__nothing
+#endif
+
 /*
  * Interrupts disabled here. Called from ASM only, prototype not public.
  */
@@ -266,6 +308,8 @@ x86_hotpatch_cleanup(int retval)
 	if (retval != 0) {
 		panic("x86_hotpatch_apply failed");
 	}
+
+	remove_d_bit();
 }
 
 /* -------------------------------------------------------------------------- */
