@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.170 2020/03/08 15:05:18 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.171 2020/05/02 09:13:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.170 2020/03/08 15:05:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.171 2020/05/02 09:13:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -240,7 +240,7 @@ _kernel_lock(int nlocks)
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins)) {
 				extern int start_init_exec;
-				if (!start_init_exec)
+				if (start_init_exec)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
 			SPINLOCK_BACKOFF_HOOK;
