@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.350 2020/04/30 03:29:19 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.351 2020/05/02 16:28:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350 2020/04/30 03:29:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.351 2020/05/02 16:28:37 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1570,7 +1570,7 @@ init_bootspace(void)
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 
-static void __noasan
+static void
 init_pte(void)
 {
 #ifndef XENPV
@@ -1586,7 +1586,7 @@ init_pte(void)
 	normal_pdes[2] = L4_BASE;
 }
 
-void __noasan
+void
 init_slotspace(void)
 {
 	vaddr_t va;
@@ -1656,7 +1656,7 @@ init_slotspace(void)
 #endif
 }
 
-void __noasan
+void
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
@@ -1677,8 +1677,6 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	init_pte();
-
-	kasan_early_init((void *)lwp0uarea);
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
