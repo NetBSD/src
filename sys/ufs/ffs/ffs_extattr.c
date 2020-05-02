@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.3 2020/04/20 18:10:10 christos Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.4 2020/05/02 22:11:16 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.3 2020/04/20 18:10:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.4 2020/05/02 22:11:16 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -392,10 +392,8 @@ ffs_extwrite(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t ucred)
 	}
 	if (error) {
 		if (ioflag & IO_UNIT) {
-			genfs_node_unlock(vp);	// XXX: need our own lock
 			(void)ffs_truncate(vp, osize,
 			    IO_EXT | (ioflag&IO_SYNC), ucred);
-			genfs_node_wrlock(vp);
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
@@ -561,9 +559,7 @@ ffs_close_ea(struct vnode *vp, int commit, kauth_cred_t cred)
 				ffs_unlock_ea(vp);
 				return error;
 			}
-			genfs_node_unlock(vp);	// XXX: need our own lock
 			error = ffs_truncate(vp, 0, IO_EXT, cred);
-			genfs_node_wrlock(vp);
 			UFS_WAPBL_END(vp->v_mount);
 		}
 		error = ffs_extwrite(vp, &luio, IO_EXT | IO_SYNC, cred);
