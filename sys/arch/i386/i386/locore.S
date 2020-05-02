@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.182 2020/05/02 16:44:35 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.183 2020/05/02 18:49:57 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.182 2020/05/02 16:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.183 2020/05/02 18:49:57 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1560,6 +1560,8 @@ IDTVEC(syscall)
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 
+	HANDLE_DEFERRED_FPU
+
 #ifdef XENPV
 	STIC(%eax)
 	jz	14f
@@ -1588,8 +1590,6 @@ IDTVEC(syscall)
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
-
-	HANDLE_DEFERRED_FPU
 
 	INTRFASTEXIT
 

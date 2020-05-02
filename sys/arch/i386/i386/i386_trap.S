@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.21 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.22 2020/05/02 18:49:57 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.21 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.22 2020/05/02 18:49:57 bouyer Exp $");
 #endif
 
 /*
@@ -434,6 +434,8 @@ calltrap:
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
 
+	HANDLE_DEFERRED_FPU
+
 #ifdef XENPV
 	STIC(%eax)
 	jz	22f
@@ -457,8 +459,6 @@ calltrap:
 	jmp	.Lalltraps_checkusr
 22:
 #endif /* XEN */
-
-	HANDLE_DEFERRED_FPU
 
 6:
 #ifdef DIAGNOSTIC
