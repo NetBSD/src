@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.101 2020/05/01 19:59:47 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.102 2020/05/02 11:28:02 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.101 2020/05/01 19:59:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.102 2020/05/02 11:28:02 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -749,6 +749,7 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 		}
 
 		gsize = xst->xs_tx_size;
+		goff = 0;
 		for (; seg < dm->dm_nsegs && gsize > 0; seg++) {
 			bus_dma_segment_t *ds = &dm->dm_segs[seg];
 			ma = ds->ds_addr;
@@ -787,6 +788,7 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 			segoff = 0;
 		}
 		KASSERT(gsize == 0);
+		KASSERT(goff == xst->xs_tx_size);
 	}
 	if (copycnt > 0) {
 		if (xennetback_copy(ifp, xneti->xni_gop_copy, copycnt) != 0)
@@ -931,6 +933,7 @@ mbuf_fail:
 				 * Flush queue if too full to fit this
 				 * new packet whole.
 				 */
+				KASSERT(m0 == NULL);
 				xennetback_tx_copy_process(ifp, xneti, queued);
 				queued = 0;
 			}
