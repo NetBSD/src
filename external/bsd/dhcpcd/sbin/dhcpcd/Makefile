@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2020/04/02 12:56:01 roy Exp $
+# $NetBSD: Makefile,v 1.52 2020/05/02 19:35:03 fox Exp $
 #
 
 WARNS?=		6
@@ -32,6 +32,13 @@ SRCS+=		auth.c
 CPPFLAGS+=	-DINET
 SRCS+=		bpf.c dhcp.c ipv4.c
 SRCS+=		privsep-bpf.c
+
+.if (${MKLIBCSANITIZER:Uno} == "yes")
+.if (${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8)
+COPTS.dhcp.c+=	-Wno-error=sign-conversion
+.endif
+.endif
+
 .if !defined(SMALLPROG)
 CPPFLAGS+=	-DARP
 SRCS+=		arp.c
