@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7.2.1 2020/05/02 16:26:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.2.1 2020/05/02 16:26:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -218,7 +218,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int error;
 
 	const bool onstack_p =
-	    (ss->ss_flags & (SS_DISABLE | SS_ONSTACK)) &&
+	    (ss->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (sa->sa_flags & SA_ONSTACK);
 
 	vaddr_t sp = onstack_p ?
