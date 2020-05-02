@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.34 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: spectre.c,v 1.35 2020/05/02 11:37:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.34 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.35 2020/05/02 11:37:17 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -169,48 +169,54 @@ static volatile unsigned long ibrs_cpu_barrier1 __cacheline_aligned;
 static volatile unsigned long ibrs_cpu_barrier2 __cacheline_aligned;
 
 #ifdef __x86_64__
+/* IBRS_ENTER. */
+extern uint8_t noibrs_enter, noibrs_enter_end;
+extern uint8_t ibrs_enter, ibrs_enter_end;
+static const struct x86_hotpatch_source hp_noibrs_enter_source = {
+	.saddr = &noibrs_enter,
+	.eaddr = &noibrs_enter_end
+};
+static const struct x86_hotpatch_source hp_ibrs_enter_source = {
+	.saddr = &ibrs_enter,
+	.eaddr = &ibrs_enter_end
+};
+static const struct x86_hotpatch_descriptor hp_ibrs_enter_desc = {
+	.name = HP_NAME_IBRS_ENTER,
+	.nsrc = 2,
+	.srcs = { &hp_noibrs_enter_source, &hp_ibrs_enter_source }
+};
+__link_set_add_rodata(x86_hotpatch_descriptors, hp_ibrs_enter_desc);
+
+/* IBRS_LEAVE. */
+extern uint8_t noibrs_leave, noibrs_leave_end;
+extern uint8_t ibrs_leave, ibrs_leave_end;
+static const struct x86_hotpatch_source hp_noibrs_leave_source = {
+	.saddr = &noibrs_leave,
+	.eaddr = &noibrs_leave_end
+};
+static const struct x86_hotpatch_source hp_ibrs_leave_source = {
+	.saddr = &ibrs_leave,
+	.eaddr = &ibrs_leave_end
+};
+static const struct x86_hotpatch_descriptor hp_ibrs_leave_desc = {
+	.name = HP_NAME_IBRS_LEAVE,
+	.nsrc = 2,
+	.srcs = { &hp_noibrs_leave_source, &hp_ibrs_leave_source }
+};
+__link_set_add_rodata(x86_hotpatch_descriptors, hp_ibrs_leave_desc);
+
 static void
 ibrs_disable_hotpatch(void)
 {
-	extern uint8_t noibrs_enter, noibrs_enter_end;
-	extern uint8_t noibrs_leave, noibrs_leave_end;
-	u_long psl, cr0;
-	uint8_t *bytes;
-	size_t size;
-
-	x86_patch_window_open(&psl, &cr0);
-
-	bytes = &noibrs_enter;
-	size = (size_t)&noibrs_enter_end - (size_t)&noibrs_enter;
-	x86_hotpatch(HP_NAME_IBRS_ENTER, bytes, size);
-
-	bytes = &noibrs_leave;
-	size = (size_t)&noibrs_leave_end - (size_t)&noibrs_leave;
-	x86_hotpatch(HP_NAME_IBRS_LEAVE, bytes, size);
-
-	x86_patch_window_close(psl, cr0);
+	x86_hotpatch(HP_NAME_IBRS_ENTER, /* noibrs */ 0);
+	x86_hotpatch(HP_NAME_IBRS_LEAVE, /* noibrs */ 0);
 }
 
 static void
 ibrs_enable_hotpatch(void)
 {
-	extern uint8_t ibrs_enter, ibrs_enter_end;
-	extern uint8_t ibrs_leave, ibrs_leave_end;
-	u_long psl, cr0;
-	uint8_t *bytes;
-	size_t size;
-
-	x86_patch_window_open(&psl, &cr0);
-
-	bytes = &ibrs_enter;
-	size = (size_t)&ibrs_enter_end - (size_t)&ibrs_enter;
-	x86_hotpatch(HP_NAME_IBRS_ENTER, bytes, size);
-
-	bytes = &ibrs_leave;
-	size = (size_t)&ibrs_leave_end - (size_t)&ibrs_leave;
-	x86_hotpatch(HP_NAME_IBRS_LEAVE, bytes, size);
-
-	x86_patch_window_close(psl, cr0);
+	x86_hotpatch(HP_NAME_IBRS_ENTER, /* ibrs */ 1);
+	x86_hotpatch(HP_NAME_IBRS_LEAVE, /* ibrs */ 1);
 }
 #else
 /* IBRS not supported on i386 */
@@ -564,38 +570,34 @@ static volatile unsigned long mds_cpu_barrier1 __cacheline_aligned;
 static volatile unsigned long mds_cpu_barrier2 __cacheline_aligned;
 
 #ifdef __x86_64__
+/* MDS_LEAVE. */
+extern uint8_t nomds_leave, nomds_leave_end;
+extern uint8_t mds_leave, mds_leave_end;
+static const struct x86_hotpatch_source hp_nomds_leave_source = {
+	.saddr = &nomds_leave,
+	.eaddr = &nomds_leave_end
+};
+static const struct x86_hotpatch_source hp_mds_leave_source = {
+	.saddr = &mds_leave,
+	.eaddr = &mds_leave_end
+};
+static const struct x86_hotpatch_descriptor hp_mds_leave_desc = {
+	.name = HP_NAME_MDS_LEAVE,
+	.nsrc = 2,
+	.srcs = { &hp_nomds_leave_source, &hp_mds_leave_source }
+};
+__link_set_add_rodata(x86_hotpatch_descriptors, hp_mds_leave_desc);
+
 static void
 mds_disable_hotpatch(void)
 {
-	extern uint8_t nomds_leave, nomds_leave_end;
-	u_long psl, cr0;
-	uint8_t *bytes;
-	size_t size;
-
-	x86_patch_window_open(&psl, &cr0);
-
-	bytes = &nomds_leave;
-	size = (size_t)&nomds_leave_end - (size_t)&nomds_leave;
-	x86_hotpatch(HP_NAME_MDS_LEAVE, bytes, size);
-
-	x86_patch_window_close(psl, cr0);
+	x86_hotpatch(HP_NAME_MDS_LEAVE, /* nomds */ 0);
 }
 
 static void
 mds_enable_hotpatch(void)
 {
-	extern uint8_t mds_leave, mds_leave_end;
-	u_long psl, cr0;
-	uint8_t *bytes;
-	size_t size;
-
-	x86_patch_window_open(&psl, &cr0);
-
-	bytes = &mds_leave;
-	size = (size_t)&mds_leave_end - (size_t)&mds_leave;
-	x86_hotpatch(HP_NAME_MDS_LEAVE, bytes, size);
-
-	x86_patch_window_close(psl, cr0);
+	x86_hotpatch(HP_NAME_MDS_LEAVE, /* mds */ 1);
 }
 #else
 /* MDS not supported on i386 */
