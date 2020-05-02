@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.6 2018/08/03 17:04:30 ryo Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.6.4.1 2020/05/02 16:30:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.6 2018/08/03 17:04:30 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.6.4.1 2020/05/02 16:30:08 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -197,6 +197,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagsp)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
+	struct proc * const p = l->l_proc;
+
 	if (flags & _UC_CPU) {
 		struct trapframe * const tf = l->l_md.md_utf;
 		int error = cpu_mcontext_validate(l, mcp);
@@ -214,6 +216,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		fpu_discard(l, true);
 		pcb->pcb_fpregs = *(const struct fpreg *)&mcp->__fregs;
 	}
+
+	mutex_enter(p->p_lock);
+	if (flags & _UC_SETSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(p->p_lock);
 
 	return 0;
 }
