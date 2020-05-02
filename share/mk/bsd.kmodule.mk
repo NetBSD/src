@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.66 2020/05/01 22:23:00 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.67 2020/05/02 09:15:30 rin Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -114,7 +114,7 @@ PROGDEBUG:=      ${PROG}.debug
 .endif  
 
 ##### Build rules
-realall:	${PROG}
+realall:	${PROG} ${PROGDEBUG}
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
