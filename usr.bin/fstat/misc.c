@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.22 2019/09/06 17:08:22 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2020/05/02 18:42:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.22 2019/09/06 17:08:22 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2020/05/02 18:42:30 christos Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -207,35 +207,6 @@ p_mqueue(struct file *f)
 }
 
 static int
-p_rnd(struct file *f)
-{
-	struct cprng_strong {
-		char cs_name[16];
-		int  cs_flags;
-		/*...*/
-	} str;
-	struct rnd_ctx {
-		struct cprng_strong *rc_cprng;
-		bool rc_hard;
-	} ctx;
-	char buf[1024];
-
-	if (!KVM_READ(f->f_data, &ctx, sizeof(ctx))) {
-		dprintf("can't read rnd_ctx at %p for pid %d", f->f_data, Pid);
-		return 0;
-	}
-	if (!KVM_READ(ctx.rc_cprng, &str, sizeof(str))) {
-		dprintf("can't read cprng_strong at %p for pid %d", f->f_data,\
-		    Pid);
-		return 0;
-	}
-	snprintb(buf, sizeof(buf), CPRNG_FMT, str.cs_flags);
-	(void)printf("* rnd \"%s\" flags %s", str.cs_name, buf);
-	oprint(f, "\n");
-	return 0;
-}
-
-static int
 p_kqueue(struct file *f)
 {
 	struct kqueue kq;
@@ -281,7 +252,8 @@ pmisc(struct file *f, const char *name)
 	case NL_KQUEUE:
 		return p_kqueue(f);
 	case NL_RND:
-		return p_rnd(f);
+		printf("* random %p", f->f_data);
+		break;
 	case NL_SEM:
 		return p_sem(f);
 	case NL_TAP:
