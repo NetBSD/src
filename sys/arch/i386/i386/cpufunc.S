@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.38 2019/11/21 19:24:00 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.39 2020/05/02 11:37:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.38 2019/11/21 19:24:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.39 2020/05/02 11:37:17 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -274,3 +274,41 @@ ENTRY(outl)
 	outl	%eax, %dx
 	ret
 END(outl)
+
+ENTRY(x86_hotpatch)
+	/* save EFLAGS, and disable intrs */
+	pushfl
+	cli
+
+	/* save CR0, and disable WP */
+	movl	%cr0,%ecx
+	pushl	%ecx
+	andl	$~CR0_WP,%ecx
+	movl	%ecx,%cr0
+
+	pushl	4*4(%esp) /* arg2 */
+	pushl	4*4(%esp) /* arg1 */
+	call	_C_LABEL(x86_hotpatch_apply)
+	addl	$2*4,%esp
+
+	/* write back and invalidate cache */
+	wbinvd
+
+	/* restore CR0 */
+	popl	%ecx
+	movl	%ecx,%cr0
+
+	/* flush instruction pipeline */
+	pushl	%eax
+	call	x86_flush
+	popl	%eax
+
+	/* clean up */
+	pushl	%eax
+	call	_C_LABEL(x86_hotpatch_cleanup)
+	addl	$4,%esp
+
+	/* restore RFLAGS */
+	popfl
+	ret
+END(x86_hotpatch)
