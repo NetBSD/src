@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.206 2020/05/02 16:44:34 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.207 2020/05/02 19:01:08 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1005,7 +1005,8 @@ longmode_hi:
 	call 	_C_LABEL(main)
 END(start)
 
-#ifndef XENPV
+#if defined(XEN)
+# if !defined(XENPV)
 /* entry point for Xen PVH */
 	.code32
 ENTRY(start_xen32)
@@ -1062,8 +1063,7 @@ ENTRY(start_xen32)
 	jmp .Lbiosbasemem_finished
 END(start_xen32)
 	.code64
-#endif /* XENPV */
-#if defined(XEN)
+# endif /* !XENPV */
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .align HYPERCALL_PAGE_OFFSET
