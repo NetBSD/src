@@ -28,6 +28,7 @@
 #include "value.h"
 #include "gdbcore.h"
 #include "inferior.h"          /* for get_exec_file */
+#include "symfile.h"
 #include "gdbthread.h"
 #include "arch-utils.h"
 
@@ -144,8 +145,11 @@ bsd_kvm_target_open (const char *arg, int from_tty)
 
   inf->gdbarch = get_current_arch ();
 
-  add_thread_silent (bsd_kvm_ptid);
+  thread_info *tp = add_thread_silent (bsd_kvm_ptid);
+  switch_to_thread(tp);
   inferior_ptid = bsd_kvm_ptid;
+
+  symbol_file_add_main(execfile, 0);
 
   target_fetch_registers (get_current_regcache (), -1);
 
