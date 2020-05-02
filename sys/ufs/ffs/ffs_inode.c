@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.128 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.129 2020/05/02 22:11:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.128 2020/04/23 21:47:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.129 2020/05/02 22:11:16 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -376,7 +376,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		}
 	}
 
-	genfs_node_wrlock(ovp);
+	if (!(ioflag & IO_EXT))
+		genfs_node_wrlock(ovp);
 	oip->i_size = length;
 	DIP_ASSIGN(oip, size, length);
 	uvm_vnp_setsize(ovp, length);
@@ -585,7 +586,8 @@ out:
 	oip->i_size = length;
 	DIP_ASSIGN(oip, size, length);
 	DIP_ADD(oip, blocks, -blocksreleased);
-	genfs_node_unlock(ovp);
+	if (!(ioflag & IO_EXT))
+		genfs_node_unlock(ovp);
 	oip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(ovp, NULL, NULL, 0);
 #if defined(QUOTA) || defined(QUOTA2)
