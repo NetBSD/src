@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.204 2020/04/30 17:21:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.205 2020/05/02 16:28:37 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -150,6 +150,7 @@
 
 #include <machine/asm.h>
 
+#include "opt_kasan.h"
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -973,6 +974,10 @@ longmode_hi:
 
 	pushq	%rdi
 	call	_C_LABEL(init_bootspace)
+#ifdef KASAN
+	movq	_C_LABEL(lwp0uarea)(%rip),%rdi
+	call	_C_LABEL(kasan_early_init)
+#endif
 	call	_C_LABEL(init_slotspace)
 	popq	%rdi
 	call	_C_LABEL(init_x86_64)
