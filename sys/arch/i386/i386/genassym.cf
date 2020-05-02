@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.121 2020/04/25 15:26:17 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.122 2020/05/02 16:44:35 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ include <machine/segments.h>
 
 ifdef XEN
 include <xen/include/public/sched.h>
+include <xen/include/public/arch-x86/hvm/start_info.h>
 endif
 
 if defined(_KERNEL) && defined(_KERNEL_OPT)
@@ -372,6 +373,7 @@ define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
 
 define	VM_GUEST_XENPV		VM_GUEST_XENPV
+define	VM_GUEST_XENPVH		VM_GUEST_XENPVH
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
@@ -388,4 +390,4 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
 define SCHEDOP_yield		SCHEDOP_yield
-endif
+endif /* XEN */

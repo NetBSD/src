@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.205 2020/05/02 16:28:37 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.206 2020/05/02 16:44:34 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -279,9 +279,7 @@
 #define __ASSEMBLY__
 #include <xen/include/public/elfnote.h>
 #include <xen/include/public/xen.h>
-#endif	/* XEN */
 
-#ifdef XENPV	
 #define ELFNOTE(name, type, desctype, descdata...) \
 .pushsection .note.name			;	\
   .align 4				;	\
@@ -302,11 +300,16 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_VERSION,  .asciz, "4.99")
 	ELFNOTE(Xen, XEN_ELFNOTE_XEN_VERSION,    .asciz, "xen-3.0")
 	ELFNOTE(Xen, XEN_ELFNOTE_VIRT_BASE,      .quad,  KERNBASE)
+#ifdef XENPV
 	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .quad,  KERNBASE)
 	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,          .quad,  start)
+#else
+	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .quad,  0)
+	ELFNOTE(Xen, XEN_ELFNOTE_PHYS32_ENTRY,   .long,  RELOC(start_xen32))
+#endif /* XENPV */
 	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE, .quad,  hypercall_page)
 	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .quad,  HYPERVISOR_VIRT_START)
-	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "")
+	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "writable_descriptor_tables|auto_translated_physmap|supervisor_mode_kernel|hvm_callback_vector")
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
 	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PTE_P, PTE_P)\
 	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
@@ -314,7 +317,7 @@
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
-#endif  /* XENPV */	
+#endif  /* XEN */
 
 /*
  * Initialization
@@ -418,6 +421,21 @@ _C_LABEL(farjmp64):
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 END(farjmp64)
 
+#ifdef XEN
+/* 32bit GDT */
+gdtdesc32:
+	.word	gdt32end - gdt32
+	.long	RELOC(gdt32)
+	.long	0
+gdt32:  
+	.long	0			# null descriptor
+	.long	0
+	.long	0x0000ffff		# %cs
+	.long	0x00cf9a00 
+	.long	0x0000ffff		# %ds, %es, %ss
+	.long	0x00cf9200
+gdt32end:
+#endif /* XEN */
 #endif	/* !XENPV */
 
 	/* Space for the temporary stack */
@@ -973,6 +991,9 @@ longmode_hi:
 #endif	/* XENPV */
 
 	pushq	%rdi
+#if defined(XEN) && !defined(XENPV)
+	call	_C_LABEL(init_xen_early)
+#endif
 	call	_C_LABEL(init_bootspace)
 #ifdef KASAN
 	movq	_C_LABEL(lwp0uarea)(%rip),%rdi
@@ -984,6 +1005,64 @@ longmode_hi:
 	call 	_C_LABEL(main)
 END(start)
 
+#ifndef XENPV
+/* entry point for Xen PVH */
+	.code32
+ENTRY(start_xen32)
+	/* Xen doesn't start us with a valid gdt */
+	movl    $RELOC(gdtdesc32), %eax
+	lgdt    (%eax)
+	jmp     $GSEL(GCODE_SEL, SEL_KPL), $RELOC(.Lreload_cs)
+
+.Lreload_cs:
+	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax          
+	movw    %ax, %ds
+	movw    %ax, %es
+	movw    %ax, %ss   
+
+	/* we need a valid stack */
+	movl	$RELOC(tmpstk),%esp
+
+	/* clear BSS */
+        xorl    %eax,%eax
+	movl    $RELOC(__bss_start),%edi
+	movl    $RELOC(_end),%ecx
+	subl    %edi,%ecx
+	rep
+	stosb
+
+	/*
+	 * save addr of the hvm_start_info structure. This is also the end
+	 * of the symbol table
+	 */
+	movl	%ebx, RELOC(hvm_start_paddr)
+	movl	%ebx, %eax
+	addl	$KERNBASE_LO,%eax
+	movl	$RELOC(esym),%ebp
+	movl	%eax,(%ebp)
+	movl	$KERNBASE_HI,4(%ebp)
+	/* get a page for HYPERVISOR_shared_info */
+	addl	$PAGE_SIZE, %ebx
+	addl	$PGOFSET,%ebx
+	andl	$~PGOFSET,%ebx
+	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
+	movl	%ebx,(%ebp)
+	movl	$0,4(%ebp)
+	/* XXX assume hvm_start_info+dependant struture fits in a single page */
+	addl	$PAGE_SIZE, %ebx
+	addl	$PGOFSET,%ebx
+	andl	$~PGOFSET,%ebx
+	addl	$KERNBASE_LO,%ebx
+	movl	$RELOC(eblob),%ebp
+	movl	%ebx,(%ebp)
+	movl	$KERNBASE_HI,4(%ebp)
+
+	/* annouce ourself */
+	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
+	jmp .Lbiosbasemem_finished
+END(start_xen32)
+	.code64
+#endif /* XENPV */
 #if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000

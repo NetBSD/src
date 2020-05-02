@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.46 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.47 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  *
@@ -59,6 +59,8 @@ union xen_cmdline_parseinfo {
 void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
+
+void 	xen_pvh_consinit(void);
 
 void	xenprivcmd_init(void);
 
@@ -293,6 +295,8 @@ xen_feature(int f)
 	KASSERT(f < XENFEAT_NR_SUBMAPS * 32);
 	return xen_feature_tables[f];
 }
+
+void xen_bootconf(void);
 
 #endif /* !__ASSEMBLY__ */
 

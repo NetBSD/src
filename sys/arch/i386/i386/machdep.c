@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.828 2020/04/30 03:29:19 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.829 2020/05/02 16:44:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.828 2020/04/30 03:29:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.829 2020/05/02 16:44:35 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1044,8 +1044,9 @@ init386_pte0(void)
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
 }
-#endif /* !XENPV */
+#endif /* !XENPV && NBIOSCALL > 0 */
 
+#ifndef XENPV
 static void
 init386_ksyms(void)
 {
@@ -1075,6 +1076,7 @@ init386_ksyms(void)
 	ksyms_addsyms_elf(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
 #endif
 }
+#endif /* XENPV */
 
 void
 init_bootspace(void)
@@ -1140,12 +1142,17 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH)
+		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
+#endif
+
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
 	cpu_rng_init();
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XEN
+#ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
@@ -1366,7 +1373,16 @@ init386(paddr_t first_avail)
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt();
 
-	init386_ksyms();
+#ifdef XENPV
+	xen_init_ksyms();
+#else /* XENPV */
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH)
+		xen_init_ksyms();
+	else
+#endif /* XEN */
+		init386_ksyms();
+#endif /* XENPV */
 
 #if NMCA > 0
 	/* 
@@ -1376,7 +1392,7 @@ init386(paddr_t first_avail)
 	 * And we do not search for MCA using bioscall() on EFI systems
 	 * that lacks it (they lack MCA too, anyway).
 	 */
-	if (lookup_bootinfo(BTINFO_EFI) == NULL)
+	if (lookup_bootinfo(BTINFO_EFI) == NULL && vm_guest != VM_GUEST_XENPVH)
 		mca_busprobe();
 #endif
 

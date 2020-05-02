@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2020/05/02 16:44:36 bouyer Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $")
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
 
-static int is_valid_disk(device_t);
-
 struct disklist *x86_alldisks;
 int x86_ndisks;
 int x86_found_console;
@@ -116,7 +114,7 @@ cpu_configure(void)
 {
 	struct pcb *pcb;
 
-	startrtclock();
+	xen_startrtclock();
 
 #if defined(DOM0OPS)
 	if (xendomain_is_dom0()) {
@@ -171,69 +169,8 @@ cpu_rootconf(void)
 void
 cpu_bootconf(void)
 {
-	device_t dv;
-	deviter_t di;
-	union xen_cmdline_parseinfo xcp;
-	static char bootspecbuf[sizeof(xcp.xcp_bootdev)];
-
-	if (booted_device) {
-		DPRINTF(("%s: preset booted_device: %s\n", __func__, device_xname(booted_device)));
-		return;
-	}
-
-	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
-
-	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
-	     dv != NULL;
-	     dv = deviter_next(&di)) {
-		bool is_ifnet, is_disk;
-		const char *devname;
-
-		is_ifnet = (device_class(dv) == DV_IFNET);
-		is_disk = is_valid_disk(dv);
-		devname = device_xname(dv);
-
-		if (!is_ifnet && !is_disk)
-			continue;
-
-		if (is_disk && xcp.xcp_bootdev[0] == 0) {
-			booted_device = dv;
-			break;
-		}
-
-		if (strncmp(xcp.xcp_bootdev, devname, strlen(devname)))
-			continue;
-
-		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
-			/* XXX check device_cfdata as in x86_autoconf.c? */
-			booted_partition = toupper(
-				xcp.xcp_bootdev[strlen(devname)]) - 'A';
-			DPRINTF(("%s: booted_partition: %d\n", __func__, booted_partition));
-		}
-
-		booted_device = dv;
-		booted_method = "bootinfo/bootdev";
-		break;
-	}
-	deviter_release(&di);
-
-	if (booted_device) {
-		DPRINTF(("%s: booted_device: %s\n", __func__, device_xname(booted_device)));
-		return;
-	}
-
-	/*
-	 * not a boot device name, pass through to MI code
-	 */
-	if (xcp.xcp_bootdev[0] != '\0') {
-		strlcpy(bootspecbuf, xcp.xcp_bootdev, sizeof(bootspecbuf));
-		bootspec = bootspecbuf;
-		booted_method = "bootinfo/bootspec";
-		DPRINTF(("%s: bootspec: %s\n", __func__, bootspec));
-		return;
-	}
+	xen_bootconf();
 }
-
 #include "pci.h"
 
 #include <dev/isa/isavar.h>
@@ -369,18 +306,4 @@ found:
 		return;
 	}
 	booted_device = dev;
-}
-
-static int
-is_valid_disk(device_t dv)
-{
-	if (device_class(dv) != DV_DISK)
-		return (0);
-
-	return (device_is_a(dv, "dk") ||
-		device_is_a(dv, "sd") ||
-		device_is_a(dv, "wd") ||
-		device_is_a(dv, "ld") ||
-		device_is_a(dv, "ed") ||
-		device_is_a(dv, "xbd"));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.38 2020/05/02 16:44:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2020/05/02 16:44:35 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -303,6 +303,9 @@ void
 initrtclock(u_long freq)
 {
 	u_long tval;
+
+	if (vm_guest == VM_GUEST_XENPVH)
+		return;
 
 	/*
 	 * Compute timer_count, the count-down count the timer will be
@@ -512,6 +515,8 @@ i8254_delay(unsigned int n)
 int
 sysbeepmatch(device_t parent, cfdata_t match, void *aux)
 {
+	if (vm_guest == VM_GUEST_XENPVH)
+		return 0;
 	return (!ppi_attached);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.85 2019/10/30 07:40:06 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.86 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.85 2019/10/30 07:40:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.86 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -135,7 +135,6 @@ static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
 
 void xen_failsafe_handler(void);
 
-extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
 static void xen_bt_set_readonly(vaddr_t);

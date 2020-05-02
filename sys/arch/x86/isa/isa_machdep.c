@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.46 2020/05/02 16:44:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.46 2020/05/02 16:44:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,6 +365,9 @@ device_isa_register(device_t dev, void *aux)
 			    	return dev;
 		}
 	}
+	if (vm_guest == VM_GUEST_XENPVH)
+		prop_dictionary_set_bool(device_properties(dev),
+		    "no-legacy-devices", true);
 #if NACPICA > 0
 #if notyet
 	if (device_is_a(dev, "isa") && acpi_active) {

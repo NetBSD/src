@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.49 2020/04/25 15:26:17 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.50 2020/05/02 16:44:36 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -41,7 +41,7 @@ ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D${XEN_BUILD}
-AFLAGS+=	-x assembler-with-cpp ${DBG} -D__XEN__
+AFLAGS+=	-x assembler-with-cpp ${DBG}
 EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma -I$S/external/mit/xen-include-public/dist/
 
 .if ${XEN_BUILD} == "amd64"

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.83 2020/04/25 15:26:16 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.84 2020/05/02 16:44:34 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ endif
 
 ifdef XEN
 include <xen/include/public/xen.h>
+include <xen/include/public/arch-x86/hvm/start_info.h>
 endif  
 
 include <sys/bus.h>
@@ -361,6 +362,7 @@ define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 define	VM_GUEST_XENPV		VM_GUEST_XENPV
+define	VM_GUEST_XENPVH		VM_GUEST_XENPVH
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
@@ -373,7 +375,7 @@ define XEN_PT_BASE		offsetof(struct start_info, pt_base)
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
 define __HYPERVISOR_iret	__HYPERVISOR_iret
 endif /* XENPV */
-endif
+endif /* XEN */
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
 define	NKL3_KIMG_ENTRIES	NKL3_KIMG_ENTRIES

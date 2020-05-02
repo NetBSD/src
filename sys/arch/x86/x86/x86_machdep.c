@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.140 2020/05/01 14:16:15 hannken Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.141 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.140 2020/05/01 14:16:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.141 2020/05/02 16:44:36 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -95,6 +95,11 @@ void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
 
+#ifdef XEN
+
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#endif
 #ifdef XENPV
 char module_machine_amd64_xen[] = "amd64-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
@@ -855,6 +860,27 @@ init_x86_clusters(void)
 	 * Check to see if we have a memory map from the BIOS (passed to us by
 	 * the boot program).
 	 */
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH) {
+		struct hvm_memmap_table_entry *map_entry;
+		map_entry = (void *)((uintptr_t)hvm_start_info->memmap_paddr + KERNBASE);
+		for (int i = 0; i < hvm_start_info->memmap_entries; i++) {
+			if (map_entry[i].size < PAGE_SIZE)
+				continue;
+			switch(map_entry[i].type) {
+			case XEN_HVM_MEMMAP_TYPE_RAM:
+				x86_add_cluster(map_entry[i].addr,
+				    map_entry[i].size, BIM_Memory);
+				break;
+			case XEN_HVM_MEMMAP_TYPE_ACPI:
+				x86_add_cluster(map_entry[i].addr,
+				    map_entry[i].size, BIM_ACPI);
+				break;
+			}
+		}
+	}
+#endif /* XEN */
+
 #ifdef i386
 	extern int biosmem_implicit;
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);

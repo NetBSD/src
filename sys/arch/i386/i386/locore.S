@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.181 2020/04/30 17:17:33 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.182 2020/05/02 16:44:35 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.181 2020/04/30 17:17:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.182 2020/05/02 16:44:35 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -243,37 +243,48 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.181 2020/04/30 17:17:33 maxv Exp $");
 
 
 #ifdef XEN
-/*
- * Unfortunately, the Xen codebase uses nonstandard preprocessing tools.
- * See: https://xenbits.xen.org/gitweb/?p=xen.git&a=search&h=HEAD&st=grep&s=__UnDeF__
- * for a fine selection of examples.
- *
- * What this means for us here is that we can't include the standard
- * xen.h header in assembler code.
- *
- * So we have to manually define, and keep track of the values we need, ourselves.
- */
-#define __HYPERVISOR_xen_version          17
-#endif	/* XEN */
+#define __ASSEMBLY__
+#include <xen/include/public/elfnote.h>
+#include <xen/include/public/xen.h>
 
-#ifdef XENPV
+#define ELFNOTE(name, type, desctype, descdata...) \
+.pushsection .note.name			;	\
+  .align 4				;	\
+  .long 2f - 1f		/* namesz */	;	\
+  .long 4f - 3f		/* descsz */	;	\
+  .long type				;	\
+1:.asciz #name				;	\
+2:.align 4				;	\
+3:desctype descdata			;	\
+4:.align 4				;	\
+.popsection
+
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
-	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
-	.ascii	",VIRT_BASE=0xc0000000" /* KERNBASE */
-	.ascii	",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
-	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-	.ascii	",HYPERCALL_PAGE=0x00000101"
-		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-	.ascii	",PAE=yes[extended-cr3]"
-	.ascii	",LOADER=generic"
-#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
-	.ascii	",BSD_SYMTAB=yes"
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_OS,       .asciz, "NetBSD")
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_VERSION,  .asciz, "4.99")
+	ELFNOTE(Xen, XEN_ELFNOTE_XEN_VERSION,    .asciz, "xen-3.0")
+	ELFNOTE(Xen, XEN_ELFNOTE_VIRT_BASE,      .long,  KERNBASE)
+#ifdef XENPV
+	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .long,  KERNBASE)
+	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,          .long,  start)
+#else
+	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .long,  0)
+	ELFNOTE(Xen, XEN_ELFNOTE_PHYS32_ENTRY,   .long,  RELOC(start_xenpvh))
+#endif /* XENPV */
+	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE, .long,  hypercall_page)
+	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .long,  HYPERVISOR_VIRT_START)
+	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "writable_descriptor_tables|auto_translated_physmap|supervisor_mode_kernel|hvm_callback_vector")
+	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
+	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .quad,  PTE_P, PTE_P)\
+	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
+	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
+	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
-	.byte	0
-#endif	/* XENPV */
+#endif  /* XEN */
 
 /*
  * Initialization
@@ -580,7 +591,7 @@ multiboot2_loader:
 	pushl	%ebx		/* Address of Multiboot information */
 	call	_C_LABEL(multiboot2_pre_reloc)
 	addl	$4,%esp
-	jmp	2f
+	jmp	.Lstart_common
 #endif /* MULTIBOOT */
 
 1:
@@ -597,7 +608,7 @@ multiboot2_loader:
 	call	_C_LABEL(native_loader)
 	addl	$24,%esp
 
-2:
+.Lstart_common:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -1071,6 +1082,9 @@ begin:
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%eax
+#if defined(XEN) && !defined(XENPV)
+        call    _C_LABEL(init_xen_early)
+#endif
 	call	_C_LABEL(init_bootspace)
 	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
@@ -1149,6 +1163,74 @@ begin:
 	call 	_C_LABEL(main)
 #endif /* XENPV */
 END(start)
+
+#ifndef XENPV
+/* entry point for Xen PVH */
+ENTRY(start_xenpvh)
+	/* Xen doesn't start us with a valid gdt */
+	movl    $RELOC(gdtdesc_xenpvh), %eax
+	lgdt    (%eax)
+	jmp     $GSEL(GCODE_SEL, SEL_KPL), $RELOC(.Lreload_cs)
+
+.Lreload_cs:
+	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax          
+	movw    %ax, %ds
+	movw    %ax, %es
+	movw    %ax, %ss   
+
+	/* we need a valid stack */
+	movl	$RELOC(tmpstk),%esp
+
+	/* clear BSS */
+        xorl    %eax,%eax
+	movl    $RELOC(__bss_start),%edi
+	movl    $RELOC(_end),%ecx
+	subl    %edi,%ecx
+	rep
+	stosb
+
+	/*
+	 * save addr of the hvm_start_info structure. This is also the end
+	 * of the symbol table
+	 */
+	movl	%ebx, RELOC(hvm_start_paddr)
+	movl	%ebx, %eax
+	addl	$KERNBASE,%eax
+	movl	$RELOC(esym),%ebp
+	movl	%eax,(%ebp)
+	/* get a page for HYPERVISOR_shared_info */
+	addl	$PAGE_SIZE, %ebx
+	addl	$PGOFSET,%ebx
+	andl	$~PGOFSET,%ebx
+	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
+	movl	%ebx,(%ebp)
+	/* XXX assume hvm_start_info+dependant struture fits in a single page */
+	addl	$PAGE_SIZE, %ebx
+	addl	$PGOFSET,%ebx
+	andl	$~PGOFSET,%ebx
+	addl	$KERNBASE,%ebx
+	movl	$RELOC(eblob),%ebp
+	movl	%ebx,(%ebp)
+	/* annouce ourself */
+	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
+	jmp	.Lstart_common
+END(start_xenpvh)
+	.align 8
+gdtdesc_xenpvh:
+	.word	gdt_xenpvhend - gdt_xenpvh
+	.long	RELOC(gdt_xenpvh)
+	.word	0
+gdt_xenpvh:
+	.long   0			# null descriptor
+	.long   0
+	.long   0x0000ffff		# %cs
+	.long   0x00cf9a00
+	.long   0x0000ffff		# %ds, %es, %ss
+	.long   0x00cf9200
+gdt_xenpvhend:
+	.align 4
+#endif /* XENPV */
+
 
 #if defined(XEN)
 /* space for the hypercall call page */

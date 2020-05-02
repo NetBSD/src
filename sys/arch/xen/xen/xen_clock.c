@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.3 2020/04/26 20:41:30 roy Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.4 2020/05/02 16:44:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.3 2020/04/26 20:41:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.4 2020/05/02 16:44:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,7 +382,6 @@ xen_vcputime_raw_systime_ns(void)
 	return raw_systime_ns;
 }
 
-#ifdef XENPV
 /*
  * struct xen_wallclock_ticket
  *
@@ -437,7 +436,6 @@ xen_wallclock_exit(struct xen_wallclock_ticket *tp)
 
 	return tp->version == HYPERVISOR_shared_info->wc_version;
 }
-#endif
 
 /*
  * xen_global_systime_ns()
@@ -892,7 +890,6 @@ sysctl_xen_timepush(SYSCTLFN_ARGS)
 
 #endif	/* DOM0OPS */
 
-#ifdef XENPV
 static int	xen_rtc_get(struct todr_chip_handle *, struct timeval *);
 static int	xen_rtc_set(struct todr_chip_handle *, struct timeval *);
 static void	xen_wallclock_time(struct timespec *);
@@ -907,28 +904,15 @@ static struct todr_chip_handle xen_todr_chip = {
 };
 
 /*
- * startrtclock()
+ * xen_startrtclock()
  *
  *	Initialize the real-time clock from x86 machdep autoconf.
  */
 void
-startrtclock(void)
+xen_startrtclock(void)
 {
 
 	todr_attach(&xen_todr_chip);
-}
-
-/*
- * setstatclockrate(rate)
- *
- *	Set the statclock to run at rate, in units of ticks per second.
- *
- *	Currently Xen does not have a separate statclock, so this is a
- *	noop; instad the statclock runs in hardclock.
- */
-void
-setstatclockrate(int rate)
-{
 }
 
 /*
@@ -1012,4 +996,17 @@ xen_wallclock_time(struct timespec *tsp)
 	tsp->tv_nsec = systime_ns % 1000000000ull;
 }
 
+#ifdef XENPV
+/*
+ * setstatclockrate(rate)
+ *
+ *	Set the statclock to run at rate, in units of ticks per second.
+ *
+ *	Currently Xen does not have a separate statclock, so this is a
+ *	noop; instad the statclock runs in hardclock.
+ */
+void
+setstatclockrate(int rate)
+{
+}
 #endif /* XENPV */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2019/12/27 12:51:56 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 2020/05/02 16:44:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2019/12/27 12:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2020/05/02 16:44:34 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_intrdebug.h"
@@ -92,7 +92,14 @@ extern void platform_init(void);
 void
 cpu_configure(void)
 {
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH)
+		xen_startrtclock();
+	else
+		startrtclock();
+#else
 	startrtclock();
+#endif
 
 #if NBIOS32 > 0
 	efi_init();
