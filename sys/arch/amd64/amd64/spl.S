@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.44 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.45 2020/05/02 11:12:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -187,7 +187,6 @@ ENTRY(softint_trigger)
 	ret
 END(softint_trigger)
 
-
 /*
  * Xrecurse_preempt()
  *
@@ -255,10 +254,7 @@ ENTRY(spllower)
 2:
 	movq	%r8,%rbx
 	jmp	_C_LABEL(Xspllower)
-
-	.align	16
 END(spllower)
-LABEL(spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -277,9 +273,6 @@ LABEL(spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop
-	.align	4	/* Avoid confusion with cx8_spllower_end */
-
 IDTVEC(spllower)
 	pushq	%rbx
 	pushq	%r13
