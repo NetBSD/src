@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.12 2020/05/01 19:53:17 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.13 2020/05/03 16:10:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.12 2020/05/01 19:53:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.13 2020/05/03 16:10:26 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -186,7 +186,7 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
 			printf("%s: unknown proto %d passed no checksum\n",
 			    ifp->if_xname, nxt);
 #endif /* XENNET_DEBUG */
-		error = EINVAL;
+		error = EOPNOTSUPP;
 		goto out;
 	    }
 	}
