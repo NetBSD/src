@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.23 2020/05/03 04:04:32 riastradh Exp $
+.\"	$NetBSD: condvar.9,v 1.24 2020/05/03 04:05:00 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -305,8 +305,6 @@ Consuming a resource:
 		    &res->mutex, &timeout, DEFAULT_TIMEOUT_EPSILON);
 		if (error) {
 			KASSERT(error == EWOULDBLOCK);
-			if (res->state != BUSY)
-				break;
 			mutex_exit(&res->mutex);
 			return ETIMEDOUT;
 		}
