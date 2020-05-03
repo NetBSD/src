@@ -1,7 +1,7 @@
-/*	$NetBSD: timevar.h,v 1.41 2020/05/03 01:20:37 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.42 2020/05/03 17:36:33 thorpej Exp $	*/
 
 /*
- *  Copyright (c) 2005, 2008 The NetBSD Foundation.
+ *  Copyright (c) 2005, 2008, The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -107,6 +107,14 @@ struct	ptimers {
 	struct ptimer *pts_timers[TIMER_MAX];
 };
 
+struct timedwaitclock {
+	struct timespec		*timeout;
+	clockid_t		clockid;
+	int			flags;
+	const struct bintime	*epsilon;
+	struct timespec		starttime;
+};
+
 /*
  * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
  *
@@ -191,6 +199,9 @@ void	timerupcall(struct lwp *);
 void	time_init(void);
 void	time_init2(void);
 bool	time_wraps(struct timespec *, struct timespec *);
+
+int	timedwaitclock_begin(struct timedwaitclock *, int *);
+void	timedwaitclock_end(struct timedwaitclock *);
 
 extern volatile time_t time_second;	/* current second in the epoch */
 extern volatile time_t time_uptime;	/* system uptime in seconds */
