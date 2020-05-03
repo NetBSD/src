@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.79 2020/05/02 16:44:36 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.80 2020/05/03 17:24:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.79 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.80 2020/05/03 17:24:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,7 @@ init_xen_early(void)
 	    (void *)((uintptr_t)hvm_start_info->cmdline_paddr + KERNBASE);
 	strlcpy(xen_start_info.cmd_line, cmd_line,
 	    sizeof(xen_start_info.cmd_line));
+	xen_start_info.flags = hvm_start_info->flags;
 }
 
 
