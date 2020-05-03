@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.3 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: boot.h,v 1.4 2020/05/03 21:02:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro
@@ -37,9 +37,9 @@
 extern int debug;
 
 /* boot.c */
-char *default_devname;
-uint default_unit, default_partition;
-const char *default_filename;
+extern char *default_devname;
+extern uint default_unit, default_partition;
+extern const char *default_filename;
 extern int default_timeout;
 
 void boot(dev_t);
