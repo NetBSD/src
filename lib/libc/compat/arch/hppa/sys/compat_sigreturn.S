@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigreturn.S,v 1.2 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.3 2020/05/03 15:27:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ WARN_REFERENCES(sigreturn, \
 
 ENTRY(sigreturn, 0)
 	/*
-	 * AFAICT, since the hppa port came after __sigreturn14, 
+	 * AFAICT, since the hppa port came after __sigreturn14,
 	 * we shouldn't have to supply the compatability sigreturn.
 	 */
 	ldi	EINVAL, %t1
