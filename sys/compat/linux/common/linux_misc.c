@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.248 2020/04/19 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.249 2020/05/03 01:06:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.248 2020/04/19 20:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.249 2020/05/03 01:06:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.248 2020/04/19 20:31:59 thorpej Exp
 #include <sys/swap.h>		/* for SWAP_ON */
 #include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
 #include <sys/kauth.h>
+#include <sys/futex.h>
 
 #include <sys/ptrace.h>
 #include <machine/ptrace.h>
@@ -1516,4 +1517,60 @@ linux_sys_utimensat(struct lwp *l, const struct linux_sys_utimensat_args *uap,
 
 	return linux_do_sys_utimensat(l, SCARG(uap, fd), SCARG(uap, path),
 	    tsp, SCARG(uap, flag), retval);
+}
+
+int
+linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int *) uaddr;
+		syscallarg(int) op;
+		syscallarg(int) val;
+		syscallarg(const struct linux_timespec *) timeout;
+		syscallarg(int *) uaddr2;
+		syscallarg(int) val3;
+	} */
+	struct linux_timespec lts;
+	struct timespec ts, *tsp = NULL;
+	int val2 = 0;
+	int error;
+
+	/*
+	 * Linux overlays the "timeout" field and the "val2" field.
+	 * "timeout" is only valid for FUTEX_WAIT and FUTEX_WAIT_BITSET
+	 * on Linux.
+	 */
+	const int op = (SCARG(uap, op) & FUTEX_CMD_MASK);
+	if ((op == FUTEX_WAIT || op == FUTEX_WAIT_BITSET) &&
+	    SCARG(uap, timeout) != NULL) {
+		if ((error = copyin(SCARG(uap, timeout), 
+		    &lts, sizeof(lts))) != 0) {
+			return error;
+		}
+		linux_to_native_timespec(&ts, &lts);
+		tsp = &ts;
+	} else {
+		val2 = (int)(uintptr_t)SCARG(uap, timeout);
+	}
+
+	return linux_do_futex(SCARG(uap, uaddr), SCARG(uap, op),
+	    SCARG(uap, val), tsp, SCARG(uap, uaddr2), val2,
+	    SCARG(uap, val3), retval);
+}
+
+int
+linux_do_futex(int *uaddr, int op, int val, struct timespec *timeout,
+    int *uaddr2, int val2, int val3, register_t *retval)
+{
+	/*
+	 * Always clear FUTEX_PRIVATE_FLAG for Linux processes.
+	 * NetBSD-native futexes exist in different namespace
+	 * depending on FUTEX_PRIVATE_FLAG.  This appears not
+	 * to be the case in Linux, and some futex users will
+	 * mix private and non-private ops on the same futex
+	 * object.
+	 */
+	return do_futex(uaddr, op & ~FUTEX_PRIVATE_FLAG,
+			val, timeout, uaddr2, val2, val3, retval);
 }
