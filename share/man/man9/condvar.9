@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.24 2020/05/03 04:05:00 riastradh Exp $
+.\"	$NetBSD: condvar.9,v 1.25 2020/05/03 04:05:28 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -229,6 +229,19 @@ and
 subtract the time elapsed from
 .Fa bt
 in place, or set it to zero if there is no time remaining.
+.Pp
+Note that
+.Fn cv_timedwaitbt
+and
+.Fn cv_timedwaitbt_sig
+may return zero indicating success, rather than
+.Er EWOULDBLOCK ,
+even if they set the timeout to zero; this means that the caller must
+re-check the condition in order to avoid potentially losing a
+.Fn cv_signal ,
+but the
+.Em next
+wait will time out immediately.
 .Pp
 The hint
 .Fa epsilon ,
