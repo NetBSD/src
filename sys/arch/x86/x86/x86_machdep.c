@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.141 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.142 2020/05/03 17:22:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.141 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.142 2020/05/03 17:22:03 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -846,22 +846,11 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 	}
 }
 
-/*
- * init_x86_clusters: retrieve the memory clusters provided by the BIOS, and
- * initialize mem_clusters.
- */
-void
-init_x86_clusters(void)
-{
-	struct btinfo_memmap *bim;
-	struct btinfo_efimemmap *biem;
-
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed to us by
-	 * the boot program).
-	 */
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH) {
+static void
+x86_add_xen_clusters(void)
+{
+	if (hvm_start_info->memmap_entries > 0) {
 		struct hvm_memmap_table_entry *map_entry;
 		map_entry = (void *)((uintptr_t)hvm_start_info->memmap_paddr + KERNBASE);
 		for (int i = 0; i < hvm_start_info->memmap_entries; i++) {
@@ -878,6 +867,41 @@ init_x86_clusters(void)
 				break;
 			}
 		}
+	} else {
+		struct xen_memory_map memmap;
+		static struct _xen_mmap {
+			struct btinfo_memmap bim;
+			struct bi_memmap_entry map[128]; /* same as FreeBSD */
+		} __packed xen_mmap;
+		int err;
+
+		memmap.nr_entries = 128;
+		set_xen_guest_handle(memmap.buffer, &xen_mmap.bim.entry[0]);
+		if ((err = HYPERVISOR_memory_op(XENMEM_memory_map, &memmap))
+		    < 0)
+			panic("XENMEM_memory_map %d", err);
+		xen_mmap.bim.num = memmap.nr_entries;
+		x86_parse_clusters(&xen_mmap.bim);
+	}
+}
+#endif /* XEN */
+/*
+ * init_x86_clusters: retrieve the memory clusters provided by the BIOS, and
+ * initialize mem_clusters.
+ */
+void
+init_x86_clusters(void)
+{
+	struct btinfo_memmap *bim;
+	struct btinfo_efimemmap *biem;
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed to us by
+	 * the boot program).
+	 */
+#ifdef XEN
+	if (vm_guest == VM_GUEST_XENPVH) {
+		x86_add_xen_clusters();
 	}
 #endif /* XEN */
 
