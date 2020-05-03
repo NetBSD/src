@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.29 2020/04/29 01:44:03 thorpej Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.30 2020/05/03 01:06:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.29 2020/04/29 01:44:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.30 2020/05/03 01:06:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -266,7 +266,7 @@ linux32_sys_futex(struct lwp *l,
 		val2 = (int)(uintptr_t)SCARG_P32(uap, timeout);
 	}
 
-	return do_futex(SCARG_P32(uap, uaddr), SCARG(uap, op),
+	return linux_do_futex(SCARG_P32(uap, uaddr), SCARG(uap, op),
 	    SCARG(uap, val), tsp, SCARG_P32(uap, uaddr2), val2,
 	    SCARG(uap, val3), retval);
 }
