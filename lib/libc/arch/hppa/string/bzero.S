@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: bzero.S,v 1.3 2020/05/03 15:29:22 skrll Exp $	*/
 
 /*	$OpenBSD: bzero.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -40,7 +40,7 @@
 #endif
 
 /*
- * void 
+ * void
  * bzero(dst, count)
  *	void *dst;
  *	size_t count;
@@ -55,7 +55,7 @@ LEAF_ENTRY(bzero)
 	comib,>>,n 4,%arg1,$bzero_bytes
 
 	/*
-	 * Since we are only clearing memory the alignment restrictions 
+	 * Since we are only clearing memory the alignment restrictions
 	 * are simplified. Figure out how many "extra" bytes we need to
 	 * store with stbys.
 	 */
@@ -64,7 +64,7 @@ LEAF_ENTRY(bzero)
         add     %arg1,%t1,%arg1
 
 	/*
-	 * We will zero the destination in blocks of 16 bytes as long as we 
+	 * We will zero the destination in blocks of 16 bytes as long as we
 	 * can and then we'll go to the 4 byte moves.
 	 */
 
@@ -80,8 +80,8 @@ $bzero_loop_16:
 	addi		-16, %arg1, %arg1
 
 	/*
-	 * see if there is anything left that needs to be zeroed in a word 
-	 * move. Since the count was decremented by 16, add 12 to test if 
+	 * see if there is anything left that needs to be zeroed in a word
+	 * move. Since the count was decremented by 16, add 12 to test if
 	 * there are any full word moves left to do.
 	 */
 
@@ -110,7 +110,7 @@ $bzero_cleanup:
 
 $bzero_bytes:
         addib,> -1,%arg1,$bzero_bytes
-        stbs,ma %r0,1(%arg0) 
+        stbs,ma %r0,1(%arg0)
 
 $bzero_exit:
 	bv,n	%r0(%rp)
