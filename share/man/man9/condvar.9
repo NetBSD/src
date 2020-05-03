@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.22 2020/04/10 17:16:21 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.23 2020/05/03 04:04:32 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -213,19 +213,28 @@ if the timeout expires.
 .It Fn cv_timedwaitbt "cv" "mtx" "bt" "epsilon"
 .It Fn cv_timedwaitbt_sig "cv" "mtx" "bt" "epsilon"
 .Pp
-Similar to
-.Fn cv_timedwait
+As per
+.Fn cv_wait
 and
-.Fn cv_timedwait_sig ,
-but
+.Fn cv_wait_sig ,
+but will return early if the duration
 .Fa bt
-is decremented in place with the amount of time actually waited, and on
-return contains the amount of time remaining, possibly negative if the
-timeout expired.
+has elapsed, immediately if
+.Fa bt
+is zero.
+On return,
+.Fn cv_timedwaitbt
+and
+.Fn cv_timedwaitbt_sig
+subtract the time elapsed from
+.Fa bt
+in place, or set it to zero if there is no time remaining.
 .Pp
 The hint
-.Fa epsilon
-requests that the wakeup not be delayed more than
+.Fa epsilon ,
+which can be
+.Dv DEFAULT_TIMEOUT_EPSILON
+if in doubt, requests that the wakeup not be delayed more than
 .Fa bt Li "+" Fa epsilon ,
 so that the system can coalesce multiple wakeups within their
 respective epsilons into a single high-resolution clock interrupt or
@@ -291,10 +300,9 @@ Consuming a resource:
 	 * alloted time, return an error.
 	 */
 	struct bintime timeout = { .sec = 5, .frac = 0 };
-	const struct bintime epsilon = { .sec = 1, .frac = 0 };
 	while (res->state == BUSY) {
-		error = cv_timedwaitbt(&res->condvar, \\
-		    &res->mutex, &timeout, &epsilon);
+		error = cv_timedwaitbt(&res->condvar,
+		    &res->mutex, &timeout, DEFAULT_TIMEOUT_EPSILON);
 		if (error) {
 			KASSERT(error == EWOULDBLOCK);
 			if (res->state != BUSY)
