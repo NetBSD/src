@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.6 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.7 2020/05/03 08:36:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 ENTRY(__vfork14, 0)
 	/*
 	 * NB: __vfork14 is a tricky syscall.  We can't save
-	 * any values on the stack, because the stack will be 
+	 * any values on the stack, because the stack will be
 	 * trashed by the child, leaving garbage for when the
 	 * parent returns.
 	 *
@@ -48,8 +48,8 @@ ENTRY(__vfork14, 0)
 	 * because *our* caller is counting on us to do so.
 	 *
 	 * What we need is a normally caller-saved register,
-	 * that the kernel is willing to save for us.  The 
-	 * syscall entry code in locore.S has been modified 
+	 * that the kernel is willing to save for us.  The
+	 * syscall entry code in locore.S has been modified
 	 * to do just this for the t4 register.
 	 */
 	.import	__cerror, code
