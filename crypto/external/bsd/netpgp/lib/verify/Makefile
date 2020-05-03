@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/10/13 07:28:05 mrg Exp $
+# $NetBSD: Makefile,v 1.13 2020/05/03 21:46:37 christos Exp $
 
 LIB=netpgpverify
 SRCS+=b64.c
@@ -29,5 +29,7 @@ INCSDIR=/usr/include/netpgp
 
 COPTS+=			${${ACTIVE_CC} == "gcc":? -Wno-implicit-fallthrough :}
 COPTS.libverify.c+=	${GCC_NO_FORMAT_TRUNCATION}
+
+LDFLAGS+=-Wl,--version-script=${.CURDIR}/verify.map
 
 .include <bsd.lib.mk>
