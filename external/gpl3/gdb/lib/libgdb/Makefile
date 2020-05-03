@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/04/29 11:04:58 rin Exp $
+#	$NetBSD: Makefile,v 1.23 2020/05/03 07:10:27 rin Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -53,10 +53,6 @@ CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 #
 
 ada-exp.c: ada-lex.c
-
-.if ${MACHINE} == "amiga"
-COPTS.dwarf2-frame.c+=-O1
-.endif
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
 .if !empty(MACHINE_ARCH:Mearmv7hf*)
