@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.47 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.48 2020/05/03 01:19:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.47 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.48 2020/05/03 01:19:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,10 +334,21 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 {
 	struct bintime slept;
 	unsigned start, end;
+	int timo;
 	int error;
 
 	KASSERTMSG(bt->sec >= 0, "negative timeout");
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
+
+	/* If there's nothing left to wait, time out.  */
+	if (bt->sec == 0 && bt->frac == 0)
+		return EWOULDBLOCK;
+
+	/* Convert to ticks, but clamp to be >=1.  */
+	timo = bintime2timo(bt);
+	KASSERTMSG(timo >= 0, "negative ticks: %d", timo);
+	if (timo == 0)
+		timo = 1;
 
 	/*
 	 * getticks() is technically int, but nothing special
@@ -345,12 +356,23 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	 * wraparound and just treat it as unsigned.
 	 */
 	start = getticks();
-	error = cv_timedwait(cv, mtx, bintime2timo(bt));
+	error = cv_timedwait(cv, mtx, timo);
 	end = getticks();
 
+	/*
+	 * Set it to the time left, or zero, whichever is larger.  We
+	 * do not fail with EWOULDBLOCK here because this may have been
+	 * an explicit wakeup, so the caller needs to check before they
+	 * give up or else cv_signal would be lost.
+	 */
 	slept = timo2bintime(end - start);
-	/* bt := bt - slept */
-	bintime_sub(bt, &slept);
+	if (bintimecmp(bt, &slept, <=)) {
+		bt->sec = 0;
+		bt->frac = 0;
+	} else {
+		/* bt := bt - slept */
+		bintime_sub(bt, &slept);
+	}
 
 	return error;
 }
@@ -377,10 +399,21 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 {
 	struct bintime slept;
 	unsigned start, end;
+	int timo;
 	int error;
 
 	KASSERTMSG(bt->sec >= 0, "negative timeout");
 	KASSERTMSG(epsilon != NULL, "specify maximum requested delay");
+
+	/* If there's nothing left to wait, time out.  */
+	if (bt->sec == 0 && bt->frac == 0)
+		return EWOULDBLOCK;
+
+	/* Convert to ticks, but clamp to be >=1.  */
+	timo = bintime2timo(bt);
+	KASSERTMSG(timo >= 0, "negative ticks: %d", timo);
+	if (timo == 0)
+		timo = 1;
 
 	/*
 	 * getticks() is technically int, but nothing special
@@ -388,12 +421,23 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 	 * wraparound and just treat it as unsigned.
 	 */
 	start = getticks();
-	error = cv_timedwait_sig(cv, mtx, bintime2timo(bt));
+	error = cv_timedwait_sig(cv, mtx, timo);
 	end = getticks();
 
+	/*
+	 * Set it to the time left, or zero, whichever is larger.  We
+	 * do not fail with EWOULDBLOCK here because this may have been
+	 * an explicit wakeup, so the caller needs to check before they
+	 * give up or else cv_signal would be lost.
+	 */
 	slept = timo2bintime(end - start);
-	/* bt := bt - slept */
-	bintime_sub(bt, &slept);
+	if (bintimecmp(bt, &slept, <=)) {
+		bt->sec = 0;
+		bt->frac = 0;
+	} else {
+		/* bt := bt - slept */
+		bintime_sub(bt, &slept);
+	}
 
 	return error;
 }
