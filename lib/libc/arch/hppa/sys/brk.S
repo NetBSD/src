@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 2020/05/03 15:29:22 skrll Exp $	*/
 
 /*	$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -31,14 +31,14 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.6 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: brk.S,v 1.7 2020/05/03 15:29:22 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.import	curbrk, data
 	.global	_end
 
 #ifdef WEAK_ALIAS
-	WEAK_ALIAS(brk, _brk) 
+	WEAK_ALIAS(brk, _brk)
 #endif
 
 	.data

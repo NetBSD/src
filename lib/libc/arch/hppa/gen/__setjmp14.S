@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.6 2016/07/16 09:51:13 skrll Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.7 2020/05/03 15:29:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.6 2016/07/16 09:51:13 skrll Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.7 2020/05/03 15:29:22 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -112,9 +112,9 @@ ENTRY(__setjmp14,0)
 	ldi	1, %r20			; SS_ONSTACK
 	and	%r1, %r20, %r1
 	stw	%r1, 0(%arg0)		; sc.sc_onstack
-	
+
 	/* Get the signal mask. */
-	ldo	40(%arg0), %arg2	; oset = &sc.sc_mask	
+	ldo	40(%arg0), %arg2	; oset = &sc.sc_mask
 	copy	%r0, %arg1		; set = NULL
 	bl	__sigprocmask14, %rp
 	copy	%r0, %arg0		; action = 0 <ignored>
