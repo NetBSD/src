@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.326 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.327 2020/05/03 10:06:29 rin Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.142 2019/05/26 23:00:57 sevan Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.143 2020/03/25 17:06:18 jdolecek Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.326 $"
+#ident 		"GENERIC-$Revision: 1.327 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -426,10 +426,10 @@ gencp*		at acafhbus?		# clockport on ACA500
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
-efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
+#efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
 
 atabus* 	at wdc? channel ?	# ATA bus
-atabus*	at efa? channel ?	# ATA bus 
+#atabus*	at efa? channel ?	# ATA bus 
 atabus*		at ata? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
