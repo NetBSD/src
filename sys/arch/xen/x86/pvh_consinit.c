@@ -1,4 +1,4 @@
-/* $NetBSD: pvh_consinit.c,v 1.1 2020/05/02 16:44:36 bouyer Exp $ */
+/* $NetBSD: pvh_consinit.c,v 1.2 2020/05/03 17:23:14 bouyer Exp $ */
 
 /*
  * Copyright (c) 2020 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.1 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.2 2020/05/03 17:23:14 bouyer Exp $");
 
 #include "xencons.h"
 #include <sys/param.h>
@@ -59,7 +59,7 @@ xen_pvh_consinit(void)
 	 * boot stage.
 	 */
 	static int initted = 0;
-	if (initted == 0) {
+	if (initted == 0 && !xendomain_is_dom0()) {
 		/* pmap not up yet, fall back to printk() */
 		cn_tab = &pvh_xencons;
 		initted++;
@@ -68,6 +68,12 @@ xen_pvh_consinit(void)
 		return;
 	}
 	initted++;
+	if (xendomain_is_dom0()) {
+		xenconscn_attach(); /* no ring in this case */
+		initted++; /* don't init console twice */
+		return;
+	}
+		
 #if NXENCONS > 0
 	/* we can now map the xencons rings. */
 	struct xen_hvm_param xen_hvm_param;
