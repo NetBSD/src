@@ -1,8 +1,8 @@
-/*	$NetBSD: ffs.S,v 1.3 2004/07/18 20:30:04 chs Exp $	*/
+/*	$NetBSD: ffs.S,v 1.4 2020/05/03 15:29:22 skrll Exp $	*/
 
 /*	$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1990, 1991, 1992, 1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
