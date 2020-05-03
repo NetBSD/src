@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.8 2020/05/01 01:31:17 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.9 2020/05/03 06:33:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.8 2020/05/01 01:31:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.9 2020/05/03 06:33:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1467,6 +1467,7 @@ rnd_attach_source(struct krndsource *rs, const char *name, uint32_t type,
 	/* Initialize the random source.  */
 	memset(rs->name, 0, sizeof(rs->name)); /* paranoia */
 	strlcpy(rs->name, name, sizeof(rs->name));
+	rs->total = 0;
 	rs->type = type;
 	rs->flags = flags;
 	if (E->stage >= ENTROPY_WARM)
