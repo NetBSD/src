@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsuspend.S,v 1.2 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.3 2020/05/03 08:36:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ WARN_REFERENCES(sigsuspend, \
 
 ENTRY(sigsuspend, 0)
 	/*
-	 * AFAICT, since the hppa port came after __sigsuspend14, 
+	 * AFAICT, since the hppa port came after __sigsuspend14,
 	 * we shouldn't have to supply the compatability sigsuspend.
 	 */
 	ldi	EINVAL, %t1
