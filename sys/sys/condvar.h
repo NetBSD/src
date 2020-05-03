@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.15 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.16 2020/05/03 01:24:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ typedef struct kcondvar {
 
 struct bintime;
 struct kmutex;
+struct timespec;
 
 void	cv_init(kcondvar_t *, const char *);
 void	cv_destroy(kcondvar_t *);
@@ -48,6 +49,10 @@ void	cv_wait(kcondvar_t *, struct kmutex *);
 int	cv_wait_sig(kcondvar_t *, struct kmutex *);
 int	cv_timedwait(kcondvar_t *, struct kmutex *, int);
 int	cv_timedwait_sig(kcondvar_t *, struct kmutex *, int);
+int	cv_timedwaitclock(kcondvar_t *, struct kmutex *, struct timespec *,
+	    clockid_t, int, const struct bintime *);
+int	cv_timedwaitclock_sig(kcondvar_t *, struct kmutex *, struct timespec *,
+	    clockid_t, int, const struct bintime *);
 int	cv_timedwaitbt(kcondvar_t *, struct kmutex *, struct bintime *,
 	    const struct bintime *);
 int	cv_timedwaitbt_sig(kcondvar_t *, struct kmutex *, struct bintime *,
