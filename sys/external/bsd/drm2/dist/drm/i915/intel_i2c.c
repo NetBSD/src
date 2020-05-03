@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_i2c.c,v 1.19 2020/02/14 14:34:58 maya Exp $	*/
+/*	$NetBSD: intel_i2c.c,v 1.20 2020/05/03 13:34:38 nia Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.19 2020/02/14 14:34:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.20 2020/05/03 13:34:38 nia Exp $");
 
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
@@ -643,8 +643,8 @@ clear_err:
 	goto out;
 
 timeout:
-	DRM_INFO("GMBUS [%s] timed out, falling back to bit banging on pin %d\n",
-		 bus->adapter.name, bus->reg0 & 0xff);
+	DRM_DEBUG_KMS("GMBUS [%s] timed out, falling back to bit banging on pin %d\n",
+		     bus->adapter.name, bus->reg0 & 0xff);
 	I915_WRITE(GMBUS0, 0);
 
 	/* Hardware may not support GMBUS over these pins? Try GPIO bitbanging instead. */
