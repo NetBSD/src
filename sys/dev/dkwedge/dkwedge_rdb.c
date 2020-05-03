@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.6 2020/04/11 16:00:34 jdolecek Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.7 2020/05/03 06:30:45 rin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.6 2020/04/11 16:00:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.7 2020/05/03 06:30:45 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
@@ -116,19 +116,21 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	    secsize);
 	bp = geteblk(bufsize);
 
+retry:
 	/*
 	 * find the RDB block
 	 * XXX bsdlabel should be detected by the other method
 	 */
 	for (nextb = 0; nextb < RDB_MAXBLOCKS; nextb++) {
-		error = dkwedge_read(pdk, vp, ADJUST_NR(nextb), bp, bufsize);
+		error = dkwedge_read(pdk, vp, ADJUST_NR(nextb), bp->b_data,
+		    bufsize);
 		if (error) {
 			aprint_error("%s: unable to read RDB @ %u, "
 			    "error = %d\n", pdk->dk_name, nextb, error);
 			error = ESRCH;
 			goto done;
 		}
-		rbp = (struct rdblock *)bp;
+		rbp = (struct rdblock *)bp->b_data;
 		if (be32toh(rbp->id) == RDBLOCK_ID) {
 			if (rdbchksum(rbp) == 0)
 				break;
@@ -152,6 +154,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 		    sizeof(struct rdblock)), secsize);
 		brelse(bp, 0);
 		bp = geteblk(bufsize);
+		goto retry;
 	}
 
 	memset(&dkw, 0, sizeof(dkw));
@@ -164,14 +167,15 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	 */
 	for (nextb = be32toh(rbp->partbhead); nextb != RDBNULL;
 	     nextb = be32toh(pbp->next)) {
-		error = dkwedge_read(pdk, vp, ADJUST_NR(nextb), bp, bufsize);
+		error = dkwedge_read(pdk, vp, ADJUST_NR(nextb), bp->b_data,
+		    bufsize);
 		if (error) {
 			aprint_error("%s: unable to read RDB partition block @ "
 			    "%u, error = %d\n", pdk->dk_name, nextb, error);
 			error = ESRCH;
 			goto done;
 		}
-		pbp = (struct partblock *)bp;
+		pbp = (struct partblock *)bp->b_data;
 		
 		if (be32toh(pbp->id) != PARTBLOCK_ID) {
 			aprint_error(
