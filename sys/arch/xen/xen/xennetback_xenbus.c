@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.102 2020/05/02 11:28:02 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.103 2020/05/03 17:56:19 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.102 2020/05/02 11:28:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.103 2020/05/03 17:56:19 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.102 2020/05/02 11:28:02 jdol
 #include <xen/xennet_checksum.h>
 
 #include <uvm/uvm.h>
-
-/* #define notyet 1 */
 
 /*
  * Backend network device driver for Xen.
@@ -263,11 +261,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	/* create pseudo-interface */
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
-	xneti->xni_ec.ec_capabilities |= ETHERCAP_VLAN_MTU
-#ifdef notyet
-		| ETHERCAP_JUMBO_MTU
-#endif
-	;
+	xneti->xni_ec.ec_capabilities |= ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
@@ -327,7 +321,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
-#if notyet
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-sg", "%d", 1);
 		if (err) {
@@ -336,7 +329,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
-#endif
 	} while ((err = xenbus_transaction_end(xbt, 0)) == EAGAIN);
 	if (err) {
 		aprint_error_ifnet(ifp,
@@ -678,21 +670,22 @@ xennetback_tx_check_packet(const netif_tx_request_t *txreq)
 }
 
 static int
-xennetback_copy(struct ifnet *ifp, gnttab_copy_t *gop, int copycnt)
+xennetback_copy(struct ifnet *ifp, gnttab_copy_t *gop, int copycnt,
+    const char *dir)
 {
 	/*
 	 * Copy the data and ack it. Delaying it until the mbuf is
 	 * freed will stall transmit.
 	 */
 	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, gop, copycnt) != 0) {
-		printf("%s: GNTTABOP_copy Tx failed", ifp->if_xname);
+		printf("%s: GNTTABOP_copy %s failed", ifp->if_xname, dir);
 		return EINVAL;
 	}
 
 	for (int i = 0; i < copycnt; i++) {
 		if (gop->status != GNTST_okay) {
-			printf("%s GNTTABOP_copy[%d] Tx %d\n",
-			    ifp->if_xname, i, gop->status);
+			printf("%s GNTTABOP_copy[%d] %s %d\n",
+			    ifp->if_xname, i, dir, gop->status);
 			return EINVAL;
 		}
 	}
@@ -758,7 +751,7 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 			KASSERT(copycnt <= NB_XMIT_PAGES_BATCH);
 			if (copycnt == NB_XMIT_PAGES_BATCH) {
 				if (xennetback_copy(ifp, xneti->xni_gop_copy,
-				    copycnt) != 0)
+				    copycnt, "Tx") != 0)
 					goto abort;
 				copycnt = 0;
 			}
@@ -791,7 +784,7 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 		KASSERT(goff == xst->xs_tx_size);
 	}
 	if (copycnt > 0) {
-		if (xennetback_copy(ifp, xneti->xni_gop_copy, copycnt) != 0)
+		if (xennetback_copy(ifp, xneti->xni_gop_copy, copycnt, "Tx"))
 			goto abort;
 		copycnt = 0;
 	}
@@ -1058,19 +1051,151 @@ xennetback_ifstart(struct ifnet *ifp)
 }
 
 static void
+xennetback_rx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
+	int queued, int copycnt)
+{
+	int notify;
+	struct xnetback_xstate *xst;
+
+	if (xennetback_copy(ifp, xneti->xni_gop_copy, copycnt, "Rx") != 0) {
+		/* message already displayed */
+		goto free_mbufs;
+	}
+
+	/* update pointer */
+	xen_rmb();
+	xneti->xni_rxring.req_cons += queued;
+	xneti->xni_rxring.rsp_prod_pvt += queued;
+	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&xneti->xni_rxring, notify);
+
+	/* send event */
+	if (notify) {
+		xen_rmb();
+		XENPRINTF(("%s receive event\n",
+		    xneti->xni_if.if_xname));
+		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
+	}
+
+free_mbufs:
+	/* now that data was copied we can free the mbufs */
+	for (int j = 0; j < queued; j++) {
+		xst = &xneti->xni_xstate[j];
+		if (xst->xs_loaded) {
+			bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+			    xst->xs_dmamap);
+			xst->xs_loaded = false;
+		}
+		if (xst->xs_m != NULL) {
+			m_freem(xst->xs_m);
+			xst->xs_m = NULL;
+		}
+	}
+}
+
+static void
+xennetback_rx_copy_queue(struct xnetback_instance *xneti,
+    struct xnetback_xstate *xst0, int rsp_prod_pvt, int *queued, int *copycntp)
+{
+	struct xnetback_xstate *xst = xst0;
+	gnttab_copy_t *gop;
+	struct netif_rx_request rxreq;
+	netif_rx_response_t *rxresp;
+	paddr_t ma;
+	size_t goff, segoff, segsize, take, totsize;
+	int copycnt = *copycntp, reqcnt = *queued;
+	const bus_dmamap_t dm = xst0->xs_dmamap;
+	const bool multiseg = (dm->dm_nsegs > 1);
+
+	KASSERT(xst0 == &xneti->xni_xstate[reqcnt]);
+
+	RING_COPY_REQUEST(&xneti->xni_rxring,
+	    xneti->xni_rxring.req_cons + reqcnt, &rxreq);
+	goff = 0;
+	rxresp = RING_GET_RESPONSE(&xneti->xni_rxring, rsp_prod_pvt + reqcnt);
+	reqcnt++;
+
+	rxresp->id = rxreq.id;
+	rxresp->offset = 0;
+	if ((xst0->xs_m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) != 0) {
+		rxresp->flags = NETRXF_csum_blank;
+	} else {
+		rxresp->flags = NETRXF_data_validated;
+	}
+	if (multiseg)
+		rxresp->flags |= NETRXF_more_data;
+
+	totsize = xst0->xs_m->m_pkthdr.len;
+
+	/*
+	 * Arrange for the mbuf contents to be copied into one or more
+	 * provided memory pages.
+	 */
+	for (int seg = 0; seg < dm->dm_nsegs; seg++) {
+		ma = dm->dm_segs[seg].ds_addr;
+		segsize = dm->dm_segs[seg].ds_len;
+		segoff = 0;
+
+		while (segoff < segsize) {
+			take = uimin(PAGE_SIZE - goff, segsize - segoff);
+			KASSERT(take <= totsize);
+
+			/* add copy request */
+			gop = &xneti->xni_gop_copy[copycnt++];
+			gop->flags = GNTCOPY_dest_gref;
+			gop->source.offset = (ma & PAGE_MASK) + segoff;
+			gop->source.domid = DOMID_SELF;
+			gop->source.u.gmfn = ma >> PAGE_SHIFT;
+
+			gop->dest.u.ref = rxreq.gref;
+			gop->dest.offset = goff;
+			gop->dest.domid = xneti->xni_domid;
+
+			gop->len = take;
+
+			segoff += take;
+			goff += take;
+			totsize -= take;
+
+			if (goff == PAGE_SIZE && totsize > 0) {
+				rxresp->status = goff;
+
+				/* Take next grant */
+				RING_COPY_REQUEST(&xneti->xni_rxring,
+				    xneti->xni_rxring.req_cons + reqcnt,
+				    &rxreq);
+				goff = 0;
+				rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
+				    rsp_prod_pvt + reqcnt);
+				reqcnt++;
+
+				rxresp->id = rxreq.id;
+				rxresp->offset = 0;
+				rxresp->flags = NETRXF_more_data;
+
+				xst++;
+				xst->xs_m = NULL;
+			}
+		}
+	}
+	rxresp->flags &= ~NETRXF_more_data;
+	rxresp->status = goff;
+	KASSERT(totsize == 0);
+
+	KASSERT(copycnt > *copycntp);
+	KASSERT(reqcnt > *queued);
+	*copycntp = copycnt;
+	*queued = reqcnt;
+}
+
+static void
 xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 {
 	struct ifnet *ifp = &xneti->xni_if;
 	struct mbuf *m;
-	paddr_t xmit_ma;
-	int i, j;
-	netif_rx_response_t *rxresp;
-	netif_rx_request_t rxreq;
-	RING_IDX req_prod, resp_prod;
-	int do_event = 0;
-	gnttab_copy_t *gop;
+	int queued = 0;
+	RING_IDX req_prod, rsp_prod_pvt;
 	struct xnetback_xstate *xst;
-	int id;
+	int copycnt = 0;
 	bool abort;
 
 	XENPRINTF(("xennetback_ifsoftstart_copy "));
@@ -1083,22 +1208,26 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		XENPRINTF(("pkt\n"));
 		req_prod = xneti->xni_rxring.sring->req_prod;
-		resp_prod = xneti->xni_rxring.rsp_prod_pvt;
+		rsp_prod_pvt = xneti->xni_rxring.rsp_prod_pvt;
 		xen_rmb();
 
-		gop = xneti->xni_gop_copy;
 		abort = false;
-		for (i = 0; i < NB_XMIT_PAGES_BATCH; i++) {
-			if (__predict_false(
-			    req_prod == xneti->xni_rxring.req_cons ||
-			    xneti->xni_rxring.req_cons - resp_prod ==
-			    NET_RX_RING_SIZE)) {
+		KASSERT(queued == 0);
+		KASSERT(copycnt == 0);
+		while (copycnt < NB_XMIT_PAGES_BATCH) {
+#define XN_RING_FULL(cnt)	\
+			req_prod == xneti->xni_rxring.req_cons + (cnt) ||  \
+			xneti->xni_rxring.req_cons - (rsp_prod_pvt + cnt) ==  \
+			NET_RX_RING_SIZE
+
+			if (__predict_false(XN_RING_FULL(1))) {
 				/* out of ring space */
 				XENPRINTF(("xennetback_ifstart: ring full "
-				    "req_prod 0x%x req_cons 0x%x resp_prod "
+				    "req_prod 0x%x req_cons 0x%x rsp_prod_pvt "
 				    "0x%x\n",
-				    req_prod, xneti->xni_rxring.req_cons,
-				    resp_prod));
+				    req_prod,
+				    xneti->xni_rxring.req_cons + queued,
+				    rsp_prod_pvt + queued));
 				abort = true;
 				break;
 			}
@@ -1107,7 +1236,8 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 			if (m == NULL)
 				break;
 
-			xst = &xneti->xni_xstate[i];
+again:
+			xst = &xneti->xni_xstate[queued];
 
 			/*
 			 * For short packets it's always way faster passing
@@ -1127,8 +1257,7 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 					if (ratecheck(&lasttime, &xni_pool_errintvl))
 						printf("%s: fail defrag mbuf\n",
 						    ifp->if_xname);
-					abort = true;
-					break;
+					continue;
 				}
 
 				if (__predict_false(bus_dmamap_load_mbuf(
@@ -1137,100 +1266,47 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 					printf("%s: cannot load mbuf\n",
 					    ifp->if_xname);
 					m_freem(m);
-					break;
+					continue;
 				}
 			}
+			KASSERT(xst->xs_dmamap->dm_nsegs < NB_XMIT_PAGES_BATCH);
+			KASSERTMSG(queued <= copycnt, "queued %d > copycnt %d",
+			    queued, copycnt);
 
-			xst->xs_m = m;
-			xmit_ma = xst->xs_dmamap->dm_segs[0].ds_addr;
-
-			/* start filling ring */
-			gop->flags = GNTCOPY_dest_gref;
-			gop->source.offset = xmit_ma & PAGE_MASK;
-			gop->source.domid = DOMID_SELF;
-			gop->source.u.gmfn = xmit_ma >> PAGE_SHIFT;
-
-			RING_COPY_REQUEST(&xneti->xni_rxring,
-			    xneti->xni_rxring.req_cons, &rxreq);
-			gop->dest.u.ref = rxreq.gref;
-			gop->dest.offset = 0;
-			gop->dest.domid = xneti->xni_domid;
-
-			gop->len = m->m_pkthdr.len;
-			gop++;
-
-			id = rxreq.id;
-			xen_rmb();
-			xneti->xni_rxring.req_cons++;
-			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
-			    resp_prod);
-			rxresp->id = id;
-			rxresp->offset = 0;
-			rxresp->status = m->m_pkthdr.len;
-			if ((m->m_pkthdr.csum_flags &
-			    XN_M_CSUM_SUPPORTED) != 0) {
-				rxresp->flags = NETRXF_csum_blank;
-			} else {
-				rxresp->flags = NETRXF_data_validated;
+			if (__predict_false(XN_RING_FULL(
+			    xst->xs_dmamap->dm_nsegs))) {
+				/* Ring too full to fit the packet */
+				bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+				    xst->xs_dmamap);
+				m_freem(m);
+				abort = true;
+				break;
+			}
+			if (__predict_false(copycnt + xst->xs_dmamap->dm_nsegs >
+			    NB_XMIT_PAGES_BATCH)) {
+				/* Batch already too full, flush and retry */
+				bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+				    xst->xs_dmamap);
+				xennetback_rx_copy_process(ifp, xneti, queued,
+				    copycnt);
+				queued = copycnt = 0;
+				goto again;
 			}
 
-			resp_prod++;
+			/* Now committed to send */
+			xst->xs_loaded = true;
+			xst->xs_m = m;
+			xennetback_rx_copy_queue(xneti, xst,
+			    rsp_prod_pvt, &queued, &copycnt);
+
 			if_statinc(ifp, if_opackets);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
-		if (i != 0) {
-			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,
-			    xneti->xni_gop_copy, i) != 0) {
-				panic("%s: GNTTABOP_copy Rx failed",
-				    ifp->if_xname);
-			}
-
-			for (j = 0; j < i; j++) {
-				gop = &xneti->xni_gop_copy[j];
-				if (gop->status != GNTST_okay) {
-					printf("%s GNTTABOP_copy[%d] Rx %d\n",
-					    ifp->if_xname,
-					    j, gop->status);
-					printf("%s: req_prod %u req_cons "
-					    "%u rsp_prod %u rsp_prod_pvt %u "
-					    "i %d\n",
-					    ifp->if_xname,
-					    xneti->xni_rxring.sring->req_prod,
-					    xneti->xni_rxring.req_cons,
-					    xneti->xni_rxring.sring->rsp_prod,
-					    xneti->xni_rxring.rsp_prod_pvt,
-					    i);
-					rxresp = RING_GET_RESPONSE(
-					    &xneti->xni_rxring,
-					    xneti->xni_rxring.rsp_prod_pvt + j);
-					rxresp->status = NETIF_RSP_ERROR;
-				}
-			}
-
-			/* update pointer */
-			KASSERT(
-			    xneti->xni_rxring.rsp_prod_pvt + i == resp_prod);
-			xneti->xni_rxring.rsp_prod_pvt = resp_prod;
-			RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(
-			    &xneti->xni_rxring, j);
-			if (j)
-				do_event = 1;
-			/* now we can free the mbufs */
-			for (j = 0; j < i; j++) {
-				xst = &xneti->xni_xstate[j];
-				bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
-				    xst->xs_dmamap);
-				m_freem(xst->xs_m);
-				xst->xs_m = NULL;
-			}
-		}
-		/* send event */
-		if (do_event) {
-			xen_rmb();
-			XENPRINTF(("%s receive event\n",
-			    xneti->xni_if.if_xname));
-			hypervisor_notify_via_evtchn(xneti->xni_evtchn);
-			do_event = 0;
+		KASSERT(copycnt <= NB_XMIT_PAGES_BATCH);
+		KASSERT(queued <= copycnt);
+		if (copycnt > 0) {
+			xennetback_rx_copy_process(ifp, xneti, queued, copycnt);
+			queued = copycnt = 0;
 		}
 		/*
 		 * note that we don't use RING_FINAL_CHECK_FOR_REQUESTS()
