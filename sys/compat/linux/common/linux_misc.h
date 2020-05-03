@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.25 2016/08/31 08:12:44 njoly Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.26 2020/05/03 01:06:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ int linux_select1(struct lwp *, register_t *, int, fd_set *, fd_set *,
 		       fd_set *, struct linux_timeval *);
 int linux_do_sys_utimensat(struct lwp *, int, const char *,
     struct timespec *, int, register_t *);
+int linux_do_futex(int *, int, int, struct timespec *, int *, int, int,
+    register_t *);
 __END_DECLS
 #endif /* !_KERNEL */
 
