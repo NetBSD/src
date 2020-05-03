@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.49 2020/05/03 01:24:37 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.50 2020/05/03 17:36:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.49 2020/05/03 01:24:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.50 2020/05/03 17:36:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,112 +244,6 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	return error;
 }
 
-struct timedwaitclock {
-	struct timespec		*timeout;
-	clockid_t		clockid;
-	int			flags;
-	const struct bintime	*epsilon;
-	struct timespec		starttime;
-};
-
-static int
-cv_timedwaitclock_begin(struct timedwaitclock *T, int *timo)
-{
-	struct timespec delta;
-	const struct timespec *deltap;
-	int error;
-
-	/* Sanity-check timeout -- may have come from userland.  */
-	if (T->timeout->tv_nsec < 0 || T->timeout->tv_nsec >= 1000000000L)
-		return EINVAL;
-
-	/*
-	 * Compute the time delta.
-	 */
-	if ((T->flags & TIMER_ABSTIME) == TIMER_ABSTIME) {
-		/* Check our watch.  */
-		error = clock_gettime1(T->clockid, &T->starttime);
-		if (error)
-			return error;
-
-		/* If the deadline has passed, we're done.  */
-		if (timespeccmp(T->timeout, &T->starttime, <=))
-			return ETIMEDOUT;
-
-		/* Count how much time is left.  */
-		timespecsub(T->timeout, &T->starttime, &delta);
-		deltap = &delta;
-	} else {
-		/* The user specified how much time is left.  */
-		deltap = T->timeout;
-
-		/* If there's none left, we've timed out.  */
-		if (deltap->tv_sec == 0 && deltap->tv_nsec == 0)
-			return ETIMEDOUT;
-	}
-
-	/*
-	 * Convert to ticks, but clamp to be >=1.
-	 *
-	 * XXX In the tickless future, use a high-resolution timer if
-	 * timo would round to zero.
-	 */
-	*timo = tstohz(deltap);
-	KASSERTMSG(*timo >= 0, "negative ticks: %d", *timo);
-	if (*timo == 0)
-		*timo = 1;
-
-	/* Success!  */
-	return 0;
-}
-
-static void
-cv_timedwaitclock_end(struct timedwaitclock *T)
-{
-	struct timespec endtime, delta;
-
-	/* If the timeout is absolute, nothing to do.  */
-	if ((T->flags & TIMER_ABSTIME) == TIMER_ABSTIME)
-		return;
-
-	/*
-	 * Check our watch.  If anything goes wrong with it, make sure
-	 * that the next time we immediately time out rather than fail
-	 * to deduct the time elapsed.
-	 */
-	if (clock_gettime1(T->clockid, &endtime)) {
-		T->timeout->tv_sec = 0;
-		T->timeout->tv_nsec = 0;
-		return;
-	}
-
-	/* Find how much time elapsed while we waited.  */
-	timespecsub(&endtime, &T->starttime, &delta);
-
-	/*
-	 * Paranoia: If the clock went backwards, treat it as if no
-	 * time elapsed at all rather than adding anything.
-	 */
-	if (delta.tv_sec < 0 ||
-	    (delta.tv_sec == 0 && delta.tv_nsec < 0)) {
-		delta.tv_sec = 0;
-		delta.tv_nsec = 0;
-	}
-
-	/*
-	 * Set it to the time left, or zero, whichever is larger.  We
-	 * do not fail with EWOULDBLOCK here because this may have been
-	 * an explicit wakeup, so the caller needs to check before they
-	 * give up or else cv_signal would be lost.
-	 */
-	if (timespeccmp(T->timeout, &delta, <=)) {
-		T->timeout->tv_sec = 0;
-		T->timeout->tv_nsec = 0;
-	} else {
-		timespecsub(T->timeout, &delta, T->timeout);
-	}
-}
-
 /*
  * cv_timedwaitclock:
  *
@@ -381,11 +275,11 @@ cv_timedwaitclock(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
 		return 0;
 	}
 
-	error = cv_timedwaitclock_begin(&T, &timo);
+	error = timedwaitclock_begin(&T, &timo);
 	if (error)
 		return error;
 	error = cv_timedwait(cv, mtx, timo);
-	cv_timedwaitclock_end(&T);
+	timedwaitclock_end(&T);
 	return error;
 }
 
@@ -419,11 +313,11 @@ cv_timedwaitclock_sig(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
 	if (timeout == NULL)
 		return cv_wait_sig(cv, mtx);
 
-	error = cv_timedwaitclock_begin(&T, &timo);
+	error = timedwaitclock_begin(&T, &timo);
 	if (error)
 		return error;
 	error = cv_timedwait_sig(cv, mtx, timo);
-	cv_timedwaitclock_end(&T);
+	timedwaitclock_end(&T);
 	return error;
 }
 
