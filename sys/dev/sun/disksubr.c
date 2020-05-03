@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2019/04/03 22:10:52 christos Exp $ */
+/*	$NetBSD: disksubr.c,v 1.17 2020/05/03 06:31:02 jdc Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2019/04/03 22:10:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2020/05/03 06:31:02 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 			lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 		lp->d_partitions[RAW_PART].p_offset = 0;
 	}
+	if (lp->d_secsize == 0)
+		return ("sector size 0");
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
