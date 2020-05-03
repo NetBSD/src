@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.123 2020/04/26 18:53:33 thorpej Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.124 2020/05/03 01:06:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008, 2020
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.123 2020/04/26 18:53:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.124 2020/05/03 01:06:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.123 2020/04/26 18:53:33 thorpej Exp
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
@@ -181,7 +182,7 @@ linux_e_lwp_exit(struct lwp *l)
 			printf("%s: cannot clear TID\n", __func__);
 #endif
 
-		error = do_futex((int *)led->led_clear_tid, FUTEX_WAKE,
+		error = linux_do_futex((int *)led->led_clear_tid, FUTEX_WAKE,
 		    INT_MAX, NULL, NULL, 0, 0, &retval);
 		if (error)
 			printf("%s: linux_sys_futex failed\n", __func__);

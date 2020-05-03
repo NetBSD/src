@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_alpha,v 1.10 2019/03/24 16:24:19 maxv Exp $
+#	$NetBSD: files.linux_alpha,v 1.11 2020/05/03 01:06:55 thorpej Exp $
 #
 # Config file description for alpha-dependent Linux compat code.
 
@@ -9,6 +9,5 @@ file	compat/linux/arch/alpha/linux_syscalls.c	compat_linux
 file	compat/linux/arch/alpha/linux_sysent.c		compat_linux
 file	compat/linux/common/linux_fadvise64.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux
-file	compat/linux/common/linux_futex.c		compat_linux
 file	compat/linux/common/linux_olduname.c		compat_linux
 file	compat/linux/common/linux_sigaction.c		compat_linux
