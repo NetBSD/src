@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.45 2019/10/04 09:02:00 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.46 2020/05/03 16:11:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.45 2019/10/04 09:02:00 mrg Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.46 2020/05/03 16:11:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = lostpeer;
-	(void)sigaction(SIGPIPE, &sa, (struct sigaction *)0);
+	(void)sigaction(SIGPIPE, &sa, NULL);
 	/* will use SIGUSR1 for window size hack, so hold it off */
 	sigemptyset(&imask);
 	sigaddset(&imask, SIGURG);
@@ -258,9 +258,9 @@ main(int argc, char *argv[])
 	 * a signal by the time that they are unblocked below.
 	 */
 	sa.sa_handler = copytochild;
-	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGURG, &sa, NULL);
 	sa.sa_handler = writeroob;
-	(void)sigaction(SIGUSR1, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGUSR1, &sa, NULL);
 
 	/* don't dump core */
 	rlim.rlim_cur = rlim.rlim_max = 0;
@@ -306,7 +306,7 @@ doit(sigset_t *smask)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
-	(void)sigaction(SIGINT, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGINT, &sa, NULL);
 	setsignal(SIGHUP);
 	setsignal(SIGQUIT);
 	mode(1);
@@ -333,9 +333,9 @@ doit(sigset_t *smask)
 	 * signals to the child. We can now unblock SIGURG and SIGUSR1
 	 * that were set above.
 	 */
-	(void)sigprocmask(SIG_SETMASK, smask, (sigset_t *) 0);
+	(void)sigprocmask(SIG_SETMASK, smask, NULL);
 	sa.sa_handler = catch_child;
-	(void)sigaction(SIGCHLD, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGCHLD, &sa, NULL);
 	writer();
 	msg("closed connection.");
 	done(0);
@@ -357,9 +357,9 @@ setsignal(int sig)
 	isa.sa_flags = SA_RESTART;
 	(void)sigaction(sig, &isa, &osa);
 	if (osa.sa_handler == SIG_IGN)
-		(void)sigaction(sig, &osa, (struct sigaction *) 0);
+		(void)sigaction(sig, &osa, NULL);
 
-	(void)sigprocmask(SIG_SETMASK, &osigs, (sigset_t *) 0);
+	(void)sigprocmask(SIG_SETMASK, &osigs, NULL);
 }
 
 static void
@@ -375,7 +375,7 @@ done(int status)
 		sigemptyset(&sa.sa_mask);
 		sa.sa_handler = SIG_DFL;
 		sa.sa_flags = 0;
-		(void)sigaction(SIGCHLD, &sa, (struct sigaction *) 0);
+		(void)sigaction(SIGCHLD, &sa, NULL);
 		if (kill(child, SIGKILL) >= 0)
 			while ((w = wait(&wstatus)) > 0 && w != child)
 				continue;
@@ -399,7 +399,7 @@ writeroob(int signo)
 		sigemptyset(&sa.sa_mask);
 		sa.sa_handler = sigwinch;
 		sa.sa_flags = SA_RESTART;
-		(void)sigaction(SIGWINCH, &sa, (struct sigaction *) 0);
+		(void)sigaction(SIGWINCH, &sa, NULL);
 	}
 	dosigwinch = 1;
 }
@@ -430,7 +430,8 @@ catch_child(int signo)
 static void
 writer(void)
 {
-	int bol, local, n;
+	int bol, local;
+	ssize_t n;
 	char c;
 
 	bol = 1;			/* beginning of line */
@@ -523,10 +524,10 @@ stop(int all)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = SIG_IGN;
 	sa.sa_flags = SA_RESTART;
-	(void)sigaction(SIGCHLD, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGCHLD, &sa, NULL);
 	(void)kill(all ? 0 : getpid(), SIGTSTP);
 	sa.sa_handler = catch_child;
-	(void)sigaction(SIGCHLD, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGCHLD, &sa, NULL);
 	mode(1);
 	sigwinch(0);			/* check for size changes */
 }
@@ -573,18 +574,19 @@ sendwindow(void)
 
 static jmp_buf rcvtop;
 static pid_t ppid;
-static int rcvcnt, rcvstate;
+static ssize_t rcvcnt, rcvstate;
 static char rcvbuf[8 * 1024];
 
 static void
 oob(int signo)
 {
 	struct termios tty;
-	int atmark, n, rcvd;
+	int atmark;
+	ssize_t n, rcvd;
 	char waste[BUFSIZ], mark;
 
 	rcvd = 0;
-	while (recv(rem, &mark, 1, MSG_OOB) < 0) {
+	while (recv(rem, &mark, 1, MSG_OOB) == -1) {
 		switch (errno) {
 		case EWOULDBLOCK:
 			/*
@@ -592,7 +594,7 @@ oob(int signo)
 			 * to send it yet if we are blocked for output and
 			 * our input buffer is full.
 			 */
-			if (rcvcnt < (int)sizeof(rcvbuf)) {
+			if (rcvcnt < (ssize_t)sizeof(rcvbuf)) {
 				n = read(rem, rcvbuf + rcvcnt,
 				    sizeof(rcvbuf) - rcvcnt);
 				if (n <= 0)
@@ -661,7 +663,7 @@ static int
 reader(sigset_t *smask)
 {
 	pid_t pid;
-	int n, remaining;
+	ssize_t n, remaining;
 	char *bufp;
 	struct sigaction sa;
 
@@ -669,13 +671,13 @@ reader(sigset_t *smask)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
-	(void)sigaction(SIGTTOU, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGTTOU, &sa, NULL);
 	sa.sa_handler = oob;
-	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGURG, &sa, NULL);
 	ppid = getppid();
 	(void)fcntl(rem, F_SETOWN, pid);
 	(void)setjmp(rcvtop);
-	(void)sigprocmask(SIG_SETMASK, smask, (sigset_t *) 0);
+	(void)sigprocmask(SIG_SETMASK, smask, NULL);
 	bufp = rcvbuf;
 	for (;;) {
 		while ((remaining = rcvcnt - (bufp - rcvbuf)) > 0) {
@@ -742,7 +744,7 @@ lostpeer(int signo)
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
-	(void)sigaction(SIGPIPE, &sa, (struct sigaction *)0);
+	(void)sigaction(SIGPIPE, &sa, NULL);
 	msg("\aconnection closed.");
 	done(1);
 }
@@ -796,7 +798,7 @@ static u_int
 getescape(char *p)
 {
 	long val;
-	int len;
+	size_t len;
 
 	if ((len = strlen(p)) == 1)	/* use any single char, including '\' */
 		return ((u_int)*p);
