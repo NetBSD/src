@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.2 2015/02/05 01:26:54 agc Exp $	*/
+/*	$NetBSD: zlib.c,v 1.3 2020/05/04 00:18:34 agc Exp $	*/
 
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2005 Mark Adler
@@ -34,23 +34,23 @@
  * - Fix bug in reuse of allocated window after inflateReset()
  * - Remove bit fields--back to byte structure for speed
  * - Remove distance extra == 0 check in inflate_fast()--only helps for lengths
- * - Change post-increments to pre-increments in inflate_fast(), PPC biased?
+ * - Change post-increments to pre-increments in netpgpv_inflate_fast(), PPC biased?
  * - Add compile time option, POSTINC, to use post-increments instead (Intel?)
- * - Make MATCH copy in inflate() much faster for when inflate_fast() not used
+ * - Make MATCH copy in inflate() much faster for when netpgpv_inflate_fast() not used
  * - Use local copies of stream next and avail values, as well as local bit
- *   buffer and bit count in inflate()--for speed when inflate_fast() not used
+ *   buffer and bit count in inflate()--for speed when netpgpv_inflate_fast() not used
  *
  * 1.2.beta4    1 Jan 2003
- * - Split ptr - 257 statements in inflate_table() to avoid compiler warnings
+ * - Split ptr - 257 statements in netpgpv_inflate_table() to avoid compiler warnings
  * - Move a comment on output buffer sizes from inffast.c to inflate.c
- * - Add comments in inffast.c to introduce the inflate_fast() routine
- * - Rearrange window copies in inflate_fast() for speed and simplification
- * - Unroll last copy for window match in inflate_fast()
- * - Use local copies of window variables in inflate_fast() for speed
- * - Pull out common write == 0 case for speed in inflate_fast()
- * - Make op and len in inflate_fast() unsigned for consistency
- * - Add FAR to lcode and dcode declarations in inflate_fast()
- * - Simplified bad distance check in inflate_fast()
+ * - Add comments in inffast.c to introduce the netpgpv_inflate_fast() routine
+ * - Rearrange window copies in netpgpv_inflate_fast() for speed and simplification
+ * - Unroll last copy for window match in netpgpv_inflate_fast()
+ * - Use local copies of window variables in netpgpv_inflate_fast() for speed
+ * - Pull out common write == 0 case for speed in netpgpv_inflate_fast()
+ * - Make op and len in netpgpv_inflate_fast() unsigned for consistency
+ * - Add FAR to lcode and dcode declarations in netpgpv_inflate_fast()
+ * - Simplified bad distance check in netpgpv_inflate_fast()
  * - Added inflateBackInit(), inflateBack(), and inflateBackEnd() in new
  *   source file infback.c to provide a call-back interface to inflate for
  *   programs like gzip and unzip -- uses window as output buffer to avoid
@@ -237,14 +237,14 @@ struct inflate_state {
     code codes[ENOUGH];         /* space for code tables */
 };
 
-voidpf zcalloc(voidpf /*opaque*/, unsigned /*items*/, unsigned /*size*/);
-void zcfree (voidpf /*opaque*/, voidpf /*ptr*/);
-int inflate_table(codetype /*type*/, unsigned short FAR */*lens*/, unsigned /*codes*/,
+voidpf netpgpv_zcalloc(voidpf /*opaque*/, unsigned /*items*/, unsigned /*size*/);
+void netpgpv_zcfree (voidpf /*opaque*/, voidpf /*ptr*/);
+int netpgpv_inflate_table(codetype /*type*/, unsigned short FAR */*lens*/, unsigned /*codes*/,
 	code FAR * FAR */*table*/, unsigned FAR */*bits*/, unsigned short FAR */*work*/);
-void inflate_fast(z_streamp /*strm*/, unsigned /*start*/);
+void netpgpv_inflate_fast(z_streamp /*strm*/, unsigned /*start*/);
 
 voidpf
-zcalloc (voidpf opaque, unsigned items, unsigned size)
+netpgpv_zcalloc (voidpf opaque, unsigned items, unsigned size)
 {
     if (opaque) items += size - size; /* make compiler happy */
     return sizeof(uInt) > 2 ? (voidpf)malloc(items * size) :
@@ -252,7 +252,7 @@ zcalloc (voidpf opaque, unsigned items, unsigned size)
 }
 
 void
-zcfree (voidpf opaque, voidpf ptr)
+netpgpv_zcfree (voidpf opaque, voidpf ptr)
 {
     free(ptr);
     if (opaque) return; /* make compiler happy */
@@ -291,7 +291,7 @@ int ZEXPORT inflateReset(z_streamp strm)
     return Z_OK;
 }
 
-int ZEXPORT inflatePrime(z_streamp strm, int bits, int value)
+int ZEXPORT netpgpv_inflatePrime(z_streamp strm, int bits, int value)
 {
     struct inflate_state FAR *state;
 
@@ -314,10 +314,10 @@ int ZEXPORT inflateInit2_(z_streamp strm, int windowBits, const char *version, i
     if (strm == Z_NULL) return Z_STREAM_ERROR;
     strm->msg = Z_NULL;                 /* in case we return an error */
     if (strm->zalloc == (alloc_func)0) {
-        strm->zalloc = zcalloc;
+        strm->zalloc = netpgpv_zcalloc;
         strm->opaque = (voidpf)0;
     }
-    if (strm->zfree == (free_func)0) strm->zfree = zcfree;
+    if (strm->zfree == (free_func)0) strm->zfree = netpgpv_zcfree;
     state = (struct inflate_state FAR *)
             ZALLOC(strm, 1, sizeof(struct inflate_state));
     if (state == Z_NULL) return Z_MEM_ERROR;
@@ -361,7 +361,7 @@ int ZEXPORT inflateInit_( z_streamp strm, const char *version, int stream_size)
 local void
 fixedtables(struct inflate_state FAR *state)
 {
-/*	$NetBSD: zlib.c,v 1.2 2015/02/05 01:26:54 agc Exp $	*/
+/*	$NetBSD: zlib.c,v 1.3 2020/05/04 00:18:34 agc Exp $	*/
 
     /* inffixed.h -- table for decoding fixed codes
      * Generated automatically by makefixed().
@@ -762,7 +762,7 @@ adler32(uLong adler, const Bytef *buf, uInt len)
    longest code or if it is less than the shortest code.
  */
 int
-inflate_table(codetype type, unsigned short FAR *lens, unsigned codes,
+netpgpv_inflate_table(codetype type, unsigned short FAR *lens, unsigned codes,
 	code FAR * FAR *table, unsigned FAR *bits, unsigned short FAR *work)
 {
     unsigned len;               /* a code's length in bits */
@@ -1106,12 +1106,12 @@ inflate_table(codetype type, unsigned short FAR *lens, unsigned codes,
       checking for available input while decoding.
 
     - The maximum bytes that a single length/distance pair can output is 258
-      bytes, which is the maximum length that can be coded.  inflate_fast()
+      bytes, which is the maximum length that can be coded.  netpgpv_inflate_fast()
       requires strm->avail_out >= 258 for each loop to avoid checking for
       output space.
  */
 void
-inflate_fast(z_streamp strm, unsigned start)
+netpgpv_inflate_fast(z_streamp strm, unsigned start)
 /* inflate()'s starting value for strm->avail_out */
 {
     struct inflate_state FAR *state;
@@ -1748,7 +1748,7 @@ inflate(z_streamp strm, int flush)
             state->next = state->codes;
             state->lencode = (code const FAR *)(state->next);
             state->lenbits = 7;
-            ret = inflate_table(CODES, state->lens, 19, &(state->next),
+            ret = netpgpv_inflate_table(CODES, state->lens, 19, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
                 strm->msg = __UNCONST("invalid code lengths set");
@@ -1814,7 +1814,7 @@ inflate(z_streamp strm, int flush)
             state->next = state->codes;
             state->lencode = (code const FAR *)(state->next);
             state->lenbits = 9;
-            ret = inflate_table(LENS, state->lens, state->nlen, &(state->next),
+            ret = netpgpv_inflate_table(LENS, state->lens, state->nlen, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
                 strm->msg = __UNCONST("invalid literal/lengths set");
@@ -1823,7 +1823,7 @@ inflate(z_streamp strm, int flush)
             }
             state->distcode = (code const FAR *)(state->next);
             state->distbits = 6;
-            ret = inflate_table(DISTS, state->lens + state->nlen, state->ndist,
+            ret = netpgpv_inflate_table(DISTS, state->lens + state->nlen, state->ndist,
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
                 strm->msg = __UNCONST("invalid distances set");
@@ -1835,7 +1835,7 @@ inflate(z_streamp strm, int flush)
         case LEN:
             if (have >= 6 && left >= 258) {
                 RESTORE();
-                inflate_fast(strm, out);
+                netpgpv_inflate_fast(strm, out);
                 LOAD();
                 break;
             }
@@ -2092,7 +2092,7 @@ inflateSetDictionary(z_streamp strm, const Bytef *dictionary, uInt dictLength)
 }
 
 int ZEXPORT
-inflateGetHeader(z_streamp strm, gz_headerp head)
+netpgpv_inflateGetHeader(z_streamp strm, gz_headerp head)
 {
     struct inflate_state FAR *state;
 

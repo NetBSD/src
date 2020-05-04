@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib.h,v 1.1 2014/03/09 00:15:45 agc Exp $	*/
+/*	$NetBSD: bzlib.h,v 1.2 2020/05/04 00:18:34 agc Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -115,17 +115,17 @@ BZ_EXTERN int BZ_API(BZ2_bzCompressEnd) (
       bz_stream* strm 
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzDecompressInit) ( 
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzDecompressInit) ( 
       bz_stream *strm, 
       int       verbosity, 
       int       small
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzDecompress) ( 
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzDecompress) ( 
       bz_stream* strm 
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzDecompressEnd) ( 
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzDecompressEnd) ( 
       bz_stream *strm 
    );
 
@@ -138,7 +138,7 @@ BZ_EXTERN int BZ_API(BZ2_bzDecompressEnd) (
 
 typedef void BZFILE;
 
-BZ_EXTERN BZFILE* BZ_API(BZ2_bzReadOpen) ( 
+BZ_EXTERN BZFILE* BZ_API(netpgpv_BZ2_bzReadOpen) ( 
       int*  bzerror,   
       FILE* f, 
       int   verbosity, 
@@ -147,19 +147,19 @@ BZ_EXTERN BZFILE* BZ_API(BZ2_bzReadOpen) (
       int   nUnused 
    );
 
-BZ_EXTERN void BZ_API(BZ2_bzReadClose) ( 
+BZ_EXTERN void BZ_API(netpgpv_BZ2_bzReadClose) ( 
       int*    bzerror, 
       BZFILE* b 
    );
 
-BZ_EXTERN void BZ_API(BZ2_bzReadGetUnused) ( 
+BZ_EXTERN void BZ_API(netpgpv_BZ2_bzReadGetUnused) ( 
       int*    bzerror, 
       BZFILE* b, 
       void**  unused,  
       int*    nUnused 
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzRead) ( 
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzRead) ( 
       int*    bzerror, 
       BZFILE* b, 
       void*   buf, 
@@ -213,7 +213,7 @@ BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffCompress) (
       int           workFactor 
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffDecompress) ( 
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzBuffToBuffDecompress) ( 
       char*         dest, 
       unsigned int* destLen,
       char*         source, 
@@ -232,22 +232,22 @@ BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffDecompress) (
    If this code breaks, please contact both Yoshioka and me.
 --*/
 
-BZ_EXTERN const char * BZ_API(BZ2_bzlibVersion) (
+BZ_EXTERN const char * BZ_API(netpgpv_BZ2_bzlibVersion) (
       void
    );
 
 #ifndef BZ_NO_STDIO
-BZ_EXTERN BZFILE * BZ_API(BZ2_bzopen) (
+BZ_EXTERN BZFILE * BZ_API(netpgpv_BZ2_bzopen) (
       const char *path,
       const char *mode
    );
 
-BZ_EXTERN BZFILE * BZ_API(BZ2_bzdopen) (
+BZ_EXTERN BZFILE * BZ_API(netpgpv_BZ2_bzdopen) (
       int        fd,
       const char *mode
    );
          
-BZ_EXTERN int BZ_API(BZ2_bzread) (
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzread) (
       BZFILE* b, 
       void* buf, 
       int len 
@@ -259,15 +259,15 @@ BZ_EXTERN int BZ_API(BZ2_bzwrite) (
       int     len 
    );
 
-BZ_EXTERN int BZ_API(BZ2_bzflush) (
+BZ_EXTERN int BZ_API(netpgpv_BZ2_bzflush) (
       BZFILE* b
    );
 
-BZ_EXTERN void BZ_API(BZ2_bzclose) (
+BZ_EXTERN void BZ_API(netpgpv_BZ2_bzclose) (
       BZFILE* b
    );
 
-BZ_EXTERN const char * BZ_API(BZ2_bzerror) (
+BZ_EXTERN const char * BZ_API(netpgpv_BZ2_bzerror) (
       BZFILE *b, 
       int    *errnum
    );
