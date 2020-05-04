@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.181 2020/05/04 23:49:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.182 2020/05/04 23:53:20 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.181 2020/05/04 23:49:31 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.182 2020/05/04 23:53:20 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -3255,80 +3255,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_create);
 	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_exit);
 	ATF_TP_ADD_TC(tp, eventmask_preserved_posix_spawn);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_32);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_64);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_8);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_16);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_32);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_64);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_8);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_16);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_32);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_64);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_8);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_16);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_32);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_64);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_read_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_read_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_write_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_write_i);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_32_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_64_text);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_8_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_16_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_32_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_i_64_text);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_8_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_16_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_32_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_d_64_text);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_8_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_16_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_32_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_write_i_64_text);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_read_d_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_read_i_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_write_d_text);
-	ATF_TP_ADD_TC(tp, bytes_transfer_write_i_text);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_auxv);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_pt_read_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_pt_read_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_pt_write_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_pt_write_d);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_read_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_read_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_write_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_write_d);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_alignment_piod_read_auxv);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_read_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_read_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_write_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_pt_write_d);
-
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_read_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_read_d);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_write_i);
-	ATF_TP_ADD_TC(tp, bytes_transfer_eof_piod_write_d);
 
 	ATF_TP_ADD_TC(tp, traceme_lwpinfo0);
 	ATF_TP_ADD_TC(tp, traceme_lwpinfo1);
