@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.42 2020/05/03 17:36:33 thorpej Exp $	*/
+/*	$NetBSD: timevar.h,v 1.43 2020/05/04 18:23:37 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, The NetBSD Foundation.
@@ -200,6 +200,8 @@ void	time_init(void);
 void	time_init2(void);
 bool	time_wraps(struct timespec *, struct timespec *);
 
+void	timedwaitclock_setup(struct timedwaitclock *, struct timespec *,
+	    clockid_t, int, const struct bintime *);
 int	timedwaitclock_begin(struct timedwaitclock *, int *);
 void	timedwaitclock_end(struct timedwaitclock *);
 
