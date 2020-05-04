@@ -235,7 +235,7 @@ encodeblock(uint8_t *wordin, uint8_t *wordout, int wordlen)
 ** base64 encode a stream adding padding and line breaks as per spec.
 */
 int 
-b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int linesize)
+netpgpv_b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int linesize)
 {
 	const char	*inp;
 	unsigned	 i;
@@ -299,7 +299,7 @@ decodeblock(uint8_t wordin[4], uint8_t wordout[3])
 ** decode a base64 encoded stream discarding padding, line breaks and noise
 */
 int
-b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
+netpgpv_b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 {
 	const char	*inp;
 	unsigned	 wordlen;
@@ -349,7 +349,7 @@ b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 
 /* return the encoded size for n bytes input */
 int
-b64_encsize(unsigned n)
+netpgpv_b64_encsize(unsigned n)
 {
 	return ((4 * n) / 3) + 4;
 }

@@ -25,8 +25,8 @@
 #ifndef B64_H_
 #define B64_H_	20091223
 
-int b64encode(const char */*in*/, const size_t /*insize*/, void */*vp*/, size_t /*outsize*/, int /*linesize*/);
-int b64decode(const char */*in*/, const size_t /*insize*/, void */*vp*/, size_t /*outsize*/);
-int b64_encsize(unsigned /*n*/);
+int netpgpv_b64encode(const char */*in*/, const size_t /*insize*/, void */*vp*/, size_t /*outsize*/, int /*linesize*/);
+int netpgpv_b64decode(const char */*in*/, const size_t /*insize*/, void */*vp*/, size_t /*outsize*/);
+int netpgpv_b64_encsize(unsigned /*n*/);
 
 #endif

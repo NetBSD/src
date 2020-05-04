@@ -61,7 +61,7 @@ rsa_padding_check_none(uint8_t *to, int tlen, const uint8_t *from, int flen, int
 }
 
 static int
-lowlevel_rsa_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa)
+lowlevel_rsa_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, NETPGPV_RSA *rsa)
 {
 	PGPV_BIGNUM	*decbn;
 	PGPV_BIGNUM	*signedbn;
@@ -100,7 +100,7 @@ err:
 }
 
 static int
-lowlevel_rsa_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa)
+lowlevel_rsa_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, NETPGPV_RSA *rsa)
 {
 	PGPV_BIGNUM	*decbn;
 	PGPV_BIGNUM	*encbn;
@@ -143,7 +143,7 @@ err:
 }
 
 static int
-lowlevel_rsa_private_decrypt(int enclen, const unsigned char *encbuf, unsigned char *to, RSA *rsa)
+lowlevel_rsa_private_decrypt(int enclen, const unsigned char *encbuf, unsigned char *to, NETPGPV_RSA *rsa)
 {
 	PGPV_BIGNUM	*encbn;
 	PGPV_BIGNUM	*decbn;
@@ -185,7 +185,7 @@ err:
 }
 
 static int
-lowlevel_rsa_public_decrypt(const uint8_t *encbuf, int enclen, uint8_t *dec, const rsa_pubkey_t *rsa)
+lowlevel_rsa_public_decrypt(const uint8_t *encbuf, int enclen, uint8_t *dec, const netpgpv_rsa_pubkey_t *rsa)
 {
 	uint8_t		*decbuf;
 	PGPV_BIGNUM		*decbn;
@@ -404,7 +404,7 @@ cleanup:
 #define DSA_MAX_MODULUS_BITS	10000
 
 static int
-dsa_do_verify(const unsigned char *calculated, int dgst_len, const dsasig_t *sig, mpi_dsa_t *dsa)
+dsa_do_verify(const unsigned char *calculated, int dgst_len, const netpgpv_dsasig_t *sig, netpgpv_mpi_dsa_t *dsa)
 {
 	PGPV_BIGNUM		 *M;
 	PGPV_BIGNUM		 *W;
@@ -491,24 +491,26 @@ err:
 /*************************************************************************/
 
 int
-RSA_size(const RSA *rsa)
+netpgpv_RSA_size(const NETPGPV_RSA *rsa)
 {
 	return (rsa == NULL) ? 0 : PGPV_BN_num_bits(rsa->n);
 }
 
 int
-DSA_size(const DSA *dsa)
+netpgpv_DSA_size(const NETPGPV_DSA *dsa)
 {
 	return (dsa == NULL) ? 0 : PGPV_BN_num_bits(dsa->p);
 }
 
 unsigned 
-dsa_verify(const signature_t *signature, const dsa_pubkey_t *pubdsa, const uint8_t *calculated, size_t hash_length)
+netpgpv_dsa_verify(const signature_t *signature,
+	const netpgpv_dsa_pubkey_t *pubdsa, const uint8_t *calculated,
+	size_t hash_length)
 {
-	mpi_dsa_t	odsa;
-	dsasig_t	osig;
-	unsigned	qlen;
-	int             ret;
+	netpgpv_mpi_dsa_t	odsa;
+	netpgpv_dsasig_t	osig;
+	unsigned		qlen;
+	int	             ret;
 
 	if (signature == NULL || pubdsa == NULL || calculated == NULL) {
 		return -1;
@@ -539,14 +541,14 @@ dsa_verify(const signature_t *signature, const dsa_pubkey_t *pubdsa, const uint8
 	return (unsigned)ret;
 }
 
-RSA *
-RSA_new(void)
+NETPGPV_RSA *
+netpgpv_RSA_new(void)
 {
-	return netpgp_allocate(1, sizeof(RSA));
+	return netpgp_allocate(1, sizeof(NETPGPV_RSA));
 }
 
 void
-RSA_free(RSA *rsa)
+netpgpv_RSA_free(NETPGPV_RSA *rsa)
 {
 	if (rsa) {
 		netpgp_deallocate(rsa, sizeof(*rsa));
@@ -554,7 +556,7 @@ RSA_free(RSA *rsa)
 }
 
 int
-RSA_check_key(RSA *rsa)
+netpgpv_RSA_check_key(NETPGPV_RSA *rsa)
 {
 	PGPV_BIGNUM	*calcn;
 	int	 ret;
@@ -580,8 +582,8 @@ errout:
 	return ret;
 }
 
-RSA *
-RSA_generate_key(int num, unsigned long e, void (*callback)(int,int,void *), void *cb_arg)
+NETPGPV_RSA *
+netpgpv_RSA_generate_key(int num, unsigned long e, void (*callback)(int,int,void *), void *cb_arg)
 {
 	/* STUBBED */
 	USE_ARG(num);
@@ -589,12 +591,12 @@ RSA_generate_key(int num, unsigned long e, void (*callback)(int,int,void *), voi
 	USE_ARG(callback);
 	USE_ARG(cb_arg);
 	printf("RSA_generate_key stubbed\n");
-	return RSA_new();
+	return netpgpv_RSA_new();
 }
 
 /* encrypt */
 int
-RSA_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa, int padding)
+netpgpv_RSA_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, NETPGPV_RSA *rsa, int padding)
 {
 	USE_ARG(padding);
 	if (plain == NULL || encbuf == NULL || rsa == NULL) {
@@ -605,7 +607,7 @@ RSA_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf
 
 /* decrypt */
 int
-RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, int padding)
+netpgpv_RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to, NETPGPV_RSA *rsa, int padding)
 {
 	USE_ARG(padding);
 	if (from == NULL || to == NULL || rsa == NULL) {
@@ -616,7 +618,7 @@ RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to, RSA 
 
 /* sign */
 int
-RSA_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa, int padding)
+netpgpv_RSA_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, NETPGPV_RSA *rsa, int padding)
 {
 	USE_ARG(padding);
 	if (plain == NULL || encbuf == NULL || rsa == NULL) {
@@ -627,10 +629,10 @@ RSA_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbu
 
 /* verify */
 int
-RSA_public_decrypt(int enclen, const unsigned char *enc, unsigned char *dec, RSA *rsa, int padding)
+netpgpv_RSA_public_decrypt(int enclen, const unsigned char *enc, unsigned char *dec, NETPGPV_RSA *rsa, int padding)
 {
-	rsa_pubkey_t	pub;
-	int		ret;
+	netpgpv_rsa_pubkey_t	pub;
+	int			ret;
 
 	if (enc == NULL || dec == NULL || rsa == NULL) {
 		return 0;
@@ -647,47 +649,47 @@ RSA_public_decrypt(int enclen, const unsigned char *enc, unsigned char *dec, RSA
 
 /***********************************************************************/
 
-DSA *
-DSA_new(void)
+NETPGPV_DSA *
+netpgpv_DSA_new(void)
 {
-	return netpgp_allocate(1, sizeof(DSA));
+	return netpgp_allocate(1, sizeof(NETPGPV_DSA));
 }
 
 void
-DSA_free(DSA *dsa)
+netpgpv_DSA_free(NETPGPV_DSA *dsa)
 {
 	if (dsa) {
 		netpgp_deallocate(dsa, sizeof(*dsa));
 	}
 }
 
-DSA_SIG *
-DSA_SIG_new(void)
+NETPGPV_DSA_SIG *
+netpgpv_DSA_SIG_new(void)
 {
-	return netpgp_allocate(1, sizeof(DSA_SIG));
+	return netpgp_allocate(1, sizeof(NETPGPV_DSA_SIG));
 }
 
 void
-DSA_SIG_free(DSA_SIG *sig)
+netpgpv_DSA_SIG_free(NETPGPV_DSA_SIG *sig)
 {
 	if (sig) {
 		netpgp_deallocate(sig, sizeof(*sig));
 	}
 }
 
-DSA_SIG *
-DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+NETPGPV_DSA_SIG *
+netpgpv_DSA_do_sign(const unsigned char *dgst, int dlen, NETPGPV_DSA *dsa)
 {
 	/* STUBBED */
 	USE_ARG(dgst);
 	USE_ARG(dlen);
 	USE_ARG(dsa);
 	printf("DSA_do_sign stubbed\n");
-	return DSA_SIG_new();
+	return netpgpv_DSA_SIG_new();
 }
 
 int
-DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
+netpgpv_DSA_do_verify(const unsigned char *dgst, int dgst_len, NETPGPV_DSA_SIG *sig, NETPGPV_DSA *dsa)
 {
 	if (dgst == NULL || dgst_len == 0 || sig == NULL || dsa == NULL) {
 		return -1;

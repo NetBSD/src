@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.h,v 1.1 2014/03/09 00:15:45 agc Exp $	*/
+/*	$NetBSD: zlib.h,v 1.2 2020/05/04 00:18:34 agc Exp $	*/
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.3, July 18th, 2005
@@ -35,7 +35,7 @@
 
 #include "config.h"
 
-/*	$NetBSD: zlib.h,v 1.1 2014/03/09 00:15:45 agc Exp $	*/
+/*	$NetBSD: zlib.h,v 1.2 2020/05/04 00:18:34 agc Exp $	*/
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -49,55 +49,58 @@
 
 #include <sys/types.h>
 
+/* we don't want these colliding with anything else out there */
+#define	Z_PREFIX	1
+
 /*
  * If you *really* need a unique prefix for all types and library functions,
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
  */
 #ifdef Z_PREFIX
-#  define deflateInit_          z_deflateInit_
-#  define deflate               z_deflate
-#  define deflateEnd            z_deflateEnd
-#  define inflateInit_          z_inflateInit_
-#  define inflate               z_inflate
-#  define inflateEnd            z_inflateEnd
-#  define deflateInit2_         z_deflateInit2_
-#  define deflateSetDictionary  z_deflateSetDictionary
-#  define deflateCopy           z_deflateCopy
-#  define deflateReset          z_deflateReset
-#  define deflateParams         z_deflateParams
-#  define deflateBound          z_deflateBound
-#  define deflatePrime          z_deflatePrime
-#  define inflateInit2_         z_inflateInit2_
-#  define inflateSetDictionary  z_inflateSetDictionary
-#  define inflateSync           z_inflateSync
-#  define inflateSyncPoint      z_inflateSyncPoint
-#  define inflateCopy           z_inflateCopy
-#  define inflateReset          z_inflateReset
-#  define inflateBack           z_inflateBack
-#  define inflateBackEnd        z_inflateBackEnd
-#  define compress              z_compress
-#  define compress2             z_compress2
-#  define compressBound         z_compressBound
-#  define uncompress            z_uncompress
-#  define adler32               z_adler32
-#  define crc32                 z_crc32
-#  define get_crc_table         z_get_crc_table
-#  define zError                z_zError
+#  define deflateInit_          netpgpv_z_deflateInit_
+#  define deflate               netpgpv_z_deflate
+#  define deflateEnd            netpgpv_z_deflateEnd
+#  define inflateInit_          netpgpv_z_inflateInit_
+#  define inflate               netpgpv_z_inflate
+#  define inflateEnd            netpgpv_z_inflateEnd
+#  define deflateInit2_         netpgpv_z_deflateInit2_
+#  define deflateSetDictionary  netpgpv_z_deflateSetDictionary
+#  define deflateCopy           netpgpv_z_deflateCopy
+#  define deflateReset          netpgpv_z_deflateReset
+#  define deflateParams         netpgpv_z_deflateParams
+#  define deflateBound          netpgpv_z_deflateBound
+#  define deflatePrime          netpgpv_z_deflatePrime
+#  define inflateInit2_         netpgpv_z_inflateInit2_
+#  define inflateSetDictionary  netpgpv_z_inflateSetDictionary
+#  define inflateSync           netpgpv_z_inflateSync
+#  define inflateSyncPoint      netpgpv_z_inflateSyncPoint
+#  define inflateCopy           netpgpv_z_inflateCopy
+#  define inflateReset          netpgpv_z_inflateReset
+#  define inflateBack           netpgpv_z_inflateBack
+#  define inflateBackEnd        netpgpv_z_inflateBackEnd
+#  define compress              netpgpv_z_compress
+#  define compress2             netpgpv_z_compress2
+#  define compressBound         netpgpv_z_compressBound
+#  define uncompress            netpgpv_z_uncompress
+#  define adler32               netpgpv_z_adler32
+#  define crc32                 netpgpv_z_crc32
+#  define get_crc_table         netpgpv_z_get_crc_table
+#  define zError                netpgpv_z_zError
 
-#  define alloc_func            z_alloc_func
-#  define free_func             z_free_func
-#  define in_func               z_in_func
-#  define out_func              z_out_func
-#  define Byte                  z_Byte
-#  define uInt                  z_uInt
-#  define uLong                 z_uLong
-#  define Bytef                 z_Bytef
-#  define charf                 z_charf
-#  define intf                  z_intf
-#  define uIntf                 z_uIntf
-#  define uLongf                z_uLongf
-#  define voidpf                z_voidpf
-#  define voidp                 z_voidp
+#  define alloc_func            netpgpv_z_alloc_func
+#  define free_func             netpgpv_z_free_func
+#  define in_func               netpgpv_z_in_func
+#  define out_func              netpgpv_z_out_func
+#  define Byte                  netpgpv_z_Byte
+#  define uInt                  netpgpv_z_uInt
+#  define uLong                 netpgpv_z_uLong
+#  define Bytef                 netpgpv_z_Bytef
+#  define charf                 netpgpv_z_charf
+#  define intf                  netpgpv_z_intf
+#  define uIntf                 netpgpv_z_uIntf
+#  define uLongf                netpgpv_z_uLongf
+#  define voidpf                netpgpv_z_voidpf
+#  define voidp                 netpgpv_z_voidp
 #endif
 
 #if defined(__MSDOS__) && !defined(MSDOS)
@@ -1138,7 +1141,7 @@ ZEXTERN int ZEXPORT inflateReset OF((z_streamp strm));
    stream state was inconsistent (such as zalloc or state being NULL).
 */
 
-ZEXTERN int ZEXPORT inflatePrime OF((z_streamp strm,
+ZEXTERN int ZEXPORT netpgpv_inflatePrime OF((z_streamp strm,
                                      int bits,
                                      int value));
 /*
@@ -1150,15 +1153,15 @@ ZEXTERN int ZEXPORT inflatePrime OF((z_streamp strm,
   inflateReset().  bits must be less than or equal to 16, and that many of the
   least significant bits of value will be inserted in the input.
 
-      inflatePrime returns Z_OK if success, or Z_STREAM_ERROR if the source
+      netpgpv_inflatePrime returns Z_OK if success, or Z_STREAM_ERROR if the source
    stream state was inconsistent.
 */
 
-ZEXTERN int ZEXPORT inflateGetHeader OF((z_streamp strm,
+ZEXTERN int ZEXPORT netpgpv_inflateGetHeader OF((z_streamp strm,
                                          gz_headerp head));
 /*
-      inflateGetHeader() requests that gzip header information be stored in the
-   provided gz_header structure.  inflateGetHeader() may be called after
+      netpgpv_inflateGetHeader() requests that gzip header information be stored in the
+   provided gz_header structure.  netpgpv_inflateGetHeader() may be called after
    inflateInit2() or inflateReset(), and before the first call of inflate().
    As inflate() processes the gzip stream, head->done is zero until the header
    is completed, at which time head->done is set to one.  If a zlib stream is
@@ -1184,13 +1187,13 @@ ZEXTERN int ZEXPORT inflateGetHeader OF((z_streamp strm,
    allocated memory, then the application will need to save those pointers
    elsewhere so that they can be eventually freed.
 
-      If inflateGetHeader is not used, then the header information is simply
+      If netpgpv_inflateGetHeader is not used, then the header information is simply
    discarded.  The header is always checked for validity, including the header
    CRC if present.  inflateReset() will reset the process to discard the header
-   information.  The application would need to call inflateGetHeader() again to
+   information.  The application would need to call netpgpv_inflateGetHeader() again to
    retrieve the header from the next gzip stream.
 
-      inflateGetHeader returns Z_OK if success, or Z_STREAM_ERROR if the source
+      netpgpv_inflateGetHeader returns Z_OK if success, or Z_STREAM_ERROR if the source
    stream state was inconsistent.
 */
 

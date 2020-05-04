@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib_private.h,v 1.3 2015/02/05 01:26:54 agc Exp $	*/
+/*	$NetBSD: bzlib_private.h,v 1.4 2020/05/04 00:18:34 agc Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -61,9 +61,9 @@ typedef unsigned short  UInt16;
 #define __dead
 #endif
 
-void BZ2_bz__AssertH__fail ( int errcode ) __dead;
+void netpgpv_BZ2_bz__AssertH__fail ( int errcode ) __dead;
 #define AssertH(cond,errcode) \
-   { if (!(cond)) BZ2_bz__AssertH__fail ( errcode ); }
+   { if (!(cond)) netpgpv_BZ2_bz__AssertH__fail ( errcode ); }
 
 #if BZ_DEBUG
 #define AssertD(cond,msg) \
@@ -134,7 +134,7 @@ extern void bz_internal_error ( int errcode );
 
 /*-- Stuff for randomising repetitive blocks. --*/
 
-extern Int32 BZ2_rNums[512];
+extern Int32 netpgpv_BZ2_rNums[512];
 
 #define BZ_RAND_DECLS                          \
    Int32 rNToGo;                               \
@@ -148,7 +148,7 @@ extern Int32 BZ2_rNums[512];
 
 #define BZ_RAND_UPD_MASK                       \
    if (s->rNToGo == 0) {                       \
-      s->rNToGo = BZ2_rNums[s->rTPos];         \
+      s->rNToGo = netpgpv_BZ2_rNums[s->rTPos];         \
       s->rTPos++;                              \
       if (s->rTPos == 512) s->rTPos = 0;       \
    }                                           \
@@ -158,7 +158,7 @@ extern Int32 BZ2_rNums[512];
 
 /*-- Stuff for doing CRCs. --*/
 
-extern UInt32 BZ2_crc32Table[256];
+extern UInt32 netpgpv_BZ2_crc32Table[256];
 
 #define BZ_INITIALISE_CRC(crcVar)              \
 {                                              \
@@ -173,7 +173,7 @@ extern UInt32 BZ2_crc32Table[256];
 #define BZ_UPDATE_CRC(crcVar,cha)              \
 {                                              \
    crcVar = (crcVar << 8) ^                    \
-            BZ2_crc32Table[(crcVar >> 24) ^    \
+            netpgpv_BZ2_crc32Table[(crcVar >> 24) ^    \
                            ((UChar)cha)];      \
 }
 
@@ -285,10 +285,10 @@ extern void
 BZ2_bsInitWrite ( EState* );
 
 extern void 
-BZ2_hbAssignCodes ( Int32*, UChar*, Int32, Int32, Int32 );
+netpgpv_BZ2_hbAssignCodes ( Int32*, UChar*, Int32, Int32, Int32 );
 
 extern void 
-BZ2_hbMakeCodeLengths ( UChar*, Int32*, Int32, Int32 );
+netpgpv_BZ2_hbMakeCodeLengths ( UChar*, Int32*, Int32, Int32 );
 
 
 
@@ -481,20 +481,20 @@ typedef
 #define BZ_GET_SMALL(cccc)                            \
     /* c_tPos is unsigned, hence test < 0 is pointless. */ \
     if (s->tPos >= (UInt32)100000 * (UInt32)s->blockSize100k) return True; \
-    cccc = BZ2_indexIntoF ( s->tPos, s->cftab );    \
+    cccc = netpgpv_BZ2_indexIntoF ( s->tPos, s->cftab );    \
     s->tPos = GET_LL(s->tPos);
 
 
 /*-- externs for decompression. --*/
 
 extern Int32 
-BZ2_indexIntoF ( Int32, Int32* );
+netpgpv_BZ2_indexIntoF ( Int32, Int32* );
 
 extern Int32 
-BZ2_decompress ( DState* );
+netpgpv_BZ2_decompress ( DState* );
 
 extern void 
-BZ2_hbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
+netpgpv_BZ2_hbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
                            Int32,  Int32, Int32 );
 
 
