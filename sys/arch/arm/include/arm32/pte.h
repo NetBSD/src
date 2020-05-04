@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.22 2020/02/02 09:19:48 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.23 2020/05/04 18:36:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -89,7 +89,11 @@
 
 #ifndef _LOCORE
 typedef uint32_t	pd_entry_t;	/* L1 table entry */
-typedef uint32_t	pt_entry_t;	/* L2 table entry */
+#ifndef	__BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
+typedef uint32_t pt_entry_t;
+#define PRIxPTE		PRIx32
+#endif
 #endif /* _LOCORE */
 
 #define	L1_SS_SIZE	0x01000000	/* 16M */
