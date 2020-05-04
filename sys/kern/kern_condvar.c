@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.50 2020/05/03 17:36:33 thorpej Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.51 2020/05/04 18:23:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.50 2020/05/03 17:36:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.51 2020/05/04 18:23:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,12 +261,7 @@ int
 cv_timedwaitclock(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
     clockid_t clockid, int flags, const struct bintime *epsilon)
 {
-	struct timedwaitclock T = {
-		.timeout = timeout,
-		.clockid = clockid,
-		.flags = flags,
-		.epsilon = epsilon,
-	};
+	struct timedwaitclock T;
 	int timo;
 	int error;
 
@@ -275,6 +270,7 @@ cv_timedwaitclock(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
 		return 0;
 	}
 
+	timedwaitclock_setup(&T, timeout, clockid, flags, epsilon);
 	error = timedwaitclock_begin(&T, &timo);
 	if (error)
 		return error;
@@ -301,18 +297,14 @@ int
 cv_timedwaitclock_sig(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
     clockid_t clockid, int flags, const struct bintime *epsilon)
 {
-	struct timedwaitclock T = {
-		.timeout = timeout,
-		.clockid = clockid,
-		.flags = flags,
-		.epsilon = epsilon,
-	};
+	struct timedwaitclock T;
 	int timo;
 	int error;
 
 	if (timeout == NULL)
 		return cv_wait_sig(cv, mtx);
 
+	timedwaitclock_setup(&T, timeout, clockid, flags, epsilon);
 	error = timedwaitclock_begin(&T, &timo);
 	if (error)
 		return error;
