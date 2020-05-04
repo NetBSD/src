@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_clone_wait.h,v 1.1 2020/05/04 22:15:23 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_clone_wait.h,v 1.2 2020/05/04 22:24:31 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
