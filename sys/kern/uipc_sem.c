@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.58 2019/12/17 18:16:05 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.59 2020/05/04 13:58:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.58 2019/12/17 18:16:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.59 2020/05/04 13:58:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,6 +110,7 @@ static kauth_listener_t	ksem_listener;
 static int		ksem_sysinit(void);
 static int		ksem_sysfini(bool);
 static int		ksem_modcmd(modcmd_t, void *);
+static void		ksem_release(ksem_t *, int);
 static int		ksem_close_fop(file_t *);
 static int		ksem_stat_fop(file_t *, struct stat *);
 static int		ksem_read_fop(file_t *, off_t *, struct uio *,
@@ -365,6 +366,7 @@ ksem_lookup_pshared(intptr_t id)
 static void
 ksem_alloc_pshared_id(ksem_t *ksem)
 {
+	ksem_t *ksem0;
 	uint32_t try;
 
 	KASSERT(ksem->ks_pshared_proc != NULL);
@@ -374,10 +376,11 @@ ksem_alloc_pshared_id(ksem_t *ksem)
 		try = (cprng_fast32() & ~KSEM_MARKER_MASK) |
 		    KSEM_PSHARED_MARKER;
 
-		if (ksem_lookup_pshared_locked(try) == NULL) {
+		if ((ksem0 = ksem_lookup_pshared_locked(try)) == NULL) {
 			/* Got it! */
 			break;
 		}
+		ksem_release(ksem0, -1);
 	}
 	ksem->ks_pshared_id = try;
 	u_long bucket = KSEM_PSHARED_HASH(ksem->ks_pshared_id);
