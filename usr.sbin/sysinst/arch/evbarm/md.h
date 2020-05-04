@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2020/01/20 21:26:35 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2020/05/04 18:19:34 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@
 #define BOARD_TYPE_NORMAL	0	/* assume u-boot */
 #define BOARD_TYPE_RPI		1	/* RPi firmware booted us */
 #define	BOARD_TYPE_ACPI		2	/* generic SBSA machine */
-int boardtype;
+extern int boardtype;
 
 /*
  * Size limit for the initial GPT part, in bytes. This allows us to
