@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_wait4.c,v 1.2 2019/02/10 02:13:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait4.c,v 1.3 2020/05/04 23:49:31 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
