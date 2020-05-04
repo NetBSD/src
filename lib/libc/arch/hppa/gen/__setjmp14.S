@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.7 2020/05/03 15:29:22 skrll Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.8 2020/05/04 06:42:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,14 +30,11 @@
  */
 
 #include <machine/asm.h>
-/* XXX fredette - this is awful */
-#define _LOCORE
 #include <machine/frame.h>
-#undef _LOCORE
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.7 2020/05/03 15:29:22 skrll Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.8 2020/05/04 06:42:11 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
