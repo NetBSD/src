@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.22 2020/05/03 17:36:33 thorpej Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.23 2020/05/04 18:23:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.22 2020/05/03 17:36:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.23 2020/05/04 18:23:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -355,6 +355,38 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	return 0;
 }
 
+/*
+ * timedwaitclock_setup(T, timeout, clockid, flags, epsilon)
+ *
+ *	Initialize state for a timedwaitclock, to be used subsequently
+ *	with timedwaitclock_begin/end, possibly many times in a row.
+ *
+ *	No cleanup action required at the end; the caller-allocated
+ *	(typically stack-allocated) timedwaitclock just holds
+ *	parameters and a little state for timedwaitclock_begin/end.
+ */
+void
+timedwaitclock_setup(struct timedwaitclock *T, struct timespec *timeout,
+    clockid_t clockid, int flags, const struct bintime *epsilon)
+{
+
+	memset(T, 0, sizeof(*T));
+	T->timeout = timeout;
+	T->clockid = clockid;
+	T->flags = flags;
+	T->epsilon = epsilon;
+	T->starttime = (struct timespec){0,0};
+}
+
+/*
+ * timedwaitclock_begin(T, timo)
+ *
+ *	Decide how many ticks to wait for the timedwaitclock T and
+ *	store it in *timo.  Keep state for timedwaitclock_end.  May
+ *	fail with EINVAL if the specified timeout is invalid, or if the
+ *	specified clock fails.  Fails with ETIMEDOUT if there is no
+ *	time left to wait.
+ */
 int
 timedwaitclock_begin(struct timedwaitclock *T, int *timo)
 {
@@ -406,6 +438,14 @@ timedwaitclock_begin(struct timedwaitclock *T, int *timo)
 	return 0;
 }
 
+/*
+ * timedwaitclock_end(T)
+ *
+ *	If the timedwaitclock T was relative, update the caller's
+ *	original timeout to reflect how much time is left, or zero if
+ *	there is no time left or if the clock has gone bad, so that the
+ *	next timedwaitclock_begin will immediately time out.
+ */
 void
 timedwaitclock_end(struct timedwaitclock *T)
 {
