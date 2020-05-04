@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2012-2019 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 # include <stdio.h>
 #endif
 
-#ifndef __BEGIN_DECLS
+#if !defined(__BEGIN_DECLS)
 #  if defined(__cplusplus)
 #  define __BEGIN_DECLS           extern "C" {
 #  define __END_DECLS             }
@@ -50,6 +50,7 @@ __BEGIN_DECLS
 #define	BN_CTX		PGPV_BN_CTX
 #define BN_is_negative	PGPV_BN_is_negative
 #define BN_is_zero	PGPV_BN_is_zero
+#define BN_is_one	PGPV_BN_is_one
 #define BN_is_odd	PGPV_BN_is_odd
 #define BN_is_even	PGPV_BN_is_even
 #define BN_new		PGPV_BN_new
@@ -61,6 +62,7 @@ __BEGIN_DECLS
 #define BN_clear_free	PGPV_BN_clear_free
 #define BN_cmp		PGPV_BN_cmp
 #define BN_bn2bin	PGPV_BN_bn2bin
+#define BN_bin2bn	PGPV_BN_bin2bn
 #define BN_bn2hex	PGPV_BN_bn2hex
 #define BN_bn2dec	PGPV_BN_bn2dec
 #define BN_bn2radix	PGPV_BN_bn2radix
@@ -87,6 +89,7 @@ __BEGIN_DECLS
 #define BN_mod_exp	PGPV_BN_mod_exp
 #define BN_mod_inverse	PGPV_BN_mod_inverse
 #define BN_mod_mul	PGPV_BN_mod_mul
+#define BN_mod_add	PGPV_BN_mod_add
 #define BN_mod_sub	PGPV_BN_mod_sub
 #define BN_raise	PGPV_BN_raise
 #define BN_factorial	PGPV_BN_factorial
@@ -102,6 +105,8 @@ __BEGIN_DECLS
 #define BN_value_one	PGPV_BN_value_one
 #define BN_is_bit_set	PGPV_BN_is_bit_set
 #define BN_gcd		PGPV_BN_gcd
+#define BN_sub_word	PGPV_BN_sub_word
+#define BN_add_word	PGPV_BN_add_word
 #endif /* USE_BN_INTERFACE */
 
 /* should be 32bit on ILP32, 64bit on LP64 */
@@ -142,6 +147,7 @@ typedef struct bn_ctx_t {
 
 #define PGPV_BN_is_negative(x)	((x)->sign == MP_NEG)
 #define PGPV_BN_is_zero(a) 		(((a)->used == 0) ? 1 : 0)
+#define PGPV_BN_is_one(a) 		(((a)->used == 1 && (a)->dp[0] == 1) ? 1 : 0)
 #define PGPV_BN_is_odd(a)  		(((a)->used > 0 && (((a)->dp[0] & 1) == 1)) ? 1 : 0)
 #define PGPV_BN_is_even(a) 		(((a)->used > 0 && (((a)->dp[0] & 1) == 0)) ? 1 : 0)
 
@@ -184,9 +190,10 @@ void PGPV_BN_set_negative(PGPV_BIGNUM */*a*/, int /*n*/);
 int PGPV_BN_num_bytes(const PGPV_BIGNUM */*a*/);
 int PGPV_BN_num_bits(const PGPV_BIGNUM */*a*/);
 
-int PGPV_BN_mod_exp(PGPV_BIGNUM */*r*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*p*/, PGPV_BIGNUM */*m*/, PGPV_BN_CTX */*ctx*/);
+int PGPV_BN_mod_exp(PGPV_BIGNUM */*r*/, PGPV_BIGNUM */*a*/, const PGPV_BIGNUM */*p*/, const PGPV_BIGNUM */*m*/, PGPV_BN_CTX */*ctx*/);
 PGPV_BIGNUM *PGPV_BN_mod_inverse(PGPV_BIGNUM */*ret*/, PGPV_BIGNUM */*a*/, const PGPV_BIGNUM */*n*/, PGPV_BN_CTX */*ctx*/);
 int PGPV_BN_mod_mul(PGPV_BIGNUM */*ret*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*b*/, const PGPV_BIGNUM */*m*/, PGPV_BN_CTX */*ctx*/);
+int PGPV_BN_mod_add(PGPV_BIGNUM */*ret*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*b*/, const PGPV_BIGNUM */*m*/, PGPV_BN_CTX */*ctx*/);
 int PGPV_BN_mod_sub(PGPV_BIGNUM */*r*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*b*/, const PGPV_BIGNUM */*m*/, PGPV_BN_CTX */*ctx*/);
 
 int PGPV_BN_raise(PGPV_BIGNUM */*res*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*b*/);
@@ -208,6 +215,9 @@ const PGPV_BIGNUM *PGPV_BN_value_one(void);
 int PGPV_BN_is_bit_set(const PGPV_BIGNUM */*a*/, int /*n*/);
 
 int PGPV_BN_gcd(PGPV_BIGNUM */*r*/, PGPV_BIGNUM */*a*/, PGPV_BIGNUM */*b*/, PGPV_BN_CTX */*ctx*/);
+
+int PGPV_BN_sub_word(PGPV_BIGNUM */*a*/, PGPV_BN_ULONG /*w*/);
+int PGPV_BN_add_word(PGPV_BIGNUM */*a*/, PGPV_BN_ULONG /*w*/);
 
 __END_DECLS
 
