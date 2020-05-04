@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2684 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2685 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -189,3 +189,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xen: Added support for Xen PVH. [bouyer 20200502]
 	hp300: Add bitmap access ops support for EVRX framebuffer on
 		HP9000/425e. [tsutsui 20200504]
+	xennet(4): add support for feature-sg & jumbo frames [jdolecek 20200430]
+	xvif(4): add support for feature-sg & jumbo frames [jdolecek 20200503]
+	xen: Support MSI for XenPV [jdolecek 20200504]
