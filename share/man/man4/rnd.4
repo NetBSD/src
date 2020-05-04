@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.33 2020/05/01 19:56:08 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.34 2020/05/04 15:10:40 wiz Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -463,14 +463,15 @@ pool at the next consolidation, such as from triggering
 .It Dv kern.entropy.epoch Pq Vt unsigned int
 Number of times system has reached full entropy, or entropy has been
 consolidated with
-.Dv kern.entropy.consolidate , as an unsigned 32-bit integer.
+.Dv kern.entropy.consolidate ,
+as an unsigned 32-bit integer.
 Consulted inside the kernel by subsystems such as
 .Xr cprng 9
 to decide whether to reseed.
-Initially set to 2^32 - 1
-.Pq i.e., Li "(unsigned)-1"
+Initially set to 2^32 \- 1
+.Pq i.e., Li "(unsigned)\-1"
 meaning the system has never reached full entropy and the entropy has
-never been consolidated; never again set to 2^32 - 1.
+never been consolidated; never again set to 2^32 \- 1.
 Never zero, so applications can initialize a cache of the epoch to zero
 to ensure they reseed the next time they check whether it is different
 from the stored epoch.
