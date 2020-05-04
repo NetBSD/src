@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.100 2020/01/25 18:38:35 thorpej Exp $
+#	$NetBSD: MALTA,v 1.101 2020/05/04 12:15:43 simonb Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.100 $"
+#ident 		"MALTA-$Revision: 1.101 $"
 
 maxusers	32
 
@@ -64,7 +64,7 @@ file-system	TMPFS		# Efficient memory file system
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
-#file-system	PTYFS		# /dev/pts/N support
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server

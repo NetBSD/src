@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.68 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: ALCHEMY,v 1.69 2020/05/04 12:15:43 simonb Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.68 $"
+#ident 		"ALCHEMY-$Revision: 1.69 $"
 
 maxusers	32
 
@@ -68,7 +68,7 @@ file-system	FDESC		# user file descriptor filesystem
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
-#file-system	PTYFS		# /dev/pts/N support
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
