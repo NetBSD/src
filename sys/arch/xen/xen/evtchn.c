@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.91 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.92 2020/05/04 15:55:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.91 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.92 2020/05/04 15:55:56 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.91 2020/04/25 15:26:18 bouyer Exp $");
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/xenfunc.h>
+
+#define	NR_PIRQS	NR_EVENT_CHANNELS
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -193,7 +195,7 @@ struct pic xen_pic = {
 
 int debug_port = -1;
 
-// #define IRQ_DEBUG 4
+/* #define IRQ_DEBUG 4 */
 
 /* http://mail-index.netbsd.org/port-amd64/2004/02/22/0000.html */
 #ifdef MULTIPROCESSOR
