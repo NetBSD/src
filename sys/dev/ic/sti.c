@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.20 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: sti.c,v 1.21 2020/05/04 06:52:53 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.20 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.21 2020/05/04 06:52:53 tsutsui Exp $");
 
 #include "wsdisplay.h"
 
@@ -103,9 +103,6 @@ enum sti_bmove_funcs {
 	bmf_clear, bmf_copy, bmf_invert, bmf_underline
 };
 
-int	sti_init(struct sti_screen *, int);
-#define	STI_TEXTMODE	0x01
-#define	STI_CLEARSCR	0x02
 int	sti_inqcfg(struct sti_screen *, struct sti_inqconfout *);
 void	sti_bmove(struct sti_screen *, int, int, int, int, int, int,
 	    enum sti_bmove_funcs);
@@ -844,10 +841,16 @@ sti_init(struct sti_screen *scr, int mode)
 	KASSERT(rom != NULL);
 	memset(&a, 0, sizeof(a));
 
-	a.flags.flags = STI_INITF_WAIT | STI_INITF_CMB | STI_INITF_EBET |
-	    (mode & STI_TEXTMODE ? STI_INITF_TEXT | STI_INITF_PBET |
-	     STI_INITF_PBETI | STI_INITF_ICMT : 0) |
-	    (mode & STI_CLEARSCR ? STI_INITF_CLEAR : 0);
+	a.flags.flags = STI_INITF_WAIT | STI_INITF_EBET;
+	if ((mode & STI_TEXTMODE) != 0) {
+		a.flags.flags |= STI_INITF_TEXT | STI_INITF_CMB |
+		    STI_INITF_PBET | STI_INITF_PBETI | STI_INITF_ICMT;
+	} else {
+		a.flags.flags |= STI_INITF_NTEXT;
+	}
+	if ((mode & STI_CLEARSCR) != 0)
+		a.flags.flags |= STI_INITF_CLEAR;
+
 	a.in.text_planes = 1;
 	a.in.ext_in = &a.ein;
 
