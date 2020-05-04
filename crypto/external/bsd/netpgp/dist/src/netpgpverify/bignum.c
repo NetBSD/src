@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2012-2019 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3539,6 +3539,25 @@ multiply_modulo(mp_int *d, mp_int * a, mp_int * b, mp_int * c)
 	return res;
 }
 
+/* d = a + b (mod c) */
+static int
+add_modulo(mp_int *d, mp_int * a, mp_int * b, mp_int * c)
+{
+	mp_int  t;
+	int     res;
+
+	if ((res = mp_init(&t)) != MP_OKAY) {
+		return res;
+	}
+	if ((res = signed_add(a, b, &t)) != MP_OKAY) {
+		mp_clear(&t);
+		return res;
+	}
+	res = modulo(&t, c, d);
+	mp_clear(&t);
+	return res;
+}
+
 /* Source: /usr/cvsroot/libtommath/dist/libtommath/bn_mp_mulmod.c,v $ */
 /* Revision: 1.1.1.1 $ */
 /* Date: 2011/03/12 22:58:18 $ */
@@ -5048,7 +5067,6 @@ mp_getradix_num(mp_int *a, int radix, char *s)
 
 	/* clear a */
 	mp_zero(a);
-
 	/* if first digit is - then set negative */
 	if ((ch = *s++) == '-') {
 		neg = MP_NEG;
@@ -5056,9 +5074,12 @@ mp_getradix_num(mp_int *a, int radix, char *s)
 	} else {
 		neg = MP_ZPOS;
 	}
-
 	for (;;) {
-		/* find y in the radix map */
+		/* fold lower to upper case */
+		if (ch >= 'a' && ch <= 'z') {
+			ch = (ch - 'a') + 'A';
+		}
+		/* find index y in the radix map */
 		for (y = 0; y < radix; y++) {
 			if (mp_s_rmap[y] == ch) {
 				break;
@@ -5067,7 +5088,6 @@ mp_getradix_num(mp_int *a, int radix, char *s)
 		if (y == radix) {
 			break;
 		}
-
 		/* shift up and add */
 		if ((err = multiply_digit(a, radix, a)) != MP_OKAY) {
 			return err;
@@ -5075,13 +5095,11 @@ mp_getradix_num(mp_int *a, int radix, char *s)
 		if ((err = add_single_digit(a, y, a)) != MP_OKAY) {
 			return err;
 		}
-
 		ch = *s++;
 	}
 	if (compare_digit(a, 0) != MP_EQ) {
 		a->sign = neg;
 	}
-
 	return MP_OKAY;
 }
 
@@ -5501,13 +5519,13 @@ PGPV_BN_cmp(PGPV_BIGNUM *a, PGPV_BIGNUM *b)
 }
 
 int
-PGPV_BN_mod_exp(PGPV_BIGNUM *Y, PGPV_BIGNUM *G, PGPV_BIGNUM *X, PGPV_BIGNUM *P, PGPV_BN_CTX *ctx)
+PGPV_BN_mod_exp(PGPV_BIGNUM *Y, PGPV_BIGNUM *G, const PGPV_BIGNUM *X, const PGPV_BIGNUM *P, PGPV_BN_CTX *ctx)
 {
 	if (Y == NULL || G == NULL || X == NULL || P == NULL) {
 		return MP_VAL;
 	}
 	USE_ARG(ctx);
-	return exponent_modulo(G, X, P, Y) == MP_OKAY;
+	return exponent_modulo(G, __UNCONST(X), __UNCONST(P), Y) == MP_OKAY;
 }
 
 PGPV_BIGNUM *
@@ -5528,6 +5546,16 @@ PGPV_BN_mod_mul(PGPV_BIGNUM *ret, PGPV_BIGNUM *a, PGPV_BIGNUM *b, const PGPV_BIG
 		return 0;
 	}
 	return multiply_modulo(ret, a, b, __UNCONST(m)) == MP_OKAY;
+}
+
+int
+PGPV_BN_mod_add(PGPV_BIGNUM *ret, PGPV_BIGNUM *a, PGPV_BIGNUM *b, const PGPV_BIGNUM *m, PGPV_BN_CTX *ctx)
+{
+	USE_ARG(ctx);
+	if (ret == NULL || a == NULL || b == NULL || m == NULL) {
+		return 0;
+	}
+	return add_modulo(ret, a, b, __UNCONST(m)) == MP_OKAY;
 }
 
 PGPV_BN_CTX *
@@ -5776,4 +5804,28 @@ int
 PGPV_BN_gcd(PGPV_BIGNUM *r, PGPV_BIGNUM *a, PGPV_BIGNUM *b, PGPV_BN_CTX *ctx)
 {
 	return mp_gcd(a, b, r);
+}
+
+int 
+PGPV_BN_sub_word(PGPV_BIGNUM *a, PGPV_BN_ULONG w)
+{
+	PGPV_BIGNUM	*bnw;
+
+	bnw = PGPV_BN_new();
+	PGPV_BN_set_word(bnw, w);
+	PGPV_BN_sub(a, a, bnw);
+	PGPV_BN_free(bnw);
+	return 1;
+}
+
+int 
+PGPV_BN_add_word(PGPV_BIGNUM *a, PGPV_BN_ULONG w)
+{
+	PGPV_BIGNUM	*bnw;
+
+	bnw = PGPV_BN_new();
+	PGPV_BN_set_word(bnw, w);
+	PGPV_BN_add(a, a, bnw);
+	PGPV_BN_free(bnw);
+	return 1;
 }
