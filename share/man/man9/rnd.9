@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.28 2020/04/30 03:28:18 riastradh Exp $
+.\"	$NetBSD: rnd.9,v 1.29 2020/05/04 15:13:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -275,7 +275,7 @@ but may be used in a callback as set with
 .Fn rndsource_setcb .
 .It Fn rnd_add_uint32 "rnd_source" "datum"
 Equivalent to
-.Li "rnd_add_data(" Ns Fa rnd_source Ns Li ", &" Ns datum Ns Li ", 4, 0)" .
+.Li rnd_add_data Ns ( Ns Fa rnd_source , Li & Ns Fa datum , Li 4 , 0 ) .
 .Pp
 .Fn rnd_add_uint32
 .Em must not
