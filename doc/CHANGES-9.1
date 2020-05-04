@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.51 2020/05/02 16:31:44 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.52 2020/05/04 14:04:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2424,4 +2424,23 @@ sys/arch/aarch64/aarch64/sig_machdep.c		1.5
 
 	aarch64: fix sigaltstack(2)
 	[tnn, ticket #884]
+
+sys/dev/scsipi/scsiconf.c			1.287
+
+	Do not attempt to read opcodes and their timeouts at attach time for
+	old (pre SCSI-3) devices.
+	[jdc, ticket #885]
+
+sys/dev/sun/disksubr.c				1.17
+
+	sparc: prevent a panic a sparc when trying to read a disklabel from
+	an empty CD drive.
+	[jdc, ticket #886]
+
+crypto/external/bsd/netpgp/lib/verify/Makefile	1.13
+crypto/external/bsd/netpgp/lib/verify/verify.map 1.1
+
+	Add a linker map to hide all the symbols the this library accidentally
+	exported. This fixes pkg_add.
+	[christos, ticket #887]
 
