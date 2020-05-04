@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.13 2020/05/03 16:10:26 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.14 2020/05/04 08:22:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.13 2020/05/03 16:10:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.14 2020/05/04 08:22:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -147,7 +147,7 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
 	switch (nxt) {
 	case IPPROTO_UDP:
 		if (iph)
-			m->m_pkthdr.csum_flags = M_CSUM_UDPv4 | M_CSUM_IPv4;
+			m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
 #ifdef INET6
 		else
 			m->m_pkthdr.csum_flags = M_CSUM_UDPv6;
@@ -157,7 +157,7 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
 		break;
 	case IPPROTO_TCP:
 		if (iph)
-			m->m_pkthdr.csum_flags = M_CSUM_TCPv4 | M_CSUM_IPv4;
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
 #ifdef INET6
 		else
 			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
@@ -167,10 +167,6 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
 		break;
 	case IPPROTO_ICMP:
 	case IPPROTO_IGMP:
-		if (iph)
-			m->m_pkthdr.csum_flags = M_CSUM_IPv4;
-		m->m_pkthdr.csum_data = iphlen << 16;
-		break;
 	case IPPROTO_HOPOPTS:
 	case IPPROTO_ICMPV6:
 	case IPPROTO_FRAGMENT:
@@ -196,17 +192,9 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m,
 	 */
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_rx;
 
-	/*
-	 * Always initialize the sum to 0!  Some HW assisted
-	 * checksumming requires this. in_undefer_cksum()
-	 * also needs it to be zero.
-	 */
-	if (iph != NULL && (m->m_pkthdr.csum_flags & M_CSUM_IPv4))
-		iph->ip_sum = 0;
-
-	if (sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) {
+	if (sw_csum & (M_CSUM_UDPv4|M_CSUM_TCPv4)) {
 		in_undefer_cksum(m, ehlen,
-		    sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4));
+		    sw_csum & (M_CSUM_UDPv4|M_CSUM_TCPv4));
 	}
 
 #ifdef INET6
