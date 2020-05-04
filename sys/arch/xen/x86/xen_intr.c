@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.25 2020/05/04 15:55:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.24 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.25 2020/05/04 15:55:56 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -156,7 +156,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 #if (NPCI > 0 || NISA > 0) && defined(XENPV) /* XXX: support PVHVM pirq */
 	struct pintrhand *pih;
 	int gsi;
-	int vector, evtchn;
+	int evtchn;
 
 	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
 	    "bad legacy IRQ value: %d", legacy_irq);
@@ -164,17 +164,17 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	    "non-legacy IRQon i8259 ");
 
 	gsi = xen_pic_to_gsi(pic, pin);
+	KASSERTMSG(gsi < NR_EVENT_CHANNELS, "gsi %d >= NR_EVENT_CHANNELS %u",
+	    gsi, (int)NR_EVENT_CHANNELS);
 
 	intrstr = intr_create_intrid(gsi, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
-
-	vector = xen_vec_alloc(gsi);
 
 	if (irq2port[gsi] == 0) {
 		extern struct cpu_info phycpu_info_primary; /* XXX */
 		struct cpu_info *ci = &phycpu_info_primary;
 
-		pic->pic_addroute(pic, ci, pin, vector, type);
+		pic->pic_addroute(pic, ci, pin, gsi, type);
 
 		evtchn = bind_pirq_to_evtch(gsi);
 		KASSERT(evtchn > 0);

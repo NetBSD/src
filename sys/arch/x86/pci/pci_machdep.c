@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.86 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.87 2020/05/04 15:55:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.86 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.87 2020/05/04 15:55:56 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -554,6 +554,15 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 			pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
 		}
 	}
+
+#ifdef XENPV
+	/*
+	 * XXX MSI-X doesn't work for XenPV yet - setup seems to be correct,
+	 * XXX but no interrupts are actually delivered.
+	 */
+	pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+#endif
+
 #endif /* __HAVE_PCI_MSI_MSIX */
 }
 

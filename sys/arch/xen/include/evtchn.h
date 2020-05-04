@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.30 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.31 2020/05/04 15:55:56 jdolecek Exp $	*/
 
 /*
  *
@@ -28,8 +28,6 @@
 
 #ifndef _XEN_EVENTS_H_
 #define _XEN_EVENTS_H_
-
-#define NR_PIRQS	256
 
 extern struct evtsource *evtsource[];
 
