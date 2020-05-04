@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.82 2020/04/28 10:04:32 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.83 2020/05/04 20:06:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.82 2020/04/28 10:04:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.83 2020/05/04 20:06:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,7 +101,7 @@ ACPI_MODULE_NAME            ("acpi_ec")
 #define	EC_STATUS_SCI		0x20
 #define	EC_STATUS_SMI		0x40
 
-static const char *ec_hid[] = {
+static const char * const ec_hid[] = {
 	"PNP0C09",
 	NULL,
 };
