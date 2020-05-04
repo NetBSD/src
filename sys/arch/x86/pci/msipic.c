@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: msipic.c,v 1.22 2020/05/04 09:34:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.22 2020/05/04 09:34:37 jdolecek Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -114,7 +114,7 @@ static void msipic_release_common_msi_devid(int);
 
 static struct pic *msipic_find_msi_pic_locked(int);
 static struct pic *msipic_construct_common_msi_pic(const struct pci_attach_args *,
-						   struct pic *);
+						   const struct pic *);
 static void msipic_destruct_common_msi_pic(struct pic *);
 
 static void msi_set_msictl_enablebit(struct pic *, int, int);
@@ -231,7 +231,7 @@ msipic_find_msi_pic(int devid)
  */
 static struct pic *
 msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
-    struct pic *pic_tmpl)
+    const struct pic *pic_tmpl)
 {
 	struct pic *pic;
 	struct msipic *msipic;
@@ -427,7 +427,7 @@ msi_delroute(struct pic *pic, struct cpu_info *ci,
  * Template for MSI pic.
  * .pic_msipic is set later in construct_msi_pic().
  */
-static struct pic msi_pic_tmpl = {
+static const struct pic msi_pic_tmpl = {
 	.pic_type = PIC_MSI,
 	.pic_vecbase = 0,
 	.pic_apicid = 0,
@@ -605,7 +605,7 @@ msix_delroute(struct pic *pic, struct cpu_info *ci,
  * Template for MSI-X pic.
  * .pic_msipic is set later in construct_msix_pic().
  */
-static struct pic msix_pic_tmpl = {
+static const struct pic msix_pic_tmpl = {
 	.pic_type = PIC_MSIX,
 	.pic_vecbase = 0,
 	.pic_apicid = 0,
