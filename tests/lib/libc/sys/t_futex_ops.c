@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.3 2020/04/30 04:18:07 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.4 2020/05/04 15:09:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.3 2020/04/30 04:18:07 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.4 2020/05/04 15:09:34 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: t_futex_ops.c,v 1.3 2020/04/30 04:18:07 thorpej Exp $");
 #include <signal.h>
 #include <time.h>
 #include <limits.h>
+#include <sched.h>
 #include <unistd.h>
 
 #include <atf-c.h>
@@ -1334,6 +1335,152 @@ ATF_TC_CLEANUP(futex_wait_evil_unmapped_anon, tc)
 
 /*****************************************************************************/
 
+static int pri_min;
+static int pri_max;
+
+static void
+lowpri_simple_test_waiter_lwp(void *arg)
+{
+	struct lwp_data *d = arg;
+	struct sched_param sp;
+	int policy;
+
+	d->threadid = _lwp_self();
+
+	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
+	policy = SCHED_RR;
+	sp.sched_priority = pri_min;
+	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
+
+	simple_test_waiter_lwp(arg);
+}
+
+static void
+highpri_simple_test_waiter_lwp(void *arg)
+{
+	struct lwp_data *d = arg;
+	struct sched_param sp;
+	int policy;
+
+	d->threadid = _lwp_self();
+
+	ATF_REQUIRE(_sched_getparam(getpid(), d->threadid, &policy, &sp) == 0);
+	policy = SCHED_RR;
+	sp.sched_priority = pri_max;
+	ATF_REQUIRE(_sched_setparam(getpid(), d->threadid, policy, &sp) == 0);
+
+	simple_test_waiter_lwp(arg);
+}
+
+static void
+do_test_wake_highest_pri(void)
+{
+	lwpid_t waiter;
+	int tries;
+	long pri;
+
+	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MIN)) != -1);
+	pri_min = (int)pri;
+	ATF_REQUIRE((pri = sysconf(_SC_SCHED_PRI_MAX)) != -1);
+	pri_max = (int)pri;
+
+	futex_word = 0;
+	membar_sync();
+
+	setup_lwp_context(&lwp_data[0], lowpri_simple_test_waiter_lwp);
+	lwp_data[0].op_flags = FUTEX_PRIVATE_FLAG;
+	lwp_data[0].futex_error = -1;
+	lwp_data[0].futex_ptr = &futex_word;
+	lwp_data[0].block_val = 0;
+	lwp_data[0].bitset = 0;
+	lwp_data[0].wait_op = FUTEX_WAIT;
+	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
+				&lwp_data[0].lwpid) == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 1)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 1, "lowpri waiter failed to start");
+
+	/* Ensure it's blocked. */
+	ATF_REQUIRE(lwp_data[0].futex_error == -1);
+
+	setup_lwp_context(&lwp_data[1], highpri_simple_test_waiter_lwp);
+	lwp_data[1].op_flags = FUTEX_PRIVATE_FLAG;
+	lwp_data[1].futex_error = -1;
+	lwp_data[1].futex_ptr = &futex_word;
+	lwp_data[1].block_val = 0;
+	lwp_data[1].bitset = 0;
+	lwp_data[1].wait_op = FUTEX_WAIT;
+	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
+				&lwp_data[0].lwpid) == 0);
+
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 2)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE_EQ_MSG(nlwps_running, 2, "highpri waiter failed to start");
+
+	/* Ensure it's blocked. */
+	ATF_REQUIRE(lwp_data[1].futex_error == -1);
+
+	/* Wake the first LWP.  We should get the highpri thread. */
+	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
+			    1, NULL, NULL, 0, 0) == 1);
+	sleep(1);
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 1)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE(nlwps_running == 1);
+	ATF_REQUIRE(_lwp_wait(0, &waiter) == 0);
+	ATF_REQUIRE(waiter == lwp_data[1].threadid);
+
+	/* Wake the second LWP.  We should get the lowpri thread. */
+	ATF_REQUIRE(__futex(&futex_word, FUTEX_WAKE | FUTEX_PRIVATE_FLAG,
+			    1, NULL, NULL, 0, 0) == 1);
+	sleep(1);
+	for (tries = 0; tries < 5; tries++) {
+		membar_sync();
+		if (nlwps_running == 0)
+			break;
+		sleep(1);
+	}
+	membar_sync();
+	ATF_REQUIRE(nlwps_running == 0);
+	ATF_REQUIRE(_lwp_wait(0, &waiter) == 0);
+	ATF_REQUIRE(waiter == lwp_data[0].threadid);
+}
+
+ATF_TC_WITH_CLEANUP(futex_wake_highest_pri);
+ATF_TC_HEAD(futex_wake_highest_pri, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests that futex WAKE wakes the highest priority waiter");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(futex_wake_highest_pri, tc)
+{
+	atf_tc_expect_fail("PR kern/55230");
+	do_test_wake_highest_pri();
+}
+ATF_TC_CLEANUP(futex_wake_highest_pri, tc)
+{
+	do_cleanup();
+}
+
+/*****************************************************************************/
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, futex_basic_wait_wake_private);
@@ -1363,6 +1510,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, futex_wake_op_op);
 	ATF_TP_ADD_TC(tp, futex_wake_op_cmp);
+
+	ATF_TP_ADD_TC(tp, futex_wake_highest_pri);
 
 	return atf_no_error();
 }
