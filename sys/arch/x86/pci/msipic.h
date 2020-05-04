@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.h,v 1.2 2015/05/08 04:27:48 knakahara Exp $	*/
+/*	$NetBSD: msipic.h,v 1.3 2020/05/04 15:55:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -40,6 +40,14 @@ int		msipic_set_msi_vectors(struct pic *, pci_intr_handle_t *, int);
 
 bool		msipic_is_msi_pic(struct pic *);
 int		msipic_get_devid(struct pic *);
+
+struct msipic_pci_info {
+	int mp_bus, mp_dev, mp_fun;
+	int mp_veccnt; /* The number of MSI/MSI-X vectors. */
+	uint32_t mp_table_base;	/* MSI-X table location in memory space */
+};
+
+const struct msipic_pci_info *msipic_get_pci_info(struct pic *);
 
 void		msipic_init(void);
 
