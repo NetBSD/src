@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_quirks.c,v 1.20 2011/11/14 02:44:59 jmcneill Exp $ */
+/* $NetBSD: acpi_quirks.c,v 1.21 2020/05/04 20:06:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.20 2011/11/14 02:44:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.21 2020/05/04 20:06:38 jdolecek Exp $");
 
 #include "opt_acpi.h"
 
@@ -84,7 +84,7 @@ ACPI_MODULE_NAME	("acpi_quirks")
 
 static int acpi_quirks_revcmp(uint32_t, uint32_t, int);
 
-static struct acpi_quirk acpi_quirks[] = {
+static const struct acpi_quirk acpi_quirks[] = {
 
 	{ ACPI_SIG_FADT, "ASUS  ", 0x30303031, AQ_LTE, "CUV4X-D ",
 	  ACPI_QUIRK_BROKEN },
@@ -152,7 +152,7 @@ int
 acpi_find_quirks(void)
 {
 	ACPI_TABLE_HEADER fadt, dsdt, xsdt, *hdr;
-	struct acpi_quirk *aq;
+	const struct acpi_quirk *aq;
 	ACPI_STATUS rv;
 	size_t i, len;
 
