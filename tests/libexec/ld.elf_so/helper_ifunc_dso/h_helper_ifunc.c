@@ -30,6 +30,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * Not supported on hppa
+ */
+#if !defined(__hppa__)
+
 static long long
 ifunc1(void)
 {
@@ -73,3 +78,4 @@ long long (*ifunc_indirect(void))(void)
 {
 	return ifunc_hidden;
 }
+#endif
