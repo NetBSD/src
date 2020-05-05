@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.9 2020/05/03 01:26:39 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.10 2020/05/05 15:23:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.9 2020/05/03 01:26:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.10 2020/05/05 15:23:32 riastradh Exp $");
 
 /*
  * Futexes
@@ -954,16 +954,12 @@ futex_wait(struct futex_wait *fw, struct timespec *timeout, clockid_t clkid,
 	 * If we were woken up, the waker will have removed fw from the
 	 * queue.  But if anything went wrong, we must remove fw from
 	 * the queue ourselves.  While here, convert EWOULDBLOCK to
-	 * ETIMEDOUT in case cv_timedwait_sig returned EWOULDBLOCK, and
-	 * convert ERESTART to EINTR so that we don't restart with the
-	 * same relative timeout after time has elapsed.
+	 * ETIMEDOUT.
 	 */
 	if (error) {
 		futex_wait_abort(fw);
 		if (error == EWOULDBLOCK)
 			error = ETIMEDOUT;
-		else if (error == ERESTART)
-			error = EINTR;
 	}
 
 	mutex_exit(&fw->fw_lock);
