@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.251 2019/02/24 19:24:20 jandberg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.252 2020/05/05 21:22:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2019/02/24 19:24:20 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2020/05/05 21:22:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,8 +986,6 @@ remove_isr(struct isr *isr)
 	}
 }
 
-static int idepth;
-
 void
 intrhand(int sr)
 {
@@ -995,7 +993,6 @@ intrhand(int sr)
 	register unsigned short ireq;
 	register struct isr **p, *q;
 
-	idepth++;
 	ipl = (sr >> 8) & 7;
 #ifdef REALLYDEBUG
 	printf("intrhand: got int. %d\n", ipl);
@@ -1118,14 +1115,13 @@ intrhand(int sr)
 #ifdef REALLYDEBUG
 	printf("intrhand: leaving.\n");
 #endif
-	idepth--;
 }
 
 bool
 cpu_intr_p(void)
 {
 
-	return idepth != 0;
+	return interrupt_depth != 0;
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)
