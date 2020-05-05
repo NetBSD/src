@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.387 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.388 2020/05/05 17:02:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.387 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.388 2020/05/05 17:02:01 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -982,7 +982,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pte = vtopte(va);
 	else
 		pte = kvtopte(va);
-#ifdef DOM0OPS
+#if defined(XENPV) && defined(DOM0OPS)
 	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
 #ifdef DEBUG
 		printf_nolog("%s: pa %#" PRIxPADDR " for va %#" PRIxVADDR
@@ -990,7 +990,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* DEBUG */
 		npte = pa;
 	} else
-#endif /* DOM0OPS */
+#endif /* XENPV && DOM0OPS */
 		npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PTE_P | pmap_pg_g;
 	npte |= pmap_pat_flags(flags);

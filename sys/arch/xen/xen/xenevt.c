@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.57 2020/04/25 15:26:18 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.58 2020/05/05 17:02:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.57 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.58 2020/05/05 17:02:01 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -176,12 +176,12 @@ xenevtattach(int n)
 	 * Allocate a loopback event port.
 	 * This helps us massage xenevt_processevt() into the
 	 * callchain at the appropriate level using only
-	 * xen_intr_establish_xname().
+	 * intr_establish_xname().
 	 */
 	evtchn_port_t evtchn = xenevt_alloc_event();
 
 	/* The real objective here is to wiggle into the ih callchain for IPL level */
-	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
+	ih = intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
 	    xenevt_processevt, NULL, true, "xenevt");
 
 	KASSERT(ih != NULL);
@@ -357,8 +357,13 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 		/* only one page, so off is always 0 */
 		if (off != 0)
 			return -1;
+#ifdef XENPV
 		return x86_btop(
 		   xpmap_mtop((paddr_t)xen_start_info.store_mfn << PAGE_SHIFT));
+#else
+		return x86_btop(
+		   (paddr_t)xen_start_info.store_mfn << PAGE_SHIFT);
+#endif
 	}
 	return -1;
 }
