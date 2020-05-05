@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ifunc.c,v 1.2 2018/03/09 20:15:03 joerg Exp $	*/
+/*	$NetBSD: h_ifunc.c,v 1.3 2020/05/05 20:47:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,5 +39,12 @@ main(int argc, char **argv)
 
 	if (argc != 2)
 		return 1;
+/*
+ * Not supported on hppa
+ */
+#if defined(__hppa__)
+	return 1;
+#else
 	return ifunc() != atoll(argv[1]);
+#endif
 }
