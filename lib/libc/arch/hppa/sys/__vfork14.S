@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.8 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.9 2020/05/05 20:43:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,9 +57,11 @@ ENTRY(__vfork14, 0)
 	copy	%rp, %t4
 	ldil	L%SYSCALLGATE, %r1
 	ble	4(%sr2, %r1)
-	ldi	SYS___vfork14, %t1
-	comb,<>	%r0, %t1, __cerror
-	 copy	%t4, %rp
+	 ldi	SYS___vfork14, %t1
+	comb,=,n %r0, %t1, 1f
+	b	__cerror
+1:
+	 copy	%t4, %rp		// delay slot of branch to __cerror
 	addi	-1, %ret1, %ret1
 	bv	%r0(%rp)
 	 and	%ret0, %ret1, %ret0
