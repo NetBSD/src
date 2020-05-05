@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.123 2020/05/04 10:03:45 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.124 2020/05/05 09:52:13 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,10 +81,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.123 2020/05/04 10:03:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.124 2020/05/05 09:52:13 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
+#include "opt_net_mpsafe.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1267,7 +1268,13 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 	int error = 0;
 
+#ifdef NET_MPSAFE
+#ifdef notyet
+	/* XXX IFNET_LOCK() is not taken in some cases e.g. multicast ioctls */
 	KASSERT(IFNET_LOCKED(ifp));
+#endif
+#endif
+	int s = splnet();
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n",
 	    device_xname(sc->sc_dev)));
@@ -1277,6 +1284,8 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() returning %d\n",
 	    device_xname(sc->sc_dev), error));
+
+	splx(s);
 
 	return error;
 }
