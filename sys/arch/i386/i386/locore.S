@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.183 2020/05/02 18:49:57 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.184 2020/05/05 09:07:35 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.183 2020/05/02 18:49:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.184 2020/05/05 09:07:35 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1164,6 +1164,7 @@ begin:
 #endif /* XENPV */
 END(start)
 
+#if defined(XEN)
 #ifndef XENPV
 /* entry point for Xen PVH */
 ENTRY(start_xenpvh)
@@ -1229,10 +1230,9 @@ gdt_xenpvh:
 	.long   0x00cf9200
 gdt_xenpvhend:
 	.align 4
-#endif /* XENPV */
+#endif /* !XENPV */
 
 
-#if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .align HYPERCALL_PAGE_OFFSET
