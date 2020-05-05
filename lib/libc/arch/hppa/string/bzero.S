@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.3 2020/05/03 15:29:22 skrll Exp $	*/
+/*	$NetBSD: bzero.S,v 1.4 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*	$OpenBSD: bzero.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -77,7 +77,7 @@ $bzero_loop_16:
         stwm    %r0,4(%arg0)
         stwm    %r0,4(%arg0)
 	comib,<<	15, %arg1, $bzero_loop_16
-	addi		-16, %arg1, %arg1
+	 addi		-16, %arg1, %arg1
 
 	/*
 	 * see if there is anything left that needs to be zeroed in a word
@@ -90,7 +90,7 @@ $bzero_word:
 
 $bzero_loop_4:
         addib,>= -4,%arg1,$bzero_loop_4
-        stbys,b,m %r0,4(%arg0)
+         stbys,b,m %r0,4(%arg0)
 
 	/*
 	 * zero the last bytes that may be unaligned on a word boundary
@@ -100,7 +100,7 @@ $bzero_cleanup:
         addib,=,n 4,%arg1,$bzero_exit
         add	%arg0,%arg1,%arg0
         b       $bzero_exit
-        stbys,e %r0,0(%arg0)
+         stbys,e %r0,0(%arg0)
 	b,n	$bzero_exit
 
 
@@ -110,7 +110,7 @@ $bzero_cleanup:
 
 $bzero_bytes:
         addib,> -1,%arg1,$bzero_bytes
-        stbs,ma %r0,1(%arg0)
+         stbs,ma %r0,1(%arg0)
 
 $bzero_exit:
 	bv,n	%r0(%rp)

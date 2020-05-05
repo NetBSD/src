@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.7 2020/05/03 08:36:09 skrll Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.8 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ ENTRY(__vfork14, 0)
 	ble	4(%sr2, %r1)
 	ldi	SYS___vfork14, %t1
 	comb,<>	%r0, %t1, __cerror
-	copy	%t4, %rp
+	 copy	%t4, %rp
 	addi	-1, %ret1, %ret1
 	bv	%r0(%rp)
-	and	%ret0, %ret1, %ret0
+	 and	%ret0, %ret1, %ret0
 EXIT(__vfork14)
