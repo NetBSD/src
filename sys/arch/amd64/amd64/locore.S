@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.207 2020/05/02 19:01:08 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.208 2020/05/05 06:32:43 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -991,13 +991,14 @@ longmode_hi:
 #endif	/* XENPV */
 
 	pushq	%rdi
-#if defined(XEN) && !defined(XENPV)
-	call	_C_LABEL(init_xen_early)
-#endif
 	call	_C_LABEL(init_bootspace)
 #ifdef KASAN
 	movq	_C_LABEL(lwp0uarea)(%rip),%rdi
 	call	_C_LABEL(kasan_early_init)
+#endif
+	/* <-- DO NOT INSERT C CALLS BEFORE THIS POINT --> */
+#if defined(XEN) && !defined(XENPV)
+	call	_C_LABEL(init_xen_early)
 #endif
 	call	_C_LABEL(init_slotspace)
 	popq	%rdi
