@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.8 2020/05/04 06:42:11 skrll Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.9 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.8 2020/05/04 06:42:11 skrll Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.9 2020/05/05 06:20:55 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -101,7 +101,7 @@ ENTRY(__setjmp14,0)
 	/* Get signal stack info. */
 	ldo	4(%r3), %arg1		; set up oss
 	bl	__sigaltstack14, %rp
-	copy	%r0, %arg0		; set up ss
+	 copy	%r0, %arg0		; set up ss
 
 	/* Recover our jmp_buf and extract SS_ONSTACK */
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
@@ -114,14 +114,14 @@ ENTRY(__setjmp14,0)
 	ldo	40(%arg0), %arg2	; oset = &sc.sc_mask
 	copy	%r0, %arg1		; set = NULL
 	bl	__sigprocmask14, %rp
-	copy	%r0, %arg0		; action = 0 <ignored>
+	 copy	%r0, %arg0		; action = 0 <ignored>
 
 	/* Return 0. */
 	ldo	HPPA_FRAME_SIZE(%r3),%sp
 	ldwm	-HPPA_FRAME_SIZE(%sp),%r3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	bv	%r0(%rp)
-	copy	%r0, %ret0
+	 copy	%r0, %ret0
 EXIT(__setjmp14)
 
 	.end
