@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.7 2020/04/30 16:22:10 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.8 2020/05/05 18:52:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -127,3 +127,7 @@ games/fortune/unstr/unstr.c			1.15
 	Fix potential buffer overflows in fortune tools.
 	[nia, ticket #1544]
 
+external/bsd/bind/dist/lib/isc/sha2.c		(apply patch)
+
+	Fix a bug introduced when fixing alingment issues.
+	[he, ticket #1545]
