@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.7 2020/05/03 15:29:22 skrll Exp $	*/
+/*	$NetBSD: brk.S,v 1.8 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*	$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -31,7 +31,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.7 2020/05/03 15:29:22 skrll Exp $")
+	RCSID("$NetBSD: brk.S,v 1.8 2020/05/05 06:20:55 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.import	curbrk, data
@@ -66,11 +66,11 @@ ENTRY(_brk,0)
 	addil	LT%curbrk, %r19
 	ldw	RT%curbrk(%r1), %r1
 	bv	%r0(%rp)
-	stw	%arg0, 0(%r1)
+	 stw	%arg0, 0(%r1)
 #else  /* !__PIC__ */
 	ldil	L%curbrk, %t1
 	bv	%r0(%rp)
-	stw	%arg0, R%curbrk(%t1)
+	 stw	%arg0, R%curbrk(%t1)
 #endif /* !__PIC__ */
 EXIT(brk)
 

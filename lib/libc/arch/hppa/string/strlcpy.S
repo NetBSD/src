@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.S,v 1.4 2020/05/03 15:29:22 skrll Exp $	*/
+/*	$NetBSD: strlcpy.S,v 1.5 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: strlcpy.S,v 1.4 2020/05/03 15:29:22 skrll Exp $")
+        RCSID("$NetBSD: strlcpy.S,v 1.5 2020/05/05 06:20:55 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,7 @@ LEAF_ENTRY(_strlcpy)
 	 * of the src string.
 	 */
 	comb,=		%r0, %arg2, $strlcpy_dst_done
-	copy		%arg1, %ret0
+	 copy		%arg1, %ret0
 
 	/*
 	 * If our dst buffer is one byte, branch immediately
@@ -67,9 +67,9 @@ LEAF_ENTRY(_strlcpy)
 	 */
 $strlcpy_loop:
 	comb,=		%r0, %r1, $strlcpy_exit
-	stbs,ma		%r1, 1(%arg0)
+	 stbs,ma	%r1, 1(%arg0)
 	addib,<>	-1, %arg2, $strlcpy_loop
-	ldbs,ma		1(%arg1), %r1
+	 ldbs,ma	1(%arg1), %r1
 
 $strlcpy_dst_full:
 	stbs,ma		%r0, 1(%arg0)
@@ -80,5 +80,5 @@ $strlcpy_dst_done:
 
 $strlcpy_exit:
 	bv		%r0(%rp)
-	sub		%arg1, %ret0, %ret0
+	 sub		%arg1, %ret0, %ret0
 EXIT(strlcpy)

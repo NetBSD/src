@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.3 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*	$OpenBSD: bcmp.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -74,11 +74,11 @@ $bcmp_loop:
 	ldbs,ma	1(%arg1),%t2
 	comb,<>,n %t1,%t2,$bcmp_exit
 	addib,<> -1,%arg2,$bcmp_loop
-	nop
+	 nop
 
 $bcmp_exit:
 	bv	0(%r2)
-	sub	%t1,%t2,%ret0
+	 sub	%t1,%t2,%ret0
 
 EXIT(bcmp)
 

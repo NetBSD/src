@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: pipe.S,v 1.4 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.3 2003/10/06 05:30:21 matt Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.4 2020/05/05 06:20:55 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,5 +54,5 @@ ENTRY(_pipe,0)
 	stw	%ret0, 0(%arg0)
 	stw	%ret1, 4(%arg0)
 	bv	%r0(%rp)
-	copy	%r0, %ret0
+	 copy	%r0, %ret0
 EXIT(_pipe)

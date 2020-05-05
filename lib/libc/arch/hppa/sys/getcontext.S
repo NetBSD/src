@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.5 2014/02/19 13:01:51 skrll Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.6 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,5 +42,5 @@ ENTRY(_getcontext, 0)
 	ldo	4(%rp), %r1
 	stw	%r1, (_OFFSETOF_UC_GREGS + _REG_PCOQT * SZREG)(%arg0)
 	bv	%r0(%rp)
-	stw	%r0, (_OFFSETOF_UC_GREGS + _REG_RET0 * SZREG)(%arg0)
+	 stw	%r0, (_OFFSETOF_UC_GREGS + _REG_RET0 * SZREG)(%arg0)
 EXIT(_getcontext)

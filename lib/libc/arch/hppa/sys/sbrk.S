@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.7 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*	$OpenBSD: sbrk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -31,7 +31,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.6 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.7 2020/05/05 06:20:55 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.global	_end
@@ -69,7 +69,7 @@ ENTRY(_sbrk,0)
 	ldw	0(%r1), %ret0
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
 	bv	%r0(%rp)
-	stw	%arg0, 0(%r1)
+	 stw	%arg0, 0(%r1)
 
 EXIT(sbrk)
 

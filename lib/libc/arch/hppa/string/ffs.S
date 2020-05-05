@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2020/05/03 15:29:22 skrll Exp $	*/
+/*	$NetBSD: ffs.S,v 1.5 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*	$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -40,7 +40,7 @@
 
 LEAF_ENTRY(ffs)
 	comb,=	%arg0,%r0,ffsdone	; If arg0 is 0
-	or	%r0,%r0,%ret0		;   return 0
+	 or	%r0,%r0,%ret0		;   return 0
 	ldi	32,%ret0		; Set return to high bit
 	extru,=	%arg0,31,16,%r0		; If low 16 bits are non-zero
 	addi,tr	-16,%ret0,%ret0		;   subtract 16 from bitpos

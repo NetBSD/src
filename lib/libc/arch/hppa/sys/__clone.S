@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.6 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.7 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,9 +48,9 @@ ENTRY(__clone, 0)
 	 */
 	ldi	EINVAL, %t1
 	comb,=	%r0, %arg0, __cerror
-	nop
+	 nop
 	comb,=	%r0, %arg1, __cerror
-	nop
+	 nop
 
 	/*
 	 * Put the func and arg arguments into a frame in the child's stack.
@@ -76,7 +76,7 @@ ENTRY(__clone, 0)
 	/* Call the clone's entry point. */
 	stw	%r19, HPPA_FRAME_ARG(2)(%sp)
 	bl	$$dyncall, %r31
-	copy	%r31, %rp
+	 copy	%r31, %rp
 	ldw	HPPA_FRAME_ARG(2)(%sp), %r19
 
 	/* Pass the return value to _exit(). */
