@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.240 2020/04/25 11:03:04 jdolecek Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.240 2020/04/25 11:03:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.241 2020/05/05 20:36:48 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1680,10 +1680,21 @@ m_defrag(struct mbuf *m, int how)
 	if ((m->m_flags & M_EXT) == 0 && m->m_pkthdr.len <= MCLBYTES) {
 		if (m->m_pkthdr.len <= MHLEN) {
 			if (M_TRAILINGSPACE(m) < (m->m_pkthdr.len - m->m_len)) {
-				KASSERT(M_LEADINGSPACE(m) >=
-				    (m->m_pkthdr.len - m->m_len));
+				KASSERTMSG(M_LEADINGSPACE(m) +
+				    M_TRAILINGSPACE(m) >=
+				    (m->m_pkthdr.len - m->m_len),
+				    "too small leading %d trailing %d ro? %d"
+				    " pkthdr.len %d mlen %d",
+				    (int)M_LEADINGSPACE(m),
+				    (int)M_TRAILINGSPACE(m),
+				    M_READONLY(m),
+				    m->m_pkthdr.len, m->m_len);
+
 				memmove(m->m_pktdat, m->m_data, m->m_len);
 				m->m_data = m->m_pktdat;
+
+				KASSERT(M_TRAILINGSPACE(m) >=
+				    (m->m_pkthdr.len - m->m_len));
 			}
 		} else {
 			/* Must copy data before adding cluster */
