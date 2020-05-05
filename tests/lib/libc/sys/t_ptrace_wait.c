@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.188 2020/05/05 00:50:39 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.189 2020/05/05 00:57:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.188 2020/05/05 00:50:39 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.189 2020/05/05 00:57:34 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -100,132 +100,6 @@ static int debug = 0;
 	printf("%s() %d.%d %s:%d " a, \
 	__func__, getpid(), _lwp_self(), __FILE__, __LINE__,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
-
-/// ----------------------------------------------------------------------------
-
-static void
-ptrace_siginfo(bool faked, void (*sah)(int a, siginfo_t *b, void *c), int *signal_caught)
-{
-	const int exitval = 5;
-	const int sigval = SIGINT;
-	const int sigfaked = SIGTRAP;
-	const int sicodefaked = TRAP_BRKPT;
-	pid_t child, wpid;
-	struct sigaction sa;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		sa.sa_sigaction = sah;
-		sa.sa_flags = SA_SIGINFO;
-		sigemptyset(&sa.sa_mask);
-
-		FORKEE_ASSERT(sigaction(faked ? sigfaked : sigval, &sa, NULL)
-		    != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT_EQ(*signal_caught, 1);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	if (faked) {
-		DPRINTF("Before setting new faked signal to signo=%d "
-		    "si_code=%d\n", sigfaked, sicodefaked);
-		info.psi_siginfo.si_signo = sigfaked;
-		info.psi_siginfo.si_code = sicodefaked;
-	}
-
-	DPRINTF("Before calling ptrace(2) with PT_SET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_SET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	if (faked) {
-		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
-		    "child\n");
-		SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info,
-		    sizeof(info)) != -1);
-
-		DPRINTF("Before checking siginfo_t\n");
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigfaked);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, sicodefaked);
-	}
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1,
-	    faked ? sigfaked : sigval) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-#define PTRACE_SIGINFO(test, faked)					\
-ATF_TC(test);								\
-ATF_TC_HEAD(test, tc)							\
-{									\
-	atf_tc_set_md_var(tc, "descr",					\
-	    "Verify basic PT_GET_SIGINFO and PT_SET_SIGINFO calls"	\
-	    "with%s setting signal to new value", faked ? "" : "out");	\
-}									\
-									\
-static int test##_caught = 0;						\
-									\
-static void								\
-test##_sighandler(int sig, siginfo_t *info, void *ctx)			\
-{									\
-	if (faked) {							\
-		FORKEE_ASSERT_EQ(sig, SIGTRAP);				\
-		FORKEE_ASSERT_EQ(info->si_signo, SIGTRAP);		\
-		FORKEE_ASSERT_EQ(info->si_code, TRAP_BRKPT);		\
-	} else {							\
-		FORKEE_ASSERT_EQ(sig, SIGINT);				\
-		FORKEE_ASSERT_EQ(info->si_signo, SIGINT);		\
-		FORKEE_ASSERT_EQ(info->si_code, SI_LWP);		\
-	}								\
-									\
-	++ test##_caught;						\
-}									\
-									\
-ATF_TC_BODY(test, tc)							\
-{									\
-									\
-	ptrace_siginfo(faked, test##_sighandler, & test##_caught); 	\
-}
-
-PTRACE_SIGINFO(siginfo_set_unmodified, false)
-PTRACE_SIGINFO(siginfo_set_faked, true)
 
 /// ----------------------------------------------------------------------------
 
@@ -523,6 +397,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 #include "t_ptrace_exec_wait.h"
 #include "t_ptrace_topology_wait.h"
 #include "t_ptrace_threads_wait.h"
+#include "t_ptrace_siginfo_wait.h"
 
 /// ----------------------------------------------------------------------------
 
@@ -553,9 +428,6 @@ ATF_TP_ADD_TCS(tp)
 	setvbuf(stderr, NULL, _IONBF, 0);
 
 #ifdef ENABLE_TESTS
-	ATF_TP_ADD_TC(tp, siginfo_set_unmodified);
-	ATF_TP_ADD_TC(tp, siginfo_set_faked);
-
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_continue);
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_syscall);
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_detach);
@@ -575,6 +447,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TCS_PTRACE_WAIT_EXEC();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_TOPOLOGY();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_THREADS();
+	ATF_TP_ADD_TCS_PTRACE_WAIT_SIGINFO();
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
