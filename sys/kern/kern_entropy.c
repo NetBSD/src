@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.9 2020/05/03 06:33:59 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.10 2020/05/05 15:31:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.9 2020/05/03 06:33:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.10 2020/05/05 15:31:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -245,6 +245,7 @@ static void	entropy_consolidate(void);
 static void	entropy_gather_xc(void *, void *);
 static void	entropy_notify(void);
 static int	sysctl_entropy_consolidate(SYSCTLFN_ARGS);
+static int	sysctl_entropy_gather(SYSCTLFN_ARGS);
 static void	filt_entropy_read_detach(struct knote *);
 static int	filt_entropy_read_event(struct knote *, long);
 static void	entropy_request(size_t);
@@ -362,6 +363,10 @@ entropy_init(void)
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "consolidate",
 	    SYSCTL_DESCR("Trigger entropy consolidation now"),
 	    sysctl_entropy_consolidate, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&entropy_sysctllog, 0, &entropy_sysctlroot, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "gather",
+	    SYSCTL_DESCR("Trigger entropy gathering from sources now"),
+	    sysctl_entropy_gather, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 	/* XXX These should maybe not be readable at securelevel>0.  */
 	sysctl_createv(&entropy_sysctllog, 0, &entropy_sysctlroot, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_INT,
@@ -1168,6 +1173,35 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	}
 
 	return error;
+}
+
+/*
+ * sysctl -w kern.entropy.gather=1
+ *
+ *	Trigger gathering entropy from all on-demand sources, and wait
+ *	for synchronous sources (but not asynchronous sources) to
+ *	complete.  Writable only by superuser.
+ */
+static int
+sysctl_entropy_gather(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int arg;
+	int error;
+
+	KASSERT(E->stage == ENTROPY_HOT);
+
+	node.sysctl_data = &arg;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (arg) {
+		mutex_enter(&E->lock);
+		entropy_request(ENTROPY_CAPACITY);
+		mutex_exit(&E->lock);
+	}
+
+	return 0;
 }
 
 /*
