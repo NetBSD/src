@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.79 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.80 2020/05/05 22:12:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.79 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.80 2020/05/05 22:12:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,35 +467,11 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 
 	mutex_enter(p->p_lock);
 	for (target = 0; target < ntargets; target++) {
-		/*
-		 * We don't bother excluding idle LWPs here, as
-		 * setting LW_UNPARKED on them won't do any harm.
-		 */
 		t = proc_find_lwp(p, tp[target]);
 		if (__predict_false(t == NULL)) {
 			error = ESRCH;
 			continue;
 		}
-
-		/*
-		 * The locking order is p::p_lock -> l::l_mutex,
-		 * but it may not be unsafe to release p::p_lock
-		 * while l::l_mutex is held because l::l_mutex is
-		 * a scheduler lock and we don't want to get tied
-		 * in knots while unwinding priority inheritance.
-		 * So, get a reference count on the LWP and then
-		 * unlock p::p_lock before acquiring l::l_mutex.
-		 */
-		if (__predict_false(t->l_stat == LSZOMB)) {
-			continue;
-		}
- 		lwp_addref(t);
- 		mutex_exit(p->p_lock);
-
-		/*
-		 * Note the LWP cannot become a zombie while we
-		 * hold a reference.
-		 */
 
 		lwp_lock(t);
 		if (__predict_true(t->l_syncobj == &lwp_park_syncobj)) {
@@ -504,6 +480,9 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 			 * lwp_unsleep() will release the LWP lock.
 			 */
 			lwp_unsleep(t, true);
+		} else if (__predict_false(t->l_stat == LSZOMB)) {
+			lwp_unlock(t);
+			error = ESRCH;
 		} else {
 			/*
 			 * It hasn't parked yet because the wakeup side won
@@ -516,8 +495,6 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 			t->l_flag |= LW_UNPARKED;
 			lwp_unlock(t);
 		}
-		mutex_enter(p->p_lock);
-		lwp_delref2(t);
 	}
 	mutex_exit(p->p_lock);
 
