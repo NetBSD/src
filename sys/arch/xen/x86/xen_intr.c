@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.25 2020/05/04 15:55:56 jdolecek Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.26 2020/05/05 17:02:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.25 2020/05/04 15:55:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.26 2020/05/05 17:02:01 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -232,7 +232,7 @@ xen_intr_disestablish(struct intrhand *ih)
 		/* event_remove_handler frees ih */
 		return;
 	}
-#if defined(DOM0OPS)
+#if defined(DOM0OPS) && defined(XENPV)
 	/* 
 	 * Cache state, to prevent a use after free situation with
 	 * ih.

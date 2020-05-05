@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen.pv,v 1.2 2020/04/25 15:26:17 bouyer Exp $
+#	$NetBSD: files.xen.pv,v 1.3 2020/05/05 17:02:01 bouyer Exp $
 
 file	arch/xen/x86/autoconf.c		xenpv
 file	arch/xen/x86/x86_xpmap.c	xenpv
@@ -16,11 +16,6 @@ include "arch/xen/conf/files.compat"
 #
 # System bus types
 #
-
-# Xen event peudo-device
-defpseudo xenevt
-defpseudo xvif
-defpseudo xbdback
 
 # PCI frontend
 device xpci: pcibus
@@ -40,10 +35,4 @@ device vcpu
 attach vcpu at xendevbus
 file	arch/xen/x86/cpu.c		xenpv & vcpu
 
-# Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XENPV
-file	arch/xen/xen/privcmd.c		dom0ops
-file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
-file	arch/xen/xen/xenevt.c		xenevt & (dom0ops | xenpvhvm)
-file	arch/xen/xen/xennetback_xenbus.c xvif
-file	arch/xen/xen/xbdback_xenbus.c xbdback
+defflag	opt_xen.h			XENPV

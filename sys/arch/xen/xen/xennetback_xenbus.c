@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.104 2020/05/04 08:22:45 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.105 2020/05/05 17:02:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.104 2020/05/04 08:22:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.105 2020/05/05 17:02:01 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.104 2020/05/04 08:22:45 jdol
 
 #include <net/if_ether.h>
 
+#include <xen/hypervisor.h>
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
 #include <xen/evtchn.h>
@@ -361,7 +362,7 @@ xennetback_xenbus_destroy(void *arg)
 
 	if (xneti->xni_ih != NULL) {
 		hypervisor_mask_event(xneti->xni_evtchn);
-		xen_intr_disestablish(xneti->xni_ih);
+		intr_disestablish(xneti->xni_ih);
 		xneti->xni_ih = NULL;
 	}
 
@@ -528,7 +529,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	xneti->xni_ih = xen_intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
+	xneti->xni_ih = intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
 	    IST_LEVEL, IPL_NET, xennetback_evthandler, xneti, false,
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);
