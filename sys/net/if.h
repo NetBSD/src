@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.282 2020/02/14 22:04:12 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.283 2020/05/05 08:05:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -381,9 +381,6 @@ typedef struct ifnet {
 			*if_sysctl_log;	/* :: */
 	int		(*if_initaddr)  /* :: */
 			    (struct ifnet *, struct ifaddr *, bool);
-	int		(*if_mcastop)	/* :: */
-			    (struct ifnet *, const unsigned long,
-			    const struct sockaddr *);
 	int		(*if_setflags)	/* :: */
 			    (struct ifnet *, const u_short);
 	kmutex_t	*if_ioctl_lock;	/* :: */
