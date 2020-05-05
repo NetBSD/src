@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.52 2020/05/04 14:04:11 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.53 2020/05/05 18:34:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2443,4 +2443,14 @@ crypto/external/bsd/netpgp/lib/verify/verify.map 1.1
 	Add a linker map to hide all the symbols the this library accidentally
 	exported. This fixes pkg_add.
 	[christos, ticket #887]
+
+sys/kern/uipc_sem.c				1.59
+
+	Release the collision if we find one.
+	[maya, ticket #888]
+
+sys/external/bsd/compiler_rt/dist/lib/builtins/clear_cache.c 1.4
+
+	Align addresses to cache lines in __clear_cache for aarch64.
+	[jmcneill, ticket #889]
 
