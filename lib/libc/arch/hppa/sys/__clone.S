@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.7 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: __clone.S,v 1.8 2020/05/05 20:43:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 	WEAK_ALIAS(clone, __clone)
 #endif
 
-	.import	__cerror, code
-
 /*
  * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
@@ -46,10 +44,9 @@ ENTRY(__clone, 0)
 	/*
 	 * Sanity checks: func and stack may not be NULL.
 	 */
-	ldi	EINVAL, %t1
-	comb,=	%r0, %arg0, __cerror
+	comb,=	%r0, %arg0, 8f
 	 nop
-	comb,=	%r0, %arg1, __cerror
+	comb,=	%r0, %arg1, 8f
 	 nop
 
 	/*
@@ -66,6 +63,10 @@ ENTRY(__clone, 0)
 	SYSCALL(__clone)
 	comb,<>,n %r0, %ret1, 9f
 	bv,n	%r0(%rp)
+
+8:
+	b	__cerror
+	 ldi	EINVAL, %t1
 
 9:	/*
 	 * Child: Reload the function and argument from the new stack.

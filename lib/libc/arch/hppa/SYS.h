@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 2020/05/05 20:39:18 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.12 2020/05/05 20:43:47 skrll Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -35,13 +35,17 @@
 #define	SYSENTRY(x)	LEAF_ENTRY(x)
 #define	SYSEXIT(x)	EXIT(x)
 
+/*
+ * The restore of rp in the branch to __cerror delay slot is required
+ */
 #define	SYSCALL(x)				!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
 	ble	4(%sr2, %r1)			!\
-	ldi	__CONCAT(SYS_,x), %t1		!\
-	.import __cerror, code			!\
-	comb,<>	%r0, %t1, __cerror		!\
+	 ldi	__CONCAT(SYS_,x), %t1		!\
+	comb,=,n %r0, %t1, 1f			!\
+	b	__cerror			!\
+1:						!\
 	 ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
 #define	PSEUDO(x,y)				!\
@@ -73,3 +77,7 @@ SYSEXIT(x)
 #define WSYSCALL(weak,strong)		!\
 	PSEUDO(weak,weak)
 #endif
+
+	.global __cerror
+	.hidden	__cerror
+	.import __cerror, code
