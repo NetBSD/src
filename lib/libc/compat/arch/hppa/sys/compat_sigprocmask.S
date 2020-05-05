@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.4 2020/05/05 06:11:06 skrll Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.5 2020/05/05 20:43:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #include <sys/errno.h>
 #include "SYS.h"
-
-	.import __cerror, code
 
 WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
