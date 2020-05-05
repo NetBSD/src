@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.18 2019/01/05 22:11:07 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.19 2020/05/05 19:26:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -259,6 +259,19 @@ elf_build_head(vaddr_t headva)
 	}
 }
 
+static bool
+elf_section_mappable(Elf_Shdr *shdr)
+{
+	if (!(shdr->sh_flags & SHF_ALLOC)) {
+		return false;
+	}
+	if (shdr->sh_type != SHT_NOBITS &&
+	    shdr->sh_type != SHT_PROGBITS) {
+		return false;
+	}
+	return true;
+}
+
 void
 elf_map_sections(void)
 {
@@ -273,11 +286,7 @@ elf_map_sections(void)
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
 		shdr = &eif.shdr[i];
 
-		if (!(shdr->sh_flags & SHF_ALLOC)) {
-			continue;
-		}
-		if (shdr->sh_type != SHT_NOBITS &&
-		    shdr->sh_type != SHT_PROGBITS) {
+		if (!elf_section_mappable(shdr)) {
 			continue;
 		}
 
@@ -383,10 +392,10 @@ elf_kernel_reloc(void)
 	 * Update all symbol values with the appropriate offset.
 	 */
 	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (eif.shdr[i].sh_type != SHT_NOBITS &&
-		    eif.shdr[i].sh_type != SHT_PROGBITS) {
+		if (!elf_section_mappable(&eif.shdr[i])) {
 			continue;
 		}
+
 		ASSERT(eif.shdr[i].sh_offset != 0);
 		secva = baseva + eif.shdr[i].sh_offset;
 		for (j = 0; j < eif.symcnt; j++) {
@@ -417,7 +426,10 @@ elf_kernel_reloc(void)
 
 		secidx = eif.shdr[i].sh_info;
 		if (secidx >= eif.ehdr->e_shnum) {
-			fatal("elf_kernel_reloc: wrong REL relocation");
+			fatal("elf_kernel_reloc: REL sh_info is malformed");
+		}
+		if (!elf_section_mappable(&eif.shdr[secidx])) {
+			fatal("elf_kernel_reloc: REL sh_info not mappable");
 		}
 		base = (uintptr_t)eif.ehdr + eif.shdr[secidx].sh_offset;
 
@@ -446,7 +458,10 @@ elf_kernel_reloc(void)
 
 		secidx = eif.shdr[i].sh_info;
 		if (secidx >= eif.ehdr->e_shnum) {
-			fatal("elf_kernel_reloc: wrong RELA relocation");
+			fatal("elf_kernel_reloc: RELA sh_info is malformed");
+		}
+		if (!elf_section_mappable(&eif.shdr[secidx])) {
+			fatal("elf_kernel_reloc: RELA sh_info not mappable");
 		}
 		base = (uintptr_t)eif.ehdr + eif.shdr[secidx].sh_offset;
 
