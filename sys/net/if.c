@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.474 2020/04/18 15:56:26 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.475 2020/05/05 08:05:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.474 2020/04/18 15:56:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.475 2020/05/05 08:05:03 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3791,12 +3791,8 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
-	if (ifp->if_mcastop != NULL)
-		rc = (*ifp->if_mcastop)(ifp, cmd, sa);
-	else {
-		ifreq_setaddr(cmd, &ifr, sa);
-		rc = (*ifp->if_ioctl)(ifp, cmd, &ifr);
-	}
+	ifreq_setaddr(cmd, &ifr, sa);
+	rc = (*ifp->if_ioctl)(ifp, cmd, &ifr);
 
 	return rc;
 }
