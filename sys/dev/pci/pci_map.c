@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.39 2019/12/02 17:13:13 riastradh Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.40 2020/05/05 16:58:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.39 2019/12/02 17:13:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.40 2020/05/05 16:58:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int
 pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
-	pcireg_t address, mask;
+	pcireg_t address, mask, csr;
 	int s;
 
 	if (reg < PCI_MAPREG_START ||
@@ -75,9 +75,18 @@ pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	 */
 	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
+	/*
+	 * Disable decoding via the command register before writing to the
+	 * BAR register. Changing the decoding address to all-one is
+	 * not a valid address and could have side effects.
+	 */
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+	    csr & ~PCI_COMMAND_IO_ENABLE) ;
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
@@ -107,6 +116,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
 	uint64_t waddress, wmask;
 	int s, is64bit, isrom;
+	pcireg_t csr;
 
 	is64bit = (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT);
 	isrom = (reg == PCI_MAPREG_ROM);
@@ -138,6 +148,14 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	 */
 	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	/*
+	 * Disable decoding via the command register before writing to the
+	 * BAR register. Changing the decoding address to all-one is
+	 * not a valid address and could have side effects.
+	 */
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+	    csr & ~PCI_COMMAND_MEM_ENABLE) ;
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
@@ -149,6 +167,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 			pci_conf_write(pc, tag, reg + 4, address1);
 		}
 	}
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (!isrom) {
@@ -240,14 +259,28 @@ pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 int
 pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
 {
-	pcireg_t address, mask;
+	pcireg_t address, mask, csr;
 	int s;
 
 	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
+	/*
+	 * Disable decoding via the command register before writing to the
+	 * BAR register. Changing the decoding address to all-one is
+	 * not a valid address and could have side effects.
+	 */
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (PCI_MAPREG_TYPE(address) == PCI_MAPREG_TYPE_IO) {
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		    csr & ~PCI_COMMAND_IO_ENABLE);
+	} else {
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		    csr & ~PCI_COMMAND_MEM_ENABLE);
+	}
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
 
 	if (mask == 0) /* unimplemented mapping register */
