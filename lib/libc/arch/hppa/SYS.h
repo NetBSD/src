@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 2014/03/06 19:02:58 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.10 2020/05/05 06:06:16 skrll Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -30,8 +30,6 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 #include <machine/vmparam.h>
-#undef _LOCORE
-#define _LOCORE
 #include <machine/frame.h>
 
 #define	SYSENTRY(x)	LEAF_ENTRY(x)
