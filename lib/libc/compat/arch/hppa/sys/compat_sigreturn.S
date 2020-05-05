@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigreturn.S,v 1.3 2020/05/03 15:27:06 skrll Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.4 2020/05/05 06:11:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@ ENTRY(sigreturn, 0)
 	 * AFAICT, since the hppa port came after __sigreturn14,
 	 * we shouldn't have to supply the compatability sigreturn.
 	 */
-	ldi	EINVAL, %t1
-	b,n	__cerror
+	b	__cerror
+	 ldi	EINVAL, %t1
 EXIT(sigreturn)
