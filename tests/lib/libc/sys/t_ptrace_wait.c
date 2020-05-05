@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.183 2020/05/05 00:01:14 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.184 2020/05/05 00:03:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.183 2020/05/05 00:01:14 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.184 2020/05/05 00:03:49 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -3171,14 +3171,6 @@ ATF_TP_ADD_TCS(tp)
 		tracee_sees_its_original_parent_sysctl_kinfo_proc2);
 	ATF_TP_ADD_TC_HAVE_PID(tp,
 		tracee_sees_its_original_parent_procfs_status);
-
-	ATF_TP_ADD_TC(tp, eventmask_preserved_empty);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_fork);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_vfork);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_vfork_done);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_create);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_lwp_exit);
-	ATF_TP_ADD_TC(tp, eventmask_preserved_posix_spawn);
 
 	ATF_TP_ADD_TC(tp, traceme_lwpinfo0);
 	ATF_TP_ADD_TC(tp, traceme_lwpinfo1);
