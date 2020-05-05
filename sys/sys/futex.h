@@ -1,4 +1,4 @@
-/*	$NetBSD: futex.h,v 1.3 2020/05/03 01:25:48 riastradh Exp $	*/
+/*	$NetBSD: futex.h,v 1.4 2020/05/05 15:25:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
@@ -175,8 +175,8 @@ struct lwp;
 
 int	futex_robust_head_lookup(struct lwp *, lwpid_t, void **);
 void	futex_release_all_lwp(struct lwp *, lwpid_t);
-int	do_futex(int *, int, int, struct timespec *, int *, int, int,
-	    register_t *);
+int	do_futex(int *, int, int, const struct timespec *, int *, int,
+	    int, register_t *);
 void	futex_sys_init(void);
 void	futex_sys_fini(void);
 #endif /* _KERNEL */

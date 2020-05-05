@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.10 2020/05/05 15:23:32 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.11 2020/05/05 15:25:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.10 2020/05/05 15:23:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11 2020/05/05 15:25:18 riastradh Exp $");
 
 /*
  * Futexes
@@ -916,18 +916,17 @@ futex_wait_abort(struct futex_wait *fw)
 }
 
 /*
- * futex_wait(fw, timeout, clkid, clkflags)
+ * futex_wait(fw, deadline, clkid)
  *
- *	fw must be a waiter on a futex's queue.  Wait for timeout on
- *	the clock clkid according to clkflags (TIMER_*), or forever if
- *	timeout is NULL, for a futex wakeup.  Return 0 on explicit
- *	wakeup or destruction of futex, ETIMEDOUT on timeout,
- *	EINTR/ERESTART on signal.  Either way, fw will no longer be on
- *	a futex queue on return.
+ *	fw must be a waiter on a futex's queue.  Wait until deadline on
+ *	the clock clkid, or forever if deadline is NULL, for a futex
+ *	wakeup.  Return 0 on explicit wakeup or destruction of futex,
+ *	ETIMEDOUT on timeout, EINTR/ERESTART on signal.  Either way, fw
+ *	will no longer be on a futex queue on return.
  */
 static int
-futex_wait(struct futex_wait *fw, struct timespec *timeout, clockid_t clkid,
-    int clkflags)
+futex_wait(struct futex_wait *fw, const struct timespec *deadline,
+    clockid_t clkid)
 {
 	int error = 0;
 
@@ -935,7 +934,7 @@ futex_wait(struct futex_wait *fw, struct timespec *timeout, clockid_t clkid,
 	mutex_enter(&fw->fw_lock);
 
 	for (;;) {
-		/* If we're done already, stop and report success.  */
+		/* If we're done yet, stop and report success.  */
 		if (fw->fw_bitset == 0 || fw->fw_futex == NULL) {
 			error = 0;
 			break;
@@ -946,8 +945,30 @@ futex_wait(struct futex_wait *fw, struct timespec *timeout, clockid_t clkid,
 			break;
 
 		/* Not done yet.  Wait.  */
-		error = cv_timedwaitclock_sig(&fw->fw_cv, &fw->fw_lock,
-		    timeout, clkid, clkflags, DEFAULT_TIMEOUT_EPSILON);
+		if (deadline) {
+			struct timespec ts;
+
+			/* Check our watch.  */
+			error = clock_gettime1(clkid, &ts);
+			if (error)
+				break;
+
+			/* If we're past the deadline, ETIMEDOUT.  */
+			if (timespeccmp(deadline, &ts, <=)) {
+				error = ETIMEDOUT;
+				break;
+			}
+
+			/* Count how much time is left.  */
+			timespecsub(deadline, &ts, &ts);
+
+			/* Wait for that much time, allowing signals.  */
+			error = cv_timedwait_sig(&fw->fw_cv, &fw->fw_lock,
+			    tstohz(&ts));
+		} else {
+			/* Wait indefinitely, allowing signals. */
+			error = cv_wait_sig(&fw->fw_cv, &fw->fw_lock);
+		}
 	}
 
 	/*
@@ -1167,11 +1188,13 @@ futex_queue_unlock2(struct futex *f, struct futex *f2)
  */
 static int
 futex_func_wait(bool shared, int *uaddr, int val, int val3,
-    struct timespec *timeout, clockid_t clkid, int clkflags,
+    const struct timespec *timeout, clockid_t clkid, int clkflags,
     register_t *retval)
 {
 	struct futex *f;
 	struct futex_wait wait, *fw = &wait;
+	struct timespec ts;
+	const struct timespec *deadline;
 	int error;
 
 	/*
@@ -1184,6 +1207,17 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	/* Optimistically test before anything else.  */
 	if (!futex_test(uaddr, val))
 		return EAGAIN;
+
+	/* Determine a deadline on the specified clock.  */
+	if (timeout == NULL || (clkflags & TIMER_ABSTIME) == TIMER_ABSTIME) {
+		deadline = timeout;
+	} else {
+		error = clock_gettime1(clkid, &ts);
+		if (error)
+			return error;
+		timespecadd(&ts, timeout, &ts);
+		deadline = &ts;
+	}
 
 	/* Get the futex, creating it if necessary.  */
 	error = futex_lookup_create(uaddr, shared, &f);
@@ -1221,7 +1255,7 @@ futex_func_wait(bool shared, int *uaddr, int val, int val3,
 	f = NULL;
 
 	/* Wait. */
-	error = futex_wait(fw, timeout, clkid, clkflags);
+	error = futex_wait(fw, deadline, clkid);
 	if (error)
 		goto out;
 
@@ -1546,8 +1580,8 @@ out:
  *	parsed out.
  */
 int
-do_futex(int *uaddr, int op, int val, struct timespec *timeout, int *uaddr2,
-    int val2, int val3, register_t *retval)
+do_futex(int *uaddr, int op, int val, const struct timespec *timeout,
+    int *uaddr2, int val2, int val3, register_t *retval)
 {
 	const bool shared = (op & FUTEX_PRIVATE_FLAG) ? false : true;
 	const clockid_t clkid = (op & FUTEX_CLOCK_REALTIME) ? CLOCK_REALTIME
