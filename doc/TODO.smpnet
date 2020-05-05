@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.34 2020/01/20 18:40:06 thorpej Exp $
+$NetBSD: TODO.smpnet,v 1.35 2020/05/05 09:33:39 jdolecek Exp $
 
 MP-safe components
 ==================
@@ -120,6 +120,17 @@ actual devices, no time (or interest/love) to work on the task, so instead we
 provide a deferred bpf_mtap mechanism that forcibly runs bpf_mtap in softint
 context.  It's a workaround and once the functions run in softint, we should use
 the original bpf_mtap again.
+
+if_mcast_op() - SIOCADDMULTI/SIOCDELMULTI
+-----------------------------------------
+Helper function is called to add or remove multicast addresses for
+interface.  When called via ioctl it takes IFNET_LOCK(), when called
+via sosetopt() it doesn't.
+
+Various network drivers can't assert IFNET_LOCKED() in their if_ioctl
+because of this. Generally drivers still take care to splnet() even
+with NET_MPSAFE before calling ether_ioctl(), but they do not take
+KERNEL_LOCK(), so this is actually unsafe.
 
 Lingering obsolete variables
 -----------------------------
