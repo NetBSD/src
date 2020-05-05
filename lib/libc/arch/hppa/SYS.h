@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 2020/05/05 06:06:16 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.11 2020/05/05 20:39:18 skrll Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -42,13 +42,13 @@
 	ldi	__CONCAT(SYS_,x), %t1		!\
 	.import __cerror, code			!\
 	comb,<>	%r0, %t1, __cerror		!\
-	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
+	 ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
 #define	PSEUDO(x,y)				!\
 SYSENTRY(x)					!\
 	SYSCALL(y)				!\
 	bv	%r0(%rp)			!\
-	nop					!\
+	 nop					!\
 SYSEXIT(x)
 
 #define	PSEUDO_NOERROR(x,y)			!\
@@ -56,10 +56,10 @@ SYSENTRY(x)					!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
 	ble	4(%sr2, %r1)			!\
-	ldi	__CONCAT(SYS_,y), %t1		!\
+	 ldi	__CONCAT(SYS_,y), %t1		!\
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	!\
 	bv	%r0(%rp)			!\
-	nop					!\
+	 nop					!\
 SYSEXIT(x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
