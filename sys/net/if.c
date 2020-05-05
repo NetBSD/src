@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.476 2020/05/05 09:22:24 jdolecek Exp $	*/
+/*	$NetBSD: if.c,v 1.477 2020/05/05 09:26:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.476 2020/05/05 09:22:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.477 2020/05/05 09:26:29 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3794,7 +3794,7 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	/*
 	 * XXX NOMPSAFE - this calls if_ioctl without holding IFNET_LOCK()
 	 * in some cases - e.g. when called from vlan/netinet/netinet6 code
-	 * directly rather than via sockopt/doifoictl()
+	 * directly rather than via doifoictl()
 	 */
 	ifreq_setaddr(cmd, &ifr, sa);
 	rc = (*ifp->if_ioctl)(ifp, cmd, &ifr);
