@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.80 2020/05/03 17:24:11 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.81 2020/05/05 17:02:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.80 2020/05/03 17:24:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.81 2020/05/05 17:02:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ union hypervisor_attach_cookie {
  * This is set when the ISA bus is attached.  If it's not set by the
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
-#ifdef DOM0OPS
+#if defined(XENPV) && defined(DOM0OPS)
 int     isa_has_been_seen;
 #if NISA > 0
 struct  x86_isa_chipset x86_isa_chipset;
@@ -663,7 +663,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
-#ifdef DOM0OPS
+#if defined(XENPV) && defined(DOM0OPS)
 #if NPCI > 0
 #if NACPICA > 0
 	if (acpi_present) {
@@ -728,7 +728,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	if (xendomain_is_privileged()) {
 		xenprivcmd_init();
 	}
-#endif /* DOM0OPS */
+#endif /* XENPV && DOM0OPS */
 
 	hypervisor_machdep_attach();
 
