@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.5 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6 2020/05/05 06:20:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ LEAF_ENTRY(__cerror)
 	stw	%t1, HPPA_FRAME_ARG(0)(%sp)
 	ldo	HPPA_FRAME_SIZE(%sp),%sp
 	bl	__errno, %rp
-	nop
+	 nop
 	ldo	-HPPA_FRAME_SIZE(%sp), %sp
 	ldw	HPPA_FRAME_ARG(0)(%sp), %t1
 	ldw	HPPA_FRAME_CRP(%sp), %rp
@@ -58,5 +58,5 @@ LEAF_ENTRY(__cerror)
 #endif
 	ldi	-1, %ret0
 	bv	%r0(%rp)
-	ldi	-1, %ret1
+	 ldi	-1, %ret1
 EXIT(__cerror)
