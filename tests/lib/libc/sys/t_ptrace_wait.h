@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.27 2020/03/08 15:07:44 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.28 2020/05/05 00:50:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -742,6 +742,18 @@ find_event_count(struct lwp_event_count list[], lwpid_t lwp, size_t max_lwps)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)
+#endif
+
+#if defined(TWAIT_HAVE_STATUS)
+#define ATF_TP_ADD_TC_HAVE_STATUS(a,b)	ATF_TP_ADD_TC(a,b)
+#else
+#define ATF_TP_ADD_TC_HAVE_STATUS(a,b)
+#endif
+
+#if defined(TWAIT_HAVE_STATUS) && (defined(__i386__) || defined(__x86_64__))
+#define ATF_TP_ADD_TC_HAVE_STATUS_X86(a,b)	ATF_TP_ADD_TC(a,b)
+#else
+#define ATF_TP_ADD_TC_HAVE_STATUS_X86(a,b)
 #endif
 
 #if defined(HAVE_GPREGS)
