@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.58 2020/05/05 17:02:01 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.59 2020/05/06 20:40:33 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.58 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.59 2020/05/06 20:40:33 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -128,6 +128,8 @@ struct xenevt_d {
 	struct cpu_info *ci; /* prefered CPU for events for this device */
 };
 
+static struct intrhand *xenevt_ih;
+
 /* event -> user device mapping */
 static struct xenevt_d *devevent[NR_EVENT_CHANNELS];
 
@@ -160,7 +162,6 @@ static evtchn_port_t xenevt_alloc_event(void)
 void
 xenevtattach(int n)
 {
-	struct intrhand *ih __diagused;
 	int level = IPL_HIGH;
 
 	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
@@ -181,10 +182,10 @@ xenevtattach(int n)
 	evtchn_port_t evtchn = xenevt_alloc_event();
 
 	/* The real objective here is to wiggle into the ih callchain for IPL level */
-	ih = intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
-	    xenevt_processevt, NULL, true, "xenevt");
+	xenevt_ih = intr_establish_xname(-1, &xen_pic, evtchn, 
+	    IST_LEVEL, level, xenevt_processevt, NULL, true, "xenevt");
 
-	KASSERT(ih != NULL);
+	KASSERT(xenevt_ih != NULL);
 }
 
 /* register pending event - always called with interrupt disabled */
@@ -193,7 +194,7 @@ xenevt_setipending(int l1, int l2)
 {
 	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
 	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
-	atomic_or_32(&cpu_info_primary.ci_ipending, 1 << SIR_XENIPL_HIGH);
+	atomic_or_32(&xenevt_ih->ih_cpu->ci_ipending, 1 << SIR_XENIPL_HIGH);
 }
 
 /* process pending events */
@@ -307,7 +308,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 			return error;
 
 		d = kmem_zalloc(sizeof(*d), KM_SLEEP);
-		d->ci = &cpu_info_primary;
+		d->ci = xenevt_ih->ih_cpu;
 		mutex_init(&d->lock, MUTEX_DEFAULT, IPL_HIGH);
 		cv_init(&d->cv, "xenevt");
 		selinit(&d->sel);
