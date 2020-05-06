@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.4 2020/05/04 15:09:34 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.4 2020/05/04 15:09:34 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -1416,8 +1416,8 @@ do_test_wake_highest_pri(void)
 	lwp_data[1].block_val = 0;
 	lwp_data[1].bitset = 0;
 	lwp_data[1].wait_op = FUTEX_WAIT;
-	ATF_REQUIRE(_lwp_create(&lwp_data[0].context, 0,
-				&lwp_data[0].lwpid) == 0);
+	ATF_REQUIRE(_lwp_create(&lwp_data[1].context, 0,
+				&lwp_data[1].lwpid) == 0);
 
 	for (tries = 0; tries < 5; tries++) {
 		membar_sync();
