@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.10 2020/05/05 15:31:42 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.11 2020/05/06 18:31:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.10 2020/05/05 15:31:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.11 2020/05/06 18:31:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -550,7 +550,7 @@ entropy_seed(rndsave_t *seed)
 	if (E->stage >= ENTROPY_WARM)
 		mutex_enter(&E->lock);
 	seeded = E->seeded;
-	E->seeded = true;
+	E->seeded = (seed->entropy > 0);
 	if (E->stage >= ENTROPY_WARM)
 		mutex_exit(&E->lock);
 
@@ -563,7 +563,8 @@ entropy_seed(rndsave_t *seed)
 		printf("entropy: double-seeded by bootloader\n");
 		seed->entropy = 0;
 	} else {
-		printf("entropy: entering seed from bootloader\n");
+		printf("entropy: entering seed from bootloader"
+		    " with %u bits of entropy\n", (unsigned)seed->entropy);
 	}
 
 	/* Enter it into the pool and promptly zero it.  */
@@ -2197,7 +2198,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * load a seed from disk that we have already loaded
 		 * from the bootloader, so we don't double-count it.
 		 */
-		if (privileged) {
+		if (privileged && rdata->entropy && rdata->len) {
 			mutex_enter(&E->lock);
 			if (!E->seeded) {
 				entropybits = MIN(rdata->entropy,
