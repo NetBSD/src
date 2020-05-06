@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.22 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.23 2020/05/06 16:50:13 bouyer Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.22 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.23 2020/05/06 16:50:13 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.22 2020/04/25 15:26:18 bouyer Exp
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/intr.h>	/* for xendomain_is_dom0() */
@@ -54,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.22 2020/04/25 15:26:18 bouyer Exp
 
 static struct intrhand *ih;
 struct xenstore_domain_interface *xenstore_interface;
+static kmutex_t xenstore_lock;
+static kcondvar_t xenstore_cv;
 
 extern int xenstored_ready;
 // static DECLARE_WORK(probe_work, xenbus_probe, NULL);
@@ -76,11 +79,12 @@ static int
 wake_waiting(void *arg)
 {
 	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
-		xenstored_ready = 1;
-		wakeup(&xenstored_ready);
+		xb_xenstored_make_ready();
 	} 
 
-	wakeup(&xenstore_interface);
+	mutex_enter(&xenstore_lock);
+	cv_broadcast(&xenstore_cv);
+	mutex_exit(&xenstore_lock);
 	return 1;
 }
 
@@ -118,16 +122,15 @@ xb_write(const void *data, unsigned len)
 	struct xenstore_domain_interface *intf = xenstore_domain_interface();
 	XENSTORE_RING_IDX cons, prod;
 
-	int s = spltty();
-
+	mutex_enter(&xenstore_lock);
 	while (len != 0) {
 		void *dst;
 		unsigned int avail;
 
 		while ((intf->req_prod - intf->req_cons) == XENSTORE_RING_SIZE) {
-			XENPRINTF(("xb_write tsleep\n"));
-			tsleep(&xenstore_interface, PRIBIO, "wrst", 0);
-			XENPRINTF(("xb_write tsleep done\n"));
+			XENPRINTF(("xb_write cv_wait\n"));
+			cv_wait(&xenstore_cv, &xenstore_lock);
+			XENPRINTF(("xb_write cv_wait done\n"));
 		}
 
 		/* Read indexes, then verify. */
@@ -135,7 +138,7 @@ xb_write(const void *data, unsigned len)
 		prod = intf->req_prod;
 		xen_rmb();
 		if (!check_indexes(cons, prod)) {
-			splx(s);
+			mutex_exit(&xenstore_lock);
 			return EIO;
 		}
 
@@ -156,8 +159,7 @@ xb_write(const void *data, unsigned len)
 
 		hypervisor_notify_via_evtchn(xen_start_info.store_evtchn);
 	}
-
-	splx(s);
+	mutex_exit(&xenstore_lock);
 	return 0;
 }
 
@@ -167,14 +169,14 @@ xb_read(void *data, unsigned len)
 	struct xenstore_domain_interface *intf = xenstore_domain_interface();
 	XENSTORE_RING_IDX cons, prod;
 
-	int s = spltty();
+	mutex_enter(&xenstore_lock);
 
 	while (len != 0) {
 		unsigned int avail;
 		const char *src;
 
 		while (intf->rsp_cons == intf->rsp_prod)
-			tsleep(&xenstore_interface, PRIBIO, "rdst", 0);
+			cv_wait(&xenstore_cv, &xenstore_lock);
 
 		/* Read indexes, then verify. */
 		cons = intf->rsp_cons;
@@ -182,7 +184,7 @@ xb_read(void *data, unsigned len)
 		xen_rmb();
 		if (!check_indexes(cons, prod)) {
 			XENPRINTF(("xb_read EIO\n"));
-			splx(s);
+			mutex_exit(&xenstore_lock);
 			return EIO;
 		}
 
@@ -209,8 +211,7 @@ xb_read(void *data, unsigned len)
 
 		hypervisor_notify_via_evtchn(xen_start_info.store_evtchn);
 	}
-
-	splx(s);
+	mutex_exit(&xenstore_lock);
 	return 0;
 }
 
@@ -220,10 +221,13 @@ xb_init_comms(device_t dev)
 {
 	int evtchn;
 
+	mutex_init(&xenstore_lock, MUTEX_DEFAULT, IPL_TTY);
+	cv_init(&xenstore_cv, "xsio");
+
 	evtchn = xen_start_info.store_evtchn;
 
 	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_TTY,
-	    wake_waiting, NULL, false, device_xname(dev));
+	    wake_waiting, NULL, true, device_xname(dev));
 
 	hypervisor_unmask_event(evtchn);
 	aprint_verbose_dev(dev, "using event channel %d\n", evtchn);

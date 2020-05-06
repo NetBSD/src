@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.51 2020/04/28 13:21:01 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.52 2020/05/06 16:50:13 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.51 2020/04/28 13:21:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.52 2020/05/06 16:50:13 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.51 2020/04/28 13:21:01 bouyer Exp
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/kthread.h>
+#include <sys/mutex.h>
 #include <uvm/uvm.h>
 
 #include <xen/xen.h>	/* for xendomain_is_dom0() */
@@ -108,8 +109,8 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 	xenbus_dmat = xa->xa_dmat;
 	config_pending_incr(self);
 
-	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
-	    NULL, "xenbus_probe");
+	err = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    xenbus_probe_init, NULL, NULL, "xenbus_probe");
 	if (err)
 		aprint_error_dev(xenbus_dev,
 				"kthread_create(xenbus_probe): %d\n", err);
@@ -618,6 +619,8 @@ static struct xenbus_watch be_watch;
 
 /* A flag to determine if xenstored is 'ready' (i.e. has started) */
 int xenstored_ready = 0;
+static kmutex_t xenstored_lock;
+static kcondvar_t xenstored_cv;
 
 void
 xenbus_probe(void *unused)
@@ -655,6 +658,15 @@ xenbus_probe(void *unused)
 	//notifier_call_chain(&xenstore_chain, 0, NULL);
 }
 
+void
+xb_xenstored_make_ready(void)
+{
+	mutex_enter(&xenstored_lock);
+	xenstored_ready = 1;
+	cv_broadcast(&xenstored_cv);
+	mutex_exit(&xenstored_lock);
+}
+
 static void
 xenbus_probe_init(void *unused)
 {
@@ -665,6 +677,8 @@ xenbus_probe_init(void *unused)
 	DPRINTK("");
 
 	SLIST_INIT(&xenbus_device_list);
+	mutex_init(&xenstored_lock, MUTEX_DEFAULT, IPL_TTY);
+	cv_init(&xenstored_cv, "xsready");
 
 	/*
 	** Domain0 doesn't have a store_evtchn or store_mfn yet.
@@ -728,13 +742,14 @@ xenbus_probe_init(void *unused)
 	config_pending_decr(xenbus_dev);
 #ifdef DOM0OPS
 	if (dom0) {
-		int s;
-		s = spltty();
+		mutex_enter(&xenstored_lock);
 		while (xenstored_ready == 0) {
-			tsleep(&xenstored_ready, PRIBIO, "xsready", 0);
+			cv_wait(&xenstored_cv, &xenstored_lock);
+			mutex_exit(&xenstored_lock);
 			xenbus_probe(NULL);
+			mutex_enter(&xenstored_lock);
 		}
-		splx(s);
+		mutex_exit(&xenstored_lock);
 	}
 #endif
 	kthread_exit(0);
