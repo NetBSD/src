@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.17 2020/05/06 13:47:39 kim Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.18 2020/05/06 19:31:32 kim Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.17 2020/05/06 13:47:39 kim Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.18 2020/05/06 19:31:32 kim Exp $");
 #endif
 
 #include <sys/types.h>
@@ -77,6 +77,10 @@ __RCSID("$NetBSD: lastlogin.c,v 1.17 2020/05/06 13:47:39 kim Exp $");
 # define UTX_HOSTSIZE	256
 #endif
 
+/*
+ * Fields in the structure below are 1 byte longer than the maximum possible
+ * for NUL-termination.
+ */
 struct output {
 	struct timeval	 o_tv;
 	char		 o_name[UTX_USERSIZE+1];
@@ -268,12 +272,13 @@ process_entry(struct passwd *p, struct lastlog *l)
 {
 	struct output	o;
 
+	memset(&o, 0, sizeof(o));
 	if (numeric > 1)
 		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
 	else
 		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
-	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
-	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
+	(void)memcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	(void)memcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv.tv_sec = l->ll_time;
 	o.o_tv.tv_usec = 0;
 	o.next = NULL;
@@ -392,16 +397,17 @@ process_entryx(struct passwd *p, struct lastlogx *l)
 {
 	struct output	o;
 
+	memset(&o, 0, sizeof(o));
 	if (numeric > 1)
 		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
 	else
 		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
-	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	(void)memcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
 	if (numeric)
 		(void)sockaddr_snprintf(o.o_host, sizeof(o.o_host), "%a",
 		    (struct sockaddr *)&l->ll_ss);
 	else
-		(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
+		(void)memcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv = l->ll_tv;
 	o.next = NULL;
 
