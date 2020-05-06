@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: balloon.c,v 1.22 2020/05/06 17:27:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.21 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.22 2020/05/06 17:27:39 bouyer Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -272,14 +272,10 @@ error:
 static size_t
 xenmem_get_maxreservation(void)
 {
-	int s;
 	unsigned int ret;
 
-	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_maximum_reservation, 
 	    & (domid_t) { DOMID_SELF });
-
-	splx(s);
 
 	if (ret == 0) {
 		/* well, a maximum reservation of 0 is really bogus */
@@ -293,12 +289,10 @@ xenmem_get_maxreservation(void)
 static size_t
 xenmem_get_currentreservation(void)
 {
-	int s, ret;
+	int ret;
 
-	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_current_reservation,
 				   & (domid_t) { DOMID_SELF });
-	splx(s);
 
 	if (ret < 0) {
 		panic("%s failed: %d", __func__, ret);
@@ -415,11 +409,8 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = rpages;
 
-	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_decrease_reservation,
 				   &reservation);
-	splx(s);
-
 	if (ret != rpages) {
 		/*
 		 * we are in bad shape: the operation failed for certain
@@ -481,9 +472,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = tpages;
 
-	s = splvm(); /* XXXSMP */
 	ret = HYPERVISOR_memory_op(XENMEM_increase_reservation, &reservation);
-	splx(s);
 
 	if (ret < 0) {
 		panic("%s: increase reservation failed, ret %d",
