@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.93 2020/05/05 17:02:01 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.94 2020/05/06 19:49:00 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.93 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.94 2020/05/06 19:49:00 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1387,6 +1387,8 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 	}
 	case BLKIF_OP_READ:
 	case BLKIF_OP_WRITE:
+		KASSERT(mutex_owned(&xbdi->xbdi_lock));
+		mutex_exit(&xbdi->xbdi_lock);
 		xbd_io->xio_buf.b_data = (void *)
 		    (xbd_io->xio_vaddr + xbd_io->xio_start_offset);
 
@@ -1397,6 +1399,7 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 		}
 		/* will call xbdback_iodone() asynchronously when done */
 		bdev_strategy(&xbd_io->xio_buf);
+		mutex_enter(&xbdi->xbdi_lock);
 		xbdi->xbdi_cont = xbdback_co_main_incr;
 		return xbdi;
 	default:
