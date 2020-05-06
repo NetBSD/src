@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.40 2020/03/24 01:13:41 kamil Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.41 2020/05/06 12:44:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -502,11 +502,12 @@ readframe(struct spclient *spc)
 			return 1;
 		}
 
-		spc->spc_buf = malloc(framelen - HDRSZ);
+		/* Add an extra byte so that we are always NUL-terminated */
+		spc->spc_buf = malloc(framelen - HDRSZ + 1);
 		if (spc->spc_buf == NULL) {
 			return -1;
 		}
-		memset(spc->spc_buf, 0, framelen - HDRSZ);
+		memset(spc->spc_buf, 0, framelen - HDRSZ + 1);
 
 		/* "fallthrough" */
 	} else {
