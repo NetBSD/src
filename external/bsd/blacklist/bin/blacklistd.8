@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.23 2020/04/21 13:57:12 christos Exp $
+.\" $NetBSD: blacklistd.8,v 1.24 2020/05/06 14:59:51 snj Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,10 +123,10 @@ that is not required as all information to remove the rule is
 kept.
 .Pp
 If the action is
-.Dq remove
+.Dq rem
 Then the same control script is invoked as:
 .Bd -literal -offset indent
-control remove <rulename> <proto> <address> <mask> <port> <id>
+control rem <rulename> <proto> <address> <mask> <port> <id>
 .Ed
 .Pp
 where
