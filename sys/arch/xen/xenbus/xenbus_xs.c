@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.26 2020/04/07 16:10:48 jdolecek Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.27 2020/05/06 16:50:13 bouyer Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.26 2020/04/07 16:10:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.27 2020/05/06 16:50:13 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -158,9 +158,8 @@ xenbus_debug_write(const char *str, unsigned int count)
 int
 xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 {
-	int err = 0, s;
+	int err = 0;
 
-	s = spltty();
 	mutex_enter(&xs_state.xs_lock);
 	err = xb_write(msg, sizeof(*msg) + msg->len);
 	if (err) {
@@ -170,7 +169,6 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 		*reply = read_reply(&msg->type, &msg->len);
 	}
 	mutex_exit(&xs_state.xs_lock);
-	splx(s);
 
 	return err;
 }
@@ -192,7 +190,7 @@ xs_talkv(struct xenbus_transaction *t,
 {
 	struct xsd_sockmsg msg;
 	unsigned int i;
-	int err, s;
+	int err;
 	void *ret;
 
 	msg.tx_id = (uint32_t)(unsigned long)t;
@@ -202,7 +200,6 @@ xs_talkv(struct xenbus_transaction *t,
 	for (i = 0; i < num_vecs; i++)
 		msg.len += iovec[i].iov_len;
 
-	s = spltty();
 	mutex_enter(&xs_state.xs_lock);
 
 	DPRINTK("write msg");
@@ -210,7 +207,6 @@ xs_talkv(struct xenbus_transaction *t,
 	DPRINTK("write msg err %d", err);
 	if (err) {
 		mutex_exit(&xs_state.xs_lock);
-		splx(s);
 		return (err);
 	}
 
@@ -220,7 +216,6 @@ xs_talkv(struct xenbus_transaction *t,
 		DPRINTK("write iovect err %d", err);
 		if (err) {
 			mutex_exit(&xs_state.xs_lock);
-			splx(s);
 			return (err);
 		}
 	}
@@ -230,7 +225,6 @@ xs_talkv(struct xenbus_transaction *t,
 	DPRINTK("read done");
 
 	mutex_exit(&xs_state.xs_lock);
-	splx(s);
 
 	if (msg.type == XS_ERROR) {
 		err = get_error(ret);
@@ -829,14 +823,14 @@ xs_init(device_t dev)
 	mutex_init(&xs_state.reply_lock, MUTEX_DEFAULT, IPL_TTY);
 	cv_init(&xs_state.reply_cv, "rplq");
 
-	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
+	err = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, xenwatch_thread,
 	    NULL, NULL, "xenwatch");
 	if (err) {
 		aprint_error_dev(dev, "kthread_create(xenwatch): %d\n", err);
 		return err;
 	}
 
-	err = kthread_create(PRI_NONE, 0, NULL, xenbus_thread,
+	err = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, xenbus_thread,
 	    NULL, NULL, "xenbus");
 	if (err) {
 		aprint_error_dev(dev, "kthread_create(xenbus): %d\n", err);
