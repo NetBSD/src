@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.16 2020/05/06 11:58:33 kim Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.17 2020/05/06 13:47:39 kim Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.16 2020/05/06 11:58:33 kim Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.17 2020/05/06 13:47:39 kim Exp $");
 #endif
 
 #include <sys/types.h>
@@ -268,7 +268,10 @@ process_entry(struct passwd *p, struct lastlog *l)
 {
 	struct output	o;
 
-	(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
+	if (numeric > 1)
+		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
+	else
+		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
 	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
 	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv.tv_sec = l->ll_time;
@@ -358,9 +361,12 @@ dolastlogx(const char *logfile, int argc, char **argv)
 			(void)memcpy(&uid, key.data, sizeof(uid));
 
 			if ((passwd = getpwuid(uid)) == NULL) {
-				warnx("Cannot find user for uid %lu",
-				    (unsigned long)uid);
-				continue;
+				static struct passwd p;
+				static char n[32];
+				snprintf(n, sizeof(n), "(%d)", i);
+				p.pw_uid = i;
+				p.pw_name = n;
+				passwd = &p;
 			}
 			(void)memcpy(&l, data.data, sizeof(l));
 			process_entryx(passwd, &l);
@@ -391,11 +397,11 @@ process_entryx(struct passwd *p, struct lastlogx *l)
 	else
 		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
 	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
-	if (!numeric)
-		(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
-	else
+	if (numeric)
 		(void)sockaddr_snprintf(o.o_host, sizeof(o.o_host), "%a",
 		    (struct sockaddr *)&l->ll_ss);
+	else
+		(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv = l->ll_tv;
 	o.next = NULL;
 
