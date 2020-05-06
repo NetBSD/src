@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.18 2020/05/06 19:31:32 kim Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.19 2020/05/06 19:45:39 kim Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.18 2020/05/06 19:31:32 kim Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.19 2020/05/06 19:45:39 kim Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,6 +95,7 @@ struct output {
 #define DOSORT(x)	((x) & (SORT_TIME))
 static	int sortlog = SORT_NONE;
 static	struct output *outstack = NULL;
+static	struct output *outstack_p = NULL;
 
 static int fixed = 0;
 #define FIXED_NAMELEN	UT_NAMESIZE
@@ -121,7 +122,7 @@ static	void		dolastlog(const char *, int, char *[]);
 static	void		process_entryx(struct passwd *, struct lastlogx *);
 static	void		dolastlogx(const char *, int, char *[]);
 #endif
-static	void		push_record(struct output *);
+static	void		append_record(struct output *);
 static	void		sizecolumns(struct output *);
 static	void		output_stack(struct output *);
 static	void		sort_and_output_stack(struct output *);
@@ -289,7 +290,7 @@ process_entry(struct passwd *p, struct lastlog *l)
 	 * onto a stack.  Otherwise, we can just output it.
 	 */
 	if (SIZECOLUMNS || DOSORT(sortlog))
-		push_record(&o);
+		append_record(&o);
 	else
 		output_record(&o);
 }
@@ -417,14 +418,14 @@ process_entryx(struct passwd *p, struct lastlogx *l)
 	 * onto a stack.  Otherwise, we can just output it.
 	 */
 	if (SIZECOLUMNS || DOSORT(sortlog))
-		push_record(&o);
+		append_record(&o);
 	else
 		output_record(&o);
 }
 #endif
 
 static void
-push_record(struct output *o)
+append_record(struct output *o)
 {
 	struct output	*out;
 
@@ -434,12 +435,10 @@ push_record(struct output *o)
 	(void)memcpy(out, o, sizeof(*out));
 	out->next = NULL;
 
-	if (outstack) {
-		out->next = outstack;
-		outstack = out;
-	} else {
-		outstack = out;
-	}
+	if (outstack_p)
+		outstack_p = outstack_p->next = out;
+	else
+		outstack = outstack_p = out;
 }
 
 static void
