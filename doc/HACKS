@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.205 2020/04/30 12:44:41 rin Exp $
+# $NetBSD: HACKS,v 1.206 2020/05/06 14:33:52 snj Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -171,8 +171,6 @@ file	sys/net/bpf.c			: 1.116
 file	sys/net/zlib.c			: 1.26
 file	sys/netccitt/if_x25subr.c	: 1.37
 file	sys/netinet/in.c		: 1.107
-file	sys/netsmb/smb_smb.c		: 1.27
-file	sys/netsmb/smb_trantcp.c	: 1.22
 file	sys/nfs/nfs_serv.c		: 1.108
 file	sys/nfs/nfs_socket.c		: 1.129
 file	sys/nfs/nfs_syscalls.c		: 1.91
