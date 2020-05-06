@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.86 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.87 2020/05/06 17:28:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.86 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.87 2020/05/06 17:28:26 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.86 2020/05/02 16:44:36 bouyer Exp $"
 #include <sys/systm.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -193,6 +194,8 @@ xpq_flush_queue(void)
 	int done = 0, ret;
 	size_t xpq_idx;
 
+	KASSERT(curcpu()->ci_ilevel >= IPL_VM || cold);
+
 	xpq_idx = curcpu()->ci_xpq_idx;
 	xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 
@@ -219,7 +222,7 @@ retry:
 static inline void
 xpq_increment_idx(void)
 {
-
+	KASSERT(curcpu()->ci_ilevel >= IPL_VM || cold);
 	if (__predict_false(++curcpu()->ci_xpq_idx == XPQUEUE_SIZE))
 		xpq_flush_queue();
 }
@@ -315,12 +318,12 @@ xpq_queue_tlb_flush(void)
 void
 xpq_flush_cache(void)
 {
-	int s = splvm(); /* XXXSMP */
+	int s = splvm();
 
 	xpq_flush_queue();
 
 	asm("wbinvd":::"memory");
-	splx(s); /* XXX: removeme */
+	splx(s);
 }
 
 void
