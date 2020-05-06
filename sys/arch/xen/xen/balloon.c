@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.22 2020/05/06 17:27:39 bouyer Exp $ */
+/* $NetBSD: balloon.c,v 1.23 2020/05/06 19:52:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.22 2020/05/06 17:27:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.23 2020/05/06 19:52:19 bouyer Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -366,7 +366,7 @@ bpge_dtor(void *arg, void *obj)
 static size_t
 balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 {
-	int rpages, s, ret;
+	int rpages, ret;
 	paddr_t pa;
 	struct balloon_page_entry *bpg_entry;
 	xen_pfn_t *mfn_list = sc->sc_mfn_list;
@@ -395,10 +395,8 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 
 		mfn_list[rpages] = xpmap_ptom(pa) >> PAGE_SHIFT;
 
-		s = splvm(); /* XXXSMP */
 		/* Invalidate pg */
 		xpmap_ptom_unmap(pa);
-		splx(s);
 
 		SLIST_INSERT_HEAD(&balloon_sc->balloon_page_entries, 
 				  bpg_entry, entry);
@@ -494,19 +492,29 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 			pa = pmap_pa_end;
 
 			/* P2M update */
-			s = splvm(); /* XXXSMP */
-			pmap_pa_end += PAGE_SIZE; /* XXX: TLB flush ?*/
+#if defined(_LP64) || defined(PAE)
+			atomic_add_64(&pmap_pa_end, PAGE_SIZE);
+#else
+			atomic_add_32(&pmap_pa_end, PAGE_SIZE);
+#endif
+			s = splvm();
 			xpmap_ptom_map(pa, ptoa(mfn_list[rpages]));
 			xpq_queue_machphys_update(ptoa(mfn_list[rpages]), pa);
+			xpq_flush_queue();
 			splx(s);
 
 			if (uvm_physseg_plug(atop(pa), 1, NULL) == false) {
 				/* Undo P2M */
-				s = splvm(); /* XXXSMP */
+				s = splvm();
 				xpmap_ptom_unmap(pa);
 				xpq_queue_machphys_update(ptoa(mfn_list[rpages]), 0);
-				pmap_pa_end -= PAGE_SIZE; /* XXX: TLB flush ?*/
+				xpq_flush_queue();
 				splx(s);
+#if defined(_LP64) || defined(PAE)
+				atomic_add_64(&pmap_pa_end, -PAGE_SIZE);
+#else
+				atomic_add_32(&pmap_pa_end, -PAGE_SIZE);
+#endif
 				break;
 			}
 			continue;
@@ -529,17 +537,14 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 		/* Update P->M */
 		pa = VM_PAGE_TO_PHYS(bpg_entry->pg);
 
-		s = splvm(); /* XXXSMP */
-
+		s = splvm();
 		xpmap_ptom_map(pa, ptoa(mfn_list[rpages]));
 		xpq_queue_machphys_update(ptoa(mfn_list[rpages]), pa);
-
+		xpq_flush_queue();
 		splx(s);
 
 		pool_cache_put(sc->bpge_pool, bpg_entry);
 	}
-
-	xpq_flush_queue();
 
 #if BALLOONDEBUG
 	device_printf(sc->sc_dev, "deflate %zu => deflated by %d\n",
