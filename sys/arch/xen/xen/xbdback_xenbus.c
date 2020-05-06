@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.94 2020/05/06 19:49:00 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.95 2020/05/06 20:09:26 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.94 2020/05/06 19:49:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.95 2020/05/06 20:09:26 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -643,7 +643,6 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		return;
 	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
-	intr_disestablish(xbdi->xbdi_ih);
 
 	/* signal thread that we want to disconnect, then wait for it */
 	xbdi->xbdi_status = DISCONNECTING;
@@ -653,6 +652,7 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		cv_wait(&xbdi->xbdi_cv, &xbdi->xbdi_lock);
 
 	mutex_exit(&xbdi->xbdi_lock);
+	intr_disestablish(xbdi->xbdi_ih);
 
 	xenbus_switch_state(xbdi->xbdi_xbusd, NULL, XenbusStateClosing);
 }
