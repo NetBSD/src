@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.8.2.2 2017/06/20 17:09:53 snj Exp $	*/
+/*	$NetBSD: sha2.c,v 1.8.2.3 2020/05/06 07:40:17 sborrill Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -1503,6 +1503,8 @@ void isc_sha512_last(isc_sha512_t *context) {
 		*context->buffer = 0x80;
 	}
 	/* Store the length of input data (in bits): */
+	memcpy(&context->buffer[ISC_SHA512_SHORT_BLOCK_LENGTH],
+	    &context->bitcount[1], sizeof(isc_uint64_t));
 	memcpy(&context->buffer[ISC_SHA512_SHORT_BLOCK_LENGTH+8],
 	    &context->bitcount[0], sizeof(isc_uint64_t));
 
