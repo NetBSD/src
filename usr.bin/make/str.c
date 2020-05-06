@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.41 2020/05/03 12:10:28 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.41 2020/05/03 12:10:28 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.41 2020/05/03 12:10:28 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -471,6 +471,10 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
 
     if ((m = strchr(p, '%')) != NULL) {
 	*hasPercent = TRUE;
+	if (*w == '\0') {
+		/* empty word does not match pattern */
+		return NULL;
+	}
 	/* check that the prefix matches */
 	for (; p != m && *w && *w == *p; w++, p++)
 	     continue;
