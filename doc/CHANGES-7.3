@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.81 2020/04/30 16:23:32 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.82 2020/05/06 07:42:14 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -843,4 +843,10 @@ games/fortune/unstr/unstr.c			1.15
 
 	Fix potential buffer overflows in fortune tools.
 	[nia, ticket #1729]
+
+external/bsd/bind/dist/lib/isc/sha2.c		(apply patch)
+
+	Fix bug in sha384 checksum computation introduced when
+	converting the code to avoid alignment issues.
+	[he, ticket #1730]
 
