@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.35 2020/05/05 09:33:39 jdolecek Exp $
+$NetBSD: TODO.smpnet,v 1.36 2020/05/06 14:33:52 snj Exp $
 
 MP-safe components
 ==================
@@ -88,7 +88,6 @@ Unprotected ones
    - AppleTalk (sys/netatalk/)
    - Bluetooth (sys/netbt/)
    - altq(4)
-   - CIFS (sys/netsmb/)
    - kttcp(4)
    - NFS
 
