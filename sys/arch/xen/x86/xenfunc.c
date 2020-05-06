@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.27 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.28 2020/05/06 19:47:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.27 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.28 2020/05/06 19:47:05 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -144,7 +144,7 @@ rcr0(void)
 void
 lcr3(register_t val)
 {
-	int s = splvm(); /* XXXSMP */
+	int s = splvm();
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
 	splx(s);
 }
@@ -153,7 +153,7 @@ lcr3(register_t val)
 void
 tlbflush(void)
 {
-	int s = splvm(); /* XXXSMP */
+	int s = splvm();
 	xpq_queue_tlb_flush();
 	splx(s);
 }
