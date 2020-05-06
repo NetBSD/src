@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.33 2020/04/30 03:27:15 riastradh Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.34 2020/05/06 18:49:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.33 2020/04/30 03:27:15 riastradh Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.34 2020/05/06 18:49:26 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -78,6 +78,7 @@ static char * strflags(u_int32_t);
 static void do_list(int, u_int32_t, char *);
 static void do_stats(void);
 
+static int iflag;
 static int vflag;
 
 static void
@@ -88,7 +89,8 @@ usage(void)
 	    getprogname());
 	fprintf(stderr, "       %s [-lsv] [-d devname | -t devtype]\n",
 	    getprogname());
-	fprintf(stderr, "	%s -[L|S] save-file\n", getprogname());
+	fprintf(stderr, "	%s [-i] -L save-file\n", getprogname());
+	fprintf(stderr, "	%s -S save-file\n", getprogname());
 	exit(1);
 }
 
@@ -126,8 +128,8 @@ find_name(u_int32_t type)
 	return ("???");
 }
 
-static void
-do_save(const char *filename, const void *extra, size_t nextra,
+static int
+update_seed(const char *filename, const void *extra, size_t nextra,
     uint32_t extraentropy)
 {
 	char tmp[PATH_MAX];
@@ -143,23 +145,30 @@ do_save(const char *filename, const void *extra, size_t nextra,
 	memset(&rs, 0, sizeof rs);
 
 	/* Format the temporary file name.  */
-	if (snprintf(tmp, sizeof tmp, "%s.tmp", filename) >= PATH_MAX)
-		errx(1, "path too long");
+	if (snprintf(tmp, sizeof tmp, "%s.tmp", filename) >= PATH_MAX) {
+		warnx("path too long");
+		return -1;
+	}
 
 	/* Open /dev/urandom.  */
-	if ((fd = open(_PATH_URANDOM, O_RDONLY)) == -1)
-		err(1, "device open");
+	if ((fd = open(_PATH_URANDOM, O_RDONLY)) == -1) {
+		warn("device open");
+		return -1;
+	}
 
 	/* Find how much entropy is in the pool.  */
-	if (ioctl(fd, RNDGETENTCNT, &systementropy) == -1)
-		err(1, "ioctl(RNDGETENTCNT)");
+	if (ioctl(fd, RNDGETENTCNT, &systementropy) == -1) {
+		warn("ioctl(RNDGETENTCNT)");
+		systementropy = 0;
+	}
 
 	/* Read some data from /dev/urandom.  */
 	if ((size_t)(nread = read(fd, buf, sizeof buf)) != sizeof buf) {
 		if (nread == -1)
-			err(1, "read");
+			warn("read");
 		else
-			errx(1, "truncated read");
+			warnx("truncated read");
+		return -1;
 	}
 
 	/* Close /dev/urandom; we're done with it.  */
@@ -212,30 +221,47 @@ do_save(const char *filename, const void *extra, size_t nextra,
 	 * begin with in which case we're hosed either way, or we've
 	 * just revealed some output which is not a problem.
 	 */
-	if ((fd = open(tmp, O_CREAT|O_TRUNC|O_WRONLY, 0600)) == -1)
-		err(1, "open seed file to save");
+	if ((fd = open(tmp, O_CREAT|O_TRUNC|O_WRONLY, 0600)) == -1) {
+		warn("open seed file to save");
+		return -1;
+	}
 	if ((size_t)(nwrit = write(fd, &rs, sizeof rs)) != sizeof rs) {
 		int error = errno;
 		if (unlink(tmp) == -1)
 			warn("unlink");
 		if (nwrit == -1)
-			errc(1, error, "write");
+			warnc(error, "write");
 		else
-			errx(1, "truncated write");
+			warnx("truncated write");
+		return -1;
 	}
 	explicit_memset(&rs, 0, sizeof rs); /* paranoia */
 	if (fsync_range(fd, FDATASYNC|FDISKSYNC, 0, 0) == -1) {
 		int error = errno;
 		if (unlink(tmp) == -1)
 			warn("unlink");
-		errc(1, error, "fsync_range");
+		warnc(error, "fsync_range");
+		return -1;
 	}
 	if (close(fd) == -1)
 		warn("close");
 
 	/* Rename it over the original file to commit.  */
-	if (rename(tmp, filename) == -1)
-		err(1, "rename");
+	if (rename(tmp, filename) == -1) {
+		warn("rename");
+		return -1;
+	}
+
+	/* Success!  */
+	return 0;
+}
+
+static void
+do_save(const char *filename)
+{
+
+	if (update_seed(filename, NULL, 0, 0) == -1)
+		exit(1);
 }
 
 static void
@@ -248,42 +274,52 @@ do_load(const char *filename)
 	ssize_t nread, nwrit;
 	SHA1_CTX s;
 	uint8_t digest[SHA1_DIGEST_LENGTH];
+	int ro = 0, fail = 0;
+	int error;
 
 	/*
 	 * The order of operations is important here:
 	 *
 	 * 1. Load the old seed.
-	 * 2. Feed the old seed into the kernel.
-	 * 3. Generate and write a new seed.
-	 * 4. Erase the old seed.
+	 * 2. Generate and write a new seed.
+	 *    => If writing the new seed fails, assume the medium was
+	 *       read-only and we might be reading the same thing on
+	 *       multiple boots, so treat the entropy estimate as zero.
+	 * 3. Feed the old seed into the kernel.
+	 * 4. Erase the old seed if we can.
 	 *
-	 * This follows the procedure in
+	 * We used to follow the similar procedure in
 	 *
 	 *	Niels Ferguson, Bruce Schneier, and Tadayoshi Kohno,
 	 *	_Cryptography Engineering_, Wiley, 2010, Sec. 9.6.2
-	 *	`Update Seed File'.
+	 *	`Update Seed File',
 	 *
-	 * There is a race condition: If another process generates a
-	 * key from /dev/urandom after step (2) but before step (3),
-	 * and if the machine crashes before step (3), an adversary who
-	 * can read the disk after the crash can probably guess the
-	 * complete state of the entropy pool and thereby predict the
-	 * key.
+	 * which is different mainly in that it does step (3) before
+	 * step (2).  We don't need to feed the old seed into the
+	 * kernel first, because we hash the old seed together with
+	 * /dev/urandom output.
 	 *
-	 * There's not much we can do here without some kind of
-	 * systemwide lock on /dev/urandom and without introducing an
-	 * opportunity for a crash to wipe out the entropy altogether.
-	 * To avoid this race, you should ensure that any key
-	 * generation happens _after_ `rndctl -L' has completed.
+	 * Writing the new seed to disk before feeding the old seed to
+	 * the kernel lets us notice if the disk is read-only, and if
+	 * so, zero the estimate of entropy in case we're getting the
+	 * same seed each time we boot.
 	 */
 
 	/* Format the temporary file name.  */
 	if (snprintf(tmp, sizeof tmp, "%s.tmp", filename) >= PATH_MAX)
 		errx(1, "path too long");
 
-	/* 1. Load the old seed.  */
-	if ((fd_seed = open(filename, O_RDWR)) == -1)
-		err(1, "open seed file to load");
+	/*
+	 * 1. Load the old seed.
+	 */
+	if ((fd_seed = open(filename, O_RDWR)) == -1) {
+		error = errno;
+		if ((error != EPERM && error != EROFS) ||
+		    (fd_seed = open(filename, O_RDONLY)) == -1)
+			err(1, "open seed file to load");
+		warnc(error, "seed file is nonwritable");
+		ro = 1;
+	}
 	if ((size_t)(nread = read(fd_seed, &rs, sizeof rs)) != sizeof rs) {
 		if (nread == -1)
 			err(1, "read seed");
@@ -318,46 +354,61 @@ do_load(const char *filename)
 			rs.entropy = 0;
 	}
 
-	/* Format the ioctl request.  */
+	/*
+	 * If the user asked or if the medium can't be updated, zero
+	 * the entropy estimate.
+	 */
+	if (iflag || ro)
+		rs.entropy = 0;
+
+	/*
+	 * 2. Generate and write a new seed.  If anything goes wrong,
+	 * assume the medium is read-only and treat it as zero entropy.
+	 */
+	if (update_seed(filename, rs.data, sizeof(rs.data), rs.entropy) == -1)
+		rs.entropy = 0;
+
+	/* Decide whether to fail at the end if there's no entropy.  */
+	fail = (rs.entropy == 0);
+
+	/*
+	 * 3. Feed the old seed into the kernel.
+	 */
 	rd.len = MIN(sizeof(rd.data), sizeof(rs.data));
 	rd.entropy = rs.entropy;
 	memcpy(rd.data, rs.data, rd.len);
 	explicit_memset(&rs, 0, sizeof rs); /* paranoia */
-
-	/* 2. Feed the old seed into the kernel.  */
 	if ((fd_random = open(_PATH_URANDOM, O_WRONLY)) == -1)
 		err(1, "open /dev/urandom");
 	if (ioctl(fd_random, RNDADDDATA, &rd) == -1)
 		err(1, "RNDADDDATA");
+	explicit_memset(&rd, 0, sizeof rd); /* paranoia */
 	if (close(fd_random) == -1)
 		warn("close /dev/urandom");
 	fd_random = -1;		/* paranoia */
 
 	/*
-	 * 3. Generate and write a new seed.  Note that we hash the old
-	 * seed together with whatever /dev/urandom returns in do_save.
-	 * Why?  After RNDADDDATA, the input may not be distributed
-	 * immediately to /dev/urandom.
-	 */
-	do_save(filename, rd.data, rd.len, rd.entropy);
-	explicit_memset(&rd, 0, sizeof rd); /* paranoia */
-
-	/*
 	 * 4. Erase the old seed.  Only effective if we're on a
 	 * fixed-address file system like ffs -- doesn't help to erase
 	 * the data on lfs, but doesn't hurt either.  No need to unlink
-	 * because do_save will have already overwritten it.
+	 * because do_save will have already renamed over it.
 	 */
-	memset(&rs, 0, sizeof rs);
-	if ((size_t)(nwrit = pwrite(fd_seed, &rs, sizeof rs, 0)) !=
-	    sizeof rs) {
-		if (nwrit == -1)
-			err(1, "overwrite old seed");
-		else
-			errx(1, "truncated overwrite");
+	if (!ro) {
+		memset(&rs, 0, sizeof rs);
+		if ((size_t)(nwrit = pwrite(fd_seed, &rs, sizeof rs, 0)) !=
+		    sizeof rs) {
+			if (nwrit == -1)
+				err(1, "overwrite old seed");
+			else
+				errx(1, "truncated overwrite");
+		}
+		if (fsync_range(fd_seed, FDATASYNC|FDISKSYNC, 0, 0) == -1)
+			err(1, "fsync_range");
 	}
-	if (fsync_range(fd_seed, FDATASYNC|FDISKSYNC, 0, 0) == -1)
-		err(1, "fsync_range");
+
+	/* Fail noisily if there's no entropy.  */
+	if (fail)
+		errx(1, "no entropy");
 }
 
 static void
@@ -535,7 +586,7 @@ main(int argc, char **argv)
 	sflag = 0;
 	type = 0xff;
 
-	while ((ch = getopt(argc, argv, "CES:L:celt:d:sv")) != -1) {
+	while ((ch = getopt(argc, argv, "CES:L:celit:d:sv")) != -1) {
 		switch (ch) {
 		case 'C':
 			rctl.flags |= RND_FLAG_NO_COLLECT;
@@ -568,6 +619,9 @@ main(int argc, char **argv)
 			rctl.flags &= ~RND_FLAG_NO_ESTIMATE;
 			rctl.mask |= RND_FLAG_NO_ESTIMATE;
 			mflag++;
+			break;
+		case 'i':
+			iflag = 1;
 			break;
 		case 'l':
 			lflag++;
@@ -608,10 +662,16 @@ main(int argc, char **argv)
 		usage();
 
 	/*
+	 * -i makes sense only with -L.
+	 */
+	if (iflag && cmd != 'L')
+		usage();
+
+	/*
 	 * Save.
 	 */
 	if (cmd == 'S') {
-		do_save(filename, NULL, 0, 0);
+		do_save(filename);
 		exit(0);
 	}
 
