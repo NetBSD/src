@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.23 2019/12/06 14:43:18 riastradh Exp $
+.\"	$NetBSD: rndctl.8,v 1.24 2020/05/06 18:49:26 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -76,6 +76,16 @@ but no entropy is assumed to be present.
 .It Fl e
 Enable entropy estimation using the collected timing information
 for the given device name or device type.
+.It Fl i
+With the
+.Fl L
+option to load a seed from a file, ignore any estimate in the file of
+the entropy of the seed.
+This still loads the data into the kernel, but won't unblock
+.Pa /dev/random
+even if the file claims to have adequate entropy.
+This is useful if the file is on a medium, such as an NFS share, that
+the operator does not know to be secret.
 .It Fl L
 Load saved entropy from file
 .Ar save-file
