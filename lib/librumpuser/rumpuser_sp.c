@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.75 2020/03/24 14:56:31 kre Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.76 2020/05/06 07:25:26 kamil Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.75 2020/03/24 14:56:31 kre Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.76 2020/05/06 07:25:26 kamil Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -715,9 +715,13 @@ serv_handleexec(struct spclient *spc, struct rsp_hdr *rhdr, char *comm)
 	 * very much).  proceed with exec.
 	 */
 
+#if 0 /* XXX triggers buffer overflow */
 	/* ensure comm is 0-terminated */
 	/* TODO: make sure it contains sensible chars? */
 	comm[commlen] = '\0';
+#else
+	(void)commlen;
+#endif
 
 	lwproc_switch(spc->spc_mainlwp);
 	lwproc_execnotify(comm);
@@ -979,9 +983,13 @@ handlereq(struct spclient *spc)
 			char *comm = (char *)spc->spc_buf;
 			size_t commlen = spc->spc_hdr.rsp_len - HDRSZ;
 
+#if 0 /* XXX triggers buffer overflow */
 			/* ensure it's 0-terminated */
 			/* XXX make sure it contains sensible chars? */
 			comm[commlen] = '\0';
+#else
+			(void)commlen;
+#endif
 
 			/* make sure we fork off of proc1 */
 			_DIAGASSERT(lwproc_curlwp() == NULL);
