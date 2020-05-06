@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.34 2020/05/04 15:10:40 wiz Exp $
+.\"	$NetBSD: rnd.4,v 1.35 2020/05/06 18:38:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -601,8 +601,9 @@ The
 subsystem may print any of various messages about obtaining an entropy
 seed from the bootloader to diagnose saving and loading seeds on disk:
 .Bl -diag -offset indent
-.It entropy: entering seed from bootloader
-The bootloader provided an entropy seed to the kernel.
+.It entropy: entering seed from bootloader with N bits of entropy
+The bootloader provided an entropy seed to the kernel, which recorded
+an estimate of N bits of entropy in the process that generated it.
 .It entropy: no seed from bootloader
 The bootloader did not provide an entropy seed to the kernel before
 starting the kernel.
