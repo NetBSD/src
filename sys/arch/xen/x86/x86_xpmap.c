@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.87 2020/05/06 17:28:26 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.88 2020/05/06 19:47:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.87 2020/05/06 17:28:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.88 2020/05/06 19:47:05 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -182,7 +182,7 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 		ptp = kvtopte(va);
 		pmap_pte_clearbits(ptp, PTE_W);
 	}
-	s = splvm(); /* XXXSMP */
+	s = splvm();
 	xpq_queue_set_ldt(base, entries);
 	splx(s);
 }
@@ -938,14 +938,14 @@ void
 xen_set_user_pgd(paddr_t page)
 {
 	struct mmuext_op op;
-	int s = splvm(); /* XXXSMP */
 
+	int s = splvm();
 	xpq_flush_queue();
+	splx(s);
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
 	op.arg1.mfn = xpmap_ptom_masked(page) >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xen_set_user_pgd: failed to install new user page"
 			" directory %#" PRIxPADDR, page);
-	splx(s);
 }
 #endif /* __x86_64__ */
