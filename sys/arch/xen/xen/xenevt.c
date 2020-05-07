@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.59 2020/05/06 20:40:33 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.60 2020/05/07 19:52:50 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.59 2020/05/06 20:40:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.60 2020/05/07 19:52:50 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -129,6 +129,7 @@ struct xenevt_d {
 };
 
 static struct intrhand *xenevt_ih;
+static evtchn_port_t xenevt_ev;
 
 /* event -> user device mapping */
 static struct xenevt_d *devevent[NR_EVENT_CHANNELS];
@@ -175,15 +176,17 @@ xenevtattach(int n)
 
 	/*
 	 * Allocate a loopback event port.
-	 * This helps us massage xenevt_processevt() into the
-	 * callchain at the appropriate level using only
-	 * intr_establish_xname().
+	 * It won't be used by itself, but will help registering IPL
+	 * handlers.
 	 */
-	evtchn_port_t evtchn = xenevt_alloc_event();
+	xenevt_ev = xenevt_alloc_event();
 
-	/* The real objective here is to wiggle into the ih callchain for IPL level */
-	xenevt_ih = intr_establish_xname(-1, &xen_pic, evtchn, 
-	    IST_LEVEL, level, xenevt_processevt, NULL, true, "xenevt");
+	/*
+	 * The real objective here is to wiggle into the ih callchain for
+	 * IPL level on vCPU 0. (events are bound to vCPU 0 by default).
+	 */
+	xenevt_ih = event_set_handler(xenevt_ev, xenevt_processevt, NULL,
+	    level, NULL, "xenevt", true, &cpu_info_primary);
 
 	KASSERT(xenevt_ih != NULL);
 }
@@ -192,9 +195,12 @@ xenevtattach(int n)
 void
 xenevt_setipending(int l1, int l2)
 {
+	KASSERT(curcpu() == xenevt_ih->ih_cpu);
+	KASSERT(xenevt_ih->ih_cpu->ci_ilevel >= IPL_HIGH);
 	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
 	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
 	atomic_or_32(&xenevt_ih->ih_cpu->ci_ipending, 1 << SIR_XENIPL_HIGH);
+	evtsource[xenevt_ev]->ev_evcnt.ev_count++;
 }
 
 /* process pending events */
