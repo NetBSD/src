@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.13 2020/05/07 19:05:51 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.14 2020/05/07 19:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.13 2020/05/07 19:05:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.14 2020/05/07 19:07:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -172,7 +172,7 @@ struct {
 } entropy_global __cacheline_aligned = {
 	/* Fields that must be initialized when the kernel is loaded.  */
 	.needed = ENTROPY_CAPACITY*NBBY,
-	.epoch = (unsigned)-1,	/* -1 means not yet full entropy */
+	.epoch = (unsigned)-1,	/* -1 means entropy never consolidated */
 	.sources = LIST_HEAD_INITIALIZER(entropy_global.sources),
 	.stage = ENTROPY_COLD,
 };
@@ -596,10 +596,10 @@ entropy_bootrequest(void)
  * entropy_epoch()
  *
  *	Returns the current entropy epoch.  If this changes, you should
- *	reseed.  If -1, means the system has not yet reached full
- *	entropy; never reverts back to -1 after full entropy has been
- *	reached.  Never zero, so you can always use zero as an
- *	uninitialized sentinel value meaning `reseed ASAP'.
+ *	reseed.  If -1, means system entropy has not yet reached full
+ *	entropy or been explicitly consolidated; never reverts back to
+ *	-1.  Never zero, so you can always use zero as an uninitialized
+ *	sentinel value meaning `reseed ASAP'.
  *
  *	Usage model:
  *
@@ -1118,11 +1118,12 @@ entropy_notify(void)
 	 * that we're ready so operators can compare it to the timing
 	 * of other events.
 	 */
-	if (E->epoch == (unsigned)-1)
+	if (__predict_false(!rnd_initial_entropy) && E->needed == 0) {
 		printf("entropy: ready\n");
+		rnd_initial_entropy = 1;
+	}
 
 	/* Set the epoch; roll over from UINTMAX-1 to 1.  */
-	rnd_initial_entropy = 1; /* XXX legacy */
 	if (__predict_true(!atomic_load_relaxed(&entropy_depletion)) ||
 	    ratecheck(&lasttime, &interval)) {
 		epoch = E->epoch + 1;
