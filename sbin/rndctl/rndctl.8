@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.25 2020/05/07 12:58:09 wiz Exp $
+.\"	$NetBSD: rndctl.8,v 1.26 2020/05/07 19:09:26 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm rndctl
-.Nd in-kernel random number generator management tool
+.Nd kernel entropy pool management tool
 .Sh SYNOPSIS
 .Nm
 .Op Fl CcEe
@@ -49,10 +49,9 @@ The
 .Nm
 program displays statistics on the current state of the
 .Xr rnd 4
-pseudo-driver, and allows the administrator to control which sources
-are allowed to contribute to the randomness pool maintained by
-.Xr rnd 4 ,
-as well as whether a given source counts as strongly random.
+device, and controls which sources are allowed to contribute to the
+entropy pool maintained by
+.Xr rnd 4 .
 .Pp
 The following options are available:
 .Bl -tag -width 123456
@@ -113,7 +112,7 @@ The file format is specific to
 .Nm
 and includes an estimate of the amount of saved entropy and a checksum.
 .It Fl s
-Display statistics on the current state of the random collection pool.
+Display statistics on the current state of the entropy pool.
 .It Fl t
 All devices of type
 .Ar devtype
@@ -132,19 +131,10 @@ Tape devices.
 .It Ic tty
 Terminal, mouse, or other user input devices.
 .It Ic rng
-Random number generators.
+Hardware random number generators.
 .El
 .It Fl v
-Verbose output: show entropy estimation statistics for each source.
-.El
-.Sh FILES
-.Bl -tag -width /dev/urandomx -compact
-.It Pa /dev/random
-Returns
-.Dq good
-values only.
-.It Pa /dev/urandom
-Always returns data, degenerates to a pseudo-random generator.
+Verbose output.
 .El
 .Sh SEE ALSO
 .Xr rnd 4 ,
@@ -160,9 +150,3 @@ The
 program was written by
 .An Michael Graff
 .Aq explorer@flame.org .
-.Sh BUGS
-Turning on entropy estimation from unsafe or predictable sources will
-weaken system security, while turning on entropy collection from such
-sources may weaken system security.
-.Pp
-Care should be taken when using this command.
