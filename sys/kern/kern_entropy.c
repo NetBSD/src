@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.11 2020/05/06 18:31:05 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.12 2020/05/07 00:55:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.11 2020/05/06 18:31:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.12 2020/05/07 00:55:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1067,8 +1067,9 @@ entropy_gather_xc(void *arg1 __unused, void *arg2 __unused)
 	__insn_barrier();
 	extra[i++] = entropy_timer();
 
-	/* Extract the data.  */
+	/* Extract the data and count it no longer pending.  */
 	entpool_extract(ec->ec_pool, buf, sizeof buf);
+	atomic_store_relaxed(&ec->ec_pending, 0);
 	extra[i++] = entropy_timer();
 
 	/* Release the per-CPU state.  */
@@ -1108,6 +1109,8 @@ entropy_gather_xc(void *arg1 __unused, void *arg2 __unused)
 static void
 entropy_notify(void)
 {
+	static const struct timeval interval = {.tv_sec = 60, .tv_usec = 0};
+	static struct timeval lasttime; /* serialized by E->lock */
 	unsigned epoch;
 
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
@@ -1122,10 +1125,13 @@ entropy_notify(void)
 
 	/* Set the epoch; roll over from UINTMAX-1 to 1.  */
 	rnd_initial_entropy = 1; /* XXX legacy */
-	epoch = E->epoch + 1;
-	if (epoch == 0 || epoch == (unsigned)-1)
-		epoch = 1;
-	atomic_store_relaxed(&E->epoch, epoch);
+	if (__predict_true(!atomic_load_relaxed(&entropy_depletion)) ||
+	    ratecheck(&lasttime, &interval)) {
+		epoch = E->epoch + 1;
+		if (epoch == 0 || epoch == (unsigned)-1)
+			epoch = 1;
+		atomic_store_relaxed(&E->epoch, epoch);
+	}
 
 	/* Notify waiters.  */
 	if (E->stage >= ENTROPY_WARM) {
