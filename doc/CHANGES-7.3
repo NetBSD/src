@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.82 2020/05/06 07:42:14 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.83 2020/05/07 12:01:40 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -849,4 +849,11 @@ external/bsd/bind/dist/lib/isc/sha2.c		(apply patch)
 	Fix bug in sha384 checksum computation introduced when
 	converting the code to avoid alignment issues.
 	[he, ticket #1730]
+
+bin/rcp/rcp.c			1.50
+
+	In sink(), upon error, avoid multiple replies to the source
+	as this would lead to a desynchronization of the protocol and
+	further files or directories to be ignored or corrupted.
+	[aymeric, ticket #1731]
 
