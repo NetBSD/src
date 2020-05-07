@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.4 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.5 2020/05/07 19:48:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.4 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.5 2020/05/07 19:48:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -636,7 +636,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* XXX sketchy function pointer cast -- fix the API, please */
 	if (event_set_handler(evtch,
 	    __FPTRCAST(int (*)(void *), xen_timer_handler),
-	    ci, IPL_CLOCK, NULL, intr_xname, true, false) == NULL)
+	    ci, IPL_CLOCK, NULL, intr_xname, true, ci) == NULL)
 		panic("failed to establish timer interrupt handler");
 
 	hypervisor_unmask_event(evtch);
