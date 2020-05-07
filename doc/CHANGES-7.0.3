@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.162 2020/04/30 16:25:15 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.163 2020/05/07 12:03:47 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5956,4 +5956,11 @@ games/fortune/unstr/unstr.c			1.15
 
 	Fix potential buffer overflows in fortune tools.
 	[nia, ticket #1729]
+
+bin/rcp/rcp.c					1.50
+
+	In sink(), upon error, avoid multiple replies to the source
+	as this would lead to a desynchronization of the protocol and
+	further files or directories to be ignored or corrupted.
+	[aymeric, ticket #1731]
 
