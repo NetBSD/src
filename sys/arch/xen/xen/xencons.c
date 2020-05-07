@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.49 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.49 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -96,11 +96,10 @@ static struct intrhand *ih;
 #define	XENCONS_UNIT(x)	(minor(x))
 #define XENCONS_BURST 128
 
-int xencons_match(device_t, cfdata_t, void *);
-void xencons_attach(device_t, device_t, void *);
-int xencons_intr(void *);
-void xencons_tty_input(struct xencons_softc *, char*, int);
-
+static int xencons_match(device_t, cfdata_t, void *);
+static void xencons_attach(device_t, device_t, void *);
+static int xencons_intr(void *);
+static void xencons_tty_input(struct xencons_softc *, char*, int);
 
 struct xencons_softc {
 	device_t sc_dev;
@@ -114,14 +113,14 @@ CFATTACH_DECL_NEW(xencons, sizeof(struct xencons_softc),
 
 extern struct cfdriver xencons_cd;
 
-dev_type_open(xencons_open);
-dev_type_close(xencons_close);
-dev_type_read(xencons_read);
-dev_type_write(xencons_write);
-dev_type_ioctl(xencons_ioctl);
-dev_type_stop(xencons_stop);
-dev_type_tty(xencons_tty);
-dev_type_poll(xencons_poll);
+static dev_type_open(xencons_open);
+static dev_type_close(xencons_close);
+static dev_type_read(xencons_read);
+static dev_type_write(xencons_write);
+static dev_type_ioctl(xencons_ioctl);
+static dev_type_stop(xencons_stop);
+static dev_type_tty(xencons_tty);
+static dev_type_poll(xencons_poll);
 
 const struct cdevsw xencons_cdevsw = {
 	.d_open = xencons_open,
@@ -138,11 +137,10 @@ const struct cdevsw xencons_cdevsw = {
 	.d_flag = D_TTY
 };
 
-
 static int xencons_handler(void *);
-int xenconscn_getc(dev_t);
-void xenconscn_putc(dev_t, int);
-void xenconscn_pollc(dev_t, int);
+static int xenconscn_getc(dev_t);
+static void xenconscn_putc(dev_t, int);
+static void xenconscn_pollc(dev_t, int);
 
 static bool xencons_suspend(device_t, const pmf_qual_t *);
 static bool xencons_resume(device_t, const pmf_qual_t *);
@@ -154,10 +152,10 @@ static struct consdev xencons = {
 
 static struct cnm_state xencons_cnm_state;
 
-void	xencons_start (struct tty *);
-int	xencons_param (struct tty *, struct termios *);
+static void xencons_start(struct tty *);
+static int xencons_param(struct tty *, struct termios *);
 
-int
+static int
 xencons_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xencons_attach_args *xa = (struct xencons_attach_args *)aux;
@@ -167,7 +165,7 @@ xencons_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 xencons_attach(device_t parent, device_t self, void *aux)
 {
 	struct xencons_softc *sc = device_private(self);
@@ -256,7 +254,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 	return true;
 }
 
-int
+static int
 xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct xencons_softc *sc;
@@ -287,7 +285,7 @@ xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
-int
+static int
 xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -304,7 +302,7 @@ xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 xencons_read(dev_t dev, struct uio *uio, int flag)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -314,7 +312,7 @@ xencons_read(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
-int
+static int
 xencons_write(dev_t dev, struct uio *uio, int flag)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -324,7 +322,7 @@ xencons_write(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
-int
+static int
 xencons_poll(dev_t dev, int events, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -334,7 +332,7 @@ xencons_poll(dev_t dev, int events, struct lwp *l)
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
-struct tty *
+static struct tty *
 xencons_tty(dev_t dev)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -344,7 +342,7 @@ xencons_tty(dev_t dev)
 	return (tp);
 }
 
-int
+static int
 xencons_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
@@ -370,7 +368,7 @@ xencons_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 }
 
-void
+static void
 xencons_start(struct tty *tp)
 {
 	struct clist *cl;
@@ -437,12 +435,11 @@ out:
 	splx(s);
 }
 
-void
+static void
 xencons_stop(struct tty *tp, int flag)
 {
 
 }
-
 
 /* Non-privileged console interrupt routine */
 static int 
@@ -491,8 +488,7 @@ xencons_handler(void *arg)
 #undef XNC_IN
 }
 
-
-void
+static void
 xencons_tty_input(struct xencons_softc *sc, char* buf, int len)
 {
 	struct tty *tp;
@@ -509,7 +505,7 @@ xencons_tty_input(struct xencons_softc *sc, char* buf, int len)
 }
 
 /* privileged receive callback */
-int
+static int
 xencons_intr(void *p)
 {
 	static char rbuf[16];
@@ -544,7 +540,7 @@ xenconscn_attach(void)
 	xencons_isconsole = 1;
 }
 
-int
+static int
 xenconscn_getc(dev_t dev)
 {
 	char c;
@@ -594,7 +590,7 @@ xenconscn_getc(dev_t dev)
 	return c;
 }
 
-void
+static void
 xenconscn_putc(dev_t dev, int c)
 {
 	int s = spltty();
@@ -626,7 +622,7 @@ xenconscn_putc(dev_t dev, int c)
 	}
 }
 
-void
+static void
 xenconscn_pollc(dev_t dev, int on)
 {
 	if (xencons_console_device)
@@ -636,7 +632,7 @@ xenconscn_pollc(dev_t dev, int on)
 /*
  * Set line parameters.
  */
-int
+static int
 xencons_param(struct tty *tp, struct termios *t)
 {
 
