@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.14 2020/03/25 03:44:45 thorpej Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.15 2020/05/07 11:46:27 macallan Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -296,6 +296,11 @@ static const struct bwfm_sdio_product {
 		SDMMC_VENDOR_BROADCOM,
 		SDMMC_PRODUCT_BROADCOM_BCM43455, 
 		SDMMC_CIS_BROADCOM_BCM43455
+	},
+	{
+		SDMMC_VENDOR_BROADCOM,
+		SDMMC_PRODUCT_BROADCOM_BCM43362, 
+		SDMMC_CIS_BROADCOM_BCM43362
 	},
 };
 
