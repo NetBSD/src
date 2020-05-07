@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.499 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.500 2020/05/07 20:02:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.499 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.500 2020/05/07 20:02:34 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2279,8 +2279,10 @@ spawn_return(void *arg)
 	/* release our refcount on the data */
 	spawn_exec_data_release(spawn_data);
 
-	if (p->p_slflag & PSL_TRACED)
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACEDCHILD)) ==
+	    (PSL_TRACED|PSL_TRACEDCHILD)) {
 		eventswitchchild(p, TRAP_CHLD, PTRACE_POSIX_SPAWN);
+	}
 
 	/* and finally: leave to userland for the first time */
 	cpu_spawn_return(l);
@@ -2664,8 +2666,10 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	p2->p_exitsig = SIGCHLD;	/* signal for parent on exit */
 
 	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
-	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED))
+	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
 		proc_changeparent(p2, p1->p_pptr);
+		SET(p2->p_slflag, PSL_TRACEDCHILD);
+	}
 
 	p2->p_oppid = p1->p_pid;  /* Remember the original parent id. */
 
