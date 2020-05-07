@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.56 2019/10/17 14:00:28 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.57 2020/05/07 18:02:48 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -332,9 +332,9 @@ ELFNAMEEND(readfile_global)(int fd, u_long offset, Elf_Off elfoff,
 
 /*
  * Load a dynamic ELF binary into memory. Layout of the memory:
- * +------------+-----------------+-----------------+------------------+
- * | ELF HEADER | SECTION HEADERS | KERNEL SECTIONS | SYM+REL SECTIONS |
- * +------------+-----------------+-----------------+------------------+
+ * +------------+--------------+------------+------------------------+
+ * | ELF HEADER | SECT HEADERS | KERN SECTS | REL/RELA/SYM/STR SECTS |
+ * +------------+--------------+------------+------------------------+
  * The ELF HEADER start address is marks[MARK_END]. We then map the rest
  * by increasing maxp. An alignment is enforced between the code sections.
  *
@@ -438,7 +438,7 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	maxp = roundup(maxp, KERNALIGN_LARGE);
 
 	/*
-	 * Load the SYM+REL SECTIONS.
+	 * Load the REL/RELA/SYM/STR SECTIONS.
 	 */
 	maxp = roundup(maxp, ELFROUND);
 	for (i = 0; i < elf->e_shnum; i++) {
