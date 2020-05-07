@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.26 2020/05/05 17:02:01 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.27 2020/05/07 19:48:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.26 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.27 2020/05/07 19:48:58 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -143,7 +143,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		    sizeof(intrstr_buf));
 
 		rih = event_set_handler(pin, handler, arg, level,
-		    intrstr, xname, known_mpsafe, true);
+		    intrstr, xname, known_mpsafe, NULL);
 
 		if (rih == NULL) {
 			printf("%s: can't establish interrupt\n", __func__);
@@ -157,6 +157,8 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	struct pintrhand *pih;
 	int gsi;
 	int evtchn;
+	/* the hack below is from x86's intr_establish_xname() */
+	bool mpsafe = (known_mpsafe || level != IPL_VM);
 
 	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
 	    "bad legacy IRQ value: %d", legacy_irq);
@@ -190,7 +192,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	}
 
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,
-			     intrstr, xname, known_mpsafe);
+			     intrstr, xname, mpsafe);
 	pih->pic = pic;
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */

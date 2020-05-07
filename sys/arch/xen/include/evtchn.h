@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.31 2020/05/04 15:55:56 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.32 2020/05/07 19:48:58 bouyer Exp $	*/
 
 /*
  *
@@ -40,12 +40,11 @@ unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);
 struct intrhand *event_set_handler(int, int (*func)(void *), void *,
-    int, const char *, const char *, bool, bool);
+    int, const char *, const char *, bool, struct cpu_info *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
 struct cpu_info;
 struct intrhand;
-void event_set_iplhandler(struct cpu_info *, struct intrhand *, int);
 
 extern int debug_port;
 extern int xen_debug_handler(void *);
