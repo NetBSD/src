@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.49 2012/05/07 15:22:54 chs Exp $	*/
+/*	$NetBSD: rcp.c,v 1.49.14.1 2020/05/07 12:02:24 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.49 2012/05/07 15:22:54 chs Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.49.14.1 2020/05/07 12:02:24 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,6 @@ sink(int argc, char *argv[])
 	static BUF buffer;
 	struct stat stb;
 	struct timeval tv[2];
-	enum { YES, NO, DISPLAYED } wrerr;
 	BUF *bp;
 	ssize_t j;
 	off_t i;
@@ -480,8 +479,9 @@ sink(int argc, char *argv[])
 	mode_t mask;
 	mode_t mode;
 	mode_t omode;
-	int setimes, targisdir;
+	int setimes, targisdir, wrerr;
 	int wrerrno = 0;	/* pacify gcc */
+	const char *wrcontext = NULL;
 	char ch, *cp, *np, *targ, *vect[1], buf[BUFSIZ];
 	const char *why;
 	off_t size;
@@ -624,9 +624,7 @@ sink(int argc, char *argv[])
 			sink(1, vect);
 			if (setimes) {
 				setimes = 0;
-				if (utimes(np, tv) < 0)
-				    run_err("%s: set times: %s",
-					np, strerror(errno));
+				(void) utimes(np, tv);
 			}
 			if (mod_flag)
 				(void)chmod(np, mode);
@@ -644,7 +642,20 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
 		}
 		cp = bp->buf;
-		wrerr = NO;
+		wrerr = 0;
+
+/*
+ * Like run_err(), but don't send any message to the remote end.
+ * Instead, record the first error and send that in the end.
+ */
+#define RUN_ERR(w_context) do { \
+	if (!wrerr) {							\
+		wrerrno = errno;					\
+		wrcontext = w_context;					\
+		wrerr = 1;						\
+	}								\
+} while(0)
+
 		count = 0;
 		for (i = 0; i < size; i += BUFSIZ) {
 			amt = BUFSIZ;
@@ -663,69 +674,56 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			} while (amt > 0);
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
-				if (wrerr == NO) {
+				if (!wrerr) {
 					j = write(ofd, bp->buf, (size_t)count);
 					if (j != count) {
-						wrerr = YES;
-						wrerrno = j >= 0 ? EIO : errno; 
+						if (j >= 0)
+							errno = EIO;
+						RUN_ERR("write");
 					}
 				}
 				count = 0;
 				cp = bp->buf;
 			}
 		}
-		if (count != 0 && wrerr == NO &&
+		if (count != 0 && !wrerr &&
 		    (j = write(ofd, bp->buf, (size_t)count)) != count) {
-			wrerr = YES;
-			wrerrno = j >= 0 ? EIO : errno; 
+			if (j >= 0)
+				errno = EIO;
+			RUN_ERR("write");
 		}
-		if (ftruncate(ofd, size)) {
-			run_err("%s: truncate: %s", np, strerror(errno));
-			wrerr = DISPLAYED;
-		}
+		if (ftruncate(ofd, size))
+			RUN_ERR("truncate");
+
 		if (pflag) {
 			if (exists || omode != mode)
 				if (fchmod(ofd, omode))
-					run_err("%s: set mode: %s",
-					    np, strerror(errno));
+					RUN_ERR("set mode");
 		} else {
 			if (!exists && omode != mode)
 				if (fchmod(ofd, omode & ~mask))
-					run_err("%s: set mode: %s",
-					    np, strerror(errno));
+					RUN_ERR("set mode");
 		}
 #ifndef __SVR4
-		if (setimes && wrerr == NO) {
+		if (setimes && !wrerr) {
 			setimes = 0;
-			if (futimes(ofd, tv) < 0) {
-				run_err("%s: set times: %s",
-				    np, strerror(errno));
-				wrerr = DISPLAYED;
-			}
+			if (futimes(ofd, tv) < 0)
+				RUN_ERR("set times");
 		}
 #endif
 		(void)close(ofd);
 #ifdef __SVR4
-		if (setimes && wrerr == NO) {
+		if (setimes && !wrerr) {
 			setimes = 0;
-			if (utimes(np, tv) < 0) {
-				run_err("%s: set times: %s",
-				    np, strerror(errno));
-				wrerr = DISPLAYED;
-			}
+			if (utimes(np, tv) < 0)
+				RUN_ERR("set times");
 		}
 #endif
 		(void)response();
-		switch(wrerr) {
-		case YES:
-			run_err("%s: write: %s", np, strerror(wrerrno));
-			break;
-		case NO:
+		if (wrerr)
+			run_err("%s: %s: %s", np, wrcontext, strerror(wrerrno));
+		else
 			(void)write(rem, "", 1);
-			break;
-		case DISPLAYED:
-			break;
-		}
 	}
 
 out:
