@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.19 2020/05/06 19:45:39 kim Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.20 2020/05/07 12:52:40 wiz Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.19 2020/05/06 19:45:39 kim Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.20 2020/05/07 12:52:40 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -531,8 +531,8 @@ output_record(struct output *o)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-nrt] [-f <filename>] "
-	    "[-H <hostlen>] [-L <linelen>] [-N <namelen>] [user ...]\n",
+	(void)fprintf(stderr, "Usage: %s [-Fnrt] [-f filename] "
+	    "[-H hostsize] [-L linesize] [-N namesize] [user ...]\n",
 	    getprogname());
 	exit(1);
 }
