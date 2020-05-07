@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.21 2020/05/05 19:26:47 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.22 2020/05/07 21:05:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -89,8 +89,9 @@ void print_banner(void);
 /* elf.c */
 size_t elf_get_head_size(vaddr_t);
 void elf_build_head(vaddr_t);
+void elf_fixup_boot(vaddr_t, paddr_t);
 void elf_map_sections(void);
-void elf_build_boot(vaddr_t, paddr_t);
+void elf_build_info(void);
 vaddr_t elf_kernel_reloc(void);
 
 /* locore.S */
