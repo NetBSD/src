@@ -1,7 +1,7 @@
-/*	$NetBSD: elf.c,v 1.19 2020/05/05 19:26:47 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.20 2020/05/07 16:49:59 maxv Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
@@ -58,6 +58,40 @@ elf_check_header(void)
 		return -1;
 	}
 	return 0;
+}
+
+static bool
+elf_section_mappable(Elf_Shdr *shdr)
+{
+	if (!(shdr->sh_flags & SHF_ALLOC)) {
+		return false;
+	}
+	if (shdr->sh_type != SHT_NOBITS &&
+	    shdr->sh_type != SHT_PROGBITS) {
+		return false;
+	}
+	return true;
+}
+
+static bool
+elf_can_drop_unmappable(Elf_Shdr *shdr)
+{
+	/*
+	 * We found relocations from the section 'shdr' towards the rest of
+	 * the binary, but 'shdr' is not mapped. Decide whether to skip the
+	 * relocations from this section.
+	 *
+	 * We skip only if it is a note. It means that we allow notes to
+	 * have relocations towards the rest of the binary, typically with
+	 * the ".note.Xen" section. Notes do not play any role at run time.
+	 *
+	 * Any section other than a note is the sign there is a design
+	 * mistake in the kernel (variables stored outside of rodata/data).
+	 */
+	if (shdr->sh_type == SHT_NOTE) {
+		return true;
+	}
+	return false;
 }
 
 static vaddr_t
@@ -143,6 +177,12 @@ elf_sym_lookup(size_t symidx)
 		}
 
 		fatal("elf_sym_lookup: external symbol");
+	}
+	if (sym->st_shndx >= eif.ehdr->e_shnum) {
+		fatal("elf_sym_lookup: st_shndx is malformed");
+	}
+	if (!elf_section_mappable(&eif.shdr[sym->st_shndx])) {
+		fatal("elf_sym_lookup: st_shndx not mappable");
 	}
 	if (sym->st_value == 0) {
 		fatal("elf_sym_lookup: zero value");
@@ -257,19 +297,6 @@ elf_build_head(vaddr_t headva)
 	if (elf_check_header() == -1) {
 		fatal("elf_build_head: wrong kernel ELF header");
 	}
-}
-
-static bool
-elf_section_mappable(Elf_Shdr *shdr)
-{
-	if (!(shdr->sh_flags & SHF_ALLOC)) {
-		return false;
-	}
-	if (shdr->sh_type != SHT_NOBITS &&
-	    shdr->sh_type != SHT_PROGBITS) {
-		return false;
-	}
-	return true;
 }
 
 void
@@ -429,6 +456,9 @@ elf_kernel_reloc(void)
 			fatal("elf_kernel_reloc: REL sh_info is malformed");
 		}
 		if (!elf_section_mappable(&eif.shdr[secidx])) {
+			if (elf_can_drop_unmappable(&eif.shdr[secidx])) {
+				continue;
+			}
 			fatal("elf_kernel_reloc: REL sh_info not mappable");
 		}
 		base = (uintptr_t)eif.ehdr + eif.shdr[secidx].sh_offset;
@@ -461,6 +491,9 @@ elf_kernel_reloc(void)
 			fatal("elf_kernel_reloc: RELA sh_info is malformed");
 		}
 		if (!elf_section_mappable(&eif.shdr[secidx])) {
+			if (elf_can_drop_unmappable(&eif.shdr[secidx])) {
+				continue;
+			}
 			fatal("elf_kernel_reloc: RELA sh_info not mappable");
 		}
 		base = (uintptr_t)eif.ehdr + eif.shdr[secidx].sh_offset;
