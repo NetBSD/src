@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.12 2020/05/07 00:55:13 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.13 2020/05/07 19:05:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -60,9 +60,7 @@
  *	  transition from partial entropy to full entropy, so that
  *	  users can easily determine when to reseed.  This also
  *	  facilitates an operator explicitly causing everything to
- *	  reseed by sysctl -w kern.entropy.consolidate=1, e.g. if they
- *	  just flipped a coin 256 times and wrote `echo tthhhhhthh... >
- *	  /dev/random'.
+ *	  reseed by sysctl -w kern.entropy.consolidate=1.
  *
  *	* No entropy estimation based on the sample values, which is a
  *	  contradiction in terms and a potential source of side
@@ -77,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.12 2020/05/07 00:55:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.13 2020/05/07 19:05:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -241,8 +239,8 @@ static void	entropy_softintr(void *);
 static void	entropy_thread(void *);
 static uint32_t	entropy_pending(void);
 static void	entropy_pending_cpu(void *, void *, struct cpu_info *);
-static void	entropy_consolidate(void);
-static void	entropy_gather_xc(void *, void *);
+static void	entropy_do_consolidate(void);
+static void	entropy_consolidate_xc(void *, void *);
 static void	entropy_notify(void);
 static int	sysctl_entropy_consolidate(SYSCTLFN_ARGS);
 static int	sysctl_entropy_gather(SYSCTLFN_ARGS);
@@ -959,7 +957,7 @@ entropy_thread(void *cookie)
 
 		if (consolidate) {
 			/* Do it.  */
-			entropy_consolidate();
+			entropy_do_consolidate();
 
 			/* Mitigate abuse.  */
 			kpause("entropy", false, hz, NULL);
@@ -993,13 +991,13 @@ entropy_pending_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 }
 
 /*
- * entropy_consolidate()
+ * entropy_do_consolidate()
  *
  *	Issue a cross-call to gather entropy on all CPUs and advance
  *	the entropy epoch.
  */
 static void
-entropy_consolidate(void)
+entropy_do_consolidate(void)
 {
 	static const struct timeval interval = {.tv_sec = 60, .tv_usec = 0};
 	static struct timeval lasttime; /* serialized by E->lock */
@@ -1007,7 +1005,7 @@ entropy_consolidate(void)
 	uint64_t ticket;
 
 	/* Gather entropy on all CPUs.  */
-	ticket = xc_broadcast(0, &entropy_gather_xc, NULL, NULL);
+	ticket = xc_broadcast(0, &entropy_consolidate_xc, NULL, NULL);
 	xc_wait(ticket);
 
 	/* Acquire the lock to notify waiters.  */
@@ -1037,13 +1035,13 @@ entropy_consolidate(void)
 }
 
 /*
- * entropy_gather_xc(arg1, arg2)
+ * entropy_consolidate_xc(arg1, arg2)
  *
  *	Extract output from the local CPU's input pool and enter it
  *	into the global pool.
  */
 static void
-entropy_gather_xc(void *arg1 __unused, void *arg2 __unused)
+entropy_consolidate_xc(void *arg1 __unused, void *arg2 __unused)
 {
 	struct entropy_cpu *ec;
 	uint8_t buf[ENTPOOL_CAPACITY];
@@ -1144,19 +1142,49 @@ entropy_notify(void)
 }
 
 /*
+ * entropy_consolidate()
+ *
+ *	Trigger entropy consolidation and wait for it to complete.
+ *
+ *	This should be used sparingly, not periodically -- requiring
+ *	conscious intervention by the operator or a clear policy
+ *	decision.  Otherwise, the kernel will automatically consolidate
+ *	when enough entropy has been gathered into per-CPU pools to
+ *	transition to full entropy.
+ */
+void
+entropy_consolidate(void)
+{
+	uint64_t ticket;
+	int error;
+
+	KASSERT(E->stage == ENTROPY_HOT);
+
+	mutex_enter(&E->lock);
+	ticket = entropy_consolidate_evcnt.ev_count;
+	E->consolidate = true;
+	cv_broadcast(&E->cv);
+	while (ticket == entropy_consolidate_evcnt.ev_count) {
+		error = cv_wait_sig(&E->cv, &E->lock);
+		if (error)
+			break;
+	}
+	mutex_exit(&E->lock);
+}
+
+/*
  * sysctl -w kern.entropy.consolidate=1
  *
  *	Trigger entropy consolidation and wait for it to complete.
- *	Writable only by superuser.  This is the only way for the
- *	system to consolidate entropy if the operator knows something
- *	the kernel doesn't about how unpredictable the pending entropy
- *	pools are.
+ *	Writable only by superuser.  This, writing to /dev/random, and
+ *	ioctl(RNDADDDATA) are the only ways for the system to
+ *	consolidate entropy if the operator knows something the kernel
+ *	doesn't about how unpredictable the pending entropy pools are.
  */
 static int
 sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	uint64_t ticket;
 	int arg;
 	int error;
 
@@ -1166,18 +1194,8 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	if (arg) {
-		mutex_enter(&E->lock);
-		ticket = entropy_consolidate_evcnt.ev_count;
-		E->consolidate = true;
-		cv_broadcast(&E->cv);
-		while (ticket == entropy_consolidate_evcnt.ev_count) {
-			error = cv_wait_sig(&E->cv, &E->lock);
-			if (error)
-				break;
-		}
-		mutex_exit(&E->lock);
-	}
+	if (arg)
+		entropy_consolidate();
 
 	return error;
 }
@@ -2214,9 +2232,10 @@ entropy_ioctl(unsigned long cmd, void *data)
 			mutex_exit(&E->lock);
 		}
 
-		/* Enter the data.  */
+		/* Enter the data and consolidate entropy.  */
 		rnd_add_data(&seed_rndsource, rdata->data, rdata->len,
 		    entropybits);
+		entropy_consolidate();
 		break;
 	}
 	default:

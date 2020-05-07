@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.2 2020/04/30 04:26:29 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.3 2020/05/07 19:05:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.2 2020/04/30 04:26:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.3 2020/05/07 19:05:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -384,7 +384,7 @@ random_write(dev_t dev, struct uio *uio, int flags)
 {
 	kauth_cred_t cred = kauth_cred_get();
 	uint8_t *buf;
-	bool privileged = false;
+	bool privileged = false, any = false;
 	int error = 0;
 
 	/* Verify user's authorization to affect the entropy pool.  */
@@ -429,10 +429,16 @@ random_write(dev_t dev, struct uio *uio, int flags)
 		if (error)
 			break;
 		rnd_add_data(&user_rndsource, buf, n, privileged ? n*NBBY : 0);
+		any = true;
 	}
 
 	/* Zero the buffer and return it to the pool cache.  */
 	explicit_memset(buf, 0, RANDOM_BUFSIZE);
 	pool_cache_put(random_buf_pc, buf);
+
+	/* If we added anything, consolidate entropy now.  */
+	if (any)
+		entropy_consolidate();
+
 	return error;
 }
