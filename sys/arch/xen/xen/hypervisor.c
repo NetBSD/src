@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.81 2020/05/05 17:02:01 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.82 2020/05/07 15:44:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.81 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.82 2020/05/07 15:44:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ init_xen_early(void)
 	xen_init_hypercall_page();
 	hvm_start_info = (void *)((uintptr_t)hvm_start_paddr + KERNBASE);
 
-	HYPERVISOR_shared_info = (void *)(HYPERVISOR_shared_info_pa + KERNBASE);
+	HYPERVISOR_shared_info = (void *)((uintptr_t)HYPERVISOR_shared_info_pa + KERNBASE);
 	struct xen_add_to_physmap xmap = {
 		.domid = DOMID_SELF,
 		.space = XENMAPSPACE_shared_info,
