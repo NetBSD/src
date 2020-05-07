@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.26 2020/05/07 17:10:02 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.27 2020/05/07 17:58:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -417,8 +417,8 @@ mm_map_boot(void)
 	/* The "boot" region begins right after the kernel segments */
 	bootpa = bootspace_get_kern_segs_end_pa();
 
-	/* The prekern consumed some memory up until pa_avail, this covers
-	 * SYM+REL and EXTRA */
+	/* The prekern consumed some EXTRA memory up until pa_avail, this
+	 * covers REL/RELA/SYM/STR and EXTRA */
 	size = (pa_avail - bootpa);
 	npages = size / PAGE_SIZE;
 
@@ -428,11 +428,10 @@ mm_map_boot(void)
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
 
-	/* At this point both "head" and "boot" are mapped, so we can build
-	 * the ELF info */
-	elf_build_boot(randva, bootpa);
+	/* Fix up the ELF sections located in the "boot" region */
+	elf_fixup_boot(randva, bootpa);
 
-	/* Map the ISA I/O MEM right after EXTRA */
+	/* Map the ISA I/O MEM right after EXTRA, in pure VA */
 	iom_base = randva + npages * PAGE_SIZE;
 	npages = IOM_SIZE / PAGE_SIZE;
 	for (i = 0; i < npages; i++) {
@@ -456,15 +455,15 @@ mm_map_boot(void)
 
 /*
  * The bootloader has set up the following layout of physical memory:
- * +------------+-----------------+---------------+------------------+-------+
- * | ELF HEADER | SECTION HEADERS | KERN SECTIONS | SYM+REL SECTIONS | EXTRA |
- * +------------+-----------------+---------------+------------------+-------+
+ * +------------+--------------+------------+------------------------+-------+
+ * | ELF HEADER | SECT HEADERS | KERN SECTS | REL/RELA/SYM/STR SECTS | EXTRA |
+ * +------------+--------------+------------+------------------------+-------+
  * This was done in the loadfile_elf32.c:loadfile_dynamic() function.
  *
  * We abstract this layout into several "regions":
- * +------------------------------+---------------+--------------------------+
- * |         Head region          |  Kernel segs  |       Boot region        |
- * +------------------------------+---------------+--------------------------+
+ * +---------------------------+------------+--------------------------------+
+ * |         Head region       | Kern segs  |          Boot region           |
+ * +---------------------------+------------+--------------------------------+
  *
  * There is a variable number of independent regions we create: one head,
  * several kernel segments, one boot. They are all mapped at random VAs.
@@ -477,11 +476,15 @@ mm_map_boot(void)
  * sections, in a 1:1 manner (one segment is associated with one section).
  * The segments are mapped at random VAs and referenced in bootspace.segs[].
  *
- * "Boot" contains various information, including the ELF Sym+Rel sections,
- * plus extra memory the prekern has used so far; it is a region that the
- * kernel will eventually use for module_map. Boot is placed *after* the
- * other regions in physical memory. In virtual memory however there is no
- * constraint, so its VA is randomly selected in the main KASLR window.
+ * "Boot" contains miscellaneous information:
+ *  - The ELF Rel/Rela/Sym/Str sections of the kernel
+ *  - Some extra memory the prekern has consumed so far
+ *  - The ISA I/O MEM, in pure VA
+ *  - Eventually the module_map, in pure VA (the kernel uses the available VA
+ *    at the end of "boot")
+ * Boot is placed *after* the other regions in physical memory. In virtual
+ * memory however there is no constraint, so its VA is randomly selected in
+ * the main KASLR window.
  *
  * At the end of this function, the bootspace structure is fully constructed.
  */
