@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.364 2020/04/29 01:52:26 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.365 2020/05/07 20:02:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -413,6 +413,7 @@ struct proc {
 			0x00000020 /* traced process wants posix_spawn events */
 
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
+#define	PSL_TRACEDCHILD 0x00001000 /* Report process birth */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */
 #define	PSL_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	PSL_SYSCALLEMU	0x08000000 /* cancel in-progress syscall */

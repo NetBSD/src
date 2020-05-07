@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.387 2020/04/06 08:20:05 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.388 2020/05/07 20:02:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.387 2020/04/06 08:20:05 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.388 2020/05/07 20:02:34 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1693,7 +1693,8 @@ eventswitchchild(struct proc *p, int code, int pe_report_event)
 {
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
-	if (!(p->p_slflag & PSL_TRACED)) {
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACEDCHILD)) !=
+	    (PSL_TRACED|PSL_TRACEDCHILD)) {
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return;
