@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.48 2020/05/02 16:25:47 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.49 2020/05/07 18:13:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.48 2020/05/02 16:25:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.49 2020/05/07 18:13:05 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -171,6 +171,7 @@ static const struct x86_hotpatch_descriptor hp_cx8_spllower_desc = {
 __link_set_add_rodata(x86_hotpatch_descriptors, hp_cx8_spllower_desc);
 
 /* MUTEX_EXIT. */
+#ifndef LOCKDEBUG
 extern uint8_t i686_mutex_spin_exit, i686_mutex_spin_exit_end;
 static const struct x86_hotpatch_source hp_i686_mutex_spin_exit_source = {
 	.saddr = &i686_mutex_spin_exit,
@@ -182,6 +183,7 @@ static const struct x86_hotpatch_descriptor hp_i686_mutex_spin_exit_desc = {
 	.srcs = { &hp_i686_mutex_spin_exit_source }
 };
 __link_set_add_rodata(x86_hotpatch_descriptors, hp_i686_mutex_spin_exit_desc);
+#endif
 #endif
 
 /* -------------------------------------------------------------------------- */
