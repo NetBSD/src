@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.35 2020/05/07 19:12:45 riastradh Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.36 2020/05/07 19:13:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.35 2020/05/07 19:12:45 riastradh Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.36 2020/05/07 19:13:38 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: rndctl.c,v 1.35 2020/05/07 19:12:45 riastradh Exp $");
 #include <sys/ioctl.h>
 #include <sys/rndio.h>
 #include <sys/sha3.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -251,6 +252,11 @@ do_save(const char *filename)
 	char tmp[PATH_MAX];
 	int fd_seed;
 
+	/* Consolidate any pending samples.  */
+	if (sysctlbyname("kern.entropy.consolidate", NULL, NULL,
+		(const int[]){1}, sizeof(int)) == -1)
+		warn("consolidate entropy");
+
 	/* Format the temporary file name.  */
 	if (snprintf(tmp, sizeof tmp, "%s.tmp", filename) >= PATH_MAX)
 		errx(1, "path too long");
@@ -367,6 +373,11 @@ do_load(const char *filename)
 
 	/*
 	 * 2. Feed the old seed into the kernel.
+	 *
+	 * This also has the effect of consolidating pending samples,
+	 * whether or not there are enough samples from sources deemed
+	 * to have full entropy, so that the updated seed will
+	 * incorporate them.
 	 */
 	rd.len = MIN(sizeof(rd.data), sizeof(rs.data));
 	rd.entropy = rs.entropy;
