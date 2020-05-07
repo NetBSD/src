@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.13 2020/05/06 11:58:33 kim Exp $
+.\"	$NetBSD: lastlogin.8,v 1.14 2020/05/07 12:52:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -48,15 +48,16 @@
 .Nm
 will list the last login session of specified
 .Ar users ,
-or for all users by default.  Each line of output contains
-the user name, the tty from which the session was conducted, any
-hostname, and the start time for the session.
+or for all users by default.
+Each line of output contains the user name, the tty from which the
+session was conducted, any hostname, and the start time for the
+session.
 .Pp
 If multiple
 .Ar users
 are given, the session information for each user is printed in
-the order given on the command line.  Otherwise, information
-for all users is printed, sorted by uid.
+the order given on the command line.
+Otherwise, information for all users is printed, sorted by uid.
 .Pp
 .Nm
 differs from
