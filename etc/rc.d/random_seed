@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.10 2020/05/06 18:49:26 riastradh Exp $
+# $NetBSD: random_seed,v 1.11 2020/05/07 18:15:29 riastradh Exp $
 #
 
 # PROVIDE: random_seed
@@ -61,7 +61,8 @@ random_load()
 		return
 	fi
 
-	if ! fs_safe "$(dirname "${random_file}")"; then
+	if ! fs_safe "${random_file}"; then
+		message "Unsafe file system for random seed ${random_file}"
 		flags=-i
 	fi
 
