@@ -1,4 +1,4 @@
-.\"	$NetBSD: getentropy.3,v 1.1 2020/05/06 16:17:36 nia Exp $ $
+.\"	$NetBSD: getentropy.3,v 1.2 2020/05/07 12:55:06 wiz Exp $ $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,16 +40,15 @@
 .Ft int
 .Fn getentropy "void *buf" "size_t buflen"
 .Sh DESCRIPTION
-.Pp
 The
 .Fn getentropy
 function fills a buffer with high quality random data, suitable for seeding
-cryptographically secure psuedorandom number generators.
+cryptographically secure pseudo-random number generators.
 .Pp
 .Fn getentropy
 is only intended for seeding random number generators and is not intended
-for use by regular code which simply needs secure random data.  For this
-purpose, please use
+for use by regular code which simply needs secure random data.
+For this purpose, please use
 .Xr arc4random 3 .
 .Pp
 The maximum value for
@@ -64,7 +63,7 @@ variable
 .Sh RETURN VALUES
 The
 .Fn getentropy
-function returns 0 on success, and -1 if an error occurred.
+function returns 0 on success, and \-1 if an error occurred.
 .Sh ERRORS
 .Fn getentropy
 will succeed unless:
@@ -75,6 +74,7 @@ The
 argument points to an invalid memory address.
 .It Bq Er EIO
 Too many bytes were requested.
+.El
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr rnd 4
