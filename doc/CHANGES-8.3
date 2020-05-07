@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.8 2020/05/05 18:52:57 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.9 2020/05/07 17:03:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -131,3 +131,11 @@ external/bsd/bind/dist/lib/isc/sha2.c		(apply patch)
 
 	Fix a bug introduced when fixing alingment issues.
 	[he, ticket #1545]
+
+bin/rcp/rcp.c					1.50
+
+	In sink(), upon error, avoid multiple replies to the source
+	as this would lead to a desynchronization of the protocol and
+	further files or directories to be ignored or corrupted.
+	[aymeric, ticket #1546]
+
