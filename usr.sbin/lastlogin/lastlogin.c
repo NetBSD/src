@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.15 2011/08/31 13:31:29 joerg Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.15.44.1 2020/05/07 18:19:28 martin Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.15 2011/08/31 13:31:29 joerg Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.15.44.1 2020/05/07 18:19:28 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,12 +57,35 @@ __RCSID("$NetBSD: lastlogin.c,v 1.15 2011/08/31 13:31:29 joerg Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#ifndef UT_NAMESIZE
+# define UT_NAMESIZE	8
+#endif
+#ifndef UT_LINESIZE
+# define UT_LINESIZE	8
+#endif
+#ifndef UT_HOSTSIZE
+# define UT_HOSTSIZE	16
+#endif
+
+#ifndef UTX_USERSIZE
+# define UTX_USERSIZE	64
+#endif
+#ifndef UTX_LINESIZE
+# define UTX_LINESIZE	64
+#endif
+#ifndef UTX_HOSTSIZE
+# define UTX_HOSTSIZE	256
+#endif
+
+/*
+ * Fields in the structure below are 1 byte longer than the maximum possible
+ * for NUL-termination.
+ */
 struct output {
 	struct timeval	 o_tv;
-	struct sockaddr_storage o_ss;
-	char		 o_name[64];
-	char		 o_line[64];
-	char		 o_host[256];
+	char		 o_name[UTX_USERSIZE+1];
+	char		 o_line[UTX_LINESIZE+1];
+	char		 o_host[UTX_HOSTSIZE+1];
 	struct output	*next;
 };
 
@@ -72,25 +95,37 @@ struct output {
 #define DOSORT(x)	((x) & (SORT_TIME))
 static	int sortlog = SORT_NONE;
 static	struct output *outstack = NULL;
+static	struct output *outstack_p = NULL;
+
+static int fixed = 0;
+#define FIXED_NAMELEN	UT_NAMESIZE
+#define FIXED_LINELEN	UT_LINESIZE
+/*
+ * This makes the "fixed" output fit in 79 columns.
+ * Using UT_HOSTSIZE (16) seems too conservative.
+ */
+#define FIXED_HOSTLEN	32
 
 static int numeric = 0;
-static size_t namelen = UT_NAMESIZE;
-static size_t linelen = UT_LINESIZE;
-static size_t hostlen = UT_HOSTSIZE;
+static size_t namelen = 0;
+static size_t linelen = 0;
+static size_t hostlen = 0;
+#define SIZECOLUMNS	(!(namelen && linelen && hostlen))
 
-static	int	comparelog(const void *, const void *);
-static	void	output(struct output *);
+static	int		comparelog(const void *, const void *);
+static	void		output_record(struct output *);
 #ifdef SUPPORT_UTMP
-static	void	process_entry(struct passwd *, struct lastlog *);
-static	void	dolastlog(const char *, int, char *[]);
+static	void		process_entry(struct passwd *, struct lastlog *);
+static	void		dolastlog(const char *, int, char *[]);
 #endif
 #ifdef SUPPORT_UTMPX
-static	void	process_entryx(struct passwd *, struct lastlogx *);
-static	void	dolastlogx(const char *, int, char *[]);
+static	void		process_entryx(struct passwd *, struct lastlogx *);
+static	void		dolastlogx(const char *, int, char *[]);
 #endif
-static	void	push(struct output *);
-static	const char 	*gethost(struct output *);
-static	void	sortoutput(struct output *);
+static	void		append_record(struct output *);
+static	void		sizecolumns(struct output *);
+static	void		output_stack(struct output *);
+static	void		sort_and_output_stack(struct output *);
 __dead static	void	usage(void);
 
 int
@@ -107,13 +142,16 @@ main(int argc, char *argv[])
 	int	ch;
 	size_t	len;
 
-	while ((ch = getopt(argc, argv, "f:H:L:nN:rt")) != -1) {
+	while ((ch = getopt(argc, argv, "f:FH:L:nN:rt")) != -1) {
 		switch (ch) {
 		case 'H':
 			hostlen = atoi(optarg);
 			break;
 		case 'f':
 			logfile = optarg;
+			break;
+		case 'F':
+			fixed++;
 			break;
 		case 'L':
 			linelen = atoi(optarg);
@@ -137,6 +175,15 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (fixed) {
+		if (!namelen)
+			namelen = FIXED_NAMELEN;
+		if (!linelen)
+			linelen = FIXED_LINELEN;
+		if (!hostlen)
+			hostlen = FIXED_HOSTLEN;
+	}
+
 	len = strlen(logfile);
 
 	setpassent(1);	/* Keep passwd file pointers open */
@@ -152,8 +199,15 @@ main(int argc, char *argv[])
 
 	setpassent(0);	/* Close passwd file pointers */
 
-	if (outstack && DOSORT(sortlog))
-		sortoutput(outstack);
+	if (outstack) {
+		if (SIZECOLUMNS)
+			sizecolumns(outstack);
+
+		if (DOSORT(sortlog))
+			sort_and_output_stack(outstack);
+		else
+			output_stack(outstack);
+	}
 
 	return 0;
 }
@@ -219,23 +273,26 @@ process_entry(struct passwd *p, struct lastlog *l)
 {
 	struct output	o;
 
-	(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
-	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
-	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
+	memset(&o, 0, sizeof(o));
+	if (numeric > 1)
+		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
+	else
+		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
+	(void)memcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	(void)memcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv.tv_sec = l->ll_time;
 	o.o_tv.tv_usec = 0;
-	(void)memset(&o.o_ss, 0, sizeof(o.o_ss));
 	o.next = NULL;
 
 	/*
-	 * If we are sorting it, we need all the entries in memory so
-	 * push the current entry onto a stack.  Otherwise, we can just
-	 * output it.
+	 * If we are dynamically sizing the columns or sorting the log,
+	 * we need all the entries in memory so push the current entry
+	 * onto a stack.  Otherwise, we can just output it.
 	 */
-	if (DOSORT(sortlog))
-		push(&o);
+	if (SIZECOLUMNS || DOSORT(sortlog))
+		append_record(&o);
 	else
-		output(&o);
+		output_record(&o);
 }
 #endif
 
@@ -310,9 +367,12 @@ dolastlogx(const char *logfile, int argc, char **argv)
 			(void)memcpy(&uid, key.data, sizeof(uid));
 
 			if ((passwd = getpwuid(uid)) == NULL) {
-				warnx("Cannot find user for uid %lu",
-				    (unsigned long)uid);
-				continue;
+				static struct passwd p;
+				static char n[32];
+				snprintf(n, sizeof(n), "(%d)", i);
+				p.pw_uid = i;
+				p.pw_name = n;
+				passwd = &p;
 			}
 			(void)memcpy(&l, data.data, sizeof(l));
 			process_entryx(passwd, &l);
@@ -338,30 +398,34 @@ process_entryx(struct passwd *p, struct lastlogx *l)
 {
 	struct output	o;
 
+	memset(&o, 0, sizeof(o));
 	if (numeric > 1)
 		(void)snprintf(o.o_name, sizeof(o.o_name), "%d", p->pw_uid);
 	else
 		(void)strlcpy(o.o_name, p->pw_name, sizeof(o.o_name));
-	(void)strlcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
-	(void)strlcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
-	(void)memcpy(&o.o_ss, &l->ll_ss, sizeof(o.o_ss));
+	(void)memcpy(o.o_line, l->ll_line, sizeof(l->ll_line));
+	if (numeric)
+		(void)sockaddr_snprintf(o.o_host, sizeof(o.o_host), "%a",
+		    (struct sockaddr *)&l->ll_ss);
+	else
+		(void)memcpy(o.o_host, l->ll_host, sizeof(l->ll_host));
 	o.o_tv = l->ll_tv;
 	o.next = NULL;
 
 	/*
-	 * If we are sorting it, we need all the entries in memory so
-	 * push the current entry onto a stack.  Otherwise, we can just
-	 * output it.
+	 * If we are dynamically sizing the columns or sorting the log,
+	 * we need all the entries in memory so push the current entry
+	 * onto a stack.  Otherwise, we can just output it.
 	 */
-	if (DOSORT(sortlog))
-		push(&o);
+	if (SIZECOLUMNS || DOSORT(sortlog))
+		append_record(&o);
 	else
-		output(&o);
+		output_record(&o);
 }
 #endif
 
 static void
-push(struct output *o)
+append_record(struct output *o)
 {
 	struct output	*out;
 
@@ -371,16 +435,51 @@ push(struct output *o)
 	(void)memcpy(out, o, sizeof(*out));
 	out->next = NULL;
 
-	if (outstack) {
-		out->next = outstack;
-		outstack = out;
-	} else {
-		outstack = out;
-	}
+	if (outstack_p)
+		outstack_p = outstack_p->next = out;
+	else
+		outstack = outstack_p = out;
 }
 
 static void
-sortoutput(struct output *o)
+sizecolumns(struct output *stack)
+{
+	struct	output *o;
+	size_t	len;
+
+	if (!namelen)
+		for (o = stack; o; o = o->next) {
+			len = strlen(o->o_name);
+			if (namelen < len)
+				namelen = len;
+		}
+
+	if (!linelen)
+		for (o = stack; o; o = o->next) {
+			len = strlen(o->o_line);
+			if (linelen < len)
+				linelen = len;
+		}
+
+	if (!hostlen)
+		for (o = stack; o; o = o->next) {
+			len = strlen(o->o_host);
+			if (hostlen < len)
+				hostlen = len;
+		}
+}
+
+static void
+output_stack(struct output *stack)
+{
+	struct	output *o;
+
+	for (o = stack; o; o = o->next)
+		output_record(o);
+}
+
+static void
+sort_and_output_stack(struct output *o)
 {
 	struct	output **outs;
 	struct	output *tmpo;
@@ -388,7 +487,7 @@ sortoutput(struct output *o)
 	int	i;
 
 	/* count the number of entries to display */
-	for (num=0, tmpo = o; tmpo; tmpo=tmpo->next, num++)
+	for (num=0, tmpo = o; tmpo; tmpo = tmpo->next, num++)
 		;
 
 	outs = malloc(sizeof(*outs) * num);
@@ -400,7 +499,7 @@ sortoutput(struct output *o)
 	mergesort(outs, num, sizeof(*outs), comparelog);
 
 	for (i=0; i < num; i++)
-		output(outs[i]);
+		output_record(outs[i]);
 }
 
 static int
@@ -417,37 +516,23 @@ comparelog(const void *left, const void *right)
 	return -1 * order;
 }
 
-static const char *
-gethost(struct output *o)
-{
-	if (!numeric)
-		return o->o_host;
-	else {
-		static char buf[512];
-		buf[0] = '\0';
-		(void)sockaddr_snprintf(buf, sizeof(buf), "%a",
-		    (struct sockaddr *)&o->o_ss);
-		return buf;
-	}
-}
-
 /* Duplicate the output of last(1) */
 static void
-output(struct output *o)
+output_record(struct output *o)
 {
 	time_t t = (time_t)o->o_tv.tv_sec;
-	printf("%-*.*s  %-*.*s %-*.*s   %s",
+	printf("%-*.*s  %-*.*s  %-*.*s  %s",
 		(int)namelen, (int)namelen, o->o_name,
 		(int)linelen, (int)linelen, o->o_line,
-		(int)hostlen, (int)hostlen, gethost(o),
+		(int)hostlen, (int)hostlen, o->o_host,
 		t ? ctime(&t) : "Never logged in\n");
 }
 
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-nrt] [-f <filename>] "
-	    "[-H <hostlen>] [-L <linelen>] [-N <namelen>] [user ...]\n",
+	(void)fprintf(stderr, "Usage: %s [-Fnrt] [-f filename] "
+	    "[-H hostsize] [-L linesize] [-N namesize] [user ...]\n",
 	    getprogname());
 	exit(1);
 }
