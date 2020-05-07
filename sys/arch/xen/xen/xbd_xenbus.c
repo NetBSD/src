@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.124 2020/05/03 17:54:28 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.125 2020/05/07 19:25:57 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.124 2020/05/03 17:54:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.125 2020/05/07 19:25:57 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -214,14 +214,14 @@ CFATTACH_DECL3_NEW(xbd, sizeof(struct xbd_xenbus_softc),
     xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-dev_type_open(xbdopen);
-dev_type_close(xbdclose);
-dev_type_read(xbdread);
-dev_type_write(xbdwrite);
-dev_type_ioctl(xbdioctl);
-dev_type_strategy(xbdstrategy);
-dev_type_dump(xbddump);
-dev_type_size(xbdsize);
+static dev_type_open(xbdopen);
+static dev_type_close(xbdclose);
+static dev_type_read(xbdread);
+static dev_type_write(xbdwrite);
+static dev_type_ioctl(xbdioctl);
+static dev_type_strategy(xbdstrategy);
+static dev_type_dump(xbddump);
+static dev_type_size(xbdsize);
 
 const struct bdevsw xbd_bdevsw = {
 	.d_open = xbdopen,
@@ -924,7 +924,7 @@ xbd_iosize(device_t dev, int *maxxfer)
 		*maxxfer = XBD_MAX_XFER;
 }
 
-int
+static int
 xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct	xbd_xenbus_softc *sc;
@@ -939,7 +939,7 @@ xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	return dk_open(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
-int
+static int
 xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct xbd_xenbus_softc *sc;
@@ -950,7 +950,7 @@ xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	return dk_close(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
-void
+static void
 xbdstrategy(struct buf *bp)
 {
 	struct xbd_xenbus_softc *sc;
@@ -976,7 +976,7 @@ xbdstrategy(struct buf *bp)
 	return;
 }
 
-int
+static int
 xbdsize(dev_t dev)
 {
 	struct	xbd_xenbus_softc *sc;
@@ -989,7 +989,7 @@ xbdsize(dev_t dev)
 	return dk_size(&sc->sc_dksc, dev);
 }
 
-int
+static int
 xbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct xbd_xenbus_softc *sc = 
@@ -1001,7 +1001,7 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 	return physio(xbdstrategy, NULL, dev, B_READ, xbdminphys, uio);
 }
 
-int
+static int
 xbdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct xbd_xenbus_softc *sc =
@@ -1015,7 +1015,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 	return physio(xbdstrategy, NULL, dev, B_WRITE, xbdminphys, uio);
 }
 
-int
+static int
 xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct xbd_xenbus_softc *sc =
@@ -1087,7 +1087,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return error;
 }
 
-int
+static int
 xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct xbd_xenbus_softc *sc;
