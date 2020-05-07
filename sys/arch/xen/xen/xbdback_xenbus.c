@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.95 2020/05/06 20:09:26 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.96 2020/05/07 19:49:29 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.95 2020/05/06 20:09:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.96 2020/05/07 19:49:29 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -597,7 +597,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
 	xbdi->xbdi_ih = intr_establish_xname(-1, &xen_pic, xbdi->xbdi_evtchn,
-	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, false,
+	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, true,
 	    xbdi->xbdi_name);
 	KASSERT(xbdi->xbdi_ih != NULL);
 	aprint_verbose("xbd backend domain %d handle %#x (%d) "
