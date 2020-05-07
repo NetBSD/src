@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.96 2017/05/07 04:12:35 skrll Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.97 2020/05/07 11:43:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -148,6 +148,7 @@
 
 #define	CCA_UNCACHED		2
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
+#define	CCA_SB_CACHEABLE_COHERENT 5	/* cacheable coherent (SiByte ext) */
 #define	CCA_ACCEL		7	/* non-cached, write combining */
 
 /* CPU dependent mtc0 hazard hook */
@@ -964,7 +965,8 @@
 /*
  * CPU processor revision IDs for company ID == 4 (SiByte)
  */
-#define	MIPS_SB1	0x01	/* SiByte SB1	 		ISA 64  */
+#define	MIPS_SB1	0x01	/* SiByte SB1			ISA 64  */
+#define	MIPS_SB1_11	0x11	/* SiByte SB1 (rev 0x11)	ISA 64  */
 
 /*
  * CPU processor revision IDs for company ID == 5 (SandCraft)
