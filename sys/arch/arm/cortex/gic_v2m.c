@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.8 2019/12/02 03:06:51 msaitoh Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.9 2020/05/07 16:20:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.8 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.9 2020/05/07 16:20:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -66,6 +66,7 @@ static int
 gic_v2m_msi_alloc_spi(struct gic_v2m_frame *frame, int count,
     const struct pci_attach_args *pa)
 {
+	struct pci_attach_args *new_pa;
 	int spi, n;
 
 	for (spi = frame->frame_base;
@@ -75,8 +76,11 @@ gic_v2m_msi_alloc_spi(struct gic_v2m_frame *frame, int count,
 				if (frame->frame_pa[spi + n] != NULL)
 					goto next_spi;
 
-			for (n = 0; n < count; n++)
-				frame->frame_pa[spi + n] = pa;
+			for (n = 0; n < count; n++) {
+				new_pa = kmem_alloc(sizeof(*new_pa), KM_SLEEP);
+				memcpy(new_pa, pa, sizeof(*new_pa));
+				frame->frame_pa[spi + n] = new_pa;
+			}
 
 			return spi;
 		}
@@ -90,7 +94,13 @@ next_spi:
 static void
 gic_v2m_msi_free_spi(struct gic_v2m_frame *frame, int spi)
 {
+	struct pci_attach_args *pa;
+
+	pa = frame->frame_pa[spi];
 	frame->frame_pa[spi] = NULL;
+
+	if (pa != NULL)
+		kmem_free(pa, sizeof(*pa));
 }
 
 static int
