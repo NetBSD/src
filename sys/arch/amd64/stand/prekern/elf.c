@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.20 2020/05/07 16:49:59 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.21 2020/05/07 17:58:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -300,6 +300,37 @@ elf_build_head(vaddr_t headva)
 }
 
 void
+elf_fixup_boot(vaddr_t bootva, paddr_t bootpa)
+{
+	const paddr_t basepa = kernpa_start;
+	const vaddr_t headva = (vaddr_t)eif.ehdr;
+	size_t i, offboot;
+
+	/*
+	 * Fix up the 'sh_offset' field of the REL/RELA/SYM/STR sections, which
+	 * are all in the "boot" region.
+	 */
+	for (i = 0; i < eif.ehdr->e_shnum; i++) {
+		if (eif.shdr[i].sh_type != SHT_STRTAB &&
+		    eif.shdr[i].sh_type != SHT_REL &&
+		    eif.shdr[i].sh_type != SHT_RELA &&
+		    eif.shdr[i].sh_type != SHT_SYMTAB) {
+			continue;
+		}
+		if (eif.shdr[i].sh_offset == 0) {
+			/* The bootloader dropped it. */
+			continue;
+		}
+
+		/* Offset of the section within the boot region. */
+		offboot = basepa + eif.shdr[i].sh_offset - bootpa;
+
+		/* We want (headva + sh_offset) to be the VA of the region. */
+		eif.shdr[i].sh_offset = (bootva + offboot - headva);
+	}
+}
+
+void
 elf_map_sections(void)
 {
 	const paddr_t basepa = kernpa_start;
@@ -333,45 +364,27 @@ elf_map_sections(void)
 
 		secva = mm_map_segment(segtype, secpa, secsz, secalign);
 
-		/* We want (headva + sh_offset) to be the VA of the section. */
+		/*
+		 * Fix up the 'sh_offset' field of the NOBITS/PROGBITS sections.
+		 * We want (headva + sh_offset) to be the VA of the section.
+		 */
 		ASSERT(secva > headva);
 		shdr->sh_offset = secva - headva;
 	}
 }
 
 void
-elf_build_boot(vaddr_t bootva, paddr_t bootpa)
+elf_build_info(void)
 {
-	const paddr_t basepa = kernpa_start;
-	const vaddr_t headva = (vaddr_t)eif.ehdr;
-	size_t i, j, offboot;
-
-	for (i = 0; i < eif.ehdr->e_shnum; i++) {
-		if (eif.shdr[i].sh_type != SHT_STRTAB &&
-		    eif.shdr[i].sh_type != SHT_REL &&
-		    eif.shdr[i].sh_type != SHT_RELA &&
-		    eif.shdr[i].sh_type != SHT_SYMTAB) {
-			continue;
-		}
-		if (eif.shdr[i].sh_offset == 0) {
-			/* hasn't been loaded */
-			continue;
-		}
-
-		/* Offset of the section within the boot region. */
-		offboot = basepa + eif.shdr[i].sh_offset - bootpa;
-
-		/* We want (headva + sh_offset) to be the VA of the region. */
-		eif.shdr[i].sh_offset = (bootva + offboot - headva);
-	}
+	size_t i, j;
 
 	/* Locate the section names */
 	j = eif.ehdr->e_shstrndx;
 	if (j == SHN_UNDEF) {
-		fatal("elf_build_boot: shstrtab not found");
+		fatal("elf_build_info: shstrtab not found");
 	}
 	if (j >= eif.ehdr->e_shnum) {
-		fatal("elf_build_boot: wrong shstrtab index");
+		fatal("elf_build_info: wrong shstrtab index");
 	}
 	eif.shstrtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.shstrsz = eif.shdr[j].sh_size;
@@ -382,10 +395,10 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 			break;
 	}
 	if (i == eif.ehdr->e_shnum) {
-		fatal("elf_build_boot: symtab not found");
+		fatal("elf_build_info: symtab not found");
 	}
 	if (eif.shdr[i].sh_offset == 0) {
-		fatal("elf_build_boot: symtab not loaded");
+		fatal("elf_build_info: symtab not loaded");
 	}
 	eif.symtab = (Elf_Sym *)((uint8_t *)eif.ehdr + eif.shdr[i].sh_offset);
 	eif.symcnt = eif.shdr[i].sh_size / sizeof(Elf_Sym);
@@ -393,13 +406,13 @@ elf_build_boot(vaddr_t bootva, paddr_t bootpa)
 	/* Also locate the string table */
 	j = eif.shdr[i].sh_link;
 	if (j == SHN_UNDEF || j >= eif.ehdr->e_shnum) {
-		fatal("elf_build_boot: wrong strtab index");
+		fatal("elf_build_info: wrong strtab index");
 	}
 	if (eif.shdr[j].sh_type != SHT_STRTAB) {
-		fatal("elf_build_boot: wrong strtab type");
+		fatal("elf_build_info: wrong strtab type");
 	}
 	if (eif.shdr[j].sh_offset == 0) {
-		fatal("elf_build_boot: strtab not loaded");
+		fatal("elf_build_info: strtab not loaded");
 	}
 	eif.strtab = (char *)((uint8_t *)eif.ehdr + eif.shdr[j].sh_offset);
 	eif.strsz = eif.shdr[j].sh_size;
