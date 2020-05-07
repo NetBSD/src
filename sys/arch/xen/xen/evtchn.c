@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.93 2020/05/06 13:43:48 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.94 2020/05/07 19:48:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.93 2020/05/06 13:43:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.94 2020/05/07 19:48:57 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -722,7 +722,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	ih->arg = arg;
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, intrname,
-	    xname, known_mpsafe, true) == NULL) {
+	    xname, known_mpsafe, NULL) == NULL) {
 		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
@@ -784,14 +784,81 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 		xen_atomic_clear_bit(&curcpu()->ci_evtmask[0], evtch);
 }
 
+
+struct event_set_handler_args {
+	struct intrhand *ih;
+	struct intrsource *ipls;
+	struct evtsource *evts;
+	int evtch;
+};
+
+/*
+ * Called on bound CPU to handle event_set_handler()
+ * caller (on initiating CPU) holds cpu_lock on our behalf
+ * arg1: struct event_set_handler_args *
+ * arg2: NULL
+ */
+
+static void
+event_set_handler_xcall(void *arg1, void *arg2)
+{
+	struct event_set_handler_args *esh_args = arg1;
+	struct intrhand **ihp, *ih = esh_args->ih;
+	struct evtsource *evts = esh_args->evts;
+
+	const u_long psl = x86_read_psl();
+	x86_disable_intr();
+	/* sort by IPL order, higher first */
+	for (ihp = &evts->ev_handlers; *ihp != NULL;
+	    ihp = &((*ihp)->ih_evt_next)) {
+		if ((*ihp)->ih_level < ih->ih_level)
+			break;
+	}
+	/* insert before *ihp */
+	ih->ih_evt_next = *ihp;
+	*ihp = ih;
+#ifndef XENPV
+	evts->ev_isl->is_handlers = evts->ev_handlers;
+#endif
+	/* register per-cpu handler for spllower() */
+	struct cpu_info *ci = ih->ih_cpu;
+	int sir = XEN_IPL2SIR(ih->ih_level);
+	KASSERT(sir >= SIR_XENIPL_VM && sir <= SIR_XENIPL_HIGH);
+
+	KASSERT(ci == curcpu());
+	if (ci->ci_isources[sir] == NULL) {
+		KASSERT(esh_args->ipls != NULL);
+		ci->ci_isources[sir] = esh_args->ipls;
+	}
+	struct intrsource *ipls = ci->ci_isources[sir];
+	ih->ih_next = ipls->is_handlers;
+	ipls->is_handlers = ih;
+	x86_intr_calculatemasks(ci);
+
+	intr_calculatemasks(evts, esh_args->evtch, ci);
+	x86_write_psl(psl);
+}
+
 struct intrhand *
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
-    const char *intrname, const char *xname, bool mpsafe, bool bind)
+    const char *intrname, const char *xname, bool mpsafe, struct cpu_info *ci)
 {
-	struct cpu_info *ci = curcpu(); /* XXX: pass in ci ? */
-	struct evtsource *evts;
-	struct intrhand *ih, **ihp;
+	struct event_set_handler_args esh_args;
 	char intrstr_buf[INTRIDBUF];
+	bool bind = false;
+
+	memset(&esh_args, 0, sizeof(esh_args));
+
+	/*
+	 * if ci is not specified, we bind to the current cpu.
+	 * if ci has been proviced by the called, we assume 
+	 * he will do the EVTCHNOP_bind_vcpu if needed.
+	 */
+	if (ci == NULL) {
+		ci = curcpu();
+		bind = true;
+	}
+		
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
@@ -806,29 +873,47 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
 	       handler, level);
 #endif
-	ih = kmem_zalloc(sizeof (struct intrhand), KM_NOSLEEP);
-	if (ih == NULL)
+	esh_args.ih = kmem_zalloc(sizeof (struct intrhand), KM_NOSLEEP);
+	if (esh_args.ih == NULL)
 		panic("can't allocate fixed interrupt source");
 
 
-	ih->ih_pic = &xen_pic;
-	ih->ih_level = level;
-	ih->ih_fun = ih->ih_realfun = func;
-	ih->ih_arg = ih->ih_realarg = arg;
-	ih->ih_evt_next = NULL;
-	ih->ih_next = NULL;
-	ih->ih_cpu = ci;
-	ih->ih_pin = evtch;
+	esh_args.ih->ih_pic = &xen_pic;
+	esh_args.ih->ih_level = level;
+	esh_args.ih->ih_fun = esh_args.ih->ih_realfun = func;
+	esh_args.ih->ih_arg = esh_args.ih->ih_realarg = arg;
+	esh_args.ih->ih_evt_next = NULL;
+	esh_args.ih->ih_next = NULL;
+	esh_args.ih->ih_cpu = ci;
+	esh_args.ih->ih_pin = evtch;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
-		ih->ih_fun = xen_intr_biglock_wrapper;
-		ih->ih_arg = ih;
+		esh_args.ih->ih_fun = xen_intr_biglock_wrapper;
+		esh_args.ih->ih_arg = esh_args.ih;
 	}
 #endif /* MULTIPROCESSOR */
+	KASSERT(mpsafe || level < IPL_HIGH);
 
 	mutex_enter(&cpu_lock);
+	/* allocate IPL source if needed */
+	int sir = XEN_IPL2SIR(level);
+	if (ci->ci_isources[sir] == NULL) {
+		struct intrsource *ipls;
+		ipls = kmem_zalloc(sizeof (struct intrsource), KM_NOSLEEP);
+		if (ipls == NULL)
+			panic("can't allocate fixed interrupt source");
+		ipls->is_recurse = xenev_stubs[level - IPL_VM].ist_recurse;
+		ipls->is_resume = xenev_stubs[level - IPL_VM].ist_resume;
+		ipls->is_pic = &xen_pic;
+		esh_args.ipls = ipls;
+		/*
+		 * note that we can't set ci_isources here, as
+		 * the assembly can't handle is_handlers being NULL
+		 */
+	}
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
+		struct evtsource *evts;
 		evtchn_op_t op;
 		if (intrname == NULL)
 			intrname = intr_create_intrid(-1, &xen_pic, evtch,
@@ -838,15 +923,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
 
-		evts->ev_handlers = ih;
-		/*
-		 * XXX: We're assuming here that ci is the same cpu as
-		 * the one on which this event/port is bound on. The
-		 * api needs to be reshuffled so that this assumption
-		 * is more explicitly implemented.
-		 */
 		evts->ev_cpu = ci;
-		evtsource[evtch] = evts;
 		strlcpy(evts->ev_intrname, intrname, sizeof(evts->ev_intrname));
 
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
@@ -864,70 +941,31 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 #ifndef XENPV
 		evts->ev_isl = intr_allocate_io_intrsource(intrname);
 		evts->ev_isl->is_pic = &xen_pic;
-		evts->ev_isl->is_handlers = evts->ev_handlers;
 #endif
-	} else {
-		evts = evtsource[evtch];
-		/* sort by IPL order, higher first */
-		for (ihp = &evts->ev_handlers; ; ihp = &((*ihp)->ih_evt_next)) {
-			if ((*ihp)->ih_level < ih->ih_level) {
-				/* insert before *ihp */
-				ih->ih_evt_next = *ihp;
-				*ihp = ih;
-				break;
-			}
-			if ((*ihp)->ih_evt_next == NULL) {
-				(*ihp)->ih_evt_next = ih;
-				break;
-			}
-		}
-#ifndef XENPV
-		evts->ev_isl->is_handlers = evts->ev_handlers;
-#endif
+		evtsource[evtch] = evts;
 	}
-	const u_long psl = x86_read_psl();
-	x86_disable_intr();
-	/* register per-cpu handler for spllower() */
-	event_set_iplhandler(ci, ih, level);
-	intr_calculatemasks(evts, evtch, ci);
-	x86_write_psl(psl);
+	esh_args.evts = evtsource[evtch];
 
 	// append device name
-	if (evts->ev_xname[0] != '\0')
-		strlcat(evts->ev_xname, ", ", sizeof(evts->ev_xname));
-	strlcat(evts->ev_xname, xname, sizeof(evts->ev_xname));
+	if (esh_args.evts->ev_xname[0] != '\0') {
+		strlcat(esh_args.evts->ev_xname, ", ",
+		    sizeof(esh_args.evts->ev_xname));
+	}
+	strlcat(esh_args.evts->ev_xname, xname,
+	    sizeof(esh_args.evts->ev_xname));
+
+	esh_args.evtch = evtch;
+
+	if (ci == curcpu() || !mp_online) {
+		event_set_handler_xcall(&esh_args, NULL);
+	} else {
+		uint64_t where = xc_unicast(0, event_set_handler_xcall,
+		    &esh_args, NULL, ci);
+		xc_wait(where);
+	}
 
 	mutex_exit(&cpu_lock);
-	return ih;
-}
-
-void
-event_set_iplhandler(struct cpu_info *ci,
-		     struct intrhand *ih,
-		     int level)
-{
-	struct intrsource *ipls;
-	int sir = XEN_IPL2SIR(level);
-	KASSERT(sir >= SIR_XENIPL_VM && sir <= SIR_XENIPL_HIGH);
-
-	KASSERT(ci == ih->ih_cpu);
-	KASSERT(ci == curcpu());
-	if (ci->ci_isources[sir] == NULL) {
-		ipls = kmem_zalloc(sizeof (struct intrsource),
-		    KM_NOSLEEP);
-		if (ipls == NULL)
-			panic("can't allocate fixed interrupt source");
-		ipls->is_recurse = xenev_stubs[level - IPL_VM].ist_recurse;
-		ipls->is_resume = xenev_stubs[level - IPL_VM].ist_resume;
-		ipls->is_handlers = ih;
-		ipls->is_pic = &xen_pic;
-		ci->ci_isources[sir] = ipls;
-	} else {
-		ipls = ci->ci_isources[sir];
-		ih->ih_next = ipls->is_handlers;
-		ipls->is_handlers = ih;
-	}
-	x86_intr_calculatemasks(ci);
+	return esh_args.ih;
 }
 
 /*
