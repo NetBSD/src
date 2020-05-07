@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.223 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.224 2020/05/07 20:02:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.223 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.224 2020/05/07 20:02:34 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -513,8 +513,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	if (tracefork(p1, flags) || tracevfork(p1, flags))
+	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		proc_changeparent(p2, p1->p_pptr);
+		SET(p2->p_slflag, PSL_TRACEDCHILD);
+	}
 
 	p2->p_oppid = p1->p_pid; /* Remember the original parent id. */
 
@@ -634,7 +636,8 @@ child_return(void *arg)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	if ((p->p_slflag & PSL_TRACED) != 0) {
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACEDCHILD)) ==
+	    (PSL_TRACED|PSL_TRACEDCHILD)) {
 		eventswitchchild(p, TRAP_CHLD, 
 		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK);
 	}
