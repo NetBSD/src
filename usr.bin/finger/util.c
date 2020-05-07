@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29 2016/03/09 16:12:14 chs Exp $	*/
+/*	$NetBSD: util.c,v 1.30 2020/05/07 13:40:20 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.29 2016/03/09 16:12:14 chs Exp $");
+__RCSID("$NetBSD: util.c,v 1.30 2020/05/07 13:40:20 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,6 @@ __RCSID("$NetBSD: util.c,v 1.29 2016/03/09 16:12:14 chs Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include "utmpentry.h"
 
@@ -160,15 +159,40 @@ void
 enter_lastlog(PERSON *pn)
 {
 	WHERE *w;
-	static int opened, fd;
+	static int opened;
+#ifdef SUPPORT_UTMPX
+# define ll_time	ll_tv.tv_sec
+# define UT_LINESIZE	_UTX_LINESIZE
+# define UT_HOSTSIZE	_UTX_HOSTSIZE
+	static DB *lldb = NULL;
+	DBT key, data;
+	struct lastlogx ll;
+#else
+	static int fd;
 	struct lastlog ll;
+#endif
 	char doit = 0;
+
+	(void)memset(&ll, 0, sizeof(ll));
 
 	/* some systems may not maintain lastlog, don't report errors. */
 	if (!opened) {
+#ifdef SUPPORT_UTMPX
+		lldb = dbopen(_PATH_LASTLOGX, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+#else
 		fd = open(_PATH_LASTLOG, O_RDONLY, 0);
+#endif
 		opened = 1;
 	}
+#ifdef SUPPORT_UTMPX
+	if (lldb != NULL) {
+		key.data = &pn->uid;
+		key.size = sizeof(pn->uid);
+		if ((*lldb->get)(lldb, &key, &data, 0) == 0 &&
+		    data.size == sizeof(ll))
+			(void)memcpy(&ll, data.data, sizeof(ll));
+	}
+#else
 	if (fd == -1 ||
 	    lseek(fd, (off_t)pn->uid * sizeof(ll), SEEK_SET) !=
 	    (off_t)pn->uid * (off_t)sizeof(ll) ||
@@ -177,6 +201,7 @@ enter_lastlog(PERSON *pn)
 			ll.ll_line[0] = ll.ll_host[0] = '\0';
 			ll.ll_time = 0;
 		}
+#endif
 	if ((w = pn->whead) == NULL)
 		doit = 1;
 	else if (ll.ll_time != 0) {

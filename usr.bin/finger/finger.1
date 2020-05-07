@@ -1,4 +1,4 @@
-.\"	$NetBSD: finger.1,v 1.21 2020/01/30 23:59:59 sevan Exp $
+.\"	$NetBSD: finger.1,v 1.22 2020/05/07 13:40:20 kim Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)finger.1	8.3 (Berkeley) 5/5/94
 .\"
-.Dd January 30, 2020
+.Dd May 7, 2020
 .Dt FINGER 1
 .Os
 .Sh NAME
@@ -199,9 +199,23 @@ The
 .Fl l
 option is the only option that may be passed to a remote machine.
 .Sh FILES
-.Bl -tag -width /var/log/lastlog -compact
+.Bl -tag -width /var/log/lastlogx -compact
+.It Pa /var/run/utmpx
+The
+.Nm utmpx
+file.
+.It Pa /var/log/lastlogx
+The
+.Nm lastlogx
+file.
+.It Pa /var/run/utmp
+The
+.Nm utmp
+file.
 .It Pa /var/log/lastlog
-last login data base
+The
+.Nm lastlog
+file.
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
