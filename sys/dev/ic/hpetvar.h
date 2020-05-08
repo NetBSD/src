@@ -1,4 +1,4 @@
-/* $NetBSD: hpetvar.h,v 1.6 2020/04/24 23:29:17 ad Exp $ */
+/* $NetBSD: hpetvar.h,v 1.7 2020/05/08 22:01:54 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -49,5 +49,6 @@ void	hpet_attach_subr(device_t);
 int	hpet_detach(device_t, int flags);
 void	hpet_delay(unsigned int);
 bool	hpet_delay_p(void);
+uint64_t hpet_tsc_freq(void);
 
 #endif /* _DEV_IC_HPETVAR_H_ */
