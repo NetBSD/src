@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.6 2020/05/08 15:57:24 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.7 2020/05/08 16:05:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.6 2020/05/08 15:57:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.7 2020/05/08 16:05:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -398,7 +398,7 @@ random_write(dev_t dev, struct uio *uio, int flags)
 		/* Check for interruption.  */
 		if (__predict_false(curlwp->l_flag & LW_PENDSIG) &&
 		    sigispending(curlwp, 0)) {
-			error = EINTR; /* XXX ERESTART?  */
+			error = EINTR;
 			break;
 		}
 	}
