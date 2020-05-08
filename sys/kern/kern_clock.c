@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.140 2020/04/02 16:29:30 maxv Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.141 2020/05/08 22:10:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.140 2020/04/02 16:29:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.141 2020/05/08 22:10:09 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -257,13 +257,6 @@ hardclock(struct clockframe *frame)
 	 * Update real-time timeout queue.
 	 */
 	callout_hardclock();
-
-#ifdef KDTRACE_HOOKS
-	cyclic_clock_func_t func = cyclic_clock_func[cpu_index(ci)];
-	if (func) {
-		(*func)((struct clockframe *)frame);
-	}
-#endif
 }
 
 /*
@@ -431,6 +424,13 @@ statclock(struct clockframe *frame)
 		atomic_inc_uint(&l->l_cpticks);
 		mutex_spin_exit(&p->p_stmutex);
 	}
+
+#ifdef KDTRACE_HOOKS
+	cyclic_clock_func_t func = cyclic_clock_func[cpu_index(ci)];
+	if (func) {
+		(*func)((struct clockframe *)frame);
+	}
+#endif
 }
 
 /*
