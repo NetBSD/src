@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.5 2020/05/08 15:55:05 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.6 2020/05/08 15:57:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.5 2020/05/08 15:55:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.6 2020/05/08 15:57:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -213,7 +213,6 @@ random_read(dev_t dev, struct uio *uio, int flags)
 	struct nist_hash_drbg drbg;
 	uint8_t *buf;
 	int extractflags;
-	bool interruptible;
 	int error;
 
 	/* Get a buffer for transfers.  */
@@ -258,18 +257,10 @@ random_read(dev_t dev, struct uio *uio, int flags)
 	/* Promptly zero the seed.  */
 	explicit_memset(seed, 0, sizeof seed);
 
-	/*
-	 * Generate data.  Assume no error until failure.  No
-	 * interruption at this point until we've generated at least
-	 * one block of output.
-	 */
+	/* Generate data.  */
 	error = 0;
-	interruptible = false;
 	while (uio->uio_resid) {
-		size_t n = uio->uio_resid;
-
-		/* No more than one buffer's worth.  */
-		n = MIN(n, RANDOM_BUFSIZE);
+		size_t n = MIN(uio->uio_resid, RANDOM_BUFSIZE);
 
 		/*
 		 * Clamp /dev/random output to the entropy capacity and
@@ -284,22 +275,6 @@ random_read(dev_t dev, struct uio *uio, int flags)
 			 */
 			CTASSERT(ENTROPY_CAPACITY <= RANDOM_BUFSIZE);
 			CTASSERT(sizeof seed <= RANDOM_BUFSIZE);
-		}
-
-		/* Yield if requested.  */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt();
-
-		/*
-		 * Allow interruption, but only after providing a
-		 * minimum number of bytes.
-		 */
-		CTASSERT(RANDOM_BUFSIZE >= 256);
-		/* Check for interruption.  */
-		if (__predict_false(curlwp->l_flag & LW_PENDSIG) &&
-		    interruptible && sigispending(curlwp, 0)) {
-			error = EINTR; /* XXX ERESTART? */
-			break;
 		}
 
 		/*
@@ -348,11 +323,17 @@ random_read(dev_t dev, struct uio *uio, int flags)
 			break;
 		}
 
-		/*
-		 * We have generated one block of output, so it is
-		 * reasonable to allow interruption after this point.
-		 */
-		interruptible = true;
+		/* Yield if requested.  */
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+			preempt();
+
+		/* Check for interruption after at least 256 bytes.  */
+		CTASSERT(RANDOM_BUFSIZE >= 256);
+		if (__predict_false(curlwp->l_flag & LW_PENDSIG) &&
+		    sigispending(curlwp, 0)) {
+			error = EINTR;
+			break;
+		}
 	}
 
 out:	/* Zero the buffer and free it.  */
@@ -401,10 +382,14 @@ random_write(dev_t dev, struct uio *uio, int flags)
 
 	/* Consume data.  */
 	while (uio->uio_resid) {
-		size_t n = uio->uio_resid;
+		size_t n = MIN(uio->uio_resid, RANDOM_BUFSIZE);
 
-		/* No more than one buffer's worth in one step.  */
-		n = MIN(uio->uio_resid, RANDOM_BUFSIZE);
+		/* Transfer n bytes in and enter them into the pool.  */
+		error = uiomove(buf, n, uio);
+		if (error)
+			break;
+		rnd_add_data(&user_rndsource, buf, n, privileged ? n*NBBY : 0);
+		any = true;
 
 		/* Yield if requested.  */
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
@@ -416,13 +401,6 @@ random_write(dev_t dev, struct uio *uio, int flags)
 			error = EINTR; /* XXX ERESTART?  */
 			break;
 		}
-
-		/* Transfer n bytes in and enter them into the pool.  */
-		error = uiomove(buf, n, uio);
-		if (error)
-			break;
-		rnd_add_data(&user_rndsource, buf, n, privileged ? n*NBBY : 0);
-		any = true;
 	}
 
 	/* Zero the buffer and free it.  */
