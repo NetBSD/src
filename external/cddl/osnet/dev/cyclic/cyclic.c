@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.8 2018/05/28 21:05:02 chs Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.9 2020/05/08 22:10:08 ad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -347,7 +347,7 @@
 #include <sys/xcall.h>
 
 #undef mutex_init
-#define mtx_init(m, d, p, f) mutex_init(m, MUTEX_DEFAULT, IPL_CLOCK)
+#define mtx_init(m, d, p, f) mutex_init(m, MUTEX_DEFAULT, IPL_HIGH)
 #define mtx_lock_spin(x) mutex_spin_enter(x)
 #define mtx_unlock_spin(x) mutex_spin_exit(x)
 #define mtx_destroy(x) mutex_destroy(x)
