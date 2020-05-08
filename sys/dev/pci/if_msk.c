@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.108 2020/04/30 14:04:54 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.109 2020/05/08 14:35:19 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.108 2020/04/30 14:04:54 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.109 2020/05/08 14:35:19 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,8 +482,9 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	bus_addr_t		addr;
 	bus_dmamap_t		rxmap;
 	size_t			i;
-	uint32_t		rxidx, frag, cur, hiaddr, old_hiaddr, total;
+	uint32_t		rxidx, frag, cur, hiaddr, total;
 	uint32_t		entries = 0;
+	uint8_t			own = 0;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL)
@@ -537,7 +538,6 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	bus_dmamap_sync(sc->sc_dmatag, rxmap, 0, rxmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	old_hiaddr = sc_if->sk_cdata.sk_rx_hiaddr;
 	for (i = 0; i < rxmap->dm_nsegs; i++) {
 		addr = rxmap->dm_segs[i].ds_addr;
 		DPRINTFN(2, ("msk_newbuf: addr %llx\n",
@@ -551,11 +551,8 @@ msk_newbuf(struct sk_if_softc *sc_if)
 			r->sk_addr = htole32(hiaddr);
 			r->sk_len = 0;
 			r->sk_ctl = 0;
-			if (i == 0)
-				r->sk_opcode = SK_Y2_BMUOPC_ADDR64;
-			else
-				r->sk_opcode = SK_Y2_BMUOPC_ADDR64 |
-				    SK_Y2_RXOPC_OWN;
+			r->sk_opcode = SK_Y2_BMUOPC_ADDR64 | own;
+			own = SK_Y2_RXOPC_OWN;
 			sc_if->sk_cdata.sk_rx_hiaddr = hiaddr;
 			MSK_CDRXSYNC(sc_if, frag,
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -571,13 +568,10 @@ msk_newbuf(struct sk_if_softc *sc_if)
 		r->sk_len = htole16(rxmap->dm_segs[i].ds_len);
 		r->sk_ctl = 0;
 		if (i == 0) {
-			if (hiaddr != old_hiaddr)
-				r->sk_opcode = SK_Y2_RXOPC_PACKET |
-				    SK_Y2_RXOPC_OWN;
-			else
-				r->sk_opcode = SK_Y2_RXOPC_PACKET;
+			r->sk_opcode = SK_Y2_RXOPC_PACKET | own;
 		} else
-			r->sk_opcode = SK_Y2_RXOPC_BUFFER | SK_Y2_RXOPC_OWN;
+			r->sk_opcode = SK_Y2_RXOPC_BUFFER | own;
+		own = SK_Y2_RXOPC_OWN;
 		MSK_CDRXSYNC(sc_if, frag,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		cur = frag;
@@ -1856,8 +1850,9 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc		*f = NULL;
-	uint32_t		frag, cur, hiaddr, old_hiaddr, total;
+	uint32_t		frag, cur, hiaddr, total;
 	uint32_t		entries = 0;
+	uint8_t			own = 0;
 	size_t			i;
 	bus_dmamap_t		txmap;
 	bus_addr_t		addr;
@@ -1907,7 +1902,6 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 	bus_dmamap_sync(sc->sc_dmatag, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	old_hiaddr = sc_if->sk_cdata.sk_tx_hiaddr;
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		addr = txmap->dm_segs[i].ds_addr;
 		DPRINTFN(2, ("msk_encap: addr %llx\n",
@@ -1919,10 +1913,8 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 			f->sk_addr = htole32(hiaddr);
 			f->sk_len = 0;
 			f->sk_ctl = 0;
-			if (i == 0)
-				f->sk_opcode = SK_Y2_BMUOPC_ADDR64;
-			else
-				f->sk_opcode = SK_Y2_BMUOPC_ADDR64 | SK_Y2_TXOPC_OWN;
+			f->sk_opcode = SK_Y2_BMUOPC_ADDR64 | own;
+			own = SK_Y2_TXOPC_OWN;
 			sc_if->sk_cdata.sk_tx_hiaddr = hiaddr;
 			SK_INC(frag, MSK_TX_RING_CNT);
 			entries++;
@@ -1935,12 +1927,10 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, uint32_t *txidx)
 		f->sk_len = htole16(txmap->dm_segs[i].ds_len);
 		f->sk_ctl = 0;
 		if (i == 0) {
-			if (hiaddr != old_hiaddr)
-				f->sk_opcode = SK_Y2_TXOPC_PACKET | SK_Y2_TXOPC_OWN;
-			else
-				f->sk_opcode = SK_Y2_TXOPC_PACKET;
+			f->sk_opcode = SK_Y2_TXOPC_PACKET | own;
 		} else
-			f->sk_opcode = SK_Y2_TXOPC_BUFFER | SK_Y2_TXOPC_OWN;
+			f->sk_opcode = SK_Y2_TXOPC_BUFFER | own;
+		own = SK_Y2_TXOPC_OWN;
 		cur = frag;
 		SK_INC(frag, MSK_TX_RING_CNT);
 		entries++;
