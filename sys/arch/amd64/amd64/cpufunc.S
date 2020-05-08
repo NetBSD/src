@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.51 2020/05/02 17:14:01 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.52 2020/05/08 21:58:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ ENTRY(msr_onfault)
 END(msr_onfault)
 
 ENTRY(cpu_counter)
-	xorq	%rax, %rax
+	xorl	%eax, %eax
 	rdtsc
 	shlq	$32, %rdx
 	orq	%rdx, %rax
