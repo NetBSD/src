@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.829 2020/05/02 16:44:35 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.830 2020/05/08 00:52:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.829 2020/05/02 16:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.830 2020/05/08 00:52:29 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1150,8 +1150,8 @@ init386(paddr_t first_avail)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
-	cpu_rng_init();
 	cpu_init_msrs(&cpu_info_primary, true);
+	cpu_rng_init();
 #ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
