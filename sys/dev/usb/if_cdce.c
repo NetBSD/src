@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.70 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.71 2020/05/08 06:24:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.70 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.71 2020/05/08 06:24:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -146,8 +146,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	if (un->un_flags & CDCE_NO_UNION)
 		un->un_iface = uiaa->uiaa_iface;
 	else {
-		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc(un->un_udev,
-		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
+		ud = (const usb_cdc_union_descriptor_t *)usb_find_desc_if(un->un_udev,
+		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION,
+		    usbd_get_interface_descriptor(uiaa->uiaa_iface));
 		if (ud == NULL) {
 			aprint_error_dev(self, "no union descriptor\n");
 			return;
@@ -237,8 +238,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
-	    UDESC_CS_INTERFACE, UDESCSUB_CDC_ENF);
+	ue = (const usb_cdc_ethernet_descriptor_t *)usb_find_desc_if(dev,
+	    UDESC_CS_INTERFACE, UDESCSUB_CDC_ENF,
+	    usbd_get_interface_descriptor(uiaa->uiaa_iface));
 	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str) ||
 	    ether_aton_r(un->un_eaddr, sizeof(un->un_eaddr), eaddr_str)) {
 		aprint_normal_dev(self, "faking address\n");
