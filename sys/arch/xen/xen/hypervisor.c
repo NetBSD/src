@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.82 2020/05/07 15:44:35 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.83 2020/05/08 17:28:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.82 2020/05/07 15:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.83 2020/05/08 17:28:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,10 +261,14 @@ init_xen_early(void)
 	delay_func = xen_delay;
 	x86_initclock_func = xen_initclocks;
 	x86_cpu_initclock_func = xen_cpu_initclocks;
-	cmd_line =
-	    (void *)((uintptr_t)hvm_start_info->cmdline_paddr + KERNBASE);
-	strlcpy(xen_start_info.cmd_line, cmd_line,
-	    sizeof(xen_start_info.cmd_line));
+	if (hvm_start_info->cmdline_paddr != 0) {
+		cmd_line =
+		    (void *)((uintptr_t)hvm_start_info->cmdline_paddr + KERNBASE);
+		strlcpy(xen_start_info.cmd_line, cmd_line,
+		    sizeof(xen_start_info.cmd_line));
+	} else {
+		xen_start_info.cmd_line[0] = '\0';
+	}
 	xen_start_info.flags = hvm_start_info->flags;
 }
 
