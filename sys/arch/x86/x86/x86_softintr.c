@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_softintr.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: x86_softintr.c,v 1.3 2020/05/08 21:43:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.2 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.3 2020/05/08 21:43:54 ad Exp $");
 
 #include <sys/kmem.h>
 #include <sys/proc.h>
@@ -223,6 +223,7 @@ void
 x86_init_preempt(struct cpu_info *ci)
 {
 	struct intrsource *isp;
+
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_preempt;
 	isp->is_resume = Xresume_preempt;
