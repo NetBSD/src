@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.109 2020/05/08 14:35:19 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.110 2020/05/08 14:56:49 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.109 2020/05/08 14:35:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.110 2020/05/08 14:56:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1830,6 +1830,8 @@ mskc_detach(device_t self, int flags)
 	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return rv;
+
+	sysctl_teardown(&sc->sk_clog);
 
 	if (sc->sk_status_nseg > 0) {
 		bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
