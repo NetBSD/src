@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.119 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.120 2020/05/08 00:49:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -402,7 +402,7 @@ void		pmap_ept_transform(struct pmap *);
 #ifndef __HAVE_DIRECT_MAP
 void		pmap_vpage_cpu_init(struct cpu_info *);
 #endif
-vaddr_t		slotspace_rand(int, size_t, size_t);
+vaddr_t		slotspace_rand(int, size_t, size_t, size_t, vaddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
