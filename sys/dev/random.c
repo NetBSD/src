@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4 2020/05/08 15:53:26 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.5 2020/05/08 15:55:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.4 2020/05/08 15:53:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.5 2020/05/08 15:55:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: random.c,v 1.4 2020/05/08 15:53:26 riastradh Exp $")
 #include <sys/event.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/poll.h>
-#include <sys/pool.h>
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
 #include <sys/signalvar.h>
@@ -95,7 +95,6 @@ const struct cdevsw rnd_cdevsw = {
 };
 
 #define	RANDOM_BUFSIZE	512	/* XXX pulled from arse */
-static pool_cache_t random_buf_pc __read_mostly;
 
 /* Entropy source for writes to /dev/random and /dev/urandom */
 static krndsource_t	user_rndsource;
@@ -104,8 +103,6 @@ void
 rndattach(int num)
 {
 
-	random_buf_pc = pool_cache_init(RANDOM_BUFSIZE, 0, 0, 0,
-	    "randombuf", NULL, IPL_NONE, NULL, NULL, NULL);
 	rnd_attach_source(&user_rndsource, "/dev/random", RND_TYPE_UNKNOWN,
 	    RND_FLAG_COLLECT_VALUE);
 }
@@ -220,7 +217,7 @@ random_read(dev_t dev, struct uio *uio, int flags)
 	int error;
 
 	/* Get a buffer for transfers.  */
-	buf = pool_cache_get(random_buf_pc, PR_WAITOK);
+	buf = kmem_alloc(RANDOM_BUFSIZE, KM_SLEEP);
 
 	/*
 	 * If it's a short read from /dev/urandom, just generate the
@@ -358,9 +355,9 @@ random_read(dev_t dev, struct uio *uio, int flags)
 		interruptible = true;
 	}
 
-out:	/* Zero the buffer and return it to the pool cache.  */
+out:	/* Zero the buffer and free it.  */
 	explicit_memset(buf, 0, RANDOM_BUFSIZE);
-	pool_cache_put(random_buf_pc, buf);
+	kmem_free(buf, RANDOM_BUFSIZE);
 
 	return error;
 }
@@ -400,7 +397,7 @@ random_write(dev_t dev, struct uio *uio, int flags)
 		privileged = true;
 
 	/* Get a buffer for transfers.  */
-	buf = pool_cache_get(random_buf_pc, PR_WAITOK);
+	buf = kmem_alloc(RANDOM_BUFSIZE, KM_SLEEP);
 
 	/* Consume data.  */
 	while (uio->uio_resid) {
@@ -428,9 +425,9 @@ random_write(dev_t dev, struct uio *uio, int flags)
 		any = true;
 	}
 
-	/* Zero the buffer and return it to the pool cache.  */
+	/* Zero the buffer and free it.  */
 	explicit_memset(buf, 0, RANDOM_BUFSIZE);
-	pool_cache_put(random_buf_pc, buf);
+	kmem_free(buf, RANDOM_BUFSIZE);
 
 	/* If we added anything, consolidate entropy now.  */
 	if (any)
