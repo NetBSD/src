@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.43 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: tsc.c,v 1.44 2020/05/08 22:01:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.43 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.44 2020/05/08 22:01:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,12 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.43 2020/04/25 15:26:18 bouyer Exp $");
 
 #include "tsc.h"
 
+#define	TSC_SYNC_ROUNDS		1000
+#define	ABS(a)			((a) >= 0 ? (a) : -(a))
+
 u_int	tsc_get_timecount(struct timecounter *);
 
 uint64_t	tsc_freq; /* exported for sysctl */
-static int64_t	tsc_drift_max = 250;	/* max cycles */
+static int64_t	tsc_drift_max = 1000;	/* max cycles */
 static int64_t	tsc_drift_observed;
-static bool	tsc_good;
 
 int tsc_user_enabled = 1;
 
@@ -158,9 +160,6 @@ tsc_tc_init(void)
 
 	ci = curcpu();
 	tsc_freq = ci->ci_data.cpu_cc_freq;
-	tsc_good = (cpu_feature[0] & CPUID_MSR) != 0 &&
-	    (rdmsr(MSR_TSC) != 0 || rdmsr(MSR_TSC) != 0);
-
 	invariant = tsc_is_invariant();
 	if (!invariant) {
 		aprint_debug("TSC not known invariant on this CPU\n");
@@ -206,13 +205,12 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 
 	/* Flag it and read our TSC. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
-	bptsc = (rdtsc() >> 1);
 
 	/* Wait for remote to complete, and read ours again. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) != 0) {
 		__insn_barrier();
 	}
-	bptsc += (rdtsc() >> 1);
+	bptsc = rdtsc();
 
 	/* Wait for the results to come in. */
 	while (tsc_sync_cpu == ci) {
@@ -229,17 +227,21 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 void
 tsc_sync_bp(struct cpu_info *ci)
 {
-	int64_t bptsc, aptsc, bsum = 0, asum = 0;
+	int64_t bptsc, aptsc, val, diff;
 
-	tsc_read_bp(ci, &bptsc, &aptsc); /* discarded - cache effects */
-	for (int i = 0; i < 8; i++) {
+	if (!cpu_hascounter())
+		return;
+
+	val = INT64_MAX;
+	for (int i = 0; i < TSC_SYNC_ROUNDS; i++) {
 		tsc_read_bp(ci, &bptsc, &aptsc);
-		bsum += bptsc;
-		asum += aptsc;
+		diff = bptsc - aptsc;
+		if (ABS(diff) < ABS(val)) {
+			val = diff;
+		}
 	}
 
-	/* Compute final value to adjust for skew. */
-	ci->ci_data.cpu_cc_skew = (bsum - asum) >> 3;
+	ci->ci_data.cpu_cc_skew = val;
 }
 
 /*
@@ -255,11 +257,10 @@ tsc_post_ap(struct cpu_info *ci)
 	while ((ci->ci_flags & CPUF_SYNCTSC) == 0) {
 		__insn_barrier();
 	}
-	tsc = (rdtsc() >> 1);
 
 	/* Instruct primary to read its counter. */
 	atomic_and_uint(&ci->ci_flags, ~CPUF_SYNCTSC);
-	tsc += (rdtsc() >> 1);
+	tsc = rdtsc();
 
 	/* Post result.  Ensure the whole value goes out atomically. */
 	(void)atomic_swap_64(&tsc_sync_val, tsc);
@@ -273,8 +274,10 @@ void
 tsc_sync_ap(struct cpu_info *ci)
 {
 
-	tsc_post_ap(ci);
-	for (int i = 0; i < 8; i++) {
+	if (!cpu_hascounter())
+		return;
+
+	for (int i = 0; i < TSC_SYNC_ROUNDS; i++) {
 		tsc_post_ap(ci);
 	}
 }
@@ -320,13 +323,4 @@ cpu_hascounter(void)
 {
 
 	return cpu_feature[0] & CPUID_TSC;
-}
-
-uint64_t
-cpu_counter_serializing(void)
-{
-	if (tsc_good)
-		return rdmsr(MSR_TSC);
-	else
-		return cpu_counter();
 }
