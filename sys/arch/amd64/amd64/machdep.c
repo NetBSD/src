@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.352 2020/05/02 16:44:34 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.353 2020/05/08 00:49:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2020/05/02 16:44:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.353 2020/05/08 00:49:42 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -157,6 +157,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352 2020/05/02 16:44:34 bouyer Exp $")
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+#include <lib/libkern/entpool.h> /* XXX */
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -1581,7 +1583,20 @@ init_pte(void)
 void
 init_slotspace(void)
 {
+	/*
+	 * XXX Too early to use cprng(9), or even entropy_extract.
+	 * Also too early to use rdrand/rdseed, since we haven't probed
+	 * cpu features yet.  This is a hack -- fix me!
+	 */
+	struct entpool pool;
+	size_t randhole;
+	vaddr_t randva;
+	uint64_t sample;
 	vaddr_t va;
+
+	memset(&pool, 0, sizeof pool);
+	sample = rdtsc();
+	entpool_enter(&pool, &sample, sizeof sample);
 
 	memset(&slotspace, 0, sizeof(slotspace));
 
@@ -1636,16 +1651,26 @@ init_slotspace(void)
 	slotspace.area[SLAREA_KERN].active = true;
 
 	/* Main. */
+	sample = rdtsc();
+	entpool_enter(&pool, &sample, sizeof sample);
+	entpool_extract(&pool, &randhole, sizeof randhole);
+	entpool_extract(&pool, &randva, sizeof randva);
 	va = slotspace_rand(SLAREA_MAIN, NKL4_MAX_ENTRIES * NBPD_L4,
-	    NBPD_L4); /* TODO: NBPD_L1 */
+	    NBPD_L4, randhole, randva); /* TODO: NBPD_L1 */
 	vm_min_kernel_address = va;
 	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
 
 #ifndef XENPV
 	/* PTE. */
-	va = slotspace_rand(SLAREA_PTE, NBPD_L4, NBPD_L4);
+	sample = rdtsc();
+	entpool_enter(&pool, &sample, sizeof sample);
+	entpool_extract(&pool, &randhole, sizeof randhole);
+	entpool_extract(&pool, &randva, sizeof randva);
+	va = slotspace_rand(SLAREA_PTE, NBPD_L4, NBPD_L4, randhole, randva);
 	pte_base = (pd_entry_t *)va;
 #endif
+
+	explicit_memset(&pool, 0, sizeof pool);
 }
 
 void
