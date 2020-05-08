@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.388 2020/05/05 17:02:01 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.389 2020/05/08 00:49:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.388 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.389 2020/05/08 00:49:43 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1415,7 +1415,8 @@ slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
  * Finally we update the associated entry in the slotspace structure.
  */
 vaddr_t
-slotspace_rand(int type, size_t sz, size_t align)
+slotspace_rand(int type, size_t sz, size_t align, size_t randhole,
+    vaddr_t randva)
 {
 	struct {
 		int start;
@@ -1480,7 +1481,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 	}
 
 	/* Select a hole. */
-	entropy_extract(&hole, sizeof(hole), 0);
+	hole = randhole;
 #ifdef NO_X86_ASLR
 	hole = 0;
 #endif
@@ -1490,7 +1491,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 	startva = VA_SIGN_NEG(startsl * NBPD_L4);
 
 	/* Select an area within the hole. */
-	entropy_extract(&va, sizeof(va), 0);
+	va = randva;
 #ifdef NO_X86_ASLR
 	va = 0;
 #endif
@@ -1619,6 +1620,8 @@ pmap_init_directmap(struct pmap *kpm)
 	pt_entry_t *pte;
 	phys_ram_seg_t *mc;
 	int i;
+	size_t randhole;
+	vaddr_t randva;
 
 	const pd_entry_t pteflags = PTE_P | PTE_W | pmap_pg_nx;
 	const pd_entry_t holepteflags = PTE_P | pmap_pg_nx;
@@ -1642,7 +1645,10 @@ pmap_init_directmap(struct pmap *kpm)
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
 
-	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2);
+	entropy_extract(&randhole, sizeof randhole, 0);
+	entropy_extract(&randva, sizeof randva, 0);
+	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2,
+	    randhole, randva);
 	endva = startva + lastpa;
 
 	/* We will use this temporary va. */
