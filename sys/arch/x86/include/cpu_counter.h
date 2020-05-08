@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.5 2011/02/02 12:26:42 bouyer Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.6 2020/05/08 22:01:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #ifdef _KERNEL
 
 uint64_t	cpu_counter(void);
-uint64_t	cpu_counter_serializing(void);
 uint32_t	cpu_counter32(void);
 uint64_t	cpu_frequency(struct cpu_info *);
 int		cpu_hascounter(void);
