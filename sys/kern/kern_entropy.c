@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.15 2020/05/08 00:53:25 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.16 2020/05/08 00:54:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.15 2020/05/08 00:53:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.16 2020/05/08 00:54:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -255,19 +255,6 @@ static void	rndsource_to_user(struct krndsource *, rndsource_t *);
 static void	rndsource_to_user_est(struct krndsource *, rndsource_est_t *);
 
 /*
- * curcpu_available()
- *
- *	True if we can inspect the current CPU.  Early on this may not
- *	work.  XXX On most if not all ports, this should work earlier.
- */
-static inline bool
-curcpu_available(void)
-{
-
-	return true;
-}
-
-/*
  * entropy_timer()
  *
  *	Cycle counter, time counter, or anything that changes a wee bit
@@ -278,10 +265,6 @@ entropy_timer(void)
 {
 	struct bintime bt;
 	uint32_t v;
-
-	/* Very early on, cpu_counter32() may not be available.  */
-	if (!curcpu_available())
-		return 0;
 
 	/* If we have a CPU cycle counter, use the low 32 bits.  */
 #ifdef __HAVE_CPU_COUNTER
@@ -777,7 +760,7 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	uint32_t pending;
 	int s;
 
-	KASSERTMSG(!curcpu_available() || !cpu_intr_p(),
+	KASSERTMSG(!cpu_intr_p(),
 	    "use entropy_enter_intr from interrupt context");
 	KASSERTMSG(howmany(nbits, NBBY) <= len,
 	    "impossible entropy rate: %u bits in %zu-byte string", nbits, len);
@@ -1268,7 +1251,7 @@ entropy_extract(void *buf, size_t len, int flags)
 		mutex_enter(&E->lock);
 
 	/* Count up request for entropy in interrupt context.  */
-	if (curcpu_available() && cpu_intr_p())
+	if (cpu_intr_p())
 		entropy_extract_intr_evcnt.ev_count++;
 
 	/* Wait until there is enough entropy in the system.  */
@@ -1627,7 +1610,7 @@ rnd_trylock_sources(void)
 
 	if (E->sourcelock)
 		return false;
-	E->sourcelock = (curcpu_available() ? curlwp : (void *)1);
+	E->sourcelock = curlwp;
 	return true;
 }
 
@@ -1643,9 +1626,8 @@ rnd_unlock_sources(void)
 
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
 
-	KASSERTMSG(E->sourcelock == (curcpu_available() ? curlwp : (void *)1),
-	    "lwp %p releasing lock held by %p",
-	    (curcpu_available() ? curlwp : (void *)1), E->sourcelock);
+	KASSERTMSG(E->sourcelock == curlwp, "lwp %p releasing lock held by %p",
+	    curlwp, E->sourcelock);
 	E->sourcelock = NULL;
 	if (E->stage >= ENTROPY_WARM)
 		cv_broadcast(&E->cv);
@@ -1661,7 +1643,7 @@ static bool __diagused
 rnd_sources_locked(void)
 {
 
-	return E->sourcelock == (curcpu_available() ? curlwp : (void *)1);
+	return E->sourcelock == curlwp;
 }
 
 /*
@@ -1820,7 +1802,7 @@ rnd_add_data_1(struct krndsource *rs, const void *buf, uint32_t len,
 	 * take note of whether it consumed the full sample; if not,
 	 * use entropy_enter, which always consumes the full sample.
 	 */
-	if (curcpu_available() && cpu_intr_p()) {
+	if (curlwp && cpu_intr_p()) {
 		fullyused = entropy_enter_intr(buf, len, entropybits);
 	} else {
 		entropy_enter(buf, len, entropybits);
