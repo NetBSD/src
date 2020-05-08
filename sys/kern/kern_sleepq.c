@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.66 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.67 2020/05/08 03:26:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.66 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.67 2020/05/08 03:26:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,6 +234,38 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj,
 	/* Save the time when thread has slept */
 	l->l_slpticks = getticks();
 	sched_slept(l);
+}
+
+/*
+ * sleepq_transfer:
+ *
+ *	Move an LWP from one sleep queue to another.  Both sleep queues
+ *	must already be locked.
+ *
+ *	The LWP will be updated with the new sleepq, wchan, wmesg,
+ *	sobj, and mutex.  The interruptible flag will also be updated.
+ */
+void
+sleepq_transfer(lwp_t *l, sleepq_t *from_sq, sleepq_t *sq, wchan_t wchan,
+    const char *wmesg, syncobj_t *sobj, kmutex_t *mp, bool catch_p)
+{
+
+	KASSERT(l->l_sleepq == from_sq);
+
+	LIST_REMOVE(l, l_sleepchain);
+	l->l_syncobj = sobj;
+	l->l_wchan = wchan;
+	l->l_sleepq = sq;
+	l->l_wmesg = wmesg;
+
+	if (catch_p)
+		l->l_flag |= LW_SINTR;
+	else
+		l->l_flag &= ~LW_SINTR;
+
+	lwp_setlock(l, mp);
+
+	sleepq_insert(sq, l, sobj);
 }
 
 /*
