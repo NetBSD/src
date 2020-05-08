@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.h,v 1.2 2020/05/07 19:05:51 riastradh Exp $	*/
+/*	$NetBSD: entropy.h,v 1.3 2020/05/08 15:54:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -54,7 +54,5 @@ int	entropy_extract(void *, size_t, int);
 int	entropy_poll(int);
 int	entropy_kqfilter(struct knote *);
 int	entropy_ioctl(unsigned long, void *);
-
-extern bool	entropy_depletion;
 
 #endif	/* _SYS_ENTROPY_H */

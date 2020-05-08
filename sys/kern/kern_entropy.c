@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.16 2020/05/08 00:54:44 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.17 2020/05/08 15:54:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.16 2020/05/08 00:54:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.17 2020/05/08 15:54:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -223,8 +223,8 @@ static struct evcnt entropy_notify_evcnt =
 EVCNT_ATTACH_STATIC(entropy_notify_evcnt);
 
 /* Sysctl knobs */
-bool	entropy_collection = 1;
-bool	entropy_depletion = 0; /* Silly!  */
+static bool	entropy_collection = 1;
+static bool	entropy_depletion = 0; /* Silly!  */
 
 static const struct sysctlnode	*entropy_sysctlroot;
 static struct sysctllog		*entropy_sysctllog;
