@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.28 2020/01/18 12:32:57 jmcneill Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.29 2020/05/08 14:42:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.28 2020/01/18 12:32:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.29 2020/05/08 14:42:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,6 @@ ACPI_MODULE_NAME	  ("acpi_pci")
 #define ACPI_HILODWORD(x) ACPI_HIWORD(ACPI_LODWORD((x)))
 #define ACPI_LOLODWORD(x) ACPI_LOWORD(ACPI_LODWORD((x)))
 
-static ACPI_STATUS	  acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
 
@@ -106,7 +105,7 @@ static UINT8 acpi_pci_dsm_uuid[ACPI_UUID_LENGTH] = {
  *	If successful, return AE_OK and fill *busp.  Otherwise, return an
  *	exception code and leave *busp unchanged.
  */
-static ACPI_STATUS
+ACPI_STATUS
 acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
 {
 	ACPI_STATUS rv;
