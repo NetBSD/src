@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.14 2020/05/07 19:07:29 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.15 2020/05/08 00:53:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.14 2020/05/07 19:07:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.15 2020/05/08 00:53:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -264,7 +264,7 @@ static inline bool
 curcpu_available(void)
 {
 
-	return __predict_true(!cold);
+	return true;
 }
 
 /*
