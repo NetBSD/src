@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.h,v 1.11 2020/01/17 17:06:32 jmcneill Exp $ */
+/* $NetBSD: acpi_pci.h,v 1.12 2020/05/08 14:42:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #define _SYS_DEV_ACPI_ACPI_PCI_H
 
 ACPI_STATUS		 acpi_pcidev_scan(struct acpi_devnode *);
+ACPI_STATUS		 acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
 ACPI_STATUS		 acpi_pcidev_ppb_downbus(pci_chipset_tag_t,
 						 uint16_t, uint16_t, uint16_t,
 						 uint16_t, uint16_t *);
