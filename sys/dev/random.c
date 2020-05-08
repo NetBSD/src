@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 2020/05/07 19:05:51 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.4 2020/05/08 15:53:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.3 2020/05/07 19:05:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.4 2020/05/08 15:53:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -275,11 +275,10 @@ random_read(dev_t dev, struct uio *uio, int flags)
 		n = MIN(n, RANDOM_BUFSIZE);
 
 		/*
-		 * If we're `depleting' and this is /dev/random, clamp
-		 * to the smaller of the entropy capacity or the seed.
+		 * Clamp /dev/random output to the entropy capacity and
+		 * seed size.  Programs can't rely on long reads.
 		 */
-		if (__predict_false(atomic_load_relaxed(&entropy_depletion)) &&
-		    minor(dev) == RND_DEV_RANDOM) {
+		if (minor(dev) == RND_DEV_RANDOM) {
 			n = MIN(n, ENTROPY_CAPACITY);
 			n = MIN(n, sizeof seed);
 			/*
@@ -343,14 +342,11 @@ random_read(dev_t dev, struct uio *uio, int flags)
 			break;
 
 		/*
-		 * If we're `depleting' and this is /dev/random, stop
-		 * here, return what we have, and force the next read
-		 * to reseed.  Could grab more from the pool if
-		 * possible without blocking, but that's more
-		 * work.
+		 * If this is /dev/random, stop here, return what we
+		 * have, and force the next read to reseed.  Programs
+		 * can't rely on /dev/random for long reads.
 		 */
-		if (__predict_false(atomic_load_relaxed(&entropy_depletion)) &&
-		    minor(dev) == RND_DEV_RANDOM) {
+		if (minor(dev) == RND_DEV_RANDOM) {
 			error = 0;
 			break;
 		}
