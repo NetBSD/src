@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.78 2020/02/22 09:24:05 maxv Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.79 2020/05/08 10:35:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.78 2020/02/22 09:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.79 2020/05/08 10:35:51 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1392,7 +1392,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			break;
 #endif
 		if (req == PT_DETACH) {
-			CLR(t->p_slflag, PSL_TRACED|PSL_SYSCALL);
+			CLR(t->p_slflag,
+			    PSL_TRACED|PSL_TRACEDCHILD|PSL_SYSCALL);
 
 			/* give process back to original parent or init */
 			if (t->p_opptr != t->p_pptr) {
