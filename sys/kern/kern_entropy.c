@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.17 2020/05/08 15:54:11 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.18 2020/05/09 06:12:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.17 2020/05/08 15:54:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.18 2020/05/09 06:12:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -670,7 +670,7 @@ entropy_account_cpu(struct entropy_cpu *ec)
 		/* Notify waiters that we now have full entropy.  */
 		entropy_notify();
 		entropy_immediate_evcnt.ev_count++;
-	} else if (ec->ec_pending) {
+	} else {
 		/* Record how much we can add to the global pool.  */
 		diff = MIN(ec->ec_pending, ENTROPY_CAPACITY*NBBY - E->pending);
 		E->pending += diff;
