@@ -1,4 +1,4 @@
-/*	$NetBSD: t_user_ldt.c,v 1.2 2020/04/26 12:13:10 maxv Exp $	*/
+/*	$NetBSD: t_user_ldt.c,v 1.3 2020/05/09 09:08:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ user_ldt_detect(void)
 	int ret;
 
 	ret = i386_get_ldt(0, &desc, 1);
-	user_ldt_supported = (ret != -1) || (errno != ENOTSUP);
+	user_ldt_supported = (ret != -1) || (errno != ENOSYS);
 }
 
 static void
