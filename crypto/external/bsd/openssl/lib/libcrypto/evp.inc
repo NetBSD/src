@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.8 2018/09/23 13:33:04 christos Exp $
+#	$NetBSD: evp.inc,v 1.9 2020/05/09 12:20:50 nia Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -85,6 +85,7 @@ EVP_AES_SRCS = e_aes.c
 
 .for cryptosrc in ${EVP_AES_SRCS}
 CPPFLAGS.${cryptosrc} += ${AESCPPFLAGS}
+CPPFLAGS.${cryptosrc} += ${CRYPTOCPPFLAGS}
 .endfor
 
 CPPFLAGS.e_aes.c += -I${OPENSSLSRC}/crypto/modes
