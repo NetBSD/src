@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.54 2020/04/30 16:56:23 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.55 2020/05/09 08:39:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.54 2020/04/30 16:56:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.55 2020/05/09 08:39:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.54 2020/04/30 16:56:23 maxv Exp $
 #include <sys/cpu.h>
 #include <sys/xcall.h>
 #include <sys/mman.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -1137,9 +1138,11 @@ error:
 }
 
 static void
-vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
+vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    uint64_t eax, uint64_t ecx)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	unsigned int ncpus;
 	uint64_t cr4;
 
 	switch (eax) {
@@ -1185,6 +1188,33 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x0000000B:
+		switch (ecx) {
+		case 0: /* Threads */
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] =
+			    __SHIFTIN(ecx, CPUID_TOP_LVLNUM) |
+			    __SHIFTIN(CPUID_TOP_LVLTYPE_SMT, CPUID_TOP_LVLTYPE);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = vcpu->cpuid;
+			break;
+		case 1: /* Cores */
+			ncpus = atomic_load_relaxed(&mach->ncpus);
+			cpudata->gprs[NVMM_X64_GPR_RAX] = ilog2(ncpus);
+			cpudata->gprs[NVMM_X64_GPR_RBX] = ncpus;
+			cpudata->gprs[NVMM_X64_GPR_RCX] =
+			    __SHIFTIN(ecx, CPUID_TOP_LVLNUM) |
+			    __SHIFTIN(CPUID_TOP_LVLTYPE_CORE, CPUID_TOP_LVLTYPE);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = vcpu->cpuid;
+			break;
+		default:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0; /* LVLTYPE_INVAL */
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
+		}
 		break;
 	case 0x0000000D:
 		if (vmx_xcr0_mask == 0) {
@@ -1267,7 +1297,7 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
 	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
 
-	vmx_inkernel_handle_cpuid(vcpu, eax, ecx);
+	vmx_inkernel_handle_cpuid(mach, vcpu, eax, ecx);
 
 	for (i = 0; i < VMX_NCPUIDS; i++) {
 		if (!cpudata->cpuidpresent[i]) {
