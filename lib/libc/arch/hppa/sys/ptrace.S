@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.6 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7 2020/05/09 08:25:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #include <sys/errno.h>
 #include "SYS.h"
-
-	.import __cerror, code
 
 /*
  * int ptrace(int request, pid_t pid, void * addr, int data);
