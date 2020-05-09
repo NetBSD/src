@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.225 2020/04/27 02:47:26 rin Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.226 2020/05/09 15:13:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -613,8 +613,7 @@ extern struct vm_map *phys_map;
  *
  *	This structure encapsulates UVM's unique virtual object address
  *	for an individual byte inside a pageable page. Pageable pages can
- *	be owned by either a uvm_object (UVM_VOADDR_TYPE_OBJECT) or a
- *	vm_anon (UVM_VOADDR_TYPE_ANON).
+ *	be owned by either a uvm_object or a vm_anon.
  *
  *	In each case, the byte offset into the owning object
  *	(uvm_object or vm_anon) is included in the ID, so that
@@ -631,14 +630,7 @@ extern struct vm_map *phys_map;
  *	use.
  */
 struct uvm_voaddr {
-	enum {
-		UVM_VOADDR_TYPE_OBJECT = 1,
-		UVM_VOADDR_TYPE_ANON = 2,
-	} type;
-	union {
-		struct uvm_object *uobj;
-		struct vm_anon *anon;
-	};
+	uintptr_t object;
 	voff_t offset;
 };
 
