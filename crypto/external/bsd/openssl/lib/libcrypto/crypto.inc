@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.9 2018/12/08 22:35:44 christos Exp $
+#	$NetBSD: crypto.inc,v 1.10 2020/05/09 13:16:41 nia Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -37,7 +37,6 @@ SRCS += ${CRYPTO_SRCS}
 CRYPTO_SRCS+=  mem_clr.c
 .else
 CRYPTO_SRCS+=  ${CPUID_SRCS}
-#CRYPTOCPPFLAGS=-DOPENSSL_CPUID_OBJ
 .endif
 
 CRYPTOCPPFLAGS+=-DOPENSSL_NO_STATIC_ENGINE
