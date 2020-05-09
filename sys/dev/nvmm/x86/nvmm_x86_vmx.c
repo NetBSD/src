@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.55 2020/05/09 08:39:07 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.56 2020/05/09 16:18:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.55 2020/05/09 08:39:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.56 2020/05/09 16:18:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1167,14 +1167,24 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID2_OSXSAVE;
 		}
 		break;
-	case 0x00000005:
-	case 0x00000006:
+	case 0x00000002:
+		break;
+	case 0x00000003:
 		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
-	case 0x00000007:
+	case 0x00000004: /* Deterministic Cache Parameters */
+		break; /* TODO? */
+	case 0x00000005: /* MONITOR/MWAIT */
+	case 0x00000006: /* Thermal and Power Management */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x00000007: /* Structured Extended Feature Flags Enumeration */
 		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_00000007.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
@@ -1183,13 +1193,20 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gprs[NVMM_X64_GPR_RBX] |= CPUID_SEF_INVPCID;
 		}
 		break;
-	case 0x0000000A:
+	case 0x00000008: /* Empty */
+	case 0x00000009: /* Direct Cache Access Information */
 		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
-	case 0x0000000B:
+	case 0x0000000A: /* Architectural Performance Monitoring */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x0000000B: /* Extended Topology Enumeration */
 		switch (ecx) {
 		case 0: /* Threads */
 			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
@@ -1216,7 +1233,13 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		}
 		break;
-	case 0x0000000D:
+	case 0x0000000C: /* Empty */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x0000000D: /* Processor Extended State Enumeration */
 		if (vmx_xcr0_mask == 0) {
 			break;
 		}
@@ -1248,7 +1271,28 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		}
 		break;
-	case 0x40000000:
+	case 0x0000000E: /* Empty */
+	case 0x0000000F: /* Intel RDT Monitoring Enumeration */
+	case 0x00000010: /* Intel RDT Allocation Enumeration */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x00000011: /* Empty */
+	case 0x00000012: /* Intel SGX Capability Enumeration */
+	case 0x00000013: /* Empty */
+	case 0x00000014: /* Intel Processor Trace Enumeration */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x00000015: /* TSC and Nominal Core Crystal Clock Information */
+	case 0x00000016: /* Processor Frequency Information */
+		break;
+
+	case 0x40000000: /* Hypervisor Information */
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
@@ -1256,6 +1300,7 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
+
 	case 0x80000001:
 		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_80000001.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
