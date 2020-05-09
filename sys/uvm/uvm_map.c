@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.382 2020/04/30 04:18:07 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.383 2020/05/09 15:13:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.382 2020/04/30 04:18:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.383 2020/05/09 15:13:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4781,6 +4781,31 @@ uvm_map_unlock_entry(struct vm_map_entry *entry)
 	}
 }
 
+#define	UVM_VOADDR_TYPE_MASK	0x3UL
+#define	UVM_VOADDR_TYPE_UOBJ	0x1UL
+#define	UVM_VOADDR_TYPE_ANON	0x2UL
+#define	UVM_VOADDR_OBJECT_MASK	~UVM_VOADDR_TYPE_MASK
+
+#define	UVM_VOADDR_GET_TYPE(voa)					\
+	((voa)->object & UVM_VOADDR_TYPE_MASK)
+#define	UVM_VOADDR_GET_OBJECT(voa)					\
+	((voa)->object & UVM_VOADDR_OBJECT_MASK)
+#define	UVM_VOADDR_SET_OBJECT(voa, obj, type)				\
+do {									\
+	KASSERT(((uintptr_t)(obj) & UVM_VOADDR_TYPE_MASK) == 0);	\
+	(voa)->object = ((uintptr_t)(obj)) | (type);			\
+} while (/*CONSTCOND*/0)
+
+#define	UVM_VOADDR_GET_UOBJ(voa)					\
+	((struct uvm_object *)UVM_VOADDR_GET_OBJECT(voa))
+#define	UVM_VOADDR_SET_UOBJ(voa, uobj)					\
+	UVM_VOADDR_SET_OBJECT(voa, uobj, UVM_VOADDR_TYPE_UOBJ)
+
+#define	UVM_VOADDR_GET_ANON(voa)					\
+	((struct vm_anon *)UVM_VOADDR_GET_OBJECT(voa))
+#define	UVM_VOADDR_SET_ANON(voa, anon)					\
+	UVM_VOADDR_SET_OBJECT(voa, anon, UVM_VOADDR_TYPE_ANON)
+
 /*
  * uvm_voaddr_acquire: returns the virtual object address corresponding
  * to the specified virtual address.
@@ -4936,8 +4961,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 			anon->an_ref++;
 			rw_obj_hold(anon->an_lock);
 			KASSERT(anon->an_ref != 0);
-			voaddr->type = UVM_VOADDR_TYPE_ANON;
-			voaddr->anon = anon;
+			UVM_VOADDR_SET_ANON(voaddr, anon);
 			voaddr->offset = va & PAGE_MASK;
 			result = true;
 		}
@@ -4950,8 +4974,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 
 		KASSERT(uobj != NULL);
 		(*uobj->pgops->pgo_reference)(uobj);
-		voaddr->type = UVM_VOADDR_TYPE_OBJECT;
-		voaddr->uobj = uobj;
+		UVM_VOADDR_SET_UOBJ(voaddr, uobj);
 		voaddr->offset = entry->offset + (va - entry->start);
 		result = true;
 	}
@@ -4961,7 +4984,9 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 	if (result) {
 		UVMHIST_LOG(maphist,
 		    "<- done OK (type=%jd,owner=#%jx,offset=%jx)",
-		    voaddr->type, (uintptr_t)voaddr->uobj, voaddr->offset, 0);
+		    UVM_VOADDR_GET_TYPE(voaddr),
+		    UVM_VOADDR_GET_OBJECT(voaddr),
+		    voaddr->offset, 0);
 	} else {
 		UVMHIST_LOG(maphist,"<- done (failed)",0,0,0,0);
 	}
@@ -4977,9 +5002,9 @@ void
 uvm_voaddr_release(struct uvm_voaddr * const voaddr)
 {
 
-	switch (voaddr->type) {
-	case UVM_VOADDR_TYPE_OBJECT: {
-		struct uvm_object * const uobj = voaddr->uobj;
+	switch (UVM_VOADDR_GET_TYPE(voaddr)) {
+	case UVM_VOADDR_TYPE_UOBJ: {
+		struct uvm_object * const uobj = UVM_VOADDR_GET_UOBJ(voaddr);
 
 		KASSERT(uobj != NULL);
 		KASSERT(uobj->pgops->pgo_detach != NULL);
@@ -4987,7 +5012,7 @@ uvm_voaddr_release(struct uvm_voaddr * const voaddr)
 		break;
 	    }
 	case UVM_VOADDR_TYPE_ANON: {
-		struct vm_anon * const anon = voaddr->anon;
+		struct vm_anon * const anon = UVM_VOADDR_GET_ANON(voaddr);
 		krwlock_t *lock;
 
 		KASSERT(anon != NULL);
@@ -5015,23 +5040,22 @@ int
 uvm_voaddr_compare(const struct uvm_voaddr * const voaddr1,
     const struct uvm_voaddr * const voaddr2)
 {
+	const uintptr_t type1 = UVM_VOADDR_GET_TYPE(voaddr1);
+	const uintptr_t type2 = UVM_VOADDR_GET_TYPE(voaddr2);
 
-	KASSERT(voaddr1->type == UVM_VOADDR_TYPE_OBJECT ||
-		voaddr1->type == UVM_VOADDR_TYPE_ANON);
+	KASSERT(type1 == UVM_VOADDR_TYPE_UOBJ ||
+		type1 == UVM_VOADDR_TYPE_ANON);
 
-	KASSERT(voaddr2->type == UVM_VOADDR_TYPE_OBJECT ||
-		voaddr2->type == UVM_VOADDR_TYPE_ANON);
+	KASSERT(type2 == UVM_VOADDR_TYPE_UOBJ ||
+		type2 == UVM_VOADDR_TYPE_ANON);
 
-	if (voaddr1->type < voaddr2->type)
+	if (type1 < type2)
 		return -1;
-	if (voaddr1->type > voaddr2->type)
+	if (type1 > type2)
 		return 1;
 
-	/* These fields are unioned together. */
-	CTASSERT(offsetof(struct uvm_voaddr, uobj) ==
-		 offsetof(struct uvm_voaddr, anon));
-	const uintptr_t addr1 = (uintptr_t)voaddr1->uobj;
-	const uintptr_t addr2 = (uintptr_t)voaddr2->uobj;
+	const uintptr_t addr1 = UVM_VOADDR_GET_OBJECT(voaddr1);
+	const uintptr_t addr2 = UVM_VOADDR_GET_OBJECT(voaddr2);
 
 	if (addr1 < addr2)
 		return -1;
