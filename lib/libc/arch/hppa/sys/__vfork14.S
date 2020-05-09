@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.9 2020/05/05 20:43:47 skrll Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.10 2020/05/09 08:25:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,8 +52,6 @@ ENTRY(__vfork14, 0)
 	 * syscall entry code in locore.S has been modified
 	 * to do just this for the t4 register.
 	 */
-	.import	__cerror, code
-
 	copy	%rp, %t4
 	ldil	L%SYSCALLGATE, %r1
 	ble	4(%sr2, %r1)
