@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.8 2019/11/16 17:53:46 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.9 2020/05/09 16:18:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.8 2019/11/16 17:53:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.9 2020/05/09 16:18:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,18 +233,18 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	.eax = ~0,
 	.ebx = ~0,
 	.ecx =
-	    /* Excluded: MONITOR, VMX, SMX, EST, TM2, PDCM, PCID, X2APIC,
+	    /* Excluded: MONITOR, VMX, SMX, EST, TM2, PDCM, PCID, DCA, X2APIC,
 	     * DEADLINE, RAZ. */
 	    CPUID2_SSE3 | CPUID2_PCLMUL |
 	    CPUID2_DTES64 | CPUID2_DS_CPL |
 	    CPUID2_SSSE3 | CPUID2_CID |
 	    CPUID2_SDBG | CPUID2_FMA |
 	    CPUID2_CX16 | CPUID2_xTPR |
-	    CPUID2_DCA | CPUID2_SSE41 |
-	    CPUID2_SSE42 | CPUID2_MOVBE |
-	    CPUID2_POPCNT | CPUID2_AES |
-	    CPUID2_XSAVE | CPUID2_OSXSAVE |
-	    CPUID2_F16C | CPUID2_RDRAND,
+	    CPUID2_SSE41 | CPUID2_SSE42 |
+	    CPUID2_MOVBE | CPUID2_POPCNT |
+	    CPUID2_AES | CPUID2_XSAVE |
+	    CPUID2_OSXSAVE | CPUID2_F16C |
+	    CPUID2_RDRAND,
 	.edx =
 	    /* Excluded: MCE, MTRR, MCA, DS, ACPI, TM. */
 	    CPUID_FPU | CPUID_VME |
@@ -265,16 +265,16 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	.eax = ~0,
 	.ebx =
-	    /* Excluded: TSC_ADJUST, AVX2, INVPCID, AVX512*, PT, SHA. */
+	    /* Excluded: TSC_ADJUST, AVX2, INVPCID, QM, AVX512*, PT, SHA. */
 	    CPUID_SEF_FSGSBASE |
 	    CPUID_SEF_SGX | CPUID_SEF_BMI1 |
 	    CPUID_SEF_HLE | CPUID_SEF_FDPEXONLY |
 	    CPUID_SEF_SMEP | CPUID_SEF_BMI2 |
 	    CPUID_SEF_ERMS | CPUID_SEF_RTM |
-	    CPUID_SEF_QM | CPUID_SEF_FPUCSDS |
-	    CPUID_SEF_PQE | CPUID_SEF_RDSEED |
-	    CPUID_SEF_ADX | CPUID_SEF_SMAP |
-	    CPUID_SEF_CLFLUSHOPT | CPUID_SEF_CLWB,
+	    CPUID_SEF_FPUCSDS | CPUID_SEF_PQE |
+	    CPUID_SEF_RDSEED | CPUID_SEF_ADX |
+	    CPUID_SEF_SMAP | CPUID_SEF_CLFLUSHOPT |
+	    CPUID_SEF_CLWB,
 	.ecx =
 	    /* Excluded: AVX512*, MAWAU, RDPID. */
 	    CPUID_SEF_PREFETCHWT1 | CPUID_SEF_UMIP |
