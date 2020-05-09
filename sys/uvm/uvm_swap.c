@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.187 2020/05/09 21:50:39 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.188 2020/05/09 22:00:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.187 2020/05/09 21:50:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.188 2020/05/09 22:00:48 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1872,7 +1872,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 				s -= sdp->swd_drumoffset;
 				KASSERT(s < sdp->swd_drumsize);
 				uvm_swap_encrypt(sdp,
-				    (void *)(kva + i*PAGE_SIZE), s);
+				    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 				setbit(sdp->swd_encmap, s);
 			}
 		} else {
@@ -1967,7 +1967,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			KASSERT(s < sdp->swd_drumsize);
 			if (isclr(sdp->swd_encmap, s))
 				continue;
-			uvm_swap_decrypt(sdp, (void *)(kva + i*PAGE_SIZE), s);
+			uvm_swap_decrypt(sdp,
+			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 		}
 	} while (0);
 
