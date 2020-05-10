@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.40 2020/04/12 07:49:58 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.41 2020/05/10 21:40:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ AARCH64REG_READ_INLINE(id_aa64dfr1_el1)
 
 AARCH64REG_READ_INLINE(id_aa64isar0_el1)
 
-#define	ID_AA64ISAR0_EL1_RNDR		__BITS(63,30)
+#define	ID_AA64ISAR0_EL1_RNDR		__BITS(63,60)
 #define	 ID_AA64ISAR0_EL1_RNDR_NONE	 0
 #define	 ID_AA64ISAR0_EL1_RNDR_RNDRRS	 1
 #define	ID_AA64ISAR0_EL1_TLB		__BITS(59,56)
