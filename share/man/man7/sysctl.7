@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.143 2020/05/01 10:06:09 nia Exp $
+.\"	$NetBSD: sysctl.7,v 1.144 2020/05/10 02:30:33 riastradh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -384,13 +384,25 @@ upon loading or unloading the corresponding kernel module.
 .It Li kern.aio_max
 The maximum number of asynchronous I/O operations.
 .It Li kern.arandom ( Dv KERN_ARND )
-This variable returns up to 256 bytes of random data.
-Multiple queries can be used to obtain an infinite amount of
-non-blocking cryptographically secure random data.
-The used random number generator
-.Pf ( RNG )
-is based on
-.Xr cprng_strong 9 .
+Returns independent uniformly distributed bytes at random each time, as
+many as requested up to 256, derived from the system entropy pool; see
+.Xr rnd 4 .
+.Pp
+Reading
+.Li kern.arandom
+is equivalent to reading up to 256 bytes at a time from
+.Pa /dev/urandom :
+reading
+.Li kern.arandom
+never blocks, and once the system entropy pool has full entropy, output
+subsequently read from
+.Li kern.arandom
+is fit for use as cryptographic key material.
+For example, the
+.Xr arc4random 3
+library routine uses
+.Li kern.arandom
+internally to seed a cryptographic pseudorandom number generator.
 .It Li kern.argmax ( Dv KERN_ARGMAX )
 The maximum bytes of argument to
 .Xr execve 2 .
