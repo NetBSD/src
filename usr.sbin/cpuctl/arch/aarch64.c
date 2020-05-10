@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.8 2020/01/28 17:36:42 maxv Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.9 2020/05/10 21:42:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.8 2020/01/28 17:36:42 maxv Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.9 2020/05/10 21:42:05 riastradh Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -224,6 +224,13 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 			[1] = "CRC32B/CRC32H/CRC32W/CRC32X"
 			    "/CRC32CB/CRC32CH/CRC32CW/CRC32CX"
 		}
+	},
+	{
+		.bitpos = 60, .bitwidth = 4, .name = "RNDR",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No RNDR/RNDRRS",
+			[1] = "RNDR/RNDRRS",
+		},
 	},
 	{ .bitwidth = 0 }	/* end of table */
 };
