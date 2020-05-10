@@ -80,6 +80,7 @@ const int dhcpcd_signals[] = {
 	SIGTERM,
 	SIGINT,
 	SIGALRM,
+	SIGPIPE,
 	SIGHUP,
 	SIGUSR1,
 	SIGUSR2,
