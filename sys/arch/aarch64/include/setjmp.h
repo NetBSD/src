@@ -1,4 +1,4 @@
-/* $NetBSD: setjmp.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: setjmp.h,v 1.2 2020/05/10 14:05:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@
 #define _JB_X28		11
 #define _JB_X29		12
 #define _JB_X30		13
-#define _JB_TPIDR	14
 #define _JB_D8		16
 #define _JB_D9		17
 #define _JB_D10		18
