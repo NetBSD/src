@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.188 2020/05/09 22:00:48 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.189 2020/05/10 02:38:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.188 2020/05/09 22:00:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.189 2020/05/10 02:38:10 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,7 @@ static struct workqueue *sw_reg_workqueue;
 
 /* tuneables */
 u_int uvm_swapisfull_factor = 99;
-bool uvm_swap_encryption = false;
+bool uvm_swap_encrypt = false;
 
 /*
  * prototypes
@@ -231,8 +231,8 @@ static void sw_reg_start(struct swapdev *);
 static int uvm_swap_io(struct vm_page **, int, int, int);
 
 static void uvm_swap_genkey(struct swapdev *);
-static void uvm_swap_encrypt(struct swapdev *, void *, int);
-static void uvm_swap_decrypt(struct swapdev *, void *, int);
+static void uvm_swap_encryptpage(struct swapdev *, void *, int);
+static void uvm_swap_decryptpage(struct swapdev *, void *, int);
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -1800,7 +1800,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 	write = (flags & B_READ) == 0;
 	async = (flags & B_ASYNC) != 0;
-	swap_encrypt = atomic_load_relaxed(&uvm_swap_encryption);
+	swap_encrypt = atomic_load_relaxed(&uvm_swap_encrypt);
 
 	/*
 	 * allocate a buf for the i/o.
@@ -1871,7 +1871,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 				KASSERT(s >= sdp->swd_drumoffset);
 				s -= sdp->swd_drumoffset;
 				KASSERT(s < sdp->swd_drumsize);
-				uvm_swap_encrypt(sdp,
+				uvm_swap_encryptpage(sdp,
 				    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 				setbit(sdp->swd_encmap, s);
 			}
@@ -1967,7 +1967,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			KASSERT(s < sdp->swd_drumsize);
 			if (isclr(sdp->swd_encmap, s))
 				continue;
-			uvm_swap_decrypt(sdp,
+			uvm_swap_decryptpage(sdp,
 			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 		}
 	} while (0);
@@ -2014,13 +2014,13 @@ uvm_swap_genkey(struct swapdev *sdp)
 }
 
 /*
- * uvm_swap_encrypt(sdp, kva, slot)
+ * uvm_swap_encryptpage(sdp, kva, slot)
  *
  *	Encrypt one page of data at kva for the specified slot number
  *	in the swap device.
  */
 static void
-uvm_swap_encrypt(struct swapdev *sdp, void *kva, int slot)
+uvm_swap_encryptpage(struct swapdev *sdp, void *kva, int slot)
 {
 	cipherInstance aes;
 	uint8_t preiv[16] = {0}, iv[16];
@@ -2046,13 +2046,13 @@ uvm_swap_encrypt(struct swapdev *sdp, void *kva, int slot)
 }
 
 /*
- * uvm_swap_decrypt(sdp, kva, slot)
+ * uvm_swap_decryptpage(sdp, kva, slot)
  *
  *	Decrypt one page of data at kva for the specified slot number
  *	in the swap device.
  */
 static void
-uvm_swap_decrypt(struct swapdev *sdp, void *kva, int slot)
+uvm_swap_decryptpage(struct swapdev *sdp, void *kva, int slot)
 {
 	cipherInstance aes;
 	uint8_t preiv[16] = {0}, iv[16];
@@ -2084,6 +2084,6 @@ SYSCTL_SETUP(sysctl_uvmswap_setup, "sysctl uvmswap setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_BOOL, "swap_encrypt",
 	    SYSCTL_DESCR("Encrypt data when swapped out to disk"),
-	    NULL, 0, &uvm_swap_encryption, 0,
+	    NULL, 0, &uvm_swap_encrypt, 0,
 	    CTL_VM, CTL_CREATE, CTL_EOL);
 }
