@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.43 2020/04/05 22:54:51 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.44 2020/05/10 21:41:19 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.43 2020/04/05 22:54:51 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.44 2020/05/10 21:41:19 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -373,6 +373,11 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 		break;
 	case ID_AA64ISAR0_EL1_AES_PMUL:
 		aprint_verbose(", AES+PMULL");
+		break;
+	}
+	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_RNDR)) {
+	case ID_AA64ISAR0_EL1_RNDR_RNDRRS:
+		aprint_verbose(", RNDRRS");
 		break;
 	}
 
