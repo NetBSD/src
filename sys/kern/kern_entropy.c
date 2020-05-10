@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.20 2020/05/10 01:29:40 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.21 2020/05/10 02:56:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.20 2020/05/10 01:29:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.21 2020/05/10 02:56:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1932,6 +1932,40 @@ rndsource_to_user_est(struct krndsource *rs, rndsource_est_t *urse)
 }
 
 /*
+ * entropy_reset_xc(arg1, arg2)
+ *
+ *	Reset the current CPU's pending entropy to zero.
+ */
+static void
+entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
+{
+	uint32_t extra = entropy_timer();
+	struct entropy_cpu *ec;
+	int s;
+
+	/*
+	 * Acquire the per-CPU state, blocking soft interrupts and
+	 * causing hard interrupts to drop samples on the floor.
+	 */
+	ec = percpu_getref(entropy_percpu);
+	s = splsoftserial();
+	KASSERT(!ec->ec_locked);
+	ec->ec_locked = true;
+	__insn_barrier();
+
+	/* Zero the pending count and enter a cycle count for fun.  */
+	ec->ec_pending = 0;
+	entpool_enter(ec->ec_pool, &extra, sizeof extra);
+
+	/* Release the per-CPU state.  */
+	KASSERT(ec->ec_locked);
+	__insn_barrier();
+	ec->ec_locked = false;
+	splx(s);
+	percpu_putref(entropy_percpu);
+}
+
+/*
  * entropy_ioctl(cmd, data)
  *
  *	Handle various /dev/random ioctl queries.
@@ -2165,7 +2199,9 @@ entropy_ioctl(unsigned long cmd, void *data)
 	case RNDCTL: {		/* Modify entropy source flags.  */
 		rndctl_t *rndctl = data;
 		const size_t n = sizeof(rs->name);
+		uint32_t resetflags = RND_FLAG_NO_ESTIMATE|RND_FLAG_NO_COLLECT;
 		uint32_t flags;
+		bool reset = false, request = false;
 
 		CTASSERT(sizeof(rs->name) == sizeof(rndctl->name));
 
@@ -2187,9 +2223,39 @@ entropy_ioctl(unsigned long cmd, void *data)
 			}
 			flags = rs->flags & ~rndctl->mask;
 			flags |= rndctl->flags & rndctl->mask;
+			if ((rs->flags & resetflags) == 0 &&
+			    (flags & resetflags) != 0)
+				reset = true;
+			if ((rs->flags ^ flags) & resetflags)
+				request = true;
 			atomic_store_relaxed(&rs->flags, flags);
 		}
 		mutex_exit(&E->lock);
+
+		/*
+		 * If we disabled estimation or collection, nix all the
+		 * pending entropy and set needed to the maximum.
+		 */
+		if (reset) {
+			xc_broadcast(0, &entropy_reset_xc, NULL, NULL);
+			mutex_enter(&E->lock);
+			E->pending = 0;
+			atomic_store_relaxed(&E->needed,
+			    ENTROPY_CAPACITY*NBBY);
+			mutex_exit(&E->lock);
+		}
+
+		/*
+		 * If we changed any of the estimation or collection
+		 * flags, request new samples from everyone -- either
+		 * to make up for what we just lost, or to get new
+		 * samples from what we just added.
+		 */
+		if (request) {
+			mutex_enter(&E->lock);
+			entropy_request(ENTROPY_CAPACITY);
+			mutex_exit(&E->lock);
+		}
 		break;
 	}
 	case RNDADDDATA: {	/* Enter seed into entropy pool.  */
