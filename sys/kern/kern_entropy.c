@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.18 2020/05/09 06:12:32 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.19 2020/05/10 00:08:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.18 2020/05/09 06:12:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.19 2020/05/10 00:08:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -984,11 +984,14 @@ entropy_do_consolidate(void)
 {
 	static const struct timeval interval = {.tv_sec = 60, .tv_usec = 0};
 	static struct timeval lasttime; /* serialized by E->lock */
+	struct entpool pool;
+	uint8_t buf[ENTPOOL_CAPACITY];
 	unsigned diff;
 	uint64_t ticket;
 
-	/* Gather entropy on all CPUs.  */
-	ticket = xc_broadcast(0, &entropy_consolidate_xc, NULL, NULL);
+	/* Gather entropy on all CPUs into a temporary pool.  */
+	memset(&pool, 0, sizeof pool);
+	ticket = xc_broadcast(0, &entropy_consolidate_xc, &pool, NULL);
 	xc_wait(ticket);
 
 	/* Acquire the lock to notify waiters.  */
@@ -999,6 +1002,11 @@ entropy_do_consolidate(void)
 
 	/* Note when we last consolidated, i.e. now.  */
 	E->timestamp = time_uptime;
+
+	/* Mix what we gathered into the global pool.  */
+	entpool_extract(&pool, buf, sizeof buf);
+	entpool_enter(&E->pool, buf, sizeof buf);
+	explicit_memset(&pool, 0, sizeof pool);
 
 	/* Count the entropy that was gathered.  */
 	diff = MIN(E->needed, E->pending);
@@ -1024,8 +1032,9 @@ entropy_do_consolidate(void)
  *	into the global pool.
  */
 static void
-entropy_consolidate_xc(void *arg1 __unused, void *arg2 __unused)
+entropy_consolidate_xc(void *vpool, void *arg2 __unused)
 {
+	struct entpool *pool = vpool;
 	struct entropy_cpu *ec;
 	uint8_t buf[ENTPOOL_CAPACITY];
 	uint32_t extra[7];
@@ -1063,15 +1072,15 @@ entropy_consolidate_xc(void *arg1 __unused, void *arg2 __unused)
 
 	/*
 	 * Copy over statistics, and enter the per-CPU extract and the
-	 * extra timing into the global pool, under the global lock.
+	 * extra timing into the temporary pool, under the global lock.
 	 */
 	mutex_enter(&E->lock);
 	extra[i++] = entropy_timer();
-	entpool_enter(&E->pool, buf, sizeof buf);
+	entpool_enter(pool, buf, sizeof buf);
 	explicit_memset(buf, 0, sizeof buf);
 	extra[i++] = entropy_timer();
 	KASSERT(i == __arraycount(extra));
-	entpool_enter(&E->pool, extra, sizeof extra);
+	entpool_enter(pool, extra, sizeof extra);
 	explicit_memset(extra, 0, sizeof extra);
 	mutex_exit(&E->lock);
 }
