@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.60 2020/05/09 16:18:57 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.61 2020/05/10 06:24:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.60 2020/05/09 16:18:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.61 2020/05/10 06:24:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,6 +771,8 @@ svm_inkernel_advance(struct vmcb *vmcb)
 	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
+#define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+
 static void
 svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 {
@@ -856,6 +858,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		break;
 
 	case 0x40000000: /* Hypervisor Information */
+		cpudata->vmcb->state.rax = SVM_CPUID_MAX_HYPERVISOR;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
