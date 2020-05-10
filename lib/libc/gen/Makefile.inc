@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.202 2020/05/06 16:17:36 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.203 2020/05/10 19:36:49 maya Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -15,7 +15,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	exect.c extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
-	getdevmajor.c getdomainname.c getentropy.c getgrent.c \
+	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
