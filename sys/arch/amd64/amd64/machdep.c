@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.354 2020/05/08 00:52:29 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.355 2020/05/10 06:30:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.354 2020/05/08 00:52:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.355 2020/05/10 06:30:57 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1585,8 +1585,6 @@ init_slotspace(void)
 {
 	/*
 	 * XXX Too early to use cprng(9), or even entropy_extract.
-	 * Also too early to use rdrand/rdseed, since we haven't probed
-	 * cpu features yet.  This is a hack -- fix me!
 	 */
 	struct entpool pool;
 	size_t randhole;
@@ -1595,7 +1593,7 @@ init_slotspace(void)
 	vaddr_t va;
 
 	memset(&pool, 0, sizeof pool);
-	sample = rdtsc();
+	cpu_rng_early_sample(&sample);
 	entpool_enter(&pool, &sample, sizeof sample);
 
 	memset(&slotspace, 0, sizeof(slotspace));
@@ -1651,7 +1649,7 @@ init_slotspace(void)
 	slotspace.area[SLAREA_KERN].active = true;
 
 	/* Main. */
-	sample = rdtsc();
+	cpu_rng_early_sample(&sample);
 	entpool_enter(&pool, &sample, sizeof sample);
 	entpool_extract(&pool, &randhole, sizeof randhole);
 	entpool_extract(&pool, &randva, sizeof randva);
@@ -1662,7 +1660,7 @@ init_slotspace(void)
 
 #ifndef XENPV
 	/* PTE. */
-	sample = rdtsc();
+	cpu_rng_early_sample(&sample);
 	entpool_enter(&pool, &sample, sizeof sample);
 	entpool_extract(&pool, &randhole, sizeof randhole);
 	entpool_extract(&pool, &randva, sizeof randva);

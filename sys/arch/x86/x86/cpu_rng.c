@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.13 2020/04/30 03:40:53 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.14 2020/05/10 06:30:57 maxv Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -282,4 +282,38 @@ cpu_rng_init(void)
 	rndsource_setcb(&cpu_rng_source, cpu_rng_get, NULL);
 	rnd_attach_source(&cpu_rng_source, cpu_rng_name[cpu_rng_mode],
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void
+cpu_rng_early_sample(uint64_t *sample)
+{
+	static bool has_rdseed = false;
+	static bool has_rdrand = false;
+	static bool inited = false;
+	u_int descs[4];
+	size_t n;
+
+	if (!inited) {
+		if (cpuid_level >= 7) {
+			x86_cpuid(0x07, descs);
+			has_rdseed = (descs[1] & CPUID_SEF_RDSEED) != 0;
+		}
+		if (cpuid_level >= 1) {
+			x86_cpuid(0x01, descs);
+			has_rdrand = (descs[2] & CPUID2_RDRAND) != 0;
+		}
+		inited = true;
+	}
+
+	n = 0;
+	if (has_rdseed && has_rdrand)
+		n = cpu_rng_rdseed_rdrand(sample);
+	else if (has_rdseed)
+		n = cpu_rng_rdseed(sample);
+	else if (has_rdrand)
+		n = cpu_rng_rdrand(sample);
+	if (n == 0)
+		*sample = rdtsc();
 }

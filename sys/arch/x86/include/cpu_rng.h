@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.h,v 1.3 2020/04/30 03:29:19 riastradh Exp $ */
+/* $NetBSD: cpu_rng.h,v 1.4 2020/05/10 06:30:57 maxv Exp $ */
 
 #ifndef _X86_CPU_RNG_H_
 #define _X86_CPU_RNG_H_
@@ -33,5 +33,6 @@
  */
 
 void cpu_rng_init(void);
+void cpu_rng_early_sample(uint64_t *);
 
 #endif /* _X86_CPU_RNG_H_ */
