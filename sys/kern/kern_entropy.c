@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.19 2020/05/10 00:08:12 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.20 2020/05/10 01:29:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.19 2020/05/10 00:08:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.20 2020/05/10 01:29:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1026,10 +1026,10 @@ entropy_do_consolidate(void)
 }
 
 /*
- * entropy_consolidate_xc(arg1, arg2)
+ * entropy_consolidate_xc(vpool, arg2)
  *
  *	Extract output from the local CPU's input pool and enter it
- *	into the global pool.
+ *	into a temporary pool passed as vpool.
  */
 static void
 entropy_consolidate_xc(void *vpool, void *arg2 __unused)
