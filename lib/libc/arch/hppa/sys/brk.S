@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.8 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: brk.S,v 1.9 2020/05/10 14:34:31 skrll Exp $	*/
 
 /*	$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -31,10 +31,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.8 2020/05/05 06:20:55 skrll Exp $")
+	RCSID("$NetBSD: brk.S,v 1.9 2020/05/10 14:34:31 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-	.import	curbrk, data
+	.import	__curbrk, data
+	.hidden __curbrk
 	.global	_end
 
 #ifdef WEAK_ALIAS
@@ -43,6 +44,7 @@
 
 	.data
 	.export	__minbrk, data
+	.hidden __minbrk
 __minbrk:
 	.long	_end
 
@@ -63,14 +65,14 @@ ENTRY(_brk,0)
 
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
 #ifdef __PIC__
-	addil	LT%curbrk, %r19
-	ldw	RT%curbrk(%r1), %r1
+	addil	LT%__curbrk, %r19
+	ldw	RT%__curbrk(%r1), %r1
 	bv	%r0(%rp)
 	 stw	%arg0, 0(%r1)
 #else  /* !__PIC__ */
-	ldil	L%curbrk, %t1
+	ldil	L%__curbrk, %t1
 	bv	%r0(%rp)
-	 stw	%arg0, R%curbrk(%t1)
+	 stw	%arg0, R%__curbrk(%t1)
 #endif /* !__PIC__ */
 EXIT(brk)
 
