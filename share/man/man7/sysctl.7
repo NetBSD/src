@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.144 2020/05/10 02:30:33 riastradh Exp $
+.\"	$NetBSD: sysctl.7,v 1.145 2020/05/10 02:31:29 riastradh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2493,6 +2493,7 @@ privilege may change the value.
 .It vm.proc.map	struct kinfo_vmentry	no
 .It vm.guard_size	unsigned int	no
 .It vm.thread_guard_size	unsigned int	yes
+.It vm.swap_encrypt	bool	yes
 .El
 .Bl -tag -width "123456"
 .It Li vm.anonmax ( Dv VM_ANONMAX )
@@ -2566,6 +2567,29 @@ Return system wide guard size for the main thread of a program.
 .It Li vm.thread_guard_size
 Return system wide default size for the guard area of all other threads
 of a program.
+.It Li vm.swap_encrypt
+If true, encrypt data while swapped out to disk.
+.Pp
+Each swap device maintains an independent AES-256 key, generated when
+the first page is swapped to that device.
+Each page is swapped independently using AES-CBC, with an
+initialization vector chosen by the encryption under the AES-256 key of
+the little-endian swap slot number padded to 128 bits with zeros.
+(This is essentially the
+.Xr cgd 4
+.Sq encblkno1
+method.)
+.Pp
+Changes to
+.Li vm.swap_encrypt
+only affect pages of swap newly written out.
+To force encrypting or decrypting all existing swap, or to rekey
+previously encrypted swap, you can remove the swap devices and re-add
+them with
+.Xr swapctl 8 ,
+with the caveat that whatever pages were already written to disk
+unencrypted or encrypted with a compromised key may still be written to
+disk afterward.
 .\" XXX vm.idlezero
 .El
 .Ss The ddb.* subtree ( Dv CTL_DDB )
