@@ -1,4 +1,4 @@
-# $NetBSD: dollar.mk,v 1.1 2020/05/10 12:34:01 rillig Exp $
+# $NetBSD: dollar.mk,v 1.2 2020/05/10 13:03:40 rillig Exp $
 #
 # Test the various places where a dollar character can appear and
 # see what happens.  There are lots of surprises here.
@@ -38,9 +38,9 @@ all:
 	$T	'4 dollar variable'	''${DOLLAR4:Q}
 
 	$C 'Some hungry part of make eats all the dollars after a :U modifier.'
-	$T	'1 dollar var-default'	''${U:${DOLLAR1}:Q}
-	$T	'2 dollar var-default'	''${U:${DOLLAR2}:Q}
-	$T	'4 dollar var-default'	''${U:${DOLLAR4}:Q}
+	$T	'1 dollar var-default'	''${:U${DOLLAR1}:Q}
+	$T	'2 dollar var-default'	''${:U${DOLLAR2}:Q}
+	$T	'4 dollar var-default'	''${:U${DOLLAR4}:Q}
 
 	$H 'Dollar in :S pattern'
 

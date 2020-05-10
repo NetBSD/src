@@ -15,8 +15,8 @@ This works as expected.
       4 dollar variable => <$$>
 Some hungry part of make eats all the dollars after a :U modifier.
    1 dollar var-default => <>
-   2 dollar var-default => <>
-   4 dollar var-default => <>
+   2 dollar var-default => <$>
+   4 dollar var-default => <$$>
 
 Dollar in :S pattern
 
