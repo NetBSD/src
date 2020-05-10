@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.45 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.46 2020/05/10 06:42:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.45 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.46 2020/05/10 06:42:38 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -89,10 +89,10 @@ fdc(void *addr)
 }
 
 static __inline void
-fic(void *addr)     
-{                   
+fic(void *addr)
+{
 	__asm volatile("fic %%r0(%%sr0,%0)" : : "r" (addr));
-} 
+}
 
 static __inline void
 sync(void)
@@ -128,7 +128,7 @@ typedef struct _hppa_plabel {
 } hppa_plabel;
 
 /*
- * For now allocated PLABEL structures are tracked on a 
+ * For now allocated PLABEL structures are tracked on a
  * singly linked list.  This maybe should be revisited.
  */
 static SLIST_HEAD(hppa_plabel_head, _hppa_plabel) hppa_plabel_list
@@ -151,13 +151,13 @@ static inline int _rtld_relocate_plt_object(const Obj_Entry *,
  * This bootstraps the dynamic linker by relocating its GOT.
  * On the hppa, unlike on other architectures, static strings
  * are found through the GOT.  Static strings are essential
- * for RTLD_DEBUG, and I suspect they're used early even when 
+ * for RTLD_DEBUG, and I suspect they're used early even when
  * !defined(RTLD_DEBUG), making relocating the GOT essential.
  *
  * It gets worse.  Relocating the GOT doesn't mean just walking
  * it and adding the relocbase to all of the entries.  You must
- * find and use the GOT relocations, since those RELA relocations 
- * have the necessary addends - the GOT comes initialized as 
+ * find and use the GOT relocations, since those RELA relocations
+ * have the necessary addends - the GOT comes initialized as
  * zeroes.
  */
 void
@@ -176,7 +176,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 
 	/*
 	 * Process the DYNAMIC section, looking for the non-PLT relocations.
-	 */ 
+	 */
 	relafirst = NULL;
 	relasz = 0;
 	symtab = NULL;
@@ -213,11 +213,11 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(DIR32):
 			if (symnum == 0)
-				store_ptr(where, 
+				store_ptr(where,
 				    relocbase + rela->r_addend);
 			else {
 				sym = symtab + symnum;
-				store_ptr(where, 
+				store_ptr(where,
 				    relocbase + rela->r_addend + sym->st_value);
 			}
 			break;
@@ -235,7 +235,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			 *     relocations have been done.
 			 */
 			if (symnum == 0)
-				*((Elf_Addr *)where) = 
+				*((Elf_Addr *)where) =
 				    relocbase + rela->r_addend;
 			else
 				plabel_relocs[nplabel_relocs++] = rela;
@@ -251,7 +251,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		rela = plabel_relocs[i];
 		where = (void *)(relocbase + rela->r_offset);
 		sym = symtab + ELF_R_SYM(rela->r_info);
-		
+
 		plabel = &hppa_plabel_pre[hppa_plabel_pre_next++];
 
 		plabel->hppa_plabel_pc = (Elf_Addr)
@@ -261,7 +261,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
 		*((Elf_Addr *)where) = (Elf_Addr)(RTLD_MAKE_PLABEL(plabel));
 	}
-	
+
 #if defined(RTLD_DEBUG_HPPA)
 	for (rela = relafirst; rela < relalim; rela++) {
 		where = (void *)(relocbase + rela->r_offset);
@@ -304,9 +304,9 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 /*
- * This allocates a PLABEL.  If called with a non-NULL def, the 
+ * This allocates a PLABEL.  If called with a non-NULL def, the
  * plabel is for the function associated with that definition
- * in the defining object defobj, plus the given addend.  If 
+ * in the defining object defobj, plus the given addend.  If
  * called with a NULL def, the plabel is for the function at
  * the (unrelocated) address in addend in the object defobj.
  */
@@ -318,7 +318,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 	hppa_plabel	*plabel;
 
 	if (def != NULL) {
-	
+
 		/*
 		 * We assume that symbols of type STT_NOTYPE
 		 * are undefined.  Return NULL for these.
@@ -329,7 +329,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 		/* Otherwise assert that this symbol must be a function. */
 		assert(ELF_ST_TYPE(def->st_info) == STT_FUNC);
 
-		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + 
+		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +
 		    addend);
 	} else
 		func_pc = (Elf_Addr)(defobj->relocbase + addend);
@@ -370,7 +370,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 const void *
 _rtld_function_descriptor_function(const void *addr)
 {
-	return (RTLD_IS_PLABEL(addr) ? 
+	return (RTLD_IS_PLABEL(addr) ?
 	    (const void *) RTLD_GET_PLABEL(addr)->hppa_plabel_pc :
 	    addr);
 }
@@ -383,7 +383,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 
 	assert(got[-2] == PLT_STUB_MAGIC1);
 	assert(got[-1] == PLT_STUB_MAGIC2);
-	
+
 	__rtld_setup_hppa_pltgot(obj, got);
 
 	fdc(&got[-2]);
@@ -627,7 +627,7 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 		rdbg(("lazy bind %s(%p) --> old=(%p,%p) new=(%p,%p)",
 		    obj->path,
 		    (void *)where,
-		    (void *)where[0], (void *)where[1], 
+		    (void *)where[0], (void *)where[1],
 		    (void *)func_pc, (void *)func_sl));
 
 		/*
@@ -678,7 +678,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 
 		rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
 		    defobj->strtab + def->st_name,
-		    (void *)where[0], (void *)where[1], 
+		    (void *)where[0], (void *)where[1],
 		    (void *)func_pc, (void *)func_sl));
 	}
 	/*
@@ -703,11 +703,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	int err;
 
 	rela = (const Elf_Rela *)((const char *)obj->pltrela + reloff);
-	
+
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -719,7 +719,7 @@ int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela = obj->pltrela;
-	
+
 	for (; rela < obj->pltrelalim; rela++) {
 		if (_rtld_relocate_plt_object(obj, rela, NULL) < 0)
 			return -1;

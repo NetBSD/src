@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2012/01/06 10:38:57 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2020/05/10 06:42:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
 ENTRY($rtld_start,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention. */
-	copy	%r3, %r1 
+	copy	%r3, %r1
 	copy	%sp, %r3
 	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
- 
+
 	/*
 	 * Save our single argument, the ps_strings pointer. We'll need this
 	 * twice later: once to call _rtld, and again to transfer to the
@@ -49,7 +49,7 @@ ENTRY($rtld_start,HPPA_FRAME_SIZE)
 	stw     %arg0, HPPA_FRAME_ARG(0)(%r3)
 
 	/*
-	 * We can't move to C until we relocate at least the 
+	 * We can't move to C until we relocate at least the
 	 * Global Offset Table.  Even finding the GOT is tricky
 	 * without inadvertently causing the linker to make
 	 * relocations for this part of the text segment.
@@ -158,7 +158,7 @@ EXIT(__rtld_setup_hppa_pltgot)
 ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention.  */
-	copy	%r3, %r1 
+	copy	%r3, %r1
 	copy	%sp, %r3
 
 	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
