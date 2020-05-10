@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2018/12/09 15:08:05 alnsn Exp $
+# $NetBSD: Makefile,v 1.4 2020/05/10 11:04:09 skrll Exp $
 
 INCSDIR= /usr/include/aarch64
 
@@ -17,7 +17,7 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h \
 	proc.h profile.h pte.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h sljit_machdep.h sysarch.h \
-	types.h \
+	trap.h types.h \
 	vmparam.h \
 	wchar_limits.h
 
