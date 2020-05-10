@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.55 2020/04/29 23:15:21 rillig Exp $
+# $NetBSD: Makefile,v 1.56 2020/05/10 12:34:01 rillig Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -25,6 +25,7 @@ TESTNAMES= \
 	cond-late \
 	cond1 \
 	cond2 \
+	dollar \
 	error \
 	export \
 	export-all \
