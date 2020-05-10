@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.7 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8 2020/05/10 14:34:31 skrll Exp $	*/
 
 /*	$OpenBSD: sbrk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -31,7 +31,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.7 2020/05/05 06:20:55 skrll Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.8 2020/05/10 14:34:31 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.global	_end
@@ -41,18 +41,19 @@
 #endif
 
 	.data
-	.export	curbrk, data
-curbrk:
+	.export	__curbrk, data
+	.hidden __curbrk
+__curbrk:
 	.long	_end
 
 ENTRY(_sbrk,0)
 #ifdef __PIC__
-	addil	LT%curbrk, %r19
-	ldw	RT%curbrk(%r1), %r1
+	addil	LT%__curbrk, %r19
+	ldw	RT%__curbrk(%r1), %r1
 	ldw	0(%r1), %t2
 #else  /* !__PIC__ */
-	ldil	L%curbrk, %t1
-	ldw	R%curbrk(%t1), %t2
+	ldil	L%__curbrk, %t1
+	ldw	R%__curbrk(%t1), %t2
 #endif /* !__PIC__ */
 	add	%arg0, %t2, %arg0
 	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
@@ -60,11 +61,11 @@ ENTRY(_sbrk,0)
 	SYSCALL(break)
 
 #ifdef __PIC__
-	addil	LT%curbrk, %r19
-	ldw	RT%curbrk(%r1), %r1
+	addil	LT%__curbrk, %r19
+	ldw	RT%__curbrk(%r1), %r1
 #else  /* !__PIC__ */
-	ldil	L%curbrk, %t1
-	ldo	R%curbrk(%t1), %r1
+	ldil	L%__curbrk, %t1
+	ldo	R%__curbrk(%t1), %r1
 #endif /* !__PIC__ */
 	ldw	0(%r1), %ret0
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
