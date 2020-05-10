@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.145 2020/05/10 02:31:29 riastradh Exp $
+.\"	$NetBSD: sysctl.7,v 1.146 2020/05/10 02:32:32 riastradh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2546,12 +2546,11 @@ the fifth is the size of
 Returns an array of
 .Vt struct kinfo_vmentry
 objects.
-.It Li vm.ubc_direct
+.It Li vm.ubc_direct Bq Sy "EXPERIMENTAL" Ns No , default off
 Use direct map for UBC I/O, avoiding need to map and unmap buffer memory.
 Speeds up operation for fast I/O devices like NVMe, especially
 on multi-CPU systems.
 Only available on some architectures.
-Currently still experimental, default is off.
 .It Li vm.uspace ( Dv VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( Dv VM_UVMEXP )
@@ -2567,7 +2566,7 @@ Return system wide guard size for the main thread of a program.
 .It Li vm.thread_guard_size
 Return system wide default size for the guard area of all other threads
 of a program.
-.It Li vm.swap_encrypt
+.It Li vm.swap_encrypt Bq Sy "EXPERIMENTAL" Ns No , default off
 If true, encrypt data while swapped out to disk.
 .Pp
 Each swap device maintains an independent AES-256 key, generated when
