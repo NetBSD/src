@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.380 2019/08/27 22:48:54 kamil Exp $
+#	$NetBSD: bsd.lib.mk,v 1.381 2020/05/10 06:38:24 maxv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -568,7 +568,7 @@ __archivesymlinkpic: .USE
 __buildstdlib: .USE
 	@echo building standard ${.TARGET:T:S/.o//:S/lib//} library
 	@rm -f ${.TARGET}
-	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -Wno-unused-command-line-argument -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
 .if !target(__buildproflib)

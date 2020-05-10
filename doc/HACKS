@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.206 2020/05/06 14:33:52 snj Exp $
+# $NetBSD: HACKS,v 1.207 2020/05/10 06:38:24 maxv Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -26,6 +26,16 @@
 #  	  closing bracket.
 #
 # this is a comment.
+
+hack	llvm needs no-unused-command-line-argument
+mdate	10 May 2020
+who	maxv
+file	share/mk/bsd.lib.mk 1.380 -> 1.381
+descr
+	To avoid LLVM warnings when compiling the kernel with special
+	CFLAGS such as KASAN on amd64 or ARMV83_PAC on aarch64, pass
+	-Wno-unused-command-line-argument.
+kcah
 
 hack	static linking with libpthread
 mdate	7 May 2019
