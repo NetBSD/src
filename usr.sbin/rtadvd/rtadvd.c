@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.76 2020/05/10 22:33:09 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.77 2020/05/10 22:38:51 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1808,6 +1808,8 @@ logit(int level, const char *fmt, ...)
 		va_end(ap);
 		return;
 	}
+	if (level >= LOG_INFO && !dflag)
+		return;
 
 	vwarnx(expandm(fmt, "\n", &buf), ap);
 	free(buf);
