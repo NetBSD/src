@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.56 2020/05/10 12:34:01 rillig Exp $
+# $NetBSD: Makefile,v 1.57 2020/05/10 12:42:11 rillig Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -26,12 +26,12 @@ TESTNAMES= \
 	cond1 \
 	cond2 \
 	dollar \
+	doterror \
+	dotwait \
 	error \
 	export \
 	export-all \
 	export-env \
-	doterror \
-	dotwait \
 	forloop \
 	forsubst \
 	hash \
