@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.38 2020/05/11 17:27:48 riastradh Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.39 2020/05/11 21:38:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.38 2020/05/11 17:27:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.39 2020/05/11 21:38:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -217,6 +217,7 @@ cprng_init_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 {
 	struct cprng_cpu *cc = ptr;
 	const char *name = cookie;
+	const char *cpuname;
 	uint8_t zero[NIST_HASH_DRBG_SEEDLEN_BYTES] = {0};
 	char namebuf[64];	/* XXX size? */
 
@@ -246,10 +247,12 @@ cprng_init_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 		panic("nist_hash_drbg_instantiate");
 
 	/* Attach the event counters.  */
+	/* XXX ci_cpuname may not be initialized early enough.  */
+	cpuname = ci->ci_cpuname[0] == '\0' ? "cpu0" : ci->ci_cpuname;
 	evcnt_attach_dynamic(&cc->cc_evcnt->intr, EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "cprng_strong intr");
+	    cpuname, "cprng_strong intr");
 	evcnt_attach_dynamic(&cc->cc_evcnt->reseed, EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "cprng_strong reseed");
+	    cpuname, "cprng_strong reseed");
 
 	/* Set the epoch uninitialized so we reseed on first use.  */
 	cc->cc_epoch = 0;
