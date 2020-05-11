@@ -1,4 +1,4 @@
-/*      $NetBSD: t_ptrace_register_wait.h,v 1.1 2020/05/04 20:55:48 kamil Exp $   */
+/*      $NetBSD: t_ptrace_register_wait.h,v 1.2 2020/05/11 11:03:15 kamil Exp $   */
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -136,7 +136,12 @@ access_regs(const char *regset, const char *aux)
 	if (strstr(aux, "unaligned") != NULL) {
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
-		SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
+		for (;;) {
+			errno = 0;
+			if (ptrace(PT_KILL, child, NULL, 0) == 0)
+				break;
+			ATF_REQUIRE_EQ(errno, ESRCH);
+		}
 
 		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
