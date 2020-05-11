@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.c,v 1.3 2010/10/07 12:06:09 kiyohara Exp $ */
+/* $NetBSD: w83l518d_sdmmc.c,v 1.4 2020/05/11 14:55:20 jdc Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.3 2010/10/07 12:06:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.4 2020/05/11 14:55:20 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.3 2010/10/07 12:06:09 kiyohara 
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 
 #include <dev/ic/w83l518dreg.h>
 #include <dev/ic/w83l518dvar.h>
@@ -185,7 +182,8 @@ wb_sdmmc_attach(struct wb_softc *wb)
 	saa.saa_sch = wb;
 	saa.saa_clkmin = 375;
 	saa.saa_clkmax = 24000;
-	saa.saa_caps = SMC_CAPS_4BIT_MODE;
+	if (!ISSET(wb->wb_quirks, WB_QUIRK_1BIT))
+		saa.saa_caps = SMC_CAPS_4BIT_MODE;
 
 	wb->wb_sdmmc_dev = config_found(wb->wb_dev, &saa, NULL);
 }
@@ -268,7 +266,7 @@ wb_sdmmc_write_protect(sdmmc_chipset_handle_t sch)
 static int
 wb_sdmmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
-	REPORT(sch, "TRACE: sdmmc/bus_power(wb, ocr=%d)\n", ocr);
+	REPORT(sch, "TRACE: sdmmc/bus_power(wb, ocr=%x)\n", ocr);
 
 	return 0;
 }
@@ -334,10 +332,19 @@ wb_sdmmc_rsp_read_long(struct wb_softc *wb, struct sdmmc_command *cmd)
 	}
 
 	for (i = 12; i >= 0; i -= 4) {
+#if BYTE_ORDER == LITTLE_ENDIAN
 		p[3] = wb_idx_read(wb, WB_INDEX_RESP(i + 0));
 		p[2] = wb_idx_read(wb, WB_INDEX_RESP(i + 1));
 		p[1] = wb_idx_read(wb, WB_INDEX_RESP(i + 2));
 		p[0] = wb_idx_read(wb, WB_INDEX_RESP(i + 3));
+#else
+		p[0] = wb_idx_read(wb, WB_INDEX_RESP(i + 0));
+		p[1] = wb_idx_read(wb, WB_INDEX_RESP(i + 1));
+		p[2] = wb_idx_read(wb, WB_INDEX_RESP(i + 2));
+		p[3] = wb_idx_read(wb, WB_INDEX_RESP(i + 3));
+#endif
+		REPORT(wb, "TRACE: sdmmc/read_long (%d) 0x%08x\n",
+		    (12 - i) / 4, cmd->c_resp[(12 - i) / 4]);
 		p += 4;
 	}
 }
@@ -352,10 +359,19 @@ wb_sdmmc_rsp_read_short(struct wb_softc *wb, struct sdmmc_command *cmd)
 		return;
 	}
 
+#if BYTE_ORDER == LITTLE_ENDIAN
 	p[3] = wb_idx_read(wb, WB_INDEX_RESP(12));
 	p[2] = wb_idx_read(wb, WB_INDEX_RESP(13));
 	p[1] = wb_idx_read(wb, WB_INDEX_RESP(14));
 	p[0] = wb_idx_read(wb, WB_INDEX_RESP(15));
+#else
+	p[0] = wb_idx_read(wb, WB_INDEX_RESP(12));
+	p[1] = wb_idx_read(wb, WB_INDEX_RESP(13));
+	p[2] = wb_idx_read(wb, WB_INDEX_RESP(14));
+	p[3] = wb_idx_read(wb, WB_INDEX_RESP(15));
+#endif
+	REPORT(wb, "TRACE: sdmmc/read_short 0x%08x\n",
+	    cmd->c_resp[0]);
 }
 
 static int
@@ -430,8 +446,9 @@ wb_sdmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	int s;
 
 	REPORT(wb, "TRACE: sdmmc/exec_command(wb, cmd) "
-	    "opcode %d flags 0x%x data %p datalen %d\n",
-	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen);
+	    "opcode %d flags 0x%x data %p datalen %d arg 0x%08x\n",
+	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
+	    cmd->c_arg);
 
 	if (cmd->c_datalen > 0) {
 		/* controller only supports a select number of data opcodes */
@@ -439,7 +456,9 @@ wb_sdmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			if (opcodes[i] == cmd->c_opcode)
 				break;
 		if (i == __arraycount(opcodes)) {
-			cmd->c_error = EINVAL;
+			cmd->c_error = ENOTSUP;
+			aprint_debug_dev(wb->wb_dev,
+			    "unsupported opcode %d\n", cmd->c_opcode);
 			goto done;
 		}
 

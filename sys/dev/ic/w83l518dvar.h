@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518dvar.h,v 1.2 2010/08/19 14:58:22 jmcneill Exp $ */
+/* $NetBSD: w83l518dvar.h,v 1.3 2020/05/11 14:55:20 jdc Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,6 +44,10 @@ struct wb_softc {
 	uint8_t			wb_sdmmc_clk;
 	uint8_t			wb_sdmmc_intsts;
 	callout_t		wb_sdmmc_callout;
+
+	/* quirks */
+#define	WB_QUIRK_1BIT	(1U << 0)
+	int			wb_quirks;
 };
 
 void	wb_attach(struct wb_softc *);
