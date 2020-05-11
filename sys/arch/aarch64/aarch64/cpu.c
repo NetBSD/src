@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.44 2020/05/10 21:41:19 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.45 2020/05/11 14:44:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.44 2020/05/10 21:41:19 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.45 2020/05/11 14:44:16 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.44 2020/05/10 21:41:19 riastradh Exp $");
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
+#include <sys/rndsource.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -68,6 +69,7 @@ static void cpu_identify2(device_t self, struct cpu_info *);
 static void cpu_init_counter(struct cpu_info *);
 static void cpu_setup_id(struct cpu_info *);
 static void cpu_setup_sysctl(device_t, struct cpu_info *);
+static void cpu_setup_rng(device_t, struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 #define NCPUINFO	MAXCPUS
@@ -153,6 +155,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	cpu_init_counter(ci);
 
 	cpu_setup_sysctl(dv, ci);
+	cpu_setup_rng(dv, ci);
 }
 
 struct cpuidtab {
@@ -500,6 +503,72 @@ cpu_setup_sysctl(device_t dv, struct cpu_info *ci)
 		       CTLTYPE_STRUCT, "cpu_id", NULL,
 		       NULL, 0, &ci->ci_id, sizeof(ci->ci_id),
 		       CTL_CREATE, CTL_EOL);
+}
+
+static struct krndsource rndrrs_source;
+
+static void
+rndrrs_get(size_t nbytes, void *cookie)
+{
+	/* Entropy bits per data byte, wild-arse guess.  */
+	const unsigned bpb = 4;
+	size_t nbits = nbytes*NBBY;
+	uint64_t x;
+	int error;
+
+	while (nbits) {
+		/*
+		 * x := random 64-bit sample
+		 * error := Z bit, set to 1 if sample is bad
+		 *
+		 * XXX This should be done by marking the function
+		 * __attribute__((target("arch=armv8.5-a+rng"))) and
+		 * using `mrs %0, rndrrs', but:
+		 *
+		 * (a) the version of gcc we use doesn't support that,
+		 * and
+		 * (b) clang doesn't seem to like `rndrrs' itself.
+		 *
+		 * So we use the numeric encoding for now.
+		 */
+		__asm __volatile(""
+		    "mrs	%0, s3_3_c2_c4_1\n"
+		    "cset	%w1, eq"
+		    : "=r"(x), "=r"(error));
+		if (error)
+			break;
+		rnd_add_data_sync(&rndrrs_source, &x, sizeof(x),
+		    bpb*sizeof(x));
+		nbits -= MIN(nbits, bpb*sizeof(x));
+	}
+
+	explicit_memset(&x, 0, sizeof x);
+}
+
+/*
+ * setup the RNDRRS entropy source
+ */
+static void
+cpu_setup_rng(device_t dv, struct cpu_info *ci)
+{
+	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+
+	/* Probably shared between cores.  */
+	if (!CPU_IS_PRIMARY(ci))
+		return;
+
+	/* Verify that it is supported.  */
+	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_RNDR)) {
+	case ID_AA64ISAR0_EL1_RNDR_RNDRRS:
+		break;
+	default:
+		return;
+	}
+
+	/* Attach it.  */
+	rndsource_setcb(&rndrrs_source, rndrrs_get, NULL);
+	rnd_attach_source(&rndrrs_source, "rndrrs", RND_TYPE_RNG,
+	    RND_FLAG_DEFAULT|RND_FLAG_HASCB);
 }
 
 #ifdef MULTIPROCESSOR
