@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.39 2020/02/06 20:17:04 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.40 2020/05/11 15:27:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,8 +143,10 @@ default_parts_init[] =
 	{ .type = PT_root, .mount = "/tmp", .fs_type = FS_MFS,
 	  .flags = PUIFLG_JUST_MOUNTPOINT },
 #endif
-	{ .def_size = DEFUSRSIZE*(MEG/512), .mount = "/usr", .type = PT_root },
-	{ .def_size = DEFVARSIZE*(MEG/512), .mount = "/var", .type = PT_root },
+	{ .def_size = DEFUSRSIZE*(MEG/512), .mount = "/usr", .type = PT_root,
+	  .fs_type = FS_BSDFFS, .fs_version = 2 },
+	{ .def_size = DEFVARSIZE*(MEG/512), .mount = "/var", .type = PT_root,
+	  .fs_type = FS_BSDFFS, .fs_version = 2 },
 };
 
 static const char size_separator[] =
@@ -1100,7 +1102,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	if (usr < wanted->num)
 		required += wanted->infos[usr].size;
 	else if (def_usr < wanted->num)
-			required += wanted->infos[def_usr].def_size;
+		required += wanted->infos[def_usr].def_size;
 	free_space -= required;
 	for (i = 0; i < wanted->num; i++) {
 		if (i == root || i == usr)
@@ -1131,6 +1133,31 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			dump_space *= 2;
 		if (free_space > dump_space)
 			wanted->infos[root].size += dump_space;
+	}
+	if (wanted->infos[root].limit > 0 &&
+	    wanted->infos[root].size > wanted->infos[root].limit) {
+		if (usr >= wanted->num && def_usr < wanted->num) {
+			usr = def_usr;
+			wanted->infos[usr].size = wanted->infos[root].size
+			    - wanted->infos[root].limit;
+			wanted->infos[root].size =
+			    wanted->infos[root].limit;
+			if (wanted->infos[root].flags & PUIFLAG_EXTEND) {
+				wanted->infos[root].flags &= ~PUIFLAG_EXTEND;
+				wanted->infos[usr].flags |= PUIFLAG_EXTEND;
+			}
+		} else if (usr < wanted->num) {
+			/* move space from root to usr */
+			daddr_t spill = wanted->infos[root].size -
+			    wanted->infos[root].limit;
+			spill = roundup(spill, align);
+			wanted->infos[root].size =
+			    wanted->infos[root].limit;
+			wanted->infos[usr].size = spill;
+		} else {
+			wanted->infos[root].size =
+			    wanted->infos[root].limit;
+		}
 	}
 }
 
