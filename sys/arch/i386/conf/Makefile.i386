@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.195 2020/04/25 15:26:16 bouyer Exp $
+#	$NetBSD: Makefile.i386,v 1.196 2020/05/11 15:15:15 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -40,9 +40,9 @@ CFLAGS+=	-msoft-float
 ## no-sse implies no-sse2 but not no-avx
 CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 
-.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0 && ${HAVE_GCC:U0} > 0
-CFLAGS+=	-mindirect-branch=thunk
-CFLAGS+=	-mindirect-branch-register
+.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch=thunk :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch-register :}
 .endif
 EXTRA_INCLUDES= -I$S/external/mit/xen-include-public/dist/
 
