@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.37 2020/04/30 17:36:06 nia Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.38 2020/05/11 17:27:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.37 2020/04/30 17:36:06 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.38 2020/05/11 17:27:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -102,6 +102,7 @@ struct cprng_strong *kern_cprng __read_mostly; /* IPL_VM */
 struct cprng_strong *user_cprng __read_mostly; /* IPL_NONE */
 
 static struct sysctllog *cprng_sysctllog __read_mostly;
+static bool cprng_initialized __read_mostly = false;
 
 void
 cprng_init(void)
@@ -128,6 +129,9 @@ cprng_init(void)
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT /*lie*/, "arandom",
 	    SYSCTL_DESCR("Independent uniform random bytes, up to 256 bytes"),
 	    sysctl_kern_arandom, 0, NULL, 0, CTL_KERN, KERN_ARND, CTL_EOL);
+
+	/* Ready to go.  */
+	cprng_initialized = true;
 }
 
 /*
@@ -272,6 +276,25 @@ cprng_strong(struct cprng_strong *cprng, void *buf, size_t len, int flags)
 	struct cprng_cpu *cc;
 	unsigned epoch;
 	int s;
+
+	/*
+	 * Some device drivers try to use cprng_strong in attach during
+	 * autoconf, e.g. to randomly generate MAC addresses, before we
+	 * percpu is available -- percpu is not available until after
+	 * CPUs have been detected during autoconf.  We should make
+	 * percpu available sooner, but for now this works around it.
+	 */
+	if (__predict_false(!cprng_initialized)) {
+		struct nist_hash_drbg drbg;
+		entropy_extract(seed, sizeof seed, 0);
+		if (__predict_false(nist_hash_drbg_instantiate(&drbg,
+			    seed, sizeof seed, NULL, 0, NULL, 0)))
+			panic("nist_hash_drbg_instantiate");
+		if (__predict_false(nist_hash_drbg_generate(&drbg, buf, len,
+			    NULL, 0)))
+			panic("nist_hash_drbg_generate");
+		return len;
+	}
 
 	/*
 	 * Verify maximum request length.  Caller should really limit
