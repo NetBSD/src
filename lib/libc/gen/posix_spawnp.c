@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_spawnp.c,v 1.3 2018/01/04 20:57:29 kamil Exp $	*/
+/*	$NetBSD: posix_spawnp.c,v 1.4 2020/05/11 14:54:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,17 +31,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: posix_spawnp.c,v 1.3 2018/01/04 20:57:29 kamil Exp $");
+__RCSID("$NetBSD: posix_spawnp.c,v 1.4 2020/05/11 14:54:34 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <assert.h>
 #include <errno.h>
-#include <unistd.h>
+#include <paths.h>
 #include <spawn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 
 int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
@@ -49,31 +51,91 @@ int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
     const posix_spawnattr_t * __restrict sa,
     char * const *__restrict cav, char * const *__restrict env)
 {
-	char fpath[FILENAME_MAX], *last, *p;
-	char *path;
+	char fpath[FILENAME_MAX];
+	const char *path, *p;
+	size_t lp, ln;
+	int err;
+
+	_DIAGASSERT(file != NULL);
 
 	/*
-	 * If there is a / in the filename, or no PATH environment variable
-	 * set, fall straight through to posix_spawn().
+	 * If there is a / in the name, fall straight through to posix_spawn().
 	 */
-	if (strchr(file, '/') != NULL || (path = getenv("PATH")) == NULL)
+	if (strchr(file, '/') != NULL)
 		return posix_spawn(pid, file, fa, sa, cav, env);
 
-	path = strdup(path);
-	if (path == NULL)
-		return ENOMEM;
+	/* Get the path we're searching. */
+	if ((path = getenv("PATH")) == NULL)
+		path = _PATH_DEFPATH;
 
 	/*
 	 * Find an executable image with the given name in the PATH
 	 */
-	for (p = strtok_r(path, ":", &last); p;
-	    p = strtok_r(NULL, ":", &last)) {
-		snprintf(fpath, sizeof fpath, "%s/%s", p, file);
-		fpath[FILENAME_MAX-1] = 0;
+
+	ln = strlen(file);
+	err = 0;
+	do {
+		/* Find the end of this path element. */
+		for (p = path; *path != 0 && *path != ':'; path++)
+			continue;
+		/*
+		 * It's a SHELL path -- double, leading and trailing colons
+		 * mean the current directory.
+		 */
+		if (p == path) {
+			p = ".";
+			lp = 1;
+		} else
+			lp = (size_t)(path - p);
+
+		/*
+		 * Once we gain chdir/fchdir file actions, this will need
+		 * serious work, as we must treat "." relative to the
+		 * target of the (final) chdir performed.
+		 *
+		 * Fortunately, that day is yet to come.
+		 */
+
+		/*
+		 * If the path is too long complain.  This is a possible
+		 * security issue; given a way to make the path too long
+		 * the user may execute the wrong program.
+		 */
+		if (lp + ln + 2 > sizeof(fpath)) {
+			(void)write(STDERR_FILENO, "posix_spawnp: ", 14);
+			(void)write(STDERR_FILENO, p, lp);
+			(void)write(STDERR_FILENO, ": path too long\n", 16);
+			continue;
+		}
+		memcpy(fpath, p, lp);
+		fpath[lp] = '/';
+		memcpy(fpath + lp + 1, file, ln);
+		fpath[lp + ln + 1] = '\0';
+
+		/*
+		 * It would be nice (much better) to try posix_spawn()
+		 * here, using the current fpath as the filename, but
+		 * there's no guarantee that it is safe to execute it
+		 * twice (the file actions may screw us) so that we
+		 * cannot do.   This test is weak, barely even adequate.
+		 * but unless we are forced into making posix_spawmp()
+		 * become a system call (with PATH as an arg, or an array
+		 * of possible paths to try, based upon PATH and file)
+		 * we really have no better method.
+		 */
 		if (access(fpath, X_OK) == 0)
 			break;
-	}
-	free(path);
+
+		if (err == 0)
+			err = errno;
+
+		fpath[0] = '\0';
+
+
+	} while (*path++ == ':');	/* Otherwise, *path was NUL */
+
+	if (fpath[0] == '\0')
+		return err;
 
 	/*
 	 * Use posix_spawn() with the found binary
