@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_clone_wait.h,v 1.2 2020/05/04 22:24:31 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_clone_wait.h,v 1.3 2020/05/11 21:18:11 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -414,11 +414,8 @@ clone_body2(int flags, bool masked, bool ignored)
 
 	FORKEE_ASSERT_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
 
-	if (masked)
-		kp_sigmask = kp.p_sigmask;
-
-	if (ignored)
-		kp_sigignore = kp.p_sigignore;
+	kp_sigmask = kp.p_sigmask;
+	kp_sigignore = kp.p_sigignore;
 
 	DPRINTF("Set PTRACE_FORK | PTRACE_VFORK | PTRACE_VFORK_DONE in "
 	    "EVENT_MASK for the child %d\n", child);
@@ -451,8 +448,8 @@ clone_body2(int flags, bool masked, bool ignored)
 		    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 		    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-		ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
-		    sizeof(kp_sigmask)));
+		ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigmask,
+			    SIGTRAP));
 	}
 
 	if (ignored) {
@@ -468,8 +465,8 @@ clone_body2(int flags, bool masked, bool ignored)
 		    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 		    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-		ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
-		    sizeof(kp_sigignore)));
+		ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigignore,
+			    SIGTRAP));
 	}
 
 	SYSCALL_REQUIRE(
@@ -510,8 +507,8 @@ clone_body2(int flags, bool masked, bool ignored)
 		    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 		    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-		ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
-		    sizeof(kp_sigmask)));
+		ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigmask,
+			    SIGTRAP));
 	}
 
 	if (ignored) {
@@ -527,8 +524,8 @@ clone_body2(int flags, bool masked, bool ignored)
 		    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 		    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-		ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
-		    sizeof(kp_sigignore)));
+		ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigignore,
+			    SIGTRAP));
 	}
 
 	SYSCALL_REQUIRE(
