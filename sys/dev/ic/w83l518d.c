@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d.c,v 1.2 2010/08/19 14:58:22 jmcneill Exp $ */
+/* $NetBSD: w83l518d.c,v 1.3 2020/05/11 14:55:20 jdc Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d.c,v 1.2 2010/08/19 14:58:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d.c,v 1.3 2020/05/11 14:55:20 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -38,9 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: w83l518d.c,v 1.2 2010/08/19 14:58:22 jmcneill Exp $"
 #include <sys/proc.h>
 
 #include <sys/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 
 #include <dev/ic/w83l518dreg.h>
 #include <dev/ic/w83l518dvar.h>
