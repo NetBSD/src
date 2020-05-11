@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.51 2020/05/04 18:23:37 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.52 2020/05/11 03:59:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.51 2020/05/04 18:23:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.52 2020/05/11 03:59:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,75 +241,6 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	cv_enter(cv, mtx, l, true);
 	error = sleepq_block(timo, true);
 	mutex_enter(mtx);
-	return error;
-}
-
-/*
- * cv_timedwaitclock:
- *
- *	Wait on a condition variable until awoken normally, or the
- *	specified timeout expires according to the provided clock.
- *	Returns zero if awoken normally or EWOULDBLOCK if the timeout
- *	expired.  For relative timeouts ((flags & TIMER_ABSTIME) == 0),
- *	updates timeout with the time left.
- *
- *	timeout == NULL specifies an infinite timeout.  epsilon is a
- *	requested maximum error in timeout (excluding spurious
- *	wakeups).
- */
-int
-cv_timedwaitclock(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
-    clockid_t clockid, int flags, const struct bintime *epsilon)
-{
-	struct timedwaitclock T;
-	int timo;
-	int error;
-
-	if (timeout == NULL) {
-		cv_wait(cv, mtx);
-		return 0;
-	}
-
-	timedwaitclock_setup(&T, timeout, clockid, flags, epsilon);
-	error = timedwaitclock_begin(&T, &timo);
-	if (error)
-		return error;
-	error = cv_timedwait(cv, mtx, timo);
-	timedwaitclock_end(&T);
-	return error;
-}
-
-/*
- * cv_timedwaitclock_sig:
- *
- *	Wait on a condition variable until awoken normally, interrupted
- *	by a signal, or the specified timeout expires according to the
- *	provided clock.  Returns zero if awoken normally,
- *	EINTR/ERESTART if interrupted by a signal, or EWOULDBLOCK if
- *	the timeout expired.  For relative timeouts ((flags &
- *	TIMER_ABSTIME) == 0), updates timeout with the time left.
- *
- *	timeout == NULL specifies an infinite timeout.  epsilon is a
- *	requested maximum error in timeout (excluding spurious
- *	wakeups).
- */
-int
-cv_timedwaitclock_sig(kcondvar_t *cv, kmutex_t *mtx, struct timespec *timeout,
-    clockid_t clockid, int flags, const struct bintime *epsilon)
-{
-	struct timedwaitclock T;
-	int timo;
-	int error;
-
-	if (timeout == NULL)
-		return cv_wait_sig(cv, mtx);
-
-	timedwaitclock_setup(&T, timeout, clockid, flags, epsilon);
-	error = timedwaitclock_begin(&T, &timo);
-	if (error)
-		return error;
-	error = cv_timedwait_sig(cv, mtx, timo);
-	timedwaitclock_end(&T);
 	return error;
 }
 

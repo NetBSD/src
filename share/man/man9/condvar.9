@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.27 2020/05/03 04:06:15 riastradh Exp $
+.\"	$NetBSD: condvar.9,v 1.28 2020/05/11 03:59:33 riastradh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,13 +64,6 @@
 "const struct bintime *epsilon"
 .Ft int
 .Fn cv_timedwaitbt_sig "kcondvar_t *cv" "kmutex_t *mtx" "struct bintime *bt" \
-"const struct bintime *epsilon"
-.Ft int
-.Fn cv_timedwaitclock "kcondvar_t *cv" "kmutex_t *mtx" \
-"struct timespec *timeout" "clockid_t clockid" "int flags" \
-"const struct bintime *epsilon"
-.Fn cv_timedwaitclock_sig "kcondvar_t *cv" "kmutex_t *mtx" \
-"struct timespec *timeout" "clockid_t clockid" "int flags" \
 "const struct bintime *epsilon"
 .Ft void
 .Fn cv_signal "kcondvar_t *cv"
@@ -264,47 +257,6 @@ However, the system is still limited by its best clock interrupt
 resolution and by scheduling competition, which may delay the wakeup by
 more than
 .Fa bt Li "+" Fa epsilon .
-.It Fn cv_timedwaitclock "cv" "lock" "timeout" "clockid" "flags" "epsilon"
-.It Fn cv_timedwaitclock_sig "cv" "lock" "timeout" "clockid" "flags" "epsilon"
-As per
-.Fn cv_wait
-and
-.Fn cv_wait_sig ,
-but will return early in case of timeout.
-The timeout is measured by the clock
-.Fa clockid ;
-see
-.Xr clock_settime 2
-for the supported options.
-The
-.Fa flags
-may be
-.Dv TIMER_RELTIME
-for a relative duration or
-.Dv TIMER_ABSTIME
-for an absolute time on the clock.
-For relative timeouts,
-.Fn cv_timedwaitclock
-and
-.Fn cv_timedwaitclock_sig
-subtract the elapsed time from
-.Fa timeout
-in place, or set it to zero if there is no time remaining.
-The hint
-.Fa epsilon
-requests a maximum delay after the timeout before wakeup.
-.Pp
-It is safe to pass in values of
-.Fa clockid
-and
-.Fa flags
-from userland, and timeouts copied in from userland; if anything is
-wrong with them,
-.Fn cv_timedwaitclock
-or
-.Fn cv_timedwaitclock_sig
-will return
-.Er EINVAL .
 .It Fn cv_signal "cv"
 .Pp
 Awaken one LWP waiting on the specified condition variable.
@@ -380,29 +332,6 @@ Consuming a resource:
 	consume(res);
 .Ed
 .Pp
-Consuming a resource using a timeout specified in a syscall by
-userland:
-.Bd -literal
-	struct timespec timeout;
-
-	error = copyin(SCARG(uap, timeout), &timeout, sizeof timeout);
-	if (error)
-		return error;
-
-	mutex_enter(&res->mutex);
-	while (res->state == BUSY) {
-		error = cv_timedwaitclock_sig(&res->condvar,
-		    &res->mutex, &timeout, SCARG(uap, clock_id),
-		    SCARG(uap, flags), DEFAULT_TIMEOUT_EPSILON);
-		if (error)
-			break;
-	}
-	mutex_exit(&res->mutex);
-	if (error)
-		return error;
-	consume(res);
-.Ed
-.Pp
 Releasing a resource for the next consumer to use:
 .Bd -literal
 	mutex_enter(&res->mutex);
@@ -442,9 +371,3 @@ and
 .Fn cv_timedwaitbt_sig
 primitives first appeared in
 .Nx 9.0 .
-The
-.Fn cv_timedwaitclock
-and
-.Fn cv_timedwaitclock_sig
-primitives first appeared in
-.Nx 10.0 .
