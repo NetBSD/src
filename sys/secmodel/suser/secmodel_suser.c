@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.52 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.53 2020/05/11 19:36:40 alnsn Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.52 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.53 2020/05/11 19:36:40 alnsn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -847,6 +847,7 @@ secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_MACHDEP_UNMANAGEDMEM:
 	case KAUTH_MACHDEP_PXG:
 	case KAUTH_MACHDEP_SVS_DISABLE:
+		/* Deprecated. */
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
