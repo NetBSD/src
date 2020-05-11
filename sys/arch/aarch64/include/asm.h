@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.7 2020/04/12 07:49:58 maxv Exp $ */
+/* $NetBSD: asm.h,v 1.8 2020/05/11 03:00:57 ryo Exp $ */
 
 #ifndef _AARCH64_ASM_H_
 #define _AARCH64_ASM_H_
@@ -38,7 +38,7 @@
  */
 #ifdef ARMV83_PAC
 #define ARMV8_DEFINE_OPTIONS	\
-	.arch armv8.3-a+pac
+	.arch armv8.3-a
 #else
 #define ARMV8_DEFINE_OPTIONS	/* nothing */
 #endif
