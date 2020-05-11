@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.1 2020/05/04 22:34:22 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.2 2020/05/11 20:58:48 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -1318,11 +1318,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 
 	FORKEE_ASSERT_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
 
-	if (masked)
-		kp_sigmask = kp.p_sigmask;
-
-	if (ignored)
-		kp_sigignore = kp.p_sigignore;
+	kp_sigmask = kp.p_sigmask;
+	kp_sigignore = kp.p_sigignore;
 
 	DPRINTF("Set 0%s%s%s%s in EVENT_MASK for the child %d\n",
 	    strcmp(fn, "spawn") == 0 ? "|PTRACE_POSIX_SPAWN" : "",
@@ -1368,8 +1365,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
-			    sizeof(kp_sigmask)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigmask,
+			    SIGTRAP));
 		}
 
 		if (ignored) {
@@ -1385,8 +1382,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
-			    sizeof(kp_sigignore)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigignore,
+			    SIGTRAP));
 		}
 
 		SYSCALL_REQUIRE(
@@ -1431,8 +1428,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
-			    sizeof(kp_sigmask)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigmask,
+			    SIGTRAP));
 		}
 
 		if (ignored) {
@@ -1448,8 +1445,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
-			    sizeof(kp_sigignore)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigignore,
+			    SIGTRAP));
 		}
 
 		SYSCALL_REQUIRE(
@@ -1510,8 +1507,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
-			    sizeof(kp_sigmask)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigmask,
+			    SIGTRAP));
 		}
 
 		if (ignored) {
@@ -1527,8 +1524,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-			ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
-			    sizeof(kp_sigignore)));
+			ATF_REQUIRE(sigismember((sigset_t *)&kp.p_sigignore,
+			    SIGTRAP));
 		}
 
 		SYSCALL_REQUIRE(
