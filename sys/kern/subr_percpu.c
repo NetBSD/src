@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.24 2020/02/07 11:55:22 thorpej Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.25 2020/05/11 21:37:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.24 2020/02/07 11:55:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.25 2020/05/11 21:37:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -50,8 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.24 2020/02/07 11:55:22 thorpej Exp
 struct percpu {
 	unsigned		pc_offset;
 	size_t			pc_size;
+	percpu_callback_t	pc_ctor;
 	percpu_callback_t	pc_dtor;
 	void			*pc_cookie;
+	LIST_ENTRY(percpu)	pc_list;
 };
 
 static krwlock_t	percpu_swap_lock	__cacheline_aligned;
@@ -59,6 +61,9 @@ static vmem_t *		percpu_offset_arena	__read_mostly;
 static struct {
 	kmutex_t	lock;
 	unsigned int	nextoff;
+	LIST_HEAD(, percpu) ctor_list;
+	struct lwp	*busy;
+	kcondvar_t	cv;
 } percpu_allocation __cacheline_aligned;
 
 static percpu_cpu_t *
@@ -217,6 +222,9 @@ percpu_init(void)
 	rw_init(&percpu_swap_lock);
 	mutex_init(&percpu_allocation.lock, MUTEX_DEFAULT, IPL_NONE);
 	percpu_allocation.nextoff = PERCPU_QUANTUM_SIZE;
+	LIST_INIT(&percpu_allocation.ctor_list);
+	percpu_allocation.busy = NULL;
+	cv_init(&percpu_allocation.cv, "percpu");
 
 	percpu_offset_arena = vmem_xcreate("percpu", 0, 0, PERCPU_QUANTUM_SIZE,
 	    percpu_backend_alloc, NULL, NULL, PERCPU_QCACHE_MAX, VM_SLEEP,
@@ -227,18 +235,50 @@ percpu_init(void)
  * percpu_init_cpu: cpu initialization
  *
  * => should be called before the cpu appears on the list for CPU_INFO_FOREACH.
+ * => may be called for static CPUs afterward (typically just primary CPU)
  */
 
 void
 percpu_init_cpu(struct cpu_info *ci)
 {
 	percpu_cpu_t * const pcc = cpu_percpu(ci);
+	struct percpu *pc;
 	size_t size = percpu_allocation.nextoff; /* XXX racy */
 
 	ASSERT_SLEEPABLE();
+
+	/*
+	 * For the primary CPU, prior percpu_create may have already
+	 * triggered allocation, so there's nothing more for us to do
+	 * here.
+	 */
+	if (pcc->pcc_size)
+		return;
+	KASSERT(pcc->pcc_data == NULL);
+
+	/*
+	 * Otherwise, allocate storage and, while the constructor list
+	 * is locked, run constructors for all percpus on this CPU.
+	 */
 	pcc->pcc_size = size;
 	if (size) {
 		pcc->pcc_data = kmem_zalloc(pcc->pcc_size, KM_SLEEP);
+		mutex_enter(&percpu_allocation.lock);
+		while (percpu_allocation.busy)
+			cv_wait(&percpu_allocation.cv,
+			    &percpu_allocation.lock);
+		percpu_allocation.busy = curlwp;
+		LIST_FOREACH(pc, &percpu_allocation.ctor_list, pc_list) {
+			KASSERT(pc->pc_ctor);
+			mutex_exit(&percpu_allocation.lock);
+			(*pc->pc_ctor)((char *)pcc->pcc_data + pc->pc_offset,
+			    pc->pc_cookie, ci);
+			mutex_enter(&percpu_allocation.lock);
+		}
+		KASSERT(percpu_allocation.busy == curlwp);
+		percpu_allocation.busy = NULL;
+		cv_broadcast(&percpu_allocation.cv);
+		mutex_exit(&percpu_allocation.lock);
 	}
 }
 
@@ -281,6 +321,7 @@ percpu_create(size_t size, percpu_callback_t ctor, percpu_callback_t dtor,
 	pc = kmem_alloc(sizeof(*pc), KM_SLEEP);
 	pc->pc_offset = offset;
 	pc->pc_size = size;
+	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
 	pc->pc_cookie = cookie;
 
@@ -289,6 +330,22 @@ percpu_create(size_t size, percpu_callback_t ctor, percpu_callback_t dtor,
 		struct cpu_info *ci;
 		void *buf;
 
+		/*
+		 * Wait until nobody is using the list of percpus with
+		 * constructors.
+		 */
+		mutex_enter(&percpu_allocation.lock);
+		while (percpu_allocation.busy)
+			cv_wait(&percpu_allocation.cv,
+			    &percpu_allocation.lock);
+		percpu_allocation.busy = curlwp;
+		mutex_exit(&percpu_allocation.lock);
+
+		/*
+		 * Run the constructor for all CPUs.  We use a
+		 * temporary buffer wo that we need not hold the
+		 * percpu_swap_lock while running the constructor.
+		 */
 		buf = kmem_alloc(size, KM_SLEEP);
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			memset(buf, 0, size);
@@ -299,6 +356,19 @@ percpu_create(size_t size, percpu_callback_t ctor, percpu_callback_t dtor,
 		}
 		explicit_memset(buf, 0, size);
 		kmem_free(buf, size);
+
+		/*
+		 * Insert the percpu into the list of percpus with
+		 * constructors.  We are now done using the list, so it
+		 * is safe for concurrent percpu_create or concurrent
+		 * percpu_init_cpu to run.
+		 */
+		mutex_enter(&percpu_allocation.lock);
+		KASSERT(percpu_allocation.busy == curlwp);
+		percpu_allocation.busy = NULL;
+		cv_broadcast(&percpu_allocation.cv);
+		LIST_INSERT_HEAD(&percpu_allocation.ctor_list, pc, pc_list);
+		mutex_exit(&percpu_allocation.lock);
 	} else {
 		percpu_zero(pc, size);
 	}
@@ -320,6 +390,21 @@ percpu_free(percpu_t *pc, size_t size)
 	ASSERT_SLEEPABLE();
 	KASSERT(size == pc->pc_size);
 
+	/*
+	 * If there's a constructor, take the percpu off the list of
+	 * percpus with constructors, but first wait until nobody is
+	 * using the list.
+	 */
+	if (pc->pc_ctor) {
+		mutex_enter(&percpu_allocation.lock);
+		while (percpu_allocation.busy)
+			cv_wait(&percpu_allocation.cv,
+			    &percpu_allocation.lock);
+		LIST_REMOVE(pc, pc_list);
+		mutex_exit(&percpu_allocation.lock);
+	}
+
+	/* If there's a destructor, run it now for all CPUs.  */
 	if (pc->pc_dtor) {
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
