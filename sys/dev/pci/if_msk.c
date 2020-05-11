@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.111 2020/05/11 18:49:04 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.112 2020/05/11 19:17:46 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.111 2020/05/11 18:49:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.112 2020/05/11 19:17:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2275,7 +2275,6 @@ msk_intr(void *xsc)
 	struct sk_if_softc	*sc_if0 = sc->sk_if[SK_PORT_A];
 	struct sk_if_softc	*sc_if1 = sc->sk_if[SK_PORT_B];
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
-	int			claimed = 0;
 	uint32_t		status;
 	struct msk_status_desc	*cur_st;
 
@@ -2339,7 +2338,6 @@ msk_intr(void *xsc)
 
 	if (status & SK_Y2_IMR_BMU) {
 		CSR_WRITE_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_IRQ_CLEAR);
-		claimed = 1;
 	}
 
 	CSR_WRITE_4(sc, SK_Y2_ICR, 2);
@@ -2355,7 +2353,7 @@ msk_intr(void *xsc)
 	if (sc->sk_int_mod_pending)
 		msk_update_int_mod(sc, 1);
 
-	return claimed;
+	return (status & sc->sk_intrmask) != 0;
 }
 
 static void
