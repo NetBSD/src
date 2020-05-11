@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.84 2020/04/25 15:26:16 bouyer Exp $
+#	$NetBSD: Makefile.amd64,v 1.85 2020/05/11 15:15:15 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -44,9 +44,9 @@ CFLAGS+=	-msoft-float
 # For gcc we might need this, but other compilers barf
 # CFLAGS+=	-mno-fp-ret-in-387
 
-.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0 && ${HAVE_GCC:U0} > 0
-CFLAGS+=      -mindirect-branch=thunk-inline
-CFLAGS+=      -mindirect-branch-register
+.if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch=thunk :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -mindirect-branch-register :}
 .endif
 
 .if ${KASAN:U0} > 0
