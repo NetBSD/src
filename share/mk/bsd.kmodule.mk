@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.67 2020/05/02 09:15:30 rin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.68 2020/05/11 10:21:24 skrll Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -47,7 +47,7 @@ CFLAGS+=	-march=armv8-a+nofp+nosimd
 .elif ${MACHINE_CPU} == "arm"
 CFLAGS+=	-fno-common -fno-unwind-tables
 .elif ${MACHINE_CPU} == "hppa"
-CFLAGS+=	-mlong-calls
+CFLAGS+=	-mlong-calls -mno-space-regs -mfast-indirect-calls
 .elif ${MACHINE_CPU} == "powerpc"
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mlongcall :}
 .elif ${MACHINE_CPU} == "vax"
