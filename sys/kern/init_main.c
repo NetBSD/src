@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.524 2020/04/30 03:28:18 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.525 2020/05/11 21:38:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.524 2020/04/30 03:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.525 2020/05/11 21:38:54 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -395,6 +395,8 @@ main(void)
 	 */
 	rnd_init();		/* initialize entropy pool */
 
+	cprng_init();		/* initialize cryptographic PRNG */
+
 	/* Initialize process and pgrp structures. */
 	procinit();
 	lwpinit();
@@ -528,8 +530,6 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
-
-	cprng_init();		/* initialize cryptographic PRNG */
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
