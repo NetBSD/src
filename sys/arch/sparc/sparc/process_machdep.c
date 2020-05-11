@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.19 2016/12/30 17:54:43 christos Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.20 2020/05/11 18:38:26 kamil Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2016/12/30 17:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2020/05/11 18:38:26 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,9 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	int	psr = l->l_md.md_tf->tf_psr & ~PSR_ICC;
 
+	if (((regs->r_pc | regs->r_npc) & 0x03) != 0)
+		return EINVAL;
+
 	memcpy(l->l_md.md_tf, regs, sizeof(*regs));
 	l->l_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return 0;
@@ -139,6 +142,9 @@ process_sstep(struct lwp *l, int sstep)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
+
+	if (((u_int)addr & 0x03) != 0)
+		return EINVAL;
 
 	l->l_md.md_tf->tf_pc = (u_int)addr;
 	l->l_md.md_tf->tf_npc = (u_int)addr + 4;
