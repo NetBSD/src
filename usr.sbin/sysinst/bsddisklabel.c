@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.40 2020/05/11 15:27:41 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.41 2020/05/11 17:40:50 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1131,15 +1131,23 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 		dump_space = roundup(dump_space, align);
 		if (free_space > dump_space*2)
 			dump_space *= 2;
-		if (free_space > dump_space)
+		if (free_space > dump_space) {
 			wanted->infos[root].size += dump_space;
+			free_space -= dump_space;
+		}
 	}
 	if (wanted->infos[root].limit > 0 &&
-	    wanted->infos[root].size > wanted->infos[root].limit) {
+	    (wanted->infos[root].cur_start + wanted->infos[root].size >
+		wanted->infos[root].limit ||
+	    (wanted->infos[root].flags & PUIFLAG_EXTEND &&
+	    (wanted->infos[root].cur_start + wanted->infos[root].size
+	     + free_space > wanted->infos[root].limit)))) {
 		if (usr >= wanted->num && def_usr < wanted->num) {
 			usr = def_usr;
 			wanted->infos[usr].size = wanted->infos[root].size
 			    - wanted->infos[root].limit;
+			if (wanted->infos[usr].size <= 0)
+				wanted->infos[usr].size = 1;
 			wanted->infos[root].size =
 			    wanted->infos[root].limit;
 			if (wanted->infos[root].flags & PUIFLAG_EXTEND) {
@@ -1364,10 +1372,20 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 
 	/*
 	 * Expand the pool partition (or shrink, if we overran),
+	 * but check size limits.
 	 */
-	if (exp_ndx < wanted->num)
-		wanted->infos[exp_ndx].size +=
-		    parts->free_space - planned_space;
+	if (exp_ndx < wanted->num) {
+		if (wanted->infos[exp_ndx].limit > 0 &&
+		    (wanted->infos[exp_ndx].size + parts->free_space
+		    - planned_space) > wanted->infos[exp_ndx].limit) {
+			wanted->infos[exp_ndx].size =
+			    wanted->infos[exp_ndx].limit
+			    - wanted->infos[exp_ndx].cur_start;
+		} else {
+			wanted->infos[exp_ndx].size +=
+			    parts->free_space - planned_space;
+		}
+	}
 
 	/*
 	 * Now it gets tricky: we want the wanted partitions in order
