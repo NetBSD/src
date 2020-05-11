@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.110 2020/05/08 14:56:49 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.111 2020/05/11 18:49:04 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.110 2020/05/08 14:56:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.111 2020/05/11 18:49:04 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,7 +860,7 @@ msk_update_int_mod(struct sk_softc *sc, int verbose)
 		aprint_verbose_dev(sc->sk_dev,
 		    "interrupt moderation is %d us\n", sc->sk_int_mod);
 	sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(sc->sk_int_mod));
-	sk_win_write_4(sc, SK_IMMR, SK_Y2_IMR_BMU);
+	sk_win_write_4(sc, SK_IMMR, 0); /* moderate no interrupts */
 	sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
 	sc->sk_int_mod_pending = 0;
 }
