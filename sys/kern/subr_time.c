@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.23 2020/05/04 18:23:37 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.24 2020/05/11 03:59:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.23 2020/05/04 18:23:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.24 2020/05/11 03:59:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -353,142 +353,4 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	KASSERT(*timo > 0);
 
 	return 0;
-}
-
-/*
- * timedwaitclock_setup(T, timeout, clockid, flags, epsilon)
- *
- *	Initialize state for a timedwaitclock, to be used subsequently
- *	with timedwaitclock_begin/end, possibly many times in a row.
- *
- *	No cleanup action required at the end; the caller-allocated
- *	(typically stack-allocated) timedwaitclock just holds
- *	parameters and a little state for timedwaitclock_begin/end.
- */
-void
-timedwaitclock_setup(struct timedwaitclock *T, struct timespec *timeout,
-    clockid_t clockid, int flags, const struct bintime *epsilon)
-{
-
-	memset(T, 0, sizeof(*T));
-	T->timeout = timeout;
-	T->clockid = clockid;
-	T->flags = flags;
-	T->epsilon = epsilon;
-	T->starttime = (struct timespec){0,0};
-}
-
-/*
- * timedwaitclock_begin(T, timo)
- *
- *	Decide how many ticks to wait for the timedwaitclock T and
- *	store it in *timo.  Keep state for timedwaitclock_end.  May
- *	fail with EINVAL if the specified timeout is invalid, or if the
- *	specified clock fails.  Fails with ETIMEDOUT if there is no
- *	time left to wait.
- */
-int
-timedwaitclock_begin(struct timedwaitclock *T, int *timo)
-{
-	struct timespec delta;
-	const struct timespec *deltap;
-	int error;
-
-	/* Sanity-check timeout -- may have come from userland.  */
-	if (T->timeout->tv_nsec < 0 || T->timeout->tv_nsec >= 1000000000L)
-		return EINVAL;
-
-	/*
-	 * Compute the time delta.
-	 */
-	if ((T->flags & TIMER_ABSTIME) == TIMER_ABSTIME) {
-		/* Check our watch.  */
-		error = clock_gettime1(T->clockid, &T->starttime);
-		if (error)
-			return error;
-
-		/* If the deadline has passed, we're done.  */
-		if (timespeccmp(T->timeout, &T->starttime, <=))
-			return ETIMEDOUT;
-
-		/* Count how much time is left.  */
-		timespecsub(T->timeout, &T->starttime, &delta);
-		deltap = &delta;
-	} else {
-		/* The user specified how much time is left.  */
-		deltap = T->timeout;
-
-		/* If there's none left, we've timed out.  */
-		if (deltap->tv_sec == 0 && deltap->tv_nsec == 0)
-			return ETIMEDOUT;
-	}
-
-	/*
-	 * Convert to ticks, but clamp to be >=1.
-	 *
-	 * XXX In the tickless future, use a high-resolution timer if
-	 * timo would round to zero.
-	 */
-	*timo = tstohz(deltap);
-	KASSERTMSG(*timo >= 0, "negative ticks: %d", *timo);
-	if (*timo == 0)
-		*timo = 1;
-
-	/* Success!  */
-	return 0;
-}
-
-/*
- * timedwaitclock_end(T)
- *
- *	If the timedwaitclock T was relative, update the caller's
- *	original timeout to reflect how much time is left, or zero if
- *	there is no time left or if the clock has gone bad, so that the
- *	next timedwaitclock_begin will immediately time out.
- */
-void
-timedwaitclock_end(struct timedwaitclock *T)
-{
-	struct timespec endtime, delta;
-
-	/* If the timeout is absolute, nothing to do.  */
-	if ((T->flags & TIMER_ABSTIME) == TIMER_ABSTIME)
-		return;
-
-	/*
-	 * Check our watch.  If anything goes wrong with it, make sure
-	 * that the next time we immediately time out rather than fail
-	 * to deduct the time elapsed.
-	 */
-	if (clock_gettime1(T->clockid, &endtime)) {
-		T->timeout->tv_sec = 0;
-		T->timeout->tv_nsec = 0;
-		return;
-	}
-
-	/* Find how much time elapsed while we waited.  */
-	timespecsub(&endtime, &T->starttime, &delta);
-
-	/*
-	 * Paranoia: If the clock went backwards, treat it as if no
-	 * time elapsed at all rather than adding anything.
-	 */
-	if (delta.tv_sec < 0 ||
-	    (delta.tv_sec == 0 && delta.tv_nsec < 0)) {
-		delta.tv_sec = 0;
-		delta.tv_nsec = 0;
-	}
-
-	/*
-	 * Set it to the time left, or zero, whichever is larger.  We
-	 * do not fail with EWOULDBLOCK here because this may have been
-	 * an explicit wakeup, so the caller needs to check before they
-	 * give up or else cv_signal would be lost.
-	 */
-	if (timespeccmp(T->timeout, &delta, <=)) {
-		T->timeout->tv_sec = 0;
-		T->timeout->tv_nsec = 0;
-	} else {
-		timespecsub(T->timeout, &delta, T->timeout);
-	}
 }
