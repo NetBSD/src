@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.112 2020/05/11 19:17:46 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.113 2020/05/11 23:47:45 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.112 2020/05/11 19:17:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.113 2020/05/11 23:47:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2277,6 +2277,7 @@ msk_intr(void *xsc)
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	uint32_t		status;
 	struct msk_status_desc	*cur_st;
+	bool			retried = false;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
 	if (status == 0xffffffff)
@@ -2303,6 +2304,7 @@ msk_intr(void *xsc)
 		msk_intr_yukon(sc_if1);
 	}
 
+again:
 	MSK_CDSTSYNC(sc, sc->sk_status_idx,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	cur_st = &sc->sk_status_ring[sc->sk_status_idx];
@@ -2336,8 +2338,11 @@ msk_intr(void *xsc)
 		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 	}
 
-	if (status & SK_Y2_IMR_BMU) {
+	if (CSR_READ_2(sc, SK_STAT_BMU_PUTIDX) == sc->sk_status_idx) {
 		CSR_WRITE_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_IRQ_CLEAR);
+	} else if (!retried) {
+		retried = true;
+		goto again;
 	}
 
 	CSR_WRITE_4(sc, SK_Y2_ICR, 2);
