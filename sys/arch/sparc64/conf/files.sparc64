@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.158 2019/01/27 02:08:38 pgoyette Exp $
+#	$NetBSD: files.sparc64,v 1.159 2020/05/11 15:56:15 jdc Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -139,6 +139,10 @@ file	arch/sparc64/dev/fdc.c			fdc | fd needs-flag
 
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
+
+include	"dev/sdmmc/files.sdmmc"
+attach	wb at ebus with wb_ebus
+file	arch/sparc64/dev/wb_ebus.c		wb_ebus
 
 # PCMCIA bus (references fdc)
 include "dev/pcmcia/files.pcmcia"
