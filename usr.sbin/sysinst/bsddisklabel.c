@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.41 2020/05/11 17:40:50 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.42 2020/05/12 06:23:07 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1147,7 +1147,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			wanted->infos[usr].size = wanted->infos[root].size
 			    - wanted->infos[root].limit;
 			if (wanted->infos[usr].size <= 0)
-				wanted->infos[usr].size = 1;
+				wanted->infos[usr].size = max(1,
+				    wanted->infos[usr].def_size);
 			wanted->infos[root].size =
 			    wanted->infos[root].limit;
 			if (wanted->infos[root].flags & PUIFLAG_EXTEND) {
