@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.224 2020/05/07 20:02:34 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.225 2020/05/12 11:21:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.224 2020/05/07 20:02:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.225 2020/05/12 11:21:09 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -158,9 +158,9 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 	int flags, sig;
 
 	/*
-	 * We don't support the CLONE_PID or CLONE_PTRACE flags.
+	 * We don't support the CLONE_PTRACE flag.
 	 */
-	if (SCARG(uap, flags) & (CLONE_PID|CLONE_PTRACE))
+	if (SCARG(uap, flags) & (CLONE_PTRACE))
 		return EINVAL;
 
 	/*
