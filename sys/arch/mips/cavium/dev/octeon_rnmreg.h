@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnmreg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_rnmreg.h,v 1.2 2020/05/12 10:12:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,7 +40,9 @@
 
 /* ---- register bits */
 
-#define RNM_CTL_STATUS_XXX_63_4			UINT64_C(0xfffffffffffffff0)
+#define RNM_CTL_STATUS_XXX_63_5			UINT64_C(0xfffffffffffffe00)
+#define RNM_CTL_STATUS_ENT_SEL_MASK		UINT64_C(0x00000000000001e0)
+#define RNM_CTL_STATUS_EXP_ENT			UINT64_C(0x0000000000000010)
 #define RNM_CTL_STATUS_RNG_RST			UINT64_C(0x0000000000000008)
 #define RNM_CTL_STATUS_RNM_RST			UINT64_C(0x0000000000000004)
 #define RNM_CTL_STATUS_RNG_EN			UINT64_C(0x0000000000000002)
@@ -64,6 +66,8 @@
 	"\177"		/* new format */ \
 	"\020"		/* hex display */ \
 	"\020"		/* %016x format */ \
+	"f\x05\x04"	"ENT_SEL\0" \
+	"b\x04"		"EXP_ENT\0" \
 	"b\x03"		"RNG_RST\0" \
 	"b\x02"		"RNM_RST\0" \
 	"b\x01"		"RNG_EN\0" \
