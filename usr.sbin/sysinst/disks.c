@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.66 2020/02/19 18:08:03 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.67 2020/05/12 17:26:43 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1905,9 +1905,12 @@ mount_disks(struct install_partition_desc *install)
 	return error;
 }
 
+static char swap_dev[PATH_MAX];
+
 int
 set_swap_if_low_ram(struct install_partition_desc *install)
 {
+	swap_dev[0] = 0;
 	if (get_ramsize() <= TINY_RAM_SIZE)
 		return set_swap(install);
 	return 0;
@@ -1917,9 +1920,9 @@ int
 set_swap(struct install_partition_desc *install)
 {
 	size_t i;
-	char dev_buf[PATH_MAX];
 	int rval;
 
+	swap_dev[0] = 0;
 	for (i = 0; i < install->num; i++) {
 		if (install->infos[i].type == PT_swap)
 			break;
@@ -1928,15 +1931,27 @@ set_swap(struct install_partition_desc *install)
 		return 0;
 
 	if (!install->infos[i].parts->pscheme->get_part_device(
-	    install->infos[i].parts, install->infos[i].cur_part_id, dev_buf,
-	    sizeof dev_buf, NULL, plain_name, true, true))
+	    install->infos[i].parts, install->infos[i].cur_part_id, swap_dev,
+	    sizeof swap_dev, NULL, plain_name, true, true))
 		return -1;
 
-	rval = swapctl(SWAP_ON, dev_buf, 0);
-	if (rval != 0)
+	rval = swapctl(SWAP_ON, swap_dev, 0);
+	if (rval != 0) {
+		swap_dev[0] = 0;
 		return -1;
+	}
 
-	return 0;
+	return 1;
+}
+
+void
+clear_swap(void)
+{
+
+	if (swap_dev[0] == 0)
+		return;
+	swapctl(SWAP_OFF, swap_dev, 0);
+	swap_dev[0] = 0;
 }
 
 int
