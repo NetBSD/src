@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.36 2020/05/07 19:13:38 riastradh Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.37 2020/05/12 09:48:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.36 2020/05/07 19:13:38 riastradh Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.37 2020/05/12 09:48:44 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -90,8 +90,8 @@ usage(void)
 	    getprogname());
 	fprintf(stderr, "       %s [-lsv] [-d devname | -t devtype]\n",
 	    getprogname());
-	fprintf(stderr, "	%s [-i] -L save-file\n", getprogname());
-	fprintf(stderr, "	%s -S save-file\n", getprogname());
+	fprintf(stderr, "       %s [-i] -L save-file\n", getprogname());
+	fprintf(stderr, "       %s -S save-file\n", getprogname());
 	exit(1);
 }
 
