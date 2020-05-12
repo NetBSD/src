@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.42 2020/01/26 14:37:29 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.43 2020/05/12 16:18:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2197,6 +2197,21 @@ free_install_desc(struct install_partition_desc *install)
 	}
 #endif
 	free(install->infos);
+}
+
+/*
+ * Called while at the end of install when targetroot is still mounted
+ * and writable
+ */
+void
+save_entropy(void)
+{
+
+	if (!binary_available("rndctl"))
+		return;
+
+	run_program(RUN_SILENT|RUN_ERROR_OK, "rndctl -S %s",
+	    target_expand("/var/db/entropy-file"));
 }
 
 #ifdef MD_MAY_SWAP_TO

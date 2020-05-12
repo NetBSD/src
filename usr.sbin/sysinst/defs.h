@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.58 2020/04/22 23:43:12 joerg Exp $	*/
+/*	$NetBSD: defs.h,v 1.59 2020/05/12 16:18:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -809,6 +809,7 @@ unsigned int    get_kernel_set(void);
 unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
 int	sanity_check(void);
+void	save_entropy(void);
 int	set_timezone(void);
 void	scripting_fprintf(FILE *, const char *, ...) __printflike(2, 3);
 void	scripting_vfprintf(FILE *, const char *, va_list) __printflike(2, 0);
