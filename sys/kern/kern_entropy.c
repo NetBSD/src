@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.21 2020/05/10 02:56:12 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.22 2020/05/12 20:50:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.21 2020/05/10 02:56:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.22 2020/05/12 20:50:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1685,6 +1685,13 @@ entropy_request(size_t nbytes)
 	LIST_FOREACH(rs, &E->sources, list) {
 		/* Skip sources without callbacks.  */
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
+			continue;
+
+		/*
+		 * Skip sources that are disabled altogether -- we
+		 * would just ignore their samples anyway.
+		 */
+		if (ISSET(rs->flags, RND_FLAG_NO_COLLECT))
 			continue;
 
 		/* Drop the lock while we call the callback.  */
