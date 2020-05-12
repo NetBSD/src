@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.25 2020/05/12 14:29:06 christos Exp $	*/
+/*	$NetBSD: token.l,v 1.26 2020/05/12 16:17:58 christos Exp $	*/
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
 /*
@@ -336,7 +336,10 @@ yyfatal(const char *s)
 void
 yyerror(const char *s)
 {
-	warnx("%s,%d: %s at `%s'", filename, lineno, s, yytext);
+	if (f_mode == MODE_SCRIPT)
+		warnx("%s,%d: %s at `%s'", filename, lineno, s, yytext);
+	else
+		printf("%s at `%s'", s, yytext);
 }
 
 int
