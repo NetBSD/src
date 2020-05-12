@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex.c,v 1.90 2020/03/08 00:26:06 chs Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.91 2020/05/12 21:24:29 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.90 2020/03/08 00:26:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.91 2020/05/12 21:24:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -545,8 +545,12 @@ mutex_vector_enter(kmutex_t *mtx)
 		/*
 		 * Check to see if the owner is running on a processor.
 		 * If so, then we should just spin, as the owner will
-		 * likely release the lock very soon.
+		 * likely release the lock very soon.  Unfortunately
+		 * mtx_owner needs to be reloaded here with preemption
+		 * now disabled, otherwise the LWP could already have
+		 * been freed & destructed (see lwp_dtor()).
 		 */
+		owner = mtx->mtx_owner;
 		if (mutex_oncpu(owner)) {
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			count = SPINLOCK_BACKOFF_MIN;
