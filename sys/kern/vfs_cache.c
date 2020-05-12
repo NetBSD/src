@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.141 2020/04/23 22:58:36 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.142 2020/05/12 23:17:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.141 2020/04/23 22:58:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.142 2020/05/12 23:17:41 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -683,8 +683,10 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 * First up check if the user is allowed to look up files in this
 	 * directory.
 	 */
-	KASSERT(dvi->vi_nc_mode != VNOVAL && dvi->vi_nc_uid != VNOVAL &&
-	    dvi->vi_nc_gid != VNOVAL);
+	if (dvi->vi_nc_mode == VNOVAL) {
+		return false;
+	}
+	KASSERT(dvi->vi_nc_uid != VNOVAL && dvi->vi_nc_gid != VNOVAL);
 	error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
 	    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
 	    genfs_can_access(dvp->v_type, dvi->vi_nc_mode & ALLPERMS,
@@ -763,8 +765,11 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		 *
 		 * I don't like it, I didn't come up with it, don't blame me!
 		 */
-		KASSERT(vi->vi_nc_mode != VNOVAL && vi->vi_nc_uid != VNOVAL &&
-		    vi->vi_nc_gid != VNOVAL);
+		if (vi->vi_nc_mode == VNOVAL) {
+			rw_exit(&vi->vi_nc_listlock);
+			return -1;
+		}
+		KASSERT(vi->vi_nc_uid != VNOVAL && vi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(curlwp->l_cred,
 		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, vi->vi_nc_mode &
 		    ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
@@ -941,10 +946,11 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 /*
  * Set identity info in cache for a vnode.  We only care about directories
- * so ignore other updates.
+ * so ignore other updates.  The cached info may be marked invalid if the
+ * inode has an ACL.
  */
 void
-cache_enter_id(struct vnode *vp, mode_t mode, uid_t uid, gid_t gid)
+cache_enter_id(struct vnode *vp, mode_t mode, uid_t uid, gid_t gid, bool valid)
 {
 	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 
@@ -952,9 +958,15 @@ cache_enter_id(struct vnode *vp, mode_t mode, uid_t uid, gid_t gid)
 		/* Grab both locks, for forward & reverse lookup. */
 		rw_enter(&vi->vi_nc_lock, RW_WRITER);
 		rw_enter(&vi->vi_nc_listlock, RW_WRITER);
-		vi->vi_nc_mode = mode;
-		vi->vi_nc_uid = uid;
-		vi->vi_nc_gid = gid;
+		if (valid) {
+			vi->vi_nc_mode = mode;
+			vi->vi_nc_uid = uid;
+			vi->vi_nc_gid = gid;
+		} else {
+			vi->vi_nc_mode = VNOVAL;
+			vi->vi_nc_uid = VNOVAL;
+			vi->vi_nc_gid = VNOVAL;
+		}
 		rw_exit(&vi->vi_nc_listlock);
 		rw_exit(&vi->vi_nc_lock);
 	}
@@ -965,18 +977,15 @@ cache_enter_id(struct vnode *vp, mode_t mode, uid_t uid, gid_t gid)
  * opportunity to confirm that everything squares up.
  *
  * Because of shared code, some file systems could provide partial
- * information, missing some updates, so always check the mount flag
- * instead of looking for !VNOVAL.
+ * information, missing some updates, so check the mount flag too.
  */
 bool
 cache_have_id(struct vnode *vp)
 {
 
 	if (vp->v_type == VDIR &&
-	    (vp->v_mount->mnt_iflag & IMNT_NCLOOKUP) != 0) {
-		KASSERT(VNODE_TO_VIMPL(vp)->vi_nc_mode != VNOVAL);
-		KASSERT(VNODE_TO_VIMPL(vp)->vi_nc_uid != VNOVAL);
-		KASSERT(VNODE_TO_VIMPL(vp)->vi_nc_gid != VNOVAL);
+	    (vp->v_mount->mnt_iflag & IMNT_NCLOOKUP) != 0 &&
+	    atomic_load_relaxed(&VNODE_TO_VIMPL(vp)->vi_nc_mode) != VNOVAL) {
 		return true;
 	} else {
 		return false;
