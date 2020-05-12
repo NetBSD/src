@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.43 2020/05/12 16:18:04 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.44 2020/05/12 17:04:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1086,6 +1086,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	distinfo *dist;
 	int status;
 	int set, olderror, oldfound;
+	bool entropy_loaded = false;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -1203,7 +1204,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 		/* Don't discard the system's old entropy if any */
 		run_program(RUN_CHROOT | RUN_SILENT,
-			    "/etc/rc.d/random_seed start");
+		    "/etc/rc.d/random_seed start");
+		entropy_loaded = true;
 	}
 
 	/* Configure the system */
@@ -1245,7 +1247,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	umount_mnt2();
 
 	/* Save entropy -- on some systems it's ~all we'll ever get */
-	run_program(RUN_DISPLAY | RUN_CHROOT | RUN_FATAL | RUN_PROGRESS,
+	if (!update || entropy_loaded)
+		run_program(RUN_SILENT | RUN_CHROOT | RUN_ERROR_OK,
 		    "/etc/rc.d/random_seed stop");
 	/* Install/Upgrade complete ... reboot or exit to script */
 	hit_enter_to_continue(success_msg, NULL);
@@ -2197,21 +2200,6 @@ free_install_desc(struct install_partition_desc *install)
 	}
 #endif
 	free(install->infos);
-}
-
-/*
- * Called while at the end of install when targetroot is still mounted
- * and writable
- */
-void
-save_entropy(void)
-{
-
-	if (!binary_available("rndctl"))
-		return;
-
-	run_program(RUN_SILENT|RUN_ERROR_OK, "rndctl -S %s",
-	    target_expand("/var/db/entropy-file"));
 }
 
 #ifdef MD_MAY_SWAP_TO
