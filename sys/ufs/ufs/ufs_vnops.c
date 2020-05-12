@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.252 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.253 2020/05/12 23:17:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.252 2020/04/18 19:18:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.253 2020/05/12 23:17:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -621,7 +621,7 @@ ufs_setattr(void *v)
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
-	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, true);
 	return (error);
 }
 
@@ -649,7 +649,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, true);
 	return (0);
 }
 
@@ -710,7 +710,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 #endif /* QUOTA || QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, true);
 	return (0);
 }
 
