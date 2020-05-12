@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.190 2020/05/08 22:01:55 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.191 2020/05/12 06:32:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.190 2020/05/08 22:01:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.191 2020/05/12 06:32:05 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1320,11 +1320,19 @@ cpu_shutdown(device_t dv, int how)
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-	uint64_t freq = 0, t0, t1;
+	uint64_t freq = 0, freq_from_cpuid, t0, t1;
 	int64_t overhead;
 
 	if ((ci->ci_flags & CPUF_PRIMARY) != 0 && cpu_hascounter()) {
-		freq = cpu_tsc_freq_cpuid(ci);
+		/*
+		 * If it's the first call of this function, try to get TSC
+		 * freq from CPUID by calling cpu_tsc_freq_cpuid().
+		 * The function also set lapic_per_second variable if it's
+		 * known. This is required for Intel's Comet Lake and newer
+		 * processors to set LAPIC timer correctly.
+		 */
+		if (ci->ci_data.cpu_cc_freq == 0)
+			freq = freq_from_cpuid = cpu_tsc_freq_cpuid(ci);
 #if NHPET > 0
 		if (freq == 0)
 			freq = hpet_tsc_freq();
@@ -1351,6 +1359,13 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 			x86_delay(100000);
 			t1 = cpu_counter();
 			freq = (t1 - t0 - overhead) * 10;
+		}
+		if (ci->ci_data.cpu_cc_freq != 0) {
+			freq_from_cpuid = cpu_tsc_freq_cpuid(ci);
+			if ((freq_from_cpuid != 0)
+			    && (freq != freq_from_cpuid))
+				aprint_verbose_dev(ci->ci_dev, "TSC freq "
+				    "calibrated %" PRIu64 " Hz\n", freq);
 		}
 	} else {
 		freq = cpu_info_primary.ci_data.cpu_cc_freq;
