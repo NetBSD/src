@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.125 2020/05/07 19:25:57 maxv Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.126 2020/05/12 09:54:02 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.125 2020/05/07 19:25:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.126 2020/05/12 09:54:02 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -436,7 +436,10 @@ xbd_xenbus_detach(device_t dev, int flags)
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
-	xen_intr_disestablish(sc->sc_ih);
+	if (sc->sc_ih != NULL) {
+		xen_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
 	mutex_enter(&sc->sc_lock);
 	while (xengnt_status(sc->sc_ring_gntref))
@@ -488,9 +491,13 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
-	xen_intr_disestablish(sc->sc_ih);
 
 	mutex_exit(&sc->sc_lock);
+
+	if (sc->sc_ih != NULL) {
+		xen_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
 	xenbus_device_suspend(sc->sc_xbusd);
 	aprint_verbose_dev(dev, "removed event channel %d\n", sc->sc_evtchn);
