@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.3 2020/05/12 10:37:10 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.4 2020/05/12 14:04:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.3 2020/05/12 10:37:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.4 2020/05/12 14:04:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/systm.h>
-#include <sys/sysctl.h>
 #include <sys/kernel.h>
 #include <sys/rndsource.h>
+#include <sys/systm.h>
 
 #include <mips/locore.h>
 #include <mips/cavium/include/iobusvar.h>
@@ -45,26 +44,18 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.3 2020/05/12 10:37:10 simonb Exp $"
 #include <sys/bus.h>
 
 #define RNG_DELAY_CLOCK 91
-#define RNG_DEF_BURST_COUNT 10
-
-int octeon_rnm_burst_count = RNG_DEF_BURST_COUNT;
 
 struct octeon_rnm_softc {
-	device_t sc_dev;
-
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_regh;
-
+	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsrc;	/* /dev/random source */
-	struct callout		sc_rngto;	/* rng timeout */
-	int			sc_rnghz;	/* rng poll time */
 };
 
 static int octeon_rnm_match(device_t, struct cfdata *, void *);
 static void octeon_rnm_attach(device_t, device_t, void *);
-static void octeon_rnm_rng(void *);
-static inline uint64_t octeon_rnm_load(struct octeon_rnm_softc *);
-static inline int octeon_rnm_iobdma(struct octeon_rnm_softc *);
+static void octeon_rnm_rng(size_t, void *);
+static uint64_t octeon_rnm_load(struct octeon_rnm_softc *);
 
 CFATTACH_DECL_NEW(octeon_rnm, sizeof(struct octeon_rnm_softc),
     octeon_rnm_match, octeon_rnm_attach, NULL, NULL);
@@ -94,7 +85,6 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_dev = self;
 	sc->sc_bust = aa->aa_bust;
 	if (bus_space_map(aa->aa_bust, aa->aa_unit->addr, RNM_SIZE,
 	    0, &sc->sc_regh) != 0) {
@@ -110,48 +100,81 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+
+#ifdef notyet
+	/*
+	 * Enable the internal ring oscillator entropy source (ENT),
+	 * but disable the LFSR/SHA-1 engine (RNG) so we get the raw RO
+	 * samples.
+	 *
+	 * XXX simonb
+	 * To access the raw entropy, it looks like this needs to be
+	 * done through the IOBDMA.  Put this in the "Too Hard For Now"
+	 * basket and just use the RNG.
+	 */
+	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
+	    RNM_CTL_STATUS_EXP_ENT | RNM_CTL_STATUS_ENT_EN);
+
+	/*
+	 * Once entropy is enabled, 64 bits of raw entropy is available
+	 * every 8 clock cycles.  Wait a microsecond now before the
+	 * random callback is called to much sure random data is
+	 * available.
+	 */
+	delay(1);
+#else
+	/* Enable the LFSR/SHA-1 engine (RNG). */
 	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
 	    RNM_CTL_STATUS_RNG_EN | RNM_CTL_STATUS_ENT_EN);
 
-	if (hz >= 100)
-		sc->sc_rnghz = hz / 100;
-	else 
-		sc->sc_rnghz = 1;
+	/*
+	 * Once entropy is enabled, a 64-bit random number is available
+	 * every 81 clock cycles.  Wait a microsecond now before the
+	 * random callback is called to much sure random data is
+	 * available.
+	 */
+	delay(1);
+#endif
 
-	rnd_attach_source(&sc->sc_rndsrc, device_xname(sc->sc_dev),
-	    RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
-
-	callout_init(&sc->sc_rngto, 0);
-
-	octeon_rnm_rng(sc);
-
-	aprint_normal("%s: random number generator enabled: %dhz\n",
-	    device_xname(sc->sc_dev), sc->sc_rnghz);
+	rndsource_setcb(&sc->sc_rndsrc, octeon_rnm_rng, sc);
+	rnd_attach_source(&sc->sc_rndsrc, device_xname(self), RND_TYPE_RNG,
+	    RND_FLAG_DEFAULT | RND_FLAG_HASCB);
 }
 
 static void
-octeon_rnm_rng(void *vsc)
+octeon_rnm_rng(size_t nbytes, void *vsc)
 {
 	struct octeon_rnm_softc *sc = vsc;
 	uint64_t rn;
 	int i;
 
-	for (i = 0; i < octeon_rnm_burst_count; i++) {
+	/* Prevent concurrent access from emptying the FIFO.  */
+	mutex_enter(&sc->sc_lock);
+	for (i = 0; i < howmany(nbytes, sizeof(rn)); i++) {
 		rn = octeon_rnm_load(sc);
 		rnd_add_data(&sc->sc_rndsrc,
 				&rn, sizeof(rn), sizeof(rn) * NBBY);
 		/*
 		 * XXX
-		 * delay should be over RNG_DELAY_CLOCK cycles at least,
-		 * we need nanodelay() or clkdelay().
+		 *
+		 * If accessing RNG data, the 512 byte FIFO that gets
+		 * 8 bytes of RNG data added every 81 clock cycles.
+		 *
+		 * If accessing raw oscillator entropy, the 512 byte
+		 * FIFO gets 8 bytes of raw entropy added every 8 clock
+		 * cycles.
+		 *
+		 * We should in theory rate limit calls to
+		 * octeon_rnm_load() to observe this limit.  In practice
+		 * we don't appear to call octeon_rnm_load() anywhere
+		 * near that often.
 		 */
-		delay(1);
 	}
-
-	callout_reset(&sc->sc_rngto, sc->sc_rnghz, octeon_rnm_rng, sc);
+	mutex_exit(&sc->sc_lock);
 }
 
-static inline uint64_t
+static uint64_t
 octeon_rnm_load(struct octeon_rnm_softc *sc)
 {
 	uint64_t addr =
@@ -160,46 +183,4 @@ octeon_rnm_load(struct octeon_rnm_softc *sc)
 	    __BITS64_SET(RNM_OPERATION_BASE_SUB_DID, 0x00);
 
 	return octeon_xkphys_read_8(addr);
-}
-
-static inline int
-octeon_rnm_iobdma(struct octeon_rnm_softc *sc)
-{
-
-	/* XXX */
-	return 0;
-}
-
-SYSCTL_SETUP(octeon_rnm_sysctl, "sysctl octeon_rnm subtree setup")
-{
-	int rc, root_num;
-	const struct sysctlnode *node;
-
-	if ( (rc = sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-			NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
-
-	if ( (rc = sysctl_createv(clog, 0, NULL, &node,
-			CTLFLAG_PERMANENT, CTLTYPE_NODE, "octeon_rnm",
-			SYSCTL_DESCR("octeon_rnm controls"),
-			NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
-		goto err;
-	}
-
-	root_num = node->sysctl_num;
-
-	if ( (rc = sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "burst_count",
-			SYSCTL_DESCR("Burst read count per callout"),
-			NULL, 0, &octeon_rnm_burst_count,
-			0, CTL_HW, root_num, CTL_CREATE, CTL_EOL)) != 0) {
-		goto err;
-	}
-
-	return;
-err:
-	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
