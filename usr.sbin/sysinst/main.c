@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2020/04/22 23:43:12 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2020/05/12 17:26:43 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -450,6 +450,7 @@ toplevel(void)
 		if (chdir(home) != 0)
 			(void)chdir("/");
 	unwind_mounts();
+	clear_swap();
 
 	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
@@ -540,6 +541,7 @@ cleanup(void)
 	chdir(getenv("HOME"));
 	unwind_mounts();
 	umount_mnt2();
+	clear_swap();
 
 	endwin();
 
