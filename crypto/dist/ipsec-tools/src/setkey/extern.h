@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2018/10/14 08:27:39 maxv Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2020/05/12 14:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 void parse_init(void);
 
 /* token.l */
-int parse(FILE **);
+int parse(const char *, FILE *);
 int parse_string(char *);
 
 /* setkey.c */
@@ -46,6 +46,7 @@ void yyerror(const char *);
 #ifdef HAVE_POLICY_FWD
 extern int f_rfcmode;
 #endif
+extern const char *filename;
 extern int lineno;
 extern int exit_now;
 #ifdef HAVE_PFKEY_POLICY_PRIORITY

@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.24 2020/05/10 19:54:49 christos Exp $	*/
+/*	$NetBSD: token.l,v 1.25 2020/05/12 14:29:06 christos Exp $	*/
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
 /*
@@ -336,23 +336,23 @@ yyfatal(const char *s)
 void
 yyerror(const char *s)
 {
-	warnx("line %d: %s at [%s]", lineno, s, yytext);
+	warnx("%s,%d: %s at `%s'", filename, lineno, s, yytext);
 }
 
 int
-parse(FILE **fp)
+parse(const char *fname, FILE *fp)
 {
-	yyin = *fp;
-
+	yyin = fp;
+	filename = fname;
 	lineno = 1;
 	parse_init();
 
 	if (yyparse()) {
-		warnx("line %d: parse failed", lineno);
-		return(-1);
+		warnx("%s,%d: parse failed", filename, lineno);
+		return -1;
 	}
 
-	return(0);
+	return 0;
 }
 
 int
