@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.21 2020/05/12 14:29:06 christos Exp $	*/
+/*	$NetBSD: setkey.c,v 1.22 2020/05/12 16:17:58 christos Exp $	*/
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
 /*
@@ -109,12 +109,6 @@ static void shortdump(struct sadb_msg *);
 static void printdate(void);
 static int32_t gmt2local(time_t);
 static void stdin_loop(void);
-
-#define MODE_SCRIPT	1
-#define MODE_CMDDUMP	2
-#define MODE_CMDFLUSH	3
-#define MODE_PROMISC	4
-#define MODE_STDIN	5
 
 int so;
 
@@ -275,8 +269,7 @@ main(int argc, char **argv)
 
 	so = pfkey_open();
 	if (so < 0) {
-		perror("pfkey_open");
-		exit(1);
+		err(1, "pfkey_open");
 	}
 
 	switch (f_mode) {
@@ -497,7 +490,7 @@ sendkeymsg_spigrep(unsigned int satype, struct addrinfo *srcs,
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	if (setsockopt(so, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-		perror("setsockopt");
+		warn("setsockopt");
 		return NULL;
 	}
     }
@@ -531,14 +524,14 @@ sendkeymsg_spigrep(unsigned int satype, struct addrinfo *srcs,
 	}
 
 	if ((l = send(so, buf, len, 0)) < 0) {
-		perror("send");
+		warn("send");
 		return NULL;
 	}
 
 	m = (struct sadb_msg *)rbuf;
 	do {
 		if ((l = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
-			perror("recv");
+			warn("recv");
 			fail = 1;
 			break;
 		}
@@ -638,7 +631,7 @@ sendkeymsg(char *buf, size_t len)
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	if (setsockopt(so, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-		perror("setsockopt");
+		warn("setsockopt");
 		goto end;
 	}
     }
@@ -664,14 +657,14 @@ again:
 	}
 
 	if ((l = send(so, buf, len, 0)) < 0) {
-		perror("send");
+		warn("send");
 		goto end;
 	}
 
 	msg = (struct sadb_msg *)rbuf;
 	do {
 		if ((l = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
-			perror("recv");
+			warn("recv");
 			goto end;
 		}
 
@@ -706,14 +699,7 @@ postproc(struct sadb_msg *msg, int len)
 #endif
 
 	if (msg->sadb_msg_errno != 0) {
-		char inf[80];
 		const char *errmsg = NULL;
-
-		if (f_mode == MODE_SCRIPT)
-			snprintf(inf, sizeof(inf), "The result of line %d: ",
-			    lineno);
-		else
-			inf[0] = '\0';
 
 		switch (msg->sadb_msg_errno) {
 		case ENOENT:
@@ -734,7 +720,10 @@ postproc(struct sadb_msg *msg, int len)
 		default:
 			errmsg = strerror(msg->sadb_msg_errno);
 		}
-		printf("%s%s.\n", inf, errmsg);
+		if (f_mode == MODE_SCRIPT)
+			warnx("%s,%d: %s", filename, lineno, errmsg);
+		else
+			printf("%s.\n", errmsg);
 		return -1;
 	}
 
@@ -806,18 +795,27 @@ verifypriority(struct sadb_msg *m)
 
 	/* check pfkey message. */
 	if (pfkey_align(m, mhp)) {
-		printf("(%s\n", ipsec_strerror());
+		if (f_mode == MODE_SCRIPT)
+			warnx("%s", ipsec_strerror());
+		else
+			printf("%s\n", ipsec_strerror());
 		return 0;
 	}
 	if (pfkey_check(mhp)) {
-		printf("%s\n", ipsec_strerror());
+		if (f_mode == MODE_SCRIPT)
+			warnx("%s", ipsec_strerror());
+		else
+			printf("%s\n", ipsec_strerror());
 		return 0;
 	}
 
 	xpl = (struct sadb_x_policy *) mhp[SADB_X_EXT_POLICY];
 
 	if (xpl == NULL) {
-		printf("no X_POLICY extension.\n");
+		if (f_mode == MODE_SCRIPT)
+			warnx("no X_POLICY extension.");
+		else
+			printf("no X_POLICY extension.\n");
 		return 0;
 	}
 
@@ -1012,7 +1010,7 @@ printdate(void)
 	int s;
 
 	if (gettimeofday(&tp, NULL) == -1) {
-		perror("gettimeofday");
+		warn("gettimeofday");
 		return;
 	}
 
