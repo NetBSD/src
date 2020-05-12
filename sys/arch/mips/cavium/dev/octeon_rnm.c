@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.2 2019/01/08 19:41:09 jdolecek Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.3 2020/05/12 10:37:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2 2019/01/08 19:41:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.3 2020/05/12 10:37:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,16 +90,25 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 {
 	struct octeon_rnm_softc *sc = device_private(self);
 	struct iobus_attach_args *aa = aux;
-	int status;
+	uint64_t bist_status;
 
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_bust = aa->aa_bust;
-	status = bus_space_map(aa->aa_bust, aa->aa_unit->addr, RNM_SIZE,
-	    0, &sc->sc_regh);
-	if (status != 0)
-		panic(": can't map i/o space");
+	if (bus_space_map(aa->aa_bust, aa->aa_unit->addr, RNM_SIZE,
+	    0, &sc->sc_regh) != 0) {
+		aprint_error_dev(self, "unable to map device\n");
+		return;
+	}
+
+	bist_status = bus_space_read_8(sc->sc_bust, sc->sc_regh,
+	    RNM_BIST_STATUS_OFFSET);
+	if (bist_status) {
+		aprint_error_dev(self, "RNG built in self test failed: %#lx\n",
+		    bist_status);
+		return;
+	}
 
 	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
 	    RNM_CTL_STATUS_RNG_EN | RNM_CTL_STATUS_ENT_EN);
