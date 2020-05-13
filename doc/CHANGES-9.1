@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.56 2020/05/13 12:38:37 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.57 2020/05/13 12:42:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2545,4 +2545,9 @@ sys/arch/x86/pci/if_vmx.c			1.60
 	Fix wrong logic to make the number of vmx(4) TX/RX queues a power
 	of two.
 	[yamaguchi, ticket #902]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.66
+
+	Fix the handling in putpage of the page containing EOF.
+	[chs, ticket #903]
 
