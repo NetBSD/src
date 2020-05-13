@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.55 2020/05/09 08:21:36 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.56 2020/05/13 12:38:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2509,4 +2509,40 @@ external/cddl/osnet/dist/uts/common/fs/zfs/zfs_znode.c 1.33
 	a barrier to guarantee the znode cannot be freed before its log entries
 	are resolved.
 	[hannken, ticket #897]
+
+sys/dev/nvmm/nvmm.c				1.27,1.28
+sys/dev/nvmm/nvmm_internal.h			1.14
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.59
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.53-1.55
+
+	Better diagnostic, better filtering for guest CPU identification,
+	stability fixes.
+	[maxv, ticket #898]
+
+crypto/external/bsd/openssl/lib/libcrypto/evp.inc 1.9
+
+	Detect AES-NI properly in OpenSSL.
+	[nia, ticket #899]
+
+distrib/sets/lists/comp/ad.aarch64		1.40
+sys/arch/aarch64/include/Makefile		1.4
+sys/arch/aarch64/include/trap.h			1.3
+
+	Provide a trap.h (currently empty).
+	[skrll, ticket #900]
+
+lib/libc/arch/aarch64/gen/_setjmp.S		1.4
+lib/libc/arch/aarch64/gen/setjmp.S		1.3
+lib/libc/arch/aarch64/genassym.cf		1.2
+sys/arch/aarch64/include/setjmp.h		1.2
+
+	Avoid changing tpidr_el0 in {set,long}jmp as it breaks TLS as seen
+	in qemu.
+	[skrll, ticket #901]
+
+sys/arch/x86/pci/if_vmx.c			1.60
+
+	Fix wrong logic to make the number of vmx(4) TX/RX queues a power
+	of two.
+	[yamaguchi, ticket #902]
 
