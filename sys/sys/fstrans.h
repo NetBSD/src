@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.13 2019/03/01 09:02:03 hannken Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.14 2020/05/13 09:21:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ void	fstrans_start(struct mount *);
 int	fstrans_start_nowait(struct mount *);
 void	fstrans_start_lazy(struct mount *);
 void	fstrans_done(struct mount *);
+int	fstrans_held(struct mount *);
 int	fstrans_is_owner(struct mount *);
 int	fstrans_mount(struct mount *);
 void	fstrans_unmount(struct mount *);

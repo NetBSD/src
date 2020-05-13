@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.61 2019/06/17 08:07:27 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.62 2020/05/13 09:21:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.61 2019/06/17 08:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.62 2020/05/13 09:21:30 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -566,6 +566,23 @@ fstrans_done(struct mount *mp)
 	fli->fli_trans_cnt = 0;
 	cv_signal(&fstrans_count_cv);
 	mutex_exit(&fstrans_lock);
+}
+
+/*
+ * Check if we hold an lock.
+ */
+int
+fstrans_held(struct mount *mp)
+{
+	struct fstrans_lwp_info *fli;
+	struct fstrans_mount_info *fmi;
+
+	KASSERT(mp != dead_rootmount);
+
+	fli = fstrans_get_lwp_info(mp, true);
+	fmi = fli->fli_mountinfo;
+
+	return (fli->fli_trans_cnt > 0 || fmi->fmi_owner == curlwp);
 }
 
 /*
