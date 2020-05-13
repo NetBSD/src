@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.94 2020/05/07 19:48:57 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.95 2020/05/13 13:19:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.94 2020/05/07 19:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.95 2020/05/13 13:19:38 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -254,6 +254,13 @@ void
 events_init(void)
 {
 	mutex_init(&evtchn_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	(void)events_resume();
+}
+
+bool
+events_resume(void)
+{
 #ifdef XENPV
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
 
@@ -271,6 +278,8 @@ events_init(void)
 	hypervisor_unmask_event(debug_port);
 #endif /* XENPV */
 	x86_enable_intr();		/* at long last... */
+
+	return true;
 }
 
 bool
@@ -293,15 +302,6 @@ events_suspend(void)
 
 	return true;
 }
-
-bool
-events_resume (void)
-{
-	events_init();
-
-	return true;
-}
-
 
 unsigned int
 evtchn_do_event(int evtch, struct intrframe *regs)
