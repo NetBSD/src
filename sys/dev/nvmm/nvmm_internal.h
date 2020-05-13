@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.12.2.1 2019/11/10 12:58:30 martin Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.12.2.2 2020/05/13 12:21:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct nvmm_machine {
 	struct nvmm_hmapping hmap[NVMM_MAX_HMAPPINGS];
 
 	/* CPU */
+	volatile unsigned int ncpus;
 	struct nvmm_cpu cpus[NVMM_MAX_VCPUS];
 
 	/* Implementation-specific */
