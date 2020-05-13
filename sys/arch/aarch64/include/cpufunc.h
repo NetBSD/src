@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.12 2020/04/12 07:49:58 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.13 2020/05/13 06:08:51 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -165,5 +165,87 @@ cpu_earlydevice_va_p(void)
 }
 
 #endif /* _KERNEL */
+
+/* definitions of TAG and PAC in pointers */
+#define AARCH64_ADDRTOP_TAG		__BIT(55)	/* ECR_EL1.TBI[01]=1 */
+#define AARCH64_ADDRTOP_MSB		__BIT(63)	/* ECR_EL1.TBI[01]=0 */
+#define AARCH64_ADDRESS_TAG_MASK	__BITS(63,56)	/* if TCR.TBI[01]=1 */
+#define AARCH64_ADDRESS_PAC_MASK	__BITS(54,48)	/* depend on VIRT_BIT */
+#define AARCH64_ADDRESS_TAGPAC_MASK	\
+			(AARCH64_ADDRESS_TAG_MASK|AARCH64_ADDRESS_PAC_MASK)
+
+#ifdef _KERNEL
+/*
+ * Which is the address space of this VA?
+ * return the space considering TBI. (PAC is not yet)
+ *
+ * return value: AARCH64_ADDRSPACE_{LOWER,UPPER}{_OUTOFRANGE}?
+ */
+#define AARCH64_ADDRSPACE_LOWER			0	/* -> TTBR0 */
+#define AARCH64_ADDRSPACE_UPPER			1	/* -> TTBR1 */
+#define AARCH64_ADDRSPACE_LOWER_OUTOFRANGE	-1	/* certainly fault */
+#define AARCH64_ADDRSPACE_UPPER_OUTOFRANGE	-2	/* certainly fault */
+static inline int
+aarch64_addressspace(vaddr_t va)
+{
+	uint64_t addrtop, tbi;
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
+	if (reg_tcr_el1_read() & tbi) {
+		if (addrtop == 0) {
+			/* lower address, and TBI0 enabled */
+			if ((va & AARCH64_ADDRESS_PAC_MASK) != 0)
+				return AARCH64_ADDRSPACE_LOWER_OUTOFRANGE;
+			return AARCH64_ADDRSPACE_LOWER;
+		}
+		/* upper address, and TBI1 enabled */
+		if ((va & AARCH64_ADDRESS_PAC_MASK) != AARCH64_ADDRESS_PAC_MASK)
+			return AARCH64_ADDRSPACE_UPPER_OUTOFRANGE;
+		return AARCH64_ADDRSPACE_UPPER;
+	}
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_MSB;
+	if (addrtop == 0) {
+		/* lower address, and TBI0 disabled */
+		if ((va & AARCH64_ADDRESS_TAGPAC_MASK) != 0)
+			return AARCH64_ADDRSPACE_LOWER_OUTOFRANGE;
+		return AARCH64_ADDRSPACE_LOWER;
+	}
+	/* upper address, and TBI1 disabled */
+	if ((va & AARCH64_ADDRESS_TAGPAC_MASK) != AARCH64_ADDRESS_TAGPAC_MASK)
+		return AARCH64_ADDRSPACE_UPPER_OUTOFRANGE;
+	return AARCH64_ADDRSPACE_UPPER;
+}
+
+static inline vaddr_t
+aarch64_untag_address(vaddr_t va)
+{
+	uint64_t addrtop, tbi;
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
+	if (reg_tcr_el1_read() & tbi) {
+		if (addrtop == 0) {
+			/* lower address, and TBI0 enabled */
+			return (uint64_t)va & ~AARCH64_ADDRESS_TAG_MASK;
+		}
+		/* upper address, and TBI1 enabled */
+		return (uint64_t)va | AARCH64_ADDRESS_TAG_MASK;
+	}
+
+	/* TBI[01] is disabled, nothing to do */
+	return va;
+}
+
+#endif /* _KERNEL */
+
+static __inline uint64_t
+aarch64_strip_pac(uint64_t __val)
+{
+	if (__val & AARCH64_ADDRTOP_TAG)
+		return __val | AARCH64_ADDRESS_TAGPAC_MASK;
+	return __val & ~AARCH64_ADDRESS_TAGPAC_MASK;
+}
 
 #endif /* _AARCH64_CPUFUNC_H_ */
