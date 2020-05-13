@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.21 2020/04/16 08:03:30 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.22 2020/05/13 05:37:16 chs Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.21 2020/04/16 08:03:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22 2020/05/13 05:37:16 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -291,6 +291,8 @@ show_cpuinfo(struct cpu_info *ci)
 	    &ci->ci_astpending, cpuid, cpuinfobuf.ci_astpending);
 	db_printf("%p cpu[%lu].ci_intr_depth   = %u\n",
 	    &ci->ci_intr_depth, cpuid, cpuinfobuf.ci_intr_depth);
+	db_printf("%p cpu[%lu].ci_biglock_count = %u\n",
+	    &ci->ci_biglock_count, cpuid, cpuinfobuf.ci_biglock_count);
 }
 
 void
