@@ -1,4 +1,4 @@
-/* $NetBSD: umbctl.c,v 1.3 2020/03/22 07:45:02 khorben Exp $ */
+/* $NetBSD: umbctl.c,v 1.4 2020/05/13 21:44:30 khorben Exp $ */
 /*
  * Copyright (c) 2018 Pierre Pronchery <khorben@defora.org>
  *
@@ -179,12 +179,15 @@ static int _umbctl(char const * ifname, int verbose, int argc, char * argv[])
 /* umbctl_file */
 static int _umbctl_file(char const * ifname, char const * filename, int verbose)
 {
+	int ret = 0;
 	int fd;
 	struct ifreq ifr;
 	struct umb_info umbi;
 	struct umb_parameter umbp;
 	FILE * fp;
 	char buf[512];
+	size_t len;
+	int i;
 	int eof;
 	char * tokens[3] = { buf, NULL, NULL };
 	char * p;
@@ -197,18 +200,32 @@ static int _umbctl_file(char const * ifname, char const * filename, int verbose)
 		if(buf[0] == '#')
 			continue;
 		buf[sizeof(buf) - 1] = '\0';
-		if((p = strstr(buf, "=")) != NULL)
+		if((len = strlen(buf)) > 0)
+		{
+			if(buf[len - 1] != '\n')
+			{
+				ret = _error(2, "%s: %s", filename,
+						"Line too long");
+				while((i = fgetc(fp)) != EOF && i != '\n');
+				continue;
+			}
+			else
+				buf[len - 1] = '\0';
+		}
+		if((p = strchr(buf, '=')) != NULL)
 		{
 			tokens[1] = p + 1;
 			*p = '\0';
 		} else
 			tokens[1] = NULL;
-		if(_umbctl_set(ifname, &umbp, (p != NULL) ? 2 : 1, tokens) != 0)
-			break;
+		ret |= _umbctl_set(ifname, &umbp, (p != NULL) ? 2 : 1, tokens)
+			? 2 : 0;
 	}
 	eof = feof(fp);
 	if(fclose(fp) != 0 || !eof)
 		return _error(2, "%s: %s", filename, strerror(errno));
+	if(ret != 0)
+		return ret;
 	if((fd = _umbctl_socket()) < 0)
 		return 2;
 	memset(&ifr, 0, sizeof(ifr));
