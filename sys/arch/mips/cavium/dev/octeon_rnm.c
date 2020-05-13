@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.4 2020/05/12 14:04:50 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.5 2020/05/13 21:09:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -26,8 +26,68 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Cavium Octeon Random Number Generator / Random Number Memory `RNM'
+ *
+ *	The RNM unit consists of:
+ *
+ *	1. 128 ring oscillators
+ *	2. an LFSR/SHA-1 conditioner
+ *	3. a 512-byte FIFO
+ *
+ *	When the unit is enabled, there are three modes of operation:
+ *
+ *	(a) deterministic: the ring oscillators are disabled and the
+ *	    LFSR/SHA-1 conditioner operates on fixed inputs to give
+ *	    reproducible results for testing,
+ *
+ *	(b) conditioned entropy: the ring oscillators are enabled and
+ *	    samples from them are fed through the LFSR/SHA-1
+ *	    conditioner before being put into the FIFO, and
+ *
+ *	(c) raw entropy: the ring oscillators are enabled, and a group
+ *	    of eight of them selected at any one time is sampled and
+ *	    fed into the FIFO.
+ *
+ *	Details:
+ *
+ *	- The FIFO is refilled whenever we read out of it, either with
+ *	  a load address or an IOBDMA operation.
+ *
+ *	- The conditioner takes 81 cycles to produce a 64-bit block of
+ *	  output in the FIFO whether in deterministic or conditioned
+ *	  entropy mode, each block consisting of the first 64 bits of a
+ *	  SHA-1 hash.
+ *
+ *	- A group of eight ring oscillators take 8 cycles to produce a
+ *	  64-bit block of output in the FIFO in raw entropy mode, each
+ *	  block consisting of eight consecutive samples from each RO in
+ *	  parallel.
+ *
+ *	The first sample of each RO always seems to be zero.  Further,
+ *	consecutive samples from a single ring oscillator are not
+ *	independent, so naive debiasing like a von Neumann extractor
+ *	falls flat on its face.
+ *
+ *	We read out one FIFO's worth of raw samples from all 128 ring
+ *	oscillators by going through them round-robin, and without a
+ *	more detailed assessment of the jitter on the physical devices,
+ *	we assume it takes a couple thousand samples of ring
+ *	oscillators (one bit per sample) to reach one bit of entropy,
+ *	so we read out 8 KB to get about 256 bits of entropy.
+ *
+ *	We could use the on-board LFSR/SHA-1 conditioner, but it's not
+ *	clear how many RO samples go into the conditioner, and our
+ *	entropy pool is a perfectly good conditioner itself, so it
+ *	seems there is little advantage -- other than expedience -- to
+ *	using the LFSR/SHA-1 conditioner.
+ *
+ * Reference: Cavium Networks OCTEON Plus CN50XX Hardware Reference
+ * Manual, CN50XX-HM-0.99E PRELIMINARY, July 2008.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.4 2020/05/12 14:04:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.5 2020/05/13 21:09:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,19 +103,31 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.4 2020/05/12 14:04:50 simonb Exp $"
 
 #include <sys/bus.h>
 
-#define RNG_DELAY_CLOCK 91
+//#define	OCTEON_RNM_DEBUG
+
+#define	ENT_DELAY_CLOCK 8	/* cycles for each 64-bit RO sample batch */
+#define	RNG_DELAY_CLOCK 81	/* cycles for each SHA-1 output */
+#define	NROGROUPS	16
+#define	RNG_FIFO_WORDS	(512/sizeof(uint64_t))
 
 struct octeon_rnm_softc {
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_regh;
 	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsrc;	/* /dev/random source */
+	unsigned		sc_rogroup;
 };
 
 static int octeon_rnm_match(device_t, struct cfdata *, void *);
 static void octeon_rnm_attach(device_t, device_t, void *);
 static void octeon_rnm_rng(size_t, void *);
+static void octeon_rnm_reset(struct octeon_rnm_softc *);
+static void octeon_rnm_conditioned_deterministic(struct octeon_rnm_softc *);
+static void octeon_rnm_conditioned_entropy(struct octeon_rnm_softc *);
+static void octeon_rnm_raw_entropy(struct octeon_rnm_softc *, unsigned);
 static uint64_t octeon_rnm_load(struct octeon_rnm_softc *);
+static void octeon_rnm_iobdma(struct octeon_rnm_softc *, uint64_t *, unsigned);
+static void octeon_rnm_delay(uint32_t);
 
 CFATTACH_DECL_NEW(octeon_rnm, sizeof(struct octeon_rnm_softc),
     octeon_rnm_match, octeon_rnm_attach, NULL, NULL);
@@ -64,16 +136,12 @@ static int
 octeon_rnm_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
-	int result = 0;
 
 	if (strcmp(cf->cf_name, aa->aa_name) != 0)
-		goto out;
+		return 0;
 	if (cf->cf_unit != aa->aa_unitno)
-		goto out;
-	result = 1;
-
-out:
-	return result;
+		return 0;
+	return 1;
 }
 
 static void
@@ -81,10 +149,11 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 {
 	struct octeon_rnm_softc *sc = device_private(self);
 	struct iobus_attach_args *aa = aux;
-	uint64_t bist_status;
+	uint64_t bist_status, sample, expected = UINT64_C(0xd654ff35fadf866b);
 
 	aprint_normal("\n");
 
+	/* Map the device registers, all two of them.  */
 	sc->sc_bust = aa->aa_bust;
 	if (bus_space_map(aa->aa_bust, aa->aa_unit->addr, RNM_SIZE,
 	    0, &sc->sc_regh) != 0) {
@@ -92,6 +161,7 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* Verify that the built-in self-test succeeded.  */
 	bist_status = bus_space_read_8(sc->sc_bust, sc->sc_regh,
 	    RNM_BIST_STATUS_OFFSET);
 	if (bist_status) {
@@ -100,43 +170,37 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* Create a mutex to serialize access to the FIFO.  */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
-#ifdef notyet
 	/*
-	 * Enable the internal ring oscillator entropy source (ENT),
-	 * but disable the LFSR/SHA-1 engine (RNG) so we get the raw RO
-	 * samples.
+	 * Reset the core, enable the RNG engine without entropy, wait
+	 * 81 cycles for it to produce a single sample, and draw the
+	 * deterministic sample to test.
 	 *
-	 * XXX simonb
-	 * To access the raw entropy, it looks like this needs to be
-	 * done through the IOBDMA.  Put this in the "Too Hard For Now"
-	 * basket and just use the RNG.
+	 * XXX Verify that the output matches the SHA-1 computation
+	 * described by the data sheet, not just a known answer.
 	 */
-	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
-	    RNM_CTL_STATUS_EXP_ENT | RNM_CTL_STATUS_ENT_EN);
+	octeon_rnm_reset(sc);
+	octeon_rnm_conditioned_deterministic(sc);
+	octeon_rnm_delay(RNG_DELAY_CLOCK*1);
+	sample = octeon_rnm_load(sc);
+	if (sample != expected)
+		aprint_error_dev(self, "self-test: read %016"PRIx64","
+		    " expected %016"PRIx64, sample, expected);
 
 	/*
-	 * Once entropy is enabled, 64 bits of raw entropy is available
-	 * every 8 clock cycles.  Wait a microsecond now before the
-	 * random callback is called to much sure random data is
-	 * available.
+	 * Reset the core again to clear the FIFO, and enable the RNG
+	 * engine with entropy exposed directly.  Start from the first
+	 * group of ring oscillators; as we gather samples we will
+	 * rotate through the rest of them.
 	 */
-	delay(1);
-#else
-	/* Enable the LFSR/SHA-1 engine (RNG). */
-	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
-	    RNM_CTL_STATUS_RNG_EN | RNM_CTL_STATUS_ENT_EN);
+	octeon_rnm_reset(sc);
+	sc->sc_rogroup = 0;
+	octeon_rnm_raw_entropy(sc, sc->sc_rogroup);
+	octeon_rnm_delay(ENT_DELAY_CLOCK*RNG_FIFO_WORDS);
 
-	/*
-	 * Once entropy is enabled, a 64-bit random number is available
-	 * every 81 clock cycles.  Wait a microsecond now before the
-	 * random callback is called to much sure random data is
-	 * available.
-	 */
-	delay(1);
-#endif
-
+	/* Attach the rndsource.  */
 	rndsource_setcb(&sc->sc_rndsrc, octeon_rnm_rng, sc);
 	rnd_attach_source(&sc->sc_rndsrc, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_DEFAULT | RND_FLAG_HASCB);
@@ -145,35 +209,126 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 static void
 octeon_rnm_rng(size_t nbytes, void *vsc)
 {
+	/* Assume we need 2048 RO samples to get one bit of entropy.  */
+	const unsigned BPB = 2048;
+	uint64_t sample[32];
 	struct octeon_rnm_softc *sc = vsc;
-	uint64_t rn;
-	int i;
+	size_t needed = NBBY*nbytes;
+	unsigned i;
 
-	/* Prevent concurrent access from emptying the FIFO.  */
+	/* Sample the ring oscillators round-robin.  */
 	mutex_enter(&sc->sc_lock);
-	for (i = 0; i < howmany(nbytes, sizeof(rn)); i++) {
-		rn = octeon_rnm_load(sc);
-		rnd_add_data(&sc->sc_rndsrc,
-				&rn, sizeof(rn), sizeof(rn) * NBBY);
+	while (needed) {
 		/*
-		 * XXX
-		 *
-		 * If accessing RNG data, the 512 byte FIFO that gets
-		 * 8 bytes of RNG data added every 81 clock cycles.
-		 *
-		 * If accessing raw oscillator entropy, the 512 byte
-		 * FIFO gets 8 bytes of raw entropy added every 8 clock
-		 * cycles.
-		 *
-		 * We should in theory rate limit calls to
-		 * octeon_rnm_load() to observe this limit.  In practice
-		 * we don't appear to call octeon_rnm_load() anywhere
-		 * near that often.
+		 * Switch to the next RO group once we drain the FIFO.
+		 * By the time rnd_add_data is done, we will have
+		 * processed all 512 bytes of the FIFO.  We assume it
+		 * takes at least one cycle per byte (realistically,
+		 * more like ~80cpb to draw from the FIFO and then
+		 * process it with rnd_add_data), so there is no need
+		 * for any other delays.
 		 */
+		sc->sc_rogroup++;
+		sc->sc_rogroup %= NROGROUPS;
+		octeon_rnm_raw_entropy(sc, sc->sc_rogroup);
+
+		/*
+		 * Gather half the FIFO at a time -- we are limited to
+		 * 256 bytes because of limits on the CVMSEG buffer.
+		 */
+		CTASSERT(sizeof sample == 256);
+		CTASSERT(2*__arraycount(sample) == RNG_FIFO_WORDS);
+		for (i = 0; i < 2; i++) {
+			octeon_rnm_iobdma(sc, sample, __arraycount(sample));
+#ifdef OCTEON_RNM_DEBUG
+			hexdump(printf, "rnm", sample, sizeof sample);
+#endif
+			rnd_add_data_sync(&sc->sc_rndsrc, sample,
+			    sizeof sample, NBBY*sizeof(sample)/BPB);
+			needed -= MIN(needed, MAX(1, NBBY*sizeof(sample)/BPB));
+		}
+
+		/* Yield if requested.  */
+		if (__predict_false(curcpu()->ci_schedstate.spc_flags &
+			SPCF_SHOULDYIELD)) {
+			mutex_exit(&sc->sc_lock);
+			preempt();
+			mutex_enter(&sc->sc_lock);
+		}
 	}
 	mutex_exit(&sc->sc_lock);
+
+	/* Zero the sample.  */
+	explicit_memset(sample, 0, sizeof sample);
 }
 
+/*
+ * octeon_rnm_reset(sc)
+ *
+ *	Reset the RNM unit, disabling it and clearing the FIFO.
+ */
+static void
+octeon_rnm_reset(struct octeon_rnm_softc *sc)
+{
+
+	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
+	    RNM_CTL_STATUS_RNG_RST|RNM_CTL_STATUS_RNM_RST);
+}
+
+/*
+ * octeon_rnm_conditioned_deterministic(sc)
+ *
+ *	Switch the RNM unit into the deterministic LFSR/SHA-1 mode with
+ *	no entropy, for the next data loaded into the FIFO.
+ */
+static void
+octeon_rnm_conditioned_deterministic(struct octeon_rnm_softc *sc)
+{
+
+	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
+	    RNM_CTL_STATUS_RNG_EN);
+}
+
+/*
+ * octeon_rnm_conditioned_entropy(sc)
+ *
+ *	Switch the RNM unit to generate ring oscillator samples
+ *	conditioned with an LFSR/SHA-1, for the next data loaded into
+ *	the FIFO.
+ */
+static void __unused
+octeon_rnm_conditioned_entropy(struct octeon_rnm_softc *sc)
+{
+
+	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
+	    RNM_CTL_STATUS_RNG_EN|RNM_CTL_STATUS_ENT_EN);
+}
+
+/*
+ * octeon_rnm_raw_entropy(sc, rogroup)
+ *
+ *	Switch the RNM unit to generate raw ring oscillator samples
+ *	from the specified group of eight ring oscillator.
+ */
+static void
+octeon_rnm_raw_entropy(struct octeon_rnm_softc *sc, unsigned rogroup)
+{
+	uint64_t ctl = 0;
+
+	ctl |= RNM_CTL_STATUS_RNG_EN;	/* enable FIFO */
+	ctl |= RNM_CTL_STATUS_ENT_EN;	/* enable entropy source */
+	ctl |= RNM_CTL_STATUS_EXP_ENT;	/* expose entropy without LFSR/SHA-1 */
+	ctl |= __SHIFTIN(rogroup, RNM_CTL_STATUS_ENT_SEL_MASK);
+
+	bus_space_write_8(sc->sc_bust, sc->sc_regh, RNM_CTL_STATUS_OFFSET,
+	    ctl);
+}
+
+/*
+ * octeon_rnm_load(sc)
+ *
+ *	Load a single 64-bit word out of the FIFO.
+ */
 static uint64_t
 octeon_rnm_load(struct octeon_rnm_softc *sc)
 {
@@ -183,4 +338,45 @@ octeon_rnm_load(struct octeon_rnm_softc *sc)
 	    __BITS64_SET(RNM_OPERATION_BASE_SUB_DID, 0x00);
 
 	return octeon_xkphys_read_8(addr);
+}
+
+/*
+ * octeon_rnm_iobdma(sc, buf, nwords)
+ *
+ *	Load nwords, at most 32, out of the FIFO into buf.
+ */
+static void
+octeon_rnm_iobdma(struct octeon_rnm_softc *sc, uint64_t *buf, unsigned nwords)
+{
+	size_t scraddr = OCTEON_CVMSEG_OFFSET(csm_rnm);
+	uint64_t iobdma =
+	    __SHIFTIN(scraddr/sizeof(uint64_t), IOBDMA_SCRADDR) |
+	    __SHIFTIN(nwords, IOBDMA_LEN) |
+	    __SHIFTIN(RNM_IOBDMA_MAJORDID, IOBDMA_MAJORDID) |
+	    __SHIFTIN(RNM_IOBDMA_SUBDID, IOBDMA_SUBDID);
+
+	KASSERT(nwords < 256);	/* iobdma address restriction */
+	KASSERT(nwords <= 32);	/* octeon_cvmseg_map limitation */
+
+	octeon_iobdma_write_8(iobdma);
+	OCTEON_SYNCIOBDMA;
+	for (; nwords --> 0; scraddr += 8)
+		*buf++ = octeon_cvmseg_read_8(scraddr);
+}
+
+/*
+ * octeon_rnm_delay(ncycles)
+ *
+ *	Wait ncycles, at most UINT32_MAX/2 so we behave reasonably even
+ *	if the cycle counter rolls over.
+ */
+static void
+octeon_rnm_delay(uint32_t ncycles)
+{
+	uint32_t deadline = mips3_cp0_count_read() + ncycles;
+
+	KASSERT(ncycles <= UINT32_MAX/2);
+
+	while ((deadline - mips3_cp0_count_read()) < ncycles)
+		continue;
 }
