@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.52 2020/05/06 16:50:13 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.53 2020/05/13 13:19:38 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.52 2020/05/06 16:50:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.53 2020/05/13 13:19:38 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -131,7 +131,7 @@ xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 static bool
 xenbus_resume(device_t dev, const pmf_qual_t *qual)
 {
-	xb_init_comms(dev);
+	xb_resume_comms(dev);
 	xs_resume();
 
 	return true;
