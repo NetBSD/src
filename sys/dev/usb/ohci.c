@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.302 2020/05/13 18:44:51 jakllsch Exp $	*/
+/*	$NetBSD: ohci.c,v 1.303 2020/05/13 19:33:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.302 2020/05/13 18:44:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.303 2020/05/13 19:33:48 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3463,7 +3463,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	int isread =
 	    (UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN);
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_bufsize,
 	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	if (isoc->next == -1) {
@@ -3642,7 +3642,7 @@ ohci_device_isoc_done(struct usbd_xfer *xfer)
 
 	DPRINTFN(10, "xfer=%#jx, actlen=%jd", (uintptr_t)xfer, xfer->ux_actlen,
 	    0, 0);
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_bufsize,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 }
 
