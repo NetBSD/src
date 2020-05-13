@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.57 2020/05/13 12:42:30 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.58 2020/05/13 18:17:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2550,4 +2550,29 @@ external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.66
 
 	Fix the handling in putpage of the page containing EOF.
 	[chs, ticket #903]
+
+sys/arch/arm/include/mutex.h			1.22,1.23
+sys/arch/x86/include/mutex.h			1.8,1.9
+
+	Remove __MUTEX_PRIVATE conditional in definition of struct kmutex.
+	[chs, ticket #904]
+
+external/cddl/osnet/dist/tools/ctf/cvt/fixup_tdescs.c 1.6
+
+	Revert "Add fixup operation to remove private mutex types for x86."
+	[chs, ticket #905]
+
+sys/uvm/uvm_page.h				1.99
+
+	Include "opt_uvm_page_trkown.h" for UVM_PAGE_TRKOWN.
+	[chs, ticket #906]
+
+lib/libc/gen/pthread_atfork.c			1.13,1.14
+libexec/ld.elf_so/rtld.c			1.204,1.205
+libexec/ld.elf_so/rtld.h			1.139,1.140
+libexec/ld.elf_so/symbols.map			1.3,1.4
+
+	Introduce intermediate locking for fork, so that the  dynamic
+	linker is in a consistent state.
+	[chs, ticket #907]
 
