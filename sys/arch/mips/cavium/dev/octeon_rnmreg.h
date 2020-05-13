@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnmreg.h,v 1.2 2020/05/12 10:12:08 simonb Exp $	*/
+/*	$NetBSD: octeon_rnmreg.h,v 1.3 2020/05/13 21:09:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -59,6 +59,20 @@
 #define	RNM_OPERATION_BASE_MAJOR_DID_SHIFT	43
 #define	RNM_OPERATION_BASE_SUB_DID_SHIFT	40
 #define	RNM_OPERATION_BASE_IO_BIT_SHIFT	48
+
+/* ---- IOBDMA */
+
+/* 4.7 IOBDMA Operations (XXX move me elsewhere) */
+#define	IOBDMA_SCRADDR		__BITS(63,56)
+#define	IOBDMA_LEN		__BITS(55,48)
+#define	IOBDMA_MAJORDID		__BITS(47,43)
+#define	IOBDMA_SUBDID		__BITS(42,40)
+/* reserved 39:36 */
+#define	IOBDMA_OFFSET		__BITS(35,0)
+
+/* 19.1.12 IOBDMA Operations, p. 661 */
+#define	RNM_IOBDMA_MAJORDID	8
+#define	RNM_IOBDMA_SUBDID	0
 
 /* ---- snprintb */
 
