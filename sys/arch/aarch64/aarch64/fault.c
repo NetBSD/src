@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.12 2020/02/29 21:34:37 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.13 2020/05/13 06:08:51 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.12 2020/02/29 21:34:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.13 2020/05/13 06:08:51 ryo Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.12 2020/02/29 21:34:37 ryo Exp $");
 
 #include <uvm/uvm.h>
 
+#include <aarch64/cpufunc.h>
 #include <aarch64/frame.h>
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.9 2020/04/12 07:49:58 maxv Exp $ */
+/* $NetBSD: db_trace.c,v 1.10 2020/05/13 06:08:51 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9 2020/04/12 07:49:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2020/05/13 06:08:51 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
+#include <aarch64/cpufunc.h>
 #include <aarch64/db_machdep.h>
 #include <aarch64/machdep.h>
 #include <aarch64/armreg.h>
@@ -236,7 +237,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		lastfp = lastlr = lr = fp = 0;
 		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
-		lr = ptr_strip_pac(lr);
+		lr = aarch64_strip_pac(lr);
 
 		pr_traceaddr("fp", fp, lr - 4, flags, pr);
 	}
@@ -252,7 +253,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		 */
 		db_read_bytes(lastfp + 0, sizeof(fp), (char *)&fp);
 		db_read_bytes(lastfp + 8, sizeof(lr), (char *)&lr);
-		lr = ptr_strip_pac(lr);
+		lr = aarch64_strip_pac(lr);
 
 		if (!trace_user && IN_USER_VM_ADDRESS(lr))
 			break;
@@ -270,7 +271,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			lr = fp = 0;
 			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
-			lr = ptr_strip_pac(lr);
+			lr = aarch64_strip_pac(lr);
 
 			/*
 			 * no need to display the frame of el0_trap
