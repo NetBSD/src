@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.126 2020/05/12 09:54:02 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.127 2020/05/13 16:17:46 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.126 2020/05/12 09:54:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.127 2020/05/13 16:17:46 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -492,12 +492,22 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
 
-	mutex_exit(&sc->sc_lock);
+#ifdef DIAGNOSTIC
+	/* Check that all requests are finished and device ready for resume */
+	int reqcnt = 0;
+	struct xbd_req *req;
+	SLIST_FOREACH(req, &sc->sc_xbdreq_head, req_next)
+		reqcnt++;
+	KASSERT(reqcnt == __arraycount(sc->sc_reqs));
 
-	if (sc->sc_ih != NULL) {
-		xen_intr_disestablish(sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
+	int incnt = 0;
+	struct xbd_indirect *in;
+	SLIST_FOREACH(in, &sc->sc_indirect_head, in_next)
+		incnt++;
+	KASSERT(incnt == __arraycount(sc->sc_indirect));
+#endif
+
+	mutex_exit(&sc->sc_lock);
 
 	xenbus_device_suspend(sc->sc_xbusd);
 	aprint_verbose_dev(dev, "removed event channel %d\n", sc->sc_evtchn);
@@ -517,13 +527,7 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 
 	sc = device_private(dev);
 
-	if (sc->sc_backend_status == BLKIF_STATE_SUSPENDED) {
-		/*
-		 * Device was suspended, so ensure that access associated to
-		 * the block I/O ring is revoked.
-		 */
-		xengnt_revoke_access(sc->sc_ring_gntref);
-	}
+	/* All grants were removed during suspend */
 	sc->sc_ring_gntref = GRANT_INVALID_REF;
 
 	/* Initialize ring */
@@ -561,6 +565,10 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	if (error)
 		goto abort_resume;
 
+	if (sc->sc_ih != NULL) {
+		xen_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
 	sc->sc_ih = xen_intr_establish_xname(-1, &xen_pic, sc->sc_evtchn,
