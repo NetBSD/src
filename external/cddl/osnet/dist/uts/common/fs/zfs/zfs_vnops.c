@@ -6066,9 +6066,29 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 		goto out_unbusy;
 	}
 
+	/*
+	 * Calculate the length and assert that no whole pages are past EOF.
+	 * This check is equivalent to "off + len <= round_page(zp->z_size)",
+	 * with gyrations to avoid signed integer overflow.
+	 */
+
 	off = pp[0]->offset;
 	len = count * PAGESIZE;
-	KASSERT(off + len <= round_page(zp->z_size));
+	KASSERT(off <= zp->z_size);
+	KASSERT(len <= round_page(zp->z_size));
+	KASSERT(off <= round_page(zp->z_size) - len);
+
+	/*
+	 * If EOF is within the last page, reduce len to avoid writing past
+	 * the file size in the ZFS buffer.  Assert that
+	 * "off + len <= zp->z_size", again avoiding signed integer overflow.
+	 */
+
+	if (len > zp->z_size - off) {
+		len = zp->z_size - off;
+	}
+	KASSERT(len <= zp->z_size);
+	KASSERT(off <= zp->z_size - len);
 
 	if (zfs_owner_overquota(zfsvfs, zp, B_FALSE) ||
 	    zfs_owner_overquota(zfsvfs, zp, B_TRUE)) {
