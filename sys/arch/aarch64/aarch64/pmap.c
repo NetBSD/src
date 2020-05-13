@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2020/04/18 11:00:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2020/05/13 10:13:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2020/04/18 11:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2020/05/13 10:13:29 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -727,24 +727,25 @@ pmap_growkernel(vaddr_t maxkvaddr)
 }
 
 bool
-pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
-    bool *coherencyp)
+pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
-	if (coherencyp)
-		*coherencyp = false;
 
-	return pmap_extract(pm, va, pap);
+	return pmap_extract_coherency(pm, va, pap, NULL);
 }
 
 bool
-pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
+pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
+    bool *coherencyp)
 {
 	pt_entry_t *ptep, pte;
 	paddr_t pa;
 	vsize_t blocksize = 0;
 	int space;
+	bool coherency;
 	extern char __kernel_text[];
 	extern char _end[];
+
+	coherency = false;
 
 	space = aarch64_addressspace(va);
 	if (pm == pmap_kernel()) {
@@ -791,9 +792,19 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		return false;
 	pa = lxpde_pa(pte) + (va & (blocksize - 1));
 
+	switch (pte & LX_BLKPAG_ATTR_MASK) {
+	case LX_BLKPAG_ATTR_NORMAL_NC:
+	case LX_BLKPAG_ATTR_DEVICE_MEM:
+	case LX_BLKPAG_ATTR_DEVICE_MEM_SO:
+		coherency = true;
+		break;
+	}
+
  mapped:
 	if (pap != NULL)
 		*pap = pa;
+	if (coherencyp != NULL)
+		*coherencyp = coherency;
 	return true;
 }
 
