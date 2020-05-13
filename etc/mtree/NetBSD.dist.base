@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.214 2020/05/01 22:26:11 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.215 2020/05/13 21:34:01 nakayama Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -157,7 +157,6 @@
 ./usr/include/fs/nilfs
 ./usr/include/fs/ptyfs
 ./usr/include/fs/puffs
-./usr/include/fs/smbfs
 ./usr/include/fs/sysvbfs
 ./usr/include/fs/tmpfs
 ./usr/include/fs/udf
@@ -233,7 +232,6 @@
 ./usr/include/netipsec
 ./usr/include/netmpls
 ./usr/include/netpgp
-./usr/include/netsmb
 ./usr/include/nfs
 ./usr/include/ntfs
 ./usr/include/objc
@@ -414,7 +412,6 @@
 ./usr/share/examples/rpcapd
 ./usr/share/examples/rtadvd
 ./usr/share/examples/slip
-./usr/share/examples/smbfs
 ./usr/share/examples/syslogd
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
