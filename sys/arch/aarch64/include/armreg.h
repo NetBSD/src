@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.42 2020/05/11 03:00:57 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.43 2020/05/13 06:08:51 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -806,17 +806,6 @@ AARCH64REG_WRITE_INLINE(sctlr_el1)
 #define	SCTLR_ATA0		__BIT(42)
 #define	SCTLR_ATA		__BIT(43)
 #define	SCTLR_DSSBS		__BIT(44)
-
-#define	PTR_VA_RANGE_SELECT	__BIT(55)
-#define	PTR_PAC_MASK		(__BITS(63,56) | __BITS(54, 48))
-
-static __inline uint64_t
-ptr_strip_pac(uint64_t __val)
-{
-	if (__val & PTR_VA_RANGE_SELECT)
-		return __val | PTR_PAC_MASK;
-	return __val & ~PTR_PAC_MASK;
-}
 
 // current EL stack pointer
 static __inline uint64_t
