@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.301 2020/04/05 20:59:38 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.302 2020/05/13 18:44:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.301 2020/04/05 20:59:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.302 2020/05/13 18:44:51 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -411,7 +411,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
 		    OHCI_ED_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
-			return 0;
+			return NULL;
 
 		mutex_enter(&sc->sc_lock);
 		for (i = 0; i < OHCI_SED_CHUNK; i++) {
