@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.37 2020/04/25 15:26:18 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.38 2020/05/13 16:13:14 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.37 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.38 2020/05/13 16:13:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,13 +102,6 @@ xengnt_init(void)
 	 */
 	gnt_nr_grant_frames = gnt_max_grant_frames;
 
-
-	struct gnttab_set_version gntversion;
-	gntversion.version = 2;
-	rc = HYPERVISOR_grant_table_op(GNTTABOP_set_version, &gntversion, 1);
-	if (rc < 0 || gntversion.version != 2)
-		panic("GNTTABOP_set_version 2 failed %d", rc);
-
 	nr_grant_entries =
 	    gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE;
 
@@ -132,7 +125,6 @@ xengnt_init(void)
 	mutex_init(&grant_lock, MUTEX_DEFAULT, IPL_VM);
 
 	xengnt_resume();
-
 }
 
 /*
@@ -141,7 +133,14 @@ xengnt_init(void)
 bool
 xengnt_resume(void)
 {
+	int rc;
 	int previous_nr_grant_frames = gnt_nr_grant_frames;
+
+	struct gnttab_set_version gntversion;
+	gntversion.version = 2;
+	rc = HYPERVISOR_grant_table_op(GNTTABOP_set_version, &gntversion, 1);
+	if (rc < 0 || gntversion.version != 2)
+		panic("GNTTABOP_set_version 2 failed %d", rc);
 
 	last_gnt_entry = 0;
 	gnt_nr_grant_frames = 0;
