@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2686 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2687 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -193,3 +193,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xvif(4): add support for feature-sg & jumbo frames [jdolecek 20200503]
 	xen: Support MSI for XenPV [jdolecek 20200504]
 	hppa: Enable modules in GENERIC by default.  [skrll 20200511]
+	xen: enable MULTIPROCESSOR for Xen dom0. [bouyer 20200513]
