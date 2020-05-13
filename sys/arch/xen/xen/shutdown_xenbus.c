@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.8 2020/04/07 11:47:06 jdolecek Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.9 2020/05/13 22:13:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.8 2020/04/07 11:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.9 2020/05/13 22:13:49 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -97,8 +97,9 @@ again:
 	}
 	error = xenbus_read(xbt, SHUTDOWN_PATH, SHUTDOWN_NAME,
 	    reqstr, sizeof(reqstr));
-	if (error) {
-		if (error != ENOENT) {
+	/* Ignore if read error or empty value */
+	if (error || reqstr[0] == '\0') {
+		if (error && error != ENOENT) {
 			printf("%s: xenbus_read %d\n", __func__, error);
 		}
 		error = xenbus_transaction_end(xbt, 1);
@@ -109,7 +110,8 @@ again:
 		return;
 	}
 
-	error = xenbus_rm(xbt, SHUTDOWN_PATH, SHUTDOWN_NAME);
+	/* Acknowledge the command */
+	error = xenbus_write(xbt, SHUTDOWN_PATH, SHUTDOWN_NAME, "");
 	if (error) {
 		printf("%s: xenbus_rm %d\n", __func__, error);
 	}
