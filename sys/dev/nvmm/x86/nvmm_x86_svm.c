@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.3 2019/11/25 16:39:30 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.4 2020/05/13 12:21:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.3 2019/11/25 16:39:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.4 2020/05/13 12:21:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2266,21 +2266,25 @@ svm_ident(void)
 		return false;
 	}
 	if (!(cpu_feature[3] & CPUID_SVM)) {
+		printf("NVMM: SVM not supported\n");
 		return false;
 	}
 
 	if (curcpu()->ci_max_ext_cpuid < 0x8000000a) {
+		printf("NVMM: CPUID leaf not available\n");
 		return false;
 	}
 	x86_cpuid(0x8000000a, descs);
 
 	/* Want Nested Paging. */
 	if (!(descs[3] & CPUID_AMD_SVM_NP)) {
+		printf("NVMM: SVM-NP not supported\n");
 		return false;
 	}
 
 	/* Want nRIP. */
 	if (!(descs[3] & CPUID_AMD_SVM_NRIPS)) {
+		printf("NVMM: SVM-NRIPS not supported\n");
 		return false;
 	}
 
@@ -2288,6 +2292,7 @@ svm_ident(void)
 
 	msr = rdmsr(MSR_VMCR);
 	if ((msr & VMCR_SVMED) && (msr & VMCR_LOCK)) {
+		printf("NVMM: SVM disabled in BIOS\n");
 		return false;
 	}
 

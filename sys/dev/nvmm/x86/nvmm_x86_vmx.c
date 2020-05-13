@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.5 2020/02/10 19:05:05 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.6 2020/05/13 12:21:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.5 2020/02/10 19:05:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.6 2020/05/13 12:21:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.5 2020/02/10 19:05:05 martin
 #include <sys/cpu.h>
 #include <sys/xcall.h>
 #include <sys/mman.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -367,7 +368,7 @@ vmx_vmclear(paddr_t *pa)
 #define		INTR_INFO_ERROR			__BIT(11)
 #define		INTR_INFO_VALID			__BIT(31)
 #define VMCS_ENTRY_EXCEPTION_ERROR		0x00004018
-#define VMCS_ENTRY_INST_LENGTH			0x0000401A
+#define VMCS_ENTRY_INSTRUCTION_LENGTH		0x0000401A
 #define VMCS_TPR_THRESHOLD			0x0000401C
 #define VMCS_PROCBASED_CTLS2			0x0000401E
 #define		PROC_CTLS2_VIRT_APIC_ACCESSES	__BIT(0)
@@ -1137,9 +1138,11 @@ error:
 }
 
 static void
-vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
+vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    uint64_t eax, uint64_t ecx)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	unsigned int ncpus;
 	uint64_t cr4;
 
 	switch (eax) {
@@ -1185,6 +1188,33 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x0000000B:
+		switch (ecx) {
+		case 0: /* Threads */
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] =
+			    __SHIFTIN(ecx, CPUID_TOP_LVLNUM) |
+			    __SHIFTIN(CPUID_TOP_LVLTYPE_SMT, CPUID_TOP_LVLTYPE);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = vcpu->cpuid;
+			break;
+		case 1: /* Cores */
+			ncpus = atomic_load_relaxed(&mach->ncpus);
+			cpudata->gprs[NVMM_X64_GPR_RAX] = ilog2(ncpus);
+			cpudata->gprs[NVMM_X64_GPR_RBX] = ncpus;
+			cpudata->gprs[NVMM_X64_GPR_RCX] =
+			    __SHIFTIN(ecx, CPUID_TOP_LVLNUM) |
+			    __SHIFTIN(CPUID_TOP_LVLTYPE_CORE, CPUID_TOP_LVLTYPE);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = vcpu->cpuid;
+			break;
+		default:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0; /* LVLTYPE_INVAL */
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
+		}
 		break;
 	case 0x0000000D:
 		if (vmx_xcr0_mask == 0) {
@@ -1267,7 +1297,7 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
 	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
 
-	vmx_inkernel_handle_cpuid(vcpu, eax, ecx);
+	vmx_inkernel_handle_cpuid(mach, vcpu, eax, ecx);
 
 	for (i = 0; i < VMX_NCPUIDS; i++) {
 		if (!cpudata->cpuidpresent[i]) {
@@ -1900,7 +1930,7 @@ vmx_htlb_flush_ack(struct vmx_cpudata *cpudata, uint64_t machgen)
 static inline void
 vmx_exit_evt(struct vmx_cpudata *cpudata)
 {
-	uint64_t info, err;
+	uint64_t info, err, inslen;
 
 	cpudata->evt_pending = false;
 
@@ -1912,6 +1942,14 @@ vmx_exit_evt(struct vmx_cpudata *cpudata)
 
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
 	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, err);
+
+	switch (__SHIFTOUT(info, INTR_INFO_TYPE)) {
+	case INTR_TYPE_SW_INT:
+	case INTR_TYPE_PRIV_SW_EXC:
+	case INTR_TYPE_SW_EXC:
+		inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
+		vmx_vmwrite(VMCS_ENTRY_INSTRUCTION_LENGTH, inslen);
+	}
 
 	cpudata->evt_pending = true;
 }
@@ -3008,17 +3046,21 @@ vmx_ident(void)
 
 	msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
 	if ((msr & IA32_FEATURE_CONTROL_LOCK) == 0) {
+		printf("NVMM: VMX disabled in BIOS\n");
 		return false;
 	}
 	if ((msr & IA32_FEATURE_CONTROL_OUT_SMX) == 0) {
+		printf("NVMM: VMX disabled in BIOS\n");
 		return false;
 	}
 
 	msr = rdmsr(MSR_IA32_VMX_BASIC);
 	if ((msr & IA32_VMX_BASIC_IO_REPORT) == 0) {
+		printf("NVMM: I/O reporting not supported\n");
 		return false;
 	}
 	if (__SHIFTOUT(msr, IA32_VMX_BASIC_MEM_TYPE) != MEM_TYPE_WB) {
+		printf("NVMM: WB memory not supported\n");
 		return false;
 	}
 
@@ -3027,6 +3069,7 @@ vmx_ident(void)
 	vmx_cr0_fixed1 = rdmsr(MSR_IA32_VMX_CR0_FIXED1) | (CR0_PG|CR0_PE);
 	ret = vmx_check_cr(rcr0(), vmx_cr0_fixed0, vmx_cr0_fixed1);
 	if (ret == -1) {
+		printf("NVMM: CR0 requirements not satisfied\n");
 		return false;
 	}
 
@@ -3034,6 +3077,7 @@ vmx_ident(void)
 	vmx_cr4_fixed1 = rdmsr(MSR_IA32_VMX_CR4_FIXED1);
 	ret = vmx_check_cr(rcr4() | CR4_VMXE, vmx_cr4_fixed0, vmx_cr4_fixed1);
 	if (ret == -1) {
+		printf("NVMM: CR4 requirements not satisfied\n");
 		return false;
 	}
 
@@ -3043,6 +3087,7 @@ vmx_ident(void)
 	    VMX_PINBASED_CTLS_ONE, VMX_PINBASED_CTLS_ZERO,
 	    &vmx_pinbased_ctls);
 	if (ret == -1) {
+		printf("NVMM: pin-based-ctls requirements not satisfied\n");
 		return false;
 	}
 	ret = vmx_init_ctls(
@@ -3050,6 +3095,7 @@ vmx_ident(void)
 	    VMX_PROCBASED_CTLS_ONE, VMX_PROCBASED_CTLS_ZERO,
 	    &vmx_procbased_ctls);
 	if (ret == -1) {
+		printf("NVMM: proc-based-ctls requirements not satisfied\n");
 		return false;
 	}
 	ret = vmx_init_ctls(
@@ -3057,6 +3103,7 @@ vmx_ident(void)
 	    VMX_PROCBASED_CTLS2_ONE, VMX_PROCBASED_CTLS2_ZERO,
 	    &vmx_procbased_ctls2);
 	if (ret == -1) {
+		printf("NVMM: proc-based-ctls2 requirements not satisfied\n");
 		return false;
 	}
 	ret = vmx_check_ctls(
@@ -3070,6 +3117,7 @@ vmx_ident(void)
 	    VMX_ENTRY_CTLS_ONE, VMX_ENTRY_CTLS_ZERO,
 	    &vmx_entry_ctls);
 	if (ret == -1) {
+		printf("NVMM: entry-ctls requirements not satisfied\n");
 		return false;
 	}
 	ret = vmx_init_ctls(
@@ -3077,17 +3125,21 @@ vmx_ident(void)
 	    VMX_EXIT_CTLS_ONE, VMX_EXIT_CTLS_ZERO,
 	    &vmx_exit_ctls);
 	if (ret == -1) {
+		printf("NVMM: exit-ctls requirements not satisfied\n");
 		return false;
 	}
 
 	msr = rdmsr(MSR_IA32_VMX_EPT_VPID_CAP);
 	if ((msr & IA32_VMX_EPT_VPID_WALKLENGTH_4) == 0) {
+		printf("NVMM: 4-level page tree not supported\n");
 		return false;
 	}
 	if ((msr & IA32_VMX_EPT_VPID_INVEPT) == 0) {
+		printf("NVMM: INVEPT not supported\n");
 		return false;
 	}
 	if ((msr & IA32_VMX_EPT_VPID_INVVPID) == 0) {
+		printf("NVMM: INVVPID not supported\n");
 		return false;
 	}
 	if ((msr & IA32_VMX_EPT_VPID_FLAGS_AD) != 0) {
@@ -3096,6 +3148,7 @@ vmx_ident(void)
 		pmap_ept_has_ad = false;
 	}
 	if (!(msr & IA32_VMX_EPT_VPID_UC) && !(msr & IA32_VMX_EPT_VPID_WB)) {
+		printf("NVMM: EPT UC/WB memory types not supported\n");
 		return false;
 	}
 
