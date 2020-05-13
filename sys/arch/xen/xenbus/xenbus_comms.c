@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.23 2020/05/06 16:50:13 bouyer Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.23 2020/05/06 16:50:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -219,10 +219,16 @@ xb_read(void *data, unsigned len)
 int
 xb_init_comms(device_t dev)
 {
-	int evtchn;
-
 	mutex_init(&xenstore_lock, MUTEX_DEFAULT, IPL_TTY);
 	cv_init(&xenstore_cv, "xsio");
+
+	return xb_resume_comms(dev);
+}
+
+int
+xb_resume_comms(device_t dev)
+{
+	int evtchn;
 
 	evtchn = xen_start_info.store_evtchn;
 
