@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.9 2020/05/07 17:03:51 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.10 2020/05/13 12:40:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -138,4 +138,10 @@ bin/rcp/rcp.c					1.50
 	as this would lead to a desynchronization of the protocol and
 	further files or directories to be ignored or corrupted.
 	[aymeric, ticket #1546]
+
+sys/arch/x86/pci/if_vmx.c			1.60
+
+	Fix wrong logic to make the number of vmx(4) TX/RX queues a power
+	of two.
+	[yamaguchi, ticket #1547]
 
