@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.32 2019/03/22 11:09:43 uki Exp $
+# $NetBSD: ad.aarch64,v 1.32.2.1 2020/05/13 12:31:11 martin Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -44,7 +44,7 @@
 ./usr/include/aarch64/signal.h			comp-c-include
 ./usr/include/aarch64/sljit_machdep.h		comp-c-include
 ./usr/include/aarch64/sysarch.h			comp-c-include
-./usr/include/aarch64/trap.h			comp-obsolete		obsolete
+./usr/include/aarch64/trap.h			comp-c-include
 ./usr/include/aarch64/types.h			comp-c-include
 ./usr/include/aarch64/vmparam.h			comp-c-include
 ./usr/include/aarch64/wchar_limits.h		comp-c-include
