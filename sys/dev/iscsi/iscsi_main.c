@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.32 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.33 2020/05/13 21:59:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ iscsi_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	aprint_normal("%s: attached.  major = %d\n", iscsi_cd.cd_name,
+	aprint_verbose("%s: attached.  major = %d\n", iscsi_cd.cd_name,
 	    cdevsw_lookup_major(&iscsi_cdevsw));
 }
 
