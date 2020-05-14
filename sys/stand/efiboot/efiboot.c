@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.17 2019/09/26 14:28:14 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.18 2020/05/14 19:20:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 #include "efiblock.h"
 #include "efifdt.h"
 #include "efiacpi.h"
+#include "efirng.h"
 
 #include <sys/reboot.h>
 
@@ -99,6 +100,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	efi_net_probe();
 	efi_file_system_probe();
 	efi_block_probe();
+	efi_rng_probe();
 
 	boot();
 
