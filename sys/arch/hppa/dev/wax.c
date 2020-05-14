@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.2 2020/05/14 06:13:39 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.2 2020/05/14 06:13:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,8 @@ waxattach(device_t parent, device_t self, void *aux)
 	s = splhigh();
 	sc->sc_regs->wax_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_regs->wax_icr = 0;
-	sc->sc_regs->wax_imr = ~0U;
-	(void)sc->sc_regs->wax_irr;
 	sc->sc_regs->wax_imr = 0;
+	(void)sc->sc_regs->wax_irr;
 	splx(s);
 
 	/* Establish the interrupt register. */
