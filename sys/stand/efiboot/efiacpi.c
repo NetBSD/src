@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.6 2020/01/25 11:24:20 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.7 2020/05/14 19:19:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ efi_acpi_show(void)
 	    rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
 
 	if (smbios3_table)
-		printf("SMBIOS: %s", efi_acpi_get_model());
+		printf("SMBIOS: %s\n", efi_acpi_get_model());
 }
 
 int
