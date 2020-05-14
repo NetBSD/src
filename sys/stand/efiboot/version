@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.14 2019/12/18 21:46:03 riastradh Exp $
+$NetBSD: version,v 1.15 2020/05/14 19:25:16 riastradh Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -18,3 +18,4 @@ is taken as the current.
 1.11:	Add full UEFI memory map to /chosen node.
 1.12:	Derive ACPI model string from SMBIOS.
 1.13:	Add rndseed support.
+1.14:	Add EFI RNG support.
