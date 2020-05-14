@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.55 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.56 2020/05/14 19:36:02 jdolecek Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -71,7 +71,6 @@ int xen_intr_biglock_wrapper(void *);
 #endif
 
 #if defined(DOM0OPS) || NPCI > 0
-int xen_vec_alloc(int);
 int xen_pic_to_gsi(struct pic *, int);
 #endif /* defined(DOM0OPS) || NPCI > 0 */
 
