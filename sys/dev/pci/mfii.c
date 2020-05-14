@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.6 2019/11/27 19:21:36 maxv Exp $ */
+/* $NetBSD: mfii.c,v 1.7 2020/05/14 08:34:18 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.6 2019/11/27 19:21:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.7 2020/05/14 08:34:18 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1028,7 +1028,7 @@ mfii_shutdown(device_t dev, int how)
 	struct mfii_softc	*sc = device_private(dev);
 	struct mfii_ccb *ccb;
 	union mfi_mbox		mbox;
-	bool rv = true;;
+	bool rv = true;
 
 	memset(&mbox, 0, sizeof(mbox));
 

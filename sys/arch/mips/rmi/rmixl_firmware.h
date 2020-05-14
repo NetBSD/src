@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_firmware.h,v 1.3 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_firmware.h,v 1.4 2020/05/14 08:34:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ typedef struct rmixlfw_cpu_wakeup_info {
 	int argc;
 	uint32_t argv[XLR_MAX_ARGV];		/* pointers ... */
 	char argv_buf[XLR_ARGV_BUF_SIZE];	/* ... storage */
-	int valid_tlb_entries;;
+	int valid_tlb_entries;
 	struct lib_cpu_tlb_mapping tlb_map[MAX_TLB_MAPPINGS];
 	struct core_segment_info seg_info[MAX_ELF_SEGMENTS];
 	int envc;
