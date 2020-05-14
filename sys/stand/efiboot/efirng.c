@@ -1,4 +1,4 @@
-/*	$NetBSD: efirng.c,v 1.1 2020/05/14 19:19:08 riastradh Exp $	*/
+/*	$NetBSD: efirng.c,v 1.2 2020/05/14 23:09:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -79,13 +79,16 @@ void
 efi_rng_show(void)
 {
 	EFI_RNG_ALGORITHM alglist[10];
-	UINTN i, j, alglistsz = sizeof alglist;
+	UINTN i, j, alglistsz = sizeof(alglist);
 	EFI_STATUS status;
+
+	if (!efi_rng_available())
+		return;
 
 	/* Query the list of supported algorithms.  */
 	status = uefi_call_wrapper(rng->GetInfo, 3, rng, &alglistsz, alglist);
 	if (EFI_ERROR(status)) {
-		Print(L"efirng: GetInfo: %r\n", status);
+		Print(L"RNG: GetInfo: %r\n", status);
 		return;
 	}
 
@@ -115,7 +118,7 @@ efi_rng(void *buf, UINTN len)
 {
 	EFI_STATUS status;
 
-	if (rng == NULL)
+	if (!efi_rng_available())
 		return EIO;
 
 	status = uefi_call_wrapper(rng->GetRNG, 3, rng, &RngAlgorithmRawGuid,
