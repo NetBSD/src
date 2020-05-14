@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.22 2020/05/14 19:20:08 riastradh Exp $ */
+/* $NetBSD: efifdt.c,v 1.23 2020/05/14 19:21:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -185,6 +185,22 @@ efi_fdt_show(void)
 	printf("]\n");
 }
 
+static int
+efi_fdt_chosen(void)
+{
+	int chosen;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data,
+		    fdt_path_offset(fdt_data, "/"),
+		    FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	return chosen;
+}
+
 void
 efi_fdt_memory_map(void)
 {
@@ -200,11 +216,7 @@ efi_fdt_memory_map(void)
 	if (memory < 0)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
 
-	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
-	if (chosen < 0)
-		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
-	if (chosen < 0)
-		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+	chosen = efi_fdt_chosen();
 
 	fdt_delprop(fdt_data, memory, "reg");
 
@@ -335,11 +347,7 @@ efi_fdt_bootargs(const char *bootargs)
 	uint8_t macaddr[6];
 	int chosen;
 
-	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
-	if (chosen < 0)
-		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
-	if (chosen < 0)
-		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+	chosen = efi_fdt_chosen();
 
 	if (*bootargs)
 		fdt_setprop_string(fdt_data, chosen, "bootargs", bootargs);
@@ -381,12 +389,7 @@ efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
 	if (initrd_size == 0)
 		return;
 
-	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
-	if (chosen < 0)
-		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
-	if (chosen < 0)
-		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
-
+	chosen = efi_fdt_chosen();
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-start", initrd_addr);
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-end", initrd_addr + initrd_size);
 }
@@ -400,14 +403,7 @@ efi_fdt_rndseed(u_long rndseed_addr, u_long rndseed_size)
 	if (rndseed_size == 0)
 		return;
 
-	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
-	if (chosen < 0)
-		chosen = fdt_add_subnode(fdt_data,
-		    fdt_path_offset(fdt_data, "/"),
-		    FDT_CHOSEN_NODE_NAME);
-	if (chosen < 0)
-		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
-
+	chosen = efi_fdt_chosen();
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-start",
 	    rndseed_addr);
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-end",
@@ -423,14 +419,7 @@ efi_fdt_efirng(u_long efirng_addr, u_long efirng_size)
 	if (efirng_size == 0)
 		return;
 
-	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
-	if (chosen < 0)
-		chosen = fdt_add_subnode(fdt_data,
-		    fdt_path_offset(fdt_data, "/"),
-		    FDT_CHOSEN_NODE_NAME);
-	if (chosen < 0)
-		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
-
+	chosen = efi_fdt_chosen();
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,efirng-start",
 	    efirng_addr);
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,efirng-end",
