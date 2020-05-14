@@ -1,4 +1,4 @@
-.\" $NetBSD: src.7,v 1.15 2018/09/23 09:21:00 maxv Exp $
+.\" $NetBSD: src.7,v 1.16 2020/05/14 16:32:57 snj Exp $
 .\"
 .\" Copyright (c) 2012, 2013 Mingzhe Wang and Elvira Khabirova.
 .\"	All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 23, 2018
+.Dd May 14, 2020
 .Dt SRC 7
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ fragment for building an
 .Pa <arch2>
 compat libraries for
 .Pa <arch1> .
-E. g.,
+For example,
 .Pa compat/amd64/i386/
 is where the 32-bit compat libraries for the
 amd64 port are being built.
@@ -118,7 +118,7 @@ Tools and data-files for making distributions.
 .It Pa <arch>/
 Architecture-specific files, grouped by
 image type.
-E. g.,
+For example,
 .Pa distrib/<arch>/floppies/
 contains Makefiles for making images for
 various types of floppies;
@@ -157,10 +157,6 @@ Architecture-specific config files.
 .It Pa external/
 Unmodified sources from third parties,
 grouped by license.
-They are built with so-called "reachover"
-Makefiles which can be found in
-.Pa src/*bin/
-hierarchies.
 Every
 .Pa external/<license>/<package>/
 may contain:
@@ -173,7 +169,7 @@ Unmodified third party source for a given package
 .It etc.
 Such subdirectories contain reachover Makefiles,
 README's and various import helper scripts.
-E. g.,
+For example,
 .Pa external/public-domain/
 contains
 sources licensed under Public Domain
@@ -196,19 +192,6 @@ Sources for utilities/files in
 .Pa /usr/games ;
 each utility has its own subdirectory, where
 its sources and Makefiles are located.
-.It Pa gnu/
-Sources licensed under GNU GPL.
-This is deprecated;
-.Pa external/gpl2/
-or
-.Pa external/gpl3/
-should be used instead.
-.Pa gnu/dists
-contains the original GNU sources plus changes that
-were submitted to maintainers and that are not
-yet published.
-Other folders contain files that are never expected
-to be submitted to the FSF (reachover Makefiles, etc.)
 .It Pa include/
 Files to be put into
 .Pa /usr/include .
@@ -294,6 +277,9 @@ Appletalk protocol stack
 .It Pa netbt/
 Bluetooth stack
 .Xr bluetooth 4 .
+.It Pa netcan/
+Controller Area Network stack
+.Xr can 4 .
 .It Pa netinet/
 IPv4 protocol stack
 .Xr ip 4 .
@@ -305,8 +291,6 @@ IPsec protocol stack
 .It Pa netmpls/
 MPLS protocol stack
 .Xr mpls 4 .
-.It Pa netsmb/
-SMB network protocol stack.
 .It Pa nfs/
 Network file system driver.
 .It Pa opencrypto/
