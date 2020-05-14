@@ -1,9 +1,9 @@
-/* $Id: t_ppath.c,v 1.1 2011/08/25 19:09:46 dyoung Exp $ */
+/* $Id: t_ppath.c,v 1.2 2020/05/14 08:34:18 msaitoh Exp $ */
 
 /* Copyright (c) 2010 David Young.  All rights reserved. */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_ppath.c,v 1.1 2011/08/25 19:09:46 dyoung Exp $");
+__RCSID("$Id: t_ppath.c,v 1.2 2020/05/14 08:34:18 msaitoh Exp $");
 
 #include <assert.h>
 #include <atf-c.h>
@@ -1483,7 +1483,7 @@ ATF_TC_HEAD(get_string_success, tc)
 ATF_TC_BODY(get_string_success, tc)
 {
 	int rc;
-	const char *v = NULL;;
+	const char *v = NULL;
 	prop_dictionary_t d;
 	ppath_t *p;
 

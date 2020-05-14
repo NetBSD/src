@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.66 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.66 2020/05/14 08:34:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -895,7 +895,7 @@ static int	ixl_vlan_cb(struct ethercom *, uint16_t, bool);
 static int	ixl_setup_vlan_hwfilter(struct ixl_softc *);
 static void	ixl_teardown_vlan_hwfilter(struct ixl_softc *);
 static int	ixl_update_macvlan(struct ixl_softc *);
-static int	ixl_setup_interrupts(struct ixl_softc *);;
+static int	ixl_setup_interrupts(struct ixl_softc *);
 static void	ixl_teardown_interrupts(struct ixl_softc *);
 static int	ixl_setup_stats(struct ixl_softc *);
 static void	ixl_teardown_stats(struct ixl_softc *);

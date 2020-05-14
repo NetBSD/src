@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.84 2020/04/13 08:05:02 maxv Exp $	*/
+/*	$NetBSD: md.c,v 1.85 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.84 2020/04/13 08:05:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.85 2020/05/14 08:34:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -572,7 +572,7 @@ md_set_disklabel(struct md_softc *sc)
 	dg->dg_secsize = lp->d_secsize;
 	dg->dg_secperunit = lp->d_secperunit;
 	dg->dg_nsectors = lp->d_nsectors;
-	dg->dg_ntracks = lp->d_ntracks = 64;;
+	dg->dg_ntracks = lp->d_ntracks = 64;
 	dg->dg_ncylinders = lp->d_ncylinders;
 
 	disk_set_info(sc->sc_dev, &sc->sc_dkdev, NULL);
