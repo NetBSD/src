@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.69 2020/05/14 19:21:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.69 2020/05/14 19:21:06 riastradh Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $
 #include <sys/md5.h>
 #include <sys/pserialize.h>
 #include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -119,7 +120,8 @@ u_long uboot_args[4] __attribute__((__section__(".data")));
 const uint8_t *fdt_addr_r __attribute__((__section__(".data")));
 
 static uint64_t initrd_start, initrd_end;
-static uint64_t rndseed_start, rndseed_end;
+static uint64_t rndseed_start, rndseed_end; /* our on-disk seed */
+static uint64_t efirng_start, efirng_end;   /* firmware's EFI RNG output */
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -313,6 +315,10 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 	if (rndseed_size > 0)
 		fdt_memory_remove_range(rndseed_start, rndseed_size);
 
+	const uint64_t efirng_size = efirng_end - efirng_start;
+	if (efirng_size > 0)
+		fdt_memory_remove_range(efirng_start, efirng_size);
+
 	const int framebuffer = OF_finddevice("/chosen/framebuffer");
 	if (framebuffer >= 0) {
 		for (index = 0;
@@ -451,6 +457,70 @@ fdt_setup_rndseed(void)
 	rnd_seed(rndseed, rndseed_size);
 }
 
+static void
+fdt_probe_efirng(uint64_t *pstart, uint64_t *pend)
+{
+	int chosen, len;
+	const void *start_data, *end_data;
+
+	*pstart = *pend = 0;
+	chosen = OF_finddevice("/chosen");
+	if (chosen < 0)
+		return;
+
+	start_data = fdtbus_get_prop(chosen, "netbsd,efirng-start", &len);
+	end_data = fdtbus_get_prop(chosen, "netbsd,efirng-end", NULL);
+	if (start_data == NULL || end_data == NULL)
+		return;
+
+	switch (len) {
+	case 4:
+		*pstart = be32dec(start_data);
+		*pend = be32dec(end_data);
+		break;
+	case 8:
+		*pstart = be64dec(start_data);
+		*pend = be64dec(end_data);
+		break;
+	default:
+		printf("Unsupported len %d for /chosen/efirng-start\n", len);
+		return;
+	}
+}
+
+static struct krndsource efirng_source;
+
+static void
+fdt_setup_efirng(void)
+{
+	const uint64_t efirng_size = efirng_end - efirng_start;
+	const paddr_t startpa = trunc_page(efirng_start);
+	const paddr_t endpa = round_page(efirng_end);
+	paddr_t pa;
+	vaddr_t va;
+	void *efirng;
+
+	if (efirng_size == 0)
+		return;
+
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (va == 0) {
+		printf("Failed to allocate VA for efirng\n");
+		return;
+	}
+	efirng = (void *)va;
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
+	rnd_attach_source(&efirng_source, "efirng", RND_TYPE_RNG,
+	    RND_FLAG_DEFAULT);
+	rnd_add_data(&efirng_source, efirng, efirng_size, 0);
+	explicit_memset(efirng, 0, efirng_size);
+}
+
 #ifdef EFI_RUNTIME
 static void
 fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
@@ -579,8 +649,9 @@ initarm(void *arg)
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
 
-	/* Parse rndseed */
+	/* Parse our on-disk rndseed and the firmware's RNG from EFI */
 	fdt_probe_rndseed(&rndseed_start, &rndseed_end);
+	fdt_probe_efirng(&efirng_start, &efirng_end);
 
 	/*
 	 * Populate bootconfig structure for the benefit of
@@ -699,6 +770,7 @@ cpu_startup_hook(void)
 	fdtbus_intr_init();
 
 	fdt_setup_rndseed();
+	fdt_setup_efirng();
 }
 
 void
