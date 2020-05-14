@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.21 2020/01/03 14:14:56 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.22 2020/05/14 19:20:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -391,6 +391,7 @@ efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-end", initrd_addr + initrd_size);
 }
 
+/* pass in the NetBSD on-disk random seed */
 void
 efi_fdt_rndseed(u_long rndseed_addr, u_long rndseed_size)
 {
@@ -411,4 +412,27 @@ efi_fdt_rndseed(u_long rndseed_addr, u_long rndseed_size)
 	    rndseed_addr);
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-end",
 	    rndseed_addr + rndseed_size);
+}
+
+/* pass in output from the EFI firmware's RNG from some unknown source */
+void
+efi_fdt_efirng(u_long efirng_addr, u_long efirng_size)
+{
+	int chosen;
+
+	if (efirng_size == 0)
+		return;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data,
+		    fdt_path_offset(fdt_data, "/"),
+		    FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,efirng-start",
+	    efirng_addr);
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,efirng-end",
+	    efirng_addr + efirng_size);
 }
