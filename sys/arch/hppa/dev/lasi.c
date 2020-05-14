@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.2 2019/04/15 20:40:37 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.3 2020/05/14 06:13:39 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.2 2019/04/15 20:40:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.3 2020/05/14 06:13:39 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -187,9 +187,8 @@ lasiattach(device_t parent, device_t self, void *aux)
 	s = splhigh();
 	sc->sc_trs->lasi_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_trs->lasi_icr = 0;
-	sc->sc_trs->lasi_imr = ~0U;
-	(void)sc->sc_trs->lasi_irr;
 	sc->sc_trs->lasi_imr = 0;
+	(void)sc->sc_trs->lasi_irr;
 
 	/* Establish the interrupt register. */
 	hppa_interrupt_register_establish(ci, &sc->sc_ir);
