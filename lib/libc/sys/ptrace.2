@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.84 2020/05/14 13:32:15 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.85 2020/05/14 13:40:49 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd May 14, 2020
@@ -633,9 +633,12 @@ The
 argument should be set to
 .Li sizeof(sigset_t) .
 .Pp
-It is not permitted to mask SIGSTOP and SIGKILL.
+It is not permitted to mask
+.Dv SIGSTOP
+and
+.Dv SIGKILL .
 All debugger related signals
-(SIGTRAP, SIGILL, SIGSEGV, SIGBUS, SIGFPE)
+.Dv ( SIGTRAP , SIGILL , SIGSEGV , SIGBUS , SIGFPE )
 are reported to the tracer without interruption,
 unless they were emitted by a non-crash source.
 .It Dv PT_GET_SIGPASS
