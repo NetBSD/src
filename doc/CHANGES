@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2688 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2689 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -85,6 +85,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	scheduler: Improve performance and interactivity. [ad 20191201]
 	vfs: Reduce false sharing and lock overhead during normal operation.
 		[ad 20191201]
+	evbarm: Added driver for Allwinner Crypto Engine random number
+		generator [riastradh 20191209]
 	ixl(4): Ported driver for Intel Ethernet 700 series
 		[yamaguchi 20191210]
 	acpi(4): Updated ACPICA to 20191213. [christos 20191214]
@@ -186,12 +188,19 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata updated to 2020a  [kre 20200425]
 	amd64, i386: Added support for Xen PV drivers under HVM guests.
 		[bouyer 20200425]
+	kernel: Overhauled entropy subsystem [riastradh 20200430]
 	xen: Added support for Xen PVH. [bouyer 20200502]
 	hp300: Add bitmap access ops support for EVRX framebuffer on
 		HP9000/425e. [tsutsui 20200504]
 	xennet(4): add support for feature-sg & jumbo frames [jdolecek 20200430]
 	xvif(4): add support for feature-sg & jumbo frames [jdolecek 20200503]
+	kernel: Added support for swap encryption with sysctl -w
+		vm.swap_encrypt=1 [riastradh 20200509]
 	xen: Support MSI for XenPV [jdolecek 20200504]
 	hppa: Enable modules in GENERIC by default.  [skrll 20200511]
+	aarch64: Added support for ARMv8.5-RNG RNDRRS CPU random number
+		generator instructions [riastradh 20200511]
 	xen: enable MULTIPROCESSOR for Xen dom0. [bouyer 20200513]
 	ptrace(2): Add PT_SET_SIGPASS and PT_GET_SIGPASS. [kamil 20200514]
+	evbarm: Added support for EFI RNG firwmare random number generator
+		[riastradh 20200514]
