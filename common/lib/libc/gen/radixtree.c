@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.26 2020/04/11 01:46:47 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.26 2020/04/11 01:46:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.26 2020/04/11 01:46:47 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.26 2020/04/11 01:46:47 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -1339,13 +1339,13 @@ test1(void)
 	assert(!radix_tree_get_tag(t, 0, 2));
 	assert(radix_tree_get_tag(t, 1000, 2));
 	assert(!radix_tree_get_tag(t, UINT64_C(10000000000), 1));
-	radix_tree_set_tag(t, 0, 2);;
+	radix_tree_set_tag(t, 0, 2);
 	radix_tree_set_tag(t, UINT64_C(10000000000), 2);
 	radix_tree_dump(t);
 	assert(radix_tree_get_tag(t, 0, 2));
 	assert(radix_tree_get_tag(t, 1000, 2));
 	assert(radix_tree_get_tag(t, UINT64_C(10000000000), 2));
-	radix_tree_clear_tag(t, 0, 2);;
+	radix_tree_clear_tag(t, 0, 2);
 	radix_tree_clear_tag(t, UINT64_C(10000000000), 2);
 	radix_tree_dump(t);
 	assert(!radix_tree_get_tag(t, 0, 2));

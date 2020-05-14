@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.16 2020/04/24 04:55:40 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.17 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.16 2020/04/24 04:55:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.17 2020/05/14 08:34:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -940,7 +940,7 @@ struct aq_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_size_t sc_iosize;
-	bus_dma_tag_t sc_dmat;;
+	bus_dma_tag_t sc_dmat;
 
 	void *sc_ihs[AQ_NINTR_MAX];
 	pci_intr_handle_t *sc_intrs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_thrd.c,v 1.1 2019/04/24 11:43:19 kamil Exp $	*/
+/*	$NetBSD: t_thrd.c,v 1.2 2020/05/14 08:34:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_thrd.c,v 1.1 2019/04/24 11:43:19 kamil Exp $");
+__RCSID("$NetBSD: t_thrd.c,v 1.2 2020/05/14 08:34:19 msaitoh Exp $");
 
 #include <signal.h>
 #include <stdbool.h>
@@ -231,7 +231,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, thrd_detach);
 	ATF_TP_ADD_TC(tp, thrd_exit);
 	ATF_TP_ADD_TC(tp, thrd_sleep);
-	ATF_TP_ADD_TC(tp, thrd_yield);;
+	ATF_TP_ADD_TC(tp, thrd_yield);
 
 	return atf_no_error();
 }

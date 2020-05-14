@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.11 2011/01/04 23:36:23 wiz Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.12 2020/05/14 08:34:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.11 2011/01/04 23:36:23 wiz Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.12 2020/05/14 08:34:17 msaitoh Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ fill_cmd(char **cmdv, char *path, char *buff, int n)
 {
 	int     i;
 	/* Make tempbuff at least as large as buff. */
-	char	*tempbuff = malloc(n);;
+	char	*tempbuff = malloc(n);
 	if (tempbuff == NULL)
 		err(1, NULL);
 

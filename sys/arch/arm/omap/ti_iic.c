@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.11 2019/12/22 23:23:29 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.11 2019/12/22 23:23:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -458,7 +458,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 
 	con = I2C_CON_EN;
 	con |= I2C_CON_MST;
-	con |= I2C_CON_STT;;
+	con |= I2C_CON_STT;
 	if (flags & I2C_F_STOP)
 		con |= I2C_CON_STP;
 	if (addr & ~0x7f)

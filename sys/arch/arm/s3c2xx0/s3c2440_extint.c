@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.2 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.3 2020/05/14 08:34:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ ssextio_cascaded_intr(void *cookie)
 	}
 
 
-	save = disable_interrupts(I32_bit);;
+	save = disable_interrupts(I32_bit);
 	pending = pending_mask & bus_space_read_4(iot, ioh, GPIO_EINTPEND);
 	pending &= ~ssextio_softc->sc_mask;
 	ssextio_softc->sc_pending |= pending;

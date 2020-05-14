@@ -207,7 +207,7 @@ static uint8_t *
 get_ref(pgpv_ref_t *ref)
 {
 	pgpv_mem_t	*mem;
-	pgpv_t		*pgp = (pgpv_t *)ref->vp;;
+	pgpv_t		*pgp = (pgpv_t *)ref->vp;
 
 	mem = &ARRAY_ELEMENT(pgp->areas, ref->mem);
 	return &mem->mem[ref->offset];

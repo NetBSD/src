@@ -1,4 +1,4 @@
-/* $NetBSD: avdtp.c,v 1.3 2019/08/05 13:39:18 maya Exp $ */
+/* $NetBSD: avdtp.c,v 1.4 2020/05/14 08:34:19 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -165,7 +165,7 @@ avdtpSendAccept(int fd, int recvfd, uint8_t trans, uint8_t myCommand)
 	uint8_t data[2];
 
 	data[0] = (uint8_t)(trans << 4 | RESPONSEACCEPT);
-	data[1] = myCommand;;
+	data[1] = myCommand;
 
 	write(fd, data, sizeof(data));
 

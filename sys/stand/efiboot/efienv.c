@@ -1,4 +1,4 @@
-/* $NetBSD: efienv.c,v 1.4 2019/04/21 22:30:41 thorpej Exp $ */
+/* $NetBSD: efienv.c,v 1.5 2020/05/14 08:34:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -82,8 +82,8 @@ efi_env_from_efibootplist(void)
 			continue;
 		}
 		/* XXX __UNCONST because gnuefi */
-		env_key = prop_dictionary_keysym_cstring_nocopy(key);;
-		env_value = __UNCONST(prop_string_cstring_nocopy(value));;
+		env_key = prop_dictionary_keysym_cstring_nocopy(key);
+		env_value = __UNCONST(prop_string_cstring_nocopy(value));
 #ifdef EFIBOOT_DEBUG
 		printf(">> efiboot.plist env: '%s' = '%s'\n", env_key,
 		    env_value);
