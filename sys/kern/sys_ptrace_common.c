@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.79 2020/05/08 10:35:51 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.80 2020/05/14 13:32:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.79 2020/05/08 10:35:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.80 2020/05/14 13:32:15 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -290,6 +290,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_STOP:
 	case PT_LWPSTATUS:
 	case PT_LWPNEXT:
+	case PT_SET_SIGPASS:
+	case PT_GET_SIGPASS:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -500,6 +502,8 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
 	case PT_STOP:
 	case PT_LWPSTATUS:
 	case PT_LWPNEXT:
+	case PT_SET_SIGPASS:
+	case PT_GET_SIGPASS:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -618,6 +622,47 @@ ptrace_set_siginfo(struct proc *t, struct lwp **lt, struct ptrace_methods *ptm,
 	t->p_sigctx.ps_lwp = psi.psi_lwpid;
 	DPRINTF(("%s: lwp=%d signal=%d\n", __func__, psi.psi_lwpid,
 	    psi.psi_siginfo.si_signo));
+	return 0;
+}
+
+static int
+ptrace_get_sigpass(struct proc *t, void *addr, size_t data)
+{
+	sigset_t set;
+
+	if (data > sizeof(set) || data <= 0) {
+		DPRINTF(("%s: invalid data: %zu < %zu <= 0\n",
+		        __func__, sizeof(set), data));
+		return EINVAL;
+	}
+
+	set = t->p_sigctx.ps_sigpass;
+
+	return copyout(&set, addr, data);
+}
+
+static int
+ptrace_set_sigpass(struct proc *t, void *addr, size_t data)
+{
+	sigset_t set;
+	int error;
+
+	if (data > sizeof(set) || data <= 0) {
+		DPRINTF(("%s: invalid data: %zu < %zu <= 0\n",
+		        __func__, sizeof(set), data));
+		return EINVAL;
+	}
+
+	memset(&set, 0, sizeof(set));
+
+	if ((error = copyin(addr, &set, data)))
+		return error;
+
+	/* We catch SIGSTOP and cannot intercept SIGKILL. */
+	sigminusset(&sigcantmask, &set);
+
+	t->p_sigctx.ps_sigpass = set;
+
 	return 0;
 }
 
@@ -1395,6 +1440,9 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			CLR(t->p_slflag,
 			    PSL_TRACED|PSL_TRACEDCHILD|PSL_SYSCALL);
 
+			/* clear sigpass mask */
+			sigemptyset(&t->p_sigctx.ps_sigpass);
+
 			/* give process back to original parent or init */
 			if (t->p_opptr != t->p_pptr) {
 				struct proc *pp = t->p_opptr;
@@ -1497,6 +1545,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 	case PT_LWPNEXT:
 		error = ptrace_lwpstatus(t, ptm, &lt, addr, data, true);
+		break;
+
+	case PT_SET_SIGPASS:
+		error = ptrace_set_sigpass(t, addr, data);
+		break;
+
+	case PT_GET_SIGPASS:
+		error = ptrace_get_sigpass(t, addr, data);
 		break;
 
 #ifdef PT_REGISTERS

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.388 2020/05/07 20:02:34 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.389 2020/05/14 13:32:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.388 2020/05/07 20:02:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.389 2020/05/14 13:32:15 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1302,6 +1302,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	lwpid_t lid;
 	sig_t action;
 	bool toall;
+	bool traced;
 	int error = 0;
 
 	KASSERT(!cpu_intr_p());
@@ -1329,11 +1330,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	prop = sigprop[signo];
 	toall = ((prop & SA_TOALL) != 0);
 	lid = toall ? 0 : ksi->ksi_lid;
+	traced = ISSET(p->p_slflag, PSL_TRACED) &&
+	    !sigismember(&p->p_sigctx.ps_sigpass, signo);
 
 	/*
 	 * If proc is traced, always give parent a chance.
 	 */
-	if (p->p_slflag & PSL_TRACED) {
+	if (traced) {
 		action = SIG_DFL;
 
 		if (lid == 0) {
@@ -1428,7 +1431,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * or for an SA process.
 	 */
 	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
-		if ((p->p_slflag & PSL_TRACED) != 0)
+		if (traced)
 			goto deliver;
 
 		/*
@@ -1444,7 +1447,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * - If traced, then no action is needed, unless killing.
 		 * - Run the process only if sending SIGCONT or SIGKILL.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL) {
+		if (traced && signo != SIGKILL) {
 			goto out;
 		}
 		if ((prop & SA_CONT) != 0 || signo == SIGKILL) {
@@ -1456,7 +1459,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 				p->p_pptr->p_nstopchild--;
 			p->p_stat = SACTIVE;
 			p->p_sflag &= ~PS_STOPPING;
-			if (p->p_slflag & PSL_TRACED) {
+			if (traced) {
 				KASSERT(signo == SIGKILL);
 				goto deliver;
 			}
@@ -1487,7 +1490,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Make signal pending.
 	 */
-	KASSERT((p->p_slflag & PSL_TRACED) == 0);
+	KASSERT(!traced);
 	if ((error = sigput(&p->p_sigpend, p, kp)) != 0)
 		goto out;
 deliver:
@@ -1844,6 +1847,7 @@ issignal(struct lwp *l)
 	int siglwp, signo, prop;
 	sigpend_t *sp;
 	sigset_t ss;
+	bool traced;
 
 	p = l->l_proc;
 	sp = NULL;
@@ -1910,6 +1914,9 @@ issignal(struct lwp *l)
 			}
 		}
 
+		traced = ISSET(p->p_slflag, PSL_TRACED) &&
+		    !sigismember(&p->p_sigctx.ps_sigpass, signo);
+
 		if (sp) {
 			/* Overwrite process' signal context to correspond
 			 * to the currently reported LWP.  This is necessary
@@ -1937,7 +1944,7 @@ issignal(struct lwp *l)
 		 * we are being traced.
 		 */
 		if (sigismember(&p->p_sigctx.ps_sigignore, signo) &&
-		    (p->p_slflag & PSL_TRACED) == 0) {
+		    !traced) {
 			/* Discard the signal. */
 			continue;
 		}
@@ -1947,7 +1954,7 @@ issignal(struct lwp *l)
 		 * by the debugger.  If the our parent is our debugger waiting
 		 * for us and we vforked, don't hang as we could deadlock.
 		 */
-		if (ISSET(p->p_slflag, PSL_TRACED) && signo != SIGKILL &&
+		if (traced && signo != SIGKILL &&
 		    !(ISSET(p->p_lflag, PL_PPWAIT) &&
 		     (p->p_pptr == p->p_opptr))) {
 			/*
@@ -2004,7 +2011,7 @@ issignal(struct lwp *l)
 				 * XXX Don't hold proc_lock for p_lflag,
 				 * but it's not a big deal.
 				 */
-				if ((ISSET(p->p_slflag, PSL_TRACED) &&
+				if ((traced &&
 				     !(ISSET(p->p_lflag, PL_PPWAIT) &&
 				     (p->p_pptr == p->p_opptr))) ||
 				    ((p->p_lflag & PL_ORPHANPG) != 0 &&
@@ -2035,8 +2042,7 @@ issignal(struct lwp *l)
 			 * to take action on an ignored signal other
 			 * than SIGCONT, unless process is traced.
 			 */
-			if ((prop & SA_CONT) == 0 &&
-			    (p->p_slflag & PSL_TRACED) == 0)
+			if ((prop & SA_CONT) == 0 && !traced)
 				printf_nolog("issignal\n");
 #endif
 			continue;
