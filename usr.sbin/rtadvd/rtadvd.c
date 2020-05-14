@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.77 2020/05/10 22:38:51 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.78 2020/05/14 23:42:18 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -224,12 +224,11 @@ main(int argc, char *argv[])
 	if ((pid = pidfile_lock(pidfilepath)) != 0) {
 		if (pid == -1) {
 			logit(LOG_ERR, "pidfile_lock: %m");
-			/* Continue */
 		} else {
 			logit(LOG_ERR, "Another instance of `%s' is running "
 			    "(pid %d); exiting.", getprogname(), pid);
-			return EXIT_FAILURE;
 		}
+		return EXIT_FAILURE;
 	}
 
 	if (prog_init && prog_init() == -1)
