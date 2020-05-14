@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2020/05/13 10:13:29 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 2020/05/14 07:59:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2020/05/13 10:13:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2020/05/14 07:59:03 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -503,32 +503,12 @@ _pmap_pv_ctor(void *arg, void *v, int flags)
 void
 pmap_init(void)
 {
-	struct vm_page *pg;
-	struct vm_page_md *md;
-	uvm_physseg_t i;
-	paddr_t pfn;
 
 	pool_cache_bootstrap(&_pmap_cache, sizeof(struct pmap),
 	    0, 0, 0, "pmappl", NULL, IPL_NONE, _pmap_pmap_ctor, NULL, NULL);
 	pool_cache_bootstrap(&_pmap_pv_pool, sizeof(struct pv_entry),
 	    0, 0, 0, "pvpl", NULL, IPL_VM, _pmap_pv_ctor, NULL, NULL);
 
-	/*
-	 * initialize mutex in vm_page_md at this time.
-	 * When LOCKDEBUG, mutex_init() calls km_alloc,
-	 * but VM_MDPAGE_INIT() is called before initialized kmem_vm_arena.
-	 */
-	for (i = uvm_physseg_get_first();
-	     uvm_physseg_valid_p(i);
-	     i = uvm_physseg_get_next(i)) {
-		for (pfn = uvm_physseg_get_start(i);
-		     pfn < uvm_physseg_get_end(i);
-		     pfn++) {
-			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
-			md = VM_PAGE_TO_MD(pg);
-			PMAP_PAGE_INIT(&md->mdpg_pp);
-		}
-	}
 }
 
 void
@@ -616,6 +596,9 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 
 		VM_PAGE_TO_MD(pg)->mdpg_ptep_parent = NULL;
 
+		struct pmap_page *pp = VM_PAGE_TO_PP(pg);
+		pp->pp_flags = 0;
+
 	} else {
 		/* uvm_pageboot_alloc() returns AARCH64 KSEG address */
 		pg = NULL;
@@ -638,7 +621,9 @@ pmap_free_pdp(struct pmap *pm, struct vm_page *pg)
 	LIST_REMOVE(pg, mdpage.mdpg_vmlist);
 	pg->flags |= PG_BUSY;
 	pg->wire_count = 0;
-	VM_MDPAGE_INIT(pg);
+
+	struct pmap_page *pp = VM_PAGE_TO_PP(pg);
+	KASSERT(LIST_EMPTY(&pp->pp_pvhead));
 
 	uvm_pagefree(pg);
 	PMAP_COUNT(pdp_free);
