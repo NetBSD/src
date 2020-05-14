@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.70 2020/05/14 19:24:35 riastradh Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.71 2020/05/14 19:26:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.70 2020/05/14 19:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.71 2020/05/14 19:26:28 riastradh Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -396,6 +396,17 @@ fdt_map_range(uint64_t start, uint64_t end, uint64_t *psize,
 }
 
 static void
+fdt_unmap_range(void *ptr, uint64_t size)
+{
+	const char *start = ptr, *end = start + size;
+	const vaddr_t startva = trunc_page((vaddr_t)(uintptr_t)start);
+	const vaddr_t endva = round_page((vaddr_t)(uintptr_t)end);
+
+	pmap_kremove(startva, endva - startva);
+	pmap_update(pmap_kernel());
+}
+
+static void
 fdt_probe_initrd(uint64_t *pstart, uint64_t *pend)
 {
 	*pstart = *pend = 0;
@@ -439,6 +450,7 @@ fdt_setup_rndseed(void)
 	if (rndseed == NULL)
 		return;
 	rnd_seed(rndseed, rndseed_size);
+	fdt_unmap_range(rndseed, rndseed_size);
 }
 
 static void
@@ -466,6 +478,7 @@ fdt_setup_efirng(void)
 	    RND_FLAG_DEFAULT);
 	rnd_add_data(&efirng_source, efirng, efirng_size, 0);
 	explicit_memset(efirng, 0, efirng_size);
+	fdt_unmap_range(efirng, efirng_size);
 }
 
 #ifdef EFI_RUNTIME
