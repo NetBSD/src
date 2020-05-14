@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.203 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.204 2020/05/14 18:18:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.203 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.204 2020/05/14 18:18:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -352,8 +352,12 @@ again:
 		struct timespec rmtend;
 		struct timespec t0;
 		struct timespec *t;
+		int err;
 
-		(void)clock_gettime1(clock_id, &rmtend);
+		err = clock_gettime1(clock_id, &rmtend);
+		if (err != 0)
+			return err;
+
 		t = (rmt != NULL) ? rmt : &t0;
 		if (flags & TIMER_ABSTIME) {
 			timespecsub(rqt, &rmtend, t);
