@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.8 2019/10/21 02:36:48 jhigh Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.9 2020/05/14 08:34:19 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.8 2019/10/21 02:36:48 jhigh Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.9 2020/05/14 08:34:19 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -189,7 +189,7 @@ __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 static int __gensalt_argon2_decode_option(char * dst, size_t dlen, const char * option)
 {
 
-	char * in = 0;;
+	char * in = 0;
 	char * a = 0;
 	size_t tmp = 0;
 	int error = 0;

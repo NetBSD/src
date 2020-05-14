@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_usb.c,v 1.4 2019/07/24 11:20:55 hkenken Exp $	*/
+/*	$NetBSD: imx7_usb.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_usb.c,v 1.4 2019/07/24 11:20:55 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_usb.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $");
 
 #include "locators.h"
 
@@ -92,7 +92,7 @@ imx7_usbc_search(device_t parent, cfdata_t cf __unused,
 	sc = device_private(parent);
 	aa.aa_iot = sc->sc_iot;
 	aa.aa_ioh = sc->sc_ioh;
-	aa.aa_dmat = &arm_generic_dma_tag;;
+	aa.aa_dmat = &arm_generic_dma_tag;
 	aa.aa_unit = cf->cf_loc[IMXUSBCCF_UNIT];
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 

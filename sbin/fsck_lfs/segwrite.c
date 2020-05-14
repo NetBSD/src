@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.47 2020/04/03 19:36:33 joerg Exp $ */
+/* $NetBSD: segwrite.c,v 1.48 2020/05/14 08:34:17 msaitoh Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -405,7 +405,7 @@ lfs_gatherblock(struct segment * sp, struct ubuf * bp)
 
 		bn = lfs_fi_getnblocks(fs, sp->fip);
 		lfs_fi_setnblocks(fs, sp->fip, bn + 1);
-		lfs_fi_setblock(fs, sp->fip, bn, bp->b_lblkno + j);;
+		lfs_fi_setblock(fs, sp->fip, bn, bp->b_lblkno + j);
 	}
 
 	sp->sum_bytes_left -= LFS_BLKPTRSIZE(fs) * blksinblk;

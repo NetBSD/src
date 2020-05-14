@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.29 2016/06/27 08:46:04 dholland Exp $	*/
+/*	$NetBSD: snake.c,v 1.30 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.29 2016/06/27 08:46:04 dholland Exp $");
+__RCSID("$NetBSD: snake.c,v 1.30 2020/05/14 08:34:18 msaitoh Exp $");
 #endif
 #endif				/* not lint */
 
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 
 	penalty = loot = 0;
 	if (!initscr())
-		errx(0, "couldn't initialize screen");;
+		errx(0, "couldn't initialize screen");
 	cbreak();
 	noecho();
 #ifdef KEY_LEFT

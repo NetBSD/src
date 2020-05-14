@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.3 2019/10/18 01:15:54 manu Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.4 2020/05/14 08:34:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -863,7 +863,7 @@ mbi_apm(struct multiboot_package *mbp, void *buf)
 		mbt->cseg = 0;
 		mbt->offset = 0;
 		mbt->cseg_16 = 0;
-		mbt->dseg = 0;; 
+		mbt->dseg = 0; 
 		mbt->flags = 0;
 		mbt->cseg_len = 0;
 		mbt->cseg_16_len = 0;
