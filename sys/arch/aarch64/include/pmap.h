@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.38 2020/05/13 06:08:51 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.39 2020/05/14 07:59:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -101,16 +101,17 @@ struct vm_page_md {
 	struct pmap_page mdpg_pp;
 };
 
-/* each mdpg_pp.pp_pvlock will be initialized in pmap_init() */
 #define VM_MDPAGE_INIT(pg)					\
 	do {							\
-		LIST_INIT(&(pg)->mdpage.mdpg_pp.pp_pvhead);	\
-		(pg)->mdpage.mdpg_pp.pp_flags = 0;		\
+		(pg)->mdpage.mdpg_ptep_parent = NULL;		\
+		PMAP_PAGE_INIT(&(pg)->mdpage.mdpg_pp);		\
 	} while (/*CONSTCOND*/ 0)
 
 #define PMAP_PAGE_INIT(pp)						\
 	do {								\
-		mutex_init(&(pp)->pp_pvlock, MUTEX_SPIN, IPL_VM);	\
+		mutex_init(&(pp)->pp_pvlock, MUTEX_NODEBUG, IPL_VM);	\
+		LIST_INIT(&(pp)->pp_pvhead);				\
+		(pp)->pp_flags = 0;					\
 	} while (/*CONSTCOND*/ 0)
 
 /* saved permission bit for referenced/modified emulation */
