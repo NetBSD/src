@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.101 2020/04/05 20:53:17 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.102 2020/05/14 13:32:15 kamil Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -85,6 +85,7 @@ struct sigctx {
 	void		*ps_sigcode;	/* address of signal trampoline */
 	sigset_t	 ps_sigignore;	/* Signals being ignored. */
 	sigset_t	 ps_sigcatch;	/* Signals being caught by user. */
+	sigset_t	 ps_sigpass;	/* Signals evading the debugger. */
 };
 
 /* additional signal action values, used only temporarily/internally */

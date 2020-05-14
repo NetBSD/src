@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.69 2019/12/26 08:52:38 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.70 2020/05/14 13:32:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -63,6 +63,8 @@
 #define	PT_STOP			23	/* stop the child process */
 #define	PT_LWPSTATUS		24	/* get info about the LWP */
 #define	PT_LWPNEXT		25	/* get info about next LWP */
+#define	PT_SET_SIGPASS		26	/* set signals to pass to debuggee */
+#define	PT_GET_SIGPASS		27	/* get signals to pass to debuggee */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -93,7 +95,9 @@
 /* 22 */    "PT_SUSPEND", \
 /* 23 */    "PT_STOP", \
 /* 24 */    "PT_LWPSTATUS", \
-/* 25 */    "PT_LWPNEXT"
+/* 25 */    "PT_LWPNEXT", \
+/* 26 */    "PT_SET_SIGPASS", \
+/* 27 */    "PT_GET_SIGPASS"
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
