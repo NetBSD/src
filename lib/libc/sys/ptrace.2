@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.83 2020/01/04 04:40:17 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.84 2020/05/14 13:32:15 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 4, 2019
+.Dd May 14, 2020
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -623,6 +623,31 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
+.It Dv PT_SET_SIGPASS
+This request can be used to specify mask of signals that should be passed
+directly to the debuggee, without reporting to the tracer.
+A pointer to sigset_t is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(sigset_t) .
+.Pp
+It is not permitted to mask SIGSTOP and SIGKILL.
+All debugger related signals
+(SIGTRAP, SIGILL, SIGSEGV, SIGBUS, SIGFPE)
+are reported to the tracer without interruption,
+unless they were emitted by a non-crash source.
+.It Dv PT_GET_SIGPASS
+This request can be used to determine mask of signals passed directly to the debuggee.
+A pointer to sigset_t is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(sigset_t) .
+.Pp
+Upon debugger attach the sigpass mask shall be empty.
 .It Dv PT_RESUME
 Allow execution of a specified thread,
 change its state from suspended to continued.
