@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.53 2020/05/13 13:19:38 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.54 2020/05/14 13:18:55 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.53 2020/05/13 13:19:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.54 2020/05/14 13:18:55 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -195,7 +195,7 @@ read_otherend_details(struct xenbus_device *xendev,
 		return err;
 	}
 	DPRINTK("read_otherend_details: read %s/%s returned %s\n",
-	    xendev->xbusd_path, path_node, val);
+	    xendev->xbusd_path, path_node, xendev->xbusd_otherend);
 
 	if (strlen(xendev->xbusd_otherend) == 0 ||
 	    !xenbus_exists(NULL, xendev->xbusd_otherend, "")) {
@@ -322,7 +322,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 
 	DPRINTK("probe %s type %s", path, type);
 	err = xenbus_directory(NULL, path, "", &orig_dir_n, &dir);
-	DPRINTK("directory err %d dir_n %d", err, dir_n);
+	DPRINTK("directory err %d dir_n %d", err, orig_dir_n);
 	if (err)
 		return err;
 	dir_n = orig_dir_n;
