@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.2 2020/05/11 20:58:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.3 2020/05/14 19:21:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	sigset_t set;
 	ptrace_state_t state;
 	const int slen = sizeof(state);
 	ptrace_event_t event;
@@ -97,6 +98,19 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 	if (trackvforkdone)
 		event.pe_set_event |= PTRACE_VFORK_DONE;
 	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+
+	/*
+	 * Ignore interception of the SIGCHLD signals.
+	 *
+	 * SIGCHLD once blocked is discarded by the kernel as it has the
+	 * SA_IGNORE property. During the fork(2) operation all signals can be
+	 * shortly blocked and missed (unless there is a registered signal
+	 * handler in the traced child). This leads to a race in this test if
+	 * there would be an intention to catch SIGCHLD.
+	 */
+	sigemptyset(&set);
+	sigaddset(&set, SIGCHLD);
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGPASS, child, &set, sizeof(set)) != -1);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -206,16 +220,6 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 		    wpid = TWAIT_GENERIC(child2, &status, 0));
 	}
 #endif
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
