@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.13 2020/01/25 10:53:13 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.14 2020/05/14 19:20:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -31,6 +31,7 @@
 #include "efienv.h"
 #include "efifdt.h"
 #include "efiacpi.h"
+#include "efirng.h"
 
 #include <sys/reboot.h>
 
@@ -41,8 +42,8 @@ u_long load_offset = 0;
 #define	FDT_SPACE	(4 * 1024 * 1024)
 #define	FDT_ALIGN	((2 * 1024 * 1024) - 1)
 
-static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr, rndseed_addr;
-static u_long initrd_size = 0, dtb_size = 0, rndseed_size = 0;
+static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr, rndseed_addr, efirng_addr;
+static u_long initrd_size = 0, dtb_size = 0, rndseed_size = 0, efirng_size = 0;
 
 static int
 load_file(const char *path, u_long extra, bool quiet_errors,
@@ -273,6 +274,47 @@ load_fdt_overlays(void)
 	prop_object_iterator_release(iter);
 }
 
+static void
+generate_efirng(void)
+{
+	EFI_PHYSICAL_ADDRESS addr;
+	u_long size = EFI_PAGE_SIZE;
+	EFI_STATUS status;
+
+	/* Check whether the RNG is available before bothering.  */
+	if (!efi_rng_available())
+		return;
+
+	/*
+	 * Allocate a page.  This is the smallest unit we can pass into
+	 * the kernel conveniently.
+	 */
+#ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
+	addr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, EFI_SIZE_TO_PAGES(size), &addr);
+#else
+	addr = 0;
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages,
+	    EfiLoaderData, EFI_SIZE_TO_PAGES(size), &addr);
+#endif
+	if (EFI_ERROR(status)) {
+		Print(L"Failed to allocate page for EFI RNG output: %r\n",
+		    status);
+		return;
+	}
+
+	/* Fill the page with whatever the EFI RNG will do.  */
+	if (efi_rng((void *)(uintptr_t)addr, size)) {
+		uefi_call_wrapper(BS->FreePages, 2, addr, size);
+		return;
+	}
+
+	/* Success!  */
+	efirng_addr = addr;
+	efirng_size = size;
+}
+
 int
 exec_netbsd(const char *fname, const char *args)
 {
@@ -283,6 +325,7 @@ exec_netbsd(const char *fname, const char *args)
 
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
+	generate_efirng();
 
 	memset(marks, 0, sizeof(marks));
 	ohowto = howto;
@@ -346,6 +389,7 @@ exec_netbsd(const char *fname, const char *args)
 		load_fdt_overlays();
 		efi_fdt_initrd(initrd_addr, initrd_size);
 		efi_fdt_rndseed(rndseed_addr, rndseed_size);
+		efi_fdt_efirng(efirng_addr, efirng_size);
 		efi_fdt_bootargs(args);
 #ifdef EFIBOOT_ACPI
 		if (efi_acpi_available())
