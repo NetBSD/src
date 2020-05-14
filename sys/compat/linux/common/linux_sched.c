@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.76 2020/04/29 01:55:18 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.77 2020/05/14 08:26:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.76 2020/04/29 01:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.77 2020/05/14 08:26:29 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -671,12 +671,14 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	struct sys__sched_setaffinity_args ssa;
 	size_t size;
 	pid_t pid;
+	lwpid_t lid;
 
 	size = LINUX_CPU_MASK_SIZE;
 	if (SCARG(uap, len) < size)
 		return EINVAL;
 
-	if (SCARG(uap, pid) != 0) {
+	lid = SCARG(uap, pid);
+	if (lid != 0) {
 		/* Get the canonical PID for the process. */
 		mutex_enter(proc_lock);
 		struct proc *p = proc_find_lwpid(SCARG(uap, pid));
@@ -687,11 +689,12 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 		pid = p->p_pid;
 		mutex_exit(proc_lock);
 	} else {
-		pid = 0;
+		pid = curproc->p_pid;
+		lid = curlwp->l_lid;
 	}
 
 	SCARG(&ssa, pid) = pid;
-	SCARG(&ssa, lid) = SCARG(uap, pid);
+	SCARG(&ssa, lid) = lid;
 	SCARG(&ssa, size) = size;
 	SCARG(&ssa, cpuset) = (cpuset_t *)SCARG(uap, mask);
 
