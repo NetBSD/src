@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.66 2020/04/28 19:22:58 jmcneill Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.67 2020/05/14 18:06:58 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.66 2020/04/28 19:22:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.67 2020/05/14 18:06:58 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1192,7 +1192,7 @@ pms_synaptics_input(void *vsc, int data)
 
 	getmicrouptime(&psc->current);
 
-	if (psc->inputstate != 0) {
+	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
 			aprint_debug_dev(psc->sc_dev,
