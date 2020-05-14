@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.27 2020/04/05 15:25:40 joerg Exp $ */
+/* $NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.27 2020/04/05 15:25:40 joerg Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -342,7 +342,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	if (format_flags & FORMAT_META) {
 		/* note: all in backing partition space */
 		layout.meta_file   = pos++;
-		layout.meta_bitmap = pos++;;
+		layout.meta_bitmap = pos++;
 		layout.meta_mirror = layout.part_size_lba-1;
 		layout.meta_alignment  = MAX(blockingnr, sparable_blockingnr);
 		layout.meta_blockingnr = MAX(layout.meta_alignment, 32);

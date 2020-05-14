@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.27 2020/04/10 14:32:50 plunky Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.28 2020/05/14 08:34:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.27 2020/04/10 14:32:50 plunky Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.28 2020/05/14 08:34:17 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
 static bool in_addr_tentative(struct ifaddrs *);
 static bool in_addr_tentative_or_detached(struct ifaddrs *);
-static in_addr_t in_netmask(struct sockaddr *);;
+static in_addr_t in_netmask(struct sockaddr *);
 static int  in_prefixlen(struct sockaddr *);
 static void in_alias(struct ifaddrs *, prop_dictionary_t, prop_dictionary_t);
 

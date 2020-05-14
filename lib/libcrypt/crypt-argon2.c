@@ -63,7 +63,7 @@ getnum(const char *str, size_t *num)
 static int decode_option(argon2_context * ctx, argon2_type * atype, const char * option) 
 {
 	size_t tmp=0;
-        char * in = 0,*inp;;
+        char * in = 0,*inp;
         char * a=0;
         char * p=0;
 	size_t sl;

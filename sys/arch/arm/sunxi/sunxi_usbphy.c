@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.11 2018/02/19 20:15:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.11 2018/02/19 20:15:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.12 2020/05/14 08:34:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,7 +138,7 @@ sunxi_usbphy_write(struct sunxi_usbphy_softc *sc,
     struct sunxi_usbphy *phy, u_int bit_addr, u_int bits,
     u_int len)
 {
-	const uint32_t usbc_mask = __BIT(phy->phy_index * 2);;
+	const uint32_t usbc_mask = __BIT(phy->phy_index * 2);
 	bus_size_t reg;
 	uint32_t val;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.4 2019/02/03 03:20:24 thorpej Exp $ */
+/* $NetBSD: t_sem.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2019 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.4 2019/02/03 03:20:24 thorpej Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $");
 
 #include <sys/mman.h>
 #include <sys/wait.h>
@@ -211,7 +211,7 @@ put_shared_region(struct shared_region *r)
 
 ATF_TC_BODY(pshared, tc)
 {
-	struct shared_region *master_region, *slave_region;;
+	struct shared_region *master_region, *slave_region;
 
 	if (sysconf(_SC_SEMAPHORES) == -1)
 		atf_tc_skip("POSIX semaphores not supported");

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.31 2020/01/29 06:05:31 thorpej Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.32 2020/05/14 08:34:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.31 2020/01/29 06:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.32 2020/05/14 08:34:19 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1136,7 +1136,7 @@ enet_miibus_statchg(struct ifnet *ifp)
 
 	if ((ife->ifm_media & IFM_FDX) != 0) {
 		tcr |= ENET_TCR_FDEN;	/* full duplex */
-		rcr &= ~ENET_RCR_DRT;;	/* enable receive on transmit */
+		rcr &= ~ENET_RCR_DRT;	/* enable receive on transmit */
 	} else {
 		tcr &= ~ENET_TCR_FDEN;	/* half duplex */
 		rcr |= ENET_RCR_DRT;	/* disable receive on transmit */

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.18 2018/07/03 03:41:24 jnemeth Exp $");
+__RCSID("$NetBSD: restore.c,v 1.19 2020/05/14 08:34:17 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -210,7 +210,7 @@ restore(gpt_t gpt, const char *infile, int force)
 	prop_string_t propstr;
 	unsigned int entries;
 	const char *s;
-	void *secbuf = NULL;;
+	void *secbuf = NULL;
 	int rv = -1;
 
 	last = gpt->mediasz / gpt->secsz - 1LL;

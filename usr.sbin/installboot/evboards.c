@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.3 2019/09/19 01:25:29 thorpej Exp $	*/
+/*	$NetBSD: evboards.c,v 1.4 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.3 2019/09/19 01:25:29 thorpej Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.4 2020/05/14 08:34:18 msaitoh Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -481,7 +481,7 @@ evb_uboot_pkg_paths(ib_params *params, int *countp, void **bufp)
 	char *buf = NULL;
 	const char *pathspec;
 	int i, count;
-	char *cp, *startcp;;
+	char *cp, *startcp;
 
 	pathspec = getenv(UBOOT_PATHS_ENV_VAR);
 	if (pathspec == NULL)
@@ -1430,7 +1430,7 @@ evb_board_get_uboot_install(ib_params *params, evb_board board)
 	int n = snprintf(install_key, sizeof(install_key), "%s-%s",
 	    board_u_boot_install_key, params->media);
 	if (n < 0 || (size_t)n >= sizeof(install_key))
-		goto invalid_media;;
+		goto invalid_media;
 	install = prop_dictionary_get(board, install_key);
 	if (install != NULL) {
 		if (prop_object_type(install) == PROP_TYPE_STRING) {

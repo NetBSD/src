@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.21 2017/02/26 09:33:27 skrll Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.22 2020/05/14 08:34:20 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.21 2017/02/26 09:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.22 2020/05/14 08:34:20 msaitoh Exp $");
 
 #define _INTR_PRIVATE
 
@@ -1056,7 +1056,7 @@ armadaxp_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t sz)
 void
 armadaxp_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t sz)
 {
-	paddr_t pa_base = pa & ~ARMADAXP_L2_ALIGN;;
+	paddr_t pa_base = pa & ~ARMADAXP_L2_ALIGN;
 	paddr_t pa_end  = (pa + sz - 1) & ~ARMADAXP_L2_ALIGN;
 
 	if (pa_base == pa_end)

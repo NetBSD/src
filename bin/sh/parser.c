@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.169 2019/12/10 09:18:37 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.170 2020/05/14 08:34:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.169 2019/12/10 09:18:37 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.170 2020/05/14 08:34:17 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2091,7 +2091,7 @@ readtoken1(int firstc, char const *syn, int oneword)
 			parenlevel++;
 			VTRACE(DBG_LEXER, ("'('(%d)", parenlevel));
 			USTPUTC(c, out);
-			continue;;
+			continue;
 		case CRP:	/* ')' in arithmetic */
 			if (parenlevel > 0) {
 				USTPUTC(c, out);

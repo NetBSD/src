@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 2018/11/26 11:53:58 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16 2020/05/14 08:34:20 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2018/11/26 11:53:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2020/05/14 08:34:20 msaitoh Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -446,7 +446,7 @@ mvpex_mbus_conf_read(void *v, pcitag_t tag, int reg)
 		 */
 
 		struct mvsoc_softc *soc =
-		    device_private(device_parent(sc->sc_dev));;
+		    device_private(device_parent(sc->sc_dev));
 		bus_space_handle_t pcicfg_ioh;
 		uint32_t remapl, remaph, wc, pcicfg_addr, pcicfg_size;
 		int window, target, attr, base, size, s;

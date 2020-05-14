@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rwtoro.c,v 1.1 2017/01/27 10:45:11 hannken Exp $	*/
+/*	$NetBSD: t_rwtoro.c,v 1.2 2020/05/14 08:34:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ basic_test(const atf_tc_t *tc, const char *mp, int expected_errno,
 	if (use_layer) {
 		RL(rump_sys_mkdir(null_mount, 0777));
 		memset(&nargs, 0, sizeof(nargs));
-		nargs.nulla_target = __UNCONST(mp);;
+		nargs.nulla_target = __UNCONST(mp);
 		RL(rump_sys_mount(MOUNT_NULL, null_mount, 0,
 		    &nargs, sizeof(nargs)));
 	}
