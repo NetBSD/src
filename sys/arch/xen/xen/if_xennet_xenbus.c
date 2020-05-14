@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.125 2020/05/14 09:47:25 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.126 2020/05/14 13:25:40 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.125 2020/05/14 09:47:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.126 2020/05/14 13:25:40 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -198,7 +198,8 @@ struct xennet_xenbus_softc {
 	int sc_features;
 #define FEATURE_IPV6CSUM	0x01	/* IPv6 checksum offload */
 #define FEATURE_SG		0x02	/* scatter-gatter */
-#define FEATURE_BITS		"\20\1IPV6-CSUM\2SG"
+#define FEATURE_RX_COPY		0x04	/* RX-copy */
+#define FEATURE_BITS		"\20\1IPV6-CSUM\2SG\3RX-COPY"
 	krndsource_t sc_rnd_source;
 	struct evcnt sc_cnt_tx_defrag;
 	struct evcnt sc_cnt_tx_queue_full;
@@ -279,6 +280,10 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_xbusd->xbusd_otherend_changed = xennet_backend_changed;
 
 	/* read feature support flags */
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-rx-copy", &uval, 10);
+	if (!err && uval == 1)
+		sc->sc_features |= FEATURE_RX_COPY;
 	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	    "feature-ipv6-csum-offload", &uval, 10);
 	if (!err && uval == 1)
@@ -601,18 +606,8 @@ static bool
 xennet_talk_to_backend(struct xennet_xenbus_softc *sc)
 {
 	int error;
-	unsigned long rx_copy;
 	struct xenbus_transaction *xbt;
 	const char *errmsg;
-
-	error = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
-	    "feature-rx-copy", &rx_copy, 10);
-	if (error || !rx_copy) {
-		xenbus_dev_fatal(sc->sc_xbusd, error,
-		    "feature-rx-copy not supported");
-		return false;
-	}
-	aprint_normal_dev(sc->sc_dev, "using RX copy mode\n");
 
 again:
 	xbt = xenbus_transaction_start();
@@ -637,7 +632,7 @@ again:
 		goto abort_transaction;
 	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
-	    "request-rx-copy", "%lu", rx_copy);
+	    "request-rx-copy", "%u", 1);
 	if (error) {
 		errmsg = "writing request-rx-copy";
 		goto abort_transaction;
@@ -1232,9 +1227,8 @@ xennet_start(struct ifnet *ifp)
 		}
 
 		DPRINTFN(XEDB_MBUF, ("xennet_start id %d, "
-		    "mbuf %p, buf %p/%p, size %d\n",
-		    req->txreq_id, m, mtod(m, void *), (void *)ma,
-		    m->m_pkthdr.len));
+		    "mbuf %p, buf %p, size %d\n",
+		    req->txreq_id, m, mtod(m, void *), m->m_pkthdr.len));
 
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
