@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.10 2020/04/15 16:28:28 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.11 2020/05/15 07:47:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.10 2020/04/15 16:28:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.11 2020/05/15 07:47:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -513,7 +513,7 @@ kmsan_check_mbuf(void *buf)
 	struct mbuf *m = buf;
 
 	do {
-		kmsan_shadow_check(mtod(m, void *), m->m_len, "if_transmit()");
+		kmsan_shadow_check(mtod(m, void *), m->m_len, "MbufChain");
 	} while ((m = m->m_next) != NULL);
 }
 
