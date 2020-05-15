@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
 
 /* discover.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: discover.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 int interfaces_invalidated;
 int quiet_interface_discovery;
-u_int16_t local_port;
-u_int16_t remote_port;
 u_int16_t relay_port = 0;
 int dhcpv4_over_dhcpv6 = 0;
 int (*dhcp_interface_setup_hook) (struct interface_info *, struct iaddr *);

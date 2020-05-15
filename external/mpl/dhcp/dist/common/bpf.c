@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.3 2018/06/01 00:42:49 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.4 2020/05/15 12:31:03 manu Exp $	*/
 
 /* bpf.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.3 2018/06/01 00:42:49 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.4 2020/05/15 12:31:03 manu Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -366,7 +366,7 @@ void if_register_receive (info)
 		dhcp_bpf_relay_filter [10].k = ntohs (relay_port);
 	}
 #endif
-	p.bf_insns [8].k = ntohs (local_port);
+	p.bf_insns [8].k = ntohs (*libdhcp_callbacks.local_port);
 
 	if (ioctl (info -> rfdesc, BIOCSETF, &p) < 0)
 		log_fatal ("Can't install packet filter program: %m");
