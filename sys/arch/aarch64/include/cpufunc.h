@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2020/05/13 06:08:51 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14 2020/05/15 04:55:40 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -70,7 +70,7 @@ extern u_int cputype;			/* compat arm */
 
 extern int aarch64_pac_enabled;
 
-void aarch64_pac_init(int);
+int aarch64_pac_init(int);
 
 int set_cpufuncs(void);
 void aarch64_getcacheinfo(int);
