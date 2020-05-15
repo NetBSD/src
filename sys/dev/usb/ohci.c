@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.304 2020/05/15 06:15:42 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.305 2020/05/15 06:23:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.304 2020/05/15 06:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.305 2020/05/15 06:23:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3464,7 +3464,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	    (UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN);
 
 	if (xfer->ux_length)
-		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_bufsize,
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	if (isoc->next == -1) {
