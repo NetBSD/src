@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.168 2020/04/14 23:35:07 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.169 2020/05/15 14:30:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.168 2020/04/14 23:35:07 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.169 2020/05/15 14:30:23 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -82,7 +82,6 @@ static void	pthread__create_tramp(void *);
 static void	pthread__initthread(pthread_t);
 static void	pthread__scrubthread(pthread_t, char *, int);
 static void	pthread__initmain(pthread_t *);
-static void	pthread__fork_callback(void);
 static void	pthread__reap(pthread_t);
 
 void	pthread__init(void);
@@ -154,6 +153,32 @@ static union hashlock {
 	pthread_mutex_t	mutex;
 	char		pad[64];
 } hashlocks[NHASHLOCK] __aligned(64);
+
+static void
+pthread__prefork(void)
+{
+	pthread_mutex_lock(&pthread__deadqueue_lock);
+}
+
+static void
+pthread__fork_parent(void)
+{
+	pthread_mutex_unlock(&pthread__deadqueue_lock);
+}
+
+static void
+pthread__fork_child(void)
+{
+	struct __pthread_st *self = pthread__self();
+
+	pthread_mutex_init(&pthread__deadqueue_lock, NULL);
+
+	/* lwpctl state is not copied across fork. */
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
+		err(EXIT_FAILURE, "_lwp_ctl");
+	}
+	self->pt_lid = _lwp_self();
+}
 
 /*
  * This needs to be started by the library loading code, before main()
@@ -256,20 +281,8 @@ pthread__init(void)
 	}
 
 	/* Tell libc that we're here and it should role-play accordingly. */
-	pthread_atfork(NULL, NULL, pthread__fork_callback);
+	pthread_atfork(pthread__prefork, pthread__fork_parent, pthread__fork_child);
 	__isthreaded = 1;
-}
-
-static void
-pthread__fork_callback(void)
-{
-	struct __pthread_st *self = pthread__self();
-
-	/* lwpctl state is not copied across fork. */
-	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
-		err(EXIT_FAILURE, "_lwp_ctl");
-	}
-	self->pt_lid = _lwp_self();
 }
 
 /* General-purpose thread data structure sanitization. */
