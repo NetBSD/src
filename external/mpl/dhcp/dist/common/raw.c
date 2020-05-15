@@ -1,4 +1,4 @@
-/*	$NetBSD: raw.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: raw.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
 
 /* raw.c
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: raw.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: raw.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -60,7 +60,7 @@ void if_register_send (info)
 
 	/* Set up the address we're going to connect to. */
 	name.sin_family = AF_INET;
-	name.sin_port = relay_port ? relay_port : local_port;
+	name.sin_port = relay_port ? relay_port : *libdhcp_callbacks.local_port;
 	name.sin_addr.s_addr = htonl (INADDR_BROADCAST);
 	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 

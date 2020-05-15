@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: lpf.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
 
 /* lpf.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lpf.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
@@ -278,7 +278,7 @@ static void lpf_gen_filter_setup (info)
 		dhcp_bpf_relay_filter [10].k = ntohs (relay_port);
 	}
 #endif
-	dhcp_bpf_filter [8].k = ntohs (local_port);
+	dhcp_bpf_filter [8].k = ntohs (*libdhcp_callbacks.local_port);
 
 	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
 			sizeof p) < 0) {

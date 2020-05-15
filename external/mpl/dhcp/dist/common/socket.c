@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
 
 /* socket.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: socket.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -165,7 +165,7 @@ if_register_socket(struct interface_info *info, int family,
 	case AF_INET6:
 		addr6 = (struct sockaddr_in6 *)&name; 
 		addr6->sin6_family = AF_INET6;
-		addr6->sin6_port = local_port;
+		addr6->sin6_port = *libdhcp_callbacks.local_port;
 #if defined(RELAY_PORT)
 		if (relay_port &&
 		    ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM))
@@ -201,7 +201,7 @@ if_register_socket(struct interface_info *info, int family,
 	default:
 		addr = (struct sockaddr_in *)&name; 
 		addr->sin_family = AF_INET;
-		addr->sin_port = relay_port ? relay_port : local_port;
+		addr->sin_port = relay_port ? relay_port : *libdhcp_callbacks.local_port;
 		memcpy(&addr->sin_addr,
 		       &local_address,
 		       sizeof(addr->sin_addr));
@@ -535,9 +535,9 @@ if_register6(struct interface_info *info, int do_multicast) {
 			}
 			log_info("Bound to [%s]:%d",
 				 addr6_str,
-				 (int) ntohs(local_port));
+				 (int) ntohs(*libdhcp_callbacks.local_port));
 		} else {
-			log_info("Bound to *:%d", (int) ntohs(local_port));
+			log_info("Bound to *:%d", (int) ntohs(*libdhcp_callbacks.local_port));
 		}
 	}
 		
@@ -691,7 +691,7 @@ if_deregister6(struct interface_info *info) {
 			global_v6_socket = -1;
 
 			log_info("Unbound from *:%d",
-				 (int) ntohs(local_port));
+				 (int) ntohs(*libdhcp_callbacks.local_port));
 		}
 #if defined(RELAY_PORT)
 		if (relay_port && (relay_port_v6_socket_references == 0)) {
