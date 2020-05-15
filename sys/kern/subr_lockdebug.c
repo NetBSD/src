@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.76 2020/04/10 17:16:21 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.77 2020/05/15 13:09:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.76 2020/04/10 17:16:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.77 2020/05/15 13:09:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.76 2020/04/10 17:16:21 ad Exp $
 #include <sys/lock.h>
 #include <sys/rbtree.h>
 #include <sys/ksyms.h>
+#include <sys/kcov.h>
 
 #include <machine/lock.h>
 
@@ -209,7 +210,10 @@ lockdebug_lookup(const char *func, size_t line, const volatile void *lock,
 {
 	lockdebug_t *ld;
 
+	kcov_silence_enter();
 	ld = lockdebug_lookup1(lock);
+	kcov_silence_leave();
+
 	if (__predict_false(ld == NULL)) {
 		panic("%s,%zu: uninitialized lock (lock=%p, from=%08"
 		    PRIxPTR ")", func, line, lock, where);
@@ -675,6 +679,8 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 	if (__predict_false(panicstr != NULL || ld_panic))
 		return;
 
+	kcov_silence_enter();
+
 	s = splhigh();
 	ci = curcpu();
 	__cpu_simple_lock(&ci->ci_data.cpu_ld_lock);
@@ -693,9 +699,12 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 		__cpu_simple_lock(&ld->ld_spinlock);
 		lockdebug_abort1(func, line, ld, s,
 		    "allocation contains active lock", !cold);
+		kcov_silence_leave();
 		return;
 	}
 	splx(s);
+
+	kcov_silence_leave();
 }
 #endif /* _KERNEL */
 
