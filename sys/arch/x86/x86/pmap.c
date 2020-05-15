@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.391 2020/05/15 22:22:06 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.392 2020/05/15 22:22:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.391 2020/05/15 22:22:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.392 2020/05/15 22:22:44 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5433,10 +5433,7 @@ pmap_update(struct pmap *pmap)
 		uvm_pagerealloc(ptp, NULL, 0);
 		PMAP_DUMMY_UNLOCK(pmap);
 
-		/*
-		 * XXX for PTPs freed by pmap_remove_ptes() but not
-		 * pmap_zap_ptp(), we could mark them PG_ZERO.
-		 */
+		ptp->flags |= PG_ZERO;
 		uvm_pagefree(ptp);
 	}
 	while ((pvp = LIST_FIRST(&pmap->pm_pvp_full)) != NULL) {
