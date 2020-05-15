@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.17 2020/04/12 07:49:58 maxv Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.18 2020/05/15 04:55:40 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.17 2020/04/12 07:49:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.18 2020/05/15 04:55:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -443,14 +443,15 @@ set_cpufuncs(void)
 }
 
 /*
- * TODO: this function should have a "no-pac" attribute. Right now it
- * doesn't use PAC so that's fine.
+ * In order to avoid inconsistencies with pointer authentication
+ * in this function itself, the caller must enable PAC according
+ * to the return value.
  */
-void
+int
 aarch64_pac_init(int primary)
 {
 #ifdef ARMV83_PAC
-	uint64_t reg, sctlr;
+	uint64_t reg;
 
 	/* CPU0 does the detection. */
 	if (primary) {
@@ -470,15 +471,14 @@ aarch64_pac_init(int primary)
 	}
 
 	if (!aarch64_pac_enabled)
-		return;
-
-	/* Enable PAC on the CPU. */
-	sctlr = reg_sctlr_el1_read();
-	sctlr |= SCTLR_EnIA;
-	reg_sctlr_el1_write(sctlr);
+		return -1;
 
 	/* Set the key. Curlwp here is the CPU's idlelwp. */
 	reg_APIAKeyLo_EL1_write(curlwp->l_md.md_ia_kern_lo);
 	reg_APIAKeyHi_EL1_write(curlwp->l_md.md_ia_kern_hi);
+
+	return 0;
+#else
+	return -1;
 #endif
 }
