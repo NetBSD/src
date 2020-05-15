@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.14 2020/05/04 15:55:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.15 2020/05/15 07:31:07 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -194,6 +194,11 @@ xen_pic_to_gsi(struct pic *pic, int pin)
 	    {
 		KASSERT(gsi < 255);
 
+		if (irq2port[gsi] != 0) {
+			/* Already mapped the shared interrupt */
+			break;
+		}
+
 		memset(&map_irq, 0, sizeof(map_irq));
 		map_irq.domid = DOMID_SELF;
 		map_irq.type = MAP_PIRQ_TYPE_GSI;
@@ -201,7 +206,8 @@ xen_pic_to_gsi(struct pic *pic, int pin)
 		map_irq.pirq = gsi;
 		ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
 		if (ret != 0)
-			panic("physdev_op(PHYSDEVOP_map_pirq) fail");
+			panic("physdev_op(PHYSDEVOP_map_pirq) GSI fail %d",
+			    ret);
 		break;
 	    }
 	case PIC_MSI:
@@ -226,7 +232,8 @@ xen_pic_to_gsi(struct pic *pic, int pin)
 		}
 		ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
 		if (ret != 0)
-			panic("physdev_op(PHYSDEVOP_map_pirq) fail");
+			panic("physdev_op(PHYSDEVOP_map_pirq) MSI fail %d",
+			    ret);
 		KASSERT(map_irq.entry_nr == i->mp_veccnt);
 		gsi = map_irq.pirq;
 		break;
