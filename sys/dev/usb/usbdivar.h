@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.122 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.123 2020/05/15 12:34:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -157,7 +157,14 @@ struct usbd_bus {
 #define USBREV_3_0	5
 #define USBREV_3_1	6
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0", "3.1" }
-
+	int			ub_hctype;
+#define USBHCTYPE_UNKNOWN	0
+#define USBHCTYPE_MOTG		1
+#define USBHCTYPE_OHCI		2
+#define USBHCTYPE_UHCI		3
+#define USBHCTYPE_EHCI		4
+#define USBHCTYPE_XHCI		5
+#define USBHCTYPE_VHCI		6
 	const struct usbd_bus_methods
 			       *ub_methods;
 	uint32_t		ub_pipesize;	/* size of a pipe struct */
