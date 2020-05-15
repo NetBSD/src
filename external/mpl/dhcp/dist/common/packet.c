@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
 
 /* packet.c
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -308,10 +308,10 @@ decode_udp_ip_header(struct interface_info *interface,
 
   /* Is it to the port we're serving? */
 #if defined(RELAY_PORT)
-  if ((udp.uh_dport != local_port) &&
+  if ((udp.uh_dport != *libdhcp_callbacks.local_port) &&
       ((relay_port == 0) || (udp.uh_dport != relay_port)))
 #else
-  if (udp.uh_dport != local_port)
+  if (udp.uh_dport != *libdhcp_callbacks.local_port)
 #endif
 	  return -1;
 #endif /* USERLAND_FILTER */
