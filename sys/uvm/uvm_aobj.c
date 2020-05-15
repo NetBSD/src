@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.140 2020/05/15 22:27:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.140 2020/05/15 22:27:04 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -827,6 +827,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  	 */
 
 	if (flags & PGO_LOCKED) {
+		krw_t lktype = rw_lock_op(uobj->vmobjlock);
 
 		/*
  		 * step 1a: get pages that are already resident.   only do
@@ -845,11 +846,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/*
  			 * if page is new, attempt to allocate the page,
-			 * zero-fill'd.  we can only do this if busying
-			 * pages, as otherwise the object is read locked.
+			 * zero-fill'd.  we can only do this if the caller
+			 * holds a write lock.
  			 */
 
-			if ((flags & PGO_NOBUSY) == 0 && ptmp == NULL &&
+			if (ptmp == NULL && lktype == RW_WRITER &&
 			    uao_find_swslot(uobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uao_pagealloc(uobj, current_offset,
@@ -859,6 +860,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 					ptmp->flags &= ~(PG_FAKE);
 					uvm_pagemarkdirty(ptmp,
 					    UVM_PAGE_STATUS_UNKNOWN);
+					if ((flags & PGO_NOBUSY) != 0)
+						ptmp->flags &= ~PG_BUSY;
 					goto gotpage;
 				}
 			}
