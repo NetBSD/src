@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.13 2020/05/15 12:34:52 maxv Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.14 2020/05/15 13:09:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ typedef struct kcov_desc {
 	/* Local only */
 	kmutex_t lock;
 	bool lwpfree;
+	bool silenced;
 
 	/* Pointer to the end of the structure, if any */
 	struct kcov_desc *remote;
@@ -423,6 +424,26 @@ kcov_disable(kcov_t *kd)
 
 /* -------------------------------------------------------------------------- */
 
+void
+kcov_silence_enter(void)
+{
+	kcov_t *kd = curlwp->l_kcov;
+
+	if (kd != NULL)
+		kd->silenced = true;
+}
+
+void
+kcov_silence_leave(void)
+{
+	kcov_t *kd = curlwp->l_kcov;
+
+	if (kd != NULL)
+		kd->silenced = false;
+}
+
+/* -------------------------------------------------------------------------- */
+
 static int
 kcov_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -578,6 +599,11 @@ __sanitizer_cov_trace_pc(void)
 
 	if (!kd->enabled) {
 		/* Tracing not enabled */
+		return;
+	}
+
+	if (__predict_false(kd->silenced)) {
+		/* Silenced. */
 		return;
 	}
 
