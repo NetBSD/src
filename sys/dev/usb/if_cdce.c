@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.71 2020/05/08 06:24:28 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.72 2020/05/15 19:28:10 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.71 2020/05/08 06:24:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.72 2020/05/15 19:28:10 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -245,7 +245,8 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	    ether_aton_r(un->un_eaddr, sizeof(un->un_eaddr), eaddr_str)) {
 		aprint_normal_dev(self, "faking address\n");
 		un->un_eaddr[0] = 0x2a;
-		memcpy(&un->un_eaddr[1], &hardclock_ticks, sizeof(uint32_t));
+		uint32_t ticks = getticks();
+		memcpy(&un->un_eaddr[1], &ticks, sizeof(ticks));
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 

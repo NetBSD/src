@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.8 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.9 2020/05/15 19:28:09 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -365,13 +365,13 @@ ibmhawk_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct ibmhawk_softc *sc = sme->sme_cookie;
 
 	/* No more than two refreshes per second. */
-	if (hardclock_ticks-sc->sc_refresh < hz/2)
+	if (getticks() - sc->sc_refresh < hz/2)
 		return;
 #if IBMHAWK_DEBUG > 1
 	aprint_normal_dev(sc->sc_dev, "refresh \"%s\" delta %d\n",
-	    edata->desc, hardclock_ticks-sc->sc_refresh);
+	    edata->desc, getticks() - sc->sc_refresh);
 #endif
-	sc->sc_refresh = hardclock_ticks;
+	sc->sc_refresh = getticks();
 	ibmhawk_refreshall(sc, false);
 }
 
