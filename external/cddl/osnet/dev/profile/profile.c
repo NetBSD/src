@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.10 2018/06/29 11:33:46 kamil Exp $	*/
+/*	$NetBSD: profile.c,v 1.11 2020/05/15 23:57:17 ad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -169,7 +169,7 @@ struct profile_probe_percpu;
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-#define	PROF_ARTIFICIAL_FRAMES	3
+#define	PROF_ARTIFICIAL_FRAMES	4
 #endif
 
 typedef struct profile_probe {
