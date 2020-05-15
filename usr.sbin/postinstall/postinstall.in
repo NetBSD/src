@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.20 2020/04/19 22:10:24 roy Exp $
+# $NetBSD: postinstall.in,v 1.21 2020/05/15 16:33:38 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2295,25 +2295,40 @@ do_varshm()
 #
 #	obsolete_stand
 #
-adddisableditem obsolete_stand "remove obsolete files from /stand"
-do_obsolete_stand()
+obsolete_stand_internal()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stnd  fix|check"
-	op="$1"
-	failed=0
+	local prefix="$1"
+	shift
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stand  fix|check"
+	local op="$1"
+	local failed=0
 
 	for dir in \
-	    /stand/${MACHINE} \
-	    /stand/${MACHINE}-4xx \
-	    /stand/${MACHINE}-booke \
-	    /stand/${MACHINE}-xen \
-	    /stand/${MACHINE}pae-xen
+	    ${prefix}/stand/${MACHINE} \
+	    ${prefix}/stand/${MACHINE}-4xx \
+	    ${prefix}/stand/${MACHINE}-booke \
+	    ${prefix}/stand/${MACHINE}-xen \
+	    ${prefix}/stand/${MACHINE}pae-xen
 	do
 		[ -d "${DESTDIR}${dir}" ] && obsolete_stand "${dir}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
+}
+
+adddisableditem obsolete_stand "remove obsolete files from /stand"
+do_obsolete_stand()
+{
+	obsolete_stand_internal "" "$@"
+	return $?
+}
+
+adddisableditem obsolete_stand_debug "remove obsolete files from /usr/libdata/debug/stand"
+do_obsolete_stand_debug()
+{
+	obsolete_stand_internal "/usr/libdata/debug" "$@"
+	return $?
 }
 
 listarchsubdirs() {
