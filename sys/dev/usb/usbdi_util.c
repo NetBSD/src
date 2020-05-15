@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.82 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.83 2020/05/15 07:51:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.82 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.83 2020/05/15 07:51:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -733,7 +733,7 @@ usb_desc_iter_peek(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc;
 
-	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
+	if (iter->cur + sizeof(usb_descriptor_t) > iter->end) {
 		if (iter->cur != iter->end)
 			printf("%s: bad descriptor\n", __func__);
 		return NULL;
