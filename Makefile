@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.331 2019/08/27 22:48:54 kamil Exp $
+#	$NetBSD: Makefile,v 1.332 2020/05/15 16:34:44 christos Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -207,6 +207,7 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 postinstall-fix-obsolete_stand: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
 	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} ${_POSTINSTALL_X11} -d ${DESTDIR}/ fix obsolete_stand
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} ${_POSTINSTALL_X11} -d ${DESTDIR}/ fix obsolete_stand_debug
 	@echo "   ==============================="
 
 
