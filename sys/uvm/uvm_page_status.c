@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.4 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.5 2020/05/15 22:25:18 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.4 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.5 2020/05/15 22:25:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 		if (newstatus == UVM_PAGE_STATUS_CLEAN) {
 			radix_tree_clear_tag(&uobj->uo_pages, idx,
 			    UVM_PAGE_DIRTY_TAG);
-		} else {
+		} else if (oldstatus == UVM_PAGE_STATUS_CLEAN) {
 			/*
 			 * on first dirty page, mark the object dirty.
 			 * for vnodes this inserts to the syncer worklist.
