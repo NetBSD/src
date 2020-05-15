@@ -1,4 +1,4 @@
-/*      $NetBSD: kcov.h,v 1.8 2020/05/15 12:34:52 maxv Exp $        */
+/*      $NetBSD: kcov.h,v 1.9 2020/05/15 13:09:02 maxv Exp $        */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -66,11 +66,15 @@ typedef volatile uint64_t kcov_int_t;
 void kcov_remote_register(uint64_t, uint64_t);
 void kcov_remote_enter(uint64_t, uint64_t);
 void kcov_remote_leave(uint64_t, uint64_t);
+void kcov_silence_enter(void);
+void kcov_silence_leave(void);
 void kcov_lwp_free(struct lwp *);
 #else
 #define kcov_remote_register(s, i)	__nothing
 #define kcov_remote_enter(s, i)		__nothing
 #define kcov_remote_leave(s, i)		__nothing
+#define kcov_silence_enter()		__nothing
+#define kcov_silence_leave()		__nothing
 #define kcov_lwp_free(a) __nothing
 #endif
 #endif
