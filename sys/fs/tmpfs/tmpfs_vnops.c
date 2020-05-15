@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.136 2020/04/23 21:47:08 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.137 2020/05/15 22:15:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.136 2020/04/23 21:47:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.137 2020/05/15 22:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -202,11 +202,11 @@ tmpfs_lookup(void *v)
 		pnode = dnode->tn_spec.tn_dir.tn_parent;
 		if (pnode == NULL) {
 			error = ENOENT;
-			goto out;
+			goto done;
 		}
 
 		error = vcache_get(dvp->v_mount, &pnode, sizeof(pnode), vpp);
-		goto out;
+		goto done;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		/*
 		 * Lookup of "." case.
