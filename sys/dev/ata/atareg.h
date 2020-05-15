@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.44 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: atareg.h,v 1.45 2020/05/15 21:56:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -185,23 +185,6 @@ atacmd_to48(int cmd32)
 /* Native SATA command queueing */
 #define	WDCC_READ_FPDMA_QUEUED	0x60	/* SATA native queued read (48bit) */
 #define	WDCC_WRITE_FPDMA_QUEUED	0x61	/* SATA native queued write (48bit) */
-
-#ifdef _KERNEL
-/* Convert a 32-bit command to a Native SATA Queued command. */
-static __inline int
-atacmd_tostatq(int cmd32)
-{
-	switch (cmd32) {
-	case WDCC_READDMA:
-		return WDCC_READ_FPDMA_QUEUED;
-	case WDCC_WRITEDMA:
-		return WDCC_WRITE_FPDMA_QUEUED;
-	default:
-		panic("atacmd_tosataq: illegal 32-bit command: %d", cmd32);
-		/* NOTREACHED */
-	}
-}
-#endif /* _KERNEL */
 
 /* Subcommands for SET_FEATURES (features register) */
 #define	WDSF_8BIT_PIO_EN	0x01
