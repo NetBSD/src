@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.215 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.216 2020/05/15 19:28:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.215 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.216 2020/05/15 19:28:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.215 2020/04/23 21:47:07 ad Exp $")
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
-#include <sys/kernel.h> /* For hz, hardclock_ticks */
+#include <sys/kernel.h> /* For hz, getticks() */
 
 #include <uvm/uvm.h>
 
@@ -473,11 +473,11 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
  */
 
 #define TTL_TO_TIMEOUT(ts) \
-    (hardclock_ticks + (ts->tv_sec * hz) + (ts->tv_nsec * hz / 1000000000))
+    (getticks() + (ts->tv_sec * hz) + (ts->tv_nsec * hz / 1000000000))
 #define TTL_VALID(ts) \
     ((ts != NULL) && !((ts->tv_sec == 0) && (ts->tv_nsec == 0)))
 #define TIMED_OUT(expire) \
-    ((int)((unsigned int)hardclock_ticks - (unsigned int)expire) > 0)
+    ((int)((unsigned int)getticks() - (unsigned int)expire) > 0)
 int
 puffs_vnop_lookup(void *v)
 {
@@ -661,7 +661,7 @@ puffs_vnop_lookup(void *v)
 		 * lifetime of busiest * nodes - with some limits.
 		 */
 		grace = 10 * puffs_sopreq_expire_timeout;
-		cpn->pn_cn_grace = hardclock_ticks + grace;
+		cpn->pn_cn_grace = getticks() + grace;
 		vp = cvp;
 	}
 
