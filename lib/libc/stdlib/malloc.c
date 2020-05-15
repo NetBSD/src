@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.59 2017/01/13 04:18:54 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.60 2020/05/15 14:37:21 joerg Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ int utrace(const char *, void *, size_t);
 # include <sys/cdefs.h>
 # include "extern.h"
 # if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.59 2017/01/13 04:18:54 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.60 2020/05/15 14:37:21 joerg Exp $");
 # endif /* LIBC_SCCS and not lint */
 # include <reentrant.h>
 # ifdef _REENTRANT
@@ -1292,6 +1292,13 @@ _malloc_prefork(void)
 
 void
 _malloc_postfork(void)
+{
+
+	_MALLOC_UNLOCK();
+}
+
+void
+_malloc_postfork_child(void)
 {
 
 	_MALLOC_UNLOCK();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.14 2020/04/19 01:06:15 joerg Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.15 2020/05/15 14:37:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.14 2020/04/19 01:06:15 joerg Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.15 2020/05/15 14:37:21 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: pthread_atfork.c,v 1.14 2020/04/19 01:06:15 joerg Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/queue.h>
+#include "extern.h"
 #include "reentrant.h"
 
 #ifdef __weak_alias
@@ -163,6 +164,7 @@ fork(void)
 	mutex_lock(&atfork_lock);
 	SIMPLEQ_FOREACH(iter, &prepareq, next)
 		(*iter->fn)();
+	_malloc_prefork();
 
 	ret = __locked_fork(&errno);
 
@@ -171,11 +173,13 @@ fork(void)
 		 * We are the parent. It doesn't matter here whether
 		 * the fork call succeeded or failed.
 		 */
+		_malloc_postfork();
 		SIMPLEQ_FOREACH(iter, &parentq, next)
 			(*iter->fn)();
 		mutex_unlock(&atfork_lock);
 	} else {
 		/* We are the child */
+		_malloc_postfork_child();
 		SIMPLEQ_FOREACH(iter, &childq, next)
 			(*iter->fn)();
 		/*
