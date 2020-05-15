@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.115 2020/04/13 10:49:34 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.116 2020/05/15 16:58:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.115 2020/04/13 10:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.116 2020/05/15 16:58:28 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -557,8 +557,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
 		if (ata_bio->nblks > nblks) {
-		ata_bio->nblks = nblks;
-		ata_bio->nbytes = xfer->c_bcount;
+			ata_bio->nblks = nblks;
+			ata_bio->nbytes = xfer->c_bcount;
 		}
 	}
 	/* If this was a write and not using DMA, push the data. */
