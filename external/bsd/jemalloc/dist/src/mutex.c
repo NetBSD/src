@@ -157,6 +157,9 @@ malloc_mutex_init(malloc_mutex_t *mutex, const char *name,
 			return true;
 		}
 	}
+#elif MALLOC_MUTEX_TYPE == PTHREAD_MUTEX_DEFAULT
+	if (pthread_mutex_init(&mutex->lock, NULL) == -1)
+		return true;
 #else
 	pthread_mutexattr_t attr;
 
