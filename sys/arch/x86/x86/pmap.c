@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.390 2020/05/15 22:19:01 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.391 2020/05/15 22:22:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.390 2020/05/15 22:19:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.391 2020/05/15 22:22:06 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3035,10 +3035,17 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	pte += ((va - startva) >> PAGE_SHIFT);
 
 	for (cnt = ptp->wire_count; cnt > 1; pte++, va += PAGE_SIZE) {
+		/*
+		 * No need for an atomic to clear the PTE.  Nothing else can
+		 * see the address space any more and speculative access (if
+		 * possible) won't modify.  Therefore there's no need to
+		 * track the accessed/dirty bits.
+		 */
 		opte = *pte;
 		if (!pmap_valid_entry(opte)) {
 			continue;
 		}
+		pmap_pte_set(pte, 0);
 
 		/*
 		 * Count the PTE.  If it's not for a managed mapping
@@ -5380,6 +5387,7 @@ pmap_update(struct pmap *pmap)
 	struct pv_page *pvp;
 	struct pmap_page *pp;
 	struct vm_page *ptp;
+	uintptr_t sum;
 
 	/*
 	 * Initiate any pending TLB shootdowns.  Wait for them to
@@ -5393,45 +5401,52 @@ pmap_update(struct pmap *pmap)
 	 * Now that shootdowns are complete, process deferred frees.  This
 	 * is an unlocked check, but is safe as we're only interested in
 	 * work done in this LWP - we won't get a false negative.
+	 *
+	 * If pmap_kernel(), this can be called from interrupt context or
+	 * while holding a spinlock so we can't wait on the pmap lock.  No
+	 * big deal as we'll catch up eventually (even for user pmaps, in
+	 * pmap_destroy() when there's never contention on the lock).
 	 */
-	if (__predict_false(!LIST_EMPTY(&pmap->pm_gc_ptp) ||
-	    !LIST_EMPTY(&pmap->pm_pvp_full))) {
-		mutex_enter(&pmap->pm_lock);
-		while ((ptp = LIST_FIRST(&pmap->pm_gc_ptp)) != NULL) {
-			KASSERT(ptp->wire_count == 0);
-			KASSERT(ptp->uanon == NULL);
-			LIST_REMOVE(ptp, mdpage.mp_pp.pp_link);
-			pp = VM_PAGE_TO_PP(ptp);
-			LIST_INIT(&pp->pp_pvlist);
-			pp->pp_attrs = 0;
-			pp->pp_pte.pte_ptp = NULL;
-			pp->pp_pte.pte_va = 0;
-			PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
+	sum = (uintptr_t)atomic_load_relaxed(&pmap->pm_gc_ptp.lh_first);
+	sum |= (uintptr_t)atomic_load_relaxed(&pmap->pm_pvp_full.lh_first);
+	if (__predict_true(sum == 0 || cpu_intr_p() ||
+	    !mutex_tryenter(&pmap->pm_lock))) {
+		return;
+	}	
+	while ((ptp = LIST_FIRST(&pmap->pm_gc_ptp)) != NULL) {
+		KASSERT(ptp->wire_count == 0);
+		KASSERT(ptp->uanon == NULL);
+		LIST_REMOVE(ptp, mdpage.mp_pp.pp_link);
+		pp = VM_PAGE_TO_PP(ptp);
+		LIST_INIT(&pp->pp_pvlist);
+		pp->pp_attrs = 0;
+		pp->pp_pte.pte_ptp = NULL;
+		pp->pp_pte.pte_va = 0;
+		PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 
-			/*
-			 * XXX Hack to avoid extra locking, and lock
-			 * assertions in uvm_pagefree().  Despite uobject
-			 * being set, this isn't a managed page.
-			 */
-			PMAP_DUMMY_LOCK(pmap);
-			uvm_pagerealloc(ptp, NULL, 0);
-			PMAP_DUMMY_UNLOCK(pmap);
+		/*
+		 * XXX Hack to avoid extra locking, and lock
+		 * assertions in uvm_pagefree().  Despite uobject
+		 * being set, this isn't a managed page.
+		 */
+		PMAP_DUMMY_LOCK(pmap);
+		uvm_pagerealloc(ptp, NULL, 0);
+		PMAP_DUMMY_UNLOCK(pmap);
 
-			/*
-			 * XXX for PTPs freed by pmap_remove_ptes() but not
-			 * pmap_zap_ptp(), we could mark them PG_ZERO.
-			 */
-			uvm_pagefree(ptp);
-		}
-		while ((pvp = LIST_FIRST(&pmap->pm_pvp_full)) != NULL) {
-			LIST_REMOVE(pvp, pvp_list);
-			KASSERT(pvp->pvp_pmap == pmap);
-			KASSERT(pvp->pvp_nfree == PVE_PER_PVP);
-			pvp->pvp_pmap = NULL;
-			pool_cache_put(&pmap_pvp_cache, pvp);
-		}
-		mutex_exit(&pmap->pm_lock);
+		/*
+		 * XXX for PTPs freed by pmap_remove_ptes() but not
+		 * pmap_zap_ptp(), we could mark them PG_ZERO.
+		 */
+		uvm_pagefree(ptp);
 	}
+	while ((pvp = LIST_FIRST(&pmap->pm_pvp_full)) != NULL) {
+		LIST_REMOVE(pvp, pvp_list);
+		KASSERT(pvp->pvp_pmap == pmap);
+		KASSERT(pvp->pvp_nfree == PVE_PER_PVP);
+		pvp->pvp_pmap = NULL;
+		pool_cache_put(&pmap_pvp_cache, pvp);
+	}
+	mutex_exit(&pmap->pm_lock);
 }
 
 #if PTP_LEVELS > 4
