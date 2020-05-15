@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.23 2020/04/12 07:49:58 maxv Exp $
+# $NetBSD: genassym.cf,v 1.24 2020/05/15 04:55:40 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -363,6 +363,7 @@ define	SCTLR_EE		SCTLR_EE
 define	SCTLR_UCI		SCTLR_UCI
 define	SCTLR_nTLSMD		SCTLR_nTLSMD
 define	SCTLR_LSMAOE		SCTLR_LSMAOE
+define	SCTLR_EnIA		SCTLR_EnIA
 
 define	ICC_SRE_EL2_EN		ICC_SRE_EL2_EN
 define	ICC_SRE_EL2_SRE		ICC_SRE_EL2_SRE

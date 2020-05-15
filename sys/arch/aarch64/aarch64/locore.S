@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.59 2020/04/12 07:49:58 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.60 2020/05/15 04:55:40 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.59 2020/04/12 07:49:58 maxv Exp $")
+RCSID("$NetBSD: locore.S,v 1.60 2020/05/15 04:55:40 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -181,6 +181,11 @@ vstart:
 	/* init PAC if supported */
 	mov	x0, #1
 	bl	aarch64_pac_init
+	cbnz	w0, 1f			/* if (aarch64_pac_init() == 0) */
+	mrs	x0, sctlr_el1
+	orr	x0, x0, #SCTLR_EnIA	/*  enable PAC */
+	msr	sctlr_el1, x0
+1:
 
 	/* set topology information */
 	mrs	x0, tpidr_el1		/* curcpu */
@@ -509,6 +514,11 @@ mp_vstart:
 	/* init PAC if supported */
 	mov	x0, #0
 	bl	aarch64_pac_init
+	cbnz	w0, 1f			/* if (aarch64_pac_init() == 0) */
+	mrs	x0, sctlr_el1
+	orr	x0, x0, #SCTLR_EnIA	/*  enable PAC */
+	msr	sctlr_el1, x0
+1:
 
 	mov	fp, xzr			/* trace back starts here */
 	mrs	x0, tpidr_el1		/* curcpu() */
