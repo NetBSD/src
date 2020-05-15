@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2019/10/05 20:22:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2020/05/15 22:39:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.35 2019/10/05 20:22:36 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2020/05/15 22:39:54 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -465,8 +465,14 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 	ssize_t slen = getline(&p, &plen, infile);
 	if (slen == -1)
 		err(1, "%s", fname);
-	if (slen != 0 && p[slen - 1] == '\n')
+	if (slen != 0 && p[slen - 1] == '\n') {
+		sp->append_newline = 1;
 		slen--;
+	} else if (!lastline()) {
+		sp->append_newline = 1;
+	} else {
+		sp->append_newline = 0;
+	}
 	cspace(sp, p, (size_t)slen, spflag);
 
 	linenum++;
@@ -505,15 +511,49 @@ add_file(char *s)
 	fl_nextp = &fp->next;
 }
 
+static int
+next_files_have_lines(void)
+{
+	struct s_flist *file;
+	FILE *file_fd;
+	int ch;
+
+	file = files;
+	while ((file = file->next) != NULL) {
+		if ((file_fd = fopen(file->fname, "r")) == NULL)
+			continue;
+
+		if ((ch = getc(file_fd)) != EOF) {
+			/*
+			 * This next file has content, therefore current
+			 * file doesn't contains the last line.
+			 */
+			ungetc(ch, file_fd);
+			fclose(file_fd);
+			return (1);
+		}
+
+		fclose(file_fd);
+	}
+
+	return (0);
+}
+
 int
 lastline(void)
 {
 	int ch;
 
-	if (files->next != NULL && (inplace == NULL || ispan))
-		return (0);
-	if ((ch = getc(infile)) == EOF)
-		return (1);
+	if (feof(infile)) {
+		return !(
+		    (inplace == NULL || ispan) &&
+		    next_files_have_lines());
+	}
+	if ((ch = getc(infile)) == EOF) {
+		return !(
+		    (inplace == NULL || ispan) &&
+		    next_files_have_lines());
+	}
 	ungetc(ch, infile);
 	return (0);
 }
