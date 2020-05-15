@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.389 2020/05/08 00:49:43 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.390 2020/05/15 22:19:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.389 2020/05/08 00:49:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.390 2020/05/15 22:19:01 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4567,7 +4567,19 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pp = VM_PAGE_TO_PP(pg);
 	pa = VM_PAGE_TO_PHYS(pg);
 
-	return pmap_pp_clear_attrs(pp, pa, clearbits);
+	/*
+	 * If this is a new page, assert it has no mappings and simply zap
+	 * the stored attributes without taking any locks.
+	 */
+	if ((pg->flags & PG_FAKE) != 0) {
+		KASSERT(atomic_load_relaxed(&pp->pp_pte.pte_va) == 0);
+		KASSERT(atomic_load_relaxed(&pp->pp_pte.pte_ptp) == NULL);
+		KASSERT(atomic_load_relaxed(&pp->pp_pvlist.lh_first) == NULL);
+		atomic_store_relaxed(&pp->pp_attrs, 0);
+		return false;
+	} else {
+		return pmap_pp_clear_attrs(pp, pa, clearbits);
+	}
 }
 
 /*
