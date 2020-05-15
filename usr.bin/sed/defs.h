@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2014/06/06 21:56:39 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2020/05/15 22:39:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -145,6 +145,7 @@ typedef struct {
 	char *space;		/* Current space pointer. */
 	size_t len;		/* Current length. */
 	int deleted;		/* If deleted. */
+	int append_newline;	/* If originally terminated by \n. */
 	char *back;		/* Backing memory. */
 	size_t blen;		/* Backing memory length. */
 } SPACE;
