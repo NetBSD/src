@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.52 2020/05/03 07:32:54 mrg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.53 2020/05/15 14:37:21 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -117,7 +117,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.52 2020/05/03 07:32:54 mrg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.53 2020/05/15 14:37:21 joerg Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -4025,6 +4025,26 @@ _malloc_postfork(void)
 	}
 	malloc_mutex_unlock(&arenas_mtx);
 	malloc_mutex_unlock(&init_lock);
+}
+
+void
+_malloc_postfork_child(void)
+{
+	unsigned i;
+
+	/* Release all mutexes, now that fork() has completed. */
+#ifdef USE_BRK
+	malloc_mutex_init(&brk_mtx);
+#endif
+	malloc_mutex_init(&base_mtx);
+	malloc_mutex_init(&chunks_mtx);
+
+	for (i = narenas; i-- > 0; ) {
+		if (arenas[i] != NULL)
+			malloc_mutex_init(&arenas[i]->mtx);
+	}
+	malloc_mutex_init(&arenas_mtx);
+	malloc_mutex_init(&init_lock);
 }
 
 /*
