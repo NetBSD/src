@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.18 2020/04/13 06:02:03 maxv Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.19 2020/05/15 09:08:10 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.18 2020/04/13 06:02:03 maxv Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.19 2020/05/15 09:08:10 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -85,8 +85,12 @@ ENTRY_NP(cpu_switchto)
 	adrl	x4, _C_LABEL(aarch64_pac_enabled)
 	ldr	w4, [x4]
 	cbz	w4, 1f
+#if L_MD_IA_KERN_LO + 8 == L_MD_IA_KERN_HI
+	ldp	x5, x6, [x1, #L_MD_IA_KERN_LO]
+#else
 	ldr	x5, [x1, #L_MD_IA_KERN_LO]
 	ldr	x6, [x1, #L_MD_IA_KERN_HI]
+#endif
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
 1:
@@ -152,8 +156,12 @@ ENTRY_NP(cpu_switchto_softint)
 	adrl	x4, _C_LABEL(aarch64_pac_enabled)
 	ldr	w4, [x4]
 	cbz	w4, 1f
+#if L_MD_IA_KERN_LO + 8 == L_MD_IA_KERN_HI
+	ldp	x5, x6, [x0, #L_MD_IA_KERN_LO]
+#else
 	ldr	x5, [x0, #L_MD_IA_KERN_LO]
 	ldr	x6, [x0, #L_MD_IA_KERN_HI]
+#endif
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
 1:
@@ -191,8 +199,12 @@ ENTRY_NP(cpu_switchto_softint)
 	adrl	x4, _C_LABEL(aarch64_pac_enabled)
 	ldr	w4, [x4]
 	cbz	w4, 1f
+#if L_MD_IA_KERN_LO + 8 == L_MD_IA_KERN_HI
+	ldp	x5, x6, [x19, #L_MD_IA_KERN_LO]
+#else
 	ldr	x5, [x19, #L_MD_IA_KERN_LO]
 	ldr	x6, [x19, #L_MD_IA_KERN_HI]
+#endif
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
 1:
@@ -373,8 +385,12 @@ ENTRY_NP(el0_trap_exit)
 	adrl	x4, _C_LABEL(aarch64_pac_enabled)
 	ldr	w4, [x4]
 	cbz	w4, 1f
+#if L_MD_IA_USER_LO + 8 == L_MD_IA_USER_HI
+	ldp	x5, x6, [x9, #L_MD_IA_USER_LO]
+#else
 	ldr	x5, [x9, #L_MD_IA_USER_LO]
 	ldr	x6, [x9, #L_MD_IA_USER_HI]
+#endif
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
 1:
