@@ -1,5 +1,9 @@
 #include <sys/cdefs.h>
 
+#ifdef __NetBSD__
+#include "extern.h"
+#endif
+
 #define JEMALLOC_C_
 #include "jemalloc/internal/jemalloc_preamble.h"
 #include "jemalloc/internal/jemalloc_internal_includes.h"
@@ -1383,7 +1387,7 @@ malloc_init_hard_recursible(void) {
 
 #if (defined(JEMALLOC_HAVE_PTHREAD_ATFORK) && !defined(JEMALLOC_MUTEX_INIT_CB) \
     && !defined(JEMALLOC_ZONE) && !defined(_WIN32) && \
-    !defined(__native_client__))
+    !defined(__native_client__) && !defined(__NetBSD__))
 	/* LinuxThreads' pthread_atfork() allocates. */
 	if (pthread_atfork(jemalloc_prefork, jemalloc_postfork_parent,
 	    jemalloc_postfork_child) != 0) {
@@ -3221,7 +3225,7 @@ jemalloc_constructor(void) {
 }
 #endif
 
-#ifndef JEMALLOC_MUTEX_INIT_CB
+#if !defined(JEMALLOC_MUTEX_INIT_CB) && !defined(__NetBSD__)
 void
 jemalloc_prefork(void)
 #else
@@ -3294,7 +3298,7 @@ _malloc_prefork(void)
 	prof_prefork1(tsd_tsdn(tsd));
 }
 
-#ifndef JEMALLOC_MUTEX_INIT_CB
+#if !defined(JEMALLOC_MUTEX_INIT_CB) && !defined(__NetBSD__)
 void
 jemalloc_postfork_parent(void)
 #else
@@ -3332,8 +3336,14 @@ _malloc_postfork(void)
 	ctl_postfork_parent(tsd_tsdn(tsd));
 }
 
+#if !defined(__NetBSD__)
 void
-jemalloc_postfork_child(void) {
+jemalloc_postfork_child(void)
+#else
+JEMALLOC_EXPORT void
+_malloc_postfork_child(void)
+#endif
+{
 	tsd_t *tsd;
 	unsigned i, narenas;
 
