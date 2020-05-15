@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2020/03/10 03:48:05 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.106 2020/05/15 18:45:08 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -175,8 +175,6 @@ struct xpmsg {
  */
 
 struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-
 	/*
 	 * Primary Inter-processor message area.  Keep this aligned
 	 * to a cache line boundary if possible, as the structure
@@ -395,6 +393,8 @@ struct cpu_info {
 	struct evcnt ci_xpmsg_bogus;
 	struct evcnt ci_intrcnt[16];
 	struct evcnt ci_sintrcnt[16];
+
+	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
 #endif /* _KERNEL || _KMEMUSER */
