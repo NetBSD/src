@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2020/05/15 01:43:47 tnn Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2020/05/15 05:39:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2020/05/15 01:43:47 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2020/05/15 05:39:15 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -622,9 +622,7 @@ pmap_free_pdp(struct pmap *pm, struct vm_page *pg)
 	pg->flags |= PG_BUSY;
 	pg->wire_count = 0;
 
-#ifdef DIAGNOSTIC
-	struct pmap_page *pp = VM_PAGE_TO_PP(pg);
-#endif
+	struct pmap_page *pp __diagused = VM_PAGE_TO_PP(pg);
 	KASSERT(LIST_EMPTY(&pp->pp_pvhead));
 
 	uvm_pagefree(pg);
