@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2325 2020/05/06 16:17:36 nia Exp $
+#	$NetBSD: mi,v 1.2326 2020/05/15 23:32:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3863,6 +3863,8 @@
 ./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpvfs_layerfs.a			comp-c-lib		rump
 ./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpvfs_nofifofs.a			comp-c-lib		rump
+./usr/lib/librumpvfs_nofifofs_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpvfs_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libsaslc.a				comp-c-clib		compatfile
 ./usr/lib/libsaslc_p.a				comp-c-proflib		compatfile,profile

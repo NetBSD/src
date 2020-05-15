@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpfscomp,v 1.7 2020/04/04 15:43:21 jdolecek Exp $
+#	$NetBSD: Makefile.rumpfscomp,v 1.8 2020/05/15 23:32:28 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ RUMPFSCOMP+=	zfs
 
 RUMPFSCOMP+=	nfsserver
 
-RUMPVFSCOMP+=	fifo layer
+RUMPVFSCOMP+=	fifo layer nofifo
 
 RUMPFSSYSCOMP+=	aio
 

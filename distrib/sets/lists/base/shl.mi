@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.885 2020/05/15 14:57:33 joerg Exp $
+# $NetBSD: shl.mi,v 1.886 2020/05/15 23:32:27 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -844,6 +844,9 @@
 ./usr/lib/librumpvfs_layerfs.so			base-rump-shlib		rump
 ./usr/lib/librumpvfs_layerfs.so.0		base-rump-shlib		rump
 ./usr/lib/librumpvfs_layerfs.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpvfs_nofifofs.so		base-rump-shlib		rump
+./usr/lib/librumpvfs_nofifofs.so.0		base-rump-shlib		rump
+./usr/lib/librumpvfs_nofifofs.so.0.0		base-rump-shlib		rump
 ./usr/lib/libsaslc.so				base-sys-shlib		compatfile
 ./usr/lib/libsaslc.so.0				base-sys-shlib		compatfile
 ./usr/lib/libsaslc.so.0.0			base-sys-shlib		compatfile

@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2020/03/01 18:08:14 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2020/05/15 23:32:28 christos Exp $
 #
 
+RUMPFIFO=yes	# Use the real rump fifo
 .include <bsd.own.mk>
 
 SUBDIR+=	h_dtfs
@@ -15,8 +16,7 @@ VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
 
 LDADD+=		-lrumpdev_putter -lrumpdev
-LDADD+=		-lrumpfs_syspuffs -lrumpvfs_fifofs
-LDADD+=		-lrumpnet_local -lrumpnet_net -lrumpnet
+LDADD+=		-lrumpfs_syspuffs 
 LDADD+=		${LIBRUMPBASE}
 
 # required by -DPUFFSDUMP
