@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2019/06/01 08:29:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2020/05/15 14:44:05 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -310,6 +310,7 @@ CPPFLAGS+=	-DHAVE_DOUBLE_IEEE_BIG_ENDIAN=1
 CPPFLAGS+=	-DHAVE_LITTLE_ENDIAN=1
 .endif
 
+CWARNFLAGS.clang+=	-Wno-error=tautological-constant-out-of-range-compare
 
 WITHOUT_MAN=	yes
 
