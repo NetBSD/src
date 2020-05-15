@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.16 2020/03/31 16:34:25 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.17 2020/05/15 12:34:52 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.16 2020/03/31 16:34:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.17 2020/05/15 12:34:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.16 2020/03/31 16:34:25 maxv Exp $");
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kcov.h>
 
 #include <machine/endian.h>
 
@@ -1282,6 +1283,7 @@ vhci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_revision = USBREV_2_0;
+	sc->sc_bus.ub_hctype = USBHCTYPE_VHCI;
 	sc->sc_bus.ub_usedma = false;
 	sc->sc_bus.ub_methods = &vhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(vhci_pipe_t);
@@ -1297,6 +1299,7 @@ vhci_attach(device_t parent, device_t self, void *aux)
 			TAILQ_INIT(&port->endpoints[addr].usb_to_host);
 			TAILQ_INIT(&port->endpoints[addr].host_to_usb);
 		}
+		kcov_remote_register(KCOV_REMOTE_VHCI, i);
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
