@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.300 2020/04/05 20:59:38 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.301 2020/05/15 06:15:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.300 2020/04/05 20:59:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.301 2020/05/15 06:15:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2918,8 +2918,9 @@ uhci_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	KASSERT(xfer->ux_nframes != 0);
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    rd ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	mutex_enter(&sc->sc_lock);
 	next = isoc->next;
