@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls_autoload.c,v 1.32 2020/04/26 19:18:52 thorpej Exp $ */
+/* $NetBSD: netbsd32_syscalls_autoload.c,v 1.33 2020/05/16 18:31:48 christos Exp $ */
 
 /*
  * System call autoload table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls_autoload.c,v 1.32 2020/04/26 19:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls_autoload.c,v 1.33 2020/05/16 18:31:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

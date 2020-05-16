@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.62 2019/10/16 20:43:18 maya Exp $	*/
+/*	$NetBSD: unistd.h,v 1.63 2020/05/16 18:31:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -216,6 +216,11 @@
 
 /* From OpenSolaris, used by SEEK_DATA/SEEK_HOLE. */
 #define	_PC_MIN_HOLE_SIZE	15
+
+#ifdef _NETBSD_SOURCE
+#define _PC_ACL_PATH_MAX        16
+#define _PC_ACL_NFS4            17
+#endif
 
 /* configurable system variables; use as argument to sysconf(3) */
 /*

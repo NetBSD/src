@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/04/18 19:18:33 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2020/05/16 18:31:52 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=	ffs
 CPPFLAGS+=      -DUFS_DIRHASH -DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
-CPPFLAGS+=	-DUFS_EXTATTR
+CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL
 
 CWARNFLAGS.clang=	-Wno-conversion
 

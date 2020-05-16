@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2020/04/25 15:42:15 bouyer Exp $
+#	$NetBSD: Makefile,v 1.20 2020/05/16 18:31:52 christos Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
@@ -10,12 +10,12 @@ SRCS=	ffs_alloc.c ffs_appleufs.c ffs_balloc.c ffs_bswap.c ffs_inode.c	\
 	ffs_snapshot.c ffs_subr.c ffs_tables.c ffs_vfsops.c ffs_vnops.c	\
 	ffs_wapbl.c ffs_quota2.c ffs_extattr.c
 
-SRCS+=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c	\
-	ufs_lookup.c ufs_rename.c ufs_vfsops.c ufs_vnops.c	\
-	ufs_quota.c ufs_quota2.c quota2_subr.c
+SRCS+=	ufs_acl.c ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c	\
+	ufs_lookup.c ufs_rename.c ufs_vfsops.c ufs_vnops.c ufs_quota.c	\
+	ufs_quota2.c quota2_subr.c
 
 CPPFLAGS+=	-DFFS_EI -DUFS_DIRHASH -DWAPBL -DAPPLE_UFS -DUFS_EXTATTR \
-		-DQUOTA2
+		-DQUOTA2 -DUFS_ACL
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

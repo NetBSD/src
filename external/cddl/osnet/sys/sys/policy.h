@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.8 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: policy.h,v 1.9 2020/05/16 18:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -39,8 +39,6 @@
 
 struct mount;
 struct vattr;
-
-typedef int accmode_t;
 
 int	secpolicy_nfs(cred_t *cr);
 int	secpolicy_zfs(cred_t *crd);

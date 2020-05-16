@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1688 2020/05/16 13:46:10 maya Exp $
+# $NetBSD: mi,v 1.1689 2020/05/16 18:31:46 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -188,6 +188,7 @@
 ./usr/share/man/cat1/getconf.0			man-util-catman		.cat
 ./usr/share/man/cat1/getent.0			man-util-catman		.cat
 ./usr/share/man/cat1/getextattr.0		man-util-catman		.cat
+./usr/share/man/cat1/getfacl.0			man-util-catman		.cat
 ./usr/share/man/cat1/getopt.0			man-util-catman		.cat
 ./usr/share/man/cat1/gettext.0			man-locale-catman	.cat
 ./usr/share/man/cat1/gkermit.0			man-obsolete		.cat,obsolete
@@ -520,6 +521,7 @@
 ./usr/share/man/cat1/sendmail.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/seq.0			man-util-catman		.cat
 ./usr/share/man/cat1/setextattr.0		man-util-catman		.cat
+./usr/share/man/cat1/setfacl.0			man-util-catman		.cat
 ./usr/share/man/cat1/sftp.0			man-secsh-catman	.cat
 ./usr/share/man/cat1/sh.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
@@ -3487,6 +3489,7 @@
 ./usr/share/man/html1/getconf.html		man-util-htmlman	html
 ./usr/share/man/html1/getent.html		man-util-htmlman	html
 ./usr/share/man/html1/getextattr.html		man-util-htmlman	html
+./usr/share/man/html1/getfacl.html		man-util-htmlman	html
 ./usr/share/man/html1/getopt.html		man-util-htmlman	html
 ./usr/share/man/html1/gettext.html		man-locale-htmlman	html
 ./usr/share/man/html1/gkermit.html		man-obsolete		html,obsolete
@@ -3801,6 +3804,7 @@
 ./usr/share/man/html1/sendmail.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/seq.html			man-util-htmlman	html
 ./usr/share/man/html1/setextattr.html		man-util-htmlman	html
+./usr/share/man/html1/setfacl.html		man-util-htmlman	html
 ./usr/share/man/html1/sftp.html			man-secsh-htmlman	html
 ./usr/share/man/html1/sh.html			man-util-htmlman	html
 ./usr/share/man/html1/sha1.html			man-util-htmlman	html
@@ -6402,6 +6406,7 @@
 ./usr/share/man/man1/getconf.1			man-util-man		.man
 ./usr/share/man/man1/getent.1			man-util-man		.man
 ./usr/share/man/man1/getextattr.1		man-util-man		.man
+./usr/share/man/man1/getfacl.1			man-util-man		.man
 ./usr/share/man/man1/getopt.1			man-util-man		.man
 ./usr/share/man/man1/gettext.1			man-locale-man		.man
 ./usr/share/man/man1/gkermit.1			man-obsolete		.man,obsolete
@@ -6734,6 +6739,7 @@
 ./usr/share/man/man1/sendmail.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/seq.1			man-util-man		.man
 ./usr/share/man/man1/setextattr.1		man-util-man		.man
+./usr/share/man/man1/setfacl.1			man-util-man		.man
 ./usr/share/man/man1/sftp.1			man-secsh-man		.man
 ./usr/share/man/man1/sh.1			man-util-man		.man
 ./usr/share/man/man1/sha1.1			man-util-man		.man

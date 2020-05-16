@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.111 2020/04/13 19:23:17 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.112 2020/05/16 18:31:48 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.111 2020/04/13 19:23:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.112 2020/05/16 18:31:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_open_desc, coda_open },		/* open */
     { &vop_close_desc, coda_close },		/* close */
     { &vop_access_desc, coda_access },		/* access */
+    { &vop_accessx_desc, genfs_accessx },	/* access */
     { &vop_getattr_desc, coda_getattr },	/* getattr */
     { &vop_setattr_desc, coda_setattr },	/* setattr */
     { &vop_read_desc, coda_read },		/* read */
@@ -662,19 +663,20 @@ coda_access(void *v)
     struct vop_access_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    int mode = ap->a_mode;
+    accmode_t accmode = ap->a_accmode;
     kauth_cred_t cred = ap->a_cred;
 /* locals */
     int error;
 
     MARK_ENTRY(CODA_ACCESS_STATS);
 
+    KASSERT((accmode & ~(VEXEC | VWRITE | VREAD | VADMIN | VAPPEND)) == 0);
     /* Check for access of control object.  Only read access is
        allowed on it. */
     if (IS_CTL_VP(vp)) {
 	/* bogus hack - all will be marked as successes */
 	MARK_INT_SAT(CODA_ACCESS_STATS);
-	return(((mode & VREAD) && !(mode & (VWRITE | VEXEC)))
+	return(((accmode & VREAD) && !(accmode & (VWRITE | VEXEC)))
 	       ? 0 : EACCES);
     }
 
@@ -684,7 +686,7 @@ coda_access(void *v)
      * lookup access to it.
      */
     if (coda_access_cache) {
-	if ((vp->v_type == VDIR) && (mode & VEXEC)) {
+	if ((vp->v_type == VDIR) && (accmode & VEXEC)) {
 	    if (coda_nc_lookup(cp, ".", 1, cred)) {
 		MARK_INT_SAT(CODA_ACCESS_STATS);
 		return(0);                     /* it was in the cache */
@@ -692,7 +694,7 @@ coda_access(void *v)
 	}
     }
 
-    error = venus_access(vtomi(vp), &cp->c_fid, mode, cred, curlwp);
+    error = venus_access(vtomi(vp), &cp->c_fid, accmode, cred, curlwp);
 
     return(error);
 }

@@ -1590,7 +1590,7 @@ sfs_access(void *v)
 	SFS_NODE_ASSERT(ap->a_vp);
 	ZFS_ENTER(zfsvfs);
 
-	if (ap->a_mode & FWRITE)
+	if (ap->a_accmode & FWRITE)
 		error = EACCES;
 
 	ZFS_EXIT(zfsvfs);

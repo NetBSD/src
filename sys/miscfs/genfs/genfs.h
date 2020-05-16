@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.33 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: genfs.h,v 1.34 2020/05/16 18:31:51 christos Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -8,7 +8,10 @@
 
 struct componentname;
 struct mount;
+struct acl;
 
+int	genfs_access(void *);
+int	genfs_accessx(void *);
 int	genfs_badop(void *);
 int	genfs_nullop(void *);
 int	genfs_enoioctl(void *);
@@ -48,14 +51,19 @@ void	genfs_renamelock_exit(struct mount *);
 
 int	genfs_suspendctl(struct mount *, int);
 
-int	genfs_can_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
-	    kauth_cred_t);
-int	genfs_can_chmod(enum vtype, kauth_cred_t, uid_t, gid_t, mode_t);
-int	genfs_can_chown(kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
-int	genfs_can_chtimes(vnode_t *, u_int, uid_t, kauth_cred_t);
-int	genfs_can_chflags(kauth_cred_t, enum vtype, uid_t, bool);
-int	genfs_can_sticky(kauth_cred_t, uid_t, uid_t);
-int	genfs_can_extattr(kauth_cred_t, int, vnode_t *, const char *);
+int	genfs_can_access(struct vnode *, kauth_cred_t, uid_t, gid_t, mode_t,
+    struct acl *, accmode_t);
+int	genfs_can_access_acl_posix1e(struct vnode *, kauth_cred_t, uid_t,
+    gid_t, mode_t, struct acl *, accmode_t);
+int	genfs_can_access_acl_nfs4(struct vnode *, kauth_cred_t, uid_t, gid_t,
+    mode_t, struct acl *, accmode_t);
+int	genfs_can_chmod(struct vnode *, kauth_cred_t, uid_t, gid_t, mode_t);
+int	genfs_can_chown(struct vnode *, kauth_cred_t, uid_t, gid_t, uid_t,
+    gid_t);
+int	genfs_can_chtimes(struct vnode *, kauth_cred_t, uid_t, u_int);
+int	genfs_can_chflags(struct vnode *, kauth_cred_t, uid_t, bool);
+int	genfs_can_sticky(struct vnode *, kauth_cred_t, uid_t, uid_t);
+int	genfs_can_extattr(struct vnode *, kauth_cred_t, int, int);
 
 /*
  * Rename is complicated.  Sorry.

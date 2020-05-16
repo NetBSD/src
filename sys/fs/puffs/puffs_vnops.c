@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.216 2020/05/15 19:28:10 maxv Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.217 2020/05/16 18:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.216 2020/05/15 19:28:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.217 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -111,6 +111,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_open_desc, puffs_vnop_open },		/* REAL open */
         { &vop_close_desc, puffs_vnop_checkop },	/* close */
         { &vop_access_desc, puffs_vnop_access },	/* REAL access */
+        { &vop_accessx_desc, genfs_accessx },		/* accessx */
         { &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
         { &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
         { &vop_read_desc, puffs_vnop_checkop },		/* read */
@@ -168,6 +169,7 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* spec_open */
 	{ &vop_close_desc, spec_close },		/* spec_close */
 	{ &vop_access_desc, puffs_vnop_checkop },	/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
 	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
 	{ &vop_read_desc, puffs_vnop_spec_read },	/* update, read */
@@ -227,6 +229,7 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, puffs_vnop_checkop },	/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
 	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
 	{ &vop_read_desc, puffs_vnop_fifo_read },	/* read, update */
@@ -285,6 +288,7 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_open_desc, puffs_vnop_open },		/* open */
         { &vop_close_desc, puffs_vnop_close },		/* close */
         { &vop_access_desc, puffs_vnop_access },	/* access */
+        { &vop_accessx_desc, genfs_accessx },		/* accessx */
         { &vop_getattr_desc, puffs_vnop_getattr },	/* getattr */
         { &vop_setattr_desc, puffs_vnop_setattr },	/* setattr */
         { &vop_read_desc, puffs_vnop_read },		/* read */
@@ -959,16 +963,16 @@ puffs_vnop_access(void *v)
 	struct vop_access_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, access);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
-	int mode = ap->a_mode;
+	accmode_t accmode = ap->a_accmode;
 	int error;
 
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -986,7 +990,7 @@ puffs_vnop_access(void *v)
 		return 0;
 
 	PUFFS_MSG_ALLOC(vn, access);
-	access_msg->pvnr_mode = ap->a_mode;
+	access_msg->pvnr_mode = ap->a_accmode;
 	puffs_credcvt(&access_msg->pvnr_cred, ap->a_cred);
 	puffs_msg_setinfo(park_access, PUFFSOP_VN,
 	    PUFFS_VN_ACCESS, VPTOPNC(vp));

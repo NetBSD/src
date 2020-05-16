@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.313 2020/04/26 19:16:35 thorpej Exp $ */
+/* $NetBSD: syscall.h,v 1.314 2020/05/16 18:31:53 christos Exp $ */
 
 /*
  * System call numbers.
@@ -1350,6 +1350,45 @@
 /* syscall: "__fhstatvfs190" ret: "int" args: "const void *" "size_t" "struct statvfs *" "int" */
 #define	SYS___fhstatvfs190	486
 
-#define	SYS_MAXSYSCALL	487
+/* syscall: "__acl_get_link" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_get_link	487
+
+/* syscall: "__acl_set_link" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_set_link	488
+
+/* syscall: "__acl_delete_link" ret: "int" args: "const char *" "acl_type_t" */
+#define	SYS___acl_delete_link	489
+
+/* syscall: "__acl_aclcheck_link" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_aclcheck_link	490
+
+/* syscall: "__acl_get_file" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_get_file	491
+
+/* syscall: "__acl_set_file" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_set_file	492
+
+/* syscall: "__acl_get_fd" ret: "int" args: "int" "acl_type_t" "struct acl *" */
+#define	SYS___acl_get_fd	493
+
+/* syscall: "__acl_set_fd" ret: "int" args: "int" "acl_type_t" "struct acl *" */
+#define	SYS___acl_set_fd	494
+
+/* syscall: "__acl_delete_file" ret: "int" args: "const char *" "acl_type_t" */
+#define	SYS___acl_delete_file	495
+
+/* syscall: "__acl_delete_fd" ret: "int" args: "int" "acl_type_t" */
+#define	SYS___acl_delete_fd	496
+
+/* syscall: "__acl_aclcheck_file" ret: "int" args: "const char *" "acl_type_t" "struct acl *" */
+#define	SYS___acl_aclcheck_file	497
+
+/* syscall: "__acl_aclcheck_fd" ret: "int" args: "int" "acl_type_t" "struct acl *" */
+#define	SYS___acl_aclcheck_fd	498
+
+/* syscall: "lpathconf" ret: "long" args: "const char *" "int" */
+#define	SYS_lpathconf	499
+
+#define	SYS_MAXSYSCALL	500
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

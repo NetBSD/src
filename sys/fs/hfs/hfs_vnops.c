@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.35 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.36 2020/05/16 18:31:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.35 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.36 2020/05/16 18:31:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -162,6 +162,7 @@ const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_open_desc, hfs_vop_open },		/* open */
 	{ &vop_close_desc, hfs_vop_close },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, hfs_vop_getattr },		/* getattr */
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, hfs_vop_read },		/* read */
@@ -218,6 +219,7 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, hfs_vop_getattr },		/* getattr */
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
@@ -276,6 +278,7 @@ const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, hfs_vop_getattr },		/* getattr */
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */
@@ -531,7 +534,7 @@ hfs_vop_close(void *v)
 }
 
 static int
-hfs_check_possible(struct vnode *vp, mode_t mode)
+hfs_check_possible(struct vnode *vp, accmode_t accmode)
 {
 
 	/*
@@ -539,7 +542,7 @@ hfs_check_possible(struct vnode *vp, mode_t mode)
 	 * since we have no write support yet.
 	 */
 
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -554,13 +557,13 @@ hfs_check_possible(struct vnode *vp, mode_t mode)
 }
 
 static int
-hfs_check_permitted(vnode_t *vp, struct vattr *va, mode_t mode,
+hfs_check_permitted(vnode_t *vp, struct vattr *va, accmode_t accmode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    va->va_type, va->va_mode), vp, NULL,  genfs_can_access(va->va_type,
-	    va->va_mode, va->va_uid, va->va_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    va->va_type, va->va_mode), vp, NULL,  genfs_can_access(vp, cred,
+	    va->va_uid, va->va_gid, va->va_mode, NULL, accmode));
 }
 
 int
@@ -568,7 +571,7 @@ hfs_vop_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int a_mode;
+		int a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vattr va;
@@ -576,14 +579,14 @@ hfs_vop_access(void *v)
 
 	DPRINTF(("VOP = hfs_vop_access()\n"));
 
-	error = hfs_check_possible(ap->a_vp, ap->a_mode);
+	error = hfs_check_possible(ap->a_vp, ap->a_accmode);
 	if (error)
 		return error;
 
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	error = hfs_check_permitted(ap->a_vp, &va, ap->a_mode, ap->a_cred);
+	error = hfs_check_permitted(ap->a_vp, &va, ap->a_accmode, ap->a_cred);
 
 	return error;
 }

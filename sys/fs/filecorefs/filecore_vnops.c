@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.45 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.46 2020/05/16 18:31:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.45 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.46 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,14 +122,14 @@ filecore_check_possible(struct vnode *vp, struct filecore_node *ip,
  */
 static int
 filecore_check_permitted(struct vnode *vp, struct filecore_node *ip,
-    mode_t mode, kauth_cred_t cred)
+    accmode_t accmode, kauth_cred_t cred)
 {
 	struct filecore_mnt *fcmp = ip->i_mnt;
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
 	    vp->v_type, filecore_mode(ip)), vp, NULL,
-	    genfs_can_access(vp->v_type, filecore_mode(ip), fcmp->fc_uid,
-	    fcmp->fc_gid, mode, cred));
+	    genfs_can_access(vp, cred, fcmp->fc_uid, fcmp->fc_gid,
+	    filecore_mode(ip), NULL, accmode));
 }
 
 int
@@ -137,18 +137,18 @@ filecore_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		accmode_t  a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 	int error;
 
-	error = filecore_check_possible(vp, ip, ap->a_mode);
+	error = filecore_check_possible(vp, ip, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = filecore_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+	error = filecore_check_permitted(vp, ip, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -560,6 +560,7 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_open_desc, filecore_open },		/* open */
 	{ &vop_close_desc, filecore_close },		/* close */
 	{ &vop_access_desc, filecore_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, filecore_getattr },	/* getattr */
 	{ &vop_setattr_desc, filecore_setattr },	/* setattr */
 	{ &vop_read_desc, filecore_read },		/* read */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.137 2020/05/15 22:15:43 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.138 2020/05/16 18:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.137 2020/05/15 22:15:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.138 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -70,6 +70,7 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_open_desc,		tmpfs_open },
 	{ &vop_close_desc,		tmpfs_close },
 	{ &vop_access_desc,		tmpfs_access },
+	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		tmpfs_getattr },
 	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_read },
@@ -269,7 +270,7 @@ tmpfs_lookup(void *v)
 		if ((dnode->tn_mode & S_ISTXT) != 0) {
 			error = kauth_authorize_vnode(cnp->cn_cred,
 			    KAUTH_VNODE_DELETE, tnode->tn_vnode,
-			    dnode->tn_vnode, genfs_can_sticky(cnp->cn_cred,
+			    dnode->tn_vnode, genfs_can_sticky(dvp, cnp->cn_cred,
 			    dnode->tn_uid, tnode->tn_uid));
 			if (error) {
 				error = EPERM;
@@ -377,14 +378,14 @@ tmpfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode	*a_vp;
-		int		a_mode;
+		accmode_t	a_accmode;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
-	mode_t mode = ap->a_mode;
+	accmode_t accmode = ap->a_accmode;
 	kauth_cred_t cred = ap->a_cred;
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
-	const bool writing = (mode & VWRITE) != 0;
+	const bool writing = (accmode & VWRITE) != 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -409,9 +410,9 @@ tmpfs_access(void *v)
 		return EPERM;
 	}
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, node->tn_mode), vp, NULL, genfs_can_access(vp->v_type,
-	    node->tn_mode, node->tn_uid, node->tn_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, node->tn_mode), vp, NULL, genfs_can_access(vp, cred,
+	    node->tn_uid, node->tn_gid, node->tn_mode, NULL, accmode));
 }
 
 int

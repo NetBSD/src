@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.90 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.91 2020/05/16 18:31:53 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.90 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.91 2020/05/16 18:31:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,7 +661,7 @@ found:
 		 */
 		if (dp->i_e2fs_mode & ISVTX) {
 			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
-			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
+			    tdp, vdp, genfs_can_sticky(vdp, cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
 				vrele(tdp);

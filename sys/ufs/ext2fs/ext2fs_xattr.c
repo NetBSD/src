@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.c,v 1.4 2016/08/23 06:40:54 christos Exp $	*/
+/*	$NetBSD: ext2fs_xattr.c,v 1.5 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.4 2016/08/23 06:40:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.5 2020/05/16 18:31:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,19 +205,13 @@ ext2fs_getextattr(void *v)
 	        kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
-	char namebuf[EXT2FS_XATTR_NAME_LEN_MAX + 1];
 	int error;
 	const char *prefix, *name;
 	uint8_t name_index;
 	size_t name_match, valuesize = 0;
 
-	if (ap->a_attrnamespace == EXTATTR_NAMESPACE_USER)
-		prefix = xattr_prefix_index[EXT2FS_XATTR_PREFIX_USER];
-	else
-		prefix = xattr_prefix_index[EXT2FS_XATTR_PREFIX_SYSTEM];
-	snprintf(namebuf, sizeof(namebuf), "%s%s", prefix, ap->a_name);
-
-        error = extattr_check_cred(ap->a_vp, namebuf, ap->a_cred, VREAD);
+        error = extattr_check_cred(ap->a_vp, ap->a_attrnamespace, ap->a_cred,
+	    VREAD);
         if (error)
                 return error;
 
@@ -408,7 +402,6 @@ ext2fs_listextattr(void *v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 	int error;
-	const char *prefix;
 	size_t listsize = 0;
 
 	if (!EXT2F_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_EXTATTR)) {
@@ -416,15 +409,8 @@ ext2fs_listextattr(void *v)
 		goto out;
 	}
 
-        /*
-         * XXX: We can move this inside the loop and iterate on individual
-         *      attributes.
-         */
-	if (ap->a_attrnamespace == EXTATTR_NAMESPACE_USER)
-		prefix = xattr_prefix_index[EXT2FS_XATTR_PREFIX_USER];
-	else
-		prefix = xattr_prefix_index[EXT2FS_XATTR_PREFIX_SYSTEM];
-        error = extattr_check_cred(ap->a_vp, prefix, ap->a_cred, VREAD);
+        error = extattr_check_cred(ap->a_vp, ap->a_attrnamespace, ap->a_cred,
+	    VREAD);
         if (error)
                 return error;
 

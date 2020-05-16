@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.9 2012/03/13 18:41:02 elad Exp $	*/
+/*	$NetBSD: extattr.h,v 1.10 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -60,7 +60,7 @@
 #define	EXTATTR_MAXNAMELEN	KERNEL_NAME_MAX
 struct lwp;
 struct vnode;
-int	extattr_check_cred(struct vnode *, const char *, kauth_cred_t, int);
+int	extattr_check_cred(struct vnode *, int, kauth_cred_t, int);
 
 #else
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.310 2020/05/15 23:32:28 christos Exp $
+# $NetBSD: mi,v 1.311 2020/05/16 18:31:46 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -287,6 +287,7 @@
 ./usr/libdata/debug/bin/echo.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/ed.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/expr.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/getfacl.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/hostname.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/kill.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/ksh.debug		comp-util-debug		debug
@@ -303,6 +304,7 @@
 ./usr/libdata/debug/bin/rm.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/rmdir.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/rump.dd.debug		comp-util-debug		debug,rump
+./usr/libdata/debug/bin/setfacl.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/sh.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/sleep.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/stty.debug		comp-util-debug		debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.218 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.219 2020/05/16 18:31:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.218 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.219 2020/05/16 18:31:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1148,8 +1148,8 @@ ext2fs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	/* Authorize setting SGID if needed. */
 	if (ip->i_e2fs_mode & ISGID) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid,
-		    ip->i_gid, mode));
+		    vp, NULL, genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid,
+		    mode));
 		if (error)
 			ip->i_e2fs_mode &= ~ISGID;
 	}

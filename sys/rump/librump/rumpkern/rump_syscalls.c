@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.149 2020/04/26 19:16:36 thorpej Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.150 2020/05/16 18:31:52 christos Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.149 2020/04/26 19:16:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.150 2020/05/16 18:31:52 christos Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -6523,6 +6523,35 @@ __weak_alias(___fhstatvfs190,rump___sysimpl_fhstatvfs190);
 __strong_alias(_sys___fhstatvfs190,rump___sysimpl_fhstatvfs190);
 #endif /* RUMP_KERNEL_IS_LIBC */
 
+long rump___sysimpl_lpathconf(const char *, int);
+long
+rump___sysimpl_lpathconf(const char * path, int name)
+{
+	register_t retval[2];
+	int error = 0;
+	long rv = -1;
+	struct sys_lpathconf_args callarg;
+
+	memset(&callarg, 0, sizeof(callarg));
+	SPARG(&callarg, path) = path;
+	SPARG(&callarg, name) = name;
+
+	error = rsys_syscall(SYS_lpathconf, &callarg, sizeof(callarg), retval);
+	rsys_seterrno(error);
+	if (error == 0) {
+		if (sizeof(long) > sizeof(register_t))
+			rv = *(long *)retval;
+		else
+			rv = *retval;
+	}
+	return rv;
+}
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(lpathconf,rump___sysimpl_lpathconf);
+__weak_alias(_lpathconf,rump___sysimpl_lpathconf);
+__strong_alias(_sys_lpathconf,rump___sysimpl_lpathconf);
+#endif /* RUMP_KERNEL_IS_LIBC */
+
 int rump_sys_pipe(int *);
 int
 rump_sys_pipe(int *fd)
@@ -8445,57 +8474,45 @@ struct sysent rump_sysent[] = {
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
 	},		/* 486 = __fhstatvfs190 */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 487 = filler */
+},		/* 487 = __acl_get_link */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 488 = filler */
+},		/* 488 = __acl_set_link */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 489 = filler */
+},		/* 489 = __acl_delete_link */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 490 = filler */
+},		/* 490 = __acl_aclcheck_link */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 491 = filler */
+},		/* 491 = __acl_get_file */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 492 = filler */
+},		/* 492 = __acl_set_file */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 493 = filler */
+},		/* 493 = __acl_get_fd */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 494 = filler */
+},		/* 494 = __acl_set_fd */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 495 = filler */
+},		/* 495 = __acl_delete_file */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 496 = filler */
+},		/* 496 = __acl_delete_fd */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 497 = filler */
+},		/* 497 = __acl_aclcheck_file */
 	{
-		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 498 = filler */
+},		/* 498 = __acl_aclcheck_fd */
 	{
-		.sy_flags = SYCALL_NOSYS,
+		ns(struct sys_lpathconf_args),
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,
-	},		/* 499 = filler */
+	},		/* 499 = lpathconf */
 	{
 		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)(void *)rumpns_enosys,

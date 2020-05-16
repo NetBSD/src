@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.18 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.19 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -251,9 +251,9 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	/* authorize setting SGID if needed */
 	if (ip->mode & ISGID) {
-		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp->v_type, cnp->cn_cred, ip->uid,
-		    ip->gid, mode));
+		error = kauth_authorize_vnode(cnp->cn_cred,
+		    KAUTH_VNODE_WRITE_SECURITY, vp, NULL, genfs_can_chmod(vp,
+		    cnp->cn_cred, ip->uid, ip->gid, mode));
 		if (error)
 			ip->mode &= ~ISGID;
 	}

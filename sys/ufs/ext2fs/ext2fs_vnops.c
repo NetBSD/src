@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.131 2020/03/08 17:38:12 kamil Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.131 2020/03/08 17:38:12 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,13 +226,14 @@ ext2fs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 }
 
 static int
-ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
+ext2fs_check_permitted(struct vnode *vp, struct inode *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
-	    ip->i_e2fs_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
-	    ip->i_e2fs_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, ip->i_e2fs_mode & ALLPERMS), vp, NULL,
+	    genfs_can_access(vp, cred, ip->i_uid, ip->i_gid,
+	    ip->i_e2fs_mode & ALLPERMS, NULL, accmode));
 }
 
 int
@@ -240,12 +241,12 @@ ext2fs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		accmode_t  a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	mode_t mode = ap->a_mode;
+	accmode_t mode = ap->a_accmode;
 	int error;
 
 	error = ext2fs_check_possible(vp, ip, mode);
@@ -367,8 +368,7 @@ ext2fs_setattr(void *v)
 #endif /* EXT2FS_SYSTEM_FLAGS */
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
-		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
-		    changing_sysflags));
+		    genfs_can_chflags(vp, cred, ip->i_uid, changing_sysflags));
 		if (error)
 			return error;
 
@@ -425,8 +425,8 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid,
-		    cred));
+		    NULL, genfs_can_chtimes(vp, cred, ip->i_uid,
+		    vap->va_vaflags));
 		if (error)
 			return error;
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -468,8 +468,7 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	int error;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid,
-	    mode));
+	    NULL, genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode));
 	if (error)
 		return error;
 
@@ -498,7 +497,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		gid = ip->i_gid;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
+	    NULL, genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return error;
 
@@ -1101,6 +1100,7 @@ const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_open_desc, ext2fs_open },		/* open */
 	{ &vop_close_desc, ufs_close },			/* close */
 	{ &vop_access_desc, ext2fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ext2fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ext2fs_read },		/* read */
@@ -1155,6 +1155,7 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, ufsspec_close },		/* close */
 	{ &vop_access_desc, ext2fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ext2fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
@@ -1209,6 +1210,7 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, ufsfifo_close },		/* close */
 	{ &vop_access_desc, ext2fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ext2fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */

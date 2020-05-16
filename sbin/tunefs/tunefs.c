@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.51 2020/04/09 14:44:38 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.52 2020/05/16 18:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.51 2020/04/09 14:44:38 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.52 2020/05/16 18:31:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,16 +101,18 @@ __dead static	void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	int		i, ch, Aflag, Fflag, Nflag, openflags;
+	int		i, ch, aflag, pflag, Aflag, Fflag, Nflag, openflags;
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
 	int		maxbpg, minfree, optim, secsize;
 	int		avgfilesize, avgfpdir, active;
 	long long	logfilesize;
 	int		secshift, fsbtodb;
+	const char  	*avalue, *pvalue, *name;
 	struct statvfs	sfs;
 
-	Aflag = Fflag = Nflag = 0;
+	aflag = pflag = Aflag = Fflag = Nflag = 0;
+	avalue = pvalue = NULL;
 	maxbpg = minfree = optim = secsize = -1;
 	avgfilesize = avgfpdir = -1;
 	logfilesize = -1;
@@ -118,7 +120,7 @@ main(int argc, char *argv[])
 	chg[FS_OPTSPACE] = "space";
 	chg[FS_OPTTIME] = "time";
 
-	while ((ch = getopt(argc, argv, "AFNe:g:h:l:m:o:q:S:")) != -1) {
+	while ((ch = getopt(argc, argv, "AFNa:e:g:h:l:m:o:p:q:S:")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -132,6 +134,17 @@ main(int argc, char *argv[])
 		case 'N':
 			Nflag++;
 			break;
+
+		case 'a':
+			name = "ACLs";
+			avalue = optarg;
+			if (strcmp(avalue, "enable") &&
+			    strcmp(avalue, "disable")) {
+				errx(10, "bad %s (options are %s)",
+				    name, "`enable' or `disable'");
+			}
+			aflag = 1;
+ 			break;
 
 		case 'e':
 			maxbpg = strsuftoll(
@@ -170,6 +183,18 @@ main(int argc, char *argv[])
 				    "bad %s (options are `space' or `time')",
 				    "optimization preference");
 			break;
+
+		case 'p':
+			name = "POSIX1e ACLs";
+			pvalue = optarg;
+			if (strcmp(pvalue, "enable") &&
+			    strcmp(pvalue, "disable")) {
+				errx(10, "bad %s (options are %s)",
+				    name, "`enable' or `disable'");
+			}
+			pflag = 1;
+			break;
+
 		case 'q':
 			if      (strcmp(optarg, "user") == 0)
 				userquota = Q2_EN;
@@ -182,6 +207,7 @@ main(int argc, char *argv[])
 			else
 			    errx(11, "invalid quota type %s", optarg);
 			break;
+
 		case 'S':
 			secsize = strsuftoll("physical sector size",
 			    optarg, 0, INT_MAX);
@@ -189,6 +215,7 @@ main(int argc, char *argv[])
 			if (secsize != 0 && 1 << secshift != secsize)
 				errx(12, "sector size %d is not a power of two", secsize);
 			break;
+
 		default:
 			usage();
 		}
@@ -330,9 +357,55 @@ main(int argc, char *argv[])
 	 * if we disabled all quotas, FS_DOQUOTA2 and associated inode(s) will
 	 * be cleared by kernel or fsck.
 	 */
+	if (aflag) {
+		name = "ACLs";
+		if (strcmp(avalue, "enable") == 0) {
+			if (sblock.fs_flags & FS_ACLS) {
+				warnx("%s remains unchanged as enabled", name);
+			} else if (sblock.fs_flags & FS_POSIX1EACLS) {
+				warnx("%s and POSIX.1e ACLs are mutually "
+				    "exclusive", name);
+			} else {
+				sblock.fs_flags |= FS_ACLS;
+				printf("%s set\n", name);
+			}
+		} else if (strcmp(avalue, "disable") == 0) {
+			if ((~sblock.fs_flags & FS_ACLS) == FS_ACLS) {
+				warnx("%s remains unchanged as disabled",
+				    name);
+			} else {
+				sblock.fs_flags &= ~FS_ACLS;
+				printf("%s cleared\n", name);
+			}
+ 		}
+ 	}
+
+	if (pflag) {
+		name = "POSIX1e ACLs";
+		if (strcmp(pvalue, "enable") == 0) {
+			if (sblock.fs_flags & FS_POSIX1EACLS) {
+				warnx("%s remains unchanged as enabled", name);
+			} else if (sblock.fs_flags & FS_ACLS) {
+				warnx("%s and ACLs are mutually "
+				    "exclusive", name);
+			} else {
+				sblock.fs_flags |= FS_POSIX1EACLS;
+				printf("%s set", name);
+			}
+		} else if (strcmp(pvalue, "disable") == 0) {
+			if ((~sblock.fs_flags & FS_POSIX1EACLS) ==
+			    FS_POSIX1EACLS) {
+				warnx("%s remains unchanged as disabled",
+				    name);
+			} else {
+				sblock.fs_flags &= ~FS_POSIX1EACLS;
+				printf("%s cleared", name);
+			}
+		}
+	}
 
 	if (Nflag) {
-		printf("tunefs: current settings of %s\n", special);
+		printf("%s: current settings of %s\n", getprogname(), special);
 		printf("\tmaximum contiguous block count %d\n",
 		    sblock.fs_maxcontig);
 		printf("\tmaximum blocks per file in a cylinder group %d\n",
@@ -358,8 +431,12 @@ main(int argc, char *argv[])
 		} else {
 			printf(" disabled\n");
 		}
-		printf("tunefs: no changes made\n");
-		exit(0);
+		printf("\tPOSIX.1e ACLs %s\n",
+		    (sblock.fs_flags & FS_POSIX1EACLS) ? "enabled" : "disabled");
+		printf("\tACLs %s\n",
+		    (sblock.fs_flags & FS_ACLS) ? "enabled" : "disabled");
+		printf("%s: no changes made\n", getprogname());
+		return 0;
 	}
 
 	memcpy(&buf, (char *)&sblock, SBLOCKSIZE);
@@ -527,11 +604,13 @@ usage(void)
 
 	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
+	fprintf(stderr, "\t-a ACLS: `enable' or `disable'\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-g average file size\n");
 	fprintf(stderr, "\t-h expected number of files per directory\n");
 	fprintf(stderr, "\t-l journal log file size (`0' to clear journal)\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
+	fprintf(stderr, "\t-p POSIX.1e ACLS: `enable' or `disable'\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 	fprintf(stderr, "\t-q quota type (`[no]user' or `[no]group')\n");
 	fprintf(stderr, "\t-S sector size\n");

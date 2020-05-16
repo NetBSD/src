@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.52 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.53 2020/05/16 18:31:53 christos Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.52 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.53 2020/05/16 18:31:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -140,7 +140,7 @@ ulfs_open(void *v)
 }
 
 static int
-ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
+ulfs_check_possible(struct vnode *vp, struct inode *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
@@ -152,7 +152,7 @@ ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 	 * unless the file is a socket, fifo, or a block or
 	 * character device resident on the file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -180,20 +180,21 @@ ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 	if ((ip->i_flags & SF_SNAPSHOT))
 		return (EPERM);
 	/* If immutable bit set, nobody gets to write it. */
-	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
+	if ((accmode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
 	return 0;
 }
 
 static int
-ulfs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
+ulfs_check_permitted(struct vnode *vp, struct inode *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
-	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
-	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(
+	    vp, cred, ip->i_uid, ip->i_gid, ip->i_mode & ALLPERMS,
+	    NULL, accmode));
 }
 
 int
@@ -201,26 +202,26 @@ ulfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode	*a_vp;
-		int		a_mode;
+		accmode_t	a_accmode;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
-	mode_t		mode;
+	accmode_t	accmode;
 	int		error;
 
 	vp = ap->a_vp;
-	mode = ap->a_mode;
+	accmode = ap->a_accmode;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
 	ip = VTOI(vp);
 
-	error = ulfs_check_possible(vp, ip, mode, ap->a_cred);
+	error = ulfs_check_possible(vp, ip, accmode, ap->a_cred);
 	if (error)
 		return error;
 
-	error = ulfs_check_permitted(vp, ip, mode, ap->a_cred);
+	error = ulfs_check_permitted(vp, ip, accmode, ap->a_cred);
 
 	return error;
 }
@@ -292,7 +293,7 @@ ulfs_setattr(void *v)
 		}
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
-		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
+		    genfs_can_chflags(vp, cred, ip->i_uid,
 		    changing_sysflags));
 		if (error)
 			goto out;
@@ -371,7 +372,8 @@ ulfs_setattr(void *v)
 			goto out;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred));
+		    NULL, genfs_can_chtimes(vp, cred, ip->i_uid,
+		    vap->va_vaflags));
 		if (error)
 			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -424,7 +426,7 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	ip = VTOI(vp);
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid, mode));
+	    NULL, genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode));
 	if (error)
 		return (error);
 
@@ -462,7 +464,7 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		gid = ip->i_gid;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
+	    NULL, genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return (error);
 

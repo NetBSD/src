@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.332 2020/04/13 19:23:20 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.333 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.332 2020/04/13 19:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.333 2020/05/16 18:31:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -192,6 +192,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_open_desc, ulfs_open },			/* open */
 	{ &vop_close_desc, lfs_close },			/* close */
 	{ &vop_access_desc, ulfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, lfs_read },			/* read */
@@ -248,6 +249,7 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, lfsspec_close },		/* close */
 	{ &vop_access_desc, ulfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ulfsspec_read },		/* read */
@@ -304,6 +306,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, lfsfifo_close },		/* close */
 	{ &vop_access_desc, ulfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ulfsfifo_read },		/* read */
@@ -381,8 +384,9 @@ lfs_makeinode(struct vattr *vap, struct vnode *dvp,
 
 	/* Authorize setting SGID if needed. */
 	if (ip->i_mode & ISGID) {
-		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
-		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		error = kauth_authorize_vnode(cnp->cn_cred,
+		    KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp, cnp->cn_cred, ip->i_uid,
 		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
 		if (error) {
 			ip->i_mode &= ~ISGID;

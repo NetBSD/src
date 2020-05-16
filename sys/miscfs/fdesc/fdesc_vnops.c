@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.132 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.133 2020/05/16 18:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.132 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.133 2020/05/16 18:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_open_desc, fdesc_open },			/* open */
 	{ &vop_close_desc, fdesc_close },		/* close */
 	{ &vop_access_desc, fdesc_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, fdesc_getattr },		/* getattr */
 	{ &vop_setattr_desc, fdesc_setattr },		/* setattr */
 	{ &vop_read_desc, fdesc_read },			/* read */

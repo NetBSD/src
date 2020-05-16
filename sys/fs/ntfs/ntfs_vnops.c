@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.63 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.64 2020/05/16 18:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.63 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.64 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ ntfs_write(void *v)
 }
 
 static int
-ntfs_check_possible(struct vnode *vp, struct ntnode *ip, mode_t mode)
+ntfs_check_possible(struct vnode *vp, struct ntnode *ip, accmode_t accmode)
 {
 
 	/*
@@ -407,7 +407,7 @@ ntfs_check_possible(struct vnode *vp, struct ntnode *ip, mode_t mode)
 	 * unless the file is a socket, fifo, or a block or
 	 * character device resident on the file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch ((int)vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -422,16 +422,16 @@ ntfs_check_possible(struct vnode *vp, struct ntnode *ip, mode_t mode)
 }
 
 static int
-ntfs_check_permitted(struct vnode *vp, struct ntnode *ip, mode_t mode,
+ntfs_check_permitted(struct vnode *vp, struct ntnode *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 	mode_t file_mode;
 
 	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
-	    file_mode), vp, NULL, genfs_can_access(vp->v_type, file_mode,
-	    ip->i_mp->ntm_uid, ip->i_mp->ntm_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp, cred,
+	    ip->i_mp->ntm_uid, ip->i_mp->ntm_gid, file_mode, NULL, accmode));
 }
 
 int
@@ -439,7 +439,7 @@ ntfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		accmode_t  a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -448,11 +448,11 @@ ntfs_access(void *v)
 
 	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
 
-	error = ntfs_check_possible(vp, ip, ap->a_mode);
+	error = ntfs_check_possible(vp, ip, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = ntfs_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+	error = ntfs_check_permitted(vp, ip, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -814,6 +814,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_open_desc, (vop_t *) ntfs_open },	/* open */
 	{ &vop_close_desc,(vop_t *)  ntfs_close },	/* close */
 	{ &vop_access_desc, (vop_t *) ntfs_access },	/* access */
+	{ &vop_accessx_desc, (vop_t *) genfs_accessx },	/* accessx */
 	{ &vop_getattr_desc, (vop_t *) ntfs_getattr },	/* getattr */
 	{ &vop_setattr_desc, genfs_eopnotsupp },	/* setattr */
 	{ &vop_read_desc, (vop_t *) ntfs_read },	/* read */

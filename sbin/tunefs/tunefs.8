@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.44 2014/08/09 10:41:05 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.45 2020/05/16 18:31:47 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd August 9, 2014
+.Dd April 7, 2020
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -38,11 +38,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl AFN
+.Op Fl a Cm enable | disable
 .Op Fl e Ar maxbpg
 .Op Fl g Ar avgfilesize
 .Op Fl h Ar avgfpdir
 .Op Fl l Ar logsize
 .Op Fl m Ar minfree
+.Op Fl n Cm enable | disable
 .Op Fl o Ar optimize_preference
 .Op Fl q Ar quota
 .Op Fl S Ar sectorsize
@@ -78,6 +80,8 @@ will be accessed
 Display all the settable options
 (after any changes from the tuning options)
 but do not cause any of them to be changed.
+.It Fl a Cm enable | disable
+Turn on/off the administrative NFSv4 ACL enable flag.
 .It Fl e Ar maxbpg
 This indicates the maximum number of blocks any single file can
 allocate out of a cylinder group before it is forced to begin
@@ -130,6 +134,8 @@ running out of full sized blocks.
 For values of minfree greater than or equal to 5%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
+.It Fl p Cm enable | disable
+Turn on/off the administrative POSIX.1e ACL enable flag.
 .Pp
 .Ar optimize_preference
 can be specified as either

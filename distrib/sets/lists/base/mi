@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1242 2020/05/01 22:25:18 christos Exp $
+# $NetBSD: mi,v 1.1243 2020/05/16 18:31:45 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -33,6 +33,7 @@
 ./bin/echo					base-util-root
 ./bin/ed					base-util-root
 ./bin/expr					base-util-root
+./bin/getfacl					base-util-root
 ./bin/hostname					base-util-root
 ./bin/kill					base-util-root
 ./bin/ksh					base-util-root
@@ -51,6 +52,7 @@
 ./bin/rmail					base-obsolete		obsolete
 ./bin/rmdir					base-util-root
 ./bin/rump.dd					base-util-root		rump
+./bin/setfacl					base-util-root
 ./bin/sh					base-util-root
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root

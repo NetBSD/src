@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_rename.c,v 1.3 2017/03/30 09:11:12 hannken Exp $	*/
+/*	$NetBSD: genfs_rename.c,v 1.4 2020/05/16 18:31:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.3 2017/03/30 09:11:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.4 2020/05/16 18:31:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -1148,7 +1148,7 @@ genfs_ufslike_check_sticky(kauth_cred_t cred, mode_t dmode, uid_t duid,
 {
 
 	if ((dmode & S_ISTXT) && (vp != NULL))
-		return genfs_can_sticky(cred, duid, uid);
+		return genfs_can_sticky(vp, cred, duid, uid);
 
 	return 0;
 }

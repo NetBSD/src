@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.69 2020/02/23 22:14:04 ad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.70 2020/05/16 18:31:50 christos Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -269,6 +269,8 @@ BEGIN	{
 		printf("struct flock;\n");
 		printf("struct knote;\n");
 		printf("struct vm_page;\n");
+		printf("struct acl;\n");
+		printf("\n#include <sys/acl.h>\n");
 	}
 	printf("\n#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n");
 	if (rump)

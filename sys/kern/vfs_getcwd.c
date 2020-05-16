@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.59 2020/04/21 21:42:47 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.60 2020/05/16 18:31:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.59 2020/04/21 21:42:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.60 2020/05/16 18:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
 	int error;
-	int perms = VEXEC;
+	accmode_t accmode = VEXEC;
 
 	error = 0;
 	if (rvp == NULL) {
@@ -325,7 +325,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		if (lvp->v_vflag & VV_ROOT) {
 			vn_lock(lvp, LK_SHARED | LK_RETRY);
 			if (chkaccess) {
-				error = VOP_ACCESS(lvp, perms, cred);
+				error = VOP_ACCESS(lvp, accmode, cred);
 				if (error) {
 					VOP_UNLOCK(lvp);
 					goto out;
@@ -361,7 +361,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		if (chkaccess && !cache_have_id(lvp)) {
 			/* Need exclusive for UFS VOP_GETATTR (itimes) & VOP_LOOKUP. */
 			vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-			error = VOP_ACCESS(lvp, perms, cred);
+			error = VOP_ACCESS(lvp, accmode, cred);
 			if (error) {
 				VOP_UNLOCK(lvp);
 				goto out;
@@ -375,7 +375,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		 * directory..
 		 */
 		error = cache_revlookup(lvp, &uvp, &bp, bufp, chkaccess,
-		    perms);
+		    accmode);
 		if (error == -1) {
 			if (!locked) {
 				locked = true;
@@ -398,7 +398,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 			panic("getcwd: oops, went back too far");
 		}
 #endif
-		perms = VEXEC | VREAD;
+		accmode = VEXEC | VREAD;
 		if (bp)
 			*(--bp) = '/';
 		vrele(lvp);

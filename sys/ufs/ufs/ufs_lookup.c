@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.152 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.153 2020/05/16 18:31:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.152 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.153 2020/05/16 18:31:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -211,6 +211,38 @@ ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
     kauth_cred_t cred)
 {
 	int error;
+
+#ifdef UFS_ACL
+	/*
+	 * NFSv4 Minor Version 1, draft-ietf-nfsv4-minorversion1-03.txt
+	 *
+	 * 3.16.2.1. ACE4_DELETE vs. ACE4_DELETE_CHILD
+	 */
+
+	/*
+	 * XXX: Is this check required?
+	 */
+	error = VOP_ACCESS(vdp, VEXEC, cred);
+	if (error)
+		goto out;
+
+#if 0
+	/* Moved to ufs_remove, ufs_rmdir because they hold the lock */
+	error = VOP_ACCESSX(tdp, VDELETE, cred);
+	if (error == 0)
+		return (0);
+#endif
+
+	error = VOP_ACCESSX(vdp, VDELETE_CHILD, cred);
+	if (error == 0)
+		return (0);
+
+	error = VOP_ACCESSX(vdp, VEXPLICIT_DENY | VDELETE_CHILD, cred);
+	if (error)
+		goto out;
+
+#endif /* !UFS_ACL */
+
 	/*
 	 * Write access to directory required to delete files.
 	 */
@@ -228,7 +260,7 @@ ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
 	 * implements append-only directories.
 	 */
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE, tdp, vdp,
-	    genfs_can_sticky(cred, ip->i_uid, VTOI(tdp)->i_uid));
+	    genfs_can_sticky(vdp, cred, ip->i_uid, VTOI(tdp)->i_uid));
 	if (error) {
 		error = EPERM;	// Why override?
 		goto out;
@@ -590,7 +622,10 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred);
+		if (flags & WILLBEDIR)
+			error = VOP_ACCESSX(vdp, VWRITE | VAPPEND, cred);
+		else
+			error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		error = slot_estimate(&slot, dirblksiz, nameiop,
@@ -675,7 +710,11 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0)
+		if (flags & WILLBEDIR)
+			error = VOP_ACCESSX(vdp, VWRITE | VAPPEND, cred);
+		else
+			error = VOP_ACCESS(vdp, VWRITE, cred);
+		if (error)
 			goto out;
 		/*
 		 * Careful about locking second inode.

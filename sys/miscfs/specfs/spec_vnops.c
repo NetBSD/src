@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.177 2020/04/13 20:02:27 jdolecek Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.178 2020/05/16 18:31:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.177 2020/04/13 20:02:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.178 2020/05/16 18:31:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -121,6 +121,7 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, spec_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, spec_getattr },		/* getattr */
 	{ &vop_setattr_desc, spec_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */

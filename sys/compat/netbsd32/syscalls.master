@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.137 2020/04/26 19:18:36 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.138 2020/05/16 18:31:48 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1172,3 +1172,37 @@
 486	STD 		{ int|netbsd32|90|fhstatvfs1(netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statvfsp_t buf, \
 			    int flags); }
+487	STD		{ int|netbsd32||__acl_get_link( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+488	STD		{ int|netbsd32||__acl_set_link( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+489	STD		{ int|netbsd32||__acl_delete_link( \
+			    const netbsd32_charp path, \
+			    acl_type_t type); }
+490	STD		{ int|netbsd32||__acl_aclcheck_link( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+491	STD		{ int|netbsd32||__acl_get_file( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+492	STD		{ int|netbsd32||__acl_set_file( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+493	STD		{ int|netbsd32||__acl_get_fd(int filedes, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+494	STD		{ int|netbsd32||__acl_set_fd(int filedes, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+495	STD		{ int|netbsd32||__acl_delete_file( \
+			    const netbsd32_charp path, \
+			    acl_type_t type); }
+496	STD		{ int|netbsd32||__acl_delete_fd(int filedes, \
+			    acl_type_t type); }
+497	STD		{ int|netbsd32||__acl_aclcheck_file( \
+			    const netbsd32_charp path, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+498	STD		{ int|netbsd32||__acl_aclcheck_fd(int filedes, \
+			    acl_type_t type, netbsd32_aclp_t aclp); }
+499	STD		{ long|netbsd32||lpathconf(const netbsd32_charp path, \
+			    int name); }

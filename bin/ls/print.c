@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.55 2014/05/10 09:39:18 martin Exp $	*/
+/*	$NetBSD: print.c,v 1.56 2020/05/16 18:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.55 2014/05/10 09:39:18 martin Exp $");
+__RCSID("$NetBSD: print.c,v 1.56 2020/05/16 18:31:45 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/acl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -68,6 +69,7 @@ static void	printlink(FTSENT *);
 static void	printtime(time_t);
 static void	printtotal(DISPLAY *dp);
 static int	printtype(u_int);
+static void	aclmode(char *, const FTSENT *);
 
 static time_t	now;
 
@@ -154,6 +156,7 @@ printlong(DISPLAY *dp)
 			}
 		}
 		(void)strmode(sp->st_mode, buf);
+		aclmode(buf, p);
 		np = p->fts_pointer;
 		(void)printf("%s %*lu ", buf, dp->s_nlink,
 		    (unsigned long)sp->st_nlink);
@@ -494,4 +497,75 @@ printlink(FTSENT *p)
 		(void)printescaped(path);
 	else
 		(void)printf("%s", path);
+}
+
+/*
+ * Add a + after the standard rwxrwxrwx mode if the file has an
+ * ACL. strmode() reserves space at the end of the string.
+ */
+static void
+aclmode(char *buf, const FTSENT *p)
+{
+	char name[MAXPATHLEN + 1];
+	int ret, trivial;
+	static dev_t previous_dev = NODEV;
+	static int supports_acls = -1;
+	static int type = ACL_TYPE_ACCESS;
+	acl_t facl;
+
+	/*
+	 * XXX: ACLs are not supported on whiteouts and device files
+	 * residing on UFS.
+	 */
+	if (S_ISCHR(p->fts_statp->st_mode) || S_ISBLK(p->fts_statp->st_mode) ||
+	    S_ISWHT(p->fts_statp->st_mode))
+		return;
+
+	if (previous_dev == p->fts_statp->st_dev && supports_acls == 0)
+		return;
+
+	if (p->fts_level == FTS_ROOTLEVEL)
+		snprintf(name, sizeof(name), "%s", p->fts_name);
+	else
+		snprintf(name, sizeof(name), "%s/%s",
+		    p->fts_parent->fts_accpath, p->fts_name);
+
+	if (supports_acls == -1 || previous_dev != p->fts_statp->st_dev) {
+		previous_dev = p->fts_statp->st_dev;
+		supports_acls = 0;
+
+		ret = lpathconf(name, _PC_ACL_NFS4);
+		if (ret > 0) {
+			type = ACL_TYPE_NFS4;
+			supports_acls = 1;
+		} else if (ret < 0 && errno != EINVAL) {
+			warn("%s", name);
+			return;
+		}
+		if (supports_acls == 0) {
+			ret = lpathconf(name, _PC_ACL_EXTENDED);
+			if (ret > 0) {
+				type = ACL_TYPE_ACCESS;
+				supports_acls = 1;
+			} else if (ret < 0 && errno != EINVAL) {
+				warn("%s", name);
+				return;
+			}
+		}
+	}
+	if (supports_acls == 0)
+		return;
+	facl = acl_get_link_np(name, type);
+	if (facl == NULL) {
+		warn("%s", name);
+		return;
+	}
+	if (acl_is_trivial_np(facl, &trivial)) {
+		acl_free(facl);
+		warn("%s", name);
+		return;
+	}
+	if (!trivial)
+		buf[10] = '+';
+	acl_free(facl);
 }

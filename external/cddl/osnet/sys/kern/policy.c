@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.7 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: policy.c,v 1.8 2020/05/16 18:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ secpolicy_vnode_owner(vnode_t *vp, cred_t *cred, uid_t owner)
 
 int
 secpolicy_vnode_access(cred_t *cred, vnode_t *vp, uid_t owner,
-    int mode)
+    accmode_t mode)
 {
 
 	return kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);

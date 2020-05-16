@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/05/02 22:19:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.35 2020/05/16 18:31:52 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -29,6 +29,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist/uapi
 .if ${NETBSD32_DRMKMS:Uno} == "yes"
 SRCS+=	netbsd32_drm.c
 .endif
+SRCS+=	netbsd32_acl.c
 SRCS+=	netbsd32_core.c		netbsd32_event.c
 SRCS+=	netbsd32_exec_elf32.c	netbsd32_execve.c
 SRCS+=	netbsd32_fd.c		netbsd32_fs.c

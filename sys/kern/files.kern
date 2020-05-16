@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.47 2020/04/30 03:28:18 riastradh Exp $
+#	$NetBSD: files.kern,v 1.48 2020/05/16 18:31:50 christos Exp $
 
 #
 # kernel sources
@@ -96,6 +96,8 @@ file	kern/kern_uuid.c		kern
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
 file	kern/sched_m2.c			sched_m2
+file	kern/subr_acl_posix1e.c		kern
+file	kern/subr_acl_nfs4.c		kern
 file	kern/subr_asan.c		kasan
 file	kern/subr_autoconf.c		kern
 file	kern/subr_blist.c		vmswap
@@ -192,6 +194,7 @@ file	kern/uipc_syscalls.c		kern
 file	kern/uipc_usrreq.c		kern
 
 define	vfs: kern
+file	kern/vfs_acl.c			vfs
 file	kern/vfs_bio.c			vfs
 file	kern/vfs_cache.c		vfs
 file	kern/vfs_cwd.c			vfs

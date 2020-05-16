@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.152 2020/04/26 19:18:52 thorpej Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.153 2020/05/16 18:31:48 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -2669,6 +2669,93 @@ struct netbsd32___fhstatvfs190_args {
 };
 check_syscall_args(netbsd32___fhstatvfs190)
 
+struct netbsd32___acl_get_link_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_get_link)
+
+struct netbsd32___acl_set_link_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_set_link)
+
+struct netbsd32___acl_delete_link_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(netbsd32___acl_delete_link)
+
+struct netbsd32___acl_aclcheck_link_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_aclcheck_link)
+
+struct netbsd32___acl_get_file_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_get_file)
+
+struct netbsd32___acl_set_file_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_set_file)
+
+struct netbsd32___acl_get_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_get_fd)
+
+struct netbsd32___acl_set_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_set_fd)
+
+struct netbsd32___acl_delete_file_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(netbsd32___acl_delete_file)
+
+struct netbsd32___acl_delete_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(netbsd32___acl_delete_fd)
+
+struct netbsd32___acl_aclcheck_file_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_aclcheck_file)
+
+struct netbsd32___acl_aclcheck_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(netbsd32_aclp_t) aclp;
+};
+check_syscall_args(netbsd32___acl_aclcheck_fd)
+
+struct netbsd32_lpathconf_args {
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(int) name;
+};
+check_syscall_args(netbsd32_lpathconf)
+
 /*
  * System call prototypes.
  */
@@ -3502,5 +3589,31 @@ int	netbsd32___statvfs190(struct lwp *, const struct netbsd32___statvfs190_args 
 int	netbsd32___fstatvfs190(struct lwp *, const struct netbsd32___fstatvfs190_args *, register_t *);
 
 int	netbsd32___fhstatvfs190(struct lwp *, const struct netbsd32___fhstatvfs190_args *, register_t *);
+
+int	netbsd32___acl_get_link(struct lwp *, const struct netbsd32___acl_get_link_args *, register_t *);
+
+int	netbsd32___acl_set_link(struct lwp *, const struct netbsd32___acl_set_link_args *, register_t *);
+
+int	netbsd32___acl_delete_link(struct lwp *, const struct netbsd32___acl_delete_link_args *, register_t *);
+
+int	netbsd32___acl_aclcheck_link(struct lwp *, const struct netbsd32___acl_aclcheck_link_args *, register_t *);
+
+int	netbsd32___acl_get_file(struct lwp *, const struct netbsd32___acl_get_file_args *, register_t *);
+
+int	netbsd32___acl_set_file(struct lwp *, const struct netbsd32___acl_set_file_args *, register_t *);
+
+int	netbsd32___acl_get_fd(struct lwp *, const struct netbsd32___acl_get_fd_args *, register_t *);
+
+int	netbsd32___acl_set_fd(struct lwp *, const struct netbsd32___acl_set_fd_args *, register_t *);
+
+int	netbsd32___acl_delete_file(struct lwp *, const struct netbsd32___acl_delete_file_args *, register_t *);
+
+int	netbsd32___acl_delete_fd(struct lwp *, const struct netbsd32___acl_delete_fd_args *, register_t *);
+
+int	netbsd32___acl_aclcheck_file(struct lwp *, const struct netbsd32___acl_aclcheck_file_args *, register_t *);
+
+int	netbsd32___acl_aclcheck_fd(struct lwp *, const struct netbsd32___acl_aclcheck_fd_args *, register_t *);
+
+int	netbsd32_lpathconf(struct lwp *, const struct netbsd32_lpathconf_args *, register_t *);
 
 #endif /* _NETBSD32_SYS_SYSCALLARGS_H_ */

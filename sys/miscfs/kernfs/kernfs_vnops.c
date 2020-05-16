@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.164 2020/02/24 20:44:25 ad Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.165 2020/05/16 18:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.164 2020/02/24 20:44:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.165 2020/05/16 18:31:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_open_desc, kernfs_open },		/* open */
 	{ &vop_close_desc, kernfs_close },		/* close */
 	{ &vop_access_desc, kernfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, kernfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
 	{ &vop_read_desc, kernfs_read },		/* read */
@@ -236,6 +237,7 @@ const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, kernfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, kernfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
@@ -640,7 +642,7 @@ kernfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vattr va;
@@ -650,9 +652,9 @@ kernfs_access(void *v)
 		return (error);
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
-	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
-	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
+	    KAUTH_ACCESS_ACTION(ap->a_accmode, ap->a_vp->v_type, va.va_mode),
+	    ap->a_vp, NULL, genfs_can_access(ap->a_vp, ap->a_cred,
+	    va.va_uid, va.va_gid, va.va_mode, NULL, ap->a_accmode));
 }
 
 static int

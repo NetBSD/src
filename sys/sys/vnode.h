@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.295 2020/04/13 19:23:20 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.296 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/time.h>
+#include <sys/acl.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
@@ -292,11 +293,72 @@ struct vattr {
 #define	IO_ADV_DECODE(ioflag)	(((ioflag) & IO_ADV_MASK) >> IO_ADV_SHIFT)
 
 /*
- *  Modes.
+ * Flags for accmode_t.
  */
-#define	VREAD	00004		/* read, write, execute permissions */
-#define	VWRITE	00002
-#define	VEXEC	00001
+#define	VEXEC			000000000100 /* execute/search permission */
+#define	VWRITE			000000000200 /* write permission */
+#define	VREAD			000000000400 /* read permission */
+#define	VADMIN			000000010000 /* being the file owner */
+#define	VAPPEND			000000040000 /* permission to write/append */
+
+/*
+ * VEXPLICIT_DENY makes VOP_ACCESSX(9) return EPERM or EACCES only
+ * if permission was denied explicitly, by a "deny" rule in NFSv4 ACL,
+ * and 0 otherwise.  This never happens with ordinary unix access rights
+ * or POSIX.1e ACLs.  Obviously, VEXPLICIT_DENY must be OR-ed with
+ * some other V* constant.
+ */
+#define	VEXPLICIT_DENY		000000100000
+#define	VREAD_NAMED_ATTRS 	000000200000 /* not used */
+#define	VWRITE_NAMED_ATTRS 	000000400000 /* not used */
+#define	VDELETE_CHILD	 	000001000000
+#define	VREAD_ATTRIBUTES 	000002000000 /* permission to stat(2) */
+#define	VWRITE_ATTRIBUTES 	000004000000 /* change {m,c,a}time */
+#define	VDELETE		 	000010000000
+#define	VREAD_ACL	 	000020000000 /* read ACL and file mode */
+#define	VWRITE_ACL	 	000040000000 /* change ACL and/or file mode */
+#define	VWRITE_OWNER	 	000100000000 /* change file owner */
+#define	VSYNCHRONIZE	 	000200000000 /* not used */
+#define	VCREAT			000400000000 /* creating new file */
+#define	VVERIFY			001000000000 /* verification required */
+
+#define __VNODE_PERM_BITS	\
+	"\10"			\
+	"\07VEXEC"		\
+	"\10VWRITE"		\
+	"\11VREAD"		\
+	"\15VADMIN"		\
+	"\17VAPPEND"		\
+	"\20VEXPLICIT_DENY"	\
+	"\21VREAD_NAMED_ATTRS"	\
+	"\22VWRITE_NAMED_ATTRS"	\
+	"\23VDELETE_CHILD"	\
+	"\24VREAD_ATTRIBUTES"	\
+	"\25VWRITE_ATTRIBUTES"	\
+	"\26VDELETE"		\
+	"\27VREAD_ACL"		\
+	"\30VWRITE_ACL"		\
+	"\31VWRITE_OWNER"	\
+	"\32VSYNCHRONIZE"	\
+	"\33VCREAT"		\
+	"\34VVERIFY"
+
+/*
+ * Permissions that were traditionally granted only to the file owner.
+ */
+#define VADMIN_PERMS	(VADMIN | VWRITE_ATTRIBUTES | VWRITE_ACL | \
+    VWRITE_OWNER)
+
+/*
+ * Permissions that were traditionally granted to everyone.
+ */
+#define VSTAT_PERMS	(VREAD_ATTRIBUTES | VREAD_ACL)
+
+/*
+ * Permissions that allow to change the state of the file in any way.
+ */
+#define VMODIFY_PERMS	(VWRITE | VAPPEND | VADMIN_PERMS | VDELETE_CHILD | \
+    VDELETE)
 
 /*
  * Token indicating no attribute value yet assigned.
@@ -580,6 +642,7 @@ int	rawdev_mounted(struct vnode *, struct vnode **);
 uint8_t	vtype2dt(enum vtype);
 
 /* see vfssubr(9) */
+int	vfs_unixify_accmode(accmode_t *);
 void	vfs_getnewfsid(struct mount *);
 void	vfs_timestamp(struct timespec *);
 #if defined(DDB) || defined(DEBUGPRINT)

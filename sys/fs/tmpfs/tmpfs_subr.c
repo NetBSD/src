@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.110 2020/05/12 23:17:41 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.111 2020/05/16 18:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.110 2020/05/12 23:17:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.111 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -988,8 +988,7 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 	}
 
 	error = kauth_authorize_vnode(cred, action, vp, NULL,
-	    genfs_can_chflags(cred, vp->v_type, node->tn_uid,
-	    changing_sysflags));
+	    genfs_can_chflags(vp, cred, node->tn_uid, changing_sysflags));
 	if (error)
 		return error;
 
@@ -1034,7 +1033,7 @@ tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 		return EPERM;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, node->tn_uid, node->tn_gid, mode));
+	    NULL, genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid, mode));
 	if (error) {
 		return error;
 	}
@@ -1077,7 +1076,7 @@ tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 		return EPERM;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, node->tn_uid, node->tn_gid, uid,
+	    NULL, genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
 	    gid));
 	if (error) {
 		return error;
@@ -1164,7 +1163,7 @@ tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
 		return EPERM;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp, NULL,
-	    genfs_can_chtimes(vp, vaflags, node->tn_uid, cred));
+	    genfs_can_chtimes(vp, cred, node->tn_uid, vaflags));
 	if (error)
 		return error;
 
