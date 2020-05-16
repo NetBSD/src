@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/05/16 12:44:42 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2020/05/16 12:54:27 christos Exp $
 #
 
 .include <bsd.init.mk>
@@ -15,11 +15,9 @@ SRCS.t_modautoload+=	t_modautoload.c
 # subdirectory -- otherwise the LDADD lines would get a little hairy.
 LDFLAGS+=	-Wl,-E
 LDADD+= \
-    -Wl,--whole-archive \
-    ${DESTDIR}/usr/lib/librumpvfs_nofifofs.a \
-    ${DESTDIR}/usr/lib/librumpvfs.a \
-    ${DESTDIR}/usr/lib/librump.a \
-    -Wl,--no-whole-archive
+    -Wl,--whole-archive -Wl,-Bstatic \
+	-lrumpvfs_nofifofs -lrumpvfs -lrump \
+    -Wl,-Bdynamic -Wl,--no-whole-archive
 
 LDADD+=		-lrumpuser -lpthread
 DPADD+=		${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
