@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.886 2020/05/15 23:32:27 christos Exp $
+# $NetBSD: shl.mi,v 1.887 2020/05/16 19:00:13 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -21,7 +21,7 @@
 ./lib/libblacklist.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.216				base-sys-shlib		dynamicroot
+./lib/libc.so.12.217				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -249,7 +249,7 @@
 ./usr/lib/libc++.so.1.0				base-sys-shlib		compatfile,libcxx
 ./usr/lib/libc.so				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12				base-sys-shlib		compatfile
-./usr/lib/libc.so.12.216			base-sys-shlib		compatfile
+./usr/lib/libc.so.12.217			base-sys-shlib		compatfile
 ./usr/lib/libcbor.so				base-sys-shlib		compatfile
 ./usr/lib/libcbor.so.0				base-sys-shlib		compatfile
 ./usr/lib/libcbor.so.0.5			base-sys-shlib		compatfile
