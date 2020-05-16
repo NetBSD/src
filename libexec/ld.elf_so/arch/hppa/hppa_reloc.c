@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.46 2020/05/10 06:42:38 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.47 2020/05/16 16:43:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.46 2020/05/10 06:42:38 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.47 2020/05/16 16:43:00 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -420,12 +420,12 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
 		Elf_Addr         tmp;
-		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
+		unsigned long symnum = ELF_R_SYM(rela->r_info);
 		/* First, handle DIR32 and PLABEL32 without symbol. */
-		if (ELF_R_SYM(rela->r_info) == 0) {
+		if (symnum == 0) {
 			switch (ELF_R_TYPE(rela->r_info)) {
 			default:
 				break;
@@ -474,7 +474,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TLS_TPREL32):
 		case R_TYPE(TLS_DTPMOD32):
 		case R_TYPE(TLS_DTPOFF32):
-			symnum = ELF_R_SYM(rela->r_info);
 			if (last_symnum != symnum) {
 				last_symnum = symnum;
 				if (ELF_R_TYPE(rela->r_info) == R_TYPE(DIR32)) {
