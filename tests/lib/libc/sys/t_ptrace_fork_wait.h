@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.4 2020/05/16 19:08:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.5 2020/05/16 22:07:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -1600,14 +1600,14 @@ ATF_TC_BODY(name, tc)							\
 	fork2_body(fn, masked, ignored);				\
 }
 
-FORK2_TEST(posix_spawn_singalmasked, "spawn", true, false)
-FORK2_TEST(posix_spawn_singalignored, "spawn", false, true)
-FORK2_TEST(fork_singalmasked, "fork", true, false)
-FORK2_TEST(fork_singalignored, "fork", false, true)
-FORK2_TEST(vfork_singalmasked, "vfork", true, false)
-FORK2_TEST(vfork_singalignored, "vfork", false, true)
-FORK2_TEST(vforkdone_singalmasked, "vforkdone", true, false)
-FORK2_TEST(vforkdone_singalignored, "vforkdone", false, true)
+FORK2_TEST(posix_spawn_signalmasked, "spawn", true, false)
+FORK2_TEST(posix_spawn_signalignored, "spawn", false, true)
+FORK2_TEST(fork_signalmasked, "fork", true, false)
+FORK2_TEST(fork_signalignored, "fork", false, true)
+FORK2_TEST(vfork_signalmasked, "vfork", true, false)
+FORK2_TEST(vfork_signalignored, "vfork", false, true)
+FORK2_TEST(vforkdone_signalmasked, "vforkdone", true, false)
+FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 #endif
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_FORK() \
@@ -1725,11 +1725,11 @@ FORK2_TEST(vforkdone_singalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork_kill_vforkerdone); \
 	ATF_TP_ADD_TC(tp, traceme_vfork_fork); \
 	ATF_TP_ADD_TC(tp, traceme_vfork_vfork); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_singalmasked); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_singalignored); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalmasked); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalignored); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalmasked); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalignored); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalmasked); \
-	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalignored);
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_signalmasked); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_signalignored); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork_signalmasked); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork_signalignored); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_signalmasked); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_signalignored); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_signalmasked); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_signalignored);
