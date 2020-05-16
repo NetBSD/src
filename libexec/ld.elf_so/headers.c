@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.68 2020/03/04 01:21:17 thorpej Exp $	 */
+/*	$NetBSD: headers.c,v 1.69 2020/05/16 16:43:15 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.68 2020/03/04 01:21:17 thorpej Exp $");
+__RCSID("$NetBSD: headers.c,v 1.69 2020/05/16 16:43:15 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -240,7 +240,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 				    &obj->nbuckets_s2_gnu);
 
 				dbg(("found GNU Hash: buckets=%p "
-				     "nbuckets=%lu chains=%p nchains=%u "
+				     "nbuckets=%u chains=%p nchains=%lu "
 				     "bloom=%p mask_bm=%u shift2=%u "
 				     "symndx=%u",
 				    obj->buckets_gnu, obj->nbuckets_gnu,
