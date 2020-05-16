@@ -5155,11 +5155,11 @@ zfs_netbsd_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int mode = ap->a_mode;
+	accmode_t accmode = ap->a_accmode;
 	mode_t zfs_mode = 0;
 	kauth_cred_t cred = ap->a_cred;
 	int error;
@@ -5169,11 +5169,11 @@ zfs_netbsd_access(void *v)
 	 * and it exists only because of randomness in zfs_unix_to_v4
 	 * and zfs_zaccess_rwx in zfs_acl.c.
 	 */
-	if (mode & VREAD)
+	if (accmode & VREAD)
 		zfs_mode |= S_IROTH;
-	if (mode & VWRITE)
+	if (accmode & VWRITE)
 		zfs_mode |= S_IWOTH;
-	if (mode & VEXEC)
+	if (accmode & VEXEC)
 		zfs_mode |= S_IXOTH;
 	zfs_mode <<= 6;
 
@@ -5631,8 +5631,7 @@ zfs_netbsd_setattr(void *v)
 		}
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
-		    genfs_can_chflags(cred, vp->v_type, zp->z_uid,
-		    changing_sysflags));
+		    genfs_can_chflags(vp, cred, zp->z_uid, changing_sysflags));
 		if (error)
 			return error;
 	}
@@ -5640,8 +5639,8 @@ zfs_netbsd_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
 	    vap->va_birthtime.tv_sec != VNOVAL) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		     NULL, genfs_can_chtimes(vp, vap->va_vaflags, zp->z_uid,
-		     cred));
+		     NULL, genfs_can_chtimes(vp, cred, zp->z_uid,
+		     vap->va_vaflags));
 		if (error)
 			return error;
 	}
@@ -6332,6 +6331,7 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_open_desc,		zfs_netbsd_open },
 	{ &vop_close_desc,		zfs_netbsd_close },
 	{ &vop_access_desc,		zfs_netbsd_access },
+	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		zfs_netbsd_getattr },
 	{ &vop_setattr_desc,		zfs_netbsd_setattr },
 	{ &vop_read_desc,		zfs_netbsd_read },
@@ -6377,6 +6377,7 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_open_desc,		spec_open },
 	{ &vop_close_desc,		spec_close },
 	{ &vop_access_desc,		zfs_netbsd_access },
+	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		zfs_netbsd_getattr },
 	{ &vop_setattr_desc,		zfs_netbsd_setattr },
 	{ &vop_read_desc,		/**/zfs_netbsd_read },
@@ -6424,6 +6425,7 @@ const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
 	{ &vop_open_desc,		vn_fifo_bypass },
 	{ &vop_close_desc,		vn_fifo_bypass },
 	{ &vop_access_desc,		zfs_netbsd_access },
+	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		zfs_netbsd_getattr },
 	{ &vop_setattr_desc,		zfs_netbsd_setattr },
 	{ &vop_read_desc,		/**/zfs_netbsd_read },

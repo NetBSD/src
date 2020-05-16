@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.567 2020/05/02 16:44:35 bouyer Exp $
+# $NetBSD: GENERIC,v 1.568 2020/05/16 18:31:48 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.567 $"
+#ident		"GENERIC-$Revision: 1.568 $"
 
 maxusers	64		# estimated number of users
 
@@ -197,6 +197,7 @@ options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options		UFS_ACL		# UFS Access Control Lists
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
 # ext2fs

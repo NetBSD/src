@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.80 2017/07/03 21:33:23 wiz Exp $
+.\"	$NetBSD: ls.1,v 1.81 2020/05/16 18:31:45 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -449,6 +449,20 @@ or
 .Xr sticky 7 . )
 .El
 .El
+.Pp
+The next field contains a
+plus
+.Pq Ql +
+character if the file has an ACL, or a
+space
+.Pq Ql " "
+if it does not.
+The
+.Nm
+utility does not show the actual ACL;
+use
+.Xr getfacl 1
+to do this.
 .Pp
 The number of bytes displayed for a directory is a function of the
 number of

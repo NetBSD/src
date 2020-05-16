@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.3 2020/04/12 01:39:57 htodd Exp $
+#	$NetBSD: Makefile,v 1.4 2020/05/16 18:31:52 christos Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	ufs
 
 CPPFLAGS+=      -DUFS_DIRHASH -DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
-CPPFLAGS+=	-DUFS_EXTATTR
+CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL
 
 CWARNFLAGS.clang=	-Wno-conversion
 
 .PATH:	${S}/ufs/ufs
-SRCS=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c \
+SRCS=	ufs_acl.c ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c \
 	ufs_lookup.c ufs_quota.c ufs_quota1.c ufs_quota2.c ufs_rename.c \
 	ufs_vfsops.c ufs_vnops.c quota1_subr.c quota2_subr.c
 

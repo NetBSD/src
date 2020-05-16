@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.58 2020/04/13 19:23:18 ad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.59 2020/05/16 18:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.58 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.59 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,7 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_open_desc, ptyfs_open },			/* open */
 	{ &vop_close_desc, ptyfs_close },		/* close */
 	{ &vop_access_desc, ptyfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ptyfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ptyfs_setattr },		/* setattr */
 	{ &vop_read_desc, ptyfs_read },			/* read */
@@ -435,7 +436,7 @@ ptyfs_setattr(void *v)
 		}
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
-		    genfs_can_chflags(cred, vp->v_type, ptyfs->ptyfs_uid,
+		    genfs_can_chflags(vp, cred, ptyfs->ptyfs_uid,
 		    changing_sysflags));
 		if (error)
 			return error;
@@ -469,8 +470,8 @@ ptyfs_setattr(void *v)
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0)
 			return EPERM;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags,
-		    ptyfs->ptyfs_uid, cred));
+		    NULL, genfs_can_chtimes(vp, cred, ptyfs->ptyfs_uid,
+		    vap->va_vaflags));
 		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -516,8 +517,8 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	int error;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, ptyfs->ptyfs_uid,
-	    ptyfs->ptyfs_gid, mode));
+	    NULL, genfs_can_chmod(vp, cred, ptyfs->ptyfs_uid, ptyfs->ptyfs_gid,
+	    mode));
 	if (error)
 		return (error);
 
@@ -543,7 +544,7 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		gid = ptyfs->ptyfs_gid;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, ptyfs->ptyfs_uid, ptyfs->ptyfs_gid,
+	    NULL, genfs_can_chown(vp, cred, ptyfs->ptyfs_uid, ptyfs->ptyfs_gid,
 	    uid, gid));
 	if (error)
 		return (error);
@@ -567,7 +568,7 @@ ptyfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vattr va;
@@ -577,9 +578,9 @@ ptyfs_access(void *v)
 		return error;
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
-	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode, va.va_uid,
-	    va.va_gid, ap->a_mode, ap->a_cred));
+	    KAUTH_ACCESS_ACTION(ap->a_accmode, ap->a_vp->v_type, va.va_mode),
+	    ap->a_vp, NULL, genfs_can_access(ap->a_vp, ap->a_cred, va.va_uid,
+	    va.va_gid, va.va_mode, NULL, ap->a_accmode));
 }
 
 /*

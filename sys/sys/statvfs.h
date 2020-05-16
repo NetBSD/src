@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.19 2019/09/22 22:59:40 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.20 2020/05/16 18:31:53 christos Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ struct statvfs {
 #define	ST_NODEV	MNT_NODEV
 #define	ST_UNION	MNT_UNION
 #define	ST_ASYNC	MNT_ASYNC
+#define	ST_ACLS		MNT_ACLS
 #define	ST_NOCOREDUMP	MNT_NOCOREDUMP
 #define	ST_RELATIME	MNT_RELATIME
 #define	ST_IGNORE	MNT_IGNORE

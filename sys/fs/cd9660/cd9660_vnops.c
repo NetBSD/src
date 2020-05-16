@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.56 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.57 2020/05/16 18:31:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.56 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.57 2020/05/16 18:31:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
 int	iso_shipdir(struct isoreaddir *);
 
 static int
-cd9660_check_possible(struct vnode *vp, struct iso_node *ip, mode_t mode)
+cd9660_check_possible(struct vnode *vp, struct iso_node *ip, accmode_t accmode)
 {
 
 	/*
@@ -93,7 +93,7 @@ cd9660_check_possible(struct vnode *vp, struct iso_node *ip, mode_t mode)
 	 * fifo, or a block or character device resident on the
 	 * file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -113,14 +113,14 @@ cd9660_check_possible(struct vnode *vp, struct iso_node *ip, mode_t mode)
  * super user is granted all permissions.
  */
 static int
-cd9660_check_permitted(struct vnode *vp, struct iso_node *ip, mode_t mode,
+cd9660_check_permitted(struct vnode *vp, struct iso_node *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
 	    vp->v_type, ip->inode.iso_mode & ALLPERMS), vp, NULL,
-	    genfs_can_access(vp->v_type, ip->inode.iso_mode & ALLPERMS,
-	    ip->inode.iso_uid, ip->inode.iso_gid, mode, cred));
+	    genfs_can_access(vp, cred, ip->inode.iso_uid, ip->inode.iso_gid,
+	    ip->inode.iso_mode & ALLPERMS, NULL, accmode));
 }
 
 int
@@ -128,18 +128,18 @@ cd9660_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		accmode_t  a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
 	int error;
 
-	error = cd9660_check_possible(vp, ip, ap->a_mode);
+	error = cd9660_check_possible(vp, ip, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = cd9660_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+	error = cd9660_check_permitted(vp, ip, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -855,6 +855,7 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_open_desc, cd9660_open },		/* open */
 	{ &vop_close_desc, cd9660_close },		/* close */
 	{ &vop_access_desc, cd9660_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, cd9660_getattr },		/* getattr */
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, cd9660_read },		/* read */
@@ -907,6 +908,7 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, cd9660_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, cd9660_getattr },		/* getattr */
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
@@ -957,6 +959,7 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, cd9660_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, cd9660_getattr },		/* getattr */
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */

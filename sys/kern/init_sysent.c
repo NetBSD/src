@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.331 2020/04/26 19:16:36 thorpej Exp $ */
+/* $NetBSD: init_sysent.c,v 1.332 2020/05/16 18:31:50 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.331 2020/04/26 19:16:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.332 2020/05/16 18:31:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -23,6 +23,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.331 2020/04/26 19:16:36 thorpej Ex
 #include <sys/sched.h>
 #include <sys/idtype.h>
 #include <sys/syscallargs.h>
+#include <sys/acl.h>
 
 #ifdef COMPAT_43
 #define	compat_43(func) __CONCAT(compat_43_,func)
@@ -2365,44 +2366,69 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___fhstatvfs190
 	},		/* 486 = __fhstatvfs190 */
 	{
-		.sy_call = sys_nosys,
-	},		/* 487 = filler */
+		ns(struct sys___acl_get_link_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_get_link
+	},		/* 487 = __acl_get_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 488 = filler */
+		ns(struct sys___acl_set_link_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_set_link
+	},		/* 488 = __acl_set_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 489 = filler */
+		ns(struct sys___acl_delete_link_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_delete_link
+	},		/* 489 = __acl_delete_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 490 = filler */
+		ns(struct sys___acl_aclcheck_link_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_aclcheck_link
+	},		/* 490 = __acl_aclcheck_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 491 = filler */
+		ns(struct sys___acl_get_file_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_get_file
+	},		/* 491 = __acl_get_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 492 = filler */
+		ns(struct sys___acl_set_file_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_set_file
+	},		/* 492 = __acl_set_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 493 = filler */
+		ns(struct sys___acl_get_fd_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_get_fd
+	},		/* 493 = __acl_get_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 494 = filler */
+		ns(struct sys___acl_set_fd_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_set_fd
+	},		/* 494 = __acl_set_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 495 = filler */
+		ns(struct sys___acl_delete_file_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_delete_file
+	},		/* 495 = __acl_delete_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 496 = filler */
+		ns(struct sys___acl_delete_fd_args),
+		.sy_call = (sy_call_t *)sys___acl_delete_fd
+	},		/* 496 = __acl_delete_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 497 = filler */
+		ns(struct sys___acl_aclcheck_file_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_aclcheck_file
+	},		/* 497 = __acl_aclcheck_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 498 = filler */
+		ns(struct sys___acl_aclcheck_fd_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___acl_aclcheck_fd
+	},		/* 498 = __acl_aclcheck_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 499 = filler */
+		ns(struct sys_lpathconf_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_lpathconf
+	},		/* 499 = lpathconf */
 	{
 		.sy_call = sys_nosys,
 	},		/* 500 = filler */

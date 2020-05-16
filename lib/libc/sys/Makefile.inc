@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.242 2019/09/22 22:59:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.243 2020/05/16 18:31:47 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -89,8 +89,13 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 .endfor
 
 # modules with default implementations on all architectures:
-ASM=	access.S acct.S \
-	bind.S \
+ASM=\
+    __acl_get_link.S __acl_set_link.S __acl_delete_link.S \
+    __acl_aclcheck_link.S __acl_get_file.S __acl_set_file.S __acl_get_fd.S \
+    __acl_set_fd.S __acl_delete_file.S __acl_delete_fd.S \
+    __acl_aclcheck_file.S __acl_aclcheck_fd.S \
+    access.S acct.S \
+	    bind.S \
 	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
@@ -118,6 +123,7 @@ ASM=	access.S acct.S \
 		_ksem_post.S _ksem_timedwait.S _ksem_trywait.S _ksem_unlink.S \
 		_ksem_wait.S _ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
+		lpathconf.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
 		___lwp_park60.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \

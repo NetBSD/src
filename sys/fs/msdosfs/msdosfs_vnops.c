@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.102 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.103 2020/05/16 18:31:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.102 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.103 2020/05/16 18:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ msdosfs_close(void *v)
 }
 
 static int
-msdosfs_check_possible(struct vnode *vp, struct denode *dep, mode_t mode)
+msdosfs_check_possible(struct vnode *vp, struct denode *dep, accmode_t accmode)
 {
 
 	/*
@@ -188,7 +188,7 @@ msdosfs_check_possible(struct vnode *vp, struct denode *dep, mode_t mode)
 	 * unless the file is a socket, fifo, or a block or
 	 * character device resident on the file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -204,7 +204,7 @@ msdosfs_check_possible(struct vnode *vp, struct denode *dep, mode_t mode)
 }
 
 static int
-msdosfs_check_permitted(struct vnode *vp, struct denode *dep, mode_t mode,
+msdosfs_check_permitted(struct vnode *vp, struct denode *dep, accmode_t accmode,
     kauth_cred_t cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -217,9 +217,9 @@ msdosfs_check_permitted(struct vnode *vp, struct denode *dep, mode_t mode,
 
 	file_mode &= (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask);
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
-	    file_mode, pmp->pm_uid, pmp->pm_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp, cred,
+	    pmp->pm_uid, pmp->pm_gid, file_mode, NULL, accmode));
 }
 
 int
@@ -227,18 +227,18 @@ msdosfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error;
 
-	error = msdosfs_check_possible(vp, dep, ap->a_mode);
+	error = msdosfs_check_possible(vp, dep, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = msdosfs_check_permitted(vp, dep, ap->a_mode, ap->a_cred);
+	error = msdosfs_check_permitted(vp, dep, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -371,8 +371,8 @@ msdosfs_setattr(void *v)
 			goto bad;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES,
-		    ap->a_vp, NULL, genfs_can_chtimes(ap->a_vp, vap->va_vaflags,
-		    pmp->pm_uid, cred));
+		    ap->a_vp, NULL, genfs_can_chtimes(ap->a_vp, cred,
+			pmp->pm_uid, vap->va_vaflags));
 		if (error)
 			goto bad;
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
@@ -395,7 +395,7 @@ msdosfs_setattr(void *v)
 			goto bad;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
-		    NULL, genfs_can_chflags(cred, vp->v_type, pmp->pm_uid, false));
+		    NULL, genfs_can_chflags(vp, cred, pmp->pm_uid, false));
 		if (error)
 			goto bad;
 		/* We ignore the read and execute bits. */
@@ -415,7 +415,7 @@ msdosfs_setattr(void *v)
 			goto bad;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
-		    NULL, genfs_can_chflags(cred, vp->v_type, pmp->pm_uid, false));
+		    NULL, genfs_can_chflags(vp, cred, pmp->pm_uid, false));
 		if (error)
 			goto bad;
 		if (vap->va_flags & SF_ARCHIVED)
@@ -1847,6 +1847,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_open_desc, genfs_nullop },		/* open */
 	{ &vop_close_desc, msdosfs_close },		/* close */
 	{ &vop_access_desc, msdosfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, msdosfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
 	{ &vop_read_desc, msdosfs_read },		/* read */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.142 2020/05/12 23:17:41 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.143 2020/05/16 18:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.142 2020/05/12 23:17:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.143 2020/05/16 18:31:50 christos Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -689,8 +689,8 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	KASSERT(dvi->vi_nc_uid != VNOVAL && dvi->vi_nc_gid != VNOVAL);
 	error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
 	    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
-	    genfs_can_access(dvp->v_type, dvi->vi_nc_mode & ALLPERMS,
-	    dvi->vi_nc_uid, dvi->vi_nc_gid, VEXEC, cred));
+	    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
+	    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
 	if (error != 0) {
 		COUNT(ncs_denied);
 		return false;
@@ -741,7 +741,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
  */
 int
 cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
-    bool checkaccess, int perms)
+    bool checkaccess, accmode_t accmode)
 {
 	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 	struct namecache *ncp;
@@ -772,9 +772,9 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		KASSERT(vi->vi_nc_uid != VNOVAL && vi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(curlwp->l_cred,
 		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, vi->vi_nc_mode &
-		    ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
-		    vi->vi_nc_mode & ALLPERMS, vi->vi_nc_uid, vi->vi_nc_gid,
-		    perms, curlwp->l_cred));
+		    ALLPERMS), vp, NULL, genfs_can_access(vp, curlwp->l_cred,
+		    vi->vi_nc_uid, vi->vi_nc_gid, vi->vi_nc_mode & ALLPERMS,
+		    NULL, accmode));
 		    if (error != 0) {
 		    	rw_exit(&vi->vi_nc_listlock);
 			COUNT(ncs_denied);
