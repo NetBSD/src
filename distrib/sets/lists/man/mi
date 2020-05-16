@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1689 2020/05/16 18:31:46 christos Exp $
+# $NetBSD: mi,v 1.1690 2020/05/16 19:05:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -673,28 +673,6 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/eddsa_pk_new.0			man-util-catman	.cat
 ./usr/share/man/cat3/es256_pk_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_allow_cred.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_set_authdata.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_verify.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_dev_get_info.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_enroll_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_info_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_template.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cbor_info_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_exclude.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_set_authdata.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_verify.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_credman_metadata_new.0	man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_get_assert.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_info_manifest.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_make_cred.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_open.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_set_io_functions.0	man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_set_pin.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_init.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_strerr.0			man-util-catman	.cat
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
 ./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
@@ -3946,28 +3924,6 @@
 ./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	html
 ./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	html
-./usr/share/man/html3/fido_assert_allow_cred.html	man-util-htmlman	html
-./usr/share/man/html3/fido_assert_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_assert_set_authdata.html	man-util-htmlman	html
-./usr/share/man/html3/fido_assert_verify.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_dev_get_info.html	man-util-htmlman	html
-./usr/share/man/html3/fido_bio_enroll_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_info_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_template.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cbor_info_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_exclude.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_set_authdata.html	man-util-htmlman	html
-./usr/share/man/html3/fido_cred_verify.html		man-util-htmlman	html
-./usr/share/man/html3/fido_credman_metadata_new.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_get_assert.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_info_manifest.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_make_cred.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_open.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_set_io_functions.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_set_pin.html		man-util-htmlman	html
-./usr/share/man/html3/fido_init.html			man-util-htmlman	html
-./usr/share/man/html3/fido_strerr.html			man-util-htmlman	html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
 ./usr/share/man/html3/rs256_pk_new.html			man-util-htmlman	html
@@ -6891,28 +6847,6 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/eddsa_pk_new.3			man-util-man	.man
 ./usr/share/man/man3/es256_pk_new.3			man-util-man	.man
-./usr/share/man/man3/fido_assert_allow_cred.3		man-util-man	.man
-./usr/share/man/man3/fido_assert_new.3			man-util-man	.man
-./usr/share/man/man3/fido_assert_set_authdata.3		man-util-man	.man
-./usr/share/man/man3/fido_assert_verify.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_dev_get_info.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_enroll_new.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_info_new.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_template.3		man-util-man	.man
-./usr/share/man/man3/fido_cbor_info_new.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_exclude.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_new.3			man-util-man	.man
-./usr/share/man/man3/fido_cred_set_authdata.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_verify.3			man-util-man	.man
-./usr/share/man/man3/fido_credman_metadata_new.3	man-util-man	.man
-./usr/share/man/man3/fido_dev_get_assert.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_info_manifest.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_make_cred.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_open.3			man-util-man	.man
-./usr/share/man/man3/fido_dev_set_io_functions.3	man-util-man	.man
-./usr/share/man/man3/fido_dev_set_pin.3			man-util-man	.man
-./usr/share/man/man3/fido_init.3			man-util-man	.man
-./usr/share/man/man3/fido_strerr.3			man-util-man	.man
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
 ./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
