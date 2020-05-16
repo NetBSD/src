@@ -1,4 +1,4 @@
-/*	$NetBSD: futex_private.h,v 1.1 2020/04/26 18:53:32 thorpej Exp $	*/
+/*	$NetBSD: futex_private.h,v 1.2 2020/05/16 16:16:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,33 +32,32 @@
 #ifndef __LIBC_FUTEX_PRIVATE
 #define __LIBC_FUTEX_PRIVATE
 
-#if defined(_LIBC)
-#include "namespace.h"
-#endif
-
 #include <sys/cdefs.h>
 #include <sys/syscall.h>
 #include <sys/futex.h>
 #include <unistd.h>
 
+/* XXX Avoid pulling in namespace.h. */
+extern int _syscall(int, ...);
+
 static inline int __unused
 __futex(volatile int *uaddr, int op, int val, const struct timespec *timeout,
 	volatile int *uaddr2, int val2, int val3)
 {
-	return syscall(SYS___futex, uaddr, op, val, timeout, uaddr2,
+	return _syscall(SYS___futex, uaddr, op, val, timeout, uaddr2,
 			val2, val3);
 }
 
 static inline int __unused
 __futex_set_robust_list(void *head, size_t len)
 {
-	return syscall(SYS___futex_set_robust_list, head, len);
+	return _syscall(SYS___futex_set_robust_list, head, len);
 }
 
 static inline int __unused
 __futex_get_robust_list(lwpid_t lwpid, void **headp, size_t *lenp)
 {
-	return syscall(SYS___futex_get_robust_list, lwpid, headp, lenp);
+	return _syscall(SYS___futex_get_robust_list, lwpid, headp, lenp);
 }
 
 #endif /* __LIBC_FUTEX_PRIVATE */
