@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.60 2020/04/13 19:23:20 ad Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.61 2020/05/16 18:31:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.60 2020/04/13 19:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.61 2020/05/16 18:31:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_open_desc, mfs_open },			/* open */
 	{ &vop_close_desc, mfs_close },			/* close */
 	{ &vop_access_desc, mfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, mfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, mfs_setattr },		/* setattr */
 	{ &vop_read_desc, mfs_read },			/* read */

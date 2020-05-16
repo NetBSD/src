@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.319 2020/04/26 19:16:36 thorpej Exp $ */
+/* $NetBSD: syscalls.c,v 1.320 2020/05/16 18:31:50 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.319 2020/04/26 19:16:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.320 2020/05/16 18:31:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #ifdef _KERNEL_OPT
@@ -24,6 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.319 2020/04/26 19:16:36 thorpej Exp $
 #include <sys/sched.h>
 #include <sys/idtype.h>
 #include <sys/syscallargs.h>
+#include <sys/acl.h>
 #else /* _KERNEL_OPT */
 #include <sys/null.h>
 #endif /* _KERNEL_OPT */
@@ -536,19 +537,19 @@ const char *const syscallnames[] = {
 	/* 484 */	"__statvfs190",
 	/* 485 */	"__fstatvfs190",
 	/* 486 */	"__fhstatvfs190",
-	/* 487 */	"# filler",
-	/* 488 */	"# filler",
-	/* 489 */	"# filler",
-	/* 490 */	"# filler",
-	/* 491 */	"# filler",
-	/* 492 */	"# filler",
-	/* 493 */	"# filler",
-	/* 494 */	"# filler",
-	/* 495 */	"# filler",
-	/* 496 */	"# filler",
-	/* 497 */	"# filler",
-	/* 498 */	"# filler",
-	/* 499 */	"# filler",
+	/* 487 */	"__acl_get_link",
+	/* 488 */	"__acl_set_link",
+	/* 489 */	"__acl_delete_link",
+	/* 490 */	"__acl_aclcheck_link",
+	/* 491 */	"__acl_get_file",
+	/* 492 */	"__acl_set_file",
+	/* 493 */	"__acl_get_fd",
+	/* 494 */	"__acl_set_fd",
+	/* 495 */	"__acl_delete_file",
+	/* 496 */	"__acl_delete_fd",
+	/* 497 */	"__acl_aclcheck_file",
+	/* 498 */	"__acl_aclcheck_fd",
+	/* 499 */	"lpathconf",
 	/* 500 */	"# filler",
 	/* 501 */	"# filler",
 	/* 502 */	"# filler",
@@ -1073,19 +1074,19 @@ const char *const altsyscallnames[] = {
 	/* 484 */	"statvfs1",
 	/* 485 */	"fstatvfs1",
 	/* 486 */	"fhstatvfs1",
-	/* 487 */	NULL, /* filler */
-	/* 488 */	NULL, /* filler */
-	/* 489 */	NULL, /* filler */
-	/* 490 */	NULL, /* filler */
-	/* 491 */	NULL, /* filler */
-	/* 492 */	NULL, /* filler */
-	/* 493 */	NULL, /* filler */
-	/* 494 */	NULL, /* filler */
-	/* 495 */	NULL, /* filler */
-	/* 496 */	NULL, /* filler */
-	/* 497 */	NULL, /* filler */
-	/* 498 */	NULL, /* filler */
-	/* 499 */	NULL, /* filler */
+	/* 487 */	NULL, /* __acl_get_link */
+	/* 488 */	NULL, /* __acl_set_link */
+	/* 489 */	NULL, /* __acl_delete_link */
+	/* 490 */	NULL, /* __acl_aclcheck_link */
+	/* 491 */	NULL, /* __acl_get_file */
+	/* 492 */	NULL, /* __acl_set_file */
+	/* 493 */	NULL, /* __acl_get_fd */
+	/* 494 */	NULL, /* __acl_set_fd */
+	/* 495 */	NULL, /* __acl_delete_file */
+	/* 496 */	NULL, /* __acl_delete_fd */
+	/* 497 */	NULL, /* __acl_aclcheck_file */
+	/* 498 */	NULL, /* __acl_aclcheck_fd */
+	/* 499 */	NULL, /* lpathconf */
 	/* 500 */	NULL, /* filler */
 	/* 501 */	NULL, /* filler */
 	/* 502 */	NULL, /* filler */

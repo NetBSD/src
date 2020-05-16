@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.85 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.86 2020/05/16 18:31:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -61,7 +61,7 @@ extern pool_cache_t ufs_direct_cache;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop
-int	ufs_access(void *);
+int	ufs_accessx(void *);
 int	ufs_advlock(void *);
 int	ufs_bmap(void *);
 int	ufs_close(void *);

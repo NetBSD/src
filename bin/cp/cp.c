@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.59 2016/03/05 19:48:55 uwe Exp $ */
+/* $NetBSD: cp.c,v 1.60 2020/05/16 18:31:45 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.59 2016/03/05 19:48:55 uwe Exp $");
+__RCSID("$NetBSD: cp.c,v 1.60 2020/05/16 18:31:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -499,9 +499,23 @@ copy(char *argv[], enum op type, int fts_options)
                         	 * umask; arguably wrong, but it's been that way 
                         	 * forever.
 				 */
-				if (pflag && setfile(curr->fts_statp, 0))
-					this_failed = any_failed = 1;
-				else if ((dne = popdne()))
+				/*
+				 * If -p is in effect, set all the attributes.
+				 * Otherwise, set the correct permissions, limited
+				 * by the umask.  Optimise by avoiding a chmod()
+				 * if possible (which is usually the case if we
+				 * made the directory).  Note that mkdir() does not
+				 * honour setuid, setgid and sticky bits, but we
+				 * normally want to preserve them on directories.
+				 */
+				if (pflag) {
+					if (setfile(curr->fts_statp, 0))
+						this_failed = any_failed = 1;
+					if (preserve_dir_acls(curr->fts_statp,
+					    curr->fts_accpath, to.p_path) != 0)
+						this_failed = any_failed = 1;
+				}
+				if (this_failed && (dne = popdne()))
 					(void)chmod(to.p_path, 
 					    curr->fts_statp->st_mode);
 			}

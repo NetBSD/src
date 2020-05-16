@@ -1821,6 +1821,7 @@ const struct vnodeopv_entry_desc unionfs_vnodeop_entries[] = {
 	{ &vop_open_desc, unionfs_open },		/* open */
 	{ &vop_close_desc, unionfs_close },		/* close */
 	{ &vop_access_desc, unionfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, unionfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, unionfs_setattr },		/* setattr */
 	{ &vop_read_desc, unionfs_read },		/* read */

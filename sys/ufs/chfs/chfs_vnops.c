@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.38 2020/04/23 21:47:08 ad Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.39 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -371,13 +371,13 @@ int
 chfs_access(void *v)
 {
 	struct vnode *vp = ((struct vop_access_args *) v)->a_vp;
-	int mode = ((struct vop_access_args *) v)->a_mode;
+	accmode_t accmode = ((struct vop_access_args *) v)->a_accmode;
 	kauth_cred_t cred = ((struct vop_access_args *) v)->a_cred;
 
 	dbg("access()\n");
 	struct chfs_inode *ip = VTOI(vp);
 
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VLNK:
 		case VDIR:
@@ -395,12 +395,12 @@ chfs_access(void *v)
 		}
 	}
 
-	if (mode & VWRITE && ip->flags & IMMUTABLE)
+	if (accmode & VWRITE && ip->flags & IMMUTABLE)
 		return (EPERM);
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
-	    ip->mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
-	    ip->mode & ALLPERMS, ip->uid, ip->gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, ip->mode & ALLPERMS), vp, NULL, genfs_can_access(vp,
+	    cred, ip->uid, ip->gid, ip->mode & ALLPERMS, NULL, accmode));
 }
 
 /* --------------------------------------------------------------------- */
@@ -510,7 +510,8 @@ chfs_setattr(void *v)
 	/* set time */
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->uid, cred));
+		    NULL, genfs_can_chtimes(vp, cred, ip->uid,
+		    vap->va_vaflags));
 		if (error)
 			return error;
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -539,7 +540,7 @@ chfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred)
 	dbg("chmod\n");
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, ip->uid, ip->gid, mode));
+	    NULL, genfs_can_chmod(vp, cred, ip->uid, ip->gid, mode));
 	if (error)
 		return error;
 	ip->mode &= ~ALLPERMS;
@@ -566,7 +567,7 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 		gid = ip->gid;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, ip->uid, ip->gid, uid, gid));
+	    NULL, genfs_can_chown(vp, cred, ip->uid, ip->gid, uid, gid));
 	if (error)
 		return error;
 
@@ -1603,6 +1604,7 @@ const struct vnodeopv_entry_desc chfs_vnodeop_entries[] =
 		{ &vop_open_desc, chfs_open },
 		{ &vop_close_desc, chfs_close },
 		{ &vop_access_desc, chfs_access },
+		{ &vop_accessx_desc, genfs_accessx },
 		{ &vop_getattr_desc, chfs_getattr },
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
@@ -1661,6 +1663,7 @@ const struct vnodeopv_entry_desc chfs_specop_entries[] =
 		{ &vop_open_desc, spec_open },
 		{ &vop_close_desc, ufsspec_close },
 		{ &vop_access_desc, chfs_access },
+		{ &vop_accessx_desc, genfs_access },
 		{ &vop_getattr_desc, chfs_getattr },
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
@@ -1717,6 +1720,7 @@ const struct vnodeopv_entry_desc chfs_fifoop_entries[] =
 		{ &vop_open_desc, vn_fifo_bypass },
 		{ &vop_close_desc, ufsfifo_close },
 		{ &vop_access_desc, chfs_access },
+		{ &vop_accessx_desc, genfs_access },
 		{ &vop_getattr_desc, chfs_getattr },
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, ufsfifo_read },

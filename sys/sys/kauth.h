@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.84 2020/04/29 05:54:37 riastradh Exp $ */
+/* $NetBSD: kauth.h,v 1.85 2020/05/16 18:31:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -525,11 +525,11 @@ int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ki_ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct ki_pcred *);
 
-kauth_action_t kauth_mode_to_action(mode_t);
+kauth_action_t kauth_accmode_to_action(accmode_t);
 kauth_action_t kauth_extattr_action(mode_t);
 
 #define KAUTH_ACCESS_ACTION(access_mode, vn_vtype, file_mode)	\
-	(kauth_mode_to_action(access_mode) |			\
+	(kauth_accmode_to_action(access_mode) |			\
 	(FS_OBJECT_CAN_EXEC(vn_vtype, file_mode) ? KAUTH_VNODE_IS_EXEC : 0))
 
 kauth_cred_t kauth_cred_get(void);
