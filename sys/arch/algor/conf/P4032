@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.81 2020/01/25 18:38:34 thorpej Exp $
+#	$NetBSD: P4032,v 1.82 2020/05/16 13:46:10 maya Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.81 $"
+#ident 		"P4032-$Revision: 1.82 $"
 
 maxusers 32
 
@@ -291,9 +291,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB scanners
 #uscanner* at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?

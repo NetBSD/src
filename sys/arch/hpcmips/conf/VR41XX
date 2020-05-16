@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.74 2020/01/29 18:39:02 maya Exp $
+# $NetBSD: VR41XX,v 1.75 2020/05/16 13:46:11 maya Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -502,9 +502,6 @@ ucom*	at ukyopon? portno ?
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
 scsibus* at usscanner? channel ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

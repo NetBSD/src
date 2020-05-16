@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.401 2020/03/25 17:06:17 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.402 2020/05/16 13:46:10 maya Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.401 $"
+ident		"GENERIC-$Revision: 1.402 $"
 
 maxusers 32
 
@@ -626,9 +626,6 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB FM radio tuner
 udsbr* at uhub? port ?
