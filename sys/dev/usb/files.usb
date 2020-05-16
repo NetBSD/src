@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.174 2020/04/13 09:26:43 jdolecek Exp $
+#	$NetBSD: files.usb,v 1.175 2020/05/16 13:46:12 maya Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -27,7 +27,6 @@ defflag opt_usb.h	AUVITEK_I2C_DEBUG: USB_DEBUG
 defflag opt_usb.h	AXE_DEBUG: USB_DEBUG
 defflag opt_usb.h	AXEN_DEBUG: USB_DEBUG
 defflag opt_usb.h	CUE_DEBUG: USB_DEBUG
-defflag opt_usb.h	EZLOAD_DEBUG: USB_DEBUG
 defflag opt_usb.h	KUE_DEBUG: USB_DEBUG
 defflag opt_usb.h	OTUS_DEBUG: USB_DEBUG
 defflag opt_usb.h	RUM_DEBUG: USB_DEBUG
@@ -114,10 +113,6 @@ file	dev/usb/uhub.c			usb
 
 # Modem and com serial port "bus"
 define	ucombus {[ portno = -1 ]}
-
-# EZ-USB firmware loader
-define	ezload
-file	dev/usb/ezload.c		ezload
 
 # Audio devices
 device	uaudio: audiobus
@@ -302,11 +297,6 @@ file	dev/usb/ugensa.c		ugensa
 device	u3g: ucombus, umodeswitch
 attach	u3g at usbifif
 file	dev/usb/u3g.c			u3g
-
-# YAP phone firmware loader
-device	uyap: ezload
-attach	uyap at usbdevif
-file	dev/usb/uyap.c			uyap
 
 # D-Link DSB-R100 FM radio
 device	udsbr: radiodev

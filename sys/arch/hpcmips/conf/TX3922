@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.110 2019/04/13 08:22:59 isaki Exp $
+#	$NetBSD: TX3922,v 1.111 2020/05/16 13:46:11 maya Exp $
 #
 include 	"arch/hpcmips/conf/std.hpcmips"
 
@@ -244,9 +244,6 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners
 #uscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

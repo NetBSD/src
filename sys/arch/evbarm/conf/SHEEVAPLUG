@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.68 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.69 2020/05/16 13:46:11 maya Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -358,9 +358,6 @@ usscanner* at uhub? port ?
 
 # Topfield TF5000PVR range of DVB recorders
 utoppy* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?

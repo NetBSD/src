@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.198 2020/04/13 09:18:10 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.199 2020/05/16 13:46:12 maya Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.198 $"
+#ident 		"GENERIC-$Revision: 1.199 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -392,9 +392,6 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
 #scsibus* at usscanner? channel ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?
