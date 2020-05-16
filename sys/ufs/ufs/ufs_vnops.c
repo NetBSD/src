@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.253 2020/05/12 23:17:41 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.254 2020/05/16 18:31:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.253 2020/05/12 23:17:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.254 2020/05/16 18:31:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.253 2020/05/12 23:17:41 ad Exp $");
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 
+#include <ufs/ufs/acl.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>
@@ -256,7 +257,7 @@ ufs_close(void *v)
 }
 
 static int
-ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
+ufs_check_possible(struct vnode *vp, struct inode *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
 #if defined(QUOTA) || defined(QUOTA2)
@@ -268,13 +269,13 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 	 * unless the file is a socket, fifo, or a block or
 	 * character device resident on the file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VMODIFY_PERMS) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
-				return (EROFS);
+				return EROFS;
 #if defined(QUOTA) || defined(QUOTA2)
 			error = chkdq(ip, 0, cred, 0);
 			if (error != 0)
@@ -294,48 +295,94 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 
 	/* If it is a snapshot, nobody gets access to it. */
 	if ((ip->i_flags & SF_SNAPSHOT))
-		return (EPERM);
-	/* If immutable bit set, nobody gets to write it. */
-	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
-		return (EPERM);
+		return EPERM;
+	/*
+	 * If immutable bit set, nobody gets to write it.  "& ~VADMIN_PERMS"
+	 * permits the owner of the file to remove the IMMUTABLE flag.
+	 */
+	if ((accmode & (VMODIFY_PERMS & ~VADMIN_PERMS)) &&
+	    (ip->i_flags & IMMUTABLE))
+		return EPERM;
 
 	return 0;
 }
 
 static int
-ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
-    kauth_cred_t cred)
+ufs_check_permitted(struct vnode *vp, struct inode *ip,
+    struct acl *acl, accmode_t accmode, kauth_cred_t cred,
+    int (*func)(struct vnode *, kauth_cred_t, uid_t, gid_t, mode_t,
+    struct acl *, accmode_t))
 {
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
-	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
-	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, ip->i_mode & ALLPERMS), vp, NULL, (*func)(vp, cred,
+	    ip->i_uid, ip->i_gid, ip->i_mode & ALLPERMS, acl, accmode));
 }
 
 int
-ufs_access(void *v)
+ufs_accessx(void *v)
 {
-	struct vop_access_args /* {
-		struct vnode	*a_vp;
-		int		a_mode;
-		kauth_cred_t	a_cred;
+	struct vop_accessx_args /* {
+		struct vnode *a_vp;
+		accmode_t a_accmode;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-	mode_t		mode;
-	int		error;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	accmode_t accmode = ap->a_accmode;
+	int error;
+#ifdef UFS_ACL
+	struct acl *acl;
+	acl_type_t type;
+#endif
 
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	mode = ap->a_mode;
-
-	error = ufs_check_possible(vp, ip, mode, ap->a_cred);
+	error = ufs_check_possible(vp, ip, accmode, ap->a_cred);
 	if (error)
 		return error;
 
-	error = ufs_check_permitted(vp, ip, mode, ap->a_cred);
+#ifdef UFS_ACL
+	if ((vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS)) != 0) {
+		if (vp->v_mount->mnt_flag & MNT_ACLS)
+			type = ACL_TYPE_NFS4;
+		else
+			type = ACL_TYPE_ACCESS;
 
-	return error;
+		acl = acl_alloc(KM_SLEEP);
+		if (type == ACL_TYPE_NFS4)
+			error = ufs_getacl_nfs4_internal(vp, acl, curlwp);
+		else
+			error = VOP_GETACL(vp, type, acl, ap->a_cred);
+		if (!error) {
+			if (type == ACL_TYPE_NFS4) {
+				error = ufs_check_permitted(vp,
+				    ip, acl, accmode, ap->a_cred,
+				    genfs_can_access_acl_nfs4);
+			} else {
+				error = vfs_unixify_accmode(&accmode);
+				if (error == 0)
+					error = ufs_check_permitted(vp,
+					    ip, acl, accmode, ap->a_cred,
+					    genfs_can_access_acl_posix1e);
+			}
+			acl_free(acl);
+			return error;
+		}
+		if (error != EOPNOTSUPP)
+			printf("%s: Error retrieving ACL: %d\n",
+			    __func__, error);
+		/*
+		 * XXX: Fall back until debugged.  Should
+		 * eventually possibly log an error, and return
+		 * EPERM for safety.
+		 */
+		acl_free(acl);
+	}
+#endif /* !UFS_ACL */
+	error = vfs_unixify_accmode(&accmode);
+	if (error)
+		return error;
+	return ufs_check_permitted(vp, ip,
+	    NULL, accmode, ap->a_cred, genfs_can_access);
 }
 
 /* ARGSUSED */
@@ -486,8 +533,7 @@ ufs_setattr(void *v)
 		}
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
-		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
-		    changing_sysflags));
+		    genfs_can_chflags(vp, cred, ip->i_uid, changing_sysflags));
 		if (error)
 			goto out;
 
@@ -577,7 +623,8 @@ ufs_setattr(void *v)
 			goto out;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred));
+		    NULL, genfs_can_chtimes(vp, cred, ip->i_uid,
+		    vap->va_vaflags));
 		if (error)
 			goto out;
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
@@ -625,6 +672,32 @@ out:
 	return (error);
 }
 
+#ifdef UFS_ACL
+static int
+ufs_update_nfs4_acl_after_mode_change(struct vnode *vp, int mode,
+    int file_owner_id, kauth_cred_t cred, struct lwp *l)
+{
+	int error;
+	struct acl *aclp;
+
+	aclp = acl_alloc(KM_SLEEP);
+	error = ufs_getacl_nfs4_internal(vp, aclp, l);
+	/*
+	 * We don't have to handle EOPNOTSUPP here, as the filesystem claims
+	 * it supports ACLs.
+	 */
+	if (error)
+		goto out;
+
+	acl_nfs4_sync_acl_from_mode(aclp, mode, file_owner_id);
+	error = ufs_setacl_nfs4_internal(vp, aclp, l, false);
+
+out:
+	acl_free(aclp);
+	return (error);
+}
+#endif /* UFS_ACL */
+
 /*
  * Change the mode on a file.
  * Inode must be locked before calling.
@@ -639,11 +712,28 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip = VTOI(vp);
 
+#ifdef UFS_ACL
+	/*
+	 * To modify the permissions on a file, must possess VADMIN
+	 * for that file.
+	 */
+	if ((error = VOP_ACCESSX(vp, VWRITE_ACL, cred)) != 0)
+		return error;
+#endif
+
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid, mode));
+	    NULL, genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode));
 	if (error)
 		return (error);
 
+#ifdef UFS_ACL
+	if ((vp->v_mount->mnt_flag & MNT_ACLS) != 0) {
+		error = ufs_update_nfs4_acl_after_mode_change(vp, mode,
+		    ip->i_uid, cred, l);
+		if (error)
+			return error;
+	}
+#endif
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
@@ -676,8 +766,17 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
+#ifdef UFS_ACL
+	/*
+	 * To modify the ownership of a file, must possess VADMIN for that
+	 * file.
+	 */
+	if ((error = VOP_ACCESSX(vp, VWRITE_OWNER, cred)) != 0)
+		return error;
+#endif
+
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
+	    NULL, genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return (error);
 
@@ -734,6 +833,17 @@ ufs_remove(void *v)
 	mp = dvp->v_mount;
 	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
+#ifdef UFS_ACL
+#ifdef notyet
+	/* We don't do this because if the filesystem is mounted without ACLs
+	 * this goes through vfs_unixify_accmode() and we get EPERM.
+	 */
+	error = VOP_ACCESSX(vp, VDELETE, ap->a_cnp->cn_cred);
+	if (error)
+		goto err;
+#endif
+#endif
+
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
@@ -751,6 +861,9 @@ ufs_remove(void *v)
 	}
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
+#ifdef notyet
+err:
+#endif
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -906,6 +1019,193 @@ ufs_whiteout(void *v)
 	return (error);
 }
 
+#ifdef UFS_ACL
+static int
+ufs_do_posix1e_acl_inheritance_dir(struct vnode *dvp, struct vnode *tvp,
+    mode_t dmode, kauth_cred_t cred, struct lwp *l)
+{
+	int error;
+	struct inode *ip = VTOI(tvp);
+	struct acl *dacl, *acl;
+
+	acl = acl_alloc(KM_SLEEP);
+	dacl = acl_alloc(KM_SLEEP);
+
+	/*
+	 * Retrieve default ACL from parent, if any.
+	 */
+	error = VOP_GETACL(dvp, ACL_TYPE_DEFAULT, acl, cred);
+	switch (error) {
+	case 0:
+		/*
+		 * Retrieved a default ACL, so merge mode and ACL if
+		 * necessary.  If the ACL is empty, fall through to
+		 * the "not defined or available" case.
+		 */
+		if (acl->acl_cnt != 0) {
+			dmode = acl_posix1e_newfilemode(dmode, acl);
+			ip->i_mode = dmode;
+			DIP_ASSIGN(ip, mode, dmode);
+			*dacl = *acl;
+			ufs_sync_acl_from_inode(ip, acl);
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case EOPNOTSUPP:
+		/*
+		 * Just use the mode as-is.
+		 */
+		ip->i_mode = dmode;
+		DIP_ASSIGN(ip, mode, dmode);
+		error = 0;
+		goto out;
+	
+	default:
+		goto out;
+	}
+
+	/*
+	 * XXX: If we abort now, will Soft Updates notify the extattr
+	 * code that the EAs for the file need to be released?
+	 */
+	UFS_WAPBL_END(tvp->v_mount);
+	error = ufs_setacl_posix1e(tvp, ACL_TYPE_ACCESS, acl, cred, l);
+	if (error == 0)
+		error = ufs_setacl_posix1e(tvp, ACL_TYPE_DEFAULT, dacl, cred,
+		    l);
+	UFS_WAPBL_BEGIN(tvp->v_mount);
+	switch (error) {
+	case 0:
+		break;
+
+	case EOPNOTSUPP:
+		/*
+		 * XXX: This should not happen, as EOPNOTSUPP above
+		 * was supposed to free acl.
+		 */
+		printf("ufs_mkdir: VOP_GETACL() but no VOP_SETACL()\n");
+		/*
+		panic("ufs_mkdir: VOP_GETACL() but no VOP_SETACL()");
+		 */
+		break;
+
+	default:
+		goto out;
+	}
+
+out:
+	acl_free(acl);
+	acl_free(dacl);
+
+	return (error);
+}
+
+static int
+ufs_do_posix1e_acl_inheritance_file(struct vnode *dvp, struct vnode *tvp,
+    mode_t mode, kauth_cred_t cred, struct lwp *l)
+{
+	int error;
+	struct inode *ip = VTOI(tvp);
+	struct acl *acl;
+
+	acl = acl_alloc(KM_SLEEP);
+
+	/*
+	 * Retrieve default ACL for parent, if any.
+	 */
+	error = VOP_GETACL(dvp, ACL_TYPE_DEFAULT, acl, cred);
+	switch (error) {
+	case 0:
+		/*
+		 * Retrieved a default ACL, so merge mode and ACL if
+		 * necessary.
+		 */
+		if (acl->acl_cnt != 0) {
+			/*
+			 * Two possible ways for default ACL to not
+			 * be present.  First, the EA can be
+			 * undefined, or second, the default ACL can
+			 * be blank.  If it's blank, fall through to
+			 * the it's not defined case.
+			 */
+			mode = acl_posix1e_newfilemode(mode, acl);
+			ip->i_mode = mode;
+			DIP_ASSIGN(ip, mode, mode);
+			ufs_sync_acl_from_inode(ip, acl);
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case EOPNOTSUPP:
+		/*
+		 * Just use the mode as-is.
+		 */
+		ip->i_mode = mode;
+		DIP_ASSIGN(ip, mode, mode);
+		error = 0;
+		goto out;
+
+	default:
+		goto out;
+	}
+
+	UFS_WAPBL_END(tvp->v_mount);
+	/*
+	 * XXX: If we abort now, will Soft Updates notify the extattr
+	 * code that the EAs for the file need to be released?
+	 */
+	error = VOP_SETACL(tvp, ACL_TYPE_ACCESS, acl, cred);
+	UFS_WAPBL_BEGIN(tvp->v_mount);
+	switch (error) {
+	case 0:
+		break;
+
+	case EOPNOTSUPP:
+		/*
+		 * XXX: This should not happen, as EOPNOTSUPP above was
+		 * supposed to free acl.
+		 */
+		printf("%s: VOP_GETACL() but no VOP_SETACL()\n", __func__);
+		/* panic("%s: VOP_GETACL() but no VOP_SETACL()", __func__); */
+		break;
+
+	default:
+		goto out;
+	}
+
+out:
+	acl_free(acl);
+
+	return (error);
+}
+
+static int
+ufs_do_nfs4_acl_inheritance(struct vnode *dvp, struct vnode *tvp,
+    mode_t child_mode, kauth_cred_t cred, struct lwp *l)
+{
+	int error;
+	struct acl *parent_aclp, *child_aclp;
+
+	parent_aclp = acl_alloc(KM_SLEEP);
+	child_aclp = acl_alloc(KM_SLEEP);
+
+	error = ufs_getacl_nfs4_internal(dvp, parent_aclp, l);
+	if (error)
+		goto out;
+	acl_nfs4_compute_inherited_acl(parent_aclp, child_aclp,
+	    child_mode, VTOI(tvp)->i_uid, tvp->v_type == VDIR);
+	error = ufs_setacl_nfs4_internal(tvp, child_aclp, l, false);
+	if (error)
+		goto out;
+out:
+	acl_free(parent_aclp);
+	acl_free(child_aclp);
+
+	return (error);
+}
+#endif
+
 int
 ufs_mkdir(void *v)
 {
@@ -978,6 +1278,23 @@ ufs_mkdir(void *v)
 	dp->i_flag |= IN_CHANGE;
 	if ((error = UFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
+
+#ifdef UFS_ACL
+	mode_t dmode = (vap->va_mode & 0777) | IFDIR;
+	struct lwp *l = curlwp;
+	if (dvp->v_mount->mnt_flag & MNT_POSIX1EACLS) {
+
+		error = ufs_do_posix1e_acl_inheritance_dir(dvp, tvp, dmode,
+		    cnp->cn_cred, l);
+		if (error)
+			goto bad;
+	} else if (dvp->v_mount->mnt_flag & MNT_ACLS) {
+		error = ufs_do_nfs4_acl_inheritance(dvp, tvp, dmode,
+		    cnp->cn_cred, l);
+		if (error)
+			goto bad;
+	}
+#endif /* !UFS_ACL */
 
 	/*
 	 * Initialize directory with "." and ".." from static template.
@@ -1071,6 +1388,17 @@ ufs_rmdir(void *v)
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
 
+#ifdef UFS_ACL
+#ifdef notyet
+	/* We don't do this because if the filesystem is mounted without ACLs
+	 * this goes through vfs_unixify_accmode() and we get EPERM.
+	 */
+	error = VOP_ACCESSX(vp, VDELETE, cnp->cn_cred);
+	if (error)
+		goto err;
+#endif
+#endif
+
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
 	UFS_CHECK_CRAPCOUNTER(dp);
@@ -1079,11 +1407,8 @@ ufs_rmdir(void *v)
 	 * No rmdir "." or of mounted directories please.
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
-		if (dp == ip)
-			vrele(vp);
-		else
-			vput(vp);
-		return (EINVAL);
+		error = EINVAL;
+		goto err;
 	}
 
 	/*
@@ -1144,7 +1469,13 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
-	return (error);
+	return error;
+ err:
+	if (dp == ip)
+		vrele(vp);
+	else
+		vput(vp);
+	return error;
 }
 
 /*
@@ -1766,6 +2097,30 @@ ufs_pathconf(void *v)
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
 		return (0);
+#ifdef UFS_ACL
+	case _PC_ACL_EXTENDED:
+		if (ap->a_vp->v_mount->mnt_flag & MNT_POSIX1EACLS)
+			*ap->a_retval = 1;
+		else
+			*ap->a_retval = 0;
+		return 0;
+	case _PC_ACL_NFS4:
+		if (ap->a_vp->v_mount->mnt_flag & MNT_ACLS)
+			*ap->a_retval = 1;
+		else
+			*ap->a_retval = 0;
+		return 0;
+#endif
+	case _PC_ACL_PATH_MAX:
+#ifdef UFS_ACL
+		if (ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS))
+			*ap->a_retval = ACL_MAX_ENTRIES;
+		else
+			*ap->a_retval = 3;
+#else
+		*ap->a_retval = 3;
+#endif
+		return 0;
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
 		return (0);
@@ -1890,8 +2245,9 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 
 	/* Authorize setting SGID if needed. */
 	if (ip->i_mode & ISGID) {
-		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
-		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		error = kauth_authorize_vnode(cnp->cn_cred,
+		    KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp, cnp->cn_cred, ip->i_uid,
 		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
 		if (error) {
 			ip->i_mode &= ~ISGID;
@@ -1909,6 +2265,20 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	 */
 	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
+#ifdef UFS_ACL
+	struct lwp *l = curlwp;
+	if (dvp->v_mount->mnt_flag & MNT_POSIX1EACLS) {
+		error = ufs_do_posix1e_acl_inheritance_file(dvp, tvp,
+		    ip->i_mode, cnp->cn_cred, l);
+		if (error)
+			goto bad;
+	} else if (dvp->v_mount->mnt_flag & MNT_ACLS) {
+		error = ufs_do_nfs4_acl_inheritance(dvp, tvp, ip->i_mode,
+		    cnp->cn_cred, l);
+		if (error)
+			goto bad;
+	}
+#endif /* !UFS_ACL */
 	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
 	error = ufs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);

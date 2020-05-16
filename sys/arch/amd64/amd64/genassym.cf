@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.84 2020/05/02 16:44:34 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.85 2020/05/16 18:31:47 christos Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ include <sys/rwlock.h>
 include <sys/cpu_data.h>
 include <sys/evcnt.h>
 include <sys/cpu.h>
+include <sys/acl.h>
 
 include <netinet/in.h>
 include <netinet/in_systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.6 2018/05/28 21:04:38 chs Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.7 2020/05/16 18:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.6 2018/05/28 21:04:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.7 2020/05/16 18:31:50 christos Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -61,6 +61,7 @@ const struct vnodeopv_entry_desc v7fs_vnodeop_entries[] = {
 	{ &vop_open_desc, v7fs_open },			/* open */
 	{ &vop_close_desc, v7fs_close },		/* close */
 	{ &vop_access_desc, v7fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, v7fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, v7fs_read },			/* read */
@@ -110,6 +111,7 @@ const struct vnodeopv_entry_desc v7fs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, v7fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, v7fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
@@ -158,6 +160,7 @@ const struct vnodeopv_entry_desc v7fs_fifoop_entries[] = {
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, v7fs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, v7fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, v7fs_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */

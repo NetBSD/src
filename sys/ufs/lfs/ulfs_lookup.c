@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.43 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.44 2020/05/16 18:31:53 christos Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.43 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.44 2020/05/16 18:31:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -574,7 +574,7 @@ found:
 		 */
 		if (dp->i_mode & ISVTX) {
 			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
-			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
+			    tdp, vdp, genfs_can_sticky(vdp, cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
 				vrele(tdp);

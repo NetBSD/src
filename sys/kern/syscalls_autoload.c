@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls_autoload.c,v 1.36 2020/04/26 19:16:36 thorpej Exp $ */
+/* $NetBSD: syscalls_autoload.c,v 1.37 2020/05/16 18:31:50 christos Exp $ */
 
 /*
  * System call autoload table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.36 2020/04/26 19:16:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.37 2020/05/16 18:31:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -23,6 +23,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.36 2020/04/26 19:16:36 thorp
 #include <sys/sched.h>
 #include <sys/idtype.h>
 #include <sys/syscallargs.h>
+#include <sys/acl.h>
 static struct sc_autoload netbsd_syscalls_autoload[] = {
 	    { SYS_compat_50_wait4, "compat_50" },
 	    { SYS_compat_43_ocreat, "compat_43" },

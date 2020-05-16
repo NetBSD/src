@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.18 2018/01/09 03:31:12 christos Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.19 2020/05/16 18:31:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -43,6 +43,8 @@ struct mntopt {
 };
 
 /* User-visible MNT_ flags. */
+#define MOPT_ACLS		{ "acls",	0, MNT_ACLS, 0 }
+#define MOPT_POSIX1EACLS	{ "posix1eacls",0, MNT_POSIX1EACLS, 0 }
 #define MOPT_ASYNC		{ "async",	0, MNT_ASYNC, 0 }
 #define MOPT_NOCOREDUMP		{ "coredump",	1, MNT_NOCOREDUMP, 0 }
 #define MOPT_NODEV		{ "dev",	1, MNT_NODEV, 0 }

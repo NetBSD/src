@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.53 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: advnops.c,v 1.54 2020/05/16 18:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.53 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.54 2020/05/16 18:31:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_open_desc, adosfs_open },		/* open */
 	{ &vop_close_desc, adosfs_close },		/* close */
 	{ &vop_access_desc, adosfs_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, adosfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
@@ -749,7 +750,7 @@ reterr:
 }
 
 static int
-adosfs_check_possible(struct vnode *vp, struct anode *ap, mode_t mode)
+adosfs_check_possible(struct vnode *vp, struct anode *ap, accmode_t accmode)
 {
 
 	/*
@@ -757,7 +758,7 @@ adosfs_check_possible(struct vnode *vp, struct anode *ap, mode_t mode)
 	 * fifo, or a block or character device resident on the
 	 * file system.
 	 */
-	if (mode & VWRITE) {
+	if (accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -772,14 +773,14 @@ adosfs_check_possible(struct vnode *vp, struct anode *ap, mode_t mode)
 }
 
 static int
-adosfs_check_permitted(struct vnode *vp, struct anode *ap, mode_t mode,
+adosfs_check_permitted(struct vnode *vp, struct anode *ap, accmode_t accmode,
     kauth_cred_t cred)
 {
 	mode_t file_mode = adunixprot(ap->adprot) & ap->amp->mask;
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
-	    file_mode, ap->uid, ap->gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp,
+	    cred, ap->uid, ap->gid, file_mode, NULL, accmode));
 }
 
 int
@@ -787,7 +788,7 @@ adosfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		accmode_t  a_accmode;
 		kauth_cred_t a_cred;
 	} */ *sp = v;
 	struct anode *ap;
@@ -806,11 +807,11 @@ adosfs_access(void *v)
 	}
 #endif
 
-	error = adosfs_check_possible(vp, ap, sp->a_mode);
+	error = adosfs_check_possible(vp, ap, sp->a_accmode);
 	if (error)
 		return error;
 
-	error = adosfs_check_permitted(vp, ap, sp->a_mode, sp->a_cred);
+	error = adosfs_check_permitted(vp, ap, sp->a_accmode, sp->a_cred);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);

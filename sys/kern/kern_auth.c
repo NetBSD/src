@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.77 2018/09/03 16:29:35 riastradh Exp $ */
+/* $NetBSD: kern_auth.c,v 1.78 2020/05/16 18:31:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.77 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.78 2020/05/16 18:31:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1090,18 +1090,19 @@ kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
 }
 
 kauth_action_t
-kauth_mode_to_action(mode_t mode)
+kauth_accmode_to_action(accmode_t accmode)
 {
 	kauth_action_t action = 0;
 
-	if (mode & VREAD)
+	// XXX: Revisit we need to have a richer set of kauth primitives
+	// We also get only the Unix perms here sometimes
+	if (accmode & (VSTAT_PERMS|VREAD))
 		action |= KAUTH_VNODE_READ_DATA;
-	if (mode & VWRITE)
+	if (accmode & (VMODIFY_PERMS|VADMIN_PERMS))
 		action |= KAUTH_VNODE_WRITE_DATA;
-	if (mode & VEXEC)
+	if (accmode & VEXEC)
 		action |= KAUTH_VNODE_EXECUTE;
-
-	return action;
+	return action == 0 ? KAUTH_VNODE_ACCESS : action;
 }
 
 kauth_action_t

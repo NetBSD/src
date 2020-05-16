@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.34 2020/04/20 00:34:58 christos Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.35 2020/05/16 18:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.34 2020/04/20 00:34:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.35 2020/05/16 18:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.34 2020/04/20 00:34:58 christos Exp 
  * NOTE: Vnode must be locked.
  */
 int
-extattr_check_cred(struct vnode *vp, const char *attr, kauth_cred_t cred,
+extattr_check_cred(struct vnode *vp, int attrspace, kauth_cred_t cred,
     int access)
 {
 
@@ -104,7 +104,7 @@ extattr_check_cred(struct vnode *vp, const char *attr, kauth_cred_t cred,
 		return (0);
 
 	return kauth_authorize_vnode(cred, kauth_extattr_action(access), vp,
-	    NULL, genfs_can_extattr(cred, access, vp, attr));
+	    NULL, genfs_can_extattr(vp, cred, access, attrspace));
 }
 
 /*

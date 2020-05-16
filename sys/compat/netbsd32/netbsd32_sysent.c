@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.151 2020/04/26 19:18:52 thorpej Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.152 2020/05/16 18:31:48 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.151 2020/04/26 19:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.152 2020/05/16 18:31:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -2009,44 +2009,57 @@ struct sysent netbsd32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32___fhstatvfs190
 	},		/* 486 = netbsd32___fhstatvfs190 */
 	{
-		.sy_call = sys_nosys,
-	},		/* 487 = filler */
+		ns(struct netbsd32___acl_get_link_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_get_link
+	},		/* 487 = netbsd32___acl_get_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 488 = filler */
+		ns(struct netbsd32___acl_set_link_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_set_link
+	},		/* 488 = netbsd32___acl_set_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 489 = filler */
+		ns(struct netbsd32___acl_delete_link_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_delete_link
+	},		/* 489 = netbsd32___acl_delete_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 490 = filler */
+		ns(struct netbsd32___acl_aclcheck_link_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_aclcheck_link
+	},		/* 490 = netbsd32___acl_aclcheck_link */
 	{
-		.sy_call = sys_nosys,
-	},		/* 491 = filler */
+		ns(struct netbsd32___acl_get_file_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_get_file
+	},		/* 491 = netbsd32___acl_get_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 492 = filler */
+		ns(struct netbsd32___acl_set_file_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_set_file
+	},		/* 492 = netbsd32___acl_set_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 493 = filler */
+		ns(struct netbsd32___acl_get_fd_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_get_fd
+	},		/* 493 = netbsd32___acl_get_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 494 = filler */
+		ns(struct netbsd32___acl_set_fd_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_set_fd
+	},		/* 494 = netbsd32___acl_set_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 495 = filler */
+		ns(struct netbsd32___acl_delete_file_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_delete_file
+	},		/* 495 = netbsd32___acl_delete_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 496 = filler */
+		ns(struct netbsd32___acl_delete_fd_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_delete_fd
+	},		/* 496 = netbsd32___acl_delete_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 497 = filler */
+		ns(struct netbsd32___acl_aclcheck_file_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_aclcheck_file
+	},		/* 497 = netbsd32___acl_aclcheck_file */
 	{
-		.sy_call = sys_nosys,
-	},		/* 498 = filler */
+		ns(struct netbsd32___acl_aclcheck_fd_args),
+		.sy_call = (sy_call_t *)netbsd32___acl_aclcheck_fd
+	},		/* 498 = netbsd32___acl_aclcheck_fd */
 	{
-		.sy_call = sys_nosys,
-	},		/* 499 = filler */
+		ns(struct netbsd32_lpathconf_args),
+		.sy_call = (sy_call_t *)netbsd32_lpathconf
+	},		/* 499 = netbsd32_lpathconf */
 	{
 		.sy_call = sys_nosys,
 	},		/* 500 = filler */

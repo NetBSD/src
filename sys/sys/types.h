@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.104 2020/01/28 16:40:27 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.105 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -169,6 +169,11 @@ typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 #ifndef	mode_t
 typedef	__mode_t	mode_t;		/* permissions */
 #define	mode_t		__mode_t
+#endif
+
+#ifndef	accmode_t
+typedef	__accmode_t	accmode_t;	/* access permissions */
+#define	accmode_t	__accmode_t
 #endif
 
 typedef	uint32_t	nlink_t;	/* link count */

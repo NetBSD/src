@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.29 2020/04/23 21:47:08 ad Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.30 2020/05/16 18:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.29 2020/04/23 21:47:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.30 2020/05/16 18:31:50 christos Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -372,33 +372,33 @@ v7fs_check_possible(struct vnode *vp, struct v7fs_node *v7node,
 
 static int
 v7fs_check_permitted(struct vnode *vp, struct v7fs_node *v7node,
-    mode_t mode, kauth_cred_t cred)
+    accmode_t accmode, kauth_cred_t cred)
 {
 
 	struct v7fs_inode *inode = &v7node->inode;
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, inode->mode), vp, NULL, genfs_can_access(vp->v_type,
-	    inode->mode, inode->uid, inode->gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, inode->mode), vp, NULL, genfs_can_access(vp, cred,
+	    inode->uid, inode->gid, inode->mode, NULL, accmode));
 }
 
 int
 v7fs_access(void *v)
 {
 	struct vop_access_args /* {
-				  struct vnode	*a_vp;
-				  int		a_mode;
-				  kauth_cred_t	a_cred;
-				  } */ *ap = v;
+		struct vnode	*a_vp;
+		accmode_t	a_accmode;
+		kauth_cred_t	a_cred;
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 	int error;
 
-	error = v7fs_check_possible(vp, v7node, ap->a_mode);
+	error = v7fs_check_possible(vp, v7node, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = v7fs_check_permitted(vp, v7node, ap->a_mode, ap->a_cred);
+	error = v7fs_check_permitted(vp, v7node, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -492,7 +492,7 @@ v7fs_setattr(void *v)
 	/* File pointer mode. */
 	if (vap->va_flags != VNOVAL) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS,
-		    vp, NULL, genfs_can_chflags(cred, vp->v_type, inode->uid,
+		    vp, NULL, genfs_can_chflags(vp, cred, inode->uid,
 		    false));
 		if (error)
 			return error;
@@ -515,7 +515,7 @@ v7fs_setattr(void *v)
 		uid = vap->va_uid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(cred, inode->uid, inode->gid, uid,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -525,7 +525,7 @@ v7fs_setattr(void *v)
 		gid = vap->va_gid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(cred, inode->uid, inode->gid, uid,
+		    genfs_can_chown(vp, cred, inode->uid, inode->gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -534,7 +534,7 @@ v7fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		mode_t mode = vap->va_mode;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp->v_type, cred, inode->uid, inode->gid,
+		    vp, NULL, genfs_can_chmod(vp, cred, inode->uid, inode->gid,
 		    mode));
 		if (error) {
 			return error;
@@ -545,8 +545,8 @@ v7fs_setattr(void *v)
 	    (vap->va_mtime.tv_sec != VNOVAL) ||
 	    (vap->va_ctime.tv_sec != VNOVAL)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, inode->uid,
-		    cred));
+		    NULL, genfs_can_chtimes(vp, cred, inode->uid,
+		    vap->va_vaflags));
 		if (error)
 			return error;
 
