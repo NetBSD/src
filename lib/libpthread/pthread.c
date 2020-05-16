@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.169 2020/05/15 14:30:23 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.170 2020/05/16 22:53:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.169 2020/05/15 14:30:23 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.170 2020/05/16 22:53:37 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -105,7 +105,7 @@ static int pthread__diagassert;
 
 int pthread__concurrency;
 int pthread__nspins;
-int pthread__unpark_max = PTHREAD__UNPARK_MAX;
+size_t pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__dbg;	/* set by libpthread_dbg if active */
 
 /*
@@ -191,9 +191,9 @@ pthread__init(void)
 {
 	pthread_t first;
 	char *p;
-	int i;
 	int mib[2];
 	unsigned int value;
+	ssize_t slen;
 	size_t len;
 	extern int __isthreaded;
 
@@ -223,16 +223,16 @@ pthread__init(void)
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
-	for (i = 0; i < NHASHLOCK; i++) {
+	for (int i = 0; i < NHASHLOCK; i++) {
 		pthread_mutex_init(&hashlocks[i].mutex, NULL);
 	}
 
 	/* Fetch parameters. */
-	i = (int)_lwp_unpark_all(NULL, 0, NULL);
-	if (i == -1)
+	slen = _lwp_unpark_all(NULL, 0, NULL);
+	if (slen < 0)
 		err(EXIT_FAILURE, "_lwp_unpark_all");
-	if (i < pthread__unpark_max)
-		pthread__unpark_max = i;
+	if ((size_t)slen < pthread__unpark_max)
+		pthread__unpark_max = slen;
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
@@ -604,16 +604,57 @@ pthread_resume_np(pthread_t thread)
  * awoken (because cancelled, for instance) make sure we have no waiters
  * left.
  */
-static void
+void
 pthread__clear_waiters(pthread_t self)
 {
+	int rv;
 
-	if (self->pt_nwaiters != 0) {
-		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
-		    NULL);
-		self->pt_nwaiters = 0;
+	/* Zero waiters or one waiter in error case (pthread_exit()). */
+	if (self->pt_nwaiters == 0) {
+		if (self->pt_unpark != 0 && self->pt_willpark == 0) {
+			rv = (ssize_t)_lwp_unpark(self->pt_unpark, NULL);
+			self->pt_unpark = 0;
+			if (rv != 0 && errno != EALREADY && errno != EINTR &&
+			    errno != ESRCH) {
+				pthread__errorfunc(__FILE__, __LINE__, __func__,
+				    "_lwp_unpark failed");
+			}
+		}
+		return;
 	}
-	self->pt_willpark = 0;
+
+	/* One waiter or two waiters (the second being a deferred wakeup). */
+	if (self->pt_nwaiters == 1) {
+		if (self->pt_unpark != 0) {
+			/* Fall through to multiple waiters case. */
+			self->pt_waiters[1] = self->pt_unpark;
+			self->pt_nwaiters = 2;
+			self->pt_unpark = 0;
+		} else if (self->pt_willpark) {
+			/* Defer to _lwp_park(). */
+			self->pt_unpark = self->pt_waiters[0];
+			self->pt_nwaiters = 0;
+			return;
+		} else {
+			/* Wake one now. */
+			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], NULL);
+			self->pt_nwaiters = 0;
+			if (rv != 0 && errno != EALREADY && errno != EINTR &&
+			    errno != ESRCH) {
+				pthread__errorfunc(__FILE__, __LINE__, __func__,
+				    "_lwp_unpark failed");
+			}
+			return;
+		}
+	}
+
+	/* Multiple waiters. */
+	rv = _lwp_unpark_all(self->pt_waiters, self->pt_nwaiters, NULL);
+	self->pt_nwaiters = 0;
+	if (rv != 0 && errno != EINTR) {
+		pthread__errorfunc(__FILE__, __LINE__, __func__,
+		    "_lwp_unpark_all failed");
+	}
 }
 
 void
@@ -630,6 +671,7 @@ pthread_exit(void *retval)
 	self = pthread__self();
 
 	/* Disable cancellability. */
+	self->pt_willpark = 0;
 	pthread_mutex_lock(&self->pt_lock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
 	self->pt_cancel = 0;
@@ -660,10 +702,12 @@ pthread_exit(void *retval)
 	if (self->pt_flags & PT_FLAG_DETACHED) {
 		/* pthread__reap() will drop the lock. */
 		pthread__reap(self);
+		pthread__assert(!self->pt_willpark);
 		pthread__clear_waiters(self);
 		_lwp_exit();
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
+		pthread__assert(!self->pt_willpark);
 		pthread_mutex_unlock(&self->pt_lock);
 		pthread__clear_waiters(self);
 		/* Note: name will be freed by the joiner. */
@@ -1125,7 +1169,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 int
 pthread__park(pthread_t self, pthread_mutex_t *lock,
 	      pthread_queue_t *queue, const struct timespec *abstime,
-	      int cancelpt, const void *hint)
+	      int cancelpt)
 {
 	int rv, error;
 	void *obj;
@@ -1170,7 +1214,7 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 		 * have _lwp_park() restart it before blocking.
 		 */
 		error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
-		    __UNCONST(abstime), self->pt_unpark, hint, hint);
+		    __UNCONST(abstime), self->pt_unpark, NULL, NULL);
 		self->pt_unpark = 0;
 		if (error != 0) {
 			switch (rv = errno) {
@@ -1215,22 +1259,14 @@ pthread__unpark(pthread_queue_t *queue, pthread_t self,
 		pthread_mutex_t *interlock)
 {
 	pthread_t target;
-	u_int max;
-	size_t nwaiters;
 
-	max = pthread__unpark_max;
-	nwaiters = self->pt_nwaiters;
 	target = PTQ_FIRST(queue);
-	if (nwaiters == max) {
-		/* Overflow. */
-		(void)_lwp_unpark_all(self->pt_waiters, nwaiters,
-		    __UNVOLATILE(&interlock->ptm_waiters));
-		nwaiters = 0;
+	if (self->pt_nwaiters == pthread__unpark_max) {
+		pthread__clear_waiters(self);
 	}
 	target->pt_sleepobj = NULL;
-	self->pt_waiters[nwaiters++] = target->pt_lid;
+	self->pt_waiters[self->pt_nwaiters++] = target->pt_lid;
 	PTQ_REMOVE(queue, target, pt_sleep);
-	self->pt_nwaiters = nwaiters;
 	pthread__mutex_deferwake(self, interlock);
 }
 
@@ -1238,23 +1274,16 @@ void
 pthread__unpark_all(pthread_queue_t *queue, pthread_t self,
 		    pthread_mutex_t *interlock)
 {
+	const size_t max = pthread__unpark_max;
 	pthread_t target;
-	u_int max;
-	size_t nwaiters;
 
-	max = pthread__unpark_max;
-	nwaiters = self->pt_nwaiters;
 	PTQ_FOREACH(target, queue, pt_sleep) {
-		if (nwaiters == max) {
-			/* Overflow. */
-			(void)_lwp_unpark_all(self->pt_waiters, nwaiters,
-			    __UNVOLATILE(&interlock->ptm_waiters));
-			nwaiters = 0;
+		if (self->pt_nwaiters == max) {
+			pthread__clear_waiters(self);
 		}
 		target->pt_sleepobj = NULL;
-		self->pt_waiters[nwaiters++] = target->pt_lid;
+		self->pt_waiters[self->pt_nwaiters++] = target->pt_lid;
 	}
-	self->pt_nwaiters = nwaiters;
 	PTQ_INIT(queue);
 	pthread__mutex_deferwake(self, interlock);
 }

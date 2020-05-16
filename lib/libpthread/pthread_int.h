@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.103 2020/02/16 17:45:11 kamil Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.104 2020/05/16 22:53:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -182,7 +182,7 @@ extern size_t	pthread__pagesize;
 extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
-extern int 	pthread__unpark_max;
+extern size_t 	pthread__unpark_max;
 extern int	pthread_keys_max;
 
 extern int	__uselibcstub;
@@ -200,9 +200,9 @@ void	pthread__unpark_all(pthread_queue_t *, pthread_t, pthread_mutex_t *)
 void	pthread__unpark(pthread_queue_t *, pthread_t, pthread_mutex_t *)
     PTHREAD_HIDE;
 int	pthread__park(pthread_t, pthread_mutex_t *, pthread_queue_t *,
-		      const struct timespec *, int, const void *)
-		      PTHREAD_HIDE;
+		      const struct timespec *, int) PTHREAD_HIDE;
 pthread_mutex_t *pthread__hashlock(volatile const void *) PTHREAD_HIDE;
+void	pthread__clear_waiters(pthread_t) PTHREAD_HIDE;
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(void) PTHREAD_HIDE;

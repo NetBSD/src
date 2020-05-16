@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.68 2020/04/14 23:35:07 joerg Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.69 2020/05/16 22:53:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.68 2020/04/14 23:35:07 joerg Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.69 2020/05/16 22:53:37 ad Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -161,9 +161,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		self->pt_willpark = 0;
 		do {
 			retval = _lwp_park(clkid, TIMER_ABSTIME,
-			    __UNCONST(abstime), self->pt_unpark,
-			    __UNVOLATILE(&mutex->ptm_waiters),
-			    __UNVOLATILE(&mutex->ptm_waiters));
+			    __UNCONST(abstime), self->pt_unpark, NULL, NULL);
 			self->pt_unpark = 0;
 		} while (retval == -1 && errno == ESRCH);
 		pthread_mutex_lock(mutex);
@@ -254,9 +252,7 @@ pthread__cond_wake_one(pthread_cond_t *cond)
 	 * caller (this thread) releases the mutex.
 	 */
 	if (__predict_false(self->pt_nwaiters == (size_t)pthread__unpark_max)) {
-		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
-		    __UNVOLATILE(&mutex->ptm_waiters));
-		self->pt_nwaiters = 0;
+		pthread__clear_waiters(self);
 	}
 	self->pt_waiters[self->pt_nwaiters++] = lid;
 	pthread__mutex_deferwake(self, mutex);
@@ -284,7 +280,6 @@ pthread__cond_wake_all(pthread_cond_t *cond)
 	pthread_t self, signaled;
 	pthread_mutex_t *mutex;
 	u_int max;
-	size_t nwaiters;
 
 	/*
 	 * Try to defer waking threads (see pthread_cond_signal()).
@@ -294,19 +289,14 @@ pthread__cond_wake_all(pthread_cond_t *cond)
 	pthread__spinlock(self, &cond->ptc_lock);
 	max = pthread__unpark_max;
 	mutex = cond->ptc_mutex;
-	nwaiters = self->pt_nwaiters;
 	PTQ_FOREACH(signaled, &cond->ptc_waiters, pt_sleep) {
-		if (__predict_false(nwaiters == max)) {
-			/* Overflow. */
-			(void)_lwp_unpark_all(self->pt_waiters,
-			    nwaiters, __UNVOLATILE(&mutex->ptm_waiters));
-			nwaiters = 0;
+		if (__predict_false(self->pt_nwaiters == max)) {
+			pthread__clear_waiters(self);
 		}
 		signaled->pt_sleepobj = NULL;
-		self->pt_waiters[nwaiters++] = signaled->pt_lid;
+		self->pt_waiters[self->pt_nwaiters++] = signaled->pt_lid;
 	}
 	PTQ_INIT(&cond->ptc_waiters);
-	self->pt_nwaiters = nwaiters;
 	cond->ptc_mutex = NULL;
 	pthread__spinunlock(self, &cond->ptc_lock);
 	pthread__mutex_deferwake(self, mutex);
