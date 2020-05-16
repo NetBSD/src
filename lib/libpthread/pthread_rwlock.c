@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.39 2020/02/05 11:05:10 kamil Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.40 2020/05/16 22:53:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.39 2020/02/05 11:05:10 kamil Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.40 2020/05/16 22:53:37 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -220,7 +220,7 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleepobj = &ptr->ptr_rblocked;
 		self->pt_early = pthread__rwlock_early;
 		error = pthread__park(self, interlock, &ptr->ptr_rblocked,
-		    ts, 0, &ptr->ptr_rblocked);
+		    ts, 0);
 
 		/* Did we get the lock? */
 		if (self->pt_rwlocked == _RW_LOCKED) {
@@ -341,7 +341,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleepobj = &ptr->ptr_wblocked;
 		self->pt_early = pthread__rwlock_early;
 		error = pthread__park(self, interlock, &ptr->ptr_wblocked,
-		    ts, 0, &ptr->ptr_wblocked);
+		    ts, 0);
 
 		/* Did we get the lock? */
 		if (self->pt_rwlocked == _RW_LOCKED) {

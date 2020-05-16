@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_barrier.c,v 1.21 2020/01/29 14:41:57 kamil Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.22 2020/05/16 22:53:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2003, 2006, 2007, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003, 2006, 2007, 2009, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.21 2020/01/29 14:41:57 kamil Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.22 2020/05/16 22:53:37 ad Exp $");
 
 #include <errno.h>
 
@@ -106,7 +106,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleepobj = &barrier->ptb_waiters;
 		(void)pthread__park(self, interlock, &barrier->ptb_waiters,
-		    NULL, 0, __UNVOLATILE(&interlock->ptm_waiters));
+		    NULL, 0);
 		if (__predict_true(gen != barrier->ptb_generation)) {
 			break;
 		}
