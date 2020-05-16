@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/08/17 04:04:28 kamil Exp $
+#	$NetBSD: Makefile,v 1.10 2020/05/16 12:44:42 christos Exp $
 #
 
 .include <bsd.init.mk>
@@ -14,9 +14,13 @@ SRCS.t_modautoload+=	t_modautoload.c
 # on amd64.  This is the reason we keep this test in its own
 # subdirectory -- otherwise the LDADD lines would get a little hairy.
 LDFLAGS+=	-Wl,-E
-LDADD+=		-Wl,--whole-archive	${DESTDIR}/usr/lib/librumpvfs.a	\
-					${DESTDIR}/usr/lib/librump.a	\
-		-Wl,--no-whole-archive
+LDADD+= \
+    -Wl,--whole-archive \
+    ${DESTDIR}/usr/lib/librumpvfs_nofifofs.a \
+    ${DESTDIR}/usr/lib/librumpvfs.a \
+    ${DESTDIR}/usr/lib/librump.a \
+    -Wl,--no-whole-archive
+
 LDADD+=		-lrumpuser -lpthread
 DPADD+=		${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
 
