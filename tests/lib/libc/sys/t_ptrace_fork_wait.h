@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.5 2020/05/16 22:07:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.6 2020/05/16 23:10:26 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -337,6 +337,7 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 	int status;
 #endif
 
+	sigset_t set;
 	struct ptrace_siginfo info;
 	ptrace_state_t state;
 	const int slen = sizeof(state);
@@ -453,6 +454,21 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 		SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, tracee, &event, elen)
 		    != -1);
 
+		/*
+		 * Ignore interception of the SIGCHLD signals.
+		 *
+		 * SIGCHLD once blocked is discarded by the kernel as it has the
+		 * SA_IGNORE property. During the fork(2) operation all signals
+		 * can be shortly blocked and missed (unless there is a
+		 * registered signal handler in the traced child). This leads to
+		 * a race in this test if there would be an intention to catch
+		 * SIGCHLD.
+		 */
+		sigemptyset(&set);
+		sigaddset(&set, SIGCHLD);
+		SYSCALL_REQUIRE(ptrace(PT_SET_SIGPASS, tracee, &set,
+		    sizeof(set)) != -1);
+
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
 		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -558,16 +574,6 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 			TWAIT_REQUIRE_FAILURE(ECHILD,
 			    wpid = TWAIT_GENERIC(tracee2, &status, 0));
 		}
-
-		DPRINTF("Before calling %s() for the tracee - expected stopped "
-		    "SIGCHLD\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
-
-		validate_status_stopped(status, SIGCHLD);
-
-		DPRINTF("Before resuming the tracee process where it left off and "
-		    "without signal to be sent\n");
-		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		DPRINTF("Before calling %s() for the tracee - expected exited\n",
 		    TWAIT_FNAME);
