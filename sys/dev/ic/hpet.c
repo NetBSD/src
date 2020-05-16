@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.16 2020/05/08 22:01:54 ad Exp $ */
+/* $NetBSD: hpet.c,v 1.17 2020/05/16 23:06:40 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.16 2020/05/08 22:01:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.17 2020/05/16 23:06:40 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -149,7 +149,7 @@ hpet_attach_subr(device_t dv)
 	sc->sc_adj = (int64_t)val * sc->sc_period / 1000;
 
 	/* Store attach-time values for computing TSC frequency later. */
-	if (cpu_hascounter()) {
+	if (cpu_hascounter() && sc == hpet0) {
 		(void)cpu_counter();
 		val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 		hpet_attach_tsc = cpu_counter();
