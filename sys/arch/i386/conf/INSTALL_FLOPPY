@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.54 2020/01/25 18:38:36 thorpej Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.55 2020/05/16 13:46:11 maya Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -635,9 +635,6 @@ wskbd*	at ukbd? console ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?

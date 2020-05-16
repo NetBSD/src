@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.327 2020/02/09 16:06:18 jmcneill Exp $
+#	$NetBSD: DEVNAMES,v 1.328 2020/05/16 13:46:12 maya Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -425,7 +425,6 @@ event			atari		Attribute
 event			x68k		Attribute
 ex			MI
 exphy			MI
-ezload			MI		Attribute
 fb			luna68k
 fb			news68k
 fb			newsmips
@@ -1439,7 +1438,6 @@ utoppy			MI
 uu			vax
 uvisor			MI
 uvscom			MI
-uyap			MI
 va			vax
 vcons			MI		Attribute
 veriexec		MI
