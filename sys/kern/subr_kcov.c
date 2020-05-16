@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.14 2020/05/15 13:09:02 maxv Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.15 2020/05/16 17:42:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ kcov_remote_enter(uint64_t subsystem, uint64_t id)
 	struct lwp *l = curlwp;
 	kcov_remote_t *kr;
 	kcov_t *kd;
-	u_int refs;
+	u_int refs __diagused;
 
 	kr = kcov_remote_find(subsystem, id);
 	if (__predict_false(kr == NULL)) {
@@ -296,7 +296,7 @@ kcov_remote_leave(uint64_t subsystem, uint64_t id)
 {
 	struct lwp *l = curlwp;
 	kcov_remote_t *kr;
-	u_int refs;
+	u_int refs __diagused;
 
 	kr = kcov_remote_find(subsystem, id);
 	if (__predict_false(kr == NULL)) {
