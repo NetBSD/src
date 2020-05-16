@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.71 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.72 2020/05/16 13:46:11 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	32		# estimated number of users
 
@@ -521,9 +521,6 @@ ucom*	at uvscom? portno ?
 
 # Topfield TF5000PVR range of DVB recorders
 #utoppy*	at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?

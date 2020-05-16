@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.18 2020/01/29 18:39:04 maya Exp $
+$NetBSD: TODO.usbmp,v 1.19 2020/05/16 13:46:12 maya Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -162,7 +162,6 @@ driver testing:		STATUS
   - uscanner		? (must take kernel lock for scsipi)
   - usscanner
   - utoppy
-  - uyap
   - udsbr
   - ugen		mostly done
   - pseye		working

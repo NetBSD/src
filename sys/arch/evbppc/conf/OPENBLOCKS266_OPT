@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.29 2020/01/29 18:39:01 maya Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.30 2020/05/16 13:46:11 maya Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -272,9 +272,6 @@ usscanner* at uhub? port ?
 
 # Topfield TF5000PVR range of DVB recorders
 utoppy* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?

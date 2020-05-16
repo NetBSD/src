@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.74 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: SMDK2410,v 1.75 2020/05/16 13:46:11 maya Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -308,9 +308,6 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?

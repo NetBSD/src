@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.82 2020/01/20 18:38:19 thorpej Exp $
+#	$NetBSD: P6032,v 1.83 2020/05/16 13:46:10 maya Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.82 $"
+#ident 		"P6032-$Revision: 1.83 $"
 
 maxusers 32
 
@@ -360,9 +360,6 @@ fd*	at	fdc? drive ?
 
 # USB scanners
 #uscanner* at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.167 2020/01/25 18:38:36 thorpej Exp $
+#	$NetBSD: GENERIC_TINY,v 1.168 2020/05/16 13:46:11 maya Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -456,9 +456,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?

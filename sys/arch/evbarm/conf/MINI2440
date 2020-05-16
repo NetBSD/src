@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.29 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: MINI2440,v 1.30 2020/05/16 13:46:11 maya Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -333,9 +333,6 @@ umass*	at uhub? port ? configuration ? interface ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?

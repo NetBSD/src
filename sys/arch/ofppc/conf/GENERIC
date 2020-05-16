@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.170 2019/04/26 21:40:31 sevan Exp $
+# $NetBSD: GENERIC,v 1.171 2020/05/16 13:46:11 maya Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 maxusers	32
 
@@ -369,7 +369,6 @@ uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 #ucom*	at ukyopon? portno ?
 
 #uscanner* at uhub? port ?				# USB scanners
-#uyap* at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters

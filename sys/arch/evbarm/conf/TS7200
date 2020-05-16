@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.75 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: TS7200,v 1.76 2020/05/16 13:46:11 maya Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -369,9 +369,6 @@ uhub*	at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 # usscanner* at uhub? port ?
-
-# Y@P firmware loader
-# uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 # udsbr*	at uhub? port ?
