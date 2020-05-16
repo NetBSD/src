@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.79 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: TWINTAIL,v 1.80 2020/05/16 13:46:11 maya Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -271,9 +271,6 @@ opio0 	at obio?  intr 2
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.26 2020/05/13 08:42:01 bouyer Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.27 2020/05/16 13:46:11 maya Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -655,9 +655,6 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?

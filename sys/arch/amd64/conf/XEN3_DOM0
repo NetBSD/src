@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.178 2020/05/13 08:42:01 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.179 2020/05/16 13:46:10 maya Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.178 $"
+#ident		"XEN3_DOM0-$Revision: 1.179 $"
 
 maxusers	32		# estimated number of users
 
@@ -681,9 +681,6 @@ ucom*	at ukyopon? portno ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?
