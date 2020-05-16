@@ -1,4 +1,4 @@
-/* $NetBSD: tadpmuvar.h,v 1.2 2018/10/13 19:53:43 macallan Exp $ */
+/* $NetBSD: tadpmuvar.h,v 1.3 2020/05/16 07:16:14 jdc Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -26,12 +26,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* functions to talk to the PMU found in Tadpole Viper laptops */
+/* functions to talk to the PMU found in Tadpole SPARCle and Viper laptops */
 
 #ifndef TADPMUVAR_H
 #define TADPMUVAR_H
 
 int tadpmu_init(bus_space_tag_t, bus_space_handle_t, bus_space_handle_t);
 int tadpmu_intr(void *);
+
+/* PMU events from the interrupt routine */
+#define TADPMU_EV_PWRBUTT	(1 << 0)
+#define TADPMU_EV_LID		(1 << 1)
+#define TADPMU_EV_DCPOWER	(1 << 2)
+#define TADPMU_EV_BATTCHANGE	(1 << 3)
+#define TADPMU_EV_BATTCHARGED	(1 << 4)
+
+/* Battery thresholds versus voltage (higher voltage when charging) */
+#define TADPMU_BATT_DIS_CAP_CRIT	108
+#define TADPMU_BATT_DIS_CAP_WARN	110
+#define TADPMU_BATT_DIS_CAP_LOW		115
+#define TADPMU_BATT_DIS_CAP_NORM	120
+
+#define TADPMU_BATT_CHG_CAP_CRIT	116
+#define TADPMU_BATT_CHG_CAP_WARN	118
+#define TADPMU_BATT_CHG_CAP_LOW		123
+#define TADPMU_BATT_CHG_CAP_NORM	126
 
 #endif /* TADPMUVAR_H */
