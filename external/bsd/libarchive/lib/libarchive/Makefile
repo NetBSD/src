@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2020/05/16 18:31:46 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -20,6 +20,7 @@ SRCS=		archive_acl.c \
 		archive_cmdline.c \
 		archive_cryptor.c \
 		archive_digest.c \
+		archive_disk_acl_freebsd.c \
 		archive_entry.c \
 		archive_entry_copy_stat.c \
 		archive_entry_link_resolver.c \

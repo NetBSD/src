@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.72 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.73 2020/05/16 18:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.72 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.73 2020/05/16 18:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_open_desc, union_open },			/* open */
 	{ &vop_close_desc, union_close },		/* close */
 	{ &vop_access_desc, union_access },		/* access */
+	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, union_getattr },		/* getattr */
 	{ &vop_setattr_desc, union_setattr },		/* setattr */
 	{ &vop_read_desc, union_read },			/* read */
@@ -708,7 +709,7 @@ union_access(void *v)
 	struct vop_access_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		int a_mode;
+		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -721,7 +722,7 @@ union_access(void *v)
 	 * unless the file is a socket, fifo, or a block or
 	 * character device resident on the file system.
 	 */
-	if (ap->a_mode & VWRITE) {
+	if (ap->a_accmode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:

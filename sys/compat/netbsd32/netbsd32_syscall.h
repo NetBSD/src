@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.153 2020/04/26 19:18:52 thorpej Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.154 2020/05/16 18:31:48 christos Exp $ */
 
 /*
  * System call numbers.
@@ -1284,6 +1284,45 @@
 /* syscall: "netbsd32___fhstatvfs190" ret: "int" args: "netbsd32_voidp" "netbsd32_size_t" "netbsd32_statvfsp_t" "int" */
 #define	NETBSD32_SYS_netbsd32___fhstatvfs190	486
 
-#define	NETBSD32_SYS_MAXSYSCALL	487
+/* syscall: "netbsd32___acl_get_link" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_get_link	487
+
+/* syscall: "netbsd32___acl_set_link" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_set_link	488
+
+/* syscall: "netbsd32___acl_delete_link" ret: "int" args: "const netbsd32_charp" "acl_type_t" */
+#define	NETBSD32_SYS_netbsd32___acl_delete_link	489
+
+/* syscall: "netbsd32___acl_aclcheck_link" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_aclcheck_link	490
+
+/* syscall: "netbsd32___acl_get_file" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_get_file	491
+
+/* syscall: "netbsd32___acl_set_file" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_set_file	492
+
+/* syscall: "netbsd32___acl_get_fd" ret: "int" args: "int" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_get_fd	493
+
+/* syscall: "netbsd32___acl_set_fd" ret: "int" args: "int" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_set_fd	494
+
+/* syscall: "netbsd32___acl_delete_file" ret: "int" args: "const netbsd32_charp" "acl_type_t" */
+#define	NETBSD32_SYS_netbsd32___acl_delete_file	495
+
+/* syscall: "netbsd32___acl_delete_fd" ret: "int" args: "int" "acl_type_t" */
+#define	NETBSD32_SYS_netbsd32___acl_delete_fd	496
+
+/* syscall: "netbsd32___acl_aclcheck_file" ret: "int" args: "const netbsd32_charp" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_aclcheck_file	497
+
+/* syscall: "netbsd32___acl_aclcheck_fd" ret: "int" args: "int" "acl_type_t" "netbsd32_aclp_t" */
+#define	NETBSD32_SYS_netbsd32___acl_aclcheck_fd	498
+
+/* syscall: "netbsd32_lpathconf" ret: "long" args: "const netbsd32_charp" "int" */
+#define	NETBSD32_SYS_netbsd32_lpathconf	499
+
+#define	NETBSD32_SYS_MAXSYSCALL	500
 #define	NETBSD32_SYS_NSYSENT	512
 #endif /* _NETBSD32_SYS_SYSCALL_H_ */

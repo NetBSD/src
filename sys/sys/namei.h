@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.109 2020/05/12 23:18:03 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.110 2020/05/16 18:31:53 christos Exp $	*/
 
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_MODULE)
 #include <sys/kauth.h>
 #include <sys/rwlock.h>
 
@@ -171,11 +171,12 @@ struct nameidata {
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
+#define	WILLBEDIR	0x0010000	/* new files will be dirs; */
 #define	ISWHITEOUT	0x0020000	/* found whiteout */
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x02ef800	/* mask of parameter descriptors */
+#define	PARAMASK	0x02ff800	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -298,7 +299,7 @@ bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 bool	cache_lookup_linked(struct vnode *, const char *, size_t,
 			    struct vnode **, krwlock_t **, kauth_cred_t);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *,
-			bool, int);
+			bool, accmode_t);
 int	cache_diraccess(struct vnode *, int);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);

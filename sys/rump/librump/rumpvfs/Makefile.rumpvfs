@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.49 2016/01/26 23:12:18 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.50 2020/05/16 18:31:52 christos Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -31,10 +31,10 @@ SRCS+=	rumpvfs_syscalls.c
 SRCS+=	kern_physio.c
 
 # sys/kern vfs
-SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
-	vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c vfs_mount.c	\
-	vfs_subr.c vfs_syscalls.c vfs_trans.c vfs_vnode.c vfs_vnops.c	\
-	vfs_wapbl.c vfs_xattr.c
+SRCS+=	vfs_acl.c vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c 	\
+	vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c	\
+	vfs_mount.c  vfs_subr.c vfs_syscalls.c vfs_trans.c vfs_vnode.c	\
+	vfs_vnops.c vfs_wapbl.c vfs_xattr.c
 
 # sys/kern module support
 SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
@@ -47,6 +47,9 @@ SRCS+=	dead_vfsops.c dead_vnops.c
 
 # sys/miscfs
 SRCS+=	genfs_io.c genfs_rename.c genfs_vfsops.c genfs_vnops.c spec_vnops.c
+
+# sys/kern acl
+SRCS+=	subr_acl_nfs4.c subr_acl_posix1e.c
 
 # sys/kern bufq
 SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\

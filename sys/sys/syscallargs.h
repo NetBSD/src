@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.297 2020/04/26 19:16:35 thorpej Exp $ */
+/* $NetBSD: syscallargs.h,v 1.298 2020/05/16 18:31:53 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -14,6 +14,7 @@
 #include <sys/idtype.h>
 #include <sys/mount.h>
 #include <sys/sched.h>
+#include <sys/acl.h>
 #endif
 
 #include <sys/socket.h>
@@ -3205,6 +3206,117 @@ struct sys___fhstatvfs190_args {
 };
 check_syscall_args(sys___fhstatvfs190)
 
+#ifndef RUMP_CLIENT
+struct sys___acl_get_link_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_get_link)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_set_link_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_set_link)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_delete_link_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(sys___acl_delete_link)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_aclcheck_link_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_aclcheck_link)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_get_file_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_get_file)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_set_file_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_set_file)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_get_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_get_fd)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_set_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_set_fd)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_delete_file_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(sys___acl_delete_file)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_delete_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+};
+check_syscall_args(sys___acl_delete_fd)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_aclcheck_file_args {
+	syscallarg(const char *) path;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_aclcheck_file)
+#endif /* !RUMP_CLIENT */
+
+#ifndef RUMP_CLIENT
+struct sys___acl_aclcheck_fd_args {
+	syscallarg(int) filedes;
+	syscallarg(acl_type_t) type;
+	syscallarg(struct acl *) aclp;
+};
+check_syscall_args(sys___acl_aclcheck_fd)
+#endif /* !RUMP_CLIENT */
+
+struct sys_lpathconf_args {
+	syscallarg(const char *) path;
+	syscallarg(int) name;
+};
+check_syscall_args(sys_lpathconf)
+
 /*
  * System call prototypes.
  */
@@ -4092,6 +4204,32 @@ int	sys___statvfs190(struct lwp *, const struct sys___statvfs190_args *, registe
 int	sys___fstatvfs190(struct lwp *, const struct sys___fstatvfs190_args *, register_t *);
 
 int	sys___fhstatvfs190(struct lwp *, const struct sys___fhstatvfs190_args *, register_t *);
+
+int	sys___acl_get_link(struct lwp *, const struct sys___acl_get_link_args *, register_t *);
+
+int	sys___acl_set_link(struct lwp *, const struct sys___acl_set_link_args *, register_t *);
+
+int	sys___acl_delete_link(struct lwp *, const struct sys___acl_delete_link_args *, register_t *);
+
+int	sys___acl_aclcheck_link(struct lwp *, const struct sys___acl_aclcheck_link_args *, register_t *);
+
+int	sys___acl_get_file(struct lwp *, const struct sys___acl_get_file_args *, register_t *);
+
+int	sys___acl_set_file(struct lwp *, const struct sys___acl_set_file_args *, register_t *);
+
+int	sys___acl_get_fd(struct lwp *, const struct sys___acl_get_fd_args *, register_t *);
+
+int	sys___acl_set_fd(struct lwp *, const struct sys___acl_set_fd_args *, register_t *);
+
+int	sys___acl_delete_file(struct lwp *, const struct sys___acl_delete_file_args *, register_t *);
+
+int	sys___acl_delete_fd(struct lwp *, const struct sys___acl_delete_fd_args *, register_t *);
+
+int	sys___acl_aclcheck_file(struct lwp *, const struct sys___acl_aclcheck_file_args *, register_t *);
+
+int	sys___acl_aclcheck_fd(struct lwp *, const struct sys___acl_aclcheck_fd_args *, register_t *);
+
+int	sys_lpathconf(struct lwp *, const struct sys_lpathconf_args *, register_t *);
 
 #endif /* !RUMP_CLIENT */
 #endif /* _SYS_SYSCALLARGS_H_ */

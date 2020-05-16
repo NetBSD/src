@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.304 2020/04/26 19:15:55 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.305 2020/05/16 18:31:50 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -59,6 +59,7 @@
 #include <sys/sched.h>
 #include <sys/idtype.h>
 #include <sys/syscallargs.h>
+#include <sys/acl.h>
 
 %%
 
@@ -1019,3 +1020,28 @@
 			    struct statvfs *buf, int flags); }
 486	STD	RUMP	{ int|sys|90|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
+487	STD		{ int|sys||__acl_get_link(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+488	STD		{ int|sys||__acl_set_link(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+489	STD		{ int|sys||__acl_delete_link(const char *path, \
+			    acl_type_t type); }
+490	STD		{ int|sys||__acl_aclcheck_link(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+491	STD		{ int|sys||__acl_get_file(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+492	STD		{ int|sys||__acl_set_file(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+493	STD		{ int|sys||__acl_get_fd(int filedes, acl_type_t type, \
+			     struct acl *aclp); }
+494	STD		{ int|sys||__acl_set_fd(int filedes, acl_type_t type, \
+			     struct acl *aclp); }
+495	STD		{ int|sys||__acl_delete_file(const char *path, \
+			    acl_type_t type); }
+496	STD		{ int|sys||__acl_delete_fd(int filedes, \
+			    acl_type_t type); }
+497	STD		{ int|sys||__acl_aclcheck_file(const char *path, \
+			    acl_type_t type, struct acl *aclp); }
+498	STD		{ int|sys||__acl_aclcheck_fd(int filedes, \
+			    acl_type_t type, struct acl *aclp); }
+499	STD	RUMP	{ long|sys||lpathconf(const char *path, int name); }

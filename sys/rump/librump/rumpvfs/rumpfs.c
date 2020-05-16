@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.161 2020/05/15 23:32:28 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.161 2020/05/15 23:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -101,6 +101,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_symlink_desc, rump_vop_symlink },
 	{ &vop_readlink_desc, rump_vop_readlink },
 	{ &vop_access_desc, rump_vop_access },
+	{ &vop_accessx_desc, genfs_accessx },
 	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
@@ -815,13 +816,13 @@ rump_check_possible(struct vnode *vp, struct rumpfs_node *rnode,
 
 static int
 rump_check_permitted(struct vnode *vp, struct rumpfs_node *rnode,
-    mode_t mode, kauth_cred_t cred)
+    accmode_t accmode, kauth_cred_t cred)
 {
 	struct vattr *attr = &rnode->rn_va;
 
-	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
-	    vp->v_type, attr->va_mode), vp, NULL, genfs_can_access(vp->v_type,
-	    attr->va_mode, attr->va_uid, attr->va_gid, mode, cred));
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
+	    vp->v_type, attr->va_mode), vp, NULL, genfs_can_access(vp, cred,
+	    attr->va_uid, attr->va_gid, attr->va_mode, NULL, accmode));
 }
 
 int
@@ -837,11 +838,11 @@ rump_vop_access(void *v)
 	struct rumpfs_node *rn = vp->v_data;
 	int error;
 
-	error = rump_check_possible(vp, rn, ap->a_mode);
+	error = rump_check_possible(vp, rn, ap->a_accmode);
 	if (error)
 		return error;
 
-	error = rump_check_permitted(vp, rn, ap->a_mode, ap->a_cred);
+	error = rump_check_permitted(vp, rn, ap->a_accmode, ap->a_cred);
 
 	return error;
 }
@@ -890,8 +891,8 @@ rump_vop_setattr(void *v)
 	    CHANGED(va_mtime.tv_nsec, long) ||
 	    CHANGED(va_birthtime.tv_nsec, long)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, attr->va_uid,
-		    cred));
+		    NULL, genfs_can_chtimes(vp, cred, attr->va_uid,
+		    vap->va_vaflags));
 		if (error)
 			return error;
 	}
@@ -919,8 +920,7 @@ rump_vop_setattr(void *v)
 	if (CHANGED(va_flags, u_long)) {
 		/* XXX Can we handle system flags here...? */
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
-		    NULL, genfs_can_chflags(cred, vp->v_type, attr->va_uid,
-		    false));
+		    NULL, genfs_can_chflags(vp, cred, attr->va_uid, false));
 		if (error)
 			return error;
 	}
@@ -936,7 +936,7 @@ rump_vop_setattr(void *v)
 		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->va_gid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(cred, attr->va_uid, attr->va_gid, uid,
+		    genfs_can_chown(vp, cred, attr->va_uid, attr->va_gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -947,7 +947,7 @@ rump_vop_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		mode_t mode = vap->va_mode;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp->v_type, cred, attr->va_uid,
+		    vp, NULL, genfs_can_chmod(vp, cred, attr->va_uid,
 		    attr->va_gid, mode));
 		if (error)
 			return error;

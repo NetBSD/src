@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.131 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.131 2020/04/18 19:18:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.131 2020/04/18 19:18:34 christos Exp
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
+#include <ufs/ufs/acl.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -109,7 +110,8 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_mknod_desc, ufs_mknod },			/* mknod */
 	{ &vop_open_desc, ufs_open },			/* open */
 	{ &vop_close_desc, ufs_close },			/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, genfs_access },		/* access */
+	{ &vop_accessx_desc, ufs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ufs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ffs_read },			/* read */
@@ -152,6 +154,9 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
 	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
 	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
+	{ &vop_getacl_desc, ufs_getacl },		/* getacl */
+	{ &vop_setacl_desc, ufs_setacl },		/* setacl */
+	{ &vop_aclcheck_desc, ufs_aclcheck },		/* aclcheck */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -165,7 +170,8 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, ufsspec_close },		/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, genfs_access },		/* access */
+	{ &vop_accessx_desc, ufs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ufs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
@@ -208,6 +214,9 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
 	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
 	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
+	{ &vop_getacl_desc, ufs_getacl },		/* getacl */
+	{ &vop_setacl_desc, ufs_setacl },		/* setacl */
+	{ &vop_aclcheck_desc, ufs_aclcheck },		/* aclcheck */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_specop_opv_desc =
@@ -221,7 +230,8 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
 	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, ufsfifo_close },		/* close */
-	{ &vop_access_desc, ufs_access },		/* access */
+	{ &vop_access_desc, genfs_access },		/* access */
+	{ &vop_accessx_desc, ufs_accessx },		/* accessx */
 	{ &vop_getattr_desc, ufs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
@@ -263,6 +273,9 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
 	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
 	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
+	{ &vop_getacl_desc, ufs_getacl },		/* getacl */
+	{ &vop_setacl_desc, ufs_setacl },		/* setacl */
+	{ &vop_aclcheck_desc, ufs_aclcheck },		/* aclcheck */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =

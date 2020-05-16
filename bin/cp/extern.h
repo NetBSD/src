@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.17 2012/01/04 15:58:37 christos Exp $ */
+/* $NetBSD: extern.h,v 1.18 2020/05/16 18:31:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -55,6 +55,8 @@ int	copy_link(FTSENT *, int);
 int	copy_special(struct stat *, int);
 int	set_utimes(const char *, struct stat *);
 int	setfile(struct stat *, int);
+int	preserve_dir_acls(struct stat *, char *, char *);
+int	preserve_fd_acls(int, int);
 void	usage(void) __attribute__((__noreturn__));
 __END_DECLS
 
