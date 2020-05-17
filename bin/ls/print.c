@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.56 2020/05/16 18:31:45 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,13 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.56 2020/05/16 18:31:45 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#ifndef SMALL
 #include <sys/acl.h>
+#endif
 
 #include <err.h>
 #include <errno.h>
@@ -69,7 +71,9 @@ static void	printlink(FTSENT *);
 static void	printtime(time_t);
 static void	printtotal(DISPLAY *dp);
 static int	printtype(u_int);
+#ifndef SMALL
 static void	aclmode(char *, const FTSENT *);
+#endif
 
 static time_t	now;
 
@@ -156,7 +160,9 @@ printlong(DISPLAY *dp)
 			}
 		}
 		(void)strmode(sp->st_mode, buf);
+#ifndef SMALL
 		aclmode(buf, p);
+#endif
 		np = p->fts_pointer;
 		(void)printf("%s %*lu ", buf, dp->s_nlink,
 		    (unsigned long)sp->st_nlink);
@@ -499,6 +505,7 @@ printlink(FTSENT *p)
 		(void)printf("%s", path);
 }
 
+#ifndef SMALL
 /*
  * Add a + after the standard rwxrwxrwx mode if the file has an
  * ACL. strmode() reserves space at the end of the string.
@@ -569,3 +576,4 @@ aclmode(char *buf, const FTSENT *p)
 		buf[10] = '+';
 	acl_free(facl);
 }
+#endif
