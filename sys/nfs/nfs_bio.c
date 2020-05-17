@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.196 2020/04/23 21:47:08 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.197 2020/05/17 19:38:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.196 2020/04/23 21:47:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.197 2020/05/17 19:38:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1260,7 +1260,6 @@ nfs_getpages(void *v)
 	bool v3 = NFS_ISV3(vp);
 	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
-	bool nobusy = (ap->a_flags & PGO_NOBUSY);
 
 	/*
 	 * XXX NFS wants to modify the pages below and that can't be done
@@ -1348,14 +1347,10 @@ nfs_getpages(void *v)
 			if (!mutex_tryenter(&np->n_commitlock)) {
 
 				/*
-				 * Since PGO_LOCKED is set, we need to unbusy
-				 * all pages fetched by genfs_getpages() above,
 				 * tell the caller that there are no pages
 				 * available and put back original pgs array.
 				 */
 
-				if (nobusy == false)
-					uvm_page_unbusy(pgs, npages);
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));

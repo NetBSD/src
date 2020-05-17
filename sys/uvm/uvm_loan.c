@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.100 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.101 2020/05/17 19:38:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.100 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.101 2020/05/17 19:38:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static int	uvm_loanuobj(struct uvm_faultinfo *, void ***,
 static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
 static void	uvm_unloananon(struct vm_anon **, int);
 static void	uvm_unloanpage(struct vm_page **, int);
-static int	uvm_loanpage(struct vm_page **, int);
+static int	uvm_loanpage(struct vm_page **, int, bool);
 
 
 /*
@@ -442,12 +442,11 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
  *
  * => pages should be object-owned and the object should be locked.
  * => in the case of error, the object might be unlocked and relocked.
- * => caller should busy the pages beforehand.
- * => pages will be unbusied.
+ * => pages will be unbusied (if busied is true).
  * => fail with EBUSY if meet a wired page.
  */
 static int
-uvm_loanpage(struct vm_page **pgpp, int npages)
+uvm_loanpage(struct vm_page **pgpp, int npages, bool busied)
 {
 	int i;
 	int error = 0;
@@ -461,7 +460,7 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 		KASSERT(pg->uobject == pgpp[0]->uobject);
 		KASSERT(!(pg->flags & (PG_RELEASED|PG_PAGEOUT)));
 		KASSERT(rw_write_held(pg->uobject->vmobjlock));
-		KASSERT(pg->flags & PG_BUSY);
+		KASSERT(busied == ((pg->flags & PG_BUSY) != 0));
 
 		if (pg->wire_count > 0) {
 			UVMHIST_LOG(loanhist, "wired %#jx", (uintptr_t)pg,
@@ -479,7 +478,9 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 		uvm_pageunlock(pg);
 	}
 
-	uvm_page_unbusy(pgpp, npages);
+	if (busied) {
+		uvm_page_unbusy(pgpp, npages);
+	}
 
 	if (error) {
 		/*
@@ -553,7 +554,7 @@ reget:
 				if (slock) {
 					KASSERT(npendloan > 0);
 					error = uvm_loanpage(pgpp - npendloan,
-					    npendloan);
+					    npendloan, true);
 					rw_exit(slock);
 					if (error)
 						goto fail;
@@ -587,7 +588,7 @@ reget:
 		}
 		KASSERT(slock != NULL);
 		KASSERT(npendloan > 0);
-		error = uvm_loanpage(pgpp - npendloan, npendloan);
+		error = uvm_loanpage(pgpp - npendloan, npendloan, true);
 		rw_exit(slock);
 		if (error)
 			goto fail;
@@ -702,36 +703,45 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		}
 
 		/*
-		 * didn't get the lock?   release the page and retry.
+		 * unbusy the page.
 		 */
 
-		if (locked == false) {
-			if (pg->flags & PG_RELEASED) {
-				uvm_pagefree(pg);
-				rw_exit(uobj->vmobjlock);
-				return (0);
-			}
+		if ((pg->flags & PG_RELEASED) == 0) {
 			uvm_pagelock(pg);
-			uvm_pageactivate(pg);
 			uvm_pagewakeup(pg);
 			uvm_pageunlock(pg);
 			pg->flags &= ~PG_BUSY;
 			UVM_PAGE_OWN(pg, NULL);
+		}
+
+		/*
+		 * didn't get the lock?   release the page and retry.
+		 */
+
+ 		if (locked == false) {
+			if (pg->flags & PG_RELEASED) {
+				uvm_pagefree(pg);
+			}
 			rw_exit(uobj->vmobjlock);
 			return (0);
 		}
 	}
 
-	KASSERT(uobj == pg->uobject);
+	/*
+	 * for tmpfs vnodes, the page will be from a UAO rather than
+	 * the vnode.  just check the locks match.
+	 */
+
+	KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 
 	/*
-	 * at this point we have the page we want ("pg") marked PG_BUSY for us
-	 * and we have all data structures locked.  do the loanout.  page can
-	 * not be PG_RELEASED (we caught this above).
+	 * at this point we have the page we want ("pg") and we have
+	 * all data structures locked.  do the loanout.  page can not
+	 * be PG_RELEASED (we caught this above).
 	 */
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {
-		if (uvm_loanpage(&pg, 1)) {
+		if (uvm_loanpage(&pg, 1, false)) {
 			uvmfault_unlockall(ufi, amap, uobj);
 			return (-1);
 		}
@@ -1099,7 +1109,7 @@ uvm_loan_init(void)
  * uvm_loanbreak: break loan on a uobj page
  *
  * => called with uobj locked
- * => the page should be busy
+ * => the page may be busy; if it's busy, it will be unbusied
  * => return value:
  *	newly allocated page if succeeded
  */
@@ -1111,7 +1121,6 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	KASSERT(uobj != NULL);
 	KASSERT(rw_write_held(uobj->vmobjlock));
-	KASSERT(uobjpage->flags & PG_BUSY);
 
 	/* alloc new un-owned page */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1131,8 +1140,10 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY);
 	pmap_page_protect(uobjpage, VM_PROT_NONE);
 	/* uobj still locked */
-	uobjpage->flags &= ~PG_BUSY;
-	UVM_PAGE_OWN(uobjpage, NULL);
+	if ((uobjpage->flags & PG_BUSY) != 0) {
+		uobjpage->flags &= ~PG_BUSY;
+		UVM_PAGE_OWN(uobjpage, NULL);
+	}
 
 	/*
 	 * if the page is no longer referenced by

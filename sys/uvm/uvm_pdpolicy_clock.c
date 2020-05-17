@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.36 2020/04/02 16:29:30 maxv Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.37 2020/05/17 19:38:17 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.36 2020/04/02 16:29:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.37 2020/05/17 19:38:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -562,6 +562,29 @@ uvmpdpol_pageisqueued_p(struct vm_page *pg)
 		return (pqflags & PQ_INTENT_MASK) != PQ_INTENT_D;
 	} else {
 		return (pqflags & (PQ_ACTIVE | PQ_INACTIVE)) != 0;
+	}
+}
+
+bool
+uvmpdpol_pageactivate_p(struct vm_page *pg)
+{
+	uint32_t pqflags;
+
+	/* consider intent in preference to actual state. */
+	pqflags = atomic_load_relaxed(&pg->pqflags);
+	if ((pqflags & PQ_INTENT_SET) != 0) {
+		pqflags &= PQ_INTENT_MASK;
+		return pqflags != PQ_INTENT_A && pqflags != PQ_INTENT_E;
+	} else {
+		/*
+		 * TODO: Enabling this may be too much of a big hammer,
+		 * since we do get useful information from activations.
+		 * Think about it more and maybe come up with a heuristic
+		 * or something.
+		 *
+		 * return (pqflags & PQ_ACTIVE) == 0;
+		 */
+		return true;
 	}
 }
 
