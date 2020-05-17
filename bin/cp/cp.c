@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.60 2020/05/16 18:31:45 christos Exp $ */
+/* $NetBSD: cp.c,v 1.61 2020/05/17 23:34:11 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.60 2020/05/16 18:31:45 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.61 2020/05/17 23:34:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,9 +511,11 @@ copy(char *argv[], enum op type, int fts_options)
 				if (pflag) {
 					if (setfile(curr->fts_statp, 0))
 						this_failed = any_failed = 1;
+#ifndef SMALL
 					if (preserve_dir_acls(curr->fts_statp,
 					    curr->fts_accpath, to.p_path) != 0)
 						this_failed = any_failed = 1;
+#endif
 				}
 				if (this_failed && (dne = popdne()))
 					(void)chmod(to.p_path, 

@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.48 2020/05/16 18:31:45 christos Exp $ */
+/* $NetBSD: utils.c,v 1.49 2020/05/17 23:34:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.48 2020/05/16 18:31:45 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.49 2020/05/17 23:34:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,7 +43,9 @@ __RCSID("$NetBSD: utils.c,v 1.48 2020/05/16 18:31:45 christos Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifndef SMALL
 #include <sys/acl.h>
+#endif
 #include <sys/extattr.h>
 
 #include <err.h>
@@ -256,8 +258,10 @@ copy_file(FTSENT *entp, int dne)
 	if (pflag && (fcpxattr(from_fd, to_fd) != 0))
 		warn("%s: error copying extended attributes", to.p_path);
 
+#ifndef SMALL
 	if (pflag && preserve_fd_acls(from_fd, to_fd) != 0)
 		rval = 1;
+#endif
 
 	(void)close(from_fd);
 
@@ -408,6 +412,7 @@ setfile(struct stat *fs, int fd)
 	return (rval);
 }
 
+#ifndef SMALL
 int
 preserve_fd_acls(int source_fd, int dest_fd)
 {
@@ -546,6 +551,7 @@ preserve_dir_acls(struct stat *fs, char *source_dir, char *dest_dir)
 	acl_free(acl);
 	return (0);
 }
+#endif
 
 void
 usage(void)
