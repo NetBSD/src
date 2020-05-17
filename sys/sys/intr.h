@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.20 2020/03/26 20:19:06 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2020/05/17 14:11:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,7 +69,6 @@ void	softint_dispatch(lwp_t *, int);
 
 /* Implementation private flags. */
 #define	SOFTINT_PENDING	0x1000
-#define	SOFTINT_ACTIVE	0x2000
 
 #define	SOFTINT_COUNT	0x0004
 #define	SOFTINT_LVLMASK	0x00ff
