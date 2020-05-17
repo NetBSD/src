@@ -1,13 +1,14 @@
-/*	$NetBSD: ehci.c,v 1.280 2020/05/17 08:35:15 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.281 2020/05/17 08:38:37 skrll Exp $ */
 
 /*
- * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net), Charles M. Hannum,
  * Jeremy Morse (jeremy.morse@gmail.com), Jared D. McNeill
- * (jmcneill@invisible.ca) and Matthew R. Green (mrg@eterna.com.au).
+ * (jmcneill@invisible.ca). Matthew R. Green (mrg@eterna.com.au), and
+ * Nick Hudson .
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.280 2020/05/17 08:35:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.281 2020/05/17 08:38:37 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
