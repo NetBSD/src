@@ -12,6 +12,7 @@
 #include <dt-bindings/pinctrl/rockchip.h>
 #include "rk3399.dtsi"
 #include "rk3399-opp.dtsi"
+#include "rk3399-crypto.dtsi"
 
 / {
 	model = "Pine64 Pinebook Pro";
