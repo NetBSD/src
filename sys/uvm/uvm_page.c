@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.235 2020/05/17 15:11:57 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.236 2020/05/17 17:12:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.235 2020/05/17 15:11:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.236 2020/05/17 17:12:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -220,10 +220,8 @@ uvm_pageinsert_object(struct uvm_object *uobj, struct vm_page *pg)
 	if ((pg->flags & PG_STAT) != 0) {
 		/* Cannot use uvm_pagegetdirty(): not yet in radix tree. */
 		const unsigned int status = pg->flags & (PG_CLEAN | PG_DIRTY);
-		const bool isaobj = (pg->flags & PG_AOBJ) != 0;
 
-		if (!isaobj) {
-			KASSERT((pg->flags & PG_FILE) != 0);
+		if ((pg->flags & PG_FILE) != 0) {
 			if (uobj->uo_npages == 0) {
 				struct vnode *vp = (struct vnode *)uobj;
 				mutex_enter(vp->v_interlock);
@@ -285,10 +283,8 @@ uvm_pageremove_object(struct uvm_object *uobj, struct vm_page *pg)
 	if ((pg->flags & PG_STAT) != 0) {
 		/* Cannot use uvm_pagegetdirty(): no longer in radix tree. */
 		const unsigned int status = pg->flags & (PG_CLEAN | PG_DIRTY);
-		const bool isaobj = (pg->flags & PG_AOBJ) != 0;
 
-		if (!isaobj) {
-			KASSERT((pg->flags & PG_FILE) != 0);
+		if ((pg->flags & PG_FILE) != 0) {
 			if (uobj->uo_npages == 1) {
 				struct vnode *vp = (struct vnode *)uobj;
 				mutex_enter(vp->v_interlock);
@@ -1336,7 +1332,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		 */
 		if (UVM_OBJ_IS_VNODE(obj)) {
 			pg->flags |= PG_FILE;
-		} else {
+		} else if (UVM_OBJ_IS_AOBJ(obj)) {
 			pg->flags |= PG_AOBJ;
 		}
 		uvm_pageinsert_object(obj, pg);
