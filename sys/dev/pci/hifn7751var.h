@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.12 2015/04/14 20:32:36 riastradh Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.13 2020/05/17 00:49:28 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -146,9 +146,7 @@ struct hifn_softc {
 
 	bus_space_handle_t	sc_sh0, sc_sh1;
 	bus_space_tag_t		sc_st0, sc_st1;
-#ifdef __NetBSD__
 	bus_size_t		sc_iosz0, sc_iosz1;
-#endif
 	bus_dma_tag_t		sc_dmat;
 
 	struct hifn_dma *sc_dma;
