@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.111 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.112 2020/05/17 19:39:15 ad Exp $	*/
 
 /*
- * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.111 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.112 2020/05/17 19:39:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -230,10 +230,12 @@ tmpfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	node->tn_flags = 0;
 	node->tn_lockf = NULL;
 
+	node->tn_tflags = 0;
 	vfs_timestamp(&node->tn_atime);
 	node->tn_birthtime = node->tn_atime;
 	node->tn_ctime = node->tn_atime;
 	node->tn_mtime = node->tn_atime;
+	mutex_init(&node->tn_timelock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (dvp == NULL) {
 		KASSERT(vap->va_uid != VNOVAL && vap->va_gid != VNOVAL);
@@ -350,6 +352,7 @@ tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 	KASSERT(node->tn_vnode == NULL);
 	KASSERT(node->tn_links == 0);
 
+	mutex_destroy(&node->tn_timelock);
 	tmpfs_node_put(tmp, node);
 }
 
@@ -1167,29 +1170,35 @@ tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
 	if (error)
 		return error;
 
+	mutex_enter(&node->tn_timelock);
 	if (atime->tv_sec != VNOVAL) {
+		atomic_and_uint(&node->tn_tflags, ~TMPFS_UPDATE_ATIME);
 		node->tn_atime = *atime;
 	}
 	if (mtime->tv_sec != VNOVAL) {
+		atomic_and_uint(&node->tn_tflags, ~TMPFS_UPDATE_MTIME);
 		node->tn_mtime = *mtime;
 	}
 	if (btime->tv_sec != VNOVAL) {
 		node->tn_birthtime = *btime;
 	}
+	mutex_exit(&node->tn_timelock);
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return 0;
 }
 
 /*
- * tmpfs_update: update the timestamps as indicated by the flags.
+ * tmpfs_update_locked: update the timestamps as indicated by the flags.
  */
 void
-tmpfs_update(vnode_t *vp, unsigned tflags)
+tmpfs_update_locked(vnode_t *vp, unsigned tflags)
 {
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	struct timespec nowtm;
 
-	if (tflags == 0) {
+	KASSERT(mutex_owned(&node->tn_timelock));
+
+	if ((tflags |= atomic_swap_uint(&node->tn_tflags, 0)) == 0) {
 		return;
 	}
 	vfs_timestamp(&nowtm);
@@ -1202,5 +1211,38 @@ tmpfs_update(vnode_t *vp, unsigned tflags)
 	}
 	if (tflags & TMPFS_UPDATE_CTIME) {
 		node->tn_ctime = nowtm;
+	}
+}
+
+/*
+ * tmpfs_update: update the timestamps as indicated by the flags.
+ */
+void
+tmpfs_update(vnode_t *vp, unsigned tflags)
+{
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+
+	if ((tflags | atomic_load_relaxed(&node->tn_tflags)) == 0) {
+		return;
+	}
+
+	mutex_enter(&node->tn_timelock);
+	tmpfs_update_locked(vp, tflags);
+	mutex_exit(&node->tn_timelock);
+}
+
+/*
+ * tmpfs_update_lazily: schedule a deferred timestamp update.
+ */
+void
+tmpfs_update_lazily(vnode_t *vp, unsigned tflags)
+{
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+	unsigned cur;
+
+	cur = atomic_load_relaxed(&node->tn_tflags);
+	if ((cur & tflags) != tflags) {
+		atomic_or_uint(&node->tn_tflags, tflags);
+		return;
 	}
 }
