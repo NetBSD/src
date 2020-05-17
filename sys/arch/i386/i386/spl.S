@@ -1,7 +1,7 @@
-/*	$NetBSD: spl.S,v 1.54 2020/05/01 09:40:47 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.55 2020/05/17 12:12:22 ad Exp $	*/
 
 /*
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.54 2020/05/01 09:40:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.55 2020/05/17 12:12:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -359,7 +359,13 @@ IDTVEC(softintr)
 	CLI(%ecx)
 	movl	L_PCB(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
-	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
+
+	/*
+	 * for non-interlocked mutex release to work safely the change
+	 * to ci_curlwp must not languish in the store buffer. therefore
+	 * we use XCHG and not MOV here.  see kern_mutex.c.
+	 */
+	xchgl	%esi,CPUVAR(CURLWP)	/* restore ci_curlwp */
 	popl	%edi			/* unwind switchframe */
 	popl	%esi
 	addl	$8,%esp
