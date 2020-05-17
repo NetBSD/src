@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.69 2020/01/29 14:14:55 thorpej Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.70 2020/05/17 21:50:47 chs Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.69 2020/01/29 14:14:55 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.70 2020/05/17 21:50:47 chs Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -253,6 +253,16 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		sc->sc_descm = &desc_methods_enhanced;
 	} else {
 		sc->sc_descm = &desc_methods_standard;
+	}
+	if (hwft & GMAC_DMA_FEAT_RMON) {
+		uint32_t val;
+
+		/* Mask all MMC interrupts */
+		val = 0xffffffff;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    GMAC_MMC_RX_INT_MSK, val);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    GMAC_MMC_TX_INT_MSK, val);
 	}
 
 	/*
