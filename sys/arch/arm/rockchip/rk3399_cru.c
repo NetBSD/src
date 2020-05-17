@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.19 2020/01/04 13:32:32 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.20 2020/05/17 19:57:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.19 2020/01/04 13:32:32 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.20 2020/05/17 19:57:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -846,6 +846,27 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BIT(3),		/* gate_mask */
 		     0),
 	RK_MUX(RK3399_SCLK_PCIE_CORE, "clk_pcie_core", mux_pciecore_cru_phy_parents, CLKSEL_CON(18), __BIT(7)),
+
+	/* Crypto */
+	RK_COMPOSITE(RK3399_SCLK_CRYPTO0, "clk_crypto0", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(24),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(7),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     RK_COMPOSITE_ROUND_DOWN /*???*/),
+	RK_COMPOSITE(RK3399_SCLK_CRYPTO1, "clk_crypto1", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(26),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(8),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     RK_COMPOSITE_ROUND_DOWN /*???*/),
+	RK_GATE(RK3399_HCLK_M_CRYPTO0, "hclk_m_crypto0", "pclk_perilp0", CLKGATE_CON(24), 5),
+	RK_GATE(RK3399_HCLK_S_CRYPTO0, "hclk_s_crypto0", "pclk_perilp0", CLKGATE_CON(24), 6),
+	RK_GATE(RK3399_HCLK_M_CRYPTO1, "hclk_m_crypto1", "pclk_perilp0", CLKGATE_CON(24), 14),
+	RK_GATE(RK3399_HCLK_S_CRYPTO1, "hclk_s_crypto1", "pclk_perilp0", CLKGATE_CON(24), 15),
+	RK_GATE(RK3399_ACLK_DMAC1_PERILP, "aclk_dmac1_perilp", "pclk_perilp", CLKGATE_CON(25), 6),
 
 	/* TSADC */
 	RK_COMPOSITE(RK3399_SCLK_TSADC, "clk_tsadc", mux_clk_tsadc_parents,
