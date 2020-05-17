@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.98 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: md.sparc,v 1.99 2020/05/17 13:49:37 ad Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/visintrin.h		comp-obsolete		obsolete
@@ -44,6 +44,7 @@
 ./usr/include/sparc/int_limits.h		comp-c-include
 ./usr/include/sparc/int_mwgwtypes.h		comp-c-include
 ./usr/include/sparc/int_types.h			comp-c-include
+./usr/include/sparc/intr.h			comp-c-include
 ./usr/include/sparc/kbd.h			comp-c-include
 ./usr/include/sparc/kbio.h			comp-c-include
 ./usr/include/sparc/kcore.h			comp-c-include
