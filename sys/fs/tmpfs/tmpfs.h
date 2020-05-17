@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.55 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.56 2020/05/17 19:39:15 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,10 +112,12 @@ typedef struct tmpfs_node {
 	mode_t			tn_mode;
 	int			tn_flags;
 	nlink_t			tn_links;
+	unsigned		tn_tflags;
 	struct timespec		tn_atime;
 	struct timespec		tn_mtime;
 	struct timespec		tn_ctime;
 	struct timespec		tn_birthtime;
+	kmutex_t		tn_timelock;
 
 	/* Head of byte-level lock list (used by tmpfs_advlock). */
 	struct lockf *		tn_lockf;
@@ -274,6 +276,8 @@ int		tmpfs_chtimes(vnode_t *, const struct timespec *,
 		    const struct timespec *, const struct timespec *, int,
 		    kauth_cred_t, lwp_t *);
 void		tmpfs_update(vnode_t *, unsigned);
+void		tmpfs_update_locked(vnode_t *, unsigned);
+void		tmpfs_update_lazily(vnode_t *, unsigned);
 
 /*
  * Prototypes for tmpfs_mem.c.
