@@ -1,4 +1,4 @@
-.\"	$NetBSD: hifn.4,v 1.9 2018/06/15 23:11:56 wiz Exp $
+.\"	$NetBSD: hifn.4,v 1.10 2020/05/17 01:00:34 riastradh Exp $
 .\"	$OpenBSD: hifn.4,v 1.32 2002/09/26 07:55:40 miod Exp $
 .\"	$FreeBSD: src/share/man/man4/hifn.4,v 1.1.2.2 2003/10/08 23:57:50 sam Exp $
 .\"
@@ -109,11 +109,6 @@ compression, the 9751-based cards are not useful.
 .Pp
 Support for the 7955 and 7956 is incomplete; the asymmetric crypto
 facilities are to be added and the performance is suboptimal.
-.Pp
-Supplying data to the kernel
-.Xr rnd 4
-subsystem has been disabled, pending verification that the on-chip
-RNG is statistically adequate.
 .Sh BUGS
 The 7751 chip starts out at initialization by only supporting compression.
 A proprietary algorithm, which has been reverse engineered, is required to
