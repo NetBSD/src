@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.71 2020/05/17 00:53:09 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.72 2020/05/17 00:54:05 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.71 2020/05/17 00:53:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.72 2020/05/17 00:54:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -119,8 +119,8 @@ static int	hifn_dmamap_load_src(struct hifn_softc *,
 static int	hifn_dmamap_load_dst(struct hifn_softc *,
 				     struct hifn_command *);
 static int	hifn_init_pubrng(struct hifn_softc *);
-static void	hifn_rng(void *);
-static void	hifn_rng_locked(void *);
+static void	hifn_rng(struct hifn_softc *);
+static void	hifn_rng_intr(void *);
 static void	hifn_tick(void *);
 static void	hifn_abort(struct hifn_softc *);
 static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
@@ -535,10 +535,25 @@ static void
 hifn_rng_get(size_t bytes, void *priv)
 {
 	struct hifn_softc *sc = priv;
+	struct timeval delta = {0, 400000};
+	struct timeval now, oktime, wait;
+
+	/*
+	 * Wait until 0.4 seconds after we start up the RNG to read
+	 * anything out of it.  If the time hasn't elapsed, schedule a
+	 * callout later on.
+	 */
+	microtime(&now);
 
 	mutex_enter(&sc->sc_mtx);
-	sc->sc_rng_need = bytes;
-	callout_reset(&sc->sc_rngto, 0, hifn_rng, sc);
+	sc->sc_rng_needbits = MAX(sc->sc_rng_needbits, NBBY*bytes);
+	timeradd(&sc->sc_rngboottime, &delta, &oktime);
+	if (timercmp(&oktime, &now, <=)) {
+		hifn_rng(sc);
+	} else if (!callout_pending(&sc->sc_rngto)) {
+		timersub(&oktime, &now, &wait);
+		callout_schedule(&sc->sc_rngto, MAX(1, tvtohz(&wait)));
+	}
 	mutex_exit(&sc->sc_mtx);
 }
 
@@ -591,16 +606,12 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		 * data that meet their worst-case estimate of 0.06
 		 * bits of random data per output register bit.
 		 */
-		DELAY(4000);
-
-		if (hz >= 100)
-			sc->sc_rnghz = hz / 100;
-		else
-			sc->sc_rnghz = 1;
+		microtime(&sc->sc_rngboottime);
 		callout_init(&sc->sc_rngto, CALLOUT_MPSAFE);
+		callout_setfunc(&sc->sc_rngto, hifn_rng_intr, sc);
 		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-		    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+		    RND_TYPE_RNG, RND_FLAG_DEFAULT|RND_FLAG_HASCB);
 	}
 
 	/* Enable public key engine, if available */
@@ -614,25 +625,20 @@ hifn_init_pubrng(struct hifn_softc *sc)
 }
 
 static void
-hifn_rng_locked(void *vsc)
+hifn_rng(struct hifn_softc *sc)
 {
-	struct hifn_softc *sc = vsc;
-	uint32_t num[64];
-	uint32_t sts;
-	int i;
-	size_t got, gotent;
+	uint32_t entropybits;
 
-	if (sc->sc_rng_need < 1) {
-		callout_stop(&sc->sc_rngto);
-		return;
-	}
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	if (sc->sc_flags & HIFN_IS_7811) {
-		for (i = 0; i < 5; i++) {	/* XXX why 5? */
+		while (sc->sc_rng_needbits) {
+			uint32_t num[2];
+			uint32_t sts;
+
 			sts = READ_REG_1(sc, HIFN_1_7811_RNGSTS);
 			if (sts & HIFN_7811_RNGSTS_UFL) {
-				printf("%s: RNG underflow: disabling\n",
-				    device_xname(sc->sc_dv));
+				device_printf(sc->sc_dv, "RNG underflow\n");
 				return;
 			}
 			if ((sts & HIFN_7811_RNGSTS_RDY) == 0)
@@ -644,23 +650,18 @@ hifn_rng_locked(void *vsc)
 			 */
 			num[0] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
 			num[1] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
-			got = 2 * sizeof(num[0]);
-			gotent = (got * NBBY) / HIFN_RNG_BITSPER;
-			rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
-			sc->sc_rng_need -= gotent;
+#ifdef HIFN_DEBUG
+			if (hifn_debug >= 2)
+				hexdump(printf, "hifn", num, sizeof num);
+#endif
+			entropybits = NBBY*sizeof(num)/HIFN_RNG_BITSPER;
+			rnd_add_data(&sc->sc_rnd_source, num, sizeof(num),
+			    entropybits);
+			entropybits = MAX(entropybits, 1);
+			entropybits = MIN(entropybits, sc->sc_rng_needbits);
+			sc->sc_rng_needbits -= entropybits;
 		}
 	} else {
-		int nwords = 0;
-
-		if (sc->sc_rng_need) {
-			nwords = (sc->sc_rng_need * NBBY) / HIFN_RNG_BITSPER;
-			nwords = MIN((int)__arraycount(num), nwords);
-		}
-
-		if (nwords < 2) {
-			nwords = 2;
-		}
-
 		/*
 		 * We must be *extremely* careful here.  The Hifn
 		 * 795x differ from the published 6500 RNG design
@@ -681,30 +682,37 @@ hifn_rng_locked(void *vsc)
 		 * read must require at least one PCI cycle, and
 		 * RNG_Clk is at least PCI_Clk, this is safe.
 		 */
-		for (i = 0 ; i < nwords * 8; i++) {
-			volatile uint32_t regtmp;
-			regtmp = READ_REG_1(sc, HIFN_1_RNG_DATA);
-			num[i / 8] = regtmp;
+		while (sc->sc_rng_needbits) {
+			uint32_t num[64];
+			unsigned i;
+
+			for (i = 0; i < 8*__arraycount(num); i++)
+				num[i/8] = READ_REG_1(sc, HIFN_1_RNG_DATA);
+#ifdef HIFN_DEBUG
+			if (hifn_debug >= 2)
+				hexdump(printf, "hifn", num, sizeof num);
+#endif
+			entropybits = NBBY*sizeof(num)/HIFN_RNG_BITSPER;
+			rnd_add_data(&sc->sc_rnd_source, num, sizeof num,
+			    entropybits);
+			entropybits = MAX(entropybits, 1);
+			entropybits = MIN(entropybits, sc->sc_rng_needbits);
+			sc->sc_rng_needbits -= entropybits;
 		}
-
-		got = nwords * sizeof(num[0]);
-		gotent = (got * NBBY) / HIFN_RNG_BITSPER;
-		rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
-		sc->sc_rng_need -= gotent;
 	}
 
-	if (sc->sc_rng_need > 0) {
-		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
-	}
+	/* If we still need more, try again in another second.  */
+	if (sc->sc_rng_needbits)
+		callout_schedule(&sc->sc_rngto, hz);
 }
 
 static void
-hifn_rng(void *vsc)
+hifn_rng_intr(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 
 	mutex_spin_enter(&sc->sc_mtx);
-	hifn_rng_locked(vsc);
+	hifn_rng(sc);
 	mutex_spin_exit(&sc->sc_mtx);
 }
 
