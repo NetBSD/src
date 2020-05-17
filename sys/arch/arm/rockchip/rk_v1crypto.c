@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.1 2020/05/17 19:57:25 riastradh Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.2 2020/05/17 20:29:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.1 2020/05/17 19:57:25 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.2 2020/05/17 20:29:39 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -272,7 +272,8 @@ rk_v1crypto_rng_get(size_t nbytes, void *cookie)
 			device_printf(self, "failed repeated output test\n");
 			break;
 		}
-		rnd_add_data(&sc->sc_rndsource, buf, sizeof buf, entropybits);
+		rnd_add_data_sync(&sc->sc_rndsource, buf, sizeof buf,
+		    entropybits);
 		nbits -= MIN(nbits, MAX(1, entropybits));
 	}
 	explicit_memset(buf, 0, sizeof buf);
