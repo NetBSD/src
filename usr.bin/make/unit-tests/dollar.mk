@@ -1,4 +1,4 @@
-# $NetBSD: dollar.mk,v 1.2 2020/05/10 13:03:40 rillig Exp $
+# $NetBSD: dollar.mk,v 1.3 2020/05/17 09:37:48 rillig Exp $
 #
 # Test the various places where a dollar character can appear and
 # see what happens.  There are lots of surprises here.
@@ -19,13 +19,22 @@ H=	@header()	{ printf '\n%s\n\n' "$$*"; }; header
 T=	@testcase()	{ printf '%23s => <%s>\n' "$$@"; }; testcase
 C=	@comment()	{ printf '%s\n' "$$*"; }; comment
 
+# These variable values are not accessed.
+# The trailing dollar in the '1 dollar literal eol' test case accesses
+# the empty variable instead, which is always guaranteed to be empty.
+${:U }=			space-var-value
+${:U${.newline}}=	newline-var-value
+# But this one is accessed.
+${:U'}=			single-quote-var-value'
+
 all:
 	$H 'Printing dollar from literals and variables'
 
 	$C 'To survive the parser, a dollar character must be doubled.'
-	$T	'1 dollar literal'	''\$
-	$T	'2 dollar literal'	''\$$
-	$T	'4 dollar literal'	''\$$\$$
+	$T	'1 dollar literal'	'$'
+	$T	'1 dollar literal eol'	''$
+	$T	'2 dollar literal'	'$$'
+	$T	'4 dollar literal'	'$$$$'
 
 	$C 'Some hungry part of make eats all the dollars after a :U modifier.'
 	$T	'1 dollar default'	''${:U$:Q}
@@ -58,12 +67,12 @@ all:
 	$C 'The A is replaced because the $$$$ is reduced to a single $$,'
 	$C 'which is then resolved to the variable X with the value VAR_X.'
 	$C 'The effective character class becomes [VAR_XY].'
-	$T	'C,[$$XY],<&>,g'	''${DOLLAR_AXY:C,[$$XY],<&>,g:Q}
+	$T	'C,[$$$$XY],<&>,g'	''${DOLLAR_AXY:C,[$$XY],<&>,g:Q}
 
 	$H 'Dollar in :C pattern'
 	$C 'For some reason, multiple dollars are folded into one.'
-	$T	'C,$$,word,'		''${DOLLAR:C,$,dollar,g:Q}
-	$T	'C,$$$$,word,'		''${DOLLAR:C,$$,dollar,g:Q}
+	$T	'C,$$,dollar,g'		''${DOLLAR:C,$,dollar,g:Q}
+	$T	'C,$$$$,dollar,g'	''${DOLLAR:C,$$,dollar,g:Q}
 
 	$H 'Dollar in :S replacement'
 	$C 'For some reason, multiple dollars are folded into one.'
