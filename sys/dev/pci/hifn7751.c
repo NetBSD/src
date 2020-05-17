@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.68 2020/05/17 00:49:28 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.69 2020/05/17 00:50:24 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.68 2020/05/17 00:49:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.69 2020/05/17 00:50:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -2068,12 +2068,6 @@ hifn_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
-			/* Note that this is an initialization
-			   vector, not a cipher key; any function
-			   giving sufficient Hamming distance
-			   between outputs is fine.  Use of RC4
-			   to generate IVs has been FIPS140-2
-			   certified by several labs. */
 			cprng_fast(sc->sc_sessions[i].hs_iv,
 			    c->cri_alg == CRYPTO_AES_CBC ?
 				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
