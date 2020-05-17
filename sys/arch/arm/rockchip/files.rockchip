@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.23 2019/12/19 00:25:58 jakllsch Exp $
+#	$NetBSD: files.rockchip,v 1.24 2020/05/17 19:57:25 riastradh Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -111,6 +111,11 @@ file	arch/arm/rockchip/rk_anxdp.c		rk_anxdp
 device	rki2s	
 attach  rki2s at fdt with rk_i2s
 file    arch/arm/rockchip/rk_i2s.c		rk_i2s
+
+# Crypto engine v1
+device	rkv1crypto
+attach	rkv1crypto at fdt with rk_v1crypto
+file	arch/arm/rockchip/rk_v1crypto.c		rk_v1crypto
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
