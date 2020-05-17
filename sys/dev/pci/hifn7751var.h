@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.15 2020/05/17 00:52:31 riastradh Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.16 2020/05/17 00:53:09 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.54 2020/01/11 21:34:04 cheloha Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ struct hifn_softc {
 	bus_space_tag_t		sc_st0, sc_st1;
 	bus_size_t		sc_iosz0, sc_iosz1;
 	bus_dma_tag_t		sc_dmat;
+	struct pool_cache	*sc_cmd_cache;
 
 	struct hifn_dma *sc_dma;
 	bus_dmamap_t sc_dmamap;
@@ -275,6 +276,7 @@ struct hifn_command {
 		struct uio *dst_io;
 	} dstu;
 	bus_dmamap_t dst_map;
+	bus_dmamap_t dst_map_alloc;
 
 	struct hifn_softc *softc;
 	struct cryptop *crp;
