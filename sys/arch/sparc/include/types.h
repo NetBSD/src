@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.67 2020/05/16 17:52:42 ad Exp $ */
+/*	$NetBSD: types.h,v 1.68 2020/05/17 06:30:44 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,6 +127,7 @@ typedef unsigned long int	__register_t;
 #define	__HAVE_RAS
 
 #ifdef __sparc_v9__
+#define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_DEVICE_REGISTER_POSTCONFIG
 #define	__HAVE_ATOMIC64_OPS
 #define	__HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
