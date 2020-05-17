@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.67 2020/04/30 03:40:53 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.68 2020/05/17 00:49:28 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,29 +48,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.67 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.68 2020/05/17 00:49:28 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/cprng.h>
+#include <sys/device.h>
+#include <sys/endian.h>
+#include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/mbuf.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/endian.h>
-
-#ifdef __OpenBSD__
-#include <crypto/crypto.h>
-#include <dev/rndvar.h>
-#else
-#include <opencrypto/cryptodev.h>
-#include <sys/cprng.h>
 #include <sys/rndsource.h>
 #include <sys/sha1.h>
-#endif
+#include <sys/systm.h>
+
+#include <opencrypto/cryptodev.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -81,43 +76,20 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.67 2020/04/30 03:40:53 riastradh Exp 
 
 #undef HIFN_DEBUG
 
-#ifdef __NetBSD__
-#define M_DUP_PKTHDR m_copy_pkthdr	/* XXX */
-#endif
-
 #ifdef HIFN_DEBUG
 extern int hifn_debug;		/* patchable */
 int hifn_debug = 1;
 #endif
 
-#ifdef __OpenBSD__
-#define HAVE_CRYPTO_LZS		/* OpenBSD OCF supports CRYPTO_COMP_LZS */
-#endif
-
 /*
  * Prototypes and count for the pci_device structure
  */
-#ifdef __OpenBSD__
-static int hifn_probe((struct device *, void *, void *);
-#else
-static int hifn_probe(device_t, cfdata_t, void *);
-#endif
+static int hifn_match(device_t, cfdata_t, void *);
 static void hifn_attach(device_t, device_t, void *);
-#ifdef __NetBSD__
 static int hifn_detach(device_t, int);
 
 CFATTACH_DECL_NEW(hifn, sizeof(struct hifn_softc),
-    hifn_probe, hifn_attach, hifn_detach, NULL);
-#else
-CFATTACH_DECL_NEW(hifn, sizeof(struct hifn_softc),
-    hifn_probe, hifn_attach, NULL, NULL);
-#endif
-
-#ifdef __OpenBSD__
-struct cfdriver hifn_cd = {
-	0, "hifn", DV_DULL
-};
-#endif
+    hifn_match, hifn_attach, hifn_detach, NULL);
 
 static void	hifn_reset_board(struct hifn_softc *, int);
 static void	hifn_reset_puc(struct hifn_softc *);
@@ -156,14 +128,14 @@ static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
 				int *);
 static void	hifn_write_4(struct hifn_softc *, int, bus_size_t, uint32_t);
 static uint32_t hifn_read_4(struct hifn_softc *, int, bus_size_t);
-#ifdef	HAVE_CRYPTO_LZS
+#ifdef CRYPTO_LZS_COMP
 static int	hifn_compression(struct hifn_softc *, struct cryptop *,
 				 struct hifn_command *);
 static struct mbuf *hifn_mkmbuf_chain(int, struct mbuf *);
 static int	hifn_compress_enter(struct hifn_softc *, struct hifn_command *);
 static void	hifn_callback_comp(struct hifn_softc *, struct hifn_command *,
 				   uint8_t *);
-#endif	/* HAVE_CRYPTO_LZS */
+#endif	/* CRYPTO_LZS_COMP */
 
 struct hifn_stats hifnstats;
 
@@ -228,7 +200,7 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-hifn_probe(device_t parent, cfdata_t match, void *aux)
+hifn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -249,12 +221,6 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	const char *hifncap;
 	char rbase;
-#ifdef __NetBSD__
-#define iosize0 sc->sc_iosz0
-#define iosize1 sc->sc_iosz1
-#else
-	bus_size_t iosize0, iosize1;
-#endif
 	uint32_t cmd;
 	uint16_t ena;
 	bus_dma_segment_t seg;
@@ -282,13 +248,13 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
+	    &sc->sc_st0, &sc->sc_sh0, NULL, &sc->sc_iosz0)) {
 		aprint_error_dev(sc->sc_dv, "can't map mem space %d\n", 0);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR1, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
+	    &sc->sc_st1, &sc->sc_sh1, NULL, &sc->sc_iosz1)) {
 		aprint_error_dev(sc->sc_dv, "can't find mem space %d\n", 1);
 		goto fail_io0;
 	}
@@ -368,13 +334,8 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		goto fail_mem;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-#ifdef	__OpenBSD__
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
-	    device_xname(self));
-#else
 	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, hifn_intr, sc,
 	    device_xname(self));
-#endif
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dv, "couldn't establish interrupt\n");
 		if (intrstr != NULL)
@@ -440,13 +401,8 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		hifn_init_pubrng(sc);
 	}
 
-#ifdef	__OpenBSD__
-	timeout_set(&sc->sc_tickto, hifn_tick, sc);
-	timeout_add(&sc->sc_tickto, hz);
-#else
 	callout_init(&sc->sc_tickto, CALLOUT_MPSAFE);
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
-#endif
 	return;
 
 fail_intr:
@@ -462,12 +418,11 @@ fail_mem:
 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 
 fail_io1:
-	bus_space_unmap(sc->sc_st1, sc->sc_sh1, iosize1);
+	bus_space_unmap(sc->sc_st1, sc->sc_sh1, sc->sc_iosz1);
 fail_io0:
-	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
+	bus_space_unmap(sc->sc_st0, sc->sc_sh0, sc->sc_iosz0);
 }
 
-#ifdef __NetBSD__
 static int
 hifn_detach(device_t self, int flags)
 {
@@ -528,8 +483,6 @@ hifn_modcmd(modcmd_t cmd, void *data)
 		return ENOTTY;
 	}
 }
-
-#endif /* ifdef __NetBSD__ */
 
 static void
 hifn_rng_get(size_t bytes, void *priv)
@@ -597,18 +550,10 @@ hifn_init_pubrng(struct hifn_softc *sc)
 			sc->sc_rnghz = hz / 100;
 		else
 			sc->sc_rnghz = 1;
-#ifdef	__OpenBSD__
-		timeout_set(&sc->sc_rngto, hifn_rng, sc);
-#else	/* !__OpenBSD__ */
 		callout_init(&sc->sc_rngto, CALLOUT_MPSAFE);
-#endif	/* !__OpenBSD__ */
-
-#ifdef __NetBSD__
 		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-				  RND_TYPE_RNG,
-				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-#endif
+		    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 	}
 
 	/* Enable public key engine, if available */
@@ -625,11 +570,7 @@ static void
 hifn_rng_locked(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
-#ifdef __NetBSD__
 	uint32_t num[64];
-#else
-	uint32_t num[2];
-#endif
 	uint32_t sts;
 	int i;
 	size_t got, gotent;
@@ -658,27 +599,8 @@ hifn_rng_locked(void *vsc)
 			num[1] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
 			got = 2 * sizeof(num[0]);
 			gotent = (got * NBBY) / HIFN_RNG_BITSPER;
-
-#ifdef __NetBSD__
 			rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
 			sc->sc_rng_need -= gotent;
-#else
-			/*
-			 * XXX This is a really bad idea.
-			 * XXX Hifn estimate as little as 0.06
-			 * XXX actual bits of entropy per output
-			 * XXX register bit.  How can we tell the
-			 * XXX kernel RNG subsystem we're handing
-			 * XXX it 64 "true" random bits, for any
-			 * XXX sane value of "true"?
-			 * XXX
-			 * XXX The right thing to do here, if we
-			 * XXX cannot supply an estimate ourselves,
-			 * XXX would be to hash the bits locally.
-			 */
-			add_true_randomness(num[0]);
-			add_true_randomness(num[1]);
-#endif
 		}
 	} else {
 		int nwords = 0;
@@ -720,22 +642,13 @@ hifn_rng_locked(void *vsc)
 
 		got = nwords * sizeof(num[0]);
 		gotent = (got * NBBY) / HIFN_RNG_BITSPER;
-#ifdef __NetBSD__
 		rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
 		sc->sc_rng_need -= gotent;
-#else
-		/* XXX a bad idea; see 7811 block above */
-		add_true_randomness(num[0]);
-#endif
 	}
 
-#ifdef	__OpenBSD__
-	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
-#else
 	if (sc->sc_rng_need > 0) {
 		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
 	}
-#endif
 }
 
 static void
@@ -1740,7 +1653,7 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 				goto err_srcmap;
 			}
 			if (len == MHLEN)
-				M_DUP_PKTHDR(m0, cmd->srcu.src_m);
+				m_copy_pkthdr(m0, cmd->srcu.src_m);
 			if (totlen >= MINCLSIZE) {
 				MCLGET(m0, M_DONTWAIT);
 				if (m0->m_flags & M_EXT)
@@ -1858,22 +1771,13 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	}
 
 	/*
-	 * We don't worry about missing an interrupt (which a "command wait"
-	 * interrupt salvages us from), unless there is more than one command
-	 * in the queue.
-	 *
-	 * XXX We do seem to miss some interrupts.  So we always enable
-	 * XXX command wait.  From OpenBSD revision 1.149.
-	 *
+	 * Always enable the command wait interrupt.  We are obviously
+	 * missing an interrupt or two somewhere. Enabling the command wait
+	 * interrupt will guarantee we get called periodically until all
+	 * of the queues are drained and thus work around this.
 	 */
-#if 0
-	if (dma->cmdu > 1) {
-#endif
-		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
-		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
-#if 0
-	}
-#endif
+	sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
@@ -1984,11 +1888,7 @@ hifn_tick(void *vsc)
 			WRITE_REG_1(sc, HIFN_1_DMA_CSR, r);
 	} else
 		sc->sc_active--;
-#ifdef	__OpenBSD__
-	timeout_add(&sc->sc_tickto, hz);
-#else
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
-#endif
 	mutex_spin_exit(&sc->sc_mtx);
 }
 
@@ -2174,16 +2074,9 @@ hifn_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 			   between outputs is fine.  Use of RC4
 			   to generate IVs has been FIPS140-2
 			   certified by several labs. */
-#ifdef __NetBSD__
 			cprng_fast(sc->sc_sessions[i].hs_iv,
 			    c->cri_alg == CRYPTO_AES_CBC ?
 				HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
-#else	/* FreeBSD and OpenBSD have get_random_bytes */
-			/* XXX this may read fewer, does it matter? */
- 			get_random_bytes(sc->sc_sessions[i].hs_iv,
-				c->cri_alg == CRYPTO_AES_CBC ?
-					HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
-#endif
 			/*FALLTHROUGH*/
 		case CRYPTO_ARC4:
 			if (cry) {
@@ -2191,7 +2084,7 @@ hifn_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 			}
 			cry = 1;
 			break;
-#ifdef HAVE_CRYPTO_LZS
+#ifdef CRYPTO_LZS_COMP
 		case CRYPTO_LZS_COMP:
 			if (comp) {
 				goto out;
@@ -2314,7 +2207,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
 			enccrd = crd1;
-#ifdef	HAVE_CRYPTO_LZS
+#ifdef CRYPTO_LZS_COMP
 		} else if (crd1->crd_alg == CRYPTO_LZS_COMP) {
 		  return (hifn_compression(sc, crp, cmd));
 #endif
@@ -2733,7 +2626,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, uint8_t *resbuf)
 	crypto_done(crp);
 }
 
-#ifdef HAVE_CRYPTO_LZS
+#ifdef CRYPTO_LZS_COMP
 
 static int
 hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
@@ -3105,7 +2998,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 	if (m0 == NULL)
 		return (NULL);
 	if (len == MHLEN)
-		M_DUP_PKTHDR(m0, mtemplate);
+		m_copy_pkthdr(m0, mtemplate);
 	MCLGET(m0, M_DONTWAIT);
 	if (!(m0->m_flags & M_EXT)) {
  		m_freem(m0);
@@ -3141,7 +3034,7 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 
 	return (m0);
 }
-#endif	/* HAVE_CRYPTO_LZS */
+#endif	/* CRYPTO_LZS_COMP */
 
 static void
 hifn_write_4(struct hifn_softc *sc, int reggrp, bus_size_t reg, uint32_t val)
