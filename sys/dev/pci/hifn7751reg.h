@@ -1,5 +1,5 @@
-/*	$NetBSD: hifn7751reg.h,v 1.8 2005/12/11 12:22:49 christos Exp $	*/
-/*	$OpenBSD: hifn7751reg.h,v 1.43 2003/06/02 15:58:41 deraadt Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.9 2020/05/17 00:51:27 riastradh Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.46 2014/12/19 22:44:58 guenther Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -42,14 +42,14 @@
 #ifndef __DEV_PCI_HIFN7751REG_H__
 #define __DEV_PCI_HIFN7751REG_H__
 
-#include <machine/endian.h>
+#include <sys/endian.h>
 
 /*
  * Some PCI configuration space offset defines.  The names were made
  * identical to the names used by the Linux kernel.
  */
-#define HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
-#define HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
+#define	HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
+#define	HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
 #define	HIFN_RETRY_TIMEOUT	0x41
 #define	HIFN_TRDY_TIMEOUT	0x40
 
@@ -309,6 +309,9 @@ struct hifn_desc {
 #define	HIFN_MIPSRST_MIPSRST	0x00000002	/* warm reset MIPS */
 #define	HIFN_MIPSRST_MIPSCOLD	0x00000001	/* cold reset MIPS */
 
+/* PLL config register (HIFN_1_PLL) */
+#define	HIFN_PLL_7956		0x00001d18	/* 7956 PLL config value */
+
 /* Revision ID */
 #define	HIFN_REVID_7811_PB3_2	0x00000002	/* 7811PB3/2 */
 
@@ -358,11 +361,6 @@ struct hifn_desc {
 /* Random number generator config register (HIFN_1_RNG_CONFIG) */
 #define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
-/*
- * PLL config register
- */
-#define	HIFN_PLL_7956		0x00001d18	/* 7956 PLL config value */
-
 /*********************************************************************
  * Structs for board commands
  *
@@ -411,17 +409,14 @@ struct hifn_crypt_command {
 #define	HIFN_CRYPT_CMD_MODE_CFB		0x0010		/*   CFB */
 #define	HIFN_CRYPT_CMD_MODE_OFB		0x0018		/*   OFB */
 #define	HIFN_CRYPT_CMD_CLR_CTX		0x0040		/* clear context */
+#define	HIFN_CRYPT_CMD_KSZ_MASK		0x0600		/* AES key size: */
+#define	HIFN_CRYPT_CMD_KSZ_128		0x0000		/*  128 bit */
+#define	HIFN_CRYPT_CMD_KSZ_192		0x0200		/*  192 bit */
+#define	HIFN_CRYPT_CMD_KSZ_256		0x0400		/*  256 bit */
 #define	HIFN_CRYPT_CMD_NEW_KEY		0x0800		/* expect new key */
 #define	HIFN_CRYPT_CMD_NEW_IV		0x1000		/* expect new iv */
-
 #define	HIFN_CRYPT_CMD_SRCLEN_M		0xc000
 #define	HIFN_CRYPT_CMD_SRCLEN_S		14
-
-
-#define	HIFN_CRYPT_CMD_KSZ_MASK		0x0600		/* AES key size: */
-#define	HIFN_CRYPT_CMD_KSZ_128		0x0000		/*   128 bit */
-#define	HIFN_CRYPT_CMD_KSZ_192		0x0200		/*   192 bit */
-#define	HIFN_CRYPT_CMD_KSZ_256		0x0400		/*   256 bit */
 
 /*
  * Structure to help build up the command data structure.
@@ -517,11 +512,11 @@ struct hifn_crypt_result {
  * to set fields in the DMA Configuration Register.
  */
 #ifndef HIFN_POLL_FREQUENCY
-#define HIFN_POLL_FREQUENCY	0x1
+#define	HIFN_POLL_FREQUENCY	0x1
 #endif
 
 #ifndef HIFN_POLL_SCALAR
-#define HIFN_POLL_SCALAR	0x0
+#define	HIFN_POLL_SCALAR	0x0
 #endif
 
 #define	HIFN_MAX_SEGLEN 	0xffff		/* maximum dma segment len */

@@ -1,5 +1,5 @@
-/*	$NetBSD: hifn7751var.h,v 1.13 2020/05/17 00:49:28 riastradh Exp $	*/
-/*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.14 2020/05/17 00:51:27 riastradh Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.48 2003/02/24 20:36:02 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -288,13 +288,11 @@ struct hifn_command {
 	} dstu;
 	bus_dmamap_t dst_map;
 
-	u_short mac_header_skip, mac_process_len;
-	u_short crypt_header_skip, crypt_process_len;
-
 	struct hifn_softc *softc;
 	struct cryptop *crp;
-	struct cryptodesc *enccrd, *maccrd,  *compcrd;
-
+	struct cryptodesc *enccrd, *maccrd, *compcrd;
+	void (*cmd_callback)(struct hifn_softc *, struct hifn_command *,
+	    uint8_t *);
 };
 
 /*
