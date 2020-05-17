@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2020/05/10 12:42:11 rillig Exp $
+# $NetBSD: Makefile,v 1.58 2020/05/17 12:36:26 rillig Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -35,6 +35,7 @@ TESTNAMES= \
 	forloop \
 	forsubst \
 	hash \
+	include-main \
 	misc \
 	moderrs \
 	modmatch \
