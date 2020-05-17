@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.25 2020/04/10 18:17:56 tsutsui Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.26 2020/05/17 19:38:17 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.25 2020/04/10 18:17:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.26 2020/05/17 19:38:17 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1305,6 +1305,14 @@ uvmpdpol_pageisqueued_p(struct vm_page *pg)
 
 	/* Unlocked check OK due to page lifecycle. */
 	return clockpro_getq(pg) != CLOCKPRO_NOQUEUE;
+}
+
+bool
+uvmpdpol_pageactivate_p(struct vm_page *pg)
+{
+
+	/* For now, no heuristic, always receive activations. */
+	return true;
 }
 
 void

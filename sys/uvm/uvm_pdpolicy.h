@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.7 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.8 2020/05/17 19:38:17 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -48,6 +48,7 @@ void uvmpdpol_pageactivate(struct vm_page *);
 void uvmpdpol_pagedeactivate(struct vm_page *);
 void uvmpdpol_pagedequeue(struct vm_page *);
 void uvmpdpol_pageenqueue(struct vm_page *);
+bool uvmpdpol_pageactivate_p(struct vm_page *);
 bool uvmpdpol_pageisqueued_p(struct vm_page *);
 void uvmpdpol_pagerealize(struct vm_page *);
 void uvmpdpol_anfree(struct vm_anon *);
