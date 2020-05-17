@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.119 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.120 2020/05/17 15:07:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.119 2020/03/20 19:08:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.120 2020/05/17 15:07:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -305,8 +305,9 @@ uvm_amap_init(void)
 
 	mutex_init(&amap_list_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	pool_cache_bootstrap(&uvm_amap_cache, sizeof(struct vm_amap), 0, 0, 0,
-	    "amappl", NULL, IPL_NONE, amap_ctor, amap_dtor, NULL);
+	pool_cache_bootstrap(&uvm_amap_cache, sizeof(struct vm_amap), 0, 0,
+	    PR_LARGECACHE, "amappl", NULL, IPL_NONE, amap_ctor, amap_dtor,
+	    NULL);
 }
 
 /*
