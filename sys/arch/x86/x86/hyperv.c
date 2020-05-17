@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.8 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.9 2020/05/17 11:54:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.8 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.9 2020/05/17 11:54:39 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -96,6 +96,9 @@ struct hyperv_hypercall_ctx {
 };
 
 static struct hyperv_hypercall_ctx hyperv_hypercall_ctx;
+
+static char hyperv_hypercall_page[PAGE_SIZE]
+    __section(".text") __aligned(PAGE_SIZE) = { 0xcc };
 
 static u_int	hyperv_get_timecount(struct timecounter *);
 
@@ -703,11 +706,7 @@ static void
 hyperv_hypercall_memfree(void)
 {
 
-	if (hyperv_hypercall_ctx.hc_addr != NULL) {
-		uvm_km_free(kernel_map, (vaddr_t)hyperv_hypercall_ctx.hc_addr,
-		    PAGE_SIZE, UVM_KMF_WIRED);
-		hyperv_hypercall_ctx.hc_addr = NULL;
-	}
+	hyperv_hypercall_ctx.hc_addr = NULL;
 }
 
 static bool
@@ -715,30 +714,9 @@ hyperv_init_hypercall(void)
 {
 	uint64_t hc, hc_orig;
 
-	hyperv_hypercall_ctx.hc_addr = (void *)uvm_km_alloc(kernel_map,
-	    PAGE_SIZE, PAGE_SIZE,
-	    UVM_KMF_WIRED | UVM_KMF_EXEC | (cold ? UVM_KMF_NOWAIT : 0));
-	if (hyperv_hypercall_ctx.hc_addr == NULL) {
-		aprint_error("Hyper-V: Hypercall page allocation failed\n");
-		return false;
-	}
-
-	memset(hyperv_hypercall_ctx.hc_addr, 0xcc, PAGE_SIZE);
-	wbinvd();
-	x86_flush();
-
-	/* The hypercall page must be both readable and executable */
-	uvm_km_protect(kernel_map, (vaddr_t)hyperv_hypercall_ctx.hc_addr,
-	    PAGE_SIZE, VM_PROT_READ | VM_PROT_EXECUTE);
-
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)hyperv_hypercall_ctx.hc_addr,
-	    &hyperv_hypercall_ctx.hc_paddr)) {
-		aprint_error("Hyper-V: Hypercall page setup failed\n");
-		hyperv_hypercall_memfree();
-		/* Can't perform any Hyper-V specific actions */
-		vm_guest = VM_GUEST_VM;
-		return false;
-	}
+	hyperv_hypercall_ctx.hc_addr = hyperv_hypercall_page;
+	hyperv_hypercall_ctx.hc_paddr = vtophys((vaddr_t)hyperv_hypercall_page);
+	KASSERT(hyperv_hypercall_ctx.hc_paddr != 0);
 
 	/* Get the 'reserved' bits, which requires preservation. */
 	hc_orig = rdmsr(MSR_HV_HYPERCALL);
