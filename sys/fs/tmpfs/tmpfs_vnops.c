@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.139 2020/05/17 19:39:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.140 2020/05/17 19:43:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.139 2020/05/17 19:39:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.140 2020/05/17 19:43:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1201,7 +1201,7 @@ tmpfs_getpages(void *v)
 	 * VI_DEADCHECK is set with vmobjlock held.
 	 */
 	iflag = atomic_load_relaxed(&vp->v_iflag);
-	if (__predict_false((iflag & VI_DEADCHECK) != 0) {
+	if (__predict_false((iflag & VI_DEADCHECK) != 0)) {
 		mutex_enter(vp->v_interlock);
 		error = vdead_check(vp, VDEAD_NOWAIT);
 		mutex_exit(vp->v_interlock);
