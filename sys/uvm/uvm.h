@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.76 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.77 2020/05/17 15:11:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,7 +107,6 @@ struct uvm {
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	u_int	bucketcount;
 	bool	page_init_done;		/* true if uvm_page_init() finished */
-	bool	numa_alloc;		/* use NUMA page allocation strategy */
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
