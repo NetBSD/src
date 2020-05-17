@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.86 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.87 2020/05/17 14:15:55 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.86 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.87 2020/05/17 14:15:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -201,9 +201,9 @@ IDTVEC(intr_lapic_tlb)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
+	call	_C_LABEL(pmap_tlb_intr)
 	movl	_C_LABEL(local_apic_va),%eax
 	movl	$0,LAPIC_EOI(%eax)
-	call	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
 IDTVEC_END(intr_lapic_tlb)
 
@@ -211,11 +211,11 @@ IDTVEC(intr_x2apic_tlb)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
+	call	_C_LABEL(pmap_tlb_intr)
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	call	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
 IDTVEC_END(intr_x2apic_tlb)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.76 2020/05/01 07:03:02 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.77 2020/05/17 14:15:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -314,21 +314,21 @@ IDTVEC_END(intr_hyperv_hypercall)
  * TLB shootdown handler.
  */
 IDTVEC(handle_lapic_tlb)
-	movq	_C_LABEL(local_apic_va),%rax
-	movl	$0,LAPIC_EOI(%rax)
 	KCOV_DISABLE
 	callq	_C_LABEL(pmap_tlb_intr)
 	KCOV_ENABLE
+	movq	_C_LABEL(local_apic_va),%rax
+	movl	$0,LAPIC_EOI(%rax)
 	INTRFASTEXIT
 IDTVEC_END(handle_lapic_tlb)
 IDTVEC(handle_x2apic_tlb)
+	KCOV_DISABLE
+	callq	_C_LABEL(pmap_tlb_intr)
+	KCOV_ENABLE
 	movl	$(MSR_X2APIC_BASE + MSR_X2APIC_EOI),%ecx
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	KCOV_DISABLE
-	callq	_C_LABEL(pmap_tlb_intr)
-	KCOV_ENABLE
 	INTRFASTEXIT
 IDTVEC_END(handle_x2apic_tlb)
 
