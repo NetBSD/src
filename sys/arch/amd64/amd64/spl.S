@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.45 2020/05/02 11:12:49 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.46 2020/05/17 12:11:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -157,7 +157,12 @@ IDTVEC(softintr)
 	movq	L_PCB(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
 
-	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
+	/*
+	 * for non-interlocked mutex release to work safely the change
+	 * to ci_curlwp must not languish in the store buffer. therefore
+	 * we use XCHG and not MOV here.  see kern_mutex.c.
+	 */
+	xchgq	%r15,CPUVAR(CURLWP)	/* restore curlwp */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
 	jmp	*%r13			/* back to Xspllower/Xdoreti */
