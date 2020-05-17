@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.16 2020/05/17 00:53:09 riastradh Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.17 2020/05/17 00:54:05 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.54 2020/01/11 21:34:04 cheloha Exp $	*/
 
 /*
@@ -156,11 +156,11 @@ struct hifn_softc {
 #define	HIFN_HAS_AES		0x20	/* includes AES support */
 #define	HIFN_IS_7956		0x40	/* Hifn 7955/7956 part */
 
+	struct timeval		sc_rngboottime; /* time we flipped RNG on */
 	struct callout		sc_rngto;	/* rng timeout */
 	struct callout		sc_tickto;	/* led-clear timeout */
 	krndsource_t		sc_rnd_source;
-	int			sc_rnghz;
-	int			sc_rng_need;	/* how many bytes wanted */
+	unsigned		sc_rng_needbits; /* how many bits wanted */
 	int			sc_c_busy;	/* command ring busy */
 	int			sc_s_busy;	/* source data ring busy */
 	int			sc_d_busy;	/* destination data ring busy */
