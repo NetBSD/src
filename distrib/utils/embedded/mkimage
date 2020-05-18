@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.71 2019/10/30 14:16:15 martin Exp $
+# $NetBSD: mkimage,v 1.72 2020/05/18 21:19:34 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -215,8 +215,27 @@ make_fstab
 customize
 populate
 
+if [ ! "${MKDTB}" = "no" ]; then
+	#
+	# Part of the dtb set resides on the FAT partition (/boot/dtb/*), and
+	# the rest on FFS. Split it up here.
+	#
+	echo ${bar} Installing devicetree blobs ${bar}
+	mkdir -p "${mnt}/boot"
+	cp -r "${release}/boot/dtb" "${mnt}/boot/dtb"
+
+	mkdir -p "${mnt}/etc/mtree"
+	cp "${release}/etc/mtree/set.dtb" "${mnt}/etc/mtree/set.dtb"
+	echo "./etc/mtree/set.dtb type=file uname=root gname=wheel mode=0444" >> "$tmp/selected_sets"
+
+	mkdir -p "${mnt}/var/db/obsolete"
+	cp "${release}/var/db/obsolete/dtb" "${mnt}/var/db/obsolete/dtb"
+	echo "./var/db/obsolete/dtb type=file uname=root gname=wheel mode=0644" >>"$tmp/selected_sets"
+fi
+
 if [ -n "${msdosid}" ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
+
 	case $(( ${msdosid} )) in
 	1)	fat_opt=",fat_type=12";;
 	4|6|14)	fat_opt=",fat_type=16";;
