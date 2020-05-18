@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.5 2020/05/13 21:09:02 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.6 2020/05/18 16:05:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -67,27 +67,39 @@
  *	The first sample of each RO always seems to be zero.  Further,
  *	consecutive samples from a single ring oscillator are not
  *	independent, so naive debiasing like a von Neumann extractor
- *	falls flat on its face.
+ *	falls flat on its face.  And parallel ring oscillators powered
+ *	by the same source may not be independent either, if they end
+ *	up locked.
  *
- *	We read out one FIFO's worth of raw samples from all 128 ring
- *	oscillators by going through them round-robin, and without a
- *	more detailed assessment of the jitter on the physical devices,
- *	we assume it takes a couple thousand samples of ring
- *	oscillators (one bit per sample) to reach one bit of entropy,
- *	so we read out 8 KB to get about 256 bits of entropy.
+ *	We read out one FIFO's worth of raw samples from groups of 8
+ *	ring oscillators at a time, of 128 total, by going through them
+ *	round robin.  We take 32 consecutive samples from each ring
+ *	oscillator in a group of 8 in parallel before we count one bit
+ *	of entropy.  To get 256 bits of entropy, we read 4Kbit of data
+ *	from each of two 8-RO groups.
  *
- *	We could use the on-board LFSR/SHA-1 conditioner, but it's not
- *	clear how many RO samples go into the conditioner, and our
- *	entropy pool is a perfectly good conditioner itself, so it
- *	seems there is little advantage -- other than expedience -- to
- *	using the LFSR/SHA-1 conditioner.
+ *	We could use the on-board LFSR/SHA-1 conditioner like the Linux
+ *	driver written by Cavium does, but it's not clear how many RO
+ *	samples go into the conditioner, and our entropy pool is a
+ *	perfectly good conditioner itself, so it seems there is little
+ *	advantage -- other than expedience -- to using the LFSR/SHA-1
+ *	conditioner.  All the manual says is that it samples 125 of the
+ *	128 ROs.  But the Cavium SHA-1 CPU instruction is advertised to
+ *	have a latency of 100 cycles, so it seems implausible that much
+ *	more than one sample from each RO could be squeezed in there.
+ *
+ *	The hardware exposes only 64 bits of each SHA-1 hash, and the
+ *	Linux driver uses 32 bits of that -- which, if treated as full
+ *	entropy, would mean an assessment of 3.9 bits of RO samples to
+ *	get 1 bit of entropy, whereas we take 256 bits of RO samples to
+ *	get one bit of entropy, so this seems reasonably conservative.
  *
  * Reference: Cavium Networks OCTEON Plus CN50XX Hardware Reference
  * Manual, CN50XX-HM-0.99E PRELIMINARY, July 2008.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.5 2020/05/13 21:09:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.6 2020/05/18 16:05:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -209,8 +221,7 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 static void
 octeon_rnm_rng(size_t nbytes, void *vsc)
 {
-	/* Assume we need 2048 RO samples to get one bit of entropy.  */
-	const unsigned BPB = 2048;
+	const unsigned BPB = 256; /* bits of data per bit of entropy */
 	uint64_t sample[32];
 	struct octeon_rnm_softc *sc = vsc;
 	size_t needed = NBBY*nbytes;
