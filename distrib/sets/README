@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.14 2019/10/02 11:16:00 maya Exp $
+# $NetBSD: README,v 1.15 2020/05/18 21:19:34 jmcneill Exp $
 
 the scripts should be run from the directory where they reside.
 
@@ -45,6 +45,8 @@ the sets are as follows:
 
 	debug:	Debugging libraries (_g.a/MKDEBUGLIB) and (.debug/MKDEBUG)
 		binaries.
+
+	dtb:	Device tree blobs (MKDTB).
 
 	etc:	/etc, and associated files (/var/cron/tabs, /root,
 		etc.).  things that shouldn't be blindly reinstalled

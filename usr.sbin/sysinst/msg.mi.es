@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.22 2020/02/06 19:41:57 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.23 2020/05/18 21:19:36 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -818,6 +818,9 @@ message set_system
 
 message set_compiler
 {Herramientas del compilador}
+
+message set_dtb
+{Devicetree hardware descriptions}
 
 message set_games
 {Juegos}

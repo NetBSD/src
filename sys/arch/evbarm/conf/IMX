@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IMX,v 1.5 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: IMX,v 1.6 2020/05/18 21:19:35 jmcneill Exp $
 #
 #	NXP(Freescale) I.MX family SoCs
 #
@@ -7,16 +7,6 @@
 include	"arch/evbarm/conf/std.imx"
 include	"arch/evbarm/conf/files.imx"
 include	"arch/evbarm/conf/GENERIC.common"
-
-makeoptions	DTSGNUARCH="arm"
-makeoptions	DTSSUBDIR="fsl"
-makeoptions	DTS="
-	imx6q-hummingboard.dts
-	imx6dl-hummingboard.dts
-	imx6q-hummingboard2.dts
-	imx6dl-hummingboard2.dts
-	imx6qp-sabresd.dts
-"
 
 options 	MULTIPROCESSOR
 
