@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.303 2020/05/05 01:28:17 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.304 2020/05/18 20:28:44 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -155,6 +155,8 @@ BLE	Bluetooth low energy
 BLOB	binary large object
 BM	bus master
 BMC	baseboard management controller
+BMP	basic multilingual plane
+BMP	bitmap image file
 BMIC	bus master interface controller
 BN	boundary neutral
 BNF	Backus-Naur form
@@ -394,9 +396,11 @@ DFSAN	Data Flow Sanitizer
 DFT	diagnostic function test
 DFT	discrete Fourier transform
 DGL	data generation language
+DGEMM	double precision general matrix multiply
 DH	Diffie-Hellman
 DHCP	Dynamic Host Configuration Protocol
 DIA	dedicated Internet access
+DIB	device independent bitmap
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
@@ -617,6 +621,7 @@ GDT	global descriptor table
 GECOS	general comprehensive operating supervisor
 GEM	graphics environment manager
 GEM	graphics execution manager
+GEMM	general matrix multiply
 GENA	general event notification architecture
 GHC	Glasgow Haskell compiler
 GHES	generic hardware error source
@@ -1755,6 +1760,7 @@ WHEA	Windows hardware error architecture
 WIFI	wireless fidelity
 WLAN	wireless local area network
 WM	write miss
+WMF	Windows meta file
 WMI	Windows Management Instrumentation
 WOL	Wake-on-LAN
 WOM	Wake-on-Modem
