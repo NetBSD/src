@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.369 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.370 2020/05/18 08:28:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.369 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.370 2020/05/18 08:28:44 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.369 2020/05/16 18:31:53 christos Ex
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -581,7 +582,12 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			DPRINTF("VOP_OPEN returned %d", error);
 			goto fail;
 		}
+		/* Need fstrans_start() for assertion in ufs_strategy(). */
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			fstrans_start(mp);
 		error = ffs_mountfs(devvp, mp, l);
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			fstrans_done(mp);
 		if (error) {
 			DPRINTF("ffs_mountfs returned %d", error);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
