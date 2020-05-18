@@ -16297,3 +16297,8 @@ Fail we may, sail we must
 %
 Don't shout at your JBODs, they don't like it!
 		-- Brendan Gregg, "Shouting in the Datacenter"
+%
+Bell has two patents on UNIX
+a) set-user-id bit
+b) on "typo" !
+		-- John Lions, Australian UNIX Users Group Newsletter, Oct 1978
