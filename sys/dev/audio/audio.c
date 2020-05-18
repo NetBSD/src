@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.14 2020/05/18 18:05:34 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.15 2020/05/18 18:12:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.14 2020/05/18 18:05:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.15 2020/05/18 18:12:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -453,6 +453,28 @@ audio_track_bufstat(audio_track_t *track, struct audio_track_debugbuf *buf)
 
 #define SPECIFIED(x)	((x) != ~0)
 #define SPECIFIED_CH(x)	((x) != (u_char)~0)
+
+/*
+ * Default hardware blocksize in msec.
+ *
+ * We use 10 msec for most modern platforms.  This period is good enough to
+ * play audio and video synchronizely.
+ * In contrast, for very old platforms, this is usually too short and too
+ * severe.  Also such platforms usually can not play video confortably, so
+ * it's not so important to make the blocksize shorter.  If the platform
+ * defines its own value as __AUDIO_BLK_MS in its <machine/param.h>, it
+ * uses this instead.
+ *
+ * In either case, you can overwrite AUDIO_BLK_MS by your kernel
+ * configuration file if you wish.
+ */
+#if !defined(AUDIO_BLK_MS)
+# if defined(__AUDIO_BLK_MS)
+#  define AUDIO_BLK_MS __AUDIO_BLK_MS
+# else
+#  define AUDIO_BLK_MS (10)
+# endif
+#endif
 
 /* Device timeout in msec */
 #define AUDIO_TIMEOUT	(3000)
