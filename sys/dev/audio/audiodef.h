@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.7.2.3 2020/03/21 15:47:00 martin Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.7.2.4 2020/05/18 18:12:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -41,17 +41,6 @@
 
 /* Minimum number of usrbuf's blocks. */
 #define AUMINNOBLK	(3)
-
-/*
- * Hardware blocksize in msec.
- * We use 40 msec as default.  (1 / 40ms) = 25 = 5^2.
- * In this case, the number of frames in a block can be an integer
- * even if the frequency is a multiple of 100 (44100, 48000, etc),
- * or even if 15625Hz (vs(4)).
- */
-#if !defined(AUDIO_BLK_MS)
-#define AUDIO_BLK_MS 40
-#endif
 
 /*
  * Whether the playback mixer use single buffer mode.
