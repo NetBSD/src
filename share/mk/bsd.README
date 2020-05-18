@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.402 2020/05/02 19:46:58 christos Exp $
+#	$NetBSD: bsd.README,v 1.403 2020/05/18 21:19:35 jmcneill Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -196,6 +196,9 @@ MKDTRACE	If "no", do not build and install the kernel modules,
 		utilities and libraries used to implement the dtrace(1)
 		facility.
 		Default: no
+
+MKDTB		If "no", disables building of devicetree blobs.
+		Default: yes on aarch64 and armv7, no elsewhere.
 
 MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't

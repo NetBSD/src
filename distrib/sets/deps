@@ -275,6 +275,7 @@ comp-util-man base-man-share
 comp-util-sbin base-sys-usr
 comp-util-share base-terminfo-share
 comp-util-share base-util-share
+dtb-base-boot base-sys-root
 etc-amd-rc base-sys-root
 etc-audio-rc base-sys-root
 etc-bind-etc base-bind-root

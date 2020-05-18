@@ -1,25 +1,11 @@
 #
-#	$NetBSD: RPI,v 1.90 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: RPI,v 1.91 2020/05/18 21:19:35 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
 
 include	"arch/evbarm/conf/std.rpi"
 include "arch/evbarm/conf/GENERIC.common"
-
-makeoptions DTSGNUARCH="arm arm64"
-makeoptions DTSSUBDIR="broadcom"
-
-makeoptions	DTS="
-	bcm2835-rpi-a.dts
-	bcm2835-rpi-a-plus.dts
-	bcm2835-rpi-b.dts
-	bcm2835-rpi-b-plus.dts
-	bcm2835-rpi-b-rev2.dts
-	bcm2835-rpi-cm1-io1.dts
-	bcm2835-rpi-zero.dts
-	bcm2835-rpi-zero-w.dts
-"
 
 options 	CPU_ARM1176
 options 	SOC_BCM2835
