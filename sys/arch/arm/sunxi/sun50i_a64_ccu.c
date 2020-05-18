@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.13.2.3 2019/11/25 16:18:40 martin Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.13.2.4 2020/05/18 18:45:40 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.3 2019/11/25 16:18:40 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.4 2020/05/18 18:45:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.3 2019/11/25 16:18:40 mart
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
+#define	CE_CLK_REG		0x09c
 #define	SPI0_CLK_REG		0x0a0
 #define	SPI1_CLK_REG		0x0a4
 #define	I2SPCM0_CLK_REG		0x0b0
@@ -156,6 +157,7 @@ static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
+static const char *ce_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
@@ -396,6 +398,14 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN|SUNXI_CCU_NM_DIVIDE_BY_TWO),
+
+	SUNXI_CCU_NM(A64_CLK_CE, "ce", ce_parents,
+	    CE_CLK_REG,		/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_THS, "ths", ths_parents,
 	    THS_CLK_REG,	/* reg */

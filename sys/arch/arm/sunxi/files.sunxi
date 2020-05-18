@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.65 2019/06/14 21:26:36 tnn Exp $
+#	$NetBSD: files.sunxi,v 1.65.2.1 2020/05/18 18:45:40 martin Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -360,6 +360,11 @@ file	arch/arm/sunxi/sunxi_dwhdmi.c		sunxi_dwhdmi
 device	sunxihdmiphy: drmkms
 attach	sunxihdmiphy at fdt with sunxi_hdmiphy
 file	arch/arm/sunxi/sunxi_hdmiphy.c		sunxi_hdmiphy | sunxi_dwhdmi
+
+# Allwinner Crypto Engine
+device	sun8icrypto
+attach	sun8icrypto at fdt with sun8i_crypto
+file	arch/arm/sunxi/sun8i_crypto.c		sun8i_crypto
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
