@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.121 2020/04/19 13:25:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.122 2020/05/18 08:27:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.121 2020/04/19 13:25:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.122 2020/05/18 08:27:54 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -534,6 +534,7 @@ vrele_flush(struct mount *mp)
 {
 	vnode_impl_t *vip, *marker;
 	vnode_t *vp;
+	int when = 0;
 
 	KASSERT(fstrans_is_owner(mp));
 
@@ -560,6 +561,11 @@ vrele_flush(struct mount *mp)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		mutex_enter(vp->v_interlock);
 		vrelel(vp, 0, LK_EXCLUSIVE);
+
+		if (getticks() > when) {
+			yield();
+			when = getticks() + hz / 10;
+		}
 
 		mutex_enter(&vdrain_lock);
 	}
