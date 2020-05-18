@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.205 2020/05/18 19:42:16 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.206 2020/05/18 19:55:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.205 2020/05/18 19:42:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.206 2020/05/18 19:55:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,13 +695,7 @@ genfs_can_access(vnode_t *vp, kauth_cred_t cred, uid_t file_uid, gid_t file_gid,
 
 	KASSERT((accmode & ~(VEXEC | VWRITE | VREAD | VADMIN | VAPPEND)) == 0);
 	KASSERT((accmode & VAPPEND) == 0 || (accmode & VWRITE));
-#ifdef ACL_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), __VNODE_PERM_BITS, accmode);
-	printf("%s: %s cred_uid=%d cred_gid=%d file_uid=%d file_gid=%d\n",
-	    __func__, buf, kauth_cred_geteuid(cred), kauth_cred_getegid(cred),
-	    file_uid, file_gid);
-#endif
+
 	/*
 	 * Look for a normal, non-privileged way to access the file/directory
 	 * as requested.  If it exists, go with that.
@@ -719,10 +713,6 @@ genfs_can_access(vnode_t *vp, kauth_cred_t cred, uid_t file_uid, gid_t file_gid,
 		if (file_mode & S_IWUSR)
 			dac_granted |= (VWRITE | VAPPEND);
 
-#ifdef ACL_DEBUG
-		printf("%s: owner %o %o\n", __func__,
-		    accmode & dac_granted, accmode);
-#endif
 		goto privchk;
 	}
 
@@ -739,10 +729,6 @@ genfs_can_access(vnode_t *vp, kauth_cred_t cred, uid_t file_uid, gid_t file_gid,
 		if (file_mode & S_IWGRP)
 			dac_granted |= (VWRITE | VAPPEND);
 
-#ifdef ACL_DEBUG
-		printf("%s: group %o %o\n", __func__,
-		    accmode & dac_granted, accmode);
-#endif
 		goto privchk;
 	}
 
@@ -754,10 +740,6 @@ genfs_can_access(vnode_t *vp, kauth_cred_t cred, uid_t file_uid, gid_t file_gid,
 	if (file_mode & S_IWOTH)
 		dac_granted |= (VWRITE | VAPPEND);
 
-#ifdef ACL_DEBUG
-	printf("%s: others %o %o\n", __func__,
-	    accmode & dac_granted, accmode);
-#endif
 privchk:
 	if ((accmode & dac_granted) == accmode)
 		return 0;
@@ -1126,12 +1108,6 @@ genfs_can_access_acl_nfs4(vnode_t *vp, kauth_cred_t cred, uid_t file_uid,
 	    VDELETE_CHILD | VREAD_ATTRIBUTES | VWRITE_ATTRIBUTES | VDELETE |
 	    VREAD_ACL | VWRITE_ACL | VWRITE_OWNER | VSYNCHRONIZE)) == 0);
 	KASSERT((accmode & VAPPEND) == 0 || (accmode & VWRITE));
-
-#ifdef ACL_DEBUG
-	char buf[128];
-	snprintb(buf, sizeof(buf), __VNODE_PERM_BITS, accmode);
-	printf("%s: %s file_uid=%d file_gid=%d\n", __func__, buf, file_uid, file_gid);
-#endif
 
 	if (accmode & VADMIN)
 		must_be_owner = 1;
