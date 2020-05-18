@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.29 2020/02/06 19:41:57 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.30 2020/05/18 21:19:36 jmcneill Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -792,6 +792,9 @@ message set_system
 
 message set_compiler
 {Narzedzia Kompilacyjne}
+
+message set_dtb
+{Devicetree hardware descriptions}
 
 message set_games
 {Gry}

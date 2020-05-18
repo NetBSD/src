@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2019/08/27 22:48:54 kamil Exp $
+#	$NetBSD: Makefile,v 1.52 2020/05/18 21:19:35 jmcneill Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -7,7 +7,7 @@ NOOBJ=	# defined
 
 .if ${MKSHARE} != "no"
 FILES=	bsd.README bsd.buildinstall.mk bsd.clang-analyze.mk bsd.clean.mk \
-	bsd.dep.mk bsd.doc.mk bsd.endian.mk bsd.files.mk bsd.gcc.mk \
+	bsd.dep.mk bsd.doc.mk bsd.dtb.mk bsd.endian.mk bsd.files.mk bsd.gcc.mk \
 	bsd.host.mk bsd.hostinit.mk bsd.hostlib.mk bsd.hostprog.mk bsd.inc.mk \
 	bsd.info.mk bsd.init.mk bsd.ioconf.mk bsd.kernobj.mk bsd.kinc.mk \
 	bsd.klinks.mk bsd.kmodule.mk bsd.lib.mk bsd.links.mk bsd.lua.mk \

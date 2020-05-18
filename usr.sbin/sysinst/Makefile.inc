@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2020/02/19 21:49:48 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2020/05/18 21:19:36 jmcneill Exp $
 #
 # Makefile for sysinst
 
@@ -70,6 +70,10 @@ SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
 
 .if ${MKBSDTAR:Uno} == "no"
 CPPFLAGS+=	-DUSING_PAXASTAR
+.endif
+
+.if ${MKDTB:Uno} != "no"
+CPPFLAGS+=	-DHAVE_DTB
 .endif
 
 CATALOGDIR=	/usr/share/sysinst/catalog

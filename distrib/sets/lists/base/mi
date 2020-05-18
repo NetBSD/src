@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1243 2020/05/16 18:31:45 christos Exp $
+# $NetBSD: mi,v 1.1244 2020/05/18 21:19:34 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4862,6 +4862,7 @@
 ./usr/share/mk/bsd.dep.mk			base-mk-share		share
 ./usr/share/mk/bsd.depall.mk			base-obsolete		obsolete
 ./usr/share/mk/bsd.doc.mk			base-mk-share		share
+./usr/share/mk/bsd.dtb.mk			base-mk-share		share
 ./usr/share/mk/bsd.endian.mk			base-mk-share		share
 ./usr/share/mk/bsd.files.mk			base-mk-share		share
 ./usr/share/mk/bsd.gcc.mk			base-mk-share		share

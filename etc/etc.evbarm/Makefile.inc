@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.114 2019/11/03 12:16:35 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.115 2020/05/18 21:19:34 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -120,6 +120,7 @@ __mkimage: .USE
 	HOST_SH=${HOST_SH} \
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
+	MKDTB=${MKDTB} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz

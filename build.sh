@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.334 2020/03/28 20:13:13 jmcneill Exp $
+#	$NetBSD: build.sh,v 1.335 2020/05/18 21:19:34 jmcneill Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -559,6 +559,7 @@ level of source directory"
 	do_disk_image=false
 	do_params=false
 	do_rump=false
+	do_dtb=false
 
 	# done_{operation}=true if given operation has been done.
 	#
@@ -1046,6 +1047,7 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
                         Always performed.
     cleandir            Run "make cleandir".  [Default unless -u is used]
+    dtb			Build devicetree blobs.
     obj                 Run "make obj".  [Default unless -o is used]
     tools               Build and install tools.
     install=idir        Run "make installworld" to \`idir' to install all sets
@@ -1379,6 +1381,7 @@ parseoptions()
 		build|\
 		cleandir|\
 		distribution|\
+		dtb|\
 		install-image|\
 		iso-image-source|\
 		iso-image|\
@@ -1937,7 +1940,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.334 2020/03/28 20:13:13 jmcneill Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.335 2020/05/18 21:19:34 jmcneill Exp $
 # with these arguments: ${_args}
 #
 
@@ -2134,6 +2137,21 @@ buildmodules()
 	make_in_dir sys/modules install
 
 	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+}
+
+builddtb()
+{
+	statusmsg "Building devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		make_in_dir sys/dtb obj
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir sys/dtb cleandir
+	fi
+	make_in_dir sys/dtb dependall
+	make_in_dir sys/dtb install
+
+	statusmsg "Successful build of devicetree blobs for NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
 installmodules()
@@ -2374,6 +2392,10 @@ main()
 		disk-image=*)
 			arg=${op#*=}
 			diskimage "${arg}"
+			;;
+
+		dtb)
+			builddtb
 			;;
 
 		modules)
