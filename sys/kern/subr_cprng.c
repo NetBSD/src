@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.30.2.3 2020/04/30 15:34:06 martin Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.30.2.4 2020/05/18 18:57:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.30.2.3 2020/04/30 15:34:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.30.2.4 2020/05/18 18:57:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -551,7 +551,7 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 		return 0;
 	    default:
 		if (*oldlenp > 256) {
-			return E2BIG;
+			*oldlenp = 256;
 		}
 		RUN_ONCE(&sysctl_prng_once, makeprng);
 		v = kmem_alloc(*oldlenp, KM_SLEEP);
