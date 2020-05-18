@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.254 2020/05/16 18:31:54 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.255 2020/05/18 08:28:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.254 2020/05/16 18:31:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.255 2020/05/18 08:28:44 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.254 2020/05/16 18:31:54 christos Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
@@ -1869,6 +1870,7 @@ ufs_strategy(void *v)
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("ufs_strategy: spec");
+	KASSERT(fstrans_held(vp->v_mount));
 	KASSERT(bp->b_bcount != 0);
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
