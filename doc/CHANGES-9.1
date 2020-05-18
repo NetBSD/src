@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.58 2020/05/13 18:17:31 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.59 2020/05/18 19:07:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2575,4 +2575,75 @@ libexec/ld.elf_so/symbols.map			1.3,1.4
 	Introduce intermediate locking for fork, so that the  dynamic
 	linker is in a consistent state.
 	[chs, ticket #907]
+
+sys/arch/hp300/dev/sti_sgc.c			1.3
+sys/dev/ic/sti.c				1.21
+sys/dev/ic/stivar.h				1.10
+
+	Add bitmap access ops support for EVRX framebuffer on HP9000/425e.
+	[tsutsui, ticket #908]
+
+sys/dev/audio/audio.c				1.65
+
+	Start recording immediately on opening /dev/audio or /dev/sound
+	for reading.
+	[isaki, ticket #909]
+
+sys/dev/audio/audio.c				1.49,1.61,1.66,1.67
+
+	Improve diagnostic messages.
+	[isaki, ticket #910]
+
+sys/arch/amd64/conf/GENERIC			1.564
+sys/arch/evbarm/conf/GENERIC			1.75
+sys/arch/evbarm/conf/GENERIC64			1.148
+sys/arch/hppa/include/param.h			1.27
+sys/arch/m68k/include/param.h			1.23
+sys/arch/sh3/include/param.h			1.25
+sys/arch/sparc/include/param.h			1.74
+sys/arch/vax/include/param.h			1.63
+sys/dev/audio/audio.c				1.68,1.69
+sys/dev/audio/audiodef.h			1.13,1.14
+
+	Improve default latency settings for audio with usable
+	per-architecture defaults.
+	[isaki, ticket #911]
+
+sys/arch/arm/dts/sun50i-a64.dtsi		1.14
+sys/arch/arm/sunxi/files.sunxi			1.67
+sys/arch/arm/sunxi/sun50i_a64_ccu.c		1.21,1.22
+sys/arch/arm/sunxi/sun8i_crypto.c		1.1-1.12
+sys/arch/arm/sunxi/sun8i_crypto.h		1.1
+sys/arch/evbarm/conf/GENERIC64			1.116,1.131
+
+	Add sun8i Crypto Engine random number generator.
+	[riastradh, ticket #912]
+
+sys/arch/arm/dts/rk3399-crypto.dtsi		1.1
+sys/arch/arm/dts/rk3399-pinebook-pro.dts	1.3
+sys/arch/arm/dts/rk3399-rockpro64.dts		1.11
+sys/arch/arm/rockchip/files.rockchip		1.24
+sys/arch/arm/rockchip/rk3399_cru.c		1.20
+sys/arch/arm/rockchip/rk_v1crypto.c		1.1,1.2 + patch
+sys/arch/arm/rockchip/rk_v1crypto.h		1.1
+sys/arch/evbarm/conf/GENERIC64			1.158
+
+	Add support for the Rockchip Crypto v1 random number generator.
+	[riastradh, ticket #913]
+
+sys/kern/subr_cprng.c				1.37 (via patch, adapted)
+
+	Make kern.arandom truncate the output instead of failing with ETOOBIG
+	when the requested data exceeds 256 bytes in size.
+	[nia, ticket #914]
+
+sys/netinet/igmp.c				1.70
+
+	igmp: fix info leak
+	[maxv, ticket #915]
+
+sys/kern/kern_time.c				1.204
+
+	kern_time: fix info leak.
+	[maxv, ticket #916]
 
