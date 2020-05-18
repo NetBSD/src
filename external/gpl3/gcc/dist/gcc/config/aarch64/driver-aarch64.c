@@ -365,6 +365,7 @@ host_detect_local_cpu (int argc, const char **argv)
 	    {
 	      exts += "asimd ";
 	    }
+#ifdef ID_AA64ISAR0_EL1_RDM
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_RDM) == ID_AA64ISAR0_EL1_RDM_SQRDML)
 	    {
 	      exts += "asimdrdm ";
@@ -377,6 +378,7 @@ host_detect_local_cpu (int argc, const char **argv)
 	    {
 	      exts += "asimdfml ";
 	    }
+#endif
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES) == ID_AA64ISAR0_EL1_AES_AES)
 	    {
 	      exts += "aes ";
@@ -389,10 +391,12 @@ host_detect_local_cpu (int argc, const char **argv)
 	    {
 	      exts += "crc32 ";
 	    }
+#ifdef ID_AA64ISAR0_EL1_ATOMIC
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_ATOMIC) == ID_AA64ISAR0_EL1_ATOMIC_SWP)
 	    {
 	      exts += "atomics ";
 	    }
+#endif
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA1) & ID_AA64ISAR0_EL1_SHA1_SHA1CPMHSU) != 0)
 	    {
 	      exts += "sha1 ";
@@ -401,6 +405,7 @@ host_detect_local_cpu (int argc, const char **argv)
 	    {
 	      exts += "sha2 ";
 	    }
+#ifdef ID_AA64ISAR0_EL1_SHA2_SHA512HSU
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2) & ID_AA64ISAR0_EL1_SHA2_SHA512HSU) != 0)
 	    {
 	      exts += "sha512 ";
@@ -425,6 +430,7 @@ host_detect_local_cpu (int argc, const char **argv)
 	    {
 	      exts += "lrcpc ";
 	    }
+#endif
 
 	  strncpy(buf, exts.c_str(), sizeof(buf) - 1);
 	  buf[sizeof(buf) - 1] = '\0';
