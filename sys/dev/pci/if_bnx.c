@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.94 2020/02/28 14:57:55 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.95 2020/05/18 05:47:54 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.94 2020/02/28 14:57:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.95 2020/05/18 05:47:54 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -642,7 +642,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	    BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
 	    BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP);
 
-	/* Save ASIC revsion info. */
+	/* Save ASIC revision info. */
 	sc->bnx_chipid =  REG_RD(sc, BNX_MISC_ID);
 
 	/*
