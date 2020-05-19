@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.2.4.1 2020/05/19 17:35:50 martin Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.2.4.2 2020/05/19 17:39:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2.4.1 2020/05/19 17:35:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.2.4.2 2020/05/19 17:39:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,7 +214,7 @@ octeon_rnm_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the rndsource.  */
 	rndsource_setcb(&sc->sc_rndsrc, octeon_rnm_rng, sc);
-	rnd_attach_source(&sc->sc_rndsrc, device_xname(self), RND_TYPE_RNG,
+	rnd_attach_source(&sc->sc_rndsrc, device_xname(self), RND_TYPE_UNKNOWN,
 	    RND_FLAG_DEFAULT | RND_FLAG_HASCB);
 }
 
