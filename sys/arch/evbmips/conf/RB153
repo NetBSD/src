@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.24 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: RB153,v 1.25 2020/05/19 09:26:44 rin Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.24 $"
+#ident 		"RB153-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -35,8 +35,8 @@ makeoptions 	CPUFLAGS="-march=4kc"
 makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 #options 	MEMORY_DISK_HOOKS
-#options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-#options 	MEMORY_DISK_ROOT_SIZE=16384	# 2 Megabytes
+#options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
