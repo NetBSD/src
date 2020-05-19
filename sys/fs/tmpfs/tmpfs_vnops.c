@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.140 2020/05/17 19:43:31 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.141 2020/05/19 22:22:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.140 2020/05/17 19:43:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.141 2020/05/19 22:22:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1234,20 +1234,10 @@ tmpfs_getpages(void *v)
 		tmpfs_update_lazily(vp, tflags);
 	}
 
-	/*
-	 * Invoke the pager.
-	 *
-	 * Clean the array of pages before.  XXX: PR/32166
-	 * Note that vnode lock is shared with underlying UVM object.
-	 */
-	if ((flags & PGO_LOCKED) == 0 && pgs) {
-		memset(pgs, 0, sizeof(struct vm_pages *) * npages);
-	}
+	/* Invoke the pager.  The vnode vmobjlock is shared with the UAO. */
 	KASSERT(vp->v_uobj.vmobjlock == uobj->vmobjlock);
-
 	error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, centeridx,
 	    access_type, advice, flags);
-
 #if defined(DEBUG)
 	if (!error && pgs) {
 		KASSERT(pgs[centeridx] != NULL);
