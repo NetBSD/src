@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.236 2020/05/17 17:12:28 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.237 2020/05/19 20:46:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.236 2020/05/17 17:12:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.237 2020/05/19 20:46:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1766,8 +1766,8 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 		KASSERT((pg->flags & PG_BUSY) != 0);
 		if (pg->owner_tag) {
 			printf("uvm_page_own: page %p already owned "
-			    "by proc %d [%s]\n", pg,
-			    pg->owner, pg->owner_tag);
+			    "by proc %d.%d [%s]\n", pg,
+			    pg->owner, pg->lowner, pg->owner_tag);
 			panic("uvm_page_own");
 		}
 		pg->owner = curproc->p_pid;
@@ -2215,8 +2215,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 	(*pr)("  pa=0x%lx\n", (long)VM_PAGE_TO_PHYS(pg));
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
-		(*pr)("  owning process = %d, tag=%s\n",
-		    pg->owner, pg->owner_tag);
+		(*pr)("  owning process = %d.%d, tag=%s\n",
+		    pg->owner, pg->lowner, pg->owner_tag);
 	else
 		(*pr)("  page not busy, no owner\n");
 #else
