@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.21 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.22 2020/05/19 22:22:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.21 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.22 2020/05/19 22:22:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -146,7 +146,7 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 		memset(pgs, 0, sizeof(pgs));
 		error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, 0,
 			VM_PROT_READ | VM_PROT_WRITE, UVM_ADV_SEQUENTIAL,
-			PGO_ALLPAGES | PGO_SYNCIO);
+			PGO_SYNCIO);
 
 		if (error)
 			goto error;
