@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.392 2020/05/15 22:22:44 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.393 2020/05/19 21:14:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.392 2020/05/15 22:22:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.393 2020/05/19 21:14:20 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3025,8 +3025,7 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 
 	/*
 	 * Start at the lowest entered VA, and scan until there are no more
-	 * PTEs in the PTPs.  The goal is to disconnect PV entries and patch
-	 * up the pmap's stats.  No PTEs will be modified.
+	 * PTEs in the PTPs.
 	 */
 	tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
 	pve = RB_TREE_MIN(tree);
