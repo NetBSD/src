@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.59 2020/05/18 19:07:35 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.60 2020/05/19 17:40:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2646,4 +2646,18 @@ sys/kern/kern_time.c				1.204
 
 	kern_time: fix info leak.
 	[maxv, ticket #916]
+
+sys/kern/vnode_if.c				1.112
+sys/kern/vnode_if.src				1.80
+
+	Avoid a vfs deadlock when the backing store goes away
+	(e.g. by removing a USB drive).
+	[hannken, ticket #917]
+
+sys/arch/mips/cavium/dev/octeon_rnm.c		1.3-1.6 + patch
+sys/arch/mips/cavium/dev/octeon_rnmreg.h	1.2,1.3
+sys/arch/mips/cavium/octeonvar.h		1.7
+
+	Rework octeon_rnm(4) random number generator driver.
+	[simonb, ticket #918]
 
