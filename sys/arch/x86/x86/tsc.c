@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.44 2020/05/08 22:01:55 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.45 2020/05/19 21:43:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.44 2020/05/08 22:01:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.45 2020/05/19 21:43:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.44 2020/05/08 22:01:55 ad Exp $");
 #define	ABS(a)			((a) >= 0 ? (a) : -(a))
 
 u_int	tsc_get_timecount(struct timecounter *);
+
+static void	tsc_delay(unsigned int);
 
 uint64_t	tsc_freq; /* exported for sysctl */
 static int64_t	tsc_drift_max = 1000;	/* max cycles */
@@ -145,9 +147,11 @@ tsc_is_invariant(void)
 }
 
 /*
- * Initialize timecounter(9) of TSC.
- * This function is called after all secondary processors were up and
- * calculated the drift.
+ * Initialize timecounter(9) and DELAY() function of TSC.
+ *
+ * This function is called after all secondary processors were brought up
+ * and drift has been measured, and after any other potential delay funcs
+ * have been installed (e.g. lapic_delay()).
  */
 void
 tsc_tc_init(void)
@@ -169,6 +173,9 @@ tsc_tc_init(void)
 		    (long long)tsc_drift_observed);
 		tsc_timecounter.tc_quality = -100;
 		invariant = false;
+	} else if (vm_guest == VM_GUEST_NO) {
+		delay_func = tsc_delay;
+		x86_delay = tsc_delay;
 	}
 
 	if (tsc_freq != 0) {
@@ -323,4 +330,17 @@ cpu_hascounter(void)
 {
 
 	return cpu_feature[0] & CPUID_TSC;
+}
+
+static void
+tsc_delay(unsigned int us)
+{
+	uint64_t start, delta;
+
+	start = cpu_counter();
+	delta = (uint64_t)us * cpu_frequency(&cpu_info_primary) / 1000000;
+
+	while ((cpu_counter() - start) < delta) {
+		x86_pause();
+	}
 }
