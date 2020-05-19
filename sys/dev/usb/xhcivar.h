@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.13 2020/04/02 11:52:41 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.14 2020/05/19 18:18:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -62,10 +62,6 @@ struct xhci_ring {
 	u_int xr_ep;			/* enqueue pointer */
 	u_int xr_cs;			/* cycle state */
 	bool is_halted;
-};
-
-struct xhci_endpoint {
-	struct xhci_ring xe_tr;		/* transfer ring */
 };
 
 struct xhci_slot {
