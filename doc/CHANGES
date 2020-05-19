@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2690 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2691 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -206,3 +206,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[riastradh 20200514]
 	ACL: Add FFS support for ACLS via extended attributes, from FreeBSD.
 		[christos 20200516]
+	evbarm: Added support for Rockchip RK3399 crypto random number
+		generator device [riastradh 20200517]
