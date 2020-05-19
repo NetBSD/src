@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 2015/11/12 12:19:49 phx Exp $ */
+/*	$NetBSD: clock.c,v 1.56 2020/05/19 08:43:30 rin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.55 2015/11/12 12:19:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2020/05/19 08:43:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,10 @@ clockattach(device_t parent, device_t self, void *aux)
 		clockchip = "CIA B";
 	}
 
+	/* round nearest to mitigate clock drift for PAL */
 	amiga_clk_interval = chipfreq / hz;
+	if (chipfreq % hz >= hz / 2)
+		amiga_clk_interval++;
 
 	if (self != NULL) {	/* real autoconfig? */
 		printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
