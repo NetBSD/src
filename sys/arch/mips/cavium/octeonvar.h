@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.6 2018/04/19 21:50:06 christos Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.6.6.1 2020/05/19 17:35:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -163,8 +163,11 @@ struct octeon_cvmseg_map {
 		uint64_t	csm_ether_xxx_3;
 	} csm_ether[4/* XXX */];
 
-	/* 20-32 */
+	/* 20-31 */
 	uint64_t	xxx_20_32[32 - 20];
+
+	/* 32-63 */
+	uint64_t	csm_rnm[32];
 } __packed;
 #define	OCTEON_CVMSEG_OFFSET(entry) \
 	offsetof(struct octeon_cvmseg_map, entry)

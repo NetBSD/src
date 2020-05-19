@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnmreg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_rnmreg.h,v 1.1.26.1 2020/05/19 17:35:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,7 +40,9 @@
 
 /* ---- register bits */
 
-#define RNM_CTL_STATUS_XXX_63_4			UINT64_C(0xfffffffffffffff0)
+#define RNM_CTL_STATUS_XXX_63_5			UINT64_C(0xfffffffffffffe00)
+#define RNM_CTL_STATUS_ENT_SEL_MASK		UINT64_C(0x00000000000001e0)
+#define RNM_CTL_STATUS_EXP_ENT			UINT64_C(0x0000000000000010)
 #define RNM_CTL_STATUS_RNG_RST			UINT64_C(0x0000000000000008)
 #define RNM_CTL_STATUS_RNM_RST			UINT64_C(0x0000000000000004)
 #define RNM_CTL_STATUS_RNG_EN			UINT64_C(0x0000000000000002)
@@ -58,12 +60,28 @@
 #define	RNM_OPERATION_BASE_SUB_DID_SHIFT	40
 #define	RNM_OPERATION_BASE_IO_BIT_SHIFT	48
 
+/* ---- IOBDMA */
+
+/* 4.7 IOBDMA Operations (XXX move me elsewhere) */
+#define	IOBDMA_SCRADDR		__BITS(63,56)
+#define	IOBDMA_LEN		__BITS(55,48)
+#define	IOBDMA_MAJORDID		__BITS(47,43)
+#define	IOBDMA_SUBDID		__BITS(42,40)
+/* reserved 39:36 */
+#define	IOBDMA_OFFSET		__BITS(35,0)
+
+/* 19.1.12 IOBDMA Operations, p. 661 */
+#define	RNM_IOBDMA_MAJORDID	8
+#define	RNM_IOBDMA_SUBDID	0
+
 /* ---- snprintb */
 
 #define	RNM_CTL_STATUS_BITS \
 	"\177"		/* new format */ \
 	"\020"		/* hex display */ \
 	"\020"		/* %016x format */ \
+	"f\x05\x04"	"ENT_SEL\0" \
+	"b\x04"		"EXP_ENT\0" \
 	"b\x03"		"RNG_RST\0" \
 	"b\x02"		"RNM_RST\0" \
 	"b\x01"		"RNG_EN\0" \
