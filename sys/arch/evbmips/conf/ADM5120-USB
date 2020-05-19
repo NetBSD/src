@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-USB,v 1.29 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: ADM5120-USB,v 1.30 2020/05/19 09:26:44 rin Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -33,9 +33,9 @@ makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	CPUFLAGS="-march=4kc"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
-#options		MEMORY_DISK_HOOKS
-#options         MEMORY_DISK_IS_ROOT     # Force root on ram-disk
-#options         MEMORY_DISK_ROOT_SIZE=16384      # 2 Megabytes
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 # Compatibility options
 #include 	"conf/compat_netbsd10.config"
