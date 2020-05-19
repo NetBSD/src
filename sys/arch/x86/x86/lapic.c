@@ -1,7 +1,7 @@
-/*	$NetBSD: lapic.c,v 1.78 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: lapic.c,v 1.79 2020/05/19 21:39:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.78 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.79 2020/05/19 21:39:11 ad Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -727,12 +727,17 @@ static void
 lapic_delay(unsigned int usec)
 {
 	int32_t xtick, otick;
-	int64_t deltat;		/* XXX may want to be 64bit */
+	int64_t deltat;
 
+	/* XXX Bad to disable preemption, but it's tied to the cpu. */
+	kpreempt_disable();
 	otick = lapic_gettick();
 
-	if (usec <= 0)
+	if (usec <= 0) {
+		kpreempt_enable();
 		return;
+	}
+
 	if (usec <= 25)
 		deltat = lapic_delaytab[usec];
 	else
@@ -741,7 +746,7 @@ lapic_delay(unsigned int usec)
 	while (deltat > 0) {
 		xtick = lapic_gettick();
 		if (lapic_broken_periodic && xtick == 0 && otick == 0) {
-			lapic_initclocks();
+			lapic_reset();
 			xtick = lapic_gettick();
 			if (xtick == 0)
 				panic("lapic timer stopped ticking");
@@ -754,6 +759,7 @@ lapic_delay(unsigned int usec)
 
 		x86_pause();
 	}
+	kpreempt_enable();
 }
 
 /*
