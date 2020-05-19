@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.53 2020/05/19 21:40:55 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.54 2020/05/19 21:54:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -167,25 +167,6 @@ END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
 
-ENTRY(tsc_get_timecount)
-	movq	CPUVAR(CURLWP), %rcx
-1:
-	movq	L_NCSW(%rcx), %rdi
-	rdtsc
-	shlq	$32, %rdx
-	orq	%rdx, %rax
-	addq	CPUVAR(CC_SKEW), %rax
-	cmpq	%rdi, L_NCSW(%rcx)
-	jne	2f
-	KMSAN_INIT_RET(4)
-	ret
-2:
-	jmp	1b
-END(tsc_get_timecount)
-
-STRONG_ALIAS(cpu_counter, tsc_get_timecount)
-STRONG_ALIAS(cpu_counter32, tsc_get_timecount)
-
 /*
  * %rdi = name
  * %rsi = sel
@@ -224,6 +205,25 @@ ENTRY(x86_hotpatch)
 	ret
 END(x86_hotpatch)
 #endif /* !XENPV */
+
+ENTRY(tsc_get_timecount)
+	movq	CPUVAR(CURLWP), %rcx
+1:
+	movq	L_NCSW(%rcx), %rdi
+	rdtsc
+	shlq	$32, %rdx
+	orq	%rdx, %rax
+	addq	CPUVAR(CC_SKEW), %rax
+	cmpq	%rdi, L_NCSW(%rcx)
+	jne	2f
+	KMSAN_INIT_RET(4)
+	ret
+2:
+	jmp	1b
+END(tsc_get_timecount)
+
+STRONG_ALIAS(cpu_counter, tsc_get_timecount)
+STRONG_ALIAS(cpu_counter32, tsc_get_timecount)
 
 ENTRY(rdmsr_safe)
 	movq	CPUVAR(CURLWP), %r8
