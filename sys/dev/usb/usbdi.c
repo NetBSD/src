@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.201 2020/05/15 06:15:42 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.202 2020/05/19 18:32:35 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.201 2020/05/15 06:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.202 2020/05/19 18:32:35 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1243,7 +1243,7 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 static void
 usbd_request_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 }
 
 /*
@@ -1264,7 +1264,7 @@ usbd_request_async(struct usbd_device *dev, struct usbd_xfer *xfer,
 	    callback);
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
-		usbd_free_xfer(xfer);
+		usbd_destroy_xfer(xfer);
 		return (err);
 	}
 	return (USBD_NORMAL_COMPLETION);
