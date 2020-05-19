@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.21 2019/05/04 07:20:22 maxv Exp $	*/
+/*	$NetBSD: i386func.S,v 1.22 2020/05/19 21:40:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.21 2019/05/04 07:20:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.22 2020/05/19 21:40:55 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -137,17 +137,3 @@ ENTRY(lgdt)
 	movl	%eax, %fs
 	jmp	_C_LABEL(x86_flush)
 END(lgdt)
-
-ENTRY(tsc_get_timecount)
-	movl	CPUVAR(CURLWP), %ecx
-1:
-	pushl	L_NCSW(%ecx)
-	rdtsc
-	addl	CPUVAR(CC_SKEW), %eax
-	popl	%edx
-	cmpl	%edx, L_NCSW(%ecx)
-	jne	2f
-	ret
-2:
-	jmp	1b
-END(tsc_get_timecount)
