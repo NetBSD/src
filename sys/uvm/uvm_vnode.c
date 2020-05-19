@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.112 2020/05/19 21:45:57 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.113 2020/05/19 22:22:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.112 2020/05/19 21:45:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.113 2020/05/19 22:22:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -161,8 +161,7 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
  *
  * => prefer map unlocked (not required)
  * => object must be locked!  we will _unlock_ it before starting any I/O.
- * => flags: PGO_ALLPAGES: get all of the pages
- *           PGO_LOCKED: fault data structures are locked
+ * => flags: PGO_LOCKED: fault data structures are locked
  * => NOTE: offset is the offset of pps[0], _NOT_ pps[centeridx]
  * => NOTE: caller must check for released pages!!
  */
