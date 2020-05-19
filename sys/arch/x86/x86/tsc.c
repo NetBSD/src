@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.45 2020/05/19 21:43:36 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.46 2020/05/19 21:56:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.45 2020/05/19 21:43:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.46 2020/05/19 21:56:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,6 @@ tsc_tc_init(void)
 		invariant = false;
 	} else if (vm_guest == VM_GUEST_NO) {
 		delay_func = tsc_delay;
-		x86_delay = tsc_delay;
 	}
 
 	if (tsc_freq != 0) {
