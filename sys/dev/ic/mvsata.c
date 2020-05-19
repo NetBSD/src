@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.56 2020/04/13 10:49:34 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.57 2020/05/19 08:08:51 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.56 2020/04/13 10:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.57 2020/05/19 08:08:51 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1108,10 +1108,6 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 				return ATASTART_ABORT;
 			}
 			chp->ch_flags |= ATACH_DMA_WAIT;
-			/* start timeout machinery */
-			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&chp->c_timo_callout,
-				    mstohz(ATA_DELAY), ata_timeout, chp);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -1192,11 +1188,6 @@ do_pio:
 			    head, sect, nblks,
 			    (drvp->lp->d_type == DKTYPE_ST506) ?
 			    drvp->lp->d_precompcyl / 4 : 0);
-
-		/* start timeout machinery */
-		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&chp->c_timo_callout,
-			    mstohz(ATA_DELAY), wdctimeout, chp);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
@@ -1238,9 +1229,12 @@ intr:
 		xfer->c_flags, mvport->port_edmamode_curr, nodma); 
 
 	/* Wait for IRQ (either real or polled) */
-	if ((ata_bio->flags & ATA_POLL) != 0)
+	if ((ata_bio->flags & ATA_POLL) != 0) {
+		/* start timeout machinery */
+		callout_reset(&chp->c_timo_callout,
+		    mstohz(ATA_DELAY), wdctimeout, chp);
 		return ATASTART_POLL;
-	else
+	} else
 		return ATASTART_STARTED;
 
 timeout:
@@ -2116,11 +2110,6 @@ ready:
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}
-	/* start timeout machinery */
-	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
-		    wdctimeout, chp);
-
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd) != 0) {
 		aprint_error_dev(atac->atac_dev, "not ready, st = %02x\n",
@@ -2128,6 +2117,11 @@ ready:
 		sc_xfer->error = XS_TIMEOUT;
 		return ATASTART_ABORT;
 	}
+
+	/* start timeout machinery */
+	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
+		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
+		    wdctimeout, chp);
 
 	/*
 	 * Even with WDCS_ERR, the device should accept a command packet
