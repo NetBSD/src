@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dtb.mk,v 1.1 2020/05/18 21:19:35 jmcneill Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.2 2020/05/19 08:59:36 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.own.mk>
@@ -74,10 +74,12 @@ dtbinstall:	dtb
 
 dtblist:
 .if defined(DTSSUBDIR)
-	@echo ".${DTBINSTDIR}\t\tdtb-base-boot\tdtb"
+	@echo ".${DTBINSTDIR}\t\tdtb-base-boot\tdtb" | \
+	    ${TOOL_SED} 's/\\t/	/g'
 .endif
 .for _dtb in ${DTB}
-	@echo ".${DTBINSTDIR}/${_dtb}\t\tdtb-base-boot\tdtb"
+	@echo ".${DTBINSTDIR}/${_dtb}\t\tdtb-base-boot\tdtb" | \
+	    ${TOOL_SED} 's/\\t/	/g'
 .endfor
 
 clean:  .PHONY
