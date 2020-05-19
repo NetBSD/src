@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.141 2020/05/17 19:38:17 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.142 2020/05/19 22:22:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.141 2020/05/17 19:38:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.142 2020/05/19 22:22:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -786,14 +786,12 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
  * 2: page is zero-fill    -> allocate a new page and zero it.
  * 3: page is swapped out  -> fetch the page from swap.
  *
- * cases 1 and 2 can be handled with PGO_LOCKED, case 3 cannot.
- * so, if the "center" page hits case 3 (or any page, with PGO_ALLPAGES),
- * then we will need to return EBUSY.
+ * case 1 can be handled with PGO_LOCKED, cases 2 and 3 cannot.
+ * so, if the "center" page hits case 2/3 then we will need to return EBUSY.
  *
  * => prefer map unlocked (not required)
  * => object must be locked!  we will _unlock_ it before starting any I/O.
- * => flags: PGO_ALLPAGES: get all of the pages
- *           PGO_LOCKED: fault data structures are locked
+ * => flags: PGO_LOCKED: fault data structures are locked
  * => NOTE: offset is the offset of pps[0], _NOT_ pps[centeridx]
  * => NOTE: caller must check for released pages!!
  */
@@ -805,7 +803,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	voff_t current_offset;
 	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
 	int lcv, gotpages, maxpages, swslot, pageidx;
-	bool done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
@@ -841,7 +838,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  		 */
 
 		uvm_page_array_init(&a);
-		done = true;	/* be optimistic */
 		gotpages = 0;	/* # of pages we got so far */
 		for (lcv = 0; lcv < maxpages; lcv++) {
 			ptmp = uvm_page_array_fill_and_peek(&a, uobj,
@@ -880,16 +876,9 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * to unlock and do some waiting or I/O.
  		 */
 
-		if ((flags & PGO_ALLPAGES) != 0) {
-			for (int i = 0; i < maxpages; i++) {
-				done &= (pps[i] != NULL);
-			}
-		} else {
-			done = (pps[centeridx] != NULL);
-		}
 		UVMHIST_LOG(pdhist, "<- done (done=%jd)", done, 0,0,0);
 		*npagesp = gotpages;
-		return done ? 0 : EBUSY;
+		return pps[centeridx] != NULL ? 0 : EBUSY;
 	}
 
 	/*
@@ -905,17 +894,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	    lcv++, current_offset += PAGE_SIZE) {
 
 		/*
-		 * - skip over pages we've already gotten or don't want
-		 * - skip over pages we don't _have_ to get
-		 */
-
-		if (pps[lcv] != NULL ||
-		    (lcv != centeridx && (flags & PGO_ALLPAGES) == 0))
-			continue;
-
-		pageidx = current_offset >> PAGE_SHIFT;
-
-		/*
  		 * we have yet to locate the current page (pps[lcv]).   we
 		 * first look for a page that is already at the current offset.
 		 * if we find a page, we check to see if it is busy or
@@ -926,20 +904,23 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * 'break's the following while loop and indicates we are
 		 * ready to move on to the next page in the "lcv" loop above.
  		 *
- 		 * if we exit the while loop with pps[lcv] still set to NULL,
+ 		 * if we exit the while loop with pps[lcv] set to NULL,
 		 * then it means that we allocated a new busy/fake/clean page
 		 * ptmp in the object and we need to do I/O to fill in the data.
  		 */
 
 		/* top of "pps" while loop */
-		while (pps[lcv] == NULL) {
+		for (;;) {
 			/* look for a resident page */
 			ptmp = uvm_pagelookup(uobj, current_offset);
 
 			/* not resident?   allocate one now (if we can) */
 			if (ptmp == NULL) {
-
-				ptmp = uao_pagealloc(uobj, current_offset, 0);
+				/* get a zeroed page if not in swap */
+				pageidx = current_offset >> PAGE_SHIFT;
+				swslot = uao_find_swslot(uobj, pageidx);
+				ptmp = uao_pagealloc(uobj, current_offset,
+				    swslot == 0 ? UVM_PGA_ZERO : 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
@@ -952,10 +933,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				}
 
 				/*
-				 * got new page ready for I/O.  break pps while
-				 * loop.  pps[lcv] is still NULL.
+				 * got new page ready for I/O.  break pps for
+				 * loop.
 				 */
 
+				pps[lcv] = NULL;
 				break;
 			}
 
@@ -982,6 +964,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get2");
 			pps[lcv] = ptmp;
+			break;
 		}
 
 		/*
@@ -993,24 +976,12 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			continue;			/* next lcv */
 
 		/*
- 		 * we have a "fake/busy/clean" page that we just allocated.
- 		 * do the needed "i/o", either reading from swap or zeroing.
+ 		 * if swslot == 0, page hasn't existed before and is zeroed. 
+ 		 * otherwise we have a "fake/busy/clean" page that we just
+ 		 * allocated.  do the needed "i/o", reading from swap.
  		 */
 
-		swslot = uao_find_swslot(uobj, pageidx);
-
-		/*
- 		 * just zero the page if there's nothing in swap.
- 		 */
-
-		if (swslot == 0) {
-
-			/*
-			 * page hasn't existed before, just zero it.
-			 */
-
-			uvm_pagezero(ptmp);
-		} else {
+		if (swslot != 0) {
 #if defined(VMSWAP)
 			int error;
 
@@ -1049,6 +1020,12 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 				uvm_pagefree(ptmp);
 				rw_exit(uobj->vmobjlock);
+				UVMHIST_LOG(pdhist, "<- done (error)",
+				    error,lcv,0,0);
+				if (lcv != 0) {
+					uvm_page_unbusy(pps, lcv);
+				}
+				memset(pps, 0, maxpages * sizeof(pps[0]));
 				return error;
 			}
 #else /* defined(VMSWAP) */
