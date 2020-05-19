@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.77.10.1 2019/10/15 18:12:25 martin Exp $
+#	$NetBSD: vnode_if.src,v 1.77.10.2 2020/05/19 16:24:38 martin Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -436,7 +436,7 @@ vop_bmap {
 #% strategy   vp      = = =
 #
 vop_strategy {
-	FSTRANS=LAZY
+	FSTRANS=NO
 	IN struct vnode *vp;
 	IN struct buf *bp;
 };
