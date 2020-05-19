@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc.S,v 1.52 2020/05/08 21:58:03 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.53 2020/05/19 21:40:55 ad Exp $	*/
 
 /*
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -172,7 +172,9 @@ ENTRY(tsc_get_timecount)
 1:
 	movq	L_NCSW(%rcx), %rdi
 	rdtsc
-	addl	CPUVAR(CC_SKEW), %eax
+	shlq	$32, %rdx
+	orq	%rdx, %rax
+	addq	CPUVAR(CC_SKEW), %rax
 	cmpq	%rdi, L_NCSW(%rcx)
 	jne	2f
 	KMSAN_INIT_RET(4)
@@ -180,6 +182,9 @@ ENTRY(tsc_get_timecount)
 2:
 	jmp	1b
 END(tsc_get_timecount)
+
+STRONG_ALIAS(cpu_counter, tsc_get_timecount)
+STRONG_ALIAS(cpu_counter32, tsc_get_timecount)
 
 /*
  * %rdi = name
@@ -251,23 +256,6 @@ ENTRY(msr_onfault)
 	movl	$EFAULT, %eax
 	ret
 END(msr_onfault)
-
-ENTRY(cpu_counter)
-	xorl	%eax, %eax
-	rdtsc
-	shlq	$32, %rdx
-	orq	%rdx, %rax
-	addq	CPUVAR(CC_SKEW), %rax
-	KMSAN_INIT_RET(8)
-	ret
-END(cpu_counter)
-
-ENTRY(cpu_counter32)
-	rdtsc
-	addl	CPUVAR(CC_SKEW), %eax
-	KMSAN_INIT_RET(4)
-	ret
-END(cpu_counter32)
 
 ENTRY(breakpoint)
 	pushq	%rbp
