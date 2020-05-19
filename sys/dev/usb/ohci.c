@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.306 2020/05/19 18:57:26 jakllsch Exp $	*/
+/*	$NetBSD: ohci.c,v 1.307 2020/05/19 19:09:43 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.306 2020/05/19 18:57:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.307 2020/05/19 19:09:43 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1228,6 +1228,11 @@ ohci_dumpregs(ohci_softc_t *sc)
 	DPRINTF("               port1=0x%08jx port2=0x%08jx",
 		 OREAD4(sc, OHCI_RH_PORT_STATUS(1)),
 		 OREAD4(sc, OHCI_RH_PORT_STATUS(2)), 0, 0);
+	usb_syncmem(&sc->sc_hccadma,
+	    offsetof(struct ohci_hcca, hcca_frame_number),
+	    sizeof(sc->sc_hcca->hcca_frame_number) +
+	    sizeof(sc->sc_hcca->hcca_done_head),
+	    BUS_DMASYNC_POSTREAD);
 	DPRINTF("         HCCA: frame_number=0x%04jx done_head=0x%08jx",
 		 O32TOH(sc->sc_hcca->hcca_frame_number),
 		 O32TOH(sc->sc_hcca->hcca_done_head), 0, 0);
@@ -3469,6 +3474,10 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 
 	if (isoc->next == -1) {
 		/* Not in use yet, schedule it a few frames ahead. */
+		usb_syncmem(&sc->sc_hccadma,
+		    offsetof(struct ohci_hcca, hcca_frame_number),
+		    sizeof(sc->sc_hcca->hcca_frame_number),
+		    BUS_DMASYNC_POSTREAD);
 		isoc->next = O32TOH(sc->sc_hcca->hcca_frame_number) + 5;
 		DPRINTFN(2,"start next=%jd", isoc->next, 0, 0, 0);
 	}
@@ -3558,6 +3567,10 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug >= 5) {
+		usb_syncmem(&sc->sc_hccadma,
+		    offsetof(struct ohci_hcca, hcca_frame_number),
+		    sizeof(sc->sc_hcca->hcca_frame_number),
+		    BUS_DMASYNC_POSTREAD);
 		DPRINTF("frame=%jd", O32TOH(sc->sc_hcca->hcca_frame_number),
 		    0, 0, 0);
 		ohci_dump_itds(sc, xfer->ux_hcpriv);
