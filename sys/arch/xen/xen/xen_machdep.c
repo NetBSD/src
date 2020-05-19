@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.24 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.25 2020/05/19 21:57:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.24 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.25 2020/05/19 21:57:25 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -226,13 +226,6 @@ static int sysctl_xen_suspend(SYSCTLFN_ARGS);
 static void xen_suspend_domain(void);
 static void xen_prepare_suspend(void);
 static void xen_prepare_resume(void);
-
-u_int
-tsc_get_timecount(struct timecounter *tc)
-{
-
-	panic("xen: tsc_get_timecount");
-}
 
 /*
  * this function sets up the machdep.xen.suspend sysctl(7) that
