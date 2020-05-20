@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.39 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.40 2020/05/20 17:04:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1663,7 +1663,7 @@ const struct vnodeopv_entry_desc chfs_specop_entries[] =
 		{ &vop_open_desc, spec_open },
 		{ &vop_close_desc, ufsspec_close },
 		{ &vop_access_desc, chfs_access },
-		{ &vop_accessx_desc, genfs_access },
+		{ &vop_accessx_desc, genfs_accessx },
 		{ &vop_getattr_desc, chfs_getattr },
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
@@ -1720,7 +1720,7 @@ const struct vnodeopv_entry_desc chfs_fifoop_entries[] =
 		{ &vop_open_desc, vn_fifo_bypass },
 		{ &vop_close_desc, ufsfifo_close },
 		{ &vop_access_desc, chfs_access },
-		{ &vop_accessx_desc, genfs_access },
+		{ &vop_accessx_desc, genfs_accessx },
 		{ &vop_getattr_desc, chfs_getattr },
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, ufsfifo_read },
