@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.55 2020/05/20 18:39:25 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.56 2020/05/20 18:52:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -206,7 +206,8 @@ ENTRY(x86_hotpatch)
 END(x86_hotpatch)
 #endif /* !XENPV */
 
-/* Could be exact same as cpu_counter but for KASAN fussiness. */
+/* Could be exact same as cpu_counter, but KMSAN needs to have the correct
+ * size of the return value. */
 ENTRY(cpu_counter32)
 	movq	CPUVAR(CURLWP), %rcx
 1:
