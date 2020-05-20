@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_backlight.c,v 1.2 2015/12/21 04:26:29 hkenken Exp $	*/
+/*	$NetBSD: netwalker_backlight.c,v 1.3 2020/05/20 05:10:42 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,13 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.2 2015/12/21 04:26:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.3 2020/05/20 05:10:42 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/pmf.h>
+
+#include <dev/pwm/pwmvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -91,7 +93,6 @@ netwalker_backlight_attach(device_t parent, device_t self, void *aux)
 	struct imxpwm_softc *imxpwm = &sc->sc_imxpwm;
 
 	imxpwm->sc_dev = self;
-	imxpwm->sc_hz = 1000; /* 1000 Hz */
 	imxpwm->sc_handler = NULL;
 	imxpwm->sc_cookie = sc;
 	imxpwm_attach(imxpwm, aux);
@@ -102,9 +103,8 @@ netwalker_backlight_attach(device_t parent, device_t self, void *aux)
 	netwalker_backlight_sc = sc;
 
 	/* BackLight 100% On */
-	sc->sc_brightness = BRIGHTNESS_MAX;
 	sc->sc_islit = true;
-	imxpwm_set_pwm(imxpwm, 1000);
+	netwalker_set_brightness(sc, BRIGHTNESS_MAX);
 
 	if (!pmf_device_register(self, netwalker_backlight_suspend,
 		netwalker_backlight_resume))
@@ -141,9 +141,8 @@ static int
 netwalker_backlight_detach(device_t self, int flags)
 {
 	struct netwalker_backlight_softc *sc = device_private(self);
-	struct imxpwm_softc *imxpwm = &sc->sc_imxpwm;
 
-	imxpwm_set_pwm(imxpwm, 0);
+	netwalker_set_brightness(sc, 0);
 	pmf_device_deregister(self);
 	return 0;
 }
@@ -186,7 +185,7 @@ netwalker_backlight_set_brightness(void *cookie, int level)
 {
 	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
 
-	KASSERT(level >= 0 && level <= 255);
+	KASSERT(level >= 0 && level <= BRIGHTNESS_MAX);
 
 	sc->sc_brightness = level;
 	netwalker_set_brightness(sc, sc->sc_brightness);
@@ -204,7 +203,7 @@ netwalker_backlight_upd_brightness(void *cookie, int delta)
 
 	sc->sc_brightness += delta;
 	if (sc->sc_brightness < 0) sc->sc_brightness = 0;
-	if (sc->sc_brightness > 255) sc->sc_brightness = 255;
+	if (sc->sc_brightness > BRIGHTNESS_MAX) sc->sc_brightness = BRIGHTNESS_MAX;
 	netwalker_set_brightness(sc, sc->sc_brightness);
 
 	return 0;
@@ -276,10 +275,21 @@ netwalker_brightness_down(device_t dv)
 }
 
 static void
+netwalker_set_pwm(struct netwalker_backlight_softc *sc, int val)
+{
+	pwm_tag_t pwm = &sc->sc_imxpwm.sc_pwm;
+	struct pwm_config conf;
+
+	pwm_disable(pwm);
+	pwm_get_config(pwm, &conf);
+	conf.duty_cycle = (conf.period * val) / BRIGHTNESS_MAX;
+	pwm_set_config(pwm, &conf);
+	pwm_enable(pwm);
+}
+
+static void
 netwalker_set_brightness(struct netwalker_backlight_softc *sc, int newval)
 {
-	struct imxpwm_softc *imxpwm = &sc->sc_imxpwm;
-
 	if (newval < 0)
 		newval = 0;
 	else if (newval > BRIGHTNESS_MAX)
@@ -287,9 +297,9 @@ netwalker_set_brightness(struct netwalker_backlight_softc *sc, int newval)
 	sc->sc_brightness = newval;
 
 	if (sc->sc_islit)
-		imxpwm_set_pwm(imxpwm, 1000 * sc->sc_brightness / BRIGHTNESS_MAX);
+		netwalker_set_pwm(sc, sc->sc_brightness);
 	else
-		imxpwm_set_pwm(imxpwm, 0);
+		netwalker_set_pwm(sc, 0);
 }
 
 int
