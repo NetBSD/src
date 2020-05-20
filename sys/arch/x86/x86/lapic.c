@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.79 2020/05/19 21:39:11 ad Exp $	*/
+/*	$NetBSD: lapic.c,v 1.80 2020/05/20 02:23:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.79 2020/05/19 21:39:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.80 2020/05/20 02:23:35 msaitoh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -746,7 +746,7 @@ lapic_delay(unsigned int usec)
 	while (deltat > 0) {
 		xtick = lapic_gettick();
 		if (lapic_broken_periodic && xtick == 0 && otick == 0) {
-			lapic_reset();
+			lapic_initclocks();
 			xtick = lapic_gettick();
 			if (xtick == 0)
 				panic("lapic timer stopped ticking");
