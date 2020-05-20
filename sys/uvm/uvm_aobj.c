@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.142 2020/05/19 22:22:15 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.143 2020/05/20 12:47:36 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.142 2020/05/19 22:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.143 2020/05/20 12:47:36 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -802,7 +802,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 {
 	voff_t current_offset;
 	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
-	int lcv, gotpages, maxpages, swslot, pageidx;
+	int lcv, gotpages, maxpages, swslot = -1, pageidx = -1; /* XXX: gcc */
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
@@ -876,7 +876,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * to unlock and do some waiting or I/O.
  		 */
 
-		UVMHIST_LOG(pdhist, "<- done (done=%jd)", done, 0,0,0);
+		UVMHIST_LOG(pdhist, "<- done (done=%jd)",
+		    (pps[centeridx] != NULL), 0,0,0);
 		*npagesp = gotpages;
 		return pps[centeridx] != NULL ? 0 : EBUSY;
 	}
