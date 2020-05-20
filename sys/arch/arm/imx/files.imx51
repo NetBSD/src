@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.20 2019/10/12 06:46:13 skrll Exp $
+#	$NetBSD: files.imx51,v 1.21 2020/05/20 05:10:42 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -137,6 +137,6 @@ defparam opt_imxspi.h				IMXSPI_DEBUG
 # file	arch/arm/imx/imx51_i2s.c		imxi2s needs-flag
 
 # PWM controller
-device	imxpwm
+device	imxpwm: pwm
 file	arch/arm/imx/imxpwm.c			imxpwm
 file	arch/arm/imx/imx51_pwm.c		imxpwm

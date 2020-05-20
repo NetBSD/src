@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_pwm.c,v 1.1 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: imx51_pwm.c,v 1.2 2020/05/20 05:10:42 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_pwm.c,v 1.1 2014/05/06 11:22:53 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_pwm.c,v 1.2 2020/05/20 05:10:42 hkenken Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -62,10 +62,16 @@ imxpwm_attach(struct imxpwm_softc *sc, void *aux)
 
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = PWM_SIZE;
+
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_intr = aa->aa_irq;
 	sc->sc_freq = imx51_get_clock(IMX51CLK_IPG_CLK_ROOT);
+
 	if (bus_space_map(aa->aa_iot, aa->aa_addr, aa->aa_size, 0, &sc->sc_ioh))
 		panic("%s: couldn't map", device_xname(sc->sc_dev));
+
+	sc->sc_ih = intr_establish(sc->sc_intr, IPL_BIO, IST_LEVEL,
+	    imxpwm_intr, sc);
+
 	imxpwm_attach_common(sc);
 }
