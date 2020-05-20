@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.206 2020/05/18 19:55:42 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.207 2020/05/20 17:06:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.206 2020/05/18 19:55:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.207 2020/05/20 17:06:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1320,7 +1320,7 @@ genfs_can_chtimes(vnode_t *vp, kauth_cred_t cred, uid_t owner_uid,
 	 * server time.
 	 */
 	if ((error = VOP_ACCESSX(vp, VWRITE_ATTRIBUTES, cred)) != 0)
-		return (error);
+		return (vaflags & VA_UTIMES_NULL) == 0 ? EPERM : EACCES;
 
 	/* Must be owner, or... */
 	if (kauth_cred_geteuid(cred) == owner_uid)
