@@ -6,14 +6,12 @@ Known issues in NVMM, low priority in most cases.
    install the PDPTEs, and currently we don't do it. In practice they don't
    misbehave because the emulator never has to interfere with CR3.
 
- * Maybe we will want a way to return to userland when the guest TPR changes.
-   On Intel that's not complicated, but on old AMD CPUs, we need to disassemble
-   the instruction, and I don't like that.
+ * AMD: we don't support VCPU_CONF_TPR, would be nice to.
 
- * We need a cleaner way to handle CPUID exits. It is not complicated to solve,
-   but I'm still not sure which design is the cleanest.
+ * AMD: need to do comprehensive CPUID filtering.
 
- * Same for the MSRs.
+ * Intel: we have comprehensive CPUID filtering, but should we limit the highest
+   leaf?
 
 ====== LIBNVMM ======
 
@@ -22,3 +20,5 @@ Known issues in NVMM, low priority in most cases.
    must base the GVA on %SS and not %DS. This is tiring, and in practice, no
    guest is dumb enough to perform such accesses.
 
+ * Maybe the __areas should have a rwlock? I don't think Qemu unmaps memory
+   while VCPUs are running, but still.
