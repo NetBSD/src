@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpwm.c,v 1.1 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: imxpwm.c,v 1.2 2020/05/20 05:10:42 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,88 +27,155 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxpwm.c,v 1.1 2014/05/06 11:22:53 hkenken Exp $");
-
-#include "opt_imx.h"
-#include "locators.h"
+__KERNEL_RCSID(0, "$NetBSD: imxpwm.c,v 1.2 2020/05/20 05:10:42 hkenken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
+#include <dev/clk/clk_backend.h>
+
 #include <arm/imx/imxpwmreg.h>
 #include <arm/imx/imxpwmvar.h>
 
-static inline uint32_t
-imxpwm_read(struct imxpwm_softc *sc, bus_size_t o)
-{
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, o);
-}
+#include <dev/pwm/pwmvar.h>
 
-static inline void
-imxpwm_write(struct imxpwm_softc *sc, bus_size_t o, uint32_t v)
-{
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, o, v);
-}
+#define	PWM_READ(sc, reg)		\
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
+#define	PWM_WRITE(sc, reg, val)		\
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 
-static int
+int
 imxpwm_intr(void *arg)
 {
 	struct imxpwm_softc *sc = arg;
-	uint32_t sts = imxpwm_read(sc, PWM_SR);
 
-	imxpwm_write(sc, PWM_SR, sts);
+	uint32_t sts = PWM_READ(sc, PWM_SR);
 
-	if ((sts & SR_ROV) && (sc->sc_handler != NULL))
-		sc->sc_handler(sc->sc_cookie);
+	if (sts & PWM_SR_ROV) {
+		if (sc->sc_handler != NULL)
+			sc->sc_handler(sc->sc_cookie);
+	}
+
+	PWM_WRITE(sc, PWM_SR, sts);
 
 	return 1;
+}
+
+static int
+imxpwm_enable(pwm_tag_t pwm, bool enable)
+{
+	struct imxpwm_softc * const sc = device_private(pwm->pwm_dev);
+	uint32_t cr, ocr;
+
+	ocr = cr = PWM_READ(sc, PWM_CR);
+	if (enable)
+		cr |= PWM_CR_EN;
+	else
+		cr &= ~PWM_CR_EN;
+
+	if (cr != ocr)
+		PWM_WRITE(sc, PWM_CR, cr);
+
+	return 0;
+}
+
+static int
+imxpwm_get_config(pwm_tag_t pwm, struct pwm_config *conf)
+{
+	struct imxpwm_softc * const sc = device_private(pwm->pwm_dev);
+	uint32_t cr, sar, pr;
+
+	cr = PWM_READ(sc, PWM_CR);
+	sar = PWM_READ(sc, PWM_SAR);
+	pr = PWM_READ(sc, PWM_PR);
+
+	const int div		= __SHIFTOUT(cr, PWM_CR_PRESCALER) + 1;
+	const int polarity	= __SHIFTOUT(cr, PWM_CR_POUTC);
+	const uint64_t rate	= sc->sc_freq / div;
+	const u_int cycles	=  __SHIFTOUT(pr, PWM_PR_PERIOD) + 2;
+	const u_int act_cycles	= __SHIFTOUT(sar, PWM_SAR_SAMPLE);
+
+	conf->polarity	 = polarity ? PWM_ACTIVE_HIGH : PWM_ACTIVE_LOW;
+	conf->period	 = (u_int)(((uint64_t)cycles * 1000000000) / rate);
+	conf->duty_cycle = (u_int)(((uint64_t)act_cycles * 1000000000) / rate);
+
+	return 0;
+}
+
+static int
+imxpwm_set_config(pwm_tag_t pwm, const struct pwm_config *conf)
+{
+	struct imxpwm_softc * const sc = device_private(pwm->pwm_dev);
+	uint32_t cr, sar, pr;
+
+	if (conf->period == 0)
+		return EINVAL;
+	uint64_t rate;
+	u_int cycles;
+	int div = 0;
+	do {
+		div++;
+		rate = sc->sc_freq / div;
+		cycles = (u_int)((conf->period * rate) / 1000000000);
+	} while (cycles > 0xffff);
+	pr = __SHIFTIN(cycles - 2, PWM_PR_PERIOD);
+
+	cr = PWM_READ(sc, PWM_CR);
+	cr &= ~PWM_CR_PRESCALER;
+	cr |= __SHIFTIN(div - 1, PWM_CR_PRESCALER);
+	cr &= ~PWM_CR_POUTC;
+	if (conf->polarity == PWM_ACTIVE_LOW)
+		cr |= __SHIFTIN(1, PWM_CR_POUTC);
+
+	u_int act_cycles = (u_int)((conf->duty_cycle * rate) / 1000000000);
+	sar = __SHIFTIN(act_cycles, PWM_PR_PERIOD);
+
+	PWM_WRITE(sc, PWM_SAR, sar);
+	PWM_WRITE(sc, PWM_PR, pr);
+	PWM_WRITE(sc, PWM_CR, cr);
+
+	sc->sc_conf = *conf;
+
+	return 0;
 }
 
 void
 imxpwm_attach_common(struct imxpwm_softc *sc)
 {
 	uint32_t reg;
-	int div;
+	int error;
 
 	if (sc->sc_handler != NULL) {
-		sc->sc_ih = intr_establish(sc->sc_intr, IPL_BIO, IST_LEVEL,
-		    imxpwm_intr, sc);
-
-		reg = IR_RIE;
-		imxpwm_write(sc, PWM_IR, reg);
+		reg = PWM_IR_RIE;
+		PWM_WRITE(sc, PWM_IR, reg);
 	}
 
-	if (sc->sc_hz <= 0)
-		sc->sc_hz = IMXPWM_DEFAULT_HZ;
-	div = 0;
-	do {
-		div++;
-		sc->sc_cycle = sc->sc_freq / div / sc->sc_hz;
-	} while (sc->sc_cycle > 0xffff);
+	if (sc->sc_clk) {
+		error = clk_enable(sc->sc_clk);
+		if (error != 0) {
+			aprint_error(": couldn't enable clk\n");
+			return;
+		}
+	}
 
-	imxpwm_write(sc, PWM_PR, __SHIFTIN(sc->sc_cycle - 2, PR_PERIOD));
+	reg = PWM_READ(sc, PWM_CR);
+	reg &= PWM_CR_CLKSRC;
+	reg |= __SHIFTIN(CLKSRC_IPG_CLK, PWM_CR_CLKSRC);
+	PWM_WRITE(sc, PWM_CR, reg);
 
-	reg = 0;
-	reg |= __SHIFTIN(CLKSRC_IPG_CLK, CR_CLKSRC);
-	reg |= __SHIFTIN(div - 1, CR_PRESCALER);
-	reg |= CR_EN;
-	imxpwm_write(sc, PWM_CR, reg);
+	sc->sc_pwm.pwm_enable	  = imxpwm_enable;
+	sc->sc_pwm.pwm_get_config = imxpwm_get_config;
+	sc->sc_pwm.pwm_set_config = imxpwm_set_config;
+	sc->sc_pwm.pwm_dev	  = sc->sc_dev;
+
+	/* Set default settings */
+	struct pwm_config conf = {
+		.period = 1000000,
+		.duty_cycle = 0,
+		.polarity = PWM_ACTIVE_HIGH,
+	};
+	pwm_set_config(&sc->sc_pwm, &conf);
 }
 
-int
-imxpwm_set_pwm(struct imxpwm_softc *sc, int duty)
-{
-	if (duty < 0 || IMXPWM_DUTY_MAX < duty)
-		return EINVAL;
-
-	sc->sc_duty = duty;
-
-	uint16_t reg = sc->sc_cycle * sc->sc_duty / IMXPWM_DUTY_MAX;
-	if (reg != 0)
-		reg -= 1;
-	imxpwm_write(sc, PWM_SAR, __SHIFTIN(reg, SAR_SAMPLE));
-
-	return 0;
-}
