@@ -755,14 +755,13 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 			va = zfs_map_page(pp, S_READ);
 			error = uiomove(va + off, bytes, UIO_READ, uio);
 			zfs_unmap_page(pp, va);
+			rw_enter(rw, RW_WRITER);
+			uvm_page_unbusy(&pp, 1);
+			rw_exit(rw);
 		} else {
 			error = dmu_read_uio_dbuf(sa_get_db(zp->z_sa_hdl),
 			    uio, bytes);
 		}
-
-		rw_enter(rw, RW_WRITER);
-		uvm_page_unbusy(&pp, 1);
-		rw_exit(rw);
 
 		len -= bytes;
 		off = 0;
@@ -5987,9 +5986,24 @@ zfs_netbsd_getpages(void *v)
 	int npages, found, err = 0;
 
 	if (flags & PGO_LOCKED) {
-		*ap->a_count = 0;
-		ap->a_m[ap->a_centeridx] = NULL;
-		return EBUSY;
+ 		uvn_findpages(uobj, ap->a_offset, ap->a_count, ap->a_m, NULL,
+		    UFP_NOWAIT | UFP_NOALLOC | UFP_NOBUSY |
+		    (memwrite ? UFP_NORDONLY : 0));
+		if (memwrite) {
+			KASSERT(rw_write_held(uobj->vmobjlock));
+			for (int i = 0; i < npages; i++) {
+				pg = ap->a_m[i];
+				if (pg == NULL || pg == PGO_DONTCARE) {
+					continue;
+				}
+				if (uvm_pagegetdirty(pg) ==
+				    UVM_PAGE_STATUS_CLEAN) {
+					uvm_pagemarkdirty(pg,
+					    UVM_PAGE_STATUS_UNKNOWN);
+				}
+			}
+		}
+		return ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
 	}
 	rw_exit(rw);
 
@@ -6016,28 +6030,42 @@ zfs_netbsd_getpages(void *v)
 		fstrans_done(mp);
 		return EINVAL;
 	}
-	npages = 1;
-	pg = NULL;
-	uvn_findpages(uobj, offset, &npages, &pg, NULL, UFP_ALL);
+	npages = *ap->a_count;
+	uvn_findpages(uobj, offset, &npages, ap->a_m, NULL, UFP_ALL);
 
-	if (pg->flags & PG_FAKE) {
-		rw_exit(rw);
+	for (int i = 0; i < npages; i++) {
+		pg = ap->a_m[i];
+		if (pg->flags & PG_FAKE) {
+			rw_exit(rw);
 
-		va = zfs_map_page(pg, S_WRITE);
-		err = dmu_read(zfsvfs->z_os, zp->z_id, offset, PAGE_SIZE,
-		    va, DMU_READ_PREFETCH);
-		zfs_unmap_page(pg, va);
+			va = zfs_map_page(pg, S_WRITE);
+			err = dmu_read(zfsvfs->z_os, zp->z_id, offset,
+			    PAGE_SIZE, va, DMU_READ_PREFETCH);
+			zfs_unmap_page(pg, va);
 
-		rw_enter(rw, RW_WRITER);
-		pg->flags &= ~(PG_FAKE);
-	}
+			rw_enter(rw, RW_WRITER);
+			if (err != 0) {
+				for (i = 0; i < npages; i++) {
+					pg = ap->a_m[i];
+					if ((pg->flags & PG_FAKE) != 0) {
+						uvm_pagefree(pg);
+					} else {
+						uvm_page_unbusy(&pg, 1);
+					}
+				}
+				memset(ap->a_m, 0, sizeof(ap->a_m[0]) *
+				    npages);
+				break;
+			}
+			pg->flags &= ~(PG_FAKE);
+		}
 
-	if (memwrite && uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
-		/* For write faults, start dirtiness tracking. */
-		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
+		if (memwrite && uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+			/* For write faults, start dirtiness tracking. */
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
+		}
 	}
 	rw_exit(rw);
-	ap->a_m[ap->a_centeridx] = pg;
 
 	ZFS_EXIT(zfsvfs);
 	fstrans_done(mp);
