@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpwmvar.h,v 1.1 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: imxpwmvar.h,v 1.2 2020/05/20 05:10:42 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -29,6 +29,8 @@
 #ifndef	_ARM_IMX_IMXPWMVAR_H_
 #define	_ARM_IMX_IMXPWMVAR_H_
 
+#include <dev/pwm/pwmvar.h>
+
 struct imxpwm_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
@@ -36,12 +38,11 @@ struct imxpwm_softc {
 	int sc_intr;
 	void *sc_ih;
 
-	long sc_freq;
-	long sc_hz;
-#define IMXPWM_DEFAULT_HZ	1000
-	long	sc_cycle;
-	int	sc_duty;
-#define IMXPWM_DUTY_MAX		1000
+	struct clk *sc_clk;
+	u_int sc_freq;
+
+	struct pwm_controller sc_pwm;
+	struct pwm_config sc_conf;
 
 	int (*sc_handler)(void *);
 	void *sc_cookie;
@@ -51,6 +52,6 @@ int imxpwm_match(device_t, cfdata_t, void *);
 void imxpwm_attach(struct imxpwm_softc *, void *);
 void imxpwm_attach_common(struct imxpwm_softc *);
 
-int imxpwm_set_pwm(struct imxpwm_softc *, int);
+int imxpwm_intr(void *);
 
 #endif	/* _ARM_IMX_IMXPWMVAR_H_ */
