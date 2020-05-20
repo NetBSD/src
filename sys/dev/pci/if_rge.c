@@ -1,5 +1,5 @@
-/*	$NetBSD: if_rge.c,v 1.10 2020/04/30 00:32:16 sevan Exp $	*/
-/*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.11 2020/05/20 20:18:37 sevan Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.3 2020/03/27 15:15:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2019 Kevin Lo <kevlo@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.10 2020/04/30 00:32:16 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.11 2020/05/20 20:18:37 sevan Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -189,7 +189,7 @@ rge_match(device_t parent, cfdata_t match, void *aux)
 void
 rge_attach(device_t parent, device_t self, void *aux)
 {
-	struct rge_softc *sc = (struct rge_softc *)self;
+	struct rge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
