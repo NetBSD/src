@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.5 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.6 2020/05/20 13:16:30 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.5 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.6 2020/05/20 13:16:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.5 2020/05/16 18:31:53 christos Exp
 #define	lblkno(fs, o)		ffs_lblkno(fs, o)
 #define	blkoff(fs, o)		ffs_blkoff(fs, o)
 #define	sblksize(fs, o, lbn)	ffs_sblksize(fs, o, lbn)
-typedef mode_t accmode_t;	/* so that it breaks soon */
 typedef daddr_t ufs_lbn_t;
 #define msleep(chan, mtx, pri, wmesg, timeo) \
     mtsleep((chan), (pri), (wmesg), (timeo), *(mtx))
