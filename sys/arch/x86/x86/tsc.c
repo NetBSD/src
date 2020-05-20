@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.46 2020/05/19 21:56:51 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.47 2020/05/20 20:19:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.46 2020/05/19 21:56:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.47 2020/05/20 20:19:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 
 static void	tsc_delay(unsigned int);
 
+static uint64_t	tsc_dummy_cacheline __cacheline_aligned;
 uint64_t	tsc_freq; /* exported for sysctl */
 static int64_t	tsc_drift_max = 1000;	/* max cycles */
 static int64_t	tsc_drift_observed;
@@ -200,7 +201,7 @@ tsc_sync_drift(int64_t drift)
  * Called during startup of APs, by the boot processor.  Interrupts
  * are disabled on entry.
  */
-static void
+static void __noinline
 tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 {
 	uint64_t bptsc;
@@ -209,10 +210,13 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 		panic("tsc_sync_bp: 1");
 	}
 
-	/* Flag it and read our TSC. */
+	/* Prepare a cache miss for the other side. */
+	(void)atomic_swap_uint((void *)&tsc_dummy_cacheline, 0);
+
+	/* Flag our readiness. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
 
-	/* Wait for remote to complete, and read ours again. */
+	/* Wait for other side then read our TSC. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) != 0) {
 		__insn_barrier();
 	}
@@ -254,7 +258,7 @@ tsc_sync_bp(struct cpu_info *ci)
  * Called during startup of AP, by the AP itself.  Interrupts are
  * disabled on entry.
  */
-static void
+static void __noinline
 tsc_post_ap(struct cpu_info *ci)
 {
 	uint64_t tsc;
@@ -266,7 +270,12 @@ tsc_post_ap(struct cpu_info *ci)
 
 	/* Instruct primary to read its counter. */
 	atomic_and_uint(&ci->ci_flags, ~CPUF_SYNCTSC);
-	tsc = rdtsc();
+
+	/* Suffer a cache miss, then read TSC. */
+	__insn_barrier();
+	tsc = tsc_dummy_cacheline;
+	__insn_barrier();
+	tsc += rdtsc();
 
 	/* Post result.  Ensure the whole value goes out atomically. */
 	(void)atomic_swap_64(&tsc_sync_val, tsc);
