@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.102 2020/05/19 21:52:04 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.103 2020/05/20 18:37:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.102 2020/05/19 21:52:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.103 2020/05/20 18:37:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,6 +538,9 @@ uvm_loanuobjchunk(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 		/* loan out pages.  they will be unbusied whatever happens. */
 		error = uvm_loanpage(pgpp, npages, true);
 		rw_exit(uobj->vmobjlock);
+		if (error != 0) {
+			memset(pgpp, 0, sizeof(pgpp[0]) * npages);
+		}
 		return error;
 
 	case EAGAIN:
@@ -546,11 +549,6 @@ uvm_loanuobjchunk(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 		goto reget;
 
 	default:
-		if (npages > 0) {
-			rw_enter(uobj->vmobjlock, RW_WRITER);
-			uvm_page_unbusy(pgpp, npages);
-			rw_exit(uobj->vmobjlock);
-		}
 		return error;
 	}
 }
@@ -569,6 +567,7 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int npages,
 
 	KASSERT(npages > 0);
 
+	memset(pgpp, 0, sizeof(pgpp[0]) * npages);
 	for (ndone = 0; ndone < npages; ndone += chunk) {
 		chunk = MIN(UVM_LOAN_GET_CHUNK, npages - ndone);
 		error = uvm_loanuobjchunk(uobj, pgoff + (ndone << PAGE_SHIFT),
