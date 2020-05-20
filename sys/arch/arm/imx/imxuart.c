@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.24 2020/01/15 01:09:56 jmcneill Exp $ */
+/* $NetBSD: imxuart.c,v 1.25 2020/05/20 09:18:25 hkenken Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.24 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.25 2020/05/20 09:18:25 hkenken Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2083,8 +2083,6 @@ imxuart_load_pendings(struct imxuart_softc *sc)
 	sc->sc_pending = 0;
 }
 
-#if defined(IMXUARTCONSOLE) || defined(KGDB)
-
 /*
  * The following functions are polled getc and putc routines, shared
  * by the console and kgdb glue.
@@ -2171,7 +2169,6 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 
 	splx(s);
 }
-#endif /* defined(IMXUARTCONSOLE) || defined(KGDB) */
 
 /*
  * Initialize UART
@@ -2236,7 +2233,6 @@ imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag, int domap)
 }
 
 
-#ifdef	IMXUARTCONSOLE
 /*
  * Following are all routines needed for UART to act as console
  */
@@ -2294,8 +2290,6 @@ imxucnpollc(dev_t dev, int on)
 	imxuart_readahead_in = 0;
 	imxuart_readahead_out = 0;
 }
-
-#endif	/* IMXUARTCONSOLE */
 
 #ifdef KGDB
 int
