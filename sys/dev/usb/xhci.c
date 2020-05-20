@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.124 2020/04/05 20:59:38 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.125 2020/05/20 17:32:27 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.124 2020/04/05 20:59:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.125 2020/05/20 17:32:27 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2239,25 +2239,26 @@ static struct usbd_xfer *
 xhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
-	struct usbd_xfer *xfer;
+	struct xhci_xfer *xx;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct xhci_xfer));
+	xx = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
+	if (xx != NULL) {
+		memset(xx, 0, sizeof(*xx));
 #ifdef DIAGNOSTIC
-		xfer->ux_state = XFER_BUSY;
+		xx->xx_xfer.ux_state = XFER_BUSY;
 #endif
 	}
 
-	return xfer;
+	return &xx->xx_xfer;
 }
 
 static void
 xhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
+	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
@@ -2269,7 +2270,7 @@ xhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	}
 	xfer->ux_state = XFER_FREE;
 #endif
-	pool_cache_put(sc->sc_xferpool, xfer);
+	pool_cache_put(sc->sc_xferpool, xx);
 }
 
 static bool
