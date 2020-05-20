@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.8 2020/01/15 01:09:56 jmcneill Exp $
+#	$NetBSD: files.imx6,v 1.9 2020/05/20 09:18:25 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -10,11 +10,10 @@ defflag	opt_soc.h			SOC_IMX
 defflag	opt_soc.h			SOC_IMX6QDL: SOC_IMX
 
 # Clock
-device	imxccm : clk
+device	imxccm: clk
 attach	imxccm at fdt
 file	arch/arm/imx/imx6_ccm.c		imxccm
 file	arch/arm/imx/fdt/imx6_clk.c	imxccm
-
 
 # Common FDT clock framework
 define	imx_ccm
@@ -51,7 +50,7 @@ file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
 file	arch/arm/imx/fdt/imx6_gpio.c	imxgpio
 
 # UART
-device	imxuart { } : bus_space_generic
+device	imxuart: tty
 attach	imxuart at fdt with imx6_com
 file	arch/arm/imx/imxuart.c		imxuart	needs-flag
 file	arch/arm/imx/fdt/imx6_com.c	imx6_com needs-flag
@@ -84,7 +83,6 @@ device	imx8mqusbphy
 attach	imx8mqusbphy at fdt
 file	arch/arm/imx/fdt/imx8mq_usbphy.c	imx8mqusbphy
 
-
 # SDMMC
 attach	sdhc at fdt with imx6_sdhc
 file	arch/arm/imx/fdt/imx6_sdhc.c	imx6_sdhc
@@ -102,9 +100,18 @@ file	arch/arm/imx/imxi2c.c			imxi2c
 file	arch/arm/imx/fdt/imx6_i2c.c		imxi2c
 
 # SPI bus controller
-device  imxspi : spibus
+device  imxspi: spibus
 attach	imxspi at fdt with imxspi_fdt
-file    arch/arm/imx/imxspi.c			imxspi
+file	arch/arm/imx/imxspi.c			imxspi
 file	arch/arm/imx/fdt/imx6_spi.c		imxspi_fdt
 defparam opt_imxspi.h                   	IMXSPINSLAVES
 
+# PWM
+device	imxpwm: pwm
+attach	imxpwm at fdt with imxpwm_fdt
+file	arch/arm/imx/imxpwm.c			imxpwm
+file	arch/arm/imx/fdt/imx6_pwm.c		imxpwm_fdt
+
+# HDMI TX (Designware based)
+attach	dwhdmi at fdt with imx6_dwhdmi
+file	arch/arm/imx/fdt/imx6_dwhdmi.c		imx6_dwhdmi

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.77 2020/05/18 21:19:35 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.78 2020/05/20 09:18:25 hkenken Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -19,6 +19,9 @@ options 	CPU_CORTEXA53
 options 	SOC_AM33XX
 options 	SOC_BCM2836
 options 	SOC_EXYNOS5422
+options 	SOC_IMX6DL
+options 	SOC_IMX6Q
+options 	SOC_IMX6QDL
 options 	SOC_MESON8B
 options 	SOC_OMAP3
 options 	SOC_SUN4I_A10
@@ -48,6 +51,7 @@ options 	MSGBUFSIZE=32768
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 
 #options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
+#options 	EARLYCONS=imx, CONSADDR=0x02020000
 #options 	EARLYCONS=omap3, CONSADDR=0x49020000
 
 # ODROID-C1
@@ -102,6 +106,7 @@ cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk* 	at fdt? pass 3		# Exynos5422 clock controller
+imxccm* 	at fdt? pass 1		# i.MX6 ccm
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
 omap3cm*	at fdt? pass 1		# TI OMAP3 CM
@@ -172,6 +177,7 @@ gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
 bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
+imxgpc* 	at fdt? pass 2		# i.MX General Power Controller INTC
 omapintc*	at fdt? pass 2		# TI OMAP INTC
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
@@ -215,6 +221,7 @@ bcmaux* 	at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 # GPIO controller
 bcmgpio* 	at fdt?			# Broadcom BCM283x GPIO
 exyopctl* 	at fdt? pass 2		# Samsung Exynos GPIO
+imxgpio*	at fdt? pass 3		# i.MX GPIO
 mesonpinctrl* 	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell GPIO
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
@@ -225,9 +232,11 @@ gpio* 		at gpiobus?
 # MPIO / Pinmux
 pinctrl*	at fdt? pass 2		# Generic pinctrl driver
 tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
+imxiomux*	at fdt? pass 2		# i.MX IOMUX
 
 # PWM controller
 expwm* 		at fdt? pass 4		# PWM
+imxpwm* 	at fdt?			# i.MX PWM
 sunxipwm* 	at fdt? pass 3		# Allwinner PWM
 
 # Backlight
@@ -244,6 +253,7 @@ tegra210xphy* 	at tegra210xpad?
 # PCIE
 pcihost* 	at fdt?			# Generic PCI host controller
 tegrapcie0 	at fdt?			# NVIDIA Tegra PCIE
+imxpcie*	at fdt?			# i.MX PCIE
 pci* 		at pcibus?
 ppb* 		at pci? dev ? function ?
 pci* 		at ppb?
@@ -253,12 +263,14 @@ awge* 		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
 cemac* 		at fdt?			# Cadence EMAC/GEM ethernet controller
 cpsw*		at fdt?			# TI CPSW 3-port Ethernet Switch
 emac* 		at fdt?			# Allwinner Fast/Gigabit Ethernet (EMAC)
+enet*		at fdt?			# i.MX FEC
 smsh* 		at fdt?			# SMSC LAN9118
 
 # PCI Ethernet
 re* 		at pci? dev ? function ?	# Realtek RTL8111GS
 
 # MII/PHY support
+atphy* 		at mii? phy ?		# Attansic/Atheros PHYs
 exphy* 		at mii? phy ?		# 3Com internal PHYs
 gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* 	at mii? phy ?		# Level One LXT-1000 PHYs
@@ -293,6 +305,7 @@ ukphy* 		at mii? phy ?		# generic unknown PHYs
 com* 		at fdt?	pass 4		# UART
 exuart* 	at fdt?	pass 4		# SSCOM UART
 plcom* 		at fdt?	pass 4		# ARM PL011 UART
+imxuart* 	at fdt?	pass 4		# i.MX UART
 mesonuart* 	at fdt?	pass 4		# Amlogic Meson UART
 zynquart* 	at fdt?	pass 4		# Cadence UART
 
@@ -300,6 +313,7 @@ zynquart* 	at fdt?	pass 4		# Cadence UART
 options 	I2C_MAX_ADDR=0xfff
 bsciic* 	at fdt?			# Broadcom BCM283x Serial Control
 exyoi2c* 	at fdt?			# Samsung Exynos I2C
+imxi2c* 	at fdt?			# i.MX I2C
 sunxirsb* 	at fdt? pass 4		# Allwinner RSB
 sunxitwi* 	at fdt?			# Allwinner TWI
 tegrai2c* 	at fdt? pass 4		# NVIDIA Tegra I2C
@@ -334,6 +348,7 @@ pseudo-device 	canloop			# CAN loopback interface
 sunxican* 	at fdt?			# A10/A20 CAN controller
 
 # SPI
+imxspi* 	at fdt?			# i.MX SPI
 sun4ispi* 	at fdt?
 sun6ispi* 	at fdt?
 spi* 		at spibus?
@@ -425,6 +440,7 @@ hdmicec* 	at hdmicecbus?
 # Display
 #tegradrm* 	at fdt?			# NVIDIA Tegra Display
 #tegrafb* 	at tegrafbbus?
+dwhdmi* 	at fdt?			# Designware HDMI TX
 genfb* 		at fdt?			# Simple Framebuffer
 mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
 omapfb*		at fdt?			# TI OMAP3 Framebuffer
@@ -478,17 +494,20 @@ tegrasoctherm* 	at fdt?			# NVIDIA Tegra SOC_THERM
 # USB
 exusbphy* 	at fdt? pass 9		# Samsung Exynos USB2 PHY
 exusbdrdphy* 	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
+imxusbphy*	at fdt? pass 9		# i.MX USB PHY
 mesonusbphy* 	at fdt? pass 9		# Amlogic Meson USB2 PHY
 sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
 usbnopphy*	at fdt? pass 9		# Generic USB PHY
+imxusbc*	at fdt? pass 9		# i.MX USB host
 tiotg*		at fdt?			# TI dual port OTG
 tiusb*		at fdt? pass 9		# TI HS USB host
 tiusbtll*	at fdt? pass 8		# TI HS USB host TLL
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
+ehci*		at imxusbc?
 motg* 		at fdt?			# Mentor Graphics USB OTG
 ohci* 		at fdt?			# OHCI
 xhci* 		at fdt?			# XHCI
