@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.7 2020/01/22 07:29:23 mrg Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.8 2020/05/20 05:24:35 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.7 2020/01/22 07:29:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.8 2020/05/20 05:24:35 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,9 @@ pwm_backlight_set(struct pwm_backlight_softc *sc, u_int index, bool set_cur)
 	if (index >= sc->sc_nlevels)
 		return;
 
-	aprint_debug_dev(sc->sc_dev, "set duty cycle to %u%%\n", sc->sc_levels[index]);
+	KASSERT(sc->sc_levels[sc->sc_nlevels - 1] != 0);
+	aprint_debug_dev(sc->sc_dev, "set duty cycle to %u%%\n",
+	    (100 * sc->sc_levels[index]) / sc->sc_levels[sc->sc_nlevels - 1]);
 
 	pwm_disable(sc->sc_pwm);
 	pwm_get_config(sc->sc_pwm, &conf);
