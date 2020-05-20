@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.347 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.348 2020/05/20 20:59:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.347 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.348 2020/05/20 20:59:31 maxv Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -334,7 +334,7 @@ preempt_needed(void)
 	needed = l->l_cpu->ci_want_resched;
 	KPREEMPT_ENABLE(l);
 
-	return (bool)needed;
+	return (needed != 0);
 }
 
 /*
