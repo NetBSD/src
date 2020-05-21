@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.190 2020/05/20 17:48:34 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.191 2020/05/21 16:50:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.190 2020/05/20 17:48:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.191 2020/05/21 16:50:25 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -2000,6 +2000,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	error = biowait(bp);
+	if (error)
+		goto out;
 
 	/*
 	 * decrypt reads in place if needed
@@ -2042,7 +2044,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 		}
 	} while (0);
-
+out:
 	/*
 	 * kill the pager mapping
 	 */
