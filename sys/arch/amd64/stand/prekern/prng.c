@@ -1,7 +1,7 @@
-/*	$NetBSD: prng.c,v 1.2 2017/11/26 11:08:34 maxv Exp $	*/
+/*	$NetBSD: prng.c,v 1.3 2020/05/21 08:20:25 maxv Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
@@ -148,6 +148,7 @@ prng_get_entropy_data(SHA512_CTX *ctx)
 void
 prng_init(void)
 {
+	extern int cpuid_level;
 	uint8_t digest[SHA512_DIGEST_LENGTH];
 	SHA512_CTX ctx;
 	u_int descs[4];
@@ -155,10 +156,14 @@ prng_init(void)
 	memset(&rng, 0, sizeof(rng));
 
 	/* detect cpu features */
-	cpuid(0x07, 0x00, descs);
-	has_rdseed = (descs[1] & CPUID_SEF_RDSEED) != 0;
-	cpuid(0x01, 0x00, descs);
-	has_rdrand = (descs[2] & CPUID2_RDRAND) != 0;
+	if (cpuid_level >= 0x07) {
+		cpuid(0x07, 0x00, descs);
+		has_rdseed = (descs[1] & CPUID_SEF_RDSEED) != 0;
+	}
+	if (cpuid_level >= 0x01) {
+		cpuid(0x01, 0x00, descs);
+		has_rdrand = (descs[2] & CPUID2_RDRAND) != 0;
+	}
 
 	SHA512_Init(&ctx);
 	prng_get_entropy_file(&ctx);
