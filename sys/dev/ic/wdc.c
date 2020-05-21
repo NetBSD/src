@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.300 2020/05/19 08:21:29 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.301 2020/05/21 09:24:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.300 2020/05/19 08:21:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.301 2020/05/21 09:24:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1375,12 +1375,9 @@ wdctimeout(void *arg)
 	 * Call the interrupt routine. If we just missed an interrupt,
 	 * it will do what's needed. Else, it will take the needed
 	 * action (reset the device).
-	 * Before that we need to reinstall the timeout callback,
-	 * in case it will miss another irq while in this transfer
-	 * We arbitray chose it to be 1s
 	 */
-	callout_reset(&chp->c_timo_callout, hz, wdctimeout, chp);
 	xfer->c_flags |= C_TIMEOU;
+	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	KASSERT(xfer->ops != NULL && xfer->ops->c_intr != NULL);
 	xfer->ops->c_intr(chp, xfer, 1);
 
