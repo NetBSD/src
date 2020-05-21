@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.17 2020/05/15 12:34:52 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.18 2020/05/21 05:58:00 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.17 2020/05/15 12:34:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.18 2020/05/21 05:58:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,7 +238,7 @@ typedef struct vhci_xfer {
 typedef TAILQ_HEAD(, vhci_xfer) vhci_xfer_list_t;
 
 #define VHCI_INDEX2PORT(idx)	(idx)
-#define VHCI_NPORTS		4
+#define VHCI_NPORTS		8	/* above 8, update TODO-bitmap */
 
 typedef struct {
 	device_t sc_dev;
@@ -834,7 +834,7 @@ vhci_usb_attach(vhci_fd_t *vfd)
 
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
-	p[0] = __BIT(vfd->port);
+	p[0] = __BIT(vfd->port); /* TODO-bitmap */
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
