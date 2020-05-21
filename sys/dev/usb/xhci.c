@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.126 2020/05/21 12:46:44 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.127 2020/05/21 13:23:38 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.126 2020/05/21 12:46:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.127 2020/05/21 13:23:38 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -517,12 +517,13 @@ xhci_ring_trbp(struct xhci_ring * const xr, u_int idx)
 }
 
 static inline void
-xhci_soft_trb_put(struct xhci_soft_trb * const trb,
+xhci_xfer_put_trb(struct xhci_xfer * const xx, u_int idx,
     uint64_t parameter, uint32_t status, uint32_t control)
 {
-	trb->trb_0 = parameter;
-	trb->trb_2 = status;
-	trb->trb_3 = control;
+	KASSERTMSG(idx < XHCI_XFER_NTRB, "idx=%u", idx);
+	xx->xx_trb[idx].trb_0 = parameter;
+	xx->xx_trb[idx].trb_2 = status;
+	xx->xx_trb[idx].trb_3 = control;
 }
 
 static inline void
@@ -2577,7 +2578,8 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	XHCIHIST_CALLARGS("%#jx xr_ep %#jx xr_cs %ju",
 	    (uintptr_t)xr, xr->xr_ep, xr->xr_cs, 0);
 
-	KASSERTMSG(ntrbs <= XHCI_XFER_NTRB, "ntrbs %zu", ntrbs);
+	KASSERTMSG(ntrbs < xr->xr_ntrb, "ntrbs %zu, xr->xr_ntrb %u",
+	    ntrbs, xr->xr_ntrb);
 	for (i = 0; i < ntrbs; i++) {
 		DPRINTFN(12, "xr %#jx trbs %#jx num %ju", (uintptr_t)xr,
 		    (uintptr_t)trbs, i, 0);
@@ -2667,6 +2669,14 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 
 	DPRINTFN(12, "%#jx xr_ep %#jx xr_cs %ju", (uintptr_t)xr, xr->xr_ep,
 	    xr->xr_cs, 0);
+}
+
+static inline void
+xhci_ring_put_xfer(struct xhci_softc * const sc, struct xhci_ring * const tr,
+    struct xhci_xfer *xx, u_int ntrb)
+{
+	KASSERT(ntrb <= XHCI_XFER_NTRB);
+	xhci_ring_put(sc, tr, xx, xx->xx_trb, ntrb);
 }
 
 /*
@@ -3875,7 +3885,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	     (isread ? XHCI_TRB_3_TRT_IN : XHCI_TRB_3_TRT_OUT)) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_SETUP_STAGE) |
 	    XHCI_TRB_3_IDT_BIT;
-	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_xfer_put_trb(xx, i++, parameter, status, control);
 
 	if (len != 0) {
 		/* data phase */
@@ -3888,7 +3898,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
 		    (isread ? XHCI_TRB_3_ISP_BIT : 0) |
 		    XHCI_TRB_3_IOC_BIT;
-		xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
+		xhci_xfer_put_trb(xx, i++, parameter, status, control);
 
 		usb_syncmem(dma, 0, len,
 		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
@@ -3900,11 +3910,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	control = ((isread && (len > 0)) ? 0 : XHCI_TRB_3_DIR_IN) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STATUS_STAGE) |
 	    XHCI_TRB_3_IOC_BIT;
-	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_xfer_put_trb(xx, i++, parameter, status, control);
 
 	if (!polling)
 		mutex_enter(&tr->xr_lock);
-	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
+	xhci_ring_put_xfer(sc, tr, xx, i);
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
@@ -4025,11 +4035,11 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (isread ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
-	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_xfer_put_trb(xx, i++, parameter, status, control);
 
 	if (!polling)
 		mutex_enter(&tr->xr_lock);
-	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
+	xhci_ring_put_xfer(sc, tr, xx, i);
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
@@ -4139,11 +4149,11 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (isread ? XHCI_TRB_3_ISP_BIT : 0) | XHCI_TRB_3_IOC_BIT;
-	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_xfer_put_trb(xx, i++, parameter, status, control);
 
 	if (!polling)
 		mutex_enter(&tr->xr_lock);
-	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
+	xhci_ring_put_xfer(sc, tr, xx, i);
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
