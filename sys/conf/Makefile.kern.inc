@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.269 2020/04/04 19:50:54 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.270 2020/05/21 18:44:19 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -233,12 +233,12 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 LINKFLAGS_DEBUG?=	-X
 
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
-		${SIZE} $@ && chmod 755 $@ && \
-		${SYSTEM_CTFMERGE}
+		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
 SYSTEM_LD_TAIL_DEBUG?=&& \
 		echo mv -f $@ $@.gdb && mv -f $@ $@.gdb && \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
+		chmod 755 $@ $@.gdb
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
