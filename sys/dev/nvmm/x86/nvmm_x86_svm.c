@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.4 2020/05/13 12:21:56 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.5 2020/05/21 10:52:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.4 2020/05/13 12:21:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.5 2020/05/21 10:52:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,6 +773,8 @@ svm_inkernel_advance(struct vmcb *vmcb)
 	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
+#define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+
 static void
 svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 {
@@ -798,20 +800,33 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 			cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID2_OSXSAVE;
 		}
 		break;
-	case 0x00000005:
-	case 0x00000006:
+	case 0x00000002: /* Empty */
+	case 0x00000003: /* Empty */
+	case 0x00000004: /* Empty */
+	case 0x00000005: /* Monitor/MWait */
+	case 0x00000006: /* Power Management Related Features */
 		cpudata->vmcb->state.rax = 0;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
-	case 0x00000007:
+	case 0x00000007: /* Structured Extended Features */
 		cpudata->vmcb->state.rax &= nvmm_cpuid_00000007.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
 		break;
-	case 0x0000000D:
+	case 0x00000008: /* Empty */
+	case 0x00000009: /* Empty */
+	case 0x0000000A: /* Empty */
+	case 0x0000000B: /* Empty */
+	case 0x0000000C: /* Empty */
+		cpudata->vmcb->state.rax = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x0000000D: /* Processor Extended State Enumeration */
 		if (svm_xcr0_mask == 0) {
 			break;
 		}
@@ -843,7 +858,9 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 			break;
 		}
 		break;
-	case 0x40000000:
+
+	case 0x40000000: /* Hypervisor Information */
+		cpudata->vmcb->state.rax = SVM_CPUID_MAX_HYPERVISOR;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
@@ -851,6 +868,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
+
 	case 0x80000001:
 		cpudata->vmcb->state.rax &= nvmm_cpuid_80000001.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
