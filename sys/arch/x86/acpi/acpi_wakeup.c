@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.52 2020/02/22 19:49:11 chs Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.53 2020/05/21 21:12:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.52 2020/02/22 19:49:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.53 2020/05/21 21:12:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ acpi_cpu_sleep(struct cpu_info *ci)
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
-	lapic_initclocks();
+	lapic_reset();
 #endif
 
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
@@ -351,7 +351,7 @@ acpi_md_sleep(int state)
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
-	lapic_initclocks();
+	lapic_reset();
 #endif
 #if NIOAPIC > 0
 	ioapic_reenable();

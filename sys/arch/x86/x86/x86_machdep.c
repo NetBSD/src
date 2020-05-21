@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.142 2020/05/03 17:22:03 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.143 2020/05/21 21:12:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.142 2020/05/03 17:22:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.143 2020/05/21 21:12:30 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -108,11 +108,9 @@ char module_machine_i386pae_xen[] = "i386pae-xen";
 #ifndef XENPV
 void (*delay_func)(unsigned int) = i8254_delay;
 void (*x86_initclock_func)(void) = i8254_initclocks;
-void (*x86_cpu_initclock_func)(void) = x86_dummy_initclock;
 #else /* XENPV */
 void (*delay_func)(unsigned int) = xen_delay;
 void (*x86_initclock_func)(void) = xen_initclocks;
-void (*x86_cpu_initclock_func)(void) = xen_cpu_initclocks;
 #endif
 
 
@@ -1500,10 +1498,12 @@ void
 cpu_initclocks(void)
 {
 
-	(*x86_initclock_func)();
-}
+	/*
+	 * Re-calibrate TSC on boot CPU using most accurate time source,
+	 * thus making accurate TSC available for x86_initclock_func().
+	 */
+	cpu_get_tsc_freq(curcpu());
 
-void
-x86_dummy_initclock(void)
-{
+	/* Now start the clocks on this CPU (the boot CPU). */
+	(*x86_initclock_func)();
 }

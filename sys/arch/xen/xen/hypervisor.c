@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.84 2020/05/09 08:01:38 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.85 2020/05/21 21:12:31 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.84 2020/05/09 08:01:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.85 2020/05/21 21:12:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,6 @@ init_xen_early(void)
 	}
 	delay_func = x86_delay = xen_delay;
 	x86_initclock_func = xen_initclocks;
-	x86_cpu_initclock_func = xen_cpu_initclocks;
 	if (hvm_start_info->cmdline_paddr != 0) {
 		cmd_line =
 		    (void *)((uintptr_t)hvm_start_info->cmdline_paddr + KERNBASE);
@@ -436,7 +435,6 @@ xen_hvm_init(void)
 
 	delay_func = x86_delay = xen_delay;
 	x86_initclock_func = xen_initclocks;
-	x86_cpu_initclock_func = xen_cpu_initclocks;
 
 	vm_guest = VM_GUEST_XENPVHVM; /* Be more specific */
 	return 1;

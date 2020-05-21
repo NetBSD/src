@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.5 2020/05/07 19:48:57 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.6 2020/05/21 21:12:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.5 2020/05/07 19:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.6 2020/05/21 21:12:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -729,12 +729,12 @@ again:
 }
 
 /*
- * xen_cpu_initclocks()
+ * xen_initclocks()
  *
  *	Initialize the Xen clocks on the current CPU.
  */
 void
-xen_cpu_initclocks(void)
+xen_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -766,22 +766,13 @@ xen_cpu_initclocks(void)
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
-}
 
-/*
- * xen_initclocks()
- *
- *	Initialize the Xen global clock
- */
-void
-xen_initclocks(void)
-{
 #ifdef DOM0OPS
 	/*
 	 * If this is a privileged dom0, start pushing the wall
 	 * clock time back to the Xen hypervisor.
 	 */
-	if (xendomain_is_privileged())
+	if (ci == &cpu_info_primary && xendomain_is_privileged())
 		xen_timepush_init();
 #endif
 }

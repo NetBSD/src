@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.191 2020/05/12 06:32:05 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.192 2020/05/21 21:12:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.191 2020/05/12 06:32:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.192 2020/05/21 21:12:30 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -456,7 +456,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			lapic_enable();
 			lapic_set_lvt();
 			if (!vm_guest_is_xenpvh_or_pvhvm())
-				lapic_calibrate_timer(ci);
+				lapic_calibrate_timer(false);
 		}
 #endif
 		kcsan_cpu_init(ci);
@@ -471,7 +471,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_identify(ci);
 		x86_errata();
 		x86_cpu_idle_init();
-		(*x86_cpu_initclock_func)();
 #ifdef XENPVHVM
 		xen_hvm_init_cpu(ci);
 #endif
@@ -485,7 +484,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #ifdef XENPVHVM
 		xen_hvm_init_cpu(ci);
 #endif
-		(*x86_cpu_initclock_func)();
 		break;
 
 #ifdef MULTIPROCESSOR
@@ -738,14 +736,6 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	kcpuset_t *cpus;
 	u_long i;
-
-#if NHPET > 0
-	/* Use HPET delay, and re-calibrate TSC on boot CPU using HPET. */
-	if (hpet_delay_p() && x86_delay == i8254_delay) {
-		delay_func = x86_delay = hpet_delay;
-		cpu_get_tsc_freq(curcpu());
-	}
-#endif
 
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
@@ -1010,7 +1000,7 @@ cpu_hatch(void *v)
 #ifdef XENPVHVM
 	xen_hvm_init_cpu(ci);
 #endif
-	(*x86_cpu_initclock_func)();
+	(*x86_initclock_func)();
 	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
@@ -1346,7 +1336,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 			overhead = 0;
 			for (int i = 0; i <= 8; i++) {
 				t0 = cpu_counter();
-				x86_delay(0);
+				delay_func(0);
 				t1 = cpu_counter();
 				if (i > 0) {
 					overhead += (t1 - t0);
@@ -1356,7 +1346,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 
 			/* Now do the calibration. */
 			t0 = cpu_counter();
-			x86_delay(100000);
+			delay_func(100000);
 			t1 = cpu_counter();
 			freq = (t1 - t0 - overhead) * 10;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.80 2020/05/20 02:23:35 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.81 2020/05/21 21:12:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.80 2020/05/20 02:23:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.81 2020/05/21 21:12:30 ad Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -580,11 +580,10 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 }
 
 void
-lapic_initclocks(void)
+lapic_reset(void)
 {
+
 	/*
-	 * Start local apic countdown timer running, in repeated mode.
-	 *
 	 * Mask the clock interrupt and set mode,
 	 * then set divisor,
 	 * then unmask and set the vector.
@@ -596,6 +595,29 @@ lapic_initclocks(void)
 	lapic_writereg(LAPIC_LVT_TIMER,
 	    LAPIC_LVT_TMM_PERIODIC | LAPIC_TIMER_VECTOR);
 	lapic_writereg(LAPIC_EOI, 0);
+}
+
+static void
+lapic_initclock(void)
+{
+
+	if (curcpu() == &cpu_info_primary) {
+		/*
+		 * Recalibrate the timer using the cycle counter, now that
+		 * the cycle counter itself has been recalibrated.
+		 */
+		lapic_calibrate_timer(true);
+
+		/*
+		 * Hook up time counter.  This assume that all LAPICs have
+		 * the same frequency.
+		 */
+		lapic_timecounter.tc_frequency = lapic_per_second;
+		tc_init(&lapic_timecounter);
+	}
+
+	/* Start local apic countdown timer running, in repeated mode. */
+	lapic_reset();
 }
 
 /*
@@ -610,50 +632,71 @@ lapic_initclocks(void)
  * We're actually using the IRQ0 timer.  Hmm.
  */
 void
-lapic_calibrate_timer(struct cpu_info *ci)
+lapic_calibrate_timer(bool secondpass)
 {
-	unsigned int seen, delta, initial_i8254, initial_lapic;
-	unsigned int cur_i8254, cur_lapic;
+	struct cpu_info *ci = curcpu();
 	uint64_t tmp;
 	int i;
 	char tbuf[9];
 
-	if (lapic_per_second != 0)
-		goto calibrate_done;
+	KASSERT(ci == &cpu_info_primary);
 
-	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
+	aprint_debug_dev(ci->ci_dev, "[re]calibrating local timer\n");
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
+	x86_disable_intr();
 	lapic_writereg(LAPIC_LVT_TIMER, LAPIC_LVT_MASKED);
 	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	lapic_writereg(LAPIC_ICR_TIMER, 0x80000000);
+	(void)lapic_gettick();
 
-	x86_disable_intr();
+	if (secondpass && cpu_hascounter()) {
+		/*
+		 * Second pass calibration, using the TSC which has ideally
+		 * been calibrated using the HPET or information gleaned
+		 * from MSRs by this point.
+		 */
+		uint64_t l0, l1, t0, t1;
 
-	initial_lapic = lapic_gettick();
-	initial_i8254 = gettick();
+		(void)cpu_counter();
+		t0 = cpu_counter();
+		l0 = lapic_gettick();
+		t0 += cpu_counter();
+		DELAY(50000);
+		t1 = cpu_counter();
+		l1 = lapic_gettick();
+		t1 += cpu_counter();
 
-	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
-		cur_i8254 = gettick();
-		if (cur_i8254 > initial_i8254)
-			delta = x86_rtclock_tval - (cur_i8254 - initial_i8254);
-		else
-			delta = initial_i8254 - cur_i8254;
-		initial_i8254 = cur_i8254;
+		tmp = (l0 - l1) * cpu_frequency(ci) / ((t1 - t0 + 1) / 2);
+		lapic_per_second = rounddown(tmp + 500, 1000);
+	} else if (lapic_per_second == 0) {
+		/*
+		 * Inaccurate first pass calibration using the i8254.
+		 */
+		unsigned int seen, delta, initial_i8254, initial_lapic;
+		unsigned int cur_i8254, cur_lapic;
+
+		(void)gettick();
+		initial_lapic = lapic_gettick();
+		initial_i8254 = gettick();
+		for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
+			cur_i8254 = gettick();
+			if (cur_i8254 > initial_i8254)
+				delta = x86_rtclock_tval - (cur_i8254 - initial_i8254);
+			else
+				delta = initial_i8254 - cur_i8254;
+			initial_i8254 = cur_i8254;
+		}
+		cur_lapic = lapic_gettick();
+		tmp = initial_lapic - cur_lapic;
+		lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 	}
-	cur_lapic = lapic_gettick();
-
 	x86_enable_intr();
 
-	tmp = initial_lapic - cur_lapic;
-	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
-
-calibrate_done:
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
-
 	aprint_debug_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
 
 	if (lapic_per_second != 0) {
@@ -703,18 +746,10 @@ calibrate_done:
 		 * Now that the timer's calibrated, use the apic timer routines
 		 * for all our timing needs..
 		 */
-		delay_func = lapic_delay;
-		x86_cpu_initclock_func = lapic_initclocks;
-		x86_initclock_func = x86_dummy_initclock;
-		initrtclock(0);
-
-		if (lapic_timecounter.tc_frequency == 0) {
-			/*
-			 * Hook up time counter.
-			 * This assume that all LAPICs have the same frequency.
-			 */
-			lapic_timecounter.tc_frequency = lapic_per_second;
-			tc_init(&lapic_timecounter);
+		if (!secondpass) {
+			delay_func = lapic_delay;
+			x86_initclock_func = lapic_initclock;
+			initrtclock(0);
 		}
 	}
 }
