@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.67 2020/05/08 03:26:51 thorpej Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.68 2020/05/21 00:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.67 2020/05/08 03:26:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.68 2020/05/21 00:39:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -188,14 +188,22 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	KASSERT(sq != NULL);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
-		lwp_t *l2;
+		lwp_t *l2, *l_last = NULL;
 		const pri_t pri = lwp_eprio(l);
 
 		LIST_FOREACH(l2, sq, l_sleepchain) {
+			l_last = l2;
 			if (lwp_eprio(l2) < pri) {
 				LIST_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
+		}
+		/*
+		 * Ensure FIFO ordering if no waiters are of lower priority.
+		 */
+		if (l_last != NULL) {
+			LIST_INSERT_AFTER(l_last, l, l_sleepchain);
+			return;
 		}
 	}
 
