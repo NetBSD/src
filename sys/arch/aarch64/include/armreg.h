@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.43 2020/05/13 06:08:51 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.44 2020/05/21 05:04:13 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -845,7 +845,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_IT4 		__BIT(12)	// A32: IT[4]
 #define	SPSR_IT3 		__BIT(11)	// A32: IT[3]
 #define	SPSR_IT2 		__BIT(10)	// A32: IT[2]
-#define	SPSR_A64_BTYPE 		__BIT(11,10)	// A64: BTYPE
+#define	SPSR_A64_BTYPE 		__BITS(11,10)	// A64: BTYPE
 #define	SPSR_A64_D 		__BIT(9)	// A64: Debug Exception Mask
 #define	SPSR_A32_E 		__BIT(9)	// A32: BE Endian Mode
 #define	SPSR_A	 		__BIT(8)	// Async abort (SError) Mask
