@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.125 2020/05/20 17:32:27 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.126 2020/05/21 12:46:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.125 2020/05/20 17:32:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.126 2020/05/21 12:46:44 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3869,14 +3869,13 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	i = 0;
 
 	/* setup phase */
-	memcpy(&parameter, req, sizeof(parameter));
+	parameter = le64dec(req); /* to keep USB endian after xhci_trb_put() */
 	status = XHCI_TRB_2_IRQ_SET(0) | XHCI_TRB_2_BYTES_SET(sizeof(*req));
 	control = ((len == 0) ? XHCI_TRB_3_TRT_NONE :
 	     (isread ? XHCI_TRB_3_TRT_IN : XHCI_TRB_3_TRT_OUT)) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_SETUP_STAGE) |
 	    XHCI_TRB_3_IDT_BIT;
-	/* we need parameter un-swapped on big endian, so pre-swap it here */
-	xhci_soft_trb_put(&xx->xx_trb[i++], htole64(parameter), status, control);
+	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
 	if (len != 0) {
 		/* data phase */
