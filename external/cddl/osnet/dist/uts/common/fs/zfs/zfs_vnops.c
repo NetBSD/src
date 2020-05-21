@@ -5971,7 +5971,6 @@ zfs_netbsd_getpages(void *v)
 	} */ * const ap = v;
 
 	vnode_t *const vp = ap->a_vp;
-	off_t offset = ap->a_offset + (ap->a_centeridx << PAGE_SHIFT);
 	const int flags = ap->a_flags;
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
@@ -5983,12 +5982,13 @@ zfs_netbsd_getpages(void *v)
 	vfs_t *mp;
 	struct vm_page *pg;
 	caddr_t va;
-	int npages, found, err = 0;
+	int npages = *ap->a_count, found, err = 0;
 
 	if (flags & PGO_LOCKED) {
- 		uvn_findpages(uobj, ap->a_offset, ap->a_count, ap->a_m, NULL,
+ 		uvn_findpages(uobj, ap->a_offset, &npages, ap->a_m, NULL,
 		    UFP_NOWAIT | UFP_NOALLOC | UFP_NOBUSY |
 		    (memwrite ? UFP_NORDONLY : 0));
+		KASSERT(npages == *ap->a_count);
 		if (memwrite) {
 			KASSERT(rw_write_held(uobj->vmobjlock));
 			for (int i = 0; i < npages; i++) {
@@ -6010,9 +6010,6 @@ zfs_netbsd_getpages(void *v)
 	if (async) {
 		return 0;
 	}
-	if (*ap->a_count != 1) {
-		return EBUSY;
-	}
 
 	mp = vp->v_mount;
 	fstrans_start(mp);
@@ -6024,18 +6021,20 @@ zfs_netbsd_getpages(void *v)
 	ZFS_VERIFY_ZP(zp);
 
 	rw_enter(rw, RW_WRITER);
-	if (offset >= vp->v_size) {
+	if (ap->a_offset + (npages << PAGE_SHIFT) > round_page(vp->v_size)) {
 		rw_exit(rw);
 		ZFS_EXIT(zfsvfs);
 		fstrans_done(mp);
 		return EINVAL;
 	}
-	npages = *ap->a_count;
-	uvn_findpages(uobj, offset, &npages, ap->a_m, NULL, UFP_ALL);
+	uvn_findpages(uobj, ap->a_offset, &npages, ap->a_m, NULL, UFP_ALL);
+	KASSERT(npages == *ap->a_count);
 
 	for (int i = 0; i < npages; i++) {
 		pg = ap->a_m[i];
 		if (pg->flags & PG_FAKE) {
+			voff_t offset = pg->offset;
+			KASSERT(pg->offset == ap->a_offset + (i << PAGE_SHIFT));
 			rw_exit(rw);
 
 			va = zfs_map_page(pg, S_WRITE);
