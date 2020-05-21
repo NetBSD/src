@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.7 2016/08/27 09:35:13 christos Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.8 2020/05/21 05:56:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,14 +31,34 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.7 2016/08/27 09:35:13 christos Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.8 2020/05/21 05:56:31 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <machine/ieee.h>
-#include <errno.h>
 
-double ldexp(double, int);
+#include <machine/ieee.h>
+
+#include <errno.h>
+#include <float.h>
+#include <math.h>
+
+static volatile const double tiny = DBL_MIN, huge = DBL_MAX;
+
+static double
+underflow(double val)
+{
+
+	errno = ERANGE;
+	return (val < 0 ? -tiny*tiny : tiny*tiny);
+}
+
+static double
+overflow(double val)
+{
+
+	errno = ERANGE;
+	return (val < 0 ? -huge*huge : huge*huge);
+}
 
 /*
  * Multiply the given value by 2^expon.
@@ -53,10 +73,13 @@ ldexp(double val, int expon)
 	oldexp = u.dblu_dbl.dbl_exp;
 
 	/*
-	 * If input is zero, Inf or NaN, just return it.
+	 * If input is zero, Inf or NaN, just return it, but raise
+	 * invalid exception if it is a signalling NaN: adding any of
+	 * these inputs to itself gives itself as output; arithmetic on
+	 * a signalling NaN additionally raises invalid-operation.
 	 */
 	if (u.dblu_d == 0.0 || oldexp == DBL_EXP_INFNAN)
-		return (val);
+		return (val + val);
 
 	if (oldexp == 0) {
 		/*
@@ -68,17 +91,13 @@ ldexp(double val, int expon)
 			 * Optimization: if the scaling can be done in a single
 			 * multiply, or underflows, just do it now.
 			 */
-			if (expon <= -DBL_FRACBITS) {
-				errno = ERANGE;
-				return (val < 0.0 ? -0.0 : 0.0);
-			}
+			if (expon <= -DBL_FRACBITS)
+				return underflow(val);
 			mul.dblu_d = 0.0;
 			mul.dblu_dbl.dbl_exp = expon + DBL_EXP_BIAS;
 			u.dblu_d *= mul.dblu_d;
-			if (u.dblu_d == 0.0) {
-				errno = ERANGE;
-				return (val < 0.0 ? -0.0 : 0.0);
-			}
+			if (u.dblu_d == 0.0)
+				return underflow(val);
 			return (u.dblu_d);
 		} else {
 			/*
@@ -105,20 +124,14 @@ ldexp(double val, int expon)
 		/*
 		 * The result overflowed; return +/-Inf.
 		 */
-		u.dblu_dbl.dbl_exp = DBL_EXP_INFNAN;
-		u.dblu_dbl.dbl_frach = 0;
-		u.dblu_dbl.dbl_fracl = 0;
-		errno = ERANGE;
-		return (u.dblu_d);
+		return overflow(val);
 	} else if (newexp <= 0) {
 		/*
 		 * The output number is either denormal or underflows (see
 		 * comments in machine/ieee.h).
 		 */
-		if (newexp <= -DBL_FRACBITS) {
-			errno = ERANGE;
-			return (val < 0.0 ? -0.0 : 0.0);
-		}
+		if (newexp <= -DBL_FRACBITS)
+			return underflow(val);
 		/*
 		 * Denormalize the result.  We do this with a multiply.  If
 		 * expon is very large, it won't fit in a double, so we have
