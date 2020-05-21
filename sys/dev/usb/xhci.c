@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.127 2020/05/21 13:23:38 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.128 2020/05/21 13:47:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.127 2020/05/21 13:23:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.128 2020/05/21 13:47:10 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -520,7 +520,7 @@ static inline void
 xhci_xfer_put_trb(struct xhci_xfer * const xx, u_int idx,
     uint64_t parameter, uint32_t status, uint32_t control)
 {
-	KASSERTMSG(idx < XHCI_XFER_NTRB, "idx=%u", idx);
+	KASSERTMSG(idx < xx->xx_ntrb, "idx=%u xx_ntrb=%u", idx, xx->xx_ntrb);
 	xx->xx_trb[idx].trb_0 = parameter;
 	xx->xx_trb[idx].trb_2 = status;
 	xx->xx_trb[idx].trb_3 = control;
@@ -2241,12 +2241,20 @@ xhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
 	struct xhci_xfer *xx;
+	u_int ntrbs;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	ntrbs = XHCI_XFER_NTRB;
+	const size_t trbsz = sizeof(*xx->xx_trb) * ntrbs;
 
 	xx = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xx != NULL) {
 		memset(xx, 0, sizeof(*xx));
+		if (ntrbs > 0) {
+			xx->xx_trb = kmem_alloc(trbsz, KM_SLEEP);
+			xx->xx_ntrb = ntrbs;
+		}
 #ifdef DIAGNOSTIC
 		xx->xx_xfer.ux_state = XFER_BUSY;
 #endif
@@ -2271,6 +2279,11 @@ xhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	}
 	xfer->ux_state = XFER_FREE;
 #endif
+	if (xx->xx_ntrb > 0) {
+		kmem_free(xx->xx_trb, xx->xx_ntrb * sizeof(*xx->xx_trb));
+		xx->xx_trb = NULL;
+		xx->xx_ntrb = 0;
+	}
 	pool_cache_put(sc->sc_xferpool, xx);
 }
 
@@ -2675,7 +2688,7 @@ static inline void
 xhci_ring_put_xfer(struct xhci_softc * const sc, struct xhci_ring * const tr,
     struct xhci_xfer *xx, u_int ntrb)
 {
-	KASSERT(ntrb <= XHCI_XFER_NTRB);
+	KASSERT(ntrb <= xx->xx_ntrb);
 	xhci_ring_put(sc, tr, xx, xx->xx_trb, ntrb);
 }
 
