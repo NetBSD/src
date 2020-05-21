@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.117 2020/05/19 08:08:51 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.118 2020/05/21 09:11:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.117 2020/05/19 08:08:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.118 2020/05/21 09:11:33 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -769,6 +769,8 @@ end:
 	if (xfer->c_bcount > 0) {
 		if ((ata_bio->flags & ATA_POLL) == 0) {
 			/* Start the next operation */
+			KASSERT((chp->ch_flags & ATACH_IRQ_WAIT) == 0);
+			callout_stop(&chp->c_timo_callout);
 			ata_xfer_start(xfer);
 		} else {
 			/* Let _wdc_ata_bio_start do the loop */
