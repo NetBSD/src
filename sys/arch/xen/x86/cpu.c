@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.135 2020/04/25 15:26:17 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.136 2020/05/21 21:12:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135 2020/04/25 15:26:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.136 2020/05/21 21:12:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -456,14 +456,12 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
-		xen_cpu_initclocks();
 		break;
 
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
-		xen_cpu_initclocks();
 		break;
 
 	case CPU_ROLE_AP:
@@ -726,7 +724,7 @@ cpu_hatch(void *v)
 
 	xen_ipi_init();
 
-	xen_cpu_initclocks();
+	xen_initclocks();
 
 #ifdef __x86_64__
 	fpuinit(ci);
