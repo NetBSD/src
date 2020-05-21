@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.9 2020/05/01 17:58:48 tnn Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.10 2020/05/21 05:41:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.9 2020/05/01 17:58:48 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.10 2020/05/21 05:41:40 ryo Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -185,6 +185,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagsp)
 
 	memcpy(mcp->__gregs, &tf->tf_regs, sizeof(mcp->__gregs));
 	mcp->__gregs[_REG_TPIDR] = (uintptr_t)l->l_private;
+	mcp->__gregs[_REG_SPSR] &= ~SPSR_A64_BTYPE;
 
 	if (fpu_used_p(l)) {
 		const struct pcb * const pcb = lwp_getpcb(l);
