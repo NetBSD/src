@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.14 2020/05/19 18:18:33 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.15 2020/05/21 13:47:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -42,7 +42,8 @@ struct xhci_soft_trb {
 
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
-	struct xhci_soft_trb xx_trb[XHCI_XFER_NTRB];
+	struct xhci_soft_trb *xx_trb;
+	u_int xx_ntrb;
 };
 
 #define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
