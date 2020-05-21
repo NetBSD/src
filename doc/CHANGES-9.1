@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.60 2020/05/19 17:40:20 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.61 2020/05/21 10:53:23 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2660,4 +2660,14 @@ sys/arch/mips/cavium/octeonvar.h		1.7
 
 	Rework octeon_rnm(4) random number generator driver.
 	[simonb, ticket #918]
+
+sys/dev/nvmm/nvmm.c				1.29
+sys/dev/nvmm/x86/nvmm_x86.c			1.9
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.60,1.61
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.56-1.58
+
+	Improve the CPUID emulation.
+	Fix deinitialization for certain kernel configs (fix for
+	ticket #857).
+	[maxv, ticket #919]
 
