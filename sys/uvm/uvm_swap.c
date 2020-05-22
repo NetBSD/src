@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.191 2020/05/21 16:50:25 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.192 2020/05/22 11:54:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.191 2020/05/21 16:50:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.192 2020/05/22 11:54:05 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1914,25 +1914,19 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		KASSERT(sdp->swd_encinit);
 		mutex_exit(&uvm_swap_data_lock);
 
-		if (swap_encrypt) {
-			for (i = 0; i < npages; i++) {
-				int s = startslot + i;
-				KDASSERT(swapdrum_sdp_is(s, sdp));
-				KASSERT(s >= sdp->swd_drumoffset);
-				s -= sdp->swd_drumoffset;
-				KASSERT(s < sdp->swd_drumsize);
+		for (i = 0; i < npages; i++) {
+			int s = startslot + i;
+			KDASSERT(swapdrum_sdp_is(s, sdp));
+			KASSERT(s >= sdp->swd_drumoffset);
+			s -= sdp->swd_drumoffset;
+			KASSERT(s < sdp->swd_drumsize);
+
+			if (swap_encrypt) {
 				uvm_swap_encryptpage(sdp,
 				    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 				atomic_or_32(&sdp->swd_encmap[s/32],
 				    __BIT(s%32));
-			}
-		} else {
-			for (i = 0; i < npages; i++) {
-				int s = startslot + i;
-				KDASSERT(swapdrum_sdp_is(s, sdp));
-				KASSERT(s >= sdp->swd_drumoffset);
-				s -= sdp->swd_drumoffset;
-				KASSERT(s < sdp->swd_drumsize);
+			} else {
 				atomic_and_32(&sdp->swd_encmap[s/32],
 				    ~__BIT(s%32));
 			}
