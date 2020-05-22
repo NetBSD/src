@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.19 2020/05/15 09:08:10 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.20 2020/05/22 19:29:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.19 2020/05/15 09:08:10 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.20 2020/05/22 19:29:26 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -60,6 +60,10 @@ ENTRY_NP(cpu_switchto)
 	stp	x25, x26, [sp, #TF_X25]
 	stp	x27, x28, [sp, #TF_X27]
 	stp	x29, x30, [sp, #TF_X29]
+#ifdef DDB
+	str	lr, [sp, #TF_PC]		/* for backtrace */
+	str	xzr, [sp, #TF_SP]		/* mark as switchframe */
+#endif
 
 	/*
 	 * Save the current stack pointer and the CPACR and save them in
@@ -76,6 +80,9 @@ ENTRY_NP(cpu_switchto)
 	DISABLE_INTERRUPT
 	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */
+#ifdef DDB
+	str	xzr, [x6, #PCB_TF]	/* clear l->l_addr->pcb_tf */
+#endif
 	ldr	x5, [x1, #L_MD_CPACR]	/* get cpacr_el1 */
 	mov	sp, x4			/* restore stack pointer */
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
@@ -190,6 +197,9 @@ ENTRY_NP(cpu_switchto_softint)
 	str	x19, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
+#ifdef DDB
+	str	xzr, [x6, #PCB_TF]	/* clear l->l_addr->pcb_tf */
+#endif
 	ldr	x5, [x19, #L_MD_CPACR]	/* x5 := pinned_lwp->l_md_cpacr */
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */

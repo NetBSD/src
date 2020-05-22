@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.23 2020/05/22 04:46:26 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.24 2020/05/22 19:29:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.23 2020/05/22 04:46:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.24 2020/05/22 19:29:26 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -264,6 +264,29 @@ dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 	    tf->tf_reg[30],  tf->tf_sp);
 }
 
+void
+dump_switchframe(struct trapframe *tf, void (*pr)(const char *, ...))
+{
+	struct trapframe tf_buf;
+
+	db_read_bytes((db_addr_t)tf, sizeof(tf_buf), (char *)&tf_buf);
+	tf = &tf_buf;
+
+	(*pr)("   x19=%016"PRIxREGISTER",    x20=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[19], tf->tf_reg[20]);
+	(*pr)("   x21=%016"PRIxREGISTER",    x22=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[21], tf->tf_reg[22]);
+	(*pr)("   x23=%016"PRIxREGISTER",    x24=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[23], tf->tf_reg[24]);
+	(*pr)("   x25=%016"PRIxREGISTER",    x26=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[25], tf->tf_reg[26]);
+	(*pr)("   x27=%016"PRIxREGISTER",    x28=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[27], tf->tf_reg[28]);
+	(*pr)("fp=x29=%016"PRIxREGISTER", lr=x30=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[29], tf->tf_reg[30]);
+}
+
+
 #if defined(_KERNEL)
 static void
 show_cpuinfo(struct cpu_info *ci)
@@ -373,7 +396,7 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	db_printf("\tl->l_addr.pcb_tf    =%p\n", pcb->pcb_tf);
 	if (pcb->pcb_tf != l->l_md.md_utf)
-		dump_trapframe(pcb->pcb_tf, db_printf);
+		dump_switchframe(pcb->pcb_tf, db_printf);
 	db_printf("\tl->l_md.md_cpacr  =%016" PRIx64 "\n", l->l_md.md_cpacr);
 	db_printf("\tl->l_md.md_flags  =%08x\n", l->l_md.md_flags);
 
@@ -881,7 +904,7 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 volatile struct cpu_info *db_trigger;
 volatile struct cpu_info *db_onproc;
 volatile struct cpu_info *db_newcpu;
-volatile int db_readytoswitch[MAXCPUS];
+volatile struct trapframe *db_readytoswitch[MAXCPUS];
 
 #ifdef _KERNEL
 void
@@ -896,8 +919,9 @@ db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (!have_addr) {
 		for (i = 0; i < ncpu; i++) {
-			if (db_readytoswitch[i] != 0)
-				db_printf("cpu%d: ready\n", i);
+			if (db_readytoswitch[i] != NULL)
+				db_printf("cpu%d: ready. tf=%p\n", i,
+				    db_readytoswitch[i]);
 			else
 				db_printf("cpu%d: not responding\n", i);
 		}
@@ -969,7 +993,7 @@ kdb_trap(int type, struct trapframe *tf)
 		db_trigger = ci;
 		membar_producer();
 	}
-	db_readytoswitch[ci->ci_index] = 1;
+	db_readytoswitch[ci->ci_index] = tf;
 	membar_producer();
 #endif
 
@@ -1024,7 +1048,7 @@ kdb_trap(int type, struct trapframe *tf)
 		__asm __volatile ("sev; sev; sev");
 	}
 	db_trigger = NULL;
-	db_readytoswitch[ci->ci_index] = 0;
+	db_readytoswitch[ci->ci_index] = NULL;
 	membar_producer();
 #endif
 

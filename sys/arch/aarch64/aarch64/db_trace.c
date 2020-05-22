@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.10 2020/05/13 06:08:51 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.11 2020/05/22 19:29:26 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2020/05/13 06:08:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2020/05/22 19:29:26 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -208,12 +208,37 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		} else
 #endif
 		{
+			struct pcb pcb_buf;
 			struct pcb *pcb = lwp_getpcb(&l);
 
-			tf = pcb->pcb_tf;
-			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
-			(*pr)("trace: pid %d lid %d at tf %p\n",
-			    p.p_pid, l.l_lid, tf);
+			db_read_bytes((db_addr_t)pcb, sizeof(pcb_buf),
+			    (char *)&pcb_buf);
+			tf = pcb_buf.pcb_tf;
+			if (tf != 0) {
+				db_read_bytes((db_addr_t)&tf->tf_reg[29],
+				    sizeof(fp), (char *)&fp);
+				(*pr)("trace: pid %d lid %d at tf %p (in pcb)\n",
+				    p.p_pid, l.l_lid, tf);
+			}
+#if defined(MULTIPROCESSOR) && defined(_KERNEL)
+			else if (l.l_stat == LSONPROC ||
+			    (l.l_pflag & LP_RUNNING) != 0) {
+
+				/* running lwp on other cpus */
+				extern struct trapframe *db_readytoswitch[];
+				struct cpu_info cpuinfobuf;
+
+				db_read_bytes((db_addr_t)l.l_cpu,
+				    sizeof(cpuinfobuf), (char *)&cpuinfobuf);
+				tf = db_readytoswitch[cpuinfobuf.ci_index];
+
+				(*pr)("trace: pid %d lid %d at tf %p (in kdb_trap)\n",
+				    p.p_pid, l.l_lid, tf);
+			}
+#endif
+			else {
+				(*pr)("trace: no trapframe found for lwp: %p\n", (void *)addr);
+			}
 		}
 	} else if (tf == NULL) {
 		fp = addr;
@@ -227,14 +252,20 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (tf != NULL) {
 #if defined(_KERNEL)
-		(*pr)("---- trapframe %p (%zu bytes) ----\n",
+		bool is_switchframe = (tf->tf_sp == 0);
+		(*pr)("---- %s %p (%zu bytes) ----\n",
+		    is_switchframe ? "switchframe" : "trapframe",
 		    tf, sizeof(*tf));
-		dump_trapframe(tf, pr);
+		if (is_switchframe)
+			dump_switchframe(tf, pr);
+		else
+			dump_trapframe(tf, pr);
 		(*pr)("------------------------"
 		      "------------------------\n");
 
 #endif
 		lastfp = lastlr = lr = fp = 0;
+
 		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 		lr = aarch64_strip_pac(lr);
