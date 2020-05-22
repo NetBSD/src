@@ -1,4 +1,4 @@
-/*	$NetBSD: dtc-lexer.l,v 1.4 2019/12/22 12:38:24 skrll Exp $	*/
+/*	$NetBSD: dtc-lexer.l,v 1.5 2020/05/22 23:19:53 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -25,7 +25,7 @@ LINECOMMENT	"//".*\n
 #include "srcpos.h"
 #include "dtc-parser.h"
 
-YYLTYPE yylloc;
+extern YYLTYPE yylloc;
 extern bool treesource_error;
 
 /* CAUTION: this will stop working if we ever use yyless() or yyunput() */
