@@ -1,4 +1,4 @@
-/*	$NetBSD: getfacl.c,v 1.1 2020/05/16 18:31:45 christos Exp $	*/
+/*	$NetBSD: getfacl.c,v 1.2 2020/05/22 01:28:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2002 Robert N M Watson
@@ -37,7 +37,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/bin/getfacl/getfacl.c 340014 2018-11-01 17:45:29Z markj $");
 #else
-__RCSID("$NetBSD: getfacl.c,v 1.1 2020/05/16 18:31:45 christos Exp $");
+__RCSID("$NetBSD: getfacl.c,v 1.2 2020/05/22 01:28:00 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ usage(void)
 {
 
 	fprintf(stderr, "Usage: %s [-dhnqv] [file ...]\n", getprogname());
+	exit(1);
 }
 
 static char *
@@ -319,7 +320,6 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			return(-1);
 		}
 	argc -= optind;
 	argv += optind;
