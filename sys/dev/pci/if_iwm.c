@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.84 2020/01/30 06:03:34 thorpej Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.85 2020/05/22 20:27:16 thorpej Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.84 2020/01/30 06:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.85 2020/05/22 20:27:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7774,7 +7774,12 @@ iwm_preinit(struct iwm_softc *sc)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwm_newstate;
-	ieee80211_media_init(ic, iwm_media_change, ieee80211_media_status);
+
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
+	ieee80211_media_init_with_lock(ic,
+	    iwm_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+
 	ieee80211_announce(ic);
 
 	iwm_radiotap_attach(sc);
