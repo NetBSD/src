@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.143 2020/05/20 12:47:36 hannken Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.144 2020/05/22 19:02:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.143 2020/05/20 12:47:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.144 2020/05/22 19:02:59 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -804,6 +804,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
 	int lcv, gotpages, maxpages, swslot = -1, pageidx = -1; /* XXX: gcc */
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
+	bool overwrite = ((flags & PGO_OVERWRITE) != 0);
 
 	UVMHIST_LOG(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
 		    (uintptr_t)uobj, offset, flags,0);
@@ -921,7 +922,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				pageidx = current_offset >> PAGE_SHIFT;
 				swslot = uao_find_swslot(uobj, pageidx);
 				ptmp = uao_pagealloc(uobj, current_offset,
-				    swslot == 0 ? UVM_PGA_ZERO : 0);
+				    swslot != 0 || overwrite ? 0 :
+				    UVM_PGA_ZERO);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
@@ -1036,9 +1038,15 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 		/*
 		 * note that we will allow the page being writably-mapped
-		 * (!PG_RDONLY) regardless of access_type.
+		 * (!PG_RDONLY) regardless of access_type.  if overwrite,
+		 * the page can be modified through an unmanaged mapping
+		 * so mark it dirty up front.
 		 */
-		uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_UNKNOWN);
+		if (overwrite) {
+			uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_DIRTY);
+		} else {
+			uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_UNKNOWN);
+		}
 
 		/*
  		 * we got the page!   clear the fake flag (indicates valid
