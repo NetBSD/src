@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.36 2019/12/27 09:41:50 msaitoh Exp $ */
+/* $NetBSD: video.c,v 1.37 2020/05/22 11:23:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.36 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.37 2020/05/22 11:23:51 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -262,6 +262,10 @@ static int	video_set_format(struct video_softc *,
 				 struct v4l2_format *);
 static int	video_try_format(struct video_softc *,
 				 struct v4l2_format *);
+static int	video_get_parm(struct video_softc *,
+			       struct v4l2_streamparm *);
+static int	video_set_parm(struct video_softc *,
+			       struct v4l2_streamparm *);
 static int	video_enum_standard(struct video_softc *,
 				    struct v4l2_standard *);
 static int	video_get_standard(struct video_softc *, v4l2_std_id *);
@@ -867,6 +871,57 @@ video_try_format(struct video_softc *sc,
 		return err;
 
 	video_format_to_v4l2_format(&vfmt, format);
+
+	return 0;
+}
+
+static int
+video_get_parm(struct video_softc *sc, struct v4l2_streamparm *parm)
+{
+	struct video_fract fract;
+	const struct video_hw_if *hw;
+	int error;
+
+	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return EINVAL;
+
+	hw = sc->hw_if;
+	if (hw == NULL)
+		return ENXIO;
+
+	memset(&parm->parm, 0, sizeof(parm->parm));
+	if (hw->get_framerate != NULL) {
+		error = hw->get_framerate(sc->hw_softc, &fract);
+		if (error != 0)
+			return error;
+		parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
+		parm->parm.capture.timeperframe.numerator = fract.numerator;
+		parm->parm.capture.timeperframe.denominator = fract.denominator;
+	}
+
+	return 0;
+}
+
+static int
+video_set_parm(struct video_softc *sc, struct v4l2_streamparm *parm)
+{
+	struct video_fract fract;
+	const struct video_hw_if *hw;
+	int error;
+
+	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return EINVAL;
+
+	hw = sc->hw_if;
+	if (hw == NULL || hw->set_framerate == NULL)
+		return ENXIO;
+
+	error = hw->set_framerate(sc->hw_softc, &fract);
+	if (error != 0)
+		return error;
+
+	parm->parm.capture.timeperframe.numerator = fract.numerator;
+	parm->parm.capture.timeperframe.denominator = fract.denominator;
 
 	return 0;
 }
@@ -1858,6 +1913,7 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct v4l2_queryctrl *query;
 	struct v4l2_requestbuffers *reqbufs;
 	struct v4l2_buffer *buf;
+	struct v4l2_streamparm *parm;
 	v4l2_std_id *stdid;
 	enum v4l2_buf_type *typep;
 	int *ip;
@@ -1914,6 +1970,14 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_TRY_FMT:
 		fmt = data;
 		return video_try_format(sc, fmt);
+	case VIDIOC_G_PARM:
+		parm = data;
+		return video_get_parm(sc, parm);
+	case VIDIOC_S_PARM:
+		parm = data;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_parm(sc, parm);
 	case VIDIOC_ENUMSTD:
 		std = data;
 		return video_enum_standard(sc, std);
