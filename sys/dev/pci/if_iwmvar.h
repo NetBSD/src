@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.19 2019/10/05 23:27:20 mrg Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.20 2020/05/22 20:27:16 thorpej Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -498,6 +498,8 @@ struct iwm_softc {
 	struct sysctllog *sc_clog;
 
 	struct bpf_if *sc_drvbpf;
+
+	kmutex_t	sc_media_mtx;	/* XXX */
 
 	union {
 		struct iwm_rx_radiotap_header th;
