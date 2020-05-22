@@ -1,4 +1,4 @@
-/*	$NetBSD: setfacl.c,v 1.1 2020/05/16 18:31:45 christos Exp $	*/
+/*	$NetBSD: setfacl.c,v 1.2 2020/05/22 01:28:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Chris D. Faulhaber
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/bin/setfacl/setfacl.c 339793 2018-10-26 21:17:06Z markj $");
 #else
-__RCSID("$NetBSD: setfacl.c,v 1.1 2020/05/16 18:31:45 christos Exp $");
+__RCSID("$NetBSD: setfacl.c,v 1.2 2020/05/22 01:28:44 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ static acl_type_t acl_type = ACL_TYPE_ACCESS;
 static int	handle_file(FTS *ftsp, FTSENT *file);
 static acl_t	clear_inheritance_flags(acl_t acl);
 static char	**stdin_files(void);
-static void	usage(void);
+static __dead void	usage(void);
 
 static void
 usage(void)
