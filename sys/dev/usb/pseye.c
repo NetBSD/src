@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.27 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: pseye.c,v 1.28 2020/05/22 11:24:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.27 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.28 2020/05/22 11:24:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,8 @@ static int		pseye_enum_format(void *, uint32_t,
 static int		pseye_get_format(void *, struct video_format *);
 static int		pseye_set_format(void *, struct video_format *);
 static int		pseye_try_format(void *, struct video_format *);
+static int		pseye_get_framerate(void *, struct video_fract *);
+static int		pseye_set_framerate(void *, struct video_fract *);
 static int		pseye_start_transfer(void *);
 static int		pseye_stop_transfer(void *);
 
@@ -150,6 +152,8 @@ static const struct video_hw_if pseye_hw_if = {
 	.get_format = pseye_get_format,
 	.set_format = pseye_set_format,
 	.try_format = pseye_try_format,
+	.get_framerate = pseye_get_framerate,
+	.set_framerate = pseye_set_framerate,
 	.start_transfer = pseye_start_transfer,
 	.stop_transfer = pseye_stop_transfer,
 	.control_iter_init = NULL,
@@ -800,6 +804,23 @@ static int
 pseye_try_format(void *opaque, struct video_format *format)
 {
 	return pseye_get_format(opaque, format);
+}
+
+static int
+pseye_get_framerate(void *opaque, struct video_fract *fract)
+{
+	/* Driver only supports 60fps */
+	fract->numerator = 1;
+	fract->denominator = 60;
+
+	return 0;
+}
+
+static int
+pseye_set_framerate(void *opaque, struct video_fract *fract)
+{
+	/* Driver only supports one framerate. Return actual rate. */
+	return pseye_get_framerate(opaque, fract);
 }
 
 static int
