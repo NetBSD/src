@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.6 2020/04/12 07:49:58 maxv Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.7 2020/05/22 19:29:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2020/04/12 07:49:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2020/05/22 19:29:26 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +142,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	ktf->tf_reg[29] = 0;
 	KASSERT(reg_daif_read() == 0);
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;
+#ifdef DDB
+	ktf->tf_pc = (uint64_t)&&backtrace_here;
+	ktf->tf_sp = 0;	/* mark as switchframe */
+ backtrace_here:
+#endif
 
 	pcb2->pcb_tf = ktf;
 }
