@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.21 2019/10/15 15:58:46 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.22 2020/05/22 22:59:14 jmcneill Exp $	*/
 
 /* Id: output.c,v 1.87 2018/05/10 09:08:46 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.21 2019/10/15 15:58:46 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.22 2020/05/22 22:59:14 jmcneill Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -35,6 +35,8 @@ static Value_t *table;
 static Value_t *check;
 static int lowzero;
 static long high;
+
+struct code_lines code_lines[CODE_MAX];
 
 static void
 output_code_lines(FILE *fp, int cl)
