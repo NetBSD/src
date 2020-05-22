@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.17 2019/10/15 15:58:46 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.18 2020/05/22 22:59:14 jmcneill Exp $	*/
 
 /* Id: reader.c,v 1.74 2017/12/04 17:50:02 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.17 2019/10/15 15:58:46 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.18 2020/05/22 22:59:14 jmcneill Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -71,7 +71,7 @@ static const char *code_keys[] = {
 	"", "requires", "provides", "top", "imports",
 };
 
-struct code_lines code_lines[CODE_MAX];
+extern struct code_lines code_lines[CODE_MAX];
 
 #if defined(YYBTYACC)
 int destructor = 0;	/* =1 if at least one %destructor */
