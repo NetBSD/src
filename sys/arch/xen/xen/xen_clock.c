@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.6 2020/05/21 21:12:31 ad Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.7 2020/05/22 17:44:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.6 2020/05/21 21:12:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.7 2020/05/22 17:44:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -681,7 +681,7 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 	KASSERT(cpu_intr_p());
 	KASSERT(cookie == ci);
 
-#if defined(DIAGNOSTIC) && defined(XENPV)
+#if defined(XENPV)
 	frame = NULL; /* We use values cached in curcpu()  */
 #endif
 again:
