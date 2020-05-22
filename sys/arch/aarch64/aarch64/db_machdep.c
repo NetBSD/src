@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.22 2020/05/13 05:37:16 chs Exp $ */
+/* $NetBSD: db_machdep.c,v 1.23 2020/05/22 04:46:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22 2020/05/13 05:37:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.23 2020/05/22 04:46:26 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -196,6 +196,11 @@ db_regs_t ddb_regs;
 void
 dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 {
+	struct trapframe tf_buf;
+
+	db_read_bytes((db_addr_t)tf, sizeof(tf_buf), (char *)&tf_buf);
+	tf = &tf_buf;
+
 #ifdef COMPAT_NETBSD32
 	if (tf->tf_spsr & SPSR_A32) {
 		(*pr)("    pc=%016"PRIxREGISTER",   spsr=%016"PRIxREGISTER
@@ -342,25 +347,30 @@ void
 db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	lwp_t *l;
-	struct pcb *pcb;
+	lwp_t *l, lwp_buf;
+	struct pcb *pcb, pcb_buf;
 
 	if (!have_addr) {
 		db_printf("lwp address must be specified\n");
 		return;
 	}
-	l = (lwp_t *)addr;
+
+	db_read_bytes(addr, sizeof(lwp_buf), (char *)&lwp_buf);
+	l = &lwp_buf;
 
 #define SAFESTRPTR(p)	(((p) == NULL) ? "NULL" : (p))
 
-	db_printf("lwp=%p\n", l);
+	db_printf("lwp=%p\n", (void *)addr);
 
 	db_printf("\tlwp_getpcb(l)     =%p\n", lwp_getpcb(l));
 
 	db_printf("\tl->l_md.md_onfault=%p\n", l->l_md.md_onfault);
 	db_printf("\tl->l_md.md_utf    =%p\n", l->l_md.md_utf);
 	dump_trapframe(l->l_md.md_utf, db_printf);
-	pcb = l->l_addr;
+
+	db_read_bytes((db_addr_t)l->l_addr, sizeof(pcb_buf), (char *)&pcb_buf);
+	pcb = &pcb_buf;
+
 	db_printf("\tl->l_addr.pcb_tf    =%p\n", pcb->pcb_tf);
 	if (pcb->pcb_tf != l->l_md.md_utf)
 		dump_trapframe(pcb->pcb_tf, db_printf);
