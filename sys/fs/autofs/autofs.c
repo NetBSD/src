@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.5 2020/03/28 17:29:56 tkusumi Exp $	*/
+/*	$NetBSD: autofs.c,v 1.6 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.5 2020/03/28 17:29:56 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.6 2020/05/23 23:42:43 ad Exp $");
 
 #include "autofs.h"
 
@@ -142,12 +142,12 @@ autofs_ignore_thread(void)
 	if (autofs_softc->sc_dev_opened == false)
 		return false;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (autofs_softc->sc_dev_sid == curproc->p_pgrp->pg_id) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return true;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return false;
 }
@@ -264,7 +264,7 @@ autofs_set_sigmask(sigset_t *oldset)
 
 	sigfillset(&newset);
 	/* Remove the autofs set of signals from newset */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(curproc->p_lock);
 
 	for (i = 0; i < __arraycount(autofs_sig_set); i++) {
@@ -280,20 +280,20 @@ autofs_set_sigmask(sigset_t *oldset)
 	sigprocmask1(curlwp, SIG_SETMASK, &newset, oldset);
 
 	mutex_exit(curproc->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 static void
 autofs_restore_sigmask(sigset_t *set)
 {
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(curproc->p_lock);
 
 	sigprocmask1(curlwp, SIG_SETMASK, set, NULL);
 
 	mutex_exit(curproc->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 static int
@@ -485,9 +485,9 @@ autofs_ioctl_request(struct autofs_daemon_request *adr)
 	strlcpy(adr->adr_key, ar->ar_key, sizeof(adr->adr_key));
 	strlcpy(adr->adr_options, ar->ar_options, sizeof(adr->adr_options));
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	autofs_softc->sc_dev_sid = curproc->p_pgrp->pg_id;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return 0;
 }

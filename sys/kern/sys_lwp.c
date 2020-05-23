@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.81 2020/05/23 20:45:10 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.82 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.81 2020/05/23 20:45:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.82 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,10 @@ mi_startlwp(void *arg)
 	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE)) ==
 	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
 		/* Paranoid check */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE)) !=
 		    (PSL_TRACED|PSL_TRACELWP_CREATE)) { 
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return;
 		}
 
@@ -380,14 +380,14 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap,
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	ksi.ksi_lid = SCARG(uap, target);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, ksi.ksi_lid)) == NULL)
 		error = ESRCH;
 	else if (signo != 0)
 		kpsignal2(p, &ksi);
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return error;
 }

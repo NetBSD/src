@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.57 2020/02/23 10:30:43 skrll Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.58 2020/05/23 23:42:42 ad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.57 2020/02/23 10:30:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.58 2020/05/23 23:42:42 ad Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -958,12 +958,12 @@ bktr_softintr(void *cookie)
 
 	bktr = cookie;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (bktr->proc && !(bktr->signal & METEOR_SIG_MODE_MASK)) {
 		psignal(bktr->proc,
 		    bktr->signal&(~METEOR_SIG_MODE_MASK));
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 /*
@@ -977,9 +977,9 @@ video_open(bktr_ptr_t bktr)
 	if (bktr->flags & METEOR_OPEN)		/* device is busy */
 		return(EBUSY);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	bktr->proc = NULL;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	bktr->flags |= METEOR_OPEN;
 
@@ -1592,9 +1592,9 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, void *arg,
 		break;
 
 	case METEORSSIGNAL:
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if(*(int *)arg == 0 || *(int *)arg >= NSIG) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return(EINVAL);
 			break;
 		}
@@ -1604,7 +1604,7 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, void *arg,
 #else
 		bktr->proc = l->l_proc;
 #endif
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 
 	case METEORGSIGNAL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.19 2019/10/06 15:11:17 uwe Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.20 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.19 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.20 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -181,13 +181,13 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 	 * if anyone is still using the system call.
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			if (l->l_sysent == &sy[sp[i].sp_code]) {
 				break;
 			}
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		if (l == NULL) {
 			continue;
 		}

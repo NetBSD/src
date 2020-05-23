@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.23 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.24 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.23 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.24 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 
@@ -228,14 +228,14 @@ kern_pset_destroy(psetid_t psid)
 	}
 
 	/* Unmark the processor-set ID from each thread */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* Safe to check and set without lock held */
 		if (l->l_psid != psid)
 			continue;
 		l->l_psid = PS_NONE;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/* Destroy the processor-set */
 	kmem_free(psets[psid - 1], sizeof(pset_info_t));
@@ -358,7 +358,7 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 			mutex_exit(&cpu_lock);
 			return EBUSY;
 		}
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		/*
 		 * Ensure that none of the threads are using affinity mask
 		 * with this target CPU in it.
@@ -374,7 +374,7 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 			}
 			if (kcpuset_isset(t->l_affinity, cpu_index(ci))) {
 				lwp_unlock(t);
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				mutex_exit(&cpu_lock);
 				return EPERM;
 			}
@@ -397,7 +397,7 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 			KASSERT(tci != ci);
 			lwp_migrate(t, tci);
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 	}
 	mutex_exit(&cpu_lock);
@@ -452,7 +452,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 	id1 = SCARG(uap, first_id);
 	id2 = SCARG(uap, second_id);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	switch (SCARG(uap, idtype)) {
 	case P_PID:
 		/*
@@ -518,7 +518,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		error = ESRCH;
 	}
 error:
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	mutex_exit(&cpu_lock);
 	if (error == 0 && SCARG(uap, opsid))
 		error = copyout(&opsid, SCARG(uap, opsid), sizeof(psetid_t));

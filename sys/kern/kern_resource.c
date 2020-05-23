@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.186 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.187 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.186 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.187 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 	id_t who = SCARG(uap, who);
 	int low = NZERO + PRIO_MAX + 1;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		p = who ? proc_find(who) : curp;
@@ -203,10 +203,10 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		break;
 
 	default:
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return EINVAL;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (low == NZERO + PRIO_MAX + 1) {
 		return ESRCH;
@@ -228,7 +228,7 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 	id_t who = SCARG(uap, who);
 	int found = 0, error = 0;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		p = who ? proc_find(who) : curp;
@@ -275,10 +275,10 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		break;
 
 	default:
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return EINVAL;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return (found == 0) ? ESRCH : error;
 }
@@ -844,16 +844,16 @@ sysctl_proc_findproc(lwp_t *l, pid_t pid, proc_t **p2)
 	if (pid == PROC_CURPROC) {
 		p = l->l_proc;
 	} else {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		p = proc_find(pid);
 		if (p == NULL) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return ESRCH;
 		}
 	}
 	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
 	if (pid != PROC_CURPROC) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	*p2 = p;
 	return error;

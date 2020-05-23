@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.10 2020/02/01 02:23:23 riastradh Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.11 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.10 2020/02/01 02:23:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.11 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -123,7 +123,7 @@ fd_checkstd(void)
 		pathbuf_destroy(pb);
 	}
 	if (closed[0] != '\0') {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		pp = p->p_pptr;
 		mutex_enter(pp->p_lock);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
@@ -132,7 +132,7 @@ fd_checkstd(void)
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
 		mutex_exit(pp->p_lock);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	return (0);
 }
