@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.19 2019/10/12 06:46:13 skrll Exp $
+#	$NetBSD: files.imx6,v 1.20 2020/05/23 06:21:36 rin Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -27,13 +27,13 @@ attach	axi at mainbus
 file	arch/arm/imx/imx6_axi.c			axi
 
 # iMX6 PCIe
-device	imxpcie: pcibus
+device	imxpcie: pcibus, clk
 attach	imxpcie at axi with imx6_pcie
 file	arch/arm/imx/imxpcie.c			imxpcie
 file	arch/arm/imx/imx6_pcie.c		imx6_pcie
 
 # iMX6 Clock Control Module
-device	imxccm : clk
+device	imxccm: clk
 attach	imxccm at axi
 file	arch/arm/imx/imx6_ccm.c			imxccm needs-flag
 file	arch/arm/imx/imx6_clk.c			imxccm
