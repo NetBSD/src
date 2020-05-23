@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.251 2020/04/29 01:52:26 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.252 2020/05/23 20:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.251 2020/04/29 01:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.252 2020/05/23 20:45:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.251 2020/04/29 01:52:26 thorpej Exp 
 #include <sys/cpu.h>
 #include <sys/compat_stub.h>
 #include <sys/futex.h>
+#include <sys/pserialize.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -120,6 +121,7 @@ struct proclist		zombproc	__cacheline_aligned;
 
 static kmutex_t		proc_lock_s	__cacheline_aligned;
 kmutex_t *		proc_lock	__read_mostly;
+static pserialize_t	proc_psz;
 
 /*
  * pid to lwp/proc lookup is done by indexing the pid_table array.
@@ -168,13 +170,7 @@ struct pid_table {
 
 /*
  * Table of process IDs (PIDs).
- *
- * Locking order:
- *	proc_lock -> pid_table_lock
- *  or
- *	proc::p_lock -> pid_table_lock
  */
-static krwlock_t pid_table_lock		__cacheline_aligned;
 static struct pid_table *pid_table	__read_mostly;
 
 #define	INITIAL_PID_TABLE_SIZE		(1 << 5)
@@ -382,7 +378,7 @@ procinit(void)
 	mutex_init(&proc_lock_s, MUTEX_DEFAULT, IPL_NONE);
 	proc_lock = &proc_lock_s;
 
-	rw_init(&pid_table_lock);
+	proc_psz = pserialize_create();
 
 	pid_table = kmem_alloc(INITIAL_PID_TABLE_SIZE
 	    * sizeof(struct pid_table), KM_SLEEP);
@@ -406,10 +402,10 @@ procinit(void)
 #undef LINK_EMPTY
 
 	/* Reserve PID 1 for init(8). */	/* XXX slightly gross */
-	rw_enter(&pid_table_lock, RW_WRITER);
+	mutex_enter(proc_lock);
 	if (proc_alloc_pid_slot(&proc0, PT_SET_RESERVED) != 1)
 		panic("failed to reserve PID 1 for init(8)");
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
 
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
@@ -585,13 +581,12 @@ proc_sesshold(struct session *ss)
 	ss->s_count++;
 }
 
-static void
-proc_sessrele_pid_table_write_locked(struct session *ss)
+void
+proc_sessrele(struct session *ss)
 {
 	struct pgrp *pg;
 
 	KASSERT(mutex_owned(proc_lock));
-	KASSERT(rw_write_held(&pid_table_lock));
 	KASSERT(ss->s_count > 0);
 
 	/*
@@ -606,20 +601,12 @@ proc_sessrele_pid_table_write_locked(struct session *ss)
 		ss = NULL;
 	}
 
-	rw_exit(&pid_table_lock);
 	mutex_exit(proc_lock);
 
 	if (pg)
 		kmem_free(pg, sizeof(struct pgrp));
 	if (ss)
 		kmem_free(ss, sizeof(struct session));
-}
-
-void
-proc_sessrele(struct session *ss)
-{
-	rw_enter(&pid_table_lock, RW_WRITER);
-	proc_sessrele_pid_table_write_locked(ss);
 }
 
 /*
@@ -676,7 +663,7 @@ p_inferior(struct proc *p, struct proc *q)
  * proc_find_lwp: locate an lwp in said proc by the ID.
  *
  * => Must be called with p::p_lock held.
- * => LARVAL lwps are not returned because they are only partially
+ * => LSIDL lwps are not returned because they are only partially
  *    constructed while occupying the slot.
  * => Callers need to be careful about lwp::l_stat of the returned
  *    lwp.
@@ -687,20 +674,104 @@ proc_find_lwp(proc_t *p, pid_t pid)
 	struct pid_table *pt;
 	struct lwp *l = NULL;
 	uintptr_t slot;
+	int s;
 
 	KASSERT(mutex_owned(p->p_lock));
-	rw_enter(&pid_table_lock, RW_READER);
+
+	/*
+	 * Look in the pid_table.  This is done unlocked inside a pserialize
+	 * read section covering pid_table's memory allocation only, so take
+	 * care to read the slot atomically and only once.  This issues a
+	 * memory barrier for dependent loads on alpha.
+	 */
+	s = pserialize_read_enter();
 	pt = &pid_table[pid & pid_tbl_mask];
-
-	slot = pt->pt_slot;
-	if (__predict_true(PT_IS_LWP(slot) && pt->pt_pid == pid)) {
-		l = PT_GET_LWP(slot);
-		if (__predict_false(l->l_proc != p || l->l_stat == LSLARVAL)) {
-			l = NULL;
-		}
+	slot = atomic_load_consume(&pt->pt_slot);
+	if (__predict_false(!PT_IS_LWP(slot))) {
+		pserialize_read_exit(s);
+		return NULL;
 	}
-	rw_exit(&pid_table_lock);
 
+	/*
+	 * Check to see if the LWP is from the correct process.  We won't
+	 * see entries in pid_table from a prior process that also used "p",
+	 * by virtue of the fact that allocating "p" means all prior updates
+	 * to dependant data structures are visible to this thread.
+	 */
+	l = PT_GET_LWP(slot);
+	if (__predict_false(atomic_load_relaxed(&l->l_proc) != p)) {
+		pserialize_read_exit(s);
+		return NULL;
+	}
+
+	/*
+	 * We now know that p->p_lock holds this LWP stable.
+	 *
+	 * If the status is not LSIDL, it means the LWP is intended to be
+	 * findable by LID and l_lid cannot change behind us.
+	 *
+	 * No need to acquire the LWP's lock to check for LSIDL, as
+	 * p->p_lock must be held to transition in and out of LSIDL.
+	 * Any other observed state of is no particular interest.
+	 */
+	pserialize_read_exit(s);
+	return l->l_stat != LSIDL && l->l_lid == pid ? l : NULL;
+}
+
+/*
+ * proc_find_lwp_unlocked: locate an lwp in said proc by the ID.
+ *
+ * => Called in a pserialize read section with no locks held.
+ * => LSIDL lwps are not returned because they are only partially
+ *    constructed while occupying the slot.
+ * => Callers need to be careful about lwp::l_stat of the returned
+ *    lwp.
+ * => If an LWP is found, it's returned locked.
+ */
+struct lwp *
+proc_find_lwp_unlocked(proc_t *p, pid_t pid)
+{
+	struct pid_table *pt;
+	struct lwp *l = NULL;
+	uintptr_t slot;
+
+	KASSERT(pserialize_in_read_section());
+
+	/*
+	 * Look in the pid_table.  This is done unlocked inside a pserialize
+	 * read section covering pid_table's memory allocation only, so take
+	 * care to read the slot atomically and only once.  This issues a
+	 * memory barrier for dependent loads on alpha.
+	 */
+	pt = &pid_table[pid & pid_tbl_mask];
+	slot = atomic_load_consume(&pt->pt_slot);
+	if (__predict_false(!PT_IS_LWP(slot))) {
+		return NULL;
+	}
+
+	/*
+	 * Lock the LWP we found to get it stable.  If it's embryonic or
+	 * reaped (LSIDL) then none of the other fields can safely be
+	 * checked.
+	 */
+	l = PT_GET_LWP(slot);
+	lwp_lock(l);
+	if (__predict_false(l->l_stat == LSIDL)) {
+		lwp_unlock(l);
+		return NULL;
+	}
+
+	/*
+	 * l_proc and l_lid are now known stable because the LWP is not
+	 * LSIDL, so check those fields too to make sure we found the
+	 * right thing.
+	 */
+	if (__predict_false(l->l_proc != p || l->l_lid != pid)) {
+		lwp_unlock(l);
+		return NULL;
+	}
+
+	/* Everything checks out, return it locked. */
 	return l;
 }
 
@@ -723,29 +794,18 @@ proc_find_lwp_acquire_proc(pid_t pid, struct proc **pp)
 
 	KASSERT(pp != NULL);
 	mutex_enter(proc_lock);
-	rw_enter(&pid_table_lock, RW_READER);
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	slot = pt->pt_slot;
 	if (__predict_true(PT_IS_LWP(slot) && pt->pt_pid == pid)) {
-		/*
-		 * Locking order is p::p_lock -> pid_table_lock, but
-		 * we're already holding pid_table_lock; we need to
-		 * release it before acquiring p::p_lock.  This is
-		 * safe because p will be stable by virtue of holding
-		 * proc_lock.
-		 */
 		l = PT_GET_LWP(slot);
 		p = l->l_proc;
-		rw_exit(&pid_table_lock);
 		mutex_enter(p->p_lock);
-		if (__predict_false(l->l_stat == LSLARVAL)) {
+		if (__predict_false(l->l_stat == LSIDL)) {
 			mutex_exit(p->p_lock);
 			l = NULL;
 			p = NULL;
 		}
-	} else {
-		rw_exit(&pid_table_lock);
 	}
 	mutex_exit(proc_lock);
 
@@ -757,8 +817,7 @@ proc_find_lwp_acquire_proc(pid_t pid, struct proc **pp)
 /*
  * proc_find_raw_pid_table_locked: locate a process by the ID.
  *
- * => Must be called with proc_lock held and the pid_table_lock
- *    at least held for reading.
+ * => Must be called with proc_lock held.
  */
 static proc_t *
 proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
@@ -767,7 +826,7 @@ proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
 	proc_t *p = NULL;
 	uintptr_t slot;
 
-	KASSERT(mutex_owned(proc_lock));
+	/* No - used by DDB.  KASSERT(mutex_owned(proc_lock)); */
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	slot = pt->pt_slot;
@@ -777,7 +836,7 @@ proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
 		 * on the PID assigned to the proc, not just one of
 		 * its LWPs.
 		 *
-		 * N.B. We require lwp::l_proc of LARVAL LWPs to be
+		 * N.B. We require lwp::l_proc of LSIDL LWPs to be
 		 * valid here.
 		 */
 		p = PT_GET_LWP(slot)->l_proc;
@@ -792,15 +851,12 @@ proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
 proc_t *
 proc_find_raw(pid_t pid)
 {
-	KASSERT(mutex_owned(proc_lock));
-	rw_enter(&pid_table_lock, RW_READER);
-	proc_t *p = proc_find_raw_pid_table_locked(pid, false);
-	rw_exit(&pid_table_lock);
-	return p;
+
+	return proc_find_raw_pid_table_locked(pid, false);
 }
 
 static proc_t *
-proc_find_pid_table_locked(pid_t pid, bool any_lwpid)
+proc_find_internal(pid_t pid, bool any_lwpid)
 {
 	proc_t *p;
 
@@ -821,16 +877,6 @@ proc_find_pid_table_locked(pid_t pid, bool any_lwpid)
 	return NULL;
 }
 
-static proc_t *
-proc_find_internal(pid_t pid, bool any_lwpid)
-{
-	KASSERT(mutex_owned(proc_lock));
-	rw_enter(&pid_table_lock, RW_READER);
-	proc_t *p = proc_find_pid_table_locked(pid, any_lwpid);
-	rw_exit(&pid_table_lock);
-	return p;
-}
-
 proc_t *
 proc_find(pid_t pid)
 {
@@ -844,13 +890,12 @@ proc_find_lwpid(pid_t pid)
 }
 
 /*
- * pgrp_find_pid_table_locked: locate a process group by the ID.
+ * pgrp_find: locate a process group by the ID.
  *
- * => Must be called with proc_lock held and the pid_table_lock
- *    held at least for reading.
+ * => Must be called with proc_lock held.
  */
-static struct pgrp *
-pgrp_find_pid_table_locked(pid_t pgid)
+struct pgrp *
+pgrp_find(pid_t pgid)
 {
 	struct pgrp *pg;
 
@@ -868,16 +913,6 @@ pgrp_find_pid_table_locked(pid_t pgid)
 	return pg;
 }
 
-struct pgrp *
-pgrp_find(pid_t pgid)
-{
-	KASSERT(mutex_owned(proc_lock));
-	rw_enter(&pid_table_lock, RW_READER);
-	struct pgrp *pg = pgrp_find_pid_table_locked(pgid);
-	rw_exit(&pid_table_lock);
-	return pg;
-}
-
 static void
 expand_pid_table(void)
 {
@@ -889,11 +924,11 @@ expand_pid_table(void)
 	u_int i;
 	uint new_pt_mask;
 
-	KASSERT(rw_write_held(&pid_table_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	/* Unlock the pid_table briefly to allocate memory. */
 	pt_size = pid_tbl_mask + 1;
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
 
 	tsz = pt_size * 2 * sizeof(struct pid_table);
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
@@ -902,10 +937,10 @@ expand_pid_table(void)
 	/* XXX For now.  The pratical limit is much lower anyway. */
 	KASSERT(new_pt_mask <= FUTEX_TID_MASK);
 
-	rw_enter(&pid_table_lock, RW_WRITER);
+	mutex_enter(proc_lock);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
-		rw_exit(&pid_table_lock);
+		mutex_exit(proc_lock);
 		kmem_free(new_pt, tsz);
 		goto out;
 	}
@@ -971,11 +1006,17 @@ expand_pid_table(void)
 	} else
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
+
+	/*
+	 * Make sure that unlocked access to the old pid_table is complete
+	 * and then free it.
+	 */
+	pserialize_perform(proc_psz);
 	kmem_free(n_pt, tsz);
 
- out:	/* Return with the pid_table_lock held again. */
-	rw_enter(&pid_table_lock, RW_WRITER);
+ out:	/* Return with proc_lock held again. */
+	mutex_enter(proc_lock);
 }
 
 struct proc *
@@ -1013,7 +1054,7 @@ proc_alloc_pid_slot(struct proc *p, uintptr_t slot)
 	pid_t pid;
 	int nxt;
 
-	KASSERT(rw_write_held(&pid_table_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	for (;;expand_pid_table()) {
 		if (__predict_false(pid_alloc_cnt >= pid_alloc_lim)) {
@@ -1071,12 +1112,13 @@ proc_alloc_pid(struct proc *p)
 	pid_t pid;
 
 	KASSERT((((uintptr_t)p) & PT_F_ALLBITS) == 0);
+	KASSERT(p->p_stat == SIDL);
 
-	rw_enter(&pid_table_lock, RW_WRITER);
+	mutex_enter(proc_lock);
 	pid = proc_alloc_pid_slot(p, PT_SET_PROC(p));
 	if (pid != -1)
 		p->p_pid = pid;
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
 
 	return pid;
 }
@@ -1088,6 +1130,17 @@ proc_alloc_lwpid(struct proc *p, struct lwp *l)
 	pid_t pid;
 
 	KASSERT((((uintptr_t)l) & PT_F_ALLBITS) == 0);
+	KASSERT(l->l_proc == p);
+	KASSERT(l->l_stat == LSIDL);
+
+	/*
+	 * For unlocked lookup in proc_find_lwp(), make sure l->l_proc
+	 * is globally visible before the LWP becomes visible via the
+	 * pid_table.
+	 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_producer();
+#endif
 
 	/*
 	 * If the slot for p->p_pid currently points to the proc,
@@ -1096,7 +1149,7 @@ proc_alloc_lwpid(struct proc *p, struct lwp *l)
 	 * happen again if the first LWP for a process exits and
 	 * before the process creates another.
 	 */
-	rw_enter(&pid_table_lock, RW_WRITER);
+	mutex_enter(proc_lock);
 	pid = p->p_pid;
 	pt = &pid_table[pid & pid_tbl_mask];
 	KASSERT(pt->pt_pid == pid);
@@ -1110,7 +1163,7 @@ proc_alloc_lwpid(struct proc *p, struct lwp *l)
 		if (pid != -1)
 			l->l_lid = pid;
 	}
-	rw_exit(&pid_table_lock);
+	mutex_exit(proc_lock);
 
 	return pid;
 }
@@ -1120,7 +1173,6 @@ proc_free_pid_internal(pid_t pid, uintptr_t type __diagused)
 {
 	struct pid_table *pt;
 
-	rw_enter(&pid_table_lock, RW_WRITER);
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	KASSERT(PT_GET_TYPE(pt->pt_slot) == type);
@@ -1139,7 +1191,6 @@ proc_free_pid_internal(pid_t pid, uintptr_t type __diagused)
 		last_free_pt = pid;
 		pid_alloc_cnt--;
 	}
-	rw_exit(&pid_table_lock);
 }
 
 /*
@@ -1165,12 +1216,11 @@ void
 proc_free_lwpid(struct proc *p, pid_t pid)
 {
 
-	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	if (__predict_true(p->p_pid == pid)) {
 		struct pid_table *pt;
 
-		rw_enter(&pid_table_lock, RW_WRITER);
 		pt = &pid_table[pid & pid_tbl_mask];
 
 		KASSERT(pt->pt_pid == pid);
@@ -1178,8 +1228,6 @@ proc_free_lwpid(struct proc *p, pid_t pid)
 		KASSERT(PT_GET_LWP(pt->pt_slot)->l_proc == p);
 
 		pt->pt_slot = PT_SET_PROC(p);
-
-		rw_exit(&pid_table_lock);
 		return;
 	}
 	proc_free_pid_internal(pid, PT_F_LWP);
@@ -1213,19 +1261,11 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	int rval;
 	pid_t pg_id = NO_PGID;
 
-	sess = mksess ? kmem_alloc(sizeof(*sess), KM_SLEEP) : NULL;
-
 	/* Allocate data areas we might need before doing any validity checks */
-	rw_enter(&pid_table_lock, RW_READER);/* Because pid_table might change */
-	if (pid_table[pgid & pid_tbl_mask].pt_pgrp == 0) {
-		rw_exit(&pid_table_lock);
-		new_pgrp = kmem_alloc(sizeof(*new_pgrp), KM_SLEEP);
-	} else {
-		rw_exit(&pid_table_lock);
-		new_pgrp = NULL;
-	}
+	sess = mksess ? kmem_alloc(sizeof(*sess), KM_SLEEP) : NULL;
+	new_pgrp = kmem_alloc(sizeof(*new_pgrp), KM_SLEEP);
+
 	mutex_enter(proc_lock);
-	rw_enter(&pid_table_lock, RW_WRITER);
 	rval = EPERM;	/* most common error (to save typing) */
 
 	/* Check pgrp exists or can be created */
@@ -1236,7 +1276,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	/* Can only set another process under restricted circumstances. */
 	if (pid != curp->p_pid) {
 		/* Must exist and be one of our children... */
-		p = proc_find_pid_table_locked(pid, false);
+		p = proc_find_internal(pid, false);
 		if (p == NULL || !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;
@@ -1255,7 +1295,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	} else {
 		/* ... setsid() cannot re-enter a pgrp */
 		if (mksess && (curp->p_pgid == curp->p_pid ||
-		    pgrp_find_pid_table_locked(curp->p_pid)))
+		    pgrp_find(curp->p_pid)))
 			goto done;
 		p = curp;
 	}
@@ -1349,7 +1389,6 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	mutex_spin_exit(&tty_lock);
 
     done:
-	rw_exit(&pid_table_lock);
 	if (pg_id != NO_PGID) {
 		/* Releases proc_lock. */
 		pg_delete(pg_id);
@@ -1406,7 +1445,6 @@ pg_remove(pid_t pg_id)
 	struct pid_table *pt;
 
 	KASSERT(mutex_owned(proc_lock));
-	KASSERT(rw_write_held(&pid_table_lock));
 
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
@@ -1443,10 +1481,8 @@ pg_delete(pid_t pg_id)
 
 	KASSERT(mutex_owned(proc_lock));
 
-	rw_enter(&pid_table_lock, RW_WRITER);
 	pg = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
 	if (pg == NULL || pg->pg_id != pg_id || !LIST_EMPTY(&pg->pg_members)) {
-		rw_exit(&pid_table_lock);
 		mutex_exit(proc_lock);
 		return;
 	}
@@ -1463,12 +1499,11 @@ pg_delete(pid_t pg_id)
 	mutex_spin_exit(&tty_lock);
 
 	/*
-	 * The leading process group in a session is freed by
-	 * proc_sessrele_pid_table_write_locked(), if last
-	 * reference.  It will also release the locks.
+	 * The leading process group in a session is freed by proc_sessrele(),
+	 * if last reference.  It will also release the locks.
 	 */
 	pg = (ss->s_sid != pg->pg_id) ? pg_remove(pg_id) : NULL;
-	proc_sessrele_pid_table_write_locked(ss);
+	proc_sessrele(ss);
 
 	if (pg != NULL) {
 		/* Free it, if was not done above. */
