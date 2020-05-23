@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.68 2020/05/23 21:14:55 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.69 2020/05/23 21:24:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.68 2020/05/23 21:14:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.69 2020/05/23 21:24:41 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -206,9 +206,31 @@ sched_enqueue(struct lwp *l)
 		KASSERT((spc->spc_bitmap[i] & q) == 0);
 		spc->spc_bitmap[i] |= q;
 	}
-	/* Preempted SCHED_RR and SCHED_FIFO LWPs go to the queue head. */
-	if (l->l_class != SCHED_OTHER && (l->l_pflag & LP_PREEMPTING) != 0) {
-		TAILQ_INSERT_HEAD(q_head, l, l_runq);
+
+	/*
+	 * Determine run queue position according to POSIX.  XXX Explicitly
+	 * lowering a thread's priority with pthread_setschedparam() is not
+	 * handled.
+	 */
+	if ((l->l_pflag & LP_PREEMPTING) != 0) {
+		switch (l->l_class) {
+		case SCHED_OTHER:
+			TAILQ_INSERT_TAIL(q_head, l, l_runq);
+			break;
+		case SCHED_FIFO:
+			TAILQ_INSERT_HEAD(q_head, l, l_runq);
+			break;
+		case SCHED_RR:
+			if (getticks() - l->l_rticks >= sched_rrticks) {
+				TAILQ_INSERT_TAIL(q_head, l, l_runq);
+			} else {
+				TAILQ_INSERT_HEAD(q_head, l, l_runq);
+			}
+			break;
+		default: /* SCHED_OTHER */
+			panic("sched_enqueue: LWP %p has class %d\n",
+			    l, l->l_class);
+		}
 	} else {
 		TAILQ_INSERT_TAIL(q_head, l, l_runq);
 	}
