@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2020/05/01 21:58:16 christos Exp $
+# $NetBSD: Makefile,v 1.26 2020/05/23 00:43:33 rin Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -213,8 +213,6 @@ STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
 openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 	${CC} ${LDFLAGS} -nostdlib -o ${.TARGET} -r -Wl,--whole-archive \
 	    openpam_static.o ${STATIC_MODULE_LIBS}
-
-CPPFLAGS.openpam_static.c+=	-DOPENPAM_STATIC_MODULES
 
 CWARNFLAGS.clang+=	-Wno-error=tautological-pointer-compare
 COPTS.openpam_dynamic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
