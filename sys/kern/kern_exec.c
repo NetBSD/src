@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.500 2020/05/07 20:02:34 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.501 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.500 2020/05/07 20:02:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.501 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1281,7 +1281,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		bool samecpu;
 		lwp_t *lp;
 
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		lp = p->p_vforklwp;
 		p->p_vforklwp = NULL;
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
@@ -1293,7 +1293,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		/* If parent is still on same CPU, teleport curlwp elsewhere. */
 		samecpu = (lp->l_cpu == curlwp->l_cpu);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 
 		/* Give the parent its CPU back - find a new home. */
 		KASSERT(!is_spawn);
@@ -1356,13 +1356,13 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (!no_local_exec_lock)
 		rw_exit(&exec_lock);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	/* posix_spawn(3) reports a single event with implied exec(3) */
 	if ((p->p_slflag & PSL_TRACED) && !is_spawn) {
 		mutex_enter(p->p_lock);
 		eventswitch(TRAP_EXEC, 0, 0);
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 	}
 
 	if (p->p_sflag & PS_STOPEXEC) {
@@ -1380,13 +1380,13 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		p->p_nrlwps--;
 		lwp_unlock(l);
 		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		lwp_lock(l);
 		spc_lock(l->l_cpu);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 	} else {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 
 	exec_path_free(data);
@@ -1832,17 +1832,17 @@ exec_remove(struct execsw *esp, int count)
 	/* Abort if any are busy. */
 	rw_enter(&exec_lock, RW_WRITER);
 	for (i = 0; i < count; i++) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		for (pd = proclists; pd->pd_list != NULL; pd++) {
 			PROCLIST_FOREACH(p, pd->pd_list) {
 				if (p->p_execsw == &esp[i]) {
-					mutex_exit(proc_lock);
+					mutex_exit(&proc_lock);
 					rw_exit(&exec_lock);
 					return EBUSY;
 				}
 			}
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 
 	/* None are busy, so remove them all. */
@@ -2124,7 +2124,7 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 	 * set state to SSTOP so that this proc can be found by pid.
 	 * see proc_enterprp, do_sched_setparam below
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	/*
 	 * p_stat should be SACTIVE, so we need to adjust the
 	 * parent's p_nstopchild here.  For safety, just make
@@ -2135,7 +2135,7 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 	p->p_stat = SSTOP;
 	p->p_waited = 0;
 	p->p_pptr->p_nstopchild++;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/* Set process group */
 	if (attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
@@ -2200,10 +2200,10 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 	}
 	error = 0;
 out:
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	p->p_stat = ostat;
 	p->p_pptr->p_nstopchild--;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	return error;
 }
 
@@ -2657,7 +2657,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -2698,7 +2698,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	/* LWP now unlocked */
 
 	mutex_exit(p2->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	cv_wait(&spawn_data->sed_cv_child_ready, &spawn_data->sed_mtx_child);
 	error = spawn_data->sed_error;
@@ -2716,10 +2716,10 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	if (p1->p_slflag & PSL_TRACED) {
 		/* Paranoid check */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) !=
 		    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return 0;
 		}
 

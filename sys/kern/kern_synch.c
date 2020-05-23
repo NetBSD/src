@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.348 2020/05/20 20:59:31 maxv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.349 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.348 2020/05/20 20:59:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.349 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -931,7 +931,7 @@ suspendsched(void)
 	/*
 	 * We do this by process in order not to violate the locking rules.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		mutex_enter(p->p_lock);
 		if ((p->p_flag & PK_SYSTEM) != 0) {
@@ -974,7 +974,7 @@ suspendsched(void)
 
 		mutex_exit(p->p_lock);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
@@ -1112,7 +1112,7 @@ sched_pstats(void)
 		lavg_count = 0;
 		nrun = 0;
 	}
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		struct lwp *l;
 		struct rlimit *rlim;
@@ -1215,5 +1215,5 @@ sched_pstats(void)
 	/* Lightning bolt. */
 	cv_broadcast(&lbolt);
 
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.62 2020/01/08 17:21:38 mgorny Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.63 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.62 2020/01/08 17:21:38 mgorny Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.63 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -399,11 +399,11 @@ coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 	    sizeof(cpi.cpi_sigcatch));
 
 	cpi.cpi_pid = p->p_pid;
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	cpi.cpi_ppid = p->p_pptr->p_pid;
 	cpi.cpi_pgrp = p->p_pgid;
 	cpi.cpi_sid = p->p_session->s_sid;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	cpi.cpi_ruid = kauth_cred_getuid(l->l_cred);
 	cpi.cpi_euid = kauth_cred_geteuid(l->l_cred);

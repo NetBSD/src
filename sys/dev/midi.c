@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.89 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: midi.c,v 1.90 2020/05/23 23:42:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.89 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.90 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -676,11 +676,11 @@ midi_softint(void *cookie)
 
 	sc = cookie;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	pid = sc->async;
 	if (pid != 0 && (p = proc_find(pid)) != NULL)
 		psignal(p, SIGIO);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 static void
@@ -1643,7 +1643,7 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case FIOASYNC:
 		mutex_exit(sc->lock);
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (*(int *)addr) {
 			if (sc->async) {
 				error = EBUSY;
@@ -1655,7 +1655,7 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		} else {
 			sc->async = 0;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		mutex_enter(sc->lock);
 		break;
 

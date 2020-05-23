@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.96 2019/05/26 19:23:04 dholland Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.97 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.96 2019/05/26 19:23:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.97 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,12 +470,12 @@ acct_process(struct lwp *l)
 	acct.ac_gid = kauth_cred_getgid(l->l_cred);
 
 	/* (7) The terminal from which the process was started */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if ((p->p_lflag & PL_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
 		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/* (8) The boolean flags that tell how the process terminated, etc. */
 	acct.ac_flag = p->p_acflag;

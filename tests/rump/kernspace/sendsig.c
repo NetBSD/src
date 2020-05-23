@@ -1,4 +1,4 @@
-/*	$NetBSD: sendsig.c,v 1.1 2011/01/14 13:08:00 pooka Exp $	*/
+/*	$NetBSD: sendsig.c,v 1.2 2020/05/23 23:42:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: sendsig.c,v 1.1 2011/01/14 13:08:00 pooka Exp $");
+__RCSID("$NetBSD: sendsig.c,v 1.2 2020/05/23 23:42:44 ad Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -52,7 +52,7 @@ rumptest_sendsig(char *signo)
 	sig = strtoull(signo, NULL, 10);
 	rump_boot_setsigmodel(RUMP_SIGMODEL_RAISE);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	while (!sent) {
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid > 1) {
@@ -63,9 +63,9 @@ rumptest_sendsig(char *signo)
 				break;
 			}
 		}
-		kpause("w8", false, 1, proc_lock);
+		kpause("w8", false, 1, &proc_lock);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/* restore default */
 	rump_boot_setsigmodel(RUMP_SIGMODEL_PANIC);

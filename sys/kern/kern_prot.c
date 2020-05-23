@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.121 2016/11/13 15:25:01 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.122 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.121 2016/11/13 15:25:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.122 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -107,9 +107,9 @@ sys_getpgrp(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	*retval = p->p_pgrp->pg_id;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	return (0);
 }
 
@@ -127,14 +127,14 @@ sys_getsid(struct lwp *l, const struct sys_getsid_args *uap, register_t *retval)
 	struct proc *p;
 	int error = 0;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_session->s_sid;
 	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_session->s_sid;
 	else
 		error = ESRCH;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return error;
 }
@@ -149,14 +149,14 @@ sys_getpgid(struct lwp *l, const struct sys_getpgid_args *uap, register_t *retva
 	struct proc *p;
 	int error = 0;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_pgid;
 	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_pgid;
 	else
 		error = ESRCH;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return error;
 }
@@ -596,9 +596,9 @@ sys___getlogin(struct lwp *l, const struct sys___getlogin_args *uap, register_t 
 
 	if (namelen > sizeof(login))
 		namelen = sizeof(login);
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	memcpy(login, p->p_session->s_login, namelen);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	return (copyout(login, (void *)SCARG(uap, namebuf), namelen));
 }
 
@@ -624,7 +624,7 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 	if (error != 0)
 		return (error == ENAMETOOLONG ? EINVAL : error);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	sp = p->p_session;
 	if (sp->s_flags & S_LOGIN_SET && p->p_pid != sp->s_sid &&
 	    strncmp(newname, sp->s_login, sizeof sp->s_login) != 0)
@@ -633,6 +633,6 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 		    (int)sizeof sp->s_login, sp->s_login, newname);
 	sp->s_flags |= S_LOGIN_SET;
 	strncpy(sp->s_login, newname, sizeof sp->s_login);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	return (0);
 }
