@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.30 2019/11/01 13:58:32 christos Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.31 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -575,7 +575,7 @@ npfctl_config_show(int fd)
 		print_linesep(ctx);
 	} else {
 		ncf = npfctl_config_ref();
-		(void)npf_config_build(ncf);
+		npfctl_config_build();
 		loaded = true;
 	}
 	ctx->conf = ncf;

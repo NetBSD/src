@@ -47,7 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.15 2019/08/25 13:21:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.16 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -94,10 +94,18 @@ npf_config_destroy(npf_config_t *nc)
 	 * Note: the rulesets must be destroyed first, in order to drop
 	 * any references to the tableset.
 	 */
-	npf_ruleset_destroy(nc->ruleset);
-	npf_ruleset_destroy(nc->nat_ruleset);
-	npf_rprocset_destroy(nc->rule_procs);
-	npf_tableset_destroy(nc->tableset);
+	if (nc->ruleset) {
+		npf_ruleset_destroy(nc->ruleset);
+	}
+	if (nc->nat_ruleset) {
+		npf_ruleset_destroy(nc->nat_ruleset);
+	}
+	if (nc->rule_procs) {
+		npf_rprocset_destroy(nc->rule_procs);
+	}
+	if (nc->tableset) {
+		npf_tableset_destroy(nc->tableset);
+	}
 	kmem_free(nc, sizeof(npf_config_t));
 }
 
