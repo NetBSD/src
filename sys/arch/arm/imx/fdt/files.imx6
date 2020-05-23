@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.10 2020/05/23 13:24:08 skrll Exp $
+#	$NetBSD: files.imx6,v 1.11 2020/05/23 13:39:24 rin Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -16,7 +16,7 @@ file	arch/arm/imx/imx6_ccm.c		imxccm
 file	arch/arm/imx/fdt/imx6_clk.c	imxccm
 
 # Common FDT clock framework
-define	imx_ccm
+define	imx_ccm: clk
 file	arch/arm/imx/fdt/imx_ccm.c		imx_ccm
 file	arch/arm/imx/fdt/imx_ccm_extclk.c	imx_ccm
 file	arch/arm/imx/fdt/imx_ccm_gate.c		imx_ccm
@@ -106,7 +106,7 @@ file	arch/arm/imx/fdt/imx6_spi.c		imxspi_fdt
 defparam opt_imxspi.h                   	IMXSPINSLAVES
 
 # PWM
-device	imxpwm: pwm
+device	imxpwm: pwm, clk
 attach	imxpwm at fdt with imxpwm_fdt
 file	arch/arm/imx/imxpwm.c			imxpwm
 file	arch/arm/imx/fdt/imx6_pwm.c		imxpwm_fdt
