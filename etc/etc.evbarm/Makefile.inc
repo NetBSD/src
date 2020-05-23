@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.116 2020/05/22 14:09:54 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.117 2020/05/23 11:06:23 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -100,12 +100,6 @@ __mkimage: .USE
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
-ARCHES.arm=		armv4 xscale armv5t armv6 armv7
-ARCHES.armeb=		armv4 xscale armv5t armv6
-ARCHES.earm=		armv4 xscale armv5t armv6 armv7
-ARCHES.earmeb=		armv4 xscale armv5t armv6
-ARCHES.earmhf=		armv6hf armv7hf
-ARCHES.earmhfeb=	armv6hf
 ARCHES.earmv4=		armv4
 ARCHES.earmv4eb=	armv4
 ARCHES.earmv5=		xscale armv5t
