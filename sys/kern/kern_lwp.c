@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.237 2020/04/29 01:52:26 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.238 2020/05/23 20:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -65,9 +65,15 @@
  *
  *	LSIDL
  *
- *		Idle: the LWP has been created but has not yet executed,
- *		or it has ceased executing a unit of work and is waiting
- *		to be started again.
+ *		Idle: the LWP has been created but has not yet executed, or
+ *		it has ceased executing a unit of work and is waiting to be
+ *		started again.  This state exists so that the LWP can occupy
+ *		a slot in the process & PID table, but without having to
+ *		worry about being touched; lookups of the LWP by ID will
+ *		fail while in this state.  The LWP will become visible for
+ *		lookup once its state transitions further.  Some special
+ *		kernel threads also (ab)use this state to indicate that they
+ *		are idle (soft interrupts and idle LWPs).
  *
  *	LSSUSPENDED:
  *
@@ -82,16 +88,6 @@
  *	stop executing or become "running" again within a short timeframe.
  *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
- *
- *	LSLARVAL:
- *
- *		Born, but not fully mature: the LWP is in the process
- *		of being constructed.  This state exists so that the
- *		LWP can occupy a slot in the PID table, but without
- *		having to worry about being touched; lookups of the
- *		LWP will fail while in this state.  The LWP will become
- *		visible in the PID table once its state transitions
- *		to LSIDL.
  *
  *	LSZOMB:
  *
@@ -129,8 +125,6 @@
  *	LWP can be set runnable again by a signal.
  *
  *	LWPs may transition states in the following ways:
- *
- *	 LARVAL ----> IDL
  *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
  *		    				    > SLEEP
@@ -223,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.237 2020/04/29 01:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.238 2020/05/23 20:45:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -266,6 +260,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.237 2020/04/29 01:52:26 thorpej Exp $
 static pool_cache_t	lwp_cache	__read_mostly;
 struct lwplist		alllwp		__cacheline_aligned;
 
+static int		lwp_ctor(void *, void *, int);
 static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
@@ -347,7 +342,7 @@ lwpinit(void)
 	LIST_INIT(&alllwp);
 	lwpinit_specificdata();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
-	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
+	    "lwppl", NULL, IPL_NONE, lwp_ctor, lwp_dtor, NULL);
 
 	maxlwp = cpu_maxlwp();
 	sysctl_kern_lwp_setup();
@@ -376,6 +371,27 @@ lwp0_init(void)
 	SYSCALL_TIME_LWP_INIT(l);
 }
 
+/*
+ * Initialize the non-zeroed portion of an lwp_t.
+ */
+static int
+lwp_ctor(void *arg, void *obj, int flags)
+{
+	lwp_t *l = obj;
+
+	l->l_stat = LSIDL;
+	l->l_cpu = curcpu();
+	l->l_mutex = l->l_cpu->ci_schedstate.spc_lwplock;
+	l->l_ts = pool_get(&turnstile_pool, flags);
+
+	if (l->l_ts == NULL) {
+		return ENOMEM;
+	} else {
+		turnstile_ctor(l->l_ts);
+		return 0;
+	}
+}
+
 static void
 lwp_dtor(void *arg, void *obj)
 {
@@ -389,13 +405,22 @@ lwp_dtor(void *arg, void *obj)
 	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
 	 * callers, therefore cross-call to all CPUs will do the job.  Also,
 	 * the value of l->l_cpu must be still valid at this point.
+	 *
+	 * XXX should use epoch based reclamation.
 	 */
 	KASSERT(l->l_cpu != NULL);
 	xc_barrier(0);
+
+	/*
+	 * We can't return turnstile0 to the pool (it didn't come from it),
+	 * so if it comes up just drop it quietly and move on.
+	 */
+	if (l->l_ts != &turnstile0)
+		pool_put(&turnstile_pool, l->l_ts);
 }
 
 /*
- * Set an suspended.
+ * Set an LWP suspended.
  *
  * Must be called with p_lock held, and the LWP locked.  Will unlock the
  * LWP before return.
@@ -593,7 +618,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		error = 0;
 
 		/*
-		 * If given a specific LID, go via the tree and make sure
+		 * If given a specific LID, go via pid_table and make sure
 		 * it's not detached.
 		 */
 		if (lid != 0) {
@@ -742,7 +767,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
     const stack_t *sigstk)
 {
 	struct lwp *l2;
-	turnstile_t *ts;
 
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
 
@@ -778,20 +802,29 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		p2->p_zomblwp = NULL;
 		lwp_free(l2, true, false);
 		/* p2 now unlocked by lwp_free() */
-		ts = l2->l_ts;
+		KASSERT(l2->l_ts != NULL);
 		KASSERT(l2->l_inheritedprio == -1);
 		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
-		memset(l2, 0, sizeof(*l2));
-		l2->l_ts = ts;
+		memset(&l2->l_startzero, 0, sizeof(*l2) -
+		    offsetof(lwp_t, l_startzero));
 	} else {
 		mutex_exit(p2->p_lock);
 		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
-		memset(l2, 0, sizeof(*l2));
-		ts = l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
+		memset(&l2->l_startzero, 0, sizeof(*l2) -
+		    offsetof(lwp_t, l_startzero));
 		SLIST_INIT(&l2->l_pi_lenders);
 	}
 
-	l2->l_stat = LSLARVAL;
+	/*
+	 * Because of lockless lookup via pid_table, the LWP can be locked
+	 * and inspected briefly even after it's freed, so a few fields are
+	 * kept stable.
+	 */
+	KASSERT(l2->l_stat == LSIDL);
+	KASSERT(l2->l_cpu != NULL);
+	KASSERT(l2->l_ts != NULL);
+	KASSERT(l2->l_mutex == l2->l_cpu->ci_schedstate.spc_lwplock);
+
 	l2->l_proc = p2;
 	l2->l_refcnt = 0;
 	l2->l_class = sclass;
@@ -799,7 +832,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	/*
 	 * Allocate a process ID for this LWP.  We need to do this now
 	 * while we can still unwind if it fails.  Beacuse we're marked
-	 * as LARVAL, no lookups by the ID will succeed.
+	 * as LSIDL, no lookups by the ID will succeed.
 	 *
 	 * N.B. this will always succeed for the first LWP in a process,
 	 * because proc_alloc_lwpid() will usurp the slot.  Also note
@@ -807,9 +840,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	 * will succeed, even if the LWP itself is not visible.
 	 */
 	if (__predict_false(proc_alloc_lwpid(p2, l2) == -1)) {
-		if (ts != &turnstile0)
-			pool_cache_put(turnstile_cache, ts);
-		l2->l_ts = NULL;
 		pool_cache_put(lwp_cache, l2);
 		return EAGAIN;
 	}
@@ -857,11 +887,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		l2->l_flag |= LW_SYSTEM;
 	}
 
-	kpreempt_disable();
-	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_lwplock;
-	l2->l_cpu = l1->l_cpu;
-	kpreempt_enable();
-
 	kdtrace_thread_ctor(NULL, l2);
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
@@ -889,13 +914,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
 	mutex_enter(p2->p_lock);
-
-	/*
-	 * This renders l2 visible in the pid table once p2->p_lock is
-	 * released.
-	 */
-	l2->l_stat = LSIDL;
-
 	if ((flags & LWP_DETACHED) != 0) {
 		l2->l_prflag = LPR_DETACHED;
 		p2->p_ndlwps++;
@@ -1227,6 +1245,31 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		(void)chglwpcnt(kauth_cred_getuid(p->p_cred), -1);
 
 	/*
+	 * In the unlikely event that the LWP is still on the CPU,
+	 * then spin until it has switched away.
+	 */
+	membar_consumer();
+	while (__predict_false((l->l_pflag & LP_RUNNING) != 0)) {
+		SPINLOCK_BACKOFF_HOOK;
+	}
+
+	/*
+	 * Now that the LWP's known off the CPU, reset its state back to
+	 * LSIDL, which defeats anything that might have gotten a hold on
+	 * the LWP via pid_table before the ID was freed.  It's important
+	 * to do this with both the LWP locked and p_lock held.
+	 *
+	 * Also reset the CPU and lock pointer back to curcpu(), since the
+	 * LWP will in all likelyhood be cached with the current CPU in
+	 * lwp_cache when we free it and later allocated from there again
+	 * (avoid incidental lock contention).
+	 */
+	lwp_lock(l);
+	l->l_stat = LSIDL;
+	l->l_cpu = curcpu();
+	lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_lwplock);
+
+	/*
 	 * If this was not the last LWP in the process, then adjust counters
 	 * and unlock.  This is done differently for the last LWP in exit1().
 	 */
@@ -1247,24 +1290,17 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		if ((l->l_prflag & LPR_DETACHED) != 0)
 			p->p_ndlwps--;
 
-		/* Free the LWP ID. */
-		proc_free_lwpid(p, l->l_lid);
-
 		/*
 		 * Have any LWPs sleeping in lwp_wait() recheck for
 		 * deadlock.
 		 */
 		cv_broadcast(&p->p_lwpcv);
 		mutex_exit(p->p_lock);
-	}
 
-	/*
-	 * In the unlikely event that the LWP is still on the CPU,
-	 * then spin until it has switched away.
-	 */
-	membar_consumer();
-	while (__predict_false((l->l_pflag & LP_RUNNING) != 0)) {
-		SPINLOCK_BACKOFF_HOOK;
+		/* Free the LWP ID. */
+		mutex_enter(proc_lock);
+		proc_free_lwpid(p, l->l_lid);
+		mutex_exit(proc_lock);
 	}
 
 	/*
@@ -1288,18 +1324,9 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	}
 
 	/*
-	 * Free the LWP's turnstile and the LWP structure itself unless the
-	 * caller wants to recycle them.  Also, free the scheduler specific
-	 * data.
-	 *
-	 * We can't return turnstile0 to the pool (it didn't come from it),
-	 * so if it comes up just drop it quietly and move on.
-	 *
-	 * We don't recycle the VM resources at this time.
+	 * Free remaining data structures and the LWP itself unless the
+	 * caller wants to recycle.
 	 */
-
-	if (!recycle && l->l_ts != &turnstile0)
-		pool_cache_put(turnstile_cache, l->l_ts);
 	if (l->l_name != NULL)
 		kmem_free(l->l_name, MAXCOMLEN);
 
