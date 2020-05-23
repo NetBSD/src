@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.81 2020/03/01 21:43:56 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.82 2020/05/23 20:22:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.81 2020/03/01 21:43:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.82 2020/05/23 20:22:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,37 +560,14 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 void
 uvm_pglistfree(struct pglist *list)
 {
-	struct pgfreelist *pgfl;
-	struct pgflbucket *pgb;
 	struct vm_page *pg;
-	int c, b;
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 
-	/*
-	 * Lock the free list and free each page.
-	 */
-
-	uvm_pgfl_lock();
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		TAILQ_REMOVE(list, pg, pageq.queue);
-		pg->flags = (pg->flags & PG_ZERO) | PG_FREE;
-#ifdef DEBUG
-		pg->uobject = (void *)0xdeadbeef;
-		pg->uanon = (void *)0xdeadbeef;
-		if (pg->flags & PG_ZERO)
-			uvm_pagezerocheck(pg);
-#endif /* DEBUG */
-		c = VM_PGCOLOR(pg);
-		b = uvm_page_get_bucket(pg);
-		pgfl = &uvm.page_free[uvm_page_get_freelist(pg)];
-		pgb = pgfl->pgfl_buckets[b];
-		if (pg->flags & PG_ZERO)
-			CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
-		pgb->pgb_nfree++;
-		LIST_INSERT_HEAD(&pgb->pgb_colors[c], pg, pageq.list);
+		uvm_pagefree(pg);
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
-	uvm_pgfl_unlock();
 }
