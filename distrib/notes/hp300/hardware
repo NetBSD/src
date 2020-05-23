@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.22 2020/05/01 03:02:28 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.23 2020/05/23 00:02:10 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -186,8 +186,6 @@ internal video on models 362/382 (A1474-69511 and A147x-69510)
 .Em "No X server support"
 .It
 425e built-in EVRX framebuffer
-.br
-.Em "No X server support"
 .bullet)
 .It
 HP-HIL devices
