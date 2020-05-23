@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.44 2020/05/21 05:04:13 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.45 2020/05/23 18:08:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -568,6 +568,26 @@ AARCH64REG_READ_INLINE3(APIAKeyLo_EL1, apiakeylo_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_WRITE_INLINE3(APIAKeyLo_EL1, apiakeylo_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_READ_INLINE3(APIAKeyHi_EL1, apiakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_WRITE_INLINE3(APIAKeyHi_EL1, apiakeyhi_el1, ATTR_ARCH("armv8.3-a"))
+
+AARCH64REG_READ_INLINE3(APIBKeyLo_EL1, apibkeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APIBKeyLo_EL1, apibkeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_READ_INLINE3(APIBKeyHi_EL1, apibkeyhi_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APIBKeyHi_EL1, apibkeyhi_el1, ATTR_ARCH("armv8.3-a"))
+
+AARCH64REG_READ_INLINE3(APDAKeyLo_EL1, apdakeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APDAKeyLo_EL1, apdakeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_READ_INLINE3(APDAKeyHi_EL1, apdakeyhi_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APDAKeyHi_EL1, apdakeyhi_el1, ATTR_ARCH("armv8.3-a"))
+
+AARCH64REG_READ_INLINE3(APDBKeyLo_EL1, apdbkeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APDBKeyLo_EL1, apdbkeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_READ_INLINE3(APDBKeyHi_EL1, apdbkeyhi_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APDBKeyHi_EL1, apdbkeyhi_el1, ATTR_ARCH("armv8.3-a"))
+
+AARCH64REG_READ_INLINE3(APGAKeyLo_EL1, apgakeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APGAKeyLo_EL1, apgakeylo_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_READ_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
+AARCH64REG_WRITE_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 
 AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Regiser
 AARCH64REG_WRITE_INLINE(cpacr_el1)
