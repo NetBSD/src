@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HUMMINGBOARD,v 1.10 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: HUMMINGBOARD,v 1.11 2020/05/23 06:22:34 rin Exp $
 #
 #	Hummingboard -- Freescale i.MX6 Eval Board Kernel
 #
@@ -90,7 +90,6 @@ imxuart0	at axi? addr 0x02020000 irq 58		# UART1
 #imxuart2	at axi? addr 0x021ec000 irq 60		# UART3
 #imxuart3	at axi? addr 0x021f0000 irq 61		# UART4
 #imxuart4	at axi? addr 0x021f4000 irq 62		# UART5
-options		IMXUARTCONSOLE
 
 # I2C
 imxi2c0		at axi? addr 0x021A0000 irq 68
