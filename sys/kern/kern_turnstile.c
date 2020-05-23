@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.39 2020/04/19 20:35:29 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.40 2020/05/23 20:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.39 2020/04/19 20:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.40 2020/05/23 20:45:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -80,15 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.39 2020/04/19 20:35:29 ad Exp $
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 6) & TS_HASH_MASK)
 
 static tschain_t	turnstile_chains[TS_HASH_SIZE] __cacheline_aligned;
-pool_cache_t		turnstile_cache __read_mostly;
+struct pool		turnstile_pool;
 extern turnstile_t	turnstile0;
 
 static union {
 	kmutex_t	lock;
 	uint8_t		pad[COHERENCY_UNIT];
 } turnstile_locks[TS_HASH_SIZE] __cacheline_aligned;
-
-static int		turnstile_ctor(void *, void *, int);
 
 /*
  * turnstile_init:
@@ -105,11 +103,10 @@ turnstile_init(void)
 		mutex_init(&turnstile_locks[i].lock, MUTEX_DEFAULT, IPL_SCHED);
 	}
 
-	turnstile_cache = pool_cache_init(sizeof(turnstile_t), coherency_unit,
-	    0, 0, "tstile", NULL, IPL_NONE, turnstile_ctor, NULL, NULL);
-	KASSERT(turnstile_cache != NULL);
+	pool_init(&turnstile_pool, sizeof(turnstile_t), coherency_unit,
+	    0, 0, "tstile", NULL, IPL_NONE);
 
-	(void)turnstile_ctor(NULL, &turnstile0, 0);
+	turnstile_ctor(&turnstile0);
 }
 
 /*
@@ -117,15 +114,13 @@ turnstile_init(void)
  *
  *	Constructor for turnstiles.
  */
-static int
-turnstile_ctor(void *arg, void *obj, int flags)
+void
+turnstile_ctor(turnstile_t *ts)
 {
-	turnstile_t *ts = obj;
 
 	memset(ts, 0, sizeof(*ts));
 	sleepq_init(&ts->ts_sleepq[TS_READER_Q]);
 	sleepq_init(&ts->ts_sleepq[TS_WRITER_Q]);
-	return (0);
 }
 
 /*

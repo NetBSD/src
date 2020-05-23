@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.80 2020/05/05 22:12:06 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.81 2020/05/23 20:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.80 2020/05/05 22:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.81 2020/05/23 20:45:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.80 2020/05/05 22:12:06 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/lwpctl.h>
 #include <sys/cpu.h>
+#include <sys/pserialize.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -458,22 +459,23 @@ int
 lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 {
 	u_int target;
-	int error;
+	int error, s;
 	proc_t *p;
 	lwp_t *t;
 
 	p = curproc;
 	error = 0;
 
-	mutex_enter(p->p_lock);
+	s = pserialize_read_enter();
 	for (target = 0; target < ntargets; target++) {
-		t = proc_find_lwp(p, tp[target]);
+		t = proc_find_lwp_unlocked(p, tp[target]);
 		if (__predict_false(t == NULL)) {
 			error = ESRCH;
 			continue;
 		}
 
-		lwp_lock(t);
+		KASSERT(lwp_locked(t, NULL));
+
 		if (__predict_true(t->l_syncobj == &lwp_park_syncobj)) {
 			/*
 			 * As expected it's parked, so wake it up. 
@@ -496,7 +498,7 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 			lwp_unlock(t);
 		}
 	}
-	mutex_exit(p->p_lock);
+	pserialize_read_exit(s);
 
 	return error;
 }

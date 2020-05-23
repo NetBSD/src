@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.48 2020/04/25 15:42:15 bouyer Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.49 2020/05/23 20:45:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.48 2020/04/25 15:42:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.49 2020/05/23 20:45:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -310,8 +310,6 @@ lwproc_freelwp(struct lwp *l)
 	KASSERT(l->l_flag & LW_WEXIT);
 	KASSERT(l->l_refcnt == 0);
 
-	/* ok, zero references, continue with nuke */
-	proc_free_lwpid(p, l->l_lid);
 	LIST_REMOVE(l, l_sibling);
 	KASSERT(p->p_nlwps >= 1);
 	if (--p->p_nlwps == 0) {
@@ -322,9 +320,11 @@ lwproc_freelwp(struct lwp *l)
 	}
 	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in a rump kernel? */
 	kauth_cred_free(l->l_cred);
+	l->l_stat = LSIDL;
 	mutex_exit(p->p_lock);
 
 	mutex_enter(proc_lock);
+	proc_free_lwpid(p, l->l_lid);
 	LIST_REMOVE(l, l_list);
 	mutex_exit(proc_lock);
 
@@ -361,6 +361,8 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	l->l_refcnt = 1;
 	l->l_proc = p;
+	l->l_stat = LSIDL;
+	l->l_mutex = &unruntime_lock;
 
 	proc_alloc_lwpid(p, l);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
@@ -369,7 +371,6 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	l->l_cpu = &rump_bootcpu;
 	l->l_target_cpu = &rump_bootcpu; /* Initial target CPU always same */
 	l->l_stat = LSRUN;
-	l->l_mutex = &unruntime_lock;
 	TAILQ_INIT(&l->l_ld_locks);
 	mutex_exit(p->p_lock);
 
@@ -520,6 +521,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 	l->l_stat = LSRUN;
 
 	if (l->l_flag & LW_WEXIT) {
+		l->l_stat = LSIDL;
 		lwproc_freelwp(l);
 	}
 }
