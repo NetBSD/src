@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.38 2020/04/13 15:54:45 maxv Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.39 2020/05/23 21:24:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.38 2020/04/13 15:54:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.39 2020/05/23 21:24:41 ad Exp $");
 
 #include <sys/param.h>
 
@@ -68,9 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.38 2020/04/13 15:54:45 maxv Exp $");
  */
 static u_int	min_ts;			/* Minimal time-slice */
 static u_int	max_ts;			/* Maximal time-slice */
-static u_int	rt_ts;			/* Real-time time-slice */
 static u_int	ts_map[PRI_COUNT];	/* Map of time-slices */
 static pri_t	high_pri[PRI_COUNT];	/* Map for priority increase */
+u_int		sched_rrticks;		/* Real-time time-slice */
 
 static void	sched_precalcts(void);
 
@@ -88,7 +88,7 @@ sched_rqinit(void)
 	/* Default timing ranges */
 	min_ts = mstohz(20);			/*  ~20 ms */
 	max_ts = mstohz(150);			/* ~150 ms */
-	rt_ts = mstohz(100);			/* ~100 ms */
+	sched_rrticks = mstohz(100);			/* ~100 ms */
 	sched_precalcts();
 
 #ifdef notdef
@@ -117,7 +117,7 @@ sched_precalcts(void)
 
 	/* Real-time range */
 	for (p = (PRI_HIGHEST_TS + 1); p < PRI_COUNT; p++) {
-		ts_map[p] = rt_ts;
+		ts_map[p] = sched_rrticks;
 		high_pri[p] = p;
 	}
 }
@@ -346,7 +346,7 @@ static int
 sysctl_sched_rtts(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int rttsms = hztoms(rt_ts);
+	int rttsms = hztoms(sched_rrticks);
 
 	node = *rnode;
 	node.sysctl_data = &rttsms;
