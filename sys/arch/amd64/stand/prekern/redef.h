@@ -1,7 +1,7 @@
-/*	$NetBSD: redef.h,v 1.2 2017/11/14 13:58:07 maxv Exp $	*/
+/*	$NetBSD: redef.h,v 1.3 2020/05/23 08:25:32 maxv Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
