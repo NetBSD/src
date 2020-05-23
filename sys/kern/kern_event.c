@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.106 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.107 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.106 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.107 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ filt_procattach(struct knote *kn)
 
 	curl = curlwp;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (kn->kn_flags & EV_FLAG1) {
 		/*
 		 * NOTE_TRACK attaches to the child process too early
@@ -519,7 +519,7 @@ filt_procattach(struct knote *kn)
 	}
 
 	if (p == NULL) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return ESRCH;
 	}
 
@@ -528,7 +528,7 @@ filt_procattach(struct knote *kn)
 	 * setuid/setgid privs (unless you're root).
 	 */
 	mutex_enter(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
 	    p, NULL, NULL, NULL) != 0) {
 	    	mutex_exit(p->p_lock);

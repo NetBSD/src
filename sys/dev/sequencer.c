@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.71 2019/08/25 07:10:30 maxv Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.72 2020/05/23 23:42:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.71 2019/08/25 07:10:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.72 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -426,10 +426,10 @@ seq_timeout(void *addr)
 	cv_broadcast(&sc->wchan);
 	selnotify(&sc->wsel, 0, NOTE_SUBMIT);
 	if ((pid = sc->async) != 0) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if ((p = proc_find(pid)) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	mutex_exit(&sc->lock);
 }
@@ -518,10 +518,10 @@ seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 	if (sc->async != 0) {
 		proc_t *p;
 
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if ((p = proc_find(sc->async)) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	return 0;
 }

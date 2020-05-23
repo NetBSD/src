@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_limit.c,v 1.3 2019/09/27 14:36:18 christos Exp $	*/
+/*	$NetBSD: procfs_limit.c,v 1.4 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_limit.c,v 1.3 2019/09/27 14:36:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_limit.c,v 1.4 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +63,11 @@ procfs_dolimit(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if (uio->uio_rw != UIO_READ)
 		return EOPNOTSUPP;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 	memcpy(rl, p->p_rlimit, sizeof(rl));
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	error = 0;
 

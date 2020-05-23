@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.225 2020/05/12 11:21:09 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.226 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.225 2020/05/12 11:21:09 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.226 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -502,7 +502,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -546,9 +546,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Notify any interested parties about the new process.
 	 */
 	if (!SLIST_EMPTY(&p1->p_klist)) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 	}
 
 	/*
@@ -605,7 +605,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		eventswitch(TRAP_CHLD,
 		    tracefork(p1, flags) ? PTRACE_FORK : PTRACE_VFORK,
 		    retval[0]);
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 	}
 
 	/*
@@ -613,7 +613,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * child to exec or exit, sleep until it clears p_vforkwaiting.
 	 */
 	while (l1->l_vforkwaiting)
-		cv_wait(&l1->l_waitcv, proc_lock);
+		cv_wait(&l1->l_waitcv, &proc_lock);
 
 	/*
 	 * Let the parent know that we are tracing its child.
@@ -622,7 +622,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		mutex_enter(p1->p_lock);
 		eventswitch(TRAP_CHLD, PTRACE_VFORK_DONE, retval[0]);
 	} else
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 
 	return 0;
 }

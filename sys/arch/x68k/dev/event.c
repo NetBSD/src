@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.15 2017/10/25 08:12:38 maya Exp $ */
+/*	$NetBSD: event.c,v 1.16 2020/05/23 23:42:41 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.15 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.16 2020/05/23 23:42:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -177,9 +177,9 @@ ev_wakeup(struct evvar *ev)
 	mutex_exit(ev->ev_lock);
 
 	if (ev->ev_async) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		psignal(ev->ev_io, SIGIO);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 }
 

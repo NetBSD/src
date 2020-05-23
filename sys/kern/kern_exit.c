@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.289 2020/04/24 03:22:06 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.290 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.289 2020/04/24 03:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.290 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -237,15 +237,15 @@ exit1(struct lwp *l, int exitcode, int signo)
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
 
-		if (!mutex_tryenter(proc_lock)) {
+		if (!mutex_tryenter(&proc_lock)) {
 			mutex_exit(p->p_lock);
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			mutex_enter(p->p_lock);
 		}
 		p->p_waited = 0;
 		p->p_pptr->p_nstopchild++;
 		p->p_stat = SSTOP;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		lwp_lock(l);
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
@@ -356,7 +356,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * wake up the parent early to avoid deadlock.  We can do this once
 	 * the VM resources are released.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (p->p_lflag & PL_PPWAIT) {
 		lwp_t *lp;
 
@@ -392,9 +392,9 @@ exit1(struct lwp *l, int exitcode, int signo)
 				if (pgrp != NULL) {
 					pgsignal(pgrp, SIGHUP, 1);
 				}
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				(void) ttywait(tp);
-				mutex_enter(proc_lock);
+				mutex_enter(&proc_lock);
 
 				/* The tty could have been revoked. */
 				vprevoke = sp->s_ttyvp;
@@ -416,10 +416,10 @@ exit1(struct lwp *l, int exitcode, int signo)
 				proc_sessrele(sp);
 				VOP_REVOKE(vprevoke, REVOKEALL);
 			} else
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 			if (vprele != NULL)
 				vrele(vprele);
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 		}
 	}
 	fixjobc(p, p->p_pgrp, 0);
@@ -581,7 +581,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 */
 	cv_broadcast(&p->p_pptr->p_waitcv);
 	rw_exit(&p->p_reflock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
@@ -657,11 +657,11 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 	if (si != NULL)
 		memset(si, 0, sizeof(*si));
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	error = find_stopped_child(curproc, idtype, id, options, &child,
 	    wru, si);
 	if (child == NULL) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		*pid = 0;
 		*status = 0;
 		return error;
@@ -673,7 +673,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 		*status = P_WAITSTATUS(child);
 		/* proc_free() will release the proc_lock. */
 		if (options & WNOWAIT) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 		} else {
 			proc_free(child, wru);
 		}
@@ -681,7 +681,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 		/* Don't mark SIGCONT if we are being stopped */
 		*status = (child->p_xsig == SIGCONT && child->p_stat != SSTOP) ?
 		    W_CONTCODE() : W_STOPCODE(child->p_xsig);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	return 0;
 }
@@ -992,7 +992,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 	struct proc *child, *dead;
 	int error;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	if (options & ~WALLOPTS) {
 		*child_p = NULL;
@@ -1121,7 +1121,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		/*
 		 * Wait for another child process to stop.
 		 */
-		error = cv_wait_sig(&parent->p_waitcv, proc_lock);
+		error = cv_wait_sig(&parent->p_waitcv, &proc_lock);
 
 		if (error != 0) {
 			*child_p = NULL;
@@ -1145,7 +1145,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 	kauth_cred_t cred1, cred2;
 	uid_t uid;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(p->p_nlwps == 1);
 	KASSERT(p->p_nzlwps == 1);
 	KASSERT(p->p_nrlwps == 0);
@@ -1171,7 +1171,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 			kpsignal(parent, &ksi, NULL);
 		}
 		cv_broadcast(&parent->p_waitcv);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return;
 	}
 
@@ -1302,7 +1302,7 @@ void
 proc_reparent(struct proc *child, struct proc *parent)
 {
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	if (child->p_pptr == parent)
 		return;

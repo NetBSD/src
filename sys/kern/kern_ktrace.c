@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.176 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.177 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.176 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.177 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 	struct proc *p;
 	int error = 0;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		if (p->p_tracep != ktd)
 			continue;
@@ -484,7 +484,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 		mutex_exit(&ktrace_lock);
 		mutex_exit(p->p_lock);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return error;
 }
@@ -1083,7 +1083,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 	/*
 	 * do it
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pid < 0) {
 		/*
 		 * by process group
@@ -1114,7 +1114,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		else
 			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	if (error == 0 && !ret)
 		error = EPERM;
 	*fpp = NULL;
@@ -1238,7 +1238,7 @@ ktrsetchildren(lwp_t *curl, struct proc *top, int ops, int facs,
 	struct proc *p;
 	int ret = 0;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	p = top;
 	for (;;) {

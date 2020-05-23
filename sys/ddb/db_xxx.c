@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.74 2020/03/10 15:58:37 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.75 2020/05/23 23:42:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.74 2020/03/10 15:58:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.75 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -108,7 +108,7 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	       /*NOTREACHED*/
 	}
 	/* We might stop when the mutex is held or when not */
-	t = mutex_tryenter(proc_lock);
+	t = mutex_tryenter(&proc_lock);
 #ifdef DIAGNOSTIC
 	if (!t) {
 	       db_error("could not acquire proc_lock mutex\n");
@@ -118,7 +118,7 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	p = proc_find((pid_t)pid);
 	if (p == NULL) {
 		if (t)
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 		db_error("no such proc\n");
 		/*NOTREACHED*/
 	}
@@ -131,7 +131,7 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	kpsignal2(p, &ksi);
 	mutex_exit(p->p_lock);
 	if (t)
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 #else
 	db_kernelonly();
 #endif

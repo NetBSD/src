@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.44 2019/11/10 21:16:37 chs Exp $ */
+/*	$NetBSD: bpp.c,v 1.45 2020/05/23 23:42:42 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.44 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.45 2020/05/23 23:42:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -301,9 +301,9 @@ bppclose(dev_t dev, int flags, int mode, struct lwp *l)
 	irq &= ~BPP_ALLEN;
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR, irq);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	sc->sc_asyncproc = NULL;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	sc->sc_flags = 0;
 	return 0;
 }
@@ -458,7 +458,7 @@ bppioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case FIOASYNC:
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (*(int *)data) {
 			if (sc->sc_asyncproc != NULL)
 				error = EBUSY;
@@ -466,7 +466,7 @@ bppioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				sc->sc_asyncproc = p;
 		} else
 			sc->sc_asyncproc = NULL;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 	default:
 		break;
@@ -629,8 +629,8 @@ bppsoftintr(void *cookie)
 {
 	struct bpp_softc *sc = cookie;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (sc->sc_asyncproc)
 		psignal(sc->sc_asyncproc, SIGIO);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }

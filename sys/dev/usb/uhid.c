@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.113 2020/03/04 01:23:08 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.114 2020/05/23 23:42:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.113 2020/03/04 01:23:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.114 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -301,10 +301,10 @@ uhid_softintr(void *cookie)
 
 	sc = cookie;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (sc->sc_async != NULL)
 		 psignal(sc->sc_async, SIGIO);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 static int
@@ -353,9 +353,9 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_obuf = NULL;
 	sc->sc_state &= ~UHID_IMMED;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	sc->sc_async = NULL;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return 0;
 }
@@ -369,9 +369,9 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	sc->sc_async = NULL;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	mutex_enter(&sc->sc_access_lock);
 
@@ -561,45 +561,45 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		break;
 
 	case FIOASYNC:
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (*(int *)addr) {
 			if (sc->sc_async != NULL) {
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				return EBUSY;
 			}
 			sc->sc_async = l->l_proc;
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
 			sc->sc_async = NULL;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 
 	/* XXX this is not the most general solution. */
 	case TIOCSPGRP:
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (sc->sc_async == NULL) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return EINVAL;
 		}
 		if (*(int *)addr != sc->sc_async->p_pgid) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return EPERM;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 
 	case FIOSETOWN:
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (sc->sc_async == NULL) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return EINVAL;
 		}
 		if (-*(int *)addr != sc->sc_async->p_pgid
 		    && *(int *)addr != sc->sc_async->p_pid) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return EPERM;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		break;
 
 	case USB_HID_GET_RAW:

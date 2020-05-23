@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.69 2020/05/01 08:21:27 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.70 2020/05/23 23:42:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.69 2020/05/01 08:21:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.70 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5988,11 +5988,11 @@ audio_psignal(struct audio_softc *sc, pid_t pid, int signum)
 	 * psignal() must be called without spin lock held.
 	 */
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	p = proc_find(pid);
 	if (p)
 		psignal(p, signum);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 /*
@@ -7993,11 +7993,11 @@ mixer_signal(struct audio_softc *sc)
 	KASSERT(sc->sc_exlock);
 
 	for (i = 0; i < sc->sc_am_used; i++) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		p = proc_find(sc->sc_am[i]);
 		if (p)
 			psignal(p, SIGIO);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 }
 

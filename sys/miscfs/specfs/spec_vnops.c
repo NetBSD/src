@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.178 2020/05/16 18:31:51 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.179 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.178 2020/05/16 18:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.179 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1182,7 +1182,7 @@ spec_close(void *v)
 		 *
 		 * XXX V. fishy.
 		 */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		sess = curlwp->l_proc->p_session;
 		if (sn->sn_opencnt == 1 && vp == sess->s_ttyvp) {
 			mutex_spin_enter(&tty_lock);
@@ -1197,11 +1197,11 @@ spec_close(void *v)
 				mutex_spin_exit(&tty_lock);
 				if (sess->s_ttyp->t_pgrp != NULL)
 					panic("spec_close: spurious pgrp ref");
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 			}
 			vrele(vp);
 		} else
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 
 		/*
 		 * If the vnode is locked, then we are in the midst

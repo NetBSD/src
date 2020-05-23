@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.26 2019/11/23 17:32:10 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.27 2020/05/23 23:42:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2019 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.26 2019/11/23 17:32:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.27 2020/05/23 23:42:42 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -283,13 +283,13 @@ lockstat_stop(lsdisable_t *ld)
 	lockstat_init_tables(NULL);
 
 	/* Run through all LWPs and clear the slate for the next run. */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		l->l_pfailaddr = 0;
 		l->l_pfailtime = 0;
 		l->l_pfaillock = 0;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (ld == NULL)
 		return error;

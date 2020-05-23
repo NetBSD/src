@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.366 2020/05/23 20:45:11 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.367 2020/05/23 23:42:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -485,7 +485,7 @@ extern u_int		nprocs;		/* Current number of procs */
 extern int		maxproc;	/* Max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
-extern kmutex_t		*proc_lock;
+extern kmutex_t		proc_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 

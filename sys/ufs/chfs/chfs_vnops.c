@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.40 2020/05/20 17:04:58 christos Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.41 2020/05/23 23:42:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -826,9 +826,9 @@ chfs_write(void *v)
 	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)

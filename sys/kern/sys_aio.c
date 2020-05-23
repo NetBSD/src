@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.47 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.48 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.47 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.48 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -113,12 +113,12 @@ aio_fini(bool interface)
 		if (error != 0)
 			return error;
 		/* Abort if any processes are using AIO. */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_aio != NULL)
 				break;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		if (p != NULL) {
 			error = syscall_establish(NULL, aio_syscalls);
 			KASSERT(error == 0);
@@ -465,9 +465,9 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 	ksi.ksi_signo = sig->sigev_signo;
 	ksi.ksi_code = SI_ASYNCIO;
 	ksi.ksi_value = sig->sigev_value;
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	kpsignal(p, &ksi, NULL);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 /*

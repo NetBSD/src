@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.238 2020/05/23 20:45:10 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.239 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.238 2020/05/23 20:45:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.239 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -533,7 +533,7 @@ lwp_unstop(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
 	lwp_lock(l);
@@ -961,11 +961,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	SDT_PROBE(proc, kernel, , lwp__create, l2, 0, 0, 0, 0);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	/* Inherit a processor-set */
 	l2->l_psid = l1->l_psid;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
 
@@ -1125,7 +1125,7 @@ lwp_exit(struct lwp *l)
 	 * Remove the LWP from the global list.
 	 * Free its LID from the PID namespace if needed.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT)) ==
 	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
@@ -1138,12 +1138,12 @@ lwp_exit(struct lwp *l)
 			 */
 		} else {
 			eventswitch(TRAP_LWP, PTRACE_LWP_EXIT, l->l_lid);
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 		}
 	}
 
 	LIST_REMOVE(l, l_list);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * Get rid of all references to the LWP that others (e.g. procfs)
@@ -1298,9 +1298,9 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		mutex_exit(p->p_lock);
 
 		/* Free the LWP ID. */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		proc_free_lwpid(p, l->l_lid);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 
 	/*
@@ -1436,14 +1436,14 @@ lwp_find2(pid_t pid, lwpid_t lid)
 			mutex_enter(p->p_lock);
 			break;
 		default:
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			p = proc_find(pid);
 			if (__predict_false(p == NULL)) {
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				return NULL;
 			}
 			mutex_enter(p->p_lock);
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			break;
 		}
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.82 2020/04/20 13:30:34 martin Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.83 2020/05/23 23:42:43 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.82 2020/04/20 13:30:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.83 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 		goto out;
 	}
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 
 	/* retrieve RSS size */
@@ -389,7 +389,7 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 	fill_kproc2(p, &ki, false, false);
 
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	uvmspace_free(vm);
 
@@ -440,7 +440,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 
 	get_proc_size_info(p, &vm->vm_map, &stext, &etext, &sstack);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 
 	memset(&ki, 0, sizeof(ki));
@@ -507,7 +507,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    ki.p_cpuid);				/* 39 task_cpu */
 
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	uvmspace_free(vm);
 

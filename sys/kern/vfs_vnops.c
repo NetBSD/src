@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.211 2020/04/13 19:23:18 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.212 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.211 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.212 2020/05/23 23:42:43 ad Exp $");
 
 #include "veriexec.h"
 
@@ -420,9 +420,9 @@ enforce_rlimit_fsize(struct vnode *vp, struct uio *uio, int ioflag)
 
 	if (testoff + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return EFBIG;
 	}
 
@@ -781,10 +781,10 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		    kauth_cred_get());
 		if (error == 0 && com == TIOCSCTTY) {
 			vref(vp);
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			ovp = curproc->p_session->s_ttyvp;
 			curproc->p_session->s_ttyvp = vp;
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			if (ovp != NULL)
 				vrele(ovp);
 		}

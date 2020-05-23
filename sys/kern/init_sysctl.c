@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.225 2020/03/22 14:38:37 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.226 2020/05/23 23:42:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.225 2020/03/22 14:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.226 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1081,13 +1081,13 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 	if (pid == -1) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			/* Grab a hold on the process. */
 			if (!rw_tryenter(&p->p_reflock, RW_READER)) {
 				continue;
 			}
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 
 			mutex_enter(p->p_lock);
 			LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
@@ -1129,21 +1129,21 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			mutex_exit(p->p_lock);
 
 			/* Drop reference to process. */
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			rw_exit(&p->p_reflock);
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	} else {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		p = proc_find(pid);
 		if (p == NULL) {
 			error = ESRCH;
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			goto cleanup;
 		}
 		/* Grab a hold on the process. */
 		gotit = rw_tryenter(&p->p_reflock, RW_READER);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		if (!gotit) {
 			error = ESRCH;
 			goto cleanup;

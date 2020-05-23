@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.117 2019/11/09 23:44:32 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.118 2020/05/23 23:42:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.117 2019/11/09 23:44:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.118 2020/05/23 23:42:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,10 +392,10 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 			goto not_tty;
 
 		/* set tty pg_id appropriately */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		if (cmd == LINUX_F_GETOWN) {
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return 0;
 		}
 		if ((long)arg <= 0) {
@@ -403,18 +403,18 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		} else {
 			struct proc *p1 = proc_find((long)arg);
 			if (p1 == NULL) {
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				return (ESRCH);
 			}
 			pgid = (long)p1->p_pgrp->pg_id;
 		}
 		pgrp = pgrp_find(pgid);
 		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return EPERM;
 		}
 		tp->t_pgrp = pgrp;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return 0;
 
 	case LINUX_F_DUPFD_CLOEXEC:

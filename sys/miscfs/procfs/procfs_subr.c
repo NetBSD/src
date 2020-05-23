@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.115 2020/04/29 01:56:54 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.116 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.115 2020/04/29 01:56:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.116 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,8 @@ procfs_use_linux_compat(struct mount *mp)
 struct proc *
 procfs_proc_find(struct mount *mp, pid_t pid)
 {
-	KASSERT(mutex_owned(proc_lock));
+
+	KASSERT(mutex_owned(&proc_lock));
 	return procfs_use_linux_compat(mp) ? proc_find_lwpid(pid)
 					   : proc_find(pid);
 }
@@ -432,7 +433,7 @@ procfs_proc_lock(struct mount *mp, int pid, struct proc **bunghole,
 	struct proc *tp;
 	int error = 0;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	if (pid == 0)
 		tp = &proc0;
@@ -441,7 +442,7 @@ procfs_proc_lock(struct mount *mp, int pid, struct proc **bunghole,
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;
 
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	*bunghole = tp;
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.183 2020/02/19 16:03:30 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.184 2020/05/23 23:42:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.183 2020/02/19 16:03:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.184 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -725,9 +725,9 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (usb_dev_open)
 			return EBUSY;
 		usb_dev_open = 1;
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		usb_async_proc = 0;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return 0;
 	}
 
@@ -805,9 +805,9 @@ usbclose(dev_t dev, int flag, int mode,
 	int unit = minor(dev);
 
 	if (unit == USB_DEV_MINOR) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		usb_async_proc = 0;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		usb_dev_open = 0;
 	}
 
@@ -829,12 +829,12 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 
 		case FIOASYNC:
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			if (*(int *)data)
 				usb_async_proc = l->l_proc;
 			else
 				usb_async_proc = 0;
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return 0;
 
 		default:
@@ -1224,10 +1224,10 @@ usb_async_intr(void *cookie)
 {
 	proc_t *proc;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if ((proc = usb_async_proc) != NULL)
 		psignal(proc, SIGIO);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 Static void

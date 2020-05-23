@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.200 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.200 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -636,9 +636,9 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 			error = 0;
 		if (error == EPIPE && (fp->f_flag & FNOSIGPIPE) == 0 &&
 		    (flags & MSG_NOSIGNAL) == 0) {
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			psignal(l->l_proc, SIGPIPE);
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 		}
 	}
 	if (error == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.82 2020/05/01 08:45:01 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.83 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.82 2020/05/01 08:45:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.83 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -658,7 +658,7 @@ mount_checkdirs(vnode_t *olddp)
 
 	do {
 		retry = false;
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			if ((cwdi = p->p_cwdi) == NULL)
 				continue;
@@ -674,7 +674,7 @@ mount_checkdirs(vnode_t *olddp)
 			rele1 = NULL;
 			rele2 = NULL;
 			atomic_inc_uint(&cwdi->cwdi_refcnt);
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 			if (cwdi->cwdi_cdir == olddp) {
 				rele1 = cwdi->cwdi_cdir;
@@ -692,10 +692,10 @@ mount_checkdirs(vnode_t *olddp)
 				vrele(rele1);
 			if (rele2 != NULL)
 				vrele(rele2);
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			break;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	} while (retry);
 
 	if (rootvnode == olddp) {

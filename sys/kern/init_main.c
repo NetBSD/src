@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.525 2020/05/11 21:38:54 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.526 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.525 2020/05/11 21:38:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.526 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -628,9 +628,9 @@ main(void)
 	 * The initproc variable cannot be initialized in start_init as there
 	 * is a race between vfs_mountroot and start_init.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	initproc = proc_find_raw(1);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
@@ -684,7 +684,7 @@ main(void)
 	 */
 	getnanotime(&time);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(p->p_lock);
@@ -696,7 +696,7 @@ main(void)
 		}
 		mutex_exit(p->p_lock);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -720,10 +720,10 @@ main(void)
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	start_init_exec = 1;
 	cv_broadcast(&lbolt);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -960,10 +960,10 @@ start_init(void *arg)
 	/*
 	 * Wait for main() to tell us that it's safe to exec.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	while (start_init_exec == 0)
-		cv_wait(&lbolt, proc_lock);
-	mutex_exit(proc_lock);
+		cv_wait(&lbolt, &proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * This is not the right way to do this.  We really should

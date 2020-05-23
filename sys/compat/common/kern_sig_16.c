@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.5 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.6 2020/05/23 23:42:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.5 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.6 2020/05/23 23:42:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -177,13 +177,13 @@ kern_sig_16_fini(void)
 	 * further processes while we are here.  See
 	 * sigaction1() for the opposing half.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
 			break;
 		}
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	if (p != NULL) {
 		syscall_establish(NULL, kern_sig_16_syscalls);
 		return EBUSY;

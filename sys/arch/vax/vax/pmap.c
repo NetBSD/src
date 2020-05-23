@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2020/03/21 18:47:54 ad Exp $	   */
+/*	$NetBSD: pmap.c,v 1.191 2020/05/23 23:42:41 ad Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2020/03/21 18:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2020/05/23 23:42:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -688,7 +688,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!pmap_vax_swappable(l, pm))
 			continue;
@@ -715,7 +715,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;

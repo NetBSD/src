@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.77 2020/05/14 08:26:29 rin Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.78 2020/05/23 23:42:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.77 2020/05/14 08:26:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.78 2020/05/23 23:42:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -680,14 +680,14 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	lid = SCARG(uap, pid);
 	if (lid != 0) {
 		/* Get the canonical PID for the process. */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		struct proc *p = proc_find_lwpid(SCARG(uap, pid));
 		if (p == NULL) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return ESRCH;
 		}
 		pid = p->p_pid;
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	} else {
 		pid = curproc->p_pid;
 		lid = curlwp->l_lid;
