@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.18 2020/05/15 04:55:40 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.19 2020/05/23 18:08:58 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.18 2020/05/15 04:55:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.19 2020/05/23 18:08:58 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -474,8 +474,8 @@ aarch64_pac_init(int primary)
 		return -1;
 
 	/* Set the key. Curlwp here is the CPU's idlelwp. */
-	reg_APIAKeyLo_EL1_write(curlwp->l_md.md_ia_kern_lo);
-	reg_APIAKeyHi_EL1_write(curlwp->l_md.md_ia_kern_hi);
+	reg_APIAKeyLo_EL1_write(curlwp->l_md.md_ia_kern[0]);
+	reg_APIAKeyHi_EL1_write(curlwp->l_md.md_ia_kern[1]);
 
 	return 0;
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.10 2020/02/15 08:16:10 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.11 2020/05/23 18:08:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -135,6 +135,9 @@ cpu_disable_onfault(void)
 	return fb;
 }
 #endif
+
+/* exec_machdep.c */
+void aarch64_setregs_ptrauth(struct lwp *, bool);
 
 /* fpu.c */
 void fpu_attach(struct cpu_info *);
