@@ -1,7 +1,7 @@
-/*	$NetBSD: tty_ptm.c,v 1.41 2019/11/30 20:45:49 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.42 2020/05/23 22:16:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.41 2019/11/30 20:45:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.42 2020/05/23 22:16:17 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,9 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 		return error;
 	}
 
+	mutex_enter(vp->v_interlock);
 	vp->v_writecount++;
+	mutex_exit(vp->v_interlock);
 
 	return 0;
 }
