@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.36 2020/05/06 14:33:52 snj Exp $
+$NetBSD: TODO.smpnet,v 1.37 2020/05/23 18:42:17 nia Exp $
 
 MP-safe components
 ==================
@@ -78,7 +78,6 @@ Unprotected ones
    - ppp(4)
    - sl(4)
    - stf(4)
-   - strip(4)
    - if_srt
    - tap(4)
  - Packet filters
