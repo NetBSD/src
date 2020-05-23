@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.14 2020/05/14 19:20:08 riastradh Exp $ */
+/* $NetBSD: exec.c,v 1.15 2020/05/23 16:40:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -199,6 +199,7 @@ apply_overlay(void *dtbo)
 
 	if (!efi_fdt_overlay_is_compatible(dtbo)) {
 		printf("boot: incompatible overlay\n");
+		return;
 	}
 
 	int fdterr;
