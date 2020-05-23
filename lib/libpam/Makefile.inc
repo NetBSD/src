@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2020/04/29 02:16:56 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.20 2020/05/23 00:43:33 rin Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -41,6 +41,12 @@ MODLIBDIR=/usr/lib/security
 CPPFLAGS+= -DOPENPAM_MODULES_DIRECTORY=\"${MODLIBDIR}\"
 # No debugging
 #CPPFLAGS+= -DDEBUG
+
+# XXX
+# At the moment, openpam_load.c at least must be compiled with and without
+# OPENPAM_STATIC_MODULES for static and shared libraries, respectively.
+CPPFLAGS+= -DOPENPAM_STATIC_MODULES
+CSHLIBFLAGS+= -UOPENPAM_STATIC_MODULES
 
 # Define the shared library version here.  libpam and the modules share a
 # version, and we need these variables early for module install rules.
