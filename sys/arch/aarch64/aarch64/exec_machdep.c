@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.7 2020/05/23 18:08:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.7 2020/05/23 18:08:59 ryo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $")
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/cprng.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -51,7 +52,9 @@ __KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $")
 #endif
 
 #include <aarch64/armreg.h>
+#include <aarch64/cpufunc.h>
 #include <aarch64/frame.h>
+#include <aarch64/machdep.h>
 
 #if EXEC_ELF64
 int
@@ -97,10 +100,45 @@ aarch64_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #endif
 
 void
+aarch64_setregs_ptrauth(struct lwp *l, bool randomize)
+{
+#ifdef ARMV83_PAC
+	if (!aarch64_pac_enabled)
+		return;
+
+	if (randomize) {
+		cprng_strong(kern_cprng, l->l_md.md_ia_user,
+		    sizeof(l->l_md.md_ia_user), 0);
+		cprng_strong(kern_cprng, l->l_md.md_ib_user,
+		    sizeof(l->l_md.md_ib_user), 0);
+		cprng_strong(kern_cprng, l->l_md.md_da_user,
+		    sizeof(l->l_md.md_da_user), 0);
+		cprng_strong(kern_cprng, l->l_md.md_db_user,
+		    sizeof(l->l_md.md_db_user), 0);
+		cprng_strong(kern_cprng, l->l_md.md_ga_user,
+		    sizeof(l->l_md.md_ga_user), 0);
+	} else {
+		memset(l->l_md.md_ia_user, 0,
+		    sizeof(l->l_md.md_ia_user));
+		memset(l->l_md.md_ib_user, 0,
+		    sizeof(l->l_md.md_ib_user));
+		memset(l->l_md.md_da_user, 0,
+		    sizeof(l->l_md.md_da_user));
+		memset(l->l_md.md_db_user, 0,
+		    sizeof(l->l_md.md_db_user));
+		memset(l->l_md.md_ga_user, 0,
+		    sizeof(l->l_md.md_ga_user));
+	}
+#endif
+}
+
+void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
+
+	aarch64_setregs_ptrauth(l, true);
 
 	p->p_flag &= ~PK_32;
 
