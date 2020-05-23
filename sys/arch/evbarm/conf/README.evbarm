@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.28 2020/05/23 13:43:34 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.29 2020/05/23 14:14:55 rin Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -6,8 +6,8 @@ ADI_BRH		2003/01/25	ADI Eng. Big Read Head i80200 eval board
 ARMADILLO210	2006/02/06	Atmark Techno Armadillo-210
 ARMADILLO9	2005/11/13	Atmark Techno Armadillo-9
 BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
-CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
+CUBOX		2017/01/07	SolidRun Cubox
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
 DUOVERO		2016/10/15	Gumstix Inc. DuoVero COMS boards
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
@@ -41,11 +41,11 @@ OSK5912		2007/01/06	TI OMAP 5912 OSK board
 PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 PARALLELLA	2015/01/23	Xilinx Zynq and Epiphany multi-core chips
 PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)
+RPI		2012/07/26	Raspberry Pi
+RPI2		2015/03/04	Raspberry Pi 2
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
 SMDK2800	2002/11/20	Samsung SMDK2800 S3C2800 eval board
-RPI		2012/07/26	Raspberry Pi
-RPI2		2015/03/04	Raspberry Pi 2
 TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
