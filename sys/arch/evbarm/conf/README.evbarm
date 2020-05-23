@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.27 2019/11/03 12:17:32 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.28 2020/05/23 13:43:34 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -50,7 +50,6 @@ TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
 TISDP2430	2008/04/27	TI OMAP 2430 eval board
-TOASTER		2005/08/14	NetBSD/toaster based on TS-7200
 TS7200		2004/12/23	Technologic Systems TS-7200 board
 TWINTAIL	2005/02/26	Genetec corp. "Twintail" PXA255 eval board
 VIPER		2005/06/06	Arcom Viper PXA255 ARM board
