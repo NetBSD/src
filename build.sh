@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.337 2020/05/23 11:04:43 jmcneill Exp $
+#	$NetBSD: build.sh,v 1.338 2020/05/23 17:26:32 jmcneill Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -812,7 +812,7 @@ validatearch()
 
 	case "${MACHINE_ARCH}" in
 	"")
-		bomb "No MACHINE_ARCH provided"
+		bomb "No MACHINE_ARCH provided. Use 'build.sh -m ${MACHINE} list-arch' to show options."
 		;;
 	esac
 
@@ -1935,7 +1935,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.337 2020/05/23 11:04:43 jmcneill Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.338 2020/05/23 17:26:32 jmcneill Exp $
 # with these arguments: ${_args}
 #
 
