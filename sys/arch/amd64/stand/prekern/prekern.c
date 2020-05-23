@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.11 2019/03/19 19:15:57 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.12 2020/05/23 08:10:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -297,6 +297,7 @@ init_prekern(paddr_t pa_start)
 	 * Relocate the kernel.
 	 */
 	mm_map_kernel();
+	elf_build_info();
 	ent = elf_kernel_reloc();
 	mm_bootspace_mprotect();
 
