@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.117 2020/05/23 11:06:23 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.118 2020/05/23 14:10:47 rin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -52,7 +52,7 @@ EVBARM_BOARDS.xscale+=		TWINTAIL
 
 #EVBARM_BOARDS.armv5t+=		DNS323
 #EVBARM_BOARDS.armv5t+=		HPT5325
-#EVBARM_BOARDS.armv5t+=		IMX21_OLINUXINO
+#EVBARM_BOARDS.armv5t+=		IMX23_OLINUXINO
 EVBARM_BOARDS.armv5t+=		KUROBOX_PRO
 #EVBARM_BOARDS.armv5t+=		MARVELL_NAS
 #EVBARM_BOARDS.armv5t+=		MMNET_GENERIC
