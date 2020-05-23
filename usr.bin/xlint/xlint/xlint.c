@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.49 2020/02/10 04:54:01 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.50 2020/05/23 17:28:27 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.49 2020/02/10 04:54:01 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.50 2020/05/23 17:28:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -291,13 +291,13 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "Usage: %s [-abceghprvwxzHFS] [-s|-t] [-i|-nu] [-Dname[=def]]"
-	    " [-Uname] [-X <id>[,<id>]...\n", getprogname());
+	    " [-Uname] [-X <id>[,<id>]... [-Z <cpparg>]\n", getprogname());
 	(void)fprintf(stderr,
 	    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile]"
 	    " file...\n");
 	(void)fprintf(stderr,
 	    "       %s [-abceghprvwzHFS] [|-s|-t] -Clibrary [-Dname[=def]]\n"
-	    " [-X <id>[,<id>]...\n", getprogname());
+	    " [-X <id>[,<id>]... [-Z <cpparg>]\n", getprogname());
 	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] [-R old=new]"
 	    " file ...\n");
 	terminate(-1);
@@ -370,7 +370,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, terminate);
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
-	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:M:PR:SU:VX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:M:PR:SU:VX:Z:")) != -1) {
 		switch (c) {
 
 		case 'a':
@@ -521,6 +521,10 @@ main(int argc, char *argv[])
 
 		case 'V':
 			Vflag = 1;
+			break;
+
+		case 'Z':
+			appcstrg(&cflags, optarg);
 			break;
 
 		default:
