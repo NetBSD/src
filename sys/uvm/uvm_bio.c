@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.114 2020/05/19 22:22:15 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.115 2020/05/23 11:59:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.114 2020/05/19 22:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.115 2020/05/23 11:59:03 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.114 2020/05/19 22:22:15 ad Exp $");
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 #ifdef PMAP_DIRECT
 #  define UBC_USE_PMAP_DIRECT
@@ -472,7 +473,7 @@ ubc_find_mapping(struct uvm_object *uobj, voff_t offset)
 
 static void * __noinline
 ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
-    int flags)
+    int flags, struct vm_page **pgs, int *npagesp)
 {
 	vaddr_t slot_offset, va;
 	struct ubc_map *umap;
@@ -487,6 +488,7 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
 	*lenp = MIN(*lenp, ubc_winsize - slot_offset);
+	KASSERT(*lenp > 0);
 
 	rw_enter(ubc_object.uobj.vmobjlock, RW_WRITER);
 again:
@@ -560,14 +562,14 @@ again:
 	    (uintptr_t)umap, umap->refcount, (uintptr_t)va, flags);
 
 	if (flags & UBC_FAULTBUSY) {
-		// XXX add offset from slot_offset?
-		int npages = (*lenp + PAGE_SIZE - 1) >> PAGE_SHIFT;
-		struct vm_page *pgs[npages];
+		int npages = (*lenp + (offset & (PAGE_SIZE - 1)) +
+		    PAGE_SIZE - 1) >> PAGE_SHIFT;
 		int gpflags =
 		    PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF|PGO_NOBLOCKALLOC|
 		    PGO_NOTIMESTAMP;
 		int i;
 		KDASSERT(flags & UBC_WRITE);
+		KASSERT(npages <= *npagesp);
 		KASSERT(umap->refcount == 1);
 
 		UBC_EVCNT_INCR(faultbusy);
@@ -577,7 +579,7 @@ again_faultbusy:
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 		}
-		memset(pgs, 0, sizeof(pgs));
+		memset(pgs, 0, *npagesp * sizeof(pgs[0]));
 
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
 		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
@@ -615,6 +617,7 @@ again_faultbusy:
 		}
 		pmap_update(pmap_kernel());
 		umap->flags |= UMAP_PAGES_LOCKED;
+		*npagesp = npages;
 	} else {
 		KASSERT((umap->flags & UMAP_PAGES_LOCKED) == 0);
 	}
@@ -628,7 +631,7 @@ out:
  */
 
 static void __noinline
-ubc_release(void *va, int flags)
+ubc_release(void *va, int flags, struct vm_page **pgs, int npages)
 {
 	struct ubc_map *umap;
 	struct uvm_object *uobj;
@@ -643,13 +646,11 @@ ubc_release(void *va, int flags)
 	KASSERT(uobj != NULL);
 
 	if (umap->flags & UMAP_PAGES_LOCKED) {
-		const voff_t slot_offset = umap->writeoff;
 		const voff_t endoff = umap->writeoff + umap->writelen;
 		const voff_t zerolen = round_page(endoff) - endoff;
-		const u_int npages = (round_page(endoff) -
-		    trunc_page(slot_offset)) >> PAGE_SHIFT;
-		struct vm_page *pgs[npages];
 
+		KASSERT(npages == (round_page(endoff) -
+		    trunc_page(umap->writeoff)) >> PAGE_SHIFT);
 		KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
 		if (zerolen) {
 			memset((char *)umapva + endoff, 0, zerolen);
@@ -657,21 +658,25 @@ ubc_release(void *va, int flags)
 		umap->flags &= ~UMAP_PAGES_LOCKED;
 		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (u_int i = 0; i < npages; i++) {
+			struct vm_page *pg = pgs[i];
+#ifdef DIAGNOSTIC
 			paddr_t pa;
-			bool rv __diagused;
-
-			rv = pmap_extract(pmap_kernel(),
-			    umapva + slot_offset + (i << PAGE_SHIFT), &pa);
+			bool rv;
+			rv = pmap_extract(pmap_kernel(), umapva +
+			    umap->writeoff + (i << PAGE_SHIFT), &pa);
 			KASSERT(rv);
-			pgs[i] = PHYS_TO_VM_PAGE(pa);
-			pgs[i]->flags &= ~PG_FAKE;
-			KASSERTMSG(uvm_pagegetdirty(pgs[i]) ==
+			KASSERT(PHYS_TO_VM_PAGE(pa) == pg);
+#endif
+			pg->flags &= ~PG_FAKE;
+			KASSERTMSG(uvm_pagegetdirty(pg) ==
 			    UVM_PAGE_STATUS_DIRTY,
-			    "page %p not dirty", pgs[i]);
-			KASSERT(pgs[i]->loan_count == 0);
-			uvm_pagelock(pgs[i]);
-			uvm_pageactivate(pgs[i]);
-			uvm_pageunlock(pgs[i]);
+			    "page %p not dirty", pg);
+			KASSERT(pg->loan_count == 0);
+			if (uvmpdpol_pageactivate_p(pg)) {
+				uvm_pagelock(pg);
+				uvm_pageactivate(pg);
+				uvm_pageunlock(pg);
+			}
 		}
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
@@ -727,8 +732,9 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
     int flags)
 {
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
+	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
 	voff_t off;
-	int error;
+	int error, npages;
 
 	KASSERT(todo <= uio->uio_resid);
 	KASSERT(((flags & UBC_WRITE) != 0 && uio->uio_rw == UIO_WRITE) ||
@@ -755,7 +761,9 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 		vsize_t bytelen = todo;
 		void *win;
 
-		win = ubc_alloc(uobj, off, &bytelen, advice, flags);
+		npages = __arraycount(pgs);
+		win = ubc_alloc(uobj, off, &bytelen, advice, flags, pgs,
+		    &npages);
 		if (error == 0) {
 			error = uiomove(win, bytelen, uio);
 		}
@@ -768,7 +776,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 			printf("%s: error=%d\n", __func__, error);
 			memset(win, 0, bytelen);
 		}
-		ubc_release(win, flags);
+		ubc_release(win, flags, pgs, npages);
 		off += bytelen;
 		todo -= bytelen;
 		if (error != 0 && (flags & UBC_PARTIALOK) != 0) {
@@ -786,9 +794,11 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 void
 ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 {
+	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	int npages;
 
 #ifdef UBC_USE_PMAP_DIRECT
-	if (ubc_direct) {
+	if (ubc_direct || (flags & UBC_FAULTBUSY) != 0) {
 		ubc_zerorange_direct(uobj, off, len, flags);
 		return;
 	}
@@ -802,9 +812,11 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 		void *win;
 		vsize_t bytelen = len;
 
-		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
+		npages = __arraycount(pgs);
+		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, UBC_WRITE,
+		    pgs, &npages);
 		memset(win, 0, bytelen);
-		ubc_release(win, flags);
+		ubc_release(win, flags, pgs, npages);
 
 		off += bytelen;
 		len -= bytelen;
