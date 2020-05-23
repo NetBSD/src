@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2019/04/03 19:14:25 maxv Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2020/05/23 08:23:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -64,28 +64,34 @@ static void check_scroll(void)
 	memcpy(cons_start, &cons_buffer[0], CONS_WID * 2 * CONS_HEI);
 }
 
-void print_ext(int color, char *buf)
+static void putc(int color, char c)
 {
 	char *ptr, *scr;
-	size_t i;
 
-	for (i = 0; buf[i] != '\0'; i++) {
-		if (buf[i] == '\n') {
+	if (c == '\n') {
+		cons_x = 0;
+		cons_y++;
+		check_scroll();
+	} else {
+		if (cons_x + 1 == CONS_WID) {
 			cons_x = 0;
 			cons_y++;
 			check_scroll();
-		} else {
-			if (cons_x + 1 == CONS_WID) {
-				cons_x = 0;
-				cons_y++;
-				check_scroll();
-			}
-			ptr = (cons_start + 2 * cons_x + 160 * cons_y);
-			scr = (cons_buffer + 2 * cons_x + 160 * cons_y);
-			ptr[0] = scr[0] = buf[i];
-			ptr[1] = scr[1] = color;
-			cons_x++;
 		}
+		ptr = (cons_start + 2 * cons_x + 160 * cons_y);
+		scr = (cons_buffer + 2 * cons_x + 160 * cons_y);
+		ptr[0] = scr[0] = c;
+		ptr[1] = scr[1] = color;
+		cons_x++;
+	}
+}
+
+void print_ext(int color, char *buf)
+{
+	size_t i;
+
+	for (i = 0; buf[i] != '\0'; i++) {
+		putc(color, buf[i]);
 	}
 }
 
