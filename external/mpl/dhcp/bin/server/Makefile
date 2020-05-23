@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/02/12 00:41:50 fox Exp $
+# $NetBSD: Makefile,v 1.5 2020/05/23 00:32:42 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ FILESDIR= /usr/share/examples/dhcp
 FILES=	dhcpd.conf
 .endif
 
-.if !empty(MACHINE_ARCH:Msh3*)
+.if !empty(MACHINE_ARCH:Msh3*) || ${MACHINE_ARCH} == "m68000"
 COPTS.ddns.c +=-Wno-stringop-overflow
 .endif
 
