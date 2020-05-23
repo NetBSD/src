@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.67 2020/04/13 16:09:21 maxv Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.68 2020/05/23 21:14:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.67 2020/04/13 16:09:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.68 2020/05/23 21:14:55 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -479,7 +479,13 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 	 */
 	bestci = pivot;
 	bestspc = &bestci->ci_schedstate;
-	bestpri = MAX(bestspc->spc_curpriority, bestspc->spc_maxpriority);
+	if (sched_migratable(l, bestci)) {
+		bestpri = MAX(bestspc->spc_curpriority,
+		    bestspc->spc_maxpriority);
+	} else {
+		/* Invalidate the priority. */
+		bestpri = PRI_COUNT;
+	}
 
 	/* In the outer loop scroll through all CPU packages. */
 	pivot = pivot->ci_package1st;
