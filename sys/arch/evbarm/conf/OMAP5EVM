@@ -1,7 +1,7 @@
 #
-#	$NetBSD: OMAP5EVM,v 1.17 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: OMAP5EVM,v 1.18 2020/05/23 14:51:49 rin Exp $
 #
-#	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
+#	OMAP5EVM -- TI OMAP 543x Eval Board Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
