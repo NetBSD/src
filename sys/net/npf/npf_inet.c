@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.55 2019/08/11 20:26:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.56 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -562,6 +562,22 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 	return flags;
 }
 
+static inline int
+npf_cache_tcp(npf_cache_t *npc, nbuf_t *nbuf, unsigned hlen)
+{
+	struct tcphdr *th;
+
+	th = nbuf_advance(nbuf, hlen, sizeof(struct tcphdr));
+	if (__predict_false(th == NULL)) {
+		return NPC_FMTERR;
+	}
+	if (__predict_false(th->th_off < 5)) {
+		return NPC_FMTERR;
+	}
+	npc->npc_l4.tcp = th;
+	return NPC_LAYER4 | NPC_TCP;
+}
+
 /*
  * npf_cache_all: general routine to cache all relevant IP (v4 or v6)
  * and TCP, UDP or ICMP headers.
@@ -601,9 +617,7 @@ again:
 	switch (npc->npc_proto) {
 	case IPPROTO_TCP:
 		/* Cache: layer 4 - TCP. */
-		npc->npc_l4.tcp = nbuf_advance(nbuf, hlen,
-		    sizeof(struct tcphdr));
-		l4flags = NPC_LAYER4 | NPC_TCP;
+		l4flags = npf_cache_tcp(npc, nbuf, hlen);
 		break;
 	case IPPROTO_UDP:
 		/* Cache: layer 4 - UDP. */

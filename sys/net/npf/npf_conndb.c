@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.7 2019/12/14 15:21:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.8 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -143,8 +143,9 @@ npf_conndb_destroy(npf_conndb_t *cd)
  * npf_conndb_lookup: find a connection given the key.
  */
 npf_conn_t *
-npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
+npf_conndb_lookup(npf_t *npf, const npf_connkey_t *ck, bool *forw)
 {
+	npf_conndb_t *cd = atomic_load_relaxed(&npf->conn_db);
 	const unsigned keylen = NPF_CONNKEY_LEN(ck);
 	npf_conn_t *con;
 	void *val;
@@ -152,8 +153,10 @@ npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
 	/*
 	 * Lookup the connection key in the key-value map.
 	 */
+	int s = npf_config_read_enter(npf);
 	val = thmap_get(cd->cd_map, ck->ck_key, keylen);
 	if (!val) {
+		npf_config_read_exit(npf, s);
 		return NULL;
 	}
 
@@ -169,6 +172,7 @@ npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
 	 * Acquire a reference and return the connection.
 	 */
 	atomic_inc_uint(&con->c_refcnt);
+	npf_config_read_exit(npf, s);
 	return con;
 }
 
