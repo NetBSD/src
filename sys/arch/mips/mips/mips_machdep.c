@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.279 2019/03/29 05:23:12 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.280 2020/05/23 10:48:43 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.279 2019/03/29 05:23:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.280 2020/05/23 10:48:43 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -532,8 +532,14 @@ static const struct pridtab cputab[] = {
 	/* The SB-1 CPU uses a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT |
-	  CPU_MIPS_HAVE_SPECIAL_CCA | (5 << CPU_MIPS_CACHED_CCA_SHIFT), 0, 0,
+	  CPU_MIPS_HAVE_SPECIAL_CCA |
+	  (CCA_SB_CACHEABLE_COHERENT << CPU_MIPS_CACHED_CCA_SHIFT), 0, 0,
 						"SB-1"			},
+	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1_11, -1,	-1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT |
+	  CPU_MIPS_HAVE_SPECIAL_CCA |
+	  (CCA_SB_CACHEABLE_COHERENT << CPU_MIPS_CACHED_CCA_SHIFT), 0, 0,
+						"SB-1 (0x11)"		},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLR732B, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
@@ -657,6 +663,14 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
 	  0,
 	  "CN50xx"		},
+
+	{ MIPS_PRID_CID_CAVIUM, MIPS_CN70XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
+	  0,
+	  "CN70xx"		},
 
 	/* Microsoft Research' extensible MIPS */
 	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
