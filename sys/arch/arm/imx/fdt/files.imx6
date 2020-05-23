@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.9 2020/05/20 09:18:25 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.10 2020/05/23 13:24:08 skrll Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -87,8 +87,7 @@ file	arch/arm/imx/fdt/imx8mq_usbphy.c	imx8mqusbphy
 attach	sdhc at fdt with imx6_sdhc
 file	arch/arm/imx/fdt/imx6_sdhc.c	imx6_sdhc
 
-# PCIe
-device	imxpcie: pcibus
+device	imxpcie: pcibus, clk
 attach	imxpcie at fdt with imxpcie_fdt
 file	arch/arm/imx/imxpcie.c			imxpcie
 file	arch/arm/imx/fdt/imx6_pcie.c		imxpcie_fdt
