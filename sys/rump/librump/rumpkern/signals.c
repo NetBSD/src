@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.16 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.17 2020/05/23 23:42:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.16 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.17 2020/05/23 23:42:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -50,7 +50,7 @@ pgrp_apply(struct pgrp *pgrp, int signo, void (*apply)(struct proc *p, int))
 {
 	struct proc *p;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 		mutex_enter(p->p_lock);

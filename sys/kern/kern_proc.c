@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.252 2020/05/23 20:45:10 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.253 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.252 2020/05/23 20:45:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.253 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -119,8 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.252 2020/05/23 20:45:10 ad Exp $");
 struct proclist		allproc		__cacheline_aligned;
 struct proclist		zombproc	__cacheline_aligned;
 
-static kmutex_t		proc_lock_s	__cacheline_aligned;
-kmutex_t *		proc_lock	__read_mostly;
+ kmutex_t		proc_lock	__cacheline_aligned;
 static pserialize_t	proc_psz;
 
 /*
@@ -375,8 +374,7 @@ procinit(void)
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
-	mutex_init(&proc_lock_s, MUTEX_DEFAULT, IPL_NONE);
-	proc_lock = &proc_lock_s;
+	mutex_init(&proc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	proc_psz = pserialize_create();
 
@@ -402,10 +400,10 @@ procinit(void)
 #undef LINK_EMPTY
 
 	/* Reserve PID 1 for init(8). */	/* XXX slightly gross */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (proc_alloc_pid_slot(&proc0, PT_SET_RESERVED) != 1)
 		panic("failed to reserve PID 1 for init(8)");
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
@@ -577,7 +575,7 @@ void
 proc_sesshold(struct session *ss)
 {
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	ss->s_count++;
 }
 
@@ -586,7 +584,7 @@ proc_sessrele(struct session *ss)
 {
 	struct pgrp *pg;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(ss->s_count > 0);
 
 	/*
@@ -601,7 +599,7 @@ proc_sessrele(struct session *ss)
 		ss = NULL;
 	}
 
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (pg)
 		kmem_free(pg, sizeof(struct pgrp));
@@ -622,7 +620,7 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 	struct session *session;
 	int error;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pg_id < 0) {
 		struct proc *p1 = proc_find(-pg_id);
 		if (p1 == NULL) {
@@ -640,7 +638,7 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 	session = pgrp->pg_session;
 	error = (session != p->p_pgrp->pg_session) ? EPERM : 0;
 fail:
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	return error;
 }
 
@@ -651,7 +649,7 @@ static inline bool
 p_inferior(struct proc *p, struct proc *q)
 {
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
@@ -793,7 +791,7 @@ proc_find_lwp_acquire_proc(pid_t pid, struct proc **pp)
 	uintptr_t slot;
 
 	KASSERT(pp != NULL);
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	slot = pt->pt_slot;
@@ -807,7 +805,7 @@ proc_find_lwp_acquire_proc(pid_t pid, struct proc **pp)
 			p = NULL;
 		}
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	KASSERT(p == NULL || mutex_owned(p->p_lock));
 	*pp = p;
@@ -826,7 +824,7 @@ proc_find_raw_pid_table_locked(pid_t pid, bool any_lwpid)
 	proc_t *p = NULL;
 	uintptr_t slot;
 
-	/* No - used by DDB.  KASSERT(mutex_owned(proc_lock)); */
+	/* No - used by DDB.  KASSERT(mutex_owned(&proc_lock)); */
 	pt = &pid_table[pid & pid_tbl_mask];
 
 	slot = pt->pt_slot;
@@ -860,7 +858,7 @@ proc_find_internal(pid_t pid, bool any_lwpid)
 {
 	proc_t *p;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	p = proc_find_raw_pid_table_locked(pid, any_lwpid);
 	if (__predict_false(p == NULL)) {
@@ -899,7 +897,7 @@ pgrp_find(pid_t pgid)
 {
 	struct pgrp *pg;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 
@@ -924,11 +922,11 @@ expand_pid_table(void)
 	u_int i;
 	uint new_pt_mask;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	/* Unlock the pid_table briefly to allocate memory. */
 	pt_size = pid_tbl_mask + 1;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	tsz = pt_size * 2 * sizeof(struct pid_table);
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
@@ -937,10 +935,10 @@ expand_pid_table(void)
 	/* XXX For now.  The pratical limit is much lower anyway. */
 	KASSERT(new_pt_mask <= FUTEX_TID_MASK);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		kmem_free(new_pt, tsz);
 		goto out;
 	}
@@ -1006,7 +1004,7 @@ expand_pid_table(void)
 	} else
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	/*
 	 * Make sure that unlocked access to the old pid_table is complete
@@ -1016,7 +1014,7 @@ expand_pid_table(void)
 	kmem_free(n_pt, tsz);
 
  out:	/* Return with proc_lock held again. */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 }
 
 struct proc *
@@ -1054,7 +1052,7 @@ proc_alloc_pid_slot(struct proc *p, uintptr_t slot)
 	pid_t pid;
 	int nxt;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	for (;;expand_pid_table()) {
 		if (__predict_false(pid_alloc_cnt >= pid_alloc_lim)) {
@@ -1114,11 +1112,11 @@ proc_alloc_pid(struct proc *p)
 	KASSERT((((uintptr_t)p) & PT_F_ALLBITS) == 0);
 	KASSERT(p->p_stat == SIDL);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	pid = proc_alloc_pid_slot(p, PT_SET_PROC(p));
 	if (pid != -1)
 		p->p_pid = pid;
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return pid;
 }
@@ -1149,7 +1147,7 @@ proc_alloc_lwpid(struct proc *p, struct lwp *l)
 	 * happen again if the first LWP for a process exits and
 	 * before the process creates another.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	pid = p->p_pid;
 	pt = &pid_table[pid & pid_tbl_mask];
 	KASSERT(pt->pt_pid == pid);
@@ -1163,7 +1161,7 @@ proc_alloc_lwpid(struct proc *p, struct lwp *l)
 		if (pid != -1)
 			l->l_lid = pid;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return pid;
 }
@@ -1201,7 +1199,8 @@ proc_free_pid_internal(pid_t pid, uintptr_t type __diagused)
 void
 proc_free_pid(pid_t pid)
 {
-	KASSERT(mutex_owned(proc_lock));
+
+	KASSERT(mutex_owned(&proc_lock));
 	proc_free_pid_internal(pid, PT_F_PROC);
 }
 
@@ -1216,7 +1215,7 @@ void
 proc_free_lwpid(struct proc *p, pid_t pid)
 {
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	if (__predict_true(p->p_pid == pid)) {
 		struct pid_table *pt;
@@ -1265,7 +1264,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	sess = mksess ? kmem_alloc(sizeof(*sess), KM_SLEEP) : NULL;
 	new_pgrp = kmem_alloc(sizeof(*new_pgrp), KM_SLEEP);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	rval = EPERM;	/* most common error (to save typing) */
 
 	/* Check pgrp exists or can be created */
@@ -1393,7 +1392,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 		/* Releases proc_lock. */
 		pg_delete(pg_id);
 	} else {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	if (sess != NULL)
 		kmem_free(sess, sizeof(*sess));
@@ -1416,7 +1415,7 @@ proc_leavepgrp(struct proc *p)
 {
 	struct pgrp *pgrp;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	/* Interlock with ttread() */
 	mutex_spin_enter(&tty_lock);
@@ -1429,7 +1428,7 @@ proc_leavepgrp(struct proc *p)
 		/* Releases proc_lock. */
 		pg_delete(pgrp->pg_id);
 	} else {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 }
 
@@ -1444,7 +1443,7 @@ pg_remove(pid_t pg_id)
 	struct pgrp *pgrp;
 	struct pid_table *pt;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
@@ -1479,11 +1478,11 @@ pg_delete(pid_t pg_id)
 	struct tty *ttyp;
 	struct session *ss;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	pg = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
 	if (pg == NULL || pg->pg_id != pg_id || !LIST_EMPTY(&pg->pg_members)) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return;
 	}
 
@@ -1530,7 +1529,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	struct session *mysession = pgrp->pg_session;
 	struct proc *child;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -1581,7 +1580,7 @@ orphanpg(struct pgrp *pg)
 {
 	struct proc *p;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
@@ -1728,7 +1727,7 @@ proclist_foreach_call(struct proclist *list,
 	int ret = 0;
 
 	marker.p_flag = PK_MARKER;
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
 			p = LIST_NEXT(p, p_list);
@@ -1736,11 +1735,11 @@ proclist_foreach_call(struct proclist *list,
 		}
 		LIST_INSERT_AFTER(p, &marker, p_list);
 		ret = (*callback)(p, arg);
-		KASSERT(mutex_owned(proc_lock));
+		KASSERT(mutex_owned(&proc_lock));
 		p = LIST_NEXT(&marker, p_list);
 		LIST_REMOVE(&marker, p_list);
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return ret;
 }
@@ -2082,7 +2081,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
 	marker->p_flag = PK_MARKER;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	/*
 	 * Start with zombies to prevent reporting processes twice, in case they
 	 * are dying and being moved from the list of alive processes to zombies.
@@ -2210,13 +2209,13 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				elem_count--;
 			}
 			mutex_exit(p->p_lock);
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			/*
 			 * Copy out elem_size, but not larger than kelem_size
 			 */
 			error = sysctl_copyout(l, kbuf, dp,
 			    uimin(kelem_size, elem_size));
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			if (error) {
 				goto bah;
 			}
@@ -2244,7 +2243,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		if (op == KERN_PROC_PID)
                 	break;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (where != NULL) {
 		*oldlenp = dp - where;
@@ -2266,7 +2265,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	else
 		rw_exit(&p->p_reflock);
  cleanup:
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
  out:
 	kmem_free(kbuf, sizeof(*kbuf));
 	kmem_free(marker, sizeof(*marker));
@@ -2346,7 +2345,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	sysctl_unlock();
 
 	/* check pid */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if ((p = proc_find(pid)) == NULL) {
 		error = EINVAL;
 		goto out_locked;
@@ -2392,7 +2391,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	if (error) {
 		goto out_locked;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
 		int value;
@@ -2415,7 +2414,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	return error;
 
 out_locked:
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	sysctl_relock();
 	return error;
 }
@@ -2666,7 +2665,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie, bool allowaddr)
 	struct tty *tp;
 	struct lwp *l;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
 	COND_SET_VALUE(ep->e_paddr, p, allowaddr);
@@ -2726,7 +2725,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 	struct rusage ru;
 	struct vmspace *vm;
 
-	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
 	sigemptyset(&ss1);
@@ -2907,7 +2906,7 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 {
 	int error;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	if (pid == -1)
 		*p = l->l_proc;
 	else
@@ -2915,12 +2914,12 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 
 	if (*p == NULL) {
 		if (pid != -1)
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 		return ESRCH;
 	}
 	if (pid != -1)
 		mutex_enter((*p)->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	error = kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_CANSEE, *p,

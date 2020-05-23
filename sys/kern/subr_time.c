@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.24 2020/05/11 03:59:33 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.25 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.24 2020/05/11 03:59:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.25 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -265,17 +265,17 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 	if (clock_id & CLOCK_PROCESS_CPUTIME_ID) {
 		pid_t pid = clock_id & CPUCLOCK_ID_MASK;
 
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		p = pid == 0 ? curproc : proc_find(pid);
 		if (p == NULL) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return ESRCH;
 		}
 		ticks = p->p_uticks + p->p_sticks + p->p_iticks;
 		DPRINTF(("%s: u=%ju, s=%ju, i=%ju\n", __func__,
 		    (uintmax_t)p->p_uticks, (uintmax_t)p->p_sticks,
 		    (uintmax_t)p->p_iticks));
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 
 		// XXX: Perhaps create a special kauth type
 		error = kauth_authorize_process(curlwp->l_cred,

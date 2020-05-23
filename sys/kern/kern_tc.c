@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.54 2020/01/02 15:42:27 thorpej Exp $ */
+/* $NetBSD: kern_tc.c,v 1.55 2020/05/23 23:42:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.54 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.55 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -682,7 +682,7 @@ tc_detach(struct timecounter *target)
 	for (;;) {
 		xc_barrier(0);
 
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			if (l->l_tcgen == 0 || l->l_tcgen > removals) {
 				/*
@@ -693,7 +693,7 @@ tc_detach(struct timecounter *target)
 			}
 			break;
 		}
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 
 		/*
 		 * If the timecounter is still in use, wait at least 10ms

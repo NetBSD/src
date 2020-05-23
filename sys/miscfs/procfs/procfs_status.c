@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.39 2017/09/29 17:27:26 kre Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.40 2020/05/23 23:42:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.39 2017/09/29 17:27:26 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.40 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ procfs_status_netbsd(struct lwp *l, struct uio *uio)
 	uint16_t ngroups;
 
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 
 	pid = p->p_pid;
@@ -195,7 +195,7 @@ procfs_status_netbsd(struct lwp *l, struct uio *uio)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
 	}
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }
@@ -211,7 +211,7 @@ procfs_status_linux(struct lwp *l, struct uio *uio)
 	char psbuf[256+MAXHOSTNAMELEN];		/* XXX - conservative */
 	uint16_t ngroups;
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_enter(p->p_lock);
 
 	pid = p->p_pid;
@@ -239,7 +239,7 @@ procfs_status_linux(struct lwp *l, struct uio *uio)
 	    "VmRSS:\t%8" PRIu64 " kB\n", p->p_rlimit[RLIMIT_RSS].rlim_cur / 1024);
 
 	mutex_exit(p->p_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }

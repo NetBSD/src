@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.80 2020/05/14 13:32:15 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.81 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.80 2020/05/14 13:32:15 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.81 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1172,11 +1172,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	 * If attaching or detaching, we need to get a write hold on the
 	 * proclist lock so that we can re-parent the target process.
 	 */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	t = ptrace_find(l, req, pid);
 	if (t == NULL) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return ESRCH;
 	}
 
@@ -1203,7 +1203,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	 */
 	if ((pheld = ptrace_needs_hold(req)) == 0) {
 		mutex_exit(t->p_lock);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 
 	/* Now do the operation. */
@@ -1576,7 +1576,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 out:
 	if (pheld) {
 		mutex_exit(t->p_lock);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 	if (lt != NULL)
 		lwp_delref(lt);
