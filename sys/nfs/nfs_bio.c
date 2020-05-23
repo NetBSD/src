@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.197 2020/05/17 19:38:16 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.198 2020/05/23 23:42:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.197 2020/05/17 19:38:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.198 2020/05/23 23:42:44 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -487,9 +487,9 @@ nfs_write(void *v)
 		 */
 		if (uio->uio_offset + uio->uio_resid >
 		      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-			mutex_enter(proc_lock);
+			mutex_enter(&proc_lock);
 			psignal(l->l_proc, SIGXFSZ);
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			return (EFBIG);
 		}
 	}
@@ -893,9 +893,9 @@ nfs_doio_read(struct buf *bp, struct uio *uiop)
 #if 0
 		if (uiop->uio_lwp && (vp->v_iflag & VI_TEXT) &&
 		    timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)) {
-		    	mutex_enter(proc_lock);
+		    	mutex_enter(&proc_lock);
 			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
-		    	mutex_exit(proc_lock);
+		    	mutex_exit(&proc_lock);
 #if 0 /* XXX NJWLWP */
 			uiop->uio_lwp->l_proc->p_holdcnt++;
 #endif

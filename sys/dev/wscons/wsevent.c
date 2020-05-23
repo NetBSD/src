@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.44 2020/04/04 13:07:11 pgoyette Exp $ */
+/* $NetBSD: wsevent.c,v 1.45 2020/05/23 23:42:42 ad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.44 2020/04/04 13:07:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.45 2020/05/23 23:42:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -387,9 +387,9 @@ wsevent_intr(void *cookie)
 	ev = cookie;
 
 	if (ev->async) {
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		psignal(ev->io, SIGIO);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 	}
 }
 

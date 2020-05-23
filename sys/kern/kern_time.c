@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.204 2020/05/14 18:18:24 maxv Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.205 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.204 2020/05/14 18:18:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.205 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1499,7 +1499,7 @@ timer_intr(void *cookie)
 	struct ptimer *pt;
 	proc_t *p;
 	
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	mutex_spin_enter(&timer_lock);
 	while ((pt = TAILQ_FIRST(&timer_queue)) != NULL) {
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
@@ -1530,7 +1530,7 @@ timer_intr(void *cookie)
 		mutex_spin_enter(&timer_lock);
 	}
 	mutex_spin_exit(&timer_lock);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 /*

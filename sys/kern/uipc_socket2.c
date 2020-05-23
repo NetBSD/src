@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.136 2020/02/01 02:23:23 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.137 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.136 2020/02/01 02:23:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.137 2020/05/23 23:42:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1590,7 +1590,7 @@ sofindproc(struct socket *so, int all, void (*pr)(const char *, ...))
 	if (so == NULL)
 		return 0;
 
-	t = db_mutex_enter(proc_lock);
+	t = db_mutex_enter(&proc_lock);
 	if (!t) {
 		pr("could not acquire proc_lock mutex\n");
 		return 0;
@@ -1635,7 +1635,7 @@ sofindproc(struct socket *so, int all, void (*pr)(const char *, ...))
 		if (all == 0 && found != 0)
 			break;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return found;
 }

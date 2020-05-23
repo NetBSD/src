@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.49 2020/05/23 20:45:11 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.50 2020/05/23 23:42:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.49 2020/05/23 20:45:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.50 2020/05/23 23:42:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -163,7 +163,7 @@ lwproc_proc_free(struct proc *p)
 	}
 #endif
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 
 	/* childranee eunt initus */
 	while ((child = LIST_FIRST(&p->p_children)) != NULL) {
@@ -290,11 +290,11 @@ lwproc_newproc(struct proc *parent, struct vmspace *vm, int flags)
 	chgproccnt(uid, 1); /* not enforced */
 
 	/* publish proc various proc lists */
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(&parent->p_children, p, p_sibling);
 	LIST_INSERT_AFTER(parent, p, p_pglist);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	return p;
 }
@@ -323,10 +323,10 @@ lwproc_freelwp(struct lwp *l)
 	l->l_stat = LSIDL;
 	mutex_exit(p->p_lock);
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	proc_free_lwpid(p, l->l_lid);
 	LIST_REMOVE(l, l_list);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 
 	if (l->l_name)
 		kmem_free(l->l_name, MAXCOMLEN);
@@ -389,9 +389,9 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 		fd_hold(l);
 	}
 
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 }
 
 struct lwp *
@@ -421,21 +421,21 @@ rump_lwproc_newlwp(pid_t pid)
 	struct lwp *l;
 
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
-	mutex_enter(proc_lock);
+	mutex_enter(&proc_lock);
 	p = proc_find_raw(pid);
 	if (p == NULL) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		kmem_free(l, sizeof(*l));
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
 	if (p->p_sflag & PS_RUMP_LWPEXIT) {
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		mutex_exit(p->p_lock);
 		kmem_free(l, sizeof(*l));
 		return EBUSY;
 	}
-	mutex_exit(proc_lock);
+	mutex_exit(&proc_lock);
 	lwproc_makelwp(p, l, true, false);
 
 	return 0;

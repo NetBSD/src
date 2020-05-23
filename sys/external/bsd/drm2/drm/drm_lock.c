@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.7 2018/08/27 07:01:30 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.8 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.7 2018/08/27 07:01:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.8 2020/05/23 23:42:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -114,9 +114,9 @@ drm_legacy_lock(struct drm_device *dev, void *data, struct drm_file *file)
 	/* If the lock is gone, give up.  */
 	if (master->lock.hw_lock == NULL) {
 #if 0				/* XXX Linux sends SIGTERM, but why?  */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		psignal(curproc, SIGTERM);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		error = -EINTR;
 #else
 		error = -ENXIO;

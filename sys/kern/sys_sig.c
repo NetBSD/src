@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.50 2019/11/10 13:28:06 pgoyette Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.51 2020/05/23 23:42:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.50 2019/11/10 13:28:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.51 2020/05/23 23:42:43 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -247,10 +247,10 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 
 	if (pid > 0) {
 		/* kill single process */
-		mutex_enter(proc_lock);
+		mutex_enter(&proc_lock);
 		p = proc_find_raw(pid);
 		if (p == NULL || (p->p_stat != SACTIVE && p->p_stat != SSTOP)) {
-			mutex_exit(proc_lock);
+			mutex_exit(&proc_lock);
 			/* IEEE Std 1003.1-2001: return success for zombies */
 			return p ? 0 : ESRCH;
 		}
@@ -262,7 +262,7 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 			error = kpsignal2(p, ksi);
 		}
 		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
+		mutex_exit(&proc_lock);
 		return error;
 	}
 
@@ -425,13 +425,13 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 					 */
 					v0v1valid = true;
 				}
-				mutex_enter(proc_lock);
+				mutex_enter(&proc_lock);
 				/*
 				 * Prevent unload of compat module while
 				 * this process remains.
 				 */
 				p->p_lflag |= PL_SIGCOMPAT;
-				mutex_exit(proc_lock);
+				mutex_exit(&proc_lock);
 				kernconfig_unlock();
 			}
 		}
