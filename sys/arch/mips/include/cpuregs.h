@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.97 2020/05/07 11:43:28 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.98 2020/05/23 10:39:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1024,6 +1024,8 @@
 #define	MIPS_CNF71XX	0x94	/* Cavium Octeon CNF71XX	ISA 64  */
 #define	MIPS_CN78XX	0x95	/* Cavium Octeon CN78XX		ISA 64  */
 #define	MIPS_CN70XX	0x96	/* Cavium Octeon CN70XX		ISA 64  */
+#define	MIPS_CN73XX	0x97	/* Cavium Octeon CN73XX		ISA 64  */
+#define	MIPS_CNF75XX	0x98	/* Cavium Octeon CNF75XX	ISA 64  */
 
 /*
  * CPU processor revision IDs for company ID == 7 (Microsoft)
