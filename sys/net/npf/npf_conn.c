@@ -107,7 +107,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.30 2019/09/29 17:00:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.31 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -311,7 +311,7 @@ npf_conn_lookup(const npf_cache_t *npc, const int di, bool *forw)
 	if (!npf_conn_conkey(npc, &key, true)) {
 		return NULL;
 	}
-	con = npf_conndb_lookup(npf->conn_db, &key, forw);
+	con = npf_conndb_lookup(npf, &key, forw);
 	if (con == NULL) {
 		return NULL;
 	}
@@ -908,7 +908,7 @@ npf_conn_find(npf_t *npf, const nvlist_t *idict, nvlist_t **odict)
 	if (!kdict || !npf_connkey_import(kdict, &key)) {
 		return EINVAL;
 	}
-	con = npf_conndb_lookup(npf->conn_db, &key, &forw);
+	con = npf_conndb_lookup(npf, &key, &forw);
 	if (con == NULL) {
 		return ESRCH;
 	}

@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.53 2019/09/30 00:37:11 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.54 2020/05/23 19:56:00 rmind Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -56,8 +56,9 @@ __RCSID("$NetBSD: npf_build.c,v 1.53 2019/09/30 00:37:11 rmind Exp $");
 static nl_config_t *		npf_conf = NULL;
 static bool			npf_debug = false;
 static nl_rule_t *		the_rule = NULL;
+static bool			npf_conf_built = false;
 
-static bool			defgroup = false;
+static nl_rule_t *		defgroup = NULL;
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
 static unsigned			rule_nesting_level = 0;
 static unsigned			npfctl_tid_counter = 0;
@@ -71,8 +72,31 @@ npfctl_config_init(bool debug)
 	if (npf_conf == NULL) {
 		errx(EXIT_FAILURE, "npf_config_create failed");
 	}
-	npf_debug = debug;
 	memset(current_group, 0, sizeof(current_group));
+	npf_debug = debug;
+	npf_conf_built = false;
+}
+
+void
+npfctl_config_build(void)
+{
+	/* Run-once. */
+	if (npf_conf_built) {
+		return;
+	}
+
+	/*
+	 * The default group is mandatory.  Note: npfctl_build_group_end()
+	 * skipped the default rule, since it must be the last one.
+	 */
+	if (!defgroup) {
+		errx(EXIT_FAILURE, "default group was not defined");
+	}
+	assert(rule_nesting_level == 0);
+	npf_rule_insert(npf_conf, NULL, defgroup);
+
+	npf_config_build(npf_conf);
+	npf_conf_built = true;
 }
 
 int
@@ -81,9 +105,7 @@ npfctl_config_send(int fd)
 	npf_error_t errinfo;
 	int error = 0;
 
-	if (!defgroup) {
-		errx(EXIT_FAILURE, "default group was not defined");
-	}
+	npfctl_config_build();
 	error = npf_config_submit(npf_conf, fd, &errinfo);
 	if (error == EEXIST) { /* XXX */
 		errx(EXIT_FAILURE, "(re)load failed: "
@@ -118,6 +140,8 @@ npfctl_config_save(nl_config_t *ncf, const char *outfile)
 void
 npfctl_config_debug(const char *outfile)
 {
+	npfctl_config_build();
+
 	printf("\nConfiguration:\n\n");
 	_npf_config_dump(npf_conf, STDOUT_FILENO);
 
@@ -593,7 +617,7 @@ npfctl_build_group(const char *name, int attr, const char *ifname, bool def)
 		if (rule_nesting_level) {
 			yyerror("default group can only be at the top level");
 		}
-		defgroup = true;
+		defgroup = rl;
 	}
 
 	/* Set the current group and increase the nesting level. */
@@ -613,7 +637,15 @@ npfctl_build_group_end(void)
 	group = current_group[rule_nesting_level];
 	current_group[rule_nesting_level--] = NULL;
 
-	/* Note: if the parent is NULL, then it is a global rule. */
+	/*
+	 * Note:
+	 * - If the parent is NULL, then it is a global rule.
+	 * - The default rule must be the last, so it is inserted later.
+	 */
+	if (group == defgroup) {
+		assert(parent == NULL);
+		return;
+	}
 	npf_rule_insert(npf_conf, parent, group);
 }
 
