@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.S,v 1.5 2019/03/19 19:15:57 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.6 2020/05/23 08:25:32 maxv Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
