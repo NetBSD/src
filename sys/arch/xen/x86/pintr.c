@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.16 2020/05/15 07:42:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.17 2020/05/23 14:51:19 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -173,7 +173,6 @@ short irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is inva
 int
 xen_pic_to_gsi(struct pic *pic, int pin)
 {
-	struct physdev_map_pirq map_irq;
 	int ret;
 	int gsi;
 
@@ -199,21 +198,23 @@ xen_pic_to_gsi(struct pic *pic, int pin)
 			break;
 		}
 
-		memset(&map_irq, 0, sizeof(map_irq));
-		map_irq.domid = DOMID_SELF;
-		map_irq.type = MAP_PIRQ_TYPE_GSI;
-		map_irq.index = pin;
-		map_irq.pirq = gsi;
-		ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
-		if (ret != 0)
-			panic("physdev_op(PHYSDEVOP_map_pirq) GSI fail %d",
-			    ret);
+		struct physdev_irq irq_op;
+		memset(&irq_op, 0, sizeof(irq_op));
+		irq_op.irq = gsi;
+		ret = HYPERVISOR_physdev_op(PHYSDEVOP_alloc_irq_vector,
+		    &irq_op);
+		if (ret < 0) {
+			panic("physdev_op(PHYSDEVOP_alloc_irq_vector) %d"
+			    " fail %d", gsi, ret);
+		}
+		KASSERT(irq_op.vector == gsi);
 		break;
 	    }
 	case PIC_MSI:
 	case PIC_MSIX:
 #ifdef __HAVE_PCI_MSI_MSIX
 	    {
+		struct physdev_map_pirq map_irq;
 		const struct msipic_pci_info *i = msipic_get_pci_info(pic);
 
 		memset(&map_irq, 0, sizeof(map_irq));
