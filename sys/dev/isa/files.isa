@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.175 2020/01/19 20:00:35 thorpej Exp $
+#	$NetBSD: files.isa,v 1.176 2020/05/23 13:48:08 jmcneill Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -486,14 +486,6 @@ file	dev/isa/slhci_isa.c		slhci_isa
 device	tsdio {}
 attach	tsdio at isa
 file	dev/isa/tsdio.c			tsdio
-
-device	toasterlcd: hd44780, wsemuldisplaydev
-attach	toasterlcd at tsdio
-file	dev/isa/toasterlcd.c		toasterlcd
-
-device toaster
-attach toaster at tsdio
-file	dev/isa/toaster.c		toaster
 
 # Trusted Platform Module
 attach tpm at isa with tpm_isa
