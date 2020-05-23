@@ -1,7 +1,7 @@
-/*	$NetBSD: prekern.h,v 1.22 2020/05/07 21:05:37 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.23 2020/05/23 08:25:32 maxv Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
