@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: caa_257.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,15 +14,14 @@
 #ifndef GENERIC_CAA_257_H
 #define GENERIC_CAA_257_H 1
 
-
 typedef struct dns_rdata_caa {
-	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
-	uint8_t		flags;
-	unsigned char *		tag;
-	uint8_t		tag_len;
-	unsigned char		*value;
-	uint16_t		value_len;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint8_t flags;
+	unsigned char *tag;
+	uint8_t tag_len;
+	unsigned char *value;
+	uint16_t value_len;
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */

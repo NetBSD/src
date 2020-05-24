@@ -1,4 +1,4 @@
-/*	$NetBSD: result_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: result_test.c,v 1.6 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,11 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,18 +40,17 @@ tables(void **state) {
 	isccc_result_register();
 
 	for (result = ISC_RESULTCLASS_ISCCC;
-	     result < (ISC_RESULTCLASS_ISCCC + ISCCC_R_NRESULTS);
-	     result++)
+	     result < (ISC_RESULTCLASS_ISCCC + ISCCC_R_NRESULTS); result++)
 	{
 		str = isc_result_toid(result);
 		assert_non_null(str);
-		assert_string_not_equal(str,
-					"(result code text not available)");
+		assert_string_not_equal(str, "(result code text not "
+					     "available)");
 
 		str = isc_result_totext(result);
 		assert_non_null(str);
-		assert_string_not_equal(str,
-					"(result code text not available)");
+		assert_string_not_equal(str, "(result code text not "
+					     "available)");
 	}
 
 	str = isc_result_toid(result);
@@ -85,4 +81,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

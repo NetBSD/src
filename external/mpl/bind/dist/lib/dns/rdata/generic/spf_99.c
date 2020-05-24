@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 static inline isc_result_t
 fromtext_spf(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
@@ -33,7 +32,6 @@ fromtext_spf(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 totext_spf(ARGS_TOTEXT) {
-
 	UNUSED(tctx);
 
 	REQUIRE(rdata->type == dns_rdatatype_spf);
@@ -43,7 +41,6 @@ totext_spf(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_spf(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
@@ -57,7 +54,6 @@ fromwire_spf(ARGS_FROMWIRE) {
 
 static inline isc_result_t
 towire_spf(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(cctx);
@@ -81,7 +77,6 @@ compare_spf(ARGS_COMPARE) {
 
 static inline isc_result_t
 fromstruct_spf(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_spf);
 
 	return (generic_fromstruct_txt(rdclass, type, source, target));
@@ -136,7 +131,6 @@ digest_spf(ARGS_DIGEST) {
 
 static inline bool
 checkowner_spf(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(name);
@@ -149,7 +143,6 @@ checkowner_spf(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_spf(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(rdata);
@@ -163,4 +156,4 @@ static inline int
 casecompare_spf(ARGS_COMPARE) {
 	return (compare_spf(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_SPF_99_C */
+#endif /* RDATA_GENERIC_SPF_99_C */

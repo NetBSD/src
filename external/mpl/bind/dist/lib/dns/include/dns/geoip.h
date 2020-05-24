@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,15 +15,15 @@
 #define DNS_GEOIP_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/geoip.h
  * \brief
  * GeoIP/GeoIP2 data types and function prototypes.
  */
 
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+#if defined(HAVE_GEOIP2)
 
 /***
  *** Imports
@@ -36,9 +36,9 @@
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
 
+#include <dns/iptable.h>
 #include <dns/name.h>
 #include <dns/types.h>
-#include <dns/iptable.h>
 
 /***
  *** Types
@@ -81,32 +81,19 @@ typedef enum {
 
 typedef struct dns_geoip_elem {
 	dns_geoip_subtype_t subtype;
-	void *db;
+	void *		    db;
 	union {
 		char as_string[256];
-		int as_int;
+		int  as_int;
 	};
 } dns_geoip_elem_t;
 
 struct dns_geoip_databases {
-#ifdef HAVE_GEOIP2
-	void *country;		/* GeoIP2-Country or GeoLite2-Country */
-	void *city;		/* GeoIP2-CIty or GeoLite2-City */
-	void *domain;		/* GeoIP2-Domain */
-	void *isp;		/* GeoIP2-ISP */
-	void *as;		/* GeoIP2-ASN or GeoLite2-ASN */
-#else /* HAVE_GEOIP */
-	void *country_v4;	/* GeoIP DB 1 */
-	void *city_v4;		/* GeoIP DB 2 or 6 */
-	void *region;		/* GeoIP DB 3 or 7 */
-	void *isp;		/* GeoIP DB 4 */
-	void *org;		/* GeoIP DB 5 */
-	void *as;		/* GeoIP DB 9 */
-	void *netspeed;		/* GeoIP DB 10 */
-	void *domain;		/* GeoIP DB 11 */
-	void *country_v6;	/* GeoIP DB 12 */
-	void *city_v6;		/* GeoIP DB 30 or 31 */
-#endif /* HAVE_GEOIP */
+	void *country; /* GeoIP2-Country or GeoLite2-Country */
+	void *city;    /* GeoIP2-CIty or GeoLite2-City */
+	void *domain;  /* GeoIP2-Domain */
+	void *isp;     /* GeoIP2-ISP */
+	void *as;      /* GeoIP2-ASN or GeoLite2-ASN */
 };
 
 /***
@@ -116,15 +103,12 @@ struct dns_geoip_databases {
 ISC_LANG_BEGINDECLS
 
 bool
-dns_geoip_match(const isc_netaddr_t *reqaddr,
+dns_geoip_match(const isc_netaddr_t *	     reqaddr,
 		const dns_geoip_databases_t *geoip,
-		const dns_geoip_elem_t *elt);
-
-void
-dns_geoip_shutdown(void);
+		const dns_geoip_elem_t *     elt);
 
 ISC_LANG_ENDDECLS
 
-#endif /* HAVE_GEOIP | HAVE_GEOIP2 */
+#endif /* HAVE_GEOIP2 */
 
 #endif /* DNS_GEOIP_H */

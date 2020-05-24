@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rrl.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_RRL_H
 #define DNS_RRL_H 1
@@ -30,38 +29,33 @@
 
 ISC_LANG_BEGINDECLS
 
-
 /*
  * Memory allocation or other failures.
  */
-#define DNS_RRL_LOG_FAIL	ISC_LOG_WARNING
+#define DNS_RRL_LOG_FAIL ISC_LOG_WARNING
 /*
  * dropped or slipped responses.
  */
-#define DNS_RRL_LOG_DROP	ISC_LOG_INFO
+#define DNS_RRL_LOG_DROP ISC_LOG_INFO
 /*
  * Major events in dropping or slipping.
  */
-#define DNS_RRL_LOG_DEBUG1	ISC_LOG_DEBUG(3)
+#define DNS_RRL_LOG_DEBUG1 ISC_LOG_DEBUG(3)
 /*
  * Limit computations.
  */
-#define DNS_RRL_LOG_DEBUG2	ISC_LOG_DEBUG(4)
+#define DNS_RRL_LOG_DEBUG2 ISC_LOG_DEBUG(4)
 /*
  * Even less interesting.
  */
-#define DNS_RRL_LOG_DEBUG3	ISC_LOG_DEBUG(9)
+#define DNS_RRL_LOG_DEBUG3 ISC_LOG_DEBUG(9)
 
-
-#define DNS_RRL_LOG_ERR_LEN	64
-#define DNS_RRL_LOG_BUF_LEN	(sizeof("would continue limiting") +	\
-				 DNS_RRL_LOG_ERR_LEN +			\
-				 sizeof(" responses to ") +		\
-				 ISC_NETADDR_FORMATSIZE +		\
-				 sizeof("/128 for IN ") +		\
-				 DNS_RDATATYPE_FORMATSIZE +		\
-				 DNS_NAME_FORMATSIZE)
-
+#define DNS_RRL_LOG_ERR_LEN 64
+#define DNS_RRL_LOG_BUF_LEN                                        \
+	(sizeof("would continue limiting") + DNS_RRL_LOG_ERR_LEN + \
+	 sizeof(" responses to ") + ISC_NETADDR_FORMATSIZE +       \
+	 sizeof("/128 for IN ") + DNS_RDATATYPE_FORMATSIZE +       \
+	 DNS_NAME_FORMATSIZE)
 
 typedef struct dns_rrl_hash dns_rrl_hash_t;
 
@@ -88,19 +82,19 @@ typedef enum {
  * by attacker) to collide with legitimate qnames from the target with
  * probability at most 1%.
  */
-#define DNS_RRL_MAX_PREFIX  64
+#define DNS_RRL_MAX_PREFIX 64
 typedef union dns_rrl_key dns_rrl_key_t;
 struct dns__rrl_key {
-	uint32_t	    ip[DNS_RRL_MAX_PREFIX/32];
-	uint32_t	    qname_hash;
-	dns_rdatatype_t	    qtype;
-	uint8_t         qclass;
-	unsigned int	    rtype   :4; /* dns_rrl_rtype_t */
-	unsigned int	    ipv6    :1;
+	uint32_t	ip[DNS_RRL_MAX_PREFIX / 32];
+	uint32_t	qname_hash;
+	dns_rdatatype_t qtype;
+	uint8_t		qclass;
+	unsigned int	rtype : 4; /* dns_rrl_rtype_t */
+	unsigned int	ipv6 : 1;
 };
 union dns_rrl_key {
 	struct dns__rrl_key s;
-	uint16_t	w[sizeof(struct dns__rrl_key)/sizeof(uint16_t)];
+	uint16_t	    w[sizeof(struct dns__rrl_key) / sizeof(uint16_t)];
 };
 
 /*
@@ -112,63 +106,63 @@ typedef ISC_LIST(dns_rrl_entry_t) dns_rrl_bin_t;
 struct dns_rrl_entry {
 	ISC_LINK(dns_rrl_entry_t) lru;
 	ISC_LINK(dns_rrl_entry_t) hlink;
-	dns_rrl_key_t	key;
-# define DNS_RRL_RESPONSE_BITS	24
-	signed int	responses   :DNS_RRL_RESPONSE_BITS;
-# define DNS_RRL_QNAMES_BITS	8
-	unsigned int	log_qname   :DNS_RRL_QNAMES_BITS;
+	dns_rrl_key_t key;
+#define DNS_RRL_RESPONSE_BITS 24
+	signed int responses : DNS_RRL_RESPONSE_BITS;
+#define DNS_RRL_QNAMES_BITS 8
+	unsigned int log_qname : DNS_RRL_QNAMES_BITS;
 
-# define DNS_RRL_TS_GEN_BITS	2
-	unsigned int	ts_gen	    :DNS_RRL_TS_GEN_BITS;
-	unsigned int	ts_valid    :1;
-# define DNS_RRL_HASH_GEN_BITS	1
-	unsigned int	hash_gen    :DNS_RRL_HASH_GEN_BITS;
-	unsigned int	logged	    :1;
-# define DNS_RRL_LOG_BITS	11
-	unsigned int	log_secs    :DNS_RRL_LOG_BITS;
+#define DNS_RRL_TS_GEN_BITS 2
+	unsigned int ts_gen : DNS_RRL_TS_GEN_BITS;
+	unsigned int ts_valid : 1;
+#define DNS_RRL_HASH_GEN_BITS 1
+	unsigned int hash_gen : DNS_RRL_HASH_GEN_BITS;
+	unsigned int logged : 1;
+#define DNS_RRL_LOG_BITS 11
+	unsigned int log_secs : DNS_RRL_LOG_BITS;
 
-# define DNS_RRL_TS_BITS	12
-	unsigned int	ts	    :DNS_RRL_TS_BITS;
+#define DNS_RRL_TS_BITS 12
+	unsigned int ts : DNS_RRL_TS_BITS;
 
-# define DNS_RRL_MAX_SLIP	10
-	unsigned int	slip_cnt    :4;
+#define DNS_RRL_MAX_SLIP 10
+	unsigned int slip_cnt : 4;
 };
 
-#define DNS_RRL_MAX_TIME_TRAVEL	5
-#define DNS_RRL_FOREVER		(1<<DNS_RRL_TS_BITS)
+#define DNS_RRL_MAX_TIME_TRAVEL 5
+#define DNS_RRL_FOREVER		(1 << DNS_RRL_TS_BITS)
 #define DNS_RRL_MAX_TS		(DNS_RRL_FOREVER - 1)
 
-#define DNS_RRL_MAX_RESPONSES	((1<<(DNS_RRL_RESPONSE_BITS-1))-1)
-#define DNS_RRL_MAX_WINDOW	3600
+#define DNS_RRL_MAX_RESPONSES ((1 << (DNS_RRL_RESPONSE_BITS - 1)) - 1)
+#define DNS_RRL_MAX_WINDOW    3600
 #if DNS_RRL_MAX_WINDOW >= DNS_RRL_MAX_TS
 #error "DNS_RRL_MAX_WINDOW is too large"
-#endif
-#define DNS_RRL_MAX_RATE	1000
+#endif /* if DNS_RRL_MAX_WINDOW >= DNS_RRL_MAX_TS */
+#define DNS_RRL_MAX_RATE 1000
 #if DNS_RRL_MAX_RATE >= (DNS_RRL_MAX_RESPONSES / DNS_RRL_MAX_WINDOW)
 #error "DNS_RRL_MAX_rate is too large"
-#endif
+#endif /* if DNS_RRL_MAX_RATE >= (DNS_RRL_MAX_RESPONSES / DNS_RRL_MAX_WINDOW) \
+	*/
 
-#if (1<<DNS_RRL_LOG_BITS) >= DNS_RRL_FOREVER
+#if (1 << DNS_RRL_LOG_BITS) >= DNS_RRL_FOREVER
 #error DNS_RRL_LOG_BITS is too big
-#endif
-#define DNS_RRL_MAX_LOG_SECS	1800
-#if DNS_RRL_MAX_LOG_SECS >= (1<<DNS_RRL_LOG_BITS)
+#endif /* if (1 << DNS_RRL_LOG_BITS) >= DNS_RRL_FOREVER */
+#define DNS_RRL_MAX_LOG_SECS 1800
+#if DNS_RRL_MAX_LOG_SECS >= (1 << DNS_RRL_LOG_BITS)
 #error "DNS_RRL_MAX_LOG_SECS is too large"
-#endif
-#define DNS_RRL_STOP_LOG_SECS	60
-#if DNS_RRL_STOP_LOG_SECS >= (1<<DNS_RRL_LOG_BITS)
+#endif /* if DNS_RRL_MAX_LOG_SECS >= (1 << DNS_RRL_LOG_BITS) */
+#define DNS_RRL_STOP_LOG_SECS 60
+#if DNS_RRL_STOP_LOG_SECS >= (1 << DNS_RRL_LOG_BITS)
 #error "DNS_RRL_STOP_LOG_SECS is too large"
-#endif
-
+#endif /* if DNS_RRL_STOP_LOG_SECS >= (1 << DNS_RRL_LOG_BITS) */
 
 /*
  * A hash table of rate-limit entries.
  */
 struct dns_rrl_hash {
-	isc_stdtime_t	check_time;
-	unsigned int	gen	    :DNS_RRL_HASH_GEN_BITS;
-	int		length;
-	dns_rrl_bin_t	bins[1];
+	isc_stdtime_t check_time;
+	unsigned int  gen : DNS_RRL_HASH_GEN_BITS;
+	int	      length;
+	dns_rrl_bin_t bins[1];
 };
 
 /*
@@ -178,7 +172,7 @@ typedef struct dns_rrl_block dns_rrl_block_t;
 struct dns_rrl_block {
 	ISC_LINK(dns_rrl_block_t) link;
 	int		size;
-	dns_rrl_entry_t	entries[1];
+	dns_rrl_entry_t entries[1];
 };
 
 /*
@@ -188,15 +182,15 @@ typedef struct dns_rrl_qname_buf dns_rrl_qname_buf_t;
 struct dns_rrl_qname_buf {
 	ISC_LINK(dns_rrl_qname_buf_t) link;
 	const dns_rrl_entry_t *e;
-	unsigned int	    index;
-	dns_fixedname_t	    qname;
+	unsigned int	       index;
+	dns_fixedname_t	       qname;
 };
 
 typedef struct dns_rrl_rate dns_rrl_rate_t;
 struct dns_rrl_rate {
 	int	    r;
 	int	    scaled;
-	const char  *str;
+	const char *str;
 };
 
 /*
@@ -204,54 +198,54 @@ struct dns_rrl_rate {
  */
 typedef struct dns_rrl dns_rrl_t;
 struct dns_rrl {
-	isc_mutex_t	lock;
-	isc_mem_t	*mctx;
+	isc_mutex_t lock;
+	isc_mem_t * mctx;
 
-	bool	log_only;
-	dns_rrl_rate_t	responses_per_second;
-	dns_rrl_rate_t	referrals_per_second;
-	dns_rrl_rate_t	nodata_per_second;
-	dns_rrl_rate_t	nxdomains_per_second;
-	dns_rrl_rate_t	errors_per_second;
-	dns_rrl_rate_t	all_per_second;
-	dns_rrl_rate_t	slip;
-	int		window;
-	double		qps_scale;
-	int		max_entries;
+	bool	       log_only;
+	dns_rrl_rate_t responses_per_second;
+	dns_rrl_rate_t referrals_per_second;
+	dns_rrl_rate_t nodata_per_second;
+	dns_rrl_rate_t nxdomains_per_second;
+	dns_rrl_rate_t errors_per_second;
+	dns_rrl_rate_t all_per_second;
+	dns_rrl_rate_t slip;
+	int	       window;
+	double	       qps_scale;
+	int	       max_entries;
 
-	dns_acl_t	*exempt;
+	dns_acl_t *exempt;
 
-	int		num_entries;
+	int num_entries;
 
-	int		qps_responses;
-	isc_stdtime_t	qps_time;
-	double		qps;
+	int	      qps_responses;
+	isc_stdtime_t qps_time;
+	double	      qps;
 
-	unsigned int	probes;
-	unsigned int	searches;
+	unsigned int probes;
+	unsigned int searches;
 
 	ISC_LIST(dns_rrl_block_t) blocks;
 	ISC_LIST(dns_rrl_entry_t) lru;
 
-	dns_rrl_hash_t	*hash;
-	dns_rrl_hash_t	*old_hash;
+	dns_rrl_hash_t *hash;
+	dns_rrl_hash_t *old_hash;
 	unsigned int	hash_gen;
 
-	unsigned int	ts_gen;
-# define DNS_RRL_TS_BASES   (1<<DNS_RRL_TS_GEN_BITS)
-	isc_stdtime_t	ts_bases[DNS_RRL_TS_BASES];
+	unsigned int ts_gen;
+#define DNS_RRL_TS_BASES (1 << DNS_RRL_TS_GEN_BITS)
+	isc_stdtime_t ts_bases[DNS_RRL_TS_BASES];
 
-	int		ipv4_prefixlen;
-	uint32_t	ipv4_mask;
-	int		ipv6_prefixlen;
-	uint32_t	ipv6_mask[4];
+	int	 ipv4_prefixlen;
+	uint32_t ipv4_mask;
+	int	 ipv6_prefixlen;
+	uint32_t ipv6_mask[4];
 
-	isc_stdtime_t	log_stops_time;
-	dns_rrl_entry_t	*last_logged;
-	int		num_logged;
-	int		num_qnames;
+	isc_stdtime_t	 log_stops_time;
+	dns_rrl_entry_t *last_logged;
+	int		 num_logged;
+	int		 num_qnames;
 	ISC_LIST(dns_rrl_qname_buf_t) qname_free;
-# define DNS_RRL_QNAMES	    (1<<DNS_RRL_QNAMES_BITS)
+#define DNS_RRL_QNAMES (1 << DNS_RRL_QNAMES_BITS)
 	dns_rrl_qname_buf_t *qnames[DNS_RRL_QNAMES];
 };
 
@@ -262,8 +256,7 @@ typedef enum {
 } dns_rrl_result_t;
 
 dns_rrl_result_t
-dns_rrl(dns_view_t *view,
-	const isc_sockaddr_t *client_addr, bool is_tcp,
+dns_rrl(dns_view_t *view, const isc_sockaddr_t *client_addr, bool is_tcp,
 	dns_rdataclass_t rdclass, dns_rdatatype_t qtype,
 	const dns_name_t *qname, isc_result_t resp_result, isc_stdtime_t now,
 	bool wouldlog, char *log_buf, unsigned int log_buf_len);

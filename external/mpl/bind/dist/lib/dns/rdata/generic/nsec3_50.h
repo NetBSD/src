@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: nsec3_50.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,8 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
-
 
 /*!
  * \brief Per RFC 5155 */
@@ -22,17 +20,17 @@
 #include <isc/iterated_hash.h>
 
 typedef struct dns_rdata_nsec3 {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_hash_t		hash;
-	unsigned char		flags;
-	dns_iterations_t	iterations;
-	unsigned char		salt_length;
-	unsigned char		next_length;
-	uint16_t		len;
-	unsigned char		*salt;
-	unsigned char		*next;
-	unsigned char		*typebits;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_hash_t hash;
+	unsigned char flags;
+	dns_iterations_t iterations;
+	unsigned char salt_length;
+	unsigned char next_length;
+	uint16_t len;
+	unsigned char *salt;
+	unsigned char *next;
+	unsigned char *typebits;
 } dns_rdata_nsec3_t;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen-unix.h,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: gen-unix.h,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /*! \file
  * \brief
@@ -28,22 +27,21 @@
 #ifndef DNS_GEN_UNIX_H
 #define DNS_GEN_UNIX_H 1
 
-#include <sys/types.h>          /* Required on some systems for dirent.h. */
-
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>		/* XXXDCL Required for ?. */
+#include <sys/types.h> /* Required on some systems for dirent.h. */
+#include <unistd.h>    /* XXXDCL Required for ?. */
 
 #include <isc/lang.h>
 
 #ifdef NEED_OPTARG
 extern char *optarg;
-#endif
+#endif /* ifdef NEED_OPTARG */
 
-#define isc_commandline_parse		getopt
-#define isc_commandline_argument 	optarg
+#define isc_commandline_parse	 getopt
+#define isc_commandline_argument optarg
 
 typedef struct {
 	DIR *handle;
@@ -56,11 +54,11 @@ static bool
 start_directory(const char *path, isc_dir_t *dir) {
 	dir->handle = opendir(path);
 
-	if (dir->handle != NULL)
+	if (dir->handle != NULL) {
 		return (true);
-	else
+	} else {
 		return (false);
-
+	}
 }
 
 static bool
@@ -81,16 +79,18 @@ next_file(isc_dir_t *dir) {
 		}
 	}
 
-	if (dir->filename != NULL)
+	if (dir->filename != NULL) {
 		return (true);
-	else
+	} else {
 		return (false);
+	}
 }
 
 static void
 end_directory(isc_dir_t *dir) {
-	if (dir->handle != NULL)
+	if (dir->handle != NULL) {
 		(void)closedir(dir->handle);
+	}
 
 	dir->handle = NULL;
 }

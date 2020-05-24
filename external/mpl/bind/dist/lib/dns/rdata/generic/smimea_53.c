@@ -1,4 +1,4 @@
-/*	$NetBSD: smimea_53.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: smimea_53.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 static inline isc_result_t
 fromtext_smimea(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromtext_tlsa(rdclass, type, lexer, origin, options,
@@ -27,7 +26,6 @@ fromtext_smimea(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 totext_smimea(ARGS_TOTEXT) {
-
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 
 	return (generic_totext_tlsa(rdata, tctx, target));
@@ -35,7 +33,6 @@ totext_smimea(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_smimea(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromwire_tlsa(rdclass, type, source, dctx, options,
@@ -73,7 +70,6 @@ compare_smimea(ARGS_COMPARE) {
 
 static inline isc_result_t
 fromstruct_smimea(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromstruct_tlsa(rdclass, type, source, target));
@@ -128,7 +124,6 @@ digest_smimea(ARGS_DIGEST) {
 
 static inline bool
 checkowner_smimea(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	UNUSED(name);
@@ -141,7 +136,6 @@ checkowner_smimea(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_smimea(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 
 	UNUSED(rdata);
@@ -156,4 +150,4 @@ casecompare_smimea(ARGS_COMPARE) {
 	return (compare_smimea(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_SMIMEA_53_C */
+#endif /* RDATA_GENERIC_SMIMEA_53_C */

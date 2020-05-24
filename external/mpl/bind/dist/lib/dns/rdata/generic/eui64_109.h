@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64_109.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: eui64_109.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,8 @@
 #define GENERIC_EUI64_109_H 1
 
 typedef struct dns_rdata_eui64 {
-	dns_rdatacommon_t	common;
-	unsigned char		eui64[8];
+	dns_rdatacommon_t common;
+	unsigned char eui64[8];
 } dns_rdata_eui64_t;
 
 #endif /* GENERIC_EUI64_10k_H */

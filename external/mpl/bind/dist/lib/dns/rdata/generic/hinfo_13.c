@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,8 +31,7 @@ fromtext_hinfo(ARGS_FROMTEXT) {
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      false));
+					      isc_tokentype_qstring, false));
 		RETTOK(txt_fromtext(&token.value.as_textregion, target));
 	}
 	return (ISC_R_SUCCESS);
@@ -55,7 +54,6 @@ totext_hinfo(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_hinfo(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_hinfo);
 
 	UNUSED(type);
@@ -69,7 +67,6 @@ fromwire_hinfo(ARGS_FROMWIRE) {
 
 static inline isc_result_t
 towire_hinfo(ARGS_TOWIRE) {
-
 	UNUSED(cctx);
 
 	REQUIRE(rdata->type == dns_rdatatype_hinfo);
@@ -129,22 +126,25 @@ tostruct_hinfo(ARGS_TOSTRUCT) {
 	hinfo->cpu_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	hinfo->cpu = mem_maybedup(mctx, region.base, hinfo->cpu_len);
-	if (hinfo->cpu == NULL)
+	if (hinfo->cpu == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 	isc_region_consume(&region, hinfo->cpu_len);
 
 	hinfo->os_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	hinfo->os = mem_maybedup(mctx, region.base, hinfo->os_len);
-	if (hinfo->os == NULL)
+	if (hinfo->os == NULL) {
 		goto cleanup;
+	}
 
 	hinfo->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL && hinfo->cpu != NULL)
+cleanup:
+	if (mctx != NULL && hinfo->cpu != NULL) {
 		isc_mem_free(mctx, hinfo->cpu);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
@@ -154,13 +154,16 @@ freestruct_hinfo(ARGS_FREESTRUCT) {
 
 	REQUIRE(hinfo != NULL);
 
-	if (hinfo->mctx == NULL)
+	if (hinfo->mctx == NULL) {
 		return;
+	}
 
-	if (hinfo->cpu != NULL)
+	if (hinfo->cpu != NULL) {
 		isc_mem_free(hinfo->mctx, hinfo->cpu);
-	if (hinfo->os != NULL)
+	}
+	if (hinfo->os != NULL) {
 		isc_mem_free(hinfo->mctx, hinfo->os);
+	}
 	hinfo->mctx = NULL;
 }
 
@@ -188,7 +191,6 @@ digest_hinfo(ARGS_DIGEST) {
 
 static inline bool
 checkowner_hinfo(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_hinfo);
 
 	UNUSED(name);
@@ -201,7 +203,6 @@ checkowner_hinfo(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_hinfo(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_hinfo);
 
 	UNUSED(rdata);
@@ -215,4 +216,4 @@ static inline int
 casecompare_hinfo(ARGS_COMPARE) {
 	return (compare_hinfo(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_HINFO_13_C */
+#endif /* RDATA_GENERIC_HINFO_13_C */

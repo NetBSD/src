@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.3 2019/01/09 16:55:16 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_THREAD_H
 #define ISC_THREAD_H 1
 
@@ -21,7 +20,7 @@
 
 #if defined(HAVE_PTHREAD_NP_H)
 #include <pthread_np.h>
-#endif
+#endif /* if defined(HAVE_PTHREAD_NP_H) */
 
 #include <isc/lang.h>
 #include <isc/result.h>
@@ -29,13 +28,15 @@
 ISC_LANG_BEGINDECLS
 
 typedef pthread_t isc_thread_t;
-typedef void * isc_threadresult_t;
-typedef void * isc_threadarg_t;
+typedef void *	  isc_threadresult_t;
+typedef void *	  isc_threadarg_t;
 typedef isc_threadresult_t (*isc_threadfunc_t)(isc_threadarg_t);
-typedef pthread_key_t isc_thread_key_t;
 
-isc_result_t
+void
 isc_thread_create(isc_threadfunc_t, isc_threadarg_t, isc_thread_t *);
+
+void
+isc_thread_join(isc_thread_t thread, isc_threadresult_t *result);
 
 void
 isc_thread_setconcurrency(unsigned int level);
@@ -49,19 +50,24 @@ isc_thread_setname(isc_thread_t thread, const char *name);
 isc_result_t
 isc_thread_setaffinity(int cpu);
 
-/* XXX We could do fancier error handling... */
+#define isc_thread_self (unsigned long)pthread_self
 
-#define isc_thread_join(t, rp) \
-	((pthread_join((t), (rp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+/***
+ *** Thread-Local Storage
+ ***/
 
-#define isc_thread_self \
-	(unsigned long)pthread_self
-
-#define isc_thread_key_create pthread_key_create
-#define isc_thread_key_getspecific pthread_getspecific
-#define isc_thread_key_setspecific pthread_setspecific
-#define isc_thread_key_delete pthread_key_delete
+#if defined(HAVE_TLS)
+#if defined(HAVE_THREAD_LOCAL)
+#include <threads.h>
+#define ISC_THREAD_LOCAL static thread_local
+#elif defined(HAVE___THREAD)
+#define ISC_THREAD_LOCAL static __thread
+#else /* if defined(HAVE_THREAD_LOCAL) */
+#error "Unknown method for defining a TLS variable!"
+#endif /* if defined(HAVE_THREAD_LOCAL) */
+#else  /* if defined(HAVE_TLS) */
+#error "Thread-local storage support is required!"
+#endif /* if defined(HAVE_TLS) */
 
 ISC_LANG_ENDDECLS
 

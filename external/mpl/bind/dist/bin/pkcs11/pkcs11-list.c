@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-list.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: pkcs11-list.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,18 +35,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* pkcs11-list [-P] [-m module] [-s slot] [-i $id | -l $label] [-p $pin] */
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -74,9 +71,8 @@ main(int argc, char *argv[]) {
 	unsigned int i = 0, id = 0;
 	int c, errflg = 0;
 	CK_ULONG ulObjectCount;
-	CK_ATTRIBUTE search_template[] = {
-		{CKA_ID, &attr_id, sizeof(attr_id)}
-	};
+	CK_ATTRIBUTE search_template[] = { { CKA_ID, &attr_id,
+					     sizeof(attr_id) } };
 
 	while ((c = isc_commandline_parse(argc, argv, ":m:s:i:l:p:P")) != -1) {
 		switch (c) {
@@ -119,11 +115,13 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (!id && (label == NULL))
+	if (!id && (label == NULL)) {
 		all = true;
+	}
 
-	if (slot)
+	if (slot) {
 		printf("slot %lu\n", slot);
+	}
 
 	if (id) {
 		printf("id %u\n", id);
@@ -139,31 +137,37 @@ main(int argc, char *argv[]) {
 	pk11_result_register();
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	if (logon && pin == NULL) {
 		pin = getpass("Enter Pin: ");
 	}
 
-	result = pk11_get_session(&pctx, OP_ANY, false, false,
-				  logon, pin, slot);
+	result = pk11_get_session(&pctx, OP_ANY, false, false, logon, pin,
+				  slot);
 	if (result == PK11_R_NORANDOMSERVICE ||
-	    result == PK11_R_NODIGESTSERVICE ||
-	    result == PK11_R_NOAESSERVICE) {
+	    result == PK11_R_NODIGESTSERVICE || result == PK11_R_NOAESSERVICE)
+	{
 		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
 		fprintf(stderr, "This HSM will not work with BIND 9 "
 				"using native PKCS#11.\n");
 	} else if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "Unrecoverable error initializing "
-			"PKCS#11: %s\n", isc_result_totext(result));
-		fprintf(stderr, "Unrecoverable error initializing "
-				"PKCS#11: %s\n", isc_result_totext(result));
+		fprintf(stderr,
+			"Unrecoverable error initializing "
+			"PKCS#11: %s\n",
+			isc_result_totext(result));
+		fprintf(stderr,
+			"Unrecoverable error initializing "
+			"PKCS#11: %s\n",
+			isc_result_totext(result));
 		exit(1);
 	}
 
-	if (pin != NULL)
+	if (pin != NULL) {
 		memset(pin, 0, strlen(pin));
+	}
 
 	hSession = pctx.session;
 
@@ -178,9 +182,7 @@ main(int argc, char *argv[]) {
 	while (ulObjectCount) {
 		rv = pkcs_C_FindObjects(hSession, akey, 50, &ulObjectCount);
 		if (rv != CKR_OK) {
-			fprintf(stderr,
-				"C_FindObjects: Error = 0x%.8lX\n",
-				rv);
+			fprintf(stderr, "C_FindObjects: Error = 0x%.8lX\n", rv);
 			error = 1;
 			goto exit_search;
 		}
@@ -193,32 +195,32 @@ main(int argc, char *argv[]) {
 			CK_BBOOL extract = TRUE;
 			CK_BBOOL never = FALSE;
 			CK_ATTRIBUTE template[] = {
-				{CKA_CLASS, &oclass, sizeof(oclass)},
-				{CKA_LABEL, labelbuf, sizeof(labelbuf) - 1},
-				{CKA_ID, idbuf, sizeof(idbuf)}
+				{ CKA_CLASS, &oclass, sizeof(oclass) },
+				{ CKA_LABEL, labelbuf, sizeof(labelbuf) - 1 },
+				{ CKA_ID, idbuf, sizeof(idbuf) }
 			};
 			CK_ATTRIBUTE priv_template[] = {
-				{CKA_EXTRACTABLE, &extract, sizeof(extract)},
-				{CKA_NEVER_EXTRACTABLE, &never, sizeof(never)}
+				{ CKA_EXTRACTABLE, &extract, sizeof(extract) },
+				{ CKA_NEVER_EXTRACTABLE, &never, sizeof(never) }
 			};
 
 			memset(labelbuf, 0, sizeof(labelbuf));
 			memset(idbuf, 0, sizeof(idbuf));
 
 			rv = pkcs_C_GetAttributeValue(hSession, akey[i],
-						 template, 3);
+						      template, 3);
 			if (rv != CKR_OK) {
 				fprintf(stderr,
 					"C_GetAttributeValue[%u]: "
 					"rv = 0x%.8lX\n",
 					i, rv);
-				if (rv == CKR_BUFFER_TOO_SMALL)
+				if (rv == CKR_BUFFER_TOO_SMALL) {
 					fprintf(stderr,
 						"%u too small: %lu %lu %lu\n",
-						i,
-						template[0].ulValueLen,
+						i, template[0].ulValueLen,
 						template[1].ulValueLen,
 						template[2].ulValueLen);
+				}
 				error = 1;
 				continue;
 			}
@@ -226,46 +228,49 @@ main(int argc, char *argv[]) {
 			len = template[2].ulValueLen;
 			printf("object[%u]: handle %lu class %lu "
 			       "label[%lu] '%s' id[%lu] ",
-			       i, akey[i], oclass,
-			       template[1].ulValueLen,
-			       labelbuf,
-			       template[2].ulValueLen);
+			       i, akey[i], oclass, template[1].ulValueLen,
+			       labelbuf, template[2].ulValueLen);
 			if (len == 2) {
 				id = (idbuf[0] << 8) & 0xff00;
 				id |= idbuf[1] & 0xff;
 				printf("%u", id);
 			} else {
-				if (len > 8)
+				if (len > 8) {
 					len = 8;
-				if (len > 0)
+				}
+				if (len > 0) {
 					printf("0x");
+				}
 				for (j = 0; j < len; j++)
 					printf("%02x", idbuf[j]);
-				if (template[2].ulValueLen > len)
+				if (template[2].ulValueLen > len) {
 					printf("...");
+				}
 			}
 			if ((oclass == CKO_PRIVATE_KEY ||
 			     oclass == CKO_SECRET_KEY) &&
 			    pkcs_C_GetAttributeValue(hSession, akey[i],
-					priv_template, 2) == CKR_OK) {
+						     priv_template,
+						     2) == CKR_OK)
+			{
 				printf(" E:%s",
-				       extract ? "true" :
-				       (never ? "never" : "false"));
+				       extract ? "true"
+					       : (never ? "never" : "false"));
 			}
 			printf("\n");
 		}
 	}
 
- exit_search:
+exit_search:
 	rv = pkcs_C_FindObjectsFinal(hSession);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsFinal: Error = 0x%.8lX\n", rv);
 		error = 1;
 	}
 
- exit_session:
+exit_session:
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

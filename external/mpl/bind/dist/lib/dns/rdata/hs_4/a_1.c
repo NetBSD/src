@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,11 +36,13 @@ fromtext_hs_a(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1)
+	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1) {
 		RETTOK(DNS_R_BADDOTTEDQUAD);
+	}
 	isc_buffer_availableregion(target, &region);
-	if (region.length < 4)
+	if (region.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
@@ -75,10 +77,12 @@ fromwire_hs_a(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (sregion.length < 4)
+	if (sregion.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
-	if (tregion.length < 4)
+	}
+	if (tregion.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 4);
 	isc_buffer_forward(source, 4);
@@ -97,8 +101,9 @@ towire_hs_a(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	isc_buffer_availableregion(target, &region);
-	if (region.length < rdata->length)
+	if (region.length < rdata->length) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
@@ -116,8 +121,9 @@ compare_hs_a(ARGS_COMPARE) {
 	REQUIRE(rdata2->length == 4);
 
 	order = memcmp(rdata1->data, rdata2->data, 4);
-	if (order != 0)
+	if (order != 0) {
 		order = (order < 0) ? -1 : 1;
+	}
 
 	return (order);
 }
@@ -198,7 +204,6 @@ digest_hs_a(ARGS_DIGEST) {
 
 static inline bool
 checkowner_hs_a(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_a);
 	REQUIRE(rdclass == dns_rdataclass_hs);
 
@@ -212,7 +217,6 @@ checkowner_hs_a(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_hs_a(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
 
@@ -228,4 +232,4 @@ casecompare_hs_a(ARGS_COMPARE) {
 	return (compare_hs_a(rdata1, rdata2));
 }
 
-#endif	/* RDATA_HS_4_A_1_C */
+#endif /* RDATA_HS_4_A_1_C */

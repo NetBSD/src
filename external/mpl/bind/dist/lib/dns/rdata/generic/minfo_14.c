@@ -1,4 +1,4 @@
-/*	$NetBSD: minfo_14.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,24 +30,27 @@ fromtext_minfo(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      false));
+					      isc_tokentype_string, false));
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
+		RETTOK(dns_name_fromtext(&name, &buffer, origin, options,
+					 target));
 		ok = true;
-		if ((options & DNS_RDATA_CHECKNAMES) != 0)
+		if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 			ok = dns_name_ismailbox(&name);
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+		}
+		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
+		}
+		if (!ok && callbacks != NULL) {
 			warn_badname(&name, lexer, callbacks);
+		}
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -157,8 +160,9 @@ compare_minfo(ARGS_COMPARE) {
 	dns_name_fromregion(&name2, &region2);
 
 	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
@@ -217,14 +221,16 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&minfo->emailbox, NULL);
 	result = name_duporclone(&name, mctx, &minfo->emailbox);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 	minfo->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL)
+cleanup:
+	if (mctx != NULL) {
 		dns_name_free(&minfo->rmailbox, mctx);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
@@ -235,8 +241,9 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	REQUIRE(minfo != NULL);
 	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
 
-	if (minfo->mctx == NULL)
+	if (minfo->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&minfo->rmailbox, minfo->mctx);
 	dns_name_free(&minfo->emailbox, minfo->mctx);
@@ -266,8 +273,9 @@ digest_minfo(ARGS_DIGEST) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 	result = dns_name_digest(&name, digest, arg);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 	isc_region_consume(&r, name_length(&name));
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
@@ -277,7 +285,6 @@ digest_minfo(ARGS_DIGEST) {
 
 static inline bool
 checkowner_minfo(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(name);
@@ -301,15 +308,17 @@ checknames_minfo(ARGS_CHECKNAMES) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	isc_region_consume(&region, name_length(&name));
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
@@ -320,4 +329,4 @@ casecompare_minfo(ARGS_COMPARE) {
 	return (compare_minfo(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_MINFO_14_C */
+#endif /* RDATA_GENERIC_MINFO_14_C */

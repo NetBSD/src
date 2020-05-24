@@ -1,6 +1,6 @@
-.\"	$NetBSD: nslookup.1,v 1.4 2019/02/24 20:01:27 christos Exp $
+.\"	$NetBSD: nslookup.1,v 1.5 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2004-2007, 2010, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2007, 2010, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -235,7 +235,10 @@ Change the default TCP/UDP name server port to
 .RS 4
 Change the type of the information query\&.
 .sp
-(Default = A; abbreviations = q, ty)
+(Default = A and then AAAA; abbreviations = q, ty)
+.sp
+\fBNote:\fR
+It is only possible to specify one query type, only the default behavior looks up both when an alternative is not specified\&.
 .RE
 .PP
 \fB\fI[no]\fR\fR\fBrecurse\fR
@@ -303,5 +306,5 @@ runs or when the standard output is not a tty\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004-2007, 2010, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004-2007, 2010, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

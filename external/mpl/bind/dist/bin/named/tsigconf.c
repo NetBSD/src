@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 
@@ -24,20 +21,18 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/result.h>
+#include <dns/tsig.h>
+
 #include <isccfg/cfg.h>
 
-#include <dns/tsig.h>
-#include <dns/result.h>
-
-#include <named/log.h>
-
 #include <named/config.h>
+#include <named/log.h>
 #include <named/tsigconf.h>
 
 static isc_result_t
 add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
-		 isc_mem_t *mctx)
-{
+		 isc_mem_t *mctx) {
 	dns_tsigkey_t *tsigkey = NULL;
 	const cfg_listelt_t *element;
 	const cfg_obj_t *key = NULL;
@@ -49,8 +44,7 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 	isc_stdtime_t now;
 	uint16_t bits;
 
-	for (element = cfg_list_first(list);
-	     element != NULL;
+	for (element = cfg_list_first(list); element != NULL;
 	     element = cfg_list_next(element))
 	{
 		const cfg_obj_t *algobj = NULL;
@@ -81,15 +75,16 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 		isc_buffer_init(&keynamebuf, keynamedata, sizeof(keynamedata));
 		ret = dns_name_fromtext(&keyname, &keynamesrc, dns_rootname,
 					DNS_NAME_DOWNCASE, &keynamebuf);
-		if (ret != ISC_R_SUCCESS)
+		if (ret != ISC_R_SUCCESS) {
 			goto failure;
+		}
 
 		/*
 		 * Create the algorithm.
 		 */
 		algstr = cfg_obj_asstring(algobj);
-		if (named_config_getkeyalgorithm(algstr, &alg, &bits)
-		    != ISC_R_SUCCESS) {
+		if (named_config_getkeyalgorithm(algstr, &alg, &bits) !=
+		    ISC_R_SUCCESS) {
 			cfg_obj_log(algobj, named_g_lctx, ISC_LOG_ERROR,
 				    "key '%s': has a "
 				    "unsupported algorithm '%s'",
@@ -101,24 +96,22 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 		secretstr = cfg_obj_asstring(secretobj);
 		secretalloc = secretlen = strlen(secretstr) * 3 / 4;
 		secret = isc_mem_get(mctx, secretlen);
-		if (secret == NULL) {
-			ret = ISC_R_NOMEMORY;
-			goto failure;
-		}
 		isc_buffer_init(&secretbuf, secret, secretlen);
 		ret = isc_base64_decodestring(secretstr, &secretbuf);
-		if (ret != ISC_R_SUCCESS)
+		if (ret != ISC_R_SUCCESS) {
 			goto failure;
+		}
 		secretlen = isc_buffer_usedlength(&secretbuf);
 
 		isc_stdtime_get(&now);
 		ret = dns_tsigkey_create(&keyname, alg, secret, secretlen,
-					 false, NULL, now, now,
-					 mctx, ring, &tsigkey);
+					 false, NULL, now, now, mctx, ring,
+					 &tsigkey);
 		isc_mem_put(mctx, secret, secretalloc);
 		secret = NULL;
-		if (ret != ISC_R_SUCCESS)
+		if (ret != ISC_R_SUCCESS) {
 			goto failure;
+		}
 		/*
 		 * Set digest bits.
 		 */
@@ -128,20 +121,19 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 
 	return (ISC_R_SUCCESS);
 
- failure:
+failure:
 	cfg_obj_log(key, named_g_lctx, ISC_LOG_ERROR,
-		    "configuring key '%s': %s", keyid,
-		    isc_result_totext(ret));
+		    "configuring key '%s': %s", keyid, isc_result_totext(ret));
 
-	if (secret != NULL)
+	if (secret != NULL) {
 		isc_mem_put(mctx, secret, secretalloc);
+	}
 	return (ret);
 }
 
 isc_result_t
 named_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
-			     isc_mem_t *mctx, dns_tsig_keyring_t **ringp)
-{
+			     isc_mem_t *mctx, dns_tsig_keyring_t **ringp) {
 	const cfg_obj_t *maps[3];
 	const cfg_obj_t *keylist;
 	dns_tsig_keyring_t *ring = NULL;
@@ -151,32 +143,38 @@ named_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	REQUIRE(ringp != NULL && *ringp == NULL);
 
 	i = 0;
-	if (config != NULL)
+	if (config != NULL) {
 		maps[i++] = config;
-	if (vconfig != NULL)
+	}
+	if (vconfig != NULL) {
 		maps[i++] = cfg_tuple_get(vconfig, "options");
+	}
 	maps[i] = NULL;
 
 	result = dns_tsigkeyring_create(mctx, &ring);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
-	for (i = 0; ; i++) {
-		if (maps[i] == NULL)
+	for (i = 0;; i++) {
+		if (maps[i] == NULL) {
 			break;
+		}
 		keylist = NULL;
 		result = cfg_map_get(maps[i], "key", &keylist);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			continue;
+		}
 		result = add_initial_keys(keylist, ring, mctx);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			goto failure;
+		}
 	}
 
 	*ringp = ring;
 	return (ISC_R_SUCCESS);
 
- failure:
+failure:
 	dns_tsigkeyring_detach(&ring);
 	return (result);
 }

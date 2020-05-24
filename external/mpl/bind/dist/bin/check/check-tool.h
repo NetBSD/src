@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.h,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.4 2020/05/24 19:46:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef CHECK_TOOL_H
 #define CHECK_TOOL_H
@@ -44,9 +43,11 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	  const uint32_t rawversion);
 
 #ifdef _WIN32
-void InitSockets(void);
-void DestroySockets(void);
-#endif
+void
+InitSockets(void);
+void
+DestroySockets(void);
+#endif /* ifdef _WIN32 */
 
 extern int debug;
 extern const char *journal;
@@ -58,4 +59,4 @@ extern dns_zoneopt_t zone_options;
 
 ISC_LANG_ENDDECLS
 
-#endif
+#endif /* ifndef CHECK_TOOL_H */

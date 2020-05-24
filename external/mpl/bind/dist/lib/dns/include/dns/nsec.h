@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_NSEC_H
 #define DNS_NSEC_H 1
 
@@ -21,17 +20,17 @@
 
 #include <isc/lang.h>
 
-#include <dns/types.h>
 #include <dns/name.h>
+#include <dns/types.h>
 
 #define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + 8192 + 512)
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
-		    dns_dbnode_t *node, const dns_name_t *target,
-		    unsigned char *buffer, dns_rdata_t *rdata);
+dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
+		    const dns_name_t *target, unsigned char *buffer,
+		    dns_rdata_t *rdata);
 /*%<
  * Build the rdata of a NSEC record.
  *
@@ -62,8 +61,7 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  */
 
 isc_result_t
-dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
-		  bool *answer);
+dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, bool *answer);
 /*
  * Report whether the DNSKEY RRset has a NSEC only algorithm.  Unknown
  * algorithms are assumed to support NSEC3.  If DNSKEY is not found,
@@ -98,8 +96,8 @@ dns_nsec_isset(const unsigned char *array, unsigned int type);
 isc_result_t
 dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		       const dns_name_t *nsecname, dns_rdataset_t *nsecset,
-		       bool *exists, bool *data,
-		       dns_name_t *wild, dns_nseclog_t log, void *arg);
+		       bool *exists, bool *data, dns_name_t *wild,
+		       dns_nseclog_t log, void *arg);
 /*%
  * Return ISC_R_SUCCESS if we can determine that the name doesn't exist
  * or we can determine whether there is data or not at the name.

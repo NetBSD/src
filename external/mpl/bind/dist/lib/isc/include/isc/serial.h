@@ -1,4 +1,4 @@
-/*	$NetBSD: serial.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: serial.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,12 +11,11 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
 
-#include <stdbool.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>

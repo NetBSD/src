@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_SYSLOG_H
 #define ISC_SYSLOG_H 1

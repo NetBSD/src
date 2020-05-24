@@ -1,4 +1,4 @@
-/*	$NetBSD: naptr_35.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: naptr_35.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 
 /*
  * Check the wire format of the Regexp field.
- * Don't allow embeded NUL's.
+ * Don't allow embedded NUL's.
  */
 static inline isc_result_t
 txt_valid_regex(const unsigned char *txt) {
@@ -37,8 +37,9 @@ txt_valid_regex(const unsigned char *txt) {
 	int n;
 
 	len = *txt++;
-	if (len == 0U)
+	if (len == 0U) {
 		return (ISC_R_SUCCESS);
+	}
 
 	delim = *txt++;
 	len--;
@@ -47,25 +48,37 @@ txt_valid_regex(const unsigned char *txt) {
 	 * Digits, backslash and flags can't be delimiters.
 	 */
 	switch (delim) {
-	case '0': case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
-	case '\\': case 'i': case 0:
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	case '\\':
+	case 'i':
+	case 0:
 		return (DNS_R_SYNTAX);
 	}
 
 	cp = regex;
 	while (len-- > 0) {
 		c = *txt++;
-		if (c == 0)
+		if (c == 0) {
 			return (DNS_R_SYNTAX);
+		}
 		if (c == delim && !replace) {
 			replace = true;
 			continue;
 		} else if (c == delim && !flags) {
 			flags = true;
 			continue;
-		} else if (c == delim)
+		} else if (c == delim) {
 			return (DNS_R_SYNTAX);
+		}
 		/*
 		 * Flags are not escaped.
 		 */
@@ -77,38 +90,82 @@ txt_valid_regex(const unsigned char *txt) {
 				return (DNS_R_SYNTAX);
 			}
 		}
-		if (!replace)
+		if (!replace) {
 			*cp++ = c;
+		}
 		if (c == '\\') {
-			if (len == 0)
+			if (len == 0) {
 				return (DNS_R_SYNTAX);
+			}
 			c = *txt++;
-			if (c == 0)
+			if (c == 0) {
 				return (DNS_R_SYNTAX);
+			}
 			len--;
-			if (replace)
+			if (replace) {
 				switch (c) {
-				case '0': return (DNS_R_SYNTAX);
-				case '1': if (nsub < 1) nsub = 1; break;
-				case '2': if (nsub < 2) nsub = 2; break;
-				case '3': if (nsub < 3) nsub = 3; break;
-				case '4': if (nsub < 4) nsub = 4; break;
-				case '5': if (nsub < 5) nsub = 5; break;
-				case '6': if (nsub < 6) nsub = 6; break;
-				case '7': if (nsub < 7) nsub = 7; break;
-				case '8': if (nsub < 8) nsub = 8; break;
-				case '9': if (nsub < 9) nsub = 9; break;
+				case '0':
+					return (DNS_R_SYNTAX);
+				case '1':
+					if (nsub < 1) {
+						nsub = 1;
+					}
+					break;
+				case '2':
+					if (nsub < 2) {
+						nsub = 2;
+					}
+					break;
+				case '3':
+					if (nsub < 3) {
+						nsub = 3;
+					}
+					break;
+				case '4':
+					if (nsub < 4) {
+						nsub = 4;
+					}
+					break;
+				case '5':
+					if (nsub < 5) {
+						nsub = 5;
+					}
+					break;
+				case '6':
+					if (nsub < 6) {
+						nsub = 6;
+					}
+					break;
+				case '7':
+					if (nsub < 7) {
+						nsub = 7;
+					}
+					break;
+				case '8':
+					if (nsub < 8) {
+						nsub = 8;
+					}
+					break;
+				case '9':
+					if (nsub < 9) {
+						nsub = 9;
+					}
+					break;
 				}
-			if (!replace)
+			}
+			if (!replace) {
 				*cp++ = c;
+			}
 		}
 	}
-	if (!flags)
+	if (!flags) {
 		return (DNS_R_SYNTAX);
+	}
 	*cp = '\0';
 	n = isc_regex_validate(regex);
-	if (n < 0 || nsub > (unsigned int)n)
+	if (n < 0 || nsub > (unsigned int)n) {
 		return (DNS_R_SYNTAX);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -130,8 +187,9 @@ fromtext_naptr(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -139,8 +197,9 @@ fromtext_naptr(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -173,8 +232,9 @@ fromtext_naptr(ARGS_FROMTEXT) {
 				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
@@ -259,8 +319,9 @@ fromwire_naptr(ARGS_FROMWIRE) {
 	 * Order, preference.
 	 */
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 4)
+	if (sr.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	RETERR(mem_tobuffer(target, sr.base, 4));
 	isc_buffer_forward(source, 4);
 
@@ -351,8 +412,9 @@ compare_naptr(ARGS_COMPARE) {
 	 * Order, preference.
 	 */
 	order = memcmp(region1.base, region2.base, 4);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&region1, 4);
 	isc_region_consume(&region2, 4);
 
@@ -361,8 +423,9 @@ compare_naptr(ARGS_COMPARE) {
 	 */
 	len = ISC_MIN(region1.base[0], region2.base[0]);
 	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&region1, region1.base[0] + 1);
 	isc_region_consume(&region2, region2.base[0] + 1);
 
@@ -371,8 +434,9 @@ compare_naptr(ARGS_COMPARE) {
 	 */
 	len = ISC_MIN(region1.base[0], region2.base[0]);
 	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&region1, region1.base[0] + 1);
 	isc_region_consume(&region2, region2.base[0] + 1);
 
@@ -381,8 +445,9 @@ compare_naptr(ARGS_COMPARE) {
 	 */
 	len = ISC_MIN(region1.base[0], region2.base[0]);
 	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&region1, region1.base[0] + 1);
 	isc_region_consume(&region2, region2.base[0] + 1);
 
@@ -457,42 +522,49 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	isc_region_consume(&r, 1);
 	INSIST(naptr->flags_len <= r.length);
 	naptr->flags = mem_maybedup(mctx, r.base, naptr->flags_len);
-	if (naptr->flags == NULL)
+	if (naptr->flags == NULL) {
 		goto cleanup;
+	}
 	isc_region_consume(&r, naptr->flags_len);
 
 	naptr->service_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	INSIST(naptr->service_len <= r.length);
 	naptr->service = mem_maybedup(mctx, r.base, naptr->service_len);
-	if (naptr->service == NULL)
+	if (naptr->service == NULL) {
 		goto cleanup;
+	}
 	isc_region_consume(&r, naptr->service_len);
 
 	naptr->regexp_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	INSIST(naptr->regexp_len <= r.length);
 	naptr->regexp = mem_maybedup(mctx, r.base, naptr->regexp_len);
-	if (naptr->regexp == NULL)
+	if (naptr->regexp == NULL) {
 		goto cleanup;
+	}
 	isc_region_consume(&r, naptr->regexp_len);
 
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 	dns_name_init(&naptr->replacement, NULL);
 	result = name_duporclone(&name, mctx, &naptr->replacement);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 	naptr->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL && naptr->flags != NULL)
+cleanup:
+	if (mctx != NULL && naptr->flags != NULL) {
 		isc_mem_free(mctx, naptr->flags);
-	if (mctx != NULL && naptr->service != NULL)
+	}
+	if (mctx != NULL && naptr->service != NULL) {
 		isc_mem_free(mctx, naptr->service);
-	if (mctx != NULL && naptr->regexp != NULL)
+	}
+	if (mctx != NULL && naptr->regexp != NULL) {
 		isc_mem_free(mctx, naptr->regexp);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
@@ -503,15 +575,19 @@ freestruct_naptr(ARGS_FREESTRUCT) {
 	REQUIRE(naptr != NULL);
 	REQUIRE(naptr->common.rdtype == dns_rdatatype_naptr);
 
-	if (naptr->mctx == NULL)
+	if (naptr->mctx == NULL) {
 		return;
+	}
 
-	if (naptr->flags != NULL)
+	if (naptr->flags != NULL) {
 		isc_mem_free(naptr->mctx, naptr->flags);
-	if (naptr->service != NULL)
+	}
+	if (naptr->service != NULL) {
 		isc_mem_free(naptr->mctx, naptr->service);
-	if (naptr->regexp != NULL)
+	}
+	if (naptr->regexp != NULL) {
 		isc_mem_free(naptr->mctx, naptr->regexp);
+	}
 	dns_name_free(&naptr->replacement, naptr->mctx);
 	naptr->mctx = NULL;
 }
@@ -567,8 +643,9 @@ additionaldata_naptr(ARGS_ADDLDATA) {
 	dns_name_init(&name, offsets);
 	dns_name_fromregion(&name, &sr);
 
-	if (atype != 0)
+	if (atype != 0) {
 		return ((add)(arg, &name, atype));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -618,8 +695,9 @@ digest_naptr(ARGS_DIGEST) {
 	 */
 	r1.length = length;
 	result = (digest)(arg, &r1);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
 	/*
 	 * Replacement.
@@ -633,7 +711,6 @@ digest_naptr(ARGS_DIGEST) {
 
 static inline bool
 checkowner_naptr(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_naptr);
 
 	UNUSED(name);
@@ -646,7 +723,6 @@ checkowner_naptr(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_naptr(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_naptr);
 
 	UNUSED(rdata);
@@ -661,4 +737,4 @@ casecompare_naptr(ARGS_COMPARE) {
 	return (compare_naptr(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_NAPTR_35_C */
+#endif /* RDATA_GENERIC_NAPTR_35_C */

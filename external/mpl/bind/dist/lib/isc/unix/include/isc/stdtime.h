@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: stdtime.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_STDTIME_H
 #define ISC_STDTIME_H 1
 
 /*! \file */
 
-#include <isc/lang.h>
 #include <inttypes.h>
+
+#include <isc/lang.h>
 
 /*%
  * It's public information that 'isc_stdtime_t' is an unsigned integral type.

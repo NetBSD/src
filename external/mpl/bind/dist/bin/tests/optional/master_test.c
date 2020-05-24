@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -31,21 +29,21 @@ isc_mem_t *mctx;
 
 static isc_result_t
 print_dataset(void *arg, const dns_name_t *owner, dns_rdataset_t *dataset) {
-	char buf[64*1024];
+	char buf[64 * 1024];
 	isc_buffer_t target;
 	isc_result_t result;
 
 	UNUSED(arg);
 
-	isc_buffer_init(&target, buf, 64*1024);
-	result = dns_rdataset_totext(dataset, owner, false, false,
-				     &target);
-	if (result == ISC_R_SUCCESS)
+	isc_buffer_init(&target, buf, 64 * 1024);
+	result = dns_rdataset_totext(dataset, owner, false, false, &target);
+	if (result == ISC_R_SUCCESS) {
 		fprintf(stdout, "%.*s\n", (int)target.used,
-					  (char*)target.base);
-	else
+			(char *)target.base);
+	} else {
 		fprintf(stdout, "dns_rdataset_totext: %s\n",
 			dns_result_totext(result));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -61,7 +59,7 @@ main(int argc, char *argv[]) {
 
 	UNUSED(argc);
 
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
 	if (argv[1]) {
 		isc_buffer_init(&source, argv[1], strlen(argv[1]));
@@ -69,8 +67,8 @@ main(int argc, char *argv[]) {
 		isc_buffer_setactive(&source, strlen(argv[1]));
 		isc_buffer_init(&target, name_buf, 255);
 		dns_name_init(&origin, NULL);
-		result = dns_name_fromtext(&origin, &source, dns_rootname,
-					   0, &target);
+		result = dns_name_fromtext(&origin, &source, dns_rootname, 0,
+					   &target);
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stdout, "dns_name_fromtext: %s\n",
 				dns_result_totext(result));
@@ -80,10 +78,9 @@ main(int argc, char *argv[]) {
 		dns_rdatacallbacks_init_stdio(&callbacks);
 		callbacks.add = print_dataset;
 
-		result = dns_master_loadfile(argv[1], &origin, &origin,
-					     dns_rdataclass_in, 0, 0,
-					     &callbacks, NULL, NULL, mctx,
-					     dns_masterformat_text, 0);
+		result = dns_master_loadfile(
+			argv[1], &origin, &origin, dns_rdataclass_in, 0, 0,
+			&callbacks, NULL, NULL, mctx, dns_masterformat_text, 0);
 		fprintf(stdout, "dns_master_loadfile: %s\n",
 			dns_result_totext(result));
 	}

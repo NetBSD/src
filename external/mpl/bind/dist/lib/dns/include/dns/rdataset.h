@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define DNS_RDATASET_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/rdataset.h
  * \brief
@@ -52,8 +52,8 @@
 #include <isc/magic.h>
 #include <isc/stdtime.h>
 
-#include <dns/types.h>
 #include <dns/rdatastruct.h>
+#include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -64,41 +64,31 @@ typedef enum {
 } dns_rdatasetadditional_t;
 
 typedef struct dns_rdatasetmethods {
-	void			(*disassociate)(dns_rdataset_t *rdataset);
-	isc_result_t		(*first)(dns_rdataset_t *rdataset);
-	isc_result_t		(*next)(dns_rdataset_t *rdataset);
-	void			(*current)(dns_rdataset_t *rdataset,
-					   dns_rdata_t *rdata);
-	void			(*clone)(dns_rdataset_t *source,
-					 dns_rdataset_t *target);
-	unsigned int		(*count)(dns_rdataset_t *rdataset);
-	isc_result_t		(*addnoqname)(dns_rdataset_t *rdataset,
-					      const dns_name_t *name);
-	isc_result_t		(*getnoqname)(dns_rdataset_t *rdataset,
-					      dns_name_t *name,
-					      dns_rdataset_t *neg,
-					      dns_rdataset_t *negsig);
-	isc_result_t		(*addclosest)(dns_rdataset_t *rdataset,
-					      const dns_name_t *name);
-	isc_result_t		(*getclosest)(dns_rdataset_t *rdataset,
-					      dns_name_t *name,
-					      dns_rdataset_t *neg,
-					      dns_rdataset_t *negsig);
-	void			(*settrust)(dns_rdataset_t *rdataset,
-					    dns_trust_t trust);
-	void			(*expire)(dns_rdataset_t *rdataset);
-	void			(*clearprefetch)(dns_rdataset_t *rdataset);
-	void			(*setownercase)(dns_rdataset_t *rdataset,
-						const dns_name_t *name);
-	void			(*getownercase)(const dns_rdataset_t *rdataset,
-						dns_name_t *name);
-	isc_result_t		(*addglue)(dns_rdataset_t *rdataset,
-					   dns_dbversion_t *version,
-					   dns_message_t *msg);
+	void (*disassociate)(dns_rdataset_t *rdataset);
+	isc_result_t (*first)(dns_rdataset_t *rdataset);
+	isc_result_t (*next)(dns_rdataset_t *rdataset);
+	void (*current)(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
+	void (*clone)(dns_rdataset_t *source, dns_rdataset_t *target);
+	unsigned int (*count)(dns_rdataset_t *rdataset);
+	isc_result_t (*addnoqname)(dns_rdataset_t *  rdataset,
+				   const dns_name_t *name);
+	isc_result_t (*getnoqname)(dns_rdataset_t *rdataset, dns_name_t *name,
+				   dns_rdataset_t *neg, dns_rdataset_t *negsig);
+	isc_result_t (*addclosest)(dns_rdataset_t *  rdataset,
+				   const dns_name_t *name);
+	isc_result_t (*getclosest)(dns_rdataset_t *rdataset, dns_name_t *name,
+				   dns_rdataset_t *neg, dns_rdataset_t *negsig);
+	void (*settrust)(dns_rdataset_t *rdataset, dns_trust_t trust);
+	void (*expire)(dns_rdataset_t *rdataset);
+	void (*clearprefetch)(dns_rdataset_t *rdataset);
+	void (*setownercase)(dns_rdataset_t *rdataset, const dns_name_t *name);
+	void (*getownercase)(const dns_rdataset_t *rdataset, dns_name_t *name);
+	isc_result_t (*addglue)(dns_rdataset_t * rdataset,
+				dns_dbversion_t *version, dns_message_t *msg);
 } dns_rdatasetmethods_t;
 
-#define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
-#define DNS_RDATASET_VALID(set)	       ISC_MAGIC_VALID(set, DNS_RDATASET_MAGIC)
+#define DNS_RDATASET_MAGIC	ISC_MAGIC('D', 'N', 'S', 'R')
+#define DNS_RDATASET_VALID(set) ISC_MAGIC_VALID(set, DNS_RDATASET_MAGIC)
 
 /*%
  * Direct use of this structure by clients is strongly discouraged, except
@@ -107,30 +97,30 @@ typedef struct dns_rdatasetmethods {
  * rdataset implementations may change any of the fields.
  */
 struct dns_rdataset {
-	unsigned int			magic;		/* XXX ? */
-	dns_rdatasetmethods_t *		methods;
-	ISC_LINK(dns_rdataset_t)	link;
+	unsigned int	       magic; /* XXX ? */
+	dns_rdatasetmethods_t *methods;
+	ISC_LINK(dns_rdataset_t) link;
 
 	/*
 	 * XXX do we need these, or should they be retrieved by methods?
 	 * Leaning towards the latter, since they are not frequently required
 	 * once you have the rdataset.
 	 */
-	dns_rdataclass_t		rdclass;
-	dns_rdatatype_t			type;
-	dns_ttl_t			ttl;
+	dns_rdataclass_t rdclass;
+	dns_rdatatype_t	 type;
+	dns_ttl_t	 ttl;
 	/*
 	 * Stale ttl is used to see how long this RRset can still be used
 	 * to serve to clients, after the TTL has expired.
 	 */
-	dns_ttl_t			stale_ttl;
-	dns_trust_t			trust;
-	dns_rdatatype_t			covers;
+	dns_ttl_t	stale_ttl;
+	dns_trust_t	trust;
+	dns_rdatatype_t covers;
 
 	/*
 	 * attributes
 	 */
-	unsigned int			attributes;
+	unsigned int attributes;
 
 	/*%
 	 * the counter provides the starting point in the "cyclic" order.
@@ -138,28 +128,27 @@ struct dns_rdataset {
 	 * random value." in order to take care of databases that do not
 	 * increment the counter.
 	 */
-	uint32_t			count;
+	uint32_t count;
 
 	/*
 	 * This RRSIG RRset should be re-generated around this time.
 	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.
 	 */
-	isc_stdtime_t			resign;
+	isc_stdtime_t resign;
 
 	/*@{*/
 	/*%
 	 * These are for use by the rdataset implementation, and MUST NOT
 	 * be changed by clients.
 	 */
-	void *				private1;
-	void *				private2;
-	void *				private3;
-	unsigned int			privateuint4;
-	void *				private5;
-	const void *			private6;
-	const void *			private7;
+	void *	     private1;
+	void *	     private2;
+	void *	     private3;
+	unsigned int privateuint4;
+	void *	     private5;
+	const void * private6;
+	const void * private7;
 	/*@}*/
-
 };
 
 /*!
@@ -174,39 +163,39 @@ struct dns_rdataset {
  *	Output the RRset in load order.
  */
 
-#define DNS_RDATASETATTR_NONE		0x00000000	/*%< No ordering. */
-#define DNS_RDATASETATTR_QUESTION	0x00000001
-#define DNS_RDATASETATTR_RENDERED	0x00000002	/*%< Used by message.c */
-#define DNS_RDATASETATTR_ANSWERED	0x00000004	/*%< Used by server. */
-#define DNS_RDATASETATTR_CACHE		0x00000008	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_ANSWER		0x00000010	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_ANSWERSIG	0x00000020	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_EXTERNAL	0x00000040	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_NCACHE		0x00000080	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_CHAINING	0x00000100	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_TTLADJUSTED	0x00000200	/*%< Used by message.c */
-#define DNS_RDATASETATTR_FIXEDORDER	0x00000400	/*%< Fixed ordering. */
-#define DNS_RDATASETATTR_RANDOMIZE	0x00000800	/*%< Random ordering. */
-#define DNS_RDATASETATTR_CHASE		0x00001000	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_NXDOMAIN	0x00002000
-#define DNS_RDATASETATTR_NOQNAME	0x00004000
-#define DNS_RDATASETATTR_CHECKNAMES	0x00008000	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_REQUIRED	0x00010000
-#define DNS_RDATASETATTR_REQUIREDGLUE	DNS_RDATASETATTR_REQUIRED
-#define DNS_RDATASETATTR_LOADORDER	0x00020000
-#define DNS_RDATASETATTR_RESIGN		0x00040000
-#define DNS_RDATASETATTR_CLOSEST	0x00080000
-#define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
-#define DNS_RDATASETATTR_NEGATIVE	0x00200000
-#define DNS_RDATASETATTR_PREFETCH	0x00400000
-#define DNS_RDATASETATTR_CYCLIC		0x00800000	/*%< Cyclic ordering. */
-#define DNS_RDATASETATTR_STALE		0x01000000
+#define DNS_RDATASETATTR_NONE	      0x00000000 /*%< No ordering. */
+#define DNS_RDATASETATTR_QUESTION     0x00000001
+#define DNS_RDATASETATTR_RENDERED     0x00000002 /*%< Used by message.c */
+#define DNS_RDATASETATTR_ANSWERED     0x00000004 /*%< Used by server. */
+#define DNS_RDATASETATTR_CACHE	      0x00000008 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_ANSWER	      0x00000010 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_ANSWERSIG    0x00000020 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_EXTERNAL     0x00000040 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_NCACHE	      0x00000080 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_CHAINING     0x00000100 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_TTLADJUSTED  0x00000200 /*%< Used by message.c */
+#define DNS_RDATASETATTR_FIXEDORDER   0x00000400 /*%< Fixed ordering. */
+#define DNS_RDATASETATTR_RANDOMIZE    0x00000800 /*%< Random ordering. */
+#define DNS_RDATASETATTR_CHASE	      0x00001000 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_NXDOMAIN     0x00002000
+#define DNS_RDATASETATTR_NOQNAME      0x00004000
+#define DNS_RDATASETATTR_CHECKNAMES   0x00008000 /*%< Used by resolver. */
+#define DNS_RDATASETATTR_REQUIRED     0x00010000
+#define DNS_RDATASETATTR_REQUIREDGLUE DNS_RDATASETATTR_REQUIRED
+#define DNS_RDATASETATTR_LOADORDER    0x00020000
+#define DNS_RDATASETATTR_RESIGN	      0x00040000
+#define DNS_RDATASETATTR_CLOSEST      0x00080000
+#define DNS_RDATASETATTR_OPTOUT	      0x00100000 /*%< OPTOUT proof */
+#define DNS_RDATASETATTR_NEGATIVE     0x00200000
+#define DNS_RDATASETATTR_PREFETCH     0x00400000
+#define DNS_RDATASETATTR_CYCLIC	      0x00800000 /*%< Cyclic ordering. */
+#define DNS_RDATASETATTR_STALE	      0x01000000
 
 /*%
  * _OMITDNSSEC:
  * 	Omit DNSSEC records when rendering ncache records.
  */
-#define DNS_RDATASETTOWIRE_OMITDNSSEC	0x0001
+#define DNS_RDATASETTOWIRE_OMITDNSSEC 0x0001
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset);
@@ -354,11 +343,8 @@ dns_rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
  */
 
 isc_result_t
-dns_rdataset_totext(dns_rdataset_t *rdataset,
-		    const dns_name_t *owner_name,
-		    bool omit_final_dot,
-		    bool question,
-		    isc_buffer_t *target);
+dns_rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
+		    bool omit_final_dot, bool question, isc_buffer_t *target);
 /*%<
  * Convert 'rdataset' to text format, storing the result in 'target'.
  *
@@ -379,12 +365,9 @@ dns_rdataset_totext(dns_rdataset_t *rdataset,
  */
 
 isc_result_t
-dns_rdataset_towire(dns_rdataset_t *rdataset,
-		    const dns_name_t *owner_name,
-		    dns_compress_t *cctx,
-		    isc_buffer_t *target,
-		    unsigned int options,
-		    unsigned int *countp);
+dns_rdataset_towire(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
+		    dns_compress_t *cctx, isc_buffer_t *target,
+		    unsigned int options, unsigned int *countp);
 /*%<
  * Convert 'rdataset' to wire format, compressing names as specified
  * in 'cctx', and storing the result in 'target'.
@@ -418,13 +401,10 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
  */
 
 isc_result_t
-dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
-			  const dns_name_t *owner_name,
-			  dns_compress_t *cctx,
-			  isc_buffer_t *target,
-			  dns_rdatasetorderfunc_t order,
-			  const void *order_arg,
-			  unsigned int options,
+dns_rdataset_towiresorted(dns_rdataset_t *  rdataset,
+			  const dns_name_t *owner_name, dns_compress_t *cctx,
+			  isc_buffer_t *target, dns_rdatasetorderfunc_t order,
+			  const void *order_arg, unsigned int options,
 			  unsigned int *countp);
 /*%<
  * Like dns_rdataset_towire(), but sorting the rdatasets according to
@@ -437,15 +417,11 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
  */
 
 isc_result_t
-dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
-			   const dns_name_t *owner_name,
-			   dns_compress_t *cctx,
-			   isc_buffer_t *target,
-			   dns_rdatasetorderfunc_t order,
-			   const void *order_arg,
-			   unsigned int options,
-			   unsigned int *countp,
-			   void **state);
+dns_rdataset_towirepartial(dns_rdataset_t *  rdataset,
+			   const dns_name_t *owner_name, dns_compress_t *cctx,
+			   isc_buffer_t *target, dns_rdatasetorderfunc_t order,
+			   const void *order_arg, unsigned int options,
+			   unsigned int *countp, void **state);
 /*%<
  * Like dns_rdataset_towiresorted() except that a partial rdataset
  * may be written.
@@ -465,7 +441,7 @@ dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
  */
 
 isc_result_t
-dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
+dns_rdataset_additionaldata(dns_rdataset_t *	     rdataset,
 			    dns_additionaldatafunc_t add, void *arg);
 /*%<
  * For each rdata in rdataset, call 'add' for each name and type in the

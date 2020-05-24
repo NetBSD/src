@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,6 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -22,8 +20,8 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <dns/rbt.h>
 #include <dns/fixedname.h>
+#include <dns/rbt.h>
 #include <dns/result.h>
 
 const char *progname;
@@ -59,10 +57,6 @@ create_name(char *s) {
 	 * name structure.
 	 */
 	name = isc_mem_get(mctx, sizeof(*name) + DNSNAMELEN);
-	if (name == NULL) {
-		printf("out of memory!\n");
-		return (NULL);
-	}
 
 	dns_name_init(name, NULL);
 	isc_buffer_init(&target, name + 1, DNSNAMELEN);
@@ -70,8 +64,8 @@ create_name(char *s) {
 	result = dns_name_fromtext(name, &source, dns_rootname, 0, &target);
 
 	if (result != ISC_R_SUCCESS) {
-		printf("dns_name_fromtext(%s) failed: %s\n",
-		       s, dns_result_totext(result));
+		printf("dns_name_fromtext(%s) failed: %s\n", s,
+		       dns_result_totext(result));
 		return (NULL);
 	}
 
@@ -111,7 +105,7 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 	isc_result_t result;
 	bool nodes_should_match = false;
 
-	dns_rbtnodechain_init(&chain, mctx);
+	dns_rbtnodechain_init(&chain);
 
 	origin = dns_fixedname_initname(&fixedorigin);
 	fullname = dns_fixedname_initname(&fixedfullname);
@@ -145,8 +139,9 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 	if (node1 != NULL && node1->data != NULL) {
 		printf("  data at node: ");
 		print_name(node1->data);
-	} else
+	} else {
 		printf("  no data at node.");
+	}
 
 	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH) {
 		printf("\n  name from dns_rbt_findnode: ");
@@ -158,27 +153,29 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 	if (result == ISC_R_SUCCESS) {
 		printf("\n  name from dns_rbtnodechain_current: ");
 
-		result = dns_name_concatenate(foundname, origin,
-					      fullname, NULL);
-		if (result == ISC_R_SUCCESS)
+		result = dns_name_concatenate(foundname, origin, fullname,
+					      NULL);
+		if (result == ISC_R_SUCCESS) {
 			print_name(fullname);
-		else
+		} else {
 			printf("%s\n", dns_result_totext(result));
+		}
 		printf("\n      (foundname = ");
 		print_name(foundname);
 		printf(", origin = ");
 		print_name(origin);
 		printf(")\n");
-		if (nodes_should_match && node1 != node2)
+		if (nodes_should_match && node1 != node2) {
 			printf("  nodes returned from each function "
 			       "DO NOT match!\n");
-
-	} else
+		}
+	} else {
 		printf("\n  result from dns_rbtnodechain_current: %s\n",
 		       dns_result_totext(result));
+	}
 
-	printf("  level_matches = %u, level_count = %u\n",
-	       chain.level_matches, chain.level_count);
+	printf("  level_matches = %u, level_count = %u\n", chain.level_matches,
+	       chain.level_count);
 }
 
 static void
@@ -187,33 +184,30 @@ iterate(dns_rbt_t *rbt, bool forward) {
 	dns_rbtnodechain_t chain;
 	dns_fixedname_t fixedorigin;
 	isc_result_t result;
-	isc_result_t (*move)(dns_rbtnodechain_t *chain, dns_name_t *name,
-			     dns_name_t *origin);
+	isc_result_t (*move)(dns_rbtnodechain_t * chain, dns_name_t * name,
+			     dns_name_t * origin);
 
-	dns_rbtnodechain_init(&chain, mctx);
+	dns_rbtnodechain_init(&chain);
 
 	dns_name_init(&foundname, NULL);
 	origin = dns_fixedname_initname(&fixedorigin);
 
 	if (forward) {
-		printf("iterating forward\n" );
+		printf("iterating forward\n");
 		move = dns_rbtnodechain_next;
 
 		result = dns_rbtnodechain_first(&chain, rbt, &foundname,
 						origin);
-
 	} else {
-		printf("iterating backward\n" );
+		printf("iterating backward\n");
 		move = dns_rbtnodechain_prev;
 
-		result = dns_rbtnodechain_last(&chain, rbt, &foundname,
-					       origin);
+		result = dns_rbtnodechain_last(&chain, rbt, &foundname, origin);
 	}
 
-	if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN)
+	if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN) {
 		printf("start not found!\n");
-
-	else {
+	} else {
 		for (;;) {
 			if (result == DNS_R_NEWORIGIN) {
 				printf("  new origin: ");
@@ -225,11 +219,11 @@ iterate(dns_rbt_t *rbt, bool forward) {
 			    result == DNS_R_NEWORIGIN) {
 				print_name(&foundname);
 				printf("\n");
-
 			} else {
-				if (result != ISC_R_NOMORE)
-				       printf("UNEXEPCTED ITERATION ERROR: %s",
-					      dns_result_totext(result));
+				if (result != ISC_R_NOMORE) {
+					printf("UNEXPECTED ITERATION ERROR: %s",
+					       dns_result_totext(result));
+				}
 				break;
 			}
 
@@ -238,10 +232,10 @@ iterate(dns_rbt_t *rbt, bool forward) {
 	}
 }
 
-
-#define CMDCHECK(s)	(strncasecmp(command, (s), length) == 0)
-#define PRINTERR(r)	if (r != ISC_R_SUCCESS) \
-				printf("... %s\n", dns_result_totext(r));
+#define CMDCHECK(s) (strncasecmp(command, (s), length) == 0)
+#define PRINTERR(r)             \
+	if (r != ISC_R_SUCCESS) \
+		printf("... %s\n", dns_result_totext(r));
 
 int
 main(int argc, char **argv) {
@@ -256,10 +250,11 @@ main(int argc, char **argv) {
 	void *data;
 
 	progname = strrchr(*argv, '/');
-	if (progname != NULL)
+	if (progname != NULL) {
 		progname++;
-	else
+	} else {
 		progname = *argv;
+	}
 
 	while ((ch = isc_commandline_parse(argc, argv, "m")) != -1) {
 		switch (ch) {
@@ -285,12 +280,7 @@ main(int argc, char **argv) {
 	 */
 	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 
-	result = isc_mem_create(0, 0, &mctx);
-	if (result != ISC_R_SUCCESS) {
-		printf("isc_mem_create: %s: exiting\n",
-		       dns_result_totext(result));
-		exit(1);
-	}
+	isc_mem_create(&mctx);
 
 	result = dns_rbt_create(mctx, delete_name, NULL, &rbt);
 	if (result != ISC_R_SUCCESS) {
@@ -314,8 +304,9 @@ main(int argc, char **argv) {
 
 		command = buffer + strspn(buffer, whitespace);
 
-		if (*command == '#')
+		if (*command == '#') {
 			continue;
+		}
 
 		arg = strpbrk(command, whitespace);
 		if (arg != NULL) {
@@ -329,11 +320,10 @@ main(int argc, char **argv) {
 				name = create_name(arg);
 				if (name != NULL) {
 					printf("adding name %s\n", arg);
-					result = dns_rbt_addname(rbt,
-								 name, name);
+					result = dns_rbt_addname(rbt, name,
+								 name);
 					PRINTERR(result);
 				}
-
 			} else if (CMDCHECK("delete")) {
 				name = create_name(arg);
 				if (name != NULL) {
@@ -343,31 +333,29 @@ main(int argc, char **argv) {
 					PRINTERR(result);
 					delete_name(name, NULL);
 				}
-
 			} else if (CMDCHECK("nuke")) {
 				name = create_name(arg);
 				if (name != NULL) {
 					printf("nuking name %s "
-					       "and its descendants\n", arg);
+					       "and its descendants\n",
+					       arg);
 					result = dns_rbt_deletename(rbt, name,
 								    true);
 					PRINTERR(result);
 					delete_name(name, NULL);
 				}
-
 			} else if (CMDCHECK("search")) {
 				name = create_name(arg);
 				if (name != NULL) {
 					printf("searching for name %s ... ",
 					       arg);
 
-					foundname =
-					    dns_fixedname_initname(&fixedname);
+					foundname = dns_fixedname_initname(
+						&fixedname);
 					data = NULL;
 
-					result = dns_rbt_findname(rbt, name, 0,
-								  foundname,
-								  &data);
+					result = dns_rbt_findname(
+						rbt, name, 0, foundname, &data);
 					switch (result) {
 					case ISC_R_SUCCESS:
 						printf("found exact: ");
@@ -393,7 +381,6 @@ main(int argc, char **argv) {
 
 					delete_name(name, NULL);
 				}
-
 			} else if (CMDCHECK("check")) {
 				/*
 				 * Or "chain".  I know, I know.  Lame name.
@@ -411,37 +398,34 @@ main(int argc, char **argv) {
 
 					delete_name(name, NULL);
 				}
-
 			} else if (CMDCHECK("forward")) {
 				iterate(rbt, true);
-
 			} else if (CMDCHECK("backward")) {
 				iterate(rbt, false);
-
 			} else if (CMDCHECK("print")) {
-				if (arg == NULL || *arg == '\0')
+				if (arg == NULL || *arg == '\0') {
 					dns_rbt_printtext(rbt, NULL, stdout);
-				else
+				} else {
 					printf("usage: print\n");
-
+				}
 			} else if (CMDCHECK("quit")) {
-				if (arg == NULL || *arg == '\0')
+				if (arg == NULL || *arg == '\0') {
 					break;
-				else
+				} else {
 					printf("usage: quit\n");
+				}
 			} else {
 				printf("a(dd) NAME, d(elete) NAME, "
 				       "s(earch) NAME, p(rint), or q(uit)\n");
-
 			}
 		}
-
 	}
 
 	dns_rbt_destroy(&rbt);
 
-	if (show_final_mem)
+	if (show_final_mem) {
 		isc_mem_stats(mctx, stderr);
+	}
 
 	return (0);
 }

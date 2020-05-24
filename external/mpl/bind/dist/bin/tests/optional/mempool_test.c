@@ -1,4 +1,4 @@
-/*	$NetBSD: mempool_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: mempool_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <isc/mem.h>
 #include <isc/util.h>
@@ -35,13 +33,13 @@ main(int argc, char *argv[]) {
 	isc_mutex_init(&lock);
 
 	mctx = NULL;
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
 	mp1 = NULL;
-	RUNTIME_CHECK(isc_mempool_create(mctx, 24, &mp1) == ISC_R_SUCCESS);
+	isc_mempool_create(mctx, 24, &mp1);
 
 	mp2 = NULL;
-	RUNTIME_CHECK(isc_mempool_create(mctx, 31, &mp2) == ISC_R_SUCCESS);
+	isc_mempool_create(mctx, 31, &mp2);
 
 	isc_mempool_associatelock(mp1, &lock);
 	isc_mempool_associatelock(mp2, &lock);

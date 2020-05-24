@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsconf.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: dnsconf.h,v 1.3 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,7 +13,6 @@
 
 #ifndef ISCCFG_DNSCONF_H
 #define ISCCFG_DNSCONF_H 1
-
 
 /*! \file
  * \brief

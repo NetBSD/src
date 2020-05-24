@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-destroy.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: pkcs11-destroy.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /*
  * pkcs11-destroy [-m module] [-s $slot] [-i $id | -l $label]
  *                 [-p $pin] [ -w $wait ]
@@ -48,12 +47,10 @@
 
 /*! \file */
 
-#include <config.h>
-
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -66,8 +63,8 @@
 #include <pk11/result.h>
 
 #ifdef WIN32
-#define sleep(x)	Sleep(x)
-#endif
+#define sleep(x) Sleep(x)
+#endif /* ifdef WIN32 */
 
 int
 main(int argc, char *argv[]) {
@@ -85,9 +82,8 @@ main(int argc, char *argv[]) {
 	unsigned int id = 0, i = 0, wait = 5;
 	int c, errflg = 0;
 	CK_ULONG ulObjectCount;
-	CK_ATTRIBUTE search_template[] = {
-		{CKA_ID, &attr_id, sizeof(attr_id)}
-	};
+	CK_ATTRIBUTE search_template[] = { { CKA_ID, &attr_id,
+					     sizeof(attr_id) } };
 	unsigned int j, len;
 
 	while ((c = isc_commandline_parse(argc, argv, ":m:s:i:l:p:w:")) != -1) {
@@ -112,8 +108,7 @@ main(int argc, char *argv[]) {
 			wait = atoi(isc_commandline_argument);
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -128,7 +123,7 @@ main(int argc, char *argv[]) {
 	if (errflg || (id && (label != NULL))) {
 		fprintf(stderr, "Usage:\n");
 		fprintf(stderr, "\tpkcs11-destroy [-m module] [-s slot] "
-				"[-i id | -l label] [-p pin] [-w waittime]\n");
+				"{-i id | -l label} [-p pin] [-w waittime]\n");
 		exit(1);
 	}
 
@@ -144,24 +139,27 @@ main(int argc, char *argv[]) {
 	pk11_result_register();
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	if (pin == NULL) {
 		pin = getpass("Enter Pin: ");
 	}
 
-	result = pk11_get_session(&pctx, OP_ANY, false, true,
-				  true, (const char *) pin, slot);
+	result = pk11_get_session(&pctx, OP_ANY, false, true, true,
+				  (const char *)pin, slot);
 	if (result == PK11_R_NORANDOMSERVICE ||
-	    result == PK11_R_NODIGESTSERVICE ||
-	    result == PK11_R_NOAESSERVICE) {
+	    result == PK11_R_NODIGESTSERVICE || result == PK11_R_NOAESSERVICE)
+	{
 		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
 		fprintf(stderr, "This HSM will not work with BIND 9 "
 				"using native PKCS#11.\n");
 	} else if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "Unrecoverable error initializing "
-				"PKCS#11: %s\n", isc_result_totext(result));
+		fprintf(stderr,
+			"Unrecoverable error initializing "
+			"PKCS#11: %s\n",
+			isc_result_totext(result));
 		exit(1);
 	}
 
@@ -170,14 +168,14 @@ main(int argc, char *argv[]) {
 	hSession = pctx.session;
 
 	rv = pkcs_C_FindObjectsInit(hSession, search_template,
-				    ((id != 0) || (label != NULL)) ? 1 : 0); 
+				    ((id != 0) || (label != NULL)) ? 1 : 0);
 
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsInit: Error = 0x%.8lX\n", rv);
 		error = 1;
 		goto exit_session;
 	}
-	
+
 	rv = pkcs_C_FindObjects(hSession, akey, 50, &ulObjectCount);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjects: Error = 0x%.8lX\n", rv);
@@ -188,49 +186,54 @@ main(int argc, char *argv[]) {
 	if (ulObjectCount == 0) {
 		printf("No matching key objects found.\n");
 		goto exit_search;
-	} else
+	} else {
 		printf("Key object%s found:\n", ulObjectCount > 1 ? "s" : "");
+	}
 
 	for (i = 0; i < ulObjectCount; i++) {
 		CK_OBJECT_CLASS oclass = 0;
 		CK_BYTE labelbuf[64 + 1];
 		CK_BYTE idbuf[64];
 		CK_ATTRIBUTE attr_template[] = {
-			{CKA_CLASS, &oclass, sizeof(oclass)},
-			{CKA_LABEL, labelbuf, sizeof(labelbuf) - 1},
-			{CKA_ID, idbuf, sizeof(idbuf)}
+			{ CKA_CLASS, &oclass, sizeof(oclass) },
+			{ CKA_LABEL, labelbuf, sizeof(labelbuf) - 1 },
+			{ CKA_ID, idbuf, sizeof(idbuf) }
 		};
 
 		memset(labelbuf, 0, sizeof(labelbuf));
 		memset(idbuf, 0, sizeof(idbuf));
 
-		rv = pkcs_C_GetAttributeValue(hSession, akey[i],
-					      attr_template, 3);
+		rv = pkcs_C_GetAttributeValue(hSession, akey[i], attr_template,
+					      3);
 		if (rv != CKR_OK) {
 			fprintf(stderr,
-				"C_GetAttributeValue[%u]: rv = 0x%.8lX\n",
-				i, rv);
+				"C_GetAttributeValue[%u]: rv = 0x%.8lX\n", i,
+				rv);
 			error = 1;
 			goto exit_search;
 		}
 		len = attr_template[2].ulValueLen;
-		printf("  object[%u]: class %lu, label '%s', id[%lu] ",
-		       i, oclass, labelbuf, attr_template[2].ulValueLen);
-		if (len > 4)
+		printf("  object[%u]: class %lu, label '%s', id[%lu] ", i,
+		       oclass, labelbuf, attr_template[2].ulValueLen);
+		if (len > 4) {
 			len = 4;
-		if (len > 0)
+		}
+		if (len > 0) {
 			printf("0x");
+		}
 		for (j = 0; j < len; j++)
 			printf("%02x", idbuf[j]);
-		if (attr_template[2].ulValueLen > len)
+		if (attr_template[2].ulValueLen > len) {
 			printf("...\n");
-		else
+		} else {
 			printf("\n");
+		}
 	}
 
 	if (wait != 0) {
 		printf("WARNING: This action is irreversible! "
-		       "Destroying key objects in %u seconds\n  ", wait);
+		       "Destroying key objects in %u seconds\n  ",
+		       wait);
 		for (i = 0; i < wait; i++) {
 			printf(".");
 			fflush(stdout);
@@ -243,25 +246,26 @@ main(int argc, char *argv[]) {
 		rv = pkcs_C_DestroyObject(hSession, akey[i]);
 		if (rv != CKR_OK) {
 			fprintf(stderr,
-				"C_DestroyObject[%u] failed: rv = 0x%.8lX\n",
-				i, rv);
+				"C_DestroyObject[%u] failed: rv = 0x%.8lX\n", i,
+				rv);
 			error = 1;
 		}
 	}
 
-	if (error == 0)
+	if (error == 0) {
 		printf("Destruction complete.\n");
+	}
 
- exit_search:
+exit_search:
 	rv = pkcs_C_FindObjectsFinal(hSession);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsFinal: Error = 0x%.8lX\n", rv);
 		error = 1;
 	}
 
- exit_session:
+exit_session:
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

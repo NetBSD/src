@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.h,v 1.4 2019/09/05 19:33:00 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.5 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISCCFG_ACLCONF_H
 #define ISCCFG_ACLCONF_H 1
 
@@ -19,17 +18,17 @@
 
 #include <isc/lang.h>
 
-#include <isccfg/cfg.h>
-
 #include <dns/geoip.h>
 #include <dns/types.h>
+
+#include <isccfg/cfg.h>
 
 typedef struct cfg_aclconfctx {
 	ISC_LIST(dns_acl_t) named_acl_cache;
 	isc_mem_t *mctx;
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+#if defined(HAVE_GEOIP2)
 	dns_geoip_databases_t *geoip;
-#endif
+#endif /* if defined(HAVE_GEOIP2) */
 	isc_refcount_t references;
 } cfg_aclconfctx_t;
 
@@ -60,15 +59,14 @@ cfg_aclconfctx_attach(cfg_aclconfctx_t *src, cfg_aclconfctx_t **dest);
 
 isc_result_t
 cfg_acl_fromconfig(const cfg_obj_t *caml, const cfg_obj_t *cctx,
-		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
-		   isc_mem_t *mctx, unsigned int nest_level,
-		   dns_acl_t **target);
+		   isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
+		   unsigned int nest_level, dns_acl_t **target);
 
 isc_result_t
 cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
-		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
-		   isc_mem_t *mctx, unsigned int nest_level,
-		   uint16_t family, dns_acl_t **target);
+		    isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
+		    unsigned int nest_level, uint16_t family,
+		    dns_acl_t **target);
 /*
  * Construct a new dns_acl_t from configuration data in 'caml' and
  * 'cctx'.  Memory is allocated through 'mctx'.

@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: px_26.h,v 1.4 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,16 +14,15 @@
 #ifndef IN_1_PX_26_H
 #define IN_1_PX_26_H 1
 
-
 /*!
  *  \brief Per RFC2163 */
 
 typedef struct dns_rdata_in_px {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	uint16_t		preference;
-	dns_name_t		map822;
-	dns_name_t		mapx400;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t preference;
+	dns_name_t map822;
+	dns_name_t mapx400;
 } dns_rdata_in_px_t;
 
 #endif /* IN_1_PX_26_H */

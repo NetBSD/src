@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.c,v 1.5 2019/11/27 05:48:43 christos Exp $	*/
+/*	$NetBSD: resource.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,11 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdbool.h>
-
-#include <sys/types.h>
-#include <sys/time.h>	/* Required on some systems for <sys/resource.h>. */
 #include <sys/resource.h>
+#include <sys/time.h> /* Required on some systems for <sys/resource.h>. */
+#include <sys/types.h>
 
 #include <isc/platform.h>
 #include <isc/resource.h>
@@ -27,8 +23,8 @@
 #include <isc/util.h>
 
 #ifdef __linux__
-#include <linux/fs.h>	/* To get the large NR_OPEN. */
-#endif
+#include <linux/fs.h> /* To get the large NR_OPEN. */
+#endif		      /* ifdef __linux__ */
 
 #include "errno2result.h"
 
@@ -52,30 +48,30 @@ resource2rlim(isc_resource_t resource, int *rlim_resource) {
 	case isc_resource_lockedmemory:
 #ifdef RLIMIT_MEMLOCK
 		*rlim_resource = RLIMIT_MEMLOCK;
-#else
+#else  /* ifdef RLIMIT_MEMLOCK */
 		result = ISC_R_NOTIMPLEMENTED;
-#endif
+#endif /* ifdef RLIMIT_MEMLOCK */
 		break;
 	case isc_resource_openfiles:
 #ifdef RLIMIT_NOFILE
 		*rlim_resource = RLIMIT_NOFILE;
-#else
+#else  /* ifdef RLIMIT_NOFILE */
 		result = ISC_R_NOTIMPLEMENTED;
-#endif
+#endif /* ifdef RLIMIT_NOFILE */
 		break;
 	case isc_resource_processes:
 #ifdef RLIMIT_NPROC
 		*rlim_resource = RLIMIT_NPROC;
-#else
+#else  /* ifdef RLIMIT_NPROC */
 		result = ISC_R_NOTIMPLEMENTED;
-#endif
+#endif /* ifdef RLIMIT_NPROC */
 		break;
 	case isc_resource_residentsize:
 #ifdef RLIMIT_RSS
 		*rlim_resource = RLIMIT_RSS;
-#else
+#else  /* ifdef RLIMIT_RSS */
 		result = ISC_R_NOTIMPLEMENTED;
-#endif
+#endif /* ifdef RLIMIT_RSS */
 		break;
 	case isc_resource_stacksize:
 		*rlim_resource = RLIMIT_STACK;
@@ -104,13 +100,13 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	isc_result_t result;
 
 	result = resource2rlim(resource, &unixresource);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
-	if (value == ISC_RESOURCE_UNLIMITED)
+	if (value == ISC_RESOURCE_UNLIMITED) {
 		rlim_value = RLIM_INFINITY;
-
-	else {
+	} else {
 		/*
 		 * isc_resourcevalue_t was chosen as an unsigned 64 bit
 		 * integer so that it could contain the maximum range of
@@ -119,17 +115,17 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		 * rlim_t is not overflowed.
 		 */
 		isc_resourcevalue_t rlim_max;
-		bool rlim_t_is_signed =
-			(((double)(rlim_t)-1) < 0);
+		bool rlim_t_is_signed = (((double)(rlim_t)-1) < 0);
 
-		if (rlim_t_is_signed)
-			rlim_max = ~((rlim_t)1 <<
-				     (sizeof(rlim_t) * 8 - 1));
-		else
+		if (rlim_t_is_signed) {
+			rlim_max = ~((rlim_t)1 << (sizeof(rlim_t) * 8 - 1));
+		} else {
 			rlim_max = (rlim_t)-1;
+		}
 
-		if (value > rlim_max)
+		if (value > rlim_max) {
 			value = rlim_max;
+		}
 
 		rlim_value = value;
 	}
@@ -137,8 +133,9 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	rl.rlim_cur = rl.rlim_max = rlim_value;
 	unixresult = setrlimit(unixresource, &rl);
 
-	if (unixresult == 0)
+	if (unixresult == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 #if defined(OPEN_MAX) && defined(__APPLE__)
 	/*
@@ -150,13 +147,14 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		rl.rlim_cur = OPEN_MAX;
 		unixresult = setrlimit(unixresource, &rl);
-		if (unixresult == 0)
+		if (unixresult == 0) {
 			return (ISC_R_SUCCESS);
+		}
 	}
 #elif defined(__linux__)
 #ifndef NR_OPEN
-#define NR_OPEN (1024*1024)
-#endif
+#define NR_OPEN (1024 * 1024)
+#endif /* ifndef NR_OPEN */
 
 	/*
 	 * Some Linux kernels don't accept RLIM_INFINIT; the maximum
@@ -165,16 +163,18 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		rl.rlim_cur = rl.rlim_max = NR_OPEN;
 		unixresult = setrlimit(unixresource, &rl);
-		if (unixresult == 0)
+		if (unixresult == 0) {
 			return (ISC_R_SUCCESS);
+		}
 	}
-#endif
+#endif /* if defined(OPEN_MAX) && defined(__APPLE__) */
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		if (getrlimit(unixresource, &rl) == 0) {
 			rl.rlim_cur = rl.rlim_max;
 			unixresult = setrlimit(unixresource, &rl);
-			if (unixresult == 0)
+			if (unixresult == 0) {
 				return (ISC_R_SUCCESS);
+			}
 		}
 	}
 	return (isc__errno2result(errno));
