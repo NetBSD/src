@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.403 2020/05/18 21:19:35 jmcneill Exp $
+#	$NetBSD: bsd.README,v 1.404 2020/05/24 19:58:02 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1758,6 +1758,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBUNBOUND?=		${DESTDIR}/usr/lib/libunbound.a
 		LIBUSBHID?=		${DESTDIR}/usr/lib/libusbhid.a
 		LIBUTIL?=		${DESTDIR}/usr/lib/libutil.a
+		LIBUV?=			${DESTDIR}/usr/lib/libuv.a
 		LIBWIND?=		${DESTDIR}/usr/lib/libwind.a
 		LIBWRAP?=		${DESTDIR}/usr/lib/libwrap.a
 		LIBY?=			${DESTDIR}/usr/lib/liby.a
