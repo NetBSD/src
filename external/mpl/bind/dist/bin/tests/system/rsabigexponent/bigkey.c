@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.3 2019/01/09 16:55:04 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.4 2020/05/24 19:46:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,9 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-
-#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +25,12 @@
 
 #define DST_KEY_INTERNAL
 
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/rsa.h>
+
 #include <dns/dnssec.h>
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
@@ -39,12 +42,6 @@
 
 #include <dst/dst.h>
 #include <dst/result.h>
-
-#include <openssl/err.h>
-#include <openssl/objects.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
 
 dst_key_t *key;
 dns_fixedname_t fname;
@@ -62,15 +59,18 @@ RSA *rsa;
 BIGNUM *e;
 EVP_PKEY *pkey;
 
-#define CHECK(op, msg) \
-do { result = (op); \
-	if (result != ISC_R_SUCCESS) { \
-		fprintf(stderr, \
-			"fatal error: %s returns %s at file %s line %d\n", \
-			msg, isc_result_totext(result), __FILE__, __LINE__); \
-		exit(1); \
-	} \
-} while (/*CONSTCOND*/0)
+#define CHECK(op, msg)                                                        \
+	do {                                                                  \
+		result = (op);                                                \
+		if (result != ISC_R_SUCCESS) {                                \
+			fprintf(stderr,                                       \
+				"fatal error: %s returns %s at file %s line " \
+				"%d\n",                                       \
+				msg, isc_result_totext(result), __FILE__,     \
+				__LINE__);                                    \
+			exit(1);                                              \
+		}                                                             \
+	} while (/*CONSTCOND*/0)
 
 int
 main(int argc, char **argv) {
@@ -84,7 +84,8 @@ main(int argc, char **argv) {
 	pkey = EVP_PKEY_new();
 
 	if ((rsa == NULL) || (e == NULL) || (pkey == NULL) ||
-	    !EVP_PKEY_set1_RSA(pkey, rsa)) {
+	    !EVP_PKEY_set1_RSA(pkey, rsa))
+	{
 		fprintf(stderr, "fatal error: basic OpenSSL failure\n");
 		exit(1);
 	}
@@ -106,43 +107,44 @@ main(int argc, char **argv) {
 
 	dns_result_register();
 
-	CHECK(isc_mem_create(0, 0, &mctx), "isc_mem_create()");
+	isc_mem_create(&mctx);
 	CHECK(dst_lib_init(mctx, NULL), "dst_lib_init()");
-	CHECK(isc_log_create(mctx, &log_, &logconfig), "isc_log_create()");
+	isc_log_create(mctx, &log_, &logconfig);
 	isc_log_setcontext(log_);
 	dns_log_init(log_);
 	dns_log_setcontext(log_);
-	CHECK(isc_log_settag(logconfig, "bigkey"), "isc_log_settag()");
+	isc_log_settag(logconfig, "bigkey");
+
 	destination.file.stream = stderr;
 	destination.file.name = NULL;
 	destination.file.versions = ISC_LOG_ROLLNEVER;
 	destination.file.maximum_size = 0;
-	CHECK(isc_log_createchannel(logconfig, "stderr",
-				    ISC_LOG_TOFILEDESC,
-				    level,
-				    &destination,
-				    ISC_LOG_PRINTTAG | ISC_LOG_PRINTLEVEL),
-	      "isc_log_createchannel()");
-	CHECK(isc_log_usechannel(logconfig, "stderr", NULL, NULL),
-	      "isc_log_usechannel()");
+	isc_log_createchannel(logconfig, "stderr", ISC_LOG_TOFILEDESC, level,
+			      &destination,
+			      ISC_LOG_PRINTTAG | ISC_LOG_PRINTLEVEL);
+
+	CHECK(isc_log_usechannel(logconfig, "stderr", NULL, NULL), "isc_log_"
+								   "usechannel("
+								   ")");
 	name = dns_fixedname_initname(&fname);
 	isc_buffer_constinit(&buf, "example.", strlen("example."));
 	isc_buffer_add(&buf, strlen("example."));
-	CHECK(dns_name_fromtext(name, &buf, dns_rootname, 0, NULL),
-	      "dns_name_fromtext(\"example.\")");
+	CHECK(dns_name_fromtext(name, &buf, dns_rootname, 0, NULL), "dns_name_"
+								    "fromtext("
+								    "\"example."
+								    "\")");
 
-	CHECK(dst_key_buildinternal(name, DNS_KEYALG_RSASHA1,
-				    bits, DNS_KEYOWNER_ZONE,
-				    DNS_KEYPROTO_DNSSEC, dns_rdataclass_in,
-				    pkey, mctx, &key),
+	CHECK(dst_key_buildinternal(name, DNS_KEYALG_RSASHA1, bits,
+				    DNS_KEYOWNER_ZONE, DNS_KEYPROTO_DNSSEC,
+				    dns_rdataclass_in, pkey, mctx, &key),
 	      "dst_key_buildinternal(...)");
 
 	CHECK(dst_key_tofile(key, DST_TYPE_PRIVATE | DST_TYPE_PUBLIC, NULL),
 	      "dst_key_tofile()");
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);
 	isc_buffer_clear(&buf);
-	CHECK(dst_key_buildfilename(key, 0, NULL, &buf),
-	      "dst_key_buildfilename()");
+	CHECK(dst_key_buildfilename(key, 0, NULL, &buf), "dst_key_"
+							 "buildfilename()");
 	printf("%s\n", filename);
 	dst_key_free(&key);
 
@@ -150,10 +152,9 @@ main(int argc, char **argv) {
 	isc_log_setcontext(NULL);
 	dns_log_setcontext(NULL);
 	dst_lib_destroy();
-	dns_name_destroy();
 	isc_mem_destroy(&mctx);
 	return (0);
-#else /* !USE_PKCS11 */
+#else  /* !USE_PKCS11 */
 	return (1);
 #endif /* !USE_PKC11 */
 }

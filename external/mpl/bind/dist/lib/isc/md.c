@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,14 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <stdio.h>
+
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/opensslv.h>
 
 #include <isc/md.h>
 #include <isc/util.h>
-
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/opensslv.h>
 
 #include "openssl_shim.h"
 
@@ -41,7 +39,7 @@ isc_md_free(isc_md_t *md) {
 }
 
 isc_result_t
-isc_md_init(isc_md_t *md, const isc_md_type_t md_type) {
+isc_md_init(isc_md_t *md, const isc_md_type_t *md_type) {
 	REQUIRE(md != NULL);
 
 	if (md_type == NULL) {
@@ -93,7 +91,7 @@ isc_md_final(isc_md_t *md, unsigned char *digest, unsigned int *digestlen) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_md_type_t
+const isc_md_type_t *
 isc_md_get_md_type(isc_md_t *md) {
 	REQUIRE(md != NULL);
 
@@ -115,7 +113,10 @@ isc_md_get_block_size(isc_md_t *md) {
 }
 
 size_t
-isc_md_type_get_size(isc_md_type_t md_type) {
+isc_md_type_get_size(const isc_md_type_t *md_type) {
+	STATIC_ASSERT(ISC_MAX_MD_SIZE >= EVP_MAX_MD_SIZE,
+		      "Change ISC_MAX_MD_SIZE to be greater than or equal to "
+		      "EVP_MAX_MD_SIZE");
 	if (md_type != NULL) {
 		return ((size_t)EVP_MD_size(md_type));
 	}
@@ -124,7 +125,10 @@ isc_md_type_get_size(isc_md_type_t md_type) {
 }
 
 size_t
-isc_md_type_get_block_size(isc_md_type_t md_type) {
+isc_md_type_get_block_size(const isc_md_type_t *md_type) {
+	STATIC_ASSERT(ISC_MAX_MD_SIZE >= EVP_MAX_MD_SIZE,
+		      "Change ISC_MAX_MD_SIZE to be greater than or equal to "
+		      "EVP_MAX_MD_SIZE");
 	if (md_type != NULL) {
 		return ((size_t)EVP_MD_block_size(md_type));
 	}
@@ -133,9 +137,8 @@ isc_md_type_get_block_size(isc_md_type_t md_type) {
 }
 
 isc_result_t
-isc_md(isc_md_type_t md_type, const unsigned char *buf, const size_t len,
-	unsigned char *digest, unsigned int *digestlen)
-{
+isc_md(const isc_md_type_t *md_type, const unsigned char *buf, const size_t len,
+       unsigned char *digest, unsigned int *digestlen) {
 	isc_md_t *md;
 	isc_result_t res;
 
@@ -155,8 +158,18 @@ isc_md(isc_md_type_t md_type, const unsigned char *buf, const size_t len,
 	if (res != ISC_R_SUCCESS) {
 		goto end;
 	}
- end:
+end:
 	isc_md_free(md);
 
 	return (res);
 }
+
+#define md_register_algorithm(alg) \
+	const isc_md_type_t *isc__md_##alg(void) { return (EVP_##alg()); }
+
+md_register_algorithm(md5);
+md_register_algorithm(sha1);
+md_register_algorithm(sha224);
+md_register_algorithm(sha256);
+md_register_algorithm(sha384);
+md_register_algorithm(sha512);

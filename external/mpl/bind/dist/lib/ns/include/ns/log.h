@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,32 +19,32 @@
 #include <isc/log.h>
 #include <isc/types.h>
 
-LIBNS_EXTERNAL_DATA extern isc_log_t *ns_lctx;
+LIBNS_EXTERNAL_DATA extern isc_log_t *	     ns_lctx;
 LIBNS_EXTERNAL_DATA extern isc_logcategory_t ns_categories[];
-LIBNS_EXTERNAL_DATA extern isc_logmodule_t ns_modules[];
+LIBNS_EXTERNAL_DATA extern isc_logmodule_t   ns_modules[];
 
-#define NS_LOGCATEGORY_CLIENT		(&ns_categories[0])
-#define NS_LOGCATEGORY_NETWORK		(&ns_categories[1])
-#define NS_LOGCATEGORY_UPDATE		(&ns_categories[2])
-#define NS_LOGCATEGORY_QUERIES		(&ns_categories[3])
-#define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_categories[4])
-#define NS_LOGCATEGORY_QUERY_ERRORS	(&ns_categories[5])
-#define NS_LOGCATEGORY_TAT		(&ns_categories[6])
-#define NS_LOGCATEGORY_SERVE_STALE	(&ns_categories[7])
+#define NS_LOGCATEGORY_CLIENT	       (&ns_categories[0])
+#define NS_LOGCATEGORY_NETWORK	       (&ns_categories[1])
+#define NS_LOGCATEGORY_UPDATE	       (&ns_categories[2])
+#define NS_LOGCATEGORY_QUERIES	       (&ns_categories[3])
+#define NS_LOGCATEGORY_UPDATE_SECURITY (&ns_categories[4])
+#define NS_LOGCATEGORY_QUERY_ERRORS    (&ns_categories[5])
+#define NS_LOGCATEGORY_TAT	       (&ns_categories[6])
+#define NS_LOGCATEGORY_SERVE_STALE     (&ns_categories[7])
 
 /*
  * Backwards compatibility.
  */
-#define NS_LOGCATEGORY_GENERAL		ISC_LOGCATEGORY_GENERAL
+#define NS_LOGCATEGORY_GENERAL ISC_LOGCATEGORY_GENERAL
 
-#define NS_LOGMODULE_CLIENT		(&ns_modules[0])
-#define NS_LOGMODULE_QUERY		(&ns_modules[1])
-#define NS_LOGMODULE_INTERFACEMGR	(&ns_modules[2])
-#define NS_LOGMODULE_UPDATE		(&ns_modules[3])
-#define NS_LOGMODULE_XFER_IN		(&ns_modules[4])
-#define NS_LOGMODULE_XFER_OUT		(&ns_modules[5])
-#define NS_LOGMODULE_NOTIFY		(&ns_modules[6])
-#define NS_LOGMODULE_HOOKS		(&ns_modules[7])
+#define NS_LOGMODULE_CLIENT	  (&ns_modules[0])
+#define NS_LOGMODULE_QUERY	  (&ns_modules[1])
+#define NS_LOGMODULE_INTERFACEMGR (&ns_modules[2])
+#define NS_LOGMODULE_UPDATE	  (&ns_modules[3])
+#define NS_LOGMODULE_XFER_IN	  (&ns_modules[4])
+#define NS_LOGMODULE_XFER_OUT	  (&ns_modules[5])
+#define NS_LOGMODULE_NOTIFY	  (&ns_modules[6])
+#define NS_LOGMODULE_HOOKS	  (&ns_modules[7])
 
 void
 ns_log_init(isc_log_t *lctx);

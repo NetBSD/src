@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,17 @@ fromtext_nid(ARGS_FROMTEXT) {
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	if (locator_pton(DNS_AS_STR(token), locator) != 1)
+	if (locator_pton(DNS_AS_STR(token), locator) != 1) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	return (mem_tobuffer(target, locator, NS_LOCATORSZ));
 }
 
@@ -67,10 +69,10 @@ totext_nid(ARGS_TOTEXT) {
 	RETERR(str_totext(" ", target));
 
 	snprintf(buf, sizeof(buf), "%x:%x:%x:%x",
-		 region.base[0]<<8 | region.base[1],
-		 region.base[2]<<8 | region.base[3],
-		 region.base[4]<<8 | region.base[5],
-		 region.base[6]<<8 | region.base[7]);
+		 region.base[0] << 8 | region.base[1],
+		 region.base[2] << 8 | region.base[3],
+		 region.base[4] << 8 | region.base[5],
+		 region.base[6] << 8 | region.base[7]);
 	return (str_totext(buf, target));
 }
 
@@ -86,15 +88,15 @@ fromwire_nid(ARGS_FROMWIRE) {
 	UNUSED(dctx);
 
 	isc_buffer_activeregion(source, &sregion);
-	if (sregion.length != 10)
+	if (sregion.length != 10) {
 		return (DNS_R_FORMERR);
+	}
 	isc_buffer_forward(source, sregion.length);
 	return (mem_tobuffer(target, sregion.base, sregion.length));
 }
 
 static inline isc_result_t
 towire_nid(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_nid);
 	REQUIRE(rdata->length == 10);
 
@@ -168,7 +170,6 @@ freestruct_nid(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_nid(ARGS_ADDLDATA) {
-
 	REQUIRE(rdata->type == dns_rdatatype_nid);
 	REQUIRE(rdata->length == 10);
 
@@ -193,7 +194,6 @@ digest_nid(ARGS_DIGEST) {
 
 static inline bool
 checkowner_nid(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_nid);
 
 	UNUSED(name);
@@ -206,7 +206,6 @@ checkowner_nid(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_nid(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_nid);
 	REQUIRE(rdata->length == 10);
 
@@ -222,4 +221,4 @@ casecompare_nid(ARGS_COMPARE) {
 	return (compare_nid(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_NID_104_C */
+#endif /* RDATA_GENERIC_NID_104_C */

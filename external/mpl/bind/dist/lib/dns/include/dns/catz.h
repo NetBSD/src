@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: catz.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_CATZ_H
 #define DNS_CATZ_H 1
@@ -33,12 +32,12 @@
 
 ISC_LANG_BEGINDECLS
 
-#define DNS_CATZ_ERROR_LEVEL	ISC_LOG_WARNING
-#define DNS_CATZ_INFO_LEVEL	ISC_LOG_INFO
-#define DNS_CATZ_DEBUG_LEVEL1	ISC_LOG_DEBUG(1)
-#define DNS_CATZ_DEBUG_LEVEL2	ISC_LOG_DEBUG(2)
-#define DNS_CATZ_DEBUG_LEVEL3	ISC_LOG_DEBUG(3)
-#define DNS_CATZ_DEBUG_QUIET	(DNS_CATZ_DEBUG_LEVEL3+1)
+#define DNS_CATZ_ERROR_LEVEL  ISC_LOG_WARNING
+#define DNS_CATZ_INFO_LEVEL   ISC_LOG_INFO
+#define DNS_CATZ_DEBUG_LEVEL1 ISC_LOG_DEBUG(1)
+#define DNS_CATZ_DEBUG_LEVEL2 ISC_LOG_DEBUG(2)
+#define DNS_CATZ_DEBUG_LEVEL3 ISC_LOG_DEBUG(3)
+#define DNS_CATZ_DEBUG_QUIET  (DNS_CATZ_DEBUG_LEVEL3 + 1)
 
 /*
  * Catalog Zones functions and structures.
@@ -49,7 +48,7 @@ ISC_LANG_BEGINDECLS
  */
 struct dns_catz_entry_options {
 	/*
-	 * Options that can be overriden in catalog zone
+	 * Options that can be overridden in catalog zone
 	 */
 	/* default-masters definition */
 	dns_ipkeylist_t masters;
@@ -216,7 +215,7 @@ dns_catz_zone_attach(dns_catz_zone_t *zone, dns_catz_zone_t **zonep);
  */
 
 void
-dns_catz_zone_detach(dns_catz_zone_t** zonep);
+dns_catz_zone_detach(dns_catz_zone_t **zonep);
 /*%<
  * Detach a zone, free if no further references
  *
@@ -321,19 +320,19 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
  *
  */
 
-
 /* Methods provided by named to dynamically modify the member zones */
 /* xxxwpk TODO config! */
 typedef isc_result_t (*dns_catz_zoneop_fn_t)(dns_catz_entry_t *entry,
-		dns_catz_zone_t *origin, dns_view_t *view,
-		isc_taskmgr_t *taskmgr, void *udata);
+					     dns_catz_zone_t * origin,
+					     dns_view_t *      view,
+					     isc_taskmgr_t *   taskmgr,
+					     void *	       udata);
 struct dns_catz_zonemodmethods {
 	dns_catz_zoneop_fn_t addzone;
 	dns_catz_zoneop_fn_t modzone;
 	dns_catz_zoneop_fn_t delzone;
-	void * udata;
+	void *		     udata;
 };
-
 
 isc_result_t
 dns_catz_new_zones(dns_catz_zones_t **catzsp, dns_catz_zonemodmethods_t *zmm,
@@ -400,7 +399,6 @@ dns_catz_catzs_set_view(dns_catz_zones_t *catzs, dns_view_t *view);
  * \li	'catzs' is a valid dns_catz_zones_t.
  * \li	'catzs->view' is NULL or 'catzs->view' == 'view'.
  */
-
 
 isc_result_t
 dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg);

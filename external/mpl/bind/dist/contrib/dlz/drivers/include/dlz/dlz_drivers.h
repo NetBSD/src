@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_drivers.h,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_drivers.h,v 1.3 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 
 #ifndef DLZ_DRIVERS_H
 #define DLZ_DRIVERS_H 1

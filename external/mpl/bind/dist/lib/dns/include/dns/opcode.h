@@ -1,4 +1,4 @@
-/*	$NetBSD: opcode.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: opcode.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_OPCODE_H
 #define DNS_OPCODE_H 1
 
@@ -23,7 +22,8 @@
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
+isc_result_t
+dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
 /*%<
  * Put a textual representation of error 'opcode' into 'target'.
  *

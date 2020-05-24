@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +26,7 @@
  */
 #ifndef BACKTRACE_MAXFRAME
 #define BACKTRACE_MAXFRAME 128
-#endif
+#endif /* ifndef BACKTRACE_MAXFRAME */
 
 /*%
  * Forward.
@@ -47,8 +44,7 @@ static isc_assertioncallback_t isc_assertion_failed_cb = default_callback;
 /* coverity[+kill] */
 void
 isc_assertion_failed(const char *file, int line, isc_assertiontype_t type,
-		     const char *cond)
-{
+		     const char *cond) {
 	isc_assertion_failed_cb(file, line, type, cond);
 	abort();
 	/* NOTREACHED */
@@ -57,10 +53,11 @@ isc_assertion_failed(const char *file, int line, isc_assertiontype_t type,
 /*% Set callback. */
 void
 isc_assertion_setcallback(isc_assertioncallback_t cb) {
-	if (cb == NULL)
+	if (cb == NULL) {
 		isc_assertion_failed_cb = default_callback;
-	else
+	} else {
 		isc_assertion_failed_cb = cb;
+	}
 }
 
 /*% Type to Text */
@@ -99,8 +96,7 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
 /* coverity[+kill] */
 static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
-		 const char *cond)
-{
+		 const char *cond) {
 	void *tracebuf[BACKTRACE_MAXFRAME];
 	int i, nframes;
 	const char *logsuffix = ".";
@@ -112,8 +108,8 @@ default_callback(const char *file, int line, isc_assertiontype_t type,
 		logsuffix = ", back trace";
 	}
 
-	fprintf(stderr, "%s:%d: %s(%s) failed%s\n",
-		file, line, isc_assertion_typetotext(type), cond, logsuffix);
+	fprintf(stderr, "%s:%d: %s(%s) failed%s\n", file, line,
+		isc_assertion_typetotext(type), cond, logsuffix);
 
 	if (result == ISC_R_SUCCESS) {
 		for (i = 0; i < nframes; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: tkeyconf.h,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,8 @@
 
 /*! \file */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 #include <isccfg/cfg.h>
 

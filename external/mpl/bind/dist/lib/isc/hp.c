@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1.1.1 2020/05/24 19:36:46 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.2 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,7 +84,7 @@ struct isc_hp {
 };
 
 static inline int
-tid() {
+tid(void) {
 	if (tid_v == TID_UNKNOWN) {
 		tid_v = atomic_fetch_add(&tid_v_base, 1);
 		REQUIRE(tid_v < isc__hp_max_threads);

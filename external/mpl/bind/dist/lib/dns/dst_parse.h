@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 /*! \file */
 #ifndef DST_DST_PARSE_H
 #define DST_DST_PARSE_H 1
@@ -34,23 +33,23 @@
 
 #include <dst/dst.h>
 
-#define MAXFIELDSIZE		512
+#define MAXFIELDSIZE 512
 
 /*
  * Maximum number of fields in a private file is 18 (12 algorithm-
  * specific fields for RSA, plus 6 generic fields).
  */
-#define MAXFIELDS		12+6
+#define MAXFIELDS 12 + 6
 
-#define TAG_SHIFT		4
-#define TAG_ALG(tag)		((unsigned int)(tag) >> TAG_SHIFT)
-#define TAG(alg, off)		(((alg) << TAG_SHIFT) + (off))
+#define TAG_SHIFT     4
+#define TAG_ALG(tag)  ((unsigned int)(tag) >> TAG_SHIFT)
+#define TAG(alg, off) (((alg) << TAG_SHIFT) + (off))
 
 /* These are used by RSA-SHA1, RSASHA256 and RSASHA512 */
 #define RSA_NTAGS		11
 #define TAG_RSA_MODULUS		((DST_ALG_RSA << TAG_SHIFT) + 0)
 #define TAG_RSA_PUBLICEXPONENT	((DST_ALG_RSA << TAG_SHIFT) + 1)
-#define TAG_RSA_PRIVATEEXPONENT	((DST_ALG_RSA << TAG_SHIFT) + 2)
+#define TAG_RSA_PRIVATEEXPONENT ((DST_ALG_RSA << TAG_SHIFT) + 2)
 #define TAG_RSA_PRIME1		((DST_ALG_RSA << TAG_SHIFT) + 3)
 #define TAG_RSA_PRIME2		((DST_ALG_RSA << TAG_SHIFT) + 4)
 #define TAG_RSA_EXPONENT1	((DST_ALG_RSA << TAG_SHIFT) + 5)
@@ -59,46 +58,46 @@
 #define TAG_RSA_ENGINE		((DST_ALG_RSA << TAG_SHIFT) + 8)
 #define TAG_RSA_LABEL		((DST_ALG_RSA << TAG_SHIFT) + 9)
 
-#define DH_NTAGS		4
-#define TAG_DH_PRIME		((DST_ALG_DH << TAG_SHIFT) + 0)
-#define TAG_DH_GENERATOR	((DST_ALG_DH << TAG_SHIFT) + 1)
-#define TAG_DH_PRIVATE		((DST_ALG_DH << TAG_SHIFT) + 2)
-#define TAG_DH_PUBLIC		((DST_ALG_DH << TAG_SHIFT) + 3)
+#define DH_NTAGS	 4
+#define TAG_DH_PRIME	 ((DST_ALG_DH << TAG_SHIFT) + 0)
+#define TAG_DH_GENERATOR ((DST_ALG_DH << TAG_SHIFT) + 1)
+#define TAG_DH_PRIVATE	 ((DST_ALG_DH << TAG_SHIFT) + 2)
+#define TAG_DH_PUBLIC	 ((DST_ALG_DH << TAG_SHIFT) + 3)
 
-#define ECDSA_NTAGS		4
-#define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
-#define TAG_ECDSA_ENGINE	((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
-#define TAG_ECDSA_LABEL		((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
+#define ECDSA_NTAGS	     4
+#define TAG_ECDSA_PRIVATEKEY ((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
+#define TAG_ECDSA_ENGINE     ((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
+#define TAG_ECDSA_LABEL	     ((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
 
-#define EDDSA_NTAGS		4
-#define TAG_EDDSA_PRIVATEKEY	((DST_ALG_ED25519 << TAG_SHIFT) + 0)
-#define TAG_EDDSA_ENGINE	((DST_ALG_ED25519 << TAG_SHIFT) + 1)
-#define TAG_EDDSA_LABEL		((DST_ALG_ED25519 << TAG_SHIFT) + 2)
+#define EDDSA_NTAGS	     4
+#define TAG_EDDSA_PRIVATEKEY ((DST_ALG_ED25519 << TAG_SHIFT) + 0)
+#define TAG_EDDSA_ENGINE     ((DST_ALG_ED25519 << TAG_SHIFT) + 1)
+#define TAG_EDDSA_LABEL	     ((DST_ALG_ED25519 << TAG_SHIFT) + 2)
 
-#define OLD_HMACMD5_NTAGS	1
-#define HMACMD5_NTAGS		2
-#define TAG_HMACMD5_KEY		((DST_ALG_HMACMD5 << TAG_SHIFT) + 0)
-#define TAG_HMACMD5_BITS	((DST_ALG_HMACMD5 << TAG_SHIFT) + 1)
+#define OLD_HMACMD5_NTAGS 1
+#define HMACMD5_NTAGS	  2
+#define TAG_HMACMD5_KEY	  ((DST_ALG_HMACMD5 << TAG_SHIFT) + 0)
+#define TAG_HMACMD5_BITS  ((DST_ALG_HMACMD5 << TAG_SHIFT) + 1)
 
-#define HMACSHA1_NTAGS		2
-#define TAG_HMACSHA1_KEY	((DST_ALG_HMACSHA1 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA1_BITS	((DST_ALG_HMACSHA1 << TAG_SHIFT) + 1)
+#define HMACSHA1_NTAGS	  2
+#define TAG_HMACSHA1_KEY  ((DST_ALG_HMACSHA1 << TAG_SHIFT) + 0)
+#define TAG_HMACSHA1_BITS ((DST_ALG_HMACSHA1 << TAG_SHIFT) + 1)
 
-#define HMACSHA224_NTAGS	2
-#define TAG_HMACSHA224_KEY	((DST_ALG_HMACSHA224 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA224_BITS	((DST_ALG_HMACSHA224 << TAG_SHIFT) + 1)
+#define HMACSHA224_NTAGS    2
+#define TAG_HMACSHA224_KEY  ((DST_ALG_HMACSHA224 << TAG_SHIFT) + 0)
+#define TAG_HMACSHA224_BITS ((DST_ALG_HMACSHA224 << TAG_SHIFT) + 1)
 
-#define HMACSHA256_NTAGS	2
-#define TAG_HMACSHA256_KEY	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA256_BITS	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 1)
+#define HMACSHA256_NTAGS    2
+#define TAG_HMACSHA256_KEY  ((DST_ALG_HMACSHA256 << TAG_SHIFT) + 0)
+#define TAG_HMACSHA256_BITS ((DST_ALG_HMACSHA256 << TAG_SHIFT) + 1)
 
-#define HMACSHA384_NTAGS	2
-#define TAG_HMACSHA384_KEY	((DST_ALG_HMACSHA384 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA384_BITS	((DST_ALG_HMACSHA384 << TAG_SHIFT) + 1)
+#define HMACSHA384_NTAGS    2
+#define TAG_HMACSHA384_KEY  ((DST_ALG_HMACSHA384 << TAG_SHIFT) + 0)
+#define TAG_HMACSHA384_BITS ((DST_ALG_HMACSHA384 << TAG_SHIFT) + 1)
 
-#define HMACSHA512_NTAGS	2
-#define TAG_HMACSHA512_KEY	((DST_ALG_HMACSHA512 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA512_BITS	((DST_ALG_HMACSHA512 << TAG_SHIFT) + 1)
+#define HMACSHA512_NTAGS    2
+#define TAG_HMACSHA512_KEY  ((DST_ALG_HMACSHA512 << TAG_SHIFT) + 0)
+#define TAG_HMACSHA512_BITS ((DST_ALG_HMACSHA512 << TAG_SHIFT) + 1)
 
 struct dst_private_element {
 	unsigned short tag;

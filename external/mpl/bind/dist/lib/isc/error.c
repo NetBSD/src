@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,12 +22,12 @@
 /*% Default unexpected callback. */
 static void
 default_unexpected_callback(const char *, int, const char *, va_list)
-     ISC_FORMAT_PRINTF(3, 0);
+	ISC_FORMAT_PRINTF(3, 0);
 
 /*% Default fatal callback. */
 static void
 default_fatal_callback(const char *, int, const char *, va_list)
-     ISC_FORMAT_PRINTF(3, 0);
+	ISC_FORMAT_PRINTF(3, 0);
 
 /*% unexpected_callback */
 static isc_errorcallback_t unexpected_callback = default_unexpected_callback;
@@ -38,18 +35,20 @@ static isc_errorcallback_t fatal_callback = default_fatal_callback;
 
 void
 isc_error_setunexpected(isc_errorcallback_t cb) {
-	if (cb == NULL)
+	if (cb == NULL) {
 		unexpected_callback = default_unexpected_callback;
-	else
+	} else {
 		unexpected_callback = cb;
+	}
 }
 
 void
 isc_error_setfatal(isc_errorcallback_t cb) {
-	if (cb == NULL)
+	if (cb == NULL) {
 		fatal_callback = default_fatal_callback;
-	else
+	} else {
 		fatal_callback = cb;
+	}
 }
 
 void
@@ -78,8 +77,7 @@ isc_error_runtimecheck(const char *file, int line, const char *expression) {
 
 static void
 default_unexpected_callback(const char *file, int line, const char *format,
-			    va_list args)
-{
+			    va_list args) {
 	fprintf(stderr, "%s:%d: ", file, line);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
@@ -88,8 +86,7 @@ default_unexpected_callback(const char *file, int line, const char *format,
 
 static void
 default_fatal_callback(const char *file, int line, const char *format,
-		       va_list args)
-{
+		       va_list args) {
 	fprintf(stderr, "%s:%d: fatal error: ", file, line);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");

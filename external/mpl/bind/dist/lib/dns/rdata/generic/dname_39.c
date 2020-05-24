@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: dname_39.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,8 +35,9 @@ fromtext_dname(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
@@ -74,7 +75,7 @@ fromwire_dname(ARGS_FROMWIRE) {
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
 	dns_name_init(&name, NULL);
-	return(dns_name_fromwire(&name, source, dctx, options, target));
+	return (dns_name_fromwire(&name, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -166,8 +167,9 @@ freestruct_dname(ARGS_FREESTRUCT) {
 	REQUIRE(dname != NULL);
 	REQUIRE(dname->common.rdtype == dns_rdatatype_dname);
 
-	if (dname->mctx == NULL)
+	if (dname->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&dname->dname, dname->mctx);
 	dname->mctx = NULL;
@@ -200,7 +202,6 @@ digest_dname(ARGS_DIGEST) {
 
 static inline bool
 checkowner_dname(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_dname);
 
 	UNUSED(name);
@@ -213,7 +214,6 @@ checkowner_dname(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_dname(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_dname);
 
 	UNUSED(rdata);
@@ -227,4 +227,4 @@ static inline int
 casecompare_dname(ARGS_COMPARE) {
 	return (compare_dname(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_DNAME_39_C */
+#endif /* RDATA_GENERIC_DNAME_39_C */

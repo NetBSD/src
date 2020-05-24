@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,19 +29,18 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		     const cfg_obj_t *zconfig, cfg_aclconfctx_t *ac,
-		     dns_zone_t *zone, dns_zone_t *raw);
+		     dns_kasplist_t *kasplist, dns_zone_t *zone,
+		     dns_zone_t *raw);
 /*%<
  * Configure or reconfigure a zone according to the named.conf
- * data in 'cctx' and 'czone'.
+ * data.
  *
  * The zone origin is not configured, it is assumed to have been set
  * at zone creation time.
  *
  * Require:
- * \li	'lctx' to be initialized or NULL.
- * \li	'cctx' to be initialized or NULL.
  * \li	'ac' to point to an initialized cfg_aclconfctx_t.
- * \li	'czone' to be initialized.
+ * \li	'kasplist' to be initialized.
  * \li	'zone' to be initialized.
  */
 
@@ -55,10 +54,8 @@ named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig);
  */
 
 isc_result_t
-named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase,
-				   dns_zone_t *zone,
-				   dns_rdataclass_t rdclass,
-				   dns_name_t *name);
+named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase, dns_zone_t *zone,
+				   dns_rdataclass_t rdclass, dns_name_t *name);
 /*%>
  * configure a DLZ zone, setting up the database methods and calling
  * postload to load the origin values

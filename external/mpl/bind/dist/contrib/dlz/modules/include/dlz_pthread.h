@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_pthread.h,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_pthread.h,v 1.3 2020/05/24 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -21,23 +21,23 @@
 
 #ifndef PTHREADS
 #define PTHREADS 1
-#endif
+#endif /* ifndef PTHREADS */
 
 #ifdef PTHREADS
 #include <pthread.h>
-#define dlz_mutex_t pthread_mutex_t
-#define dlz_mutex_init pthread_mutex_init
+#define dlz_mutex_t	  pthread_mutex_t
+#define dlz_mutex_init	  pthread_mutex_init
 #define dlz_mutex_destroy pthread_mutex_destroy
-#define dlz_mutex_lock pthread_mutex_lock
+#define dlz_mutex_lock	  pthread_mutex_lock
 #define dlz_mutex_trylock pthread_mutex_trylock
-#define dlz_mutex_unlock pthread_mutex_unlock
+#define dlz_mutex_unlock  pthread_mutex_unlock
 #else /* !PTHREADS */
-#define dlz_mutex_t void
+#define dlz_mutex_t	     void
 #define dlz_mutex_init(a, b) (0)
 #define dlz_mutex_destroy(a) (0)
-#define dlz_mutex_lock(a) (0)
+#define dlz_mutex_lock(a)    (0)
 #define dlz_mutex_trylock(a) (0)
-#define dlz_mutex_unlock(a) (0)
-#endif
+#define dlz_mutex_unlock(a)  (0)
+#endif /* ifdef PTHREADS */
 
 #endif /* DLZ_PTHREAD_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,22 +11,18 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
 
-#include <isc/util.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 #include "entropy_private.h"
-
-#include <openssl/rand.h>
-#include <openssl/err.h>
 
 void
 isc_entropy_get(void *buf, size_t buflen) {
 	if (RAND_bytes(buf, buflen) < 1) {
-		FATAL_ERROR(__FILE__,
-			    __LINE__,
-			    "RAND_bytes(): %s",
+		FATAL_ERROR(__FILE__, __LINE__, "RAND_bytes(): %s",
 			    ERR_error_string(ERR_get_error(), NULL));
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: cname_5.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef GENERIC_CNAME_5_H
 #define GENERIC_CNAME_5_H 1
 
 typedef struct dns_rdata_cname {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		cname;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t cname;
 } dns_rdata_cname_t;
 
 #endif /* GENERIC_CNAME_5_H */

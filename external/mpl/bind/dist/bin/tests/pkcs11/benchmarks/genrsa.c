@@ -1,4 +1,4 @@
-/*	$NetBSD: genrsa.c,v 1.4 2019/10/17 16:46:58 christos Exp $	*/
+/*	$NetBSD: genrsa.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* genrsa [-m module] [-s $slot] [-p pin] [-t] [-b bits] [-n count] */
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -64,13 +61,13 @@
 
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
-#endif
-
-static int clock_gettime(int32_t id, struct timespec *tp);
+#endif /* ifndef CLOCK_REALTIME */
 
 static int
-clock_gettime(int32_t id, struct timespec *tp)
-{
+clock_gettime(int32_t id, struct timespec *tp);
+
+static int
+clock_gettime(int32_t id, struct timespec *tp) {
 	struct timeval tv;
 	int result;
 
@@ -79,11 +76,11 @@ clock_gettime(int32_t id, struct timespec *tp)
 	result = gettimeofday(&tv, NULL);
 	if (result == 0) {
 		tp->tv_sec = tv.tv_sec;
-		tp->tv_nsec = (long) tv.tv_usec * 1000;
+		tp->tv_nsec = (long)tv.tv_usec * 1000;
 	}
 	return (result);
 }
-#endif
+#endif /* ifndef HAVE_CLOCK_GETTIME */
 
 static CK_BBOOL truevalue = TRUE;
 static CK_BBOOL falsevalue = FALSE;
@@ -102,23 +99,21 @@ main(int argc, char *argv[]) {
 	CK_KEY_TYPE kType = CKK_RSA;
 	CK_ULONG bits = 1024;
 	CK_BYTE exponent[] = { 0x01, 0x00, 0x01 };
-	CK_ATTRIBUTE pubTemplate[] =
-	{
-		{ CKA_CLASS, &pubClass, (CK_ULONG) sizeof(pubClass) },
-		{ CKA_KEY_TYPE, &kType, (CK_ULONG) sizeof(kType) },
-		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_PRIVATE, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_VERIFY, &truevalue, (CK_ULONG) sizeof(truevalue) },
-		{ CKA_MODULUS_BITS, &bits, (CK_ULONG) sizeof(bits) },
-		{ CKA_PUBLIC_EXPONENT, exponent, (CK_ULONG) sizeof(exponent) }
+	CK_ATTRIBUTE pubTemplate[] = {
+		{ CKA_CLASS, &pubClass, (CK_ULONG)sizeof(pubClass) },
+		{ CKA_KEY_TYPE, &kType, (CK_ULONG)sizeof(kType) },
+		{ CKA_TOKEN, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_PRIVATE, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_VERIFY, &truevalue, (CK_ULONG)sizeof(truevalue) },
+		{ CKA_MODULUS_BITS, &bits, (CK_ULONG)sizeof(bits) },
+		{ CKA_PUBLIC_EXPONENT, exponent, (CK_ULONG)sizeof(exponent) }
 	};
-	CK_ATTRIBUTE privTemplate[] =
-	{
-		{ CKA_CLASS, &privClass, (CK_ULONG) sizeof(privClass) },
-		{ CKA_KEY_TYPE, &kType, (CK_ULONG) sizeof(kType) },
-		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_PRIVATE, &truevalue, (CK_ULONG) sizeof(truevalue) },
-		{ CKA_SIGN, &truevalue, (CK_ULONG) sizeof(truevalue) },
+	CK_ATTRIBUTE privTemplate[] = {
+		{ CKA_CLASS, &privClass, (CK_ULONG)sizeof(privClass) },
+		{ CKA_KEY_TYPE, &kType, (CK_ULONG)sizeof(kType) },
+		{ CKA_TOKEN, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_PRIVATE, &truevalue, (CK_ULONG)sizeof(truevalue) },
+		{ CKA_SIGN, &truevalue, (CK_ULONG)sizeof(truevalue) },
 	};
 	pk11_context_t pctx;
 	pk11_optype_t op_type = OP_RSA;
@@ -126,7 +121,7 @@ main(int argc, char *argv[]) {
 	char *pin = NULL;
 	int error = 0;
 	int c, errflg = 0;
-	int ontoken  = 0;
+	int ontoken = 0;
 	unsigned int count = 1000;
 	unsigned int i;
 	struct timespec starttime;
@@ -154,8 +149,7 @@ main(int argc, char *argv[]) {
 			count = atoi(isc_commandline_argument);
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -169,23 +163,21 @@ main(int argc, char *argv[]) {
 
 	if (errflg) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr,
-			"\tgenrsa [-m module] [-s slot] [-p pin] "
-			"[-t] [-b bits] [-n count]\n");
+		fprintf(stderr, "\tgenrsa [-m module] [-s slot] [-p pin] "
+				"[-t] [-b bits] [-n count]\n");
 		exit(1);
 	}
 
 	pk11_result_register();
 
-	/* Allocate hanles */
-	pubKey = (CK_SESSION_HANDLE *)
-		malloc(count * sizeof(CK_SESSION_HANDLE));
+	/* Allocate handles */
+	pubKey = (CK_SESSION_HANDLE *)malloc(count * sizeof(CK_SESSION_HANDLE));
 	if (pubKey == NULL) {
 		perror("malloc");
 		exit(1);
 	}
-	privKey = (CK_SESSION_HANDLE *)
-		malloc(count * sizeof(CK_SESSION_HANDLE));
+	privKey =
+		(CK_SESSION_HANDLE *)malloc(count * sizeof(CK_SESSION_HANDLE));
 	if (privKey == NULL) {
 		free(pubKey);
 		perror("malloc");
@@ -197,26 +189,28 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	if (pin == NULL) {
 		pin = getpass("Enter Pin: ");
 	}
 
-	result = pk11_get_session(&pctx, op_type, false, true,
-				  true, (const char *) pin, slot);
-	if ((result != ISC_R_SUCCESS) &&
-	    (result != PK11_R_NORANDOMSERVICE) &&
+	result = pk11_get_session(&pctx, op_type, false, true, true,
+				  (const char *)pin, slot);
+	if ((result != ISC_R_SUCCESS) && (result != PK11_R_NORANDOMSERVICE) &&
 	    (result != PK11_R_NODIGESTSERVICE) &&
-	    (result != PK11_R_NOAESSERVICE)) {
+	    (result != PK11_R_NOAESSERVICE))
+	{
 		fprintf(stderr, "Error initializing PKCS#11: %s\n",
 			isc_result_totext(result));
 		exit(1);
 	}
 
-	if (pin != NULL)
+	if (pin != NULL) {
 		memset(pin, 0, strlen((char *)pin));
+	}
 
 	hSession = pctx.session;
 
@@ -231,17 +225,17 @@ main(int argc, char *argv[]) {
 	}
 
 	for (i = 0; i < count; i++) {
-		rv = pkcs_C_GenerateKeyPair(hSession, &mech,
-				       pubTemplate, 7,
-				       privTemplate, 5,
-				       &pubKey[i], &privKey[i]);
+		rv = pkcs_C_GenerateKeyPair(hSession, &mech, pubTemplate, 7,
+					    privTemplate, 5, &pubKey[i],
+					    &privKey[i]);
 		if (rv != CKR_OK) {
 			fprintf(stderr,
-				"C_GenerateKeyPair[%u]: Error = 0x%.8lX\n",
-				i, rv);
+				"C_GenerateKeyPair[%u]: Error = 0x%.8lX\n", i,
+				rv);
 			error = 1;
-			if (i == 0)
+			if (i == 0) {
 				goto exit_keys;
+			}
 			break;
 		}
 	}
@@ -257,33 +251,37 @@ main(int argc, char *argv[]) {
 		endtime.tv_sec -= 1;
 		endtime.tv_nsec += 1000000000;
 	}
-	printf("%u generated RSA in %ld.%09lds\n", i,
-	       endtime.tv_sec, endtime.tv_nsec);
-	if (i > 0)
+	printf("%u generated RSA in %ld.%09lds\n", i, endtime.tv_sec,
+	       endtime.tv_nsec);
+	if (i > 0) {
 		printf("%g generated RSA/s\n",
-		       1024 * i / ((double) endtime.tv_sec +
-				   (double) endtime.tv_nsec / 1000000000.));
+		       1024 * i /
+			       ((double)endtime.tv_sec +
+				(double)endtime.tv_nsec / 1000000000.));
+	}
 
-    exit_keys:
+exit_keys:
 	for (i = 0; i < count; i++) {
 		/* Destroy keys */
-		if (pubKey[i] == CK_INVALID_HANDLE)
+		if (pubKey[i] == CK_INVALID_HANDLE) {
 			goto destroy_priv;
+		}
 		rv = pkcs_C_DestroyObject(hSession, pubKey[i]);
 		if ((rv != CKR_OK) && !errflg) {
 			fprintf(stderr,
-				"C_DestroyObject[pub%u]: Error = 0x%.8lX\n",
-				i, rv);
+				"C_DestroyObject[pub%u]: Error = 0x%.8lX\n", i,
+				rv);
 			errflg = 1;
 		}
-	    destroy_priv:
-		if (privKey[i] == CK_INVALID_HANDLE)
+	destroy_priv:
+		if (privKey[i] == CK_INVALID_HANDLE) {
 			continue;
+		}
 		rv = pkcs_C_DestroyObject(hSession, privKey[i]);
 		if ((rv != CKR_OK) && !errflg) {
 			fprintf(stderr,
-				"C_DestroyObject[priv%u]: Error = 0x%.8lX\n",
-				i, rv);
+				"C_DestroyObject[priv%u]: Error = 0x%.8lX\n", i,
+				rv);
 			errflg = 1;
 		}
 	}
@@ -292,7 +290,7 @@ main(int argc, char *argv[]) {
 	free(privKey);
 
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

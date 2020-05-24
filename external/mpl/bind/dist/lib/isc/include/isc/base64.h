@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: base64.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_BASE64_H
 #define ISC_BASE64_H 1
@@ -27,8 +26,8 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-isc_base64_totext(isc_region_t *source, int wordlength,
-		  const char *wordbreak, isc_buffer_t *target);
+isc_base64_totext(isc_region_t *source, int wordlength, const char *wordbreak,
+		  isc_buffer_t *target);
 /*!<
  * \brief Convert data into base64 encoded text.
  *

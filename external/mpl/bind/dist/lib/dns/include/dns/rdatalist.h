@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdatalist.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_RDATALIST_H
 #define DNS_RDATALIST_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/rdatalist.h
  * \brief
@@ -47,18 +46,18 @@
  * Clients may use this type directly.
  */
 struct dns_rdatalist {
-	dns_rdataclass_t		rdclass;
-	dns_rdatatype_t			type;
-	dns_rdatatype_t			covers;
-	dns_ttl_t			ttl;
-	ISC_LIST(dns_rdata_t)		rdata;
-	ISC_LINK(dns_rdatalist_t)	link;
+	dns_rdataclass_t rdclass;
+	dns_rdatatype_t	 type;
+	dns_rdatatype_t	 covers;
+	dns_ttl_t	 ttl;
+	ISC_LIST(dns_rdata_t) rdata;
+	ISC_LINK(dns_rdatalist_t) link;
 	/*%<
 	 * Case vector.  If the bit is set then the corresponding
 	 * character in the owner name needs to be AND'd with 0x20,
 	 * rendering that character upper case.
 	 */
-	unsigned char			upper[32];
+	unsigned char upper[32];
 };
 
 ISC_LANG_BEGINDECLS
@@ -74,8 +73,7 @@ dns_rdatalist_init(dns_rdatalist_t *rdatalist);
  */
 
 isc_result_t
-dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
-			 dns_rdataset_t *rdataset);
+dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist, dns_rdataset_t *rdataset);
 /*%<
  * Make 'rdataset' refer to the rdata in 'rdatalist'.
  *
@@ -100,7 +98,7 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
  */
 
 isc_result_t
-dns_rdatalist_fromrdataset(dns_rdataset_t *rdataset,
+dns_rdatalist_fromrdataset(dns_rdataset_t *  rdataset,
 			   dns_rdatalist_t **rdatalist);
 /*%<
  * Point 'rdatalist' to the rdatalist in 'rdataset'.

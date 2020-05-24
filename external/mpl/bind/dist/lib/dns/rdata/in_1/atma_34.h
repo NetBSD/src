@@ -1,4 +1,4 @@
-/*	$NetBSD: atma_34.h,v 1.2 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: atma_34.h,v 1.3 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,16 +14,15 @@
 #ifndef IN_1_ATMA_22_H
 #define IN_1_ATMA_22_H 1
 
-
 /*!
  *  \brief Per RFC1706 */
 
 typedef struct dns_rdata_in_atma {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	unsigned char		format;
-	unsigned char		*atma;
-	uint16_t		atma_len;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	unsigned char format;
+	unsigned char *atma;
+	uint16_t atma_len;
 } dns_rdata_in_atma_t;
 
 #endif /* IN_1_ATMA_22_H */

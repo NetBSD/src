@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/validator.h
  *
@@ -27,8 +26,6 @@
  * rdatasets and negative responses (messages).  It makes use of zones in
  * the view and may fetch RRset to complete trust chains.  It implements
  * DNSSEC as specified in RFC 4033, 4034 and 4035.
- *
- * It can also optionally implement ISC's DNSSEC look-aside validation.
  *
  * Correct operation is critical to preventing spoofed answers from secure
  * zones being accepted.
@@ -52,14 +49,14 @@
 
 #include <stdbool.h>
 
-#include <isc/lang.h>
 #include <isc/event.h>
+#include <isc/lang.h>
 #include <isc/mutex.h>
 
 #include <dns/fixedname.h>
-#include <dns/types.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h> /* for dns_rdata_rrsig_t */
+#include <dns/types.h>
 
 #include <dst/dst.h>
 
@@ -76,39 +73,39 @@
  */
 typedef struct dns_validatorevent {
 	ISC_EVENT_COMMON(struct dns_validatorevent);
-	dns_validator_t *		validator;
-	isc_result_t			result;
+	dns_validator_t *validator;
+	isc_result_t	 result;
 	/*
 	 * Name and type of the response to be validated.
 	 */
-	dns_name_t *			name;
-	dns_rdatatype_t			type;
+	dns_name_t *	name;
+	dns_rdatatype_t type;
 	/*
 	 * Rdata and RRSIG (if any) for positive responses.
 	 */
-	dns_rdataset_t *		rdataset;
-	dns_rdataset_t *		sigrdataset;
+	dns_rdataset_t *rdataset;
+	dns_rdataset_t *sigrdataset;
 	/*
 	 * The full response.  Required for negative responses.
 	 * Also required for positive wildcard responses.
 	 */
-	dns_message_t *			message;
+	dns_message_t *message;
 	/*
 	 * Proofs to be cached.
 	 */
-	dns_name_t *			proofs[4];
+	dns_name_t *proofs[4];
 	/*
 	 * Optout proof seen.
 	 */
-	bool			optout;
+	bool optout;
 	/*
 	 * Answer is secure.
 	 */
-	bool			secure;
+	bool secure;
 } dns_validatorevent_t;
 
-#define DNS_VALIDATOR_NOQNAMEPROOF 0
-#define DNS_VALIDATOR_NODATAPROOF 1
+#define DNS_VALIDATOR_NOQNAMEPROOF    0
+#define DNS_VALIDATOR_NODATAPROOF     1
 #define DNS_VALIDATOR_NOWILDCARDPROOF 2
 #define DNS_VALIDATOR_CLOSESTENCLOSER 3
 
@@ -121,57 +118,47 @@ typedef struct dns_validatorevent {
  */
 struct dns_validator {
 	/* Unlocked. */
-	unsigned int			magic;
-	isc_mutex_t			lock;
-	dns_view_t *			view;
+	unsigned int magic;
+	isc_mutex_t  lock;
+	dns_view_t * view;
 	/* Locked by lock. */
-	unsigned int			options;
-	unsigned int			attributes;
-	dns_validatorevent_t *		event;
-	dns_fetch_t *			fetch;
-	dns_validator_t *		subvalidator;
-	dns_validator_t *		parent;
-	dns_keytable_t *		keytable;
-	dns_keynode_t *			keynode;
-	dst_key_t *			key;
-	dns_rdata_rrsig_t *		siginfo;
-	isc_task_t *			task;
-	isc_taskaction_t		action;
-	void *				arg;
-	unsigned int			labels;
-	dns_rdataset_t *		currentset;
-	bool			seensig;
-	dns_rdataset_t *		keyset;
-	dns_rdataset_t *		dsset;
-	dns_rdataset_t *		soaset;
-	dns_rdataset_t *		nsecset;
-	dns_rdataset_t *		nsec3set;
-	dns_name_t *			soaname;
-	dns_rdataset_t			frdataset;
-	dns_rdataset_t			fsigrdataset;
-	dns_fixedname_t			fname;
-	dns_fixedname_t			wild;
-	dns_fixedname_t			nearest;
-	dns_fixedname_t			closest;
-	ISC_LINK(dns_validator_t)	link;
-	dns_rdataset_t 			dlv;
-	dns_fixedname_t			dlvsep;
-	bool			havedlvsep;
-	bool			mustbesecure;
-	unsigned int			dlvlabels;
-	unsigned int			depth;
-	unsigned int			authcount;
-	unsigned int			authfail;
-	isc_stdtime_t			start;
+	unsigned int	      options;
+	unsigned int	      attributes;
+	dns_validatorevent_t *event;
+	dns_fetch_t *	      fetch;
+	dns_validator_t *     subvalidator;
+	dns_validator_t *     parent;
+	dns_keytable_t *      keytable;
+	dns_keynode_t *	      keynode;
+	dst_key_t *	      key;
+	dns_rdata_rrsig_t *   siginfo;
+	isc_task_t *	      task;
+	isc_taskaction_t      action;
+	void *		      arg;
+	unsigned int	      labels;
+	dns_rdataset_t *      currentset;
+	dns_rdataset_t *      keyset;
+	dns_rdataset_t *      dsset;
+	dns_rdataset_t	      frdataset;
+	dns_rdataset_t	      fsigrdataset;
+	dns_fixedname_t	      fname;
+	dns_fixedname_t	      wild;
+	dns_fixedname_t	      closest;
+	ISC_LINK(dns_validator_t) link;
+	bool	      mustbesecure;
+	unsigned int  depth;
+	unsigned int  authcount;
+	unsigned int  authfail;
+	isc_stdtime_t start;
 };
 
 /*%
  * dns_validator_create() options.
  */
-#define DNS_VALIDATOR_DLV		0x0001U
-#define DNS_VALIDATOR_DEFER		0x0002U
-#define DNS_VALIDATOR_NOCDFLAG		0x0004U
-#define DNS_VALIDATOR_NONTA		0x0008U  /*% Ignore NTA table */
+/* obsolete: #define DNS_VALIDATOR_DLV	0x0001U */
+#define DNS_VALIDATOR_DEFER    0x0002U
+#define DNS_VALIDATOR_NOCDFLAG 0x0004U
+#define DNS_VALIDATOR_NONTA    0x0008U /*% Ignore NTA table */
 
 ISC_LANG_BEGINDECLS
 
@@ -212,11 +199,6 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  * Its 'result' field will be ISC_R_SUCCESS iff the
  * response was successfully proven to be either secure or
  * part of a known insecure domain.
- *
- * options:
- * If DNS_VALIDATOR_DLV is set the caller knows there is not a
- * trusted key and the validator should immediately attempt to validate
- * the answer by looking for an appropriate DLV RRset.
  */
 
 void

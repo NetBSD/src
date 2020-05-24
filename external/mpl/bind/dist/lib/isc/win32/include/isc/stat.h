@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_STAT_H
 #define ISC_STAT_H 1
@@ -27,33 +26,33 @@ typedef unsigned short mode_t;
  * We'll just map them all to the NT equivalent
  */
 
-#define S_IREAD	_S_IREAD	/* read permission, owner */
-#define S_IWRITE _S_IWRITE	/* write permission, owner */
-#define S_IRUSR _S_IREAD	/* Owner read permission */
-#define S_IWUSR _S_IWRITE	/* Owner write permission */
-#define S_IRGRP _S_IREAD	/* Group read permission */
-#define S_IWGRP _S_IWRITE	/* Group write permission */
-#define S_IROTH _S_IREAD	/* Other read permission */
-#define S_IWOTH _S_IWRITE	/* Other write permission */
+#define S_IREAD	 _S_IREAD  /* read permission, owner */
+#define S_IWRITE _S_IWRITE /* write permission, owner */
+#define S_IRUSR	 _S_IREAD  /* Owner read permission */
+#define S_IWUSR	 _S_IWRITE /* Owner write permission */
+#define S_IRGRP	 _S_IREAD  /* Group read permission */
+#define S_IWGRP	 _S_IWRITE /* Group write permission */
+#define S_IROTH	 _S_IREAD  /* Other read permission */
+#define S_IWOTH	 _S_IWRITE /* Other write permission */
 
 #ifndef S_IFMT
-# define S_IFMT   _S_IFMT
-#endif
+#define S_IFMT _S_IFMT
+#endif /* ifndef S_IFMT */
 #ifndef S_IFDIR
-# define S_IFDIR  _S_IFDIR
-#endif
+#define S_IFDIR _S_IFDIR
+#endif /* ifndef S_IFDIR */
 #ifndef S_IFCHR
-# define S_IFCHR  _S_IFCHR
-#endif
+#define S_IFCHR _S_IFCHR
+#endif /* ifndef S_IFCHR */
 #ifndef S_IFREG
-# define S_IFREG  _S_IFREG
-#endif
+#define S_IFREG _S_IFREG
+#endif /* ifndef S_IFREG */
 
 #ifndef S_ISDIR
-# define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)
-#endif
+#define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
+#endif /* ifndef S_ISDIR */
 #ifndef S_ISREG
-# define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
-#endif
+#define S_ISREG(m) (((m)&S_IFMT) == S_IFREG)
+#endif /* ifndef S_ISREG */
 
 #endif /* ISC_STAT_H */

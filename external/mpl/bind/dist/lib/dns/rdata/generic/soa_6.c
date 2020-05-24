@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,20 +31,20 @@ fromtext_soa(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      false));
+					      isc_tokentype_string, false));
 
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
+		RETTOK(dns_name_fromtext(&name, &buffer, origin, options,
+					 target));
 		ok = true;
-		if ((options & DNS_RDATA_CHECKNAMES) != 0)
+		if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 			switch (i) {
 			case 0:
 				ok = dns_name_ishostname(&name, false);
@@ -52,12 +52,14 @@ fromtext_soa(ARGS_FROMTEXT) {
 			case 1:
 				ok = dns_name_ismailbox(&name);
 				break;
-
 			}
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+		}
+		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
+		}
+		if (!ok && callbacks != NULL) {
 			warn_badname(&name, lexer, callbacks);
+		}
 	}
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
@@ -66,8 +68,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 
 	for (i = 0; i < 4; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      false));
+					      isc_tokentype_string, false));
 		RETTOK(dns_counter_fromtext(&token.value.as_textregion, &n));
 		RETERR(uint32_tobuffer(n, target));
 	}
@@ -75,9 +76,8 @@ fromtext_soa(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static const char *soa_fieldnames[5] = {
-	"serial", "refresh", "retry", "expire", "minimum"
-};
+static const char *soa_fieldnames[5] = { "serial", "refresh", "retry", "expire",
+					 "minimum" };
 
 static inline isc_result_t
 totext_soa(ARGS_TOTEXT) {
@@ -100,7 +100,6 @@ totext_soa(ARGS_TOTEXT) {
 		comm = false;
 	}
 
-
 	dns_name_init(&mname, NULL);
 	dns_name_init(&rname, NULL);
 	dns_name_init(&prefix, NULL);
@@ -121,8 +120,9 @@ totext_soa(ARGS_TOTEXT) {
 	sub = name_prefix(&rname, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	if (multiline)
-		RETERR(str_totext(" (" , target));
+	if (multiline) {
+		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 
 	for (i = 0; i < 5; i++) {
@@ -137,8 +137,7 @@ totext_soa(ARGS_TOTEXT) {
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {
 				RETERR(str_totext(" (", target));
-				RETERR(dns_ttl_totext(num, true,
-						      true, target));
+				RETERR(dns_ttl_totext(num, true, true, target));
 				RETERR(str_totext(")", target));
 			}
 			RETERR(str_totext(tctx->linebreak, target));
@@ -147,8 +146,9 @@ totext_soa(ARGS_TOTEXT) {
 		}
 	}
 
-	if (multiline)
+	if (multiline) {
 		RETERR(str_totext(")", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -176,10 +176,12 @@ fromwire_soa(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
 
-	if (sregion.length < 20)
+	if (sregion.length < 20) {
 		return (ISC_R_UNEXPECTEDEND);
-	if (tregion.length < 20)
+	}
+	if (tregion.length < 20) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_forward(source, 20);
@@ -216,8 +218,9 @@ towire_soa(ARGS_TOWIRE) {
 	RETERR(dns_name_towire(&rname, cctx, target));
 
 	isc_buffer_availableregion(target, &tregion);
-	if (tregion.length < 20)
+	if (tregion.length < 20) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_add(target, 20);
@@ -248,8 +251,9 @@ compare_soa(ARGS_COMPARE) {
 	dns_name_fromregion(&name2, &region2);
 
 	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
@@ -261,8 +265,9 @@ compare_soa(ARGS_COMPARE) {
 	dns_name_fromregion(&name2, &region2);
 
 	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
@@ -309,7 +314,6 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	soa->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&soa->common, link);
 
-
 	dns_rdata_toregion(rdata, &region);
 
 	dns_name_init(&name, NULL);
@@ -322,8 +326,9 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&soa->contact, NULL);
 	result = name_duporclone(&name, mctx, &soa->contact);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	soa->serial = uint32_fromregion(&region);
 	isc_region_consume(&region, 4);
@@ -342,9 +347,10 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	soa->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL)
+cleanup:
+	if (mctx != NULL) {
 		dns_name_free(&soa->origin, mctx);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
@@ -355,8 +361,9 @@ freestruct_soa(ARGS_FREESTRUCT) {
 	REQUIRE(soa != NULL);
 	REQUIRE(soa->common.rdtype == dns_rdatatype_soa);
 
-	if (soa->mctx == NULL)
+	if (soa->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&soa->origin, soa->mctx);
 	dns_name_free(&soa->contact, soa->mctx);
@@ -398,7 +405,6 @@ digest_soa(ARGS_DIGEST) {
 
 static inline bool
 checkowner_soa(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_soa);
 
 	UNUSED(name);
@@ -422,15 +428,17 @@ checknames_soa(ARGS_CHECKNAMES) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ishostname(&name, false)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	isc_region_consume(&region, name_length(&name));
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
@@ -441,4 +449,4 @@ casecompare_soa(ARGS_COMPARE) {
 	return (compare_soa(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_SOA_6_C */
+#endif /* RDATA_GENERIC_SOA_6_C */

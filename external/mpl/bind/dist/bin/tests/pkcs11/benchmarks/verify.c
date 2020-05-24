@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.4 2019/10/17 16:46:58 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* verify [-m module] [-s $slot] [-p pin] [-t] [-n count] */
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -64,13 +61,13 @@
 
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
-#endif
-
-static int clock_gettime(int32_t id, struct timespec *tp);
+#endif /* ifndef CLOCK_REALTIME */
 
 static int
-clock_gettime(int32_t id, struct timespec *tp)
-{
+clock_gettime(int32_t id, struct timespec *tp);
+
+static int
+clock_gettime(int32_t id, struct timespec *tp) {
 	struct timeval tv;
 	int result;
 
@@ -79,30 +76,24 @@ clock_gettime(int32_t id, struct timespec *tp)
 	result = gettimeofday(&tv, NULL);
 	if (result == 0) {
 		tp->tv_sec = tv.tv_sec;
-		tp->tv_nsec = (long) tv.tv_usec * 1000;
+		tp->tv_nsec = (long)tv.tv_usec * 1000;
 	}
 	return (result);
 }
-#endif
+#endif /* ifndef HAVE_CLOCK_GETTIME */
 
 CK_BYTE modulus[] = {
-	0x00, 0xb7, 0x9c, 0x1f, 0x05, 0xa3, 0xc2, 0x99,
-	0x44, 0x82, 0x20, 0x78, 0x43, 0x7f, 0x5f, 0x3b,
-	0x10, 0xd7, 0x9e, 0x61, 0x42, 0xd2, 0x7a, 0x90,
-	0x50, 0x8a, 0x99, 0x33, 0xe7, 0xca, 0xc8, 0x5f,
-	0x16, 0x1c, 0x56, 0xf8, 0xc1, 0x06, 0x2f, 0x96,
-	0xe7, 0x54, 0xf2, 0x85, 0x89, 0x41, 0x36, 0xf5,
-	0x4c, 0xa4, 0x0d, 0x62, 0xd3, 0x42, 0x51, 0x6b,
-	0x9f, 0xdc, 0x36, 0xcb, 0xad, 0x56, 0xf4, 0xbd,
-	0x2a, 0x60, 0x33, 0xb1, 0x7a, 0x99, 0xad, 0x08,
-	0x9f, 0x95, 0xe8, 0xe5, 0x14, 0xd9, 0x68, 0x79,
-	0xca, 0x4e, 0x72, 0xeb, 0xfb, 0x2c, 0xf1, 0x45,
-	0xd3, 0x33, 0x65, 0xe7, 0xc5, 0x11, 0xdd, 0xe7,
-	0x09, 0x83, 0x13, 0xd5, 0x17, 0x1b, 0xf4, 0xbd,
-	0x49, 0xdd, 0x8a, 0x3c, 0x3c, 0xf7, 0xa1, 0x5d,
-	0x7b, 0xb4, 0xd3, 0x80, 0x25, 0xf4, 0x05, 0x8f,
-	0xbc, 0x2c, 0x2a, 0x47, 0xff, 0xd1, 0xc8, 0x34,
-	0xbf
+	0x00, 0xb7, 0x9c, 0x1f, 0x05, 0xa3, 0xc2, 0x99, 0x44, 0x82, 0x20, 0x78,
+	0x43, 0x7f, 0x5f, 0x3b, 0x10, 0xd7, 0x9e, 0x61, 0x42, 0xd2, 0x7a, 0x90,
+	0x50, 0x8a, 0x99, 0x33, 0xe7, 0xca, 0xc8, 0x5f, 0x16, 0x1c, 0x56, 0xf8,
+	0xc1, 0x06, 0x2f, 0x96, 0xe7, 0x54, 0xf2, 0x85, 0x89, 0x41, 0x36, 0xf5,
+	0x4c, 0xa4, 0x0d, 0x62, 0xd3, 0x42, 0x51, 0x6b, 0x9f, 0xdc, 0x36, 0xcb,
+	0xad, 0x56, 0xf4, 0xbd, 0x2a, 0x60, 0x33, 0xb1, 0x7a, 0x99, 0xad, 0x08,
+	0x9f, 0x95, 0xe8, 0xe5, 0x14, 0xd9, 0x68, 0x79, 0xca, 0x4e, 0x72, 0xeb,
+	0xfb, 0x2c, 0xf1, 0x45, 0xd3, 0x33, 0x65, 0xe7, 0xc5, 0x11, 0xdd, 0xe7,
+	0x09, 0x83, 0x13, 0xd5, 0x17, 0x1b, 0xf4, 0xbd, 0x49, 0xdd, 0x8a, 0x3c,
+	0x3c, 0xf7, 0xa1, 0x5d, 0x7b, 0xb4, 0xd3, 0x80, 0x25, 0xf4, 0x05, 0x8f,
+	0xbc, 0x2c, 0x2a, 0x47, 0xff, 0xd1, 0xc8, 0x34, 0xbf
 };
 CK_BYTE exponent[] = { 0x01, 0x00, 0x01 };
 
@@ -123,15 +114,14 @@ main(int argc, char *argv[]) {
 	CK_OBJECT_HANDLE hKey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS kClass = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE kType = CKK_RSA;
-	CK_ATTRIBUTE kTemplate[] =
-	{
-		{ CKA_CLASS, &kClass, (CK_ULONG) sizeof(kClass) },
-		{ CKA_KEY_TYPE, &kType, (CK_ULONG) sizeof(kType) },
-		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_PRIVATE, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_VERIFY, &truevalue, (CK_ULONG) sizeof(truevalue) },
-		{ CKA_MODULUS, modulus, (CK_ULONG) sizeof(modulus) },
-		{ CKA_PUBLIC_EXPONENT, exponent, (CK_ULONG) sizeof(exponent) }
+	CK_ATTRIBUTE kTemplate[] = {
+		{ CKA_CLASS, &kClass, (CK_ULONG)sizeof(kClass) },
+		{ CKA_KEY_TYPE, &kType, (CK_ULONG)sizeof(kType) },
+		{ CKA_TOKEN, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_PRIVATE, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_VERIFY, &truevalue, (CK_ULONG)sizeof(truevalue) },
+		{ CKA_MODULUS, modulus, (CK_ULONG)sizeof(modulus) },
+		{ CKA_PUBLIC_EXPONENT, exponent, (CK_ULONG)sizeof(exponent) }
 	};
 	CK_MECHANISM mech = { CKM_SHA1_RSA_PKCS, NULL, 0 };
 	pk11_context_t pctx;
@@ -140,7 +130,7 @@ main(int argc, char *argv[]) {
 	char *pin = NULL;
 	int error = 0;
 	int c, errflg = 0;
-	int ontoken  = 0;
+	int ontoken = 0;
 	unsigned int count = 1000;
 	unsigned int i;
 	struct timespec starttime;
@@ -165,8 +155,7 @@ main(int argc, char *argv[]) {
 			count = atoi(isc_commandline_argument);
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -180,41 +169,43 @@ main(int argc, char *argv[]) {
 
 	if (errflg) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr,
-			"\tverify [-m module] [-s slot] [-p pin] "
-			"[-t] [-n count]\n");
+		fprintf(stderr, "\tverify [-m module] [-s slot] [-p pin] "
+				"[-t] [-n count]\n");
 		exit(1);
 	}
 
 	pk11_result_register();
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	if (pin == NULL) {
 		pin = getpass("Enter Pin: ");
 	}
 
-	result = pk11_get_session(&pctx, op_type, false, true,
-				  true, (const char *) pin, slot);
-	if ((result != ISC_R_SUCCESS) &&
-	    (result != PK11_R_NORANDOMSERVICE) &&
+	result = pk11_get_session(&pctx, op_type, false, true, true,
+				  (const char *)pin, slot);
+	if ((result != ISC_R_SUCCESS) && (result != PK11_R_NORANDOMSERVICE) &&
 	    (result != PK11_R_NODIGESTSERVICE) &&
-	    (result != PK11_R_NOAESSERVICE)) {
+	    (result != PK11_R_NOAESSERVICE))
+	{
 		fprintf(stderr, "Error initializing PKCS#11: %s\n",
 			isc_result_totext(result));
 		exit(1);
 	}
 
-	if (pin != NULL)
+	if (pin != NULL) {
 		memset(pin, 0, strlen((char *)pin));
+	}
 
 	hSession = pctx.session;
 
 	/* Create the private RSA key */
-	if (ontoken)
+	if (ontoken) {
 		kTemplate[2].pValue = &truevalue;
+	}
 
 	rv = pkcs_C_CreateObject(hSession, kTemplate, 7, &hKey);
 	if (rv != CKR_OK) {
@@ -224,7 +215,7 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Randomize the buffer */
-	len = (CK_ULONG) sizeof(buf);
+	len = (CK_ULONG)sizeof(buf);
 	rv = pkcs_C_GenerateRandom(hSession, buf, len);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_GenerateRandom: Error = 0x%.8lX\n", rv);
@@ -240,20 +231,18 @@ main(int argc, char *argv[]) {
 		/* Initialize Verify */
 		rv = pkcs_C_VerifyInit(hSession, &mech, hKey);
 		if (rv != CKR_OK) {
-			fprintf(stderr,
-				"C_VerifyInit[%u]: Error = 0x%.8lX\n",
+			fprintf(stderr, "C_VerifyInit[%u]: Error = 0x%.8lX\n",
 				i, rv);
 			error = 1;
 			break;
 		}
 
 		/* Perform Verify */
-		slen = (CK_ULONG) sizeof(sig);
+		slen = (CK_ULONG)sizeof(sig);
 		rv = pkcs_C_Verify(hSession, buf, len, sig, slen);
 		if ((rv != CKR_OK) && (rv != CKR_SIGNATURE_INVALID)) {
-			fprintf(stderr,
-				"C_Verify[%u]: Error = 0x%.8lX\n",
-				i, rv);
+			fprintf(stderr, "C_Verify[%u]: Error = 0x%.8lX\n", i,
+				rv);
 			error = 1;
 			break;
 		}
@@ -270,26 +259,27 @@ main(int argc, char *argv[]) {
 		endtime.tv_sec -= 1;
 		endtime.tv_nsec += 1000000000;
 	}
-	printf("%u RSA verify in %ld.%09lds\n", i,
-	       endtime.tv_sec, endtime.tv_nsec);
-	if (i > 0)
+	printf("%u RSA verify in %ld.%09lds\n", i, endtime.tv_sec,
+	       endtime.tv_nsec);
+	if (i > 0) {
 		printf("%g RSA verify/s\n",
-		       1024 * i / ((double) endtime.tv_sec +
-				   (double) endtime.tv_nsec / 1000000000.));
+		       1024 * i /
+			       ((double)endtime.tv_sec +
+				(double)endtime.tv_nsec / 1000000000.));
+	}
 
-    exit_key:
+exit_key:
 	if (hKey != CK_INVALID_HANDLE) {
 		rv = pkcs_C_DestroyObject(hSession, hKey);
 		if (rv != CKR_OK) {
-			fprintf(stderr,
-				"C_DestroyObject: Error = 0x%.8lX\n",
+			fprintf(stderr, "C_DestroyObject: Error = 0x%.8lX\n",
 				rv);
 			error = 1;
 		}
 	}
 
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

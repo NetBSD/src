@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.5 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,38 +36,38 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 
 /* coverity[+kill] */
 ISC_PLATFORM_NORETURN_PRE
-void isc_assertion_failed(const char *, int, isc_assertiontype_t,
-			  const char *) ISC_PLATFORM_NORETURN_POST;
-
 void
-isc_assertion_setcallback(isc_assertioncallback_t);
+isc_assertion_failed(const char *, int, isc_assertiontype_t,
+		     const char *) ISC_PLATFORM_NORETURN_POST;
+
+void isc_assertion_setcallback(isc_assertioncallback_t);
 
 const char *
 isc_assertion_typetotext(isc_assertiontype_t type);
 
-#define ISC_REQUIRE(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_require, \
-					 #cond), 0)))
+#define ISC_REQUIRE(cond)                                                  \
+	((void)(ISC_LIKELY(cond) ||                                        \
+		((isc_assertion_failed)(__FILE__, __LINE__,                \
+					isc_assertiontype_require, #cond), \
+		 0)))
 
-#define ISC_ENSURE(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_ensure, \
-					 #cond), 0)))
+#define ISC_ENSURE(cond)                                                  \
+	((void)(ISC_LIKELY(cond) ||                                       \
+		((isc_assertion_failed)(__FILE__, __LINE__,               \
+					isc_assertiontype_ensure, #cond), \
+		 0)))
 
-#define ISC_INSIST(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_insist, \
-					 #cond), 0)))
+#define ISC_INSIST(cond)                                                  \
+	((void)(/*CONSTCOND*/ISC_LIKELY(cond) ||                          \
+		((isc_assertion_failed)(__FILE__, __LINE__,               \
+					isc_assertiontype_insist, #cond), \
+		 0)))
 
-#define ISC_INVARIANT(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_invariant, \
-					 #cond), 0)))
+#define ISC_INVARIANT(cond)                                                  \
+	((void)(ISC_LIKELY(cond) ||                                          \
+		((isc_assertion_failed)(__FILE__, __LINE__,                  \
+					isc_assertiontype_invariant, #cond), \
+		 0)))
 
 ISC_LANG_ENDDECLS
 

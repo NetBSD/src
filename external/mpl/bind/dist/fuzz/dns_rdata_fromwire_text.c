@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.3 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,11 @@
 #include <dns/rdata.h>
 #include <dns/rdatatype.h>
 
-#define CHECK(x) ({ if ((result = (x)) != ISC_R_SUCCESS) goto done; })
+#define CHECK(x)                                     \
+	({                                           \
+		if ((result = (x)) != ISC_R_SUCCESS) \
+			goto done;                   \
+	})
 
 /*
  * Fuzz input to dns_rdata_fromwire(). Then convert the result
@@ -36,30 +40,27 @@
  * format again, checking for consistency throughout the sequence.
  */
 
-int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
+int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
 static void
 nullmsg(dns_rdatacallbacks_t *cb, const char *fmt, ...) {
-
 	UNUSED(cb);
 	UNUSED(fmt);
 }
 
 int
-LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	char totext[1024];
 	dns_compress_t cctx;
 	dns_decompress_t dctx;
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
-	dns_rdatatype_t typelist[256] = { 1000 };	/* unknown */
-	dns_rdataclass_t classlist[] = { dns_rdataclass_in,
-					 dns_rdataclass_hs,
-					 dns_rdataclass_ch,
-					 dns_rdataclass_any,
+	dns_rdatatype_t typelist[256] = { 1000 }; /* unknown */
+	dns_rdataclass_t classlist[] = { dns_rdataclass_in, dns_rdataclass_hs,
+					 dns_rdataclass_ch, dns_rdataclass_any,
 					 60 };
-	dns_rdata_t rdata1 = DNS_RDATA_INIT,
-		    rdata2 = DNS_RDATA_INIT,
+	dns_rdata_t rdata1 = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT,
 		    rdata3 = DNS_RDATA_INIT;
 	dns_rdatacallbacks_t callbacks;
 	isc_buffer_t source, target;
@@ -70,7 +71,7 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	unsigned char fromtext[1024];
 	unsigned char fromwire[1024];
 	unsigned char towire[1024];
-	unsigned int classes = (sizeof(classlist)/sizeof(classlist[0]));
+	unsigned int classes = (sizeof(classlist) / sizeof(classlist[0]));
 	unsigned int types = 1, flags, t;
 
 	if (size < 2) {
@@ -88,7 +89,7 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 		dns_rdatatype_format(t, typebuf, sizeof(typebuf));
 		if (strncmp(typebuf, "TYPE", 4) != 0) {
 			/* Assert when we need to grow typelist. */
-			assert(types < sizeof(typelist)/sizeof(typelist[0]));
+			assert(types < sizeof(typelist) / sizeof(typelist[0]));
 			typelist[types++] = t;
 		}
 	}
@@ -96,10 +97,12 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	/*
 	 * Random type and class from a limited set.
 	 */
-	rdtype = typelist[(*data++) % types]; size--;
-	rdclass = classlist[(*data++) % classes]; size--;
+	rdtype = typelist[(*data++) % types];
+	size--;
+	rdclass = classlist[(*data++) % classes];
+	size--;
 
-	CHECK(isc_mem_create(0, 0, &mctx));
+	isc_mem_create(&mctx);
 
 	CHECK(isc_lex_create(mctx, 64, &lex));
 	memset(specials, 0, sizeof(specials));
@@ -124,8 +127,8 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	/*
 	 * Reject invalid rdata.
 	 */
-	CHECK(dns_rdata_fromwire(&rdata1, rdclass, rdtype, &source, &dctx,
-				 0, &target));
+	CHECK(dns_rdata_fromwire(&rdata1, rdclass, rdtype, &source, &dctx, 0,
+				 &target));
 
 	/*
 	 * Convert to text from wire.
@@ -142,9 +145,8 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	CHECK(isc_lex_openbuffer(lex, &source));
 
 	isc_buffer_init(&target, fromtext, sizeof(fromtext));
-	result = dns_rdata_fromtext(&rdata2, rdclass, rdtype, lex,
-				    dns_rootname, 0, mctx, &target,
-				    &callbacks);
+	result = dns_rdata_fromtext(&rdata2, rdclass, rdtype, lex, dns_rootname,
+				    0, mctx, &target, &callbacks);
 	assert(result == ISC_R_SUCCESS);
 	assert(rdata2.length == size);
 	assert(!memcmp(rdata2.data, data, size));
@@ -154,8 +156,8 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	 */
 	isc_buffer_init(&target, totext, sizeof(totext));
 	flags = dns_master_styleflags(&dns_master_style_default);
-	result = dns_rdata_tofmttext(&rdata1, dns_rootname, flags,
-				     80 - 32, 4, "\n", &target);
+	result = dns_rdata_tofmttext(&rdata1, dns_rootname, flags, 80 - 32, 4,
+				     "\n", &target);
 	assert(result == ISC_R_SUCCESS);
 
 	/*
@@ -166,9 +168,8 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	CHECK(isc_lex_openbuffer(lex, &source));
 
 	isc_buffer_init(&target, fromtext, sizeof(fromtext));
-	result = dns_rdata_fromtext(&rdata3, rdclass, rdtype, lex,
-				    dns_rootname, 0, mctx, &target,
-				    &callbacks);
+	result = dns_rdata_fromtext(&rdata3, rdclass, rdtype, lex, dns_rootname,
+				    0, mctx, &target, &callbacks);
 	assert(result == ISC_R_SUCCESS);
 	assert(rdata3.length == size);
 	assert(!memcmp(rdata3.data, data, size));
@@ -185,7 +186,7 @@ LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	assert(target.used == size);
 	assert(!memcmp(target.base, data, size));
 
- done:
+done:
 	if (lex != NULL) {
 		isc_lex_destroy(&lex);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.6 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 static inline isc_result_t
 fromtext_openpgpkey(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(type);
@@ -45,20 +44,24 @@ totext_openpgpkey(ARGS_TOTEXT) {
 	/*
 	 * Keyring
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext("( ", target));
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0)   /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_base64_totext(&sr, 60, "", target));
-		else
+		} else {
 			RETERR(isc_base64_totext(&sr, tctx->width - 2,
 						 tctx->linebreak, target));
-	} else
+		}
+	} else {
 		RETERR(str_totext("[omitted]", target));
+	}
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -78,8 +81,9 @@ fromwire_openpgpkey(ARGS_FROMWIRE) {
 	 * Keyring.
 	 */
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
@@ -152,28 +156,31 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	 */
 	sig->length = sr.length;
 	sig->keyring = mem_maybedup(mctx, sr.base, sig->length);
-	if (sig->keyring == NULL)
+	if (sig->keyring == NULL) {
 		goto cleanup;
+	}
 
 	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
 static inline void
 freestruct_openpgpkey(ARGS_FREESTRUCT) {
-	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *) source;
+	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *)source;
 
 	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
 
-	if (sig->mctx == NULL)
+	if (sig->mctx == NULL) {
 		return;
+	}
 
-	if (sig->keyring != NULL)
+	if (sig->keyring != NULL) {
 		isc_mem_free(sig->mctx, sig->keyring);
+	}
 	sig->mctx = NULL;
 }
 
@@ -201,7 +208,6 @@ digest_openpgpkey(ARGS_DIGEST) {
 
 static inline bool
 checkowner_openpgpkey(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(name);
@@ -214,7 +220,6 @@ checkowner_openpgpkey(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_openpgpkey(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	UNUSED(rdata);
@@ -241,4 +246,4 @@ casecompare_openpgpkey(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-#endif	/* RDATA_GENERIC_OPENPGPKEY_61_C */
+#endif /* RDATA_GENERIC_OPENPGPKEY_61_C */

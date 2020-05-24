@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: keygen.c,v 1.4 2020/05/24 19:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,11 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#include <config.h>
-
-#include <stdlib.h>
+#include "keygen.h"
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
@@ -33,10 +31,10 @@
 #include <dns/name.h>
 
 #include <dst/dst.h>
+
 #include <confgen/os.h>
 
 #include "util.h"
-#include "keygen.h"
 
 /*%
  * Convert algorithm type to string.
@@ -44,20 +42,20 @@
 const char *
 alg_totext(dns_secalg_t alg) {
 	switch (alg) {
-	    case DST_ALG_HMACMD5:
-		return "hmac-md5";
-	    case DST_ALG_HMACSHA1:
-		return "hmac-sha1";
-	    case DST_ALG_HMACSHA224:
-		return "hmac-sha224";
-	    case DST_ALG_HMACSHA256:
-		return "hmac-sha256";
-	    case DST_ALG_HMACSHA384:
-		return "hmac-sha384";
-	    case DST_ALG_HMACSHA512:
-		return "hmac-sha512";
-	    default:
-		return "(unknown)";
+	case DST_ALG_HMACMD5:
+		return ("hmac-md5");
+	case DST_ALG_HMACSHA1:
+		return ("hmac-sha1");
+	case DST_ALG_HMACSHA224:
+		return ("hmac-sha224");
+	case DST_ALG_HMACSHA256:
+		return ("hmac-sha256");
+	case DST_ALG_HMACSHA384:
+		return ("hmac-sha384");
+	case DST_ALG_HMACSHA512:
+		return ("hmac-sha512");
+	default:
+		return ("(unknown)");
 	}
 }
 
@@ -67,22 +65,29 @@ alg_totext(dns_secalg_t alg) {
 dns_secalg_t
 alg_fromtext(const char *name) {
 	const char *p = name;
-	if (strncasecmp(p, "hmac-", 5) == 0)
+	if (strncasecmp(p, "hmac-", 5) == 0) {
 		p = &name[5];
+	}
 
-	if (strcasecmp(p, "md5") == 0)
-		return DST_ALG_HMACMD5;
-	if (strcasecmp(p, "sha1") == 0)
-		return DST_ALG_HMACSHA1;
-	if (strcasecmp(p, "sha224") == 0)
-		return DST_ALG_HMACSHA224;
-	if (strcasecmp(p, "sha256") == 0)
-		return DST_ALG_HMACSHA256;
-	if (strcasecmp(p, "sha384") == 0)
-		return DST_ALG_HMACSHA384;
-	if (strcasecmp(p, "sha512") == 0)
-		return DST_ALG_HMACSHA512;
-	return DST_ALG_UNKNOWN;
+	if (strcasecmp(p, "md5") == 0) {
+		return (DST_ALG_HMACMD5);
+	}
+	if (strcasecmp(p, "sha1") == 0) {
+		return (DST_ALG_HMACSHA1);
+	}
+	if (strcasecmp(p, "sha224") == 0) {
+		return (DST_ALG_HMACSHA224);
+	}
+	if (strcasecmp(p, "sha256") == 0) {
+		return (DST_ALG_HMACSHA256);
+	}
+	if (strcasecmp(p, "sha384") == 0) {
+		return (DST_ALG_HMACSHA384);
+	}
+	if (strcasecmp(p, "sha512") == 0) {
+		return (DST_ALG_HMACSHA512);
+	}
+	return (DST_ALG_UNKNOWN);
 }
 
 /*%
@@ -91,20 +96,20 @@ alg_fromtext(const char *name) {
 int
 alg_bits(dns_secalg_t alg) {
 	switch (alg) {
-	    case DST_ALG_HMACMD5:
-		return 128;
-	    case DST_ALG_HMACSHA1:
-		return 160;
-	    case DST_ALG_HMACSHA224:
-		return 224;
-	    case DST_ALG_HMACSHA256:
-		return 256;
-	    case DST_ALG_HMACSHA384:
-		return 384;
-	    case DST_ALG_HMACSHA512:
-		return 512;
-	    default:
-		return 0;
+	case DST_ALG_HMACMD5:
+		return (128);
+	case DST_ALG_HMACSHA1:
+		return (160);
+	case DST_ALG_HMACSHA224:
+		return (224);
+	case DST_ALG_HMACSHA256:
+		return (256);
+	case DST_ALG_HMACSHA384:
+		return (384);
+	case DST_ALG_HMACSHA512:
+		return (512);
+	default:
+		return (0);
 	}
 }
 
@@ -121,30 +126,31 @@ generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
 	dst_key_t *key = NULL;
 
 	switch (alg) {
-	    case DST_ALG_HMACMD5:
-	    case DST_ALG_HMACSHA1:
-	    case DST_ALG_HMACSHA224:
-	    case DST_ALG_HMACSHA256:
-		if (keysize < 1 || keysize > 512)
+	case DST_ALG_HMACMD5:
+	case DST_ALG_HMACSHA1:
+	case DST_ALG_HMACSHA224:
+	case DST_ALG_HMACSHA256:
+		if (keysize < 1 || keysize > 512) {
 			fatal("keysize %d out of range (must be 1-512)\n",
 			      keysize);
+		}
 		break;
-	    case DST_ALG_HMACSHA384:
-	    case DST_ALG_HMACSHA512:
-		if (keysize < 1 || keysize > 1024)
+	case DST_ALG_HMACSHA384:
+	case DST_ALG_HMACSHA512:
+		if (keysize < 1 || keysize > 1024) {
 			fatal("keysize %d out of range (must be 1-1024)\n",
 			      keysize);
+		}
 		break;
-	    default:
+	default:
 		fatal("unsupported algorithm %d\n", alg);
 	}
 
 	DO("initialize dst library", dst_lib_init(mctx, NULL));
 
-	DO("generate key", dst_key_generate(dns_rootname, alg,
-					    keysize, 0, 0, DNS_KEYPROTO_ANY,
-					    dns_rdataclass_in, mctx, &key,
-					    NULL));
+	DO("generate key",
+	   dst_key_generate(dns_rootname, alg, keysize, 0, 0, DNS_KEYPROTO_ANY,
+			    dns_rdataclass_in, mctx, &key, NULL));
 
 	isc_buffer_init(&key_rawbuffer, &key_rawsecret, sizeof(key_rawsecret));
 
@@ -152,11 +158,12 @@ generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
 
 	isc_buffer_usedregion(&key_rawbuffer, &key_rawregion);
 
-	DO("bsse64 encode secret", isc_base64_totext(&key_rawregion, -1, "",
-						     key_txtbuffer));
+	DO("bsse64 encode secret",
+	   isc_base64_totext(&key_rawregion, -1, "", key_txtbuffer));
 
-	if (key != NULL)
+	if (key != NULL) {
 		dst_key_free(&key);
+	}
 
 	dst_lib_destroy();
 }
@@ -167,9 +174,8 @@ generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
  * the name 'keyname' and the secret in the buffer 'secret'.
  */
 void
-write_key_file(const char *keyfile, const char *user,
-	       const char *keyname, isc_buffer_t *secret,
-	       dns_secalg_t alg) {
+write_key_file(const char *keyfile, const char *user, const char *keyname,
+	       isc_buffer_t *secret, dns_secalg_t alg) {
 	isc_result_t result;
 	const char *algname = alg_totext(alg);
 	FILE *fd = NULL;
@@ -177,19 +183,22 @@ write_key_file(const char *keyfile, const char *user,
 	DO("create keyfile", isc_file_safecreate(keyfile, &fd));
 
 	if (user != NULL) {
-		if (set_user(fd, user) == -1)
+		if (set_user(fd, user) == -1) {
 			fatal("unable to set file owner\n");
+		}
 	}
 
-	fprintf(fd, "key \"%s\" {\n\talgorithm %s;\n"
+	fprintf(fd,
+		"key \"%s\" {\n\talgorithm %s;\n"
 		"\tsecret \"%.*s\";\n};\n",
-		keyname, algname,
-		(int)isc_buffer_usedlength(secret),
+		keyname, algname, (int)isc_buffer_usedlength(secret),
 		(char *)isc_buffer_base(secret));
 	fflush(fd);
-	if (ferror(fd))
+	if (ferror(fd)) {
 		fatal("write to %s failed\n", keyfile);
-	if (fclose(fd))
+	}
+	if (fclose(fd)) {
 		fatal("fclose(%s) failed\n", keyfile);
+	}
 	fprintf(stderr, "wrote key file \"%s\"\n", keyfile);
 }

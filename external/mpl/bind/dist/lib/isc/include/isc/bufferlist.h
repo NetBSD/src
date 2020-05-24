@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferlist.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: bufferlist.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,23 +11,22 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_BUFFERLIST_H
 #define ISC_BUFFERLIST_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/bufferlist.h
  *
  *
- *\brief	Buffer lists have no synchronization.  Clients must ensure exclusive
- *	access.
+ *\brief	Buffer lists have no synchronization.  Clients must ensure
+ * exclusive *	access.
  *
  * \li Reliability:
  *	No anticipated impact.
-
+ *
  * \li Security:
  *	No anticipated impact.
  *
@@ -65,8 +64,8 @@ isc_bufferlist_usedcount(isc_bufferlist_t *bl);
 unsigned int
 isc_bufferlist_availablecount(isc_bufferlist_t *bl);
 /*!<
- * \brief Return the length of the sum of all available regions of all buffers in
- * the buffer list 'bl'
+ * \brief Return the length of the sum of all available regions of all buffers
+ * in the buffer list 'bl'
  *
  * Requires:
  *

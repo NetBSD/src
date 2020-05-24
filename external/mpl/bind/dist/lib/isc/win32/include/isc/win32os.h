@@ -1,4 +1,4 @@
-/*	$NetBSD: win32os.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: win32os.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_WIN32OS_H
 #define ISC_WIN32OS_H 1
@@ -26,7 +25,7 @@ ISC_LANG_BEGINDECLS
 
 int
 isc_win32os_versioncheck(unsigned int major, unsigned int minor,
-		     unsigned int updatemajor, unsigned int updateminor);
+			 unsigned int updatemajor, unsigned int updateminor);
 
 /*
  * Checks the current version of the operating system with the

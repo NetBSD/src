@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/byaddr.h
  * \brief
@@ -42,8 +41,8 @@
  *\li	Drafts:	TBS
  */
 
-#include <isc/lang.h>
 #include <isc/event.h>
+#include <isc/lang.h>
 
 #include <dns/types.h>
 
@@ -58,8 +57,8 @@ ISC_LANG_BEGINDECLS
  */
 typedef struct dns_byaddrevent {
 	ISC_EVENT_COMMON(struct dns_byaddrevent);
-	isc_result_t			result;
-	dns_namelist_t			names;
+	isc_result_t   result;
+	dns_namelist_t names;
 } dns_byaddrevent_t;
 
 isc_result_t

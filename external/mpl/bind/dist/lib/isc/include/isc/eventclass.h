@@ -1,4 +1,4 @@
-/*	$NetBSD: eventclass.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: eventclass.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_EVENTCLASS_H
 #define ISC_EVENTCLASS_H 1
@@ -26,7 +25,7 @@
  *
  */
 
-#define ISC_EVENTCLASS(eclass)		((eclass) << 16)
+#define ISC_EVENTCLASS(eclass) ((eclass) << 16)
 
 /*@{*/
 /*!
@@ -34,16 +33,16 @@
  * Event classes >= 1024 and <= 65535 are reserved for application use.
  */
 
-#define	ISC_EVENTCLASS_TASK		ISC_EVENTCLASS(0)
-#define	ISC_EVENTCLASS_TIMER		ISC_EVENTCLASS(1)
-#define	ISC_EVENTCLASS_SOCKET		ISC_EVENTCLASS(2)
-#define	ISC_EVENTCLASS_FILE		ISC_EVENTCLASS(3)
-#define	ISC_EVENTCLASS_DNS		ISC_EVENTCLASS(4)
-#define	ISC_EVENTCLASS_APP		ISC_EVENTCLASS(5)
-#define	ISC_EVENTCLASS_OMAPI		ISC_EVENTCLASS(6)
-#define	ISC_EVENTCLASS_RATELIMITER	ISC_EVENTCLASS(7)
-#define	ISC_EVENTCLASS_ISCCC		ISC_EVENTCLASS(8)
-#define	ISC_EVENTCLASS_NS		ISC_EVENTCLASS(9)
+#define ISC_EVENTCLASS_TASK	   ISC_EVENTCLASS(0)
+#define ISC_EVENTCLASS_TIMER	   ISC_EVENTCLASS(1)
+#define ISC_EVENTCLASS_SOCKET	   ISC_EVENTCLASS(2)
+#define ISC_EVENTCLASS_FILE	   ISC_EVENTCLASS(3)
+#define ISC_EVENTCLASS_DNS	   ISC_EVENTCLASS(4)
+#define ISC_EVENTCLASS_APP	   ISC_EVENTCLASS(5)
+#define ISC_EVENTCLASS_OMAPI	   ISC_EVENTCLASS(6)
+#define ISC_EVENTCLASS_RATELIMITER ISC_EVENTCLASS(7)
+#define ISC_EVENTCLASS_ISCCC	   ISC_EVENTCLASS(8)
+#define ISC_EVENTCLASS_NS	   ISC_EVENTCLASS(9)
 /*@}*/
 
 #endif /* ISC_EVENTCLASS_H */

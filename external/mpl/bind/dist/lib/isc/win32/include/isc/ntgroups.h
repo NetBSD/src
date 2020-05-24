@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: ntgroups.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_NTGROUPS_H
 #define ISC_NTGROUPS_H 1
 
@@ -20,10 +19,9 @@
 
 ISC_LANG_BEGINDECLS
 
-
 isc_result_t
-isc_ntsecurity_getaccountgroups(char *name, char **Groups, unsigned int maxgroups,
-	     unsigned int *total);
+isc_ntsecurity_getaccountgroups(char *name, char **Groups,
+				unsigned int maxgroups, unsigned int *total);
 
 ISC_LANG_ENDDECLS
 

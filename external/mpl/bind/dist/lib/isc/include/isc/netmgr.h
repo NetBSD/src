@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.h,v 1.1.1.1 2020/05/24 19:36:46 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.2 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -97,6 +97,9 @@ isc_nmhandle_unref(isc_nmhandle_t *handle);
  * otherwise know that the handle was in use and might free it, along
  * with the client.)
  */
+
+int
+isc_nmhandle_getfd(isc_nmhandle_t *handle);
 
 void *
 isc_nmhandle_getdata(isc_nmhandle_t *handle);

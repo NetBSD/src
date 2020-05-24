@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-gai.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: sample-gai.c,v 1.3 2020/05/24 19:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <isc/net.h>
 #include <isc/print.h>
 
 #include <irs/netdb.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 static void
 do_gai(int family, char *hostname) {
@@ -41,21 +38,21 @@ do_gai(int family, char *hostname) {
 	}
 
 	for (res = res0; res; res = res->ai_next) {
-		error = getnameinfo(res->ai_addr,
-				    (socklen_t)res->ai_addrlen,
-				    addrbuf, sizeof(addrbuf),
-				    NULL, 0, NI_NUMERICHOST);
-		if (error == 0)
+		error = getnameinfo(res->ai_addr, (socklen_t)res->ai_addrlen,
+				    addrbuf, sizeof(addrbuf), NULL, 0,
+				    NI_NUMERICHOST);
+		if (error == 0) {
 			error = getnameinfo(res->ai_addr,
-					    (socklen_t)res->ai_addrlen,
-					    namebuf, sizeof(namebuf),
-					    servbuf, sizeof(servbuf), 0);
+					    (socklen_t)res->ai_addrlen, namebuf,
+					    sizeof(namebuf), servbuf,
+					    sizeof(servbuf), 0);
+		}
 		if (error != 0) {
 			fprintf(stderr, "getnameinfo failed: %s\n",
 				gai_strerror(error));
 		} else {
-			printf("%s(%s/%s)=%s:%s\n", hostname,
-			       res->ai_canonname, addrbuf, namebuf, servbuf);
+			printf("%s(%s/%s)=%s:%s\n", hostname, res->ai_canonname,
+			       addrbuf, namebuf, servbuf);
 		}
 	}
 
@@ -64,8 +61,9 @@ do_gai(int family, char *hostname) {
 
 int
 main(int argc, char *argv[]) {
-	if (argc < 2)
+	if (argc < 2) {
 		exit(1);
+	}
 
 	do_gai(AF_INET, argv[1]);
 	do_gai(AF_INET6, argv[1]);

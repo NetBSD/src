@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: hip_55.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,24 +11,23 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef GENERIC_HIP_5_H
 #define GENERIC_HIP_5_H 1
 
 /* RFC 5205 */
 
 typedef struct dns_rdata_hip {
-	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
-	unsigned char *		hit;
-	unsigned char *		key;
-	unsigned char *		servers;
-	uint8_t		algorithm;
-	uint8_t		hit_len;
-	uint16_t		key_len;
-	uint16_t		servers_len;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	unsigned char *hit;
+	unsigned char *key;
+	unsigned char *servers;
+	uint8_t algorithm;
+	uint8_t hit_len;
+	uint16_t key_len;
+	uint16_t servers_len;
 	/* Private */
-	uint16_t		offset;
+	uint16_t offset;
 } dns_rdata_hip_t;
 
 isc_result_t

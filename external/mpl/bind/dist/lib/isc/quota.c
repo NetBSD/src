@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.6 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stddef.h>
 
@@ -22,30 +19,35 @@
 #include <isc/quota.h>
 #include <isc/util.h>
 
-
 void
 isc_quota_init(isc_quota_t *quota, unsigned int max) {
-	atomic_store(&quota->max, max);
-	atomic_store(&quota->used, 0);
-	atomic_store(&quota->soft, 0);
+	atomic_init(&quota->max, max);
+	atomic_init(&quota->used, 0);
+	atomic_init(&quota->soft, 0);
+	atomic_init(&quota->waiting, 0);
+	ISC_LIST_INIT(quota->cbs);
+	isc_mutex_init(&quota->cblock);
 }
 
 void
 isc_quota_destroy(isc_quota_t *quota) {
 	INSIST(atomic_load(&quota->used) == 0);
-	atomic_store(&quota->max, 0);
-	atomic_store(&quota->used, 0);
-	atomic_store(&quota->soft, 0);
+	INSIST(atomic_load(&quota->waiting) == 0);
+	INSIST(ISC_LIST_EMPTY(quota->cbs));
+	atomic_store_release(&quota->max, 0);
+	atomic_store_release(&quota->used, 0);
+	atomic_store_release(&quota->soft, 0);
+	isc_mutex_destroy(&quota->cblock);
 }
 
 void
 isc_quota_soft(isc_quota_t *quota, unsigned int soft) {
-	atomic_store(&quota->soft, soft);
+	atomic_store_release(&quota->soft, soft);
 }
 
 void
 isc_quota_max(isc_quota_t *quota, unsigned int max) {
-	atomic_store(&quota->max, max);
+	atomic_store_release(&quota->max, max);
 }
 
 unsigned int
@@ -63,43 +65,77 @@ isc_quota_getused(isc_quota_t *quota) {
 	return (atomic_load_relaxed(&quota->used));
 }
 
-isc_result_t
-isc_quota_reserve(isc_quota_t *quota) {
+static isc_result_t
+quota_reserve(isc_quota_t *quota) {
 	isc_result_t result;
-	uint32_t max = atomic_load(&quota->max);
-	uint32_t soft = atomic_load(&quota->soft);
-	uint32_t used = atomic_fetch_add(&quota->used, 1);
-	if (max == 0 || used < max) {
-		if (soft == 0 || used < soft) {
-			result = ISC_R_SUCCESS;
-		} else {
-			result = ISC_R_SOFTQUOTA;
+	uint_fast32_t max = atomic_load_acquire(&quota->max);
+	uint_fast32_t soft = atomic_load_acquire(&quota->soft);
+	uint_fast32_t used = atomic_load_acquire(&quota->used);
+	do {
+		if (max != 0 && used >= max) {
+			return (ISC_R_QUOTA);
 		}
-	} else {
-		INSIST(atomic_fetch_sub(&quota->used, 1) > 0);
-		result = ISC_R_QUOTA;
-	}
+		if (soft != 0 && used >= soft) {
+			result = ISC_R_SOFTQUOTA;
+		} else {
+			result = ISC_R_SUCCESS;
+		}
+	} while (!atomic_compare_exchange_weak_acq_rel(&quota->used, &used,
+						       used + 1));
 	return (result);
 }
 
-void
-isc_quota_release(isc_quota_t *quota) {
-	INSIST(atomic_fetch_sub(&quota->used, 1) > 0);
+/* Must be quota->cbslock locked */
+static void
+enqueue(isc_quota_t *quota, isc_quota_cb_t *cb) {
+	REQUIRE(cb != NULL);
+	ISC_LIST_ENQUEUE(quota->cbs, cb, link);
+	atomic_fetch_add_release(&quota->waiting, 1);
+}
+
+/* Must be quota->cbslock locked */
+static isc_quota_cb_t *
+dequeue(isc_quota_t *quota) {
+	isc_quota_cb_t *cb = ISC_LIST_HEAD(quota->cbs);
+	INSIST(cb != NULL);
+	ISC_LIST_DEQUEUE(quota->cbs, cb, link);
+	atomic_fetch_sub_relaxed(&quota->waiting, 1);
+	return (cb);
+}
+
+static void
+quota_release(isc_quota_t *quota) {
+	/*
+	 * This is opportunistic - we might race with a failing quota_attach_cb
+	 * and not detect that something is waiting, but eventually someone will
+	 * be releasing quota and will detect it, so we don't need to worry -
+	 * and we're saving a lot by not locking cblock every time.
+	 */
+
+	if (atomic_load_acquire(&quota->waiting) > 0) {
+		isc_quota_cb_t *cb = NULL;
+		LOCK(&quota->cblock);
+		if (atomic_load_relaxed(&quota->waiting) > 0) {
+			cb = dequeue(quota);
+		}
+		UNLOCK(&quota->cblock);
+		if (cb != NULL) {
+			cb->cb_func(quota, cb->data);
+			return;
+		}
+	}
+
+	INSIST(atomic_fetch_sub_release(&quota->used, 1) > 0);
 }
 
 static isc_result_t
-doattach(isc_quota_t *quota, isc_quota_t **p, bool force) {
+doattach(isc_quota_t *quota, isc_quota_t **p) {
 	isc_result_t result;
 	REQUIRE(p != NULL && *p == NULL);
 
-	result = isc_quota_reserve(quota);
+	result = quota_reserve(quota);
 	if (result == ISC_R_SUCCESS || result == ISC_R_SOFTQUOTA) {
 		*p = quota;
-	} else if (result == ISC_R_QUOTA && force) {
-		/* attach anyway */
-		atomic_fetch_add(&quota->used, 1);
-		*p = quota;
-		result = ISC_R_SUCCESS;
 	}
 
 	return (result);
@@ -107,17 +143,30 @@ doattach(isc_quota_t *quota, isc_quota_t **p, bool force) {
 
 isc_result_t
 isc_quota_attach(isc_quota_t *quota, isc_quota_t **p) {
-	return (doattach(quota, p, false));
+	return (isc_quota_attach_cb(quota, p, NULL));
 }
 
 isc_result_t
-isc_quota_force(isc_quota_t *quota, isc_quota_t **p) {
-	return (doattach(quota, p, true));
+isc_quota_attach_cb(isc_quota_t *quota, isc_quota_t **p, isc_quota_cb_t *cb) {
+	isc_result_t result = doattach(quota, p);
+	if (result == ISC_R_QUOTA && cb != NULL) {
+		LOCK(&quota->cblock);
+		enqueue(quota, cb);
+		UNLOCK(&quota->cblock);
+	}
+	return (result);
+}
+
+void
+isc_quota_cb_init(isc_quota_cb_t *cb, isc_quota_cb_func_t cb_func, void *data) {
+	ISC_LINK_INIT(cb, link);
+	cb->cb_func = cb_func;
+	cb->data = data;
 }
 
 void
 isc_quota_detach(isc_quota_t **p) {
 	INSIST(p != NULL && *p != NULL);
-	isc_quota_release(*p);
+	quota_release(*p);
 	*p = NULL;
 }

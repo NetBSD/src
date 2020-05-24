@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: cc.h,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef ISCCC_CC_H
 #define ISCCC_CC_H 1
 
@@ -34,38 +33,39 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <isc/lang.h>
 #include <isc/buffer.h>
+#include <isc/lang.h>
+
 #include <isccc/types.h>
 
 ISC_LANG_BEGINDECLS
 
 /*% from lib/dns/include/dst/dst.h */
 
-#define ISCCC_ALG_UNKNOWN	0
-#define ISCCC_ALG_HMACMD5	157
-#define ISCCC_ALG_HMACSHA1	161
-#define ISCCC_ALG_HMACSHA224	162
-#define ISCCC_ALG_HMACSHA256	163
-#define ISCCC_ALG_HMACSHA384	164
-#define ISCCC_ALG_HMACSHA512	165
+#define ISCCC_ALG_UNKNOWN    0
+#define ISCCC_ALG_HMACMD5    157
+#define ISCCC_ALG_HMACSHA1   161
+#define ISCCC_ALG_HMACSHA224 162
+#define ISCCC_ALG_HMACSHA256 163
+#define ISCCC_ALG_HMACSHA384 164
+#define ISCCC_ALG_HMACSHA512 165
 
 /*% Maximum Datagram Package */
-#define ISCCC_CC_MAXDGRAMPACKET		4096
+#define ISCCC_CC_MAXDGRAMPACKET 4096
 
 /*% Message Type String */
-#define ISCCC_CCMSGTYPE_STRING		0x00
+#define ISCCC_CCMSGTYPE_STRING 0x00
 /*% Message Type Binary Data */
-#define ISCCC_CCMSGTYPE_BINARYDATA	0x01
+#define ISCCC_CCMSGTYPE_BINARYDATA 0x01
 /*% Message Type Table */
-#define ISCCC_CCMSGTYPE_TABLE		0x02
+#define ISCCC_CCMSGTYPE_TABLE 0x02
 /*% Message Type List */
-#define ISCCC_CCMSGTYPE_LIST		0x03
+#define ISCCC_CCMSGTYPE_LIST 0x03
 
 /*% Send to Wire */
 isc_result_t
-isccc_cc_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer,
-		uint32_t algorithm, isccc_region_t *secret);
+isccc_cc_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer, uint32_t algorithm,
+		isccc_region_t *secret);
 
 /*% Get From Wire */
 isc_result_t
@@ -75,13 +75,12 @@ isccc_cc_fromwire(isccc_region_t *source, isccc_sexpr_t **alistp,
 /*% Create Message */
 isc_result_t
 isccc_cc_createmessage(uint32_t version, const char *from, const char *to,
-		       uint32_t serial, isccc_time_t now,
-		       isccc_time_t expires, isccc_sexpr_t **alistp);
+		       uint32_t serial, isccc_time_t now, isccc_time_t expires,
+		       isccc_sexpr_t **alistp);
 
 /*% Create Acknowledgment */
 isc_result_t
-isccc_cc_createack(isccc_sexpr_t *message, bool ok,
-		   isccc_sexpr_t **ackp);
+isccc_cc_createack(isccc_sexpr_t *message, bool ok, isccc_sexpr_t **ackp);
 
 /*% Is Ack? */
 bool
@@ -110,8 +109,7 @@ isccc_cc_lookupstring(isccc_sexpr_t *alist, const char *key, char **strp);
 
 /*% Lookup uint 32 */
 isc_result_t
-isccc_cc_lookupuint32(isccc_sexpr_t *alist, const char *key,
-		      uint32_t *uintp);
+isccc_cc_lookupuint32(isccc_sexpr_t *alist, const char *key, uint32_t *uintp);
 
 /*% Create Symbol Table */
 isc_result_t

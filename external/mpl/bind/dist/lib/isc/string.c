@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,19 +42,16 @@
 
 /*! \file */
 
-#include <config.h>      // IWYU pragma: keep
-
 #ifdef _GNU_SOURCE
 #undef _GNU_SOURCE
-#endif
+#endif /* ifdef _GNU_SOURCE */
 #include <string.h>
 
-#include <isc/string.h>  // IWYU pragma: keep
+#include <isc/string.h> /* IWYU pragma: keep */
 
 #if !defined(HAVE_STRLCPY)
 size_t
-strlcpy(char *dst, const char *src, size_t size)
-{
+strlcpy(char *dst, const char *src, size_t size) {
 	char *d = dst;
 	const char *s = src;
 	size_t n = size;
@@ -71,20 +68,19 @@ strlcpy(char *dst, const char *src, size_t size)
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0U) {
 		if (size != 0U) {
-			*d = '\0';		/* NUL-terminate dst */
+			*d = '\0'; /* NUL-terminate dst */
 		}
-		while (*s++)
-			;
+		while (*s++) {
+		}
 	}
 
-	return(s - src - 1);	/* count does not include NUL */
+	return (s - src - 1); /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCPY) */
 
 #if !defined(HAVE_STRLCAT)
 size_t
-strlcat(char *dst, const char *src, size_t size)
-{
+strlcat(char *dst, const char *src, size_t size) {
 	char *d = dst;
 	const char *s = src;
 	size_t n = size;
@@ -98,7 +94,7 @@ strlcat(char *dst, const char *src, size_t size)
 	n = size - dlen;
 
 	if (n == 0U) {
-		return(dlen + strlen(s));
+		return (dlen + strlen(s));
 	}
 	while (*s != '\0') {
 		if (n != 1U) {
@@ -109,7 +105,7 @@ strlcat(char *dst, const char *src, size_t size)
 	}
 	*d = '\0';
 
-	return(dlen + (s - src));	/* count does not include NUL */
+	return (dlen + (s - src)); /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCAT) */
 
@@ -117,7 +113,7 @@ int
 isc_string_strerror_r(int errnum, char *buf, size_t buflen) {
 #if defined(_WIN32) || defined(_WIN64)
 	return (strerror_s(buf, buflen, errnum));
-#else
+#else  /* if defined(_WIN32) || defined(_WIN64) */
 	return (strerror_r(errnum, buf, buflen));
-#endif
+#endif /* if defined(_WIN32) || defined(_WIN64) */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.7 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /* RFC 4255 */
 
@@ -37,8 +36,9 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -46,8 +46,9 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -106,16 +107,19 @@ totext_sshfp(ARGS_TOTEXT) {
 	/*
 	 * Digest.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0) /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_hex_totext(&sr, 0, "", target));
-	else
-		RETERR(isc_hex_totext(&sr, tctx->width - 2,
-				      tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	} else {
+		RETERR(isc_hex_totext(&sr, tctx->width - 2, tctx->linebreak,
+				      target));
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -136,7 +140,8 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	}
 
 	if ((sr.base[1] == 1 && sr.length != ISC_SHA1_DIGESTLENGTH + 2) ||
-	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2)) {
+	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2))
+	{
 		return (DNS_R_FORMERR);
 	}
 
@@ -213,8 +218,9 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	sshfp->length = region.length;
 
 	sshfp->digest = mem_maybedup(mctx, region.base, region.length);
-	if (sshfp->digest == NULL)
+	if (sshfp->digest == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	sshfp->mctx = mctx;
 	return (ISC_R_SUCCESS);
@@ -227,11 +233,13 @@ freestruct_sshfp(ARGS_FREESTRUCT) {
 	REQUIRE(sshfp != NULL);
 	REQUIRE(sshfp->common.rdtype == dns_rdatatype_sshfp);
 
-	if (sshfp->mctx == NULL)
+	if (sshfp->mctx == NULL) {
 		return;
+	}
 
-	if (sshfp->digest != NULL)
+	if (sshfp->digest != NULL) {
 		isc_mem_free(sshfp->mctx, sshfp->digest);
+	}
 	sshfp->mctx = NULL;
 }
 
@@ -259,7 +267,6 @@ digest_sshfp(ARGS_DIGEST) {
 
 static inline bool
 checkowner_sshfp(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_sshfp);
 
 	UNUSED(name);
@@ -272,7 +279,6 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_sshfp(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
 
 	UNUSED(rdata);
@@ -287,4 +293,4 @@ casecompare_sshfp(ARGS_COMPARE) {
 	return (compare_sshfp(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_SSHFP_44_C */
+#endif /* RDATA_GENERIC_SSHFP_44_C */

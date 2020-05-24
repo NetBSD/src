@@ -1,4 +1,4 @@
-/*	$NetBSD: ntservice.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: ntservice.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef NTSERVICE_H
 #define NTSERVICE_H
 
@@ -21,10 +20,12 @@
 #define BIND_SERVICE_NAME "named"
 
 void
-ntservice_init();
+     ntservice_init();
 void UpdateSCM(DWORD);
-void ServiceControl(DWORD dwCtrlCode);
+void
+ServiceControl(DWORD dwCtrlCode);
 void
 ntservice_shutdown();
-BOOL ntservice_isservice();
-#endif
+BOOL
+ntservice_isservice();
+#endif /* ifndef NTSERVICE_H */

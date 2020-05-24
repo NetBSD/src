@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_KEYTABLE_H
 #define DNS_KEYTABLE_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -44,6 +43,7 @@
 #include <isc/rwlock.h>
 #include <isc/stdtime.h>
 
+#include <dns/rdatastruct.h>
 #include <dns/types.h>
 
 #include <dst/dst.h>
@@ -71,7 +71,6 @@ dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep);
  *
  *\li	Any other result indicates failure.
  */
-
 
 void
 dns_keytable_attach(dns_keytable_t *source, dns_keytable_t **targetp);
@@ -107,34 +106,29 @@ dns_keytable_detach(dns_keytable_t **keytablep);
  */
 
 isc_result_t
-dns_keytable_add(dns_keytable_t *keytable, bool managed,
-		 bool initial, dst_key_t **keyp);
+dns_keytable_add(dns_keytable_t *keytable, bool managed, bool initial,
+		 dns_name_t *name, dns_rdata_ds_t *ds);
 /*%<
- * Add '*keyp' to 'keytable' (using the name in '*keyp').
+ * Add a key to 'keytable'. The keynode associated with 'name'
+ * is updated with the DS specified in 'ds'.
+ *
  * The value of keynode->managed is set to 'managed', and the
  * value of keynode->initial is set to 'initial'. (Note: 'initial'
  * should only be used when adding managed-keys from configuration.
  * This indicates the key is in "initializing" state, and has not yet
  * been confirmed with a key refresh query.  Once a key refresh query
- * has validated, we update the keynode with inital == false.)
+ * has validated, we update the keynode with initial == false.)
  *
  * Notes:
  *
- *\li	Ownership of *keyp is transferred to the keytable.
- *\li   If the key already exists in the table, ISC_R_EXISTS is
- *      returned and the new key is freed.
+ *\li   If the key already exists in the table, adding it again
+ *      has no effect and ISC_R_SUCCESS is returned.
  *
  * Requires:
  *
  *\li	'keytable' points to a valid keytable.
- *
+ *\li	'ds' is not NULL.
  *\li	if 'initial' is true then 'managed' must also be true.
- *
- *\li	keyp != NULL && *keyp is a valid dst_key_t *.
- *
- * Ensures:
- *
- *\li	On success, *keyp == NULL
  *
  * Returns:
  *
@@ -176,7 +170,7 @@ dns_keytable_marksecure(dns_keytable_t *keytable, const dns_name_t *name);
 isc_result_t
 dns_keytable_delete(dns_keytable_t *keytable, const dns_name_t *keyname);
 /*%<
- * Delete node(s) from 'keytable' matching name 'keyname'
+ * Delete all trust anchors from 'keytable' matching name 'keyname'
  *
  * Requires:
  *
@@ -192,15 +186,16 @@ dns_keytable_delete(dns_keytable_t *keytable, const dns_name_t *keyname);
  */
 
 isc_result_t
-dns_keytable_deletekeynode(dns_keytable_t *keytable, dst_key_t *dstkey);
+dns_keytable_deletekey(dns_keytable_t *keytable, const dns_name_t *keyname,
+		       dns_rdata_dnskey_t *dnskey);
 /*%<
- * Delete node(s) from 'keytable' containing copies of the key pointed
- * to by 'dstkey'
+ * Remove the trust anchor matching the name 'keyname' and the DNSKEY
+ * rdata struct 'dnskey' from 'keytable'.
  *
  * Requires:
  *
  *\li	'keytable' points to a valid keytable.
- *\li	'dstkey' is not NULL
+ *\li	'dnskey' is not NULL
  *
  * Returns:
  *
@@ -213,9 +208,8 @@ isc_result_t
 dns_keytable_find(dns_keytable_t *keytable, const dns_name_t *keyname,
 		  dns_keynode_t **keynodep);
 /*%<
- * Search for the first instance of a key named 'name' in 'keytable',
- * without regard to keyid and algorithm.  Use dns_keytable_nextkeynode()
- * to find subsequent instances.
+ * Search for the first instance of a trust anchor named 'name' in
+ * 'keytable', without regard to keyid and algorithm.
  *
  * Requires:
  *
@@ -224,78 +218,6 @@ dns_keytable_find(dns_keytable_t *keytable, const dns_name_t *keyname,
  *\li	'name' is a valid absolute name.
  *
  *\li	keynodep != NULL && *keynodep == NULL
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *\li	ISC_R_NOTFOUND
- *
- *\li	Any other result indicates an error.
- */
-
-isc_result_t
-dns_keytable_nextkeynode(dns_keytable_t *keytable, dns_keynode_t *keynode,
-			 dns_keynode_t **nextnodep);
-/*%<
- * Return for the next key after 'keynode' in 'keytable', without regard to
- * keyid and algorithm.
- *
- * Requires:
- *
- *\li	'keytable' is a valid keytable.
- *
- *\li	'keynode' is a valid keynode.
- *
- *\li	nextnodep != NULL && *nextnodep == NULL
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *\li	ISC_R_NOTFOUND
- *
- *\li	Any other result indicates an error.
- */
-
-isc_result_t
-dns_keytable_findkeynode(dns_keytable_t *keytable, const dns_name_t *name,
-			 dns_secalg_t algorithm, dns_keytag_t tag,
-			 dns_keynode_t **keynodep);
-/*%<
- * Search for a key named 'name', matching 'algorithm' and 'tag' in
- * 'keytable'.  This finds the first instance which matches.  Use
- * dns_keytable_findnextkeynode() to find other instances.
- *
- * Requires:
- *
- *\li	'keytable' is a valid keytable.
- *
- *\li	'name' is a valid absolute name.
- *
- *\li	keynodep != NULL && *keynodep == NULL
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *\li	DNS_R_PARTIALMATCH	the name existed in the keytable.
- *\li	ISC_R_NOTFOUND
- *
- *\li	Any other result indicates an error.
- */
-
-isc_result_t
-dns_keytable_findnextkeynode(dns_keytable_t *keytable, dns_keynode_t *keynode,
-					     dns_keynode_t **nextnodep);
-/*%<
- * Search for the next key with the same properties as 'keynode' in
- * 'keytable' as found by dns_keytable_findkeynode().
- *
- * Requires:
- *
- *\li	'keytable' is a valid keytable.
- *
- *\li	'keynode' is a valid keynode.
- *
- *\li	nextnodep != NULL && *nextnodep == NULL
  *
  * Returns:
  *
@@ -328,33 +250,13 @@ dns_keytable_finddeepestmatch(dns_keytable_t *keytable, const dns_name_t *name,
  */
 
 void
-dns_keytable_attachkeynode(dns_keytable_t *keytable, dns_keynode_t *source,
-			   dns_keynode_t **target);
+dns_keytable_detachkeynode(dns_keytable_t *keytable, dns_keynode_t **keynodep);
 /*%<
- * Attach a keynode and and increment the active_nodes counter in a
- * corresponding keytable.
+ * Detach a keynode found via dns_keytable_find().
  *
  * Requires:
  *
- *\li	'keytable' is a valid keytable.
- *
- *\li	'source' is a valid keynode.
- *
- *\li	'target' is not null and '*target' is null.
- */
-
-void
-dns_keytable_detachkeynode(dns_keytable_t *keytable,
-			   dns_keynode_t **keynodep);
-/*%<
- * Give back a keynode found via dns_keytable_findkeynode().
- *
- * Requires:
- *
- *\li	'keytable' is a valid keytable.
- *
- *\li	*keynodep is a valid keynode returned by a call to
- *	dns_keytable_findkeynode().
+ *\li	*keynodep is a valid keynode returned by a call to dns_keytable_find().
  *
  * Ensures:
  *
@@ -376,7 +278,7 @@ dns_keytable_issecuredomain(dns_keytable_t *keytable, const dns_name_t *name,
  *\li	'foundanme' is NULL or is a pointer to an initialized dns_name_t
  *
  *\li	'*wantsdnssecp' is a valid bool.
-
+ *
  * Ensures:
  *
  *\li	On success, *wantsdnssecp will be true if and only if 'name'
@@ -403,10 +305,17 @@ dns_keytable_totext(dns_keytable_t *keytable, isc_buffer_t **buf);
  * Dump the keytable to buffer at 'buf'
  */
 
-dst_key_t *
-dns_keynode_key(dns_keynode_t *keynode);
+dns_rdataset_t *
+dns_keynode_dsset(dns_keynode_t *keynode);
 /*%<
- * Get the DST key associated with keynode.
+ * Return a pointer to the DS RRset associated with 'keynode'.
+ *
+ * Returns:
+ *\li	ISC_R_SUCCESS
+ *\li	ISC_R_FAILURE if the keynode does not contain a DS trust anchor.
+ *
+ * Requires:
+ *\li	'keynode' is valid.
  */
 
 bool
@@ -429,33 +338,9 @@ dns_keynode_trust(dns_keynode_t *keynode);
  */
 
 isc_result_t
-dns_keynode_create(isc_mem_t *mctx, dns_keynode_t **target);
-/*%<
- * Allocate space for a keynode
- */
-
-void
-dns_keynode_attach(dns_keynode_t *source, dns_keynode_t **target);
-/*%<
- * Attach keynode 'source' to '*target'
- */
-
-void
-dns_keynode_detach(isc_mem_t *mctx, dns_keynode_t **target);
-/*%<
- * Detach a single keynode, without touching any keynodes that
- * may be pointed to by its 'next' pointer
- */
-
-void
-dns_keynode_detachall(isc_mem_t *mctx, dns_keynode_t **target);
-/*%<
- * Detach a keynode and all its succesors.
- */
-
-isc_result_t
 dns_keytable_forall(dns_keytable_t *keytable,
-		    void (*func)(dns_keytable_t *, dns_keynode_t *, void *),
+		    void (*func)(dns_keytable_t *, dns_keynode_t *,
+				 dns_name_t *, void *),
 		    void *arg);
 ISC_LANG_ENDDECLS
 

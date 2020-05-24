@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.6 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,8 +45,9 @@ fromtext_cert(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -98,16 +99,19 @@ totext_cert(ARGS_TOTEXT) {
 	/*
 	 * Cert.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	} else {
+		RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
+					 target));
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -123,8 +127,9 @@ fromwire_cert(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 5)
+	if (sr.length < 5) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
@@ -202,8 +207,9 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	cert->length = region.length;
 
 	cert->certificate = mem_maybedup(mctx, region.base, region.length);
-	if (cert->certificate == NULL)
+	if (cert->certificate == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	cert->mctx = mctx;
 	return (ISC_R_SUCCESS);
@@ -216,11 +222,13 @@ freestruct_cert(ARGS_FREESTRUCT) {
 	REQUIRE(cert != NULL);
 	REQUIRE(cert->common.rdtype == dns_rdatatype_cert);
 
-	if (cert->mctx == NULL)
+	if (cert->mctx == NULL) {
 		return;
+	}
 
-	if (cert->certificate != NULL)
+	if (cert->certificate != NULL) {
 		isc_mem_free(cert->mctx, cert->certificate);
+	}
 	cert->mctx = NULL;
 }
 
@@ -248,7 +256,6 @@ digest_cert(ARGS_DIGEST) {
 
 static inline bool
 checkowner_cert(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_cert);
 
 	UNUSED(name);
@@ -261,7 +268,6 @@ checkowner_cert(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_cert(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	UNUSED(rdata);
@@ -271,9 +277,8 @@ checknames_cert(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-
 static inline int
 casecompare_cert(ARGS_COMPARE) {
 	return (compare_cert(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_CERT_37_C */
+#endif /* RDATA_GENERIC_CERT_37_C */

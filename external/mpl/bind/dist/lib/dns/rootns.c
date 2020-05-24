@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 
 #include <isc/buffer.h>
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -28,7 +25,6 @@
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/master.h>
-#include <dns/rdata.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
@@ -39,49 +35,49 @@
 #include <dns/view.h>
 
 static char root_ns[] =
-";\n"
-"; Internet Root Nameservers\n"
-";\n"
-"$TTL 518400\n"
-".                       518400  IN      NS      A.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      B.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      C.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      D.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      E.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      F.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      G.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      H.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      I.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      J.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      K.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      L.ROOT-SERVERS.NET.\n"
-".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
-"A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
-"A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
-"B.ROOT-SERVERS.NET.     3600000 IN      A       199.9.14.201\n"
-"B.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:200::b\n"
-"C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
-"C.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2::c\n"
-"D.ROOT-SERVERS.NET.     3600000 IN      A       199.7.91.13\n"
-"D.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2d::d\n"
-"E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
-"E.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:a8::e\n"
-"F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
-"F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
-"G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
-"G.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:12::d0d\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      A       198.97.190.53\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::53\n"
-"I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
-"I.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7fe::53\n"
-"J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
-"J.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:C27::2:30\n"
-"K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
-"K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
-"L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
-"L.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:9f::42\n"
-"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
-"M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
+	";\n"
+	"; Internet Root Nameservers\n"
+	";\n"
+	"$TTL 518400\n"
+	".                       518400  IN      NS      A.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      B.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      C.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      D.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      E.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      F.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      G.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      H.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      I.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      J.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      K.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      L.ROOT-SERVERS.NET.\n"
+	".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
+	"A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
+	"A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
+	"B.ROOT-SERVERS.NET.     3600000 IN      A       199.9.14.201\n"
+	"B.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:200::b\n"
+	"C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
+	"C.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2::c\n"
+	"D.ROOT-SERVERS.NET.     3600000 IN      A       199.7.91.13\n"
+	"D.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2d::d\n"
+	"E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
+	"E.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:a8::e\n"
+	"F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
+	"F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
+	"G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
+	"G.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:12::d0d\n"
+	"H.ROOT-SERVERS.NET.     3600000 IN      A       198.97.190.53\n"
+	"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::53\n"
+	"I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
+	"I.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7fe::53\n"
+	"J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
+	"J.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:C27::2:30\n"
+	"K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
+	"K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
+	"L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
+	"L.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:9f::42\n"
+	"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
+	"M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
 
 static isc_result_t
 in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {
@@ -89,22 +85,26 @@ in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_ns_t ns;
 
-	if (!dns_rdataset_isassociated(rootns))
+	if (!dns_rdataset_isassociated(rootns)) {
 		return (ISC_R_NOTFOUND);
+	}
 
 	result = dns_rdataset_first(rootns);
 	while (result == ISC_R_SUCCESS) {
 		dns_rdataset_current(rootns, &rdata);
 		result = dns_rdata_tostruct(&rdata, &ns, NULL);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			return (result);
-		if (dns_name_compare(name, &ns.name) == 0)
+		}
+		if (dns_name_compare(name, &ns.name) == 0) {
 			return (ISC_R_SUCCESS);
+		}
 		result = dns_rdataset_next(rootns);
 		dns_rdata_reset(&rdata);
 	}
-	if (result == ISC_R_NOMORE)
+	if (result == ISC_R_NOMORE) {
 		result = ISC_R_NOTFOUND;
+	}
 	return (result);
 }
 
@@ -122,13 +122,15 @@ check_node(dns_rdataset_t *rootns, dns_name_t *name,
 		case dns_rdatatype_a:
 		case dns_rdatatype_aaaa:
 			result = in_rootns(rootns, name);
-			if (result != ISC_R_SUCCESS)
+			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 			break;
 		case dns_rdatatype_ns:
-			if (dns_name_compare(name, dns_rootname) == 0)
+			if (dns_name_compare(name, dns_rootname) == 0) {
 				break;
-			/* FALLTHROUGH */
+			}
+		/* FALLTHROUGH */
 		default:
 			result = ISC_R_FAILURE;
 			goto cleanup;
@@ -136,11 +138,13 @@ check_node(dns_rdataset_t *rootns, dns_name_t *name,
 		dns_rdataset_disassociate(&rdataset);
 		result = dns_rdatasetiter_next(rdsiter);
 	}
-	if (result == ISC_R_NOMORE)
+	if (result == ISC_R_NOMORE) {
 		result = ISC_R_SUCCESS;
- cleanup:
-	if (dns_rdataset_isassociated(&rdataset))
+	}
+cleanup:
+	if (dns_rdataset_isassociated(&rdataset)) {
 		dns_rdataset_disassociate(&rdataset);
+	}
 	return (result);
 }
 
@@ -160,45 +164,53 @@ check_hints(dns_db_t *db) {
 	name = dns_fixedname_initname(&fixname);
 
 	dns_rdataset_init(&rootns);
-	(void)dns_db_find(db, dns_rootname, NULL, dns_rdatatype_ns, 0,
-			  now, NULL, name, &rootns, NULL);
+	(void)dns_db_find(db, dns_rootname, NULL, dns_rdatatype_ns, 0, now,
+			  NULL, name, &rootns, NULL);
 	result = dns_db_createiterator(db, 0, &dbiter);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 	result = dns_dbiterator_first(dbiter);
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(dbiter, &node, name);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
+		}
 		result = dns_db_allrdatasets(db, node, NULL, now, &rdsiter);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
+		}
 		result = check_node(&rootns, name, rdsiter);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
+		}
 		dns_rdatasetiter_destroy(&rdsiter);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(dbiter);
 	}
-	if (result == ISC_R_NOMORE)
+	if (result == ISC_R_NOMORE) {
 		result = ISC_R_SUCCESS;
+	}
 
- cleanup:
-	if (dns_rdataset_isassociated(&rootns))
+cleanup:
+	if (dns_rdataset_isassociated(&rootns)) {
 		dns_rdataset_disassociate(&rootns);
-	if (rdsiter != NULL)
+	}
+	if (rdsiter != NULL) {
 		dns_rdatasetiter_destroy(&rdsiter);
-	if (node != NULL)
+	}
+	if (node != NULL) {
 		dns_db_detachnode(db, &node);
-	if (dbiter != NULL)
+	}
+	if (dbiter != NULL) {
 		dns_dbiterator_destroy(&dbiter);
+	}
 	return (result);
 }
 
 isc_result_t
 dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
-		  const char *filename, dns_db_t **target)
-{
+		  const char *filename, dns_db_t **target) {
 	isc_result_t result, eresult;
 	isc_buffer_t source;
 	unsigned int len;
@@ -209,8 +221,9 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 
 	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
 			       rdclass, 0, NULL, &db);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto failure;
+	}
 
 	len = strlen(root_ns);
 	isc_buffer_init(&source, root_ns, len);
@@ -218,56 +231,60 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 
 	dns_rdatacallbacks_init(&callbacks);
 	result = dns_db_beginload(db, &callbacks);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto failure;
+	}
 	if (filename != NULL) {
 		/*
 		 * Load the hints from the specified filename.
 		 */
-		result = dns_master_loadfile(filename, &db->origin,
-					     &db->origin, db->rdclass,
-					     DNS_MASTER_HINT, 0, &callbacks,
-					     NULL, NULL, db->mctx,
+		result = dns_master_loadfile(filename, &db->origin, &db->origin,
+					     db->rdclass, DNS_MASTER_HINT, 0,
+					     &callbacks, NULL, NULL, db->mctx,
 					     dns_masterformat_text, 0);
 	} else if (rdclass == dns_rdataclass_in) {
 		/*
 		 * Default to using the Internet root servers.
 		 */
-		result = dns_master_loadbuffer(&source, &db->origin,
-					       &db->origin, db->rdclass,
-					       DNS_MASTER_HINT,
-					       &callbacks, db->mctx);
-	} else
+		result = dns_master_loadbuffer(
+			&source, &db->origin, &db->origin, db->rdclass,
+			DNS_MASTER_HINT, &callbacks, db->mctx);
+	} else {
 		result = ISC_R_NOTFOUND;
+	}
 	eresult = dns_db_endload(db, &callbacks);
-	if (result == ISC_R_SUCCESS || result == DNS_R_SEENINCLUDE)
+	if (result == ISC_R_SUCCESS || result == DNS_R_SEENINCLUDE) {
 		result = eresult;
-	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)
+	}
+	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE) {
 		goto failure;
-	if (check_hints(db) != ISC_R_SUCCESS)
+	}
+	if (check_hints(db) != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 			      "extra data in root hints '%s'",
 			      (filename != NULL) ? filename : "<BUILT-IN>");
+	}
 	*target = db;
 	return (ISC_R_SUCCESS);
 
- failure:
+failure:
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_HINTS,
-		      ISC_LOG_ERROR, "could not configure root hints from "
-		      "'%s': %s", (filename != NULL) ? filename : "<BUILT-IN>",
+		      ISC_LOG_ERROR,
+		      "could not configure root hints from "
+		      "'%s': %s",
+		      (filename != NULL) ? filename : "<BUILT-IN>",
 		      isc_result_totext(result));
 
-	if (db != NULL)
+	if (db != NULL) {
 		dns_db_detach(&db);
+	}
 
 	return (result);
 }
 
 static void
-report(dns_view_t *view, dns_name_t *name, bool missing,
-       dns_rdata_t *rdata)
-{
+report(dns_view_t *view, dns_name_t *name, bool missing, dns_rdata_t *rdata) {
 	const char *viewname = "", *sep = "";
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char typebuf[DNS_RDATATYPE_FORMATSIZE];
@@ -288,17 +305,18 @@ report(dns_view_t *view, dns_name_t *name, bool missing,
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	databuf[isc_buffer_usedlength(&buffer)] = '\0';
 
-	if (missing)
+	if (missing) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 			      "checkhints%s%s: %s/%s (%s) missing from hints",
 			      sep, viewname, namebuf, typebuf, databuf);
-	else
+	} else {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 			      "checkhints%s%s: %s/%s (%s) extra record "
-			      "in hints", sep, viewname, namebuf, typebuf,
-			      databuf);
+			      "in hints",
+			      sep, viewname, namebuf, typebuf, databuf);
+	}
 }
 
 static bool
@@ -309,8 +327,9 @@ inrrset(dns_rdataset_t *rrset, dns_rdata_t *rdata) {
 	result = dns_rdataset_first(rrset);
 	while (result == ISC_R_SUCCESS) {
 		dns_rdataset_current(rrset, &current);
-		if (dns_rdata_compare(rdata, &current) == 0)
+		if (dns_rdata_compare(rdata, &current) == 0) {
 			return (true);
+		}
 		dns_rdata_reset(&current);
 		result = dns_rdataset_next(rrset);
 	}
@@ -325,8 +344,7 @@ inrrset(dns_rdataset_t *rrset, dns_rdata_t *rdata) {
 
 static void
 check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
-		      dns_name_t *name, isc_stdtime_t now)
-{
+		      dns_name_t *name, isc_stdtime_t now) {
 	isc_result_t hresult, rresult, result;
 	dns_rdataset_t hintrrset, rootrrset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
@@ -337,32 +355,36 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 	dns_rdataset_init(&rootrrset);
 	foundname = dns_fixedname_initname(&fixed);
 
-	hresult = dns_db_find(hints, name, NULL, dns_rdatatype_a, 0,
-			      now, NULL, foundname, &hintrrset, NULL);
+	hresult = dns_db_find(hints, name, NULL, dns_rdatatype_a, 0, now, NULL,
+			      foundname, &hintrrset, NULL);
 	rresult = dns_db_find(db, name, NULL, dns_rdatatype_a,
 			      DNS_DBFIND_GLUEOK, now, NULL, foundname,
 			      &rootrrset, NULL);
 	if (hresult == ISC_R_SUCCESS &&
-	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
+	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE))
+	{
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
-			if (!inrrset(&hintrrset, &rdata))
+			if (!inrrset(&hintrrset, &rdata)) {
 				report(view, name, true, &rdata);
+			}
 			result = dns_rdataset_next(&rootrrset);
 		}
 		result = dns_rdataset_first(&hintrrset);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&hintrrset, &rdata);
-			if (!inrrset(&rootrrset, &rdata))
+			if (!inrrset(&rootrrset, &rdata)) {
 				report(view, name, false, &rdata);
+			}
 			result = dns_rdataset_next(&hintrrset);
 		}
 	}
 	if (hresult == ISC_R_NOTFOUND &&
-	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
+	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE))
+	{
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
@@ -371,27 +393,31 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 			result = dns_rdataset_next(&rootrrset);
 		}
 	}
-	if (dns_rdataset_isassociated(&rootrrset))
+	if (dns_rdataset_isassociated(&rootrrset)) {
 		dns_rdataset_disassociate(&rootrrset);
-	if (dns_rdataset_isassociated(&hintrrset))
+	}
+	if (dns_rdataset_isassociated(&hintrrset)) {
 		dns_rdataset_disassociate(&hintrrset);
+	}
 
 	/*
 	 * Check AAAA records.
 	 */
-	hresult = dns_db_find(hints, name, NULL, dns_rdatatype_aaaa, 0,
-			      now, NULL, foundname, &hintrrset, NULL);
+	hresult = dns_db_find(hints, name, NULL, dns_rdatatype_aaaa, 0, now,
+			      NULL, foundname, &hintrrset, NULL);
 	rresult = dns_db_find(db, name, NULL, dns_rdatatype_aaaa,
 			      DNS_DBFIND_GLUEOK, now, NULL, foundname,
 			      &rootrrset, NULL);
 	if (hresult == ISC_R_SUCCESS &&
-	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
+	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE))
+	{
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
-			if (!inrrset(&hintrrset, &rdata))
+			if (!inrrset(&hintrrset, &rdata)) {
 				report(view, name, true, &rdata);
+			}
 			dns_rdata_reset(&rdata);
 			result = dns_rdataset_next(&rootrrset);
 		}
@@ -399,14 +425,16 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&hintrrset, &rdata);
-			if (!inrrset(&rootrrset, &rdata))
+			if (!inrrset(&rootrrset, &rdata)) {
 				report(view, name, false, &rdata);
+			}
 			dns_rdata_reset(&rdata);
 			result = dns_rdataset_next(&hintrrset);
 		}
 	}
 	if (hresult == ISC_R_NOTFOUND &&
-	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
+	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE))
+	{
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&rdata);
@@ -416,10 +444,12 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 			result = dns_rdataset_next(&rootrrset);
 		}
 	}
-	if (dns_rdataset_isassociated(&rootrrset))
+	if (dns_rdataset_isassociated(&rootrrset)) {
 		dns_rdataset_disassociate(&rootrrset);
-	if (dns_rdataset_isassociated(&hintrrset))
+	}
+	if (dns_rdataset_isassociated(&hintrrset)) {
 		dns_rdataset_disassociate(&hintrrset);
+	}
 }
 
 void
@@ -455,19 +485,19 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 			      "checkhints%s%s: unable to get root NS rrset "
-			      "from hints: %s", sep, viewname,
-			      dns_result_totext(result));
+			      "from hints: %s",
+			      sep, viewname, dns_result_totext(result));
 		goto cleanup;
 	}
 
-	result = dns_db_find(db, dns_rootname, NULL, dns_rdatatype_ns, 0,
-			     now, NULL, name, &rootns, NULL);
+	result = dns_db_find(db, dns_rootname, NULL, dns_rdatatype_ns, 0, now,
+			     NULL, name, &rootns, NULL);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 			      "checkhints%s%s: unable to get root NS rrset "
-			      "from cache: %s", sep, viewname,
-			      dns_result_totext(result));
+			      "from cache: %s",
+			      sep, viewname, dns_result_totext(result));
 		goto cleanup;
 	}
 
@@ -487,10 +517,11 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 				      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
 				      "checkhints%s%s: unable to find root "
-				      "NS '%s' in hints", sep, viewname,
-				      namebuf);
-		} else
+				      "NS '%s' in hints",
+				      sep, viewname, namebuf);
+		} else {
 			check_address_records(view, hints, db, &ns.name, now);
+		}
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(&rootns);
 	}
@@ -523,9 +554,11 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 		goto cleanup;
 	}
 
- cleanup:
-	if (dns_rdataset_isassociated(&rootns))
+cleanup:
+	if (dns_rdataset_isassociated(&rootns)) {
 		dns_rdataset_disassociate(&rootns);
-	if (dns_rdataset_isassociated(&hintns))
+	}
+	if (dns_rdataset_isassociated(&hintns)) {
 		dns_rdataset_disassociate(&hintns);
+	}
 }

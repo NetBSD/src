@@ -1,4 +1,4 @@
-/*	$NetBSD: rp_17.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: rp_17.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,16 +14,14 @@
 #ifndef GENERIC_RP_17_H
 #define GENERIC_RP_17_H 1
 
-
 /*!
  *  \brief Per RFC1183 */
 
 typedef struct dns_rdata_rp {
-	dns_rdatacommon_t       common;
-	isc_mem_t               *mctx;
-	dns_name_t              mail;
-	dns_name_t              text;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t mail;
+	dns_name_t text;
 } dns_rdata_rp_t;
-
 
 #endif /* GENERIC_RP_17_H */

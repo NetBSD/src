@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: sdb.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_SDB_H
 #define DNS_SDB_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/sdb.h
  * \brief
@@ -54,39 +53,38 @@ typedef struct dns_sdblookup dns_sdblookup_t;
  */
 typedef struct dns_sdballnodes dns_sdballnodes_t;
 
-typedef isc_result_t
-(*dns_sdblookupfunc_t)(const char *zone, const char *name, void *dbdata,
-		       dns_sdblookup_t *lookup,
-		       dns_clientinfomethods_t *methods,
-		       dns_clientinfo_t *clientinfo);
-typedef isc_result_t
-(*dns_sdblookup2func_t)(const dns_name_t *zone, const dns_name_t *name,
-			void *dbdata, dns_sdblookup_t *lookup,
-			dns_clientinfomethods_t *methods,
-			dns_clientinfo_t *clientinfo);
+typedef isc_result_t (*dns_sdblookupfunc_t)(const char *zone, const char *name,
+					    void *		     dbdata,
+					    dns_sdblookup_t *	     lookup,
+					    dns_clientinfomethods_t *methods,
+					    dns_clientinfo_t *clientinfo);
+typedef isc_result_t (*dns_sdblookup2func_t)(const dns_name_t *	      zone,
+					     const dns_name_t *	      name,
+					     void *		      dbdata,
+					     dns_sdblookup_t *	      lookup,
+					     dns_clientinfomethods_t *methods,
+					     dns_clientinfo_t *clientinfo);
 
-typedef isc_result_t
-(*dns_sdbauthorityfunc_t)(const char *zone, void *dbdata, dns_sdblookup_t *);
+typedef isc_result_t (*dns_sdbauthorityfunc_t)(const char *zone, void *dbdata,
+					       dns_sdblookup_t *);
 
-typedef isc_result_t
-(*dns_sdballnodesfunc_t)(const char *zone, void *dbdata,
-			 dns_sdballnodes_t *allnodes);
+typedef isc_result_t (*dns_sdballnodesfunc_t)(const char *zone, void *dbdata,
+					      dns_sdballnodes_t *allnodes);
 
-typedef isc_result_t
-(*dns_sdbcreatefunc_t)(const char *zone, int argc, char **argv,
-		       void *driverdata, void **dbdata);
+typedef isc_result_t (*dns_sdbcreatefunc_t)(const char *zone, int argc,
+					    char **argv, void *driverdata,
+					    void **dbdata);
 
-typedef void
-(*dns_sdbdestroyfunc_t)(const char *zone, void *driverdata, void **dbdata);
-
+typedef void (*dns_sdbdestroyfunc_t)(const char *zone, void *driverdata,
+				     void **dbdata);
 
 typedef struct dns_sdbmethods {
-	dns_sdblookupfunc_t	lookup;
-	dns_sdbauthorityfunc_t	authority;
-	dns_sdballnodesfunc_t	allnodes;
-	dns_sdbcreatefunc_t	create;
-	dns_sdbdestroyfunc_t	destroy;
-	dns_sdblookup2func_t	lookup2;
+	dns_sdblookupfunc_t    lookup;
+	dns_sdbauthorityfunc_t authority;
+	dns_sdballnodesfunc_t  allnodes;
+	dns_sdbcreatefunc_t    create;
+	dns_sdbdestroyfunc_t   destroy;
+	dns_sdblookup2func_t   lookup2;
 } dns_sdbmethods_t;
 
 /***
@@ -97,8 +95,8 @@ ISC_LANG_BEGINDECLS
 
 #define DNS_SDBFLAG_RELATIVEOWNER 0x00000001U
 #define DNS_SDBFLAG_RELATIVERDATA 0x00000002U
-#define DNS_SDBFLAG_THREADSAFE 0x00000004U
-#define DNS_SDBFLAG_DNS64 0x00000008U
+#define DNS_SDBFLAG_THREADSAFE	  0x00000004U
+#define DNS_SDBFLAG_DNS64	  0x00000008U
 
 isc_result_t
 dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
@@ -191,8 +189,8 @@ dns_sdb_putnamedrr(dns_sdballnodes_t *allnodes, const char *name,
 		   const char *type, dns_ttl_t ttl, const char *data);
 isc_result_t
 dns_sdb_putnamedrdata(dns_sdballnodes_t *allnodes, const char *name,
-		      dns_rdatatype_t type, dns_ttl_t ttl,
-		      const void *rdata, unsigned int rdlen);
+		      dns_rdatatype_t type, dns_ttl_t ttl, const void *rdata,
+		      unsigned int rdlen);
 /*%<
  * Add a single resource record to the allnodes structure to be
  * included in a zone transfer response, in text or wire

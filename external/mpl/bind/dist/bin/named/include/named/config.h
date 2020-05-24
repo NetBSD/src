@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef NAMED_CONFIG_H
 #define NAMED_CONFIG_H 1
 
@@ -19,10 +18,10 @@
 
 #include <inttypes.h>
 
-#include <isccfg/cfg.h>
-
 #include <dns/types.h>
 #include <dns/zone.h>
+
+#include <isccfg/cfg.h>
 
 #define DEFAULT_IANA_ROOT_ZONE_MASTERS "_default_iana_root_zone_masters"
 
@@ -30,36 +29,36 @@ isc_result_t
 named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf);
 
 isc_result_t
-named_config_get(cfg_obj_t const * const *maps, const char *name,
-	      const cfg_obj_t **obj);
+named_config_get(cfg_obj_t const *const *maps, const char *name,
+		 const cfg_obj_t **obj);
 
 isc_result_t
 named_checknames_get(const cfg_obj_t **maps, const char *name,
-		  const cfg_obj_t **obj);
+		     const cfg_obj_t **obj);
 
 int
 named_config_listcount(const cfg_obj_t *list);
 
 isc_result_t
 named_config_getclass(const cfg_obj_t *classobj, dns_rdataclass_t defclass,
-		   dns_rdataclass_t *classp);
+		      dns_rdataclass_t *classp);
 
 isc_result_t
 named_config_gettype(const cfg_obj_t *typeobj, dns_rdatatype_t deftype,
-		  dns_rdatatype_t *typep);
+		     dns_rdatatype_t *typep);
 
 dns_zonetype_t
 named_config_getzonetype(const cfg_obj_t *zonetypeobj);
 
 isc_result_t
 named_config_getiplist(const cfg_obj_t *config, const cfg_obj_t *list,
-		    in_port_t defport, isc_mem_t *mctx,
-		    isc_sockaddr_t **addrsp, isc_dscp_t **dscpsp,
-		    uint32_t *countp);
+		       in_port_t defport, isc_mem_t *mctx,
+		       isc_sockaddr_t **addrsp, isc_dscp_t **dscpsp,
+		       uint32_t *countp);
 
 void
 named_config_putiplist(isc_mem_t *mctx, isc_sockaddr_t **addrsp,
-		    isc_dscp_t **dscpsp, uint32_t count);
+		       isc_dscp_t **dscpsp, uint32_t count);
 
 isc_result_t
 named_config_getmastersdef(const cfg_obj_t *cctx, const char *name,
@@ -67,17 +66,17 @@ named_config_getmastersdef(const cfg_obj_t *cctx, const char *name,
 
 isc_result_t
 named_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
-			  isc_mem_t *mctx, dns_ipkeylist_t *ipkl);
+			     isc_mem_t *mctx, dns_ipkeylist_t *ipkl);
 
 isc_result_t
 named_config_getport(const cfg_obj_t *config, in_port_t *portp);
 
 isc_result_t
 named_config_getkeyalgorithm(const char *str, const dns_name_t **name,
-			  uint16_t *digestbits);
+			     uint16_t *digestbits);
 isc_result_t
 named_config_getkeyalgorithm2(const char *str, const dns_name_t **name,
-			   unsigned int *typep, uint16_t *digestbits);
+			      unsigned int *typep, uint16_t *digestbits);
 
 isc_result_t
 named_config_getdscp(const cfg_obj_t *config, isc_dscp_t *dscpp);

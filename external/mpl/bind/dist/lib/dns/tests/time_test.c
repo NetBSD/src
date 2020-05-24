@@ -1,4 +1,4 @@
-/*	$NetBSD: time_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: time_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,7 +31,7 @@
 
 #include "dnstest.h"
 
-#define TEST_ORIGIN	"test"
+#define TEST_ORIGIN "test"
 
 static int
 _setup(void **state) {
@@ -193,18 +189,17 @@ some_ago_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(epoch_minus_one_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(epoch_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(half_maxint_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(half_plus_one_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(fifty_before_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(some_ago_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(epoch_minus_one_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(epoch_test, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(half_maxint_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(half_plus_one_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(fifty_before_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(some_ago_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -220,4 +215,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

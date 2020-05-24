@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /* RFC2874 */
 
@@ -44,8 +43,9 @@ fromtext_in_a6(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 128U)
+	if (token.value.as_ulong > 128U) {
 		RETTOK(ISC_R_RANGE);
+	}
 
 	prefixlen = (unsigned char)token.value.as_ulong;
 	RETERR(mem_tobuffer(target, &prefixlen, 1));
@@ -57,37 +57,42 @@ fromtext_in_a6(ARGS_FROMTEXT) {
 		/*
 		 * Prefix 0..127.
 		 */
-		octets = prefixlen/8;
+		octets = prefixlen / 8;
 		/*
 		 * Octets 0..15.
 		 */
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      false));
-		if (inet_pton(AF_INET6, DNS_AS_STR(token), addr) != 1)
+					      isc_tokentype_string, false));
+		if (inet_pton(AF_INET6, DNS_AS_STR(token), addr) != 1) {
 			RETTOK(DNS_R_BADAAAA);
+		}
 		mask = 0xff >> (prefixlen % 8);
 		addr[octets] &= mask;
 		RETERR(mem_tobuffer(target, &addr[octets], 16 - octets));
 	}
 
-	if (prefixlen == 0)
+	if (prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = true;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
+	if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 		ok = dns_name_ishostname(&name, false);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+	}
+	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
+	}
+	if (!ok && callbacks != NULL) {
 		warn_badname(&name, lexer, callbacks);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -116,7 +121,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	RETERR(str_totext(" ", target));
 
 	if (prefixlen != 128) {
-		octets = prefixlen/8;
+		octets = prefixlen / 8;
 		memset(addr, 0, sizeof(addr));
 		memmove(&addr[octets], sr.base, 16 - octets);
 		mask = 0xff >> (prefixlen % 8);
@@ -127,8 +132,9 @@ totext_in_a6(ARGS_TOTEXT) {
 		isc_region_consume(&sr, 16 - octets);
 	}
 
-	if (prefixlen == 0)
+	if (prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	RETERR(str_totext(" ", target));
 	dns_name_init(&name, NULL);
@@ -158,11 +164,13 @@ fromwire_in_a6(ARGS_FROMWIRE) {
 	/*
 	 * Prefix length.
 	 */
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	prefixlen = sr.base[0];
-	if (prefixlen > 128)
+	if (prefixlen > 128) {
 		return (ISC_R_RANGE);
+	}
 	isc_region_consume(&sr, 1);
 	RETERR(mem_tobuffer(target, &prefixlen, 1));
 	isc_buffer_forward(source, 1);
@@ -172,16 +180,18 @@ fromwire_in_a6(ARGS_FROMWIRE) {
 	 */
 	if (prefixlen != 128) {
 		octets = 16 - prefixlen / 8;
-		if (sr.length < octets)
+		if (sr.length < octets) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		mask = 0xff >> (prefixlen % 8);
-		sr.base[0] &= mask;	/* Ensure pad bits are zero. */
+		sr.base[0] &= mask; /* Ensure pad bits are zero. */
 		RETERR(mem_tobuffer(target, sr.base, octets));
 		isc_buffer_forward(source, octets);
 	}
 
-	if (prefixlen == 0)
+	if (prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	dns_name_init(&name, NULL);
 	return (dns_name_fromwire(&name, source, dctx, options, target));
@@ -208,8 +218,9 @@ towire_in_a6(ARGS_TOWIRE) {
 	RETERR(mem_tobuffer(target, sr.base, octets));
 	isc_region_consume(&sr, octets);
 
-	if (prefixlen == 0)
+	if (prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	dns_name_init(&name, offsets);
 	dns_name_fromregion(&name, &sr);
@@ -239,10 +250,11 @@ compare_in_a6(ARGS_COMPARE) {
 	prefixlen2 = region2.base[0];
 	isc_region_consume(&region1, 1);
 	isc_region_consume(&region2, 1);
-	if (prefixlen1 < prefixlen2)
+	if (prefixlen1 < prefixlen2) {
 		return (-1);
-	else if (prefixlen1 > prefixlen2)
+	} else if (prefixlen1 > prefixlen2) {
 		return (1);
+	}
 	/*
 	 * Prefix lengths are equal.
 	 */
@@ -250,15 +262,17 @@ compare_in_a6(ARGS_COMPARE) {
 
 	if (octets > 0) {
 		order = memcmp(region1.base, region2.base, octets);
-		if (order < 0)
+		if (order < 0) {
 			return (-1);
-		else if (order > 0)
+		} else if (order > 0) {
 			return (1);
+		}
 		/*
 		 * Address suffixes are equal.
 		 */
-		if (prefixlen1 == 0)
+		if (prefixlen1 == 0) {
 			return (order);
+		}
 		isc_region_consume(&region1, octets);
 		isc_region_consume(&region2, octets);
 	}
@@ -288,8 +302,9 @@ fromstruct_in_a6(ARGS_FROMSTRUCT) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	if (a6->prefixlen > 128)
+	if (a6->prefixlen > 128) {
 		return (ISC_R_RANGE);
+	}
 
 	RETERR(uint8_tobuffer(a6->prefixlen, target));
 
@@ -303,14 +318,16 @@ fromstruct_in_a6(ARGS_FROMSTRUCT) {
 			RETERR(uint8_tobuffer(first, target));
 			octets--;
 		}
-		if (octets > 0)
+		if (octets > 0) {
 			RETERR(mem_tobuffer(target,
 					    a6->in6_addr.s6_addr + 16 - octets,
 					    octets));
+		}
 	}
 
-	if (a6->prefixlen == 0)
+	if (a6->prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 	dns_name_toregion(&a6->prefix, &region);
 	return (isc_buffer_copyregion(target, &region));
 }
@@ -368,11 +385,13 @@ freestruct_in_a6(ARGS_FREESTRUCT) {
 	REQUIRE(a6->common.rdclass == dns_rdataclass_in);
 	REQUIRE(a6->common.rdtype == dns_rdatatype_a6);
 
-	if (a6->mctx == NULL)
+	if (a6->mctx == NULL) {
 		return;
+	}
 
-	if (dns_name_dynamic(&a6->prefix))
+	if (dns_name_dynamic(&a6->prefix)) {
 		dns_name_free(&a6->prefix, a6->mctx);
+	}
 	a6->mctx = NULL;
 }
 
@@ -405,10 +424,12 @@ digest_in_a6(ARGS_DIGEST) {
 
 	r1.length = octets;
 	result = (digest)(arg, &r1);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
-	if (prefixlen == 0)
+	}
+	if (prefixlen == 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	isc_region_consume(&r2, octets);
 	dns_name_init(&name, NULL);
@@ -418,7 +439,6 @@ digest_in_a6(ARGS_DIGEST) {
 
 static inline bool
 checkowner_in_a6(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_a6);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -441,14 +461,16 @@ checknames_in_a6(ARGS_CHECKNAMES) {
 
 	dns_rdata_toregion(rdata, &region);
 	prefixlen = uint8_fromregion(&region);
-	if (prefixlen == 0)
+	if (prefixlen == 0) {
 		return (true);
+	}
 	isc_region_consume(&region, 1 + 16 - prefixlen / 8);
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ishostname(&name, false)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
@@ -459,4 +481,4 @@ casecompare_in_a6(ARGS_COMPARE) {
 	return (compare_in_a6(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_A6_38_C */
+#endif /* RDATA_IN_1_A6_38_C */

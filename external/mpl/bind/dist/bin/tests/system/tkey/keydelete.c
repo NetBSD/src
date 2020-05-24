@@ -1,4 +1,4 @@
-/*	$NetBSD: keydelete.c,v 1.3 2019/01/09 16:55:04 christos Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.4 2020/05/24 19:46:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,9 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-
-#include <config.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,16 +42,18 @@
 
 #include <dst/result.h>
 
-#define CHECK(str, x) { \
-	if ((x) != ISC_R_SUCCESS) { \
-		fprintf(stderr, "I:%s: %s\n", (str), isc_result_totext(x)); \
-		exit(-1); \
-	} \
-}
+#define CHECK(str, x)                                        \
+	{                                                    \
+		if ((x) != ISC_R_SUCCESS) {                  \
+			fprintf(stderr, "I:%s: %s\n", (str), \
+				isc_result_totext(x));       \
+			exit(-1);                            \
+		}                                            \
+	}
 
 #define RUNCHECK(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
 
-#define PORT 5300
+#define PORT	5300
 #define TIMEOUT 30
 
 static isc_mem_t *mctx;
@@ -92,7 +91,7 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 		result = ISC_RESULTCLASS_DNSRCODE + response->rcode;
 		fprintf(stderr, "I:response rcode: %s\n",
 			isc_result_totext(result));
-			exit(-1);
+		exit(-1);
 	}
 
 	result = dns_tkey_processdeleteresponse(query, response, ring);
@@ -117,8 +116,9 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 
 	result = ISC_R_FAILURE;
-	if (inet_pton(AF_INET, "10.53.0.1", &inaddr) != 1)
+	if (inet_pton(AF_INET, "10.53.0.1", &inaddr) != 1) {
 		CHECK("inet_pton", result);
+	}
 	isc_sockaddr_fromin(&address, &inaddr, PORT);
 
 	query = NULL;
@@ -130,8 +130,8 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 
 	request = NULL;
 	result = dns_request_create(requestmgr, query, &address,
-				    DNS_REQUESTOPT_TCP, tsigkey, TIMEOUT,
-				    task, recvquery, query, &request);
+				    DNS_REQUESTOPT_TCP, tsigkey, TIMEOUT, task,
+				    recvquery, query, &request);
 	CHECK("dns_request_create", result);
 }
 
@@ -157,7 +157,6 @@ main(int argc, char **argv) {
 
 	RUNCHECK(isc_app_start());
 
-
 	if (argc < 2) {
 		fprintf(stderr, "I:no key to delete\n");
 		exit(-1);
@@ -171,16 +170,16 @@ main(int argc, char **argv) {
 	dns_result_register();
 
 	mctx = NULL;
-	RUNCHECK(isc_mem_create(0, 0, &mctx));
+	isc_mem_create(&mctx);
 
 	log = NULL;
 	logconfig = NULL;
-	RUNCHECK(isc_log_create(mctx, &log, &logconfig));
+	isc_log_create(mctx, &log, &logconfig);
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
 
 	taskmgr = NULL;
-	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, &taskmgr));
+	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, NULL, &taskmgr));
 	task = NULL;
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
 	timermgr = NULL;
@@ -190,21 +189,18 @@ main(int argc, char **argv) {
 	dispatchmgr = NULL;
 	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 	isc_sockaddr_any(&bind_any);
-	attrs = DNS_DISPATCHATTR_UDP |
-		DNS_DISPATCHATTR_MAKEQUERY |
+	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY |
 		DNS_DISPATCHATTR_IPV4;
-	attrmask = DNS_DISPATCHATTR_UDP |
-		   DNS_DISPATCHATTR_TCP |
-		   DNS_DISPATCHATTR_IPV4 |
-		   DNS_DISPATCHATTR_IPV6;
+	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
+		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
 	dispatchv4 = NULL;
-	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
-					  &bind_any, 4096, 4, 2, 3, 5,
-					  attrs, attrmask, &dispatchv4));
+	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &bind_any,
+				     4096, 4, 2, 3, 5, attrs, attrmask,
+				     &dispatchv4));
 	requestmgr = NULL;
 	RUNCHECK(dns_requestmgr_create(mctx, timermgr, socketmgr, taskmgr,
-					    dispatchmgr, dispatchv4, NULL,
-					    &requestmgr));
+				       dispatchmgr, dispatchv4, NULL,
+				       &requestmgr));
 
 	ring = NULL;
 	RUNCHECK(dns_tsigkeyring_create(mctx, &ring));
@@ -226,9 +222,8 @@ main(int argc, char **argv) {
 	result = dst_key_fromnamedfile(keyname, NULL, type, mctx, &dstkey);
 	CHECK("dst_key_fromnamedfile", result);
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey),
-					   DNS_TSIG_HMACMD5_NAME,
-					   dstkey, true, NULL, 0, 0,
-					   mctx, ring, &tsigkey);
+					   DNS_TSIG_HMACMD5_NAME, dstkey, true,
+					   NULL, 0, 0, mctx, ring, &tsigkey);
 	dst_key_free(&dstkey);
 	CHECK("dns_tsigkey_createfromkey", result);
 

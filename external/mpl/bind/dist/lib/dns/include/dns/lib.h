@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.3 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_LIB_H
 #define DNS_LIB_H 1
 
 /*! \file dns/lib.h */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 

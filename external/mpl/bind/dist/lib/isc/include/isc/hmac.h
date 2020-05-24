@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.h,v 1.2 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: hmac.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,12 +21,10 @@
 #include <isc/lang.h>
 #include <isc/md.h>
 #include <isc/platform.h>
-#include <isc/types.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
-#include <openssl/hmac.h>
-
-typedef HMAC_CTX isc_hmac_t;
+typedef void isc_hmac_t;
 
 /**
  * isc_hmac:
@@ -46,9 +44,9 @@ typedef HMAC_CTX isc_hmac_t;
  * (i.e. the length of the digest) will be written to the @digestlen.
  */
 isc_result_t
-isc_hmac(isc_md_type_t type, const void *key, const int keylen,
-	 const unsigned char *buf, const size_t len,
-	 unsigned char *digest, unsigned int *digestlen);
+isc_hmac(const isc_md_type_t *type, const void *key, const int keylen,
+	 const unsigned char *buf, const size_t len, unsigned char *digest,
+	 unsigned int *digestlen);
 
 /**
  * isc_hmac_new:
@@ -79,8 +77,8 @@ isc_hmac_free(isc_hmac_t *hmac);
  */
 
 isc_result_t
-isc_hmac_init(isc_hmac_t *hmac, const void *key,
-	      size_t keylen, isc_md_type_t type);
+isc_hmac_init(isc_hmac_t *hmac, const void *key, size_t keylen,
+	      const isc_md_type_t *type);
 
 /**
  * isc_hmac_reset:
@@ -108,7 +106,7 @@ isc_hmac_update(isc_hmac_t *hmac, const unsigned char *buf, const size_t len);
  * isc_hmac_final:
  * @hmac: HMAC context
  * @digest: the output buffer
- * @digestlen: the lenth of the data written to @digest
+ * @digestlen: the length of the data written to @digest
  *
  * This function retrieves the message authentication code from @hmac and places
  * it in @digest, which must have space for the hash function output.  If the
@@ -127,7 +125,7 @@ isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
  * This function return the isc_md_type_t previously set for the supplied
  * HMAC context or NULL if no isc_md_type_t has been set.
  */
-isc_md_type_t
+const isc_md_type_t *
 isc_hmac_get_md_type(isc_hmac_t *hmac);
 
 /**

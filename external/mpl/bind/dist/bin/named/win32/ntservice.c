@@ -1,4 +1,4 @@
-/*	$NetBSD: ntservice.c,v 1.4 2019/09/05 19:32:56 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.5 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
 #include <stdio.h>
 
 #include <isc/app.h>
@@ -21,8 +20,8 @@
 #include <isc/string.h>
 
 #include <named/globals.h>
-#include <named/ntservice.h>
 #include <named/main.h>
+#include <named/ntservice.h>
 #include <named/server.h>
 
 /* Handle to SCM for updating service status */
@@ -33,8 +32,10 @@ static char ConsoleTitle[128];
 /*
  * Forward declarations
  */
-void ServiceControl(DWORD dwCtrlCode);
-int bindmain(int, char *[]); /* From main.c */
+void
+ServiceControl(DWORD dwCtrlCode);
+int
+bindmain(int, char *[]); /* From main.c */
 
 /*
  * Initialize the Service by registering it.
@@ -43,11 +44,11 @@ void
 ntservice_init(void) {
 	if (!foreground) {
 		/* Register handler with the SCM */
-		hServiceStatus = RegisterServiceCtrlHandler(BIND_SERVICE_NAME,
-					(LPHANDLER_FUNCTION)ServiceControl);
+		hServiceStatus = RegisterServiceCtrlHandler(
+			BIND_SERVICE_NAME, (LPHANDLER_FUNCTION)ServiceControl);
 		if (!hServiceStatus) {
-			named_main_earlyfatal(
-				"could not register service control handler");
+			named_main_earlyfatal("could not register service "
+					      "control handler");
 		}
 		UpdateSCM(SERVICE_RUNNING);
 	} else {
@@ -66,7 +67,7 @@ ntservice_shutdown(void) {
  */
 BOOL
 ntservice_isservice(void) {
-	return(!foreground);
+	return (!foreground);
 }
 /*
  * ServiceControl(): Handles requests from the SCM and passes them on
@@ -75,7 +76,7 @@ ntservice_isservice(void) {
 void
 ServiceControl(DWORD dwCtrlCode) {
 	/* Handle the requested control code */
-	switch(dwCtrlCode) {
+	switch (dwCtrlCode) {
 	case SERVICE_CONTROL_INTERROGATE:
 		UpdateSCM(0);
 		break;
@@ -94,13 +95,15 @@ ServiceControl(DWORD dwCtrlCode) {
 /*
  * Tell the Service Control Manager the state of the service.
  */
-void UpdateSCM(DWORD state) {
+void
+UpdateSCM(DWORD state) {
 	SERVICE_STATUS ss;
 	static DWORD dwState = SERVICE_STOPPED;
 
 	if (hServiceStatus) {
-		if (state)
+		if (state) {
 			dwState = state;
+		}
 
 		memset(&ss, 0, sizeof(SERVICE_STATUS));
 		ss.dwServiceType |= SERVICE_WIN32_OWN_PROCESS;
@@ -128,14 +131,13 @@ void UpdateSCM(DWORD state) {
  * We can now call bindmain() explicitly or via StartServiceCtrlDispatcher()
  * as we need to.
  */
-int main(int argc, char *argv[])
-{
+int
+main(int argc, char *argv[]) {
 	int rc, ch;
 
 	/* Command line users should put -f in the options. */
 	isc_commandline_errprint = false;
-	while ((ch = isc_commandline_parse(argc, argv,
-					   NAMED_MAIN_ARGS)) != -1)
+	while ((ch = isc_commandline_parse(argc, argv, NAMED_MAIN_ARGS)) != -1)
 	{
 		switch (ch) {
 		case 'f':
@@ -165,8 +167,8 @@ int main(int argc, char *argv[])
 
 		rc = StartServiceCtrlDispatcher(dispatchTable);
 		if (!rc) {
-			fprintf(stderr,
-				"Use -f to run from the command line.\n");
+			fprintf(stderr, "Use -f to run from the command "
+					"line.\n");
 			/* will be 1063 when launched as a console app */
 			exit(GetLastError());
 		}

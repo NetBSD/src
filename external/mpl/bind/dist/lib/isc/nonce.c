@@ -1,4 +1,4 @@
-/*	$NetBSD: nonce.c,v 1.2 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: nonce.c,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <isc/nonce.h>
 

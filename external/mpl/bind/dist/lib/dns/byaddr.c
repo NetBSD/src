@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>
 
@@ -40,15 +37,12 @@
  * XXXRTH  We could use a static event...
  */
 
-static char hex_digits[] = {
-	'0', '1', '2', '3', '4', '5', '6', '7',
-	'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-};
+static char hex_digits[] = { '0', '1', '2', '3', '4', '5', '6', '7',
+			     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 isc_result_t
 dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
-			 dns_name_t *name)
-{
+			 dns_name_t *name) {
 	char textname[128];
 	const unsigned char *bytes;
 	int i;
@@ -85,8 +79,9 @@ dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
 		}
 		remaining = sizeof(textname) - (cp - textname);
 		strlcpy(cp, "ip6.arpa.", remaining);
-	} else
+	} else {
 		return (ISC_R_NOTIMPLEMENTED);
+	}
 
 	len = (unsigned int)strlen(textname);
 	isc_buffer_init(&buffer, textname, len);
@@ -96,20 +91,20 @@ dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
 
 struct dns_byaddr {
 	/* Unlocked. */
-	unsigned int		magic;
-	isc_mem_t *		mctx;
-	isc_mutex_t		lock;
-	dns_fixedname_t		name;
+	unsigned int magic;
+	isc_mem_t *mctx;
+	isc_mutex_t lock;
+	dns_fixedname_t name;
 	/* Locked by lock. */
-	unsigned int		options;
-	dns_lookup_t *		lookup;
-	isc_task_t *		task;
-	dns_byaddrevent_t *	event;
-	bool		canceled;
+	unsigned int options;
+	dns_lookup_t *lookup;
+	isc_task_t *task;
+	dns_byaddrevent_t *event;
+	bool canceled;
 };
 
-#define BYADDR_MAGIC			ISC_MAGIC('B', 'y', 'A', 'd')
-#define VALID_BYADDR(b)			ISC_MAGIC_VALID(b, BYADDR_MAGIC)
+#define BYADDR_MAGIC	ISC_MAGIC('B', 'y', 'A', 'd')
+#define VALID_BYADDR(b) ISC_MAGIC_VALID(b, BYADDR_MAGIC)
 
 #define MAX_RESTARTS 16
 
@@ -128,26 +123,20 @@ copy_ptr_targets(dns_byaddr_t *byaddr, dns_rdataset_t *rdataset) {
 		dns_rdata_ptr_t ptr;
 		dns_rdataset_current(rdataset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &ptr, NULL);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-		name = isc_mem_get(byaddr->mctx, sizeof(*name));
-		if (name == NULL) {
-			dns_rdata_freestruct(&ptr);
-			return (ISC_R_NOMEMORY);
-		}
-		dns_name_init(name, NULL);
-		result = dns_name_dup(&ptr.ptr, byaddr->mctx, name);
-		dns_rdata_freestruct(&ptr);
 		if (result != ISC_R_SUCCESS) {
-			isc_mem_put(byaddr->mctx, name, sizeof(*name));
-			return (ISC_R_NOMEMORY);
+			return (result);
 		}
+		name = isc_mem_get(byaddr->mctx, sizeof(*name));
+		dns_name_init(name, NULL);
+		dns_name_dup(&ptr.ptr, byaddr->mctx, name);
+		dns_rdata_freestruct(&ptr);
 		ISC_LIST_APPEND(byaddr->event->names, name, link);
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(rdataset);
 	}
-	if (result == ISC_R_NOMORE)
+	if (result == ISC_R_NOMORE) {
 		result = ISC_R_SUCCESS;
+	}
 
 	return (result);
 }
@@ -169,8 +158,9 @@ lookup_done(isc_task_t *task, isc_event_t *event) {
 	if (levent->result == ISC_R_SUCCESS) {
 		result = copy_ptr_targets(byaddr, levent->rdataset);
 		byaddr->event->result = result;
-	} else
+	} else {
 		byaddr->event->result = levent->result;
+	}
 	isc_event_free(&event);
 	isc_task_sendanddetach(&byaddr->task, (isc_event_t **)(void *)&byaddr->event);
 }
@@ -185,8 +175,7 @@ bevent_destroy(isc_event_t *event) {
 	mctx = event->ev_destroy_arg;
 	bevent = (dns_byaddrevent_t *)event;
 
-	for (name = ISC_LIST_HEAD(bevent->names);
-	     name != NULL;
+	for (name = ISC_LIST_HEAD(bevent->names); name != NULL;
 	     name = next_name) {
 		next_name = ISC_LIST_NEXT(name, link);
 		ISC_LIST_UNLINK(bevent->names, name, link);
@@ -199,24 +188,17 @@ bevent_destroy(isc_event_t *event) {
 isc_result_t
 dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 		  dns_view_t *view, unsigned int options, isc_task_t *task,
-		  isc_taskaction_t action, void *arg, dns_byaddr_t **byaddrp)
-{
+		  isc_taskaction_t action, void *arg, dns_byaddr_t **byaddrp) {
 	isc_result_t result;
 	dns_byaddr_t *byaddr;
 	isc_event_t *ievent;
 
 	byaddr = isc_mem_get(mctx, sizeof(*byaddr));
-	if (byaddr == NULL)
-		return (ISC_R_NOMEMORY);
 	byaddr->mctx = NULL;
 	isc_mem_attach(mctx, &byaddr->mctx);
 	byaddr->options = options;
 
 	byaddr->event = isc_mem_get(mctx, sizeof(*byaddr->event));
-	if (byaddr->event == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup_byaddr;
-	}
 	ISC_EVENT_INIT(byaddr->event, sizeof(*byaddr->event), 0, NULL,
 		       DNS_EVENT_BYADDRDONE, action, arg, byaddr,
 		       bevent_destroy, mctx);
@@ -232,15 +214,17 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 
 	result = dns_byaddr_createptrname(address, options,
 					  dns_fixedname_name(&byaddr->name));
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup_lock;
+	}
 
 	byaddr->lookup = NULL;
 	result = dns_lookup_create(mctx, dns_fixedname_name(&byaddr->name),
 				   dns_rdatatype_ptr, view, 0, task,
 				   lookup_done, byaddr, &byaddr->lookup);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup_lock;
+	}
 
 	byaddr->canceled = false;
 	byaddr->magic = BYADDR_MAGIC;
@@ -249,7 +233,7 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 
 	return (ISC_R_SUCCESS);
 
- cleanup_lock:
+cleanup_lock:
 	isc_mutex_destroy(&byaddr->lock);
 
 	ievent = (isc_event_t *)byaddr->event;
@@ -258,7 +242,6 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 
 	isc_task_detach(&byaddr->task);
 
- cleanup_byaddr:
 	isc_mem_putanddetach(&mctx, byaddr, sizeof(*byaddr));
 
 	return (result);
@@ -272,8 +255,9 @@ dns_byaddr_cancel(dns_byaddr_t *byaddr) {
 
 	if (!byaddr->canceled) {
 		byaddr->canceled = true;
-		if (byaddr->lookup != NULL)
+		if (byaddr->lookup != NULL) {
 			dns_lookup_cancel(byaddr->lookup);
+		}
 	}
 
 	UNLOCK(&byaddr->lock);
@@ -285,6 +269,7 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp) {
 
 	REQUIRE(byaddrp != NULL);
 	byaddr = *byaddrp;
+	*byaddrp = NULL;
 	REQUIRE(VALID_BYADDR(byaddr));
 	REQUIRE(byaddr->event == NULL);
 	REQUIRE(byaddr->task == NULL);
@@ -293,6 +278,4 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp) {
 	isc_mutex_destroy(&byaddr->lock);
 	byaddr->magic = 0;
 	isc_mem_putanddetach(&byaddr->mctx, byaddr, sizeof(*byaddr));
-
-	*byaddrp = NULL;
 }

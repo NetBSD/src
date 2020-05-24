@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.5 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,6 @@
  * SUCH DAMAGE.
  */
 
-
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
  *    NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp
@@ -48,8 +47,6 @@
  * The primary change has been to rename items to the ISC namespace
  * and format in the ISC coding style.
  */
-
-#include <config.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -75,18 +72,18 @@ LIBISC_EXTERNAL_DATA bool isc_commandline_reset = true;
 
 static char endopt = '\0';
 
-#define	BADOPT	'?'
-#define	BADARG	':'
-#define ENDOPT  &endopt
+#define BADOPT '?'
+#define BADARG ':'
+#define ENDOPT &endopt
 
 /*!
  * getopt --
  *	Parse argc/argv argument vector.
  */
 int
-isc_commandline_parse(int argc, char * const *argv, const char *options) {
+isc_commandline_parse(int argc, char *const *argv, const char *options) {
 	static char *place = ENDOPT;
-	const char *option;		/* Index into *options of option. */
+	const char *option; /* Index into *options of option. */
 
 	REQUIRE(argc >= 0 && argv != NULL && options != NULL);
 
@@ -100,11 +97,13 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 			isc_commandline_reset = false;
 		}
 
-		if (isc_commandline_progname == NULL)
+		if (isc_commandline_progname == NULL) {
 			isc_commandline_progname = argv[0];
+		}
 
 		if (isc_commandline_index >= argc ||
-		    *(place = argv[isc_commandline_index]) != '-') {
+		    *(place = argv[isc_commandline_index]) != '-')
+		{
 			/*
 			 * Index out of range or points to non-option.
 			 */
@@ -132,13 +131,15 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	 * distinguish ':' from the argument specifier in the options string.
 	 */
 	if (isc_commandline_option == ':' || option == NULL) {
-		if (*place == '\0')
+		if (*place == '\0') {
 			isc_commandline_index++;
+		}
 
-		if (isc_commandline_errprint && *options != ':')
+		if (isc_commandline_errprint && *options != ':') {
 			fprintf(stderr, "%s: illegal option -- %c\n",
 				isc_commandline_progname,
 				isc_commandline_option);
+		}
 
 		return (BADOPT);
 	}
@@ -152,26 +153,24 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 		/*
 		 * Skip to next argv if at the end of the current argv.
 		 */
-		if (*place == '\0')
+		if (*place == '\0') {
 			++isc_commandline_index;
-
+		}
 	} else {
 		/*
 		 * Option needs an argument.
 		 */
-		if (*place != '\0')
+		if (*place != '\0') {
 			/*
 			 * Option is in this argv, -D1 style.
 			 */
 			isc_commandline_argument = place;
-
-		else if (argc > ++isc_commandline_index)
+		} else if (argc > ++isc_commandline_index) {
 			/*
 			 * Option is next argv, -D 1 style.
 			 */
 			isc_commandline_argument = argv[isc_commandline_index];
-
-		else {
+		} else {
 			/*
 			 * Argument needed, but no more argv.
 			 */
@@ -181,13 +180,17 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 			 * Silent failure with "missing argument" return
 			 * when ':' starts options string, per historical spec.
 			 */
-			if (*options == ':')
+			if (*options == ':') {
 				return (BADARG);
+			}
 
-			if (isc_commandline_errprint)
-				fprintf(stderr, "%s: option requires an argument -- %c\n",
+			if (isc_commandline_errprint) {
+				fprintf(stderr,
+					"%s: option requires an argument -- "
+					"%c\n",
 					isc_commandline_progname,
 					isc_commandline_option);
+			}
 
 			return (BADOPT);
 		}
@@ -205,21 +208,19 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 
 isc_result_t
 isc_commandline_strtoargv(isc_mem_t *mctx, char *s, unsigned int *argcp,
-			  char ***argvp, unsigned int n)
-{
+			  char ***argvp, unsigned int n) {
 	isc_result_t result;
 
- restart:
+restart:
 	/* Discard leading whitespace. */
-	while (*s == ' ' || *s == '\t')
+	while (*s == ' ' || *s == '\t') {
 		s++;
+	}
 
 	if (*s == '\0') {
 		/* We have reached the end of the string. */
 		*argcp = n;
 		*argvp = isc_mem_get(mctx, n * sizeof(char *));
-		if (*argvp == NULL)
-			return (ISC_R_NOMEMORY);
 	} else {
 		char *p = s;
 		while (*p != ' ' && *p != '\t' && *p != '\0' && *p != '{') {
@@ -238,7 +239,7 @@ isc_commandline_strtoargv(isc_mem_t *mctx, char *s, unsigned int *argcp,
 			 */
 			while (*t != '\0') {
 				t++;
-				*(t-1) = *t;
+				*(t - 1) = *t;
 			}
 			while (*p != '\0' && *p != '}') {
 				p++;
@@ -249,13 +250,15 @@ isc_commandline_strtoargv(isc_mem_t *mctx, char *s, unsigned int *argcp,
 				p++;
 			}
 			/* normal case, no "grouping" */
-		} else if (*p != '\0')
+		} else if (*p != '\0') {
 			*p++ = '\0';
+		}
 
-		result = isc_commandline_strtoargv(mctx, p,
-						   argcp, argvp, n + 1);
-		if (result != ISC_R_SUCCESS)
+		result = isc_commandline_strtoargv(mctx, p, argcp, argvp,
+						   n + 1);
+		if (result != ISC_R_SUCCESS) {
 			return (result);
+		}
 		(*argvp)[n] = s;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.4 2019/11/27 05:48:40 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
+#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/select.h>
-#include <sys/types.h>
 #include <sys/time.h>
-
+#include <sys/types.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include <isc/app.h>
 #include <isc/commandline.h>
@@ -50,27 +47,27 @@ dns_zonemgr_t *zonemgr = NULL;
 dns_zonetype_t zonetype = dns_zone_master;
 isc_sockaddr_t addr;
 
-#define ERRRET(result, function) \
-	do { \
-		if (result != ISC_R_SUCCESS) { \
-			fprintf(stderr, "%s() returned %s\n", \
-				function, dns_result_totext(result)); \
-			return; \
-		} \
+#define ERRRET(result, function)                                        \
+	do {                                                            \
+		if (result != ISC_R_SUCCESS) {                          \
+			fprintf(stderr, "%s() returned %s\n", function, \
+				dns_result_totext(result));             \
+			return;                                         \
+		}                                                       \
 	} while (0)
 
-#define ERRCONT(result, function) \
-		if (result != ISC_R_SUCCESS) { \
-			fprintf(stderr, "%s() returned %s\n", \
-				function, dns_result_totext(result)); \
-			continue; \
-		} else \
-			(void)NULL
+#define ERRCONT(result, function)                               \
+	if (result != ISC_R_SUCCESS) {                          \
+		fprintf(stderr, "%s() returned %s\n", function, \
+			dns_result_totext(result));             \
+		continue;                                       \
+	} else                                                  \
+		(void)NULL
 
 static void
 usage(void) {
-	fprintf(stderr,
-		"usage: zone_test [-dqsSM] [-c class] [-f file] zone\n");
+	fprintf(stderr, "usage: zone_test [-dqsSM] [-c class] [-f file] "
+			"zone\n");
 	exit(1);
 }
 
@@ -84,9 +81,10 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	dns_name_t *origin;
 	const char *rbt = "rbt";
 
-	if (debug)
+	if (debug) {
 		fprintf(stderr, "loading \"%s\" from \"%s\" class \"%s\"\n",
 			zonename, filename, classname);
+	}
 	result = dns_zone_create(&zone, mctx);
 	ERRRET(result, "dns_zone_new");
 
@@ -95,16 +93,15 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	isc_buffer_constinit(&buffer, zonename, strlen(zonename));
 	isc_buffer_add(&buffer, strlen(zonename));
 	dns_fixedname_init(&fixorigin);
-	result = dns_name_fromtext(dns_fixedname_name(&fixorigin),
-				   &buffer, dns_rootname, 0, NULL);
+	result = dns_name_fromtext(dns_fixedname_name(&fixorigin), &buffer,
+				   dns_rootname, 0, NULL);
 	ERRRET(result, "dns_name_fromtext");
 	origin = dns_fixedname_name(&fixorigin);
 
 	result = dns_zone_setorigin(zone, origin);
 	ERRRET(result, "dns_zone_setorigin");
 
-	result = dns_zone_setdbtype(zone, 1, &rbt);
-	ERRRET(result, "dns_zone_setdatabase");
+	dns_zone_setdbtype(zone, 1, &rbt);
 
 	result = dns_zone_setfile(zone, filename, dns_masterformat_text,
 				  &dns_master_style_default);
@@ -113,13 +110,14 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	region.base = classname;
 	region.length = strlen(classname);
 	result = dns_rdataclass_fromtext(&rdclass,
-					 (isc_textregion_t *)(void*)&region);
+					 (isc_textregion_t *)(void *)&region);
 	ERRRET(result, "dns_rdataclass_fromtext");
 
 	dns_zone_setclass(zone, rdclass);
 
-	if (zonetype == dns_zone_slave)
+	if (zonetype == dns_zone_slave) {
 		dns_zone_setmasters(zone, &addr, 1);
+	}
 
 	result = dns_zone_load(zone, false);
 	ERRRET(result, "dns_zone_load");
@@ -136,13 +134,13 @@ print_rdataset(dns_name_t *name, dns_rdataset_t *rdataset) {
 	isc_region_t r;
 
 	isc_buffer_init(&text, t, sizeof(t));
-	result = dns_rdataset_totext(rdataset, name, false, false,
-				     &text);
+	result = dns_rdataset_totext(rdataset, name, false, false, &text);
 	isc_buffer_usedregion(&text, &r);
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
 		printf("%.*s", (int)r.length, (char *)r.base);
-	else
+	} else {
 		printf("%s\n", dns_result_totext(result));
+	}
 }
 
 static void
@@ -183,34 +181,34 @@ query(void) {
 		buf[sizeof(buf) - 1] = '\0';
 
 		s = strchr(buf, '\n');
-		if (s != NULL)
+		if (s != NULL) {
 			*s = '\0';
+		}
 		s = strchr(buf, '\r');
-		if (s != NULL)
+		if (s != NULL) {
 			*s = '\0';
+		}
 		if (strcmp(buf, "dump") == 0) {
 			dns_zone_dumptostream(zone, stdout,
 					      dns_masterformat_text,
 					      &dns_master_style_default, 0);
 			continue;
 		}
-		if (strlen(buf) == 0U)
+		if (strlen(buf) == 0U) {
 			continue;
+		}
 		dns_fixedname_init(&name);
 		isc_buffer_init(&buffer, buf, strlen(buf));
 		isc_buffer_add(&buffer, strlen(buf));
-		result = dns_name_fromtext(dns_fixedname_name(&name),
-				  &buffer, dns_rootname, 0, NULL);
+		result = dns_name_fromtext(dns_fixedname_name(&name), &buffer,
+					   dns_rootname, 0, NULL);
 		ERRCONT(result, "dns_name_fromtext");
 
 		result = dns_db_find(db, dns_fixedname_name(&name),
-				     NULL /*vesion*/,
-				     dns_rdatatype_a,
-				     0 /*options*/,
-				     0 /*time*/,
-				     NULL /*nodep*/,
-				     dns_fixedname_name(&found),
-				     &rdataset, &sigset);
+				     NULL /*version*/, dns_rdatatype_a,
+				     0 /*options*/, 0 /*time*/, NULL /*nodep*/,
+				     dns_fixedname_name(&found), &rdataset,
+				     &sigset);
 		fprintf(stderr, "%s() returned %s\n", "dns_db_find",
 			dns_result_totext(result));
 		switch (result) {
@@ -224,10 +222,12 @@ query(void) {
 			break;
 		}
 
-		if (dns_rdataset_isassociated(&rdataset))
+		if (dns_rdataset_isassociated(&rdataset)) {
 			dns_rdataset_disassociate(&rdataset);
-		if (dns_rdataset_isassociated(&sigset))
+		}
+		if (dns_rdataset_isassociated(&sigset)) {
 			dns_rdataset_disassociate(&sigset);
+		}
 	} while (1);
 	dns_rdataset_invalidate(&rdataset);
 	dns_db_detach(&db);
@@ -248,8 +248,9 @@ main(int argc, char **argv) {
 			debug++;
 			break;
 		case 'f':
-			if (filename != NULL)
+			if (filename != NULL) {
 				usage();
+			}
 			filename = isc_commandline_argument;
 			break;
 		case 'm':
@@ -280,30 +281,34 @@ main(int argc, char **argv) {
 		}
 	}
 
-	if (argv[isc_commandline_index] == NULL)
+	if (argv[isc_commandline_index] == NULL) {
 		usage();
+	}
 
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, 2, 0, &taskmgr) ==
+	isc_mem_create(&mctx);
+	RUNTIME_CHECK(isc_taskmgr_create(mctx, 2, 0, NULL, &taskmgr) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timermgr) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
 					 &zonemgr) == ISC_R_SUCCESS);
-	if (filename == NULL)
+	if (filename == NULL) {
 		filename = argv[isc_commandline_index];
+	}
 	setup(argv[isc_commandline_index], filename, classname);
 	query();
-	if (zone != NULL)
+	if (zone != NULL) {
 		dns_zone_detach(&zone);
+	}
 	dns_zonemgr_shutdown(zonemgr);
 	dns_zonemgr_detach(&zonemgr);
 	isc_socketmgr_destroy(&socketmgr);
 	isc_taskmgr_destroy(&taskmgr);
 	isc_timermgr_destroy(&timermgr);
-	if (!quiet && stats)
+	if (!quiet && stats) {
 		isc_mem_stats(mctx, stdout);
+	}
 	isc_mem_destroy(&mctx);
 
 	return (0);

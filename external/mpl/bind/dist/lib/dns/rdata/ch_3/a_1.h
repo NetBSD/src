@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/mx_15.h */
 
@@ -21,10 +20,12 @@
 typedef uint16_t ch_addr_t;
 
 typedef struct dns_rdata_ch_a {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		ch_addr_dom; /* ch-addr domain for back mapping */
-	ch_addr_t		ch_addr; /* chaos address (16 bit) network order */
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t ch_addr_dom; /* ch-addr domain for back mapping
+				 * */
+	ch_addr_t ch_addr;	/* chaos address (16 bit) network
+				 * order */
 } dns_rdata_ch_a_t;
 
 #endif /* CH_3_A_1_H */

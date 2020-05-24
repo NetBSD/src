@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: parseint.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <ctype.h>
 #include <errno.h>
-#include <limits.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include <isc/parseint.h>
@@ -30,20 +27,23 @@ isc_parse_uint32(uint32_t *uip, const char *string, int base) {
 	unsigned long n;
 	uint32_t r;
 	char *e;
-	if (! isalnum((unsigned char)(string[0])))
+	if (!isalnum((unsigned char)(string[0]))) {
 		return (ISC_R_BADNUMBER);
+	}
 	errno = 0;
 	n = strtoul(string, &e, base);
-	if (*e != '\0')
+	if (*e != '\0') {
 		return (ISC_R_BADNUMBER);
+	}
 	/*
 	 * Where long is 64 bits we need to convert to 32 bits then test for
 	 * equality.  This is a no-op on 32 bit machines and a good compiler
 	 * will optimise it away.
 	 */
 	r = (uint32_t)n;
-	if ((n == ULONG_MAX && errno == ERANGE) || (n != (unsigned long)r))
+	if ((n == ULONG_MAX && errno == ERANGE) || (n != (unsigned long)r)) {
 		return (ISC_R_RANGE);
+	}
 	*uip = r;
 	return (ISC_R_SUCCESS);
 }
@@ -53,11 +53,13 @@ isc_parse_uint16(uint16_t *uip, const char *string, int base) {
 	uint32_t val;
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
-	if (val > 0xFFFF)
+	}
+	if (val > 0xFFFF) {
 		return (ISC_R_RANGE);
-	*uip = (uint16_t) val;
+	}
+	*uip = (uint16_t)val;
 	return (ISC_R_SUCCESS);
 }
 
@@ -66,10 +68,12 @@ isc_parse_uint8(uint8_t *uip, const char *string, int base) {
 	uint32_t val;
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
-	if (val > 0xFF)
+	}
+	if (val > 0xFF) {
 		return (ISC_R_RANGE);
-	*uip = (uint8_t) val;
+	}
+	*uip = (uint8_t)val;
 	return (ISC_R_SUCCESS);
 }

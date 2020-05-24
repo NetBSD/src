@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_result.c,v 1.3 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,37 +11,35 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <isc/once.h>
 #include <isc/util.h>
 
 #include <dst/result.h>
 
 static const char *text[DST_R_NRESULTS] = {
-	"algorithm is unsupported",		/*%< 0 */
-	"crypto failure",			/*%< 1 */
-	"built with no crypto support",		/*%< 2 */
-	"illegal operation for a null key",	/*%< 3 */
-	"public key is invalid",		/*%< 4 */
-	"private key is invalid",		/*%< 5 */
-	"external key",				/*%< 6 */
-	"error occurred writing key to disk",	/*%< 7 */
-	"invalid algorithm specific parameter",	/*%< 8 */
-	"UNUSED9",				/*%< 9 */
-	"UNUSED10",				/*%< 10 */
-	"sign failure",				/*%< 11 */
-	"UNUSED12",				/*%< 12 */
-	"UNUSED13",				/*%< 13 */
-	"verify failure",			/*%< 14 */
-	"not a public key",			/*%< 15 */
-	"not a private key",			/*%< 16 */
-	"not a key that can compute a secret",	/*%< 17 */
-	"failure computing a shared secret",	/*%< 18 */
-	"no randomness available",		/*%< 19 */
-	"bad key type",				/*%< 20 */
-	"no engine",				/*%< 21 */
-	"illegal operation for an external key",/*%< 22 */
+	"algorithm is unsupported",		 /*%< 0 */
+	"crypto failure",			 /*%< 1 */
+	"built with no crypto support",		 /*%< 2 */
+	"illegal operation for a null key",	 /*%< 3 */
+	"public key is invalid",		 /*%< 4 */
+	"private key is invalid",		 /*%< 5 */
+	"external key",				 /*%< 6 */
+	"error occurred writing key to disk",	 /*%< 7 */
+	"invalid algorithm specific parameter",	 /*%< 8 */
+	"UNUSED9",				 /*%< 9 */
+	"UNUSED10",				 /*%< 10 */
+	"sign failure",				 /*%< 11 */
+	"UNUSED12",				 /*%< 12 */
+	"UNUSED13",				 /*%< 13 */
+	"verify failure",			 /*%< 14 */
+	"not a public key",			 /*%< 15 */
+	"not a private key",			 /*%< 16 */
+	"not a key that can compute a secret",	 /*%< 17 */
+	"failure computing a shared secret",	 /*%< 18 */
+	"no randomness available",		 /*%< 19 */
+	"bad key type",				 /*%< 20 */
+	"no engine",				 /*%< 21 */
+	"illegal operation for an external key", /*%< 22 */
 };
 
 static const char *ids[DST_R_NRESULTS] = {
@@ -70,24 +68,26 @@ static const char *ids[DST_R_NRESULTS] = {
 	"DST_R_EXTERNALKEY",
 };
 
-#define DST_RESULT_RESULTSET			2
+#define DST_RESULT_RESULTSET 2
 
-static isc_once_t		once = ISC_ONCE_INIT;
+static isc_once_t once = ISC_ONCE_INIT;
 
 static void
 initialize_action(void) {
 	isc_result_t result;
 
-	result = isc_result_register(ISC_RESULTCLASS_DST, DST_R_NRESULTS,
-				     text, DST_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	result = isc_result_register(ISC_RESULTCLASS_DST, DST_R_NRESULTS, text,
+				     DST_RESULT_RESULTSET);
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_register() failed: %u", result);
+	}
 	result = isc_result_registerids(ISC_RESULTCLASS_DST, DST_R_NRESULTS,
 					ids, DST_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_registerids() failed: %u", result);
+	}
 }
 
 static void

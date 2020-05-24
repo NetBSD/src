@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: radix_test.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -67,7 +64,7 @@ isc_radix_search_test(void **state) {
 
 	UNUSED(state);
 
-	result = isc_radix_create(mctx, &radix, 32);
+	result = isc_radix_create(test_mctx, &radix, 32);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	in_addr.s_addr = inet_addr("3.3.3.0");
@@ -107,8 +104,8 @@ isc_radix_search_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(isc_radix_search_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(isc_radix_search_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -124,4 +121,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

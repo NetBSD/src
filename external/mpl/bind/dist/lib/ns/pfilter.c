@@ -1,4 +1,3 @@
-#include <config.h>
 
 #include <isc/platform.h>
 #include <isc/util.h>
@@ -22,7 +21,7 @@ pfilter_enable(void) {
 void
 pfilter_notify(isc_result_t res, ns_client_t *client, const char *msg)
 {
-	isc_socket_t *socket;
+	int fd;
 
 	if (!blenable)
 		return;
@@ -33,18 +32,13 @@ pfilter_notify(isc_result_t res, ns_client_t *client, const char *msg)
 	if (blstate == NULL)
 		return;
 
-	if (TCP_CLIENT(client))
-		socket = client->tcpsocket;
-	else {
-		socket = client->udpsocket;
-		if (!client->peeraddr_valid)
-			return;
-	}
+	if (!TCP_CLIENT(client) && !client->peeraddr_valid)
+		return;
 
-	if (socket == NULL)
+	if ((fd = isc_nmhandle_getfd(client->handle)) == -1)
 		return;
 
 	blacklist_sa_r(blstate, 
-	    res != ISC_R_SUCCESS, isc_socket_getfd(socket),
+	    res != ISC_R_SUCCESS, fd,
 	    &client->peeraddr.type.sa, client->peeraddr.length, msg);
 }

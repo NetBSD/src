@@ -1,6 +1,6 @@
-.\"	$NetBSD: rndc.8,v 1.5 2019/09/05 19:32:56 christos Exp $
+.\"	$NetBSD: rndc.8,v 1.6 2020/05/24 19:46:13 christos Exp $
 .\"
-.\" Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -278,7 +278,8 @@ See also
 Fetch all DNSSEC keys for the given zone from the key directory\&. If they are within their publication period, merge them into the zone\*(Aqs DNSKEY RRset\&. Unlike
 \fBrndc sign\fR, however, the zone is not immediately re\-signed by the new keys, but is allowed to incrementally re\-sign over time\&.
 .sp
-This command requires that the
+This command requires that the zone is configured with a
+\fBdnssec\-policy\fR, or that the
 \fBauto\-dnssec\fR
 zone option be set to
 maintain, and also requires the zone to be configured to allow dynamic DNS\&. (See "Dynamic Update Policies" in the Administrator Reference Manual for more details\&.)
@@ -286,7 +287,7 @@ maintain, and also requires the zone to be configured to allow dynamic DNS\&. (S
 .PP
 \fBmanaged\-keys \fR\fB\fI(status | refresh | sync | destroy)\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR
 .RS 4
-Inspect and control the "managed\-keys" database which handles RFC 5011 DNSSEC trust anchor maintenance\&. If a view is specified, these commands are applied to that view; otherwise they are applied to all views\&.
+Inspect and control the "managed keys" database which handles RFC 5011 DNSSEC trust anchor maintenance\&. If a view is specified, these commands are applied to that view; otherwise they are applied to all views\&.
 .sp
 .RS 4
 .ie n \{\
@@ -298,7 +299,7 @@ Inspect and control the "managed\-keys" database which handles RFC 5011 DNSSEC t
 .\}
 When run with the
 status
-keyword, prints the current status of the managed\-keys database\&.
+keyword, prints the current status of the managed keys database\&.
 .RE
 .sp
 .RS 4
@@ -311,7 +312,7 @@ keyword, prints the current status of the managed\-keys database\&.
 .\}
 When run with the
 refresh
-keyword, forces an immediate refresh query to be sent for all the managed keys, updating the managed\-keys database if any new keys are found, without waiting the normal refresh interval\&.
+keyword, forces an immediate refresh query to be sent for all the managed keys, updating the managed keys database if any new keys are found, without waiting the normal refresh interval\&.
 .RE
 .sp
 .RS 4
@@ -324,7 +325,7 @@ keyword, forces an immediate refresh query to be sent for all the managed keys, 
 .\}
 When run with the
 sync
-keyword, forces an immediate dump of the managed\-keys database to disk (in the file
+keyword, forces an immediate dump of the managed keys database to disk (in the file
 managed\-keys\&.bind
 or (\fIviewname\fR\&.mkeys)\&. This synchronizes the database with its journal file, so that the database\*(Aqs current contents can be inspected visually\&.
 .RE
@@ -339,7 +340,7 @@ or (\fIviewname\fR\&.mkeys)\&. This synchronizes the database with its journal f
 .\}
 When run with the
 destroy
-keyword, the managed\-keys database is shut down and deleted, and all key maintenance is terminated\&. This command should be used only with extreme caution\&.
+keyword, the managed keys database is shut down and deleted, and all key maintenance is terminated\&. This command should be used only with extreme caution\&.
 .sp
 Existing keys that are already trusted are not deleted from memory; DNSSEC validation can continue after this command is used\&. However, key maintenance operations will cease until
 \fBnamed\fR
@@ -517,8 +518,8 @@ timer\&.
 \fBsecroots \fR\fB[\-]\fR\fB \fR\fB[\fIview \&.\&.\&.\fR]\fR
 .RS 4
 Dump the security roots (i\&.e\&., trust anchors configured via
-\fBtrusted\-keys\fR,
-\fBmanaged\-keys\fR, or
+\fBtrust\-anchors\fR
+statements, or the managed\-keys or trusted\-keys statements (both deprecated), or via
 \fBdnssec\-validation auto\fR) and negative trust anchors for the specified views\&. If no view is specified, all views are dumped\&. Security roots will indicate whether they are configured as trusted keys, managed keys, or initializing managed keys (managed keys that have not yet been updated by a successful key refresh query)\&.
 .sp
 If the first argument is "\-", then the output is returned via the
@@ -568,7 +569,8 @@ Fetch all DNSSEC keys for the given zone from the key directory (see the
 \fBkey\-directory\fR
 option in the BIND 9 Administrator Reference Manual)\&. If they are within their publication period, merge them into the zone\*(Aqs DNSKEY RRset\&. If the DNSKEY RRset is changed, then the zone is automatically re\-signed with the new key set\&.
 .sp
-This command requires that the
+This command requires that the zone is configured with a
+\fBdnssec\-policy\fR, or that the
 \fBauto\-dnssec\fR
 zone option be set to
 allow
@@ -704,14 +706,7 @@ in each view\&. The list includes both statically configured keys and dynamic TK
 .PP
 \fBvalidation ( on | off | status ) \fR\fB[\fIview \&.\&.\&.\fR]\fR\fB \fR
 .RS 4
-Enable, disable, or check the current status of DNSSEC validation\&. By default, validation is enabled\&. (Note that
-\fBdnssec\-enable\fR
-must also be
-\fByes\fR
-(the default value) for signatures to be returned along with validated data\&. If validation is enabled while
-\fBdnssec\-enable\fR
-is set to
-\fBno\fR, the server will validate internally, but will not supply clients with the necessary records to allow validity to be confirmed\&.)
+Enable, disable, or check the current status of DNSSEC validation\&. By default, validation is enabled\&. The cache is flushed when validation is turned on or off to avoid using data that might differ between states\&.
 .RE
 .PP
 \fBzonestatus \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR
@@ -752,5 +747,5 @@ BIND 9 Administrator Reference Manual\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2000, 2001, 2004, 2005, 2007, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2000, 2001, 2004, 2005, 2007, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

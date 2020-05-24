@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.1.1.1 2020/05/24 19:36:46 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@
 static atomic_uint_fast32_t last_tcpquota_log = ATOMIC_VAR_INIT(0);
 
 static bool
-can_log_tcp_quota() {
+can_log_tcp_quota(void) {
 	isc_stdtime_t now, last;
 
 	isc_stdtime_get(&now);

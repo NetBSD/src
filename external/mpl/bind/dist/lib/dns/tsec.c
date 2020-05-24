@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tsec.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,40 +11,37 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <isc/mem.h>
 #include <isc/util.h>
 
 #include <pk11/site.h>
 
+#include <dns/result.h>
 #include <dns/tsec.h>
 #include <dns/tsig.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
 
-#define DNS_TSEC_MAGIC			ISC_MAGIC('T', 's', 'e', 'c')
-#define DNS_TSEC_VALID(t)		ISC_MAGIC_VALID(t, DNS_TSEC_MAGIC)
+#define DNS_TSEC_MAGIC	  ISC_MAGIC('T', 's', 'e', 'c')
+#define DNS_TSEC_VALID(t) ISC_MAGIC_VALID(t, DNS_TSEC_MAGIC)
 
 /*%
  * DNS Transaction Security object.  We assume this is not shared by
  * multiple threads, and so the structure does not contain a lock.
  */
 struct dns_tsec {
-	unsigned int		magic;
-	dns_tsectype_t		type;
-	isc_mem_t		*mctx;
+	unsigned int magic;
+	dns_tsectype_t type;
+	isc_mem_t *mctx;
 	union {
-		dns_tsigkey_t	*tsigkey;
-		dst_key_t	*key;
+		dns_tsigkey_t *tsigkey;
+		dst_key_t *key;
 	} ukey;
 };
 
 isc_result_t
 dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
-		dns_tsec_t **tsecp)
-{
+		dns_tsec_t **tsecp) {
 	isc_result_t result;
 	dns_tsec_t *tsec;
 	dns_tsigkey_t *tsigkey = NULL;
@@ -54,8 +51,6 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	REQUIRE(tsecp != NULL && *tsecp == NULL);
 
 	tsec = isc_mem_get(mctx, sizeof(*tsec));
-	if (tsec == NULL)
-		return (ISC_R_NOMEMORY);
 
 	tsec->type = type;
 	tsec->mctx = mctx;
@@ -85,10 +80,9 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 			isc_mem_put(mctx, tsec, sizeof(*tsec));
 			return (DNS_R_BADALG);
 		}
-		result = dns_tsigkey_createfromkey(dst_key_name(key),
-						   algname, key, false,
-						   NULL, 0, 0, mctx, NULL,
-						   &tsigkey);
+		result = dns_tsigkey_createfromkey(dst_key_name(key), algname,
+						   key, false, NULL, 0, 0, mctx,
+						   NULL, &tsigkey);
 		if (result != ISC_R_SUCCESS) {
 			isc_mem_put(mctx, tsec, sizeof(*tsec));
 			return (result);
@@ -115,6 +109,7 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 
 	REQUIRE(tsecp != NULL && *tsecp != NULL);
 	tsec = *tsecp;
+	*tsecp = NULL;
 	REQUIRE(DNS_TSEC_VALID(tsec));
 
 	switch (tsec->type) {
@@ -131,8 +126,6 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 
 	tsec->magic = 0;
 	isc_mem_put(tsec->mctx, tsec, sizeof(*tsec));
-
-	*tsecp = NULL;
 }
 
 dns_tsectype_t

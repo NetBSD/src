@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,11 +38,13 @@ fromtext_in_a(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1)
+	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1) {
 		RETTOK(DNS_R_BADDOTTEDQUAD);
+	}
 	isc_buffer_availableregion(target, &region);
-	if (region.length < 4)
+	if (region.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
@@ -77,10 +79,12 @@ fromwire_in_a(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (sregion.length < 4)
+	if (sregion.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
-	if (tregion.length < 4)
+	}
+	if (tregion.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 4);
 	isc_buffer_forward(source, 4);
@@ -99,8 +103,9 @@ towire_in_a(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	isc_buffer_availableregion(target, &region);
-	if (region.length < rdata->length)
+	if (region.length < rdata->length) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
@@ -141,7 +146,6 @@ fromstruct_in_a(ARGS_FROMSTRUCT) {
 
 	return (uint32_tobuffer(n, target));
 }
-
 
 static inline isc_result_t
 tostruct_in_a(ARGS_TOSTRUCT) {
@@ -213,16 +217,17 @@ checkowner_in_a(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 
 	/*
-	 * Handle Active Diretory gc._msdcs.<forest> name.
+	 * Handle Active Directory gc._msdcs.<forest> name.
 	 */
 	if (dns_name_countlabels(name) > 2U) {
 		dns_name_init(&prefix, NULL);
 		dns_name_init(&suffix, NULL);
-		dns_name_split(name, dns_name_countlabels(name) - 2,
-			       &prefix, &suffix);
+		dns_name_split(name, dns_name_countlabels(name) - 2, &prefix,
+			       &suffix);
 		if (dns_name_equal(&gc_msdcs, &prefix) &&
-		    dns_name_ishostname(&suffix, false))
+		    dns_name_ishostname(&suffix, false)) {
 			return (true);
+		}
 	}
 
 	return (dns_name_ishostname(name, wildcard));
@@ -230,7 +235,6 @@ checkowner_in_a(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_in_a(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -246,4 +250,4 @@ casecompare_in_a(ARGS_COMPARE) {
 	return (compare_in_a(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_A_1_C */
+#endif /* RDATA_IN_1_A_1_C */

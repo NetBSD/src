@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_RDATASETITER_H
 #define DNS_RDATASETITER_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/rdatasetiter.h
  * \brief
@@ -53,8 +52,8 @@
  */
 
 /*****
- ***** Imports
- *****/
+***** Imports
+*****/
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -65,19 +64,18 @@
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Types
- *****/
+***** Types
+*****/
 
 typedef struct dns_rdatasetitermethods {
-	void		(*destroy)(dns_rdatasetiter_t **iteratorp);
-	isc_result_t	(*first)(dns_rdatasetiter_t *iterator);
-	isc_result_t	(*next)(dns_rdatasetiter_t *iterator);
-	void		(*current)(dns_rdatasetiter_t *iterator,
-				   dns_rdataset_t *rdataset);
+	void (*destroy)(dns_rdatasetiter_t **iteratorp);
+	isc_result_t (*first)(dns_rdatasetiter_t *iterator);
+	isc_result_t (*next)(dns_rdatasetiter_t *iterator);
+	void (*current)(dns_rdatasetiter_t *iterator, dns_rdataset_t *rdataset);
 } dns_rdatasetitermethods_t;
 
-#define DNS_RDATASETITER_MAGIC	     ISC_MAGIC('D','N','S','i')
-#define DNS_RDATASETITER_VALID(i)    ISC_MAGIC_VALID(i, DNS_RDATASETITER_MAGIC)
+#define DNS_RDATASETITER_MAGIC	  ISC_MAGIC('D', 'N', 'S', 'i')
+#define DNS_RDATASETITER_VALID(i) ISC_MAGIC_VALID(i, DNS_RDATASETITER_MAGIC)
 
 /*%
  * This structure is actually just the common prefix of a DNS db
@@ -90,12 +88,12 @@ typedef struct dns_rdatasetitermethods {
  */
 struct dns_rdatasetiter {
 	/* Unlocked. */
-	unsigned int			magic;
-	dns_rdatasetitermethods_t *	methods;
-	dns_db_t *			db;
-	dns_dbnode_t *			node;
-	dns_dbversion_t *		version;
-	isc_stdtime_t			now;
+	unsigned int		   magic;
+	dns_rdatasetitermethods_t *methods;
+	dns_db_t *		   db;
+	dns_dbnode_t *		   node;
+	dns_dbversion_t *	   version;
+	isc_stdtime_t		   now;
 };
 
 void
@@ -147,7 +145,7 @@ dns_rdatasetiter_next(dns_rdatasetiter_t *iterator);
 
 void
 dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
-			 dns_rdataset_t *rdataset);
+			 dns_rdataset_t *    rdataset);
 /*%<
  * Return the current rdataset.
  *

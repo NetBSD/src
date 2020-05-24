@@ -1,4 +1,4 @@
-/*	$NetBSD: context.h,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: context.h,v 1.3 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef IRS_CONTEXT_H
 #define IRS_CONTEXT_H 1
@@ -24,6 +23,7 @@
  */
 
 #include <dns/types.h>
+
 #include <irs/types.h>
 
 ISC_LANG_BEGINDECLS

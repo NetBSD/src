@@ -1,4 +1,4 @@
-/*	$NetBSD: update_test.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: update_test.c,v 1.6 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -37,6 +33,13 @@
 #include <dns/update.h>
 
 #include "dnstest.h"
+
+/*
+ * Fix the linking order problem for overridden isc_stdtime_get() by making
+ * everything local.  This also allows static functions from update.c to be
+ * tested.
+ */
+#include "../update.c"
 
 static int
 _setup(void **state) {
@@ -74,7 +77,8 @@ set_mystdtime(int year, int month, int day) {
 	mystdtime = timegm(&tm);
 }
 
-void isc_stdtime_get(isc_stdtime_t *now) {
+void
+isc_stdtime_get(isc_stdtime_t *now) {
 	*now = mystdtime;
 }
 
@@ -283,30 +287,30 @@ future_to_date_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(increment_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(increment_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(increment_past_zero_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(past_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(now_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(future_to_unix_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(undefined_to_unix_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(past_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(now_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(future_to_unix_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(undefined_to_unix_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(undefined_plus1_to_unix_test,
 						_setup, _teardown),
 		cmocka_unit_test_setup_teardown(undefined_minus1_to_unix_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(unixtime_zero_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(past_to_date_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(now_to_date_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(future_to_date_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(unixtime_zero_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(past_to_date_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(now_to_date_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(future_to_date_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -322,4 +326,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

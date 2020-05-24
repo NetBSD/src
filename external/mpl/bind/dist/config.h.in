@@ -162,17 +162,11 @@
 /* Define to 1 if you have the `flockfile' function. */
 #undef HAVE_FLOCKFILE
 
-/* Build with GeoIP support */
-#undef HAVE_GEOIP
+/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+#undef HAVE_FSEEKO
 
 /* Build with GeoIP2 support */
 #undef HAVE_GEOIP2
-
-/* Build with GeoIP City IPv6 support */
-#undef HAVE_GEOIP_CITY_V6
-
-/* Build with GeoIP Country IPv6 support */
-#undef HAVE_GEOIP_V6
 
 /* Define to 1 if you have the `getc_unlocked' function. */
 #undef HAVE_GETC_UNLOCKED
@@ -219,10 +213,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define if libjson was found */
-#undef HAVE_JSON
-
-/* Define if json-c was found */
+/* Use json-c library */
 #undef HAVE_JSON_C
 
 /* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
@@ -252,7 +243,7 @@
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
-/* Define if libxml2 was found */
+/* Use libxml2 library */
 #undef HAVE_LIBXML2
 
 /* Define to 1 if you have the <linux/netlink.h> header file. */
@@ -288,6 +279,9 @@
 /* define if OpenSSL supports Ed448 */
 #undef HAVE_OPENSSL_ED448
 
+/* define if OpenSSL supports SipHash */
+#undef HAVE_OPENSSL_SIPHASH
+
 /* Define to 1 if you have the `processor_bind' function. */
 #undef HAVE_PROCESSOR_BIND
 
@@ -308,6 +302,9 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `pthread_rwlock_rdlock' function. */
+#undef HAVE_PTHREAD_RWLOCK_RDLOCK
 
 /* Define to 1 if you have the `pthread_setaffinity_np' function. */
 #undef HAVE_PTHREAD_SETAFFINITY_NP
@@ -363,14 +360,14 @@
 /* Define to 1 if you have the `setresuid' function. */
 #undef HAVE_SETRESUID
 
-/* Define to 1 if you have the `sigwait' function. */
-#undef HAVE_SIGWAIT
-
 /* define if the SPARC pause instruction is available */
 #undef HAVE_SPARC_PAUSE
 
 /* define if struct stat has st_mtim.tv_nsec field */
 #undef HAVE_STAT_NSEC
+
+/* Define to 1 if you have the <stdalign.h> header file. */
+#undef HAVE_STDALIGN_H
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #undef HAVE_STDATOMIC_H
@@ -468,7 +465,16 @@
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
 
-/* Define if zlib was found */
+/* Define to 1 if you have the `uv_handle_get_data' function. */
+#undef HAVE_UV_HANDLE_GET_DATA
+
+/* Define to 1 if you have the `uv_handle_set_data' function. */
+#undef HAVE_UV_HANDLE_SET_DATA
+
+/* Define to 1 if you have the `uv_import' function. */
+#undef HAVE_UV_IMPORT
+
+/* Use zlib library */
 #undef HAVE_ZLIB
 
 /* define if __atomic builtins are not available */
@@ -482,6 +488,12 @@
 
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
+
+/* Define to emulate atomic variables with mutexes. */
+#undef ISC_MUTEX_ATOMICS
+
+/* define if the linker supports --wrap option */
+#undef LD_WRAP
 
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
@@ -531,7 +543,7 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
 
-/* Define to use large-system tuning. */
+/* Define to use default system tuning. */
 #undef TUNE_LARGE
 
 /* define if we can use backtrace */
@@ -544,11 +556,17 @@
    non-blocking. */
 #undef USE_FIONBIO_IOCTL
 
+/* Define if libtool is used for compilation */
+#undef USE_LIBTOOL
+
 /* define if OpenSSL is used for Public-Key Cryptography */
 #undef USE_OPENSSL
 
 /* define if PKCS11 is used for Public-Key Cryptography */
 #undef USE_PKCS11
+
+/* Define if you want to use pthread rwlock implementation */
+#undef USE_PTHREAD_RWLOCK
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -589,6 +607,20 @@
 #  undef WORDS_BIGENDIAN
 # endif
 #endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
+#undef _LARGEFILE_SOURCE
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

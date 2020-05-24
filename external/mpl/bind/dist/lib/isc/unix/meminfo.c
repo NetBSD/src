@@ -1,4 +1,4 @@
-/*	$NetBSD: meminfo.c,v 1.4 2019/11/27 05:48:43 christos Exp $	*/
+/*	$NetBSD: meminfo.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
-#include <isc/meminfo.h>
 #include <inttypes.h>
 #include <unistd.h>
+
+#include <isc/meminfo.h>
 #if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__)
 #include <sys/sysctl.h>
-#endif
+#endif /* if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__) */
 
 uint64_t
 isc_meminfo_totalphys(void) {
@@ -29,14 +28,16 @@ isc_meminfo_totalphys(void) {
 	mib[1] = HW_MEMSIZE;
 #elif defined(HW_PHYSMEM64)
 	mib[1] = HW_PHYSMEM64;
-#endif
+#endif /* if defined(HW_MEMSIZE) */
 	uint64_t size = 0;
 	size_t len = sizeof(size);
-	if (sysctl(mib, 2, &size, &len, NULL, 0) == 0)
+	if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) {
 		return (size);
-#endif
+	}
+#endif /* if defined(CTL_HW) && (defined(HW_PHYSMEM64) || defined(HW_MEMSIZE)) \
+	* */
 #if defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
-	return ((size_t) (sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE)));
-#endif
+	return ((size_t)(sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE)));
+#endif /* if defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE) */
 	return (0);
 }

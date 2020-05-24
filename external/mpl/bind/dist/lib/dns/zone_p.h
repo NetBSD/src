@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_p.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zone_p.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,8 +26,8 @@
 ISC_LANG_BEGINDECLS
 
 typedef struct {
-	dns_diff_t	*diff;
-	bool		offline;
+	dns_diff_t *diff;
+	bool offline;
 } dns__zonediff_t;
 
 isc_result_t
@@ -40,8 +40,8 @@ dns__zone_updatesigs(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *version,
 		     dst_key_t *zone_keys[], unsigned int nkeys,
 		     dns_zone_t *zone, isc_stdtime_t inception,
 		     isc_stdtime_t expire, isc_stdtime_t keyxpire,
-		     isc_stdtime_t now, bool check_ksk,
-		     bool keyset_kskonly, dns__zonediff_t *zonediff);
+		     isc_stdtime_t now, bool check_ksk, bool keyset_kskonly,
+		     dns__zonediff_t *zonediff);
 
 ISC_LANG_ENDDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: crc64.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: crc64.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <inttypes.h>
 
@@ -109,8 +107,8 @@ static const uint64_t crc64_table[256] = {
 	0x41A94CE9DC428066ULL, 0xCF8B0890283E370CULL, 0x8D7BE97B81D4019FULL,
 	0x4A6ACB477BEA5A2AULL, 0x089A2AACD2006CB9ULL, 0x14DEA25F3AF9026DULL,
 	0x562E43B4931334FEULL, 0x913F6188692D6F4BULL, 0xD3CF8063C0C759D8ULL,
-	0x5DEDC41A34BBEEB2ULL, 0x1F1D25F19D51D821ULL,
-	0xD80C07CD676F8394ULL, 0x9AFCE626CE85B507ULL
+	0x5DEDC41A34BBEEB2ULL, 0x1F1D25F19D51D821ULL, 0xD80C07CD676F8394ULL,
+	0x9AFCE626CE85B507ULL
 };
 
 void
@@ -129,11 +127,10 @@ isc_crc64_update(uint64_t *crc, const void *data, size_t len) {
 	REQUIRE(data != NULL);
 
 	while (len-- > 0U) {
-		i = ((int) (*crc >> 56) ^ *p++) & 0xff;
+		i = ((int)(*crc >> 56) ^ *p++) & 0xff;
 		*crc = crc64_table[i] ^ (*crc << 8);
 	}
 }
-
 
 void
 isc_crc64_final(uint64_t *crc) {

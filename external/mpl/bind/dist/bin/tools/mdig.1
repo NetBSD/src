@@ -1,6 +1,6 @@
-.\"	$NetBSD: mdig.1,v 1.4 2019/02/24 20:01:28 christos Exp $
+.\"	$NetBSD: mdig.1,v 1.5 2020/05/24 19:46:19 christos Exp $
 .\"
-.\" Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -235,6 +235,11 @@ Use [do not use] TCP when querying name servers\&. This alternate syntax to
 \fI+[no]tcp\fR
 is provided for backwards compatibility\&. The "vc" stands for "virtual circuit"\&.
 .RE
+.PP
+\fB+[no]yaml\fR
+.RS 4
+Print the responses in a detailed YAML format\&.
+.RE
 .SH "LOCAL OPTIONS"
 .PP
 The
@@ -400,5 +405,5 @@ RFC1035\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2015-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

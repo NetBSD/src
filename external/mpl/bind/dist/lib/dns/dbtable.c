@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtable.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dbtable.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,35 +11,32 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/rwlock.h>
 #include <isc/util.h>
 
-#include <dns/dbtable.h>
 #include <dns/db.h>
+#include <dns/dbtable.h>
 #include <dns/rbt.h>
 #include <dns/result.h>
 
 struct dns_dbtable {
 	/* Unlocked. */
-	unsigned int		magic;
-	isc_mem_t *		mctx;
-	dns_rdataclass_t	rdclass;
-	isc_mutex_t		lock;
-	isc_rwlock_t		tree_lock;
-	/* Locked by lock. */
-	unsigned int		references;
+	unsigned int magic;
+	isc_mem_t *mctx;
+	dns_rdataclass_t rdclass;
+	isc_rwlock_t tree_lock;
+	/* Protected by atomics */
+	isc_refcount_t references;
 	/* Locked by tree_lock. */
-	dns_rbt_t *		rbt;
-	dns_db_t *		default_db;
+	dns_rbt_t *rbt;
+	dns_db_t *default_db;
 };
 
-#define DBTABLE_MAGIC		ISC_MAGIC('D', 'B', '-', '-')
-#define VALID_DBTABLE(dbtable)	ISC_MAGIC_VALID(dbtable, DBTABLE_MAGIC)
+#define DBTABLE_MAGIC	       ISC_MAGIC('D', 'B', '-', '-')
+#define VALID_DBTABLE(dbtable) ISC_MAGIC_VALID(dbtable, DBTABLE_MAGIC)
 
 static void
 dbdetach(void *data, void *arg) {
@@ -52,46 +49,41 @@ dbdetach(void *data, void *arg) {
 
 isc_result_t
 dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
-		   dns_dbtable_t **dbtablep)
-{
+		   dns_dbtable_t **dbtablep) {
 	dns_dbtable_t *dbtable;
 	isc_result_t result;
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(dbtablep != NULL && *dbtablep == NULL);
 
-	dbtable = (dns_dbtable_t *)isc_mem_get(mctx, sizeof(*dbtable));
-	if (dbtable == NULL)
-		return (ISC_R_NOMEMORY);
+	dbtable = isc_mem_get(mctx, sizeof(*dbtable));
 
 	dbtable->rbt = NULL;
 	result = dns_rbt_create(mctx, dbdetach, NULL, &dbtable->rbt);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto clean1;
-
-	isc_mutex_init(&dbtable->lock);
+	}
 
 	result = isc_rwlock_init(&dbtable->tree_lock, 0, 0);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto clean3;
+	}
 
 	dbtable->default_db = NULL;
 	dbtable->mctx = NULL;
 	isc_mem_attach(mctx, &dbtable->mctx);
 	dbtable->rdclass = rdclass;
 	dbtable->magic = DBTABLE_MAGIC;
-	dbtable->references = 1;
+	isc_refcount_init(&dbtable->references, 1);
 
 	*dbtablep = dbtable;
 
 	return (ISC_R_SUCCESS);
 
- clean3:
-	isc_mutex_destroy(&dbtable->lock);
-
+clean3:
 	dns_rbt_destroy(&dbtable->rbt);
 
- clean1:
+clean1:
 	isc_mem_putanddetach(&mctx, dbtable, sizeof(*dbtable));
 
 	return (result);
@@ -105,8 +97,9 @@ dbtable_free(dns_dbtable_t *dbtable) {
 
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
 
-	if (dbtable->default_db != NULL)
+	if (dbtable->default_db != NULL) {
 		dns_db_detach(&dbtable->default_db);
+	}
 
 	dns_rbt_destroy(&dbtable->rbt);
 
@@ -124,13 +117,7 @@ dns_dbtable_attach(dns_dbtable_t *source, dns_dbtable_t **targetp) {
 	REQUIRE(VALID_DBTABLE(source));
 	REQUIRE(targetp != NULL && *targetp == NULL);
 
-	LOCK(&source->lock);
-
-	INSIST(source->references > 0);
-	source->references++;
-	INSIST(source->references != 0);
-
-	UNLOCK(&source->lock);
+	isc_refcount_increment(&source->references);
 
 	*targetp = source;
 }
@@ -138,25 +125,15 @@ dns_dbtable_attach(dns_dbtable_t *source, dns_dbtable_t **targetp) {
 void
 dns_dbtable_detach(dns_dbtable_t **dbtablep) {
 	dns_dbtable_t *dbtable;
-	bool free_dbtable = false;
 
 	REQUIRE(dbtablep != NULL);
 	dbtable = *dbtablep;
+	*dbtablep = NULL;
 	REQUIRE(VALID_DBTABLE(dbtable));
 
-	LOCK(&dbtable->lock);
-
-	INSIST(dbtable->references > 0);
-	dbtable->references--;
-	if (dbtable->references == 0)
-		free_dbtable = true;
-
-	UNLOCK(&dbtable->lock);
-
-	if (free_dbtable)
+	if (isc_refcount_decrement(&dbtable->references) == 1) {
 		dbtable_free(dbtable);
-
-	*dbtablep = NULL;
+	}
 }
 
 isc_result_t
@@ -198,7 +175,7 @@ dns_dbtable_remove(dns_dbtable_t *dbtable, dns_db_t *db) {
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_write);
 
 	result = dns_rbt_findname(dbtable->rbt, name, 0, NULL,
-				  (void **) (void *)&stored_data);
+				  (void **)(void *)&stored_data);
 
 	if (result == ISC_R_SUCCESS) {
 		INSIST(stored_data == db);
@@ -248,29 +225,30 @@ dns_dbtable_removedefault(dns_dbtable_t *dbtable) {
 
 isc_result_t
 dns_dbtable_find(dns_dbtable_t *dbtable, const dns_name_t *name,
-		 unsigned int options, dns_db_t **dbp)
-{
+		 unsigned int options, dns_db_t **dbp) {
 	dns_db_t *stored_data = NULL;
 	isc_result_t result;
 	unsigned int rbtoptions = 0;
 
 	REQUIRE(dbp != NULL && *dbp == NULL);
 
-	if ((options & DNS_DBTABLEFIND_NOEXACT) != 0)
+	if ((options & DNS_DBTABLEFIND_NOEXACT) != 0) {
 		rbtoptions |= DNS_RBTFIND_NOEXACT;
+	}
 
 	RWLOCK(&dbtable->tree_lock, isc_rwlocktype_read);
 
 	result = dns_rbt_findname(dbtable->rbt, name, rbtoptions, NULL,
-				  (void **) (void *)&stored_data);
+				  (void **)(void *)&stored_data);
 
-	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH)
+	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH) {
 		dns_db_attach(stored_data, dbp);
-	else if (dbtable->default_db != NULL) {
+	} else if (dbtable->default_db != NULL) {
 		dns_db_attach(dbtable->default_db, dbp);
 		result = DNS_R_PARTIALMATCH;
-	} else
+	} else {
 		result = ISC_R_NOTFOUND;
+	}
 
 	RWUNLOCK(&dbtable->tree_lock, isc_rwlocktype_read);
 

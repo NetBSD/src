@@ -1,4 +1,4 @@
-/*	$NetBSD: safe.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: safe.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_SAFE_H
 #define ISC_SAFE_H 1
 
@@ -19,11 +18,10 @@
 
 #include <isc/lang.h>
 
-#include <openssl/crypto.h>
-
 ISC_LANG_BEGINDECLS
 
-#define isc_safe_memequal(s1, s2, n) !CRYPTO_memcmp(s1, s2, n)
+int
+isc_safe_memequal(const void *, const void *, size_t);
 
 /*%<
  * Returns true iff. two blocks of memory are equal, otherwise
@@ -31,7 +29,9 @@ ISC_LANG_BEGINDECLS
  *
  */
 
-#define isc_safe_memwipe(ptr, len) OPENSSL_cleanse(ptr, len)
+void
+isc_safe_memwipe(void *, size_t);
+
 /*%<
  * Clear the memory of length `len` pointed to by `ptr`.
  *

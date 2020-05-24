@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,6 @@
 
 /*! \file
  */
-
-#include <config.h>
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -48,13 +46,12 @@ done(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	printf("byaddr event result = %s\n",
-	       isc_result_totext(bevent->result));
+	printf("byaddr event result = %s\n", isc_result_totext(bevent->result));
 
 	if (bevent->result == ISC_R_SUCCESS) {
-		for (name = ISC_LIST_HEAD(bevent->names);
-		     name != NULL;
-		     name = ISC_LIST_NEXT(name, link)) {
+		for (name = ISC_LIST_HEAD(bevent->names); name != NULL;
+		     name = ISC_LIST_NEXT(name, link))
+		{
 			char text[DNS_NAME_FORMATSIZE];
 			dns_name_format(name, text, sizeof(text));
 			printf("%s\n", text);
@@ -91,7 +88,7 @@ main(int argc, char *argv[]) {
 	dns_result_register();
 
 	mctx = NULL;
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
 	while ((ch = isc_commandline_parse(argc, argv, "nvw:")) != -1) {
 		switch (ch) {
@@ -116,16 +113,15 @@ main(int argc, char *argv[]) {
 	}
 
 	taskmgr = NULL;
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, &taskmgr)
-		      == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, NULL, &taskmgr) ==
+		      ISC_R_SUCCESS);
 	task = NULL;
-	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &task)
-		      == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &task) == ISC_R_SUCCESS);
 	isc_task_setname(task, "byaddr", NULL);
 
 	dispatchmgr = NULL;
-	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, &dispatchmgr)
-		      == ISC_R_SUCCESS);
+	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, &dispatchmgr) ==
+		      ISC_R_SUCCESS);
 
 	timermgr = NULL;
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timermgr) == ISC_R_SUCCESS);
@@ -152,13 +148,11 @@ main(int argc, char *argv[]) {
 			isc_sockaddr_any(&any4);
 
 			attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
-			RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr,
-							  socketmgr,
-							  taskmgr, &any4,
-							  512, 6, 1024,
-							  17, 19, attrs,
-							  attrs, &disp4)
-				      == ISC_R_SUCCESS);
+			RUNTIME_CHECK(
+				dns_dispatch_getudp(dispatchmgr, socketmgr,
+						    taskmgr, &any4, 512, 6,
+						    1024, 17, 19, attrs, attrs,
+						    &disp4) == ISC_R_SUCCESS);
 			INSIST(disp4 != NULL);
 		}
 
@@ -168,27 +162,25 @@ main(int argc, char *argv[]) {
 			isc_sockaddr_any6(&any6);
 
 			attrs = DNS_DISPATCHATTR_IPV6 | DNS_DISPATCHATTR_UDP;
-			RUNTIME_CHECK(dns_dispatch_getudp(dispatchmgr,
-							  socketmgr,
-							  taskmgr, &any6,
-							  512, 6, 1024,
-							  17, 19, attrs,
-							  attrs, &disp6)
-				      == ISC_R_SUCCESS);
+			RUNTIME_CHECK(
+				dns_dispatch_getudp(dispatchmgr, socketmgr,
+						    taskmgr, &any6, 512, 6,
+						    1024, 17, 19, attrs, attrs,
+						    &disp6) == ISC_R_SUCCESS);
 			INSIST(disp6 != NULL);
 		}
 
 		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10, 1,
-						      socketmgr,
-						      timermgr, 0,
-						      dispatchmgr,
-						      disp4, disp6) ==
-		      ISC_R_SUCCESS);
+						      socketmgr, timermgr, 0,
+						      dispatchmgr, disp4,
+						      disp6) == ISC_R_SUCCESS);
 
-		if (disp4 != NULL)
-		    dns_dispatch_detach(&disp4);
-		if (disp6 != NULL)
-		    dns_dispatch_detach(&disp6);
+		if (disp4 != NULL) {
+			dns_dispatch_detach(&disp4);
+		}
+		if (disp6 != NULL) {
+			dns_dispatch_detach(&disp6);
+		}
 	}
 
 	{
@@ -202,8 +194,8 @@ main(int argc, char *argv[]) {
 		ISC_LIST_APPEND(sal, &sa, link);
 
 		RUNTIME_CHECK(dns_fwdtable_add(view->fwdtable, dns_rootname,
-					       &sal, dns_fwdpolicy_only)
-			      == ISC_R_SUCCESS);
+					       &sal, dns_fwdpolicy_only) ==
+			      ISC_R_SUCCESS);
 	}
 
 	dns_view_setcache(view, cache, false);
@@ -223,8 +215,8 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	result = dns_byaddr_create(mctx, &na, view, options, task,
-				   done, NULL, &byaddr);
+	result = dns_byaddr_create(mctx, &na, view, options, task, done, NULL,
+				   &byaddr);
 	if (result != ISC_R_SUCCESS) {
 		printf("dns_byaddr_create() returned %s\n",
 		       isc_result_totext(result));
@@ -251,8 +243,9 @@ main(int argc, char *argv[]) {
 	isc_socketmgr_destroy(&socketmgr);
 	isc_timermgr_destroy(&timermgr);
 
-	if (verbose)
+	if (verbose) {
 		isc_mem_stats(mctx, stdout);
+	}
 	isc_mem_destroy(&mctx);
 
 	isc_app_finish();

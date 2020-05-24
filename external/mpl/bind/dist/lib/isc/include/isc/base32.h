@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: base32.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,8 +36,8 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-isc_base32_totext(isc_region_t *source, int wordlength,
-		  const char *wordbreak, isc_buffer_t *target);
+isc_base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
+		  isc_buffer_t *target);
 isc_result_t
 isc_base32hex_totext(isc_region_t *source, int wordlength,
 		     const char *wordbreak, isc_buffer_t *target);

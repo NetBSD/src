@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,8 @@
 
 #include <string.h>
 
-#include "isc/platform.h"
 #include "isc/lang.h"
+#include "isc/platform.h"
 
 ISC_LANG_BEGINDECLS
 
@@ -30,7 +30,7 @@ strlcpy(char *dst, const char *src, size_t size);
 #if !defined(HAVE_STRLCAT)
 size_t
 strlcat(char *dst, const char *src, size_t size);
-#endif
+#endif /* if !defined(HAVE_STRLCAT) */
 
 int
 isc_string_strerror_r(int errnum, char *buf, size_t buflen);

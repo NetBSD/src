@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: commandline.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_COMMANDLINE_H
 #define ISC_COMMANDLINE_H 1
@@ -39,7 +38,7 @@ LIBISC_EXTERNAL_DATA extern bool isc_commandline_reset;
 ISC_LANG_BEGINDECLS
 
 int
-isc_commandline_parse(int argc, char * const *argv, const char *options);
+isc_commandline_parse(int argc, char *const *argv, const char *options);
 /*%<
  * Parse a command line (similar to getopt())
  */

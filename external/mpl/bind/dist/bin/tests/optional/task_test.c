@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.3 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,8 +29,9 @@ my_callback(isc_task_t *task, isc_event_t *event) {
 	char *name = event->ev_arg;
 
 	j = 0;
-	for (i = 0; i < 1000000; i++)
+	for (i = 0; i < 1000000; i++) {
 		j += 100;
+	}
 	printf("task %s (%p): %d\n", name, task, j);
 	isc_event_free(&event);
 }
@@ -73,17 +72,20 @@ main(int argc, char *argv[]) {
 
 	if (argc > 1) {
 		workers = atoi(argv[1]);
-		if (workers < 1)
+		if (workers < 1) {
 			workers = 1;
-		if (workers > 8192)
+		}
+		if (workers > 8192) {
 			workers = 8192;
-	} else
+		}
+	} else {
 		workers = 2;
+	}
 	printf("%u workers\n", workers);
 
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, &manager) ==
+	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, NULL, &manager) ==
 		      ISC_R_SUCCESS);
 
 	RUNTIME_CHECK(isc_task_create(manager, 0, &t1) == ISC_R_SUCCESS);
@@ -106,22 +108,22 @@ main(int argc, char *argv[]) {
 
 	isc_interval_set(&interval, 1, 0);
 	RUNTIME_CHECK(isc_timer_create(timgr, isc_timertype_ticker, NULL,
-				       &interval, t1, my_tick, foo, &ti1) ==
-		      ISC_R_SUCCESS);
+				       &interval, t1, my_tick, foo,
+				       &ti1) == ISC_R_SUCCESS);
 
 	ti2 = NULL;
 	isc_interval_set(&interval, 1, 0);
 	RUNTIME_CHECK(isc_timer_create(timgr, isc_timertype_ticker, NULL,
-				       &interval, t2, my_tick, bar, &ti2) ==
-		      ISC_R_SUCCESS);
+				       &interval, t2, my_tick, bar,
+				       &ti2) == ISC_R_SUCCESS);
 
 	printf("task 1 = %p\n", t1);
 	printf("task 2 = %p\n", t2);
 #ifndef WIN32
 	sleep(2);
-#else
+#else  /* ifndef WIN32 */
 	Sleep(2000);
-#endif
+#endif /* ifndef WIN32 */
 
 	/*
 	 * Note:  (void *)1 is used as a sender here, since some compilers
@@ -176,9 +178,7 @@ main(int argc, char *argv[]) {
 	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, four,
 				   sizeof(*event));
 	isc_task_send(t4, &event);
-	isc_task_purgerange(t3,
-			    NULL,
-			    ISC_EVENTTYPE_FIRSTEVENT,
+	isc_task_purgerange(t3, NULL, ISC_EVENTTYPE_FIRSTEVENT,
 			    ISC_EVENTTYPE_LASTEVENT, NULL);
 
 	isc_task_detach(&t1);
@@ -188,9 +188,9 @@ main(int argc, char *argv[]) {
 
 #ifndef WIN32
 	sleep(10);
-#else
+#else  /* ifndef WIN32 */
 	Sleep(10000);
-#endif
+#endif /* ifndef WIN32 */
 	printf("destroy\n");
 	isc_timer_detach(&ti1);
 	isc_timer_detach(&ti2);

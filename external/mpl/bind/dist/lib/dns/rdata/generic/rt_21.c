@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,8 +33,9 @@ fromtext_rt(ARGS_FROMTEXT) {
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
@@ -42,16 +43,20 @@ fromtext_rt(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = true;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
+	if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 		ok = dns_name_ishostname(&name, false);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+	}
+	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
+	}
+	if (!ok && callbacks != NULL) {
 		warn_badname(&name, lexer, callbacks);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -98,10 +103,12 @@ fromwire_rt(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (tregion.length < 2)
+	if (tregion.length < 2) {
 		return (ISC_R_NOSPACE);
-	if (sregion.length < 2)
+	}
+	if (sregion.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	memmove(tregion.base, sregion.base, 2);
 	isc_buffer_forward(source, 2);
 	isc_buffer_add(target, 2);
@@ -121,8 +128,9 @@ towire_rt(ARGS_TOWIRE) {
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
 	isc_buffer_availableregion(target, &tr);
 	dns_rdata_toregion(rdata, &region);
-	if (tr.length < 2)
+	if (tr.length < 2) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(tr.base, region.base, 2);
 	isc_region_consume(&region, 2);
 	isc_buffer_add(target, 2);
@@ -148,8 +156,9 @@ compare_rt(ARGS_COMPARE) {
 	REQUIRE(rdata2->length != 0);
 
 	order = memcmp(rdata1->data, rdata2->data, 2);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 
 	dns_name_init(&name1, NULL);
 	dns_name_init(&name2, NULL);
@@ -217,8 +226,9 @@ freestruct_rt(ARGS_FREESTRUCT) {
 	REQUIRE(rt != NULL);
 	REQUIRE(rt->common.rdtype == dns_rdatatype_rt);
 
-	if (rt->mctx == NULL)
+	if (rt->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&rt->host, rt->mctx);
 	rt->mctx = NULL;
@@ -239,11 +249,13 @@ additionaldata_rt(ARGS_ADDLDATA) {
 	dns_name_fromregion(&name, &region);
 
 	result = (add)(arg, &name, dns_rdatatype_x25);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 	result = (add)(arg, &name, dns_rdatatype_isdn);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 	return ((add)(arg, &name, dns_rdatatype_a));
 }
 
@@ -260,8 +272,9 @@ digest_rt(ARGS_DIGEST) {
 	isc_region_consume(&r2, 2);
 	r1.length = 2;
 	result = (digest)(arg, &r1);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r2);
 	return (dns_name_digest(&name, digest, arg));
@@ -269,7 +282,6 @@ digest_rt(ARGS_DIGEST) {
 
 static inline bool
 checkowner_rt(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_rt);
 
 	UNUSED(name);
@@ -294,8 +306,9 @@ checknames_rt(ARGS_CHECKNAMES) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ishostname(&name, false)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
@@ -306,4 +319,4 @@ casecompare_rt(ARGS_COMPARE) {
 	return (compare_rt(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_RT_21_C */
+#endif /* RDATA_GENERIC_RT_21_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.3 2020/05/24 19:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,15 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <io.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <confgen/os.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <stdio.h>
-#include <io.h>
-#include <sys/stat.h>
 
 int
 set_user(FILE *fd, const char *user) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdlib.h>
 #include <syslog.h>
@@ -27,39 +24,37 @@
 static struct dsn_c_pvt_sfnt {
 	int val;
 	const char *strval;
-} facilities[] = {
-	{ LOG_KERN,			"kern" },
-	{ LOG_USER,			"user" },
-	{ LOG_MAIL,			"mail" },
-	{ LOG_DAEMON,			"daemon" },
-	{ LOG_AUTH,			"auth" },
-	{ LOG_SYSLOG,			"syslog" },
-	{ LOG_LPR,			"lpr" },
+} facilities[] = { { LOG_KERN, "kern" },
+		   { LOG_USER, "user" },
+		   { LOG_MAIL, "mail" },
+		   { LOG_DAEMON, "daemon" },
+		   { LOG_AUTH, "auth" },
+		   { LOG_SYSLOG, "syslog" },
+		   { LOG_LPR, "lpr" },
 #ifdef LOG_NEWS
-	{ LOG_NEWS,			"news" },
-#endif
+		   { LOG_NEWS, "news" },
+#endif /* ifdef LOG_NEWS */
 #ifdef LOG_UUCP
-	{ LOG_UUCP,			"uucp" },
-#endif
+		   { LOG_UUCP, "uucp" },
+#endif /* ifdef LOG_UUCP */
 #ifdef LOG_CRON
-	{ LOG_CRON,			"cron" },
-#endif
+		   { LOG_CRON, "cron" },
+#endif /* ifdef LOG_CRON */
 #ifdef LOG_AUTHPRIV
-	{ LOG_AUTHPRIV,			"authpriv" },
-#endif
+		   { LOG_AUTHPRIV, "authpriv" },
+#endif /* ifdef LOG_AUTHPRIV */
 #ifdef LOG_FTP
-	{ LOG_FTP,			"ftp" },
-#endif
-	{ LOG_LOCAL0,			"local0"},
-	{ LOG_LOCAL1,			"local1"},
-	{ LOG_LOCAL2,			"local2"},
-	{ LOG_LOCAL3,			"local3"},
-	{ LOG_LOCAL4,			"local4"},
-	{ LOG_LOCAL5,			"local5"},
-	{ LOG_LOCAL6,			"local6"},
-	{ LOG_LOCAL7,			"local7"},
-	{ 0,				NULL }
-};
+		   { LOG_FTP, "ftp" },
+#endif /* ifdef LOG_FTP */
+		   { LOG_LOCAL0, "local0" },
+		   { LOG_LOCAL1, "local1" },
+		   { LOG_LOCAL2, "local2" },
+		   { LOG_LOCAL3, "local3" },
+		   { LOG_LOCAL4, "local4" },
+		   { LOG_LOCAL5, "local5" },
+		   { LOG_LOCAL6, "local6" },
+		   { LOG_LOCAL7, "local7" },
+		   { 0, NULL } };
 
 isc_result_t
 isc_syslog_facilityfromstring(const char *str, int *facilityp) {
@@ -75,5 +70,4 @@ isc_syslog_facilityfromstring(const char *str, int *facilityp) {
 		}
 	}
 	return (ISC_R_NOTFOUND);
-
 }

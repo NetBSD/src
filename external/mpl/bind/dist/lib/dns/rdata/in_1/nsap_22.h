@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: nsap_22.h,v 1.4 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,15 +14,14 @@
 #ifndef IN_1_NSAP_22_H
 #define IN_1_NSAP_22_H 1
 
-
 /*!
  *  \brief Per RFC1706 */
 
 typedef struct dns_rdata_in_nsap {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	unsigned char		*nsap;
-	uint16_t		nsap_len;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	unsigned char *nsap;
+	uint16_t nsap_len;
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */

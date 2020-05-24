@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: buffer_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,15 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <fcntl.h>
 #include <limits.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -69,8 +66,7 @@ isc_buffer_reserve_test(void **state) {
 	UNUSED(state);
 
 	b = NULL;
-	result = isc_buffer_allocate(mctx, &b, 1024);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_buffer_allocate(test_mctx, &b, 1024);
 	assert_int_equal(b->length, 1024);
 
 	/*
@@ -131,7 +127,6 @@ isc_buffer_reserve_test(void **state) {
 /* dynamic buffer automatic reallocation */
 static void
 isc_buffer_dynamic_test(void **state) {
-	isc_result_t result;
 	isc_buffer_t *b;
 	size_t last_length = 10;
 	int i;
@@ -139,8 +134,7 @@ isc_buffer_dynamic_test(void **state) {
 	UNUSED(state);
 
 	b = NULL;
-	result = isc_buffer_allocate(mctx, &b, last_length);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_buffer_allocate(test_mctx, &b, last_length);
 	assert_non_null(b);
 	assert_int_equal(b->length, last_length);
 
@@ -151,35 +145,34 @@ isc_buffer_dynamic_test(void **state) {
 	for (i = 0; i < 1000; i++) {
 		isc_buffer_putstr(b, "thisisa24charslongstring");
 	}
-	assert_true(b->length-last_length >= 1000*24);
-	last_length+=1000*24;
+	assert_true(b->length - last_length >= 1000 * 24);
+	last_length += 1000 * 24;
 
 	for (i = 0; i < 10000; i++) {
 		isc_buffer_putuint8(b, 1);
 	}
 
-	assert_true(b->length-last_length >= 10000*1);
-	last_length += 10000*1;
+	assert_true(b->length - last_length >= 10000 * 1);
+	last_length += 10000 * 1;
 
 	for (i = 0; i < 10000; i++) {
 		isc_buffer_putuint16(b, 1);
 	}
 
-	assert_true(b->length-last_length >= 10000*2);
+	assert_true(b->length - last_length >= 10000 * 2);
 
-	last_length += 10000*2;
+	last_length += 10000 * 2;
 	for (i = 0; i < 10000; i++) {
 		isc_buffer_putuint24(b, 1);
 	}
-	assert_true(b->length-last_length >= 10000*3);
+	assert_true(b->length - last_length >= 10000 * 3);
 
-	last_length+=10000*3;
+	last_length += 10000 * 3;
 
 	for (i = 0; i < 10000; i++) {
 		isc_buffer_putuint32(b, 1);
 	}
-	assert_true(b->length-last_length >= 10000*4);
-
+	assert_true(b->length - last_length >= 10000 * 4);
 
 	isc_buffer_free(&b);
 }
@@ -198,8 +191,7 @@ isc_buffer_copyregion_test(void **state) {
 
 	UNUSED(state);
 
-	result = isc_buffer_allocate(mctx, &b, sizeof(data));
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_buffer_allocate(test_mctx, &b, sizeof(data));
 
 	/*
 	 * Fill originally allocated buffer space.
@@ -238,8 +230,7 @@ isc_buffer_printf_test(void **state) {
 	 * Prepare a buffer with auto-reallocation enabled.
 	 */
 	b = NULL;
-	result = isc_buffer_allocate(mctx, &b, 0);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_buffer_allocate(test_mctx, &b, 0);
 	isc_buffer_setautorealloc(b, true);
 
 	/*
@@ -334,14 +325,14 @@ isc_buffer_printf_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(isc_buffer_reserve_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(isc_buffer_dynamic_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(isc_buffer_reserve_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(isc_buffer_dynamic_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(isc_buffer_copyregion_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(isc_buffer_printf_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(isc_buffer_printf_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -357,4 +348,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

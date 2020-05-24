@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,14 +17,14 @@
 #define IRS_PLATFORM_H 1
 
 /*****
- ***** Platform-dependent defines.
- *****/
+***** Platform-dependent defines.
+*****/
 
 #ifdef LIBIRS_EXPORTS
 #define LIBIRS_EXTERNAL_DATA __declspec(dllexport)
-#else
+#else /* ifdef LIBIRS_EXPORTS */
 #define LIBIRS_EXTERNAL_DATA __declspec(dllimport)
-#endif
+#endif /* ifdef LIBIRS_EXPORTS */
 
 /*
  * Tell Emacs to use C mode on this file.

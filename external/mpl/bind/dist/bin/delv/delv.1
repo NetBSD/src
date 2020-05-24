@@ -1,6 +1,6 @@
-.\"	$NetBSD: delv.1,v 1.3 2019/02/24 20:01:26 christos Exp $
+.\"	$NetBSD: delv.1,v 1.4 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,7 @@ is a tool for sending DNS queries and validating the results, using the same int
 \fBnamed\fR\&.
 .PP
 \fBdelv\fR
-will send to a specified name server all queries needed to fetch and validate the requested data; this includes the original requested query, subsequent queries to follow CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records to establish a chain of trust for DNSSEC validation\&. It does not perform iterative resolution, but simulates the behavior of a name server configured for DNSSEC validating and forwarding\&.
+will send to a specified name server all queries needed to fetch and validate the requested data; this includes the original requested query, subsequent queries to follow CNAME or DNAME chains, and queries for DNSKEY and DS records to establish a chain of trust for DNSSEC validation\&. It does not perform iterative resolution, but simulates the behavior of a name server configured for DNSSEC validating and forwarding\&.
 .PP
 By default, responses are validated using built\-in DNSSEC trust anchor for the root zone ("\&.")\&. Records returned by
 \fBdelv\fR
@@ -141,21 +141,21 @@ BIND
 .sp
 Keys that do not match the root zone name are ignored\&. An alternate key name can be specified using the
 \fB+root=NAME\fR
-options\&. DNSSEC Lookaside Validation can also be turned on by using the
-\fB+dlv=NAME\fR
-to specify the name of a zone containing DLV records\&.
+options\&.
 .sp
 Note: When reading the trust anchor file,
 \fBdelv\fR
 treats
-\fBmanaged\-keys\fR
-statements and
-\fBtrusted\-keys\fR
-statements identically\&. That is, for a managed key, it is the
-\fIinitial\fR
-key that is trusted; RFC 5011 key management is not supported\&.
+\fBtrust\-anchors\fR\fBinitial\-key\fR
+and
+\fBstatic\-key\fR
+entries identically\&. That is, even if a key is configured with
+\fBinitial\-key\fR, indicating that it is meant to be used only as an initializing key for RFC 5011 key maintenance, it is still treated by
 \fBdelv\fR
-will not consult the managed\-keys database maintained by
+as if it had been configured as a
+\fBstatic\-key\fR\&.
+\fBdelv\fR
+does not consult the managed keys database maintained by
 \fBnamed\fR\&. This means that if either of the keys in
 /etc/bind\&.keys
 is revoked and rolled over, it will be necessary to update
@@ -392,23 +392,14 @@ output\&. The default is to do so\&. Note that (unlike in
 control whether to request DNSSEC records or whether to validate them\&. DNSSEC records are always requested, and validation will always occur unless suppressed by the use of
 \fB\-i\fR
 or
-\fB+noroot\fR
-and
-\fB+nodlv\fR\&.
+\fB+noroot\fR\&.
 .RE
 .PP
 \fB+[no]root[=ROOT]\fR
 .RS 4
-Indicates whether to perform conventional (non\-lookaside) DNSSEC validation, and if so, specifies the name of a trust anchor\&. The default is to validate using a trust anchor of "\&." (the root zone), for which there is a built\-in key\&. If specifying a different trust anchor, then
+Indicates whether to perform conventional DNSSEC validation, and if so, specifies the name of a trust anchor\&. The default is to validate using a trust anchor of "\&." (the root zone), for which there is a built\-in key\&. If specifying a different trust anchor, then
 \fB\-a\fR
 must be used to specify a file containing the key\&.
-.RE
-.PP
-\fB+[no]dlv[=DLV]\fR
-.RS 4
-Indicates whether to perform DNSSEC lookaside validation, and if so, specifies the name of the DLV trust anchor\&. The
-\fB\-a\fR
-option must also be used to specify a file containing the DLV key\&.
 .RE
 .PP
 \fB+[no]tcp\fR
@@ -419,6 +410,11 @@ Controls whether to use TCP when sending queries\&. The default is to use UDP un
 \fB+[no]unknownformat\fR
 .RS 4
 Print all RDATA in unknown RR type presentation format (RFC 3597)\&. The default is to print RDATA for known types in the type\*(Aqs presentation format\&.
+.RE
+.PP
+\fB+[no]yaml\fR
+.RS 4
+Print response data in YAML format\&.
 .RE
 .SH "FILES"
 .PP
@@ -439,5 +435,5 @@ RFC5155\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

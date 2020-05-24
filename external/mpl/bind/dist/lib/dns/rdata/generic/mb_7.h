@@ -1,4 +1,4 @@
-/*	$NetBSD: mb_7.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: mb_7.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,11 +15,10 @@
 #ifndef GENERIC_MB_7_H
 #define GENERIC_MB_7_H 1
 
-
 typedef struct dns_rdata_mb {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		mb;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t mb;
 } dns_rdata_mb_t;
 
 #endif /* GENERIC_MB_7_H */

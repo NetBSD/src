@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-verify.8,v 1.3 2019/02/24 20:01:27 christos Exp $
+.\"	$NetBSD: dnssec-verify.8,v 1.4 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2012, 2014-2016, 2018, 2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2012, 2014-2016, 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@
 dnssec-verify \- DNSSEC zone verification tool
 .SH "SYNOPSIS"
 .HP \w'\fBdnssec\-verify\fR\ 'u
-\fBdnssec\-verify\fR [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-x\fR] [\fB\-z\fR] {zonefile}
+\fBdnssec\-verify\fR [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-q\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-x\fR] [\fB\-z\fR] {zonefile}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-verify\fR
@@ -83,6 +83,13 @@ Sets the debugging level\&.
 Prints version information\&.
 .RE
 .PP
+\-q
+.RS 4
+Quiet mode: Suppresses output\&. Without this option, when
+\fBdnssec\-verify\fR
+is run it will print to standard output the number of keys in use, the algorithms used to verify the zone was signed correctly and other status information\&. With it, all non\-error output is suppressed, and only the exit code will indicate success\&.
+.RE
+.PP
 \-x
 .RS 4
 Only verify that the DNSKEY RRset is signed with key\-signing keys\&. Without this flag, it is assumed that the DNSKEY RRset will be signed by all active keys\&. When this flag is set, it will not be an error if the DNSKEY RRset is not signed by zone\-signing keys\&. This corresponds to the
@@ -115,5 +122,5 @@ RFC 4033\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2012, 2014-2016, 2018, 2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2012, 2014-2016, 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

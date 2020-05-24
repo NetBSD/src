@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: soa.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 #include <string.h>
@@ -28,18 +25,15 @@
 
 static inline uint32_t
 decode_uint32(unsigned char *p) {
-	return ((p[0] << 24) +
-		(p[1] << 16) +
-		(p[2] <<  8) +
-		(p[3] <<  0));
+	return ((p[0] << 24) + (p[1] << 16) + (p[2] << 8) + (p[3] << 0));
 }
 
 static inline void
 encode_uint32(uint32_t val, unsigned char *p) {
 	p[0] = (uint8_t)(val >> 24);
 	p[1] = (uint8_t)(val >> 16);
-	p[2] = (uint8_t)(val >>  8);
-	p[3] = (uint8_t)(val >>  0);
+	p[2] = (uint8_t)(val >> 8);
+	p[3] = (uint8_t)(val >> 0);
 }
 
 static uint32_t
@@ -62,11 +56,9 @@ soa_get(dns_rdata_t *rdata, int offset) {
 
 isc_result_t
 dns_soa_buildrdata(const dns_name_t *origin, const dns_name_t *contact,
-		   dns_rdataclass_t rdclass,
-		   uint32_t serial, uint32_t refresh,
-		   uint32_t retry, uint32_t expire,
-		   uint32_t minimum, unsigned char *buffer,
-		   dns_rdata_t *rdata) {
+		   dns_rdataclass_t rdclass, uint32_t serial, uint32_t refresh,
+		   uint32_t retry, uint32_t expire, uint32_t minimum,
+		   unsigned char *buffer, dns_rdata_t *rdata) {
 	dns_rdata_soa_t soa;
 	isc_buffer_t rdatabuf;
 
@@ -89,29 +81,29 @@ dns_soa_buildrdata(const dns_name_t *origin, const dns_name_t *contact,
 	dns_name_init(&soa.contact, NULL);
 	dns_name_clone(contact, &soa.contact);
 
-	return (dns_rdata_fromstruct(rdata, rdclass, dns_rdatatype_soa,
-				      &soa, &rdatabuf));
+	return (dns_rdata_fromstruct(rdata, rdclass, dns_rdatatype_soa, &soa,
+				     &rdatabuf));
 }
 
 uint32_t
 dns_soa_getserial(dns_rdata_t *rdata) {
-	return soa_get(rdata, 0);
+	return (soa_get(rdata, 0));
 }
 uint32_t
 dns_soa_getrefresh(dns_rdata_t *rdata) {
-	return soa_get(rdata, 4);
+	return (soa_get(rdata, 4));
 }
 uint32_t
 dns_soa_getretry(dns_rdata_t *rdata) {
-	return soa_get(rdata, 8);
+	return (soa_get(rdata, 8));
 }
 uint32_t
 dns_soa_getexpire(dns_rdata_t *rdata) {
-	return soa_get(rdata, 12);
+	return (soa_get(rdata, 12));
 }
 uint32_t
 dns_soa_getminimum(dns_rdata_t *rdata) {
-	return soa_get(rdata, 16);
+	return (soa_get(rdata, 16));
 }
 
 static void

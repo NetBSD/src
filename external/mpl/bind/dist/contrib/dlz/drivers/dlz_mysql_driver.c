@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.3 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -44,15 +44,10 @@
  */
 
 #ifdef DLZ_MYSQL
-
-#include <config.h>
+#include <mysql.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include <dns/log.h>
-#include <dns/sdlz.h>
-#include <dns/result.h>
+#include <string.h>
 
 #include <isc/mem.h>
 #include <isc/platform.h>
@@ -61,22 +56,27 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/log.h>
+#include <dns/result.h>
+#include <dns/sdlz.h>
+
+#include <dlz/dlz_mysql_driver.h>
+#include <dlz/sdlz_helper.h>
 #include <named/globals.h>
 
-#include <dlz/sdlz_helper.h>
-#include <dlz/dlz_mysql_driver.h>
-
-#include <mysql.h>
+#if !defined(LIBMARIADB) && MYSQL_VERSION_ID >= 80000
+typedef bool my_bool;
+#endif /* !defined(LIBMARIADB) && MYSQL_VERSION_ID >= 80000 */
 
 static dns_sdlzimplementation_t *dlz_mysql = NULL;
 
 #define dbc_search_limit 30
-#define ALLNODES 1
-#define ALLOWXFR 2
-#define AUTHORITY 3
-#define FINDZONE 4
-#define COUNTZONE 5
-#define LOOKUP 6
+#define ALLNODES	 1
+#define ALLOWXFR	 2
+#define AUTHORITY	 3
+#define FINDZONE	 4
+#define COUNTZONE	 5
+#define LOOKUP		 6
 
 #define safeGet(in) in == NULL ? "" : in
 
@@ -94,22 +94,20 @@ static dns_sdlzimplementation_t *dlz_mysql = NULL;
 
 static char *
 mysqldrv_escape_string(MYSQL *mysql, const char *instr) {
-
 	char *outstr;
 	unsigned int len;
 
-	if (instr == NULL)
-		return NULL;
+	if (instr == NULL) {
+		return (NULL);
+	}
 
 	len = strlen(instr);
 
-	outstr = isc_mem_allocate(named_g_mctx ,(2 * len * sizeof(char)) + 1);
-	if (outstr == NULL)
-		return NULL;
+	outstr = isc_mem_allocate(named_g_mctx, (2 * len * sizeof(char)) + 1);
 
 	mysql_real_escape_string(mysql, outstr, instr, len);
 
-	return outstr;
+	return (outstr);
 }
 
 /*%
@@ -123,10 +121,8 @@ mysqldrv_escape_string(MYSQL *mysql, const char *instr) {
  */
 
 static isc_result_t
-mysql_get_resultset(const char *zone, const char *record,
-		    const char *client, unsigned int query,
-		    void *dbdata, MYSQL_RES **rs)
-{
+mysql_get_resultset(const char *zone, const char *record, const char *client,
+		    unsigned int query, void *dbdata, MYSQL_RES **rs) {
 	isc_result_t result;
 	dbinstance_t *dbi = NULL;
 	char *querystring = NULL;
@@ -134,22 +130,22 @@ mysql_get_resultset(const char *zone, const char *record,
 	unsigned int j = 0;
 	int qres = 0;
 
-	if (query != COUNTZONE)
+	if (query != COUNTZONE) {
 		REQUIRE(*rs == NULL);
-	else
+	} else {
 		REQUIRE(rs == NULL);
+	}
 
 	/* get db instance / connection */
-	dbi =  (dbinstance_t *) dbdata;
+	dbi = (dbinstance_t *)dbdata;
 
 	/* if DBI is null, can't do anything else */
 	if (dbi == NULL) {
-		result = ISC_R_FAILURE;
-		goto cleanup;
+		return (ISC_R_FAILURE);
 	}
 
 	/* what type of query are we going to run? */
-	switch(query) {
+	switch (query) {
 	case ALLNODES:
 		/*
 		 * if the query was not passed in from the config file
@@ -217,19 +213,17 @@ mysql_get_resultset(const char *zone, const char *record,
 		goto cleanup;
 	}
 
-
 	/*
 	 * was a zone string passed?  If so, make it safe for use in
 	 * queries.
 	 */
 	if (zone != NULL) {
-		dbi->zone = mysqldrv_escape_string((MYSQL *) dbi->dbconn,
-						   zone);
+		dbi->zone = mysqldrv_escape_string((MYSQL *)dbi->dbconn, zone);
 		if (dbi->zone == NULL) {
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
-	} else {	/* no string passed, set the string pointer to NULL */
+	} else { /* no string passed, set the string pointer to NULL */
 		dbi->zone = NULL;
 	}
 
@@ -238,13 +232,13 @@ mysql_get_resultset(const char *zone, const char *record,
 	 * queries.
 	 */
 	if (record != NULL) {
-		dbi->record = mysqldrv_escape_string((MYSQL *) dbi->dbconn,
+		dbi->record = mysqldrv_escape_string((MYSQL *)dbi->dbconn,
 						     record);
 		if (dbi->record == NULL) {
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
-	} else {	/* no string passed, set the string pointer to NULL */
+	} else { /* no string passed, set the string pointer to NULL */
 		dbi->record = NULL;
 	}
 
@@ -253,13 +247,13 @@ mysql_get_resultset(const char *zone, const char *record,
 	 * queries.
 	 */
 	if (client != NULL) {
-		dbi->client = mysqldrv_escape_string((MYSQL *) dbi->dbconn,
+		dbi->client = mysqldrv_escape_string((MYSQL *)dbi->dbconn,
 						     client);
 		if (dbi->client == NULL) {
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
-	} else {	/* no string passed, set the string pointer to NULL */
+	} else { /* no string passed, set the string pointer to NULL */
 		dbi->client = NULL;
 	}
 
@@ -267,7 +261,7 @@ mysql_get_resultset(const char *zone, const char *record,
 	 * what type of query are we going to run?  this time we build
 	 * the actual query to run.
 	 */
-	switch(query) {
+	switch (query) {
 	case ALLNODES:
 		querystring = build_querystring(named_g_mctx, dbi->allnodes_q);
 		break;
@@ -308,56 +302,56 @@ mysql_get_resultset(const char *zone, const char *record,
 	 * output the full query string during debug so we can see
 	 * what lame error the query has.
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(1),
-		      "\nQuery String: %s\n", querystring);
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(1), "\nQuery String: %s\n", querystring);
 
 	/* attempt query up to 3 times. */
-	for (i=0; i < 3; i++) {
-		qres = mysql_query((MYSQL *) dbi->dbconn, querystring);
-		if (qres == 0)
+	for (i = 0; i < 3; i++) {
+		qres = mysql_query((MYSQL *)dbi->dbconn, querystring);
+		if (qres == 0) {
 			break;
-		for (j=0; mysql_ping((MYSQL *) dbi->dbconn) != 0 && j < 4; j++)
+		}
+		for (j = 0; mysql_ping((MYSQL *)dbi->dbconn) != 0 && j < 4; j++)
 			;
 	}
 
 	if (qres == 0) {
 		result = ISC_R_SUCCESS;
 		if (query != COUNTZONE) {
-			*rs = mysql_store_result((MYSQL *) dbi->dbconn);
-			if (*rs == NULL)
+			*rs = mysql_store_result((MYSQL *)dbi->dbconn);
+			if (*rs == NULL) {
 				result = ISC_R_FAILURE;
+			}
 		}
 	} else {
 		result = ISC_R_FAILURE;
 	}
 
-
- cleanup:
+cleanup:
 	/* it's always good to cleanup after yourself */
 
-	/* if we couldn't even get DBI, just return NULL */
-	if (dbi == NULL)
-		return ISC_R_FAILURE;
-
 	/* free dbi->zone string */
-	if (dbi->zone != NULL)
+	if (dbi->zone != NULL) {
 		isc_mem_free(named_g_mctx, dbi->zone);
+	}
 
 	/* free dbi->record string */
-	if (dbi->record != NULL)
+	if (dbi->record != NULL) {
 		isc_mem_free(named_g_mctx, dbi->record);
+	}
 
 	/* free dbi->client string */
-	if (dbi->client != NULL)
+	if (dbi->client != NULL) {
 		isc_mem_free(named_g_mctx, dbi->client);
+	}
 
 	/* release query string */
-	if (querystring  != NULL)
+	if (querystring != NULL) {
 		isc_mem_free(named_g_mctx, querystring);
+	}
 
 	/* return result */
-	return result;
+	return (result);
 }
 
 /*%
@@ -367,8 +361,7 @@ mysql_get_resultset(const char *zone, const char *record,
  */
 
 static isc_result_t
-mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
-{
+mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs) {
 	isc_result_t result = ISC_R_NOTFOUND;
 	MYSQL_ROW row;
 	unsigned int fields;
@@ -378,10 +371,10 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 	char *endp;
 	int ttl;
 
-	row = mysql_fetch_row(rs);	/* get a row from the result set */
-	fields = mysql_num_fields(rs);	/* how many columns in result set */
+	row = mysql_fetch_row(rs);     /* get a row from the result set */
+	fields = mysql_num_fields(rs); /* how many columns in result set */
 	while (row != NULL) {
-		switch(fields) {
+		switch (fields) {
 		case 1:
 			/*
 			 * one column in rs, it's the data field.  use
@@ -411,7 +404,7 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 					      DNS_LOGCATEGORY_DATABASE,
 					      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 					      "mysql driver ttl must be "
-					      "a postive number");
+					      "a positive number");
 			}
 			result = dns_sdlz_putrr(lookup, safeGet(row[1]), ttl,
 						safeGet(row[2]));
@@ -422,7 +415,7 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 			 * ones together.  figure out how long to make
 			 * string.
 			 */
-			for (j=2, len=0; j < fields; j++) {
+			for (j = 2, len = 0; j < fields; j++) {
 				len += strlen(safeGet(row[j])) + 1;
 			}
 			/*
@@ -430,26 +423,14 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 			 * term string
 			 */
 			tmpString = isc_mem_allocate(named_g_mctx, len + 1);
-			if (tmpString == NULL) {
-				/* major bummer, need more ram */
-				isc_log_write(dns_lctx,
-					      DNS_LOGCATEGORY_DATABASE,
-					      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-					      "mysql driver unable "
-					      "to allocate memory for "
-					      "temporary string");
-				mysql_free_result(rs);
-				return (ISC_R_FAILURE);	/* Yeah, I'd say! */
-			}
 			/* copy field to tmpString */
 			strcpy(tmpString, safeGet(row[2]));
-
 
 			/*
 			 * concat the rest of fields together, space
 			 * between each one.
 			 */
-			for (j=3; j < fields; j++) {
+			for (j = 3; j < fields; j++) {
 				strcat(tmpString, " ");
 				strcat(tmpString, safeGet(row[j]));
 			}
@@ -460,11 +441,11 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 					      DNS_LOGCATEGORY_DATABASE,
 					      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 					      "mysql driver ttl must be "
-					      "a postive number");
+					      "a positive number");
 			}
 			/* ok, now tell Bind about it. */
-			result = dns_sdlz_putrr(lookup, safeGet(row[1]),
-						ttl, tmpString);
+			result = dns_sdlz_putrr(lookup, safeGet(row[1]), ttl,
+						tmpString);
 			/* done, get rid of this thing. */
 			isc_mem_free(named_g_mctx, tmpString);
 		}
@@ -479,14 +460,14 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 				      isc_result_totext(result));
 			return (ISC_R_FAILURE);
 		}
-		row = mysql_fetch_row(rs);	/* get next row */
+		row = mysql_fetch_row(rs); /* get next row */
 	}
 
 	/* free result set memory */
 	mysql_free_result(rs);
 
 	/* return result code */
-	return result;
+	return (result);
 }
 
 /*
@@ -497,8 +478,7 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 
 static isc_result_t
 mysql_findzone(void *driverarg, void *dbdata, const char *name,
-	       dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
-{
+	       dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo) {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 	my_ulonglong rows;
@@ -511,8 +491,9 @@ mysql_findzone(void *driverarg, void *dbdata, const char *name,
 	result = mysql_get_resultset(name, NULL, NULL, FINDZONE, dbdata, &rs);
 	/* if we didn't get a result set, log an err msg. */
 	if (result != ISC_R_SUCCESS || rs == NULL) {
-		if (rs != NULL)
+		if (rs != NULL) {
 			mysql_free_result(rs);
+		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "mysql driver unable to return "
@@ -537,8 +518,7 @@ mysql_findzone(void *driverarg, void *dbdata, const char *name,
 /*% Determine if the client is allowed to perform a zone transfer */
 static isc_result_t
 mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
-		   const char *client)
-{
+		   const char *client) {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 	my_ulonglong rows;
@@ -547,8 +527,9 @@ mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 
 	/* first check if the zone is supported by the database. */
 	result = mysql_findzone(driverarg, dbdata, name, NULL, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (ISC_R_NOTFOUND);
+	}
 
 	/*
 	 * if we get to this point we know the zone is supported by
@@ -558,15 +539,16 @@ mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	 *
 	 * Run our query, and get a result set from the database.
 	 */
-	result = mysql_get_resultset(name, NULL, client, ALLOWXFR,
-				     dbdata, &rs);
+	result = mysql_get_resultset(name, NULL, client, ALLOWXFR, dbdata, &rs);
 	/* if we get "not implemented", send it along. */
-	if (result == ISC_R_NOTIMPLEMENTED)
-		return result;
+	if (result == ISC_R_NOTIMPLEMENTED) {
+		return (result);
+	}
 	/* if we didn't get a result set, log an err msg. */
 	if (result != ISC_R_SUCCESS || rs == NULL) {
-		if (rs != NULL)
+		if (rs != NULL) {
 			mysql_free_result(rs);
+		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "mysql driver unable to return "
@@ -579,8 +561,9 @@ mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	mysql_free_result(rs);
 
 	/* if we returned any rows, zone xfr is allowed. */
-	if (rows > 0)
+	if (rows > 0) {
 		return (ISC_R_SUCCESS);
+	}
 
 	/* no rows returned, zone xfr not allowed */
 	return (ISC_R_NOPERM);
@@ -593,8 +576,7 @@ mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
  */
 static isc_result_t
 mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
-	       dns_sdlzallnodes_t *allnodes)
-{
+	       dns_sdlzallnodes_t *allnodes) {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 	MYSQL_ROW row;
@@ -610,12 +592,14 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 	/* run the query and get the result set from the database. */
 	result = mysql_get_resultset(zone, NULL, NULL, ALLNODES, dbdata, &rs);
 	/* if we get "not implemented", send it along */
-	if (result == ISC_R_NOTIMPLEMENTED)
-		return result;
+	if (result == ISC_R_NOTIMPLEMENTED) {
+		return (result);
+	}
 	/* if we didn't get a result set, log an err msg. */
 	if (result != ISC_R_SUCCESS) {
-		if (rs != NULL)
+		if (rs != NULL) {
 			mysql_free_result(rs);
+		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "mysql driver unable to return "
@@ -625,10 +609,10 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 
 	result = ISC_R_NOTFOUND;
 
-	row = mysql_fetch_row(rs);	/* get a row from the result set */
-	fields = mysql_num_fields(rs);	/* how many columns in result set */
+	row = mysql_fetch_row(rs);     /* get a row from the result set */
+	fields = mysql_num_fields(rs); /* how many columns in result set */
 	while (row != NULL) {
-		if (fields < 4) {	/* gotta have at least 4 columns */
+		if (fields < 4) { /* gotta have at least 4 columns */
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "mysql driver too few fields returned "
@@ -640,7 +624,7 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "mysql driver ttl must be "
-				      "a postive number");
+				      "a positive number");
 		}
 		if (fields == 4) {
 			/* tell Bind about it. */
@@ -653,32 +637,22 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 			 * ones together.  figure out how long to make
 			 * string.
 			 */
-			for (j=3, len=0; j < fields; j++) {
+			for (j = 3, len = 0; j < fields; j++) {
 				len += strlen(safeGet(row[j])) + 1;
 			}
 			/* allocate memory, allow for NULL to term string */
 			tmpString = isc_mem_allocate(named_g_mctx, len + 1);
-			if (tmpString == NULL) {	/* we need more ram. */
-				isc_log_write(dns_lctx,
-					      DNS_LOGCATEGORY_DATABASE,
-					      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-					      "mysql driver unable "
-					      "to allocate memory for "
-					      "temporary string");
-				mysql_free_result(rs);
-				return (ISC_R_FAILURE);
-			}
 			/* copy this field to tmpString */
 			strcpy(tmpString, safeGet(row[3]));
-			/* concatonate the rest, with spaces between */
-			for (j=4; j < fields; j++) {
+			/* concatenate the rest, with spaces between */
+			for (j = 4; j < fields; j++) {
 				strcat(tmpString, " ");
 				strcat(tmpString, safeGet(row[j]));
 			}
 			/* tell Bind about it. */
 			result = dns_sdlz_putnamedrr(allnodes, safeGet(row[2]),
-						     safeGet(row[1]),
-						     ttl, tmpString);
+						     safeGet(row[1]), ttl,
+						     tmpString);
 			isc_mem_free(named_g_mctx, tmpString);
 		}
 		/* if we weren't successful, log err msg */
@@ -698,7 +672,7 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 	/* free result set memory */
 	mysql_free_result(rs);
 
-	return result;
+	return (result);
 }
 
 /*% if the lookup function does not return SOA or NS records for the zone,
@@ -707,8 +681,7 @@ mysql_allnodes(const char *zone, void *driverarg, void *dbdata,
 
 static isc_result_t
 mysql_authority(const char *zone, void *driverarg, void *dbdata,
-		dns_sdlzlookup_t *lookup)
-{
+		dns_sdlzlookup_t *lookup) {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 
@@ -717,12 +690,14 @@ mysql_authority(const char *zone, void *driverarg, void *dbdata,
 	/* run the query and get the result set from the database. */
 	result = mysql_get_resultset(zone, NULL, NULL, AUTHORITY, dbdata, &rs);
 	/* if we get "not implemented", send it along */
-	if (result == ISC_R_NOTIMPLEMENTED)
-		return result;
+	if (result == ISC_R_NOTIMPLEMENTED) {
+		return (result);
+	}
 	/* if we didn't get a result set, log an err msg. */
 	if (result != ISC_R_SUCCESS) {
-		if (rs != NULL)
+		if (rs != NULL) {
 			mysql_free_result(rs);
+		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "mysql driver unable to return "
@@ -733,15 +708,14 @@ mysql_authority(const char *zone, void *driverarg, void *dbdata,
 	 * lookup and authority result sets are processed in the same
 	 * manner mysql_process_rs does the job for both functions.
 	 */
-	return mysql_process_rs(lookup, rs);
+	return (mysql_process_rs(lookup, rs));
 }
 
 /*% if zone is supported, lookup up a (or multiple) record(s) in it */
 static isc_result_t
-mysql_lookup(const char *zone, const char *name, void *driverarg,
-	     void *dbdata, dns_sdlzlookup_t *lookup,
-	     dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
-{
+mysql_lookup(const char *zone, const char *name, void *driverarg, void *dbdata,
+	     dns_sdlzlookup_t *lookup, dns_clientinfomethods_t *methods,
+	     dns_clientinfo_t *clientinfo) {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 
@@ -753,8 +727,9 @@ mysql_lookup(const char *zone, const char *name, void *driverarg,
 	result = mysql_get_resultset(zone, name, NULL, LOOKUP, dbdata, &rs);
 	/* if we didn't get a result set, log an err msg. */
 	if (result != ISC_R_SUCCESS) {
-		if (rs != NULL)
+		if (rs != NULL) {
 			mysql_free_result(rs);
+		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "mysql driver unable to return "
@@ -765,7 +740,7 @@ mysql_lookup(const char *zone, const char *name, void *driverarg,
 	 * lookup and authority result sets are processed in the same manner
 	 * mysql_process_rs does the job for both functions.
 	 */
-	return mysql_process_rs(lookup, rs);
+	return (mysql_process_rs(lookup, rs));
 }
 
 /*%
@@ -776,8 +751,7 @@ mysql_lookup(const char *zone, const char *name, void *driverarg,
  */
 static isc_result_t
 mysql_create(const char *dlzname, unsigned int argc, char *argv[],
-	     void *driverarg, void **dbdata)
-{
+	     void *driverarg, void **dbdata) {
 	isc_result_t result;
 	dbinstance_t *dbi = NULL;
 	char *tmp = NULL;
@@ -791,9 +765,6 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	char *endp;
 	int j;
 	unsigned int flags = 0;
-#if MYSQL_VERSION_ID >= 50000
-        my_bool auto_reconnect = 1;
-#endif
 
 	UNUSED(driverarg);
 	UNUSED(dlzname);
@@ -816,7 +787,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 		return (ISC_R_FAILURE);
 	}
 
-	/* parse connection string and get paramters. */
+	/* parse connection string and get parameters. */
 
 	/* get db name - required */
 	dbname = getParameterValue(argv[1], "dbname=");
@@ -847,7 +818,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	}
 
 	/* how many queries were passed in from config file? */
-	switch(argc) {
+	switch (argc) {
 	case 4:
 		result = build_sqldbinstance(named_g_mctx, NULL, NULL, NULL,
 					     argv[2], argv[3], NULL, &dbi);
@@ -857,18 +828,19 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 					     argv[2], argv[3], NULL, &dbi);
 		break;
 	case 6:
-		result = build_sqldbinstance(named_g_mctx, argv[5], NULL, argv[4],
-					     argv[2], argv[3], NULL, &dbi);
+		result = build_sqldbinstance(named_g_mctx, argv[5], NULL,
+					     argv[4], argv[2], argv[3], NULL,
+					     &dbi);
 		break;
 	case 7:
-		result = build_sqldbinstance(named_g_mctx, argv[5],
-					     argv[6], argv[4],
-					     argv[2], argv[3], NULL, &dbi);
+		result = build_sqldbinstance(named_g_mctx, argv[5], argv[6],
+					     argv[4], argv[2], argv[3], NULL,
+					     &dbi);
 		break;
 	case 8:
-		result = build_sqldbinstance(named_g_mctx, argv[5],
-					     argv[6], argv[4],
-					     argv[2], argv[3], argv[7], &dbi);
+		result = build_sqldbinstance(named_g_mctx, argv[5], argv[6],
+					     argv[4], argv[2], argv[3], argv[7],
+					     &dbi);
 		break;
 	default:
 		/* not really needed, should shut up compiler. */
@@ -900,22 +872,25 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 
 	tmp = getParameterValue(argv[1], "compress=");
 	if (tmp != NULL) {
-		if (strcasecmp(tmp, "true") == 0)
+		if (strcasecmp(tmp, "true") == 0) {
 			flags = CLIENT_COMPRESS;
+		}
 		isc_mem_free(named_g_mctx, tmp);
 	}
 
 	tmp = getParameterValue(argv[1], "ssl=");
 	if (tmp != NULL) {
-		if (strcasecmp(tmp, "true") == 0)
+		if (strcasecmp(tmp, "true") == 0) {
 			flags = flags | CLIENT_SSL;
+		}
 		isc_mem_free(named_g_mctx, tmp);
 	}
 
 	tmp = getParameterValue(argv[1], "space=");
 	if (tmp != NULL) {
-		if (strcasecmp(tmp, "ignore") == 0)
+		if (strcasecmp(tmp, "ignore") == 0) {
 			flags = flags | CLIENT_IGNORE_SPACE;
+		}
 		isc_mem_free(named_g_mctx, tmp);
 	}
 
@@ -925,21 +900,21 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	pass = getParameterValue(argv[1], "pass=");
 	socket = getParameterValue(argv[1], "socket=");
 
-#if MYSQL_VERSION_ID >= 50000
 	/* enable automatic reconnection. */
-        if (mysql_options((MYSQL *) dbi->dbconn, MYSQL_OPT_RECONNECT,
-			  &auto_reconnect) != 0) {
+	if (mysql_options((MYSQL *)dbi->dbconn, MYSQL_OPT_RECONNECT,
+			  &(my_bool){ 1 }) != 0)
+	{
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_WARNING,
 			      "mysql driver failed to set "
-			      "MYSQL_OPT_RECONNECT option, continuing");
+			      "MYSQL_OPT_RECONNECT option, "
+			      "continuing");
 	}
-#endif
 
-	for (j=0; dbc == NULL && j < 4; j++)
-		dbc = mysql_real_connect((MYSQL *) dbi->dbconn, host,
-					 user, pass, dbname, port, socket,
-					 flags);
+	for (j = 0; dbc == NULL && j < 4; j++) {
+		dbc = mysql_real_connect((MYSQL *)dbi->dbconn, host, user, pass,
+					 dbname, port, socket, flags);
+	}
 
 	/* let user know if we couldn't connect. */
 	if (dbc == NULL) {
@@ -957,26 +932,31 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	result = ISC_R_SUCCESS;
 	goto cleanup;
 
- full_cleanup:
+full_cleanup:
 
-	if (dbi != NULL)
+	if (dbi != NULL) {
 		destroy_sqldbinstance(dbi);
+	}
 
- cleanup:
+cleanup:
 
-	if (dbname != NULL)
+	if (dbname != NULL) {
 		isc_mem_free(named_g_mctx, dbname);
-	if (host != NULL)
+	}
+	if (host != NULL) {
 		isc_mem_free(named_g_mctx, host);
-	if (user != NULL)
+	}
+	if (user != NULL) {
 		isc_mem_free(named_g_mctx, user);
-	if (pass != NULL)
+	}
+	if (pass != NULL) {
 		isc_mem_free(named_g_mctx, pass);
-	if (socket != NULL)
+	}
+	if (socket != NULL) {
 		isc_mem_free(named_g_mctx, socket);
+	}
 
-
-	return result;
+	return (result);
 }
 
 /*%
@@ -987,17 +967,17 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
  */
 
 static void
-mysql_destroy(void *driverarg, void *dbdata)
-{
+mysql_destroy(void *driverarg, void *dbdata) {
 	dbinstance_t *dbi;
 
 	UNUSED(driverarg);
 
-	dbi = (dbinstance_t *) dbdata;
+	dbi = (dbinstance_t *)dbdata;
 
 	/* release DB connection */
-	if (dbi->dbconn != NULL)
-		mysql_close((MYSQL *) dbi->dbconn);
+	if (dbi->dbconn != NULL) {
+		mysql_close((MYSQL *)dbi->dbconn);
+	}
 
 	/* destroy DB instance */
 	destroy_sqldbinstance(dbi);
@@ -1033,20 +1013,19 @@ dlz_mysql_init(void) {
 	/*
 	 * Write debugging message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "Registering DLZ mysql driver.");
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "Registering DLZ mysql driver.");
 
 	/* Driver is always threadsafe.  Because of the way MySQL handles
-         * threads the MySQL driver can only be used when bind is run single
-         * threaded.  Using MySQL with Bind running multi-threaded is not
-         * allowed.  When using the MySQL driver "-n1" should always be
-         * passed to Bind to guarantee single threaded operation.
+	 * threads the MySQL driver can only be used when bind is run single
+	 * threaded.  Using MySQL with Bind running multi-threaded is not
+	 * allowed.  When using the MySQL driver "-n1" should always be
+	 * passed to Bind to guarantee single threaded operation.
 	 */
 	result = dns_sdlzregister("mysql", &dlz_mysql_methods, NULL,
 				  DNS_SDLZFLAG_RELATIVEOWNER |
-				  DNS_SDLZFLAG_RELATIVERDATA |
-				  DNS_SDLZFLAG_THREADSAFE,
+					  DNS_SDLZFLAG_RELATIVERDATA |
+					  DNS_SDLZFLAG_THREADSAFE,
 				  named_g_mctx, &dlz_mysql);
 	/* if we can't register the driver, there are big problems. */
 	if (result != ISC_R_SUCCESS) {
@@ -1056,8 +1035,7 @@ dlz_mysql_init(void) {
 		result = ISC_R_UNEXPECTED;
 	}
 
-
-	return result;
+	return (result);
 }
 
 /*%
@@ -1065,17 +1043,16 @@ dlz_mysql_init(void) {
  */
 void
 dlz_mysql_clear(void) {
-
 	/*
 	 * Write debugging message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "Unregistering DLZ mysql driver.");
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "Unregistering DLZ mysql driver.");
 
 	/* unregister the driver. */
-	if (dlz_mysql != NULL)
+	if (dlz_mysql != NULL) {
 		dns_sdlzunregister(&dlz_mysql);
+	}
 }
 
-#endif
+#endif /* ifdef DLZ_MYSQL */

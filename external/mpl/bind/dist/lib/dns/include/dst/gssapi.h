@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DST_GSSAPI_H
 #define DST_GSSAPI_H 1
@@ -24,6 +23,7 @@
 #include <isc/lang.h>
 #include <isc/platform.h>
 #include <isc/types.h>
+
 #include <dns/types.h>
 
 #ifdef GSSAPI
@@ -33,16 +33,16 @@
  */
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
-#else
+#else /* ifdef WIN32 */
 #include ISC_PLATFORM_GSSAPIHEADER
 #ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER
 #include ISC_PLATFORM_GSSAPI_KRB5_HEADER
-#endif
-#endif
+#endif /* ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER */
+#endif /* ifdef WIN32 */
 #ifndef GSS_SPNEGO_MECHANISM
-#define GSS_SPNEGO_MECHANISM ((void*)0)
-#endif
-#endif
+#define GSS_SPNEGO_MECHANISM ((void *)0)
+#endif /* ifndef GSS_SPNEGO_MECHANISM */
+#endif /* ifdef GSSAPI */
 
 ISC_LANG_BEGINDECLS
 
@@ -115,8 +115,7 @@ dst_gssapi_initctx(const dns_name_t *name, isc_buffer_t *intoken,
  */
 
 isc_result_t
-dst_gssapi_acceptctx(gss_cred_id_t cred,
-		     const char *gssapi_keytab,
+dst_gssapi_acceptctx(gss_cred_id_t cred, const char *gssapi_keytab,
 		     isc_region_t *intoken, isc_buffer_t **outtoken,
 		     gss_ctx_id_t *context, dns_name_t *principal,
 		     isc_mem_t *mctx);
@@ -161,10 +160,8 @@ dst_gssapi_deletectx(isc_mem_t *mctx, gss_ctx_id_t *gssctx);
  *		ISC_R_SUCCESS
  */
 
-
 void
-gss_log(int level, const char *fmt, ...)
-ISC_FORMAT_PRINTF(2, 3);
+gss_log(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 /*
  * Logging function for GSS.
  *
@@ -174,8 +171,7 @@ ISC_FORMAT_PRINTF(2, 3);
  */
 
 char *
-gss_error_tostring(uint32_t major, uint32_t minor,
-		   char *buf, size_t buflen);
+gss_error_tostring(uint32_t major, uint32_t minor, char *buf, size_t buflen);
 /*
  *	Render a GSS major status/minor status pair into a string
  *
@@ -191,8 +187,7 @@ gss_error_tostring(uint32_t major, uint32_t minor,
 bool
 dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 				    const dns_name_t *name,
-				    const dns_name_t *realm,
-				    bool subdomain);
+				    const dns_name_t *realm, bool subdomain);
 /*
  *	Compare a "signer" (in the format of a Kerberos-format Kerberos5
  *	principal: host/example.com@EXAMPLE.COM) to the realm name stored
@@ -203,8 +198,7 @@ dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 bool
 dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 				  const dns_name_t *name,
-				  const dns_name_t *realm,
-				  bool subdomain);
+				  const dns_name_t *realm, bool subdomain);
 /*
  *	Compare a "signer" (in the format of a Kerberos-format Kerberos5
  *	principal: host/example.com@EXAMPLE.COM) to the realm name stored

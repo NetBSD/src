@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: sockaddr_test.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,8 +26,8 @@
 #include <cmocka.h>
 
 #include <isc/netaddr.h>
-#include <isc/sockaddr.h>
 #include <isc/print.h>
+#include <isc/sockaddr.h>
 #include <isc/util.h>
 
 #include "isctest.h"
@@ -95,14 +92,10 @@ sockaddr_isnetzero(void **state) {
 		const char *string;
 		bool expect;
 	} data4[] = {
-		{ "0.0.0.0", true },
-		{ "0.0.0.1", true },
-		{ "0.0.1.0", true },
-		{ "0.1.0.0", true },
-		{ "1.0.0.0", false },
-		{ "0.0.0.127", true },
-		{ "0.0.0.255", true },
-		{ "127.0.0.1", false },
+		{ "0.0.0.0", true },	      { "0.0.0.1", true },
+		{ "0.0.1.0", true },	      { "0.1.0.0", true },
+		{ "1.0.0.0", false },	      { "0.0.0.127", true },
+		{ "0.0.0.255", true },	      { "127.0.0.1", false },
 		{ "255.255.255.255", false },
 	};
 	/*
@@ -122,14 +115,14 @@ sockaddr_isnetzero(void **state) {
 
 	UNUSED(state);
 
-	for (i = 0; i < sizeof(data4)/sizeof(data4[0]); i++) {
+	for (i = 0; i < sizeof(data4) / sizeof(data4[0]); i++) {
 		in.s_addr = inet_addr(data4[i].string);
 		isc_sockaddr_fromin(&addr, &in, 1);
 		r = isc_sockaddr_isnetzero(&addr);
 		assert_int_equal(r, data4[i].expect);
 	}
 
-	for (i = 0; i < sizeof(data6)/sizeof(data6[0]); i++) {
+	for (i = 0; i < sizeof(data6) / sizeof(data6[0]); i++) {
 		ret = inet_pton(AF_INET6, data6[i].string, &in6);
 		assert_int_equal(ret, 1);
 		isc_sockaddr_fromin6(&addr, &in6, 1);
@@ -173,8 +166,8 @@ sockaddr_eqaddrprefix(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(sockaddr_hash,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(sockaddr_hash, _setup,
+						_teardown),
 		cmocka_unit_test(sockaddr_isnetzero),
 		cmocka_unit_test(sockaddr_eqaddrprefix),
 	};
@@ -192,4 +185,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

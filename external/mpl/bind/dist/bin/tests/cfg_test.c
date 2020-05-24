@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <errno.h>
 #include <stdbool.h>
@@ -25,17 +22,18 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/log.h>
+
 #include <isccfg/grammar.h>
 #include <isccfg/namedconf.h>
-
-#include <dns/log.h>
 
 static void
 check_result(isc_result_t result, const char *format, ...) {
 	va_list args;
 
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
 		return;
+	}
 
 	va_start(args, format);
 	vfprintf(stderr, format, args);
@@ -47,13 +45,14 @@ check_result(isc_result_t result, const char *format, ...) {
 static void
 output(void *closure, const char *text, int textlen) {
 	UNUSED(closure);
-	(void) fwrite(text, 1, textlen, stdout);
+	(void)fwrite(text, 1, textlen, stdout);
 }
 
 static void
 usage(void) {
 	fprintf(stderr, "usage: cfg_test --rndc|--named "
-		"[--grammar] [--memstats] conffile\n");
+			"[--grammar] [--zonegrammar] [--active] "
+			"[--memstats] conffile\n");
 	exit(1);
 }
 
@@ -71,11 +70,11 @@ main(int argc, char **argv) {
 	bool memstats = false;
 	char *filename = NULL;
 	unsigned int zonetype = 0;
+	unsigned int pflags = 0;
 
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
-	result = isc_log_create(mctx, &lctx, &lcfg);
-	check_result(result, "isc_log_create()");
+	isc_log_create(mctx, &lctx, &lcfg);
 	isc_log_setcontext(lctx);
 
 	/*
@@ -85,11 +84,9 @@ main(int argc, char **argv) {
 	destination.file.name = NULL;
 	destination.file.versions = ISC_LOG_ROLLNEVER;
 	destination.file.maximum_size = 0;
-	result = isc_log_createchannel(lcfg, "_default",
-				       ISC_LOG_TOFILEDESC,
-				       ISC_LOG_DYNAMIC,
-				       &destination, ISC_LOG_PRINTTIME);
-	check_result(result, "isc_log_createchannel()");
+	isc_log_createchannel(lcfg, "_default", ISC_LOG_TOFILEDESC,
+			      ISC_LOG_DYNAMIC, &destination, ISC_LOG_PRINTTIME);
+
 	result = isc_log_usechannel(lcfg, "_default", NULL, NULL);
 	check_result(result, "isc_log_usechannel()");
 
@@ -98,24 +95,25 @@ main(int argc, char **argv) {
 	 */
 	isc_log_setdebuglevel(lctx, 2);
 
-	if (argc < 3)
+	if (argc < 3) {
 		usage();
+	}
 
 	while (argc > 1) {
-		if (strcmp(argv[1], "--grammar") == 0) {
+		if (strcmp(argv[1], "--active") == 0) {
+			pflags |= CFG_PRINTER_ACTIVEONLY;
+		} else if (strcmp(argv[1], "--grammar") == 0) {
 			grammar = true;
 		} else if (strcmp(argv[1], "--zonegrammar") == 0) {
 			argv++, argc--;
-			if (argc <= 1)  {
+			if (argc <= 1) {
 				usage();
 			}
 			if (strcmp(argv[1], "master") == 0 ||
-			    strcmp(argv[1], "primary") == 0)
-			{
+			    strcmp(argv[1], "primary") == 0) {
 				zonetype = CFG_ZONE_MASTER;
 			} else if (strcmp(argv[1], "slave") == 0 ||
-				   strcmp(argv[1], "seconary") == 0)
-			{
+				   strcmp(argv[1], "seconary") == 0) {
 				zonetype = CFG_ZONE_SLAVE;
 			} else if (strcmp(argv[1], "mirror") == 0) {
 				zonetype = CFG_ZONE_MIRROR;
@@ -151,22 +149,26 @@ main(int argc, char **argv) {
 	}
 
 	if (grammar) {
-		if (type == NULL)
+		if (type == NULL) {
 			usage();
-		cfg_print_grammar(type, output, NULL);
+		}
+		cfg_print_grammar(type, pflags, output, NULL);
 	} else if (zonetype != 0) {
-		cfg_print_zonegrammar(zonetype, output, NULL);
+		cfg_print_zonegrammar(zonetype, pflags, output, NULL);
 	} else {
-		if (type == NULL || filename == NULL)
+		if (type == NULL || filename == NULL) {
 			usage();
-		RUNTIME_CHECK(cfg_parser_create(mctx, lctx, &pctx) == ISC_R_SUCCESS);
+		}
+		RUNTIME_CHECK(cfg_parser_create(mctx, lctx, &pctx) ==
+			      ISC_R_SUCCESS);
 
 		result = cfg_parse_file(pctx, filename, type, &cfg);
 
 		fprintf(stderr, "read config: %s\n", isc_result_totext(result));
 
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			exit(1);
+		}
 
 		cfg_print(cfg, output, NULL);
 
@@ -176,14 +178,16 @@ main(int argc, char **argv) {
 	}
 
 	isc_log_destroy(&lctx);
-	if (memstats)
+	if (memstats) {
 		isc_mem_stats(mctx, stderr);
+	}
 	isc_mem_destroy(&mctx);
 
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
 		return (1);
-	} else
+	} else {
 		return (0);
+	}
 }

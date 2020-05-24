@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,16 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef IRS_TYPES_H
 #define IRS_TYPES_H 1
 
 /* Core Types.  Alphabetized by defined type. */
 
 /*%< per-thread IRS context */
-typedef struct irs_context		irs_context_t;
+typedef struct irs_context irs_context_t;
 /*%< resolv.conf configuration information */
-typedef struct irs_resconf		irs_resconf_t;
+typedef struct irs_resconf irs_resconf_t;
 /*%< advanced DNS-related configuration information */
-typedef struct irs_dnsconf		irs_dnsconf_t;
+typedef struct irs_dnsconf irs_dnsconf_t;
 
 #endif /* IRS_TYPES_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: tsec.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_TSEC_H
 #define DNS_TSEC_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  *

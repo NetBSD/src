@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: xfrin.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_XFRIN_H
 #define DNS_XFRIN_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/xfrin.h
  * \brief
@@ -50,8 +49,8 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_xfrin_create(dns_zone_t *zone, dns_rdatatype_t xfrtype,
 		 const isc_sockaddr_t *masteraddr,
-		 const isc_sockaddr_t *sourceaddr,
-		 isc_dscp_t dscp, dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
+		 const isc_sockaddr_t *sourceaddr, isc_dscp_t dscp,
+		 dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
 		 isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
 		 isc_task_t *task, dns_xfrindone_t done,
 		 dns_xfrin_ctx_t **xfrp);

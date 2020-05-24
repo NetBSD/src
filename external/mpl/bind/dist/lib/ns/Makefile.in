@@ -22,13 +22,13 @@ USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/ns -Iinclude \
 		${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
+		${OPENSSL_CFLAGS} @DST_GSSAPI_INC@
 
 CDEFINES =	-DNAMED_PLUGINDIR=\"${plugindir}\"
 
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 

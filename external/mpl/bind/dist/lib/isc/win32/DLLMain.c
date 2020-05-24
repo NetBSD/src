@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,19 +11,15 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
-#include <windows.h>
 #include <stdio.h>
+#include <windows.h>
 
 /*
  * Called when we enter the DLL
  */
-__declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE hinstDLL,
-					  DWORD fdwReason, LPVOID lpvReserved)
-{
-	switch (fdwReason)
-	{
+__declspec(dllexport) BOOL WINAPI
+	DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+	switch (fdwReason) {
 	/*
 	 * The DLL is loading due to process
 	 * initialization or a call to LoadLibrary.
@@ -51,4 +47,3 @@ __declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 	}
 	return (TRUE);
 }
-

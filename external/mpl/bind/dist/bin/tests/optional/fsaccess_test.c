@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: fsaccess_test.c,v 1.3 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,14 +13,11 @@
 
 /*! \file */
 
-#include <config.h>
-
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-
-#include <sys/types.h>		/* Non-portable. */
-#include <sys/stat.h>		/* Non-portable. */
+#include <sys/stat.h>  /* Non-portable. */
+#include <sys/types.h> /* Non-portable. */
 
 #include <isc/fsaccess.h>
 #include <isc/print.h>
@@ -54,8 +51,7 @@ main(void) {
 	access = 0;
 
 	isc_fsaccess_add(ISC_FSACCESS_OWNER | ISC_FSACCESS_GROUP,
-			 ISC_FSACCESS_READ | ISC_FSACCESS_WRITE,
-			 &access);
+			 ISC_FSACCESS_READ | ISC_FSACCESS_WRITE, &access);
 
 	printf("fsaccess=%u\n", access);
 
@@ -64,8 +60,9 @@ main(void) {
 	printf("fsaccess=%u\n", access);
 
 	result = isc_fsaccess_set(PATH, access);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "result = %s\n", isc_result_totext(result));
+	}
 	(void)fclose(fp);
 
 	return (0);

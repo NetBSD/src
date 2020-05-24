@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.c,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stddef.h>
 
@@ -61,15 +58,14 @@ dns_rdatasetiter_next(dns_rdatasetiter_t *iterator) {
 
 void
 dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
-			 dns_rdataset_t *rdataset)
-{
+			 dns_rdataset_t *rdataset) {
 	/*
 	 * Return the current rdataset.
 	 */
 
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(! dns_rdataset_isassociated(rdataset));
+	REQUIRE(!dns_rdataset_isassociated(rdataset));
 
 	iterator->methods->current(iterator, rdataset);
 }

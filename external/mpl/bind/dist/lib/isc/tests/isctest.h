@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,6 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -22,6 +20,7 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
@@ -29,23 +28,23 @@
 #include <isc/timer.h>
 #include <isc/util.h>
 
-#define CHECK(r) \
-	do { \
-		result = (r); \
+#define CHECK(r)                             \
+	do {                                 \
+		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
-			goto cleanup; \
+			goto cleanup;        \
 	} while (/*CONSTCOND*/0)
 
-extern isc_mem_t *mctx;
-extern isc_log_t *lctx;
+extern isc_mem_t *test_mctx;
+extern isc_log_t *test_lctx;
 extern isc_taskmgr_t *taskmgr;
 extern isc_timermgr_t *timermgr;
 extern isc_socketmgr_t *socketmgr;
+extern isc_nm_t *netmgr;
 extern int ncpus;
 
 isc_result_t
-isc_test_begin(FILE *logfile, bool start_managers,
-	       unsigned int workers);
+isc_test_begin(FILE *logfile, bool start_managers, unsigned int workers);
 /*%<
  * Begin test, logging to 'logfile' or default if not specified.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.4 2020/05/24 19:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,25 +11,21 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #ifndef WIN32
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-
 #include <arpa/inet.h>
-
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
-#endif
+#endif /* ifndef WIN32 */
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -37,14 +33,10 @@
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/sockaddr.h>
-#include <isc/util.h>
-#include <isc/app.h>
-#include <isc/task.h>
 #include <isc/socket.h>
+#include <isc/task.h>
 #include <isc/timer.h>
-
-#include <irs/resconf.h>
-#include <irs/netdb.h>
+#include <isc/util.h>
 
 #include <dns/client.h>
 #include <dns/fixedname.h>
@@ -59,6 +51,9 @@
 #include <dns/secalg.h>
 
 #include <dst/dst.h>
+
+#include <irs/netdb.h>
+#include <irs/resconf.h>
 
 static char *algname;
 
@@ -76,10 +71,10 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner) {
 
 	isc_buffer_init(&target, t, sizeof(t));
 
-	result = dns_rdataset_totext(rdataset, owner, false, false,
-				     &target);
-	if (result != ISC_R_SUCCESS)
+	result = dns_rdataset_totext(rdataset, owner, false, false, &target);
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 	isc_buffer_usedregion(&target, &r);
 	printf("%.*s", (int)r.length, (char *)r.base);
 
@@ -92,17 +87,16 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(void) {
 	fprintf(stderr, "resolve [-t RRtype] "
-		"[[-a algorithm] [-e] -k keyname -K keystring] "
-		"[-S domain:serveraddr_for_domain ] [-s server_address]"
-		"[-b address[#port]] hostname\n");
+			"[[-a algorithm] [-e] -k keyname -K keystring] "
+			"[-S domain:serveraddr_for_domain ] [-s server_address]"
+			"[-b address[#port]] hostname\n");
 
 	exit(1);
 }
 
 static void
-set_key(dns_client_t *client, char *keynamestr, char *keystr,
-	bool is_sep, isc_mem_t **mctxp)
-{
+set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep,
+	isc_mem_t **mctxp) {
 	isc_result_t result;
 	dns_fixedname_t fkeyname;
 	unsigned int namelen;
@@ -117,11 +111,7 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 	isc_region_t r;
 	dns_secalg_t alg;
 
-	result = isc_mem_create(0, 0, mctxp);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to create mctx\n");
-		exit(1);
-	}
+	isc_mem_create(mctxp);
 
 	if (algname != NULL) {
 		tr.base = algname;
@@ -131,14 +121,16 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 			fprintf(stderr, "failed to identify the algorithm\n");
 			exit(1);
 		}
-	} else
+	} else {
 		alg = DNS_KEYALG_RSASHA1;
+	}
 
 	keystruct.common.rdclass = dns_rdataclass_in;
 	keystruct.common.rdtype = dns_rdatatype_dnskey;
 	keystruct.flags = DNS_KEYOWNER_ZONE; /* fixed */
-	if (is_sep)
+	if (is_sep) {
 		keystruct.flags |= DNS_KEYFLAG_KSK;
+	}
 	keystruct.protocol = DNS_KEYPROTO_DNSSEC; /* fixed */
 	keystruct.algorithm = alg;
 
@@ -154,8 +146,8 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 	keystruct.data = r.base;
 
 	result = dns_rdata_fromstruct(NULL, keystruct.common.rdclass,
-				      keystruct.common.rdtype,
-				      &keystruct, &rrdatabuf);
+				      keystruct.common.rdtype, &keystruct,
+				      &rrdatabuf);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to construct key rdata\n");
 		exit(1);
@@ -170,18 +162,17 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 		exit(1);
 	}
 	result = dns_client_addtrustedkey(client, dns_rdataclass_in,
-					  keyname, &rrdatabuf);
+					  dns_rdatatype_dnskey, keyname,
+					  &rrdatabuf);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to add key for %s\n",
-			keynamestr);
+		fprintf(stderr, "failed to add key for %s\n", keynamestr);
 		exit(1);
 	}
 }
 
 static void
 addserver(dns_client_t *client, const char *addrstr, const char *port,
-	  const char *name_space)
-{
+	  const char *name_space) {
 	struct addrinfo hints, *res;
 	int gaierror;
 	isc_sockaddr_t sa;
@@ -265,16 +256,15 @@ main(int argc, char *argv[]) {
 	isc_sockaddr_t a4, a6;
 	isc_sockaddr_t *addr4 = NULL, *addr6 = NULL;
 
-	while ((ch = isc_commandline_parse(argc, argv,
-					   "a:b:es:t:k:K:p:S:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "a:b:es:t:k:K:p:S:")) !=
+	       -1) {
 		switch (ch) {
 		case 't':
 			tr.base = isc_commandline_argument;
 			tr.length = strlen(isc_commandline_argument);
 			result = dns_rdatatype_fromtext(&type, &tr);
 			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr,
-					"invalid RRtype: %s\n",
+				fprintf(stderr, "invalid RRtype: %s\n",
 					isc_commandline_argument);
 				exit(1);
 			}
@@ -283,8 +273,8 @@ main(int argc, char *argv[]) {
 			algname = isc_commandline_argument;
 			break;
 		case 'b':
-			if (inet_pton(AF_INET,
-				      isc_commandline_argument, &in4) == 1) {
+			if (inet_pton(AF_INET, isc_commandline_argument,
+				      &in4) == 1) {
 				if (addr4 != NULL) {
 					fprintf(stderr, "only one local "
 							"address per family "
@@ -293,8 +283,7 @@ main(int argc, char *argv[]) {
 				}
 				isc_sockaddr_fromin(&a4, &in4, 0);
 				addr4 = &a4;
-			} else if (inet_pton(AF_INET6,
-					     isc_commandline_argument,
+			} else if (inet_pton(AF_INET6, isc_commandline_argument,
 					     &in6) == 1) {
 				if (addr6 != NULL) {
 					fprintf(stderr, "only one local "
@@ -315,7 +304,8 @@ main(int argc, char *argv[]) {
 			break;
 		case 'S':
 			if (altserver != NULL) {
-				fprintf(stderr, "alternate server "
+				fprintf(stderr,
+					"alternate server "
 					"already defined: %s\n",
 					altserver);
 				exit(1);
@@ -324,7 +314,8 @@ main(int argc, char *argv[]) {
 			break;
 		case 's':
 			if (server != NULL) {
-				fprintf(stderr, "server "
+				fprintf(stderr,
+					"server "
 					"already defined: %s\n",
 					server);
 				exit(1);
@@ -347,8 +338,9 @@ main(int argc, char *argv[]) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
-	if (argc < 1)
+	if (argc < 1) {
 		usage();
+	}
 
 	if (altserver != NULL) {
 		char *cp;
@@ -371,27 +363,28 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	result = isc_mem_create(0, 0, &mctx);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to crate mctx\n");
-		exit(1);
-	}
+	isc_mem_create(&mctx);
 
 	result = isc_appctx_create(mctx, &actx);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 	result = isc_app_ctxstart(actx);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	result = isc_taskmgr_createinctx(mctx, actx, 1, 0, &taskmgr);
-	if (result != ISC_R_SUCCESS)
+	}
+	result = isc_taskmgr_createinctx(mctx, 1, 0, &taskmgr);
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	result = isc_socketmgr_createinctx(mctx, actx, &socketmgr);
-	if (result != ISC_R_SUCCESS)
+	}
+	result = isc_socketmgr_createinctx(mctx, &socketmgr);
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	result = isc_timermgr_createinctx(mctx, actx, &timermgr);
-	if (result != ISC_R_SUCCESS)
+	}
+	result = isc_timermgr_createinctx(mctx, &timermgr);
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	clientopt = 0;
 	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
@@ -414,8 +407,8 @@ main(int argc, char *argv[]) {
 			exit(1);
 		}
 		nameservers = irs_resconf_getnameservers(resconf);
-		result = dns_client_setservers(client, dns_rdataclass_in,
-					       NULL, nameservers);
+		result = dns_client_setservers(client, dns_rdataclass_in, NULL,
+					       nameservers);
 		if (result != ISC_R_SUCCESS) {
 			irs_resconf_destroy(&resconf);
 			fprintf(stderr, "dns_client_setservers failed: %u\n",
@@ -428,15 +421,15 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Set the alternate nameserver (when specified) */
-	if (altserver != NULL)
+	if (altserver != NULL) {
 		addserver(client, altserveraddr, port, altservername);
+	}
 
 	/* Install DNSSEC key (if given) */
 	if (keynamestr != NULL) {
 		if (keystr == NULL) {
-			fprintf(stderr,
-				"key string is missing "
-				"while key name is provided\n");
+			fprintf(stderr, "key string is missing "
+					"while key name is provided\n");
 			exit(1);
 		}
 		set_key(client, keynamestr, keystr, is_sep, &keymctx);
@@ -448,27 +441,31 @@ main(int argc, char *argv[]) {
 	isc_buffer_add(&b, namelen);
 	qname = dns_fixedname_initname(&qname0);
 	result = dns_name_fromtext(qname, &b, dns_rootname, 0, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to convert qname: %u\n", result);
+	}
 
 	/* Perform resolution */
 	resopt = DNS_CLIENTRESOPT_ALLOWRUN;
-	if (keynamestr == NULL)
+	if (keynamestr == NULL) {
 		resopt |= DNS_CLIENTRESOPT_NODNSSEC;
+	}
 	ISC_LIST_INIT(namelist);
 	result = dns_client_resolve(client, qname, dns_rdataclass_in, type,
 				    resopt, &namelist);
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr,
-			"resolution failed: %s\n", dns_result_totext(result));
+		fprintf(stderr, "resolution failed: %s\n",
+			dns_result_totext(result));
 	}
 	for (name = ISC_LIST_HEAD(namelist); name != NULL;
-	     name = ISC_LIST_NEXT(name, link)) {
-		for (rdataset = ISC_LIST_HEAD(name->list);
-		     rdataset != NULL;
-		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
-			if (printdata(rdataset, name) != ISC_R_SUCCESS)
+	     name = ISC_LIST_NEXT(name, link))
+	{
+		for (rdataset = ISC_LIST_HEAD(name->list); rdataset != NULL;
+		     rdataset = ISC_LIST_NEXT(rdataset, link))
+		{
+			if (printdata(rdataset, name) != ISC_R_SUCCESS) {
 				fprintf(stderr, "print data failed\n");
+			}
 		}
 	}
 
@@ -478,18 +475,23 @@ main(int argc, char *argv[]) {
 cleanup:
 	dns_client_destroy(&client);
 
-	if (taskmgr != NULL)
+	if (taskmgr != NULL) {
 		isc_taskmgr_destroy(&taskmgr);
-	if (timermgr != NULL)
+	}
+	if (timermgr != NULL) {
 		isc_timermgr_destroy(&timermgr);
-	if (socketmgr != NULL)
+	}
+	if (socketmgr != NULL) {
 		isc_socketmgr_destroy(&socketmgr);
-	if (actx != NULL)
+	}
+	if (actx != NULL) {
 		isc_appctx_destroy(&actx);
+	}
 	isc_mem_detach(&mctx);
 
-	if (keynamestr != NULL)
+	if (keynamestr != NULL) {
 		isc_mem_destroy(&keymctx);
+	}
 	dns_lib_shutdown();
 
 	return (0);

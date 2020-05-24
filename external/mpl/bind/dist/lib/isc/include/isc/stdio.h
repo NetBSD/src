@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_STDIO_H
 #define ISC_STDIO_H 1
@@ -51,8 +50,7 @@ isc_stdio_tell(FILE *f, off_t *offsetp);
 
 /*% Read */
 isc_result_t
-isc_stdio_read(void *ptr, size_t size, size_t nmemb, FILE *f,
-	       size_t *nret);
+isc_stdio_read(void *ptr, size_t size, size_t nmemb, FILE *f, size_t *nret);
 
 /*% Write */
 isc_result_t

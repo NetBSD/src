@@ -1,4 +1,4 @@
-/*	$NetBSD: symtype.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: symtype.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,15 +25,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef ISCCC_SYMTYPE_H
 #define ISCCC_SYMTYPE_H 1
 
 /*! \file isccc/symtype.h */
 
-#define ISCCC_SYMTYPE_ZONESTATS			0x0001
-#define ISCCC_SYMTYPE_CCDUP			0x0002
-#define ISCCC_SYMTYPE_TELLSERVICE			0x0003
-#define ISCCC_SYMTYPE_TELLRESPONSE		0x0004
+#define ISCCC_SYMTYPE_ZONESTATS	   0x0001
+#define ISCCC_SYMTYPE_CCDUP	   0x0002
+#define ISCCC_SYMTYPE_TELLSERVICE  0x0003
+#define ISCCC_SYMTYPE_TELLRESPONSE 0x0004
 
 #endif /* ISCCC_SYMTYPE_H */

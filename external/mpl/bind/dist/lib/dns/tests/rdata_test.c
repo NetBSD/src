@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.6 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.7 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -45,10 +42,10 @@ static bool debug = false;
  * An array of these structures is passed to compare_ok().
  */
 struct compare_ok {
-	const char *text1;		/* text passed to fromtext_*() */
-	const char *text2;		/* text passed to fromtext_*() */
-	int answer;			/* -1, 0, 1 */
-	int lineno;			/* source line defining this RDATA */
+	const char *text1; /* text passed to fromtext_*() */
+	const char *text2; /* text passed to fromtext_*() */
+	int answer;	   /* -1, 0, 1 */
+	int lineno;	   /* source line defining this RDATA */
 };
 typedef struct compare_ok compare_ok_t;
 
@@ -77,46 +74,57 @@ _teardown(void **state) {
  * An array of these structures is passed to check_text_ok().
  */
 typedef struct text_ok {
-	const char *text_in;		/* text passed to fromtext_*() */
-	const char *text_out;		/* text expected from totext_*();
-					   NULL indicates text_in is invalid */
+	const char *text_in;  /* text passed to fromtext_*() */
+	const char *text_out; /* text expected from totext_*();
+			       * NULL indicates text_in is invalid */
 } text_ok_t;
 
 /*
  * An array of these structures is passed to check_wire_ok().
  */
 typedef struct wire_ok {
-	unsigned char data[512];	/* RDATA in wire format */
-	size_t len;			/* octets of data to parse */
-	bool ok;			/* is this RDATA valid? */
+	unsigned char data[512]; /* RDATA in wire format */
+	size_t len;		 /* octets of data to parse */
+	bool ok;		 /* is this RDATA valid? */
 } wire_ok_t;
 
-#define COMPARE(r1, r2, answer) \
-	{ r1, r2, answer, __LINE__ }
-#define COMPARE_SENTINEL() \
-	{ NULL, NULL, 0, __LINE__ }
+#define COMPARE(r1, r2, answer)          \
+	{                                \
+		r1, r2, answer, __LINE__ \
+	}
+#define COMPARE_SENTINEL()              \
+	{                               \
+		NULL, NULL, 0, __LINE__ \
+	}
 
 #define TEXT_VALID_CHANGED(data_in, data_out) \
-				{ data_in, data_out }
-#define TEXT_VALID(data)	{ data, data }
-#define TEXT_INVALID(data)	{ data, NULL }
-#define TEXT_SENTINEL()		TEXT_INVALID(NULL)
+	{                                     \
+		data_in, data_out             \
+	}
+#define TEXT_VALID(data)   \
+	{                  \
+		data, data \
+	}
+#define TEXT_INVALID(data) \
+	{                  \
+		data, NULL \
+	}
+#define TEXT_SENTINEL() TEXT_INVALID(NULL)
 
-#define VARGC(...)		(sizeof((unsigned char[]){ __VA_ARGS__ }))
-#define WIRE_TEST(ok, ...)	{					      \
-					{ __VA_ARGS__ }, VARGC(__VA_ARGS__),  \
-					ok				      \
-				}
-#define WIRE_VALID(...)		WIRE_TEST(true, __VA_ARGS__)
+#define VARGC(...) (sizeof((unsigned char[]){ __VA_ARGS__ }))
+#define WIRE_TEST(ok, ...)                              \
+	{                                               \
+		{ __VA_ARGS__ }, VARGC(__VA_ARGS__), ok \
+	}
+#define WIRE_VALID(...) WIRE_TEST(true, __VA_ARGS__)
 /*
  * WIRE_INVALID() test cases must always have at least one octet specified to
  * distinguish them from WIRE_SENTINEL().  Use the 'empty_ok' parameter passed
  * to check_wire_ok() for indicating whether empty RDATA is allowed for a given
  * RR type or not.
  */
-#define WIRE_INVALID(FIRST, ...) \
-				WIRE_TEST(false, FIRST, __VA_ARGS__)
-#define WIRE_SENTINEL()		WIRE_TEST(false)
+#define WIRE_INVALID(FIRST, ...) WIRE_TEST(false, FIRST, __VA_ARGS__)
+#define WIRE_SENTINEL()		 WIRE_TEST(false)
 
 /*
  * Call dns_rdata_fromwire() for data in 'src', which is 'srclen' octets in
@@ -125,10 +133,9 @@ typedef struct wire_ok {
  * 'rdata' refer to that uncompressed wire form.
  */
 static isc_result_t
-wire_to_rdata(const unsigned char *src, size_t srclen,
-	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
-	      unsigned char *dst, size_t dstlen, dns_rdata_t *rdata)
-{
+wire_to_rdata(const unsigned char *src, size_t srclen, dns_rdataclass_t rdclass,
+	      dns_rdatatype_t type, unsigned char *dst, size_t dstlen,
+	      dns_rdata_t *rdata) {
 	isc_buffer_t source, target;
 	dns_decompress_t dctx;
 	isc_result_t result;
@@ -157,6 +164,87 @@ wire_to_rdata(const unsigned char *src, size_t srclen,
 }
 
 /*
+ * Call dns_rdata_towire() for rdata and write to result to dst.
+ */
+static isc_result_t
+rdata_towire(dns_rdata_t *rdata, unsigned char *dst, size_t dstlen,
+	     size_t *length) {
+	isc_buffer_t target;
+	dns_compress_t cctx;
+	isc_result_t result;
+
+	/*
+	 * Initialize target buffer.
+	 */
+	isc_buffer_init(&target, dst, dstlen);
+
+	/*
+	 * Try converting input data into uncompressed wire form.
+	 */
+	dns_compress_init(&cctx, -1, dt_mctx);
+	result = dns_rdata_towire(rdata, &cctx, &target);
+	dns_compress_invalidate(&cctx);
+
+	*length = isc_buffer_usedlength(&target);
+
+	return (result);
+}
+
+static isc_result_t
+additionaldata_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
+	UNUSED(arg);
+	UNUSED(name);
+	UNUSED(qtype);
+	return (ISC_R_SUCCESS);
+}
+
+/*
+ * call dns_rdata_additionaldata() for rdata.
+ */
+static isc_result_t
+rdata_additionadata(dns_rdata_t *rdata) {
+	return (dns_rdata_additionaldata(rdata, additionaldata_cb, NULL));
+}
+
+/*
+ * Call dns_rdata_checknames() with various owner names chosen to
+ * match well known forms.
+ *
+ * We are currently only checking that the calls do not trigger
+ * assertion failures.
+ *
+ * XXXMPA A future extension could be to record the expected
+ * result and the expected value of 'bad'.
+ */
+static void
+rdata_checknames(dns_rdata_t *rdata) {
+	dns_fixedname_t fixed, bfixed;
+	dns_name_t *name, *bad;
+	isc_result_t result;
+
+	name = dns_fixedname_initname(&fixed);
+	bad = dns_fixedname_initname(&bfixed);
+
+	(void)dns_rdata_checknames(rdata, dns_rootname, NULL);
+	(void)dns_rdata_checknames(rdata, dns_rootname, bad);
+
+	result = dns_name_fromstring(name, "example.net", 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	(void)dns_rdata_checknames(rdata, name, NULL);
+	(void)dns_rdata_checknames(rdata, name, bad);
+
+	result = dns_name_fromstring(name, "in-addr.arpa", 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	(void)dns_rdata_checknames(rdata, name, NULL);
+	(void)dns_rdata_checknames(rdata, name, bad);
+
+	result = dns_name_fromstring(name, "ip6.arpa", 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	(void)dns_rdata_checknames(rdata, name, NULL);
+	(void)dns_rdata_checknames(rdata, name, bad);
+}
+
+/*
  * Test whether converting rdata to a type-specific struct and then back to
  * rdata results in the same uncompressed wire form.  This checks whether
  * tostruct_*() and fromstruct_*() routines for given RR class and type behave
@@ -174,7 +262,7 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
 	void *rdata_struct;
 	char buf[1024];
 
-	rdata_struct = isc_mem_allocate(mctx, structsize);
+	rdata_struct = isc_mem_allocate(dt_mctx, structsize);
 	assert_non_null(rdata_struct);
 
 	/*
@@ -198,7 +286,7 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
 
 	assert_memory_equal(buf, rdata->data, rdata->length);
 
-	isc_mem_free(mctx, rdata_struct);
+	isc_mem_free(dt_mctx, rdata_struct);
 }
 
 /*
@@ -208,13 +296,13 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
  */
 static void
 check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, size_t structsize)
-{
-	unsigned char buf_fromtext[1024], buf_fromwire[1024];
+		     dns_rdatatype_t type, size_t structsize) {
+	unsigned char buf_fromtext[1024], buf_fromwire[1024], buf_towire[1024];
 	dns_rdata_t rdata = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT;
 	char buf_totext[1024] = { 0 };
 	isc_buffer_t target;
 	isc_result_t result;
+	size_t length = 0;
 
 	/*
 	 * Try converting text form RDATA into uncompressed wire form.
@@ -259,8 +347,8 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	 */
 	isc_buffer_putuint8(&target, 0);
 	if (debug && strcmp(buf_totext, text_ok->text_out) != 0) {
-		fprintf(stdout, "# '%s' != '%s'\n",
-			buf_totext, text_ok->text_out);
+		fprintf(stdout, "# '%s' != '%s'\n", buf_totext,
+			text_ok->text_out);
 	}
 	assert_string_equal(buf_totext, text_ok->text_out);
 
@@ -272,6 +360,25 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(rdata.length, rdata2.length);
 	assert_memory_equal(rdata.data, buf_fromwire, rdata.length);
+
+	/*
+	 * Ensure that fromtext_*() output is valid input for towire_*().
+	 */
+	result = rdata_towire(&rdata, buf_towire, sizeof(buf_towire), &length);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(rdata.length, length);
+	assert_memory_equal(rdata.data, buf_towire, length);
+
+	/*
+	 * Test that additionaldata_*() succeeded.
+	 */
+	result = rdata_additionadata(&rdata);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/*
+	 * Exercise checknames_*().
+	 */
+	rdata_checknames(&rdata);
 
 	/*
 	 * Perform two-way conversion checks between uncompressed wire form and
@@ -382,17 +489,17 @@ check_multiline_text_conversions(dns_rdata_t *rdata) {
  */
 static void
 check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, size_t structsize)
-{
-	unsigned char buf[1024];
+		     dns_rdatatype_t type, size_t structsize) {
+	unsigned char buf[1024], buf_towire[1024];
 	isc_result_t result;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
+	size_t length = 0;
 
 	/*
 	 * Try converting wire data into uncompressed wire form.
 	 */
-	result = wire_to_rdata(wire_ok->data, wire_ok->len, rdclass, type,
-			       buf, sizeof(buf), &rdata);
+	result = wire_to_rdata(wire_ok->data, wire_ok->len, rdclass, type, buf,
+			       sizeof(buf), &rdata);
 	/*
 	 * Check whether result is as expected.
 	 */
@@ -401,6 +508,11 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	} else {
 		assert_int_not_equal(result, ISC_R_SUCCESS);
 	}
+
+	if (result != ISC_R_SUCCESS) {
+		return;
+	}
+
 	/*
 	 * If data was parsed correctly, perform two-way conversion checks
 	 * between uncompressed wire form and type-specific struct.
@@ -411,13 +523,30 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	 *   - uncompressed wire form and text form,
 	 *   - uncompressed wire form and multi-line text form.
 	 */
-	if (result == ISC_R_SUCCESS) {
-		check_struct_conversions(&rdata, structsize);
-		if (!dns_rdatatype_ismeta(rdata.type)) {
-			check_text_conversions(&rdata);
-			check_multiline_text_conversions(&rdata);
-		}
+	check_struct_conversions(&rdata, structsize);
+	if (!dns_rdatatype_ismeta(rdata.type)) {
+		check_text_conversions(&rdata);
+		check_multiline_text_conversions(&rdata);
 	}
+
+	/*
+	 * Ensure that fromwire_*() output is valid input for towire_*().
+	 */
+	result = rdata_towire(&rdata, buf_towire, sizeof(buf_towire), &length);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(rdata.length, length);
+	assert_memory_equal(rdata.data, buf_towire, length);
+
+	/*
+	 * Test that additionaldata_*() succeeded.
+	 */
+	result = rdata_additionadata(&rdata);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/*
+	 * Exercise checknames_*().
+	 */
+	rdata_checknames(&rdata);
 }
 
 /*
@@ -428,8 +557,7 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
  */
 static void
 check_text_ok(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
-	      dns_rdatatype_t type, size_t structsize)
-{
+	      dns_rdatatype_t type, size_t structsize) {
 	size_t i;
 
 	/*
@@ -448,10 +576,8 @@ check_text_ok(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
  * for given RR class and type behaves as expected.
  */
 static void
-check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok,
-	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
-	      size_t structsize)
-{
+check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok, dns_rdataclass_t rdclass,
+	      dns_rdatatype_t type, size_t structsize) {
 	wire_ok_t empty_wire = WIRE_TEST(empty_ok);
 	size_t i;
 
@@ -473,24 +599,23 @@ check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok,
  */
 static void
 check_compare_ok_single(const compare_ok_t *compare_ok,
-			dns_rdataclass_t rdclass, dns_rdatatype_t type)
-{
+			dns_rdataclass_t rdclass, dns_rdatatype_t type) {
 	dns_rdata_t rdata1 = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT;
 	unsigned char buf1[1024], buf2[1024];
 	isc_result_t result;
 	int answer;
 
-	result = dns_test_rdatafromstring(&rdata1, rdclass, type,
-					  buf1, sizeof(buf1),
-					  compare_ok->text1, false);
+	result = dns_test_rdatafromstring(&rdata1, rdclass, type, buf1,
+					  sizeof(buf1), compare_ok->text1,
+					  false);
 	if (result != ISC_R_SUCCESS) {
 		fail_msg("# line %d: '%s': expected success, got failure",
 			 compare_ok->lineno, compare_ok->text1);
 	}
 
-	result = dns_test_rdatafromstring(&rdata2, rdclass, type,
-					  buf2, sizeof(buf2),
-					  compare_ok->text2, false);
+	result = dns_test_rdatafromstring(&rdata2, rdclass, type, buf2,
+					  sizeof(buf2), compare_ok->text2,
+					  false);
 
 	if (result != ISC_R_SUCCESS) {
 		fail_msg("# line %d: '%s': expected success, got failure",
@@ -501,22 +626,22 @@ check_compare_ok_single(const compare_ok_t *compare_ok,
 	if (compare_ok->answer == 0 && answer != 0) {
 		fail_msg("# line %d: dns_rdata_compare('%s', '%s'): "
 			 "expected equal, got %s",
-			 compare_ok->lineno,
-			 compare_ok->text1, compare_ok->text2,
+			 compare_ok->lineno, compare_ok->text1,
+			 compare_ok->text2,
 			 (answer > 0) ? "greater than" : "less than");
 	}
 	if (compare_ok->answer < 0 && answer >= 0) {
 		fail_msg("# line %d: dns_rdata_compare('%s', '%s'): "
 			 "expected less than, got %s",
-			 compare_ok->lineno,
-			 compare_ok->text1, compare_ok->text2,
+			 compare_ok->lineno, compare_ok->text1,
+			 compare_ok->text2,
 			 (answer == 0) ? "equal" : "greater than");
 	}
 	if (compare_ok->answer > 0 && answer <= 0) {
 		fail_msg("line %d: dns_rdata_compare('%s', '%s'): "
 			 "expected greater than, got %s",
-			 compare_ok->lineno,
-			 compare_ok->text1, compare_ok->text2,
+			 compare_ok->lineno, compare_ok->text1,
+			 compare_ok->text2,
 			 (answer == 0) ? "equal" : "less than");
 	}
 }
@@ -526,9 +651,8 @@ check_compare_ok_single(const compare_ok_t *compare_ok,
  * with dns_rdata_compare().
  */
 static void
-check_compare_ok(const compare_ok_t *compare_ok,
-		 dns_rdataclass_t rdclass, dns_rdatatype_t type)
-{
+check_compare_ok(const compare_ok_t *compare_ok, dns_rdataclass_t rdclass,
+		 dns_rdatatype_t type) {
 	size_t i;
 	/*
 	 * Check all entries in the supplied array.
@@ -550,10 +674,8 @@ check_compare_ok(const compare_ok_t *compare_ok,
  */
 static void
 check_rdata(const text_ok_t *text_ok, const wire_ok_t *wire_ok,
-	    const compare_ok_t *compare_ok,
-	    bool empty_ok, dns_rdataclass_t rdclass,
-	    dns_rdatatype_t type, size_t structsize)
-{
+	    const compare_ok_t *compare_ok, bool empty_ok,
+	    dns_rdataclass_t rdclass, dns_rdatatype_t type, size_t structsize) {
 	if (text_ok != NULL) {
 		check_text_ok(text_ok, rdclass, type, structsize);
 	}
@@ -574,27 +696,27 @@ check_rdata(const text_ok_t *text_ok, const wire_ok_t *wire_ok,
  */
 static void
 key_required(void **state, dns_rdatatype_t type, size_t size) {
-	wire_ok_t wire_ok[] = {
-		/*
-		 * RDATA must be at least 5 octets in size:
-		 *
-		 *   - 2 octets for Flags,
-		 *   - 1 octet for Protocol,
-		 *   - 1 octet for Algorithm,
-		 *   - Public Key must not be empty.
-		 *
-		 * RFC 2535 section 3.1.2 allows the Public Key to be empty if
-		 * bits 0-1 of Flags are both set, but that only applies to KEY
-		 * records: for the RR types tested here, the Public Key must
-		 * not be empty.
-		 */
-		WIRE_INVALID(0x00),
-		WIRE_INVALID(0x00, 0x00),
-		WIRE_INVALID(0x00, 0x00, 0x00),
-		WIRE_INVALID(0xc0, 0x00, 0x00, 0x00),
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /*
+				 * RDATA must be at least 5 octets in size:
+				 *
+				 *   - 2 octets for Flags,
+				 *   - 1 octet for Protocol,
+				 *   - 1 octet for Algorithm,
+				 *   - Public Key must not be empty.
+				 *
+				 * RFC 2535 section 3.1.2 allows the Public Key
+				 * to be empty if bits 0-1 of Flags are both
+				 * set, but that only applies to KEY records:
+				 * for the RR types tested here, the Public Key
+				 * must not be empty.
+				 */
+				WIRE_INVALID(0x00),
+				WIRE_INVALID(0x00, 0x00),
+				WIRE_INVALID(0x00, 0x00, 0x00),
+				WIRE_INVALID(0xc0, 0x00, 0x00, 0x00),
+				WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+				WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+				WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -609,19 +731,14 @@ apl(void **state) {
 		/* empty list */
 		TEXT_VALID(""),
 		/* min,max prefix IPv4 */
-		TEXT_VALID("1:0.0.0.0/0"),
-		TEXT_VALID("1:127.0.0.1/32"),
+		TEXT_VALID("1:0.0.0.0/0"), TEXT_VALID("1:127.0.0.1/32"),
 		/* min,max prefix IPv6 */
-		TEXT_VALID("2:::/0"),
-		TEXT_VALID("2:::1/128"),
+		TEXT_VALID("2:::/0"), TEXT_VALID("2:::1/128"),
 		/* negated */
-		TEXT_VALID("!1:0.0.0.0/0"),
-		TEXT_VALID("!1:127.0.0.1/32"),
-		TEXT_VALID("!2:::/0"),
-		TEXT_VALID("!2:::1/128"),
+		TEXT_VALID("!1:0.0.0.0/0"), TEXT_VALID("!1:127.0.0.1/32"),
+		TEXT_VALID("!2:::/0"), TEXT_VALID("!2:::1/128"),
 		/* bits set after prefix length - not disallowed */
-		TEXT_VALID("1:127.0.0.0/0"),
-		TEXT_VALID("2:8000::/0"),
+		TEXT_VALID("1:127.0.0.0/0"), TEXT_VALID("2:8000::/0"),
 		/* multiple */
 		TEXT_VALID("1:0.0.0.0/0 1:127.0.0.1/32"),
 		TEXT_VALID("1:0.0.0.0/0 !1:127.0.0.1/32"),
@@ -630,26 +747,24 @@ apl(void **state) {
 		/* family 0, prefix 0, negative */
 		TEXT_VALID("\\# 4 00000080"),
 		/* prefix too long */
-		TEXT_INVALID("1:0.0.0.0/33"),
-		TEXT_INVALID("2:::/129"),
+		TEXT_INVALID("1:0.0.0.0/33"), TEXT_INVALID("2:::/129"),
 		/*
 		 * Sentinel.
 		 */
 		TEXT_SENTINEL()
 	};
-	wire_ok_t wire_ok[] = {
-		/* zero length */
-		WIRE_VALID(),
-		/* prefix too big IPv4 */
-		WIRE_INVALID(0x00, 0x01, 33U, 0x00),
-		/* prefix too big IPv6 */
-		WIRE_INVALID(0x00, 0x02, 129U, 0x00),
-		/* trailing zero octet in afdpart */
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x00),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /* zero length */
+				WIRE_VALID(),
+				/* prefix too big IPv4 */
+				WIRE_INVALID(0x00, 0x01, 33U, 0x00),
+				/* prefix too big IPv6 */
+				WIRE_INVALID(0x00, 0x02, 129U, 0x00),
+				/* trailing zero octet in afdpart */
+				WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x00),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -697,56 +812,54 @@ apl(void **state) {
  */
 static void
 atma(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_VALID("00"),
-		TEXT_VALID_CHANGED("0.0", "00"),
-		/*
-		 * multiple consecutive periods
-		 */
-		TEXT_INVALID("0..0"),
-		/*
-		 * trailing period
-		 */
-		TEXT_INVALID("00."),
-		/*
-		 * leading period
-		 */
-		TEXT_INVALID(".00"),
-		/*
-		 * Not full octets.
-		 */
-		TEXT_INVALID("000"),
-		/*
-		 * E.164
-		 */
-		TEXT_VALID("+61200000000"),
-		/*
-		 * E.164 with periods
-		 */
-		TEXT_VALID_CHANGED("+61.2.0000.0000", "+61200000000"),
-		/*
-		 * E.164 with period at end
-		 */
-		TEXT_INVALID("+61200000000."),
-		/*
-		 * E.164 with multiple consecutive periods
-		 */
-		TEXT_INVALID("+612..00000000"),
-		/*
-		 * E.164 with period before the leading digit.
-		 */
-		TEXT_INVALID("+.61200000000"),
-		/*
-		 * Sentinel.
-		 */
-		TEXT_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_VALID("00"),
+				TEXT_VALID_CHANGED("0.0", "00"),
+				/*
+				 * multiple consecutive periods
+				 */
+				TEXT_INVALID("0..0"),
+				/*
+				 * trailing period
+				 */
+				TEXT_INVALID("00."),
+				/*
+				 * leading period
+				 */
+				TEXT_INVALID(".00"),
+				/*
+				 * Not full octets.
+				 */
+				TEXT_INVALID("000"),
+				/*
+				 * E.164
+				 */
+				TEXT_VALID("+61200000000"),
+				/*
+				 * E.164 with periods
+				 */
+				TEXT_VALID_CHANGED("+61.2.0000.0000", "+6120000"
+								      "0000"),
+				/*
+				 * E.164 with period at end
+				 */
+				TEXT_INVALID("+61200000000."),
+				/*
+				 * E.164 with multiple consecutive periods
+				 */
+				TEXT_INVALID("+612..00000000"),
+				/*
+				 * E.164 with period before the leading digit.
+				 */
+				TEXT_INVALID("+.61200000000"),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL() };
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Too short.
 		 */
-		WIRE_INVALID(0x00),
-		WIRE_INVALID(0x01),
+		WIRE_INVALID(0x00), WIRE_INVALID(0x01),
 		/*
 		 * all digits
 		 */
@@ -771,33 +884,29 @@ atma(void **state) {
 static void
 amtrelay(void **state) {
 	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),
-		TEXT_INVALID("0"),
-		TEXT_INVALID("0 0"),
-		/* gatway type 0 */
-		TEXT_VALID("0 0 0"),
-		TEXT_VALID("0 1 0"),
-		TEXT_INVALID("0 2 0"),		/* discovery out of range */
-		TEXT_VALID("255 1 0"),		/* max precendence */
-		TEXT_INVALID("256 1 0"),	/* precedence out of range */
+		TEXT_INVALID(""), TEXT_INVALID("0"), TEXT_INVALID("0 0"),
+		/* gateway type 0 */
+		TEXT_VALID("0 0 0"), TEXT_VALID("0 1 0"),
+		TEXT_INVALID("0 2 0"),	 /* discovery out of range */
+		TEXT_VALID("255 1 0"),	 /* max precedence */
+		TEXT_INVALID("256 1 0"), /* precedence out of range */
 
 		/* IPv4 gateway */
-		TEXT_INVALID("0 0 1"),		/* no addresss */
+		TEXT_INVALID("0 0 1"), /* no address */
 		TEXT_VALID("0 0 1 0.0.0.0"),
 		TEXT_INVALID("0 0 1 0.0.0.0 x"), /* extra */
-		TEXT_INVALID("0 0 1 0.0.0.0.0"), /* bad addresss */
-		TEXT_INVALID("0 0 1 ::"),	/* bad addresss */
-		TEXT_INVALID("0 0 1 ."),	/* bad addresss */
+		TEXT_INVALID("0 0 1 0.0.0.0.0"), /* bad address */
+		TEXT_INVALID("0 0 1 ::"),	 /* bad address */
+		TEXT_INVALID("0 0 1 ."),	 /* bad address */
 
 		/* IPv6 gateway */
-		TEXT_INVALID("0 0 2"),		/* no addresss */
-		TEXT_VALID("0 0 2 ::"),
-		TEXT_INVALID("0 0 2 :: xx"),	/* extra */
-		TEXT_INVALID("0 0 2 0.0.0.0"),	/* bad addresss */
-		TEXT_INVALID("0 0 2 ."),	/* bad addresss */
+		TEXT_INVALID("0 0 2"), /* no address */
+		TEXT_VALID("0 0 2 ::"), TEXT_INVALID("0 0 2 :: xx"), /* extra */
+		TEXT_INVALID("0 0 2 0.0.0.0"), /* bad address */
+		TEXT_INVALID("0 0 2 ."),       /* bad address */
 
 		/* hostname gateway */
-		TEXT_INVALID("0 0 3"),		/* no name */
+		TEXT_INVALID("0 0 3"), /* no name */
 		/* IPv4 is a valid name */
 		TEXT_VALID_CHANGED("0 0 3 0.0.0.0", "0 0 3 0.0.0.0."),
 		/* IPv6 is a valid name */
@@ -807,12 +916,9 @@ amtrelay(void **state) {
 		TEXT_INVALID("0 0 3 example. x"), /* extra */
 
 		/* unknown gateway */
-		TEXT_VALID("\\# 2 0004"),
-		TEXT_VALID("\\# 2 0084"),
-		TEXT_VALID("\\# 2 007F"),
-		TEXT_VALID("\\# 3 000400"),
-		TEXT_VALID("\\# 3 008400"),
-		TEXT_VALID("\\# 3 00FF00"),
+		TEXT_VALID("\\# 2 0004"), TEXT_VALID("\\# 2 0084"),
+		TEXT_VALID("\\# 2 007F"), TEXT_VALID("\\# 3 000400"),
+		TEXT_VALID("\\# 3 008400"), TEXT_VALID("\\# 3 00FF00"),
 
 		/*
 		 * Sentinel.
@@ -820,34 +926,28 @@ amtrelay(void **state) {
 		TEXT_SENTINEL()
 	};
 	wire_ok_t wire_ok[] = {
-		WIRE_INVALID(0x00),
-		WIRE_VALID(0x00, 0x00),
-		WIRE_VALID(0x00, 0x80),
-		WIRE_INVALID(0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00), WIRE_VALID(0x00, 0x00),
+		WIRE_VALID(0x00, 0x80), WIRE_INVALID(0x00, 0x00, 0x00),
 		WIRE_INVALID(0x00, 0x80, 0x00),
 
-		WIRE_INVALID(0x00, 0x01),
-		WIRE_INVALID(0x00, 0x01, 0x00),
+		WIRE_INVALID(0x00, 0x01), WIRE_INVALID(0x00, 0x01, 0x00),
 		WIRE_INVALID(0x00, 0x01, 0x00, 0x00),
 		WIRE_INVALID(0x00, 0x01, 0x00, 0x00, 0x00),
 		WIRE_VALID(0x00, 0x01, 0x00, 0x00, 0x00, 0x00),
 		WIRE_INVALID(0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00),
 
-		WIRE_INVALID(0x00, 0x02),
-		WIRE_INVALID(0x00, 0x02, 0x00),
-		WIRE_VALID(0x00, 0x02, 0x00, 0x01, 0x02, 0x03, 0x04,
-			   0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11,
-			   0x12, 0x13, 0x14, 0x15),
-		WIRE_INVALID(0x00, 0x02, 0x00, 0x01, 0x02, 0x03, 0x04,
-			     0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11,
-			     0x12, 0x13, 0x14, 0x15, 0x16),
+		WIRE_INVALID(0x00, 0x02), WIRE_INVALID(0x00, 0x02, 0x00),
+		WIRE_VALID(0x00, 0x02, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+			   0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14,
+			   0x15),
+		WIRE_INVALID(0x00, 0x02, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+			     0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13,
+			     0x14, 0x15, 0x16),
 
-		WIRE_INVALID(0x00, 0x03),
-		WIRE_VALID(0x00, 0x03, 0x00),
-		WIRE_INVALID(0x00, 0x03, 0x00, 0x00),	/* extra */
+		WIRE_INVALID(0x00, 0x03), WIRE_VALID(0x00, 0x03, 0x00),
+		WIRE_INVALID(0x00, 0x03, 0x00, 0x00), /* extra */
 
-		WIRE_VALID(0x00, 0x04),
-		WIRE_VALID(0x00, 0x04, 0x00),
+		WIRE_VALID(0x00, 0x04), WIRE_VALID(0x00, 0x04, 0x00),
 		/*
 		 * Sentinel.
 		 */
@@ -931,18 +1031,16 @@ cdnskey(void **state) {
  */
 static void
 csync(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),
-		TEXT_INVALID("0"),
-		TEXT_VALID("0 0"),
-		TEXT_VALID("0 0 A"),
-		TEXT_VALID("0 0 NS"),
-		TEXT_VALID("0 0 AAAA"),
-		TEXT_VALID("0 0 A AAAA"),
-		TEXT_VALID("0 0 A NS AAAA"),
-		TEXT_INVALID("0 0 A NS AAAA BOGUS"),
-		TEXT_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_INVALID(""),
+				TEXT_INVALID("0"),
+				TEXT_VALID("0 0"),
+				TEXT_VALID("0 0 A"),
+				TEXT_VALID("0 0 NS"),
+				TEXT_VALID("0 0 AAAA"),
+				TEXT_VALID("0 0 A AAAA"),
+				TEXT_VALID("0 0 A NS AAAA"),
+				TEXT_INVALID("0 0 A NS AAAA BOGUS"),
+				TEXT_SENTINEL() };
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Short.
@@ -1068,13 +1166,16 @@ doa(void **state) {
 		/*
 		 * Valid, non-empty DOA-DATA with whitespace in between.
 		 */
-		TEXT_VALID_CHANGED("0 0 1 \"text/plain\" Zm 9v",
-				   "0 0 1 \"text/plain\" Zm9v"),
+		TEXT_VALID_CHANGED("0 0 1 \"text/plain\" Zm 9v", "0 0 1 "
+								 "\"text/"
+								 "plain\" "
+								 "Zm9v"),
 		/*
 		 * Valid, unquoted DOA-MEDIA-TYPE, non-empty DOA-DATA.
 		 */
-		TEXT_VALID_CHANGED("0 0 1 text/plain Zm9v",
-				   "0 0 1 \"text/plain\" Zm9v"),
+		TEXT_VALID_CHANGED("0 0 1 text/plain Zm9v", "0 0 1 "
+							    "\"text/plain\" "
+							    "Zm9v"),
 		/*
 		 * Invalid, quoted non-empty DOA-DATA.
 		 */
@@ -1140,8 +1241,8 @@ doa(void **state) {
 		/*
 		 * Valid, empty DOA-MEDIA-TYPE, empty DOA-DATA.
 		 */
-		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
-			   0x01, 0x00),
+		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x01,
+			   0x00),
 		/*
 		 * Invalid, missing DOA-MEDIA-TYPE.
 		 */
@@ -1155,52 +1256,48 @@ doa(void **state) {
 		/*
 		 * Valid, empty DOA-DATA.
 		 */
-		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
-			   0x01, 0x03, 0x66, 0x6f, 0x6f),
+		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x01,
+			   0x03, 0x66, 0x6f, 0x6f),
 		/*
 		 * Valid, non-empty DOA-DATA.
 		 */
-		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
-			   0x01, 0x03, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72),
+		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x01,
+			   0x03, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72),
 		/*
 		 * Valid, DOA-DATA over 255 octets.
 		 */
-		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78,
-			   0x01, 0x06, 0x62, 0x69, 0x6e, 0x61, 0x72, 0x79,
-			   0x00, 0x66, 0x99, 0xff, 0xff, 0xff, 0x33, 0x99,
-			   0xcc, 0xcc, 0xff, 0xff, 0x99, 0xcc, 0xff, 0x33,
-			   0x66, 0x99, 0x66, 0xcc, 0xff, 0x99, 0xcc, 0xcc,
-			   0xcc, 0xcc, 0xcc, 0x00, 0x99, 0xff, 0xff, 0xff,
-			   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-			   0xff, 0xff, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04,
-			   0x01, 0x0a, 0x00, 0x0f, 0x00, 0x2c, 0x00, 0x00,
-			   0x00, 0x00, 0x28, 0x00, 0x19, 0x00, 0x00, 0x04,
-			   0xc7, 0xf0, 0x81, 0x49, 0x2b, 0x95, 0x36, 0x6b,
-			   0x8d, 0xf7, 0xec, 0x5e, 0x68, 0x81, 0x19, 0x29,
-			   0x9e, 0x80, 0x89, 0xae, 0x5c, 0xbb, 0x3e, 0xb0,
-			   0x8a, 0xca, 0x1f, 0x1c, 0xdc, 0x78, 0x00, 0x87,
-			   0x34, 0xf7, 0xe4, 0xc0, 0xdb, 0x6e, 0xd3, 0xbb,
-			   0xfc, 0x82, 0x48, 0x1d, 0xb1, 0xa2, 0x3a, 0x26,
-			   0x93, 0xc5, 0x54, 0xe9, 0x49, 0x55, 0x96, 0x2e,
-			   0xa3, 0x6a, 0xd5, 0x45, 0x72, 0x6a, 0x93, 0x52,
-			   0xd7, 0x07, 0x77, 0x38, 0x0c, 0x6e, 0x83, 0x42,
-			   0xe1, 0x9c, 0x2b, 0x9b, 0x71, 0x58, 0x6c, 0xc7,
-			   0x2b, 0x10, 0x9c, 0xeb, 0x78, 0x01, 0x3a, 0x6f,
-			   0xbf, 0x31, 0xe5, 0x17, 0x39, 0x75, 0x03, 0x03,
-			   0x83, 0x85, 0x67, 0x85, 0x02, 0x04, 0x69, 0x7a,
-			   0x7e, 0x7f, 0x52, 0x18, 0x5e, 0x01, 0x83, 0x05,
-			   0x75, 0x40, 0x78, 0x48, 0x57, 0x29, 0x18, 0x41,
-			   0x86, 0x75, 0x07, 0x82, 0x02, 0xa0, 0x41, 0x2d,
-			   0x3b, 0x92, 0x93, 0x7d, 0x04, 0x79, 0x77, 0x7d,
-			   0xa4, 0x4b, 0x00, 0x6c, 0xa1, 0xb1, 0x8c, 0x7a,
-			   0x83, 0x48, 0x4d, 0x12, 0xa7, 0xa8, 0xb1, 0x37,
-			   0x83, 0x75, 0x04, 0x99, 0x9b, 0x73, 0xb9, 0x48,
-			   0x86, 0x6b, 0x01, 0x89, 0xc8, 0x75, 0x6b, 0x03,
-			   0xc0, 0x8e, 0x46, 0x35, 0x49, 0x94, 0x7c, 0x6c,
-			   0x95, 0xab, 0xcf, 0x7f, 0x36, 0x48, 0x6a, 0x88,
-			   0x05, 0x04, 0x05, 0x41, 0xde, 0x08, 0xb1, 0x44,
-			   0xda, 0x5f, 0xe7, 0x1e, 0xba, 0xe7, 0x4f, 0x11,
-			   0x00, 0x3b),
+		WIRE_VALID(0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x01,
+			   0x06, 0x62, 0x69, 0x6e, 0x61, 0x72, 0x79, 0x00, 0x66,
+			   0x99, 0xff, 0xff, 0xff, 0x33, 0x99, 0xcc, 0xcc, 0xff,
+			   0xff, 0x99, 0xcc, 0xff, 0x33, 0x66, 0x99, 0x66, 0xcc,
+			   0xff, 0x99, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x00, 0x99,
+			   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x21, 0xf9,
+			   0x04, 0x01, 0x0a, 0x00, 0x0f, 0x00, 0x2c, 0x00, 0x00,
+			   0x00, 0x00, 0x28, 0x00, 0x19, 0x00, 0x00, 0x04, 0xc7,
+			   0xf0, 0x81, 0x49, 0x2b, 0x95, 0x36, 0x6b, 0x8d, 0xf7,
+			   0xec, 0x5e, 0x68, 0x81, 0x19, 0x29, 0x9e, 0x80, 0x89,
+			   0xae, 0x5c, 0xbb, 0x3e, 0xb0, 0x8a, 0xca, 0x1f, 0x1c,
+			   0xdc, 0x78, 0x00, 0x87, 0x34, 0xf7, 0xe4, 0xc0, 0xdb,
+			   0x6e, 0xd3, 0xbb, 0xfc, 0x82, 0x48, 0x1d, 0xb1, 0xa2,
+			   0x3a, 0x26, 0x93, 0xc5, 0x54, 0xe9, 0x49, 0x55, 0x96,
+			   0x2e, 0xa3, 0x6a, 0xd5, 0x45, 0x72, 0x6a, 0x93, 0x52,
+			   0xd7, 0x07, 0x77, 0x38, 0x0c, 0x6e, 0x83, 0x42, 0xe1,
+			   0x9c, 0x2b, 0x9b, 0x71, 0x58, 0x6c, 0xc7, 0x2b, 0x10,
+			   0x9c, 0xeb, 0x78, 0x01, 0x3a, 0x6f, 0xbf, 0x31, 0xe5,
+			   0x17, 0x39, 0x75, 0x03, 0x03, 0x83, 0x85, 0x67, 0x85,
+			   0x02, 0x04, 0x69, 0x7a, 0x7e, 0x7f, 0x52, 0x18, 0x5e,
+			   0x01, 0x83, 0x05, 0x75, 0x40, 0x78, 0x48, 0x57, 0x29,
+			   0x18, 0x41, 0x86, 0x75, 0x07, 0x82, 0x02, 0xa0, 0x41,
+			   0x2d, 0x3b, 0x92, 0x93, 0x7d, 0x04, 0x79, 0x77, 0x7d,
+			   0xa4, 0x4b, 0x00, 0x6c, 0xa1, 0xb1, 0x8c, 0x7a, 0x83,
+			   0x48, 0x4d, 0x12, 0xa7, 0xa8, 0xb1, 0x37, 0x83, 0x75,
+			   0x04, 0x99, 0x9b, 0x73, 0xb9, 0x48, 0x86, 0x6b, 0x01,
+			   0x89, 0xc8, 0x75, 0x6b, 0x03, 0xc0, 0x8e, 0x46, 0x35,
+			   0x49, 0x94, 0x7c, 0x6c, 0x95, 0xab, 0xcf, 0x7f, 0x36,
+			   0x48, 0x6a, 0x88, 0x05, 0x04, 0x05, 0x41, 0xde, 0x08,
+			   0xb1, 0x44, 0xda, 0x5f, 0xe7, 0x1e, 0xba, 0xe7, 0x4f,
+			   0x11, 0x00, 0x3b),
 		/*
 		 * Sentinel.
 		 */
@@ -1321,11 +1418,12 @@ ds(void **state) {
 		/*
 		 * Valid, 32-octet SHA-256 digest.
 		 */
-		TEXT_VALID_CHANGED(
-			   "0 0 2 D001BD422FFDA9B745425B71DC17D007E691869B"
-			   "D59C5F237D9BF85434C3133F",
-			   "0 0 2 D001BD422FFDA9B745425B71DC17D007E691869B"
-			   "D59C5F237D9BF854 34C3133F"),
+		TEXT_VALID_CHANGED("0 0 2 "
+				   "D001BD422FFDA9B745425B71DC17D007E691869B"
+				   "D59C5F237D9BF85434C3133F",
+				   "0 0 2 "
+				   "D001BD422FFDA9B745425B71DC17D007E691869B"
+				   "D59C5F237D9BF854 34C3133F"),
 		/*
 		 * Invalid, excessively long SHA-256 digest.
 		 */
@@ -1345,13 +1443,16 @@ ds(void **state) {
 		/*
 		 * Valid, 48-octet SHA-384 digest.
 		 */
-		TEXT_VALID_CHANGED(
-			   "0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
-			   "12128D238BEBB4814B648F5A841E15CAA2DE348891A37A"
-			   "699F65E54D",
-			   "0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
-			   "12128D238BEBB481 4B648F5A841E15CAA2DE348891A37A"
-			   "699F65E54D"),
+		TEXT_VALID_CHANGED("0 0 4 "
+				   "AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
+				   "12128D238BEBB4814B648F5A841E15CAA2DE348891A"
+				   "37A"
+				   "699F65E54D",
+				   "0 0 4 "
+				   "AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
+				   "12128D238BEBB481 "
+				   "4B648F5A841E15CAA2DE348891A37A"
+				   "699F65E54D"),
 		/*
 		 * Invalid, excessively long SHA-384 digest.
 		 */
@@ -1398,9 +1499,9 @@ ds(void **state) {
 		/*
 		 * Valid, 20-octet SHA-1 digest.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x01, 0x4F, 0xDC, 0xE8, 0x30,
-			   0x16, 0xED, 0xD2, 0x90, 0x77, 0x62, 0x1F, 0xE5,
-			   0x68, 0xF8, 0xDA, 0xDD, 0xB5, 0x80, 0x9B, 0x6A),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x01, 0x4F, 0xDC, 0xE8, 0x30, 0x16,
+			   0xED, 0xD2, 0x90, 0x77, 0x62, 0x1F, 0xE5, 0x68, 0xF8,
+			   0xDA, 0xDD, 0xB5, 0x80, 0x9B, 0x6A),
 		/*
 		 * Invalid, excessively long SHA-1 digest.
 		 */
@@ -1420,11 +1521,11 @@ ds(void **state) {
 		/*
 		 * Valid, 32-octet SHA-256 digest.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x02, 0xD0, 0x01, 0xBD, 0x42,
-			   0x2F, 0xFD, 0xA9, 0xB7, 0x45, 0x42, 0x5B, 0x71,
-			   0xDC, 0x17, 0xD0, 0x07, 0xE6, 0x91, 0x86, 0x9B,
-			   0xD5, 0x9C, 0x5F, 0x23, 0x7D, 0x9B, 0xF8, 0x54,
-			   0x34, 0xC3, 0x13, 0x3F),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x02, 0xD0, 0x01, 0xBD, 0x42, 0x2F,
+			   0xFD, 0xA9, 0xB7, 0x45, 0x42, 0x5B, 0x71, 0xDC, 0x17,
+			   0xD0, 0x07, 0xE6, 0x91, 0x86, 0x9B, 0xD5, 0x9C, 0x5F,
+			   0x23, 0x7D, 0x9B, 0xF8, 0x54, 0x34, 0xC3, 0x13,
+			   0x3F),
 		/*
 		 * Invalid, excessively long SHA-256 digest.
 		 */
@@ -1451,13 +1552,12 @@ ds(void **state) {
 		/*
 		 * Valid, 48-octet SHA-384 digest.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x04, 0xAC, 0x74, 0x8D, 0x6C,
-			   0x5A, 0xA6, 0x52, 0x90, 0x4A, 0x87, 0x63, 0xD6,
-			   0x4B, 0x7D, 0xFF, 0xFF, 0xA9, 0x81, 0x52, 0xBE,
-			   0x12, 0x12, 0x8D, 0x23, 0x8B, 0xEB, 0xB4, 0x81,
-			   0x4B, 0x64, 0x8F, 0x5A, 0x84, 0x1E, 0x15, 0xCA,
-			   0xA2, 0xDE, 0x34, 0x88, 0x91, 0xA3, 0x7A, 0x69,
-			   0x9F, 0x65, 0xE5, 0x4D),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x04, 0xAC, 0x74, 0x8D, 0x6C, 0x5A,
+			   0xA6, 0x52, 0x90, 0x4A, 0x87, 0x63, 0xD6, 0x4B, 0x7D,
+			   0xFF, 0xFF, 0xA9, 0x81, 0x52, 0xBE, 0x12, 0x12, 0x8D,
+			   0x23, 0x8B, 0xEB, 0xB4, 0x81, 0x4B, 0x64, 0x8F, 0x5A,
+			   0x84, 0x1E, 0x15, 0xCA, 0xA2, 0xDE, 0x34, 0x88, 0x91,
+			   0xA3, 0x7A, 0x69, 0x9F, 0x65, 0xE5, 0x4D),
 		/*
 		 * Invalid, excessively long SHA-384 digest.
 		 */
@@ -1551,86 +1651,65 @@ edns_client_subnet(void **state) {
 		/*
 		 * Option code family 0, source 0, scope 0.
 		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x04,
-			   0x00, 0x00, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00),
 		/*
 		 * Option code family 1 (IPv4), source 0, scope 0.
 		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x04,
-			   0x00, 0x01, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00),
 		/*
 		 * Option code family 2 (IPv6) , source 0, scope 0.
 		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x04,
-			   0x00, 0x02, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x08, 0x00, 0x04, 0x00, 0x02, 0x00, 0x00),
 		/*
 		 * Extra octet.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00, 0x05,
-			     0x00, 0x00, 0x00, 0x00,
+		WIRE_INVALID(0x00, 0x08, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00,
 			     0x00),
 		/*
 		 * Source too long for IPv4.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,    8,
-			     0x00, 0x01,   33, 0x00,
-			     0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 8, 0x00, 0x01, 33, 0x00, 0x00,
+			     0x00, 0x00, 0x00),
 		/*
 		 * Source too long for IPv6.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,   20,
-			     0x00, 0x02,  129, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 20, 0x00, 0x02, 129, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
 		/*
 		 * Scope too long for IPv4.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,    8,
-			     0x00, 0x01, 0x00,   33,
-			     0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 8, 0x00, 0x01, 0x00, 33, 0x00,
+			     0x00, 0x00, 0x00),
 		/*
 		 * Scope too long for IPv6.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,   20,
-			     0x00, 0x02, 0x00,  129,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 20, 0x00, 0x02, 0x00, 129, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
 		/*
 		 * When family=0, source and scope should be 0.
 		 */
-		WIRE_VALID(0x00, 0x08, 0x00,    4,
-			   0x00, 0x00, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x08, 0x00, 4, 0x00, 0x00, 0x00, 0x00),
 		/*
 		 * When family=0, source and scope should be 0.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,    5,
-			     0x00, 0x00, 0x01, 0x00,
-			     0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 5, 0x00, 0x00, 0x01, 0x00, 0x00),
 		/*
 		 * When family=0, source and scope should be 0.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,    5,
-			     0x00, 0x00, 0x00, 0x01,
-			     0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 5, 0x00, 0x00, 0x00, 0x01, 0x00),
 		/*
 		 * Length too short for source IPv4.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,    7,
-			     0x00, 0x01,   32, 0x00,
-			     0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 7, 0x00, 0x01, 32, 0x00, 0x00,
+			     0x00, 0x00),
 		/*
 		 * Length too short for source IPv6.
 		 */
-		WIRE_INVALID(0x00, 0x08, 0x00,   19,
-			     0x00, 0x02,  128, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00, 0x00,
-			     0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x08, 0x00, 19, 0x00, 0x02, 128, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
 		/*
 		 * Sentinel.
 		 */
@@ -1654,23 +1733,18 @@ edns_client_subnet(void **state) {
  */
 static void
 eid(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_VALID("AABBCC"),
-		TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
-		TEXT_INVALID("aab"),
-		/*
-		 * Sentinel.
-		 */
-		TEXT_SENTINEL()
-	};
-	wire_ok_t wire_ok[] = {
-		WIRE_VALID(0x00),
-		WIRE_VALID(0xAA, 0xBB, 0xCC),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_VALID("AABBCC"),
+				TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
+				TEXT_INVALID("aab"),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL() };
+	wire_ok_t wire_ok[] = { WIRE_VALID(0x00), WIRE_VALID(0xAA, 0xBB, 0xCC),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL() };
 
 	UNUSED(state);
 
@@ -1683,10 +1757,10 @@ eid(void **state) {
  */
 static void
 hip(void **state) {
-	unsigned char hipwire[DNS_RDATA_MAXLENGTH] = {
-				    0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
-				    0x04, 0x41, 0x42, 0x43, 0x44, 0x00 };
-	unsigned char buf[1024*1024];
+	unsigned char hipwire[DNS_RDATA_MAXLENGTH] = { 0x01, 0x00, 0x00, 0x01,
+						       0x00, 0x00, 0x04, 0x41,
+						       0x42, 0x43, 0x44, 0x00 };
+	unsigned char buf[1024 * 1024];
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_result_t result;
 	size_t i;
@@ -1698,7 +1772,7 @@ hip(void **state) {
 	 */
 	for (i = 12; i < sizeof(hipwire) - 2; i += 2) {
 		hipwire[i] = 0xc0;
-		hipwire[i+1] = 0x06;
+		hipwire[i + 1] = 0x06;
 	}
 
 	result = wire_to_rdata(hipwire, sizeof(hipwire), dns_rdataclass_in,
@@ -1769,27 +1843,26 @@ hip(void **state) {
  */
 static void
 isdn(void **state) {
-	wire_ok_t wire_ok[] = {
-		/*
-		 * "".
-		 */
-		WIRE_VALID(0x00),
-		/*
-		 * "\001".
-		 */
-		WIRE_VALID(0x01, 0x01),
-		/*
-		 * "\001" "".
-		 */
-		WIRE_VALID(0x01, 0x01, 0x00),
-		/*
-		 * "\001" "\001".
-		 */
-		WIRE_VALID(0x01, 0x01, 0x01, 0x01),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /*
+				 * "".
+				 */
+				WIRE_VALID(0x00),
+				/*
+				 * "\001".
+				 */
+				WIRE_VALID(0x01, 0x01),
+				/*
+				 * "\001" "".
+				 */
+				WIRE_VALID(0x01, 0x01, 0x00),
+				/*
+				 * "\001" "\001".
+				 */
+				WIRE_VALID(0x01, 0x01, 0x01, 0x01),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -1803,28 +1876,28 @@ isdn(void **state) {
  */
 static void
 key(void **state) {
-	wire_ok_t wire_ok[] = {
-		/*
-		 * RDATA is comprised of:
-		 *
-		 *   - 2 octets for Flags,
-		 *   - 1 octet for Protocol,
-		 *   - 1 octet for Algorithm,
-		 *   - variable number of octets for Public Key.
-		 *
-		 * RFC 2535 section 3.1.2 states that if bits 0-1 of Flags are
-		 * both set, the RR stops after the algorithm octet and thus
-		 * its length must be 4 octets.  In any other case, though, the
-		 * Public Key part must not be empty.
-		 */
-		WIRE_INVALID(0x00),
-		WIRE_INVALID(0x00, 0x00),
-		WIRE_INVALID(0x00, 0x00, 0x00),
-		WIRE_VALID(0xc0, 0x00, 0x00, 0x00),
-		WIRE_INVALID(0xc0, 0x00, 0x00, 0x00, 0x00),
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /*
+				 * RDATA is comprised of:
+				 *
+				 *   - 2 octets for Flags,
+				 *   - 1 octet for Protocol,
+				 *   - 1 octet for Algorithm,
+				 *   - variable number of octets for Public Key.
+				 *
+				 * RFC 2535 section 3.1.2 states that if bits
+				 * 0-1 of Flags are both set, the RR stops after
+				 * the algorithm octet and thus its length must
+				 * be 4 octets.  In any other case, though, the
+				 * Public Key part must not be empty.
+				 */
+				WIRE_INVALID(0x00),
+				WIRE_INVALID(0x00, 0x00),
+				WIRE_INVALID(0x00, 0x00, 0x00),
+				WIRE_VALID(0xc0, 0x00, 0x00, 0x00),
+				WIRE_INVALID(0xc0, 0x00, 0x00, 0x00, 0x00),
+				WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+				WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+				WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -1844,23 +1917,18 @@ key(void **state) {
  */
 static void
 nimloc(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_VALID("AABBCC"),
-		TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
-		TEXT_INVALID("aab"),
-		/*
-		 * Sentinel.
-		 */
-		TEXT_SENTINEL()
-	};
-	wire_ok_t wire_ok[] = {
-		WIRE_VALID(0x00),
-		WIRE_VALID(0xAA, 0xBB, 0xCC),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_VALID("AABBCC"),
+				TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
+				TEXT_INVALID("aab"),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL() };
+	wire_ok_t wire_ok[] = { WIRE_VALID(0x00), WIRE_VALID(0xAA, 0xBB, 0xCC),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL() };
 
 	UNUSED(state);
 
@@ -1936,19 +2004,12 @@ nimloc(void **state) {
  */
 static void
 nsec(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),
-		TEXT_INVALID("."),
-		TEXT_VALID(". RRSIG"),
-		TEXT_SENTINEL()
-	};
-	wire_ok_t wire_ok[] = {
-		WIRE_INVALID(0x00),
-		WIRE_INVALID(0x00, 0x00),
-		WIRE_INVALID(0x00, 0x00, 0x00),
-		WIRE_VALID(0x00, 0x00, 0x01, 0x02),
-		WIRE_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_INVALID(""), TEXT_INVALID("."),
+				TEXT_VALID(". RRSIG"), TEXT_SENTINEL() };
+	wire_ok_t wire_ok[] = { WIRE_INVALID(0x00), WIRE_INVALID(0x00, 0x00),
+				WIRE_INVALID(0x00, 0x00, 0x00),
+				WIRE_VALID(0x00, 0x00, 0x01, 0x02),
+				WIRE_SENTINEL() };
 
 	UNUSED(state);
 
@@ -1963,18 +2024,24 @@ nsec(void **state) {
  */
 static void
 nsec3(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),
-		TEXT_INVALID("."),
-		TEXT_INVALID(". RRSIG"),
-		TEXT_INVALID("1 0 10 76931F"),
-		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG&UED541AS"),
-		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONGAUED541AS A RRSIG BADTYPE"),
-		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM A RRSIG"),
-		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
-		TEXT_VALID("1 0 10 - AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
-		TEXT_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_INVALID(""),
+				TEXT_INVALID("."),
+				TEXT_INVALID(". RRSIG"),
+				TEXT_INVALID("1 0 10 76931F"),
+				TEXT_INVALID("1 0 10 76931F "
+					     "IMQ912BREQP1POLAH3RMONG&"
+					     "UED541AS"),
+				TEXT_INVALID("1 0 10 76931F "
+					     "IMQ912BREQP1POLAH3RMONGAUED541AS "
+					     "A RRSIG BADTYPE"),
+				TEXT_VALID("1 0 10 76931F "
+					   "AJHVGTICN6K0VDA53GCHFMT219SRRQLM A "
+					   "RRSIG"),
+				TEXT_VALID("1 0 10 76931F "
+					   "AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
+				TEXT_VALID("1 0 10 - "
+					   "AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
+				TEXT_SENTINEL() };
 
 	UNUSED(state);
 
@@ -2000,8 +2067,7 @@ nxt(void **state) {
 		/* bit map differs */
 		COMPARE("b. A SIG", "b. A AAAA SIG", -1),
 		/* order of bit map does not matter */
-		COMPARE("b. A SIG AAAA", "b. A AAAA SIG", 0),
-		COMPARE_SENTINEL()
+		COMPARE("b. A SIG AAAA", "b. A AAAA SIG", 0), COMPARE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -2012,35 +2078,33 @@ nxt(void **state) {
 
 static void
 rkey(void **state) {
-	text_ok_t text_ok[] = {
-		/*
-		 * Valid, flags set to 0 and a key is present.
-		 */
-		TEXT_VALID("0 0 0 aaaa"),
-		/*
-		 * Invalid, non-zero flags.
-		 */
-		TEXT_INVALID("1 0 0 aaaa"),
-		TEXT_INVALID("65535 0 0 aaaa"),
-		/*
-		 * Sentinel.
-		 */
-		TEXT_SENTINEL()
+	text_ok_t text_ok[] = { /*
+				 * Valid, flags set to 0 and a key is present.
+				 */
+				TEXT_VALID("0 0 0 aaaa"),
+				/*
+				 * Invalid, non-zero flags.
+				 */
+				TEXT_INVALID("1 0 0 aaaa"),
+				TEXT_INVALID("65535 0 0 aaaa"),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL()
 	};
-	wire_ok_t wire_ok[] = {
-		/*
-		 * Valid, flags set to 0 and a key is present.
-		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
-		/*
-		 * Invalid, non-zero flags.
-		 */
-		WIRE_INVALID(0x00, 0x01, 0x00, 0x00, 0x00),
-		WIRE_INVALID(0xff, 0xff, 0x00, 0x00, 0x00),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /*
+				 * Valid, flags set to 0 and a key is present.
+				 */
+				WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+				/*
+				 * Invalid, non-zero flags.
+				 */
+				WIRE_INVALID(0x00, 0x01, 0x00, 0x00, 0x00),
+				WIRE_INVALID(0xff, 0xff, 0x00, 0x00, 0x00),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL()
 	};
 	key_required(state, dns_rdatatype_rkey, sizeof(dns_rdata_rkey_t));
 	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
@@ -2050,61 +2114,69 @@ rkey(void **state) {
 /* SSHFP RDATA manipulations */
 static void
 sshfp(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),	/* too short */
-		TEXT_INVALID("0"),	/* reserved, too short */
-		TEXT_VALID("0 0"),	/* no finger print */
-		TEXT_VALID("0 0 AA"),	/* reserved */
-		TEXT_INVALID("0 1 AA"), /* too short SHA 1 digest */
-		TEXT_INVALID("0 2 AA"), /* too short SHA 256 digest */
-		TEXT_VALID("0 3 AA"),	/* unknown finger print type */
-		/* good length SHA 1 digest */
-		TEXT_VALID("1 1 00112233445566778899AABBCCDDEEFF17181920"),
-		/* good length SHA 256 digest */
-		TEXT_VALID("4 2 A87F1B687AC0E57D2A081A2F282672334D90ED316D2B818CA9580EA3 84D92401"),
-		/*
-		 * totext splits the fingerprint into chunks and
-		 * emits uppercase hex.
-		 */
-		TEXT_VALID_CHANGED("1 2 00112233445566778899aabbccddeeff "
-				   "00112233445566778899AABBCCDDEEFF",
-				   "1 2 00112233445566778899AABBCCDDEEFF"
-				   "00112233445566778899AABB CCDDEEFF"),
-		TEXT_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_INVALID(""),     /* too short */
+				TEXT_INVALID("0"),    /* reserved, too short */
+				TEXT_VALID("0 0"),    /* no finger print */
+				TEXT_VALID("0 0 AA"), /* reserved */
+				TEXT_INVALID("0 1 AA"), /* too short SHA 1
+							 * digest */
+				TEXT_INVALID("0 2 AA"), /* too short SHA 256
+							 * digest */
+				TEXT_VALID("0 3 AA"),	/* unknown finger print
+							 * type */
+				/* good length SHA 1 digest */
+				TEXT_VALID("1 1 "
+					   "00112233445566778899AABBCCDDEEFF171"
+					   "81920"),
+				/* good length SHA 256 digest */
+				TEXT_VALID("4 2 "
+					   "A87F1B687AC0E57D2A081A2F282672334D9"
+					   "0ED316D2B818CA9580EA3 84D92401"),
+				/*
+				 * totext splits the fingerprint into chunks and
+				 * emits uppercase hex.
+				 */
+				TEXT_VALID_CHANGED("1 2 "
+						   "00112233445566778899aabbccd"
+						   "deeff "
+						   "00112233445566778899AABBCCD"
+						   "DEEFF",
+						   "1 2 "
+						   "00112233445566778899AABBCCD"
+						   "DEEFF"
+						   "00112233445566778899AABB "
+						   "CCDDEEFF"),
+				TEXT_SENTINEL() };
 	wire_ok_t wire_ok[] = {
-		WIRE_INVALID(0x00),		/* reserved too short */
-		WIRE_VALID(0x00, 0x00),		/* reserved no finger print */
-		WIRE_VALID(0x00, 0x00, 0x00),	/* reserved */
+		WIRE_INVALID(0x00),	      /* reserved too short */
+		WIRE_VALID(0x00, 0x00),	      /* reserved no finger print */
+		WIRE_VALID(0x00, 0x00, 0x00), /* reserved */
 
 		/* too short SHA 1 digests */
-		WIRE_INVALID(0x00, 0x01),
-		WIRE_INVALID(0x00, 0x01, 0x00),
+		WIRE_INVALID(0x00, 0x01), WIRE_INVALID(0x00, 0x01, 0x00),
 		WIRE_INVALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
 			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
 			     0xEE, 0xFF, 0x17, 0x18, 0x19),
 		/* good length SHA 1 digest */
-		WIRE_VALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
-			   0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
-			   0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20),
+		WIRE_VALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+			   0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+			   0x17, 0x18, 0x19, 0x20),
 		/* too long SHA 1 digest */
 		WIRE_INVALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
 			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
 			     0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21),
 		/* too short SHA 256 digests */
-		WIRE_INVALID(0x00, 0x02),
-		WIRE_INVALID(0x00, 0x02, 0x00),
+		WIRE_INVALID(0x00, 0x02), WIRE_INVALID(0x00, 0x02, 0x00),
 		WIRE_INVALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
 			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
 			     0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22,
 			     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
 			     0x31),
 		/* good length SHA 256 digest */
-		WIRE_VALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
-			   0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
-			   0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22,
-			   0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
-			   0x31, 0x32),
+		WIRE_VALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+			   0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+			   0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
+			   0x26, 0x27, 0x28, 0x29, 0x30, 0x31, 0x32),
 		/* too long SHA 256 digest */
 		WIRE_INVALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
 			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
@@ -2112,8 +2184,9 @@ sshfp(void **state) {
 			     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
 			     0x31, 0x32, 0x33),
 		/* unknown digest, * no fingerprint */
-		WIRE_VALID(0x00, 0x03),
-		WIRE_VALID(0x00, 0x03, 0x00),	/* unknown digest */
+		WIRE_VALID(0x00, 0x03), WIRE_VALID(0x00, 0x03, 0x00), /* unknown
+								       * digest
+								       */
 		WIRE_SENTINEL()
 	};
 
@@ -2164,41 +2237,40 @@ sshfp(void **state) {
  */
 static void
 wks(void **state) {
-	text_ok_t text_ok[] = {
-		/*
-		 * Valid, IPv4 address in dotted-quad form.
-		 */
-		TEXT_VALID("127.0.0.1 6"),
-		/*
-		 * Invalid, IPv4 address not in dotted-quad form.
-		 */
-		TEXT_INVALID("127.1 6"),
-		/*
-		 * Sentinel.
-		 */
-		TEXT_SENTINEL()
+	text_ok_t text_ok[] = { /*
+				 * Valid, IPv4 address in dotted-quad form.
+				 */
+				TEXT_VALID("127.0.0.1 6"),
+				/*
+				 * Invalid, IPv4 address not in dotted-quad
+				 * form.
+				 */
+				TEXT_INVALID("127.1 6"),
+				/*
+				 * Sentinel.
+				 */
+				TEXT_SENTINEL()
 	};
-	wire_ok_t wire_ok[] = {
-		/*
-		 * Too short.
-		 */
-		WIRE_INVALID(0x00, 0x08, 0x00, 0x00),
-		/*
-		 * Minimal TCP.
-		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x00, 6),
-		/*
-		 * Minimal UDP.
-		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x00, 17),
-		/*
-		 * Minimal other.
-		 */
-		WIRE_VALID(0x00, 0x08, 0x00, 0x00, 1),
-		/*
-		 * Sentinel.
-		 */
-		WIRE_SENTINEL()
+	wire_ok_t wire_ok[] = { /*
+				 * Too short.
+				 */
+				WIRE_INVALID(0x00, 0x08, 0x00, 0x00),
+				/*
+				 * Minimal TCP.
+				 */
+				WIRE_VALID(0x00, 0x08, 0x00, 0x00, 6),
+				/*
+				 * Minimal UDP.
+				 */
+				WIRE_VALID(0x00, 0x08, 0x00, 0x00, 17),
+				/*
+				 * Minimal other.
+				 */
+				WIRE_VALID(0x00, 0x08, 0x00, 0x00, 1),
+				/*
+				 * Sentinel.
+				 */
+				WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -2252,24 +2324,23 @@ wks(void **state) {
 
 static void
 zonemd(void **state) {
-	text_ok_t text_ok[] = {
-		TEXT_INVALID(""),
-		TEXT_INVALID("0"),
-		TEXT_INVALID("0 0"),
-		TEXT_INVALID("0 0 0"),
-		TEXT_INVALID("99999999 0 0"),
-		TEXT_INVALID("2019020700 0 0"),
-		TEXT_INVALID("2019020700 1 0 DEADBEEF"),
-		TEXT_VALID("2019020700 2 0 DEADBEEF"),
-		TEXT_VALID("2019020700 255 0 DEADBEEF"),
-		TEXT_INVALID("2019020700 256 0 DEADBEEF"),
-		TEXT_VALID("2019020700 2 255 DEADBEEF"),
-		TEXT_INVALID("2019020700 2 256 DEADBEEF"),
-		TEXT_VALID("2019020700 1 0 7162D2BB75C047A53DE98767C9192BEB"
-					  "14DB01E7E2267135DAF0230A 19BA4A31"
-					  "6AF6BF64AA5C7BAE24B2992850300509"),
-		TEXT_SENTINEL()
-	};
+	text_ok_t text_ok[] = { TEXT_INVALID(""),
+				TEXT_INVALID("0"),
+				TEXT_INVALID("0 0"),
+				TEXT_INVALID("0 0 0"),
+				TEXT_INVALID("99999999 0 0"),
+				TEXT_INVALID("2019020700 0 0"),
+				TEXT_INVALID("2019020700 1 0 DEADBEEF"),
+				TEXT_VALID("2019020700 2 0 DEADBEEF"),
+				TEXT_VALID("2019020700 255 0 DEADBEEF"),
+				TEXT_INVALID("2019020700 256 0 DEADBEEF"),
+				TEXT_VALID("2019020700 2 255 DEADBEEF"),
+				TEXT_INVALID("2019020700 2 256 DEADBEEF"),
+				TEXT_VALID("2019020700 1 0 "
+					   "7162D2BB75C047A53DE98767C9192BEB"
+					   "14DB01E7E2267135DAF0230A 19BA4A31"
+					   "6AF6BF64AA5C7BAE24B2992850300509"),
+				TEXT_SENTINEL() };
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Short.
@@ -2307,40 +2378,33 @@ zonemd(void **state) {
 		/*
 		 * 48-octet digest, valid for SHA-384.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa,
+			   0xce),
 		/*
 		 * 56-octet digest, too long for SHA-384.
 		 */
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce),
 		/*
 		 * 56-octet digest, valid for an undefined digest type.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
-			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
 			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce),
 		/*
 		 * Sentinel.
@@ -2377,7 +2441,6 @@ atcname(void **state) {
 			assert_false(tf);
 			break;
 		}
-
 	}
 #undef UNR
 }
@@ -2403,7 +2466,6 @@ atparent(void **state) {
 			assert_false(tf);
 			break;
 		}
-
 	}
 #undef UNR
 }
@@ -2433,7 +2495,6 @@ iszonecutauth(void **state) {
 			assert_false(tf);
 			break;
 		}
-
 	}
 #undef UNR
 }
@@ -2450,8 +2511,8 @@ main(int argc, char **argv) {
 		cmocka_unit_test_setup_teardown(dnskey, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(ds, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(eid, _setup, _teardown),
-		cmocka_unit_test_setup_teardown(edns_client_subnet,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(edns_client_subnet, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(hip, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(isdn, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(key, _setup, _teardown),
@@ -2487,4 +2548,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

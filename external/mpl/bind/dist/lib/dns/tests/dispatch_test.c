@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch_test.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.6 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,14 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -31,6 +28,7 @@
 
 #include <isc/app.h>
 #include <isc/buffer.h>
+#include <isc/refcount.h>
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -73,19 +71,20 @@ make_dispatchset(unsigned int ndisps) {
 	unsigned int attrs;
 	dns_dispatch_t *disp = NULL;
 
-	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
-	if (result != ISC_R_SUCCESS)
+	result = dns_dispatchmgr_create(dt_mctx, &dispatchmgr);
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
 	isc_sockaddr_any(&any);
 	attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
-	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
-				     &any, 512, 6, 1024, 17, 19, attrs,
-				     attrs, &disp);
-	if (result != ISC_R_SUCCESS)
+	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &any, 512,
+				     6, 1024, 17, 19, attrs, attrs, &disp);
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
-	result = dns_dispatchset_create(mctx, socketmgr, taskmgr, disp,
+	result = dns_dispatchset_create(dt_mctx, socketmgr, taskmgr, disp,
 					&dset, ndisps);
 	dns_dispatch_detach(&disp);
 
@@ -182,11 +181,11 @@ nameserver(isc_task_t *task, isc_event_t *event) {
 
 	memmove(buf1, ev->region.base, 12);
 	memset(buf1 + 12, 0, 4);
-	buf1[2] |= 0x80;	/* qr=1 */
+	buf1[2] |= 0x80; /* qr=1 */
 
 	memmove(buf2, ev->region.base, 12);
 	memset(buf2 + 12, 1, 4);
-	buf2[2] |= 0x80;	/* qr=1 */
+	buf2[2] |= 0x80; /* qr=1 */
 
 	/*
 	 * send message to be discarded.
@@ -197,8 +196,9 @@ nameserver(isc_task_t *task, isc_event_t *event) {
 	isc_socket_attach(sock, &dummy);
 	result = isc_socket_sendto(sock, &region, task, senddone, sock,
 				   &ev->address, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		isc_socket_detach(&dummy);
+	}
 
 	/*
 	 * send nextitem message.
@@ -209,34 +209,28 @@ nameserver(isc_task_t *task, isc_event_t *event) {
 	isc_socket_attach(sock, &dummy);
 	result = isc_socket_sendto(sock, &region, task, senddone, sock,
 				   &ev->address, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		isc_socket_detach(&dummy);
+	}
 	isc_event_free(&event);
 }
 
 static dns_dispatch_t *dispatch = NULL;
 static dns_dispentry_t *dispentry = NULL;
-static bool first = true;
-static isc_mutex_t lock;
+static atomic_bool first = ATOMIC_VAR_INIT(true);
 static isc_sockaddr_t local;
-static unsigned int responses = 0;
+static atomic_uint_fast32_t responses;
 
 static void
 response(isc_task_t *task, isc_event_t *event) {
 	dns_dispatchevent_t *devent = (dns_dispatchevent_t *)event;
-	isc_result_t result;
-	bool wasfirst;
+	bool exp_true = true;
 
 	UNUSED(task);
 
-	LOCK(&lock);
-	wasfirst = first;
-	first = false;
-	responses++;
-	UNLOCK(&lock);
-
-	if (wasfirst) {
-		result = dns_dispatch_getnext(dispentry, &devent);
+	atomic_fetch_add_relaxed(&responses, 1);
+	if (atomic_compare_exchange_strong(&first, &exp_true, false)) {
+		isc_result_t result = dns_dispatch_getnext(dispentry, &devent);
 		assert_int_equal(result, ISC_R_SUCCESS);
 	} else {
 		dns_dispatch_removeresponse(&dispentry, &devent);
@@ -271,20 +265,20 @@ dispatch_getnext(void **state) {
 
 	UNUSED(state);
 
-	isc_mutex_init(&lock);
+	atomic_init(&responses, 0);
 
 	result = isc_task_create(taskmgr, 0, &task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
+	result = dns_dispatchmgr_create(dt_mctx, &dispatchmgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	ina.s_addr = htonl(INADDR_LOOPBACK);
 	isc_sockaddr_fromin(&local, &ina, 0);
 	attrs = DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_UDP;
-	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
-				     &local, 512, 6, 1024, 17, 19, attrs,
-				     attrs, &dispatch);
+	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &local,
+				     512, 6, 1024, 17, 19, attrs, attrs,
+				     &dispatch);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -302,7 +296,6 @@ dispatch_getnext(void **state) {
 	result = isc_socket_getsockname(sock, &local);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	first = true;
 	region.base = rbuf;
 	region.length = sizeof(rbuf);
 	result = isc_socket_recv(sock, &region, 1, task, nameserver, sock);
@@ -318,13 +311,13 @@ dispatch_getnext(void **state) {
 
 	region.base = message;
 	region.length = sizeof(message);
-	result = isc_app_onrun(mctx, task, startit, &region);
+	result = isc_app_onrun(dt_mctx, task, startit, &region);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_app_run();
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	assert_int_equal(responses, 2);
+	assert_int_equal(atomic_load_acquire(&responses), 2);
 
 	/*
 	 * Shutdown nameserver.
@@ -343,12 +336,12 @@ dispatch_getnext(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(dispatchset_create,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(dispatchset_get,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(dispatch_getnext,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dispatchset_create, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(dispatchset_get, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(dispatch_getnext, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -364,4 +357,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

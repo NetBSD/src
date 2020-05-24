@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataclass.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdataclass.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_RDATACLASS_H
 #define DNS_RDATACLASS_H 1
@@ -78,8 +77,7 @@ dns_rdataclass_tounknowntext(dns_rdataclass_t rdclass, isc_buffer_t *target);
  */
 
 void
-dns_rdataclass_format(dns_rdataclass_t rdclass,
-		      char *array, unsigned int size);
+dns_rdataclass_format(dns_rdataclass_t rdclass, char *array, unsigned int size);
 /*%<
  * Format a human-readable representation of the class 'rdclass'
  * into the character array 'array', which is of size 'size'.

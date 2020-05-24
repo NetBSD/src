@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: srv_33.h,v 1.4 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,12 +18,12 @@
  *  \brief Per RFC2782 */
 
 typedef struct dns_rdata_in_srv {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	uint16_t		priority;
-	uint16_t		weight;
-	uint16_t		port;
-	dns_name_t		target;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t priority;
+	uint16_t weight;
+	uint16_t port;
+	dns_name_t target;
 } dns_rdata_in_srv_t;
 
 #endif /* IN_1_SRV_33_H */

@@ -1,3 +1,5 @@
+/*	$NetBSD: safe.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
+
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -9,12 +11,16 @@
  * information regarding copyright ownership.
  */
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm hmac-md5;
-};
+#include <openssl/crypto.h>
 
-controls {
-	inet 10.53.0.2 port 9953 allow { any; } keys { rndc_key; };
-};
+#include <isc/safe.h>
 
+int
+isc_safe_memequal(const void *s1, const void *s2, size_t len) {
+	return (!CRYPTO_memcmp(s1, s2, len));
+}
+
+void
+isc_safe_memwipe(void *ptr, size_t len) {
+	OPENSSL_cleanse(ptr, len);
+}

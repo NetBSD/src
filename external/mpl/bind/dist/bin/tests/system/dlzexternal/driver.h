@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: driver.h,v 1.3 2020/05/24 19:46:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,6 +11,9 @@
  * information regarding copyright ownership.
  */
 
+#pragma once
+
+#include <dns/dlz_dlopen.h>
 
 /*
  * This header includes the declarations of entry points.

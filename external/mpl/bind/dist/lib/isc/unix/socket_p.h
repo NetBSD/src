@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_p.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: socket_p.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_SOCKET_P_H
 #define ISC_SOCKET_P_H
 
@@ -20,7 +19,9 @@
 #include <sys/time.h>
 
 typedef struct isc_socketwait isc_socketwait_t;
-int isc__socketmgr_waitevents(isc_socketmgr_t *, struct timeval *,
-			      isc_socketwait_t **);
-isc_result_t isc__socketmgr_dispatch(isc_socketmgr_t *, isc_socketwait_t *);
+int
+isc__socketmgr_waitevents(isc_socketmgr_t *, struct timeval *,
+			  isc_socketwait_t **);
+isc_result_t
+isc__socketmgr_dispatch(isc_socketmgr_t *, isc_socketwait_t *);
 #endif /* ISC_SOCKET_P_H */

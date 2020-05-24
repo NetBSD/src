@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-request.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.3 2020/05/24 19:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,20 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #ifndef WIN32
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
-
 #include <arpa/inet.h>
-
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
-#endif
+#endif /* ifndef WIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,8 +64,7 @@ usage(void) {
 
 static isc_result_t
 make_querymessage(dns_message_t *message, const char *namestr,
-		  dns_rdatatype_t rdtype)
-{
+		  dns_rdatatype_t rdtype) {
 	dns_name_t *qname = NULL, *qname0;
 	dns_rdataset_t *qrdataset = NULL;
 	isc_result_t result;
@@ -97,12 +90,14 @@ make_querymessage(dns_message_t *message, const char *namestr,
 	message->rdclass = dns_rdataclass_in;
 
 	result = dns_message_gettempname(message, &qname);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	result = dns_message_gettemprdataset(message, &qrdataset);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	dns_name_init(qname, NULL);
 	dns_name_clone(qname0, qname);
@@ -112,11 +107,13 @@ make_querymessage(dns_message_t *message, const char *namestr,
 
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (qname != NULL)
+cleanup:
+	if (qname != NULL) {
 		dns_message_puttempname(message, &qname);
-	if (qrdataset != NULL)
+	}
+	if (qrdataset != NULL) {
 		dns_message_puttemprdataset(message, &qrdataset);
+	}
 	dns_message_destroy(&message);
 	return (result);
 }
@@ -128,15 +125,16 @@ print_section(dns_message_t *message, int section, isc_buffer_t *buf) {
 
 	result = dns_message_sectiontotext(message, section,
 					   &dns_master_style_full, 0, buf);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto fail;
+	}
 
 	isc_buffer_usedregion(buf, &r);
 	printf("%.*s", (int)r.length, (char *)r.base);
 
 	return;
 
- fail:
+fail:
 	fprintf(stderr, "failed to convert a section\n");
 }
 
@@ -159,8 +157,7 @@ main(int argc, char *argv[]) {
 			tr.length = strlen(isc_commandline_argument);
 			result = dns_rdatatype_fromtext(&type, &tr);
 			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr,
-					"invalid RRtype: %s\n",
+				fprintf(stderr, "invalid RRtype: %s\n",
 					isc_commandline_argument);
 				exit(1);
 			}
@@ -172,8 +169,9 @@ main(int argc, char *argv[]) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
-	if (argc < 2)
+	if (argc < 2) {
 		usage();
+	}
 
 	isc_lib_register();
 	result = dns_lib_init();
@@ -193,11 +191,7 @@ main(int argc, char *argv[]) {
 	qmessage = NULL;
 	rmessage = NULL;
 
-	result = isc_mem_create(0, 0, &mctx);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to create a memory context\n");
-		exit(1);
-	}
+	isc_mem_create(&mctx);
 	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &qmessage);
 	if (result == ISC_R_SUCCESS) {
 		result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE,
@@ -215,7 +209,7 @@ main(int argc, char *argv[]) {
 	hints.ai_protocol = IPPROTO_UDP;
 #ifdef AI_NUMERICHOST
 	hints.ai_flags = AI_NUMERICHOST;
-#endif
+#endif /* ifdef AI_NUMERICHOST */
 	gaierror = getaddrinfo(argv[0], "53", &hints, &res);
 	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",
@@ -236,8 +230,8 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Send request and wait for a response */
-	result = dns_client_request(client, qmessage, rmessage, &sa, 0, 0,
-				    NULL, 60, 0, 3);
+	result = dns_client_request(client, qmessage, rmessage, &sa, 0, 0, NULL,
+				    60, 0, 3);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "failed to get a response: %s\n",
 			dns_result_totext(result));
@@ -245,11 +239,7 @@ main(int argc, char *argv[]) {
 
 	/* Dump the response */
 	outputbuf = NULL;
-	result = isc_buffer_allocate(mctx, &outputbuf, 65535);
-	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "failed to allocate a result buffer\n");
-		exit(1);
-	}
+	isc_buffer_allocate(mctx, &outputbuf, 65535);
 	for (i = 0; i < DNS_SECTION_MAX; i++) {
 		print_section(rmessage, i, outputbuf);
 		isc_buffer_clear(outputbuf);

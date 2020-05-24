@@ -1,4 +1,4 @@
-/*	$NetBSD: smf_globals.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: smf_globals.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,17 +21,19 @@
 #ifdef NAMED_MAIN
 #define EXTERN
 #define INIT(v) = (v)
-#else
+#else /* ifdef NAMED_MAIN */
 #define EXTERN extern
 #define INIT(v)
-#endif
+#endif /* ifdef NAMED_MAIN */
 
-EXTERN unsigned int	named_smf_got_instance	INIT(0);
-EXTERN unsigned int	named_smf_chroot	INIT(0);
-EXTERN unsigned int	named_smf_want_disable	INIT(0);
+EXTERN unsigned int named_smf_got_instance INIT(0);
+EXTERN unsigned int named_smf_chroot	   INIT(0);
+EXTERN unsigned int named_smf_want_disable INIT(0);
 
-isc_result_t named_smf_add_message(isc_buffer_t **text);
-isc_result_t named_smf_get_instance(char **name, int debug, isc_mem_t *mctx);
+isc_result_t
+named_smf_add_message(isc_buffer_t **text);
+isc_result_t
+named_smf_get_instance(char **name, int debug, isc_mem_t *mctx);
 
 #undef EXTERN
 #undef INIT

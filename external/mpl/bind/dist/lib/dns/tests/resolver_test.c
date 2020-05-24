@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: resolver_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -55,7 +52,7 @@ _setup(void **state) {
 	result = dns_test_begin(NULL, true);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
+	result = dns_dispatchmgr_create(dt_mctx, &dispatchmgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_test_makeview("view", &view);
@@ -63,8 +60,7 @@ _setup(void **state) {
 
 	isc_sockaddr_any(&local);
 	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &local,
-				     4096, 100, 100, 100, 500, 0, 0,
-				     &dispatch);
+				     4096, 100, 100, 100, 500, 0, 0, &dispatch);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	return (0);
@@ -82,14 +78,12 @@ _teardown(void **state) {
 	return (0);
 }
 
-
 static void
 mkres(dns_resolver_t **resolverp) {
 	isc_result_t result;
 
-	result = dns_resolver_create(view, taskmgr, 1, 1,
-				     socketmgr, timermgr, 0,
-				     dispatchmgr, dispatch, NULL, resolverp);
+	result = dns_resolver_create(view, taskmgr, 1, 1, socketmgr, timermgr,
+				     0, dispatchmgr, dispatch, NULL, resolverp);
 	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
@@ -134,7 +128,6 @@ settimeout_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
@@ -152,7 +145,6 @@ settimeout_default_test(void **state) {
 	unsigned int default_timeout, timeout;
 
 	UNUSED(state);
-
 
 	mkres(&resolver);
 
@@ -177,7 +169,6 @@ settimeout_belowmin_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
@@ -197,7 +188,6 @@ settimeout_overmax_test(void **state) {
 
 	UNUSED(state);
 
-
 	mkres(&resolver);
 
 	dns_resolver_settimeout(resolver, 4000000);
@@ -209,18 +199,17 @@ settimeout_overmax_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(create_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(gettimeout_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_test,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_default_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(create_test, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(gettimeout_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(settimeout_test, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(settimeout_default_test, _setup,
+						_teardown),
 		cmocka_unit_test_setup_teardown(settimeout_belowmin_test,
 						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(settimeout_overmax_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_overmax_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -236,4 +225,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

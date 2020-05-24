@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_MUTEX_H
 #define ISC_MUTEX_H 1
 
-#include <isc/net.h>
 #include <windows.h>
 
+#include <isc/net.h>
 #include <isc/result.h>
 
 typedef CRITICAL_SECTION isc_mutex_t;
@@ -31,20 +30,18 @@ WINBASEAPI BOOL WINAPI
 TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 #endif /* _WIN32_WINNT < 0x0400 */
 
-#define isc_mutex_init(mp) \
-	InitializeCriticalSection((mp))
-#define isc_mutex_lock(mp) \
-	(EnterCriticalSection((mp)), ISC_R_SUCCESS)
-#define isc_mutex_unlock(mp) \
-	(LeaveCriticalSection((mp)), ISC_R_SUCCESS)
+#define isc_mutex_init(mp)   InitializeCriticalSection((mp))
+#define isc_mutex_lock(mp)   (EnterCriticalSection((mp)), ISC_R_SUCCESS)
+#define isc_mutex_unlock(mp) (LeaveCriticalSection((mp)), ISC_R_SUCCESS)
 #define isc_mutex_trylock(mp) \
 	(TryEnterCriticalSection((mp)) ? ISC_R_SUCCESS : ISC_R_LOCKBUSY)
-#define isc_mutex_destroy(mp) \
-	(DeleteCriticalSection((mp)))
+#define isc_mutex_destroy(mp) (DeleteCriticalSection((mp)))
 
 /*
  * This is a placeholder for now since we are not keeping any mutex stats
  */
-#define isc_mutex_stats(fp) do {} while (0)
+#define isc_mutex_stats(fp) \
+	do {                \
+	} while (/*CONSTCOND*/0)
 
 #endif /* ISC_MUTEX_H */

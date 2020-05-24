@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -32,10 +29,32 @@
 #include <isc/mem.h>
 #include <isc/util.h>
 
+#include "isctest.h"
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
+
 /* check handling of 0xff */
 static void
 lex_0xff(void **state) {
-	isc_mem_t *mctx = NULL;
 	isc_result_t result;
 	isc_lex_t *lex = NULL;
 	isc_buffer_t death_buf;
@@ -45,10 +64,7 @@ lex_0xff(void **state) {
 
 	UNUSED(state);
 
-	result = isc_mem_create(0, 0, &mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_lex_create(mctx, 1024, &lex);
+	result = isc_lex_create(test_mctx, 1024, &lex);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&death_buf, &death[0], sizeof(death));
@@ -61,14 +77,11 @@ lex_0xff(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_lex_destroy(&lex);
-
-	isc_mem_destroy(&mctx);
 }
 
 /* check setting of source line */
 static void
 lex_setline(void **state) {
-	isc_mem_t *mctx = NULL;
 	isc_result_t result;
 	isc_lex_t *lex = NULL;
 	unsigned char text[] = "text\nto\nbe\nprocessed\nby\nlexer";
@@ -79,10 +92,7 @@ lex_setline(void **state) {
 
 	UNUSED(state);
 
-	result = isc_mem_create(0, 0, &mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_lex_create(mctx, 1024, &lex);
+	result = isc_lex_create(test_mctx, 1024, &lex);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&buf, &text[0], sizeof(text));
@@ -109,8 +119,6 @@ lex_setline(void **state) {
 	assert_int_equal(line, 105U);
 
 	isc_lex_destroy(&lex);
-
-	isc_mem_destroy(&mctx);
 }
 
 int
@@ -120,7 +128,7 @@ main(void) {
 		cmocka_unit_test(lex_setline),
 	};
 
-	return (cmocka_run_group_tests(tests, NULL, NULL));
+	return (cmocka_run_group_tests(tests, _setup, _teardown));
 }
 
 #else /* HAVE_CMOCKA */
@@ -133,4 +141,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

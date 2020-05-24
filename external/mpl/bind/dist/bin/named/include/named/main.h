@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
 
 #ifdef ISC_MAIN_HOOK
 #define main(argc, argv) bindmain(argc, argv)
-#endif
+#endif /* ifdef ISC_MAIN_HOOK */
 
 /*
  * Commandline arguments for named; also referenced in win32/ntservice.c
@@ -27,7 +27,7 @@
 
 ISC_PLATFORM_NORETURN_PRE void
 named_main_earlyfatal(const char *format, ...)
-ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
+	ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
 
 void
 named_main_earlywarning(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: errno_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: errno_test.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <errno.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,61 +32,59 @@ typedef struct {
 	isc_result_t result;
 } testpair_t;
 
-testpair_t testpair[] = {
-	{ EPERM, ISC_R_NOPERM },
-	{ ENOENT, ISC_R_FILENOTFOUND },
-	{ EIO, ISC_R_IOERROR },
-	{ EBADF, ISC_R_INVALIDFILE },
-	{ ENOMEM, ISC_R_NOMEMORY },
-	{ EACCES, ISC_R_NOPERM },
-	{ EEXIST, ISC_R_FILEEXISTS },
-	{ ENOTDIR, ISC_R_INVALIDFILE },
-	{ EINVAL, ISC_R_INVALIDFILE },
-	{ ENFILE, ISC_R_TOOMANYOPENFILES },
-	{ EMFILE, ISC_R_TOOMANYOPENFILES },
-	{ EPIPE, ISC_R_CONNECTIONRESET },
-	{ ENAMETOOLONG, ISC_R_INVALIDFILE },
-	{ ELOOP, ISC_R_INVALIDFILE },
+testpair_t testpair[] = { { EPERM, ISC_R_NOPERM },
+			  { ENOENT, ISC_R_FILENOTFOUND },
+			  { EIO, ISC_R_IOERROR },
+			  { EBADF, ISC_R_INVALIDFILE },
+			  { ENOMEM, ISC_R_NOMEMORY },
+			  { EACCES, ISC_R_NOPERM },
+			  { EEXIST, ISC_R_FILEEXISTS },
+			  { ENOTDIR, ISC_R_INVALIDFILE },
+			  { EINVAL, ISC_R_INVALIDFILE },
+			  { ENFILE, ISC_R_TOOMANYOPENFILES },
+			  { EMFILE, ISC_R_TOOMANYOPENFILES },
+			  { EPIPE, ISC_R_CONNECTIONRESET },
+			  { ENAMETOOLONG, ISC_R_INVALIDFILE },
+			  { ELOOP, ISC_R_INVALIDFILE },
 #ifdef EOVERFLOW
-	{ EOVERFLOW, ISC_R_RANGE },
-#endif
+			  { EOVERFLOW, ISC_R_RANGE },
+#endif /* ifdef EOVERFLOW */
 #ifdef EAFNOSUPPORT
-	{ EAFNOSUPPORT, ISC_R_FAMILYNOSUPPORT },
-#endif
+			  { EAFNOSUPPORT, ISC_R_FAMILYNOSUPPORT },
+#endif /* ifdef EAFNOSUPPORT */
 #ifdef EADDRINUSE
-	{ EADDRINUSE, ISC_R_ADDRINUSE },
-#endif
-	{ EADDRNOTAVAIL, ISC_R_ADDRNOTAVAIL },
+			  { EADDRINUSE, ISC_R_ADDRINUSE },
+#endif /* ifdef EADDRINUSE */
+			  { EADDRNOTAVAIL, ISC_R_ADDRNOTAVAIL },
 #ifdef ENETDOWN
-	{ ENETDOWN, ISC_R_NETDOWN },
-#endif
+			  { ENETDOWN, ISC_R_NETDOWN },
+#endif /* ifdef ENETDOWN */
 #ifdef ENETUNREACH
-	{ ENETUNREACH, ISC_R_NETUNREACH },
-#endif
+			  { ENETUNREACH, ISC_R_NETUNREACH },
+#endif /* ifdef ENETUNREACH */
 #ifdef ECONNABORTED
-	{ ECONNABORTED, ISC_R_CONNECTIONRESET },
-#endif
+			  { ECONNABORTED, ISC_R_CONNECTIONRESET },
+#endif /* ifdef ECONNABORTED */
 #ifdef ECONNRESET
-	{ ECONNRESET, ISC_R_CONNECTIONRESET },
-#endif
+			  { ECONNRESET, ISC_R_CONNECTIONRESET },
+#endif /* ifdef ECONNRESET */
 #ifdef ENOBUFS
-	{ ENOBUFS, ISC_R_NORESOURCES },
-#endif
+			  { ENOBUFS, ISC_R_NORESOURCES },
+#endif /* ifdef ENOBUFS */
 #ifdef ENOTCONN
-	{ ENOTCONN, ISC_R_NOTCONNECTED },
-#endif
+			  { ENOTCONN, ISC_R_NOTCONNECTED },
+#endif /* ifdef ENOTCONN */
 #ifdef ETIMEDOUT
-	{ ETIMEDOUT, ISC_R_TIMEDOUT },
-#endif
-	{ ECONNREFUSED, ISC_R_CONNREFUSED },
+			  { ETIMEDOUT, ISC_R_TIMEDOUT },
+#endif /* ifdef ETIMEDOUT */
+			  { ECONNREFUSED, ISC_R_CONNREFUSED },
 #ifdef EHOSTDOWN
-	{ EHOSTDOWN, ISC_R_HOSTDOWN },
-#endif
+			  { EHOSTDOWN, ISC_R_HOSTDOWN },
+#endif /* ifdef EHOSTDOWN */
 #ifdef EHOSTUNREACH
-	{ EHOSTUNREACH, ISC_R_HOSTUNREACH },
-#endif
-	{ 0, ISC_R_UNEXPECTED }
-};
+			  { EHOSTUNREACH, ISC_R_HOSTUNREACH },
+#endif /* ifdef EHOSTUNREACH */
+			  { 0, ISC_R_UNEXPECTED } };
 
 /* convert errno to ISC result */
 static void
@@ -99,7 +94,7 @@ isc_errno_toresult_test(void **state) {
 
 	UNUSED(state);
 
-	for (i = 0; i < sizeof(testpair)/sizeof(testpair[0]); i++) {
+	for (i = 0; i < sizeof(testpair) / sizeof(testpair[0]); i++) {
 		result = isc_errno_toresult(testpair[i].err);
 		expect = testpair[i].result;
 		assert_int_equal(result, expect);
@@ -125,4 +120,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: avc_258.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 static inline isc_result_t
 fromtext_avc(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_avc);
 
 	UNUSED(type);
@@ -33,7 +32,6 @@ fromtext_avc(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 totext_avc(ARGS_TOTEXT) {
-
 	UNUSED(tctx);
 
 	REQUIRE(rdata->type == dns_rdatatype_avc);
@@ -43,7 +41,6 @@ totext_avc(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_avc(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_avc);
 
 	UNUSED(type);
@@ -57,7 +54,6 @@ fromwire_avc(ARGS_FROMWIRE) {
 
 static inline isc_result_t
 towire_avc(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
 	UNUSED(cctx);
@@ -81,7 +77,6 @@ compare_avc(ARGS_COMPARE) {
 
 static inline isc_result_t
 fromstruct_avc(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_avc);
 
 	return (generic_fromstruct_txt(rdclass, type, source, target));
@@ -135,7 +130,6 @@ digest_avc(ARGS_DIGEST) {
 
 static inline bool
 checkowner_avc(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_avc);
 
 	UNUSED(name);
@@ -148,7 +142,6 @@ checkowner_avc(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_avc(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
 	UNUSED(rdata);
@@ -162,4 +155,4 @@ static inline int
 casecompare_avc(ARGS_COMPARE) {
 	return (compare_avc(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_AVC_258_C */
+#endif /* RDATA_GENERIC_AVC_258_C */

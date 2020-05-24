@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_test.c,v 1.1.1.1 2020/05/24 19:36:47 christos Exp $	*/
+/*	$NetBSD: quota_test.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

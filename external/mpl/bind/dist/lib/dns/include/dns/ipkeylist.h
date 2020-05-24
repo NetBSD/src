@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkeylist.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: ipkeylist.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 #include <inttypes.h>
 
 #include <isc/types.h>
+
 #include <dns/types.h>
 
 /*%
@@ -24,12 +25,12 @@
  * store masters for a slave zone, created by parsing config options.
  */
 struct dns_ipkeylist {
-	isc_sockaddr_t		*addrs;
-	isc_dscp_t		*dscps;
-	dns_name_t		**keys;
-	dns_name_t		**labels;
-	uint32_t		count;
-	uint32_t		allocated;
+	isc_sockaddr_t *addrs;
+	isc_dscp_t *	dscps;
+	dns_name_t **	keys;
+	dns_name_t **	labels;
+	uint32_t	count;
+	uint32_t	allocated;
 };
 
 void
@@ -82,8 +83,8 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n);
  * \li	'n' >= ipkl->count
  *
  * Returns:
- * \li	#ISC_R_SUCCESS if successs
- * \li	#ISC_R_NOMEMORY if there's no memory, ipkeylist is left untoched
+ * \li	#ISC_R_SUCCESS if success
+ * \li	#ISC_R_NOMEMORY if there's no memory, ipkeylist is left untouched
  */
 
-#endif
+#endif /* ifndef DNS_IPKEYLIST_H */

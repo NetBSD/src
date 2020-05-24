@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,5 +50,8 @@ LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
 
 /*%< Zone options */
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_zoneopts;
+
+/*%< DNSSEC Key and Signing Policy options */
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_dnssecpolicyopts;
 
 #endif /* ISCCFG_NAMEDCONF_H */

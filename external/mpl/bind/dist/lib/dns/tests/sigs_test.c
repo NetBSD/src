@@ -1,4 +1,4 @@
-/*	$NetBSD: sigs_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: sigs_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -50,7 +47,6 @@
 #include <dst/dst.h>
 
 #include "../zone_p.h"
-
 #include "dnstest.h"
 
 static int
@@ -85,15 +81,19 @@ typedef struct {
 	const char *type;
 } zonediff_t;
 
-#define ZONEDIFF_SENTINEL { 0, NULL, 0, NULL }
+#define ZONEDIFF_SENTINEL        \
+	{                        \
+		0, NULL, 0, NULL \
+	}
 
 /*%
  * Structure defining a dns__zone_updatesigs() test.
  */
 typedef struct {
-	const char *description;	/* test description */
-	const zonechange_t *changes;	/* array of "raw" zone changes */
-	const zonediff_t *zonediff;	/* array of "processed" zone changes */
+	const char *description;     /* test description */
+	const zonechange_t *changes; /* array of "raw" zone changes */
+	const zonediff_t *zonediff;  /* array of "processed" zone changes
+				      * */
 } updatesigs_test_params_t;
 
 /*%
@@ -102,10 +102,9 @@ typedef struct {
  */
 static void
 compare_tuples(const zonediff_t *expected, dns_difftuple_t *found,
-	       size_t index)
-{
-	char found_covers[DNS_RDATATYPE_FORMATSIZE] = { };
-	char found_type[DNS_RDATATYPE_FORMATSIZE] = { };
+	       size_t index) {
+	char found_covers[DNS_RDATATYPE_FORMATSIZE] = {};
+	char found_type[DNS_RDATATYPE_FORMATSIZE] = {};
 	char found_name[DNS_NAME_FORMATSIZE];
 	isc_consttextregion_t typeregion;
 	dns_fixedname_t expected_fname;
@@ -128,7 +127,8 @@ compare_tuples(const zonediff_t *expected, dns_difftuple_t *found,
 	 * Check owner name.
 	 */
 	expected_name = dns_fixedname_initname(&expected_fname);
-	result = dns_name_fromstring(expected_name, expected->owner, 0, mctx);
+	result = dns_name_fromstring(expected_name, expected->owner, 0,
+				     dt_mctx);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	dns_name_format(&found->name, found_name, sizeof(found_name));
 	assert_true(dns_name_equal(expected_name, &found->name));
@@ -144,7 +144,7 @@ compare_tuples(const zonediff_t *expected, dns_difftuple_t *found,
 	typeregion.base = expected->type;
 	typeregion.length = strlen(expected->type);
 	result = dns_rdatatype_fromtext(&expected_type,
-					(isc_textregion_t*)&typeregion);
+					(isc_textregion_t *)&typeregion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -194,8 +194,7 @@ compare_tuples(const zonediff_t *expected, dns_difftuple_t *found,
 static void
 updatesigs_test(const updatesigs_test_params_t *test, dns_zone_t *zone,
 		dns_db_t *db, dst_key_t *zone_keys[], unsigned int nkeys,
-		isc_stdtime_t now)
-{
+		isc_stdtime_t now) {
 	size_t tuples_expected, tuples_found, index;
 	dns_dbversion_t *version = NULL;
 	dns_diff_t raw_diff, zone_diff;
@@ -237,7 +236,7 @@ updatesigs_test(const updatesigs_test_params_t *test, dns_zone_t *zone,
 	/*
 	 * Initialize the structure dns__zone_updatesigs() will modify.
 	 */
-	dns_diff_init(mctx, &zone_diff);
+	dns_diff_init(dt_mctx, &zone_diff);
 
 	/*
 	 * Check whether dns__zone_updatesigs() behaves as expected.
@@ -259,8 +258,7 @@ updatesigs_test(const updatesigs_test_params_t *test, dns_zone_t *zone,
 	}
 
 	tuples_found = 0;
-	for (found = ISC_LIST_HEAD(zone_diff.tuples);
-	     found != NULL;
+	for (found = ISC_LIST_HEAD(zone_diff.tuples); found != NULL;
 	     found = ISC_LIST_NEXT(found, link))
 	{
 		tuples_found++;
@@ -273,8 +271,7 @@ updatesigs_test(const updatesigs_test_params_t *test, dns_zone_t *zone,
 	 */
 	expected = test->zonediff;
 	index = 1;
-	for (found = ISC_LIST_HEAD(zone_diff.tuples);
-	     found != NULL;
+	for (found = ISC_LIST_HEAD(zone_diff.tuples); found != NULL;
 	     found = ISC_LIST_NEXT(found, link))
 	{
 		compare_tuples(expected, found, index);
@@ -318,8 +315,8 @@ updatesigs_next_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_stdtime_get(&now);
-	result = dns__zone_findkeys(zone, db, NULL, now, mctx, DNS_MAXZONEKEYS,
-				    zone_keys, &nkeys);
+	result = dns__zone_findkeys(zone, db, NULL, now, dt_mctx,
+				    DNS_MAXZONEKEYS, zone_keys, &nkeys);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(nkeys, 2);
 
@@ -421,11 +418,8 @@ updatesigs_next_test(void **state) {
 	};
 
 	const updatesigs_test_params_t *tests[] = {
-		&test_add,
-		&test_append,
-		&test_replace,
-		&test_delete,
-		&test_mixed,
+		&test_add,    &test_append, &test_replace,
+		&test_delete, &test_mixed,
 	};
 
 	/*
@@ -448,8 +442,8 @@ updatesigs_next_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(updatesigs_next_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(updatesigs_next_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -465,4 +459,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

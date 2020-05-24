@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.5 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
 
 /*! \file isc/log.h */
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <syslog.h> /* XXXDCL NT */
 
 #include <isc/formatcheck.h>
@@ -32,45 +31,45 @@
  * \brief Severity levels, patterned after Unix's syslog levels.
  *
  */
-#define ISC_LOG_DEBUG(level)	(level)
+#define ISC_LOG_DEBUG(level) (level)
 /*!
  * #ISC_LOG_DYNAMIC can only be used for defining channels with
  * isc_log_createchannel(), not to specify a level in isc_log_write().
  */
-#define ISC_LOG_DYNAMIC	  	  0
-#define ISC_LOG_INFO		(-1)
-#define ISC_LOG_NOTICE		(-2)
-#define ISC_LOG_WARNING 	(-3)
-#define ISC_LOG_ERROR		(-4)
-#define ISC_LOG_CRITICAL	(-5)
+#define ISC_LOG_DYNAMIC	 0
+#define ISC_LOG_INFO	 (-1)
+#define ISC_LOG_NOTICE	 (-2)
+#define ISC_LOG_WARNING	 (-3)
+#define ISC_LOG_ERROR	 (-4)
+#define ISC_LOG_CRITICAL (-5)
 /*@}*/
 
 /*@{*/
 /*!
  * \brief Destinations.
  */
-#define ISC_LOG_TONULL		1
-#define ISC_LOG_TOSYSLOG	2
-#define ISC_LOG_TOFILE		3
-#define ISC_LOG_TOFILEDESC	4
+#define ISC_LOG_TONULL	   1
+#define ISC_LOG_TOSYSLOG   2
+#define ISC_LOG_TOFILE	   3
+#define ISC_LOG_TOFILEDESC 4
 /*@}*/
 
 /*@{*/
 /*%
  * Channel flags.
  */
-#define ISC_LOG_PRINTTIME	0x00001
-#define ISC_LOG_PRINTLEVEL	0x00002
-#define ISC_LOG_PRINTCATEGORY	0x00004
-#define ISC_LOG_PRINTMODULE	0x00008
-#define ISC_LOG_PRINTTAG	0x00010		/* tag and ":" */
-#define ISC_LOG_PRINTPREFIX	0x00020		/* tag only, no colon */
-#define ISC_LOG_PRINTALL	0x0003F
-#define ISC_LOG_BUFFERED	0x00040
-#define ISC_LOG_DEBUGONLY	0x01000
-#define ISC_LOG_OPENERR		0x08000		/* internal */
-#define ISC_LOG_ISO8601		0x10000		/* if PRINTTIME, use ISO8601 */
-#define ISC_LOG_UTC		0x20000		/* if PRINTTIME, use UTC */
+#define ISC_LOG_PRINTTIME     0x00001
+#define ISC_LOG_PRINTLEVEL    0x00002
+#define ISC_LOG_PRINTCATEGORY 0x00004
+#define ISC_LOG_PRINTMODULE   0x00008
+#define ISC_LOG_PRINTTAG      0x00010 /* tag and ":" */
+#define ISC_LOG_PRINTPREFIX   0x00020 /* tag only, no colon */
+#define ISC_LOG_PRINTALL      0x0003F
+#define ISC_LOG_BUFFERED      0x00040
+#define ISC_LOG_DEBUGONLY     0x01000
+#define ISC_LOG_OPENERR	      0x08000 /* internal */
+#define ISC_LOG_ISO8601	      0x10000 /* if PRINTTIME, use ISO8601 */
+#define ISC_LOG_UTC	      0x20000 /* if PRINTTIME, use UTC */
 /*@}*/
 
 /*@{*/
@@ -81,9 +80,9 @@
  *   since I am intend to make large number of versions work efficiently,
  *   INFINITE is going to be trivial to add to that.
  */
-#define ISC_LOG_ROLLINFINITE	(-1)
-#define ISC_LOG_ROLLNEVER	(-2)
-#define ISC_LOG_MAX_VERSIONS	256
+#define ISC_LOG_ROLLINFINITE (-1)
+#define ISC_LOG_ROLLNEVER    (-2)
+#define ISC_LOG_MAX_VERSIONS 256
 /*@}*/
 
 /*@{*/
@@ -104,7 +103,7 @@ typedef enum {
  * isc_log_registercategories.
  */
 struct isc_logcategory {
-	const char *name;
+	const char * name;
 	unsigned int id;
 };
 
@@ -112,7 +111,7 @@ struct isc_logcategory {
  * Similar to isc_logcategory, but for all the modules a library defines.
  */
 struct isc_logmodule {
-	const char *name;
+	const char * name;
 	unsigned int id;
 };
 
@@ -128,9 +127,11 @@ struct isc_logmodule {
  * Setting maximum_size to zero implies no maximum.
  */
 typedef struct isc_logfile {
-	FILE *stream;		/*%< Initialized to NULL for #ISC_LOG_TOFILE. */
-	const char *name;	/*%< NULL for #ISC_LOG_TOFILEDESC. */
-	int versions;	/* >= 0, #ISC_LOG_ROLLNEVER, #ISC_LOG_ROLLINFINITE. */
+	FILE *stream;	      /*%< Initialized to NULL for
+			       * #ISC_LOG_TOFILE. */
+	const char *name;     /*%< NULL for #ISC_LOG_TOFILEDESC. */
+	int	    versions; /* >= 0, #ISC_LOG_ROLLNEVER,
+			       * #ISC_LOG_ROLLINFINITE. */
 	isc_log_rollsuffix_t suffix;
 	/*%
 	 * stdio's ftell is standardized to return a long, which may well not
@@ -140,7 +141,7 @@ typedef struct isc_logfile {
 	 * to a size large enough for the largest possible file on a system.
 	 */
 	isc_offset_t maximum_size;
-	bool maximum_reached; /*%< Private. */
+	bool	     maximum_reached; /*%< Private. */
 } isc_logfile_t;
 
 /*%
@@ -149,7 +150,7 @@ typedef struct isc_logfile {
  */
 typedef union isc_logdestination {
 	isc_logfile_t file;
-	int facility;		/* XXXDCL NT */
+	int	      facility; /* XXXDCL NT */
 } isc_logdestination_t;
 
 /*@{*/
@@ -161,8 +162,8 @@ typedef union isc_logdestination {
  * the order of the names.
  */
 LIBISC_EXTERNAL_DATA extern isc_logcategory_t isc_categories[];
-LIBISC_EXTERNAL_DATA extern isc_log_t *isc_lctx;
-LIBISC_EXTERNAL_DATA extern isc_logmodule_t isc_modules[];
+LIBISC_EXTERNAL_DATA extern isc_log_t *	      isc_lctx;
+LIBISC_EXTERNAL_DATA extern isc_logmodule_t   isc_modules[];
 /*@}*/
 
 /*@{*/
@@ -170,20 +171,21 @@ LIBISC_EXTERNAL_DATA extern isc_logmodule_t isc_modules[];
  * Do not log directly to DEFAULT.  Use another category.  When in doubt,
  * use GENERAL.
  */
-#define ISC_LOGCATEGORY_DEFAULT	(&isc_categories[0])
-#define ISC_LOGCATEGORY_GENERAL	(&isc_categories[1])
+#define ISC_LOGCATEGORY_DEFAULT (&isc_categories[0])
+#define ISC_LOGCATEGORY_GENERAL (&isc_categories[1])
 /*@}*/
 
-#define ISC_LOGMODULE_SOCKET (&isc_modules[0])
-#define ISC_LOGMODULE_TIME (&isc_modules[1])
+#define ISC_LOGMODULE_SOCKET	(&isc_modules[0])
+#define ISC_LOGMODULE_TIME	(&isc_modules[1])
 #define ISC_LOGMODULE_INTERFACE (&isc_modules[2])
-#define ISC_LOGMODULE_TIMER (&isc_modules[3])
-#define ISC_LOGMODULE_FILE (&isc_modules[4])
-#define ISC_LOGMODULE_OTHER (&isc_modules[5])
+#define ISC_LOGMODULE_TIMER	(&isc_modules[3])
+#define ISC_LOGMODULE_FILE	(&isc_modules[4])
+#define ISC_LOGMODULE_NETMGR	(&isc_modules[5])
+#define ISC_LOGMODULE_OTHER	(&isc_modules[6])
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t
+void
 isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp);
 /*%<
  * Establish a new logging context, with default channels.
@@ -203,13 +205,9 @@ isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp);
  *\li	*lcfgp will point to a valid logging configuration if all of the
  *	necessary memory was allocated, or NULL otherwise.
  *\li	On failure, no additional memory is allocated.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Success
- *\li	#ISC_R_NOMEMORY		Resource limit: Out of memory
  */
 
-isc_result_t
+void
 isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp);
 /*%<
  * Create the data structure that holds all of the configurable information
@@ -249,28 +247,9 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp);
  *\li	*lcfgp will point to a valid logging context if all of the necessary
  *	memory was allocated, or NULL otherwise.
  *\li	On failure, no additional memory is allocated.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Success
- *\li	#ISC_R_NOMEMORY		Resource limit: Out of memory
  */
 
-isc_logconfig_t *
-isc_logconfig_get(isc_log_t *lctx);
-/*%<
- * Returns a pointer to the configuration currently in use by the log context.
- *
- * Requires:
- *\li	lctx is a valid context.
- *
- * Ensures:
- *\li	The configuration pointer is non-null.
- *
- * Returns:
- *\li	The configuration pointer.
- */
-
-isc_result_t
+void
 isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg);
 /*%<
  * Associate a new configuration with a logging context.
@@ -289,10 +268,6 @@ isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg);
  *
  * Ensures:
  *\li	Future calls to isc_log_write will use the new configuration.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Success
- *\li	#ISC_R_NOMEMORY		Resource limit: Out of memory
  */
 
 void
@@ -316,11 +291,6 @@ void
 isc_logconfig_destroy(isc_logconfig_t **lcfgp);
 /*%<
  * Destroy a logging configuration.
- *
- * Notes:
- *\li	This function cannot be used directly with the return value of
- *	isc_logconfig_get, because a logging context must always have
- *	a valid configuration associated with it.
  *
  * Requires:
  *\li	lcfgp is not null and *lcfgp is a valid logging configuration.
@@ -408,11 +378,11 @@ isc_log_registermodules(isc_log_t *lctx, isc_logmodule_t modules[]);
  *	used with isc_log_usechannel() and isc_log_write().
  */
 
-isc_result_t
+void
 isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 		      unsigned int type, int level,
 		      const isc_logdestination_t *destination,
-		      unsigned int flags);
+		      unsigned int		  flags);
 /*%<
  * Specify the parameters of a logging channel.
  *
@@ -469,18 +439,12 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
  *		No additional memory is being used by the logging context.
  *		Any channel that previously existed with the given name
  *		is not redefined.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Success
- *\li	#ISC_R_NOMEMORY		Resource limit: Out of memory
- *\li	#ISC_R_UNEXPECTED	type was out of range and REQUIRE()
- *					was disabled.
  */
 
 isc_result_t
 isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
 		   const isc_logcategory_t *category,
-		   const isc_logmodule_t *module);
+		   const isc_logmodule_t *  module);
 /*%<
  * Associate a named logging channel with a category and module that
  * will use it.
@@ -540,7 +504,7 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
  *\li	#ISC_R_NOMEMORY	Resource limit: Out of memory
  */
 
-/* Attention: next four comments PRECEED code */
+/* Attention: next four comments PRECEDE code */
 /*!
  *   \brief
  * Write a message to the log channels.
@@ -576,10 +540,9 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
  */
 void
 isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	      const char *format, ...)
+	      isc_logmodule_t *module, int level, const char *format, ...)
 
-ISC_FORMAT_PRINTF(5, 6);
+	ISC_FORMAT_PRINTF(5, 6);
 
 /*%
  * Write a message to the log channels.
@@ -615,10 +578,10 @@ ISC_FORMAT_PRINTF(5, 6);
  */
 void
 isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	       const char *format, va_list args)
+	       isc_logmodule_t *module, int level, const char *format,
+	       va_list args)
 
-ISC_FORMAT_PRINTF(5, 0);
+	ISC_FORMAT_PRINTF(5, 0);
 
 /*%
  * Write a message to the log channels, pruning duplicates that occur within
@@ -629,7 +592,7 @@ void
 isc_log_write1(isc_log_t *lctx, isc_logcategory_t *category,
 	       isc_logmodule_t *module, int level, const char *format, ...)
 
-ISC_FORMAT_PRINTF(5, 6);
+	ISC_FORMAT_PRINTF(5, 6);
 
 /*%
  * Write a message to the log channels, pruning duplicates that occur within
@@ -641,7 +604,7 @@ isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
 		isc_logmodule_t *module, int level, const char *format,
 		va_list args)
 
-ISC_FORMAT_PRINTF(5, 0);
+	ISC_FORMAT_PRINTF(5, 0);
 
 void
 isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level);
@@ -720,7 +683,7 @@ isc_log_getduplicateinterval(isc_logconfig_t *lcfg);
  *\li	The current duplicate filtering interval.
  */
 
-isc_result_t
+void
 isc_log_settag(isc_logconfig_t *lcfg, const char *tag);
 /*%<
  * Set the program name or other identifier for #ISC_LOG_PRINTTAG.
@@ -738,10 +701,6 @@ isc_log_settag(isc_logconfig_t *lcfg, const char *tag);
  *\li	Setting the tag to NULL or the empty string will also cause the
  *	#ISC_LOG_PRINTTAG channel flag to not print anything.  If tag equals the
  *	empty string, calls to isc_log_gettag will return NULL.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS	Success
- *\li	#ISC_R_NOMEMORY  Resource Limit: Out of memory
  *
  * XXXDCL when creating a new isc_logconfig_t, it might be nice if the tag
  * of the currently active isc_logconfig_t was inherited.  this does not

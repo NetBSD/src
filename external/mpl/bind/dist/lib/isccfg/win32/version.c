@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,6 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <versions.h>
 
 #include <isccfg/version.h>
@@ -22,4 +20,3 @@ LIBISCCFG_EXTERNAL_DATA const char cfg_version[] = VERSION;
 LIBISCCFG_EXTERNAL_DATA const unsigned int cfg_libinterface = LIBINTERFACE;
 LIBISCCFG_EXTERNAL_DATA const unsigned int cfg_librevision = LIBREVISION;
 LIBISCCFG_EXTERNAL_DATA const unsigned int cfg_libage = LIBAGE;
-

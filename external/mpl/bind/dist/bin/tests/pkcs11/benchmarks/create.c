@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.4 2019/10/17 16:46:58 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* create [-m module] [-s $slot] [-p pin] [-t] [-n count] */
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -64,13 +61,13 @@
 
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
-#endif
-
-static int clock_gettime(int32_t id, struct timespec *tp);
+#endif /* ifndef CLOCK_REALTIME */
 
 static int
-clock_gettime(int32_t id, struct timespec *tp)
-{
+clock_gettime(int32_t id, struct timespec *tp);
+
+static int
+clock_gettime(int32_t id, struct timespec *tp) {
 	struct timeval tv;
 	int result;
 
@@ -79,11 +76,11 @@ clock_gettime(int32_t id, struct timespec *tp)
 	result = gettimeofday(&tv, NULL);
 	if (result == 0) {
 		tp->tv_sec = tv.tv_sec;
-		tp->tv_nsec = (long) tv.tv_usec * 1000;
+		tp->tv_nsec = (long)tv.tv_usec * 1000;
 	}
 	return (result);
 }
-#endif
+#endif /* ifndef HAVE_CLOCK_GETTIME */
 
 CK_BYTE buf[1024];
 char label[16];
@@ -100,20 +97,19 @@ main(int argc, char *argv[]) {
 	CK_OBJECT_HANDLE *hKey;
 	CK_OBJECT_CLASS kClass = CKO_DATA;
 	CK_ULONG len = sizeof(buf);
-	CK_ATTRIBUTE kTemplate[] =
-	{
-		{ CKA_CLASS, &kClass, (CK_ULONG) sizeof(kClass) },
-		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_PRIVATE, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_LABEL, (CK_BYTE_PTR) label, (CK_ULONG) sizeof(label) },
-		{ CKA_VALUE, buf, (CK_ULONG) sizeof(buf) }
+	CK_ATTRIBUTE kTemplate[] = {
+		{ CKA_CLASS, &kClass, (CK_ULONG)sizeof(kClass) },
+		{ CKA_TOKEN, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_PRIVATE, &falsevalue, (CK_ULONG)sizeof(falsevalue) },
+		{ CKA_LABEL, (CK_BYTE_PTR)label, (CK_ULONG)sizeof(label) },
+		{ CKA_VALUE, buf, (CK_ULONG)sizeof(buf) }
 	};
 	pk11_context_t pctx;
 	char *lib_name = NULL;
 	char *pin = NULL;
 	int error = 0;
 	int c, errflg = 0;
-	int ontoken  = 0;
+	int ontoken = 0;
 	unsigned int count = 1000;
 	unsigned int i;
 	struct timespec starttime;
@@ -137,8 +133,7 @@ main(int argc, char *argv[]) {
 			count = atoi(isc_commandline_argument);
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -152,16 +147,15 @@ main(int argc, char *argv[]) {
 
 	if (errflg) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr,
-			"\tcreate [-m module] [-s slot] [-t] [-n count]\n");
+		fprintf(stderr, "\tcreate [-m module] [-s slot] [-t] [-n "
+				"count]\n");
 		exit(1);
 	}
 
 	pk11_result_register();
 
-	/* Allocate hanles */
-	hKey = (CK_SESSION_HANDLE *)
-		malloc(count * sizeof(CK_SESSION_HANDLE));
+	/* Allocate handles */
+	hKey = (CK_SESSION_HANDLE *)malloc(count * sizeof(CK_SESSION_HANDLE));
 	if (hKey == NULL) {
 		perror("malloc");
 		exit(1);
@@ -170,25 +164,28 @@ main(int argc, char *argv[]) {
 		hKey[i] = CK_INVALID_HANDLE;
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
-	if (pin == NULL)
+	if (pin == NULL) {
 		pin = getpass("Enter Pin: ");
+	}
 
-	result = pk11_get_session(&pctx, OP_ANY, true, true,
-				  true, (const char *) pin, slot);
-	if ((result != ISC_R_SUCCESS) &&
-	    (result != PK11_R_NORANDOMSERVICE) &&
+	result = pk11_get_session(&pctx, OP_ANY, true, true, true,
+				  (const char *)pin, slot);
+	if ((result != ISC_R_SUCCESS) && (result != PK11_R_NORANDOMSERVICE) &&
 	    (result != PK11_R_NODIGESTSERVICE) &&
-	    (result != PK11_R_NOAESSERVICE)) {
+	    (result != PK11_R_NOAESSERVICE))
+	{
 		fprintf(stderr, "Error initializing PKCS#11: %s\n",
 			isc_result_totext(result));
 		exit(1);
 	}
 
-	if (pin != NULL)
+	if (pin != NULL) {
 		memset(pin, 0, strlen((char *)pin));
+	}
 
 	hSession = pctx.session;
 
@@ -199,8 +196,9 @@ main(int argc, char *argv[]) {
 		goto exit_objects;
 	}
 
-	if (ontoken)
+	if (ontoken) {
 		kTemplate[1].pValue = &truevalue;
+	}
 
 	if (clock_gettime(CLOCK_REALTIME, &starttime) < 0) {
 		perror("clock_gettime(start)");
@@ -208,16 +206,16 @@ main(int argc, char *argv[]) {
 	}
 
 	for (i = 0; i < count; i++) {
-		(void) snprintf(label, sizeof(label), "obj%u", i);
+		(void)snprintf(label, sizeof(label), "obj%u", i);
 		kTemplate[3].ulValueLen = strlen(label);
 		rv = pkcs_C_CreateObject(hSession, kTemplate, 5, &hKey[i]);
 		if (rv != CKR_OK) {
-			fprintf(stderr,
-				"C_CreateObject[%u]: Error = 0x%.8lX\n",
+			fprintf(stderr, "C_CreateObject[%u]: Error = 0x%.8lX\n",
 				i, rv);
 			error = 1;
-			if (i == 0)
+			if (i == 0) {
 				goto exit_objects;
+			}
 			break;
 		}
 	}
@@ -233,30 +231,33 @@ main(int argc, char *argv[]) {
 		endtime.tv_sec -= 1;
 		endtime.tv_nsec += 1000000000;
 	}
-	printf("%u created objects in %ld.%09lds\n", i,
-	       endtime.tv_sec, endtime.tv_nsec);
-	if (i > 0)
+	printf("%u created objects in %ld.%09lds\n", i, endtime.tv_sec,
+	       endtime.tv_nsec);
+	if (i > 0) {
 		printf("%g created objects/s\n",
-		       1024 * i / ((double) endtime.tv_sec +
-				   (double) endtime.tv_nsec / 1000000000.));
+		       1024 * i /
+			       ((double)endtime.tv_sec +
+				(double)endtime.tv_nsec / 1000000000.));
+	}
 
-    exit_objects:
+exit_objects:
 	for (i = 0; i < count; i++) {
 		/* Destroy objects */
-		if (hKey[i] == CK_INVALID_HANDLE)
+		if (hKey[i] == CK_INVALID_HANDLE) {
 			continue;
+		}
 		rv = pkcs_C_DestroyObject(hSession, hKey[i]);
 		if ((rv != CKR_OK) && !errflg) {
 			fprintf(stderr,
-				"C_DestroyObject[%u]: Error = 0x%.8lX\n",
-				i, rv);
+				"C_DestroyObject[%u]: Error = 0x%.8lX\n", i,
+				rv);
 			errflg = 1;
 		}
 	}
 
 	free(hKey);
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

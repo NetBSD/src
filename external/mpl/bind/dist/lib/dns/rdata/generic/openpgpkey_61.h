@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,10 +15,10 @@
 #define GENERIC_OPENPGPKEY_61_H 1
 
 typedef struct dns_rdata_openpgpkey {
-	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
-	uint16_t		length;
-	unsigned char *		keyring;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t length;
+	unsigned char *keyring;
 } dns_rdata_openpgpkey_t;
 
 #endif /* GENERIC_OPENPGPKEY_61_H */

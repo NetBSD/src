@@ -1,4 +1,4 @@
-/*	$NetBSD: rriterator.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rriterator.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define DNS_RRITERATOR_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/rriterator.h
  * \brief
@@ -24,8 +24,8 @@
  */
 
 /*****
- ***** Imports
- *****/
+***** Imports
+*****/
 
 #include <inttypes.h>
 
@@ -45,8 +45,8 @@
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Types
- *****/
+***** Types
+*****/
 
 /*%
  * A dns_rriterator_t is an iterator that iterates over an entire database,
@@ -54,25 +54,25 @@ ISC_LANG_BEGINDECLS
  */
 
 typedef struct dns_rriterator {
-	unsigned int		magic;
-	isc_result_t		result;
-	dns_db_t		*db;
-	dns_dbiterator_t 	*dbit;
-	dns_dbversion_t 	*ver;
-	isc_stdtime_t		now;
-	dns_dbnode_t		*node;
-	dns_fixedname_t		fixedname;
-	dns_rdatasetiter_t 	*rdatasetit;
-	dns_rdataset_t 		rdataset;
-	dns_rdata_t		rdata;
+	unsigned int	    magic;
+	isc_result_t	    result;
+	dns_db_t *	    db;
+	dns_dbiterator_t *  dbit;
+	dns_dbversion_t *   ver;
+	isc_stdtime_t	    now;
+	dns_dbnode_t *	    node;
+	dns_fixedname_t	    fixedname;
+	dns_rdatasetiter_t *rdatasetit;
+	dns_rdataset_t	    rdataset;
+	dns_rdata_t	    rdata;
 } dns_rriterator_t;
 
-#define RRITERATOR_MAGIC		ISC_MAGIC('R', 'R', 'I', 't')
-#define VALID_RRITERATOR(m)		ISC_MAGIC_VALID(m, RRITERATOR_MAGIC)
+#define RRITERATOR_MAGIC    ISC_MAGIC('R', 'R', 'I', 't')
+#define VALID_RRITERATOR(m) ISC_MAGIC_VALID(m, RRITERATOR_MAGIC)
 
 isc_result_t
-dns_rriterator_init(dns_rriterator_t *it, dns_db_t *db,
-		       dns_dbversion_t *ver, isc_stdtime_t now);
+dns_rriterator_init(dns_rriterator_t *it, dns_db_t *db, dns_dbversion_t *ver,
+		    isc_stdtime_t now);
 /*%
  * Initialize an rriterator; sets the cursor to the origin node
  * of the database.
@@ -131,9 +131,8 @@ dns_rriterator_next(dns_rriterator_t *it);
  */
 
 void
-dns_rriterator_current(dns_rriterator_t *it, dns_name_t **name,
-			  uint32_t *ttl, dns_rdataset_t **rdataset,
-			  dns_rdata_t **rdata);
+dns_rriterator_current(dns_rriterator_t *it, dns_name_t **name, uint32_t *ttl,
+		       dns_rdataset_t **rdataset, dns_rdata_t **rdata);
 /*%<
  * Make '*name' refer to the current name.  If 'rdataset' is not NULL,
  * make '*rdataset' refer to the current * rdataset.  If '*rdata' is not

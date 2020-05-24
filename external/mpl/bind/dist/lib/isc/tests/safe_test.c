@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: safe_test.c,v 1.5 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,15 +13,12 @@
 
 /* ! \file */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -38,12 +35,12 @@ isc_safe_memequal_test(void **state) {
 
 	assert_true(isc_safe_memequal("test", "test", 4));
 	assert_true(!isc_safe_memequal("test", "tesc", 4));
-	assert_true(isc_safe_memequal("\x00\x00\x00\x00",
-				      "\x00\x00\x00\x00", 4));
-	assert_true(!isc_safe_memequal("\x00\x00\x00\x00",
-				       "\x00\x00\x00\x01", 4));
-	assert_true(!isc_safe_memequal("\x00\x00\x00\x02",
-				       "\x00\x00\x00\x00", 4));
+	assert_true(
+		isc_safe_memequal("\x00\x00\x00\x00", "\x00\x00\x00\x00", 4));
+	assert_true(
+		!isc_safe_memequal("\x00\x00\x00\x00", "\x00\x00\x00\x01", 4));
+	assert_true(
+		!isc_safe_memequal("\x00\x00\x00\x02", "\x00\x00\x00\x00", 4));
 }
 
 /* test isc_safe_memwipe() */
@@ -53,7 +50,7 @@ isc_safe_memwipe_test(void **state) {
 
 	/* These should pass. */
 	isc_safe_memwipe(NULL, 0);
-	isc_safe_memwipe((void *) -1, 0);
+	isc_safe_memwipe((void *)-1, 0);
 
 	/*
 	 * isc_safe_memwipe(ptr, size) should function same as
@@ -107,4 +104,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

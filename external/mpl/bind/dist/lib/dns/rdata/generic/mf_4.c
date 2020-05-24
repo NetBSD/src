@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,8 +33,9 @@ fromtext_mf(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
@@ -165,8 +166,9 @@ freestruct_mf(ARGS_FREESTRUCT) {
 	REQUIRE(mf != NULL);
 	REQUIRE(mf->common.rdtype == dns_rdatatype_mf);
 
-	if (mf->mctx == NULL)
+	if (mf->mctx == NULL) {
 		return;
+	}
 	dns_name_free(&mf->mf, mf->mctx);
 	mf->mctx = NULL;
 }
@@ -202,7 +204,6 @@ digest_mf(ARGS_DIGEST) {
 
 static inline bool
 checkowner_mf(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_mf);
 
 	UNUSED(name);
@@ -215,7 +216,6 @@ checkowner_mf(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_mf(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 
 	UNUSED(rdata);
@@ -230,4 +230,4 @@ casecompare_mf(ARGS_COMPARE) {
 	return (compare_mf(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_MF_4_C */
+#endif /* RDATA_GENERIC_MF_4_C */

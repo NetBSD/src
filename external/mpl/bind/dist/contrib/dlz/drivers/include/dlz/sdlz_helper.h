@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz_helper.h,v 1.4 2019/02/24 20:01:29 christos Exp $	*/
+/*	$NetBSD: sdlz_helper.h,v 1.5 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -43,10 +43,10 @@
 /*
  * Types
  */
-#define SDLZH_REQUIRE_CLIENT	0x01
-#define SDLZH_REQUIRE_QUERY	0x02
-#define SDLZH_REQUIRE_RECORD	0x04
-#define SDLZH_REQUIRE_ZONE	0x08
+#define SDLZH_REQUIRE_CLIENT 0x01
+#define SDLZH_REQUIRE_QUERY  0x02
+#define SDLZH_REQUIRE_RECORD 0x04
+#define SDLZH_REQUIRE_ZONE   0x08
 
 typedef struct query_segment query_segment_t;
 typedef ISC_LIST(query_segment_t) query_list_t;
@@ -59,10 +59,10 @@ typedef struct driverinstance driverinstance_t;
  * special tokens are %zone%, %record%, %client%
  */
 struct query_segment {
-	void				*sql;
-	unsigned int			strlen;
-	bool				direct;
-	ISC_LINK(query_segment_t)	link;
+	void *	     sql;
+	unsigned int strlen;
+	bool	     direct;
+	ISC_LINK(query_segment_t) link;
 };
 
 /*%
@@ -73,20 +73,20 @@ struct query_segment {
  * make sure no two threads try to use the same DBI at a time.
  */
 struct dbinstance {
-	void			*dbconn;
-	query_list_t		*allnodes_q;
-	query_list_t		*allowxfr_q;
-	query_list_t		*authority_q;
-	query_list_t		*findzone_q;
-	query_list_t		*lookup_q;
-	query_list_t		*countzone_q;
-	char			*query_buf;
-	char			*zone;
-	char			*record;
-	char			*client;
-	isc_mem_t		*mctx;
-	isc_mutex_t		instance_lock;
-	ISC_LINK(dbinstance_t)	link;
+	void *	      dbconn;
+	query_list_t *allnodes_q;
+	query_list_t *allowxfr_q;
+	query_list_t *authority_q;
+	query_list_t *findzone_q;
+	query_list_t *lookup_q;
+	query_list_t *countzone_q;
+	char *	      query_buf;
+	char *	      zone;
+	char *	      record;
+	char *	      client;
+	isc_mem_t *   mctx;
+	isc_mutex_t   instance_lock;
+	ISC_LINK(dbinstance_t) link;
 };
 
 /*
@@ -108,14 +108,15 @@ void
 sdlzh_destroy_sqldbinstance(dbinstance_t *dbi);
 
 char *
-sdlzh_get_parameter_value(isc_mem_t *mctx, const char *input, const char* key);
+sdlzh_get_parameter_value(isc_mem_t *mctx, const char *input, const char *key);
 
-/* Compatability with existing DLZ drivers */
+/* Compatibility with existing DLZ drivers */
 
-#define	build_querystring	sdlzh_build_querystring
-#define	build_sqldbinstance	sdlzh_build_sqldbinstance
-#define	destroy_sqldbinstance	sdlzh_destroy_sqldbinstance
+#define build_querystring     sdlzh_build_querystring
+#define build_sqldbinstance   sdlzh_build_sqldbinstance
+#define destroy_sqldbinstance sdlzh_destroy_sqldbinstance
 
-#define	getParameterValue(x,y)  sdlzh_get_parameter_value(named_g_mctx, (x), (y))
+#define getParameterValue(x, y) \
+	sdlzh_get_parameter_value(named_g_mctx, (x), (y))
 
 #endif /* SDLZHELPER_H */

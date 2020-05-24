@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.7 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,15 +13,12 @@
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -40,9 +37,9 @@
 #include <isc/mem.h>
 #include <isc/os.h>
 #include <isc/print.h>
-#include <isc/string.h>
 #include <isc/socket.h>
 #include <isc/stdio.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
@@ -58,7 +55,15 @@
 
 #include "dnstest.h"
 
-isc_mem_t *mctx = NULL;
+#define CHECK(r)                               \
+	do {                                   \
+		result = (r);                  \
+		if (result != ISC_R_SUCCESS) { \
+			goto cleanup;          \
+		}                              \
+	} while (/*CONSTCOND*/0)
+
+isc_mem_t *dt_mctx = NULL;
 isc_log_t *lctx = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_task_t *maintask = NULL;
@@ -75,17 +80,15 @@ static bool test_running = false;
 /*
  * Logging categories: this needs to match the list in bin/named/log.c.
  */
-static isc_logcategory_t categories[] = {
-		{ "",                0 },
-		{ "client",          0 },
-		{ "network",         0 },
-		{ "update",          0 },
-		{ "queries",         0 },
-		{ "unmatched",       0 },
-		{ "update-security", 0 },
-		{ "query-errors",    0 },
-		{ NULL,              0 }
-};
+static isc_logcategory_t categories[] = { { "", 0 },
+					  { "client", 0 },
+					  { "network", 0 },
+					  { "update", 0 },
+					  { "queries", 0 },
+					  { "unmatched", 0 },
+					  { "update-security", 0 },
+					  { "query-errors", 0 },
+					  { NULL, 0 } };
 
 static void
 cleanup_managers(void) {
@@ -112,13 +115,13 @@ create_managers(void) {
 	isc_result_t result;
 	ncpus = isc_os_ncpus();
 
-	CHECK(isc_taskmgr_create(mctx, ncpus, 0, &taskmgr));
-	CHECK(isc_timermgr_create(mctx, &timermgr));
-	CHECK(isc_socketmgr_create(mctx, &socketmgr));
+	CHECK(isc_taskmgr_create(dt_mctx, ncpus, 0, NULL, &taskmgr));
+	CHECK(isc_timermgr_create(dt_mctx, &timermgr));
+	CHECK(isc_socketmgr_create(dt_mctx, &socketmgr));
 	CHECK(isc_task_create(taskmgr, 0, &maintask));
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	cleanup_managers();
 	return (result);
 }
@@ -137,14 +140,14 @@ dns_test_begin(FILE *logfile, bool start_managers) {
 		isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 	}
 
-	INSIST(mctx == NULL);
-	CHECK(isc_mem_create(0, 0, &mctx));
+	INSIST(dt_mctx == NULL);
+	isc_mem_create(&dt_mctx);
 
 	/* Don't check the memory leaks as they hide the assertions */
-	isc_mem_setdestroycheck(mctx, false);
+	isc_mem_setdestroycheck(dt_mctx, false);
 
 	INSIST(!dst_active);
-	CHECK(dst_lib_init(mctx, NULL));
+	CHECK(dst_lib_init(dt_mctx, NULL));
 	dst_active = true;
 
 	if (logfile != NULL) {
@@ -152,8 +155,7 @@ dns_test_begin(FILE *logfile, bool start_managers) {
 		isc_logconfig_t *logconfig = NULL;
 
 		INSIST(lctx == NULL);
-		CHECK(isc_log_create(mctx, &lctx, &logconfig));
-
+		isc_log_create(dt_mctx, &lctx, &logconfig);
 		isc_log_registercategories(lctx, categories);
 		isc_log_setcontext(lctx);
 		dns_log_init(lctx);
@@ -163,10 +165,8 @@ dns_test_begin(FILE *logfile, bool start_managers) {
 		destination.file.name = NULL;
 		destination.file.versions = ISC_LOG_ROLLNEVER;
 		destination.file.maximum_size = 0;
-		CHECK(isc_log_createchannel(logconfig, "stderr",
-					    ISC_LOG_TOFILEDESC,
-					    ISC_LOG_DYNAMIC,
-					    &destination, 0));
+		isc_log_createchannel(logconfig, "stderr", ISC_LOG_TOFILEDESC,
+				      ISC_LOG_DYNAMIC, &destination, 0);
 		CHECK(isc_log_usechannel(logconfig, "stderr", NULL, NULL));
 	}
 
@@ -187,7 +187,7 @@ dns_test_begin(FILE *logfile, bool start_managers) {
 
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	dns_test_end();
 	return (result);
 }
@@ -203,8 +203,8 @@ dns_test_end(void) {
 		isc_log_destroy(&lctx);
 	}
 
-	if (mctx != NULL) {
-		isc_mem_destroy(&mctx);
+	if (dt_mctx != NULL) {
+		isc_mem_destroy(&dt_mctx);
 	}
 
 	test_running = false;
@@ -218,21 +218,21 @@ dns_test_makeview(const char *name, dns_view_t **viewp) {
 	isc_result_t result;
 	dns_view_t *view = NULL;
 
-	CHECK(dns_view_create(mctx, dns_rdataclass_in, name, &view));
+	CHECK(dns_view_create(dt_mctx, dns_rdataclass_in, name, &view));
 	*viewp = view;
 
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (view != NULL)
+cleanup:
+	if (view != NULL) {
 		dns_view_detach(&view);
+	}
 	return (result);
 }
 
 isc_result_t
 dns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
-		  bool createview)
-{
+		  bool createview) {
 	dns_fixedname_t fixed_origin;
 	dns_zone_t *zone = NULL;
 	isc_result_t result;
@@ -243,7 +243,7 @@ dns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
 	/*
 	 * Create the zone structure.
 	 */
-	result = dns_zone_create(&zone, mctx);
+	result = dns_zone_create(&zone, dt_mctx);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -288,7 +288,7 @@ dns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
 
 	return (ISC_R_SUCCESS);
 
- detach_zone:
+detach_zone:
 	dns_zone_detach(&zone);
 
 	return (result);
@@ -299,7 +299,7 @@ dns_test_setupzonemgr(void) {
 	isc_result_t result;
 	REQUIRE(zonemgr == NULL);
 
-	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+	result = dns_zonemgr_create(dt_mctx, taskmgr, timermgr, socketmgr,
 				    &zonemgr);
 	return (result);
 }
@@ -310,8 +310,9 @@ dns_test_managezone(dns_zone_t *zone) {
 	REQUIRE(zonemgr != NULL);
 
 	result = dns_zonemgr_setsize(zonemgr, 1);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
 	result = dns_zonemgr_managezone(zonemgr, zone);
 	return (result);
@@ -344,33 +345,34 @@ dns_test_nap(uint32_t usec) {
 	nanosleep(&ts, NULL);
 #elif HAVE_USLEEP
 	usleep(usec);
-#else
+#else  /* ifdef HAVE_NANOSLEEP */
 	/*
 	 * No fractional-second sleep function is available, so we
 	 * round up to the nearest second and sleep instead
 	 */
 	sleep((usec / 1000000) + 1);
-#endif
+#endif /* ifdef HAVE_NANOSLEEP */
 }
 
 isc_result_t
 dns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
-		const char *testfile)
-{
-	isc_result_t		result;
-	dns_fixedname_t		fixed;
-	dns_name_t		*name;
+		const char *testfile) {
+	isc_result_t result;
+	dns_fixedname_t fixed;
+	dns_name_t *name;
 
 	name = dns_fixedname_initname(&fixed);
 
 	result = dns_name_fromstring(name, origin, 0, NULL);
-	if (result != ISC_R_SUCCESS)
-		return(result);
-
-	result = dns_db_create(mctx, "rbt", name, dbtype, dns_rdataclass_in,
-			       0, NULL, db);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
+
+	result = dns_db_create(dt_mctx, "rbt", name, dbtype, dns_rdataclass_in,
+			       0, NULL, db);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
 
 	result = dns_db_load(*db, testfile, dns_masterformat_text, 0);
 	return (result);
@@ -378,12 +380,13 @@ dns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
 
 static int
 fromhex(char c) {
-	if (c >= '0' && c <= '9')
+	if (c >= '0' && c <= '9') {
 		return (c - '0');
-	else if (c >= 'a' && c <= 'f')
+	} else if (c >= 'a' && c <= 'f') {
 		return (c - 'a' + 10);
-	else if (c >= 'A' && c <= 'F')
+	} else if (c >= 'A' && c <= 'F') {
 		return (c - 'A' + 10);
+	}
 
 	printf("bad input format: %02x\n", c);
 	exit(3);
@@ -396,12 +399,9 @@ fromhex(char c) {
  * times 'len'. Always returns 'buf'.
  */
 char *
-dns_test_tohex(const unsigned char *data, size_t len, char *buf, size_t buflen)
-{
-	isc_constregion_t source = {
-		.base = data,
-		.length = len
-	};
+dns_test_tohex(const unsigned char *data, size_t len, char *buf,
+	       size_t buflen) {
+	isc_constregion_t source = { .base = data, .length = len };
 	isc_buffer_t target;
 	isc_result_t result;
 
@@ -414,9 +414,8 @@ dns_test_tohex(const unsigned char *data, size_t len, char *buf, size_t buflen)
 }
 
 isc_result_t
-dns_test_getdata(const char *file, unsigned char *buf,
-		 size_t bufsiz, size_t *sizep)
-{
+dns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
+		 size_t *sizep) {
 	isc_result_t result;
 	unsigned char *bp;
 	char *rp, *wp;
@@ -426,8 +425,9 @@ dns_test_getdata(const char *file, unsigned char *buf,
 	int n;
 
 	result = isc_stdio_open(file, "r", &f);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
 	bp = buf;
 	while (fgets(s, sizeof(s), f) != NULL) {
@@ -435,21 +435,25 @@ dns_test_getdata(const char *file, unsigned char *buf,
 		wp = s;
 		len = 0;
 		while (*rp != '\0') {
-			if (*rp == '#')
+			if (*rp == '#') {
 				break;
-			if (*rp != ' ' && *rp != '\t' &&
-			    *rp != '\r' && *rp != '\n') {
+			}
+			if (*rp != ' ' && *rp != '\t' && *rp != '\r' &&
+			    *rp != '\n') {
 				*wp++ = *rp;
 				len++;
 			}
 			rp++;
 		}
-		if (len == 0U)
+		if (len == 0U) {
 			continue;
-		if (len % 2 != 0U)
+		}
+		if (len % 2 != 0U) {
 			CHECK(ISC_R_UNEXPECTEDEND);
-		if (len > bufsiz * 2)
+		}
+		if (len > bufsiz * 2) {
 			CHECK(ISC_R_NOSPACE);
+		}
 		rp = s;
 		for (i = 0; i < len; i += 2) {
 			n = fromhex(*rp++);
@@ -459,12 +463,11 @@ dns_test_getdata(const char *file, unsigned char *buf,
 		}
 	}
 
-
 	*sizep = bp - buf;
 
 	result = ISC_R_SUCCESS;
 
- cleanup:
+cleanup:
 	isc_stdio_close(f);
 	return (result);
 }
@@ -478,8 +481,7 @@ nullmsg(dns_rdatacallbacks_t *cb, const char *fmt, ...) {
 isc_result_t
 dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 			 dns_rdatatype_t rdtype, unsigned char *dst,
-			 size_t dstlen, const char *src, bool warnings)
-{
+			 size_t dstlen, const char *src, bool warnings) {
 	dns_rdatacallbacks_t callbacks;
 	isc_buffer_t source, target;
 	isc_lex_t *lex = NULL;
@@ -502,7 +504,7 @@ dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	/*
 	 * Create a lexer as one is required by dns_rdata_fromtext().
 	 */
-	result = isc_lex_create(mctx, 64, &lex);
+	result = isc_lex_create(dt_mctx, 64, &lex);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -548,9 +550,9 @@ dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	 * Parse input string, determining result.
 	 */
 	result = dns_rdata_fromtext(rdata, rdclass, rdtype, lex, dns_rootname,
-				    0, mctx, &target, &callbacks);
+				    0, dt_mctx, &target, &callbacks);
 
- destroy_lexer:
+destroy_lexer:
 	isc_lex_destroy(&lex);
 
 	return (result);
@@ -567,10 +569,9 @@ dns_test_namefromstring(const char *namestr, dns_fixedname_t *fname) {
 
 	name = dns_fixedname_initname(fname);
 
-	result = isc_buffer_allocate(mctx, &b, length);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_buffer_allocate(dt_mctx, &b, length);
 
-	isc_buffer_putmem(b, (const unsigned char *) namestr, length);
+	isc_buffer_putmem(b, (const unsigned char *)namestr, length);
 	result = dns_name_fromtext(name, b, dns_rootname, 0, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -579,8 +580,7 @@ dns_test_namefromstring(const char *namestr, dns_fixedname_t *fname) {
 
 isc_result_t
 dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes,
-			 bool warnings)
-{
+			 bool warnings) {
 	isc_result_t result = ISC_R_SUCCESS;
 	unsigned char rdata_buf[1024];
 	dns_difftuple_t *tuple = NULL;
@@ -594,14 +594,15 @@ dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes,
 	REQUIRE(diff != NULL);
 	REQUIRE(changes != NULL);
 
-	dns_diff_init(mctx, diff);
+	dns_diff_init(dt_mctx, diff);
 
 	for (i = 0; changes[i].owner != NULL; i++) {
 		/*
 		 * Parse owner name.
 		 */
 		name = dns_fixedname_initname(&fixedname);
-		result = dns_name_fromstring(name, changes[i].owner, 0, mctx);
+		result = dns_name_fromstring(name, changes[i].owner, 0,
+					     dt_mctx);
 		if (result != ISC_R_SUCCESS) {
 			break;
 		}
@@ -621,11 +622,9 @@ dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes,
 		 * Parse RDATA.
 		 */
 		dns_rdata_init(&rdata);
-		result = dns_test_rdatafromstring(&rdata, dns_rdataclass_in,
-						  rdatatype, rdata_buf,
-						  sizeof(rdata_buf),
-						  changes[i].rdata,
-						  warnings);
+		result = dns_test_rdatafromstring(
+			&rdata, dns_rdataclass_in, rdatatype, rdata_buf,
+			sizeof(rdata_buf), changes[i].rdata, warnings);
 		if (result != ISC_R_SUCCESS) {
 			break;
 		}
@@ -634,7 +633,7 @@ dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes,
 		 * Create a diff tuple for the parsed change and append it to
 		 * the diff.
 		 */
-		result = dns_difftuple_create(mctx, changes[i].op, name,
+		result = dns_difftuple_create(dt_mctx, changes[i].op, name,
 					      changes[i].ttl, &rdata, &tuple);
 		if (result != ISC_R_SUCCESS) {
 			break;

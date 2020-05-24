@@ -1,4 +1,4 @@
-/*	$NetBSD: duration_test.c,v 1.1.1.1 2020/05/24 19:36:48 christos Exp $	*/
+/*	$NetBSD: duration_test.c,v 1.2 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,7 @@
 		result = (r);                \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 isc_mem_t *mctx = NULL;
 isc_log_t *lctx = NULL;

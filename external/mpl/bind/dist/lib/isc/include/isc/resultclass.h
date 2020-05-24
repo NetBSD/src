@@ -1,4 +1,4 @@
-/*	$NetBSD: resultclass.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: resultclass.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,8 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_RESULTCLASS_H
 #define ISC_RESULTCLASS_H 1
-
 
 /*! \file isc/resultclass.h
  * \brief Registry of Predefined Result Type Classes
@@ -27,20 +25,19 @@
  * Result classes >= 1024 and <= 65535 are reserved for application use.
  */
 
-#define ISC_RESULTCLASS_FROMNUM(num)		((num) << 16)
-#define ISC_RESULTCLASS_TONUM(rclass)		((rclass) >> 16)
-#define ISC_RESULTCLASS_SIZE			65536
+#define ISC_RESULTCLASS_FROMNUM(num)  ((num) << 16)
+#define ISC_RESULTCLASS_TONUM(rclass) ((rclass) >> 16)
+#define ISC_RESULTCLASS_SIZE	      65536
 #define ISC_RESULTCLASS_INCLASS(rclass, result) \
-	((rclass) == ((result) & 0xFFFF0000))
+	((rclass) == ((result)&0xFFFF0000))
 
-
-#define	ISC_RESULTCLASS_ISC		ISC_RESULTCLASS_FROMNUM(0)
-#define	ISC_RESULTCLASS_DNS		ISC_RESULTCLASS_FROMNUM(1)
-#define	ISC_RESULTCLASS_DST		ISC_RESULTCLASS_FROMNUM(2)
-#define	ISC_RESULTCLASS_DNSRCODE	ISC_RESULTCLASS_FROMNUM(3)
-#define	ISC_RESULTCLASS_OMAPI		ISC_RESULTCLASS_FROMNUM(4)
-#define	ISC_RESULTCLASS_ISCCC		ISC_RESULTCLASS_FROMNUM(5)
-#define	ISC_RESULTCLASS_DHCP		ISC_RESULTCLASS_FROMNUM(6)
-#define	ISC_RESULTCLASS_PK11		ISC_RESULTCLASS_FROMNUM(7)
+#define ISC_RESULTCLASS_ISC	 ISC_RESULTCLASS_FROMNUM(0)
+#define ISC_RESULTCLASS_DNS	 ISC_RESULTCLASS_FROMNUM(1)
+#define ISC_RESULTCLASS_DST	 ISC_RESULTCLASS_FROMNUM(2)
+#define ISC_RESULTCLASS_DNSRCODE ISC_RESULTCLASS_FROMNUM(3)
+#define ISC_RESULTCLASS_OMAPI	 ISC_RESULTCLASS_FROMNUM(4)
+#define ISC_RESULTCLASS_ISCCC	 ISC_RESULTCLASS_FROMNUM(5)
+#define ISC_RESULTCLASS_DHCP	 ISC_RESULTCLASS_FROMNUM(6)
+#define ISC_RESULTCLASS_PK11	 ISC_RESULTCLASS_FROMNUM(7)
 
 #endif /* ISC_RESULTCLASS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@ fromtext_loc(ARGS_FROMTEXT) {
 	long tmp;
 	long m;
 	long cm;
-	long poweroften[8] = { 1, 10, 100, 1000,
+	long poweroften[8] = { 1,     10,     100,     1000,
 			       10000, 100000, 1000000, 10000000 };
 	int man;
 	int exp;
@@ -54,9 +54,9 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	m1 = s1 = 0;
 	m2 = s2 = 0;
-	size = 0x12;	/* 1.00m */
-	hp = 0x16;	/* 10000.00 m */
-	vp = 0x13;	/* 10.00 m */
+	size = 0x12; /* 1.00m */
+	hp = 0x16;   /* 10000.00 m */
+	vp = 0x13;   /* 10.00 m */
 	version = 0;
 
 	/*
@@ -64,48 +64,60 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 90U)
+	if (token.value.as_ulong > 90U) {
 		RETTOK(ISC_R_RANGE);
+	}
 	d1 = (int)token.value.as_ulong;
 	/*
 	 * Minutes.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "N") == 0) {
 		north = true;
-	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0)
+	}
+	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0) {
 		goto getlong;
+	}
 	m1 = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0)
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
-	if (m1 < 0 || m1 > 59)
+	}
+	if (m1 < 0 || m1 > 59) {
 		RETTOK(ISC_R_RANGE);
-	if (d1 == 90 && m1 != 0)
+	}
+	if (d1 == 90 && m1 != 0) {
 		RETTOK(ISC_R_RANGE);
+	}
 
 	/*
 	 * Seconds.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "N") == 0) {
 		north = true;
-	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0)
+	}
+	if (north || strcasecmp(DNS_AS_STR(token), "S") == 0) {
 		goto getlong;
+	}
 	s1 = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.')
+	if (*e != 0 && *e != '.') {
 		RETTOK(DNS_R_SYNTAX);
-	if (s1 < 0 || s1 > 59)
+	}
+	if (s1 < 0 || s1 > 59) {
 		RETTOK(ISC_R_RANGE);
+	}
 	if (*e == '.') {
 		const char *l;
 		e++;
 		for (i = 0; i < 3; i++) {
-			if (*e == 0)
+			if (*e == 0) {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 			s1 *= 10;
 			s1 += tmp;
 		}
@@ -113,43 +125,51 @@ fromtext_loc(ARGS_FROMTEXT) {
 			s1 *= 10;
 		l = e;
 		while (*e != 0) {
-			if (decvalue(*e++) < 0)
+			if (decvalue(*e++) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 		}
 		if (*l != '\0' && callbacks != NULL) {
 			const char *file = isc_lex_getsourcename(lexer);
 			unsigned long line = isc_lex_getsourceline(lexer);
 
-			if (file == NULL)
+			if (file == NULL) {
 				file = "UNKNOWN";
-			(*callbacks->warn)(callbacks, "%s: %s:%u: '%s' extra "
+			}
+			(*callbacks->warn)(callbacks,
+					   "%s: %s:%u: '%s' extra "
 					   "precision digits ignored",
 					   "dns_rdata_fromtext", file, line,
 					   DNS_AS_STR(token));
 		}
-	} else
+	} else {
 		s1 *= 1000;
-	if (d1 == 90 && s1 != 0)
+	}
+	if (d1 == 90 && s1 != 0) {
 		RETTOK(ISC_R_RANGE);
+	}
 
 	/*
 	 * Direction.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "N") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "N") == 0) {
 		north = true;
-	if (!north && strcasecmp(DNS_AS_STR(token), "S") != 0)
+	}
+	if (!north && strcasecmp(DNS_AS_STR(token), "S") != 0) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 
- getlong:
+getlong:
 	/*
 	 * Degrees.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 180U)
+	if (token.value.as_ulong > 180U) {
 		RETTOK(ISC_R_RANGE);
+	}
 	d2 = (int)token.value.as_ulong;
 
 	/*
@@ -157,40 +177,51 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "E") == 0) {
 		east = true;
-	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0)
+	}
+	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0) {
 		goto getalt;
+	}
 	m2 = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0)
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
-	if (m2 < 0 || m2 > 59)
+	}
+	if (m2 < 0 || m2 > 59) {
 		RETTOK(ISC_R_RANGE);
-	if (d2 == 180 && m2 != 0)
+	}
+	if (d2 == 180 && m2 != 0) {
 		RETTOK(ISC_R_RANGE);
+	}
 
 	/*
 	 * Seconds.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "E") == 0) {
 		east = true;
-	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0)
+	}
+	if (east || strcasecmp(DNS_AS_STR(token), "W") == 0) {
 		goto getalt;
+	}
 	s2 = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.')
+	if (*e != 0 && *e != '.') {
 		RETTOK(DNS_R_SYNTAX);
-	if (s2 < 0 || s2 > 59)
+	}
+	if (s2 < 0 || s2 > 59) {
 		RETTOK(ISC_R_RANGE);
+	}
 	if (*e == '.') {
 		const char *l;
 		e++;
 		for (i = 0; i < 3; i++) {
-			if (*e == 0)
+			if (*e == 0) {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 			s2 *= 10;
 			s2 += tmp;
 		}
@@ -198,71 +229,87 @@ fromtext_loc(ARGS_FROMTEXT) {
 			s2 *= 10;
 		l = e;
 		while (*e != 0) {
-			if (decvalue(*e++) < 0)
+			if (decvalue(*e++) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 		}
 		if (*l != '\0' && callbacks != NULL) {
 			const char *file = isc_lex_getsourcename(lexer);
 			unsigned long line = isc_lex_getsourceline(lexer);
 
-			if (file == NULL)
+			if (file == NULL) {
 				file = "UNKNOWN";
-			(*callbacks->warn)(callbacks, "%s: %s:%u: '%s' extra "
+			}
+			(*callbacks->warn)(callbacks,
+					   "%s: %s:%u: '%s' extra "
 					   "precision digits ignored",
-					   "dns_rdata_fromtext",
-					   file, line, DNS_AS_STR(token));
+					   "dns_rdata_fromtext", file, line,
+					   DNS_AS_STR(token));
 		}
-	} else
+	} else {
 		s2 *= 1000;
-	if (d2 == 180 && s2 != 0)
+	}
+	if (d2 == 180 && s2 != 0) {
 		RETTOK(ISC_R_RANGE);
+	}
 
 	/*
 	 * Direction.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strcasecmp(DNS_AS_STR(token), "E") == 0)
+	if (strcasecmp(DNS_AS_STR(token), "E") == 0) {
 		east = true;
-	if (!east && strcasecmp(DNS_AS_STR(token), "W") != 0)
+	}
+	if (!east && strcasecmp(DNS_AS_STR(token), "W") != 0) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 
- getalt:
+getalt:
 	/*
 	 * Altitude.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 	m = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.' && *e != 'm')
+	if (*e != 0 && *e != '.' && *e != 'm') {
 		RETTOK(DNS_R_SYNTAX);
-	if (m < -100000 || m > 42849672)
+	}
+	if (m < -100000 || m > 42849672) {
 		RETTOK(ISC_R_RANGE);
+	}
 	cm = 0;
 	if (*e == '.') {
 		e++;
 		for (i = 0; i < 2; i++) {
-			if (*e == 0 || *e == 'm')
+			if (*e == 0 || *e == 'm') {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				return (DNS_R_SYNTAX);
+			}
 			cm *= 10;
-			if (m < 0)
+			if (m < 0) {
 				cm -= tmp;
-			else
+			} else {
 				cm += tmp;
+			}
 		}
 		for (; i < 2; i++)
 			cm *= 10;
 	}
-	if (*e == 'm')
+	if (*e == 'm') {
 		e++;
-	if (*e != 0)
+	}
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
-	if (m == -100000 && cm != 0)
+	}
+	if (m == -100000 && cm != 0) {
 		RETTOK(ISC_R_RANGE);
-	if (m == 42849672 && cm > 95)
+	}
+	if (m == 42849672 && cm > 95) {
 		RETTOK(ISC_R_RANGE);
+	}
 	/*
 	 * Adjust base.
 	 */
@@ -275,41 +322,49 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      true));
-	if (token.type == isc_tokentype_eol ||
-	    token.type == isc_tokentype_eof) {
+	if (token.type == isc_tokentype_eol || token.type == isc_tokentype_eof)
+	{
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
 	m = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.' && *e != 'm')
+	if (*e != 0 && *e != '.' && *e != 'm') {
 		RETTOK(DNS_R_SYNTAX);
-	if (m < 0 || m > 90000000)
+	}
+	if (m < 0 || m > 90000000) {
 		RETTOK(ISC_R_RANGE);
+	}
 	cm = 0;
 	if (*e == '.') {
 		e++;
 		for (i = 0; i < 2; i++) {
-			if (*e == 0 || *e == 'm')
+			if (*e == 0 || *e == 'm') {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 			cm *= 10;
 			cm += tmp;
 		}
 		for (; i < 2; i++)
 			cm *= 10;
 	}
-	if (*e == 'm')
+	if (*e == 'm') {
 		e++;
-	if (*e != 0)
+	}
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	/*
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
-			if (m < poweroften[exp+1])
+		for (exp = 0; exp < 7; exp++) {
+			if (m < poweroften[exp + 1]) {
 				break;
+			}
+		}
 		man = m / poweroften[exp];
 		exp += 2;
 	} else {
@@ -328,47 +383,55 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      true));
-	if (token.type == isc_tokentype_eol ||
-	    token.type == isc_tokentype_eof) {
+	if (token.type == isc_tokentype_eol || token.type == isc_tokentype_eof)
+	{
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
 	m = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.' && *e != 'm')
+	if (*e != 0 && *e != '.' && *e != 'm') {
 		RETTOK(DNS_R_SYNTAX);
-	if (m < 0 || m > 90000000)
+	}
+	if (m < 0 || m > 90000000) {
 		RETTOK(ISC_R_RANGE);
+	}
 	cm = 0;
 	if (*e == '.') {
 		e++;
 		for (i = 0; i < 2; i++) {
-			if (*e == 0 || *e == 'm')
+			if (*e == 0 || *e == 'm') {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 			cm *= 10;
 			cm += tmp;
 		}
 		for (; i < 2; i++)
 			cm *= 10;
 	}
-	if (*e == 'm')
+	if (*e == 'm') {
 		e++;
-	if (*e != 0)
+	}
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	/*
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
-			if (m < poweroften[exp+1])
+		for (exp = 0; exp < 7; exp++) {
+			if (m < poweroften[exp + 1]) {
 				break;
+			}
+		}
 		man = m / poweroften[exp];
 		exp += 2;
 	} else if (cm >= 10) {
 		man = cm / 10;
 		exp = 1;
-	} else  {
+	} else {
 		man = cm;
 		exp = 0;
 	}
@@ -379,41 +442,49 @@ fromtext_loc(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      true));
-	if (token.type == isc_tokentype_eol ||
-	    token.type == isc_tokentype_eof) {
+	if (token.type == isc_tokentype_eol || token.type == isc_tokentype_eof)
+	{
 		isc_lex_ungettoken(lexer, &token);
 		goto encode;
 	}
 	m = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e != 0 && *e != '.' && *e != 'm')
+	if (*e != 0 && *e != '.' && *e != 'm') {
 		RETTOK(DNS_R_SYNTAX);
-	if (m < 0 || m > 90000000)
+	}
+	if (m < 0 || m > 90000000) {
 		RETTOK(ISC_R_RANGE);
+	}
 	cm = 0;
 	if (*e == '.') {
 		e++;
 		for (i = 0; i < 2; i++) {
-			if (*e == 0 || *e == 'm')
+			if (*e == 0 || *e == 'm') {
 				break;
-			if ((tmp = decvalue(*e++)) < 0)
+			}
+			if ((tmp = decvalue(*e++)) < 0) {
 				RETTOK(DNS_R_SYNTAX);
+			}
 			cm *= 10;
 			cm += tmp;
 		}
 		for (; i < 2; i++)
 			cm *= 10;
 	}
-	if (*e == 'm')
+	if (*e == 'm') {
 		e++;
-	if (*e != 0)
+	}
+	if (*e != 0) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	/*
 	 * We don't just multiply out as we will overflow.
 	 */
 	if (m > 0) {
-		for (exp = 0; exp < 7; exp++)
-			if (m < poweroften[exp+1])
+		for (exp = 0; exp < 7; exp++) {
+			if (m < poweroften[exp + 1]) {
 				break;
+			}
+		}
 		man = m / poweroften[exp];
 		exp += 2;
 	} else if (cm >= 10) {
@@ -425,21 +496,23 @@ fromtext_loc(ARGS_FROMTEXT) {
 	}
 	vp = (man << 4) + exp;
 
- encode:
+encode:
 	RETERR(mem_tobuffer(target, &version, 1));
 	RETERR(mem_tobuffer(target, &size, 1));
 	RETERR(mem_tobuffer(target, &hp, 1));
 	RETERR(mem_tobuffer(target, &vp, 1));
-	if (north)
-		latitude = 0x80000000 + ( d1 * 3600 + m1 * 60 ) * 1000 + s1;
-	else
-		latitude = 0x80000000 - ( d1 * 3600 + m1 * 60 ) * 1000 - s1;
+	if (north) {
+		latitude = 0x80000000 + (d1 * 3600 + m1 * 60) * 1000 + s1;
+	} else {
+		latitude = 0x80000000 - (d1 * 3600 + m1 * 60) * 1000 - s1;
+	}
 	RETERR(uint32_tobuffer(latitude, target));
 
-	if (east)
-		longitude = 0x80000000 + ( d2 * 3600 + m2 * 60 ) * 1000 + s2;
-	else
-		longitude = 0x80000000 - ( d2 * 3600 + m2 * 60 ) * 1000 - s2;
+	if (east) {
+		longitude = 0x80000000 + (d2 * 3600 + m2 * 60) * 1000 + s2;
+	} else {
+		longitude = 0x80000000 - (d2 * 3600 + m2 * 60) * 1000 - s2;
+	}
 	RETERR(uint32_tobuffer(longitude, target));
 
 	return (uint32_tobuffer(altitude, target));
@@ -461,9 +534,10 @@ totext_loc(ARGS_TOTEXT) {
 	char vbuf[sizeof("90000000m")];
 	/* "89 59 59.999 N 179 59 59.999 E " */
 	/* "-42849672.95m 90000000m 90000000m 90000000m"; */
-	char buf[8*6 + 12*1 + 2*10 + sizeof(sbuf)+sizeof(hbuf)+sizeof(vbuf)];
+	char buf[8 * 6 + 12 * 1 + 2 * 10 + sizeof(sbuf) + sizeof(hbuf) +
+		 sizeof(vbuf)];
 	unsigned char size, hp, vp;
-	unsigned long poweroften[8] = { 1, 10, 100, 1000,
+	unsigned long poweroften[8] = { 1,     10,     100,	1000,
 					10000, 100000, 1000000, 10000000 };
 
 	UNUSED(tctx);
@@ -473,37 +547,38 @@ totext_loc(ARGS_TOTEXT) {
 
 	dns_rdata_toregion(rdata, &sr);
 
-	if (sr.base[0] != 0)
+	if (sr.base[0] != 0) {
 		return (ISC_R_NOTIMPLEMENTED);
+	}
 
 	REQUIRE(rdata->length == 16);
 
 	size = sr.base[1];
-	INSIST((size&0x0f) < 10 && (size>>4) < 10);
-	if ((size&0x0f)> 1) {
-		snprintf(sbuf, sizeof(sbuf),
-			 "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
+	INSIST((size & 0x0f) < 10 && (size >> 4) < 10);
+	if ((size & 0x0f) > 1) {
+		snprintf(sbuf, sizeof(sbuf), "%lum",
+			 (size >> 4) * poweroften[(size & 0x0f) - 2]);
 	} else {
-		snprintf(sbuf, sizeof(sbuf),
-			 "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
+		snprintf(sbuf, sizeof(sbuf), "0.%02lum",
+			 (size >> 4) * poweroften[(size & 0x0f)]);
 	}
 	hp = sr.base[2];
-	INSIST((hp&0x0f) < 10 && (hp>>4) < 10);
-	if ((hp&0x0f)> 1) {
-		snprintf(hbuf, sizeof(hbuf),
-			"%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
+	INSIST((hp & 0x0f) < 10 && (hp >> 4) < 10);
+	if ((hp & 0x0f) > 1) {
+		snprintf(hbuf, sizeof(hbuf), "%lum",
+			 (hp >> 4) * poweroften[(hp & 0x0f) - 2]);
 	} else {
-		snprintf(hbuf, sizeof(hbuf),
-			 "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
+		snprintf(hbuf, sizeof(hbuf), "0.%02lum",
+			 (hp >> 4) * poweroften[(hp & 0x0f)]);
 	}
 	vp = sr.base[3];
-	INSIST((vp&0x0f) < 10 && (vp>>4) < 10);
-	if ((vp&0x0f)> 1) {
-		snprintf(vbuf, sizeof(vbuf),
-			 "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
+	INSIST((vp & 0x0f) < 10 && (vp >> 4) < 10);
+	if ((vp & 0x0f) > 1) {
+		snprintf(vbuf, sizeof(vbuf), "%lum",
+			 (vp >> 4) * poweroften[(vp & 0x0f) - 2]);
 	} else {
-		snprintf(vbuf, sizeof(vbuf),
-			 "0.%02lum", (vp>>4) * poweroften[(vp&0x0f)]);
+		snprintf(vbuf, sizeof(vbuf), "0.%02lum",
+			 (vp >> 4) * poweroften[(vp & 0x0f)]);
 	}
 	isc_region_consume(&sr, 4);
 
@@ -549,16 +624,15 @@ totext_loc(ARGS_TOTEXT) {
 		below = true;
 		altitude = 10000000 - altitude;
 	} else {
-		below =false;
+		below = false;
 		altitude -= 10000000;
 	}
 
 	snprintf(buf, sizeof(buf),
-		 "%d %d %d.%03d %s %d %d %d.%03d %s %s%lu.%02lum %s %s %s",
-		 d1, m1, s1, fs1, north ? "N" : "S",
-		 d2, m2, s2, fs2, east ? "E" : "W",
-		 below ? "-" : "", altitude/100, altitude % 100,
-		 sbuf, hbuf, vbuf);
+		 "%d %d %d.%03d %s %d %d %d.%03d %s %s%lu.%02lum %s %s %s", d1,
+		 m1, s1, fs1, north ? "N" : "S", d2, m2, s2, fs2,
+		 east ? "E" : "W", below ? "-" : "", altitude / 100,
+		 altitude % 100, sbuf, hbuf, vbuf);
 
 	return (str_totext(buf, target));
 }
@@ -578,39 +652,58 @@ fromwire_loc(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	if (sr.base[0] != 0) {
 		/* Treat as unknown. */
 		isc_buffer_forward(source, sr.length);
 		return (mem_tobuffer(target, sr.base, sr.length));
 	}
-	if (sr.length < 16)
+	if (sr.length < 16) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	/*
 	 * Size.
 	 */
 	c = sr.base[1];
-	if (c != 0)
-		if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if (c != 0) {
+		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
+		    ((c >> 4) & 0xf) == 0) {
 			return (ISC_R_RANGE);
+
+			/*
+			 * Horizontal precision.
+			 */
+		}
+	}
 
 	/*
 	 * Horizontal precision.
 	 */
 	c = sr.base[2];
-	if (c != 0)
-		if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if (c != 0) {
+		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
+		    ((c >> 4) & 0xf) == 0) {
 			return (ISC_R_RANGE);
+
+			/*
+			 * Vertical precision.
+			 */
+		}
+	}
 
 	/*
 	 * Vertical precision.
 	 */
 	c = sr.base[3];
-	if (c != 0)
-		if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if (c != 0) {
+		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
+		    ((c >> 4) & 0xf) == 0) {
 			return (ISC_R_RANGE);
+		}
+	}
 	isc_region_consume(&sr, 4);
 
 	/*
@@ -619,7 +712,9 @@ fromwire_loc(ARGS_FROMWIRE) {
 	latitude = uint32_fromregion(&sr);
 	if (latitude < (0x80000000UL - 90 * 3600000) ||
 	    latitude > (0x80000000UL + 90 * 3600000))
+	{
 		return (ISC_R_RANGE);
+	}
 	isc_region_consume(&sr, 4);
 
 	/*
@@ -628,7 +723,9 @@ fromwire_loc(ARGS_FROMWIRE) {
 	longitude = uint32_fromregion(&sr);
 	if (longitude < (0x80000000UL - 180 * 3600000) ||
 	    longitude > (0x80000000UL + 180 * 3600000))
+	{
 		return (ISC_R_RANGE);
+	}
 
 	/*
 	 * Altitude.
@@ -679,33 +776,41 @@ fromstruct_loc(ARGS_FROMSTRUCT) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	if (loc->v.v0.version != 0)
+	if (loc->v.v0.version != 0) {
 		return (ISC_R_NOTIMPLEMENTED);
+	}
 	RETERR(uint8_tobuffer(loc->v.v0.version, target));
 
 	c = loc->v.v0.size;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 || ((c >> 4) & 0xf) == 0) {
 		return (ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(loc->v.v0.size, target));
 
 	c = loc->v.v0.horizontal;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 || ((c >> 4) & 0xf) == 0) {
 		return (ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(loc->v.v0.horizontal, target));
 
 	c = loc->v.v0.vertical;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
+	if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 || ((c >> 4) & 0xf) == 0) {
 		return (ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(loc->v.v0.vertical, target));
 
 	if (loc->v.v0.latitude < (0x80000000UL - 90 * 3600000) ||
 	    loc->v.v0.latitude > (0x80000000UL + 90 * 3600000))
+	{
 		return (ISC_R_RANGE);
+	}
 	RETERR(uint32_tobuffer(loc->v.v0.latitude, target));
 
 	if (loc->v.v0.longitude < (0x80000000UL - 180 * 3600000) ||
 	    loc->v.v0.longitude > (0x80000000UL + 180 * 3600000))
+	{
 		return (ISC_R_RANGE);
+	}
 	RETERR(uint32_tobuffer(loc->v.v0.longitude, target));
 	return (uint32_tobuffer(loc->v.v0.altitude, target));
 }
@@ -724,8 +829,9 @@ tostruct_loc(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &r);
 	version = uint8_fromregion(&r);
-	if (version != 0)
+	if (version != 0) {
 		return (ISC_R_NOTIMPLEMENTED);
+	}
 
 	loc->common.rdclass = rdata->rdclass;
 	loc->common.rdtype = rdata->type;
@@ -783,7 +889,6 @@ digest_loc(ARGS_DIGEST) {
 
 static inline bool
 checkowner_loc(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_loc);
 
 	UNUSED(name);
@@ -796,7 +901,6 @@ checkowner_loc(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_loc(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_loc);
 
 	UNUSED(rdata);
@@ -811,4 +915,4 @@ casecompare_loc(ARGS_COMPARE) {
 	return (compare_loc(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_LOC_29_C */
+#endif /* RDATA_GENERIC_LOC_29_C */

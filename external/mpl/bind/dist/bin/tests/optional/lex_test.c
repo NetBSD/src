@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.3 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,7 +12,6 @@
  */
 
 /*! \file */
-#include <config.h>
 
 #include <isc/commandline.h>
 #include <isc/lex.h>
@@ -93,7 +92,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 	RUNTIME_CHECK(isc_lex_create(mctx, 256, &lex) == ISC_R_SUCCESS);
 
 	if (masterfile) {
@@ -104,8 +103,8 @@ main(int argc, char *argv[]) {
 		specials['"'] = 1;
 		isc_lex_setspecials(lex, specials);
 		options = ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE |
-			ISC_LEXOPT_EOF |
-			ISC_LEXOPT_QSTRING | ISC_LEXOPT_NOMORE;
+			  ISC_LEXOPT_EOF | ISC_LEXOPT_QSTRING |
+			  ISC_LEXOPT_NOMORE;
 		isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 	} else {
 		/* Set up to lex DNS config file. */
@@ -118,37 +117,42 @@ main(int argc, char *argv[]) {
 		specials['!'] = 1;
 		specials['*'] = 1;
 		isc_lex_setspecials(lex, specials);
-		options = ISC_LEXOPT_EOF |
-			ISC_LEXOPT_QSTRING |
-			ISC_LEXOPT_NUMBER | ISC_LEXOPT_NOMORE;
-		isc_lex_setcomments(lex, (ISC_LEXCOMMENT_C|
-					  ISC_LEXCOMMENT_CPLUSPLUS|
+		options = ISC_LEXOPT_EOF | ISC_LEXOPT_QSTRING |
+			  ISC_LEXOPT_NUMBER | ISC_LEXOPT_NOMORE;
+		isc_lex_setcomments(lex, (ISC_LEXCOMMENT_C |
+					  ISC_LEXCOMMENT_CPLUSPLUS |
 					  ISC_LEXCOMMENT_SHELL));
 	}
 
 	RUNTIME_CHECK(isc_lex_openstream(lex, stdin) == ISC_R_SUCCESS);
 
 	while ((result = isc_lex_gettoken(lex, options, &token)) ==
-	       ISC_R_SUCCESS && !done) {
+		       ISC_R_SUCCESS &&
+	       !done)
+	{
 		if (!quiet) {
 			char *name = isc_lex_getsourcename(lex);
 			print_token(&token, stdout);
 			printf(" line = %lu file = %s\n",
-				isc_lex_getsourceline(lex),
-				(name == NULL) ? "<none>" : name);
+			       isc_lex_getsourceline(lex),
+			       (name == NULL) ? "<none>" : name);
 		}
-		if (token.type == isc_tokentype_eof)
+		if (token.type == isc_tokentype_eof) {
 			isc_lex_close(lex);
-		if (token.type == isc_tokentype_nomore)
+		}
+		if (token.type == isc_tokentype_nomore) {
 			done = 1;
+		}
 	}
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		printf("Result: %s\n", isc_result_totext(result));
+	}
 
 	isc_lex_close(lex);
 	isc_lex_destroy(&lex);
-	if (!quiet && stats)
+	if (!quiet && stats) {
 		isc_mem_stats(mctx, stdout);
+	}
 	isc_mem_destroy(&mctx);
 
 	return (0);
