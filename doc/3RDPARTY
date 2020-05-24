@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1716 2020/05/19 11:40:46 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1717 2020/05/24 19:49:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -120,12 +120,12 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.14.8/MPL
-Current Vers:	9.14.10/MPL
+Version:	9.16.3/MPL
+Current Vers:	9.16.3/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
-Date:		2019-10-17
+Date:		2020-05-24
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
@@ -137,6 +137,19 @@ The Makefiles in src/external/mpl/bind are not handled by the script.
 Build bind to generate the include files.
 Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
+
+Package:	libuv
+Version:	1.38.0
+Current Vers:	1.38.0
+Maintainer:	libuv
+Archive Site:	https://dist.libuv.org/dist/
+Home Page:	https://libuv.org
+Date:		2020-05-24
+Mailing List:	https://groups.google.com/forum/#!forum/libuv
+Responsible:	christos
+License:	mit
+Location:	external/mit/libuv/dist
+Notes:
 
 Package:	unbound
 Version:	1.9.6
