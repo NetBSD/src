@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.237 2020/05/19 20:46:39 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.238 2020/05/24 19:46:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.237 2020/05/19 20:46:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.238 2020/05/24 19:46:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1718,8 +1718,8 @@ uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
 	KASSERT(uvm_page_owner_locked_p(pg, false));
 
 	mutex_enter(&pg->interlock);
-	rw_exit(lock);
 	pg->pqflags |= PQ_WANTED;
+	rw_exit(lock);
 	UVM_UNLOCK_AND_WAIT(pg, &pg->interlock, false, wmesg, 0);
 }
 
@@ -1742,6 +1742,21 @@ uvm_pagewakeup(struct vm_page *pg)
 		wakeup(pg);
 		pg->pqflags &= ~PQ_WANTED;
 	}
+}
+
+/*
+ * uvm_pagewanted_p: return true if someone is waiting on the page
+ *
+ * => object must be write locked (lock out all concurrent access)
+ */
+
+bool
+uvm_pagewanted_p(struct vm_page *pg)
+{
+
+	KASSERT(uvm_page_owner_locked_p(pg, true));
+
+	return (atomic_load_relaxed(&pg->pqflags) & PQ_WANTED) != 0;
 }
 
 #if defined(UVM_PAGE_TRKOWN)
