@@ -33,13 +33,14 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.17 2015/12/04 21:39:18 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.18 2020/05/24 14:42:44 jmcneill Exp $");
 #endif
 
 #include <sys/bootblock.h>
 #include <sys/types.h>
 
 #include <err.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +55,7 @@ __RCSID("$NetBSD: resizedisk.c,v 1.17 2015/12/04 21:39:18 christos Exp $");
 static int cmd_resizedisk(gpt_t, int, char *[]);
 
 static const char *resizediskhelp[] = {
-	"[-s size]",
+	"[-s size] [-q]",
 };
 
 struct gpt_cmd c_resizedisk = {
@@ -78,7 +79,7 @@ struct gpt_cmd c_resizedisk = {
  * - when shrinking, verify that table fits
  */
 static int 
-resizedisk(gpt_t gpt, off_t sector, off_t size)
+resizedisk(gpt_t gpt, off_t sector, off_t size, bool quiet)
 {
 	map_t mbrmap;
 	struct gpt_hdr *hdr;
@@ -144,12 +145,14 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 
 	gpt_size = gpt->tbl->map_size;
 	if (sector == oldloc) {
-		gpt_warnx(gpt, "Device is already the specified size");
+		if (!quiet)
+			gpt_warnx(gpt, "Device is already the specified size");
 		return 0;
 	}
 
 	if (sector == 0 && last == oldloc) {
-		gpt_warnx(gpt, "Device hasn't changed size");
+		if (!quiet)
+			gpt_warnx(gpt, "Device hasn't changed size");
 		return 0;
 	}
 
@@ -253,12 +256,16 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 	off_t sector, size = gpt->mediasz;
+	bool quiet = false;
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	while ((ch = getopt(argc, argv, "s:q")) != -1) {
 		switch(ch) {
 		case 's':
 			if (gpt_add_ais(gpt, NULL, NULL, &size, ch) == -1)
 				return -1;
+			break;
+		case 'q':
+			quiet = true;
 			break;
 		default:
 			return usage();
@@ -276,5 +283,5 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 		return -1;
 	}
 
-	return resizedisk(gpt, sector, size);
+	return resizedisk(gpt, sector, size, quiet);
 }

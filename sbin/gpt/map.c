@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.14 2018/04/11 07:14:23 mrg Exp $");
+__RCSID("$NetBSD: map.c,v 1.15 2020/05/24 14:42:44 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -280,7 +280,10 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 			prevsize = m->map_size;
 			size = ((m->map_size + n->map_size) / alignment)
 			    * alignment;
-			if (size <= prevsize) {
+			if (size == prevsize) {
+				m->map_size = size;
+				return size;
+			} else if (size < prevsize) {
 				gpt_warnx(gpt, "Can't coalesce %ju <= %ju",
 				    (uintmax_t)prevsize, (uintmax_t)size);
 				return -1;
