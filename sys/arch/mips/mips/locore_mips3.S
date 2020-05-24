@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.114 2018/01/26 05:29:43 maya Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.115 2020/05/24 07:15:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -92,7 +92,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips3.S,v 1.114 2018/01/26 05:29:43 maya Exp $")
+RCSID("$NetBSD: locore_mips3.S,v 1.115 2020/05/24 07:15:24 simonb Exp $")
 
 #include "assym.h"
 
@@ -492,6 +492,22 @@ LEAF(mipsNN_cp0_ebase_write)
 END(mipsNN_cp0_ebase_write)
 
 #if (MIPS32R2 + MIPS64R2) > 0
+/*
+ * uint32_t mipsNN_cp0_rdhwr_cpunum(void);
+ *	Set the value of the CP0 HWRENA register.
+ */
+LEAF(mipsNN_cp0_rdhwr_cpunum)
+	.set push
+#ifdef __mips_o32
+	.set mips32r2
+#else
+	.set mips64r2
+#endif
+	jr	ra
+	 rdhwr	v0, MIPS_HWR_CPUNUM
+	.set pop
+END(mipsNN_cp0_rdhwr_cpunum)
+
 /*
  * void mipsNN_cp0_hwrena_write(void *);
  *	Set the value of the CP0 HWRENA register.

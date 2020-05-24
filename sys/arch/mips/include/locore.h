@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.104 2019/04/06 03:06:26 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.105 2020/05/24 07:15:24 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -434,6 +434,8 @@ void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
 
 int32_t mipsNN_cp0_ebase_read(void);
 void	mipsNN_cp0_ebase_write(int32_t);
+
+uint32_t mipsNN_cp0_rdhwr_cpunum(void);
 
 #ifdef MIPSNNR2
 void	mipsNN_cp0_hwrena_write(uint32_t);

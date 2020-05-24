@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.98 2020/05/23 10:39:25 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.99 2020/05/24 07:15:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -805,15 +805,27 @@
 #endif
 
 /*
+ * RDHWR register numbers
+ */
+#define	MIPS_HWR_CPUNUM			_(0)
+#define	MIPS_HWR_SYNCI_STEP		_(1)
+#define	MIPS_HWR_CC			_(2)
+#define	MIPS_HWR_CCRES			_(3)
+#define	MIPS_HWR_UL			_(29)	/* Userlocal */
+#define	MIPS_HWR_IMPL30			_(30)
+#define	MIPS_HWR_IMPL31			_(31)
+#define	MIPS_HWR_CPUNUM			_(0)
+
+/*
  * Bits defined for HWREna (CP0 register 7, select 0).
  */
-#define	MIPS_HWRENA_IMPL31		__BIT(31)
-#define	MIPS_HWRENA_IMPL30		__BIT(30)
-#define	MIPS_HWRENA_UL			__BIT(29)	/* Userlocal */
-#define	MIPS_HWRENA_CCRES		__BIT(3)
-#define	MIPS_HWRENA_CC			__BIT(2)
-#define	MIPS_HWRENA_SYNCI_STEP		__BIT(1)
-#define	MIPS_HWRENA_CPUNUM		__BIT(0)
+#define	MIPS_HWRENA_IMPL31		__BIT(MIPS_HWR_IMPL31)
+#define	MIPS_HWRENA_IMPL30		__BIT(MIPS_HWR_IMPL30)
+#define	MIPS_HWRENA_UL			__BIT(MIPS_HWR_UL)
+#define	MIPS_HWRENA_CCRES		__BIT(MIPS_HWR_CCRES)
+#define	MIPS_HWRENA_CC			__BIT(MIPS_HWR_CC)
+#define	MIPS_HWRENA_SYNCI_STEP		__BIT(MIPS_HWR_SYNCI_STEP)
+#define	MIPS_HWRENA_CPUNUM		__BIT(MIPS_HWR_CPUNUM)
 
 /*
  * Bits defined for EBASE (CP0 register 15, select 1).
