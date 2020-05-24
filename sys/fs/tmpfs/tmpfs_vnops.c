@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.141 2020/05/19 22:22:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.142 2020/05/24 20:08:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.141 2020/05/19 22:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.142 2020/05/24 20:08:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -573,7 +573,7 @@ tmpfs_write(void *v)
 	tmpfs_node_t *node;
 	struct uvm_object *uobj;
 	off_t oldsize;
-	int error;
+	int error, ubc_flags;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -603,6 +603,26 @@ tmpfs_write(void *v)
 			goto out;
 	}
 
+	/*
+	 * If we're extending the file and have data to write that would
+	 * not leave an un-zeroed hole, we can avoid fault processing and
+	 * zeroing of pages on allocation.
+	 *
+	 * Don't do this if the file is mapped and we need to touch an
+	 * existing page, because writing a mapping of the file into itself
+	 * could cause a deadlock on PG_BUSY.
+	 *
+	 * New pages will not become visible until finished here (because
+	 * of PG_BUSY and the vnode lock).
+	 */
+	ubc_flags = UBC_WRITE | UBC_VNODE_FLAGS(vp);
+	if (uio->uio_offset >= oldsize &&
+	    ((uio->uio_offset & (PAGE_SIZE - 1)) == 0 ||
+	    ((vp->v_vflag & VV_MAPPED) == 0 &&
+	    trunc_page(uio->uio_offset) == trunc_page(oldsize)))) {
+		ubc_flags |= UBC_FAULTBUSY;
+	}
+
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
@@ -613,7 +633,7 @@ tmpfs_write(void *v)
 			break;
 		}
 		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
-		    UBC_WRITE | UBC_VNODE_FLAGS(vp));
+		    ubc_flags);
 	}
 	if (error) {
 		(void)tmpfs_reg_resize(vp, oldsize);
