@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.70 2019/07/26 07:22:05 martin Exp $
+.\" $NetBSD: gpt.8,v 1.71 2020/05/24 14:42:44 jmcneill Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd July 26, 2019
+.Dd May 24, 2020
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -470,7 +470,7 @@ Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
 .It Nm Ic resize Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc Oo Fl a Ar alignment Oc \
-Oo Fl s Ar size Oc
+Oo Fl s Ar size Oc Oo Fl q Oc
 The
 .Ic resize
 command allows the user to resize a partition.
@@ -500,8 +500,12 @@ If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
+If the
+.Fl q
+option is specified then the utility will not print output when a
+resize is not required.
 .\" ==== resizedisk ====
-.It Nm Ic resizedisk Oo Fl s Ar size Oc
+.It Nm Ic resizedisk Oo Fl s Ar size Oc Oo Fl q Oc
 The
 .Ic resizedisk
 command allows the user to resize a disk.
@@ -537,6 +541,10 @@ Using the
 .Fl s
 option allows you to move the backup copy prior to resizing the medium.
 This is primarily useful when shrinking the medium.
+If the
+.Fl q
+option is specified then the utility will not print output when a
+resize is not required.
 .\" ==== restore ====
 .It Nm Ic restore Oo Fl F Oc Oo Fl i Ar infile Oc
 The

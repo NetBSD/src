@@ -33,12 +33,13 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.24 2019/03/24 13:31:00 martin Exp $");
+__RCSID("$NetBSD: resize.c,v 1.25 2020/05/24 14:42:44 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
 
 #include <err.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ __RCSID("$NetBSD: resize.c,v 1.24 2019/03/24 13:31:00 martin Exp $");
 static int cmd_resize(gpt_t, int, char *[]);
 
 static const char *resizehelp[] = {
-	"[-i index | -b blocknr] [-a alignment] [-s size]",
+	"[-i index | -b blocknr] [-a alignment] [-s size] [-q]",
 };
 
 struct gpt_cmd c_resize = {
@@ -65,13 +66,13 @@ struct gpt_cmd c_resize = {
 #define usage() gpt_usage(NULL, &c_resize)
 
 static int
-resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
+resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size, bool quiet)
 {
 	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
-	off_t alignsecs, newsize;
+	off_t alignsecs, newsize, oldsize;
 	uint64_t end;
 	
 
@@ -101,13 +102,24 @@ resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 		if (alignment == 0 ||
 		    (alignment > 0 && sectors % alignsecs == 0)) {
 			/* nothing to do */
-			gpt_warnx(gpt, "partition does not need resizing");
+			if (!quiet)
+				gpt_warnx(gpt,
+				    "partition does not need resizing");
 			return 0;
 		}
 
+	oldsize = map->map_size;
 	newsize = map_resize(gpt, map, sectors, alignsecs);
 	if (newsize == -1)
 		return -1;
+
+	if (oldsize == newsize) {
+		/* Nothing to do */
+		if (!quiet)
+			gpt_warnx(gpt,
+			    "partition does not need resizing");
+		return 0;
+	}
 
 	end = htole64((uint64_t)(map->map_start + newsize - 1LL));
 	ent->ent_lba_end = end;
@@ -134,10 +146,13 @@ cmd_resize(gpt_t gpt, int argc, char *argv[])
 	off_t alignment = 0, sectors, start = 0, size = 0;
 	unsigned int entry = 0;
 	map_t m;
+	bool quiet = false;
 
-	while ((ch = getopt(argc, argv, GPT_AIS "b:")) != -1) {
+	while ((ch = getopt(argc, argv, GPT_AIS "b:q")) != -1) {
 		if (ch == 'b')
 			gpt_human_get(gpt, &start);
+		else if (ch == 'q')
+			quiet = true;
 		else if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
 			return usage();
 	}
@@ -160,5 +175,5 @@ cmd_resize(gpt_t gpt, int argc, char *argv[])
 	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
 		return -1;
 
-	return resize(gpt, entry, alignment, sectors, size);
+	return resize(gpt, entry, alignment, sectors, size, quiet);
 }
