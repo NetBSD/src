@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.282 2020/04/04 17:56:22 christos Exp $
+#	$NetBSD: Makefile,v 1.283 2020/05/24 19:29:36 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -174,6 +174,8 @@ SUBDIR+=	../external/apache2/llvm/include
 .endif
 
 SUBDIR+=	../external/mit/libcbor/lib
+
+SUBDIR+=	../external/mit/libuv/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -243,6 +245,7 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz,
 						   # libfido2
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
 SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
+						# libuv
 .if ${MKUNBOUND} != "no"
 SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
 .endif
