@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1191 2020/05/20 15:43:29 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1192 2020/05/24 21:09:49 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -868,7 +868,9 @@ GNU_ARCH.earmhfeb=armeb
 GNU_ARCH.earmv4=armv4
 GNU_ARCH.earmv4eb=armv4eb
 GNU_ARCH.earmv5=arm
+GNU_ARCH.earmv5hf=arm
 GNU_ARCH.earmv5eb=armeb
+GNU_ARCH.earmv5hfeb=armeb
 GNU_ARCH.earmv6=armv6
 GNU_ARCH.earmv6hf=armv6
 GNU_ARCH.earmv6eb=armv6eb
