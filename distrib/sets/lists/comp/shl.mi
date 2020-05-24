@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.332 2020/05/15 23:32:28 christos Exp $
+# $NetBSD: shl.mi,v 1.333 2020/05/24 19:48:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -279,6 +279,7 @@
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libusbhid_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libutil_pic.a				comp-c-piclib		compatfile,picinstall
+./usr/lib/libuv_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libuutil_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libwind_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libwrap_pic.a				comp-c-piclib		compatfile,picinstall
