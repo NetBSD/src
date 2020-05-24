@@ -91,6 +91,7 @@ npfctl_parse_string(const char *str, parse_entry_t entry)
 
 ID	[a-zA-Z_][a-zA-Z_0-9]*
 DID	[a-zA-Z_][a-zA-Z_0-9-]*
+SPID	[a-zA-Z][a-zA-Z_0-9.]*
 NUMBER	[0-9]+
 HEXDIG	[0-9a-fA-F]+
 
@@ -227,7 +228,7 @@ any			return ANY;
 			return VAR_ID;
 		}
 
-[a-z]*"."[a-z.]* {
+{ID}"."{SPID}+	{
 			yylval.str = estrndup(yytext, yyleng);
 			return PARAM;
 		}
