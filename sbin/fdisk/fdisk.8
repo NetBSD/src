@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.90 2019/12/15 11:49:28 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.91 2020/05/24 18:42:48 jmcneill Exp $
 .\"
-.Dd December 14, 2019
+.Dd May 24, 2020
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aBFfIiSuv
+.Op Fl aBFfgIiSuv
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
 .Op Fl s Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
@@ -114,7 +114,9 @@ selects defaults for its questions to guarantee that behaviour.
 If partition data is going to be updated and the disk carries GUID Partition
 Tables,
 .Nm
-will remove both primary and backup GPT headers from the disk.
+will remove both primary and backup GPT headers from the disk unless the
+.Fl g
+flag is specified.
 See
 .Xr gpt 8
 for information on how to manipulate GUID Partition Tables.
@@ -262,6 +264,8 @@ and
 fields
 .Pq only Ar start No and Ar size No can be specified by Fl s No option .
 They will be automatically computed using the BIOS geometry.
+.It Fl g
+Preserve existing GPT headers when updating partitions.
 .It Fl I
 Ignore errors from overlapping partitions.
 Some devices (cameras CHDK) require overlapping partitions to support
