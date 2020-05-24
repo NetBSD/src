@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.100 2020/03/02 16:01:56 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.101 2020/05/24 14:40:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.100 2020/03/02 16:01:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.101 2020/05/24 14:40:21 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -310,6 +310,34 @@ dkwedge_add(struct dkwedge_info *dkw)
 	if (dkw->dkw_offset < 0)
 		return (EINVAL);
 
+	/*
+	 * Check for an existing wedge at the same disk offset. Allow
+	 * updating a wedge if the only change is the size, and the new
+	 * size is larger than the old.
+	 */
+	sc = NULL;
+	mutex_enter(&pdk->dk_openlock);
+	LIST_FOREACH(lsc, &pdk->dk_wedges, sc_plink) {
+		if (lsc->sc_offset != dkw->dkw_offset)
+			continue;
+		if (strcmp(lsc->sc_wname, dkw->dkw_wname) != 0)
+			break;
+		if (strcmp(lsc->sc_ptype, dkw->dkw_ptype) != 0)
+			break;
+		if (lsc->sc_size > dkw->dkw_size)
+			break;
+
+		sc = lsc;
+		sc->sc_size = dkw->dkw_size;
+		dk_set_geometry(sc, pdk);
+
+		break;
+	}
+	mutex_exit(&pdk->dk_openlock);
+
+	if (sc != NULL)
+		goto announce;
+
 	sc = malloc(sizeof(*sc), M_DKWEDGE, M_WAITOK|M_ZERO);
 	sc->sc_state = DKW_STATE_LARVAL;
 	sc->sc_parent = pdk;
@@ -475,6 +503,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	/* Disk wedge is ready for use! */
 	sc->sc_state = DKW_STATE_RUNNING;
 
+announce:
 	/* Announce our arrival. */
 	aprint_normal(
 	    "%s at %s: \"%s\", %"PRIu64" blocks at %"PRId64", type: %s\n",
