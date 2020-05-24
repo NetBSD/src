@@ -17,6 +17,10 @@ dlz "example two" {
 	database "dlopen ../driver.@SO@ alternate.nil";
 };
 
+dlz "example three" {
+	database "dlopen ../driver.@SO@ example.org";
+};
+
 dlz "unsearched1" {
 	database "dlopen ../driver.@SO@ other.nil";
 	search no;

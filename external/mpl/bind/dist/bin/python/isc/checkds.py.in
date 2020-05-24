@@ -21,7 +21,7 @@ prog = 'dnssec-checkds'
 
 ############################################################################
 # SECRR class:
-# Class for DS/DLV resource record
+# Class for DS resource record
 ############################################################################
 class SECRR:
     hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST', 4: 'SHA-384'}
@@ -33,7 +33,7 @@ class SECRR:
     digest = ''
     ttl = 0
 
-    def __init__(self, rrtext, dlvname = None):
+    def __init__(self, rrtext):
         if not rrtext:
             raise Exception
 
@@ -45,24 +45,8 @@ class SECRR:
         if len(fields) < 7:
             raise Exception
 
-        if dlvname:
-            self.rrtype = "DLV"
-            self.dlvname = dlvname.lower()
-            parent = fields[0].lower().strip('.').split('.')
-            parent.reverse()
-            dlv = dlvname.split('.')
-            dlv.reverse()
-            while len(dlv) != 0 and len(parent) != 0 and parent[0] == dlv[0]:
-                parent = parent[1:]
-                dlv = dlv[1:]
-            if dlv:
-                raise Exception
-            parent.reverse()
-            self.parent = '.'.join(parent)
-            self.rrname = self.parent + '.' + self.dlvname + '.'
-        else:
-            self.rrtype = "DS"
-            self.rrname = fields[0].lower()
+        self.rrtype = "DS"
+        self.rrname = fields[0].lower()
 
         fields = fields[1:]
         if fields[0].upper() in ['IN', 'CH', 'HS']:
@@ -91,9 +75,9 @@ class SECRR:
 
 ############################################################################
 # check:
-# Fetch DS/DLV RRset for the given zone from the DNS; fetch DNSKEY
+# Fetch DS RRset for the given zone from the DNS; fetch DNSKEY
 # RRset from the masterfile if specified, or from DNS if not.
-# Generate a set of expected DS/DLV records from the DNSKEY RRset,
+# Generate a set of expected DS records from the DNSKEY RRset,
 # and report on congruency.
 ############################################################################
 def check(zone, args):
@@ -101,60 +85,60 @@ def check(zone, args):
     if args.dssetfile:
         fp = open(args.dssetfile).read()
     else:
-        cmd = [args.dig, "+noall", "+answer", "-t",
-                "dlv" if args.lookaside else "ds", "-q",
-                zone + "." + args.lookaside if args.lookaside else zone]
+        cmd = [args.dig, "+noall", "+answer", "-t", "ds", "-q", zone]
         fp, _ = Popen(cmd, stdout=PIPE).communicate()
 
     for line in fp.splitlines():
         if type(line) is not str:
             line = line.decode('ascii')
-        rrlist.append(SECRR(line, args.lookaside))
+        rrlist.append(SECRR(line))
     rrlist = sorted(rrlist, key=lambda rr: (rr.keyid, rr.keyalg, rr.hashalg))
 
     klist = []
 
+    cmd = [args.dsfromkey]
+    for algo in args.algo:
+        cmd += ['-a', algo]
+
     if args.masterfile:
-        cmd = [args.dsfromkey, "-f", args.masterfile]
-        if args.lookaside:
-            cmd += ["-l", args.lookaside]
-        cmd.append(zone)
+        cmd += ["-f", args.masterfile, zone]
         fp, _ = Popen(cmd, stdout=PIPE).communicate()
     else:
         intods, _ = Popen([args.dig, "+noall", "+answer", "-t", "dnskey",
                            "-q", zone], stdout=PIPE).communicate()
-        cmd = [args.dsfromkey, "-f", "-"]
-        if args.lookaside:
-            cmd += ["-l", args.lookaside]
-        cmd.append(zone)
+        cmd += ["-f", "-", zone]
         fp, _ = Popen(cmd, stdin=PIPE, stdout=PIPE).communicate(intods)
 
     for line in fp.splitlines():
         if type(line) is not str:
             line = line.decode('ascii')
-        klist.append(SECRR(line, args.lookaside))
+        klist.append(SECRR(line))
 
     if len(klist) < 1:
         print("No DNSKEY records found in zone apex")
         return False
 
-    found = False
+    match = True
+    for rr in rrlist:
+        if rr not in klist:
+            print("KSK for %s %s/%03d/%05d (%s) missing from child" %
+                  (rr.rrtype, rr.rrname.strip('.'), rr.keyalg,
+                   rr.keyid, SECRR.hashalgs[rr.hashalg]))
+            match = False
+    for rr in klist:
+        if rr not in rrlist:
+            print("%s for KSK %s/%03d/%05d (%s) missing from parent" %
+                  (rr.rrtype, rr.rrname.strip('.'), rr.keyalg,
+                   rr.keyid, SECRR.hashalgs[rr.hashalg]))
+            match = False
     for rr in klist:
         if rr in rrlist:
             print("%s for KSK %s/%03d/%05d (%s) found in parent" %
                   (rr.rrtype, rr.rrname.strip('.'), rr.keyalg,
                    rr.keyid, SECRR.hashalgs[rr.hashalg]))
-            found = True
-        else:
-            print("%s for KSK %s/%03d/%05d (%s) missing from parent" %
-                  (rr.rrtype, rr.rrname.strip('.'), rr.keyalg,
-                   rr.keyid, SECRR.hashalgs[rr.hashalg]))
 
-    if not found:
-        print("No %s records were found for any DNSKEY" %
-                ("DLV" if args.lookaside else "DS"))
+    return match
 
-    return found
 
 ############################################################################
 # parse_args:
@@ -167,6 +151,8 @@ def parse_args():
     sbindir = 'bin' if os.name == 'nt' else 'sbin'
 
     parser.add_argument('zone', type=str, help='zone to check')
+    parser.add_argument('-a', '--algo', dest='algo', action='append',
+                        default=[], type=str, help='DS digest algorithm')
     parser.add_argument('-d', '--dig', dest='dig',
                         default=os.path.join(prefix(bindir), 'dig'),
                         type=str, help='path to \'dig\'')
@@ -176,8 +162,6 @@ def parse_args():
                         type=str, help='path to \'dnssec-dsfromkey\'')
     parser.add_argument('-f', '--file', dest='masterfile', type=str,
                         help='zone master file')
-    parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,
-                        help='DLV lookaside zone')
     parser.add_argument('-s', '--dsset', dest='dssetfile', type=str,
                         help='prepared DSset file')
     parser.add_argument('-v', '--version', action='version',
@@ -185,8 +169,6 @@ def parse_args():
     args = parser.parse_args()
 
     args.zone = args.zone.strip('.')
-    if args.lookaside:
-        args.lookaside = args.lookaside.strip('.')
 
     return args
 
@@ -196,5 +178,5 @@ def parse_args():
 ############################################################################
 def main():
     args = parse_args()
-    found = check(args.zone, args)
-    exit(0 if found else 1)
+    match = check(args.zone, args)
+    exit(0 if match else 1)

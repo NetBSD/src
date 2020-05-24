@@ -18,12 +18,6 @@
     <None Include="libns.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DLLMain.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="version.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\client.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -61,6 +55,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\xfrout.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DLLMain.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="version.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

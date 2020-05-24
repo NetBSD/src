@@ -8,6 +8,6 @@ zone <string> [ <class> ] {
 	masterfile-style ( full | relative );
 	masters [ port <integer> ] [ dscp <integer> ] { ( <masters> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
 	max-records <integer>;
-	max-zone-ttl ( unlimited | <ttlval> );
+	max-zone-ttl ( unlimited | <duration> );
 	zone-statistics ( full | terse | none | <boolean> );
 };

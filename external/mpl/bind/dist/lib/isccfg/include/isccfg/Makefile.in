@@ -18,8 +18,8 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	aclconf.h cfg.h dnsconf.h grammar.h log.h namedconf.h \
-		version.h
+HEADERS =	aclconf.h cfg.h dnsconf.h grammar.h kaspconf.h log.h \
+		namedconf.h version.h
 
 SUBDIRS =
 TARGETS =

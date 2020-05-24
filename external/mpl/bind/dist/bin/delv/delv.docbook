@@ -40,6 +40,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -96,7 +97,7 @@
       <command>delv</command> will send to a specified name server all
       queries needed to fetch and validate the requested data; this
       includes the original requested query, subsequent queries to follow
-      CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records
+      CNAME or DNAME chains, and queries for DNSKEY and DS records
       to establish a chain of trust for DNSSEC validation.
       It does not perform iterative resolution, but simulates the
       behavior of a name server configured for DNSSEC validating and
@@ -211,21 +212,21 @@
 	  <para>
 	    Keys that do not match the root zone name are ignored.
             An alternate key name can be specified using the
-	    <option>+root=NAME</option> options. DNSSEC Lookaside
-            Validation can also be turned on by using the
-	    <option>+dlv=NAME</option> to specify the name of a
-            zone containing DLV records.
+	    <option>+root=NAME</option> options.
 	  </para>
 	  <para>
 	    Note: When reading the trust anchor file,
-	    <command>delv</command> treats <option>managed-keys</option>
-	    statements and <option>trusted-keys</option> statements
-	    identically.  That is, for a managed key, it is the
-	    <emphasis>initial</emphasis> key that is trusted; RFC 5011
-	    key management is not supported. <command>delv</command>
-	    will not consult the managed-keys database maintained by
-	    <command>named</command>. This means that if either of the
-	    keys in <filename>/etc/bind.keys</filename> is revoked
+	    <command>delv</command> treats <option>trust-anchors</option>
+	    <option>initial-key</option> and <option>static-key</option>
+	    entries identically.  That is, even if a key is configured
+	    with <command>initial-key</command>, indicating that it is
+	    meant to be used only as an initializing key for RFC 5011
+	    key maintenance, it is still treated by <command>delv</command>
+	    as if it had been configured as a <command>static-key</command>.
+	    <command>delv</command> does not consult the managed keys
+	    database maintained by <command>named</command>. This means
+	    that if either of the keys in
+	    <filename>/etc/bind.keys</filename> is revoked
 	    and rolled over, it will be necessary to update
 	    <filename>/etc/bind.keys</filename> to use DNSSEC
 	    validation in <command>delv</command>.
@@ -617,8 +618,7 @@
 	      request DNSSEC records or whether to validate them.
 	      DNSSEC records are always requested, and validation
 	      will always occur unless suppressed by the use of
-	      <option>-i</option> or <option>+noroot</option> and
-	      <option>+nodlv</option>.
+	      <option>-i</option> or <option>+noroot</option>.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -627,25 +627,13 @@
 	  <term><option>+[no]root[=ROOT]</option></term>
 	  <listitem>
 	    <para>
-	      Indicates whether to perform conventional (non-lookaside)
+	      Indicates whether to perform conventional
 	      DNSSEC validation, and if so, specifies the
 	      name of a trust anchor.  The default is to validate using
 	      a trust anchor of "." (the root zone), for which there is
 	      a built-in key.  If specifying a different trust anchor,
 	      then <option>-a</option> must be used to specify a file
 	      containing the key.
-	    </para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>+[no]dlv[=DLV]</option></term>
-	  <listitem>
-	    <para>
-	      Indicates whether to perform DNSSEC lookaside validation,
-	      and if so, specifies the name of the DLV trust anchor.
-	      The <option>-a</option> option must also be used to specify
-              a file containing the DLV key.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -671,6 +659,16 @@
 	    </para>
 	  </listitem>
 	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]yaml</option></term>
+	  <listitem>
+	    <para>
+	      Print response data in YAML format.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
       </variablelist>
 
     </para>

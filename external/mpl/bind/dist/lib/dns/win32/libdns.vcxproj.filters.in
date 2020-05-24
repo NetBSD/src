@@ -107,11 +107,6 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClCompile Include="..\geoip.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
-@END GEOIPLEGACY
     <ClCompile Include="..\ipkeylist.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -121,7 +116,13 @@
     <ClCompile Include="..\journal.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\kasp.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\keydata.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\keymgr.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\keytable.c">
@@ -445,11 +446,6 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClInclude Include="..\include\dns\geoip.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
-@END GEOIPLEGACY
     <ClInclude Include="..\include\dns\ipkeylist.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -459,10 +455,16 @@
     <ClInclude Include="..\include\dns\journal.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\dns\kasp.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\dns\keydata.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\dns\keyflags.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dns\keymgr.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\dns\keytable.h">

@@ -19,7 +19,8 @@ READLINE_LIB = @READLINE_LIB@
 
 CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} \
 		${BIND9_INCLUDES} ${ISC_INCLUDES} \
-		${IRS_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ @OPENSSL_INCLUDES@
+		${IRS_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ \
+		${OPENSSL_CFLAGS}
 
 CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
@@ -27,8 +28,8 @@ CWARNINGS =
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 IRSLIBS =	../../lib/irs/libirs.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@

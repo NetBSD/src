@@ -10,8 +10,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 cp -f ns1/dynamic.db.in ns1/dynamic.db
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf

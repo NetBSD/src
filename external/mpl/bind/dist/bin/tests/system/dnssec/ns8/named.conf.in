@@ -20,7 +20,6 @@ options {
 	listen-on { 10.53.0.8; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 	minimal-responses no;
 	disable-algorithms "disabled.managed." { @DISABLED_ALGORITHM@; };

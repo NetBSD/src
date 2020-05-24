@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2005, 2007-2012, 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2005, 2007-2012, 2014-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,7 @@
        [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
        [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-D sync <em class="replaceable"><code>date/offset</code></em></code>]
+       [<code class="option">-d <em class="replaceable"><code>bits</code></em></code>]
        [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>]
        [<code class="option">-f <em class="replaceable"><code>flag</code></em></code>]
        [<code class="option">-G</code>]
@@ -49,8 +50,9 @@
        [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-i <em class="replaceable"><code>interval</code></em></code>]
        [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
-       [<code class="option">-k</code>]
+       [<code class="option">-k <em class="replaceable"><code>policy</code></em></code>]
        [<code class="option">-L <em class="replaceable"><code>ttl</code></em></code>]
+       [<code class="option">-l <em class="replaceable"><code>file</code></em></code>]
        [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>]
        [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-P sync <em class="replaceable"><code>date/offset</code></em></code>]
@@ -59,6 +61,7 @@
        [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>]
        [<code class="option">-S <em class="replaceable"><code>key</code></em></code>]
        [<code class="option">-s <em class="replaceable"><code>strength</code></em></code>]
+       [<code class="option">-T <em class="replaceable"><code>rrtype</code></em></code>]
        [<code class="option">-t <em class="replaceable"><code>type</code></em></code>]
        [<code class="option">-V</code>]
        [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
@@ -145,10 +148,8 @@
 	  </p>
 	  <p>
 	    If the key size is not specified, some algorithms have
-	    pre-defined defaults.  For example, RSA keys for use as
-	    DNSSEC zone signing keys have a default size of 1024 bits;
-	    RSA keys for use as key signing keys (KSKs, generated with
-	    <code class="option">-f KSK</code>) default to 2048 bits.
+	    pre-defined defaults.  For instance, RSA keys have a default
+	    size of 2048 bits.
 	  </p>
 	</dd>
 <dt><span class="term">-C</span></dt>
@@ -168,6 +169,15 @@
 	  <p>
 	    Indicates that the DNS record containing the key should have
 	    the specified class.  If not specified, class IN is used.
+	  </p>
+	</dd>
+<dt><span class="term">-d <em class="replaceable"><code>bits</code></em></span></dt>
+<dd>
+	  <p>
+	    Key size in bits. For the algorithms RSASHA1, NSEC3RSASA1,
+	    RSASHA256 and RSASHA512 the key size must be in range 1024-4096.
+	    DH size is between 128 and 4096. This option is ignored for
+	    algorithms ECDSAP256SHA256, ECDSAP384SHA384, ED25519 and ED448.
 	  </p>
 	</dd>
 <dt><span class="term">-E <em class="replaceable"><code>engine</code></em></span></dt>
@@ -220,6 +230,21 @@
 	    Sets the directory in which the key files are to be written.
 	  </p>
 	</dd>
+<dt><span class="term">-k <em class="replaceable"><code>policy</code></em></span></dt>
+<dd>
+	  <p>
+	    Create keys for a specific dnssec-policy.  If a policy uses
+	    multiple keys, <span class="command"><strong>dnssec-keygen</strong></span> will generate
+	    multiple keys.  This will also create a ".state" file to keep
+	    track of the key state.
+	  </p>
+	  <p>
+	    This option creates keys according to the dnssec-policy
+	    configuration, hence it cannot be used together with many of
+	    the other options that <span class="command"><strong>dnssec-keygen</strong></span>
+	    provides.
+	  </p>
+	</dd>
 <dt><span class="term">-L <em class="replaceable"><code>ttl</code></em></span></dt>
 <dd>
 	  <p>
@@ -231,6 +256,13 @@
 	    is no existing DNSKEY RRset, the TTL will default to the
 	    SOA TTL. Setting the default TTL to <code class="literal">0</code>
 	    or <code class="literal">none</code> is the same as leaving it unset.
+	  </p>
+	</dd>
+<dt><span class="term">-l <em class="replaceable"><code>file</code></em></span></dt>
+<dd>
+	  <p>
+	    Provide a configuration file that contains a dnssec-policy
+	    statement (matching the policy set with <span class="command"><strong>-k</strong></span>).
 	  </p>
 	</dd>
 <dt><span class="term">-n <em class="replaceable"><code>nametype</code></em></span></dt>

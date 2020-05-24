@@ -14,7 +14,6 @@ while [ "$#" != 0 ]; do
     +*) shift ;;
     -t) shift ;;
     DS|ds) ext=ds ; shift ;;
-    DLV|dlv) ext=dlv ; shift ;;
     DNSKEY|dnskey) ext=dnskey ; shift ;;
     *) file=$1 ; shift ;;
     esac

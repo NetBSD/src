@@ -33,4 +33,4 @@ $SIGNER -P -g -o $zone $zonefile > /dev/null
 # irrelevant here, so just reuse the root zone key generated above.
 sed "s/^\./nonexistent./;" $keyname1.key > $keyname1.modified.key
 
-keyfile_to_trusted_keys $keyname1 $keyname1.modified > trusted.conf
+keyfile_to_static_ds $keyname1 $keyname1.modified > trusted.conf

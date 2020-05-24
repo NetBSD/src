@@ -25,7 +25,7 @@ key2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null`
 
 cat $infile $key1.key $key2.key > $zonefile
 
-$SIGNER -P -g -O full -o $zone $zonefile > sign.ns5.signed.out 2>&1
+$SIGNER -P -g -O full -o $zone $zonefile > sign.ns5.signed.out
 
 cp signed.db.signed ../ns6
 
@@ -40,4 +40,4 @@ key2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -fk $zone 2> /dev/null`
 # cat $infile $key1.key $key2.key > $zonefile
 cat $infile dsset-signed. $key1.key $key2.key > $zonefile
 
-$SIGNER -P -g -O full -o $zone $zonefile > sign.ns5.root.out 2>&1
+$SIGNER -P -g -O full -o $zone $zonefile > sign.ns5.root.out

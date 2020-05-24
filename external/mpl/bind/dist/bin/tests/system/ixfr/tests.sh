@@ -206,7 +206,7 @@ echo_i "testing request-ixfr option in view vs zone ($n)"
 # we want to make sure that a change to sub.test results in AXFR, while
 # changes to test. result in IXFR
 
-echo_i " this result should be AXFR"
+echo_ic "this result should be AXFR"
 cp ns3/subtest1.db ns3/subtest.db # change to sub.test zone, should be AXFR
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 
@@ -231,7 +231,7 @@ do
 	sleep 1
 done
 
-echo_i " this result should be AXFR"
+echo_ic "this result should be AXFR"
 for i in 0 1 2 3 4 5 6 7 8 9
 do
 	NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
@@ -240,13 +240,15 @@ do
 done
 if [ $NONINCR -ne 2 ]
 then
-    echo_i "failed to get nonincremental response in 2nd AXFR test"
+    echo_ic "failed to get nonincremental response in 2nd AXFR test"
+
+    echo_i "failed"
     status=1
 else
-    echo_i "  success: AXFR it was"
+    echo_ic "success: AXFR it was"
 fi
 
-echo_i " this result should be IXFR"
+echo_ic "this result should be IXFR"
 cp ns3/mytest2.db ns3/mytest.db # change to test zone, should be IXFR
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 
@@ -279,10 +281,12 @@ do
 done
 if [ $INCR -ne 2 ]
 then
-    echo_i "failed to get incremental response in 2nd IXFR test"
+    echo_ic "failed to get incremental response in 2nd IXFR test"
+
+    echo_i "failed"
     status=1
 else
-    echo_i "  success: IXFR it was"
+    echo_ic "success: IXFR it was"
 fi
 
 n=$((n+1))
@@ -311,8 +315,8 @@ awk '$4 == "SOA" { if ($7 == 4) exit(0); else exit(1);}' dig.out1.test$n || ret=
 $DIG $DIGOPTS ixfr=1 test @10.53.0.4 > dig.out3.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END { if (soacnt == 6) exit(0); else exit(1);}' dig.out3.test$n || ret=1
 if [ ${ret} != 0 ]; then
-	echo_i "failed";
-	status=1;
+	echo_i "failed"
+	status=1
 fi
 
 # wait for slave to transfer zone
@@ -338,8 +342,8 @@ $DIG $DIGOPTS ixfr=1 +notcp test @10.53.0.5 > dig.out2.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END {if (soacnt == 2) exit(0); else exit(1);}' dig.out1.test$n || ret=1
 awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out2.test$n || ret=1
 if [ ${ret} != 0 ]; then
-	echo_i "failed";
-	status=1;
+	echo_i "failed"
+	status=1
 fi
 
 n=$((n+1))

@@ -55,6 +55,9 @@ cksk4=`$REVOKE $cksk3`
 echo_i "setting up sync key"
 cksk5=`$KEYGEN -q -a rsasha1 -fk -P now+1mo -A now+1mo -Psync now $czone`
 
+echo_i "and future sync key"
+cksk6=`$KEYGEN -q -a rsasha1 -fk -P now+1mo -A now+1mo -Psync now+1mo $czone`
+
 echo_i "generating parent keys"
 pzsk=`$KEYGEN -q -a rsasha1 $pzone`
 pksk=`$KEYGEN -q -a rsasha1 -fk $pzone`
@@ -64,10 +67,10 @@ echo_i "setting child's activation time"
 $SETTIME -A now+30s $cksk2 > /dev/null
 
 echo_i "signing child zone"
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile 2>&1`
+czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile`
 
 echo_i "signing parent zone"
-pzoneout=`$SIGNER -Sg -o $pzone $pfile 2>&1`
+pzoneout=`$SIGNER -Sg -o $pzone $pfile`
 
 czactive=$(keyfile_to_key_id $czsk1)
 czgenerated=$(keyfile_to_key_id $czsk2)
@@ -99,8 +102,8 @@ status=`expr $status + $ret`
 echo_i "rechecking dnssec-signzone output with -x"
 ret=0
 # use an alternate output file so -x doesn't interfere with later checks
-pzoneout=`$SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile 2>&1`
-czoneout=`$SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile 2>&1`
+pzoneout=`$SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile`
+czoneout=`$SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile`
 echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
 echo "$pzoneout" | grep 'ZSKs: 1 active, 0 present, 0 revoked' > /dev/null || ret=1
 echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' > /dev/null || ret=1
@@ -165,7 +168,7 @@ grep "key id = $czinactive\$" $cfile.signed > /dev/null || {
 # should not be there, hence the &&
 grep "key id = $ckprerevoke\$" $cfile.signed > /dev/null && {
 	ret=1
-	echo_i "found unexpect child pre-revoke ZSK id = $ckprerevoke"
+	echo_i "found unexpected child pre-revoke ZSK id = $ckprerevoke"
 }
 grep "key id = $czgenerated\$" $cfile.signed > /dev/null && {
 	ret=1
@@ -204,7 +207,7 @@ status=`expr $status + $ret`
 echo_i "re-signing and checking imported TTLs again"
 ret=0
 $SETTIME -L 15 ${czsk2} > /dev/null
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile 2>&1`
+czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile`
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 15 {r = 1} END {exit r}' \
         ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -325,7 +328,7 @@ status=`expr $status + $ret`
 echo_i "waiting 30 seconds for key activation"
 sleep 30
 echo_i "re-signing child zone"
-czoneout2=`$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed 2>&1`
+czoneout2=`$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed`
 mv $cfile.new $cfile.signed
 
 echo_i "checking dnssec-signzone output matches expectations"
@@ -348,10 +351,11 @@ awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+# this also checks that the future sync record is not yet published
 echo_i "checking sync record deletion"
 ret=0
 $SETTIME -P now -A now -Dsync now ${cksk5} > /dev/null
-$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed > /dev/null 2>&1
+$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed > /dev/null
 mv $cfile.new $cfile.signed
 awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed && ret=1
 awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed && ret=1

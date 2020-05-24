@@ -16,15 +16,16 @@ VERSION=@BIND9_VERSION@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${NS_INCLUDES} ${BIND9_INCLUDES} ${DNS_INCLUDES} ${ISCCFG_INCLUDES} \
-		${ISC_INCLUDES} @OPENSSL_INCLUDES@
+		${ISC_INCLUDES} \
+		${OPENSSL_CFLAGS}
 
 CDEFINES = 	-DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 NSLIBS =	../../lib/ns/libns.@A@
 

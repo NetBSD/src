@@ -190,7 +190,7 @@ grep "3rd sub test data" dig.out.ns2.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-# reload with a different name server: exisitng zone shouldn't be reused.
+# reload with a different name server: existing zone shouldn't be reused.
 n=`expr $n + 1`
 echo_i "checking server reload with a different static-stub config ($n)"
 ret=0

@@ -40,6 +40,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -59,16 +60,33 @@
   <refsection><info><title>DESCRIPTION</title></info>
 
     <para><command>dnssec-checkds</command>
-      verifies the correctness of Delegation Signer (DS) or DNSSEC
-      Lookaside Validation (DLV) resource records for keys in a specified
-      zone.
+      verifies the correctness of Delegation Signer (DS)
+      resource records for keys in a specified zone.
     </para>
   </refsection>
 
   <refsection><info><title>OPTIONS</title></info>
 
-
     <variablelist>
+
+      <varlistentry>
+	<term>-a <replaceable class="parameter">algorithm</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify a digest algorithm to use when converting the
+	    zone's DNSKEY records to expected DS records. This
+	    option can be repeated, so that multiple records are
+	    checked for each DNSKEY record.
+          </para>
+          <para>
+            The <replaceable>algorithm</replaceable> must be one of
+            SHA-1, SHA-256, or SHA-384.  These values are case insensitive,
+            and the hyphen may be omitted.  If no algorithm is specified,
+            the default is SHA-256.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
         <term>-f <replaceable class="parameter">file</replaceable></term>
         <listitem>
@@ -76,16 +94,6 @@
             If a <option>file</option> is specified, then the zone is
             read from that file to find the DNSKEY records.  If not,
             then the DNSKEY records for the zone are looked up in the DNS.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-l <replaceable class="parameter">domain</replaceable></term>
-        <listitem>
-          <para>
-            Check for a DLV record in the specified lookaside domain,
-            instead of checking for a DS record in the zone's parent.
           </para>
         </listitem>
       </varlistentry>

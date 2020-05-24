@@ -26,7 +26,7 @@
 # See https://data.iana.org/root-anchors/root-anchors.xml for current trust
 # anchor information for the root zone.
 
-managed-keys {
+trust-anchors {
         # This key (20326) was published in the root zone in 2017.
         . initial-key 257 3 8 "AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3
                 +/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kv

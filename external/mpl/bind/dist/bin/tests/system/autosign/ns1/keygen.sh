@@ -33,12 +33,12 @@ rm $zsknopriv.private
 ksksby=`$KEYGEN -3 -a RSASHA1 -q -P now -A now+15s -fk $zone`
 kskrev=`$KEYGEN -3 -a RSASHA1 -q -R now+15s -fk $zone`
 
-keyfile_to_trusted_keys $ksksby > trusted.conf
+keyfile_to_static_ds $ksksby > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns4/trusted.conf
 
-keyfile_to_trusted_keys $kskrev > trusted.conf
+keyfile_to_static_ds $kskrev > trusted.conf
 cp trusted.conf ../ns5/trusted.conf
 
 echo $zskact > ../active.key

@@ -132,10 +132,15 @@ $ <userinput>make</userinput>
       parameters. By default the path to this configuration file is
       <filename>/etc/dns.conf</filename>.  This module is very experimental
       and the configuration syntax or library interfaces may change in
-      future versions. Currently, only the <command>trusted-keys</command>
-      statement is supported, whose syntax is the same as the same
-      statement in <filename>named.conf</filename>. (See
-      <xref linkend="trusted-keys"/> for details.)
+      future versions.  Currently, only static key configuration is supported.
+      <command>managed-keys</command> and <command>trusted-keys</command>
+      statements are parsed exactly as they are in
+      <filename>named.conf</filename>, except that all
+      <command>managed-keys</command> entries will be treated as
+      if they were configured with the <command>static-key</command>
+      or <command>static-ds</command> keywords, even if they are configured
+      with <command>initial-key</command> or <command>iniital-ds</command>.
+      (See <xref linkend="managed-keys"/> for syntax details.)
     </para>
   </section>
   <section>

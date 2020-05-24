@@ -15,7 +15,7 @@ CDEFINES =
 CWARNINGS =
 
 DNSLIBS =	-ldns @DNS_CRYPTO_LIBS@
-ISCLIBS =	-lisc @OPENSSL_LIBS@
+ISCLIBS =	-lisc @OPENSSL_LIBS@ @LIBXML2_LIBS@
 ISCCFGLIBS =	-lisccfg
 IRSLIBS =	-lirs
 
@@ -24,14 +24,13 @@ LIBS =		${DNSLIBS} ${ISCCFGLIBS} ${ISCLIBS} @LIBS@
 SUBDIRS =
 
 TARGETS =	sample@EXEEXT@ sample-async@EXEEXT@ sample-gai@EXEEXT@ \
-		sample-update@EXEEXT@ sample-request@EXEEXT@ nsprobe@EXEEXT@ \
-		dlvchecks@EXEEXT@
+		sample-update@EXEEXT@ sample-request@EXEEXT@ nsprobe@EXEEXT@
 
 OBJS =		sample.@O@ sample-async.@O@ sample-gai.@O@ sample-update.@O@ \
-		sample-request.@O@ nsprobe.@O@ dlvchecks.@O@
+		sample-request.@O@ nsprobe.@O@
 
 SRCS =		sample.c sample-async.c sample-gai.c sample-update.c \
-		sample-request.c nsprobe.c dlvchecks..c
+		sample-request.c nsprobe.c
 
 @BIND9_MAKE_RULES@
 
@@ -62,10 +61,6 @@ sample-request@EXEEXT@: sample-request.@O@ ${DEPLIBS}
 nsprobe@EXEEXT@: nsprobe.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 	nsprobe.@O@ ${LIBS}
-
-dlvchecks@EXEEXT@: dlvchecks.@O@ ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-	dlvchecks.@O@ ${LIBS}
 
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}

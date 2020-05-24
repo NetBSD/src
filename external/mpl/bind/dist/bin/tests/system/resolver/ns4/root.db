@@ -26,3 +26,7 @@ no-questions.		NS	ns.no-questions.
 ns.no-questions.	A	10.53.0.8
 formerr-to-all.		NS	ns.formerr-to-all.
 ns.formerr-to-all.	A	10.53.0.8
+sourcens.		NS	ns.sourcens.
+ns.sourcens.		A	10.53.0.4
+targetns. 		NS	ns.targetns.
+ns.targetns.		A	10.53.0.6

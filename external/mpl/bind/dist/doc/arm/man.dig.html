@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -628,6 +628,13 @@
 	      Send an EDNS Expire option.
 	    </p>
 	  </dd>
+<dt><span class="term"><code class="option">+[no]expandaaaa</code></span></dt>
+<dd>
+	    <p>
+	      When printing AAAA record print all zero nibbles rather
+	      than the default RFC 5952 preferred presentation format.
+	    </p>
+	  </dd>
 <dt><span class="term"><code class="option">+[no]fail</code></span></dt>
 <dd>
 	    <p>
@@ -1011,6 +1018,14 @@
 	      seconds, minutes, hours, days and weeks.  Implies +ttlid.
 	    </p>
 	  </dd>
+<dt><span class="term"><code class="option">+[no]unexpected</code></span></dt>
+<dd>
+	    <p>
+	      Accept [do not accept] answers from unexpected sources.  By
+	      default, <span class="command"><strong>dig</strong></span> won't accept a reply from a
+	      source other than the one to which it sent the query.
+	    </p>
+	  </dd>
 <dt><span class="term"><code class="option">+[no]unknownformat</code></span></dt>
 <dd>
 	    <p>
@@ -1026,6 +1041,13 @@
 	      alternate syntax to <em class="parameter"><code>+[no]tcp</code></em>
 	      is provided for backwards compatibility.  The "vc"
 	      stands for "virtual circuit".
+	    </p>
+	  </dd>
+<dt><span class="term"><code class="option">+[no]yaml</code></span></dt>
+<dd>
+	    <p>
+	      Print the responses (and, if <code class="option">+qr</code> is in use,
+	      also the outgoing queries) in a detailed YAML format.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]zflag</code></span></dt>
@@ -1166,6 +1188,6 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

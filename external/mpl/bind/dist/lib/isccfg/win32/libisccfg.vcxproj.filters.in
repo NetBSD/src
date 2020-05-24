@@ -30,6 +30,9 @@
     <ClCompile Include="..\dnsconf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\kaspconf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isccfg\grammar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\isccfg\kaspconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isccfg\log.h">

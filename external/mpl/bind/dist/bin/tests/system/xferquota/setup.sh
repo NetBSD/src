@@ -16,8 +16,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 $PERL setup.pl
 
 cp -f ns1/changing1.db ns1/changing.db

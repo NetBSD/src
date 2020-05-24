@@ -17,6 +17,9 @@
 # Find the top of the BIND9 tree.
 TOP=@abs_top_builddir@
 
+# Provide TMPDIR variable for tests that need it.
+TMPDIR=${TMPDIR:-/tmp}
+
 # This is not the windows build.
 CYGWIN=""
 
@@ -36,6 +39,7 @@ DNSTAPREAD=$TOP/bin/tools/dnstap-read
 DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
 FEATURETEST=$TOP/bin/tests/system/feature-test
 FSTRM_CAPTURE=@FSTRM_CAPTURE@
+HOST=$TOP/bin/dig/host
 IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
 JOURNALPRINT=$TOP/bin/tools/named-journalprint
 KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
@@ -110,11 +114,20 @@ PERL=@PERL@
 PSSUSPEND=
 
 PYTHON=@PYTHON@
+PYTEST=@PYTEST@
 
 #
 # Determine if we support various optional features.
 #
-HAVEXMLSTATS=@XMLSTATS@
-HAVEJSONSTATS=@JSONSTATS@
-ZLIB=@ZLIB@
+LIBXML2_LIBS="@LIBXML2_LIBS@"
+HAVEXMLSTATS=${LIBXML2_LIBS:+1}
+JSON_C_LIBS="@JSON_C_LIBS@"
+HAVEJSONSTATS=${JSON_C_LIBS:+1}
+MAXMINDDB_LIBS="@MAXMINDDB_LIBS@"
+HAVEGEOIP2=${MAXMINDDB_LIBS:+1}
+ZLIB_LIBS="@ZLIB_LIBS@"
+HAVEZLIB=${ZLIB_LIBS:+1}
 NZD=@NZD_TOOLS@
+CRYPTO=@CRYPTO@
+
+export HAVEXMLSTATS HAVEJSONSTATS
