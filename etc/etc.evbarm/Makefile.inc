@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.118 2020/05/23 14:10:47 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.119 2020/05/24 14:44:11 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -87,6 +87,7 @@ __mkimage: .USE
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
 	TOOL_DISKLABEL=${TOOL_DISKLABEL} \
 	TOOL_FDISK=${TOOL_FDISK} \
+	TOOL_GPT=${TOOL_GPT} \
 	TOOL_GZIP=${TOOL_GZIP} \
 	TOOL_MKNOD=${TOOL_MKNOD} \
 	TOOL_PAX=${TOOL_PAX} \
