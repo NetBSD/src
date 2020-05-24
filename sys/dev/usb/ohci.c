@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.307 2020/05/19 19:09:43 jakllsch Exp $	*/
+/*	$NetBSD: ohci.c,v 1.308 2020/05/24 07:42:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.307 2020/05/19 19:09:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.308 2020/05/24 07:42:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -618,26 +618,28 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 			next = ox->ox_stds[j++];
 		KASSERT(next != cur);
 
-		curlen = 0;
-		const ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
-		ohci_physaddr_t edataphys = DMAADDR(dma, curoffs + len - 1);
-
-		const ohci_physaddr_t sphyspg = OHCI_PAGE(sdataphys);
-		ohci_physaddr_t ephyspg = OHCI_PAGE(edataphys);
-		/*
-		 * The OHCI hardware can handle at most one page
-		 * crossing per TD
-		 */
 		curlen = len;
-		if (sphyspg != ephyspg &&
-		    sphyspg + OHCI_PAGE_SIZE != ephyspg) {
-			/* must use multiple TDs, fill as much as possible. */
-			curlen = 2 * OHCI_PAGE_SIZE -
-			    OHCI_PAGE_OFFSET(sdataphys);
-			/* the length must be a multiple of the max size */
+		/*
+		 * The OHCI hardware can handle at most one page crossing per
+		 * TD.  That is, 2 * OHCI_PAGE_SIZE as a maximum.  Limit the
+		 * length in this TD accordingly.
+		 */
+		const ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
+
+		int maxlen = (2 * OHCI_PAGE_SIZE) - OHCI_PAGE_OFFSET(sdataphys);
+		if (curlen > maxlen) {
+			curlen = maxlen;
+
+			/*
+			 * the length must be a multiple of
+			 * the max size
+			 */
 			curlen -= curlen % mps;
-			edataphys = DMAADDR(dma, curoffs + curlen - 1);
 		}
+
+		const int edataoffs = curoffs + curlen - 1;
+		const ohci_physaddr_t edataphys = DMAADDR(dma, edataoffs);
+
 		KASSERT(curlen != 0);
 		DPRINTFN(4, "sdataphys=0x%08jx edataphys=0x%08jx "
 		    "len=%jd curlen=%jd", sdataphys, edataphys, len, curlen);
@@ -811,6 +813,7 @@ ohci_init(ohci_softc_t *sc)
 	}
 	sc->sc_bus.ub_revision = USBREV_1_0;
 	sc->sc_bus.ub_usedma = true;
+	sc->sc_bus.ub_dmaflags = USBMALLOC_MULTISEG;
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
@@ -3447,8 +3450,9 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_itd_t *sitd, *nsitd, *tail;
-	ohci_physaddr_t buf, offs, noffs, bp0;
+	ohci_physaddr_t buf, offs, bp0, bp1;
 	int i, ncur, nframes;
+	size_t boff, frlen;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTFN(5, "xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
@@ -3486,17 +3490,44 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	opipe->tail.itd = ox->ox_sitds[0];
 	ox->ox_sitds[0] = sitd;
 
+	boff = 0;
 	buf = DMAADDR(&xfer->ux_dmabuf, 0);
-	bp0 = OHCI_PAGE(buf);
+	bp0 = bp1 = OHCI_PAGE(buf);
 	offs = OHCI_PAGE_OFFSET(buf);
+
+	ohci_physaddr_t end = bp0;	/* XXX stupid GCC */
+
 	nframes = xfer->ux_nframes;
 	xfer->ux_hcpriv = sitd;
 	size_t j = 1;
 	for (i = ncur = 0; i < nframes; i++, ncur++) {
-		noffs = offs + xfer->ux_frlengths[i];
-		if (ncur == OHCI_ITD_NOFFSET ||	/* all offsets used */
-		    OHCI_PAGE(buf + noffs) > bp0 + OHCI_PAGE_SIZE) { /* too many page crossings */
+		frlen = xfer->ux_frlengths[i];
 
+		DPRINTFN(1, "frame=%jd ux_frlengths[%jd]=%jd", i, i,
+		    xfer->ux_frlengths[i], 0);
+		/*
+		 * XXXNH: The loop assumes this is never true, because
+		 * incrementing 'i' assumes all the ux_frlengths[i] is covered.
+		 */
+		if (frlen > 2 * OHCI_PAGE_SIZE - offs)
+			frlen = 2 * OHCI_PAGE_SIZE - offs;
+
+		boff += frlen;
+		buf = DMAADDR(&xfer->ux_dmabuf, boff);
+		ohci_physaddr_t noffs = OHCI_PAGE_OFFSET(buf);
+
+		ohci_physaddr_t nend = DMAADDR(&xfer->ux_dmabuf, boff - 1);
+		const ohci_physaddr_t nep = OHCI_PAGE(nend);
+
+		/* Note the first page crossing in bp1 */
+		if (bp0 == bp1 && bp1 != nep)
+			bp1 = nep;
+
+		DPRINTFN(1, "ncur=%jd bp0=%#jx bp1=%#jx nend=%#jx",
+		    ncur, bp0, bp1, nend);
+
+		/* all offsets used or too many page crossings */
+		if (ncur == OHCI_ITD_NOFFSET || (bp0 != bp1 && bp1 != nep)) {
 			/* Allocate next ITD */
 			nsitd = ox->ox_sitds[j++];
 			KASSERT(nsitd != NULL);
@@ -3510,7 +3541,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 				OHCI_ITD_SET_FC(ncur));
 			sitd->itd.itd_bp0 = HTOO32(bp0);
 			sitd->itd.itd_nextitd = HTOO32(nsitd->physaddr);
-			sitd->itd.itd_be = HTOO32(bp0 + offs - 1);
+			sitd->itd.itd_be = HTOO32(end);
 			sitd->nextitd = nsitd;
 			sitd->xfer = xfer;
 			sitd->flags = 0;
@@ -3523,10 +3554,11 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 
 			sitd = nsitd;
 			isoc->next = isoc->next + ncur;
-			bp0 = OHCI_PAGE(buf + offs);
+			bp0 = bp1 = OHCI_PAGE(buf);
 			ncur = 0;
 		}
 		sitd->itd.itd_offset[ncur] = HTOO16(OHCI_ITD_MK_OFFS(offs));
+		end = nend;
 		offs = noffs;
 	}
 	KASSERT(j <= ox->ox_nsitd);
@@ -3547,7 +3579,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 		OHCI_ITD_SET_FC(ncur));
 	sitd->itd.itd_bp0 = HTOO32(bp0);
 	sitd->itd.itd_nextitd = HTOO32(tail->physaddr);
-	sitd->itd.itd_be = HTOO32(bp0 + offs - 1);
+	sitd->itd.itd_be = HTOO32(end);
 	sitd->nextitd = tail;
 	sitd->xfer = xfer;
 	sitd->flags = OHCI_CALL_DONE;
