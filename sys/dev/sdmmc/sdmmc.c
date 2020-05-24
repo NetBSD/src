@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.39 2019/10/28 06:16:46 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.40 2020/05/24 17:26:18 riastradh Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.39 2019/10/28 06:16:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.40 2020/05/24 17:26:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -152,7 +152,6 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_tskq_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	mutex_init(&sc->sc_discover_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
-	mutex_init(&sc->sc_intr_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&sc->sc_tskq_cv, "mmctaskq");
 
 	evcnt_attach_dynamic(&sc->sc_ev_xfer, EVCNT_TYPE_MISC, NULL,
@@ -227,8 +226,10 @@ sdmmc_detach(device_t self, int flags)
 		callout_destroy(&sc->sc_card_detect_ch);
 	}
 
+	sdmmc_del_task(sc, &sc->sc_intr_task, NULL);
+	sdmmc_del_task(sc, &sc->sc_discover_task, NULL);
+
 	cv_destroy(&sc->sc_tskq_cv);
-	mutex_destroy(&sc->sc_intr_task_mtx);
 	mutex_destroy(&sc->sc_discover_task_mtx);
 	mutex_destroy(&sc->sc_tskq_mtx);
 	mutex_destroy(&sc->sc_mtx);
@@ -258,32 +259,64 @@ sdmmc_add_task(struct sdmmc_softc *sc, struct sdmmc_task *task)
 {
 
 	mutex_enter(&sc->sc_tskq_mtx);
+	if (task->sc == sc) {
+		KASSERT(task->onqueue);
+		goto out;
+	}
+	KASSERT(task->sc == NULL);
+	KASSERT(!task->onqueue);
 	task->onqueue = 1;
 	task->sc = sc;
 	TAILQ_INSERT_TAIL(&sc->sc_tskq, task, next);
 	cv_broadcast(&sc->sc_tskq_cv);
-	mutex_exit(&sc->sc_tskq_mtx);
+out:	mutex_exit(&sc->sc_tskq_mtx);
 }
 
 static inline void
 sdmmc_del_task1(struct sdmmc_softc *sc, struct sdmmc_task *task)
 {
 
+	KASSERT(mutex_owned(&sc->sc_tskq_mtx));
+
 	TAILQ_REMOVE(&sc->sc_tskq, task, next);
 	task->sc = NULL;
 	task->onqueue = 0;
 }
 
-void
-sdmmc_del_task(struct sdmmc_task *task)
+bool
+sdmmc_del_task(struct sdmmc_softc *sc, struct sdmmc_task *task,
+    kmutex_t *interlock)
 {
-	struct sdmmc_softc *sc = (struct sdmmc_softc *)task->sc;
+	bool cancelled;
 
-	if (sc != NULL) {
-		mutex_enter(&sc->sc_tskq_mtx);
+	KASSERT(interlock == NULL || mutex_owned(interlock));
+
+	mutex_enter(&sc->sc_tskq_mtx);
+	if (task->sc == sc) {
+		KASSERT(task->onqueue);
+		KASSERT(sc->sc_curtask != task);
 		sdmmc_del_task1(sc, task);
-		mutex_exit(&sc->sc_tskq_mtx);
+		cancelled = true;
+	} else {
+		KASSERT(task->sc == NULL);
+		KASSERT(!task->onqueue);
+		mutex_exit(interlock);
+		while (sc->sc_curtask == task) {
+			KASSERT(curlwp != sc->sc_tskq_lwp);
+			cv_wait(&sc->sc_tskq_cv, &sc->sc_tskq_mtx);
+		}
+		if (!mutex_tryenter(interlock)) {
+			mutex_exit(&sc->sc_tskq_mtx);
+			mutex_enter(interlock);
+			mutex_enter(&sc->sc_tskq_mtx);
+		}
+		cancelled = false;
 	}
+	mutex_exit(&sc->sc_tskq_mtx);
+
+	KASSERT(interlock == NULL || mutex_owned(interlock));
+
+	return cancelled;
 }
 
 static void
@@ -300,9 +333,12 @@ sdmmc_task_thread(void *arg)
 		task = TAILQ_FIRST(&sc->sc_tskq);
 		if (task != NULL) {
 			sdmmc_del_task1(sc, task);
+			sc->sc_curtask = task;
 			mutex_exit(&sc->sc_tskq_mtx);
 			(*task->func)(task->arg);
 			mutex_enter(&sc->sc_tskq_mtx);
+			sc->sc_curtask = NULL;
+			cv_broadcast(&sc->sc_tskq_cv);
 		} else {
 			/* Check for the exit condition. */
 			if (sc->sc_dying)
@@ -335,10 +371,7 @@ sdmmc_needs_discover(device_t dev)
 	if (!ISSET(sc->sc_flags, SMF_INITED))
 		return;
 
-	mutex_enter(&sc->sc_discover_task_mtx);
-	if (!sdmmc_task_pending(&sc->sc_discover_task))
-		sdmmc_add_task(sc, &sc->sc_discover_task);
-	mutex_exit(&sc->sc_discover_task_mtx);
+	sdmmc_add_task(sc, &sc->sc_discover_task);
 }
 
 static void
