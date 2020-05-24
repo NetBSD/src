@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.81 2019/10/11 23:04:52 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.82 2020/05/24 18:42:20 jmcneill Exp $");
 #endif
 
 #include <sys/param.h>
@@ -311,7 +311,7 @@ gpt_mbr(gpt_t gpt, off_t lba, unsigned int *next_index, off_t ext_offset)
 			continue;
 		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
 			pmbr++;
-		else
+		else if ((gpt->flags & GPT_HYBRID) == 0)
 			break;
 	}
 	if (pmbr && i == 4 && lba == 0) {

@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.71 2020/05/24 14:42:44 jmcneill Exp $
+.\" $NetBSD: gpt.8,v 1.72 2020/05/24 18:42:20 jmcneill Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd GUID partition table maintenance utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl nrqv
+.Op Fl Hnrqv
 .Op Fl m Ar mediasize
 .Op Fl s Ar sectorsize
 .Op Fl T Ar timestamp
@@ -83,6 +83,8 @@ have an effect on all commands.
 Override the default media size for the device (obtained
 from the kernel if possible) or defaulting to the file size for
 plain files.
+.If Fl H
+Ignore existing MBR (Hybrid MBR/GPT mode).
 .It Fl n
 Do not update the wedge information that
 .Nm
