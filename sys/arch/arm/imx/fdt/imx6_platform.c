@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.8 2019/10/23 02:34:43 hkenken Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.9 2020/05/24 08:47:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.8 2019/10/23 02:34:43 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.9 2020/05/24 08:47:19 skrll Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -82,7 +82,7 @@ imx_platform_devmap(void)
 		DEVMAP_ENTRY(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE, IMX6_IOREG_SIZE),
 		DEVMAP_ENTRY(KERNEL_IO_ARMCORE_VBASE, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE),
 		DEVMAP_ENTRY_END
-};
+	};
 
 	return devmap;
 }
@@ -174,7 +174,6 @@ imx_platform_mpstart(void)
 	if (bus_space_map(bst, IMX6_AIPS1_BASE + AIPS1_SRC_BASE, AIPS1_SRC_SIZE, 0, &bsh) != 0)
 		panic("couldn't map SRC");
 
-
 	uint32_t srcctl = bus_space_read_4(bst, bsh, SRC_SCR);
 	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
 
@@ -234,4 +233,3 @@ const struct arm_platform imx6_platform = {
 
 ARM_PLATFORM(imx6q, "fsl,imx6q", &imx6_platform);
 ARM_PLATFORM(imx6qp, "fsl,imx6qp", &imx6_platform);
-
