@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.103 2020/05/17 19:38:17 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.104 2020/05/24 19:46:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -378,6 +378,7 @@ bool uvm_pagecheckdirty(struct vm_page *, bool);
 bool uvm_pagereadonly_p(struct vm_page *);
 bool uvm_page_locked_p(struct vm_page *);
 void uvm_pagewakeup(struct vm_page *);
+bool uvm_pagewanted_p(struct vm_page *);
 void uvm_pagewait(struct vm_page *, krwlock_t *, const char *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
