@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.3 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,10 +25,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <isc/once.h>
 #include <isc/util.h>
@@ -36,26 +33,22 @@
 #include <isccc/result.h>
 
 static const char *text[ISCCC_R_NRESULTS] = {
-	"unknown version",			/* 1 */
-	"syntax error",				/* 2 */
-	"bad auth",				/* 3 */
-	"expired",				/* 4 */
-	"clock skew",				/* 5 */
-	"duplicate"				/* 6 */
+	"unknown version", /* 1 */
+	"syntax error",	   /* 2 */
+	"bad auth",	   /* 3 */
+	"expired",	   /* 4 */
+	"clock skew",	   /* 5 */
+	"duplicate"	   /* 6 */
 };
 
 static const char *ids[ISCCC_R_NRESULTS] = {
-	"ISCCC_R_UNKNOWNVERSION",
-	"ISCCC_R_SYNTAX",
-	"ISCCC_R_BADAUTH",
-	"ISCCC_R_EXPIRED",
-	"ISCCC_R_CLOCKSKEW",
-	"ISCCC_R_DUPLICATE",
+	"ISCCC_R_UNKNOWNVERSION", "ISCCC_R_SYNTAX",    "ISCCC_R_BADAUTH",
+	"ISCCC_R_EXPIRED",	  "ISCCC_R_CLOCKSKEW", "ISCCC_R_DUPLICATE",
 };
 
-#define ISCCC_RESULT_RESULTSET			2
+#define ISCCC_RESULT_RESULTSET 2
 
-static isc_once_t		once = ISC_ONCE_INIT;
+static isc_once_t once = ISC_ONCE_INIT;
 
 static void
 initialize_action(void) {
@@ -63,15 +56,17 @@ initialize_action(void) {
 
 	result = isc_result_register(ISC_RESULTCLASS_ISCCC, ISCCC_R_NRESULTS,
 				     text, ISCCC_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_register() failed: %u", result);
+	}
 
 	result = isc_result_registerids(ISC_RESULTCLASS_ISCCC, ISCCC_R_NRESULTS,
 					ids, ISCCC_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_registerids() failed: %u", result);
+	}
 }
 
 static void

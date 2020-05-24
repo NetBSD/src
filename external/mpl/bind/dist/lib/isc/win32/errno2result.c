@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.c,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.5 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,10 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
+#include "errno2result.h"
 #include <stdbool.h>
 #include <winsock2.h>
 
-#include "errno2result.h"
 #include <isc/result.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
@@ -30,16 +27,14 @@
  * not already there.
  */
 isc_result_t
-isc__errno2resultx(int posixerrno, bool dolog,
-		   const char *file, int line)
-{
+isc__errno2resultx(int posixerrno, bool dolog, const char *file, int line) {
 	char strbuf[ISC_STRERRORSIZE];
 
 	switch (posixerrno) {
 	case ENOTDIR:
 	case WSAELOOP:
 	case WSAEINVAL:
-	case EINVAL:		/* XXX sometimes this is not for files */
+	case EINVAL: /* XXX sometimes this is not for files */
 	case ENAMETOOLONG:
 	case WSAENAMETOOLONG:
 	case EBADF:
@@ -60,7 +55,7 @@ isc__errno2resultx(int posixerrno, bool dolog,
 #ifdef EOVERFLOW
 	case EOVERFLOW:
 		return (ISC_R_RANGE);
-#endif
+#endif /* ifdef EOVERFLOW */
 	case ENFILE:
 	case EMFILE:
 	case WSAEMFILE:

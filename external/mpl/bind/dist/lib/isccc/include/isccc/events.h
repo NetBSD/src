@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.3 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef ISCCC_EVENTS_H
 #define ISCCC_EVENTS_H 1
 
@@ -37,9 +36,9 @@
  * Registry of ISCCC event numbers.
  */
 
-#define ISCCC_EVENT_CCMSG			(ISC_EVENTCLASS_ISCCC + 0)
+#define ISCCC_EVENT_CCMSG (ISC_EVENTCLASS_ISCCC + 0)
 
-#define ISCCC_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_ISCCC + 0)
-#define ISCCC_EVENT_LASTEVENT			(ISC_EVENTCLASS_ISCCC + 65535)
+#define ISCCC_EVENT_FIRSTEVENT (ISC_EVENTCLASS_ISCCC + 0)
+#define ISCCC_EVENT_LASTEVENT  (ISC_EVENTCLASS_ISCCC + 65535)
 
 #endif /* ISCCC_EVENTS_H */

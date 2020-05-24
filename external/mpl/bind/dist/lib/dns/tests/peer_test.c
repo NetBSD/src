@@ -1,4 +1,4 @@
-/*	$NetBSD: peer_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: peer_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -70,7 +67,7 @@ dscp(void **state) {
 	 */
 	ina.s_addr = INADDR_LOOPBACK;
 	isc_netaddr_fromin(&netaddr, &ina);
-	result = dns_peer_new(mctx, &netaddr, &peer);
+	result = dns_peer_new(dt_mctx, &netaddr, &peer);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -175,4 +172,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

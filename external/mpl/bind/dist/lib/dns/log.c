@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,6 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <isc/util.h>
 
 #include <dns/log.h>
@@ -24,26 +22,26 @@
  * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
-	{ "notify", 	0 },
-	{ "database", 	0 },
-	{ "security", 	0 },
+	{ "notify", 0 },
+	{ "database", 0 },
+	{ "security", 0 },
 	{ "_placeholder", 0 },
-	{ "dnssec",	0 },
-	{ "resolver",	0 },
-	{ "xfer-in",	0 },
-	{ "xfer-out",	0 },
-	{ "dispatch",	0 },
+	{ "dnssec", 0 },
+	{ "resolver", 0 },
+	{ "xfer-in", 0 },
+	{ "xfer-out", 0 },
+	{ "dispatch", 0 },
 	{ "lame-servers", 0 },
 	{ "delegation-only", 0 },
 	{ "edns-disabled", 0 },
-	{ "rpz",	0 },
-	{ "rate-limit",	0 },
-	{ "cname",	0 },
-	{ "spill",	0 },
-	{ "dnstap",	0 },
-	{ "zoneload",	0 },
-	{ "nsid",	0 },
-	{ NULL, 	0 }
+	{ "rpz", 0 },
+	{ "rate-limit", 0 },
+	{ "cname", 0 },
+	{ "spill", 0 },
+	{ "dnstap", 0 },
+	{ "zoneload", 0 },
+	{ "nsid", 0 },
+	{ NULL, 0 }
 };
 
 /*%
@@ -51,40 +49,23 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
  * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
-	{ "dns/db",	 	0 },
-	{ "dns/rbtdb", 		0 },
-	{ "dns/rbt", 		0 },
-	{ "dns/rdata", 		0 },
-	{ "dns/master", 	0 },
-	{ "dns/message", 	0 },
-	{ "dns/cache", 		0 },
-	{ "dns/config",		0 },
-	{ "dns/resolver",	0 },
-	{ "dns/zone",		0 },
-	{ "dns/journal",	0 },
-	{ "dns/adb",		0 },
-	{ "dns/xfrin",		0 },
-	{ "dns/xfrout",		0 },
-	{ "dns/acl",		0 },
-	{ "dns/validator",	0 },
-	{ "dns/dispatch",	0 },
-	{ "dns/request",	0 },
-	{ "dns/masterdump",	0 },
-	{ "dns/tsig",		0 },
-	{ "dns/tkey",		0 },
-	{ "dns/sdb",		0 },
-	{ "dns/diff",		0 },
-	{ "dns/hints",		0 },
-	{ "dns/unused1",	0 },
-	{ "dns/dlz",		0 },
-	{ "dns/dnssec",		0 },
-	{ "dns/crypto",		0 },
-	{ "dns/packets",	0 },
-	{ "dns/nta",		0 },
-	{ "dns/dyndb",		0 },
-	{ "dns/dnstap",		0 },
-	{ "dns/ssu",		0 },
-	{ NULL, 		0 }
+	{ "dns/db", 0 },	 { "dns/rbtdb", 0 },
+	{ "dns/rbt", 0 },	 { "dns/rdata", 0 },
+	{ "dns/master", 0 },	 { "dns/message", 0 },
+	{ "dns/cache", 0 },	 { "dns/config", 0 },
+	{ "dns/resolver", 0 },	 { "dns/zone", 0 },
+	{ "dns/journal", 0 },	 { "dns/adb", 0 },
+	{ "dns/xfrin", 0 },	 { "dns/xfrout", 0 },
+	{ "dns/acl", 0 },	 { "dns/validator", 0 },
+	{ "dns/dispatch", 0 },	 { "dns/request", 0 },
+	{ "dns/masterdump", 0 }, { "dns/tsig", 0 },
+	{ "dns/tkey", 0 },	 { "dns/sdb", 0 },
+	{ "dns/diff", 0 },	 { "dns/hints", 0 },
+	{ "dns/unused1", 0 },	 { "dns/dlz", 0 },
+	{ "dns/dnssec", 0 },	 { "dns/crypto", 0 },
+	{ "dns/packets", 0 },	 { "dns/nta", 0 },
+	{ "dns/dyndb", 0 },	 { "dns/dnstap", 0 },
+	{ "dns/ssu", 0 },	 { NULL, 0 }
 };
 
 LIBDNS_EXTERNAL_DATA isc_log_t *dns_lctx = NULL;

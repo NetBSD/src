@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpaths.c,v 1.3 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: ntpaths.c,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /*
  * This module fetches the required path information that is specific
  * to NT systems which can have its configuration and system files
@@ -19,8 +18,6 @@
  * had previously assigned to the pointer. Basic information about the
  * file locations are stored in the registry.
  */
-
-#include <config.h>
 
 #include <isc/bind_registry.h>
 #include <isc/ntpaths.h>
@@ -52,15 +49,20 @@ isc_ntpaths_init(void) {
 	BOOL keyFound = TRUE;
 
 	memset(namedBase, 0, sizeof(namedBase));
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, BIND_SUBKEY, 0, KEY_READ, &hKey)
-		!= ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, BIND_SUBKEY, 0, KEY_READ, &hKey) !=
+	    ERROR_SUCCESS)
+	{
 		keyFound = FALSE;
+	}
 
 	if (keyFound == TRUE) {
 		/* Get the named directory */
 		if (RegQueryValueEx(hKey, "InstallDir", NULL, NULL,
-			(LPBYTE)namedBase, &baseLen) != ERROR_SUCCESS)
+				    (LPBYTE)namedBase,
+				    &baseLen) != ERROR_SUCCESS)
+		{
 			keyFound = FALSE;
+		}
 		RegCloseKey(hKey);
 	}
 
@@ -98,8 +100,7 @@ isc_ntpaths_init(void) {
 
 	/* Added to avoid an assert on NULL value */
 	strlcpy(resolv_confFile, namedBase, sizeof(resolv_confFile));
-	strlcat(resolv_confFile, "\\etc\\resolv.conf",
-		sizeof(resolv_confFile));
+	strlcat(resolv_confFile, "\\etc\\resolv.conf", sizeof(resolv_confFile));
 
 	strlcpy(bind_keysFile, namedBase, sizeof(bind_keysFile));
 	strlcat(bind_keysFile, "\\etc\\bind.keys", sizeof(bind_keysFile));
@@ -109,8 +110,9 @@ isc_ntpaths_init(void) {
 
 char *
 isc_ntpaths_get(int ind) {
-	if (!Initialized)
+	if (!Initialized) {
 		isc_ntpaths_init();
+	}
 
 	switch (ind) {
 	case NAMED_CONF_PATH:

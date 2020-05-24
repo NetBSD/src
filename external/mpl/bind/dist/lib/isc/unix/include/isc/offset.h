@@ -1,4 +1,4 @@
-/*	$NetBSD: offset.h,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: offset.h,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_OFFSET_H
 #define ISC_OFFSET_H 1
 
@@ -19,9 +18,10 @@
  * \brief
  * File offsets are operating-system dependent.
  */
-#include <limits.h>             /* Required for CHAR_BIT. */
+#include <limits.h> /* Required for CHAR_BIT. */
+#include <stddef.h> /* For Linux Standard Base. */
+
 #include <sys/types.h>
-#include <stddef.h>		/* For Linux Standard Base. */
 
 typedef off_t isc_offset_t;
 

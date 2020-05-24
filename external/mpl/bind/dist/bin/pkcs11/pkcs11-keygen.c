@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.4 2019/09/05 19:32:56 christos Exp $	*/
+/*	$NetBSD: pkcs11-keygen.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
@@ -56,12 +56,10 @@
 
 /*! \file */
 
-#include <config.h>
-
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -71,84 +69,82 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
+#include <pk11/constants.h>
 #include <pk11/pk11.h>
 #include <pk11/result.h>
-#include <pk11/constants.h>
-#include <pkcs11/eddsa.h>
 
 /* Define static key template values */
 static CK_BBOOL truevalue = TRUE;
 static CK_BBOOL falsevalue = FALSE;
 
+/* Static arrays of data used for key template initialization */
+static CK_BYTE pk11_ecc_prime256v1[] = PK11_ECC_PRIME256V1;
+static CK_BYTE pk11_ecc_secp384r1[] = PK11_ECC_SECP384R1;
+static CK_BYTE pk11_ecx_ed25519[] = PK11_ECX_ED25519;
+static CK_BYTE pk11_ecx_ed448[] = PK11_ECX_ED448;
+
 /* Key class: RSA, ECC, ECX, or unknown */
-typedef enum {
-	key_unknown,
-	key_rsa,
-	key_ecc,
-	key_ecx
-} key_class_t;
+typedef enum { key_unknown, key_rsa, key_ecc, key_ecx } key_class_t;
 
 /*
- * Private key template: usable for most key classes without
- * modificaton; override CKA_SIGN with CKA_DERIVE for DH
+ * Private key template
  */
-#define PRIVATE_LABEL 0
-#define PRIVATE_SIGN 1
-#define PRIVATE_DERIVE 1
-#define PRIVATE_TOKEN 2
-#define PRIVATE_PRIVATE 3
-#define PRIVATE_SENSITIVE 4
+#define PRIVATE_LABEL	    0
+#define PRIVATE_SIGN	    1
+#define PRIVATE_TOKEN	    2
+#define PRIVATE_PRIVATE	    3
+#define PRIVATE_SENSITIVE   4
 #define PRIVATE_EXTRACTABLE 5
-#define PRIVATE_ID 6
-#define PRIVATE_ATTRS 7
+#define PRIVATE_ID	    6
+#define PRIVATE_ATTRS	    7
 static CK_ATTRIBUTE private_template[] = {
-	{CKA_LABEL, NULL_PTR, 0},
-	{CKA_SIGN, &truevalue, sizeof(truevalue)},
-	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
-	{CKA_PRIVATE, &truevalue, sizeof(truevalue)},
-	{CKA_SENSITIVE, &truevalue, sizeof(truevalue)},
-	{CKA_EXTRACTABLE, &falsevalue, sizeof(falsevalue)},
-	{CKA_ID, NULL_PTR, 0}
+	{ CKA_LABEL, NULL_PTR, 0 },
+	{ CKA_SIGN, &truevalue, sizeof(truevalue) },
+	{ CKA_TOKEN, &truevalue, sizeof(truevalue) },
+	{ CKA_PRIVATE, &truevalue, sizeof(truevalue) },
+	{ CKA_SENSITIVE, &truevalue, sizeof(truevalue) },
+	{ CKA_EXTRACTABLE, &falsevalue, sizeof(falsevalue) },
+	{ CKA_ID, NULL_PTR, 0 }
 };
 
 /*
  * Public key template for RSA keys
  */
-#define RSA_LABEL 0
-#define RSA_VERIFY 1
-#define RSA_TOKEN 2
-#define RSA_PRIVATE 3
-#define RSA_MODULUS_BITS 4
+#define RSA_LABEL	    0
+#define RSA_VERIFY	    1
+#define RSA_TOKEN	    2
+#define RSA_PRIVATE	    3
+#define RSA_MODULUS_BITS    4
 #define RSA_PUBLIC_EXPONENT 5
-#define RSA_ID 6
-#define RSA_ATTRS 7
+#define RSA_ID		    6
+#define RSA_ATTRS	    7
 static CK_ATTRIBUTE rsa_template[] = {
-	{CKA_LABEL, NULL_PTR, 0},
-	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
-	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
-	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
-	{CKA_MODULUS_BITS, NULL_PTR, 0},
-	{CKA_PUBLIC_EXPONENT, NULL_PTR, 0},
-	{CKA_ID, NULL_PTR, 0}
+	{ CKA_LABEL, NULL_PTR, 0 },
+	{ CKA_VERIFY, &truevalue, sizeof(truevalue) },
+	{ CKA_TOKEN, &truevalue, sizeof(truevalue) },
+	{ CKA_PRIVATE, &falsevalue, sizeof(falsevalue) },
+	{ CKA_MODULUS_BITS, NULL_PTR, 0 },
+	{ CKA_PUBLIC_EXPONENT, NULL_PTR, 0 },
+	{ CKA_ID, NULL_PTR, 0 }
 };
 
 /*
  * Public key template for ECC/ECX keys
  */
-#define ECC_LABEL 0
-#define ECC_VERIFY 1
-#define ECC_TOKEN 2
+#define ECC_LABEL   0
+#define ECC_VERIFY  1
+#define ECC_TOKEN   2
 #define ECC_PRIVATE 3
-#define ECC_PARAMS 4
-#define ECC_ID 5
-#define ECC_ATTRS 6
+#define ECC_PARAMS  4
+#define ECC_ID	    5
+#define ECC_ATTRS   6
 static CK_ATTRIBUTE ecc_template[] = {
-	{CKA_LABEL, NULL_PTR, 0},
-	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
-	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
-	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
-	{CKA_EC_PARAMS, NULL_PTR, 0},
-	{CKA_ID, NULL_PTR, 0}
+	{ CKA_LABEL, NULL_PTR, 0 },
+	{ CKA_VERIFY, &truevalue, sizeof(truevalue) },
+	{ CKA_TOKEN, &truevalue, sizeof(truevalue) },
+	{ CKA_PRIVATE, &falsevalue, sizeof(falsevalue) },
+	{ CKA_EC_PARAMS, NULL_PTR, 0 },
+	{ CKA_ID, NULL_PTR, 0 }
 };
 
 /*
@@ -158,28 +154,30 @@ static CK_ATTRIBUTE ecc_template[] = {
  */
 static key_class_t
 keyclass_fromtext(const char *name) {
-	if (name == NULL)
+	if (name == NULL) {
 		return (key_unknown);
+	}
 
 	if (strncasecmp(name, "rsa", 3) == 0 ||
-	    strncasecmp(name, "nsec3rsa", 8) == 0)
+	    strncasecmp(name, "nsec3rsa", 8) == 0) {
 		return (key_rsa);
-	else if (strncasecmp(name, "ecc", 3) == 0 ||
-		 strncasecmp(name, "ecdsa", 5) == 0)
+	} else if (strncasecmp(name, "ecc", 3) == 0 ||
+		   strncasecmp(name, "ecdsa", 5) == 0)
+	{
 		return (key_ecc);
-	else if (strncasecmp(name, "ecx", 3) == 0 ||
-		 strncasecmp(name, "ed", 2) == 0)
+	} else if (strncasecmp(name, "ecx", 3) == 0 ||
+		   strncasecmp(name, "ed", 2) == 0) {
 		return (key_ecx);
-	else
+	} else {
 		return (key_unknown);
+	}
 }
 
 static void
 usage(void) {
-	fprintf(stderr,
-		"Usage:\n"
-		"\tpkcs11-keygen -a algorithm -b keysize -l label\n"
-		"\t              [-P] [-m module] "
+	fprintf(stderr, "Usage:\n"
+			"\tpkcs11-keygen -a algorithm -b keysize -l label\n"
+			"\t              [-P] [-m module] "
 			"[-s slot] [-e] [-S] [-i id] [-p PIN]\n");
 	exit(2);
 }
@@ -206,9 +204,7 @@ main(int argc, char *argv[]) {
 	unsigned long id = 0;
 	CK_BYTE idbuf[4];
 	CK_ULONG ulObjectCount;
-	CK_ATTRIBUTE search_template[] = {
-		{CKA_LABEL, NULL_PTR, 0}
-	};
+	CK_ATTRIBUTE search_template[] = { { CKA_LABEL, NULL_PTR, 0 } };
 	CK_ATTRIBUTE *public_template = NULL;
 	CK_ULONG public_attrcnt = 0, private_attrcnt = PRIVATE_ATTRS;
 	key_class_t keyclass = key_rsa;
@@ -250,8 +246,7 @@ main(int argc, char *argv[]) {
 			quiet = 1;
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -263,11 +258,13 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	if (label == NULL && isc_commandline_index < argc)
+	if (label == NULL && isc_commandline_index < argc) {
 		label = (CK_CHAR *)argv[isc_commandline_index];
+	}
 
-	if (errflg || (label == NULL))
+	if (errflg || (label == NULL)) {
 		usage();
+	}
 
 	if (expsize != 0 && keyclass != key_rsa) {
 		fprintf(stderr, "The -e option is only compatible "
@@ -278,10 +275,12 @@ main(int argc, char *argv[]) {
 	switch (keyclass) {
 	case key_rsa:
 		op_type = OP_RSA;
-		if (expsize == 0)
+		if (expsize == 0) {
 			expsize = 3;
-		if (bits == 0)
+		}
+		if (bits == 0) {
 			usage();
+		}
 
 		mech.mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN;
 		mech.pParameter = NULL;
@@ -294,9 +293,9 @@ main(int argc, char *argv[]) {
 		/* Set public exponent to F4 or F5 */
 		exponent[0] = 0x01;
 		exponent[1] = 0x00;
-		if (expsize == 3)
+		if (expsize == 3) {
 			exponent[2] = 0x01;
-		else {
+		} else {
 			exponent[2] = 0x00;
 			exponent[3] = 0x00;
 			exponent[4] = 0x01;
@@ -309,9 +308,9 @@ main(int argc, char *argv[]) {
 		break;
 	case key_ecc:
 		op_type = OP_ECDSA;
-		if (bits == 0)
+		if (bits == 0) {
 			bits = 256;
-		else if (bits != 256 && bits != 384) {
+		} else if (bits != 256 && bits != 384) {
 			fprintf(stderr, "ECC keys only support bit sizes of "
 					"256 and 384\n");
 			exit(2);
@@ -337,20 +336,16 @@ main(int argc, char *argv[]) {
 
 		break;
 	case key_ecx:
-#ifndef CKM_EDDSA_KEY_PAIR_GEN
-		fprintf(stderr, "CKM_EDDSA_KEY_PAIR_GEN is not defined\n");
-		usage();
-#else
 		op_type = OP_EDDSA;
-		if (bits == 0)
+		if (bits == 0) {
 			bits = 256;
-		else if (bits != 256 && bits != 456) {
+		} else if (bits != 256 && bits != 456) {
 			fprintf(stderr, "ECX keys only support bit sizes of "
 					"256 and 456\n");
 			exit(2);
 		}
 
-		mech.mechanism = CKM_EDDSA_KEY_PAIR_GEN;
+		mech.mechanism = CKM_EC_EDWARDS_KEY_PAIR_GEN;
 		mech.pParameter = NULL;
 		mech.ulParameterLen = 0;
 
@@ -359,16 +354,14 @@ main(int argc, char *argv[]) {
 		id_offset = ECC_ID;
 
 		if (bits == 256) {
-			public_template[4].pValue = pk11_ecc_ed25519;
+			public_template[4].pValue = pk11_ecx_ed25519;
 			public_template[4].ulValueLen =
-				sizeof(pk11_ecc_ed25519);
+				sizeof(pk11_ecx_ed25519);
 		} else {
-			public_template[4].pValue = pk11_ecc_ed448;
-			public_template[4].ulValueLen =
-				sizeof(pk11_ecc_ed448);
+			public_template[4].pValue = pk11_ecx_ed448;
+			public_template[4].ulValueLen = sizeof(pk11_ecx_ed448);
 		}
 
-#endif
 		break;
 	case key_unknown:
 		usage();
@@ -405,24 +398,27 @@ main(int argc, char *argv[]) {
 	pk11_result_register();
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	if (pin == NULL) {
 		pin = getpass("Enter Pin: ");
 	}
 
-	result = pk11_get_session(&pctx, op_type, false, true,
-				  true, (const char *) pin, slot);
+	result = pk11_get_session(&pctx, op_type, false, true, true,
+				  (const char *)pin, slot);
 	if (result == PK11_R_NORANDOMSERVICE ||
-	    result == PK11_R_NODIGESTSERVICE ||
-	    result == PK11_R_NOAESSERVICE) {
+	    result == PK11_R_NODIGESTSERVICE || result == PK11_R_NOAESSERVICE)
+	{
 		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
 		fprintf(stderr, "This HSM will not work with BIND 9 "
 				"using native PKCS#11.\n");
 	} else if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "Unrecoverable error initializing "
-				"PKCS#11: %s\n", isc_result_totext(result));
+		fprintf(stderr,
+			"Unrecoverable error initializing "
+			"PKCS#11: %s\n",
+			isc_result_totext(result));
 		exit(1);
 	}
 
@@ -456,10 +452,9 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Generate Key pair for signing/verifying */
-	rv = pkcs_C_GenerateKeyPair(hSession, &mech,
-			       public_template, public_attrcnt,
-			       private_template, private_attrcnt,
-			       &publickey, &privatekey);
+	rv = pkcs_C_GenerateKeyPair(hSession, &mech, public_template,
+				    public_attrcnt, private_template,
+				    private_attrcnt, &publickey, &privatekey);
 
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_GenerateKeyPair: Error = 0x%.8lX\n", rv);
@@ -468,16 +463,16 @@ main(int argc, char *argv[]) {
 		printf("Key pair generation complete.\n");
 	}
 
- exit_search:
+exit_search:
 	rv = pkcs_C_FindObjectsFinal(hSession);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsFinal: Error = 0x%.8lX\n", rv);
 		error = 1;
 	}
 
- exit_session:
+exit_session:
 	pk11_return_session(&pctx);
-	(void) pk11_finalize();
+	(void)pk11_finalize();
 
 	exit(error);
 }

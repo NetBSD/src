@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <isc/dir.h>
@@ -32,8 +28,8 @@
 
 #include "errno2result.h"
 
-#define ISC_DIR_MAGIC		ISC_MAGIC('D', 'I', 'R', '*')
-#define VALID_DIR(dir)		ISC_MAGIC_VALID(dir, ISC_DIR_MAGIC)
+#define ISC_DIR_MAGIC  ISC_MAGIC('D', 'I', 'R', '*')
+#define VALID_DIR(dir) ISC_MAGIC_VALID(dir, ISC_DIR_MAGIC)
 
 void
 isc_dir_init(isc_dir_t *dir) {
@@ -73,8 +69,9 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 	 * Append path separator, if needed, and "*".
 	 */
 	p = dir->dirname + strlen(dir->dirname);
-	if (dir->dirname < p && *(p - 1) != '/')
+	if (dir->dirname < p && *(p - 1) != '/') {
 		*p++ = '/';
+	}
 	*p++ = '*';
 	*p = '\0';
 
@@ -92,7 +89,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 
 /*!
  * \brief Return previously retrieved file or get next one.
-
+ *
  * Unix's dirent has
  * separate open and read functions, but the Win32 and DOS interfaces open
  * the dir stream and reads the first file in one operation.
@@ -108,14 +105,16 @@ isc_dir_read(isc_dir_t *dir) {
 	 */
 	entry = readdir(dir->handle);
 
-	if (entry == NULL)
+	if (entry == NULL) {
 		return (ISC_R_NOMORE);
+	}
 
 	/*
 	 * Make sure that the space for the name is long enough.
 	 */
-	if (sizeof(dir->entry.name) <= strlen(entry->d_name))
+	if (sizeof(dir->entry.name) <= strlen(entry->d_name)) {
 		return (ISC_R_UNEXPECTED);
+	}
 
 	strlcpy(dir->entry.name, entry->d_name, sizeof(dir->entry.name));
 
@@ -132,10 +131,10 @@ isc_dir_read(isc_dir_t *dir) {
  */
 void
 isc_dir_close(isc_dir_t *dir) {
-       REQUIRE(VALID_DIR(dir) && dir->handle != NULL);
+	REQUIRE(VALID_DIR(dir) && dir->handle != NULL);
 
-       (void)closedir(dir->handle);
-       dir->handle = NULL;
+	(void)closedir(dir->handle);
+	dir->handle = NULL;
 }
 
 /*!
@@ -158,8 +157,9 @@ isc_dir_chdir(const char *dirname) {
 
 	REQUIRE(dirname != NULL);
 
-	if (chdir(dirname) < 0)
+	if (chdir(dirname) < 0) {
 		return (isc__errno2result(errno));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -168,7 +168,7 @@ isc_result_t
 isc_dir_chroot(const char *dirname) {
 #ifdef HAVE_CHROOT
 	void *tmp;
-#endif
+#endif /* ifdef HAVE_CHROOT */
 
 	REQUIRE(dirname != NULL);
 
@@ -180,16 +180,18 @@ isc_dir_chroot(const char *dirname) {
 	 * Do not report errors if it fails, we do not need any result now.
 	 */
 	tmp = getprotobyname("udp");
-	if (tmp != NULL)
-		(void) getservbyname("domain", "udp");
+	if (tmp != NULL) {
+		(void)getservbyname("domain", "udp");
+	}
 
-	if (chroot(dirname) < 0 || chdir("/") < 0)
+	if (chroot(dirname) < 0 || chdir("/") < 0) {
 		return (isc__errno2result(errno));
+	}
 
 	return (ISC_R_SUCCESS);
-#else
+#else  /* ifdef HAVE_CHROOT */
 	return (ISC_R_NOTIMPLEMENTED);
-#endif
+#endif /* ifdef HAVE_CHROOT */
 }
 
 isc_result_t
@@ -213,25 +215,28 @@ isc_dir_createunique(char *templet) {
 	 */
 	for (x = templet + strlen(templet) - 1; *x == 'X' && x >= templet;
 	     x--, pid /= 10)
+	{
 		*x = pid % 10 + '0';
+	}
 
-	x++;			/* Set x to start of ex-Xs. */
+	x++; /* Set x to start of ex-Xs. */
 
 	do {
 		i = mkdir(templet, 0700);
-		if (i == 0 || errno != EEXIST)
+		if (i == 0 || errno != EEXIST) {
 			break;
+		}
 
 		/*
 		 * The BSD algorithm.
 		 */
 		p = x;
 		while (*p != '\0') {
-			if (isdigit(*p & 0xff))
+			if (isdigit(*p & 0xff)) {
 				*p = 'a';
-			else if (*p != 'z')
+			} else if (*p != 'z') {
 				++*p;
-			else {
+			} else {
 				/*
 				 * Reset character and move to next.
 				 */
@@ -253,10 +258,11 @@ isc_dir_createunique(char *templet) {
 		}
 	} while (1);
 
-	if (i == -1)
+	if (i == -1) {
 		result = isc__errno2result(errno);
-	else
+	} else {
 		result = ISC_R_SUCCESS;
+	}
 
 	return (result);
 }

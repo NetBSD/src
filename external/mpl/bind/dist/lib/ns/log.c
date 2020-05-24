@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,6 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <isc/result.h>
 #include <isc/util.h>
 
@@ -22,22 +20,22 @@
 
 #ifndef ISC_FACILITY
 #define ISC_FACILITY LOG_DAEMON
-#endif
+#endif /* ifndef ISC_FACILITY */
 
 /*%
  * When adding a new category, be sure to add the appropriate
  * \#define to <ns/log.h>
  */
 LIBNS_EXTERNAL_DATA isc_logcategory_t ns_categories[] = {
-	{ "client",                     0 },
-	{ "network",                    0 },
-	{ "update",                     0 },
-	{ "queries",                    0 },
-	{ "update-security",            0 },
-	{ "query-errors",               0 },
-	{ "trust-anchor-telemetry",     0 },
-	{ "serve-stale",                0 },
-	{ NULL, 			0 }
+	{ "client", 0 },
+	{ "network", 0 },
+	{ "update", 0 },
+	{ "queries", 0 },
+	{ "update-security", 0 },
+	{ "query-errors", 0 },
+	{ "trust-anchor-telemetry", 0 },
+	{ "serve-stale", 0 },
+	{ NULL, 0 }
 };
 
 /*%
@@ -45,15 +43,9 @@ LIBNS_EXTERNAL_DATA isc_logcategory_t ns_categories[] = {
  * \#define to <ns/log.h>.
  */
 LIBNS_EXTERNAL_DATA isc_logmodule_t ns_modules[] = {
-	{ "ns/client",	 		0 },
-	{ "ns/query",		 	0 },
-	{ "ns/interfacemgr",	 	0 },
-	{ "ns/update",	 		0 },
-	{ "ns/xfer-in",	 		0 },
-	{ "ns/xfer-out", 		0 },
-	{ "ns/notify",	 		0 },
-	{ "ns/hooks",	 		0 },
-	{ NULL, 			0 }
+	{ "ns/client", 0 }, { "ns/query", 0 },	 { "ns/interfacemgr", 0 },
+	{ "ns/update", 0 }, { "ns/xfer-in", 0 }, { "ns/xfer-out", 0 },
+	{ "ns/notify", 0 }, { "ns/hooks", 0 },	 { NULL, 0 }
 };
 
 LIBNS_EXTERNAL_DATA isc_log_t *ns_lctx = NULL;

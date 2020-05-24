@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.7 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,14 @@
  * information regarding copyright ownership.
  */
 
-
 /* RFC3658 */
 
 #ifndef RDATA_GENERIC_DS_43_C
 #define RDATA_GENERIC_DS_43_C
 
-#define RRTYPE_DS_ATTRIBUTES \
-	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
-	  DNS_RDATATYPEATTR_ATPARENT )
+#define RRTYPE_DS_ATTRIBUTES                                        \
+	(DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	 DNS_RDATATYPEATTR_ATPARENT)
 
 #include <isc/md.h>
 
@@ -42,8 +41,9 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -84,7 +84,6 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 
 static inline isc_result_t
 fromtext_ds(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
@@ -130,25 +129,28 @@ generic_totext_ds(ARGS_TOTEXT) {
 	/*
 	 * Digest.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0) /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_hex_totext(&sr, 0, "", target));
-		else
+		} else {
 			RETERR(isc_hex_totext(&sr, tctx->width - 2,
 					      tctx->linebreak, target));
-	} else
+		}
+	} else {
 		RETERR(str_totext("[omitted]", target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
 static inline isc_result_t
 totext_ds(ARGS_TOTEXT) {
-
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	return (generic_totext_ds(rdata, tctx, target));
@@ -175,19 +177,22 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA384 &&
 	     sr.length < 4 + ISC_SHA384_DIGESTLENGTH))
+	{
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	/*
 	 * Only copy digest lengths if we know them.
 	 * If there is extra data dns_rdata_fromwire() will
 	 * detect that.
 	 */
-	if (sr.base[3] == DNS_DSDIGEST_SHA1)
+	if (sr.base[3] == DNS_DSDIGEST_SHA1) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
-	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
+	} else if (sr.base[3] == DNS_DSDIGEST_SHA256) {
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
-	else if (sr.base[3] == DNS_DSDIGEST_SHA384)
+	} else if (sr.base[3] == DNS_DSDIGEST_SHA384) {
 		sr.length = 4 + ISC_SHA384_DIGESTLENGTH;
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
@@ -195,7 +200,6 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 
 static inline isc_result_t
 fromwire_ds(ARGS_FROMWIRE) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromwire_ds(rdclass, type, source, dctx, options,
@@ -263,7 +267,6 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 
 static inline isc_result_t
 fromstruct_ds(ARGS_FROMSTRUCT) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromstruct_ds(rdclass, type, source, target));
@@ -291,8 +294,9 @@ generic_tostruct_ds(ARGS_TOSTRUCT) {
 	ds->length = region.length;
 
 	ds->digest = mem_maybedup(mctx, region.base, region.length);
-	if (ds->digest == NULL)
+	if (ds->digest == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	ds->mctx = mctx;
 	return (ISC_R_SUCCESS);
@@ -319,11 +323,13 @@ freestruct_ds(ARGS_FREESTRUCT) {
 	REQUIRE(ds != NULL);
 	REQUIRE(ds->common.rdtype == dns_rdatatype_ds);
 
-	if (ds->mctx == NULL)
+	if (ds->mctx == NULL) {
 		return;
+	}
 
-	if (ds->digest != NULL)
+	if (ds->digest != NULL) {
 		isc_mem_free(ds->mctx, ds->digest);
+	}
 	ds->mctx = NULL;
 }
 
@@ -351,7 +357,6 @@ digest_ds(ARGS_DIGEST) {
 
 static inline bool
 checkowner_ds(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_ds);
 
 	UNUSED(name);
@@ -364,7 +369,6 @@ checkowner_ds(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_ds(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	UNUSED(rdata);
@@ -379,4 +383,4 @@ casecompare_ds(ARGS_COMPARE) {
 	return (compare_ds(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_DS_43_C */
+#endif /* RDATA_GENERIC_DS_43_C */

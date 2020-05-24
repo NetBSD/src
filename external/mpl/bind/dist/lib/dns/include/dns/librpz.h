@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,26 +38,24 @@
 #define LIBRPZ_H
 
 #include <inttypes.h>
-#include <stdbool.h>
-
-#include <arpa/nameser.h>
-#include <netinet/in.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/types.h>
 
+#include <arpa/nameser.h>
+#include <netinet/in.h>
+#include <sys/types.h>
 
 /*
  * Allow either ordinary or dlopen() linking.
  */
 #ifdef LIBRPZ_INTERNAL
-#define LIBDEF(t,s) extern t s;
-#define LIBDEF_F(f) LIBDEF(librpz_##f##_t, librpz_##f)
-#else
-#define LIBDEF(t,s)
+#define LIBDEF(t, s) extern t s;
+#define LIBDEF_F(f)  LIBDEF(librpz_##f##_t, librpz_##f)
+#else /* ifdef LIBRPZ_INTERNAL */
+#define LIBDEF(t, s)
 #define LIBDEF_F(f)
-#endif
+#endif /* ifdef LIBRPZ_INTERNAL */
 
 /*
  * Response Policy Zone triggers.
@@ -66,53 +64,50 @@
  *	    < LIBRPZ_TRIG_NSDNAME < LIBRPZ_TRIG_NSIP}
  */
 typedef enum {
-	LIBRPZ_TRIG_BAD		=0,
-	LIBRPZ_TRIG_CLIENT_IP	=1,
-	LIBRPZ_TRIG_QNAME	=2,
-	LIBRPZ_TRIG_IP		=3,
-	LIBRPZ_TRIG_NSDNAME	=4,
-	LIBRPZ_TRIG_NSIP	=5
+	LIBRPZ_TRIG_BAD = 0,
+	LIBRPZ_TRIG_CLIENT_IP = 1,
+	LIBRPZ_TRIG_QNAME = 2,
+	LIBRPZ_TRIG_IP = 3,
+	LIBRPZ_TRIG_NSDNAME = 4,
+	LIBRPZ_TRIG_NSIP = 5
 } librpz_trig_t;
-#define LIBRPZ_TRIG_SIZE	3	/* sizeof librpz_trig_t in bits */
-typedef uint8_t		librpz_tbit_t;  /* one bit for each of the TRIGS_NUM
-					 * trigger types */
-
+#define LIBRPZ_TRIG_SIZE 3     /* sizeof librpz_trig_t in bits */
+typedef uint8_t librpz_tbit_t; /* one bit for each of the TRIGS_NUM
+				* trigger types */
 
 /*
  * Response Policy Zone Actions or policies
  */
 typedef enum {
-	LIBRPZ_POLICY_UNDEFINED	=0,	/* an empty entry or no decision yet */
-	LIBRPZ_POLICY_DELETED	=1,	/* placeholder for a deleted policy */
+	LIBRPZ_POLICY_UNDEFINED = 0, /* an empty entry or no decision yet */
+	LIBRPZ_POLICY_DELETED = 1,   /* placeholder for a deleted policy */
 
-	LIBRPZ_POLICY_PASSTHRU	=2,	/* 'passthru': do not rewrite */
-	LIBRPZ_POLICY_DROP	=3,	/* 'drop': do not respond */
-	LIBRPZ_POLICY_TCP_ONLY	=4,	/* 'tcp-only': answer UDP with TC=1 */
-	LIBRPZ_POLICY_NXDOMAIN	=5,	/* 'nxdomain': answer with NXDOMAIN */
-	LIBRPZ_POLICY_NODATA	=6,	/* 'nodata': answer with ANCOUNT=0 */
-	LIBRPZ_POLICY_RECORD	=7,	/* rewrite with the policy's RR */
+	LIBRPZ_POLICY_PASSTHRU = 2, /* 'passthru': do not rewrite */
+	LIBRPZ_POLICY_DROP = 3,	    /* 'drop': do not respond */
+	LIBRPZ_POLICY_TCP_ONLY = 4, /* 'tcp-only': answer UDP with TC=1 */
+	LIBRPZ_POLICY_NXDOMAIN = 5, /* 'nxdomain': answer with NXDOMAIN */
+	LIBRPZ_POLICY_NODATA = 6,   /* 'nodata': answer with ANCOUNT=0 */
+	LIBRPZ_POLICY_RECORD = 7,   /* rewrite with the policy's RR */
 
 	/* only in client configurations to override the zone */
-	LIBRPZ_POLICY_GIVEN,		/* 'given': what policy record says */
-	LIBRPZ_POLICY_DISABLED,		/* at most log */
-	LIBRPZ_POLICY_CNAME,		/* answer with 'cname x' */
+	LIBRPZ_POLICY_GIVEN,	/* 'given': what policy record says */
+	LIBRPZ_POLICY_DISABLED, /* at most log */
+	LIBRPZ_POLICY_CNAME,	/* answer with 'cname x' */
 } librpz_policy_t;
-#define LIBRPZ_POLICY_BITS	4
+#define LIBRPZ_POLICY_BITS 4
 
 /*
  * Special policies that appear as targets of CNAMEs
  * NXDOMAIN is signaled by a CNAME with a "." target.
  * NODATA is signaled by a CNAME with a "*." target.
  */
-#define LIBRPZ_RPZ_PREFIX	"rpz-"
-#define LIBRPZ_RPZ_PASSTHRU	LIBRPZ_RPZ_PREFIX"passthru"
-#define LIBRPZ_RPZ_DROP		LIBRPZ_RPZ_PREFIX"drop"
-#define LIBRPZ_RPZ_TCP_ONLY	LIBRPZ_RPZ_PREFIX"tcp-only"
+#define LIBRPZ_RPZ_PREFIX   "rpz-"
+#define LIBRPZ_RPZ_PASSTHRU LIBRPZ_RPZ_PREFIX "passthru"
+#define LIBRPZ_RPZ_DROP	    LIBRPZ_RPZ_PREFIX "drop"
+#define LIBRPZ_RPZ_TCP_ONLY LIBRPZ_RPZ_PREFIX "tcp-only"
 
-
-typedef	uint16_t    librpz_dznum_t;	/* dnsrpzd zone # in [0,DZNUM_MAX] */
-typedef	uint8_t	    librpz_cznum_t;	/* client zone # in [0,CZNUM_MAX] */
-
+typedef uint16_t librpz_dznum_t; /* dnsrpzd zone # in [0,DZNUM_MAX] */
+typedef uint8_t	 librpz_cznum_t; /* client zone # in [0,CZNUM_MAX] */
 
 /*
  * CIDR block
@@ -120,27 +115,27 @@ typedef	uint8_t	    librpz_cznum_t;	/* client zone # in [0,CZNUM_MAX] */
 typedef struct librpz_prefix {
 	union {
 		struct in_addr	in;
-		struct in6_addr	in6;
+		struct in6_addr in6;
 	} addr;
-	uint8_t		    family;
-	uint8_t		    len;
+	uint8_t family;
+	uint8_t len;
 } librpz_prefix_t;
 
 /*
  * A domain
  */
-typedef uint8_t	librpz_dsize_t;
+typedef uint8_t librpz_dsize_t;
 typedef struct librpz_domain {
-	librpz_dsize_t	    size;	/* of only .d */
-	uint8_t		    d[0];	/* variable length wire format */
+	librpz_dsize_t size; /* of only .d */
+	uint8_t	       d[0]; /* variable length wire format */
 } librpz_domain_t;
 
 /*
  * A maximal domain buffer
  */
 typedef struct librpz_domain_buf {
-	librpz_dsize_t	    size;
-	uint8_t		    d[NS_MAXCDNAME];
+	librpz_dsize_t size;
+	uint8_t	       d[NS_MAXCDNAME];
 } librpz_domain_buf_t;
 
 /*
@@ -148,51 +143,51 @@ typedef struct librpz_domain_buf {
  * C compilers say that sizeof(librpz_rr_t)=12 instead of 10.
  */
 typedef struct {
-	uint16_t	    type;	/* network byte order */
-	uint16_t	    class;	/* network byte order */
-	uint32_t	    ttl;	/* network byte order */
-	uint16_t	    rdlength;	/* network byte order */
-	uint8_t		    rdata[0];	/* variable length */
+	uint16_t type;	   /* network byte order */
+	uint16_t class;	   /* network byte order */
+	uint32_t ttl;	   /* network byte order */
+	uint16_t rdlength; /* network byte order */
+	uint8_t	 rdata[0]; /* variable length */
 } librpz_rr_t;
 
 /*
  * The database file might be mapped with different starting addresses
  * by concurrent clients (resolvers), and so all pointers are offsets.
  */
-typedef uint32_t	librpz_idx_t;
-#define LIBRPZ_IDX_NULL	0
+typedef uint32_t librpz_idx_t;
+#define LIBRPZ_IDX_NULL 0
 #define LIBRPZ_IDX_MIN	1
-#define LIBRPZ_IDX_BAD  ((librpz_idx_t)-1)
+#define LIBRPZ_IDX_BAD	((librpz_idx_t)-1)
 /**
  * Partial decoded results of a set of RPZ queries for a single DNS response
  * or iteration through the mapped file.
  */
 typedef int16_t librpz_result_id_t;
 typedef struct librpz_result {
-	librpz_idx_t	    next_rr;
-	librpz_result_id_t  hit_id;		/* trigger ID from resolver */
-	librpz_policy_t	    zpolicy;	/* policy from zone */
-	librpz_policy_t	    policy;	/* adjusted by client configuration */
-	librpz_dznum_t	    dznum;	/* dnsrpzd zone number */
-	librpz_cznum_t	    cznum;	/* librpz client zone number */
-	librpz_trig_t	    trig:LIBRPZ_TRIG_SIZE;
-	bool		    log:1;	/* log rewrite given librpz_log_level */
+	librpz_idx_t	   next_rr;
+	librpz_result_id_t hit_id;  /* trigger ID from resolver */
+	librpz_policy_t	   zpolicy; /* policy from zone */
+	librpz_policy_t	   policy;  /* adjusted by client configuration */
+	librpz_dznum_t	   dznum;   /* dnsrpzd zone number */
+	librpz_cznum_t	   cznum;   /* librpz client zone number */
+	librpz_trig_t	   trig : LIBRPZ_TRIG_SIZE;
+	bool		   log : 1; /* log rewrite given librpz_log_level
+				     * */
 } librpz_result_t;
-
 
 /**
  * librpz trace or log levels.
  */
 typedef enum {
-	LIBRPZ_LOG_FATAL    =0,		/* always print fatal errors */
-	LIBRPZ_LOG_ERROR    =1,		/* errors have this level */
-	LIBRPZ_LOG_TRACE1   =2,		/* big events such as dnsrpzd starts */
-	LIBRPZ_LOG_TRACE2   =3,		/* smaller dnsrpzd zone transfers */
-	LIBRPZ_LOG_TRACE3   =4,		/* librpz hits */
-	LIBRPZ_LOG_TRACE4   =5,		/* librpz lookups */
-	LIBRPZ_LOG_INVALID   =999,
+	LIBRPZ_LOG_FATAL = 0,  /* always print fatal errors */
+	LIBRPZ_LOG_ERROR = 1,  /* errors have this level */
+	LIBRPZ_LOG_TRACE1 = 2, /* big events such as dnsrpzd starts */
+	LIBRPZ_LOG_TRACE2 = 3, /* smaller dnsrpzd zone transfers */
+	LIBRPZ_LOG_TRACE3 = 4, /* librpz hits */
+	LIBRPZ_LOG_TRACE4 = 5, /* librpz lookups */
+	LIBRPZ_LOG_INVALID = 999,
 } librpz_log_level_t;
-typedef librpz_log_level_t (librpz_log_level_val_t)(librpz_log_level_t level);
+typedef librpz_log_level_t(librpz_log_level_val_t)(librpz_log_level_t level);
 LIBDEF_F(log_level_val)
 
 /**
@@ -207,9 +202,8 @@ typedef void(librpz_log_fnc_t)(librpz_log_level_t level, void *ctx,
 /**
  * Point librpz logging functions to the resolver's choice.
  */
-typedef void (librpz_set_log_t)(librpz_log_fnc_t *new_log, const char *prog_nm);
+typedef void(librpz_set_log_t)(librpz_log_fnc_t *new_log, const char *prog_nm);
 LIBDEF_F(set_log)
-
 
 /**
  * librpz error messages are put in these buffers.
@@ -218,60 +212,58 @@ LIBDEF_F(set_log)
  * "char sbuf[2]; foo(sbuf)" and suffer a buffer overrun.
  */
 typedef struct {
-	char	c[120];
+	char c[120];
 } librpz_emsg_t;
-
 
 #ifdef LIBRPZ_HAVE_ATTR
 #define LIBRPZ_UNUSED	__attribute__((unused))
-#define LIBRPZ_PF(f,l)	__attribute__((format(printf,f,l)))
-#define	LIBRPZ_NORET	__attribute__((__noreturn__))
-#else
+#define LIBRPZ_PF(f, l) __attribute__((format(printf, f, l)))
+#define LIBRPZ_NORET	__attribute__((__noreturn__))
+#else /* ifdef LIBRPZ_HAVE_ATTR */
 #define LIBRPZ_UNUSED
-#define LIBRPZ_PF(f,l)
-#define	LIBRPZ_NORET
-#endif
+#define LIBRPZ_PF(f, l)
+#define LIBRPZ_NORET
+#endif /* ifdef LIBRPZ_HAVE_ATTR */
 
 #ifdef HAVE_BUILTIN_EXPECT
-#define LIBRPZ_LIKELY(c) __builtin_expect(!!(c), 1)
+#define LIBRPZ_LIKELY(c)   __builtin_expect(!!(c), 1)
 #define LIBRPZ_UNLIKELY(c) __builtin_expect(!!(c), 0)
-#else
-#define LIBRPZ_LIKELY(c) (c)
+#else /* ifdef HAVE_BUILTIN_EXPECT */
+#define LIBRPZ_LIKELY(c)   (c)
 #define LIBRPZ_UNLIKELY(c) (c)
-#endif
+#endif /* ifdef HAVE_BUILTIN_EXPECT */
 
-typedef bool (librpz_parse_log_opt_t)(librpz_emsg_t *emsg, const char *arg);
+typedef bool(librpz_parse_log_opt_t)(librpz_emsg_t *emsg, const char *arg);
 LIBDEF_F(parse_log_opt)
 
-typedef void (librpz_vpemsg_t)(librpz_emsg_t *emsg,
-			       const char *p, va_list args);
+typedef void(librpz_vpemsg_t)(librpz_emsg_t *emsg, const char *p, va_list args);
 LIBDEF_F(vpemsg)
-typedef void (librpz_pemsg_t)(librpz_emsg_t *emsg,
-			      const char *p, ...) LIBRPZ_PF(2,3);
+typedef void(librpz_pemsg_t)(librpz_emsg_t *emsg, const char *p, ...)
+	LIBRPZ_PF(2, 3);
 LIBDEF_F(pemsg)
 
-typedef void (librpz_vlog_t)(librpz_log_level_t level, void *ctx,
-			     const char *p, va_list args);
+typedef void(librpz_vlog_t)(librpz_log_level_t level, void *ctx, const char *p,
+			    va_list args);
 LIBDEF_F(vlog)
-typedef void (librpz_log_t)(librpz_log_level_t level, void *ctx,
-			    const char *p, ...) LIBRPZ_PF(3,4);
+typedef void(librpz_log_t)(librpz_log_level_t level, void *ctx, const char *p,
+			   ...) LIBRPZ_PF(3, 4);
 LIBDEF_F(log)
 
-typedef void (librpz_fatal_t)(int ex_code,
-			      const char *p, ...) LIBRPZ_PF(2,3);
-extern void librpz_fatal(int ex_code,
-			 const char *p, ...) LIBRPZ_PF(2,3) LIBRPZ_NORET;
+typedef void(librpz_fatal_t)(int ex_code, const char *p, ...) LIBRPZ_PF(2, 3);
+extern void
+librpz_fatal(int ex_code, const char *p, ...) LIBRPZ_PF(2, 3) LIBRPZ_NORET;
 
-typedef void (librpz_rpz_assert_t)(const char *file, unsigned line,
-				   const char *p, ...) LIBRPZ_PF(3,4);
-extern void librpz_rpz_assert(const char *file, unsigned line,
-			      const char *p, ...) LIBRPZ_PF(3,4) LIBRPZ_NORET;
+typedef void(librpz_rpz_assert_t)(const char *file, unsigned line,
+				  const char *p, ...) LIBRPZ_PF(3, 4);
+extern void
+librpz_rpz_assert(const char *file, unsigned line, const char *p, ...)
+	LIBRPZ_PF(3, 4) LIBRPZ_NORET;
 
-typedef void (librpz_rpz_vassert_t)(const char *file, uint line,
-				    const char *p, va_list args);
-extern void librpz_rpz_vassert(const char *file, uint line,
-			       const char *p, va_list args) LIBRPZ_NORET;
-
+typedef void(librpz_rpz_vassert_t)(const char *file, uint line, const char *p,
+				   va_list args);
+extern void
+librpz_rpz_vassert(const char *file, uint line, const char *p,
+		   va_list args) LIBRPZ_NORET;
 
 /*
  * As far as clients are concerned, all relative pointers or indexes in a
@@ -359,7 +351,6 @@ extern void librpz_rpz_vassert(const char *file, uint line,
  *	at most once every 30 seconds.
  */
 
-
 /*
  * Lock functions for concurrent use of a single librpz_client_t client handle.
  */
@@ -384,18 +375,17 @@ typedef struct librpz_client librpz_client_t;
  * @param mutex: pointer to the lock for the client handle
  * @param log_ctx: NULL or resolver's context log messages
  */
-typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t *emsg,
+typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t * emsg,
 						librpz_mutex_t *lock,
 						librpz_mutex_t *unlock,
 						librpz_mutex_t *mutex_destroy,
 						void *mutex, void *log_ctx);
 LIBDEF_F(clist_create)
 
-
 /**
  * Release the list of dnsrpzd connections.
  */
-typedef void (librpz_clist_detach_t)(librpz_clist_t **clistp);
+typedef void(librpz_clist_detach_t)(librpz_clist_t **clistp);
 LIBDEF_F(clist_detach)
 
 /**
@@ -406,10 +396,10 @@ LIBDEF_F(clist_detach)
  * @param use_expired: true to not ignore expired zones
  * @return client handle or NULL if the handle could not be created
  */
-typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t *emsg,
+typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t * emsg,
 						  librpz_clist_t *clist,
-						  const char *cstr,
-						  bool use_expired);
+						  const char *	  cstr,
+						  bool		  use_expired);
 LIBDEF_F(client_create)
 
 /**
@@ -418,8 +408,8 @@ LIBDEF_F(client_create)
  * @param client handle
  * @param optional: true if it is ok if starting the daemon is not allowed
  */
-typedef bool (librpz_connect_t)(librpz_emsg_t *emsg, librpz_client_t *client,
-				bool optional);
+typedef bool(librpz_connect_t)(librpz_emsg_t *emsg, librpz_client_t *client,
+			       bool optional);
 LIBDEF_F(connect)
 
 /**
@@ -429,7 +419,7 @@ LIBDEF_F(connect)
  * @param client handle to be released
  * @return false on error
  */
-typedef void (librpz_client_detach_t)(librpz_client_t **clientp);
+typedef void(librpz_client_detach_t)(librpz_client_t **clientp);
 LIBDEF_F(client_detach)
 
 /**
@@ -448,15 +438,15 @@ typedef struct librpz_rsp librpz_rsp_t;
  * @param have_do: DO=1 in the DNS request
  * @return false on error
  */
-typedef bool (librpz_rsp_create_t)(librpz_emsg_t *emsg, librpz_rsp_t **rspp,
-				   int *min_ns_dotsp, librpz_client_t *client,
-				   bool have_rd, bool have_do);
+typedef bool(librpz_rsp_create_t)(librpz_emsg_t *emsg, librpz_rsp_t **rspp,
+				  int *min_ns_dotsp, librpz_client_t *client,
+				  bool have_rd, bool have_do);
 LIBDEF_F(rsp_create)
 
 /**
  * Finish RPZ work for a DNS response.
  */
-typedef void (librpz_rsp_detach_t)(librpz_rsp_t **rspp);
+typedef void(librpz_rsp_detach_t)(librpz_rsp_t **rspp);
 LIBDEF_F(rsp_detach)
 
 /**
@@ -476,8 +466,8 @@ LIBDEF_F(rsp_detach)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_result_t)(librpz_emsg_t *emsg, librpz_result_t *result,
-				   bool recursed, const librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_result_t)(librpz_emsg_t *emsg, librpz_result_t *result,
+				  bool recursed, const librpz_rsp_t *rsp);
 LIBDEF_F(rsp_result)
 
 /**
@@ -487,15 +477,15 @@ LIBDEF_F(rsp_result)
  *	or LIBRPZ_TRIG_NSIP and the IP address is IPv6
  * @return: true if looking could be worthwhile
  */
-typedef bool (librpz_have_trig_t)(librpz_trig_t trig, bool ipv6,
-				  const librpz_rsp_t *rsp);
+typedef bool(librpz_have_trig_t)(librpz_trig_t trig, bool ipv6,
+				 const librpz_rsp_t *rsp);
 LIBDEF_F(have_trig)
 
 /**
  * Might looking for NSDNAME and NSIP triggers be worthwhile?
  * @return: true if looking could be worthwhile
  */
-typedef bool (librpz_have_ns_trig_t)(const librpz_rsp_t *rsp);
+typedef bool(librpz_have_ns_trig_t)(const librpz_rsp_t *rsp);
 LIBDEF_F(have_ns_trig)
 
 /**
@@ -505,9 +495,9 @@ LIBDEF_F(have_ns_trig)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_clientip_prefix_t)(librpz_emsg_t *emsg,
-					    librpz_prefix_t *prefix,
-					    librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_clientip_prefix_t)(librpz_emsg_t *  emsg,
+					   librpz_prefix_t *prefix,
+					   librpz_rsp_t *   rsp);
 LIBDEF_F(rsp_clientip_prefix)
 
 /**
@@ -520,9 +510,9 @@ LIBDEF_F(rsp_clientip_prefix)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_domain_t)(librpz_emsg_t *emsg,
-				   librpz_domain_buf_t *owner,
-				   librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_domain_t)(librpz_emsg_t *      emsg,
+				  librpz_domain_buf_t *owner,
+				  librpz_rsp_t *       rsp);
 LIBDEF_F(rsp_domain)
 
 /**
@@ -542,11 +532,11 @@ LIBDEF_F(rsp_domain)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_rr_t)(librpz_emsg_t *emsg, uint16_t *typep,
-			       uint16_t *classp, uint32_t *ttlp,
-			       librpz_rr_t **rrp, librpz_result_t *result,
-			       const uint8_t *qname, size_t qname_size,
-			       librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_rr_t)(librpz_emsg_t *emsg, uint16_t *typep,
+			      uint16_t *classp, uint32_t *ttlp,
+			      librpz_rr_t **rrp, librpz_result_t *result,
+			      const uint8_t *qname, size_t qname_size,
+			      librpz_rsp_t *rsp);
 LIBDEF_F(rsp_rr)
 
 /**
@@ -560,17 +550,17 @@ LIBDEF_F(rsp_rr)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_soa_t)(librpz_emsg_t *emsg, uint32_t *ttlp,
-				librpz_rr_t **rrp, librpz_domain_buf_t *origin,
-				librpz_result_t *result, librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_soa_t)(librpz_emsg_t *emsg, uint32_t *ttlp,
+			       librpz_rr_t **rrp, librpz_domain_buf_t *origin,
+			       librpz_result_t *result, librpz_rsp_t *rsp);
 LIBDEF_F(rsp_soa)
 
 /**
  * Get the SOA serial number for a policy zone to compare with a known value
  * to check whether a zone transfer is complete.
  */
-typedef bool (librpz_soa_serial_t)(librpz_emsg_t *emsg, uint32_t *serialp,
-				   const char *domain_nm, librpz_rsp_t *rsp);
+typedef bool(librpz_soa_serial_t)(librpz_emsg_t *emsg, uint32_t *serialp,
+				  const char *domain_nm, librpz_rsp_t *rsp);
 LIBDEF_F(soa_serial)
 
 /**
@@ -579,9 +569,9 @@ LIBDEF_F(soa_serial)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_push_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_push_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
 LIBDEF_F(rsp_push)
-#define LIBRPZ_RSP_STACK_DEPTH	3
+#define LIBRPZ_RSP_STACK_DEPTH 3
 
 /**
  * Restore the previous policy checking state.
@@ -590,8 +580,8 @@ LIBDEF_F(rsp_push)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_pop_t)(librpz_emsg_t *emsg, librpz_result_t *result,
-				librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_pop_t)(librpz_emsg_t *emsg, librpz_result_t *result,
+			       librpz_rsp_t *rsp);
 LIBDEF_F(rsp_pop)
 
 /**
@@ -600,7 +590,7 @@ LIBDEF_F(rsp_pop)
  * @param[out] result: NULL or restored policy rewrite values
  * @return false on error
  */
-typedef bool (librpz_rsp_pop_discard_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_pop_discard_t)(librpz_emsg_t *emsg, librpz_rsp_t *rsp);
 LIBDEF_F(rsp_pop_discard)
 
 /**
@@ -610,8 +600,8 @@ LIBDEF_F(rsp_pop_discard)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_rsp_forget_zone_t)(librpz_emsg_t *emsg,
-					librpz_cznum_t znum, librpz_rsp_t *rsp);
+typedef bool(librpz_rsp_forget_zone_t)(librpz_emsg_t *emsg, librpz_cznum_t znum,
+				       librpz_rsp_t *rsp);
 LIBDEF_F(rsp_forget_zone)
 
 /**
@@ -625,10 +615,9 @@ LIBDEF_F(rsp_forget_zone)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_ck_ip_t)(librpz_emsg_t *emsg,
-			      const void *addr, uint family,
-			      librpz_trig_t trig, librpz_result_id_t hit_id,
-			      bool recursed, librpz_rsp_t *rsp);
+typedef bool(librpz_ck_ip_t)(librpz_emsg_t *emsg, const void *addr, uint family,
+			     librpz_trig_t trig, librpz_result_id_t hit_id,
+			     bool recursed, librpz_rsp_t *rsp);
 LIBDEF_F(ck_ip)
 
 /**
@@ -642,10 +631,10 @@ LIBDEF_F(ck_ip)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool (librpz_ck_domain_t)(librpz_emsg_t *emsg,
-				  const uint8_t *domain, size_t domain_size,
-				  librpz_trig_t trig, librpz_result_id_t hit_id,
-				  bool recursed, librpz_rsp_t *rsp);
+typedef bool(librpz_ck_domain_t)(librpz_emsg_t *emsg, const uint8_t *domain,
+				 size_t domain_size, librpz_trig_t trig,
+				 librpz_result_id_t hit_id, bool recursed,
+				 librpz_rsp_t *rsp);
 LIBDEF_F(ck_domain)
 
 /**
@@ -655,8 +644,8 @@ LIBDEF_F(ck_domain)
  * @param client context
  * @return false after error
  */
-typedef bool (librpz_zone_refresh_t)(librpz_emsg_t *emsg, const char *domain,
-				       librpz_rsp_t *rsp);
+typedef bool(librpz_zone_refresh_t)(librpz_emsg_t *emsg, const char *domain,
+				    librpz_rsp_t *rsp);
 LIBDEF_F(zone_refresh)
 
 /**
@@ -668,9 +657,8 @@ LIBDEF_F(zone_refresh)
  * @param client context
  * @return malloc'ed string or NULL after error
  */
-typedef char *(librpz_db_info_t)(librpz_emsg_t *emsg,
-				 bool license, bool cfiles, bool listens,
-				 librpz_rsp_t *rsp);
+typedef char *(librpz_db_info_t)(librpz_emsg_t *emsg, bool license, bool cfiles,
+				 bool listens, librpz_rsp_t *rsp);
 LIBDEF_F(db_info)
 
 /**
@@ -680,8 +668,8 @@ LIBDEF_F(db_info)
  * @param client context
  * @return false after error
  */
-typedef bool (librpz_itr_start_t)(librpz_emsg_t *emsg, librpz_rsp_t **rspp,
-				  librpz_client_t *client);
+typedef bool(librpz_itr_start_t)(librpz_emsg_t *emsg, librpz_rsp_t **rspp,
+				 librpz_client_t *client);
 LIBDEF_F(itr_start)
 
 /**
@@ -722,15 +710,15 @@ LIBDEF_F(itr_zone)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return: false on error
  */
-typedef bool (librpz_itr_node_t)(librpz_emsg_t *emsg, librpz_result_t *result,
-				 bool all_zones, librpz_rsp_t *rsp);
+typedef bool(librpz_itr_node_t)(librpz_emsg_t *emsg, librpz_result_t *result,
+				bool all_zones, librpz_rsp_t *rsp);
 LIBDEF_F(itr_node)
 
 /**
  * RPZ policy to string with a backup buffer of POLICY2STR_SIZE size
  */
-typedef const char *(librpz_policy2str_t)(librpz_policy_t policy,
-					  char *buf, size_t buf_size);
+typedef const char *(librpz_policy2str_t)(librpz_policy_t policy, char *buf,
+					  size_t buf_size);
 #define POLICY2STR_SIZE sizeof("policy xxxxxx")
 LIBDEF_F(policy2str)
 
@@ -743,16 +731,16 @@ LIBDEF_F(trig2str)
 /**
  * Convert a number of seconds to a zone file duration string
  */
-typedef const char *(librpz_secs2str_t)(time_t secs,
-					char *buf, size_t buf_size);
+typedef const char *(librpz_secs2str_t)(time_t secs, char *buf,
+					size_t buf_size);
 #define SECS2STR_SIZE sizeof("1234567w7d24h59m59s")
 LIBDEF_F(secs2str)
 
 /**
  * Parse a duration with 's', 'm', 'h', 'd', and 'w' units.
  */
-typedef bool (librpz_str2secs_t)(librpz_emsg_t *emsg, time_t *val,
-				 const char *str0);
+typedef bool(librpz_str2secs_t)(librpz_emsg_t *emsg, time_t *val,
+				const char *str0);
 LIBDEF_F(str2secs)
 
 /**
@@ -765,39 +753,37 @@ LIBDEF_F(rtype2str)
 /**
  * Local version of ns_name_ntop() for portability.
  */
-typedef int (librpz_domain_ntop_t)(const u_char *src, char *dst, size_t dstsiz);
+typedef int(librpz_domain_ntop_t)(const u_char *src, char *dst, size_t dstsiz);
 LIBDEF_F(domain_ntop)
 
 /**
  * Local version of ns_name_pton().
  */
-typedef int (librpz_domain_pton2_t)(const char *src, u_char *dst, size_t dstsiz,
-				    size_t *dstlen, bool lower);
+typedef int(librpz_domain_pton2_t)(const char *src, u_char *dst, size_t dstsiz,
+				   size_t *dstlen, bool lower);
 LIBDEF_F(domain_pton2)
 
 typedef union socku socku_t;
 typedef socku_t *(librpz_mk_inet_su_t)(socku_t *su, const struct in_addr *addrp,
-				     in_port_t port);
+				       in_port_t port);
 LIBDEF_F(mk_inet_su)
 
-typedef socku_t *(librpz_mk_inet6_su_t)(socku_t *su, const
-					struct in6_addr *addrp,
+typedef socku_t *(librpz_mk_inet6_su_t)(socku_t *	       su,
+					const struct in6_addr *addrp,
 					uint32_t scope_id, in_port_t port);
 LIBDEF_F(mk_inet6_su)
 
-typedef bool (librpz_str2su_t)(socku_t *sup, const char *str);
+typedef bool(librpz_str2su_t)(socku_t *sup, const char *str);
 LIBDEF_F(str2su)
 
 typedef char *(librpz_su2str_t)(char *str, size_t str_len, const socku_t *su);
 LIBDEF_F(su2str)
-#define SU2STR_SIZE (INET6_ADDRSTRLEN+1+6+1)
-
+#define SU2STR_SIZE (INET6_ADDRSTRLEN + 1 + 6 + 1)
 
 /**
  * default path to dnsrpzd
  */
 const char *librpz_dnsrpzd_path;
-
 
 #undef LIBDEF
 
@@ -805,57 +791,57 @@ const char *librpz_dnsrpzd_path;
  * This is the dlopen() interface to librpz.
  */
 typedef const struct {
-	const char			*dnsrpzd_path;
-	const char			*version;
-	librpz_parse_log_opt_t		*parse_log_opt;
-	librpz_log_level_val_t		*log_level_val;
-	librpz_set_log_t		*set_log;
-	librpz_vpemsg_t			*vpemsg;
-	librpz_pemsg_t			*pemsg;
-	librpz_vlog_t			*vlog;
-	librpz_log_t			*log;
-	librpz_fatal_t			*fatal LIBRPZ_NORET;
-	librpz_rpz_assert_t		*rpz_assert LIBRPZ_NORET;
-	librpz_rpz_vassert_t		*rpz_vassert LIBRPZ_NORET;
-	librpz_clist_create_t		*clist_create;
-	librpz_clist_detach_t		*clist_detach;
-	librpz_client_create_t		*client_create;
-	librpz_connect_t		*connect;
-	librpz_client_detach_t		*client_detach;
-	librpz_rsp_create_t		*rsp_create;
-	librpz_rsp_detach_t		*rsp_detach;
-	librpz_rsp_result_t		*rsp_result;
-	librpz_have_trig_t		*have_trig;
-	librpz_have_ns_trig_t		*have_ns_trig;
-	librpz_rsp_clientip_prefix_t	*rsp_clientip_prefix;
-	librpz_rsp_domain_t		*rsp_domain;
-	librpz_rsp_rr_t			*rsp_rr;
-	librpz_rsp_soa_t		*rsp_soa;
-	librpz_soa_serial_t		*soa_serial;
-	librpz_rsp_push_t		*rsp_push;
-	librpz_rsp_pop_t		*rsp_pop;
-	librpz_rsp_pop_discard_t	*rsp_pop_discard;
-	librpz_rsp_forget_zone_t	*rsp_forget_zone;
-	librpz_ck_ip_t			*ck_ip;
-	librpz_ck_domain_t		*ck_domain;
-	librpz_zone_refresh_t		*zone_refresh;
-	librpz_db_info_t		*db_info;
-	librpz_itr_start_t		*itr_start;
-	librpz_mf_stats_t		*mf_stats;
-	librpz_vers_stats_t		*vers_stats;
-	librpz_itr_zone_t		*itr_zone;
-	librpz_itr_node_t		*itr_node;
-	librpz_policy2str_t		*policy2str;
-	librpz_trig2str_t		*trig2str;
-	librpz_secs2str_t		*secs2str;
-	librpz_str2secs_t		*str2secs;
-	librpz_rtype2str_t		*rtype2str;
-	librpz_domain_ntop_t		*domain_ntop;
-	librpz_domain_pton2_t		*domain_pton2;
-	librpz_mk_inet_su_t		*mk_inet_su;
-	librpz_mk_inet6_su_t		*mk_inet6_su;
-	librpz_str2su_t			*str2su;
-	librpz_su2str_t			*su2str;
+	const char *			  dnsrpzd_path;
+	const char *			  version;
+	librpz_parse_log_opt_t *	  parse_log_opt;
+	librpz_log_level_val_t *	  log_level_val;
+	librpz_set_log_t *		  set_log;
+	librpz_vpemsg_t *		  vpemsg;
+	librpz_pemsg_t *		  pemsg;
+	librpz_vlog_t *			  vlog;
+	librpz_log_t *			  log;
+	librpz_fatal_t *fatal		  LIBRPZ_NORET;
+	librpz_rpz_assert_t *rpz_assert	  LIBRPZ_NORET;
+	librpz_rpz_vassert_t *rpz_vassert LIBRPZ_NORET;
+	librpz_clist_create_t *		  clist_create;
+	librpz_clist_detach_t *		  clist_detach;
+	librpz_client_create_t *	  client_create;
+	librpz_connect_t *		  connect;
+	librpz_client_detach_t *	  client_detach;
+	librpz_rsp_create_t *		  rsp_create;
+	librpz_rsp_detach_t *		  rsp_detach;
+	librpz_rsp_result_t *		  rsp_result;
+	librpz_have_trig_t *		  have_trig;
+	librpz_have_ns_trig_t *		  have_ns_trig;
+	librpz_rsp_clientip_prefix_t *	  rsp_clientip_prefix;
+	librpz_rsp_domain_t *		  rsp_domain;
+	librpz_rsp_rr_t *		  rsp_rr;
+	librpz_rsp_soa_t *		  rsp_soa;
+	librpz_soa_serial_t *		  soa_serial;
+	librpz_rsp_push_t *		  rsp_push;
+	librpz_rsp_pop_t *		  rsp_pop;
+	librpz_rsp_pop_discard_t *	  rsp_pop_discard;
+	librpz_rsp_forget_zone_t *	  rsp_forget_zone;
+	librpz_ck_ip_t *		  ck_ip;
+	librpz_ck_domain_t *		  ck_domain;
+	librpz_zone_refresh_t *		  zone_refresh;
+	librpz_db_info_t *		  db_info;
+	librpz_itr_start_t *		  itr_start;
+	librpz_mf_stats_t *		  mf_stats;
+	librpz_vers_stats_t *		  vers_stats;
+	librpz_itr_zone_t *		  itr_zone;
+	librpz_itr_node_t *		  itr_node;
+	librpz_policy2str_t *		  policy2str;
+	librpz_trig2str_t *		  trig2str;
+	librpz_secs2str_t *		  secs2str;
+	librpz_str2secs_t *		  str2secs;
+	librpz_rtype2str_t *		  rtype2str;
+	librpz_domain_ntop_t *		  domain_ntop;
+	librpz_domain_pton2_t *		  domain_pton2;
+	librpz_mk_inet_su_t *		  mk_inet_su;
+	librpz_mk_inet6_su_t *		  mk_inet6_su;
+	librpz_str2su_t *		  str2su;
+	librpz_su2str_t *		  su2str;
 } librpz_0_t;
 extern librpz_0_t librpz_def_0;
 
@@ -863,12 +849,11 @@ extern librpz_0_t librpz_def_0;
  * Future versions can be upward compatible by defining LIBRPZ_DEF as
  * librpz_X_t.
  */
-#define LIBRPZ_DEF	librpz_def_0
-#define LIBRPZ_DEF_STR	"librpz_def_0"
+#define LIBRPZ_DEF     librpz_def_0
+#define LIBRPZ_DEF_STR "librpz_def_0"
 
 typedef librpz_0_t librpz_t;
-extern librpz_t *librpz;
-
+extern librpz_t *  librpz;
 
 #if LIBRPZ_LIB_OPEN == 2
 #include <dlfcn.h>
@@ -881,9 +866,8 @@ extern librpz_t *librpz;
  * @return address of interface structure or NULL on failure
  */
 static inline librpz_t *
-librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path)
-{
-	void *handle;
+librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
+	void *	  handle;
 	librpz_t *new_librpz;
 
 	emsg->c[0] = '\0';
@@ -909,13 +893,14 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path)
 	if (handle != NULL) {
 		new_librpz = dlsym(handle, LIBRPZ_DEF_STR);
 		if (new_librpz != NULL) {
-			if (dl_handle != NULL)
+			if (dl_handle != NULL) {
 				*dl_handle = handle;
+			}
 			return (new_librpz);
 		}
 		if (dlclose(handle) != 0) {
 			snprintf(emsg->c, sizeof(librpz_emsg_t),
-				 "dlsym(NULL, "LIBRPZ_DEF_STR"): %s",
+				 "dlsym(NULL, " LIBRPZ_DEF_STR "): %s",
 				 dlerror());
 			return (NULL);
 		}
@@ -929,19 +914,19 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path)
 
 	handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL) {
-		snprintf(emsg->c, sizeof(librpz_emsg_t), "dlopen(%s): %s",
-			 path, dlerror());
+		snprintf(emsg->c, sizeof(librpz_emsg_t), "dlopen(%s): %s", path,
+			 dlerror());
 		return (NULL);
 	}
 	new_librpz = dlsym(handle, LIBRPZ_DEF_STR);
 	if (new_librpz != NULL) {
-		if (dl_handle != NULL)
+		if (dl_handle != NULL) {
 			*dl_handle = handle;
+		}
 		return (new_librpz);
 	}
 	snprintf(emsg->c, sizeof(librpz_emsg_t),
-		 "dlsym(%s, "LIBRPZ_DEF_STR"): %s",
-		 path, dlerror());
+		 "dlsym(%s, " LIBRPZ_DEF_STR "): %s", path, dlerror());
 	dlclose(handle);
 	return (NULL);
 }
@@ -950,17 +935,17 @@ librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path)
  * Statically link to the librpz.so DSO on systems without dlopen()
  */
 static inline librpz_t *
-librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path)
-{
+librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
 	(void)(path);
 
-	if (dl_handle != NULL)
+	if (dl_handle != NULL) {
 		*dl_handle = NULL;
+	}
 
 #if LIBRPZ_LIB_OPEN == 1
 	emsg->c[0] = '\0';
 	return (&LIBRPZ_DEF);
-#else
+#else  /* if LIBRPZ_LIB_OPEN == 1 */
 	snprintf(emsg->c, sizeof(librpz_emsg_t),
 		 "librpz not available via ./configure");
 	return (NULL);

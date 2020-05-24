@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.h,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: hooks.h,v 1.5 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -220,7 +220,7 @@ typedef enum {
 
 	/* XXX other files could be added later */
 
-	NS_HOOKPOINTS_COUNT	/* MUST BE LAST */
+	NS_HOOKPOINTS_COUNT /* MUST BE LAST */
 } ns_hookpoint_t;
 
 /*
@@ -232,13 +232,13 @@ typedef enum {
 	NS_HOOK_RETURN,
 } ns_hookresult_t;
 
-typedef ns_hookresult_t
-(*ns_hook_action_t)(void *arg, void *data, isc_result_t *resultp);
+typedef ns_hookresult_t (*ns_hook_action_t)(void *arg, void *data,
+					    isc_result_t *resultp);
 
 typedef struct ns_hook {
-	isc_mem_t *mctx;
+	isc_mem_t *	 mctx;
 	ns_hook_action_t action;
-	void *action_data;
+	void *		 action_data;
 	ISC_LINK(struct ns_hook) link;
 } ns_hook_t;
 
@@ -261,14 +261,13 @@ LIBNS_EXTERNAL_DATA extern ns_hooktable_t *ns__hook_table;
  */
 #ifndef NS_PLUGIN_VERSION
 #define NS_PLUGIN_VERSION 1
-#define NS_PLUGIN_AGE 0
-#endif
+#define NS_PLUGIN_AGE	  0
+#endif /* ifndef NS_PLUGIN_VERSION */
 
 typedef isc_result_t
-ns_plugin_register_t(const char *parameters,
-		     const void *cfg, const char *file, unsigned long line,
-		     isc_mem_t *mctx, isc_log_t *lctx, void *actx,
-		     ns_hooktable_t *hooktable, void **instp);
+ns_plugin_register_t(const char *parameters, const void *cfg, const char *file,
+		     unsigned long line, isc_mem_t *mctx, isc_log_t *lctx,
+		     void *actx, ns_hooktable_t *hooktable, void **instp);
 /*%<
  * Called when registering a new plugin.
  *
@@ -292,9 +291,9 @@ ns_plugin_destroy_t(void **instp);
  */
 
 typedef isc_result_t
-ns_plugin_check_t(const char *parameters,
-		  const void *cfg, const char *file, unsigned long line,
-		  isc_mem_t *mctx, isc_log_t *lctx, void *actx);
+ns_plugin_check_t(const char *parameters, const void *cfg, const char *file,
+		  unsigned long line, isc_mem_t *mctx, isc_log_t *lctx,
+		  void *actx);
 /*%<
  * Check the validity of 'parameters'.
  */
@@ -312,10 +311,10 @@ ns_plugin_version_t(void);
 /*%
  * Prototypes for API functions to be defined in each module.
  */
-ns_plugin_check_t plugin_check;
-ns_plugin_destroy_t plugin_destroy;
+ns_plugin_check_t    plugin_check;
+ns_plugin_destroy_t  plugin_destroy;
 ns_plugin_register_t plugin_register;
-ns_plugin_version_t plugin_version;
+ns_plugin_version_t  plugin_version;
 
 isc_result_t
 ns_plugin_expandpath(const char *src, char *dst, size_t dstsize);
@@ -342,9 +341,8 @@ ns_plugin_expandpath(const char *src, char *dst, size_t dstsize);
  */
 
 isc_result_t
-ns_plugin_register(const char *modpath, const char *parameters,
-		   const void *cfg, const char *cfg_file,
-		   unsigned long cfg_line,
+ns_plugin_register(const char *modpath, const char *parameters, const void *cfg,
+		   const char *cfg_file, unsigned long cfg_line,
 		   isc_mem_t *mctx, isc_log_t *lctx, void *actx,
 		   dns_view_t *view);
 /*%<
@@ -363,9 +361,9 @@ ns_plugin_register(const char *modpath, const char *parameters,
  */
 
 isc_result_t
-ns_plugin_check(const char *modpath, const char *parameters,
-		const void *cfg, const char *cfg_file, unsigned long cfg_line,
-		isc_mem_t *mctx, isc_log_t *lctx, void *actx);
+ns_plugin_check(const char *modpath, const char *parameters, const void *cfg,
+		const char *cfg_file, unsigned long cfg_line, isc_mem_t *mctx,
+		isc_log_t *lctx, void *actx);
 /*%<
  * Open the plugin module at 'modpath' and check the validity of
  * 'parameters', logging any errors or warnings found, then

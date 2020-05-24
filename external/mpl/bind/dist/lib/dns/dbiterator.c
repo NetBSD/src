@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dbiterator.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 
@@ -94,8 +91,7 @@ dns_dbiterator_next(dns_dbiterator_t *iterator) {
 
 isc_result_t
 dns_dbiterator_current(dns_dbiterator_t *iterator, dns_dbnode_t **nodep,
-		       dns_name_t *name)
-{
+		       dns_name_t *name) {
 	/*
 	 * Return the current node.
 	 */
@@ -120,7 +116,6 @@ dns_dbiterator_pause(dns_dbiterator_t *iterator) {
 
 isc_result_t
 dns_dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name) {
-
 	/*
 	 * Return the origin to which returned node names are relative.
 	 */

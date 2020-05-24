@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,18 +40,21 @@ fromtext_in_nsap(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 	sr = &token.value.as_textregion;
-	if (sr->length < 2)
+	if (sr->length < 2) {
 		RETTOK(ISC_R_UNEXPECTEDEND);
-	if (sr->base[0] != '0' || (sr->base[1] != 'x' && sr->base[1] != 'X'))
+	}
+	if (sr->base[0] != '0' || (sr->base[1] != 'x' && sr->base[1] != 'X')) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	isc_textregion_consume(sr, 2);
 	while (sr->length > 0) {
 		if (sr->base[0] == '.') {
 			isc_textregion_consume(sr, 1);
 			continue;
 		}
-		if ((n = hexvalue(sr->base[0])) == -1)
+		if ((n = hexvalue(sr->base[0])) == -1) {
 			RETTOK(DNS_R_SYNTAX);
+		}
 		c <<= 4;
 		c += n;
 		if (++digits == 2) {
@@ -62,8 +65,9 @@ fromtext_in_nsap(ARGS_FROMTEXT) {
 		}
 		isc_textregion_consume(sr, 1);
 	}
-	if (digits != 0 || !valid)
+	if (digits != 0 || !valid) {
 		RETTOK(ISC_R_UNEXPECTEDEND);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -101,8 +105,9 @@ fromwire_in_nsap(ARGS_FROMWIRE) {
 	UNUSED(rdclass);
 
 	isc_buffer_activeregion(source, &region);
-	if (region.length < 1)
+	if (region.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	RETERR(mem_tobuffer(target, region.base, region.length));
 	isc_buffer_forward(source, region.length);
@@ -171,8 +176,9 @@ tostruct_in_nsap(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	nsap->nsap_len = r.length;
 	nsap->nsap = mem_maybedup(mctx, r.base, r.length);
-	if (nsap->nsap == NULL)
+	if (nsap->nsap == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	nsap->mctx = mctx;
 	return (ISC_R_SUCCESS);
@@ -186,11 +192,13 @@ freestruct_in_nsap(ARGS_FREESTRUCT) {
 	REQUIRE(nsap->common.rdclass == dns_rdataclass_in);
 	REQUIRE(nsap->common.rdtype == dns_rdatatype_nsap);
 
-	if (nsap->mctx == NULL)
+	if (nsap->mctx == NULL) {
 		return;
+	}
 
-	if (nsap->nsap != NULL)
+	if (nsap->nsap != NULL) {
 		isc_mem_free(nsap->mctx, nsap->nsap);
+	}
 	nsap->mctx = NULL;
 }
 
@@ -220,7 +228,6 @@ digest_in_nsap(ARGS_DIGEST) {
 
 static inline bool
 checkowner_in_nsap(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_nsap);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -234,7 +241,6 @@ checkowner_in_nsap(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_in_nsap(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_nsap);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -250,4 +256,4 @@ casecompare_in_nsap(ARGS_COMPARE) {
 	return (compare_in_nsap(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_NSAP_22_C */
+#endif /* RDATA_IN_1_NSAP_22_C */

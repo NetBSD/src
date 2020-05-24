@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: iptable.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,15 +24,15 @@
 #include <dns/types.h>
 
 struct dns_iptable {
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	isc_refcount_t		refcount;
-	isc_radix_tree_t	*radix;
-	ISC_LINK(dns_iptable_t)	nextincache;
+	unsigned int	  magic;
+	isc_mem_t *	  mctx;
+	isc_refcount_t	  refcount;
+	isc_radix_tree_t *radix;
+	ISC_LINK(dns_iptable_t) nextincache;
 };
 
-#define DNS_IPTABLE_MAGIC	ISC_MAGIC('T','a','b','l')
-#define DNS_IPTABLE_VALID(a)	ISC_MAGIC_VALID(a, DNS_IPTABLE_MAGIC)
+#define DNS_IPTABLE_MAGIC    ISC_MAGIC('T', 'a', 'b', 'l')
+#define DNS_IPTABLE_VALID(a) ISC_MAGIC_VALID(a, DNS_IPTABLE_MAGIC)
 
 /***
  *** Functions

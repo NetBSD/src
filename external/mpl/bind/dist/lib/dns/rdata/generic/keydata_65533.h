@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: keydata_65533.h,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,18 +14,17 @@
 #ifndef GENERIC_KEYDATA_65533_H
 #define GENERIC_KEYDATA_65533_H 1
 
-
 typedef struct dns_rdata_keydata {
-	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
-	uint32_t		refresh;      /* Timer for refreshing data */
-	uint32_t		addhd;	      /* Hold-down timer for adding */
-	uint32_t		removehd;     /* Hold-down timer for removing */
-	uint16_t		flags;	      /* Copy of DNSKEY_48 */
-	dns_secproto_t		protocol;
-	dns_secalg_t		algorithm;
-	uint16_t		datalen;
-	unsigned char *		data;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint32_t refresh;  /* Timer for refreshing data */
+	uint32_t addhd;	   /* Hold-down timer for adding */
+	uint32_t removehd; /* Hold-down timer for removing */
+	uint16_t flags;	   /* Copy of DNSKEY_48 */
+	dns_secproto_t protocol;
+	dns_secalg_t algorithm;
+	uint16_t datalen;
+	unsigned char *data;
 } dns_rdata_keydata_t;
 
 #endif /* GENERIC_KEYDATA_65533_H */

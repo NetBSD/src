@@ -1,4 +1,4 @@
-/*	$NetBSD: dh_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: dh_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -27,17 +24,16 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/util.h>
 #include <isc/string.h>
+#include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/name.h>
 
 #include <dst/result.h>
 
-#include <pk11/site.h>
-
 #include "../dst_internal.h"
-
 #include "dnstest.h"
 
 #if USE_OPENSSL
@@ -81,8 +77,8 @@ dh_computesecret(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dst_key_fromfile(name, 18602, DST_ALG_DH,
-				  DST_TYPE_PUBLIC | DST_TYPE_KEY,
-				  "./", mctx, &key);
+				  DST_TYPE_PUBLIC | DST_TYPE_KEY, "./", dt_mctx,
+				  &key);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&buf, array, sizeof(array));
@@ -99,14 +95,14 @@ int
 main(void) {
 #if USE_OPENSSL
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(dh_computesecret,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dh_computesecret, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
-#else
+#else  /* if USE_OPENSSL */
 	print_message("1..0 # Skipped: dh test broken with PKCS11");
-#endif
+#endif /* if USE_OPENSSL */
 }
 
 #else /* HAVE_CMOCKA */
@@ -119,4 +115,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

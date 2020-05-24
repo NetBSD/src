@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.h,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: resconf.h,v 1.3 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef IRS_RESCONF_H
 #define IRS_RESCONF_H 1
@@ -30,8 +29,8 @@
  * in the "resolv.conf" file.
  */
 typedef struct irs_resconf_search {
-	char					*domain;
-	ISC_LINK(struct irs_resconf_search)	link;
+	char *domain;
+	ISC_LINK(struct irs_resconf_search) link;
 } irs_resconf_search_t;
 
 typedef ISC_LIST(irs_resconf_search_t) irs_resconf_searchlist_t;

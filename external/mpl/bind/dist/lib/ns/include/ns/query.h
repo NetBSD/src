@@ -1,4 +1,4 @@
-/*	$NetBSD: query.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,9 +18,9 @@
 
 #include <stdbool.h>
 
-#include <isc/types.h>
 #include <isc/buffer.h>
 #include <isc/netaddr.h>
+#include <isc/types.h>
 
 #include <dns/rdataset.h>
 #include <dns/resolver.h>
@@ -31,11 +31,11 @@
 
 /*% nameserver database version structure */
 typedef struct ns_dbversion {
-	dns_db_t			*db;
-	dns_dbversion_t			*version;
-	bool				acl_checked;
-	bool				queryok;
-	ISC_LINK(struct ns_dbversion)	link;
+	dns_db_t *	 db;
+	dns_dbversion_t *version;
+	bool		 acl_checked;
+	bool		 queryok;
+	ISC_LINK(struct ns_dbversion) link;
 } ns_dbversion_t;
 
 /*%
@@ -43,137 +43,137 @@ typedef struct ns_dbversion {
  * query; this is used to detect a recursion loop
  */
 typedef struct ns_query_recparam {
-	dns_rdatatype_t			qtype;
-	dns_name_t *			qname;
-	dns_fixedname_t			fqname;
-	dns_name_t *			qdomain;
-	dns_fixedname_t			fqdomain;
+	dns_rdatatype_t qtype;
+	dns_name_t *	qname;
+	dns_fixedname_t fqname;
+	dns_name_t *	qdomain;
+	dns_fixedname_t fqdomain;
 } ns_query_recparam_t;
 
 /*% nameserver query structure */
 struct ns_query {
-	unsigned int			attributes;
-	unsigned int			restarts;
-	bool				timerset;
-	dns_name_t *			qname;
-	dns_name_t *			origqname;
-	dns_rdatatype_t			qtype;
-	unsigned int			dboptions;
-	unsigned int			fetchoptions;
-	dns_db_t *			gluedb;
-	dns_db_t *			authdb;
-	dns_zone_t *			authzone;
-	bool				authdbset;
-	bool				isreferral;
-	isc_mutex_t			fetchlock;
-	dns_fetch_t *			fetch;
-	dns_fetch_t *			prefetch;
-	dns_rpz_st_t *			rpz_st;
-	isc_bufferlist_t		namebufs;
-	ISC_LIST(ns_dbversion_t)	activeversions;
-	ISC_LIST(ns_dbversion_t)	freeversions;
-	dns_rdataset_t *		dns64_aaaa;
-	dns_rdataset_t *		dns64_sigaaaa;
-	bool *				dns64_aaaaok;
-	unsigned int			dns64_aaaaoklen;
-	unsigned int			dns64_options;
-	unsigned int			dns64_ttl;
+	unsigned int	 attributes;
+	unsigned int	 restarts;
+	bool		 timerset;
+	dns_name_t *	 qname;
+	dns_name_t *	 origqname;
+	dns_rdatatype_t	 qtype;
+	unsigned int	 dboptions;
+	unsigned int	 fetchoptions;
+	dns_db_t *	 gluedb;
+	dns_db_t *	 authdb;
+	dns_zone_t *	 authzone;
+	bool		 authdbset;
+	bool		 isreferral;
+	isc_mutex_t	 fetchlock;
+	dns_fetch_t *	 fetch;
+	dns_fetch_t *	 prefetch;
+	dns_rpz_st_t *	 rpz_st;
+	isc_bufferlist_t namebufs;
+	ISC_LIST(ns_dbversion_t) activeversions;
+	ISC_LIST(ns_dbversion_t) freeversions;
+	dns_rdataset_t *dns64_aaaa;
+	dns_rdataset_t *dns64_sigaaaa;
+	bool *		dns64_aaaaok;
+	unsigned int	dns64_aaaaoklen;
+	unsigned int	dns64_options;
+	unsigned int	dns64_ttl;
 
 	struct {
-		dns_db_t *      	db;
-		dns_zone_t *      	zone;
-		dns_dbnode_t *      	node;
-		dns_rdatatype_t   	qtype;
-		dns_name_t *		fname;
-		dns_fixedname_t		fixed;
-		isc_result_t		result;
-		dns_rdataset_t *	rdataset;
-		dns_rdataset_t *	sigrdataset;
-		bool			authoritative;
-		bool			is_zone;
+		dns_db_t *	db;
+		dns_zone_t *	zone;
+		dns_dbnode_t *	node;
+		dns_rdatatype_t qtype;
+		dns_name_t *	fname;
+		dns_fixedname_t fixed;
+		isc_result_t	result;
+		dns_rdataset_t *rdataset;
+		dns_rdataset_t *sigrdataset;
+		bool		authoritative;
+		bool		is_zone;
 	} redirect;
 
-	ns_query_recparam_t		recparam;
+	ns_query_recparam_t recparam;
 
 	dns_keytag_t root_key_sentinel_keyid;
-	bool root_key_sentinel_is_ta;
-	bool root_key_sentinel_not_ta;
+	bool	     root_key_sentinel_is_ta;
+	bool	     root_key_sentinel_not_ta;
 };
 
-#define NS_QUERYATTR_RECURSIONOK	0x00001
-#define NS_QUERYATTR_CACHEOK		0x00002
-#define NS_QUERYATTR_PARTIALANSWER	0x00004
-#define NS_QUERYATTR_NAMEBUFUSED	0x00008
-#define NS_QUERYATTR_RECURSING		0x00010
-#define NS_QUERYATTR_QUERYOKVALID	0x00040
-#define NS_QUERYATTR_QUERYOK		0x00080
-#define NS_QUERYATTR_WANTRECURSION	0x00100
-#define NS_QUERYATTR_SECURE		0x00200
-#define NS_QUERYATTR_NOAUTHORITY	0x00400
-#define NS_QUERYATTR_NOADDITIONAL	0x00800
-#define NS_QUERYATTR_CACHEACLOKVALID	0x01000
-#define NS_QUERYATTR_CACHEACLOK		0x02000
-#define NS_QUERYATTR_DNS64		0x04000
-#define NS_QUERYATTR_DNS64EXCLUDE	0x08000
-#define NS_QUERYATTR_RRL_CHECKED	0x10000
-#define NS_QUERYATTR_REDIRECT		0x20000
+#define NS_QUERYATTR_RECURSIONOK     0x00001
+#define NS_QUERYATTR_CACHEOK	     0x00002
+#define NS_QUERYATTR_PARTIALANSWER   0x00004
+#define NS_QUERYATTR_NAMEBUFUSED     0x00008
+#define NS_QUERYATTR_RECURSING	     0x00010
+#define NS_QUERYATTR_QUERYOKVALID    0x00040
+#define NS_QUERYATTR_QUERYOK	     0x00080
+#define NS_QUERYATTR_WANTRECURSION   0x00100
+#define NS_QUERYATTR_SECURE	     0x00200
+#define NS_QUERYATTR_NOAUTHORITY     0x00400
+#define NS_QUERYATTR_NOADDITIONAL    0x00800
+#define NS_QUERYATTR_CACHEACLOKVALID 0x01000
+#define NS_QUERYATTR_CACHEACLOK	     0x02000
+#define NS_QUERYATTR_DNS64	     0x04000
+#define NS_QUERYATTR_DNS64EXCLUDE    0x08000
+#define NS_QUERYATTR_RRL_CHECKED     0x10000
+#define NS_QUERYATTR_REDIRECT	     0x20000
 
 typedef struct query_ctx query_ctx_t;
 
 /* query context structure */
 struct query_ctx {
-	isc_buffer_t *dbuf;			/* name buffer */
-	dns_name_t *fname;			/* found name from DB lookup */
-	dns_name_t *tname;			/* temporary name, used
-						 * when processing ANY
-						 * queries */
-	dns_rdataset_t *rdataset;		/* found rdataset */
-	dns_rdataset_t *sigrdataset;		/* found sigrdataset */
-	dns_rdataset_t *noqname;		/* rdataset needing
-						 * NOQNAME proof */
+	isc_buffer_t *dbuf;	     /* name buffer */
+	dns_name_t *  fname;	     /* found name from DB lookup */
+	dns_name_t *  tname;	     /* temporary name, used
+				      * when processing ANY
+				      * queries */
+	dns_rdataset_t *rdataset;    /* found rdataset */
+	dns_rdataset_t *sigrdataset; /* found sigrdataset */
+	dns_rdataset_t *noqname;     /* rdataset needing
+				      * NOQNAME proof */
 	dns_rdatatype_t qtype;
 	dns_rdatatype_t type;
 
-	unsigned int options;			/* DB lookup options */
+	unsigned int options; /* DB lookup options */
 
-	bool redirected;			/* nxdomain redirected? */
-	bool is_zone;				/* is DB a zone DB? */
+	bool redirected; /* nxdomain redirected? */
+	bool is_zone;	 /* is DB a zone DB? */
 	bool is_staticstub_zone;
-	bool resuming;				/* resumed from recursion? */
+	bool resuming; /* resumed from recursion? */
 	bool dns64, dns64_exclude, rpz;
-	bool authoritative;			/* authoritative query? */
-	bool want_restart;			/* CNAME chain or other
-						 * restart needed */
-	bool need_wildcardproof;		/* wilcard proof needed */
-	bool nxrewrite;				/* negative answer from RPZ */
-	bool findcoveringnsec;			/* lookup covering NSEC */
-	bool answer_has_ns;			/* NS is in answer */
-	dns_fixedname_t wildcardname;		/* name needing wcard proof */
-	dns_fixedname_t dsname;			/* name needing DS */
+	bool authoritative;		    /* authoritative query? */
+	bool want_restart;		    /* CNAME chain or other
+					     * restart needed */
+	bool		need_wildcardproof; /* wildcard proof needed */
+	bool		nxrewrite;	    /* negative answer from RPZ */
+	bool		findcoveringnsec;   /* lookup covering NSEC */
+	bool		answer_has_ns;	    /* NS is in answer */
+	dns_fixedname_t wildcardname;	    /* name needing wcard proof */
+	dns_fixedname_t dsname;		    /* name needing DS */
 
-	ns_client_t *client;			/* client object */
-	bool detach_client;			/* client needs detaching */
+	ns_client_t *client;	    /* client object */
+	bool	     detach_client; /* client needs detaching */
 
-	dns_fetchevent_t *event;		/* recursion event */
+	dns_fetchevent_t *event; /* recursion event */
 
-	dns_db_t *db;				/* zone or cache database */
-	dns_dbversion_t *version;		/* DB version */
-	dns_dbnode_t *node;			/* DB node */
+	dns_db_t *	 db;	  /* zone or cache database */
+	dns_dbversion_t *version; /* DB version */
+	dns_dbnode_t *	 node;	  /* DB node */
 
-	dns_db_t *zdb;				/* zone DB values, saved */
-	dns_dbnode_t *znode;			/* while searching cache */
-	dns_name_t *zfname;			/* for a better answer */
+	dns_db_t *	 zdb;	 /* zone DB values, saved */
+	dns_dbnode_t *	 znode;	 /* while searching cache */
+	dns_name_t *	 zfname; /* for a better answer */
 	dns_dbversion_t *zversion;
-	dns_rdataset_t *zrdataset;
-	dns_rdataset_t *zsigrdataset;
+	dns_rdataset_t * zrdataset;
+	dns_rdataset_t * zsigrdataset;
 
-	dns_rpz_st_t *rpz_st;			/* RPZ state */
-	dns_zone_t *zone;			/* zone to search */
+	dns_rpz_st_t *rpz_st; /* RPZ state */
+	dns_zone_t *  zone;   /* zone to search */
 
-	dns_view_t *view;			/* client view */
+	dns_view_t *view; /* client view */
 
-	isc_result_t result;			/* query result */
-	int line;				/* line to report error */
+	isc_result_t result; /* query result */
+	int	     line;   /* line to report error */
 };
 
 /*
@@ -203,7 +203,6 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
  * this phase of the query, and resume with a new query context when
  * recursion completes.
  */
-
 
 isc_result_t
 ns_query_init(ns_client_t *client);
@@ -244,7 +243,6 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
  * this phase of the query, and resume with a new query context when
  * recursion completes.
  */
-
 
 isc_result_t
 ns__query_sfcache(query_ctx_t *qctx);

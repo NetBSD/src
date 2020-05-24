@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_RDATASLAB_H
 #define DNS_RDATASLAB_H 1
@@ -54,12 +53,13 @@ ISC_LANG_BEGINDECLS
 #define DNS_RDATASLAB_FORCE 0x1
 #define DNS_RDATASLAB_EXACT 0x2
 
-#define DNS_RDATASLAB_OFFLINE 0x01 	/* RRSIG is for offline DNSKEY */
-#define DNS_RDATASLAB_WARNMASK 0x0E	/*%< RRSIG(DNSKEY) expired
-					 * warnings number mask. */
-#define DNS_RDATASLAB_WARNSHIFT 1	/*%< How many bits to shift to find
-					 * remaining expired warning number. */
-
+#define DNS_RDATASLAB_OFFLINE 0x01 /* RRSIG is for offline DNSKEY */
+#define DNS_RDATASLAB_WARNMASK          \
+	0x0E /*%< RRSIG(DNSKEY) expired \
+	      * warnings number mask. */
+#define DNS_RDATASLAB_WARNSHIFT               \
+	1 /*%< How many bits to shift to find \
+	   * remaining expired warning number. */
 
 /***
  *** Functions
@@ -96,6 +96,15 @@ dns_rdataslab_size(unsigned char *slab, unsigned int reservelen);
  *
  * Returns:
  *\li	The number of bytes in the slab, including the reservelen.
+ */
+
+unsigned int
+dns_rdataslab_rdatasize(unsigned char *slab, unsigned int reservelen);
+/*%<
+ * Return the size of the rdata in an rdataslab.
+ *
+ * Requires:
+ *\li	'slab' points to a slab.
  */
 
 unsigned int

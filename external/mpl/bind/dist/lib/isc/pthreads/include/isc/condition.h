@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.h,v 1.3 2019/01/09 16:55:16 christos Exp $	*/
+/*	$NetBSD: condition.h,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,37 +27,34 @@
 
 typedef pthread_cond_t isc_condition_t;
 
-#define isc_condition_init(cond)					\
-	if (pthread_cond_init(cond, NULL) != 0) {			\
-		char isc_condition_strbuf[ISC_STRERRORSIZE];		\
-		strerror_r(errno, isc_condition_strbuf,			\
-			   sizeof(isc_condition_strbuf));		\
-		isc_error_fatal(__FILE__, __LINE__,			\
-				"pthread_cond_init failed: %s",		\
-				isc_condition_strbuf);			\
+#define isc_condition_init(cond)                                \
+	if (pthread_cond_init(cond, NULL) != 0) {               \
+		char isc_condition_strbuf[ISC_STRERRORSIZE];    \
+		strerror_r(errno, isc_condition_strbuf,         \
+			   sizeof(isc_condition_strbuf));       \
+		isc_error_fatal(__FILE__, __LINE__,             \
+				"pthread_cond_init failed: %s", \
+				isc_condition_strbuf);          \
 	}
 
 #if ISC_MUTEX_PROFILE
-#define isc_condition_wait(cp, mp) \
-	((pthread_cond_wait((cp), &((mp)->mutex)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
-#else
-#define isc_condition_wait(cp, mp) \
-	((pthread_cond_wait((cp), (mp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
-#endif
+#define isc_condition_wait(cp, mp)                                      \
+	((pthread_cond_wait((cp), &((mp)->mutex)) == 0) ? ISC_R_SUCCESS \
+							: ISC_R_UNEXPECTED)
+#else /* if ISC_MUTEX_PROFILE */
+#define isc_condition_wait(cp, mp)                            \
+	((pthread_cond_wait((cp), (mp)) == 0) ? ISC_R_SUCCESS \
+					      : ISC_R_UNEXPECTED)
+#endif /* if ISC_MUTEX_PROFILE */
 
 #define isc_condition_signal(cp) \
-	((pthread_cond_signal((cp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+	((pthread_cond_signal((cp)) == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED)
 
 #define isc_condition_broadcast(cp) \
-	((pthread_cond_broadcast((cp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+	((pthread_cond_broadcast((cp)) == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED)
 
 #define isc_condition_destroy(cp) \
-	((pthread_cond_destroy((cp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+	((pthread_cond_destroy((cp)) == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED)
 
 ISC_LANG_BEGINDECLS
 

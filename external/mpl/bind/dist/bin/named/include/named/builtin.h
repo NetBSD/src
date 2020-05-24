@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: builtin.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,8 +18,10 @@
 
 #include <isc/types.h>
 
-isc_result_t named_builtin_init(void);
+isc_result_t
+named_builtin_init(void);
 
-void named_builtin_deinit(void);
+void
+named_builtin_deinit(void);
 
 #endif /* NAMED_BUILTIN_H */

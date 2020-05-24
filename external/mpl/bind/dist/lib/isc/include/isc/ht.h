@@ -1,4 +1,4 @@
-/*	$NetBSD: ht.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: ht.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,10 +19,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <isc/types.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
-typedef struct isc_ht isc_ht_t;
+typedef struct isc_ht	   isc_ht_t;
 typedef struct isc_ht_iter isc_ht_iter_t;
 
 /*%
@@ -63,7 +63,7 @@ isc_ht_destroy(isc_ht_t **htp);
  */
 isc_result_t
 isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
-		   void *value);
+	   void *value);
 
 /*%
  * Find a node matching 'key'/'keysize' in hashtable 'ht';
@@ -79,8 +79,8 @@ isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
  * \li	#ISC_R_NOTFOUND		-- key not found
  */
 isc_result_t
-isc_ht_find(const isc_ht_t *ht, const unsigned char *key,
-	    uint32_t keysize, void **valuep);
+isc_ht_find(const isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
+	    void **valuep);
 
 /*%
  * Delete node from hashtable
@@ -153,7 +153,6 @@ isc_ht_iter_next(isc_ht_iter_t *it);
 isc_result_t
 isc_ht_iter_delcurrent_next(isc_ht_iter_t *it);
 
-
 /*%
  * Set 'value' to the current value under the iterator
  *
@@ -184,4 +183,4 @@ isc_ht_iter_currentkey(isc_ht_iter_t *it, unsigned char **key, size_t *keysize);
  */
 unsigned int
 isc_ht_count(isc_ht_t *ht);
-#endif
+#endif /* ifndef ISC_HT_H */

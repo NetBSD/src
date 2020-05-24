@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,8 +12,6 @@
  */
 
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -31,9 +29,8 @@
 #include <bind9/getaddresses.h>
 
 isc_result_t
-bind9_getaddresses(const char *hostname, in_port_t port,
-		   isc_sockaddr_t *addrs, int addrsize, int *addrcount)
-{
+bind9_getaddresses(const char *hostname, in_port_t port, isc_sockaddr_t *addrs,
+		   int addrsize, int *addrcount) {
 	struct in_addr in4;
 	struct in6_addr in6;
 	bool have_ipv4, have_ipv6;
@@ -60,10 +57,11 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 	 * terminating NULL character.
 	 */
 	if (inet_pton(AF_INET, hostname, &in4) == 1) {
-		if (have_ipv4)
+		if (have_ipv4) {
 			isc_sockaddr_fromin(&addrs[0], &in4, port);
-		else
+		} else {
 			isc_sockaddr_v6fromin(&addrs[0], &in4, port);
+		}
 		*addrcount = 1;
 		return (ISC_R_SUCCESS);
 	} else if (strlen(hostname) <= 127U) {
@@ -72,14 +70,16 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 
 		strlcpy(tmpbuf, hostname, sizeof(tmpbuf));
 		d = strchr(tmpbuf, '%');
-		if (d != NULL)
+		if (d != NULL) {
 			*d = '\0';
+		}
 
 		if (inet_pton(AF_INET6, tmpbuf, &in6) == 1) {
 			isc_netaddr_t na;
 
-			if (!have_ipv6)
+			if (!have_ipv6) {
 				return (ISC_R_FAMILYNOSUPPORT);
+			}
 
 			if (d != NULL) {
 				isc_result_t iresult;
@@ -87,35 +87,35 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 				iresult = isc_netscope_pton(AF_INET6, d + 1,
 							    &in6, &zone);
 
-				if (iresult != ISC_R_SUCCESS)
+				if (iresult != ISC_R_SUCCESS) {
 					return (iresult);
+				}
 			}
 
 			isc_netaddr_fromin6(&na, &in6);
 			isc_netaddr_setzone(&na, zone);
-			isc_sockaddr_fromnetaddr(&addrs[0],
-						 (const isc_netaddr_t *)&na,
-						 port);
+			isc_sockaddr_fromnetaddr(
+				&addrs[0], (const isc_netaddr_t *)&na, port);
 
 			*addrcount = 1;
 			return (ISC_R_SUCCESS);
 		}
 	}
 	memset(&hints, 0, sizeof(hints));
-	if (!have_ipv6)
+	if (!have_ipv6) {
 		hints.ai_family = PF_INET;
-	else if (!have_ipv4)
+	} else if (!have_ipv4) {
 		hints.ai_family = PF_INET6;
-	else {
+	} else {
 		hints.ai_family = PF_UNSPEC;
 #ifdef AI_ADDRCONFIG
 		hints.ai_flags = AI_ADDRCONFIG;
-#endif
+#endif /* ifdef AI_ADDRCONFIG */
 	}
 	hints.ai_socktype = SOCK_STREAM;
 #ifdef AI_ADDRCONFIG
- again:
-#endif
+again:
+#endif /* ifdef AI_ADDRCONFIG */
 	result = getaddrinfo(hostname, NULL, &hints, &ai);
 	switch (result) {
 	case 0:
@@ -123,7 +123,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 	case EAI_NONAME:
 #if defined(EAI_NODATA) && (EAI_NODATA != EAI_NONAME)
 	case EAI_NODATA:
-#endif
+#endif /* if defined(EAI_NODATA) && (EAI_NODATA != EAI_NONAME) */
 		return (ISC_R_NOTFOUND);
 #ifdef AI_ADDRCONFIG
 	case EAI_BADFLAGS:
@@ -131,18 +131,17 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 			hints.ai_flags &= ~AI_ADDRCONFIG;
 			goto again;
 		}
-#endif
-		/* FALLTHROUGH */
+#endif /* ifdef AI_ADDRCONFIG */
+	/* FALLTHROUGH */
 	default:
 		return (ISC_R_FAILURE);
 	}
-	for (tmpai = ai, i = 0;
-	     tmpai != NULL && i < addrsize;
-	     tmpai = tmpai->ai_next)
-	{
-		if (tmpai->ai_family != AF_INET &&
-		    tmpai->ai_family != AF_INET6)
+	for (tmpai = ai, i = 0; tmpai != NULL && i < addrsize;
+	     tmpai = tmpai->ai_next) {
+		if (tmpai->ai_family != AF_INET && tmpai->ai_family != AF_INET6)
+		{
 			continue;
+		}
 		if (tmpai->ai_family == AF_INET) {
 			struct sockaddr_in *sin;
 			sin = (struct sockaddr_in *)tmpai->ai_addr;
@@ -150,16 +149,15 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 		} else {
 			struct sockaddr_in6 *sin6;
 			sin6 = (struct sockaddr_in6 *)tmpai->ai_addr;
-			isc_sockaddr_fromin6(&addrs[i], &sin6->sin6_addr,
-					     port);
+			isc_sockaddr_fromin6(&addrs[i], &sin6->sin6_addr, port);
 		}
 		i++;
-
 	}
 	freeaddrinfo(ai);
 	*addrcount = i;
-	if (*addrcount == 0)
+	if (*addrcount == 0) {
 		return (ISC_R_NOTFOUND);
-	else
+	} else {
 		return (ISC_R_SUCCESS);
+	}
 }

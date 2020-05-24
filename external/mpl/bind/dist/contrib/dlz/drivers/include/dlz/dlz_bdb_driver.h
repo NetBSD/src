@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdb_driver.h,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_bdb_driver.h,v 1.3 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -44,4 +44,4 @@ dlz_bdb_init(void);
 void
 dlz_bdb_clear(void);
 
-#endif
+#endif /* ifndef DLZ_BDB_DRIVER_H */

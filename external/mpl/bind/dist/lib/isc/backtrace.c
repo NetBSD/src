@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#include <config.h>
-
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_LIBCTRACE
 #include <execinfo.h>
-#endif
+#endif /* ifdef HAVE_LIBCTRACE */
 
 #include <isc/backtrace.h>
 #include <isc/result.h>
@@ -51,12 +48,12 @@
 #define BACKTRACE_WIN32
 #elif defined(__x86_64__) || defined(__i386__)
 #define BACKTRACE_X86STACK
-#else
+#else /* ifdef HAVE_LIBCTRACE */
 #define BACKTRACE_DISABLED
-#endif  /* HAVE_LIBCTRACE */
-#else	/* USE_BACKTRACE */
+#endif /* HAVE_LIBCTRACE */
+#else  /* USE_BACKTRACE */
 #define BACKTRACE_DISABLED
-#endif	/* USE_BACKTRACE */
+#endif /* USE_BACKTRACE */
 
 #ifdef BACKTRACE_LIBC
 isc_result_t
@@ -67,24 +64,28 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	 * Validate the arguments: intentionally avoid using REQUIRE().
 	 * See notes in backtrace.h.
 	 */
-	if (addrs == NULL || nframes == NULL)
+	if (addrs == NULL || nframes == NULL) {
 		return (ISC_R_FAILURE);
+	}
 
 	/*
 	 * backtrace(3) includes this function itself in the address array,
 	 * which should be eliminated from the returned sequence.
 	 */
 	n = backtrace(addrs, maxaddrs);
-	if (n < 2)
+	if (n < 2) {
 		return (ISC_R_NOTFOUND);
+	}
 	n--;
 	memmove(addrs, &addrs[1], sizeof(void *) * n);
 	*nframes = n;
 	return (ISC_R_SUCCESS);
 }
 #elif defined(BACKTRACE_GCC)
-extern int _Unwind_Backtrace(void* fn, void* a);
-extern void* _Unwind_GetIP(void* ctx);
+extern int
+_Unwind_Backtrace(void *fn, void *a);
+extern void *
+_Unwind_GetIP(void *ctx);
 
 typedef struct {
 	void **result;
@@ -97,13 +98,14 @@ static int
 btcallback(void *uc, void *opq) {
 	trace_arg_t *arg = (trace_arg_t *)opq;
 
-	if (arg->skip_count > 0)
+	if (arg->skip_count > 0) {
 		arg->skip_count--;
-	else
+	} else {
 		arg->result[arg->count++] = (void *)_Unwind_GetIP(uc);
-	if (arg->count == arg->max_depth)
+	}
+	if (arg->count == arg->max_depth) {
 		return (5); /* _URC_END_OF_STACK */
-
+	}
 	return (0); /* _URC_NO_REASON */
 }
 
@@ -112,8 +114,9 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	trace_arg_t arg;
 
 	/* Argument validation: see above. */
-	if (addrs == NULL || nframes == NULL)
+	if (addrs == NULL || nframes == NULL) {
 		return (ISC_R_FAILURE);
+	}
 
 	arg.skip_count = 1;
 	arg.result = addrs;
@@ -131,7 +134,7 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	unsigned long ftc = (unsigned long)maxaddrs;
 
 	*nframes = (int)CaptureStackBackTrace(1, ftc, addrs, NULL);
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 #elif defined(BACKTRACE_X86STACK)
 #ifdef __x86_64__
@@ -139,7 +142,7 @@ static unsigned long
 getrbp(void) {
 	__asm("movq %rbp, %rax\n");
 }
-#endif
+#endif /* ifdef __x86_64__ */
 
 static void **
 getnextframeptr(void **sp) {
@@ -151,12 +154,14 @@ getnextframeptr(void **sp) {
 	 */
 
 	/* prohibit the stack frames from growing downwards */
-	if (newsp <= sp)
+	if (newsp <= sp) {
 		return (NULL);
+	}
 
 	/* A heuristics to reject "too large" frame: this actually happened. */
-	if ((char *)newsp - (char *)sp > 100000)
+	if ((char *)newsp - (char *)sp > 100000) {
 		return (NULL);
+	}
 
 	/*
 	 * Not sure if other checks used in glog are needed at this moment.
@@ -173,26 +178,28 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	void **sp;
 
 	/* Argument validation: see above. */
-	if (addrs == NULL || nframes == NULL)
+	if (addrs == NULL || nframes == NULL) {
 		return (ISC_R_FAILURE);
+	}
 
 #ifdef __x86_64__
 	sp = (void **)getrbp();
-	if (sp == NULL)
+	if (sp == NULL) {
 		return (ISC_R_NOTFOUND);
+	}
 	/*
 	 * sp is the frame ptr of this function itself due to the call to
 	 * getrbp(), so need to unwind one frame for consistency.
 	 */
 	sp = getnextframeptr(sp);
-#else
+#else  /* ifdef __x86_64__ */
 	/*
 	 * i386: the frame pointer is stored 2 words below the address for the
 	 * first argument.  Note that the body of this function cannot be
 	 * inlined since it depends on the address of the function argument.
 	 */
 	sp = (void **)(void *)&addrs - 2;
-#endif
+#endif /* ifdef __x86_64__ */
 
 	while (sp != NULL && i < maxaddrs) {
 		addrs[i++] = *(sp + 1);
@@ -207,24 +214,25 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 isc_result_t
 isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	/* Argument validation: see above. */
-	if (addrs == NULL || nframes == NULL)
+	if (addrs == NULL || nframes == NULL) {
 		return (ISC_R_FAILURE);
+	}
 
 	UNUSED(maxaddrs);
 
 	return (ISC_R_NOTIMPLEMENTED);
 }
-#endif
+#endif /* ifdef BACKTRACE_LIBC */
 
 isc_result_t
 isc_backtrace_getsymbolfromindex(int idx, const void **addrp,
-				 const char **symbolp)
-{
+				 const char **symbolp) {
 	REQUIRE(addrp != NULL && *addrp == NULL);
 	REQUIRE(symbolp != NULL && *symbolp == NULL);
 
-	if (idx < 0 || idx >= isc__backtrace_nsymbols)
+	if (idx < 0 || idx >= isc__backtrace_nsymbols) {
 		return (ISC_R_RANGE);
+	}
 
 	*addrp = isc__backtrace_symtable[idx].addr;
 	*symbolp = isc__backtrace_symtable[idx].symbol;
@@ -250,17 +258,17 @@ symtbl_compare(const void *addr, const void *entryarg) {
 	}
 
 	/* entry + 1 is a valid entry from now on. */
-	if (addr < entry->addr)
+	if (addr < entry->addr) {
 		return (-1);
-	else if (addr >= (entry + 1)->addr)
+	} else if (addr >= (entry + 1)->addr) {
 		return (1);
+	}
 	return (0);
 }
 
 isc_result_t
 isc_backtrace_getsymbol(const void *addr, const char **symbolp,
-			unsigned long *offsetp)
-{
+			unsigned long *offsetp) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_backtrace_symmap_t *found;
 
@@ -268,11 +276,13 @@ isc_backtrace_getsymbol(const void *addr, const char **symbolp,
 	 * Validate the arguments: intentionally avoid using REQUIRE().
 	 * See notes in backtrace.h.
 	 */
-	if (symbolp == NULL || *symbolp != NULL || offsetp == NULL)
+	if (symbolp == NULL || *symbolp != NULL || offsetp == NULL) {
 		return (ISC_R_FAILURE);
+	}
 
-	if (isc__backtrace_nsymbols < 1)
+	if (isc__backtrace_nsymbols < 1) {
 		return (ISC_R_NOTFOUND);
+	}
 
 	/*
 	 * Search the table for the entry that meets:
@@ -280,12 +290,12 @@ isc_backtrace_getsymbol(const void *addr, const char **symbolp,
 	 */
 	found = bsearch(addr, isc__backtrace_symtable, isc__backtrace_nsymbols,
 			sizeof(isc__backtrace_symtable[0]), symtbl_compare);
-	if (found == NULL)
+	if (found == NULL) {
 		result = ISC_R_NOTFOUND;
-	else {
+	} else {
 		*symbolp = found->symbol;
-		*offsetp = (unsigned long) ((const char *)addr -
-					    (char *)found->addr);
+		*offsetp = (unsigned long)((const char *)addr -
+					   (char *)found->addr);
 	}
 
 	return (result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_TIME_H
 #define DNS_TIME_H 1
@@ -46,7 +45,6 @@ dns_time32_fromtext(const char *source, uint32_t *target);
  * Like dns_time64_fromtext, but returns the second count modulo 2^32
  * as per RFC2535.
  */
-
 
 isc_result_t
 dns_time64_totext(int64_t value, isc_buffer_t *target);

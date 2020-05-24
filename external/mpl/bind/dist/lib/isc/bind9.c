@@ -1,4 +1,4 @@
-/*	$NetBSD: bind9.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: bind9.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,8 +12,6 @@
  */
 
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 

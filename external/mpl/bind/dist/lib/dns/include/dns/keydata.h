@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: keydata.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_KEYDATA_H
 #define DNS_KEYDATA_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/keydata.h
  * \brief
@@ -33,20 +32,19 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-#include <dns/types.h>
 #include <dns/rdatastruct.h>
+#include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_keydata_todnskey(dns_rdata_keydata_t *keydata,
-		     dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx);
+dns_keydata_todnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
+		     isc_mem_t *mctx);
 
 isc_result_t
-dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata,
-		       dns_rdata_dnskey_t *dnskey,
-		       uint32_t refresh, uint32_t addhd,
-		       uint32_t removehd, isc_mem_t *mctx);
+dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
+		       uint32_t refresh, uint32_t addhd, uint32_t removehd,
+		       isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: netscope.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISC_NETSCOPE_H
 #define ISC_NETSCOPE_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdatomic.h,v 1.1.1.2 2020/05/24 19:36:47 christos Exp $	*/
+/*	$NetBSD: stdatomic.h,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@ typedef uint_fast64_t atomic_uintptr_t;
 		__sync_synchronize();              \
 		*obj = desired;                    \
 		__sync_synchronize();              \
-	} while (0);
+	} while (/*CONSTCOND*/0);
 #define atomic_fetch_add_explicit(obj, arg, order) \
 	__sync_fetch_and_add(obj, arg)
 #define atomic_fetch_sub_explicit(obj, arg, order) \

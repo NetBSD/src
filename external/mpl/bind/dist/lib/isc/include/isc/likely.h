@@ -1,4 +1,4 @@
-/*	$NetBSD: likely.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: likely.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,17 @@
 /*%
  * Performance
  */
+#ifdef CPPCHECK
+#define ISC_LIKELY(x)	(x)
+#define ISC_UNLIKELY(x) (x)
+#else /* ifdef CPPCHECK */
 #ifdef HAVE_BUILTIN_EXPECT
-#define ISC_LIKELY(x)            __builtin_expect(!!(x), 1)
-#define ISC_UNLIKELY(x)          __builtin_expect(!!(x), 0)
-#else
-#define ISC_LIKELY(x)            (x)
-#define ISC_UNLIKELY(x)          (x)
-#endif
+#define ISC_LIKELY(x)	__builtin_expect(!!(x), 1)
+#define ISC_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else /* ifdef HAVE_BUILTIN_EXPECT */
+#define ISC_LIKELY(x)	(x)
+#define ISC_UNLIKELY(x) (x)
+#endif /* ifdef HAVE_BUILTIN_EXPECT */
+#endif /* ifdef CPPCHECK */
 
 #endif /* ISC_LIKELY_H */

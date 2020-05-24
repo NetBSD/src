@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.h,v 1.2 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zoneverify.h,v 1.3 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,9 @@
 
 #include <stdbool.h>
 
-#include <dns/types.h>
-
 #include <isc/types.h>
+
+#include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -44,7 +44,7 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_zoneverify_dnssec(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 		      dns_name_t *origin, dns_keytable_t *secroots,
-		      isc_mem_t *mctx, bool ignore_kskflag,
-		      bool keyset_kskonly);
+		      isc_mem_t *mctx, bool ignore_kskflag, bool keyset_kskonly,
+		      void (*report)(const char *, ...));
 
 ISC_LANG_ENDDECLS

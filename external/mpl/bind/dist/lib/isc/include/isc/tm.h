@@ -1,4 +1,4 @@
-/*	$NetBSD: tm.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: tm.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 
 #include <isc/lang.h>
 #include <isc/types.h>
-
 
 ISC_LANG_BEGINDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 
@@ -22,18 +19,19 @@
 #include <isc/time.h>
 #include <isc/timer.h>
 
-#include <dns/types.h>
 #include <dns/timer.h>
+#include <dns/types.h>
 
-#define CHECK(op) \
-	do { result = (op);					\
-		if (result != ISC_R_SUCCESS) goto failure;	\
+#define CHECK(op)                            \
+	do {                                 \
+		result = (op);               \
+		if (result != ISC_R_SUCCESS) \
+			goto failure;        \
 	} while (/*CONSTCOND*/0)
 
 isc_result_t
 dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
-		  unsigned int idletime, bool purge)
-{
+		  unsigned int idletime, bool purge) {
 	isc_result_t result;
 	isc_interval_t maxinterval, idleinterval;
 	isc_time_t expires;
@@ -49,9 +47,8 @@ dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
 	 */
 	isc_interval_set(&idleinterval, idletime, 1);
 
-	CHECK(isc_timer_reset(timer, isc_timertype_once,
-			      &expires, &idleinterval,
-			      purge));
- failure:
+	CHECK(isc_timer_reset(timer, isc_timertype_once, &expires,
+			      &idleinterval, purge));
+failure:
 	return (result);
 }

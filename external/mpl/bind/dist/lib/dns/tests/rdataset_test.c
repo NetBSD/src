@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset_test.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: rdataset_test.c,v 1.6 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,8 +72,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimeexpire;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 800);
 	assert_int_equal(sigrdataset.ttl, 800);
 
@@ -85,8 +81,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimenow - 200;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 120);
 	assert_int_equal(sigrdataset.ttl, 120);
 
@@ -105,8 +100,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimeexpire;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 800);
 	assert_int_equal(sigrdataset.ttl, 800);
 
@@ -115,8 +109,7 @@ trimttl(void **state) {
 	rrsig.timeexpire = ttltimenow - 200;
 	rrsig.originalttl = 1000;
 
-	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow,
-			     true);
+	dns_rdataset_trimttl(&rdataset, &sigrdataset, &rrsig, ttltimenow, true);
 	assert_int_equal(rdataset.ttl, 120);
 	assert_int_equal(sigrdataset.ttl, 120);
 
@@ -150,4 +143,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */
