@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.40 2020/05/23 17:28:27 christos Exp $
+.\" $NetBSD: lint.1,v 1.41 2020/05/24 09:55:43 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -416,15 +416,15 @@ Report variables referred to by
 .Sy extern
 declarations, but never used.
 .It Fl Z Ar cpparg
-Pass 
+Pass
 .Ar cpparg
-to 
+to
 .Xr cpp 1
 directly.
 Multiple
 .Fl Z
 .Ar cppargs
-can passed in the order they are received.
+can be passed in the order they are received.
 .It Fl z
 Do not complain about structures that are never defined
 (for example, using a structure pointer without knowing
