@@ -2,6 +2,80 @@ HISTORY
 
 Functional enhancements from prior major releases of BIND 9
 
+BIND 9.14
+
+BIND 9.14 (a stable branch based on the 9.13 development branch) includes
+a number of changes from BIND 9.12 and earlier releases. New features
+include:
+
+  * A new "plugin" mechanism has been added to allow query functionality
+    to be extended using dynamically loadable libraries. The "filter-aaaa"
+    feature has been removed from named and is now implemented as a
+    plugin.
+  * Socket and task code has been refactored to improve performance.
+  * QNAME minimization, as described in RFC 7816, is now supported.
+  * "Root key sentinel" support, enabling validating resolvers to indicate
+    via a special query which trust anchors are configured for the root
+    zone.
+  * Secondary zones can now be configured as "mirror" zones; their
+    contents are transferred in as with traditional slave zones, but are
+    subject to DNSSEC validation and are not treated as authoritative data
+    when answering. This makes it easier to configure a local copy of the
+    root zone as described in RFC 7706.
+  * The "validate-except" option allows configuration of domains below
+    which DNSSEC validation should not be performed.
+  * The default value of "dnssec-validation" is now "auto".
+  * IDNA2008 is now supported when linking with libidn2.
+  * "named -V" now outputs the default paths for files used by named and
+    other tools.
+
+In addition, workarounds that were formerly in place to enable resolution
+of domains whose authoritative servers did not respond to EDNS queries
+have been removed. See https://dnsflagday.net for more details.
+
+Cryptographic support has been modernized. BIND now uses the best
+available pseudo-random number generator for the platform on which it's
+built. Very old versions of OpenSSL are no longer supported. Cryptography
+is now mandatory: building BIND without DNSSEC is no longer supported.
+
+Special code to support certain legacy operating systems has also been
+removed; see the file PLATFORMS.md for details of supported platforms. In
+addition to OpenSSL, BIND now requires support for IPv6, threads, and
+standard atomic operations provided by the C compiler.
+
+BIND 9.12
+
+BIND 9.12 includes a number of changes from BIND 9.11 and earlier
+releases. New features include:
+
+  * named and related libraries have been substantially refactored for
+    improved query performance -- particularly on delegation heavy zones
+    -- and for improved readability, maintainability, and testability.
+  * Code implementing the name server query processing logic has been
+    moved into a new libns library, for easier testing and use in tools
+    other than named.
+  * Cached, validated NSEC and other records can now be used to synthesize
+    NXDOMAIN responses.
+  * The DNS Response Policy Service API (DNSRPS) is now supported.
+  * Setting 'max-journal-size default' now limits the size of journal
+    files to twice the size of the zone.
+  * dnstap-read -x prints a hex dump of the wire format of each logged DNS
+    message.
+  * dnstap output files can now be configured to roll automatically when
+    reaching a given size.
+  * Log file timestamps can now also be formatted in ISO 8601 (local) or
+    ISO 8601 (UTC) formats.
+  * Logging channels and dnstap output files can now be configured to use
+    a timestamp as the suffix when rolling to a new file.
+  * 'named-checkconf -l' lists zones found in named.conf.
+  * Added support for the EDNS Padding and Keepalive options.
+  * 'new-zones-directory' option sets the location where the configuration
+    data for zones added by rndc addzone is stored.
+  * The default key algorithm in rndc-confgen is now hmac-sha256.
+  * filter-aaaa-on-v4 and filter-aaaa-on-v6 options are now available by
+    default without a configure option.
+  * The obsolete isc-hmac-fixup command has been removed.
+
 BIND 9.11
 
 BIND 9.11.0 includes a number of changes from BIND 9.10 and earlier
@@ -69,7 +143,7 @@ releases. New features include:
   * "rndc modzone" reconfigures a single zone, without requiring the
     entire server to be reconfigured.
   * "rndc showzone" displays the current configuration of a zone.
-  * "rndc managed-keys" can be used to check the status of RFC 5001
+  * "rndc managed-keys" can be used to check the status of RFC 5011
     managed trust anchors, or to force trust anchors to be refreshed.
   * "max-cache-size" can now be set to a percentage of available memory.
     The default is 90%.
@@ -441,8 +515,8 @@ BIND 9.4.0
   * dig: report the number of extra bytes still left in the packet after
     processing all the records.
   * Support for IPSECKEY rdata type.
-  * Raise the UDP recieve buffer size to 32k if it is less than 32k.
-  * x86 and x86_64 now have seperate atomic locking implementations.
+  * Raise the UDP receive buffer size to 32k if it is less than 32k.
+  * x86 and x86_64 now have separate atomic locking implementations.
   * named-checkconf now validates update-policy entries.
   * Attempt to make the amount of work performed in a iteration self
     tuning. The covers nodes clean from the cache per iteration, nodes
@@ -459,8 +533,8 @@ BIND 9.4.0
   * dig now warns if 'RA' is not set in the answer when 'RD' was set in
     the query. host/nslookup skip servers that fail to set 'RA' when 'RD'
     is set unless a server is explicitly set.
-  * Integrate contibuted DLZ code into named.
-  * Integrate contibuted IDN code from JPNIC.
+  * Integrate contributed DLZ code into named.
+  * Integrate contributed IDN code from JPNIC.
   * libbind: corresponds to that from BIND 8.4.7.
 
 BIND 9.3.0

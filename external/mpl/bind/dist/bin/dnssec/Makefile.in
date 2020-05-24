@@ -15,23 +15,26 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
+		${OPENSSL_CFLAGS}
 
-CDEFINES =	-DVERSION=\"${VERSION}\"
+CDEFINES =	-DVERSION=\"${VERSION}\" -DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
+ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
+ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+DEPLIBS =	${DNSDEPLIBS} ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
 
-LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+LIBS =		${DNSLIBS} ${ISCCFGLIBS} ${ISCLIBS} @LIBS@
 
-NOSYMLIBS =	${DNSLIBS} ${ISCNOSYMLIBS} @LIBS@
+NOSYMLIBS =	${DNSLIBS} ${ISCCFGLIBS} ${ISCNOSYMLIBS} @LIBS@
 
 # Alphabetically
 TARGETS =	dnssec-cds@EXEEXT@ dnssec-dsfromkey@EXEEXT@ \
@@ -47,7 +50,7 @@ SRCS =		dnssec-cds.c dnssec-dsfromkey.c dnssec-importkey.c \
 		dnssec-settime.c dnssec-signzone.c dnssec-verify.c \
 		dnssectool.c
 
-MANPAGES =	dnssec-cds.8 dnssec-dsfromkey.8  dnssec-importkey.8 \
+MANPAGES =	dnssec-cds.8 dnssec-dsfromkey.8 dnssec-importkey.8 \
 		dnssec-keyfromlabel.8 dnssec-keygen.8 dnssec-revoke.8 \
 		dnssec-settime.8 dnssec-signzone.8 dnssec-verify.8
 

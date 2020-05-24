@@ -18,7 +18,7 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	pkcs11f.h pkcs11.h pkcs11t.h eddsa.h
+HEADERS =	pkcs11.h
 SUBDIRS =
 TARGETS =
 

@@ -12,9 +12,9 @@
 <section xml:id="relnotes_versions"><info><title>Note on Version Numbering</title></info>
   <para>
     As of BIND 9.13/9.14, BIND has adopted the "odd-unstable/even-stable"
-    release numbering convention.  BIND 9.14 contains new features added
-    during the BIND 9.13 development process. Henceforth, the 9.14 branch
+    release numbering convention.  BIND 9.16 contains new features added
+    during the BIND 9.15 development process. Henceforth, the 9.16 branch
     will be limited to bug fixes and new feature development will proceed
-    in the unstable 9.15 branch, and so forth.
+    in the unstable 9.17 branch.
   </para>
 </section>

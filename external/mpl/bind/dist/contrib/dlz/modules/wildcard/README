@@ -20,7 +20,7 @@ as "thisexample.com", "exampleofthat.com", or "anexampleoftheotherthing.com".
         *      86400   A      192.0.0.100";
     };
 
-For any zone name matchin the wildcard, it would return the data from
+For any zone name matching the wildcard, it would return the data from
 the template.  "$zone$" is replaced with zone name: i.e., the shortest
 possible string of labels in the query name that matches the wildcard.
 "$record$" is replaced with the remainder of the query name.  In the

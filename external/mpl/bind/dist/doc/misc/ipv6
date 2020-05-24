@@ -46,7 +46,7 @@ ipv6 addresses separately.
 
 In any case, bind9 named binds to specific addresses for ipv4 sockets.
 
-The followings are historical notes when we always bound to the ipv6
+The following are historical notes when we always bound to the ipv6
 wildcard port regardless of the availability of the API support.
 These problems should not happen with the closer checks above.
 

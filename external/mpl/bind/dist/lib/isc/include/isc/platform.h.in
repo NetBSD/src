@@ -19,18 +19,28 @@
  *****/
 
 /***
- *** Thread-Local Storage
- ***/
-
-#ifdef HAVE___THREAD
-#define thread_local __thread
-#endif
-
-/***
  *** Default strerror_r buffer size
  ***/
 
 #define ISC_STRERRORSIZE 128
+
+/***
+ *** System limitations
+ ***/
+
+#include <limits.h>
+
+#ifndef NAME_MAX
+#define NAME_MAX 256
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
+#ifndef IOV_MAX
+#define IOV_MAX 1024
+#endif
 
 /***
  *** Miscellaneous.

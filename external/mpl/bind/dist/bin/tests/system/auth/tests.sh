@@ -18,7 +18,7 @@ status=0
 n=0
 
 n=`expr $n + 1`
-echo_i "wait for zones to finish transfering to ns2 ($n)"
+echo_i "wait for zones to finish transferring to ns2 ($n)"
 for i in 1 2 3 4 5 6 7 8 9 10
 do
   ret=0

@@ -23,7 +23,6 @@ options {
 	listen-on-v6 { none; };
 	allow-recursion { 10.53.0.1; };
 	notify yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 
 	dns64 2001:bbbb::/96 {

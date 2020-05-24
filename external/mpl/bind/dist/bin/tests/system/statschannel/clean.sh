@@ -22,5 +22,6 @@ rm -f xml.*mem json.*mem
 rm -f compressed.headers regular.headers compressed.out regular.out
 rm -f ns*/managed-keys.bind*
 rm -f ns2/Kdnssec* ns2/dnssec.*.id
-rm -f ns2/dnssec.db.signed* ns2/dsset-dnssec.
+rm -f ns2/Kmanykeys* ns2/manykeys.*.id
+rm -f ns2/*.db.signed* ns2/dsset-*. ns2/*.jbk
 rm -f ns2/core

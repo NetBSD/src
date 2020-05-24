@@ -26,5 +26,7 @@ cp unsupported-managed.key "${unsupportedkey}.key"
 rootkey=`cat ../ns1/managed.key`
 cp "../ns1/${rootkey}.key" .
 
-# Configure the resolving server with a managed trusted key.
-keyfile_to_managed_keys $unsupportedkey $rsakey $rootkey > managed.conf
+# Configure the resolving server with an initializing key.
+# (We use key-format trust anchors here because otherwise the
+# unsupported algorithm test won't work.)
+keyfile_to_initial_keys $unsupportedkey $rsakey $rootkey > managed.conf

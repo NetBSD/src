@@ -14,8 +14,6 @@ set -eu
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 touch empty
 
 Z=cds.test
@@ -44,7 +42,7 @@ tac() {
 convert() {
 	key=$1
 	n=$2
-	$DSFROMKEY $key >DS.$n
+	$DSFROMKEY -12 $key >DS.$n
 	grep ' 8 1 ' DS.$n >DS.$n-1
 	grep ' 8 2 ' DS.$n >DS.$n-2
 	sed 's/ IN DS / IN CDS /' <DS.$n >>CDS.$n
@@ -84,7 +82,7 @@ sed 's/ add \(.*\) IN DS / add \1 3600 IN DS /' <UP.swap >UP.swapttl
 
 sign() {
 	cat >db.$1
-	$SIGNER >/dev/null 2>&1 \
+	$SIGNER >/dev/null \
 		 -S -O full -o $Z -f sig.$1 db.$1
 }
 

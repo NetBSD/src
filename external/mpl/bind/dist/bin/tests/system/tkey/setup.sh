@@ -12,6 +12,4 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 cd ns1 && $SHELL setup.sh

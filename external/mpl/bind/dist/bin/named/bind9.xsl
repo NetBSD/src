@@ -21,6 +21,14 @@
               var wid=0;
               $('table.zones').each(function(i) { if( $(this).width() > wid ) wid = $(this).width(); return true; });
               $('table.zones').css('min-width', wid );
+              $("h2+table,h3+table,h4+table,h2+div,h3+div,h2+script,h3+script").prev().append(' <a class="tabletoggle" href="#" style="font-size:small">Show/Hide</a>');
+              $(".tabletoggle").click(function(){
+		 var n = $(this).closest("h2,h3,h4").next();
+		 if (n.is("script")) { n = n.next(); }
+	         if (n.is("div")) { n.toggleClass("hidden"); n = n.next(); }
+		 if (n.is("table")) { n.toggleClass("hidden"); }
+		 return false;
+	      });
           });
         </script>
 
@@ -88,6 +96,10 @@
       background-color: #ffffff;
       color: #000000;
       font-size: 10pt;
+     }
+
+     .hidden{
+      display: none;
      }
 
      .odd{

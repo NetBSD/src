@@ -14,8 +14,6 @@ SYSTEMTESTTOP=../..
 
 SYSTESTDIR=filter-aaaa
 
-dlvsets=
-
 zone=signed.
 infile=signed.db.in
 zonefile=signed.db.signed

@@ -45,9 +45,10 @@ my $A = "ns.example 300 IN A $localaddr";
 #
 # Records to be TTL stretched
 #
-my $TXT = "data.example 1 IN TXT \"A text record with a 1 second ttl\"";
+my $TXT = "data.example 2 IN TXT \"A text record with a 2 second ttl\"";
 my $LONGTXT = "longttl.example 600 IN TXT \"A text record with a 600 second ttl\"";
-my $negSOA = "example 1 IN SOA . . 0 0 0 0 300";
+my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
+my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
 
 sub reply_handler {
     my ($qname, $qclass, $qtype) = @_;
@@ -129,13 +130,22 @@ sub reply_handler {
 	my $rr = new Net::DNS::RR($negSOA);
 	push @auth, $rr;
 	$rcode = "NXDOMAIN";
+    } elsif ($qname eq "othertype.example") {
+	if ($qtype eq "CAA") {
+	    my $rr = new Net::DNS::RR($CAA);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
     } else {
         my $rr = new Net::DNS::RR($SOA);
 	push @auth, $rr;
 	$rcode = "NXDOMAIN";
     }
 
-    # mark the answer as authoritive (by setting the 'aa' flag
+    # mark the answer as authoritative (by setting the 'aa' flag
     return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
 }
 

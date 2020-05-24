@@ -16,10 +16,11 @@
 use XML::Simple;
 
 my $file = $ARGV[0];
+my $zone = $ARGV[1];
 
 my $ref = XMLin($file);
 
-my $counters = $ref->{views}->{view}->{_default}->{zones}->{zone}->{dnssec}->{counters};
+my $counters = $ref->{views}->{view}->{_default}->{zones}->{zone}->{$zone}->{counters};
 
 foreach $group (@$counters) {
 

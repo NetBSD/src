@@ -109,7 +109,7 @@ foreach my $name(@ans) {
 	stop_signal($name, "TERM", 1);
 }
 
-@ans = wait_for_servers(60, @ans);
+@ans = wait_for_servers(1200, @ans);
 
 # Pass 3: SIGABRT
 foreach my $name (@ns) {

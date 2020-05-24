@@ -107,7 +107,7 @@ if [ ! "$CYGWIN" ]; then
     ret=0
     echo_i "verifying active sockets output in named.stats ($n)"
     nsock1nstat=`grep "UDP/IPv4 sockets active" ns3/named.stats | awk '{print $1}'`
-    [ `expr $nsock1nstat - $nsock0nstat` -eq 1 ] || ret=1
+    [ `expr ${nsock1nstat:-0} - ${nsock0nstat:-0}` -eq 1 ] || ret=1
     if [ $ret != 0 ]; then echo_i "failed"; fi
     status=`expr $status + $ret`
     n=`expr $n + 1`

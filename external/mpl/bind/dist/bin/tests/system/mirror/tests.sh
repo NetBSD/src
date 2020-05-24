@@ -540,7 +540,9 @@ n=`expr $n + 1`
 echo_i "checking that a mirror zone can be deleted using rndc ($n)"
 ret=0
 # Remove the mirror zone added in the previous test.
+nextpart ns3/named.run > /dev/null
 $RNDCCMD 10.53.0.3 delzone verify-addzone > rndc.out.ns3.test$n 2>&1 || ret=1
+wait_for_log 20 "zone verify-addzone/IN: mirror zone is no longer in use; reverting to normal recursion" ns3/named.run || ret=1
 # Check whether the mirror zone was removed.
 $DIG $DIGOPTS @10.53.0.3 +norec verify-addzone SOA > dig.out.ns3.test$n 2>&1 || ret=1
 grep "NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1

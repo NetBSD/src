@@ -20,7 +20,6 @@ options {
 	recursion yes;
 	dnssec-validation yes;
 	notify yes;
-	dnssec-lookaside . trust-anchor dlv;
 };
 
 include "../ns1/trusted.conf";

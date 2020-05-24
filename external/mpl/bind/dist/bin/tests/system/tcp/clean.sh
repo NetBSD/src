@@ -12,7 +12,7 @@
 rm -f */named.memstats
 rm -f */named.run
 rm -f */named.conf
-rm -f */named.stats
+rm -f */named.stats*
 rm -f ans6/ans.run*
 rm -f dig.out*
 rm -f rndc.out*

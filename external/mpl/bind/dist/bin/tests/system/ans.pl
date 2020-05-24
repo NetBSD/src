@@ -62,6 +62,11 @@
 #  Note that this data will still be sent with any request for
 #  pattern, only this data will be signed. Currently, this is only
 #  done for TCP.
+#
+# /pattern bad-id <key> <key_data>/
+# /pattern bad-id/
+#
+# will add 50 to the message id of the response.
 
 
 use IO::File;
@@ -361,13 +366,18 @@ sub handleTCP {
 	my $r;
 	foreach $r (@rules) {
 		my $pattern = $r->{pattern};
-		my($dbtype, $key_name, $key_data) = split(/ /,$pattern);
+		my($dbtype, $key_name, $key_data, $extra) = split(/ /,$pattern);
 		print "[handleTCP] $dbtype, $key_name, $key_data \n";
 		if ("$qname $qtype" =~ /$dbtype/) {
 			$count_these++;
 			my $a;
 			foreach $a (@{$r->{answer}}) {
 				$packet->push("answer", $a);
+			}
+			if(defined($key_name) && $key_name eq "bad-id") {
+				$packet->header->id(($id+50)%0xffff);
+				$key_name = $key_data;
+				$key_data = $extra;
 			}
 			if (defined($key_name) && defined($key_data)) {
 				my $tsig;

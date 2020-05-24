@@ -16,7 +16,7 @@
   xmlns:db="http://docbook.org/ns/docbook">
 
   <!-- <optional> and <command> rendered in <programlisting>s.
-       For each overriden element, the parameters must be defined.
+       For each overridden element, the parameters must be defined.
        They are mandatory, and $probe must be set to 0 by default.
 
        Only dblatex 0.2.12, with the verbatim.boldseq template works

@@ -38,7 +38,7 @@ def logquery(type, qname):
 # icky.ptang.zoop.boing.good. NS a.bit.longer.ns.name.good.
 # it responds properly (with NODATA empty response) to non-empty terminals
 #
-# For slow. it works the same as for good., but each response is delayed by 400 miliseconds
+# For slow. it works the same as for good., but each response is delayed by 400 milliseconds
 #
 # For bad. it works the same as for good., but returns NXDOMAIN to non-empty terminals
 #

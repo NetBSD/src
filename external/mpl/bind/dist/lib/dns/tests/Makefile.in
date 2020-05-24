@@ -16,10 +16,10 @@ VERSION=@BIND9_VERSION@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@OPENSSL_INCLUDES@ @CMOCKA_CFLAGS@
+		${OPENSSL_CFLAGS} ${MAXMINDDB_CFLAGS} @CMOCKA_CFLAGS@
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/dns/tests/\""
 
-ISCLIBS =	../../isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 ISCDEPLIBS =	../../isc/libisc.@A@
 DNSLIBS =	../libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 DNSDEPLIBS =	../libdns.@A@
@@ -91,6 +91,8 @@ TARGETS =	acl_test@EXEEXT@ \
 		zt_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
+
+LD_WRAP_TESTS=@LD_WRAP_TESTS@
 
 acl_test@EXEEXT@: acl_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
@@ -229,6 +231,13 @@ time_test@EXEEXT@: time_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ time_test.@O@ dnstest.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+WRAP_OPTIONS = \
+	-Wl,--wrap=isc__mem_put \
+	-Wl,--wrap=isc__mem_get \
+	-Wl,--wrap=isc_mem_attach \
+	-Wl,--wrap=isc_mem_detach \
+	-Wl,--wrap=isc__mem_putanddetach
 
 tsig_test@EXEEXT@: tsig_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \

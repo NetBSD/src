@@ -22,6 +22,7 @@ options {
 	recursion yes;
 	dnssec-validation yes;
 	querylog yes;
+	prefetch 4 10;
 };
 
 server 10.53.0.7 {
@@ -47,4 +48,11 @@ zone "delegation-only" {
        type delegation-only;
 };
 
-include "trusted.conf";
+key rndc_key {
+        secret "1234abcd8765";
+        algorithm hmac-sha256;
+};
+
+controls {
+        inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};

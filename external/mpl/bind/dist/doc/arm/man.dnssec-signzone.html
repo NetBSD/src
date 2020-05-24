@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,7 @@
        [<code class="option">-O <em class="replaceable"><code>output-format</code></em></code>]
        [<code class="option">-P</code>]
        [<code class="option">-Q</code>]
+       [<code class="option">-q</code>]
        [<code class="option">-R</code>]
        [<code class="option">-S</code>]
        [<code class="option">-s <em class="replaceable"><code>start-time</code></em></code>]
@@ -189,13 +190,6 @@
           <p>
             Treat specified key as a key signing key ignoring any
             key flags.  This option may be specified multiple times.
-          </p>
-        </dd>
-<dt><span class="term">-l <em class="replaceable"><code>domain</code></em></span></dt>
-<dd>
-          <p>
-            Generate a DLV set in addition to the key (DNSKEY) and DS sets.
-            The domain is appended to the name of the records.
           </p>
         </dd>
 <dt><span class="term">-M <em class="replaceable"><code>maxttl</code></em></span></dt>
@@ -377,7 +371,7 @@
 <dt><span class="term"><span class="command"><strong>"increment"</strong></span></span></dt>
 <dd>
                 <p>Increment the SOA serial number using RFC 1982
-                      arithmetics.</p>
+                      arithmetic.</p>
 	      </dd>
 <dt><span class="term"><span class="command"><strong>"unixtime"</strong></span></span></dt>
 <dd>
@@ -445,6 +439,18 @@
             signatures from keys that are no longer active. This
             enables ZSK rollover using the procedure described in
             RFC 4641, section 4.2.1.1 ("Pre-Publish Key Rollover").
+          </p>
+        </dd>
+<dt><span class="term">-q</span></dt>
+<dd>
+          <p>
+	    Quiet mode: Suppresses unnecessary output.  Without this
+	    option, when <span class="command"><strong>dnssec-signzone</strong></span> is run it
+	    will print to standard output the number of keys in use,
+	    the algorithms used to verify the zone was signed correctly
+	    and other status information, and finally the filename
+	    containing the signed zone.  With it, that output is
+	    suppressed, leaving only the filename.
           </p>
         </dd>
 <dt><span class="term">-R</span></dt>
@@ -701,6 +707,6 @@ db.example.com.signed
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

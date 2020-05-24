@@ -44,6 +44,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -172,9 +173,7 @@
 	  <para>
 	    When <acronym>BIND</acronym> 9 is built with OpenSSL-based
 	    PKCS#11 support, the label is an arbitrary string that
-	    identifies a particular key.  It may be preceded by an
-	    optional OpenSSL engine name, followed by a colon, as in
-	    "pkcs11:<replaceable>keylabel</replaceable>".
+	    identifies a particular key.
 	  </para>
 	  <para>
 	    When <acronym>BIND</acronym> 9 is built with native PKCS#11

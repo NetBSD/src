@@ -27,8 +27,8 @@ cat $infile $keyname.key > $zonefile
 
 $SIGNER -P -g -o $zone $zonefile > /dev/null
 
-# Configure the resolving server with a trusted key.
-keyfile_to_trusted_keys $keyname > trusted.conf
+# Configure the resolving server with a static key.
+keyfile_to_static_ds $keyname > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns4/trusted.conf

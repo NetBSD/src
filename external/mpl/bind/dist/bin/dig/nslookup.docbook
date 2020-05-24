@@ -72,6 +72,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -307,7 +308,7 @@ nslookup -query=hinfo  -timeout=10
                     The class specifies the protocol group of the information.
 
                   </para>
-		  <para>
+                  <para>
                     (Default = IN; abbreviation = cl)
                   </para>
                 </listitem>
@@ -317,10 +318,10 @@ nslookup -query=hinfo  -timeout=10
                 <term><constant><replaceable><optional>no</optional></replaceable>debug</constant></term>
                 <listitem>
                   <para>
-		    Turn on or off the display of the full response packet and
-		    any intermediate response packets when searching.
+                    Turn on or off the display of the full response packet and
+                    any intermediate response packets when searching.
                   </para>
-		  <para>
+                  <para>
                     (Default = nodebug; abbreviation = <optional>no</optional>deb)
                   </para>
                 </listitem>
@@ -331,9 +332,9 @@ nslookup -query=hinfo  -timeout=10
                 <listitem>
                   <para>
                     Turn debugging mode on or off.  This displays more about
-	            what nslookup is doing.
+                    what nslookup is doing.
                   </para>
-		  <para>
+                  <para>
                     (Default = nod2)
                   </para>
                 </listitem>
@@ -357,7 +358,7 @@ nslookup -query=hinfo  -timeout=10
                     names in the domain search list to the request until an
                     answer is received.
                   </para>
-		  <para>
+                  <para>
                     (Default = search)
                   </para>
                 </listitem>
@@ -369,7 +370,7 @@ nslookup -query=hinfo  -timeout=10
                   <para>
                     Change the default TCP/UDP name server port to <replaceable>value</replaceable>.
                   </para>
-		  <para>
+                  <para>
                     (Default = 53; abbreviation = po)
                   </para>
                 </listitem>
@@ -388,9 +389,15 @@ nslookup -query=hinfo  -timeout=10
                   <para>
                     Change the type of the information query.
                   </para>
-		  <para>
-                    (Default = A; abbreviations = q, ty)
+                  <para>
+                    (Default = A and then AAAA; abbreviations = q, ty)
                   </para>
+                    <para>
+                      <emphasis role="bold">Note:</emphasis> It is
+                      only possible to specify one query type, only
+                      the default behavior looks up both when an
+                      alternative is not specified.
+                    </para>
                 </listitem>
               </varlistentry>
 
@@ -402,7 +409,7 @@ nslookup -query=hinfo  -timeout=10
                     have the
                     information.
                   </para>
-		  <para>
+                  <para>
                     (Default = recurse; abbreviation = [no]rec)
                   </para>
                 </listitem>
@@ -412,9 +419,9 @@ nslookup -query=hinfo  -timeout=10
                 <term><constant>ndots=</constant><replaceable>number</replaceable></term>
                 <listitem>
                   <para>
-		    Set the number of dots (label separators) in a domain
-		    that will disable searching.  Absolute names always
-		    stop searching.
+                    Set the number of dots (label separators) in a domain
+                    that will disable searching.  Absolute names always
+                    stop searching.
                   </para>
                 </listitem>
               </varlistentry>
@@ -445,7 +452,7 @@ nslookup -query=hinfo  -timeout=10
                     Always use a virtual circuit when sending requests to the
                     server.
                   </para>
-		  <para>
+                  <para>
                     (Default = novc)
                   </para>
                 </listitem>
@@ -455,15 +462,15 @@ nslookup -query=hinfo  -timeout=10
                 <term><constant><replaceable><optional>no</optional></replaceable>fail</constant></term>
                 <listitem>
                   <para>
-		    Try the next nameserver if a nameserver responds with
-		    SERVFAIL or a referral (nofail) or terminate query
-		    (fail) on such a response.
-		  </para>
-		  <para>
+                    Try the next nameserver if a nameserver responds with
+                    SERVFAIL or a referral (nofail) or terminate query
+                    (fail) on such a response.
+                  </para>
+                  <para>
                     (Default = nofail)
                   </para>
-	        </listitem>
-	      </varlistentry>
+                </listitem>
+              </varlistentry>
 
             </variablelist>
           </para>

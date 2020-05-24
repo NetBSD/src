@@ -41,6 +41,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -92,7 +93,7 @@
       The <command>dnssec-cds</command> command uses special DNSSEC
       validation logic specified by RFC 7344. It requires that the CDS
       and/or CDNSKEY records are validly signed by a key represented in the
-      existing DS records. This will typicially be the pre-existing
+      existing DS records. This will typically be the pre-existing
       key-signing key (KSK).
     </para>
     <para>

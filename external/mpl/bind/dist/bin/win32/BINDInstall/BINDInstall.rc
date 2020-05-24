@@ -277,12 +277,12 @@ BEGIN
     IDS_BAD_PRIVILEGES      "This user cannot acquire the privileges necessary to install BIND.  Please ensure you are logged on as a member of the Administrators group."
     IDS_ERR_CREATE_DIR      "An error occurred while creating directory %s\n(%s)"
     IDS_VERSION             "Version %s"
-    IDS_ERR_CREATE_KEY      "An error occured while creating registry keys\n(%s)"
+    IDS_ERR_CREATE_KEY      "An error occurred while creating registry keys\n(%s)"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_ERR_SET_VALUE       "An error occured while setting registry key values\n(%s)"
+    IDS_ERR_SET_VALUE       "An error occurred while setting registry key values\n(%s)"
     IDS_NO_VERSION          "Version Unknown"
     IDS_EXISTING_NEWER      "%s\nThe existing version of this file is newer than the version being installed.\nDo you wish to overwrite the existing file?"
     IDS_FILE_BAD            "Could not retrieve version info for file %s.  Do you wish to continue?\n(Continuing may overwrite a newer version of the file) "

@@ -18,6 +18,10 @@ SYSTEMTESTTOP="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
 export SYSTEMTESTTOP
 
+date_with_args() (
+    date "+%Y-%m-%dT%T%z"
+)
+
 stopservers=true
 baseport=5300
 
@@ -37,13 +41,12 @@ while getopts "knp:r-:" flag; do
 	k) stopservers=false ;;
 	n) clean=false ;;
 	p) baseport=$OPTARG ;;
-	r) runall="-r" ;;
     esac
 done
 shift `expr $OPTIND - 1`
 
 if [ $# -eq 0 ]; then
-    echofail "Usage: $0 [-k] [-n] [-p <PORT>] [-r] test-directory [test-options]" >&2;
+    echofail "Usage: $0 [-k] [-n] [-p <PORT>] test-directory [test-options]" >&2;
     exit 1
 fi
 
@@ -110,7 +113,40 @@ export CONTROLPORT
 export LOWPORT
 export HIGHPORT
 
-echostart "S:$systest:`date`"
+restart=false
+
+start_servers_failed() {
+    echoinfo "I:$systest:starting servers failed"
+    echofail "R:$systest:FAIL"
+    echoend  "E:$systest:$(date_with_args)"
+    exit 1
+}
+
+start_servers() {
+    echoinfo "I:$systest:starting servers"
+    if $restart; then
+        $PERL start.pl --restart --port "$PORT" "$systest" || start_servers_failed
+    else
+        restart=true
+        $PERL start.pl --port "$PORT" "$systest" || start_servers_failed
+    fi
+}
+
+stop_servers_failed() {
+    echoinfo "I:$systest:stopping servers failed"
+    echofail "R:$systest:FAIL"
+    echoend  "E:$systest:$(date_with_args)"
+    exit 1
+}
+
+stop_servers() {
+    if $stopservers; then
+        echoinfo "I:$systest:stopping servers"
+        $PERL stop.pl "$systest" || stop_servers_failed
+    fi
+}
+
+echostart "S:$systest:$(date_with_args)"
 echoinfo  "T:$systest:1:A"
 echoinfo  "A:$systest:System test $systest"
 echoinfo  "I:$systest:PORTRANGE:${LOWPORT} - ${HIGHPORT}"
@@ -119,14 +155,14 @@ if [ x${PERL:+set} = x ]
 then
     echowarn "I:$systest:Perl not available.  Skipping test."
     echowarn "R:$systest:UNTESTED"
-    echoend  "E:$systest:`date $dateargs`"
+    echoend  "E:$systest:$(date_with_args)"
     exit 0;
 fi
 
 $PERL testsock.pl -p $PORT  || {
     echowarn "I:$systest:Network interface aliases not set up.  Skipping test."
     echowarn "R:$systest:UNTESTED"
-    echoend  "E:$systest:`date $dateargs`"
+    echoend  "E:$systest:$(date_with_args)"
     exit 0;
 }
 
@@ -139,7 +175,7 @@ if [ $result -eq 0 ]; then
 else
     echowarn "I:$systest:Prerequisites missing, skipping test."
     [ $result -eq 255 ] && echowarn "R:$systest:SKIPPED" || echowarn "R:$systest:UNTESTED"
-    echoend "E:$systest:`date $dateargs`"
+    echoend "E:$systest:$(date_with_args)"
     exit 0
 fi
 
@@ -151,27 +187,64 @@ then
 else
     echowarn "I:$systest:Need PKCS#11, skipping test."
     echowarn "R:$systest:PKCS11ONLY"
-    echoend  "E:$systest:`date $dateargs`"
+    echoend  "E:$systest:$(date_with_args)"
     exit 0
+fi
+
+# Clean up files left from any potential previous runs
+if test -f $systest/clean.sh
+then
+    ( cd $systest && $SHELL clean.sh "$@" )
+    ret=$?
+    if [ $ret -ne 0 ]; then
+	echowarn "I:$systest:clean.sh script failed with $ret"
+    fi
 fi
 
 # Set up any dynamically generated test data
 if test -f $systest/setup.sh
 then
-   ( cd $systest && $SHELL setup.sh "$@" )
+    ( cd $systest && $SHELL setup.sh "$@" )
+    ret=$?
+    if [ $ret -ne 0 ]; then
+	echowarn "I:$systest:clean.sh script failed with $ret"
+    fi
 fi
 
-# Start name servers running
-$PERL start.pl --port $PORT $systest
-if [ $? -ne 0 ]; then
-    echofail "R:$systest:FAIL"
-    echoend  "E:$systest:`date $dateargs`"
-    exit 1
-fi
-
+status=0
+run=0
 # Run the tests
-( cd $systest ; $SHELL tests.sh "$@" )
-status=$?
+if [ -r "$systest/tests.sh" ]; then
+    start_servers
+    ( cd "$systest" && $SHELL tests.sh "$@" )
+    status=$?
+    run=$((run+1))
+    stop_servers
+fi
+
+if [ -n "$PYTEST" ]; then
+    run=$((run+1))
+    for test in $(cd "${systest}" && find . -name "tests*.py"); do
+	start_servers
+	rm -f "$systest/$test.status"
+	test_status=0
+	(cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
+	if [ -f "$systest/$test.status" ]; then
+	    echo_i "FAILED"
+	    test_status=$(cat "$systest/$test.status")
+	fi
+	status=$((status+test_status))
+	stop_servers
+    done
+else
+    echoinfo "I:$systest:pytest not installed, skipping python tests"
+fi
+
+if [ "$run" -eq "0" ]; then
+    echoinfo "I:$systest:No tests were found and run"
+    status=255
+fi
+
 
 if $stopservers
 then
@@ -180,30 +253,43 @@ else
     exit $status
 fi
 
-# Shutdown
-$PERL stop.pl $systest
-
-status=`expr $status + $?`
-
 if [ $status != 0 ]; then
     echofail "R:$systest:FAIL"
     # Do not clean up - we need the evidence.
 else
-    core_dumps="$(find $systest/ -name 'core*' | sort | tr '\n' ' ')"
+    core_dumps="$(find $systest/ -name 'core*' -or -name '*.core' | sort | tr '\n' ' ')"
     assertion_failures=$(find $systest/ -name named.run | xargs grep "assertion failure" | wc -l)
+    sanitizer_summaries=$(find $systest/ -name 'tsan.*' | wc -l)
     if [ -n "$core_dumps" ]; then
         echoinfo "I:$systest:Test claims success despite crashes: $core_dumps"
         echofail "R:$systest:FAIL"
         # Do not clean up - we need the evidence.
+	find "$systest/" -name 'core*' -or -name '*.core' | while read -r coredump; do
+		SYSTESTDIR="$systest"
+		echoinfo "D:$systest:backtrace from $coredump start"
+		binary=$(gdb --batch --core="$coredump" | sed -ne "s/Core was generated by \`//;s/ .*'.$//p;")
+		"$TOP/libtool" --mode=execute gdb \
+			       --batch \
+			       --command=run.gdb \
+			       --core="$coredump" \
+			       -- \
+			       "$binary"
+		echoinfo "D:$systest:backtrace from $coredump end"
+	done
     elif [ $assertion_failures -ne 0 ]; then
+	SYSTESTDIR="$systest"
         echoinfo "I:$systest:Test claims success despite $assertion_failures assertion failure(s)"
+	grep "SUMMARY: " $(find $systest/ -name 'tsan.*') | sort -u | cat_d
         echofail "R:$systest:FAIL"
         # Do not clean up - we need the evidence.
+    elif [ $sanitizer_summaries -ne 0 ]; then
+        echoinfo "I:$systest:Test claims success despite $sanitizer_summaries sanitizer reports(s)"
+        echofail "R:$systest:FAIL"
     else
         echopass "R:$systest:PASS"
         if $clean
         then
-            $SHELL clean.sh $runall $systest "$@"
+            ( cd $systest && $SHELL clean.sh "$@" )
             if test -d ../../../.git
             then
                 git status -su --ignored $systest 2>/dev/null | \
@@ -215,6 +301,6 @@ else
     fi
 fi
 
-echoend "E:$systest:`date $dateargs`"
+echoend "E:$systest:$(date_with_args)"
 
 exit $status

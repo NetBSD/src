@@ -18,6 +18,7 @@ options {
 	session-keyfile "session.key";
 	listen-on { 10.53.0.1; 127.0.0.1; };
 	listen-on-v6 { none; };
+	allow-transfer { !10.53.0.1; any; };
 	recursion no;
 	notify yes;
 };

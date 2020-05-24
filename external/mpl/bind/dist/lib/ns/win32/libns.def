@@ -3,18 +3,20 @@ LIBRARY libns
 ; Exported Functions
 EXPORTS
 
+ns__client_put_cb
 ns__client_request
-ns__clientmgr_getclient
+ns__client_reset_cb
+ns__client_setup
 ns__interfacemgr_getif
 ns__interfacemgr_nextif
 ns__query_sfcache
 ns__query_start
+ns__client_tcpconn
 ns_client_aclmsg
 ns_client_addopt
-ns_client_attach
 ns_client_checkacl
 ns_client_checkaclsilent
-ns_client_detach
+ns_client_drop
 ns_client_dumprecursing
 ns_client_error
 ns_client_findversion
@@ -29,19 +31,16 @@ ns_client_newdbversion
 ns_client_newname
 ns_client_newnamebuf
 ns_client_newrdataset
-ns_client_next
 ns_client_putrdataset
 ns_client_qnamereplace
 ns_client_recursing
 ns_client_releasename
-ns_client_replace
 ns_client_send
 ns_client_sendraw
 ns_client_settimeout
 ns_client_shuttingdown
 ns_client_sourceip
 ns_clientmgr_create
-ns_clientmgr_createclients
 ns_clientmgr_destroy
 ns_hook_add
 ns_hooktable_create
@@ -89,10 +88,8 @@ ns_server_attach
 ns_server_create
 ns_server_detach
 ns_server_getoption
-ns_server_gettimeouts
 ns_server_setoption
 ns_server_setserverid
-ns_server_settimeouts
 ns_sortlist_addrorder1
 ns_sortlist_addrorder2
 ns_sortlist_byaddrsetup

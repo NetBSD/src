@@ -15,6 +15,12 @@ SYSTEMTESTTOP=..
 DIGOPTS="+tcp +dnssec -p ${PORT}"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
+wait_for_serial() (
+    $DIG $DIGOPTS "@$1" "$2" SOA > "$4"
+    serial=$(awk '$4 == "SOA" { print $7 }' "$4")
+    [ "$3" -eq "${serial:--1}" ]
+)
+
 status=0
 n=0
 
@@ -146,7 +152,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that update has been transfered and has been signed ($n)"
+echo_i "checking that update has been transferred and has been signed ($n)"
 ret=0
 for i in 1 2 3 4 5 6 7 8 9 10
 do
@@ -224,7 +230,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that update has been transfered and has been signed, noixfr ($n)"
+echo_i "checking that update has been transferred and has been signed, noixfr ($n)"
 ret=0
 for i in 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10
 do
@@ -389,7 +395,6 @@ $DIG $DIGOPTS @10.53.0.3 e.master A > dig.out.ns6.test$n
 grep "10.0.0.5" dig.out.ns6.test$n > /dev/null || ans=1
 grep "ANSWER: 2," dig.out.ns6.test$n > /dev/null || ans=1
 grep "flags:.* ad[ ;]" dig.out.ns6.test$n > /dev/null || ans=1
-
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -411,7 +416,8 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "checking master zone that was updated while offline is correct ($n)"
 ret=0
-serial=`$DIG $DIGOPTS +nodnssec +short @10.53.0.3 updated SOA | awk '{print $3}'`
+$DIG $DIGOPTS +nodnssec +short @10.53.0.3 updated SOA >dig.out.ns2.soa.test$n
+serial=`awk '{print $3}' dig.out.ns2.soa.test$n`
 # serial should have changed
 [ "$serial" = "2000042407" ] && ret=1
 # e.updated should exist and should be signed
@@ -422,9 +428,10 @@ grep "ANSWER: 2," dig.out.ns3.test$n > /dev/null || ret=1
 # of master2.db, and should show a minimal diff: no more than 8 added
 # records (SOA/RRSIG, 2 x NSEC/RRSIG, A/RRSIG), and 4 removed records
 # (SOA/RRSIG, NSEC/RRSIG).
-serial=`$JOURNALPRINT ns3/updated.db.signed.jnl | head -1 | awk '{print $4}'`
+$JOURNALPRINT ns3/updated.db.signed.jnl >journalprint.out.test$n
+serial=`awk '/Source serial =/ {print $4}' journalprint.out.test$n`
 [ "$serial" = "2000042408" ] || ret=1
-diffsize=`$JOURNALPRINT ns3/updated.db.signed.jnl | wc -l`
+diffsize=`wc -l < journalprint.out.test$n`
 [ "$diffsize" -le 13 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -731,7 +738,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking that the change has not been transfered due to notify ($n)"
+echo_i "checking that the change has not been transferred due to notify ($n)"
 ret=0
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -1014,10 +1021,7 @@ ret=0
 $DIG $DIGOPTS nsec3. SOA @10.53.0.3 > dig.out.n3.pre.test$n
 newserial=`$PERL -e 'while (<>) { chomp; my @field = split /\s+/; printf("%u\n", $field[6] + 10) if ($field[3] eq "SOA"); }' < dig.out.n3.pre.test$n`
 $RNDCCMD 10.53.0.3 signing -serial ${newserial:-0} nsec3 > /dev/null 2>&1
-sleep 1
-$DIG $DIGOPTS nsec3. SOA @10.53.0.3 > dig.out.ns3.post.test$n
-serial=`awk '$4 == "SOA" { print $7 }' dig.out.ns3.post.test$n`
-[ ${newserial:-0} -eq ${serial:-1} ] || ret=1
+retry_quiet 5 wait_for_serial 10.53.0.3 nsec3. "${newserial:-0}" dig.out.ns3.post.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1047,10 +1051,7 @@ newserial=`$PERL -e 'while (<>) { chomp; my @field = split /\s+/; printf("%u\n",
 $RNDCCMD 10.53.0.3 freeze nsec3 > /dev/null 2>&1
 $RNDCCMD 10.53.0.3 signing -serial ${newserial:-0} nsec3 > /dev/null 2>&1
 $RNDCCMD 10.53.0.3 thaw nsec3 > /dev/null 2>&1
-sleep 1
-$DIG $DIGOPTS nsec3. SOA @10.53.0.3 > dig.out.ns3.post.test$n
-serial=`awk '$4 == "SOA" { print $7 }' dig.out.ns3.post.test$n`
-[ ${newserial:-0} -eq ${serial:-1} ] || ret=1
+retry_quiet 5 wait_for_serial 10.53.0.3 nsec3. "${newserial:-0}" dig.out.ns3.post1.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1060,10 +1061,7 @@ ret=0
 $DIG $DIGOPTS bits. SOA @10.53.0.2 > dig.out.ns2.pre.test$n
 newserial=`$PERL -e 'while (<>) { chomp; my @field = split /\s+/; printf("%u\n", $field[6] + 10) if ($field[3] eq "SOA"); }' < dig.out.ns2.pre.test$n`
 $RNDCCMD 10.53.0.2 signing -serial ${newserial:-0} bits > /dev/null 2>&1
-sleep 1
-$DIG $DIGOPTS bits. SOA @10.53.0.2 > dig.out.ns2.post.test$n
-serial=`awk '$4 == "SOA" { print $7 }' dig.out.ns2.post.test$n`
-[ ${newserial:-0} -eq ${serial:-1} ] || ret=1
+retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${newserial:-0}" dig.out.ns2.post.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1074,10 +1072,8 @@ $DIG $DIGOPTS bits. SOA @10.53.0.2 > dig.out.ns2.pre.test$n
 oldserial=`awk '$4 == "SOA" { print $7 }' dig.out.ns2.pre.test$n`
 newserial=`$PERL -e 'while (<>) { chomp; my @field = split /\s+/; printf("%u\n", $field[6] - 10) if ($field[3] eq "SOA"); }' < dig.out.ns2.pre.test$n`
 $RNDCCMD 10.53.0.2 signing -serial ${newserial:-0} bits > /dev/null 2>&1
-sleep 1
-$DIG $DIGOPTS bits. SOA @10.53.0.2 > dig.out.ns2.post.test$n
-serial=`awk '$4 == "SOA" { print $7 }' dig.out.ns2.post.test$n`
-[ ${oldserial:-0} -eq ${serial:-1} ] || ret=1
+retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${newserial:-1}" dig.out.ns2.post1.test$n && ret=1
+retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${oldserial:-1}" dig.out.ns2.post2.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1090,10 +1086,8 @@ newserial=`$PERL -e 'while (<>) { chomp; my @field = split /\s+/; printf("%u\n",
 $RNDCCMD 10.53.0.2 freeze bits > /dev/null 2>&1
 $RNDCCMD 10.53.0.2 signing -serial ${newserial:-0} bits > /dev/null 2>&1
 $RNDCCMD 10.53.0.2 thaw bits > /dev/null 2>&1
-sleep 1
-$DIG $DIGOPTS bits. SOA @10.53.0.2 > dig.out.ns2.post.test$n
-serial=`awk '$4 == "SOA" { print $7 }' dig.out.ns2.post.test$n`
-[ ${oldserial:-0} -eq ${serial:-1} ] || ret=1
+retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${newserial:-1}" dig.out.ns2.post1.test$n && ret=1
+retry_quiet 5 wait_for_serial 10.53.0.2 bits. "${oldserial:-1}" dig.out.ns2.post2.test$n || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1339,18 +1333,12 @@ ret=0
 mv Kdelayedkeys* ns3/
 $RNDCCMD 10.53.0.3 loadkeys delayedkeys > rndc.out.ns3.pre.test$n 2>&1 || ret=1
 # Wait until the zone is signed.
-ans=1
-for i in 1 2 3 4 5 6 7 8 9 10
-do
-	$RNDCCMD 10.53.0.3 signing -list delayedkeys > signing.out.test$n 2>&1
-	num=`grep "Done signing with" signing.out.test$n | wc -l`
-	if [ $num -eq 2 ]; then
-		ans=0
-		break
-	fi
-	sleep 1
-done
-if [ $ans != 0 ]; then ret=1; fi
+check_done_signing () (
+    $RNDCCMD 10.53.0.3 signing -list delayedkeys > signing.out.test$n 2>&1
+    num=`grep "Done signing with" signing.out.test$n | wc -l`
+    [ $num -eq 2 ]
+)
+retry_quiet 10 check_done_signing || ret=1
 # Halt rather than stopping the server to prevent the master file from being
 # flushed upon shutdown since we specifically want to avoid it.
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} inline ns3
@@ -1364,11 +1352,13 @@ $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} inline ns3
 # receive_secure_serial() should refrain from introducing any zone changes.
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --halt --port ${CONTROLPORT} inline ns3
 ensure_sigs_only_in_journal delayedkeys ns3/delayedkeys.db.signed
+nextpart ns3/named.run > /dev/null
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} inline ns3
 # We can now test whether the secure zone journal was correctly processed:
 # unless the records contained in it were scheduled for resigning, no resigning
 # event will be scheduled at all since the secure zone master file contains no
 # DNSSEC records.
+wait_for_log 20 "all zones loaded" ns3/named.run || ret=1
 $RNDCCMD 10.53.0.3 zonestatus delayedkeys > rndc.out.ns3.post.test$n 2>&1 || ret=1
 grep "next resign node:" rndc.out.ns3.post.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -1387,6 +1377,25 @@ echo_i "check that zonestatus reports 'type: slave' for a inline slave zone ($n)
 ret=0
 $RNDCCMD 10.53.0.3 zonestatus bits > rndc.out.ns3.test$n
 grep "type: slave" rndc.out.ns3.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking reload of touched inline zones ($n)"
+echo_ic "pre-reload 'next key event'"
+nextpart ns8/named.run > nextpart.pre$n.out
+count=`grep "zone example[0-9][0-9].com/IN (signed): next key event:" nextpart.pre$n.out | wc -l`
+echo_ic "found: $count/16"
+[ $count -eq 16 ] || ret=1
+echo_ic "touch and reload"
+touch ns8/example??.com.db
+$RNDCCMD 10.53.0.8 reload 2>&1 | sed 's/^/ns3 /' | cat_i
+sleep 5
+echo_ic "post-reload 'next key event'"
+nextpart ns8/named.run > nextpart.post$n.out
+count=`grep "zone example[0-9][0-9].com/IN (signed): next key event:" nextpart.post$n.out | wc -l`
+echo_ic "found: $count/16"
+[ $count -eq 16 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

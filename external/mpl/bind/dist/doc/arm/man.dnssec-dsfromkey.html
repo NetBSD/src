@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -115,10 +115,8 @@
 
     <p>
       The <span class="command"><strong>dnssec-dsfromkey</strong></span> command outputs DS (Delegation
-      Signer) resource records (RRs) and other similarly-constructed RRs:
-      with the <code class="option">-l</code> option it outputs DLV (DNSSEC Lookaside
-      Validation) RRs; or with the <code class="option">-C</code> it outputs CDS (Child
-      DS) RRs.
+      Signer) resource records (RRs), or CDS (Child DS) RRs with the
+      <code class="option">-C</code> option.
     </p>
 
     <p>
@@ -153,13 +151,15 @@
 <dt><span class="term">-1</span></dt>
 <dd>
 	  <p>
-	    An abbreviation for <code class="option">-a SHA1</code>
+	    An abbreviation for <code class="option">-a SHA-1</code>.
+	    (Note: The SHA-1 algorithm is no longer recommended for use
+	    when generating new DS and CDS records.)
 	  </p>
 	</dd>
 <dt><span class="term">-2</span></dt>
 <dd>
 	  <p>
-	    An abbreviation for <code class="option">-a SHA-256</code>
+	    An abbreviation for <code class="option">-a SHA-256</code>.
 	  </p>
 	</dd>
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
@@ -175,6 +175,8 @@
 	    SHA-1, SHA-256, or SHA-384.  These values are case insensitive,
 	    and the hyphen may be omitted.  If no algorithm is specified,
 	    the default is SHA-256.
+	    (Note: The SHA-1 algorithm is no longer recommended for use
+	    when generating new DS and CDS records.)
 	  </p>
 	</dd>
 <dt><span class="term">-A</span></dt>
@@ -196,9 +198,7 @@
 <dt><span class="term">-C</span></dt>
 <dd>
 	  <p>
-	    Generate CDS records rather than DS records. This is mutually
-	    exclusive with the <code class="option">-l</code> option for generating DLV
-	    records.
+	    Generate CDS records rather than DS records.
 	  </p>
 	</dd>
 <dt><span class="term">-f <em class="replaceable"><code>file</code></em></span></dt>
@@ -231,16 +231,6 @@
 	  <p>
 	    Look for key files or <code class="filename">keyset-</code> files in
 	    <code class="option">directory</code>.
-	  </p>
-	</dd>
-<dt><span class="term">-l <em class="replaceable"><code>domain</code></em></span></dt>
-<dd>
-	  <p>
-	    Generate a DLV set instead of a DS set. The specified
-	    <em class="replaceable"><code>domain</code></em> is appended to the name for each
-	    record in the set.
-	    This is mutually exclusive with the <code class="option">-C</code> option
-	    for generating CDS records.
 	  </p>
 	</dd>
 <dt><span class="term">-s</span></dt>
@@ -325,7 +315,6 @@
       </span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
       <em class="citetitle">RFC 3658</em> (DS RRs),
-      <em class="citetitle">RFC 4431</em> (DLV RRs),
       <em class="citetitle">RFC 4509</em> (SHA-256 for DS RRs),
       <em class="citetitle">RFC 6605</em> (SHA-384 for DS RRs),
       <em class="citetitle">RFC 7344</em> (CDS and CDNSKEY RRs).
@@ -352,6 +341,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

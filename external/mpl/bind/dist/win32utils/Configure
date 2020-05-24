@@ -24,7 +24,6 @@ use Cwd;
 my $configfile = "..\\config.h";
 my $platformfile = "..\\lib\\isc\\win32\\include\\isc\\platform.h";
 my $confshfile = "..\\bin\\tests\\system\\conf.sh";
-my $icshfile = "..\\isc-config.sh";
 
 my @filelist = ("..\\bin\\python\\dnssec-checkds.py",
                 "..\\bin\\python\\dnssec-coverage.py",
@@ -194,10 +193,7 @@ my %configdefh;
 
 my @substdefh = ("CONFIGARGS",
                  "DNS_RDATASET_FIXED",
-                 "HAVE_GEOIP",
                  "HAVE_GEOIP2",
-                 "HAVE_GEOIP_CITY_V6",
-                 "HAVE_GEOIP_V6",
                  "HAVE_LIBXML2",
                  "HAVE_OPENSSL_ED25519",
                  "HAVE_OPENSSL_ED448",
@@ -207,8 +203,6 @@ my @substdefh = ("CONFIGARGS",
                  "USE_BACKTRACE",
                  "USE_OPENSSL",
                  "USE_PKCS11",
-                 "HAVE_PKCS11_ED25519",
-                 "HAVE_PKCS11_ED448",
                  "HAVE_READLINE",
                  "HAVE_ZLIB",
                  "ISC_LIST_CHECKINIT",
@@ -227,6 +221,9 @@ my @substdefh = ("CONFIGARGS",
                  "HAVE_HMAC_CTX_GET_MD",
                  "HAVE_HMAC_CTX_NEW",
                  "HAVE_HMAC_CTX_RESET",
+                 "HAVE_UV_HANDLE_GET_DATA",
+                 "HAVE_UV_HANDLE_SET_DATA",
+                 "HAVE_UV_IMPORT",
     );
 
 # for platform.h
@@ -241,6 +238,7 @@ my %configtest;
 
 my @substtest = ("CHECKDS",
                  "COVERAGE",
+                 "CRYPTO",
                  "DNSTAP",
                  "FSTRM_CAPTURE",
                  "JSONSTATS",
@@ -257,6 +255,7 @@ my @substinc = ("GSSAPI_INC",
                 "GEOIP_INC",
                 "IDN_INC",
                 "LIBXML2_INC",
+                "LIBUV_INC",
                 "OPENSSL_INC",
                 "READLINE_INC",
                 "ZLIB_INC");
@@ -270,6 +269,7 @@ my @substlib = ("GSSAPI_LIB",
                 "IDN_LIB",
                 "KRB5_LIB",
                 "LIBXML2_LIB",
+                "LIBUV_LIB",
                 "OPENSSL_LIB",
                 "READLINE_LIB",
                 "READLINE_LIBD",
@@ -281,12 +281,12 @@ my %configdll;
 
 my @substdll = ("COMERR_DLL",
                 "GSSAPI_DLL",
-                "GEOIP_DLL",
                 "ICONV_DLL",
                 "IDN_DLL",
                 "KRB5_DLL",
                 "K5SPRT_DLL",
                 "LIBXML2_DLL",
+                "LIBUV_DLL",
                 "OPENSSL_DLL",
                 "WSHELP_DLL",
                 "ZLIB_DLL");
@@ -338,7 +338,6 @@ my %configcond;
 my @substcond = ("ATOMIC",
                  "GSSAPI",
                  "GEOIP",
-                 "GEOIPLEGACY",
                  "IDNKIT",
                  "LIBXML2",
                  "OPENSSL",
@@ -368,11 +367,8 @@ my @enablelist = ("developer",
 
 my @withlist = ("aes",
                 "cross-compile",
-                "ecdsa",
-                "eddsa",
                 "extra-tests",
                 "gssapi",
-                "geoip",
                 "geoip2",
                 "iconv",
                 "idn",
@@ -386,6 +382,7 @@ my @withlist = ("aes",
                 "system-tests",
                 "tests",
                 "tuning",
+                "libuv",
                 "vcredist",
                 "zlib");
 
@@ -412,7 +409,7 @@ my @help = (
 "  clean                 (command) clean up generated files\n",
 "  <none>                (command) print a summary of the configuration\n",
 "\nOptional Features:\n",
-"  enable-intrinsics     enable instrinsic/atomic functions [default=yes]\n",
+"  enable-intrinsics     enable intrinsic/atomic functions [default=yes]\n",
 "  enable-native-pkcs11  use native PKCS#11 for all crypto [default=no]\n",
 "  enable-openssl-hash   use OpenSSL for hash functions [default=yes]\n",
 "  enable-isc-spnego     use SPNEGO from lib/dns [default=yes]\n",
@@ -425,11 +422,10 @@ my @help = (
 "  with-system-tests     build with system test suite\n",
 "  with-samples          build with sample programs\n",
 "  with-openssl[=PATH]   build with OpenSSL yes|path (mandatory)\n",
+"  with-libuv[=PATH]     build with libuv yes|path (mandatory)\n",
 "  with-pkcs11[=PATH]    build with PKCS#11 support yes|no|provider-path\n",
-"  with-eddsa            crypto EDDSA yes|all|no\n",
 "  with-gssapi[=PATH]    build with MIT KfW GSSAPI yes|no|path\n",
 "  with-libxml2[=PATH]   build with libxml2 library yes|no|path\n",
-"  with-geoip[=PATH]     build with GeoIP support yes|no|path\n",
 "  with-geoip2[=PATH]    build with GeoIP2 support yes|no|path\n",
 "  with-pssuspend[=COMMAND] specify pssuspend command\n",
 "  with-python[=COMMAND] specify python interpreter python|command\n",
@@ -438,7 +434,7 @@ my @help = (
 "  with-iconv[=PATH]     path of the iconv DLL [default=same than idn]\n",
 "  with-zlib[=PATH]      build with zlib library yes|no|path\n",
 "  with-vcredist[=PATH]  visual C++ redistributable package yes|path\n",
-"  with-tuning=OPTION    tune for platform size (large|default)\n",
+"  with-tuning=OPTION    tune for platform size (small|default)\n",
 "  with-cross-compile    32 / 64 bit build / host platforms\n",
 "\nOptional Visual Studio project parameters:\n",
 "  with-tools-version=VERSION     set the ToolsVersion attribute to VERSION\n",
@@ -469,18 +465,16 @@ my $use_tests = "no";
 my $use_xtests = "no";
 my $use_stests = "no";
 my $use_samples = "no";
+my $use_libuv = "auto";
+my $libuv_path = "..\\..\\";
 my $use_openssl = "auto";
 my $openssl_path = "..\\..\\";
 my $use_pkcs11 = "no";
 my $pkcs11_path = "unknown";
-my $use_eddsa = "auto";
-my $use_ed448 = "auto";
 my $use_aes = "auto";
 my $use_gssapi = "no";
 my $validation_default = "auto";
 my $gssapi_path = "C:\\Program\ Files\\MIT\\Kerberos\\";
-my $use_geoip = "no";
-my $geoip_path = "";
 my $use_geoip2 = "no";
 my $geoip2_path = "";
 my $use_libxml2 = "auto";
@@ -640,8 +634,9 @@ getversion();
 
 sub appargs {
     my $arg = $_[0];
-    # escape backslashes, spaces and double quotes
-    $arg =~ s/([\\ "])/\\$1/g;
+    # escape backslashes and double quotes
+    $arg =~ s/([\\"])/\\$1/g;
+    $arg =~ s/([\s])/\\\\$1/g;
     if (defined($configdefh{"CONFIGARGS"})) {
         $configdefh{"CONFIGARGS"} .= " " . $arg;
     } else {
@@ -746,6 +741,13 @@ sub mywith {
             $use_openssl = "yes";
             $openssl_path = $val;
         }
+    } elsif ($key =~ /^libuv$/i) {
+        if ($val =~ /^no$/i) {
+            die "libuv is required\n";
+        } elsif ($val !~ /^yes$/i) {
+            $use_libuv = "yes";
+            $libuv_path = $val;
+        }
     } elsif ($key =~ /^pkcs11$/i) {
         if ($val =~ /^yes$/i) {
             $use_pkcs11 = "yes";
@@ -753,15 +755,6 @@ sub mywith {
             $use_pkcs11= "yes";
             $pkcs11_path = $val;
             $pkcs11_path =~ s/\.dll$//i;
-        }
-    } elsif ($key =~ /^eddsa$/i) {
-        if ($val =~ /^no$/i) {
-            $use_eddsa = "no";
-        } elsif ($val !~ /^no$/i) {
-            $use_eddsa = "yes";
-            if ($val =~ /^all$/i) {
-                $use_ed448 = "yes";
-            }
         }
     } elsif ($key =~ /^aes$/i) {
         if ($val =~ /^no$/i) {
@@ -783,18 +776,9 @@ sub mywith {
             $use_libxml2 = "yes";
             $libxml2_path = $val;
         }
-    } elsif ($key =~ /^geoip$/i) {
-        if ($val !~ /^no$/i) {
-            $use_geoip = "yes";
-            if ($val !~ /^yes$/i) {
-                $geoip_path = $val;
-            }
-        }
     } elsif ($key =~ /^geoip2$/i) {
         if ($val !~ /^no$/i) {
             $use_geoip2 = "yes";
-            # Disable GeoIP legacy.
-            $use_geoip = "no";
             if ($val !~ /^yes$/i) {
                 $geoip2_path = $val;
             } else {
@@ -858,8 +842,8 @@ sub mywith {
             $cross_compile = "yes";
         }
     } elsif ($key =~ /^tuning$/i) {
-        if ($val =~ /^large$/i) {
-            $tuning = "large";
+        if ($val =~ /^small$/i) {
+            $tuning = "small";
         }
     } elsif ($key =~ /^tools-version$/i) {
         $configvar{"TOOLS_VERSION"} = $val;
@@ -891,7 +875,6 @@ if ($want_clean eq "yes") {
     unlink($configfile);
     unlink($platformfile);
     unlink($confshfile);
-    unlink($icshfile);
 
     foreach $file (@filelist) {
         unlink($file);
@@ -957,6 +940,7 @@ if ($verbose) {
     } else {
         print "querytrace: disabled\n";
     }
+    print "libuv-path: $libuv_path\n";
     print "openssl-path: $openssl_path\n";
     if ($use_tests eq "yes") {
         print "tests: enabled\n";
@@ -975,17 +959,6 @@ if ($verbose) {
     } else {
         print "pkcs11-provider-path: $pkcs11_path\n";
     }
-    print "ecdsa: enabled\n";
-    if ($use_eddsa eq "no") {
-        print "eddsa: disabled\n";
-    } else {
-        print "ed25519: enabled\n";
-        if ($use_ed448 eq "no") {
-            print "ed448: disabled\n";
-        } else {
-            print "ed448: enabled\n";
-        }
-    }
     if ($use_aes eq "no") {
         print "aes: disabled\n";
     } else {
@@ -1000,11 +973,6 @@ if ($verbose) {
         print "libxml2: disabled\n";
     } else {
         print "libxml2-path: $libxml2_path\n";
-    }
-    if ($use_geoip eq "no") {
-        print "geoip: disabled\n";
-    } else {
-        print "geoip-path: $geoip_path\n";
     }
     if ($use_geoip2 eq "no") {
         print "geoip2: disabled\n";
@@ -1253,26 +1221,6 @@ if ($enable_native_pkcs11 eq "yes") {
             print "native PKCS#11 support: no PKCS#11 provider defined?\n";
         }
     }
-    if ($use_eddsa eq "no") {
-        if ($verbose) {
-            print "no EDDSA support in native PKCS#11\n";
-        }
-    } else {
-        if ($verbose) {
-            print "enabled Ed25519 support in native PKCS#11\n";
-        }
-        $configdefh{"HAVE_PKCS11_ED25519"} = 1;
-        if ($use_ed448 eq "no") {
-            if ($verbose) {
-                print "no Ed448 support in native PKCS#11\n";
-            }
-        } else {
-            if ($verbose) {
-                print "enabled Ed448 support in native PKCS#11\n";
-            }
-            $configdefh{"HAVE_PKCS11_ED448"} = 1;
-        }
-    }
 }
 
 # enable-fixed-rrset
@@ -1303,6 +1251,78 @@ if ($use_stests eq "yes") {
 # with-samples
 if ($use_samples eq "yes") {
     $configcond{"SAMPLES"} = 1;
+}
+
+# with-libuv
+if ($use_libuv eq "auto") {
+    if ($verbose) {
+        print "checking for an libuv built directory at sibling root\n";
+    }
+    opendir DIR, $libuv_path || die "No Directory: $!\n";
+    my @dirlist = grep (/^libuv-v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+){0,1}$/i,
+                        readdir(DIR));
+    closedir(DIR);
+
+    # Make sure we have something
+    if (scalar(@dirlist) == 0) {
+        die "can't find an libuv at sibling root\n";
+    }
+    # Now see if we have a directory or just a file.
+    # Make sure we are case insensitive
+    my $file;
+    foreach $file (sort {uc($b) cmp uc($a)} @dirlist) {
+        if (-f File::Spec->catfile($libuv_path,
+                                   $file,
+                                   "include\\uv.h")) {
+            $libuv_path = File::Spec->catdir($libuv_path, $file);
+            $use_libuv = "yes";
+            last;
+        }
+    }
+
+    # If we have one use it otherwise report the error
+    if ($use_libuv eq "auto") {
+        die "can't find an libuv built directory at sibling root\n";
+    }
+
+    # When a libuv version exposing uv_import() and uv_export() is released, the
+    # following three config.h macros will need to be conditionally defined for
+    # that libuv version and all later ones.
+    # $configdefh{"HAVE_UV_HANDLE_SET_DATA"} = 1;
+    # $configdefh{"HAVE_UV_HANDLE_GET_DATA"} = 1;
+    # $configdefh{"HAVE_UV_IMPORT"} = 1;
+}
+# falls into (so no else)
+if ($use_libuv eq "yes") {
+    $libuv_path = File::Spec->rel2abs($libuv_path);
+    if ($verbose) {
+        print "checking for libuv built directory at \"$libuv_path\"\n";
+    }
+    my $libuv_new = 0;
+    if (!-f File::Spec->catfile($libuv_path,
+                                "include\\uv.h")) {
+        die "can't find libuv uv.h include\n";
+    }
+    my $libuv_inc = File::Spec->catdir($libuv_path, "include");
+    my $libuv_libdir = File::Spec->catdir($libuv_path, "Release");
+    my $libuv_lib = File::Spec->catfile($libuv_libdir, "libuv.lib");
+    my $libuv_dll = File::Spec->catfile($libuv_libdir, "libuv.dll");
+    if (!-f $libuv_lib) {
+       die "can't find libuv.lib library\n";
+    }
+    if (!-f $libuv_dll) {
+       die "can't find libuv.dll library\n";
+    }
+    $configvar{"LIBUV_PATH"} = "$libuv_path";
+    $configinc{"LIBUV_INC"} = "$libuv_inc";
+    $configlib{"LIBUV_LIB"} = "$libuv_lib";
+    $configdll{"LIBUV_DLL"} = "$libuv_dll";
+    # When a libuv version exposing uv_import() and uv_export() is released, the
+    # following three config.h macros will need to be conditionally defined for
+    # that libuv version and all later ones.
+    # $configdefh{"HAVE_UV_HANDLE_SET_DATA"} = 1;
+    # $configdefh{"HAVE_UV_HANDLE_GET_DATA"} = 1;
+    # $configdefh{"HAVE_UV_IMPORT"} = 1;
 }
 
 # with-openssl
@@ -1404,8 +1424,10 @@ if ($use_openssl eq "yes") {
 
 if ($cryptolib eq "openssl") {
     $configdefh{"USE_OPENSSL"} = 1;
+    $configtest{"CRYPTO"} = "OpenSSL";
 } else {
     $configdefh{"USE_PKCS11"} = 1;
+    $configtest{"CRYPTO"} = "pkcs11";
 }
 
 # check OpenSSL
@@ -1521,15 +1543,9 @@ EOF
     }
 }
 
-# check FIPS_mode
-
-# with-eddsa
-if ($use_openssl eq "no") {
-    $use_eddsa = "no";
-}
-if ($use_eddsa eq "auto") {
+if ($use_openssl eq "yes") {
     if ($verbose) {
-        print "checking for OpenSSL ED25519 support\n";
+        print "checking for OpenSSL Ed25519 support\n";
     }
     open F, ">tested25519.c" || die $!;
     print F << 'EOF';
@@ -1553,31 +1569,24 @@ EOF
     $compret = `cl /nologo /MD /I "$include" tested25519.c "$library"`;
     if (grep { -f and -x } ".\\tested25519.exe") {
         `.\\tested25519.exe`;
-        if ($? != 0) {
+        if ($? == 0) {
+            $configdefh{"HAVE_OPENSSL_ED25519"} = 1;
+        } else {
             if ($verbose) {
-                print "EDDSA test failed: disabling EDDSA\n";
+                print "Ed25519 test failed: disabling Ed25519\n";
             }
-            $use_eddsa = "no";
         }
     } else {
         if ($verbose) {
-            print "can't compile EDDSA test: $compret\n";
-            print "disabling EDDSA\n";
+            print "can't compile Ed25519 test: $compret\n";
+            print "disabling Ed25519\n";
         }
-    $use_eddsa = "no";
     }
 }
 
-if ($use_eddsa ne "no") {
-    $use_eddsa = "yes";
-    $configdefh{"HAVE_OPENSSL_ED25519"} = 1;
-} else {
-    $use_ed448 = "no";
-}
-
-if ($use_ed448 eq "auto") {
+if ($use_openssl eq "yes") {
     if ($verbose) {
-        print "checking for OpenSSL ED448 support\n";
+        print "checking for OpenSSL Ed448 support\n";
     }
     open F, ">tested448.c" || die $!;
     print F << 'EOF';
@@ -1601,24 +1610,19 @@ EOF
     $compret = `cl /nologo /MD /I "$include" tested448.c "$library"`;
     if (grep { -f and -x } ".\\tested448.exe") {
         `.\\tested448.exe`;
-        if ($? != 0) {
+        if ($? == 0) {
+            $configdefh{"HAVE_OPENSSL_ED448"} = 1;
+        } else {
             if ($verbose) {
-                print "ED448 test failed: disabling ED448\n";
+                print "Ed448 test failed: disabling Ed448\n";
             }
-            $use_ed448 = "no";
         }
     } else {
         if ($verbose) {
-            print "can't compile ED448 test: $compret\n";
-            print "disabling ED448\n";
+            print "can't compile Ed448 test: $compret\n";
+            print "disabling Ed448\n";
         }
-    $use_ed448 = "no";
     }
-}
-
-if ($use_ed448 ne "no") {
-    $use_ed448 = "yes";
-    $configdefh{"HAVE_OPENSSL_ED448"} = 1;
 }
 
 # with-aes
@@ -1747,120 +1751,6 @@ if ($use_gssapi ne "yes") {
 # disable-auto-validation
 $configdefh{"VALIDATION_DEFAULT"} = "\"$validation_default\"";
 
-# with-geoip
-if ($use_geoip eq "no") {
-    if ($verbose) {
-        print "geoip library is disabled\n";
-    }
-} else {
-    $configcond{"GEOIPLEGACY"} = 1;
-    $geoip_path = File::Spec->rel2abs($geoip_path);
-    if ($verbose) {
-        print "checking for geoip directory at \"$geoip_path\"\n";
-    }
-    if (!-f File::Spec->catfile($geoip_path, "GeoIP.h")) {
-        die "can't find GeoIP.h include\n";
-    }
-    if (!-f File::Spec->catfile($geoip_path, "GeoIP.lib")) {
-        die "can't find Geoip.lib library\n";
-    }
-    if (!-f File::Spec->catfile($geoip_path, "GeoIP.dll")) {
-        die "can't find Geoip.dll DLL\n";
-    }
-    $configinc{"GEOIP_INC"} = "$geoip_path";
-    my $geoip_lib = File::Spec->catfile($geoip_path, "GeoIP.lib");
-    $configlib{"GEOIP_LIB"} = "$geoip_lib";
-    my $geoip_dll = File::Spec->catfile($geoip_path, "GeoIP.dll");
-    $configdll{"GEOIP_DLL"} = "$geoip_dll";
-
-    if ($verbose) {
-        print "checking for GeoIP support\n";
-    }
-    my $ret = `copy "$geoip_dll" .`;
-    if ($? != 0) {
-        die "Can't copy GeoIP DLL to working directory: $ret\n";
-    }
-    open F, ">testgeoip.c" || die $!;
-    print F << 'EOF';
-extern void *GeoIP_open();
-
-int main() {
-        return GeoIP_open != 0;
-}
-EOF
-    close F;
-    $compret = `cl /nologo /MD testgeoip.c "$geoip_lib"`;
-    if (grep { -f and -x } ".\\testgeoip.exe") {
-        `.\\testgeoip.exe`;
-        if ($? == 0) {
-            die "GeoIP test failed\n";
-        }
-    } else {
-        die "can't compile GeoIP test: $compret\n";
-    }
-    $configdefh{"HAVE_GEOIP"} = 1;
-
-    if ($verbose) {
-        print "checking for GeoIP Country IPv6 support\n";
-    }
-    my $geoip_inc = qq(/I "$geoip_path");
-    my $geoip_libs = qq("$geoip_lib" ws2_32.lib);
-    open F, ">testgeoip1.c" || die $!;
-    print F << 'EOF';
-#include <GeoIP.h>
-
-struct in6_addr in6;
-int flag = 1;
-
-int main() {
-        if (flag)
-                return 1;
-        return GeoIP_country_name_by_ipnum_v6(NULL, in6) != NULL;
-}
-EOF
-    close F;
-    $compret = `cl /nologo $geoip_inc /MD testgeoip1.c $geoip_libs`;
-    if (grep { -f and -x } ".\\testgeoip1.exe") {
-        `.\\testgeoip1.exe`;
-        if ($? == 0) {
-            die "GeoIP Country IPv6 test failed\n";
-        }
-    } else {
-        die "can't compile GeoIP Country IPv6 test: $compret\n";
-    }
-    $configdefh{"HAVE_GEOIP_V6"} = 1;
-
-    if ($verbose) {
-        print "checking for GeoIP City IPv6 support\n";
-    }
-    open F, ">testgeoip2.c" || die $!;
-    print F << 'EOF';
-#include <GeoIP.h>
-#include <GeoIPCity.h>
-
-struct in6_addr in6;
-int i = GEOIP_CITY_EDITION_REV0_V6;
-int flag = 1;
-
-int main() {
-        if (flag)
-                return 1;
-        return GeoIP_record_by_ipnum_v6(NULL, in6) != NULL;
-}
-EOF
-    close F;
-    $compret = `cl /nologo $geoip_inc /MD testgeoip2.c $geoip_libs`;
-    if (grep { -f and -x } ".\\testgeoip2.exe") {
-        `.\\testgeoip2.exe`;
-        if ($? == 0) {
-            die "GeoIP City IPv6 test failed\n";
-        }
-    } else {
-        die "can't compile GeoIP City IPv6 test: $compret\n";
-    }
-    $configdefh{"HAVE_GEOIP_CITY_V6"} = 1;
-}
-
 # with-geoip2
 if ($use_geoip2 eq "no") {
     if ($verbose) {
@@ -1894,7 +1784,7 @@ if ($use_geoip2 eq "no") {
     print F << 'EOF';
 #include <maxminddb.h>
 int main(void) {
-	return MMDB_lib_version() != 0;
+       return MMDB_lib_version() != 0;
 }
 EOF
     close F;
@@ -2185,7 +2075,7 @@ if (!grep { -f and -x } $vcredist_path) {
 }
 
 # tuning
-if ($tuning eq "large") {
+if ($tuning ne "small") {
     $configdefh{"TUNE_LARGE"} = 1;
 }
 
@@ -2298,44 +2188,6 @@ sub setupconfsh {
     open F, ">" . $confshfile || die $!;
     if ($verbose) {
         print "Setting up $confshfile\n";
-    }
-    binmode(F);
-    foreach $line (@Lines) {
-        print F $line . "\n";
-    }
-    close F;
-}
-
-# setup isc-config.sh with %configvar accepting undefined
-
-sub setupicsh {
-    my $line;
-    my @Lines;
-    my $val;
-
-    open F, $icshfile . ".in" || die $!;
-    @Lines = <F>;
-    close F;
-
-    foreach $line (@Lines) {
-        chomp $line;
-        while ($line =~ /@([^@]+)\@/) {
-            if ($1 ~~ @substvar) {
-                if (defined($configvar{$1})) {
-                    $val = kw($configvar{$1});
-                    $line = "$`$val$'";
-                } else {
-                    $line = "$`$'";
-                }
-            }  else {
-                $line = "$`__$1__$'";
-            }
-        }
-    }
-
-    open F, ">" . $icshfile || die $!;
-    if ($verbose) {
-        print "Setting up $icshfile\n";
     }
     binmode(F);
     foreach $line (@Lines) {
@@ -2725,6 +2577,13 @@ sub makesrcid {
         close SIN;
     }
 
+    if ($srcid eq "unset_id" and -d "..\\.git") {
+        $data = `git rev-list --max-count=1 HEAD`;
+        if (length($data) > 0) {
+            $srcid = substr($data, 0, 7);
+        }
+    }
+
     # Now set up the output version file
 
     my $ThisDate = scalar localtime();
@@ -2793,6 +2652,7 @@ sub makeinstallfile {
     print LOUT "libdns.dll-BCFT\n";
     print LOUT "libirs.dll-BCFT\n";
     print LOUT "libns.dll-BCFT\n";
+    print LOUT "libuv.dll-BCFT\n";
     if ($use_openssl eq "yes") {
         my $v;
         my $d;
@@ -2811,9 +2671,6 @@ sub makeinstallfile {
             print LOUT "gssapi32.dll-BCFT\n";
             print LOUT "krb5_32.dll-BCFT\n";
         }
-    }
-    if ($use_geoip eq "yes") {
-        print LOUT "libgeoip.dll-BCFT\n";
     }
     if ($use_idn eq "yes") {
         print LOUT "idnkit.dll-BCFT\n";
@@ -2966,8 +2823,6 @@ if (($want_win32 eq "yes") || ($want_x64 eq "yes")) {
 
     setupconfsh();
 
-    setupicsh();
-
     my $file;
     foreach $file (@filelist) {
         setupfile($file);
@@ -3011,16 +2866,13 @@ exit 0;
 #  --with-python supported
 #  --with-openssl supported
 #  --with-pkcs11 supported
-#  --with-ecdsa supported
-#  --with-eddsa supported
 #  --with-aes supported
 #  --with-randomdev not supported on WIN32 (makes no sense)
-#  --with-geoip supported
 #  --with-geoip2 supported
 #  --with-gssapi supported with MIT (K)erberos (f)or (W)indows
 #  --with-lmdb no supported on WIN32 (port is not reliable)
 #  --with-libxml2 supported
-#  --with-libjson not supported on WIN32 (package not available on WIN32)
+#  --with-json-c not supported on WIN32 (package not available on WIN32)
 #  --with-zlib supported
 #  --with-purify not supported (package available on WIN32 but for free?)
 #  --with-gperftools-profiler not supported (package not available on WIN32)

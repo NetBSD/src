@@ -14,11 +14,10 @@
 options {
 	query-source address 10.53.0.2;
 	port @PORT@;
-	pid-file "named2.pid";
+	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { fd92:7065:b8e:ffff::2; };
 	recursion no;
 	notify yes;
-	dnssec-enable no;
 	dnssec-validation no;
 };

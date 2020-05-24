@@ -35,6 +35,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <!-- insert copyright end -->
@@ -414,7 +415,7 @@
 	    checking whether the SERIAL field has been updated; if so,
 	    a new transfer request is initiated. The timing of these
 	    refresh queries is controlled by the SOA REFRESH and RETRY
-	    fields, but can be overrridden with the
+	    fields, but can be overridden with the
 	    <command>max-refresh-time</command>,
 	    <command>min-refresh-time</command>,
 	    <command>max-retry-time</command>, and
@@ -582,7 +583,7 @@
     <section xml:id="cpu_req"><info><title>CPU Requirements</title></info>
       <para>
 	CPU requirements for <acronym>BIND</acronym> 9 range from
-	i486-class machines
+	i386-class machines
 	for serving of static zones without caching, to enterprise-class
 	machines if you intend to process many dynamic updates and DNSSEC
 	signed zones, serving many thousands of queries per second.
@@ -632,9 +633,9 @@
 	ISC <acronym>BIND</acronym> 9 compiles and runs on a large
 	number
 	of Unix-like operating systems and on
-	Microsoft Windows Server 2003 and 2008, and Windows XP and Vista.
+	Microsoft Windows Server 2012 R2, 2016 and Windows 10.
 	For an up-to-date
-	list of supported systems, see the README file in the top level
+	list of supported systems, see the PLATFORMS file in the top level
 	directory
 	of the BIND 9 source distribution.
       </para>
@@ -747,7 +748,7 @@ zone "eng.example.com" {
       </para>
 
       <para>
-	For example, if you have three WWW servers with network addresses
+	For example, if you have three HTTP servers with network addresses
 	of 10.0.0.1, 10.0.0.2 and 10.0.0.3, a set of records such as the
 	following means that clients will connect to each machine one third
 	of the time:
@@ -2087,7 +2088,7 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	zone key of another zone above this one in the DNS tree.
       </para>
 
-      <section xml:id="dnssec_keys"><info><title>Generating Keys</title></info>
+      <section xml:id="generating_dnssec_keys"><info><title>Generating Keys</title></info>
 
 	<para>
 	  The <command>dnssec-keygen</command> program is used to
@@ -2184,22 +2185,16 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	</para>
 
 	<para><command>dnssec-signzone</command>
-	  will also produce a keyset and dsset files and optionally a
-	  dlvset file.  These are used to provide the parent zone
-	  administrators with the <literal>DNSKEYs</literal> (or their
-	  corresponding <literal>DS</literal> records) that are the
-	  secure entry point to the zone.
+	  will also produce a keyset and dsset files.  These are used
+	  to provide the parent zone administrators with the
+	  <literal>DNSKEYs</literal> (or their corresponding
+	  <literal>DS</literal> records) that are the secure entry
+	  point to the zone.
 	</para>
 
       </section>
 
       <section xml:id="dnssec_config"><info><title>Configuring Servers for DNSSEC</title></info>
-	<para>
-	  To enable <command>named</command> to respond appropriately
-	  to DNS requests from DNSSEC-aware clients,
-	  <command>dnssec-enable</command> must be set to
-	  <userinput>yes</userinput>. This is the default setting.
-	</para>
 	<para>
 	  To enable <command>named</command> to validate answers
 	  received from other servers, the
@@ -2218,8 +2213,9 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	  <userinput>yes</userinput>, DNSSEC validation will only occur
 	  if at least one trust anchor has been explicitly configured
 	  in <filename>named.conf</filename>
-	  using a <command>trusted-keys</command> or
-	  <command>managed-keys</command> statement.
+	  using a <command>trust-anchors</command> statement (or the
+	  <command>managed-keys</command> and <command>trusted-keys</command>
+	  statements, both deprecated).
 	</para>
 	<para>
 	  When <command>dnssec-validation</command> is set to
@@ -2230,36 +2226,23 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	  built with <command>configure --disable-auto-validation</command>,
 	  in which case the default is <userinput>yes</userinput>.
 	</para>
+
 	<para>
-	  If <command>dnssec-enable</command> is set to
-	  <userinput>no</userinput>, then the default for
-	  <command>dnssec-validation</command> is also changed to
-	  <userinput>no</userinput>. If
-	  <command>dnssec-validation</command> is set to
-	  <userinput>yes</userinput>, the server will
-	  perform DNSSEC validation internally, but will not return
-	  signatures when queried - but it will not be turned on
-	  automatically.
+	  The keys specified in <command>trust-anchors</command>
+	  copies of DNSKEY RRs for zones that are used to form the
+	  first link in the cryptographic chain of trust.  Keys configured
+	  with the keyword <command>static-key</command> or
+	  <command>static-ds</command> are loaded directly
+	  into the table of trust anchors, and can only be changed by
+	  altering the configuration. Keys configured with
+	  <command>initial-key</command> or <command>initial-ds</command>
+	  are used to initialize RFC 5011 trust anchor maintenance, and
+	  will be kept up to date automatically after the first time
+	  <command>named</command> runs.
 	</para>
 
 	<para>
-	  <command>trusted-keys</command> are copies of DNSKEY RRs
-	  for zones that are used to form the first link in the
-	  cryptographic chain of trust.  All keys listed in
-	  <command>trusted-keys</command> (and corresponding zones)
-	  are deemed to exist and only the listed keys will be used
-	  to validated the DNSKEY RRset that they are from.
-	</para>
-
-	<para>
-	  <command>managed-keys</command> are trusted keys which are
-	  automatically kept up to date via RFC 5011 trust anchor
-	  maintenance.
-	</para>
-
-	<para>
-	  <command>trusted-keys</command> and
-	  <command>managed-keys</command> are described in more detail
+	  <command>trust-anchors</command> is described in more detail
 	  later in this document.
 	</para>
 
@@ -2282,7 +2265,7 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 	</para>
 
 <programlisting>
-managed-keys {
+trust-anchors {
 	/* Root Key */
 	"." initial-key 257 3 3 "BNY4wrWM1nCfJ+CXd0rVXyYmobt7sEEfK3clRbGaTwS
 				 JxrGkxJWoZu6I7PzJu/E9gx4UC1zGAHlXKdE4zYIpRh
@@ -2294,24 +2277,11 @@ managed-keys {
 				 66gKodQj+MiA21AfUVe7u99WzTLzY3qlxDhxYQQ20FQ
 				 97S+LKUTpQcq27R7AT3/V5hRQxScINqwcz4jYqZD2fQ
 				 dgxbcDTClU0CRBdiieyLMNzXG3";
-};
-
-trusted-keys {
 	/* Key for our organization's forward zone */
-	example.com. 257 3 5 "AwEAAaxPMcR2x0HbQV4WeZB6oEDX+r0QM6
-			      5KbhTjrW1ZaARmPhEZZe3Y9ifgEuq7vZ/z
-			      GZUdEGNWy+JZzus0lUptwgjGwhUS1558Hb
-			      4JKUbbOTcM8pwXlj0EiX3oDFVmjHO444gL
-			      kBOUKUf/mC7HvfwYH/Be22GnClrinKJp1O
-			      g4ywzO9WglMk7jbfW33gUKvirTHr25GL7S
-			      TQUzBb5Usxt8lgnyTUHs1t3JwCY5hKZ6Cq
-			      FxmAVZP20igTixin/1LcrgX/KMEGd/biuv
-			      F4qJCyduieHukuY3H4XMAcR+xia2nIUPvm
-			      /oyWR8BW/hWdzOvnSCThlHf3xiYleDbt/o
-			      1OTQ09A0=";
+	example.com. static-ds 54135 5 2 "8EF922C97F1D07B23134440F19682E7519ADDAE180E20B1B1EC52E7F58B2831D"
 
 	/* Key for our reverse zone. */
-	2.0.192.IN-ADDRPA.NET. 257 3 5 "AQOnS4xn/IgOUpBPJ3bogzwc
+	2.0.192.IN-ADDRPA.NET. static-key 257 3 5 "AQOnS4xn/IgOUpBPJ3bogzwc
 				       xOdNax071L18QqZnQQQAVVr+i
 				       LhGTnNGp3HoWQLUIzKrJVZ3zg
 				       gy3WwNT6kZo6c0tszYqbtvchm
@@ -2329,7 +2299,6 @@ trusted-keys {
 
 options {
 	...
-	dnssec-enable yes;
 	dnssec-validation yes;
 };
 </programlisting>
@@ -3145,6 +3114,17 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	    </row>
 	    <row rowsep="0">
 	      <entry colname="1">
+		<para><command>dnssec-policy</command></para>
+	      </entry>
+	      <entry colname="2">
+		<para>
+		  describes a DNSSEC key and signing policy for zones.
+		  See <xref linkend="dnssec_policy_grammar"/> for details.
+		</para>
+	      </entry>
+	    </row>
+	    <row rowsep="0">
+	      <entry colname="1">
 		<para><command>include</command></para>
 	      </entry>
 	      <entry colname="2">
@@ -3223,11 +3203,18 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	    </row>
 	    <row rowsep="0">
 	      <entry colname="1">
-		<para><command>trusted-keys</command></para>
+		<para><command>trust-anchors</command></para>
 	      </entry>
 	      <entry colname="2">
 		<para>
-		  defines trusted DNSSEC keys.
+		  defines DNSSEC trust anchors: if used with
+		  the <command>initial-key</command> or
+		  <command>initial-ds</command> keyword,
+		  trust anchors are kept up to date using RFC
+		  5011 trust anchor maintenance, and if used with
+		  <command>static-key</command> or
+		  <command>static-ds</command>, trust anchors
+		  are permanent.
 		</para>
 	      </entry>
 	    </row>
@@ -3237,8 +3224,25 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	      </entry>
 	      <entry colname="2">
 		<para>
-		  lists DNSSEC keys to be kept up to date
-		  using RFC 5011 trust anchor maintenance.
+		  is identical to <command>trust-anchors</command>;
+		  this option is deprecated in favor
+		  of <command>trust-anchors</command> with
+		  the <command>initial-key</command> keyword,
+		  and may be removed in a future release.
+		</para>
+	      </entry>
+	    </row>
+	    <row rowsep="0">
+	      <entry colname="1">
+		<para><command>trusted-keys</command></para>
+	      </entry>
+	      <entry colname="2">
+		<para>
+		  defines permanent trusted DNSSEC keys;
+		  this option is deprecated in favor
+		  of <command>trust-anchors</command> with
+		  the <command>static-key</command> keyword,
+		  and may be removed in a future release.
 		</para>
 	      </entry>
 	    </row>
@@ -3960,69 +3964,64 @@ category notify { null; };
 	<section xml:id="query_errors"><info><title>The <command>query-errors</command> Category</title></info>
 	  <para>
 	    The <command>query-errors</command> category is
-	    specifically intended for debugging purposes: To identify
-	    why and how specific queries result in responses which
-	    indicate an error.
-	    Messages of this category are therefore only logged
-	    with <command>debug</command> levels.
+	    used to indicate why and how specific queries resulted in
+	    responses which indicate an error.  Normally, these messages
+	    will be logged at <command>debug</command> logging levels;
+	    note, however, that if query logging is active, some will be
+	    logged at <command>info</command>. The logging levels are
+	    described below:
 	  </para>
 
 	  <para>
-	    At the debug levels of 1 or higher, each response with the
-	    rcode of SERVFAIL is logged as follows:
+	    At <command>debug</command> level 1 or higher - or at
+	    <command>info</command>, when query logging is active - each
+	    response with response code SERVFAIL will be logged as follows:
 	  </para>
 	  <para>
 	    <computeroutput>client 127.0.0.1#61502: query failed (SERVFAIL) for www.example.com/IN/AAAA at query.c:3880</computeroutput>
 	  </para>
 	  <para>
-	    This means an error resulting in SERVFAIL was
-	    detected at line 3880 of source file
-	    <filename>query.c</filename>.
-	    Log messages of this level will particularly
-	    help identify the cause of SERVFAIL for an
-	    authoritative server.
+	    This means an error resulting in SERVFAIL was detected at line
+	    3880 of source file <filename>query.c</filename>.  Log messages
+	    of this level will particularly help identify the cause of
+	    SERVFAIL for an authoritative server.
 	  </para>
 	  <para>
-	    At the debug levels of 2 or higher, detailed context
-	    information of recursive resolutions that resulted in
-	    SERVFAIL is logged.
-	    The log message will look like as follows:
+	    At <command>debug</command> level 2 or higher, detailed
+	    context information about recursive resolutions that resulted in
+	    SERVFAIL will be logged.  The log message will look like this:
 	  </para>
 	  <para>
 <!-- NOTE: newlines and some spaces added so this would fit on page -->
 	    <programlisting>
 fetch completed at resolver.c:2970 for www.example.com/A
-in 30.000183: timed out/success [domain:example.com,
-referral:2,restart:7,qrysent:8,timeout:5,lame:0,neterr:0,
+in 10.000183: timed out/success [domain:example.com,
+referral:2,restart:7,qrysent:8,timeout:5,lame:0,quota:0,neterr:0,
 badresp:1,adberr:0,findfail:0,valfail:0]
 	    </programlisting>
 	  </para>
 	  <para>
 	    The first part before the colon shows that a recursive
 	    resolution for AAAA records of www.example.com completed
-	    in 30.000183 seconds and the final result that led to the
+	    in 10.000183 seconds and the final result that led to the
 	    SERVFAIL was determined at line 2970 of source file
 	    <filename>resolver.c</filename>.
 	  </para>
 	  <para>
 	    The following part shows the detected final result and the
-	    latest result of DNSSEC validation.
-	    The latter is always success when no validation attempt
-	    is made.
-	    In this example, this query resulted in SERVFAIL probably
-	    because all name servers are down or unreachable, leading
-	    to a timeout in 30 seconds.
-	    DNSSEC validation was probably not attempted.
+	    latest result of DNSSEC validation.  The latter is always
+	    "success" when no validation attempt was made.  In this example,
+	    this query probably resulted in SERVFAIL because all name
+	    servers are down or unreachable, leading to a timeout in 10
+	    seconds.  DNSSEC validation was probably not attempted.
 	  </para>
 	  <para>
-	    The last part enclosed in square brackets shows statistics
-	    information collected for this particular resolution
-	    attempt.
-	    The <varname>domain</varname> field shows the deepest zone
-	    that the resolver reached;
-	    it is the zone where the error was finally detected.
-	    The meaning of the other fields is summarized in the
-	    following table.
+	    The last part, enclosed in square brackets, shows statistics
+	    collected for this particular resolution attempt.
+	    The <varname>domain</varname> field shows the deepest zone that
+	    the resolver reached; it is the zone where the error was
+	    finally detected.  The meaning of the other fields is
+	    summarized in the following table.
 	  </para>
 
 	  <informaltable colsep="0" rowsep="0">
@@ -4098,6 +4097,18 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		</row>
 		<row rowsep="0">
 		  <entry colname="1">
+		    <para><varname>quota</varname></para>
+		  </entry>
+		  <entry colname="2">
+		    <para>
+		      The number of times the resolver was unable
+		      to send a query because it had exceeded the
+		      permissible fetch quota for a server.
+		    </para>
+		  </entry>
+		</row>
+		<row rowsep="0">
+		  <entry colname="1">
 		    <para><varname>neterr</varname></para>
 		  </entry>
 		  <entry colname="2">
@@ -4166,20 +4177,17 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    </tgroup>
 	  </informaltable>
 	  <para>
-	    At the debug levels of 3 or higher, the same messages
-	    as those at the debug 1 level are logged for other errors
-	    than SERVFAIL.
-	    Note that negative responses such as NXDOMAIN are not
-	    regarded as errors here.
+	    At <command>debug</command> level 3 or higher, the same
+	    messages as those at <command>debug</command> level 1 will be
+	    logged for other errors than SERVFAIL. Note that negative
+	    responses such as NXDOMAIN are not errors, and are not logged
+	    at this debug level.
 	  </para>
 	  <para>
-	    At the debug levels of 4 or higher, the same messages
-	    as those at the debug 2 level are logged for other errors
-	    than SERVFAIL.
-	    Unlike the above case of level 3, messages are logged for
-	    negative responses.
-	    This is because any unexpected results can be difficult to
-	    debug in the recursion case.
+	    At <command>debug</command> level 4 or higher, the
+	    detailed context information logged at <command>debug</command>
+	    level 2 will be logged for other errors than SERVFAIL and
+	    for negative resonses such as NXDOMAIN.
 	  </para>
 	</section>
       </section>
@@ -4293,7 +4301,6 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		  configurable options be consistent among these
 		  views:
 		  <command>check-names</command>,
-		  <command>cleaning-interval</command>,
 		  <command>dnssec-accept-expired</command>,
 		  <command>dnssec-validation</command>,
 		  <command>max-cache-ttl</command>,
@@ -4465,9 +4472,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		    The number of seconds to wait between attempts to
 		    reopen a closed output stream. The minimum is 1 second,
 		    the maximum is 600 seconds (10 minutes), and the default
-		    is 5 seconds.
-		    For convenience, TTL-style time unit suffixes may be
-		    used to specify the value.
+		    is 5 seconds.  For convenience, TTL-style time unit
+		    suffixes may be used to specify the value.  It also
+		    accepts ISO 8601 duration formats.
 		  </simpara>
 		</listitem>
 	      </itemizedlist>
@@ -4558,7 +4565,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    <listitem>
 	      <para>
 		When <command>named</command> is compiled using the
-		MaxMind GeoIP2 geolocation API, or the legacy GeoIP API,
+		MaxMind GeoIP2 geolocation API,
 		this specifies the directory containing GeoIP
 		database files.  By default, the option is set based on
 		the prefix used to build the <command>libmaxminddb</command>
@@ -4619,10 +4626,13 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    <listitem>
 	      <para>
 		Specifies the directory in which to store the files that
-		track managed DNSSEC keys.  By default, this is the working
-		directory.  The directory <emphasis>must</emphasis>
-		be writable by the effective user ID of the
-		<command>named</command> process.
+		track managed DNSSEC keys (i.e., those configured using
+		the <command>initial-key</command> or
+		<command>initial-ds</command> keywords in a
+		<command>trust-anchors</command> statement).  By default,
+		this is the working directory.  The directory
+		<emphasis>must</emphasis> be writable by the effective
+		user ID of the <command>named</command> process.
 	      </para>
 	      <para>
 		If <command>named</command> is not configured to use views,
@@ -5057,10 +5067,11 @@ options {
 		as insecure.
 	      </para>
 	      <para>
-		Configured trust anchors in <command>trusted-keys</command>
-		or <command>managed-keys</command> that match a disabled
-		algorithm will be ignored and treated as if they were not
-		configured at all.
+		Configured trust anchors in <command>trust-anchors</command>
+		(or <command>managed-keys</command> or
+		<command>trusted-keys</command>, both deprecated)
+		that match a disabled algorithm will be ignored and treated
+		as if they were not configured at all.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5069,7 +5080,7 @@ options {
 	    <term><command>disable-ds-digests</command></term>
 	    <listitem>
 	      <para>
-		Disable the specified DS/DLV digest types at and below the
+		Disable the specified DS digest types at and below the
 		specified name.
 		Multiple <command>disable-ds-digests</command>
 		statements are allowed.
@@ -5085,37 +5096,6 @@ options {
 	  </varlistentry>
 
 	  <varlistentry>
-	    <term><command>dnssec-lookaside</command></term>
-	    <listitem>
-	      <para>
-		When set, <command>dnssec-lookaside</command> provides the
-		validator with an alternate method to validate DNSKEY
-		records at the top of a zone.  When a DNSKEY is at or
-		below a domain specified by the deepest
-		<command>dnssec-lookaside</command>, and the normal DNSSEC
-		validation has left the key untrusted, the trust-anchor
-		will be appended to the key name and a DLV record will be
-		looked up to see if it can validate the key.  If the DLV
-		record validates a DNSKEY (similarly to the way a DS
-		record does) the DNSKEY RRset is deemed to be trusted.
-	      </para>
-	      <para>
-		If <command>dnssec-lookaside</command> is set to
-		<userinput>no</userinput>, then dnssec-lookaside
-		is not used.
-	      </para>
-	      <para>
-		NOTE: The ISC-provided DLV service at
-		<literal>dlv.isc.org</literal>, has been shut down.
-		The <command>dnssec-lookaside auto;</command>
-		configuration option, which set <command>named</command>
-		up to use ISC DLV with minimal configuration, has
-		accordingly been removed.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
 	    <term><command>dnssec-must-be-secure</command></term>
 	    <listitem>
 	      <para>
@@ -5124,10 +5104,10 @@ options {
 		then <command>named</command> will only accept answers if
 		they are secure.  If <userinput>no</userinput>, then normal
 		DNSSEC validation applies allowing for insecure answers to
-		be accepted.  The specified domain must be under a
-		<command>trusted-keys</command> or
-		<command>managed-keys</command> statement, or
-		<command>dnssec-validation auto</command> must be active.
+		be accepted.  The specified domain must be defined as a
+		trust anchor, for instance in a <command>trust-anchors</command>
+		statement, or <command>dnssec-validation auto</command> must
+		be active.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5296,8 +5276,11 @@ options {
 		<para>
 		  For convenience, TTL-style time unit suffixes can be
 		  used to specify the NTA lifetime in seconds, minutes
-		  or hours.  <option>nta-lifetime</option> defaults to
-		  one hour.  It cannot exceed one week.
+		  or hours.  It also accepts ISO 8601 duration formats.
+		</para>
+		<para>
+		 <option>nta-lifetime</option> defaults to one hour.  It
+		 cannot exceed one week.
 		</para>
 	    </listitem>
 	  </varlistentry>
@@ -5330,9 +5313,13 @@ options {
 		<para>
 		  For convenience, TTL-style time unit suffixes can be
 		  used to specify the NTA recheck interval in seconds,
-		  minutes or hours.  The default is five minutes.  It
-		  cannot be longer than <option>nta-lifetime</option>
-		  (which cannot be longer than a week).
+		  minutes or hours.  It also accepts ISO 8601 duration
+		  formats.
+		</para>
+		<para>
+		  The default is five minutes.  It cannot be longer than
+		  <option>nta-lifetime</option> (which cannot be longer
+		  than a week).
 		</para>
 	    </listitem>
 	  </varlistentry>
@@ -5343,7 +5330,10 @@ options {
 	      <para>
 		Specifies a maximum permissible TTL value in seconds.
 		For convenience, TTL-style time unit suffixes may be
-		used to specify the maximum value.
+		used to specify the maximum value. It also
+                accepts ISO 8601 duration formats.
+	      </para>
+	      <para>
 		When loading a zone file using a
 		<option>masterfile-format</option> of
 		<constant>text</constant> or <constant>raw</constant>,
@@ -6241,8 +6231,8 @@ options {
 		<para>
 		  Causes <command>named</command> to send specially-formed
 		  queries once per day to domains for which trust anchors
-		  have been configured via <command>trusted-keys</command>,
-		  <command>managed-keys</command>, or
+		  have been configured via, e.g.,
+		  <command>trust-anchors</command> or
 		  <command>dnssec-validation auto</command>.
 		</para>
 		<para>
@@ -6437,12 +6427,7 @@ options {
 	      <term><command>dnssec-enable</command></term>
 	      <listitem>
 		<para>
-		  This indicates whether DNSSEC-related resource
-		  records are to be returned by <command>named</command>.
-		  If set to <userinput>no</userinput>,
-		  <command>named</command> will not return DNSSEC-related
-		  resource records unless specifically queried for.
-		  The default is <userinput>yes</userinput>.
+		  This option is obsolete and has no effect.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6451,10 +6436,8 @@ options {
 	      <term xml:id="dnssec_validation_term"><command>dnssec-validation</command></term>
 	      <listitem>
 		<para>
-		  This enables DNSSEC validation in <command>named</command>.
-		  Note that <command>dnssec-enable</command> also needs to
-		  be set to <userinput>yes</userinput> for signatures to be
-		  returned to the client along with validated answers.
+		  This option enables DNSSEC validation in
+		  <command>named</command>.
 		</para>
 	        <para>
 		  If set to <userinput>auto</userinput>,
@@ -6464,10 +6447,11 @@ options {
 		<para>
 		  If set to <userinput>yes</userinput>, DNSSEC validation is
 		  enabled, but a trust anchor must be manually configured
-		  using a <command>trusted-keys</command>
-		  or <command>managed-keys</command> statement; if there
-		  is no configured trust anchor, validation will not take
-		  place.
+		  using a <command>trust-anchors</command> statement (or
+		  the <command>managed-keys</command> or the
+		  <command>trusted-keys</command> statements, both deprecated).
+		  If there is no configured trust anchor, validation will
+		  not take place.
 		</para>
 		<para>
 		  If set to <userinput>no</userinput>, DNSSEC validation
@@ -6478,13 +6462,6 @@ options {
 		  BIND is built with
 		  <command>configure --disable-auto-validation</command>,
 		  in which case the default is <userinput>yes</userinput>.
-		  If <command>dnssec-enable</command> is set to
-		  <userinput>no</userinput>, then the default for
-		  <command>dnssec-validation</command> is also
-		  <userinput>no</userinput>. Validation can still be turned on
-		  if desired - this results in a server that performs DNSSEC
-		  validation but does not return signatures when queried -
-		  but it will not be turned on automatically.
 		</para>
 		<para>
 		  The default root trust anchor is stored in the file
@@ -6558,11 +6535,22 @@ options {
 	      <term><command>querylog</command></term>
 	      <listitem>
 		<para>
-		  Specify whether query logging should be started when <command>named</command>
-		  starts.
-		  If <command>querylog</command> is not specified,
-		  then the query logging
-		  is determined by the presence of the logging category <command>queries</command>.
+		  Query logging provides a complete log of all incoming
+		  queries and all query errors. This provides more insight
+		  into the server's activity, but with a cost to
+		  performance which may be significant on heavily-loaded
+		  servers.
+		</para>
+		<para>
+		  The <command>querylog</command> option specifies
+		  whether query logging should be active when
+		  <command>named</command> first starts.
+		  If <command>querylog</command> is not specified, then
+		  query logging is determined by the presence of the
+		  logging category <command>queries</command>.
+		  Query logging can also be activated at runtime using the
+		  command <command>rndc querylog on</command>, or
+		  deactivated with <command>rndc querylog off</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6893,9 +6881,11 @@ options {
 	      <term><command>forwarders</command></term>
 	      <listitem>
 		<para>
-		  Specifies the IP addresses to be used
-		  for forwarding. The default is the empty list (no
-		  forwarding).
+		  Specifies a list of IP addresses to which queries shall be
+		  forwarded. The default is the empty list (no forwarding).
+		  Each address in the list can be associated with an optional
+		  port number and/or DSCP value, and a default port number and
+		  DSCP value can be set for the entire list.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8464,14 +8454,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <term><command>cleaning-interval</command></term>
 	      <listitem>
 		<para>
-		  This interval is effectively obsolete.  Previously,
-		  the server would remove expired resource records
-		  from the cache every <command>cleaning-interval</command> minutes.
-		  <acronym>BIND</acronym> 9 now manages cache
-		  memory in a more sophisticated manner and does not
-		  rely on the periodic cleaning any more.
-		  Specifying this option therefore has no effect on
-		  the server's behavior.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8508,7 +8491,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  <command>listen-on</command> configuration), and
 		  will stop listening on interfaces that have gone away.
 		  For convenience, TTL-style time unit suffixes may be
-		  used to specify the value.
+		  used to specify the value.  It also accepts ISO 8601
+		  duration formats.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8789,9 +8773,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  stores negative answers. <command>min-ncache-ttl</command> is
 		  used to set a minimum retention time for these answers in the
 		  server in seconds.  For convenience, TTL-style time unit
-		  suffixes may be used to specify the value.  The default
-		  <command>min-ncache-ttl</command> is <literal>0</literal>
-		  seconds.  <command>min-ncache-ttl</command> cannot exceed 90
+		  suffixes may be used to specify the value.  It also
+                  accepts ISO 8601 duration formats.
+		</para>
+		<para>
+		  The default <command>min-ncache-ttl</command> is
+		  <literal>0</literal> seconds.
+		  <command>min-ncache-ttl</command> cannot exceed 90
 		  seconds and will be truncated to 90 seconds if set to a
 		  greater value.
 		</para>
@@ -8803,10 +8791,14 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>
 		<para>
 		  Sets the minimum time for which the server will cache ordinary
-		  (positive) answers in seconds. For convenience, TTL-style time
-		  unit suffixes may be used to specify the value. The default
-		  <command>min-cache-ttl</command> is <literal>0</literal>
-		  seconds. <command>min-cache-ttl</command> cannot exceed 90
+		  (positive) answers in seconds.  For convenience, TTL-style
+		  time unit suffixes may be used to specify the value.  It also
+                  accepts ISO 8601 duration formats.
+		</para>
+		<para>
+		  The default <command>min-cache-ttl</command> is
+		  <literal>0</literal> seconds.
+		  <command>min-cache-ttl</command> cannot exceed 90
 		  seconds and will be truncated to 90 seconds if set to a
 		  greater value.
 		</para>
@@ -8818,15 +8810,19 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	      <listitem>
 		<para>
 		  To reduce network traffic and increase performance,
-		  the server stores negative answers. <command>max-ncache-ttl</command> is
+		  the server stores negative answers.
+		  <command>max-ncache-ttl</command> is
 		  used to set a maximum retention time for these answers in
-		  the server in seconds.
-		  For convenience, TTL-style time unit suffixes may be
-		  used to specify the value.  The default
-		  <command>max-ncache-ttl</command> is <literal>10800</literal> seconds (3 hours).
-		  <command>max-ncache-ttl</command> cannot exceed
-		  7 days and will
-		  be silently truncated to 7 days if set to a greater value.
+		  the server in seconds.  For convenience, TTL-style time unit
+		  suffixes may be used to specify the value.  It also accepts
+		  ISO 8601 duration formats.
+		</para>
+		<para>
+		  The default <command>max-ncache-ttl</command> is
+		  <literal>10800</literal> seconds (3 hours).
+		  <command>max-ncache-ttl</command> cannot exceed 7 days and
+		  will be silently truncated to 7 days if set to a greater
+		  value.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -8838,7 +8834,10 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  Sets the maximum time for which the server will
 		  cache ordinary (positive) answers in seconds.
 		  For convenience, TTL-style time unit suffixes may be
-		  used to specify the value.
+		  used to specify the value.  It also accepts ISO 8601
+		  duration formats.
+		</para>
+		<para>
 		  The default is 604800 (one week).
 		  A value of zero may cause all queries to return
 		  SERVFAIL, because of lost caches of intermediate
@@ -9193,10 +9192,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  Sets the maximum number of iterative queries that
 		  may be sent while servicing a recursive query.
 		  If more queries are sent, the recursive query
-		  is terminated and returns SERVFAIL. Queries to
-		  look up top level domains such as "com" and "net"
-		  and the DNS root zone are exempt from this limitation.
-		  The default is 75.
+		  is terminated and returns SERVFAIL.  The default is 75.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -9317,6 +9313,11 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  The default is the real version number of this server.
 		  Specifying <command>version none</command>
 		  disables processing of the queries.
+		</para>
+		<para>
+		  Setting <command>version</command> to any value
+		  (including <literal>none</literal>) will also
+		  disable queries for <literal>authors.bind TXT CH</literal>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -10144,7 +10145,9 @@ deny-answer-aliases { "example.net"; };
 	    The <command>max-policy-ttl</command> clause changes the
 	    maximum seconds from its default of 5.
 	    For convenience, TTL-style time unit suffixes may be
-	    used to specify the value.
+	    used to specify the value.  It also accepts ISO 8601 duration
+	    formats.
+
 	  </para>
 
 	  <para>
@@ -10240,7 +10243,8 @@ example.com                 CNAME   rpz-tcp-only.
 	    recent update, then the changes will not be carried out until this
 	    interval has elapsed.  The default is <literal>60</literal> seconds.
 	    For convenience, TTL-style time unit suffixes may be
-	    used to specify the value.
+	    used to specify the value.  It also accepts ISO 8601 duration
+	    formats.
 	  </para>
 	</section>
 
@@ -10780,249 +10784,260 @@ example.com                 CNAME   rpz-tcp-only.
 	  </para>
 	</section>
 
-      <section xml:id="statschannels"><info><title><command>statistics-channels</command> Statement Grammar</title></info>
-	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="statistics-channels.grammar.xml"/>
-      </section>
-
-      <section xml:id="statistics_channels"><info><title><command>statistics-channels</command> Statement Definition and
-	    Usage</title></info>
-
-	<para>
-	  The <command>statistics-channels</command> statement
-	  declares communication channels to be used by system
-	  administrators to get access to statistics information of
-	  the name server.
-	</para>
-
-	<para>
-	  This statement intends to be flexible to support multiple
-	  communication protocols in the future, but currently only
-	  HTTP access is supported.
-	  It requires that BIND 9 be compiled with libxml2 and/or
-	  json-c (also known as libjson0); the
-	  <command>statistics-channels</command> statement is
-	  still accepted even if it is built without the library,
-	  but any HTTP access will fail with an error.
-	</para>
-
-	<para>
-	  An <command>inet</command> control channel is a TCP socket
-	  listening at the specified <command>ip_port</command> on the
-	  specified <command>ip_addr</command>, which can be an IPv4 or IPv6
-	  address.  An <command>ip_addr</command> of <literal>*</literal>
-	  (asterisk) is
-	  interpreted as the IPv4 wildcard address; connections will be
-	  accepted on any of the system's IPv4 addresses.
-	  To listen on the IPv6 wildcard address,
-	  use an <command>ip_addr</command> of <literal>::</literal>.
-	</para>
-
-	<para>
-	  If no port is specified, port 80 is used for HTTP channels.
-	  The asterisk "<literal>*</literal>" cannot be used for
-	  <command>ip_port</command>.
-	</para>
-
-	<para>
-	  The attempt of opening a statistics channel is
-	  restricted by the optional <command>allow</command> clause.
-	  Connections to the statistics channel are permitted based on the
-	  <command>address_match_list</command>.
-	  If no <command>allow</command> clause is present,
-	  <command>named</command> accepts connection
-	  attempts from any address; since the statistics may
-	  contain sensitive internal information, it is highly
-	  recommended to restrict the source of connection requests
-	  appropriately.
-	</para>
-
-	<para>
-	  If no <command>statistics-channels</command> statement is present,
-	  <command>named</command> will not open any communication channels.
-	</para>
-
-	<para>
-	  The statistics are available in various formats and views
-	  depending on the URI used to access them.  For example, if
-	  the statistics channel is configured to listen on 127.0.0.1
-	  port 8888, then the statistics are accessible in XML format at
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/">http://127.0.0.1:8888/</link> or
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml">http://127.0.0.1:8888/xml</link>. A CSS file is
-	  included which can format the XML statistics into tables
-	  when viewed with a stylesheet-capable browser, and into
-	  charts and graphs using the Google Charts API when using a
-	  javascript-capable browser.
-	</para>
-
-	<para>
-	  Broken-out subsets of the statistics can be viewed at
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/status">http://127.0.0.1:8888/xml/v3/status</link>
-	  (server uptime and last reconfiguration time),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/server">http://127.0.0.1:8888/xml/v3/server</link>
-	  (server and resolver statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/zones">http://127.0.0.1:8888/xml/v3/zones</link>
-	  (zone statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/net">http://127.0.0.1:8888/xml/v3/net</link>
-	  (network status and socket statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/mem">http://127.0.0.1:8888/xml/v3/mem</link>
-	  (memory manager statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/tasks">http://127.0.0.1:8888/xml/v3/tasks</link>
-	  (task manager statistics), and
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/traffic">http://127.0.0.1:8888/xml/v3/traffic</link>
-	  (traffic sizes).
-	</para>
-
-	<para>
-	  The full set of statistics can also be read in JSON format at
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json">http://127.0.0.1:8888/json</link>,
-	  with the broken-out subsets at
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/status">http://127.0.0.1:8888/json/v1/status</link>
-	  (server uptime and last reconfiguration time),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/server">http://127.0.0.1:8888/json/v1/server</link>
-	  (server and resolver statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/zones">http://127.0.0.1:8888/json/v1/zones</link>
-	  (zone statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/net">http://127.0.0.1:8888/json/v1/net</link>
-	  (network status and socket statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/mem">http://127.0.0.1:8888/json/v1/mem</link>
-	  (memory manager statistics),
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/tasks">http://127.0.0.1:8888/json/v1/tasks</link>
-	  (task manager statistics), and
-	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/traffic">http://127.0.0.1:8888/json/v1/traffic</link>
-	  (traffic sizes).
-	</para>
-      </section>
-
-	<section xml:id="trusted-keys"><info><title><command>trusted-keys</command> Statement Grammar</title></info>
-	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="trusted-keys.grammar.xml"/>
+	<section xml:id="statschannels"><info><title><command>statistics-channels</command> Statement Grammar</title></info>
+	  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="statistics-channels.grammar.xml"/>
 	</section>
-	<section xml:id="trusted_keys"><info><title><command>trusted-keys</command> Statement Definition
+
+	<section xml:id="statistics_channels"><info><title><command>statistics-channels</command> Statement Definition and
+	      Usage</title></info>
+
+	  <para>
+	    The <command>statistics-channels</command> statement
+	    declares communication channels to be used by system
+	    administrators to get access to statistics information of
+	    the name server.
+	  </para>
+
+	  <para>
+	    This statement intends to be flexible to support multiple
+	    communication protocols in the future, but currently only
+	    HTTP access is supported.
+	    It requires that BIND 9 be compiled with libxml2 and/or
+	    json-c (also known as libjson0); the
+	    <command>statistics-channels</command> statement is
+	    still accepted even if it is built without the library,
+	    but any HTTP access will fail with an error.
+	  </para>
+
+	  <para>
+	    An <command>inet</command> control channel is a TCP socket
+	    listening at the specified <command>ip_port</command> on the
+	    specified <command>ip_addr</command>, which can be an IPv4 or IPv6
+	    address.  An <command>ip_addr</command> of <literal>*</literal>
+	    (asterisk) is
+	    interpreted as the IPv4 wildcard address; connections will be
+	    accepted on any of the system's IPv4 addresses.
+	    To listen on the IPv6 wildcard address,
+	    use an <command>ip_addr</command> of <literal>::</literal>.
+	  </para>
+
+	  <para>
+	    If no port is specified, port 80 is used for HTTP channels.
+	    The asterisk "<literal>*</literal>" cannot be used for
+	    <command>ip_port</command>.
+	  </para>
+
+	  <para>
+	    The attempt of opening a statistics channel is
+	    restricted by the optional <command>allow</command> clause.
+	    Connections to the statistics channel are permitted based on the
+	    <command>address_match_list</command>.
+	    If no <command>allow</command> clause is present,
+	    <command>named</command> accepts connection
+	    attempts from any address; since the statistics may
+	    contain sensitive internal information, it is highly
+	    recommended to restrict the source of connection requests
+	    appropriately.
+	  </para>
+
+	  <para>
+	    If no <command>statistics-channels</command> statement is present,
+	    <command>named</command> will not open any communication channels.
+	  </para>
+
+	  <para>
+	    The statistics are available in various formats and views
+	    depending on the URI used to access them.  For example, if
+	    the statistics channel is configured to listen on 127.0.0.1
+	    port 8888, then the statistics are accessible in XML format at
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/">http://127.0.0.1:8888/</link> or
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml">http://127.0.0.1:8888/xml</link>. A CSS file is
+	    included which can format the XML statistics into tables
+	    when viewed with a stylesheet-capable browser, and into
+	    charts and graphs using the Google Charts API when using a
+	    javascript-capable browser.
+	  </para>
+
+	  <para>
+	    Broken-out subsets of the statistics can be viewed at
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/status">http://127.0.0.1:8888/xml/v3/status</link>
+	    (server uptime and last reconfiguration time),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/server">http://127.0.0.1:8888/xml/v3/server</link>
+	    (server and resolver statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/zones">http://127.0.0.1:8888/xml/v3/zones</link>
+	    (zone statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/net">http://127.0.0.1:8888/xml/v3/net</link>
+	    (network status and socket statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/mem">http://127.0.0.1:8888/xml/v3/mem</link>
+	    (memory manager statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/tasks">http://127.0.0.1:8888/xml/v3/tasks</link>
+	    (task manager statistics), and
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/xml/v3/traffic">http://127.0.0.1:8888/xml/v3/traffic</link>
+	    (traffic sizes).
+	  </para>
+
+	  <para>
+	    The full set of statistics can also be read in JSON format at
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json">http://127.0.0.1:8888/json</link>,
+	    with the broken-out subsets at
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/status">http://127.0.0.1:8888/json/v1/status</link>
+	    (server uptime and last reconfiguration time),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/server">http://127.0.0.1:8888/json/v1/server</link>
+	    (server and resolver statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/zones">http://127.0.0.1:8888/json/v1/zones</link>
+	    (zone statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/net">http://127.0.0.1:8888/json/v1/net</link>
+	    (network status and socket statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/mem">http://127.0.0.1:8888/json/v1/mem</link>
+	    (memory manager statistics),
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/tasks">http://127.0.0.1:8888/json/v1/tasks</link>
+	    (task manager statistics), and
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1:8888/json/v1/traffic">http://127.0.0.1:8888/json/v1/traffic</link>
+	    (traffic sizes).
+	  </para>
+	</section>
+
+	<section xml:id="trust_anchors"><info><title><command>trust-anchors</command> Statement Grammar</title></info>
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="trust-anchors.grammar.xml"/>
+	</section>
+	<section xml:id="trust-anchors"><info><title><command>trust-anchors</command> Statement Definition
 	    and Usage</title></info>
 
 	  <para>
-	    The <command>trusted-keys</command> statement defines
-	    DNSSEC security roots. DNSSEC is described in <xref linkend="DNSSEC"/>. A security root is defined when the
-	    public key for a non-authoritative zone is known, but
-	    cannot be securely obtained through DNS, either because
-	    it is the DNS root zone or because its parent zone is
-	    unsigned.  Once a key has been configured as a trusted
-	    key, it is treated as if it had been validated and
-	    proven secure. The resolver attempts DNSSEC validation
-	    on all DNS data in subdomains of a security root.
+	    The <command>trust-anchors</command> statement defines DNSSEC
+	    trust anchors.  DNSSEC is described in <xref linkend="DNSSEC"/>.
 	  </para>
 	  <para>
-	    All keys (and corresponding zones) listed in
-	    <command>trusted-keys</command> are deemed to exist regardless
-	    of what parent zones say.  Similarly for all keys listed in
-	    <command>trusted-keys</command> only those keys are
-	    used to validate the DNSKEY RRset.  The parent's DS RRset
-	    will not be used.
+	    A trust anchor is defined when the public key or public key
+	    digest for a non-authoritative zone is known, but cannot be
+	    securely obtained through DNS, either because it is the DNS
+	    root zone or because its parent zone is unsigned.  Once a key
+	    or digest has been configured as a trust anchor, it is treated
+	    as if it had been validated and proven secure.
 	  </para>
 	  <para>
-	    The <command>trusted-keys</command> statement can contain
-	    multiple key entries, each consisting of the key's
-	    domain name, flags, protocol, algorithm, and the Base64
-	    representation of the key data.
-	    Spaces, tabs, newlines and carriage returns are ignored
-	    in the key data, so the configuration may be split up into
-	    multiple lines.
+	    The resolver attempts DNSSEC validation on all DNS data
+	    in subdomains of configured trust anchors.  (Validation below
+	    specified names can be temporarily disabled by using
+	    <command>rndc nta</command>, or permanently disabled with
+	    the <command>validate-except</command> option).
 	  </para>
 	  <para>
-	    <command>trusted-keys</command> may be set at the top level
+	    All keys listed in <command>trust-anchors</command>, and
+	    their corresponding zones, are deemed to exist regardless
+	    of what parent zones say.  Only keys configured as trust anchors
+	    are used to validate the DNSKEY RRset for the corresponding
+	    name. The parent's DS RRset will not be used.
+	  </para>
+	  <para>
+	    <command>trust-anchors</command> may be set at the top level
 	    of <filename>named.conf</filename> or within a view.  If it is
-	    set in both places, they are additive: keys defined at the top
-	    level are inherited by all views, but keys defined in a view
-	    are only used within that view.
+	    set in both places, the configurations are additive: keys
+	    defined at the top level are inherited by all views, but keys
+	    defined in a view are only used within that view.
 	  </para>
 	  <para>
-	    Validation below specified names can be temporarily disabled
-	    by using <command>rndc nta</command>.
+	    The <command>trust-anchors</command> statement can contain
+	    multiple trust anchor entries, each consisting of a
+	    domain name, followed by an "anchor type" keyword indicating
+	    the trust anchor's format, followed by the key or digest data.
 	  </para>
-	</section>
-
-	<section xml:id="managed_keys"><info><title><command>managed-keys</command> Statement Grammar</title></info>
-	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="managed-keys.grammar.xml"/>
-	</section>
-	<section xml:id="managed-keys"><info><title><command>managed-keys</command> Statement Definition
-	    and Usage</title></info>
-
 	  <para>
-	    The <command>managed-keys</command> statement, like
-	    <command>trusted-keys</command>, defines DNSSEC
-	    security roots.  The difference is that
-	    <command>managed-keys</command> can be kept up to date
-	    automatically, without intervention from the resolver
-	    operator.
+	    If the anchor type is <command>static-key</command> or
+	    <command>initial-key</command>, then it is followed with the
+	    key's flags, protocol, algorithm, and the Base64 representation
+	    of the public key data. This is identical to the text
+	    representation of a DNSKEY record.  Spaces, tabs, newlines and
+	    carriage returns are ignored in the key data, so the
+	    configuration may be split up into multiple lines.
+	  </para>
+	  <para>
+	    If the anchor type is <command>static-ds</command> or
+	    <command>initial-ds</command>, then it is followed with the
+	    key tag, algorithm, digest type, and the hexadecimal
+	    representation of the key digest. This is identical to the
+	    text representation of a DS record.  Spaces, tabs, newlines
+	    and carriage returns are ignored.
+	  </para>
+	  <para>
+	    Trust anchors configured with the
+	    <command>static-key</command> or <command>static-ds</command>
+	    anchor types are immutable, while keys configured with
+	    <command>initial-key</command> or <command>initial-ds</command>
+	    can be kept up to date automatically, without intervention
+	    from the resolver operator. (<command>static-key</command>
+	    keys are identical to keys configured using the deprecated
+	    <command>trusted-keys</command> statement.)
 	  </para>
 	  <para>
 	    Suppose, for example, that a zone's key-signing
 	    key was compromised, and the zone owner had to revoke and
-	    replace the key.  A resolver which had the old key in a
-	    <command>trusted-keys</command> statement would be
-	    unable to validate this zone any longer; it would
-	    reply with a SERVFAIL response code.  This would
-	    continue until the resolver operator had updated the
-	    <command>trusted-keys</command> statement with the new key.
+	    replace the key.  A resolver which had the original key
+	    configured using <command>static-key</command> or
+	    <command>static-ds</command> would be unable to validate
+	    this zone any longer; it would reply with a SERVFAIL response
+	    code.  This would continue until the resolver operator had
+	    updated the <command>trust-anchors</command> statement with
+	    the new key.
 	  </para>
 	  <para>
-	    If, however, the zone were listed in a
-	    <command>managed-keys</command> statement instead, then the
-	    zone owner could add a "stand-by" key to the zone in advance.
-	    <command>named</command> would store the stand-by key, and
-	    when the original key was revoked, <command>named</command>
-	    would be able to transition smoothly to the new key.  It would
-	    also recognize that the old key had been revoked, and cease
-	    using that key to validate answers, minimizing the damage that
-	    the compromised key could do.
+	    If, however, the trust anchor had been configured with
+	    <command>initial-key</command> or <command>initial-ds</command>
+	    instead, then the zone owner could add a "stand-by" key to
+	    their zone in advance.  <command>named</command> would store
+	    the stand-by key, and when the original key was revoked,
+	    <command>named</command> would be able to transition smoothly
+	    to the new key.  It would also recognize that the old key had
+	    been revoked, and cease using that key to validate answers,
+	    minimizing the damage that the compromised key could do.
+	    This is the process used to keep the ICANN root DNSSEC key
+	    up to date.
 	  </para>
 	  <para>
-	    A <command>managed-keys</command> statement contains a list of
-	    the keys to be managed, along with information about how the
-	    keys are to be initialized for the first time.  The only
-	    initialization method currently supported is
-	    <literal>initial-key</literal>.
-	    This means the <command>managed-keys</command> statement must
-	    contain a copy of the initializing key.  (Future releases may
-	    allow keys to be initialized by other methods, eliminating this
-	    requirement.)
+	    Whereas <command>static-key</command> and
+	    <command>static-ds</command> trust anchors continue
+	    to be trusted until they are removed from
+	    <filename>named.conf</filename>, an
+	    <command>initial-key</command> or <command>initial-ds</command>
+	    is only trusted <emphasis>once</emphasis>: for as long as it
+	    takes to load the managed key database and start the RFC 5011
+	    key maintenance process.
 	  </para>
 	  <para>
-	    Consequently, a <command>managed-keys</command> statement
-	    appears similar to a <command>trusted-keys</command>, differing
-	    in the presence of the second field, containing the keyword
-	    <literal>initial-key</literal>.  The difference is, whereas the
-	    keys listed in a <command>trusted-keys</command> continue to be
-	    trusted until they are removed from
-	    <filename>named.conf</filename>, an initializing key listed
-	    in a <command>managed-keys</command> statement is only trusted
-	    <emphasis>once</emphasis>: for as long as it takes to load the
-	    managed key database and start the RFC 5011 key maintenance
-	    process.
+	    It is not possible to mix static with initial trust anchors
+	    for the same domain name.
 	  </para>
 	  <para>
-	    The first time <command>named</command> runs with a managed key
+	    The first time <command>named</command> runs with an
+	    <command>initial-key</command> or <command>initial-ds</command>
 	    configured in <filename>named.conf</filename>, it fetches the
 	    DNSKEY RRset directly from the zone apex, and validates it
-	    using the key specified in the <command>managed-keys</command>
-	    statement.  If the DNSKEY RRset is validly signed, then it is
-	    used as the basis for a new managed keys database.
+	    using the trust anchor specified in <command>trust-anchors</command>.
+	    If the DNSKEY RRset is validly signed by a key matching
+	    the trust anchor, then it is used as the basis for a new
+	    managed keys database.
 	  </para>
 	  <para>
 	    From that point on, whenever <command>named</command> runs, it
-	    sees the <command>managed-keys</command> statement, checks to
+	    sees the <command>initial-key</command> or
+	    <command>initial-ds</command> listed in
+	    <command>trust-anchors</command>, checks to
 	    make sure RFC 5011 key maintenance has already been initialized
 	    for the specified domain, and if so, it simply moves on.  The
-	    key specified in the <command>managed-keys</command>
-	    statement is not used to validate answers; it has been
-	    superseded by the key or keys stored in the managed keys database.
+	    key specified in the <command>trust-anchors</command>
+	    statement is not used to validate answers; it is
+	    superseded by the key or keys stored in the managed keys
+	    database.
 	  </para>
 	  <para>
-	    The next time <command>named</command> runs after a name
-	    has been <emphasis>removed</emphasis> from the
-	    <command>managed-keys</command> statement, the corresponding
-	    zone will be removed from the managed keys database,
-	    and RFC 5011 key maintenance will no longer be used for that
-	    domain.
+	    The next time <command>named</command> runs after an
+	    <command>initial-key</command> or <command>initial-ds</command>
+	    trust anchor has been <emphasis>removed</emphasis> from the
+	    <command>trust-anchors</command> statement (or changed to
+	    a <command>static-key</command> or <command>static-ds</command>),
+	    the corresponding keys will be removed from the managed keys
+	    database, and RFC 5011 key maintenance will no longer be used
+	    for that domain.
 	  </para>
 	  <para>
 	    In the current implementation, the managed keys database
@@ -11054,14 +11069,357 @@ example.com                 CNAME   rpz-tcp-only.
 	  <para>
 	    If the <command>dnssec-validation</command> option is
 	    set to <userinput>auto</userinput>, <command>named</command>
-	    will automatically initialize a managed key for the
-	    root zone.  The key that is used to initialize the key
+	    will automatically initialize an <command>initial-key</command>
+	    for the root zone.  The key that is used to initialize the key
 	    maintenance process is stored in <filename>bind.keys</filename>;
 	    the location of this file can be overridden with the
 	    <command>bindkeys-file</command> option. As a fallback
 	    in the event no <filename>bind.keys</filename> can be
 	    found, the initializing key is also compiled directly
 	    into <command>named</command>.
+	  </para>
+	</section>
+
+	<section xml:id="dnssec_policy_grammar"><info><title><command>dnssec-policy</command> Statement Grammar</title></info>
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dnssec-policy.grammar.xml"/>
+	</section>
+
+	<section xml:id="dnssec_policy"><info><title><command>dnssec-policy</command> Statement Definition and Usage</title></info>
+
+	  <para>
+	    The <command>dnssec-policy</command> statement defines a key and
+	    signing policy (KASP) for zones.
+	  </para>
+	  <para>
+	    A KASP determines how one or more zones will be signed
+	    with DNSSEC. For example, it specifies how often keys should
+	    roll, which cryptographic algorithms to use, and how often RRSIG
+	    records need to be refreshed.
+	  </para>
+	  <para>
+	    Keys are not shared among zones, which means that one set of keys
+	    per zone will be generated even if they have the same policy.
+	    If multiple views are configured with different versions of the
+	    same zone, each separate version will use the same set of signing
+	    keys.
+	  </para>
+	  <para>
+	    Multiple key and signing policies can be configured.  To
+	    attach a policy to a zone, add a <command>dnssec-policy</command>
+	    option to the <command>zone</command> statement, specifying he
+	    name of the policy that should be used.
+	  </para>
+	  <para>
+	    Key rollover timing is computed for each key according to
+	    the key lifetime defined in the KASP.  The lifetime may be
+	    modified by zone TTLs and propagation delays, in order to
+	    prevent validation failures.  When a key reaches the end of its
+	    lifetime,
+	    <command>named</command> will generate and publish a new key
+	    automatically, then deactivate the old key and activate the
+	    new one, and finally retire the old key according to a computed
+	    schedule.
+	  </para>
+	  <para>
+	    Zone-signing key (ZSK) rollovers require no operator input.
+	    Key-signing key (KSK) and combined signing key (CSK) rollovers
+	    require action to be taken to submit a DS record to the parent.
+	    Rollover timing for KSKs and CSKs is adjusted to take into account
+	    delays in processing and propagating DS updates.
+	  </para>
+	  <para>
+	    There are two predefined <command>dnssec-policy</command> names:
+	    <command>none</command> and <command>default</command>.
+	    Setting a zone's policy to
+	    <command>none</command> is the same as not setting
+	    <command>dnssec-policy</command> at all; the zone will not
+	    be signed.  Policy <command>default</command> causes the
+	    zone to be signed with a single combined signing key (CSK)
+	    using algorithm ECDSAP256SHA256; this key will have an
+	    unlimited lifetime. (A verbose copy of this policy
+	    may be found in the source tree, in the file
+	    <filename>doc/misc/dnssec-policy.default.conf</filename>.)
+	    <note>
+	      The default signing policy may change in future releases.
+	      This could result in changes to your signing policy
+	      occurring when you upgrade to a new version of BIND. Check
+	      the release notes carefully when upgrading to be informed
+	      of such changes. To prevent policy changes on upgrade,
+	      use an explicitly defined <command>dnssec-policy</command>
+	      rather than <command>default</command>.
+	    </note>
+	  </para>
+	  <para>
+	    If a <command>dnssec-policy</command> statement is modified
+	    and the server restarted or reconfigured, <command>named</command>
+	    will attempt to change the policy smoothly from the old one to
+	    the new. For example, if the key algorithm is changed, then
+	    a new key will be generated with the new algorithm, and the old
+	    algorithm will be retired when the existing key's lifetime ends.
+	    <note>
+	      Rolling to a new policy while another key rollover is
+	      already in progress is not yet supported, and may result in
+	      unexpected behavior.
+	    </note>
+	  </para>
+	  <para>
+	    The following options can be specified in a
+	    <command>dnssec-policy</command> statement:
+	  </para>
+
+	  <variablelist>
+	    <varlistentry>
+	      <term><command>dnskey-ttl</command></term>
+	      <listitem>
+		<para>
+		  The TTL to use when generating DNSKEY resource records.
+		  The default is 1 hour (3600 seconds).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>keys</command></term>
+	      <listitem>
+		<para>
+		  A list specifying the algorithms and roles to use when
+		  generating keys and signing the zone.
+		  Entries in this list do not represent specific
+		  DNSSEC keys, which may be changed on a regular basis,
+		  but the roles that keys will play in the signing policy.
+		  For example, configuring a KSK of algorithm RSASHA256 ensures
+		  that the DNSKEY RRset will always include a key-signing key
+		  for that algorithm.
+		</para>
+		<para>
+		  Here is an example (for illustration purposes only) of
+		  some possible entries in a <command>keys</command>
+		  list:
+		</para>
+
+<programlisting>keys {
+    ksk key-directory lifetime unlimited algorithm rsasha1 2048;
+    zsk lifetime P30D algorithm 8;
+    csk lifetime P6MT12H3M15S algorithm ecdsa256;
+};
+</programlisting>
+
+		<para>
+		  This example specifies that three keys should be used
+		  in the zone. The first token determines which role the
+		  key will play in signing RRsets.  If set to
+		  <userinput>ksk</userinput>, then this will be
+		  a key-signing key; it will have the KSK flag set and
+		  will only be used to sign DNSKEY, CDS, and CDNSKEY RRsets.
+		  If set to <userinput>zsk</userinput>, this will be
+		  a zone-signing key; the KSK flag will be unset, and
+		  the key will sign all RRsets <emphasis>except</emphasis>
+		  DNSKEY, CDS, and CDNSKEY. If set to
+		  <userinput>csk</userinput> the key will have the KSK
+		  flag set and will be used to sign all RRsets.
+		</para>
+		<para>
+		  An optional second token determines where the key will
+		  be stored.  Currently, keys can only be stored in the
+		  configured <command>key-directory</command>. This token
+		  may be used in the future to store keys in hardware
+		  service modules or separate directories.
+		</para>
+		<para>
+		  The <command>lifetime</command> parameter specifies how
+		  long a key may be used before rolling over.  In the
+		  example above, the first key will have an unlimited
+		  lifetime, the second key may be used for 30 days, and the
+		  third key has a rather peculiar lifetime of 6 months,
+		  12 hours, 3 minutes and 15 seconds.  A lifetime of 0
+		  seconds is the same as <command>unlimited</command>.
+		</para>
+		<para>
+		  Note that the lifetime of a key may be extended if
+		  retiring it too soon would cause validation failures.
+		  For example, if the key were configured to roll more
+		  frequently than its own TTL, its lifetime would
+		  automatically be extended to account for this.
+		</para>
+		<para>
+		  The <command>algorithm</command> parameter specifies
+		  the key's algorithm, expressed either as a string
+		  ("rsasha256", "ecdsa384", etc) or as a decimal number.
+		  An optional second parameter specifies the key's size
+		  in size in bits. If it is omitted, as shown in the
+		  example for the second and third keys, an appropriate
+		  default size for the algorithm will be used.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>publish-safety</command></term>
+	      <listitem>
+		<para>
+		  A margin that is added to the pre-publication
+		  interval in rollover timing calculations to give some
+		  extra time to cover unforeseen events. This increases
+		  the time that keys are published before becoming active.
+		  The default is <constant>PT1H</constant> (1 hour).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>retire-safety</command></term>
+	      <listitem>
+		<para>
+		  A margin that is added to the post-publication interval
+		  in rollover timing calculations to give some extra time
+		  to cover unforeseen events. This increases the time a key
+		  remains published after it is no longer active.  The
+		  default is <constant>PT1H</constant> (1 hour).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>signatures-refresh</command></term>
+	      <listitem>
+		<para>
+		  This determines how frequently an RRSIG record needs to be
+		  refreshed.  The signature is renewed when the time until
+		  the expiration time is closer than the specified interval.
+		  The default is <constant>P5D</constant> (5 days), meaning
+		  signatures that will expire in 5 days or sooner will be
+		  refreshed.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>signatures-validity</command></term>
+	      <listitem>
+		<para>
+		  The validity period of an RRSIG record (subject to
+		  inception offset and jitter). The default is
+		  <constant>P2W</constant> (2 weeks).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>signatures-validity-dnskey</command></term>
+	      <listitem>
+		<para>
+		  Similar to <command>signatures-validity</command> but for
+		  DNSKEY records. The default is <constant>P2W</constant>
+		  (2 weeks).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>max-zone-ttl</command></term>
+	      <listitem>
+		<para>
+		  Like the <command>max-zone-ttl</command> zone option,
+		  this specifies the maximum permissible TTL value in
+		  seconds for the zone. When loading a zone file using
+		  a <option>masterfile-format</option> of
+		  <constant>text</constant> or <constant>raw</constant>,
+		  any record encountered with a TTL higher than
+		  <option>max-zone-ttl</option> will be capped at the
+		  maximum permissible TTL value.
+		</para>
+		<para>
+		  This is needed in DNSSEC-maintained zones because when
+		  rolling to a new DNSKEY, the old key needs to remain
+		  available until RRSIG records have expired from caches.
+		  The <option>max-zone-ttl</option> option guarantees that
+		  the largest TTL in the zone will be no higher than the
+		  set value.
+		</para>
+		<para>
+		  (NOTE: Because <constant>map</constant>-format files
+		  load directly into memory, this option cannot be
+		  used with them.)
+		</para>
+		<para>
+		  The default value is <constant>PT24H</constant> (24 hours).
+		  A <option>max-zone-ttl</option> of zero is treated as if
+		  the default value were in use.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>zone-propagation-delay</command></term>
+	      <listitem>
+		<para>
+		  The expected propagation delay from the time when a zone
+		  is first updated to the time when the new version of the
+		  zone will be served by all secondary servers.  The default
+		  is <constant>PT5M</constant> (5 minutes).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>parent-ds-ttl</command></term>
+	      <listitem>
+		<para>
+		  The TTL of the DS RRset that the parent zone uses.  The
+		  default is <constant>P1D</constant> (1 day).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>parent-propagation-delay</command></term>
+	      <listitem>
+		<para>
+		  The expected propagation delay from the time when the
+		  parent zone is updated to the time when the new version
+		  is served by all of the parent zone's name servers.
+		  The default is <constant>PT1H</constant> (1 hour).
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>parent-registration-delay</command></term>
+	      <listitem>
+		<para>
+		  The expected registration delay from the time when a DS
+		  RRset change is requested to the time when the DS RRset
+		  will be updated in the parent zone.  The default is
+		  <constant>P1D</constant> (1 day).
+	      </para>
+	      </listitem>
+	    </varlistentry>
+	  </variablelist>
+	</section>
+
+	<section xml:id="managed-keys"><info><title><command>managed-keys</command> Statement Grammar</title></info>
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="managed-keys.grammar.xml"/>
+	</section>
+	<section xml:id="managed_keys"><info><title><command>managed-keys</command> Statement Definition
+	    and Usage</title></info>
+
+	  <para>
+	    The <command>managed-keys</command> statement has been
+	    deprecated in favor of <xref linkend="trust_anchors"/>
+	    with the <command>initial-key</command> keyword.
+	  </para>
+	</section>
+
+	<section xml:id="trusted-keys"><info><title><command>trusted-keys</command> Statement Grammar</title></info>
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="trusted-keys.grammar.xml"/>
+	</section>
+	<section xml:id="trusted_keys"><info><title><command>trusted-keys</command> Statement Definition
+	    and Usage</title></info>
+
+	  <para>
+	    The <command>trusted-keys</command> statement has been
+	    deprecated in favor of <xref linkend="trust_anchors"/>
+	    with the <command>static-key</command> keyword.
 	  </para>
 	</section>
 
@@ -11242,67 +11600,60 @@ view "external" {
 	      <tgroup cols="2" colsep="0" rowsep="0" tgroupstyle="3Level-table">
 		<!--colspec colname="1" colnum="1" colsep="0" colwidth="1.108in"/-->
 		<!--colspec colname="2" colnum="2" colsep="0" colwidth="4.017in"/-->
-		<colspec colname="1" colnum="1" colsep="0"/>
-		<colspec colname="2" colnum="2" colsep="0" colwidth="4.017in"/>
-		<tbody>
+		<colspec colname="1" colnum="1" colsep="0" colwidth="*"/>
+		<colspec colname="2" colnum="2" colsep="0" colwidth="4*"/>
+		<tbody valign="top">
 		  <row rowsep="0">
 		    <entry colname="1">
 		      <para>
-			<varname>master</varname>
+			<varname>primary</varname>
 		      </para>
 		    </entry>
 		    <entry colname="2">
 		      <para>
 			The server has a master copy of the data
 			for the zone and will be able to provide authoritative
-			answers for it. Type <varname>primary</varname> is
-			a synonym for <varname>master</varname>.
+			answers for it. Type <varname>master</varname> is
+			a synonym for <varname>primary</varname>.
 		      </para>
 		    </entry>
 		  </row>
 		  <row rowsep="0">
 		    <entry colname="1">
 		      <para>
-			<varname>slave</varname>
+			<varname>secondary</varname>
 		      </para>
 		    </entry>
 		    <entry colname="2">
 		      <para>
-			A slave zone is a replica of a master
-			zone. Type <varname>secondary</varname> is a
-			synonym for <varname>slave</varname>.
+			A secondary zone is a replica of a master
+			zone. Type <varname>slave</varname> is a
+			synonym for <varname>secondary</varname>.
 			The <command>masters</command> list
 			specifies one or more IP addresses
 			of master servers that the slave contacts to update
-			its copy of the zone.
-			Masters list elements can also be names of other
-			masters lists.
-			By default, transfers are made from port 53 on the
-			servers; this can
-			be changed for all servers by specifying a port number
-			before the
-			list of IP addresses, or on a per-server basis after
-			the IP address.
+			its copy of the zone.  Masters list elements can
+			also be names of other masters lists.  By default,
+			transfers are made from port 53 on the servers;
+			this can be changed for all servers by specifying
+			a port number before the list of IP addresses,
+			or on a per-server basis after the IP address.
 			Authentication to the master can also be done with
-			per-server TSIG keys.
-			If a file is specified, then the
+			per-server TSIG keys.  If a file is specified, then the
 			replica will be written to this file whenever the zone
-			is changed,
-			and reloaded from this file on a server restart. Use
-			of a file is
-			recommended, since it often speeds server startup and
-			eliminates
-			a needless waste of bandwidth. Note that for large
-			numbers (in the
-			tens or hundreds of thousands) of zones per server, it
-			is best to
-			use a two-level naming scheme for zone filenames. For
-			example,
-			a slave server for the zone <literal>example.com</literal> might place
+			is changed, and reloaded from this file on a server
+			restart. Use of a file is recommended, since it
+			often speeds server startup and eliminates a
+			needless waste of bandwidth. Note that for large
+			numbers (in the tens or hundreds of thousands) of
+			zones per server, it is best to use a two-level
+			naming scheme for zone filenames. For example,
+			a slave server for the zone
+			<literal>example.com</literal> might place
 			the zone contents into a file called
-			<filename>ex/example.com</filename> where <filename>ex/</filename> is
-			just the first two letters of the zone name. (Most
-			operating systems
+			<filename>ex/example.com</filename> where
+			<filename>ex/</filename> is just the first two
+			letters of the zone name. (Most operating systems
 			behave very slowly if you put 100000 files into
 			a single directory.)
 		      </para>
@@ -11374,88 +11725,23 @@ view "external" {
 		    </entry>
 		    <entry colname="2">
 		      <para>
-		        <emphasis role="bold">Note:</emphasis> using
-		        this zone type with any zone other than the root
-		        zone should be considered
-		        <emphasis>experimental</emphasis> and may cause
-		        performance issues, especially for zones which
-		        are large and/or frequently updated.
-		      </para>
-		      <para>
-		        A mirror zone acts like a zone of type
-		        <userinput>secondary</userinput> whose data is
-		        subject to DNSSEC validation before being used
-		        in answers.  Validation is performed during the
-		        zone transfer process (for both AXFR and IXFR),
-		        and again when the zone file is loaded from disk
-		        when <command>named</command> is restarted.  If
+		        A mirror zone is similar to a zone of type
+			<userinput>secondary</userinput>, except its data
+			is subject to DNSSEC validation before being used
+			in answers.  Validation is applied to the entire
+			zone during the zone transfer process, and again
+			when the zone file is loaded from disk when
+			<command>named</command> is restarted.  If
 		        validation of a new version of a mirror zone
 		        fails, a retransfer is scheduled and the most
 		        recent correctly validated version of that zone
-		        is used until it expires; if a newer version of
-		        that zone is later correctly validated, it
-		        replaces the previously used version.  If no
-		        usable zone data is available for a mirror zone
-		        (either because it was never loaded from disk
-		        and has not yet been transferred from a primary
-		        server or because its most recent correctly
-		        validated version expired), traditional DNS
-		        recursion will be used to look up the answers
-		        instead.
-		      </para>
-		      <para>
-		        While any zone may be configured with this type,
-		        it is intended to be used to set up a fast local
-		        copy of the root zone, similar to the one
-		        described in RFC 7706.  Note, however, that
-		        mirror zones are not supposed to augment the
-		        example configuration provided by RFC 7706 but
-		        rather to replace it altogether.
-		      </para>
-		      <para>
-		        A default list of primary servers for the IANA
-		        root zone is built into <command>named</command>
-		        and thus its mirroring can be enabled using the
-		        following configuration:
-		      </para>
-<programlisting>zone "." {
-	type mirror;
-};</programlisting>
-		      <para>
-		        In order to set up mirroring of any other zone,
-		        an explicit list of primary servers needs to be
-		        provided using the <command>masters</command>
-		        option (see <xref linkend="masters_grammar"/>
-		        for details).
-		      </para>
-		      <para>
-		        To make mirror zone contents persist between
-		        <command>named</command> restarts, use the
-		        <xref endterm="file_option_term" linkend="file_option"/>
-		        option.
-		      </para>
-		      <para>
-		        Mirror zone validation always happens for the
-		        entire zone contents, i.e. no "incremental
-		        validation" takes place, even for IXFRs.  This
-		        is required to ensure that each version of the
-		        zone used by the resolver is fully
-		        self-consistent with respect to DNSSEC.  Other,
-		        more efficient zone verification methods may be
-		        added in the future.
-		      </para>
-		      <para>
-		        For validation to succeed, a key-signing key
-		        (KSK) for the zone must be configured as a trust
-		        anchor in <filename>named.conf</filename>: that
-		        is, a key for the zone must either be specified
-		        in <command>managed-keys</command> or
-		        <command>trusted-keys</command>.  In the case
-		        of the root zone, you may also rely on the
-		        built-in root trust anchor, which is enabled
-			when <xref endterm="dnssec_validation_term"
-			  linkend="dnssec_validation"/> is set to the
-			default value <userinput>auto</userinput>.
+			is used until it either expires or a newer version
+			validates correctly. If no usable zone data is
+			available for a mirror zone at all, either due to
+			transfer failure or expiration, traditional DNS
+			recursion is used to look up the answers instead.
+			Mirror zones cannot be used in a view that does
+			not have recursion enabled.
 		      </para>
 		      <para>
 			Answers coming from a mirror zone look almost
@@ -11466,33 +11752,57 @@ view "external" {
 		        bit ("authenticated data") is.
 		      </para>
 		      <para>
-		        Since mirror zones are intended to be used by
-		        recursive resolvers, adding one to a view with
-		        recursion disabled is considered to be a
-		        configuration error.
+			Mirror zones are intended to be used to set up a
+			fast local copy of the root zone, similar to the
+			one described in RFC 7706.  A default list of primary
+			servers for the IANA root zone is built into
+			<command>named</command> and thus its mirroring
+			can be enabled using the following configuration:
+		      </para>
+<programlisting>zone "." {
+	type mirror;
+};</programlisting>
+		      <para>
+			Other zones can be configured as mirror zones,
+			but this should be considered
+			<emphasis>experimental</emphasis> and may cause
+			performance issues, especially with zones that
+			are large and/or frequently updated.
+			Mirroring a zone other than root requires an
+			explicit list of primary servers to be provided
+			using the <command>masters</command> option
+			(see <xref linkend="masters_grammar"/>
+			for details), and a key-signing key (KSK)
+			for the specified zone to be explicitly
+			configured as a trust anchor.
+		      </para>
+		      <para>
+		        To make mirror zone contents persist between
+		        <command>named</command> restarts, use the
+		        <xref endterm="file_option_term" linkend="file_option"/>
+		        option.
 		      </para>
 		      <para>
 		        When configuring NOTIFY for a mirror zone, only
 		        <userinput>notify no;</userinput> and
 		        <userinput>notify explicit;</userinput> can be
-		        used.  Using any other <command>notify</command>
-		        setting at the zone level is a configuration
-		        error.  Using any other
+		        used at the zone level.  Using any other
 		        <command>notify</command> setting at the
 		        <command>options</command> or
 		        <command>view</command> level will cause
 		        that setting to be overridden with
 		        <userinput>notify explicit;</userinput> for the
-		        mirror zone in question.  Since the global
-		        default for the <command>notify</command> option
-		        is <userinput>yes</userinput>, mirror zones are
-		        by default configured with
+			mirror zone.  The global default for the
+			<command>notify</command> option is
+			<userinput>yes</userinput>, so mirror
+			zones are by default configured with
 		        <userinput>notify explicit;</userinput>.
 		      </para>
 		      <para>
 		        Outgoing transfers of mirror zones are disabled
 		        by default but may be enabled using
-		        <xref endterm="allow_transfer_term" linkend="allow_transfer"/>.
+			<xref endterm="allow_transfer_term"
+			  linkend="allow_transfer"/>.
 		      </para>
 		    </entry>
 		  </row>
@@ -11645,7 +11955,7 @@ view "external" {
 		      <para>
 			If a redirect zone is configured with a
 			<option>masters</option> option, then it is
-			transfered in as if it were a slave zone.
+			transferred in as if it were a slave zone.
 			Otherwise, it is loaded from a file as if it
 			were a master zone.
 		      </para>
@@ -11910,6 +12220,24 @@ view "external" {
 		  <para>
 		    See the description of
 		    <command>dnssec-loadkeys-interval</command> in <xref linkend="options"/>.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+	      <varlistentry>
+		<term><command>dnssec-policy</command></term>
+		<listitem>
+		  <para>
+		    Specifies which key and signing policy (KASP) should
+		    be used for this zone.  This is a string referring to
+		    a <command>dnssec-policy</command> statement.
+		    There are two built-in policies:
+		    <userinput>default</userinput> allows you to use the
+		    default policy, and <userinput>none</userinput> means
+		    not to use any DNSSEC policy, keeping the zone unsigned.
+		    The default is <userinput>none</userinput>.
+		    See <xref linkend="dnssec_policy_grammar"/> for
+		    more details.
 		  </para>
 		</listitem>
 	      </varlistentry>
@@ -13363,7 +13691,7 @@ view external {
 		    </entry>
 		    <entry colname="2">
 		      <para>
-			A DNS Look-aside Validation record which contains
+			A DNS Lookaside Validation record which contains
 			the records that are used as trust anchors for
 			zones in a DLV namespace.  Described in RFC 4431.
 		      </para>
@@ -16906,9 +17234,7 @@ zone "example.com" {
 	  specified, then these queries will be answered from the "city",
 	  database if it is installed, or the "country" database if it
 	  is installed, in that order. Valid database names are
-	  "country", "city", "asnum", "isp", and "domain". (If using
-	  the legacy GeoIP API, "netspeed" and "org" databases are also
-	  available.)
+	  "country", "city", "asnum", "isp", and "domain".
 	</para>
 	<para>
 	  Some example GeoIP ACLs:
@@ -17386,56 +17712,56 @@ allow-query { !{ !10/8; any; }; key example; };
 	  <para>
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ietf.org/rfc/">http://www.ietf.org/rfc/</link>.
 	  </para>
-	  <bibliography>
-	    <bibliodiv><info><title>Standards</title></info>
+	  <bibliography><title/>
+	    <bibliodiv><title>Standards</title>
 	      <!-- one of (BIBLIOENTRY BIBLIOMIXED) -->
 
 	      <biblioentry>
 		<abbrev>RFC974</abbrev>
 		<author><personname><surname>Partridge</surname><firstname>C.</firstname></personname></author>
-		<citetitle>Mail Routing and the Domain System</citetitle>
+		<title>Mail Routing and the Domain System</title>
 		<pubdate>January 1986</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1034</abbrev>
 		<author><personname><surname>Mockapetris</surname><firstname>P.V.</firstname></personname></author>
-		<citetitle>Domain Names — Concepts and Facilities</citetitle>
+		<title>Domain Names — Concepts and Facilities</title>
 		<pubdate>November 1987</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1035</abbrev>
-		<author><personname><surname>Mockapetris</surname><firstname>P. V.</firstname></personname></author> <citetitle>Domain Names — Implementation and
-		  Specification</citetitle>
+		<author><personname><surname>Mockapetris</surname><firstname>P. V.</firstname></personname></author> <title>Domain Names — Implementation and
+		  Specification</title>
 		<pubdate>November 1987</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv xml:id="proposed_standards" xreflabel="Proposed Standards"><info><title>Proposed Standards</title></info>
+	    <bibliodiv xml:id="proposed_standards" xreflabel="Proposed Standards"><title>Proposed Standards</title>
 
 	      <!-- one of (BIBLIOENTRY BIBLIOMIXED) -->
 	      <biblioentry>
 		<abbrev>RFC2181</abbrev>
 		<author><personname><surname>Elz</surname><firstname>R., R. Bush</firstname></personname></author>
-		<citetitle>Clarifications to the <acronym>DNS</acronym>
-		  Specification</citetitle>
+		<title>Clarifications to the <acronym>DNS</acronym>
+		  Specification</title>
 		<pubdate>July 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2308</abbrev>
 		<author><personname><surname>Andrews</surname><firstname>M.</firstname></personname></author>
-		<citetitle>Negative Caching of <acronym>DNS</acronym>
-		  Queries</citetitle>
+		<title>Negative Caching of <acronym>DNS</acronym>
+		  Queries</title>
 		<pubdate>March 1998</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1995</abbrev>
 		<author><personname><surname>Ohta</surname><firstname>M.</firstname></personname></author>
-		<citetitle>Incremental Zone Transfer in <acronym>DNS</acronym></citetitle>
+		<title>Incremental Zone Transfer in <acronym>DNS</acronym></title>
 		<pubdate>August 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1996</abbrev>
 		<author><personname><surname>Vixie</surname><firstname>P.</firstname></personname></author>
-		<citetitle>A Mechanism for Prompt Notification of Zone Changes</citetitle>
+		<title>A Mechanism for Prompt Notification of Zone Changes</title>
 		<pubdate>August 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17446,7 +17772,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>Y.</firstname><surname>Rekhter</surname></personname></author>
 		  <author><personname><firstname>J.</firstname><surname>Bound</surname></personname></author>
 		</authorgroup>
-		<citetitle>Dynamic Updates in the Domain Name System</citetitle>
+		<title>Dynamic Updates in the Domain Name System</title>
 		<pubdate>April 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17454,7 +17780,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><firstname>P.</firstname><surname>Vixie</surname></personname></author>
 		</authorgroup>
-		<citetitle>Extension Mechanisms for DNS (EDNS0)</citetitle>
+		<title>Extension Mechanisms for DNS (EDNS0)</title>
 		<pubdate>August 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17462,7 +17788,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><firstname>M.</firstname><surname>Crawford</surname></personname></author>
 		</authorgroup>
-		<citetitle>Non-Terminal DNS Name Redirection</citetitle>
+		<title>Non-Terminal DNS Name Redirection</title>
 		<pubdate>August 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17473,7 +17799,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>D.</firstname><surname>Eastlake</surname><lineage>3rd</lineage></personname></author>
 		  <author><personname><firstname>B.</firstname><surname>Wellington</surname></personname></author>
 		</authorgroup>
-		<citetitle>Secret Key Transaction Authentication for <acronym>DNS</acronym> (TSIG)</citetitle>
+		<title>Secret Key Transaction Authentication for <acronym>DNS</acronym> (TSIG)</title>
 		<pubdate>May 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17481,7 +17807,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><firstname>D.</firstname><surname>Eastlake</surname><lineage>3rd</lineage></personname></author>
 		</authorgroup>
-		<citetitle>Secret Key Establishment for DNS (TKEY RR)</citetitle>
+		<title>Secret Key Establishment for DNS (TKEY RR)</title>
 		<pubdate>September 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17489,7 +17815,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><firstname>D.</firstname><surname>Eastlake</surname><lineage>3rd</lineage></personname></author>
 		</authorgroup>
-		<citetitle>DNS Request and Transaction Signatures (SIG(0)s)</citetitle>
+		<title>DNS Request and Transaction Signatures (SIG(0)s)</title>
 		<pubdate>September 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17497,7 +17823,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><firstname>B.</firstname><surname>Wellington</surname></personname></author>
 		</authorgroup>
-		<citetitle>Secure Domain Name System (DNS) Dynamic Update</citetitle>
+		<title>Secure Domain Name System (DNS) Dynamic Update</title>
 		<pubdate>November 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17510,20 +17836,20 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>J.</firstname><surname>Westhead</surname></personname></author>
 		  <author><personname><firstname>R.</firstname><surname>Hall</surname></personname></author>
 		</authorgroup>
-		<citetitle>Generic Security Service Algorithm for Secret
+		<title>Generic Security Service Algorithm for Secret
 		       Key Transaction Authentication for DNS
-		       (GSS-TSIG)</citetitle>
+		       (GSS-TSIG)</title>
 		<pubdate>October 2003</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title><acronym>DNS</acronym> Security Proposed Standards</title></info>
+	    <bibliodiv><title><acronym>DNS</acronym> Security Proposed Standards</title>
 
 	      <biblioentry>
 		<abbrev>RFC3225</abbrev>
 		<authorgroup>
 		  <author><personname><firstname>D.</firstname><surname>Conrad</surname></personname></author>
 		</authorgroup>
-		<citetitle>Indicating Resolver Support of DNSSEC</citetitle>
+		<title>Indicating Resolver Support of DNSSEC</title>
 		<pubdate>December 2001</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17532,7 +17858,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>D.</firstname><surname>Atkins</surname></personname></author>
 		  <author><personname><firstname>R.</firstname><surname>Austein</surname></personname></author>
 		</authorgroup>
-		<citetitle>Threat Analysis of the Domain Name System (DNS)</citetitle>
+		<title>Threat Analysis of the Domain Name System (DNS)</title>
 		<pubdate>August 2004</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17544,7 +17870,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>D.</firstname><surname>Massey</surname></personname></author>
 		  <author><personname><firstname>S.</firstname><surname>Rose</surname></personname></author>
 		</authorgroup>
-		<citetitle>DNS Security Introduction and Requirements</citetitle>
+		<title>DNS Security Introduction and Requirements</title>
 		<pubdate>March 2005</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17556,7 +17882,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>D.</firstname><surname>Massey</surname></personname></author>
 		  <author><personname><firstname>S.</firstname><surname>Rose</surname></personname></author>
 		</authorgroup>
-		<citetitle>Resource Records for the DNS Security Extensions</citetitle>
+		<title>Resource Records for the DNS Security Extensions</title>
 		<pubdate>March 2005</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17568,19 +17894,19 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>D.</firstname><surname>Massey</surname></personname></author>
 		  <author><personname><firstname>S.</firstname><surname>Rose</surname></personname></author>
 		</authorgroup>
-		<citetitle>Protocol Modifications for the DNS
-		       Security Extensions</citetitle>
+		<title>Protocol Modifications for the DNS
+		       Security Extensions</title>
 		<pubdate>March 2005</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Other Important RFCs About <acronym>DNS</acronym>
-		Implementation</title></info>
+	    <bibliodiv><title>Other Important RFCs About <acronym>DNS</acronym>
+		Implementation</title>
 
 	      <biblioentry>
 		<abbrev>RFC1535</abbrev>
 		<author><personname><surname>Gavron</surname><firstname>E.</firstname></personname></author>
-		<citetitle>A Security Problem and Proposed Correction With Widely
-		  Deployed <acronym>DNS</acronym> Software</citetitle>
+		<title>A Security Problem and Proposed Correction With Widely
+		  Deployed <acronym>DNS</acronym> Software</title>
 		<pubdate>October 1993</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17592,8 +17918,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>P.</firstname><surname>Danzig</surname></personname></author>
 		  <author><personname><firstname>S.</firstname><surname>Miller</surname></personname></author>
 		</authorgroup>
-		<citetitle>Common <acronym>DNS</acronym> Implementation
-		  Errors and Suggested Fixes</citetitle>
+		<title>Common <acronym>DNS</acronym> Implementation
+		  Errors and Suggested Fixes</title>
 		<pubdate>October 1993</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17602,7 +17928,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Elz</surname><firstname>R.</firstname></personname></author>
 		  <author><personname><firstname>R.</firstname><surname>Bush</surname></personname></author>
 		</authorgroup>
-		<citetitle>Serial Number Arithmetic</citetitle>
+		<title>Serial Number Arithmetic</title>
 		<pubdate>August 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17611,12 +17937,12 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Morishita</surname><firstname>Y.</firstname></personname></author>
 		  <author><personname><firstname>T.</firstname><surname>Jinmei</surname></personname></author>
 		</authorgroup>
-		<citetitle>Common Misbehaviour Against <acronym>DNS</acronym>
-		Queries for IPv6 Addresses</citetitle>
+		<title>Common Misbehaviour Against <acronym>DNS</acronym>
+		Queries for IPv6 Addresses</title>
 		<pubdate>May 2005</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Resource Record Types</title></info>
+	    <bibliodiv><title>Resource Record Types</title>
 
 	      <biblioentry>
 		<abbrev>RFC1183</abbrev>
@@ -17626,7 +17952,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>R.</firstname><surname>Ullmann</surname></personname></author>
 		  <author><personname><firstname>P.</firstname><surname>Mockapetris</surname></personname></author>
 		</authorgroup>
-		<citetitle>New <acronym>DNS</acronym> RR Definitions</citetitle>
+		<title>New <acronym>DNS</acronym> RR Definitions</title>
 		<pubdate>October 1990</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17635,7 +17961,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Manning</surname><firstname>B.</firstname></personname></author>
 		  <author><personname><firstname>R.</firstname><surname>Colella</surname></personname></author>
 		</authorgroup>
-		<citetitle><acronym>DNS</acronym> NSAP Resource Records</citetitle>
+		<title><acronym>DNS</acronym> NSAP Resource Records</title>
 		<pubdate>October 1994</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17644,8 +17970,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Daniel</surname><firstname>R.</firstname></personname></author>
 		  <author><personname><firstname>M.</firstname><surname>Mealling</surname></personname></author>
 		</authorgroup>
-		<citetitle>Resolution of Uniform Resource Identifiers using
-		  the Domain Name System</citetitle>
+		<title>Resolution of Uniform Resource Identifiers using
+		  the Domain Name System</title>
 		<pubdate>June 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17656,9 +17982,9 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>T.</firstname><firstname>Goodwin</firstname></personname></author>
 		  <author><personname><firstname>I.</firstname><surname>Dickinson</surname></personname></author>
 		</authorgroup>
-		<citetitle>A Means for Expressing Location Information in the
+		<title>A Means for Expressing Location Information in the
 		  Domain
-		  Name System</citetitle>
+		  Name System</title>
 		<pubdate>January 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17667,35 +17993,35 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Gulbrandsen</surname><firstname>A.</firstname></personname></author>
 		  <author><personname><firstname>P.</firstname><surname>Vixie</surname></personname></author>
 		</authorgroup>
-		<citetitle>A <acronym>DNS</acronym> RR for Specifying the
+		<title>A <acronym>DNS</acronym> RR for Specifying the
 		  Location of
-		  Services</citetitle>
+		  Services</title>
 		<pubdate>October 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2163</abbrev>
 		<author><personname><surname>Allocchio</surname><firstname>A.</firstname></personname></author>
-		<citetitle>Using the Internet <acronym>DNS</acronym> to
+		<title>Using the Internet <acronym>DNS</acronym> to
 		  Distribute MIXER
-		  Conformant Global Address Mapping</citetitle>
+		  Conformant Global Address Mapping</title>
 		<pubdate>January 1998</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2230</abbrev>
 		<author><personname><surname>Atkinson</surname><firstname>R.</firstname></personname></author>
-		<citetitle>Key Exchange Delegation Record for the <acronym>DNS</acronym></citetitle>
+		<title>Key Exchange Delegation Record for the <acronym>DNS</acronym></title>
 		<pubdate>October 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2536</abbrev>
 		<author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
-		<citetitle>DSA KEYs and SIGs in the Domain Name System (DNS)</citetitle>
+		<title>DSA KEYs and SIGs in the Domain Name System (DNS)</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2537</abbrev>
 		<author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
-		<citetitle>RSA/MD5 KEYs and SIGs in the Domain Name System (DNS)</citetitle>
+		<title>RSA/MD5 KEYs and SIGs in the Domain Name System (DNS)</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17704,7 +18030,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
 		  <author><personname><surname>Gudmundsson</surname><firstname>O.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Storing Certificates in the Domain Name System (DNS)</citetitle>
+		<title>Storing Certificates in the Domain Name System (DNS)</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17712,7 +18038,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
 		</authorgroup>
-		<citetitle>Storage of Diffie-Hellman Keys in the Domain Name System (DNS)</citetitle>
+		<title>Storage of Diffie-Hellman Keys in the Domain Name System (DNS)</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17720,7 +18046,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
 		</authorgroup>
-		<citetitle>Detached Domain Name System (DNS) Information</citetitle>
+		<title>Detached Domain Name System (DNS) Information</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17728,26 +18054,26 @@ allow-query { !{ !10/8; any; }; key example; };
 		<author><personname><surname>Gulbrandsen</surname><firstname>A.</firstname></personname></author>
 		<author><personname><surname>Vixie</surname><firstname>P.</firstname></personname></author>
 		<author><personname><surname>Esibov</surname><firstname>L.</firstname></personname></author>
-		<citetitle>A DNS RR for specifying the location of services (DNS SRV)</citetitle>
+		<title>A DNS RR for specifying the location of services (DNS SRV)</title>
 		<pubdate>February 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2915</abbrev>
 		<author><personname><surname>Mealling</surname><firstname>M.</firstname></personname></author>
 		<author><personname><surname>Daniel</surname><firstname>R.</firstname></personname></author>
-		<citetitle>The Naming Authority Pointer (NAPTR) DNS Resource Record</citetitle>
+		<title>The Naming Authority Pointer (NAPTR) DNS Resource Record</title>
 		<pubdate>September 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC3110</abbrev>
 		<author><personname><surname>Eastlake</surname><firstname>D.</firstname><lineage>3rd</lineage></personname></author>
-		<citetitle>RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System (DNS)</citetitle>
+		<title>RSA/SHA-1 SIGs and RSA KEYs in the Domain Name System (DNS)</title>
 		<pubdate>May 2001</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC3123</abbrev>
 		<author><personname><surname>Koch</surname><firstname>P.</firstname></personname></author>
-		<citetitle>A DNS RR Type for Lists of Address Prefixes (APL RR)</citetitle>
+		<title>A DNS RR Type for Lists of Address Prefixes (APL RR)</title>
 		<pubdate>June 2001</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17758,37 +18084,37 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>V.</firstname><surname>Ksinant</surname></personname></author>
 		  <author><personname><firstname>M.</firstname><surname>Souissi</surname></personname></author>
 		</authorgroup>
-		<citetitle><acronym>DNS</acronym> Extensions to support IP
-		  version 6</citetitle>
+		<title><acronym>DNS</acronym> Extensions to support IP
+		  version 6</title>
 		<pubdate>October 2003</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC3597</abbrev>
 		<author><personname><surname>Gustafsson</surname><firstname>A.</firstname></personname></author>
-		<citetitle>Handling of Unknown DNS Resource Record (RR) Types</citetitle>
+		<title>Handling of Unknown DNS Resource Record (RR) Types</title>
 		<pubdate>September 2003</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title><acronym>DNS</acronym> and the Internet</title></info>
+	    <bibliodiv><title><acronym>DNS</acronym> and the Internet</title>
 
 	      <biblioentry>
 		<abbrev>RFC1101</abbrev>
 		<author><personname><surname>Mockapetris</surname><firstname>P. V.</firstname></personname></author>
-		<citetitle><acronym>DNS</acronym> Encoding of Network Names
-		  and Other Types</citetitle>
+		<title><acronym>DNS</acronym> Encoding of Network Names
+		  and Other Types</title>
 		<pubdate>April 1989</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1123</abbrev>
 		<author><personname><surname>Braden</surname><surname>R.</surname></personname></author>
-		<citetitle>Requirements for Internet Hosts - Application and
-		  Support</citetitle>
+		<title>Requirements for Internet Hosts - Application and
+		  Support</title>
 		<pubdate>October 1989</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1591</abbrev>
 		<author><personname><surname>Postel</surname><firstname>J.</firstname></personname></author>
-		<citetitle>Domain Name System Structure and Delegation</citetitle>
+		<title>Domain Name System Structure and Delegation</title>
 		<pubdate>March 1994</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17798,7 +18124,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>G.</firstname><surname>de Groot</surname></personname></author>
 		  <author><personname><firstname>P.</firstname><surname>Vixie</surname></personname></author>
 		</authorgroup>
-		<citetitle>Classless IN-ADDR.ARPA Delegation</citetitle>
+		<title>Classless IN-ADDR.ARPA Delegation</title>
 		<pubdate>March 1998</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17806,7 +18132,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Internet Architecture Board</surname></personname></author>
 		</authorgroup>
-		<citetitle>IAB Technical Comment on the Unique DNS Root</citetitle>
+		<title>IAB Technical Comment on the Unique DNS Root</title>
 		<pubdate>May 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17816,30 +18142,30 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Brunner-Williams</surname><firstname>E.</firstname></personname></author>
 		  <author><personname><surname>Manning</surname><firstname>B.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Name System (DNS) IANA Considerations</citetitle>
+		<title>Domain Name System (DNS) IANA Considerations</title>
 		<pubdate>September 2000</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title><acronym>DNS</acronym> Operations</title></info>
+	    <bibliodiv><title><acronym>DNS</acronym> Operations</title>
 
 	      <biblioentry>
 		<abbrev>RFC1033</abbrev>
 		<author><personname><surname>Lottor</surname><firstname>M.</firstname></personname></author>
-		<citetitle>Domain administrators operations guide</citetitle>
+		<title>Domain administrators operations guide</title>
 		<pubdate>November 1987</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1537</abbrev>
 		<author><personname><surname>Beertema</surname><firstname>P.</firstname></personname></author>
-		<citetitle>Common <acronym>DNS</acronym> Data File
-		  Configuration Errors</citetitle>
+		<title>Common <acronym>DNS</acronym> Data File
+		  Configuration Errors</title>
 		<pubdate>October 1993</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1912</abbrev>
 		<author><personname><surname>Barr</surname><firstname>D.</firstname></personname></author>
-		<citetitle>Common <acronym>DNS</acronym> Operational and
-		  Configuration Errors</citetitle>
+		<title>Common <acronym>DNS</acronym> Operational and
+		  Configuration Errors</title>
 		<pubdate>February 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17848,7 +18174,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Manning</surname><firstname>B.</firstname></personname></author>
 		  <author><personname><firstname>P.</firstname><surname>Vixie</surname></personname></author>
 		</authorgroup>
-		<citetitle>Operational Criteria for Root Name Servers</citetitle>
+		<title>Operational Criteria for Root Name Servers</title>
 		<pubdate>October 1996</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17857,12 +18183,12 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Hamilton</surname><firstname>M.</firstname></personname></author>
 		  <author><personname><firstname>R.</firstname><surname>Wright</surname></personname></author>
 		</authorgroup>
-		<citetitle>Use of <acronym>DNS</acronym> Aliases for
-		  Network Services</citetitle>
+		<title>Use of <acronym>DNS</acronym> Aliases for
+		  Network Services</title>
 		<pubdate>October 1997</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Internationalized Domain Names</title></info>
+	    <bibliodiv><title>Internationalized Domain Names</title>
 
 	      <biblioentry>
 		<abbrev>RFC2825</abbrev>
@@ -17870,8 +18196,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>IAB</surname></personname></author>
 		  <author><personname><surname>Daigle</surname><firstname>R.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>A Tangled Web: Issues of I18N, Domain Names,
-		       and the Other Internet protocols</citetitle>
+		<title>A Tangled Web: Issues of I18N, Domain Names,
+		       and the Other Internet protocols</title>
 		<pubdate>May 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17881,7 +18207,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Hoffman</surname><firstname>P.</firstname></personname></author>
 		  <author><personname><surname>Costello</surname><firstname>A.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Internationalizing Domain Names in Applications (IDNA)</citetitle>
+		<title>Internationalizing Domain Names in Applications (IDNA)</title>
 		<pubdate>March 2003</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17890,7 +18216,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Hoffman</surname><firstname>P.</firstname></personname></author>
 		  <author><personname><surname>Blanchet</surname><firstname>M.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Nameprep: A Stringprep Profile for Internationalized Domain Names</citetitle>
+		<title>Nameprep: A Stringprep Profile for Internationalized Domain Names</title>
 		<pubdate>March 2003</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17898,13 +18224,13 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Costello</surname><firstname>A.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Punycode: A Bootstring encoding of Unicode
+		<title>Punycode: A Bootstring encoding of Unicode
 		       for Internationalized Domain Names in
-		       Applications (IDNA)</citetitle>
+		       Applications (IDNA)</title>
 		<pubdate>March 2003</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Other <acronym>DNS</acronym>-related RFCs</title></info>
+	    <bibliodiv><title>Other <acronym>DNS</acronym>-related RFCs</title>
 
 	      <note>
 		<para>
@@ -17916,27 +18242,27 @@ allow-query { !{ !10/8; any; }; key example; };
 	      <biblioentry>
 		<abbrev>RFC1464</abbrev>
 		<author><personname><surname>Rosenbaum</surname><firstname>R.</firstname></personname></author>
-		<citetitle>Using the Domain Name System To Store Arbitrary String
-		  Attributes</citetitle>
+		<title>Using the Domain Name System To Store Arbitrary String
+		  Attributes</title>
 		<pubdate>May 1993</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1713</abbrev>
 		<author><personname><surname>Romao</surname><firstname>A.</firstname></personname></author>
-		<citetitle>Tools for <acronym>DNS</acronym> Debugging</citetitle>
+		<title>Tools for <acronym>DNS</acronym> Debugging</title>
 		<pubdate>November 1994</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC1794</abbrev>
 		<author><personname><surname>Brisco</surname><firstname>T.</firstname></personname></author>
-		<citetitle><acronym>DNS</acronym> Support for Load
-		  Balancing</citetitle>
+		<title><acronym>DNS</acronym> Support for Load
+		  Balancing</title>
 		<pubdate>April 1995</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2240</abbrev>
 		<author><personname><surname>Vaughan</surname><firstname>O.</firstname></personname></author>
-		<citetitle>A Legal Basis for Domain Name Allocation</citetitle>
+		<title>A Legal Basis for Domain Name Allocation</title>
 		<pubdate>November 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17946,13 +18272,13 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>T.</firstname><surname>Wolf</surname></personname></author>
 		  <author><personname><firstname>G.</firstname><surname>Oglesby</surname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Names and Company Name Retrieval</citetitle>
+		<title>Domain Names and Company Name Retrieval</title>
 		<pubdate>May 1998</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2352</abbrev>
 		<author><personname><surname>Vaughan</surname><firstname>O.</firstname></personname></author>
-		<citetitle>A Convention For Using Legal Names as Domain Names</citetitle>
+		<title>A Convention For Using Legal Names as Domain Names</title>
 		<pubdate>May 1998</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17960,7 +18286,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Klensin</surname><firstname>J.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Reflections on the DNS, RFC 1591, and Categories of Domains</citetitle>
+		<title>Reflections on the DNS, RFC 1591, and Categories of Domains</title>
 		<pubdate>February 2001</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17968,8 +18294,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Hardie</surname><firstname>T.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Distributing Authoritative Name Servers via
-		       Shared Unicast Addresses</citetitle>
+		<title>Distributing Authoritative Name Servers via
+		       Shared Unicast Addresses</title>
 		<pubdate>April 2002</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -17978,11 +18304,11 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Durand</surname><firstname>A.</firstname></personname></author>
 		  <author><personname><firstname>J.</firstname><surname>Ihren</surname></personname></author>
 		</authorgroup>
-		<citetitle>DNS IPv6 Transport Operational Guidelines</citetitle>
+		<title>DNS IPv6 Transport Operational Guidelines</title>
 		<pubdate>September 2004</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Obsolete and Unimplemented Experimental RFC</title></info>
+	    <bibliodiv><title>Obsolete and Unimplemented Experimental RFC</title>
 
 	      <biblioentry>
 		<abbrev>RFC1712</abbrev>
@@ -17992,8 +18318,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><firstname>S.</firstname><surname>Pleitner</surname></personname></author>
 		  <author><personname><firstname>D.</firstname><surname>Baldoni</surname></personname></author>
 		</authorgroup>
-		<citetitle><acronym>DNS</acronym> Encoding of Geographical
-		  Location</citetitle>
+		<title><acronym>DNS</acronym> Encoding of Geographical
+		  Location</title>
 		<pubdate>November 1994</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18001,7 +18327,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Crawford</surname><firstname>M.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Binary Labels in the Domain Name System</citetitle>
+		<title>Binary Labels in the Domain Name System</title>
 		<pubdate>August 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18010,12 +18336,12 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Crawford</surname><firstname>M.</firstname></personname></author>
 		  <author><personname><surname>Huitema</surname><firstname>C.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>DNS Extensions to Support IPv6 Address Aggregation
-		       and Renumbering</citetitle>
+		<title>DNS Extensions to Support IPv6 Address Aggregation
+		       and Renumbering</title>
 		<pubdate>July 2000</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
-	    <bibliodiv><info><title>Obsoleted DNS Security RFCs</title></info>
+	    <bibliodiv><title>Obsoleted DNS Security RFCs</title>
 
 	      <note>
 		<para>
@@ -18029,13 +18355,13 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Eastlake</surname><lineage>3rd</lineage><firstname>D.</firstname></personname></author>
 		  <author><personname><firstname>C.</firstname><surname>Kaufman</surname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Name System Security Extensions</citetitle>
+		<title>Domain Name System Security Extensions</title>
 		<pubdate>January 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
 		<abbrev>RFC2137</abbrev>
 		<author><personname><surname>Eastlake</surname><lineage>3rd</lineage><firstname>D.</firstname></personname></author>
-		<citetitle>Secure Domain Name System Dynamic Update</citetitle>
+		<title>Secure Domain Name System Dynamic Update</title>
 		<pubdate>April 1997</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18043,7 +18369,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Eastlake</surname><lineage>3rd</lineage><firstname>D.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Name System Security Extensions</citetitle>
+		<title>Domain Name System Security Extensions</title>
 		<pubdate>March 1999</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18051,8 +18377,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Wellington</surname><firstname>B.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Name System Security (DNSSEC)
-		       Signing Authority</citetitle>
+		<title>Domain Name System Security (DNSSEC)
+		       Signing Authority</title>
 		<pubdate>November 2000</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18060,7 +18386,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Lewis</surname><firstname>E.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>DNS Security Extension Clarification on Zone Status</citetitle>
+		<title>DNS Security Extension Clarification on Zone Status</title>
 		<pubdate>March 2001</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18069,7 +18395,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Massey</surname><firstname>D.</firstname></personname></author>
 		  <author><personname><surname>Rose</surname><firstname>S.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Limiting the Scope of the KEY Resource Record (RR)</citetitle>
+		<title>Limiting the Scope of the KEY Resource Record (RR)</title>
 		<pubdate>December 2002</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18078,7 +18404,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Wellington</surname><firstname>B.</firstname></personname></author>
 		  <author><personname><surname>Gudmundsson</surname><firstname>O.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Redefinition of DNS Authenticated Data (AD) bit</citetitle>
+		<title>Redefinition of DNS Authenticated Data (AD) bit</title>
 		<pubdate>November 2003</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18086,7 +18412,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Gudmundsson</surname><firstname>O.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Delegation Signer (DS) Resource Record (RR)</citetitle>
+		<title>Delegation Signer (DS) Resource Record (RR)</title>
 		<pubdate>December 2003</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18094,7 +18420,7 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Weiler</surname><firstname>S.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Legacy Resolver Compatibility for Delegation Signer (DS)</citetitle>
+		<title>Legacy Resolver Compatibility for Delegation Signer (DS)</title>
 		<pubdate>May 2004</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18104,8 +18430,8 @@ allow-query { !{ !10/8; any; }; key example; };
 		  <author><personname><surname>Schlyter</surname><firstname>J.</firstname></personname></author>
 		  <author><personname><surname>Lewis</surname><firstname>E.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>Domain Name System KEY (DNSKEY) Resource Record
-		      (RR) Secure Entry Point (SEP) Flag</citetitle>
+		<title>Domain Name System KEY (DNSKEY) Resource Record
+		      (RR) Secure Entry Point (SEP) Flag</title>
 		<pubdate>April 2004</pubdate>
 	      </biblioentry>
 	      <biblioentry>
@@ -18113,13 +18439,13 @@ allow-query { !{ !10/8; any; }; key example; };
 		<authorgroup>
 		  <author><personname><surname>Schlyter</surname><firstname>J.</firstname></personname></author>
 		</authorgroup>
-		<citetitle>DNS Security (DNSSEC) NextSECure (NSEC) RDATA Format</citetitle>
+		<title>DNS Security (DNSSEC) NextSECure (NSEC) RDATA Format</title>
 		<pubdate>August 2004</pubdate>
 	      </biblioentry>
 	    </bibliodiv>
 	  </bibliography>
 	</section>
-	<section xml:id="internet_drafts"><info><title>Internet Drafts</title></info>
+	<section xml:id="internet_drafts"><title>Internet Drafts</title>
 
 	  <para>
 	    Internet Drafts (IDs) are rough-draft working documents of
@@ -18135,13 +18461,13 @@ allow-query { !{ !10/8; any; }; key example; };
 	<section xml:id="more_about_bind"><info><title>Other Documents About <acronym>BIND</acronym></title></info>
 
 	  <para/>
-	  <bibliography>
+	  <bibliography><title/>
 	    <biblioentry>
 	      <authorgroup>
 		<author><personname><surname>Albitz</surname><firstname>Paul</firstname></personname></author>
 		<author><personname><firstname>Cricket</firstname><surname>Liu</surname></personname></author>
 	      </authorgroup>
-	      <citetitle><acronym>DNS</acronym> and <acronym>BIND</acronym></citetitle>
+	      <title><acronym>DNS</acronym> and <acronym>BIND</acronym></title>
 	      <copyright>
 		<year>1998</year>
 		<holder>Sebastopol, CA: O'Reilly and Associates</holder>

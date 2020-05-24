@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,6 +36,7 @@
        [<code class="option">-aACdlnrsTUwv</code>]
        [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
        [<code class="option">-N <em class="replaceable"><code>ndots</code></em></code>]
+       [<code class="option">-p <em class="replaceable"><code>port</code></em></code>]
        [<code class="option">-R <em class="replaceable"><code>number</code></em></code>]
        [<code class="option">-t <em class="replaceable"><code>type</code></em></code>]
        [<code class="option">-W <em class="replaceable"><code>wait</code></em></code>]
@@ -163,6 +164,12 @@
 	    searched for in the domains listed in
 	    the <span class="type">search</span> or <span class="type">domain</span> directive
 	    in <code class="filename">/etc/resolv.conf</code>.
+	  </p>
+	</dd>
+<dt><span class="term">-p <em class="replaceable"><code>port</code></em></span></dt>
+<dd>
+	  <p>
+	    Specify the port on the server to query.  The default is 53.
 	  </p>
 	</dd>
 <dt><span class="term">-r</span></dt>

@@ -50,6 +50,18 @@ checkprivate () {
     return 1
 }
 
+# wait until notifies for zone $1 are sent by server $2. This is an indication
+# that the zone is signed with the active keys, and the changes have been
+# committed.
+wait_for_notifies () {
+	wait_for_log 10 "zone ${1}/IN: sending notifies" "${2}/named.run" || return 1
+}
+
+freq() {
+	_file=$1
+	# remove first and last line that has incomplete set and skews the distribution
+	awk '$4 == "RRSIG" {print substr($9,1,8)}' < "$_file" | sort | uniq -c | sed '1d;$d'
+}
 # Check the signatures expiration times.  First check how many signatures
 # there are in total ($rrsigs).  Then see what the distribution of signature
 # expiration times is ($expiretimes).  Ignore the time part for a better
@@ -58,28 +70,59 @@ checkjitter () {
 	_file=$1
 	_ret=0
 
-	cat $_file | awk '$4 == "RRSIG" {print substr($9,1,8)}' | sort | uniq -c | cat_i
-	_rrsigs=$(cat $_file | awk '$4 == "RRSIG" {print $4}' | cat_i | wc -l)
-	_expiretimes=$(cat $_file | awk '$4 == "RRSIG" {print substr($9,1,8)}' | sort | uniq -c | awk '{print $1}')
+	if ! command -v bc >/dev/null 2>&1; then
+		echo_i "skip: bc not available"
+		return 0
+	fi
+
+	freq "$_file" | cat_i
+	_expiretimes=$(freq "$_file" | awk '{print $1}')
+
 	_count=0
+	# Check if we have at least 5 days
+	# This number has been tuned for `sig-validity-interval 10 2`, as
+	# 1. 1. signature expiration dates should be spread out across at most 8 (10-2) days
+	# 2. we remove first and last day to remove frequency outlier, we are left with 6 (8-2) days
+	# 3. we subtract one more day to allow test pass on day boundaries, etc. leaving us with 5 (6-1) days
+	for _num in $_expiretimes
+	do
+		_count=$((_count+1))
+	done
+	if [ "$_count" -lt 5 ]; then
+		echo_i "error: not enough categories"
+		return 1
+	fi
+
+	# Calculate mean
 	_total=0
 	for _num in $_expiretimes
 	do
-		_total=$(($_total + $_num))
+		_total=$((_total+_num))
 	done
-	# Make sure the total number of numbers matches the number of RRSIGs.
-	test $_total -eq $_rrsigs || _ret=1
-	# Calculate mean: The number of signatures divided over 8 days.
-	_mean=$(($_total / 8))
-	# We expect the number of signatures not to exceed twice the mean.
-	_limit=$(($_mean * 2))
-	# Add an additional margin.
-	_limit=$(($_limit + 10))
-	# Find outliers.
+	_mean=$(($_total / $_count))
+
+	# Calculate stddev
+	_stddev=0
 	for _num in $_expiretimes
 	do
-		if [ $_num -gt $_limit ]; then
-			echo_i "error: too many RRSIG records ($_num) with the same expiration time"
+		_stddev=$(echo "$_stddev + (($_num - $_mean) * ($_num - $_mean))" | bc)
+	done
+	_stddev=$(echo "sqrt($_stddev/$_count)" | bc)
+
+	# We expect the number of signatures not to exceed the mean +- 3 * stddev.
+	_limit=$((_stddev*3))
+	_low=$((_mean-_limit))
+	_high=$((_mean+_limit))
+	# Find outliers.
+	echo_i "checking whether all frequencies fall into <$_low;$_high> range"
+	for _num in $_expiretimes
+	do
+		if [ $_num -gt $_high ]; then
+			echo_i "error: too many RRSIG records ($_num) in expiration bucket"
+			_ret=1
+		fi
+		if [ $_num -lt $_low ]; then
+			echo_i "error: too few RRSIG records ($_num) in expiration bucket"
 			_ret=1
 		fi
 	done
@@ -145,12 +188,15 @@ do
 	$DIG $DIGOPTS $z @10.53.0.3 axfr | awk '$4 == "RRSIG" {print $9}' | sort | uniq -c | cat_i
 done
 
+# Set logfile offset for wait_for_log usage.
+nextpartreset ns3/named.run
+
 #
 # Check that DNSKEY is initially signed with a KSK and not a ZSK.
 #
 echo_i "check that zone with active and inactive KSK and active ZSK is properly"
-echo_i "  resigned after the active KSK is deleted - stage 1: Verify that DNSKEY"
-echo_i "  is initially signed with a KSK and not a ZSK. ($n)"
+echo_ic "resigned after the active KSK is deleted - stage 1: Verify that DNSKEY"
+echo_ic "is initially signed with a KSK and not a ZSK. ($n)"
 ret=0
 
 $DIG $DIGOPTS @10.53.0.3 axfr inacksk3.example > dig.out.ns3.test$n
@@ -175,8 +221,8 @@ test $count -eq 3 || ret=1
 awk='$4 == "RRSIG" && $5 == "DNSKEY" { printf "%05u\n", $11 }'
 id=`awk "${awk}" dig.out.ns3.test$n`
 
-$SETTIME -D now+5 ns3/Kinacksk3.example.+007+${id} > /dev/null 2>&1
-$RNDCCMD 10.53.0.3 loadkeys inacksk3.example 2>&1 | sed 's/^/ns3 /' | cat_i
+$SETTIME -D now+5 ns3/Kinacksk3.example.+007+${id} > settime.out.test$n || ret=1
+($RNDCCMD 10.53.0.3 loadkeys inacksk3.example 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -186,8 +232,8 @@ status=`expr $status + $ret`
 # Check that zone is initially signed with a ZSK and not a KSK.
 #
 echo_i "check that zone with active and inactive ZSK and active KSK is properly"
-echo_i "  resigned after the active ZSK is deleted - stage 1: Verify that zone"
-echo_i "  is initially signed with a ZSK and not a KSK. ($n)"
+echo_ic "resigned after the active ZSK is deleted - stage 1: Verify that zone"
+echo_ic "is initially signed with a ZSK and not a KSK. ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.3 axfr inaczsk3.example > dig.out.ns3.test$n
 kskid=`awk '$4 == "DNSKEY" && $5 == 257 { print }' dig.out.ns3.test$n |
@@ -203,8 +249,8 @@ count=`awk 'BEGIN { count = 0 }
        END {print count}' dig.out.ns3.test$n`
 test $count -eq 3 || ret=1
 id=`awk '$4 == "RRSIG" && $5 == "CNAME" { printf "%05u\n", $11 }' dig.out.ns3.test$n`
-$SETTIME -D now+5 ns3/Kinaczsk3.example.+007+${id} > /dev/null 2>&1
-$RNDCCMD 10.53.0.3 loadkeys inaczsk3.example 2>&1 | sed 's/^/ns3 /' | cat_i
+$SETTIME -D now+5 ns3/Kinaczsk3.example.+007+${id} > settime.out.test$n || ret=1
+($RNDCCMD 10.53.0.3 loadkeys inaczsk3.example 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -300,9 +346,9 @@ status=`expr $status + $ret`
 echo_i "signing preset nsec3 zone"
 zsk=`cat autozsk.key`
 ksk=`cat autoksk.key`
-$SETTIME -K ns3 -P now -A now $zsk > /dev/null 2>&1
-$SETTIME -K ns3 -P now -A now $ksk > /dev/null 2>&1
-$RNDCCMD 10.53.0.3 loadkeys autonsec3.example. 2>&1 | sed 's/^/ns3 /' | cat_i
+$SETTIME -K ns3 -P now -A now $zsk > settime.out.test$n.zsk || ret=1
+$SETTIME -K ns3 -P now -A now $ksk > settime.out.test$n.ksk || ret=1
+($RNDCCMD 10.53.0.3 loadkeys autonsec3.example. 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 
 echo_i "waiting for changes to take effect"
 sleep 3
@@ -355,24 +401,30 @@ status=`expr $status + $ret`
 # Send rndc sync command to ns1, ns2 and ns3, to force the dynamically
 # signed zones to be dumped to their zone files
 echo_i "dumping zone files"
-$RNDCCMD 10.53.0.1 sync 2>&1 | sed 's/^/ns1 /' | cat_i
-$RNDCCMD 10.53.0.2 sync 2>&1 | sed 's/^/ns2 /' | cat_i
-$RNDCCMD 10.53.0.3 sync 2>&1 | sed 's/^/ns3 /' | cat_i
+($RNDCCMD 10.53.0.1 sync 2>&1 | sed 's/^/ns1 /' | cat_i) || ret=1
+($RNDCCMD 10.53.0.2 sync 2>&1 | sed 's/^/ns2 /' | cat_i) || ret=1
+($RNDCCMD 10.53.0.3 sync 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
+
+now="$(TZ=UTC date +%Y%m%d%H%M%S)"
+check_expiry() (
+	$DIG $DIGOPTS AXFR oldsigs.example @10.53.0.3 > dig.out.test$n
+	nearest_expiration="$(awk '$4 == "RRSIG" { print $9 }' < dig.out.test$n | sort -n | head -1)"
+	if [ "$nearest_expiration" -le "$now" ]; then
+		echo_i "failed: $nearest_expiration <= $now"
+		return 1
+	fi
+)
 
 echo_i "checking expired signatures were updated ($n)"
-for i in 1 2 3 4 5 6 7 8 9
-do
-	ret=0
-	$DIG $DIGOPTS +noauth a.oldsigs.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
-	$DIG $DIGOPTS +noauth a.oldsigs.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
-        digcomp dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
-	grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
-	[ $ret = 0 ] && break
-	sleep 1
-done
+retry 10 check_expiry || ret=1
+$DIG $DIGOPTS +noauth a.oldsigs.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +noauth a.oldsigs.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
+
 # Check jitter distribution.
 echo_i "checking expired signatures were jittered correctly ($n)"
 ret=0
@@ -433,10 +485,13 @@ status=`expr $status + $ret`
 echo_i "checking NSEC3->NSEC conversion with 'rndc signing -nsec3param none' ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 signing -nsec3param none autonsec3.example. > /dev/null 2>&1
-sleep 2
 # this command should result in an empty file:
-$DIG $DIGOPTS +noall +answer autonsec3.example. nsec3param @10.53.0.3 > dig.out.ns3.nx.test$n || ret=1
-grep "NSEC3PARAM" dig.out.ns3.nx.test$n > /dev/null && ret=1
+no_nsec3param() (
+ $DIG $DIGOPTS +noall +answer autonsec3.example. nsec3param @10.53.0.3 > dig.out.ns3.nx.test$n || return 1
+ grep "NSEC3PARAM" dig.out.ns3.nx.test$n > /dev/null && return 1
+ return 0
+)
+retry_quiet 10 no_nsec3param || ret=1
 $DIG $DIGOPTS +noauth q.autonsec3.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
 $DIG $DIGOPTS +noauth q.autonsec3.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
 digcomp dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
@@ -450,7 +505,7 @@ echo_i "checking TTLs of imported DNSKEYs (no default) ($n)"
 ret=0
 $DIG $DIGOPTS +tcp +noall +answer dnskey ttl1.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 [ -s dig.out.ns3.test$n ] || ret=1
-awk 'BEGIN {r=0} $2 != 300 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n || ret=1 | cat_i
+(awk 'BEGIN {r=0} $2 != 300 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n | cat_i) || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -459,7 +514,7 @@ echo_i "checking TTLs of imported DNSKEYs (with default) ($n)"
 ret=0
 $DIG $DIGOPTS +tcp +noall +answer dnskey ttl2.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 [ -s dig.out.ns3.test$n ] || ret=1
-awk 'BEGIN {r=0} $2 != 60 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n || ret=1 | cat_i
+(awk 'BEGIN {r=0} $2 != 60 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n | cat_i) || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -468,7 +523,7 @@ echo_i "checking TTLs of imported DNSKEYs (mismatched) ($n)"
 ret=0
 $DIG $DIGOPTS +tcp +noall +answer dnskey ttl3.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 [ -s dig.out.ns3.test$n ] || ret=1
-awk 'BEGIN {r=0} $2 != 30 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n || ret=1 | cat_i
+(awk 'BEGIN {r=0} $2 != 30 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n | cat_i) || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -477,7 +532,7 @@ echo_i "checking TTLs of imported DNSKEYs (existing RRset) ($n)"
 ret=0
 $DIG $DIGOPTS +tcp +noall +answer dnskey ttl4.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 [ -s dig.out.ns3.test$n ] || ret=1
-awk 'BEGIN {r=0} $2 != 30 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n || ret=1 | cat_i
+(awk 'BEGIN {r=0} $2 != 30 {r=1; print "found TTL " $2} END {exit r}' dig.out.ns3.test$n | cat_i) || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -968,10 +1023,10 @@ status=`expr $status + $ret`
 echo_i "checking secure-to-insecure transition, scheduled ($n)"
 ret=0
 file="ns3/`cat del1.key`.key"
-$SETTIME -I now -D now $file > /dev/null
+$SETTIME -I now -D now $file > settime.out.test$n.1 || ret=1
 file="ns3/`cat del2.key`.key"
-$SETTIME -I now -D now $file > /dev/null
-$RNDCCMD 10.53.0.3 sign secure-to-insecure2.example. 2>&1 | sed 's/^/ns3 /' | cat_i
+$SETTIME -I now -D now $file > settime.out.test$n.2 || ret=1
+($RNDCCMD 10.53.0.3 sign secure-to-insecure2.example. 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	ret=0
 	$DIG $DIGOPTS axfr secure-to-insecure2.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
@@ -997,19 +1052,19 @@ END
 # Create DNSSEC keys in the zone directory.
 $KEYGEN -a rsasha1 -3 -q -K ns3 jitter.nsec3.example > /dev/null
 # Trigger zone signing.
-$RNDCCMD 10.53.0.3 sign jitter.nsec3.example. 2>&1 | sed 's/^/ns3 /' | cat_i
+($RNDCCMD 10.53.0.3 sign jitter.nsec3.example. 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 # Wait until zone has been signed.
-for i in 0 1 2 3 4 5 6 7 8 9; do
-	failed=0
-	$DIG $DIGOPTS axfr jitter.nsec3.example @10.53.0.3 > dig.out.ns3.test$n || failed=1
-	grep "NSEC3PARAM" dig.out.ns3.test$n > /dev/null || failed=1
-	[ $failed -eq 0 ] && break
-	echo_i "waiting ... ($i)"
-	sleep 2
-done
-[ $failed != 0 ] && echo_i "error: no NSEC3PARAM found in AXFR" && ret=1
+check_if_nsec3param_exists() {
+	$DIG $DIGOPTS NSEC3PARAM jitter.nsec3.example @10.53.0.3 > dig.out.ns3.1.test$n || return 1
+	grep -q "^jitter\.nsec3\.example\..*NSEC3PARAM" dig.out.ns3.1.test$n || return 1
+}
+retry_quiet 40 check_if_nsec3param_exists || {
+	echo_i "error: NSEC3PARAM not present yet"
+	ret=1
+}
+$DIG $DIGOPTS AXFR jitter.nsec3.example @10.53.0.3 > dig.out.ns3.2.test$n || ret=1
 # Check jitter distribution.
-checkjitter dig.out.ns3.test$n || ret=1
+checkjitter dig.out.ns3.2.test$n || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -1021,7 +1076,7 @@ oldinception=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '/SOA/ {p
 
 $KEYGEN -a rsasha1 -3 -q -K ns3 -P 0 -A +6d -I +38d -D +45d prepub.example > /dev/null
 
-$RNDCCMD 10.53.0.3 sign prepub.example 2>&1 | sed 's/^/ns1 /' | cat_i
+($RNDCCMD 10.53.0.3 sign prepub.example 2>&1 | sed 's/^/ns1 /' | cat_i) || ret=1
 newserial=$oldserial
 try=0
 while [ $oldserial -eq $newserial -a $try -lt 42 ]
@@ -1052,19 +1107,19 @@ oldfile=`cat active.key`
 oldid=$(keyfile_to_key_id "$(cat active.key)")
 newfile=`cat standby.key`
 newid=$(keyfile_to_key_id "$(cat standby.key)")
-$SETTIME -K ns1 -I now+2s -D now+25 $oldfile > /dev/null
-$SETTIME -K ns1 -i 0 -S $oldfile $newfile > /dev/null
+$SETTIME -K ns1 -I now+2s -D now+25 $oldfile > settime.out.test$n.1 || ret=1
+$SETTIME -K ns1 -i 0 -S $oldfile $newfile > settime.out.test$n.2 || ret=1
 
 # note previous zone serial number
 oldserial=`$DIG $DIGOPTS +short soa . @10.53.0.1 | awk '{print $3}'`
 
-$RNDCCMD 10.53.0.1 loadkeys . 2>&1 | sed 's/^/ns1 /' | cat_i
+($RNDCCMD 10.53.0.1 loadkeys . 2>&1 | sed 's/^/ns1 /' | cat_i) || ret=1
 sleep 4
 
 echo_i "revoking key to duplicated key ID"
-$SETTIME -R now -K ns2 Kbar.+005+30676.key > /dev/null 2>&1
+$SETTIME -R now -K ns2 Kbar.+005+30676.key > settime.out.test$n.3 || ret=1
 
-$RNDCCMD 10.53.0.2 loadkeys bar. 2>&1 | sed 's/^/ns2 /' | cat_i
+($RNDCCMD 10.53.0.2 loadkeys bar. 2>&1 | sed 's/^/ns2 /' | cat_i) || ret=1
 
 echo_i "waiting for changes to take effect"
 sleep 5
@@ -1117,7 +1172,7 @@ n=`expr $n + 1`
 status=`expr $status + $ret`
 
 echo_i "forcing full sign"
-$RNDCCMD 10.53.0.1 sign . 2>&1 | sed 's/^/ns1 /' | cat_i
+($RNDCCMD 10.53.0.1 sign . 2>&1 | sed 's/^/ns1 /' | cat_i) || ret=1
 
 echo_i "waiting for change to take effect"
 sleep 5
@@ -1143,8 +1198,10 @@ ret=0
 zsk=`cat delayzsk.key`
 ksk=`cat delayksk.key`
 # publication and activation times should be unset
-$SETTIME -K ns3 -pA -pP $zsk | grep -v UNSET > /dev/null 2>&1 && ret=1
-$SETTIME -K ns3 -pA -pP $ksk | grep -v UNSET > /dev/null 2>&1 && ret=1
+$SETTIME -K ns3 -pA -pP $zsk > settime.out.test$n.zsk || ret=1
+grep -v UNSET settime.out.test$n.zsk >/dev/null && ret=1
+$SETTIME -K ns3 -pA -pP $ksk > settime.out.test$n.ksk || ret=1
+grep -v UNSET settime.out.test$n.ksk >/dev/null && ret=1
 $DIG $DIGOPTS +noall +answer dnskey delay.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 # DNSKEY not expected:
 awk 'BEGIN {r=1} $4=="DNSKEY" {r=0} END {exit r}' dig.out.ns3.test$n && ret=1
@@ -1154,12 +1211,14 @@ status=`expr $status + $ret`
 
 echo_i "checking scheduled key publication, not activation ($n)"
 ret=0
-$SETTIME -K ns3 -P now+3s -A none $zsk > /dev/null 2>&1
-$SETTIME -K ns3 -P now+3s -A none $ksk > /dev/null 2>&1
-$RNDCCMD 10.53.0.3 loadkeys delay.example. 2>&1 | sed 's/^/ns2 /' | cat_i
-
+# Ensure initial zone is loaded.
+wait_for_notifies "delay.example" "ns3" || ret=1
+$SETTIME -K ns3 -P now+3s -A none $zsk > settime.out.test$n.zsk || ret=1
+$SETTIME -K ns3 -P now+3s -A none $ksk > settime.out.test$n.ksk || ret=1
+($RNDCCMD 10.53.0.3 loadkeys delay.example. 2>&1 | sed 's/^/ns2 /' | cat_i) || ret=1
 echo_i "waiting for changes to take effect"
-sleep 5
+sleep 3
+wait_for_notifies "delay.example" "ns3" || ret=1
 
 $DIG $DIGOPTS +noall +answer dnskey delay.example. @10.53.0.3 > dig.out.ns3.test$n || ret=1
 # DNSKEY expected:
@@ -1172,13 +1231,12 @@ status=`expr $status + $ret`
 
 echo_i "checking scheduled key activation ($n)"
 ret=0
-$SETTIME -K ns3 -A now+3s $zsk > /dev/null 2>&1
-$SETTIME -K ns3 -A now+3s $ksk > /dev/null 2>&1
-$RNDCCMD 10.53.0.3 loadkeys delay.example. 2>&1 | sed 's/^/ns2 /' | cat_i
-
+$SETTIME -K ns3 -A now+3s $zsk > settime.out.test$n.zsk || ret=1
+$SETTIME -K ns3 -A now+3s $ksk > settime.out.test$n.ksk || ret=1
+($RNDCCMD 10.53.0.3 loadkeys delay.example. 2>&1 | sed 's/^/ns2 /' | cat_i) || ret=1
 echo_i "waiting for changes to take effect"
-sleep 5
-
+sleep 3
+wait_for_log 10 "add delay\.example\..*NSEC.a\.delay\.example\. NS SOA RRSIG NSEC DNSKEY" ns3/named.run
 $DIG $DIGOPTS +noall +answer dnskey delay.example. @10.53.0.3 > dig.out.ns3.1.test$n || ret=1
 # DNSKEY expected:
 awk 'BEGIN {r=1} $4=="DNSKEY" {r=0} END {exit r}' dig.out.ns3.1.test$n || ret=1
@@ -1288,7 +1346,7 @@ status=`expr $status + $ret`
 echo_i "forcing full sign with unreadable keys ($n)"
 ret=0
 chmod 0 ns1/K.+*+*.key ns1/K.+*+*.private || ret=1
-$RNDCCMD 10.53.0.1 sign . 2>&1 | sed 's/^/ns1 /' | cat_i
+($RNDCCMD 10.53.0.1 sign . 2>&1 | sed 's/^/ns1 /' | cat_i) || ret=1
 $DIG $DIGOPTS . @10.53.0.1 dnskey > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
@@ -1298,11 +1356,11 @@ status=`expr $status + $ret`
 echo_i "test turning on auto-dnssec during reconfig ($n)"
 ret=0
 # first create a zone that doesn't have auto-dnssec
-$RNDCCMD 10.53.0.3 addzone reconf.example '{ type master; file "reconf.example.db"; };' 2>&1 | sed 's/^/ns3 /' | cat_i
+($RNDCCMD 10.53.0.3 addzone reconf.example '{ type master; file "reconf.example.db"; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 rekey_calls=`grep "zone reconf.example.*next key event" ns3/named.run | wc -l`
 [ "$rekey_calls" -eq 0 ] || ret=1
 # ...then we add auto-dnssec and reconfigure
-$RNDCCMD 10.53.0.3 modzone reconf.example '{ type master; file "reconf.example.db"; allow-update { any; }; auto-dnssec maintain; };' 2>&1 | sed 's/^/ns3 /' | cat_i
+($RNDCCMD 10.53.0.3 modzone reconf.example '{ type master; file "reconf.example.db"; allow-update { any; }; auto-dnssec maintain; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 rndc_reconfig ns3 10.53.0.3
 for i in 0 1 2 3 4 5 6 7 8 9; do
     lret=0
@@ -1324,7 +1382,6 @@ $DIG $DIGOPTS @10.53.0.3 sync.example cdnskey > dig.out.ns3.cdnskeytest$n
 grep -i "sync.example.*in.cds.*[1-9][0-9]* " dig.out.ns3.cdstest$n > /dev/null || ret=1
 grep -i "sync.example.*in.cdnskey.*257 " dig.out.ns3.cdnskeytest$n > /dev/null || ret=1
 n=`expr $n + 1`
-if [ "$lret" != 0 ]; then ret=$lret; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1359,37 +1416,35 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "setting CDS and CDNSKEY deletion times and calling 'rndc loadkeys'"
-$SETTIME -D sync now+2 `cat sync.key` > /dev/null
-$RNDCCMD 10.53.0.3 loadkeys sync.example | sed 's/^/ns3 /' | cat_i
-echo_i "waiting for deletion to occur"
-sleep 3
+$SETTIME -D sync now `cat sync.key` > settime.out.test$n || ret=1
+($RNDCCMD 10.53.0.3 loadkeys sync.example | sed 's/^/ns3 /' | cat_i) || ret=1
 
 echo_i "checking that the CDS and CDNSKEY are deleted ($n)"
 ret=0
-$DIG $DIGOPTS @10.53.0.3 sync.example cds > dig.out.ns3.cdstest$n
-$DIG $DIGOPTS @10.53.0.3 sync.example cdnskey > dig.out.ns3.cdnskeytest$n
-grep -i "sync.example.*in.cds.*[1-9][0-9]* " dig.out.ns3.cdstest$n > /dev/null && ret=1
-grep -i "sync.example.*in.cdnskey.*257 " dig.out.ns3.cdnskeytest$n > /dev/null && ret=1
+ensure_cds_and_cdnskey_are_deleted() {
+	$DIG $DIGOPTS @10.53.0.3 sync.example. CDS > dig.out.ns3.cdstest$n || return 1
+	awk '$1 == "sync.example." && $4 == "CDS" { exit 1; }' dig.out.ns3.cdstest$n || return 1
+	$DIG $DIGOPTS @10.53.0.3 sync.example. CDNSKEY > dig.out.ns3.cdnskeytest$n || return 1
+	awk '$1 == "sync.example." && $4 == "CDNSKEY" { exit 1; }' dig.out.ns3.cdnskeytest$n || return 1
+}
+retry 10 ensure_cds_and_cdnskey_are_deleted || ret=1
 n=`expr $n + 1`
-if [ "$lret" != 0 ]; then ret=$lret; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "check that dnssec-settime -p Dsync works ($n)"
 ret=0
-$SETTIME -p Dsync `cat sync.key` > settime.out.$n|| ret=0
-grep "SYNC Delete:" settime.out.$n >/dev/null || ret=0
+$SETTIME -p Dsync `cat sync.key` > settime.out.test$n || ret=1
+grep "SYNC Delete:" settime.out.test$n >/dev/null || ret=1
 n=`expr $n + 1`
-if [ "$lret" != 0 ]; then ret=$lret; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "check that dnssec-settime -p Psync works ($n)"
 ret=0
-$SETTIME -p Psync `cat sync.key` > settime.out.$n|| ret=0
-grep "SYNC Publish:" settime.out.$n >/dev/null || ret=0
+$SETTIME -p Psync `cat sync.key` > settime.out.test$n || ret=1
+grep "SYNC Publish:" settime.out.test$n >/dev/null || ret=1
 n=`expr $n + 1`
-if [ "$lret" != 0 ]; then ret=$lret; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -1423,8 +1478,8 @@ status=`expr $status + $ret`
 # Check that DNSKEY is now signed with the ZSK.
 #
 echo_i "check that zone with active and inactive KSK and active ZSK is properly"
-echo_i "  resigned after the active KSK is deleted - stage 2: Verify that DNSKEY"
-echo_i "  is now signed with the ZSK. ($n)"
+echo_ic "resigned after the active KSK is deleted - stage 2: Verify that DNSKEY"
+echo_ic "is now signed with the ZSK. ($n)"
 ret=0
 
 $DIG $DIGOPTS @10.53.0.3 axfr inacksk3.example > dig.out.ns3.test$n
@@ -1452,8 +1507,8 @@ status=`expr $status + $ret`
 # Check that zone is now signed with the KSK.
 #
 echo_i "check that zone with active and inactive ZSK and active KSK is properly"
-echo_i "  resigned after the active ZSK is deleted - stage 2: Verify that zone"
-echo_i "  is now signed with the KSK. ($n)"
+echo_ic "resigned after the active ZSK is deleted - stage 2: Verify that zone"
+echo_ic "is now signed with the KSK. ($n)"
 ret=0
 $DIG $DIGOPTS @10.53.0.3 axfr inaczsk3.example > dig.out.ns3.test$n
 kskid=`awk '$4 == "DNSKEY" && $5 == 257 { print }' dig.out.ns3.test$n |
@@ -1495,9 +1550,9 @@ if [ $_ret -ne 0 ]; then
 fi
 # Mark the inactive ZSK as pending removal.
 file="ns3/`cat delzsk.key`.key"
-$SETTIME -D now-1h $file > settime.out.test$n 2>&1 || ret=1
+$SETTIME -D now-1h $file > settime.out.test$n || ret=1
 # Trigger removal of the inactive ZSK and wait until its completion.
-$RNDCCMD 10.53.0.3 loadkeys delzsk.example 2>&1 | sed 's/^/ns3 /' | cat_i
+($RNDCCMD 10.53.0.3 loadkeys delzsk.example 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	_ret=1
 	$RNDCCMD 10.53.0.3 signing -list delzsk.example > signing.out.3.test$n 2>&1

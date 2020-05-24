@@ -18,4 +18,4 @@ $TTL 300
 @			NS	ns.fetch.tld.
 ns.fetch.tld.		A	10.53.0.6
 
-@	10		TXT	A short ttl
+@	13		TXT	A short ttl

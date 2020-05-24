@@ -157,28 +157,29 @@ sleep 1
 grep "zone serial (0) unchanged." ns1/named.run > /dev/null && ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
-VERSION=`../../../../isc-config.sh  --version | cut -d = -f 2`
 HOSTNAME=`$FEATURETEST --gethostname`
+BIND_VERSION_STRING=$($NAMED -V | head -1)
+BIND_VERSION=$($NAMED -V | sed -ne 's/^BIND \([^ ]*\).*/\1/p')
 
 n=`expr $n + 1`
 ret=0
 echo_i "Checking that default version works for rndc ($n)"
 $RNDCCMD 10.53.0.1 status > rndc.status.ns1.$n 2>&1
-grep "^version: BIND $VERSION " rndc.status.ns1.$n > /dev/null || ret=1
+fgrep "version: $BIND_VERSION_STRING" rndc.status.ns1.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
 ret=0
 echo_i "Checking that custom version works for rndc ($n)"
 $RNDCCMD 10.53.0.3 status > rndc.status.ns3.$n 2>&1
-grep "^version: BIND $VERSION ${DESCRIPTION}${DESCRIPTION:+ }<id:........*> (this is a test of version)" rndc.status.ns3.$n > /dev/null || ret=1
+fgrep "version: $BIND_VERSION_STRING (this is a test of version)" rndc.status.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
 ret=0
 echo_i "Checking that default version works for query ($n)"
 $DIG $DIGOPTS +short version.bind txt ch @10.53.0.1 > dig.out.ns1.$n
-grep "^\"$VERSION\"$" dig.out.ns1.$n > /dev/null || ret=1
+grep "^\"$BIND_VERSION\"$" dig.out.ns1.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`

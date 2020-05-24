@@ -122,16 +122,24 @@ do
 done
 
 echo_i "checking large unknown record loading on master"
-ret=0
-$DIG $DIGOPTS @10.53.0.1 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
-$DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    $DIG $DIGOPTS @10.53.0.1 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
+    $DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
 echo_i "checking large unknown record loading on slave"
-ret=0
-$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
-$DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    $DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
+    $DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
@@ -139,10 +147,16 @@ echo_i "stop and restart slave"
 $PERL $SYSTEMTESTTOP/stop.pl unknown ns2
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} unknown ns2
 
+# server may be answering queries before zones are loaded,
+# so retry a few times if this query fails
 echo_i "checking large unknown record loading on slave"
-ret=0
-$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
-$DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    $DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
+    $DIFF -s large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
@@ -157,10 +171,16 @@ echo_i "stop and restart inline slave"
 $PERL $SYSTEMTESTTOP/stop.pl unknown ns3
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} unknown ns3
 
+# server may be answering queries before zones are loaded,
+# so retry a few times if this query fails
 echo_i "checking large unknown record loading on inline slave"
-ret=0
-$DIG $DIGOPTS @10.53.0.3 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
-$DIFF large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    $DIG $DIGOPTS @10.53.0.3 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo_i "dig failed" ; }
+    $DIFF large.out dig.out > /dev/null || { ret=1 ; echo_i "$DIFF failed"; }
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
 [ $ret = 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 

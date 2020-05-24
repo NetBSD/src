@@ -259,8 +259,13 @@ $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} legacy ns1
 
 n=`expr $n + 1`
 echo_i "checking recursive lookup to edns 512 + no tcp + trust anchor fails ($n)"
-ret=0
-resolution_fails edns512-notcp. || ret=1
+# retry loop in case the server restart above causes transient failure
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    resolution_fails edns512-notcp. || ret=1
+    [ "$ret" -eq 0 ] && break
+    sleep 1
+done
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

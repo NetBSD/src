@@ -46,8 +46,12 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${NS_INCLUDES} ${DNS_INCLUDES} \
 		${BIND9_INCLUDES} ${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} \
 		${ISC_INCLUDES} ${DLZDRIVER_INCLUDES} \
-		${DBDRIVER_INCLUDES} ${MAXMINDDB_CFLAGS} \
-		@OPENSSL_INCLUDES@
+		${DBDRIVER_INCLUDES} \
+		${OPENSSL_CFLAGS} \
+		${JSON_C_CFLAGS} \
+		${LIBXML2_CFLAGS} \
+		${MAXMINDDB_CFLAGS} \
+		${ZLIB_CFLAGS}
 
 CDEFINES =      @CONTRIB_DLZ@
 
@@ -56,8 +60,8 @@ CWARNINGS =
 DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 ISCCCLIBS =	../../lib/isccc/libisccc.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 NSLIBS =	../../lib/ns/libns.@A@
 
@@ -85,12 +89,11 @@ SUBDIRS =	unix
 
 TARGETS =	named@EXEEXT@
 
-GEOIPLINKOBJS = geoip.@O@
 GEOIP2LINKOBJS = geoip.@O@
 
 OBJS =		builtin.@O@ config.@O@ control.@O@ \
 		controlconf.@O@ fuzz.@O@ \
-		@GEOIPLINKOBJS@ @GEOIP2LINKOBJS@ \
+		@GEOIP2LINKOBJS@ \
 		log.@O@ logconf.@O@ main.@O@ \
 		server.@O@ statschannel.@O@ \
 		tkeyconf.@O@ tsigconf.@O@ zoneconf.@O@ \
@@ -100,12 +103,11 @@ UOBJS =		unix/os.@O@ unix/dlz_dlopen_driver.@O@
 
 SYMOBJS =	symtbl.@O@
 
-GEOIPLINKSRCS = geoip.c
 GEOIP2LINKSRCS = geoip.c
 
 SRCS =		builtin.c config.c control.c \
 		controlconf.c fuzz.c \
-		@GEOIPLINKSRCS@ @GEOIP2LINKSRCS@ \
+		@GEOIP2LINKSRCS@ \
 		log.c logconf.c main.c \
 		server.c statschannel.c \
 		tkeyconf.c tsigconf.c zoneconf.c \

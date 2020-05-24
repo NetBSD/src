@@ -11,12 +11,12 @@
 #   Look for OpenSSL in a number of default spots, or in a user-selected
 #   spot (via --with-openssl).  Sets
 #
-#     OPENSSL_INCLUDES to the include directives required
+#     OPENSSL_CFLAGS to the include directives required
 #     OPENSSL_LIBS to the -l directives required
 #
 #   and calls ACTION-IF-FOUND or ACTION-IF-NOT-FOUND appropriately
 #
-#   This macro sets OPENSSL_INCLUDES such that source files should use the
+#   This macro sets OPENSSL_CFLAGS such that source files should use the
 #   openssl/ directory in include directives:
 #
 #     #include <openssl/hmac.h>
@@ -62,12 +62,12 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
     # an 'openssl' subdirectory
 
     AS_IF([! $found],[
-        OPENSSL_INCLUDES=
+        OPENSSL_CFLAGS=
         for ssldir in $ssldirs; do
             AC_MSG_CHECKING([for openssl/ssl.h in $ssldir])
 	    AS_IF([test -f "$ssldir/include/openssl/ssl.h"],
 	        [
-		    OPENSSL_INCLUDES="-I$ssldir/include"
+		    OPENSSL_CFLAGS="-I$ssldir/include"
                     OPENSSL_LIBS="-L$ssldir/lib -lcrypto"
                     found=true
                     AC_MSG_RESULT([yes])
@@ -86,12 +86,12 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
     # being careful not to pollute the global LIBS, LDFLAGS, and CPPFLAGS
 
     AC_MSG_CHECKING([whether compiling and linking against OpenSSL works])
-    # AC_MSG_NOTICE([Trying link with OPENSSL_LIBS=$OPENSSL_LIBS; OPENSSL_INCLUDES=$OPENSSL_INCLUDES])
+    # AC_MSG_NOTICE([Trying link with OPENSSL_LIBS=$OPENSSL_LIBS; OPENSSL_CFLAGS=$OPENSSL_CFLAGS])
 
     save_LIBS="$LIBS"
     save_CPPFLAGS="$CPPFLAGS"
     LIBS="$OPENSSL_LIBS $LIBS"
-    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
+    CPPFLAGS="$OPENSSL_CFLAGS $CPPFLAGS"
     AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
             [
@@ -110,6 +110,6 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
     CPPFLAGS="$save_CPPFLAGS"
     LIBS="$save_LIBS"
 
-    AC_SUBST([OPENSSL_INCLUDES])
+    AC_SUBST([OPENSSL_CFLAGS])
     AC_SUBST([OPENSSL_LIBS])
 ])

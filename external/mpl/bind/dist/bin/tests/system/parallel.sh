@@ -29,6 +29,6 @@ port=${STARTPORT:-5000}
 for directory in $PARALLELDIRS ; do
         echo
         echo "test-`echo $directory | tr _ -`: check_interfaces"
-        echo "	@${SHELL} ./run.sh -r -p $port $directory 2>&1 | tee $directory/test.output"
+        echo "	@${SHELL} ./run.sh -p $port $directory 2>&1 | tee test.output.$directory"
         port=`expr $port + 100`
 done

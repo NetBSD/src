@@ -7,6 +7,7 @@ EXPORTS
 dns__rbt_checkproperties
 dns__rbt_getheight
 dns__rbtnode_getdistance
+dns__rbtnode_namelen
 dns__zone_findkeys
 dns__zone_loadpending
 dns__zone_updatesigs
@@ -82,7 +83,6 @@ dns_cache_flush
 dns_cache_flushname
 dns_cache_flushnode
 dns_cache_getcachesize
-dns_cache_getcleaninginterval
 dns_cache_getname
 dns_cache_getservestalettl
 dns_cache_getstats
@@ -94,7 +94,6 @@ dns_cache_renderjson
 dns_cache_renderxml
 @END LIBXML2
 dns_cache_setcachesize
-dns_cache_setcleaninginterval
 dns_cache_setfilename
 dns_cache_setservestalettl
 dns_cache_updatestats
@@ -149,7 +148,6 @@ dns_client_freeupdate
 dns_client_mctx
 dns_client_request
 dns_client_resolve
-dns_client_setdlv
 dns_client_setservers
 dns_client_startrequest
 dns_client_startresolve
@@ -317,11 +315,26 @@ dns_dns64_create
 dns_dns64_destroy
 dns_dns64_next
 dns_dns64_unlink
+@IF NOTYET
+dns_dnsrps_2policy
+dns_dnsrps_trig2type
+dns_dnsrps_type2trig
+dns_dnsrps_server_create
+dns_dnsrps_server_destroy
+dns_dnsrps_view_init
+dns_dnsrps_connect
+dns_dnsrps_rewrite_init
+@END NOTYET
+@IF NOTYET
+dns_resolver_setfuzzing
+@END NOTYET
 dns_dnssec_findmatchingkeys
 dns_dnssec_findzonekeys
+dns_dnssec_get_hints
 dns_dnssec_keyactive
 dns_dnssec_keyfromrdata
 dns_dnssec_keylistfromrdataset
+dns_dnssec_matchdskey
 dns_dnssec_selfsigns
 dns_dnssec_sign
 dns_dnssec_signmessage
@@ -337,6 +350,7 @@ dns_dnssecsignstats_create
 dns_dnssecsignstats_dump
 dns_dnssecsignstats_increment
 dns_ds_buildrdata
+dns_ds_fromkeyrdata
 dns_dsdigest_format
 dns_dsdigest_fromtext
 dns_dsdigest_totext
@@ -355,7 +369,6 @@ dns_dt_send
 dns_dt_setidentity
 dns_dt_setupfile
 dns_dt_setversion
-dns_dt_shutdown
 dns_dtdata_free
 @END NOTYET
 dns_dumpctx_attach
@@ -386,7 +399,6 @@ dns_generalstats_dump
 dns_generalstats_increment
 @IF GEOIP
 dns_geoip_match
-dns_geoip_shutdown
 @END GEOIP
 dns_hashalg_fromtext
 dns_ipkeylist_clear
@@ -416,35 +428,68 @@ dns_journal_rollforward
 dns_journal_set_sourceserial
 dns_journal_write_transaction
 dns_journal_writediff
+dns_kasp_addkey
+dns_kasp_attach
+dns_kasp_create
+dns_kasp_detach
+dns_kasp_dnskeyttl
+dns_kasp_dsttl
+dns_kasp_freeze
+dns_kasp_getname
+dns_kasp_key_algorithm
+dns_kasp_key_create
+dns_kasp_key_destroy
+dns_kasp_key_ksk
+dns_kasp_key_lifetime
+dns_kasp_key_size
+dns_kasp_key_zsk
+dns_kasp_keylist_empty
+dns_kasp_keys
+dns_kasp_parentpropagationdelay
+dns_kasp_parentregistrationdelay
+dns_kasp_publishsafety
+dns_kasp_retiresafety
+dns_kasp_setdnskeyttl
+dns_kasp_setdsttl
+dns_kasp_setparentpropagationdelay
+dns_kasp_setparentregistrationdelay
+dns_kasp_setpublishsafety
+dns_kasp_setretiresafety
+dns_kasp_setsigrefresh
+dns_kasp_setsigvalidity
+dns_kasp_setsigvalidity_dnskey
+dns_kasp_setzonemaxttl
+dns_kasp_setzonepropagationdelay
+dns_kasp_signdelay
+dns_kasp_sigrefresh
+dns_kasp_sigvalidity
+dns_kasp_sigvalidity_dnskey
+dns_kasp_thaw
+dns_kasp_zonemaxttl
+dns_kasp_zonepropagationdelay
+dns_kasplist_find
 dns_keydata_fromdnskey
 dns_keydata_todnskey
 dns_keyflags_fromtext
-dns_keynode_attach
-dns_keynode_create
-dns_keynode_detach
-dns_keynode_detachall
+dns_keymgr_run
+dns_keynode_dsset
 dns_keynode_initial
-dns_keynode_key
 dns_keynode_managed
 dns_keynode_trust
 dns_keyring_restore
 dns_keytable_add
 dns_keytable_attach
-dns_keytable_attachkeynode
 dns_keytable_create
 dns_keytable_delete
-dns_keytable_deletekeynode
+dns_keytable_deletekey
 dns_keytable_detach
 dns_keytable_detachkeynode
 dns_keytable_dump
 dns_keytable_find
 dns_keytable_finddeepestmatch
-dns_keytable_findkeynode
-dns_keytable_findnextkeynode
 dns_keytable_forall
 dns_keytable_issecuredomain
 dns_keytable_marksecure
-dns_keytable_nextkeynode
 dns_keytable_totext
 dns_lib_init
 dns_lib_shutdown
@@ -499,6 +544,7 @@ dns_message_gettemprdataset
 dns_message_gettimeadjust
 dns_message_gettsig
 dns_message_gettsigkey
+dns_message_headertotext
 dns_message_logfmtpacket
 dns_message_logpacket
 dns_message_movename
@@ -542,7 +588,6 @@ dns_name_concatenate
 dns_name_copy
 dns_name_copynf
 dns_name_countlabels
-dns_name_destroy
 dns_name_digest
 dns_name_downcase
 dns_name_dup
@@ -722,10 +767,8 @@ dns_rbt_nodecount
 dns_rbt_printdot
 dns_rbt_printnodeinfo
 dns_rbt_printtext
-dns_rbt_root
 dns_rbt_serialize_align
 dns_rbt_serialize_tree
-dns_rbtnode_nodename
 dns_rbtnodechain_current
 dns_rbtnodechain_down
 dns_rbtnodechain_first
@@ -827,6 +870,7 @@ dns_rdataslab_equal
 dns_rdataslab_equalx
 dns_rdataslab_fromrdataset
 dns_rdataslab_merge
+dns_rdataslab_rdatasize
 dns_rdataslab_size
 dns_rdataslab_subtract
 dns_rdatatype_atcname
@@ -851,6 +895,7 @@ dns_request_create
 dns_request_createraw
 dns_request_createvia
 dns_request_destroy
+dns_request_getanswer
 dns_request_getresponse
 dns_request_usedtcp
 dns_requestmgr_attach
@@ -893,7 +938,6 @@ dns_resolver_gettimeout
 dns_resolver_getudpsize
 dns_resolver_getzeronosoattl
 dns_resolver_logfetch
-dns_resolver_nrunning
 dns_resolver_prime
 dns_resolver_printbadcache
 dns_resolver_reset_algorithms
@@ -978,6 +1022,13 @@ dns_soa_setretry
 dns_soa_setserial
 dns_ssu_external_match
 dns_ssu_mtypefromstring
+dns_ssurule_isgrant
+dns_ssurule_identity
+dns_ssurule_matchtype
+dns_ssurule_name
+dns_ssurule_types
+dns_ssutable_firstrule
+dns_ssutable_nextrule
 dns_ssutable_addrule
 dns_ssutable_attach
 dns_ssutable_checkrules
@@ -1144,7 +1195,6 @@ dns_zone_getchecknames
 dns_zone_getclass
 dns_zone_getdb
 dns_zone_getdbtype
-dns_zone_getdnssecrefreshstats
 dns_zone_getdnssecsignstats
 dns_zone_getexpiretime
 dns_zone_getfile
@@ -1155,6 +1205,7 @@ dns_zone_getidleout
 dns_zone_getincludes
 dns_zone_getjournal
 dns_zone_getjournalsize
+dns_zone_getkasp
 dns_zone_getkeydirectory
 dns_zone_getkeyopts
 dns_zone_getkeyvalidityinterval
@@ -1246,7 +1297,6 @@ dns_zone_setclass
 dns_zone_setdb
 dns_zone_setdbtype
 dns_zone_setdialup
-dns_zone_setdnssecrefreshstats
 dns_zone_setdnssecsignstats
 dns_zone_setfile
 dns_zone_setflag
@@ -1256,6 +1306,7 @@ dns_zone_setidleout
 dns_zone_setisself
 dns_zone_setjournal
 dns_zone_setjournalsize
+dns_zone_setkasp
 dns_zone_setkeydirectory
 dns_zone_setkeyopt
 dns_zone_setkeyvalidityinterval
@@ -1376,6 +1427,7 @@ dst_key_attach
 dst_key_buildfilename
 dst_key_buildinternal
 dst_key_class
+dst_key_copy_metadata
 dst_key_compare
 dst_key_computesecret
 dst_key_dump
@@ -1390,13 +1442,22 @@ dst_key_fromlabel
 dst_key_fromnamedfile
 dst_key_generate
 dst_key_getbits
+dst_key_getbool
 dst_key_getfilename
 dst_key_getgssctx
 dst_key_getnum
 dst_key_getprivateformat
+dst_key_getstate
 dst_key_gettime
 dst_key_getttl
+dst_key_goal
 dst_key_id
+dst_key_is_active
+dst_key_is_published
+dst_key_is_removed
+dst_key_is_revoked
+dst_key_is_signing
+dst_key_is_unused
 dst_key_inactive
 dst_key_isexternal
 dst_key_isnullkey
@@ -1408,15 +1469,18 @@ dst_key_privatefrombuffer
 dst_key_proto
 dst_key_pubcompare
 dst_key_read_public
+dst_key_read_state
 dst_key_restore
 dst_key_rid
 dst_key_secretsize
 dst_key_setbits
+dst_key_setbool
 dst_key_setexternal
 dst_key_setflags
 dst_key_setinactive
 dst_key_setnum
 dst_key_setprivateformat
+dst_key_setstate
 dst_key_settime
 dst_key_setttl
 dst_key_sigsize
@@ -1425,7 +1489,9 @@ dst_key_tkeytoken
 dst_key_tobuffer
 dst_key_todns
 dst_key_tofile
+dst_key_unsetbool
 dst_key_unsetnum
+dst_key_unsetstate
 dst_key_unsettime
 dst_lib_destroy
 dst_lib_init

@@ -23,7 +23,7 @@ zonefile=root.db.signed
 keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
 
 # copy the KSK out first, then revoke it
-keyfile_to_managed_keys "$keyname" > revoked.conf
+keyfile_to_initial_ds "$keyname" > revoked.conf
 
 "$SETTIME" -R now "${keyname}.key" > /dev/null
 
@@ -34,4 +34,4 @@ keyfile_to_managed_keys "$keyname" > revoked.conf
 
 keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone ".")
 
-keyfile_to_trusted_keys "$keyname" > trusted.conf
+keyfile_to_static_ds "$keyname" > trusted.conf

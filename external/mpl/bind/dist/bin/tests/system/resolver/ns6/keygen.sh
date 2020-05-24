@@ -19,7 +19,7 @@ cp $infile $zonefile
 ksk=`$KEYGEN -q -a rsasha256 -fk $zone`
 zsk=`$KEYGEN -q -a rsasha256 -b 2048 $zone`
 cat $ksk.key $zsk.key >> $zonefile
-$SIGNER -P -o $zone $zonefile > /dev/null 2>&1
+$SIGNER -P -o $zone $zonefile > /dev/null
 
 zone=example.net
 zonefile="${zone}.db"
@@ -28,7 +28,7 @@ cp $infile $zonefile
 ksk=`$KEYGEN -q -a rsasha256 -fk $zone`
 zsk=`$KEYGEN -q -a rsasha256 $zone`
 cat $ksk.key $zsk.key dsset-ds.example.net$TP >> $zonefile
-$SIGNER -P -o $zone $zonefile > /dev/null 2>&1
+$SIGNER -P -o $zone $zonefile > /dev/null
 
-# Configure a trusted key statement (used by delv)
-keyfile_to_trusted_keys $ksk > ../ns5/trusted.conf
+# Configure a static key to be used by delv
+keyfile_to_static_ds $ksk > ../ns5/trusted.conf

@@ -11,11 +11,30 @@
 ## Supported platforms
 
 In general, this version of BIND will build and run on any POSIX-compliant
-system with a C99-compliant C compiler, BSD-style sockets with RFC-compliant
-IPv6 support, POSIX-compliant threads, and the OpenSSL cryptography library.
-Atomic operations support from the compiler is needed, either in the form of
-builtin operations, C11 atomics or the Interlocked family of functions on
-Windows.
+system with a C11-compliant C compiler, BSD-style sockets with RFC-compliant
+IPv6 support, POSIX-compliant threads, the `libuv` asynchronous I/O library,
+and the OpenSSL cryptography library.
+
+The following C11 features are used in BIND 9:
+
+* Atomic operations support from the compiler is needed, either in the form of
+  builtin operations, C11 atomics, or the `Interlocked` family of functions on
+  Windows.
+
+* Thread Local Storage support from the compiler is needed, either in the form
+  of C11 `_Thread_local`/`thread_local`, the `__thread` GCC extension, or
+  the `__declspec(thread)` MSVC extension on Windows.
+
+BIND 9.16 requires a fairly recent version of `libuv` (at least 1.x).  For
+some of the older systems listed below, you will have to install an updated
+`libuv` package from sources such as EPEL, PPA, or other native sources for
+updated packages. The other option is to build and install `libuv` from
+source.
+
+Certain optional BIND features have additional library dependencies.
+These include `libxml2` and `libjson-c` for statistics, `libmaxminddb` for
+geolocation, `libfstrm` and `libprotobuf-c` for DNSTAP, and `libidn2` for
+internationalized domain name conversion.
 
 ISC regularly tests BIND on many operating systems and architectures, but
 lacks the resources to test all of them. Consequently, ISC is only able to
@@ -23,15 +42,16 @@ offer support on a "best effort" basis for some.
 
 ### Regularly tested platforms
 
-As of Feb 2019, BIND 9.14 is fully supported and regularly tested on the
+As of Mar 2020, BIND 9.16 is fully supported and regularly tested on the
 following systems:
 
-* Debian 8, 9, 10
-* Ubuntu 16.04, 18.04
-* Fedora 28, 29
-* Red Hat Enterprise Linux / CentOS 6, 7
-* FreeBSD 11.x
-* OpenBSD 6.2, 6.3
+* Debian 9, 10
+* Ubuntu LTS 16.04, 18.04
+* Fedora 31
+* Red Hat Enterprise Linux / CentOS 7, 8
+* FreeBSD 11.3, 12.1
+* OpenBSD 6.6
+* Alpine Linux
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully supported.
 
@@ -47,20 +67,33 @@ Server 2012 R2, none of these are tested regularly by ISC.
 * Windows 10 / x64
 * macOS 10.12+
 * Solaris 11
-* FreeBSD 10.x, 12.0+
-* OpenBSD 6.4+
 * NetBSD
 * Other Linux distributions still supported by their vendors, such as:
-    * Ubuntu 14.04, 18.10+
+    * Ubuntu 19.04+
     * Gentoo
     * Arch Linux
-    * Alpine Linux
 * OpenWRT/LEDE 17.01+
 * Other CPU architectures (mips, mipsel, sparc, ...)
 
+### Community maintained
+
+These systems may not all have the required dependencies for building BIND
+easily available, although it will be possible in many cases to compile
+those directly from source. The community and interested parties may wish
+to help with maintenance, and we welcome patch contributions, although we
+cannot guarantee that we will accept them.  All contributions will be
+assessed against the risk of adverse effect on officially supported
+platforms.
+
+* Platforms past or close to their respective EOL dates, such as:
+    * Ubuntu 14.04, 18.10
+    * CentOS 6
+    * Debian Jessie
+    * FreeBSD 10.x
+
 ## Unsupported platforms
 
-These are platforms on which BIND 9.14 is known *not* to build or run:
+These are platforms on which BIND 9.16 is known *not* to build or run:
 
 * Platforms without at least OpenSSL 1.0.2
 * Windows 10 / x86
@@ -69,15 +102,4 @@ These are platforms on which BIND 9.14 is known *not* to build or run:
 * Platforms that don't support IPv6 Advanced Socket API (RFC 3542)
 * Platforms that don't support atomic operations (via compiler or library)
 * Linux without NPTL (Native POSIX Thread Library)
-
-## Platform quirks
-
-### NetBSD 6 i386
-
-The i386 build of NetBSD requires the `libatomic` library, available from
-the `gcc5-libs` package.  Because this library is in a non-standard path,
-its location must be specified in the `configure` command line:
-
-```
-LDFLAGS="-L/usr/pkg/gcc5/i486--netbsdelf/lib/ -Wl,-R/usr/pkg/gcc5/i486--netbsdelf/lib/" ./configure
-```
+* Platforms on which `libuv` cannot be compiled

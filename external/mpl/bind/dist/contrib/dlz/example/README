@@ -1,6 +1,6 @@
 OVERVIEW:
 
-DLZ (Dynamically Loadable Zones) is an extention to BIND 9 that
+DLZ (Dynamically Loadable Zones) is an extension to BIND 9 that
 allows zone data to be retrieved directly from an external database.
 There is no required format or schema.  DLZ drivers exist for several
 different database backends including PostgreSQL, MySQL, and LDAP and
@@ -136,7 +136,7 @@ The DLZ dlopen driver provides a set of callback functions:
 
   - isc_result_t writeable_zone(dns_view_t *view, const char *zone_name);
 
-    Allows the DLZ module to inform named that a given zone can recieve
+    Allows the DLZ module to inform named that a given zone can receive
     DDNS updates.  (Note: This is not currently supported for DLZ
     databases that are configured as 'search no;')
 

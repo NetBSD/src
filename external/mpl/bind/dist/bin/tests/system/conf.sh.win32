@@ -120,8 +120,9 @@ PYTHON=@PYTHON@
 #
 HAVEXMLSTATS=@XMLSTATS@
 HAVEJSONSTATS=@JSONSTATS@
-ZLIB=@ZLIB@
+HAVEZLIB=@ZLIB@
 NZD=@NZD_TOOLS@
+CRYPTO=@CRYPTO@
 
 # The rest is shared between Windows and Unices
 . $TOP/bin/tests/system/conf.sh.common

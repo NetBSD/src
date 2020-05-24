@@ -40,7 +40,7 @@ def logquery(type, qname):
 # too.many.labels.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.good. A 192.0.2.2
 # it responds properly (with NODATA empty response) to non-empty terminals
 #
-# For slow. it works the same as for good., but each response is delayed by 400 miliseconds
+# For slow. it works the same as for good., but each response is delayed by 400 milliseconds
 #
 # For bad. it works the same as for good., but returns NXDOMAIN to non-empty terminals
 #

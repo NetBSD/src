@@ -55,14 +55,68 @@ check_ttl_range() {
 
 # using delv insecure mode as not testing dnssec here
 delv_with_opts() {
-    "$DELV" +noroot +nodlv -p "$PORT" "$@"
+    "$DELV" +noroot -p "$PORT" "$@"
 }
 
 KEYID="$(cat ns2/keyid)"
 KEYDATA="$(< ns2/keydata sed -e 's/+/[+]/g')"
 NOSPLIT="$(< ns2/keydata sed -e 's/+/[+]/g' -e 's/ //g')"
 
+HAS_PYYAML=0
+if [ -n "$PYTHON" ] ; then
+	$PYTHON -c "import yaml" 2> /dev/null && HAS_PYYAML=1
+fi
+
+#
+# test whether ans7/ans.pl will be able to send a UPDATE response.
+# if it can't, we will log that below.
+#
+if "$PERL" -e 'use Net::DNS; use Net::DNS::Packet; my $p = new Net::DNS::Packet; $p->header->opcode(5);' > /dev/null 2>&1
+then
+	checkupdate=1
+else
+	checkupdate=0
+fi
+
+if [ -x "$NSLOOKUP" -a $checkupdate -eq 1 ] ; then
+
+  n=$((n+1))
+  echo_i "check nslookup handles UPDATE response ($n)"
+  ret=0
+  "$NSLOOKUP" -q=CNAME "-port=$PORT" foo.bar 10.53.0.7 > nslookup.out.test$n 2>&1 && ret=1
+  grep "Opcode mismatch" nslookup.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+fi
+
+if [ -x "$HOST" -a $checkupdate -eq 1 ] ; then
+
+  n=$((n+1))
+  echo_i "check host handles UPDATE response ($n)"
+  ret=0
+  "$HOST" -t CNAME -p $PORT foo.bar 10.53.0.7 > host.out.test$n 2>&1 && ret=1
+  grep "Opcode mismatch" host.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+fi
+
 if [ -x "$DIG" ] ; then
+
+  if [ $checkupdate -eq 1 ] ; then
+
+    n=$((n+1))
+    echo_i "check dig handles UPDATE response ($n)"
+    ret=0
+    dig_with_opts @10.53.0.7 cname foo.bar > dig.out.test$n 2>&1 && ret=1
+    grep "Opcode mismatch" dig.out.test$n > /dev/null || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
+  else
+    echo_i "Skipped UPDATE handling test"
+  fi
+
   n=$((n+1))
   echo_i "checking dig short form works ($n)"
   ret=0
@@ -111,7 +165,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY example > dig.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" dig.out.test$n > /dev/null && ret=1
   check_ttl_range dig.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -129,7 +183,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +rrcomments works for DNSKEY($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY example > dig.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < dig.out.test$n > /dev/null || ret=1
   check_ttl_range dig.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -138,7 +192,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +short +rrcomments works for DNSKEY ($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY example > dig.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -146,7 +200,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +short +nosplit works($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +short +nosplit DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +short +nosplit DNSKEY example > dig.out.test$n || ret=1
   grep "$NOSPLIT" < dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -154,7 +208,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +short +rrcomments works($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY example > dig.out.test$n || ret=1
   grep -q "$KEYDATA  ; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID\$" < dig.out.test$n || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -162,10 +216,10 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig multi flag is local($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 -t DNSKEY dnskey.example +nomulti dnskey.example +nomulti > dig.out.nn.$n || ret=1
-  dig_with_opts +tcp @10.53.0.3 -t DNSKEY dnskey.example +multi dnskey.example +nomulti > dig.out.mn.$n || ret=1
-  dig_with_opts +tcp @10.53.0.3 -t DNSKEY dnskey.example +nomulti dnskey.example +multi > dig.out.nm.$n || ret=1
-  dig_with_opts +tcp @10.53.0.3 -t DNSKEY dnskey.example +multi dnskey.example +multi > dig.out.mm.$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 -t DNSKEY example +nomulti example +nomulti > dig.out.nn.$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 -t DNSKEY example +multi example +nomulti > dig.out.mn.$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 -t DNSKEY example +nomulti example +multi > dig.out.nm.$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 -t DNSKEY example +multi example +multi > dig.out.mm.$n || ret=1
   lcnn=$(wc -l < dig.out.nn.$n)
   lcmn=$(wc -l < dig.out.mn.$n)
   lcnm=$(wc -l < dig.out.nm.$n)
@@ -193,7 +247,7 @@ if [ -x "$DIG" ] ; then
   n=$((n+1))
   echo_i "checking dig +short +rrcomments works($n)"
   ret=0
-  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY dnskey.example > dig.out.test$n || ret=1
+  dig_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY example > dig.out.test$n || ret=1
   grep -q "$KEYDATA  ; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID\$" < dig.out.test$n || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -320,7 +374,6 @@ if [ -x "$DIG" ] ; then
   if testsock6 fd92:7065:b8e:ffff::2 2>/dev/null && [ "$(uname -s)" != "OpenBSD" ]
   then
     ret=0
-    ret=0
     dig_with_opts +tcp @10.53.0.2 -6 +mapped A a.example > dig.out.test$n 2>&1 || ret=1
     grep "SERVER: ::ffff:10.53.0.2#$PORT" < dig.out.test$n > /dev/null || ret=1
     if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -334,7 +387,6 @@ if [ -x "$DIG" ] ; then
   if testsock6 fd92:7065:b8e:ffff::2 2>/dev/null
   then
     ret=0
-    ret=0
     dig_with_opts +tcp @10.53.0.2 -6 +nomapped A a.example > dig.out.test$n 2>&1 || ret=1
     grep "SERVER: ::ffff:10.53.0.2#$PORT" < dig.out.test$n > /dev/null && ret=1
     if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -347,7 +399,6 @@ if [ -x "$DIG" ] ; then
   echo_i "checking dig +notcp @IPv4addr -6 +nomapped A a.example ($n)"
   if testsock6 fd92:7065:b8e:ffff::2 2>/dev/null
   then
-    ret=0
     ret=0
     dig_with_opts +notcp @10.53.0.2 -6 +nomapped A a.example > dig.out.test$n 2>&1 || ret=1
     grep "SERVER: ::ffff:10.53.0.2#$PORT" < dig.out.test$n > /dev/null && ret=1
@@ -532,14 +583,16 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that dig processes +ednsopt=key-tag and FORMERR is returned ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=key-tag a.example +qr > dig.out.test$n 2>&1 || ret=1
-  grep "; KEY-TAG$" dig.out.test$n > /dev/null || ret=1
+  grep "; KEY-TAG: *$" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
 
   n=$((n+1))
   echo_i "check that dig processes +ednsopt=key-tag:<value-list> ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=key-tag:00010002 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; KEY-TAG: 1, 2$" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
@@ -558,6 +611,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that dig processes +ednsopt=client-tag:value ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=client-tag:0001 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; CLIENT-TAG: 1$" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
@@ -566,6 +620,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that FORMERR is returned for a too short client-tag ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=client-tag:01 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; CLIENT-TAG" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
@@ -574,6 +629,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that FORMERR is returned for a too long client-tag ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=client-tag:000001 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; CLIENT-TAG" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
@@ -582,6 +638,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that dig processes +ednsopt=server-tag:value ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=server-tag:0001 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; SERVER-TAG: 1$" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null && ret=1
@@ -590,6 +647,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that FORMERR is returned for a too short server-tag ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=server-tag:01 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; SERVER-TAG" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
@@ -598,6 +656,7 @@ if [ -x "$DIG" ] ; then
 
   n=$((n+1))
   echo_i "check that FORMERR is returned for a too long server-tag ($n)"
+  ret=0
   dig_with_opts @10.53.0.3 +ednsopt=server-tag:000001 a.example +qr > dig.out.test$n 2>&1 || ret=1
   grep "; SERVER-TAG" dig.out.test$n > /dev/null || ret=1
   grep "status: FORMERR" dig.out.test$n > /dev/null || ret=1
@@ -692,6 +751,82 @@ if [ -x "$DIG" ] ; then
   [ `grep "communications error.*end of file" dig.out.test$n | wc -l` -eq 1 ] || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +expandaaaa works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +expandaaaa AAAA ns2.example > dig.out.test$n 2>&1 || ret=1
+  grep "ns2.example.*fd92:7065:0b8e:ffff:0000:0000:0000:0002" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +noexpandaaaa works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +noexpandaaaa AAAA ns2.example > dig.out.test$n 2>&1 || ret=1
+  grep "ns2.example.*fd92:7065:b8e:ffff::2" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig default for +[no]expandaaa (+noexpandaaaa) works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 AAAA ns2.example > dig.out.test$n 2>&1 || ret=1
+  grep "ns2.example.*fd92:7065:b8e:ffff::2" dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+
+  echo_i "check that dig +short +expandaaaa works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.3 +short +expandaaaa AAAA ns2.example > dig.out.test$n 2>&1 || ret=1
+  grep '^fd92:7065:0b8e:ffff:0000:0000:0000:0002$' dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  if [ $HAS_PYYAML -ne 0 ] ; then
+    n=$((n+1))
+    echo_i "check dig +yaml output ($n)"
+    ret=0
+    dig_with_opts +qr +yaml @10.53.0.3 any ns2.example > dig.out.test$n 2>&1 || ret=1
+    value=$($PYTHON yamlget.py dig.out.test$n 0 message query_message_data status || ret=1)
+    [ "$value" = "NOERROR" ] || ret=1
+    value=$($PYTHON yamlget.py dig.out.test$n 1 message response_message_data status || ret=1)
+    [ "$value" = "NOERROR" ] || ret=1
+    value=$($PYTHON yamlget.py dig.out.test$n 1 message response_message_data QUESTION_SECTION 0 || ret=1)
+    [ "$value" = "ns2.example. IN ANY" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
+  fi
+
+  n=$((n+1))
+  echo_i "check that dig +unexpected works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.6 +unexpected a a.example > dig.out.test$n || ret=1
+  grep 'reply from unexpected source' dig.out.test$n > /dev/null || ret=1
+  grep 'status: NOERROR' dig.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig +nounexpected works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.6 +nounexpected +tries=1 +time=2 a a.example > dig.out.test$n && ret=1
+  grep 'reply from unexpected source' dig.out.test$n > /dev/null || ret=1
+  grep "status: NOERROR" < dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that dig default for +[no]unexpected (+nounexpected) works ($n)"
+  ret=0
+  dig_with_opts @10.53.0.6 +tries=1 +time=2 a a.example > dig.out.test$n && ret=1
+  grep 'reply from unexpected source' dig.out.test$n > /dev/null || ret=1
+  grep "status: NOERROR" < dig.out.test$n > /dev/null && ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
 else
   echo_i "$DIG is needed, so skipping these dig tests"
 fi
@@ -708,7 +843,7 @@ if [ -x "$MDIG" ] ; then
   n=$((n+1))
   echo_i "checking mdig +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
   ret=0
-  mdig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY dnskey.example > dig.out.test$n || ret=1
+  mdig_with_opts +tcp @10.53.0.3 +multi +norrcomments -t DNSKEY example > dig.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" dig.out.test$n && ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -720,6 +855,19 @@ if [ -x "$MDIG" ] ; then
   grep "; serial" < dig.out.test$n > /dev/null && ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
+
+  if [ $HAS_PYYAML -ne 0 ] ; then
+    n=$((n+1))
+    echo_i "check mdig +yaml output ($n)"
+    ret=0
+    mdig_with_opts +yaml @10.53.0.3 -t any ns2.example > dig.out.test$n 2>&1 || ret=1
+    value=$($PYTHON yamlget.py dig.out.test$n 0 message response_message_data status || ret=1)
+    [ "$value" = "NOERROR" ] || ret=1
+    value=$($PYTHON yamlget.py dig.out.test$n 0 message response_message_data QUESTION_SECTION 0 || ret=1)
+    [ "$value" = "ns2.example. IN ANY" ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
+  fi
 else
   echo_i "$MDIG is needed, so skipping these mdig tests"
 fi
@@ -817,7 +965,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +multi +norrcomments works for DNSKEY (when default is rrcomments)($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +multi +norrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +multi +norrcomments DNSKEY example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null && ret=1
   check_ttl_range delv.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -835,7 +983,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +rrcomments works for DNSKEY($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +rrcomments DNSKEY example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null || ret=1
   check_ttl_range delv.out.test$n "DNSKEY" 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
@@ -844,7 +992,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +short +rrcomments works for DNSKEY ($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY example > delv.out.test$n || ret=1
   grep "; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n > /dev/null || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -852,7 +1000,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +short +rrcomments works ($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +short +rrcomments DNSKEY example > delv.out.test$n || ret=1
   grep -q "$KEYDATA  ; ZSK; alg = $DEFAULT_ALGORITHM ; key id = $KEYID" < delv.out.test$n || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
@@ -860,7 +1008,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +short +nosplit works ($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +short +nosplit DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +short +nosplit DNSKEY example > delv.out.test$n || ret=1
   grep -q "$NOSPLIT" < delv.out.test$n || ret=1
   test "$(wc -l < delv.out.test$n)" -eq 1 || ret=1
   test "$(awk '{print NF}' < delv.out.test$n)" -eq 14 || ret=1
@@ -870,7 +1018,7 @@ if [ -x "$DELV" ] ; then
   n=$((n+1))
   echo_i "checking delv +short +nosplit +norrcomments works ($n)"
   ret=0
-  delv_with_opts +tcp @10.53.0.3 +short +nosplit +norrcomments DNSKEY dnskey.example > delv.out.test$n || ret=1
+  delv_with_opts +tcp @10.53.0.3 +short +nosplit +norrcomments DNSKEY example > delv.out.test$n || ret=1
   grep -q "$NOSPLIT\$" < delv.out.test$n || ret=1
   test "$(wc -l < delv.out.test$n)" -eq 1 || ret=1
   test "$(awk '{print NF}' < delv.out.test$n)" -eq 4 || ret=1
@@ -941,6 +1089,38 @@ if [ -x "$DELV" ] ; then
   check_ttl_range delv.out.test$n SOA 300 || ret=1
   if [ $ret -ne 0 ]; then echo_i "failed"; fi
   status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that delv loads key-style trust anchors ($n)"
+  ret=0
+  delv_with_opts -a ns3/anchor.dnskey +root=example @10.53.0.3 -t DNSKEY example > delv.out.test$n 2>&1 || ret=1
+  grep "fully validated" delv.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  n=$((n+1))
+  echo_i "check that delv loads DS-style trust anchors ($n)"
+  ret=0
+  delv_with_opts -a ns3/anchor.ds +root=example @10.53.0.3 -t DNSKEY example > delv.out.test$n 2>&1 || ret=1
+  grep "fully validated" delv.out.test$n > /dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status+ret))
+
+  if [ $HAS_PYYAML -ne 0 ] ; then
+    n=$((n+1))
+    echo_i "check delv +yaml output ($n)"
+    ret=0
+    delv_with_opts +yaml @10.53.0.3 any ns2.example > delv.out.test$n 2>&1 || ret=1
+    value=$($PYTHON yamlget.py delv.out.test$n status || ret=1)
+    [ "$value" = "success" ] || ret=1
+    value=$($PYTHON yamlget.py delv.out.test$n query_name || ret=1)
+    [ "$value" = "ns2.example" ] || ret=1
+    value=$($PYTHON yamlget.py delv.out.test$n records 0 answer_not_validated 0 || ret=1)
+    count=$(echo $value | wc -w )
+    [ ${count:-0} -eq 5 ] || ret=1
+    if [ $ret -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
+  fi
 else
   echo_i "$DELV is needed, so skipping these delv tests"
 fi

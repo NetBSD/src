@@ -6,10 +6,10 @@ abs_srcdir =	@abs_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. -I.. ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@OPENSSL_INCLUDES@
+		${OPENSSL_CFLAGS}
 CDEFINES =	-DFUZZDIR=\"$(abs_srcdir)\"
 
-ISCLIBS =	../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 ISCDEPLIBS =	../lib/isc/libisc.@A@
 DNSLIBS =	../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 DNSDEPLIBS =	../lib/dns/libdns.@A@

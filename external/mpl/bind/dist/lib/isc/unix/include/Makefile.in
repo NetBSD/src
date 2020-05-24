@@ -11,7 +11,7 @@ srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-SUBDIRS =	isc pkcs11
+SUBDIRS =	isc
 TARGETS =
 
 @BIND9_MAKE_RULES@

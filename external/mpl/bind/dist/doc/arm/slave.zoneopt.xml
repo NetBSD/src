@@ -29,6 +29,7 @@
 	<command>dnskey-sig-validity</command> <replaceable>integer</replaceable>;
 	<command>dnssec-dnskey-kskonly</command> <replaceable>boolean</replaceable>;
 	<command>dnssec-loadkeys-interval</command> <replaceable>integer</replaceable>;
+	<command>dnssec-policy</command> <replaceable>string</replaceable>;
 	<command>dnssec-update-mode</command> ( maintain | no-resign );
 	<command>file</command> <replaceable>quoted_string</replaceable>;
 	<command>forward</command> ( first | only );

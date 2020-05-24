@@ -44,6 +44,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -443,7 +444,8 @@
 	    allowed to incrementally re-sign over time.
 	  </para>
 	  <para>
-	    This command requires that the
+	    This command requires that the zone is configured with a
+	    <command>dnssec-policy</command>, or that the
 	    <command>auto-dnssec</command> zone option
 	    be set to <literal>maintain</literal>,
 	    and also requires the zone to be configured to
@@ -458,7 +460,7 @@
 	<term><userinput>managed-keys <replaceable>(status | refresh | sync | destroy)</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
 	<listitem>
 	  <para>
-            Inspect and control the "managed-keys" database which
+            Inspect and control the "managed keys" database which
             handles RFC 5011 DNSSEC trust anchor maintenance. If a view
             is specified, these commands are applied to that view;
             otherwise they are applied to all views.
@@ -467,14 +469,14 @@
             <listitem>
               <para>
                 When run with the <literal>status</literal> keyword, prints
-                the current status of the managed-keys database.
+                the current status of the managed keys database.
               </para>
             </listitem>
             <listitem>
               <para>
                 When run with the <literal>refresh</literal> keyword,
                 forces an immediate refresh query to be sent for all
-                the managed keys, updating the managed-keys database
+                the managed keys, updating the managed keys database
                 if any new keys are found, without waiting the normal
                 refresh interval.
               </para>
@@ -482,7 +484,7 @@
             <listitem>
               <para>
                 When run with the <literal>sync</literal> keyword, forces an
-                immediate dump of the managed-keys database to disk
+                immediate dump of the managed keys database to disk
                 (in the file <filename>managed-keys.bind</filename> or
                 (<filename><replaceable>viewname</replaceable>.mkeys</filename>).
                 This synchronizes the database with its journal file, so
@@ -493,7 +495,7 @@
             <listitem>
               <para>
                 When run with the <literal>destroy</literal> keyword, the
-                managed-keys database is shut down and deleted, and all key
+                managed keys database is shut down and deleted, and all key
                 maintenance is terminated.  This command should be used only
                 with extreme caution.
               </para>
@@ -772,9 +774,9 @@
 	<listitem>
 	  <para>
 	    Dump the security roots (i.e., trust anchors
-	    configured via <command>trusted-keys</command>,
-	    <command>managed-keys</command>, or
-	    <command>dnssec-validation auto</command>) and negative trust
+	    configured via <command>trust-anchors</command> statements, or the
+	    managed-keys or trusted-keys statements (both deprecated), or
+	    via <command>dnssec-validation auto</command>) and negative trust
 	    anchors for the specified views.  If no view is specified, all
 	    views are dumped.  Security roots will indicate whether
 	    they are configured as trusted keys, managed keys, or
@@ -849,7 +851,8 @@
 	    re-signed with the new key set.
 	  </para>
 	  <para>
-	    This command requires that the
+	    This command requires that the zone is configured with a
+	    <command>dnssec-policy</command>, or that the
 	    <command>auto-dnssec</command> zone option be set
 	    to <literal>allow</literal> or
 	    <literal>maintain</literal>,
@@ -1078,13 +1081,8 @@
 	  <para>
 	    Enable, disable, or check the current status of
 	    DNSSEC validation.  By default, validation is enabled.
-	    (Note that <command>dnssec-enable</command> must also be
-	    <userinput>yes</userinput> (the default value) for signatures
-	    to be returned along with validated data. If validation is
-	    enabled while <command>dnssec-enable</command> is set to
-	    <userinput>no</userinput>, the server will validate internally,
-	    but will not supply clients with the necessary records to allow
-	    validity to be confirmed.)
+	    The cache is flushed when validation is turned on or off
+	    to avoid using data that might differ between states.
 	  </para>
 	</listitem>
       </varlistentry>

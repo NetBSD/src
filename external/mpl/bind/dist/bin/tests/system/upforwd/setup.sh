@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 cp -f ns1/example1.db ns1/example.db
 cp -f ns3/nomaster.db ns3/nomaster1.db
 

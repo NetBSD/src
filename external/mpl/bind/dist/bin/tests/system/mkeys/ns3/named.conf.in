@@ -21,7 +21,6 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify no;
-	dnssec-enable yes;
 	dnssec-validation yes;
 	bindkeys-file "managed.conf";
 	trust-anchor-telemetry no;
@@ -42,6 +41,6 @@ zone "." {
 };
 
 # purposely broken key for testing
-managed-keys {
+trust-anchors {
     "." initial-key 257 3 5 "PURPOSELYBROKEN/xs9iVj7QekClcpzjCf0JrvXW1z07hNMqMm6Q2FtIXMbRgfvTtHF3/ZNvcewT9hpfczC+JACHsQSYYdr7UI8oe4nJfal9+2F3pz4a+HR6CqkgrR6WLWQI1Q==";
 };

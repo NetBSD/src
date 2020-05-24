@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 cp -f ns2/example1.db ns2/example.db
 
 copy_setports ns1/named.conf.in ns1/named.conf

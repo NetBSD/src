@@ -46,7 +46,10 @@ server fd92:7065:b8e:ffff::1000 {
  * "globalcache" before the recursive "default"/IN view is configured.
  */
 view "class" chaos {
-	match-clients { none; };
+	zone "chaostest" CHAOS {
+                type master;
+                file "chaostest.db";
+        };
 };
 
 /*

@@ -33,26 +33,30 @@ options: FORCE
 	if test -x ${CFG_TEST} ; \
 	then \
 		${CFG_TEST} --named --grammar > $@.raw ; \
-		${CFG_TEST} --zonegrammar master > master.zoneopt ; \
-		${CFG_TEST} --zonegrammar slave > slave.zoneopt ; \
-		${CFG_TEST} --zonegrammar mirror > mirror.zoneopt ; \
-		${CFG_TEST} --zonegrammar forward > forward.zoneopt ; \
-		${CFG_TEST} --zonegrammar hint > hint.zoneopt ; \
-		${CFG_TEST} --zonegrammar stub > stub.zoneopt ; \
-		${CFG_TEST} --zonegrammar static-stub > static-stub.zoneopt ; \
-		${CFG_TEST} --zonegrammar redirect > redirect.zoneopt ; \
-		${CFG_TEST} --zonegrammar delegation-only > delegation-only.zoneopt ; \
-		${CFG_TEST} --zonegrammar in-view > in-view.zoneopt ; \
 		${PERL} ${srcdir}/sort-options.pl < $@.raw > $@.sorted ; \
 		${PERL} ${srcdir}/format-options.pl < $@.sorted > $@.new ; \
 		mv -f $@.new $@ ; \
+		${CFG_TEST} --named --grammar --active > $@.raw ; \
+		${PERL} ${srcdir}/sort-options.pl < $@.raw > $@.sorted ; \
+		${PERL} ${srcdir}/format-options.pl < $@.sorted > $@.new ; \
+		mv -f $@.new $@.active ; \
 		rm -f $@.raw $@.sorted ; \
+		${CFG_TEST} --zonegrammar master --active > master.zoneopt ; \
+		${CFG_TEST} --zonegrammar slave --active > slave.zoneopt ; \
+		${CFG_TEST} --zonegrammar mirror --active > mirror.zoneopt ; \
+		${CFG_TEST} --zonegrammar forward --active > forward.zoneopt ; \
+		${CFG_TEST} --zonegrammar hint --active > hint.zoneopt ; \
+		${CFG_TEST} --zonegrammar stub --active > stub.zoneopt ; \
+		${CFG_TEST} --zonegrammar static-stub --active > static-stub.zoneopt ; \
+		${CFG_TEST} --zonegrammar redirect --active > redirect.zoneopt ; \
+		${CFG_TEST} --zonegrammar delegation-only --active > delegation-only.zoneopt ; \
+		${CFG_TEST} --zonegrammar in-view --active > in-view.zoneopt ; \
 	else \
 		rm -f $@.new $@.raw $@.sorted ; \
 	fi
 
 docbook: options
-	${PERL} docbook-options.pl options > ${top_srcdir}/bin/named/named.conf.docbook
+	${PERL} docbook-options.pl options.active > ${top_srcdir}/bin/named/named.conf.docbook
 	${PERL} docbook-zoneopt.pl master.zoneopt > ${top_srcdir}/doc/arm/master.zoneopt.xml
 	${PERL} docbook-zoneopt.pl slave.zoneopt > ${top_srcdir}/doc/arm/slave.zoneopt.xml
 	${PERL} docbook-zoneopt.pl mirror.zoneopt > ${top_srcdir}/doc/arm/mirror.zoneopt.xml
@@ -63,13 +67,14 @@ docbook: options
 	${PERL} docbook-zoneopt.pl redirect.zoneopt > ${top_srcdir}/doc/arm/redirect.zoneopt.xml
 	${PERL} docbook-zoneopt.pl delegation-only.zoneopt > ${top_srcdir}/doc/arm/delegation-only.zoneopt.xml
 	${PERL} docbook-zoneopt.pl in-view.zoneopt > ${top_srcdir}/doc/arm/in-view.zoneopt.xml
-	${PERL} docbook-grammars.pl options acl > ${top_srcdir}/doc/arm/acl.grammar.xml
-	${PERL} docbook-grammars.pl options controls > ${top_srcdir}/doc/arm/controls.grammar.xml
-	${PERL} docbook-grammars.pl options key > ${top_srcdir}/doc/arm/key.grammar.xml
-	${PERL} docbook-grammars.pl options logging > ${top_srcdir}/doc/arm/logging.grammar.xml
-	${PERL} docbook-grammars.pl options masters > ${top_srcdir}/doc/arm/masters.grammar.xml
-	${PERL} docbook-grammars.pl options options > ${top_srcdir}/doc/arm/options.grammar.xml
-	${PERL} docbook-grammars.pl options server > ${top_srcdir}/doc/arm/server.grammar.xml
-	${PERL} docbook-grammars.pl options statistics-channels > ${top_srcdir}/doc/arm/statistics-channels.grammar.xml
-	${PERL} docbook-grammars.pl options trusted-keys > ${top_srcdir}/doc/arm/trusted-keys.grammar.xml
-	${PERL} docbook-grammars.pl options managed-keys > ${top_srcdir}/doc/arm/managed-keys.grammar.xml
+	${PERL} docbook-grammars.pl options.active acl > ${top_srcdir}/doc/arm/acl.grammar.xml
+	${PERL} docbook-grammars.pl options.active controls > ${top_srcdir}/doc/arm/controls.grammar.xml
+	${PERL} docbook-grammars.pl options.active key > ${top_srcdir}/doc/arm/key.grammar.xml
+	${PERL} docbook-grammars.pl options.active logging > ${top_srcdir}/doc/arm/logging.grammar.xml
+	${PERL} docbook-grammars.pl options.active masters > ${top_srcdir}/doc/arm/masters.grammar.xml
+	${PERL} docbook-grammars.pl options.active options > ${top_srcdir}/doc/arm/options.grammar.xml
+	${PERL} docbook-grammars.pl options.active server > ${top_srcdir}/doc/arm/server.grammar.xml
+	${PERL} docbook-grammars.pl options.active statistics-channels > ${top_srcdir}/doc/arm/statistics-channels.grammar.xml
+	${PERL} docbook-grammars.pl options.active trust-anchors > ${top_srcdir}/doc/arm/trust-anchors.grammar.xml
+	${PERL} docbook-grammars.pl options.active managed-keys > ${top_srcdir}/doc/arm/managed-keys.grammar.xml
+	${PERL} docbook-grammars.pl options.active trusted-keys > ${top_srcdir}/doc/arm/trusted-keys.grammar.xml

@@ -176,7 +176,7 @@ ck_soa() {
     done
 }
 
-# (re)load the reponse policy zones with the rules in the file $TEST_FILE
+# (re)load the response policy zones with the rules in the file $TEST_FILE
 load_db () {
     if test -n "$TEST_FILE"; then
         copy_setports $TEST_FILE tmp
@@ -219,6 +219,7 @@ restart () {
     $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz ns$1
     load_db
     dnsrps_loaded
+    sleep 1
 }
 
 # $1=server and irrelevant args
@@ -432,6 +433,24 @@ EOF
   sleep 2
 }
 
+#
+# generate prototype NXDOMAIN response to compare against.
+#
+make_proto_nxdomain() {
+  digcmd nonexistent @$ns2 >proto.nxdomain || return 1
+  grep "status: NXDOMAIN" proto.nxdomain >/dev/null || return 1
+  return 0
+}
+
+#
+# generate prototype NODATA response to compare against.
+#
+make_proto_nodata() {
+  digcmd txt-only.tld2 @$ns2 >proto.nodata || return 1
+  grep "status: NOERROR" proto.nodata >/dev/null || return 1
+  return 0
+}
+
 for mode in native dnsrps; do
   status=0
   case ${mode} in
@@ -465,13 +484,14 @@ for mode in native dnsrps; do
     else
       echo_i "running DNSRPS sub-test"
       $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz
+      sleep 3
     fi
     ;;
   esac
 
   # make prototype files to check against rewritten results
-  digcmd nonexistent @$ns2 >proto.nxdomain
-  digcmd txt-only.tld2 @$ns2 >proto.nodata
+  retry_quiet 10 make_proto_nxdomain
+  retry_quiet 10 make_proto_nodata
 
   start_group "QNAME rewrites" test1
   nochange .					# 1 do not crash or rewrite root
@@ -566,7 +586,7 @@ EOF
   rndc_reload ns2 $ns2 bl.tld2
   ck_soa 2 bl.tld2 $ns3
   nochange a7-1.tld2				# 19 PASSTHRU
-  # ensure that a clock tick has occured so that named will do the reload
+  # ensure that a clock tick has occurred so that named will do the reload
   sleep 1
   cp ns2/blv3.tld2.db.in ns2/bl.tld2.db
   rndc_reload ns2 $ns2 bl.tld2
@@ -867,7 +887,7 @@ EOF
     grep "fast-expire/IN: response-policy zone expired" ns3/named.run > /dev/null || setret "failed"
   fi
 
-  # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 senarios.
+  # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 scenarios.
   for label in a-only no-a-no-aaaa a-plus-aaaa
   do
     for type in AAAA A

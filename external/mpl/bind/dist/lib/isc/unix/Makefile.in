@@ -15,14 +15,17 @@ CINCLUDES =	-I${srcdir}/include \
 		-I${srcdir}/../pthreads/include \
 		-I../include \
 		-I${srcdir}/../include \
-		-I${srcdir}/.. @OPENSSL_INCLUDES@
+		-I${srcdir}/.. \
+		${OPENSSL_CFLAGS} \
+		${JSON_C_CFLAGS} \
+		${LIBXML2_CFLAGS}
 
 CDEFINES =
 CWARNINGS =
 
 # Alphabetically
 OBJS =		pk11_api.@O@ \
-		app.@O@ dir.@O@ errno.@O@ errno2result.@O@ \
+		dir.@O@ errno.@O@ errno2result.@O@ \
 		file.@O@ fsaccess.@O@ interfaceiter.@O@ \
 		meminfo.@O@ \
 		net.@O@ os.@O@ resource.@O@ socket.@O@ stdio.@O@ stdtime.@O@ \
@@ -30,7 +33,7 @@ OBJS =		pk11_api.@O@ \
 
 # Alphabetically
 SRCS =		pk11_api.c \
-		app.c dir.c errno.c errno2result.c \
+		dir.c errno.c errno2result.c \
 		file.c fsaccess.c interfaceiter.c meminfo.c \
 		net.c os.c resource.c socket.c stdio.c stdtime.c \
 		syslog.c time.c

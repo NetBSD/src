@@ -9,18 +9,21 @@
 # information regarding copyright ownership.
 ############################################################################
 
+import sys
+
 try:
     import yaml
-except:
+except (ModuleNotFoundError, ImportError):
     print("No python yaml module, skipping")
-    exit(1)
+    sys.exit(1)
 
 import subprocess
 import pprint
-import sys
 
-DNSTAP_READ=sys.argv[1]
-DATAFILE=sys.argv[2]
+DNSTAP_READ = sys.argv[1]
+DATAFILE = sys.argv[2]
+ARGS = [DNSTAP_READ, '-y', DATAFILE]
 
-f = subprocess.Popen([DNSTAP_READ, '-y', DATAFILE], stdout=subprocess.PIPE)
-pprint.pprint([l for l in yaml.load_all(f.stdout)])
+with subprocess.Popen(ARGS, stdout=subprocess.PIPE) as f:
+    for l in yaml.load_all(f.stdout):
+        pprint.pprint(l)

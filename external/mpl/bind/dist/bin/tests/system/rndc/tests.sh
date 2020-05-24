@@ -537,10 +537,32 @@ mv ns4/named.conf ns4/named.conf.save
 echo "error error error" >> ns4/named.conf
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf reconfig > rndc.out.1.test$n 2>&1 && ret=1
 grep "rndc: 'reconfig' failed: unexpected token" rndc.out.1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check rndc status reports failure ($n)"
+ret=0
+$RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf status > rndc.out.1.test$n 2>&1 || ret=1
+grep "reload/reconfig failed" rndc.out.1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "restore working config ($n)"
+ret=0
 mv ns4/named.conf.save ns4/named.conf
 sleep 1
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf reconfig > /dev/null || ret=1
 sleep 1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check 'rndc status' 'reload/reconfig failure' is cleared after successful reload/reconfig ($n)"
+ret=0
+$RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf status > rndc.out.1.test$n 2>&1 || ret=1
+grep "reload/reconfig failed" rndc.out.1.test$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

@@ -23,6 +23,7 @@ zone <string> [ <class> ] {
 	dnskey-sig-validity <integer>;
 	dnssec-dnskey-kskonly <boolean>;
 	dnssec-loadkeys-interval <integer>;
+	dnssec-policy <string>;
 	dnssec-secure-to-insecure <boolean>;
 	dnssec-update-mode ( maintain | no-resign );
 	file <quoted_string>;
@@ -38,13 +39,12 @@ zone <string> [ <class> ] {
 	max-records <integer>;
 	max-transfer-idle-out <integer>;
 	max-transfer-time-out <integer>;
-	max-zone-ttl ( unlimited | <ttlval> );
+	max-zone-ttl ( unlimited | <duration> );
 	notify ( explicit | master-only | <boolean> );
 	notify-delay <integer>;
 	notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
 	notify-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
 	notify-to-soa <boolean>;
-	nsec3-test-zone <boolean>; // test only
 	serial-update-method ( date | increment | unixtime );
 	sig-signing-nodes <integer>;
 	sig-signing-signatures <integer>;

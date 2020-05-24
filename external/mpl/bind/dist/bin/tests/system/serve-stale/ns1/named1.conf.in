@@ -30,6 +30,7 @@ options {
 	max-stale-ttl 3600;
 	stale-answer-ttl 2;
 	stale-answer-enable yes;
+	servfail-ttl 0;
 };
 
 zone "." {

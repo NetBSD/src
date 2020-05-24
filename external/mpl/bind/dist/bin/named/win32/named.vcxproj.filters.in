@@ -41,11 +41,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClCompile Include="..\geoip.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-@END GEOIPLEGACY
     <ClCompile Include="..\log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -92,11 +87,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClInclude Include="..\include\named\geoip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-@END GEOIPLEGACY
     <ClInclude Include="..\include\named\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>

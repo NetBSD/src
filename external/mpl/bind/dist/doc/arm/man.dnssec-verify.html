@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,7 @@
        [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>]
        [<code class="option">-I <em class="replaceable"><code>input-format</code></em></code>]
        [<code class="option">-o <em class="replaceable"><code>origin</code></em></code>]
+       [<code class="option">-q</code>]
        [<code class="option">-v <em class="replaceable"><code>level</code></em></code>]
        [<code class="option">-V</code>]
        [<code class="option">-x</code>]
@@ -130,6 +131,17 @@
 	    Prints version information.
 	  </p>
         </dd>
+<dt><span class="term">-q</span></dt>
+<dd>
+          <p>
+	    Quiet mode: Suppresses output.  Without this option, when
+	    <span class="command"><strong>dnssec-verify</strong></span> is run it will print to
+	    standard output the number of keys in use, the algorithms
+	    used to verify the zone was signed correctly and other
+	    status information.  With it, all non-error output is
+	    suppressed, and only the exit code will indicate success.
+          </p>
+        </dd>
 <dt><span class="term">-x</span></dt>
 <dd>
           <p>
@@ -202,6 +214,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

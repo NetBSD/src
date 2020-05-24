@@ -11,7 +11,7 @@
 
 <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
   <para>
-    BIND 9.14 is a stable branch of BIND.
+    BIND 9.16 is a stable branch of BIND.
     This document summarizes significant changes since the last
     production release on that branch.
   </para>

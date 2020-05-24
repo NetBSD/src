@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.c,v 1.1.1.2 2019/11/24 19:58:06 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.c,v 1.1.1.3 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef RDATA_GENERIC_AMTRELAY_260_C
 #define RDATA_GENERIC_AMTRELAY_260_C
@@ -63,8 +62,9 @@ fromtext_amtrelay(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0x7fU)
+	if (token.value.as_ulong > 0x7fU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong | (discovery << 7), target));
 	gateway = token.value.as_ulong;
 
@@ -136,8 +136,9 @@ totext_amtrelay(ARGS_TOTEXT) {
 	REQUIRE(rdata->type == dns_rdatatype_amtrelay);
 	REQUIRE(rdata->length >= 2);
 
-	if ((rdata->data[1] & 0x7f) > 3U)
+	if ((rdata->data[1] & 0x7f) > 3U) {
 		return (ISC_R_NOTIMPLEMENTED);
+	}
 
 	/*
 	 * Precedence.
@@ -196,8 +197,9 @@ fromwire_amtrelay(ARGS_FROMWIRE) {
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
 	isc_buffer_activeregion(source, &region);
-	if (region.length < 2)
+	if (region.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	switch (region.base[1] & 0x7f) {
 	case 0:
@@ -282,7 +284,7 @@ fromstruct_amtrelay(ARGS_FROMSTRUCT) {
 	n = (amtrelay->discovery ? 0x80 : 0) | amtrelay->gateway_type;
 	RETERR(uint8_tobuffer(n, target));
 
-	switch  (amtrelay->gateway_type) {
+	switch (amtrelay->gateway_type) {
 	case 0:
 		return (ISC_R_SUCCESS);
 
@@ -375,21 +377,23 @@ freestruct_amtrelay(ARGS_FREESTRUCT) {
 	REQUIRE(amtrelay != NULL);
 	REQUIRE(amtrelay->common.rdtype == dns_rdatatype_amtrelay);
 
-	if (amtrelay->mctx == NULL)
+	if (amtrelay->mctx == NULL) {
 		return;
+	}
 
-	if (amtrelay->gateway_type == 3)
+	if (amtrelay->gateway_type == 3) {
 		dns_name_free(&amtrelay->gateway, amtrelay->mctx);
+	}
 
-	if (amtrelay->data != NULL)
+	if (amtrelay->data != NULL) {
 		isc_mem_free(amtrelay->mctx, amtrelay->data);
+	}
 
 	amtrelay->mctx = NULL;
 }
 
 static inline isc_result_t
 additionaldata_amtrelay(ARGS_ADDLDATA) {
-
 	REQUIRE(rdata->type == dns_rdatatype_amtrelay);
 
 	UNUSED(rdata);
@@ -411,7 +415,6 @@ digest_amtrelay(ARGS_DIGEST) {
 
 static inline bool
 checkowner_amtrelay(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_amtrelay);
 
 	UNUSED(name);
@@ -424,7 +427,6 @@ checkowner_amtrelay(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_amtrelay(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_amtrelay);
 
 	UNUSED(rdata);
@@ -451,8 +453,9 @@ casecompare_amtrelay(ARGS_COMPARE) {
 	dns_rdata_toregion(rdata2, &region2);
 
 	if (memcmp(region1.base, region2.base, 2) != 0 ||
-	    (region1.base[1] & 0x7f) != 3)
+	    (region1.base[1] & 0x7f) != 3) {
 		return (isc_region_compare(&region1, &region2));
+	}
 
 	dns_name_init(&name1, NULL);
 	dns_name_init(&name2, NULL);
@@ -466,4 +469,4 @@ casecompare_amtrelay(ARGS_COMPARE) {
 	return (dns_name_rdatacompare(&name1, &name2));
 }
 
-#endif	/* RDATA_GENERIC_AMTRELAY_260_C */
+#endif /* RDATA_GENERIC_AMTRELAY_260_C */

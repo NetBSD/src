@@ -12,5 +12,4 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
 copy_setports ns1/named1.conf.in ns1/named.conf

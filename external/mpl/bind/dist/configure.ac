@@ -7,14 +7,29 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-AC_INIT(BIND, [9.14], [info@isc.org], [], [https://www.isc.org/downloads/BIND/])
+AC_INIT(BIND, [9.16], [info@isc.org], [], [https://www.isc.org/downloads/])
 AC_PREREQ([2.60])
+
+#
+# Enable maintainer mode by default, but allow to disable it in the CI
+#
+AM_MAINTAINER_MODE([enable])
 
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_HOST
+
+#
+# Enable system extensions to C and POSIX
+#
 AC_USE_SYSTEM_EXTENSIONS
+
+#
+# Enable large file support
+#
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
 
 LFS_CFLAGS=`getconf LFS_CFLAGS 2>/dev/null`
 LFS_LDFLAGS=`getconf LFS_LDFLAGS 2>/dev/null`
@@ -46,18 +61,8 @@ AC_SUBST(BACKTRACECFLAGS)
 #
 
 PKG_PROG_PKG_CONFIG
-
-# Warn if the user specified libbind, which is now deprecated
-AC_ARG_ENABLE(libbind, AS_HELP_STRING([--enable-libbind], [deprecated]))
-
-case "$enable_libbind" in
-	yes)
-		AC_MSG_ERROR(['libbind' is no longer part of the BIND 9 distribution.
-It is available from http://www.isc.org as a separate download.])
-		;;
-	no|'')
-		;;
-esac
+AS_IF([test -z "$PKG_CONFIG"],
+      [AC_MSG_ERROR([The pkg-config script could not be found or is too old.])])
 
 AC_ARG_ENABLE(buffer_useinline,
 	      AS_HELP_STRING([--enable-buffer-useinline],
@@ -70,33 +75,32 @@ AC_ARG_ENABLE(buffer_useinline,
 	      fi,
 	      AC_DEFINE([ISC_BUFFER_USEINLINE], [1]))
 
-AC_ARG_ENABLE(warn_shadow,
-	      AS_HELP_STRING([--enable-warn-shadow],
-			     [turn on -Wshadow when compiling]))
+AC_ARG_ENABLE([warn_shadow],
+	      [AS_HELP_STRING([--enable-warn-shadow],
+			      [turn on -Wshadow when compiling])])
 
-AC_ARG_ENABLE(warn_error,
-	      AS_HELP_STRING([--enable-warn-error],
-			    [turn on -Werror when compiling]))
+AC_ARG_ENABLE([warn_error],
+	      [AS_HELP_STRING([--enable-warn-error],
+			      [turn on -Werror when compiling])])
 
-AC_ARG_ENABLE(developer,
-	      AS_HELP_STRING([--enable-developer],
-			     [enable developer build settings]))
+AC_ARG_ENABLE([developer],
+	      [AS_HELP_STRING([--enable-developer],
+			      [enable developer build settings])])
+
 XTARGETS=
-case "$enable_developer" in
-yes)
-	STD_CDEFINES="$STD_CDEFINES -DISC_MEM_DEFAULTFILL=1 -DISC_LIST_CHECKINIT=1"
-	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
-	test "${enable_querytrace+set}" = set || enable_querytrace=yes
-	test "${with_cmocka+set}" = set || with_cmocka=yes
-	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
-	test "${enable_symtable+set}" = set || enable_symtable=all
-	test "${enable_warn_error+set}" = set || enable_warn_error=yes
-	test "${enable_warn_shadow+set}" = set || enable_warn_shadow=yes
-	test "${with_zlib+set}" = set || with_zlib=yes
-	XTARGETS='${XTARGETS}'
-	;;
-esac
-AC_SUBST(XTARGETS)
+AS_IF([test "$enable_developer" = "yes"],
+      [STD_CDEFINES="$STD_CDEFINES -DISC_MEM_DEFAULTFILL=1 -DISC_LIST_CHECKINIT=1"
+       test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
+       test "${enable_querytrace+set}" = set || enable_querytrace=yes
+       test "${with_cmocka+set}" = set || with_cmocka=yes
+       test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
+       test "${enable_symtable+set}" = set || enable_symtable=all
+       test "${enable_warn_error+set}" = set || enable_warn_error=yes
+       test "${enable_warn_shadow+set}" = set || enable_warn_shadow=yes
+       test "${with_zlib+set}" = set || with_zlib=yes
+       XTARGETS='${XTARGETS}'
+       ])
+AC_SUBST([XTARGETS])
 
 AC_ARG_ENABLE([fuzzing],
 	      [AS_HELP_STRING([--enable-fuzzing=<afl|libfuzzer>],
@@ -130,6 +134,27 @@ AS_IF([test "$enable_fuzzing" = "afl"],
 			 [AC_MSG_ERROR([set CC=afl-<gcc|clang> when --enable-fuzzing=afl is used])])
       ])
 
+AC_ARG_ENABLE(mutex_atomics,
+	      AS_HELP_STRING([--enable-mutex-atomics],
+		             [emulate atomics by mutex-locked variables, useful for debugging
+				[default=no]]),
+	      [],
+	      [enable_mutex_atomics=no])
+
+AC_MSG_CHECKING([whether to emulate atomics with mutexes])
+case "$enable_mutex_atomics" in
+yes)
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(ISC_MUTEX_ATOMICS, 1, [Define to emulate atomic variables with mutexes.])
+        ;;
+no)
+        AC_MSG_RESULT(no)
+        ;;
+*)
+        AC_MSG_ERROR("--enable-mutex-atomics requires yes or no")
+        ;;
+esac
+
 #
 # Make very sure that these are the first files processed by
 # config.status, since we use the processed output as the input for
@@ -158,26 +183,6 @@ which ar resides, or set AR in the environment with the full path to ar.
 esac
 
 #
-# Etags.
-#
-AC_PATH_PROGS(ETAGS, etags emacs-etags)
-
-#
-# Some systems, e.g. RH7, have the Exuberant Ctags etags instead of
-# GNU emacs etags, and it requires the -L flag.
-#
-if test "X$ETAGS" != "X"; then
-	AC_MSG_CHECKING(for Exuberant Ctags etags)
-	if $ETAGS --version 2>&1 | grep 'Exuberant Ctags' >/dev/null 2>&1; then
-		AC_MSG_RESULT(yes)
-		ETAGS="$ETAGS -L"
-	else
-		AC_MSG_RESULT(no)
-	fi
-fi
-AC_SUBST(ETAGS)
-
-#
 # Perl is optional; it is used only by some of the system test scripts.
 # Note: the backtrace feature (see below) uses perl to build the symbol table,
 # but it still compiles without perl, in which case an empty table will be used.
@@ -199,7 +204,12 @@ except: exit(1)'
 testply='try: import ply
 except: exit(1)'
 
+testsetup='try: from distutils.core import setup
+except: exit(1)'
+
 default_with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+
+AC_ARG_VAR([PYTHON], [path to python executable])
 
 AC_ARG_WITH([python],
 	    AS_HELP_STRING([--with-python=PATH],
@@ -215,6 +225,7 @@ AS_IF([test "$with_python" = "yes"],
 
 AS_IF([test "$with_python" = "no"],
       [AC_MSG_CHECKING([for Python support])
+       unset PYTHON
        AC_MSG_RESULT([disabled])],
       [for p in $with_python
        do
@@ -247,6 +258,13 @@ AS_IF([test "$with_python" = "no"],
 
 	 AC_MSG_CHECKING([Python module 'ply'])
 	 AS_IF(["$PYTHON" -c "$testply" 2>/dev/null],
+	       [AC_MSG_RESULT([yes])],
+	       [AC_MSG_RESULT([no])
+		unset PYTHON
+		continue])
+
+	 AC_MSG_CHECKING([Python module 'distutils.core setup'])
+	 AS_IF(["$PYTHON" -c "$testsetup" 2>/dev/null],
 	       [AC_MSG_RESULT([yes])],
 	       [AC_MSG_RESULT([no])
 		unset PYTHON
@@ -290,39 +308,8 @@ AC_SUBST(PYTHON_INSTALL_DIR)
 AC_SUBST(PYTHON_INSTALL_LIB)
 
 #
-# Special processing of paths depending on whether --prefix,
-# --sysconfdir or --localstatedir arguments were given.  What's
-# desired is some compatibility with the way previous versions
-# of BIND built; they defaulted to /usr/local for most parts of
-# the installation, but named.boot/named.conf was in /etc
-# and named.pid was in /var/run.
+# expanded_sysconfdir is needed for replacement in the python utilities
 #
-# So ... if none of --prefix, --sysconfdir or --localstatedir are
-# specified, set things up that way.  If --prefix is given, use
-# it for sysconfdir and localstatedir the way configure normally
-# would.  To change the prefix for everything but leave named.conf
-# in /etc or named.pid in /var/run, then do this the usual configure way:
-# ./configure --prefix=/somewhere --sysconfdir=/etc
-# ./configure --prefix=/somewhere --localstatedir=/var
-#
-# To put named.conf and named.pid in /usr/local with everything else,
-# set the prefix explicitly to /usr/local even though that's the default:
-# ./configure --prefix=/usr/local
-#
-case "$prefix" in
-	NONE)
-		case "$sysconfdir" in
-			'${prefix}/etc')
-				sysconfdir=/etc
-				;;
-		esac
-		case "$localstatedir" in
-			'${prefix}/var')
-				localstatedir=/var
-				;;
-		esac
-		;;
-esac
 expanded_sysconfdir=`eval echo $sysconfdir`
 AC_SUBST(expanded_sysconfdir)
 
@@ -351,6 +338,12 @@ case "$INSTALL" in
 		INSTALL="$ac_dir/$ac_prog"
 		;;
 esac
+
+AC_PATH_PROGS([PYTEST], [pytest-3 pytest pytest-pypy], [])
+AS_IF([test -z "$PYTEST"],
+      [AC_MSG_WARN([pytest not found, some system tests will be skipped])])
+AC_SUBST([PYTEST])
+
 
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -404,7 +397,7 @@ AC_CHECK_HEADERS([threads.h],
 			     AC_DEFINE([HAVE_THREAD_LOCAL],[1],[Define if thread_local keyword is available])
 			     AC_DEFINE([HAVE_TLS],[1],[Define if Thread-Local Storage is available])
 			 ],[
-			     AC_MSG_RESULT([no])
+			     AC_MSG_ERROR([Thread Local Storage support required, update your toolchain to build BIND 9])
 			 ])
 		 ],[
 		     AC_MSG_CHECKING([for Thread-Local Storage using __thread])
@@ -420,7 +413,7 @@ AC_CHECK_HEADERS([threads.h],
 			     AC_DEFINE([HAVE___THREAD],[1],[Define if __thread keyword is available])
 			     AC_DEFINE([HAVE_TLS],[1],[Define if Thread-Local Storage is available])
 			 ],[
-			     AC_MSG_RESULT([no])
+			     AC_MSG_ERROR([Thread Local Storage support required, update your toolchain to build BIND 9])
 			 ])
 		 ])
 
@@ -553,149 +546,65 @@ AC_C_BIGENDIAN
 #
 # GeoIP support?
 #
-geoip2_default="no"
-AC_ARG_WITH(geoip,
-	    AS_HELP_STRING([--with-geoip=PATH],
-			   [Build with legacy GeoIP support (yes|no|path)]),
-                           [
-                            use_geoip="$withval"
-                            geoip2_default="no"
-                           ],
-                           [use_geoip="no"])
+# Should be on by default if libmaxminddb exists.
+#
 AC_ARG_WITH([geoip2],
-	    [AS_HELP_STRING([--with-geoip2=PATH],
-			    [Build with MaxMind GeoIP2 support (auto|yes|no|path) [default=no]])],
-	    [], with_geoip2="$geoip2_default")
+	    [AS_HELP_STRING([--with-geoip2],
+			    [deprecated, use --with-maxminddb])],
+	    [AC_MSG_WARN([--with-geoip2 is DEPRECATED and will be removed in a future release, use --with-maxminddb instead])],
+	    [with_geoip2="auto"])
 
-# specifying both --with-geoip and --with-geoip2 is an error.
-AS_IF([test "no" != "$with_geoip2" && test "no" != "$use_geoip"],
-      [AC_MSG_ERROR([--with-geoip and --with-geoip2 are incompatible])])
+AC_ARG_ENABLE([geoip],
+	      [AS_HELP_STRING([--disable-geoip],
+			      [support GeoIP2 geolocation ACLs if available [default=yes]])],
+	      [], [enable_geoip="yes"])
+
+AC_ARG_WITH([maxminddb],
+	    [AS_HELP_STRING([--with-maxminddb=PATH],
+			    [Build with MaxMind GeoIP2 support (auto|yes|no|path) [default=auto]])],
+	    [], [with_maxminddb="$with_geoip2"])
 
 GEOIP2LINKSRCS=
 GEOIP2LINKOBJS=
-AS_CASE([$with_geoip2],
-	[no],[],
-	[auto],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
-				      [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
-				       PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
-				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
-				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
-				      ],[:])],
-	[yes],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
-				      [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
-				       PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
-				       GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
-				       GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
-				      ])],
-	[ # default
-	    AX_SAVE_FLAGS([geoip2])
-	    MAXMINDDB_CFLAGS="-I$with_geoip2/include"
-	    MAXMINDDB_LIBS="-L$with_geoip2/lib"
-	    CFLAGS="$CFLAGS $MAXMINDDB_CFLAGS"
-	    LDFLAGS="$LDFLAGS $MAXMINDDB_LIBS"
-	    AC_SEARCH_LIBS([MMDB_open], [maxminddb],
-			   [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
-			    GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
-			    GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
-			    MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_mmdb_open"
-			    AC_MSG_NOTICE([GeoIP2 default database path set to $with_geoip2/share/GeoIP])
-			    AS_VAR_COPY([MAXMINDDB_PREFIX], [$with_geoip2])
-			   ],
-			   [AC_MSG_ERROR([GeoIP2 requested, but libmaxminddb not found])])
-	    AX_RESTORE_FLAGS([maxminddb])
-	])
-AC_ARG_VAR([MAXMINDDB_PREFIX], [value of prefix for MAXMINDDB, overriding pkg-config])
+AS_IF([test "$enable_geoip" = "yes"],
+      [AS_CASE([$with_maxminddb],
+	       [no],[AC_MSG_ERROR([Use '--disable-geoip' to disable the GeoIP])],
+	       [auto],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
+					 [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+					  PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
+					  GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+					  GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+					 ],[:])],
+	       [yes],[PKG_CHECK_MODULES([MAXMINDDB], [libmaxminddb],
+					[AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+					 PKG_CHECK_VAR([MAXMINDDB_PREFIX], [libmaxminddb], [prefix], [], [AC_MSG_ERROR([libmaxminddb prefix not found in pkg-config; set MAXMINDDB_PREFIX in the environment])])
+					 GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+					 GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+					])],
+	       [ # default
+		   AX_SAVE_FLAGS([maxminddb])
+		   MAXMINDDB_CFLAGS="-I$with_maxminddb/include"
+		   MAXMINDDB_LIBS="-L$with_maxminddb/lib"
+		   CFLAGS="$CFLAGS $MAXMINDDB_CFLAGS"
+		   LDFLAGS="$LDFLAGS $MAXMINDDB_LIBS"
+		   AC_SEARCH_LIBS([MMDB_open], [maxminddb],
+				  [AC_DEFINE([HAVE_GEOIP2], [1], [Build with GeoIP2 support])
+				   GEOIP2LINKSRCS='${GEOIP2LINKSRCS}'
+				   GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
+				   MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_mmdb_open"
+				   AC_MSG_NOTICE([GeoIP2 default database path set to $with_maxminddb/share/GeoIP])
+				   AS_VAR_COPY([MAXMINDDB_PREFIX], [$with_maxminddb])
+				  ],
+				  [AC_MSG_ERROR([GeoIP2 requested, but libmaxminddb not found])])
+		   AX_RESTORE_FLAGS([maxminddb])
+	       ])
+       AC_ARG_VAR([MAXMINDDB_PREFIX], [value of prefix for MAXMINDDB, overriding pkg-config])
+])
+
 AC_SUBST([MAXMINDDB_CFLAGS])
 AC_SUBST([MAXMINDDB_LIBS])
 AC_SUBST([GEOIP2LINKSRCS])
 AC_SUBST([GEOIP2LINKOBJS])
-
-GEOIPLINKSRCS=
-GEOIPLINKOBJS=
-if test "yes" = "$use_geoip"
-then
-	for d in /usr /usr/local /opt/local
-	do
-		if test -f $d/include/GeoIP.h
-		then
-			use_geoip=$d
-			break
-		fi
-	done
-fi
-
-case "$use_geoip" in
-	no|'')
-		;;
-	*)
-		if test -d "$use_geoip" -o -L "$use_geoip"
-		then
-			CFLAGS="$CFLAGS -I$use_geoip/include"
-			CPPFLAGS="$CPPFLAGS -I$use_geoip/include"
-			LIBS="$LIBS -L$use_geoip/lib"
-			case "$host_os" in
-				netbsd*|openbsd*|solaris*)
-					LIBS="$LIBS -Wl,-rpath=$use_geoip/lib"
-					;;
-			esac
-		elif test "yes" = "$use_geoip"
-		then
-			AC_MSG_ERROR([GeoIP path not found])
-		else
-			AC_MSG_ERROR([GeoIP path $use_geoip does not exist])
-		fi
-		AC_CHECK_HEADER(GeoIP.h, [],
-			[AC_MSG_ERROR([GeoIP header file not found])]
-		)
-		AC_SEARCH_LIBS(GeoIP_id_by_addr_gl, GeoIP, [],
-			[AC_MSG_ERROR([suitable GeoIP library not found])]
-		)
-		AC_SEARCH_LIBS(fabsf, m, [],
-			[AC_MSG_ERROR([Math library not found])]
-		)
-		AC_DEFINE(HAVE_GEOIP, 1, Build with GeoIP support)
-		GEOIPLINKSRCS='${GEOIPLINKSRCS}'
-		GEOIPLINKOBJS='${GEOIPLINKOBJS}'
-		AC_MSG_CHECKING([for GeoIP support])
-		AC_MSG_RESULT([yes])
-
-		AC_MSG_CHECKING([for GeoIP Country IPv6 support])
-		AC_COMPILE_IFELSE(
-			[AC_LANG_PROGRAM([
-				#include <GeoIP.h>
-				#include <netinet/in.h>
-			], [
-				struct in6_addr in6;
-				GeoIP_country_name_by_ipnum_v6(NULL, in6);
-			])],
-			[
-				AC_MSG_RESULT([yes])
-				AC_DEFINE(HAVE_GEOIP_V6, 1, Build with GeoIP Country IPv6 support)
-			],
-			[AC_MSG_RESULT([no])]
-		)
-
-		AC_MSG_CHECKING([for GeoIP City IPv6 support])
-		AC_COMPILE_IFELSE(
-			[AC_LANG_PROGRAM([
-				#include <GeoIP.h>
-				#include <GeoIPCity.h>
-				#include <netinet/in.h>
-			], [
-				struct in6_addr in6;
-				int i = GEOIP_CITY_EDITION_REV0_V6;
-				GeoIP_record_by_ipnum_v6(NULL, in6);
-			])],
-			[
-				AC_MSG_RESULT([yes])
-				AC_DEFINE(HAVE_GEOIP_CITY_V6, 1, Build with GeoIP City IPv6 support)
-			],
-			[AC_MSG_RESULT([no])]
-		)
-		;;
-esac
-AC_SUBST(GEOIPLINKSRCS)
-AC_SUBST(GEOIPLINKOBJS)
 
 #
 # Do we have arc4random(), etc ?
@@ -708,10 +617,7 @@ LIBS="$PTHREAD_LIBS $LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 CC="$PTHREAD_CC"
 
-#
-# We'd like to use sigwait() too
-#
-AC_CHECK_FUNCS([sigwait pthread_attr_getstacksize pthread_attr_setstacksize])
+AC_CHECK_FUNCS([pthread_attr_getstacksize pthread_attr_setstacksize])
 
 AC_ARG_WITH([locktype],
 	    AS_HELP_STRING([--with-locktype=ARG],
@@ -756,6 +662,19 @@ AC_CHECK_FUNCS([pthread_setaffinity_np cpuset_setaffinity processor_bind sched_s
 AC_CHECK_FUNCS([pthread_setname_np pthread_set_name_np])
 AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
 
+# libuv
+AC_MSG_CHECKING(for libuv)
+PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0], [],
+		  [AC_MSG_ERROR([libuv not found])])
+AX_SAVE_FLAGS([libuv])
+
+CFLAGS="$CFLAGS $LIBUV_CFLAGS"
+LIBS="$LIBS $LIBUV_LIBS"
+
+# Those functions are only provided in newer versions of libuv, we'll be emulating them
+# for now
+AC_CHECK_FUNCS([uv_handle_get_data uv_handle_set_data uv_import])
+
 #
 # flockfile is usually provided by pthreads
 #
@@ -784,6 +703,7 @@ case $use_libtool in
 		LIBTOOL_MODE_LINK='--mode=link'
 		LIBTOOL_MODE_UNINSTALL='--mode=uninstall'
 		INSTALL_LIBRARY='${INSTALL_PROGRAM}'
+		AC_DEFINE([USE_LIBTOOL],[1],[Define if libtool is used for compilation])
 		;;
 	*)
 		AC_MSG_RESULT(no)
@@ -802,24 +722,31 @@ esac
 AC_SUBST(INSTALL_LIBRARY)
 
 #
-# If PIC is disabled, shared libraries must also be
+# Do we want to use pthread rwlock?
 #
-AS_IF([test "$pic_mode" = "no"],
-      [enable_shared="no"])
+AC_ARG_ENABLE([pthread_rwlock],
+	      [AS_HELP_STRING([--enable-pthread-rwlock],
+			      [use pthread rwlock instead of internal rwlock implementation])],
+	      [], [enable_pthread_rwlock=no])
+
+AS_IF([test "$enable_pthread_rwlock" = "yes"],
+      [AC_CHECK_FUNCS([pthread_rwlock_rdlock], [],
+		      [AC_MSG_ERROR([pthread_rwlock_rdlock requested but not found])])
+       AC_DEFINE([USE_PTHREAD_RWLOCK],[1],[Define if you want to use pthread rwlock implementation])
+      ])
 
 CRYPTO=OpenSSL
 
 #
-# was --with-openssl specified?
+# OpenSSL/LibreSSL is mandatory
 #
-AX_CHECK_OPENSSL([:],[AC_MSG_FAILURE([OpenSSL/LibreSSL not found])])
+PKG_CHECK_MODULES([OPENSSL], [libcrypto], [],
+		  [AX_CHECK_OPENSSL([:],[AC_MSG_FAILURE([OpenSSL/LibreSSL not found])])])
 
-save_CFLAGS="$CFLAGS"
-save_LIBS="$LIBS"
-save_LDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $OPENSSL_INCLUDES"
+AX_SAVE_FLAGS([openssl])
+
+CFLAGS="$CFLAGS $OPENSSL_CFLAGS"
 LIBS="$LIBS $OPENSSL_LIBS"
-LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
 
 AC_MSG_CHECKING([for OpenSSL >= 1.0.0 or LibreSSL])
 AC_COMPILE_IFELSE(
@@ -881,6 +808,19 @@ AC_COMPILE_IFELSE(
      AC_MSG_RESULT([yes])],
     [AC_MSG_RESULT([no])])
 
+AC_MSG_CHECKING([for SipHash support])
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <openssl/evp.h>
+		       #include <openssl/opensslv.h>]],
+		     [[#if OPENSSL_VERSION_NUMBER < 0x10101010L
+		       #error OpenSSL >= 1.1.1a required for working SipHash initialization
+		       #endif
+		       EVP_PKEY *key = EVP_PKEY_new_raw_private_key(
+			   EVP_PKEY_SIPHASH, NULL, NULL, 0);]])],
+    [AC_DEFINE([HAVE_OPENSSL_SIPHASH], [1], [define if OpenSSL supports SipHash])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
+
 #
 # Check for OpenSSL SHA-1 support
 #
@@ -919,24 +859,10 @@ AS_CASE([$enable_fips_mode],
 			       [], [AC_MSG_FAILURE([OpenSSL FIPS mode requested but not available.])])],
 	[no], [AC_MSG_RESULT([no])])
 
-CFLAGS="$save_CFLAGS"
-LIBS="$save_LIBS"
-LDFLAGS="$save_LDFLAGS"
+AX_RESTORE_FLAGS([openssl])
 
-AC_SUBST([OPENSSL_INCLUDES])
+AC_SUBST([OPENSSL_CFLAGS])
 AC_SUBST([OPENSSL_LIBS])
-AC_SUBST([OPENSSL_LDFLAGS])
-
-#
-# Client Cookie algorithm choice
-#
-AC_ARG_WITH([cc-alg],
-	    [AS_HELP_STRING([--with-cc-alg=ALG], [deprecated])],
-	    [:], [with_cc_alg="siphash24"])
-
-AS_CASE([$with_cc_alg],
-	[siphash24],[:],
-	[AC_MSG_WARN([The Client Cookie is always SipHash 2-4 based])])
 
 PKCS11_TOOLS=
 PKCS11_TEST=
@@ -963,6 +889,7 @@ AS_CASE([$enable_native_pkcs11],
 AC_SUBST([PKCS11_TEST])
 AC_SUBST([PKCS11_TOOLS])
 
+AC_SUBST([CRYPTO])
 AS_CASE([$CRYPTO],
 	[pkcs11],[AC_DEFINE([USE_PKCS11], [1], [define if PKCS11 is used for Public-Key Cryptography])],
 	[AC_DEFINE([USE_OPENSSL], [1], [define if OpenSSL is used for Public-Key Cryptography])])
@@ -1350,203 +1277,66 @@ AC_SUBST(NZDTARGETS)
 #
 # was --with-libxml2 specified?
 #
-AC_MSG_CHECKING(for libxml2 library)
-AC_ARG_WITH(libxml2,
-	    AS_HELP_STRING([--with-libxml2[=PATH]],
-			   [build with libxml2 library [yes|no|path]]),
-    use_libxml2="$withval", use_libxml2="auto")
+AC_ARG_WITH([libxml2],
+	    [AS_HELP_STRING([--with-libxml2],
+			    [build with libxml2 library [yes|no|auto] (default is auto)])],
+	    [], [with_libxml2="auto"])
 
-case "$use_libxml2" in
-	no)
-		DST_LIBXML2_INC=""
-		;;
-	auto|yes)
-		case X`(xml2-config --version) 2>/dev/null` in
-		X2.[[6789]].*)
-			libxml2_libs=`xml2-config --libs`
-			libxml2_cflags=`xml2-config --cflags`
-			;;
-		*)
-			if test "yes" = "$use_libxml2" ; then
-				AC_MSG_RESULT(no)
-				AC_MSG_ERROR(required libxml2 version not available)
-			else
-				libxml2_libs=
-				libxml2_cflags=
-			fi
-			;;
-		esac
-		;;
-	*)
-		if test -f "$use_libxml2/bin/xml2-config" ; then
-			libxml2_libs=`$use_libxml2/bin/xml2-config --libs`
-			libxml2_cflags=`$use_libxml2/bin/xml2-config --cflags`
-		fi
-		;;
-esac
-
-if test "X$libxml2_libs" != "X"
-then
-	CFLAGS="$CFLAGS $libxml2_cflags"
-	LIBS="$LIBS $libxml2_libs"
-	#
-	# Sanity check xml2-config output.
-	#
-	AC_TRY_LINK([#include <libxml/xmlwriter.h>],
-		    [return(xmlTextWriterStartElement(NULL, NULL));],
-		    AC_MSG_RESULT(yes),
-		    AC_MSG_ERROR(xml2-config returns badness))
-	AC_DEFINE(HAVE_LIBXML2, 1, [Define if libxml2 was found])
-	XMLSTATS=1
-else
-	AC_MSG_RESULT(no)
-fi
-AC_SUBST(XMLSTATS)
+AS_CASE([$with_libxml2],
+	[no],[],
+	[auto],[PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.0],
+				  [AC_DEFINE([HAVE_LIBXML2], [1], [Use libxml2 library])],
+				  [:])],
+	[yes],[PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.0],
+				 [AC_DEFINE([HAVE_LIBXML2], [1], [Use libxml2 library])])],
+	[AC_MSG_ERROR([Specifying libxml2 installation path is not supported, adjust PKG_CONFIG_PATH instead])])
 
 #
-# was --with-libjson specified?
+# DEPRECATED
 #
-AC_MSG_CHECKING(for json library)
-AC_ARG_WITH(libjson,
-	    AS_HELP_STRING([--with-libjson[=PATH]],
-			   [build with libjson0 library [yes|no|path]]),
-	    use_libjson="$withval", use_libjson="auto")
-
-have_libjson=""
-have_libjson_c=""
-case "$use_libjson" in
-	no)
-		libjson_libs=""
-		;;
-	auto|yes)
-		for d in /usr /usr/local /opt/local
-		do
-			if test -f "${d}/include/json/json.h"
-			then
-				if test ${d} != /usr
-				then
-					libjson_cflags="-I ${d}/include"
-					LIBS="$LIBS -L${d}/lib"
-				fi
-				have_libjson="yes"
-			elif test -f "${d}/include/json-c/json.h"
-			then
-				if test ${d} != /usr
-				then
-					libjson_cflags="-I ${d}/include"
-					LIBS="$LIBS -L${d}/lib"
-				fi
-				have_libjson="yes"
-				have_libjson_c="yes"
-			fi
-		done
-		;;
-	*)
-		if test -f "${use_libjson}/include/json/json.h"
-		then
-			libjson_cflags="-I${use_libjson}/include"
-			LIBS="$LIBS -L${use_libjson}/lib"
-			have_libjson="yes"
-		elif test -f "${use_libjson}/include/json-c/json.h"
-		then
-			libjson_cflags="-I${use_libjson}/include"
-			LIBS="$LIBS -L${use_libjson}/lib"
-			have_libjson="yes"
-			have_libjson_c="yes"
-		else
-			AC_MSG_ERROR([$use_libjson/include/json{,-c}/json.h not found.])
-		fi
-		;;
-esac
-
-if test "X${have_libjson}" != "X"
-then
-	AC_MSG_RESULT(yes)
-	AC_SEARCH_LIBS([json_object_new_int64], [json json-c], [],
-		       [AC_MSG_ERROR([found libjson include but not library.])
-			have_libjson=""])
-elif test "X$use_libjson" = Xyes
-then
-	AC_MSG_ERROR([include/json{,-c}/json.h not found.])
-else
-	AC_MSG_RESULT(no)
-fi
-
-if test "X${have_libjson}" != "X"
-then
-	CFLAGS="$CFLAGS $libjson_cflags"
-	AC_DEFINE(HAVE_JSON, 1, [Define if libjson was found])
-	if test "X${have_libjson_c}" = Xyes
-	then
-		AC_DEFINE(HAVE_JSON_C, 1, [Define if json-c was found])
-	fi
-	JSONSTATS=1
-fi
-AC_SUBST(JSONSTATS)
+AC_ARG_WITH([libjson],
+	    [AS_HELP_STRING([--with-libjson],
+			    [deprecated, use --with-json-c])],
+	    [AC_MSG_WARN([--with-libjson is DEPRECATED and will be removed in a future release, use --with-json-c instead])],
+	    [with_libjson="detect"])
 
 #
-# was --with-zlib specified?
+# was --with-json-c specified?
 #
-AC_MSG_CHECKING(for zlib library)
-AC_ARG_WITH(zlib,
-	    AS_HELP_STRING([--with-zlib[=PATH]],
-			   [build with zlib for HTTP compression
-				[default=yes]]),
-	    with_zlib="$withval", with_zlib="auto")
+AC_ARG_WITH([json-c],
+	    [AS_HELP_STRING([--with-json-c],
+			    [build with json-c library [yes|no|detect] (default is detect)])],
+	    [], [with_json_c="$with_libjson"])
 
-have_zlib=""
-case "$with_zlib" in
-	no)
-		zlib_libs=""
-		;;
-	auto|yes)
-		for d in /usr /usr/local /opt/local
-		do
-			if test -f "${d}/include/zlib.h"
-			then
-				if test ${d} != /usr
-				then
-					zlib_cflags="-I ${d}/include"
-					LIBS="$LIBS -L${d}/lib"
-				fi
-				have_zlib="yes"
-			fi
-		done
-		;;
-	*)
-		if test -f "${with_zlib}/include/zlib.h"
-		then
-			zlib_cflags="-I${with_zlib}/include"
-			LIBS="$LIBS -L${with_zlib}/lib"
-			have_zlib="yes"
-		else
-			AC_MSG_ERROR([$with_zlib/include/zlib.h not found.])
-		fi
-		;;
-esac
+AS_CASE([$with_json_c],
+	[no],[],
+	[detect],[PKG_CHECK_MODULES([JSON_C], [json-c >= 0.11],
+				    [AC_DEFINE([HAVE_JSON_C], [1], [Use json-c library])],
+				    [:])],
+	[yes],[PKG_CHECK_MODULES([JSON_C], [json-c >= 0.11],
+				 [AC_DEFINE([HAVE_JSON_C], [1], [Use json-c library])])],
+	[AC_MSG_ERROR([Specifying json-c installation path is not supported, adjust PKG_CONFIG_PATH instead])]
+       )
 
-if test "X${have_zlib}" != "X"
-then
-	AC_MSG_RESULT(yes)
-	AC_SEARCH_LIBS([deflate], [z], [],
-		       [AC_MSG_ERROR([found zlib include but not library.])
-			have_zlib=""])
-elif test "X$with_zlib" = Xyes
-then
-	AC_MSG_ERROR([include/zlib.h not found.])
-else
-	AC_MSG_RESULT(no)
-fi
+AC_SUBST([JSON_C_CFLAGS])
+AC_SUBST([JSON_C_LIBS])
 
-ZLIB=
-if test "X${have_zlib}" != "X"
-then
-	CFLAGS="$CFLAGS $zlib_cflags"
-	AC_DEFINE(HAVE_ZLIB, 1, [Define if zlib was found])
-	ZLIB=1
-fi
-AC_SUBST(ZLIB)
+AC_ARG_WITH([zlib],
+           [AS_HELP_STRING([--with-zlib],
+                           [build with zlib for HTTP compression
+                            [default=yes]])],
+	   [], with_zlib="auto")
 
+AS_CASE([$with_zlib],
+       [no],[],
+       [auto],[PKG_CHECK_MODULES([ZLIB], [zlib],
+                                 [AC_DEFINE([HAVE_ZLIB], [1], [Use zlib library])],
+                                 [:])],
+       [yes],[PKG_CHECK_MODULES([ZLIB], [zlib],
+                                [AC_DEFINE([HAVE_ZLIB], [1], [Use zlib library])])],
+       [AC_MSG_ERROR([Specifying zlib installation path is not supported, adjust PKG_CONFIG_PATH instead])])
+AC_SUBST([ZLIB_CFLAGS])
+AC_SUBST([ZLIB_LIBS])
 
 #
 # In solaris 10, SMF can manage named service
@@ -1554,70 +1344,34 @@ AC_SUBST(ZLIB)
 AC_CHECK_LIB(scf, smf_enable_instance)
 
 #
-# Large File
-#
-AC_ARG_ENABLE(largefile,
-	      AS_HELP_STRING([--enable-largefile], [64-bit file support]),
-	      want_largefile="yes", want_largefile="no")
-case $want_largefile in
-	yes)
-		ALWAYS_DEFINES="$ALWAYS_DEFINES -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-		;;
-	*)
-		;;
-esac
-
-#
 # Additional compiler settings.
 #
 MKDEPCC="$CC"
+
 MKDEPCFLAGS="-M"
+AS_CASE([$host],
+	[*-solaris*],[
+	    AS_IF([test "$GCC" != "yes"],
+		  [MKDEPCFLAGS="-xM"])])
 
-if test "X$GCC" = "Xyes"; then
-	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
-	AC_MSG_CHECKING(if "$CC" supports -fno-strict-aliasing)
-	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -Werror -fno-strict-aliasing"
-	AC_TRY_COMPILE(,, [FNOSTRICTALIASING=yes],[FNOSTRICTALIASING=no])
-	CFLAGS="$SAVE_CFLAGS"
-	if test "yes" = "$FNOSTRICTALIASING"; then
-		AC_MSG_RESULT(yes)
-		STD_CWARNINGS="$STD_CWARNINGS -fno-strict-aliasing"
-	else
-		AC_MSG_RESULT(no)
-	fi
-	#
-	# turn off delete null pointer checks
-	#
-	AC_MSG_CHECKING(if "$CC" supports -fno-delete-null-pointer-checks)
-	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -Werror -fno-delete-null-pointer-checks"
-	AC_TRY_COMPILE(,, [FNODELETENULLPOINTERCHECKS=yes],
-			  [FNODELETENULLPOINTERCHECKS=no])
-	CFLAGS="$SAVE_CFLAGS"
-	if test "yes" = "$FNODELETENULLPOINTERCHECKS"; then
-		AC_MSG_RESULT(yes)
-		STD_CWARNINGS="$STD_CWARNINGS -fno-delete-null-pointer-checks"
-	else
-		AC_MSG_RESULT(no)
-	fi
-	if test "X$enable_warn_shadow" = Xyes; then
-		STD_CWARNINGS="$STD_CWARNINGS -Wshadow"
-	fi
-	if test "X$enable_warn_error" = Xyes; then
-		STD_CWARNINGS="$STD_CWARNINGS -Werror"
-	fi
-else
-	case $host in
-	*-solaris*)
-		MKDEPCFLAGS="-xM"
-		;;
-	esac
-fi
+AS_IF([test "$GCC" = "yes"],
+      [STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith -Wno-missing-field-initializers"]
+      )
 
-AC_SUBST(MKDEPCC)
-AC_SUBST(MKDEPCFLAGS)
-AC_SUBST(MKDEPPROG)
+AX_CHECK_COMPILE_FLAG([-fno-strict-aliasing],
+		      [STD_CWARNINGS="$STD_CWARNINGS -fno-strict-aliasing"])
+AX_CHECK_COMPILE_FLAG([-Werror -fno-delete-null-pointer-checks],
+		      [STC_CWARNINGS="$STD_CWARNINGS -fno-delete-null-pointer-checks"])
+AS_IF([test "$enable_warn_shadow" = "yes"],
+      [AX_CHECK_COMPILE_FLAG([-Wshadow],
+			     [STD_CWARNINGS="$STD_CWARNINGS -Wshadow"])])
+AS_IF([test "$enable_warn_error" = "yes"],
+      [AX_CHECK_COMPILE_FLAG([-Werror],
+			     [STD_CWARNINGS="$STD_CWARNINGS -Werror"])])
+
+AC_SUBST([MKDEPCC])
+AC_SUBST([MKDEPCFLAGS])
+AC_SUBST([MKDEPPROG])
 
 #
 # -lxnet buys us one big porting headache...  standards, gotta love 'em.
@@ -1954,12 +1708,12 @@ AS_IF([test "$enable_linux_caps" = "yes"],
 			[],
 			[AC_MSG_ERROR(m4_normalize([sys/capability.h header is required for Linux capabilities support.
 						    Either install libcap or use --disable-linux-caps.]))])
-       save_LIBS="$LIBS"
+       AX_SAVE_FLAGS([cap])
        AC_SEARCH_LIBS([cap_set_proc], [cap],
 		      [LIBCAP_LIBS="$ac_cv_search_cap_set_proc"],
 		      [AC_MSG_ERROR(m4_normalize([libcap is required for Linux capabilities support.
 						  Either install libcap or use --disable-linux-caps.]))])
-       LIBS="$save_LIBS"],
+       AX_RESTORE_FLAGS([cap])],
       [AC_MSG_RESULT([no])])
 AC_SUBST([LIBCAP_LIBS])
 
@@ -2029,7 +1783,7 @@ AC_CHECK_HEADERS(
 	 )],
 	[AC_MSG_RESULT([no])],
 	[ISC_ATOMIC_LIBS="-latomic"
-	 save_LIBS="$LIBS"
+	 AX_SAVE_FLAGS([atomic])
 	 LIBS="$LIBS $ISC_ATOMIC_LIBS"
 	 AC_LINK_IFELSE(
 	   [AC_LANG_PROGRAM(
@@ -2038,7 +1792,7 @@ AC_CHECK_HEADERS(
 	    )],
 	   [AC_MSG_RESULT([yes])],
 	   [AC_MSG_FAILURE([libatomic needed, but linking with -latomic failed, please fix your toolchain.])])
-	 LIBS="$save_LIBS"
+	 AX_RESTORE_FLAGS([atomic])
 	])
      ],
      [AC_MSG_FAILURE([stdatomic.h header found, but compilation failed, please fix your toolchain.])]
@@ -2059,7 +1813,7 @@ AC_CHECK_HEADERS(
 	 )],
 	[AC_MSG_RESULT([no])],
 	[ISC_ATOMIC_LIBS="-latomic"
-	 save_LIBS="$LIBS"
+	 AX_SAVE_FLAGS([atomic])
 	 LIBS="$LIBS $ISC_ATOMIC_LIBS"
 	 AC_LINK_IFELSE(
 	   [AC_LANG_PROGRAM(
@@ -2068,13 +1822,15 @@ AC_CHECK_HEADERS(
 	    )],
 	   [AC_MSG_RESULT([yes])],
 	   [AC_MSG_FAILURE([libatomic needed, but linking with -latomic failed, please fix your toolchain.])])
-	 LIBS="$save_LIBS"
+	 AX_RESTORE_FLAGS([atomic])
 	])
      ],
      [AC_MSG_RESULT([__sync builtins])
      ])
   ])
 LIBS="$LIBS $ISC_ATOMIC_LIBS"
+
+AC_CHECK_HEADERS([stdalign.h])
 
 AC_CHECK_HEADERS([uchar.h])
 
@@ -2386,10 +2142,7 @@ AS_CASE([$with_libidn2],
 	[yes],	[PKG_CHECK_MODULES([LIBIDN2], [libidn2],
 				   [AC_DEFINE([HAVE_LIBIDN2], [1], [Define if libidn2 was found])])],
 	[no],	[],
-	[*],	[save_CFLAGS="$CFLAGS"
-		 save_CPPFLAGS="$CPPFLAGS"
-		 save_LDFLAGS="$LDFLAGS"
-		 save_LIBS="$LIBS"
+	[*],	[AX_SAVE_FLAGS([libidn2])
 		 LIBIDN2_CFLAGS="-I$with_libidn2/include"
 		 LIBIDN2_LDFLAGS="-L$with_libidn2/lib"
 		 CFLAGS="$LIBIDN2_CFLAGS $CFLAGS"
@@ -2402,10 +2155,7 @@ AS_CASE([$with_libidn2],
 				[LIBIDN2_LIBS="$ac_cv_search_idn2_to_ascii_lz"
 				 AC_DEFINE([HAVE_LIBIDN2], [1], [Define if libidn2 was found])],
 				[AC_MSG_ERROR([libidn2 requested, but not found])])
-		 CFLAGS="$save_CFLAGS"
-		 CPPFLAGS="$save_CPPFLAGS"
-		 LDFLAGS="$save_LDFLAGS"
-		 LIBS="$save_LIBS"])
+		AX_RESTORE_FLAGS([libidn2])])
 AC_SUBST([LIBIDN2_CFLAGS])
 AC_SUBST([LIBIDN2_LDFLAGS])
 AC_SUBST([LIBIDN2_LIBS])
@@ -2445,6 +2195,45 @@ AS_IF([test "$with_cmocka" != "no"],
 AC_SUBST([KYUA])
 
 #
+# Check for -Wl,--wrap= support
+#
+
+LD_WRAP_TESTS=false
+AC_MSG_CHECKING([for linker support for --wrap option])
+AX_SAVE_FLAGS([wrap])
+LDFLAGS="-Wl,-wrap,exit"
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[#include <stdlib.h>
+		       void __real_exit (int status);
+		       void __wrap_exit (int status) { __real_exit (status); }
+		      ]],
+		     [[exit (1);]])],
+    [LD_WRAP_TESTS=true
+     AC_DEFINE([LD_WRAP], [1], [define if the linker supports --wrap option])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
+AX_RESTORE_FLAGS([wrap])
+
+AC_SUBST([LD_WRAP_TESTS])
+
+WRAP_INTERPOSE=
+AC_MSG_CHECKING([for linker support for '-z interpose' option])
+AX_SAVE_FLAGS([interpose])
+LDFLAGS="-Wl,-z,interpose"
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([],[])],
+    [WRAP_INTERPOSE="-Wl,-z,interpose"
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
+AX_RESTORE_FLAGS([interpose])
+
+AC_SUBST([WRAP_INTERPOSE])
+
+WRAP_NAME=''
+AS_CASE([$host],[*-darwin*],[WRAP_NAME='${WRAP_NAME}'])
+AC_SUBST([WRAP_NAME])
+
+#
 # Check for i18n
 #
 AC_CHECK_HEADERS(locale.h)
@@ -2453,23 +2242,15 @@ AC_CHECK_FUNCS(setlocale)
 #
 # was --with-tuning specified?
 #
-AC_ARG_WITH(tuning,
+AC_ARG_WITH([tuning],
 	    AS_HELP_STRING([--with-tuning=ARG],
-			   [Specify server tuning (large or default)]),
-	    use_tuning="$withval", use_tuning="no")
+			   [Specify server tuning (default or small)]),
+	    [],[with_tuning=no])
 
-case "$use_tuning" in
-	large)
-		AC_DEFINE(TUNE_LARGE, 1, [Define to use large-system tuning.])
-		AC_MSG_RESULT(using large-system tuning)
-		;;
-	no|default)
-		AC_MSG_RESULT(using default tuning)
-		;;
-	yes|*)
-		AC_MSG_ERROR([You must specify "large" or "default" for --with-tuning.])
-		;;
-esac
+AS_CASE([$with_tuning],
+	[small],[AC_MSG_NOTICE(using small system tuning)],
+	[AC_DEFINE(TUNE_LARGE, 1, [Define to use default system tuning.])
+	 AC_MSG_NOTICE(using default system tuning)])
 
 #
 # was --enable-querytrace specified?
@@ -2976,7 +2757,7 @@ AC_SUBST(BUILD_LIBS)
 
 AC_CONFIG_COMMANDS(
 	[chmod],
-	[chmod a+x isc-config.sh doc/doxygen/doxygen-input-filter])
+	[chmod a+x doc/doxygen/doxygen-input-filter])
 
 #
 # Files to configure.  These are listed here because we used to
@@ -2985,8 +2766,6 @@ AC_CONFIG_COMMANDS(
 #
 
 AC_CONFIG_FILES([
-	make/Makefile
-	make/mkdep
 	Makefile
 	bin/Makefile
 	bin/check/Makefile
@@ -3001,12 +2780,10 @@ AC_CONFIG_FILES([
 	bin/pkcs11/Makefile
 	bin/plugins/Makefile
 	bin/python/Makefile
-	bin/python/isc/Makefile
-	bin/python/isc/utils.py
-	bin/python/isc/tests/Makefile
 	bin/python/dnssec-checkds.py
 	bin/python/dnssec-coverage.py
 	bin/python/dnssec-keymgr.py
+	bin/python/isc/Makefile
 	bin/python/isc/__init__.py
 	bin/python/isc/checkds.py
 	bin/python/isc/coverage.py
@@ -3019,8 +2796,10 @@ AC_CONFIG_FILES([
 	bin/python/isc/keyzone.py
 	bin/python/isc/policy.py
 	bin/python/isc/rndc.py
+	bin/python/isc/tests/Makefile
 	bin/python/isc/tests/dnskey_test.py
 	bin/python/isc/tests/policy_test.py
+	bin/python/isc/utils.py
 	bin/rndc/Makefile
 	bin/tests/Makefile
 	bin/tests/headerdep_test.sh
@@ -3038,8 +2817,6 @@ AC_CONFIG_FILES([
 	bin/tests/system/rpz/Makefile
 	bin/tests/system/rsabigexponent/Makefile
 	bin/tests/system/tkey/Makefile
-	bin/tests/virtual-time/Makefile
-	bin/tests/virtual-time/conf.sh
 	bin/tools/Makefile
 	contrib/scripts/check-secure-delegation.pl
 	contrib/scripts/zone-edit.sh
@@ -3059,7 +2836,7 @@ AC_CONFIG_FILES([
 	doc/xsl/isc-docbook-html.xsl
 	doc/xsl/isc-manpage.xsl
 	doc/xsl/isc-notes-html.xsl
-	isc-config.sh
+	fuzz/Makefile
 	lib/Makefile
 	lib/bind9/Makefile
 	lib/bind9/include/Makefile
@@ -3075,20 +2852,20 @@ AC_CONFIG_FILES([
 	lib/irs/include/irs/netdb.h
 	lib/irs/include/irs/platform.h
 	lib/irs/tests/Makefile
-	lib/isc/pthreads/Makefile
-	lib/isc/pthreads/include/Makefile
-	lib/isc/pthreads/include/isc/Makefile
 	lib/isc/Makefile
 	lib/isc/include/Makefile
 	lib/isc/include/isc/Makefile
 	lib/isc/include/isc/platform.h
 	lib/isc/include/pk11/Makefile
 	lib/isc/include/pkcs11/Makefile
+	lib/isc/netmgr/Makefile
+	lib/isc/pthreads/Makefile
+	lib/isc/pthreads/include/Makefile
+	lib/isc/pthreads/include/isc/Makefile
 	lib/isc/tests/Makefile
 	lib/isc/unix/Makefile
 	lib/isc/unix/include/Makefile
 	lib/isc/unix/include/isc/Makefile
-	lib/isc/unix/include/pkcs11/Makefile
 	lib/isccc/Makefile
 	lib/isccc/include/Makefile
 	lib/isccc/include/isccc/Makefile
@@ -3103,8 +2880,10 @@ AC_CONFIG_FILES([
 	lib/ns/tests/Makefile
 	lib/samples/Makefile
 	lib/samples/Makefile-postinstall
+	make/Makefile
+	make/mkdep
 	unit/unittest.sh
-	fuzz/Makefile
+	util/check-make-install
 ])
 
 #
@@ -3143,23 +2922,22 @@ report() {
     echo "Configuration summary:"
     echo "-------------------------------------------------------------------------------"
     echo "Optional features enabled:"
-    if test "yes" = "$enable_full_report" -o "standard" = "$locktype"; then
-	echo "        Mutex lock type: $locktype"
+    if test "yes" = "$enable_full_report" -o "standard" = "$with_locktype"; then
+	echo "    Mutex lock type: $with_locktype"
     fi
-    test "large" = "$use_tuning" && echo "    Large-system tuning (--with-tuning)"
+    test "small" = "$with_tuning" && echo "    Small-system tuning (--with-tuning)"
     test "no" = "$use_dnstap" || \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test -z "$MAXMINDDB_LIBS" || echo "    GeoIP2 access control (--with-geoip2)"
-    test "no" = "$use_geoip" || echo "    Legacy GeoIP access control (--with-geoip)"
+    test -z "$MAXMINDDB_LIBS" || echo "    GeoIP2 access control (--enable-geoip)"
     test "no" = "$use_gssapi" || echo "    GSS-API (--with-gssapi)"
 
     # these lines are only printed if run with --enable-full-report
     if test "yes" = "$enable_full_report"; then
 	test "no" = "$found_ipv6" || echo "    IPv6 support (--enable-ipv6)"
 	test "X$PYTHON" = "X" || echo "    Python tools (--with-python)"
-	test "X$XMLSTATS" = "X" || echo "    XML statistics (--with-libxml2)"
-	test "X$JSONSTATS" = "X" || echo "    JSON statistics (--with-libjson)"
-	test "X$ZLIB" = "X" || echo "    HTTP zlib compression (--with-zlib)"
+	test "X$LIBXML2_LIBS" = "X" || echo "    XML statistics (--with-libxml2)"
+	test "X$JSON_C_LIBS" = "X" || echo "    JSON statistics (--with-json-c): $JSON_C_CFLAGS $JSON_C_LIBS"
+	test "X$ZLIB_LIBS" = "X" || echo "    HTTP zlib compression (--with-zlib)"
 	test "X$NZD_TOOLS" = "X" || echo "    LMDB database to store configuration for 'addzone' zones (--with-lmdb)"
 	test "no" = "$with_libidn2" || echo "    IDN support (--with-libidn2)"
     fi
@@ -3207,11 +2985,11 @@ report() {
 
     echo "Features disabled or unavailable on this platform:"
     test "no" = "$found_ipv6" && echo "    IPv6 support (--enable-ipv6)"
-    test "large" = "$use_tuning" || echo "    Large-system tuning (--with-tuning)"
+    test "small" = "$with_tuning" || echo "    Small-system tuning (--with-tuning)"
 
     test "no" = "$use_dnstap" && \
 	    echo "    Allow 'dnstap' packet logging (--enable-dnstap)"
-    test -z "$MAXMINDDB_LIBS" && echo "    GeoIP2 access control (--with-geoip2)"
+    test -z "$MAXMINDDB_LIBS" && echo "    GeoIP2 access control (--enable-geoip)"
     test "no" = "$use_gssapi" && echo "    GSS-API (--with-gssapi)"
 
     test "no" = "$enable_dnsrps" && \
@@ -3235,9 +3013,9 @@ report() {
     test "no" = "$with_cmocka" && echo "    CMocka Unit Testing Framework (--with-cmocka)"
 
     test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
-    test "X$XMLSTATS" = "X" && echo "    XML statistics (--with-libxml2)"
-    test "X$JSONSTATS" = "X" && echo "    JSON statistics (--with-libjson)"
-    test "X$ZLIB" = "X" && echo "    HTTP zlib compression (--with-zlib)"
+    test "X$LIBXML2_LIBS" = "X" && echo "    XML statistics (--with-libxml2)"
+    test "X$JSON_C_LIBS" = "X" && echo "    JSON statistics (--with-json-c)"
+    test "X$ZLIB_LIBS" = "X" && echo "    HTTP zlib compression (--with-zlib)"
     test "X$NZD_TOOLS" = "X" && echo "    LMDB database to store configuration for 'addzone' zones (--with-lmdb)"
     test "no" = "$with_libidn2" && echo "    IDN support (--with-libidn2)"
 

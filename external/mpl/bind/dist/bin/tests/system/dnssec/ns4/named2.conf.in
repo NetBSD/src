@@ -21,7 +21,6 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-enable yes;
 	dnssec-validation auto;
 	bindkeys-file "managed.conf";
 	minimal-responses no;

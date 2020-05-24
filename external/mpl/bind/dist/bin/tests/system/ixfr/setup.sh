@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 cat <<EOF >ns1/named.conf
 options {
 	query-source address 10.53.0.1;

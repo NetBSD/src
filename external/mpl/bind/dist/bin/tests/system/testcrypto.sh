@@ -18,8 +18,7 @@ args=""
 alg="-a $DEFAULT_ALGORITHM -b $DEFAULT_BITS"
 quiet=0
 
-msg1="cryptography"
-msg2="--with-openssl, or --enable-native-pkcs11 --with-pkcs11"
+msg="cryptography"
 while test "$#" -gt 0; do
         case $1 in
         -q)
@@ -28,18 +27,32 @@ while test "$#" -gt 0; do
                 ;;
         rsa|RSA)
                 alg="-a RSASHA1"
-                msg1="RSA cryptography"
+                msg="RSA cryptography"
                 ;;
-        ecdsa|ECDSA)
-                alg="-a ecdsap256sha256"
-                msg1="ECDSA cryptography"
-                msg2="--with-ecdsa"
+	rsasha256|RSASHA256)
+                alg="-a RSASHA256"
+                msg="RSA cryptography"
                 ;;
-	eddsa|EDDSA)
-		alg="-a ED25519"
-		msg1="EDDSA cryptography"
-		msg2="--with-eddsa"
-		;;
+	rsasha512|RSASHA512)
+                alg="-a RSASHA512"
+                msg="RSA cryptography"
+                ;;
+        ecdsa|ECDSA|ecdsap256sha256|ECDSAP256SHA256)
+                alg="-a ECDSAP256SHA256"
+                msg="ECDSA cryptography"
+                ;;
+        ecdsap384sha384|ECDSAP384SHA384)
+                alg="-a ECDSAP384SHA384"
+                msg="ECDSA cryptography"
+                ;;
+        eddsa|EDDSA|ed25519|ED25519)
+                alg="-a ED25519"
+                msg="EDDSA cryptography"
+                ;;
+        ed448|ED448)
+                alg="-a ED25519"
+                msg="EDDSA cryptography"
+                ;;
         *)
                 echo "${prog}: unknown argument"
                 exit 1
@@ -48,14 +61,14 @@ while test "$#" -gt 0; do
         shift
 done
 
-
 if $KEYGEN $args $alg foo > /dev/null 2>&1
 then
     rm -f Kfoo*
 else
     if test $quiet -eq 0; then
-        echo "I:This test requires support for $msg1" >&2
-        echo "I:configure with $msg2" >&2
+        echo "I:This test requires support for $msg" >&2
+        echo "I:configure with --with-openssl, or --enable-native-pkcs11" \
+            "--with-pkcs11" >&2
     fi
     exit 255
 fi

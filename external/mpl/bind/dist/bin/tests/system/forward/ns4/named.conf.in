@@ -55,3 +55,8 @@ zone "grafted" {
 	forward only;
 	forwarders { 10.53.0.2; };
 };
+
+zone "malicious." {
+	type master;
+	file "malicious.db";
+};

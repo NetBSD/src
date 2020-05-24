@@ -28,5 +28,5 @@ cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -g -o $zone -f $outfile -e +30y $zonefile > /dev/null 2> signer.err || cat signer.err
 
-keyfile_to_trusted_keys $keyname2 > trusted.conf
+keyfile_to_static_ds $keyname2 > trusted.conf
 cp trusted.conf ../ns1

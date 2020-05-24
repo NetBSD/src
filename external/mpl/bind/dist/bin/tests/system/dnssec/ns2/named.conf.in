@@ -21,7 +21,6 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	notify yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 	notify-delay 1;
 	minimal-responses no;
@@ -41,11 +40,6 @@ zone "." {
 	file "../../common/root.hint";
 };
 
-zone "dlv" {
-	type master;
-	file "dlv.db.signed";
-};
-
 zone "trusted" {
 	type master;
 	file "trusted.db.signed";
@@ -59,12 +53,6 @@ zone "managed" {
 zone "example" {
 	type master;
 	file "example.db.signed";
-	allow-update { any; };
-};
-
-zone "private.secure.example" {
-	type master;
-	file "private.secure.example.db.signed";
 	allow-update { any; };
 };
 

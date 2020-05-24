@@ -1,0 +1,14 @@
+@has_string_h@
+@@
+
+#include <string.h>
+
+@depends on has_string_h@
+
+expression D;
+expression S;
+expression N;
+@@
+
+- memcpy(D, S, N);
++ memmove(D, S, N);

@@ -48,7 +48,7 @@ ret=0 reason=
 $DIG $DIGOPTS  @10.53.0.1 +edns=100 +noednsnegotiation soa $zone > dig.out$n
 grep "status: BADVERS," dig.out$n > /dev/null || { ret=1; reason="status"; }
 grep "EDNS: version: 0," dig.out$n > /dev/null || { ret=1; reason="version"; }
-grep "IN.SOA." dig.out$n > /dev/null && { ret=1; reaons="soa"; }
+grep "IN.SOA." dig.out$n > /dev/null && { ret=1; reasons="soa"; }
 if [ $ret != 0 ]; then echo_i "failed $reason"; fi
 status=`expr $status + $ret`
 

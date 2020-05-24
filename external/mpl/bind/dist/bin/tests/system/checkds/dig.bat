@@ -9,8 +9,6 @@ if "%arg:~0,1%" == "+" goto next
 if "%arg%" == "-t" goto next
 if "%arg%" == "ds" goto ds
 if "%arg%" == "DS" goto ds
-if "%arg%" == "dlv" goto dlv
-if "%arg%" == "DLV" goto dlv
 if "%arg%" == "dnskey" goto dnskey
 if "%arg%" == "DNSKEY" goto dnskey
 set file=%arg%
@@ -18,10 +16,6 @@ goto next
 
 :ds
 set ext=ds
-goto next
-
-:dlv
-set ext=dlv
 goto next
 
 :dnskey

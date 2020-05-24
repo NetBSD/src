@@ -27,14 +27,17 @@ VERSION=@BIND9_VERSION@
 USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/dns -Iinclude ${DNS_INCLUDES} \
-		${ISC_INCLUDES} ${MAXMINDDB_CFLAGS} \
-		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
+		${ISC_INCLUDES} \
+		${OPENSSL_CFLAGS} @DST_GSSAPI_INC@ \
+		${JSON_C_CFLAGS} \
+		${LIBXML2_CFLAGS} \
+		${MAXMINDDB_CFLAGS}
 
 CDEFINES =	@USE_GSSAPI@ ${USE_ISC_SPNEGO}
 
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
@@ -51,7 +54,6 @@ DSTOBJS =	@DST_EXTRA_OBJS@ \
 		pkcs11ecdsa_link.@O@ pkcs11eddsa_link.@O@ pkcs11.@O@ \
 		key.@O@
 
-GEOIPLINKOBJS = geoip.@O@
 GEOIP2LINKOBJS = geoip2.@O@
 
 DNSTAPOBJS = dnstap.@O@ dnstap.pb-c.@O@
@@ -62,8 +64,8 @@ DNSOBJS =	acl.@O@ adb.@O@ badcache.@O@ byaddr.@O@ \
 		db.@O@ dbiterator.@O@ dbtable.@O@ diff.@O@ dispatch.@O@ \
 		dlz.@O@ dns64.@O@ dnsrps.@O@ dnssec.@O@ ds.@O@ dyndb.@O@ \
 		ecs.@O@ fixedname.@O@ forward.@O@ \
-		ipkeylist.@O@ iptable.@O@ journal.@O@ keydata.@O@ \
-		keytable.@O@ lib.@O@ log.@O@ lookup.@O@ \
+		ipkeylist.@O@ iptable.@O@ journal.@O@ kasp.@O@ keydata.@O@ \
+		keymgr.@O@ keytable.@O@ lib.@O@ log.@O@ lookup.@O@ \
 		master.@O@ masterdump.@O@ message.@O@ \
 		name.@O@ ncache.@O@ nsec.@O@ nsec3.@O@ nta.@O@ \
 		order.@O@ peer.@O@ portlist.@O@ private.@O@ \
@@ -79,9 +81,9 @@ DNSOBJS =	acl.@O@ adb.@O@ badcache.@O@ byaddr.@O@ \
 PORTDNSOBJS =	client.@O@ ecdb.@O@
 
 OBJS=		@DNSTAPOBJS@ ${DNSOBJS} ${OTHEROBJS} ${DSTOBJS} \
-		${PORTDNSOBJS} @GEOIPLINKOBJS@ @GEOIP2LINKOBJS@
+		${PORTDNSOBJS} @GEOIP2LINKOBJS@
 
-DSTSRCS =	@DST_EXTRA_SRCS@ @PKCS11LINKSRCS@ \
+DSTSRCS =	@DST_EXTRA_SRCS@ \
 		dst_api.c dst_parse.c \
 		dst_result.c gssapi_link.c gssapictx.c hmac_link.c \
 		openssl_link.c openssldh_link.c \
@@ -90,18 +92,17 @@ DSTSRCS =	@DST_EXTRA_SRCS@ @PKCS11LINKSRCS@ \
 		pkcs11ecdsa_link.c pkcs11eddsa_link.c pkcs11.c \
 		key.c
 
-GEOIPLINKSRCS = geoip.c
 GEOIPL2INKSRCS = geoip2.c
 
 DNSTAPSRCS = dnstap.c dnstap.pb-c.c
 
-DNSSRCS =	acl.c adb.c badcache. byaddr.c \
+DNSSRCS =	acl.c adb.c badcache.c byaddr.c \
 		cache.c callbacks.c clientinfo.c compress.c \
 		db.c dbiterator.c dbtable.c diff.c dispatch.c \
 		dlz.c dns64.c dnsrps.c dnssec.c ds.c dyndb.c \
-		ecs.c fixedname.c forward.c \
-		ipkeylist.c iptable.c journal.c keydata.c keytable.c lib.c \
-		log.c lookup.c master.c masterdump.c message.c \
+		ecs.c fixedname.c forward.c ipkeylist.c iptable.c \
+		journal.c kasp.c keydata.c keymgr.c keytable.c \
+		lib.c log.c lookup.c master.c masterdump.c message.c \
 		name.c ncache.c nsec.c nsec3.c nta.c \
 		order.c peer.c portlist.c \
 		rbt.c rbtdb.c rcode.c rdata.c rdatalist.c \
@@ -115,7 +116,7 @@ DNSSRCS =	acl.c adb.c badcache. byaddr.c \
 PORTDNSSRCS =	client.c ecdb.c
 
 SRCS = ${DSTSRCS} ${DNSSRCS} \
-	${PORTDNSSRCS} @DNSTAPSRCS@ @GEOIPLINKSRCS@ @GEOIP2LINKSRCS@
+	${PORTDNSSRCS} @DNSTAPSRCS@ @GEOIP2LINKSRCS@
 
 SUBDIRS =	include
 TARGETS =	timestamp
@@ -203,7 +204,7 @@ newrr::
 
 rdata.@O@: include
 
-depend: include
+depend: include @DNSTAPSRCS@
 subdirs: include
 ${OBJS}: include
 

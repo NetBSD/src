@@ -9,92 +9,84 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -eu
 
-$SHELL clean.sh
+SYSTEMTESTTOP=..
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
+
+echo_i "Generating keys for Native PKCS#11" >&2
 
 infile=ns1/example.db.in
 
-/bin/echo -n ${HSMPIN:-1234}> pin
-PWD=`pwd`
+printf '%s' "${HSMPIN:-1234}" > pin
+PWD=$(pwd)
 
-zone=rsa.example
-zonefile=ns1/rsa.example.db
-have_rsa=`grep rsa supported`
-if [ "x$have_rsa" != "x" ]; then
-    $PK11GEN -a RSA -b 1024 -l robie-rsa-zsk1 -i 01
-    $PK11GEN -a RSA -b 1024 -l robie-rsa-zsk2 -i 02
-    $PK11GEN -a RSA -b 2048 -l robie-rsa-ksk
+copy_setports ns1/named.conf.in ns1/named.conf
 
-    rsazsk1=`$KEYFRLAB -a RSASHA1 \
-            -l "object=robie-rsa-zsk1;pin-source=$PWD/pin" rsa.example`
-    rsazsk2=`$KEYFRLAB -a RSASHA1 \
-            -l "object=robie-rsa-zsk2;pin-source=$PWD/pin" rsa.example`
-    rsaksk=`$KEYFRLAB -a RSASHA1 -f ksk \
-            -l "object=robie-rsa-ksk;pin-source=$PWD/pin" rsa.example`
+get_random() {
+    dd if=/dev/urandom bs=1 count=2 2>/dev/null | od -tu2 -An
+}
 
-    cat $infile $rsazsk1.key $rsaksk.key > $zonefile
-    $SIGNER -a -P -g -o $zone $zonefile \
-            > /dev/null 2> signer.err || cat signer.err
-    cp $rsazsk2.key ns1/rsa.key
-    mv Krsa* ns1
-else
-    # RSA not available and will not be tested; make a placeholder
-    cp $infile ${zonefile}.signed
-fi
+genpkcs() (
+    alg="$1"
+    bits="$2"
+    label="$3"
+    id="$(get_random)"
 
-zone=ecc.example
-zonefile=ns1/ecc.example.db
-have_ecc=`grep ecc supported`
-if [ "x$have_ecc" != "x" ]; then
-    $PK11GEN -a ECC -b 256 -l robie-ecc-zsk1 -i 03
-    $PK11GEN -a ECC -b 256 -l robie-ecc-zsk2 -i 04
-    $PK11GEN -a ECC -b 384 -l robie-ecc-ksk
+    $PK11DEL -l "$label" -w0 >/dev/null || true
+    $PK11GEN -a "$alg" -b "$bits" -l "$label" -i "$id" >/dev/null
+)
 
-    ecczsk1=`$KEYFRLAB -a ECDSAP256SHA256 \
-            -l "object=robie-ecc-zsk1;pin-source=$PWD/pin" ecc.example`
-    ecczsk2=`$KEYFRLAB -a ECDSAP256SHA256 \
-            -l "object=robie-ecc-zsk2;pin-source=$PWD/pin" ecc.example`
-    eccksk=`$KEYFRLAB -a ECDSAP384SHA384 -f ksk \
-            -l "object=robie-ecc-ksk;pin-source=$PWD/pin" ecc.example`
+keyfrlab() (
+    alg="$1"
+    bits="$2"
+    label="$3"
+    zone="$4"
+    shift 4
 
-    cat $infile $ecczsk1.key $eccksk.key > $zonefile
-    $SIGNER -a -P -g -o $zone $zonefile \
-        > /dev/null 2> signer.err || cat signer.err
-    cp $ecczsk2.key ns1/ecc.key
-    mv Kecc* ns1
-else
-    # ECC not available and will not be tested; make a placeholder
-    cp $infile ${zonefile}.signed
-fi
+    $KEYFRLAB -a "$alg" -l "pkcs11:object=$label;pin-source=$PWD/pin" "$@" "$zone"
+)
 
-zone=ecx.example
-zonefile=ns1/ecx.example.db
-have_ecx=`grep ecx supported`
-if [ "x$have_ecx" != "x" ]; then
-    $PK11GEN -a ECX -b 256 -l robie-ecx-zsk1 -i 05
-    $PK11GEN -a ECX -b 256 -l robie-ecx-zsk2 -i 06
-    $PK11GEN -a ECX -b 256 -l robie-ecx-ksk
-#   $PK11GEN -a ECX -b 456 -l robie-ecx-ksk
+genzsk() (
+    genpkcs "$@"
+    keyfrlab "$@"
+)
 
-    ecxzsk1=`$KEYFRLAB -a ED25519 \
-            -l "object=robie-ecx-zsk1;pin-source=$PWD/pin" ecx.example`
-    ecxzsk2=`$KEYFRLAB -a ED25519 \
-            -l "object=robie-ecx-zsk2;pin-source=$PWD/pin" ecx.example`
-    ecxksk=`$KEYFRLAB -a ED25519 -f ksk \
-            -l "object=robie-ecx-ksk;pin-source=$PWD/pin" ecx.example`
-#   ecxksk=`$KEYFRLAB -a ED448 -f ksk \
-#           -l "object=robie-ecx-ksk;pin-source=$PWD/pin" ecx.example`
+genksk() (
+    genpkcs "$@"
+    keyfrlab "$@" -f ksk
+)
 
-    cat $infile $ecxzsk1.key $ecxksk.key > $zonefile
-    $SIGNER -a -P -g -o $zone $zonefile \
-        > /dev/null 2> signer.err || cat signer.err
-    cp $ecxzsk2.key ns1/ecx.key
-    mv Kecx* ns1
-else
-    # ECX not available and will not be tested; make a placeholder
-    cp $infile ${zonefile}.signed
-fi
+algs=
+for algbits in rsasha256:2048 rsasha512:2048 ecdsap256sha256:256 ecdsap384sha384:384 ed25519:256 ed448:456; do
+    alg=$(echo "$algbits" | cut -f 1 -d :)
+    bits=$(echo "$algbits" | cut -f 2 -d :)
+    zone="$alg.example"
+    zonefile="ns1/$alg.example.db"
+    if $SHELL "$SYSTEMTESTTOP/testcrypto.sh" "$alg"; then
+	echo "$alg" >> supported
+	algs="$algs$alg "
 
-rm -f signer.err
+	zsk1=$(genzsk "$alg" "$bits" "pkcs11-$alg-zsk1" "$zone")
+	zsk2=$(genzsk "$alg" "$bits" "pkcs11-$alg-zsk2" "$zone")
+	ksk1=$(genksk "$alg" "$bits" "pkcs11-$alg-ksk1" "$zone")
+	ksk2=$(genksk "$alg" "$bits" "pkcs11-$alg-ksk2" "$zone")
+
+	cat "$infile" "$zsk1.key" "$ksk1.key" > "$zonefile"
+	$SIGNER -a -P -g -o "$zone" "$zonefile" > /dev/null
+	cp "$zsk2.key" "ns1/$alg.zsk"
+	cp "$ksk2.key" "ns1/$alg.ksk"
+	mv "K$alg"* ns1/
+
+	cat >> ns1/named.conf <<EOF
+zone "$alg.example." {
+	type master;
+	file "$alg.example.db.signed";
+	allow-update { any; };
+};
+
+EOF
+    fi
+done
+echo_i "Generated keys for Native PKCS#11: $algs"

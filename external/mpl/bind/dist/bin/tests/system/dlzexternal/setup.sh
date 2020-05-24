@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 $DDNSCONFGEN -q -z example.nil > ns1/ddns.key
 
 copy_setports ns1/named.conf.in ns1/named.conf

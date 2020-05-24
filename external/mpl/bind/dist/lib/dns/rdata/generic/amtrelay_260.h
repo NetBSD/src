@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.h,v 1.1.1.1 2019/02/24 18:56:52 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.h,v 1.1.1.2 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,21 +11,20 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef GENERIC_AMTRELAY_260_H
 #define GENERIC_AMTRELAY_260_H 1
 
 typedef struct dns_rdata_amtrelay {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	uint8_t			precedence;
-	bool			discovery;
-	uint8_t			gateway_type;
-	struct in_addr		in_addr;	/* gateway type 1 */
-	struct in6_addr		in6_addr;	/* gateway type 2 */
-	dns_name_t		gateway;	/* gateway type 3 */
-	unsigned char		*data;		/* gateway type > 3 */
-	uint16_t		length;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint8_t precedence;
+	bool discovery;
+	uint8_t gateway_type;
+	struct in_addr in_addr;	  /* gateway type 1 */
+	struct in6_addr in6_addr; /* gateway type 2 */
+	dns_name_t gateway;	  /* gateway type 3 */
+	unsigned char *data;	  /* gateway type > 3 */
+	uint16_t length;
 } dns_rdata_amtrelay_t;
 
 #endif /* GENERIC_AMTRELAY_260_H */

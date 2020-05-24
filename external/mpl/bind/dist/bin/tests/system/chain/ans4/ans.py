@@ -56,7 +56,7 @@ from dns.name import *
 #
 # examples: for the answer set "cname, cname, cname", an rr set
 # '1, s1, 2, s2, 3, s3, 4, s4' indicates that all four RRs should
-# be included in the answer, with siagntures, in the origninal
+# be included in the answer, with siagntures, in the original
 # order, while 4, s4, 3, s3, 2, s2, 1, s1' indicates the order
 # should be reversed, 's3, s3, s3, s3' indicates that the third
 # RRSIG should be repeated four times and everything else should

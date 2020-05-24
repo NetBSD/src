@@ -75,4 +75,4 @@ for variant in addzone axfr ixfr load reconfig untrusted; do
 	fi
 done
 
-keyfile_to_trusted_keys $keys_to_trust > trusted-mirror.conf
+keyfile_to_static_ds $keys_to_trust > trusted-mirror.conf

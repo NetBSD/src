@@ -39,19 +39,6 @@ do
         status=`expr $status + $ret`
 done
 
-for conf in conf/warn*.conf
-do
-        echo_i "checking that $conf produces a warning ($n)"
-        ret=0
-        $CHECKCONF "$conf" > checkconf.out$n || ret=1
-	l=`wc -l < checkconf.out$n`
-	grep "warning" checkconf.out$n > /dev/null || ret=1
-	test $l -ne 0 || ret=1
-	n=`expr $n + 1`
-        if [ $ret != 0 ]; then echo_i "failed"; fi
-        status=`expr $status + $ret`
-done
-
 # Check the example. domain
 
 echo_i "checking non-excluded AAAA lookup works ($n)"

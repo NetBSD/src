@@ -1120,7 +1120,7 @@ RFC 1035        Domain Implementation and Specification    November 1987
 
 A records cause no additional section processing.  The RDATA section of
 an A line in a master file is an Internet address expressed as four
-decimal numbers separated by dots without any imbedded spaces (e.g.,
+decimal numbers separated by dots without any embedded spaces (e.g.,
 "10.2.0.52" or "192.0.5.6").
 
 3.4.2. WKS RDATA format
@@ -1636,7 +1636,7 @@ RDATA           a variable length string of octets that describes the
 In order to reduce the size of messages, the domain system utilizes a
 compression scheme which eliminates the repetition of domain names in a
 message.  In this scheme, an entire domain name or a list of labels at
-the end of a domain name is replaced with a pointer to a prior occurance
+the end of a domain name is replaced with a pointer to a prior occurrence
 of the same name.
 
 The pointer takes the form of a two octet sequence:
@@ -1662,7 +1662,7 @@ represented as either:
 
    - a sequence of labels ending with a pointer
 
-Pointers can only be used for occurances of a domain name where the
+Pointers can only be used for occurrences of a domain name where the
 format is not class specific.  If this were not the case, a name server
 or resolver would be required to know the format of all RRs it handled.
 As yet, there are no such cases, but they may occur in future RDATA
@@ -2825,13 +2825,13 @@ RFC 1035        Domain Implementation and Specification    November 1987
                 Facilities," RFC-882, USC/Information Sciences
                 Institute, November 1983.
 
-                Superceeded by this memo.
+                Superseded by this memo.
 
 [RFC-883]       P. Mockapetris, "Domain names - Implementation and
                 Specification," RFC-883, USC/Information Sciences
                 Institute, November 1983.
 
-                Superceeded by this memo.
+                Superseded by this memo.
 
 [RFC-920]       J. Postel and J. Reynolds, "Domain Requirements",
                 RFC-920, USC/Information Sciences Institute,

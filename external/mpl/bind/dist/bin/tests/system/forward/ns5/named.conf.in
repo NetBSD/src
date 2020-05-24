@@ -19,10 +19,16 @@ options {
 	listen-on-v6 { none; };
 	forward only;
 	forwarders { 10.53.0.4; };
+	deny-answer-aliases { "rebind"; };
 	dnssec-validation yes;
 };
 
 zone "." {
 	type hint;
 	file "root.db";
+};
+
+zone "rebind" {
+	type master;
+	file "rebind.db";
 };

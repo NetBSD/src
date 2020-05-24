@@ -21,7 +21,7 @@
 	<command>masterfile-style</command> ( full | relative );
 	<command>masters</command> [ port <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>masters</replaceable> | <replaceable>ipv4_address</replaceable> [ port <replaceable>integer</replaceable> ] | <replaceable>ipv6_address</replaceable> [ port <replaceable>integer</replaceable> ] ) [ key <replaceable>string</replaceable> ]; ... };
 	<command>max-records</command> <replaceable>integer</replaceable>;
-	<command>max-zone-ttl</command> ( unlimited | <replaceable>ttlval</replaceable> );
+	<command>max-zone-ttl</command> ( unlimited | <replaceable>duration</replaceable> );
 	<command>zone-statistics</command> ( full | terse | none | <replaceable>boolean</replaceable> );
 };
 </programlisting>

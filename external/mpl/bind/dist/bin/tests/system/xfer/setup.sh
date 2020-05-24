@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh
-
 $SHELL ../genzone.sh 1 6 7 >ns1/slave.db
 $SHELL ../genzone.sh 1 6 7 >ns1/edns-expire.db
 $SHELL ../genzone.sh 2 3 >ns2/example.db

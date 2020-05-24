@@ -21,5 +21,5 @@ SYSTEMTESTTOP=.
 
 for d in $SEQUENTIALDIRS
 do
-    $SHELL run.sh "${@}" $d 2>&1 | tee $d/test.output
+    $SHELL run.sh "${@}" $d 2>&1 | tee test.output.$d
 done

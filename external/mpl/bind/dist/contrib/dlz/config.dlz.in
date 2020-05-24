@@ -251,7 +251,7 @@ case "$use_dlz_bdb" in
                 AC_MSG_RESULT( )
 		for dd in $bdbdirs
 		do
-			# Skip nonexistant directories
+			# Skip nonexistent directories
 			if test ! -d "$dd"
 			then
 				continue

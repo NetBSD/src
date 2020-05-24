@@ -35,7 +35,21 @@ do
 	status=`expr $status + $ret`
 done
 
+echo_i "wait for servers to finish loading"
+ret=0
+wait_for_log 20 "all zones loaded" ns1/named.run || ret=1
+wait_for_log 20 "all zones loaded" ns2/named.run || ret=1
+wait_for_log 20 "all zones loaded" ns3/named.run || ret=1
+wait_for_log 20 "all zones loaded" ns4/named.run || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# both the 'a.example/A' lookup and the './NS' lookup to ns1
+# need tocomplete before reopening/rolling for the counts to
+# be correct.
+
 $DIG $DIGOPTS @10.53.0.3 a.example > dig.out
+wait_for_log 20 "(./NS): query_reset" ns1/named.run || true
 
 # check three different dnstap reopen/roll methods:
 # ns1: dnstap-reopen; ns2: dnstap -reopen; ns3: dnstap -roll
@@ -71,6 +85,7 @@ EOF
 $RNDCCMD -s 10.53.0.1 stop | sed 's/^/ns1 /' | cat_i
 $RNDCCMD -s 10.53.0.2 stop | sed 's/^/ns2 /' | cat_i
 $RNDCCMD -s 10.53.0.3 stop | sed 's/^/ns3 /' | cat_i
+
 sleep 1
 
 echo_i "checking initial message counts"
@@ -483,7 +498,6 @@ ret=0
 }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
-
 
 HAS_PYYAML=0
 if [ -n "$PYTHON" ] ; then

@@ -114,17 +114,29 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "checking named-checkconf dnssec warnings ($n)"
 ret=0
+# dnssec.1: dnssec-enable is obsolete
 $CHECKCONF dnssec.1 > checkconf.out$n.1 2>&1
-grep 'validation yes.*enable no' < checkconf.out$n.1 > /dev/null || ret=1
+grep "'dnssec-enable' is obsolete and should be removed" < checkconf.out$n.1 > /dev/null || ret=1
+# dnssec.2: auto-dnssec warning
 $CHECKCONF dnssec.2 > checkconf.out$n.2 2>&1
 grep 'auto-dnssec may only be ' < checkconf.out$n.2 > /dev/null || ret=1
-$CHECKCONF dnssec.2 > checkconf.out$n.3 2>&1
-grep 'validation auto.*enable no' < checkconf.out$n.3 > /dev/null || ret=1
-$CHECKCONF dnssec.2 > checkconf.out$n.4 2>&1
-grep 'validation yes.*enable no' < checkconf.out$n.4 > /dev/null || ret=1
-# this one should have no warnings
-$CHECKCONF dnssec.3 > checkconf.out$n.5 2>&1
-grep '.*' < checkconf.out$n.5 && ret=1
+# dnssec.3: should have no warnings
+$CHECKCONF dnssec.3 > checkconf.out$n.3 2>&1
+grep '.*' < checkconf.out$n.3 > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf deprecate warnings ($n)"
+ret=0
+$CHECKCONF deprecated.conf > checkconf.out$n.1 2>&1
+grep "option 'managed-keys' is deprecated" < checkconf.out$n.1 > /dev/null || ret=1
+grep "option 'trusted-keys' is deprecated" < checkconf.out$n.1 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+# set -i to ignore deprecate warnings
+$CHECKCONF -i deprecated.conf > checkconf.out$n.2 2>&1
+grep '.*' < checkconf.out$n.2 > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -223,16 +235,6 @@ l=`grep "key-directory" < checkconf.out$n.3 | wc -l`
 [ $l -eq 0 ] || ret=1
 rm -rf test.keydir
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "checking for trusted-key/managed-key collision warning ($n)"
-ret=0
-$CHECKCONF warn-duplicate-key.conf 2>&1 | grep "ROLLOVERS WILL FAIL" > /dev/null 2>&1 || ret=1
-$CHECKCONF warn-duplicate-root-key.conf 2>&1 | grep "ROLLOVERS WILL FAIL" > /dev/null 2>&1 || ret=1
-$CHECKCONF warn-validation-auto-key.conf 2>&1 | grep "ROLLOVERS WILL FAIL" > /dev/null 2>&1 || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that named-checkconf -z catches conflicting ttl with max-ttl ($n)"
@@ -364,6 +366,13 @@ if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo_i "check that named-checkconf -z returns error when a later view is okay ($n)"
+ret=0
+$CHECKCONF -z check-missing-zone.conf > checkconf.out$n 2>&1 && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "check that named-checkconf prints max-cache-size <percentage> correctly ($n)"
 ret=0
 $CHECKCONF -p max-cache-size-good.conf > checkconf.out$n 2>&1 || ret=1
@@ -386,7 +395,7 @@ n=`expr $n + 1`
 echo_i "check that 'dnssec-lookaside auto;' generates a warning ($n)"
 ret=0
 $CHECKCONF warn-dlv-auto.conf > checkconf.out$n 2>/dev/null || ret=1
-grep "dnssec-lookaside 'auto' is no longer supported" < checkconf.out$n > /dev/null || ret=1
+grep "option 'dnssec-lookaside' is obsolete and should be removed" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
@@ -394,15 +403,15 @@ n=`expr $n + 1`
 echo_i "check that 'dnssec-lookaside . trust-anchor dlv.isc.org;' generates a warning ($n)"
 ret=0
 $CHECKCONF warn-dlv-dlv.isc.org.conf > checkconf.out$n 2>/dev/null || ret=1
-grep "dlv.isc.org has been shut down" < checkconf.out$n > /dev/null || ret=1
+grep "option 'dnssec-lookaside' is obsolete and should be removed" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that 'dnssec-lookaside . trust-anchor dlv.example.com;' doesn't generates a warning ($n)"
+echo_i "check that 'dnssec-lookaside . trust-anchor dlv.example.com;' generates a warning ($n)"
 ret=0
-$CHECKCONF good-dlv-dlv.example.com.conf > checkconf.out$n 2>/dev/null || ret=1
-[ -s checkconf.out$n ] && ret=1
+$CHECKCONF warn-dlv-dlv.example.com.conf > checkconf.out$n 2>/dev/null || ret=1
+grep "option 'dnssec-lookaside' is obsolete and should be removed" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
@@ -411,7 +420,7 @@ echo_i "check that the 2010 ICANN ROOT KSK without the 2017 ICANN ROOT KSK gener
 ret=0
 $CHECKCONF check-root-ksk-2010.conf > checkconf.out$n 2>/dev/null || ret=1
 [ -s checkconf.out$n ] || ret=1
-grep "trusted-key for root from 2010 without updated" < checkconf.out$n > /dev/null || ret=1
+grep "key without the updated" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
@@ -423,27 +432,94 @@ $CHECKCONF check-root-ksk-both.conf > checkconf.out$n 2>/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
-echo_i "check that the 2017 ICANN ROOT KSK alone does not warning ($n)"
+n=`expr $n + 1`
+echo_i "check that the 2017 ICANN ROOT KSK alone does not generate a warning ($n)"
 ret=0
 $CHECKCONF check-root-ksk-2017.conf > checkconf.out$n 2>/dev/null || ret=1
 [ -s checkconf.out$n ] && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
-echo_i "check that the dlv.isc.org KSK generates a warning ($n)"
+n=`expr $n + 1`
+echo_i "check that a static root key generates a warning ($n)"
 ret=0
-$CHECKCONF check-dlv-ksk-key.conf > checkconf.out$n 2>/dev/null || ret=1
-[ -s checkconf.out$n ] || ret=1
-grep "trusted-key for dlv.isc.org still present" < checkconf.out$n > /dev/null || ret=1
+$CHECKCONF check-root-static-key.conf > checkconf.out$n 2>/dev/null || ret=1
+grep "static entry for the root zone WILL FAIL" checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo_i "check that a static root DS trust anchor generates a warning ($n)"
+ret=0
+$CHECKCONF check-root-static-ds.conf > checkconf.out$n 2>/dev/null || ret=1
+grep "static entry for the root zone WILL FAIL" checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check that a trusted-keys entry for root generates a warning ($n)"
+ret=0
+$CHECKCONF check-root-trusted-key.conf > checkconf.out$n 2>/dev/null || ret=1
+grep "trusted-keys entry for the root zone WILL FAIL" checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check that using trust-anchors and managed-keys generates an error ($n)"
+ret=0
+$CHECKCONF check-mixed-keys.conf > checkconf.out$n 2>/dev/null && ret=1
+grep "use of managed-keys is not allowed" checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "check that 'geoip-use-ecs no' generates a warning ($n)"
 ret=0
 $CHECKCONF warn-geoip-use-ecs.conf > checkconf.out$n 2>/dev/null || ret=1
 [ -s checkconf.out$n ] || ret=1
 grep "'geoip-use-ecs' is obsolete" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf kasp errors ($n)"
+ret=0
+$CHECKCONF kasp-and-other-dnssec-options.conf > checkconf.out$n 2>&1 && ret=1
+grep "'inline-signing;' cannot be set to 'no' if dnssec-policy is also set on a non-dynamic DNS zone" < checkconf.out$n > /dev/null || ret=1
+grep "'auto-dnssec maintain;' cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "dnskey-sig-validity: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "dnssec-dnskey-kskonly: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "dnssec-secure-to-insecure: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "dnssec-update-mode: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "sig-validity-interval: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+grep "update-check-ksk: cannot be configured if dnssec-policy is also set" < checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking named-checkconf kasp predefined key lengths ($n)"
+ret=0
+$CHECKCONF kasp-ignore-keylen.conf > checkconf.out$n 2>&1 || ret=1
+grep "dnssec-policy: key algorithm ecdsa256 has predefined length; ignoring length value 2048" < checkconf.out$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check that a good 'kasp' configuration is accepted ($n)"
+ret=0
+$CHECKCONF good-kasp.conf > checkconf.out$n 2>/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking that named-checkconf prints a known good kasp config ($n)"
+ret=0
+awk 'BEGIN { ok = 0; } /cut here/ { ok = 1; getline } ok == 1 { print }' good-kasp.conf > good-kasp.conf.in
+[ -s good-kasp.conf.in ] || ret=1
+$CHECKCONF -p good-kasp.conf.in | grep -v '^good-kasp.conf.in:' > good-kasp.conf.out 2>&1 || ret=1
+cmp good-kasp.conf.in good-kasp.conf.out || ret=1
+
+if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "exit status: $status"

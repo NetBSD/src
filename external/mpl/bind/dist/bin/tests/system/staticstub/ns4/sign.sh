@@ -21,4 +21,4 @@ keyname2=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -f KSK -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key > $zonefile
 
-$SIGNER -o $zone $zonefile > /dev/null 2>&1
+$SIGNER -o $zone $zonefile > /dev/null

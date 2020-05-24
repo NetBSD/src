@@ -20,25 +20,12 @@
 #       fd92:7065:b8e:ff::{1..2}
 #
 
-config_guess=""
-for f in ./config.guess ../../../config.guess /usr/share/automake*/config.guess
-do
-	if test -f $f
-	then
-		config_guess=$f
-	fi
-done
+SYSTEMTESTTOP="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
+. "$SYSTEMTESTTOP/conf.sh"
 
-if test "X$config_guess" = "X"
-then
-	cat <<EOF >&2
-$0: must be run from the top level source directory or the
-bin/tests/system directory
-EOF
-	exit 1
-fi
+export SYSTEMTESTTOP
 
-sys=`sh $config_guess`
+sys=$($SHELL "$TOP/config.guess")
 
 use_ip=
 case "$sys" in

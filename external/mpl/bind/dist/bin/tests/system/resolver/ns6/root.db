@@ -22,7 +22,7 @@ server.			NS	ns7.server.
 ns7.server.		A	10.53.0.7
 ;
 ; These two delegations are strictly not necessary as the test resolver (ns5)
-; doesn't have this zone as its root.  They are just done for consistancy with
+; doesn't have this zone as its root.  They are just done for consistency with
 ; the delegations in ns4/tld.
 ;
 no-edns-version.tld.	NS	ns.no-edns-version.tld.
