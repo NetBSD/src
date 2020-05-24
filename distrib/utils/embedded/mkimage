@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.73 2020/05/24 14:45:49 jmcneill Exp $
+# $NetBSD: mkimage,v 1.74 2020/05/24 18:43:39 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,6 +149,7 @@ fi
 
 resize=false
 gpt=false
+gpt_hybrid=false
 
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
@@ -271,19 +272,28 @@ do
 done                      
 
 if $gpt; then
+	if $gpt_hybrid; then
+		gpt_flags="-H"
+	fi
 	initsecs=$((${init} * 1024))
 	bootsecs=$((${boot} * 1024))
 	ffsstart="$(getsectors ${ffsoffset})"
 
 	echo ${bar} Clearing existing partitions ${bar}
-	${GPT} ${image} destroy || true
+	${GPT} ${gpt_flags} ${image} destroy || true
 
 	echo ${bar} Creating partitions ${bar}
-	${GPT} ${image} create ${gpt_create_flags}
-	${GPT} ${image} add -b ${initsecs} -s ${bootsecs} -l ${gpt_label_efi:-EFI} -t efi
-	${GPT} ${image} set -a required -i 1
-	${GPT} ${image} add -a 4m -b ${ffsstart} -l ${gpt_label_ffs:-netbsd-root} -t ffs
-	${GPT} ${image} show
+	${GPT} ${gpt_flags} ${image} create ${gpt_create_flags}
+	${GPT} ${gpt_flags} ${image} add -b ${initsecs} -s ${bootsecs} -l ${gpt_label_efi:-EFI} -t efi
+	${GPT} ${gpt_flags} ${image} set -a required -i 1
+	${GPT} ${gpt_flags} ${image} add -a 4m -b ${ffsstart} -l ${gpt_label_ffs:-netbsd-root} -t ffs
+	${GPT} ${gpt_flags} ${image} show
+	if $gpt_hybrid; then
+		echo ${bar} Creating hybrid MBR ${bar}
+		${FDISK} -f -g -u -0 -a -s ${msdosid}/${initsecs}/${bootsecs} -F ${image}
+		${FDISK} -f -g -u -3 -s 238/1/$((${initsecs} - 1)) -F ${image}
+		${FDISK} -F ${image}
+	fi
 else
 	if [ -n "${msdosid}" ]; then
 		echo ${bar} Running fdisk ${bar}
