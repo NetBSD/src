@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.72 2020/05/18 21:19:34 jmcneill Exp $
+# $NetBSD: mkimage,v 1.73 2020/05/24 14:45:49 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,6 +54,7 @@ PROG="$(basename "$0")"
 MAKE=${TOOL_MAKE:-make}
 DISKLABEL=${TOOL_DISKLABEL:-disklabel}
 FDISK=${TOOL_FDISK:-fdisk}
+GPT=${TOOL_GPT:-gpt}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
 INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
@@ -147,6 +148,7 @@ then
 fi
 
 resize=false
+gpt=false
 
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
@@ -268,32 +270,48 @@ do
 	compare="$((${newsize} * 2 * 1024))"
 done                      
 
-if [ -n "${msdosid}" ]; then
-	echo ${bar} Running fdisk ${bar}
+if $gpt; then
 	initsecs=$((${init} * 1024))
 	bootsecs=$((${boot} * 1024))
-	${FDISK} -f -i ${image}
-	${FDISK} -f -a -u -0 -s ${msdosid}/${initsecs}/${bootsecs} -F ${image}
-	if [ -z "${bootonly}" ]; then
-		ffsstart="$(getsectors ${ffsoffset})"
-		imagesize="$(getsize "${image}")"
-		imagesecs="$(getsectors ${imagesize})"
-		ffssize="$(expr ${imagesecs} - ${ffsstart})"
-		${FDISK} -f -u -1 -s 169/${ffsstart}/${ffssize} -F ${image}
+	ffsstart="$(getsectors ${ffsoffset})"
+
+	echo ${bar} Clearing existing partitions ${bar}
+	${GPT} ${image} destroy || true
+
+	echo ${bar} Creating partitions ${bar}
+	${GPT} ${image} create ${gpt_create_flags}
+	${GPT} ${image} add -b ${initsecs} -s ${bootsecs} -l ${gpt_label_efi:-EFI} -t efi
+	${GPT} ${image} set -a required -i 1
+	${GPT} ${image} add -a 4m -b ${ffsstart} -l ${gpt_label_ffs:-netbsd-root} -t ffs
+	${GPT} ${image} show
+else
+	if [ -n "${msdosid}" ]; then
+		echo ${bar} Running fdisk ${bar}
+		initsecs=$((${init} * 1024))
+		bootsecs=$((${boot} * 1024))
+		${FDISK} -f -i ${image}
+		${FDISK} -f -a -u -0 -s ${msdosid}/${initsecs}/${bootsecs} -F ${image}
+		if [ -z "${bootonly}" ]; then
+			ffsstart="$(getsectors ${ffsoffset})"
+			imagesize="$(getsize "${image}")"
+			imagesecs="$(getsectors ${imagesize})"
+			ffssize="$(expr ${imagesecs} - ${ffsstart})"
+			${FDISK} -f -u -1 -s 169/${ffsstart}/${ffssize} -F ${image}
+		fi
+
+		echo ${bar} Adding label ${bar}
+		make_label > ${tmp}/label
+		${DISKLABEL} -R -F ${image} ${tmp}/label
+	elif [ -n "${netbsdid}" ]; then
+		echo ${bar} Adding label ${bar}
+		make_label > ${tmp}/label
+		${DISKLABEL} -R -F ${image} ${tmp}/label
+
+		echo ${bar} Running fdisk ${bar}
+		${FDISK} -f -i ${image}
+		${FDISK} -f -a -u -0 -s 169/${init} ${image}
+		${INSTALLBOOT} -f -v ${image} ${release}/usr/mdec/bootxx_ffsv1
 	fi
-
-	echo ${bar} Adding label ${bar}
-	make_label > ${tmp}/label
-	${DISKLABEL} -R -F ${image} ${tmp}/label
-elif [ -n "${netbsdid}" ]; then
-	echo ${bar} Adding label ${bar}
-	make_label > ${tmp}/label
-	${DISKLABEL} -R -F ${image} ${tmp}/label
-
-	echo ${bar} Running fdisk ${bar}
-	${FDISK} -f -i ${image}
-	${FDISK} -f -a -u -0 -s 169/${init} ${image}
-	${INSTALLBOOT} -f -v ${image} ${release}/usr/mdec/bootxx_ffsv1
 fi
 
 if $compress; then
