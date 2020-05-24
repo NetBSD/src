@@ -14,6 +14,7 @@ rm -f ns*/named.run
 rm -f ns*/named.lock
 
 # build.sh
+rm -f ns1/named_dump.db*
 rm -f ns6/K*
 rm -f ns6/dsset-*
 rm -f ns6/edns512.db

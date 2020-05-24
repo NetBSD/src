@@ -21,7 +21,6 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	notify yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 	dnssec-loadkeys-interval 30;
 };

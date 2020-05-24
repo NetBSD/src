@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -382,7 +382,8 @@
 	    allowed to incrementally re-sign over time.
 	  </p>
 	  <p>
-	    This command requires that the
+	    This command requires that the zone is configured with a
+	    <span class="command"><strong>dnssec-policy</strong></span>, or that the
 	    <span class="command"><strong>auto-dnssec</strong></span> zone option
 	    be set to <code class="literal">maintain</code>,
 	    and also requires the zone to be configured to
@@ -394,7 +395,7 @@
 <dt><span class="term"><strong class="userinput"><code>managed-keys <em class="replaceable"><code>(status | refresh | sync | destroy)</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
 <dd>
 	  <p>
-            Inspect and control the "managed-keys" database which
+            Inspect and control the "managed keys" database which
             handles RFC 5011 DNSSEC trust anchor maintenance. If a view
             is specified, these commands are applied to that view;
             otherwise they are applied to all views.
@@ -403,14 +404,14 @@
 <li class="listitem">
               <p>
                 When run with the <code class="literal">status</code> keyword, prints
-                the current status of the managed-keys database.
+                the current status of the managed keys database.
               </p>
             </li>
 <li class="listitem">
               <p>
                 When run with the <code class="literal">refresh</code> keyword,
                 forces an immediate refresh query to be sent for all
-                the managed keys, updating the managed-keys database
+                the managed keys, updating the managed keys database
                 if any new keys are found, without waiting the normal
                 refresh interval.
               </p>
@@ -418,7 +419,7 @@
 <li class="listitem">
               <p>
                 When run with the <code class="literal">sync</code> keyword, forces an
-                immediate dump of the managed-keys database to disk
+                immediate dump of the managed keys database to disk
                 (in the file <code class="filename">managed-keys.bind</code> or
                 (<code class="filename"><em class="replaceable"><code>viewname</code></em>.mkeys</code>).
                 This synchronizes the database with its journal file, so
@@ -429,7 +430,7 @@
 <li class="listitem">
               <p>
                 When run with the <code class="literal">destroy</code> keyword, the
-                managed-keys database is shut down and deleted, and all key
+                managed keys database is shut down and deleted, and all key
                 maintenance is terminated.  This command should be used only
                 with extreme caution.
               </p>
@@ -669,9 +670,9 @@
 <dd>
 	  <p>
 	    Dump the security roots (i.e., trust anchors
-	    configured via <span class="command"><strong>trusted-keys</strong></span>,
-	    <span class="command"><strong>managed-keys</strong></span>, or
-	    <span class="command"><strong>dnssec-validation auto</strong></span>) and negative trust
+	    configured via <span class="command"><strong>trust-anchors</strong></span> statements, or the
+	    managed-keys or trusted-keys statements (both deprecated), or
+	    via <span class="command"><strong>dnssec-validation auto</strong></span>) and negative trust
 	    anchors for the specified views.  If no view is specified, all
 	    views are dumped.  Security roots will indicate whether
 	    they are configured as trusted keys, managed keys, or
@@ -737,7 +738,8 @@
 	    re-signed with the new key set.
 	  </p>
 	  <p>
-	    This command requires that the
+	    This command requires that the zone is configured with a
+	    <span class="command"><strong>dnssec-policy</strong></span>, or that the
 	    <span class="command"><strong>auto-dnssec</strong></span> zone option be set
 	    to <code class="literal">allow</code> or
 	    <code class="literal">maintain</code>,
@@ -930,13 +932,8 @@
 	  <p>
 	    Enable, disable, or check the current status of
 	    DNSSEC validation.  By default, validation is enabled.
-	    (Note that <span class="command"><strong>dnssec-enable</strong></span> must also be
-	    <strong class="userinput"><code>yes</code></strong> (the default value) for signatures
-	    to be returned along with validated data. If validation is
-	    enabled while <span class="command"><strong>dnssec-enable</strong></span> is set to
-	    <strong class="userinput"><code>no</code></strong>, the server will validate internally,
-	    but will not supply clients with the necessary records to allow
-	    validity to be confirmed.)
+	    The cache is flushed when validation is turned on or off
+	    to avoid using data that might differ between states.
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>zonestatus <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
@@ -1024,6 +1021,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

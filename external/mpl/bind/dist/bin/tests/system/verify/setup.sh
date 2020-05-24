@@ -12,6 +12,4 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL clean.sh 
-
 (cd zones && $SHELL genzones.sh)

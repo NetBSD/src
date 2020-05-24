@@ -5,14 +5,17 @@ Building BIND 9 on Windows has the following prerequisites:
 (http://www.strawberryperl.com) have both been tested and found
 to work.
 
-2) OpenSSL (http://www.openssl.org) must be downloaded and built on
+2) libuv (https://libuv.org/) must be downloaded and built on the
+system on which you are building BIND 9.
+
+3) OpenSSL (https://www.openssl.org) must be downloaded and built on
 the system on which you are building BIND 9.
 
-3) If you wish to use the statistics channel, LibXML2
+4) If you wish to use the statistics channel, LibXML2
 (ftp://xmlsoft.org/libxml2) must be downloaded and built on
 the system on which you are building BIND 9.
 
-4) Optional external packages (not used by default)
+5) Optional external packages (not used by default)
 
 If you wish to use IP geolocation, GeoIP API and database must be
 downloaded, patched and built on the system on which you are building
@@ -28,17 +31,44 @@ interpreter with its standard libraries.
 If you wish to use readline, the readline library must be downloaded
 and built on the system on which you are building BIND 9.
 
-5) The BIND 9 Installer (BINDInstall) includes a copy of the
+6) The BIND 9 Installer (BINDInstall) includes a copy of the
 redistributable runtime object vcredist_x86.exe (or vcredist_x64.exe),
 which is included with Visual Studio and can be downloaded from
 Microsoft.  This file must be in place prior to running Configure.
 
-Step 1: Download and build OpenSSL
+Step 1: Download and build libuv
 
-  Download and untar the OpenSSL sources from http://www.openssl.org/.
-  Extract them at in the same directory in which you extracted the BIND 9
-  source:  If BIND 9 is in \build\bind-9.14.6, for instance, OpenSSL should
-  be in \build\openssl-1.1.1d (subject to version number changes).
+  Download and untar the libuv sources from https://libuv.org/ in the same
+  directory in which you extracted the BIND 9 source: if BIND 9 is in
+  \build\bind-9.16.0, for instance, libuv should be in \build\libuv-v1.34.2
+  (subject to version number changes).
+
+  As of this writing, a patch (win32utils/libuv.diff) needs to be applied
+  to the libuv source code in order for it to work with BIND on Windows.  A
+  pull request including the changes from this patch has been submitted to
+  the libuv maintainers:
+
+      https://github.com/libuv/libuv/pull/2653
+
+  Applying the win32utils/libuv.diff patch will no longer be necessary
+  for libuv versions released after this pull request has been merged.
+
+  To build libuv, use the vcbuild.bat script in the root directory of
+  libuv's source tree.  Here is a sample command which builds a 64-bit
+  shared libuv library:
+
+      cd libuv-v1.34.2
+      vcbuild.bat x64 shared
+
+  The vcbuild.bat script supports several command line switches which can
+  be listed by running "vcbuild.bat --help".
+
+Step 2: Download and build OpenSSL
+
+  Download and untar the OpenSSL sources from https://www.openssl.org/ in
+  the same directory in which you extracted the BIND 9 source: if BIND 9 is
+  in \build\bind-9.16.0, for instance, OpenSSL should be in
+  \build\openssl-1.1.1d (subject to version number changes).
 
   Note: Building OpenSSL requires that you install Perl and NASM as it
   uses these during its build process. The following commands work as of
@@ -50,15 +80,15 @@ Step 1: Download and build OpenSSL
       perl Configure VC-WIN64A
       nmake
 
-Step 2: Download and build LibXML2
+Step 3: Download and build LibXML2
 
   LibXML2 is required to use the statistics channel. If you wish to
-  build BIND 9 without support for this feature, skip to step 3.
+  build BIND 9 without support for this feature, skip to step 4.
 
-  Download and untar the libxml2 sources from ftp://xmlsoft.org/libxml2.
-  Extract them in the same directory in which you extracted the BIND 9
-  source:  If BIND 9 is in \build\bind-9.14.6, for instance, libxml2 should
-  be in \build\libxml2-2.9.2 (subject to version number changes).
+  Download and untar the libxml2 sources from ftp://xmlsoft.org/libxml2 in
+  the same directory in which you extracted the BIND 9 source: if BIND 9 is
+  in \build\bind-9.16.0, for instance, libxml2 should be in
+  \build\libxml2-2.9.2 (subject to version number changes).
 
   Now build libxml2:
 
@@ -66,22 +96,28 @@ Step 2: Download and build LibXML2
     cscript configure.js iconv=no
     nmake /f Makefile.msvc
 
-Step 3: Download and build zlib
+Step 4: Download and build zlib
 
   The statistics channel (aka internal HTTP server) can support
   zlib "deflate" compression method. If you don't want to this
-  feature, skip to step 4.
+  feature, skip to step 5.
 
-  Download and untar the zlib sources from http://www.zlib.net,
-  extract them, read the win32\Makefile.msc for the Usage comment
-  at the beginning of this file, then build the zlib1.dll DLL for
-  the intended processor (i.e., win32 aka x86, or x64), e.g.,
-  running 'nmake /f win32\Makefile.msc'.
+  Download and untar the zlib sources from https://www.zlib.net in the same
+  directory in which you extracted the BIND 9 source: if BIND 9 is in
+  \build\bind-9.16.0, for instance, zlib should be in \build\zlib-1.2.11
+  (subject to version number changes).
 
-Step 4: Download and build GeoIP
+  Read the win32\Makefile.msc for the Usage comment at the beginning of
+  this file, then build the zlib1.dll DLL for the intended processor (i.e.,
+  win32 aka x86, or x64), e.g.:
+
+    cd zlib-1.2.11
+    nmake /f win32\Makefile.msc
+
+Step 5: Download and build GeoIP
 
   Geographic ("geoip") ACLs require libGeoIP. If you wish to build BIND 9
-  without support for this feature, skip to step 5.
+  without support for this feature, skip to step 6.
 
   The libGeoIP source code is available from:
 
@@ -94,10 +130,10 @@ Step 4: Download and build GeoIP
   This patch has been submitted upstream, and will be included in
   future versions of libGeoIP.
 
-Step 5: Enable python tools
+Step 6: Enable python tools
 
   Some python packages are required: argparse, ply, win32con and win32api.
-  Last CPython's (version 2 or 3) from http://www.python.org include
+  Last CPython's (version 2 or 3) from https://www.python.org include
   the pip package manager which can install missing packages, for
   instance for the 2 last packages 'pip install pypiwin32' downloads and
   installs win32con and win32api.
@@ -108,15 +144,15 @@ Step 5: Enable python tools
 
   To be used a python tool must be invoked with python (e.g.,
   python dnssec-checkds.py <args>) as the shebang doesn't work
-  on Windows. The isc package should be installed too, cf step 11.
-  At the opposite of Unix this isc package uses the Registry to
-  learn where BIND 9 was installed in step 10.
+  on Windows. The isc package should be installed too, cf step 12.
+  Unlike on Unix systems, this isc package uses the Registry to
+  learn where BIND 9 was installed in step 11.
 
-Step 6: Download and build Readline
+Step 7: Download and build Readline
 
   The readline library adds command-line editing in nslookup and nsupdate.
   If you wish to build BIND 9 without support for this feature, skip to
-  step 7.
+  step 8.
 
   Because the original GNU source for the readline library has no WIN32
   support, it will be necessary to download a version of the static
@@ -125,27 +161,27 @@ Step 6: Download and build Readline
 
     http://gpsim.sourceforge.net/gpsimWin32/gpsimWin32.html#readline_lib
 
-  Note: Windows command (cmd.exe) provides an integrated line edition
+  Note: Windows command (cmd.exe) provides an integrated line editing
   feature so it is not recommended to configure bind with readline.
 
-Step 7: Make the redistributable runtime object available
+Step 8: Make the redistributable runtime object available
 
   Check that the Microsoft redistributable object (vcredist_x86.exe or
   vcredist_x64.exe) is available to the build.  The file may be placed
   in the directory in which the BIND 9 source was extracted (for
-  instance, if BIND 9 is in \build\bind-9.14.6, the redistributable
+  instance, if BIND 9 is in \build\bind-9.16.0, the redistributable
   may be placed in \build\vcredist_x86.exe).  Or, the path to the file
   can be specified via the VCREDIST_PATH environment variable, or via
   the "with-vcredist=PATH" option to the configuration script (see
-  step 8). If none of these options is used, Configure will attempt to
+  step 9). If none of these options is used, Configure will attempt to
   find the redistributable based on clues in the build environment.
 
-Step 8: Configuring the BIND 9 build
+Step 9: Configuring the BIND 9 build
 
   From the command prompt, cd to the win32utils directory under
   the BIND 9 root:
 
-    cd bind-9.14.6\win32utils
+    cd bind-9.16.0\win32utils
 
   In this directory, you can prepare the Windows build by running:
 
@@ -160,7 +196,7 @@ Step 8: Configuring the BIND 9 build
 
     perl Configure clean
 
-Step 9: Building BIND 9
+Step 10: Building BIND 9
 
   Building using 'nmake' or older versions of Visual Studio
   (e.g. VS 2005 or VS 2008) is no longer supported.
@@ -172,13 +208,22 @@ Step 9: Building BIND 9
 
   If the build host only has Visual Studio Build Tools available
   and not a full Visual Studio installation, devenv.exe will not
-  be present.  In that case, the Configure invocation from step 8
+  be present.  In that case, the Configure invocation from step 9
   must be extended with the following parameters set to values
   matching the Visual Studio Build Tools version used:
 
     with-tools-version
     with-platform-version
     with-platform-toolset
+
+  Example use for a 64-bit Visual Studio 2017 build:
+
+    perl Configure ^
+      with-tools-version=15.0 ^
+      with-platform-toolset=v141 ^
+      with-platform-version=10.0.17763.0 ^
+      ...
+      x64
 
   To build using the Visual Studio GUI in VS 2010 or newer:
   open the bind9.sln solution file; this will load the project
@@ -196,7 +241,7 @@ Step 9: Building BIND 9
   After this step this documentation applies to external or remote
   builds, i.e., is common with installation.
 
-Step 10: Install
+Step 11: Install
 
   Installation is accomplished by running the BINDInstall program. All
   DLL's are copied to the Program Files area and all applications
@@ -219,7 +264,7 @@ Step 10: Install
   The idea is to be able to use any BINDInstall.exe binary so
   a non-free version of Visual Studio is no longer required.
 
-Step 11: Python package install
+Step 12: Python package install
 
   When BIND 9 was built with python support, the isc python package
   must be installed locally by:

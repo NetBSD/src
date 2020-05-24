@@ -192,7 +192,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "query for .bad succeds when qname-minimization is in relaxed mode ($n)"
+echo_i "query for .bad succeeds when qname-minimization is in relaxed mode ($n)"
 ret=0
 $CLEANQL
 $RNDCCMD 10.53.0.7 flush
@@ -243,7 +243,7 @@ status=`expr $status + $ret`
 $RNDCCMD 10.53.0.6 flush
 
 n=`expr $n + 1`
-echo_i "query for .ugly succeds when qname-minimization is in relaxed mode ($n)"
+echo_i "query for .ugly succeeds when qname-minimization is in relaxed mode ($n)"
 ret=0
 $CLEANQL
 $RNDCCMD 10.53.0.7 flush
@@ -312,7 +312,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "query for .ip6.arpa succeds and skips on proper boundaries when qname-minimization is on ($n)"
+echo_i "query for .ip6.arpa succeeds and skips on proper boundaries when qname-minimization is on ($n)"
 ret=0
 $CLEANQL
 $RNDCCMD 10.53.0.6 flush

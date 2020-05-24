@@ -15,7 +15,8 @@ top_srcdir =	@top_srcdir@
 
 CINCLUDES =	-I${srcdir}/include -I${srcdir}/../include \
 		${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} \
-		${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
+		${DNS_INCLUDES} ${ISC_INCLUDES} \
+		${OPENSSL_CFLAGS}
 
 CDEFINES =
 CWARNINGS =

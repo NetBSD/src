@@ -30,5 +30,5 @@ $CHECKZONE -D -F map -o example.db.map example-map \
 
 $KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK signed > /dev/null 2>&1
 $KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" signed > /dev/null 2>&1
-$SIGNER -S -f signed.db.signed -o signed signed.db > /dev/null 2>&1
+$SIGNER -S -f signed.db.signed -o signed signed.db > /dev/null
 $CHECKZONE -D -F map -o signed.db.map signed signed.db.signed > /dev/null 2>&1

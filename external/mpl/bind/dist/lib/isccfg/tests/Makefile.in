@@ -17,10 +17,10 @@ VERSION=@BIND9_VERSION@
 
 CINCLUDES =	-I. -Iinclude \
 		${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
-		@OPENSSL_INCLUDES@ @CMOCKA_CFLAGS@
+		${OPENSSL_CFLAGS} @CMOCKA_CFLAGS@
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/dns/tests/\""
 
-ISCLIBS =	../../isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 ISCDEPLIBS =	../../isc/libisc.@A@
 DNSLIBS =	../../dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 DNSDEPLIBS =	../../dns/libdns.@A@
@@ -30,12 +30,17 @@ ISCCFGDEPLIBS = ../libisccfg.@A@
 LIBS =		@LIBS@ @CMOCKA_LIBS@
 
 OBJS =
-SRCS =		parser_test.c
+SRCS =		duration_test.c parser_test.c
 
 SUBDIRS =
-TARGETS =	parser_test@EXEEXT@
+TARGETS =	duration_test@EXEEXT@ parser_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
+
+duration_test@EXEEXT@: duration_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS} ${ISCCFGDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ duration_test.@O@ \
+		${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 parser_test@EXEEXT@: parser_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS} ${ISCCFGDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \

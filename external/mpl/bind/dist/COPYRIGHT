@@ -1,4 +1,4 @@
-Copyright (C) 1996-2019  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 1996-2020  Internet Systems Consortium, Inc. ("ISC")
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,67 +181,6 @@ SUCH DAMAGE.
 
  -----------------------------------------------------------------------------
 
-Copyright (c) 1998 Doug Rabson
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
-
- -----------------------------------------------------------------------------
-
-Copyright ((c)) 2002, Rice University
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-    * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following
-    disclaimer in the documentation and/or other materials provided
-    with the distribution.
-
-    * Neither the name of Rice University (RICE) nor the names of its
-    contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission.
-
-
-This software is provided by RICE and the contributors on an "as is"
-basis, without any representations or warranties of any kind, express
-or implied including, but not limited to, representations or
-warranties of non-infringement, merchantability or fitness for a
-particular purpose. In no event shall RICE or contributors be liable
-for any direct, indirect, incidental, special, exemplary, or
-consequential damages (including, but not limited to, procurement of
-substitute goods or services; loss of use, data, or profits; or
-business interruption) however caused and on any theory of liability,
-whether in contract, strict liability, or tort (including negligence
-or otherwise) arising in any way out of the use of this software, even
-if advised of the possibility of such damage.
-
- -----------------------------------------------------------------------------
-
 Copyright (c) 1993 by Digital Equipment Corporation.
 
 Permission to use, copy, modify, and distribute this software for any
@@ -259,61 +198,6 @@ DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
 PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
-
- -----------------------------------------------------------------------------
-
-Copyright 2000 Aaron D. Gifford.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
- 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTOR(S) ``AS IS'' AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
-
- -----------------------------------------------------------------------------
-
-Copyright (c) 1998 Doug Rabson.
-Copyright (c) 2001 Jake Burkholder.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGE.
 
  -----------------------------------------------------------------------------
 
@@ -363,49 +247,6 @@ SOFTWARE.
 
  -----------------------------------------------------------------------------
 
-Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved.
- 
-By using this file, you agree to the terms and conditions set forth bellow.
-
-                        LICENSE TERMS AND CONDITIONS 
-
-The following License Terms and Conditions apply, unless a different
-license is obtained from Japan Network Information Center ("JPNIC"),
-a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
-Chiyoda-ku, Tokyo 101-0047, Japan.
-
-1. Use, Modification and Redistribution (including distribution of any
-   modified or derived work) in source and/or binary forms is permitted
-   under this License Terms and Conditions.
-
-2. Redistribution of source code must retain the copyright notices as they
-   appear in each source code file, this License Terms and Conditions.
-
-3. Redistribution in binary form must reproduce the Copyright Notice,
-   this License Terms and Conditions, in the documentation and/or other
-   materials provided with the distribution.  For the purposes of binary
-   distribution the "Copyright Notice" refers to the following language:
-   "Copyright (c) 2000-2002 Japan Network Information Center.  All rights
-   reserved."
-
-4. The name of JPNIC may not be used to endorse or promote products
-   derived from this Software without specific prior written approval of
-   JPNIC.
-
-5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-   PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
-   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-   BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-   OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-   ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
- -----------------------------------------------------------------------------
-
 Copyright (C) 2004  Nominet, Ltd.
 
 Permission to use, copy, modify, and distribute this software for any
@@ -419,24 +260,6 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
-
- -----------------------------------------------------------------------------
-
-Portions Copyright RSA Security Inc.
-
-License to copy and use this software is granted provided that it is
-identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
-(Cryptoki)" in all material mentioning or referencing this software.
-
-License is also granted to make and use derivative works provided that
-such works are identified as "derived from the RSA Security Inc. PKCS #11
-Cryptographic Token Interface (Cryptoki)" in all material mentioning or
-referencing the derived work.
-
-RSA Security Inc. makes no representations concerning either the
-merchantability of this software or the suitability of this software for
-any particular purpose. It is provided "as is" without express or implied
-warranty of any kind.
 
  -----------------------------------------------------------------------------
 
@@ -454,54 +277,6 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
------------------------------------------------------------------------------
-
-Copyright (c) 2000-2001 The OpenSSL Project.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in
-   the documentation and/or other materials provided with the
-   distribution.
-
-3. All advertising materials mentioning features or use of this
-   software must display the following acknowledgment:
-   "This product includes software developed by the OpenSSL Project
-   for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
-
-4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-   endorse or promote products derived from this software without
-   prior written permission. For written permission, please contact
-   licensing@OpenSSL.org.
-
-5. Products derived from this software may not be called "OpenSSL"
-   nor may "OpenSSL" appear in their names without prior written
-   permission of the OpenSSL Project.
-
-6. Redistributions of any form whatsoever must retain the following
-   acknowledgment:
-   "This product includes software developed by the OpenSSL Project
-   for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
-
-THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -----------------------------------------------------------------------------
 

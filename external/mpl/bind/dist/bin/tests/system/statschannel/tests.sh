@@ -70,31 +70,19 @@ getzones() {
         *) return 1 ;;
     esac
     file=`$PERL fetch.pl -p ${EXTRAPORT1} $path`
-    cp $file $file.$1.$2
-    $PERL zones-${1}.pl $file 2>/dev/null | sort > zones.out.$2
+    cp $file $file.$1.$3
+    $PERL zones-${1}.pl $file $2 2>/dev/null | sort > zones.out.$3
     result=$?
     return $result
 }
 
-# TODO: Move wait_for_log and loadkeys_on to conf.sh.common
-wait_for_log() {
-    msg=$1
-    file=$2
-
-    for i in 1 2 3 4 5 6 7 8 9 10; do
-        nextpart "$file" | grep "$msg" > /dev/null && return
-        sleep 1
-    done
-    echo_i "exceeded time limit waiting for '$msg' in $file"
-    ret=1
-}
-
+# TODO: Move loadkeys_on to conf.sh.common
 loadkeys_on() {
     nsidx=$1
     zone=$2
     nextpart ns${nsidx}/named.run > /dev/null
     $RNDCCMD 10.53.0.${nsidx} loadkeys ${zone} | sed "s/^/ns${nsidx} /" | cat_i
-    wait_for_log "next key event" ns${nsidx}/named.run
+    wait_for_log 20 "next key event" ns${nsidx}/named.run
 }
 
 status=0
@@ -264,7 +252,7 @@ n=`expr $n + 1`
 
 ret=0
 echo_i "checking if compressed output is really compressed ($n)"
-if [ "$ZLIB" ];
+if [ "$HAVEZLIB" ];
 then
     REGSIZE=`cat regular.headers | \
 	grep -i Content-Length | sed -e "s/.*: \([0-9]*\).*/\1/"`
@@ -294,25 +282,21 @@ ret=0
 # almost right away, this should trigger 10 zsk and 1 ksk sign operations.
 # However, the DNSSEC maintenance assumes when we see the SOA record we have
 # walked the whole zone, since the SOA record should always have the most
-# recent signature.  This however is not always the case, for example when
-# the signature expiration is the same, `dns_db_getsigningtime could return
-# the SOA RRset before a competing RRset. This happens here and so the
-# SOA RRset is updated and resigned twice at startup, that explains the
-# additional zsk sign operation (11 instead of 10).
-echo "${refresh_prefix} ${zsk_id}: 11" > zones.expect
+# recent signature.
+echo "${refresh_prefix} ${zsk_id}: 10" > zones.expect
 echo "${refresh_prefix} ${ksk_id}: 1" >> zones.expect
-echo "${sign_prefix} ${zsk_id}: 11" >> zones.expect
+echo "${sign_prefix} ${zsk_id}: 10" >> zones.expect
 echo "${sign_prefix} ${ksk_id}: 1" >> zones.expect
 cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
 echo_i "fetching zone stats data after zone maintenance at startup ($n)"
 if [ $PERL_XML ]; then
-    getzones xml x$n || ret=1
+    getzones xml $zone x$n || ret=1
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json j$n || ret=1
+    getzones json $zone j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -329,20 +313,20 @@ echo update add $zone. 300 in txt "nsupdate added me"
 echo send
 ) | $NSUPDATE
 # This should trigger the resign of SOA, TXT and NSEC (+3 zsk).
-echo "${refresh_prefix} ${zsk_id}: 11" > zones.expect
+echo "${refresh_prefix} ${zsk_id}: 10" > zones.expect
 echo "${refresh_prefix} ${ksk_id}: 1" >> zones.expect
-echo "${sign_prefix} ${zsk_id}: 14" >> zones.expect
+echo "${sign_prefix} ${zsk_id}: 13" >> zones.expect
 echo "${sign_prefix} ${ksk_id}: 1" >> zones.expect
 cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
 echo_i "fetching zone stats data after dynamic update ($n)"
 if [ $PERL_XML ]; then
-    getzones xml x$n || ret=1
+    getzones xml $zone x$n || ret=1
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json j$n || ret=1
+    getzones json $zone j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -357,21 +341,44 @@ zsk=$("$KEYGEN" -K ns2 -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
 $SETTIME -K ns2 -P now -A never $zsk.key > /dev/null
 loadkeys_on 2 $zone || ret=1
 # This should trigger the resign of SOA (+1 zsk) and DNSKEY (+1 ksk).
-echo "${refresh_prefix} ${zsk_id}: 12" > zones.expect
+echo "${refresh_prefix} ${zsk_id}: 11" > zones.expect
 echo "${refresh_prefix} ${ksk_id}: 2" >> zones.expect
-echo "${sign_prefix} ${zsk_id}: 15" >> zones.expect
+echo "${sign_prefix} ${zsk_id}: 14" >> zones.expect
 echo "${sign_prefix} ${ksk_id}: 2" >> zones.expect
 cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
 if [ $PERL_XML ]; then
-    getzones xml x$n || ret=1
+    getzones xml $zone x$n || ret=1
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json j$n || ret=1
+    getzones json $zone j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+# 4. Test a zone with more than four keys.
+zone="manykeys"
+ksk8_id=`cat ns2/$zone.ksk8.id`
+zsk8_id=`cat ns2/$zone.zsk8.id`
+ksk13_id=`cat ns2/$zone.ksk13.id`
+zsk13_id=`cat ns2/$zone.zsk13.id`
+ksk14_id=`cat ns2/$zone.ksk14.id`
+zsk14_id=`cat ns2/$zone.zsk14.id`
+
+ret=0
+echo_i "fetch zone stats data for a zone with many keys ($n)"
+# Fetch and check the dnssec sign statistics.
+if [ $PERL_XML ]; then
+    getzones xml $zone x$n || ret=1
+fi
+if [ $PERL_JSON ]; then
+    getzones json $zone j$n || ret=1
+fi
+# The output is gibberish, but at least make sure it does not crash.
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

@@ -487,7 +487,7 @@ dlv			DLV	30795 1 1 (
 
 ; type 65280-65534 (private use)
 
-; keydata (internal type used for managed-keys)
+; keydata (internal type used for managed keys)
 keydata			TYPE65533	\# 0
 keydata			TYPE65533	\# 6 010203040506 
 keydata			TYPE65533	\# 18 010203040506010203040506010203040506

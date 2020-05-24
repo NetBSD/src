@@ -14,8 +14,6 @@ SYSTEMTESTTOP=../..
 
 SYSTESTDIR=filter-aaaa
 
-dlvsets=
-
 zone=signed.
 infile=signed.db.in
 zonefile=signed.db.signed
@@ -26,7 +24,7 @@ $KEYGEN -f KSK -a $DEFAULT_ALGORITHM $zone 2>&1 > keygen.out | cat_i
 keyname=`cat keygen.out`
 rm -f keygen.out
 
-keyfile_to_trusted_keys $keyname > trusted.conf
+keyfile_to_static_ds $keyname > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns5/trusted.conf

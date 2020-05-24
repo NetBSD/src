@@ -38,6 +38,7 @@
       <year>2016</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -49,6 +50,7 @@
       <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">input-format</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">origin</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q</option></arg>
       <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-x</option></arg>
@@ -137,6 +139,20 @@
 	  <para>
 	    Prints version information.
 	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-q</term>
+        <listitem>
+          <para>
+	    Quiet mode: Suppresses output.  Without this option, when
+	    <command>dnssec-verify</command> is run it will print to
+	    standard output the number of keys in use, the algorithms
+	    used to verify the zone was signed correctly and other
+	    status information.  With it, all non-error output is
+	    suppressed, and only the exit code will indicate success.
+          </para>
         </listitem>
       </varlistentry>
 

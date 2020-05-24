@@ -506,7 +506,6 @@ grep "add nsec3param.test.	0	IN	TYPE65534 .# 6 000140000400" jp.out.ns3.$n > /de
 if [ $ret != 0 ] ; then echo_i "failed"; status=`expr $ret + $status`; fi
 
 
-
 ret=0
 echo_i "testing that rndc stop updates the master file"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
@@ -514,21 +513,29 @@ server 10.53.0.1 ${PORT}
 update add updated4.example.nil. 600 A 10.10.10.3
 send
 END
+sleep 3
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} nsupdate ns1
+sleep 3
 # Removing the journal file and restarting the server means
 # that the data served by the new server process are exactly
 # those dumped to the master file by "rndc stop".
 rm -f ns1/*jnl
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} nsupdate ns1
-$DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd updated4.example.nil.\
-	@10.53.0.1 a > dig.out.ns1 || status=1
-digcomp knowngood.ns1.afterstop dig.out.ns1 || ret=1
-[ $ret = 0 ] || { echo_i "failed"; status=1; }
+for try in 0 1 2 3 4 5 6 7 8 9; do
+    iret=0
+    $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
+	updated4.example.nil. @10.53.0.1 a > dig.out.ns1 || iret=1
+    digcomp knowngood.ns1.afterstop dig.out.ns1 || iret=1
+    [ "$iret" -eq 0 ] && break
+    sleep 1
+done
+[ "$iret" -ne 0 ] && ret=1
+[ "$ret" -eq 0 ] || { echo_i "failed"; status=1; }
 
 ret=0
 echo_i "check that 'nsupdate -l' with a missing keyfile reports the missing file"
-$NSUPDATE -4 -p ${PORT} -l -k ns1/nonexistant.key 2> nsupdate.out < /dev/null
-grep ns1/nonexistant.key nsupdate.out > /dev/null || ret=1
+$NSUPDATE -4 -p ${PORT} -l -k ns1/nonexistent.key 2> nsupdate.out < /dev/null
+grep ns1/nonexistent.key nsupdate.out > /dev/null || ret=1
 if test $ret -ne 0
 then
 echo_i "failed"; status=1

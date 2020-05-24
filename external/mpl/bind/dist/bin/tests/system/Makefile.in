@@ -23,7 +23,7 @@ CDEFINES =	@USE_GSSAPI@ @CONTRIB_DLZ@
 CWARNINGS =
 
 DNSLIBS =
-ISCLIBS =	../../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 
 DNSDEPLIBS =
 ISCDEPLIBS =
@@ -64,7 +64,7 @@ parallel.mk:
 
 test: parallel.mk subdirs
 	@$(MAKE) -f parallel.mk check
-	@$(SHELL) ./runsequential.sh -r
+	@$(SHELL) ./runsequential.sh
 	@$(SHELL) ./testsummary.sh
 
 check: test

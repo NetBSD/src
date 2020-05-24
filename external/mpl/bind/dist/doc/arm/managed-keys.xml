@@ -24,11 +24,10 @@
     <!-- TODO: command tag is overloaded for configuration and executables -->
     <para>To configure a validating resolver to use RFC 5011 to
     maintain a trust anchor, configure the trust anchor using a
-    <command>managed-keys</command> statement. Information about
-    this can be found in
-    <xref linkend="managed-keys"/>.</para>
-    <!-- TODO: managed-keys examples
-also in DNSSEC section above here in ARM -->
+    <command>trust-anchors</command> statement and the
+    <command>initial-key</command> or <command>initial-ds</command>
+    keyword. Information about this can be found in
+    <xref linkend="trust-anchors"/>.</para>
   </section>
   <section><info><title>Authoritative Server</title></info>
 

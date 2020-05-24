@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2000-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,10 +170,15 @@ $ <strong class="userinput"><code>make</code></strong>
       parameters. By default the path to this configuration file is
       <code class="filename">/etc/dns.conf</code>.  This module is very experimental
       and the configuration syntax or library interfaces may change in
-      future versions. Currently, only the <span class="command"><strong>trusted-keys</strong></span>
-      statement is supported, whose syntax is the same as the same
-      statement in <code class="filename">named.conf</code>. (See
-      <a class="xref" href="Bv9ARM.ch05.html#trusted-keys" title="trusted-keys Statement Grammar">the section called &#8220;<span class="command"><strong>trusted-keys</strong></span> Statement Grammar&#8221;</a> for details.)
+      future versions.  Currently, only static key configuration is supported.
+      <span class="command"><strong>managed-keys</strong></span> and <span class="command"><strong>trusted-keys</strong></span>
+      statements are parsed exactly as they are in
+      <code class="filename">named.conf</code>, except that all
+      <span class="command"><strong>managed-keys</strong></span> entries will be treated as
+      if they were configured with the <span class="command"><strong>static-key</strong></span>
+      or <span class="command"><strong>static-ds</strong></span> keywords, even if they are configured
+      with <span class="command"><strong>initial-key</strong></span> or <span class="command"><strong>iniital-ds</strong></span>.
+      (See <a class="xref" href="Bv9ARM.ch05.html#managed-keys" title="managed-keys Statement Grammar">the section called &#8220;<span class="command"><strong>managed-keys</strong></span> Statement Grammar&#8221;</a> for syntax details.)
     </p>
   </div>
   <div class="section">
@@ -533,6 +538,6 @@ $ <strong class="userinput"><code>sample-update -a sample-update -k Kxxx.+nnn+mm
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.16.3 (Stable Release)</p>
 </body>
 </html>

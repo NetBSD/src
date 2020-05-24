@@ -41,6 +41,14 @@ a release: read access to the source repository was restricted just
 as commit access was.  That's now changing, with the opening of a
 public git mirror to the BIND source tree (see below).
 
+At [Internet Systems Consortium](https://www.isc.org), we're committed to
+building communities that are welcoming and inclusive; environments where people
+are encouraged to share ideas, treat each other with respect, and collaborate
+towards the best solutions. To reinforce our commitment, the [Internet Systems
+Consortium](https://www.isc.org) has adopted the Contributor Covenant version
+1.4 as our Code of Conduct for BIND 9 project, as well as for the conduct of our
+developers throughout the industry.
+
 ### <a name="access"></a>Access to source code
 
 Public BIND releases are always available from the
@@ -99,7 +107,7 @@ e-mail is not a secure choice for communications concerning undisclosed
 security issues so please encrypt your communications to us if possible,
 using the [ISC Security Officer public key](https://www.isc.org/downloads/software-support-policy/openpgp-key/).
 
-Do not discuss undisclosed security vulnerabilites on any public mailing list.
+Do not discuss undisclosed security vulnerabilities on any public mailing list.
 ISC has a long history of handling reported vulnerabilities promptly and
 effectively and we respect and acknowledge responsible reporters.
 
@@ -108,7 +116,7 @@ ISC's Security Vulnerability Disclosure Policy is documented at [https://kb.isc.
 If you have a crash, you may want to consult
 [‘What to do if your BIND or DHCP server has crashed.’](https://kb.isc.org/article/AA-00340/89/What-to-do-if-your-BIND-or-DHCP-server-has-crashed.html)
 
-### <a name="bugs"></a>Contributing code
+### <a name="contrib"></a>Contributing code
 
 BIND is licensed under the
 [Mozilla Public License 2.0](http://www.isc.org/downloads/software-support-policy/isc-license/).
