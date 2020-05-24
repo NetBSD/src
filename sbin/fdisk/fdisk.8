@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.91 2020/05/24 18:42:48 jmcneill Exp $
+.\"	$NetBSD: fdisk.8,v 1.92 2020/05/24 21:01:49 wiz Exp $
 .\"
 .Dd May 24, 2020
 .Dt FDISK 8
@@ -519,7 +519,7 @@ sector
 .It Em "cylinder" , Em "head" , Em "sector"
 are the beginning or ending address of a partition.
 .Pp
-.Em "Note:"
+.Em Note :
 these numbers are read from the bootblock, so are the values calculated
 by a previous run of
 .Nm .
@@ -601,8 +601,9 @@ Default location of i386 bootcode
 .It Pa /usr/mdec/mbr_bootsel
 Default location of i386 bootselect code
 .It Pa /usr/mdec/mbr_ext
-Default location of i386 bootselect for extended partitions (i.e., NetBSD on
-logical partitions)
+Default location of i386 bootselect for extended partitions (i.e.,
+.Nx
+on logical partitions)
 .El
 .Sh EXAMPLES
 Update MBR partition data of
