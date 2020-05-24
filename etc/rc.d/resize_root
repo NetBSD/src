@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: resize_root,v 1.4 2018/10/06 13:09:53 jmcneill Exp $
+# $NetBSD: resize_root,v 1.5 2020/05/24 14:43:19 jmcneill Exp $
 #
 
 # PROVIDE: resize_root
@@ -72,7 +72,7 @@ resize_root_start()
 			fi
 		done
 
-		rootdev=${fs_spec%/*}/r${fs_spec##*/}
+		rootdev=${fs_spec}
 		break
 	done < "${fstab_file}"
 
@@ -81,8 +81,8 @@ resize_root_start()
 		return
 	fi
 
-	if resize_ffs -c $rootdev; then
-		echo "Resizing $rootmp"
+	if resize_ffs -c "$rootdev"; then
+		echo "Resizing $rootmp ($rootdev)"
 		if ! resize_ffs -y $resize_root_flags $rootdev; then
 		    echo "Error resizing root."
 		    stop_boot
@@ -91,7 +91,7 @@ resize_root_start()
 			${resize_root_postcmd}
 		fi
 	else
-		echo "Not resizing $rootmp: already correct size"
+		echo "Not resizing $rootmp ($rootdev): already correct size"
 	fi
 	return
 }
