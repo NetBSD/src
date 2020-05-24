@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.54 2019/04/21 11:45:08 maya Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.55 2020/05/24 14:41:26 jmcneill Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.54 2019/04/21 11:45:08 maya Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.55 2020/05/24 14:41:26 jmcneill Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: resize_ffs.c,v 1.54 2019/04/21 11:45:08 maya Exp $");
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "progress.h"
 
@@ -68,7 +69,7 @@ static int64_t newsize;
 static int fd;
 
 /* disk device or file path */
-char *special;
+const char *special;
 
 /* must we break up big I/O operations - see checksmallio() */
 static int smallio;
@@ -2110,7 +2111,7 @@ checkonly(void)
 }
 
 static off_t
-get_dev_size(char *dev_name)
+get_dev_size(const char *dev_name)
 {
 	struct dkwedge_info dkw;
 	struct partition *pp;
@@ -2145,6 +2146,9 @@ main(int argc, char **argv)
 	int ExpertFlag;
 	int SFlag;
 	size_t i;
+	char specname[MAXPATHLEN];
+	char rawname[MAXPATHLEN];
+	const char *raw;
 
 	char reply[5];
 
@@ -2187,7 +2191,12 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	special = *argv;
+	special = getfsspecname(specname, sizeof(specname), argv[0]);
+	if (special == NULL)
+		err(EXIT_FAILURE, "%s: %s", argv[0], specname);
+	raw = getdiskrawname(rawname, sizeof(rawname), special);
+	if (raw != NULL)
+		special = raw;
 
 	if (ExpertFlag == 0 && CheckOnlyFlag == 0) {
 		printf("It's required to manually run fsck on file system "
