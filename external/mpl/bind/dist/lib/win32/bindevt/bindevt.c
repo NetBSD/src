@@ -1,4 +1,4 @@
-/*	$NetBSD: bindevt.c,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
+/*	$NetBSD: bindevt.c,v 1.1.1.3 2020/05/24 19:36:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,7 @@
 
 #include <windows.h>
 
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,
-		      LPVOID lpReserved)
-{
+BOOL APIENTRY
+DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
 	return (TRUE);
 }
-

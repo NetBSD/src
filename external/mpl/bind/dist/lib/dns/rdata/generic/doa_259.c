@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.1.1.3 2019/11/24 19:58:06 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.1.1.4 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -358,4 +358,4 @@ casecompare_doa(ARGS_COMPARE) {
 	return (compare_doa(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_DOA_259_C */
+#endif /* RDATA_GENERIC_DOA_259_C */

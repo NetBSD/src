@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.1.1.3 2020/05/24 19:36:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,9 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-#include <config.h>
 
 #include <bind9/version.h>
 

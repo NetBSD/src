@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_2.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: ns_2.h,v 1.1.1.2 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,12 +15,10 @@
 #ifndef GENERIC_NS_2_H
 #define GENERIC_NS_2_H 1
 
-
 typedef struct dns_rdata_ns {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		name;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t name;
 } dns_rdata_ns_t;
-
 
 #endif /* GENERIC_NS_2_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.h,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: rbtdb.h,v 1.1.1.2 2020/05/24 19:36:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,16 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_RBTDB_H
 #define DNS_RBTDB_H 1
 
 #include <isc/lang.h>
+
 #include <dns/types.h>
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief

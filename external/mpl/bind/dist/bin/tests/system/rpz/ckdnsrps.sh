@@ -94,12 +94,12 @@ if [ -n "$AS_NS" ]; then
 			ip-as-ns yes"
 fi
 
-# write dnsrps setttings for master resolver
+# write dnsrps settings for master resolver
 cat <<EOF >>$MCONF
 $MASTER };
 EOF
 
-# write dnsrps setttings for resolvers that should not start dnsrpzd
+# write dnsrps settings for resolvers that should not start dnsrpzd
 cat <<EOF >>$SCONF
 $CMN
 			dnsrpzd '' };	# do not start dnsrpzd

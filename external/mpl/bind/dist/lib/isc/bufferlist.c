@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferlist.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: bufferlist.c,v 1.1.1.2 2020/05/24 19:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stddef.h>
 

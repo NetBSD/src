@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_stub_driver.h,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_stub_driver.h,v 1.1.1.2 2020/05/24 19:36:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -44,4 +44,4 @@ dlz_stub_init(void);
 void
 dlz_stub_clear(void);
 
-#endif
+#endif /* ifndef DLZ_STUB_DRIVER_H */

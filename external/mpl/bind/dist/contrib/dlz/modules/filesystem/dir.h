@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.1.1.2 2020/05/24 19:36:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
@@ -16,21 +16,23 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <dirent.h>
+#include <sys/types.h>
+
+#include <dlz_minimal.h>
 
 #define DIR_NAMEMAX 256
 #define DIR_PATHMAX 1024
 
 typedef struct direntry {
-	char 		name[DIR_NAMEMAX];
-	unsigned int	length;
+	char name[DIR_NAMEMAX];
+	unsigned int length;
 } direntry_t;
 
 typedef struct dir {
-	char		dirname[DIR_PATHMAX];
-	direntry_t	entry;
-	DIR *		handle;
+	char dirname[DIR_PATHMAX];
+	direntry_t entry;
+	DIR *handle;
 } dir_t;
 
 void

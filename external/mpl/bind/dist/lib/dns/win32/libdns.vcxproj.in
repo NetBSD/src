@@ -44,19 +44,23 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
+    <IntDirSharingDetected>None</IntDirSharingDetected>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
+    <IntDirSharingDetected>None</IntDirSharingDetected>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>BIND9;WIN32;@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -78,13 +82,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
       <PreprocessorDefinitions>BIND9;WIN32;@USE_GSSAPI@@USE_ISC_SPNEGO@NDEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
@@ -142,16 +148,15 @@
 @IF GEOIP
     <ClCompile Include="..\geoip2.c" />
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClCompile Include="..\geoip.c" />
-@END GEOIPLEGACY
     <ClCompile Include="..\gssapictx.c" />
     <ClCompile Include="..\gssapi_link.c" />
     <ClCompile Include="..\hmac_link.c" />
     <ClCompile Include="..\ipkeylist.c" />
     <ClCompile Include="..\iptable.c" />
     <ClCompile Include="..\journal.c" />
+    <ClCompile Include="..\kasp.c" />
     <ClCompile Include="..\key.c" />
+    <ClCompile Include="..\keymgr.c" />
     <ClCompile Include="..\keydata.c" />
     <ClCompile Include="..\keytable.c" />
     <ClCompile Include="..\lib.c" />
@@ -263,14 +268,13 @@
 @IF GEOIP
     <ClInclude Include="..\include\dns\geoip.h" />
 @END GEOIP
-@IF GEOIPLEGACY
-    <ClInclude Include="..\include\dns\geoip.h" />
-@END GEOIPLEGACY
     <ClInclude Include="..\include\dns\ipkeylist.h" />
     <ClInclude Include="..\include\dns\iptable.h" />
     <ClInclude Include="..\include\dns\journal.h" />
+    <ClInclude Include="..\include\dns\kasp.h" />
     <ClInclude Include="..\include\dns\keydata.h" />
     <ClInclude Include="..\include\dns\keyflags.h" />
+    <ClInclude Include="..\include\dns\keymgr.h" />
     <ClInclude Include="..\include\dns\keytable.h" />
     <ClInclude Include="..\include\dns\keyvalues.h" />
     <ClInclude Include="..\include\dns\lib.h" />

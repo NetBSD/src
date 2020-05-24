@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: ttl.h,v 1.1.1.3 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_TTL_H
 #define DNS_TTL_H 1
@@ -34,8 +33,7 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-dns_ttl_totext(uint32_t src, bool verbose,
-	       bool upcase, isc_buffer_t *target);
+dns_ttl_totext(uint32_t src, bool verbose, bool upcase, isc_buffer_t *target);
 /*%<
  * Output a TTL or other time interval in a human-readable form.
  * The time interval is given as a count of seconds in 'src'.

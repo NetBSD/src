@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.1.1.2 2019/02/24 18:56:53 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.1.1.3 2020/05/24 19:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 
 /*! \file include/ns/lib.h */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 

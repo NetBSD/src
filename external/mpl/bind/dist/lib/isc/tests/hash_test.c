@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_test.c,v 1.1.1.3 2019/09/05 19:27:37 christos Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.1.1.4 2020/05/24 19:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,15 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <inttypes.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <inttypes.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
@@ -38,7 +35,7 @@
 
 #include <pk11/site.h>
 
-#define TEST_INPUT(x) (x), sizeof(x)-1
+#define TEST_INPUT(x) (x), sizeof(x) - 1
 
 /*Hash function test */
 static void
@@ -114,4 +111,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

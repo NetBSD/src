@@ -1,4 +1,4 @@
-/*	$NetBSD: mg_8.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: mg_8.h,v 1.1.1.2 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,11 +15,10 @@
 #ifndef GENERIC_MG_8_H
 #define GENERIC_MG_8_H 1
 
-
 typedef struct dns_rdata_mg {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		mg;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t mg;
 } dns_rdata_mg_t;
 
 #endif /* GENERIC_MG_8_H */

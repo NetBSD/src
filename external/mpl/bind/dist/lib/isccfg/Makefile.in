@@ -22,7 +22,7 @@ CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES}
 CDEFINES =
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../../lib/cfg/libisccfg.@A@
 
@@ -35,11 +35,11 @@ SUBDIRS =	include
 TESTDIRS =	@UNITTESTS@
 
 # Alphabetically
-OBJS =		aclconf.@O@ dnsconf.@O@ log.@O@ namedconf.@O@ \
+OBJS =		aclconf.@O@ dnsconf.@O@ kaspconf.@O@ log.@O@ namedconf.@O@ \
 		parser.@O@ version.@O@
 
 # Alphabetically
-SRCS =		aclconf.c dnsconf.c log.c namedconf.c \
+SRCS =		aclconf.c dnsconf.c kaspconf.c log.c namedconf.c \
 		parser.c version.c
 
 TARGETS = 	timestamp

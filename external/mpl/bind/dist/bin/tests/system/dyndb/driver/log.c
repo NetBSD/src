@@ -1,16 +1,14 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2018/08/12 12:07:38 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2020/05/24 19:36:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2015  Red Hat ; see COPYRIGHT for license
  */
 
-#include <config.h>
+#include "log.h"
 
 #include <isc/util.h>
 
 #include <dns/log.h>
-
-#include "log.h"
 
 void
 log_write(int level, const char *format, ...) {

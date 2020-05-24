@@ -1,4 +1,4 @@
-/*	$NetBSD: update.h,v 1.1.1.1 2018/08/12 12:08:07 christos Exp $	*/
+/*	$NetBSD: update.h,v 1.1.1.2 2020/05/24 19:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define NS_UPDATE_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -27,8 +27,8 @@
  *** Imports
  ***/
 
-#include <dns/types.h>
 #include <dns/result.h>
+#include <dns/types.h>
 
 /***
  *** Types.

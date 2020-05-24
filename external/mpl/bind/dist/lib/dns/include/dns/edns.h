@@ -1,4 +1,4 @@
-/*	$NetBSD: edns.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: edns.h,v 1.1.1.2 2020/05/24 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,6 @@
  * Warning: this currently disables sending COOKIE requests in resolver.c
  */
 #define DNS_EDNS_VERSION 1 /* draft-andrews-edns1 */
-#endif
+#endif			   /* ifdef DRAFT_ANDREWS_EDNS1 */
 
-#endif
+#endif /* ifndef DNS_EDNS_H */

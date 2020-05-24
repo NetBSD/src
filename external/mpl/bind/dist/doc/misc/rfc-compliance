@@ -154,8 +154,8 @@ everywhere with or without --with-idn.
 used.
 
 [12] Section 5.5 does not match reality.  Named uses the presence
-of DO=1 to detect if validation may be occuring.  CD has no bearing
-on whether validation is occuring or not.
+of DO=1 to detect if validation may be occurring.  CD has no bearing
+on whether validation is occurring or not.
 
 [13] Conditional on the OpenSSL library being linked against
 supporting ECDSA.

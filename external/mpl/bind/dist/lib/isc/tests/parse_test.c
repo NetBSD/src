@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_test.c,v 1.1.1.3 2019/09/05 19:27:38 christos Exp $	*/
+/*	$NetBSD: parse_test.c,v 1.1.1.4 2020/05/24 19:36:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,16 +13,13 @@
 
 /*! \file */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -79,8 +76,8 @@ parse_overflow(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(parse_overflow,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(parse_overflow, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -96,4 +93,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

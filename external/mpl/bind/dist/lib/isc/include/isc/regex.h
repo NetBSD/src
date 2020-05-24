@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.1.1.2 2020/05/24 19:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,8 @@
 
 /*! \file isc/regex.h */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace-emptytbl.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: backtrace-emptytbl.c,v 1.1.1.2 2020/05/24 19:36:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
 /*
@@ -22,10 +21,9 @@
  * (e.g. libisc-nosymbol.a).
  */
 
-#include <config.h>
-
 #include <isc/backtrace.h>
 
 LIBISC_EXTERNAL_DATA const int isc__backtrace_nsymbols = 0;
-LIBISC_EXTERNAL_DATA const
-	isc_backtrace_symmap_t isc__backtrace_symtable[] = { { NULL, "" } };
+LIBISC_EXTERNAL_DATA const isc_backtrace_symmap_t isc__backtrace_symtable[] = {
+	{ NULL, "" }
+};

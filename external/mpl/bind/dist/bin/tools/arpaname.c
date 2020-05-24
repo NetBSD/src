@@ -1,4 +1,4 @@
-/*	$NetBSD: arpaname.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.1.1.3 2020/05/24 19:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,10 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
+#include <stdio.h>
 
 #include <isc/net.h>
 #include <isc/print.h>
-
-#include <stdio.h>
 
 #define UNUSED(x) (void)(x)
 
@@ -30,21 +27,22 @@ main(int argc, char *argv[]) {
 
 	while (argv[1]) {
 		if (inet_pton(AF_INET6, argv[1], buf) == 1) {
-			for (i = 15; i >= 0; i--)
+			for (i = 15; i >= 0; i--) {
 				fprintf(stdout, "%X.%X.", buf[i] & 0xf,
 					(buf[i] >> 4) & 0xf);
+			}
 			fprintf(stdout, "IP6.ARPA\n");
 			argv++;
 			continue;
 		}
 		if (inet_pton(AF_INET, argv[1], buf) == 1) {
-			fprintf(stdout, "%u.%u.%u.%u.IN-ADDR.ARPA\n",
-				buf[3], buf[2], buf[1], buf[0]);
+			fprintf(stdout, "%u.%u.%u.%u.IN-ADDR.ARPA\n", buf[3],
+				buf[2], buf[1], buf[0]);
 			argv++;
 			continue;
 		}
 		return (1);
 	}
 	fflush(stdout);
-	return(ferror(stdout));
+	return (ferror(stdout));
 }

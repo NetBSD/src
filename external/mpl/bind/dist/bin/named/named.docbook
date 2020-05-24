@@ -49,6 +49,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -293,9 +294,9 @@
           <para>
             Allow <command>named</command> to use up to
             <replaceable class="parameter">#max-socks</replaceable> sockets.
-            The default value is 4096 on systems built with default
-            configuration options, and 21000 on systems built with
-            "configure --with-tuning=large".
+            The default value is 21000 on systems built with default
+            configuration options, and 4096 on systems built with
+            "configure --with-tuning=small".
           </para>
           <warning>
             <para>

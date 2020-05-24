@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: dhcid_49.h,v 1.1.1.2 2020/05/24 19:36:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,12 +15,11 @@
 #ifndef IN_1_DHCID_49_H
 #define IN_1_DHCID_49_H 1
 
-
 typedef struct dns_rdata_in_dhcid {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	unsigned char		*dhcid;
-	unsigned int		length;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	unsigned char *dhcid;
+	unsigned int length;
 } dns_rdata_in_dhcid_t;
 
 #endif /* IN_1_DHCID_49_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: meminfo.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: meminfo.h,v 1.1.1.3 2020/05/24 19:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,9 +16,8 @@
 
 #include <inttypes.h>
 
-#include <isc/types.h>
-
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -27,7 +26,7 @@ isc_meminfo_totalphys(void);
 /*%<
  * Return total available physical memory in bytes, or 0 if this cannot
  * be determined
-*/
+ */
 
 ISC_LANG_ENDDECLS
 

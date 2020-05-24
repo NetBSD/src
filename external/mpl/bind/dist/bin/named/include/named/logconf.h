@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.h,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: logconf.h,v 1.1.1.2 2020/05/24 19:36:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef NAMED_LOGCONF_H
 #define NAMED_LOGCONF_H 1

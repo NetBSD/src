@@ -35,6 +35,9 @@
     <ClInclude Include="..\include\isc\assertions.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\astack.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\atomic.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -68,6 +71,9 @@
     <ClInclude Include="..\include\isc\crc64.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\endian.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\errno.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -99,6 +105,9 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\hmac.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\isc\hp.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\ht.h">
@@ -260,9 +269,6 @@
     <ClInclude Include="..\include\isc\version.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\isc\xml.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
 @IF PKCS11
     <ClInclude Include="..\include\pk11\constants.h">
       <Filter>Library Header Files</Filter>
@@ -277,12 +283,6 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\pkcs11\pkcs11.h">
-      <Filter>Pkcs11 Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\pkcs11\pkcs11f.h">
-      <Filter>Pkcs11 Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\pkcs11\pkcs11t.h">
       <Filter>Pkcs11 Header Files</Filter>
     </ClInclude>
 @END PKCS11
@@ -364,11 +364,6 @@
     <ClInclude Include="unistd.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
-@IF PKCS11
-    <ClInclude Include="include\pkcs11\cryptoki.h">
-      <Filter>Win32 Header Files</Filter>
-    </ClInclude>
-@END PKCS11
     <ClInclude Include="..\..\..\config.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -377,9 +372,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="app.c">
-      <Filter>Win32 Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="condition.c">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
@@ -457,7 +449,13 @@
     <ClCompile Include="..\aes.c">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\app.c">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\assertions.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\astack.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\backtrace.c">
@@ -511,6 +509,9 @@
     <ClCompile Include="..\hmac.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\hp.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\ht.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -559,6 +560,9 @@
     <ClCompile Include="..\portset.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\queue.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\quota.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -581,6 +585,9 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\rwlock.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\safe.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\serial.c">

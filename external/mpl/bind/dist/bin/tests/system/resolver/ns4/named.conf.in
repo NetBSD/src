@@ -50,6 +50,11 @@ zone "broken" {
 	file "broken.db";
 };
 
+zone "sourcens" {
+    type master;
+    file "sourcens.db";
+};
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm hmac-sha256;

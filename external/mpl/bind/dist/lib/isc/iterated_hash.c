@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.1.1.3 2020/05/24 19:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,21 +11,17 @@
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #include <stdio.h>
 
-#include <isc/md.h>
 #include <isc/iterated_hash.h>
+#include <isc/md.h>
 #include <isc/util.h>
 
 int
-isc_iterated_hash(unsigned char *out,
-		  const unsigned int hashalg, const int iterations,
-		  const unsigned char *salt, const int saltlength,
-		  const unsigned char *in, const int inlength)
-{
+isc_iterated_hash(unsigned char *out, const unsigned int hashalg,
+		  const int iterations, const unsigned char *salt,
+		  const int saltlength, const unsigned char *in,
+		  const int inlength) {
 	isc_md_t *md;
 	isc_result_t result;
 	int n = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: libgen.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: libgen.h,v 1.1.1.2 2020/05/24 19:36:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,11 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef LIBGEN_H
 #define LIBGEN_H 1
 
-char *basename(const char *);
-char *dirname(const char *);
+char *
+basename(const char *);
+char *
+dirname(const char *);
 
-#endif
+#endif /* ifndef LIBGEN_H */

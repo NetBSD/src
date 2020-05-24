@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_p.h,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
+/*	$NetBSD: tsig_p.h,v 1.1.1.3 2020/05/24 19:36:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stdbool.h>
 
 #include <isc/result.h>
+
 #include <dns/types.h>
 
 /*%

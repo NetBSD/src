@@ -11,7 +11,7 @@
 
 # This is a tool for sending an arbitrary packet via UDP or TCP to an
 # arbitrary address and port.  The packet is specified in a file or on
-# the standard input, in the form of a series of bytes in hexidecimal.
+# the standard input, in the form of a series of bytes in hexadecimal.
 # Whitespace is ignored, as is anything following a '#' symbol.
 #
 # For example, the following input would generate normal query for 

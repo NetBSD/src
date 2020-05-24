@@ -56,12 +56,12 @@ PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
 	acl additional addzone allow-query auth autosign \
 	builtin cacheclean case catz cds chain \
 	checkconf checknames checkzone \
-	cookie database digdelv dlv dlz dlzexternal \
+	cookie database digdelv dlz dlzexternal \
 	dns64 dscp dsdigest dyndb \
 	ednscompliance emptyzones \
 	fetchlimit filter-aaaa formerr forward \
-	geoip geoip2 glue idna inline integrity ixfr \
-	keepalive legacy limits \
+	geoip2 glue idna inline integrity ixfr \
+	kasp keepalive legacy limits \
 	masterfile masterformat metadata mirror mkeys \
 	names notify nslookup nsupdate nzd2nzf \
 	padding pending pipelined qmin \
@@ -95,6 +95,8 @@ else
     COLOR_WARN=''
 fi
 
+SYSTESTDIR="`basename $PWD`"
+
 if type printf > /dev/null 2>&1
 then
 	echofail () {
@@ -115,6 +117,23 @@ then
 	echoend () {
 		printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
 	}
+	echo_i() {
+	    printf '%s\n' "$*" | while read -r __LINE ; do
+	       echoinfo "I:$SYSTESTDIR:$__LINE"
+	    done
+	}
+
+	echo_ic() {
+	    printf '%s\n' "$*" | while read -r __LINE ; do
+	       echoinfo "I:$SYSTESTDIR:  $__LINE"
+	    done
+	}
+
+	echo_d() {
+	    printf '%s\n' "$*" | while read -r __LINE ; do
+	       echoinfo "D:$SYSTESTDIR:$__LINE"
+	    done
+	}
 else
 	echofail () {
 		echo "$*"
@@ -134,36 +153,34 @@ else
 	echoend () {
 		echo "$*"
 	}
+
+	echo_i() {
+	    echo "$@" | while read -r __LINE ; do
+	       echoinfo "I:$SYSTESTDIR:$__LINE"
+	    done
+	}
+
+	echo_ic() {
+	    echo "$@" | while read -r __LINE ; do
+	       echoinfo "I:$SYSTESTDIR:  $__LINE"
+	    done
+	}
+
+	echo_d() {
+	    echo "$@" | while read -r __LINE ; do
+	       echoinfo "D:$SYSTESTDIR:$__LINE"
+	    done
+	}
 fi
 
-SYSTESTDIR="`basename $PWD`"
-
-echo_i() {
-    echo "$@" | while read __LINE ; do
-       echoinfo "I:$SYSTESTDIR:$__LINE"
-    done
-}
-
-echo_ic() {
-    echo "$@" | while read __LINE ; do
-       echoinfo "I:$SYSTESTDIR:  $__LINE"
-    done
-}
-
 cat_i() {
-    while read __LINE ; do
+    while read -r __LINE ; do
        echoinfo "I:$SYSTESTDIR:$__LINE"
-    done
-}
-
-echo_d() {
-    echo "$@" | while read __LINE ; do
-       echoinfo "D:$SYSTESTDIR:$__LINE"
     done
 }
 
 cat_d() {
-    while read __LINE ; do
+    while read -r __LINE ; do
        echoinfo "D:$SYSTESTDIR:$__LINE"
     done
 }
@@ -173,6 +190,18 @@ digcomp() {
     result=$?
     [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
     return $result
+}
+
+start_server() {
+    $PERL "$TOP_SRCDIR/bin/tests/system/start.pl" "$@"
+}
+
+stop_server() {
+    $PERL "$TOP_SRCDIR/bin/tests/system/stop.pl" "$@"
+}
+
+send() {
+    $PERL "$TOP_SRCDIR/bin/tests/system/send.pl" "$@"
 }
 
 #
@@ -208,12 +237,12 @@ DISABLED_BITS=384
 # the error using the description of the tested variable provided in $3
 # and return 1.
 assert_int_equal() {
-	expected="$1"
-	found="$2"
+	found="$1"
+	expected="$2"
 	description="$3"
 
 	if [ "${expected}" -ne "${found}" ]; then
-		echo_i "incorrect ${description}: expected ${expected}, got ${found}"
+		echo_i "incorrect ${description}: got ${found}, expected ${expected}"
 		return 1
 	fi
 
@@ -221,9 +250,9 @@ assert_int_equal() {
 }
 
 # keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
-# converts keyfile data into a configuration section using the supplied
-# parameters
-keyfile_to_keys_section() {
+# converts keyfile data into a key-style trust anchor configuration
+# section using the supplied parameters
+keyfile_to_keys() {
     section_name=$1
     key_prefix=$2
     shift
@@ -232,7 +261,7 @@ keyfile_to_keys_section() {
     for keyname in $*; do
 	awk '!/^; /{
 	    printf "\t\""$1"\" "
-	    printf "'"$key_prefix"'"
+	    printf "'"$key_prefix "'"
 	    printf $4 " " $5 " " $6 " \""
 	    for (i=7; i<=NF; i++) printf $i
 	    printf "\";\n"
@@ -241,18 +270,54 @@ keyfile_to_keys_section() {
     echo "};"
 }
 
-# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
-# provided to a "trusted-keys" section suitable for including in a
-# resolver's configuration file
-keyfile_to_trusted_keys() {
-    keyfile_to_keys_section "trusted-keys" "" $*
+# keyfile_to_dskeys_section: helper function for keyfile_to_*_dskeys()
+# converts keyfile data into a DS-style trust anchor configuration
+# section using the supplied parameters
+keyfile_to_dskeys() {
+    section_name=$1
+    key_prefix=$2
+    shift
+    shift
+    echo "$section_name {"
+    for keyname in $*; do
+        $DSFROMKEY $keyname.key | \
+	awk '!/^; /{
+	    printf "\t\""$1"\" "
+	    printf "'"$key_prefix "'"
+	    printf $4 " " $5 " " $6 " \""
+	    for (i=7; i<=NF; i++) printf $i
+	    printf "\";\n"
+	}'
+    done
+    echo "};"
 }
 
-# keyfile_to_managed_keys: convert key data contained in the keyfile(s)
-# provided to a "managed-keys" section suitable for including in a
+# keyfile_to_static_keys: convert key data contained in the keyfile(s)
+# provided to a *static-key* "trust-anchors" section suitable for including in
+# a resolver's configuration file
+keyfile_to_static_keys() {
+    keyfile_to_keys "trust-anchors" "static-key" $*
+}
+
+# keyfile_to_initial_keys: convert key data contained in the keyfile(s)
+# provided to an *initial-key* "trust-anchors" section suitable for including
+# in a resolver's configuration file
+keyfile_to_initial_keys() {
+    keyfile_to_keys "trust-anchors" "initial-key" $*
+}
+
+# keyfile_to_static_ds_keys: convert key data contained in the keyfile(s)
+# provided to a *static-ds* "trust-anchors" section suitable for including in a
 # resolver's configuration file
-keyfile_to_managed_keys() {
-    keyfile_to_keys_section "managed-keys" "initial-key " $*
+keyfile_to_static_ds() {
+    keyfile_to_dskeys "trust-anchors" "static-ds" $*
+}
+
+# keyfile_to_initial_ds_keys: convert key data contained in the keyfile(s)
+# provided to an *initial-ds* "trust-anchors" section suitable for including
+# in a resolver's configuration file
+keyfile_to_initial_ds() {
+    keyfile_to_dskeys "trust-anchors" "initial-ds" $*
 }
 
 # keyfile_to_key_id: convert a key file name to a key ID
@@ -336,6 +401,79 @@ nextpart() {
 # last time nextpart() was called
 nextpartpeek() {
 	nextpartread $1 2> /dev/null
+}
+
+# _search_log: look for message $1 in file $2 with nextpart().
+_search_log() (
+	msg="$1"
+	file="$2"
+	nextpart "$file" | grep -F -e "$msg" > /dev/null
+)
+
+# _search_log_peek: look for message $1 in file $2 with nextpartpeek().
+_search_log_peek() (
+	msg="$1"
+	file="$2"
+	nextpartpeek "$file" | grep -F -e "$msg" > /dev/null
+)
+
+# wait_for_log: wait until message $2 in file $3 appears.  Bail out after
+# $1 seconds.  This needs to be used in conjunction with a prior call to
+# nextpart() or nextpartreset() on the same file to guarantee the offset is
+# set correctly.  Tests using wait_for_log() are responsible for cleaning up
+# the created <file>.prev files.
+wait_for_log() (
+	timeout="$1"
+	msg="$2"
+	file="$3"
+	retry_quiet "$timeout" _search_log "$msg" "$file" && return 0
+	echo_i "exceeded time limit waiting for '$msg' in $file"
+        return 1
+)
+
+# wait_for_log_peek: similar to wait_for_log() but peeking, so the file offset
+# does not change.
+wait_for_log_peek() (
+	timeout="$1"
+	msg="$2"
+	file="$3"
+	retry_quiet "$timeout" _search_log_peek "$msg" "$file" && return 0
+	echo_i "exceeded time limit waiting for '$msg' in $file"
+        return 1
+)
+
+# _retry: keep running a command until it succeeds, up to $1 times, with
+# one-second intervals, optionally printing a message upon every attempt
+_retry() {
+	__retries="${1}"
+	shift
+
+	while :; do
+		if "$@"; then
+			return 0
+		fi
+		__retries=$((__retries-1))
+		if [ "${__retries}" -gt 0 ]; then
+			if [ "${__retry_quiet}" -ne 1 ]; then
+				echo_i "retrying"
+			fi
+			sleep 1
+		else
+			return 1
+		fi
+	done
+}
+
+# retry: call _retry() in verbose mode
+retry() {
+	__retry_quiet=0
+	_retry "$@"
+}
+
+# retry_quiet: call _retry() in silent mode
+retry_quiet() {
+	__retry_quiet=1
+	_retry "$@"
 }
 
 rndc_reload() {
@@ -506,5 +644,6 @@ export RRCHECKER
 export SAMPLEUPDATE
 export SIGNER
 export SUBDIRS
+export TMPDIR
 export TSIGKEYGEN
 export WIRETEST

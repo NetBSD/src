@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: aaaa_28.h,v 1.1.1.2 2020/05/24 19:36:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,12 @@
 #ifndef IN_1_AAAA_28_H
 #define IN_1_AAAA_28_H 1
 
-
 /*!
  *  \brief Per RFC1886 */
 
 typedef struct dns_rdata_in_aaaa {
-	dns_rdatacommon_t	common;
-	struct in6_addr		in6_addr;
+	dns_rdatacommon_t common;
+	struct in6_addr in6_addr;
 } dns_rdata_in_aaaa_t;
 
 #endif /* IN_1_AAAA_28_H */

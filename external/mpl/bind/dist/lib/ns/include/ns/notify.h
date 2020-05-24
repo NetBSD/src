@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.h,v 1.1.1.1 2018/08/12 12:08:07 christos Exp $	*/
+/*	$NetBSD: notify.h,v 1.1.1.2 2020/05/24 19:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,4 +45,3 @@ ns_notify_start(ns_client_t *client);
  */
 
 #endif /* NS_NOTIFY_H */
-

@@ -51,6 +51,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -80,6 +81,7 @@
       <arg choice="opt" rep="norepeat"><option>-O <replaceable class="parameter">output-format</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-P</option></arg>
       <arg choice="opt" rep="norepeat"><option>-Q</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q</option></arg>
       <arg choice="opt" rep="norepeat"><option>-R</option></arg>
       <arg choice="opt" rep="norepeat"><option>-S</option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">start-time</replaceable></option></arg>
@@ -219,16 +221,6 @@
           <para>
             Treat specified key as a key signing key ignoring any
             key flags.  This option may be specified multiple times.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-l <replaceable class="parameter">domain</replaceable></term>
-        <listitem>
-          <para>
-            Generate a DLV set in addition to the key (DNSKEY) and DS sets.
-            The domain is appended to the name of the records.
           </para>
         </listitem>
       </varlistentry>
@@ -453,7 +445,7 @@
 	      <term><command>"increment"</command></term>
               <listitem>
                 <para>Increment the SOA serial number using RFC 1982
-                      arithmetics.</para>
+                      arithmetic.</para>
 	      </listitem>
             </varlistentry>
 
@@ -543,6 +535,22 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-q</term>
+        <listitem>
+          <para>
+	    Quiet mode: Suppresses unnecessary output.  Without this
+	    option, when <command>dnssec-signzone</command> is run it
+	    will print to standard output the number of keys in use,
+	    the algorithms used to verify the zone was signed correctly
+	    and other status information, and finally the filename
+	    containing the signed zone.  With it, that output is
+	    suppressed, leaving only the filename.
+          </para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry>
         <term>-R</term>
         <listitem>

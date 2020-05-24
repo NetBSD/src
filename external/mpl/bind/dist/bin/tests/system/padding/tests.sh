@@ -36,8 +36,11 @@ status=`expr $status + $ret`
 echo_i "checking that dig added padding ($n)"
 ret=0
 n=`expr $n + 1`
+nextpart ns2/named.stats > /dev/null
 $RNDCCMD 10.53.0.2 stats
-grep "EDNS padding option received" ns2/named.stats > /dev/null || ret=1
+wait_for_log_peek 5 "--- Statistics Dump ---" ns2/named.stats || ret=1
+nextpart ns2/named.stats | grep "EDNS padding option received" > /dev/null || ret=1
+
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -88,28 +91,30 @@ status=`expr $status + $ret`
 echo_i "checking that a TCP and padding server config enables padding ($n)"
 ret=0
 n=`expr $n + 1`
+nextpart ns2/named.stats > /dev/null
 $RNDCCMD 10.53.0.2 stats
-opad=`grep  "EDNS padding option received" ns2/named.stats | \
-    tail -1 | awk '{ print $1}'`
+wait_for_log_peek 5 "--- Statistics Dump ---" ns2/named.stats || ret=1
+opad=`nextpart ns2/named.stats | awk '/EDNS padding option received/ { print $1}'`
 $DIG $DIGOPTS foo.example @10.53.0.3 > dig.out.test$n
 $RNDCCMD 10.53.0.2 stats
-npad=`grep  "EDNS padding option received" ns2/named.stats | \
-    tail -1 | awk '{ print $1}'`
-if [ "$opad" -eq "$npad" ]; then ret=1; fi
+wait_for_log_peek 5 "--- Statistics Dump ---" ns2/named.stats || ret=1
+npad=`nextpart ns2/named.stats | awk '/EDNS padding option received/ { print $1}'`
+if [ "$opad" -eq "$npad" ]; then echo_i "error: opad ($opad) == npad ($npad)"; ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "checking that a padding server config should enforce TCP ($n)"
 ret=0
 n=`expr $n + 1`
+nextpart ns2/named.stats > /dev/null
 $RNDCCMD 10.53.0.2 stats
-opad=`grep  "EDNS padding option received" ns2/named.stats | \
-    tail -1 | awk '{ print $1}'`
+wait_for_log_peek 5 "--- Statistics Dump ---" ns2/named.stats || ret=1
+opad=`nextpart ns2/named.stats | awk '/EDNS padding option received/ { print $1}'`
 $DIG $DIGOPTS foo.example @10.53.0.4 > dig.out.test$n
 $RNDCCMD 10.53.0.2 stats
-npad=`grep  "EDNS padding option received" ns2/named.stats | \
-    tail -1 | awk '{ print $1}'`
-if [ "$opad" -ne "$npad" ]; then ret=1; fi
+wait_for_log_peek 5 "--- Statistics Dump ---" ns2/named.stats || ret=1
+npad=`nextpart ns2/named.stats | awk '/EDNS padding option received/ { print $1}'`
+if [ "$opad" -ne "$npad" ]; then echo_i "error: opad ($opad) != npad ($npad)"; ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
