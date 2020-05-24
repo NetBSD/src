@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.17 2020/02/04 05:25:38 thorpej Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.18 2020/05/24 10:31:59 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.17 2020/02/04 05:25:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.18 2020/05/24 10:31:59 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,6 +133,7 @@ struct hvn_softc {
 
 	struct ethercom			sc_ec;
 	struct ifmedia			sc_media;
+	kmutex_t			sc_media_lock;	/* XXX */
 	struct if_percpuq		*sc_ipq;
 	int				sc_link_state;
 	int				sc_promisc;
@@ -294,8 +295,10 @@ hvn_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize ifmedia structures. */
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
-	ifmedia_init(&sc->sc_media, IFM_IMASK, hvn_media_change,
-	    hvn_media_status);
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	ifmedia_init_with_lock(&sc->sc_media, IFM_IMASK,
+	    hvn_media_change, hvn_media_status, &sc->sc_media_lock);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
@@ -341,7 +344,9 @@ hvn_attach(device_t parent, device_t self, void *aux)
 
 fail4:	hvn_rndis_detach(sc);
 	if_percpuq_destroy(sc->sc_ipq);
-fail3:	hvn_tx_ring_destroy(sc);
+fail3:	ifmedia_fini(&sc->sc_media);
+	mutex_destroy(&sc->sc_media_lock);
+	hvn_tx_ring_destroy(sc);
 fail2:	hvn_rx_ring_destroy(sc);
 fail1:	hvn_nvs_detach(sc);
 }
@@ -363,6 +368,7 @@ hvn_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_fini(&sc->sc_media);
+	mutex_destroy(&sc->sc_media_lock);
 	if_percpuq_destroy(sc->sc_ipq);
 
 	hvn_rndis_detach(sc);
