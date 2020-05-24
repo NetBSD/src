@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.72 2020/05/24 18:42:20 jmcneill Exp $
+.\" $NetBSD: gpt.8,v 1.73 2020/05/24 20:59:16 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd GUID partition table maintenance utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl Hnrqv
+.Op Fl Hnqrv
 .Op Fl m Ar mediasize
 .Op Fl s Ar sectorsize
 .Op Fl T Ar timestamp
@@ -79,12 +79,12 @@ change the behaviour that is applicable to all commands.
 Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Bl -tag -width XXXX
+.It Fl H
+Ignore existing MBR (Hybrid MBR/GPT mode).
 .It Fl m Ar mediasize
 Override the default media size for the device (obtained
 from the kernel if possible) or defaulting to the file size for
 plain files.
-.If Fl H
-Ignore existing MBR (Hybrid MBR/GPT mode).
 .It Fl n
 Do not update the wedge information that
 .Nm
@@ -92,15 +92,15 @@ changed.
 You need to use the
 .Xr dkctl 8
 command manually update the device's wedge configuration if you do that.
+.It Fl q
+Do not print error messages.
+This is not implemented completely yet.
 .It Fl r
 Open the device for reading only.
 .Nm
 Currently this option is primarily useful for the
 .Ic show
 command, but the intent is to use it to implement dry-run behaviour.
-.It Fl q
-Do not print error messages.
-This is not implemented completely yet.
 .It Fl s Ar sectorsize
 Override the default sector size for the device (obtained
 from the kernel if possible) or
