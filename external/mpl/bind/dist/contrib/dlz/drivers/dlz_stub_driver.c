@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_stub_driver.c,v 1.3 2019/02/24 20:01:29 christos Exp $	*/
+/*	$NetBSD: dlz_stub_driver.c,v 1.4 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -44,32 +44,29 @@
  */
 
 #ifdef DLZ_STUB
-
-#include <config.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include <dns/log.h>
-#include <dns/sdlz.h>
-#include <dns/result.h>
+#include <string.h>
 
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
-#include <named/globals.h>
+#include <dns/log.h>
+#include <dns/result.h>
+#include <dns/sdlz.h>
 
 #include <dlz/dlz_stub_driver.h>
+#include <named/globals.h>
 
 static dns_sdlzimplementation_t *dlz_stub = NULL;
 
 typedef struct config_data {
-	char		*myzone;
-	char		*myname;
-	char		*myip;
-	isc_mem_t	*mctx;
+	char *myzone;
+	char *myname;
+	char *myip;
+	isc_mem_t *mctx;
 } config_data_t;
 
 /*
@@ -78,40 +75,41 @@ typedef struct config_data {
 
 static isc_result_t
 stub_dlz_allnodes(const char *zone, void *driverarg, void *dbdata,
-		  dns_sdlzallnodes_t *allnodes)
-{
+		  dns_sdlzallnodes_t *allnodes) {
 	config_data_t *cd;
 	isc_result_t result;
 
 	UNUSED(zone);
 	UNUSED(driverarg);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	result = dns_sdlz_putnamedrr(allnodes, cd->myname, "soa", 86400,
 				     "web root.localhost. "
 				     "0 28800 7200 604800 86400");
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (ISC_R_FAILURE);
+	}
 	result = dns_sdlz_putnamedrr(allnodes, "ns", "ns", 86400, cd->myname);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (ISC_R_FAILURE);
+	}
 	result = dns_sdlz_putnamedrr(allnodes, cd->myname, "a", 1, cd->myip);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (ISC_R_FAILURE);
+	}
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
 stub_dlz_allowzonexfr(void *driverarg, void *dbdata, const char *name,
-		      const char *client)
-{
+		      const char *client) {
 	config_data_t *cd;
 
 	UNUSED(driverarg);
 	UNUSED(client);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	if (strcmp(name, cd->myname) == 0) {
 		return (ISC_R_SUCCESS);
@@ -121,24 +119,25 @@ stub_dlz_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 
 static isc_result_t
 stub_dlz_authority(const char *zone, void *driverarg, void *dbdata,
-		   dns_sdlzlookup_t *lookup)
-{
+		   dns_sdlzlookup_t *lookup) {
 	isc_result_t result;
 	config_data_t *cd;
 
 	UNUSED(driverarg);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	if (strcmp(zone, cd->myzone) == 0) {
-		result = dns_sdlz_putsoa(lookup, cd->myname,
-					 "root.localhost.", 0);
-		if (result != ISC_R_SUCCESS)
+		result = dns_sdlz_putsoa(lookup, cd->myname, "root.localhost.",
+					 0);
+		if (result != ISC_R_SUCCESS) {
 			return (ISC_R_FAILURE);
+		}
 
 		result = dns_sdlz_putrr(lookup, "ns", 86400, cd->myname);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			return (ISC_R_FAILURE);
+		}
 
 		return (ISC_R_SUCCESS);
 	}
@@ -148,34 +147,32 @@ stub_dlz_authority(const char *zone, void *driverarg, void *dbdata,
 static isc_result_t
 stub_dlz_findzonedb(void *driverarg, void *dbdata, const char *name,
 		    dns_clientinfomethods_t *methods,
-		    dns_clientinfo_t *clientinfo)
-{
-
+		    dns_clientinfo_t *clientinfo) {
 	config_data_t *cd;
 
 	UNUSED(driverarg);
 	UNUSED(methods);
 	UNUSED(clientinfo);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	/* Write info message to log */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "dlz_stub findzone looking for '%s'", name);
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "dlz_stub findzone looking for '%s'",
+		      name);
 
-	if (strcmp(cd->myzone, name) == 0)
+	if (strcmp(cd->myzone, name) == 0) {
 		return (ISC_R_SUCCESS);
-	else
+	} else {
 		return (ISC_R_NOTFOUND);
+	}
 }
-
 
 static isc_result_t
 stub_dlz_lookup(const char *zone, const char *name, void *driverarg,
 		void *dbdata, dns_sdlzlookup_t *lookup,
-		dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
-{
+		dns_clientinfomethods_t *methods,
+		dns_clientinfo_t *clientinfo) {
 	isc_result_t result;
 	config_data_t *cd;
 
@@ -184,36 +181,34 @@ stub_dlz_lookup(const char *zone, const char *name, void *driverarg,
 	UNUSED(methods);
 	UNUSED(clientinfo);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	if (strcmp(name, cd->myname) == 0) {
 		result = dns_sdlz_putrr(lookup, "a", 1, cd->myip);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			return (ISC_R_FAILURE);
+		}
 
 		return (ISC_R_SUCCESS);
 	}
 	return (ISC_R_FAILURE);
-
 }
-
 
 static isc_result_t
 stub_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
-		void *driverarg, void **dbdata)
-{
-
+		void *driverarg, void **dbdata) {
 	config_data_t *cd;
 
 	UNUSED(driverarg);
 
-	if (argc < 4)
+	if (argc < 4) {
 		return (ISC_R_FAILURE);
+	}
 	/*
 	 * Write info message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_INFO,
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_INFO,
 		      "Loading '%s' using DLZ_stub driver. "
 		      "Zone: %s, Name: %s IP: %s",
 		      dlzname, argv[1], argv[2], argv[3]);
@@ -226,56 +221,38 @@ stub_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	memset(cd, 0, sizeof(config_data_t));
 
 	cd->myzone = isc_mem_strdup(named_g_mctx, argv[1]);
-	if (cd->myzone == NULL) {
-		isc_mem_put(named_g_mctx, cd, sizeof(config_data_t));
-		return (ISC_R_NOMEMORY);
-	}
 
 	cd->myname = isc_mem_strdup(named_g_mctx, argv[2]);
-	if (cd->myname == NULL) {
-		isc_mem_put(named_g_mctx, cd, sizeof(config_data_t));
-		isc_mem_free(named_g_mctx, cd->myzone);
-		return (ISC_R_NOMEMORY);
-	}
 
 	cd->myip = isc_mem_strdup(named_g_mctx, argv[3]);
-	if (cd->myip == NULL) {
-		isc_mem_put(named_g_mctx, cd, sizeof(config_data_t));
-		isc_mem_free(named_g_mctx, cd->myname);
-		isc_mem_free(named_g_mctx, cd->myzone);
-		return (ISC_R_NOMEMORY);
-	}
 
 	isc_mem_attach(named_g_mctx, &cd->mctx);
 
 	*dbdata = cd;
 
-	return(ISC_R_SUCCESS);
+	return (ISC_R_SUCCESS);
 }
 
 static void
-stub_dlz_destroy(void *driverarg, void *dbdata)
-{
+stub_dlz_destroy(void *driverarg, void *dbdata) {
 	config_data_t *cd;
 	isc_mem_t *mctx;
 
 	UNUSED(driverarg);
 
-	cd = (config_data_t *) dbdata;
+	cd = (config_data_t *)dbdata;
 
 	/*
 	 * Write debugging message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "Unloading DLZ_stub driver.");
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "Unloading DLZ_stub driver.");
 
 	isc_mem_free(named_g_mctx, cd->myzone);
 	isc_mem_free(named_g_mctx, cd->myname);
 	isc_mem_free(named_g_mctx, cd->myip);
 	mctx = cd->mctx;
-	isc_mem_put(mctx, cd, sizeof(config_data_t));
-	isc_mem_detach(&mctx);
+	isc_mem_putanddetach(&mctx, cd, sizeof(config_data_t));
 }
 
 static dns_sdlzmethods_t dlz_stub_methods = {
@@ -305,13 +282,12 @@ dlz_stub_init(void) {
 	/*
 	 * Write debugging message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "Registering DLZ_stub driver.");
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "Registering DLZ_stub driver.");
 
 	result = dns_sdlzregister("dlz_stub", &dlz_stub_methods, NULL,
 				  DNS_SDLZFLAG_RELATIVEOWNER |
-				  DNS_SDLZFLAG_RELATIVERDATA,
+					  DNS_SDLZFLAG_RELATIVERDATA,
 				  named_g_mctx, &dlz_stub);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -320,8 +296,7 @@ dlz_stub_init(void) {
 		result = ISC_R_UNEXPECTED;
 	}
 
-
-	return result;
+	return (result);
 }
 
 /*
@@ -329,16 +304,15 @@ dlz_stub_init(void) {
  */
 void
 dlz_stub_clear(void) {
-
 	/*
 	 * Write debugging message to log
 	 */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(2),
-		      "Unregistering DLZ_stub driver.");
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DLZ,
+		      ISC_LOG_DEBUG(2), "Unregistering DLZ_stub driver.");
 
-	if (dlz_stub != NULL)
+	if (dlz_stub != NULL) {
 		dns_sdlzunregister(&dlz_stub);
+	}
 }
 
-#endif
+#endif /* ifdef DLZ_STUB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: serial_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: serial_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,11 +11,9 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
 #include <isc/print.h>
 #include <isc/serial.h>
@@ -30,17 +28,18 @@ main() {
 		buf[sizeof(buf) - 1] = '\0';
 		s = buf;
 		a = strtoul(s, &e, 0);
-		if (s == e)
+		if (s == e) {
 			continue;
+		}
 		s = e;
 		b = strtoul(s, &e, 0);
-		if (s == e)
+		if (s == e) {
 			continue;
+		}
 		fprintf(stdout, "%u %u gt:%d lt:%d ge:%d le:%d eq:%d ne:%d\n",
-			a, b,
-			isc_serial_gt(a,b), isc_serial_lt(a,b),
-			isc_serial_ge(a,b), isc_serial_le(a,b),
-			isc_serial_eq(a,b), isc_serial_ne(a,b));
+			a, b, isc_serial_gt(a, b), isc_serial_lt(a, b),
+			isc_serial_ge(a, b), isc_serial_le(a, b),
+			isc_serial_eq(a, b), isc_serial_ne(a, b));
 	}
 	return (0);
 }

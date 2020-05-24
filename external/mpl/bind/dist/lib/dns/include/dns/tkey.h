@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_TKEY_H
 #define DNS_TKEY_H 1
@@ -30,18 +29,18 @@
 ISC_LANG_BEGINDECLS
 
 /* Key agreement modes */
-#define DNS_TKEYMODE_SERVERASSIGNED		1
-#define DNS_TKEYMODE_DIFFIEHELLMAN		2
-#define DNS_TKEYMODE_GSSAPI			3
-#define DNS_TKEYMODE_RESOLVERASSIGNED		4
-#define DNS_TKEYMODE_DELETE			5
+#define DNS_TKEYMODE_SERVERASSIGNED   1
+#define DNS_TKEYMODE_DIFFIEHELLMAN    2
+#define DNS_TKEYMODE_GSSAPI	      3
+#define DNS_TKEYMODE_RESOLVERASSIGNED 4
+#define DNS_TKEYMODE_DELETE	      5
 
 struct dns_tkeyctx {
-	dst_key_t *dhkey;
-	dns_name_t *domain;
+	dst_key_t *   dhkey;
+	dns_name_t *  domain;
 	gss_cred_id_t gsscred;
-	isc_mem_t *mctx;
-	char *gssapi_keytab;
+	isc_mem_t *   mctx;
+	char *	      gssapi_keytab;
 };
 
 isc_result_t
@@ -120,9 +119,8 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key,
 isc_result_t
 dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
 		       const dns_name_t *gname, isc_buffer_t *intoken,
-		       uint32_t lifetime, gss_ctx_id_t *context,
-		       bool win2k, isc_mem_t *mctx,
-		       char **err_message);
+		       uint32_t lifetime, gss_ctx_id_t *context, bool win2k,
+		       isc_mem_t *mctx, char **err_message);
 /*%<
  *	Builds a query containing a TKEY that will generate a GSSAPI context.
  *	The key is requested to have the specified lifetime (in seconds).
@@ -142,7 +140,6 @@ dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
  *\li		other		an error occurred while building the message
  *\li		*err_message	optional error message
  */
-
 
 isc_result_t
 dns_tkey_builddeletequery(dns_message_t *msg, dns_tsigkey_t *key);

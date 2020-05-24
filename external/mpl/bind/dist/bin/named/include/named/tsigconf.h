@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: tsigconf.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,8 @@
 
 /*! \file */
 
-#include <isc/types.h>
 #include <isc/lang.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 

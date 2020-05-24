@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: isctest.c,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
 
 /*! \file */
 
-#include <config.h>
-
+#include "isctest.h"
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -30,13 +29,12 @@
 #include <isc/timer.h>
 #include <isc/util.h>
 
-#include "isctest.h"
-
-isc_mem_t *mctx = NULL;
-isc_log_t *lctx = NULL;
+isc_mem_t *test_mctx = NULL;
+isc_log_t *test_lctx = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_timermgr_t *timermgr = NULL;
 isc_socketmgr_t *socketmgr = NULL;
+isc_nm_t *netmgr = NULL;
 isc_task_t *maintask = NULL;
 int ncpus;
 
@@ -45,17 +43,15 @@ static bool test_running = false;
 /*
  * Logging categories: this needs to match the list in bin/named/log.c.
  */
-static isc_logcategory_t categories[] = {
-		{ "",                0 },
-		{ "client",          0 },
-		{ "network",         0 },
-		{ "update",          0 },
-		{ "queries",         0 },
-		{ "unmatched",       0 },
-		{ "update-security", 0 },
-		{ "query-errors",    0 },
-		{ NULL,              0 }
-};
+static isc_logcategory_t categories[] = { { "", 0 },
+					  { "client", 0 },
+					  { "network", 0 },
+					  { "update", 0 },
+					  { "queries", 0 },
+					  { "unmatched", 0 },
+					  { "update-security", 0 },
+					  { "query-errors", 0 },
+					  { NULL, 0 } };
 
 static void
 cleanup_managers(void) {
@@ -71,6 +67,9 @@ cleanup_managers(void) {
 	}
 	if (timermgr != NULL) {
 		isc_timermgr_destroy(&timermgr);
+	}
+	if (netmgr != NULL) {
+		isc_nm_detach(&netmgr);
 	}
 }
 
@@ -88,23 +87,22 @@ create_managers(unsigned int workers) {
 		workers = atoi(p);
 	}
 
-	CHECK(isc_taskmgr_create(mctx, workers, 0, &taskmgr));
+	netmgr = isc_nm_start(test_mctx, workers);
+	CHECK(isc_taskmgr_create(test_mctx, workers, 0, netmgr, &taskmgr));
 	CHECK(isc_task_create(taskmgr, 0, &maintask));
 	isc_taskmgr_setexcltask(taskmgr, maintask);
 
-	CHECK(isc_timermgr_create(mctx, &timermgr));
-	CHECK(isc_socketmgr_create(mctx, &socketmgr));
+	CHECK(isc_timermgr_create(test_mctx, &timermgr));
+	CHECK(isc_socketmgr_create(test_mctx, &socketmgr));
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	cleanup_managers();
 	return (result);
 }
 
 isc_result_t
-isc_test_begin(FILE *logfile, bool start_managers,
-	       unsigned int workers)
-{
+isc_test_begin(FILE *logfile, bool start_managers, unsigned int workers) {
 	isc_result_t result;
 
 	INSIST(!test_running);
@@ -112,27 +110,24 @@ isc_test_begin(FILE *logfile, bool start_managers,
 
 	isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 
-	INSIST(mctx == NULL);
-	CHECK(isc_mem_create(0, 0, &mctx));
+	INSIST(test_mctx == NULL);
+	isc_mem_create(&test_mctx);
 
 	if (logfile != NULL) {
 		isc_logdestination_t destination;
 		isc_logconfig_t *logconfig = NULL;
 
-		INSIST(lctx == NULL);
-		CHECK(isc_log_create(mctx, &lctx, &logconfig));
-
-		isc_log_registercategories(lctx, categories);
-		isc_log_setcontext(lctx);
+		INSIST(test_lctx == NULL);
+		isc_log_create(test_mctx, &test_lctx, &logconfig);
+		isc_log_registercategories(test_lctx, categories);
+		isc_log_setcontext(test_lctx);
 
 		destination.file.stream = logfile;
 		destination.file.name = NULL;
 		destination.file.versions = ISC_LOG_ROLLNEVER;
 		destination.file.maximum_size = 0;
-		CHECK(isc_log_createchannel(logconfig, "stderr",
-					    ISC_LOG_TOFILEDESC,
-					    ISC_LOG_DYNAMIC,
-					    &destination, 0));
+		isc_log_createchannel(logconfig, "stderr", ISC_LOG_TOFILEDESC,
+				      ISC_LOG_DYNAMIC, &destination, 0);
 		CHECK(isc_log_usechannel(logconfig, "stderr", NULL, NULL));
 	}
 
@@ -144,7 +139,7 @@ isc_test_begin(FILE *logfile, bool start_managers,
 
 	return (ISC_R_SUCCESS);
 
-  cleanup:
+cleanup:
 	isc_test_end();
 	return (result);
 }
@@ -160,11 +155,11 @@ isc_test_end(void) {
 
 	cleanup_managers();
 
-	if (lctx != NULL) {
-		isc_log_destroy(&lctx);
+	if (test_lctx != NULL) {
+		isc_log_destroy(&test_lctx);
 	}
-	if (mctx != NULL) {
-		isc_mem_destroy(&mctx);
+	if (test_mctx != NULL) {
+		isc_mem_destroy(&test_mctx);
 	}
 
 	test_running = false;
@@ -183,11 +178,11 @@ isc_test_nap(uint32_t usec) {
 	nanosleep(&ts, NULL);
 #elif HAVE_USLEEP
 	usleep(usec);
-#else
+#else  /* ifdef HAVE_NANOSLEEP */
 	/*
 	 * No fractional-second sleep function is available, so we
 	 * round up to the nearest second and sleep instead
 	 */
 	sleep((usec / 1000000) + 1);
-#endif
+#endif /* ifdef HAVE_NANOSLEEP */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.5 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.6 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <string.h>
 
 #include <isc/buffer.h>
-#include <isc/region.h>
 #include <isc/md.h>
+#include <isc/region.h>
 #include <isc/util.h>
 
 #include <dns/ds.h>
@@ -33,20 +30,16 @@
 #include <dst/dst.h>
 
 isc_result_t
-dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
-		  dns_dsdigest_t digest_type, unsigned char *buffer,
-		  dns_rdata_t *rdata)
-{
+dns_ds_fromkeyrdata(const dns_name_t *owner, dns_rdata_t *key,
+		    dns_dsdigest_t digest_type, unsigned char *digest,
+		    dns_rdata_ds_t *dsrdata) {
+	isc_result_t result;
 	dns_fixedname_t fname;
 	dns_name_t *name;
-	unsigned char digest[ISC_MAX_MD_SIZE];
 	unsigned int digestlen;
 	isc_region_t r;
-	isc_buffer_t b;
-	dns_rdata_ds_t ds;
 	isc_md_t *md;
-	isc_md_type_t md_type = 0;
-	isc_result_t ret;
+	const isc_md_type_t *md_type = NULL;
 
 	REQUIRE(key != NULL);
 	REQUIRE(key->type == dns_rdatatype_dnskey ||
@@ -77,53 +70,67 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 	name = dns_fixedname_initname(&fname);
 	(void)dns_name_downcase(owner, name, NULL);
 
-	memset(buffer, 0, DNS_DS_BUFFERSIZE);
-	isc_buffer_init(&b, buffer, DNS_DS_BUFFERSIZE);
-
 	md = isc_md_new();
 	if (md == NULL) {
 		return (ISC_R_NOMEMORY);
 	}
 
-	ret = isc_md_init(md, md_type);
-	if (ret != ISC_R_SUCCESS) {
+	result = isc_md_init(md, md_type);
+	if (result != ISC_R_SUCCESS) {
 		goto end;
 	}
 
 	dns_name_toregion(name, &r);
 
-	ret = isc_md_update(md, r.base, r.length);
-	if (ret != ISC_R_SUCCESS) {
+	result = isc_md_update(md, r.base, r.length);
+	if (result != ISC_R_SUCCESS) {
 		goto end;
 	}
 
 	dns_rdata_toregion(key, &r);
 	INSIST(r.length >= 4);
 
-	ret = isc_md_update(md, r.base, r.length);
-	if (ret != ISC_R_SUCCESS) {
+	result = isc_md_update(md, r.base, r.length);
+	if (result != ISC_R_SUCCESS) {
 		goto end;
 	}
 
-	ret = isc_md_final(md, digest, &digestlen);
-	if (ret != ISC_R_SUCCESS) {
+	result = isc_md_final(md, digest, &digestlen);
+	if (result != ISC_R_SUCCESS) {
 		goto end;
 	}
 
-	ds.mctx = NULL;
-	ds.common.rdclass = key->rdclass;
-	ds.common.rdtype = dns_rdatatype_ds;
-	ds.algorithm = r.base[3];
-	ds.key_tag = dst_region_computeid(&r);
-	ds.digest_type = digest_type;
-	ds.digest = digest;
-	ds.length = digestlen;
+	dsrdata->mctx = NULL;
+	dsrdata->common.rdclass = key->rdclass;
+	dsrdata->common.rdtype = dns_rdatatype_ds;
+	dsrdata->algorithm = r.base[3];
+	dsrdata->key_tag = dst_region_computeid(&r);
+	dsrdata->digest_type = digest_type;
+	dsrdata->digest = digest;
+	dsrdata->length = digestlen;
 
-	ret = dns_rdata_fromstruct(rdata, key->rdclass, dns_rdatatype_ds,
-				   &ds, &b);
 end:
-	if (md != NULL) {
-		isc_md_free(md);
+	isc_md_free(md);
+	return (result);
+}
+
+isc_result_t
+dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
+		  dns_dsdigest_t digest_type, unsigned char *buffer,
+		  dns_rdata_t *rdata) {
+	isc_result_t result;
+	unsigned char digest[ISC_MAX_MD_SIZE];
+	dns_rdata_ds_t ds;
+	isc_buffer_t b;
+
+	result = dns_ds_fromkeyrdata(owner, key, digest_type, digest, &ds);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
 	}
-	return (ret);
+
+	memset(buffer, 0, DNS_DS_BUFFERSIZE);
+	isc_buffer_init(&b, buffer, DNS_DS_BUFFERSIZE);
+	result = dns_rdata_fromstruct(rdata, key->rdclass, dns_rdatatype_ds,
+				      &ds, &b);
+	return (result);
 }

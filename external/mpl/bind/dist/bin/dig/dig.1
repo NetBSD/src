@@ -1,6 +1,6 @@
-.\"	$NetBSD: dig.1,v 1.5 2019/09/05 19:32:55 christos Exp $
+.\"	$NetBSD: dig.1,v 1.6 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2000-2011, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2011, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -458,6 +458,11 @@ clears the EDNS options to be sent\&.
 Send an EDNS Expire option\&.
 .RE
 .PP
+\fB+[no]expandaaaa\fR
+.RS 4
+When printing AAAA record print all zero nibbles rather than the default RFC 5952 preferred presentation format\&.
+.RE
+.PP
 \fB+[no]fail\fR
 .RS 4
 Do not try the next server if you receive a SERVFAIL\&. The default is to not try the next server which is the reverse of normal stub resolver behavior\&.
@@ -741,6 +746,13 @@ Display [do not display] the TTL when printing the record\&.
 Display [do not display] the TTL in friendly human\-readable time units of "s", "m", "h", "d", and "w", representing seconds, minutes, hours, days and weeks\&. Implies +ttlid\&.
 .RE
 .PP
+\fB+[no]unexpected\fR
+.RS 4
+Accept [do not accept] answers from unexpected sources\&. By default,
+\fBdig\fR
+won\*(Aqt accept a reply from a source other than the one to which it sent the query\&.
+.RE
+.PP
 \fB+[no]unknownformat\fR
 .RS 4
 Print all RDATA in unknown RR type presentation format (RFC 3597)\&. The default is to print RDATA for known types in the type\*(Aqs presentation format\&.
@@ -751,6 +763,13 @@ Print all RDATA in unknown RR type presentation format (RFC 3597)\&. The default
 Use [do not use] TCP when querying name servers\&. This alternate syntax to
 \fI+[no]tcp\fR
 is provided for backwards compatibility\&. The "vc" stands for "virtual circuit"\&.
+.RE
+.PP
+\fB+[no]yaml\fR
+.RS 4
+Print the responses (and, if
+\fB+qr\fR
+is in use, also the outgoing queries) in a detailed YAML format\&.
 .RE
 .PP
 \fB+[no]zflag\fR
@@ -832,5 +851,5 @@ There are probably too many query options\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2000-2011, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2000-2011, 2013-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

@@ -1,4 +1,4 @@
-/*	$NetBSD: nta.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: nta.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define DNS_NTA_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -37,33 +37,33 @@
 #include <isc/task.h>
 #include <isc/timer.h>
 
-#include <dns/types.h>
 #include <dns/rdataset.h>
 #include <dns/resolver.h>
+#include <dns/types.h>
 #include <dns/view.h>
 
 ISC_LANG_BEGINDECLS
 
 struct dns_ntatable {
 	/* Unlocked. */
-	unsigned int		magic;
-	dns_view_t		*view;
-	isc_rwlock_t		rwlock;
-	isc_taskmgr_t		*taskmgr;
-	isc_timermgr_t		*timermgr;
-	isc_task_t		*task;
+	unsigned int	magic;
+	dns_view_t *	view;
+	isc_rwlock_t	rwlock;
+	isc_taskmgr_t * taskmgr;
+	isc_timermgr_t *timermgr;
+	isc_task_t *	task;
+	/* Protected by atomics */
+	isc_refcount_t references;
 	/* Locked by rwlock. */
-	uint32_t		references;
-	dns_rbt_t		*table;
+	dns_rbt_t *table;
 };
 
-#define NTATABLE_MAGIC		ISC_MAGIC('N', 'T', 'A', 't')
-#define VALID_NTATABLE(nt) 	ISC_MAGIC_VALID(nt, NTATABLE_MAGIC)
+#define NTATABLE_MAGIC	   ISC_MAGIC('N', 'T', 'A', 't')
+#define VALID_NTATABLE(nt) ISC_MAGIC_VALID(nt, NTATABLE_MAGIC)
 
 isc_result_t
-dns_ntatable_create(dns_view_t *view,
-		    isc_taskmgr_t *taskmgr, isc_timermgr_t *timermgr,
-		    dns_ntatable_t **ntatablep);
+dns_ntatable_create(dns_view_t *view, isc_taskmgr_t *taskmgr,
+		    isc_timermgr_t *timermgr, dns_ntatable_t **ntatablep);
 /*%<
  * Create an NTA table in view 'view'.
  *
@@ -119,9 +119,8 @@ dns_ntatable_detach(dns_ntatable_t **ntatablep);
  */
 
 isc_result_t
-dns_ntatable_add(dns_ntatable_t *ntatable, const dns_name_t *name,
-		 bool force, isc_stdtime_t now,
-		 uint32_t lifetime);
+dns_ntatable_add(dns_ntatable_t *ntatable, const dns_name_t *name, bool force,
+		 isc_stdtime_t now, uint32_t lifetime);
 /*%<
  * Add a negative trust anchor to 'ntatable' for name 'name',
  * which will expire at time 'now' + 'lifetime'.  If 'force' is true,

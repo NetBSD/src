@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: key_25.h,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,19 +14,17 @@
 #ifndef GENERIC_KEY_25_H
 #define GENERIC_KEY_25_H 1
 
-
 /*!
  * \brief Per RFC2535 */
 
 typedef struct dns_rdata_key {
-	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
-	uint16_t		flags;
-	dns_secproto_t		protocol;
-	dns_secalg_t		algorithm;
-	uint16_t		datalen;
-	unsigned char *		data;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t flags;
+	dns_secproto_t protocol;
+	dns_secalg_t algorithm;
+	uint16_t datalen;
+	unsigned char *data;
 } dns_rdata_key_t;
-
 
 #endif /* GENERIC_KEY_25_H */

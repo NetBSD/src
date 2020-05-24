@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.h,v 1.2 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: openssl_shim.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,51 +13,59 @@
 
 #pragma once
 
-#include <config.h>
-
-#include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/opensslv.h>
 
 #if !HAVE_CRYPTO_ZALLOC
-void *CRYPTO_zalloc(size_t size);
+void *
+CRYPTO_zalloc(size_t size);
 #define OPENSSL_zalloc(num) CRYPTO_zalloc(num)
-#endif
+#endif /* if !HAVE_CRYPTO_ZALLOC */
 
 #if !HAVE_EVP_CIPHER_CTX_NEW
-EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
-#endif
+EVP_CIPHER_CTX *
+EVP_CIPHER_CTX_new(void);
+#endif /* if !HAVE_EVP_CIPHER_CTX_NEW */
 
 #if !HAVE_EVP_CIPHER_CTX_FREE
-void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
-#endif
+void
+EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
+#endif /* if !HAVE_EVP_CIPHER_CTX_FREE */
 
 #if !HAVE_EVP_MD_CTX_NEW
-EVP_MD_CTX *EVP_MD_CTX_new(void);
-#endif
+EVP_MD_CTX *
+EVP_MD_CTX_new(void);
+#endif /* if !HAVE_EVP_MD_CTX_NEW */
 
 #if !HAVE_EVP_MD_CTX_FREE
-void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
-#endif
+void
+EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+#endif /* if !HAVE_EVP_MD_CTX_FREE */
 
 #if !HAVE_EVP_MD_CTX_RESET
-int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
-#endif
+int
+EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
+#endif /* if !HAVE_EVP_MD_CTX_RESET */
 
 #if !HAVE_HMAC_CTX_NEW
-HMAC_CTX *HMAC_CTX_new(void);
-#endif
+HMAC_CTX *
+HMAC_CTX_new(void);
+#endif /* if !HAVE_HMAC_CTX_NEW */
 
 #if !HAVE_HMAC_CTX_FREE
-void HMAC_CTX_free(HMAC_CTX *ctx);
-#endif
+void
+HMAC_CTX_free(HMAC_CTX *ctx);
+#endif /* if !HAVE_HMAC_CTX_FREE */
 
 #if !HAVE_HMAC_CTX_RESET
-int HMAC_CTX_reset(HMAC_CTX *ctx);
-#endif
+int
+HMAC_CTX_reset(HMAC_CTX *ctx);
+#endif /* if !HAVE_HMAC_CTX_RESET */
 
 #if !HAVE_HMAC_CTX_GET_MD
-const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
-#endif
+const EVP_MD *
+HMAC_CTX_get_md(const HMAC_CTX *ctx);
+#endif /* if !HAVE_HMAC_CTX_GET_MD */

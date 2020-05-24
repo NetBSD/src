@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.4 2019/10/17 16:46:58 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.5 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,15 +35,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* session [-m module] [-s $slot] [-n count] */
 
 /*! \file */
 
-#include <config.h>
-
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -55,8 +52,8 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <pk11/pk11.h>
 #include <pk11/internal.h>
+#include <pk11/pk11.h>
 
 #ifndef HAVE_CLOCK_GETTIME
 
@@ -64,13 +61,13 @@
 
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
-#endif
-
-static int clock_gettime(int32_t id, struct timespec *tp);
+#endif /* ifndef CLOCK_REALTIME */
 
 static int
-clock_gettime(int32_t id, struct timespec *tp)
-{
+clock_gettime(int32_t id, struct timespec *tp);
+
+static int
+clock_gettime(int32_t id, struct timespec *tp) {
 	struct timeval tv;
 	int result;
 
@@ -79,11 +76,11 @@ clock_gettime(int32_t id, struct timespec *tp)
 	result = gettimeofday(&tv, NULL);
 	if (result == 0) {
 		tp->tv_sec = tv.tv_sec;
-		tp->tv_nsec = (long) tv.tv_usec * 1000;
+		tp->tv_nsec = (long)tv.tv_usec * 1000;
 	}
 	return (result);
 }
-#endif
+#endif /* ifndef HAVE_CLOCK_GETTIME */
 
 int
 main(int argc, char *argv[]) {
@@ -110,8 +107,7 @@ main(int argc, char *argv[]) {
 			count = atoi(isc_commandline_argument);
 			break;
 		case ':':
-			fprintf(stderr,
-				"Option -%c requires an operand\n",
+			fprintf(stderr, "Option -%c requires an operand\n",
 				isc_commandline_option);
 			errflg++;
 			break;
@@ -125,14 +121,13 @@ main(int argc, char *argv[]) {
 
 	if (errflg) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr,
-			"\tsession [-m module] [-s slot] [-n count]\n");
+		fprintf(stderr, "\tsession [-m module] [-s slot] [-n count]\n");
 		exit(1);
 	}
 
 	/* Allocate sessions */
-	hSession = (CK_SESSION_HANDLE *)
-		malloc(count * sizeof(CK_SESSION_HANDLE));
+	hSession =
+		(CK_SESSION_HANDLE *)malloc(count * sizeof(CK_SESSION_HANDLE));
 	if (hSession == NULL) {
 		perror("malloc");
 		exit(1);
@@ -141,17 +136,18 @@ main(int argc, char *argv[]) {
 		hSession[i] = CK_INVALID_HANDLE;
 
 	/* Initialize the CRYPTOKI library */
-	if (lib_name != NULL)
+	if (lib_name != NULL) {
 		pk11_set_lib_name(lib_name);
+	}
 
 	rv = pkcs_C_Initialize(NULL_PTR);
 	if (rv != CKR_OK) {
-		if (rv == 0xfe)
-			fprintf(stderr,
-				"Can't load or link module \"%s\"\n",
+		if (rv == 0xfe) {
+			fprintf(stderr, "Can't load or link module \"%s\"\n",
 				pk11_get_lib_name());
-		else
+		} else {
 			fprintf(stderr, "C_Initialize: Error = 0x%.8lX\n", rv);
+		}
 		free(hSession);
 		exit(1);
 	}
@@ -164,15 +160,15 @@ main(int argc, char *argv[]) {
 	/* loop */
 	for (i = 0; i < count; i++) {
 		/* Open sessions */
-		rv = pkcs_C_OpenSession(slot, CKF_SERIAL_SESSION,
-					NULL_PTR, NULL_PTR, &hSession[i]);
+		rv = pkcs_C_OpenSession(slot, CKF_SERIAL_SESSION, NULL_PTR,
+					NULL_PTR, &hSession[i]);
 		if (rv != CKR_OK) {
-			fprintf(stderr,
-				"C_OpenSession[%u]: Error = 0x%.8lX\n",
+			fprintf(stderr, "C_OpenSession[%u]: Error = 0x%.8lX\n",
 				i, rv);
 			error = 1;
-			if (i == 0)
+			if (i == 0) {
 				goto exit_program;
+			}
 			break;
 		}
 	}
@@ -188,32 +184,34 @@ main(int argc, char *argv[]) {
 		endtime.tv_sec -= 1;
 		endtime.tv_nsec += 1000000000;
 	}
-	printf("%u sessions in %ld.%09lds\n", i,
-	       endtime.tv_sec, endtime.tv_nsec);
-	if (i > 0)
+	printf("%u sessions in %ld.%09lds\n", i, endtime.tv_sec,
+	       endtime.tv_nsec);
+	if (i > 0) {
 		printf("%g sessions/s\n",
-		       i / ((double) endtime.tv_sec +
-			    (double) endtime.tv_nsec / 1000000000.));
+		       i / ((double)endtime.tv_sec +
+			    (double)endtime.tv_nsec / 1000000000.));
+	}
 
 	for (i = 0; i < count; i++) {
 		/* Close sessions */
-		if (hSession[i] == CK_INVALID_HANDLE)
+		if (hSession[i] == CK_INVALID_HANDLE) {
 			continue;
+		}
 		rv = pkcs_C_CloseSession(hSession[i]);
 		if ((rv != CKR_OK) && !errflg) {
-			fprintf(stderr,
-				"C_CloseSession[%u]: Error = 0x%.8lX\n",
+			fprintf(stderr, "C_CloseSession[%u]: Error = 0x%.8lX\n",
 				i, rv);
 			errflg = 1;
 		}
 	}
 
-    exit_program:
+exit_program:
 	free(hSession);
 
 	rv = pkcs_C_Finalize(NULL_PTR);
-	if (rv != CKR_OK)
+	if (rv != CKR_OK) {
 		fprintf(stderr, "C_Finalize: Error = 0x%.8lX\n", rv);
+	}
 
 	exit(error);
 }

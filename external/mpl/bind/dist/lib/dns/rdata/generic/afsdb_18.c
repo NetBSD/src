@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: afsdb_18.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,8 +36,9 @@ fromtext_afsdb(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -47,16 +48,20 @@ fromtext_afsdb(ARGS_FROMTEXT) {
 				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = true;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
+	if ((options & DNS_RDATA_CHECKNAMES) != 0) {
 		ok = dns_name_ishostname(&name, false);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+	}
+	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
+	}
+	if (!ok && callbacks != NULL) {
 		warn_badname(&name, lexer, callbacks);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -102,10 +107,12 @@ fromwire_afsdb(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_availableregion(target, &tr);
-	if (tr.length < 2)
+	if (tr.length < 2) {
 		return (ISC_R_NOSPACE);
-	if (sr.length < 2)
+	}
+	if (sr.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	memmove(tr.base, sr.base, 2);
 	isc_buffer_forward(source, 2);
 	isc_buffer_add(target, 2);
@@ -125,8 +132,9 @@ towire_afsdb(ARGS_TOWIRE) {
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
 	isc_buffer_availableregion(target, &tr);
 	dns_rdata_toregion(rdata, &sr);
-	if (tr.length < 2)
+	if (tr.length < 2) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(tr.base, sr.base, 2);
 	isc_region_consume(&sr, 2);
 	isc_buffer_add(target, 2);
@@ -152,8 +160,9 @@ compare_afsdb(ARGS_COMPARE) {
 	REQUIRE(rdata2->length != 0);
 
 	result = memcmp(rdata1->data, rdata2->data, 2);
-	if (result != 0)
+	if (result != 0) {
 		return (result < 0 ? -1 : 1);
+	}
 
 	dns_name_init(&name1, NULL);
 	dns_name_init(&name2, NULL);
@@ -224,8 +233,9 @@ freestruct_afsdb(ARGS_FREESTRUCT) {
 	REQUIRE(afsdb != NULL);
 	REQUIRE(afsdb->common.rdtype == dns_rdatatype_afsdb);
 
-	if (afsdb->mctx == NULL)
+	if (afsdb->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&afsdb->server, afsdb->mctx);
 	afsdb->mctx = NULL;
@@ -267,7 +277,6 @@ digest_afsdb(ARGS_DIGEST) {
 
 static inline bool
 checkowner_afsdb(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_afsdb);
 
 	UNUSED(name);
@@ -292,8 +301,9 @@ checknames_afsdb(ARGS_CHECKNAMES) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ishostname(&name, false)) {
-		if (bad != NULL)
+		if (bad != NULL) {
 			dns_name_clone(&name, bad);
+		}
 		return (false);
 	}
 	return (true);
@@ -303,4 +313,4 @@ static inline int
 casecompare_afsdb(ARGS_COMPARE) {
 	return (compare_afsdb(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_AFSDB_18_C */
+#endif /* RDATA_GENERIC_AFSDB_18_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.h,v 1.5 2019/11/27 05:48:41 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define DNS_ACL_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/acl.h
  * \brief
@@ -34,12 +34,10 @@
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
 
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 #include <dns/geoip.h>
-#endif
+#include <dns/iptable.h>
 #include <dns/name.h>
 #include <dns/types.h>
-#include <dns/iptable.h>
 
 /***
  *** Types
@@ -51,9 +49,9 @@ typedef enum {
 	dns_aclelementtype_nestedacl,
 	dns_aclelementtype_localhost,
 	dns_aclelementtype_localnets,
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+#if defined(HAVE_GEOIP2)
 	dns_aclelementtype_geoip,
-#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
+#endif /* HAVE_GEOIP2 */
 	dns_aclelementtype_any
 } dns_aclelementtype_t;
 
@@ -61,45 +59,46 @@ typedef struct dns_aclipprefix dns_aclipprefix_t;
 
 struct dns_aclipprefix {
 	isc_netaddr_t address; /* IP4/IP6 */
-	unsigned int prefixlen;
+	unsigned int  prefixlen;
 };
 
 struct dns_aclelement {
-	dns_aclelementtype_t	type;
-	bool		negative;
-	dns_name_t		keyname;
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
-	dns_geoip_elem_t	geoip_elem;
-#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
-	dns_acl_t		*nestedacl;
-	int			node_num;
+	dns_aclelementtype_t type;
+	bool		     negative;
+	dns_name_t	     keyname;
+#if defined(HAVE_GEOIP2)
+	dns_geoip_elem_t geoip_elem;
+#endif /* HAVE_GEOIP2 */
+	dns_acl_t *nestedacl;
+	int	   node_num;
 };
 
+#define dns_acl_node_count(acl) acl->iptable->radix->num_added_node
+
 struct dns_acl {
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	isc_refcount_t		refcount;
-	dns_iptable_t		*iptable;
-#define node_count		iptable->radix->num_added_node
-	dns_aclelement_t	*elements;
-	bool 		has_negatives;
-	unsigned int 		alloc;		/*%< Elements allocated */
-	unsigned int 		length;		/*%< Elements initialized */
-	char 			*name;		/*%< Temporary use only */
-	ISC_LINK(dns_acl_t) 	nextincache;	/*%< Ditto */
+	unsigned int	  magic;
+	isc_mem_t *	  mctx;
+	isc_refcount_t	  refcount;
+	dns_iptable_t *	  iptable;
+	dns_aclelement_t *elements;
+	bool		  has_negatives;
+	unsigned int	  alloc;	 /*%< Elements allocated */
+	unsigned int	  length;	 /*%< Elements initialized */
+	char *		  name;		 /*%< Temporary use only */
+	ISC_LINK(dns_acl_t) nextincache; /*%< Ditto */
 };
 
 struct dns_aclenv {
 	dns_acl_t *localhost;
 	dns_acl_t *localnets;
-	bool match_mapped;
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+	bool	   match_mapped;
+#if defined(HAVE_GEOIP2)
 	dns_geoip_databases_t *geoip;
-#endif
+#endif /* HAVE_GEOIP2 */
 };
 
-#define DNS_ACL_MAGIC		ISC_MAGIC('D','a','c','l')
-#define DNS_ACL_VALID(a)	ISC_MAGIC_VALID(a, DNS_ACL_MAGIC)
+#define DNS_ACL_MAGIC	 ISC_MAGIC('D', 'a', 'c', 'l')
+#define DNS_ACL_VALID(a) ISC_MAGIC_VALID(a, DNS_ACL_MAGIC)
 
 /***
  *** Functions
@@ -186,8 +185,8 @@ dns_acl_isinsecure(const dns_acl_t *a);
  */
 
 bool
-dns_acl_allowed(isc_netaddr_t *addr, const dns_name_t *signer,
-		dns_acl_t *acl, dns_aclenv_t *aclenv);
+dns_acl_allowed(isc_netaddr_t *addr, const dns_name_t *signer, dns_acl_t *acl,
+		dns_aclenv_t *aclenv);
 /*%<
  * Return #true iff the 'addr', 'signer', or ECS values are
  * permitted by 'acl' in environment 'aclenv'.
@@ -206,11 +205,8 @@ void
 dns_aclenv_destroy(dns_aclenv_t *env);
 
 isc_result_t
-dns_acl_match(const isc_netaddr_t *reqaddr,
-	      const dns_name_t *reqsigner,
-	      const dns_acl_t *acl,
-	      const dns_aclenv_t *env,
-	      int *match,
+dns_acl_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,
+	      const dns_acl_t *acl, const dns_aclenv_t *env, int *match,
 	      const dns_aclelement_t **matchelt);
 /*%<
  * General, low-level ACL matching.  This is expected to
@@ -239,10 +235,8 @@ dns_acl_match(const isc_netaddr_t *reqaddr,
  */
 
 bool
-dns_aclelement_match(const isc_netaddr_t *reqaddr,
-		     const dns_name_t *reqsigner,
-		     const dns_aclelement_t *e,
-		     const dns_aclenv_t *env,
+dns_aclelement_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,
+		     const dns_aclelement_t *e, const dns_aclenv_t *env,
 		     const dns_aclelement_t **matchelt);
 /*%<
  * Like dns_acl_match, but matches against the single ACL element 'e'

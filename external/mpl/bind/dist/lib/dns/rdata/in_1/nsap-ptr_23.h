@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.h,v 1.3 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,14 +14,13 @@
 #ifndef IN_1_NSAP_PTR_23_H
 #define IN_1_NSAP_PTR_23_H 1
 
-
 /*!
  *  \brief Per RFC1348.  Obsoleted in RFC 1706 - use PTR instead. */
 
 typedef struct dns_rdata_in_nsap_ptr {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		owner;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t owner;
 } dns_rdata_in_nsap_ptr_t;
 
 #endif /* IN_1_NSAP_PTR_23_H */

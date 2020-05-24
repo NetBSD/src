@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/name.h
  * \brief
@@ -66,33 +65,33 @@
  *** Imports
  ***/
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <inttypes.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
-#include <isc/region.h>		/* Required for storage size of dns_label_t. */
+#include <isc/region.h> /* Required for storage size of dns_label_t. */
 
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Labels
- *****
- ***** A 'label' is basically a region.  It contains one DNS wire format
- ***** label of type 00 (ordinary).
- *****/
+***** Labels
+*****
+***** A 'label' is basically a region.  It contains one DNS wire format
+***** label of type 00 (ordinary).
+*****/
 
 /*****
- ***** Names
- *****
- ***** A 'name' is a handle to a binary region.  It contains a sequence of one
- ***** or more DNS wire format labels of type 00 (ordinary).
- ***** Note that all names are not required to end with the root label,
- ***** as they are in the actual DNS wire protocol.
- *****/
+***** Names
+*****
+***** A 'name' is a handle to a binary region.  It contains a sequence of one
+***** or more DNS wire format labels of type 00 (ordinary).
+***** Note that all names are not required to end with the root label,
+***** as they are in the actual DNS wire protocol.
+*****/
 
 /***
  *** Types
@@ -104,46 +103,46 @@ ISC_LANG_BEGINDECLS
  * for whatever purpose the client desires.
  */
 struct dns_name {
-	unsigned int			magic;
-	unsigned char *			ndata;
-	unsigned int			length;
-	unsigned int			labels;
-	unsigned int			attributes;
-	unsigned char *			offsets;
-	isc_buffer_t *			buffer;
-	ISC_LINK(dns_name_t)		link;
-	ISC_LIST(dns_rdataset_t)	list;
+	unsigned int   magic;
+	unsigned char *ndata;
+	unsigned int   length;
+	unsigned int   labels;
+	unsigned int   attributes;
+	unsigned char *offsets;
+	isc_buffer_t * buffer;
+	ISC_LINK(dns_name_t) link;
+	ISC_LIST(dns_rdataset_t) list;
 };
 
-#define DNS_NAME_MAGIC			ISC_MAGIC('D','N','S','n')
+#define DNS_NAME_MAGIC ISC_MAGIC('D', 'N', 'S', 'n')
 
-#define DNS_NAMEATTR_ABSOLUTE		0x00000001
-#define DNS_NAMEATTR_READONLY		0x00000002
-#define DNS_NAMEATTR_DYNAMIC		0x00000004
-#define DNS_NAMEATTR_DYNOFFSETS		0x00000008
-#define DNS_NAMEATTR_NOCOMPRESS		0x00000010
+#define DNS_NAMEATTR_ABSOLUTE	0x00000001
+#define DNS_NAMEATTR_READONLY	0x00000002
+#define DNS_NAMEATTR_DYNAMIC	0x00000004
+#define DNS_NAMEATTR_DYNOFFSETS 0x00000008
+#define DNS_NAMEATTR_NOCOMPRESS 0x00000010
 /*
  * Attributes below 0x0100 reserved for name.c usage.
  */
-#define DNS_NAMEATTR_CACHE		0x00000100	/*%< Used by resolver. */
-#define DNS_NAMEATTR_ANSWER		0x00000200	/*%< Used by resolver. */
-#define DNS_NAMEATTR_NCACHE		0x00000400	/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHAINING		0x00000800	/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHASE		0x00001000	/*%< Used by resolver. */
-#define DNS_NAMEATTR_WILDCARD		0x00002000	/*%< Used by server. */
-#define DNS_NAMEATTR_PREREQUISITE	0x00004000	/*%< Used by client. */
-#define DNS_NAMEATTR_UPDATE		0x00008000	/*%< Used by client. */
-#define DNS_NAMEATTR_HASUPDATEREC	0x00010000	/*%< Used by client. */
+#define DNS_NAMEATTR_CACHE	  0x00000100 /*%< Used by resolver. */
+#define DNS_NAMEATTR_ANSWER	  0x00000200 /*%< Used by resolver. */
+#define DNS_NAMEATTR_NCACHE	  0x00000400 /*%< Used by resolver. */
+#define DNS_NAMEATTR_CHAINING	  0x00000800 /*%< Used by resolver. */
+#define DNS_NAMEATTR_CHASE	  0x00001000 /*%< Used by resolver. */
+#define DNS_NAMEATTR_WILDCARD	  0x00002000 /*%< Used by server. */
+#define DNS_NAMEATTR_PREREQUISITE 0x00004000 /*%< Used by client. */
+#define DNS_NAMEATTR_UPDATE	  0x00008000 /*%< Used by client. */
+#define DNS_NAMEATTR_HASUPDATEREC 0x00010000 /*%< Used by client. */
 
 /*
  * Various flags.
  */
-#define DNS_NAME_DOWNCASE		0x0001
-#define DNS_NAME_CHECKNAMES		0x0002		/*%< Used by rdata. */
-#define DNS_NAME_CHECKNAMESFAIL		0x0004		/*%< Used by rdata. */
-#define DNS_NAME_CHECKREVERSE		0x0008		/*%< Used by rdata. */
-#define DNS_NAME_CHECKMX		0x0010		/*%< Used by rdata. */
-#define DNS_NAME_CHECKMXFAIL		0x0020		/*%< Used by rdata. */
+#define DNS_NAME_DOWNCASE	0x0001
+#define DNS_NAME_CHECKNAMES	0x0002 /*%< Used by rdata. */
+#define DNS_NAME_CHECKNAMESFAIL 0x0004 /*%< Used by rdata. */
+#define DNS_NAME_CHECKREVERSE	0x0008 /*%< Used by rdata. */
+#define DNS_NAME_CHECKMX	0x0010 /*%< Used by rdata. */
+#define DNS_NAME_CHECKMXFAIL	0x0020 /*%< Used by rdata. */
 
 LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_rootname;
 LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_wildcardname;
@@ -168,26 +167,31 @@ LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_wildcardname;
  *	unsigned char offsets[] = { 0, 6 };
  *	dns_name_t value = DNS_NAME_INITABSOLUTE(data, offsets);
  */
-#define DNS_NAME_INITNONABSOLUTE(A,B) { \
-	DNS_NAME_MAGIC, \
-	A, (sizeof(A) - 1), sizeof(B), \
-	DNS_NAMEATTR_READONLY, \
-	B, NULL, { (void *)-1, (void *)-1}, \
-	{NULL, NULL} \
-}
+#define DNS_NAME_INITNONABSOLUTE(A, B)                         \
+	{                                                      \
+		DNS_NAME_MAGIC, A, (sizeof(A) - 1), sizeof(B), \
+			DNS_NAMEATTR_READONLY, B, NULL,        \
+			{ (void *)-1, (void *)-1 }, {          \
+			NULL, NULL                             \
+		}                                              \
+	}
 
-#define DNS_NAME_INITABSOLUTE(A,B) { \
-	DNS_NAME_MAGIC, \
-	A, sizeof(A), sizeof(B), \
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
-	B, NULL, { (void *)-1, (void *)-1}, \
-	{NULL, NULL} \
-}
+#define DNS_NAME_INITABSOLUTE(A, B)                                       \
+	{                                                                 \
+		DNS_NAME_MAGIC, A, sizeof(A), sizeof(B),                  \
+			DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, B, \
+			NULL, { (void *)-1, (void *)-1 }, {               \
+			NULL, NULL                                        \
+		}                                                         \
+	}
 
-#define DNS_NAME_INITEMPTY { \
-	DNS_NAME_MAGIC, NULL, 0, 0, 0, NULL, NULL, \
-	{ (void *)-1, (void *)-1 }, { NULL, NULL } \
-}
+#define DNS_NAME_INITEMPTY                                 \
+	{                                                  \
+		DNS_NAME_MAGIC, NULL, 0, 0, 0, NULL, NULL, \
+			{ (void *)-1, (void *)-1 }, {      \
+			NULL, NULL                         \
+		}                                          \
+	}
 
 /*%
  * Standard size of a wire format name
@@ -199,8 +203,8 @@ LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_wildcardname;
  * 'target' is the buffer to be converted.  The region to be converted
  * is from 'buffer'->base + 'used_org' to the end of the used region.
  */
-typedef isc_result_t (*dns_name_totextfilter_t)(isc_buffer_t *target,
-						unsigned int used_org);
+typedef isc_result_t(dns_name_totextfilter_t)(isc_buffer_t *target,
+					      unsigned int  used_org);
 
 /***
  *** Initialization
@@ -459,7 +463,7 @@ dns_name_equal(const dns_name_t *name1, const dns_name_t *name2);
  * \li	Because it only needs to test for equality, dns_name_equal() can be
  *	significantly faster than dns_name_fullcompare() or dns_name_compare().
  *
- * \li	Offsets tables are not used in the comparision.
+ * \li	Offsets tables are not used in the comparison.
  *
  * \li	It makes no sense for one of the names to be relative and the
  *	other absolute.  If both names are relative, then to be meaningfully
@@ -627,7 +631,6 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
  *
  * \li	first + n <= dns_name_countlabels(name)
  */
-
 
 void
 dns_name_clone(const dns_name_t *source, dns_name_t *target);
@@ -828,8 +831,8 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *\li	#ISC_R_UNEXPECTEDEND
  */
 
-#define DNS_NAME_OMITFINALDOT	0x01U
-#define DNS_NAME_MASTERFILE	0x02U	/* escape $ and @ */
+#define DNS_NAME_OMITFINALDOT 0x01U
+#define DNS_NAME_MASTERFILE   0x02U /* escape $ and @ */
 
 isc_result_t
 dns_name_toprincipal(const dns_name_t *name, isc_buffer_t *target);
@@ -1033,9 +1036,8 @@ dns_name_split(const dns_name_t *name, unsigned int suffixlabels,
  *\li	#ISC_R_SUCCESS	No worries.  (This function should always success).
  */
 
-isc_result_t
-dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
-	     dns_name_t *target);
+void
+dns_name_dup(const dns_name_t *source, isc_mem_t *mctx, dns_name_t *target);
 /*%<
  * Make 'target' a dynamically allocated copy of 'source'.
  *
@@ -1219,7 +1221,7 @@ dns_name_fromstring2(dns_name_t *target, const char *src,
  */
 
 isc_result_t
-dns_name_settotextfilter(dns_name_totextfilter_t proc);
+dns_name_settotextfilter(dns_name_totextfilter_t *proc);
 /*%<
  * Set / clear a thread specific function 'proc' to be called at the
  * end of dns_name_totext().
@@ -1279,7 +1281,6 @@ dns_name_ishostname(const dns_name_t *name, bool wildcard);
  *	'name' to be valid.
  */
 
-
 bool
 dns_name_ismailbox(const dns_name_t *name);
 /*%<
@@ -1296,18 +1297,6 @@ dns_name_internalwildcard(const dns_name_t *name);
  *
  * Requires:
  * \li	'name' to be valid.
- */
-
-void
-dns_name_destroy(void);
-/*%<
- * Cleanup dns_name_settotextfilter() / dns_name_totext() state.
- *
- * This should be called as part of the final cleanup process.
- *
- * Note: dns_name_settotextfilter(NULL); should be called for all
- * threads which have called dns_name_settotextfilter() with a
- * non-NULL argument prior to calling dns_name_destroy();
  */
 
 bool
@@ -1348,67 +1337,66 @@ ISC_LANG_ENDDECLS
  * WARNING:  No assertion checking is done for these macros.
  */
 
-#define DNS_NAME_INIT(n, o) \
-do { \
-	dns_name_t *_n = (n); \
-	/* memset(_n, 0, sizeof(*_n)); */ \
-	_n->magic = DNS_NAME_MAGIC; \
-	_n->ndata = NULL; \
-	_n->length = 0; \
-	_n->labels = 0; \
-	_n->attributes = 0; \
-	_n->offsets = (o); \
-	_n->buffer = NULL; \
-	ISC_LINK_INIT(_n, link); \
-	ISC_LIST_INIT(_n->list); \
-} while (/*CONSTCOND*/0)
+#define DNS_NAME_INIT(n, o)                       \
+	do {                                      \
+		dns_name_t *_n = (n);             \
+		/* memset(_n, 0, sizeof(*_n)); */ \
+		_n->magic = DNS_NAME_MAGIC;       \
+		_n->ndata = NULL;                 \
+		_n->length = 0;                   \
+		_n->labels = 0;                   \
+		_n->attributes = 0;               \
+		_n->offsets = (o);                \
+		_n->buffer = NULL;                \
+		ISC_LINK_INIT(_n, link);          \
+		ISC_LIST_INIT(_n->list);          \
+	} while (/*CONSTCOND*/0)
 
-#define DNS_NAME_RESET(n) \
-do { \
-	(n)->ndata = NULL; \
-	(n)->length = 0; \
-	(n)->labels = 0; \
-	(n)->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
-	if ((n)->buffer != NULL) \
-		isc_buffer_clear((n)->buffer); \
-} while (/*CONSTCOND*/0)
+#define DNS_NAME_RESET(n)                                  \
+	do {                                               \
+		(n)->ndata = NULL;                         \
+		(n)->length = 0;                           \
+		(n)->labels = 0;                           \
+		(n)->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
+		if ((n)->buffer != NULL)                   \
+			isc_buffer_clear((n)->buffer);     \
+	} while (/*CONSTCOND*/0)
 
-#define DNS_NAME_SETBUFFER(n, b) \
-	(n)->buffer = (b)
+#define DNS_NAME_SETBUFFER(n, b) (n)->buffer = (b)
 
 #define DNS_NAME_ISABSOLUTE(n) \
 	(((n)->attributes & DNS_NAMEATTR_ABSOLUTE) != 0 ? true : false)
 
-#define DNS_NAME_COUNTLABELS(n) \
-	((n)->labels)
+#define DNS_NAME_COUNTLABELS(n) ((n)->labels)
 
-#define DNS_NAME_TOREGION(n, r) \
-do { \
-	(r)->base = (n)->ndata; \
-	(r)->length = (n)->length; \
-} while (/*CONSTCOND*/0)
+#define DNS_NAME_TOREGION(n, r)            \
+	do {                               \
+		(r)->base = (n)->ndata;    \
+		(r)->length = (n)->length; \
+	} while (/*CONSTCOND*/0)
 
-#define DNS_NAME_SPLIT(n, l, p, s) \
-do { \
-	dns_name_t *_n = (n); \
-	dns_name_t *_p = (p); \
-	dns_name_t *_s = (s); \
-	unsigned int _l = (l); \
-	if (_p != NULL) \
-		dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
-	if (_s != NULL) \
-		dns_name_getlabelsequence(_n, _n->labels - _l, _l, _s); \
-} while (/*CONSTCOND*/0)
+#define DNS_NAME_SPLIT(n, l, p, s)                                             \
+	do {                                                                   \
+		dns_name_t * _n = (n);                                         \
+		dns_name_t * _p = (p);                                         \
+		dns_name_t * _s = (s);                                         \
+		unsigned int _l = (l);                                         \
+		if (_p != NULL)                                                \
+			dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
+		if (_s != NULL)                                                \
+			dns_name_getlabelsequence(_n, _n->labels - _l, _l,     \
+						  _s);                         \
+	} while (/*CONSTCOND*/0)
 
 #ifdef DNS_NAME_USEINLINE
 
-#define dns_name_init(n, o)		DNS_NAME_INIT(n, o)
-#define dns_name_reset(n)		DNS_NAME_RESET(n)
-#define dns_name_setbuffer(n, b)	DNS_NAME_SETBUFFER(n, b)
-#define dns_name_countlabels(n)		DNS_NAME_COUNTLABELS(n)
-#define dns_name_isabsolute(n)		DNS_NAME_ISABSOLUTE(n)
-#define dns_name_toregion(n, r)		DNS_NAME_TOREGION(n, r)
-#define dns_name_split(n, l, p, s)	DNS_NAME_SPLIT(n, l, p, s)
+#define dns_name_init(n, o)	   DNS_NAME_INIT(n, o)
+#define dns_name_reset(n)	   DNS_NAME_RESET(n)
+#define dns_name_setbuffer(n, b)   DNS_NAME_SETBUFFER(n, b)
+#define dns_name_countlabels(n)	   DNS_NAME_COUNTLABELS(n)
+#define dns_name_isabsolute(n)	   DNS_NAME_ISABSOLUTE(n)
+#define dns_name_toregion(n, r)	   DNS_NAME_TOREGION(n, r)
+#define dns_name_split(n, l, p, s) DNS_NAME_SPLIT(n, l, p, s)
 
 #endif /* DNS_NAME_USEINLINE */
 

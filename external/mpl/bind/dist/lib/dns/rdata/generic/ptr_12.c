@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,18 +33,22 @@ fromtext_ptr(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	if (rdclass == dns_rdataclass_in &&
 	    (options & DNS_RDATA_CHECKNAMES) != 0 &&
-	    (options & DNS_RDATA_CHECKREVERSE) != 0) {
+	    (options & DNS_RDATA_CHECKREVERSE) != 0)
+	{
 		bool ok;
 		ok = dns_name_ishostname(&name, false);
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0) {
 			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
+		}
+		if (!ok && callbacks != NULL) {
 			warn_badname(&name, lexer, callbacks);
+		}
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -175,8 +179,9 @@ freestruct_ptr(ARGS_FREESTRUCT) {
 	REQUIRE(ptr != NULL);
 	REQUIRE(ptr->common.rdtype == dns_rdatatype_ptr);
 
-	if (ptr->mctx == NULL)
+	if (ptr->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&ptr->ptr, ptr->mctx);
 	ptr->mctx = NULL;
@@ -209,7 +214,6 @@ digest_ptr(ARGS_DIGEST) {
 
 static inline bool
 checkowner_ptr(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_ptr);
 
 	UNUSED(name);
@@ -220,17 +224,17 @@ checkowner_ptr(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static unsigned char ip6_arpa_data[]  = "\003IP6\004ARPA";
+static unsigned char ip6_arpa_data[] = "\003IP6\004ARPA";
 static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
-static const dns_name_t ip6_arpa =
-	DNS_NAME_INITABSOLUTE(ip6_arpa_data, ip6_arpa_offsets);
+static const dns_name_t ip6_arpa = DNS_NAME_INITABSOLUTE(ip6_arpa_data,
+							 ip6_arpa_offsets);
 
-static unsigned char ip6_int_data[]  = "\003IP6\003INT";
+static unsigned char ip6_int_data[] = "\003IP6\003INT";
 static unsigned char ip6_int_offsets[] = { 0, 4, 8 };
-static const dns_name_t ip6_int =
-	DNS_NAME_INITABSOLUTE(ip6_int_data, ip6_int_offsets);
+static const dns_name_t ip6_int = DNS_NAME_INITABSOLUTE(ip6_int_data,
+							ip6_int_offsets);
 
-static unsigned char in_addr_arpa_data[]  = "\007IN-ADDR\004ARPA";
+static unsigned char in_addr_arpa_data[] = "\007IN-ADDR\004ARPA";
 static unsigned char in_addr_arpa_offsets[] = { 0, 8, 13 };
 static const dns_name_t in_addr_arpa =
 	DNS_NAME_INITABSOLUTE(in_addr_arpa_data, in_addr_arpa_offsets);
@@ -242,21 +246,25 @@ checknames_ptr(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
 
-	if (rdata->rdclass != dns_rdataclass_in)
-	    return (true);
-
-	if (dns_name_isdnssd(owner))
+	if (rdata->rdclass != dns_rdataclass_in) {
 		return (true);
+	}
+
+	if (dns_name_isdnssd(owner)) {
+		return (true);
+	}
 
 	if (dns_name_issubdomain(owner, &in_addr_arpa) ||
 	    dns_name_issubdomain(owner, &ip6_arpa) ||
-	    dns_name_issubdomain(owner, &ip6_int)) {
+	    dns_name_issubdomain(owner, &ip6_int))
+	{
 		dns_rdata_toregion(rdata, &region);
 		dns_name_init(&name, NULL);
 		dns_name_fromregion(&name, &region);
 		if (!dns_name_ishostname(&name, false)) {
-			if (bad != NULL)
+			if (bad != NULL) {
 				dns_name_clone(&name, bad);
+			}
 			return (false);
 		}
 	}
@@ -267,4 +275,4 @@ static inline int
 casecompare_ptr(ARGS_COMPARE) {
 	return (compare_ptr(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_PTR_12_C */
+#endif /* RDATA_GENERIC_PTR_12_C */

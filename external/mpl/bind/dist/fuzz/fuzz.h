@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.h,v 1.2 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.3 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -27,17 +25,17 @@
 
 ISC_LANG_BEGINDECLS
 
-int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
+int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
 static isc_mem_t *mctx = NULL;
 
 static void __attribute__((constructor)) init(void) {
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 	RUNTIME_CHECK(dst_lib_init(mctx, NULL) == ISC_R_SUCCESS);
 }
 
-static void __attribute__((destructor)) deinit(void)
-{
+static void __attribute__((destructor)) deinit(void) {
 	dst_lib_destroy();
 	isc_mem_destroy(&mctx);
 }

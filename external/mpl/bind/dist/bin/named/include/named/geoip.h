@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.3 2019/09/05 19:32:55 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,9 @@ named_geoip_init(void);
 
 void
 named_geoip_load(char *dir);
+
+void
+named_geoip_unload(void);
 
 void
 named_geoip_shutdown(void);

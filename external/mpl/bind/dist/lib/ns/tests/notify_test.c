@@ -1,4 +1,4 @@
-/*	$NetBSD: notify_test.c,v 1.5 2019/09/05 19:33:00 christos Exp $	*/
+/*	$NetBSD: notify_test.c,v 1.6 2020/05/24 19:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,14 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
+#include <isc/util.h>
 
-#if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
+#if HAVE_CMOCKA && !__SANITIZE_ADDRESS__
 
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +30,6 @@
 #include <isc/event.h>
 #include <isc/print.h>
 #include <isc/task.h>
-#include <isc/util.h>
 
 #include <dns/acl.h>
 #include <dns/rcode.h>
@@ -42,6 +40,7 @@
 
 #include "nstest.h"
 
+#if defined(USE_LIBTOOL) || LD_WRAP
 static int
 _setup(void **state) {
 	isc_result_t result;
@@ -112,8 +111,8 @@ notify_start(void **state) {
 	 * (XXX: use better message mocking method when available.)
 	 */
 
-	result = ns_test_getdata("testdata/notify/notify1.msg",
-				  ndata, sizeof(ndata), &nsize);
+	result = ns_test_getdata("testdata/notify/notify1.msg", ndata,
+				 sizeof(ndata), &nsize);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	isc_buffer_init(&nbuf, ndata, nsize);
 	isc_buffer_add(&nbuf, nsize);
@@ -140,27 +139,39 @@ notify_start(void **state) {
 	 * Clean up
 	 */
 	ns_test_cleanup_zone();
-
-	ns_client_detach(&client);
+	isc_nmhandle_unref(client->handle);
 }
+#endif /* if defined(USE_LIBTOOL) || LD_WRAP */
 
 int
 main(void) {
+#if defined(USE_LIBTOOL) || LD_WRAP
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(notify_start,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(notify_start, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
+#else  /* if defined(USE_LIBTOOL) || LD_WRAP */
+	print_message("1..0 # Skip notify_test requires libtool or LD_WRAP\n");
+#endif /* if defined(USE_LIBTOOL) || LD_WRAP */
 }
-#else /* HAVE_CMOCKA */
+#else /* HAVE_CMOCKA && !__SANITIZE_ADDRESS__ */
 
 #include <stdio.h>
 
 int
 main(void) {
-	printf("1..0 # Skipped: cmocka not available\n");
+#if __SANITIZE_ADDRESS__
+	/*
+	 * We disable this test when the address sanitizer is in
+	 * the use, as libuv will trigger errors.
+	 */
+	printf("1..0 # Skip ASAN is in use\n");
+#else  /* __SANITIZE_ADDRESS__ */
+	printf("1..0 # Skip cmocka not available\n");
+#endif /* __SANITIZE_ADDRESS__ */
 	return (0);
 }
 
-#endif
+#endif /* HAVE_CMOCKA && !__SANITIZE_ADDRESS__ */

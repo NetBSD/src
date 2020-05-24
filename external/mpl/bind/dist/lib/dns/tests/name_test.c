@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,14 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
-
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
 
 #include <inttypes.h>
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -38,8 +35,8 @@
 #include <isc/util.h>
 
 #include <dns/compress.h>
-#include <dns/name.h>
 #include <dns/fixedname.h>
+#include <dns/name.h>
 
 #include "dnstest.h"
 
@@ -94,8 +91,8 @@ fullcompare_test(void **state) {
 		{ "foo", "bar.foo", dns_namereln_contains, -1, 1 },
 		{ "baz.bar.foo", "bar.foo", dns_namereln_subdomain, 1, 2 },
 		{ "bar.foo", "baz.bar.foo", dns_namereln_contains, -1, 2 },
-		{ "foo.example", "bar.example", dns_namereln_commonancestor,
-		  4, 1 },
+		{ "foo.example", "bar.example", dns_namereln_commonancestor, 4,
+		  1 },
 
 		/* absolute */
 		{ ".", ".", dns_namereln_equal, 0, 1 },
@@ -151,8 +148,7 @@ fullcompare_test(void **state) {
 static void
 compress_test(dns_name_t *name1, dns_name_t *name2, dns_name_t *name3,
 	      unsigned char *expected, unsigned int length,
-	      dns_compress_t *cctx, dns_decompress_t *dctx)
-{
+	      dns_compress_t *cctx, dns_decompress_t *dctx) {
 	isc_buffer_t source;
 	isc_buffer_t target;
 	dns_name_t name;
@@ -171,14 +167,14 @@ compress_test(dns_name_t *name1, dns_name_t *name2, dns_name_t *name3,
 	isc_buffer_setactive(&source, source.used);
 
 	dns_name_init(&name, NULL);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
-					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
-					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
-					&target) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0,
-					&target) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0, &target) ==
+		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0, &target) ==
+		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0, &target) ==
+		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(dns_name_fromwire(&name, &source, dctx, 0, &target) ==
+		      ISC_R_SUCCESS);
 	dns_decompress_invalidate(dctx);
 
 	assert_int_equal(target.used, length);
@@ -220,81 +216,81 @@ compression_test(void **state) {
 
 	/* Test 1: NONE */
 	allowed = DNS_COMPRESS_NONE;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
 
 	/* Test2: GLOBAL14 */
 	allowed = DNS_COMPRESS_GLOBAL14;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
 
 	/* Test3: ALL */
 	allowed = DNS_COMPRESS_ALL;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
 
 	/* Test4: NONE disabled */
 	allowed = DNS_COMPRESS_NONE;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_compress_disable(&cctx);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
 
 	/* Test5: GLOBAL14 disabled */
 	allowed = DNS_COMPRESS_GLOBAL14;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_compress_disable(&cctx);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
 
 	/* Test6: ALL disabled */
 	allowed = DNS_COMPRESS_ALL;
-	assert_int_equal(dns_compress_init(&cctx, -1, mctx), ISC_R_SUCCESS);
+	assert_int_equal(dns_compress_init(&cctx, -1, dt_mctx), ISC_R_SUCCESS);
 	dns_compress_setmethods(&cctx, allowed);
 	dns_compress_disable(&cctx);
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
 	dns_decompress_setmethods(&dctx, allowed);
 
-	compress_test(&name1, &name2, &name3, plain, sizeof(plain),
-		      &cctx, &dctx);
+	compress_test(&name1, &name2, &name3, plain, sizeof(plain), &cctx,
+		      &dctx);
 
 	dns_compress_rollback(&cctx, 0);
 	dns_compress_invalidate(&cctx);
@@ -310,30 +306,28 @@ istat_test(void **state) {
 	struct {
 		const char *name;
 		bool istat;
-	} data[] = {
-		{ ".", false },
-		{ "_ta-", false },
-		{ "_ta-1234", true },
-		{ "_TA-1234", true },
-		{ "+TA-1234", false },
-		{ "_fa-1234", false },
-		{ "_td-1234", false },
-		{ "_ta_1234", false },
-		{ "_ta-g234", false },
-		{ "_ta-1h34", false },
-		{ "_ta-12i4", false },
-		{ "_ta-123j", false },
-		{ "_ta-1234-abcf", true },
-		{ "_ta-1234-abcf-ED89", true },
-		{ "_ta-12345-abcf-ED89", false },
-		{ "_ta-.example", false },
-		{ "_ta-1234.example", true },
-		{ "_ta-1234-abcf.example", true },
-		{ "_ta-1234-abcf-ED89.example", true },
-		{ "_ta-12345-abcf-ED89.example", false },
-		{ "_ta-1234-abcfe-ED89.example", false },
-		{ "_ta-1234-abcf-EcD89.example", false }
-	};
+	} data[] = { { ".", false },
+		     { "_ta-", false },
+		     { "_ta-1234", true },
+		     { "_TA-1234", true },
+		     { "+TA-1234", false },
+		     { "_fa-1234", false },
+		     { "_td-1234", false },
+		     { "_ta_1234", false },
+		     { "_ta-g234", false },
+		     { "_ta-1h34", false },
+		     { "_ta-12i4", false },
+		     { "_ta-123j", false },
+		     { "_ta-1234-abcf", true },
+		     { "_ta-1234-abcf-ED89", true },
+		     { "_ta-12345-abcf-ED89", false },
+		     { "_ta-.example", false },
+		     { "_ta-1234.example", true },
+		     { "_ta-1234-abcf.example", true },
+		     { "_ta-1234-abcf-ED89.example", true },
+		     { "_ta-12345-abcf-ED89.example", false },
+		     { "_ta-1234-abcfe-ED89.example", false },
+		     { "_ta-1234-abcf-EcD89.example", false } };
 
 	UNUSED(state);
 
@@ -405,11 +399,9 @@ isabsolute_test(void **state) {
 	struct {
 		const char *namestr;
 		bool expect;
-	} testcases[] = {
-		{ "x", false },
-		{ "a.b.c.d.", true },
-		{ "x.z", false}
-	};
+	} testcases[] = { { "x", false },
+			  { "a.b.c.d.", true },
+			  { "x.z", false } };
 	unsigned int i;
 
 	UNUSED(state);
@@ -465,11 +457,11 @@ hash_test(void **state) {
 		n1 = dns_fixedname_initname(&f1);
 		n2 = dns_fixedname_initname(&f2);
 
-		result = dns_name_fromstring2(n1, testcases[i].name1,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n1, testcases[i].name1, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		result = dns_name_fromstring2(n2, testcases[i].name2,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n2, testcases[i].name2, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		/* Check case-insensitive hashing first */
@@ -508,13 +500,10 @@ issubdomain_test(void **state) {
 		const char *name2;
 		bool expect;
 	} testcases[] = {
-		{ "c.d", "a.b.c.d", false },
-		{ "c.d.", "a.b.c.d.", false },
-		{ "b.c.d", "c.d", true },
-		{ "a.b.c.d.", "c.d.", true },
-		{ "a.b.c", "a.b.c", true },
-		{ "a.b.c.", "a.b.c.", true },
-		{ "x.y.z", "a.b.c", false}
+		{ "c.d", "a.b.c.d", false }, { "c.d.", "a.b.c.d.", false },
+		{ "b.c.d", "c.d", true },    { "a.b.c.d.", "c.d.", true },
+		{ "a.b.c", "a.b.c", true },  { "a.b.c.", "a.b.c.", true },
+		{ "x.y.z", "a.b.c", false }
 	};
 	unsigned int i;
 
@@ -528,11 +517,11 @@ issubdomain_test(void **state) {
 		n1 = dns_fixedname_initname(&f1);
 		n2 = dns_fixedname_initname(&f2);
 
-		result = dns_name_fromstring2(n1, testcases[i].name1,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n1, testcases[i].name1, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		result = dns_name_fromstring2(n2, testcases[i].name2,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n2, testcases[i].name2, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		if (verbose) {
@@ -543,7 +532,7 @@ issubdomain_test(void **state) {
 		}
 
 		assert_int_equal(dns_name_issubdomain(n1, n2),
-			     testcases[i].expect);
+				 testcases[i].expect);
 	}
 }
 
@@ -554,12 +543,8 @@ countlabels_test(void **state) {
 		const char *namestr;
 		unsigned int expect;
 	} testcases[] = {
-		{ "c.d", 2 },
-		{ "c.d.", 3 },
-		{ "a.b.c.d.", 5 },
-		{ "a.b.c.d", 4 },
-		{ "a.b.c", 3 },
-		{ ".", 1 },
+		{ "c.d", 2 },	  { "c.d.", 3 },  { "a.b.c.d.", 5 },
+		{ "a.b.c.d", 4 }, { "a.b.c", 3 }, { ".", 1 },
 	};
 	unsigned int i;
 
@@ -572,8 +557,8 @@ countlabels_test(void **state) {
 
 		name = dns_fixedname_initname(&fname);
 
-		result = dns_name_fromstring2(name, testcases[i].namestr,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(name, testcases[i].namestr, NULL,
+					      0, NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		if (verbose) {
@@ -583,7 +568,7 @@ countlabels_test(void **state) {
 		}
 
 		assert_int_equal(dns_name_countlabels(name),
-			       testcases[i].expect);
+				 testcases[i].expect);
 	}
 }
 
@@ -596,9 +581,9 @@ getlabel_test(void **state) {
 		const char *name2;
 		unsigned int pos2;
 	} testcases[] = {
-		{ "c.d", 	1, "a.b.c.d", 	3 },
-		{ "a.b.c.d", 	3, "c.d", 	1 },
-		{ "a.b.c.", 	3, "A.B.C.", 	3 },
+		{ "c.d", 1, "a.b.c.d", 3 },
+		{ "a.b.c.d", 3, "c.d", 1 },
+		{ "a.b.c.", 3, "A.B.C.", 3 },
 	};
 	unsigned int i;
 
@@ -614,11 +599,11 @@ getlabel_test(void **state) {
 		n1 = dns_fixedname_initname(&f1);
 		n2 = dns_fixedname_initname(&f2);
 
-		result = dns_name_fromstring2(n1, testcases[i].name1,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n1, testcases[i].name1, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		result = dns_name_fromstring2(n2, testcases[i].name2,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n2, testcases[i].name2, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		dns_name_getlabel(n1, testcases[i].pos1, &l1);
@@ -641,10 +626,9 @@ getlabelsequence_test(void **state) {
 		unsigned int pos2;
 		unsigned int range;
 	} testcases[] = {
-		{ "c.d",	1,	"a.b.c.d",	3,	1 },
-		{ "a.b.c.d.e",	2,	"c.d",		0,	2 },
-		{ "a.b.c",	0,	"a.b.c",	0,	3 },
-
+		{ "c.d", 1, "a.b.c.d", 3, 1 },
+		{ "a.b.c.d.e", 2, "c.d", 0, 2 },
+		{ "a.b.c", 0, "a.b.c", 0, 3 },
 	};
 	unsigned int i;
 
@@ -664,11 +648,11 @@ getlabelsequence_test(void **state) {
 		n1 = dns_fixedname_initname(&f1);
 		n2 = dns_fixedname_initname(&f2);
 
-		result = dns_name_fromstring2(n1, testcases[i].name1,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n1, testcases[i].name1, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
-		result = dns_name_fromstring2(n2, testcases[i].name2,
-					      NULL, 0, NULL);
+		result = dns_name_fromstring2(n2, testcases[i].name2, NULL, 0,
+					      NULL);
 		assert_int_equal(result, ISC_R_SUCCESS);
 
 		dns_name_getlabelsequence(n1, testcases[i].pos1,
@@ -692,12 +676,9 @@ getlabelsequence_test(void **state) {
 static void *
 fromwire_thread(void *arg) {
 	unsigned int maxval = 32000000;
-	uint8_t data[] = {
-		3, 'w', 'w', 'w',
-		7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
-		7, 'i', 'n', 'v', 'a', 'l', 'i', 'd',
-		0
-	};
+	uint8_t data[] = { 3,	'w', 'w', 'w', 7,   'e', 'x',
+			   'a', 'm', 'p', 'l', 'e', 7,	 'i',
+			   'n', 'v', 'a', 'l', 'i', 'd', 0 };
 	unsigned char output_data[DNS_NAME_MAXWIRE];
 	isc_buffer_t source, target;
 	unsigned int i;
@@ -722,7 +703,7 @@ fromwire_thread(void *arg) {
 		isc_buffer_setactive(&source, sizeof(data));
 
 		dns_name_init(&name, NULL);
-		(void) dns_name_fromwire(&name, &source, &dctx, 0, &target);
+		(void)dns_name_fromwire(&name, &source, &dctx, 0, &target);
 	}
 
 	return (NULL);
@@ -747,13 +728,11 @@ benchmark_test(void **state) {
 	nthreads = ISC_MIN(isc_os_ncpus(), 32);
 	nthreads = ISC_MAX(nthreads, 1);
 	for (i = 0; i < nthreads; i++) {
-		result = isc_thread_create(fromwire_thread, NULL, &threads[i]);
-		assert_int_equal(result, ISC_R_SUCCESS);
+		isc_thread_create(fromwire_thread, NULL, &threads[i]);
 	}
 
 	for (i = 0; i < nthreads; i++) {
-		result = isc_thread_join(threads[i], NULL);
-		assert_int_equal(result, ISC_R_SUCCESS);
+		isc_thread_join(threads[i], NULL);
 	}
 
 	result = isc_time_now(&ts2);
@@ -772,8 +751,8 @@ int
 main(int argc, char **argv) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(fullcompare_test),
-		cmocka_unit_test_setup_teardown(compression_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(compression_test, _setup,
+						_teardown),
 		cmocka_unit_test(istat_test),
 		cmocka_unit_test(init_test),
 		cmocka_unit_test(invalidate_test),
@@ -785,8 +764,8 @@ main(int argc, char **argv) {
 		cmocka_unit_test(getlabel_test),
 		cmocka_unit_test(getlabelsequence_test),
 #ifdef DNS_BENCHMARK_TESTS
-		cmocka_unit_test_setup_teardown(benchmark_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(benchmark_test, _setup,
+						_teardown),
 #endif /* DNS_BENCHMARK_TESTS */
 	};
 	int c;
@@ -801,7 +780,6 @@ main(int argc, char **argv) {
 		}
 	}
 
-
 	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
@@ -815,4 +793,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

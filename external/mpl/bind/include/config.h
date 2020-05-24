@@ -163,17 +163,11 @@
 /* Define to 1 if you have the `flockfile' function. */
 #define HAVE_FLOCKFILE 1
 
-/* Build with GeoIP support */
-/* #undef HAVE_GEOIP */
+/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+#define HAVE_FSEEKO 1
 
 /* Build with GeoIP2 support */
 /* #undef HAVE_GEOIP2 */
-
-/* Build with GeoIP City IPv6 support */
-/* #undef HAVE_GEOIP_CITY_V6 */
-
-/* Build with GeoIP Country IPv6 support */
-/* #undef HAVE_GEOIP_V6 */
 
 /* Define to 1 if you have the `getc_unlocked' function. */
 #define HAVE_GETC_UNLOCKED 1
@@ -219,9 +213,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define if libjson was found */
-/* #undef HAVE_JSON */
 
 /* Define if json-c was found */
 /* #undef HAVE_JSON_C */
@@ -289,6 +280,9 @@
 /* define if OpenSSL supports Ed448 */
 #define HAVE_OPENSSL_ED448 1
 
+/* define if OpenSSL supports SipHash */
+#define HAVE_OPENSSL_SIPHASH 1
+
 /* Define to 1 if you have the `processor_bind' function. */
 /* #undef HAVE_PROCESSOR_BIND */
 
@@ -309,6 +303,9 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #define HAVE_PTHREAD_PRIO_INHERIT 1
+
+/* Define to 1 if you have the `pthread_rwlock_rdlock' function. */
+/* #undef HAVE_PTHREAD_RWLOCK_RDLOCK */
 
 /* Define to 1 if you have the `pthread_setaffinity_np' function. */
 #define HAVE_PTHREAD_SETAFFINITY_NP 1
@@ -364,16 +361,14 @@
 /* Define to 1 if you have the `setresuid' function. */
 /* #undef HAVE_SETRESUID */
 
-#ifdef ISC_PLATFORM_USETHREADS
-/* Define to 1 if you have the `sigwait' function. */
-#define HAVE_SIGWAIT 1
-#endif
-
 /* define if the SPARC pause instruction is available */
 /* #undef HAVE_SPARC_PAUSE */
 
 /* define if struct stat has st_mtim.tv_nsec field */
 /* #undef HAVE_STAT_NSEC */
+
+/* Define to 1 if you have the <stdalign.h> header file. */
+#define HAVE_STDALIGN_H 1
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #ifndef __lint__
@@ -474,7 +469,16 @@
 /* Define to 1 if you have the `usleep' function. */
 #define HAVE_USLEEP 1
 
-/* Define if zlib was found */
+/* Define to 1 if you have the `uv_handle_get_data' function. */
+#define HAVE_UV_HANDLE_GET_DATA 1
+
+/* Define to 1 if you have the `uv_handle_set_data' function. */
+#define HAVE_UV_HANDLE_SET_DATA 1
+
+/* Define to 1 if you have the `uv_import' function. */
+/* #undef HAVE_UV_IMPORT */
+
+/* Use zlib library */
 #define HAVE_ZLIB 1
 
 /* define if __atomic builtins are not available */
@@ -488,6 +492,12 @@
 
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
+
+/* Define to emulate atomic variables with mutexes. */
+/* #undef ISC_MUTEX_ATOMICS */
+
+/* define if the linker supports --wrap option */
+#define LD_WRAP 1
 
 /* have __attribute__s used in librpz.h */
 #define LIBRPZ_HAVE_ATTR 1
@@ -509,16 +519,16 @@
 #define PACKAGE_NAME "BIND"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "BIND 9.14"
+#define PACKAGE_STRING "BIND 9.16"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bind"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "https://www.isc.org/downloads/BIND/"
+#define PACKAGE_URL "https://www.isc.org/downloads/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.14"
+#define PACKAGE_VERSION "9.16"
 
 /* define the default PKCS11 library path */
 #define PK11_LIB_LOCATION "undefined"
@@ -550,11 +560,17 @@
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
 
+/* Define if libtool is used for compilation */
+/* #undef USE_LIBTOOL */
+
 /* define if OpenSSL is used for Public-Key Cryptography */
 #define USE_OPENSSL 1
 
 /* define if PKCS11 is used for Public-Key Cryptography */
 /* #undef USE_PKCS11 */
+
+/* Define if you want to use pthread rwlock implementation */
+/* #undef USE_PTHREAD_RWLOCK */
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -591,12 +607,25 @@
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
 # endif
+/* Enable large inode numbers on Mac OS X 10.5.  */
+# ifndef _DARWIN_USE_64_BIT_INODE
+#  define _DARWIN_USE_64_BIT_INODE 1
+# endif
 #else
 # ifndef WORDS_BIGENDIAN
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
 #endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
+/* #undef _LARGEFILE_SOURCE */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

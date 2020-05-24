@@ -1,4 +1,4 @@
-/*	$NetBSD: heap_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: heap_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,15 +13,12 @@
 
 /* ! \file */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,6 +28,29 @@
 #include <isc/heap.h>
 #include <isc/mem.h>
 #include <isc/util.h>
+
+#include "isctest.h"
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
 
 struct e {
 	unsigned int value;
@@ -55,17 +75,13 @@ idx(void *p, unsigned int i) {
 /* test isc_heap_delete() */
 static void
 isc_heap_delete_test(void **state) {
-	isc_mem_t *mctx = NULL;
 	isc_heap_t *heap = NULL;
 	isc_result_t result;
 	struct e e1 = { 100, 0 };
 
 	UNUSED(state);
 
-	result = isc_mem_create(0, 0, &mctx);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	result = isc_heap_create(mctx, compare, idx, 0, &heap);
+	result = isc_heap_create(test_mctx, compare, idx, 0, &heap);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(heap);
 
@@ -78,9 +94,6 @@ isc_heap_delete_test(void **state) {
 
 	isc_heap_destroy(&heap);
 	assert_int_equal(heap, NULL);
-
-	isc_mem_detach(&mctx);
-	assert_int_equal(mctx, NULL);
 }
 
 int
@@ -89,7 +102,7 @@ main(void) {
 		cmocka_unit_test(isc_heap_delete_test),
 	};
 
-	return (cmocka_run_group_tests(tests, NULL, NULL));
+	return (cmocka_run_group_tests(tests, _setup, _teardown));
 }
 
 #else /* HAVE_CMOCKA */
@@ -102,4 +115,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

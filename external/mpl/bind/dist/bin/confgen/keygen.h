@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.h,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: keygen.h,v 1.4 2020/05/24 19:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,26 +11,33 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef RNDC_KEYGEN_H
 #define RNDC_KEYGEN_H 1
 
 /*! \file */
 
+#include <isc/buffer.h>
 #include <isc/lang.h>
+#include <isc/mem.h>
+
+#include <dns/secalg.h>
 
 ISC_LANG_BEGINDECLS
 
-void generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
-		  isc_buffer_t *key_txtbuffer);
+void
+generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
+	     isc_buffer_t *key_txtbuffer);
 
-void write_key_file(const char *keyfile, const char *user,
-		    const char *keyname, isc_buffer_t *secret,
-		    dns_secalg_t alg);
+void
+write_key_file(const char *keyfile, const char *user, const char *keyname,
+	       isc_buffer_t *secret, dns_secalg_t alg);
 
-const char *alg_totext(dns_secalg_t alg);
-dns_secalg_t alg_fromtext(const char *name);
-int alg_bits(dns_secalg_t alg);
+const char *
+alg_totext(dns_secalg_t alg);
+dns_secalg_t
+alg_fromtext(const char *name);
+int
+alg_bits(dns_secalg_t alg);
 
 ISC_LANG_ENDDECLS
 

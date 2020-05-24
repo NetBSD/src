@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_NETDB_H
 #define ISC_NETDB_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -45,8 +44,8 @@
  *** Imports.
  ***/
 
-#include <isc/net.h>
-
 #include <netdb.h>
+
+#include <isc/net.h>
 
 #endif /* ISC_NETDB_H */

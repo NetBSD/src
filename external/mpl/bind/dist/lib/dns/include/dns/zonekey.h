@@ -1,4 +1,4 @@
-/*	$NetBSD: zonekey.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zonekey.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef DNS_ZONEKEY_H
 #define DNS_ZONEKEY_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,6 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <windows.h>
 
 #include <isc/os.h>
@@ -22,8 +20,9 @@ static SYSTEM_INFO SystemInfo;
 
 static void
 initialize_action(void) {
-	if (bInit)
+	if (bInit) {
 		return;
+	}
 
 	GetSystemInfo(&SystemInfo);
 	bInit = TRUE;
@@ -34,8 +33,9 @@ isc_os_ncpus(void) {
 	long ncpus;
 	initialize_action();
 	ncpus = SystemInfo.dwNumberOfProcessors;
-	if (ncpus <= 0)
+	if (ncpus <= 0) {
 		ncpus = 1;
+	}
 
 	return ((unsigned int)ncpus);
 }

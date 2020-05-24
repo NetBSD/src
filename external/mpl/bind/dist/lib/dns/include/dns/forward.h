@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,16 +25,16 @@
 ISC_LANG_BEGINDECLS
 
 struct dns_forwarder {
-	isc_sockaddr_t			addr;
-	isc_dscp_t			dscp;
-	ISC_LINK(dns_forwarder_t)	link;
+	isc_sockaddr_t addr;
+	isc_dscp_t     dscp;
+	ISC_LINK(dns_forwarder_t) link;
 };
 
-typedef ISC_LIST(struct dns_forwarder)	dns_forwarderlist_t;
+typedef ISC_LIST(struct dns_forwarder) dns_forwarderlist_t;
 
 struct dns_forwarders {
-	dns_forwarderlist_t	fwdrs;
-	dns_fwdpolicy_t		fwdpolicy;
+	dns_forwarderlist_t fwdrs;
+	dns_fwdpolicy_t	    fwdpolicy;
 };
 
 isc_result_t

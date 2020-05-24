@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,10 +15,9 @@
 #ifndef HS_4_A_1_H
 #define HS_4_A_1_H 1
 
-
 typedef struct dns_rdata_hs_a {
-	dns_rdatacommon_t	common;
-	struct in_addr          in_addr;
+	dns_rdatacommon_t common;
+	struct in_addr in_addr;
 } dns_rdata_hs_a_t;
 
 #endif /* HS_4_A_1_H */
