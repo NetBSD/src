@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2019/01/10 17:41:47 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2020/05/24 19:50:12 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -37,8 +37,10 @@ LDADD+= ${OMOBJDIR}/libomapi.a
 # would be to install the libraries in /lib...
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -lirs -lisccfg -ldns -lisc
-LDADD+=-lpthread -lz
+LDADD+= -lirs -lisccfg -ldns -lisc -luv
+DPADD+= ${LIBIRS} ${LIBISCCFG} ${LIBDNS} ${LIBISC} ${LIBUV}
+LDADD+= -lpthread -lz
+DPADD+= ${LIBPTHREAD} ${LIBZ}
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
@@ -53,5 +55,3 @@ LDADD+=-Wl,-Bdynamic
 .endif
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a
-DPADD+=	${LIBDNS} ${LIBISC}
-DPADD+= ${LIBPTHREAD} ${LIBZ}

@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
+/*	$NetBSD: isclib.c,v 1.4 2020/05/24 19:50:12 christos Exp $	*/
 
 /*
  * Copyright(c) 2009-2017 by Internet Systems Consortium, Inc.("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.4 2020/05/24 19:50:12 christos Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the library but need the fdwatchcommand
@@ -169,10 +169,7 @@ dhcp_context_create(int flags,
 		 * the lib inits in case we aren't doing NSUPDATE
 		 * in which case dst needs a memory context
 		 */
-		result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
-
+		isc_mem_create(&dhcp_gbl_ctx.mctx);
 
 #if defined (NSUPDATE)
 		result = dns_lib_init();
@@ -193,20 +190,17 @@ dhcp_context_create(int flags,
 			goto cleanup;
 
 		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
-						 dhcp_gbl_ctx.actx,
 						 1, 0,
 						 &dhcp_gbl_ctx.taskmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
 		result = isc_socketmgr_createinctx(dhcp_gbl_ctx.mctx,
-						   dhcp_gbl_ctx.actx,
 						   &dhcp_gbl_ctx.socketmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
 		result = isc_timermgr_createinctx(dhcp_gbl_ctx.mctx,
-						  dhcp_gbl_ctx.actx,
 						  &dhcp_gbl_ctx.timermgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
