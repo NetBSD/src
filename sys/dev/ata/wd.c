@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.462 2020/04/13 10:49:34 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.463 2020/05/24 22:12:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.462 2020/04/13 10:49:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.463 2020/05/24 22:12:29 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -663,6 +663,7 @@ static void
 wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 {
 	struct dk_softc *dksc = &wd->sc_dksc;
+	const uint32_t secsize = dksc->sc_dkdev.dk_geom.dg_secsize;
 
 	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
@@ -679,6 +680,14 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	xfer->c_bio.databuf = bp->b_data;
 	xfer->c_bio.blkdone = 0;
 	xfer->c_bio.bp = bp;
+
+	/* Adjust blkno and bcount if xfer has been already partially done */
+	if (__predict_false(xfer->c_skip > 0)) {
+		KASSERT(xfer->c_skip < xfer->c_bio.bcount);
+		KASSERT((xfer->c_skip % secsize) == 0);
+		xfer->c_bio.bcount -= xfer->c_skip;
+		xfer->c_bio.blkno += xfer->c_skip / secsize;
+	}
 
 #ifdef WD_CHAOS_MONKEY
 	/*
@@ -714,10 +723,9 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * and needed by transfer offset or size.
 	 */
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (((xfer->c_bio.blkno +
-	     xfer->c_bio.bcount / dksc->sc_dkdev.dk_geom.dg_secsize) >
+	    (((xfer->c_bio.blkno + xfer->c_bio.bcount / secsize) >
 	    wd->sc_capacity28) ||
-	    ((xfer->c_bio.bcount / dksc->sc_dkdev.dk_geom.dg_secsize) > 128)))
+	    ((xfer->c_bio.bcount / secsize) > 128)))
 		xfer->c_bio.flags |= ATA_LBA48;
 
 	/*
