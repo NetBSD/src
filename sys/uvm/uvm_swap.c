@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.192 2020/05/22 11:54:05 jdolecek Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.193 2020/05/24 14:11:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.192 2020/05/22 11:54:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.193 2020/05/24 14:11:49 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1985,7 +1985,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		 * Reads are always synchronous; if this changes, we
 		 * need to add an asynchronous path for decryption.
 		 */
-		KASSERT((bp->b_flags & B_READ) == 0);
+		KASSERT(write);
 		return 0;
 	}
 
