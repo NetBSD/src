@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2019/06/25 04:53:40 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2020/05/24 18:42:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.13 2019/06/25 04:53:40 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2020/05/24 18:42:20 jmcneill Exp $");
 #endif
 
 #include <stdio.h>
@@ -185,8 +185,11 @@ main(int argc, char *argv[])
 #endif
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, GETOPT_BE_POSIX "m:nqrs:T:v")) != -1) {
+	while ((ch = getopt(argc, argv, GETOPT_BE_POSIX "Hm:nqrs:T:v")) != -1) {
 		switch(ch) {
+		case 'H':
+			flags |= GPT_HYBRID;
+			break;
 		case 'm':
 			if (mediasz > 0)
 				usage();
