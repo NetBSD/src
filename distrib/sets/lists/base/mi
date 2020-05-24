@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1244 2020/05/18 21:19:34 jmcneill Exp $
+# $NetBSD: mi,v 1.1245 2020/05/24 19:47:59 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1303,6 +1303,7 @@
 ./usr/include/ufs/mfs				base-c-usr
 ./usr/include/ufs/ufs				base-c-usr
 ./usr/include/uvm				base-c-usr
+./usr/include/uv				base-c-usr
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr		compatdir
 ./usr/lib/clang					base-sys-usr
