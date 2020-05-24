@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.115 2020/05/23 11:59:03 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.116 2020/05/24 20:05:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.115 2020/05/23 11:59:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.116 2020/05/24 20:05:53 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -748,9 +748,13 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	 *
 	 * avoid the problem by disallowing direct access if the object
 	 * might be visible somewhere via mmap().
+	 *
+	 * XXX concurrent reads cause thundering herd issues with PG_BUSY. 
+	 * In the future enable by default for writes or if ncpu<=2, and
+	 * make the toggle override that.
 	 */
-
-	if (ubc_direct && (flags & UBC_ISMAPPED) == 0) {
+	if ((ubc_direct && (flags & UBC_ISMAPPED) == 0) ||
+	    (flags & UBC_FAULTBUSY) != 0) {
 		return ubc_uiomove_direct(uobj, uio, todo, advice, flags);
 	}
 #endif
@@ -841,7 +845,7 @@ ubc_alloc_direct(struct uvm_object *uobj, voff_t offset, vsize_t *lenp,
 
 	if (flags & UBC_WRITE) {
 		if (flags & UBC_FAULTBUSY)
-			gpflags |= PGO_OVERWRITE;
+			gpflags |= PGO_OVERWRITE | PGO_NOBLOCKALLOC;
 #if 0
 		KASSERT(!UVM_OBJ_NEEDS_WRITEFAULT(uobj));
 #endif
@@ -902,7 +906,10 @@ again:
 		/* Page must be writable by now */
 		KASSERT((pg->flags & PG_RDONLY) == 0 || (flags & UBC_WRITE) == 0);
 
-		/* No managed mapping - mark the page dirty. */
+		/*
+		 * XXX For aobj pages.  No managed mapping - mark the page
+		 * dirty.
+		 */
 		if ((flags & UBC_WRITE) != 0) {
 			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);	
 		}
@@ -927,10 +934,13 @@ ubc_direct_release(struct uvm_object *uobj,
 			uvm_pagefree(pg);
 			continue;
 		}
-		uvm_pagelock(pg);
-		uvm_pageactivate(pg);
-		uvm_pagewakeup(pg);
-		uvm_pageunlock(pg);
+
+		if (uvm_pagewanted_p(pg) || uvmpdpol_pageactivate_p(pg)) {
+			uvm_pagelock(pg);
+			uvm_pageactivate(pg);
+			uvm_pagewakeup(pg);
+			uvm_pageunlock(pg);
+		}
 
 		/* Page was changed, no longer fake and neither clean. */
 		if (flags & UBC_WRITE) {
