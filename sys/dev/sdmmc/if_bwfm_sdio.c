@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.15 2020/05/07 11:46:27 macallan Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.16 2020/05/24 17:26:18 riastradh Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -69,7 +69,6 @@ enum bwfm_sdio_clkstate {
 struct bwfm_sdio_softc {
 	struct bwfm_softc	sc_sc;
 	kmutex_t		sc_lock;
-	kmutex_t		sc_intr_lock;
 
 	bool			sc_bwfm_attached;
 
@@ -361,10 +360,8 @@ bwfm_sdio_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_rxctl_cv, "bwfmctl");
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sdmmc_init_task(&sc->sc_task, bwfm_sdio_task, sc);
-	sc->sc_task_queued = false;
 
 	sc->sc_bounce_size = 64 * 1024;
 	sc->sc_bounce_buf = kmem_alloc(sc->sc_bounce_size, KM_SLEEP);
@@ -620,10 +617,11 @@ bwfm_sdio_detach(device_t self, int flags)
 	if (sc->sc_bwfm_attached)
 		bwfm_detach(&sc->sc_sc, flags);
 
+	sdmmc_del_task(sc->sc_sf[1]->sc, &sc->sc_task, NULL);
+
 	kmem_free(sc->sc_sf, sc->sc_sf_size);
 	kmem_free(sc->sc_bounce_buf, sc->sc_bounce_size);
 
-	mutex_destroy(&sc->sc_intr_lock);
 	cv_destroy(&sc->sc_rxctl_cv);
 	mutex_destroy(&sc->sc_lock);
 
@@ -1426,11 +1424,7 @@ bwfm_sdio_intr1(void *v, const char *name)
 
 	DPRINTF(("%s: %s\n", DEVNAME(sc), name));
 
-	mutex_enter(&sc->sc_intr_lock);
-	if (!sdmmc_task_pending(&sc->sc_task))
-		sdmmc_add_task(sc->sc_sf[1]->sc, &sc->sc_task);
-	sc->sc_task_queued = true;
-	mutex_exit(&sc->sc_intr_lock);
+	sdmmc_add_task(sc->sc_sf[1]->sc, &sc->sc_task);
 	return 1;
 }
 
@@ -1444,33 +1438,13 @@ static void
 bwfm_sdio_task(void *v)
 {
 	struct bwfm_sdio_softc *sc = (void *)v;
-#ifdef BWFM_DEBUG
-	unsigned count = 0;
-#endif
 
-	mutex_enter(&sc->sc_intr_lock);
-	while (sc->sc_task_queued) {
+	mutex_enter(&sc->sc_lock);
+	bwfm_sdio_task1(sc);
 #ifdef BWFM_DEBUG
-		++count;
+	bwfm_sdio_debug_console(sc);
 #endif
-		sc->sc_task_queued = false;
-		mutex_exit(&sc->sc_intr_lock);
-
-		mutex_enter(&sc->sc_lock);
-		bwfm_sdio_task1(sc);
-#ifdef BWFM_DEBUG
-		bwfm_sdio_debug_console(sc);
-#endif
-		mutex_exit(&sc->sc_lock);
-
-		mutex_enter(&sc->sc_intr_lock);
-	}
-	mutex_exit(&sc->sc_intr_lock);
-
-#ifdef BWFM_DEBUG
-	if (count > 1)
-		DPRINTF(("%s: finished %u tasks\n", DEVNAME(sc), count));
-#endif
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
