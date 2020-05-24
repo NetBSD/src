@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.57 2020/05/22 11:25:06 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.58 2020/05/24 17:28:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.57 2020/05/22 11:25:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.58 2020/05/24 17:28:20 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.57 2020/05/22 11:25:06 jmcneill Exp $")
 #include <dev/usb/uvideoreg.h>
 
 #define UVIDEO_NXFERS	3
+#define UVIDEO_NFRAMES_MAX 80
 #define PRI_UVIDEO	PRI_BIO
 
 /* #define UVIDEO_DISABLE_MJPEG */
@@ -1561,6 +1562,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		uframe_len = alt->max_packet_size;
 		nframes = (vframe_len + uframe_len - 1) / uframe_len;
 		nframes = (nframes + 7) & ~7; /*round up for ehci inefficiency*/
+		nframes = uimin(UVIDEO_NFRAMES_MAX, nframes);
 		DPRINTF(("uvideo_stream_start_xfer: nframes=%d\n", nframes));
 
 		ix->ix_nframes = nframes;
