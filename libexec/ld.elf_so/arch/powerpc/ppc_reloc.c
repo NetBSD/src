@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.60 2019/12/08 23:49:16 uwe Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.61 2020/05/24 02:33:11 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.60 2019/12/08 23:49:16 uwe Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.61 2020/05/24 02:33:11 macallan Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -195,6 +195,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(ADDR64):	/* <address> S + A */
 #else
 		case R_TYPE(ADDR32):	/* <address> S + A */
+		case R_TYPE(UADDR32):	/* <address> S + A */
 #endif
 		case R_TYPE(GLOB_DAT):	/* <address> S + A */
 		case R_TYPE(ADDR16_LO):
@@ -226,6 +227,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(ADDR64):	/* <address> S + A */
 #else
 		case R_TYPE(ADDR32):	/* <address> S + A */
+		case R_TYPE(UADDR32):	/* <address> S + A */
 #endif
 		case R_TYPE(GLOB_DAT):	/* <address> S + A */
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
