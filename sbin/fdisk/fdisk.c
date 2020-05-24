@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.158 2020/05/24 18:42:48 jmcneill Exp $ */
+/*	$NetBSD: fdisk.c,v 1.159 2020/05/24 21:02:12 wiz Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.158 2020/05/24 18:42:48 jmcneill Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.159 2020/05/24 21:02:12 wiz Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -665,7 +665,7 @@ usage(void)
 {
 	int indent = 7 + (int)strlen(getprogname()) + 1;
 
-	(void)fprintf(stderr, "usage: %s [-aBFfIilSuv] "
+	(void)fprintf(stderr, "usage: %s [-aBFfgIilSuv] "
 		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
 		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
@@ -675,6 +675,7 @@ usage(void)
 		"[-r|-w file] [-z sectorsize] [device]\n"
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
+		"\t-g preserve existing GPT headers\n"
 		"\t-i initialise MBR code\n"
 		"\t-I ignore errors about no space or overlapping partitions\n"
 		"\t-l list partition types\n"
