@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.3 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISCCFG_LOG_H
 #define ISCCFG_LOG_H 1
 
@@ -21,11 +20,11 @@
 #include <isc/log.h>
 
 LIBISCCFG_EXTERNAL_DATA extern isc_logcategory_t cfg_categories[];
-LIBISCCFG_EXTERNAL_DATA extern isc_logmodule_t cfg_modules[];
+LIBISCCFG_EXTERNAL_DATA extern isc_logmodule_t	 cfg_modules[];
 
-#define CFG_LOGCATEGORY_CONFIG	(&cfg_categories[0])
+#define CFG_LOGCATEGORY_CONFIG (&cfg_categories[0])
 
-#define CFG_LOGMODULE_PARSER	(&cfg_modules[0])
+#define CFG_LOGMODULE_PARSER (&cfg_modules[0])
 
 ISC_LANG_BEGINDECLS
 

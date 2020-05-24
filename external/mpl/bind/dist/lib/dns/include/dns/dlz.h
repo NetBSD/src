@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,15 +46,14 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 /*! \file dns/dlz.h */
 
 #ifndef DLZ_H
 #define DLZ_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*
  * DLZ Interface
@@ -76,18 +75,19 @@
  */
 
 /*****
- ***** Imports
- *****/
+***** Imports
+*****/
 
 #include <stdbool.h>
+
+#include <isc/lang.h>
 
 #include <dns/clientinfo.h>
 #include <dns/name.h>
 #include <dns/types.h>
 #include <dns/view.h>
-#include <dst/dst.h>
 
-#include <isc/lang.h>
+#include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -95,13 +95,15 @@ ISC_LANG_BEGINDECLS
  *** Types
  ***/
 
-#define DNS_DLZ_MAGIC		ISC_MAGIC('D','L','Z','D')
-#define DNS_DLZ_VALID(dlz)	ISC_MAGIC_VALID(dlz, DNS_DLZ_MAGIC)
+#define DNS_DLZ_MAGIC	   ISC_MAGIC('D', 'L', 'Z', 'D')
+#define DNS_DLZ_VALID(dlz) ISC_MAGIC_VALID(dlz, DNS_DLZ_MAGIC)
 
-typedef isc_result_t
-(*dns_dlzallowzonexfr_t)(void *driverarg, void *dbdata, isc_mem_t *mctx,
-			 dns_rdataclass_t rdclass, const dns_name_t *name,
-			 const isc_sockaddr_t *clientaddr, dns_db_t **dbp);
+typedef isc_result_t (*dns_dlzallowzonexfr_t)(void *driverarg, void *dbdata,
+					      isc_mem_t *	    mctx,
+					      dns_rdataclass_t	    rdclass,
+					      const dns_name_t *    name,
+					      const isc_sockaddr_t *clientaddr,
+					      dns_db_t **	    dbp);
 
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface MUST
@@ -109,15 +111,16 @@ typedef isc_result_t
  * the DNS server is performing a zone transfer query.  The driver's
  * method should return ISC_R_SUCCESS and a database pointer to the
  * name server if the zone is supported by the database, and zone
- * transfer is allowed.  Otherwise it will return ISC_R_NOTFOUND if
- * the zone is not supported by the database, or ISC_R_NOPERM if zone
- * transfers are not allowed.  If an error occurs it should return a
- * result code indicating the type of error.
+ * transfer is allowed.  If the view's transfer acl should be used,
+ * then the driver's method should return ISC_R_DEFAULT.  Otherwise,
+ * it should return ISC_R_NOTFOUND if the zone is not supported by
+ * the database, or ISC_R_NOPERM if zone transfers are not allowed.
+ * If an error occurs, the result code should indicate the type of error.
  */
 
-typedef isc_result_t
-(*dns_dlzcreate_t)(isc_mem_t *mctx, const char *dlzname, unsigned int argc,
-		   char *argv[], void *driverarg, void **dbdata);
+typedef isc_result_t (*dns_dlzcreate_t)(isc_mem_t *mctx, const char *dlzname,
+					unsigned int argc, char *argv[],
+					void *driverarg, void **dbdata);
 
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface MUST
@@ -125,8 +128,7 @@ typedef isc_result_t
  * is starting up and creating drivers for use later.
  */
 
-typedef void
-(*dns_dlzdestroy_t)(void *driverarg, void **dbdata);
+typedef void (*dns_dlzdestroy_t)(void *driverarg, void **dbdata);
 
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface MUST
@@ -134,12 +136,13 @@ typedef void
  * is shutting down and no longer needs the driver.
  */
 
-typedef isc_result_t
-(*dns_dlzfindzone_t)(void *driverarg, void *dbdata, isc_mem_t *mctx,
-		     dns_rdataclass_t rdclass, const dns_name_t *name,
-		     dns_clientinfomethods_t *methods,
-		     dns_clientinfo_t *clientinfo,
-		     dns_db_t **dbp);
+typedef isc_result_t (*dns_dlzfindzone_t)(void *driverarg, void *dbdata,
+					  isc_mem_t *		   mctx,
+					  dns_rdataclass_t	   rdclass,
+					  const dns_name_t *	   name,
+					  dns_clientinfomethods_t *methods,
+					  dns_clientinfo_t *	   clientinfo,
+					  dns_db_t **		   dbp);
 
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface MUST
@@ -165,10 +168,9 @@ typedef isc_result_t
  * return a result code indicating the type of error.
  */
 
-
-typedef isc_result_t
-(*dns_dlzconfigure_t)(void *driverarg, void *dbdata,
-		      dns_view_t *view, dns_dlzdb_t *dlzdb);
+typedef isc_result_t (*dns_dlzconfigure_t)(void *driverarg, void *dbdata,
+					   dns_view_t * view,
+					   dns_dlzdb_t *dlzdb);
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface may
  * optionally supply a configure method. If supplied, this will be
@@ -176,13 +178,11 @@ typedef isc_result_t
  * may call configuration functions during the configure call
  */
 
-
-typedef bool (*dns_dlzssumatch_t)(const dns_name_t *signer,
-					   const dns_name_t *name,
-					   const isc_netaddr_t *tcpaddr,
-					   dns_rdatatype_t type,
-					   const dst_key_t *key,
-					   void *driverarg, void *dbdata);
+typedef bool (*dns_dlzssumatch_t)(const dns_name_t *   signer,
+				  const dns_name_t *   name,
+				  const isc_netaddr_t *tcpaddr,
+				  dns_rdatatype_t type, const dst_key_t *key,
+				  void *driverarg, void *dbdata);
 /*%<
  * Method prototype.  Drivers implementing the DLZ interface may
  * optionally supply a ssumatch method. If supplied, this will be
@@ -191,21 +191,21 @@ typedef bool (*dns_dlzssumatch_t)(const dns_name_t *signer,
 
 /*% the methods supplied by a DLZ driver */
 typedef struct dns_dlzmethods {
-	dns_dlzcreate_t		create;
-	dns_dlzdestroy_t	destroy;
-	dns_dlzfindzone_t	findzone;
-	dns_dlzallowzonexfr_t	allowzonexfr;
-	dns_dlzconfigure_t	configure;
-	dns_dlzssumatch_t	ssumatch;
+	dns_dlzcreate_t	      create;
+	dns_dlzdestroy_t      destroy;
+	dns_dlzfindzone_t     findzone;
+	dns_dlzallowzonexfr_t allowzonexfr;
+	dns_dlzconfigure_t    configure;
+	dns_dlzssumatch_t     ssumatch;
 } dns_dlzmethods_t;
 
 /*% information about a DLZ driver */
 struct dns_dlzimplementation {
-	const char				*name;
-	const dns_dlzmethods_t			*methods;
-	isc_mem_t				*mctx;
-	void					*driverarg;
-	ISC_LINK(dns_dlzimplementation_t)	link;
+	const char *		name;
+	const dns_dlzmethods_t *methods;
+	isc_mem_t *		mctx;
+	void *			driverarg;
+	ISC_LINK(dns_dlzimplementation_t) link;
 };
 
 typedef isc_result_t (*dlzconfigure_callback_t)(dns_view_t *, dns_dlzdb_t *,
@@ -213,17 +213,16 @@ typedef isc_result_t (*dlzconfigure_callback_t)(dns_view_t *, dns_dlzdb_t *,
 
 /*% An instance of a DLZ driver */
 struct dns_dlzdb {
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	dns_dlzimplementation_t	*implementation;
-	void			*dbdata;
-	dlzconfigure_callback_t configure_callback;
-	bool		search;
-	char			*dlzname;
-	ISC_LINK(dns_dlzdb_t)	link;
-	dns_ssutable_t 		*ssutable;
+	unsigned int		 magic;
+	isc_mem_t *		 mctx;
+	dns_dlzimplementation_t *implementation;
+	void *			 dbdata;
+	dlzconfigure_callback_t	 configure_callback;
+	bool			 search;
+	char *			 dlzname;
+	ISC_LINK(dns_dlzdb_t) link;
+	dns_ssutable_t *ssutable;
 };
-
 
 /***
  *** Method declarations
@@ -240,9 +239,8 @@ dns_dlzallowzonexfr(dns_view_t *view, const dns_name_t *name,
  */
 
 isc_result_t
-dns_dlzcreate(isc_mem_t *mctx, const char *dlzname,
-	      const char *drivername, unsigned int argc,
-	      char *argv[], dns_dlzdb_t **dbp);
+dns_dlzcreate(isc_mem_t *mctx, const char *dlzname, const char *drivername,
+	      unsigned int argc, char *argv[], dns_dlzdb_t **dbp);
 
 /*%<
  * This method is called when the DNS server is starting up and
@@ -263,7 +261,7 @@ dns_dlzdestroy(dns_dlzdb_t **dbp);
 
 isc_result_t
 dns_dlzregister(const char *drivername, const dns_dlzmethods_t *methods,
-		 void *driverarg, isc_mem_t *mctx,
+		void *driverarg, isc_mem_t *mctx,
 		dns_dlzimplementation_t **dlzimp);
 
 /*%<
@@ -309,16 +307,14 @@ dns_dlzunregister(dns_dlzimplementation_t **dlzimp);
  * is called.
  */
 
-
-typedef isc_result_t dns_dlz_writeablezone_t(dns_view_t *view,
-					     dns_dlzdb_t *dlzdb,
-					     const char *zone_name);
+typedef isc_result_t
+			dns_dlz_writeablezone_t(dns_view_t *view, dns_dlzdb_t *dlzdb,
+						const char *zone_name);
 dns_dlz_writeablezone_t dns_dlz_writeablezone;
 /*%<
  * creates a writeable DLZ zone. Must be called from within the
  * configure() method of a DLZ driver.
  */
-
 
 isc_result_t
 dns_dlzconfigure(dns_view_t *view, dns_dlzdb_t *dlzdb,

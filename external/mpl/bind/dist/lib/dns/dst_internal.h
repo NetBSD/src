@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,29 +27,23 @@
 
 #pragma once
 
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <isc/lang.h>
 #include <isc/buffer.h>
+#include <isc/hmac.h>
+#include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/md.h>
-#include <isc/region.h>
-#include <isc/types.h>
 #include <isc/refcount.h>
+#include <isc/region.h>
 #include <isc/stdtime.h>
-#include <isc/hmac.h>
+#include <isc/types.h>
 
 #if USE_PKCS11
 #include <pk11/pk11.h>
 #include <pk11/site.h>
 #endif /* USE_PKCS11 */
-
-#include <dns/time.h>
-
-#include <dst/dst.h>
 
 #include <openssl/dh.h>
 #include <openssl/err.h>
@@ -57,10 +51,14 @@
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
 
+#include <dns/time.h>
+
+#include <dst/dst.h>
+
 ISC_LANG_BEGINDECLS
 
-#define KEY_MAGIC	ISC_MAGIC('D','S','T','K')
-#define CTX_MAGIC	ISC_MAGIC('D','S','T','C')
+#define KEY_MAGIC ISC_MAGIC('D', 'S', 'T', 'K')
+#define CTX_MAGIC ISC_MAGIC('D', 'S', 'T', 'C')
 
 #define VALID_KEY(x) ISC_MAGIC_VALID(x, KEY_MAGIC)
 #define VALID_CTX(x) ISC_MAGIC_VALID(x, CTX_MAGIC)
@@ -71,7 +69,7 @@ ISC_LANG_BEGINDECLS
 
 typedef struct dst_func dst_func_t;
 
-typedef struct dst_hmac_key	  dst_hmac_key_t;
+typedef struct dst_hmac_key dst_hmac_key_t;
 
 /*%
  * Indicate whether a DST context will be used for signing
@@ -81,48 +79,63 @@ typedef enum { DO_SIGN, DO_VERIFY } dst_use_t;
 
 /*% DST Key Structure */
 struct dst_key {
-	unsigned int	magic;
-	isc_refcount_t	refs;
-	dns_name_t *	key_name;	/*%< name of the key */
-	unsigned int	key_size;	/*%< size of the key in bits */
-	unsigned int	key_proto;	/*%< protocols this key is used for */
-	unsigned int	key_alg;	/*%< algorithm of the key */
-	uint32_t	key_flags;	/*%< flags of the public key */
-	uint16_t	key_id;		/*%< identifier of the key */
-	uint16_t	key_rid;	/*%< identifier of the key when
-					     revoked */
-	uint16_t	key_bits;	/*%< hmac digest bits */
-	dns_rdataclass_t key_class;	/*%< class of the key record */
-	dns_ttl_t	key_ttl;	/*%< default/initial dnskey ttl */
-	isc_mem_t	*mctx;		/*%< memory context */
-	char		*engine;	/*%< engine name (HSM) */
-	char		*label;		/*%< engine label (HSM) */
+	unsigned int magic;
+	isc_refcount_t refs;
+	dns_name_t *key_name;	    /*%< name of the key */
+	unsigned int key_size;	    /*%< size of the key in bits */
+	unsigned int key_proto;	    /*%< protocols this key is used for
+				     * */
+	unsigned int key_alg;	    /*%< algorithm of the key */
+	uint32_t key_flags;	    /*%< flags of the public key */
+	uint16_t key_id;	    /*%< identifier of the key */
+	uint16_t key_rid;	    /*%< identifier of the key when
+				     *   revoked */
+	uint16_t key_bits;	    /*%< hmac digest bits */
+	dns_rdataclass_t key_class; /*%< class of the key record */
+	dns_ttl_t key_ttl;	    /*%< default/initial dnskey ttl */
+	isc_mem_t *mctx;	    /*%< memory context */
+	char *engine;		    /*%< engine name (HSM) */
+	char *label;		    /*%< engine label (HSM) */
 	union {
 		void *generic;
 		gss_ctx_id_t gssctx;
 		DH *dh;
 #if USE_OPENSSL
 		EVP_PKEY *pkey;
-#endif
+#endif /* if USE_OPENSSL */
 #if USE_PKCS11
 		pk11_object_t *pkey;
-#endif
+#endif /* if USE_PKCS11 */
 		dst_hmac_key_t *hmac_key;
-	} keydata;			/*%< pointer to key in crypto pkg fmt */
+	} keydata; /*%< pointer to key in crypto pkg fmt */
 
-	isc_stdtime_t	times[DST_MAX_TIMES + 1];    /*%< timing metadata */
-	bool	timeset[DST_MAX_TIMES + 1];  /*%< data set? */
-	isc_stdtime_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
-	bool	numset[DST_MAX_NUMERIC + 1]; /*%< data set? */
-	bool 	inactive;      /*%< private key not present as it is
-					    inactive */
-	bool 	external;      /*%< external key */
+	isc_stdtime_t times[DST_MAX_TIMES + 1]; /*%< timing metadata */
+	bool timeset[DST_MAX_TIMES + 1];	/*%< data set? */
 
-	int		fmt_major;     /*%< private key format, major version */
-	int		fmt_minor;     /*%< private key format, minor version */
+	uint32_t nums[DST_MAX_NUMERIC + 1]; /*%< numeric metadata
+					     * */
+	bool numset[DST_MAX_NUMERIC + 1];   /*%< data set? */
 
-	dst_func_t *    func;	       /*%< crypto package specific functions */
-	isc_buffer_t   *key_tkeytoken; /*%< TKEY token data */
+	bool bools[DST_MAX_BOOLEAN + 1];   /*%< boolean metadata
+					    * */
+	bool boolset[DST_MAX_BOOLEAN + 1]; /*%< data set? */
+
+	dst_key_state_t keystates[DST_MAX_KEYSTATES + 1]; /*%< key states
+							   * */
+	bool keystateset[DST_MAX_KEYSTATES + 1];	  /*%< data
+							   * set? */
+
+	bool inactive; /*%< private key not present as it is
+			* inactive */
+	bool external; /*%< external key */
+
+	int fmt_major; /*%< private key format, major version
+			* */
+	int fmt_minor; /*%< private key format, minor version
+			* */
+
+	dst_func_t *func;	     /*%< crypto package specific functions */
+	isc_buffer_t *key_tkeytoken; /*%< TKEY token data */
 };
 
 struct dst_context {
@@ -138,7 +151,7 @@ struct dst_context {
 		EVP_MD_CTX *evp_md_ctx;
 #if USE_PKCS11
 		pk11_context_t *pk11_ctx;
-#endif
+#endif /* if USE_PKCS11 */
 	} ctxdata;
 };
 
@@ -163,8 +176,7 @@ struct dst_func {
 				      const dst_key_t *priv,
 				      isc_buffer_t *secret);
 	bool (*compare)(const dst_key_t *key1, const dst_key_t *key2);
-	bool (*paramcompare)(const dst_key_t *key1,
-				      const dst_key_t *key2);
+	bool (*paramcompare)(const dst_key_t *key1, const dst_key_t *key2);
 	isc_result_t (*generate)(dst_key_t *key, int parms,
 				 void (*callback)(int));
 	bool (*isprivate)(const dst_key_t *key);
@@ -174,9 +186,7 @@ struct dst_func {
 	isc_result_t (*todns)(const dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*fromdns)(dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*tofile)(const dst_key_t *key, const char *directory);
-	isc_result_t (*parse)(dst_key_t *key,
-			      isc_lex_t *lexer,
-			      dst_key_t *pub);
+	isc_result_t (*parse)(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub);
 
 	/* cleanup */
 	void (*cleanup)(void);
@@ -191,48 +201,65 @@ struct dst_func {
 /*%
  * Initializers
  */
-isc_result_t dst__openssl_init(isc_mem_t *, const char *engine);
+isc_result_t
+dst__openssl_init(isc_mem_t *, const char *engine);
 #define dst__pkcs11_init pk11_initialize
 
-isc_result_t dst__hmacmd5_init(struct dst_func **funcp);
-isc_result_t dst__hmacsha1_init(struct dst_func **funcp);
-isc_result_t dst__hmacsha224_init(struct dst_func **funcp);
-isc_result_t dst__hmacsha256_init(struct dst_func **funcp);
-isc_result_t dst__hmacsha384_init(struct dst_func **funcp);
-isc_result_t dst__hmacsha512_init(struct dst_func **funcp);
-isc_result_t dst__openssldh_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacmd5_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacsha1_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacsha224_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacsha256_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacsha384_init(struct dst_func **funcp);
+isc_result_t
+dst__hmacsha512_init(struct dst_func **funcp);
+isc_result_t
+dst__openssldh_init(struct dst_func **funcp);
 #if USE_OPENSSL
-isc_result_t dst__opensslrsa_init(struct dst_func **funcp,
-				  unsigned char algorithm);
-isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
+isc_result_t
+dst__opensslrsa_init(struct dst_func **funcp, unsigned char algorithm);
+isc_result_t
+dst__opensslecdsa_init(struct dst_func **funcp);
 #if HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448
-isc_result_t dst__openssleddsa_init(struct dst_func **funcp);
+isc_result_t
+dst__openssleddsa_init(struct dst_func **funcp);
 #endif /* HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448 */
 #endif /* USE_OPENSSL */
 #if USE_PKCS11
-isc_result_t dst__pkcs11rsa_init(struct dst_func **funcp);
-isc_result_t dst__pkcs11dsa_init(struct dst_func **funcp);
-isc_result_t dst__pkcs11ecdsa_init(struct dst_func **funcp);
-#if defined(HAVE_PKCS11_ED25519) || defined(HAVE_PKCS11_ED448)
-isc_result_t dst__pkcs11eddsa_init(struct dst_func **funcp);
-#endif
+isc_result_t
+dst__pkcs11rsa_init(struct dst_func **funcp);
+isc_result_t
+dst__pkcs11dsa_init(struct dst_func **funcp);
+isc_result_t
+dst__pkcs11ecdsa_init(struct dst_func **funcp);
+isc_result_t
+dst__pkcs11eddsa_init(struct dst_func **funcp);
 #endif /* USE_PKCS11 */
 #ifdef GSSAPI
-isc_result_t dst__gssapi_init(struct dst_func **funcp);
+isc_result_t
+dst__gssapi_init(struct dst_func **funcp);
 #endif /* GSSAPI */
 
 /*%
  * Destructors
  */
-void dst__openssl_destroy(void);
+void
+dst__openssl_destroy(void);
 #define dst__pkcs11_destroy pk11_finalize
 
 /*%
  * Memory allocators using the DST memory pool.
  */
-void * dst__mem_alloc(size_t size);
-void   dst__mem_free(void *ptr);
-void * dst__mem_realloc(void *ptr, size_t size);
+void *
+dst__mem_alloc(size_t size);
+void
+dst__mem_free(void *ptr);
+void *
+dst__mem_realloc(void *ptr, size_t size);
 
 ISC_LANG_ENDDECLS
 

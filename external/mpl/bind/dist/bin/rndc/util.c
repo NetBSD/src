@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,19 +11,15 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#include <config.h>
-
+#include "util.h"
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <isc/print.h>
-
-#include "util.h"
 
 extern bool verbose;
 extern const char *progname;

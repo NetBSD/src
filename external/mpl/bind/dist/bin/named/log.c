@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,42 +13,35 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <isc/result.h>
 
 #include <dns/log.h>
 
-#include <ns/log.h>
-
 #include <isccfg/log.h>
+
+#include <ns/log.h>
 
 #include <named/log.h>
 
 #ifndef ISC_FACILITY
 #define ISC_FACILITY LOG_DAEMON
-#endif
+#endif /* ifndef ISC_FACILITY */
 
 /*%
  * When adding a new category, be sure to add the appropriate
  * \#define to <named/log.h> and to update the list in
  * bin/check/check-tool.c.
  */
-static isc_logcategory_t categories[] = {
-	{ "",		 		0 },
-	{ "unmatched",	 		0 },
-	{ NULL, 			0 }
-};
+static isc_logcategory_t categories[] = { { "", 0 },
+					  { "unmatched", 0 },
+					  { NULL, 0 } };
 
 /*%
  * When adding a new module, be sure to add the appropriate
  * \#define to <dns/log.h>.
  */
 static isc_logmodule_t modules[] = {
-	{ "main",	 		0 },
-	{ "server",		 	0 },
-	{ "control",	 		0 },
-	{ NULL, 			0 }
+	{ "main", 0 }, { "server", 0 }, { "control", 0 }, { NULL, 0 }
 };
 
 isc_result_t
@@ -62,9 +55,7 @@ named_log_init(bool safe) {
 	/*
 	 * Setup a logging context.
 	 */
-	result = isc_log_create(named_g_mctx, &named_g_lctx, &lcfg);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	isc_log_create(named_g_mctx, &named_g_lctx, &lcfg);
 
 	/*
 	 * named-checktool.c:setup_logging() needs to be kept in sync.
@@ -78,20 +69,20 @@ named_log_init(bool safe) {
 	ns_log_init(named_g_lctx);
 	ns_log_setcontext(named_g_lctx);
 
-	if (safe)
-		result = named_log_setsafechannels(lcfg);
-	else
-		result = named_log_setdefaultchannels(lcfg);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	if (safe) {
+		named_log_setsafechannels(lcfg);
+	} else {
+		named_log_setdefaultchannels(lcfg);
+	}
 
 	result = named_log_setdefaultcategory(lcfg);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	isc_log_destroy(&named_g_lctx);
 	isc_log_setcontext(NULL);
 	dns_log_setcontext(NULL);
@@ -99,9 +90,8 @@ named_log_init(bool safe) {
 	return (result);
 }
 
-isc_result_t
+void
 named_log_setdefaultchannels(isc_logconfig_t *lcfg) {
-	isc_result_t result;
 	isc_logdestination_t destination;
 
 	/*
@@ -109,19 +99,14 @@ named_log_setdefaultchannels(isc_logconfig_t *lcfg) {
 	 * stderr.  In BIND, we want to override this and log to named.run
 	 * instead, unless the -g option was given.
 	 */
-	if (! named_g_logstderr) {
+	if (!named_g_logstderr) {
 		destination.file.stream = NULL;
 		destination.file.name = "named.run";
 		destination.file.versions = ISC_LOG_ROLLNEVER;
 		destination.file.maximum_size = 0;
-		result = isc_log_createchannel(lcfg, "default_debug",
-					       ISC_LOG_TOFILE,
-					       ISC_LOG_DYNAMIC,
-					       &destination,
-					       ISC_LOG_PRINTTIME|
-					       ISC_LOG_DEBUGONLY);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		isc_log_createchannel(lcfg, "default_debug", ISC_LOG_TOFILE,
+				      ISC_LOG_DYNAMIC, &destination,
+				      ISC_LOG_PRINTTIME | ISC_LOG_DEBUGONLY);
 	}
 
 	if (named_g_logfile != NULL) {
@@ -129,49 +114,32 @@ named_log_setdefaultchannels(isc_logconfig_t *lcfg) {
 		destination.file.name = named_g_logfile;
 		destination.file.versions = ISC_LOG_ROLLNEVER;
 		destination.file.maximum_size = 0;
-		result = isc_log_createchannel(lcfg, "default_logfile",
-					       ISC_LOG_TOFILE,
-					       ISC_LOG_DYNAMIC,
-					       &destination,
-					       ISC_LOG_PRINTTIME|
-					       ISC_LOG_PRINTCATEGORY|
-					       ISC_LOG_PRINTLEVEL);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		isc_log_createchannel(lcfg, "default_logfile", ISC_LOG_TOFILE,
+				      ISC_LOG_DYNAMIC, &destination,
+				      ISC_LOG_PRINTTIME |
+					      ISC_LOG_PRINTCATEGORY |
+					      ISC_LOG_PRINTLEVEL);
 	}
 
 #if ISC_FACILITY != LOG_DAEMON
 	destination.facility = ISC_FACILITY;
-	result = isc_log_createchannel(lcfg, "default_syslog",
-				       ISC_LOG_TOSYSLOG, ISC_LOG_INFO,
-				       &destination, 0);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-#endif
+	isc_log_createchannel(lcfg, "default_syslog", ISC_LOG_TOSYSLOG,
+			      ISC_LOG_INFO, &destination, 0);
+#endif /* if ISC_FACILITY != LOG_DAEMON */
 
 	/*
 	 * Set the initial debug level.
 	 */
 	isc_log_setdebuglevel(named_g_lctx, named_g_debuglevel);
-
-	result = ISC_R_SUCCESS;
-
- cleanup:
-	return (result);
 }
 
-isc_result_t
+void
 named_log_setsafechannels(isc_logconfig_t *lcfg) {
-	isc_result_t result;
 	isc_logdestination_t destination;
 
-	if (! named_g_logstderr) {
-		result = isc_log_createchannel(lcfg, "default_debug",
-					       ISC_LOG_TONULL,
-					       ISC_LOG_DYNAMIC,
-					       NULL, 0);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+	if (!named_g_logstderr) {
+		isc_log_createchannel(lcfg, "default_debug", ISC_LOG_TONULL,
+				      ISC_LOG_DYNAMIC, NULL, 0);
 
 		/*
 		 * Setting the debug level to zero should get the output
@@ -187,30 +155,18 @@ named_log_setsafechannels(isc_logconfig_t *lcfg) {
 		destination.file.name = named_g_logfile;
 		destination.file.versions = ISC_LOG_ROLLNEVER;
 		destination.file.maximum_size = 0;
-		result = isc_log_createchannel(lcfg, "default_logfile",
-					       ISC_LOG_TOFILE,
-					       ISC_LOG_DYNAMIC,
-					       &destination,
-					       ISC_LOG_PRINTTIME|
-					       ISC_LOG_PRINTCATEGORY|
-					       ISC_LOG_PRINTLEVEL);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		isc_log_createchannel(lcfg, "default_logfile", ISC_LOG_TOFILE,
+				      ISC_LOG_DYNAMIC, &destination,
+				      ISC_LOG_PRINTTIME |
+					      ISC_LOG_PRINTCATEGORY |
+					      ISC_LOG_PRINTLEVEL);
 	}
 
 #if ISC_FACILITY != LOG_DAEMON
 	destination.facility = ISC_FACILITY;
-	result = isc_log_createchannel(lcfg, "default_syslog",
-				       ISC_LOG_TOSYSLOG, ISC_LOG_INFO,
-				       &destination, 0);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-#endif
-
-	result = ISC_R_SUCCESS;
-
- cleanup:
-	return (result);
+	isc_log_createchannel(lcfg, "default_syslog", ISC_LOG_TOSYSLOG,
+			      ISC_LOG_INFO, &destination, 0);
+#endif /* if ISC_FACILITY != LOG_DAEMON */
 }
 
 isc_result_t
@@ -219,21 +175,23 @@ named_log_setdefaultcategory(isc_logconfig_t *lcfg) {
 
 	result = isc_log_usechannel(lcfg, "default_debug",
 				    ISC_LOGCATEGORY_DEFAULT, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
+	}
 
-	if (! named_g_logstderr) {
-		if (named_g_logfile != NULL)
+	if (!named_g_logstderr) {
+		if (named_g_logfile != NULL) {
 			result = isc_log_usechannel(lcfg, "default_logfile",
 						    ISC_LOGCATEGORY_DEFAULT,
 						    NULL);
-		else if (! named_g_nosyslog)
+		} else if (!named_g_nosyslog) {
 			result = isc_log_usechannel(lcfg, "default_syslog",
 						    ISC_LOGCATEGORY_DEFAULT,
 						    NULL);
+		}
 	}
 
- cleanup:
+cleanup:
 	return (result);
 }
 
@@ -241,8 +199,8 @@ isc_result_t
 named_log_setunmatchedcategory(isc_logconfig_t *lcfg) {
 	isc_result_t result;
 
-	result = isc_log_usechannel(lcfg, "null",
-				    NAMED_LOGCATEGORY_UNMATCHED, NULL);
+	result = isc_log_usechannel(lcfg, "null", NAMED_LOGCATEGORY_UNMATCHED,
+				    NULL);
 	return (result);
 }
 

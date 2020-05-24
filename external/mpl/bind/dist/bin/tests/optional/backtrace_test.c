@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: backtrace_test.c,v 1.3 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,6 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <stdio.h>
 #include <string.h>
 
@@ -20,12 +18,7 @@
 #include <isc/print.h>
 #include <isc/result.h>
 
-const char *expected_symbols[] = {
-	"func3",
-	"func2",
-	"func1",
-	"main"
-};
+const char *expected_symbols[] = { "func3", "func2", "func1", "main" };
 
 static int
 func3() {
@@ -43,8 +36,9 @@ func3() {
 		return (1);
 	}
 
-	if (nframes < 4)
+	if (nframes < 4) {
 		error++;
+	}
 
 	for (i = 0; i < 4 && i < nframes; i++) {
 		fname = NULL;
@@ -53,8 +47,9 @@ func3() {
 			error++;
 			continue;
 		}
-		if (strcmp(fname, expected_symbols[i]) != 0)
+		if (strcmp(fname, expected_symbols[i]) != 0) {
 			error++;
+		}
 	}
 
 	if (error) {
@@ -65,9 +60,9 @@ func3() {
 			fname = NULL;
 			result = isc_backtrace_getsymbol(tracebuf[i], &fname,
 							 &offset);
-			if (result == ISC_R_SUCCESS)
+			if (result == ISC_R_SUCCESS) {
 				printf("  [%d] %s\n", i, fname);
-			else {
+			} else {
 				printf("  [%d] %p getsymbol failed: %s\n", i,
 				       tracebuf[i], isc_result_totext(result));
 			}

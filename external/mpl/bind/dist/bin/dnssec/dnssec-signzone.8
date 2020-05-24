@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-signzone.8,v 1.4 2019/02/24 20:01:27 christos Exp $
+.\"	$NetBSD: dnssec-signzone.8,v 1.5 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2000-2009, 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2009, 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@
 dnssec-signzone \- DNSSEC zone signing tool
 .SH "SYNOPSIS"
 .HP \w'\fBdnssec\-signzone\fR\ 'u
-\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-L\ \fR\fB\fIserial\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-M\ \fR\fB\fImaxttl\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-Q\fR] [\fB\-R\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
+\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-L\ \fR\fB\fIserial\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-M\ \fR\fB\fImaxttl\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-Q\fR] [\fB\-q\fR] [\fB\-R\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-signzone\fR
@@ -113,11 +113,6 @@ Key repository: Specify a directory to search for DNSSEC keys\&. If not specifie
 \-k \fIkey\fR
 .RS 4
 Treat specified key as a key signing key ignoring any key flags\&. This option may be specified multiple times\&.
-.RE
-.PP
-\-l \fIdomain\fR
-.RS 4
-Generate a DLV set in addition to the key (DNSKEY) and DS sets\&. The domain is appended to the name of the records\&.
 .RE
 .PP
 \-M \fImaxttl\fR
@@ -246,7 +241,7 @@ Do not modify the SOA serial number\&.
 .PP
 \fB"increment"\fR
 .RS 4
-Increment the SOA serial number using RFC 1982 arithmetics\&.
+Increment the SOA serial number using RFC 1982 arithmetic\&.
 .RE
 .PP
 \fB"unixtime"\fR
@@ -296,6 +291,13 @@ Normally, when a previously\-signed zone is passed as input to the signer, and a
 forces
 \fBdnssec\-signzone\fR
 to remove signatures from keys that are no longer active\&. This enables ZSK rollover using the procedure described in RFC 4641, section 4\&.2\&.1\&.1 ("Pre\-Publish Key Rollover")\&.
+.RE
+.PP
+\-q
+.RS 4
+Quiet mode: Suppresses unnecessary output\&. Without this option, when
+\fBdnssec\-signzone\fR
+is run it will print to standard output the number of keys in use, the algorithms used to verify the zone was signed correctly and other status information, and finally the filename containing the signed zone\&. With it, that output is suppressed, leaving only the filename\&.
 .RE
 .PP
 \-R
@@ -470,5 +472,5 @@ RFC 4641\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2000-2009, 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2000-2009, 2011-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

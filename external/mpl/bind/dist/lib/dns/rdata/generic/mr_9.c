@@ -1,4 +1,4 @@
-/*	$NetBSD: mr_9.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: mr_9.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,8 +33,9 @@ fromtext_mr(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
@@ -165,8 +166,9 @@ freestruct_mr(ARGS_FREESTRUCT) {
 	REQUIRE(mr != NULL);
 	REQUIRE(mr->common.rdtype == dns_rdatatype_mr);
 
-	if (mr->mctx == NULL)
+	if (mr->mctx == NULL) {
 		return;
+	}
 	dns_name_free(&mr->mr, mr->mctx);
 	mr->mctx = NULL;
 }
@@ -198,7 +200,6 @@ digest_mr(ARGS_DIGEST) {
 
 static inline bool
 checkowner_mr(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_mr);
 
 	UNUSED(name);
@@ -211,7 +212,6 @@ checkowner_mr(ARGS_CHECKOWNER) {
 
 static inline bool
 checknames_mr(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_mr);
 
 	UNUSED(rdata);
@@ -226,4 +226,4 @@ casecompare_mr(ARGS_COMPARE) {
 	return (compare_mr(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_MR_9_C */
+#endif /* RDATA_GENERIC_MR_9_C */

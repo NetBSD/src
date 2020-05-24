@@ -1,4 +1,4 @@
-/*	$NetBSD: pool_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: pool_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -58,19 +55,20 @@ static isc_result_t
 poolinit(void **target, void *arg) {
 	isc_result_t result;
 
-	isc_taskmgr_t *mgr = (isc_taskmgr_t *) arg;
+	isc_taskmgr_t *mgr = (isc_taskmgr_t *)arg;
 	isc_task_t *task = NULL;
 	result = isc_task_create(mgr, 0, &task);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (result);
+	}
 
-	*target = (void *) task;
+	*target = (void *)task;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 poolfree(void **target) {
-	isc_task_t *task = *(isc_task_t **) target;
+	isc_task_t *task = *(isc_task_t **)target;
 	isc_task_destroy(&task);
 	*target = NULL;
 }
@@ -83,7 +81,8 @@ create_pool(void **state) {
 
 	UNUSED(state);
 
-	result = isc_pool_create(mctx, 8, poolfree, poolinit, taskmgr, &pool);
+	result = isc_pool_create(test_mctx, 8, poolfree, poolinit, taskmgr,
+				 &pool);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(isc_pool_count(pool), 8);
 
@@ -99,7 +98,8 @@ expand_pool(void **state) {
 
 	UNUSED(state);
 
-	result = isc_pool_create(mctx, 10, poolfree, poolinit, taskmgr, &pool1);
+	result = isc_pool_create(test_mctx, 10, poolfree, poolinit, taskmgr,
+				 &pool1);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(isc_pool_count(pool1), 10);
 
@@ -145,21 +145,22 @@ get_objects(void **state) {
 
 	UNUSED(state);
 
-	result = isc_pool_create(mctx, 2, poolfree, poolinit, taskmgr, &pool);
+	result = isc_pool_create(test_mctx, 2, poolfree, poolinit, taskmgr,
+				 &pool);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(isc_pool_count(pool), 2);
 
 	item = isc_pool_get(pool);
 	assert_non_null(item);
-	isc_task_attach((isc_task_t *) item, &task1);
+	isc_task_attach((isc_task_t *)item, &task1);
 
 	item = isc_pool_get(pool);
 	assert_non_null(item);
-	isc_task_attach((isc_task_t *) item, &task2);
+	isc_task_attach((isc_task_t *)item, &task2);
 
 	item = isc_pool_get(pool);
 	assert_non_null(item);
-	isc_task_attach((isc_task_t *) item, &task3);
+	isc_task_attach((isc_task_t *)item, &task3);
 
 	isc_task_detach(&task1);
 	isc_task_detach(&task2);
@@ -172,12 +173,9 @@ get_objects(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(create_pool,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(expand_pool,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(get_objects,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(create_pool, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(expand_pool, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(get_objects, _setup, _teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -193,4 +191,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

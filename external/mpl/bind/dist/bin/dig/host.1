@@ -1,6 +1,6 @@
-.\"	$NetBSD: host.1,v 1.4 2019/02/24 20:01:27 christos Exp $
+.\"	$NetBSD: host.1,v 1.5 2020/05/24 19:46:11 christos Exp $
 .\"
-.\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" This Source Code Form is subject to the terms of the Mozilla Public
 .\" License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@
 host \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP \w'\fBhost\fR\ 'u
-\fBhost\fR [\fB\-aACdlnrsTUwv\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-N\ \fR\fB\fIndots\fR\fR] [\fB\-R\ \fR\fB\fInumber\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-W\ \fR\fB\fIwait\fR\fR] [\fB\-m\ \fR\fB\fIflag\fR\fR] [[\fB\-4\fR] | [\fB\-6\fR]] [\fB\-v\fR] [\fB\-V\fR] {name} [server]
+\fBhost\fR [\fB\-aACdlnrsTUwv\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-N\ \fR\fB\fIndots\fR\fR] [\fB\-p\ \fR\fB\fIport\fR\fR] [\fB\-R\ \fR\fB\fInumber\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-W\ \fR\fB\fIwait\fR\fR] [\fB\-m\ \fR\fB\fIflag\fR\fR] [[\fB\-4\fR] | [\fB\-6\fR]] [\fB\-v\fR] [\fB\-V\fR] {name} [server]
 .SH "DESCRIPTION"
 .PP
 \fBhost\fR
@@ -138,6 +138,11 @@ or
 \fBdomain\fR
 directive in
 /etc/resolv\&.conf\&.
+.RE
+.PP
+\-p \fIport\fR
+.RS 4
+Specify the port on the server to query\&. The default is 53\&.
 .RE
 .PP
 \-r
@@ -271,5 +276,5 @@ runs\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2000-2002, 2004, 2005, 2007-2009, 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2000-2002, 2004, 2005, 2007-2009, 2014-2020 Internet Systems Consortium, Inc. ("ISC")
 .br

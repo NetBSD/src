@@ -1,4 +1,4 @@
-/*	$NetBSD: sig0_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -27,9 +25,9 @@
 #include <isc/mutex.h>
 #include <isc/net.h>
 #include <isc/print.h>
+#include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
-#include <isc/socket.h>
 #include <isc/util.h>
 
 #include <dns/dnssec.h>
@@ -44,15 +42,16 @@
 #include <dns/result.h>
 #include <dns/types.h>
 
-#include <dst/result.h>
 #include <dst/dst.h>
+#include <dst/result.h>
 
-#define CHECK(str, x) { \
-	if ((x) != ISC_R_SUCCESS) { \
-		printf("%s: %s\n", (str), isc_result_totext(x)); \
-		exit(-1); \
-	} \
-}
+#define CHECK(str, x)                                                    \
+	{                                                                \
+		if ((x) != ISC_R_SUCCESS) {                              \
+			printf("%s: %s\n", (str), isc_result_totext(x)); \
+			exit(-1);                                        \
+		}                                                        \
+	}
 
 isc_mutex_t lock;
 dst_key_t *key;
@@ -141,8 +140,7 @@ buildquery(void) {
 
 	result = dns_message_gettemprdataset(query, &question);
 	CHECK("dns_message_gettemprdataset", result);
-	dns_rdataset_makequestion(question, dns_rdataclass_in,
-				  dns_rdatatype_a);
+	dns_rdataset_makequestion(question, dns_rdataclass_in, dns_rdatatype_a);
 	result = dns_message_gettempname(query, &qname);
 	CHECK("dns_message_gettempname", result);
 	isc_buffer_init(&namesrc, nametext, strlen(nametext));
@@ -211,7 +209,7 @@ main(int argc, char *argv[]) {
 	isc_mutex_init(&lock);
 
 	mctx = NULL;
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 
 	while ((ch = isc_commandline_parse(argc, argv, "vp:")) != -1) {
 		switch (ch) {
@@ -230,7 +228,7 @@ main(int argc, char *argv[]) {
 	dst_result_register();
 
 	taskmgr = NULL;
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, 2, 0, &taskmgr) ==
+	RUNTIME_CHECK(isc_taskmgr_create(mctx, 2, 0, NULL, &taskmgr) ==
 		      ISC_R_SUCCESS);
 	task1 = NULL;
 	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &task1) == ISC_R_SUCCESS);
@@ -240,12 +238,11 @@ main(int argc, char *argv[]) {
 	socketmgr = NULL;
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_log_create(mctx, &lctx, &logconfig) == ISC_R_SUCCESS);
+	isc_log_create(mctx, &lctx, &logconfig);
 
 	s = NULL;
-	RUNTIME_CHECK(isc_socket_create(socketmgr, PF_INET,
-					isc_sockettype_udp, &s) ==
-		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_socket_create(socketmgr, PF_INET, isc_sockettype_udp,
+					&s) == ISC_R_SUCCESS);
 
 	inaddr.s_addr = htonl(INADDR_LOOPBACK);
 	isc_sockaddr_fromin(&address, &inaddr, port);
@@ -258,8 +255,8 @@ main(int argc, char *argv[]) {
 
 	key = NULL;
 	result = dst_key_fromfile(name, 33180, DNS_KEYALG_RSASHA1,
-				  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE,
-				  NULL, mctx, &key);
+				  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, NULL,
+				  mctx, &key);
 	CHECK("dst_key_fromfile", result);
 
 	buildquery();
@@ -280,8 +277,9 @@ main(int argc, char *argv[]) {
 
 	isc_log_destroy(&lctx);
 
-	if (verbose)
+	if (verbose) {
 		isc_mem_stats(mctx, stdout);
+	}
 	isc_mem_destroy(&mctx);
 
 	isc_mutex_destroy(&lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns-confgen.c,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.4 2020/05/24 19:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,8 +19,6 @@
  * and the corresponding key and update-policy statements in named.conf.
  */
 
-#include <config.h>
-
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -40,24 +38,25 @@
 
 #if USE_PKCS11
 #include <pk11/result.h>
-#endif
+#endif /* if USE_PKCS11 */
 
 #include <dns/keyvalues.h>
 #include <dns/name.h>
 #include <dns/result.h>
 
 #include <dst/dst.h>
+
 #include <confgen/os.h>
 
-#include "util.h"
 #include "keygen.h"
+#include "util.h"
 
-#define KEYGEN_DEFAULT		"tsig-key"
-#define CONFGEN_DEFAULT		"ddns-key"
+#define KEYGEN_DEFAULT	"tsig-key"
+#define CONFGEN_DEFAULT "ddns-key"
 
 static char program[256];
 const char *progname;
-static enum { progmode_keygen, progmode_confgen} progmode;
+static enum { progmode_keygen, progmode_confgen } progmode;
 bool verbose = false; /* needed by util.c but not used here */
 
 ISC_PLATFORM_NORETURN_PRE static void
@@ -74,16 +73,16 @@ Usage:\n\
   -s name:       domain name to be updated using the created key\n\
   -z zone:       name of the zone as it will be used in named.conf\n\
   -q:            quiet mode: print the key, with no explanatory text\n",
-			 progname);
+			progname);
 	} else {
 		fprintf(stderr, "\
 Usage:\n\
  %s [-a alg] [keyname]\n\
   -a alg:        algorithm (default hmac-sha256)\n\n",
-			 progname);
+			progname);
 	}
 
-	exit (status);
+	exit(status);
 }
 
 int
@@ -106,20 +105,22 @@ main(int argc, char **argv) {
 
 #if USE_PKCS11
 	pk11_result_register();
-#endif
+#endif /* if USE_PKCS11 */
 	dns_result_register();
 
 	result = isc_file_progname(*argv, program, sizeof(program));
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		memmove(program, "tsig-keygen", 11);
+	}
 	progname = program;
 
 	/*
 	 * Libtool doesn't preserve the program name prior to final
 	 * installation.  Remove the libtool prefix ("lt-").
 	 */
-	if (strncmp(progname, "lt-", 3) == 0)
+	if (strncmp(progname, "lt-", 3) == 0) {
 		progname += 3;
+	}
 
 #define PROGCMP(X) \
 	(strcasecmp(progname, X) == 0 || strcasecmp(progname, X ".exe") == 0)
@@ -136,24 +137,26 @@ main(int argc, char **argv) {
 
 	isc_commandline_errprint = false;
 
-	while ((ch = isc_commandline_parse(argc, argv,
-					   "a:hk:Mmr:qs:y:z:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "a:hk:Mmr:qs:y:z:")) !=
+	       -1) {
 		switch (ch) {
 		case 'a':
 			algname = isc_commandline_argument;
 			alg = alg_fromtext(algname);
-			if (alg == DST_ALG_UNKNOWN)
+			if (alg == DST_ALG_UNKNOWN) {
 				fatal("Unsupported algorithm '%s'", algname);
+			}
 			keysize = alg_bits(alg);
 			break;
 		case 'h':
 			usage(0);
 		case 'k':
 		case 'y':
-			if (progmode == progmode_confgen)
+			if (progmode == progmode_confgen) {
 				keyname = isc_commandline_argument;
-			else
+			} else {
 				usage(1);
+			}
 			break;
 		case 'M':
 			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
@@ -162,74 +165,79 @@ main(int argc, char **argv) {
 			show_final_mem = true;
 			break;
 		case 'q':
-			if (progmode == progmode_confgen)
+			if (progmode == progmode_confgen) {
 				quiet = true;
-			else
+			} else {
 				usage(1);
+			}
 			break;
 		case 'r':
 			fatal("The -r option has been deprecated.");
 			break;
 		case 's':
-			if (progmode == progmode_confgen)
+			if (progmode == progmode_confgen) {
 				self_domain = isc_commandline_argument;
-			else
+			} else {
 				usage(1);
+			}
 			break;
 		case 'z':
-			if (progmode == progmode_confgen)
+			if (progmode == progmode_confgen) {
 				zone = isc_commandline_argument;
-			else
+			} else {
 				usage(1);
+			}
 			break;
 		case '?':
 			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 				usage(1);
-			} else
+			} else {
 				usage(0);
+			}
 			break;
 		default:
-			fprintf(stderr, "%s: unhandled option -%c\n",
-				program, isc_commandline_option);
+			fprintf(stderr, "%s: unhandled option -%c\n", program,
+				isc_commandline_option);
 			exit(1);
 		}
 	}
 
-	if (progmode == progmode_keygen)
+	if (progmode == progmode_keygen) {
 		keyname = argv[isc_commandline_index++];
+	}
 
 	POST(argv);
 
-	if (self_domain != NULL && zone != NULL)
-		usage(1);	/* -s and -z cannot coexist */
+	if (self_domain != NULL && zone != NULL) {
+		usage(1); /* -s and -z cannot coexist */
+	}
 
-	if (argc > isc_commandline_index)
+	if (argc > isc_commandline_index) {
 		usage(1);
+	}
 
 	/* Use canonical algorithm name */
 	algname = alg_totext(alg);
 
-	DO("create memory context", isc_mem_create(0, 0, &mctx));
+	isc_mem_create(&mctx);
 
 	if (keyname == NULL) {
 		const char *suffix = NULL;
 
-		keyname = ((progmode == progmode_keygen)
-			?  KEYGEN_DEFAULT
-			: CONFGEN_DEFAULT);
-		if (self_domain != NULL)
+		keyname = ((progmode == progmode_keygen) ? KEYGEN_DEFAULT
+							 : CONFGEN_DEFAULT);
+		if (self_domain != NULL) {
 			suffix = self_domain;
-		else if (zone != NULL)
+		} else if (zone != NULL) {
 			suffix = zone;
+		}
 		if (suffix != NULL) {
 			len = strlen(keyname) + strlen(suffix) + 2;
 			keybuf = isc_mem_get(mctx, len);
-			if (keybuf == NULL)
-				fatal("failed to allocate memory for keyname");
 			snprintf(keybuf, len, "%s.%s", keyname, suffix);
-			keyname = (const char *) keybuf;
+			keyname = (const char *)keybuf;
 		}
 	}
 
@@ -237,20 +245,19 @@ main(int argc, char **argv) {
 
 	generate_key(mctx, alg, keysize, &key_txtbuffer);
 
-
-	if (!quiet)
+	if (!quiet) {
 		printf("\
 # To activate this key, place the following in named.conf, and\n\
 # in a separate keyfile on the system or systems from which nsupdate\n\
 # will be run:\n");
+	}
 
 	printf("\
 key \"%s\" {\n\
 	algorithm %s;\n\
 	secret \"%.*s\";\n\
 };\n",
-	       keyname, algname,
-	       (int)isc_buffer_usedlength(&key_txtbuffer),
+	       keyname, algname, (int)isc_buffer_usedlength(&key_txtbuffer),
 	       (char *)isc_buffer_base(&key_txtbuffer));
 
 	if (!quiet) {
@@ -288,14 +295,15 @@ update-policy {\n\
 # After the keyfile has been placed, the following command will\n\
 # execute nsupdate using this key:\n\
 nsupdate -k <keyfile>\n");
-
 	}
 
-	if (keybuf != NULL)
+	if (keybuf != NULL) {
 		isc_mem_put(mctx, keybuf, len);
+	}
 
-	if (show_final_mem)
+	if (show_final_mem) {
 		isc_mem_stats(mctx, stderr);
+	}
 
 	isc_mem_destroy(&mctx);
 

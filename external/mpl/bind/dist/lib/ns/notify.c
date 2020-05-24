@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.4 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <isc/log.h>
 #include <isc/print.h>
@@ -53,18 +51,23 @@ respond(ns_client_t *client, isc_result_t result) {
 	rcode = dns_result_torcode(result);
 
 	msg_result = dns_message_reply(message, true);
-	if (msg_result != ISC_R_SUCCESS)
-		msg_result = dns_message_reply(message, false);
 	if (msg_result != ISC_R_SUCCESS) {
-		ns_client_next(client, msg_result);
+		msg_result = dns_message_reply(message, false);
+	}
+	if (msg_result != ISC_R_SUCCESS) {
+		ns_client_drop(client, msg_result);
+		isc_nmhandle_unref(client->handle);
 		return;
 	}
 	message->rcode = rcode;
-	if (rcode == dns_rcode_noerror)
+	if (rcode == dns_rcode_noerror) {
 		message->flags |= DNS_MESSAGEFLAG_AA;
-	else
+	} else {
 		message->flags &= ~DNS_MESSAGEFLAG_AA;
+	}
+
 	ns_client_send(client);
+	isc_nmhandle_unref(client->handle);
 }
 
 void
@@ -133,8 +136,9 @@ ns_notify_start(ns_client_t *client) {
 			snprintf(tsigbuf, sizeof(tsigbuf), ": TSIG '%s'",
 				 namebuf);
 		}
-	} else
+	} else {
 		tsigbuf[0] = '\0';
+	}
 
 	dns_name_format(zonename, namebuf, sizeof(namebuf));
 	result = dns_zt_find(client->view->zonetable, zonename, 0, NULL, &zone);
@@ -149,8 +153,8 @@ ns_notify_start(ns_client_t *client) {
 			isc_sockaddr_t *from = ns_client_getsockaddr(client);
 			isc_sockaddr_t *to = ns_client_getdestaddr(client);
 			notify_log(client, ISC_LOG_INFO,
-				   "received notify for zone '%s'%s",
-				   namebuf, tsigbuf);
+				   "received notify for zone '%s'%s", namebuf,
+				   tsigbuf);
 			result = dns_zone_notifyreceive(zone, from, to,
 							request);
 			goto done;
@@ -162,8 +166,9 @@ ns_notify_start(ns_client_t *client) {
 		   namebuf, tsigbuf);
 	result = DNS_R_NOTAUTH;
 
- done:
-	if (zone != NULL)
+done:
+	if (zone != NULL) {
 		dns_zone_detach(&zone);
+	}
 	respond(client, result);
 }

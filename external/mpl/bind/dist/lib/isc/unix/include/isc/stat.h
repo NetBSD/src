@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_STAT_H
 #define ISC_STAT_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*
  * Portable <sys/stat.h> support.
@@ -42,7 +41,7 @@
  *** Imports.
  ***/
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #endif /* ISC_STAT_H */

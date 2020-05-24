@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: clientinfo.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,14 +13,11 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <dns/clientinfo.h>
 
 void
 dns_clientinfomethods_init(dns_clientinfomethods_t *methods,
-			   dns_clientinfo_sourceip_t sourceip)
-{
+			   dns_clientinfo_sourceip_t sourceip) {
 	methods->version = DNS_CLIENTINFOMETHODS_VERSION;
 	methods->age = DNS_CLIENTINFOMETHODS_AGE;
 	methods->sourceip = sourceip;

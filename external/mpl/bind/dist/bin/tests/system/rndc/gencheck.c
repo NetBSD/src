@@ -1,4 +1,4 @@
-/*	$NetBSD: gencheck.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: gencheck.c,v 1.3 2020/05/24 19:46:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,11 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <isc/print.h>
@@ -30,23 +27,22 @@ check(const char *buf, ssize_t count, size_t *start) {
 	const char chars[] = "abcdefghijklmnopqrstuvwxyz0123456789";
 	ssize_t i;
 
-	for (i = 0;
-	     i < count;
-	     i++, *start = (*start + 1) % (sizeof(chars) - 1))
+	for (i = 0; i < count; i++, *start = (*start + 1) % (sizeof(chars) - 1))
 	{
 		/* Just ignore the trailing newline */
-		if (buf[i] == '\n')
+		if (buf[i] == '\n') {
 			continue;
-		if (buf[i] != chars[*start])
-			return 0;
+		}
+		if (buf[i] != chars[*start]) {
+			return (0);
+		}
 	}
 
-	return 1;
+	return (1);
 }
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
 	int ret;
 	int fd;
 	ssize_t count;
@@ -64,27 +60,31 @@ main(int argc, char **argv)
 	}
 
 	fd = open(argv[1], O_RDONLY);
-	if (fd == -1)
+	if (fd == -1) {
 		goto out;
+	}
 
 	start = 0;
 	while ((count = read(fd, buf, sizeof(buf))) != 0) {
-		if (count < 0)
+		if (count < 0) {
 			goto out;
+		}
 
-		if (!check(buf, count, &start))
+		if (!check(buf, count, &start)) {
 			goto out;
+		}
 
 		length += count;
 	}
 
 	ret = EXIT_SUCCESS;
 
- out:
+out:
 	printf("%lu\n", (unsigned long)length);
 
-	if (fd != -1)
+	if (fd != -1) {
 		close(fd);
+	}
 
 	return (ret);
 }

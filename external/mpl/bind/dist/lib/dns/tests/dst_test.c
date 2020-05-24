@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.6 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.7 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,13 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-
 #include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -32,13 +29,11 @@
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/util.h>
-#include <isc/util.h>
 
 #include <dst/dst.h>
 #include <dst/result.h>
 
 #include "../dst_internal.h"
-
 #include "dnstest.h"
 
 static int
@@ -78,7 +73,7 @@ sig_fromfile(const char *path, isc_buffer_t *buf) {
 	result = isc_file_getsizefd(fileno(fp), &size);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	data = isc_mem_get(mctx, (size + 1));
+	data = isc_mem_get(dt_mctx, (size + 1));
 	assert_non_null(data);
 
 	len = (size_t)size;
@@ -99,7 +94,7 @@ sig_fromfile(const char *path, isc_buffer_t *buf) {
 			--len;
 			continue;
 		} else if (len < 2U) {
-		       goto err;
+			goto err;
 		}
 		if (('0' <= *p) && (*p <= '9')) {
 			val = *p - '0';
@@ -127,15 +122,14 @@ sig_fromfile(const char *path, isc_buffer_t *buf) {
 
 	result = ISC_R_SUCCESS;
 
- err:
-	isc_mem_put(mctx, data, size + 1);
+err:
+	isc_mem_put(dt_mctx, data, size + 1);
 	return (result);
 }
 
 static void
 check_sig(const char *datapath, const char *sigpath, const char *keyname,
-	  dns_keytag_t id, dns_secalg_t alg, int type, bool expect)
-{
+	  dns_keytag_t id, dns_secalg_t alg, int type, bool expect) {
 	isc_result_t result;
 	size_t rval, len;
 	FILE *fp;
@@ -160,7 +154,7 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 	result = isc_file_getsizefd(fileno(fp), &size);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	data = isc_mem_get(mctx, (size + 1));
+	data = isc_mem_get(dt_mctx, (size + 1));
 	assert_non_null(data);
 
 	p = data;
@@ -181,8 +175,8 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 	isc_buffer_add(&b, strlen(keyname));
 	result = dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
-	result = dst_key_fromfile(name, id, alg, type, "testdata/dst",
-				  mctx, &key);
+	result = dst_key_fromfile(name, id, alg, type, "testdata/dst", dt_mctx,
+				  &key);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&databuf, data, (unsigned int)size);
@@ -203,7 +197,7 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 	 */
 	isc_buffer_remainingregion(&sigbuf, &sigreg);
 
-	result = dst_context_create(key, mctx, DNS_LOGCATEGORY_GENERAL,
+	result = dst_context_create(key, dt_mctx, DNS_LOGCATEGORY_GENERAL,
 				    false, 0, &ctx);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -211,10 +205,18 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dst_context_verify(ctx, &sigreg);
 
+	/*
+	 * Compute the expected signature and emit it
+	 * so the precomputed signature can be updated.
+	 * This should only be done if the covered data
+	 * is updated.
+	 */
 	if (expect && result != ISC_R_SUCCESS) {
 		isc_result_t result2;
-		result2 = dst_context_create(key, mctx, DNS_LOGCATEGORY_GENERAL,
-					    false, 0, &ctx);
+
+		dst_context_destroy(&ctx);
+		result2 = dst_context_create(
+			key, dt_mctx, DNS_LOGCATEGORY_GENERAL, false, 0, &ctx);
 		assert_int_equal(result2, ISC_R_SUCCESS);
 
 		result2 = dst_context_adddata(ctx, &datareg);
@@ -236,17 +238,15 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 
 		isc_hex_totext(&r, 0, "", &hb);
 
-		fprintf(stderr, "%s\n", hexbuf);
-
-		dst_context_destroy(&ctx);
+		fprintf(stderr, "# %s:\n# %s\n", sigpath, hexbuf);
 	}
+
+	isc_mem_put(dt_mctx, data, size + 1);
+	dst_context_destroy(&ctx);
+	dst_key_free(&key);
 
 	assert_true((expect && (result == ISC_R_SUCCESS)) ||
 		    (!expect && (result != ISC_R_SUCCESS)));
-
-	isc_mem_put(mctx, data, size + 1);
-	dst_context_destroy(&ctx);
-	dst_key_free(&key);
 
 	return;
 }
@@ -263,42 +263,27 @@ sig_test(void **state) {
 		dns_secalg_t alg;
 		bool expect;
 	} testcases[] = {
-		{
-			"testdata/dst/test1.data",
-			"testdata/dst/test1.ecdsa256sig",
-			"test.", 49130, DST_ALG_ECDSA256, true
-		},
-		{
-			"testdata/dst/test1.data",
-			"testdata/dst/test1.rsasha256sig",
-			"test.", 11349, DST_ALG_RSASHA256, true
-		},
-		{
-			/* wrong sig */
-			"testdata/dst/test1.data",
-			"testdata/dst/test1.ecdsa256sig",
-			"test.", 11349, DST_ALG_RSASHA256, false
-		},
-		{
-			/* wrong data */
-			"testdata/dst/test2.data",
-			"testdata/dst/test1.ecdsa256sig",
-			"test.", 49130, DST_ALG_ECDSA256, false
-		},
+		{ "testdata/dst/test1.data", "testdata/dst/test1.ecdsa256sig",
+		  "test.", 49130, DST_ALG_ECDSA256, true },
+		{ "testdata/dst/test1.data", "testdata/dst/test1.rsasha256sig",
+		  "test.", 11349, DST_ALG_RSASHA256, true },
+		{ /* wrong sig */
+		  "testdata/dst/test1.data", "testdata/dst/test1.ecdsa256sig",
+		  "test.", 11349, DST_ALG_RSASHA256, false },
+		{ /* wrong data */
+		  "testdata/dst/test2.data", "testdata/dst/test1.ecdsa256sig",
+		  "test.", 49130, DST_ALG_ECDSA256, false },
 	};
 	unsigned int i;
 
-	for (i = 0; i < (sizeof(testcases)/sizeof(testcases[0])); i++) {
+	for (i = 0; i < (sizeof(testcases) / sizeof(testcases[0])); i++) {
 		if (!dst_algorithm_supported(testcases[i].alg)) {
 			continue;
 		}
 
-		check_sig(testcases[i].datapath,
-			  testcases[i].sigpath,
-			  testcases[i].keyname,
-			  testcases[i].keyid,
-			  testcases[i].alg,
-			  DST_TYPE_PRIVATE|DST_TYPE_PUBLIC,
+		check_sig(testcases[i].datapath, testcases[i].sigpath,
+			  testcases[i].keyname, testcases[i].keyid,
+			  testcases[i].alg, DST_TYPE_PRIVATE | DST_TYPE_PUBLIC,
 			  testcases[i].expect);
 	}
 }
@@ -322,4 +307,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

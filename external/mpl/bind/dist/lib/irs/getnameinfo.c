@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,8 +90,6 @@
  *    getnamebyaddr(). inet_ntop().
  */
 
-#include <config.h>
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -121,69 +119,80 @@ static struct afd {
 	int a_af;
 	size_t a_addrlen;
 	size_t a_socklen;
-} afdl [] = {
+} afdl[] = {
 	/*!
 	 * First entry is linked last...
 	 */
 	{ AF_INET, sizeof(struct in_addr), sizeof(struct sockaddr_in) },
 	{ AF_INET6, sizeof(struct in6_addr), sizeof(struct sockaddr_in6) },
-	{0, 0, 0},
+	{ 0, 0, 0 },
 };
 
 /*!
  * The test against 0 is there to keep the Solaris compiler
  * from complaining about "end-of-loop code not reached".
  */
-#define ERR(code) \
-	do { result = (code);			\
-		if (result != 0) goto cleanup;	\
+#define ERR(code)                     \
+	do {                          \
+		result = (code);      \
+		if (result != 0)      \
+			goto cleanup; \
 	} while (/*CONSTCOND*/0)
 
+#ifdef _WIN32
 int
-getnameinfo(const struct sockaddr *sa, socklen_t salen,
-	    char *host, socklen_t hostlen,
-	    char *serv, socklen_t servlen,
-	    int flags)
-{
+getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
+	    DWORD hostlen, char *serv, DWORD servlen, int flags) {
+#else
+int
+getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
+	    socklen_t hostlen, char *serv, socklen_t servlen, int flags) {
+#endif
 	struct afd *afd = NULL;
 	struct servent *sp;
 	unsigned short port = 0;
 #ifdef IRS_PLATFORM_HAVESALEN
 	size_t len;
-#endif
+#endif /* ifdef IRS_PLATFORM_HAVESALEN */
 	int family, i;
 	const void *addr = NULL;
 	char *p;
 #if 0
 	unsigned long v4a;
 	unsigned char pfx;
-#endif
+#endif /* if 0 */
 	char numserv[sizeof("65000")];
-	char numaddr[sizeof("abcd:abcd:abcd:abcd:abcd:abcd:255.255.255.255")
-		    + 1 + sizeof("4294967295")];
+	char numaddr[sizeof("abcd:abcd:abcd:abcd:abcd:abcd:255.255.255.255") +
+		     1 + sizeof("4294967295")];
 	const char *proto;
 	int result = SUCCESS;
 
-	if (sa == NULL)
+	if (sa == NULL) {
 		ERR(EAI_FAIL);
+	}
 
 #ifdef IRS_PLATFORM_HAVESALEN
 	len = sa->sa_len;
-	if (len != salen)
+	if (len != salen) {
 		ERR(EAI_FAIL);
-#endif
+	}
+#endif /* ifdef IRS_PLATFORM_HAVESALEN */
 
 	family = sa->sa_family;
-	for (i = 0; afdl[i].a_af; i++)
+	for (i = 0; afdl[i].a_af; i++) {
 		if (afdl[i].a_af == family) {
-			afd = &afdl[i];
-			goto found;
+			{
+				afd = &afdl[i];
+				goto found;
+			}
 		}
+	}
 	ERR(EAI_FAMILY);
 
- found:
-	if (salen != afd->a_socklen)
+found:
+	if (salen != afd->a_socklen) {
 		ERR(EAI_FAIL);
+	}
 
 	switch (family) {
 	case AF_INET:
@@ -207,14 +216,17 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 		 * Caller does not want service.
 		 */
 	} else if ((flags & NI_NUMERICSERV) != 0 ||
-		   (sp = getservbyport(port, proto)) == NULL) {
+		   (sp = getservbyport(port, proto)) == NULL)
+	{
 		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
-		if ((strlen(numserv) + 1) > servlen)
+		if ((strlen(numserv) + 1) > servlen) {
 			ERR(EAI_OVERFLOW);
+		}
 		strlcpy(serv, numserv, servlen);
 	} else {
-		if ((strlen(sp->s_name) + 1) > servlen)
+		if ((strlen(sp->s_name) + 1) > servlen) {
 			ERR(EAI_OVERFLOW);
+		}
 		strlcpy(serv, sp->s_name, servlen);
 	}
 
@@ -222,20 +234,23 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 	switch (sa->sa_family) {
 	case AF_INET:
 		v4a = ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
+		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a)) {
 			flags |= NI_NUMERICHOST;
+		}
 		v4a >>= IN_CLASSA_NSHIFT;
-		if (v4a == 0 || v4a == IN_LOOPBACKNET)
+		if (v4a == 0 || v4a == IN_LOOPBACKNET) {
 			flags |= NI_NUMERICHOST;
+		}
 		break;
 
 	case AF_INET6:
 		pfx = ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[0];
-		if (pfx == 0 || pfx == 0xfe || pfx == 0xff)
+		if (pfx == 0 || pfx == 0xfe || pfx == 0xff) {
 			flags |= NI_NUMERICHOST;
+		}
 		break;
 	}
-#endif
+#endif /* if 0 */
 
 	if (host == NULL || hostlen == 0U) {
 		/*
@@ -245,9 +260,10 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 		 * means that the caller does not want the result.
 		 */
 	} else if ((flags & NI_NUMERICHOST) != 0) {
-		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
-		    == NULL)
+		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr)) ==
+		    NULL) {
 			ERR(EAI_SYSTEM);
+		}
 #if defined(IRS_HAVE_SIN6_SCOPE_ID)
 		if (afd->a_af == AF_INET6 &&
 		    ((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
@@ -259,19 +275,21 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 			 * non-numeric scope identifier.
 			 */
 			stringscope = foo;
-#endif
+#endif /* ifdef VENDOR_SPECIFIC */
 			if (stringscope == NULL) {
 				snprintf(p, sizeof(numaddr) - (p - numaddr),
-				    "%%%u",
-				    ((const struct sockaddr_in6 *)sa)->sin6_scope_id);
+					 "%%%u",
+					 ((const struct sockaddr_in6 *)sa)
+						 ->sin6_scope_id);
 			} else {
 				snprintf(p, sizeof(numaddr) - (p - numaddr),
-				    "%%%s", stringscope);
+					 "%%%s", stringscope);
 			}
 		}
-#endif
-		if (strlen(numaddr) + 1 > hostlen)
+#endif /* if defined(IRS_HAVE_SIN6_SCOPE_ID) */
+		if (strlen(numaddr) + 1 > hostlen) {
 			ERR(EAI_OVERFLOW);
+		}
 		strlcpy(host, numaddr, hostlen);
 	} else {
 		isc_netaddr_t netaddr;
@@ -288,24 +306,24 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 
 		/* Get IRS context and the associated DNS client object */
 		iresult = irs_context_get(&irsctx);
-		if (iresult != ISC_R_SUCCESS)
+		if (iresult != ISC_R_SUCCESS) {
 			ERR(EAI_FAIL);
+		}
 		client = irs_context_getdnsclient(irsctx);
 
 		/* Make query name */
 		isc_netaddr_fromsockaddr(&netaddr, (const isc_sockaddr_t *)sa);
 		ptrname = dns_fixedname_initname(&ptrfname);
 		iresult = dns_byaddr_createptrname(&netaddr, 0, ptrname);
-		if (iresult != ISC_R_SUCCESS)
+		if (iresult != ISC_R_SUCCESS) {
 			ERR(EAI_FAIL);
+		}
 
 		/* Get the PTR RRset */
 		ISC_LIST_INIT(answerlist);
-		iresult = dns_client_resolve(client, ptrname,
-					     dns_rdataclass_in,
-					     dns_rdatatype_ptr,
-					     DNS_CLIENTRESOPT_ALLOWRUN,
-					     &answerlist);
+		iresult = dns_client_resolve(
+			client, ptrname, dns_rdataclass_in, dns_rdatatype_ptr,
+			DNS_CLIENTRESOPT_ALLOWRUN, &answerlist);
 		switch (iresult) {
 		case ISC_R_SUCCESS:
 		/*
@@ -338,18 +356,23 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 
 		/* Parse the answer for the hostname */
 		for (ptrname = ISC_LIST_HEAD(answerlist); ptrname != NULL;
-		     ptrname = ISC_LIST_NEXT(ptrname, link)) {
+		     ptrname = ISC_LIST_NEXT(ptrname, link))
+		{
 			for (rdataset = ISC_LIST_HEAD(ptrname->list);
 			     rdataset != NULL;
-			     rdataset = ISC_LIST_NEXT(rdataset, link)) {
-				if (!dns_rdataset_isassociated(rdataset))
+			     rdataset = ISC_LIST_NEXT(rdataset, link))
+			{
+				if (!dns_rdataset_isassociated(rdataset)) {
 					continue;
-				if (rdataset->type != dns_rdatatype_ptr)
+				}
+				if (rdataset->type != dns_rdatatype_ptr) {
 					continue;
+				}
 
 				for (iresult = dns_rdataset_first(rdataset);
 				     iresult == ISC_R_SUCCESS;
-				     iresult = dns_rdataset_next(rdataset)) {
+				     iresult = dns_rdataset_next(rdataset))
+				{
 					dns_rdata_t rdata;
 					dns_rdata_ptr_t rdata_ptr;
 					isc_buffer_t b;
@@ -361,9 +384,8 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 
 					isc_buffer_init(&b, hoststr,
 							sizeof(hoststr));
-					iresult =
-						dns_name_totext(&rdata_ptr.ptr,
-								true, &b);
+					iresult = dns_name_totext(
+						&rdata_ptr.ptr, true, &b);
 					dns_rdata_freestruct(&rdata_ptr);
 					if (iresult == ISC_R_SUCCESS) {
 						/*
@@ -377,7 +399,6 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 							&b, &hostregion);
 						goto ptrfound;
 					}
-
 				}
 			}
 		}
@@ -386,27 +407,31 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 		if (found) {
 			if ((flags & NI_NOFQDN) != 0) {
 				p = strchr(hoststr, '.');
-				if (p)
+				if (p) {
 					*p = '\0';
+				}
 			}
-			if (hostregion.length + 1 > hostlen)
+			if (hostregion.length + 1 > hostlen) {
 				ERR(EAI_OVERFLOW);
-			snprintf(host, hostlen, "%.*s",
-				 (int)hostregion.length,
+			}
+			snprintf(host, hostlen, "%.*s", (int)hostregion.length,
 				 (char *)hostregion.base);
 		} else {
-			if ((flags & NI_NAMEREQD) != 0)
+			if ((flags & NI_NAMEREQD) != 0) {
 				ERR(EAI_NONAME);
+			}
 			if (inet_ntop(afd->a_af, addr, numaddr,
-				      sizeof(numaddr)) == NULL)
+				      sizeof(numaddr)) == NULL) {
 				ERR(EAI_SYSTEM);
-			if ((strlen(numaddr) + 1) > hostlen)
+			}
+			if ((strlen(numaddr) + 1) > hostlen) {
 				ERR(EAI_OVERFLOW);
+			}
 			strlcpy(host, numaddr, hostlen);
 		}
 	}
 	result = SUCCESS;
 
- cleanup:
+cleanup:
 	return (result);
 }

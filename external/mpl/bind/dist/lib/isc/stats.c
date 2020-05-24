@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.7 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 #include <string.h>
@@ -29,21 +26,21 @@
 #include <isc/stats.h>
 #include <isc/util.h>
 
-#define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
-#define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
+#define ISC_STATS_MAGIC	   ISC_MAGIC('S', 't', 'a', 't')
+#define ISC_STATS_VALID(x) ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
 #if (defined(_WIN32) && !defined(_WIN64)) || !defined(_LP64)
-	typedef atomic_int_fast32_t isc__atomic_statcounter_t;
-#else
-	typedef atomic_int_fast64_t isc__atomic_statcounter_t;
-#endif
+typedef atomic_int_fast32_t isc__atomic_statcounter_t;
+#else  /* if defined(_WIN32) && !defined(_WIN64) */
+typedef atomic_int_fast64_t isc__atomic_statcounter_t;
+#endif /* if defined(_WIN32) && !defined(_WIN64) */
 
 struct isc_stats {
-	unsigned int			magic;
-	isc_mem_t			*mctx;
-	isc_refcount_t			refs;
-	int				ncounters;
-	isc__atomic_statcounter_t	*counters;
+	unsigned int magic;
+	isc_mem_t *mctx;
+	isc_refcount_t references;
+	int ncounters;
+	isc__atomic_statcounter_t *counters;
 };
 
 static isc_result_t
@@ -56,7 +53,7 @@ create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 	stats = isc_mem_get(mctx, sizeof(*stats));
 	counters_alloc_size = sizeof(isc__atomic_statcounter_t) * ncounters;
 	stats->counters = isc_mem_get(mctx, counters_alloc_size);
-	isc_refcount_init(&stats->refs, 1);
+	isc_refcount_init(&stats->references, 1);
 	memset(stats->counters, 0, counters_alloc_size);
 	stats->mctx = NULL;
 	isc_mem_attach(mctx, &stats->mctx);
@@ -72,7 +69,7 @@ isc_stats_attach(isc_stats_t *stats, isc_stats_t **statsp) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
-	isc_refcount_increment(&stats->refs);
+	isc_refcount_increment(&stats->references);
 	*statsp = stats;
 }
 
@@ -85,10 +82,11 @@ isc_stats_detach(isc_stats_t **statsp) {
 	stats = *statsp;
 	*statsp = NULL;
 
-	if (isc_refcount_decrement(&stats->refs) == 1) {
+	if (isc_refcount_decrement(&stats->references) == 1) {
+		isc_refcount_destroy(&stats->references);
 		isc_mem_put(stats->mctx, stats->counters,
 			    sizeof(isc__atomic_statcounter_t) *
-				stats->ncounters);
+				    stats->ncounters);
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
 	}
 }
@@ -112,30 +110,25 @@ isc_stats_increment(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-	atomic_fetch_add_explicit(&stats->counters[counter], 1,
-				  memory_order_relaxed);
+	atomic_fetch_add_relaxed(&stats->counters[counter], 1);
 }
 
 void
 isc_stats_decrement(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
-
-	atomic_fetch_sub_explicit(&stats->counters[counter], 1,
-				  memory_order_relaxed);
+	atomic_fetch_sub_release(&stats->counters[counter], 1);
 }
 
 void
-isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
-	       void *arg, unsigned int options)
-{
+isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn, void *arg,
+	       unsigned int options) {
 	int i;
 
 	REQUIRE(ISC_STATS_VALID(stats));
 
 	for (i = 0; i < stats->ncounters; i++) {
-		uint32_t counter = atomic_load_explicit(&stats->counters[i],
-							memory_order_relaxed);
+		uint32_t counter = atomic_load_acquire(&stats->counters[i]);
 		if ((options & ISC_STATSDUMP_VERBOSE) == 0 && counter == 0) {
 			continue;
 		}
@@ -144,40 +137,33 @@ isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
 }
 
 void
-isc_stats_set(isc_stats_t *stats, uint64_t val,
-	      isc_statscounter_t counter)
-{
+isc_stats_set(isc_stats_t *stats, uint64_t val, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-	atomic_store_explicit(&stats->counters[counter], val,
-			      memory_order_relaxed);
+	atomic_store_release(&stats->counters[counter], val);
 }
 
-void isc_stats_update_if_greater(isc_stats_t *stats,
-				 isc_statscounter_t counter,
-				 isc_statscounter_t value)
-{
+void
+isc_stats_update_if_greater(isc_stats_t *stats, isc_statscounter_t counter,
+			    isc_statscounter_t value) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
 	isc_statscounter_t curr_value =
-		atomic_load_relaxed(&stats->counters[counter]);
+		atomic_load_acquire(&stats->counters[counter]);
 	do {
 		if (curr_value >= value) {
 			break;
 		}
-	} while (!atomic_compare_exchange_strong(&stats->counters[counter],
-						 &curr_value,
-						 value));
+	} while (!atomic_compare_exchange_weak_acq_rel(
+		&stats->counters[counter], &curr_value, value));
 }
 
 isc_statscounter_t
-isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter)
-{
+isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-	return (atomic_load_explicit(&stats->counters[counter],
-				    memory_order_relaxed));
+	return (atomic_load_acquire(&stats->counters[counter]));
 }

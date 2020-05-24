@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.2 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: hmac.c,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,8 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
+#include <openssl/hmac.h>
+#include <openssl/opensslv.h>
 
 #include <isc/assertions.h>
 #include <isc/hmac.h>
@@ -22,16 +23,13 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <openssl/hmac.h>
-#include <openssl/opensslv.h>
-
 #include "openssl_shim.h"
 
 isc_hmac_t *
 isc_hmac_new(void) {
-	isc_hmac_t *hmac = HMAC_CTX_new();
+	HMAC_CTX *hmac = HMAC_CTX_new();
 	RUNTIME_CHECK(hmac != NULL);
-	return (hmac);
+	return ((struct hmac *)hmac);
 }
 
 void
@@ -44,9 +42,8 @@ isc_hmac_free(isc_hmac_t *hmac) {
 }
 
 isc_result_t
-isc_hmac_init(isc_hmac_t *hmac, const void *key,
-	      size_t keylen, isc_md_type_t md_type)
-{
+isc_hmac_init(isc_hmac_t *hmac, const void *key, size_t keylen,
+	      const isc_md_type_t *md_type) {
 	REQUIRE(hmac != NULL);
 	REQUIRE(key != NULL);
 
@@ -65,7 +62,7 @@ isc_result_t
 isc_hmac_reset(isc_hmac_t *hmac) {
 	REQUIRE(hmac != NULL);
 
-	if  (HMAC_CTX_reset(hmac) != 1) {
+	if (HMAC_CTX_reset(hmac) != 1) {
 		return (ISC_R_CRYPTOFAILURE);
 	}
 
@@ -89,8 +86,7 @@ isc_hmac_update(isc_hmac_t *hmac, const unsigned char *buf, const size_t len) {
 
 isc_result_t
 isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
-	       unsigned int *digestlen)
-{
+	       unsigned int *digestlen) {
 	REQUIRE(hmac != NULL);
 	REQUIRE(digest != NULL);
 
@@ -101,7 +97,7 @@ isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
 	return (ISC_R_SUCCESS);
 }
 
-isc_md_type_t
+const isc_md_type_t *
 isc_hmac_get_md_type(isc_hmac_t *hmac) {
 	REQUIRE(hmac != NULL);
 
@@ -123,14 +119,11 @@ isc_hmac_get_block_size(isc_hmac_t *hmac) {
 }
 
 isc_result_t
-isc_hmac(isc_md_type_t type, const void *key, const int keylen,
-	 const unsigned char *buf, const size_t len,
-	 unsigned char *digest, unsigned int *digestlen)
-{
-	isc_hmac_t *hmac = NULL;
+isc_hmac(const isc_md_type_t *type, const void *key, const int keylen,
+	 const unsigned char *buf, const size_t len, unsigned char *digest,
+	 unsigned int *digestlen) {
 	isc_result_t res;
-
-	hmac = isc_hmac_new();
+	isc_hmac_t *hmac = isc_hmac_new();
 
 	res = isc_hmac_init(hmac, key, keylen, type);
 	if (res != ISC_R_SUCCESS) {
@@ -146,7 +139,7 @@ isc_hmac(isc_md_type_t type, const void *key, const int keylen,
 	if (res != ISC_R_SUCCESS) {
 		goto end;
 	}
- end:
+end:
 	isc_hmac_free(hmac);
 
 	return (res);

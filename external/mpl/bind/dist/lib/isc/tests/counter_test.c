@@ -1,4 +1,4 @@
-/*	$NetBSD: counter_test.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: counter_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,7 +59,7 @@ isc_counter_test(void **state) {
 
 	UNUSED(state);
 
-	result = isc_counter_create(mctx, 0, &counter);
+	result = isc_counter_create(test_mctx, 0, &counter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (i = 0; i < 10; i++) {
@@ -88,8 +85,8 @@ isc_counter_test(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(isc_counter_test,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(isc_counter_test, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -105,4 +102,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

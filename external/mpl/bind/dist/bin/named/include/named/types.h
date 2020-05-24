@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2020/05/24 19:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,15 +18,24 @@
 
 #include <dns/types.h>
 
-typedef struct named_cache		named_cache_t;
-typedef ISC_LIST(named_cache_t)		named_cachelist_t;
-typedef struct named_server 		named_server_t;
-typedef struct named_xmld		named_xmld_t;
-typedef struct named_xmldmgr		named_xmldmgr_t;
-typedef struct named_controls		named_controls_t;
-typedef struct named_dispatch		named_dispatch_t;
-typedef ISC_LIST(named_dispatch_t)	named_dispatchlist_t;
-typedef struct named_statschannel	named_statschannel_t;
-typedef ISC_LIST(named_statschannel_t)	named_statschannellist_t;
+typedef struct named_cache named_cache_t;
+typedef ISC_LIST(named_cache_t) named_cachelist_t;
+typedef struct named_server   named_server_t;
+typedef struct named_xmld     named_xmld_t;
+typedef struct named_xmldmgr  named_xmldmgr_t;
+typedef struct named_controls named_controls_t;
+typedef struct named_dispatch named_dispatch_t;
+typedef ISC_LIST(named_dispatch_t) named_dispatchlist_t;
+typedef struct named_statschannel named_statschannel_t;
+typedef ISC_LIST(named_statschannel_t) named_statschannellist_t;
+
+/*%
+ * Used for server->reload_status as printed by `rndc status`
+ */
+typedef enum {
+	NAMED_RELOAD_DONE,
+	NAMED_RELOAD_IN_PROGRESS,
+	NAMED_RELOAD_FAILED,
+} named_reload_t;
 
 #endif /* NAMED_TYPES_H */

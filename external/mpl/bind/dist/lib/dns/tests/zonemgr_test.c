@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemgr_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: zonemgr_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -67,7 +64,7 @@ zonemgr_create(void **state) {
 
 	UNUSED(state);
 
-	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+	result = dns_zonemgr_create(dt_mctx, taskmgr, timermgr, socketmgr,
 				    &myzonemgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -85,7 +82,7 @@ zonemgr_managezone(void **state) {
 
 	UNUSED(state);
 
-	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+	result = dns_zonemgr_create(dt_mctx, taskmgr, timermgr, socketmgr,
 				    &myzonemgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -126,7 +123,7 @@ zonemgr_createzone(void **state) {
 
 	UNUSED(state);
 
-	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+	result = dns_zonemgr_create(dt_mctx, taskmgr, timermgr, socketmgr,
 				    &myzonemgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -142,8 +139,9 @@ zonemgr_createzone(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_non_null(zone);
 
-	if (zone != NULL)
+	if (zone != NULL) {
 		dns_zone_detach(&zone);
+	}
 
 	dns_zonemgr_shutdown(myzonemgr);
 	dns_zonemgr_detach(&myzonemgr);
@@ -164,7 +162,7 @@ zonemgr_unreachable(void **state) {
 
 	TIME_NOW(&now);
 
-	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+	result = dns_zonemgr_create(dt_mctx, taskmgr, timermgr, socketmgr,
 				    &myzonemgr);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -241,14 +239,14 @@ zonemgr_unreachable(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(zonemgr_create,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(zonemgr_managezone,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(zonemgr_createzone,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(zonemgr_unreachable,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(zonemgr_create, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(zonemgr_managezone, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(zonemgr_createzone, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(zonemgr_unreachable, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -264,4 +262,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

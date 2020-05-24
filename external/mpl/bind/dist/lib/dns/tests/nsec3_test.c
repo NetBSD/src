@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: nsec3_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,12 @@
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #if HAVE_CMOCKA
 
+#include <sched.h> /* IWYU pragma: keep */
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-
-#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -27,8 +24,8 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
-#include <isc/util.h>
 #include <isc/string.h>
+#include <isc/util.h>
 
 #include <dns/db.h>
 #include <dns/nsec3.h>
@@ -65,7 +62,7 @@ iteration_test(const char *file, unsigned int expected) {
 	result = dns_test_loaddb(&db, dns_dbtype_zone, "test", file);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_nsec3_maxiterations(db, NULL, mctx, &iterations);
+	result = dns_nsec3_maxiterations(db, NULL, dt_mctx, &iterations);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	assert_int_equal(iterations, expected);
@@ -77,8 +74,8 @@ iteration_test(const char *file, unsigned int expected) {
  * Structure containing parameters for nsec3param_salttotext_test().
  */
 typedef struct {
-	const char *nsec3param_text;	/* NSEC3PARAM RDATA in text form */
-	const char *expected_salt;	/* string expected in target buffer */
+	const char *nsec3param_text; /* NSEC3PARAM RDATA in text form */
+	const char *expected_salt;   /* string expected in target buffer */
 } nsec3param_salttotext_test_params_t;
 
 /*%
@@ -101,10 +98,9 @@ nsec3param_salttotext_test(const nsec3param_salttotext_test_params_t *params) {
 	/*
 	 * Prepare a dns_rdata_nsec3param_t structure for testing.
 	 */
-	result = dns_test_rdatafromstring(&rdata, dns_rdataclass_in,
-					  dns_rdatatype_nsec3param, buf,
-					  sizeof(buf),
-					  params->nsec3param_text, false);
+	result = dns_test_rdatafromstring(
+		&rdata, dns_rdataclass_in, dns_rdatatype_nsec3param, buf,
+		sizeof(buf), params->nsec3param_text, false);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_rdata_tostruct(&rdata, &nsec3param, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -122,7 +118,7 @@ nsec3param_salttotext_test(const nsec3param_salttotext_test_params_t *params) {
 	 * terminating NULL byte.
 	 */
 	length = strlen(params->expected_salt);
-	assert_true(length < sizeof(salt) - 1);	/* prevent buffer overwrite */
+	assert_true(length < sizeof(salt) - 1); /* prevent buffer overwrite */
 	assert_true(length > 0U);		/* prevent length underflow */
 
 	result = dns_nsec3param_salttotext(&nsec3param, salt, length - 1);
@@ -179,10 +175,10 @@ nsec3param_salttotext(void **state) {
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test_setup_teardown(max_iterations,
-						_setup, _teardown),
-		cmocka_unit_test_setup_teardown(nsec3param_salttotext,
-						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(max_iterations, _setup,
+						_teardown),
+		cmocka_unit_test_setup_teardown(nsec3param_salttotext, _setup,
+						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
@@ -198,4 +194,4 @@ main(void) {
 	return (0);
 }
 
-#endif
+#endif /* if HAVE_CMOCKA */

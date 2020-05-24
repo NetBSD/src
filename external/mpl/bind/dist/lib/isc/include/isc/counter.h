@@ -1,4 +1,4 @@
-/*	$NetBSD: counter.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: counter.h,v 1.3 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,8 @@
 #define ISC_COUNTER_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/counter.h
  *
@@ -36,8 +36,8 @@
 #include <isc/types.h>
 
 /*****
- ***** Types.
- *****/
+***** Types.
+*****/
 
 ISC_LANG_BEGINDECLS
 

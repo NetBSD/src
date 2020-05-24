@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,12 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef ISC_RATELIMITER_H
 #define ISC_RATELIMITER_H 1
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/ratelimiter.h
  * \brief A rate limiter is a mechanism for dispatching events at a limited
@@ -38,8 +37,8 @@
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Functions.
- *****/
+***** Functions.
+*****/
 
 isc_result_t
 isc_ratelimiter_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,

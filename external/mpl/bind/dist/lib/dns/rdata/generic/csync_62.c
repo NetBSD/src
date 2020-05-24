@@ -1,4 +1,4 @@
-/*	$NetBSD: csync_62.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
+/*	$NetBSD: csync_62.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,8 +38,9 @@ fromtext_csync(ARGS_FROMTEXT) {
 	/* Flags. */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/* Type Map */
@@ -49,7 +50,7 @@ fromtext_csync(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_csync(ARGS_TOTEXT) {
 	unsigned long num;
-	char buf[sizeof("0123456789")];	/* Also TYPE65535 */
+	char buf[sizeof("0123456789")]; /* Also TYPE65535 */
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_csync);
@@ -95,8 +96,9 @@ fromwire_csync(ARGS_FROMWIRE) {
 	 * Serial + Flags
 	 */
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 6)
+	if (sr.length < 6) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	RETERR(mem_tobuffer(target, sr.base, 6));
 	isc_buffer_forward(source, 6);
@@ -111,7 +113,6 @@ fromwire_csync(ARGS_FROMWIRE) {
 
 static inline isc_result_t
 towire_csync(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_csync);
 	REQUIRE(rdata->length >= 6);
 
@@ -182,13 +183,14 @@ tostruct_csync(ARGS_TOSTRUCT) {
 
 	csync->len = region.length;
 	csync->typebits = mem_maybedup(mctx, region.base, region.length);
-	if (csync->typebits == NULL)
+	if (csync->typebits == NULL) {
 		goto cleanup;
+	}
 
 	csync->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
@@ -199,11 +201,13 @@ freestruct_csync(ARGS_FREESTRUCT) {
 	REQUIRE(csync != NULL);
 	REQUIRE(csync->common.rdtype == dns_rdatatype_csync);
 
-	if (csync->mctx == NULL)
+	if (csync->mctx == NULL) {
 		return;
+	}
 
-	if (csync->typebits != NULL)
+	if (csync->typebits != NULL) {
 		isc_mem_free(csync->mctx, csync->typebits);
+	}
 	csync->mctx = NULL;
 }
 
@@ -230,20 +234,18 @@ digest_csync(ARGS_DIGEST) {
 
 static inline bool
 checkowner_csync(ARGS_CHECKOWNER) {
+	REQUIRE(type == dns_rdatatype_csync);
 
-       REQUIRE(type == dns_rdatatype_csync);
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
 
-       UNUSED(name);
-       UNUSED(type);
-       UNUSED(rdclass);
-       UNUSED(wildcard);
-
-       return (true);
+	return (true);
 }
 
 static inline bool
 checknames_csync(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_csync);
 
 	UNUSED(rdata);
@@ -268,4 +270,4 @@ casecompare_csync(ARGS_COMPARE) {
 	dns_rdata_toregion(rdata2, &region2);
 	return (isc_region_compare(&region1, &region2));
 }
-#endif	/* RDATA_GENERIC_CSYNC_62_C */
+#endif /* RDATA_GENERIC_CSYNC_62_C */

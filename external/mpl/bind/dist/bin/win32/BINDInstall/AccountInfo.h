@@ -1,4 +1,4 @@
-/*	$NetBSD: AccountInfo.h,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: AccountInfo.h,v 1.3 2020/05/24 19:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,28 +11,29 @@
  * information regarding copyright ownership.
  */
 
+#define RTN_OK	      0
+#define RTN_NOACCOUNT 1
+#define RTN_NOMEMORY  2
+#define RTN_ERROR     10
 
-
-#define RTN_OK		0
-#define RTN_NOACCOUNT	1
-#define RTN_NOMEMORY	2
-#define RTN_ERROR	10
-
-#define SE_SERVICE_LOGON_PRIV	L"SeServiceLogonRight"
+#define SE_SERVICE_LOGON_PRIV L"SeServiceLogonRight"
 
 /*
  * This routine retrieves the list of all Privileges associated with
  * a given account as well as the groups to which it beongs
  */
 int
-GetAccountPrivileges(
-	char *name,			/* Name of Account */
-	wchar_t **PrivList,		/* List of Privileges returned */
-	unsigned int *PrivCount,	/* Count of Privileges returned */
-	char **Groups,		/* List of Groups to which account belongs */
-	unsigned int *totalGroups,	/* Count of Groups returned */
-	int maxGroups		/* Maximum number of Groups to return */
-	);
+GetAccountPrivileges(char *name,	      /* Name of Account */
+		     wchar_t **PrivList,      /* List of Privileges returned */
+		     unsigned int *PrivCount, /* Count of Privileges
+						 returned */
+		     char **Groups,	      /* List of Groups to which account
+					       * belongs
+					       */
+		     unsigned int *totalGroups, /* Count of Groups returned
+						 */
+		     int maxGroups /* Maximum number of Groups to return */
+);
 
 /*
  * This routine creates an account with the given name which has just

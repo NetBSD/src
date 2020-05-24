@@ -1,4 +1,4 @@
-/*	$NetBSD: talink_58.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: talink_58.h,v 1.3 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,18 @@
  * information regarding copyright ownership.
  */
 
-/* http://www.iana.org/assignments/dns-parameters/TALINK/talink-completed-template */
+/*
+ * http://www.iana.org/assignments/dns-parameters/TALINK/talink-completed-template
+ */
 
 #ifndef GENERIC_TALINK_58_H
 #define GENERIC_TALINK_58_H 1
 
 typedef struct dns_rdata_talink {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_name_t		prev;
-	dns_name_t		next;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_name_t prev;
+	dns_name_t next;
 } dns_rdata_talink_t;
 
 #endif /* GENERIC_TALINK_58_H */

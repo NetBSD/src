@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.4 2019/09/05 19:32:56 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.5 2020/05/24 19:46:16 christos Exp $	*/
 
 /*
  * Driver API implementation and main entry point for BIND.
@@ -17,12 +17,10 @@
  * Copyright (C) 2009-2015  Red Hat ; see COPYRIGHT for license
  */
 
-#include <config.h>
-
 #include <isc/commandline.h>
 #include <isc/hash.h>
-#include <isc/mem.h>
 #include <isc/lib.h>
+#include <isc/mem.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -31,8 +29,8 @@
 #include <dns/types.h>
 
 #include "db.h"
-#include "log.h"
 #include "instance.h"
+#include "log.h"
 #include "util.h"
 
 dns_dyndb_destroy_t dyndb_destroy;
@@ -61,9 +59,8 @@ dns_dyndb_version_t dyndb_version;
  */
 isc_result_t
 dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
-	   const char *file, unsigned long line,
-	   const dns_dyndbctx_t *dctx, void **instp)
-{
+	   const char *file, unsigned long line, const dns_dyndbctx_t *dctx,
+	   void **instp) {
 	isc_result_t result;
 	unsigned int argc;
 	char **argv = NULL;
@@ -86,10 +83,6 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 	}
 
 	s = isc_mem_strdup(mctx, parameters);
-	if (s == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup;
-	}
 
 	result = isc_commandline_strtoargv(mctx, s, &argc, &argv, 0);
 	if (result != ISC_R_SUCCESS) {
@@ -99,8 +92,7 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 		goto cleanup;
 	}
 
-	log_write(ISC_LOG_DEBUG(9),
-		  "loading params for dyndb '%s' from %s:%lu",
+	log_write(ISC_LOG_DEBUG(9), "loading params for dyndb '%s' from %s:%lu",
 		  name, file, line);
 
 	/* Finally, create the instance. */
@@ -127,11 +119,11 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 
 	*instp = sample_inst;
 
- cleanup:
-	if (s != NULL)
-		isc_mem_free(mctx, s);
-	if (argv != NULL)
+cleanup:
+	isc_mem_free(mctx, s);
+	if (argv != NULL) {
 		isc_mem_put(mctx, argv, argc * sizeof(*argv));
+	}
 
 	return (result);
 }
@@ -149,7 +141,7 @@ dyndb_destroy(void **instp) {
 
 /*
  * Driver version is called when loading the driver to ensure there
- * is no API mismatch betwen the driver and the caller.
+ * is no API mismatch between the driver and the caller.
  */
 int
 dyndb_version(unsigned int *flags) {

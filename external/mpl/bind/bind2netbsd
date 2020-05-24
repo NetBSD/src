@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.5 2019/11/27 05:48:39 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.6 2020/05/24 19:46:10 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -119,7 +119,21 @@ echo done
 echo "cleaning up CVS residue."
 (
 	cd $d
-	find . -type d -name "CVS" -print | xargs rm -r
+	find . -type d -name "CVS" -exec rm -r {} +
+)
+echo done
+
+echo "cleaning up GIT residue."
+(
+	cd $d
+	find . -type d -name ".gitattributes" -exec rm {} +
+)
+echo done
+
+echo "cleaning up clang-format residue."
+(
+	cd $d
+	find . -type d -name ".clang-format*" -exec rm {} +
 )
 echo done
 

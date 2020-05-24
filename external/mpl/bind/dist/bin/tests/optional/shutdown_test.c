@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-#include <config.h>
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -27,24 +25,24 @@
 #include <isc/util.h>
 
 typedef struct {
-	isc_mem_t *	mctx;
-	isc_task_t *	task;
-	isc_timer_t *	timer;
-	unsigned int	ticks;
-	char	        name[16];
-	bool	exiting;
-	isc_task_t *	peer;
+	isc_mem_t *mctx;
+	isc_task_t *task;
+	isc_timer_t *timer;
+	unsigned int ticks;
+	char name[16];
+	bool exiting;
+	isc_task_t *peer;
 } t_info;
 
 #define MAX_TASKS	3
 #define T2_SHUTDOWNOK	(ISC_EVENTCLASS(1024) + 0)
-#define T2_SHUTDOWNDONE	(ISC_EVENTCLASS(1024) + 1)
+#define T2_SHUTDOWNDONE (ISC_EVENTCLASS(1024) + 1)
 #define FOO_EVENT	(ISC_EVENTCLASS(1024) + 2)
 
-static t_info			tasks[MAX_TASKS];
-static unsigned int		task_count;
-static isc_taskmgr_t *		task_manager;
-static isc_timermgr_t *		timer_manager;
+static t_info tasks[MAX_TASKS];
+static unsigned int task_count;
+static isc_taskmgr_t *task_manager;
+static isc_timermgr_t *timer_manager;
 
 static void
 t1_shutdown(isc_task_t *task, isc_event_t *event) {
@@ -102,24 +100,21 @@ tick(isc_task_t *task, isc_event_t *event) {
 	info->ticks++;
 	if (strcmp(info->name, "1") == 0) {
 		if (info->ticks == 10) {
-			RUNTIME_CHECK(isc_app_shutdown() == ISC_R_SUCCESS);
+			isc_app_shutdown();
 		} else if (info->ticks >= 15 && info->exiting) {
 			isc_timer_detach(&info->timer);
 			isc_task_detach(&info->task);
-			nevent = isc_event_allocate(info->mctx, info,
-						    T2_SHUTDOWNDONE,
-						    t1_shutdown, &tasks[0],
-						    sizeof(*event));
+			nevent = isc_event_allocate(
+				info->mctx, info, T2_SHUTDOWNDONE, t1_shutdown,
+				&tasks[0], sizeof(*event));
 			RUNTIME_CHECK(nevent != NULL);
 			isc_task_send(info->peer, &nevent);
 			isc_task_detach(&info->peer);
 		}
 	} else if (strcmp(info->name, "foo") == 0) {
 		isc_timer_detach(&info->timer);
-		nevent = isc_event_allocate(info->mctx, info,
-					    FOO_EVENT,
-					    foo_event, task,
-					    sizeof(*event));
+		nevent = isc_event_allocate(info->mctx, info, FOO_EVENT,
+					    foo_event, task, sizeof(*event));
 		RUNTIME_CHECK(nevent != NULL);
 		isc_task_sendanddetach(&task, &nevent);
 	}
@@ -153,9 +148,8 @@ new_task(isc_mem_t *mctx, const char *name) {
 	isc_time_settoepoch(&expires);
 	isc_interval_set(&interval, 1, 0);
 	RUNTIME_CHECK(isc_timer_create(timer_manager, isc_timertype_ticker,
-				       &expires, &interval, ti->task,
-				       tick, ti, &ti->timer) ==
-		      ISC_R_SUCCESS);
+				       &expires, &interval, ti->task, tick, ti,
+				       &ti->timer) == ISC_R_SUCCESS);
 
 	task_count++;
 
@@ -173,20 +167,23 @@ main(int argc, char *argv[]) {
 
 	if (argc > 1) {
 		workers = atoi(argv[1]);
-		if (workers < 1)
+		if (workers < 1) {
 			workers = 1;
-		if (workers > 8192)
+		}
+		if (workers > 8192) {
 			workers = 8192;
-	} else
+		}
+	} else {
 		workers = 2;
+	}
 	printf("%u workers\n", workers);
 
 	mctx = NULL;
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
+	isc_mem_create(&mctx);
 	mctx2 = NULL;
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx2) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, &task_manager) ==
-		      ISC_R_SUCCESS);
+	isc_mem_create(&mctx2);
+	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, NULL,
+					 &task_manager) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timer_manager) ==
 		      ISC_R_SUCCESS);
 
@@ -204,15 +201,13 @@ main(int argc, char *argv[]) {
 	 * Test implicit shutdown.
 	 */
 	task = NULL;
-	RUNTIME_CHECK(isc_task_create(task_manager, 0, &task) ==
-		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_task_create(task_manager, 0, &task) == ISC_R_SUCCESS);
 	isc_task_detach(&task);
 
 	/*
 	 * Test anti-zombie code.
 	 */
-	RUNTIME_CHECK(isc_task_create(task_manager, 0, &task) ==
-		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_task_create(task_manager, 0, &task) == ISC_R_SUCCESS);
 	isc_task_detach(&task);
 
 	RUNTIME_CHECK(isc_app_run() == ISC_R_SUCCESS);

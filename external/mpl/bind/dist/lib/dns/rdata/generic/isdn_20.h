@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: isdn_20.h,v 1.4 2020/05/24 19:46:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,17 +14,16 @@
 #ifndef GENERIC_ISDN_20_H
 #define GENERIC_ISDN_20_H 1
 
-
 /*!
  * \brief Per RFC1183 */
 
 typedef struct dns_rdata_isdn {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	char			*isdn;
-	char			*subaddress;
-	uint8_t		isdn_len;
-	uint8_t		subaddress_len;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	char *isdn;
+	char *subaddress;
+	uint8_t isdn_len;
+	uint8_t subaddress_len;
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */

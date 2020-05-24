@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.3 2020/05/24 19:46:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,19 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
 #ifndef RNDC_OS_H
 #define RNDC_OS_H 1
 
-#include <isc/lang.h>
 #include <stdio.h>
+
+#include <isc/lang.h>
 
 ISC_LANG_BEGINDECLS
 
-int set_user(FILE *fd, const char *user);
+int
+set_user(FILE *fd, const char *user);
 /*%<
  * Set the owner of the file referenced by 'fd' to 'user'.
  * Returns:
@@ -32,4 +33,4 @@ int set_user(FILE *fd, const char *user);
 
 ISC_LANG_ENDDECLS
 
-#endif
+#endif /* ifndef RNDC_OS_H */

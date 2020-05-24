@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: getaddresses.h,v 1.3 2020/05/24 19:46:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,22 +11,20 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef BIND9_GETADDRESSES_H
 #define BIND9_GETADDRESSES_H 1
 
 /*! \file bind9/getaddresses.h */
 
 #include <isc/lang.h>
-#include <isc/types.h>
-
 #include <isc/net.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-bind9_getaddresses(const char *hostname, in_port_t port,
-		   isc_sockaddr_t *addrs, int addrsize, int *addrcount);
+bind9_getaddresses(const char *hostname, in_port_t port, isc_sockaddr_t *addrs,
+		   int addrsize, int *addrcount);
 /*%<
  * Use the system resolver to get the addresses associated with a hostname.
  * If successful, the number of addresses found is returned in 'addrcount'.

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2020/05/24 19:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,10 +11,7 @@
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <isc/util.h>
 
@@ -24,18 +21,15 @@
  * When adding a new category, be sure to add the appropriate
  * \#define to <isccfg/log.h>.
  */
-LIBISCCFG_EXTERNAL_DATA isc_logcategory_t cfg_categories[] = {
-	{ "config", 	0 },
-	{ NULL, 	0 }
-};
+LIBISCCFG_EXTERNAL_DATA isc_logcategory_t cfg_categories[] = { { "config", 0 },
+							       { NULL, 0 } };
 
 /*%
  * When adding a new module, be sure to add the appropriate
  * \#define to <isccfg/log.h>.
  */
 LIBISCCFG_EXTERNAL_DATA isc_logmodule_t cfg_modules[] = {
-	{ "isccfg/parser",	0 },
-	{ NULL, 		0 }
+	{ "isccfg/parser", 0 }, { NULL, 0 }
 };
 
 void
