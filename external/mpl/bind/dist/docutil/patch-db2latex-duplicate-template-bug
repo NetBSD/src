@@ -9,7 +9,7 @@
 ;; take it from there.  I've sent this patch off to the port
 ;; maintainer but have not yet heard anything back.
 ;; 
-;; I don't really know whther this is the "right" fix, but it seems to
+;; I don't really know whether this is the "right" fix, but it seems to
 ;; work, and I'm pretty sure that the code this patch deletes does not
 ;; work as it stands, so at worst the result after applying this patch
 ;; should be no worse than the result without this patch.
@@ -26,7 +26,7 @@ Index: xsl/qandaset.mod.xsl
 -<xsl:template name="question.answer.label">
 -	<!-- variable: deflabel -->
 -  <xsl:variable name="deflabel">
--  	<!-- chck whether someone has a defaultlabel attribute -->
+-  	<!-- check whether someone has a defaultlabel attribute -->
 -    <xsl:choose>
 -		<xsl:when test="ancestor-or-self::*[@defaultlabel]">
 -        	<xsl:value-of select="(ancestor-or-self::*[@defaultlabel])[last()]/@defaultlabel"/>

@@ -16,6 +16,7 @@ zone <string> [ <class> ] {
 	dnskey-sig-validity <integer>;
 	dnssec-dnskey-kskonly <boolean>;
 	dnssec-loadkeys-interval <integer>;
+	dnssec-policy <string>;
 	dnssec-update-mode ( maintain | no-resign );
 	file <quoted_string>;
 	forward ( first | only );
@@ -43,7 +44,6 @@ zone <string> [ <class> ] {
 	notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
 	notify-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
 	notify-to-soa <boolean>;
-	nsec3-test-zone <boolean>; // test only
 	request-expire <boolean>;
 	request-ixfr <boolean>;
 	sig-signing-nodes <integer>;

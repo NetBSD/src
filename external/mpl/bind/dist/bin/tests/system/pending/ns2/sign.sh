@@ -22,7 +22,7 @@ for domain in example example.com; do
 
 	cat $infile $keyname1.key $keyname2.key > $zonefile
 
-	$SIGNER -3 bebe -o $zone $zonefile > /dev/null 2>&1
+	$SIGNER -3 bebe -o $zone $zonefile > /dev/null
 done
 
 # remove "removed" record from example.com, causing the server to

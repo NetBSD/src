@@ -136,31 +136,6 @@ keyname2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zon
 cat "$infile" "$keyname1.key" "$keyname2.key" > "$zonefile"
 "$SIGNER" -P -g -o "$zone" -k "$keyname1" "$zonefile" "$keyname2" > /dev/null 2>&1
 
-# Sign the privately secure file
-
-privzone=private.secure.example
-privinfile=private.secure.example.db.in
-privzonefile=private.secure.example.db
-
-privkeyname=$("$KEYGEN" -q -a "${DEFAULT_ALGORITHM}" -b "${DEFAULT_BITS}" -n zone "$privzone")
-
-cat "$privinfile" "$privkeyname.key" > "$privzonefile"
-
-"$SIGNER" -P -g -o "$privzone" -l dlv "$privzonefile" > /dev/null 2>&1
-
-# Sign the DLV secure zone.
-
-dlvzone=dlv.
-dlvinfile=dlv.db.in
-dlvzonefile=dlv.db
-dlvsetfile="dlvset-${privzone}${TP}"
-
-dlvkeyname=$("$KEYGEN" -q -a "${DEFAULT_ALGORITHM}" -b "${DEFAULT_BITS}" -n zone "$dlvzone")
-
-cat "$dlvinfile" "$dlvkeyname.key" "$dlvsetfile" > "$dlvzonefile"
-
-"$SIGNER" -P -g -o "$dlvzone" "$dlvzonefile" > /dev/null 2>&1
-
 # Sign the badparam secure file
 
 zone=badparam.
@@ -263,6 +238,7 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 cat "$infile" "$key1.key" "$key2.key" > "$zonefile"
 "$SIGNER" -P -g -o "$zone" "$zonefile" > /dev/null 2>&1
+keyfile_to_key_id "$key1" > cds-kskonly.secure.id
 
 zone=cds-auto.secure
 infile=cds-auto.secure.db.in
@@ -306,6 +282,7 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 cat "$infile" "$key1.key" "$key2.key" > "$zonefile"
 "$SIGNER" -P -g -o "$zone" "$zonefile" > /dev/null 2>&1
+keyfile_to_key_id "$key1" > cdnskey-kskonly.secure.id
 
 zone=cdnskey-auto.secure
 infile=cdnskey-auto.secure.db.in

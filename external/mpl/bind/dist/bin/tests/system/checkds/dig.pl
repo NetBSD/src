@@ -24,10 +24,6 @@ foreach $arg (@ARGV) {
         $ext = "ds";
         next;
     }
-    if ($arg =~ /^dlv$/i) {
-        $ext = "dlv";
-        next;
-    }
     if ($arg =~ /^dnskey$/i) {
         $ext = "dnskey";
         next;

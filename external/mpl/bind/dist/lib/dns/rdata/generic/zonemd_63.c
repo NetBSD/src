@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.1.1.3 2019/11/24 19:58:06 christos Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.1.1.4 2020/05/24 19:36:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -108,15 +108,17 @@ totext_zonemd(ARGS_TOTEXT) {
 	/*
 	 * Digest.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0) /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_hex_totext(&sr, 0, "", target));
-		else
+		} else {
 			RETERR(isc_hex_totext(&sr, tctx->width - 2,
 					      tctx->linebreak, target));
+		}
 	} else {
 		RETERR(str_totext("[omitted]", target));
 	}
@@ -144,9 +146,8 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	 * If we do recognize the digest type, ensure that the digest is of the
 	 * correct length.
 	 */
-	if (sr.length < 7 ||
-	    (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384 &&
-	     sr.length < 6 + ISC_SHA384_DIGESTLENGTH))
+	if (sr.length < 7 || (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384 &&
+			      sr.length < 6 + ISC_SHA384_DIGESTLENGTH))
 	{
 		return (ISC_R_UNEXPECTEDEND);
 	}
@@ -317,4 +318,4 @@ casecompare_zonemd(ARGS_COMPARE) {
 	return (compare_zonemd(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_ZONEMD_63_C */
+#endif /* RDATA_GENERIC_ZONEMD_63_C */

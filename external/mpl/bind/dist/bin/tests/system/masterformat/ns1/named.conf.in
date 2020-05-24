@@ -18,7 +18,6 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	notify no;
-	dnssec-enable yes;
 	session-keyfile "session.key";
 	servfail-ttl 0;
 };

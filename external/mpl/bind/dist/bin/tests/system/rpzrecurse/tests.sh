@@ -135,6 +135,7 @@ for mode in native dnsrps; do
     else
       echo_i "running DNSRPS sub-test"
       $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpzrecurse
+      sleep 3
     fi
     ;;
   esac
@@ -414,15 +415,15 @@ for mode in native dnsrps; do
   $DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p ${PORT} -b 10.53.0.3 >> dig.out.${t}
   $DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p ${PORT} -b 10.53.0.2 >> dig.out.${t}
   sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0/A/IN via 32.4.0.53.10.rpz-client-ip.log1" > /dev/null && {
-    echo_i " failed: unexpected rewrite message for policy zone log1 was logged"
+    echo_ic "failed: unexpected rewrite message for policy zone log1 was logged"
     status=1
   }
   sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0/A/IN via 32.3.0.53.10.rpz-client-ip.log2" > /dev/null || {
-    echo_i " failed: expected rewrite message for policy zone log2 was not logged"
+    echo_ic "failed: expected rewrite message for policy zone log2 was not logged"
     status=1
   }
   sed -n "$cur,"'$p' < ns2/named.run | grep "view recursive: rpz CLIENT-IP Local-Data rewrite l2.l1.l0/A/IN via 32.2.0.53.10.rpz-client-ip.log3" > /dev/null || {
-    echo_i " failed: expected rewrite message for policy zone log3 was not logged"
+    echo_ic "failed: expected rewrite message for policy zone log3 was not logged"
     status=1
   }
 
@@ -479,7 +480,7 @@ for mode in native dnsrps; do
   add_test_marker 10.53.0.2
   run_server invalidprefixlength
   grep "invalid rpz IP address \"1000.4.0.53.10.rpz-client-ip.invalidprefixlength\"; invalid prefix length of 1000$" ns2/named.run > /dev/null || {
-    echo_i " failed: expected that invalid prefix length error would be logged"
+    echo_ic "failed: expected that invalid prefix length error would be logged"
     status=1
   }
 

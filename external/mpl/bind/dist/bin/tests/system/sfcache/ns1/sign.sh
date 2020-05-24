@@ -28,9 +28,9 @@ cat "$infile" "$keyname.key" > "$zonefile"
 
 $SIGNER -P -g -o $zone $zonefile > /dev/null
 
-# Configure the resolving server with a trusted key.
-keyfile_to_trusted_keys "$keyname" > trusted.conf
+# Configure the resolving server with a static key.
+keyfile_to_static_ds "$keyname" > trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 
-# ...or with a managed key.
-keyfile_to_managed_keys "$keyname" > managed.conf
+# ...or with an initializing key.
+keyfile_to_initial_ds "$keyname" > managed.conf

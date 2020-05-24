@@ -21,7 +21,6 @@ options {
 	listen-on-v6 { none; };
 	allow-recursion { 10.53.0.3; };
 	notify yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 };
 

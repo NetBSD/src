@@ -45,7 +45,7 @@ class eventlist:
                                             key=lambda event: event.when)
 
     # scan events per zone, algorithm, and key type, in order of
-    # occurrance, noting inconsistent states when found
+    # occurrence, noting inconsistent states when found
     def coverage(self, zone, keytype, until, output = None):
         def noop(*args, **kwargs): pass
         if not output:

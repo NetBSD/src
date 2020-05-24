@@ -48,6 +48,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -58,6 +59,7 @@
       <arg choice="opt" rep="norepeat"><option>-aACdlnrsTUwv</option></arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">class</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-N <replaceable class="parameter">ndots</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="port">port</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-R <replaceable class="parameter">number</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">wait</replaceable></option></arg>
@@ -209,6 +211,15 @@
 	    searched for in the domains listed in
 	    the <type>search</type> or <type>domain</type> directive
 	    in <filename>/etc/resolv.conf</filename>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-p <replaceable class="parameter">port</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify the port on the server to query.  The default is 53.
 	  </para>
 	</listitem>
       </varlistentry>

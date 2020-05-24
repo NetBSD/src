@@ -13,7 +13,7 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-HEADERS =	dir.h mutex.h net.h netdb.h once.h \
+HEADERS =	align.h dir.h mutex.h net.h netdb.h once.h \
 		stat.h stdtime.h thread.h time.h
 
 SUBDIRS =
