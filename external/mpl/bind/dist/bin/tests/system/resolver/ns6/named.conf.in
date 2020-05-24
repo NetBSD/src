@@ -22,6 +22,7 @@ options {
 	recursion no;
 	dnssec-validation no;
 	querylog yes;
+	statistics-file "named.stats";
 	/*
 	 * test that named loads with root-delegation-only that
 	 * has a exclude list.
@@ -71,4 +72,18 @@ zone "delegation-only" {
 zone "fetch.tld" {
 	type master;
 	file "fetch.tld.db";
+};
+
+zone "targetns" {
+	type master;
+	file "targetns.db";
+};
+
+key rndc_key {
+        secret "1234abcd8765";
+        algorithm hmac-sha256;
+};
+
+controls {
+        inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };

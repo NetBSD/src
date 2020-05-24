@@ -50,7 +50,7 @@ status=`expr $status + $ret`
 
 ret=0
 n=`expr $n + 1`
-echo_i "test owner inheritence after "'$INCLUDE'" ($n)"
+echo_i "test owner inheritance after "'$INCLUDE'" ($n)"
 $CHECKZONE -Dq example zone/inheritownerafterinclude.db > checkzone.out$n
 $DIFF checkzone.out$n zone/inheritownerafterinclude.good || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

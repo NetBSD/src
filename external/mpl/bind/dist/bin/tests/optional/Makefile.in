@@ -14,7 +14,7 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
-		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
+		${OPENSSL_CFLAGS} @DST_GSSAPI_INC@
 
 CDEFINES =	@USE_GSSAPI@
 
@@ -23,8 +23,8 @@ BACKTRACECFLAGS = @BACKTRACECFLAGS@
 PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
 
 DNSLIBS =	../../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
+ISCLIBS =	../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCNOSYMLIBS =	../../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
 ISCCFGLIBS = 	../../../lib/isccfg/libisccfg.@A@
 
 DNSDEPLIBS =	../../../lib/dns/libdns.@A@

@@ -9,7 +9,7 @@
 
 
 
-; RPZ preformance test
+; RPZ performance test
 
 $TTL	120
 @	SOA	.  hostmaster.ns.example.tld5. ( 1 3600 1200 604800 60 )

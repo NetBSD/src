@@ -12,6 +12,7 @@
 rm -f */named.conf
 rm -f */named.memstats
 rm -f */named.run
+rm -f */named.run.prev
 rm -f */named.stats
 rm -f dig.out*
 rm -f dnstap.out dnstap.hex

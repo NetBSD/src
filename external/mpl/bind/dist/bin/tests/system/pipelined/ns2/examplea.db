@@ -17,7 +17,7 @@ examplea		IN SOA	mname1. . (
 				3600       ; minimum (1 hour)
 				)
 examplea.		NS	ns2.examplea.
-ns2.examplea.		A	10.53.0.2
+ns2.examplea.		A	10.53.0.5
 
 $ORIGIN examplea.
 a			A	10.0.1.1

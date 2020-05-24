@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
  - 
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,7 +83,7 @@
       <span class="command"><strong>delv</strong></span> will send to a specified name server all
       queries needed to fetch and validate the requested data; this
       includes the original requested query, subsequent queries to follow
-      CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records
+      CNAME or DNAME chains, and queries for DNSKEY and DS records
       to establish a chain of trust for DNSSEC validation.
       It does not perform iterative resolution, but simulates the
       behavior of a name server configured for DNSSEC validating and
@@ -193,21 +193,21 @@
 	  <p>
 	    Keys that do not match the root zone name are ignored.
             An alternate key name can be specified using the
-	    <code class="option">+root=NAME</code> options. DNSSEC Lookaside
-            Validation can also be turned on by using the
-	    <code class="option">+dlv=NAME</code> to specify the name of a
-            zone containing DLV records.
+	    <code class="option">+root=NAME</code> options.
 	  </p>
 	  <p>
 	    Note: When reading the trust anchor file,
-	    <span class="command"><strong>delv</strong></span> treats <code class="option">managed-keys</code>
-	    statements and <code class="option">trusted-keys</code> statements
-	    identically.  That is, for a managed key, it is the
-	    <span class="emphasis"><em>initial</em></span> key that is trusted; RFC 5011
-	    key management is not supported. <span class="command"><strong>delv</strong></span>
-	    will not consult the managed-keys database maintained by
-	    <span class="command"><strong>named</strong></span>. This means that if either of the
-	    keys in <code class="filename">/etc/bind.keys</code> is revoked
+	    <span class="command"><strong>delv</strong></span> treats <code class="option">trust-anchors</code>
+	    <code class="option">initial-key</code> and <code class="option">static-key</code>
+	    entries identically.  That is, even if a key is configured
+	    with <span class="command"><strong>initial-key</strong></span>, indicating that it is
+	    meant to be used only as an initializing key for RFC 5011
+	    key maintenance, it is still treated by <span class="command"><strong>delv</strong></span>
+	    as if it had been configured as a <span class="command"><strong>static-key</strong></span>.
+	    <span class="command"><strong>delv</strong></span> does not consult the managed keys
+	    database maintained by <span class="command"><strong>named</strong></span>. This means
+	    that if either of the keys in
+	    <code class="filename">/etc/bind.keys</code> is revoked
 	    and rolled over, it will be necessary to update
 	    <code class="filename">/etc/bind.keys</code> to use DNSSEC
 	    validation in <span class="command"><strong>delv</strong></span>.
@@ -517,29 +517,19 @@
 	      request DNSSEC records or whether to validate them.
 	      DNSSEC records are always requested, and validation
 	      will always occur unless suppressed by the use of
-	      <code class="option">-i</code> or <code class="option">+noroot</code> and
-	      <code class="option">+nodlv</code>.
+	      <code class="option">-i</code> or <code class="option">+noroot</code>.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]root[=ROOT]</code></span></dt>
 <dd>
 	    <p>
-	      Indicates whether to perform conventional (non-lookaside)
+	      Indicates whether to perform conventional
 	      DNSSEC validation, and if so, specifies the
 	      name of a trust anchor.  The default is to validate using
 	      a trust anchor of "." (the root zone), for which there is
 	      a built-in key.  If specifying a different trust anchor,
 	      then <code class="option">-a</code> must be used to specify a file
 	      containing the key.
-	    </p>
-	  </dd>
-<dt><span class="term"><code class="option">+[no]dlv[=DLV]</code></span></dt>
-<dd>
-	    <p>
-	      Indicates whether to perform DNSSEC lookaside validation,
-	      and if so, specifies the name of the DLV trust anchor.
-	      The <code class="option">-a</code> option must also be used to specify
-              a file containing the DLV key.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]tcp</code></span></dt>
@@ -556,6 +546,12 @@
 	      Print all RDATA in unknown RR type presentation format
 	      (RFC 3597). The default is to print RDATA for known types
 	      in the type's presentation format.
+	    </p>
+	  </dd>
+<dt><span class="term"><code class="option">+[no]yaml</code></span></dt>
+<dd>
+	    <p>
+	      Print response data in YAML format.
 	    </p>
 	  </dd>
 </dl></div>

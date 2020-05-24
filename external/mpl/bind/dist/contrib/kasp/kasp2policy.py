@@ -21,17 +21,21 @@
 
 from xml.etree import cElementTree as ET
 from collections import defaultdict
-from isc import dnskey
+import re
 import ply.yacc as yacc
 import ply.lex as lex
-import re
+from isc import dnskey
+
 
 ############################################################################
 # Translate KASP duration values into seconds
 ############################################################################
-class kasptime:
-    class ktlex:
-        tokens = ( 'P', 'T', 'Y', 'M', 'D', 'H', 'S', 'NUM' )
+class KaspTime:
+    # pylint: disable=invalid-name
+    class KTLex:
+        # pylint: disable=invalid-name
+
+        tokens = ('P', 'T', 'Y', 'M', 'D', 'H', 'S', 'NUM')
 
         t_P = r'(?i)P'
         t_T = r'(?i)T'
@@ -41,12 +45,14 @@ class kasptime:
         t_H = r'(?i)H'
         t_S = r'(?i)S'
 
-        def t_NUM(self, t):
+        @staticmethod
+        def t_NUM(t):
             r'\d+'
             t.value = int(t.value)
             return t
 
-        def t_error(self, t):
+        @staticmethod
+        def t_error(t):
             print("Illegal character '%s'" % t.value[0])
             t.lexer.skip(1)
 
@@ -54,7 +60,7 @@ class kasptime:
             self.lexer = lex.lex(object=self)
 
     def __init__(self):
-        self.lexer = self.ktlex()
+        self.lexer = self.KTLex()
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(debug=False, write_tables=False, module=self)
 
@@ -62,35 +68,43 @@ class kasptime:
         self.lexer.lexer.lineno = 0
         return self.parser.parse(text)
 
-    def p_ktime_4(self, p):
+    @staticmethod
+    def p_ktime_4(p):
         "ktime : P periods T times"
         p[0] = p[2] + p[4]
 
-    def p_ktime_3(self, p):
+    @staticmethod
+    def p_ktime_3(p):
         "ktime : P T times"
         p[0] = p[3]
 
-    def p_ktime_2(self, p):
+    @staticmethod
+    def p_ktime_2(p):
         "ktime : P periods"
         p[0] = p[2]
 
-    def p_periods_1(self, p):
+    @staticmethod
+    def p_periods_1(p):
         "periods : period"
         p[0] = p[1]
 
-    def p_periods_2(self, p):
+    @staticmethod
+    def p_periods_2(p):
         "periods : periods period"
         p[0] = p[1] + p[2]
 
-    def p_times_1(self, p):
+    @staticmethod
+    def p_times_1(p):
         "times : time"
         p[0] = p[1]
 
-    def p_times_2(self, p):
+    @staticmethod
+    def p_times_2(p):
         "times : times time"
         p[0] = p[1] + p[2]
 
-    def p_period(self, p):
+    @staticmethod
+    def p_period(p):
         '''period : NUM Y
                   | NUM M
                   | NUM D'''
@@ -101,7 +115,8 @@ class kasptime:
         elif p[2].lower() == 'd':
             p[0] += int(p[1]) * 86400
 
-    def p_time(self, p):
+    @staticmethod
+    def p_time(p):
         '''time : NUM H
                 | NUM M
                 | NUM S'''
@@ -112,24 +127,28 @@ class kasptime:
         elif p[2].lower() == 's':
             p[0] = int(p[1])
 
-    def p_error(self, p):
+    @staticmethod
+    def p_error():
         print("Syntax error")
+
 
 ############################################################################
 # Load the contents of a KASP XML file as a python dictionary
 ############################################################################
-class kasp():
+class Kasp():
+    # pylint: disable=invalid-name
+
     @staticmethod
     def _todict(t):
         d = {t.tag: {} if t.attrib else None}
         children = list(t)
         if children:
             dd = defaultdict(list)
-            for dc in map(kasp._todict, children):
+            for dc in map(Kasp._todict, children):
                 for k, v in dc.iteritems():
                     dd[k].append(v)
-            d = {t.tag:
-                    {k:v[0] if len(v) == 1 else v for k, v in dd.iteritems()}}
+            k = {k: v[0] if len(v) == 1 else v for k, v in dd.items()}
+            d = {t.tag: k}
         if t.attrib:
             d[t.tag].update(('@' + k, v) for k, v in t.attrib.iteritems())
         if t.text:
@@ -142,7 +161,7 @@ class kasp():
         return d
 
     def __init__(self, filename):
-        self._dict = kasp._todict(ET.parse(filename).getroot())
+        self._dict = Kasp._todict(ET.parse(filename).getroot())
 
     def __getitem__(self, key):
         return self._dict[key]
@@ -156,52 +175,54 @@ class kasp():
     def __repr__(self):
         return repr(self._dict)
 
+
 ############################################################################
 # Load the contents of a KASP XML file as a python dictionary
 ############################################################################
 if __name__ == "__main__":
-    from pprint import *
     import sys
 
     if len(sys.argv) < 2:
         print("Usage: kasp2policy <filename>")
-        exit(1)
+        sys.exit(1)
 
+    KINFO = Kasp(sys.argv[1])
     try:
-        kinfo = kasp(sys.argv[1])
-    except:
+        KINFO = Kasp(sys.argv[1])
+    except FileNotFoundError:
         print("%s: unable to load KASP file '%s'" % (sys.argv[0], sys.argv[1]))
-        exit(1)
+        sys.exit(1)
 
-    kt = kasptime()
-    first = True
+    KT = KaspTime()
+    FIRST = True
 
-    for p in kinfo['KASP']['Policy']:
-        if not p['@name'] or not p['Keys']: continue
-        if not first:
+    for policy in KINFO['KASP']['Policy']:
+        if not policy['@name'] or not policy['Keys']:
+            continue
+        if not FIRST:
             print("")
-        first = False
-        if p['Description']:
-            d = p['Description'].strip()
-            print("# %s" % re.sub(r"\n\s*", "\n# ", d))
-        print("policy %s {" % p['@name'])
-        ksk = p['Keys']['KSK']
-        zsk = p['Keys']['ZSK']
+        FIRST = False
+        if policy['Description']:
+            desc = policy['Description'].strip()
+            print("# %s" % re.sub(r"\n\s*", "\n# ", desc))
+        print("policy %s {" % policy['@name'])
+        ksk = policy['Keys']['KSK']
+        zsk = policy['Keys']['ZSK']
         kalg = ksk['Algorithm']
         zalg = zsk['Algorithm']
         algnum = kalg['#text'] or zalg['#text']
         if algnum:
             print("\talgorithm %s;" % dnskey.algstr(int(algnum)))
-        if p['Keys']['TTL']:
-            print("\tkeyttl %d;" % kt.parse(p['Keys']['TTL']))
+        if policy['Keys']['TTL']:
+            print("\tkeyttl %d;" % KT.parse(policy['Keys']['TTL']))
         if kalg['@length']:
             print("\tkey-size ksk %d;" % int(kalg['@length']))
         if zalg['@length']:
             print("\tkey-size zsk %d;" % int(zalg['@length']))
         if ksk['Lifetime']:
-            print("\troll-period ksk %d;" % kt.parse(ksk['Lifetime']))
+            print("\troll-period ksk %d;" % KT.parse(ksk['Lifetime']))
         if zsk['Lifetime']:
-            print("\troll-period zsk %d;" % kt.parse(zsk['Lifetime']))
+            print("\troll-period zsk %d;" % KT.parse(zsk['Lifetime']))
         if ksk['Standby']:
             print("\tstandby ksk %d;" % int(ksk['Standby']))
         if zsk['Standby']:

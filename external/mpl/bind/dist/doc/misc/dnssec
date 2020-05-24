@@ -46,7 +46,7 @@ been implemented but should still be considered experimental.
 
 When acting as a caching name server, BIND9 is capable of performing
 basic DNSSEC validation of positive as well as nonexistence responses.
-This functionality is enabled by including a "trusted-keys" clause
+This functionality is enabled by including a "trust-anchors" clause
 in the configuration file, containing the top-level zone key of the
 the DNSSEC tree.
 

@@ -125,6 +125,16 @@ grep "; Transfer failed" dig.out.alternate.ns1.test$n > /dev/null || ret=1
 [ "$ret" -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
+newtest "testing AXFR denied based on view ACL"
+# 10.53.0.1 should be disallowed
+$DIG $DIGOPTS -b 10.53.0.1 +noall +answer axfr example.org > dig.out.example.ns1.test$n.1
+grep "; Transfer failed" dig.out.example.ns1.test$n.1 > /dev/null || ret=1
+# 10.53.0.2 should be allowed
+$DIG $DIGOPTS -b 10.53.0.2 +noall +answer axfr example.org > dig.out.example.ns1.test$n.2
+grep "; Transfer failed" dig.out.example.ns1.test$n.2 > /dev/null && ret=1
+[ "$ret" -eq 0 ] || echo_i "failed"
+status=`expr $status + $ret`
+
 newtest "testing unsearched/unregistered DLZ zone is not found"
 $DIG $DIGOPTS +noall +answer ns other.nil > dig.out.ns1.test$n
 grep "3600.IN.NS.other.nil." dig.out.ns1.test$n > /dev/null && ret=1

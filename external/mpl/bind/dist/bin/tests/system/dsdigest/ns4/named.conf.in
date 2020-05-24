@@ -22,7 +22,6 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-enable yes;
 	dnssec-validation yes;
 	/* only SHA-256 is enabled */
 	disable-ds-digests . { SHA-1; SHA-384; 5; 6; 7; 8; 9; };

@@ -51,6 +51,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -66,6 +67,7 @@
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">class</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-D sync <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">bits</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">flag</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-G</option></arg>
@@ -74,8 +76,9 @@
       <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-i <replaceable class="parameter">interval</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
-      <arg choice="opt" rep="norepeat"><option>-k</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">policy</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">ttl</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-l <replaceable class="parameter">file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">nametype</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-P sync <replaceable class="parameter">date/offset</replaceable></option></arg>
@@ -84,6 +87,7 @@
       <arg choice="opt" rep="norepeat"><option>-R <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-S <replaceable class="parameter">key</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">strength</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-T <replaceable class="parameter">rrtype</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>
@@ -176,10 +180,8 @@
 	  </para>
 	  <para>
 	    If the key size is not specified, some algorithms have
-	    pre-defined defaults.  For example, RSA keys for use as
-	    DNSSEC zone signing keys have a default size of 1024 bits;
-	    RSA keys for use as key signing keys (KSKs, generated with
-	    <option>-f KSK</option>) default to 2048 bits.
+	    pre-defined defaults.  For instance, RSA keys have a default
+	    size of 2048 bits.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -205,6 +207,18 @@
 	  <para>
 	    Indicates that the DNS record containing the key should have
 	    the specified class.  If not specified, class IN is used.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-d <replaceable class="parameter">bits</replaceable></term>
+	<listitem>
+	  <para>
+	    Key size in bits. For the algorithms RSASHA1, NSEC3RSASA1,
+	    RSASHA256 and RSASHA512 the key size must be in range 1024-4096.
+	    DH size is between 128 and 4096. This option is ignored for
+	    algorithms ECDSAP256SHA256, ECDSAP384SHA384, ED25519 and ED448.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -278,6 +292,24 @@
       </varlistentry>
 
       <varlistentry>
+	<term>-k <replaceable class="parameter">policy</replaceable></term>
+	<listitem>
+	  <para>
+	    Create keys for a specific dnssec-policy.  If a policy uses
+	    multiple keys, <command>dnssec-keygen</command> will generate
+	    multiple keys.  This will also create a ".state" file to keep
+	    track of the key state.
+	  </para>
+	  <para>
+	    This option creates keys according to the dnssec-policy
+	    configuration, hence it cannot be used together with many of
+	    the other options that <command>dnssec-keygen</command>
+	    provides.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term>-L <replaceable class="parameter">ttl</replaceable></term>
 	<listitem>
 	  <para>
@@ -289,6 +321,16 @@
 	    is no existing DNSKEY RRset, the TTL will default to the
 	    SOA TTL. Setting the default TTL to <literal>0</literal>
 	    or <literal>none</literal> is the same as leaving it unset.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-l <replaceable class="parameter">file</replaceable></term>
+	<listitem>
+	  <para>
+	    Provide a configuration file that contains a dnssec-policy
+	    statement (matching the policy set with <command>-k</command>).
 	  </para>
 	</listitem>
       </varlistentry>

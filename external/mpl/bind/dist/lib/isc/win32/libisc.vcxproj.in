@@ -44,24 +44,29 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
+    <IntDirSharingDetected>None</IntDirSharingDetected>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
     <IntDir>.\$(Configuration)\</IntDir>
+    <IntDirSharingDetected>None</IntDirSharingDetected>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
 @IF PKCS11
       <PreprocessorDefinitions>BIND9;@PK11_LIB_LOCATION@WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @ELSE PKCS11
       <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @END PKCS11
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -75,7 +80,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>@OPENSSL_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
     </Link>
@@ -94,6 +99,9 @@ echo Copying the OpenSSL DLL and LICENSE.
 copy @OPENSSL_DLL@ ..\Build\Debug\
 copy @OPENSSL_PATH@\LICENSE ..\Build\Debug\OpenSSL-LICENSE
 
+echo Copying libuv DLL.
+copy @LIBUV_DLL@ ..\Build\Debug\
+
 @IF LIBXML2
 echo Copying the libxml DLL.
 
@@ -109,12 +117,6 @@ copy @COMERR_DLL@ ..\Build\Debug\
 copy @K5SPRT_DLL@ ..\Build\Debug\
 copy @WSHELP_DLL@ ..\Build\Debug\
 @END GSSAPI
-
-@IF GEOIPLEGACY
-echo Copying the GeoIP DLL.
-
-copy @GEOIP_DLL@ ..\Build\Debug\
-@END GEOIPLEGACY
 
 @IF IDNKIT
 echo Copying the IDN kit DLL.
@@ -143,7 +145,8 @@ copy InstallFiles ..\Build\Debug\
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
@@ -151,10 +154,12 @@ copy InstallFiles ..\Build\Debug\
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
 @IF PKCS11
       <PreprocessorDefinitions>BIND9;@PK11_LIB_LOCATION@WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @ELSE PKCS11
       <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @END PKCS11
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -171,7 +176,7 @@ copy InstallFiles ..\Build\Debug\
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>@OPENSSL_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@@LIBUV_LIB@@LIBXML2_LIB@@ZLIB_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -241,6 +246,9 @@ echo Copying the OpenSSL DLL and LICENSE.
 copy @OPENSSL_DLL@ ..\Build\Release\
 copy @OPENSSL_PATH@\LICENSE ..\Build\Release\OpenSSL-LICENSE
 
+echo Copying libuv DLL.
+copy @LIBUV_DLL@ ..\Build\Release\
+
 @IF LIBXML2
 echo Copying the libxml DLL.
 
@@ -256,12 +264,6 @@ copy @COMERR_DLL@ ..\Build\Release\
 copy @K5SPRT_DLL@ ..\Build\Release\
 copy @WSHELP_DLL@ ..\Build\Release\
 @END GSSAPI
-
-@IF GEOIPLEGACY
-echo Copying the GeoIP DLL.
-
-copy @GEOIP_DLL@ ..\Build\Release\
-@END GEOIPLEGACY
 
 @IF IDNKIT
 echo Copying the IDN kit DLL.
@@ -296,6 +298,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\aes.h" />
     <ClInclude Include="..\include\isc\app.h" />
     <ClInclude Include="..\include\isc\assertions.h" />
+    <ClInclude Include="..\include\isc\astack.h" />
     <ClInclude Include="..\include\isc\atomic.h" />
     <ClInclude Include="..\include\isc\backtrace.h" />
     <ClInclude Include="..\include\isc\base32.h" />
@@ -307,6 +310,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\commandline.h" />
     <ClInclude Include="..\include\isc\counter.h" />
     <ClInclude Include="..\include\isc\crc64.h" />
+    <ClInclude Include="..\include\isc\endian.h" />
     <ClInclude Include="..\include\isc\errno.h" />
     <ClInclude Include="..\include\isc\error.h" />
     <ClInclude Include="..\include\isc\event.h" />
@@ -318,6 +322,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\heap.h" />
     <ClInclude Include="..\include\isc\hex.h" />
     <ClInclude Include="..\include\isc\hmac.h" />
+    <ClInclude Include="..\include\isc\hp.h" />
     <ClInclude Include="..\include\isc\ht.h" />
     <ClInclude Include="..\include\isc\httpd.h" />
     <ClInclude Include="..\include\isc\interfaceiter.h" />
@@ -372,15 +377,12 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\types.h" />
     <ClInclude Include="..\include\isc\util.h" />
     <ClInclude Include="..\include\isc\version.h" />
-    <ClInclude Include="..\include\isc\xml.h" />
 @IF PKCS11
     <ClInclude Include="..\include\pk11\constants.h" />
     <ClInclude Include="..\include\pk11\internal.h" />
     <ClInclude Include="..\include\pk11\pk11.h" />
     <ClInclude Include="..\include\pk11\result.h" />
     <ClInclude Include="..\include\pkcs11\pkcs11.h" />
-    <ClInclude Include="..\include\pkcs11\pkcs11f.h" />
-    <ClInclude Include="..\include\pkcs11\pkcs11t.h" />
 @END PKCS11
     <ClInclude Include="errno2result.h" />
     <ClInclude Include="include\isc\bindevt.h" />
@@ -408,14 +410,13 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\openssl_shim.h" />
     <ClInclude Include="syslog.h" />
     <ClInclude Include="unistd.h" />
-@IF PKCS11
-    <ClInclude Include="include\pkcs11\cryptoki.h" />
-@END PKCS11
     <ClInclude Include="..\..\versions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\aes.c" />
+    <ClCompile Include="..\app.c" />
     <ClCompile Include="..\assertions.c" />
+    <ClCompile Include="..\astack.c" />
     <ClCompile Include="..\backtrace-emptytbl.c" />
     <ClCompile Include="..\backtrace.c" />
     <ClCompile Include="..\base32.c" />
@@ -433,6 +434,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\heap.c" />
     <ClCompile Include="..\hex.c" />
     <ClCompile Include="..\hmac.c" />
+    <ClCompile Include="..\hp.c" />
     <ClCompile Include="..\ht.c" />
     <ClCompile Include="..\httpd.c" />
     <ClCompile Include="..\iterated_hash.c" />
@@ -444,12 +446,19 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\mem.c" />
     <ClCompile Include="..\mutexblock.c" />
     <ClCompile Include="..\netaddr.c" />
+    <ClCompile Include="..\netmgr\netmgr.c" />
+    <ClCompile Include="..\netmgr\tcp.c" />
+    <ClCompile Include="..\netmgr\udp.c" />
+    <ClCompile Include="..\netmgr\uverr2result.c" />
+    <ClCompile Include="..\netmgr\uv-compat.c" />
+    <ClCompile Include="..\netmgr\tcpdns.c" />
     <ClCompile Include="..\netscope.c" />
     <ClCompile Include="..\nonce.c" />
     <ClCompile Include="..\openssl_shim.c" />
     <ClCompile Include="..\parseint.c" />
     <ClCompile Include="..\pool.c" />
     <ClCompile Include="..\portset.c" />
+    <ClCompile Include="..\queue.c" />
     <ClCompile Include="..\quota.c" />
     <ClCompile Include="..\radix.c" />
     <ClCompile Include="..\random.c" />
@@ -458,6 +467,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\region.c" />
     <ClCompile Include="..\result.c" />
     <ClCompile Include="..\rwlock.c" />
+    <ClCompile Include="..\safe.c" />
     <ClCompile Include="..\serial.c" />
     <ClCompile Include="..\siphash.c" />
     <ClCompile Include="..\sockaddr.c" />
@@ -472,7 +482,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\pk11.c" />
     <ClCompile Include="..\pk11_result.c" />
 @END PKCS11
-    <ClCompile Include="app.c" />
     <ClCompile Include="condition.c" />
     <ClCompile Include="dir.c" />
     <ClCompile Include="DLLMain.c" />

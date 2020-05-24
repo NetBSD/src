@@ -30,8 +30,8 @@ standby=$(keyfile_to_key_id "$(cat standby.key)")
 zsk=$(keyfile_to_key_id "$(cat zsk.key)")
 
 echo_i "signing zones"
-$SIGNER -Sg -o $czone $cfile > /dev/null 2>&1
-$SIGNER -Sg -o $pzone $pfile > /dev/null 2>&1
+$SIGNER -Sg -o $czone $cfile > /dev/null
+$SIGNER -Sg -o $pzone $pfile > /dev/null
 
 awk '$2 ~ /RRSIG/ {
         type = $3;
@@ -115,7 +115,7 @@ echo_i "waiting 20 seconds for key changes to occur"
 sleep 20
 
 echo_i "re-signing zone"
-$SIGNER  -Sg -o $czone -f ${cfile}.new ${cfile}.signed > /dev/null 2>&1
+$SIGNER  -Sg -o $czone -f ${cfile}.new ${cfile}.signed > /dev/null
 
 echo_i "checking that standby KSK is now active ($n)"
 ret=0

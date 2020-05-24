@@ -21,8 +21,6 @@ DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
 status=0
 n=1
 
-sleep 5
-
 echo_i "waiting for servers to be ready for testing ($n)"
 for i in 1 2 3 4 5 6 7 8 9 10
 do

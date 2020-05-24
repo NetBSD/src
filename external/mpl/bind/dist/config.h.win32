@@ -289,32 +289,17 @@ typedef __int64 off_t;
 /* Define if native PKCS#11 is used as cryptographic library provider */
 @USE_PKCS11@
 
-/* Define if your PKCS11 provider supports Ed25519. */
-@HAVE_PKCS11_ED25519@
-
-/* Define if your PKCS11 provider supports Ed448. */
-@HAVE_PKCS11_ED448@
-
 /* HMAC_*() return ints */
 @HMAC_RETURN_INT@
 
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@
 
-/* Build with GeoIP support */
-@HAVE_GEOIP@
-
 /* Build with GeoIP2 support */
 @HAVE_GEOIP2@
 
 /* define if idnkit support is to be included. */
 @WITH_IDN@
-
-/* Build with GeoIP City IPv6 support */
-@HAVE_GEOIP_CITY_V6@
-
-/* Build with GeoIP Country IPv6 support */
-@HAVE_GEOIP_V6@
 
 /* Define if zlib was found */
 @HAVE_ZLIB@
@@ -363,6 +348,15 @@ typedef __int64 off_t;
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
 @HAVE_HMAC_CTX_RESET@
+
+/* Define to 1 if you have the `uv_handle_get_data' function. */
+@HAVE_UV_HANDLE_GET_DATA@
+
+/* Define to 1 if you have the `uv_handle_set_data' function. */
+@HAVE_UV_HANDLE_SET_DATA@
+
+/* Define to 1 if you have the `uv_import' function. */
+@HAVE_UV_IMPORT@
 
 /*
  * Define to nothing if C supports flexible array members, and to 1 if it does

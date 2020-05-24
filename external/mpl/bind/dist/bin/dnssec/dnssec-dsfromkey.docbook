@@ -12,7 +12,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-dsfromkey">
   <info>
-    <date>2012-05-02</date>
+    <date>2019-05-08</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -42,6 +42,7 @@
       <year>2016</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -112,10 +113,8 @@
 
     <para>
       The <command>dnssec-dsfromkey</command> command outputs DS (Delegation
-      Signer) resource records (RRs) and other similarly-constructed RRs:
-      with the <option>-l</option> option it outputs DLV (DNSSEC Lookaside
-      Validation) RRs; or with the <option>-C</option> it outputs CDS (Child
-      DS) RRs.
+      Signer) resource records (RRs), or CDS (Child DS) RRs with the
+      <option>-C</option> option.
     </para>
 
     <para>
@@ -150,7 +149,9 @@
 	<term>-1</term>
 	<listitem>
 	  <para>
-	    An abbreviation for <option>-a SHA1</option>
+	    An abbreviation for <option>-a SHA-1</option>.
+	    (Note: The SHA-1 algorithm is no longer recommended for use
+	    when generating new DS and CDS records.)
 	  </para>
 	</listitem>
       </varlistentry>
@@ -159,7 +160,7 @@
 	<term>-2</term>
 	<listitem>
 	  <para>
-	    An abbreviation for <option>-a SHA-256</option>
+	    An abbreviation for <option>-a SHA-256</option>.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -178,6 +179,8 @@
 	    SHA-1, SHA-256, or SHA-384.  These values are case insensitive,
 	    and the hyphen may be omitted.  If no algorithm is specified,
 	    the default is SHA-256.
+	    (Note: The SHA-1 algorithm is no longer recommended for use
+	    when generating new DS and CDS records.)
 	  </para>
 	</listitem>
       </varlistentry>
@@ -208,9 +211,7 @@
 	<term>-C</term>
 	<listitem>
 	  <para>
-	    Generate CDS records rather than DS records. This is mutually
-	    exclusive with the <option>-l</option> option for generating DLV
-	    records.
+	    Generate CDS records rather than DS records.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -252,19 +253,6 @@
 	  <para>
 	    Look for key files or <filename>keyset-</filename> files in
 	    <option>directory</option>.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>-l <replaceable class="parameter">domain</replaceable></term>
-	<listitem>
-	  <para>
-	    Generate a DLV set instead of a DS set. The specified
-	    <replaceable>domain</replaceable> is appended to the name for each
-	    record in the set.
-	    This is mutually exclusive with the <option>-C</option> option
-	    for generating CDS records.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -358,7 +346,6 @@
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
       <citetitle>RFC 3658</citetitle> (DS RRs),
-      <citetitle>RFC 4431</citetitle> (DLV RRs),
       <citetitle>RFC 4509</citetitle> (SHA-256 for DS RRs),
       <citetitle>RFC 6605</citetitle> (SHA-384 for DS RRs),
       <citetitle>RFC 7344</citetitle> (CDS and CDNSKEY RRs).

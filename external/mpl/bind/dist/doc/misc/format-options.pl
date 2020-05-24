@@ -11,7 +11,7 @@
 
 print <<END;
 
-This is a summary of the named.conf options supported by 
+This is a summary of the named.conf options supported by
 this version of BIND 9.
 
 END

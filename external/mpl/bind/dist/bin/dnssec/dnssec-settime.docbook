@@ -41,6 +41,7 @@
       <year>2017</year>
       <year>2018</year>
       <year>2019</year>
+      <year>2020</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -64,6 +65,12 @@
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-g <replaceable class="parameter">state</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">state</replaceable> <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">state</replaceable> <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">state</replaceable> <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-z <replaceable class="parameter">state</replaceable> <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg choice="req" rep="norepeat">keyfile</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -88,10 +95,29 @@
       When key metadata fields are changed, both files of a key
       pair (<filename>Knnnn.+aaa+iiiii.key</filename> and
       <filename>Knnnn.+aaa+iiiii.private</filename>) are regenerated.
+    </para>
+    <para>
       Metadata fields are stored in the private file.  A human-readable
       description of the metadata is also placed in comments in the key
       file.  The private file's permissions are always set to be
       inaccessible to anyone other than the owner (mode 0600).
+    </para>
+    <para>
+      When working with state files, it is possible to update the timing
+      metadata in those files as well with <option>-s</option>.  If this
+      option is used you can also update key states with <option>-d</option>
+      (DS), <option>-k</option> (DNSKEY), <option>-r</option> (RRSIG of KSK),
+      or <option>-z</option> (RRSIG of ZSK). Allowed states are HIDDEN,
+      RUMOURED, OMNIPRESENT, and UNRETENTIVE.
+    </para>
+    <para>
+      You can also set the goal state of the key with <option>-g</option>.
+      This should be either HIDDEN or OMNIPRESENT (representing whether the
+      key should be removed from the zone, or published).
+    </para>
+    <para>
+      It is NOT RECOMMENDED to manipulate state files manually except for
+      testing purposes.
     </para>
   </refsection>
 
@@ -316,6 +342,74 @@
           </para>
         </listitem>
       </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>KEY STATE OPTIONS</title></info>
+
+    <para>
+      Known key states are HIDDEN, RUMOURED, OMNIPRESENT and UNRETENTIVE.
+      These should not be set manually except for testing purposes.
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>-s</term>
+        <listitem>
+          <para>
+	    When setting key timing data, also update the state file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-g</term>
+        <listitem>
+          <para>
+	    Set the goal state for this key. Must be HIDDEN or OMNIPRESENT.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-d</term>
+        <listitem>
+          <para>
+	    Set the DS state for this key, and when it was last changed.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-k</term>
+        <listitem>
+          <para>
+	    Set the DNSKEY state for this key, and when it was last changed.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-r</term>
+        <listitem>
+          <para>
+	    Set the RRSIG (KSK) state for this key, and when it was last
+	    changed.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-z</term>
+        <listitem>
+          <para>
+	    Set the RRSIG (ZSK) state for this key, and when it was last
+	    changed.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
   </refsection>
 

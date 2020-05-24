@@ -34,6 +34,14 @@ access to the source repository was restricted just as commit access was.
 That's now changing, with the opening of a public git mirror to the BIND
 source tree (see below).
 
+At Internet Systems Consortium, we're committed to building communities
+that are welcoming and inclusive; environments where people are encouraged
+to share ideas, treat each other with respect, and collaborate towards the
+best solutions. To reinforce our commitment, the Internet Systems
+Consortium has adopted the Contributor Covenant version 1.4 as our Code of
+Conduct for BIND 9 project, as well as for the conduct of our developers
+throughout the industry.
+
 Access to source code
 
 Public BIND releases are always available from the ISC FTP site.
@@ -91,7 +99,7 @@ e-mail is not a secure choice for communications concerning undisclosed
 security issues so please encrypt your communications to us if possible,
 using the ISC Security Officer public key.
 
-Do not discuss undisclosed security vulnerabilites on any public mailing
+Do not discuss undisclosed security vulnerabilities on any public mailing
 list. ISC has a long history of handling reported vulnerabilities promptly
 and effectively and we respect and acknowledge responsible reporters.
 
