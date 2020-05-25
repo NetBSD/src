@@ -64,7 +64,7 @@ implements the following steps:
 
   * Rename the current logfile by appending a suffix that contains the date and
     time. This suffix is configured with the maillog_file_rotate_suffix
-    parameter (default: %Y%M%d-%H%M%S).
+    parameter (default: %Y%m%d-%H%M%S).
 
   * Reload Postfix so that postlogd(8) immediately closes the old logfile.
 

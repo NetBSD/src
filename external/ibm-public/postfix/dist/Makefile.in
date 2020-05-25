@@ -1,7 +1,7 @@
 # To test with valgrind:
 # make -i tests VALGRIND="valgrind --tool=memcheck --log-file=/some/where.%p" 
 SHELL	= /bin/sh
-WARN    = -Wmissing-prototypes -Wformat -Wno-comment
+WARN    = -Wmissing-prototypes -Wformat -Wno-comment -fcommon
 OPTS	= 'WARN=$(WARN)'
 DIRS	= src/util src/global src/dns src/tls src/xsasl src/master src/milter \
 	src/postfix src/fsstone src/smtpstone \
