@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.56 2020/05/25 08:22:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.57 2020/05/25 08:25:28 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.56 2020/05/25 08:22:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.57 2020/05/25 08:25:28 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -200,7 +200,7 @@ struct vioif_ctrl_cmdspec {
 /*
  * Locking notes:
  * + a field in vioif_txqueue is protected by txq_lock (a spin mutex), and
- *   a filds in vioif_rxqueue is protected by rxq_lock (a spin mutex).
+ *   a field in vioif_rxqueue is protected by rxq_lock (a spin mutex).
  *      - more than one lock cannot be held at onece
  * + ctrlq_inuse is protected by ctrlq_wait_lock.
  *      - other fields in vioif_ctrlqueue are protected by ctrlq_inuse
@@ -823,7 +823,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/*
-	 * Allocating a virtqueues
+	 * Allocating virtqueues
 	 */
 	for (i = 0; i < sc->sc_max_nvq_pairs; i++) {
 		rxq = &sc->sc_rxq[i];
