@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.14 2020/05/25 07:29:52 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.15 2020/05/25 07:37:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -117,7 +117,7 @@ struct virtqueue {
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
 	void			*vq_done_ctx;
-	int			(*vq_intrhand)(struct virtqueue*);
+	int			(*vq_intrhand)(void *);
 };
 
 struct virtio_attach_args {
