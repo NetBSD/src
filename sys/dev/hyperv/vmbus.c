@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.8 2019/12/10 12:20:20 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.9 2020/05/25 10:14:58 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.8 2019/12/10 12:20:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.9 2020/05/25 10:14:58 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1911,7 +1911,7 @@ vmbus_handle_alloc(struct vmbus_channel *ch, const struct hyperv_dma *dma,
 
 	/* Allocate additional gpadl_body structures if required */
 	if (left > 0) {
-		ncmds = MAX(1, left / VMBUS_NPFNBODY + left % VMBUS_NPFNBODY);
+		ncmds = howmany(left, VMBUS_NPFNBODY);
 		bodylen = ncmds * VMBUS_MSG_DSIZE_MAX;
 		body = kmem_zalloc(bodylen, kmemflags);
 		if (body == NULL) {
