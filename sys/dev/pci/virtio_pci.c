@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.8 2020/05/25 07:29:52 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.9 2020/05/25 07:37:47 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.8 2020/05/25 07:29:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.9 2020/05/25 07:37:47 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ static void	virtio_pci_free_interrupts(struct virtio_softc *);
 
 static int	virtio_pci_intr(void *arg);
 static int	virtio_pci_msix_queue_intr(void *);
-static int	virtio_pci_msix_vq_intr(void *);
 static int	virtio_pci_msix_config_intr(void *);
 static int	virtio_pci_setup_msix_vectors(struct virtio_softc *);
 static int	virtio_pci_setup_msix_interrupts(struct virtio_softc *,
@@ -511,6 +510,7 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	struct virtqueue *vq;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char intr_xname[INTRDEVNAMEBUF];
 	char const *intrstr;
@@ -534,6 +534,7 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 	if (sc->sc_child_mq) {
 		for (qid = 0; qid < sc->sc_nvqs; qid++) {
 			n = idx + qid;
+			vq = &sc->sc_vqs[qid];
 
 			snprintf(intr_xname, sizeof(intr_xname), "%s vq#%d",
 			    device_xname(sc->sc_dev), qid);
@@ -544,8 +545,7 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 			}
 
 			psc->sc_ihs[n] = pci_intr_establish_xname(pc, psc->sc_ihp[n],
-			    sc->sc_ipl, virtio_pci_msix_vq_intr, &sc->sc_vqs[qid],
-			    intr_xname);
+			    sc->sc_ipl, vq->vq_intrhand, vq, intr_xname);
 			if (psc->sc_ihs[n] == NULL) {
 				aprint_error_dev(self, "couldn't establish MSI-X for a vq\n");
 				goto error;
@@ -795,15 +795,6 @@ virtio_pci_msix_queue_intr(void *arg)
 	}
 
 	return r;
-}
-
-static int
-virtio_pci_msix_vq_intr(void *arg)
-{
-	struct virtqueue *vq = arg;
-
-	KASSERT(vq->vq_intrhand != NULL);
-	return vq->vq_intrhand(vq);
 }
 
 static int
