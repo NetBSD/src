@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.116 2020/05/24 20:05:53 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.117 2020/05/25 19:29:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.116 2020/05/24 20:05:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.117 2020/05/25 19:29:08 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -997,21 +997,39 @@ ubc_uiomove_direct(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int a
 			error = uvm_direct_process(pgs, npages, off, bytelen,
 			    ubc_uiomove_process, uio);
 		}
-		if (error != 0 && overwrite) {
+
+		if (overwrite) {
+			voff_t endoff;
+
 			/*
-			 * if we haven't initialized the pages yet,
-			 * do it now.  it's safe to use memset here
-			 * because we just mapped the pages above.
+			 * if we haven't initialized the pages yet due to an
+			 * error above, do it now.
 			 */
-			printf("%s: error=%d\n", __func__, error);
-			(void) uvm_direct_process(pgs, npages, off, bytelen,
-			    ubc_zerorange_process, NULL);
+			if (error != 0) {
+				printf("%s: error=%d\n", __func__, error);
+				(void) uvm_direct_process(pgs, npages, off,
+				    bytelen, ubc_zerorange_process, NULL);
+			}
+
+			off += bytelen;
+			todo -= bytelen;
+			endoff = off & (PAGE_SIZE - 1);
+
+			/*
+			 * zero out the remaining portion of the final page
+			 * (if any).
+			 */
+			if (todo == 0 && endoff != 0) {
+				vsize_t zlen = PAGE_SIZE - endoff;
+				(void) uvm_direct_process(pgs + npages - 1, 1,
+				    off, zlen, ubc_zerorange_process, NULL);
+			}
+		} else {
+			off += bytelen;
+			todo -= bytelen;
 		}
 
 		ubc_direct_release(uobj, flags, pgs, npages);
-
-		off += bytelen;
-		todo -= bytelen;
 
 		if (error != 0 && ISSET(flags, UBC_PARTIALOK)) {
 			break;
