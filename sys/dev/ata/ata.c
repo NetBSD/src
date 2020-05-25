@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.157 2020/05/02 19:09:56 thorpej Exp $	*/
+/*	$NetBSD: ata.c,v 1.158 2020/05/25 18:29:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.157 2020/05/02 19:09:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.158 2020/05/25 18:29:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -82,6 +82,10 @@ int atadebug_mask = ATADEBUG_MASK;
 		printf args
 #else
 #define ATADEBUG_PRINT(args, level)
+#endif
+
+#if NATA_DMA
+static int	ata_downgrade_mode(struct ata_drive_datas *, int);
 #endif
 
 static ONCE_DECL(ata_init_ctrl);
@@ -1755,7 +1759,7 @@ ata_print_modes(struct ata_channel *chp)
  *
  * MUST BE CALLED AT splbio()!
  */
-int
+static int
 ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
