@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.14 2020/05/15 04:55:40 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.15 2020/05/25 05:13:16 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,7 +36,7 @@
 
 struct aarch64_cache_unit {
 	u_int cache_type;
-#define CACHE_TYPE_UNKNOWN	0
+#define CACHE_TYPE_VPIPT	0	/* VMID-aware PIPT */
 #define CACHE_TYPE_VIVT		1	/* ASID-tagged VIVT */
 #define CACHE_TYPE_VIPT		2
 #define CACHE_TYPE_PIPT		3
@@ -45,11 +45,6 @@ struct aarch64_cache_unit {
 	u_int cache_sets;
 	u_int cache_way_size;
 	u_int cache_size;
-	u_int cache_purging;
-#define CACHE_PURGING_WB	0x01
-#define CACHE_PURGING_WT	0x02
-#define CACHE_PURGING_RA	0x04
-#define CACHE_PURGING_WA	0x08
 };
 
 struct aarch64_cache_info {
