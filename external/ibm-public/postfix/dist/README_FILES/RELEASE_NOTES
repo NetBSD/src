@@ -25,6 +25,14 @@ more recent Eclipse Public License 2.0. Recipients can choose to take
 the software under the license of their choice. Those who are more
 comfortable with the IPL can continue with that license.
 
+libc-musl workaround for Postfix 3.2.15, 3.3.10, 3.4.12, and 3.5.2
+------------------------------------------------------------------
+
+Security: this release disables DANE support on Linux systems with
+libc-musl, because libc-musl provides no indication whether DNS
+responses are authentic. This broke DANE support without a clear
+explanation.
+
 Major changes - multiple relayhost in SMTP
 ------------------------------------------
 
