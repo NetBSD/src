@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.46 2019/04/07 22:31:54 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.47 2020/05/25 14:52:48 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.46 2019/04/07 22:31:54 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.47 2020/05/25 14:52:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -563,7 +563,7 @@ label:
 				*/
 				continue;
 			case 'z':
-#if defined TM_GMTOFF || USG_COMPAT || defined ALTZONE
+#if defined TM_GMTOFF || USG_COMPAT || ALTZONE
 				{
 				long		diff;
 				char const *	sign;
@@ -601,7 +601,7 @@ label:
 					continue;
 #   endif
 				else
-#   ifdef ALTZONE
+#   if ALTZONE
 					diff = -altzone;
 #   else
 					continue;
