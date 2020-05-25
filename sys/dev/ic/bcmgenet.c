@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.6 2020/05/25 19:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.6 2020/05/25 19:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,6 +165,8 @@ genet_update_link(struct genet_softc *sc)
 	val |= GENET_EXT_RGMII_OOB_RGMII_MODE_EN;
 	if (sc->sc_phy_mode == GENET_PHY_MODE_RGMII)
 		val |= GENET_EXT_RGMII_OOB_ID_MODE_DISABLE;
+	else
+		val &= ~GENET_EXT_RGMII_OOB_ID_MODE_DISABLE;
 	WR4(sc, GENET_EXT_RGMII_OOB_CTRL, val);
 
 	val = RD4(sc, GENET_UMAC_CMD);
@@ -507,9 +509,13 @@ genet_init_locked(struct genet_softc *sc)
 		return 0;
 
 	if (sc->sc_phy_mode == GENET_PHY_MODE_RGMII ||
-	    sc->sc_phy_mode == GENET_PHY_MODE_RGMII_RXID)
+	    sc->sc_phy_mode == GENET_PHY_MODE_RGMII_ID ||
+	    sc->sc_phy_mode == GENET_PHY_MODE_RGMII_RXID ||
+	    sc->sc_phy_mode == GENET_PHY_MODE_RGMII_TXID)
 		WR4(sc, GENET_SYS_PORT_CTRL,
 		    GENET_SYS_PORT_MODE_EXT_GPHY);
+	else
+		WR4(sc, GENET_SYS_PORT_CTRL, 0);
 
 	/* Write hardware address */
 	val = enaddr[3] | (enaddr[2] << 8) | (enaddr[1] << 16) |
@@ -908,6 +914,7 @@ genet_attach(struct genet_softc *sc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	u_int maj, min;
+	int mii_flags = 0;
 
 	const uint32_t rev = RD4(sc, GENET_SYS_REV_CTRL);
 	min = __SHIFTOUT(rev, SYS_REV_MINOR);
@@ -920,6 +927,21 @@ genet_attach(struct genet_softc *sc)
 	if (maj != 5) {
 		aprint_error(": GENETv%d.%d not supported\n", maj, min);
 		return ENXIO;
+	}
+
+	switch (sc->sc_phy_mode) {
+	case GENET_PHY_MODE_RGMII_TXID:
+		mii_flags |= MIIF_TXID;
+		break;
+	case GENET_PHY_MODE_RGMII_RXID:
+		mii_flags |= MIIF_RXID;
+		break;
+	case GENET_PHY_MODE_RGMII_ID:
+		mii_flags |= MIIF_RXID | MIIF_TXID;
+		break;
+	case GENET_PHY_MODE_RGMII:
+	default:
+		break;
 	}
 
 	aprint_naive("\n");
@@ -968,7 +990,7 @@ genet_attach(struct genet_softc *sc)
 	mii->mii_writereg = genet_mii_writereg;
 	mii->mii_statchg = genet_mii_statchg;
 	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id, MII_OFFSET_ANY,
-	    0);
+	    mii_flags);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {
 		aprint_error_dev(sc->sc_dev, "no PHY found!\n");
