@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.7 2020/05/25 17:00:20 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.8 2020/05/25 17:06:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.7 2020/05/25 17:00:20 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.8 2020/05/25 17:06:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3041,6 +3041,8 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
+		sigblock(sigmask(SIGCHLD));
+
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
@@ -3197,16 +3199,6 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 	}
 #endif
 
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
 	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
@@ -3332,6 +3324,8 @@ fork_detach_forker_body(const char *fn, bool kill_process)
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		sigblock(sigmask(SIGCHLD));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -5763,6 +5757,8 @@ fork2_body(const char *fn, bool masked, bool ignored)
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
+		sigblock(sigmask(SIGCHLD));
+
 		if (masked) {
 			sigemptyset(&intmask);
 			sigaddset(&intmask, SIGTRAP);
@@ -6061,16 +6057,6 @@ fork2_body(const char *fn, bool masked, bool ignored)
 		TWAIT_REQUIRE_FAILURE(ECHILD,
 		    wpid = TWAIT_GENERIC(child2, &status, 0));
 	}
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
