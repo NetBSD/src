@@ -1,8 +1,8 @@
-.\"	$NetBSD: tzfile.5,v 1.29 2019/07/03 15:50:16 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.30 2020/05/25 14:52:48 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-.Dd July 2, 2019
+.Dd May 25, 2020
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@ Six four-byte integer values, in the following order:
 .Bl -inset
 .It Va tzh_ttisutcnt
 The number of UT/local indicators stored in the file.
+(UT is Universal Time.)
 .It Va tzh_ttisstdcnt
 The number of standard/wall indicators stored in the file.
 .It Va tzh_leapcnt
