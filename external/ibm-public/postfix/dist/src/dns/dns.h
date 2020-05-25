@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.4 2020/05/25 23:47:13 christos Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -61,6 +61,7 @@
  */
 #ifdef NO_DNSSEC
 #undef RES_USE_DNSSEC
+#undef RES_TRUSTAD
 #endif
 
  /*
@@ -71,6 +72,9 @@
 #endif
 #ifndef RES_USE_EDNS0
 #define RES_USE_EDNS0	0
+#endif
+#ifndef RES_TRUSTAD
+#define RES_TRUSTAD	0
 #endif
 
  /*-
