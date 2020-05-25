@@ -1,4 +1,4 @@
-/*	$NetBSD: netof.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: netof.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
 
 /* 
  * netof - return the net address part of an ip address in a sockaddr_storage structure

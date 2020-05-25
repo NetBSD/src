@@ -1,4 +1,4 @@
-/*	$NetBSD: t-ntpq.c,v 1.1.1.5 2020/05/25 20:40:16 christos Exp $	*/
+/*	$NetBSD: t-ntpq.c,v 1.2 2020/05/25 20:47:37 christos Exp $	*/
 
 #include "config.h"
 

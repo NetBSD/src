@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.5 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group

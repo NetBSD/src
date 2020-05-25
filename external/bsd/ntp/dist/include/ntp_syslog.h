@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities
@@ -84,5 +84,8 @@ do {								\
 	NLOG(NLOG_##nlog_suffix)	/* like "if (...) */	\
 		msyslog msl_args;				\
 } while (FALSE)
+
+extern int change_iobufs(int how);
+/* how: 0->unbuffered, 1->linebuffer, 2->full */
 
 #endif /* NTP_SYSLOG_H */

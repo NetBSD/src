@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.8 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.9 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-/* Id */
+	"Id: inet_ntop.c,v 1.21 2009/07/17 23:47:41 tbox Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -41,7 +41,6 @@ static char rcsid[] =
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-#ifdef notdef
 static const char *inet_ntop4(const unsigned char *src, char *dst,
 			      size_t size);
 
@@ -50,9 +49,7 @@ static const char *inet_ntop6(const unsigned char *src, char *dst,
 			      size_t size);
 #endif
 const char *isc_net_ntop(int af, const void *src, char *dst, size_t size);
-#endif
 
-#ifdef notdef
 /*! char *
  * isc_net_ntop(af, src, dst, size)
  *	convert a network format address to presentation format.
@@ -93,11 +90,11 @@ isc_net_ntop(int af, const void *src, char *dst, size_t size)
 static const char *
 inet_ntop4(const unsigned char *src, char *dst, size_t size)
 {
-	static const char *fmt = "%u.%u.%u.%u";
+#define	FMT "%u.%u.%u.%u"
 	char tmp[sizeof("255.255.255.255")];
 	int len;
 
-	len = snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
+	len = snprintf(tmp, sizeof(tmp), FMT, src[0], src[1], src[2], src[3]);
 	if (len < 0 || (size_t)len >= size)
 	{
 		errno = ENOSPC;
@@ -206,4 +203,3 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 	return (dst);
 }
 #endif /* AF_INET6 */
-#endif

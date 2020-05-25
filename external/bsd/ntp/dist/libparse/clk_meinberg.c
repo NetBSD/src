@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.6 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.7 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A

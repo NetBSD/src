@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: buffer.c,v 1.49 2008/09/25 04:02:39 tbox Exp  */
 
 /*! \file */
 

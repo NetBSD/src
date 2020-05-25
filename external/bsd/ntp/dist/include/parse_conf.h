@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_conf.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: parse_conf.h,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/parse_conf.h,v 4.7 2005/06/25 10:58:45 kardel RELEASE_20050625_A

@@ -1,4 +1,4 @@
-/*	$NetBSD: authusekey.c,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
