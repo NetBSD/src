@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.61 2020/05/25 09:31:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.62 2020/05/25 09:36:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.61 2020/05/25 09:31:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.62 2020/05/25 09:36:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -205,6 +205,9 @@ struct vioif_ctrl_cmdspec {
  * + ctrlq_inuse is protected by ctrlq_wait_lock.
  *      - other fields in vioif_ctrlqueue are protected by ctrlq_inuse
  *      - txq_lock or rxq_lock cannot be held along with ctrlq_wait_lock
+ * + fields in vioif_softc except queues are protected by
+ *   sc->sc_lock(an adaptive mutex)
+ *      - the lock is held before acquisition of other locks
  */
 
 struct vioif_work {
@@ -279,6 +282,7 @@ struct vioif_ctrlqueue {
 
 struct vioif_softc {
 	device_t		sc_dev;
+	kmutex_t		sc_lock;
 	struct sysctllog	*sc_sysctllog;
 
 	struct virtio_softc	*sc_virtio;
@@ -793,6 +797,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rx_intr_process_limit = VIOIF_RX_INTR_PROCESS_LIMIT;
 	sc->sc_rx_process_limit = VIOIF_RX_PROCESS_LIMIT;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_txrx", device_xname(self));
 	sc->sc_txrx_workqueue = vioif_workq_create(xnamebuf, VIOIF_WORKQUEUE_PRI,
 	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
@@ -1039,6 +1045,7 @@ err:
 		virtio_free_vq(vsc, &sc->sc_vqs[--nvqs]);
 
 	vioif_free_queues(sc);
+	mutex_destroy(&sc->sc_lock);
 	virtio_child_attach_failed(vsc);
 	config_finalize_register(self, vioif_finalize_teardown);
 
@@ -2274,6 +2281,8 @@ vioif_update_link_status(struct vioif_softc *sc)
 	bool active, changed;
 	int link, i;
 
+	mutex_enter(&sc->sc_lock);
+
 	active = vioif_is_link_up(sc);
 	changed = false;
 
@@ -2302,6 +2311,8 @@ vioif_update_link_status(struct vioif_softc *sc)
 
 		if_link_state_change(ifp, link);
 	}
+
+	mutex_exit(&sc->sc_lock);
 }
 
 static int
