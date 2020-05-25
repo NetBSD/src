@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.57 2020/05/25 08:25:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.58 2020/05/25 08:41:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.57 2020/05/25 08:25:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.58 2020/05/25 08:41:13 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -404,6 +404,65 @@ vioif_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
+static int
+vioif_dmamap_create(struct vioif_softc *sc, bus_dmamap_t *map,
+    bus_size_t size, int nsegs, const char *usage)
+{
+	int r;
+
+	r = bus_dmamap_create(virtio_dmat(sc->sc_virtio), size,
+	    nsegs, size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, map);
+
+	if (r != 0) {
+		aprint_error_dev(sc->sc_dev, "%s dmamap creation failed, "
+		    "error code %d\n", usage, r);
+	}
+
+	return r;
+}
+
+static void
+vioif_dmamap_destroy(struct vioif_softc *sc, bus_dmamap_t *map)
+{
+
+	if (*map) {
+		bus_dmamap_destroy(virtio_dmat(sc->sc_virtio), *map);
+		*map = NULL;
+	}
+}
+
+static int
+vioif_dmamap_create_load(struct vioif_softc *sc, bus_dmamap_t *map,
+    void *buf, bus_size_t size, int nsegs, int rw, const char *usage)
+{
+	int r;
+
+	r = vioif_dmamap_create(sc, map, size, nsegs, usage);
+	if (r != 0)
+		return 1;
+
+	r = bus_dmamap_load(virtio_dmat(sc->sc_virtio), *map, buf,
+	    size, NULL, rw | BUS_DMA_NOWAIT);
+	if (r != 0) {
+		vioif_dmamap_destroy(sc, map);
+		aprint_error_dev(sc->sc_dev, "%s dmamap load failed. "
+		    "error code %d\n", usage, r);
+	}
+
+	return r;
+}
+
+static void *
+vioif_assign_mem(intptr_t *p, size_t size)
+{
+	intptr_t rv;
+
+	rv = *p;
+	*p += size;
+
+	return (void *)rv;
+}
+
 static void
 vioif_alloc_queues(struct vioif_softc *sc)
 {
@@ -528,8 +587,6 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		goto err_dmamem_alloc;
 	}
 
-#define P(p, p0, p0size)	do { p0 = (void *) p;		\
-				     p += p0size; } while (0)
 	memset(vaddr, 0, allocsize);
 	sc->sc_dmamem = vaddr;
 	p = (intptr_t) vaddr;
@@ -538,19 +595,24 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		rxq = &sc->sc_rxq[qid];
 		txq = &sc->sc_txq[qid];
 
-		P(p, rxq->rxq_hdrs,
+		rxq->rxq_hdrs = vioif_assign_mem(&p,
 		    sizeof(rxq->rxq_hdrs[0]) * rxq->rxq_vq->vq_num);
-		P(p, txq->txq_hdrs,
+		txq->txq_hdrs = vioif_assign_mem(&p,
 		    sizeof(txq->txq_hdrs[0]) * txq->txq_vq->vq_num);
 	}
 	if (sc->sc_has_ctrl) {
-		P(p, ctrlq->ctrlq_cmd, sizeof(*ctrlq->ctrlq_cmd));
-		P(p, ctrlq->ctrlq_status, sizeof(*ctrlq->ctrlq_status));
-		P(p, ctrlq->ctrlq_rx, sizeof(*ctrlq->ctrlq_rx));
-		P(p, ctrlq->ctrlq_mac_tbl_uc, sizeof(*ctrlq->ctrlq_mac_tbl_uc));
-		P(p, ctrlq->ctrlq_mac_tbl_mc, sizeof(*ctrlq->ctrlq_mac_tbl_mc)
+		ctrlq->ctrlq_cmd = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_cmd));
+		ctrlq->ctrlq_status = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_status));
+		ctrlq->ctrlq_rx = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_rx));
+		ctrlq->ctrlq_mac_tbl_uc = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_mac_tbl_uc));
+		ctrlq->ctrlq_mac_tbl_mc = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES);
-		P(p, ctrlq->ctrlq_mq, sizeof(*ctrlq->ctrlq_mq));
+		ctrlq->ctrlq_mq = vioif_assign_mem(&p, sizeof(*ctrlq->ctrlq_mq));
 	}
 
 	allocsize2 = 0;
@@ -581,126 +643,115 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		rxqsize = rxq->rxq_vq->vq_num;
 		txqsize = txq->txq_vq->vq_num;
 
-		P(p, rxq->rxq_hdr_dmamaps,
+		rxq->rxq_hdr_dmamaps = vioif_assign_mem(&p,
 		    sizeof(rxq->rxq_hdr_dmamaps[0]) * rxqsize);
-		P(p, txq->txq_hdr_dmamaps,
+		txq->txq_hdr_dmamaps = vioif_assign_mem(&p,
 		    sizeof(txq->txq_hdr_dmamaps[0]) * txqsize);
-		P(p, rxq->rxq_dmamaps, sizeof(rxq->rxq_dmamaps[0]) * rxqsize);
-		P(p, txq->txq_dmamaps, sizeof(txq->txq_dmamaps[0]) * txqsize);
-		P(p, rxq->rxq_mbufs, sizeof(rxq->rxq_mbufs[0]) * rxqsize);
-		P(p, txq->txq_mbufs, sizeof(txq->txq_mbufs[0]) * txqsize);
+		rxq->rxq_dmamaps = vioif_assign_mem(&p,
+		    sizeof(rxq->rxq_dmamaps[0]) * rxqsize);
+		txq->txq_dmamaps = vioif_assign_mem(&p,
+		    sizeof(txq->txq_dmamaps[0]) * txqsize);
+		rxq->rxq_mbufs = vioif_assign_mem(&p,
+		    sizeof(rxq->rxq_mbufs[0]) * rxqsize);
+		txq->txq_mbufs = vioif_assign_mem(&p,
+		    sizeof(txq->txq_mbufs[0]) * txqsize);
 	}
-#undef P
-
-#define C(map, size, nsegs, usage)					      \
-	do {								      \
-		r = bus_dmamap_create(virtio_dmat(vsc), size, nsegs, size, 0, \
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,			      \
-		    &map);						      \
-		if (r != 0) {						      \
-			aprint_error_dev(sc->sc_dev,			      \
-			    usage " dmamap creation failed, "		      \
-			    "error code %d\n", r);			      \
-			goto err_reqs;					      \
-		}							      \
-	} while (0)
-#define C_L(map, buf, size, nsegs, rw, usage)				\
-	C(map, size, nsegs, usage);					\
-	do {								\
-		r = bus_dmamap_load(virtio_dmat(vsc), map,		\
-				    buf, size, NULL,			\
-				    rw | BUS_DMA_NOWAIT);		\
-		if (r != 0) {						\
-			aprint_error_dev(sc->sc_dev,			\
-			    usage " dmamap load failed, "		\
-			    "error code %d\n", r);			\
-			goto err_reqs;					\
-		}							\
-	} while (0)
 
 	for (qid = 0; qid < sc->sc_max_nvq_pairs; qid++) {
 		rxq = &sc->sc_rxq[qid];
 		txq = &sc->sc_txq[qid];
 
 		for (i = 0; i < rxq->rxq_vq->vq_num; i++) {
-			C_L(rxq->rxq_hdr_dmamaps[i], &rxq->rxq_hdrs[i],
-			    sizeof(rxq->rxq_hdrs[0]), 1,
+			r = vioif_dmamap_create_load(sc, &rxq->rxq_hdr_dmamaps[i],
+			    &rxq->rxq_hdrs[i], sizeof(rxq->rxq_hdrs[0]), 1,
 			    BUS_DMA_READ, "rx header");
-			C(rxq->rxq_dmamaps[i], MCLBYTES, 1, "rx payload");
+			if (r != 0)
+				goto err_reqs;
+
+			r = vioif_dmamap_create(sc, &rxq->rxq_dmamaps[i],
+			    MCLBYTES, 1, "rx payload");
+			if (r != 0)
+				goto err_reqs;
 		}
 
 		for (i = 0; i < txq->txq_vq->vq_num; i++) {
-			C_L(txq->txq_hdr_dmamaps[i], &txq->txq_hdrs[i],
-			    sizeof(txq->txq_hdrs[0]), 1,
+			r = vioif_dmamap_create_load(sc, &txq->txq_hdr_dmamaps[i],
+			    &txq->txq_hdrs[i], sizeof(txq->txq_hdrs[0]), 1,
 			    BUS_DMA_READ, "tx header");
-			C(txq->txq_dmamaps[i], ETHER_MAX_LEN,
+			if (r != 0)
+				goto err_reqs;
+
+			r = vioif_dmamap_create(sc, &txq->txq_dmamaps[i], ETHER_MAX_LEN,
 			    VIRTIO_NET_TX_MAXNSEGS, "tx payload");
+			if (r != 0)
+				goto err_reqs;
 		}
 	}
 
 	if (sc->sc_has_ctrl) {
 		/* control vq class & command */
-		C_L(ctrlq->ctrlq_cmd_dmamap,
+		r = vioif_dmamap_create_load(sc, &ctrlq->ctrlq_cmd_dmamap,
 		    ctrlq->ctrlq_cmd, sizeof(*ctrlq->ctrlq_cmd), 1,
 		    BUS_DMA_WRITE, "control command");
-		C_L(ctrlq->ctrlq_status_dmamap,
+		if (r != 0)
+			goto err_reqs;
+
+		r = vioif_dmamap_create_load(sc, &ctrlq->ctrlq_status_dmamap,
 		    ctrlq->ctrlq_status, sizeof(*ctrlq->ctrlq_status), 1,
 		    BUS_DMA_READ, "control status");
+		if (r != 0)
+			goto err_reqs;
 
 		/* control vq rx mode command parameter */
-		C_L(ctrlq->ctrlq_rx_dmamap,
+		r = vioif_dmamap_create_load(sc, &ctrlq->ctrlq_rx_dmamap,
 		    ctrlq->ctrlq_rx, sizeof(*ctrlq->ctrlq_rx), 1,
 		    BUS_DMA_WRITE, "rx mode control command");
+		if (r != 0)
+			goto err_reqs;
 
 		/* multiqueue set command */
-		C_L(ctrlq->ctrlq_mq_dmamap,
+		r = vioif_dmamap_create_load(sc, &ctrlq->ctrlq_mq_dmamap,
 		    ctrlq->ctrlq_mq, sizeof(*ctrlq->ctrlq_mq), 1,
 		    BUS_DMA_WRITE, "multiqueue set command");
+		if (r != 0)
+			goto err_reqs;
 
 		/* control vq MAC filter table for unicast */
 		/* do not load now since its length is variable */
-		C(ctrlq->ctrlq_tbl_uc_dmamap,
+		r = vioif_dmamap_create(sc, &ctrlq->ctrlq_tbl_uc_dmamap,
 		    sizeof(*ctrlq->ctrlq_mac_tbl_uc) + 0, 1,
 		    "unicast MAC address filter command");
+		if (r != 0)
+			goto err_reqs;
 
 		/* control vq MAC filter table for multicast */
-		C(ctrlq->ctrlq_tbl_mc_dmamap,
+		r = vioif_dmamap_create(sc, &ctrlq->ctrlq_tbl_mc_dmamap,
 		    sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES, 1,
 		    "multicast MAC address filter command");
 	}
-#undef C_L
-#undef C
 
 	return 0;
 
 err_reqs:
-#define D(map)								\
-	do {								\
-		if (map) {						\
-			bus_dmamap_destroy(virtio_dmat(vsc), map);	\
-			map = NULL;					\
-		}							\
-	} while (0)
-	D(ctrlq->ctrlq_tbl_mc_dmamap);
-	D(ctrlq->ctrlq_tbl_uc_dmamap);
-	D(ctrlq->ctrlq_rx_dmamap);
-	D(ctrlq->ctrlq_status_dmamap);
-	D(ctrlq->ctrlq_cmd_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_tbl_mc_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_tbl_uc_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_rx_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_status_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_cmd_dmamap);
 	for (qid = 0; qid < sc->sc_max_nvq_pairs; qid++) {
 		rxq = &sc->sc_rxq[qid];
 		txq = &sc->sc_txq[qid];
 
 		for (i = 0; i < txq->txq_vq->vq_num; i++) {
-			D(txq->txq_dmamaps[i]);
-			D(txq->txq_hdr_dmamaps[i]);
+			vioif_dmamap_destroy(sc, &txq->txq_dmamaps[i]);
+			vioif_dmamap_destroy(sc, &txq->txq_hdr_dmamaps[i]);
 		}
 		for (i = 0; i < rxq->rxq_vq->vq_num; i++) {
-			D(rxq->rxq_dmamaps[i]);
-			D(rxq->rxq_hdr_dmamaps[i]);
+			vioif_dmamap_destroy(sc, &rxq->rxq_dmamaps[i]);
+			vioif_dmamap_destroy(sc, &rxq->rxq_hdr_dmamaps[i]);
 		}
 	}
-#undef D
 	if (sc->sc_kmem) {
 		kmem_free(sc->sc_kmem, allocsize2);
 		sc->sc_kmem = NULL;
