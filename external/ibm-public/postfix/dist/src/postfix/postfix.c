@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postfix.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -244,7 +244,7 @@
 /*	logrotate".
 /* .IP "\fBmaillog_file_prefixes (/var, /dev/stdout)\fR"
 /*	A list of allowed prefixes for a maillog_file value.
-/* .IP "\fBmaillog_file_rotate_suffix (%Y%M%d-%H%M%S)\fR"
+/* .IP "\fBmaillog_file_rotate_suffix (%Y%m%d-%H%M%S)\fR"
 /*	The format of the suffix to append to $maillog_file while rotating
 /*	the file with "postfix logrotate".
 /* .IP "\fBpostlog_service_name (postlog)\fR"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -873,6 +873,8 @@ void    mail_params_init()
     var_smtputf8_enable = 0;
 #else
     midna_domain_transitional = var_idna2003_compat;
+    if (var_smtputf8_enable)
+	midna_domain_pre_chroot();
 #endif
     util_utf8_enable = var_smtputf8_enable;
 

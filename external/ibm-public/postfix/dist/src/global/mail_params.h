@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.16 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.17 2020/05/25 23:47:14 christos Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -4183,7 +4183,7 @@ extern char *var_maillog_file_pfxs;
 extern char *var_maillog_file_comp;
 
 #define VAR_MAILLOG_FILE_STAMP	"maillog_file_rotate_suffix"
-#define DEF_MAILLOG_FILE_STAMP	"%Y%M%d-%H%M%S"
+#define DEF_MAILLOG_FILE_STAMP	"%Y%m%d-%H%M%S"
 extern char *var_maillog_file_stamp;
 
 #define VAR_POSTLOG_SERVICE	"postlog_service_name"

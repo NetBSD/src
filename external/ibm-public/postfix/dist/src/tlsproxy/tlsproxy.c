@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -783,6 +783,7 @@ static void tlsp_strategy(TLSP_STATE *state)
 	 */
 	if (state->flags & TLSP_FLAG_DO_HANDSHAKE) {
 	    state->timeout = state->handshake_timeout;
+	    ERR_clear_error();
 	    if (state->is_server_role)
 		ssl_stat = SSL_accept(tls_context->con);
 	    else
@@ -811,6 +812,7 @@ static void tlsp_strategy(TLSP_STATE *state)
 	if (NBBIO_ERROR_FLAGS(plaintext_buf)) {
 	    if (NBBIO_ACTIVE_FLAGS(plaintext_buf))
 		nbbio_disable_readwrite(state->plaintext_buf);
+	    ERR_clear_error();
 	    if (!SSL_in_init(tls_context->con)
 		&& (ssl_stat = SSL_shutdown(tls_context->con)) < 0) {
 		handshake_err = SSL_get_error(tls_context->con, ssl_stat);
@@ -840,6 +842,7 @@ static void tlsp_strategy(TLSP_STATE *state)
 	 */
 	ssl_write_err = SSL_ERROR_NONE;
 	while (NBBIO_READ_PEND(plaintext_buf) > 0) {
+	    ERR_clear_error();
 	    ssl_stat = SSL_write(tls_context->con, NBBIO_READ_BUF(plaintext_buf),
 				 NBBIO_READ_PEND(plaintext_buf));
 	    ssl_write_err = SSL_get_error(tls_context->con, ssl_stat);
@@ -872,6 +875,7 @@ static void tlsp_strategy(TLSP_STATE *state)
 	 */
 	ssl_read_err = SSL_ERROR_NONE;
 	while (NBBIO_WRITE_PEND(state->plaintext_buf) < NBBIO_BUFSIZE(plaintext_buf)) {
+	    ERR_clear_error();
 	    ssl_stat = SSL_read(tls_context->con,
 				NBBIO_WRITE_BUF(plaintext_buf)
 				+ NBBIO_WRITE_PEND(state->plaintext_buf),
@@ -1495,16 +1499,15 @@ static void tlsp_service(VSTREAM *plaintext_stream,
 			    TLSP_INIT_TIMEOUT, (void *) state);
 }
 
-/* pre_jail_init - pre-jail initialization */
+/* pre_jail_init_server - pre-jail initialization */
 
-static void pre_jail_init(char *unused_name, char **unused_argv)
+static void pre_jail_init_server(void)
 {
     TLS_SERVER_INIT_PROPS props;
     const char *cert_file;
     int     have_server_cert;
     int     no_server_cert_ok;
     int     require_server_cert;
-    int     clnt_use_tls;
 
     /*
      * The code in this routine is pasted literally from smtpd(8). I am not
@@ -1537,7 +1540,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
     }
     var_tlsp_use_tls = var_tlsp_use_tls || var_tlsp_enforce_tls;
     if (!var_tlsp_use_tls) {
-	msg_warn("TLS service is requested, but disabled with %s or %s",
+	msg_warn("TLS server role is disabled with %s or %s",
 		 VAR_TLSP_TLS_LEVEL, VAR_TLSP_USE_TLS);
 	return;
     }
@@ -1628,6 +1631,13 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 	SSL_CTX_set_mode(tlsp_server_ctx->ssl_ctx,
 			 SSL_MODE_ENABLE_PARTIAL_WRITE
 			 | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+}
+
+/* pre_jail_init_client - pre-jail initialization */
+
+static void pre_jail_init_client(void)
+{
+    int     clnt_use_tls;
 
     /*
      * The cache with TLS_APPL_STATE instances for different TLS_CLIENT_INIT
@@ -1739,6 +1749,18 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 		msg_warn("TLS client initialization failed");
 	}
     }
+}
+
+/* pre_jail_init - pre-jail initialization */
+
+static void pre_jail_init(char *unused_name, char **unused_argv)
+{
+
+    /*
+     * Initialize roles separately.
+     */
+    pre_jail_init_server();
+    pre_jail_init_client();
 
     /*
      * tlsp_client_init() needs to know if it is called pre-jail or

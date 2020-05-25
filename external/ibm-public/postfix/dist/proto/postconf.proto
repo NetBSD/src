@@ -17651,7 +17651,7 @@ first argument. </p>
 
 <p> This feature is available in Postfix 3.4 and later. </p>
 
-%PARAM maillog_file_rotate_suffix %Y%M%d-%H%M%S
+%PARAM maillog_file_rotate_suffix %Y%m%d-%H%M%S
 
 <p> The format of the suffix to append to $maillog_file while rotating
 the file with "postfix logrotate". See strftime(3) for syntax. The

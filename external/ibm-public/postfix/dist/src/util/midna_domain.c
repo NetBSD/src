@@ -1,4 +1,4 @@
-/*	$NetBSD: midna_domain.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: midna_domain.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,8 @@
 /*
 /*	const char *midna_domain_suffix_to_utf8(
 /*	const char *name)
+/* AUXILIARY FUNCTIONS
+/*	void midna_domain_pre_chroot(void)
 /* DESCRIPTION
 /*	The functions in this module transform domain names from/to
 /*	ASCII and UTF-8 form. The result is cached to avoid repeated
@@ -54,6 +56,8 @@
 /*
 /*	midna_domain_transitional enables transitional conversion
 /*	between UTF8 and ASCII labels.
+/*
+/*	midna_domain_pre_chroot() does some pre-chroot initialization.
 /* SEE ALSO
 /*	http://unicode.org/reports/tr46/ Unicode IDNA Compatibility processing
 /*	msg(3) diagnostics interface
@@ -144,6 +148,22 @@ static const char *midna_domain_strerror(UErrorCode error, int info_errors)
     } else {
 	return u_errorName(error);
     }
+}
+
+/* midna_domain_pre_chroot - pre-chroot initialization */
+
+void    midna_domain_pre_chroot(void)
+{
+    UErrorCode error = U_ZERO_ERROR;
+    UIDNAInfo info = UIDNA_INFO_INITIALIZER;
+    UIDNA  *idna;
+
+    idna = uidna_openUTS46(midna_domain_transitional ? UIDNA_DEFAULT
+			   : UIDNA_NONTRANSITIONAL_TO_ASCII, &error);
+    if (U_FAILURE(error))
+	msg_warn("ICU library initialization failed: %s",
+		 midna_domain_strerror(error, info.errors));
+    uidna_close(idna);
 }
 
 /* midna_domain_to_ascii_create - convert domain to ASCII */
@@ -329,6 +349,7 @@ const char *midna_domain_suffix_to_utf8(const char *name)
  /*
   * Test program - reads names from stdin, reports invalid names to stderr.
   */
+#include <unistd.h>
 #include <stdlib.h>
 #include <locale.h>
 
@@ -352,6 +373,11 @@ int     main(int argc, char **argv)
     /* msg_verbose = 1; */
     util_utf8_enable = 1;
 
+    if (geteuid() == 0) {
+	midna_domain_pre_chroot();
+	if (chroot(".") != 0)
+	    msg_fatal("chroot(\".\"): %m");
+    }
     while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
 	bp = STR(buffer);
 	msg_info("> %s", bp);

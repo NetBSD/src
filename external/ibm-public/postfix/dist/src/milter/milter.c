@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: milter.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -622,14 +622,14 @@ void    milter_disc_event(MILTERS *milters)
   * names by skipping the redundant "milter_" prefix.
   */
 static ATTR_OVER_TIME time_table[] = {
-    7 + VAR_MILT_CONN_TIME, DEF_MILT_CONN_TIME, 0, 1, 0,
-    7 + VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, 0, 1, 0,
-    7 + VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_CONN_TIME, DEF_MILT_CONN_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, 0, 1, 0,
+    7 + (const char *) VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, 0, 1, 0,
     0,
 };
 static ATTR_OVER_STR str_table[] = {
-    7 + VAR_MILT_PROTOCOL, 0, 1, 0,
-    7 + VAR_MILT_DEF_ACTION, 0, 1, 0,
+    7 + (const char *) VAR_MILT_PROTOCOL, 0, 1, 0,
+    7 + (const char *) VAR_MILT_DEF_ACTION, 0, 1, 0,
     0,
 };
 

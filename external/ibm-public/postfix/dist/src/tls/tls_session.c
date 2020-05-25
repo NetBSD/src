@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_session.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_session.c,v 1.3 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -120,7 +120,7 @@ void    tls_session_stop(TLS_APPL_STATE *unused_ctx, VSTREAM *stream, int timeou
      * so we will not perform SSL_shutdown() and the session will be removed
      * as being bad.
      */
-    if (!failure) {
+    if (!failure && !SSL_in_init(TLScontext->con)) {
 	retval = tls_bio_shutdown(vstream_fileno(stream), timeout, TLScontext);
 	if (!var_tls_fast_shutdown && retval == 0)
 	    tls_bio_shutdown(vstream_fileno(stream), timeout, TLScontext);
