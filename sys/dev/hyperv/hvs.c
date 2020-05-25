@@ -1,4 +1,4 @@
-/*	$NetBSD: hvs.c,v 1.3 2019/11/25 08:53:39 nonaka Exp $	*/
+/*	$NetBSD: hvs.c,v 1.4 2020/05/25 10:14:58 nonaka Exp $	*/
 /*	$OpenBSD: hvs.c,v 1.17 2017/08/10 17:22:48 mikeb Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /* #define HVS_DEBUG_IO */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.3 2019/11/25 08:53:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.4 2020/05/25 10:14:58 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ union hvs_cmd {
 
 #define HVS_RING_SIZE			(20 * PAGE_SIZE)
 #define HVS_MAX_CCB			128
-#define HVS_MAX_SGE			(MAXPHYS / PAGE_SIZE + 1)
+#define HVS_MAX_SGE			(howmany(MAXPHYS, PAGE_SIZE) + 1)
 
 struct hvs_softc;
 
