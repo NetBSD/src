@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.58 2020/05/25 08:41:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.59 2020/05/25 09:07:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.58 2020/05/25 08:41:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.59 2020/05/25 09:07:43 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1375,8 +1375,7 @@ vioif_start(struct ifnet *ifp)
 #endif
 
 	mutex_enter(txq->txq_lock);
-	if (!txq->txq_stopping)
-		vioif_start_locked(ifp, txq);
+	vioif_start_locked(ifp, txq);
 	mutex_exit(txq->txq_lock);
 }
 
@@ -1418,8 +1417,7 @@ vioif_transmit(struct ifnet *ifp, struct mbuf *m)
 	IF_STAT_PUTREF(ifp);
 
 	if (mutex_tryenter(txq->txq_lock)) {
-		if (!txq->txq_stopping)
-			vioif_transmit_locked(ifp, txq);
+		vioif_transmit_locked(ifp, txq);
 		mutex_exit(txq->txq_lock);
 	}
 
