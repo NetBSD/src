@@ -24663,7 +24663,7 @@ Apologies for any names omitted.
 
 	Usability: the Postfix SMTP server now logs a warning when
 	a configuration requests access control by client certificate,
-	but "smtpd_tls_ask_clientcert = no".  Files: proto/postconf.proto,
+	but "smtpd_tls_ask_ccert = no". Files: proto/postconf.proto,
 	smtpd/smtpd_check.c.
 
 20200316
@@ -24671,3 +24671,69 @@ Apologies for any names omitted.
 	Removed the issuer_cn and subject_cn matches from
 	check_ccert_access. Files: smtpd/smtpd_check.c,
 	proto/postconf.proto.
+
+20200416
+
+	Workaround for broken builds after an incompatible change
+	in GCC 10. Files: makedefs, Makefile.in.
+
+	Workaround for broken DANE support after an incompatible
+	change in GLIBC 2.31. This avoids the need for new options
+	in /etc/resolv.conf. Files: dns/dns.h, dns/dns_lookup.c.
+
+20200419
+
+	Bugfix: segfault in the tlsproxy client role when the server
+	role was disabled. This typically happens on systems that
+	do not receive mail, after configuring connection reuse for
+	outbound TLS. Found during program maintenance. File:
+	tlsproxy/tlsproxy.c.
+
+20200420
+
+	Noise suppression: shut up a compiler that special-cases
+	string literals. Viktor Dukhovni. File milter/milter.c.
+
+20200422
+
+	Security: disable DANE support on Alpine Linux because
+	libc-musl provides no indication whether DNS responses are
+	authentic. This broke DANE support without a clear explanation.
+	File: makedefs.
+
+20200505
+
+	Noise suppression: shut up a compiler that special-cases
+	string literals. Viktor Dukhovni. File smtpd/smtpd_check.c.
+
+20200509
+
+	Bugfix (introduced: Postfix 3.5): maillog_file_rotate_suffix
+	default value used the minute instead of the month. Reported
+	by Larry Stone. Files: conf/postfix-tls-script,
+	proto/MAILLOG_README.html, proto/postconf.proto.
+	global/mail_params.h, postfix/postfix.c.
+
+20200510
+
+	Bitrot: avoid U_FILE_ACCESS_ERROR after chroot(), by
+	initializing the ICU library before making the chroot()
+	call. Files: util/midna_domain.[hc], global/mail_params.c.
+
+20200511
+
+	Noise suppression: avoid "SSL_Shutdown:shutdown while in
+	init" warnings. File: tls/tls_session.c.
+
+20200515
+
+	Bugfix (introduced: Postfix 2.2): a TLS error for a PostgreSQL
+	client caused a false 'lost connection' error for an SMTP
+	over TLS session in the same Postfix process. Reported by
+	Alexander Vasarab, diagnosed by Viktor Dukhovni. File:
+	tls/tls_bio_ops.c.
+
+	Bugfix (introduced: Postfix 2.8): a TLS error for one TLS
+	session may cause a false 'lost connection' error for a
+	concurrent TLS session in the same tlsproxy process. File:
+	tlsproxy/tlsproxy.c.
