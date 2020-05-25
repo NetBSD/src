@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.52 2020/01/30 14:02:14 thorpej Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.53 2020/05/25 07:20:15 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.52 2020/01/30 14:02:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.53 2020/05/25 07:20:15 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.52 2020/01/30 14:02:14 thorpej Exp $"
 #ifdef NET_MPSAFE
 #define VIOIF_MPSAFE	1
 #define VIOIF_MULTIQ	1
-#endif
-
-#ifdef SOFTINT_INTR
-#define VIOIF_SOFTINT_INTR	1
 #endif
 
 /*
@@ -695,9 +691,6 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 #ifdef VIOIF_MPSAFE
 	req_flags |= VIRTIO_F_PCI_INTR_MPSAFE;
-#endif
-#ifdef VIOIF_SOFTINT_INTR
-	req_flags |= VIRTIO_F_PCI_INTR_SOFTINT;
 #endif
 	req_flags |= VIRTIO_F_PCI_INTR_MSIX;
 
@@ -1466,10 +1459,6 @@ vioif_rx_vq_done(struct virtqueue *vq)
 	struct vioif_rxqueue *rxq = vq->vq_done_ctx;
 	int r = 0;
 
-#ifdef VIOIF_SOFTINT_INTR
-	KASSERT(!cpu_intr_p());
-#endif
-
 	mutex_enter(rxq->rxq_lock);
 
 	if (rxq->rxq_stopping)
@@ -1477,11 +1466,7 @@ vioif_rx_vq_done(struct virtqueue *vq)
 
 	r = vioif_rx_deq_locked(rxq);
 	if (r)
-#ifdef VIOIF_SOFTINT_INTR
-		vioif_populate_rx_mbufs_locked(rxq);
-#else
 		softint_schedule(rxq->rxq_softint);
-#endif
 
 out:
 	mutex_exit(rxq->rxq_lock);
@@ -2011,18 +1996,7 @@ vioif_config_change(struct virtio_softc *vsc)
 {
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 
-#ifdef VIOIF_SOFTINT_INTR
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-#endif
-
-#ifdef VIOIF_SOFTINT_INTR
-	KASSERT(!cpu_intr_p());
-	vioif_update_link_status(sc);
-	vioif_start(ifp);
-#else
 	softint_schedule(sc->sc_ctl_softint);
-#endif
-
 	return 0;
 }
 
