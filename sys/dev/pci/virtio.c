@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.38 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: virtio.c,v 1.39 2020/05/25 07:29:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.38 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.39 2020/05/25 07:29:52 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,54 +233,6 @@ vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
 			offset, sizeof(struct vring_desc) * vq->vq_maxnsegs,
 			ops);
-}
-
-static void
-virtio_vq_soft_intr(void *arg)
-{
-	struct virtqueue *vq = arg;
-
-	KASSERT(vq->vq_intrhand != NULL);
-
-	(vq->vq_intrhand)(vq);
-}
-
-static int
-virtio_vq_softint_establish(struct virtio_softc *sc)
-{
-	struct virtqueue *vq;
-	int qid;
-	u_int flags;
-
-	flags = SOFTINT_NET;
-	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
-		flags |= SOFTINT_MPSAFE;
-
-	for (qid = 0; qid < sc->sc_nvqs; qid++) {
-		vq = &sc->sc_vqs[qid];
-		vq->vq_soft_ih =
-		    softint_establish(flags, virtio_vq_soft_intr, vq);
-		if (vq->vq_soft_ih == NULL)
-			return -1;
-	}
-
-	return 0;
-}
-
-static void
-virtio_vq_softint_disestablish(struct virtio_softc *sc)
-{
-	struct virtqueue *vq;
-	int qid;
-
-	for (qid = 0; qid < sc->sc_nvqs; qid++) {
-		vq = &sc->sc_vqs[qid];
-		if (vq->vq_soft_ih == NULL)
-			continue;
-
-		softint_disestablish(vq->vq_soft_ih);
-		vq->vq_soft_ih = NULL;
-	}
 }
 
 /*
@@ -910,6 +862,9 @@ void
 virtio_child_attach_set_vqs(struct virtio_softc *sc,
     struct virtqueue *vqs, int nvq_pairs)
 {
+
+	KASSERT(nvq_pairs == 1 ||
+	    (sc->sc_flags & VIRTIO_F_PCI_INTR_SOFTINT) == 0);
 	if (nvq_pairs > 1)
 		sc->sc_child_mq = true;
 
@@ -940,13 +895,6 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 			    "failed to establish soft interrupt\n");
 			goto fail;
 		}
-
-		if (sc->sc_child_mq) {
-			r = virtio_vq_softint_establish(sc);
-			aprint_error_dev(sc->sc_dev,
-			    "failed to establish softint interrupt\n");
-			goto fail;
-		}
 	}
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
@@ -957,8 +905,6 @@ fail:
 		softint_disestablish(sc->sc_soft_ih);
 		sc->sc_soft_ih = NULL;
 	}
-
-	virtio_vq_softint_disestablish(sc);
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
 	return 1;

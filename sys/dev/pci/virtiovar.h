@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.13 2019/01/14 14:55:37 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.14 2020/05/25 07:29:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -117,7 +117,6 @@ struct virtqueue {
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
 	void			*vq_done_ctx;
-	void			*vq_soft_ih;
 	int			(*vq_intrhand)(struct virtqueue*);
 };
 
