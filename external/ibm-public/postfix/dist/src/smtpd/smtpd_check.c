@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -488,20 +488,20 @@ typedef struct {
   * parameter names by skipping the redundant "smtpd_policy_service_" prefix.
   */
 static ATTR_OVER_TIME time_table[] = {
-    21 + VAR_SMTPD_POLICY_TMOUT, DEF_SMTPD_POLICY_TMOUT, 0, 1, 0,
-    21 + VAR_SMTPD_POLICY_IDLE, DEF_SMTPD_POLICY_IDLE, 0, 1, 0,
-    21 + VAR_SMTPD_POLICY_TTL, DEF_SMTPD_POLICY_TTL, 0, 1, 0,
-    21 + VAR_SMTPD_POLICY_TRY_DELAY, DEF_SMTPD_POLICY_TRY_DELAY, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_TMOUT, DEF_SMTPD_POLICY_TMOUT, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_IDLE, DEF_SMTPD_POLICY_IDLE, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_TTL, DEF_SMTPD_POLICY_TTL, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_TRY_DELAY, DEF_SMTPD_POLICY_TRY_DELAY, 0, 1, 0,
     0,
 };
 static ATTR_OVER_INT int_table[] = {
-    21 + VAR_SMTPD_POLICY_REQ_LIMIT, 0, 0, 0,
-    21 + VAR_SMTPD_POLICY_TRY_LIMIT, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_REQ_LIMIT, 0, 0, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_TRY_LIMIT, 0, 1, 0,
     0,
 };
 static ATTR_OVER_STR str_table[] = {
-    21 + VAR_SMTPD_POLICY_DEF_ACTION, 0, 1, 0,
-    21 + VAR_SMTPD_POLICY_CONTEXT, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_DEF_ACTION, 0, 1, 0,
+    21 + (const char *) VAR_SMTPD_POLICY_CONTEXT, 0, 1, 0,
     0,
 };
 

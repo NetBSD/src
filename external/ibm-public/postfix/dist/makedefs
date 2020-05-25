@@ -228,6 +228,19 @@ case $# in
  *) echo usage: $0 [system release] 1>&2; exit 1;;
 esac
 
+case "$SYSTEM" in
+ Linux)
+    case "`PATH=/bin:/usr/bin ldd /bin/sh`" in
+     *-musl-*)
+	case "$CCARGS" in
+	 *-DNO_DNSSEC*) ;;
+	 *) echo Warning: libc-musl breaks DANE/TLSA security. 1>&2
+	    echo This build will not support DANE/TLSA. 1>&2
+	    CCARGS="$CCARGS -DNO_DNSSEC";;
+	esac;;
+    esac;;
+esac
+
 case "$SYSTEM.$RELEASE" in
    SCO_SV.3.2)	SYSTYPE=SCO5
 		# Use the native compiler by default
@@ -1136,7 +1149,7 @@ esac
 : ${CC=gcc} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk} \
 ${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused -Wno-missing-braces'}
+	-Wunused -Wno-missing-braces -fcommon'}
 
 # Extract map type names from -DHAS_XXX compiler options.  We avoid
 # problems with tr(1) range syntax by using enumerations instead,

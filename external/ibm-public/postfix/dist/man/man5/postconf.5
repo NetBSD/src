@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.16 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postconf.5,v 1.17 2020/05/25 23:47:13 christos Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -3824,7 +3824,7 @@ mistake. Specify one or more prefix strings, separated by comma or
 whitespace.
 .PP
 This feature is available in Postfix 3.4 and later.
-.SH maillog_file_rotate_suffix (default: %Y%M%d\-%H%M%S)
+.SH maillog_file_rotate_suffix (default: %Y%m%d\-%H%M%S)
 The format of the suffix to append to $maillog_file while rotating
 the file with "postfix logrotate". See \fBstrftime\fR(3) for syntax. The
 default suffix, YYYYMMDD\-HHMMSS, allows logs to be rotated frequently.
