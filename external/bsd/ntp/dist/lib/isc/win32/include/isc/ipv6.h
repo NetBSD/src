@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6.h,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.5 2020/05/25 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

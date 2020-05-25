@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_signd.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: ntp_signd.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
 
 /* Copyright 2008, Red Hat, Inc.
    Copyright 2008, Andrew Tridgell.

@@ -1,4 +1,4 @@
-/*	$NetBSD: libntp.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: libntp.h,v 1.5 2020/05/25 20:47:19 christos Exp $	*/
 
 /* libntp.h */
 

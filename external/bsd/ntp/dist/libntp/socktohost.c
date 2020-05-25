@@ -1,4 +1,4 @@
-/*	$NetBSD: socktohost.c,v 1.5 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: socktohost.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure

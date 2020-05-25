@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.c,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id */
+/* Id: commandline.c,v 1.22 2008/09/25 04:02:39 tbox Exp  */
 
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:

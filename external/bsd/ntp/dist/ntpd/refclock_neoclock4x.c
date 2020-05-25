@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.10 2019/02/03 10:48:47 mrg Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.11 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  *

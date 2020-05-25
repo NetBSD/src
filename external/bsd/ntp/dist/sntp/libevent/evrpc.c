@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: evrpc.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

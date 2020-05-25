@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_httpclient.c,v 1.5 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: bench_httpclient.c,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson

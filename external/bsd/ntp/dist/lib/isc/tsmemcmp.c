@@ -1,3 +1,5 @@
+/*	$NetBSD: tsmemcmp.c,v 1.3 2020/05/25 20:47:20 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.

@@ -1,7 +1,7 @@
-/*	$NetBSD: version.c,v 1.3 2018/09/29 21:52:34 christos Exp $	*/
+/*	$NetBSD: version.c,v 1.4 2020/05/25 20:47:32 christos Exp $	*/
 
 /*
  * version file for sntp
  */
 #include <config.h>
-const char * Version = "sntp 4.2.8p12@1.3728-o Tue Aug 14 12:27:30 UTC 2018 (54)";
+const char * Version = "sntp 4.2.8p14@1.3728-o Wed Mar  4 01:42:35 UTC 2020 (8)";

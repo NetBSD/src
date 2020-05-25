@@ -1,4 +1,4 @@
-/*	$NetBSD: timexsup.c,v 1.1.1.1 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: timexsup.c,v 1.2 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * timexsup.c - 'struct timex' support functions
@@ -13,6 +13,7 @@
 #include <math.h>
 
 #ifdef HAVE_SYS_TIMEX_H
+# include <time.h>
 # include <sys/timex.h>
 #endif
 

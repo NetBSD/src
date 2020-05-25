@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: poll.c,v 1.5 2020/05/25 20:47:33 christos Exp $	*/
 
 /*	$OpenBSD: poll.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 

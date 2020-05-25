@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.5 2020/05/25 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")

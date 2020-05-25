@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.5 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -73,7 +73,7 @@ getCmdOpts(
 	}
 
 	if (HAVE_OPT( DRIFTFILE ))
-		stats_config(STATS_FREQ_FILE, OPT_ARG( DRIFTFILE ));
+	    stats_config(STATS_FREQ_FILE, OPT_ARG( DRIFTFILE ), 0);
 
 	if (HAVE_OPT( PANICGATE ))
 		allow_panic = TRUE;
@@ -92,7 +92,7 @@ getCmdOpts(
 		getauthkeys(OPT_ARG( KEYFILE ));
 
 	if (HAVE_OPT( PIDFILE ))
-		stats_config(STATS_PID_FILE, OPT_ARG( PIDFILE ));
+	    stats_config(STATS_PID_FILE, OPT_ARG( PIDFILE ), 0);
 
 	if (HAVE_OPT( QUIT ))
 		mode_ntpdate = TRUE;
@@ -112,7 +112,7 @@ getCmdOpts(
 		} while (0);
 
 	if (HAVE_OPT( STATSDIR ))
-		stats_config(STATS_STATSDIR, OPT_ARG( STATSDIR ));
+	    stats_config(STATS_STATSDIR, OPT_ARG( STATSDIR ), 0);
 
 	if (HAVE_OPT( TRUSTEDKEY )) {
 		int		ct = STACKCT_OPT(  TRUSTEDKEY );

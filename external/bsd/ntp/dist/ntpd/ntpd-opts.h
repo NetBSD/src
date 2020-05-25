@@ -1,13 +1,13 @@
-/*	$NetBSD: ntpd-opts.h,v 1.15 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: ntpd-opts.h,v 1.16 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.h)
  *
- *  It has been AutoGen-ed  August 14, 2018 at 08:27:44 AM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  March  3, 2020 at 05:40:30 PM by AutoGen 5.18.5
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 41:0:16 templates.
+ * Generated from AutoOpts 41:1:16 templates.
  *
  *  AutoOpts is a copyrighted work.  This header file is not encumbered
  *  by AutoOpts licensing, but is provided under the licensing terms chosen
@@ -20,7 +20,7 @@
  * The ntpd program is copyrighted and licensed
  * under the following terms:
  *
- *  Copyright (C) 1992-2017 The University of Delaware and Network Time Foundation, all rights reserved.
+ *  Copyright (C) 1992-2020 The University of Delaware and Network Time Foundation, all rights reserved.
  *  This is free software. It is licensed for use, modification and
  *  redistribution under the terms of the NTP License, copies of which
  *  can be seen at:
@@ -55,7 +55,7 @@
  *  tolerable version is at least as old as what was current when the header
  *  template was released.
  */
-#define AO_TEMPLATE_VERSION 167936
+#define AO_TEMPLATE_VERSION 167937
 #if (AO_TEMPLATE_VERSION < OPTIONS_MINIMUM_VERSION) \
  || (AO_TEMPLATE_VERSION > OPTIONS_STRUCT_VERSION)
 # error option template version mismatches autoopts/options.h header
@@ -108,9 +108,9 @@ typedef enum {
 /** count of all options for ntpd */
 #define OPTION_CT    38
 /** ntpd version */
-#define NTPD_VERSION       "4.2.8p12"
+#define NTPD_VERSION       "4.2.8p14"
 /** Full ntpd version text */
-#define NTPD_FULL_VERSION  "ntpd 4.2.8p12"
+#define NTPD_FULL_VERSION  "ntpd 4.2.8p14"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

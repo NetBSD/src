@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.6 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: systime.c,v 1.7 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -621,12 +621,11 @@ clamp_systime(void)
 {
 #if SIZEOF_TIME_T > 4
 
-	struct timeval timetv, tvlast;
+	struct timeval  tvbase, tvlast;
 	struct timespec timets;
-	uint32_t	tdiff;
-
 	
-	timetv.tv_sec = basedate_get_erabase();
+	tvbase.tv_sec  = basedate_get_erabase();
+	tvbase.tv_usec = 0;
 	
 	/* ---> time-critical path starts ---> */
 
@@ -638,28 +637,24 @@ clamp_systime(void)
 		tvlast.tv_usec -= 1000000;
 		tvlast.tv_sec  += 1;
 	}
-	timetv.tv_usec = tvlast.tv_usec;
 
-	tdiff = (uint32_t)(tvlast.tv_sec & UINT32_MAX) -
-	        (uint32_t)(timetv.tv_sec & UINT32_MAX);
-	timetv.tv_sec += tdiff;
-	if (timetv.tv_sec != tvlast.tv_sec) {
+	if (tvbase.tv_sec > tvlast.tv_sec) {
 		/* now set new system time */
-		if (ntp_set_tod(&timetv, NULL) != 0) {
+		if (ntp_set_tod(&tvbase, NULL) != 0) {
 			msyslog(LOG_ERR, "clamp-systime: %m");
 			return FALSE;
 		}
 	} else {
 		msyslog(LOG_INFO,
 			"clamp-systime: clock (%s) in allowed range",
-			tv_fmt_libbuf(&timetv));
+			tv_fmt_libbuf(&tvlast));
 		return FALSE;
 	}
 
 	/* <--- time-critical path ended with 'ntp_set_tod()' <--- */
 
 	sys_residual = 0;
-	lamport_violated = (timetv.tv_sec < tvlast.tv_sec);
+	lamport_violated = (tvbase.tv_sec < tvlast.tv_sec);
 	if (step_callback)
 		(*step_callback)();
 
@@ -670,15 +665,16 @@ clamp_systime(void)
 	_clear_adjtime();
 #   endif
 
-	update_uwtmp(timetv, tvlast);
+	update_uwtmp(tvbase, tvlast);
 	msyslog(LOG_WARNING,
 		"clamp-systime: clock stepped from %s to %s!",
-		tv_fmt_libbuf(&tvlast), tv_fmt_libbuf(&timetv));
+		tv_fmt_libbuf(&tvlast), tv_fmt_libbuf(&tvbase));
 	return TRUE;
 		
 #else
 
-	return 0;
+	return FALSE;
+	
 #endif
 }
 

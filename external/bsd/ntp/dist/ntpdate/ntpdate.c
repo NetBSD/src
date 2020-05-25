@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.13 2018/12/26 18:31:29 christos Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.14 2020/05/25 20:47:26 christos Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -341,7 +341,11 @@ ntpdatemain (
 	if (!ipv6_works)
 		ai_fam_templ = AF_INET;
 
-	errflg = 0;
+#ifdef HAVE_NETINFO
+	errflg = 0;		/* servers can come from netinfo */
+#else
+	errflg = (argc < 2);	/* need at least server on cmdline */
+#endif
 	progname = argv[0];
 	syslogit = 0;
 
@@ -1370,6 +1374,10 @@ addserver(
 #endif
 
 	error = getaddrinfo(serv, service, &hints, &addrResult);
+	if (error == EAI_SERVICE) {
+		strlcpy(service, "123", sizeof(service));
+		error = getaddrinfo(serv, service, &hints, &addrResult);
+	}
 	if (error != 0) {
 		/* Conduct more refined error analysis */
 		if (error == EAI_FAIL || error == EAI_AGAIN){
@@ -1706,7 +1714,12 @@ init_io(void)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	if (getaddrinfo(NULL, service, &hints, &res) != 0) {
+	rc = getaddrinfo(NULL, service, &hints, &res);
+	if (rc == EAI_SERVICE) {
+		strlcpy(service, "123", sizeof(service));
+		rc = getaddrinfo(NULL, service, &hints, &res);
+	}
+	if (rc != 0) {
 		msyslog(LOG_ERR, "getaddrinfo() failed: %m");
 		exit(1);
 		/*NOTREACHED*/
@@ -1752,9 +1765,7 @@ init_io(void)
 		/* Restricts AF_INET6 socket to IPv6 communications (see RFC 2553bis-03) */
 		if (res->ai_family == AF_INET6)
 			if (setsockopt(fd[nbsock], IPPROTO_IPV6, IPV6_V6ONLY, (void*) &optval, sizeof(optval)) < 0) {
-				   msyslog(LOG_ERR, "setsockopt() IPV6_V6ONLY failed: %m");
-					exit(1);
-					/*NOTREACHED*/
+				msyslog(LOG_ERR, "setsockopt() IPV6_V6ONLY failed: %m");
 		}
 #endif
 
@@ -2179,10 +2190,11 @@ print_server(
 			str, fptoa((s_fp)pp->rootdelay, 6),
 			ufptoa(pp->rootdisp, 6));
 
-	(void) fprintf(fp, "transmitted %d, in filter %d\n",
+	if (pp->xmtcnt != pp->filter_nextpt)
+		(void) fprintf(fp, "transmitted %d, in filter %d\n",
 			   pp->xmtcnt, pp->filter_nextpt);
 
-	(void) fprintf(fp, "reference time:    %s\n",
+	(void) fprintf(fp, "reference time:      %s\n",
 			   prettydate(&pp->reftime));
 	(void) fprintf(fp, "originate timestamp: %s\n",
 			   prettydate(&pp->org));
@@ -2192,22 +2204,24 @@ print_server(
 	if (sys_samples > 1) {
 		(void) fprintf(fp, "filter delay: ");
 		for (i = 0; i < NTP_SHIFT; i++) {
-			(void) fprintf(fp, " %-8.8s", fptoa(pp->filter_delay[i], 5));
-			if (i == (NTP_SHIFT>>1)-1)
-				(void) fprintf(fp, "\n        ");
+			if (i == (NTP_SHIFT>>1))
+				(void) fprintf(fp, "\n              ");
+			(void) fprintf(fp, " %-10.10s", 
+				(i<sys_samples ? fptoa(pp->filter_delay[i], 5) : "----"));
 		}
 		(void) fprintf(fp, "\n");
 
 		(void) fprintf(fp, "filter offset:");
 		for (i = 0; i < PEER_SHIFT; i++) {
-			(void) fprintf(fp, " %-8.8s", lfptoa(&pp->filter_offset[i], 6));
-			if (i == (PEER_SHIFT>>1)-1)
-				(void) fprintf(fp, "\n        ");
+			if (i == (PEER_SHIFT>>1))
+				(void) fprintf(fp, "\n              ");
+			(void) fprintf(fp, " %-10.10s", 
+				(i<sys_samples ? lfptoa(&pp->filter_offset[i], 6): "----"));
 		}
 		(void) fprintf(fp, "\n");
 	}
 
-	(void) fprintf(fp, "delay %s, dispersion %s\n",
+	(void) fprintf(fp, "delay %s, dispersion %s, ",
 			   fptoa((s_fp)pp->delay, 5), ufptoa(pp->dispersion, 5));
 
 	(void) fprintf(fp, "offset %s\n\n",

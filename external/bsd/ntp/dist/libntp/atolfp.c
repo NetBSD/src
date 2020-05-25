@@ -1,4 +1,4 @@
-/*	$NetBSD: atolfp.c,v 1.8 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: atolfp.c,v 1.9 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * atolfp - convert an ascii string to an l_fp number
