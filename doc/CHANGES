@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2694 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2695 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -212,3 +212,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.16.3. [christos 20200524]
 	tzcode: Updated to 2020a. [christos 20200525]
 	ntp: Import ntp 4.2.8p14. [christos 20200525] 
+	acpi(4): Updated ACPICA to 20200430. [christos 20200525]
