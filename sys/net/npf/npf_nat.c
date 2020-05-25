@@ -67,7 +67,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.46.2.2 2019/09/01 13:21:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.46.2.3 2020/05/25 17:25:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,6 +182,7 @@ npf_nat_newpolicy(npf_t *npf, const nvlist_t *nat, npf_ruleset_t *rset)
 	size_t len;
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
+	atomic_store_relaxed(&np->n_refcnt, 1);
 	np->n_npfctx = npf;
 
 	/* The translation type, flags and policy ID. */
@@ -271,37 +272,53 @@ npf_nat_policyexport(const npf_natpolicy_t *np, nvlist_t *nat)
 	return 0;
 }
 
-/*
- * npf_nat_freepolicy: free the NAT policy.
- *
- * => Called from npf_rule_free() during the reload via npf_ruleset_destroy().
- */
-void
-npf_nat_freepolicy(npf_natpolicy_t *np)
+static void
+npf_natpolicy_release(npf_natpolicy_t *np)
 {
-	npf_conn_t *con;
-	npf_nat_t *nt;
+	KASSERT(atomic_load_relaxed(&np->n_refcnt) > 0);
 
-	/*
-	 * Disassociate all entries from the policy.  At this point,
-	 * new entries can no longer be created for this policy.
-	 */
-	while (np->n_refcnt) {
-		mutex_enter(&np->n_lock);
-		LIST_FOREACH(nt, &np->n_nat_list, nt_entry) {
-			con = nt->nt_conn;
-			KASSERT(con != NULL);
-			npf_conn_expire(con);
-		}
-		mutex_exit(&np->n_lock);
-
-		/* Kick the worker - all references should be going away. */
-		npf_worker_signal(np->n_npfctx);
-		kpause("npfgcnat", false, 1, NULL);
+	if (atomic_dec_uint_nv(&np->n_refcnt) != 0) {
+		return;
 	}
 	KASSERT(LIST_EMPTY(&np->n_nat_list));
 	mutex_destroy(&np->n_lock);
 	kmem_free(np, sizeof(npf_natpolicy_t));
+}
+
+/*
+ * npf_nat_freepolicy: free the NAT policy.
+ *
+ * => Called from npf_rule_free() during the reload via npf_ruleset_destroy().
+ * => At this point, NAT policy cannot acquire new references.
+ */
+void
+npf_nat_freepolicy(npf_natpolicy_t *np)
+{
+	/*
+	 * Drain the references.  If there are active NAT connections,
+	 * then expire them and kick the worker.
+	 */
+	if (atomic_load_relaxed(&np->n_refcnt) > 1) {
+		npf_nat_t *nt;
+
+		mutex_enter(&np->n_lock);
+		LIST_FOREACH(nt, &np->n_nat_list, nt_entry) {
+			npf_conn_t *con = nt->nt_conn;
+			KASSERT(con != NULL);
+			npf_conn_expire(con);
+		}
+		mutex_exit(&np->n_lock);
+		npf_worker_signal(np->n_npfctx);
+	}
+	KASSERT(atomic_load_relaxed(&np->n_refcnt) >= 1);
+
+	/*
+	 * Drop the initial reference, but it might not be the last one.
+	 * If so, the last reference will be triggered via:
+	 *
+	 * npf_conn_destroy() -> npf_nat_destroy() -> npf_natpolicy_release()
+	 */
+	npf_natpolicy_release(np);
 }
 
 void
@@ -649,7 +666,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 			npf_recache(npc);
 		}
 		error = npf_nat_algo(npc, np, forw);
-		atomic_dec_uint(&np->n_refcnt);
+		npf_natpolicy_release(np);
 		return error;
 	}
 
@@ -662,7 +679,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 	if (con == NULL) {
 		ncon = npf_conn_establish(npc, di, true);
 		if (ncon == NULL) {
-			atomic_dec_uint(&np->n_refcnt);
+			npf_natpolicy_release(np);
 			return ENOMEM;
 		}
 		con = ncon;
@@ -674,7 +691,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 	 */
 	nt = npf_nat_create(npc, np, con);
 	if (nt == NULL) {
-		atomic_dec_uint(&np->n_refcnt);
+		npf_natpolicy_release(np);
 		error = ENOMEM;
 		goto out;
 	}
@@ -757,11 +774,15 @@ npf_nat_destroy(npf_nat_t *nt)
 	}
 	npf_stats_inc(np->n_npfctx, NPF_STAT_NAT_DESTROY);
 
+	/*
+	 * Remove the connection from the list and drop the reference on
+	 * the NAT policy.  Note: this might trigger its destruction.
+	 */
 	mutex_enter(&np->n_lock);
 	LIST_REMOVE(nt, nt_entry);
-	KASSERT(np->n_refcnt > 0);
-	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
+	npf_natpolicy_release(np);
+
 	pool_cache_put(nat_cache, nt);
 }
 
@@ -772,10 +793,13 @@ void
 npf_nat_export(nvlist_t *condict, npf_nat_t *nt)
 {
 	npf_natpolicy_t *np = nt->nt_natpolicy;
+	unsigned alen = nt->nt_alen;
 	nvlist_t *nat;
 
 	nat = nvlist_create(0);
+	nvlist_add_number(nat, "alen", alen);
 	nvlist_add_binary(nat, "oaddr", &nt->nt_oaddr, sizeof(npf_addr_t));
+	nvlist_add_binary(nat, "taddr", &nt->nt_taddr, alen);
 	nvlist_add_number(nat, "oport", nt->nt_oport);
 	nvlist_add_number(nat, "tport", nt->nt_tport);
 	nvlist_add_number(nat, "nat-policy", np->n_id);
@@ -791,9 +815,9 @@ npf_nat_import(npf_t *npf, const nvlist_t *nat,
 {
 	npf_natpolicy_t *np;
 	npf_nat_t *nt;
-	const void *oaddr;
+	const void *taddr, *oaddr;
+	size_t alen, len;
 	uint64_t np_id;
-	size_t len;
 
 	np_id = dnvlist_get_number(nat, "nat-policy", UINT64_MAX);
 	if ((np = npf_ruleset_findnat(natlist, np_id)) == NULL) {
@@ -802,12 +826,23 @@ npf_nat_import(npf_t *npf, const nvlist_t *nat,
 	nt = pool_cache_get(nat_cache, PR_WAITOK);
 	memset(nt, 0, sizeof(npf_nat_t));
 
+	alen = dnvlist_get_number(nat, "alen", 0);
+	if (alen == 0 || alen > sizeof(npf_addr_t)) {
+		goto err;
+	}
+
+	taddr = dnvlist_get_binary(nat, "taddr", &len, NULL, 0);
+	if (!taddr || len != alen) {
+		goto err;
+	}
+	memcpy(&nt->nt_taddr, taddr, sizeof(npf_addr_t));
+
 	oaddr = dnvlist_get_binary(nat, "oaddr", &len, NULL, 0);
-	if (!oaddr || len != sizeof(npf_addr_t)) {
-		pool_cache_put(nat_cache, nt);
-		return NULL;
+	if (!oaddr || len != alen) {
+		goto err;
 	}
 	memcpy(&nt->nt_oaddr, oaddr, sizeof(npf_addr_t));
+
 	nt->nt_oport = dnvlist_get_number(nat, "oport", 0);
 	nt->nt_tport = dnvlist_get_number(nat, "tport", 0);
 
@@ -817,8 +852,7 @@ npf_nat_import(npf_t *npf, const nvlist_t *nat,
 
 		if (!npf_portmap_take(pm, nt->nt_alen,
 		    &nt->nt_taddr, nt->nt_tport)) {
-			pool_cache_put(nat_cache, nt);
-			return NULL;
+			goto err;
 		}
 	}
 	npf_stats_inc(npf, NPF_STAT_NAT_CREATE);
@@ -832,6 +866,9 @@ npf_nat_import(npf_t *npf, const nvlist_t *nat,
 	np->n_refcnt++;
 	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
 	return nt;
+err:
+	pool_cache_put(nat_cache, nt);
+	return NULL;
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)
