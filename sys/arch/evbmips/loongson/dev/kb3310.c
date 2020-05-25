@@ -99,9 +99,8 @@ extern void loongson_set_isa_imr(uint);
 int	ykbec_match(device_t, cfdata_t, void *);
 void	ykbec_attach(device_t, device_t, void *);
 
-const struct cfattach ykbec_ca = {
-	sizeof(struct ykbec_softc), ykbec_match, ykbec_attach
-};
+CFATTACH_DECL_NEW(ykbec, sizeof(struct ykbec_softc),
+    ykbec_match, ykbec_attach, NULL, NULL);
 
 int	ykbec_apminfo(struct apm_power_info *);
 void	ykbec_bell(void *, u_int, u_int, u_int, int);
