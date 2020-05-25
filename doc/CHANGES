@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2692 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2693 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -210,3 +210,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		generator device [riastradh 20200517]
 	libuv: Import version 1.38.0. [christos 20200524]
 	bind: Import version 9.16.3. [christos 20200524]
+	tzcode: Updated to 2020a. [christos 20200525]
