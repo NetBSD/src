@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.146 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.147 2020/05/25 22:04:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.146 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.147 2020/05/25 22:04:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -799,10 +799,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
     int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 	voff_t current_offset;
-	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
-	int lcv, gotpages, maxpages, swslot = -1, pageidx = -1; /* XXX: gcc */
+	struct vm_page *ptmp;
+	int lcv, gotpages, maxpages, swslot, pageidx;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 	bool overwrite = ((flags & PGO_OVERWRITE) != 0);
+	struct uvm_page_array a;
 
 	UVMHIST_LOG(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
 		    (uintptr_t)uobj, offset, flags,0);
@@ -828,7 +829,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  	 */
 
 	if (flags & PGO_LOCKED) {
-		struct uvm_page_array a;
 
 		/*
  		 * step 1a: get pages that are already resident.   only do
@@ -890,8 +890,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		goto done;
 	}
 
-	for (lcv = 0, current_offset = offset ; lcv < maxpages ;
-	    lcv++, current_offset += PAGE_SIZE) {
+	uvm_page_array_init(&a, uobj, 0);
+	for (lcv = 0, current_offset = offset ; lcv < maxpages ;) {
 
 		/*
  		 * we have yet to locate the current page (pps[lcv]).   we
@@ -900,48 +900,14 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * released.  if that is the case, then we sleep on the page
 		 * until it is no longer busy or released and repeat the lookup.
 		 * if the page we found is neither busy nor released, then we
-		 * busy it (so we own it) and plug it into pps[lcv].   this
-		 * 'break's the following while loop and indicates we are
-		 * ready to move on to the next page in the "lcv" loop above.
- 		 *
- 		 * if we exit the while loop with pps[lcv] set to NULL,
-		 * then it means that we allocated a new busy/fake/clean page
-		 * ptmp in the object and we need to do I/O to fill in the data.
+		 * busy it (so we own it) and plug it into pps[lcv].   we are
+		 * ready to move on to the next page.
  		 */
 
-		/* top of "pps" while loop */
-		for (;;) {
-			/* look for a resident page */
-			ptmp = uvm_pagelookup(uobj, current_offset);
+		ptmp = uvm_page_array_fill_and_peek(&a, current_offset,
+		    maxpages - lcv);
 
-			/* not resident?   allocate one now (if we can) */
-			if (ptmp == NULL) {
-				/* get a zeroed page if not in swap */
-				pageidx = current_offset >> PAGE_SHIFT;
-				swslot = uao_find_swslot(uobj, pageidx);
-				ptmp = uao_pagealloc(uobj, current_offset,
-				    swslot != 0 || overwrite ? 0 :
-				    UVM_PGA_ZERO);
-
-				/* out of RAM? */
-				if (ptmp == NULL) {
-					rw_exit(uobj->vmobjlock);
-					UVMHIST_LOG(pdhist,
-					    "sleeping, ptmp == NULL\n",0,0,0,0);
-					uvm_wait("uao_getpage");
-					rw_enter(uobj->vmobjlock, RW_WRITER);
-					continue;
-				}
-
-				/*
-				 * got new page ready for I/O.  break pps for
-				 * loop.
-				 */
-
-				pps[lcv] = NULL;
-				break;
-			}
-
+		if (ptmp != NULL && ptmp->offset == current_offset) {
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->flags & PG_BUSY) != 0) {
 				UVMHIST_LOG(pdhist,
@@ -949,14 +915,15 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				    ptmp->flags,0,0,0);
 				uvm_pagewait(ptmp, uobj->vmobjlock, "uao_get");
 				rw_enter(uobj->vmobjlock, RW_WRITER);
+				uvm_page_array_clear(&a);
 				continue;
 			}
 
 			/*
- 			 * if we get here then the page has become resident and
-			 * unbusy between steps 1 and 2.  we busy it now (so we
-			 * own it) and set pps[lcv] (so that we exit the while
-			 * loop).
+ 			 * if we get here then the page is resident and
+			 * unbusy.  we busy it now (so we own it).  if
+			 * overwriting, mark the page dirty up front as
+			 * it will be zapped via an unmanaged mapping.
  			 */
 
 			KASSERT(uvm_pagegetdirty(ptmp) !=
@@ -967,17 +934,35 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/* we own it, caller must un-busy */
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get2");
-			pps[lcv] = ptmp;
-			break;
+			pps[lcv++] = ptmp;
+			current_offset += PAGE_SIZE;
+			uvm_page_array_advance(&a);
+			continue;
+		} else {
+			KASSERT(ptmp == NULL || ptmp->offset > current_offset);
 		}
 
 		/*
- 		 * if we own the valid page at the correct offset, pps[lcv] will
- 		 * point to it.   nothing more to do except go to the next page.
- 		 */
+		 * not resident.  allocate a new busy/fake/clean page in the
+		 * object.  if it's in swap we need to do I/O to fill in the
+		 * data, otherwise the page needs to be cleared: if it's not
+		 * destined to be overwritten, then zero it here and now.
+		 */
 
-		if (pps[lcv])
-			continue;			/* next lcv */
+		pageidx = current_offset >> PAGE_SHIFT;
+		swslot = uao_find_swslot(uobj, pageidx);
+		ptmp = uao_pagealloc(uobj, current_offset,
+		    swslot != 0 || overwrite ? 0 : UVM_PGA_ZERO);
+
+		/* out of RAM? */
+		if (ptmp == NULL) {
+			rw_exit(uobj->vmobjlock);
+			UVMHIST_LOG(pdhist, "sleeping, ptmp == NULL\n",0,0,0,0);
+			uvm_wait("uao_getpage");
+			rw_enter(uobj->vmobjlock, RW_WRITER);
+			uvm_page_array_clear(&a);
+			continue;
+		}
 
 		/*
  		 * if swslot == 0, page hasn't existed before and is zeroed. 
@@ -1061,9 +1046,12 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  		 */
 		KASSERT(uvm_pagegetdirty(ptmp) != UVM_PAGE_STATUS_CLEAN);
 		KASSERT((ptmp->flags & PG_FAKE) != 0);
+		KASSERT(ptmp->offset == current_offset);
 		ptmp->flags &= ~PG_FAKE;
-		pps[lcv] = ptmp;
+		pps[lcv++] = ptmp;
+		current_offset += PAGE_SIZE;
 	}
+	uvm_page_array_fini(&a);
 
 	/*
  	 * finally, unlock object and return.
