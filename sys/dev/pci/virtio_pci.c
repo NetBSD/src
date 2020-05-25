@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.9 2020/05/25 07:37:47 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.10 2020/05/25 07:52:16 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.9 2020/05/25 07:37:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.10 2020/05/25 07:52:16 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 			}
 
 			psc->sc_ihs[n] = pci_intr_establish_xname(pc, psc->sc_ihp[n],
-			    sc->sc_ipl, vq->vq_intrhand, vq, intr_xname);
+			    sc->sc_ipl, vq->vq_intrhand, vq->vq_intrhand_arg, intr_xname);
 			if (psc->sc_ihs[n] == NULL) {
 				aprint_error_dev(self, "couldn't establish MSI-X for a vq\n");
 				goto error;

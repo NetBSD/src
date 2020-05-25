@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.15 2020/05/25 07:37:47 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.16 2020/05/25 07:52:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -116,8 +116,8 @@ struct virtqueue {
 
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
-	void			*vq_done_ctx;
 	int			(*vq_intrhand)(void *);
+	void			*vq_intrhand_arg;
 };
 
 struct virtio_attach_args {
@@ -217,7 +217,9 @@ int virtio_enqueue_abort(struct virtio_softc*, struct virtqueue*, int);
 int virtio_dequeue(struct virtio_softc*, struct virtqueue*, int *, int *);
 int virtio_dequeue_commit(struct virtio_softc*, struct virtqueue*, int);
 
+bool virtio_vq_is_enqueued(struct virtio_softc *, struct virtqueue *);
 int virtio_vq_intr(struct virtio_softc *);
+int virtio_vq_intrhand(struct virtio_softc *);
 void virtio_stop_vq_intr(struct virtio_softc *, struct virtqueue *);
 void virtio_start_vq_intr(struct virtio_softc *, struct virtqueue *);
 

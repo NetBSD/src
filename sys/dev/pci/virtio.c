@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.40 2020/05/25 07:37:47 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.41 2020/05/25 07:52:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.40 2020/05/25 07:37:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.41 2020/05/25 07:52:16 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,11 +242,9 @@ vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
  * Scan vq, bus_dmamap_sync for the vqs (not for the payload),
  * and calls (*vq_done)() if some entries are consumed.
  */
-static int
-virtio_vq_intr_common(struct virtqueue *vq)
+bool
+virtio_vq_is_enqueued(struct virtio_softc *sc, struct virtqueue *vq)
 {
-	struct virtio_softc *sc = vq->vq_owner;
-	int r = 0;
 
 	if (vq->vq_queued) {
 		vq->vq_queued = 0;
@@ -254,12 +252,8 @@ virtio_vq_intr_common(struct virtqueue *vq)
 	}
 	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 	membar_consumer();
-	if (vq->vq_used_idx != vq->vq_used->idx) {
-		if (vq->vq_done)
-			r |= (vq->vq_done)(vq);
-	}
 
-	return r;
+	return (vq->vq_used_idx != vq->vq_used->idx) ? 1 : 0;
 }
 
 int
@@ -270,18 +264,27 @@ virtio_vq_intr(struct virtio_softc *sc)
 
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		vq = &sc->sc_vqs[i];
-		r |= virtio_vq_intr_common(vq);
+		if (virtio_vq_is_enqueued(sc, vq) == 1) {
+			if (vq->vq_done)
+				r |= (vq->vq_done)(vq);
+		}
 	}
 
 	return r;
 }
 
-static int
-virtio_vq_mq_intr(void *arg)
+int
+virtio_vq_intrhand(struct virtio_softc *sc)
 {
-	struct virtqueue *vq = arg;
+	struct virtqueue *vq;
+	int i, r = 0;
 
-	return virtio_vq_intr_common(vq);
+	for (i = 0; i < sc->sc_nvqs; i++) {
+		vq = &sc->sc_vqs[i];
+		r |= (vq->vq_intrhand)(vq->vq_intrhand_arg);
+	}
+
+	return r;
 }
 
 /*
@@ -428,7 +431,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* remember addresses and offsets for later use */
 	vq->vq_owner = sc;
-	vq->vq_intrhand = virtio_vq_mq_intr;
 	vq->vq_num = vq_size;
 	vq->vq_index = index;
 	vq->vq_desc = vq->vq_vaddr;
