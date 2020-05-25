@@ -1,4 +1,4 @@
-/* $NetBSD: genet_fdt.c,v 1.1 2020/02/22 00:28:35 jmcneill Exp $ */
+/* $NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.1 2020/02/22 00:28:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.2 2020/05/25 19:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,6 +108,8 @@ genet_fdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_phy_mode = GENET_PHY_MODE_RGMII_RXID;
 	else if (strcmp(phy_mode, "rgmii-txid") == 0)
 		sc->sc_phy_mode = GENET_PHY_MODE_RGMII_TXID;
+	else if (strcmp(phy_mode, "rgmii-id") == 0)
+		sc->sc_phy_mode = GENET_PHY_MODE_RGMII_ID;
 	else if (strcmp(phy_mode, "rgmii") == 0)
 		sc->sc_phy_mode = GENET_PHY_MODE_RGMII;
 	else {
