@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.107 2020/05/02 19:09:56 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.108 2020/05/25 18:29:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -559,9 +559,6 @@ int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
 void	atastart(struct ata_channel *);
 void	ata_print_modes(struct ata_channel *);
-#if NATA_DMA
-int	ata_downgrade_mode(struct ata_drive_datas *, int);
-#endif
 void	ata_probe_caps(struct ata_drive_datas *);
 
 #if NATA_DMA
