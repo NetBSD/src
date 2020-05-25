@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.55 2020/05/25 08:16:23 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.56 2020/05/25 08:22:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.55 2020/05/25 08:16:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.56 2020/05/25 08:22:39 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -847,7 +847,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 		snprintf(qname, sizeof(qname), "rx%d", i);
 		r = virtio_alloc_vq(vsc, rxq->rxq_vq, nvqs,
-		    MCLBYTES+sizeof(struct virtio_net_hdr), nvqs, qname);
+		    MCLBYTES+sizeof(struct virtio_net_hdr), 2, qname);
 		if (r != 0)
 			goto err;
 		nvqs++;
