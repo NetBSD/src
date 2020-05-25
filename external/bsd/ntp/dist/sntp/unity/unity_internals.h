@@ -1,4 +1,4 @@
-/*	$NetBSD: unity_internals.h,v 1.1.1.8 2020/05/25 20:40:15 christos Exp $	*/
+/*	$NetBSD: unity_internals.h,v 1.2 2020/05/25 20:47:36 christos Exp $	*/
 
 /* ==========================================
     Unity Project - A Test Framework for C

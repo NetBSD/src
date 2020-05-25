@@ -1,4 +1,4 @@
-/*	$NetBSD: http-internal.h,v 1.5 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: http-internal.h,v 1.6 2020/05/25 20:47:33 christos Exp $	*/
 
 /*
  * Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>

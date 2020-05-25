@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.7 2017/04/13 20:17:42 christos Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.8 2020/05/25 20:47:24 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -228,7 +228,6 @@ get_full_recv_buffer(void)
 
 	LOCK();
 	
-#ifdef HAVE_SIGNALED_IO
 	/*
 	 * make sure there are free buffers when we
 	 * wander off to do lengthy packet processing with
@@ -243,7 +242,6 @@ get_full_recv_buffer(void)
 		 */
 		create_buffers(RECV_INC);
 	}
-#endif
 
 	/*
 	 * try to grab a full buffer

@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.7 2019/02/03 10:48:47 mrg Exp $	*/
+/*	$NetBSD: usage.c,v 1.8 2020/05/25 20:47:35 christos Exp $	*/
 
 
 /*

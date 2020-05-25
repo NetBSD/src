@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.8 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.9 2020/05/25 20:47:32 christos Exp $	*/
 
 #ifndef LOG_H
 #define LOG_H

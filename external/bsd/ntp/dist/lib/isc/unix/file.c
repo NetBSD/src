@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.7 2016/01/08 21:35:37 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.8 2020/05/25 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

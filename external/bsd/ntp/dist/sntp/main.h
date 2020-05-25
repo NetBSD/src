@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.5 2020/05/25 20:47:32 christos Exp $	*/
 
 #ifndef MAIN_H
 #define MAIN_H

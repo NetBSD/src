@@ -1,4 +1,4 @@
-/*	$NetBSD: iosignal.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: iosignal.h,v 1.5 2020/05/25 20:47:19 christos Exp $	*/
 
 #ifndef IOSIGNAL_H
 #define IOSIGNAL_H

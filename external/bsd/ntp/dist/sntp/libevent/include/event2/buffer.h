@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.5 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

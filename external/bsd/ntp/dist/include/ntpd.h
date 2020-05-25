@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.11 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.12 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -234,7 +234,7 @@ extern	double	sys_mindisp;
 extern	double	sys_maxdist;
 
 extern	char	*sys_ident;	/* identity scheme */
-extern	void	poll_update	(struct peer *, u_char);
+extern	void	poll_update	(struct peer *, u_char, u_char);
 
 extern	void	clear		(struct peer *);
 extern	void	clock_filter	(struct peer *, double, double, double);
@@ -277,14 +277,14 @@ extern	u_long	orphwait;		/* orphan wait time */
 extern	char	*sys_hostname;	/* host name */
 extern	char	*sys_groupname;	/* group name */
 extern	char	*group_name;	/* group name */
-extern	u_long	sys_revoke;	/* keys revoke timeout */
-extern	u_long	sys_automax;	/* session key timeout */
+extern	u_char	sys_revoke;	/* keys revoke timeout */
+extern	u_char	sys_automax;	/* session key timeout */
 #endif	/* AUTOKEY */
 
 /* ntp_util.c */
 extern	void	init_util	(void);
 extern	void	write_stats	(void);
-extern	void	stats_config	(int, const char *);
+extern	void	stats_config	(int, const char *, int optflag);
 extern	void	record_peer_stats (sockaddr_u *, int, double, double, double, double);
 extern	void	record_proto_stats (char *);
 extern	void	record_loop_stats (double, double, double, double, int);
@@ -570,7 +570,7 @@ extern char *group;		/* group to switch to */
 extern const char *chrootdir;	/* directory to chroot() to */
 #endif
 #ifdef HAVE_WORKING_FORK
-extern	int	waitsync_fd_to_close;	/* -w/--wait-sync */
+extern	int	daemon_pipe[2];	/* startup monitoring */
 #endif
 
 /* ntservice.c */
