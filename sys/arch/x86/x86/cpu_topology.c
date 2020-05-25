@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.14 2018/11/21 10:34:53 msaitoh Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.14.4.1 2020/05/25 15:39:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.14 2018/11/21 10:34:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.14.4.1 2020/05/25 15:39:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -157,8 +157,9 @@ x86_cpu_topology(struct cpu_info *ci)
 		x86_cpuid(0x8000001e, descs);
 		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
 
-		KASSERT(smt_bits == 0 && smt_bits <= core_bits);
+		KASSERT(smt_bits == 0);
 		smt_bits = ilog2(threads);
+		KASSERT(smt_bits <= core_bits);
 		core_bits -= smt_bits;
 	}
 
