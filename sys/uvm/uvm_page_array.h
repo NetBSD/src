@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.h,v 1.2 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.h,v 1.3 2020/05/25 21:15:10 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -40,33 +40,38 @@
  *
  *	struct uvm_page_array a;
  *
- *	uvm_page_array_init(&a);
- *	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, off, ....))
- *	    != NULL) {
+ *	uvm_page_array_init(&a, uobj, ...);
+ *	while ((pg = uvm_page_array_fill_and_peek(&a, off, 0)) != NULL) {
  *		off = pg->offset + PAGE_SIZE;
  *		do_something(pg);
  *		uvm_page_array_advance(&a);
  *	}
  *	uvm_page_array_fini(&a);
+ *
+ * if scanning forwards the "off" argument may not go backwards.
+ * if scanning backwards, the "off" argument may not go forwards.
  */
 
 struct vm_page;
 
 struct uvm_page_array {
-	struct vm_page *ar_pages[16];	/* XXX tune */
 	unsigned int ar_npages;		/* valid elements in ar_pages */
 	unsigned int ar_idx;		/* index in ar_pages */
+	struct uvm_object *ar_uobj;
+	unsigned int ar_flags;
+	voff_t ar_lastoff;
+	struct vm_page *ar_pages[16];	/* XXX tune */
 };
 
-void uvm_page_array_init(struct uvm_page_array *);
+void uvm_page_array_init(struct uvm_page_array *, struct uvm_object *,
+    unsigned int);
 void uvm_page_array_fini(struct uvm_page_array *);
 void uvm_page_array_clear(struct uvm_page_array *);
 struct vm_page *uvm_page_array_peek(struct uvm_page_array *);
 void uvm_page_array_advance(struct uvm_page_array *);
-int uvm_page_array_fill(struct uvm_page_array *, struct uvm_object *,
-    voff_t, unsigned int, unsigned int);
+int uvm_page_array_fill(struct uvm_page_array *, voff_t, unsigned int);
 struct vm_page *uvm_page_array_fill_and_peek(struct uvm_page_array *,
-    struct uvm_object *, voff_t, unsigned int, unsigned int);
+    voff_t, unsigned int);
 
 /*
  * flags for uvm_page_array_fill and uvm_page_array_fill_and_peek
