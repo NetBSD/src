@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.10 2020/05/13 12:40:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.11 2020/05/25 17:49:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -144,4 +144,11 @@ sys/arch/x86/pci/if_vmx.c			1.60
 	Fix wrong logic to make the number of vmx(4) TX/RX queues a power
 	of two.
 	[yamaguchi, ticket #1547]
+
+sys/kern/kern_time.c				1.204
+sys/netinet/igmp.c				1.70
+
+	Fix one byte kernel heap leak.
+	Fix uninitialized memory access.
+	[christos, ticket #1549]
 
