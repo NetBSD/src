@@ -1,3 +1,5 @@
+/*	$NetBSD: pkgver.h,v 1.1.1.6 2020/05/25 20:40:15 christos Exp $	*/
+
 /*
  * 
  *   Copyright 2015 Harlan Stenn.  Used by NTP with permission.

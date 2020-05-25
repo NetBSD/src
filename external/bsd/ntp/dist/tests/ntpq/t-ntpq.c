@@ -1,3 +1,5 @@
+/*	$NetBSD: t-ntpq.c,v 1.1.1.5 2020/05/25 20:40:16 christos Exp $	*/
+
 #include "config.h"
 
 #include "ntp.h"

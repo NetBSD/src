@@ -81,6 +81,7 @@ libntp_a_SRCS =						\
 	msyslog.c					\
 	netof.c						\
 	ntp_calendar.c					\
+	ntp_calgps.c					\
 	ntp_crypto_rnd.c				\
 	ntp_intres.c					\
 	ntp_libopts.c					\
@@ -104,12 +105,15 @@ libntp_a_SRCS =						\
 	strdup.c					\
 	strl_obsd.c					\
 	syssignal.c					\
+	timespecops.c					\
 	timetoa.c					\
 	timevalops.c					\
+	timexsup.c					\
 	uglydate.c					\
 	vint64ops.c					\
 	work_fork.c					\
 	work_thread.c					\
+	xsbprintf.c					\
 	ymd2yd.c					\
 	$(libisc_SRCS)					\
 	$(NULL)
