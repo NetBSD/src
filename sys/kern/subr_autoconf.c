@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.270 2020/04/30 03:28:18 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.271 2020/05/25 21:05:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.270 2020/04/30 03:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.271 2020/05/25 21:05:01 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1265,12 +1265,11 @@ config_devlink(device_t dev)
 static void
 config_devfree(device_t dev)
 {
-	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
+	KASSERT(dev->dv_flags & DVF_PRIV_ALLOC);
 
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
-	if (priv)
-		kmem_free(dev, sizeof(*dev));
+	kmem_free(dev, sizeof(*dev));
 }
 
 /*
@@ -1401,26 +1400,14 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		return NULL;
 
 	/* get memory for all device vars */
-	KASSERTMSG((ca->ca_flags & DVF_PRIV_ALLOC)
-	    || ca->ca_devsize >= sizeof(struct device),
-	    "%s: %s (%zu < %zu)", __func__, cf->cf_atname, ca->ca_devsize,
-	    sizeof(struct device));
+	KASSERT(ca->ca_flags & DVF_PRIV_ALLOC);
 	if (ca->ca_devsize > 0) {
 		dev_private = kmem_zalloc(ca->ca_devsize, KM_SLEEP);
 	} else {
-		KASSERT(ca->ca_flags & DVF_PRIV_ALLOC);
 		dev_private = NULL;
 	}
+	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 
-	if ((ca->ca_flags & DVF_PRIV_ALLOC) != 0) {
-		dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
-	} else {
-		dev = dev_private;
-#ifdef DIAGNOSTIC
-		printf("%s has not been converted to device_t\n", cd->cd_name);
-#endif
-		KASSERT(dev != NULL);
-	}
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
