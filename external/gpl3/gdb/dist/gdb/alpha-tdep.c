@@ -1825,6 +1825,9 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Prologue heuristics.  */
   set_gdbarch_skip_prologue (gdbarch, alpha_skip_prologue);
 
+  /* Entrypoint heuristics.  */
+  set_gdbarch_skip_entrypoint (gdbarch, alpha_skip_entrypoint);
+
   /* Call info.  */
 
   set_gdbarch_return_value (gdbarch, alpha_return_value);
