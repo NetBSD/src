@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.7 2019/01/27 02:08:42 pgoyette Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.8 2020/05/25 07:29:52 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.7 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.8 2020/05/25 07:29:52 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,16 +801,9 @@ static int
 virtio_pci_msix_vq_intr(void *arg)
 {
 	struct virtqueue *vq = arg;
-	int r = 0;
 
-	if (vq->vq_intrhand != NULL) {
-		if (vq->vq_soft_ih)
-			softint_schedule(vq->vq_soft_ih);
-		else
-			r |= vq->vq_intrhand(vq);
-	}
-
-	return r;
+	KASSERT(vq->vq_intrhand != NULL);
+	return vq->vq_intrhand(vq);
 }
 
 static int
