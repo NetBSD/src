@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.61 2020/05/21 10:53:23 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.62 2020/05/25 17:31:36 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2670,4 +2670,74 @@ sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.56-1.58
 	Fix deinitialization for certain kernel configs (fix for
 	ticket #857).
 	[maxv, ticket #919]
+
+lib/libc/compat/gen/compat_ldexp_ieee754.c	1.8
+
+	Teach libc's compat ldexp stub to raise fp exceptions.
+	[riastradh, ticket #920]
+
+sys/dev/usb/xhci.c				1.129
+
+	xhci(4): USB abort and timeout fix (followup fix for
+	ticket #744).
+	[jakllsch, ticket #921]
+
+sys/arch/x86/x86/cpu_topology.c			1.18
+
+	Assert smt_bits value only after it is computed.
+	[mlelstv, ticket #922]
+
+external/gpl3/gdb/dist/gdb/alpha-tdep.c		1.5
+
+	Revive entrypoint heuristics for alpha.
+	[rin, ticket #924]
+
+tests/lib/libc/sys/t_ptrace_fork_wait.h	1.2-1.4,1.6	(via patch, adapted)
+	(applied to tests/lib/libc/sys/t_ptrace_wait.c)
+
+	Fix race in fork_singalmasked.
+	Ignore interception of SIGCHLD signals in the debugger.
+	PR 55241: there is a race that SIGCHLD might be blocked during
+	forking	and dropped.
+	[kamil, ticket #925]	
+
+sys/arch/sparc/sparc/process_machdep.c		1.20
+
+	PR 54734: reject setting unaligned Program Counter.
+	[kamil, ticket #926]
+
+sys/kern/subr_thmap.c				1.6
+
+	thmap(9): merge changes from the upstream to use
+	atomic_loadstore(9) primitives.
+	[rmind, ticket #929]
+
+sys/net/npf/npf_conf.c				1.16
+sys/net/npf/npf_conn.c				1.31
+sys/net/npf/npf_conn.h				1.19
+sys/net/npf/npf_conndb.c			1.8
+sys/net/npf/npf_inet.c				1.56
+sys/net/npf/npf_nat.c				1.49
+usr.sbin/npf/npfctl/npf_build.c			1.54
+usr.sbin/npf/npfctl/npf_show.c			1.31
+usr.sbin/npf/npfctl/npfctl.h			1.52
+
+	Backport selected NPF fixes from the upstream:
+	- PR 55182: protect the connection lookup with pserialize(9).
+	- fix crashes with some invalid configurations.
+	- fix a lockup with dynamic NAT rules.
+	- fix a regression since dynamic NAT rules.
+	- npfctl: fix a regression and restore the default group behaviour.
+	- validate the TCP data offset.
+	[rmind, ticket #930]
+
+usr.sbin/npf/npfctl/npf_show.c			1.30
+
+	PR/54670: consistently use 'W' for TH_CWN, and bump buffer size.
+	[rmind, ticket #931]
+
+usr.sbin/npf/npfctl/npf_scan.l			1.31
+
+	PR/55288: npfctl: change parameter syntax to be more permissive.
+	[rmind, ticket #932]
 
