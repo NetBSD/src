@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.144 2020/05/22 19:02:59 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.145 2020/05/25 20:13:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.144 2020/05/22 19:02:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.145 2020/05/25 20:13:00 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -963,6 +963,9 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			KASSERT(uvm_pagegetdirty(ptmp) !=
 			    UVM_PAGE_STATUS_CLEAN);
+			if (overwrite) {
+				uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_DIRTY);
+			}
 			/* we own it, caller must un-busy */
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get2");
