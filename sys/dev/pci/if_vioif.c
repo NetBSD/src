@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.63 2020/05/25 09:41:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.64 2020/05/25 09:45:40 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.63 2020/05/25 09:41:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.64 2020/05/25 09:45:40 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1121,11 +1121,11 @@ vioif_disable_interrupt_vqpairs(struct vioif_softc *sc)
 	int i;
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
-		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
+		txq = &sc->sc_txq[i];
 
-		virtio_stop_vq_intr(vsc, txq->txq_vq);
 		virtio_stop_vq_intr(vsc, rxq->rxq_vq);
+		virtio_stop_vq_intr(vsc, txq->txq_vq);
 	}
 }
 
@@ -1202,13 +1202,13 @@ vioif_stop(struct ifnet *ifp, int disable)
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
 
-		mutex_enter(txq->txq_lock);
-		txq->txq_stopping = true;
-		mutex_exit(txq->txq_lock);
-
 		mutex_enter(rxq->rxq_lock);
 		rxq->rxq_stopping = true;
 		mutex_exit(rxq->rxq_lock);
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_stopping = true;
+		mutex_exit(txq->txq_lock);
 	}
 
 	/* disable interrupts */
@@ -1225,14 +1225,13 @@ vioif_stop(struct ifnet *ifp, int disable)
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
 
-		mutex_enter(txq->txq_lock);
-		mutex_exit(txq->txq_lock);
-
 		mutex_enter(rxq->rxq_lock);
 		mutex_exit(rxq->rxq_lock);
-
-		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
 		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
+
+		mutex_enter(txq->txq_lock);
+		mutex_exit(txq->txq_lock);
+		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
 	}
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
