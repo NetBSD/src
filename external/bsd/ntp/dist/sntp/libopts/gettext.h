@@ -1,3 +1,5 @@
+/*	$NetBSD: gettext.h,v 1.1.1.8 2020/05/25 20:40:14 christos Exp $	*/
+
 /* Convenience header for conditional use of GNU <libintl.h>.
    Copyright (C) 1995-1998, 2000-2002, 2004-2006, 2009-2015 Free Software
    Foundation, Inc.

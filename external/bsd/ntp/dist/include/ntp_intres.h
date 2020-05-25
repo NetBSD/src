@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_intres.h,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_intres.h - client interface to blocking-worker name resolution.
  */

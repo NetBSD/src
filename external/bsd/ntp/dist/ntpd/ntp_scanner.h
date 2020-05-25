@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_scanner.h,v 1.1.1.10 2020/05/25 20:40:08 christos Exp $	*/
+
 /* ntp_scanner.h
  *
  * The header file for a simple lexical analyzer. 

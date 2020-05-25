@@ -1,3 +1,5 @@
+/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.9 2020/05/25 20:40:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_sysctl.c,v 1.1.1.8 2018/09/29 17:28:41 christos Exp $ */
+/* Id: ifiter_sysctl.c,v 1.25 2007/06/19 23:47:18 tbox Exp  */
 
 /*! \file
  * \brief

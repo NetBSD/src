@@ -1,3 +1,5 @@
+/*	$NetBSD: iosignal.h,v 1.1.1.8 2020/05/25 20:40:04 christos Exp $	*/
+
 #ifndef IOSIGNAL_H
 #define IOSIGNAL_H
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: check_y2k.c,v 1.1.1.8 2020/05/25 20:40:07 christos Exp $	*/
+
 /* check_y2k.c -- test ntp code constructs for Y2K correctness 	Y2KFixes [*/
 
   /*

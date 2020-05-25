@@ -1,3 +1,5 @@
+/*	$NetBSD: strerror.h,v 1.1.1.8 2020/05/25 20:40:04 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: strerror.h,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
+/* Id: strerror.h,v 1.5 2007/06/19 23:47:20 tbox Exp  */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H

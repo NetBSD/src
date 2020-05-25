@@ -1,3 +1,5 @@
+/*	$NetBSD: netscope.h,v 1.1.1.8 2020/05/25 20:40:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netscope.h,v 1.1.1.7 2018/09/29 17:28:41 christos Exp $ */
+/* Id: netscope.h,v 1.13 2009/06/25 23:48:02 tbox Exp  */
 
 #ifndef ISC_NETSCOPE_H
 #define ISC_NETSCOPE_H 1

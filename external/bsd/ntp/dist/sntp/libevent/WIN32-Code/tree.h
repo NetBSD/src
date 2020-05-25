@@ -1,3 +1,5 @@
+/*	$NetBSD: tree.h,v 1.1.1.8 2020/05/25 20:40:13 christos Exp $	*/
+
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

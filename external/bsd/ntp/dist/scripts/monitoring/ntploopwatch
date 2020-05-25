@@ -718,43 +718,43 @@ sub genfile
 	}
 	;# now reclaim memory used for files no longer referenced ...
 	local(%Names);
-	grep($Names{$_} = 1,@newfiles);
+	grep(Names{_} = 1,@newfiles);
 	foreach (keys %F_key)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_key{$_};
 	    $verbose > 2 && print "no longer referenced: \"$_\"\n";
 	}
 	%Names = ();
 	
-	grep($Names{$_} = 1,values(%F_key));
+	grep(Names{_} = 1,values(%F_key));
 	foreach (keys %F_name)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_name{$_};
 	    $verbose > 2 && print "unref name($_)= $F_name{$_}\n";
 	}
 	foreach (keys %F_size)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_size{$_};
 	    $verbose > 2 && print "unref size($_)\n";
 	}
 	foreach (keys %F_mtime)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_mtime{$_};
 	    $verbose > 2 && print "unref mtime($_)\n";
 	}
 	foreach (keys %F_first)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_first{$_};
 	    $verbose > 2 && print "unref first($_)\n";
 	}
 	foreach (keys %F_last)
 	{
-	    next if defined($Names{$_});
+	    next if defined(Names{_});
 	    delete $F_last{$_};
 	    $verbose > 2 && print "unref last($_)\n";
 	}

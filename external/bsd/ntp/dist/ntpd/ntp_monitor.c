@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_monitor.c,v 1.1.1.11 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * ntp_monitor - monitor ntpd statistics
  */

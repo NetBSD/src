@@ -1,3 +1,5 @@
+/*	$NetBSD: mstolfp.c,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * mstolfp - convert an ascii string in milliseconds to an l_fp number
  */
@@ -22,7 +24,7 @@ mstolfp(
 	/*
 	 * We understand numbers of the form:
 	 *
-	 * [spaces][-][digits][.][digits][spaces|\n|\0]
+	 * [spaces][-|+][digits][.][digits][spaces|\n|\0]
 	 *
 	 * This is one enormous hack.  Since I didn't feel like
 	 * rewriting the decoding routine for milliseconds, what
@@ -35,9 +37,8 @@ mstolfp(
 	while (isspace((unsigned char)*cp))
 	    cp++;
 	
-	if (*cp == '-') {
-		*bp++ = '-';
-		cp++;
+	if (*cp == '-' || *cp == '+') {
+		*bp++ = *cp++;
 	}
 
 	if (*cp != '.' && !isdigit((unsigned char)*cp))

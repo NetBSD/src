@@ -1,3 +1,5 @@
+/*	$NetBSD: calyearstart.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * calyearstart - determine the NTP time at midnight of January 1 in
  *		  the year of the given date.
@@ -54,7 +56,7 @@ calmonthstart(u_int32 ntptime, const time_t *pivot)
 }
 
 /*
- * calweekstart - get NTP time at midnight of the last monday on or
+ * calweekstart - get NTP time at midnight of the last Monday on or
  * before the current date.
  */
 u_int32

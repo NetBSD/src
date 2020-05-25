@@ -1,3 +1,5 @@
+/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.8 2020/05/25 20:40:13 christos Exp $	*/
+
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *

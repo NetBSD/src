@@ -1,3 +1,5 @@
+/*	$NetBSD: ppsclock.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66.

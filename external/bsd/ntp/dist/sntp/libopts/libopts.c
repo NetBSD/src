@@ -1,3 +1,5 @@
+/*	$NetBSD: libopts.c,v 1.1.1.9 2020/05/25 20:40:14 christos Exp $	*/
+
 #define  AUTOOPTS_INTERNAL 1
 #include "autoopts/project.h"
 #define  LOCAL static

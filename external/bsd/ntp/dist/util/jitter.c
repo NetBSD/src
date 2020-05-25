@@ -1,3 +1,5 @@
+/*	$NetBSD: jitter.c,v 1.1.1.9 2020/05/25 20:40:16 christos Exp $	*/
+
 /*
  * This program can be used to calibrate the clock reading jitter of a
  * particular CPU and operating system. It first tickles every element

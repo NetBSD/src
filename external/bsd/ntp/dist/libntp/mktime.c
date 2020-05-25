@@ -1,3 +1,5 @@
+/*	$NetBSD: mktime.c,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * Copyright (c) 1987, 1989 Regents of the University of California.
  * All rights reserved.

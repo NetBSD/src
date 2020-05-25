@@ -1,3 +1,5 @@
+/*	$NetBSD: t-ntp_scanner.c,v 1.1.1.6 2020/05/25 20:40:16 christos Exp $	*/
+
 #include "config.h"
 
 #include "unity.h"
@@ -10,7 +12,7 @@ void test_keywordIncorrectToken(void)
 {
 	const char * temp = keyword(999);
 	//printf("%s\n",temp);
-	TEST_ASSERT_EQUAL_STRING("(keyword not found)",temp);
+	TEST_ASSERT_EQUAL_STRING("(keyword #999 not found)",temp);
 }
 
 extern void test_keywordServerToken(void);

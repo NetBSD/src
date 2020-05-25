@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_tty.h,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_tty.h - header file for serial lines handling
  */

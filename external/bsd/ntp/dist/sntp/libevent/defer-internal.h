@@ -1,3 +1,5 @@
+/*	$NetBSD: defer-internal.h,v 1.1.1.7 2020/05/25 20:40:12 christos Exp $	*/
+
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *

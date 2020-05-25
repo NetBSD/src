@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdc.h,v 1.1.1.9 2020/05/25 20:40:09 christos Exp $	*/
+
 /*
  * ntpdc.h - definitions of interest to ntpdc
  */

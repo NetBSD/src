@@ -1,3 +1,5 @@
+/*	$NetBSD: evdns.c,v 1.1.1.9 2020/05/25 20:40:13 christos Exp $	*/
+
 /* Copyright 2006-2007 Niels Provos
  * Copyright 2007-2012 Nick Mathewson and Niels Provos
  *

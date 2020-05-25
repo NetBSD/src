@@ -1,3 +1,5 @@
+/*	$NetBSD: netof.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /* 
  * netof - return the net address part of an ip address in a sockaddr_storage structure
  *         (zero out host part)

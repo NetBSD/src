@@ -1,3 +1,5 @@
+/*	$NetBSD: data_mbg.c,v 1.1.1.9 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *

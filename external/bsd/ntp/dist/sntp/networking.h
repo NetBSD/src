@@ -1,3 +1,5 @@
+/*	$NetBSD: networking.h,v 1.1.1.9 2020/05/25 20:40:11 christos Exp $	*/
+
 #ifndef NETWORKING_H
 #define NETWORKING_H
 

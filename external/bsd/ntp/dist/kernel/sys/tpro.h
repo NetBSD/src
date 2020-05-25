@@ -1,3 +1,5 @@
+/*	$NetBSD: tpro.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * Structure for the KSI/Odetics TPRO-S data returned in reponse to a
  * read() call. Note that these are driver-specific and not dependent on

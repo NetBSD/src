@@ -1,3 +1,5 @@
+/*	$NetBSD: recvbuff.h,v 1.1.1.11 2020/05/25 20:40:05 christos Exp $	*/
+
 #ifndef RECVBUFF_H
 #define RECVBUFF_H
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_machine.h,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_machine.h
  *

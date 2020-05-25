@@ -1,3 +1,5 @@
+/*	$NetBSD: rc_cmdlength.c,v 1.1.1.7 2020/05/25 20:40:06 christos Exp $	*/
+
 #include <config.h>
 #include <rc_cmdlength.h>
 

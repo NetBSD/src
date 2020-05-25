@@ -1,3 +1,5 @@
+/*	$NetBSD: util.h,v 1.1.1.9 2020/05/25 20:40:14 christos Exp $	*/
+
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *

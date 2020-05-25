@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpSnmpSubagentObject.c,v 1.1.1.9 2020/05/25 20:40:10 christos Exp $	*/
+
 /*****************************************************************************
  *
  *  ntpSnmpSubAgentObject.c

@@ -1,3 +1,5 @@
+/*	$NetBSD: tinytest_macros.h,v 1.1.1.8 2020/05/25 20:40:14 christos Exp $	*/
+
 /* tinytest_macros.h -- Copyright 2009-2012 Nick Mathewson
  *
  * Redistribution and use in source and binary forms, with or without

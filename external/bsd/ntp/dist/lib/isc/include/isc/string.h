@@ -1,3 +1,5 @@
+/*	$NetBSD: string.h,v 1.1.1.9 2020/05/25 20:40:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: string.h,v 1.1.1.8 2018/09/29 17:28:41 christos Exp $ */
+/* Id: string.h,v 1.23 2007/09/13 04:48:16 each Exp  */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1

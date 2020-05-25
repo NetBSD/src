@@ -1,3 +1,5 @@
+/*	$NetBSD: main.h,v 1.1.1.8 2020/05/25 20:40:11 christos Exp $	*/
+
 #ifndef MAIN_H
 #define MAIN_H
 

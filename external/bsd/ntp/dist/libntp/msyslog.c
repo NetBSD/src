@@ -1,3 +1,5 @@
+/*	$NetBSD: msyslog.c,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * msyslog - either send a message to the terminal or print it on
  *	     the standard output.
@@ -581,4 +583,42 @@ setup_logfile(
 	if (-1 == change_logfile(syslog_fname, FALSE))
 		msyslog(LOG_ERR, "Cannot reopen log file %s, %m",
 			syslog_fname);
+}
+
+/* Helper for unit tests, where stdout + stderr are piped to the same
+ * stream.  This works moderately reliable only if both streams are
+ * unbuffered or line buffered.  Unfortunately stdout can be fully
+ * buffered on pipes or files...
+ */
+int
+change_iobufs(
+	int how
+	)
+{
+	int	retv = 0;
+	
+#   ifdef HAVE_SETVBUF
+
+	int mode;
+
+	switch (how) {
+	case 0 : mode = _IONBF; break; /* no buffering   */
+	case 1 : mode = _IOLBF; break; /* line buffering */
+	case 2 : mode = _IOFBF; break; /* full buffering */
+	default: mode = _IOLBF; break; /* line buffering */
+	}
+	
+	retv = 1;
+	if (setvbuf(stdout, NULL, mode, BUFSIZ) != 0)
+		retv = -1;
+	if (setvbuf(stderr, NULL, mode, BUFSIZ) != 0)
+		retv = -1;
+
+#   else
+	
+	UNUSED_ARG(how);
+	
+#   endif
+	
+	return retv;
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: task_p.h,v 1.1.1.8 2020/05/25 20:40:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task_p.h,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
+/* Id */
 
 #ifndef ISC_TASK_P_H
 #define ISC_TASK_P_H

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_hpgps.c,v 1.1.1.10 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
  * refclock_hpgps - clock driver for HP 58503A GPS receiver
  */

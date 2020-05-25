@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_datum.c,v 1.1.1.9 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
 **

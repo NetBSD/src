@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_dcf7000.c,v 1.1.1.8 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/libparse/clk_dcf7000.c,v 4.10 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *

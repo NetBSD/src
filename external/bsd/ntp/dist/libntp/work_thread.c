@@ -1,3 +1,5 @@
+/*	$NetBSD: work_thread.c,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * work_thread.c - threads implementation for blocking worker child.
  */

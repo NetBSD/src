@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_peer.c,v 1.1.1.14 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * ntp_peer.c - management of data maintained for peer associations
  */
@@ -844,11 +846,13 @@ newpeer(
 		return NULL;
 	}
 
+#if 0
 DPRINTF(1, ("newpeer(%s) found no existing and %d other associations\n",
 		(hostname)
 		    ? hostname
 		    : stoa(srcadr),
 		ip_count));
+#endif
 
 	/* Check ippeerlimit wrt ip_count */
 	if (ippeerlimit > -1) {

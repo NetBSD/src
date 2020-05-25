@@ -1,3 +1,5 @@
+/*	$NetBSD: find.c,v 1.1.1.10 2020/05/25 20:40:14 christos Exp $	*/
+
 /**
  * @file check.c
  *

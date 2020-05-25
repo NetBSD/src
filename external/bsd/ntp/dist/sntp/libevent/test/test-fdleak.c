@@ -1,3 +1,5 @@
+/*	$NetBSD: test-fdleak.c,v 1.1.1.8 2020/05/25 20:40:14 christos Exp $	*/
+
 /*
  * Copyright (c) 2012 Ross Lagerwall <rosslagerwall@gmail.com>
  *

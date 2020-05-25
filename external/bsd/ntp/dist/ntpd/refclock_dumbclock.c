@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_dumbclock.c,v 1.1.1.9 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
  * refclock_dumbclock - clock driver for a unknown time distribution system
  * that only provides hh:mm:ss (in local time, yet!).

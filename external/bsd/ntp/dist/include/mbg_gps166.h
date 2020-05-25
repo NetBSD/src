@@ -1,3 +1,5 @@
+/*	$NetBSD: mbg_gps166.h,v 1.1.1.10 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
  *

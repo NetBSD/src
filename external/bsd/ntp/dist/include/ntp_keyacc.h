@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_keyacc.h,v 1.1.1.4 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  *  ntp_keyacc.h - key access stuff
  */

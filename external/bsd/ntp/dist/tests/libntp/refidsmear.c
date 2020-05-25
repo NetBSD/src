@@ -1,3 +1,5 @@
+/*	$NetBSD: refidsmear.c,v 1.1.1.7 2020/05/25 20:40:16 christos Exp $	*/
+
 #include "config.h"
 
 #include <ntp.h>
@@ -120,14 +122,14 @@ void test_refidsmear(void)
 	rtol(0xfefffffe, "-0.00000048");
 	rtol(0xfeffffff, "-0.00000024");
 
-	rtol(0xfe000000, "0.00000000");
-	rtol(0xfe000001, "0.00000024");
-	rtol(0xfe6ffffe, "1.74999952");
-	rtol(0xfe6fffff, "1.74999976");
-	rtol(0xfe700000, "1.75000000");
-	rtol(0xfe700001, "1.75000024");
-	rtol(0xfe7ffffe, "1.99999952");
-	rtol(0xfe7fffff, "1.99999976");
+	rtol(0xfe000000, "+0.00000000");
+	rtol(0xfe000001, "+0.00000024");
+	rtol(0xfe6ffffe, "+1.74999952");
+	rtol(0xfe6fffff, "+1.74999976");
+	rtol(0xfe700000, "+1.75000000");
+	rtol(0xfe700001, "+1.75000024");
+	rtol(0xfe7ffffe, "+1.99999952");
+	rtol(0xfe7fffff, "+1.99999976");
 
 	rtoltor(0xfe800000, "-2.00000000");
 	rtoltor(0xfe800001, "-1.99999976");
@@ -138,14 +140,14 @@ void test_refidsmear(void)
 	rtoltor(0xfefffffe, "-0.00000048");
 	rtoltor(0xfeffffff, "-0.00000024");
 
-	rtoltor(0xfe000000, "0.00000000");
-	rtoltor(0xfe000001, "0.00000024");
-	rtoltor(0xfe6ffffe, "1.74999952");
-	rtoltor(0xfe6fffff, "1.74999976");
-	rtoltor(0xfe700000, "1.75000000");
-	rtoltor(0xfe700001, "1.75000024");
-	rtoltor(0xfe7ffffe, "1.99999952");
-	rtoltor(0xfe7fffff, "1.99999976");
+	rtoltor(0xfe000000, "+0.00000000");
+	rtoltor(0xfe000001, "+0.00000024");
+	rtoltor(0xfe6ffffe, "+1.74999952");
+	rtoltor(0xfe6fffff, "+1.74999976");
+	rtoltor(0xfe700000, "+1.75000000");
+	rtoltor(0xfe700001, "+1.75000024");
+	rtoltor(0xfe7ffffe, "+1.99999952");
+	rtoltor(0xfe7fffff, "+1.99999976");
 
 	return;
 }

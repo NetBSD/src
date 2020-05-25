@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_assert.h,v 1.1.1.11 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_assert.h - design by contract stuff
  *

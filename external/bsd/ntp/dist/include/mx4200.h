@@ -1,3 +1,5 @@
+/*	$NetBSD: mx4200.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 
 /* records transmitted from extern CDU to MX 4200 */
 #define PMVXG_S_INITMODEA	0	/* initialization/mode part A */

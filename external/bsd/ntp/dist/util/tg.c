@@ -1,3 +1,5 @@
+/*	$NetBSD: tg.c,v 1.1.1.8 2020/05/25 20:40:16 christos Exp $	*/
+
 /*
  * tg.c generate WWV or IRIG signals for test
  */

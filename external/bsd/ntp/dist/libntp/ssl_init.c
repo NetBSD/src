@@ -1,3 +1,5 @@
+/*	$NetBSD: ssl_init.c,v 1.1.1.13 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
  *		programs which use it.

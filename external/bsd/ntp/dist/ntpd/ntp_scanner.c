@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_scanner.c,v 1.1.1.14 2020/05/25 20:40:08 christos Exp $	*/
+
 
 /* ntp_scanner.c
  *
@@ -73,17 +75,26 @@ keyword(
 {
 	size_t i;
 	const char *text;
+	static char sbuf[64];
 
 	i = token - LOWEST_KEYWORD_ID;
 
-	if (i < COUNTOF(keyword_text))
-		text = keyword_text[i];
-	else
-		text = NULL;
+	switch (token) {
+	    case T_ServerresponseFuzz:
+		text = "serverresponse fuzz";
+		break;
 
-	return (text != NULL)
-		   ? text
-		   : "(keyword not found)";
+	    default:
+		if (i < COUNTOF(keyword_text)) {
+			text = keyword_text[i];
+		} else {
+			snprintf(sbuf, sizeof sbuf,
+				"(keyword #%u not found)", token);
+			text = sbuf;
+		}
+	}
+
+	return text;
 }
 
 

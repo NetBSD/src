@@ -1,3 +1,5 @@
+/*	$NetBSD: namespace.h,v 1.1.1.7 2020/05/25 20:40:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: namespace.h,v 1.1.1.6 2018/09/29 17:28:41 christos Exp $ */
+/* Id */
 
 #ifndef ISCAPI_NAMESPACE_H
 #define ISCAPI_NAMESPACE_H 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: ppsapi_timepps.h,v 1.1.1.7 2020/05/25 20:40:06 christos Exp $	*/
+
 /* ppsapi_timepps.h */
 
 /*

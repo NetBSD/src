@@ -1,3 +1,5 @@
+/*	$NetBSD: tickadj.c,v 1.1.1.9 2020/05/25 20:40:16 christos Exp $	*/
+
 /*
  * tickadj - read, and possibly modify, the kernel `tick' and
  *	     `tickadj' variables, as well as `dosynctodr'.  Note that

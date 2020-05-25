@@ -1,3 +1,5 @@
+/*	$NetBSD: log.c,v 1.1.1.9 2020/05/25 20:40:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.1.1.8 2018/09/29 17:28:40 christos Exp $ */
+/* Id */
 
 /*! \file
  * \author  Principal Authors: DCL */

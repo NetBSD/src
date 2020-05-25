@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_sel240x.c,v 1.1.1.8 2020/05/25 20:40:06 christos Exp $	*/
+
 //////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2009,2012 -
 //        Schweitzer Engineering Laboratories, Inc. <opensource@selinc.com>

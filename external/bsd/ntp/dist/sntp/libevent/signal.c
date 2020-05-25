@@ -1,3 +1,5 @@
+/*	$NetBSD: signal.c,v 1.1.1.7 2020/05/25 20:40:12 christos Exp $	*/
+
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*

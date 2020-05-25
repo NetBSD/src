@@ -1,3 +1,5 @@
+/*	$NetBSD: packetHandling.c,v 1.1.1.9 2020/05/25 20:40:15 christos Exp $	*/
+
 #include "config.h"
 #include "ntp_debug.h"
 #include "ntp_stdlib.h"

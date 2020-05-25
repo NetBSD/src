@@ -1,3 +1,5 @@
+/*	$NetBSD: kqueue.c,v 1.1.1.8 2020/05/25 20:40:12 christos Exp $	*/
+
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*

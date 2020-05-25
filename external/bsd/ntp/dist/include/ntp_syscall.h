@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_syscall.h,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_syscall.h - various ways to perform the ntp_adjtime() and ntp_gettime()
  * 		   system calls.

@@ -1,5 +1,7 @@
+/*	$NetBSD: refclock_ripencc.c,v 1.1.1.10 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
- * $Id: refclock_ripencc.c,v 1.1.1.9 2018/09/29 17:28:36 christos Exp $
+ * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks 
  *
  * Copyright (c) 2002  RIPE NCC
  *

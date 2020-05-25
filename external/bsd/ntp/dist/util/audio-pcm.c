@@ -1,3 +1,5 @@
+/*	$NetBSD: audio-pcm.c,v 1.1.1.8 2020/05/25 20:40:16 christos Exp $	*/
+
 /*
  * audio-pcm.c - Scope out the PCM audio stuff
  */

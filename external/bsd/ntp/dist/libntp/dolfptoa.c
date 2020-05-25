@@ -1,3 +1,5 @@
+/*	$NetBSD: dolfptoa.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * dolfptoa - do the grunge work of converting an l_fp number to decimal
  */
@@ -13,7 +15,7 @@ char *
 dolfptoa(
 	u_int32 fpi,
 	u_int32 fpv,
-	int neg,
+	char sign,
 	short ndec,
 	int msec
 	)
@@ -120,8 +122,8 @@ dolfptoa(
 		cp = cpdec - 1;
 
 	bp = buf;
-	if (neg)
-		*bp++ = '-';
+	if (sign)
+		*bp++ = sign;
 	while (cp < cpend) {
 		if (cp == cpdec)
 			*bp++ = '.';
@@ -150,7 +152,7 @@ mfptoa(
 		M_NEG(fpi, fpf);
 	}
 
-	return dolfptoa(fpi, fpf, isneg, ndec, FALSE);
+	return dolfptoa(fpi, fpf, (isneg?'-':'+'), ndec, FALSE);
 }
 
 
@@ -168,7 +170,7 @@ mfptoms(
 		M_NEG(fpi, fpf);
 	}
 
-	return dolfptoa(fpi, fpf, isneg, ndec, TRUE);
+	return dolfptoa(fpi, fpf, (isneg?'-':'+'), ndec, TRUE);
 }
 
 

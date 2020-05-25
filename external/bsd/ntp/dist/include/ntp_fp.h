@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_fp.h,v 1.1.1.13 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
  */
@@ -344,8 +346,8 @@ typedef u_int32 u_fp;
 /*
  * Prototypes
  */
-extern	char *	dofptoa		(u_fp, int, short, int);
-extern	char *	dolfptoa	(u_int32, u_int32, int, short, int);
+extern	char *	dofptoa		(u_fp, char, short, int);
+extern	char *	dolfptoa	(u_int32, u_int32, char, short, int);
 
 extern	int	atolfp		(const char *, l_fp *);
 extern	int	buftvtots	(const char *, l_fp *);

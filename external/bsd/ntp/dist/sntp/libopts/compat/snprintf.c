@@ -1,3 +1,5 @@
+/*	$NetBSD: snprintf.c,v 1.1.1.8 2020/05/25 20:40:15 christos Exp $	*/
+
 
 #ifndef HAVE_VPRINTF
 #include "choke-me: no vprintf and no snprintf"

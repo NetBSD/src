@@ -1,3 +1,5 @@
+/*	$NetBSD: pps-api.c,v 1.1.1.7 2020/05/25 20:40:16 christos Exp $	*/
+
 /*
 
 Try to run this program to see what the PPS-API finds. You give it the

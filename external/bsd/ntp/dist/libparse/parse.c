@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.c,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/libparse/parse.c,v 4.20 2005/08/06 17:39:40 kardel RELEASE_20050806_A
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: strdup.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 #include <config.h>
 
 #include <ntp_assert.h>

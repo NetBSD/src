@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_gpsvme.c,v 1.1.1.9 2020/05/25 20:40:07 christos Exp $	*/
+
 /* refclock_psc.c:  clock driver for Brandywine PCI-SyncClock32/HP-UX 11.X */
 
 #ifdef	HAVE_CONFIG_H

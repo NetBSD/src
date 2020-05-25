@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_shm.c,v 1.1.1.12 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
  * refclock_shm - clock driver for utc via shared memory
  * - under construction -

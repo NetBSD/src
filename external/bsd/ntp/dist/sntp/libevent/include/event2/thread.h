@@ -1,3 +1,5 @@
+/*	$NetBSD: thread.h,v 1.1.1.8 2020/05/25 20:40:14 christos Exp $	*/
+
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: lib_strbuf.h,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * lib_strbuf.h - definitions for routines which use the common string buffers
  */

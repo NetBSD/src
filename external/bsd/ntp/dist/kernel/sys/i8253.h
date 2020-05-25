@@ -1,3 +1,5 @@
+/*	$NetBSD: i8253.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 /* Copyright (c) 1995 Vixie Enterprises
  *
  * Permission to use, copy, modify, and distribute this software for any

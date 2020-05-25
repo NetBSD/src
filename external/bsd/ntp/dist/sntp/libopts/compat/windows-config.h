@@ -1,3 +1,5 @@
+/*	$NetBSD: windows-config.h,v 1.1.1.10 2020/05/25 20:40:15 christos Exp $	*/
+
 
 /**
  * \file windows-config.h

@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.1.1.13 2020/05/25 20:40:11 christos Exp $	*/
+
 #include <config.h>
 
 #include <event2/util.h>
@@ -6,6 +8,10 @@
 #include "ntp_workimpl.h"
 #ifdef WORK_THREAD
 # include <event2/thread.h>
+#endif
+
+#ifdef HAVE_SYSEXITS_H
+# include <sysexits.h>
 #endif
 
 #include "main.h"
@@ -1609,9 +1615,8 @@ gettimeofday_cached(
 }
 
 /* Dummy function to satisfy libntp/work_fork.c */
-int
-set_user_group_ids(
-	)
+extern int set_user_group_ids(void);
+int set_user_group_ids(void)
 {
     return 1;
 }

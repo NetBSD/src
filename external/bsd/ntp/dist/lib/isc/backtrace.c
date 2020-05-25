@@ -1,3 +1,5 @@
+/*	$NetBSD: backtrace.c,v 1.1.1.8 2020/05/25 20:40:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: backtrace.c,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
+/* Id: backtrace.c,v 1.3 2009/09/02 23:48:02 tbox Exp  */
 
 /*! \file */
 

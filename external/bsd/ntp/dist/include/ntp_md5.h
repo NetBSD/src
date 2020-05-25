@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_md5.h,v 1.1.1.11 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * ntp_md5.h: deal with md5.h headers
  *

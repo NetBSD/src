@@ -1,3 +1,5 @@
+/*	$NetBSD: evport.c,v 1.1.1.7 2020/05/25 20:40:12 christos Exp $	*/
+
 /*
  * Submitted by David Pacheco (dp.spambait@gmail.com)
  *

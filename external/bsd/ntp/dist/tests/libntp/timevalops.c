@@ -1,3 +1,5 @@
+/*	$NetBSD: timevalops.c,v 1.1.1.9 2020/05/25 20:40:16 christos Exp $	*/
+
 #include "config.h"
 
 //some unused features are still in the wrapper, unconverted

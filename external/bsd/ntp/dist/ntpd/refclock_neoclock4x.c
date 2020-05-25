@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_neoclock4x.c,v 1.1.1.10 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  *
  * Refclock_neoclock4x.c

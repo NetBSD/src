@@ -1,3 +1,5 @@
+/*	$NetBSD: crypto.c,v 1.1.1.14 2020/05/25 20:40:11 christos Exp $	*/
+
 /*
  * HMS: we need to test:
  * - OpenSSL versions, if we are building with them
@@ -32,7 +34,9 @@ compute_mac(
 	)
 {
 	u_int		len  = 0;
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 	size_t		slen = 0;
+#endif
 	int		key_type;
 	
 	INIT_SSL();

@@ -1,3 +1,5 @@
+/*	$NetBSD: sntptest.h,v 1.1.1.8 2020/05/25 20:40:15 christos Exp $	*/
+
 #ifndef SNTPTEST_H
 #define SNTPTEST_H
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: adjtimex.c,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement

@@ -1,3 +1,5 @@
+/*	$NetBSD: kod_management.c,v 1.1.1.10 2020/05/25 20:40:11 christos Exp $	*/
+
 #include <config.h>
 #include <string.h>
 #include <sys/types.h>

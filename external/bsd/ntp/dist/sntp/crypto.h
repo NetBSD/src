@@ -1,3 +1,5 @@
+/*	$NetBSD: crypto.h,v 1.1.1.11 2020/05/25 20:40:11 christos Exp $	*/
+
 #ifndef CRYPTO_H
 #define CRYPTO_H
 

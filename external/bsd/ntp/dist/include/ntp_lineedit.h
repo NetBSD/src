@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_lineedit.h,v 1.1.1.7 2020/05/25 20:40:05 christos Exp $	*/
+
 
 /*
  * ntp_lineedit.h - generic interface to various line editing libs

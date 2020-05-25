@@ -1,3 +1,5 @@
+/*	$NetBSD: strlcpy.c,v 1.1.1.7 2020/05/25 20:40:12 christos Exp $	*/
+
 /*	$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp $	*/
 
 /*

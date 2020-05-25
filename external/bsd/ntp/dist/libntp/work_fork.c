@@ -1,3 +1,5 @@
+/*	$NetBSD: work_fork.c,v 1.1.1.12 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * work_fork.c - fork implementation for blocking worker child.
  */
@@ -89,7 +91,9 @@ netwrite(
 }
 
 
-int set_user_group_ids(void);
+#if defined(HAVE_DROPROOT)
+extern int set_user_group_ids(void);
+#endif
 
 /* === functions === */
 /*
@@ -594,7 +598,9 @@ fork_blocking_child(
 	init_logging("ntp_intres", 0, FALSE);
 	setup_logfile(NULL);
 
+#ifdef HAVE_DROPROOT
 	(void) set_user_group_ids();
+#endif
 
 	/*
 	 * And now back to the portable code

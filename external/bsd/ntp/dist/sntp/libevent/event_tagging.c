@@ -1,3 +1,5 @@
+/*	$NetBSD: event_tagging.c,v 1.1.1.8 2020/05/25 20:40:13 christos Exp $	*/
+
 /*
  * Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson

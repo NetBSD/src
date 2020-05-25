@@ -1,3 +1,5 @@
+/*	$NetBSD: regress_util.c,v 1.1.1.9 2020/05/25 20:40:14 christos Exp $	*/
+
 /*
  * Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: usage.c,v 1.1.1.11 2020/05/25 20:40:15 christos Exp $	*/
+
 
 /*
  * \file usage.c

@@ -1,3 +1,5 @@
+/*	$NetBSD: syssignal.c,v 1.1.1.8 2020/05/25 20:40:05 christos Exp $	*/
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif

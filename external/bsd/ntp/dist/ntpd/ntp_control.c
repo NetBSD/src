@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_control.c,v 1.1.1.16 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
  *		   traps.  Provides service to ntpq and others.
@@ -28,6 +30,8 @@
 #include "ntp_leapsec.h"
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
 #include "lib_strbuf.h"
+#include "timexsup.h"
+
 #include <rc_cmdlength.h>
 #ifdef KERNEL_PLL
 # include "ntp_syscall.h"
@@ -327,7 +331,8 @@ static const struct ctl_proc control_codes[] = {
 #define	CC_FLAGS	11
 #define	CC_DEVICE	12
 #define	CC_VARLIST	13
-#define	CC_MAXCODE	CC_VARLIST
+#define	CC_FUDGEMINJIT	14
+#define	CC_MAXCODE	CC_FUDGEMINJIT
 
 /*
  * System variable values. The array can be indexed by the variable
@@ -625,7 +630,8 @@ static const struct ctl_var clock_var[] = {
 	{ CC_FLAGS,	RO, "flags" },		/* 11 */
 	{ CC_DEVICE,	RO, "device" },		/* 12 */
 	{ CC_VARLIST,	RO, "clock_var_list" },	/* 13 */
-	{ 0,		EOV, ""  }		/* 14 */
+	{ CC_FUDGEMINJIT, RO, "minjitter" },	/* 14 */
+	{ 0,		EOV, ""  }		/* 15 */
 };
 
 
@@ -640,6 +646,7 @@ static const u_char def_clock_var[] = {
 	CC_NOREPLY,
 	CC_BADFORMAT,
 	CC_BADDATA,
+	CC_FUDGEMINJIT,
 	CC_FUDGETIME1,
 	CC_FUDGETIME2,
 	CC_FUDGEVAL1,
@@ -1187,15 +1194,21 @@ process_control(
 	pkt = (struct ntp_control *)&rbufp->recv_pkt;
 
 	/*
-	 * If the length is less than required for the header, or
-	 * it is a response or a fragment, ignore this.
+	 * If the length is less than required for the header,
+	 * ignore it.
 	 */
-	if (rbufp->recv_length < (int)CTL_HEADER_LEN
-	    || (CTL_RESPONSE | CTL_MORE | CTL_ERROR) & pkt->r_m_e_op
+	if (rbufp->recv_length < (int)CTL_HEADER_LEN) {
+		DPRINTF(1, ("Short control packet\n"));
+		numctltooshort++;
+		return;
+	}
+
+	/*
+	 * If this packet is a response or a fragment, ignore it.
+	 */
+	if (   (CTL_RESPONSE | CTL_MORE | CTL_ERROR) & pkt->r_m_e_op
 	    || pkt->offset != 0) {
 		DPRINTF(1, ("invalid format in control packet\n"));
-		if (rbufp->recv_length < (int)CTL_HEADER_LEN)
-			numctltooshort++;
 		if (CTL_RESPONSE & pkt->r_m_e_op)
 			numctlinputresp++;
 		if (CTL_MORE & pkt->r_m_e_op)
@@ -1206,6 +1219,7 @@ process_control(
 			numctlbadoffset++;
 		return;
 	}
+
 	res_version = PKT_VERSION(pkt->li_vn_mode);
 	if (res_version > NTP_VERSION || res_version < NTP_OLDVERSION) {
 		DPRINTF(1, ("unknown version %d in control packet\n",
@@ -1910,13 +1924,6 @@ ctl_putsys(
 	static struct timex ntx;
 	static u_long ntp_adjtime_time;
 
-	static const double to_ms =
-# ifdef STA_NANO
-		1.0e-6; /* nsec to msec */
-# else
-		1.0e-3; /* usec to msec */
-# endif
-
 	/*
 	 * CS_K_* variables depend on up-to-date output of ntp_adjtime()
 	 */
@@ -2319,7 +2326,8 @@ ctl_putsys(
 	case CS_K_OFFSET:
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
-			(sys_var[varid].text, 0, -1, to_ms * ntx.offset)
+			(sys_var[varid].text, 0, -1,
+			 1000 * dbl_from_var_long(ntx.offset, ntx.status))
 		);
 		break;
 
@@ -2334,7 +2342,7 @@ ctl_putsys(
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
 			(sys_var[varid].text, 0, 6,
-			 to_ms * ntx.maxerror)
+			 1000 * dbl_from_usec_long(ntx.maxerror))
 		);
 		break;
 
@@ -2342,7 +2350,7 @@ ctl_putsys(
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
 			(sys_var[varid].text, 0, 6,
-			 to_ms * ntx.esterror)
+			 1000 * dbl_from_usec_long(ntx.esterror))
 		);
 		break;
 
@@ -2366,7 +2374,7 @@ ctl_putsys(
 		CTL_IF_KERNLOOP(
 			ctl_putdblf,
 			(sys_var[varid].text, 0, 6,
-			    to_ms * ntx.precision)
+			 1000 * dbl_from_var_long(ntx.precision, ntx.status))
 		);
 		break;
 
@@ -2394,7 +2402,8 @@ ctl_putsys(
 	case CS_K_PPS_JITTER:
 		CTL_IF_KERNPPS(
 			ctl_putdbl,
-			(sys_var[varid].text, to_ms * ntx.jitter)
+			(sys_var[varid].text,
+			 1000 * dbl_from_var_long(ntx.jitter, ntx.status))
 		);
 		break;
 
@@ -2963,14 +2972,9 @@ ctl_putclock(
 		break;
 
 	case CC_FUDGEVAL2:
-		if (mustput || (pcs->haveflags & CLK_HAVEVAL2)) {
-			if (pcs->fudgeval1 > 1)
-				ctl_putadr(clock_var[id].text,
-					   pcs->fudgeval2, NULL);
-			else
-				ctl_putrefid(clock_var[id].text,
-					     pcs->fudgeval2);
-		}
+		/* RefID of clocks are always text even if stratum is fudged */
+		if (mustput || (pcs->haveflags & CLK_HAVEVAL2))
+			ctl_putrefid(clock_var[id].text, pcs->fudgeval2);
 		break;
 
 	case CC_FLAGS:
@@ -3043,6 +3047,16 @@ ctl_putclock(
 		*s = '\0';
 		ctl_putdata(buf, (unsigned)(s - buf), 0);
 		break;
+		
+	case CC_FUDGEMINJIT:
+		if (mustput || (pcs->haveflags & CLK_HAVEMINJIT))
+			ctl_putdbl(clock_var[id].text,
+				   pcs->fudgeminjitter * 1e3);
+		break;
+
+	default:
+		break;
+
 	}
 }
 #endif
@@ -3446,11 +3460,11 @@ write_variables(
 	 * Look through the variables. Dump out at the first sign of
 	 * trouble.
 	 */
-	while ((v = ctl_getitem(sys_var, &valuep)) != 0) {
+	while ((v = ctl_getitem(sys_var, &valuep)) != NULL) {
 		ext_var = 0;
 		if (v->flags & EOV) {
-			if ((v = ctl_getitem(ext_sys_var, &valuep)) !=
-			    0) {
+			v = ctl_getitem(ext_sys_var, &valuep);
+			if (v != NULL) {
 				if (v->flags & EOV) {
 					ctl_error(CERR_UNKNOWNVAR);
 					return;
@@ -3464,16 +3478,24 @@ write_variables(
 			ctl_error(CERR_PERMISSION);
 			return;
 		}
-		if (!ext_var && (*valuep == '\0' || !atoint(valuep,
-							    &val))) {
+		/* [bug 3565] writing makes sense only if we *have* a
+		 * value in the packet!
+		 */
+		if (valuep == NULL) {
 			ctl_error(CERR_BADFMT);
 			return;
 		}
-		if (!ext_var && (val & ~LEAP_NOTINSYNC) != 0) {
-			ctl_error(CERR_BADVALUE);
-			return;
+		if (!ext_var) {
+			if ( !(*valuep && atoint(valuep, &val))) {
+				ctl_error(CERR_BADFMT);
+				return;
+			}
+			if ((val & ~LEAP_NOTINSYNC) != 0) {
+				ctl_error(CERR_BADVALUE);
+				return;
+			}
 		}
-
+		
 		if (ext_var) {
 			octets = strlen(v->text) + strlen(valuep) + 2;
 			vareqv = emalloc(octets);

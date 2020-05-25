@@ -1,3 +1,5 @@
+/*	$NetBSD: gpstolfp.c,v 1.1.1.10 2020/05/25 20:40:06 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/libntp/gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
@@ -45,11 +47,6 @@ gpstolfp(
 	 l_fp * lfp
 	 )
 {
-  if (weeks < GPSWRAP)
-    {
-      weeks += GPSWEEKS;
-    }
-
   lfp->l_ui = (uint32_t)(weeks * SECSPERWEEK + days * SECSPERDAY + seconds + GPSORIGIN); /* convert to NTP time */
   lfp->l_uf = 0;
 }

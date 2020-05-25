@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.13 2020/05/25 20:40:07 christos Exp $	*/
+
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
  *	Juergen Perlinger (perlinger@ntp.org)
@@ -949,7 +951,7 @@ add_clock_sample(
 	pp->lastref = stamp;
 	if (pp->coderecv == pp->codeproc)
 		refclock_report(peer, CEVNT_NOMINAL);
-	refclock_process_offset(pp, stamp, recvt, pp->fudgetime1);
+	refclock_process_offset(pp, stamp, recvt, 0.0);
 }
 
 /* ------------------------------------------------------------------ */

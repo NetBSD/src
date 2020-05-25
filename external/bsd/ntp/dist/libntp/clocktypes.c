@@ -1,3 +1,5 @@
+/*	$NetBSD: clocktypes.c,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  * Data for pretty printing clock types
  */

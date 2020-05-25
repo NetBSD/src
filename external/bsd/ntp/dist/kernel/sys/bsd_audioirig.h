@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audioirig.h,v 1.1.1.9 2020/05/25 20:40:05 christos Exp $	*/
+
 /*
  *	$Header: bsd_audioirig.h,v 1.0 93/08/02 12:42:00
  */
