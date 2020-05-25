@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.45 2020/05/23 18:08:59 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.46 2020/05/25 05:13:16 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -189,6 +189,7 @@ AARCH64REG_READ_INLINE2(cbar_el1, s3_1_c15_c3_0)	// Cortex-A57
 
 AARCH64REG_READ_INLINE(ccsidr_el1)
 
+/* 32bit format CCSIDR_EL1 */
 #define	CCSIDR_WT		__BIT(31)	// OBSOLETE: Write-through supported
 #define	CCSIDR_WB		__BIT(30)	// OBSOLETE: Write-back supported
 #define	CCSIDR_RA		__BIT(29)	// OBSOLETE: Read-allocation supported
@@ -196,6 +197,11 @@ AARCH64REG_READ_INLINE(ccsidr_el1)
 #define	CCSIDR_NUMSET		__BITS(27,13)	// (Number of sets in cache) - 1
 #define	CCSIDR_ASSOC		__BITS(12,3)	// (Associativity of cache) - 1
 #define	CCSIDR_LINESIZE 	__BITS(2,0)	// Number of bytes in cache line
+
+/* 64bit format CCSIDR_EL1 (ARMv8.3-CCIDX is implemented) */
+#define	CCSIDR64_NUMSET		__BITS(55,32)	// (Number of sets in cache) - 1
+#define	CCSIDR64_ASSOC		__BITS(23,3)	// (Associativity of cache) - 1
+#define	CCSIDR64_LINESIZE 	__BITS(2,0)	// Number of bytes in cache line
 
 AARCH64REG_READ_INLINE(clidr_el1)
 
