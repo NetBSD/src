@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2020/04/30 06:16:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2020/05/25 21:15:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2020/04/30 06:16:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2020/05/25 21:15:10 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1253,11 +1253,10 @@ pmap_destroy(pmap_t pmap)
 		return;
 
 #ifdef DIAGNOSTIC
-	uvm_page_array_init(&a);
+	uvm_page_array_init(&a, &pmap->pm_obj, 0);
 	off = 0;
 	rw_enter(pmap->pm_lock, RW_WRITER);
-	while ((pg = uvm_page_array_fill_and_peek(&a, &pmap->pm_obj, off, 0, 0))
-	    != NULL) {
+	while ((pg = uvm_page_array_fill_and_peek(&a, off, 0)) != NULL) {
 		pt_entry_t *pde, *epde;
 		struct vm_page *spg;
 		struct pv_entry *pv, *npv;

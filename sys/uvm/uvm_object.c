@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.22 2020/05/19 22:22:15 ad Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.23 2020/05/25 21:15:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.22 2020/05/19 22:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.23 2020/05/25 21:15:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -258,10 +258,9 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 		return;
 	}
 	(*pr)("  PAGES <pg,offset>:\n  ");
-	uvm_page_array_init(&a);
+	uvm_page_array_init(&a, uobj, 0);
 	off = 0;
-	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, off, 0, 0))
-	    != NULL) {
+	while ((pg = uvm_page_array_fill_and_peek(&a, off, 0)) != NULL) {
 		cnt++;
 		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
 		if ((cnt % 3) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.145 2020/05/25 20:13:00 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.146 2020/05/25 21:15:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.145 2020/05/25 20:13:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.146 2020/05/25 21:15:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -618,10 +618,9 @@ uao_detach(struct uvm_object *uobj)
 	 * involved in is complete), release any swap resources and free
 	 * the page itself.
 	 */
-	uvm_page_array_init(&a);
+	uvm_page_array_init(&a, uobj, 0);
 	rw_enter(uobj->vmobjlock, RW_WRITER);
-	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, 0, 0, 0))
-	    != NULL) {
+	while ((pg = uvm_page_array_fill_and_peek(&a, 0, 0)) != NULL) {
 		uvm_page_array_advance(&a);
 		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
@@ -705,10 +704,9 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	}
 
 	/* locked: uobj */
-	uvm_page_array_init(&a);
+	uvm_page_array_init(&a, uobj, 0);
 	curoff = start;
-	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, curoff, 0, 0)) !=
-	    NULL) {
+	while ((pg = uvm_page_array_fill_and_peek(&a, curoff, 0)) != NULL) {
 		if (pg->offset >= stop) {
 			break;
 		}
@@ -838,11 +836,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * time through).
  		 */
 
-		uvm_page_array_init(&a);
+		uvm_page_array_init(&a, uobj, 0);
 		gotpages = 0;	/* # of pages we got so far */
 		for (lcv = 0; lcv < maxpages; lcv++) {
-			ptmp = uvm_page_array_fill_and_peek(&a, uobj,
-			    offset + (lcv << PAGE_SHIFT), maxpages, 0);
+			ptmp = uvm_page_array_fill_and_peek(&a,
+			    offset + (lcv << PAGE_SHIFT), maxpages);
 			if (ptmp == NULL) {
 				break;
 			}
