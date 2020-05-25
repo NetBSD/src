@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.7 2020/05/25 21:22:40 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.8 2020/05/25 22:01:26 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.7 2020/05/25 21:22:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.8 2020/05/25 22:01:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,12 +180,12 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 			 * set of arguments, in the current version of the
 			 * tree.
 			 *
-			 * minimize repeated tree lookups by "finding" some
-			 * null pointers, in case the caller keeps looping
-			 * (a common use case).
+			 * minimize repeated tree lookups by "finding" a
+			 * null pointer, in case the caller keeps looping (a
+			 * common use case).
 			 */
-			npages = maxpages;
-			memset(ar->ar_pages, 0, sizeof(ar->ar_pages[0]) * npages);
+			npages = 1;
+			ar->ar_pages[0] = NULL;
 		}
 	}
 	KASSERT(npages <= maxpages);
@@ -220,20 +220,17 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
  */
 
 struct vm_page *
-uvm_page_array_fill_and_peek(struct uvm_page_array *a, voff_t off,
+uvm_page_array_fill_and_peek(struct uvm_page_array *ar, voff_t off,
     unsigned int nwant)
 {
-	struct vm_page *pg;
 	int error;
 
-	pg = uvm_page_array_peek(a);
-	if (pg != NULL) {
-		return pg;
+	if (ar->ar_idx != ar->ar_npages) {
+		return ar->ar_pages[ar->ar_idx];
 	}
-	error = uvm_page_array_fill(a, off, nwant);
+	error = uvm_page_array_fill(ar, off, nwant);
 	if (error != 0) {
 		return NULL;
 	}
-	pg = uvm_page_array_peek(a);
-	return pg;
+	return uvm_page_array_peek(ar);
 }
