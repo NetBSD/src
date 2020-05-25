@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.9 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: configfile.c,v 1.10 2020/05/25 20:54:07 christos Exp $	*/
 
 /**
  * \file configfile.c
@@ -468,7 +468,7 @@ file_preset(tOptions * opts, char const * fname, int dir)
                 ftext = strchr(ftext + 2, '>');
                 if (ftext++ != NULL)
                     break;
-
+		/*FALLTHROUGH*/
             default:
                 ftext = NULL;
             }
