@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.52 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: zdump.c,v 1.53 2020/05/25 14:52:48 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.52 2019/01/27 02:08:35 pgoyette Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.53 2020/05/25 14:52:48 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -330,12 +330,12 @@ abbrok(const char *const abbrp, const char *const zone)
 	cp = abbrp;
 	while (is_alpha(*cp) || is_digit(*cp) || *cp == '-' || *cp == '+')
 		++cp;
-	if (cp - abbrp < 3)
+	if (*cp)
+		wp = _("has characters other than ASCII alphanumerics, '-' or '+'");
+	else if (cp - abbrp < 3)
 		wp = _("has fewer than 3 characters");
 	else if (cp - abbrp > 6)
 		wp = _("has more than 6 characters");
-	else if (*cp)
-		wp = _("has characters other than ASCII alphanumerics, '-' or '+'");
 	else
 		return;
 	(void) fflush(stdout);

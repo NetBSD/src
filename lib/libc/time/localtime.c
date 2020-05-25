@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.122 2019/07/03 15:50:16 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.123 2020/05/25 14:52:48 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.122 2019/07/03 15:50:16 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.123 2020/05/25 14:52:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,6 +165,7 @@ static struct tm *gmtsub(struct state const *, time_t const *, int_fast32_t,
 			 struct tm *);
 static bool increment_overflow(int *, int);
 static bool increment_overflow_time(time_t *, int_fast32_t);
+static int_fast64_t leapcorr(struct state const *, time_t);
 static bool normalize_overflow32(int_fast32_t *, int *, int);
 static struct tm *timesub(time_t const *, int_fast32_t, struct state const *,
 			  struct tm *);
@@ -198,7 +199,7 @@ rwlock_t __lcl_lock = RWLOCK_INITIALIZER;
 
 static struct tm	tm;
 
-#if !HAVE_POSIX_DECLS || TZ_TIME_T || defined(__NetBSD__)
+#if 2 <= HAVE_TZNAME + TZ_TIME_T || defined(__NetBSD__)
 # if !defined(__LIBC12_SOURCE__)
 
 __aconst char *		tzname[2] = {
@@ -211,21 +212,21 @@ __aconst char *		tzname[2] = {
 extern __aconst char *	tzname[2];
 
 # endif /* __LIBC12_SOURCE__ */
+#endif
 
-# if USG_COMPAT
-#  if !defined(__LIBC12_SOURCE__)
+#if 2 <= USG_COMPAT + TZ_TIME_T || defined(__NetBSD__)
+# if !defined(__LIBC12_SOURCE__)
 long 			timezone = 0;
 int			daylight = 0;
-#  else
+# else
 extern int		daylight;
 extern long		timezone __RENAME(__timezone13);
-#  endif /* __LIBC12_SOURCE__ */
-# endif /* defined USG_COMPAT */
+# endif /* __LIBC12_SOURCE__ */
+#endif /* 2<= USG_COMPAT + TZ_TIME_T */
 
-# ifdef ALTZONE
+#if 2 <= ALTZONE + TZ_TIME_T
 long			altzone = 0;
-# endif /* defined ALTZONE */
-#endif /* !HAVE_POSIX_DECLS */
+#endif /* 2 <= ALTZONE + TZ_TIME_T */
 
 /* Initialize *S to a value based on UTOFF, ISDST, and DESIGIDX.  */
 static void
@@ -353,10 +354,10 @@ update_tzname_etc(const struct state *sp, const struct ttinfo *ttisp)
 	if (!ttisp->tt_isdst)
 		timezone = - ttisp->tt_utoff;
 #endif
-#ifdef ALTZONE
+#if ALTZONE
 	if (ttisp->tt_isdst)
 	    altzone = - ttisp->tt_utoff;
-#endif /* defined ALTZONE */
+#endif /* ALTZONE */
 }
 
 static void
@@ -373,9 +374,9 @@ settzname(void)
 	daylight = 0;
 	timezone = 0;
 #endif
-#ifdef ALTZONE
+#if ALTZONE
 	altzone = 0;
-#endif /* defined ALTZONE */
+#endif
 	if (sp == NULL) {
 		return;
 	}
@@ -699,11 +700,13 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 
 			    for (i = 0; i < ts->timecnt; i++)
 			      if (sp->timecnt == 0
-				  || sp->ats[sp->timecnt - 1] < ts->ats[i])
+				  || (sp->ats[sp->timecnt - 1]
+				      < ts->ats[i] + leapcorr(sp, ts->ats[i])))
 				break;
 			    while (i < ts->timecnt
 				   && sp->timecnt < TZ_MAX_TIMES) {
-			      sp->ats[sp->timecnt] = ts->ats[i];
+			      sp->ats[sp->timecnt] = (time_t)
+				(ts->ats[i] + leapcorr(sp, ts->ats[i]));
 			      sp->types[sp->timecnt] = (sp->typecnt
 							+ ts->types[i]);
 			      sp->timecnt++;
@@ -1703,7 +1706,7 @@ offtime_r(const time_t *timep, long offset, struct tm *tmp)
 #  define daylight 0
 #  define timezone 0
 # endif
-# ifndef ALTZONE
+# if !ALTZONE
 #  define altzone 0
 # endif
  
@@ -2401,22 +2404,8 @@ timeoff(struct tm *tmp, long offset)
 
 #endif /* defined STD_INSPIRED */
 
-/*
-** XXX--is the below the right way to conditionalize??
-*/
-
-#ifdef STD_INSPIRED
-
-/*
-** IEEE Std 1003.1 (POSIX) says that 536457599
-** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
-** is not the case if we are accounting for leap seconds.
-** So, we provide the following conversion routines for use
-** when exchanging timestamps with POSIX conforming systems.
-*/
-
 static int_fast64_t
-leapcorr(const timezone_t sp, time_t t)
+leapcorr(struct state const *sp, time_t t)
 {
 	struct lsinfo const * lp;
 	int		i;
@@ -2447,6 +2436,20 @@ time2posix(time_t t)
 	rwlock_unlock(&__lcl_lock);
 	return t;
 }
+
+/*
+** XXX--is the below the right way to conditionalize??
+*/
+
+#ifdef STD_INSPIRED
+
+/*
+** IEEE Std 1003.1 (POSIX) says that 536457599
+** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
+** is not the case if we are accounting for leap seconds.
+** So, we provide the following conversion routines for use
+** when exchanging timestamps with POSIX conforming systems.
+*/
 
 NETBSD_INSPIRED_EXTERN time_t
 posix2time_z(timezone_t sp, time_t t)
