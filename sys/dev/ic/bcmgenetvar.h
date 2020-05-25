@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetvar.h,v 1.1 2020/02/22 00:28:35 jmcneill Exp $ */
+/* $NetBSD: bcmgenetvar.h,v 1.2 2020/05/25 19:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,7 @@
 
 enum genet_phy_mode {
 	GENET_PHY_MODE_RGMII,
+	GENET_PHY_MODE_RGMII_ID,
 	GENET_PHY_MODE_RGMII_TXID,
 	GENET_PHY_MODE_RGMII_RXID,
 };
