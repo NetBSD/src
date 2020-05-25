@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.59 2020/05/25 09:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.60 2020/05/25 09:25:31 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.59 2020/05/25 09:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.60 2020/05/25 09:25:31 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1432,10 +1432,9 @@ vioif_deferred_transmit(void *arg)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (mutex_tryenter(txq->txq_lock)) {
-		vioif_send_common_locked(ifp, txq, true);
-		mutex_exit(txq->txq_lock);
-	}
+	mutex_enter(txq->txq_lock);
+	vioif_send_common_locked(ifp, txq, true);
+	mutex_exit(txq->txq_lock);
 }
 
 static int
