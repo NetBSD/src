@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.13 2020/04/24 12:58:42 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.14 2020/05/25 10:35:17 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.44 2020/04/24 07:28:37 mestre Exp $ */
 
 /*
@@ -21,6 +21,9 @@
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
 #endif
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.14 2020/05/25 10:35:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
