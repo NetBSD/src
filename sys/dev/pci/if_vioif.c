@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.54 2020/05/25 07:52:16 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.55 2020/05/25 08:16:23 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.54 2020/05/25 07:52:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.55 2020/05/25 08:16:23 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.54 2020/05/25 07:52:16 yamaguchi Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/condvar.h>
 #include <sys/device.h>
@@ -46,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.54 2020/05/25 07:52:16 yamaguchi Exp 
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/pcq.h>
+#include <sys/workqueue.h>
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
@@ -205,6 +207,13 @@ struct vioif_ctrl_cmdspec {
  *      - txq_lock or rxq_lock cannot be held along with ctrlq_wait_lock
  */
 
+struct vioif_work {
+	struct work	 cookie;
+	void		(*func)(void *);
+	void		*arg;
+	unsigned int	 added;
+};
+
 struct vioif_txqueue {
 	kmutex_t		*txq_lock;	/* lock for tx operations */
 
@@ -220,6 +229,10 @@ struct vioif_txqueue {
 	bus_dmamap_t		*txq_dmamaps;
 
 	void			*txq_deferred_transmit;
+	void			*txq_handle_si;
+	struct vioif_work	 txq_work;
+	bool			 txq_workqueue;
+	bool			 txq_active;
 };
 
 struct vioif_rxqueue {
@@ -235,6 +248,10 @@ struct vioif_rxqueue {
 	bus_dmamap_t		*rxq_dmamaps;
 
 	void			*rxq_softint;
+	void			*rxq_handle_si;
+	struct vioif_work	 rxq_work;
+	bool			 rxq_workqueue;
+	bool			 rxq_active;
 };
 
 struct vioif_ctrlqueue {
@@ -263,6 +280,7 @@ struct vioif_ctrlqueue {
 
 struct vioif_softc {
 	device_t		sc_dev;
+	struct sysctllog	*sc_sysctllog;
 
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	*sc_vqs;
@@ -287,14 +305,29 @@ struct vioif_softc {
 	void			*sc_kmem;
 
 	void			*sc_ctl_softint;
+
+	struct workqueue	*sc_txrx_workqueue;
+	bool			 sc_txrx_workqueue_sysctl;
+	u_int			 sc_tx_intr_process_limit;
+	u_int			 sc_tx_process_limit;
+	u_int			 sc_rx_intr_process_limit;
+	u_int			 sc_rx_process_limit;
 };
 #define VIRTIO_NET_TX_MAXNSEGS		(16) /* XXX */
 #define VIRTIO_NET_CTRL_MAC_MAXENTRIES	(64) /* XXX */
+
+#define VIOIF_TX_INTR_PROCESS_LIMIT	256
+#define VIOIF_TX_PROCESS_LIMIT		256
+#define VIOIF_RX_INTR_PROCESS_LIMIT	0U
+#define VIOIF_RX_PROCESS_LIMIT		256
+
+#define VIOIF_WORKQUEUE_PRI		PRI_SOFTNET
 
 /* cfattach interface functions */
 static int	vioif_match(device_t, cfdata_t, void *);
 static void	vioif_attach(device_t, device_t, void *);
 static void	vioif_deferred_init(device_t);
+static int	vioif_finalize_teardown(device_t);
 
 /* ifnet interface functions */
 static int	vioif_init(struct ifnet *);
@@ -311,17 +344,35 @@ static int	vioif_add_rx_mbuf(struct vioif_rxqueue *, int);
 static void	vioif_free_rx_mbuf(struct vioif_rxqueue *, int);
 static void	vioif_populate_rx_mbufs(struct vioif_rxqueue *);
 static void	vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *);
-static int	vioif_rx_deq(struct vioif_rxqueue *);
-static int	vioif_rx_deq_locked(struct vioif_rxqueue *);
+static void	vioif_rx_queue_clear(struct vioif_rxqueue *);
+static bool	vioif_rx_deq_locked(struct vioif_softc *, struct virtio_softc *,
+		    struct vioif_rxqueue *, u_int);
 static int	vioif_rx_intr(void *);
+static void	vioif_rx_handle(void *);
+static void	vioif_rx_sched_handle(struct vioif_softc *,
+		    struct vioif_rxqueue *);
 static void	vioif_rx_softint(void *);
 static void	vioif_rx_drain(struct vioif_rxqueue *);
 
 /* tx */
 static int	vioif_tx_intr(void *);
-static int	vioif_tx_deq_locked(struct virtqueue *);
+static void	vioif_tx_handle(void *);
+static void	vioif_tx_sched_handle(struct vioif_softc *,
+		    struct vioif_txqueue *);
+static void	vioif_tx_queue_clear(struct vioif_txqueue *);
+static bool	vioif_tx_deq_locked(struct vioif_softc *, struct virtio_softc *,
+		    struct vioif_txqueue *, u_int);
 static void	vioif_tx_drain(struct vioif_txqueue *);
 static void	vioif_deferred_transmit(void *);
+
+/* workqueue */
+static struct workqueue*
+		vioif_workq_create(const char *, pri_t, int, int);
+static void	vioif_workq_destroy(struct workqueue *);
+static void	vioif_workq_work(struct work *, void *);
+static void	vioif_work_set(struct vioif_work *, void(*)(void *), void *);
+static void	vioif_work_add(struct workqueue *, struct vioif_work *);
+static void	vioif_work_wait(struct workqueue *, struct vioif_work *);
 
 /* other control */
 static bool	vioif_is_link_up(struct vioif_softc *);
@@ -337,6 +388,7 @@ static void	vioif_ctl_softint(void *);
 static int	vioif_ctrl_mq_vq_pairs_set(struct vioif_softc *, int);
 static void	vioif_enable_interrupt_vqpairs(struct vioif_softc *);
 static void	vioif_disable_interrupt_vqpairs(struct vioif_softc *);
+static int	vioif_setup_sysctl(struct vioif_softc *);
 
 CFATTACH_DECL_NEW(vioif, sizeof(struct vioif_softc),
 		  vioif_match, vioif_attach, NULL, NULL);
@@ -672,6 +724,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int softint_flags;
 	int r, i, nvqs=0, req_flags;
+	char xnamebuf[MAXCOMLEN];
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -686,6 +739,17 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	sc->sc_max_nvq_pairs = 1;
 	sc->sc_req_nvq_pairs = 1;
 	sc->sc_act_nvq_pairs = 1;
+	sc->sc_txrx_workqueue_sysctl = true;
+	sc->sc_tx_intr_process_limit = VIOIF_TX_INTR_PROCESS_LIMIT;
+	sc->sc_tx_process_limit = VIOIF_TX_PROCESS_LIMIT;
+	sc->sc_rx_intr_process_limit = VIOIF_RX_INTR_PROCESS_LIMIT;
+	sc->sc_rx_process_limit = VIOIF_RX_PROCESS_LIMIT;
+
+	snprintf(xnamebuf, sizeof(xnamebuf), "%s_txrx", device_xname(self));
+	sc->sc_txrx_workqueue = vioif_workq_create(xnamebuf, VIOIF_WORKQUEUE_PRI,
+	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	if (sc->sc_txrx_workqueue == NULL)
+		goto err;
 
 	req_flags = 0;
 
@@ -774,6 +838,13 @@ vioif_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "cannot establish rx softint\n");
 			goto err;
 		}
+		rxq->rxq_handle_si = softint_establish(softint_flags,
+		    vioif_rx_handle, rxq);
+		if (rxq->rxq_handle_si == NULL) {
+			aprint_error_dev(self, "cannot establish rx softint\n");
+			goto err;
+		}
+
 		snprintf(qname, sizeof(qname), "rx%d", i);
 		r = virtio_alloc_vq(vsc, rxq->rxq_vq, nvqs,
 		    MCLBYTES+sizeof(struct virtio_net_hdr), nvqs, qname);
@@ -783,14 +854,23 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		rxq->rxq_vq->vq_intrhand = vioif_rx_intr;
 		rxq->rxq_vq->vq_intrhand_arg = (void *)rxq;
 		rxq->rxq_stopping = true;
+		vioif_work_set(&rxq->rxq_work, vioif_rx_handle, rxq);
 
 		txq->txq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+
 		txq->txq_deferred_transmit = softint_establish(softint_flags,
 		    vioif_deferred_transmit, txq);
 		if (txq->txq_deferred_transmit == NULL) {
 			aprint_error_dev(self, "cannot establish tx softint\n");
 			goto err;
 		}
+		txq->txq_handle_si = softint_establish(softint_flags,
+		    vioif_tx_handle, txq);
+		if (txq->txq_handle_si == NULL) {
+			aprint_error_dev(self, "cannot establish tx softint\n");
+			goto err;
+		}
+
 		snprintf(qname, sizeof(qname), "tx%d", i);
 		r = virtio_alloc_vq(vsc, txq->txq_vq, nvqs,
 		    sizeof(struct virtio_net_hdr)
@@ -804,6 +884,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		txq->txq_link_active = sc->sc_link_active;
 		txq->txq_stopping = false;
 		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_SLEEP);
+		vioif_work_set(&txq->txq_work, vioif_tx_handle, txq);
 	}
 
 	if (sc->sc_has_ctrl) {
@@ -839,6 +920,11 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 	if (virtio_child_attach_finish(vsc) != 0)
 		goto err;
+
+	if (vioif_setup_sysctl(sc) != 0) {
+		aprint_error_dev(self, "unable to create sysctl node\n");
+		/* continue */
+	}
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -881,9 +967,19 @@ err:
 			rxq->rxq_softint = NULL;
 		}
 
+		if (rxq->rxq_handle_si) {
+			softint_disestablish(rxq->rxq_handle_si);
+			rxq->rxq_handle_si = NULL;
+		}
+
 		if (txq->txq_lock) {
 			mutex_obj_free(txq->txq_lock);
 			txq->txq_lock = NULL;
+		}
+
+		if (txq->txq_handle_si) {
+			softint_disestablish(txq->txq_handle_si);
+			txq->txq_handle_si = NULL;
 		}
 
 		if (txq->txq_deferred_transmit) {
@@ -906,9 +1002,23 @@ err:
 		virtio_free_vq(vsc, &sc->sc_vqs[--nvqs]);
 
 	vioif_free_queues(sc);
-
 	virtio_child_attach_failed(vsc);
+	config_finalize_register(self, vioif_finalize_teardown);
+
 	return;
+}
+
+static int
+vioif_finalize_teardown(device_t self)
+{
+	struct vioif_softc *sc = device_private(self);
+
+	if (sc->sc_txrx_workqueue != NULL) {
+		vioif_workq_destroy(sc->sc_txrx_workqueue);
+		sc->sc_txrx_workqueue = NULL;
+	}
+
+	return 0;
 }
 
 /* we need interrupts to make promiscuous mode off */
@@ -1049,8 +1159,26 @@ vioif_stop(struct ifnet *ifp, int disable)
 
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
-	for (i = 0; i < sc->sc_act_nvq_pairs; i++)
-		vioif_rx_deq(&sc->sc_rxq[i]);
+
+	/* rendezvous for finish of handlers */
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+		txq = &sc->sc_txq[i];
+		rxq = &sc->sc_rxq[i];
+
+		mutex_enter(txq->txq_lock);
+		mutex_exit(txq->txq_lock);
+
+		mutex_enter(rxq->rxq_lock);
+		mutex_exit(rxq->rxq_lock);
+
+		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
+		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
+	}
+
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+		vioif_rx_queue_clear(&sc->sc_rxq[i]);
+		vioif_tx_queue_clear(&sc->sc_txq[i]);
+	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->sc_link_active = false;
@@ -1289,8 +1417,9 @@ vioif_watchdog(struct ifnet *ifp)
 	int i;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		for (i = 0; i < sc->sc_act_nvq_pairs; i++)
-			vioif_tx_intr(sc->sc_txq[i].txq_vq);
+		for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+			vioif_tx_queue_clear(&sc->sc_txq[i]);
+		}
 	}
 }
 
@@ -1396,41 +1525,54 @@ vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *rxq)
 		virtio_enqueue_commit(vsc, vq, -1, true);
 }
 
-/* dequeue received packets */
-static int
-vioif_rx_deq(struct vioif_rxqueue *rxq)
-{
-	int r;
-
-	KASSERT(rxq->rxq_stopping);
-
-	mutex_enter(rxq->rxq_lock);
-	r = vioif_rx_deq_locked(rxq);
-	mutex_exit(rxq->rxq_lock);
-
-	return r;
-}
-
-/* dequeue received packets */
-static int
-vioif_rx_deq_locked(struct vioif_rxqueue *rxq)
+static void
+vioif_rx_queue_clear(struct vioif_rxqueue *rxq)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
+	u_int limit = UINT_MAX;
+	bool more;
+
+	KASSERT(rxq->rxq_stopping);
+
+	mutex_enter(rxq->rxq_lock);
+	for (;;) {
+		more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
+		if (more == false)
+			break;
+	}
+	mutex_exit(rxq->rxq_lock);
+}
+
+/* dequeue received packets */
+static bool
+vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
+    struct vioif_rxqueue *rxq, u_int limit)
+{
+	struct virtqueue *vq = rxq->rxq_vq;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	int r = 0;
 	int slot, len;
+	bool more = false, dequeued = false;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	if (virtio_vq_is_enqueued(vsc, vq) == false)
-		return r;
+		return false;
 
-	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
+	for (;;) {
+		if (limit-- == 0) {
+			more = true;
+			break;
+		}
+
+		if (virtio_dequeue(vsc, vq, &slot, &len) != 0)
+			break;
+
+		dequeued = true;
+
 		len -= sizeof(struct virtio_net_hdr);
-		r = 1;
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
 		    0, sizeof(struct virtio_net_hdr), BUS_DMASYNC_POSTREAD);
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_dmamaps[slot],
@@ -1451,7 +1593,10 @@ vioif_rx_deq_locked(struct vioif_rxqueue *rxq)
 			break;
 	}
 
-	return r;
+	if (dequeued)
+		softint_schedule(rxq->rxq_softint);
+
+	return more;
 }
 
 /* rx interrupt; call _dequeue above and schedule a softint */
@@ -1459,20 +1604,73 @@ static int
 vioif_rx_intr(void *arg)
 {
 	struct vioif_rxqueue *rxq = arg;
-	int r = 0;
+	struct virtqueue *vq = rxq->rxq_vq;
+	struct virtio_softc *vsc = vq->vq_owner;
+	struct vioif_softc *sc = device_private(virtio_child(vsc));
+	u_int limit;
+	bool more;
+
+	limit = sc->sc_rx_intr_process_limit;
+
+	if (atomic_load_relaxed(&rxq->rxq_active) == true)
+		return 1;
 
 	mutex_enter(rxq->rxq_lock);
 
-	if (rxq->rxq_stopping)
-		goto out;
+	if (!rxq->rxq_stopping) {
+		rxq->rxq_workqueue = sc->sc_txrx_workqueue_sysctl;
 
-	r = vioif_rx_deq_locked(rxq);
-	if (r)
-		softint_schedule(rxq->rxq_softint);
+		virtio_stop_vq_intr(vsc, vq);
+		atomic_store_relaxed(&rxq->rxq_active, true);
 
-out:
+		more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
+		if (more) {
+			vioif_rx_sched_handle(sc, rxq);
+		} else {
+			atomic_store_relaxed(&rxq->rxq_active, false);
+			virtio_start_vq_intr(vsc, vq);
+		}
+	}
+
 	mutex_exit(rxq->rxq_lock);
-	return r;
+	return 1;
+}
+
+static void
+vioif_rx_handle(void *xrxq)
+{
+	struct vioif_rxqueue *rxq = xrxq;
+	struct virtqueue *vq = rxq->rxq_vq;
+	struct virtio_softc *vsc = vq->vq_owner;
+	struct vioif_softc *sc = device_private(virtio_child(vsc));
+	u_int limit;
+	bool more;
+
+	limit = sc->sc_rx_process_limit;
+
+	mutex_enter(rxq->rxq_lock);
+
+	if (!rxq->rxq_stopping) {
+		more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
+		if (more) {
+			vioif_rx_sched_handle(sc, rxq);
+		} else {
+			atomic_store_relaxed(&rxq->rxq_active, false);
+			virtio_start_vq_intr(vsc, rxq->rxq_vq);
+		}
+	}
+
+	mutex_exit(rxq->rxq_lock);
+}
+
+static void
+vioif_rx_sched_handle(struct vioif_softc *sc, struct vioif_rxqueue *rxq)
+{
+
+	if (rxq->rxq_workqueue)
+		vioif_work_add(sc->sc_txrx_workqueue, &rxq->rxq_work);
+	else
+		softint_schedule(rxq->rxq_handle_si);
 }
 
 /* softint: enqueue receive requests for new incoming packets */
@@ -1507,6 +1705,7 @@ vioif_rx_drain(struct vioif_rxqueue *rxq)
  * tx interrupt is actually disabled; this should be called upon
  * tx vq full and watchdog
  */
+
 static int
 vioif_tx_intr(void *arg)
 {
@@ -1515,44 +1714,132 @@ vioif_tx_intr(void *arg)
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int r = 0;
+	bool more;
+	u_int limit;
+
+	limit = sc->sc_tx_intr_process_limit;
+
+	if (atomic_load_relaxed(&txq->txq_active) == true)
+		return 1;
 
 	mutex_enter(txq->txq_lock);
 
-	if (txq->txq_stopping)
-		goto out;
+	if (!txq->txq_stopping) {
+		txq->txq_workqueue = sc->sc_txrx_workqueue_sysctl;
 
-	r = vioif_tx_deq_locked(vq);
+		virtio_stop_vq_intr(vsc, vq);
+		atomic_store_relaxed(&txq->txq_active, true);
 
-out:
-	mutex_exit(txq->txq_lock);
-	if (r) {
-		if_schedule_deferred_start(ifp);
+		more = vioif_tx_deq_locked(sc, vsc, txq, limit);
+		if (more) {
+			vioif_tx_sched_handle(sc, txq);
+		} else {
+			atomic_store_relaxed(&txq->txq_active, false);
 
-		KASSERT(txq->txq_deferred_transmit != NULL);
-		softint_schedule(txq->txq_deferred_transmit);
+			/* for ALTQ */
+			if (txq == &sc->sc_txq[0]) {
+				if_schedule_deferred_start(ifp);
+				ifp->if_flags &= ~IFF_OACTIVE;
+			}
+			softint_schedule(txq->txq_deferred_transmit);
+
+			virtio_start_vq_intr(vsc, vq);
+		}
 	}
-	return r;
+
+	mutex_exit(txq->txq_lock);
+
+	return 1;
 }
 
-static int
-vioif_tx_deq_locked(struct virtqueue *vq)
+static void
+vioif_tx_handle(void *xtxq)
 {
+	struct vioif_txqueue *txq = xtxq;
+	struct virtqueue *vq = txq->txq_vq;
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
-	struct vioif_txqueue *txq = vq->vq_intrhand_arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int limit;
+	bool more;
+
+	limit = sc->sc_tx_process_limit;
+
+	mutex_enter(txq->txq_lock);
+
+	if (!txq->txq_stopping) {
+		more = vioif_tx_deq_locked(sc, vsc, txq, limit);
+		if (more) {
+			vioif_tx_sched_handle(sc, txq);
+		} else {
+			atomic_store_relaxed(&txq->txq_active, false);
+
+			/* for ALTQ */
+			if (txq == &sc->sc_txq[0]) {
+				if_schedule_deferred_start(ifp);
+				ifp->if_flags &= ~IFF_OACTIVE;
+			}
+			softint_schedule(txq->txq_deferred_transmit);
+
+			virtio_start_vq_intr(vsc, txq->txq_vq);
+		}
+	}
+
+	mutex_exit(txq->txq_lock);
+}
+
+static void
+vioif_tx_sched_handle(struct vioif_softc *sc, struct vioif_txqueue *txq)
+{
+
+	if (txq->txq_workqueue)
+		vioif_work_add(sc->sc_txrx_workqueue, &txq->txq_work);
+	else
+		softint_schedule(txq->txq_handle_si);
+}
+
+static void
+vioif_tx_queue_clear(struct vioif_txqueue *txq)
+{
+	struct virtqueue *vq = txq->txq_vq;
+	struct virtio_softc *vsc = vq->vq_owner;
+	struct vioif_softc *sc = device_private(virtio_child(vsc));
+	u_int limit = UINT_MAX;
+	bool more;
+
+	mutex_enter(txq->txq_lock);
+	for (;;) {
+		more = vioif_tx_deq_locked(sc, vsc, txq, limit);
+		if (more == false)
+			break;
+	}
+	mutex_exit(txq->txq_lock);
+}
+
+static bool
+vioif_tx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
+    struct vioif_txqueue *txq, u_int limit)
+{
+	struct virtqueue *vq = txq->txq_vq;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	int r = 0;
 	int slot, len;
+	bool more = false;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
 	if (virtio_vq_is_enqueued(vsc, vq) == false)
-		return r;
+		return false;
 
-	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
-		r++;
+	for (;;) {
+		if (limit-- == 0) {
+			more = true;
+			break;
+		}
+
+		if (virtio_dequeue(vsc, vq, &slot, &len) != 0)
+			break;
+
 		bus_dmamap_sync(virtio_dmat(vsc), txq->txq_hdr_dmamaps[slot],
 		    0, sizeof(struct virtio_net_hdr), BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_sync(virtio_dmat(vsc), txq->txq_dmamaps[slot],
@@ -1566,9 +1853,7 @@ vioif_tx_deq_locked(struct virtqueue *vq)
 		m_freem(m);
 	}
 
-	if (r)
-		ifp->if_flags &= ~IFF_OACTIVE;
-	return r;
+	return more;
 }
 
 /* free all the mbufs already put on vq; called from if_stop(disable) */
@@ -2017,6 +2302,140 @@ vioif_ctl_softint(void *arg)
 
 	vioif_update_link_status(sc);
 	vioif_start(ifp);
+}
+
+static struct workqueue *
+vioif_workq_create(const char *name, pri_t prio, int ipl, int flags)
+{
+	struct workqueue *wq;
+	int error;
+
+	error = workqueue_create(&wq, name, vioif_workq_work, NULL,
+	    prio, ipl, flags);
+
+	if (error)
+		return NULL;
+
+	return wq;
+}
+
+static void
+vioif_workq_destroy(struct workqueue *wq)
+{
+
+	workqueue_destroy(wq);
+}
+
+static void
+vioif_workq_work(struct work *wk, void *context)
+{
+	struct vioif_work *work;
+
+	work = container_of(wk, struct vioif_work, cookie);
+
+	atomic_store_relaxed(&work->added, 0);
+	work->func(work->arg);
+}
+
+static void
+vioif_work_set(struct vioif_work *work, void (*func)(void *), void *arg)
+{
+
+	memset(work, 0, sizeof(*work));
+	work->func = func;
+	work->arg = arg;
+}
+
+static void
+vioif_work_add(struct workqueue *wq, struct vioif_work *work)
+{
+
+	if (atomic_load_relaxed(&work->added) != 0)
+		return;
+
+	atomic_store_relaxed(&work->added, 1);
+	kpreempt_disable();
+	workqueue_enqueue(wq, &work->cookie, NULL);
+	kpreempt_enable();
+}
+
+static void
+vioif_work_wait(struct workqueue *wq, struct vioif_work *work)
+{
+
+	workqueue_wait(wq, &work->cookie);
+}
+
+static int
+vioif_setup_sysctl(struct vioif_softc *sc)
+{
+	const char *devname;
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *rxnode, *txnode;
+	int error;
+
+	log = &sc->sc_sysctllog;
+	devname = device_xname(sc->sc_dev);
+
+	error = sysctl_createv(log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, devname,
+	    SYSCTL_DESCR("virtio-net information and settings"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &sc->sc_txrx_workqueue_sysctl, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rnode, &rxnode,
+	    0, CTLTYPE_NODE, "rx",
+	    SYSCTL_DESCR("virtio-net information and settings for Rx"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rxnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "intr_process_limit",
+	    SYSCTL_DESCR("max number of Rx packets to process for interrupt processing"),
+	    NULL, 0, &sc->sc_rx_intr_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rxnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "process_limit",
+	    SYSCTL_DESCR("max number of Rx packets to process for deferred processing"),
+	    NULL, 0, &sc->sc_rx_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rnode, &txnode,
+	    0, CTLTYPE_NODE, "tx",
+	    SYSCTL_DESCR("virtio-net information and settings for Tx"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &txnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "intr_process_limit",
+	    SYSCTL_DESCR("max number of Tx packets to process for interrupt processing"),
+	    NULL, 0, &sc->sc_tx_intr_process_limit, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &txnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "process_limit",
+	    SYSCTL_DESCR("max number of Tx packets to process for deferred processing"),
+	    NULL, 0, &sc->sc_tx_process_limit, 0, CTL_CREATE, CTL_EOL);
+
+out:
+	if (error)
+		sysctl_teardown(log);
+
+	return error;
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
