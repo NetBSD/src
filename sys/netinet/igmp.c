@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.64.6.2 2018/07/13 14:26:47 martin Exp $	*/
+/*	$NetBSD: igmp.c,v 1.64.6.3 2020/05/25 17:48:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.64.6.2 2018/07/13 14:26:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.64.6.3 2020/05/25 17:48:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -620,6 +620,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	ip->ip_tos = 0;
 	ip->ip_len = htons(sizeof(struct ip) + IGMP_MINLEN);
 	ip->ip_off = htons(0);
+	ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
 	ip->ip_p = IPPROTO_IGMP;
 	ip->ip_src = zeroin_addr;
 	ip->ip_dst = inm->inm_addr;
