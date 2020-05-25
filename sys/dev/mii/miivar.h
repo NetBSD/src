@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.70 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.71 2020/05/25 19:47:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -175,6 +175,8 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_FORCEANEG	0x0400		/* force auto-negotiation */
 #define	MIIF_PROBING	0x0800		/* PHY probe in-progress */
 #define	MIIF_EXITING	0x1000		/* MII is exiting */
+#define	MIIF_RXID	0x2000		/* add RX delay */
+#define	MIIF_TXID	0x4000		/* add TX delay */
 
 #define	MIIF_INHERIT_MASK (MIIF_NOISOLATE | MIIF_NOLOOP | MIIF_AUTOTSLEEP)
 
