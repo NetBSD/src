@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.19 2020/05/23 18:08:58 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.20 2020/05/25 05:13:16 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.19 2020/05/23 18:08:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.20 2020/05/25 05:13:16 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ extract_cacheunit(int level, bool insn, int cachetype,
     struct aarch64_cache_info *cacheinfo)
 {
 	struct aarch64_cache_unit *cunit;
-	uint32_t ccsidr;
+	uint64_t ccsidr, mmfr2;
 
 	/* select and extract level N data cache */
 	reg_csselr_el1_write(__SHIFTIN(level, CSSELR_LEVEL) |
@@ -68,6 +68,7 @@ extract_cacheunit(int level, bool insn, int cachetype,
 	__asm __volatile ("isb");
 
 	ccsidr = reg_ccsidr_el1_read();
+	mmfr2 = reg_id_aa64mmfr2_el1_read();
 
 	if (insn)
 		cunit = &cacheinfo[level].icache;
@@ -76,19 +77,24 @@ extract_cacheunit(int level, bool insn, int cachetype,
 
 	cunit->cache_type = cachetype;
 
-	cunit->cache_line_size = 1 << (__SHIFTOUT(ccsidr, CCSIDR_LINESIZE) + 4);
-	cunit->cache_ways = __SHIFTOUT(ccsidr, CCSIDR_ASSOC) + 1;
-	cunit->cache_sets = __SHIFTOUT(ccsidr, CCSIDR_NUMSET) + 1;
+	switch (__SHIFTOUT(mmfr2, ID_AA64MMFR2_EL1_CCIDX)) {
+	case ID_AA64MMFR2_EL1_CCIDX_32BIT:
+		cunit->cache_line_size =
+		    1 << (__SHIFTOUT(ccsidr, CCSIDR_LINESIZE) + 4);
+		cunit->cache_ways = __SHIFTOUT(ccsidr, CCSIDR_ASSOC) + 1;
+		cunit->cache_sets = __SHIFTOUT(ccsidr, CCSIDR_NUMSET) + 1;
+		break;
+	case ID_AA64MMFR2_EL1_CCIDX_64BIT:
+		cunit->cache_line_size =
+		    1 << (__SHIFTOUT(ccsidr, CCSIDR64_LINESIZE) + 4);
+		cunit->cache_ways = __SHIFTOUT(ccsidr, CCSIDR64_ASSOC) + 1;
+		cunit->cache_sets = __SHIFTOUT(ccsidr, CCSIDR64_NUMSET) + 1;
+		break;
+	}
 
 	/* calc waysize and whole size */
 	cunit->cache_way_size = cunit->cache_line_size * cunit->cache_sets;
 	cunit->cache_size = cunit->cache_way_size * cunit->cache_ways;
-
-	/* cache purging */
-	cunit->cache_purging = (ccsidr & CCSIDR_WT) ? CACHE_PURGING_WT : 0;
-	cunit->cache_purging |= (ccsidr & CCSIDR_WB) ? CACHE_PURGING_WB : 0;
-	cunit->cache_purging |= (ccsidr & CCSIDR_RA) ? CACHE_PURGING_RA : 0;
-	cunit->cache_purging |= (ccsidr & CCSIDR_WA) ? CACHE_PURGING_WA : 0;
 }
 
 void
@@ -125,6 +131,9 @@ aarch64_getcacheinfo(int unit)
 	 */
 	ctr = reg_ctr_el0_read();
 	switch (__SHIFTOUT(ctr, CTR_EL0_L1IP_MASK)) {
+	case CTR_EL0_L1IP_VPIPT:
+		cachetype = CACHE_TYPE_VPIPT;
+		break;
 	case CTR_EL0_L1IP_AIVIVT:
 		cachetype = CACHE_TYPE_VIVT;
 		break;
@@ -133,9 +142,6 @@ aarch64_getcacheinfo(int unit)
 		break;
 	case CTR_EL0_L1IP_PIPT:
 		cachetype = CACHE_TYPE_PIPT;
-		break;
-	default:
-		cachetype = 0;
 		break;
 	}
 
@@ -224,7 +230,6 @@ static int
 prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 {
 	struct aarch64_cache_unit *cunit;
-	u_int purging;
 	int i;
 	const char *cacheable, *cachetype;
 
@@ -261,6 +266,9 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 		}
 
 		switch (cunit->cache_type) {
+		case CACHE_TYPE_VPIPT:
+			cachetype = "VPIPT";
+			break;
 		case CACHE_TYPE_VIVT:
 			cachetype = "VIVT";
 			break;
@@ -275,17 +283,13 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 			break;
 		}
 
-		purging = cunit->cache_purging;
 		aprint_verbose_dev(self,
-		    "L%d %dKB/%dB %d-way%s%s%s%s %s %s cache\n",
+		    "L%d %uKB/%uB*%uL*%uW %s %s cache\n",
 		    level + 1,
 		    cunit->cache_size / 1024,
 		    cunit->cache_line_size,
+		    cunit->cache_sets,
 		    cunit->cache_ways,
-		    (purging & CACHE_PURGING_WT) ? " write-through" : "",
-		    (purging & CACHE_PURGING_WB) ? " write-back" : "",
-		    (purging & CACHE_PURGING_RA) ? " read-allocate" : "",
-		    (purging & CACHE_PURGING_WA) ? " write-allocate" : "",
 		    cachetype, cacheable);
 
 		if (cinfo[level].cacheable != CACHE_CACHEABLE_IDCACHE)
