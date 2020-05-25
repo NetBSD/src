@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.39 2020/05/25 07:29:52 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.40 2020/05/25 07:37:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.39 2020/05/25 07:29:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.40 2020/05/25 07:37:47 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,8 +277,9 @@ virtio_vq_intr(struct virtio_softc *sc)
 }
 
 static int
-virtio_vq_mq_intr(struct virtqueue *vq)
+virtio_vq_mq_intr(void *arg)
 {
+	struct virtqueue *vq = arg;
 
 	return virtio_vq_intr_common(vq);
 }
