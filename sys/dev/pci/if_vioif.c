@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.62 2020/05/25 09:36:18 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.63 2020/05/25 09:41:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.62 2020/05/25 09:36:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.63 2020/05/25 09:41:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.62 2020/05/25 09:36:18 yamaguchi Exp 
 #include <sys/bus.h>
 #include <sys/condvar.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
@@ -236,6 +237,10 @@ struct vioif_txqueue {
 	struct vioif_work	 txq_work;
 	bool			 txq_workqueue;
 	bool			 txq_active;
+
+	struct evcnt		 txq_defrag_failed;
+	struct evcnt		 txq_mbuf_load_failed;
+	struct evcnt		 txq_enqueue_reserve_failed;
 };
 
 struct vioif_rxqueue {
@@ -254,6 +259,8 @@ struct vioif_rxqueue {
 	struct vioif_work	 rxq_work;
 	bool			 rxq_workqueue;
 	bool			 rxq_active;
+
+	struct evcnt		 rxq_mbuf_add_failed;
 };
 
 struct vioif_ctrlqueue {
@@ -278,6 +285,9 @@ struct vioif_ctrlqueue {
 	bus_dmamap_t			ctrlq_tbl_uc_dmamap;
 	bus_dmamap_t			ctrlq_tbl_mc_dmamap;
 	bus_dmamap_t			ctrlq_mq_dmamap;
+
+	struct evcnt			ctrlq_cmd_load_failed;
+	struct evcnt			ctrlq_cmd_failed;
 };
 
 struct vioif_softc {
@@ -390,6 +400,7 @@ static int	vioif_ctrl_mq_vq_pairs_set(struct vioif_softc *, int);
 static void	vioif_enable_interrupt_vqpairs(struct vioif_softc *);
 static void	vioif_disable_interrupt_vqpairs(struct vioif_softc *);
 static int	vioif_setup_sysctl(struct vioif_softc *);
+static void	vioif_setup_stats(struct vioif_softc *);
 
 CFATTACH_DECL_NEW(vioif, sizeof(struct vioif_softc),
 		  vioif_match, vioif_attach, NULL, NULL);
@@ -974,6 +985,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		/* continue */
 	}
 
+	vioif_setup_stats(sc);
+
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1292,8 +1305,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 
 			newm = m_defrag(m, M_NOWAIT);
 			if (newm == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "m_defrag() failed\n");
+				txq->txq_defrag_failed.ev_count++;
 				goto skip;
 			}
 
@@ -1302,9 +1314,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 			    txq->txq_dmamaps[slot], m,
 			    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 			if (r != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "tx dmamap load failed, error code %d\n",
-				    r);
+				txq->txq_mbuf_load_failed.ev_count++;
 skip:
 				m_freem(m);
 				virtio_enqueue_abort(vsc, vq, slot);
@@ -1314,13 +1324,11 @@ skip:
 
 		/* This should actually never fail */
 		r = virtio_enqueue_reserve(vsc, vq, slot,
-					txq->txq_dmamaps[slot]->dm_nsegs + 1);
+		    txq->txq_dmamaps[slot]->dm_nsegs + 1);
 		if (r != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "virtio_enqueue_reserve failed, error code %d\n",
-			    r);
+			txq->txq_enqueue_reserve_failed.ev_count++;
 			bus_dmamap_unload(virtio_dmat(vsc),
-					  txq->txq_dmamaps[slot]);
+			     txq->txq_dmamaps[slot]);
 			/* slot already freed by virtio_enqueue_reserve */
 			m_freem(m);
 			continue;
@@ -1516,7 +1524,6 @@ vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *rxq)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	int i, r, ndone = 0;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
@@ -1534,9 +1541,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *rxq)
 		if (rxq->rxq_mbufs[slot] == NULL) {
 			r = vioif_add_rx_mbuf(rxq, slot);
 			if (r != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "rx mbuf allocation failed, "
-				    "error code %d\n", r);
+				rxq->rxq_mbuf_add_failed.ev_count++;
 				break;
 			}
 		}
@@ -1946,8 +1951,7 @@ vioif_ctrl_load_cmdspec(struct vioif_softc *sc,
 		    specs[i].dmamap, specs[i].buf, specs[i].bufsize,
 		    NULL, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (r) {
-			aprint_error_dev(sc->sc_dev, "control command dmamap"
-			    " load failed, error code %d\n", r);
+			sc->sc_ctrlq.ctrlq_cmd_load_failed.ev_count++;
 			goto err;
 		}
 		loaded++;
@@ -2029,7 +2033,8 @@ vioif_ctrl_send_command(struct vioif_softc *sc, uint8_t class, uint8_t cmd,
 	if (ctrlq->ctrlq_status->ack == VIRTIO_NET_OK)
 		r = 0;
 	else {
-		aprint_error_dev(sc->sc_dev, "failed setting rx mode\n");
+		device_printf(sc->sc_dev, "failed setting rx mode\n");
+		sc->sc_ctrlq.ctrlq_cmd_failed.ev_count++;
 		r = EIO;
 	}
 
@@ -2466,6 +2471,41 @@ out:
 		sysctl_teardown(log);
 
 	return error;
+}
+
+static void
+vioif_setup_stats(struct vioif_softc *sc)
+{
+	struct vioif_rxqueue *rxq;
+	struct vioif_txqueue *txq;
+
+	char namebuf[16];
+	int i;
+
+	for (i = 0; i < sc->sc_max_nvq_pairs; i++) {
+		rxq = &sc->sc_rxq[i];
+		txq = &sc->sc_txq[i];
+
+		snprintf(namebuf, sizeof(namebuf), "%s-TX%d",
+		    device_xname(sc->sc_dev), i);
+		evcnt_attach_dynamic(&txq->txq_defrag_failed, EVCNT_TYPE_MISC,
+		    NULL, namebuf, "tx m_defrag() failed");
+		evcnt_attach_dynamic(&txq->txq_mbuf_load_failed, EVCNT_TYPE_MISC,
+		    NULL, namebuf, "tx dmamap load failed");
+		evcnt_attach_dynamic(&txq->txq_enqueue_reserve_failed, EVCNT_TYPE_MISC,
+		    NULL, namebuf, "virtio_enqueue_reserve failed");
+
+		snprintf(namebuf, sizeof(namebuf), "%s-RX%d",
+		    device_xname(sc->sc_dev), i);
+		evcnt_attach_dynamic(&rxq->rxq_mbuf_add_failed, EVCNT_TYPE_MISC,
+		    NULL, namebuf, "rx mbuf allocation failed");
+	}
+
+	snprintf(namebuf, sizeof(namebuf), "%s-CTRL", device_xname(sc->sc_dev));
+	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_load_failed, EVCNT_TYPE_MISC,
+	    NULL, namebuf, "control command dmamap load failed");
+	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_failed, EVCNT_TYPE_MISC,
+	    NULL, namebuf, "control command failed");
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
