@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.5 2020/03/01 12:35:16 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.6 2020/05/25 15:31:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.5 2020/03/01 12:35:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.6 2020/05/25 15:31:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1969,13 +1969,6 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		return;
 	}
 
-	/*
-	 * Try to claim this xfer for completion.  If it has already
-	 * completed or aborted, drop it on the floor.
-	 */
-	if (!usbd_xfer_trycomplete(xfer))
-		return;
-
 	/* 4.11.5.2 Event Data TRB */
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
 		DPRINTFN(14, "transfer Event Data: 0x%016jx 0x%08jx"
@@ -2031,6 +2024,13 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		DPRINTFN(1, "ERR %ju slot %ju dci %ju", trbcode, slot, dci, 0);
 		xr->is_halted = true;
 		/*
+		 * Try to claim this xfer for completion.  If it has already
+		 * completed or aborted, drop it on the floor.
+		 */
+		if (!usbd_xfer_trycomplete(xfer))
+			return;
+
+		/*
 		 * Stalled endpoints can be recoverd by issuing
 		 * command TRB TYPE_RESET_EP on xHCI instead of
 		 * issuing request CLEAR_FEATURE UF_ENDPOINT_HALT
@@ -2054,6 +2054,13 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		err = USBD_IOERROR;
 		break;
 	}
+
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (!usbd_xfer_trycomplete(xfer))
+		return;
 
 	/* Set the status.  */
 	xfer->ux_status = err;
