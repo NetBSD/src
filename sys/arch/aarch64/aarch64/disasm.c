@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.6 2018/10/04 07:40:09 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.7 2020/05/25 10:39:48 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.6 2018/10/04 07:40:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.7 2020/05/25 10:39:48 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1636,27 +1636,50 @@ OP6FUNC(op_ror_imm, sf, n, Rm, imms, Rn, Rd)
 
 OP2FUNC(op_hint, CRm, op2)
 {
-	const uint64_t op = CRm << 3 | op2;
+#define CRm_OP2(crm,op)	((crm) << 3 | (op))
+
+	const uint64_t op = CRm_OP2(CRm, op2);
 
 	/* ALIAS: nop,sev,sevl,wfe,wfi,yield */
 	switch (op) {
-	case 0:
+	case CRm_OP2(0, 0):
 		PRINTF("nop\n");
 		break;
-	case 1:
+	case CRm_OP2(0, 1):
 		PRINTF("yield\n");
 		break;
-	case 2:
+	case CRm_OP2(0, 2):
 		PRINTF("wfe\n");
 		break;
-	case 3:
+	case CRm_OP2(0, 3):
 		PRINTF("wfi\n");
 		break;
-	case 4:
+	case CRm_OP2(0, 4):
 		PRINTF("sev\n");
 		break;
-	case 5:
+	case CRm_OP2(0, 5):
 		PRINTF("sevl\n");
+		break;
+	case CRm_OP2(0, 7):
+		PRINTF("xpaclri\n");
+		break;
+	case CRm_OP2(1, 0):
+		PRINTF("pacia1716\n");
+		break;
+	case CRm_OP2(1, 2):
+		PRINTF("pacib1716\n");
+		break;
+	case CRm_OP2(3, 0):
+		PRINTF("paciaz\n");
+		break;
+	case CRm_OP2(3, 1):
+		PRINTF("paciasp\n");
+		break;
+	case CRm_OP2(3, 2):
+		PRINTF("pacibz\n");
+		break;
+	case CRm_OP2(3, 3):
+		PRINTF("pacibsp\n");
 		break;
 	default:
 		PRINTF("hint\t#0x%"PRIx64"\n", op);
@@ -3450,6 +3473,120 @@ OP5FUNC(op_simd_pmull, q, size, Rm, Rn, Rd)
 	}
 }
 
+OP1FUNC(op_eretaa, m)
+{
+	if (m == 0)
+		PRINTF("eretaa\n");
+	else
+		PRINTF("eretab\n");
+
+}
+
+OP1FUNC(op_retaa, m)
+{
+	if (m == 0)
+		PRINTF("retaa\n");
+	else
+		PRINTF("retab\n");
+}
+
+OP4FUNC(op_blraa, z, m, Rn, Rm)
+{
+	if (z == 0) {
+		if (Rm != 31) {
+			UNDEFINED(pc, insn, "undefined");
+		} else {
+			PRINTF("%s\t%s\n",
+			    SHIFTOP2(m, "blraaz", "blrabz"),
+			    SREGNAME(1, Rn));
+		}
+	} else {
+		PRINTF("%s\t%s, %s\n",
+		    SHIFTOP2(m, "blraa", "blrab"),
+		    SREGNAME(1, Rn),
+		    SREGNAME(1, Rm));
+	}
+}
+
+OP4FUNC(op_braa, z, m, Rn, Rm)
+{
+	if (z == 0) {
+		if (Rm != 31) {
+			UNDEFINED(pc, insn, "undefined");
+		} else {
+			PRINTF("%s\t%s\n",
+			    SHIFTOP2(m, "braaz", "brabz"),
+			    SREGNAME(1, Rn));
+		}
+	} else {
+		PRINTF("%s\t%s, %s\n",
+		    SHIFTOP2(m, "braa", "brab"),
+		    SREGNAME(1, Rn),
+		    SREGNAME(1, Rm));
+	}
+}
+
+OP4FUNC(op_pacda, z, m, Rn, Rd)
+{
+	if (z != 0) {
+		if (Rn != 31) {
+			UNDEFINED(pc, insn, "undefined");
+		} else {
+			PRINTF("%s\t%s\n",
+			    SHIFTOP2(m, "pacdza", "pacdzb"),
+			    SREGNAME(1, Rd));
+		}
+	} else {
+		PRINTF("%s\t%s, %s\n",
+		    SHIFTOP2(m, "pacda", "pacdb"),
+		    ZREGNAME(1, Rd),
+		    SREGNAME(1, Rn));
+	}
+}
+
+OP4FUNC(op_pacia, z, m, Rn, Rd)
+{
+	if (z != 0) {
+		if (Rn != 31) {
+			UNDEFINED(pc, insn, "undefined");
+		} else {
+			PRINTF("%s\t%s\n",
+			    SHIFTOP2(m, "paciza", "pacizb"),
+			    SREGNAME(1, Rd));
+		}
+	} else {
+		PRINTF("%s\t%s, %s\n",
+		    SHIFTOP2(m, "pacia", "pacib"),
+		    ZREGNAME(1, Rd),
+		    SREGNAME(1, Rn));
+	}
+}
+
+OP3FUNC(op_pacga, Rm, Rn, Rd)
+{
+	PRINTF("pacga\t%s, %s, %s\n",
+	    ZREGNAME(1, Rd),
+	    ZREGNAME(1, Rn),
+	    SREGNAME(1, Rm));
+}
+
+OP1FUNC(op_xpaci, Rd)
+{
+	PRINTF("xpaci\t%s\n",
+	    ZREGNAME(1, Rd));
+}
+
+OP1FUNC(op_xpacd, Rd)
+{
+	PRINTF("xpacd\t%s\n",
+	    ZREGNAME(1, Rd));
+}
+
+OP0FUNC(op_xpaclri)
+{
+	PRINTF("xpaclri\n");
+}
+
 /*
  * SIMD instructions are not supported except some insns.
  * They are disassembled as '.insn 0xXXXXXXXX'.
@@ -3470,16 +3607,22 @@ struct insn_info {
 /* define code format  { {bitpos, bitwidth}, ... (maximum 8 args) } */
 #define FMT_NOARG			\
 	{{ 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_RD				\
+	{{ 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RN				\
 	{{ 5, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RN_RT			\
 	{{ 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_M				\
+	{{10, 1}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_CRM				\
 	{{ 8, 4}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_CRM_OP2			\
 	{{ 8, 4}, { 5, 3}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP2_RN_RD			\
 	{{10, 2}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_Z_M_RN_RD			\
+	{{13, 1}, {10, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_M_D_RN_RD			\
 	{{13, 1}, {12, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP3_RN_RD			\
@@ -3522,6 +3665,8 @@ struct insn_info {
 	{{ 5,19}, { 0, 4}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_IMM19_RT			\
 	{{ 5,19}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_Z_M_RN_RM			\
+	{{24, 1}, {10, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_IMM26			\
 	{{ 0,26}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_SIZE_RN_RT			\
@@ -3596,6 +3741,9 @@ static const struct insn_info insn_tables[] = {
  /* ---------  ----------  ---------------------------  ------------------ */
  { 0xffffffff, 0xd6bf03e0, FMT_NOARG,                   op_drps },
  { 0xffffffff, 0xd69f03e0, FMT_NOARG,                   op_eret },
+ { 0xffffffff, 0xd50320ff, FMT_NOARG,                   op_xpaclri },
+ { 0xffffffe0, 0xdac143e0, FMT_RD,                      op_xpaci },
+ { 0xffffffe0, 0xdac147e0, FMT_RD,                      op_xpacd },
  { 0xfffffc1f, 0xd63f0000, FMT_RN,                      op_blr },
  { 0xfffffc1f, 0xd61f0000, FMT_RN,                      op_br },
  { 0xfffffc1f, 0xd65f0000, FMT_RN,                      op_ret },
@@ -3607,12 +3755,16 @@ static const struct insn_info insn_tables[] = {
  { 0xfffffc00, 0x485f7c00, FMT_RN_RT,                   op_ldxrh },
  { 0xfffffc00, 0x089ffc00, FMT_RN_RT,                   op_stlrb },
  { 0xfffffc00, 0x489ffc00, FMT_RN_RT,                   op_stlrh },
+ { 0xfffffbff, 0xd69f0bff, FMT_M,                       op_eretaa },
+ { 0xfffffbff, 0xd65f0bff, FMT_M,                       op_retaa },
  { 0xfffff0ff, 0xd503305f, FMT_CRM,                     op_clrex },
  { 0xfffff0ff, 0xd50330bf, FMT_CRM,                     op_dmb },
  { 0xfffff0ff, 0xd503309f, FMT_CRM,                     op_dsb },
  { 0xfffff0ff, 0xd50330df, FMT_CRM,                     op_isb },
  { 0xfffff01f, 0xd503201f, FMT_CRM_OP2,                 op_hint },
  { 0xfffff000, 0xcec08000, FMT_OP2_RN_RD,               op_simd_sha512_reg2 },
+ { 0xffffd800, 0xdac10800, FMT_Z_M_RN_RD,               op_pacda },
+ { 0xffffd800, 0xdac10000, FMT_Z_M_RN_RD,               op_pacia },
  { 0xffffcc00, 0x4e284800, FMT_M_D_RN_RD,               op_simd_aes },
  { 0xffff8c00, 0x5e280800, FMT_OP3_RN_RD,               op_simd_sha_reg2 },
  { 0xfff8f01f, 0xd500401f, FMT_OP1_CRM_OP2,             op_msr_imm },
@@ -3624,6 +3776,7 @@ static const struct insn_info insn_tables[] = {
  { 0xffe0fc00, 0x08007c00, FMT_RS_RN_RT,                op_stxrb },
  { 0xffe0fc00, 0x48007c00, FMT_RS_RN_RT,                op_stxrh },
  { 0xffe0fc00, 0x9bc07c00, FMT_RM_RN_RD,                op_umulh },
+ { 0xffe0fc00, 0x9ac03000, FMT_RM_RN_RD,                op_pacga },
  { 0xffe0f000, 0xce608000, FMT_RM_OP2_RN_RD,            op_simd_sha512_reg3 },
  { 0xffe08c00, 0x5e000000, FMT_RM_OP_RN_RD,             op_simd_sha_reg3 },
  { 0xffe08000, 0x9b208000, FMT_RM_RA_RN_RD,             op_smsubl },
@@ -3689,6 +3842,8 @@ static const struct insn_info insn_tables[] = {
  { 0xff000010, 0x54000000, FMT_IMM19_COND,              op_b_cond },
  { 0xff000000, 0x98000000, FMT_IMM19_RT,                op_ldrsw_literal },
  { 0xff000000, 0xd8000000, FMT_IMM19_RT,                op_prfm_literal },
+ { 0xfefff800, 0xd63f0800, FMT_Z_M_RN_RM,               op_blraa },
+ { 0xfefff800, 0xd61f0800, FMT_Z_M_RN_RM,               op_braa },
  { 0xfc000000, 0x14000000, FMT_IMM26,                   op_b },
  { 0xfc000000, 0x94000000, FMT_IMM26,                   op_bl },
  { 0xbffffc00, 0x88dffc00, FMT_SIZE_RN_RT,              op_ldar },
