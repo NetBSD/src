@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.46 2020/05/25 05:13:16 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.47 2020/05/25 05:17:05 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -900,6 +900,26 @@ AARCH64REG_WRITE_INLINE(tcr_el1)
 
 
 /* TCR_EL1 - Translation Control Register */
+#define TCR_TCMA1		__BIT(58)		/* ARMv8.5-MemTag control when ADDR[59:55] = 0b11111 */
+#define TCR_TCMA0		__BIT(57)		/* ARMv8.5-MemTag control when ADDR[59:55] = 0b00000 */
+#define TCR_E0PD1		__BIT(56)		/* ARMv8.5-E0PD Faulting control for EL0 by TTBR1 */
+#define TCR_E0PD0		__BIT(55)		/* ARMv8.5-E0PD Faulting control for EL0 by TTBR0 */
+#define TCR_NFD1		__BIT(54)		/* SVE Non-fault translation table walk disable (TTBR1) */
+#define TCR_NFD0		__BIT(53)		/* SVE Non-fault translation table walk disable (TTBR0) */
+#define TCR_TBID1		__BIT(52)		/* ARMv8.3-PAuth TBI for instruction addr (TTBR1) */
+#define TCR_TBID0		__BIT(51)		/* ARMv8.3-PAuth TBI for instruction addr (TTBR0) */
+#define TCR_HWU162		__BIT(50)		/* ARMv8.1-TTPBHA bit[62] of PTE (TTBR1) */
+#define TCR_HWU161		__BIT(49)		/* ARMv8.1-TTPBHA bit[61] of PTE (TTBR1) */
+#define TCR_HWU160		__BIT(48)		/* ARMv8.1-TTPBHA bit[60] of PTE (TTBR1) */
+#define TCR_HWU159		__BIT(47)		/* ARMv8.1-TTPBHA bit[59] of PTE (TTBR1) */
+#define TCR_HWU062		__BIT(46)		/* ARMv8.1-TTPBHA bit[62] of PTE (TTBR0) */
+#define TCR_HWU061		__BIT(45)		/* ARMv8.1-TTPBHA bit[61] of PTE (TTBR0) */
+#define TCR_HWU060		__BIT(44)		/* ARMv8.1-TTPBHA bit[60] of PTE (TTBR0) */
+#define TCR_HWU059		__BIT(43)		/* ARMv8.1-TTPBHA bit[59] of PTE (TTBR0) */
+#define TCR_HPD1		__BIT(42)		/* ARMv8.1-HPD Hierarchical Permission (TTBR1) */
+#define TCR_HPD0		__BIT(41)		/* ARMv8.1-HPD Hierarchical Permission (TTBR0) */
+#define TCR_HD			__BIT(40)		/* ARMv8.1-TTHM Hardware Dirty flag */
+#define TCR_HA			__BIT(39)		/* ARMv8.1-TTHM Hardware Access flag */
 #define TCR_TBI1		__BIT(38)		/* ignore Top Byte TTBR1_EL1 */
 #define TCR_TBI0		__BIT(37)		/* ignore Top Byte TTBR0_EL1 */
 #define TCR_AS64K		__BIT(36)		/* Use 64K ASIDs */
