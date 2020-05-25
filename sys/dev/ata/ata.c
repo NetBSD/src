@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.158 2020/05/25 18:29:25 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.159 2020/05/25 19:05:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.158 2020/05/25 18:29:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.159 2020/05/25 19:05:30 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -84,7 +84,7 @@ int atadebug_mask = ATADEBUG_MASK;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-#if NATA_DMA
+#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
 static int	ata_downgrade_mode(struct ata_drive_datas *, int);
 #endif
 
@@ -965,8 +965,19 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	 */
 	drvp->n_dmaerrs++;
 	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
+#ifdef ATA_DOWNGRADE_MODE
 		ata_downgrade_mode(drvp, flags);
 		drvp->n_dmaerrs = NERRS_MAX-1;
+#else
+		static struct timeval last;
+		static const struct timeval serrintvl = { 300, 0 };
+
+		if (ratecheck(&last, &serrintvl)) {
+			aprint_error_dev(drvp->drv_softc,
+			    "excessive DMA errors - %d in last %d transfers\n",
+			    drvp->n_dmaerrs, drvp->n_xfers);
+		}
+#endif
 		drvp->n_xfers = 0;
 		return;
 	}
@@ -1752,7 +1763,7 @@ ata_print_modes(struct ata_channel *chp)
 	}
 }
 
-#if NATA_DMA
+#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
@@ -1809,7 +1820,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	ata_thread_run(chp, flags, ATACH_TH_RESET, ATACH_NODRIVE);
 	return 1;
 }
-#endif	/* NATA_DMA */
+#endif	/* ATA_DOWNGRADE_MODE && NATA_DMA */
 
 /*
  * Probe drive's capabilities, for use by the controller later
