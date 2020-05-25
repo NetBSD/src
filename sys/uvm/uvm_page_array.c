@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.6 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.7 2020/05/25 21:22:40 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.6 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.7 2020/05/25 21:22:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,10 +195,9 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 	for (i = 0; i < ar->ar_npages; i++) {
 		struct vm_page * const pg = ar->ar_pages[i];
 
-		if (!dense && pg == NULL) {
+		if (pg == NULL) {
 			continue;
 		}
-		KDASSERT(pg != NULL);
 		KDASSERT(pg->uobject == uobj);
 		if (backward) {
 			KDASSERT(pg->offset <= off);
