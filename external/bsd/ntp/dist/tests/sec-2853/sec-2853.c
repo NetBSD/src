@@ -1,3 +1,5 @@
+/*	$NetBSD: sec-2853.c,v 1.1.1.7 2020/05/25 20:40:16 christos Exp $	*/
+
 #include <config.h>
 
 #include <rc_cmdlength.h>
