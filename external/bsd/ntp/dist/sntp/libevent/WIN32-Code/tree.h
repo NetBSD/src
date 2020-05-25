@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.5 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.6 2020/05/25 20:47:33 christos Exp $	*/
 
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*

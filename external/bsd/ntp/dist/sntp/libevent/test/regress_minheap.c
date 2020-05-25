@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_minheap.c,v 1.6 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: regress_minheap.c,v 1.7 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson

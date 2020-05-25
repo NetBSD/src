@@ -1,4 +1,4 @@
-/*	$NetBSD: genshell.h,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: genshell.h,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *
@@ -57,7 +57,7 @@
  *  tolerable version is at least as old as what was current when the header
  *  template was released.
  */
-#define AO_TEMPLATE_VERSION 167936
+#define AO_TEMPLATE_VERSION 167937
 #if (AO_TEMPLATE_VERSION < OPTIONS_MINIMUM_VERSION) \
  || (AO_TEMPLATE_VERSION > OPTIONS_STRUCT_VERSION)
 # error option template version mismatches autoopts/options.h header

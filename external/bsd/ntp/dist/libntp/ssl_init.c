@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.12 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.13 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various

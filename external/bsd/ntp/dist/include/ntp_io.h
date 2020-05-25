@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.h,v 1.5 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: ntp_io.h,v 1.6 2020/05/25 20:47:19 christos Exp $	*/
 
 #ifndef NTP_IO_H
 #define NTP_IO_H
@@ -86,7 +86,7 @@ typedef enum {
 
 extern int	qos;
 SOCKET		move_fd(SOCKET fd);
-isc_boolean_t	get_broadcastclient_flag(void);
+/*isc_boolean_t	get_broadcastclient_flag(void);*/
 extern void	sau_from_netaddr(sockaddr_u *, const isc_netaddr_t *);
 extern void	add_nic_rule(nic_rule_match match_type,
 			     const char *if_name, int prefixlen,

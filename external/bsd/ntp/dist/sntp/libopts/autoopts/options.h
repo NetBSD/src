@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.11 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.12 2020/05/25 20:47:35 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *
@@ -111,7 +111,7 @@
  * @{
  */
 /// autoopts structure version
-#define OPTIONS_STRUCT_VERSION      167936
+#define OPTIONS_STRUCT_VERSION      167937
 /// autoopts structure version string
 #define OPTIONS_VERSION_STRING      "41:0:16"
 /// minimum version the autoopts library supports

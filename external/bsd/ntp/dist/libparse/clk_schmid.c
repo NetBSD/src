@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_schmid.c,v 1.5 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: clk_schmid.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_schmid.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A

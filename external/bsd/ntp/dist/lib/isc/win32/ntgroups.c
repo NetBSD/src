@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.c,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: ntgroups.c,v 1.6 2020/05/25 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: ntgroups.c,v 1.12 2009/09/29 23:48:04 tbox Exp  */
 
 /*
  * The NT Groups have two groups that are not well documented and are

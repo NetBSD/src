@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.9 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.10 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-/* Id */
+	"Id: inet_pton.c,v 1.19 2007/06/19 23:47:17 tbox Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -43,7 +43,6 @@ static char rcsid[] =
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-#ifdef notdef
 static int inet_pton4(const char *src, unsigned char *dst);
 static int inet_pton6(const char *src, unsigned char *dst);
 int isc_net_pton(int af, const char *src, void *dst);
@@ -216,4 +215,3 @@ inet_pton6(const char *src, unsigned char *dst) {
 	memcpy(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }
-#endif

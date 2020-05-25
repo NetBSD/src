@@ -1,4 +1,4 @@
-/*	$NetBSD: leapsec.c,v 1.2 2018/04/07 00:19:54 christos Exp $	*/
+/*	$NetBSD: leapsec.c,v 1.3 2020/05/25 20:47:36 christos Exp $	*/
 
 //#include "ntpdtest.h"
 #include "config.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: numeric.c,v 1.7 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: numeric.c,v 1.8 2020/05/25 20:47:34 christos Exp $	*/
 
 
 /**

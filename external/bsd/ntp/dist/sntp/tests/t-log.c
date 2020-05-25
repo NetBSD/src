@@ -1,4 +1,4 @@
-/*	$NetBSD: t-log.c,v 1.1.1.5 2020/05/25 20:40:15 christos Exp $	*/
+/*	$NetBSD: t-log.c,v 1.2 2020/05/25 20:47:35 christos Exp $	*/
 
 #include "config.h"
 #include "unity.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.5 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.6 2020/05/25 20:47:26 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
@@ -123,9 +123,9 @@
 #define LPRINTF if (interactive && loop_filter_debug) printf
 
 #ifdef DEBUG
-#define dprintf(_x_) LPRINTF _x_
+#define DPRINTF(_x_) LPRINTF _x_
 #else
-#define dprintf(_x_)
+#define DPRINTF(_x_)
 #endif
 
 #ifdef DECL_ERRNO
@@ -597,7 +597,7 @@ cvt_rawdcf(
 			/*
 			 * invalid character (no consecutive bit sequence)
 			 */
-			dprintf(("parse: cvt_rawdcf: character check for 0x%x@%ld FAILED\n",
+			DPRINTF(("parse: cvt_rawdcf: character check for 0x%x@%ld FAILED\n",
 				 (u_int)*s, (long)(s - buffer)));
 			*s = (unsigned char)~0;
 			rtc = CVT_FAIL|CVT_BADFMT;
@@ -618,7 +618,7 @@ cvt_rawdcf(
 		cutoff = 4;	/* doesn't really matter - it'll fail anyway, but gives error output */
 	}
 
-	dprintf(("parse: cvt_rawdcf: average bit count: %d\n", cutoff));
+	DPRINTF(("parse: cvt_rawdcf: average bit count: %d\n", cutoff));
 
 	lowmax = 0;  /* weighted sum */
 	highmax = 0; /* bitcount */
@@ -626,14 +626,14 @@ cvt_rawdcf(
 	/*
 	 * collect weighted sum of lower bits (left of initial guess)
 	 */
-	dprintf(("parse: cvt_rawdcf: histogram:"));
+	DPRINTF(("parse: cvt_rawdcf: histogram:"));
 	for (i = 0; i <= cutoff; i++)
 	{
 		lowmax  += histbuf[i] * i;
 		highmax += histbuf[i];
-		dprintf((" %d", histbuf[i]));
+		DPRINTF((" %d", histbuf[i]));
 	}
-	dprintf((" <M>"));
+	DPRINTF((" <M>"));
 
 	/*
 	 * round up
@@ -664,9 +664,9 @@ cvt_rawdcf(
 	{
 		highmax+=histbuf[i] * i;
 		cutoff +=histbuf[i];
-		dprintf((" %d", histbuf[i]));
+		DPRINTF((" %d", histbuf[i]));
 	}
-	dprintf(("\n"));
+	DPRINTF(("\n"));
 
 	/*
 	 * determine upper maximum (weighted sum / bit count)
@@ -718,7 +718,7 @@ cvt_rawdcf(
 	 */
 	cutoff = (cutoff + span) / 2;
 
-	dprintf(("parse: cvt_rawdcf: lower maximum %d, higher maximum %d, cutoff %d\n", lowmax, highmax, cutoff));
+	DPRINTF(("parse: cvt_rawdcf: lower maximum %d, higher maximum %d, cutoff %d\n", lowmax, highmax, cutoff));
 
 	/*
 	 * convert the bit counts to symbolic 1/0 information for data conversion

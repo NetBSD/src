@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.9 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.10 2020/05/25 20:47:26 christos Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -66,6 +66,7 @@
 #define NTP_LFP		0x7	/* NTP timestamp */
 #define NTP_MODE	0x8	/* peer mode */
 #define NTP_2BIT	0x9	/* leap bits */
+#define NTP_REFID	0xA	/* RefID */
 
 /*
  * Arguments are returned in a union

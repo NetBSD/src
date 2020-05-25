@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.6 2020/05/25 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: radix.h,v 1.13 2008/12/01 23:47:45 tbox Exp  */
 
 /*
  * This source was adapted from MRT's RCS Ids:

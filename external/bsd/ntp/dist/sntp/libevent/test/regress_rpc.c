@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>

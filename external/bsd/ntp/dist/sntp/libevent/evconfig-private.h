@@ -1,4 +1,4 @@
-/*	$NetBSD: evconfig-private.h,v 1.5 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: evconfig-private.h,v 1.6 2020/05/25 20:47:33 christos Exp $	*/
 
 /* evconfig-private.h.  Generated from evconfig-private.h.in by configure.  */
 /* evconfig-private.h template - see "Configuration Header Templates" */
@@ -28,7 +28,7 @@
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-#define _FILE_OFFSET_BITS 64
+/* #undef _FILE_OFFSET_BITS */
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 

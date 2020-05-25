@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_as2201.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_as2201.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * refclock_as2201 - clock driver for the Austron 2201A GPS

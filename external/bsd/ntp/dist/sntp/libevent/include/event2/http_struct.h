@@ -1,4 +1,4 @@
-/*	$NetBSD: http_struct.h,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: http_struct.h,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

@@ -1,5 +1,7 @@
-/*	$NetBSD: ntp_control.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.6 2020/05/25 20:47:19 christos Exp $	*/
 
+#ifndef NTP_CONTROL_H
+#define NTP_CONTROL_H
 /*
  * ntp_control.h - definitions related to NTP mode 6 control messages
  */
@@ -191,4 +193,6 @@ extern struct ctl_trap ctl_traps[CTL_MAXTRAPS];
  */
 #define	IFSTATS_FIELDS	12
 #define	RESLIST_FIELDS	4
+
+#endif /* NTP_CONTROL_H */
 

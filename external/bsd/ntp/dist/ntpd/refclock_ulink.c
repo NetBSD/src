@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_ulink.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_ulink.c,v 1.5 2020/05/25 20:47:26 christos Exp $	*/
 
 /*
  * refclock_ulink - clock driver for Ultralink  WWVB receiver
@@ -239,7 +239,7 @@ ulink_receive(
 	 */
 	syncchar = leapchar = modechar = siglchar = ' ';
 	switch (pp->lencode ) {
-		case LEN33X:
+	case LEN33X:
 
 		/*
                  * First we check if the format is 33x or 325:
@@ -391,8 +391,9 @@ ulink_receive(
                     }
 		    break;
 		}
+		/*FALLTHROUGH*/
 
-		case LEN320:
+	case LEN320:
 
 	        /*
 		 * Model 320 Decoder
@@ -430,11 +431,10 @@ ulink_receive(
 		if (leapchar == 'I' ) leapchar = '+';
 		if (leapchar == 'D' ) leapchar = '-';
 		if (syncchar != '?' ) syncchar = ':';
-
- 		break;
+		    break;
 		}
-
-		default:
+		/*FALLTHROUGH*/
+	default:
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
 	}

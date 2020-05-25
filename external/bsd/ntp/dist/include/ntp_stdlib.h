@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.15 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.16 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -43,6 +43,9 @@ extern	void	setup_logfile	(const char *);
 #ifndef errno_to_str
 extern	void	errno_to_str(int, char *, size_t);
 #endif
+
+extern	int	xvsbprintf(char**, char* const, char const*, va_list) NTP_PRINTF(3, 0);
+extern	int	xsbprintf(char**, char* const, char const*, ...) NTP_PRINTF(3, 4);
 
 /*
  * When building without OpenSSL, use a few macros of theirs to
@@ -160,7 +163,7 @@ extern	const char * modetoa	(size_t);
 extern	const char * eventstr	(int);
 extern	const char * ceventstr	(int);
 extern	const char * res_match_flags(u_short);
-extern	const char * res_access_flags(u_short);
+extern	const char * res_access_flags(u_int32);
 #ifdef KERNEL_PLL
 extern	const char * k_st_flags	(u_int32);
 #endif

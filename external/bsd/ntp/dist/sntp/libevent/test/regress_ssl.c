@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.6 2017/04/13 20:17:43 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.7 2020/05/25 20:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson

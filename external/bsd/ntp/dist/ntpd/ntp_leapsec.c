@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_leapsec.c,v 1.6 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: ntp_leapsec.c,v 1.7 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * ntp_leapsec.c - leap second processing for NTPD
@@ -424,7 +424,8 @@ int/*BOOL*/
 leapsec_load_stream(
 	FILE       * ifp  ,
 	const char * fname,
-	int/*BOOL*/  logall)
+	int/*BOOL*/  logall,
+	int/*BOOL*/  vhash)
 {
 	leap_table_t *pt;
 	int           rcheck;
@@ -432,36 +433,37 @@ leapsec_load_stream(
 	if (NULL == fname)
 		fname = "<unknown>";
 
-	rcheck = leapsec_validate((leapsec_reader)getc, ifp);
-	if (logall)
-		switch (rcheck)
-		{
-		case LSVALID_GOODHASH:
-			msyslog(LOG_NOTICE, "%s ('%s'): good hash signature",
-				logPrefix, fname);
-			break;
-
-		case LSVALID_NOHASH:
-			msyslog(LOG_ERR, "%s ('%s'): no hash signature",
-				logPrefix, fname);
-			break;
-		case LSVALID_BADHASH:
-			msyslog(LOG_ERR, "%s ('%s'): signature mismatch",
-				logPrefix, fname);
-			break;
-		case LSVALID_BADFORMAT:
-			msyslog(LOG_ERR, "%s ('%s'): malformed hash signature",
-				logPrefix, fname);
-			break;
-		default:
-			msyslog(LOG_ERR, "%s ('%s'): unknown error code %d",
-				logPrefix, fname, rcheck);
-			break;
-		}
-	if (rcheck < 0)
-		return FALSE;
-
-	rewind(ifp);
+	if (vhash) {
+		rcheck = leapsec_validate((leapsec_reader)getc, ifp);
+		if (logall)
+			switch (rcheck)
+			{
+			case LSVALID_GOODHASH:
+				msyslog(LOG_NOTICE, "%s ('%s'): good hash signature",
+					logPrefix, fname);
+				break;
+				
+			case LSVALID_NOHASH:
+				msyslog(LOG_ERR, "%s ('%s'): no hash signature",
+					logPrefix, fname);
+				break;
+			case LSVALID_BADHASH:
+				msyslog(LOG_ERR, "%s ('%s'): signature mismatch",
+					logPrefix, fname);
+				break;
+			case LSVALID_BADFORMAT:
+				msyslog(LOG_ERR, "%s ('%s'): malformed hash signature",
+					logPrefix, fname);
+				break;
+			default:
+				msyslog(LOG_ERR, "%s ('%s'): unknown error code %d",
+					logPrefix, fname, rcheck);
+				break;
+			}
+		if (rcheck < 0)
+			return FALSE;
+		rewind(ifp);
+	}
 	pt = leapsec_get_table(TRUE);
 	if (!leapsec_load(pt, (leapsec_reader)getc, ifp, TRUE)) {
 		switch (errno) {
@@ -500,7 +502,8 @@ leapsec_load_file(
 	const char  * fname,
 	struct stat * sb_old,
 	int/*BOOL*/   force,
-	int/*BOOL*/   logall)
+	int/*BOOL*/   logall,
+	int/*BOOL*/   vhash)
 {
 	FILE       * fp;
 	struct stat  sb_new;
@@ -553,7 +556,7 @@ leapsec_load_file(
 		return FALSE;
 	}
 
-	rc = leapsec_load_stream(fp, fname, logall);
+	rc = leapsec_load_stream(fp, fname, logall, vhash);
 	fclose(fp);
 	return rc;
 }

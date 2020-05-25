@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.17 2019/01/27 04:28:18 dholland Exp $	*/
+/*	$NetBSD: crypto.c,v 1.18 2020/05/25 20:47:32 christos Exp $	*/
 
 /*
  * HMS: we need to test:
@@ -34,7 +34,9 @@ compute_mac(
 	)
 {
 	u_int		len  = 0;
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 	size_t		slen = 0;
+#endif
 	int		key_type;
 	
 	INIT_SSL();

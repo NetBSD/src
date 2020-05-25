@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.6 2020/05/25 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: stdio.h,v 1.13 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_STDIO_H
 #define ISC_STDIO_H 1

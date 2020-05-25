@@ -1,4 +1,4 @@
-/*	$NetBSD: option-value-type.c,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: option-value-type.c,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *

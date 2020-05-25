@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.14 2019/02/03 10:48:47 mrg Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.15 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.6 2020/05/25 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: time.h,v 1.40 2009/01/05 23:47:54 tbox Exp  */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1

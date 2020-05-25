@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.6 2020/05/25 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: region.h,v 1.25 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1

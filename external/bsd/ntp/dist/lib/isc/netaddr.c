@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.10 2016/11/22 03:09:30 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.11 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")

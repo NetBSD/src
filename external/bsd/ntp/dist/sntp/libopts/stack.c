@@ -1,4 +1,4 @@
-/*	$NetBSD: stack.c,v 1.7 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: stack.c,v 1.8 2020/05/25 20:47:35 christos Exp $	*/
 
 
 /**

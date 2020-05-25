@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.9 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.10 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers

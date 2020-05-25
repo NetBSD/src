@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tsyncpci.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_tsyncpci.c,v 1.5 2020/05/25 20:47:26 christos Exp $	*/
 
 /*******************************************************************************
 *

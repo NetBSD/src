@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps-Solaris.h,v 1.5 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: timepps-Solaris.h,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /***********************************************************************
  *								       *

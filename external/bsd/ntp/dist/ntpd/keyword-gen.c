@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.12 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.13 2020/05/25 20:47:25 christos Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -45,6 +45,7 @@ struct key_tok ntp_keywords[] = {
 { "broadcast",		T_Broadcast,		FOLLBY_STRING },
 { "broadcastclient",	T_Broadcastclient,	FOLLBY_TOKEN },
 { "broadcastdelay",	T_Broadcastdelay,	FOLLBY_TOKEN },
+{ "checkhash",		T_Checkhash,		FOLLBY_TOKEN },
 { "ctl",		T_Ctl,			FOLLBY_TOKEN },
 { "disable",		T_Disable,		FOLLBY_TOKEN },
 { "driftfile",		T_Driftfile,		FOLLBY_STRING },
@@ -53,6 +54,7 @@ struct key_tok ntp_keywords[] = {
 { "end",		T_End,			FOLLBY_TOKEN },
 { "filegen",		T_Filegen,		FOLLBY_TOKEN },
 { "fudge",		T_Fudge,		FOLLBY_STRING },
+{ "ignorehash",		T_Ignorehash,		FOLLBY_TOKEN },
 { "io",			T_Io,			FOLLBY_TOKEN },
 { "includefile",	T_Includefile,		FOLLBY_STRING },
 { "leapfile",		T_Leapfile,		FOLLBY_STRING },
@@ -66,12 +68,16 @@ struct key_tok ntp_keywords[] = {
 { "peer",		T_Peer,			FOLLBY_STRING },
 { "phone",		T_Phone,		FOLLBY_STRINGS_TO_EOC },
 { "pidfile",		T_Pidfile,		FOLLBY_STRING },
+{ "pollskewlist",	T_PollSkewList,		FOLLBY_TOKEN },
 { "pool",		T_Pool,			FOLLBY_STRING },
 { "discard",		T_Discard,		FOLLBY_TOKEN },
 { "reset",		T_Reset,		FOLLBY_TOKEN },
 { "restrict",		T_Restrict,		FOLLBY_TOKEN },
 { "rlimit",		T_Rlimit,		FOLLBY_TOKEN },
 { "server",		T_Server,		FOLLBY_STRING },
+{ "serverresponse",	T_Serverresponse,	FOLLBY_TOKEN },
+{ "fuzz",		T_Fuzz,			FOLLBY_TOKEN },
+{ "poll",		T_Poll,			FOLLBY_TOKEN },
 { "setvar",		T_Setvar,		FOLLBY_STRING },
 { "statistics",		T_Statistics,		FOLLBY_TOKEN },
 { "statsdir",		T_Statsdir,		FOLLBY_STRING },
@@ -83,6 +89,7 @@ struct key_tok ntp_keywords[] = {
 { "trap",		T_Trap,			FOLLBY_STRING },
 { "unconfig",		T_Unconfig,		FOLLBY_STRING },
 { "unpeer",		T_Unpeer,		FOLLBY_STRING },
+{ "xmtnonce",		T_Xmtnonce,		FOLLBY_TOKEN },
 /* authentication_command */
 { "controlkey",		T_ControlKey,		FOLLBY_TOKEN },
 { "crypto",		T_Crypto,		FOLLBY_TOKEN },
@@ -201,6 +208,7 @@ struct key_tok ntp_keywords[] = {
 { "stratum",		T_Stratum,		FOLLBY_TOKEN },
 { "time1",		T_Time1,		FOLLBY_TOKEN },
 { "time2",		T_Time2,		FOLLBY_TOKEN },
+{ "minjitter",		T_Minjitter,		FOLLBY_TOKEN },
 /* system_option */
 { "auth",		T_Auth,			FOLLBY_TOKEN },
 { "bclient",		T_Bclient,		FOLLBY_TOKEN },

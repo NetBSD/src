@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.6 2020/05/25 20:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: iterated_hash.c,v 1.6 2009/02/18 23:47:48 tbox Exp  */
 
 #include "config.h"
 

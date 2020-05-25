@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.8 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.9 2020/05/25 20:47:19 christos Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -672,8 +672,10 @@ struct conf_restrict {
 	u_int32	addr;		/* match address */
 	u_int32 mask;		/* match mask */
 	short ippeerlimit;	/* ip peer limit */
-	u_short flags;		/* restrict flags */
+	int srvfuzrft;		/* server response fuzz reftime: poll */
+	u_short flags;		/* restrict flags XXX: OLD size and name */
 	u_short mflags;		/* match flags */
+	short unused1;		/* (unused) padding for v6_flag */
 	u_int v6_flag;		/* is this v6 or not */
 	struct in6_addr addr6; 	/* match address (v6) */
 	struct in6_addr mask6; 	/* match mask (v6) */

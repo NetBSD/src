@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.10 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.11 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -223,12 +223,14 @@ authreadkeys(
 			log_maybe(NULL,
 				  "authreadkeys: invalid type for key %d",
 				  keyno);
+#  ifdef ENABLE_CMAC
 		} else if (NID_cmac != keytype &&
 				EVP_get_digestbynid(keytype) == NULL) {
 			log_maybe(NULL,
 				  "authreadkeys: no algorithm for key %d",
 				  keyno);
 			keytype = 0;
+#  endif /* ENABLE_CMAC */
 		}
 #else	/* !OPENSSL follows */
 		/*

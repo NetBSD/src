@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsim.c,v 1.5 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: ntpsim.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
 
 /* ntpdsim.c
  *

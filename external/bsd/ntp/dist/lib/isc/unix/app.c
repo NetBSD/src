@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.6 2020/05/25 20:47:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: app.c,v 1.64 2009/11/04 05:58:46 marka Exp  */
 
 /*! \file */
 
