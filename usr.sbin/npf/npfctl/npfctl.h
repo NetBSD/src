@@ -192,6 +192,7 @@ void		npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
 #define	NPFCTL_NAT_STATIC	2
 
 void		npfctl_config_init(bool);
+void		npfctl_config_build(void);
 int		npfctl_config_send(int);
 nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
