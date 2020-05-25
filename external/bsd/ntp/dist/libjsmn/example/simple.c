@@ -1,3 +1,5 @@
+/*	$NetBSD: simple.c,v 1.1.1.6 2020/05/25 20:40:05 christos Exp $	*/
+
 #include <stdio.h>
 #include <string.h>
 #include "../jsmn.h"
