@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.60 2020/05/25 09:25:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.61 2020/05/25 09:31:09 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.60 2020/05/25 09:25:31 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.61 2020/05/25 09:31:09 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -247,7 +247,6 @@ struct vioif_rxqueue {
 	struct mbuf		**rxq_mbufs;
 	bus_dmamap_t		*rxq_dmamaps;
 
-	void			*rxq_softint;
 	void			*rxq_handle_si;
 	struct vioif_work	 rxq_work;
 	bool			 rxq_workqueue;
@@ -342,7 +341,6 @@ static void	vioif_watchdog(struct ifnet *);
 /* rx */
 static int	vioif_add_rx_mbuf(struct vioif_rxqueue *, int);
 static void	vioif_free_rx_mbuf(struct vioif_rxqueue *, int);
-static void	vioif_populate_rx_mbufs(struct vioif_rxqueue *);
 static void	vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *);
 static void	vioif_rx_queue_clear(struct vioif_rxqueue *);
 static bool	vioif_rx_deq_locked(struct vioif_softc *, struct virtio_softc *,
@@ -351,7 +349,6 @@ static int	vioif_rx_intr(void *);
 static void	vioif_rx_handle(void *);
 static void	vioif_rx_sched_handle(struct vioif_softc *,
 		    struct vioif_rxqueue *);
-static void	vioif_rx_softint(void *);
 static void	vioif_rx_drain(struct vioif_rxqueue *);
 
 /* tx */
@@ -883,12 +880,6 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 		rxq->rxq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 
-		rxq->rxq_softint = softint_establish(softint_flags,
-		    vioif_rx_softint, rxq);
-		if (rxq->rxq_softint == NULL) {
-			aprint_error_dev(self, "cannot establish rx softint\n");
-			goto err;
-		}
 		rxq->rxq_handle_si = softint_establish(softint_flags,
 		    vioif_rx_handle, rxq);
 		if (rxq->rxq_handle_si == NULL) {
@@ -1011,11 +1002,6 @@ err:
 		if (rxq->rxq_lock) {
 			mutex_obj_free(rxq->rxq_lock);
 			rxq->rxq_lock = NULL;
-		}
-
-		if (rxq->rxq_softint) {
-			softint_disestablish(rxq->rxq_softint);
-			rxq->rxq_softint = NULL;
 		}
 
 		if (rxq->rxq_handle_si) {
@@ -1144,8 +1130,11 @@ vioif_init(struct ifnet *ifp)
 		rxq = &sc->sc_rxq[i];
 
 		/* Have to set false before vioif_populate_rx_mbufs */
+		mutex_enter(rxq->rxq_lock);
 		rxq->rxq_stopping = false;
-		vioif_populate_rx_mbufs(rxq);
+		vioif_populate_rx_mbufs_locked(rxq);
+		mutex_exit(rxq->rxq_lock);
+
 	}
 
 	virtio_reinit_end(vsc);
@@ -1516,15 +1505,6 @@ vioif_free_rx_mbuf(struct vioif_rxqueue *rxq, int i)
 
 /* add mbufs for all the empty receive slots */
 static void
-vioif_populate_rx_mbufs(struct vioif_rxqueue *rxq)
-{
-
-	mutex_enter(rxq->rxq_lock);
-	vioif_populate_rx_mbufs_locked(rxq);
-	mutex_exit(rxq->rxq_lock);
-}
-
-static void
 vioif_populate_rx_mbufs_locked(struct vioif_rxqueue *rxq)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
@@ -1642,7 +1622,7 @@ vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 	}
 
 	if (dequeued)
-		softint_schedule(rxq->rxq_softint);
+		vioif_populate_rx_mbufs_locked(rxq);
 
 	return more;
 }
@@ -1719,15 +1699,6 @@ vioif_rx_sched_handle(struct vioif_softc *sc, struct vioif_rxqueue *rxq)
 		vioif_work_add(sc->sc_txrx_workqueue, &rxq->rxq_work);
 	else
 		softint_schedule(rxq->rxq_handle_si);
-}
-
-/* softint: enqueue receive requests for new incoming packets */
-static void
-vioif_rx_softint(void *arg)
-{
-	struct vioif_rxqueue *rxq = arg;
-
-	vioif_populate_rx_mbufs(rxq);
 }
 
 /* free all the mbufs; called from if_stop(disable) */
