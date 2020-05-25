@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.6 2020/05/25 15:14:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,7 +89,9 @@ typedef enum {
 	DNS_ZONEOPT_CHECKSPF = 1 << 27,		/*%< check SPF records */
 	DNS_ZONEOPT_CHECKTTL = 1 << 28,		/*%< check max-zone-ttl */
 	DNS_ZONEOPT_AUTOEMPTY = 1 << 29,	/*%< automatic empty zone */
+#ifndef __NetBSD__
 	DNS_ZONEOPT___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
+#endif
 } dns_zoneopt_t;
 
 /*
@@ -101,7 +103,9 @@ typedef enum {
 	DNS_ZONEKEY_CREATE = 0x00000004U,   /*%< make keys when needed */
 	DNS_ZONEKEY_FULLSIGN = 0x00000008U, /*%< roll to new keys immediately */
 	DNS_ZONEKEY_NORESIGN = 0x00000010U, /*%< no automatic resigning */
+#ifndef __NetBSD__
 	DNS_ZONEKEY___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
+#endif
 } dns_zonekey_t;
 
 #ifndef DNS_ZONE_MINREFRESH
