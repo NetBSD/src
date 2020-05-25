@@ -1,4 +1,4 @@
-/*	$NetBSD: netsnmp_daemonize.c,v 1.6 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: netsnmp_daemonize.c,v 1.7 2020/05/25 20:47:26 christos Exp $	*/
 
 /*
  * system.c

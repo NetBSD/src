@@ -1,4 +1,4 @@
-/*	$NetBSD: resultclass.h,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
+/*	$NetBSD: resultclass.h,v 1.6 2020/05/25 20:47:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: resultclass.h,v 1.20 2009/09/02 23:48:03 tbox Exp  */
 
 #ifndef ISC_RESULTCLASS_H
 #define ISC_RESULTCLASS_H 1

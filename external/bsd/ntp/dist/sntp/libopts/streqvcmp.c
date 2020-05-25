@@ -1,4 +1,4 @@
-/*	$NetBSD: streqvcmp.c,v 1.6 2016/01/08 21:35:41 christos Exp $	*/
+/*	$NetBSD: streqvcmp.c,v 1.7 2020/05/25 20:47:35 christos Exp $	*/
 
 
 /**

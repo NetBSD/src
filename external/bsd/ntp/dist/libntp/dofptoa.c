@@ -1,4 +1,4 @@
-/*	$NetBSD: dofptoa.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: dofptoa.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * dofptoa - do the grunge work to convert an fp number to ascii
@@ -14,7 +14,7 @@
 char *
 dofptoa(
 	u_fp fpv,
-	int neg,
+	char sign,
 	short ndec,
 	int msec
 	)
@@ -108,8 +108,8 @@ dofptoa(
 	 * Copy it into the buffer, asciizing as we go.
 	 */
 	bp = buf;
-	if (neg)
-	    *bp++ = '-';
+	if (sign)
+	    *bp++ = sign;
 	
 	while (cp < cpend) {
 		if (cp == cpdec)
@@ -137,7 +137,7 @@ fptoa(
 		plusfp = (u_fp)fpv;
 	}
 
-	return dofptoa(plusfp, neg, ndec, FALSE);
+	return dofptoa(plusfp, (neg?'-':0), ndec, FALSE);
 }
 
 
@@ -157,5 +157,5 @@ fptoms(
 		plusfp = (u_fp)fpv;
 	}
 
-	return dofptoa(plusfp, neg, ndec, TRUE);
+	return dofptoa(plusfp, (neg?'-':0), ndec, TRUE);
 }

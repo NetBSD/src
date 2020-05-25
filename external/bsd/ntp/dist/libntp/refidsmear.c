@@ -1,4 +1,4 @@
-/*	$NetBSD: refidsmear.c,v 1.1.1.6 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: refidsmear.c,v 1.2 2020/05/25 20:47:24 christos Exp $	*/
 
 #include <config.h>
 

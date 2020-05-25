@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
 
 /*
  * Modified by Dave Hart for integration into NTP 4.2.7 <hart@ntp.org>
@@ -12,7 +12,7 @@
  * C99-compliant implementations.
  */
 
-/* Id */
+/* Id: snprintf.c,v 1.9 2008/01/20 14:02:00 holger Exp  */
 
 /*
  * Copyright (c) 1995 Patrick Powell.
