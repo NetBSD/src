@@ -21,6 +21,7 @@
 	  database</a></li>
       <li><a href="#functions">Time and date functions</a></li>
       <li><a href="#stability">Interface stability</a></li>
+      <li><a href="#leapsec">Leap seconds</a></li>
       <li><a href="#calendar">Calendrical issues</a></li>
       <li><a href="#planets">Time and time zones on other planets</a></li>
     </ul>
@@ -98,8 +99,9 @@ A <code><abbr>tz</abbr></code> timezone corresponds to a ruleset that can
 have more than two changes per year, these changes need not merely
 flip back and forth between two alternatives, and the rules themselves
 can change at times.
-Whether and when a timezone changes its
-clock, and even the timezone's notional base offset from UTC, are variable.
+Whether and when a timezone changes its clock,
+and even the timezone's notional base offset from <abbr>UTC</abbr>,
+are variable.
 It does not always make sense to talk about a timezone's
 "base offset", which is not necessarily a single number.
 </p>
@@ -296,6 +298,10 @@ in decreasing order of importance:
     If a name is changed, put its old spelling in the
     '<code>backward</code>' file.
     This means old spellings will continue to work.
+    Ordinarily a name change should occur only in the rare case when
+    a location's consensus English-language spelling changes; for example,
+    in 2008 <code>Asia/Calcutta</code> was renamed to <code>Asia/Kolkata</code>
+    due to long-time widespread use of the new city name instead of the old.
   </li>
 </ul>
 
@@ -428,7 +434,7 @@ in decreasing order of importance:
       EET/EEST Eastern European,
       GST/GDT Guam,
       HST/HDT/HWT/HPT Hawaii,
-      HKT/HKST Hong Kong,
+      HKT/HKST/HKWT Hong Kong,
       IST India,
       IST/GMT Irish,
       IST/IDT/IDDT Israel,
@@ -972,7 +978,8 @@ an older <code>zic</code>.
     that do not fit into the POSIX model.
   </li>
   <li>
-    POSIX requires that systems ignore leap seconds.
+    POSIX requires that <code>time_t</code> clock counts exclude leap
+    seconds.
   </li>
   <li>
     The <code><abbr>tz</abbr></code> code attempts to support all the
@@ -1051,28 +1058,12 @@ an older <code>zic</code>.
     The functions were inspired by <a href="https://netbsd.org/">NetBSD</a>.
   </li>
   <li>
-    A function <code>tzsetwall</code> has been added to arrange for the
-    system's best approximation to local (wall clock) time to be delivered
-    by subsequent calls to <code>localtime</code>.
-    Source code for portable applications that "must" run on local
-    time should call <code>tzsetwall</code>;
-    if such code is moved to "old" systems that do not
-    provide <code>tzsetwall</code>, you will not be able to generate an
-    executable program.
-    (These functions also arrange for local time to
-    be used if <code>tzset</code> is called &ndash; directly or
-    indirectly &ndash; and there is no <code>TZ</code> environment
-    variable; portable applications should not, however, rely on this
-    behavior since it is not the way <a
-    href="https://en.wikipedia.org/wiki/UNIX_System_V#SVR2"><abbr>SVR2</abbr></a>
-    systems behave.)
-  </li>
-  <li>
     Negative <code>time_t</code> values are supported, on systems
     where <code>time_t</code> is signed.
   </li>
   <li>
-    These functions can account for leap seconds, thanks to Bradley White.
+    These functions can account for leap seconds;
+    see <a href="#leapsec">Leap seconds</a> below.
   </li>
 </ul>
 
@@ -1133,7 +1124,7 @@ The vestigial <abbr>API</abbr>s are:
     may now examine <code>localtime(&amp;clock)-&gt;tm_zone</code>
     (if <code>TM_ZONE</code> is defined) or
     <code>tzname[localtime(&amp;clock)-&gt;tm_isdst]</code>
-    (if <code>HAVE_TZNAME</code> is defined) to learn the correct time
+    (if <code>HAVE_TZNAME</code> is nonzero) to learn the correct time
     zone abbreviation to use.
   </li>
   <li>
@@ -1245,6 +1236,69 @@ If a calendar application records a future event in some location other
 than Bangkok by putting "<samp>Asia/Bangkok</samp>" in the event's record,
 the application should be robust in the presence of timezone splits
 between now and the future time.
+</p>
+</section>
+
+<section>
+  <h2 id="leapsec">Leap seconds</h2>
+<p>
+The <code><abbr>tz</abbr></code> code and data can account for leap seconds,
+thanks to code contributed by Bradley White.
+However, the leap second support of this package is rarely used directly
+because POSIX requires leap seconds to be excluded and many
+software packages would mishandle leap seconds if they were present.
+Instead, leap seconds are more commonly handled by occasionally adjusting
+the operating system kernel clock as described in
+<a href="tz-link.html#precision">Precision timekeeping</a>,
+and this package by default installs a <samp>leapseconds</samp> file
+commonly used by
+<a href="http://www.ntp.org"><abbr title="Network Time Protocol">NTP</abbr></a>
+software that adjusts the kernel clock.
+However, kernel-clock twiddling approximates UTC only roughly,
+and systems needing more-precise UTC can use this package's leap
+second support directly.
+</p>
+
+<p>
+The directly-supported mechanism assumes that <code>time_t</code>
+counts of seconds since the POSIX epoch normally include leap seconds,
+as opposed to POSIX <code>time_t</code> counts which exclude leap seconds.
+This modified timescale is converted to <abbr>UTC</abbr>
+at the same point that time zone and DST adjustments are applied &ndash;
+namely, at calls to <code>localtime</code> and analogous functions &ndash;
+and the process is driven by leap second information
+stored in alternate versions of the <abbr>TZif</abbr> files.
+Because a leap second adjustment may be needed even
+if no time zone correction is desired,
+calls to <code>gmtime</code>-like functions
+also need to consult a <abbr>TZif</abbr> file,
+conventionally named <samp><abbr>GMT</abbr></samp>,
+to see whether leap second corrections are needed.
+To convert an application's <code>time_t</code> timestamps to or from
+POSIX <code>time_t</code> timestamps (for use when, say,
+embedding or interpreting timestamps in portable
+<a href="https://en.wikipedia.org/wiki/Tar_(computing)"><code>tar</code></a>
+files),
+the application can call the utility functions
+<code>time2posix</code> and <code>posix2time</code>
+included with this package.
+</p>
+
+<p>
+If the POSIX-compatible <abbr>TZif</abbr> file set is installed
+in a directory whose basename is <samp>zoneinfo</samp>, the
+leap-second-aware file set is by default installed in a separate
+directory <samp>zoneinfo-leaps</samp>.
+Although each process can have its own time zone by setting
+its <code>TZ</code> environment variable, there is no support for some
+processes being leap-second aware while other processes are
+POSIX-compatible; the leap-second choice is system-wide.
+So if you configure your kernel to count leap seconds, you should also
+discard <samp>zoneinfo</samp> and rename <samp>zoneinfo-leaps</samp>
+to <samp>zoneinfo</samp>.
+Alternatively, you can install just one set of <abbr>TZif</abbr> files
+in the first place; see the <code>REDO</code> variable in this package's
+<a href="https://en.wikipedia.org/wiki/Makefile">makefile</a>.
 </p>
 </section>
 
