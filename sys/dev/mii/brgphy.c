@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.89 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.90 2020/05/25 19:48:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.89 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.90 2020/05/25 19:48:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static void	brgphy_crc_bug(struct mii_softc *);
 static void	brgphy_disable_early_dac(struct mii_softc *);
 static void	brgphy_jumbo_settings(struct mii_softc *);
 static void	brgphy_eth_wirespeed(struct mii_softc *);
-
+static void	brgphy_bcm54xx_clock_delay(struct mii_softc *);
 
 static const struct mii_phy_funcs brgphy_copper_funcs = {
 	brgphy_service, brgphy_copper_status, brgphy_reset,
@@ -460,6 +460,12 @@ setit:
 				break;
 			}
 			break;
+		case MII_OUI_BROADCOM4:
+			switch (sc->mii_mpd_model) {
+			case MII_MODEL_BROADCOM4_BCM54213PE:
+				brgphy_bcm54xx_clock_delay(sc);
+				break;
+			}
 		}
 	}
 
@@ -1241,4 +1247,31 @@ brgphy_eth_wirespeed(struct mii_softc *sc)
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
 	PHY_READ(sc, BRGPHY_MII_AUXCTL, &val);
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
+}
+
+static void
+brgphy_bcm54xx_clock_delay(struct mii_softc *sc)
+{
+	uint16_t val;
+
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_SHADOW_MISC |
+	    BRGPHY_AUXCTL_SHADOW_MISC << BRGPHY_AUXCTL_MISC_READ_SHIFT);
+	PHY_READ(sc, BRGPHY_MII_AUXCTL, &val);
+	val &= BRGPHY_AUXCTL_MISC_DATA_MASK;
+	if (sc->mii_flags & MIIF_RXID)
+		val |= BRGPHY_AUXCTL_MISC_RGMII_SKEW_EN;
+	else
+		val &= ~BRGPHY_AUXCTL_MISC_RGMII_SKEW_EN;
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_MISC_WRITE_EN |
+	    BRGPHY_AUXCTL_SHADOW_MISC | val);
+
+	PHY_WRITE(sc, BRGPHY_MII_SHADOW_1C, BRGPHY_SHADOW_1C_CLK_CTRL);
+	PHY_READ(sc, BRGPHY_MII_SHADOW_1C, &val);
+	val &= BRGPHY_SHADOW_1C_DATA_MASK;
+	if (sc->mii_flags & MIIF_TXID)
+		val |= BRGPHY_SHADOW_1C_GTXCLK_EN;
+	else
+		val &= ~BRGPHY_SHADOW_1C_GTXCLK_EN;
+	PHY_WRITE(sc, BRGPHY_MII_SHADOW_1C, BRGPHY_SHADOW_1C_WRITE_EN |
+	    BRGPHY_SHADOW_1C_CLK_CTRL | val);
 }
