@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.5 2020/03/17 00:30:17 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.6 2020/05/25 21:15:10 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.5 2020/03/17 00:30:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.6 2020/05/25 21:15:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,10 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.5 2020/03/17 00:30:17 ad Exp $"
  */
 
 void
-uvm_page_array_init(struct uvm_page_array *ar)
+uvm_page_array_init(struct uvm_page_array *ar, struct uvm_object *uobj,
+    unsigned int flags)
 {
 
-	ar->ar_idx = ar->ar_npages = 0;
+	ar->ar_idx = 0;
+	ar->ar_npages = 0;
+	ar->ar_uobj = uobj;
+	ar->ar_flags = flags;
 }
 
 /*
@@ -78,7 +82,8 @@ uvm_page_array_clear(struct uvm_page_array *ar)
 {
 
 	KASSERT(ar->ar_idx <= ar->ar_npages);
-	uvm_page_array_init(ar);
+	ar->ar_idx = 0;
+	ar->ar_npages = 0;
 }
 
 /*
@@ -124,14 +129,15 @@ uvm_page_array_advance(struct uvm_page_array *ar)
  */
 
 int
-uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
-    voff_t off, unsigned int nwant, unsigned int flags)
+uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 {
 	unsigned int npages;
 #if defined(DEBUG)
 	unsigned int i;
 #endif /* defined(DEBUG) */
 	unsigned int maxpages = __arraycount(ar->ar_pages);
+	struct uvm_object *uobj = ar->ar_uobj;
+	const int flags = ar->ar_flags;
 	const bool dense = (flags & UVM_PAGE_ARRAY_FILL_DENSE) != 0;
 	const bool backward = (flags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0;
 
@@ -161,8 +167,26 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 		    maxpages, dense);
 	}
 	if (npages == 0) {
-		uvm_page_array_clear(ar);
-		return ENOENT;
+		if (flags != 0) {
+			/*
+			 * if dense or looking for tagged entries (or
+			 * working backwards), fail right away.
+			 */
+			uvm_page_array_clear(ar);
+			return ENOENT;
+		} else {
+			/*
+			 * there's nothing else to be found with the current
+			 * set of arguments, in the current version of the
+			 * tree.
+			 *
+			 * minimize repeated tree lookups by "finding" some
+			 * null pointers, in case the caller keeps looping
+			 * (a common use case).
+			 */
+			npages = maxpages;
+			memset(ar->ar_pages, 0, sizeof(ar->ar_pages[0]) * npages);
+		}
 	}
 	KASSERT(npages <= maxpages);
 	ar->ar_npages = npages;
@@ -171,6 +195,9 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 	for (i = 0; i < ar->ar_npages; i++) {
 		struct vm_page * const pg = ar->ar_pages[i];
 
+		if (!dense && pg == NULL) {
+			continue;
+		}
 		KDASSERT(pg != NULL);
 		KDASSERT(pg->uobject == uobj);
 		if (backward) {
@@ -194,8 +221,8 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
  */
 
 struct vm_page *
-uvm_page_array_fill_and_peek(struct uvm_page_array *a, struct uvm_object *uobj,
-    voff_t off, unsigned int nwant, unsigned int flags)
+uvm_page_array_fill_and_peek(struct uvm_page_array *a, voff_t off,
+    unsigned int nwant)
 {
 	struct vm_page *pg;
 	int error;
@@ -204,11 +231,10 @@ uvm_page_array_fill_and_peek(struct uvm_page_array *a, struct uvm_object *uobj,
 	if (pg != NULL) {
 		return pg;
 	}
-	error = uvm_page_array_fill(a, uobj, off, nwant, flags);
+	error = uvm_page_array_fill(a, off, nwant);
 	if (error != 0) {
 		return NULL;
 	}
 	pg = uvm_page_array_peek(a);
-	KASSERT(pg != NULL);
 	return pg;
 }

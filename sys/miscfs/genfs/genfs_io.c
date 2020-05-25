@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.96 2020/05/17 19:38:16 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.97 2020/05/25 21:15:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.96 2020/05/17 19:38:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.97 2020/05/25 21:15:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,7 +1005,8 @@ retry:
 
 	cleanall = true;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
-	uvm_page_array_init(&a);
+	uvm_page_array_init(&a, uobj, dirtyonly ? (UVM_PAGE_ARRAY_FILL_DIRTY |
+	    (!async ? UVM_PAGE_ARRAY_FILL_WRITEBACK : 0)) : 0);
 	for (;;) {
 		bool pgprotected;
 
@@ -1017,9 +1018,7 @@ retry:
 		 * wait on pages being written back by other threads as well.
 		 */
 
-		pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff, 0,
-		    dirtyonly ? (UVM_PAGE_ARRAY_FILL_DIRTY |
-		    (!async ? UVM_PAGE_ARRAY_FILL_WRITEBACK : 0)) : 0);
+		pg = uvm_page_array_fill_and_peek(&a, nextoff, 0);
 		if (pg == NULL) {
 			break;
 		}
