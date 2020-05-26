@@ -374,7 +374,7 @@ struct xen_pod_target {
 };
 typedef struct xen_pod_target xen_pod_target_t;
 
-#if defined(__XEN__) || defined(__XEN_TOOLS__)
+#if 1 /* defined(__XEN__) || defined(__XEN_TOOLS__) XXX needed for privcmd.c */
 
 #ifndef uint64_aligned_t
 #define uint64_aligned_t uint64_t
