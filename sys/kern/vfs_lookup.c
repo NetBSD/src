@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.219 2020/04/22 21:35:52 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.220 2020/05/26 18:38:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.219 2020/04/22 21:35:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.220 2020/05/26 18:38:37 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1354,9 +1354,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		    foundobj->v_type != VDIR ||
 		    (foundobj->v_type == VDIR &&
 		    foundobj->v_mountedhere != NULL)) {
-		    	mutex_enter(foundobj->v_interlock);
 			error = vcache_tryvget(foundobj);
-			/* v_interlock now unheld */
 			if (error != 0) {
 				foundobj = NULL;
 				error = EOPNOTSUPP;
@@ -1381,9 +1379,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 	 * let lookup_once() take care of it.
 	 */
 	if (searchdir != *searchdir_ret) {
-		mutex_enter(searchdir->v_interlock);
 		error2 = vcache_tryvget(searchdir);
-		/* v_interlock now unheld */
 		KASSERT(plock != NULL);
 		rw_exit(plock);
 		if (__predict_true(error2 == 0)) {
