@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.11 2019/06/07 05:34:34 ozaki-r Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.12 2020/05/26 19:41:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.11 2019/06/07 05:34:34 ozaki-r Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.12 2020/05/26 19:41:36 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -138,8 +138,6 @@ proto_getstat(struct puffs_usermount *pu, struct puffs_framebuf *pb, struct vatt
 		*rs = size+2; /* compensate for size field itself */
 
 	GETFIELD(p9pbuf_get_2, &v16, 2);
-	if (v16)
-		printf("%d\n", v16);
 	GETFIELD(p9pbuf_get_4, &rdev, 4);
 	GETFIELD(proto_getqid, &qid, 13);
 	GETFIELD(p9pbuf_get_4, &mode, 4);
@@ -150,8 +148,6 @@ proto_getstat(struct puffs_usermount *pu, struct puffs_framebuf *pb, struct vatt
 	GETSTR(&uid, &v16);
 	GETSTR(&gid, &v16);
 
-	if (rdev)
-		printf("%d\n", rdev);
 	vap->va_rdev = rdev;
 	vap->va_mode = mode & 0777; /* may contain other uninteresting bits */
 	vap->va_atime.tv_sec = atime;
