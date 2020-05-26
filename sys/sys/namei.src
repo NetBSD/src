@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.55 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: namei.src,v 1.56 2020/05/26 22:05:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -163,11 +163,12 @@ NAMEIFL	RDONLY		0x0001000	/* lookup with read-only semantics */
 NAMEIFL	ISDOTDOT	0x0002000	/* current component name is .. */
 NAMEIFL	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 NAMEIFL	ISLASTCN	0x0008000	/* this is last component of pathname */
+NAMIEFL	WILLBEDIR	0x0010000	/* new files will be dirs */
 NAMEIFL	ISWHITEOUT	0x0020000	/* found whiteout */
 NAMEIFL	DOWHITEOUT	0x0040000	/* do whiteouts */
 NAMEIFL	REQUIREDIR	0x0080000	/* must be a directory */
 NAMEIFL	CREATEDIR	0x0200000	/* trailing slashes are ok */
-NAMEIFL	PARAMASK	0x02ef800	/* mask of parameter descriptors */
+NAMEIFL	PARAMASK	0x02ff800	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -290,7 +291,7 @@ bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 bool	cache_lookup_linked(struct vnode *, const char *, size_t,
 			    struct vnode **, krwlock_t **, kauth_cred_t);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *,
-			bool, int);
+			bool, accmode_t);
 int	cache_diraccess(struct vnode *, int);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
