@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.60 2020/05/15 04:55:40 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.61 2020/05/26 07:23:57 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.60 2020/05/15 04:55:40 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.61 2020/05/26 07:23:57 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -436,6 +436,7 @@ ENTRY_NP(cpu_mpstart)
 	br	x20
 
 mp_vstart:
+	hint	0x24		/* bti j */
 	CPU_DPRINTREG("PC               = ", x20)
 
 	/* set exception vector */
