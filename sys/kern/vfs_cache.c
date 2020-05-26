@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.143 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.144 2020/05/26 18:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.143 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.144 2020/05/26 18:38:37 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -582,13 +582,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		return hit;
 	}
 	vp = ncp->nc_vp;
-	mutex_enter(vp->v_interlock);
-	rw_exit(&dvi->vi_nc_lock);
-
-	/*
-	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
-	 */
 	error = vcache_tryvget(vp);
+	rw_exit(&dvi->vi_nc_lock);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -821,9 +816,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		}
 
 		dvp = ncp->nc_dvp;
-		mutex_enter(dvp->v_interlock);
-		rw_exit(&vi->vi_nc_listlock);
 		error = vcache_tryvget(dvp);
+		rw_exit(&vi->vi_nc_listlock);
 		if (error) {
 			KASSERT(error == EBUSY);
 			if (bufp)
