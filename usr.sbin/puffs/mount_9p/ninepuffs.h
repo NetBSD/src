@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.15 2019/10/28 02:59:25 ozaki-r Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.16 2020/05/26 22:54:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,7 @@ typedef uint32_t p9pfid_t;
 #define AUTOVAR(pu)							\
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);			\
 	struct puffs9p *p9p = puffs_getspecific(pu);			\
-	uint16_t tag = NEXTTAG(p9p);					\
+	p9ptag_t tag;							\
 	struct puffs_framebuf *pb = p9pbuf_makeout();			\
 	int rv = 0
 
