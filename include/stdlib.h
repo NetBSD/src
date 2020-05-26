@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.121 2019/01/05 09:16:46 maya Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.122 2020/05/26 21:49:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -272,7 +272,7 @@ uint32_t arc4random(void);
 void	 arc4random_stir(void);
 void	 arc4random_buf(void *, size_t);
 uint32_t arc4random_uniform(uint32_t);
-void	 arc4random_addrandom(u_char *, int);
+void	 arc4random_addrandom(unsigned char *, int);
 char	*getbsize(int *, long *);
 char	*cgetcap(char *, const char *, int);
 int	 cgetclose(void);
