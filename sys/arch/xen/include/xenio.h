@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.11 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: xenio.h,v 1.12 2020/05/26 10:11:56 bouyer Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -114,8 +114,91 @@ typedef struct oprivcmd_hypercall
  */
 #define IOCTL_PRIVCMD_INITDOMAIN_EVTCHN \
     _IOR('P', 5, int)
+
 #define IOCTL_PRIVCMD_MMAPBATCH_V2      \
     _IOW('P', 6, privcmd_mmapbatch_v2_t)
+
+/*
+ * @cmd: IOCTL_PRIVCMD_MMAP_RESOURCE
+ * @arg &privcmd_mmap_resource_t
+ * Return: 
+ * map the specified resource at the provided virtual address
+ */ 
+
+typedef struct privcmd_mmap_resource {
+        domid_t dom;
+	uint32_t type;
+	uint32_t id;
+	uint32_t idx; 
+	uint64_t num; 
+	uint64_t addr;
+} privcmd_mmap_resource_t;
+
+#define IOCTL_PRIVCMD_MMAP_RESOURCE      \
+    _IOW('P', 7, privcmd_mmap_resource_t)
+
+/*
+ * @cmd: IOCTL_GNTDEV_MMAP_GRANT_REF
+ * @arg &ioctl_gntdev_mmap_grant_ref
+ * Return: 
+ * map the grant references at the virtual address provided by caller
+ * The grant ref already exists (e.g. comes from a remote domain)
+ */ 
+struct ioctl_gntdev_grant_ref {
+	/* The domain ID of the grant to be mapped. */
+	uint32_t domid;
+	/* The grant reference of the grant to be mapped. */
+	uint32_t ref;
+};
+
+struct ioctl_gntdev_grant_notify {
+	ssize_t offset;
+	uint32_t action;
+	uint32_t event_channel_port;
+};
+#define UNMAP_NOTIFY_CLEAR_BYTE 0x1
+#define UNMAP_NOTIFY_SEND_EVENT 0x2
+
+struct ioctl_gntdev_mmap_grant_ref {
+	/* The number of grants to be mapped. */
+	uint32_t count;
+	uint32_t pad;
+	/* The virtual address where they should be mapped */
+	void *va;
+	/* notify action */
+	struct ioctl_gntdev_grant_notify notify;
+	/* Array of grant references, of size @count. */
+	struct ioctl_gntdev_grant_ref *refs;
+};
+
+#define IOCTL_GNTDEV_MMAP_GRANT_REF \
+    _IOW('P', 8, struct ioctl_gntdev_mmap_grant_ref)
+
+/*
+ * @cmd: IOCTL_GNTDEV_ALLOC_GRANT_REF
+ * @arg &ioctl_gntdev_alloc_grant_ref
+ * Return: 
+ * Allocate local memory and grant it to a remote domain.
+ * local memory is mmaped at the virtual address provided by caller
+ */ 
+
+struct ioctl_gntdev_alloc_grant_ref {
+	/* IN parameters */ 
+	uint16_t domid;
+	uint16_t flags;
+	uint32_t count;
+	void *va;
+	/* notify action */
+	struct ioctl_gntdev_grant_notify notify;
+	/* Variable OUT parameter */  
+	uint32_t *gref_ids; 
+};
+
+#define IOCTL_GNTDEV_ALLOC_GRANT_REF \
+    _IOW('P', 9, struct ioctl_gntdev_alloc_grant_ref)
+
+#define GNTDEV_ALLOC_FLAG_WRITABLE 0x01
+
 
 /* Interface to /dev/xenevt */
 /* EVTCHN_RESET: Clear and reinit the event buffer. Clear error condition. */

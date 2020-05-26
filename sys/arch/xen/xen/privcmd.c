@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.57 2020/05/05 17:02:01 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.58 2020/05/26 10:11:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.57 2020/05/05 17:02:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.58 2020/05/26 10:11:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,29 +47,68 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.57 2020/05/05 17:02:01 bouyer Exp $");
 #include <xen/hypervisor.h>
 #include <xen/xen.h>
 #include <xen/xenio.h>
+#include <xen/granttables.h>
 
 #define	PRIVCMD_MODE	(S_IRUSR)
 
 /* Magic value is used to mark invalid pages.
  * This must be a value within the page-offset.
  * Page-aligned values including 0x0 are used by the guest.
- */ 
+ */
 #define INVALID_PAGE	0xfff
+
+typedef enum _privcmd_type {
+	PTYPE_PRIVCMD,
+	PTYPE_GNTDEV_REF,
+	PTYPE_GNTDEV_ALLOC
+} privcmd_type;
+
+struct privcmd_object_privcmd {
+        paddr_t *maddr; /* array of machine address to map */
+        int     domid;
+        bool    no_translate;
+};
+
+struct privcmd_object_gntref {
+        struct ioctl_gntdev_grant_notify notify;
+	struct gnttab_map_grant_ref ops[1]; /* variable length */
+};
+
+struct privcmd_object_gntalloc {
+        vaddr_t	gntva;	/* granted area mapped in kernel */
+        uint16_t domid;
+        uint16_t flags;
+        struct ioctl_gntdev_grant_notify notify;
+	uint32_t gref_ids[1]; /* variable length */
+};
 
 struct privcmd_object {
 	struct uvm_object uobj;
-	paddr_t *maddr; /* array of machine address to map */
+	privcmd_type type;
 	int	npages;
-	int	domid;
+	union {
+		struct privcmd_object_privcmd pc;
+		struct privcmd_object_gntref gr;
+		struct privcmd_object_gntalloc ga;
+	} u;
 };
+
+#define PGO_GNTREF_LEN(count) \
+    (sizeof(struct privcmd_object) + \
+	sizeof(struct gnttab_map_grant_ref) * ((count) - 1))
+
+#define PGO_GNTA_LEN(count) \
+    (sizeof(struct privcmd_object) + \
+	sizeof(uint32_t) * ((count) - 1))
 
 int privcmd_nobjects = 0;
 
 static void privpgop_reference(struct uvm_object *);
 static void privpgop_detach(struct uvm_object *);
 static int privpgop_fault(struct uvm_faultinfo *, vaddr_t , struct vm_page **,
-			 int, int, vm_prot_t, int);
-static int privcmd_map_obj(struct vm_map *, vaddr_t, paddr_t *, int, int);
+			  int, int, vm_prot_t, int);
+static int privcmd_map_obj(struct vm_map *, vaddr_t,
+			   struct privcmd_object *, vm_prot_t);
 
 
 static int
@@ -252,6 +291,414 @@ privcmd_xen2bsd_errno(int error)
 	}
 }
 
+static vm_prot_t
+privcmd_get_map_prot(struct vm_map *map, vaddr_t start, off_t size)
+{
+	vm_prot_t prot;
+
+	vm_map_lock_read(map);
+	/* get protections. This also check for validity of mapping */
+	if (uvm_map_checkprot(map, start, start + size - 1, VM_PROT_WRITE))
+		prot = VM_PROT_READ | VM_PROT_WRITE;
+	else if (uvm_map_checkprot(map, start, start + size - 1, VM_PROT_READ))
+		prot = VM_PROT_READ;
+	else {
+		printf("privcmd_get_map_prot 0x%lx -> 0x%lx "
+		    "failed\n",
+		    start, (unsigned long)(start + size - 1));
+		prot = UVM_PROT_NONE;
+	}
+	vm_map_unlock_read(map);
+	return prot;
+}
+
+static int
+privcmd_mmap(struct vop_ioctl_args *ap)
+{
+	int i, j;
+	privcmd_mmap_t *mcmd = ap->a_data;
+	privcmd_mmap_entry_t mentry;
+	vaddr_t va;
+	paddr_t ma;
+	struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	paddr_t *maddr;
+	struct privcmd_object *obj;
+	vm_prot_t prot;
+	int error;
+
+	for (i = 0; i < mcmd->num; i++) {
+		error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
+		if (error)
+			return EINVAL;
+		if (mentry.npages == 0)
+			return EINVAL;
+		if (mentry.va > VM_MAXUSER_ADDRESS)
+			return EINVAL;
+		va = mentry.va & ~PAGE_MASK;
+		prot = privcmd_get_map_prot(vmm, va, mentry.npages * PAGE_SIZE);
+		if (prot == UVM_PROT_NONE)
+			return EINVAL;
+		maddr = kmem_alloc(sizeof(paddr_t) * mentry.npages,
+		    KM_SLEEP);
+		ma = ((paddr_t)mentry.mfn) <<  PGSHIFT;
+		for (j = 0; j < mentry.npages; j++) {
+			maddr[j] = ma;
+			ma += PAGE_SIZE;
+		}
+		obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
+		obj->type = PTYPE_PRIVCMD;
+		obj->u.pc.maddr = maddr;
+		obj->u.pc.no_translate = false;
+		obj->npages = mentry.npages;
+		obj->u.pc.domid = mcmd->dom;
+		error  = privcmd_map_obj(vmm, va, obj, prot);
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+static int
+privcmd_mmapbatch(struct vop_ioctl_args *ap)
+{
+	int i;
+	privcmd_mmapbatch_t* pmb = ap->a_data;
+	vaddr_t va0;
+	u_long mfn;
+	paddr_t ma;
+	struct vm_map *vmm;
+	vaddr_t trymap;
+	paddr_t *maddr;
+	struct privcmd_object *obj;
+	vm_prot_t prot;
+	int error;
+
+	vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	va0 = pmb->addr & ~PAGE_MASK;
+
+	if (pmb->num == 0)
+		return EINVAL;
+	if (va0 > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
+		return EINVAL;
+
+	prot = privcmd_get_map_prot(vmm, va0, PAGE_SIZE);
+	if (prot == UVM_PROT_NONE)
+		return EINVAL;
+	
+	maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
+	/* get a page of KVA to check mappins */
+	trymap = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+	    UVM_KMF_VAONLY);
+	if (trymap == 0) {
+		kmem_free(maddr, sizeof(paddr_t) * pmb->num);
+		return ENOMEM;
+	}
+
+	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
+	obj->type = PTYPE_PRIVCMD;
+	obj->u.pc.maddr = maddr;
+	obj->u.pc.no_translate = false;
+	obj->npages = pmb->num;
+	obj->u.pc.domid = pmb->dom;
+
+	for(i = 0; i < pmb->num; ++i) {
+		error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
+		if (error != 0) {
+			/* XXX: mappings */
+			pmap_update(pmap_kernel());
+			kmem_free(maddr, sizeof(paddr_t) * pmb->num);
+			uvm_km_free(kernel_map, trymap, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
+			return error;
+		}
+		ma = ((paddr_t)mfn) << PGSHIFT;
+		if ((error = pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
+		    prot, PMAP_CANFAIL | prot, pmb->dom))) {
+			mfn |= 0xF0000000;
+			copyout(&mfn, &pmb->arr[i], sizeof(mfn));
+			maddr[i] = INVALID_PAGE;
+		} else {
+			pmap_remove(pmap_kernel(), trymap,
+			    trymap + PAGE_SIZE);
+			maddr[i] = ma;
+		}
+	}
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
+
+	error = privcmd_map_obj(vmm, va0, obj, prot);
+
+	return error;
+}
+
+static int
+privcmd_mmapbatch_v2(struct vop_ioctl_args *ap)
+{
+	int i;
+	privcmd_mmapbatch_v2_t* pmb = ap->a_data;
+	vaddr_t va0;
+	u_long mfn;
+	struct vm_map *vmm;
+	paddr_t *maddr;
+	struct privcmd_object *obj;
+	vm_prot_t prot;
+	int error;
+
+	vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	va0 = pmb->addr & ~PAGE_MASK;
+
+	if (pmb->num == 0)
+		return EINVAL;
+	if (va0 > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
+		return EINVAL;
+
+	prot = privcmd_get_map_prot(vmm, va0, PAGE_SIZE);
+	if (prot == UVM_PROT_NONE)
+		return EINVAL;
+	
+	maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
+	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
+	obj->type = PTYPE_PRIVCMD;
+	obj->u.pc.maddr = maddr;
+	obj->u.pc.no_translate = false;
+	obj->npages = pmb->num;
+	obj->u.pc.domid = pmb->dom;
+
+	for(i = 0; i < pmb->num; ++i) {
+		error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
+		if (error != 0) {
+			kmem_free(maddr, sizeof(paddr_t) * pmb->num);
+			return error;
+		}
+		maddr[i] = ((paddr_t)mfn) << PGSHIFT;
+	}
+	error = privcmd_map_obj(vmm, va0, obj, prot);
+	if (error)
+		return error;
+
+	/*
+	 * map the range in user process now.
+	 * If Xenr return -ENOENT, retry (paging in progress)
+	 */
+	for(i = 0; i < pmb->num; i++, va0 += PAGE_SIZE) {
+		int err, cerr;
+		for (int j = 0 ; j < 10; j++) {
+			err = pmap_enter_ma(vmm->pmap, va0, maddr[i], 0, 
+			    prot, PMAP_CANFAIL | prot,
+			    pmb->dom);
+			if (err != -2) /* Xen ENOENT */
+				break;
+			if (kpause("xnoent", 1, mstohz(100), NULL))
+				break;
+		}
+		if (err) {
+			maddr[i] = INVALID_PAGE;
+		}
+		cerr = copyout(&err, &pmb->err[i], sizeof(pmb->err[i]));
+		if (cerr) {
+			privpgop_detach(&obj->uobj);
+			return cerr;
+		}
+	}
+	return 0;
+}
+
+static int
+privcmd_mmap_resource(struct vop_ioctl_args *ap)
+{
+	int i;
+	privcmd_mmap_resource_t* pmr = ap->a_data;
+	vaddr_t va0;
+	struct vm_map *vmm;
+	struct privcmd_object *obj;
+	vm_prot_t prot;
+	int error;
+	struct xen_mem_acquire_resource op;
+	xen_pfn_t *pfns;
+	paddr_t *maddr;
+
+	KASSERT(!xen_feature(XENFEAT_auto_translated_physmap));
+
+	vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	va0 = pmr->addr & ~PAGE_MASK;
+
+	if (pmr->num == 0)
+		return EINVAL;
+	if (va0 > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmr->num)
+		return EINVAL;
+
+	prot = privcmd_get_map_prot(vmm, va0, PAGE_SIZE);
+	if (prot == UVM_PROT_NONE)
+		return EINVAL;
+	
+	pfns = kmem_alloc(sizeof(xen_pfn_t) * pmr->num, KM_SLEEP);
+	memset(&op, 0, sizeof(op));
+	op.domid = pmr->dom;
+	op.type = pmr->type;
+	op.id = pmr->id;
+	op.frame = pmr->idx;
+	op.nr_frames = pmr->num;
+	set_xen_guest_handle(op.frame_list, pfns);
+
+	error = HYPERVISOR_memory_op(XENMEM_acquire_resource, &op);
+	if (error) {
+		printf("%s: XENMEM_acquire_resource failed: %d\n",
+		    __func__, error);
+		return privcmd_xen2bsd_errno(error);
+	}
+	maddr = kmem_alloc(sizeof(paddr_t) * pmr->num, KM_SLEEP);
+	for (i = 0; i < pmr->num; i++) {
+		maddr[i] = pfns[i] << PGSHIFT;
+	}
+	kmem_free(pfns, sizeof(xen_pfn_t) * pmr->num);
+
+	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
+	obj->type = PTYPE_PRIVCMD;
+	obj->u.pc.maddr = maddr;
+	obj->u.pc.no_translate = true;
+	obj->npages = pmr->num;
+	obj->u.pc.domid = (op.flags & XENMEM_rsrc_acq_caller_owned) ?
+	    DOMID_SELF : pmr->dom;
+
+	error = privcmd_map_obj(vmm, va0, obj, prot);
+	return error;
+}
+
+static int
+privcmd_map_gref(struct vop_ioctl_args *ap)
+{
+	struct ioctl_gntdev_mmap_grant_ref *mgr = ap->a_data;
+	struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	struct privcmd_object *obj;
+	vaddr_t va0 = (vaddr_t)mgr->va & ~PAGE_MASK;
+	vm_prot_t prot;
+	int error;
+
+	if (mgr->count == 0)
+		return EINVAL;
+	if (va0 > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < mgr->count)
+		return EINVAL;
+	if (mgr->notify.offset < 0 || mgr->notify.offset > mgr->count)
+		return EINVAL;
+
+	prot = privcmd_get_map_prot(vmm, va0, PAGE_SIZE);
+	if (prot == UVM_PROT_NONE)
+		return EINVAL;
+	
+	obj = kmem_alloc(PGO_GNTREF_LEN(mgr->count), KM_SLEEP);
+
+	obj->type  = PTYPE_GNTDEV_REF;
+	obj->npages = mgr->count;
+	memcpy(&obj->u.gr.notify, &mgr->notify,
+	    sizeof(obj->u.gr.notify));
+
+	for (int i = 0; i < obj->npages; ++i) {
+		struct ioctl_gntdev_grant_ref gref;
+		error = copyin(&mgr->refs[i], &gref, sizeof(gref));
+		if (error != 0) {
+			goto err1;
+		}
+		obj->u.gr.ops[i].host_addr = 0;
+		obj->u.gr.ops[i].dev_bus_addr = 0;
+		obj->u.gr.ops[i].ref = gref.ref;
+		obj->u.gr.ops[i].dom = gref.domid;
+		obj->u.gr.ops[i].handle = -1;
+		obj->u.gr.ops[i].flags = GNTMAP_host_map |
+		    GNTMAP_application_map | GNTMAP_contains_pte;
+		if (prot == UVM_PROT_READ)
+			obj->u.gr.ops[i].flags |= GNTMAP_readonly;
+	}
+	error = privcmd_map_obj(vmm, va0, obj, prot);
+	return error;
+
+err1:
+	kmem_free(obj, PGO_GNTREF_LEN(obj->npages));
+	return error;
+}
+
+static int
+privcmd_alloc_gref(struct vop_ioctl_args *ap)
+{
+	struct ioctl_gntdev_alloc_grant_ref *mga = ap->a_data;
+	struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
+	struct privcmd_object *obj;
+	vaddr_t va0 = (vaddr_t)mga->va & ~PAGE_MASK;
+	vm_prot_t prot;
+	int error, ret;
+
+	if (mga->count == 0)
+		return EINVAL;
+	if (va0 > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < mga->count)
+		return EINVAL;
+	if (mga->notify.offset < 0 || mga->notify.offset > mga->count)
+		return EINVAL;
+
+	prot = privcmd_get_map_prot(vmm, va0, PAGE_SIZE);
+	if (prot == UVM_PROT_NONE)
+		return EINVAL;
+	
+	obj = kmem_alloc(PGO_GNTA_LEN(mga->count), KM_SLEEP);
+
+	obj->type  = PTYPE_GNTDEV_ALLOC;
+	obj->npages = mga->count;
+	obj->u.ga.domid = mga->domid;
+	memcpy(&obj->u.ga.notify, &mga->notify,
+	    sizeof(obj->u.ga.notify));
+	obj->u.ga.gntva = uvm_km_alloc(kernel_map,
+	    PAGE_SIZE * obj->npages, PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_ZERO);
+	if (obj->u.ga.gntva == 0) {
+		error = ENOMEM;
+		goto err1;
+	}
+
+	for (int i = 0; i < obj->npages; ++i) {
+		paddr_t ma;
+		vaddr_t va = obj->u.ga.gntva + i * PAGE_SIZE;
+		grant_ref_t id;
+		bool ro = ((mga->flags & GNTDEV_ALLOC_FLAG_WRITABLE) == 0);
+		(void)pmap_extract_ma(pmap_kernel(), va, &ma);
+		if ((ret = xengnt_grant_access(mga->domid, ma, ro, &id)) != 0) {
+			printf("%s: xengnt_grant_access failed: %d\n",
+			    __func__, ret);
+			for (int j = 0; j < i; j++) {
+				xengnt_revoke_access(obj->u.ga.gref_ids[j]);
+				error = ret;
+				goto err2;
+			}
+		}
+		obj->u.ga.gref_ids[i] = id;
+	}
+
+	error = copyout(&obj->u.ga.gref_ids[0], mga->gref_ids,
+	    sizeof(uint32_t) * obj->npages);
+	if (error) {
+		for (int i = 0; i < obj->npages; ++i) {
+			xengnt_revoke_access(obj->u.ga.gref_ids[i]);
+		}
+		goto err2;
+	}
+
+	error = privcmd_map_obj(vmm, va0, obj, prot);
+	return error;
+
+err2:
+	uvm_km_free(kernel_map, obj->u.ga.gntva,
+	    PAGE_SIZE * obj->npages, UVM_KMF_WIRED);
+err1:
+	kmem_free(obj, PGO_GNTA_LEN(obj->npages));
+	return error;
+}
+
 static int
 privcmd_ioctl(void *v)
 {
@@ -264,7 +711,6 @@ privcmd_ioctl(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error = 0;
-	paddr_t *maddr;
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
@@ -328,113 +774,23 @@ privcmd_ioctl(void *v)
 		break;
 	}
 	case IOCTL_PRIVCMD_MMAP:
-	{
-		int i, j;
-		privcmd_mmap_t *mcmd = ap->a_data;
-		privcmd_mmap_entry_t mentry;
-		vaddr_t va;
-		paddr_t ma;
-		struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
+		return privcmd_mmap(ap);
 
-		for (i = 0; i < mcmd->num; i++) {
-			error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
-			if (error)
-				return error;
-			if (mentry.npages == 0)
-				return EINVAL;
-			if (mentry.va > VM_MAXUSER_ADDRESS)
-				return EINVAL;
-#if 0
-			if (mentry.va + (mentry.npages << PGSHIFT) >
-			    mrentry->vm_end)
-				return EINVAL;
-#endif
-			maddr = kmem_alloc(sizeof(paddr_t) * mentry.npages,
-			    KM_SLEEP);
-			va = mentry.va & ~PAGE_MASK;
-			ma = ((paddr_t)mentry.mfn) <<  PGSHIFT; /* XXX ??? */
-			for (j = 0; j < mentry.npages; j++) {
-				maddr[j] = ma;
-				ma += PAGE_SIZE;
-			}
-			error  = privcmd_map_obj(vmm, va, maddr,
-			    mentry.npages, mcmd->dom);
-			if (error)
-				return error;
-		}
-		break;
-	}
 	case IOCTL_PRIVCMD_MMAPBATCH:
-	{
-		int i;
-		privcmd_mmapbatch_t* pmb = ap->a_data;
-		vaddr_t va0;
-		u_long mfn;
-		paddr_t ma;
-		struct vm_map *vmm;
-		struct vm_map_entry *entry;
-		vm_prot_t prot;
-		vaddr_t trymap;
+		return privcmd_mmapbatch(ap);
 
-		vmm = &curlwp->l_proc->p_vmspace->vm_map;
-		va0 = pmb->addr & ~PAGE_MASK;
+	case IOCTL_PRIVCMD_MMAPBATCH_V2:
+		return privcmd_mmapbatch_v2(ap);
 
-		if (pmb->num == 0)
-			return EINVAL;
-		if (va0 > VM_MAXUSER_ADDRESS)
-			return EINVAL;
-		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
-			return EINVAL;
 
-		vm_map_lock_read(vmm);
-		if (!uvm_map_lookup_entry(vmm, va0, &entry)) {
-			vm_map_unlock_read(vmm);
-			return EINVAL;
-		}
-		prot = entry->protection;
-		vm_map_unlock_read(vmm);
-		
-		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
-		/* get a page of KVA to check mappins */
-		trymap = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
-		    UVM_KMF_VAONLY);
-		if (trymap == 0) {
-			kmem_free(maddr, sizeof(paddr_t) * pmb->num);
-			return ENOMEM;
-		}
+	case IOCTL_PRIVCMD_MMAP_RESOURCE:
+		return privcmd_mmap_resource(ap);
 
-		for(i = 0; i < pmb->num; ++i) {
-			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
-			if (error != 0) {
-				/* XXX: mappings */
-				pmap_update(pmap_kernel());
-				kmem_free(maddr, sizeof(paddr_t) * pmb->num);
-				uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-				    UVM_KMF_VAONLY);
-				return error;
-			}
-			ma = ((paddr_t)mfn) << PGSHIFT;
-			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
-			    prot, PMAP_CANFAIL, pmb->dom)) {
-				mfn |= 0xF0000000;
-				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
-				maddr[i] = INVALID_PAGE;
-			} else {
-				pmap_remove(pmap_kernel(), trymap,
-				    trymap + PAGE_SIZE);
-				maddr[i] = ma;
-			}
-		}
-		pmap_update(pmap_kernel());
+	case IOCTL_GNTDEV_MMAP_GRANT_REF:
+		return privcmd_map_gref(ap);
 
-		error = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
-		uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
-
-		if (error != 0)
-			return error;
-
-		break;
-	}
+	case IOCTL_GNTDEV_ALLOC_GRANT_REF:
+		return privcmd_alloc_gref(ap);
 	default:
 		error = EINVAL;
 	}
@@ -457,20 +813,85 @@ privpgop_reference(struct uvm_object *uobj)
 }
 
 static void
+privcmd_notify(struct ioctl_gntdev_grant_notify *notify, vaddr_t va,
+    struct gnttab_map_grant_ref *gmops)
+{
+	if (notify->action & UNMAP_NOTIFY_SEND_EVENT) {
+		hypervisor_notify_via_evtchn(notify->event_channel_port);
+	}
+	if ((notify->action & UNMAP_NOTIFY_CLEAR_BYTE) == 0) {
+		notify->action = 0;
+		return;
+	}
+	if (va == 0) {
+		struct gnttab_map_grant_ref op;
+		struct gnttab_unmap_grant_ref uop;
+		int i = notify->offset / PAGE_SIZE;
+		int o = notify->offset % PAGE_SIZE;
+		int err;
+
+		KASSERT(gmops != NULL);
+		va = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+		op.host_addr = va;
+		op.dev_bus_addr = 0;
+		op.ref = gmops[i].ref;
+		op.dom = gmops[i].dom;
+		op.handle = -1;
+		op.flags = GNTMAP_host_map;
+		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
+		if (err == 0 && op.status == GNTST_okay) {
+			char *n = (void *)(va + o);
+			*n = 0;
+			uop.host_addr = va;
+			uop.handle = op.handle;
+			uop.dev_bus_addr = 0;
+			(void)HYPERVISOR_grant_table_op(
+			    GNTTABOP_unmap_grant_ref, &uop, 1);
+		}
+		uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+	} else {
+		KASSERT(gmops == NULL);
+		char *n = (void *)(va + notify->offset);
+		*n = 0;
+	}
+	notify->action = 0;
+}
+
+static void
 privpgop_detach(struct uvm_object *uobj)
 {
 	struct privcmd_object *pobj = (struct privcmd_object *)uobj;
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
+	KASSERT(uobj->uo_refs > 0);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
 		rw_exit(uobj->vmobjlock);
 		return;
 	}
 	rw_exit(uobj->vmobjlock);
-	kmem_free(pobj->maddr, sizeof(paddr_t) * pobj->npages);
-	uvm_obj_destroy(uobj, true);
-	kmem_free(pobj, sizeof(struct privcmd_object));
+	switch (pobj->type) {
+	case PTYPE_PRIVCMD:
+		kmem_free(pobj->u.pc.maddr, sizeof(paddr_t) * pobj->npages);
+		uvm_obj_destroy(uobj, true);
+		kmem_free(pobj, sizeof(struct privcmd_object));
+		break;
+	case PTYPE_GNTDEV_REF:
+	{
+		privcmd_notify(&pobj->u.gr.notify, 0, pobj->u.gr.ops);
+		kmem_free(pobj, PGO_GNTREF_LEN(pobj->npages));
+		break;
+	}
+	case PTYPE_GNTDEV_ALLOC:
+		privcmd_notify(&pobj->u.ga.notify, pobj->u.ga.gntva, NULL);
+		for (int i = 0; i < pobj->npages; ++i) {
+			xengnt_revoke_access(pobj->u.ga.gref_ids[i]);
+		}
+		uvm_km_free(kernel_map, pobj->u.ga.gntva,
+		    PAGE_SIZE * pobj->npages, UVM_KMF_WIRED);
+		kmem_free(pobj, PGO_GNTA_LEN(pobj->npages));
+	}
 	privcmd_nobjects--;
 }
 
@@ -493,62 +914,76 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-		if (pobj->maddr[maddr_i] == INVALID_PAGE) {
-			/* This has already been flagged as error. */
-			error = EFAULT;
+		switch(pobj->type) {
+		case PTYPE_PRIVCMD:
+			if (pobj->u.pc.maddr[maddr_i] == INVALID_PAGE) {
+				/* This has already been flagged as error. */
+				error = EFAULT;
+				goto out;
+			}
+			error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
+			    pobj->u.pc.maddr[maddr_i], 0,
+			    ufi->entry->protection,
+			    PMAP_CANFAIL | ufi->entry->protection |
+			    (pobj->u.pc.no_translate ? PMAP_MD_XEN_NOTR : 0),
+			    pobj->u.pc.domid);
+			if (error == ENOMEM) {
+				goto out;
+			}
+			if (error) {
+				pobj->u.pc.maddr[maddr_i] = INVALID_PAGE;
+				error = EFAULT;
+			}
+			break;
+		case PTYPE_GNTDEV_REF:
+		{
+			struct pmap *pmap = ufi->orig_map->pmap;
+			if (pmap_enter_gnt(pmap, vaddr, entry->start, pobj->npages, &pobj->u.gr.ops[0]) != GNTST_okay) {
+				error = EFAULT;
+				goto out;
+			}
 			break;
 		}
-		error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
-		    pobj->maddr[maddr_i], 0, ufi->entry->protection,
-		    PMAP_CANFAIL | ufi->entry->protection,
-		    pobj->domid);
-		if (error == ENOMEM) {
+		case PTYPE_GNTDEV_ALLOC:
+		{
+			paddr_t pa;
+			if (!pmap_extract(pmap_kernel(),
+			    pobj->u.ga.gntva + maddr_i * PAGE_SIZE, &pa)) {
+				error = EFAULT;
+				goto out;
+			}
+			error = pmap_enter(ufi->orig_map->pmap, vaddr, pa,
+			    ufi->entry->protection,
+			    PMAP_CANFAIL | ufi->entry->protection);
+			if (error == ENOMEM) {
+				goto out;
+			}
 			break;
+		}
 		}
 		if (error) {
 			/* XXX for proper ptp accountings */
-			pmap_remove(ufi->orig_map->pmap, vaddr, 
+			pmap_remove(ufi->orig_map->pmap, vaddr,
 			    vaddr + PAGE_SIZE);
 		}
 	}
+out:
 	pmap_update(ufi->orig_map->pmap);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	return error;
 }
 
 static int
-privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
-		int npages, int domid)
+privcmd_map_obj(struct vm_map *map, vaddr_t start, struct privcmd_object *obj,
+    vm_prot_t prot)
 {
-	struct privcmd_object *obj;
 	int error;
 	uvm_flag_t uvmflag;
 	vaddr_t newstart = start;
-	vm_prot_t prot;
-	off_t size = ((off_t)npages << PGSHIFT);
+	off_t size = ((off_t)obj->npages << PGSHIFT);
 
-	vm_map_lock_read(map);
-	/* get protections. This also check for validity of mapping */
-	if (uvm_map_checkprot(map, start, start + size - 1, VM_PROT_WRITE))
-		prot = VM_PROT_READ | VM_PROT_WRITE;
-	else if (uvm_map_checkprot(map, start, start + size - 1, VM_PROT_READ))
-		prot = VM_PROT_READ;
-	else {
-		printf("uvm_map_checkprot 0x%lx -> 0x%lx "
-		    "failed\n",
-		    start, (unsigned long)(start + size - 1));
-		vm_map_unlock_read(map);
-		kmem_free(maddr, sizeof(paddr_t) * npages);
-		return EINVAL;
-	}
-	vm_map_unlock_read(map);
-
-	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
 	privcmd_nobjects++;
 	uvm_obj_init(&obj->uobj, &privpgops, true, 1);
-	obj->maddr = maddr;
-	obj->npages = npages;
-	obj->domid = domid;
 	uvmflag = UVM_MAPFLAG(prot, prot, UVM_INH_NONE, UVM_ADV_NORMAL,
 	    UVM_FLAG_FIXED | UVM_FLAG_UNMAP | UVM_FLAG_NOMERGE);
 	error = uvm_map(map, &newstart, size, &obj->uobj, 0, 0, uvmflag);
