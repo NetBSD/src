@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.16 2020/04/13 19:23:17 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.17 2020/05/26 08:39:27 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -135,7 +135,6 @@ typedef int (**vnodeops_t)(void *);
 #define	vop_fid_args	vop_vptofh_args
 #define	a_fid		a_fhp
 
-#define	v_count		v_usecount
 #define	v_object	v_uobj
 
 struct vop_vptofh_args {
