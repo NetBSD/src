@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.24 2020/05/26 22:08:11 uwe Exp $	*/
+/*	$NetBSD: node.c,v 1.25 2020/05/26 22:54:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.24 2020/05/26 22:08:11 uwe Exp $");
+__RCSID("$NetBSD: node.c,v 1.25 2020/05/26 22:54:43 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -57,6 +57,7 @@ do_getattr(struct puffs_usermount *pu, struct puffs_node *pn, struct vattr *vap)
 	AUTOVAR(pu);
 	struct p9pnode *p9n = pn->pn_data;
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
@@ -97,6 +98,7 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	struct qid9p newqid;
 	uint16_t nqid;
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_WALK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_dir->fid_base);
@@ -232,6 +234,7 @@ puffs9p_node_setattr(struct puffs_usermount *pu, void *opc,
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
@@ -327,6 +330,7 @@ puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 	nread = 0;
 	while (*resid > 0 && (uint64_t)(offset+nread) < pn->pn_va.va_size) {
+		tag = NEXTTAG(p9p);
 		p9pbuf_put_1(pb, P9PROTO_T_READ);
 		p9pbuf_put_2(pb, tag);
 		p9pbuf_put_4(pb, p9n->fid_read);
@@ -374,6 +378,7 @@ puffs9p_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	while (*resid > 0) {
 		chunk = MIN(*resid, p9p->maxreq-32);
 
+		tag = NEXTTAG(p9p);
 		p9pbuf_put_1(pb, P9PROTO_T_WRITE);
 		p9pbuf_put_2(pb, tag);
 		p9pbuf_put_4(pb, p9n->fid_write);
@@ -425,6 +430,7 @@ nodecreate(struct puffs_usermount *pu, struct puffs_node *pn,
 	if (rv)
 		goto out;
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_CREATE);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, nfid);
@@ -448,6 +454,7 @@ nodecreate(struct puffs_usermount *pu, struct puffs_node *pn,
 	nfid = NEXTFID(p9p);
 
 	p9pbuf_recycleout(pb);
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_WALK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n->fid_base);
@@ -506,6 +513,7 @@ noderemove(struct puffs_usermount *pu, struct puffs_node *pn)
 	if (rv)
 		goto out;
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_REMOVE);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, testfid);
@@ -583,6 +591,7 @@ puffs9p_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 			goto out;
 	}
 
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_WSTAT);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, p9n_src->fid_base);
