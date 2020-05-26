@@ -1,13 +1,14 @@
-/*	$NetBSD: ohci.c,v 1.308 2020/05/24 07:42:51 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.309 2020/05/26 07:03:22 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology, Jared D. McNeill (jmcneill@invisible.ca)
- * and Matthew R. Green (mrg@eterna.com.au).
+ * Carlstedt Research & Technology, Jared D. McNeill (jmcneill@invisible.ca),
+ * Matthew R. Green (mrg@eterna.com.au), and Nick Hudson.
+ *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
  *
@@ -41,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.308 2020/05/24 07:42:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.309 2020/05/26 07:03:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
