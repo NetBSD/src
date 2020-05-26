@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.70 2020/05/23 23:42:42 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.71 2020/05/26 10:07:29 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.70 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.71 2020/05/26 10:07:29 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7755,11 +7755,9 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 	/* Halts mixers but don't clear busy flag for resume */
 	if (sc->sc_pbusy) {
 		audio_pmixer_halt(sc);
-		sc->sc_pbusy = true;
 	}
 	if (sc->sc_rbusy) {
 		audio_rmixer_halt(sc);
-		sc->sc_rbusy = true;
 	}
 
 #ifdef AUDIO_PM_IDLE
@@ -7786,9 +7784,9 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 	AUDIO_INITINFO(&ai);
 	audio_hw_setinfo(sc, &ai, NULL);
 
-	if (sc->sc_pbusy)
+	if (!sc->sc_pbusy)
 		audio_pmixer_start(sc, true);
-	if (sc->sc_rbusy)
+	if (!sc->sc_rbusy)
 		audio_rmixer_start(sc);
 
 	audio_exlock_mutex_exit(sc);
