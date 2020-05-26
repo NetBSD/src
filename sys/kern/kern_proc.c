@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.253 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.254 2020/05/26 00:50:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.253 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.254 2020/05/26 00:50:53 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1753,7 +1753,7 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 	/* curproc exception is for coredump. */
 
 	if ((p != curproc && (p->p_sflag & PS_WEXIT) != 0) ||
-	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
+	    (p->p_vmspace->vm_refcnt < 1)) {
 		return EFAULT;
 	}
 

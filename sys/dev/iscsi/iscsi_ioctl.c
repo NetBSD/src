@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.30 2018/12/07 14:59:19 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.31 2020/05/26 00:50:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1308,7 +1308,7 @@ map_databuf(struct proc *p, void **buf, uint32_t datalen)
 	if ((p->p_sflag & PS_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
 		return ISCSI_STATUS_NO_RESOURCES;
 	}
-	p->p_vmspace->vm_refcnt++;
+	uvmspace_addref(p->p_vmspace);
 
 	/* this is lifted from uvm_io */
 	error = uvm_map_extract(&p->p_vmspace->vm_map, databuf, datalen,
