@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/05/16 12:54:27 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2020/05/26 18:52:29 christos Exp $
 #
 
 .include <bsd.init.mk>
@@ -14,6 +14,9 @@ SRCS.t_modautoload+=	t_modautoload.c
 # on amd64.  This is the reason we keep this test in its own
 # subdirectory -- otherwise the LDADD lines would get a little hairy.
 LDFLAGS+=	-Wl,-E
+.if ${MACHINE} == "alpha"
+LDFLAGS+=	-Wl,--no-relax
+.endif
 LDADD+= \
     -Wl,--whole-archive -Wl,-Bstatic \
 	-lrumpvfs_nofifofs -lrumpvfs -lrump \
