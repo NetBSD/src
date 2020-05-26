@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.58 2020/05/26 10:11:56 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.59 2020/05/26 10:37:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.58 2020/05/26 10:11:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.59 2020/05/26 10:37:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,7 +781,6 @@ privcmd_ioctl(void *v)
 
 	case IOCTL_PRIVCMD_MMAPBATCH_V2:
 		return privcmd_mmapbatch_v2(ap);
-
 
 	case IOCTL_PRIVCMD_MMAP_RESOURCE:
 		return privcmd_mmap_resource(ap);

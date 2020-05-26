@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.85 2020/05/21 21:12:31 ad Exp $ */
+/* $NetBSD: hypervisor.c,v 1.86 2020/05/26 10:37:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.85 2020/05/21 21:12:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.86 2020/05/26 10:37:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.85 2020/05/21 21:12:31 ad Exp $");
 #include "isa.h"
 #include "pci.h"
 #include "acpica.h"
+#include "kernfs.h"
 
 #include "opt_xen.h"
 #include "opt_mpbios.h"
@@ -778,10 +779,12 @@ kernfs_parentdir_t *kernxen_pkt;
 void
 xenkernfs_init(void)
 {
+#if NKERNFS > 0
 	kernfs_entry_t *dkt;
 
 	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_DIR, "xen", NULL, KFSsubdir, VDIR, DIR_MODE);
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
+#endif
 }

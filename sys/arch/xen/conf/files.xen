@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.185 2020/05/05 17:02:01 bouyer Exp $
+#	$NetBSD: files.xen,v 1.186 2020/05/26 10:37:24 bouyer Exp $
 
 defflag	opt_xen.h			XEN XENPVH XENPVHVM PAE DOM0OPS
 
@@ -27,7 +27,7 @@ device xenbus {[id = -1]}
 attach xenbus at xendevbus
 file arch/xen/xenbus/xenbus_client.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
-file arch/xen/xenbus/xenbus_dev.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_dev.c xenbus & kernfs
 file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
 
