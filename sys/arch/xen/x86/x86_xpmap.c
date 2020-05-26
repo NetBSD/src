@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.88 2020/05/06 19:47:05 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.89 2020/05/26 10:10:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.88 2020/05/06 19:47:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.89 2020/05/26 10:10:32 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -429,17 +429,26 @@ xen_pagezero(paddr_t pa)
 }
 
 int
-xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
+xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom, u_int flags)
 {
 	mmu_update_t op;
 	int ok;
+	int err;
 
 	xpq_flush_queue();
 
 	op.ptr = ptr;
+	if (flags & PMAP_MD_XEN_NOTR)
+		op.ptr |= MMU_PT_UPDATE_NO_TRANSLATE;
 	op.val = val;
-	if (HYPERVISOR_mmu_update(&op, 1, &ok, dom) < 0)
-		return EFAULT;
+	/*
+	 * here we return a negative error number as Xen error to
+	 * pmap_enter_ma. only calls from privcmd.c should end here, and
+	 * it can deal with it.
+	 */
+	if ((err = HYPERVISOR_mmu_update(&op, 1, &ok, dom)) < 0) {
+		return err;
+	}
 	return 0;
 }
 
