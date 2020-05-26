@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.7 2020/05/25 10:39:48 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.7 2020/05/25 10:39:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1680,6 +1680,18 @@ OP2FUNC(op_hint, CRm, op2)
 		break;
 	case CRm_OP2(3, 3):
 		PRINTF("pacibsp\n");
+		break;
+	case CRm_OP2(4, 0):
+		PRINTF("bti\n");
+		break;
+	case CRm_OP2(4, 2):
+		PRINTF("bti\tc\n");
+		break;
+	case CRm_OP2(4, 4):
+		PRINTF("bti\tj\n");
+		break;
+	case CRm_OP2(4, 6):
+		PRINTF("bti\tjc\n");
 		break;
 	default:
 		PRINTF("hint\t#0x%"PRIx64"\n", op);
