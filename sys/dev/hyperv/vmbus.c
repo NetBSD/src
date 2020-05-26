@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.10 2020/05/26 16:00:06 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.11 2020/05/26 16:08:55 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.10 2020/05/26 16:00:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.11 2020/05/26 16:08:55 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,14 @@ static void	vmbus_channel_detach(struct vmbus_channel *);
 static void	vmbus_channel_pause(struct vmbus_channel *);
 static uint32_t	vmbus_channel_unpause(struct vmbus_channel *);
 static uint32_t	vmbus_channel_ready(struct vmbus_channel *);
+static void	vmbus_chevq_enqueue(struct vmbus_softc *, int, void *);
+static void	vmbus_process_chevq(void *);
+static void	vmbus_chevq_thread(void *);
 static void	vmbus_devq_enqueue(struct vmbus_softc *, int,
 		    struct vmbus_channel *);
 static void	vmbus_process_devq(void *);
 static void	vmbus_devq_thread(void *);
+static void	vmbus_subchannel_devq_thread(void *);
 
 static struct vmbus_softc *vmbus_sc;
 
@@ -841,15 +845,33 @@ vmbus_channel_response(struct vmbus_softc *sc, struct vmbus_chanmsg_hdr *rsphdr)
 static void
 vmbus_channel_offer(struct vmbus_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 {
+	struct vmbus_chanmsg_choffer *co;
 
-	vmbus_process_offer(sc, (struct vmbus_chanmsg_choffer *)hdr);
+	co = kmem_intr_alloc(sizeof(*co), KM_NOSLEEP);
+	if (co == NULL) {
+		device_printf(sc->sc_dev,
+		    "failed to allocate an offer object\n");
+		return;
+	}
+
+	memcpy(co, hdr, sizeof(*co));
+	vmbus_chevq_enqueue(sc, VMBUS_CHEV_TYPE_OFFER, co);
 }
 
 static void
 vmbus_channel_rescind(struct vmbus_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 {
+	struct vmbus_chanmsg_chrescind *cr;
+ 
+	cr = kmem_intr_alloc(sizeof(*cr), KM_NOSLEEP);
+	if (cr == NULL) {
+		device_printf(sc->sc_dev,
+		    "failed to allocate an rescind object\n");
+		return;
+	}
 
-	vmbus_process_rescind(sc, (struct vmbus_chanmsg_chrescind *)hdr);
+	memcpy(cr, hdr, sizeof(*cr));
+	vmbus_chevq_enqueue(sc, VMBUS_CHEV_TYPE_RESCIND, cr);
 }
 
 static void
@@ -906,16 +928,48 @@ vmbus_channel_scan(struct vmbus_softc *sc)
 	struct vmbus_chanmsg_hdr hdr;
 	struct vmbus_chanmsg_choffer rsp;
 
+	TAILQ_INIT(&sc->sc_prichans);
+	mutex_init(&sc->sc_prichan_lock, MUTEX_DEFAULT, IPL_NET);
 	TAILQ_INIT(&sc->sc_channels);
 	mutex_init(&sc->sc_channel_lock, MUTEX_DEFAULT, IPL_NET);
 
+	/*
+	 * This queue serializes vmbus channel offer and rescind messages.
+	 */
+	SIMPLEQ_INIT(&sc->sc_chevq);
+	mutex_init(&sc->sc_chevq_lock, MUTEX_DEFAULT, IPL_NET);
+	cv_init(&sc->sc_chevq_cv, "hvchevcv");
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    vmbus_chevq_thread, sc, NULL, "hvchevq") != 0) {
+		DPRINTF("%s: failed to create prich chevq thread\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+
+	/*
+	 * This queue serializes vmbus devices' attach and detach
+	 * for channel offer and rescind messages.
+	 */
 	SIMPLEQ_INIT(&sc->sc_devq);
 	mutex_init(&sc->sc_devq_lock, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&sc->sc_devq_cv, "hvdevqcv");
-
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-	    vmbus_devq_thread, sc, NULL, "hvoffer") != 0) {
-		DPRINTF("%s: failed to create offer thread\n",
+	    vmbus_devq_thread, sc, NULL, "hvdevq") != 0) {
+		DPRINTF("%s: failed to create prich devq thread\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+
+	/*
+	 * This queue handles sub-channel detach, so that vmbus
+	 * device's detach running in sc_devq can drain its sub-channels.
+	 */
+	SIMPLEQ_INIT(&sc->sc_subch_devq);
+	mutex_init(&sc->sc_subch_devq_lock, MUTEX_DEFAULT, IPL_NET);
+	cv_init(&sc->sc_subch_devq_cv, "hvsdvqcv");
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    vmbus_subchannel_devq_thread, sc, NULL, "hvsdevq") != 0) {
+		DPRINTF("%s: failed to create subch devq thread\n",
 		    device_xname(sc->sc_dev));
 		return -1;
 	}
@@ -932,6 +986,9 @@ vmbus_channel_scan(struct vmbus_softc *sc)
 	while (!ISSET(sc->sc_flags, VMBUS_SCFLAG_OFFERS_DELIVERED))
 		tsleep(&sc->sc_devq, PRIBIO, "hvscan", 1);
 
+	mutex_enter(&sc->sc_chevq_lock);
+	vmbus_process_chevq(sc);
+	mutex_exit(&sc->sc_chevq_lock);
 	mutex_enter(&sc->sc_devq_lock);
 	vmbus_process_devq(sc);
 	mutex_exit(&sc->sc_devq_lock);
@@ -944,10 +1001,10 @@ vmbus_channel_alloc(struct vmbus_softc *sc)
 {
 	struct vmbus_channel *ch;
 
-	ch = kmem_intr_zalloc(sizeof(*ch), KM_NOSLEEP);
+	ch = kmem_zalloc(sizeof(*ch), KM_SLEEP);
 
 	ch->ch_monprm = hyperv_dma_alloc(sc->sc_dmat, &ch->ch_monprm_dma,
-	    sizeof(*ch->ch_monprm), 8, 0, 1, HYPERV_DMA_NOSLEEP);
+	    sizeof(*ch->ch_monprm), 8, 0, 1, HYPERV_DMA_SLEEPOK);
 	if (ch->ch_monprm == NULL) {
 		device_printf(sc->sc_dev, "monprm alloc failed\n");
 		kmem_free(ch, sizeof(*ch));
@@ -1000,32 +1057,32 @@ vmbus_channel_add(struct vmbus_channel *nch)
 		return EINVAL;
 	}
 
-	mutex_enter(&sc->sc_channel_lock);
-	TAILQ_FOREACH(ch, &sc->sc_channels, ch_entry) {
+	mutex_enter(&sc->sc_prichan_lock);
+	TAILQ_FOREACH(ch, &sc->sc_prichans, ch_prientry) {
 		if (!memcmp(&ch->ch_type, &nch->ch_type, sizeof(ch->ch_type)) &&
 		    !memcmp(&ch->ch_inst, &nch->ch_inst, sizeof(ch->ch_inst)))
 			break;
 	}
 	if (VMBUS_CHAN_ISPRIMARY(nch)) {
 		if (ch == NULL) {
-			TAILQ_INSERT_TAIL(&sc->sc_channels, nch, ch_entry);
-			mutex_exit(&sc->sc_channel_lock);
+			TAILQ_INSERT_TAIL(&sc->sc_prichans, nch, ch_prientry);
+			mutex_exit(&sc->sc_prichan_lock);
 			goto done;
 		} else {
-			mutex_exit(&sc->sc_channel_lock);
+			mutex_exit(&sc->sc_prichan_lock);
 			device_printf(sc->sc_dev,
 			    "duplicated primary channel%u\n", nch->ch_id);
 			return EINVAL;
 		}
 	} else {
 		if (ch == NULL) {
-			mutex_exit(&sc->sc_channel_lock);
+			mutex_exit(&sc->sc_prichan_lock);
 			device_printf(sc->sc_dev, "no primary channel%u\n",
 			    nch->ch_id);
 			return EINVAL;
 		}
 	}
-	mutex_exit(&sc->sc_channel_lock);
+	mutex_exit(&sc->sc_prichan_lock);
 
 	KASSERT(!VMBUS_CHAN_ISPRIMARY(nch));
 	KASSERT(ch != NULL);
@@ -1043,6 +1100,10 @@ vmbus_channel_add(struct vmbus_channel *nch)
 	wakeup(ch);
 
 done:
+	mutex_enter(&sc->sc_channel_lock);
+	TAILQ_INSERT_TAIL(&sc->sc_channels, nch, ch_entry);
+	mutex_exit(&sc->sc_channel_lock);
+
 	vmbus_channel_cpu_default(nch);
 
 	return 0;
@@ -1093,7 +1154,6 @@ vmbus_channel_is_revoked(struct vmbus_channel *ch)
 
 	return (ch->ch_flags & CHF_REVOKED) ? true : false;
 }
-
 
 static void
 vmbus_process_offer(struct vmbus_softc *sc, struct vmbus_chanmsg_choffer *co)
@@ -1176,6 +1236,12 @@ vmbus_process_rescind(struct vmbus_softc *sc,
 	TAILQ_REMOVE(&sc->sc_channels, ch, ch_entry);
 	mutex_exit(&sc->sc_channel_lock);
 
+	if (VMBUS_CHAN_ISPRIMARY(ch)) {
+		mutex_enter(&sc->sc_prichan_lock);
+		TAILQ_REMOVE(&sc->sc_prichans, ch, ch_prientry);
+		mutex_exit(&sc->sc_prichan_lock);
+	}
+
 	KASSERTMSG(!(ch->ch_flags & CHF_REVOKED),
 	    "channel%u has already been revoked", ch->ch_id);
 	atomic_or_uint(&ch->ch_flags, CHF_REVOKED);
@@ -1206,20 +1272,32 @@ vmbus_channel_release(struct vmbus_channel *ch)
 struct vmbus_channel **
 vmbus_subchannel_get(struct vmbus_channel *prich, int cnt)
 {
+	struct vmbus_softc *sc = prich->ch_sc;
 	struct vmbus_channel **ret, *ch;
-	int i;
+	int i, s;
 
-	KASSERT(cnt > 0);
+	KASSERTMSG(cnt > 0, "invalid sub-channel count %d", cnt);
 
-	ret = kmem_alloc(sizeof(struct vmbus_channel *) * cnt,
-	    cold ? KM_NOSLEEP : KM_SLEEP);
+	ret = kmem_zalloc(sizeof(struct vmbus_channel *) * cnt, KM_SLEEP);
 
 	mutex_enter(&prich->ch_subchannel_lock);
 
-	while (prich->ch_subchannel_count < cnt)
-		/* XXX use condvar(9) instead of mtsleep */
-		mtsleep(prich, PRIBIO, "hvvmsubch", 0,
-		    &prich->ch_subchannel_lock);
+	while (prich->ch_subchannel_count < cnt) {
+		if (cold) {
+			mutex_exit(&prich->ch_subchannel_lock);
+			delay(1000);
+			s = splnet();
+			hyperv_intr();
+			splx(s);
+			mutex_enter(&sc->sc_chevq_lock);
+			vmbus_process_chevq(sc);
+			mutex_exit(&sc->sc_chevq_lock);
+			mutex_enter(&prich->ch_subchannel_lock);
+		} else {
+			mtsleep(prich, PRIBIO, "hvsubch", 1,
+			    &prich->ch_subchannel_lock);
+		}
+	}
 
 	i = 0;
 	TAILQ_FOREACH(ch, &prich->ch_subchannels, ch_subentry) {
@@ -1228,6 +1306,9 @@ vmbus_subchannel_get(struct vmbus_channel *prich, int cnt)
 		if (++i == cnt)
 			break;
 	}
+
+	KASSERTMSG(i == cnt, "invalid subchan count %d, should be %d",
+	    prich->ch_subchannel_count, cnt);
 
 	mutex_exit(&prich->ch_subchannel_lock);
 
@@ -1991,12 +2072,90 @@ vmbus_handle_free(struct vmbus_channel *ch, uint32_t handle)
 	}
 }
 
+ static void
+vmbus_chevq_enqueue(struct vmbus_softc *sc, int type, void *arg)
+{
+	struct vmbus_chev *vce;
+ 
+	vce = kmem_intr_alloc(sizeof(*vce), KM_NOSLEEP);
+	if (vce == NULL) {
+		device_printf(sc->sc_dev, "failed to allocate chev\n");
+		return;
+	}
+
+	vce->vce_type = type;
+	vce->vce_arg = arg;
+
+	mutex_enter(&sc->sc_chevq_lock);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_chevq, vce, vce_entry);
+	cv_broadcast(&sc->sc_chevq_cv);
+	mutex_exit(&sc->sc_chevq_lock);
+}
+
+static void
+vmbus_process_chevq(void *arg)
+{
+	struct vmbus_softc *sc = arg;
+	struct vmbus_chev *vce;
+	struct vmbus_chanmsg_choffer *co;
+	struct vmbus_chanmsg_chrescind *cr;
+
+	KASSERT(mutex_owned(&sc->sc_chevq_lock));
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_chevq)) {
+		vce = SIMPLEQ_FIRST(&sc->sc_chevq);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_chevq, vce_entry);
+		mutex_exit(&sc->sc_chevq_lock);
+
+		switch (vce->vce_type) {
+		case VMBUS_CHEV_TYPE_OFFER:
+			co = vce->vce_arg;
+			vmbus_process_offer(sc, co);
+			kmem_free(co, sizeof(*co));
+			break;
+
+		case VMBUS_CHEV_TYPE_RESCIND:
+			cr = vce->vce_arg;
+			vmbus_process_rescind(sc, cr);
+			kmem_free(cr, sizeof(*cr));
+			break;
+
+		default:
+			DPRINTF("%s: unknown chevq type %d\n",
+			    device_xname(sc->sc_dev), vce->vce_type);
+			break;
+		}
+		kmem_free(vce, sizeof(*vce));
+
+		mutex_enter(&sc->sc_chevq_lock);
+	}
+}
+
+static void
+vmbus_chevq_thread(void *arg)
+{
+	struct vmbus_softc *sc = arg;
+
+	mutex_enter(&sc->sc_chevq_lock);
+	for (;;) {
+		if (SIMPLEQ_EMPTY(&sc->sc_chevq)) {
+			cv_wait(&sc->sc_chevq_cv, &sc->sc_chevq_lock);
+			continue;
+		}
+
+		vmbus_process_chevq(sc);
+	}
+	mutex_exit(&sc->sc_chevq_lock);
+
+	kthread_exit(0);
+}
+
 static void
 vmbus_devq_enqueue(struct vmbus_softc *sc, int type, struct vmbus_channel *ch)
 {
 	struct vmbus_dev *vd;
 
-	vd = kmem_intr_zalloc(sizeof(*vd), KM_NOSLEEP);
+	vd = kmem_zalloc(sizeof(*vd), KM_SLEEP);
 	if (vd == NULL) {
 		device_printf(sc->sc_dev, "failed to allocate devq\n");
 		return;
@@ -2005,10 +2164,17 @@ vmbus_devq_enqueue(struct vmbus_softc *sc, int type, struct vmbus_channel *ch)
 	vd->vd_type = type;
 	vd->vd_chan = ch;
 
-	mutex_enter(&sc->sc_devq_lock);
-	SIMPLEQ_INSERT_TAIL(&sc->sc_devq, vd, vd_entry);
-	cv_broadcast(&sc->sc_devq_cv);
-	mutex_exit(&sc->sc_devq_lock);
+	if (VMBUS_CHAN_ISPRIMARY(ch)) {
+		mutex_enter(&sc->sc_devq_lock);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_devq, vd, vd_entry);
+		cv_broadcast(&sc->sc_devq_cv);
+		mutex_exit(&sc->sc_devq_lock);
+	} else {
+		mutex_enter(&sc->sc_subch_devq_lock);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_subch_devq, vd, vd_entry);
+		cv_broadcast(&sc->sc_subch_devq_cv);
+		mutex_exit(&sc->sc_subch_devq_lock);
+	}
 }
 
 static void
@@ -2016,7 +2182,8 @@ vmbus_process_devq(void *arg)
 {
 	struct vmbus_softc *sc = arg;
 	struct vmbus_dev *vd;
-	struct vmbus_channel *ch, *prich;
+	struct vmbus_channel *ch;
+	struct vmbus_attach_args vaa;
 
 	KASSERT(mutex_owned(&sc->sc_devq_lock));
 
@@ -2028,46 +2195,28 @@ vmbus_process_devq(void *arg)
 		switch (vd->vd_type) {
 		case VMBUS_DEV_TYPE_ATTACH:
 			ch = vd->vd_chan;
-			if (VMBUS_CHAN_ISPRIMARY(ch)) {
-				struct vmbus_attach_args vaa;
-
-				vaa.aa_type = &ch->ch_type;
-				vaa.aa_inst = &ch->ch_inst;
-				vaa.aa_ident = ch->ch_ident;
-				vaa.aa_chan = ch;
-				vaa.aa_iot = sc->sc_iot;
-				vaa.aa_memt = sc->sc_memt;
-				ch->ch_dev = config_found_ia(sc->sc_dev,
-				    "hypervvmbus", &vaa, vmbus_attach_print);
-			}
+			vaa.aa_type = &ch->ch_type;
+			vaa.aa_inst = &ch->ch_inst;
+			vaa.aa_ident = ch->ch_ident;
+			vaa.aa_chan = ch;
+			vaa.aa_iot = sc->sc_iot;
+			vaa.aa_memt = sc->sc_memt;
+			ch->ch_dev = config_found_ia(sc->sc_dev,
+			    "hypervvmbus", &vaa, vmbus_attach_print);
 			break;
 
 		case VMBUS_DEV_TYPE_DETACH:
 			ch = vd->vd_chan;
-			if (VMBUS_CHAN_ISPRIMARY(ch)) {
-				if (ch->ch_dev != NULL) {
-					config_detach(ch->ch_dev, DETACH_FORCE);
-					ch->ch_dev = NULL;
-				}
-				vmbus_channel_release(ch);
-				vmbus_channel_free(ch);
-				break;
+			if (ch->ch_dev != NULL) {
+				config_detach(ch->ch_dev, DETACH_FORCE);
+				ch->ch_dev = NULL;
 			}
-
 			vmbus_channel_release(ch);
-
-			prich = ch->ch_primary_channel;
-			mutex_enter(&prich->ch_subchannel_lock);
-			TAILQ_REMOVE(&prich->ch_subchannels, ch, ch_subentry);
-			prich->ch_subchannel_count--;
-			mutex_exit(&prich->ch_subchannel_lock);
-			wakeup(prich);
-
 			vmbus_channel_free(ch);
 			break;
 
 		default:
-			DPRINTF("%s: unknown offer type %d\n",
+			DPRINTF("%s: unknown devq type %d\n",
 			    device_xname(sc->sc_dev), vd->vd_type);
 			break;
 		}
@@ -2095,6 +2244,63 @@ vmbus_devq_thread(void *arg)
 
 	kthread_exit(0);
 }
+
+static void
+vmbus_subchannel_devq_thread(void *arg)
+{
+	struct vmbus_softc *sc = arg;
+	struct vmbus_dev *vd;
+	struct vmbus_channel *ch, *prich;
+
+	mutex_enter(&sc->sc_subch_devq_lock);
+	for (;;) {
+		if (SIMPLEQ_EMPTY(&sc->sc_subch_devq)) {
+			cv_wait(&sc->sc_subch_devq_cv, &sc->sc_subch_devq_lock);
+			continue;
+		}
+
+		while (!SIMPLEQ_EMPTY(&sc->sc_subch_devq)) {
+			vd = SIMPLEQ_FIRST(&sc->sc_subch_devq);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_subch_devq, vd_entry);
+			mutex_exit(&sc->sc_subch_devq_lock);
+
+			switch (vd->vd_type) {
+			case VMBUS_DEV_TYPE_ATTACH:
+				/* Nothing to do */
+				break;
+
+			case VMBUS_DEV_TYPE_DETACH:
+				ch = vd->vd_chan;
+
+				vmbus_channel_release(ch);
+
+				prich = ch->ch_primary_channel;
+				mutex_enter(&prich->ch_subchannel_lock);
+				TAILQ_REMOVE(&prich->ch_subchannels, ch,
+				    ch_subentry);
+				prich->ch_subchannel_count--;
+				mutex_exit(&prich->ch_subchannel_lock);
+				wakeup(prich);
+
+				vmbus_channel_free(ch);
+				break;
+
+			default:
+				DPRINTF("%s: unknown devq type %d\n",
+				    device_xname(sc->sc_dev), vd->vd_type);
+				break;
+			}
+
+			kmem_free(vd, sizeof(*vd));
+
+			mutex_enter(&sc->sc_subch_devq_lock);
+		}
+	}
+	mutex_exit(&sc->sc_subch_devq_lock);
+
+	kthread_exit(0);
+}
+
 
 static int
 vmbus_attach_print(void *aux, const char *name)
