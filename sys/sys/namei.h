@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.110 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.111 2020/05/26 22:06:11 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.54 2020/05/12 23:17:41 ad Exp 
+ *   from: NetBSD: namei.src,v 1.56 2020/05/26 22:05:52 ad Exp 
  */
 
 /*
@@ -171,7 +171,7 @@ struct nameidata {
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
-#define	WILLBEDIR	0x0010000	/* new files will be dirs; */
+NAMIEFL	WILLBEDIR	0x0010000	/* new files will be dirs */
 #define	ISWHITEOUT	0x0020000	/* found whiteout */
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
@@ -371,6 +371,6 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x02ef800
+#define NAMEI_PARAMASK	0x02ff800
 
 #endif /* !_SYS_NAMEI_H_ */
