@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.79 2020/03/14 14:15:43 ad Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.80 2020/05/26 00:50:53 kamil Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -220,7 +220,7 @@ struct vm_map {
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
-	int			ref_count;	/* Reference count */
+	volatile int		ref_count;	/* Reference count */
 	struct vm_map_entry *	hint;		/* hint for quick lookups */
 	struct vm_map_entry *	first_free;	/* First free space hint */
 	unsigned int		timestamp;	/* Version number */
