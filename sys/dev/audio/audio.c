@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.72 2020/05/26 10:12:12 nia Exp $	*/
+/*	$NetBSD: audio.c,v 1.73 2020/05/26 11:43:00 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.72 2020/05/26 10:12:12 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.73 2020/05/26 11:43:00 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7756,7 +7756,6 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 		return error;
 	audio_mixer_capture(sc);
 
-	/* Halts mixers but don't clear busy flag for resume */
 	if (sc->sc_pbusy) {
 		audio_pmixer_halt(sc);
 	}
