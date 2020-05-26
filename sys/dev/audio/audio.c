@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.71 2020/05/26 10:07:29 nia Exp $	*/
+/*	$NetBSD: audio.c,v 1.72 2020/05/26 10:12:12 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.71 2020/05/26 10:07:29 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.72 2020/05/26 10:12:12 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6120,13 +6120,17 @@ static int
 audio_check_params(audio_format2_t *p)
 {
 
-	/* Convert obsoleted AUDIO_ENCODING_PCM* */
-	/* XXX Is this conversion right? */
+	/*
+	 * Convert obsolete AUDIO_ENCODING_PCM encodings.
+	 * 
+	 * AUDIO_ENCODING_PCM16 == AUDIO_ENCODING_LINEAR
+	 * So, it's always signed, as in SunOS.
+	 *
+	 * AUDIO_ENCODING_PCM8 == AUDIO_ENCODING_LINEAR8
+	 * So, it's always unsigned, as in SunOS.
+	 */
 	if (p->encoding == AUDIO_ENCODING_PCM16) {
-		if (p->precision == 8)
-			p->encoding = AUDIO_ENCODING_ULINEAR;
-		else
-			p->encoding = AUDIO_ENCODING_SLINEAR;
+		p->encoding = AUDIO_ENCODING_SLINEAR;
 	} else if (p->encoding == AUDIO_ENCODING_PCM8) {
 		if (p->precision == 8)
 			p->encoding = AUDIO_ENCODING_ULINEAR;
