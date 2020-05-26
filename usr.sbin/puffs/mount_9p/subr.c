@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.7 2019/06/07 05:34:34 ozaki-r Exp $	*/
+/*	$NetBSD: subr.c,v 1.8 2020/05/26 19:38:14 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.7 2019/06/07 05:34:34 ozaki-r Exp $");
+__RCSID("$NetBSD: subr.c,v 1.8 2020/05/26 19:38:14 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -104,11 +104,7 @@ getdfwithoffset(struct puffs_usermount *pu, struct p9pnode *p9n, off_t wantoff,
 {
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs9p *p9p = puffs_getspecific(pu);
-	struct puffs_framebuf *pb;
 	struct dirfid *dfp = NULL;
-	p9ptag_t tag = NEXTTAG(p9p);
-	off_t curoff, advance;
-	uint32_t count;
 	int rv;
 
 	LIST_FOREACH(dfp, &p9n->dir_openlist, entries) {
@@ -120,52 +116,57 @@ getdfwithoffset(struct puffs_usermount *pu, struct p9pnode *p9n, off_t wantoff,
 	}
 
 	/* didn't get off easy?  damn, do manual labour */
-	pb = p9pbuf_makeout();
 	dfp = ecalloc(1, sizeof(struct dirfid));
 	dfp->fid = NEXTFID(p9p);
 	rv = proto_cc_open(pu, p9n->fid_base, dfp->fid, P9PROTO_OMODE_READ);
 	if (rv)
 		goto out;
 
-	for (curoff = 0;;) {
-		advance = wantoff - curoff;
+	off_t curoff = 0;
+	if (wantoff != 0) {
+		struct puffs_framebuf *pb = p9pbuf_makeout();
+		for (;;) {
+			off_t advance = wantoff - curoff;
 
-		tag = NEXTTAG(p9p);
-		p9pbuf_put_1(pb, P9PROTO_T_READ);  
-		p9pbuf_put_2(pb, tag);
-		p9pbuf_put_4(pb, dfp->fid);       
-		p9pbuf_put_8(pb, 0);
-		p9pbuf_put_4(pb, advance);       
-		GETRESPONSE(pb);
+			p9ptag_t tag = NEXTTAG(p9p);
+			p9pbuf_put_1(pb, P9PROTO_T_READ);
+			p9pbuf_put_2(pb, tag);
+			p9pbuf_put_4(pb, dfp->fid);
+			p9pbuf_put_8(pb, curoff);
+			p9pbuf_put_4(pb, advance);
+			GETRESPONSE(pb);
 
-		if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
-			rv = proto_handle_rerror(pu, pb);
-			goto out;
+			if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
+				rv = proto_handle_rerror(pu, pb);
+				puffs_framebuf_destroy(pb);
+				goto out;
+			}
+
+			/*
+			 * Check how many bytes we got.  If we got the
+			 * amount we wanted, we are at the correct position.
+			 * If we got zero bytes, either the directory
+			 * doesn't "support" the seek offset we want
+			 * (someone has probably inserted an entry
+			 * meantime) or we at the end of directory.
+			 * Either way, let the upper layer deal with it.
+			 */
+			uint32_t count;
+			p9pbuf_get_4(pb, &count);
+			curoff += count;
+			if (count == advance || count == 0)
+				break;
+
+			p9pbuf_recycleout(pb);
 		}
-
-		/*
-		 * Check how many bytes we got.  If we got the amount we
-		 * wanted, we are at the correct position.  If we got
-		 * zero bytes, either the directory doesn't "support" the
-		 * seek offset we want (someone has probably inserted an
-		 * entry meantime) or we at the end of directory.  Either
-		 * way, let the upper layer deal with it.
-		 */
-		p9pbuf_get_4(pb, &count);
-		curoff += count;
-		if (count == advance || count == 0)
-			break;
-
-		p9pbuf_recycleout(pb);
+		puffs_framebuf_destroy(pb);
 	}
-	puffs_framebuf_destroy(pb);
 
 	dfp->seekoff = curoff;
 	*rfid = dfp;
 	return 0;
 
  out:
-	puffs_framebuf_destroy(pb);
 	free(dfp);
 	return rv;
 }
