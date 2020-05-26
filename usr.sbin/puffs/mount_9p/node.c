@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.23 2019/06/07 05:34:34 ozaki-r Exp $	*/
+/*	$NetBSD: node.c,v 1.24 2020/05/26 22:08:11 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.23 2019/06/07 05:34:34 ozaki-r Exp $");
+__RCSID("$NetBSD: node.c,v 1.24 2020/05/26 22:08:11 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -93,7 +93,7 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	struct vattr va;
 	struct puffs_node *pn, *pn_dir = opc;
 	struct p9pnode *p9n_dir = pn_dir->pn_data;
-	p9ptag_t tfid = NEXTFID(p9p);
+	p9pfid_t tfid = NEXTFID(p9p);
 	struct qid9p newqid;
 	uint16_t nqid;
 
