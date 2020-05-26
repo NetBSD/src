@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.8 2020/05/25 22:01:26 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.9 2020/05/26 21:52:12 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.8 2020/05/25 22:01:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.9 2020/05/26 21:52:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 	const int flags = ar->ar_flags;
 	const bool dense = (flags & UVM_PAGE_ARRAY_FILL_DENSE) != 0;
 	const bool backward = (flags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0;
+	int error = 0;
 
 	if (nwant != 0 && nwant < maxpages) {
 		maxpages = nwant;
@@ -172,8 +173,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 			 * if dense or looking for tagged entries (or
 			 * working backwards), fail right away.
 			 */
-			uvm_page_array_clear(ar);
-			return ENOENT;
+			npages = 0;
 		} else {
 			/*
 			 * there's nothing else to be found with the current
@@ -187,17 +187,16 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 			npages = 1;
 			ar->ar_pages[0] = NULL;
 		}
+		error = ENOENT;
 	}
 	KASSERT(npages <= maxpages);
 	ar->ar_npages = npages;
 	ar->ar_idx = 0;
 #if defined(DEBUG)
-	for (i = 0; i < ar->ar_npages; i++) {
+	for (i = 0; error == 0 && i < ar->ar_npages; i++) {
 		struct vm_page * const pg = ar->ar_pages[i];
 
-		if (pg == NULL) {
-			continue;
-		}
+		KASSERT(pg != NULL);
 		KDASSERT(pg->uobject == uobj);
 		if (backward) {
 			KDASSERT(pg->offset <= off);
@@ -210,7 +209,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, voff_t off, unsigned int nwant)
 		}
 	}
 #endif /* defined(DEBUG) */
-	return 0;
+	return error;
 }
 
 /*
