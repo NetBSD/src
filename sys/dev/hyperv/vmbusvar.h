@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusvar.h,v 1.4 2019/12/10 12:20:20 nonaka Exp $	*/
+/*	$NetBSD: vmbusvar.h,v 1.5 2020/05/26 16:08:55 nonaka Exp $	*/
 /*	$OpenBSD: hypervvar.h,v 1.13 2017/06/23 19:05:42 mikeb Exp $	*/
 
 /*
@@ -58,6 +58,15 @@ struct vmbus_msg {
 };
 __CTASSERT((offsetof(struct vmbus_msg, msg_req) % 8) == 0);
 TAILQ_HEAD(vmbus_queue, vmbus_msg);
+
+struct vmbus_chev {
+	int				vce_type;
+#define VMBUS_CHEV_TYPE_OFFER		0
+#define VMBUS_CHEV_TYPE_RESCIND		1
+	void				*vce_arg;
+	SIMPLEQ_ENTRY(vmbus_chev)	vce_entry;
+};
+SIMPLEQ_HEAD(vmbus_chevq, vmbus_chev);
 
 struct vmbus_dev {
 	int					vd_type;
@@ -122,6 +131,7 @@ struct vmbus_channel {
 	struct hyperv_mon_param		*ch_monprm;
 	struct hyperv_dma		ch_monprm_dma;
 
+	TAILQ_ENTRY(vmbus_channel)	ch_prientry;
 	TAILQ_ENTRY(vmbus_channel)	ch_entry;
 
 	kmutex_t			ch_subchannel_lock;
@@ -189,9 +199,20 @@ struct vmbus_softc {
 	struct vmbus_queue 	sc_rsps;	/* Response queue */
 	kmutex_t		sc_rsp_lock;
 
+	struct vmbus_chevq	sc_chevq;
+	kmutex_t		sc_chevq_lock;
+	kcondvar_t		sc_chevq_cv;
+
 	struct vmbus_devq	sc_devq;
 	kmutex_t		sc_devq_lock;
 	kcondvar_t		sc_devq_cv;
+
+	struct vmbus_devq	sc_subch_devq;
+	kmutex_t		sc_subch_devq_lock;
+	kcondvar_t		sc_subch_devq_cv;
+
+	struct vmbus_channels	sc_prichans;
+	kmutex_t		sc_prichan_lock;
 
 	struct vmbus_channels	sc_channels;
 	kmutex_t		sc_channel_lock;
