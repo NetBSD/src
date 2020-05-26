@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.393 2020/05/19 21:14:20 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.394 2020/05/26 10:10:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.393 2020/05/19 21:14:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.394 2020/05/26 10:10:31 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.393 2020/05/19 21:14:20 ad Exp $");
 #include <sys/intr.h>
 #include <sys/xcall.h>
 #include <sys/kcore.h>
+#include <sys/kmem.h>
 #include <sys/asan.h>
 #include <sys/msan.h>
 #include <sys/entropy.h>
@@ -2850,7 +2851,7 @@ pmap_create(void)
 	pmap->pm_hiexec = 0;
 #endif
 
-	/* Used by NVMM. */
+	/* Used by NVMM and Xen */
 	pmap->pm_enter = NULL;
 	pmap->pm_extract = NULL;
 	pmap->pm_remove = NULL;
@@ -4109,13 +4110,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	return true;
 }
 
-/*
- * pmap_remove: mapping removal function.
- *
- * => caller should not be holding any pmap locks
- */
-void
-pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
+static void
+pmap_remove_locked(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t *ptes;
 	pd_entry_t pde;
@@ -4126,12 +4122,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	struct pmap *pmap2;
 	int lvl;
 
-	if (__predict_false(pmap->pm_remove != NULL)) {
-		(*pmap->pm_remove)(pmap, sva, eva);
-		return;
-	}
+	KASSERT(mutex_owned(&pmap->pm_lock));
 
-	mutex_enter(&pmap->pm_lock);
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
 	/*
@@ -4195,6 +4187,23 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);
+}
+
+/*
+ * pmap_remove: mapping removal function.
+ *
+ * => caller should not be holding any pmap locks
+ */
+void
+pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
+{
+	if (__predict_false(pmap->pm_remove != NULL)) {
+		(*pmap->pm_remove)(pmap, sva, eva);
+		return;
+	}
+
+	mutex_enter(&pmap->pm_lock);
+	pmap_remove_locked(pmap, sva, eva);
 	mutex_exit(&pmap->pm_lock);
 }
 
@@ -4966,7 +4975,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 				continue;
 			}
 			error = xpq_update_foreign(
-			    vtomach((vaddr_t)ptep), npte, domid);
+			    vtomach((vaddr_t)ptep), npte, domid, flags);
 			splx(s);
 			if (error) {
 				/* Undo pv_entry tracking - oof. */
@@ -5070,6 +5079,330 @@ same_pa:
 	mutex_exit(&pmap->pm_lock);
 	return 0;
 }
+
+#if defined(XEN) && defined(DOM0OPS)
+
+struct pmap_data_gnt {
+	SLIST_ENTRY(pmap_data_gnt) pd_gnt_list;
+	vaddr_t pd_gnt_sva; 
+	vaddr_t pd_gnt_eva; /* range covered by this gnt */
+	int pd_gnt_refs; /* ref counter */
+	struct gnttab_map_grant_ref pd_gnt_ops[1]; /* variable length */
+};
+SLIST_HEAD(pmap_data_gnt_head, pmap_data_gnt);
+
+static void pmap_remove_gnt(struct pmap *, vaddr_t, vaddr_t);
+
+static struct pmap_data_gnt *
+pmap_find_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
+{
+	struct pmap_data_gnt_head *headp;
+	struct pmap_data_gnt *pgnt;
+
+	KASSERT(mutex_owned(&pmap->pm_lock));
+	headp = pmap->pm_data;
+	KASSERT(headp != NULL);
+	SLIST_FOREACH(pgnt, headp, pd_gnt_list) {
+		if (pgnt->pd_gnt_sva >= sva && pgnt->pd_gnt_sva <= eva)
+			return pgnt;
+		/* check that we're not overlapping part of a region */
+		KASSERT(pgnt->pd_gnt_sva >= eva || pgnt->pd_gnt_eva <= sva);
+	}
+	return NULL;
+}
+
+static void
+pmap_alloc_gnt(struct pmap *pmap, vaddr_t sva, int nentries,
+    const struct gnttab_map_grant_ref *ops)
+{
+	struct pmap_data_gnt_head *headp;
+	struct pmap_data_gnt *pgnt;
+	vaddr_t eva = sva + nentries * PAGE_SIZE;
+	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(nentries >= 1);
+	if (pmap->pm_remove == NULL) {
+		pmap->pm_remove = pmap_remove_gnt;
+		KASSERT(pmap->pm_data == NULL);
+		headp = kmem_alloc(sizeof(*headp), KM_SLEEP);
+		SLIST_INIT(headp);
+		pmap->pm_data = headp;
+	} else {
+		KASSERT(pmap->pm_remove == pmap_remove_gnt);
+		KASSERT(pmap->pm_data != NULL);
+		headp = pmap->pm_data;
+	}
+
+	pgnt = pmap_find_gnt(pmap, sva, eva);
+	if (pgnt != NULL) {
+		KASSERT(pgnt->pd_gnt_sva == sva);
+		KASSERT(pgnt->pd_gnt_eva == eva);
+		return;
+	}
+
+	/* new entry */
+	pgnt = kmem_alloc(sizeof(*pgnt) +
+	    (nentries - 1) * sizeof(struct gnttab_map_grant_ref), KM_SLEEP);
+	pgnt->pd_gnt_sva = sva;
+	pgnt->pd_gnt_eva = eva;
+	pgnt->pd_gnt_refs = 0;
+	memcpy(pgnt->pd_gnt_ops, ops,
+	    sizeof(struct gnttab_map_grant_ref) * nentries);
+	SLIST_INSERT_HEAD(headp, pgnt, pd_gnt_list);
+}
+
+static void
+pmap_free_gnt(struct pmap *pmap, struct pmap_data_gnt *pgnt)
+{
+	struct pmap_data_gnt_head *headp = pmap->pm_data;
+	int nentries = (pgnt->pd_gnt_eva - pgnt->pd_gnt_sva) / PAGE_SIZE;
+	KASSERT(nentries >= 1);
+	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(pgnt->pd_gnt_refs == 0);
+	SLIST_REMOVE(headp, pgnt, pmap_data_gnt, pd_gnt_list);
+	kmem_free(pgnt, sizeof(*pgnt) +
+		    (nentries - 1) * sizeof(struct gnttab_map_grant_ref));
+	if (SLIST_EMPTY(headp)) {
+		kmem_free(headp, sizeof(*headp));
+		pmap->pm_data = NULL;
+		pmap->pm_remove = NULL;
+	}
+}
+
+/*
+ * pmap_enter_gnt: enter a grant entry into a pmap
+ *
+ * => must be done "now" ... no lazy-evaluation
+ */
+int
+pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
+    const struct gnttab_map_grant_ref *oops)
+{
+	struct pmap_data_gnt *pgnt;
+	pt_entry_t *ptes, opte;
+	pt_entry_t *ptep;
+	pd_entry_t * const *pdes;
+	struct vm_page *ptp;
+	struct vm_page *old_pg;
+	struct pmap_page *old_pp;
+	struct pv_entry *old_pve;
+	struct pmap *pmap2;
+	struct pmap_ptparray pt;
+	int error;
+	bool getptp;
+	rb_tree_t *tree;
+	struct gnttab_map_grant_ref *op;
+	int ret;
+	int idx;
+
+	KASSERT(pmap_initialized);
+	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
+	KASSERTMSG(va != (vaddr_t)PDP_BASE, "%s: trying to map va=%#"
+	    PRIxVADDR " over PDP!", __func__, va);
+	KASSERT(pmap != pmap_kernel());
+
+	/* Begin by locking the pmap. */
+	mutex_enter(&pmap->pm_lock);
+	pmap_alloc_gnt(pmap, sva, nentries, oops);
+
+	pgnt = pmap_find_gnt(pmap, va, va + PAGE_SIZE);
+	KASSERT(pgnt != NULL);
+
+	/* Look up the PTP.  Allocate if none present. */
+	ptp = NULL;
+	getptp = false;
+	ptp = pmap_find_ptp(pmap, va, 1);
+	if (ptp == NULL) {
+		getptp = true;
+		error = pmap_get_ptp(pmap, &pt, va, PMAP_CANFAIL, &ptp);
+		if (error != 0) {
+			mutex_exit(&pmap->pm_lock);
+			return error;
+		}
+	}
+	tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
+
+	/*
+	 * Look up the old PV entry at this VA (if any), and insert a new PV
+	 * entry if required for the new mapping.  Temporarily track the old
+	 * and new mappings concurrently.  Only after the old mapping is
+	 * evicted from the pmap will we remove its PV entry.  Otherwise,
+	 * our picture of modified/accessed state for either page could get
+	 * out of sync (we need any P->V operation for either page to stall
+	 * on pmap->pm_lock until done here).
+	 */
+	old_pve = NULL;
+
+	old_pve = pmap_treelookup_pv(pmap, ptp, tree, va);
+
+	/* Map PTEs into address space. */
+	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+
+	/* Install any newly allocated PTPs. */
+	if (getptp) {
+		pmap_install_ptp(pmap, &pt, va, pdes);
+	}
+
+	/* Check if there is an existing mapping. */
+	ptep = &ptes[pl1_i(va)];
+	opte = *ptep;
+	bool have_oldpa = pmap_valid_entry(opte);
+	paddr_t oldpa = pmap_pte2pa(opte);
+
+	/*
+	 * Update the pte.
+	 */
+
+	idx = (va - pgnt->pd_gnt_sva) / PAGE_SIZE;
+	op = &pgnt->pd_gnt_ops[idx];
+
+	op->host_addr = xpmap_ptetomach(ptep);
+	op->dev_bus_addr = 0;
+	op->status = GNTST_general_error;
+	ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, 1);
+	if (__predict_false(ret)) {
+		printf("%s: GNTTABOP_map_grant_ref failed: %d\n",
+		    __func__, ret);
+		op->status = GNTST_general_error;
+	}
+	for (int d = 0; d < 256 && op->status == GNTST_eagain; d++) {
+		kpause("gntmap", false, mstohz(1), NULL);
+		ret = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, op, 1);
+		if (__predict_false(ret)) {
+			printf("%s: GNTTABOP_map_grant_ref failed: %d\n",
+			    __func__, ret);
+			op->status = GNTST_general_error;
+		}
+	}
+	if (__predict_false(op->status != GNTST_okay)) {
+		printf("%s: GNTTABOP_map_grant_ref status: %d\n",
+		    __func__, op->status);
+		if (ptp != NULL) {
+			if (have_oldpa) {
+				ptp->wire_count--;
+			}
+		}
+	} else {
+		pgnt->pd_gnt_refs++;
+		if (ptp != NULL) {
+			if (!have_oldpa) {
+				ptp->wire_count++;
+			}
+			/* Remember minimum VA in PTP. */
+			pmap_ptp_range_set(ptp, va);
+		}
+	}
+
+	/*
+	 * Done with the PTEs: they can now be unmapped.
+	 */
+	pmap_unmap_ptes(pmap, pmap2);
+
+	/*
+	 * Update statistics and PTP's reference count.
+	 */
+	pmap_stats_update_bypte(pmap, 0, opte);
+	KASSERT(ptp == NULL || ptp->wire_count >= 1);
+
+	/*
+	 * If old page is pv-tracked, remove pv_entry from its list.
+	 */
+	if ((~opte & (PTE_P | PTE_PVLIST)) == 0) {
+		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
+			old_pp = VM_PAGE_TO_PP(old_pg);
+		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
+			panic("%s: PTE_PVLIST with pv-untracked page"
+			    " va = %#"PRIxVADDR " pa = %#" PRIxPADDR,
+			    __func__, va, oldpa);
+		}
+
+		pmap_remove_pv(pmap, old_pp, ptp, va, old_pve,
+		    pmap_pte_to_pp_attrs(opte));
+	} else {
+		KASSERT(old_pve == NULL);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
+	}
+
+	mutex_exit(&pmap->pm_lock);
+	return op->status;
+}
+
+/*
+ * pmap_remove_gnt: grant mapping removal function.
+ *
+ * => caller should not be holding any pmap locks
+ */
+static void
+pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
+{
+	struct pmap_data_gnt *pgnt;
+	pt_entry_t *ptes;
+	pd_entry_t pde;
+	pd_entry_t * const *pdes;
+	struct vm_page *ptp;
+	struct pmap *pmap2;
+	vaddr_t va;
+	int lvl;
+	int idx;
+	struct gnttab_map_grant_ref *op;
+	struct gnttab_unmap_grant_ref unmap_op;
+	int ret;
+
+	KASSERT(pmap != pmap_kernel());
+	KASSERT(pmap->pm_remove == pmap_remove_gnt);
+
+	mutex_enter(&pmap->pm_lock);
+	for (va = sva; va < eva; va += PAGE_SIZE) {
+		pgnt = pmap_find_gnt(pmap, va, va + PAGE_SIZE);
+		if (pgnt == NULL) {
+			pmap_remove_locked(pmap, sva, eva);
+			continue;
+		}
+
+		pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+		if (!pmap_pdes_valid(va, pdes, &pde, &lvl)) {
+			panic("pmap_remove_gnt pdes not valid");
+		}
+
+		idx = (va - pgnt->pd_gnt_sva) / PAGE_SIZE;
+		op = &pgnt->pd_gnt_ops[idx];
+		KASSERT(lvl == 1);
+		KASSERT(op->status == GNTST_okay);
+
+		/* Get PTP if non-kernel mapping. */
+		ptp = pmap_find_ptp(pmap, va, 1);
+		KASSERTMSG(ptp != NULL,
+		    "%s: unmanaged PTP detected", __func__);
+
+		if (op->status == GNTST_okay)  {
+			KASSERT(pmap_valid_entry(ptes[pl1_i(va)]));
+			unmap_op.handle = op->handle;
+			unmap_op.dev_bus_addr = 0;
+			unmap_op.host_addr = xpmap_ptetomach(&ptes[pl1_i(va)]);
+			ret = HYPERVISOR_grant_table_op(
+			    GNTTABOP_unmap_grant_ref, &unmap_op, 1);
+			if (ret) {
+				printf("%s: GNTTABOP_unmap_grant_ref "
+				    "failed: %d\n", __func__, ret);
+			}
+
+			ptp->wire_count--;
+			pgnt->pd_gnt_refs--;
+			if (pgnt->pd_gnt_refs == 0) {
+				pmap_free_gnt(pmap, pgnt);
+			}
+		}
+		/*
+		 * if mapping removed and the PTP is no longer
+		 * being used, free it!
+		 */
+
+		if (ptp && ptp->wire_count <= 1)
+			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+		pmap_unmap_ptes(pmap, pmap2);
+	}
+	mutex_exit(&pmap->pm_lock);
+}
+#endif /* XEN && DOM0OPS */
 
 paddr_t
 pmap_get_physpage(void)

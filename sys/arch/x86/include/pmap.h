@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.120 2020/05/08 00:49:42 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.121 2020/05/26 10:10:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -283,7 +283,7 @@ struct pmap {
 	uint64_t pm_ncsw;		/* for assertions */
 	LIST_HEAD(,vm_page) pm_gc_ptp;	/* PTPs queued for free */
 
-	/* Used by NVMM. */
+	/* Used by NVMM and Xen */
 	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
 	bool (*pm_extract)(struct pmap *, vaddr_t, paddr_t *);
 	void (*pm_remove)(struct pmap *, vaddr_t, vaddr_t);
