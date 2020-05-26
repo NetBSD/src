@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.73 2020/05/26 11:43:00 nia Exp $	*/
+/*	$NetBSD: audio.c,v 1.74 2020/05/26 15:20:16 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.73 2020/05/26 11:43:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.74 2020/05/26 15:20:16 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7789,7 +7789,7 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 
 	if (!sc->sc_pbusy)
 		audio_pmixer_start(sc, true);
-	if (!sc->sc_rbusy)
+	if (!sc->sc_rbusy && sc->sc_ropens > 0)
 		audio_rmixer_start(sc);
 
 	audio_exlock_mutex_exit(sc);
