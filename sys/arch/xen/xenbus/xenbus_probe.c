@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.54 2020/05/14 13:18:55 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.55 2020/05/26 10:37:25 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.54 2020/05/14 13:18:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.55 2020/05/26 10:37:25 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.54 2020/05/14 13:18:55 jdolecek E
 #include <xen/shutdown_xenbus.h>
 
 #include "xenbus_comms.h"
+
+#include "kernfs.h"
 
 static int  xenbus_match(device_t, cfdata_t, void *);
 static void xenbus_attach(device_t, device_t, void *);
@@ -719,8 +721,10 @@ xenbus_probe_init(void *unused)
 #endif /* DOM0OPS */
 	}
 
+#if NKERNFS > 0
 	/* Publish xenbus and Xenstore info in /kern/xen */
 	xenbus_kernfs_init();
+#endif
 
 	/* register event handler */
 	xb_init_comms(xenbus_dev);
