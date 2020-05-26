@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.9 2020/05/25 10:14:58 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.10 2020/05/26 16:00:06 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.9 2020/05/25 10:14:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.10 2020/05/26 16:00:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,6 @@ static int	vmbus_cmd(struct vmbus_softc *, void *, size_t, void *, size_t,
 		    int);
 static int	vmbus_start(struct vmbus_softc *, struct vmbus_msg *, paddr_t);
 static int	vmbus_reply(struct vmbus_softc *, struct vmbus_msg *);
-static void	vmbus_wait(struct vmbus_softc *,
-		    int (*done)(struct vmbus_softc *, struct vmbus_msg *),
-		    struct vmbus_msg *, void *, const char *);
 static uint16_t vmbus_intr_signal(struct vmbus_softc *, paddr_t);
 static void	vmbus_event_proc(void *, struct cpu_info *);
 static void	vmbus_event_proc_compat(void *, struct cpu_info *);
@@ -642,36 +639,26 @@ vmbus_reply_done(struct vmbus_softc *sc, struct vmbus_msg *msg)
 static int
 vmbus_reply(struct vmbus_softc *sc, struct vmbus_msg *msg)
 {
+	int s;
 
 	if (msg->msg_flags & MSGF_NOQUEUE)
 		return 0;
 
-	vmbus_wait(sc, vmbus_reply_done, msg, msg, "hvreply");
-
-	mutex_enter(&sc->sc_rsp_lock);
-	TAILQ_REMOVE(&sc->sc_rsps, msg, msg_entry);
-	mutex_exit(&sc->sc_rsp_lock);
-
-	return 0;
-}
-
-static void
-vmbus_wait(struct vmbus_softc *sc,
-    int (*cond)(struct vmbus_softc *, struct vmbus_msg *),
-    struct vmbus_msg *msg, void *wchan, const char *wmsg)
-{
-	int s;
-
-	while (!cond(sc, msg)) {
+	while (!vmbus_reply_done(sc, msg)) {
 		if (msg->msg_flags & MSGF_NOSLEEP) {
 			delay(1000);
 			s = splnet();
 			hyperv_intr();
 			splx(s);
 		} else
-			tsleep(wchan, PRIBIO, wmsg ? wmsg : "hvwait",
-			    mstohz(1));
+			tsleep(msg, PRIBIO, "hvreply", 1);
 	}
+
+	mutex_enter(&sc->sc_rsp_lock);
+	TAILQ_REMOVE(&sc->sc_rsps, msg, msg_entry);
+	mutex_exit(&sc->sc_rsp_lock);
+
+	return 0;
 }
 
 static uint16_t
@@ -914,13 +901,6 @@ hyperv_guid_sprint(struct hyperv_guid *guid, char *str, size_t size)
 }
 
 static int
-vmbus_channel_scan_done(struct vmbus_softc *sc, struct vmbus_msg *msg __unused)
-{
-
-	return ISSET(sc->sc_flags, VMBUS_SCFLAG_OFFERS_DELIVERED);
-}
-
-static int
 vmbus_channel_scan(struct vmbus_softc *sc)
 {
 	struct vmbus_chanmsg_hdr hdr;
@@ -949,8 +929,8 @@ vmbus_channel_scan(struct vmbus_softc *sc)
 		return -1;
 	}
 
-	vmbus_wait(sc, vmbus_channel_scan_done, (struct vmbus_msg *)&hdr,
-	    &sc->sc_devq, "hvscan");
+	while (!ISSET(sc->sc_flags, VMBUS_SCFLAG_OFFERS_DELIVERED))
+		tsleep(&sc->sc_devq, PRIBIO, "hvscan", 1);
 
 	mutex_enter(&sc->sc_devq_lock);
 	vmbus_process_devq(sc);
