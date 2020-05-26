@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.23 2020/05/18 21:19:36 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.24 2020/05/26 15:20:45 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1301,7 +1301,7 @@ message	mp_already_exists	{$0 already defined!}
 
 message ptnsize_replace_existing
 {This is an already existing partition. 
-To change it's size, the partition will need to be deleted and later
+To change its size, the partition will need to be deleted and later
 recreated.  All data in this partition will be lost.
 
 Would you like to delete this partition and continue?}
