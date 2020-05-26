@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.61 2020/05/26 07:23:57 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.62 2020/05/26 09:16:33 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.61 2020/05/26 07:23:57 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.62 2020/05/26 09:16:33 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -574,7 +574,7 @@ ENTRY_NP(uartputs)
 1:
 	cmp	x0, #'\n'
 	bne	2f
-	mov	x0, #'\r'
+	mov	x0, #0x0d	/* '\r' */
 	bl	uartputc
 	mov	x0, #'\n'
 2:
@@ -680,7 +680,7 @@ tinyprintf_loop:
 	cmp	x0, #'\n'
 	bne	1f
 	/* '\n' -> '\r', '\n' */
-	mov	x0, #'\r'
+	mov	x0, #0x0d	/* '\r' */
 	bl	uartputc
 	mov	x0, #'\n'
 1:
