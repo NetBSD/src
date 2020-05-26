@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.179 2017/04/13 07:58:45 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.180 2020/05/26 00:50:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.179 2017/04/13 07:58:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.180 2020/05/26 00:50:53 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -168,12 +168,10 @@ process_domem(struct lwp *curl /*tracer*/,
 
 	vm = p->p_vmspace;
 
-	mutex_enter(&vm->vm_map.misc_lock);
 	if ((l->l_flag & LW_WEXIT) || vm->vm_refcnt < 1)
 		error = EFAULT;
 	if (error == 0)
-		p->p_vmspace->vm_refcnt++;  /* XXX */
-	mutex_exit(&vm->vm_map.misc_lock);
+		uvmspace_addref(p->p_vmspace);
 	if (error != 0)
 		return error;
 	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
