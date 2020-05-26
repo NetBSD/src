@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.12 2020/05/26 19:41:36 uwe Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.13 2020/05/26 22:33:04 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.12 2020/05/26 19:41:36 uwe Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.13 2020/05/26 22:33:04 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -233,11 +233,12 @@ proto_cc_dupfid(struct puffs_usermount *pu, p9pfid_t oldfid, p9pfid_t newfid)
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
-	p9ptag_t tag = NEXTTAG(p9p);
+	p9ptag_t tag;
 	uint16_t qids;
 	int rv = 0;
 
 	pb = p9pbuf_makeout();
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_WALK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, oldfid);
@@ -260,10 +261,11 @@ proto_cc_clunkfid(struct puffs_usermount *pu, p9pfid_t fid, int waitforit)
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
-	p9ptag_t tag = NEXTTAG(p9p);
+	p9ptag_t tag;
 	int rv = 0;
 
 	pb = p9pbuf_makeout();
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_CLUNK);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, fid);
@@ -294,7 +296,7 @@ proto_cc_open(struct puffs_usermount *pu, p9pfid_t fid,
 	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
-	p9ptag_t tag = NEXTTAG(p9p);
+	p9ptag_t tag;
 	int rv;
 
 	rv = proto_cc_dupfid(pu, fid, newfid);
@@ -302,6 +304,7 @@ proto_cc_open(struct puffs_usermount *pu, p9pfid_t fid,
 		return rv;
 
 	pb = p9pbuf_makeout();
+	tag = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_OPEN);
 	p9pbuf_put_2(pb, tag);
 	p9pbuf_put_4(pb, newfid);
