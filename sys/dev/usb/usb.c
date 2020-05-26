@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.185 2020/05/26 19:51:14 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.186 2020/05/26 19:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.185 2020/05/26 19:51:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.186 2020/05/26 19:55:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -724,7 +724,7 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 			return EBUSY;
 		usb_dev_open = 1;
 		mutex_enter(&proc_lock);
-		usb_async_proc = 0;
+		usb_async_proc = NULL;
 		mutex_exit(&proc_lock);
 		return 0;
 	}
@@ -804,7 +804,7 @@ usbclose(dev_t dev, int flag, int mode,
 
 	if (unit == USB_DEV_MINOR) {
 		mutex_enter(&proc_lock);
-		usb_async_proc = 0;
+		usb_async_proc = NULL;
 		mutex_exit(&proc_lock);
 		usb_dev_open = 0;
 	}
@@ -831,7 +831,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			if (*(int *)data)
 				usb_async_proc = l->l_proc;
 			else
-				usb_async_proc = 0;
+				usb_async_proc = NULL;
 			mutex_exit(&proc_lock);
 			return 0;
 
