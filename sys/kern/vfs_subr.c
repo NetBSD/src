@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.487 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.488 2020/05/26 18:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.487 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.488 2020/05/26 18:38:37 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -730,18 +730,15 @@ lazy_sync_vnode(struct vnode *vp)
 	KASSERT(mutex_owned(&syncer_data_lock));
 
 	synced = false;
-	/* We are locking in the wrong direction. */
-	if (mutex_tryenter(vp->v_interlock)) {
+	if (vcache_tryvget(vp) == 0) {
 		mutex_exit(&syncer_data_lock);
-		if (vcache_tryvget(vp) == 0) {
-			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
-				synced = true;
-				(void) VOP_FSYNC(vp, curlwp->l_cred,
-				    FSYNC_LAZY, 0, 0);
-				vput(vp);
-			} else
-				vrele(vp);
-		}
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
+			synced = true;
+			(void) VOP_FSYNC(vp, curlwp->l_cred,
+			    FSYNC_LAZY, 0, 0);
+			vput(vp);
+		} else
+			vrele(vp);
 		mutex_enter(&syncer_data_lock);
 	}
 	return synced;
