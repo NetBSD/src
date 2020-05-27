@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.27 2020/05/27 00:36:07 uwe Exp $	*/
+/*	$NetBSD: node.c,v 1.28 2020/05/27 03:25:13 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.27 2020/05/27 00:36:07 uwe Exp $");
+__RCSID("$NetBSD: node.c,v 1.28 2020/05/27 03:25:13 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -572,22 +572,22 @@ puffs9p_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	return rv;
 }
 
-/*
- * 9P supports renames only for files within a directory
- * from what I could tell.  So just support in-directory renames
- * for now.
- */ 
 int
-puffs9p_node_rename(struct puffs_usermount *pu, void *opc, void *src,
-	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
-	const struct puffs_cn *pcn_targ)
+puffs9p_node_rename(struct puffs_usermount *pu,
+		    void *src_dir, void *src, const struct puffs_cn *pcn_src,
+		    void *targ_dir, void *targ, const struct puffs_cn *pcn_targ)
 {
 	AUTOVAR(pu);
 	struct puffs_node *pn_src = src;
 	struct p9pnode *p9n_src = pn_src->pn_data;
 
-	if (opc != targ_dir) {
-		rv = EOPNOTSUPP;
+	/*
+	 * 9P rename can only change the last pathname component.
+	 * Return EXDEV for attempts to move a file to a different
+	 * directory to make mv(1) fall back to copying.
+	 */
+	if (src_dir != targ_dir) {
+		rv = EXDEV;
 		goto out;
 	}
 
