@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.10 2019/11/21 19:23:18 martin Exp $
+.\"	$NetBSD: install,v 1.11 2020/05/27 12:45:07 nia Exp $
 .\"
-.\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,78 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
+.Ss2 Installation for ARMv7 and AArch64 boards using U-Boot (example: Allwinner SoCs)
+.Bl -bullet -offset indent -compact
+.It
+Download or build armv7.img (32-bit) or arm64.img (64-bit)
+.It
+Write the image to disk:
+.Bd -literal
+# dd if=armv7.img of=/dev/rld0d bs=1m conv=sync
+.Ed
+.It
+Install a board-specific U-Boot from pkgsrc to the SD card (the u-boot-sunxi-with-spl.bin-s are provided by sysutils/u-boot-<boardname> packages):
+.Bd -literal
+# dd if=/usr/pkg/share/u-boot/[boardname]/u-boot-sunxi-with-spl.bin of=/dev/rld0d bs=1k seek=8 conv=sync
+.Ed
+.El
+.Pp
+If you do not want to prepare a SD card image manually, NetBSD developer
+Jared McNeill provides pre-prepared images on his website
+.Lk http://www.armbsd.org/arm/ "armbsd.org" .
+.Ss2 Installation for AArch64 boards using U-Boot (example: Rockchip SoCs)
+.Bl -bullet -offset indent -compact
+.It
+Download or build arm64.img (64-bit)
+.It
+Write the image to disk:
+.Bd -literal
+# dd if=arm64.img of=/dev/rld0d bs=1m conv=sync
+.Ed
+.It
+Install a board-specific U-Boot from pkgsrc to the SD card:
+.Bd -literal
+# dd if=/usr/pkg/share/u-boot/[boardname]/rksd_loader.img of=/dev/rld0d seek=64 conv=sync
+.Ed
+.El
+.Pp
+If you do not want to prepare a SD card image manually, NetBSD developer
+Jared McNeill provides pre-prepared images on his website
+.Lk http://www.armbsd.org/arm/ "armbsd.org" .
+.Ss2 Installation for ODROID C1, C1+
+.Bl -bullet -offset indent -compact
+.It
+Download or build armv7.img (32-bit)
+.It
+.Lk https://github.com/hardkernel/u-boot/tree/odroidc-v2011.03 "Build"
+or
+.Lk http://ftp.netbsd.org/pub/NetBSD/misc/jmcneill/odroidc1/u-boot-odroidc-v2011.03-20150308.tar.gz "download a prebuilt"
+U-Boot
+.It
+Write the bootloader to the empty space at the start of the base image:
+.Pp
+.Bd -literal
+# dd if=bl1.bin.hardkernel of=armv7.img bs=1 count=442 conv=notrunc
+# dd if=bl1.bin.hardkernel of=armv7.img bs=512 skip=1 seek=1 conv=notrunc
+# dd if=u-boot.bin of=armv7.img bs=512 seek=64 conv=notrunc
+.Ed
+.It
+Write the image to an SD card.
+.It
+Edit boot.ini on the MS-DOS partition. Note that the default boot.ini has console=fb in bootargs, which you should remove if you want serial console:
+.Pp
+.Bd -literal
+ODROIDC-UBOOT-CONFIG
+
+setenv bootargs "root=ld0a awge0.mac-address=${ethaddr} console=fb"
+setenv bootcmd "fatload mmc 0:1 0x21000000 netbsd-ODROID-C1.ub; bootm 0x21000000"
+run bootcmd
+.Ed
+.El
+.Pp
+If you do not want to prepare a SD card image manually, NetBSD developer
+Jared McNeill provides pre-prepared images on his website
+.Lk http://www.armbsd.org/arm/ "armbsd.org" .
 .Ss2 Installation for the Technologic Systems TS-7200
 The following steps describe how to set up a CompactFlash card for
 the TS-7200.  The TS-7200 can use the interactive
