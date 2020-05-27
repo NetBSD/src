@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.62 2020/05/26 09:16:33 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.63 2020/05/27 19:49:37 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.62 2020/05/26 09:16:33 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.63 2020/05/27 19:49:37 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -845,10 +845,10 @@ init_mmutable:
 	cbnz	x0, init_mmutable_error
 
 #ifdef FDT
+	VPRINT("Creating VA=PA tables for FDT\n")
 	adrl	x8, _C_LABEL(fdt_addr_r)
 	ldr	x8, [x8]
 
-	VPRINT("Creating VA=PA tables for FDT\n")
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
