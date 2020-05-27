@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.22 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.23 2020/05/27 23:52:19 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -3892,7 +3892,7 @@ config_fudge(
 
 			case T_Refid:
 				clock_stat.haveflags |= CLK_HAVEVAL2;
-				/* strncpy() does exactly what we want here: */
+				/* avoid using strncpy because gcc warns */
 				len = strlen(curr_opt->value.s);
 				if (len > sizeof(clock_stat.fudgeval2))
 					len = sizeof(clock_stat.fudgeval2);
