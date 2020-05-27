@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.36 2020/05/27 19:15:08 ad Exp $	*/
+/*	$NetBSD: svs.c,v 1.37 2020/05/27 19:40:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.36 2020/05/27 19:15:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.37 2020/05/27 19:40:29 ad Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -682,28 +682,16 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	}
 }
 
-static inline pt_entry_t
-svs_pte_atomic_read(struct pmap *pmap, size_t idx)
-{
-	/*
-	 * XXX: We don't have a basic atomic_fetch_64 function?
-	 */
-	return atomic_cas_64(&pmap->pm_pdir[idx], 666, 666);
-}
-
 /*
- * We may come here with the pmap unlocked. So read its PTEs atomically. If
- * a remote CPU is updating them at the same time, it's not a problem: the
- * remote CPU will call svs_pmap_sync afterwards, and our updirpa will be
- * synchronized properly.
+ * We may come here with the pmap unlocked.  If a remote CPU is updating
+ * them at the same time, it's not a problem: the remote CPU will call
+ * svs_pmap_sync afterwards, and our updirpa will be synchronized properly.
  */
 void
 svs_pdir_switch(struct pmap *pmap)
 {
 	struct cpu_info *ci = curcpu();
 	struct svs_utls *utls;
-	pt_entry_t pte;
-	size_t i;
 
 	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel());
@@ -712,14 +700,9 @@ svs_pdir_switch(struct pmap *pmap)
 	utls = (struct svs_utls *)ci->ci_svs_utls;
 	utls->kpdirpa = pmap_pdirpa(pmap, 0) | svs_pcid_kcr3;
 
+	/* Copy user slots. */
 	mutex_enter(&ci->ci_svs_mtx);
-
-	/* User slots. */
-	for (i = 0; i < PDIR_SLOT_USERLIM; i++) {
-		pte = svs_pte_atomic_read(pmap, i);
-		ci->ci_svs_updir[i] = pte;
-	}
-
+	x86_movs(ci->ci_svs_updir, pmap->pm_pdir, PDIR_SLOT_USERLIM);
 	mutex_exit(&ci->ci_svs_mtx);
 
 	if (svs_pcid) {
