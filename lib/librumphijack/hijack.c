@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.130 2020/02/10 23:21:42 kamil Exp $	*/
+/*      $NetBSD: hijack.c,v 1.131 2020/05/27 18:55:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.130 2020/02/10 23:21:42 kamil Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.131 2020/05/27 18:55:36 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -170,6 +170,9 @@ enum dualcall {
 #ifdef __NetBSD__
 	DUALCALL_LINKAT,
 #endif
+	DUALCALL_PATHCONF,
+	DUALCALL_LPATHCONF,
+
 	DUALCALL__NUM
 };
 
@@ -405,6 +408,8 @@ struct sysnames {
 #ifdef __NetBSD__
 	{ DUALCALL_LINKAT,	"linkat",	RSYS_NAME(LINKAT)	},
 #endif
+	{ DUALCALL_PATHCONF,	"pathconf",	RSYS_NAME(PATHCONF)	},
+	{ DUALCALL_LPATHCONF,	"lpathconf",	RSYS_NAME(LPATHCONF)	},
 };
 #undef S
 
@@ -1334,6 +1339,39 @@ linkat(int fromfd, const char *from, int tofd, const char *to, int flags)
 	    GETSYSCALL(rump, LINK), GETSYSCALL(host, LINK));
 }
 #endif
+
+static long
+do_pathconf(const char *path, int name, int link)
+{
+	long (*op_pathconf)(const char *, int);
+	enum pathtype pt;
+
+	if ((pt = path_isrump(path)) != PATH_HOST) {
+		op_pathconf = link ?
+		    GETSYSCALL(rump, LPATHCONF) :
+		    GETSYSCALL(rump, PATHCONF);
+		if (pt == PATH_RUMP)
+			path = path_host2rump(path);
+	} else {
+		op_pathconf = link ? 
+		    GETSYSCALL(host, LPATHCONF) :
+		    GETSYSCALL(host, PATHCONF);
+	}
+
+	return op_pathconf(path, name);
+}
+
+long
+lpathconf(const char *path, int name)
+{
+	return do_pathconf(path, name, 1);
+}
+
+long
+pathconf(const char *path, int name)
+{
+	return do_pathconf(path, name, 0);
+}
 
 int
 link(const char *from, const char *to)
