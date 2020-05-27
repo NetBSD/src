@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.47 2020/05/20 20:19:02 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.47 2020/05/20 20:19:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 static void	tsc_delay(unsigned int);
 
 static uint64_t	tsc_dummy_cacheline __cacheline_aligned;
-uint64_t	tsc_freq; /* exported for sysctl */
+uint64_t	tsc_freq __read_mostly;	/* exported for sysctl */
 static int64_t	tsc_drift_max = 1000;	/* max cycles */
 static int64_t	tsc_drift_observed;
 
@@ -346,7 +346,7 @@ tsc_delay(unsigned int us)
 	uint64_t start, delta;
 
 	start = cpu_counter();
-	delta = (uint64_t)us * cpu_frequency(&cpu_info_primary) / 1000000;
+	delta = (uint64_t)us * tsc_freq / 1000000;
 
 	while ((cpu_counter() - start) < delta) {
 		x86_pause();
