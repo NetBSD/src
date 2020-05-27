@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.58 2020/05/27 08:55:18 rin Exp $ */
+/* $NetBSD: kern_tc.c,v 1.59 2020/05/27 09:09:50 rin Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.58 2020/05/27 08:55:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.59 2020/05/27 09:09:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -80,7 +80,7 @@ dummy_get_timecount(struct timecounter *tc)
 {
 	static u_int now;
 
-	return (++now);
+	return ++now;
 }
 
 static struct timecounter dummy_timecounter = {
@@ -143,11 +143,6 @@ static u_int timecounter_mods;
 static volatile int timecounter_removals = 1;
 static u_int timecounter_bad;
 
-#ifdef __FreeBSD__
-SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
-    &timestepwarnings, 0, "");
-#endif /* __FreeBSD__ */
-
 /*
  * sysctl helper routine for kern.timercounter.hardware
  */
@@ -177,7 +172,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	if (l != NULL && (error = kauth_authorize_system(l->l_cred, 
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS, newname,
 	    NULL, NULL)) != 0)
-		return (error);
+		return error;
 
 	if (!cold)
 		mutex_spin_enter(&timecounter_lock);
@@ -208,9 +203,9 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 	int error, mods;
 
 	if (newp != NULL)
-		return (EPERM);
+		return EPERM;
 	if (namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	mutex_spin_enter(&timecounter_lock);
  retry:
@@ -244,7 +239,7 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 	mutex_spin_exit(&timecounter_lock);
 
 	*oldlenp = needed;
-	return (error);
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
@@ -310,8 +305,8 @@ tc_delta(struct timehands *th)
 	struct timecounter *tc;
 
 	tc = th->th_counter;
-	return ((tc->tc_get_timecount(tc) - 
-		 th->th_offset_count) & tc->tc_counter_mask);
+	return (tc->tc_get_timecount(tc) -
+		 th->th_offset_count) & tc->tc_counter_mask;
 }
 
 /*
@@ -711,7 +706,7 @@ uint64_t
 tc_getfrequency(void)
 {
 
-	return (timehands->th_counter->tc_frequency);
+	return timehands->th_counter->tc_frequency;
 }
 
 /*
@@ -912,41 +907,41 @@ pps_ioctl(u_long cmd, void *data, struct pps_state *pps)
 
 	switch (cmd) {
 	case PPS_IOC_CREATE:
-		return (0);
+		return 0;
 	case PPS_IOC_DESTROY:
-		return (0);
+		return 0;
 	case PPS_IOC_SETPARAMS:
 		app = (pps_params_t *)data;
 		if (app->mode & ~pps->ppscap)
-			return (EINVAL);
+			return EINVAL;
 		pps->ppsparam = *app;
-		return (0);
+		return 0;
 	case PPS_IOC_GETPARAMS:
 		app = (pps_params_t *)data;
 		*app = pps->ppsparam;
 		app->api_version = PPS_API_VERS_1;
-		return (0);
+		return 0;
 	case PPS_IOC_GETCAP:
 		*(int*)data = pps->ppscap;
-		return (0);
+		return 0;
 	case PPS_IOC_FETCH:
 		pipi = (pps_info_t *)data;
 		pps->ppsinfo.current_mode = pps->ppsparam.mode;
 		*pipi = pps->ppsinfo;
-		return (0);
+		return 0;
 	case PPS_IOC_KCBIND:
 #ifdef PPS_SYNC
 		epi = (int *)data;
 		/* XXX Only root should be able to do this */
 		if (*epi & ~pps->ppscap)
-			return (EINVAL);
+			return EINVAL;
 		pps->kcmode = *epi;
-		return (0);
+		return 0;
 #else
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 #endif
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 }
 
