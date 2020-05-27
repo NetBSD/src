@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.184 2020/05/05 09:07:35 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.185 2020/05/27 19:33:40 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.184 2020/05/05 09:07:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.185 2020/05/27 19:33:40 ad Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1640,43 +1640,6 @@ ENTRY(npx586bug1)
 	popl	%eax
 	ret
 END(npx586bug1)
-
-/*
- * void sse2_idlezero_page(void *pg)
- *
- * Zero a page without polluting the cache.  Preemption must be
- * disabled by the caller. Abort if a preemption is pending.
- */
-ENTRY(sse2_idlezero_page)
-	pushl	%ebp
-	movl	%esp,%ebp
-	movl	8(%esp), %edx
-	movl	$(PAGE_SIZE/32), %ecx
-	xorl	%eax, %eax
-	.align	16
-1:
-	cmpl	$0, CPUVAR(RESCHED)
-	jnz	2f
-	movnti	%eax, 0(%edx)
-	movnti	%eax, 4(%edx)
-	movnti	%eax, 8(%edx)
-	movnti	%eax, 12(%edx)
-	movnti	%eax, 16(%edx)
-	movnti	%eax, 20(%edx)
-	movnti	%eax, 24(%edx)
-	movnti	%eax, 28(%edx)
-	addl	$32, %edx
-	decl	%ecx
-	jnz	1b
-	sfence
-	incl	%eax
-	pop	%ebp
-	ret
-2:
-	sfence
-	popl	%ebp
-	ret
-END(sse2_idlezero_page)
 
 ENTRY(intrfastexit)
 	movw	TF_GS(%esp),%gs

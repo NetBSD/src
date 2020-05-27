@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.208 2020/05/05 06:32:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.209 2020/05/27 19:33:40 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1559,61 +1559,6 @@ LABEL(syscall_sysret)
 #endif
 END(syscall_sysret)
 	TEXT_USER_END
-
-/*
- * bool sse2_idlezero_page(void *pg)
- *
- * Zero a page without polluting the cache.  Preemption must be
- * disabled by the caller. Abort if a preemption is pending.
- * Returns true if the page is zeroed, false if not.
- */
-ENTRY(sse2_idlezero_page)
-	pushq	%rbp
-	movq	%rsp,%rbp
-	movl	$(PAGE_SIZE/64), %ecx
-	xorq	%rax, %rax
-	.align	16
-1:
-	cmpl	$0, CPUVAR(RESCHED)
-	jnz	2f
-	movnti	%rax, 0(%rdi)
-	movnti	%rax, 8(%rdi)
-	movnti	%rax, 16(%rdi)
-	movnti	%rax, 24(%rdi)
-	movnti	%rax, 32(%rdi)
-	movnti	%rax, 40(%rdi)
-	movnti	%rax, 48(%rdi)
-	movnti	%rax, 56(%rdi)
-	addq	$64, %rdi
-	decl	%ecx
-	jnz	1b
-	sfence
-	incl	%eax
-	popq	%rbp
-	KMSAN_INIT_RET(1)
-	ret
-2:
-	sfence
-	popq	%rbp
-	KMSAN_INIT_RET(1)
-	ret
-END(sse2_idlezero_page)
-
-/*
- * void pagezero(vaddr_t va)
- *
- * Zero a page.
- */
-ENTRY(pagezero)
-	pushq	%rbp
-	movq	%rsp,%rbp
-	movq	$(PAGE_SIZE / 8),%rcx
-	xorq	%rax,%rax
-	rep
-	stosq
-	leave
-	ret
-END(pagezero)
 
 	TEXT_USER_BEGIN
 

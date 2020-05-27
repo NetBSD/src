@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.121 2020/05/26 10:10:31 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.122 2020/05/27 19:33:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -431,12 +431,6 @@ void		pmap_tlb_intr(void);
 #define PMAP_FORK		/* turn on pmap_fork interface */
 
 /*
- * Do idle page zero'ing uncached to avoid polluting the cache.
- */
-bool	pmap_pageidlezero(paddr_t);
-#define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
-
-/*
  * inline functions
  */
 
@@ -546,7 +540,6 @@ kvtopte(vaddr_t va)
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_late(struct cpu_info *);
-bool	sse2_idlezero_page(void *);
 
 #ifdef XENPV
 #include <sys/bitops.h>
@@ -617,9 +610,10 @@ extern vaddr_t pmap_direct_end;
 #define PMAP_MAP_POOLPAGE(pa)	PMAP_DIRECT_MAP((pa))
 #define PMAP_UNMAP_POOLPAGE(va)	PMAP_DIRECT_UNMAP((va))
 
-void	pagezero(vaddr_t);
-
 #endif /* __HAVE_DIRECT_MAP */
+
+void	x86_stos(void *, long, long);
+void	x86_movs(void *, void *, long);
 
 #endif /* _KERNEL */
 
