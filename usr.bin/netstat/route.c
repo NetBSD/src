@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.85 2016/04/04 07:37:08 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.86 2020/05/27 05:59:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.85 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: route.c,v 1.86 2020/05/27 05:59:16 yamaguchi Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,7 +303,7 @@ rt_stats(u_long off)
 	if (use_sysctl) {
 		size_t rtsize = sizeof(rtstats);
 
-		if (sysctlbyname("net.route.stats", &rtstats, &rtsize,
+		if (sysctlbyname("net.rtable.stats", &rtstats, &rtsize,
 		    NULL, 0) == -1)
 			err(1, "rt_stats: sysctl");
 	} else 	if (off == 0) {
