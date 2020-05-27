@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.56 2020/05/27 08:47:15 rin Exp $ */
+/* $NetBSD: kern_tc.c,v 1.57 2020/05/27 08:51:03 rin Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,11 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.56 2020/05/27 08:47:15 rin Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ntp.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.57 2020/05/27 08:51:03 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,9 +93,9 @@ struct timehands {
 	struct timecounter	*th_counter;     /* active timecounter */
 	int64_t			th_adjustment;   /* frequency adjustment */
 						 /* (NTP/adjtime) */
-	u_int64_t		th_scale;        /* scale factor (counter */
+	uint64_t		th_scale;        /* scale factor (counter */
 						 /* tick->time) */
-	u_int64_t 		th_offset_count; /* offset at last time */
+	uint64_t 		th_offset_count; /* offset at last time */
 						 /* update (tc_windup()) */
 	struct bintime		th_offset;       /* bin (up)time at windup */
 	struct timeval		th_microtime;    /* cached microtime */
@@ -707,7 +703,7 @@ tc_detach(struct timecounter *target)
 }
 
 /* Report the frequency of the current timecounter. */
-u_int64_t
+uint64_t
 tc_getfrequency(void)
 {
 
@@ -753,7 +749,7 @@ tc_windup(void)
 {
 	struct bintime bt;
 	struct timehands *th, *tho;
-	u_int64_t scale;
+	uint64_t scale;
 	u_int delta, ncount, ogen;
 	int i, s_update;
 	time_t t;
@@ -858,7 +854,7 @@ tc_windup(void)
 	 *
 	 */
 	if (s_update) {
-		scale = (u_int64_t)1 << 63;
+		scale = (uint64_t)1 << 63;
 		scale += (th->th_adjustment / 1024) * 2199;
 		scale /= th->th_counter->tc_frequency;
 		th->th_scale = scale * 2;
@@ -977,7 +973,7 @@ pps_capture(struct pps_state *pps)
 	th = timehands;
 	pps->capgen = th->th_generation;
 	pps->capth = th;
-	pps->capcount = (u_int64_t)tc_delta(th) + th->th_offset_count;
+	pps->capcount = (uint64_t)tc_delta(th) + th->th_offset_count;
 	if (pps->capgen != th->th_generation)
 		pps->capgen = 0;
 }
@@ -1039,7 +1035,7 @@ pps_ref_event(struct pps_state *pps,
 	struct bintime bt_ref;	/* reference time */
 	struct timespec ts, *tsp, *osp;
 	struct timehands *th;
-	u_int64_t tcount, acount, dcount, *pcount;
+	uint64_t tcount, acount, dcount, *pcount;
 	int foff, gen;
 #ifdef PPS_SYNC
 	int fhard;
@@ -1055,7 +1051,7 @@ pps_ref_event(struct pps_state *pps,
 		/* pick up current time stamp */
 		th = timehands;
 		gen = th->th_generation;
-		tcount = (u_int64_t)tc_delta(th) + th->th_offset_count;
+		tcount = (uint64_t)tc_delta(th) + th->th_offset_count;
 		if (gen != th->th_generation)
 			gen = 0;
 
