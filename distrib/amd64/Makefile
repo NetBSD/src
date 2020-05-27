@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/05/21 15:28:37 riastradh Exp $
+#	$NetBSD: Makefile,v 1.14 2020/05/27 22:27:58 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,6 @@ SUBDIR+=	.WAIT
 SUBDIR+=	cdroms
 SUBDIR+=	liveimage
 SUBDIR+=	installimage
-SUBDIR+=	uefi-installimage
 TARGETS+=	release 
 
 iso_image:
@@ -25,6 +24,5 @@ live_image:
 
 install_image:
 	${MAKEDIRTARGET} installimage install_image
-	${MAKEDIRTARGET} uefi-installimage install_image
 
 .include <bsd.subdir.mk>
