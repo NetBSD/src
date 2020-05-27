@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.43 2020/05/27 19:33:40 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.44 2020/05/27 20:49:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.43 2020/05/27 19:33:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.44 2020/05/27 20:49:14 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -341,4 +341,4 @@ ENTRY(x86_movs)
 	movsl
 	leave
 	ret
-END(x86_stos)
+END(x86_movs)
