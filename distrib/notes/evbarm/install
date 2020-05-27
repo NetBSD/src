@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.11 2020/05/27 12:45:07 nia Exp $
+.\"	$NetBSD: install,v 1.12 2020/05/27 12:47:47 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Ss2 Installation for ARMv7 and AArch64 boards using U-Boot (example: Allwinner SoCs)
+.Ss2 Installation for ARMv7 and AArch64 devices with U-Boot (example: Allwinner SoCs)
 .Bl -bullet -offset indent -compact
 .It
 Download or build armv7.img (32-bit) or arm64.img (64-bit)
@@ -43,7 +43,7 @@ Install a board-specific U-Boot from pkgsrc to the SD card (the u-boot-sunxi-wit
 If you do not want to prepare a SD card image manually, NetBSD developer
 Jared McNeill provides pre-prepared images on his website
 .Lk http://www.armbsd.org/arm/ "armbsd.org" .
-.Ss2 Installation for AArch64 boards using U-Boot (example: Rockchip SoCs)
+.Ss2 Installation for AArch64 devices with U-Boot (example: Rockchip SoCs)
 .Bl -bullet -offset indent -compact
 .It
 Download or build arm64.img (64-bit)
