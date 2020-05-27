@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.57 2020/05/27 19:33:40 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.58 2020/05/27 20:48:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -422,22 +422,16 @@ ENTRY(outl)
 END(outl)
 
 ENTRY(x86_stos)
-	pushq	%rbp
-	movq	%rsp,%rbp
 	movq	%rsi,%rax
 	movq	%rdx,%rcx
 	rep
 	stosq
-	leave
 	ret
 END(x86_stos)
 
 ENTRY(x86_movs)
-	pushq	%rbp
-	movq	%rsp,%rbp
 	movq	%rdx,%rcx
 	rep
 	movsq
-	leave
 	ret
-END(x86_stos)
+END(x86_movs)
