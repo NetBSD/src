@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.26 2020/05/27 00:05:22 uwe Exp $	*/
+/*	$NetBSD: node.c,v 1.27 2020/05/27 00:36:07 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.26 2020/05/27 00:05:22 uwe Exp $");
+__RCSID("$NetBSD: node.c,v 1.27 2020/05/27 00:36:07 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -533,9 +533,6 @@ noderemove(struct puffs_usermount *pu, struct puffs_node *pn)
 	}
 
  out:
-	if (rv == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
-
 	RETURN(rv);
 }
 
@@ -543,24 +540,36 @@ int
 puffs9p_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs_node *pn = targ;
+	int rv;
 
 	if (pn->pn_va.va_type == VDIR)
 		return EISDIR;
 
-	return noderemove(pu, pn);
+	rv = noderemove(pu, pn);
+	if (rv == 0)
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+
+	return rv;
 }
 
 int
 puffs9p_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs_node *pn = targ;
+	int rv;
 
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
 
-	return noderemove(pu, pn);
+	rv = noderemove(pu, pn);
+	if (rv == 0)
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+
+	return rv;
 }
 
 /*
