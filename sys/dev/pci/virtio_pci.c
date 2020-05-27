@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.10 2020/05/25 07:52:16 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.11 2020/05/27 11:24:31 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.10 2020/05/25 07:52:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.11 2020/05/27 11:24:31 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,10 +677,14 @@ virtio_pci_setup_interrupts(struct virtio_softc *sc)
 		counts[PCI_INTR_TYPE_INTX] = 1;
 	} else {
 		/* Try MSI-X first and INTx second */
-		if (sc->sc_child_mq &&
-		    sc->sc_nvqs > (nmsix - VIRTIO_MSIX_QUEUE_VECTOR_INDEX)) {
-			nmsix = 2;
+		if (sc->sc_nvqs + VIRTIO_MSIX_QUEUE_VECTOR_INDEX <= nmsix) {
+			nmsix = sc->sc_nvqs + VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
+		} else {
 			sc->sc_child_mq = false;
+		}
+
+		if (sc->sc_child_mq == false) {
+			nmsix = 2;
 		}
 
 		max_type = PCI_INTR_TYPE_MSIX;
