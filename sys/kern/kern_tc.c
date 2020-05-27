@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.55 2020/05/23 23:42:43 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.56 2020/05/27 08:47:15 rin Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.55 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.56 2020/05/27 08:47:15 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -1336,7 +1336,7 @@ tc_ticktock(void)
 		return;
 	count = 0;
 	mutex_spin_enter(&timecounter_lock);
-	if (timecounter_bad != 0) {
+	if (__predict_false(timecounter_bad != 0)) {
 		/* An existing timecounter has gone bad, pick a new one. */
 		(void)atomic_swap_uint(&timecounter_bad, 0);
 		if (timecounter->tc_quality < 0) {
