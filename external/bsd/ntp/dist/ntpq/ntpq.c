@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.21 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.22 2020/05/27 23:52:19 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -3738,7 +3738,7 @@ cookedprint(
 		case SN:
 			if (!value)
 				output_raw = '?';
-			else if (isdigit((unsigned char)*value)) {	/* number without sign */
+			else if (isdigit(*(const unsigned char *)value)) {	/* number without sign */
 				bv[0] = '+';
 				atoascii (value, MAXVALLEN, bv+1, sizeof(bv)-1);
 				output(fp, name, bv);
