@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.11 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.12 2020/05/27 23:52:19 christos Exp $	*/
 
 /*
  *
@@ -727,6 +727,7 @@ neoclock4x_control(int unit,
   if(NULL != out)
     {
       char *tt;
+      /* the 199 here is almost 2x the max string */
       char tmpbuf[199];
 
       out->kv_list = (struct ctl_var *)0;
@@ -767,6 +768,7 @@ neoclock4x_control(int unit,
         snprintf(tt, 39, "dststatus=\"winter\"");
       else
         snprintf(tt, 39, "dststatus=\"unknown\"");
+      /* the 99 below is greater than 80 the max string */
       tt = add_var(&out->kv_list, 80, RO|DEF);
       snprintf(tt, 99, "firmware=\"%s\"", up->firmware);
       tt = add_var(&out->kv_list, 40, RO|DEF);

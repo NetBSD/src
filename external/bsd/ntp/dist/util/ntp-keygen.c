@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.13 2020/05/25 20:47:37 christos Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.14 2020/05/27 23:52:20 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -281,7 +281,7 @@ followlink(
 
 	REQUIRE(bufsiz > 0);
 
-	len = readlink(fname, result, bufsiz);
+	len = readlink(fname, result, sizeof(result));
 	if (len < 0) {
 		fname[0] = '\0';
 		return;
