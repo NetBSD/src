@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2020/05/27 12:47:47 nia Exp $
+.\"	$NetBSD: install,v 1.13 2020/05/27 13:51:05 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,18 @@ Write the image to disk:
 # dd if=armv7.img of=/dev/rld0d bs=1m conv=sync
 .Ed
 .It
-Install a board-specific U-Boot from pkgsrc to the SD card (the u-boot-sunxi-with-spl.bin-s are provided by sysutils/u-boot-<boardname> packages):
+Obtain a board-specific U-Boot image. Bootloaders are provided by
+the
+.Pa sysutils/u-boot-*
+packages in
+.Lk https://www.pkgsrc.org/ "pkgsrc" .
+.Pp
+If you're using pkgsrc on an UNIX-like operating system that isn't NetBSD,
+you must bootstrap first (see the 
+.Pa README
+file in the root directory of pkgsrc).
+.Pp
+Install the board-specific U-Boot to the SD card:
 .Bd -literal
 # dd if=/usr/pkg/share/u-boot/[boardname]/u-boot-sunxi-with-spl.bin of=/dev/rld0d bs=1k seek=8 conv=sync
 .Ed
@@ -53,7 +64,18 @@ Write the image to disk:
 # dd if=arm64.img of=/dev/rld0d bs=1m conv=sync
 .Ed
 .It
-Install a board-specific U-Boot from pkgsrc to the SD card:
+Obtain a board-specific U-Boot image. Bootloaders are provided by
+the
+.Pa sysutils/u-boot-*
+packages in
+.Lk https://www.pkgsrc.org/ "pkgsrc" .
+.Pp
+If you're using pkgsrc on an UNIX-like operating system that isn't NetBSD,
+you must bootstrap first (see the 
+.Pa README
+file in the root directory of pkgsrc).
+.Pp
+Install the board-specific U-Boot to the SD card:
 .Bd -literal
 # dd if=/usr/pkg/share/u-boot/[boardname]/rksd_loader.img of=/dev/rld0d seek=64 conv=sync
 .Ed
