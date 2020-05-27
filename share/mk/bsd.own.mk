@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1194 2020/05/27 06:06:37 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1195 2020/05/27 10:53:18 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1195,8 +1195,12 @@ MKRADEONFIRMWARE.aarch64=	yes
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
 
-# Only build devicetree (dtb) files on armv7 and aarch64.
+# Only build devicetree (dtb) files on armv6, armv7, and aarch64.
 MKDTB.aarch64=			yes
+MKDTB.earmv6=			yes
+MKDTB.earmv6hf=			yes
+MKDTB.earmv6eb=			yes
+MKDTB.earmv6hfeb=		yes
 MKDTB.earmv7=			yes
 MKDTB.earmv7hf=			yes
 MKDTB.earmv7eb=			yes
