@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.394 2020/05/26 10:10:31 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.395 2020/05/27 19:26:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.394 2020/05/26 10:10:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.395 2020/05/27 19:26:43 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -494,6 +494,7 @@ static int pmap_pvp_ctor(void *, void *, int);
 static void pmap_pvp_dtor(void *, void *);
 static struct pv_entry *pmap_alloc_pv(struct pmap *);
 static void pmap_free_pv(struct pmap *, struct pv_entry *);
+static void pmap_drain_pv(struct pmap *);
 
 static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
@@ -2073,6 +2074,25 @@ pmap_free_pv(struct pmap *pmap, struct pv_entry *pve)
 }
 
 /*
+ * pmap_drain_pv: free full PV pages.
+ */
+static void
+pmap_drain_pv(struct pmap *pmap)
+{
+	struct pv_page *pvp;
+
+	KASSERT(mutex_owned(&pmap->pm_lock));
+
+	while ((pvp = LIST_FIRST(&pmap->pm_pvp_full)) != NULL) {
+		LIST_REMOVE(pvp, pvp_list);
+		KASSERT(pvp->pvp_pmap == pmap);
+		KASSERT(pvp->pvp_nfree == PVE_PER_PVP);
+		pvp->pvp_pmap = NULL;
+		pool_cache_put(&pmap_pvp_cache, pvp);
+	}
+}
+
+/*
  * pmap_check_pv: verify {VA, PTP} pair is either tracked/untracked by page
  */
 static void
@@ -2940,12 +2960,13 @@ pmap_destroy(struct pmap *pmap)
 	 * handle any deferred frees.
 	 */
 
+	mutex_enter(&pmap->pm_lock);
 	if (pmap->pm_pve != NULL) {
-		mutex_enter(&pmap->pm_lock);
 		pmap_free_pv(pmap, pmap->pm_pve);
-		mutex_exit(&pmap->pm_lock);
 		pmap->pm_pve = NULL;
 	}
+	pmap_drain_pv(pmap);
+	mutex_exit(&pmap->pm_lock);
 	pmap_update(pmap);
 
 	/*
@@ -3088,7 +3109,7 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 			mutex_spin_exit(&pp->pp_lock);
 
 			/*
-			 * pve won't be touched again until pmap_update(),
+			 * pve won't be touched again until pmap_drain_pv(),
 			 * so it's still safe to traverse the tree.
 			 */
 			pmap_free_pv(pmap, pve);
@@ -3123,6 +3144,7 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #ifdef DIAGNOSTIC
 	rb_tree_init(tree, &pmap_rbtree_ops);
 #endif
+	pmap_drain_pv(pmap);
 #else	/* !XENPV */
 	/*
 	 * XXXAD For XEN, it's not clear to me that we can do this, because
@@ -4187,6 +4209,7 @@ pmap_remove_locked(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);
+	pmap_drain_pv(pmap);
 }
 
 /*
@@ -4432,6 +4455,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 			pmap_stats_update_bypte(pmap, 0, opte);
 		}
 		pmap_tlb_shootnow();
+		pmap_drain_pv(pmap);
 		mutex_exit(&pmap->pm_lock);
 		if (ptp != NULL) {
 			pmap_destroy(pmap);
@@ -5076,6 +5100,7 @@ same_pa:
 	    ((opte ^ npte) & (PTE_FRAME | PTE_W)) != 0) {
 		pmap_tlb_shootdown(pmap, va, opte, TLBSHOOT_ENTER);
 	}
+	pmap_drain_pv(pmap);
 	mutex_exit(&pmap->pm_lock);
 	return 0;
 }
@@ -5322,6 +5347,7 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
 	}
 
+	pmap_drain_pv(pmap);
 	mutex_exit(&pmap->pm_lock);
 	return op->status;
 }
@@ -5716,10 +5742,8 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_update(struct pmap *pmap)
 {
-	struct pv_page *pvp;
 	struct pmap_page *pp;
 	struct vm_page *ptp;
-	uintptr_t sum;
 
 	/*
 	 * Initiate any pending TLB shootdowns.  Wait for them to
@@ -5733,18 +5757,12 @@ pmap_update(struct pmap *pmap)
 	 * Now that shootdowns are complete, process deferred frees.  This
 	 * is an unlocked check, but is safe as we're only interested in
 	 * work done in this LWP - we won't get a false negative.
-	 *
-	 * If pmap_kernel(), this can be called from interrupt context or
-	 * while holding a spinlock so we can't wait on the pmap lock.  No
-	 * big deal as we'll catch up eventually (even for user pmaps, in
-	 * pmap_destroy() when there's never contention on the lock).
 	 */
-	sum = (uintptr_t)atomic_load_relaxed(&pmap->pm_gc_ptp.lh_first);
-	sum |= (uintptr_t)atomic_load_relaxed(&pmap->pm_pvp_full.lh_first);
-	if (__predict_true(sum == 0 || cpu_intr_p() ||
-	    !mutex_tryenter(&pmap->pm_lock))) {
+	if (atomic_load_relaxed(&pmap->pm_gc_ptp.lh_first) == NULL) {
 		return;
-	}	
+	}
+
+	mutex_enter(&pmap->pm_lock);
 	while ((ptp = LIST_FIRST(&pmap->pm_gc_ptp)) != NULL) {
 		KASSERT(ptp->wire_count == 0);
 		KASSERT(ptp->uanon == NULL);
@@ -5767,13 +5785,6 @@ pmap_update(struct pmap *pmap)
 
 		ptp->flags |= PG_ZERO;
 		uvm_pagefree(ptp);
-	}
-	while ((pvp = LIST_FIRST(&pmap->pm_pvp_full)) != NULL) {
-		LIST_REMOVE(pvp, pvp_list);
-		KASSERT(pvp->pvp_pmap == pmap);
-		KASSERT(pvp->pvp_nfree == PVE_PER_PVP);
-		pvp->pvp_pmap = NULL;
-		pool_cache_put(&pmap_pvp_cache, pvp);
 	}
 	mutex_exit(&pmap->pm_lock);
 }
@@ -6311,6 +6322,7 @@ same_pa:
 	if (accessed && ((opte ^ npte) & (PTE_FRAME | EPT_W)) != 0) {
 		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_ENTER);
 	}
+	pmap_drain_pv(pmap);
 	mutex_exit(&pmap->pm_lock);
 	return 0;
 }
@@ -6533,6 +6545,7 @@ pmap_ept_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	}
 
 	kpreempt_enable();
+	pmap_drain_pv(pmap);
 	mutex_exit(&pmap->pm_lock);
 }
 
