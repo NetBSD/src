@@ -1,7 +1,7 @@
-/*	$NetBSD: svs.c,v 1.35 2020/05/02 11:37:17 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.36 2020/05/27 19:15:08 ad Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.35 2020/05/02 11:37:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.36 2020/05/27 19:15:08 ad Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -574,6 +574,18 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 	KASSERT(index < PDIR_SLOT_USERLIM);
+
+	ci = curcpu();
+	cid = cpu_index(ci);
+
+	mutex_enter(&ci->ci_svs_mtx);
+	KASSERT(kcpuset_isset(pmap->pm_kernel_cpus, cid));
+	ci->ci_svs_updir[index] = pmap->pm_pdir[index];
+	mutex_exit(&ci->ci_svs_mtx);
+
+	if (!kcpuset_isotherset(pmap->pm_kernel_cpus, cid)) {
+		return;
+	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cid = cpu_index(ci);
