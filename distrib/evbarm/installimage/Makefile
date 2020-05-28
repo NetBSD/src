@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2020/05/28 15:23:43 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2020/05/28 19:20:57 jmcneill Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
 
-INSTIMAGEMB?=	1550			# for all installation binaries
+INSTIMAGEMB?=	750			# for all installation binaries
 
 .if ${MACHINE_ARCH} == "aarch64"
 EFIBOOT=		${WORKDIR}/usr/mdec/bootaa64.efi
@@ -29,5 +29,8 @@ IMGFILE_EXTRA=								\
 	${SYSINSTDIR}/sysinstmsgs.fr	.				\
 	${SYSINSTDIR}/sysinstmsgs.pl	.				\
 	${SYSINSTDIR}/sysinst		.
+
+MD_IMGDIR_EXCLUDE=	-s ',./binary/gzimg.*,,gp'
+MD_IMGDIR_EXCLUDE+=	-s ',./binary/instkernel.*,,gp'
 
 .include "${NETBSDSRCDIR}/distrib/common/bootimage/Makefile.installimage"
