@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $	*/
+/*	$NetBSD: fs.c,v 1.11 2020/05/28 14:00:05 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.10 2019/05/17 08:48:04 ozaki-r Exp $");
+__RCSID("$NetBSD: fs.c,v 1.11 2020/05/28 14:00:05 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -108,27 +108,6 @@ p9p_handshake(struct puffs_usermount *pu,
 		errx(1, "server doesn't support %s", p9p_ver2str(p9p->protover));
 		/* Should downgrade from 9P2000.u to 9P2000 if the server request? */
 	}
-
-	/* tell the server we don't support authentication */
-	p9pbuf_recycleout(pb);
-	tagid = NEXTTAG(p9p);
-	p9pbuf_put_1(pb, P9PROTO_T_AUTH);
-	p9pbuf_put_2(pb, tagid);
-	p9pbuf_put_4(pb, P9PROTO_NOFID);
-	p9pbuf_put_str(pb, username);
-	p9pbuf_put_str(pb, "");
-	if (p9p->protover == P9PROTO_VERSION_U)
-		p9pbuf_put_4(pb, P9PROTO_NUNAME_UNSPECIFIED); /* n_uname[4] */
-	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
-
-	puffs_framebuf_recycle(pb);
-	DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
-
-	/* assume all Rerror is "no auth" */
-	if (p9pbuf_get_type(pb) != P9PROTO_R_ERROR)
-		errx(1, "mount_9p supports only NO auth");
-	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
-		errx(1, "server invalid tag: %d vs. %d", tagid, rtagid);
 
 	/* build attach message */
 	p9pbuf_recycleout(pb);
