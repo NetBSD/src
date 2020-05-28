@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.90 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.91 2020/05/28 20:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.90 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.91 2020/05/28 20:29:18 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -130,7 +130,8 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	KASSERT(maxcpus > 0);
 
-	ci->ci_index = ncpu;
+	if ((ci->ci_index = ncpu) >= maxcpus)
+		panic("Too many CPUs.  Increase MAXCPUS?");
 	kcpuset_set(kcpuset_attached, cpu_index(ci));
 
 	/*
