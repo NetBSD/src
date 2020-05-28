@@ -1,5 +1,5 @@
 
-/* $OpenBSD: servconf.c,v 1.360 2020/01/31 22:42:45 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.363 2020/04/17 03:30:05 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -572,7 +572,7 @@ static struct {
 	{ "addressfamily", sAddressFamily, SSHCFG_GLOBAL },
 	{ "printmotd", sPrintMotd, SSHCFG_GLOBAL },
 	{ "printlastlog", sPrintLastLog, SSHCFG_GLOBAL },
-	{ "ignorerhosts", sIgnoreRhosts, SSHCFG_GLOBAL },
+	{ "ignorerhosts", sIgnoreRhosts, SSHCFG_ALL },
 	{ "ignoreuserknownhosts", sIgnoreUserKnownHosts, SSHCFG_GLOBAL },
 	{ "x11forwarding", sX11Forwarding, SSHCFG_ALL },
 	{ "x11displayoffset", sX11DisplayOffset, SSHCFG_ALL },
@@ -1152,6 +1152,12 @@ static const struct multistate multistate_flag[] = {
 	{ "no",				0 },
 	{ NULL, -1 }
 };
+static const struct multistate multistate_ignore_rhosts[] = {
+	{ "yes",			IGNORE_RHOSTS_YES },
+	{ "no",				IGNORE_RHOSTS_NO },
+	{ "shosts-only",		IGNORE_RHOSTS_SHOSTS },
+	{ NULL, -1 }
+};
 static const struct multistate multistate_addressfamily[] = {
 	{ "inet",			AF_INET },
 	{ "inet6",			AF_INET6 },
@@ -1395,13 +1401,14 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 
 	case sIgnoreRhosts:
 		intptr = &options->ignore_rhosts;
- parse_flag:
-		multistate_ptr = multistate_flag;
+		multistate_ptr = multistate_ignore_rhosts;
 		goto parse_multistate;
 
 	case sIgnoreUserKnownHosts:
 		intptr = &options->ignore_user_known_hosts;
-		goto parse_flag;
+ parse_flag:
+		multistate_ptr = multistate_flag;
+		goto parse_multistate;
 
 	case sHostbasedAuthentication:
 		intptr = &options->hostbased_authentication;
@@ -1910,7 +1917,7 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			value++;
 			found = 0;
 			if (*arg2 != '/' && *arg2 != '~') {
-				xasprintf(&arg, "%s/%s", SSHDIR, arg);
+				xasprintf(&arg, "%s/%s", SSHDIR, arg2);
 			} else
 				arg = xstrdup(arg2);
 
@@ -2406,6 +2413,7 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	M_CP_INTOPT(kbd_interactive_authentication);
 	M_CP_INTOPT(permit_root_login);
 	M_CP_INTOPT(permit_empty_passwd);
+	M_CP_INTOPT(ignore_rhosts);
 
 	M_CP_INTOPT(allow_tcp_forwarding);
 	M_CP_INTOPT(allow_streamlocal_forwarding);
@@ -2560,6 +2568,8 @@ fmt_intarg(ServerOpCodes code, int val)
 		return fmt_multistate_int(val, multistate_tcpfwd);
 	case sAllowStreamLocalForwarding:
 		return fmt_multistate_int(val, multistate_tcpfwd);
+	case sIgnoreRhosts:
+		return fmt_multistate_int(val, multistate_ignore_rhosts);
 	case sFingerprintHash:
 		return ssh_digest_alg_name(val);
 	default:
