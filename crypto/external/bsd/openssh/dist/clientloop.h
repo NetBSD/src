@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.17 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.36 2018/07/09 21:03:30 markus Exp $ */
+/*	$NetBSD: clientloop.h,v 1.18 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.37 2020/04/03 02:40:32 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -47,7 +47,8 @@ int	 client_x11_get_proto(struct ssh *, const char *, const char *,
 void	 client_global_request_reply_fwd(int, u_int32_t, void *);
 void	 client_session2_setup(struct ssh *, int, int, int,
 	    const char *, struct termios *, int, struct sshbuf *, char **);
-char	 *client_request_tun_fwd(struct ssh *, int, int, int);
+char	 *client_request_tun_fwd(struct ssh *, int, int, int,
+    channel_open_fn *, void *);
 void	 client_stop_mux(void);
 
 /* Escape filter for protocol 2 sessions */

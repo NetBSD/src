@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.13 2020/01/25 23:28:06 djm Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.14 2020/02/26 13:40:09 jsg Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-misc.c,v 1.10 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sshbuf-misc.c,v 1.11 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -154,17 +154,14 @@ sshbuf_b64tod(struct sshbuf *buf, const char *b64)
 	if ((p = malloc(plen)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
 	if ((nlen = b64_pton(b64, p, plen)) < 0) {
-		explicit_bzero(p, plen);
-		free(p);
+		freezero(p, plen);
 		return SSH_ERR_INVALID_FORMAT;
 	}
 	if ((r = sshbuf_put(buf, p, nlen)) < 0) {
-		explicit_bzero(p, plen);
-		free(p);
+		freezero(p, plen);
 		return r;
 	}
-	explicit_bzero(p, plen);
-	free(p);
+	freezero(p, plen);
 	return 0;
 }
 
