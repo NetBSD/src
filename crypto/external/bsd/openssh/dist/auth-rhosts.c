@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rhosts.c,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.51 2019/10/02 00:42:30 djm Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.12 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.52 2020/04/17 03:30:05 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.11 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.12 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -297,8 +297,9 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 		 * Check if we have been configured to ignore .rhosts
 		 * and .shosts files.
 		 */
-		if ((pw->pw_uid == 0 && options.ignore_root_rhosts) ||
-		    (pw->pw_uid != 0 && options.ignore_rhosts)) {
+		if (options.ignore_rhosts == IGNORE_RHOSTS_YES ||
+		    (options.ignore_rhosts == IGNORE_RHOSTS_SHOSTS &&
+		    strcmp(rhosts_files[rhosts_file_index], ".shosts") != 0)) {
 			auth_debug_add("Server has been configured to "
 			    "ignore %.100s.", rhosts_files[rhosts_file_index]);
 			continue;

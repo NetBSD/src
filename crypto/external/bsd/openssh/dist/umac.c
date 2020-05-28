@@ -1,6 +1,5 @@
-/*	$NetBSD: umac.c,v 1.18 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.18 2019/11/13 04:47:52 deraadt Exp $ */
-
+/*	$NetBSD: umac.c,v 1.19 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: umac.c,v 1.20 2020/03/13 03:17:07 djm Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -41,7 +40,7 @@
   * at http://www.esat.kuleuven.ac.be/~rijmen/rijndael/ (search for
   * "Barreto"). The only two files needed are rijndael-alg-fst.c and
   * rijndael-alg-fst.h. Brian Gladman's version is distributed with the GNU
-  * Public lisence at http://fp.gladman.plus.com/AES/index.htm. It
+  * Public license at http://fp.gladman.plus.com/AES/index.htm. It
   * includes a fast IA-32 assembly version. The OpenSSL crypo library is
   * the third.
   *
@@ -68,7 +67,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.18 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.19 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
@@ -1226,8 +1225,7 @@ int umac_delete(struct umac_ctx *ctx)
     if (ctx) {
         if (ALLOC_BOUNDARY)
             ctx = (struct umac_ctx *)ctx->free_ptr;
-        explicit_bzero(ctx, sizeof(*ctx) + ALLOC_BOUNDARY);
-        free(ctx);
+        freezero(ctx, sizeof(*ctx) + ALLOC_BOUNDARY);
     }
     return (1);
 }

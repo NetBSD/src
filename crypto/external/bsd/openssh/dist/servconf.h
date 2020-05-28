@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.21 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.143 2020/01/31 22:42:45 djm Exp $ */
+/*	$NetBSD: servconf.h,v 1.22 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: servconf.h,v 1.144 2020/04/17 03:30:05 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,6 +42,11 @@
 /* PermitOpen */
 #define PERMITOPEN_ANY		0
 #define PERMITOPEN_NONE		-2
+
+/* IgnoreRhosts */
+#define IGNORE_RHOSTS_NO	0
+#define IGNORE_RHOSTS_YES	1
+#define IGNORE_RHOSTS_SHOSTS	2
 
 #define DEFAULT_AUTH_FAIL_MAX	6	/* Default for MaxAuthTries */
 #define DEFAULT_SESSIONS_MAX	10	/* Default for MaxSessions */

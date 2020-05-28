@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.28 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.255 2020/02/06 22:30:54 naddy Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.29 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.257 2020/03/06 18:28:27 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.28 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.29 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -420,7 +420,7 @@ process_add_identity(SocketEntry *e)
 {
 	Identity *id;
 	int success = 0, confirm = 0;
-	u_int seconds, maxsign;
+	u_int seconds = 0, maxsign;
 	char *fp, *comment = NULL, *ext_name = NULL, *sk_provider = NULL;
 	char canonical_provider[PATH_MAX];
 	time_t death = 0;
@@ -612,8 +612,7 @@ process_lock_agent(SocketEntry *e, int lock)
 			fatal("bcrypt_pbkdf");
 		success = 1;
 	}
-	explicit_bzero(passwd, pwlen);
-	free(passwd);
+	freezero(passwd, pwlen);
 	send_status(e, success);
 }
 

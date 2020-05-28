@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.17 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.52 2019/11/13 04:47:52 deraadt Exp $ */
+/*	$NetBSD: auth2-chall.c,v 1.18 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.53 2020/02/26 13:40:09 jsg Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.17 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.18 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -155,8 +155,7 @@ kbdint_free(KbdintAuthctxt *kbdintctxt)
 	if (kbdintctxt->device)
 		kbdint_reset_device(kbdintctxt);
 	free(kbdintctxt->devices);
-	explicit_bzero(kbdintctxt, sizeof(*kbdintctxt));
-	free(kbdintctxt);
+	freezero(kbdintctxt, sizeof(*kbdintctxt));
 }
 /* get next device */
 static int

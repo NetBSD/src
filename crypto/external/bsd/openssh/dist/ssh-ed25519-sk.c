@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ed25519-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: ssh-ed25519-sk.c,v 1.4 2019/11/26 03:04:27 djm Exp $ */
+/*	$NetBSD: ssh-ed25519-sk.c,v 1.3 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: ssh-ed25519-sk.c,v 1.5 2020/02/26 13:40:09 jsg Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ed25519-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssh-ed25519-sk.c,v 1.3 2020/05/28 17:05:49 christos Exp $");
 
 /* #define DEBUG_SK 1 */
 
@@ -155,10 +155,8 @@ ssh_ed25519_sk_verify(const struct sshkey *key,
 		details = NULL;
 	}
  out:
-	if (m != NULL) {
-		explicit_bzero(m, smlen); /* NB mlen may be invalid if r != 0 */
-		free(m);
-	}
+	if (m != NULL)
+		freezero(m, smlen); /* NB mlen may be invalid if r != 0 */
 	sshkey_sig_details_free(details);
 	sshbuf_free(b);
 	sshbuf_free(encoded);
