@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.20 2020/01/24 09:33:42 ad Exp $
+#	$NetBSD: TODO,v 1.21 2020/05/28 20:27:41 jmcneill Exp $
 
 THINGS TO BE DONE:
 
@@ -45,7 +45,6 @@ This is a list of suggested smaller projects (in no particular order):
 + investigate zebra or quagga in gnusrc rather than routed
 + do a type-punned pointer sweep for -fstrict-aliases (and fix the
   problems, not the symptoms)
-+ write a BSD-licensed web browser
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
 + write an overview document for openssl and certificates
 + documentation project help
