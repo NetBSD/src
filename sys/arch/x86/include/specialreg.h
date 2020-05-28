@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.164 2020/05/01 04:07:24 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.165 2020/05/28 07:59:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -1121,6 +1121,7 @@
 
 #define MSR_DE_CFG	0xc0011029
 #define 	DE_CFG_ERRATA_721	0x00000001
+#define 	DE_CFG_LFENCE_SERIALIZE	__BIT(1)
 #define 	DE_CFG_ERRATA_1021	__BIT(13)
 
 #define MSR_BU_CFG2	0xc001102a
