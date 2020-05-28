@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.64 2020/05/25 09:45:40 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.65 2020/05/28 23:25:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.64 2020/05/25 09:45:40 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.65 2020/05/28 23:25:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -238,6 +238,7 @@ struct vioif_txqueue {
 	bool			 txq_workqueue;
 	bool			 txq_active;
 
+	char			 txq_evgroup[16];
 	struct evcnt		 txq_defrag_failed;
 	struct evcnt		 txq_mbuf_load_failed;
 	struct evcnt		 txq_enqueue_reserve_failed;
@@ -260,6 +261,7 @@ struct vioif_rxqueue {
 	bool			 rxq_workqueue;
 	bool			 rxq_active;
 
+	char			 rxq_evgroup[16];
 	struct evcnt		 rxq_mbuf_add_failed;
 };
 
@@ -2477,34 +2479,31 @@ vioif_setup_stats(struct vioif_softc *sc)
 {
 	struct vioif_rxqueue *rxq;
 	struct vioif_txqueue *txq;
-
-	char namebuf[16];
 	int i;
 
 	for (i = 0; i < sc->sc_max_nvq_pairs; i++) {
 		rxq = &sc->sc_rxq[i];
 		txq = &sc->sc_txq[i];
 
-		snprintf(namebuf, sizeof(namebuf), "%s-TX%d",
+		snprintf(txq->txq_evgroup, sizeof(txq->txq_evgroup), "%s-TX%d",
 		    device_xname(sc->sc_dev), i);
 		evcnt_attach_dynamic(&txq->txq_defrag_failed, EVCNT_TYPE_MISC,
-		    NULL, namebuf, "tx m_defrag() failed");
+		    NULL, txq->txq_evgroup, "tx m_defrag() failed");
 		evcnt_attach_dynamic(&txq->txq_mbuf_load_failed, EVCNT_TYPE_MISC,
-		    NULL, namebuf, "tx dmamap load failed");
+		    NULL, txq->txq_evgroup, "tx dmamap load failed");
 		evcnt_attach_dynamic(&txq->txq_enqueue_reserve_failed, EVCNT_TYPE_MISC,
-		    NULL, namebuf, "virtio_enqueue_reserve failed");
+		    NULL, txq->txq_evgroup, "virtio_enqueue_reserve failed");
 
-		snprintf(namebuf, sizeof(namebuf), "%s-RX%d",
+		snprintf(rxq->rxq_evgroup, sizeof(rxq->rxq_evgroup), "%s-RX%d",
 		    device_xname(sc->sc_dev), i);
 		evcnt_attach_dynamic(&rxq->rxq_mbuf_add_failed, EVCNT_TYPE_MISC,
-		    NULL, namebuf, "rx mbuf allocation failed");
+		    NULL, rxq->rxq_evgroup, "rx mbuf allocation failed");
 	}
 
-	snprintf(namebuf, sizeof(namebuf), "%s-CTRL", device_xname(sc->sc_dev));
 	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_load_failed, EVCNT_TYPE_MISC,
-	    NULL, namebuf, "control command dmamap load failed");
+	    NULL, device_xname(sc->sc_dev), "control command dmamap load failed");
 	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_failed, EVCNT_TYPE_MISC,
-	    NULL, namebuf, "control command failed");
+	    NULL, device_xname(sc->sc_dev), "control command failed");
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
