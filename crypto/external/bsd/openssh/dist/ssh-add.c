@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.21 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.152 2020/02/06 22:30:54 naddy Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.22 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.155 2020/03/16 02:17:02 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.21 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.22 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -86,7 +86,7 @@ static const char *default_files[] = {
 static int fingerprint_hash = SSH_FP_HASH_DEFAULT;
 
 /* Default lifetime (0 == forever) */
-static int lifetime = 0;
+static long lifetime = 0;
 
 /* User has to confirm key use */
 static int confirm = 0;
@@ -101,8 +101,7 @@ static void
 clear_pass(void)
 {
 	if (pass) {
-		explicit_bzero(pass, strlen(pass));
-		free(pass);
+		freezero(pass, strlen(pass));
 		pass = NULL;
 	}
 }
@@ -324,7 +323,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 			    filename, comment);
 			if (lifetime != 0) {
 				fprintf(stderr,
-				    "Lifetime set to %d seconds\n", lifetime);
+				    "Lifetime set to %ld seconds\n", lifetime);
 			}
 			if (confirm != 0) {
 				fprintf(stderr, "The user must confirm "
@@ -380,7 +379,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 		fprintf(stderr, "Certificate added: %s (%s)\n", certpath,
 		    private->cert->key_id);
 		if (lifetime != 0) {
-			fprintf(stderr, "Lifetime set to %d seconds\n",
+			fprintf(stderr, "Lifetime set to %ld seconds\n",
 			    lifetime);
 		}
 		if (confirm != 0) {
@@ -517,8 +516,7 @@ lock_agent(int agent_fd, int lock)
 			fprintf(stderr, "Passwords do not match.\n");
 			passok = 0;
 		}
-		explicit_bzero(p2, strlen(p2));
-		free(p2);
+		freezero(p2, strlen(p2));
 	}
 	if (passok) {
 		if ((r = ssh_lock_agent(agent_fd, lock, p1)) == 0) {
@@ -529,8 +527,7 @@ lock_agent(int agent_fd, int lock)
 			    lock ? "" : "un", ssh_err(r));
 		}
 	}
-	explicit_bzero(p1, strlen(p1));
-	free(p1);
+	freezero(p1, strlen(p1));
 	return (ret);
 }
 
@@ -567,7 +564,7 @@ load_resident_keys(int agent_fd, const char *skprovider, int qflag)
 			    sshkey_type(keys[i]), fp);
 			if (lifetime != 0) {
 				fprintf(stderr,
-				    "Lifetime set to %d seconds\n", lifetime);
+				    "Lifetime set to %ld seconds\n", lifetime);
 			}
 			if (confirm != 0) {
 				fprintf(stderr, "The user must confirm "
@@ -717,7 +714,8 @@ main(int argc, char **argv)
 			pkcs11provider = optarg;
 			break;
 		case 't':
-			if ((lifetime = convtime(optarg)) == -1) {
+			if ((lifetime = convtime(optarg)) == -1 ||
+			    lifetime < 0 || (u_long)lifetime > UINT32_MAX) {
 				fprintf(stderr, "Invalid lifetime\n");
 				ret = 1;
 				goto done;

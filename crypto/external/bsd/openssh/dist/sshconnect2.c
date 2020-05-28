@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.36 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.320 2020/02/06 22:48:23 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.37 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.321 2020/04/17 03:38:47 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.36 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.37 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1702,7 +1702,7 @@ pubkey_prepare(Authctxt *authctxt)
 		found = 0;
 		TAILQ_FOREACH(id2, &files, next) {
 			if (id2->key == NULL ||
-			    (id2->key->flags & SSHKEY_FLAG_EXT) == 0)
+			    (id2->key->flags & SSHKEY_FLAG_EXT) != 0)
 				continue;
 			if (sshkey_equal(id->key, id2->key)) {
 				TAILQ_REMOVE(&files, id, next);

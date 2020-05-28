@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.33 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.208 2020/02/06 22:30:54 naddy Exp $ */
+/*	$NetBSD: monitor.c,v 1.34 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.210 2020/03/13 03:17:07 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.33 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.34 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -842,8 +842,7 @@ mm_answer_authpassword(struct ssh *ssh, int sock, struct sshbuf *m)
 	/* Only authenticate if the context is valid */
 	authenticated = options.password_authentication &&
 	    auth_password(ssh, passwd);
-	explicit_bzero(passwd, plen);
-	free(passwd);
+	freezero(passwd, plen);
 
 	sshbuf_reset(m);
 	if ((r = sshbuf_put_u32(m, authenticated)) != 0)
@@ -1717,7 +1716,7 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
 	}
 }
 
-/* This function requries careful sanity checking */
+/* This function requires careful sanity checking */
 
 void
 mm_get_keystate(struct ssh *ssh, struct monitor *pmonitor)

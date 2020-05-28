@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.14 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.31 2018/07/09 21:37:55 markus Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.15 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.32 2020/03/13 03:17:07 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.14 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.15 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -342,7 +342,7 @@ ssh_gssapi_storecreds(void)
 		debug("ssh_gssapi_storecreds: Not a GSSAPI mechanism");
 }
 
-/* This allows GSSAPI methods to do things to the childs environment based
+/* This allows GSSAPI methods to do things to the child's environment based
  * on the passed authentication process and credentials.
  */
 /* As user */

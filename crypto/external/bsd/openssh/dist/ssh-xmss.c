@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: ssh-xmss.c,v 1.1 2018/02/23 15:58:38 markus Exp $*/
+/*	$NetBSD: ssh-xmss.c,v 1.3 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: ssh-xmss.c,v 1.2 2020/02/26 13:40:09 jsg Exp $*/
 /*
  * Copyright (c) 2017 Stefan-Lukas Gazdag.
  * Copyright (c) 2017 Markus Friedl.
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: ssh-xmss.c,v 1.3 2020/05/28 17:05:49 christos Exp $");
 #define SSHKEY_INTERNAL
 #include <sys/types.h>
 #include <limits.h>
@@ -103,10 +103,8 @@ ssh_xmss_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		r = ret;
 	}
 	sshbuf_free(b);
-	if (sig != NULL) {
-		explicit_bzero(sig, slen);
-		free(sig);
-	}
+	if (sig != NULL)
+		freezero(sig, slen);
 
 	return r;
 }
@@ -177,14 +175,10 @@ ssh_xmss_verify(const struct sshkey *key,
 	/* success */
 	r = 0;
  out:
-	if (sm != NULL) {
-		explicit_bzero(sm, smlen);
-		free(sm);
-	}
-	if (m != NULL) {
-		explicit_bzero(m, smlen); /* NB mlen may be invalid if r != 0 */
-		free(m);
-	}
+	if (sm != NULL)
+		freezero(sm, smlen);
+	if (m != NULL)
+		freezero(m, smlen);
 	sshbuf_free(b);
 	free(ktype);
 	return r;

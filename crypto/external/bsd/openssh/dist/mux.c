@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.25 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.81 2020/01/23 07:10:22 dtucker Exp $ */
+/*	$NetBSD: mux.c,v 1.26 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.82 2020/04/30 17:12:20 markus Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -19,7 +19,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.25 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.26 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1971,6 +1971,7 @@ mux_client_request_session(int fd)
 	case MUX_S_SESSION_OPENED:
 		if ((r = sshbuf_get_u32(m, &sid)) != 0)
 			fatal("%s: decode ID: %s", __func__, ssh_err(r));
+		debug("%s: master session id: %u", __func__, sid);
 		break;
 	case MUX_S_PERMISSION_DENIED:
 		if ((r = sshbuf_get_cstring(m, &e, NULL)) != 0)

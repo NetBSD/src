@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf.c,v 1.14 2020/01/23 07:10:22 dtucker Exp $	*/
+/*	$OpenBSD: sshbuf.c,v 1.15 2020/02/26 13:40:09 jsg Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf.c,v 1.11 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sshbuf.c,v 1.12 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/types.h>
 #include <signal.h>
@@ -164,8 +164,7 @@ sshbuf_free(struct sshbuf *buf)
 		explicit_bzero(buf->d, buf->alloc);
 		free(buf->d);
 	}
-	explicit_bzero(buf, sizeof(*buf));
-	free(buf);
+	freezero(buf, sizeof(*buf));
 }
 
 void

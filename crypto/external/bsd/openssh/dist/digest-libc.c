@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-libc.c,v 1.6 2017/05/08 22:57:38 djm Exp $ */
+/* $OpenBSD: digest-libc.c,v 1.7 2020/02/26 13:40:09 jsg Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-libc.c,v 1.7 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: digest-libc.c,v 1.8 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -222,8 +222,7 @@ ssh_digest_free(struct ssh_digest_ctx *ctx)
 		if (digest) {
 			explicit_bzero(ctx->mdctx, digest->ctx_len);
 			free(ctx->mdctx);
-			explicit_bzero(ctx, sizeof(*ctx));
-			free(ctx);
+			freezero(ctx, sizeof(*ctx));
 		}
 	}
 }

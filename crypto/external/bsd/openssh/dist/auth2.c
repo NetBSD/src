@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.21 2019/12/07 16:32:22 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.157 2019/09/06 04:53:27 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.22 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.158 2020/03/06 18:16:21 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.21 2019/12/07 16:32:22 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.22 2020/05/28 17:05:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -231,7 +231,7 @@ input_service_request(int type, u_int32_t seq, struct ssh *ssh)
 	r = 0;
  out:
 	free(service);
-	return 0;
+	return r;
 }
 
 #define MIN_FAIL_DELAY_SECONDS 0.005
