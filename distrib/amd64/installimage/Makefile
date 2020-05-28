@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/05/27 22:27:58 maya Exp $
+#	$NetBSD: Makefile,v 1.12 2020/05/28 15:13:21 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ EFIBOOT+=		${WORKDIR}/usr/mdec/bootia32.efi
 
 USE_MBR=		yes
 USE_GPT=		yes
+USE_GPTMBR=		yes
 
 CLEANFILES+=	boot.cfg
 
