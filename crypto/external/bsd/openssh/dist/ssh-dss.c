@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.16 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.38 2018/09/13 02:08:33 djm Exp $ */
+/*	$NetBSD: ssh-dss.c,v 1.17 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.39 2020/02/26 13:40:09 jsg Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.16 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.17 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -195,9 +195,7 @@ ssh_dss_verify(const struct sshkey *key,
 	BN_clear_free(sig_s);
 	sshbuf_free(b);
 	free(ktype);
-	if (sigblob != NULL) {
-		explicit_bzero(sigblob, len);
-		free(sigblob);
-	}
+	if (sigblob != NULL)
+		freezero(sigblob, len);
 	return ret;
 }

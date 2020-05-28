@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.30 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.318 2020/01/23 07:10:22 dtucker Exp $ */
+/*	$NetBSD: session.c,v 1.31 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.319 2020/03/13 03:17:07 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.30 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.31 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -918,7 +918,7 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 #ifdef GSSAPI
 	/* Allow any GSSAPI methods that we've used to alter
-	 * the childs environment as they see fit
+	 * the child's environment as they see fit
 	 */
 	ssh_gssapi_do_child(&env, &envsize);
 #endif
@@ -2235,7 +2235,7 @@ session_exit_message(struct ssh *ssh, Session *s, int status)
 	/*
 	 * Adjust cleanup callback attachment to send close messages when
 	 * the channel gets EOF. The session will be then be closed
-	 * by session_close_by_channel when the childs close their fds.
+	 * by session_close_by_channel when the child sessions close their fds.
 	 */
 	channel_register_cleanup(ssh, c->self, session_close_by_channel, 1);
 

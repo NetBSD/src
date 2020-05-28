@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.22 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.146 2020/01/28 01:49:36 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.23 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.147 2020/04/25 06:59:36 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.22 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -2202,7 +2202,7 @@ ssh_signal(int signum, sshsig_t handler)
 	struct sigaction sa, osa;
 
 	/* mask all other signals while in handler */
-	bzero(&sa, sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
 	sigfillset(&sa.sa_mask);
 	if (signum != SIGALRM)
