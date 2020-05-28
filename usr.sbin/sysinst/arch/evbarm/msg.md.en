@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2020/05/28 19:00:52 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{If you booted from a floppy, you may now remove the disk.
+{
 }
 
 message badreadbb
