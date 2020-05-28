@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.6 2019/11/21 22:29:03 joerg Exp $
+#	$NetBSD: Makefile.installimage,v 1.7 2020/05/28 15:12:03 jmcneill Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -35,6 +35,8 @@ KERN_SET?=	kern-GENERIC
 SETS?=		modules base etc
 
 FSTAB_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/fstab.install.in
+
+USE_MBR?=	no
 
 .if ${USE_MBR} != "no"
 DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.mbr.in
