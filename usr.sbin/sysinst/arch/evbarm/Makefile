@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2019/06/12 06:20:19 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2020/05/28 19:03:09 jmcneill Exp $
 #
 # Makefile for evbarm
 #
 
 MENUS_MD= menus.md.${SYSINSTLANG}
 MSG_MD= msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
-MD_OPTIONS=	AOUT2ELF
+MD_OPTIONS=	AOUT2ELF HAVE_INSTALL_IMAGE
 NO_MBR=no
 
 .include "../../Makefile.inc"
