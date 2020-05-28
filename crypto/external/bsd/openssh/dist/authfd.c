@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.20 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.121 2019/12/21 02:19:13 djm Exp $ */
+/*	$NetBSD: authfd.c,v 1.21 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.123 2020/03/06 18:24:39 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.20 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.21 2020/05/28 17:05:49 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -343,7 +343,7 @@ ssh_agent_has_key(int sock, struct sshkey *key)
 	size_t i;
 	struct ssh_identitylist *idlist = NULL;
 
-	if ((r = ssh_fetch_identitylist(sock, &idlist)) < 0) {
+	if ((r = ssh_fetch_identitylist(sock, &idlist)) != 0) {
 		return r;
 	}
 
@@ -562,10 +562,8 @@ ssh_remove_identity(int sock, struct sshkey *key)
 		goto out;
 	r = decode_reply(type);
  out:
-	if (blob != NULL) {
-		explicit_bzero(blob, blen);
-		free(blob);
-	}
+	if (blob != NULL)
+		freezero(blob, blen);
 	sshbuf_free(msg);
 	return r;
 }

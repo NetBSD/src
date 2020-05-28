@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.c,v 1.26 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: channels.c,v 1.395 2020/01/25 06:40:20 djm Exp $ */
+/*	$NetBSD: channels.c,v 1.27 2020/05/28 17:05:49 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.398 2020/04/25 06:59:36 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.26 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.27 2020/05/28 17:05:49 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -456,7 +456,7 @@ fwd_perm_clear(struct permission *perm)
 	free(perm->host_to_connect);
 	free(perm->listen_host);
 	free(perm->listen_path);
-	bzero(perm, sizeof(*perm));
+	memset(perm, 0, sizeof(*perm));
 }
 
 /* Returns an printable name for the specified forwarding permission list */
@@ -627,14 +627,12 @@ channel_free(struct ssh *ssh, Channel *c)
 		if (cc->abandon_cb != NULL)
 			cc->abandon_cb(ssh, c, cc->ctx);
 		TAILQ_REMOVE(&c->status_confirms, cc, entry);
-		explicit_bzero(cc, sizeof(*cc));
-		free(cc);
+		freezero(cc, sizeof(*cc));
 	}
 	if (c->filter_cleanup != NULL && c->filter_ctx != NULL)
 		c->filter_cleanup(ssh, c->self, c->filter_ctx);
 	sc->channels[c->self] = NULL;
-	explicit_bzero(c, sizeof(*c));
-	free(c);
+	freezero(c, sizeof(*c));
 }
 
 void
@@ -3313,8 +3311,7 @@ channel_input_status_confirm(int type, u_int32_t seq, struct ssh *ssh)
 		return 0;
 	cc->cb(ssh, type, c, cc->ctx);
 	TAILQ_REMOVE(&c->status_confirms, cc, entry);
-	explicit_bzero(cc, sizeof(*cc));
-	free(cc);
+	freezero(cc, sizeof(*cc));
 	return 0;
 }
 
@@ -4027,7 +4024,7 @@ channel_request_rforward_cancel_tcpip(struct ssh *ssh,
 	struct permission_set *pset = &sc->local_perms;
 	int r;
 	u_int i;
-	struct permission *perm;
+	struct permission *perm = NULL;
 
 	for (i = 0; i < pset->num_permitted_user; i++) {
 		perm = &pset->permitted_user[i];
@@ -4063,7 +4060,7 @@ channel_request_rforward_cancel_streamlocal(struct ssh *ssh, const char *path)
 	struct permission_set *pset = &sc->local_perms;
 	int r;
 	u_int i;
-	struct permission *perm;
+	struct permission *perm = NULL;
 
 	for (i = 0; i < pset->num_permitted_user; i++) {
 		perm = &pset->permitted_user[i];
