@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.24 2020/03/21 14:19:26 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.25 2020/05/28 15:13:21 jmcneill Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -166,6 +166,7 @@ RM?=		rm
 #
 USE_MBR?=	no
 USE_GPT?=	no
+USE_GPTMBR?=	no
 USE_SUNLABEL?=	no
 INSTALLBOOT_AFTER_DISKLABEL?=	no
 
@@ -549,8 +550,10 @@ ${IMGBASE}.img:	${WORKLABEL}
 ${IMGBASE}.img:	${TARGET_BLOCKS}
 	${CAT} ${TARGET_BLOCKS} > ${WORKIMG}
 .if ${USE_GPT} != "no"
+.if ${USE_GPTMBR} != "no"
 	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2		\
 	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
+.endif
 	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
 .endif	# USE_GPT != "no"
 .if ${USE_SUNLABEL} != "no"
