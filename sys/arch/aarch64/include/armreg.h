@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.47 2020/05/25 05:17:05 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.48 2020/05/28 12:41:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -108,6 +108,9 @@ reg_##regname##_write(uint64_t __val)				\
  */
 AARCH64REG_READ_INLINE(ctr_el0)		// Cache Type Register
 
+#define	CTR_EL0_TMIN_LINE	__BITS(37,32)	// Tag MIN LINE size
+#define	CTR_EL0_DIC		__BIT(29)	// Instruction cache requirement
+#define	CTR_EL0_IDC		__BIT(28)	// Data Cache clean requirement
 #define	CTR_EL0_CWG_LINE	__BITS(27,24)	// Cacheback Writeback Granule
 #define	CTR_EL0_ERG_LINE	__BITS(23,20)	// Exclusives Reservation Granule
 #define	CTR_EL0_DMIN_LINE	__BITS(19,16)	// Dcache MIN LINE size (log2 - 2)
