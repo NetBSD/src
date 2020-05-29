@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.27 2019/10/28 02:59:25 ozaki-r Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.28 2020/05/29 23:49:08 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.27 2019/10/28 02:59:25 ozaki-r Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.28 2020/05/29 23:49:08 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 	if (server == P9P_SERVER_TCP) {
 		p9p.servsock = serverconnect(srvhost, port);
 	} else {
-		/* path to a viop9fs chardev file, e.g., /dev/viop9fs0 */
+		/* path to a vio9p(4) device, e.g., /dev/vio9p0 */
 		p9p.servsock = open_cdev(argv[0]);
 	}
 
