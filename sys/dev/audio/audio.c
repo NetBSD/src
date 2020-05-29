@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.74 2020/05/26 15:20:16 nia Exp $	*/
+/*	$NetBSD: audio.c,v 1.75 2020/05/29 03:09:14 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.74 2020/05/26 15:20:16 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.75 2020/05/29 03:09:14 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1566,6 +1566,13 @@ audio_track_waitio(struct audio_softc *sc, audio_track_t *track)
 	/* Wait for pending I/O to complete. */
 	error = cv_timedwait_sig(&track->mixer->outcv, sc->sc_lock,
 	    mstohz(AUDIO_TIMEOUT));
+	if (sc->sc_suspending) {
+		/* If it's about to suspend, ignore timeout error. */
+		if (error == EWOULDBLOCK) {
+			TRACET(2, track, "timeout (suspending)");
+			return 0;
+		}
+	}
 	if (sc->sc_dying) {
 		error = EIO;
 	}
@@ -7754,13 +7761,18 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 	error = audio_exlock_mutex_enter(sc);
 	if (error)
 		return error;
+	sc->sc_suspending = true;
 	audio_mixer_capture(sc);
 
 	if (sc->sc_pbusy) {
 		audio_pmixer_halt(sc);
+		/* Reuse this as need-to-restart flag while suspending */
+		sc->sc_pbusy = true;
 	}
 	if (sc->sc_rbusy) {
 		audio_rmixer_halt(sc);
+		/* Reuse this as need-to-restart flag while suspending */
+		sc->sc_rbusy = true;
 	}
 
 #ifdef AUDIO_PM_IDLE
@@ -7782,15 +7794,28 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 	if (error)
 		return error;
 
+	sc->sc_suspending = false;
 	audio_mixer_restore(sc);
 	/* XXX ? */
 	AUDIO_INITINFO(&ai);
 	audio_hw_setinfo(sc, &ai, NULL);
 
-	if (!sc->sc_pbusy)
+	/*
+	 * During from suspend to resume here, sc_[pr]busy is used as
+	 * need-to-restart flag temporarily.  After this point,
+	 * sc_[pr]busy is returned to its original usage (busy flag).
+	 * And note that sc_[pr]busy must be false to call [pr]mixer_start().
+	 */
+	if (sc->sc_pbusy) {
+		/* pmixer_start() requires pbusy is false */
+		sc->sc_pbusy = false;
 		audio_pmixer_start(sc, true);
-	if (!sc->sc_rbusy && sc->sc_ropens > 0)
+	}
+	if (sc->sc_rbusy) {
+		/* rmixer_start() requires rbusy is false */
+		sc->sc_rbusy = false;
 		audio_rmixer_start(sc);
+	}
 
 	audio_exlock_mutex_exit(sc);
 
