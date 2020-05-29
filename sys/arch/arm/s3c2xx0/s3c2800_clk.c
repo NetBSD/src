@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.17 2012/02/07 09:06:05 nisimura Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.17 2012/02/07 09:06:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +70,10 @@ static unsigned int timer0_mseccount;
 static u_int	s3c2800_get_timecount(struct timecounter *);
 
 static struct timecounter s3c2800_timecounter = {
-	s3c2800_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"s3c2800",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = s3c2800_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "s3c2800",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t s3c2800_base;

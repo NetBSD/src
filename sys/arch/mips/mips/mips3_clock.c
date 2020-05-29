@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.14 2017/05/07 05:45:07 skrll Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.15 2020/05/29 12:30:40 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
 
 #include "opt_multiprocessor.h"
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.14 2017/05/07 05:45:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.15 2020/05/29 12:30:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -109,12 +109,10 @@ mips3_init_tc(void)
 {
 #if !defined(MULTIPROCESSOR)
 	static struct timecounter tc =  {
-		(timecounter_get_t *)mips3_cp0_count_read, /* get_timecount */
-		0,				/* no poll_pps */
-		~0u,				/* counter_mask */
-		0,				/* frequency */
-		"mips3_cp0_counter",		/* name */
-		100,				/* quality */
+		.tc_get_timecount = (timecounter_get_t *)mips3_cp0_count_read,
+		.tc_counter_mask = ~0u,
+		.tc_name = "mips3_cp0_counter",
+		.tc_quality = 100,
 	};
 
 	tc.tc_frequency = curcpu()->ci_cpu_freq;
