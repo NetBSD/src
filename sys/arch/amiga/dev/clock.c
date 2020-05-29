@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2020/05/19 08:43:30 rin Exp $ */
+/*	$NetBSD: clock.c,v 1.57 2020/05/29 05:35:47 rin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2020/05/19 08:43:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2020/05/29 05:35:47 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,14 +93,9 @@ struct CIA *clockcia;
 static u_int clk_getcounter(struct timecounter *);
 
 static struct timecounter clk_timecounter = {
-	clk_getcounter,	/* get_timecount */
-	0,		/* no poll_pps */
-	~0u,		/* counter_mask */
-	0,		/* frequency */
-	"clock",	/* name, overriden later */
-	100,		/* quality */
-	NULL,		/* prev */
-	NULL,		/* next */
+	.tc_get_timecount = clk_getcounter,
+	.tc_counter_mask = ~0u,
+	.tc_quality = 100,
 };
 
 CFATTACH_DECL_NEW(clock, 0,
