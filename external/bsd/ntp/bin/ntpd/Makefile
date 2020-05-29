@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2020/02/08 13:20:10 fox Exp $
+#	$NetBSD: Makefile,v 1.26 2020/05/29 10:53:02 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -78,7 +78,7 @@ LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL}
 
 COPTS.ntp_control.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-nonliteral :}
-
+COPTS.ntp_refclock.c+=	-Wno-format-nonliteral
 
 DIST=${IDIST}/ntpd
 
