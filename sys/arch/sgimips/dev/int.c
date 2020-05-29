@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.30 2019/11/10 21:16:32 chs Exp $	*/
+/*	$NetBSD: int.c,v 1.31 2020/05/29 12:30:40 rin Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.30 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.31 2020/05/29 12:30:40 rin Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -80,14 +80,10 @@ static u_long	int2_cal_timer(void);
 #endif
 
 static struct timecounter int_8254_timecounter = {
-	int_8254_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,			/* frequency; set in int_8254_cal */
-	"int i8254",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = int_8254_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "int i8254",
+	.tc_quality = 100,
 };
 
 static u_long int_8254_tc_count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.82 2020/05/21 22:01:42 ad Exp $	*/
+/*	$NetBSD: lapic.c,v 1.83 2020/05/29 12:30:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.82 2020/05/21 22:01:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.83 2020/05/29 12:30:41 rin Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -553,18 +553,15 @@ lapic_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter lapic_timecounter = {
-	lapic_get_timecount,
-	NULL,
-	~0u,
-	0,
-	"lapic",
+	.tc_get_timecount = lapic_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "lapic",
+	.tc_quality =
 #ifndef MULTIPROCESSOR
-	2100,
+	    2100,
 #else
-	-100, /* per CPU state */
+	    -100, /* per CPU state */
 #endif
-	NULL,
-	NULL,
 };
 
 extern u_int i8254_get_timecount(struct timecounter *);

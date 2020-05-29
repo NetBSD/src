@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2017/05/21 06:49:12 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.11 2020/05/29 12:30:40 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2017/05/21 06:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2020/05/29 12:30:40 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,12 +60,11 @@ cpu_initclocks(void)
 	uint32_t cnt;
 
 	static struct timecounter tc =  {
-		ingenic_count_read,		/* get_timecount */
-		0,				/* no poll_pps */
-		~0u,				/* counter_mask */
-		12000000,			/* frequency */
-		"Ingenic OS timer",		/* name */
-		100,				/* quality */
+		.tc_get_timecount = ingenic_count_read,
+		.tc_counter_mask = ~0u,
+		.tc_frequency = 12000000,
+		.tc_name = "Ingenic OS timer",
+		.tc_quality = 100,
 	};
 
 	curcpu()->ci_cctr_freq = tc.tc_frequency;

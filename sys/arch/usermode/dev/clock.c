@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.26 2012/01/21 22:09:56 reinoud Exp $ */
+/* $NetBSD: clock.c,v 1.27 2020/05/29 12:30:41 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2012/01/21 22:09:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2020/05/29 12:30:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,14 +64,11 @@ struct clock_softc {
 };
 
 static struct timecounter clock_timecounter = {
-	clock_getcounter,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	1000000000ULL,		/* frequency */
-	"CLOCK_MONOTONIC",	/* name */
-	-100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = clock_getcounter,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = 1000000000ULL,
+	.tc_name = "CLOCK_MONOTONIC",
+	.tc_quality = -100,
 };
 
 timer_t clock_timerid;

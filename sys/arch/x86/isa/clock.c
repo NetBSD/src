@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2020/05/02 16:44:35 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2020/05/02 16:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -204,14 +204,11 @@ static __cpu_simple_lock_t tmr_lock = __SIMPLELOCK_UNLOCKED;
 u_int i8254_get_timecount(struct timecounter *);
 
 static struct timecounter i8254_timecounter = {
-	i8254_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	TIMER_FREQ,		/* frequency */
-	"i8254",		/* name */
-	100,			/* quality */
-	NULL,			/* private data */
-	NULL,			/* next */
+	.tc_get_timecount = i8254_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = TIMER_FREQ,
+	.tc_name = "i8254",
+	.tc_quality = 100,
 };
 
 u_long x86_rtclock_tval;	/* i8254 reload value for countdown */

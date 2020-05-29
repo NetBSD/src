@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.22 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.23 2020/05/29 12:30:40 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.22 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.23 2020/05/29 12:30:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,14 +85,11 @@ static uint32_t counts_per_hz;
 static u_int	iq80310_get_timecount(struct timecounter *);
 
 static struct timecounter iq80310_timecounter = {
-	iq80310_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	COUNTS_PER_SEC,		/* frequency */
-	"iq80310",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = iq80310_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = COUNTS_PER_SEC,
+	.tc_name = "iq80310",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t iq80310_base;

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.14 2012/02/10 09:17:49 nisimura Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.15 2020/05/29 12:30:39 rin Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.14 2012/02/10 09:17:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.15 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,14 +66,10 @@ static uint32_t timer4_mseccount;
 static u_int	s3c24x0_get_timecount(struct timecounter *);
 
 static struct timecounter s3c24x0_timecounter = {
-	s3c24x0_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"s3c24x0",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = s3c24x0_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "s3c24x0",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t s3c24x0_base;

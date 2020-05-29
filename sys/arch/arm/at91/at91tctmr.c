@@ -1,4 +1,4 @@
-/*$NetBSD: at91tctmr.c,v 1.7 2012/11/12 18:00:36 skrll Exp $*/
+/*$NetBSD: at91tctmr.c,v 1.8 2020/05/29 12:30:38 rin Exp $*/
 
 /*
  * AT91 Timer Counter (TC) based clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.7 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.8 2020/05/29 12:30:38 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,14 +157,11 @@ CFATTACH_DECL_NEW(at91tctmr, sizeof(struct at91tctmr_softc),
 static u_int at91tctmr_get_timecount(struct timecounter *);
 
 static struct timecounter at91tctmr_timecounter = {
-	at91tctmr_get_timecount,/* get_timecount */
-	0,                      /* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	COUNTS_PER_SEC,		/* frequency */
-	"at91tctmr",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = at91tctmr_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = COUNTS_PER_SEC,
+	.tc_name = "at91tctmr",
+	.tc_quality = 100,
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.15 2013/02/19 10:57:10 skrll Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.16 2020/05/29 12:30:39 rin Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -40,7 +40,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.15 2013/02/19 10:57:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.16 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,14 +87,11 @@ static int statprev;		/* previous value in stat timer */
 static u_int	ifpga_get_timecount(struct timecounter *);
 
 static struct timecounter ifpga_timecounter = {
-	ifpga_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	COUNTS_PER_SEC,		/* frequency */
-	"ifpga",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = ifpga_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = COUNTS_PER_SEC,
+	.tc_name = "ifpga",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t ifpga_base;

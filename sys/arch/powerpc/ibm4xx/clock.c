@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2012/01/09 06:25:55 kiyohara Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 2020/05/29 12:30:40 rin Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2012/01/09 06:25:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2020/05/29 12:30:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,14 +63,10 @@ static void init_ppc4xx_tc(void);
 static u_int get_ppc4xx_timecount(struct timecounter *);
 
 static struct timecounter ppc4xx_timecounter = {
-	get_ppc4xx_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,			/* frequency */
-	"ppc_timebase",		/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_ppc4xx_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "ppc_timebase",
+	.tc_quality = 100,
 };
 
 void decr_intr(struct clockframe *);	/* called from trap_subr.S */
