@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.396 2020/05/27 19:33:40 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.397 2020/05/29 22:40:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.396 2020/05/27 19:33:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.397 2020/05/29 22:40:15 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3145,7 +3145,6 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #ifdef DIAGNOSTIC
 	rb_tree_init(tree, &pmap_rbtree_ops);
 #endif
-	pmap_drain_pv(pmap);
 #else	/* !XENPV */
 	/*
 	 * XXXAD For XEN, it's not clear to me that we can do this, because
@@ -3216,6 +3215,7 @@ pmap_remove_all(struct pmap *pmap)
 			pmap_free_ptp(pmap, ptps[i], va, ptes, pdes);
 		}
 		pmap_unmap_ptes(pmap, pmap2);
+		pmap_drain_pv(pmap);
 		pmap_tlb_shootdown(pmap, -1L, 0, TLBSHOOT_REMOVE_ALL);
 		mutex_exit(&pmap->pm_lock);
 
