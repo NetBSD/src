@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.7 2018/10/06 13:03:55 maya Exp $ */
+/* $NetBSD: timetc.h,v 1.8 2020/05/29 05:29:23 rin Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ struct timecounter {
 		 */
 	u_int 			tc_counter_mask;
 		/* This mask should mask off any unimplemented bits. */
-	u_int64_t		tc_frequency;
+	uint64_t		tc_frequency;
 		/* Frequency of the counter in Hz. */
 	const char		*tc_name;
 		/* Name of the timecounter. */
@@ -79,7 +79,7 @@ struct timecounter {
 
 extern struct timecounter *timecounter;
 
-u_int64_t tc_getfrequency(void);
+uint64_t tc_getfrequency(void);
 void	tc_init(struct timecounter *tc);
 int	tc_detach(struct timecounter *);
 void	tc_setclock(const struct timespec *ts);
