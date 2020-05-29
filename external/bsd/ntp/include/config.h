@@ -1560,7 +1560,11 @@
 #define SIZEOF_LONG_LONG 8
 
 /* The size of `pthread_t', as computed by sizeof. */
+#ifdef _LP64
 #define SIZEOF_PTHREAD_T 8
+#else
+#define SIZEOF_PTHREAD_T 4
+#endif
 
 /* The size of `short', as computed by sizeof. */
 #define SIZEOF_SHORT 2
