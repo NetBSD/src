@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.11 2020/03/07 06:25:57 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.12 2020/05/29 03:09:14 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -233,6 +233,12 @@ struct audio_softc {
 	 * Must be protected by sc_lock (?)
 	 */
 	bool		sc_dying;
+
+	/*
+	 * Indicates that about to suspend.
+	 * Must be protected by sc_lock.
+	 */
+	bool		sc_suspending;
 
 	/*
 	 * If multiuser is false, other users who have different euid
