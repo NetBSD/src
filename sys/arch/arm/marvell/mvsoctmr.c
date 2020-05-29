@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.14 2017/01/07 15:14:20 kiyohara Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.15 2020/05/29 12:30:39 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.14 2017/01/07 15:14:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.15 2020/05/29 12:30:39 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mvsoc.h"
@@ -100,14 +100,10 @@ static int mvsoctmr_freq;
 
 static struct mvsoctmr_softc *mvsoctmr_sc;
 static struct timecounter mvsoctmr_timecounter = {
-	mvsoctmr_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,			/* frequency  (set by cpu_initclocks()) */
-	"mvsoctmr",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = mvsoctmr_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "mvsoctmr",
+	.tc_quality = 100,
 };
 
 CFATTACH_DECL_NEW(mvsoctmr, sizeof(struct mvsoctmr_softc),

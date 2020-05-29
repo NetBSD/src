@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.16 2020/05/29 12:30:39 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.16 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +70,11 @@ static void *clock_ih;
 static u_int	becc_get_timecount(struct timecounter *);
 
 static struct timecounter becc_timecounter = {
-	becc_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	COUNTS_PER_SEC,		/* frequency */
-	"becc",			/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = becc_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = COUNTS_PER_SEC,
+	.tc_name = "becc",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t becc_base;

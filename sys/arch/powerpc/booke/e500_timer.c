@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.6 2015/01/21 06:11:39 nonaka Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.7 2020/05/29 12:30:40 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.6 2015/01/21 06:11:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.7 2020/05/29 12:30:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,14 +60,10 @@ static void init_ppcbooke_tc(void);
 static u_int get_ppcbooke_timecount(struct timecounter *);
 
 static struct timecounter ppcbooke_timecounter = {
-	get_ppcbooke_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,			/* frequency */
-	"ppc_timebase",		/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_ppcbooke_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "ppc_timebase",
+	.tc_quality = 100,
 };
 
 static inline void 

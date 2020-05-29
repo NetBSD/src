@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.11 2016/08/26 15:45:48 skrll Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.12 2020/05/29 12:30:41 rin Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.11 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.12 2020/05/29 12:30:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,14 +92,10 @@ static int  pwmclock_cpuspeed_available(SYSCTLFN_ARGS);
 static void pwmclock_shutdown(void *);
 
 static struct timecounter pwmclock_timecounter = {
-	get_pwmclock_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"pwm",			/* name */
-	100,			/* quality */
-	NULL,			/* tc_priv */
-	NULL			/* tc_next */
+	.tc_get_timecount = get_pwmclock_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "pwm",
+	.tc_quality = 100,
 };
 
 static int

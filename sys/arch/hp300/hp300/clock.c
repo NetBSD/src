@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.41 2020/05/29 12:30:40 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2011/02/08 20:20:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2020/05/29 12:30:40 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,12 +189,11 @@ cpu_initclocks(void)
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
 	static struct timecounter tc = {
-		mc6840_counter,		/* get_timecount */
-		NULL,			/* no poll_pps */
-		~0,			/* counter mask */
-		COUNTS_PER_SEC,		/* frequency */
-		"mc6840",		/* name */
-		100			/* quality */
+		.tc_get_timecount = mc6840_counter,
+		.tc_counter_mask = ~0,
+		.tc_frequency = COUNTS_PER_SEC,
+		.tc_name = "mc6840",
+		.tc_quality = 100,
 	};
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */

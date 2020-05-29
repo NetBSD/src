@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.122 2019/12/01 15:34:46 ad Exp $ */
+/*	$NetBSD: clock.c,v 1.123 2020/05/29 12:30:41 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.122 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.123 2020/05/29 12:30:41 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -155,40 +155,28 @@ static u_int stick2e_get_timecount(struct timecounter *);
  */
 
 static struct timecounter tick_timecounter = {
-	tick_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,                      /* frequency - set at initialisation */
-	"tick-counter",		/* name */
-	100,			/* quality */
-	0,			/* private reference - UNUSED */
-	NULL			/* next timecounter */
+	.tc_get_timecount = tick_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "tick-counter",
+	.tc_quality = 100,
 };
 
 /* US-III %stick */
 
 static struct timecounter stick_timecounter = {
-	stick_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,                      /* frequency - set at initialisation */
-	"stick-counter",	/* name */
-	200,			/* quality */
-	0,			/* private reference - UNUSED */
-	NULL			/* next timecounter */
+	.tc_get_timecount = stick_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "stick-counter",
+	.tc_quality = 200,
 };
 
 /* US-IIe STICK counter */
 #if NPSYCHO > 0
 static struct timecounter stick2e_timecounter = {
-	stick2e_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,                      /* frequency - set at initialisation */
-	"stick-counter",	/* name */
-	200,			/* quality */
-	0,			/* private reference - UNUSED */
-	NULL			/* next timecounter */
+	.tc_get_timecount = stick2e_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_name = "stick-counter",
+	.tc_quality = 200,
 };
 #endif
 
