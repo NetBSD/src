@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.6 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.7 2020/05/29 20:54:16 christos Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -243,9 +243,11 @@ extern	void	refclock_save_lcode(
 			struct refclockproc *, char const *, size_t);
 /* format data into la_code */
 extern	void	refclock_format_lcode(
-			struct refclockproc *, char const *, ...);
+			struct refclockproc *, char const *, ...)
+			NTP_PRINTF(2, 3);
 extern	void	refclock_vformat_lcode(
 			struct refclockproc *, char const *, va_list);
+			NTP_PRINTF(2, 0);
 				       
 struct refclock_atom;
 extern int	refclock_ppsaugment(
