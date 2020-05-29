@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2020/03/01 20:59:52 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/05/29 10:01:23 kamil Exp $
 
 BINDIR=/usr/bin
 
 PROG=	scp
+
+COPTS.scp.c += -Wno-format-nonliteral
 
 .include <bsd.prog.mk>
