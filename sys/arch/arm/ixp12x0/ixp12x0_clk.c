@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.17 2012/11/12 18:00:37 skrll Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.17 2012/11/12 18:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,14 +123,10 @@ static uint32_t ccf_to_coreclock[MAX_CCF + 1] = {
 static struct ixpclk_softc *ixpclk_sc = NULL;
 
 static struct timecounter ixpclk_timecounter = {
-	ixpclk_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"ixpclk",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = ixpclk_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "ixpclk",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t ixpclk_base;

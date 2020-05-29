@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.21 2014/03/06 19:46:27 maxv Exp $	*/
+/*	$NetBSD: epclk.c,v 1.22 2020/05/29 12:30:38 rin Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.21 2014/03/06 19:46:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.22 2020/05/29 12:30:38 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,14 +85,11 @@ struct epclk_softc {
 };
 
 static struct timecounter epclk_timecounter = {
-	epclk_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	TIMER_FREQ,		/* frequency */
-	"epclk",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = epclk_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = TIMER_FREQ,
+	.tc_name = "epclk",
+	.tc_quality = 100,
 };
 
 static struct epclk_softc *epclk_sc = NULL;

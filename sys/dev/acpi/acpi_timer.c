@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.25 2018/10/16 10:25:33 jmcneill Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.26 2020/05/29 12:30:41 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.25 2018/10/16 10:25:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.26 2020/05/29 12:30:41 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -43,14 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.25 2018/10/16 10:25:33 jmcneill Exp
 static int	acpitimer_test(void);
 
 static struct timecounter acpi_timecounter = {
-	acpitimer_read_safe,
-	0,
-	0x00ffffff,
-	ACPI_PM_TIMER_FREQUENCY,
-	"ACPI-Safe",
-	900,
-	NULL,
-	NULL,
+	.tc_get_timecount = acpitimer_read_safe,
+	.tc_counter_mask = 0x00ffffff,
+	.tc_frequency = ACPI_PM_TIMER_FREQUENCY,
+	.tc_name = "ACPI-Safe",
+	.tc_quality = 900,
 };
 
 static bool
