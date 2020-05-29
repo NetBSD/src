@@ -1687,6 +1687,7 @@ typedef unsigned int	uintptr_t;
 #endif
 
 #ifndef __NetBSD__
+
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
@@ -1698,6 +1699,12 @@ typedef unsigned int	uintptr_t;
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
+
+#else /* __NetBSD */
+# include <sys/endian.h>
+# if _BYTE_ORDER == _BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+# endif
 #endif
 
 /* routine worker child proc uses to exit. */
