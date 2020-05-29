@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/05/25 20:47:37 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2020/05/29 10:47:37 kamil Exp $
 
 LIBISPRIVATE=yes
 
@@ -86,6 +86,8 @@ ymd2yd.c
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
 COPTS.msyslog.c+=	-Wno-error=format-nonliteral
+
+CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 
 # For MKREPRO, avoid using __DATE__ and __TIME__.
 # Instead, use the date and time from ${IMPORTDATE_FILE}.
