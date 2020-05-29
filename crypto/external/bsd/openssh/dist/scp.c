@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.26 2020/05/28 17:05:49 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.27 2020/05/29 12:14:49 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.210 2020/05/06 20:57:38 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.26 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.27 2020/05/29 12:14:49 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -366,7 +366,7 @@ __dead static void lostconn(int);
 int okname(char *);
 void run_err(const char *,...) __printflike(1, 2);
 void run_err(const char *,...) __printflike(1, 2);
-int note_err(const char *,...);
+int note_err(const char *,...) __printflike(1, 2);
 void verifydir(char *);
 
 struct passwd *pwd;
@@ -1503,7 +1503,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				}
 		}
 		if (close(ofd) == -1)
-			note_err(np, "%s: close: %s", np, strerror(errno));
+			note_err("%s: close: %s", np, strerror(errno));
 		(void) response();
 		if (showprogress)
 			stop_progress_meter();
