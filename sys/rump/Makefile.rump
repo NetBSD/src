@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.127 2020/03/09 14:45:41 kamil Exp $
+#	$NetBSD: Makefile.rump,v 1.128 2020/05/29 00:05:26 kamil Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -23,6 +23,12 @@ CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
 # and compiling without it, causes issues at least on sh3 by adding
 # aborts after kern_assert on NULL pointer checks.
 CFLAGS+=    ${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
+
+# NULL + 0 arithmetic raises LLVM UBSan warnings, specially in sys/pslist.h
+# in the type-safe macros _PSLIST_VALIDATE_PTRS and _PSLIST_VALIDATE_CONTAINER.
+.if ${MKSANITIZER:Uno} == "yes" || ${MKLIBCSANITIZER:Uno} == "yes"
+CFLAGS+=    ${${ACTIVE_CC} == "clang":? -fno-delete-null-pointer-checks :}
+.endif
 
 # Define baseline cpu for mips ports, required for
 # rumpcomp_sync_icache() hypercall.
