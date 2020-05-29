@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.16 2020/05/25 20:47:20 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.17 2020/05/29 20:15:37 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -23,9 +23,11 @@
 #ifdef __GNUC__
 #define NTP_PRINTF(fmt, args) __attribute__((__format__(__printf__, fmt, args)))
 #define NTP_SYSLOG(fmt, args) __attribute__((__format__(__syslog__, fmt, args)))
+#define NTP_FORMAT_ARG(args) __attribute__((__format_arg__(args)))
 #else
 #define NTP_PRINTF(fmt, args)
 #define NTP_SYSLOG(fmt, args)
+#define NTP_FORMAT_ARG(args)
 #endif
 
 extern	int	mprintf(const char *, ...) NTP_SYSLOG(1, 2);
