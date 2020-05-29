@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.13 2019/06/19 15:10:17 jmcneill Exp $ */
+/* $NetBSD: xhcireg.h,v 1.14 2020/05/29 06:53:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -121,13 +121,13 @@
 #define	 XHCI_STS_HSE		0x00000004	/* RW - Host System Error */
 #define	 XHCI_STS_EINT		0x00000008	/* RW - Event Interrupt */
 #define	 XHCI_STS_PCD		0x00000010	/* RW - Port Change Detect */
-#define	 XHCI_STS_RSVDZ1	__BITS(5, 7)	/* RsvdZ - 5:7 */
+#define	 XHCI_STS_RSVDZ1	__BITS(7, 5)	/* RsvdZ - 7:5 */
 #define	 XHCI_STS_SSS		0x00000100	/* RO - Save State Status */
 #define	 XHCI_STS_RSS		0x00000200	/* RO - Restore State Status */
 #define	 XHCI_STS_SRE		0x00000400	/* RW - Save/Restore Error */
 #define	 XHCI_STS_CNR		0x00000800	/* RO - Controller Not Ready */
 #define	 XHCI_STS_HCE		0x00001000	/* RO - Host Controller Error */
-#define	 XHCI_STS_RSVDP0	__BITS(13, 31)	/* RsvdP - 13:31 */
+#define	 XHCI_STS_RSVDP0	__BITS(31, 13)	/* RsvdP - 31:13 */
 
 #define	XHCI_PAGESIZE		0x08	/* XHCI page size mask */
 #define	 XHCI_PAGESIZE_4K	0x00000001	/* 4K Page Size */
