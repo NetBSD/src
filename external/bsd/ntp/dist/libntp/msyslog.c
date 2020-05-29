@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.7 2020/05/29 20:15:38 christos Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -44,11 +44,14 @@ extern char const * progname;
 
 /* Declare the local functions */
 void	addto_syslog	(int, const char *);
-#ifndef VSNPRINTF_PERCENT_M
-void	format_errmsg	(char *, size_t, const char *, int);
+#ifdef VSNPRINTF_PERCENT_M
+#define format_errmsg(buf, len, fmt, error) (fmt)
+#else
+static const char *format_errmsg(char *, size_t, const char *, int)
+    NTP_FORMAT_ARG(3);
 
 /* format_errmsg() is under #ifndef VSNPRINTF_PERCENT_M above */
-void
+static const char *
 format_errmsg(
 	char *		nfmt,
 	size_t		lennfmt,
@@ -86,6 +89,7 @@ format_errmsg(
 		}
 	}
 	*n = '\0';
+	return nfmt;
 }
 #endif	/* VSNPRINTF_PERCENT_M */
 
@@ -233,9 +237,7 @@ mvsnprintf(
 	)
 {
 #ifndef VSNPRINTF_PERCENT_M
-	char		nfmt[256];
-#else
-	const char *	nfmt = fmt;
+	char		fmtbuf[256];
 #endif
 	int		errval;
 
@@ -248,12 +250,11 @@ mvsnprintf(
 #endif /* SYS_WINNT */
 		errval = errno;
 
-#ifndef VSNPRINTF_PERCENT_M
-	format_errmsg(nfmt, sizeof(nfmt), fmt, errval);
-#else
+#ifdef VSNPRINTF_PERCENT_M
 	errno = errval;
 #endif
-	return vsnprintf(buf, bufsiz, nfmt, ap);
+	return vsnprintf(buf, bufsiz,
+	    format_errmsg(fmtbuf, sizeof(fmtbuf), fmt, errval), ap);
 }
 
 
@@ -265,9 +266,7 @@ mvfprintf(
 	)
 {
 #ifndef VSNPRINTF_PERCENT_M
-	char		nfmt[256];
-#else
-	const char *	nfmt = fmt;
+	char		fmtbuf[256];
 #endif
 	int		errval;
 
@@ -280,12 +279,11 @@ mvfprintf(
 #endif /* SYS_WINNT */
 		errval = errno;
 
-#ifndef VSNPRINTF_PERCENT_M
-	format_errmsg(nfmt, sizeof(nfmt), fmt, errval);
-#else
+#ifdef VSNPRINTF_PERCENT_M
 	errno = errval;
 #endif
-	return vfprintf(fp, nfmt, ap);
+	return vfprintf(fp, 
+	    format_errmsg(fmtbuf, sizeof(fmtbuf), fmt, errval), ap);
 }
 
 
