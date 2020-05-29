@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2020/05/29 12:30:40 rin Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,12 +78,10 @@ cpu_initclocks(void)
 {
 #if !defined(MULTIPROCESSOR)
 	static struct timecounter tc =  {
-		(timecounter_get_t *)ia64_get_timecount, /* get_timecount */
-		0,				/* no poll_pps */
-		~0u,				/* counter_mask */
-		0,				/* frequency */
-		"ia64_timecounter",		/* name */
-		100,				/* quality */
+		.tc_get_timecount = ia64_get_timecount,
+		.tc_counter_mask = ~0u,
+		.tc_name = "ia64_timecounter",
+		.tc_quality = 100,
 	};
 #endif
 

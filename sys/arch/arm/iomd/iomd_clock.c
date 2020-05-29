@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.29 2012/05/18 21:09:50 skrll Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.30 2020/05/29 12:30:38 rin Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.29 2012/05/18 21:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.30 2020/05/29 12:30:38 rin Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -94,12 +94,11 @@ static volatile int timer0_ticked;
 static kmutex_t tmr_lock;
 
 static struct timecounter iomd_timecounter = {
-	iomd_timecounter0_get,
-	0, /* No poll_pps */
-	~0, /* 32bit accuracy */
-	TIMER_FREQUENCY,
-	"iomd_timer0",
-	100 
+	.tc_get_timecount = iomd_timecounter0_get,
+	.tc_counter_mask = ~0,
+	.tc_frequency = TIMER_FREQUENCY,
+	.tc_name = "iomd_timer0",
+	.tc_quality = 100,
 };
 
 int clockhandler(void *);

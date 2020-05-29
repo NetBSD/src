@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.19 2018/07/12 10:46:42 maxv Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.20 2020/05/29 12:30:39 rin Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.19 2018/07/12 10:46:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.20 2020/05/29 12:30:39 rin Exp $");
 
 #include "opt_ixp425.h"
 
@@ -79,14 +79,11 @@ struct ixpclk_softc {
 static struct ixpclk_softc *ixpclk_sc;
 
 static struct timecounter ixpclk_timecounter = {
-	ixpclk_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	COUNTS_PER_SEC,		/* frequency */
-	"ixpclk",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = ixpclk_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = COUNTS_PER_SEC,
+	.tc_name = "ixpclk",
+	.tc_quality = 100,
 };
 
 static volatile uint32_t ixpclk_base;

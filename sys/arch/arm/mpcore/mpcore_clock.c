@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_clock.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: mpcore_clock.c,v 1.3 2020/05/29 12:30:39 rin Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_clock.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_clock.c,v 1.3 2020/05/29 12:30:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +60,10 @@ static u_int mpcore_get_timecount(struct timecounter *);
 static int mpcoreclk_intr(void *);
 
 static struct timecounter mpcore_timecounter = {
-	mpcore_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"cpuclock",		/* name */
-	100,			/* quality */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount = mpcore_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "cpuclock",
+	.tc_quality = 100,
 };
 
 struct mpcoreclk_softc {
