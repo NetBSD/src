@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000var.h,v 1.6 2020/03/31 02:32:25 nisimura Exp $	*/
+/*	$NetBSD: dm9000var.h,v 1.7 2020/05/29 09:05:19 rin Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -65,6 +65,9 @@
 
 #include <sys/callout.h>
 #include <sys/rndsource.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #define DM9000_MODE_8BIT 2
 #define DM9000_MODE_16BIT 0
