@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2020/01/29 19:04:40 martin Exp $ */
+/*	$NetBSD: md.c,v 1.16 2020/05/29 10:25:06 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,9 +83,8 @@ md_init_set_status(int flags)
 {
 
 	/*
-	 * we will extract kernel variants and DTB files piecwise
-	 * manually later, just fetch the kernel set, do not
-	 * unpack it.
+	 * we will extract kernel variants piecewise manually
+	 * later, just fetch the kernel set, do not unpack it.
 	 */
 	set_noextract_set(SET_KERNEL_1);
 }
@@ -221,15 +220,12 @@ evbarm_extract_finalize(int update)
 		return 0;
 	}
 	if (boardtype == BOARD_TYPE_NORMAL) {
-		make_target_dir("/boot/dtb");
-		extract_file_to(dist, false, "/boot/dtb", "*.dt*", false);
 		extract_file_to(dist, false, "/boot", "./netbsd.ub", false);
 		fetch_fn = saved_fetch_fn;
 		return 0;
 	}
 	if (boardtype == BOARD_TYPE_RPI) {
 		extract_file_to(dist, false, "/boot", "./netbsd.img", false);
-		extract_file_to(dist, false, "/boot", "./bcm*.dtb", false);
 		fetch_fn = saved_fetch_fn;
 		snprintf(kernelbin, 100, "%s/netbsd.img", targetroot_mnt);
 		if (file_exists_p(kernelbin)) {
