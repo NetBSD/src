@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.8 2020/04/27 03:29:57 mrg Exp $
+$NetBSD: README.gcc8,v 1.9 2020/05/29 01:18:50 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -27,37 +27,37 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	y
-alpha		y	y	y	y		y		?	?	?
-earmv4		y	y	y	y		y		y	?	y
-earmv4eb	y	?	y	y		?		?	?	y
-earm		y	?	y	y		?		?	?	y
-earmeb		y	?	y	y		?		?	?	y
-earmhf		y	?	y	y		?		?	?	y
-earmhfeb	y	?	y	y		?		?	?	y
-earmv6		y	?	y	y		?		?	?	y
-earmv6eb	y	?	y	y		?		?	?	y
-earmv6hf	y	?	y	y		?		?	?	y
-earmv6hfeb	y	?	y	y		?		?	?	y
-earmv7		y	?	y	y		?		?	?	y
-earmv7eb	y	?	y	y		?		?	?	y
-earmv7hf	y	y	y	y		y		y	n[3]	y
-earmv7hfeb	y	?	y	y		?		?	?	y
+alpha		y	y	y	y		y		y	y	y
+earmv4		y	y	y	y		y		y	y	y
+earmv4eb	y	y	y	y		y		y	y	y
+earm		y	y	y	y		y		y	y	y
+earmeb		y	y	y	y		y		y	y	y
+earmhf		y	y	y	y		y		y	y	y
+earmhfeb	y	y	y	y		y		y	y	y
+earmv6		y	y	y	y		y		y	y	y
+earmv6eb	y	y	y	y		y		y	y	y
+earmv6hf	y	y	y	y		y		y	y	y
+earmv6hfeb	y	y	y	y		y		y	y	y
+earmv7		y	y	y	y		y		y	y	y
+earmv7eb	y	y	y	y		y		y	y	y
+earmv7hf	y	y	y	y		y		y	y	y
+earmv7hfeb	y	y	y	y		y		y	y	y
 hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	y	y
-ia64		y	y	y	y		y		y	n[4]	y
-m68000		y	?	y	y		?		?	?	?
+ia64		y	y	y	y		y		y	n	y
+m68000		y	n[3]	y	y		y		?	?	?
 m68k		y	y	y	y		y		?	?	?
-mipseb		y	y	y	y		?		?	?	y
-mipsel		y	?	y	y		?		?	?	y
-mips64eb	y	y	y	y		y		y	y[2]	y
-mips64el	y	?	y	y		?		?	?	y
-powerpc		y	y	y	y		y		y	y[1]	y
-powerpc64	y	n	y	y		y		y	y	y
-sh3eb		y	y	y	y		y		y	y	?
-sh3el		y	y	y	y		y		?	?	?
+mipseb		y	y	y	y		y		y	y	y
+mipsel		y	y	y	y		y		y	y	y
+mips64eb	y	y	y	y		y		y	y	y
+mips64el	y	y	y	y		y		y	y	y
+powerpc		y	y	y	y		y		y	y	y
+powerpc64	y	n	y	y		y		?	y	y
+sh3eb		y	y	y	y		y		y	y	y
+sh3el		y	y	y	y		y		y	y	y
 sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
-vax		y	?	?	y		?		?	?	?
+vax		y	y	y	y		y		y	n[5]	y
 x86_64		y	y	y	y		y		y	y	y
 riscv32		y	?	y	y		y		?	?	y	
 riscv64		y	?	y	y		y		?	?	y
@@ -66,10 +66,8 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1] - many ipsec atf and c++ failures
-[2] - lots of failures, no idea if bad
-[3] - c++ exceptions are broken, all arm
-[4] - not upto userland yet
+[3] - kernel faults loading, too large?
+[5] - c++ exceptions are broken
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
 values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted)
