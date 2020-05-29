@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.82 2015/05/02 23:21:40 christos Exp $
+#	$NetBSD: RAMDISK,v 1.83 2020/05/29 23:24:39 tsutsui Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -9,13 +9,15 @@ include		"arch/arc/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=8420	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=5760	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
-makeoptions	COPTS="-Os -mmemcpy"	# generates smaller code than -O2, -O1
+no makeoptions	COPTS
+makeoptions	COPTS="-Os -mmemcpy -fno-unwind-tables"
 
-# shrink kernel since ARC BIOS seems to have 8MB limit
+# shrink kernel since ARC BIOS seems to have ~6MB limit
 options 	FFS_NO_SNAPSHOT
+options 	PIPE_SOCKETPAIR
 
 no options 	KTRACE
 no options 	NTP
@@ -23,43 +25,90 @@ no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
 no options 	SYSCTL_INCLUDE_DESCR
+no options 	BUFQ_PRIOCSCAN
+
 no options 	COMPAT_10
-no options 	COMPAT_11
-no options 	COMPAT_12
-no options 	COMPAT_13
-no options 	COMPAT_14
-no options 	COMPAT_ULTRIX
+no options 	DDB
+#no options 	COMPAT_ULTRIX
 no options 	EXEC_ECOFF
 
 no file-system	EXT2FS
-no file-system	LFS
+#no file-system	LFS
 no file-system	FDESC
 no file-system	KERNFS
 no file-system	NULLFS
-no file-system	OVERLAY
-no file-system	UMAPFS
-no file-system	UNION
-no file-system	TMPFS
+#no file-system	OVERLAY
+no file-system	PROCFS
+#no file-system	UMAPFS
+#no file-system	UNION
 no file-system	PTYFS
+no file-system	TMPFS
 
-no options 	QUOTA
-no options 	QUOTA2
+#no options 	QUOTA
+#no options 	QUOTA2
+no options 	WAPBL
+no options 	UFS_EXTATTR
+options 	NFS_V2_ONLY
+options 	NO_DEV_PTM
+
+no options	INET6
 no options 	NFSSERVER
 no options 	PPP_FILTER
-no options 	NETATALK
+#no options 	NETATALK
+
 no options 	MIIVERBOSE
 no options 	PCIVERBOSE
 no options 	SCSIVERBOSE
 
+no options 	WSDISPLAY_COMPAT_USL
+
 no lpt0 at jazzio?
-no ast0 at isa?
+#no ast0 at isa?
 no lpt0 at isa?
 
-no hifn* at pci?
-no ubsec* at pci?
+#no hifn* at pci?
+#no ubsec* at pci?
 
 no pms* at pckbc?
 no wsmouse* at pms?
+
+# drop non-bootable SCSI/ATA devices
+no adv* at pci?
+no ahc* at pci?
+no iha* at pci?
+no njs* at pci?
+no pcscp* at pci?
+no siop* at pci?
+no esiop* at pci?
+no trm* at pci?
+
+no acardide* at pci?
+no cmdide* at pci?
+no hptide* at pci?
+no optiide* at pci?
+no pdcide* at pci?
+no satalink* at pci?
+no viaide* at pci?
+
+# drop most PCI Network devices
+no bge* at pci?
+no ep* at pci?
+no epic* at pci?
+no ex* at pci?
+no fxp* at pci?
+no gsip* at pci?
+no ne* at pci?
+no pcn* at pci?
+no re* at pci?
+no rtk* at pci?
+no sf* at pci?
+no sip* at pci?
+no ste* at pci?
+no tl* at pci?
+no tlp* at pci?
+no vge* at pci?
+no vr* at pci?
+no wm* at pci?
 
 no ch*  at scsibus?
 no ss*  at scsibus?
@@ -69,21 +118,25 @@ no uk*  at atapibus?
 no pseudo-device crypto
 no pseudo-device swcrypto
 
+no pseudo-device ccd
 no pseudo-device raid
 no pseudo-device vnd
 no pseudo-device fss
 
-no pseudo-device ipfilter
+no pseudo-device npf
 no pseudo-device ppp
 no pseudo-device pppoe
-no pseudo-device tap
+no pseudo-device sl
 no pseudo-device tun
-no pseudo-device gif
-no pseudo-device stf
+no pseudo-device tap
+#no pseudo-device gif
+#no pseudo-device stf
 no pseudo-device vlan
 no pseudo-device bridge
-no pseudo-device agr
+#no pseudo-device agr
 no pseudo-device clockctl
 
-no pseudo-device accf_data
-no pseudo-device accf_http
+#no pseudo-device accf_data
+#no pseudo-device accf_http
+
+no pseudo-device ksyms
