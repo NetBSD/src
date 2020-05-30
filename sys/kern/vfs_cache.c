@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.144 2020/05/26 18:38:37 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.145 2020/05/30 18:06:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.144 2020/05/26 18:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.145 2020/05/30 18:06:17 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -626,11 +626,9 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 {
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct namecache *ncp;
+	krwlock_t *oldlock, *newlock;
 	uint64_t key;
 	int error;
-
-	/* Establish default results. */
-	*vn_ret = NULL;
 
 	/* If disabled, or file system doesn't support this, bail out. */
 	if (__predict_false((dvp->v_mount->mnt_iflag & IMNT_NCLOOKUP) == 0)) {
@@ -663,32 +661,42 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 * on the lock as child -> parent is the wrong direction.
 	 */
 	if (*plock != &dvi->vi_nc_lock) {
+		oldlock = *plock;
+		newlock = &dvi->vi_nc_lock;
 		if (!rw_tryenter(&dvi->vi_nc_lock, RW_READER)) {
 			return false;
 		}
-		if (*plock != NULL) {
-			rw_exit(*plock);
+	} else {
+		oldlock = NULL;
+		newlock = NULL;
+		if (*plock == NULL) {
+			KASSERT(vrefcnt(dvp) > 0);
 		}
-		*plock = &dvi->vi_nc_lock;
-	} else if (*plock == NULL) {
-		KASSERT(vrefcnt(dvp) > 0);
 	}
 
 	/*
 	 * First up check if the user is allowed to look up files in this
 	 * directory.
 	 */
-	if (dvi->vi_nc_mode == VNOVAL) {
-		return false;
-	}
-	KASSERT(dvi->vi_nc_uid != VNOVAL && dvi->vi_nc_gid != VNOVAL);
-	error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
-	    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
-	    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
-	    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
-	if (error != 0) {
-		COUNT(ncs_denied);
-		return false;
+	if (cred != FSCRED) {
+		if (dvi->vi_nc_mode == VNOVAL) {
+			if (newlock != NULL) {
+				rw_exit(newlock);
+			}
+			return false;
+		}
+		KASSERT(dvi->vi_nc_uid != VNOVAL && dvi->vi_nc_gid != VNOVAL);
+		error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
+		    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
+		    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
+		    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
+		if (error != 0) {
+			if (newlock != NULL) {
+				rw_exit(newlock);
+			}
+			COUNT(ncs_denied);
+			return false;
+		}
 	}
 
 	/*
@@ -696,6 +704,9 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 */
 	ncp = cache_lookup_entry(dvp, name, namelen, key);
 	if (__predict_false(ncp == NULL)) {
+		if (newlock != NULL) {
+			rw_exit(newlock);
+		}
 		COUNT(ncs_miss);
 		SDT_PROBE(vfs, namecache, lookup, miss, dvp,
 		    name, namelen, 0, 0);
@@ -704,11 +715,9 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	if (ncp->nc_vp == NULL) {
 		/* found negative entry; vn is already null from above */
 		COUNT(ncs_neghits);
-		SDT_PROBE(vfs, namecache, lookup, hit, dvp, name, namelen, 0, 0);
-		return true;
+	} else {
+		COUNT(ncs_goodhits); /* XXX can be "badhits" */
 	}
-
-	COUNT(ncs_goodhits); /* XXX can be "badhits" */
 	SDT_PROBE(vfs, namecache, lookup, hit, dvp, name, namelen, 0, 0);
 
 	/*
@@ -717,6 +726,12 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 * looking up the next component, or the caller will release it
 	 * manually when finished.
 	 */
+	if (oldlock) {
+		rw_exit(oldlock);
+	}
+	if (newlock) {
+		*plock = newlock;
+	}	
 	*vn_ret = ncp->nc_vp;
 	return true;
 }
