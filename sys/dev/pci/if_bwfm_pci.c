@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.8 2020/05/30 13:41:58 jdolecek Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.9 2020/05/30 15:55:47 jdolecek Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -41,8 +41,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
+#include <dev/ic/bwfmvar.h>
 #include <dev/pci/if_bwfm_pci.h>
 
 #define BWFM_DMA_D2H_SCRATCH_BUF_LEN		8
