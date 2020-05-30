@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.23 2019/09/26 18:44:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.24 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.23 2019/09/26 18:44:45 christos Exp $
 #define	m_makewritable(m,o,l,f)	(nbuf)->nb_mops->ensure_writable((m), (o+l))
 #define	mtod(m,t)		((t)((nbuf)->nb_mops->getdata(m)))
 #define	m_flags_p(m,f)		true
+#define	M_UNWRITABLE(m, l)	false
 #else
 #define	m_next_ptr(m)		(m)->m_next
 #define	m_buflen(m)		((size_t)(m)->m_len)
@@ -73,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.23 2019/09/26 18:44:45 christos Exp $
 void
 nbuf_init(npf_t *npf, nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
 {
-	u_int ifid = npf_ifmap_getid(npf, ifp);
+	unsigned ifid = npf_ifmap_getid(npf, ifp);
 
 	KASSERT(m_flags_p(m, M_PKTHDR));
 	nbuf->nb_mops = npf->mbufops;
@@ -104,7 +105,7 @@ size_t
 nbuf_offset(const nbuf_t *nbuf)
 {
 	const struct mbuf *m = nbuf->nb_mbuf;
-	const u_int off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t);
+	const unsigned off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t);
 	const int poff = m_length(nbuf->nb_mbuf0) - m_length(m) + off;
 
 	return poff;
@@ -139,7 +140,7 @@ void *
 nbuf_advance(nbuf_t *nbuf, size_t len, size_t ensure)
 {
 	struct mbuf *m = nbuf->nb_mbuf;
-	u_int off, wmark;
+	unsigned off, wmark;
 	uint8_t *d;
 
 	/* Offset with amount to advance. */
@@ -240,7 +241,7 @@ void *
 nbuf_ensure_writable(nbuf_t *nbuf, size_t len)
 {
 	struct mbuf *m = nbuf->nb_mbuf;
-	const u_int off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t);
+	const unsigned off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t);
 	const int tlen = off + len;
 	bool head_buf;
 
@@ -296,15 +297,15 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
 }
 
 /*
- * nbuf_add_tag: add a tag to specified network buffer.
+ * nbuf_add_tag: associate a tag with the network buffer.
  *
- * => Returns 0 on success or errno on failure.
+ * => Returns 0 on success or error number on failure.
  */
 int
 nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
 {
-#ifdef _KERNEL
 	struct mbuf *m = nbuf->nb_mbuf0;
+#ifdef _KERNEL
 	struct m_tag *mt;
 	uint32_t *dat;
 
@@ -319,21 +320,23 @@ nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
 	m_tag_prepend(m, mt);
 	return 0;
 #else
-	(void)nbuf; (void)val;
-	return ENOTSUP;
+	if (!nbuf->nb_mops->set_tag) {
+		return ENOTSUP;
+	}
+	return nbuf->nb_mops->set_tag(m, val);
 #endif
 }
 
 /*
- * nbuf_find_tag: find a tag in specified network buffer.
+ * nbuf_find_tag: find a tag associated with a network buffer.
  *
- * => Returns 0 on success or errno on failure.
+ * => Returns 0 on success or error number on failure.
  */
 int
 nbuf_find_tag(nbuf_t *nbuf, uint32_t *val)
 {
-#ifdef _KERNEL
 	struct mbuf *m = nbuf->nb_mbuf0;
+#ifdef _KERNEL
 	struct m_tag *mt;
 
 	KASSERT(m_flags_p(m, M_PKTHDR));
@@ -345,7 +348,9 @@ nbuf_find_tag(nbuf_t *nbuf, uint32_t *val)
 	*val = *(uint32_t *)(mt + 1);
 	return 0;
 #else
-	(void)nbuf; (void)val;
-	return ENOTSUP;
+	if (!nbuf->nb_mops->get_tag) {
+		return ENOTSUP;
+	}
+	return nbuf->nb_mops->get_tag(m, val);
 #endif
 }
