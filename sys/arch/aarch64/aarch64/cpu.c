@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.45 2020/05/11 14:44:16 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.46 2020/05/30 17:50:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.45 2020/05/11 14:44:16 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.46 2020/05/30 17:50:39 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -232,7 +232,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 static void
 cpu_identify1(device_t self, struct cpu_info *ci)
 {
-	uint32_t ctr, sctlr;	/* for cache */
+	uint64_t ctr, sctlr;	/* for cache */
 
 	/* SCTLR - System Control Register */
 	sctlr = reg_sctlr_el1_read();
