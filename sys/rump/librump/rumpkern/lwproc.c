@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.50 2020/05/23 23:42:44 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.51 2020/05/30 19:16:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.50 2020/05/23 23:42:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.51 2020/05/30 19:16:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -343,12 +343,10 @@ lwproc_freelwp(struct lwp *l)
 
 extern kmutex_t unruntime_lock;
 
-/*
- * called with p_lock held, releases lock before return
- */
-static void
-lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
+static struct lwp *
+lwproc_makelwp(struct proc *p, bool doswitch, bool procmake)
 {
+	struct lwp *l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
 	/*
 	 * Account the new lwp to the owner of the process.
@@ -365,6 +363,9 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	l->l_mutex = &unruntime_lock;
 
 	proc_alloc_lwpid(p, l);
+
+	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 
 	l->l_fd = p->p_fd;
@@ -392,12 +393,13 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	mutex_enter(&proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 	mutex_exit(&proc_lock);
+
+	return l;
 }
 
 struct lwp *
 rump__lwproc_alloclwp(struct proc *p)
 {
-	struct lwp *l;
 	bool newproc = false;
 
 	if (p == NULL) {
@@ -405,13 +407,7 @@ rump__lwproc_alloclwp(struct proc *p)
 		newproc = true;
 	}
 
-	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
-
-	mutex_enter(p->p_lock);
-	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
-	lwproc_makelwp(p, l, false, newproc);
-
-	return l;
+	return lwproc_makelwp(p, false, newproc);
 }
 
 int
@@ -435,8 +431,12 @@ rump_lwproc_newlwp(pid_t pid)
 		kmem_free(l, sizeof(*l));
 		return EBUSY;
 	}
+	mutex_exit(p->p_lock);
 	mutex_exit(&proc_lock);
-	lwproc_makelwp(p, l, true, false);
+
+	/* XXX what holds proc? */
+
+	lwproc_makelwp(p, true, false);
 
 	return 0;
 }
@@ -445,17 +445,13 @@ int
 rump_lwproc_rfork_vmspace(struct vmspace *vm, int flags)
 {
 	struct proc *p;
-	struct lwp *l;
 
 	if (flags & ~(RUMP_RFFDG|RUMP_RFCFDG) ||
 	    (~flags & (RUMP_RFFDG|RUMP_RFCFDG)) == 0)
 		return EINVAL;
 
 	p = lwproc_newproc(curproc, vm, flags);
-	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
-	mutex_enter(p->p_lock);
-	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
-	lwproc_makelwp(p, l, true, true);
+	lwproc_makelwp(p, true, true);
 
 	return 0;
 }
