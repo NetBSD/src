@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21 2020/01/08 17:21:38 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.22 2020/05/30 08:41:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -100,6 +100,12 @@
 
 int process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
 int process_machdep_validfpu(struct proc *);
+
+/*
+ * The fpregs structure contains an fxsave area, which must have 16-byte
+ * alignment.
+ */
+#define PTRACE_REGS_ALIGN __aligned(16)
 
 #include <sys/module_hook.h>
 MODULE_HOOK(netbsd32_process_doxmmregs_hook, int,

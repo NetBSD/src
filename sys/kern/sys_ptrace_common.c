@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.82 2020/05/26 23:08:56 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.83 2020/05/30 08:41:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.82 2020/05/26 23:08:56 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.83 2020/05/30 08:41:22 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -212,6 +212,10 @@ static kcondvar_t ptrace_cv;
     defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
     defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
 # define PT_REGISTERS
+#endif
+
+#ifndef PTRACE_REGS_ALIGN
+#define PTRACE_REGS_ALIGN /* nothing */
 #endif
 
 static int
@@ -1591,7 +1595,7 @@ static int
 proc_regio(struct lwp *l, struct uio *uio, size_t ks, regrfunc_t r,
     regwfunc_t w)
 {
-	char buf[1024];
+	char buf[1024] PTRACE_REGS_ALIGN;
 	int error;
 	char *kv;
 	size_t kl;

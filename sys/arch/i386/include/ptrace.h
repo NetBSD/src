@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.25 2020/01/09 10:46:31 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.26 2020/05/30 08:41:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -186,6 +186,12 @@ struct pfsnode;
 int	procfs_machdep_doxmmregs(struct lwp *, struct lwp *,
 	    struct pfsnode *, struct uio *);
 int	procfs_machdep_validxmmregs(struct lwp *, struct mount *);
+
+/*
+ * The fpregs structure contains an fxsave area, which must have 16-byte
+ * alignment.
+ */
+#define PTRACE_REGS_ALIGN __aligned(16)
 
 #endif /* _KERNEL */
 
