@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.12 2019/10/28 13:42:28 wiz Exp $
+.\"	$NetBSD: mount_9p.8,v 1.13 2020/05/30 00:00:35 uwe Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 24, 2019
+.Dd May 30, 2020
 .Dt MOUNT_9P 8
 .Os
 .Sh NAME
@@ -32,21 +32,21 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl su
-.Op Fl o Ar mntopts
+.Op Fl o Ar options
 .Op Fl p Ar port
-.Ar [user@]host[:path]
+.Oo Ar user Ns Li \&@ Oc Ns Ar host Ns Op Li \&: Ns Ar path
 .Ar mount_point
 .Nm
 .Fl c
 .Op Fl su
-.Op Fl o Ar mntopts
-.Ar devfile
+.Op Fl o Ar options
+.Ar device
 .Ar mount_point
 .Sh DESCRIPTION
 The
 .Nm
 program is used to mount a file hierarchy served with the Plan 9
-file sharing protocol: 9P.
+resource sharing protocol 9P.
 After the file system is mounted, the files on the remote
 .Ar host
 will be accessed using the credentials of the user named
@@ -60,9 +60,9 @@ must be an absolute path.
 .Pp
 The
 .Fl c
-opiton enables to mount a file system exported by a VM host through
+option enables to mount a file system exported by a VM host through
 a character device file
-.Ar devfile
+.Ar device
 backed by the
 .Xr vio9p 4
 driver.
@@ -70,30 +70,45 @@ See
 .Xr vio9p 4
 for more information.
 .Pp
+The following options are available:
+.Bl -tag -width "Fl o Ar options"
+.It Fl c
+Interpret
+.Ar special
+as a device name.
+See
+.Xr vio9p 4 .
+.It Fl o Ar options
+Mount options.
+See documentation for the
+.Fl o
+option to
+.Xr mount 8 .
+.It Fl p Ar port
+Use the specified TCP port.
 By default
 .Nm
-runs in the background with
-.Xr daemon 3 .
-With the
-.Fl s
-option
-.Nm
-runs in the forground.
-.Pp
-By default
-.Nm
-follows the 9P2000 protocol.
-With the
-.Fl u
-option
-.Nm
-follows the 9P2000.u protocol that includes extensions to better support Unix
+uses port 564
+.Li ( 9pfs ) .
+Another useful port is 6666
+.Li ( styx ) ,
+used by Inferno operating system.
+.It Fl s
+Run in the foreground.
+Useful for debugging.
+.It Fl u
+Use 9P2000.u protocol that includes extensions to better support Unix
 environments.
+.El
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
 .Xr vio9p 4 ,
 .Xr mount 8
+.Rs
+.%T 9P: The Simple Distributed File System from Bell Labs
+.%U http://9p.cat-v.org/
+.Re
 .Rs
 .%T RFC and standards documents relating the 9P protocol
 .%U http://ericvh.github.io/9p-rfc/
@@ -108,16 +123,14 @@ Experimental 9P2000.u support appeared in
 .Nx 9.0 .
 .Pp
 The
-.Fl c
-option appeared in
+.Xr vio9p 4
+support appeared in
 .Nx 10.0 .
 .Sh CAVEATS
+Authentication is not supported.
+.Pp
 Permissions are not handled well.
 .Pp
-Authentication support is missing.
-.Pp
 Error code handling is missing for 9P2000.
-.Pp
-Under construction.
 .Pp
 9P2000.u support doesn't use extension fields.
