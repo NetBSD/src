@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.22 2020/03/25 04:53:11 thorpej Exp $ */
+/* $NetBSD: bwfm.c,v 1.23 2020/05/30 13:41:58 jdolecek Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -119,15 +119,15 @@ void	 bwfm_rx_event(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_rx_event_cb(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_scan_node(struct bwfm_softc *, struct bwfm_bss_info *, size_t);
 
-uint8_t bwfm_2ghz_channels[] = {
+static const uint8_t bwfm_2ghz_channels[] = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
 };
-uint8_t bwfm_5ghz_channels[] = {
+static const uint8_t bwfm_5ghz_channels[] = {
 	34, 36, 38, 40, 42, 44, 46, 48, 52, 56, 60, 64, 100, 104, 108, 112,
 	116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165,
 };
 
-struct bwfm_proto_ops bwfm_proto_bcdc_ops = {
+const struct bwfm_proto_ops bwfm_proto_bcdc_ops = {
 	.proto_query_dcmd = bwfm_proto_bcdc_query_dcmd,
 	.proto_set_dcmd = bwfm_proto_bcdc_set_dcmd,
 };

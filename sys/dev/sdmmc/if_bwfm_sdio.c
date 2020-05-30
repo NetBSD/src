@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.16 2020/05/24 17:26:18 riastradh Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.17 2020/05/30 13:41:58 jdolecek Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -245,7 +245,7 @@ static const struct bwfm_firmware_selector bwfm_sdio_fwtab[] = {
 	BWFM_FW_ENTRY_END
 };
 
-struct bwfm_bus_ops bwfm_sdio_bus_ops = {
+static const struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = NULL,
 	.bs_txcheck = bwfm_sdio_txcheck,
@@ -254,7 +254,7 @@ struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_rxctl = bwfm_sdio_rxctl,
 };
 
-struct bwfm_buscore_ops bwfm_sdio_buscore_ops = {
+static const struct bwfm_buscore_ops bwfm_sdio_buscore_ops = {
 	.bc_read = bwfm_sdio_buscore_read,
 	.bc_write = bwfm_sdio_buscore_write,
 	.bc_prepare = bwfm_sdio_buscore_prepare,
@@ -303,7 +303,7 @@ static const struct bwfm_sdio_product {
 	},
 };
 
-static const char *compatible[] = {
+static const char * const compatible[] = {
 	"brcm,bcm4329-fmac",
 	NULL
 };
