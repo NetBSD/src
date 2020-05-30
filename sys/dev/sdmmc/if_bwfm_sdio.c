@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.17 2020/05/30 13:41:58 jdolecek Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.18 2020/05/30 15:55:47 jdolecek Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -44,8 +44,8 @@
 #include <dev/sdmmc/sdmmcdevs.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
-#include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
+#include <dev/ic/bwfmvar.h>
 #include <dev/sdmmc/if_bwfm_sdio.h>
 
 #ifdef BWFM_DEBUG

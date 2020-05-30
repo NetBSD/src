@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.9 2020/05/30 13:41:58 jdolecek Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.10 2020/05/30 15:55:47 jdolecek Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -214,6 +214,11 @@ struct bwfm_softc {
 				    enum ieee80211_state, int);
 
 	int			 sc_bcdc_reqid;
+
+	union {
+		struct bwfm_bss_info bss_info;
+		uint8_t padding[BWFM_BSS_INFO_BUFLEN];
+	}			sc_bss_buf;
 };
 
 void bwfm_attach(struct bwfm_softc *);
