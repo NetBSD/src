@@ -1,6 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2020/05/30 20:47:59 christos Exp $
+# $NetBSD: Makefile,v 1.3 2020/05/30 20:54:46 christos Exp $
 
 LIBISPRIVATE=yes
+
+LIBISPRIVATE=yes
+MKPICLIB=yes
 
 .include <bsd.own.mk>
 
@@ -61,10 +64,12 @@ CPPFLAGS+=	-I${LIBUVDIR}/include -I${LIBUVDIR}/src
 
 LIBDPLIBS+=	kvm ${NETBSDSRCDIR}/lib/libkvm
 
+.if ${LIBISPRIVATE} != "yes"
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 PKGCONFIG=libuv
 .include "${.CURDIR}/../pkgconfig.mk"
+.endif
 
 .include <bsd.lib.mk>
