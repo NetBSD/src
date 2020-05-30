@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.63 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.64 2020/05/30 16:12:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.63 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.64 2020/05/30 16:12:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -478,47 +478,58 @@ ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 	return error;
 }
 
-static int
-ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
-{
-	int error;
+struct elf_coredump_note_data {
 	char name[64];
 	elf_lwpstatus els;
 	elf_reg intreg;
 #ifdef PT_GETFPREGS
 	elf_fpreg freg;
+#endif
+};
+
+static int
+ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
+{
+	struct elf_coredump_note_data *d;
+#ifdef PT_GETFPREGS
 	size_t freglen;
 #endif
+	int error;
 
-	snprintf(name, sizeof(name), "%s@%d",
+	d = kmem_alloc(sizeof(*d), KM_SLEEP);
+
+	snprintf(d->name, sizeof(d->name), "%s@%d",
 	    ELF_NOTE_NETBSD_CORE_NAME, l->l_lid);
 
-	elf_read_lwpstatus(l, &els);
+	elf_read_lwpstatus(l, &d->els);
 
-	ELFNAMEEND(coredump_savenote)(ns, PT_LWPSTATUS, name, &els,
-	    sizeof(els));
+	ELFNAMEEND(coredump_savenote)(ns, PT_LWPSTATUS, d->name, &d->els,
+	    sizeof(d->els));
 
-	error = elf_process_read_regs(l, &intreg);
+	error = elf_process_read_regs(l, &d->intreg);
 	if (error)
-		return (error);
+		goto out;
 
-	ELFNAMEEND(coredump_savenote)(ns, PT_GETREGS, name, &intreg,
-	    sizeof(intreg));
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETREGS, d->name, &d->intreg,
+	    sizeof(d->intreg));
 
 #ifdef PT_GETFPREGS
-	freglen = sizeof(freg);
-	error = elf_process_read_fpregs(l, &freg, &freglen);
+	freglen = sizeof(d->freg);
+	error = elf_process_read_fpregs(l, &d->freg, &freglen);
 	if (error)
-		return (error);
+		goto out;
 
-	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, d->name, &d->freg,
+	    freglen);
 #endif
 
 #ifdef COREDUMP_MACHDEP_LWP_NOTES
-	COREDUMP_MACHDEP_LWP_NOTES(l, ns, name);
+	COREDUMP_MACHDEP_LWP_NOTES(l, ns, d->name);
 #endif
 
-	return (0);
+ out:
+	kmem_free(d, sizeof(*d));
+	return (error);
 }
 
 static void
