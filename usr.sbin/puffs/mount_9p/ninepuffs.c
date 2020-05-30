@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.28 2020/05/29 23:49:08 uwe Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.29 2020/05/30 02:53:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.28 2020/05/29 23:49:08 uwe Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.29 2020/05/30 02:53:30 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -207,6 +207,7 @@ main(int argc, char *argv[])
 	p9p.maxreq = P9P_DEFREQLEN;
 	p9p.nextfid = 1;
 	p9p.protover = protover;
+	p9p.server = server;
 
 	/* user@ */
 	if ((p = strchr(argv[0], '@')) != NULL) {
@@ -233,7 +234,7 @@ main(int argc, char *argv[])
 		srvpath = "/";
 	}
 
-	if (server == P9P_SERVER_TCP) {
+	if (p9p.server == P9P_SERVER_TCP) {
 		p9p.servsock = serverconnect(srvhost, port);
 	} else {
 		/* path to a vio9p(4) device, e.g., /dev/vio9p0 */
