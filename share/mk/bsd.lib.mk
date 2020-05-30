@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.381 2020/05/10 06:38:24 maxv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.382 2020/05/30 19:51:32 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -30,7 +30,7 @@ MKLINT:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
 MKSTATICLIB:=	no
-. else
+. elif ${MKPICLIB} == "no"
 MKPIC:=		no
 . endif
 MKPROFILE:=	no
