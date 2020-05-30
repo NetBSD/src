@@ -32,7 +32,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: arcbios_calls.S,v 1.2 2020/05/30 02:46:07 tsutsui Exp $")
+RCSID("$NetBSD: arcbios_calls.S,v 1.3 2020/05/30 02:56:54 tsutsui Exp $")
 
 	.text
 	.set noreorder
@@ -60,11 +60,11 @@ NESTED(arcbios_4orless_args, CALLFRAME_SIZ, ra)
 	nop
 
 	jalr	t9
-	 move	s0, t8
+	 move	s0, MIPS_CURLWP
 
 	FIX_V0
 
-	move	t8, s0
+	move	MIPS_CURLWP, s0
 
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	s0, CALLFRAME_S0(sp)
@@ -101,11 +101,11 @@ NESTED(arcbios_5to8_args, CALLFRAME2_SIZ, ra)
 	nop
 
 	jalr	t9
-	 move	s0, t8
+	 move	s0, MIPS_CURLWP
 
 	FIX_V0
 
-	move	t8, s0
+	move	MIPS_CURLWP, s0
 
 	REG_L	ra, CALLFRAME2_RA(sp)
 	REG_L	s0, CALLFRAME2_S0(sp)
