@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.55 2018/10/14 17:40:28 jdolecek Exp $
+.\"	$NetBSD: malloc.9,v 1.56 2020/05/30 17:12:01 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 14, 2018
+.Dd May 30, 2020
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -222,10 +222,6 @@ Device driver memory.
 structures.
 .It Dv M_FREE
 Should be on free list.
-.It Dv M_PCB
-Protocol control block.
-.It Dv M_SOFTINTR
-Softinterrupt structures.
 .It Dv M_TEMP
 Misc temporary data buffers.
 .El
@@ -233,6 +229,22 @@ Misc temporary data buffers.
 Other malloc types are defined by the corresponding subsystem; see the
 documentation for that subsystem for information its available malloc
 types.
+.Sh NOTES
+Note that the malloc type argument is actually unused on
+.Nx ,
+the argument is only supported for easier source compatibility
+with
+.Fx
+and
+.Ox .
+Likewise calls to
+.Fn MALLOC_DECLARE
+.Fn MALLOC_DEFINE ,
+.Fn malloc_type_attach ,
+and
+.Fn malloc_type_detach
+are defined out and have no effect on
+.Nx .
 .Sh RETURN VALUES
 .Fn malloc
 returns a kernel virtual address that is suitably aligned for storage of
