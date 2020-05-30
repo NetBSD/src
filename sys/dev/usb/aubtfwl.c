@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.9 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.10 2020/05/30 17:19:45 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.9 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.10 2020/05/30 17:19:45 jakllsch Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
@@ -272,7 +273,7 @@ static void
 aubtfwl_attach_hook(device_t self)
 {
 	struct aubtfwl_softc * const sc = device_private(self);
-	char firmware_name[MAXPATHLEN+1];
+	char *fw_name;
 	struct ar3k_version ver;
 	uint8_t state;
 	int clock = 0;
@@ -292,9 +293,10 @@ aubtfwl_attach_hook(device_t self)
 		aprint_verbose_dev(self, "state is 0x%02x\n", state);
 
 		if (!(state & AR3K_STATE_IS_PATCHED)) {
-			snprintf(firmware_name, sizeof(firmware_name),
-				"ar3k/AthrBT_0x%08x.dfu", ver.rom);
-			error = aubtfwl_firmware_load(self, firmware_name);
+			fw_name = kmem_asprintf("ar3k/AthrBT_0x%08x.dfu",
+			    ver.rom);
+			error = aubtfwl_firmware_load(self, fw_name);
+			kmem_strfree(fw_name);
 
 			if (error)
 				return;
@@ -312,9 +314,10 @@ aubtfwl_attach_hook(device_t self)
 			break;
 		}
 
-		snprintf(firmware_name, sizeof(firmware_name),
-			"ar3k/ramps_0x%08x_%d.dfu", ver.rom, clock);
-		aubtfwl_firmware_load(self, firmware_name);
+		fw_name = kmem_asprintf("ar3k/ramps_0x%08x_%d.dfu",
+		    ver.rom, clock);
+		aubtfwl_firmware_load(self, fw_name);
+		kmem_strfree(fw_name);
 
 		if ((state & AR3K_STATE_MODE_MASK) != AR3K_STATE_MODE_NORMAL) {
 			error = aubtfwl_send_command(sc, AR3K_SET_NORMAL_MODE);
