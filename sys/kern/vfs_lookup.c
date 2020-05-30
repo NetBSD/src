@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.221 2020/05/30 20:16:14 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.222 2020/05/30 20:23:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.221 2020/05/30 20:16:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.222 2020/05/30 20:23:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -935,10 +935,10 @@ lookup_crossmount(struct namei_state *state,
 	error = 0;
 
 	KASSERT((cnp->cn_flags & NOCROSSMOUNT) == 0);
-	KASSERT(searchdir != NULL);
 
 	/* First, unlock searchdir (oof). */
 	if (*searchdir_locked) {
+		KASSERT(searchdir != NULL);
 		lktype = VOP_ISLOCKED(searchdir);
 		VOP_UNLOCK(searchdir);
 		*searchdir_locked = false;
@@ -1608,7 +1608,8 @@ namei_oneroot(struct namei_state *state,
 			 * foundobj == NULL.
 			 */
 			/* lookup_once can't have dropped the searchdir */
-			KASSERT(searchdir != NULL);
+			KASSERT(searchdir != NULL ||
+			    (cnp->cn_flags & ISLASTCN) != 0);
 			break;
 		}
 
