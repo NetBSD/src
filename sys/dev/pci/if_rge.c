@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.11 2020/05/20 20:18:37 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.12 2020/05/30 21:39:49 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.3 2020/03/27 15:15:24 krw Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.11 2020/05/20 20:18:37 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.12 2020/05/30 21:39:49 sevan Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -202,6 +202,8 @@ rge_attach(device_t parent, device_t self, void *aux)
 	int offset;
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
+
+	sc->sc_dev = self;
 
 	/*
 	 * Map control/status registers.
