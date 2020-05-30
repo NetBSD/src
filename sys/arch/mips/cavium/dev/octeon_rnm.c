@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.6 2020/05/18 16:05:09 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.7 2020/05/30 03:12:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.6 2020/05/18 16:05:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.7 2020/05/30 03:12:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.6 2020/05/18 16:05:09 riastradh Exp
 #define	RNG_FIFO_WORDS	(512/sizeof(uint64_t))
 
 struct octeon_rnm_softc {
+	uint64_t		sc_sample[RNG_FIFO_WORDS];
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_regh;
 	kmutex_t		sc_lock;
@@ -222,8 +223,8 @@ static void
 octeon_rnm_rng(size_t nbytes, void *vsc)
 {
 	const unsigned BPB = 256; /* bits of data per bit of entropy */
-	uint64_t sample[32];
 	struct octeon_rnm_softc *sc = vsc;
+	uint64_t *samplepos;
 	size_t needed = NBBY*nbytes;
 	unsigned i;
 
@@ -244,20 +245,21 @@ octeon_rnm_rng(size_t nbytes, void *vsc)
 		octeon_rnm_raw_entropy(sc, sc->sc_rogroup);
 
 		/*
-		 * Gather half the FIFO at a time -- we are limited to
-		 * 256 bytes because of limits on the CVMSEG buffer.
+		 * Gather quarter the FIFO at a time -- we are limited
+		 * to 128 bytes because of limits on the CVMSEG buffer.
 		 */
-		CTASSERT(sizeof sample == 256);
-		CTASSERT(2*__arraycount(sample) == RNG_FIFO_WORDS);
-		for (i = 0; i < 2; i++) {
-			octeon_rnm_iobdma(sc, sample, __arraycount(sample));
-#ifdef OCTEON_RNM_DEBUG
-			hexdump(printf, "rnm", sample, sizeof sample);
-#endif
-			rnd_add_data_sync(&sc->sc_rndsrc, sample,
-			    sizeof sample, NBBY*sizeof(sample)/BPB);
-			needed -= MIN(needed, MAX(1, NBBY*sizeof(sample)/BPB));
+		CTASSERT(sizeof sc->sc_sample == 512);
+		CTASSERT(__arraycount(sc->sc_sample) == RNG_FIFO_WORDS);
+		for (samplepos = sc->sc_sample, i = 0; i < 4; i++) {
+			octeon_rnm_iobdma(sc, samplepos, RNG_FIFO_WORDS / 4);
+			samplepos += RNG_FIFO_WORDS / 4;
 		}
+#ifdef OCTEON_RNM_DEBUG
+		hexdump(printf, "rnm", sc->sc_sample, sizeof sc->sc_sample);
+#endif
+		rnd_add_data_sync(&sc->sc_rndsrc, sc->sc_sample,
+		    sizeof sc->sc_sample, NBBY*sizeof(sc->sc_sample)/BPB);
+		needed -= MIN(needed, MAX(1, NBBY*sizeof(sc->sc_sample)/BPB));
 
 		/* Yield if requested.  */
 		if (__predict_false(curcpu()->ci_schedstate.spc_flags &
@@ -270,7 +272,7 @@ octeon_rnm_rng(size_t nbytes, void *vsc)
 	mutex_exit(&sc->sc_lock);
 
 	/* Zero the sample.  */
-	explicit_memset(sample, 0, sizeof sample);
+	explicit_memset(sc->sc_sample, 0, sizeof sc->sc_sample);
 }
 
 /*
@@ -366,7 +368,7 @@ octeon_rnm_iobdma(struct octeon_rnm_softc *sc, uint64_t *buf, unsigned nwords)
 	    __SHIFTIN(RNM_IOBDMA_MAJORDID, IOBDMA_MAJORDID) |
 	    __SHIFTIN(RNM_IOBDMA_SUBDID, IOBDMA_SUBDID);
 
-	KASSERT(nwords < 256);	/* iobdma address restriction */
+	KASSERT(nwords < 128);	/* iobdma address restriction */
 	KASSERT(nwords <= 32);	/* octeon_cvmseg_map limitation */
 
 	octeon_iobdma_write_8(iobdma);
