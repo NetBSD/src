@@ -64,6 +64,13 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 {
 	npf_t *npf;
 
+#ifdef __NetBSD__
+	// XXX: Workaround for npf_init()
+	if ((npf = npf_getkernctx()) != NULL) {
+		npf_worker_discharge(npf);
+		npf_worker_sysfini();
+	}
+#endif
 	npfk_sysinit(0);
 	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops, NULL);
 	npfk_thread_register(npf);
