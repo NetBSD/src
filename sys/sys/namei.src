@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.57 2020/05/27 02:03:30 rin Exp $	*/
+/*	$NetBSD: namei.src,v 1.58 2020/05/30 20:16:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -300,6 +300,9 @@ bool	cache_have_id(struct vnode *);
 void	cache_vnode_init(struct vnode * );
 void	cache_vnode_fini(struct vnode * );
 void	cache_cpu_init(struct cpu_info *);
+void	cache_enter_mount(struct vnode *, struct vnode *);
+bool	cache_cross_mount(struct vnode **, krwlock_t **);
+bool	cache_lookup_mount(struct vnode *, struct vnode **);
 
 void	nchinit(void);
 void	namecache_count_pass2(void);
