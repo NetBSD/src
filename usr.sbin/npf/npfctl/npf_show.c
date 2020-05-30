@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.31 2020/05/23 19:56:00 rmind Exp $");
+__RCSID("$NetBSD");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -52,29 +52,80 @@ __RCSID("$NetBSD: npf_show.c,v 1.31 2020/05/23 19:56:00 rmind Exp $");
 
 #include "npfctl.h"
 
-#define	SEEN_SRC	0x01
-#define	SEEN_DST	0x02
+#define	SEEN_PROTO	0x01
+
+typedef struct {
+	char **		values;
+	unsigned	count;
+} elem_list_t;
+
+enum {
+	LIST_PROTO = 0, LIST_SADDR, LIST_DADDR, LIST_SPORT, LIST_DPORT,
+	LIST_COUNT,
+};
 
 typedef struct {
 	nl_config_t *	conf;
+	bool		validating;
+
 	FILE *		fp;
 	long		fpos;
-	u_int		flags;
-	uint32_t	curmark;
-	unsigned	level;
-} npf_conf_info_t;
+	long		fposln;
+	int		glevel;
 
-static npf_conf_info_t	stdout_ctx;
+	unsigned	flags;
+	uint32_t	curmark;
+	uint64_t	seen_marks;
+	elem_list_t	list[LIST_COUNT];
+
+} npf_conf_info_t;
 
 static void	print_linesep(npf_conf_info_t *);
 
-void
+static npf_conf_info_t *
 npfctl_show_init(void)
 {
+	static npf_conf_info_t stdout_ctx;
+	memset(&stdout_ctx, 0, sizeof(npf_conf_info_t));
+	stdout_ctx.glevel = -1;
 	stdout_ctx.fp = stdout;
-	stdout_ctx.fpos = 0;
-	stdout_ctx.flags = 0;
-	stdout_ctx.level = 0;
+	return &stdout_ctx;
+}
+
+static void
+list_push(elem_list_t *list, char *val)
+{
+	const unsigned n = list->count;
+	char **values;
+
+	if ((values = calloc(n + 1, sizeof(char *))) == NULL) {
+		err(EXIT_FAILURE, "calloc");
+	}
+	for (unsigned i = 0; i < n; i++) {
+		values[i] = list->values[i];
+	}
+	values[n] = val;
+	free(list->values);
+	list->values = values;
+	list->count++;
+}
+
+static char *
+list_join_free(elem_list_t *list, const bool use_br, const char *sep)
+{
+	char *s, buf[2048];
+
+	if (!join(buf, sizeof(buf), list->count, list->values, sep)) {
+		errx(EXIT_FAILURE, "out of memory while parsing the rule");
+	}
+	easprintf(&s, (use_br && list->count > 1) ? "{ %s }" : "%s", buf);
+	for (unsigned i = 0; i < list->count; i++) {
+		free(list->values[i]);
+	}
+	free(list->values);
+	list->values = NULL;
+	list->count = 0;
+	return s;
 }
 
 /*
@@ -84,39 +135,32 @@ npfctl_show_init(void)
 static void
 print_indent(npf_conf_info_t *ctx, unsigned level)
 {
-	if (level < ctx->level) {
+	if (ctx->glevel >= 0 && level <= (unsigned)ctx->glevel) {
 		/*
 		 * Level decrease -- end of the group.
 		 * Print the group closing curly bracket.
 		 */
-		fputs("}\n", ctx->fp);
+		ctx->fpos += fprintf(ctx->fp, "}\n\n");
+		ctx->glevel = -1;
 	}
-	if (level == 0) {
-		/*
-		 * Group level -- separate groups by a trailing new line.
-		 */
-		print_linesep(ctx);
-	}
-	ctx->level = level;
-
 	while (level--) {
-		fprintf(ctx->fp, "\t");
+		ctx->fpos += fprintf(ctx->fp, "\t");
 	}
 }
 
 static void
 print_linesep(npf_conf_info_t *ctx)
 {
-	if (ftell(ctx->fp) != ctx->fpos) {
-		fputs("\n", ctx->fp);
-		ctx->fpos = ftell(ctx->fp);
+	if (ctx->fpos != ctx->fposln) {
+		ctx->fpos += fprintf(ctx->fp, "\n");
+		ctx->fposln = ctx->fpos;
 	}
 }
 
 static size_t
-tcpflags2string(char *buf, u_int tfl)
+tcpflags2string(char *buf, unsigned tfl)
 {
-	u_int i = 0;
+	unsigned i = 0;
 
 	if (tfl & TH_FIN)	buf[i++] = 'F';
 	if (tfl & TH_SYN)	buf[i++] = 'S';
@@ -150,7 +194,7 @@ static char *
 print_address(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	const int af = *words++;
-	const u_int mask = *words++;
+	const unsigned mask = *words++;
 	const npf_addr_t *addr;
 	int alen = 0;
 
@@ -192,6 +236,7 @@ print_table(npf_conf_info_t *ctx, const uint32_t *words)
 static char *
 print_proto(npf_conf_info_t *ctx, const uint32_t *words)
 {
+	ctx->flags |= SEEN_PROTO;
 	switch (words[0]) {
 	case IPPROTO_TCP:
 		return estrdup("tcp");
@@ -208,10 +253,19 @@ print_proto(npf_conf_info_t *ctx, const uint32_t *words)
 static char *
 print_tcpflags(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
-	const u_int tf = words[0], tf_mask = words[1];
-	char buf[20];
+	const unsigned tf = words[0], tf_mask = words[1];
+	char buf[32];
+	size_t n;
 
-	size_t n = tcpflags2string(buf, tf);
+	if ((ctx->flags & SEEN_PROTO) == 0) {
+		/*
+		 * Note: the TCP flag matching might be without 'proto tcp'
+		 * when using a plain 'stateful' rule.  In such case, just
+		 * skip showing of the flags as they are implicit.
+		 */
+		return NULL;
+	}
+	n = tcpflags2string(buf, tf);
 	if (tf != tf_mask) {
 		buf[n++] = '/';
 		tcpflags2string(buf + n, tf_mask);
@@ -220,23 +274,9 @@ print_tcpflags(npf_conf_info_t *ctx __unused, const uint32_t *words)
 }
 
 static char *
-print_pbarrier(npf_conf_info_t *ctx, const uint32_t *words __unused)
-{
-	if (ctx->curmark == BM_SRC_PORTS && (ctx->flags & SEEN_SRC) == 0) {
-		ctx->flags |= SEEN_SRC;
-		return estrdup("from any");
-	}
-	if (ctx->curmark == BM_DST_PORTS && (ctx->flags & SEEN_DST) == 0) {
-		ctx->flags |= SEEN_DST;
-		return estrdup("to any");
-	}
-	return NULL;
-}
-
-static char *
 print_portrange(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
-	u_int fport = words[0], tport = words[1];
+	unsigned fport = words[0], tport = words[1];
 	char *p;
 
 	if (fport != tport) {
@@ -263,7 +303,7 @@ static const struct attr_keyword_mapent {
 	const char *	val;
 } attr_keyword_map[] = {
 	{ F(GROUP)|F(DYNAMIC),	F(GROUP),		"group"		},
-	{ F(DYNAMIC),		F(DYNAMIC),		"ruleset"	},
+	{ F(GROUP)|F(DYNAMIC),	F(GROUP)|F(DYNAMIC),	"ruleset"	},
 	{ F(GROUP)|F(PASS),	0,			"block"		},
 	{ F(GROUP)|F(PASS),	F(PASS),		"pass"		},
 	{ F(RETRST)|F(RETICMP),	F(RETRST)|F(RETICMP),	"return"	},
@@ -277,28 +317,27 @@ static const struct attr_keyword_mapent {
 };
 
 static const struct mark_keyword_mapent {
-	u_int		mark;
-	const char *	token;
-	const char *	sep;
-	u_int		set_flags;
+	unsigned	mark;
+	const char *	format;
+	int		list_id;
 	char *		(*printfn)(npf_conf_info_t *, const uint32_t *);
-	u_int		fwords;
+	unsigned	fwords;
 } mark_keyword_map[] = {
-	{ BM_IPVER,	"family %s",	NULL, 0,	print_family,	1 },
-	{ BM_PROTO,	"proto %s",	", ", 0,	print_proto,	1 },
-	{ BM_TCPFL,	"flags %s",	NULL, 0,	print_tcpflags,	2 },
-	{ BM_ICMP_TYPE,	"icmp-type %s",	NULL, 0,	print_number,	1 },
-	{ BM_ICMP_CODE,	"code %s",	NULL, 0,	print_number,	1 },
+	{ BM_IPVER,	"family %s",	LIST_PROTO,	print_family,	1 },
+	{ BM_PROTO,	"proto %s",	LIST_PROTO,	print_proto,	1 },
+	{ BM_TCPFL,	"flags %s",	LIST_PROTO,	print_tcpflags,	2 },
+	{ BM_ICMP_TYPE,	"icmp-type %s",	LIST_PROTO,	print_number,	1 },
+	{ BM_ICMP_CODE,	"code %s",	LIST_PROTO,	print_number,	1 },
 
-	{ BM_SRC_CIDR,	"from %s",	", ", SEEN_SRC,	print_address,	6 },
-	{ BM_SRC_TABLE,	"from %s",	", ", SEEN_SRC,	print_table,	1 },
-	{ BM_SRC_PORTS,	"%s",		NULL, 0,	print_pbarrier,	2 },
-	{ BM_SRC_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
+	{ BM_SRC_NEG,	NULL,		-1,		NULL,		0 },
+	{ BM_SRC_CIDR,	NULL,		LIST_SADDR,	print_address,	6 },
+	{ BM_SRC_TABLE,	NULL,		LIST_SADDR,	print_table,	1 },
+	{ BM_SRC_PORTS,	NULL,		LIST_SPORT,	print_portrange,2 },
 
-	{ BM_DST_CIDR,	"to %s",	", ", SEEN_DST,	print_address,	6 },
-	{ BM_DST_TABLE,	"to %s",	", ", SEEN_DST,	print_table,	1 },
-	{ BM_DST_PORTS,	"%s",		NULL, 0,	print_pbarrier,	2 },
-	{ BM_DST_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
+	{ BM_DST_NEG,	NULL,		-1,		NULL,		0 },
+	{ BM_DST_CIDR,	NULL,		LIST_DADDR,	print_address,	6 },
+	{ BM_DST_TABLE,	NULL,		LIST_DADDR,	print_table,	1 },
+	{ BM_DST_PORTS,	NULL,		LIST_DPORT,	print_portrange,2 },
 };
 
 static const char * __attribute__((format_arg(2)))
@@ -307,71 +346,141 @@ verified_fmt(const char *fmt, const char *t __unused)
 	return fmt;
 }
 
-static char *
+static void
 scan_marks(npf_conf_info_t *ctx, const struct mark_keyword_mapent *mk,
     const uint32_t *marks, size_t mlen)
 {
-	char buf[2048], *vals[256], *p;
-	size_t nvals = 0;
+	elem_list_t sublist, *target_list;
+
+	/*
+	 * If format is used for this mark, then collect multiple elements
+	 * in into the list, merge and re-push the set into the target list.
+	 *
+	 * Currently, this is applicable only for 'proto { tcp, udp }'.
+	 */
+	memset(&sublist, 0, sizeof(elem_list_t));
+	target_list = mk->format ? &sublist : &ctx->list[mk->list_id];
 
 	/* Scan for the marks and extract the values. */
 	mlen /= sizeof(uint32_t);
 	while (mlen > 2) {
 		const uint32_t m = *marks++;
-		const u_int nwords = *marks++;
+		const unsigned nwords = *marks++;
 
 		if ((mlen -= 2) < nwords) {
 			errx(EXIT_FAILURE, "byte-code marking inconsistency");
 		}
 		if (m == mk->mark) {
-			char *val;
-
-			/* Set the current mark and the flags. */
-			ctx->flags |= mk->set_flags;
+			/*
+			 * Set the current mark and note it as seen.
+			 * Value is processed by the print function,
+			 * otherwise we just need to note the mark.
+			 */
 			ctx->curmark = m;
-
-			/* Value is processed by the print function. */
+			assert(BM_COUNT < (sizeof(uint64_t) * CHAR_BIT));
+			ctx->seen_marks = UINT64_C(1) << m;
 			assert(mk->fwords == nwords);
-			if ((val = mk->printfn(ctx, marks)) != NULL) {
-				vals[nvals++] = val;
+
+			if (mk->printfn) {
+				char *val;
+
+				if ((val = mk->printfn(ctx, marks)) != NULL) {
+					list_push(target_list, val);
+				}
 			}
 		}
 		marks += nwords;
 		mlen -= nwords;
 	}
-	if (nvals == 0) {
-		return NULL;
-	}
-	assert(nvals == 1 || mk->sep != NULL);
 
-	/*
-	 * Join all the values and print.  Add curly brackets if there
-	 * is more than value and it can be a set.
-	 */
-	if (!join(buf, sizeof(buf), nvals, vals, mk->sep ? mk->sep : "")) {
-		errx(EXIT_FAILURE, "out of memory while parsing the rule");
-	}
-	easprintf(&p, nvals > 1 ? "{ %s }" : "%s", buf);
+	if (sublist.count) {
+		char *val, *elements;
 
-	for (u_int i = 0; i < nvals; i++) {
-		free(vals[i]);
+		elements = list_join_free(&sublist, true, ", ");
+		easprintf(&val, verified_fmt(mk->format, "%s"), elements );
+		list_push(&ctx->list[mk->list_id], val);
+		free(elements);
 	}
-	return p;
 }
 
 static void
 npfctl_print_id(npf_conf_info_t *ctx, nl_rule_t *rl)
 {
-	uint64_t id = id = npf_rule_getid(rl);
-	fprintf(ctx->fp, "# id=\"%" PRIx64 "\" ", id);
+	const uint64_t id = npf_rule_getid(rl);
+
+	if (id) {
+		ctx->fpos += fprintf(ctx->fp, "# id=\"%" PRIx64 "\" ", id);
+	}
 }
 
 static void
+npfctl_print_filter_generic(npf_conf_info_t *ctx)
+{
+	elem_list_t *list = &ctx->list[LIST_PROTO];
+
+	if (list->count) {
+		char *elements = list_join_free(list, false, " ");
+		ctx->fpos += fprintf(ctx->fp, "%s ", elements);
+		free(elements);
+	}
+}
+
+static bool
+npfctl_print_filter_seg(npf_conf_info_t *ctx, unsigned which)
+{
+	static const struct {
+		const char *	keyword;
+		unsigned	alist;
+		unsigned	plist;
+		unsigned	negbm;
+	} refs[] = {
+		[NPF_SRC] = {
+			.keyword	= "from",
+			.alist		= LIST_SADDR,
+			.plist		= LIST_SPORT,
+			.negbm		= UINT64_C(1) << BM_SRC_NEG,
+		},
+		[NPF_DST] = {
+			.keyword	= "to",
+			.alist		= LIST_DADDR,
+			.plist		= LIST_DPORT,
+			.negbm		= UINT64_C(1) << BM_DST_NEG,
+		}
+	};
+	const char *neg = !!(ctx->seen_marks & refs[which].negbm) ? "! " : "";
+	const char *kwd = refs[which].keyword;
+	bool seen_filter = false;
+	elem_list_t *list;
+	char *elements;
+
+	list = &ctx->list[refs[which].alist];
+	if (list->count != 0) {
+		seen_filter = true;
+		elements = list_join_free(list, true, ", ");
+		ctx->fpos += fprintf(ctx->fp, "%s %s%s ", kwd, neg, elements);
+		free(elements);
+	}
+
+	list = &ctx->list[refs[which].plist];
+	if (list->count != 0) {
+		if (!seen_filter) {
+			ctx->fpos += fprintf(ctx->fp, "%s any ", kwd);
+			seen_filter = true;
+		}
+		elements = list_join_free(list, true, ", ");
+		ctx->fpos += fprintf(ctx->fp, "port %s ", elements);
+		free(elements);
+	}
+	return seen_filter;
+}
+
+static bool
 npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 {
 	const void *marks;
 	size_t mlen, len;
 	const void *code;
+	bool seenf = false;
 	int type;
 
 	marks = npf_rule_getinfo(rl, &mlen);
@@ -381,70 +490,70 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 		 * have been filled by libpcap(3) or possibly an unknown
 		 * to us byte-code.
 		 */
-		fprintf(ctx->fp, "%s ", type == NPF_CODE_BPF ?
+		ctx->fpos += fprintf(ctx->fp, "%s ", type == NPF_CODE_BPF ?
 		    "pcap-filter \"...\"" : "unrecognized-bytecode");
-		return;
+		return true;
 	}
 	ctx->flags = 0;
 
 	/*
 	 * BPF filter criteria described by the byte-code marks.
 	 */
-	for (u_int i = 0; i < __arraycount(mark_keyword_map); i++) {
+	for (unsigned i = 0; i < __arraycount(mark_keyword_map); i++) {
 		const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
-		char *val;
-
-		if ((val = scan_marks(ctx, mk, marks, mlen)) != NULL) {
-			fprintf(ctx->fp, verified_fmt(mk->token, "%s"), val);
-			fputs(" ", ctx->fp);
-			free(val);
-		}
+		scan_marks(ctx, mk, marks, mlen);
 	}
-	if (!mlen) {
-		fputs("all ", ctx->fp);
-	}
+	npfctl_print_filter_generic(ctx);
+	seenf |= npfctl_print_filter_seg(ctx, NPF_SRC);
+	seenf |= npfctl_print_filter_seg(ctx, NPF_DST);
+	return seenf;
 }
 
 static void
-npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
+npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 {
 	const uint32_t attr = npf_rule_getattr(rl);
 	const char *rproc, *ifname, *name;
+	bool dyn_ruleset;
 
 	/* Rule attributes/flags. */
-	for (u_int i = 0; i < __arraycount(attr_keyword_map); i++) {
+	for (unsigned i = 0; i < __arraycount(attr_keyword_map); i++) {
 		const struct attr_keyword_mapent *ak = &attr_keyword_map[i];
 
 		if (i == NAME_AT && (name = npf_rule_getname(rl)) != NULL) {
-			fprintf(ctx->fp, "\"%s\" ", name);
+			ctx->fpos += fprintf(ctx->fp, "\"%s\" ", name);
 		}
 		if ((attr & ak->mask) == ak->flags) {
-			fprintf(ctx->fp, "%s ", ak->val);
+			ctx->fpos += fprintf(ctx->fp, "%s ", ak->val);
 		}
 	}
 	if ((ifname = npf_rule_getinterface(rl)) != NULL) {
-		fprintf(ctx->fp, "on %s ", ifname);
+		ctx->fpos += fprintf(ctx->fp, "on %s ", ifname);
 	}
 	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_OUT) && !ifname) {
 		/* The default group is a special case. */
-		fprintf(ctx->fp, "default ");
+		ctx->fpos += fprintf(ctx->fp, "default ");
 	}
 	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP) {
 		/* Group; done. */
-		fprintf(ctx->fp, "{ ");
+		ctx->fpos += fprintf(ctx->fp, "{ ");
+		ctx->glevel = level;
 		goto out;
 	}
 
 	/* Print filter criteria. */
-	npfctl_print_filter(ctx, rl);
+	dyn_ruleset = (attr & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP;
+	if (!npfctl_print_filter(ctx, rl) && !dyn_ruleset) {
+		ctx->fpos += fprintf(ctx->fp, "all ");
+	}
 
 	/* Rule procedure. */
 	if ((rproc = npf_rule_getproc(rl)) != NULL) {
-		fprintf(ctx->fp, "apply \"%s\" ", rproc);
+		ctx->fpos += fprintf(ctx->fp, "apply \"%s\" ", rproc);
 	}
 out:
 	npfctl_print_id(ctx, rl);
-	fputs("\n", ctx->fp);
+	ctx->fpos += fprintf(ctx->fp, "\n");
 }
 
 static void
@@ -467,7 +576,8 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 
 	if ((npf_rule_getattr(rl) & dynamic_natset) == dynamic_natset) {
 		const char *name = npf_rule_getname(rl);
-		fprintf(ctx->fp, "map ruleset \"%s\" on %s\n", name, ifname);
+		ctx->fpos += fprintf(ctx->fp,
+		    "map ruleset \"%s\" on %s\n", name, ifname);
 		return;
 	}
 
@@ -517,23 +627,23 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 		algo = "algo round-robin ";
 		break;
 	case NPF_ALGO_NPT66:
-		algo = "algo npt66";
+		algo = "algo npt66 ";
 		break;
 	default:
 		algo = "";
 		break;
 	}
 
-	/* FIXME also handle "any" */
+	/* XXX also handle "any" */
 
 	/* Print out the NAT policy with the filter criteria. */
-	fprintf(ctx->fp, "map %s %s %s%s%s %s %s pass ",
+	ctx->fpos += fprintf(ctx->fp, "map %s %s %s%s%s %s %s pass ",
 	    ifname, (flags & NPF_NAT_STATIC) ? "static" : "dynamic",
 	    algo, (flags & NPF_NAT_PORTS) ? "" : "no-ports ",
 	    seg1, arrow, seg2);
 	npfctl_print_filter(ctx, rl);
 	npfctl_print_id(ctx, rl);
-	fputs("\n", ctx->fp);
+	ctx->fpos += fprintf(ctx->fp, "\n");
 	free(seg);
 }
 
@@ -553,13 +663,31 @@ npfctl_print_table(npf_conf_info_t *ctx, nl_table_t *tl)
 		return;
 	}
 	assert(type < __arraycount(table_types));
-	fprintf(ctx->fp, "table <%s> type %s\n", name, table_types[type]);
+	ctx->fpos += fprintf(ctx->fp,
+	    "table <%s> type %s\n", name, table_types[type]);
+}
+
+static void
+npfctl_print_params(npf_conf_info_t *ctx, nl_config_t *ncf)
+{
+	nl_iter_t i = NPF_ITER_BEGIN;
+	int val, defval, *dval;
+	const char *name;
+
+	dval = ctx->validating ? NULL : &defval;
+	while ((name = npf_param_iterate(ncf, &i, &val, dval)) != NULL) {
+		if (dval && val == *dval) {
+			continue;
+		}
+		ctx->fpos += fprintf(ctx->fp, "set %s %d\n", name, val);
+	}
+	print_linesep(ctx);
 }
 
 int
 npfctl_config_show(int fd)
 {
-	npf_conf_info_t *ctx = &stdout_ctx;
+	npf_conf_info_t *ctx = npfctl_show_init();
 	nl_config_t *ncf;
 	bool loaded;
 
@@ -569,13 +697,16 @@ npfctl_config_show(int fd)
 			return errno;
 		}
 		loaded = npf_config_loaded_p(ncf);
-		fprintf(ctx->fp, "# filtering:\t%s\n# config:\t%s\n",
+		ctx->validating = false;
+		ctx->fpos += fprintf(ctx->fp,
+		    "# filtering:\t%s\n# config:\t%s\n",
 		    npf_config_active_p(ncf) ? "active" : "inactive",
 		    loaded ? "loaded" : "empty");
 		print_linesep(ctx);
 	} else {
 		ncf = npfctl_config_ref();
 		npfctl_config_build();
+		ctx->validating = true;
 		loaded = true;
 	}
 	ctx->conf = ncf;
@@ -588,6 +719,8 @@ npfctl_config_show(int fd)
 		nl_iter_t i;
 		unsigned level;
 
+		npfctl_print_params(ctx, ncf);
+
 		i = NPF_ITER_BEGIN;
 		while ((tl = npf_table_iterate(ncf, &i)) != NULL) {
 			npfctl_print_table(ctx, tl);
@@ -597,7 +730,8 @@ npfctl_config_show(int fd)
 		i = NPF_ITER_BEGIN;
 		while ((rp = npf_rproc_iterate(ncf, &i)) != NULL) {
 			const char *rpname = npf_rproc_getname(rp);
-			fprintf(ctx->fp, "procedure \"%s\"\n", rpname);
+			ctx->fpos += fprintf(ctx->fp,
+			    "procedure \"%s\"\n", rpname);
 		}
 		print_linesep(ctx);
 
@@ -610,7 +744,7 @@ npfctl_config_show(int fd)
 		i = NPF_ITER_BEGIN;
 		while ((rl = npf_rule_iterate(ncf, &i, &level)) != NULL) {
 			print_indent(ctx, level);
-			npfctl_print_rule(ctx, rl);
+			npfctl_print_rule(ctx, rl, level);
 		}
 		print_indent(ctx, 0);
 	}
@@ -621,7 +755,7 @@ npfctl_config_show(int fd)
 int
 npfctl_ruleset_show(int fd, const char *ruleset_name)
 {
-	npf_conf_info_t *ctx = &stdout_ctx;
+	npf_conf_info_t *ctx = npfctl_show_init();
 	nl_config_t *ncf;
 	nl_rule_t *rl;
 	unsigned level;
@@ -636,7 +770,7 @@ npfctl_ruleset_show(int fd, const char *ruleset_name)
 	}
 	i = NPF_ITER_BEGIN;
 	while ((rl = npf_rule_iterate(ncf, &i, &level)) != NULL) {
-		npfctl_print_rule(ctx, rl);
+		npfctl_print_rule(ctx, rl, 0);
 	}
 	npf_config_destroy(ncf);
 	return error;

@@ -30,6 +30,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <err.h>
 
 #include "npfctl.h"
@@ -48,9 +49,10 @@ extern void		yyrestart(FILE *);
 void
 npfctl_parse_file(const char *name)
 {
+	const bool use_stdin = strcmp(name, "-") == 0;
 	FILE *fp;
 
-	fp = fopen(name, "r");
+	fp = use_stdin ? fdopen(STDIN_FILENO, "r") : fopen(name, "r");
 	if (fp == NULL) {
 		err(EXIT_FAILURE, "open '%s'", name);
 	}
@@ -58,7 +60,7 @@ npfctl_parse_file(const char *name)
 	yyrestart(fp);
 	yylineno = 1;
 	yycolumn = 0;
-	yyfilename = name;
+	yyfilename = use_stdin ? "stdin" : name;
 	yyparse();
 	fclose(fp);
 }
@@ -247,3 +249,5 @@ any			return ANY;
 [ \t]		/* eat whitespace */
 
 :		return COLON;
+
+.		return INVALID;

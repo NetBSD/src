@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.32 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.33 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -203,9 +203,9 @@ npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 	if (!nbuf_advance(nbuf, npc->npc_hlen, 0)) {
 		return false;
 	}
+	memset(enpc, 0, sizeof(npf_cache_t));
 	enpc->npc_ctx = npc->npc_ctx;
 	enpc->npc_nbuf = nbuf;
-	enpc->npc_info = 0;
 
 	/*
 	 * Inspect the ICMP packet.  The relevant data might be in the
@@ -264,7 +264,8 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 		struct tcphdr th;
 		struct udphdr uh;
 	} l4;
-	bool ret, forw;
+	npf_flow_t flow;
+	bool ret;
 
 	#define	SWAP(type, x, y) { type tmp = x; x = y; y = tmp; }
 	SWAP(npf_addr_t *, enpc.npc_ips[NPF_SRC], enpc.npc_ips[NPF_DST]);
@@ -301,8 +302,7 @@ npfa_icmp_conn(npf_cache_t *npc, int di)
 	}
 
 	/* Lookup a connection using the embedded packet. */
-	conn = npf_conn_lookup(&enpc, di, &forw);
-
+	conn = npf_conn_lookup(&enpc, di, &flow);
 out:
 	/*
 	 * Recache npc. The nbuf may have been updated as a result of
@@ -317,14 +317,14 @@ out:
  * which is embedded in ICMP packet.  Note: backwards stream only.
  */
 static bool
-npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
+npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, npf_flow_t flow)
 {
-	const u_int which = NPF_SRC;
+	const unsigned which = NPF_SRC;
 	npf_cache_t enpc;
 	struct icmp *ic;
 	uint16_t cksum;
 
-	if (forw || !npf_iscached(npc, NPC_ICMP))
+	if (flow == NPF_FLOW_FORW || !npf_iscached(npc, NPC_ICMP))
 		return false;
 
 	/*
@@ -453,19 +453,20 @@ err:
  * and module interface.
  */
 
-int
+__dso_public int
 npf_alg_icmp_init(npf_t *npf)
 {
 	static const npfa_funcs_t icmp = {
 		.match		= npfa_icmp_match,
 		.translate	= npfa_icmp_nat,
 		.inspect	= npfa_icmp_conn,
+		.destroy	= NULL,
 	};
 	alg_icmp = npf_alg_register(npf, "icmp", &icmp);
 	return alg_icmp ? 0 : ENOMEM;
 }
 
-int
+__dso_public int
 npf_alg_icmp_fini(npf_t *npf)
 {
 	KASSERT(alg_icmp != NULL);
