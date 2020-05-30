@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.383 2020/05/09 15:13:19 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.384 2020/05/30 08:50:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.383 2020/05/09 15:13:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.384 2020/05/30 08:50:31 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -296,9 +296,8 @@ static struct vm_map_entry *
 static void	uvm_mapent_copy(struct vm_map_entry *, struct vm_map_entry *);
 static void	uvm_mapent_free(struct vm_map_entry *);
 #if defined(DEBUG)
-static void	_uvm_mapent_check(const struct vm_map_entry *, const char *,
-		    int);
-#define	uvm_mapent_check(map)	_uvm_mapent_check(map, __FILE__, __LINE__)
+static void	_uvm_mapent_check(const struct vm_map_entry *, int);
+#define	uvm_mapent_check(map)	_uvm_mapent_check(map, __LINE__)
 #else /* defined(DEBUG) */
 #define	uvm_mapent_check(e)	/* nothing */
 #endif /* defined(DEBUG) */
@@ -827,7 +826,7 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 
 #if defined(DEBUG)
 static void
-_uvm_mapent_check(const struct vm_map_entry *entry, const char *file, int line)
+_uvm_mapent_check(const struct vm_map_entry *entry, int line)
 {
 
 	if (entry->start >= entry->end) {
@@ -856,7 +855,7 @@ _uvm_mapent_check(const struct vm_map_entry *entry, const char *file, int line)
 	return;
 
 bad:
-	panic("%s: bad entry %p (%s:%d)", __func__, entry, file, line);
+	panic("%s: bad entry %p, line %d", __func__, entry, line);
 }
 #endif /* defined(DEBUG) */
 
