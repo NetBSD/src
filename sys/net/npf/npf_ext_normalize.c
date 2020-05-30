@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.9 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.10 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -54,8 +54,8 @@ static void *		npf_ext_normalize_id;
  * Normalisation parameters.
  */
 typedef struct {
-	u_int		n_minttl;
-	u_int		n_maxmss;
+	unsigned	n_minttl;
+	unsigned	n_maxmss;
 	bool		n_random_id;
 	bool		n_no_df;
 } npf_normalize_t;
@@ -96,7 +96,7 @@ npf_normalize_dtor(npf_rproc_t *rp, void *params)
 }
 
 /*
- * npf_normalize_ip4: routine to normalize IPv4 header (randomise ID,
+ * npf_normalize_ip4: routine to normalize IPv4 header (randomize ID,
  * clear "don't fragment" and/or enforce minimum TTL).
  */
 static inline void
@@ -106,11 +106,11 @@ npf_normalize_ip4(npf_cache_t *npc, npf_normalize_t *np)
 	uint16_t cksum = ip->ip_sum;
 	uint16_t ip_off = ip->ip_off;
 	uint8_t ttl = ip->ip_ttl;
-	u_int minttl = np->n_minttl;
+	unsigned minttl = np->n_minttl;
 
 	KASSERT(np->n_random_id || np->n_no_df || minttl);
 
-	/* Randomise IPv4 ID. */
+	/* Randomize IPv4 ID. */
 	if (np->n_random_id) {
 		uint16_t oid = ip->ip_id, nid;
 
@@ -156,7 +156,7 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 		return true;
 	}
 
-	/* Normalise IPv4.  Nothing to do for IPv6. */
+	/* Normalize IPv4.  Nothing to do for IPv6. */
 	if (npf_iscached(npc, NPC_IP4) && (np->n_random_id || np->n_minttl)) {
 		npf_normalize_ip4(npc, np);
 	}
@@ -204,8 +204,8 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	return true;
 }
 
-static int
-npf_ext_normalize_modcmd(modcmd_t cmd, void *arg)
+__dso_public int
+npf_ext_normalize_init(npf_t *npf)
 {
 	static const npf_ext_ops_t npf_normalize_ops = {
 		.version	= NPFEXT_NORMALIZE_VER,
@@ -214,27 +214,33 @@ npf_ext_normalize_modcmd(modcmd_t cmd, void *arg)
 		.dtor		= npf_normalize_dtor,
 		.proc		= npf_normalize
 	};
+	npf_ext_normalize_id = npf_ext_register(npf,
+	    "normalize", &npf_normalize_ops);
+	return npf_ext_normalize_id ? 0 : EEXIST;
+}
+
+__dso_public int
+npf_ext_normalize_fini(npf_t *npf)
+{
+	return npf_ext_unregister(npf, npf_ext_normalize_id);
+}
+
+#ifdef _KERNEL
+static int
+npf_ext_normalize_modcmd(modcmd_t cmd, void *arg)
+{
 	npf_t *npf = npf_getkernctx();
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		/*
-		 * Initialise normalisation module.  Register the "normalize"
-		 * extension and its calls.
-		 */
-		npf_ext_normalize_id =
-		    npf_ext_register(npf, "normalize", &npf_normalize_ops);
-		return npf_ext_normalize_id ? 0 : EEXIST;
-
+		return npf_ext_normalize_init(npf);
 	case MODULE_CMD_FINI:
-		/* Unregister the normalisation rule procedure. */
 		return npf_ext_unregister(npf, npf_ext_normalize_id);
-
 	case MODULE_CMD_AUTOUNLOAD:
 		return npf_autounload_p() ? 0 : EBUSY;
-
 	default:
 		return ENOTTY;
 	}
 	return 0;
 }
+#endif
