@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.301 2020/05/21 09:24:17 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.302 2020/05/30 13:23:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.301 2020/05/21 09:24:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.302 2020/05/30 13:23:14 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.301 2020/05/21 09:24:17 jdolecek Exp $");
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
@@ -489,24 +490,28 @@ int
 wdcprobe_with_reset(struct wdc_regs *wdr,
     void (*do_reset)(struct ata_channel *, int))
 {
-	struct wdc_softc wdc;
-	struct ata_channel ch;
+	struct wdc_softc *wdc;
+	struct ata_channel *ch;
 	int rv;
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ata_channel_init(&ch);
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = wdr;
+	wdc = kmem_zalloc(sizeof(*wdc), KM_SLEEP);
+	ch = kmem_zalloc(sizeof(*ch), KM_SLEEP);
+
+	ata_channel_init(ch);
+	ch->ch_atac = &wdc->sc_atac;
+	wdc->regs = wdr;
 
 	/* check the MD reset method */
-	wdc.reset = (do_reset != NULL) ? do_reset : wdc_do_reset;
+	wdc->reset = (do_reset != NULL) ? do_reset : wdc_do_reset;
 
-	ata_channel_lock(&ch);
-	rv = wdcprobe1(&ch, 1);
-	ata_channel_unlock(&ch);
+	ata_channel_lock(ch);
+	rv = wdcprobe1(ch, 1);
+	ata_channel_unlock(ch);
 
-	ata_channel_destroy(&ch);
+	ata_channel_destroy(ch);
+
+	kmem_free(ch, sizeof(*ch));
+	kmem_free(wdc, sizeof(*wdc));
 
 	return rv;
 }
