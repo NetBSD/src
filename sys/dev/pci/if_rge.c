@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.13 2020/05/30 22:01:05 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.14 2020/05/30 22:39:40 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.3 2020/03/27 15:15:24 krw Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.13 2020/05/30 22:01:05 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.14 2020/05/30 22:39:40 sevan Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -234,7 +234,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, rge_intr,
-	    sc, sc->sc_dev.dv_xname);
+	    sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, ": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -298,7 +298,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 
 	ifp = &sc->sc_ec.ec_if;
 	ifp->if_softc = sc;
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef RGE_MPSAFE
 	ifp->if_xflags = IFEF_MPSAFE;
@@ -1813,7 +1813,7 @@ rge_config_imtype(struct rge_softc *sc, int imtype)
 		sc->rge_tx_ack = RGE_ISR_PCS_TIMEOUT;
 		break;
 	default:
-		panic("%s: unknown imtype %d", sc->sc_dev.dv_xname, imtype);
+		panic("%s: unknown imtype %d", device_xname(sc->sc_dev), imtype);
 	}
 }
 
@@ -1848,7 +1848,7 @@ rge_setup_intr(struct rge_softc *sc, int imtype)
 		rge_setup_sim_im(sc);
 		break;
 	default:
-		panic("%s: unknown imtype %d", sc->sc_dev.dv_xname, imtype);
+		panic("%s: unknown imtype %d", device_xname(sc->sc_dev), imtype);
 	}
 }
 
