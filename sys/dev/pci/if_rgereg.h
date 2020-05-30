@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.3 2020/01/12 23:22:12 sevan Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.4 2020/05/30 22:27:55 sevan Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.1 2019/11/18 03:03:37 kevlo Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ enum rge_mac_type {
 #define RGE_RXCFG_CONFIG	0x40c00700
 
 struct rge_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec; 		/* Ethernet common data */
 	void			*sc_ih;		/* interrupt vectoring */
 	bus_space_handle_t	rge_bhandle;	/* bus space handle */
