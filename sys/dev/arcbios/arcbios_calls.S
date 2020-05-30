@@ -32,7 +32,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: arcbios_calls.S,v 1.3 2020/05/30 02:56:54 tsutsui Exp $")
+RCSID("$NetBSD: arcbios_calls.S,v 1.4 2020/05/30 03:16:31 tsutsui Exp $")
 
 	.text
 	.set noreorder
@@ -45,14 +45,14 @@ RCSID("$NetBSD: arcbios_calls.S,v 1.3 2020/05/30 02:56:54 tsutsui Exp $")
 
 #define	CALLFRAME2_SIZ	(CALLFRAME_SIZ + 16)
 #define	CALLFRAME2_RA	(CALLFRAME_RA + 16)
-#define	CALLFRAME2_S0	(CALLFRAME_S0 + 16)
+#define	CALLFRAME2_SP	(CALLFRAME_SP + 16)
 
 #ifndef _STANDALONE
 NESTED(arcbios_4orless_args, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME_SIZ
 
 	REG_S	ra, CALLFRAME_RA(sp)
-	REG_S	s0, CALLFRAME_S0(sp)
+	REG_S	s0, CALLFRAME_SP(sp)
 
 	PTR_L	t9, _C_LABEL(ARCBIOS)
 	PTR_ADDU t9, t0
@@ -67,7 +67,7 @@ NESTED(arcbios_4orless_args, CALLFRAME_SIZ, ra)
 	move	MIPS_CURLWP, s0
 
 	REG_L	ra, CALLFRAME_RA(sp)
-	REG_L	s0, CALLFRAME_S0(sp)
+	REG_L	s0, CALLFRAME_SP(sp)
 
 	jr	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ
@@ -77,7 +77,7 @@ NESTED(arcbios_5to8_args, CALLFRAME2_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME2_SIZ
 
 	REG_S	ra, CALLFRAME2_RA(sp)
-	REG_S	s0, CALLFRAME2_S0(sp)
+	REG_S	s0, CALLFRAME2_SP(sp)
 
 #ifdef __mips_o32
 	INT_L	ta0, CALLFRAME2_SIZ+16(sp)	# load 5th arg
@@ -108,7 +108,7 @@ NESTED(arcbios_5to8_args, CALLFRAME2_SIZ, ra)
 	move	MIPS_CURLWP, s0
 
 	REG_L	ra, CALLFRAME2_RA(sp)
-	REG_L	s0, CALLFRAME2_S0(sp)
+	REG_L	s0, CALLFRAME2_SP(sp)
 
 	jr	ra
 	 PTR_ADDU sp, CALLFRAME2_SIZ
