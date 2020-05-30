@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.889 2020/05/28 17:06:24 christos Exp $
+# $NetBSD: shl.mi,v 1.890 2020/05/30 20:47:58 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -920,9 +920,9 @@
 ./usr/lib/libuutil.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		compatfile,zfs
-./usr/lib/libuv.so				base-sys-shlib		compatfile
-./usr/lib/libuv.so.1				base-sys-shlib		compatfile
-./usr/lib/libuv.so.1.0				base-sys-shlib		compatfile
+./usr/lib/libuv.so				base-obsolete		compatfile,obsolete
+./usr/lib/libuv.so.1				base-obsolete		compatfile,obsolete
+./usr/lib/libuv.so.1.0				base-obsolete		compatfile,obsolete
 ./usr/lib/libwind.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libwind.so.1				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libwind.so.1.0			base-krb5-shlib		compatfile,kerberos

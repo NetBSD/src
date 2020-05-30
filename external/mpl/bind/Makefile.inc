@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2020/05/25 15:12:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2020/05/30 20:47:59 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -13,6 +13,9 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
 			-Wno-atomic-alignment
 
 .include <bsd.own.mk>
+
+LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
+LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
 
 NAMED_USE_OPENSSL?=yes
 
@@ -67,12 +70,18 @@ DBG=-g3 -gstabs
 # NOTE: the order of these libraries is important...
 .if defined(NAMED_DEBUG)
 LDADD+=		-lbind9_g -lisccfg_g -ldns_g -lns_g -lirs_g
-LDADD+=		-lisccc_g -lisc_g -luv_g -lkvm_g -lz_g
+LDADD+=		-lisccc_g -lisc_g
+LDADD+=		-L${LIBUVOBJDIR} -luv_g
+LDADD+=		-lkvm_g -lz_g
 .else
 LDADD+=		-lbind9 -lisccfg -ldns -lns -lirs
 DPADD+=		${LIBBIND9} ${LIBISCCFG} ${LIBDNS} ${LIBNS} ${LIBIRS}
-LDADD+=		-lisccc -lisc -luv -lkvm -lz
-DPADD+=		${LIBISCCC} ${LIBISC} ${LIBUV} ${LIBKVM} ${LIBZ}
+LDADD+=		-lisccc -lisc 
+LDADD+=		-L${LIBUVOBJDIR} -luv
+LDADD+=		-lkvm -lz
+DPADD+=		${LIBISCCC} ${LIBISC}
+DPADD+=		${LIBUVOBJDIR}/libuv.a
+DPADD+=		${LIBKVM} ${LIBZ}
 .endif
 .else
 CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2330 2020/05/24 19:47:59 christos Exp $
+#	$NetBSD: mi,v 1.2331 2020/05/30 20:47:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3302,12 +3302,12 @@
 ./usr/include/utmp.h				comp-c-include
 ./usr/include/utmpx.h				comp-c-include
 ./usr/include/uuid.h				comp-c-include
-./usr/include/uv.h				comp-c-include
-./usr/include/uv/bsd.h				comp-c-include
-./usr/include/uv/errno.h			comp-c-include
-./usr/include/uv/threadpool.h			comp-c-include
-./usr/include/uv/unix.h				comp-c-include
-./usr/include/uv/version.h			comp-c-include
+./usr/include/uv.h				comp-c-obsolete		obsolete
+./usr/include/uv/bsd.h				comp-c-obsolete		obsolete
+./usr/include/uv/errno.h			comp-c-obsolete		obsolete
+./usr/include/uv/threadpool.h			comp-c-obsolete		obsolete
+./usr/include/uv/unix.h				comp-c-obsolete		obsolete
+./usr/include/uv/version.h			comp-c-obsolete		obsolete
 ./usr/include/uvm/uvm.h				comp-c-include
 ./usr/include/uvm/uvm_amap.h			comp-c-include
 ./usr/include/uvm/uvm_amap_i.h			comp-obsolete		obsolete
@@ -3925,8 +3925,8 @@
 ./usr/lib/libusbhid_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libutil.a				comp-c-lib		compatfile
 ./usr/lib/libutil_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libuv.a				comp-c-lib		compatfile
-./usr/lib/libuv_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libuv.a				comp-obsolete		compatfile,obsolete
+./usr/lib/libuv_p.a				comp-obsolete		obsolete
 ./usr/lib/libuutil.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libuutil_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libwind.a				comp-krb5-lib		compatfile,kerberos
@@ -3953,7 +3953,7 @@
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		share
 ./usr/lib/pkgconfig/libfido2.pc			comp-c-lib		share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		share
-./usr/lib/pkgconfig/libuv.pc			comp-c-lib		share
+./usr/lib/pkgconfig/libuv.pc			comp-obsolete		share,obsolete
 ./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
@@ -8480,7 +8480,7 @@
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libutil.0			comp-c-catman		.cat
-./usr/share/man/cat3/libuv.0			comp-c-catman		.cat
+./usr/share/man/cat3/libuv.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/limits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/link_addr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/link_field.0		comp-c-catman		.cat
@@ -16578,7 +16578,7 @@
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/libutil.html		comp-c-htmlman		html
-./usr/share/man/html3/libuv.html		comp-c-htmlman		html
+./usr/share/man/html3/libuv.html		comp-obsolete		obsolete
 ./usr/share/man/html3/limits.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_addr.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_field.html		comp-c-htmlman		html
@@ -24659,7 +24659,7 @@
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
 ./usr/share/man/man3/libutil.3			comp-c-man		.man
-./usr/share/man/man3/libuv.3			comp-c-man		.man
+./usr/share/man/man3/libuv.3			comp-obsolete		obsolete
 ./usr/share/man/man3/limits.3			comp-c-man		.man
 ./usr/share/man/man3/link_addr.3		comp-c-man		.man
 ./usr/share/man/man3/link_field.3		comp-c-man		.man

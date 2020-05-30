@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.11 2020/05/24 19:46:31 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2020/05/30 20:47:59 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
 
 .include <bsd.own.mk>
+
+LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
+LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
+CPPFLAGS+=-I${LIBUVDIR}/dist/include
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -46,6 +50,14 @@ SRCS=		app.c assertions.c astack.c base32.c base64.c bind9.c buffer.c \
 CPPFLAGS.net.c=	-Wno-error
 SRCS+=		ipv6.c
 .endif
+
+LDFLAGS+=-Wl,--version-script=${.CURDIR}/isc.map
+LDADD+=-Wl,-Bstatic
+
+LDADD+=-L${LIBUVOBJDIR} -luv_pic
+DPADD+=${LIBUVOBJDIR}/libuv_pic.a
+
+LDADD+=-Wl,-Bdynamic
 
 LDADD+=-lz
 DPADD+=${LIBZ}

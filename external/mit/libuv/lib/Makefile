@@ -1,13 +1,17 @@
-# $NetBSD: Makefile,v 1.1 2020/05/24 19:28:10 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/05/30 20:47:59 christos Exp $
+
+LIBISPRIVATE=yes
 
 .include <bsd.own.mk>
 
 MKLINT=	no
 LIB=	uv
 
+.if ${LIBISPRIVATE:Uno} == "no"
 INCS=	uv.h uv/unix.h uv/bsd.h uv/errno.h uv/version.h uv/threadpool.h
 INCSDIR=/usr/include
 MAN=	libuv.3
+.endif
 
 LIBUVDIR=${.CURDIR}/../dist
 
