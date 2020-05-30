@@ -16,7 +16,7 @@
 
 #define	NPF_BINAT	(NPF_NATIN | NPF_NATOUT)
 
-#define	RANDOM_PORT	46759
+#define	RANDOM_PORT	18791
 
 static const struct test_case {
 	const char *	src;
@@ -164,8 +164,8 @@ static bool
 checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 {
 	const struct test_case *t = &test_cases[i];
-	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf_getkernctx() };
 	const int af = t->af;
+	npf_cache_t npc;
 	nbuf_t nbuf;
 
 	if (verbose) {
@@ -176,7 +176,10 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 	}
 
 	nbuf_init(npf_getkernctx(), &nbuf, m, ifp);
+	memset(&npc, 0, sizeof(npf_cache_t));
+	npc.npc_ctx = npf_getkernctx();
 	npc.npc_nbuf = &nbuf;
+
 	if (!npf_cache_all(&npc)) {
 		printf("error: could not fetch the packet data");
 		return false;
@@ -190,7 +193,7 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 		npf_inet_ntop(af, npc.npc_ips[NPF_SRC], sbuf, sizeof(sbuf));
 		npf_inet_ntop(af, npc.npc_ips[NPF_DST], dbuf, sizeof(dbuf));
 
-		printf("\tpost-translation:");
+		printf("\tpost-translation: ");
 		printf("src %s (%d) ", sbuf, ntohs(uh->uh_sport));
 		printf("dst %s (%d)\n", dbuf, ntohs(uh->uh_dport));
 	}

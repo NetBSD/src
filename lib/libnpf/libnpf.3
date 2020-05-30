@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnpf.3,v 1.11 2019/09/30 00:37:11 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.12 2020/05/30 14:16:56 rmind Exp $
 .\"
 .\" Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 25, 2019
+.Dd May 30, 2020
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -187,13 +187,12 @@ be stopped and this rule should be applied instantly.
 .It Dv NPF_RULE_STATEFUL
 Create a state (session) on match, track the connection and pass the
 backwards stream (the returning packets) without the ruleset inspection.
-The state is uniquely identified by a 5-tuple (source and destination
-IP addresses, port numbers and an interface identifier).
+The state is uniquely identified by an n-tuple key.
 .It Dv NPF_RULE_GSTATEFUL
-Exclude the interface identifier from the state key i.e. use a 4-tuple.
+Exclude the interface identifier from the state key (n-tuple).
 This makes the state global with respect to the network interfaces.
-The state is also picked for packets travelling different direction than
-originally.
+The state is also picked for packets travelling in different direction
+than originally.
 .It Dv NPF_RULE_RETRST
 Return TCP RST packet in a case of packet block.
 .It Dv NPF_RULE_RETICMP
@@ -281,7 +280,8 @@ If the value of
 is
 .Dv NULL ,
 then insert into the main ruleset.
-The rule must not be referenced after insertion.
+The rule will be consumed (the relevant resourced will be freed) and it
+must not be referenced after insertion.
 .\" ---
 .It Fn npf_rule_exists_p "ncf" "name"
 Check whether the rule with a given name is already in the configuration.

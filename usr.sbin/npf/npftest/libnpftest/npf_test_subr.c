@@ -43,14 +43,15 @@ struct ifnet {
 static TAILQ_HEAD(, ifnet) npftest_ifnet_list =
     TAILQ_HEAD_INITIALIZER(npftest_ifnet_list);
 
-static const char *	npftest_ifop_getname(ifnet_t *);
-static void		npftest_ifop_flush(void *);
-static void *		npftest_ifop_getmeta(const ifnet_t *);
-static void		npftest_ifop_setmeta(ifnet_t *, void *);
+static const char *	npftest_ifop_getname(npf_t *, ifnet_t *);
+static ifnet_t *	npftest_ifop_lookup(npf_t *, const char *);
+static void		npftest_ifop_flush(npf_t *, void *);
+static void *		npftest_ifop_getmeta(npf_t *, const ifnet_t *);
+static void		npftest_ifop_setmeta(npf_t *, ifnet_t *, void *);
 
 const npf_ifops_t npftest_ifops = {
 	.getname	= npftest_ifop_getname,
-	.lookup		= npf_test_getif,
+	.lookup		= npftest_ifop_lookup,
 	.flush		= npftest_ifop_flush,
 	.getmeta	= npftest_ifop_getmeta,
 	.setmeta	= npftest_ifop_setmeta,
@@ -64,7 +65,7 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 	npf_t *npf;
 
 	npfk_sysinit(0);
-	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops);
+	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops, NULL);
 	npfk_thread_register(npf);
 	npf_setkernctx(npf);
 
@@ -90,6 +91,7 @@ npf_test_load(const void *buf, size_t len, bool verbose)
 {
 	nvlist_t *npf_dict;
 	npf_error_t error;
+	int ret;
 
 	npf_dict = nvlist_unpack(buf, len, 0);
 	if (!npf_dict) {
@@ -97,9 +99,9 @@ npf_test_load(const void *buf, size_t len, bool verbose)
 		return EINVAL;
 	}
 	load_npf_config_ifs(npf_dict, verbose);
-
-	// Note: npf_dict will be consumed by npf_load().
-	return npfk_load(npf_getkernctx(), npf_dict, &error);
+	ret = npfk_load(npf_getkernctx(), npf_dict, &error);
+	nvlist_destroy(npf_dict);
+	return ret;
 }
 
 ifnet_t *
@@ -125,6 +127,18 @@ npf_test_addif(const char *ifname, bool reg, bool verbose)
 		printf("+ Interface %s\n", ifname);
 	}
 	return ifp;
+}
+
+ifnet_t *
+npf_test_getif(const char *ifname)
+{
+	ifnet_t *ifp;
+
+	TAILQ_FOREACH(ifp, &npftest_ifnet_list, if_list) {
+		if (!strcmp(ifp->if_xname, ifname))
+			return ifp;
+	}
+	return NULL;
 }
 
 static void
@@ -153,25 +167,19 @@ load_npf_config_ifs(nvlist_t *npf_dict, bool verbose)
 }
 
 static const char *
-npftest_ifop_getname(ifnet_t *ifp)
+npftest_ifop_getname(npf_t *npf __unused, ifnet_t *ifp)
 {
 	return ifp->if_xname;
 }
 
-ifnet_t *
-npf_test_getif(const char *ifname)
+static ifnet_t *
+npftest_ifop_lookup(npf_t *npf __unused, const char *ifname)
 {
-	ifnet_t *ifp;
-
-	TAILQ_FOREACH(ifp, &npftest_ifnet_list, if_list) {
-		if (!strcmp(ifp->if_xname, ifname))
-			return ifp;
-	}
-	return NULL;
+	return npf_test_getif(ifname);
 }
 
 static void
-npftest_ifop_flush(void *arg)
+npftest_ifop_flush(npf_t *npf __unused, void *arg)
 {
 	ifnet_t *ifp;
 
@@ -180,13 +188,13 @@ npftest_ifop_flush(void *arg)
 }
 
 static void *
-npftest_ifop_getmeta(const ifnet_t *ifp)
+npftest_ifop_getmeta(npf_t *npf __unused, const ifnet_t *ifp)
 {
 	return ifp->if_softc;
 }
 
 static void
-npftest_ifop_setmeta(ifnet_t *ifp, void *arg)
+npftest_ifop_setmeta(npf_t *npf __unused, ifnet_t *ifp, void *arg)
 {
 	ifp->if_softc = arg;
 }

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,6 +30,10 @@
 /*
  * NPF connection storage.
  *
+ * Lock-free connection lookups are protected by EBR with an atomic
+ * reference acquisition before exiting the critical path.  The caller
+ * is responsible for re-checking the connection state.
+ *
  * Warning (not applicable for the userspace npfkern):
  *
  *	thmap is partially lock-free data structure that uses its own
@@ -41,12 +45,13 @@
  *	the same guarantees as a spinning mutex(9) would provide.
  *
  *	This is achieved with SPL routines splsoftnet() and splx() around
- *	the thmap_del() and thmap_put() calls.
+ *	the thmap_del() and thmap_put() calls.  Note: we assume that the
+ *	network stack invokes NPF at IPL_SOFTNET or lower, but not higher.
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.8 2020/05/23 19:56:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.9 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,8 +84,9 @@ struct npf_conndb {
 };
 
 typedef struct {
-	int		gc_step;
-	int		_reserved0;
+	int		step;
+	int		interval_min;
+	int		interval_max;
 } npf_conndb_params_t;
 
 /*
@@ -98,10 +104,22 @@ npf_conndb_sysinit(npf_t *npf)
 	npf_param_t param_map[] = {
 		{
 			"gc.step",
-			&params->gc_step,
+			&params->step,
 			.default_val = 256,
 			.min = 1, .max = INT_MAX
-		}
+		},
+		{
+			"gc.interval_min",
+			&params->interval_min,
+			.default_val = 50, // ms
+			.min = 10, .max = 10000
+		},
+		{
+			"gc.interval_max",
+			&params->interval_max,
+			.default_val = 5000, // ms
+			.min = 10, .max = 10000
+		},
 	};
 	npf_param_register(npf, param_map, __arraycount(param_map));
 }
@@ -143,7 +161,7 @@ npf_conndb_destroy(npf_conndb_t *cd)
  * npf_conndb_lookup: find a connection given the key.
  */
 npf_conn_t *
-npf_conndb_lookup(npf_t *npf, const npf_connkey_t *ck, bool *forw)
+npf_conndb_lookup(npf_t *npf, const npf_connkey_t *ck, npf_flow_t *flow)
 {
 	npf_conndb_t *cd = atomic_load_relaxed(&npf->conn_db);
 	const unsigned keylen = NPF_CONNKEY_LEN(ck);
@@ -164,7 +182,7 @@ npf_conndb_lookup(npf_t *npf, const npf_connkey_t *ck, bool *forw)
 	 * Determine whether this is the "forwards" or "backwards" key
 	 * and clear the pointer tag.
 	 */
-	*forw = CONNDB_ISFORW_P(val);
+	*flow = CONNDB_ISFORW_P(val) ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	con = CONNDB_GET_PTR(val);
 	KASSERT(con != NULL);
 
@@ -183,10 +201,10 @@ npf_conndb_lookup(npf_t *npf, const npf_connkey_t *ck, bool *forw)
  */
 bool
 npf_conndb_insert(npf_conndb_t *cd, const npf_connkey_t *ck,
-    npf_conn_t *con, bool forw)
+    npf_conn_t *con, npf_flow_t flow)
 {
 	const unsigned keylen = NPF_CONNKEY_LEN(ck);
-	const uintptr_t tag = (CONNDB_FORW_BIT * !!forw);
+	const uintptr_t tag = (CONNDB_FORW_BIT * !flow);
 	void *val;
 	bool ok;
 
@@ -230,8 +248,8 @@ npf_conndb_enqueue(npf_conndb_t *cd, npf_conn_t *con)
 	npf_conn_t *head;
 
 	do {
-		head = cd->cd_new;
-		con->c_next = head;
+		head = atomic_load_relaxed(&cd->cd_new);
+		atomic_store_relaxed(&con->c_next, head);
 	} while (atomic_cas_ptr(&cd->cd_new, head, con) != head);
 }
 
@@ -247,7 +265,7 @@ npf_conndb_update(npf_conndb_t *cd)
 
 	con = atomic_swap_ptr(&cd->cd_new, NULL);
 	while (con) {
-		npf_conn_t *next = con->c_next; // union
+		npf_conn_t *next = atomic_load_relaxed(&con->c_next); // union
 		LIST_INSERT_HEAD(&cd->cd_list, con, c_entry);
 		con = next;
 	}
@@ -280,12 +298,15 @@ npf_conndb_getnext(npf_conndb_t *cd, npf_conn_t *con)
 /*
  * npf_conndb_gc_incr: incremental G/C of the expired connections.
  */
-static void
+static unsigned
 npf_conndb_gc_incr(npf_t *npf, npf_conndb_t *cd, const time_t now)
 {
 	const npf_conndb_params_t *params = npf->params[NPF_PARAMS_CONNDB];
-	unsigned target = params->gc_step;
+	unsigned target = params->step;
+	unsigned gc_conns = 0;
 	npf_conn_t *con;
+
+	KASSERT(mutex_owned(&npf->conn_lock));
 
 	/*
 	 * Second, start from the "last" (marker) connection.
@@ -313,6 +334,7 @@ npf_conndb_gc_incr(npf_t *npf, npf_conndb_t *cd, const time_t now)
 			LIST_REMOVE(con, c_entry);
 			LIST_INSERT_HEAD(&cd->cd_gclist, con, c_entry);
 			npf_conn_remove(cd, con);
+			gc_conns++;
 
 			/* This connection cannot be a new marker anymore. */
 			if (con == next) {
@@ -335,6 +357,25 @@ npf_conndb_gc_incr(npf_t *npf, npf_conndb_t *cd, const time_t now)
 		}
 	}
 	cd->cd_marker = con;
+	return gc_conns;
+}
+
+/*
+ * gc_freq_tune: G/C frequency self-tuning.
+ *
+ * If there is something to G/C, then exponentially increase the wake
+ * up frequency.  Otherwise, reduce the frequency.  Enforce the lower
+ * and upper bounds.
+ *
+ * => Returns the number milliseconds until next G/C.
+ */
+static unsigned
+gc_freq_tune(const npf_t *npf, const npf_conndb_t *cd, const unsigned n)
+{
+	const npf_conndb_params_t *params = npf->params[NPF_PARAMS_CONNDB];
+	int wtime = npf->worker_wait_time;
+	wtime = n ? (wtime >> 1) : (wtime << 1);
+	return MAX(MIN(wtime, params->interval_max), params->interval_min);
 }
 
 /*
@@ -348,6 +389,7 @@ void
 npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 {
 	struct timespec tsnow;
+	unsigned gc_conns = 0;
 	npf_conn_t *con;
 	void *gcref;
 
@@ -366,7 +408,7 @@ npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 		cd->cd_marker = NULL;
 	} else {
 		/* Incremental G/C of the expired connections. */
-		npf_conndb_gc_incr(npf, cd, tsnow.tv_sec);
+		gc_conns = npf_conndb_gc_incr(npf, cd, tsnow.tv_sec);
 	}
 	mutex_exit(&npf->conn_lock);
 
@@ -382,12 +424,10 @@ npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 	}
 	thmap_gc(cd->cd_map, gcref);
 
-	/*
-	 * If there is nothing to G/C, then reduce the worker interval.
-	 * We do not go below the lower watermark.
-	 */
+	/* Self-tune the G/C frequency. */
+	npf->worker_wait_time = gc_freq_tune(npf, cd, gc_conns);
+
 	if (LIST_EMPTY(&cd->cd_gclist)) {
-		// TODO: cd->next_gc = MAX(cd->next_gc >> 1, NPF_MIN_GC_TIME);
 		return;
 	}
 
@@ -400,12 +440,14 @@ npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 		 * Destroy only if removed and no references.  Otherwise,
 		 * just do it next time, unless we are destroying all.
 		 */
-		if (__predict_false(con->c_refcnt)) {
-			if (!flush) {
-				break;
+		const unsigned refcnt = atomic_load_relaxed(&con->c_refcnt);
+
+		if (__predict_false(refcnt)) {
+			if (flush) {
+				kpause("npfcongc", false, 1, NULL);
+				continue;
 			}
-			kpause("npfcongc", false, 1, NULL);
-			continue;
+			break; // exit the loop
 		}
 		LIST_REMOVE(con, c_entry);
 		npf_conn_destroy(npf, con);

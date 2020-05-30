@@ -15,7 +15,7 @@
 
 #if defined(_NPF_STANDALONE)
 struct mbuf *
-npfkern_m_get(int flags, int space)
+npfkern_m_get(npf_t *npf __unused, unsigned flags, size_t space)
 {
 	unsigned mlen = offsetof(struct mbuf, m_data0[space]);
 	struct mbuf *m;
@@ -30,7 +30,7 @@ npfkern_m_get(int flags, int space)
 }
 #else
 struct mbuf *
-npfkern_m_get(int flags, int space)
+npfkern_m_get(npf_t *npf __unused, unsigned flags, size_t space)
 {
 	return m_get(flags, space);
 }
@@ -92,7 +92,7 @@ npfkern_m_ensure_contig(struct mbuf **m0, size_t len)
 	char *dptr;
 
 	tlen = npfkern_m_length(*m0);
-	if ((m1 = npfkern_m_get(M_PKTHDR, tlen)) == NULL) {
+	if ((m1 = npfkern_m_get(NULL, M_PKTHDR, tlen)) == NULL) {
 		return false;
 	}
 	m1->m_pkthdr.len = m1->m_len = tlen;

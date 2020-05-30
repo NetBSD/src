@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.24 2019/09/30 21:06:16 uwe Exp $
+.\"	$NetBSD: npfctl.8,v 1.25 2020/05/30 14:16:56 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 26, 2019
+.Dd May 12, 2020
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -85,6 +85,10 @@ The configuration file at
 .Pa /etc/npf.conf
 will be used unless a file is specified by
 .Ar path .
+The
+.Ar path
+may also be set to "-" for reading from
+.Em stdin .
 .\" ---
 .It Ic rule Ar name Ic add Aq rule-syntax
 Add a rule to a dynamic ruleset specified by
@@ -159,11 +163,12 @@ or
 If not specified, the type of the table being replaced will be used.
 .El
 .\" ---
-.It Ic save
-Save the active configuration and a snapshot of the current connections.
+.It Ic save Op Ar path
+Save the active configuration with a snapshot of the current connections.
 The data will be stored in the
 .Pa /var/db/npf.db
-file.
+file unless a file is specified by
+.Ar path .
 Administrator may want to stop the packet inspection before saving.
 .It Ic load
 Load the saved configuration file and the connections from the file.
@@ -171,11 +176,22 @@ Note that any existing connections will be destroyed.
 Administrator may want to start packet inspection after the load.
 .It Ic stats
 Print various statistics.
-.It Ic debug
-Process the configuration file, print the byte-code of each rule
-and dump the raw configuration.
+.It Ic debug ( Fl a | Fl b Ar binary-config | Fl c Ar config ) \
+Oo Fl o Ar outfile Oc
+Process the active configuration (if
+.Fl a
+is set), the given binary configuration (if
+.Fl b
+is set) or the given the plain configuration (if
+.Fl c
+is set).
+Print the byte-code of each rule and the encoded configuration data.
+Also, if
+.Fl o
+is set, write the binary configuration data into the given file.
+.Pp
 This is primarily for developer use.
-.It Ic list Oo Fl 46hNnw Oc Op Fl i Ar ifname
+.It Ic list Oo Fl 46hNnW Oc Op Fl i Ar ifname
 Display a list of tracked connections:
 .Bl -tag -width xxxxxxxxx -compact -offset 3n
 .It Fl 4
@@ -188,8 +204,8 @@ Don't display a header.
 Try to resolve addresses.
 .It Fl n
 Only show NAT connections.
-.It Fl w
-Don't restrict display width.
+.It Fl W
+Restrict the display width.
 .It Fl i Ar ifname
 Display only connections through the named interface.
 .El

@@ -56,7 +56,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.12 2019/09/30 22:04:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.13 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,7 +72,8 @@ typedef struct npf_ifmap {
 
 #define	NPF_IFMAP_NOID			(0U)
 #define	NPF_IFMAP_SLOT2ID(npf, slot)	((npf)->ifmap_off + (slot) + 1)
-#define	NPF_IFMAP_ID2SLOT(npf, id)	((id) - (npf)->ifmap_off - 1)
+#define	NPF_IFMAP_ID2SLOT(npf, id)	\
+    ((id) - atomic_load_relaxed(&(npf)->ifmap_off) - 1)
 
 void
 npf_ifmap_init(npf_t *npf, const npf_ifops_t *ifops)
@@ -80,7 +81,7 @@ npf_ifmap_init(npf_t *npf, const npf_ifops_t *ifops)
 	const size_t nbytes = sizeof(npf_ifmap_t) * NPF_MAX_IFMAP;
 
 	KASSERT(ifops != NULL);
-	ifops->flush((void *)(uintptr_t)0);
+	ifops->flush(npf, (void *)(uintptr_t)0);
 
 	mutex_init(&npf->ifmap_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	npf->ifmap = kmem_zalloc(nbytes, KM_SLEEP);
@@ -143,8 +144,8 @@ npf_ifmap_register(npf_t *npf, const char *ifname)
 	strlcpy(ifmap->ifname, ifname, IFNAMSIZ);
 	id = NPF_IFMAP_SLOT2ID(npf, i);
 
-	if ((ifp = npf->ifops->lookup(ifname)) != NULL) {
-		npf->ifops->setmeta(ifp, (void *)(uintptr_t)id);
+	if ((ifp = npf->ifops->lookup(npf, ifname)) != NULL) {
+		npf->ifops->setmeta(npf, ifp, (void *)(uintptr_t)id);
 	}
 out:
 	mutex_exit(&npf->ifmap_lock);
@@ -155,7 +156,7 @@ void
 npf_ifmap_flush(npf_t *npf)
 {
 	mutex_enter(&npf->ifmap_lock);
-	npf->ifops->flush((void *)(uintptr_t)NPF_IFMAP_NOID);
+	npf->ifops->flush(npf, (void *)(uintptr_t)NPF_IFMAP_NOID);
 	for (unsigned i = 0; i < npf->ifmap_cnt; i++) {
 		npf->ifmap[i].ifname[0] = '\0';
 	}
@@ -186,7 +187,7 @@ npf_ifmap_flush(npf_t *npf)
 unsigned
 npf_ifmap_getid(npf_t *npf, const ifnet_t *ifp)
 {
-	const unsigned id = (uintptr_t)npf->ifops->getmeta(ifp);
+	const unsigned id = (uintptr_t)npf->ifops->getmeta(npf, ifp);
 	return id;
 }
 
@@ -228,8 +229,8 @@ npfk_ifmap_attach(npf_t *npf, ifnet_t *ifp)
 	unsigned id;
 
 	mutex_enter(&npf->ifmap_lock);
-	id = npf_ifmap_lookup(npf, ifops->getname(ifp));
-	ifops->setmeta(ifp, (void *)(uintptr_t)id);
+	id = npf_ifmap_lookup(npf, ifops->getname(npf, ifp));
+	ifops->setmeta(npf, ifp, (void *)(uintptr_t)id);
 	mutex_exit(&npf->ifmap_lock);
 }
 
@@ -238,6 +239,6 @@ npfk_ifmap_detach(npf_t *npf, ifnet_t *ifp)
 {
 	/* Diagnostic. */
 	mutex_enter(&npf->ifmap_lock);
-	npf->ifops->setmeta(ifp, (void *)(uintptr_t)NPF_IFMAP_NOID);
+	npf->ifops->setmeta(npf, ifp, (void *)(uintptr_t)NPF_IFMAP_NOID);
 	mutex_exit(&npf->ifmap_lock);
 }

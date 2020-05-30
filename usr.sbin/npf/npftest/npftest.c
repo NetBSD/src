@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.24 2019/07/23 00:52:02 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.25 2020/05/30 14:16:56 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -64,7 +64,7 @@ describe_tests(void)
 		"bpf\tBPF coprocessor\n"
 		"table\ttable handling\n"
 		"state\tstate handling and processing\n"
-		"conn\tconnection processing\n"
+		"gc\tconnection G/C\n"
 		"rule\trule processing\n"
 		"nat\tNAT rule processing\n");
 	exit(EXIT_SUCCESS);
@@ -309,9 +309,9 @@ main(int argc, char **argv)
 			tname_matched = true;
 		}
 
-		if (!testname || strcmp("conn", testname) == 0) {
-			ok = rumpns_npf_conn_test(verbose);
-			fail |= result("conn", ok);
+		if (!testname || strcmp("gc", testname) == 0) {
+			ok = rumpns_npf_gc_test(verbose);
+			fail |= result("gc", ok);
 			tname_matched = true;
 		}
 	}

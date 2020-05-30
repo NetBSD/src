@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.21 2018/09/29 18:00:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.22 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.21 2018/09/29 18:00:35 rmind Exp $
 #define	DEFAULT_IP_TTL		(ip_defttl)
 
 #if defined(_NPF_STANDALONE)
-#define	m_gethdr(t, f)		(npf)->mbufops->alloc(0, 0)
+#define	m_gethdr(t, f)		(npf)->mbufops->alloc((npf), 0, 0)
 #define	m_freem(m)		(npc)->npc_ctx->mbufops->free(m)
 #define	mtod(m,t)		((t)((npc)->npc_ctx->mbufops->getdata(m)))
 #endif

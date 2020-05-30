@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -69,7 +69,7 @@
  *
  * Grouping
  *
- *	Filters can have groups, which have a meaning of logical
+ *	Filters can have groups, which have an effect of logical
  *	disjunction, e.g.:
  *
  *		A and B and (C or D)
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.15 2019/08/25 13:21:03 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.16 2020/05/30 14:16:56 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -111,7 +111,7 @@ __RCSID("$NetBSD: npf_bpf_comp.c,v 1.15 2019/08/25 13:21:03 rmind Exp $");
  * something other than L4 header offset.  Generally, when BPF_LDX is used.
  */
 #define	FETCHED_L3		0x01
-#define	CHECKED_L4		0x02
+#define	CHECKED_L4_PROTO	0x02
 #define	X_EQ_L4OFF		0x04
 
 struct npf_bpf {
@@ -121,17 +121,24 @@ struct npf_bpf {
 	 */
 	struct bpf_program	prog;
 	size_t			alen;
-	u_int			nblocks;
+	unsigned		nblocks;
 	sa_family_t		af;
 	uint32_t		flags;
 
 	/*
+	 * Indicators whether we are inside the group and whether this
+	 * group is implementing inverted logic.
+	 *
 	 * The current group offset (counted in BPF instructions)
 	 * and block number at the start of the group.
 	 */
-	bool			ingroup;
-	u_int			goff;
-	u_int			gblock;
+	unsigned		ingroup;
+	bool			invert;
+	unsigned		goff;
+	unsigned		gblock;
+
+	/* Track inversion (excl. mark). */
+	uint32_t		invflags;
 
 	/* BPF marks, allocated length and the real length. */
 	uint32_t *		marks;
@@ -239,7 +246,7 @@ add_insns(npf_bpf_t *ctx, struct bpf_insn *insns, size_t count)
 }
 
 static void
-done_raw_block(npf_bpf_t *ctx, const uint32_t *m, size_t len)
+add_bmarks(npf_bpf_t *ctx, const uint32_t *m, size_t len)
 {
 	size_t reqlen, nargs = m[1];
 
@@ -258,7 +265,7 @@ done_raw_block(npf_bpf_t *ctx, const uint32_t *m, size_t len)
 static void
 done_block(npf_bpf_t *ctx, const uint32_t *m, size_t len)
 {
-	done_raw_block(ctx, m, len);
+	add_bmarks(ctx, m, len);
 	ctx->nblocks++;
 }
 
@@ -302,10 +309,10 @@ npfctl_bpf_destroy(npf_bpf_t *ctx)
 
 /*
  * npfctl_bpf_group_enter: begin a logical group.  It merely uses logical
- * disjunction (OR) for compares within the group.
+ * disjunction (OR) for comparisons within the group.
  */
 void
-npfctl_bpf_group_enter(npf_bpf_t *ctx)
+npfctl_bpf_group_enter(npf_bpf_t *ctx, bool invert)
 {
 	struct bpf_program *bp = &ctx->prog;
 
@@ -314,17 +321,21 @@ npfctl_bpf_group_enter(npf_bpf_t *ctx)
 
 	ctx->goff = bp->bf_len;
 	ctx->gblock = ctx->nblocks;
-	ctx->ingroup = true;
+	ctx->invert = invert;
+	ctx->ingroup++;
 }
 
 void
-npfctl_bpf_group_exit(npf_bpf_t *ctx, bool invert)
+npfctl_bpf_group_exit(npf_bpf_t *ctx)
 {
 	struct bpf_program *bp = &ctx->prog;
 	const size_t curoff = bp->bf_len;
 
+	assert(ctx->ingroup);
+	ctx->ingroup--;
+
 	/* If there are no blocks or only one - nothing to do. */
-	if (!invert && (ctx->nblocks - ctx->gblock) <= 1) {
+	if (!ctx->invert && (ctx->nblocks - ctx->gblock) <= 1) {
 		ctx->goff = ctx->gblock = 0;
 		return;
 	}
@@ -333,7 +344,7 @@ npfctl_bpf_group_exit(npf_bpf_t *ctx, bool invert)
 	 * If inverting, then prepend a jump over the statement below.
 	 * On match, it will skip-through and the fail path will be taken.
 	 */
-	if (invert) {
+	if (ctx->invert) {
 		struct bpf_insn insns_ret[] = {
 			BPF_STMT(BPF_JMP+BPF_JA, 1),
 		};
@@ -359,9 +370,9 @@ npfctl_bpf_group_exit(npf_bpf_t *ctx, bool invert)
 }
 
 static void
-fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
+fetch_l3(npf_bpf_t *ctx, sa_family_t af, unsigned flags)
 {
-	u_int ver;
+	unsigned ver;
 
 	switch (af) {
 	case AF_INET:
@@ -386,7 +397,8 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 	if ((ctx->flags & FETCHED_L3) == 0 || (af && ctx->af == 0)) {
 		const uint8_t jt = ver ? 0 : JUMP_MAGIC;
 		const uint8_t jf = ver ? JUMP_MAGIC : 0;
-		bool ingroup = ctx->ingroup;
+		const bool ingroup = ctx->ingroup != 0;
+		const bool invert = ctx->invert;
 
 		/*
 		 * L3 block cannot be inserted in the middle of a group.
@@ -394,7 +406,7 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 		 */
 		if (ingroup) {
 			assert(ctx->nblocks == ctx->gblock);
-			npfctl_bpf_group_exit(ctx, false);
+			npfctl_bpf_group_exit(ctx);
 		}
 
 		/*
@@ -411,10 +423,10 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 
 		if (af) {
 			uint32_t mwords[] = { BM_IPVER, 1, af };
-			done_raw_block(ctx, mwords, sizeof(mwords));
+			add_bmarks(ctx, mwords, sizeof(mwords));
 		}
 		if (ingroup) {
-			npfctl_bpf_group_enter(ctx);
+			npfctl_bpf_group_enter(ctx, invert);
 		}
 
 	} else if (af && af != ctx->af) {
@@ -431,20 +443,43 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 	}
 }
 
+static void
+bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
+{
+	uint32_t bm = 0;
+
+	if (ctx->ingroup && ctx->invert) {
+		const unsigned seen = ctx->invflags;
+
+		if ((opts & MATCH_SRC) != 0 && (seen & MATCH_SRC) == 0) {
+			bm = BM_SRC_NEG;
+		}
+		if ((opts & MATCH_DST) != 0 && (seen & MATCH_DST) == 0) {
+			bm = BM_DST_NEG;
+		}
+		ctx->invflags |= opts & (MATCH_SRC | MATCH_DST);
+	}
+	if (bm) {
+		uint32_t mwords[] = { bm, 0 };
+		add_bmarks(ctx, mwords, sizeof(mwords));
+	}
+}
+
+/*
+ * npfctl_bpf_ipver: match the IP version.
+ */
+void
+npfctl_bpf_ipver(npf_bpf_t *ctx, sa_family_t af)
+{
+	fetch_l3(ctx, af, 0);
+}
+
 /*
  * npfctl_bpf_proto: code block to match IP version and L4 protocol.
  */
 void
-npfctl_bpf_proto(npf_bpf_t *ctx, sa_family_t af, int proto)
+npfctl_bpf_proto(npf_bpf_t *ctx, unsigned proto)
 {
-	assert(af != AF_UNSPEC || proto != -1);
-
-	/* Note: fails if IP version does not match. */
-	fetch_l3(ctx, af, 0);
-	if (proto == -1) {
-		return;
-	}
-
 	struct bpf_insn insns_proto[] = {
 		/* A <- L4 protocol; A == expected-protocol? */
 		BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_L4PROTO),
@@ -454,7 +489,7 @@ npfctl_bpf_proto(npf_bpf_t *ctx, sa_family_t af, int proto)
 
 	uint32_t mwords[] = { BM_PROTO, 1, proto };
 	done_block(ctx, mwords, sizeof(mwords));
-	ctx->flags |= CHECKED_L4;
+	ctx->flags |= CHECKED_L4_PROTO;
 }
 
 /*
@@ -463,11 +498,11 @@ npfctl_bpf_proto(npf_bpf_t *ctx, sa_family_t af, int proto)
  * => IP address shall be in the network byte order.
  */
 void
-npfctl_bpf_cidr(npf_bpf_t *ctx, u_int opts, sa_family_t af,
+npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
     const npf_addr_t *addr, const npf_netmask_t mask)
 {
 	const uint32_t *awords = (const uint32_t *)addr;
-	u_int nwords, length, maxmask, off;
+	unsigned nwords, length, maxmask, off;
 
 	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
 	assert((mask && mask <= NPF_MAX_NETMASK) || mask == NPF_NO_NETMASK);
@@ -497,8 +532,8 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, u_int opts, sa_family_t af,
 	length = (mask == NPF_NO_NETMASK) ? maxmask : mask;
 
 	/* CAUTION: BPF operates in host byte-order. */
-	for (u_int i = 0; i < nwords; i++) {
-		const u_int woff = i * sizeof(uint32_t);
+	for (unsigned i = 0; i < nwords; i++) {
+		const unsigned woff = i * sizeof(uint32_t);
 		uint32_t word = ntohl(awords[i]);
 		uint32_t wordmask;
 
@@ -539,6 +574,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, u_int opts, sa_family_t af,
 		(opts & MATCH_SRC) ? BM_SRC_CIDR: BM_DST_CIDR, 6,
 		af, mask, awords[0], awords[1], awords[2], awords[3],
 	};
+	bm_invert_checkpoint(ctx, opts);
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
@@ -548,16 +584,16 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, u_int opts, sa_family_t af,
  * => Port numbers shall be in the network byte order.
  */
 void
-npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
+npfctl_bpf_ports(npf_bpf_t *ctx, unsigned opts, in_port_t from, in_port_t to)
 {
-	const u_int sport_off = offsetof(struct udphdr, uh_sport);
-	const u_int dport_off = offsetof(struct udphdr, uh_dport);
-	u_int off;
+	const unsigned sport_off = offsetof(struct udphdr, uh_sport);
+	const unsigned dport_off = offsetof(struct udphdr, uh_dport);
+	unsigned off;
 
 	/* TCP and UDP port offsets are the same. */
 	assert(sport_off == offsetof(struct tcphdr, th_sport));
 	assert(dport_off == offsetof(struct tcphdr, th_dport));
-	assert(ctx->flags & CHECKED_L4);
+	assert(ctx->flags & CHECKED_L4_PROTO);
 
 	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
 	off = (opts & MATCH_SRC) ? sport_off : dport_off;
@@ -592,7 +628,7 @@ npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
 	}
 
 	uint32_t mwords[] = {
-		opts & MATCH_SRC ? BM_SRC_PORTS : BM_DST_PORTS, 2, from, to
+		(opts & MATCH_SRC) ? BM_SRC_PORTS : BM_DST_PORTS, 2, from, to
 	};
 	done_block(ctx, mwords, sizeof(mwords));
 }
@@ -601,25 +637,30 @@ npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
  * npfctl_bpf_tcpfl: code block to match TCP flags.
  */
 void
-npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask, bool checktcp)
+npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask)
 {
-	const u_int tcpfl_off = offsetof(struct tcphdr, th_flags);
+	const unsigned tcpfl_off = offsetof(struct tcphdr, th_flags);
 	const bool usingmask = tf_mask != tf;
 
 	/* X <- IP header length */
 	fetch_l3(ctx, AF_UNSPEC, X_EQ_L4OFF);
-	if (checktcp) {
-		const u_int jf = usingmask ? 3 : 2;
-		assert(ctx->ingroup == false);
 
-		/* A <- L4 protocol; A == TCP?  If not, jump out. */
+	if ((ctx->flags & CHECKED_L4_PROTO) == 0) {
+		const unsigned jf = usingmask ? 3 : 2;
+		assert(ctx->ingroup == 0);
+
+		/*
+		 * A <- L4 protocol; A == TCP?  If not, jump out.
+		 *
+		 * Note: the TCP flag matching might be without 'proto tcp'
+		 * when using a plain 'stateful' rule.  In such case it also
+		 * handles other protocols, thus no strict TCP check.
+		 */
 		struct bpf_insn insns_tcp[] = {
 			BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_L4PROTO),
 			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, IPPROTO_TCP, 0, jf),
 		};
 		add_insns(ctx, insns_tcp, __arraycount(insns_tcp));
-	} else {
-		assert(ctx->flags & CHECKED_L4);
 	}
 
 	struct bpf_insn insns_tf[] = {
@@ -642,13 +683,13 @@ npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask, bool checktcp)
 	};
 	add_insns(ctx, insns_cmp, __arraycount(insns_cmp));
 
-	uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask};
+	uint32_t mwords[] = { BM_TCPFL, 2, tf, tf_mask };
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
 /*
  * npfctl_bpf_icmp: code block to match ICMP type and/or code.
- * Note: suitable both for the ICMPv4 and ICMPv6.
+ * Note: suitable for both the ICMPv4 and ICMPv6.
  */
 void
 npfctl_bpf_icmp(npf_bpf_t *ctx, int type, int code)
@@ -656,7 +697,7 @@ npfctl_bpf_icmp(npf_bpf_t *ctx, int type, int code)
 	const u_int type_off = offsetof(struct icmp, icmp_type);
 	const u_int code_off = offsetof(struct icmp, icmp_code);
 
-	assert(ctx->flags & CHECKED_L4);
+	assert(ctx->flags & CHECKED_L4_PROTO);
 	assert(offsetof(struct icmp6_hdr, icmp6_type) == type_off);
 	assert(offsetof(struct icmp6_hdr, icmp6_code) == code_off);
 	assert(type != -1 || code != -1);
@@ -694,7 +735,7 @@ npfctl_bpf_icmp(npf_bpf_t *ctx, int type, int code)
  * against NPF table specified by ID.
  */
 void
-npfctl_bpf_table(npf_bpf_t *ctx, u_int opts, u_int tid)
+npfctl_bpf_table(npf_bpf_t *ctx, unsigned opts, unsigned tid)
 {
 	const bool src = (opts & MATCH_SRC) != 0;
 
@@ -706,5 +747,6 @@ npfctl_bpf_table(npf_bpf_t *ctx, u_int opts, u_int tid)
 	add_insns(ctx, insns_table, __arraycount(insns_table));
 
 	uint32_t mwords[] = { src ? BM_SRC_TABLE: BM_DST_TABLE, 1, tid };
+	bm_invert_checkpoint(ctx, opts);
 	done_block(ctx, mwords, sizeof(mwords));
 }

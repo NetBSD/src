@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.22 2019/07/23 00:52:01 rmind Exp $
+# $NetBSD: files.npf,v 1.23 2020/05/30 14:16:56 rmind Exp $
 #
 # Public Domain.
 #
@@ -46,6 +46,7 @@ file	net/npf/npf_ext_rndblock.c		npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf
+# file	net/npf/npf_alg_pptp.c			npf
 
 # Interfaces
 file	net/npf/if_npflog.c			npf

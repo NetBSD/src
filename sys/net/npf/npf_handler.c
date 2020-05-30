@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2020 Mindaugas Rasiukevicius <rmind at noxt eu>
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -30,12 +31,22 @@
 /*
  * NPF packet handler.
  *
- * Note: pfil(9) hooks are currently locked by softnet_lock and kernel-lock.
+ * This is the main entry point to the NPF where packet processing happens.
+ * There are some important synchronization rules:
+ *
+ *	1) Lookups into the connection database and configuration (ruleset,
+ *	tables, etc) are protected by Epoch-Based Reclamation (EBR);
+ *
+ *	2) The code in the critical path (protected by EBR) should generally
+ *	not block (that includes adaptive mutex acquisitions);
+ *
+ *	3) Where it will blocks, references should be acquired atomically,
+ *	while in the critical path, on the relevant objects.
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.48 2019/08/25 13:21:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,14 +88,20 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 	*mff = false;
 	m = nbuf_head_mbuf(nbuf);
 
-	if (npf_iscached(npc, NPC_IP4)) {
+	if (npf_iscached(npc, NPC_IP4) && npf->ip4_reassembly) {
 		error = ip_reass_packet(&m);
-	} else if (npf_iscached(npc, NPC_IP6)) {
+	} else if (npf_iscached(npc, NPC_IP6) && npf->ip6_reassembly) {
 		error = ip6_reass_packet(&m, npc->npc_hlen);
+	} else {
+		/*
+		 * Reassembly is disabled: just pass the packet through
+		 * the ruleset for inspection.
+		 */
+		return 0;
 	}
 
 	if (error) {
-		/* Reass failed. Free the mbuf, clear the nbuf. */
+		/* Reassembly failed; free the mbuf, clear the nbuf. */
 		npf_stats_inc(npf, NPF_STAT_REASSFAIL);
 		m_freem(m);
 		memset(nbuf, 0, sizeof(nbuf_t));
@@ -111,6 +128,13 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, bool *mff)
 	return 0;
 }
 
+static inline bool
+npf_packet_bypass_tag_p(nbuf_t *nbuf)
+{
+	uint32_t ntag;
+	return nbuf_find_tag(nbuf, &ntag) == 0 && (ntag & NPF_NTAG_PASS) != 0;
+}
+
 /*
  * npfk_packet_handler: main packet handling routine for layer 3.
  *
@@ -125,20 +149,19 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, decision, flags;
-	uint32_t ntag;
 	npf_match_info_t mi;
 	bool mff;
 
 	KASSERT(ifp != NULL);
 
 	/*
-	 * Initialise packet information cache.
+	 * Initialize packet information cache.
 	 * Note: it is enough to clear the info bits.
 	 */
-	npc.npc_ctx = npf;
 	nbuf_init(npf, &nbuf, *mp, ifp);
+	memset(&npc, 0, sizeof(npf_cache_t));
+	npc.npc_ctx = npf;
 	npc.npc_nbuf = &nbuf;
-	npc.npc_info = 0;
 
 	mi.mi_di = di;
 	mi.mi_rid = 0;
@@ -153,7 +176,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	/* Cache everything. */
 	flags = npf_cache_all(&npc);
 
-	/* If error on the format, leave quickly. */
+	/* Malformed packet, leave quickly. */
 	if (flags & NPC_FMTERR) {
 		error = EINVAL;
 		goto out;
@@ -173,7 +196,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Just pass-through if specially tagged. */
-	if (nbuf_find_tag(&nbuf, &ntag) == 0 && (ntag & NPF_NTAG_PASS) != 0) {
+	if (npf_packet_bypass_tag_p(&nbuf)) {
 		goto pass;
 	}
 
@@ -236,7 +259,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 		if (con) {
 			/*
 			 * Note: the reference on the rule procedure is
-			 * transfered to the connection.  It will be
+			 * transferred to the connection.  It will be
 			 * released on connection destruction.
 			 */
 			npf_conn_setpass(con, &mi, rp);

@@ -39,14 +39,14 @@
  * Warning (not applicable for the userspace npfkern):
  *
  *	The thmap_put()/thmap_del() are not called from the interrupt
- *	context and are protected by a mutex(9), therefore they do not
- *	SPL wrappers -- see the comment at the top of the npf_conndb.c
- *	source file.
+ *	context and are protected by an IPL_NET mutex(9), therefore they
+ *	do not need SPL wrappers -- see the comment at the top of the
+ *	npf_conndb.c source file.
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.34 2019/08/21 21:45:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.35 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,6 +199,7 @@ npf_tableset_swap(npf_tableset_t *ts, npf_table_t *newt)
 
 	newt->t_refcnt = oldt->t_refcnt;
 	oldt->t_refcnt = 0;
+	membar_producer();
 
 	return atomic_swap_ptr(&ts->ts_map[tid], newt);
 }
@@ -221,10 +222,10 @@ npf_tableset_getbyname(npf_tableset_t *ts, const char *name)
 }
 
 npf_table_t *
-npf_tableset_getbyid(npf_tableset_t *ts, u_int tid)
+npf_tableset_getbyid(npf_tableset_t *ts, unsigned tid)
 {
 	if (__predict_true(tid < ts->ts_nitems)) {
-		return ts->ts_map[tid];
+		return atomic_load_relaxed(&ts->ts_map[tid]);
 	}
 	return NULL;
 }
@@ -280,7 +281,7 @@ npf_tableset_reload(npf_t *npf, npf_tableset_t *nts, npf_tableset_t *ots)
 }
 
 int
-npf_tableset_export(npf_t *npf, const npf_tableset_t *ts, nvlist_t *npf_dict)
+npf_tableset_export(npf_t *npf, const npf_tableset_t *ts, nvlist_t *nvl)
 {
 	const npf_table_t *t;
 
@@ -297,7 +298,7 @@ npf_tableset_export(npf_t *npf, const npf_tableset_t *ts, nvlist_t *npf_dict)
 		nvlist_add_number(table, "type", t->t_type);
 		nvlist_add_number(table, "id", tid);
 
-		nvlist_append_nvlist_array(npf_dict, "tables", table);
+		nvlist_append_nvlist_array(nvl, "tables", table);
 		nvlist_destroy(table);
 	}
 	return 0;
@@ -677,6 +678,7 @@ npf_table_lookup(npf_table_t *t, const int alen, const npf_addr_t *addr)
 
 	switch (t->t_type) {
 	case NPF_TABLE_IPSET:
+		/* Note: the caller is in the npf_config_read_enter(). */
 		found = thmap_get(t->t_map, addr, alen) != NULL;
 		break;
 	case NPF_TABLE_LPM:

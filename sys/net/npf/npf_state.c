@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.22 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.23 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.22 2019/07/23 00:52:01 rmind Exp $")
  */
 typedef struct {
 	int		timeouts[NPF_ANY_CONN_NSTATES];
+	int		gre_timeout;
 } npf_state_params_t;
 
 /*
@@ -114,6 +115,12 @@ npf_state_sysinit(npf_t *npf)
 			.default_val = 60,
 			.min = 0, .max = INT_MAX
 		},
+		{
+			"state.generic.timeout.gre",
+			&params->gre_timeout,
+			.default_val = 24 * 60 * 60,
+			.min = 0, .max = INT_MAX
+		},
 	};
 	npf_param_register(npf, param_map, __arraycount(param_map));
 	npf_state_tcp_sysinit(npf);
@@ -152,6 +159,7 @@ npf_state_init(npf_cache_t *npc, npf_state_t *nst)
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_ICMP:
+	case IPPROTO_GRE:
 		/* Generic. */
 		nst->nst_state = npf_generic_fsm[nst->nst_state][NPF_FLOW_FORW];
 		ret = true;
@@ -176,21 +184,21 @@ npf_state_destroy(npf_state_t *nst)
  * the packet belongs to the tracked connection) and false otherwise.
  */
 bool
-npf_state_inspect(npf_cache_t *npc, npf_state_t *nst, const bool forw)
+npf_state_inspect(npf_cache_t *npc, npf_state_t *nst, const npf_flow_t flow)
 {
 	const int proto = npc->npc_proto;
-	const int di = forw ? NPF_FLOW_FORW : NPF_FLOW_BACK;
 	bool ret;
 
 	switch (proto) {
 	case IPPROTO_TCP:
 		/* Pass to TCP state tracking engine. */
-		ret = npf_state_tcp(npc, nst, di);
+		ret = npf_state_tcp(npc, nst, flow);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_ICMP:
+	case IPPROTO_GRE:
 		/* Generic. */
-		nst->nst_state = npf_generic_fsm[nst->nst_state][di];
+		nst->nst_state = npf_generic_fsm[nst->nst_state][flow];
 		ret = true;
 		break;
 	default:
@@ -221,6 +229,10 @@ npf_state_etime(npf_t *npf, const npf_state_t *nst, const int proto)
 		/* Generic. */
 		params = npf->params[NPF_PARAMS_GENERIC_STATE];
 		timeout = params->timeouts[state];
+		break;
+	case IPPROTO_GRE:
+		params = npf->params[NPF_PARAMS_GENERIC_STATE];
+		timeout = params->gre_timeout;
 		break;
 	default:
 		KASSERT(false);

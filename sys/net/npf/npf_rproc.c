@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_rproc.c,v 1.19 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_rproc.c,v 1.20 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,7 +65,7 @@ struct npf_rprocset {
 struct npf_rproc {
 	/* Flags and reference count. */
 	uint32_t		rp_flags;
-	u_int			rp_refcnt;
+	unsigned		rp_refcnt;
 
 	/* Associated extensions and their metadata . */
 	unsigned		rp_ext_count;
@@ -155,12 +155,12 @@ npf_ext_unregister(npf_t *npf, void *extid)
 	/*
 	 * Check if in-use first (re-check with the lock held).
 	 */
-	if (ext->ext_refcnt) {
+	if (atomic_load_relaxed(&ext->ext_refcnt)) {
 		return EBUSY;
 	}
 
 	mutex_enter(&npf->ext_lock);
-	if (ext->ext_refcnt) {
+	if (atomic_load_relaxed(&ext->ext_refcnt)) {
 		mutex_exit(&npf->ext_lock);
 		return EBUSY;
 	}
@@ -260,7 +260,7 @@ npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
 }
 
 int
-npf_rprocset_export(const npf_rprocset_t *rpset, nvlist_t *npf_dict)
+npf_rprocset_export(const npf_rprocset_t *rpset, nvlist_t *nvl)
 {
 	const npf_rproc_t *rp;
 
@@ -275,7 +275,7 @@ npf_rprocset_export(const npf_rprocset_t *rpset, nvlist_t *npf_dict)
 #endif
 		nvlist_add_string(rproc, "name", rp->rp_name);
 		nvlist_add_number(rproc, "flags", rp->rp_flags);
-		nvlist_append_nvlist_array(npf_dict, "rprocs", rproc);
+		nvlist_append_nvlist_array(nvl, "rprocs", rproc);
 		nvlist_destroy(rproc);
 	}
 	return 0;
@@ -328,8 +328,8 @@ npf_rproc_getname(const npf_rproc_t *rp)
 void
 npf_rproc_release(npf_rproc_t *rp)
 {
+	KASSERT(atomic_load_relaxed(&rp->rp_refcnt) > 0);
 
-	KASSERT(rp->rp_refcnt > 0);
 	if (atomic_dec_uint_nv(&rp->rp_refcnt) != 0) {
 		return;
 	}
@@ -366,13 +366,14 @@ npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, const npf_match_info_t *mi,
 	const unsigned extcount = rp->rp_ext_count;
 
 	KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
-	KASSERT(rp->rp_refcnt > 0);
+	KASSERT(atomic_load_relaxed(&rp->rp_refcnt) > 0);
 
 	for (unsigned i = 0; i < extcount; i++) {
 		const npf_ext_t *ext = rp->rp_ext[i];
 		const npf_ext_ops_t *extops = ext->ext_ops;
 
-		KASSERT(ext->ext_refcnt > 0);
+		KASSERT(atomic_load_relaxed(&ext->ext_refcnt) > 0);
+
 		if (!extops->proc(npc, rp->rp_ext_meta[i], mi, decision)) {
 			return false;
 		}

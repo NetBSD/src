@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.90 2019/09/30 20:44:51 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.91 2020/05/30 14:16:56 rmind Exp $
 .\"
-.\" Copyright (c) 2009-2019 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 25, 2019
+.Dd May 19, 2020
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -271,6 +271,17 @@ Return an ICMP UNREACHABLE message, when the packet being blocked is a UDP packe
 Applies to IPv4 and IPv6.
 .El
 .Pp
+The
+.Cm from
+and
+.Cm to
+keywords are provided to filter by source or destination IP addresses.
+They can be used in conjunction with the
+.Cm port
+keyword.
+Negation (the exclamation mark) can be used in front of the address
+filter criteria.
+.Pp
 Further packet specification at present is limited to TCP and UDP
 understanding source and destination ports, and ICMP and IPv6-ICMP
 understanding icmp-type.
@@ -296,15 +307,32 @@ syntax, for example:
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
 .Ss Stateful
+NPF supports stateful packet inspection which can be used to bypass
+unnecessary rule processing as well as to complement NAT.
+The connection state is uniquely identified by an n-tuple: IP version,
+layer 4 protocol, source and destination IP addresses and port numbers.
+Each state is represented by two keys: one for the original flow and
+one for the reverse flow, so that the reverse lookup on the returning
+packets would succeed.
+The packets are matched against the connection direction respectively.
+.Pp
+Depending on the settings (see the section on
+.Li state.key
+in the
+.Xr npf-params 7
+manual), the connection identifier (keys) may also include the interface ID,
+making the states per-interface.
+.Pp
 Stateful packet inspection is enabled using the
 .Cm stateful
 or
 .Cm stateful-all
 keywords.
-The former creates a state which is uniquely identified by a 5-tuple (source
-and destination IP addresses, port numbers and an interface identifier).
-The latter excludes the interface identifier, i.e. making the state global,
-and must be used with caution.
+The former matches the interface after the state lookup, while the latter
+avoids matching the interface (assuming the
+.Li state.key.interface
+parameter is disabled),
+i.e. making the state global, and must be used with caution.
 In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
@@ -486,10 +514,15 @@ procedure "someproc" {
 .Pp
 In this case, the procedure calls the logging and normalization modules.
 .Ss Parameter settings
-NPF supports a set of dynamically tunable parameters.
+NPF supports a set of dynamically tunable configuration-wide parameters.
+For example:
+.Bd -literal -offset indent
+set state.tcp.timeout.time_wait 0  # destroy the state immediately
+.Ed
+.Pp
 See
 .Xr npf-params 7
-for specific details.
+for the list of parameters and their details.
 .Ss Misc
 Text after a hash
 .Pq Sq #
@@ -580,8 +613,7 @@ proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 proto		= "proto" protocol [ proto-opts ]
 
-filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr
-		  [ port-opts ]
+filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
 filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
 
 port-opts	= "port" ( port-num | port-from "-" port-to | var-name )

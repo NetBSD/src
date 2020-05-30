@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -130,6 +130,7 @@ yyerror(const char *fmt, ...)
 %token			INET4
 %token			INET6
 %token			INTERFACE
+%token			INVALID
 %token			IPHASH
 %token			IPSET
 %token			LPM
@@ -188,14 +189,15 @@ yyerror(const char *fmt, ...)
 %type	<num>		maybe_not opt_stateful icmp_type table_type
 %type	<num>		map_sd map_algo map_flags map_type
 %type	<num>		param_val
-%type	<var>		static_ifaddrs addr_or_ifaddr
-%type	<var>		port_range icmp_type_and_code
+%type	<var>		static_ifaddrs filt_addr_element
+%type	<var>		filt_port filt_port_list port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
 %type	<var>		procs proc_call proc_param_list proc_param
-%type	<var>		element list_elems list value
+%type	<var>		element list_elems list value filt_addr_list
+%type	<var>		opt_proto proto proto_elems
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts all_or_filt_opts
-%type	<optproto>	proto opt_proto
+%type	<optproto>	rawproto
 %type	<rulegroup>	group_opts
 
 %union {
@@ -389,7 +391,7 @@ map_type
 	;
 
 mapseg
-	: filt_addr port_range
+	: filt_addr filt_port
 	{
 		$$.ap_netaddr = $1;
 		$$.ap_portrange = $2;
@@ -400,7 +402,7 @@ map
 	: MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
 	  PASS opt_family opt_proto all_or_filt_opts
 	{
-		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, &$11, &$12, $4);
+		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, $11, &$12, $4);
 	}
 	| MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
 	{
@@ -408,7 +410,7 @@ map
 	}
 	| MAP ifref map_sd map_algo map_flags proto mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $8, $5, $2, &$7, &$9, &$6, NULL, $4);
+		npfctl_build_natseg($3, $8, $5, $2, &$7, &$9, $6, NULL, $4);
 	}
 	| MAP RULESET group_opts
 	{
@@ -549,7 +551,7 @@ rule
 	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
-		    $6, &$7, &$8, NULL, $9);
+		    $6, $7, &$8, NULL, $9);
 	}
 	| block_or_pass opt_stateful rule_dir opt_final on_ifname
 	  PCAP_FILTER STRING opt_apply
@@ -595,41 +597,61 @@ opt_family
 	|			{ $$ = AF_UNSPEC; }
 	;
 
-proto
-	: PROTO TCP tcp_flags_and_mask
+rawproto
+	: TCP tcp_flags_and_mask
 	{
 		$$.op_proto = IPPROTO_TCP;
-		$$.op_opts = $3;
+		$$.op_opts = $2;
 	}
-	| PROTO ICMP icmp_type_and_code
+	| ICMP icmp_type_and_code
 	{
 		$$.op_proto = IPPROTO_ICMP;
-		$$.op_opts = $3;
+		$$.op_opts = $2;
 	}
-	| PROTO ICMP6 icmp_type_and_code
+	| ICMP6 icmp_type_and_code
 	{
 		$$.op_proto = IPPROTO_ICMPV6;
-		$$.op_opts = $3;
+		$$.op_opts = $2;
 	}
-	| PROTO some_name
+	| some_name
 	{
-		$$.op_proto = npfctl_protono($2);
+		$$.op_proto = npfctl_protono($1);
 		$$.op_opts = NULL;
 	}
-	| PROTO number
+	| number
 	{
-		$$.op_proto = $2;
+		$$.op_proto = $1;
 		$$.op_opts = NULL;
+	}
+	;
+
+proto_elems
+	: proto_elems COMMA rawproto
+	{
+		npfvar_t *pvar = npfvar_create_element(
+		    NPFVAR_PROTO, &$3, sizeof($3));
+		$$ = npfvar_add_elements($1, pvar);
+	}
+	| rawproto
+	{
+		$$ = npfvar_create_element(NPFVAR_PROTO, &$1, sizeof($1));
+	}
+	;
+
+proto
+	: PROTO rawproto
+	{
+		$$ = npfvar_create_element(NPFVAR_PROTO, &$2, sizeof($2));
+	}
+	| PROTO CURLY_OPEN proto_elems CURLY_CLOSE
+	{
+		$$ = $3;
 	}
 	;
 
 opt_proto
 	: proto			{ $$ = $1; }
-	|
-	{
-		$$.op_proto = -1;
-		$$.op_opts = NULL;
-	}
+	|			{ $$ = NULL; }
 	;
 
 all_or_filt_opts
@@ -664,7 +686,7 @@ block_opts
 	;
 
 filt_opts
-	: FROM maybe_not filt_addr port_range TO maybe_not filt_addr port_range
+	: FROM maybe_not filt_addr filt_port TO maybe_not filt_addr filt_port
 	{
 		$$.fo_finvert = $2;
 		$$.fo_from.ap_netaddr = $3;
@@ -673,7 +695,7 @@ filt_opts
 		$$.fo_to.ap_netaddr = $7;
 		$$.fo_to.ap_portrange = $8;
 	}
-	| FROM maybe_not filt_addr port_range
+	| FROM maybe_not filt_addr filt_port
 	{
 		$$.fo_finvert = $2;
 		$$.fo_from.ap_netaddr = $3;
@@ -682,7 +704,7 @@ filt_opts
 		$$.fo_to.ap_netaddr = NULL;
 		$$.fo_to.ap_portrange = NULL;
 	}
-	| TO maybe_not filt_addr port_range
+	| TO maybe_not filt_addr filt_port
 	{
 		$$.fo_finvert = false;
 		$$.fo_from.ap_netaddr = NULL;
@@ -693,9 +715,20 @@ filt_opts
 	}
 	;
 
+filt_addr_list
+	: filt_addr_list COMMA filt_addr_element
+	{
+		npfvar_add_elements($1, $3);
+	}
+	| filt_addr_element
+	;
+
 filt_addr
-	: list			{ $$ = $1; }
-	| addr_or_ifaddr	{ $$ = $1; }
+	: CURLY_OPEN filt_addr_list CURLY_CLOSE
+	{
+		$$ = $2;
+	}
+	| filt_addr_element	{ $$ = $1; }
 	| ANY			{ $$ = NULL; }
 	;
 
@@ -714,7 +747,7 @@ addr_and_mask
 	}
 	;
 
-addr_or_ifaddr
+filt_addr_element
 	: addr_and_mask		{ assert($1 != NULL); $$ = $1; }
 	| static_ifaddrs
 	{
@@ -765,25 +798,37 @@ addr
 	| IPV6ADDR	{ $$ = $1; }
 	;
 
-port_range
-	: PORT port		/* just port */
+filt_port
+	: PORT CURLY_OPEN filt_port_list CURLY_CLOSE
 	{
-		$$ = npfctl_parse_port_range($2, $2);
+		$$ = npfctl_parse_port_range_variable(NULL, $3);
 	}
-	| PORT port MINUS port	/* port from-to */
-	{
-		$$ = npfctl_parse_port_range($2, $4);
-	}
-	| PORT VAR_ID
-	{
-		npfvar_t *vp = npfvar_lookup($2);
-		$$ = npfctl_parse_port_range_variable($2, vp);
-	}
-	| PORT list
-	{
-		$$ = npfctl_parse_port_range_variable(NULL, $2);
-	}
+	| PORT port_range	{ $$ = $2; }
 	|			{ $$ = NULL; }
+	;
+
+filt_port_list
+	: filt_port_list COMMA port_range
+	{
+		npfvar_add_elements($1, $3);
+	}
+	| port_range
+	;
+
+port_range
+	: port		/* just port */
+	{
+		$$ = npfctl_parse_port_range($1, $1);
+	}
+	| port MINUS port	/* port from-to */
+	{
+		$$ = npfctl_parse_port_range($1, $3);
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		$$ = npfctl_parse_port_range_variable($1, vp);
+	}
 	;
 
 port
