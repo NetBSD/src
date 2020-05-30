@@ -1,8 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.7 2020/05/25 15:37:50 christos Exp $
+# $NetBSD: Makefile.inc,v 1.8 2020/05/30 20:47:59 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
 .include <bsd.own.mk>
+
+LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
+LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
+
 
 USE_FORT?= yes	# network client/server
 CWARNFLAGS.clang+=	-Wno-tautological-compare \
@@ -37,10 +41,12 @@ LDADD+= ${OMOBJDIR}/libomapi.a
 # would be to install the libraries in /lib...
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -lirs -lisccfg -ldns -lisc -luv -lkvm
-DPADD+= ${LIBIRS} ${LIBISCCFG} ${LIBDNS} ${LIBISC} ${LIBUV} ${LIBKVM}
-LDADD+= -lpthread -lz
-DPADD+= ${LIBPTHREAD} ${LIBZ}
+LDADD+= -lirs -lisccfg -ldns -lisc
+LDADD+= -L${LIBUVOBJDIR} -luv
+DPADD+= ${LIBIRS} ${LIBISCCFG} ${LIBDNS} ${LIBISC} ${LIBUV}
+DPADD+= ${LIBUVOBJDIR}/libuv.a
+LDADD+= -lkvm -lpthread -lz
+DPADD+= ${LIBKVM} ${LIBPTHREAD} ${LIBZ}
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
