@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.112 2020/05/27 02:04:37 rin Exp $	*/
+/*	$NetBSD: namei.h,v 1.113 2020/05/30 20:16:34 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.57 2020/05/27 02:03:30 rin Exp 
+ *   from: NetBSD: namei.src,v 1.58 2020/05/30 20:16:14 ad Exp 
  */
 
 /*
@@ -308,6 +308,9 @@ bool	cache_have_id(struct vnode *);
 void	cache_vnode_init(struct vnode * );
 void	cache_vnode_fini(struct vnode * );
 void	cache_cpu_init(struct cpu_info *);
+void	cache_enter_mount(struct vnode *, struct vnode *);
+bool	cache_cross_mount(struct vnode **, krwlock_t **);
+bool	cache_lookup_mount(struct vnode *, struct vnode **);
 
 void	nchinit(void);
 void	namecache_count_pass2(void);
