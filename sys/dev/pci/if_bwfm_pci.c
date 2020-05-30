@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.7 2020/03/25 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.8 2020/05/30 13:41:58 jdolecek Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -290,7 +290,7 @@ int		 bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *, int,
 int		 bwfm_pci_msgbuf_set_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t);
 
-struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
+static const struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 	.bc_read = bwfm_pci_buscore_read,
 	.bc_write = bwfm_pci_buscore_write,
 	.bc_prepare = bwfm_pci_buscore_prepare,
@@ -299,7 +299,7 @@ struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 	.bc_activate = bwfm_pci_buscore_activate,
 };
 
-struct bwfm_bus_ops bwfm_pci_bus_ops = {
+static const struct bwfm_bus_ops bwfm_pci_bus_ops = {
 	.bs_init = NULL,
 	.bs_stop = bwfm_pci_stop,
 	.bs_txcheck = bwfm_pci_txcheck,
@@ -308,7 +308,7 @@ struct bwfm_bus_ops bwfm_pci_bus_ops = {
 	.bs_rxctl = NULL,
 };
 
-struct bwfm_proto_ops bwfm_pci_msgbuf_ops = {
+static const struct bwfm_proto_ops bwfm_pci_msgbuf_ops = {
 	.proto_query_dcmd = bwfm_pci_msgbuf_query_dcmd,
 	.proto_set_dcmd = bwfm_pci_msgbuf_set_dcmd,
 };
