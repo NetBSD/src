@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.23 2020/05/27 23:52:19 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.24 2020/05/30 23:52:09 joerg Exp $	*/
 
 /* ntp_config.c
  *
@@ -68,6 +68,16 @@ extern int yyparse(void);
 #if defined(HAVE_SYS_MMAN_H)
 # include <sys/mman.h>
 #endif
+
+/*
+ * Poll Skew List
+ */
+
+static psl_item psl[17-3+1];	/* values for polls 3-17 */
+				/* To simplify the runtime code we */
+				/* don't want to have to special-case */
+				/* dealing with a default */
+
 
 /* list of servers from command line for config_peers() */
 int	cmdline_server_count;
