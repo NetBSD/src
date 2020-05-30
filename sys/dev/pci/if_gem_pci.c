@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.50 2020/03/02 06:38:06 msaitoh Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.51 2020/05/30 16:35:02 thorpej Exp $ */
 
 /*
  *
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.50 2020/03/02 06:38:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.51 2020/05/30 16:35:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <machine/endian.h>
 
@@ -142,6 +142,8 @@ isserdes(u_int8_t* buf)
 	    buf[3] == 'd' && buf[4] == 'e' && buf[5] == 's';
 }
 
+#define	GEM_TMP_BUFSIZE		0x0800
+
 void
 gem_pci_attach(device_t parent, device_t self, void *aux)
 {
@@ -150,9 +152,8 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	struct gem_softc *sc = &gsc->gsc_gem;
 	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	u_int8_t		*enp;
 	bus_space_handle_t	romh;
-	u_int8_t		buf[0x0800];
+	uint8_t			*buf;
 	int			dataoff, vpdoff, serdes;
 	int i, got_addr = 0;
 #ifdef GEM_DEBUG
@@ -230,6 +231,8 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	buf = kmem_alloc(GEM_TMP_BUFSIZE, KM_SLEEP);
+
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL) {
 		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
@@ -252,7 +255,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 		 * later) chapter 2 describes the data structure.
 		 */
 
-		enp = NULL;
+		uint8_t *enp = NULL;
 
 		if (sc->sc_variant == GEM_SUN_GEM &&
 		    (bus_space_subregion(sc->sc_bustag, sc->sc_h1,
@@ -351,6 +354,9 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 			got_addr = 1;
 		}
 	}
+
+	kmem_free(buf, GEM_TMP_BUFSIZE);
+
 	if (!got_addr) {
 		printf("%s: no Ethernet address found\n",
 		    device_xname(sc->sc_dev));
