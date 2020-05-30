@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.24 2020/05/30 14:03:08 jdolecek Exp $ */
+/* $NetBSD: bwfm.c,v 1.25 2020/05/30 15:55:47 jdolecek Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -38,8 +38,8 @@
 
 #include <net80211/ieee80211_var.h>
 
-#include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
+#include <dev/ic/bwfmvar.h>
 
 /* #define BWFM_DEBUG */
 #ifdef BWFM_DEBUG
@@ -2140,18 +2140,12 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 		bss = &res->bss_info[0];
 		for (i = 0; i < le16toh(res->bss_count); i++) {
 			/* Fix alignment of bss_info */
-			union {
-				struct bwfm_bss_info bss_info;
-				uint8_t padding[BWFM_BSS_INFO_BUFLEN];
-			} *bss_buf;
-			if (len > sizeof(*bss_buf)) {
+			if (len > sizeof(sc->sc_bss_buf)) {
 				printf("%s: bss_info buffer too big\n", DEVNAME(sc));
 			} else {
-				bss_buf = kmem_alloc(sizeof(*bss_buf),
-				    KM_SLEEP);
-				memcpy(bss_buf, &res->bss_info[i], len);
-				bwfm_scan_node(sc, &bss_buf->bss_info, len);
-				kmem_free(bss_buf, sizeof(*bss_buf));
+				memcpy(&sc->sc_bss_buf, &res->bss_info[i], len);
+				bwfm_scan_node(sc, &sc->sc_bss_buf.bss_info,
+				    len);
 			}
 			len -= sizeof(*bss) + le32toh(bss->length);
 			bss = (void *)(((uintptr_t)bss) + le32toh(bss->length));
