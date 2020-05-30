@@ -135,8 +135,10 @@ typedef struct {
  * CONNECTION STATE STRUCTURES
  */
 
-#define	NPF_FLOW_FORW		0
-#define	NPF_FLOW_BACK		1
+typedef enum {
+	NPF_FLOW_FORW = 0,
+	NPF_FLOW_BACK = 1,
+} npf_flow_t;
 
 typedef struct {
 	uint32_t	nst_end;
@@ -156,8 +158,9 @@ typedef struct {
 
 typedef struct {
 	bool		(*match)(npf_cache_t *, npf_nat_t *, int);
-	bool		(*translate)(npf_cache_t *, npf_nat_t *, bool);
+	bool		(*translate)(npf_cache_t *, npf_nat_t *, npf_flow_t);
 	npf_conn_t *	(*inspect)(npf_cache_t *, int);
+	void		(*destroy)(npf_t *, npf_nat_t *, npf_conn_t *);
 } npfa_funcs_t;
 
 /*
@@ -192,7 +195,8 @@ typedef struct {
 } npf_param_t;
 
 typedef enum {
-	NPF_PARAMS_CONNDB = 0,
+	NPF_PARAMS_CONN = 0,
+	NPF_PARAMS_CONNDB,
 	NPF_PARAMS_GENERIC_STATE,
 	NPF_PARAMS_TCP_STATE,
 	NPF_PARAMS_COUNT
@@ -208,13 +212,18 @@ struct npf {
 	ebr_t *			ebr;
 	npf_config_t *		config;
 
-	/* BPF byte-code context. */
+	/*
+	 * BPF byte-code context, mbuf operations an arbitrary user argument.
+	 */
 	bpf_ctx_t *		bpfctx;
 	const npf_mbufops_t *	mbufops;
+	void *			arg;
 
 	/* Parameters. */
 	npf_paraminfo_t *	paraminfo;
 	void *			params[NPF_PARAMS_COUNT];
+	int			ip4_reassembly;
+	int			ip6_reassembly;
 
 	/*
 	 * Connection tracking state: disabled (off) or enabled (on).
@@ -237,14 +246,15 @@ struct npf {
 	unsigned		ifmap_off;
 	kmutex_t		ifmap_lock;
 
-	/* Associated worker thread. */
-	unsigned		worker_id;
-	void *			worker_entry;
-	bool			sync_registered;
-
 	/* List of extensions and its lock. */
 	LIST_HEAD(, npf_ext)	ext_list;
 	kmutex_t		ext_lock;
+
+	/* Associated worker information. */
+	unsigned		worker_flags;
+	LIST_ENTRY(npf)		worker_entry;
+	unsigned		worker_wait_time;
+	npf_workfunc_t		worker_funcs[NPF_MAX_WORKS];
 
 	/* Statistics. */
 	percpu_t *		stats_percpu;
@@ -295,15 +305,12 @@ bool		npf_active_p(void);
 
 int		npf_worker_sysinit(unsigned);
 void		npf_worker_sysfini(void);
+int		npf_worker_addfunc(npf_t *, npf_workfunc_t);
+void		npf_worker_enlist(npf_t *);
+void		npf_worker_discharge(npf_t *);
 void		npf_worker_signal(npf_t *);
-void		npf_worker_register(npf_t *, npf_workfunc_t);
-void		npf_worker_unregister(npf_t *, npf_workfunc_t);
 
-int		npfctl_save(npf_t *, u_long, void *);
-int		npfctl_load(npf_t *, u_long, void *);
-int		npfctl_rule(npf_t *, u_long, void *);
-int		npfctl_conn_lookup(npf_t *, u_long, void *);
-int		npfctl_table_replace(npf_t *, u_long, void *);
+int		npfctl_run_op(npf_t *, unsigned, const nvlist_t *, nvlist_t *);
 int		npfctl_table(npf_t *, void *);
 
 void		npf_stats_inc(npf_t *, npf_stats_t);
@@ -315,6 +322,7 @@ void		npf_param_register(npf_t *, npf_param_t *, unsigned);
 void *		npf_param_allocgroup(npf_t *, npf_paramgroup_t, size_t);
 void		npf_param_freegroup(npf_t *, npf_paramgroup_t, size_t);
 int		npf_param_check(npf_t *, const char *, int);
+int		npf_params_export(const npf_t *, nvlist_t *);
 
 void		npf_ifmap_init(npf_t *, const npf_ifops_t *);
 void		npf_ifmap_fini(npf_t *);
@@ -413,7 +421,7 @@ int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
 int		npf_ruleset_remove(npf_ruleset_t *, const char *, uint64_t);
 int		npf_ruleset_remkey(npf_ruleset_t *, const char *,
 		    const void *, size_t);
-nvlist_t *	npf_ruleset_list(npf_t *, npf_ruleset_t *, const char *);
+int		npf_ruleset_list(npf_t *, npf_ruleset_t *, const char *, nvlist_t *);
 int		npf_ruleset_flush(npf_ruleset_t *, const char *);
 void		npf_ruleset_gc(npf_ruleset_t *);
 
@@ -454,13 +462,13 @@ void		npf_state_sysinit(npf_t *);
 void		npf_state_sysfini(npf_t *);
 
 bool		npf_state_init(npf_cache_t *, npf_state_t *);
-bool		npf_state_inspect(npf_cache_t *, npf_state_t *, const bool);
+bool		npf_state_inspect(npf_cache_t *, npf_state_t *, npf_flow_t);
 int		npf_state_etime(npf_t *, const npf_state_t *, const int);
 void		npf_state_destroy(npf_state_t *);
 
 void		npf_state_tcp_sysinit(npf_t *);
 void		npf_state_tcp_sysfini(npf_t *);
-bool		npf_state_tcp(npf_cache_t *, npf_state_t *, int);
+bool		npf_state_tcp(npf_cache_t *, npf_state_t *, npf_flow_t);
 int		npf_state_tcp_timeout(npf_t *, const npf_state_t *);
 
 /* Portmap. */
@@ -478,21 +486,24 @@ void		npf_portmap_flush(npf_portmap_t *);
 /* NAT. */
 void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
-npf_natpolicy_t *npf_nat_newpolicy(npf_t *, const nvlist_t *, npf_ruleset_t *);
-int		npf_nat_policyexport(const npf_natpolicy_t *, nvlist_t *);
-void		npf_nat_freepolicy(npf_natpolicy_t *);
-bool		npf_nat_cmppolicy(npf_natpolicy_t *, npf_natpolicy_t *);
+npf_natpolicy_t *npf_natpolicy_create(npf_t *, const nvlist_t *, npf_ruleset_t *);
+int		npf_natpolicy_export(const npf_natpolicy_t *, nvlist_t *);
+void		npf_natpolicy_destroy(npf_natpolicy_t *);
+bool		npf_natpolicy_cmp(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_setid(npf_natpolicy_t *, uint64_t);
 uint64_t	npf_nat_getid(const npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
-int		npf_do_nat(npf_cache_t *, npf_conn_t *, const int);
-void		npf_nat_destroy(npf_nat_t *);
+int		npf_do_nat(npf_cache_t *, npf_conn_t *, const unsigned);
+npf_nat_t *	npf_nat_share_policy(npf_cache_t *, npf_conn_t *, npf_nat_t *);
+void		npf_nat_destroy(npf_conn_t *, npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
+npf_alg_t *	npf_nat_getalg(const npf_nat_t *);
+uintptr_t	npf_nat_getalgarg(const npf_nat_t *);
 
-void		npf_nat_export(nvlist_t *, npf_nat_t *);
+void		npf_nat_export(npf_t *, const npf_nat_t *, nvlist_t *);
 npf_nat_t *	npf_nat_import(npf_t *, const nvlist_t *, npf_ruleset_t *,
 		    npf_conn_t *);
 
@@ -505,9 +516,10 @@ npf_alg_t *	npf_alg_register(npf_t *, const char *, const npfa_funcs_t *);
 int		npf_alg_unregister(npf_t *, npf_alg_t *);
 npf_alg_t *	npf_alg_construct(npf_t *, const char *);
 bool		npf_alg_match(npf_cache_t *, npf_nat_t *, int);
-void		npf_alg_exec(npf_cache_t *, npf_nat_t *, bool);
+void		npf_alg_exec(npf_cache_t *, npf_nat_t *, const npf_flow_t);
 npf_conn_t *	npf_alg_conn(npf_cache_t *, int);
 int		npf_alg_export(npf_t *, nvlist_t *);
+void		npf_alg_destroy(npf_t *, npf_alg_t *, npf_nat_t *, npf_conn_t *);
 
 /* Wrappers for the reclamation mechanism. */
 ebr_t *		npf_ebr_create(void);

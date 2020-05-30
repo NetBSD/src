@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.54 2020/05/23 19:56:00 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.55 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -70,11 +70,23 @@ npfctl_config_init(bool debug)
 {
 	npf_conf = npf_config_create();
 	if (npf_conf == NULL) {
-		errx(EXIT_FAILURE, "npf_config_create failed");
+		errx(EXIT_FAILURE, "npf_config_create() failed");
 	}
 	memset(current_group, 0, sizeof(current_group));
 	npf_debug = debug;
 	npf_conf_built = false;
+}
+
+nl_config_t *
+npfctl_config_ref(void)
+{
+	return npf_conf;
+}
+
+nl_rule_t *
+npfctl_rule_ref(void)
+{
+	return the_rule;
 }
 
 void
@@ -107,10 +119,6 @@ npfctl_config_send(int fd)
 
 	npfctl_config_build();
 	error = npf_config_submit(npf_conf, fd, &errinfo);
-	if (error == EEXIST) { /* XXX */
-		errx(EXIT_FAILURE, "(re)load failed: "
-		    "some table has a duplicate entry?");
-	}
 	if (error) {
 		npfctl_print_error(&errinfo);
 	}
@@ -126,40 +134,17 @@ npfctl_config_save(nl_config_t *ncf, const char *outfile)
 	int fd;
 
 	blob = npf_config_export(ncf, &len);
-	if (!blob)
+	if (!blob) {
 		err(EXIT_FAILURE, "npf_config_export");
-	if ((fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) == -1)
+	}
+	if ((fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) == -1) {
 		err(EXIT_FAILURE, "could not open %s", outfile);
+	}
 	if (write(fd, blob, len) != (ssize_t)len) {
 		err(EXIT_FAILURE, "write to %s failed", outfile);
 	}
 	free(blob);
 	close(fd);
-}
-
-void
-npfctl_config_debug(const char *outfile)
-{
-	npfctl_config_build();
-
-	printf("\nConfiguration:\n\n");
-	_npf_config_dump(npf_conf, STDOUT_FILENO);
-
-	printf("\nSaving binary to %s\n", outfile);
-	npfctl_config_save(npf_conf, outfile);
-	npf_config_destroy(npf_conf);
-}
-
-nl_config_t *
-npfctl_config_ref(void)
-{
-	return npf_conf;
-}
-
-nl_rule_t *
-npfctl_rule_ref(void)
-{
-	return the_rule;
 }
 
 bool
@@ -269,7 +254,7 @@ npfctl_get_singletable(const npfvar_t *vp)
 	unsigned *tid;
 
 	if (npfvar_get_count(vp) > 1) {
-		yyerror("multiple tables are not valid");
+		yyerror("invalid use of multiple tables");
 	}
 	tid = npfvar_get_data(vp, NPFVAR_TABLE, 0);
 	assert(tid != NULL);
@@ -278,7 +263,7 @@ npfctl_get_singletable(const npfvar_t *vp)
 
 static bool
 npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
-    fam_addr_mask_t *fam, int opts)
+    fam_addr_mask_t *fam, unsigned opts)
 {
 	/*
 	 * If family is specified, address does not match it and the
@@ -303,9 +288,7 @@ npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
 	 * zero mask would never match and therefore is not valid.
 	 */
 	if (fam->fam_mask == 0) {
-		static const npf_addr_t zero; /* must be static */
-
-		if (memcmp(&fam->fam_addr, &zero, sizeof(npf_addr_t))) {
+		if (!npfctl_addr_iszero(&fam->fam_addr)) {
 			yyerror("filter criterion would never match");
 		}
 		return false;
@@ -318,12 +301,11 @@ npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
 static void
 npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 {
-	const int type = npfvar_get_type(vars, 0);
-	size_t i;
-
-	npfctl_bpf_group_enter(ctx);
-	for (i = 0; i < npfvar_get_count(vars); i++) {
+	npfctl_bpf_group_enter(ctx, (opts & MATCH_INVERT) != 0);
+	for (unsigned i = 0; i < npfvar_get_count(vars); i++) {
+		const unsigned type = npfvar_get_type(vars, i);
 		void *data = npfvar_get_data(vars, type, i);
+
 		assert(data != NULL);
 
 		switch (type) {
@@ -338,28 +320,31 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			break;
 		}
 		case NPFVAR_TABLE: {
-			u_int tid;
-			memcpy(&tid, data, sizeof(u_int));
+			unsigned tid;
+			memcpy(&tid, data, sizeof(unsigned));
 			npfctl_bpf_table(ctx, opts, tid);
 			break;
 		}
 		default:
-			assert(false);
+			yyerror("unexpected %s", npfvar_type(type));
 		}
 	}
-	npfctl_bpf_group_exit(ctx, (opts & MATCH_INVERT) != 0);
+	npfctl_bpf_group_exit(ctx);
 }
 
 static void
-npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
+npfctl_build_proto_block(npf_bpf_t *ctx, const opt_proto_t *op, bool multiple)
 {
-	const npfvar_t *popts = op->op_opts;
-	const int proto = op->op_proto;
+	const unsigned proto = op->op_proto;
+	npfvar_t *popts = op->op_opts;
 
-	/* IP version and/or L4 protocol matching. */
-	if (family != AF_UNSPEC || proto != -1) {
-		npfctl_bpf_proto(ctx, family, proto);
+	if (multiple && popts) {
+		yyerror("multiple protocol options with protocol filters "
+		    "are not yet supported");
 	}
+
+	/* Build the protocol filter. */
+	npfctl_bpf_proto(ctx, proto);
 
 	switch (proto) {
 	case IPPROTO_TCP:
@@ -370,7 +355,7 @@ npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
 			assert(npfvar_get_count(popts) == 2);
 			tf = npfvar_get_data(popts, NPFVAR_TCPFLAG, 0);
 			tf_mask = npfvar_get_data(popts, NPFVAR_TCPFLAG, 1);
-			npfctl_bpf_tcpfl(ctx, *tf, *tf_mask, false);
+			npfctl_bpf_tcpfl(ctx, *tf, *tf_mask);
 		}
 		break;
 	case IPPROTO_ICMP:
@@ -391,58 +376,110 @@ npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
 	}
 }
 
+static void
+npfctl_build_proto(npf_bpf_t *ctx, const npfvar_t *vars)
+{
+	const unsigned count = npfvar_get_count(vars);
+
+	/*
+	 * XXX: For now, just do not support multiple protocol
+	 * blocks with options; this is because npfctl_bpf_tcpfl()
+	 * and npfctl_bpf_icmp() will not work correctly in a group.
+	 */
+	if (count == 1) {
+		const opt_proto_t *op = npfvar_get_data(vars, NPFVAR_PROTO, 0);
+		npfctl_build_proto_block(ctx, op, false);
+		return;
+	}
+
+	npfctl_bpf_group_enter(ctx, false);
+	for (unsigned i = 0; i < count; i++) {
+		const opt_proto_t *op = npfvar_get_data(vars, NPFVAR_PROTO, i);
+		npfctl_build_proto_block(ctx, op, true);
+	}
+	npfctl_bpf_group_exit(ctx);
+}
+
 static bool
-npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
+npfctl_check_proto(const npfvar_t *vars, bool *non_tcpudp, bool *tcp_with_nofl)
+{
+	unsigned count;
+
+	*non_tcpudp = false;
+	*tcp_with_nofl = false;
+
+	if (vars == NULL) {
+		return false;
+	}
+
+	count = npfvar_get_count(vars);
+	for (unsigned i = 0; i < count; i++) {
+		const opt_proto_t *op = npfvar_get_data(vars, NPFVAR_PROTO, i);
+
+		switch (op->op_proto) {
+		case IPPROTO_TCP:
+			*tcp_with_nofl = op->op_opts == NULL;
+			break;
+		case IPPROTO_UDP:
+		case -1:
+			break;
+		default:
+			*non_tcpudp = true;
+			break;
+		}
+	}
+	return count != 0;
+}
+
+static bool
+npfctl_build_code(nl_rule_t *rl, sa_family_t family, const npfvar_t *popts,
     const filt_opts_t *fopts)
 {
-	bool noproto, noaddrs, noports, nostate, need_tcpudp = false;
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
-	const int proto = op->op_proto;
+	bool any_proto, any_addrs, any_ports, stateful;
+	bool any_l4proto, non_tcpudp, tcp_with_nofl;
 	npf_bpf_t *bc;
 	unsigned opts;
 	size_t len;
 
-	/* If none specified, then no byte-code. */
-	noproto = family == AF_UNSPEC && proto == -1 && !op->op_opts;
-	noaddrs = !apfrom->ap_netaddr && !apto->ap_netaddr;
-	noports = !apfrom->ap_portrange && !apto->ap_portrange;
-	nostate = !(npf_rule_getattr(rl) & NPF_RULE_STATEFUL);
-	if (noproto && noaddrs && noports && nostate) {
+	/*
+	 * Gather some information about the protocol options, if any.
+	 * Check the filter criteria in general -- if none specified,
+	 * then no byte-code.
+	 */
+	any_l4proto = npfctl_check_proto(popts, &non_tcpudp, &tcp_with_nofl);
+	any_proto = (family != AF_UNSPEC) || any_l4proto;
+	any_addrs = apfrom->ap_netaddr || apto->ap_netaddr;
+	any_ports = apfrom->ap_portrange || apto->ap_portrange;
+	stateful = (npf_rule_getattr(rl) & NPF_RULE_STATEFUL) != 0;
+	if (!any_proto && !any_addrs && !any_ports && !stateful) {
 		return false;
 	}
 
 	/*
 	 * Sanity check: ports can only be used with TCP or UDP protocol.
-	 * No filter options are supported for other protocols, only the
-	 * IP addresses are allowed.
 	 */
-	if (!noports) {
-		switch (proto) {
-		case IPPROTO_TCP:
-		case IPPROTO_UDP:
-			break;
-		case -1:
-			need_tcpudp = true;
-			break;
-		default:
-			yyerror("invalid filter options for protocol %d", proto);
-		}
+	if (any_ports && non_tcpudp) {
+		yyerror("invalid filter options for given the protocol(s)");
 	}
 
 	bc = npfctl_bpf_create();
 
-	/* Build layer 4 protocol blocks. */
-	npfctl_build_proto(bc, family, op);
+	/* Build layer 3 and 4 protocol blocks. */
+	if (family != AF_UNSPEC) {
+		npfctl_bpf_ipver(bc, family);
+	}
+	if (any_l4proto) {
+		npfctl_build_proto(bc, popts);
+	}
 
 	/*
 	 * If this is a stateful rule and TCP flags are not specified,
 	 * then add "flags S/SAFR" filter for TCP protocol case.
 	 */
-	if ((npf_rule_getattr(rl) & NPF_RULE_STATEFUL) != 0 &&
-	    (proto == -1 || (proto == IPPROTO_TCP && !op->op_opts))) {
-		npfctl_bpf_tcpfl(bc, TH_SYN,
-		    TH_SYN | TH_ACK | TH_FIN | TH_RST, proto == -1);
+	if (stateful && (!any_l4proto || tcp_with_nofl)) {
+		npfctl_bpf_tcpfl(bc, TH_SYN, TH_SYN | TH_ACK | TH_FIN | TH_RST);
 	}
 
 	/* Build IP address blocks. */
@@ -451,21 +488,23 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	opts = MATCH_DST | (fopts->fo_tinvert ? MATCH_INVERT : 0);
 	npfctl_build_vars(bc, family, apto->ap_netaddr, opts);
 
-	/* Build port-range blocks. */
-	if (need_tcpudp) {
-		/* TCP/UDP check for the ports. */
-		npfctl_bpf_group_enter(bc);
-		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
-		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
-		npfctl_bpf_group_exit(bc, false);
+	/*
+	 * Build the port-range blocks.  If no protocol is specified,
+	 * then we implicitly filter for the TCP / UDP protocols.
+	 */
+	if (any_ports && !any_l4proto) {
+		npfctl_bpf_group_enter(bc, false);
+		npfctl_bpf_proto(bc, IPPROTO_TCP);
+		npfctl_bpf_proto(bc, IPPROTO_UDP);
+		npfctl_bpf_group_exit(bc);
 	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
 
 	/* Set the byte-code marks, if any. */
 	const void *bmarks = npfctl_bpf_bmarks(bc, &len);
-	if (npf_rule_setinfo(rl, bmarks, len) == -1) {
-		errx(EXIT_FAILURE, "npf_rule_setinfo failed");
+	if (bmarks && npf_rule_setinfo(rl, bmarks, len) != 0) {
+		errx(EXIT_FAILURE, "npf_rule_setinfo");
 	}
 
 	/* Complete BPF byte-code and pass to the rule. */
@@ -477,7 +516,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	len = bf->bf_len * sizeof(struct bpf_insn);
 
 	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf->bf_insns, len) != 0) {
-		errx(EXIT_FAILURE, "npf_rule_setcode failed");
+		errx(EXIT_FAILURE, "npf_rule_setcode");
 	}
 	npfctl_dump_bpf(bf);
 	npfctl_bpf_destroy(bc);
@@ -655,7 +694,7 @@ npfctl_build_group_end(void)
  */
 void
 npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
-    const opt_proto_t *op, const filt_opts_t *fopts,
+    const npfvar_t *popts, const filt_opts_t *fopts,
     const char *pcap_filter, const char *rproc)
 {
 	nl_rule_t *rl;
@@ -666,7 +705,7 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 	if (pcap_filter) {
 		npfctl_build_pcap(rl, pcap_filter);
 	} else {
-		npfctl_build_code(rl, family, op, fopts);
+		npfctl_build_code(rl, family, popts, fopts);
 	}
 
 	if (rproc) {
@@ -694,9 +733,8 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
  */
 static nl_nat_t *
 npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
-    const opt_proto_t *op, const filt_opts_t *fopts, unsigned flags)
+    const npfvar_t *popts, const filt_opts_t *fopts, unsigned flags)
 {
-	const opt_proto_t def_op = { .op_proto = -1, .op_opts = NULL };
 	fam_addr_mask_t *am;
 	sa_family_t family;
 	in_port_t port;
@@ -713,9 +751,6 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
 		flags = (flags & ~NPF_NAT_PORTMAP) | NPF_NAT_PORTS;
 	} else {
 		port = 0;
-	}
-	if (!op) {
-		op = &def_op;
 	}
 
 	nat = npf_nat_create(type, flags, ifname);
@@ -738,14 +773,14 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
 		abort();
 	}
 	npf_nat_setport(nat, port);
-	npfctl_build_code(nat, family, op, fopts);
+	npfctl_build_code(nat, family, popts, fopts);
 	return nat;
 }
 
 static void
 npfctl_dnat_check(const addr_port_t *ap, const unsigned algo)
 {
-	int type = npfvar_get_type(ap->ap_netaddr, 0);
+	const unsigned type = npfvar_get_type(ap->ap_netaddr, 0);
 	fam_addr_mask_t *am;
 
 	switch (algo) {
@@ -779,7 +814,7 @@ npfctl_dnat_check(const addr_port_t *ap, const unsigned algo)
  */
 void
 npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
-    const addr_port_t *ap1, const addr_port_t *ap2, const opt_proto_t *op,
+    const addr_port_t *ap1, const addr_port_t *ap2, const npfvar_t *popts,
     const filt_opts_t *fopts, unsigned algo)
 {
 	fam_addr_mask_t *am1 = NULL, *am2 = NULL;
@@ -829,27 +864,31 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		flags = NPF_NAT_STATIC;
 
 		/* Note: translation address/network cannot be a table. */
-		am1 = npfctl_get_singlefam(ap1->ap_netaddr);
-		am2 = npfctl_get_singlefam(ap2->ap_netaddr);
+		if (type & NPF_NATIN) {
+			am1 = npfctl_get_singlefam(ap1->ap_netaddr);
+		}
+		if (type & NPF_NATOUT) {
+			am2 = npfctl_get_singlefam(ap2->ap_netaddr);
+		}
 
 		/* Validate the algorithm. */
 		switch (algo) {
 		case NPF_ALGO_NPT66:
-			if (am1->fam_mask != am2->fam_mask) {
+			if (!binat || am1->fam_mask != am2->fam_mask) {
 				yyerror("asymmetric NPTv6 is not supported");
 			}
 			adj = npfctl_npt66_calcadj(am1->fam_mask,
 			    &am1->fam_addr, &am2->fam_addr);
 			break;
 		case NPF_ALGO_NETMAP:
-			if (am1->fam_mask != am2->fam_mask) {
+			if (binat && am1->fam_mask != am2->fam_mask) {
 				yyerror("net-to-net mapping using the "
 				    "NETMAP algorithm must be 1:1");
 			}
 			break;
 		case NPF_ALGO_NONE:
-			if (am1->fam_mask != NPF_NO_NETMASK ||
-			    am2->fam_mask != NPF_NO_NETMASK) {
+			if ((am1 && am1->fam_mask != NPF_NO_NETMASK) ||
+			    (am2 && am2->fam_mask != NPF_NO_NETMASK)) {
 				yyerror("static net-to-net translation "
 				    "must have an algorithm specified");
 			}
@@ -882,12 +921,14 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
-		nt1 = npfctl_build_nat(NPF_NATIN, ifname, ap1, op, fopts, flags);
+		nt1 = npfctl_build_nat(NPF_NATIN, ifname,
+		    ap1, popts, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
-		nt2 = npfctl_build_nat(NPF_NATOUT, ifname, ap2, op, fopts, flags);
+		nt2 = npfctl_build_nat(NPF_NATOUT, ifname,
+		    ap2, popts, fopts, flags);
 	}
 
 	switch (algo) {
@@ -937,7 +978,7 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
  * npfctl_fill_table: fill NPF table with entries from a specified file.
  */
 static void
-npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname, FILE *fp)
+npfctl_fill_table(nl_table_t *tl, unsigned type, const char *fname, FILE *fp)
 {
 	char *buf = NULL;
 	int l = 0;
@@ -973,7 +1014,7 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname, FILE *fp)
  * npfctl_load_table: create an NPF table and fill with contents from a file.
  */
 nl_table_t *
-npfctl_load_table(const char *tname, int tid, u_int type,
+npfctl_load_table(const char *tname, int tid, unsigned type,
     const char *fname, FILE *fp)
 {
 	nl_table_t *tl;
@@ -991,7 +1032,7 @@ npfctl_load_table(const char *tname, int tid, u_int type,
  * if required, fill with contents from a file.
  */
 void
-npfctl_build_table(const char *tname, u_int type, const char *fname)
+npfctl_build_table(const char *tname, unsigned type, const char *fname)
 {
 	nl_table_t *tl;
 

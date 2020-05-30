@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.20 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.21 2020/05/30 14:16:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -289,7 +289,7 @@ static const uint8_t npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
  * and thus part of the connection we are tracking.
  */
 static bool
-npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
+npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const npf_flow_t flow)
 {
 	const npf_state_tcp_params_t *params;
 	const struct tcphdr * const th = npc->npc_l4.tcp;
@@ -301,7 +301,6 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 
 	params = npc->npc_ctx->params[NPF_PARAMS_TCP_STATE];
 	KASSERT(npf_iscached(npc, NPC_TCP));
-	KASSERT(di == NPF_FLOW_FORW || di == NPF_FLOW_BACK);
 
 	/*
 	 * Perform SEQ/ACK numbers check against boundaries.  Reference:
@@ -330,8 +329,8 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 		end++;
 	}
 
-	fstate = &nst->nst_tcpst[di];
-	tstate = &nst->nst_tcpst[!di];
+	fstate = &nst->nst_tcpst[flow];
+	tstate = &nst->nst_tcpst[!flow];
 	win = win ? (win << fstate->nst_wscale) : 1;
 
 	/*
@@ -456,7 +455,7 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
  * the connection and track its state.
  */
 bool
-npf_state_tcp(npf_cache_t *npc, npf_state_t *nst, int di)
+npf_state_tcp(npf_cache_t *npc, npf_state_t *nst, npf_flow_t flow)
 {
 	const struct tcphdr * const th = npc->npc_l4.tcp;
 	const unsigned tcpfl = th->th_flags, state = nst->nst_state;
@@ -467,7 +466,7 @@ npf_state_tcp(npf_cache_t *npc, npf_state_t *nst, int di)
 	/* Look for a transition to a new state. */
 	if (__predict_true((tcpfl & TH_RST) == 0)) {
 		const u_int flagcase = npf_tcpfl2case(tcpfl);
-		nstate = npf_tcp_fsm[state][di][flagcase];
+		nstate = npf_tcp_fsm[state][flow][flagcase];
 	} else if (state == NPF_TCPS_TIME_WAIT) {
 		/* Prevent TIME-WAIT assassination (RFC 1337). */
 		nstate = NPF_TCPS_OK;
@@ -476,7 +475,7 @@ npf_state_tcp(npf_cache_t *npc, npf_state_t *nst, int di)
 	}
 
 	/* Determine whether TCP packet really belongs to this connection. */
-	if (!npf_tcp_inwindow(npc, nst, di)) {
+	if (!npf_tcp_inwindow(npc, nst, flow)) {
 		return false;
 	}
 	if (__predict_true(nstate == NPF_TCPS_OK)) {
