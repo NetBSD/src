@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.12 2020/05/30 19:23:25 jdolecek Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.12 2020/05/30 19:23:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
+#include <dev/ic/bwfmvar.h>
 
 static const struct bwfm_firmware_selector bwfm_usb_fwtab[] = {
 	BWFM_FW_ENTRY(BRCM_CC_43143_CHIP_ID,
