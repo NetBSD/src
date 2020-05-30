@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.145 2020/05/30 18:06:17 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.146 2020/05/30 20:16:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.145 2020/05/30 18:06:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.146 2020/05/30 20:16:14 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -267,6 +267,15 @@ int cache_stat_interval __read_mostly = 300;	/* in seconds */
  * sysctl stuff.
  */
 static struct	sysctllog *cache_sysctllog;
+
+/*
+ * This is a dummy name that cannot usually occur anywhere in the cache nor
+ * file system.  It's used when caching the root vnode of mounted file
+ * systems.  The name is attached to the directory that the file system is
+ * mounted on.
+ */
+static const char cache_mp_name[] = "";
+static const int cache_mp_nlen = sizeof(cache_mp_name) - 1;
 
 /*
  * Red-black tree stuff.
@@ -507,6 +516,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	bool hit;
 	krw_t op;
 
+	KASSERT(namelen != cache_mp_nlen || name == cache_mp_name);
+
 	/* Establish default result values */
 	if (iswht_ret != NULL) {
 		*iswht_ret = 0;
@@ -630,6 +641,8 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	uint64_t key;
 	int error;
 
+	KASSERT(namelen != cache_mp_nlen || name == cache_mp_name);
+
 	/* If disabled, or file system doesn't support this, bail out. */
 	if (__predict_false((dvp->v_mount->mnt_iflag & IMNT_NCLOOKUP) == 0)) {
 		return false;
@@ -714,6 +727,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	}
 	if (ncp->nc_vp == NULL) {
 		/* found negative entry; vn is already null from above */
+		KASSERT(namelen != cache_mp_nlen && name != cache_mp_name);
 		COUNT(ncs_neghits);
 	} else {
 		COUNT(ncs_goodhits); /* XXX can be "badhits" */
@@ -797,6 +811,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		nlen = ncp->nc_nlen;
 
 		/*
+		 * Ignore mountpoint entries.
+		 */
+		if (ncp->nc_nlen == cache_mp_nlen) {
+			continue;
+		}
+
+		/*
 		 * The queue is partially sorted.  Once we hit dots, nothing
 		 * else remains but dots and dotdots, so bail out.
 		 */
@@ -865,6 +886,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct namecache *ncp, *oncp;
 	int total;
+
+	KASSERT(namelen != cache_mp_nlen || name == cache_mp_name);
 
 	/* First, check whether we can/should add a cache entry. */
 	if ((cnflags & MAKEENTRY) == 0 ||
@@ -999,6 +1022,49 @@ cache_have_id(struct vnode *vp)
 	} else {
 		return false;
 	}
+}
+
+/*
+ * Enter a mount point.  cvp is the covered vnode, and rvp is the root of
+ * the mounted file system.
+ */
+void
+cache_enter_mount(struct vnode *cvp, struct vnode *rvp)
+{
+
+	KASSERT(vrefcnt(cvp) > 0);
+	KASSERT(vrefcnt(rvp) > 0);
+	KASSERT(cvp->v_type == VDIR);
+	KASSERT((rvp->v_vflag & VV_ROOT) != 0);
+
+	if (rvp->v_type == VDIR) {
+		cache_enter(cvp, rvp, cache_mp_name, cache_mp_nlen, MAKEENTRY);
+	}
+}
+
+/*
+ * Look up a cached mount point.  Used in the strongly locked path.
+ */
+bool
+cache_lookup_mount(struct vnode *dvp, struct vnode **vn_ret)
+{
+	bool ret;
+
+	ret = cache_lookup(dvp, cache_mp_name, cache_mp_nlen, LOOKUP,
+	    MAKEENTRY, NULL, vn_ret);
+	KASSERT((*vn_ret != NULL) == ret);
+	return ret;
+}
+
+/*
+ * Try to cross a mount point.  For use with cache_lookup_linked().
+ */
+bool
+cache_cross_mount(struct vnode **dvp, krwlock_t **plock)
+{
+
+	return cache_lookup_linked(*dvp, cache_mp_name, cache_mp_nlen,
+	   dvp, plock, FSCRED);
 }
 
 /*
