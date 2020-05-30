@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.10 2019/02/24 12:05:49 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.11 2020/05/30 13:15:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.10 2019/02/24 12:05:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.11 2020/05/30 13:15:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -492,7 +492,7 @@ dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct dtv_demux *demux = fp->f_data;
-	struct dtv_ts_section sec;
+	struct dtv_ts_section *sec;
 	int error;
 
 	if (demux == NULL)
@@ -502,22 +502,25 @@ dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
 	if (demux->dd_mode != DTV_DEMUX_MODE_SECTION)
 		return EIO;
 
+	sec = kmem_alloc(sizeof(*sec), KM_SLEEP);
+
 	/* Wait for a complete PSI section */
 	mutex_enter(&demux->dd_lock);
 	while (demux->dd_secfilt.nsections == 0) {
 		if (flags & IO_NDELAY) {
 			mutex_exit(&demux->dd_lock);
 			/* No data available */
-			return EWOULDBLOCK;
+			error = EWOULDBLOCK;
+			goto out;
 		}
 		error = cv_wait_sig(&demux->dd_section_cv, &demux->dd_lock);
 		if (error) {
 			mutex_exit(&demux->dd_lock);
-			return error;
+			goto out;
 		}
 	}
 	/* Copy the completed PSI section */
-	sec = demux->dd_secfilt.section[demux->dd_secfilt.rp];
+	*sec = demux->dd_secfilt.section[demux->dd_secfilt.rp];
 	/* Update read pointer */
 	demux->dd_secfilt.rp++;
 	if (demux->dd_secfilt.rp >= __arraycount(demux->dd_secfilt.section))
@@ -540,7 +543,12 @@ dtv_demux_read(struct file *fp, off_t *offp, struct uio *uio,
 	 * it should not be an issue as PSI sections have a max size of 4KB
 	 * (and callers will generally provide a big enough buffer).
 	 */
-	return uiomove(sec.sec_buf, sec.sec_length, uio);
+	error = uiomove(sec->sec_buf, sec->sec_length, uio);
+
+out:
+	kmem_free(sec, sizeof(*sec));
+	return error;
+	
 }
 
 /*
