@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.223 2020/04/10 18:32:00 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.224 2020/05/30 10:43:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.223 2020/04/10 18:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.224 2020/05/30 10:43:46 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -52,6 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.223 2020/04/10 18:32:00 christos Exp 
 #include <sys/systm.h>
 #include <sys/intr.h>
 #include <sys/module.h>
+#include <sys/kmem.h>
+
+#define MALLOC(sz)	kmem_alloc(sz, KM_SLEEP)
+#define FREE(p, sz)	kmem_free(p, sz)
+
 #else
 #include <pci.h>
 #include <stdarg.h>
@@ -59,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.223 2020/04/10 18:32:00 christos Exp 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MALLOC(sz)	malloc(sz)
+#define FREE(p, sz)	free(p)
+
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -4810,7 +4819,7 @@ pci_conf_print(
 #endif
     )
 {
-	pcireg_t regs[o2i(PCI_EXTCONF_SIZE)];
+	pcireg_t *regs;
 	int off, capoff, endoff, hdrtype;
 	const char *type_name;
 #ifdef _KERNEL
@@ -4818,6 +4827,8 @@ pci_conf_print(
 #else
 	void (*type_printfn)(const pcireg_t *);
 #endif
+
+	regs = MALLOC(PCI_EXTCONF_SIZE);
 
 	printf("PCI configuration registers:\n");
 
@@ -4915,7 +4926,7 @@ pci_conf_print(
 
 	if (regs[o2i(PCI_EXTCAPLIST_BASE)] == 0xffffffff ||
 	    regs[o2i(PCI_EXTCAPLIST_BASE)] == 0)
-		return;
+		goto out;
 
 	printf("\n");
 #ifdef _KERNEL
@@ -4928,4 +4939,7 @@ pci_conf_print(
 	/* Extended Configuration Space, if present */
 	printf("  Extended Configuration Space:\n");
 	pci_conf_print_regs(regs, PCI_EXTCAPLIST_BASE, PCI_EXTCONF_SIZE);
+
+out:
+	FREE(regs, PCI_EXTCONF_SIZE);
 }
