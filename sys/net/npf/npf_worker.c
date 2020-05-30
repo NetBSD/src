@@ -29,7 +29,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.8 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.9 2020/05/30 20:54:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,7 +81,8 @@ npf_worker_sysinit(unsigned nworkers)
 	winfo = kmem_zalloc(len, KM_SLEEP);
 	winfo->worker_count = nworkers;
 	mutex_init(&winfo->lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	cv_init(&winfo->cv, "npfgccv");
+	cv_init(&winfo->exit_cv, "npfgcx");
+	cv_init(&winfo->cv, "npfgcw");
 	LIST_INIT(&winfo->instances);
 	worker_info = winfo;
 
@@ -121,6 +122,7 @@ npf_worker_sysfini(void)
 		}
 	}
 	cv_destroy(&winfo->cv);
+	cv_destroy(&winfo->exit_cv);
 	mutex_destroy(&winfo->lock);
 	kmem_free(winfo, offsetof(npf_workerinfo_t, worker[nworkers]));
 	worker_info = NULL;
