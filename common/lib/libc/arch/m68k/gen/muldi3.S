@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.S,v 1.1 2020/05/31 11:43:37 rin Exp $	*/
+/*	$NetBSD: muldi3.S,v 1.2 2020/05/31 12:37:07 rin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: muldi3.S,v 1.1 2020/05/31 11:43:37 rin Exp $")
+RCSID("$NetBSD: muldi3.S,v 1.2 2020/05/31 12:37:07 rin Exp $")
 
 | int64_t __muldi3(int64_t X, int64_t Y);
 |
@@ -110,6 +110,6 @@ ENTRY(__muldi3)
 	addl	%d2, %d0	| E += C
 	addl	%d3, %d0	| %d0 = E + F
 
-	moveml	(%sp)+, %d2-%d4	| pop %d2-%d6
+	moveml	(%sp)+, %d2-%d4	| pop %d2-%d4
 	rts
 END(__muldi3)
