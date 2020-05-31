@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.245 2020/05/31 17:52:58 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.246 2020/05/31 18:20:23 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.245 2020/05/31 17:52:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.246 2020/05/31 18:20:23 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -507,6 +507,7 @@ usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 		int nendpt = ifc->ui_idesc->bNumEndpoints;
 		size_t sz = nendpt * sizeof(struct usbd_endpoint);
 		kmem_free(ifc->ui_endpoints, sz);
+		ifc->ui_endpoints = NULL;
 	}
 }
 
