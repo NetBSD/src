@@ -27,7 +27,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <arpa/inet.h>
@@ -55,58 +54,6 @@
 #include "ipv4.h"
 #include "logerr.h"
 #include "sa.h"
-
-/* These options only make sense in the config file, so don't use any
-   valid short options for them */
-#define O_BASE			MAX('z', 'Z') + 1
-#define O_ARPING		O_BASE + 1
-#define O_FALLBACK		O_BASE + 2
-#define O_DESTINATION		O_BASE + 3
-#define O_IPV6RS		O_BASE + 4
-#define O_NOIPV6RS		O_BASE + 5
-#define O_IPV6RA_FORK		O_BASE + 6
-#define O_LINK_RCVBUF		O_BASE + 7
-#define O_ANONYMOUS		O_BASE + 8
-#define O_NOALIAS		O_BASE + 9
-#define O_IA_NA			O_BASE + 10
-#define O_IA_TA			O_BASE + 11
-#define O_IA_PD			O_BASE + 12
-#define O_HOSTNAME_SHORT	O_BASE + 13
-#define O_DEV			O_BASE + 14
-#define O_NODEV			O_BASE + 15
-#define O_NOIPV4		O_BASE + 16
-#define O_NOIPV6		O_BASE + 17
-#define O_IAID			O_BASE + 18
-#define O_DEFINE		O_BASE + 19
-#define O_DEFINE6		O_BASE + 20
-#define O_EMBED			O_BASE + 21
-#define O_ENCAP			O_BASE + 22
-#define O_VENDOPT		O_BASE + 23
-#define O_VENDCLASS		O_BASE + 24
-#define O_AUTHPROTOCOL		O_BASE + 25
-#define O_AUTHTOKEN		O_BASE + 26
-#define O_AUTHNOTREQUIRED	O_BASE + 27
-#define O_NODHCP		O_BASE + 28
-#define O_NODHCP6		O_BASE + 29
-#define O_DHCP			O_BASE + 30
-#define O_DHCP6			O_BASE + 31
-#define O_IPV4			O_BASE + 32
-#define O_IPV6			O_BASE + 33
-#define O_CONTROLGRP		O_BASE + 34
-#define O_SLAAC			O_BASE + 35
-#define O_GATEWAY		O_BASE + 36
-#define O_NOUP			O_BASE + 37
-#define O_IPV6RA_AUTOCONF	O_BASE + 38
-#define O_IPV6RA_NOAUTOCONF	O_BASE + 39
-#define O_REJECT		O_BASE + 40
-#define O_BOOTP			O_BASE + 42
-#define O_DEFINEND		O_BASE + 43
-#define O_NODELAY		O_BASE + 44
-#define O_INFORM6		O_BASE + 45
-#define O_LASTLEASE_EXTEND	O_BASE + 46
-#define O_INACTIVE		O_BASE + 47
-#define	O_MUDURL		O_BASE + 48
-#define	O_MSUSERCLASS		O_BASE + 49
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -213,8 +160,6 @@ const struct option cf_options[] = {
 	{"link_rcvbuf",     required_argument, NULL, O_LINK_RCVBUF},
 	{NULL,              0,                 NULL, '\0'}
 };
-
-static const char *default_script = SCRIPT;
 
 static char *
 add_environ(char ***array, const char *value, int uniq)
@@ -728,26 +673,32 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'c':
 		ARG_REQUIRED;
-		if (ifo->script != default_script)
-			free(ifo->script);
+		if (ifname != NULL) {
+			logerrx("%s: per interface scripts"
+			    " are no longer supported",
+			    ifname);
+			return -1;
+		}
+		if (ctx->script != dhcpcd_default_script)
+			free(ctx->script);
 		s = parse_nstring(NULL, 0, arg);
 		if (s == 0) {
-			ifo->script = NULL;
+			ctx->script = NULL;
 			break;
 		}
 		dl = (size_t)s;
-		if (s == -1 || (ifo->script = malloc(dl)) == NULL) {
-			ifo->script = NULL;
+		if (s == -1 || (ctx->script = malloc(dl)) == NULL) {
+			ctx->script = NULL;
 			logerr(__func__);
 			return -1;
 		}
-		s = parse_nstring(ifo->script, dl, arg);
+		s = parse_nstring(ctx->script, dl, arg);
 		if (s == -1 ||
-		    ifo->script[0] == '\0' ||
-		    strcmp(ifo->script, "/dev/null") == 0)
+		    ctx->script[0] == '\0' ||
+		    strcmp(ctx->script, "/dev/null") == 0)
 		{
-			free(ifo->script);
-			ifo->script = NULL;
+			free(ctx->script);
+			ctx->script = NULL;
 		}
 		break;
 	case 'd':
@@ -1291,7 +1242,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		del_option_mask(ifo->nomask, DHO_DNSSEARCH);
 #endif
 
-#ifdef INET6
+#ifdef DHCP6
 		del_option_mask(ifo->nomask6, D6_OPTION_DNS_SERVERS);
 		del_option_mask(ifo->nomask6, D6_OPTION_DOMAIN_LIST);
 		del_option_mask(ifo->nomask6, D6_OPTION_SOL_MAX_RT);
@@ -2145,7 +2096,7 @@ invalid_token:
 			logerr(__func__);
 			return -1;
 		}
-		while ((i = getgrnam_r(arg, &grpbuf, p, (size_t)l, &grp)) ==
+		while ((i = getgrnam_r(arg, &grpbuf, p, dl, &grp)) ==
 		    ERANGE)
 		{
 			size_t nl = dl * 2;
@@ -2170,7 +2121,8 @@ invalid_token:
 			return -1;
 		}
 		if (grp == NULL) {
-			logerrx("controlgroup: %s: not found", arg);
+			if (!ctx->control_group)
+				logerrx("controlgroup: %s: not found", arg);
 			free(p);
 			return -1;
 		}
@@ -2179,7 +2131,8 @@ invalid_token:
 #else
 		grp = getgrnam(arg);
 		if (grp == NULL) {
-			logerrx("controlgroup: %s: not found", arg);
+			if (!ctx->control_group)
+				logerrx("controlgroup: %s: not found", arg);
 			return -1;
 		}
 		ctx->control_group = grp->gr_gid;
@@ -2308,45 +2261,6 @@ finish_config(struct if_options *ifo)
 		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
 }
 
-/* Handy routine to read very long lines in text files.
- * This means we read the whole line and avoid any nasty buffer overflows.
- * We strip leading space and avoid comment lines, making the code that calls
- * us smaller. */
-static char *
-get_line(char ** __restrict buf, size_t * __restrict buflen,
-    FILE * __restrict fp)
-{
-	char *p, *c;
-	ssize_t bytes;
-	int quoted;
-
-	do {
-		bytes = getline(buf, buflen, fp);
-		if (bytes == -1)
-			return NULL;
-		for (p = *buf; *p == ' ' || *p == '\t'; p++)
-			;
-	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
-	if ((*buf)[--bytes] == '\n')
-		(*buf)[bytes] = '\0';
-
-	/* Strip embedded comments unless in a quoted string or escaped */
-	quoted = 0;
-	for (c = p; *c != '\0'; c++) {
-		if (*c == '\\') {
-			c++; /* escaped */
-			continue;
-		}
-		if (*c == '"')
-			quoted = !quoted;
-		else if (*c == '#' && !quoted) {
-			*c = '\0';
-			break;
-		}
-	}
-	return p;
-}
-
 struct if_options *
 default_config(struct dhcpcd_ctx *ctx)
 {
@@ -2360,7 +2274,6 @@ default_config(struct dhcpcd_ctx *ctx)
 	ifo->options |= DHCPCD_IF_UP | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
-	ifo->script = UNCONST(default_script);
 	ifo->metric = -1;
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
 	rb_tree_init(&ifo->routes, &rt_compare_list_ops);
@@ -2382,16 +2295,11 @@ read_config(struct dhcpcd_ctx *ctx,
     const char *ifname, const char *ssid, const char *profile)
 {
 	struct if_options *ifo;
-	FILE *fp;
-	struct stat sb;
-	char *line, *buf, *option, *p;
-	size_t buflen;
-	ssize_t vlen;
+	char buf[UDPLEN_MAX], *bp; /* 64k max config file size */
+	char *line, *option, *p;
+	ssize_t buflen;
+	size_t vlen;
 	int skip, have_profile, new_block, had_block;
-#ifndef EMBEDDED_CONFIG
-	const char * const *e;
-	size_t ol;
-#endif
 #if !defined(INET) || !defined(INET6)
 	size_t i;
 	struct dhcp_opt *opt;
@@ -2414,12 +2322,9 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->options |= DHCPCD_DHCP6;
 #endif
 
-	vlen = dhcp_vendor((char *)ifo->vendorclassid + 1,
-	            sizeof(ifo->vendorclassid) - 1);
-	ifo->vendorclassid[0] = (uint8_t)(vlen == -1 ? 0 : vlen);
-
-	buf = NULL;
-	buflen = 0;
+	vlen = strlcpy((char *)ifo->vendorclassid + 1, ctx->vendor,
+	    sizeof(ifo->vendorclassid) - 1);
+	ifo->vendorclassid[0] = (uint8_t)(vlen > 255 ? 0 : vlen);
 
 	/* Reset route order */
 	ctx->rt_order = 0;
@@ -2455,38 +2360,27 @@ read_config(struct dhcpcd_ctx *ctx,
 
 		/* Now load our embedded config */
 #ifdef EMBEDDED_CONFIG
-		fp = fopen(EMBEDDED_CONFIG, "r");
-		if (fp == NULL)
-			logerr("%s: fopen `%s'", __func__, EMBEDDED_CONFIG);
-
-		while (fp && (line = get_line(&buf, &buflen, fp))) {
-#else
-		buflen = 80;
-		buf = malloc(buflen);
-		if (buf == NULL) {
-			logerr(__func__);
-			free_options(ctx, ifo);
-			return NULL;
+		buflen = dhcp_readfile(ctx, EMBEDDED_CONFIG, buf, sizeof(buf));
+		if (buflen == -1) {
+			logerr("%s: %s", __func__, EMBEDDED_CONFIG);
+			return ifo;
 		}
-		ldop = edop = NULL;
-		for (e = dhcpcd_embedded_conf; *e; e++) {
-			ol = strlen(*e) + 1;
-			if (ol > buflen) {
-				char *nbuf;
-
-				buflen = ol;
-				nbuf = realloc(buf, buflen);
-				if (nbuf == NULL) {
-					logerr(__func__);
-					free(buf);
-					free_options(ctx, ifo);
-					return NULL;
-				}
-				buf = nbuf;
-			}
-			memcpy(buf, *e, ol);
-			line = buf;
+		if (buf[buflen - 1] != '\0') {
+			if (buflen < sizeof(buf) - 1)
+				bulen++;
+			buf[buflen - 1] = '\0';
+		}
+#else
+		buflen = (ssize_t)strlcpy(buf, dhcpcd_embedded_conf,
+		    sizeof(buf));
+		if ((size_t)buflen >= sizeof(buf)) {
+			logerrx("%s: embedded config too big", __func__);
+			return ifo;
+		}
+		/* Our embedded config is NULL terminated */
 #endif
+		bp = buf;
+		while ((line = get_line(&bp, &buflen)) != NULL) {
 			option = strsep(&line, " \t");
 			if (line)
 				line = strskipwhite(line);
@@ -2500,13 +2394,8 @@ read_config(struct dhcpcd_ctx *ctx,
 			}
 			parse_config_line(ctx, NULL, ifo, option, line,
 			    &ldop, &edop);
-
 		}
 
-#ifdef EMBEDDED_CONFIG
-		if (fp)
-			fclose(fp);
-#endif
 #ifdef INET
 		ctx->dhcp_opts = ifo->dhcp_override;
 		ctx->dhcp_opts_len = ifo->dhcp_override_len;
@@ -2551,26 +2440,25 @@ read_config(struct dhcpcd_ctx *ctx,
 	}
 
 	/* Parse our options file */
-#ifdef PRIVSEP
-	if (ctx->options & DHCPCD_PRIVSEP &&
-	    ps_root_copychroot(ctx, ctx->cffile) == -1)
-		logwarn("%s: ps_root_copychroot `%s'", __func__, ctx->cffile);
-#endif
-	fp = fopen(ctx->cffile, "r");
-	if (fp == NULL) {
+	buflen = dhcp_readfile(ctx, ctx->cffile, buf, sizeof(buf));
+	if (buflen == -1) {
 		/* dhcpcd can continue without it, but no DNS options
 		 * would be requested ... */
-		logwarn("%s: fopen `%s'", __func__, ctx->cffile);
-		free(buf);
+		logerr("%s: %s", __func__, ctx->cffile);
 		return ifo;
 	}
-	if (stat(ctx->cffile, &sb) == 0)
-		ifo->mtime = sb.st_mtime;
+	if (buf[buflen - 1] != '\0') {
+		if ((size_t)buflen < sizeof(buf) - 1)
+			buflen++;
+		buf[buflen - 1] = '\0';
+	}
+	dhcp_filemtime(ctx, ctx->cffile, &ifo->mtime);
 
 	ldop = edop = NULL;
 	skip = have_profile = new_block = 0;
 	had_block = ifname == NULL ? 1 : 0;
-	while ((line = get_line(&buf, &buflen, fp))) {
+	bp = buf;
+	while ((line = get_line(&bp, &buflen)) != NULL) {
 		option = strsep(&line, " \t");
 		if (line)
 			line = strskipwhite(line);
@@ -2644,10 +2532,9 @@ read_config(struct dhcpcd_ctx *ctx,
 			continue;
 		if (skip)
 			continue;
+
 		parse_config_line(ctx, ifname, ifo, option, line, &ldop, &edop);
 	}
-	fclose(fp);
-	free(buf);
 
 	if (profile && !have_profile) {
 		free_options(ctx, ifo);
@@ -2738,8 +2625,6 @@ free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 #endif
 	rt_headclear0(ctx, &ifo->routes, AF_UNSPEC);
 
-	if (ifo->script != default_script)
-		free(ifo->script);
 	free(ifo->arping);
 	free(ifo->blacklist);
 	free(ifo->fallback);
