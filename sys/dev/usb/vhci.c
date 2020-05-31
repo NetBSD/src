@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.18 2020/05/21 05:58:00 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.19 2020/05/31 07:53:38 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.18 2020/05/21 05:58:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.19 2020/05/31 07:53:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -832,6 +832,10 @@ vhci_usb_attach(vhci_fd_t *vfd)
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
+	/*
+	 * Mark our port has having changed state. Uhub will then fetch
+	 * status/change and see it needs to perform an attach.
+	 */
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
 	p[0] = __BIT(vfd->port); /* TODO-bitmap */
@@ -917,9 +921,13 @@ vhci_usb_detach(vhci_fd_t *vfd)
 	port->status = 0;
 	port->change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
+	/*
+	 * Mark our port has having changed state. Uhub will then fetch
+	 * status/change and see it needs to perform a detach.
+	 */
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
-	p[0] = __BIT(vfd->port);
+	p[0] = __BIT(vfd->port); /* TODO-bitmap */
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
