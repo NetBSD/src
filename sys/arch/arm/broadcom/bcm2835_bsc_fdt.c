@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.1 2020/03/31 12:23:17 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_bsc_fdt.c,v 1.2 2020/05/31 23:52:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.1 2020/03/31 12:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_fdt.c,v 1.2 2020/05/31 23:52:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,6 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 	struct bsciic_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	prop_dictionary_t prop = device_properties(self);
-	bool disable = false;
 
 	bus_addr_t addr;
 	bus_size_t size;
@@ -79,13 +77,6 @@ bsciic_fdt_attach(device_t parent, device_t self, void *aux)
 	int error = fdtbus_get_reg(phandle, 0, &addr, &size);
 	if (error) {
 		aprint_error(": unable to get device registers\n");
-		return;
-	}
-
-	prop_dictionary_get_bool(prop, "disable", &disable);
-	if (disable) {
-		aprint_naive(": disabled\n");
-		aprint_normal(": disabled\n");
 		return;
 	}
 
