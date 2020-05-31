@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.83 2020/05/23 23:42:43 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.84 2020/05/31 08:38:54 rin Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.83 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.84 2020/05/31 08:38:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,18 +611,19 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	struct mount *mp;
 	int error = 0, root = 0;
 	struct cwdinfo *cwdi = curl->l_proc->p_cwdi;
+	struct statvfs *sfs;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
+	sfs = malloc(sizeof(*sfs), M_TEMP, M_WAITOK);
 	mountlist_iterator_init(&iter);
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
-		struct statvfs sfs;
-
-		if ((error = dostatvfs(mp, &sfs, curl, MNT_WAIT, 0)) == 0)
+		if ((error = dostatvfs(mp, sfs, curl, MNT_WAIT, 0)) == 0)
 			root |= procfs_format_sfs(&mtab, &mtabsz, bf, LBFSZ,
-			    &sfs, curl, 0);
+			    sfs, curl, 0);
 	}
 	mountlist_iterator_destroy(iter);
+	free(sfs, M_TEMP);
 
 	/*
 	 * If we are inside a chroot that is not itself a mount point,
