@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.7 2020/05/31 23:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.7 2020/05/31 23:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,14 +123,7 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	char intrstr[128];
-	_Bool disable;
 
-	prop_dictionary_get_bool(dict, "disable", &disable);
-	if (disable) {
-		aprint_naive(": disabled\n");
-		aprint_normal(": disabled\n");
-		return;
-	}
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
 	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": unable to map device\n");
