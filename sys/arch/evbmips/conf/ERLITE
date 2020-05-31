@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.24 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: ERLITE,v 1.25 2020/05/31 04:56:35 simonb Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.24 $"
+#ident 		"ERLITE-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -120,10 +120,10 @@ bootbus0	at mainbus?
 
 com*		at iobus?
 
-octeon_rnm*	at iobus?
+octrnm*		at iobus?
 
-octeon_gmx*	at iobus?
-cnmac*		at octeon_gmx?
+octgmx*		at iobus?
+cnmac*		at octgmx?
 
 dwctwo*		at iobus?
 usb*		at dwctwo?

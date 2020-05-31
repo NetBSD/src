@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.9 2020/04/24 09:29:26 mrg Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.10 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.9 2020/04/24 09:29:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.10 2020/05/31 04:56:35 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -168,7 +168,7 @@ EVCNT_ATTACH_STATIC(octeon_gmx_intr_evcnt);
 struct octeon_gmx_port_softc *__octeon_gmx_port_softc[3/* XXX */];
 #endif
 
-CFATTACH_DECL_NEW(octeon_gmx, sizeof(struct octeon_gmx_softc),
+CFATTACH_DECL_NEW(octgmx, sizeof(struct octeon_gmx_softc),
     octeon_gmx_match, octeon_gmx_attach, NULL, NULL);
 
 static int
@@ -229,7 +229,7 @@ octeon_gmx_attach(device_t parent, device_t self, void *aux)
 		gmx_aa.ga_port_type = sc->sc_port_types[i];
 		gmx_aa.ga_gmx = sc;
 		gmx_aa.ga_gmx_port = port_sc;
-		config_found_sm_loc(self, "octeon_gmx", NULL, &gmx_aa,
+		config_found_sm_loc(self, "octgmx", NULL, &gmx_aa,
 		    octeon_gmx_print, octeon_gmx_submatch);
 
 #ifdef OCTEON_ETH_DEBUG

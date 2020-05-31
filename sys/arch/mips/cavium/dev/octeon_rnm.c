@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.7 2020/05/30 03:12:52 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.8 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.7 2020/05/30 03:12:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.8 2020/05/31 04:56:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ static uint64_t octeon_rnm_load(struct octeon_rnm_softc *);
 static void octeon_rnm_iobdma(struct octeon_rnm_softc *, uint64_t *, unsigned);
 static void octeon_rnm_delay(uint32_t);
 
-CFATTACH_DECL_NEW(octeon_rnm, sizeof(struct octeon_rnm_softc),
+CFATTACH_DECL_NEW(octrnm, sizeof(struct octeon_rnm_softc),
     octeon_rnm_match, octeon_rnm_attach, NULL, NULL);
 
 static int

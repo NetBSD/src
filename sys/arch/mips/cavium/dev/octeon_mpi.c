@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_mpi.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_mpi.c,v 1.3 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.3 2020/05/31 04:56:35 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -155,7 +155,7 @@ octeon_mpi_attach(device_t parent, device_t self, void *aux)
 #endif
 	octeon_mpi_reg_wr(sc, MPI_TX_OFFSET, 0);
 
-	config_found_ia(&sc->sc_dev, "octeon_mpi", &pa, spi_print);
+	config_found_ia(&sc->sc_dev, "octmpi", &pa, spi_print);
 }
 
 #if 0

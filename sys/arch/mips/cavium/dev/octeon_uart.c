@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.3 2015/06/02 05:11:34 matt Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.4 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.3 2015/06/02 05:11:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.4 2020/05/31 04:56:35 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -93,7 +93,7 @@ const struct com_regs octeon_uart_com_regs = {
 	}
 };
 
-CFATTACH_DECL_NEW(octeon_uart_iobus, sizeof(struct octeon_uart_iobus_softc),
+CFATTACH_DECL_NEW(com_iobus, sizeof(struct octeon_uart_iobus_softc),
     octeon_uart_iobus_match, octeon_uart_iobus_attach, NULL, NULL);
 
 int
