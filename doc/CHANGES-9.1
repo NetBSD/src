@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.62 2020/05/25 17:31:36 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.63 2020/05/31 10:46:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2740,4 +2740,49 @@ usr.sbin/npf/npfctl/npf_scan.l			1.31
 
 	PR/55288: npfctl: change parameter syntax to be more permissive.
 	[rmind, ticket #932]
+
+distrib/amd64/Makefile				1.14
+distrib/amd64/installimage/Makefile		1.11
+distrib/amd64/uefi-installimage/Makefile	delete
+distrib/amd64/uefi-installimage/Makefile.bootimage delete
+distrib/amd64/uefi-installimage/Makefile.installimage delete
+distrib/amd64/uefi-installimage/boot.cfg.in	delete
+distrib/amd64/uefi-installimage/etc.rc		delete
+distrib/amd64/uefi-installimage/etc.ttys	delete
+distrib/amd64/uefi-installimage/install.sh	delete
+distrib/amd64/uefi-installimage/spec.inst	delete
+
+	Rename amd64 uefi-installimage to be just installimage, it works
+	for both UEFI and BIOS installations.
+	[maya, ticket #933]
+
+sys/dev/usb/usb.c				1.187
+
+	PR 55303: do not allow open of /dev/usb if there are no attached
+	busses.
+	[skrll, ticket #934]
+
+sys/arch/x86/include/pmap.h			1.121 (patch)
+sys/arch/x86/x86/pmap.c				1.394 (patch)
+sys/arch/xen/include/xenio.h			1.12 (patch)
+sys/arch/xen/include/xenpmap.h			1.44 (patch)
+sys/arch/xen/x86/x86_xpmap.c			1.89 (patch)
+sys/arch/xen/xen/privcmd.c			1.58 (patch)
+sys/external/mit/xen-include-public/dist/xen/include/public/memory.h 1.2 (patch)
+
+	Support Xen 4.13:
+	implement new ioctls: IOCTL_PRIVCMD_MMAPBATCH_V2,
+	IOCTL_PRIVCMD_MMAP_RESOURCE, IOCTL_GNTDEV_MMAP_GRANT_REF and
+	IOCTL_GNTDEV_ALLOC_GRANT_REF
+	[bouyer, ticket #935]
+
+lib/libterminfo/curterm.c			1.14
+
+	terminfo: test strlcpy result against space free, not string length.
+	[roy, ticket #936]
+
+usr.sbin/bta2dpd/bta2dpd/bta2dpd.c		1.7
+
+	Avoid running of the end of the array if a file cannot be opened.
+	[nat, ticket #937]
 
