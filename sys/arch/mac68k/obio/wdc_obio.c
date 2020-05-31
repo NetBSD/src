@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.30 2020/05/31 08:59:40 rin Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,14 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.29 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.30 2020/05/31 08:59:40 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/callout.h>
 
 #include <machine/bus.h>
@@ -87,8 +87,10 @@ int
 wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	struct wdc_regs wdr;
+	struct wdc_regs *wdr;
 	int i, result = 0;
+
+	wdr = kmem_alloc(sizeof(struct wdc_regs), KM_SLEEP);
 
 	switch (current_mac_model->machineid) {
 	case MACH_MACPB150:
@@ -96,36 +98,38 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 	case MACH_MACPB190CS:
 	case MACH_MACP580:
 	case MACH_MACQ630:
-		wdr.cmd_iot = wdr.ctl_iot = oa->oa_tag;
+		wdr->cmd_iot = wdr->ctl_iot = oa->oa_tag;
 
-		if (bus_space_map(wdr.cmd_iot, IDEBase, WDC_OBIO_REG_NPORTS,
-				0, &wdr.cmd_baseioh))
-			return 0;
+		if (bus_space_map(wdr->cmd_iot, IDEBase, WDC_OBIO_REG_NPORTS,
+				0, &wdr->cmd_baseioh))
+			goto out;
 
-		mac68k_bus_space_handle_swapped(wdr.cmd_iot, &wdr.cmd_baseioh);
+		mac68k_bus_space_handle_swapped(wdr->cmd_iot,
+		    &wdr->cmd_baseioh);
 
 		for (i = 0; i < WDC_NREG; i++) {
-			if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh,
-					    4 * i, 4, &wdr.cmd_iohs[i]) != 0) {
-				return 0;
-			}
+			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+					    4 * i, 4, &wdr->cmd_iohs[i]) != 0)
+				goto out;
 		}
-		wdc_init_shadow_regs(&wdr);
+		wdc_init_shadow_regs(wdr);
 
 
-		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				        WDC_OBIO_AUXREG_OFFSET,
 					WDC_OBIO_AUXREG_NPORTS,
-					&wdr.ctl_ioh))
-			return 0;
+					&wdr->ctl_ioh))
+			goto out;
 
-		result = wdcprobe(&wdr);
+		result = wdcprobe(wdr);
 
-		bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_OBIO_REG_NPORTS);
+		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
+		    WDC_OBIO_REG_NPORTS);
 
-		return (result);
+		goto out;
 	}
-	return 0;
+out:	kmem_free(wdr, sizeof(struct wdc_regs));
+	return result;
 }
 
 void
