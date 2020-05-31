@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon1p_iobus.c,v 1.2 2015/05/01 07:23:47 hikaru Exp $	*/
+/*	$NetBSD: octeon1p_iobus.c,v 1.3 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.2 2015/05/01 07:23:47 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.3 2020/05/31 04:56:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static const struct iobus_unit iobus_units_octeon_rnm[] = {
 };
 
 static const struct iobus_dev iobus_dev_octeon_rnm = {
-	.name = "octeon_rnm",
+	.name = "octrnm",
 	.nunits = RNM_NUNITS,
 	.units = iobus_units_octeon_rnm
 };
@@ -83,7 +83,7 @@ static const struct iobus_unit iobus_units_octeon_twsi[] = {
 };
 
 static const struct iobus_dev iobus_dev_octeon_twsi = {
-	.name = "octeon_twsi",
+	.name = "octtwsi",
 	.nunits = MIO_TWS_NUNITS,
 	.units = iobus_units_octeon_twsi
 };
@@ -98,7 +98,7 @@ static const struct iobus_unit	iobus_units_octeon_mpi[] = {
 };
 
 static const struct iobus_dev iobus_dev_octeon_mpi = {
-	.name = "octeon_mpi",
+	.name = "octmpi",
 	.nunits = MPI_NUNITS,
 	.units = iobus_units_octeon_mpi
 };
@@ -112,7 +112,7 @@ static const struct iobus_unit	iobus_units_octeon_gmx[] = {
 };
 
 static const struct iobus_dev iobus_dev_octeon_gmx = {
-	.name = "octeon_gmx",
+	.name = "octgmx",
 	.nunits = GMX_IF_NUNITS,
 	.units = iobus_units_octeon_gmx
 };
