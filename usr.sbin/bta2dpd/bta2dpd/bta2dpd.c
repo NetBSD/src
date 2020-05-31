@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.6 2019/07/27 20:10:29 nakayama Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.7 2020/05/31 06:17:23 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -844,6 +844,7 @@ do_interrupt(int fd, short ev, void *arg)
 	len = stream(fd, sc, channel_mode, frequency, bands, blocks,
 	    alloc_method, bitpool, mtu, volume);
 
+next_file:
 	if (len == -1 && currentFileInd >= numfiles -1) {
 		event_del(&interrupt_ev);
 		close(fd);
@@ -851,7 +852,6 @@ do_interrupt(int fd, short ev, void *arg)
 		exit(1);
 	} else if (len == -1) {
 		close(fd);
-next_file:
 		currentFileInd++;
 		audfile = open(files2open[currentFileInd], O_RDONLY);
 		if (audfile < 0) {
