@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.41 2019/11/12 20:59:46 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.42 2020/05/31 23:24:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.41 2019/11/12 20:59:46 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.42 2020/05/31 23:24:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1319,10 +1319,8 @@ terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
 	if (argv == NULL || argv[1] == NULL || argv[2] == NULL)
 		return -1;
 
-	strncpy(what, ct_encode_string(argv[1], &el->el_scratch), sizeof(what));
-	what[sizeof(what) - 1] = '\0';
-	strncpy(how,  ct_encode_string(argv[2], &el->el_scratch), sizeof(how));
-	how[sizeof(how) - 1] = '\0';
+	strlcpy(what, ct_encode_string(argv[1], &el->el_scratch), sizeof(what));
+	strlcpy(how,  ct_encode_string(argv[2], &el->el_scratch), sizeof(how));
 
 	/*
          * Do the strings first
