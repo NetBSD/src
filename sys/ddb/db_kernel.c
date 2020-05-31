@@ -1,4 +1,4 @@
-/*	$NetBSD: db_kernel.c,v 1.2 2009/03/08 11:40:00 mrg Exp $	*/
+/*	$NetBSD: db_kernel.c,v 1.3 2020/05/31 09:42:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,32 +30,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_kernel.c,v 1.2 2009/03/08 11:40:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_kernel.c,v 1.3 2020/05/31 09:42:46 rin Exp $");
 
 #include <sys/param.h>
-#include <sys/cpu.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <ddb/ddb.h>
+
+/*
+ * XXX
+ * DDB can be running in the interrupt context, e.g., when activated from
+ * console. Therefore, we use kmem_intr_alloc(9) and friends here to avoid
+ * assertion failure.
+ */
 
 void *
 db_alloc(size_t sz)
 {
 
-	return malloc(sz, M_TEMP, M_WAITOK);
+	return kmem_intr_alloc(sz, KM_NOSLEEP);
 }
 
 void *
 db_zalloc(size_t sz)
 {
 
-	return malloc(sz, M_TEMP, M_WAITOK | M_ZERO);
+	return kmem_intr_zalloc(sz, KM_NOSLEEP);
 }
 
 void
 db_free(void *p, size_t sz)
 {
 
-	free(p, M_TEMP);
+	kmem_intr_free(p, sz);
 }
