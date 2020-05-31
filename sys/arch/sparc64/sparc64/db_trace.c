@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.54 2020/03/10 15:54:52 christos Exp $ */
+/*	$NetBSD: db_trace.c,v 1.55 2020/05/31 11:28:52 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54 2020/03/10 15:54:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.55 2020/05/31 11:28:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,9 +102,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 	} else {
 		if (trace_thread) {
-			proc_t p;
-			lwp_t l;
+			static proc_t p;
+			static lwp_t l;
 			struct pcb *pcb;
+
 			if (lwpaddr) {
 				db_read_bytes(addr, sizeof(l), (char *)&l);
 				db_read_bytes((db_addr_t)l.l_proc,
