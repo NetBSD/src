@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.165.6.5 2019/11/16 16:30:09 martin Exp $	*/
+/*	$NetBSD: usb.c,v 1.165.6.6 2020/05/31 10:27:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.5 2019/11/16 16:30:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.6 2020/05/31 10:27:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -178,6 +178,11 @@ Static void	usb_discover(struct usb_softc *);
 Static void	usb_create_event_thread(device_t);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
+
+/*
+ * Count of USB busses
+ */
+int nusbbusses = 0;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -330,6 +335,9 @@ usb_doattach(device_t self)
 	struct usb_event *ue;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
+	/* Protected by KERNEL_LOCK */
+	nusbbusses++;
 
 	sc->sc_bus->ub_usbctl = self;
 	sc->sc_port.up_power = USB_MAX_POWER;
@@ -638,6 +646,9 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct usb_softc *sc;
+
+	if (nusbbusses == 0)
+		return ENXIO;
 
 	if (unit == USB_DEV_MINOR) {
 		if (usb_dev_open)
