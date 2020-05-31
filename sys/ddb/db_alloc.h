@@ -1,11 +1,8 @@
-/*	$NetBSD: ddb.h,v 1.4 2020/05/31 09:40:09 rin Exp $	*/
+/*	$NetBSD: db_alloc.h,v 1.1 2020/05/31 09:40:09 rin Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,27 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DDB_DDB_H_
-#define	_DDB_DDB_H_
+#ifndef _DDB_ALLOC_
+#define _DDB_ALLOC_
 
-#include <machine/db_machdep.h>		/* type definitions */
+#ifdef _KERNEL
+void	*db_alloc(size_t);
+void	*db_zalloc(size_t);
+void	db_free(void *, size_t);
+#else
+#define db_alloc(sz)	malloc(size)
+#define db_zalloc(sz)	calloc(1, (size))
+#define db_free(p, sz)	free(p)
+#endif
 
-#include <ddb/db_user.h>
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_break.h>
-#include <ddb/db_watch.h>
-#include <ddb/db_run.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_lwp.h>
-#include <ddb/db_access.h>
-#include <ddb/db_proc.h>
-#include <ddb/db_cpu.h>
-#include <ddb/db_autoconf.h>
-#include <ddb/db_alloc.h>
-
-#endif	/* _DDB_DDB_H_ */
+#endif /* _DDB_ALLOC_ */
