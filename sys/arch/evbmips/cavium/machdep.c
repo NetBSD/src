@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2016/12/28 03:27:08 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2020/05/31 14:05:21 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@
 #include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2016/12/28 03:27:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2020/05/31 14:05:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ mach_init_console(void)
 #if NCOM > 0
 	struct octeon_config *mcp = &octeon_configuration;
 	int status;
-	extern int octeon_uart_com_cnattach(bus_space_tag_t, int, int);
+	extern int octuart_com_cnattach(bus_space_tag_t, int, int);
 
 	/*
 	 * Delay to allow firmware putchars to complete.
@@ -323,7 +323,7 @@ mach_init_console(void)
 	 */
 	delay(640000000 / comcnrate);
 
-	status = octeon_uart_com_cnattach(
+	status = octuart_com_cnattach(
 		&mcp->mc_iobus_bust,
 		0,	/* XXX port 0 */
 		comcnrate);
