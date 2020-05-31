@@ -33,458 +33,458 @@
 
 #include <unistd.h>
 
-const char * const dhcpcd_embedded_conf[] = {
+const char dhcpcd_embedded_conf[] =
 #ifdef SMALL
-"define 1 request ipaddress subnet_mask",
-"define 121 rfc3442 classless_static_routes",
-"define 3 request array ipaddress routers",
-"define 6 array ipaddress domain_name_servers",
-"define 12 dname host_name",
-"define 15 array dname domain_name",
-"define 26 uint16 interface_mtu",
-"define 28 request ipaddress broadcast_address",
-"define 33 request array ipaddress static_routes",
-"define 50 ipaddress dhcp_requested_address",
-"define 51 request uint32 dhcp_lease_time",
-"define 52 byte dhcp_option_overload",
-"define 53 byte dhcp_message_type",
-"define 54 ipaddress dhcp_server_identifier",
-"define 55 array byte dhcp_parameter_request_list",
-"define 56 string dhcp_message",
-"define 57 uint16 dhcp_max_message_size",
-"define 58 request uint32 dhcp_renewal_time",
-"define 59 request uint32 dhcp_rebinding_time",
-"define 60 string vendor_class_identifier",
-"define 61 binhex dhcp_client_identifier",
-"define 80 norequest flag rapid_commit",
-"define 81 embed fqdn",
-"embed bitflags=0000NEOS flags",
-"embed byte rcode1",
-"embed byte rcode2",
-"embed optional domain fqdn",
-"define 119 array domain domain_search",
-"define 249 rfc3442 ms_classless_static_routes",
-"definend 1 binhex source_address",
-"definend 2 binhex target_address",
-"definend 3 index embed prefix_information",
-"embed byte length",
-"embed bitflags=LA flags",
-"embed uint32 vltime",
-"embed uint32 pltime",
-"embed uint32 reserved",
-"embed array ip6address prefix",
-"definend 5 embed mtu",
-"embed uint16 reserved",
-"embed uint32 mtu",
-"definend 25 index embed rdnss",
-"embed uint16 reserved",
-"embed uint32 lifetime",
-"embed array ip6address servers",
-"definend 31 index embed dnssl",
-"embed uint16 reserved",
-"embed uint32 lifetime",
-"embed domain search",
-"define6 1 binhex client_id",
-"define6 2 binhex server_id",
-"define6 3 norequest index embed ia_na",
-"embed binhex:4 iaid",
-"embed uint32 t1",
-"embed uint32 t2",
-"encap 5 option",
-"encap 13 option",
-"define6 4 norequest index embed ia_ta",
-"embed uint32 iaid",
-"encap 5 option",
-"encap 13 option",
-"define6 5 norequest index embed ia_addr",
-"embed ip6address ia_addr",
-"embed uint32 pltime",
-"embed uint32 vltime",
-"encap 13 option",
-"define6 12 ip6address unicast",
-"define6 13 norequest embed status_code",
-"embed uint16 status_code",
-"embed optional string message",
-"define6 18 binhex interface_id",
-"define6 19 byte reconfigure_msg",
-"define6 20 flag reconfigure_accept",
-"define6 23 array ip6address name_servers",
-"define6 24 array domain domain_search",
-"define6 39 embed fqdn",
-"embed bitflags=00000NOS flags",
-"embed optional domain fqdn",
-"define6 82 request uint32 sol_max_rt",
-"define6 83 request uint32 inf_max_rt",
+"define 1 request ipaddress subnet_mask\n"
+"define 121 rfc3442 classless_static_routes\n"
+"define 3 request array ipaddress routers\n"
+"define 6 array ipaddress domain_name_servers\n"
+"define 12 dname host_name\n"
+"define 15 array dname domain_name\n"
+"define 26 uint16 interface_mtu\n"
+"define 28 request ipaddress broadcast_address\n"
+"define 33 request array ipaddress static_routes\n"
+"define 50 ipaddress dhcp_requested_address\n"
+"define 51 request uint32 dhcp_lease_time\n"
+"define 52 byte dhcp_option_overload\n"
+"define 53 byte dhcp_message_type\n"
+"define 54 ipaddress dhcp_server_identifier\n"
+"define 55 array byte dhcp_parameter_request_list\n"
+"define 56 string dhcp_message\n"
+"define 57 uint16 dhcp_max_message_size\n"
+"define 58 request uint32 dhcp_renewal_time\n"
+"define 59 request uint32 dhcp_rebinding_time\n"
+"define 60 string vendor_class_identifier\n"
+"define 61 binhex dhcp_client_identifier\n"
+"define 80 norequest flag rapid_commit\n"
+"define 81 embed fqdn\n"
+"embed bitflags=0000NEOS flags\n"
+"embed byte rcode1\n"
+"embed byte rcode2\n"
+"embed optional domain fqdn\n"
+"define 119 array domain domain_search\n"
+"define 249 rfc3442 ms_classless_static_routes\n"
+"definend 1 binhex source_address\n"
+"definend 2 binhex target_address\n"
+"definend 3 index embed prefix_information\n"
+"embed byte length\n"
+"embed bitflags=LA flags\n"
+"embed uint32 vltime\n"
+"embed uint32 pltime\n"
+"embed uint32 reserved\n"
+"embed array ip6address prefix\n"
+"definend 5 embed mtu\n"
+"embed uint16 reserved\n"
+"embed uint32 mtu\n"
+"definend 25 index embed rdnss\n"
+"embed uint16 reserved\n"
+"embed uint32 lifetime\n"
+"embed array ip6address servers\n"
+"definend 31 index embed dnssl\n"
+"embed uint16 reserved\n"
+"embed uint32 lifetime\n"
+"embed domain search\n"
+"define6 1 binhex client_id\n"
+"define6 2 binhex server_id\n"
+"define6 3 norequest index embed ia_na\n"
+"embed binhex:4 iaid\n"
+"embed uint32 t1\n"
+"embed uint32 t2\n"
+"encap 5 option\n"
+"encap 13 option\n"
+"define6 4 norequest index embed ia_ta\n"
+"embed uint32 iaid\n"
+"encap 5 option\n"
+"encap 13 option\n"
+"define6 5 norequest index embed ia_addr\n"
+"embed ip6address ia_addr\n"
+"embed uint32 pltime\n"
+"embed uint32 vltime\n"
+"encap 13 option\n"
+"define6 12 ip6address unicast\n"
+"define6 13 norequest embed status_code\n"
+"embed uint16 status_code\n"
+"embed optional string message\n"
+"define6 18 binhex interface_id\n"
+"define6 19 byte reconfigure_msg\n"
+"define6 20 flag reconfigure_accept\n"
+"define6 23 array ip6address name_servers\n"
+"define6 24 array domain domain_search\n"
+"define6 39 embed fqdn\n"
+"embed bitflags=00000NOS flags\n"
+"embed optional domain fqdn\n"
+"define6 82 request uint32 sol_max_rt\n"
+"define6 83 request uint32 inf_max_rt\n"
 #else
-"define 1 request ipaddress subnet_mask",
-"define 121 rfc3442 classless_static_routes",
-"define 2 uint32 time_offset",
-"define 3 request array ipaddress routers",
-"define 4 array ipaddress time_servers",
-"define 5 array ipaddress ien116_name_servers",
-"define 6 array ipaddress domain_name_servers",
-"define 7 array ipaddress log_servers",
-"define 8 array ipaddress cookie_servers",
-"define 9 array ipaddress lpr_servers",
-"define 10 array ipaddress impress_servers",
-"define 11 array ipaddress resource_location_servers",
-"define 12 dname host_name",
-"define 13 uint16 boot_size",
-"define 14 string merit_dump",
-"define 15 array dname domain_name",
-"define 16 ipaddress swap_server",
-"define 17 string root_path",
-"define 18 string extensions_path",
-"define 19 byte ip_forwarding",
-"define 20 byte non_local_source_routing",
-"define 21 array ipaddress policy_filter",
-"define 22 uint16 max_dgram_reassembly",
-"define 23 byte default_ip_ttl",
-"define 24 uint32 path_mtu_aging_timeout",
-"define 25 array uint16 path_mtu_plateau_table",
-"define 26 uint16 interface_mtu",
-"define 27 byte all_subnets_local",
-"define 28 request ipaddress broadcast_address",
-"define 29 byte perform_mask_discovery",
-"define 30 byte mask_supplier",
-"define 31 byte router_discovery",
-"define 32 ipaddress router_solicitation_address",
-"define 33 request array ipaddress static_routes",
-"define 34 byte trailer_encapsulation",
-"define 35 uint32 arp_cache_timeout",
-"define 36 uint16 ieee802_3_encapsulation",
-"define 37 byte default_tcp_ttl",
-"define 38 uint32 tcp_keepalive_interval",
-"define 39 byte tcp_keepalive_garbage",
-"define 40 string nis_domain",
-"define 41 array ipaddress nis_servers",
-"define 42 array ipaddress ntp_servers",
-"define 43 binhex vendor_encapsulated_options",
-"define 44 array ipaddress netbios_name_servers",
-"define 45 ipaddress netbios_dd_server",
-"define 46 byte netbios_node_type",
-"define 47 string netbios_scope",
-"define 48 array ipaddress font_servers",
-"define 49 array ipaddress x_display_manager",
-"define 50 ipaddress dhcp_requested_address",
-"define 51 request uint32 dhcp_lease_time",
-"define 52 byte dhcp_option_overload",
-"define 53 byte dhcp_message_type",
-"define 54 ipaddress dhcp_server_identifier",
-"define 55 array byte dhcp_parameter_request_list",
-"define 56 string dhcp_message",
-"define 57 uint16 dhcp_max_message_size",
-"define 58 request uint32 dhcp_renewal_time",
-"define 59 request uint32 dhcp_rebinding_time",
-"define 60 string vendor_class_identifier",
-"define 61 binhex dhcp_client_identifier",
-"define 64 string nisplus_domain",
-"define 65 array ipaddress nisplus_servers",
-"define 66 dname tftp_server_name",
-"define 67 string bootfile_name",
-"define 68 array ipaddress mobile_ip_home_agent",
-"define 69 array ipaddress smtp_server",
-"define 70 array ipaddress pop_server",
-"define 71 array ipaddress nntp_server",
-"define 72 array ipaddress www_server",
-"define 73 array ipaddress finger_server",
-"define 74 array ipaddress irc_server",
-"define 75 array ipaddress streettalk_server",
-"define 76 array ipaddress streettalk_directory_assistance_server",
-"define 77 binhex user_class",
-"define 78 embed slp_agent",
-"embed byte mandatory",
-"embed array ipaddress address",
-"define 79 embed slp_service",
-"embed byte mandatory",
-"embed ascii scope_list",
-"define 80 norequest flag rapid_commit",
-"define 81 embed fqdn",
-"embed bitflags=0000NEOS flags",
-"embed byte rcode1",
-"embed byte rcode2",
-"embed optional domain fqdn",
-"define 83 embed isns",
-"embed byte reserved1",
-"embed bitflags=00000SAE functions",
-"embed byte reserved2",
-"embed bitflags=00fFsSCE dd",
-"embed byte reserved3",
-"embed bitflags=0000DMHE admin",
-"embed uint16 reserved4",
-"embed byte reserved5",
-"embed bitflags=0TXPAMSE server_security",
-"embed array ipaddress servers",
-"define 85 array ipaddress nds_servers",
-"define 86 raw nds_tree_name",
-"define 87 raw nds_context",
-"define 88 array domain bcms_controller_names",
-"define 89 array ipaddress bcms_controller_address",
-"define 90 embed auth",
-"embed byte protocol",
-"embed byte algorithm",
-"embed byte rdm",
-"embed binhex:8 replay",
-"embed binhex information",
-"define 91 uint32 client_last_transaction_time",
-"define 92 array ipaddress associated_ip",
-"define 98 string uap_servers",
-"define 99 encap geoconf_civic",
-"embed byte what",
-"embed uint16 country_code",
-"define 100 string posix_timezone",
-"define 101 string tzdb_timezone",
-"define 116 byte auto_configure",
-"define 117 array uint16 name_service_search",
-"define 118 ipaddress subnet_selection",
-"define 119 array domain domain_search",
-"define 120 rfc3361 sip_server",
-"define 122 encap tsp",
-"encap 1 ipaddress dhcp_server",
-"encap 2 ipaddress dhcp_secondary_server",
-"encap 3 rfc3361 provisioning_server",
-"encap 4 embed as_req_as_rep_backoff",
-"embed uint32 nominal",
-"embed uint32 maximum",
-"embed uint32 retry",
-"encap 5 embed ap_req_ap_rep_backoff",
-"embed uint32 nominal",
-"embed uint32 maximum",
-"embed uint32 retry",
-"encap 6 domain kerberos_realm",
-"encap 7 byte ticket_granting_server_utilization",
-"encap 8 byte provisioning_timer",
-"define 123 binhex geoconf",
-"define 124 binhex vivco",
-"define 125 embed vivso",
-"embed uint32 enterprise_number",
-"define 136 array ipaddress pana_agent",
-"define 137 domain lost_server",
-"define 138 array ipaddress capwap_ac",
-"define 139 encap mos_ip",
-"encap 1 array ipaddress is",
-"encap 2 array ipaddress cs",
-"encap 3 array ipaddress es",
-"define 140 encap mos_domain",
-"encap 1 domain is",
-"encap 2 domain cs",
-"encap 3 domain es",
-"define 141 array domain sip_ua_cs_list",
-"define 142 array ipaddress andsf",
-"define 143 array ip6address andsf6",
-"define 144 binhex geoloc",
-"define 145 array byte forcerenew_nonce_capable",
-"define 146 embed rdnss_selection",
-"embed byte prf",
-"embed ipaddress primary",
-"embed ipaddress secondary",
-"embed array domain domains",
-"define 150 array ipaddress tftp_servers",
-"define 161 string mudurl",
-"define 208 binhex pxelinux_magic",
-"define 209 string config_file",
-"define 210 string path_prefix",
-"define 211 uint32 reboot_time",
-"define 212 embed sixrd",
-"embed byte mask_len",
-"embed byte prefix_len",
-"embed ip6address prefix",
-"embed array ipaddress brip_address",
-"define 213 domain access_domain",
-"define 221 encap vss",
-"encap 0 string nvt",
-"encap 1 binhex vpn_id",
-"encap 255 flag global",
-"define 249 rfc3442 ms_classless_static_routes",
-"define 252 string wpad_url",
-"definend 1 binhex source_address",
-"definend 2 binhex target_address",
-"definend 3 index embed prefix_information",
-"embed byte length",
-"embed bitflags=LA flags",
-"embed uint32 vltime",
-"embed uint32 pltime",
-"embed uint32 reserved",
-"embed array ip6address prefix",
-"definend 5 embed mtu",
-"embed uint16 reserved",
-"embed uint32 mtu",
-"definend 25 index embed rdnss",
-"embed uint16 reserved",
-"embed uint32 lifetime",
-"embed array ip6address servers",
-"definend 31 index embed dnssl",
-"embed uint16 reserved",
-"embed uint32 lifetime",
-"embed domain search",
-"define6 1 binhex client_id",
-"define6 2 binhex server_id",
-"define6 3 norequest index embed ia_na",
-"embed binhex:4 iaid",
-"embed uint32 t1",
-"embed uint32 t2",
-"encap 5 option",
-"encap 13 option",
-"define6 4 norequest index embed ia_ta",
-"embed uint32 iaid",
-"encap 5 option",
-"encap 13 option",
-"define6 5 norequest index embed ia_addr",
-"embed ip6address ia_addr",
-"embed uint32 pltime",
-"embed uint32 vltime",
-"encap 13 option",
-"define6 6 array uint16 option_request",
-"define6 7 byte preference",
-"define6 8 uint16 elased_time",
-"define6 9 binhex dhcp_relay_msg",
-"define6 11 embed auth",
-"embed byte protocol",
-"embed byte algorithm",
-"embed byte rdm",
-"embed binhex:8 replay",
-"embed binhex information",
-"define6 12 ip6address unicast",
-"define6 13 norequest embed status_code",
-"embed uint16 status_code",
-"embed optional string message",
-"define6 14 norequest flag rapid_commit",
-"define6 15 binhex user_class",
-"define6 16 binhex vivco",
-"define6 17 embed vivso",
-"embed uint32 enterprise_number",
-"define6 18 binhex interface_id",
-"define6 19 byte reconfigure_msg",
-"define6 20 flag reconfigure_accept",
-"define6 21 array domain sip_servers_names",
-"define6 22 array ip6address sip_servers_addresses",
-"define6 23 array ip6address name_servers",
-"define6 24 array domain domain_search",
-"define6 25 norequest index embed ia_pd",
-"embed binhex:4 iaid",
-"embed uint32 t1",
-"embed uint32 t2",
-"encap 26 option",
-"define6 26 index embed prefix",
-"embed uint32 pltime",
-"embed uint32 vltime",
-"embed byte length",
-"embed ip6address prefix",
-"encap 13 option",
-"encap 67 option",
-"define6 27 array ip6address nis_servers",
-"define6 28 array ip6address nisp_servers",
-"define6 29 string nis_domain_name",
-"define6 30 string nisp_domain_name",
-"define6 31 array ip6address sntp_servers",
-"define6 32 uint32 info_refresh_time",
-"define6 33 array domain bcms_server_d",
-"define6 34 array ip6address bcms_server_a",
-"define6 36 encap geoconf_civic",
-"embed byte what",
-"embed uint16 country_code",
-"define6 37 embed remote_id",
-"embed uint32 enterprise_number",
-"embed binhex remote_id",
-"define6 38 binhex subscriber_id",
-"define6 39 embed fqdn",
-"embed bitflags=00000NOS flags",
-"embed optional domain fqdn",
-"define6 40 array ip6address pana_agent",
-"define6 41 string posix_timezone",
-"define6 42 string tzdb_timezone",
-"define6 43 array uint16 ero",
-"define6 49 domain mip6_hnidf",
-"define6 50 encap mip6_vdinf",
-"encap 71 option",
-"encap 72 option",
-"encap 73 option",
-"define6 51 domain lost_server",
-"define6 52 array ip6address capwap_ac",
-"define6 53 binhex relay_id",
-"define6 54 encap mos_ip",
-"encap 1 array ip6address is",
-"encap 2 array ip6address cs",
-"encap 3 array ip6address es",
-"define6 55  encap mos_domain",
-"encap 1 domain is",
-"encap 2 domain cs",
-"encap 3 domain es",
-"define6 56 encap ntp_server",
-"encap 1 ip6address addr",
-"encap 2 ip6address mcast_addr",
-"encap 3 domain fqdn",
-"define6 57 domain access_domain",
-"define6 58 array domain sip_ua_cs_list",
-"define6 59 string bootfile_url",
-"define6 60 binhex bootfile_param",
-"define6 61 array uint16 architecture_types",
-"define6 62 embed nii",
-"embed byte type",
-"embed byte major",
-"embed byte minor",
-"define6 63 binhex geoloc",
-"define6 64 domain aftr_name",
-"define6 67 embed pd_exclude",
-"embed byte prefix_len",
-"embed binhex subnetID",
-"define6 69 encap mip6_idinf",
-"encap 71 option",
-"encap 72 option",
-"encap 73 option",
-"define6 70 encap mip6_udinf",
-"encap 71 option",
-"encap 72 option",
-"encap 73 option",
-"define6 71 embed mip6_hnp",
-"embed byte prefix_len",
-"embed ip6address prefix",
-"define6 72 ip6address mip6_haa",
-"define6 73 domain mip6_haf",
-"define6 74 embed rdnss_selection",
-"embed ip6address server",
-"embed byte prf",
-"embed array domain domains",
-"define6 75 string krb_principal_name",
-"define6 76 string krb_realm_name",
-"define6 78 embed krb_kdc",
-"embed uint16 priority",
-"embed uint16 weight",
-"embed byte transport_type",
-"embed uint16 port",
-"embed ip6address address",
-"embed string realm_name",
-"define6 80 ip6address link_address",
-"define6 82 request uint32 sol_max_rt",
-"define6 83 request uint32 inf_max_rt",
-"define6 89 embed s46_rule",
-"embed bitflags=0000000F flags",
-"embed byte ea_len",
-"embed byte prefix4_len",
-"embed ipaddress ipv4_prefix",
-"embed ip6address ipv6_prefix",
-"define6 90 ip6address s64_br",
-"define6 91 embed s46_dmr",
-"embed byte prefix_len",
-"embed binhex prefix",
-"define6 92 embed s46_v4v6bind",
-"embed ipaddress ipv4_address",
-"embed byte ipv6_prefix_len",
-"embed binhex ipv6_prefix_and_options",
-"define6 93 embed s46_portparams",
-"embed byte offset",
-"embed byte psid_len",
-"embed uint16 psid",
-"define6 94 embed s46_cont_mape",
-"encap 89 option",
-"encap 90 option",
-"define6 95 embed s46_cont_mapt",
-"encap 89 option",
-"encap 91 option",
-"define6 96 embed s46_cont_lw",
-"encap 90 option",
-"encap 92 option",
-"define6 112 string mudurl",
+"define 1 request ipaddress subnet_mask\n"
+"define 121 rfc3442 classless_static_routes\n"
+"define 2 uint32 time_offset\n"
+"define 3 request array ipaddress routers\n"
+"define 4 array ipaddress time_servers\n"
+"define 5 array ipaddress ien116_name_servers\n"
+"define 6 array ipaddress domain_name_servers\n"
+"define 7 array ipaddress log_servers\n"
+"define 8 array ipaddress cookie_servers\n"
+"define 9 array ipaddress lpr_servers\n"
+"define 10 array ipaddress impress_servers\n"
+"define 11 array ipaddress resource_location_servers\n"
+"define 12 dname host_name\n"
+"define 13 uint16 boot_size\n"
+"define 14 string merit_dump\n"
+"define 15 array dname domain_name\n"
+"define 16 ipaddress swap_server\n"
+"define 17 string root_path\n"
+"define 18 string extensions_path\n"
+"define 19 byte ip_forwarding\n"
+"define 20 byte non_local_source_routing\n"
+"define 21 array ipaddress policy_filter\n"
+"define 22 uint16 max_dgram_reassembly\n"
+"define 23 byte default_ip_ttl\n"
+"define 24 uint32 path_mtu_aging_timeout\n"
+"define 25 array uint16 path_mtu_plateau_table\n"
+"define 26 uint16 interface_mtu\n"
+"define 27 byte all_subnets_local\n"
+"define 28 request ipaddress broadcast_address\n"
+"define 29 byte perform_mask_discovery\n"
+"define 30 byte mask_supplier\n"
+"define 31 byte router_discovery\n"
+"define 32 ipaddress router_solicitation_address\n"
+"define 33 request array ipaddress static_routes\n"
+"define 34 byte trailer_encapsulation\n"
+"define 35 uint32 arp_cache_timeout\n"
+"define 36 uint16 ieee802_3_encapsulation\n"
+"define 37 byte default_tcp_ttl\n"
+"define 38 uint32 tcp_keepalive_interval\n"
+"define 39 byte tcp_keepalive_garbage\n"
+"define 40 string nis_domain\n"
+"define 41 array ipaddress nis_servers\n"
+"define 42 array ipaddress ntp_servers\n"
+"define 43 binhex vendor_encapsulated_options\n"
+"define 44 array ipaddress netbios_name_servers\n"
+"define 45 ipaddress netbios_dd_server\n"
+"define 46 byte netbios_node_type\n"
+"define 47 string netbios_scope\n"
+"define 48 array ipaddress font_servers\n"
+"define 49 array ipaddress x_display_manager\n"
+"define 50 ipaddress dhcp_requested_address\n"
+"define 51 request uint32 dhcp_lease_time\n"
+"define 52 byte dhcp_option_overload\n"
+"define 53 byte dhcp_message_type\n"
+"define 54 ipaddress dhcp_server_identifier\n"
+"define 55 array byte dhcp_parameter_request_list\n"
+"define 56 string dhcp_message\n"
+"define 57 uint16 dhcp_max_message_size\n"
+"define 58 request uint32 dhcp_renewal_time\n"
+"define 59 request uint32 dhcp_rebinding_time\n"
+"define 60 string vendor_class_identifier\n"
+"define 61 binhex dhcp_client_identifier\n"
+"define 64 string nisplus_domain\n"
+"define 65 array ipaddress nisplus_servers\n"
+"define 66 dname tftp_server_name\n"
+"define 67 string bootfile_name\n"
+"define 68 array ipaddress mobile_ip_home_agent\n"
+"define 69 array ipaddress smtp_server\n"
+"define 70 array ipaddress pop_server\n"
+"define 71 array ipaddress nntp_server\n"
+"define 72 array ipaddress www_server\n"
+"define 73 array ipaddress finger_server\n"
+"define 74 array ipaddress irc_server\n"
+"define 75 array ipaddress streettalk_server\n"
+"define 76 array ipaddress streettalk_directory_assistance_server\n"
+"define 77 binhex user_class\n"
+"define 78 embed slp_agent\n"
+"embed byte mandatory\n"
+"embed array ipaddress address\n"
+"define 79 embed slp_service\n"
+"embed byte mandatory\n"
+"embed ascii scope_list\n"
+"define 80 norequest flag rapid_commit\n"
+"define 81 embed fqdn\n"
+"embed bitflags=0000NEOS flags\n"
+"embed byte rcode1\n"
+"embed byte rcode2\n"
+"embed optional domain fqdn\n"
+"define 83 embed isns\n"
+"embed byte reserved1\n"
+"embed bitflags=00000SAE functions\n"
+"embed byte reserved2\n"
+"embed bitflags=00fFsSCE dd\n"
+"embed byte reserved3\n"
+"embed bitflags=0000DMHE admin\n"
+"embed uint16 reserved4\n"
+"embed byte reserved5\n"
+"embed bitflags=0TXPAMSE server_security\n"
+"embed array ipaddress servers\n"
+"define 85 array ipaddress nds_servers\n"
+"define 86 raw nds_tree_name\n"
+"define 87 raw nds_context\n"
+"define 88 array domain bcms_controller_names\n"
+"define 89 array ipaddress bcms_controller_address\n"
+"define 90 embed auth\n"
+"embed byte protocol\n"
+"embed byte algorithm\n"
+"embed byte rdm\n"
+"embed binhex:8 replay\n"
+"embed binhex information\n"
+"define 91 uint32 client_last_transaction_time\n"
+"define 92 array ipaddress associated_ip\n"
+"define 98 string uap_servers\n"
+"define 99 encap geoconf_civic\n"
+"embed byte what\n"
+"embed uint16 country_code\n"
+"define 100 string posix_timezone\n"
+"define 101 string tzdb_timezone\n"
+"define 116 byte auto_configure\n"
+"define 117 array uint16 name_service_search\n"
+"define 118 ipaddress subnet_selection\n"
+"define 119 array domain domain_search\n"
+"define 120 rfc3361 sip_server\n"
+"define 122 encap tsp\n"
+"encap 1 ipaddress dhcp_server\n"
+"encap 2 ipaddress dhcp_secondary_server\n"
+"encap 3 rfc3361 provisioning_server\n"
+"encap 4 embed as_req_as_rep_backoff\n"
+"embed uint32 nominal\n"
+"embed uint32 maximum\n"
+"embed uint32 retry\n"
+"encap 5 embed ap_req_ap_rep_backoff\n"
+"embed uint32 nominal\n"
+"embed uint32 maximum\n"
+"embed uint32 retry\n"
+"encap 6 domain kerberos_realm\n"
+"encap 7 byte ticket_granting_server_utilization\n"
+"encap 8 byte provisioning_timer\n"
+"define 123 binhex geoconf\n"
+"define 124 binhex vivco\n"
+"define 125 embed vivso\n"
+"embed uint32 enterprise_number\n"
+"define 136 array ipaddress pana_agent\n"
+"define 137 domain lost_server\n"
+"define 138 array ipaddress capwap_ac\n"
+"define 139 encap mos_ip\n"
+"encap 1 array ipaddress is\n"
+"encap 2 array ipaddress cs\n"
+"encap 3 array ipaddress es\n"
+"define 140 encap mos_domain\n"
+"encap 1 domain is\n"
+"encap 2 domain cs\n"
+"encap 3 domain es\n"
+"define 141 array domain sip_ua_cs_list\n"
+"define 142 array ipaddress andsf\n"
+"define 143 array ip6address andsf6\n"
+"define 144 binhex geoloc\n"
+"define 145 array byte forcerenew_nonce_capable\n"
+"define 146 embed rdnss_selection\n"
+"embed byte prf\n"
+"embed ipaddress primary\n"
+"embed ipaddress secondary\n"
+"embed array domain domains\n"
+"define 150 array ipaddress tftp_servers\n"
+"define 161 string mudurl\n"
+"define 208 binhex pxelinux_magic\n"
+"define 209 string config_file\n"
+"define 210 string path_prefix\n"
+"define 211 uint32 reboot_time\n"
+"define 212 embed sixrd\n"
+"embed byte mask_len\n"
+"embed byte prefix_len\n"
+"embed ip6address prefix\n"
+"embed array ipaddress brip_address\n"
+"define 213 domain access_domain\n"
+"define 221 encap vss\n"
+"encap 0 string nvt\n"
+"encap 1 binhex vpn_id\n"
+"encap 255 flag global\n"
+"define 249 rfc3442 ms_classless_static_routes\n"
+"define 252 string wpad_url\n"
+"definend 1 binhex source_address\n"
+"definend 2 binhex target_address\n"
+"definend 3 index embed prefix_information\n"
+"embed byte length\n"
+"embed bitflags=LA flags\n"
+"embed uint32 vltime\n"
+"embed uint32 pltime\n"
+"embed uint32 reserved\n"
+"embed array ip6address prefix\n"
+"definend 5 embed mtu\n"
+"embed uint16 reserved\n"
+"embed uint32 mtu\n"
+"definend 25 index embed rdnss\n"
+"embed uint16 reserved\n"
+"embed uint32 lifetime\n"
+"embed array ip6address servers\n"
+"definend 31 index embed dnssl\n"
+"embed uint16 reserved\n"
+"embed uint32 lifetime\n"
+"embed domain search\n"
+"define6 1 binhex client_id\n"
+"define6 2 binhex server_id\n"
+"define6 3 norequest index embed ia_na\n"
+"embed binhex:4 iaid\n"
+"embed uint32 t1\n"
+"embed uint32 t2\n"
+"encap 5 option\n"
+"encap 13 option\n"
+"define6 4 norequest index embed ia_ta\n"
+"embed uint32 iaid\n"
+"encap 5 option\n"
+"encap 13 option\n"
+"define6 5 norequest index embed ia_addr\n"
+"embed ip6address ia_addr\n"
+"embed uint32 pltime\n"
+"embed uint32 vltime\n"
+"encap 13 option\n"
+"define6 6 array uint16 option_request\n"
+"define6 7 byte preference\n"
+"define6 8 uint16 elased_time\n"
+"define6 9 binhex dhcp_relay_msg\n"
+"define6 11 embed auth\n"
+"embed byte protocol\n"
+"embed byte algorithm\n"
+"embed byte rdm\n"
+"embed binhex:8 replay\n"
+"embed binhex information\n"
+"define6 12 ip6address unicast\n"
+"define6 13 norequest embed status_code\n"
+"embed uint16 status_code\n"
+"embed optional string message\n"
+"define6 14 norequest flag rapid_commit\n"
+"define6 15 binhex user_class\n"
+"define6 16 binhex vivco\n"
+"define6 17 embed vivso\n"
+"embed uint32 enterprise_number\n"
+"define6 18 binhex interface_id\n"
+"define6 19 byte reconfigure_msg\n"
+"define6 20 flag reconfigure_accept\n"
+"define6 21 array domain sip_servers_names\n"
+"define6 22 array ip6address sip_servers_addresses\n"
+"define6 23 array ip6address name_servers\n"
+"define6 24 array domain domain_search\n"
+"define6 25 norequest index embed ia_pd\n"
+"embed binhex:4 iaid\n"
+"embed uint32 t1\n"
+"embed uint32 t2\n"
+"encap 26 option\n"
+"define6 26 index embed prefix\n"
+"embed uint32 pltime\n"
+"embed uint32 vltime\n"
+"embed byte length\n"
+"embed ip6address prefix\n"
+"encap 13 option\n"
+"encap 67 option\n"
+"define6 27 array ip6address nis_servers\n"
+"define6 28 array ip6address nisp_servers\n"
+"define6 29 string nis_domain_name\n"
+"define6 30 string nisp_domain_name\n"
+"define6 31 array ip6address sntp_servers\n"
+"define6 32 uint32 info_refresh_time\n"
+"define6 33 array domain bcms_server_d\n"
+"define6 34 array ip6address bcms_server_a\n"
+"define6 36 encap geoconf_civic\n"
+"embed byte what\n"
+"embed uint16 country_code\n"
+"define6 37 embed remote_id\n"
+"embed uint32 enterprise_number\n"
+"embed binhex remote_id\n"
+"define6 38 binhex subscriber_id\n"
+"define6 39 embed fqdn\n"
+"embed bitflags=00000NOS flags\n"
+"embed optional domain fqdn\n"
+"define6 40 array ip6address pana_agent\n"
+"define6 41 string posix_timezone\n"
+"define6 42 string tzdb_timezone\n"
+"define6 43 array uint16 ero\n"
+"define6 49 domain mip6_hnidf\n"
+"define6 50 encap mip6_vdinf\n"
+"encap 71 option\n"
+"encap 72 option\n"
+"encap 73 option\n"
+"define6 51 domain lost_server\n"
+"define6 52 array ip6address capwap_ac\n"
+"define6 53 binhex relay_id\n"
+"define6 54 encap mos_ip\n"
+"encap 1 array ip6address is\n"
+"encap 2 array ip6address cs\n"
+"encap 3 array ip6address es\n"
+"define6 55  encap mos_domain\n"
+"encap 1 domain is\n"
+"encap 2 domain cs\n"
+"encap 3 domain es\n"
+"define6 56 encap ntp_server\n"
+"encap 1 ip6address addr\n"
+"encap 2 ip6address mcast_addr\n"
+"encap 3 domain fqdn\n"
+"define6 57 domain access_domain\n"
+"define6 58 array domain sip_ua_cs_list\n"
+"define6 59 string bootfile_url\n"
+"define6 60 binhex bootfile_param\n"
+"define6 61 array uint16 architecture_types\n"
+"define6 62 embed nii\n"
+"embed byte type\n"
+"embed byte major\n"
+"embed byte minor\n"
+"define6 63 binhex geoloc\n"
+"define6 64 domain aftr_name\n"
+"define6 67 embed pd_exclude\n"
+"embed byte prefix_len\n"
+"embed binhex subnetID\n"
+"define6 69 encap mip6_idinf\n"
+"encap 71 option\n"
+"encap 72 option\n"
+"encap 73 option\n"
+"define6 70 encap mip6_udinf\n"
+"encap 71 option\n"
+"encap 72 option\n"
+"encap 73 option\n"
+"define6 71 embed mip6_hnp\n"
+"embed byte prefix_len\n"
+"embed ip6address prefix\n"
+"define6 72 ip6address mip6_haa\n"
+"define6 73 domain mip6_haf\n"
+"define6 74 embed rdnss_selection\n"
+"embed ip6address server\n"
+"embed byte prf\n"
+"embed array domain domains\n"
+"define6 75 string krb_principal_name\n"
+"define6 76 string krb_realm_name\n"
+"define6 78 embed krb_kdc\n"
+"embed uint16 priority\n"
+"embed uint16 weight\n"
+"embed byte transport_type\n"
+"embed uint16 port\n"
+"embed ip6address address\n"
+"embed string realm_name\n"
+"define6 80 ip6address link_address\n"
+"define6 82 request uint32 sol_max_rt\n"
+"define6 83 request uint32 inf_max_rt\n"
+"define6 89 embed s46_rule\n"
+"embed bitflags=0000000F flags\n"
+"embed byte ea_len\n"
+"embed byte prefix4_len\n"
+"embed ipaddress ipv4_prefix\n"
+"embed ip6address ipv6_prefix\n"
+"define6 90 ip6address s64_br\n"
+"define6 91 embed s46_dmr\n"
+"embed byte prefix_len\n"
+"embed binhex prefix\n"
+"define6 92 embed s46_v4v6bind\n"
+"embed ipaddress ipv4_address\n"
+"embed byte ipv6_prefix_len\n"
+"embed binhex ipv6_prefix_and_options\n"
+"define6 93 embed s46_portparams\n"
+"embed byte offset\n"
+"embed byte psid_len\n"
+"embed uint16 psid\n"
+"define6 94 embed s46_cont_mape\n"
+"encap 89 option\n"
+"encap 90 option\n"
+"define6 95 embed s46_cont_mapt\n"
+"encap 89 option\n"
+"encap 91 option\n"
+"define6 96 embed s46_cont_lw\n"
+"encap 90 option\n"
+"encap 92 option\n"
+"define6 112 string mudurl\n"
 #endif
-NULL
-};
+"\0";
+

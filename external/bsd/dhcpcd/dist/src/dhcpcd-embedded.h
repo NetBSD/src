@@ -35,4 +35,4 @@
 #define INITDEFINE6S	      69
 #endif
 
-extern const char * const dhcpcd_embedded_conf[];
+extern const char dhcpcd_embedded_conf[];

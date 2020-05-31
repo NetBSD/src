@@ -41,6 +41,7 @@
 #include <stdint.h>
 
 #include "arp.h"
+#include "bpf.h"
 #include "auth.h"
 #include "dhcp-common.h"
 
@@ -221,9 +222,8 @@ struct dhcp_state {
 	uint32_t xid;
 	int socket;
 
-	int bpf_fd;
-	unsigned int bpf_flags;
-	int udp_fd;
+	struct bpf *bpf;
+	int udp_rfd;
 	struct ipv4_addr *addr;
 	uint8_t added;
 
@@ -256,7 +256,7 @@ ssize_t print_rfc3361(FILE *, const uint8_t *, size_t);
 ssize_t print_rfc3442(FILE *, const uint8_t *, size_t);
 
 int dhcp_openudp(struct in_addr *);
-void dhcp_packet(struct interface *, uint8_t *, size_t);
+void dhcp_packet(struct interface *, uint8_t *, size_t, unsigned int);
 void dhcp_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
 void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);

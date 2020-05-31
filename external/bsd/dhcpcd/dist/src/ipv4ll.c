@@ -57,12 +57,10 @@ static const struct in_addr inaddr_llbcast = {
 	.s_addr = HTONL(LINKLOCAL_BCAST)
 };
 
-static void ipv4ll_start1(struct interface *, struct arp_state *);
-
-static in_addr_t
+static void
 ipv4ll_pickaddr(struct interface *ifp)
 {
-	struct in_addr addr;
+	struct in_addr addr = { .s_addr = 0 };
 	struct ipv4ll_state *state;
 
 	state = IPV4LL_STATE(ifp);
@@ -88,7 +86,7 @@ again:
 
 	/* Restore the original random state */
 	setstate(ifp->ctx->randomstate);
-	return addr.s_addr;
+	state->pickedaddr = addr;
 }
 
 int
@@ -176,13 +174,12 @@ ipv4ll_announced_arp(struct arp_state *astate)
 	struct ipv4ll_state *state = IPV4LL_STATE(astate->iface);
 
 	state->conflicts = 0;
-#ifdef KERNEL_RFC5227
-	arp_free(astate);
-#endif
 }
 
+#ifndef KERNEL_RFC5227
+/* This is the callback by ARP freeing */
 static void
-ipv4ll_arpfree(struct arp_state *astate)
+ipv4ll_free_arp(struct arp_state *astate)
 {
 	struct ipv4ll_state *state;
 
@@ -191,23 +188,33 @@ ipv4ll_arpfree(struct arp_state *astate)
 		state->arp = NULL;
 }
 
+/* This is us freeing any ARP state */
+static void
+ipv4ll_freearp(struct interface *ifp)
+{
+	struct ipv4ll_state *state;
+
+	state = IPV4LL_STATE(ifp);
+	if (state == NULL || state->arp == NULL)
+		return;
+
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, state->arp);
+	arp_free(state->arp);
+	state->arp = NULL;
+}
+#else
+#define	ipv4ll_freearp(ifp)
+#endif
+
 static void
 ipv4ll_not_found(struct interface *ifp)
 {
 	struct ipv4ll_state *state;
 	struct ipv4_addr *ia;
-#ifdef KERNEL_RFC5227
 	struct arp_state *astate;
-	bool new_addr;
-#endif
 
 	state = IPV4LL_STATE(ifp);
-	assert(state != NULL);
-
 	ia = ipv4_iffindaddr(ifp, &state->pickedaddr, &inaddr_llmask);
-#ifdef KERNEL_RFC5227
-	new_addr = ia == NULL;
-#endif
 #ifdef IN_IFF_NOTREADY
 	if (ia == NULL || ia->addr_flags & IN_IFF_NOTREADY)
 #endif
@@ -227,6 +234,7 @@ ipv4ll_not_found(struct interface *ifp)
 		return;
 	logdebugx("%s: DAD completed for %s", ifp->name, ia->saddr);
 #endif
+
 test:
 	state->addr = ia;
 	state->down = false;
@@ -236,32 +244,11 @@ test:
 		return;
 	}
 	rt_build(ifp->ctx, AF_INET);
-#ifdef KERNEL_RFC5227
-	if (!new_addr) {
-		astate = arp_new(ifp, &ia->addr);
-		if (ifp->ctx->options & DHCPCD_FORKED)
-			return;
-		if (astate != NULL) {
-			astate->announced_cb = ipv4ll_announced_arp;
-			astate->free_cb = ipv4ll_arpfree;
-			arp_announce(astate);
-		}
-	}
-#else
-	arp_announce(state->arp);
-#endif
+	astate = arp_announceaddr(ifp->ctx, &ia->addr);
+	if (astate != NULL)
+		astate->announced_cb = ipv4ll_announced_arp;
 	script_runreason(ifp, "IPV4LL");
 	dhcpcd_daemonise(ifp->ctx);
-}
-
-static void
-ipv4ll_startifp(void *arg)
-{
-	struct interface *ifp = arg;
-	struct ipv4ll_state *state;
-
-	state = IPV4LL_STATE(ifp);
-	ipv4ll_start1(ifp, state->arp);
 }
 
 static void
@@ -269,16 +256,15 @@ ipv4ll_found(struct interface *ifp)
 {
 	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
-	if (state->arp != NULL)
-		arp_cancel(state->arp);
+	ipv4ll_freearp(ifp);
 	if (++state->conflicts == MAX_CONFLICTS)
 		logerrx("%s: failed to acquire an IPv4LL address",
 		    ifp->name);
-	state->pickedaddr.s_addr = ipv4ll_pickaddr(ifp);
+	ipv4ll_pickaddr(ifp);
 	eloop_timeout_add_sec(ifp->ctx->eloop,
 	    state->conflicts >= MAX_CONFLICTS ?
 	    RATE_LIMIT_INTERVAL : PROBE_WAIT,
-	    ipv4ll_startifp, ifp);
+	    ipv4ll_start, ifp);
 }
 
 static void
@@ -286,62 +272,49 @@ ipv4ll_defend_failed(struct interface *ifp)
 {
 	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
-	if (state->arp != NULL)
-		arp_cancel(state->arp);
+	ipv4ll_freearp(ifp);
 	ipv4_deladdr(state->addr, 1);
-	state->down = true;
 	state->addr = NULL;
 	rt_build(ifp->ctx, AF_INET);
 	script_runreason(ifp, "IPV4LL");
-	state->pickedaddr.s_addr = ipv4ll_pickaddr(ifp);
-	ipv4ll_start1(ifp, state->arp);
+	ipv4ll_pickaddr(ifp);
+	ipv4ll_start(ifp);
 }
 
 #ifndef KERNEL_RFC5227
 static void
 ipv4ll_not_found_arp(struct arp_state *astate)
 {
-	struct interface *ifp;
-	struct ipv4ll_state *state;
 
-	assert(astate != NULL);
-	assert(astate->iface != NULL);
-
-	ifp = astate->iface;
-	state = IPV4LL_STATE(ifp);
-	assert(state != NULL);
-	assert(state->arp == astate);
-	ipv4ll_not_found(ifp);
+	ipv4ll_not_found(astate->iface);
 }
 
 static void
 ipv4ll_found_arp(struct arp_state *astate, __unused const struct arp_msg *amsg)
 {
-	struct interface *ifp = astate->iface;
-	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
-	assert(state->arp == astate);
-	ipv4ll_found(ifp);
+	ipv4ll_found(astate->iface);
 }
 
 static void
 ipv4ll_defend_failed_arp(struct arp_state *astate)
 {
-	struct ipv4ll_state *state = IPV4LL_STATE(astate->iface);
 
-	assert(state->arp == astate);
 	ipv4ll_defend_failed(astate->iface);
 }
 #endif
 
-static void
-ipv4ll_start1(struct interface *ifp, struct arp_state *astate)
+void
+ipv4ll_start(void *arg)
 {
+	struct interface *ifp = arg;
 	struct ipv4ll_state *state;
 	struct ipv4_addr *ia;
 	bool repick;
+#ifndef KERNEL_RFC5227
+	struct arp_state *astate;
+#endif
 
-	assert(ifp != NULL);
 	if ((state = IPV4LL_STATE(ifp)) == NULL) {
 		ifp->if_data[IF_DATA_IPV4LL] = calloc(1, sizeof(*state));
 		if ((state = IPV4LL_STATE(ifp)) == NULL) {
@@ -377,26 +350,6 @@ ipv4ll_start1(struct interface *ifp, struct arp_state *astate)
 		state->seeded = true;
 	}
 
-#ifndef KERNEL_RFC5227
-	if (astate == NULL) {
-		if (state->arp != NULL)
-			return;
-		if ((astate = arp_new(ifp, NULL)) == NULL)
-			return;
-		astate->found_cb = ipv4ll_found_arp;
-		astate->not_found_cb = ipv4ll_not_found_arp;
-		astate->announced_cb = ipv4ll_announced_arp;
-		astate->defend_failed_cb = ipv4ll_defend_failed_arp;
-		astate->free_cb = ipv4ll_arpfree;
-		state->arp = astate;
-	} else
-		assert(state->arp == astate);
-#else
-	UNUSED(astate);
-#endif
-
-	state->down = true;
-
 	/* Find the previosuly used address. */
 	if (state->pickedaddr.s_addr != INADDR_ANY)
 		ia = ipv4_iffindaddr(ifp, &state->pickedaddr, NULL);
@@ -418,11 +371,9 @@ ipv4ll_start1(struct interface *ifp, struct arp_state *astate)
 #endif
 
 	state->addr = ia;
+	state->down = true;
 	if (ia != NULL) {
 		state->pickedaddr = ia->addr;
-#ifndef KERNEL_RFC5227
-		astate->addr = ia->addr;
-#endif
 #ifdef IN_IFF_TENTATIVE
 		if (ia->addr_flags & (IN_IFF_TENTATIVE | IN_IFF_DETACHED)) {
 			loginfox("%s: waiting for DAD to complete on %s",
@@ -433,41 +384,27 @@ ipv4ll_start1(struct interface *ifp, struct arp_state *astate)
 #ifdef IN_IFF_DUPLICATED
 		loginfox("%s: using IPv4LL address %s", ifp->name, ia->saddr);
 #endif
-		ipv4ll_not_found(ifp);
-		return;
+	} else {
+		loginfox("%s: probing for an IPv4LL address", ifp->name);
+		if (repick || state->pickedaddr.s_addr == INADDR_ANY)
+			ipv4ll_pickaddr(ifp);
 	}
 
-	loginfox("%s: probing for an IPv4LL address", ifp->name);
-	if (repick || state->pickedaddr.s_addr == INADDR_ANY)
-		state->pickedaddr.s_addr = ipv4ll_pickaddr(ifp);
-#ifndef KERNEL_RFC5227
-	astate->addr = state->pickedaddr;
-#endif
-#ifdef IN_IFF_DUPLICATED
+#ifdef KERNEL_RFC5227
 	ipv4ll_not_found(ifp);
 #else
-	arp_probe(astate);
-#endif
-}
-
-void
-ipv4ll_start(void *arg)
-{
-
-	ipv4ll_start1(arg, NULL);
-}
-
-static void
-ipv4ll_freearp(struct interface *ifp)
-{
-	struct ipv4ll_state *state;
-
-	state = IPV4LL_STATE(ifp);
-	if (state == NULL || state->arp == NULL)
+	ipv4ll_freearp(ifp);
+	state->arp = astate = arp_new(ifp, &state->pickedaddr);
+	if (state->arp == NULL)
 		return;
 
-	eloop_timeout_delete(ifp->ctx->eloop, NULL, state->arp);
-	arp_free(state->arp);
+	astate->found_cb = ipv4ll_found_arp;
+	astate->not_found_cb = ipv4ll_not_found_arp;
+	astate->announced_cb = ipv4ll_announced_arp;
+	astate->defend_failed_cb = ipv4ll_defend_failed_arp;
+	astate->free_cb = ipv4ll_free_arp;
+	arp_probe(astate);
+#endif
 }
 
 void
@@ -516,6 +453,7 @@ ipv4ll_reset(struct interface *ifp)
 
 	if (state == NULL)
 		return;
+	ipv4ll_freearp(ifp);
 	state->pickedaddr.s_addr = INADDR_ANY;
 	state->seeded = false;
 }
@@ -587,9 +525,7 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 		ipv4ll_not_found(ifp);
 	else if (ia->addr_flags & IN_IFF_DUPLICATED) {
 		logerrx("%s: DAD detected %s", ifp->name, ia->saddr);
-#ifdef KERNEL_RFC5227
-		arp_freeaddr(ifp, &ia->addr);
-#endif
+		ipv4ll_freearp(ifp);
 		ipv4_deladdr(ia, 1);
 		state->addr = NULL;
 		rt_build(ifp->ctx, AF_INET);
