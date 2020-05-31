@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.21 2020/05/15 16:33:38 christos Exp $
+# $NetBSD: postinstall.in,v 1.22 2020/05/31 13:45:47 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -945,57 +945,65 @@ do_dhcpcd()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
-	dstdir="${DEST_DIR}/var/chroot/dhcpcd"
-
-	check_dir "${op}" "${dstdir}/var/db/dhcpcd" 755
+	check_dir "${op}" "${DEST_DIR}/var/db/dhcpcd" 755
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/etc/dhcpcd.duid" \
-		"${dstdir}/var/db/dhcpcd/duid"
+		"${DEST_DIR}/var/db/dhcpcd/duid"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/etc/dhcpcd.secret" \
-		"${dstdir}/var/db/dhcpcd/secret"
+		"${DEST_DIR}/var/db/dhcpcd/secret"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
-		"${dstdir}/var/db/dhcpcd/rdm_monotonic"
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
 	failed=$(( ${failed} + $? ))
 
 	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
 		[ -f "${lease}" ] || continue
 		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
-		new_lease="${dstdir}/var/db/dhcpcd/${new_lease}"
+		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
 		move_file "${op}" "${lease}" "${new_lease}"
 		failed=$(( ${failed} + $? ))
 	done
 
+	chroot_dir="${DEST_DIR}/var/chroot/dhcpcd"
 	move_file "${op}" \
-		"${DEST_DIR}/var/db/dhcpcd/duid" \
-		"${dstdir}/var/db/dhcpcd/duid"
+		"${chroot_dir}/var/db/dhcpcd/duid" \
+		"${DEST_DIR}/var/db/dhcpcd/duid"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
-		"${DEST_DIR}/var/db/dhcpcd/secret" \
-		"${dstdir}/var/db/dhcpcd/secret"
+		"${chroot_dir}/var/db/dhcpcd/secret" \
+		"${DEST_DIR}/var/db/dhcpcd/secret"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
-		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic" \
-		"${dstdir}/var/db/dhcpcd/rdm_monotonic"
+		"${chroot_dir}/var/db/dhcpcd/rdm_monotonic" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
 	failed=$(( ${failed} + $? ))
 
-	for lease in "${DEST_DIR}/var/db/dhcpcd/"*.lease*; do
+	for lease in "${chroot_dir}/var/db/dhcpcd/"*.lease*; do
 		[ -f "${lease}" ] || continue
-		new_lease="${dstdir}/var/db/dhcpcd/$(basename ${lease})"
+		new_lease="${DEST_DIR}/var/db/dhcpcd/$(basename ${lease})"
 		move_file "${op}" "${lease}" "${new_lease}"
 		failed=$(( ${failed} + $? ))
 	done
 
-	contents_owner "${op}" "${dstdir}/var/db/dhcpcd" _dhcpcd _dhcpcd
+	# Ensure chroot is now empty
+	for dir in \
+		$(find ${chroot_dir} -type f) \
+		$(find ${chroot_dir} -type d -mindepth 1 | sort -r)
+	do
+		echo "/var/chroot/dhcpcd${dir##${chroot_dir}}"
+	done | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	contents_owner "${op}" "${DEST_DIR}/var/db/dhcpcd" root wheel
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
