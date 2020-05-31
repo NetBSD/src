@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.60 2019/02/03 03:19:27 mrg Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.61 2020/05/31 01:39:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.60 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.61 2020/05/31 01:39:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -739,9 +739,18 @@ static void
 acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 {
 	struct acpicpu_cstate *cs = &sc->sc_cstate[state];
-	uint32_t end, start, val;
+	uint32_t val;
 
+#ifdef notyet
+	/*
+	 * XXX This has a significant performance impact because the ACPI
+	 * timer seems very slow and with many CPUs becomes a chokepoint. 
+	 * Better to use the TSC (if invariant) or APIC timer instead. 
+	 * Proably even getbintime().  Disabled for now as no functional
+	 * change - only C1 sleep is enabled.
+	 */
 	start = acpitimer_read_fast(NULL);
+#endif
 
 	switch (cs->cs_method) {
 
@@ -756,8 +765,15 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	}
 
 	cs->cs_evcnt.ev_count++;
+
+#ifdef notyet
+	/*
+	 * XXX As above.  Also, hztoms() seems incorrect as the ACPI timer
+	 * is running the MHz region.
+	 */
 	end = acpitimer_read_fast(NULL);
 	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
+#endif
 }
 
 static bool
