@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.63 2020/05/31 09:59:37 rin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.64 2020/05/31 23:24:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.63 2020/05/31 09:59:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.64 2020/05/31 23:24:20 rin Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -102,9 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.63 2020/05/31 09:59:37 rin Exp $"
 #include <ddb/db_interface.h>
 #include <ddb/db_access.h>
 #include <ddb/db_cpu.h>
-#include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
+
+static struct callout_cpu ccb;
+static struct cpu_info cib;
 #endif
 
 #define BUCKETS		1024
@@ -835,9 +837,8 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *kbucket,
 void
 db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-	struct callout_cpu *cc, *ccp;
-	struct cpu_info *ci, *cip;
-	const size_t ccs = sizeof(*cc), cis = sizeof(*ci);
+	struct callout_cpu *cc;
+	struct cpu_info *ci;
 	int b;
 
 #ifndef CRASH
@@ -845,40 +846,25 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 #endif
 	db_printf("    ticks  wheel               arg  func\n");
 
-	ccp = db_alloc(ccs);
-	if (ccp == NULL) {
-		db_printf("%s: cannot allocate callout_cpu\n", __func__);
-		return;
-	}
-	cip = db_alloc(cis);
-	if (cip == NULL) {
-		db_free(ccp, ccs);
-		db_printf("%s: cannot allocate cpu_info\n", __func__);
-		return;
-	}
-
 	/*
 	 * Don't lock the callwheel; all the other CPUs are paused
 	 * anyhow, and we might be called in a circumstance where
 	 * some other CPU was paused while holding the lock.
 	 */
 	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-		db_read_bytes((db_addr_t)ci, cis, (char *)cip);
-		cc = cip->ci_data.cpu_callout;
-		db_read_bytes((db_addr_t)cc, ccs, (char *)ccp);
-		db_show_callout_bucket(ccp, &cc->cc_todo, &ccp->cc_todo);
+		db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+		cc = cib.ci_data.cpu_callout;
+		db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+		db_show_callout_bucket(&ccb, &cc->cc_todo, &ccb.cc_todo);
 	}
 	for (b = 0; b < BUCKETS; b++) {
 		for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-			db_read_bytes((db_addr_t)ci, cis, (char *)cip);
-			cc = cip->ci_data.cpu_callout;
-			db_read_bytes((db_addr_t)cc, ccs, (char *)ccp);
-			db_show_callout_bucket(ccp, &cc->cc_wheel[b],
-			    &ccp->cc_wheel[b]);
+			db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+			cc = cib.ci_data.cpu_callout;
+			db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+			db_show_callout_bucket(&ccb, &cc->cc_wheel[b],
+			    &ccb.cc_wheel[b]);
 		}
 	}
-
-	db_free(ccp, ccs);
-	db_free(cip, cis);
 }
 #endif /* DDB */
