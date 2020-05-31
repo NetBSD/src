@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.11 2020/05/25 17:49:03 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.12 2020/05/31 10:48:27 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -151,4 +151,20 @@ sys/netinet/igmp.c				1.70
 	Fix one byte kernel heap leak.
 	Fix uninitialized memory access.
 	[christos, ticket #1549]
+
+sys/dev/usb/usb.c				1.187
+
+	PR 55303: do not allow open of /dev/usb if there are no attached
+	busses.
+	[skrll, ticket #1551]
+
+lib/libterminfo/curterm.c			1.14
+
+	terminfo: test strlcpy result against space free, not string length.
+	[roy, ticket #1552]
+
+usr.sbin/bta2dpd/bta2dpd/bta2dpd.c		1.7
+
+	Avoid running of the end of the array if a file cannot be opened.
+	[nat, ticket #1553]
 
