@@ -66,9 +66,9 @@ TAILQ_HEAD(fd_list_head, fd_list);
 #define FD_LISTEN	(1<<0)
 #define FD_UNPRIV	(1<<1)
 
-int control_start(struct dhcpcd_ctx *, const char *);
+int control_start(struct dhcpcd_ctx *, const char *, sa_family_t);
 int control_stop(struct dhcpcd_ctx *);
-int control_open(const char *, bool);
+int control_open(const char *, sa_family_t, bool);
 ssize_t control_send(struct dhcpcd_ctx *, int, char * const *);
 int control_queue(struct fd_list *, void *, size_t, bool);
 

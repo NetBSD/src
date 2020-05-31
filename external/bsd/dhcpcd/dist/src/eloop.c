@@ -1023,11 +1023,12 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 			continue;
 		}
 
-		eloop_reduce_timers(eloop);
-
 		t = TAILQ_FIRST(&eloop->timeouts);
 		if (t == NULL && eloop->events_len == 0)
 			break;
+
+		if (t != NULL)
+			eloop_reduce_timers(eloop);
 
 		if (t != NULL && t->seconds == 0 && t->nseconds == 0) {
 			TAILQ_REMOVE(&eloop->timeouts, t, next);

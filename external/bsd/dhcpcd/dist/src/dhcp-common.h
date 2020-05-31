@@ -136,6 +136,11 @@ void dhcp_envoption(struct dhcpcd_ctx *,
     const uint8_t *, size_t, struct dhcp_opt **),
     const uint8_t *od, size_t ol);
 void dhcp_zero_index(struct dhcp_opt *);
-size_t dhcp_read_lease_fd(int, void **);
 
+ssize_t dhcp_readfile(struct dhcpcd_ctx *, const char *, void *, size_t);
+ssize_t dhcp_writefile(struct dhcpcd_ctx *, const char *, mode_t,
+    const void *, size_t);
+int dhcp_filemtime(struct dhcpcd_ctx *, const char *, time_t *);
+int dhcp_unlink(struct dhcpcd_ctx *, const char *);
+size_t dhcp_read_hwaddr_aton(struct dhcpcd_ctx *, uint8_t **, const char *);
 #endif

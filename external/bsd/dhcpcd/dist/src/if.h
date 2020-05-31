@@ -95,6 +95,8 @@ typedef unsigned long		ioctl_request_t;
 #define	FRAMEHDRLEN_MAX			14	/* only ethernet support */
 #define	FRAMELEN_MAX			(FRAMEHDRLEN_MAX + 9216)
 
+#define UDPLEN_MAX			64 * 1024
+
 /* Work out if we have a private address or not
  * 10/8
  * 172.16/12
@@ -117,6 +119,11 @@ typedef unsigned long		ioctl_request_t;
  * but then ignores it. */
 #undef RTF_CLONING
 
+/* This interface is busted on DilOS at least.
+ * It used to work, but lukily Solaris can fall back to
+ * IP_PKTINFO. */
+#undef IP_RECVIF
+
 /* Solaris getifaddrs is very un-suitable for dhcpcd.
  * See if-sun.c for details why. */
 struct ifaddrs;
@@ -126,6 +133,11 @@ int if_getsubnet(struct dhcpcd_ctx *, const char *, int, void *, size_t);
 #endif
 
 int if_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
+#ifdef HAVE_PLEDGE
+#define	pioctl(ctx, req, data, len) if_ioctl((ctx), (req), (data), (len))
+#else
+#define	pioctl(ctx, req, data, len) ioctl((ctx)->pf_inet_fd, (req),(data),(len))
+#endif
 int if_getflags(struct interface *);
 int if_setflag(struct interface *, short, short);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
@@ -171,7 +183,7 @@ int if_conf(struct interface *);
 int if_init(struct interface *);
 int if_getssid(struct interface *);
 bool if_ignore(struct dhcpcd_ctx *, const char *);
-int if_vimaster(const struct dhcpcd_ctx *ctx, const char *);
+int if_vimaster(struct dhcpcd_ctx *ctx, const char *);
 unsigned short if_vlanid(const struct interface *);
 int if_opensockets(struct dhcpcd_ctx *);
 int if_opensockets_os(struct dhcpcd_ctx *);
@@ -202,6 +214,9 @@ int if_setmac(struct interface *ifp, void *, uint8_t);
 # define HAVE_SOCK_NONBLOCK
 #else
 # define SOCK_NONBLOCK	0x20000000
+#endif
+#ifndef SOCK_CXNB
+#define	SOCK_CXNB	SOCK_CLOEXEC | SOCK_NONBLOCK
 #endif
 
 int if_route(unsigned char, const struct rt *rt);
@@ -241,7 +256,7 @@ struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *,
 int xsocket(int, int, int);
 
 #ifdef __linux__
-int if_linksocket(struct sockaddr_nl *, int);
+int if_linksocket(struct sockaddr_nl *, int, int);
 int if_getnetlink(struct dhcpcd_ctx *, struct iovec *, int, int,
     int (*)(struct dhcpcd_ctx *, void *, struct nlmsghdr *), void *);
 #endif

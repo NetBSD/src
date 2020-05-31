@@ -193,21 +193,33 @@ control_handle_unpriv(void *arg)
 }
 
 static int
-make_sock(struct sockaddr_un *sa, const char *ifname, bool unpriv)
+make_sock(struct sockaddr_un *sa, const char *ifname, sa_family_t family,
+    bool unpriv)
 {
 	int fd;
 
-#define SOCK_FLAGS	SOCK_CLOEXEC | SOCK_NONBLOCK
-	if ((fd = xsocket(AF_UNIX, SOCK_STREAM | SOCK_FLAGS, 0)) == -1)
+	if ((fd = xsocket(AF_UNIX, SOCK_STREAM | SOCK_CXNB, 0)) == -1)
 		return -1;
-#undef SOCK_FLAGS
 	memset(sa, 0, sizeof(*sa));
 	sa->sun_family = AF_UNIX;
 	if (unpriv)
 		strlcpy(sa->sun_path, UNPRIVSOCKET, sizeof(sa->sun_path));
 	else {
+		const char *per;
+
+		switch(family) {
+		case AF_INET:
+			per = "-4";
+			break;
+		case AF_INET6:
+			per = "-6";
+			break;
+		default:
+			per = "";
+			break;
+		}
 		snprintf(sa->sun_path, sizeof(sa->sun_path), CONTROLSOCKET,
-		    ifname ? ifname : "", ifname ? "." : "");
+		    ifname ? ifname : "", ifname ? per : "", ifname ? "." : "");
 	}
 	return fd;
 }
@@ -216,14 +228,17 @@ make_sock(struct sockaddr_un *sa, const char *ifname, bool unpriv)
 #define S_UNPRIV (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)
 
 static int
-control_start1(struct dhcpcd_ctx *ctx, const char *ifname, mode_t fmode)
+control_start1(struct dhcpcd_ctx *ctx, const char *ifname, sa_family_t family,
+    mode_t fmode)
 {
 	struct sockaddr_un sa;
 	int fd;
 	socklen_t len;
 
-	if ((fd = make_sock(&sa, ifname, (fmode & S_UNPRIV) == S_UNPRIV)) == -1)
+	fd = make_sock(&sa, ifname, family, (fmode & S_UNPRIV) == S_UNPRIV);
+	if (fd == -1)
 		return -1;
+
 	len = (socklen_t)SUN_LEN(&sa);
 	unlink(sa.sun_path);
 	if (bind(fd, (struct sockaddr *)&sa, len) == -1 ||
@@ -244,17 +259,19 @@ control_start1(struct dhcpcd_ctx *ctx, const char *ifname, mode_t fmode)
 }
 
 int
-control_start(struct dhcpcd_ctx *ctx, const char *ifname)
+control_start(struct dhcpcd_ctx *ctx, const char *ifname, sa_family_t family)
 {
 	int fd;
 
-	if ((fd = control_start1(ctx, ifname, S_PRIV)) == -1)
+	if ((fd = control_start1(ctx, ifname, family, S_PRIV)) == -1)
 		return -1;
 
 	ctx->control_fd = fd;
 	eloop_event_add(ctx->eloop, fd, control_handle, ctx);
 
-	if (ifname == NULL && (fd = control_start1(ctx, NULL, S_UNPRIV)) != -1){
+	if (ifname == NULL &&
+	    (fd = control_start1(ctx, NULL, AF_UNSPEC, S_UNPRIV)) != -1)
+	{
 		/* We must be in master mode, so create an unprivileged socket
 		 * to allow normal users to learn the status of dhcpcd. */
 		ctx->control_unpriv_fd = fd;
@@ -318,12 +335,12 @@ control_stop(struct dhcpcd_ctx *ctx)
 }
 
 int
-control_open(const char *ifname, bool unpriv)
+control_open(const char *ifname, sa_family_t family, bool unpriv)
 {
 	struct sockaddr_un sa;
 	int fd;
 
-	if ((fd = make_sock(&sa, ifname, unpriv)) != -1) {
+	if ((fd = make_sock(&sa, ifname, family, unpriv)) != -1) {
 		socklen_t len;
 
 		len = (socklen_t)SUN_LEN(&sa);

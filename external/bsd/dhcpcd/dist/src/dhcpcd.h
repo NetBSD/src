@@ -82,7 +82,7 @@ struct interface {
 	unsigned int index;
 	unsigned int active;
 	unsigned int flags;
-	sa_family_t family;
+	uint16_t hwtype; /* ARPHRD_ETHER for example */
 	unsigned char hwaddr[HWADDR_LEN];
 	uint8_t hwlen;
 	unsigned short vlanid;
@@ -125,6 +125,7 @@ struct passwd;
 
 struct dhcpcd_ctx {
 	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
+	char vendor[256];
 	int fork_fd;	/* FD for the fork init signal pipe */
 	const char *cffile;
 	unsigned long long options;
@@ -163,6 +164,7 @@ struct dhcpcd_ctx {
 #endif
 	struct eloop *eloop;
 
+	char *script;
 #ifdef HAVE_OPEN_MEMSTREAM
 	FILE *script_fp;
 #endif
@@ -205,7 +207,8 @@ struct dhcpcd_ctx {
 	struct dhcp_opt *dhcp_opts;
 	size_t dhcp_opts_len;
 
-	int udp_fd;
+	int udp_rfd;
+	int udp_wfd;
 
 	/* Our aggregate option buffer.
 	 * We ONLY use this when options are split, which for most purposes is
@@ -222,11 +225,11 @@ struct dhcpcd_ctx {
 #endif
 	struct ra_head *ra_routers;
 
-	int dhcp6_fd;
-
 	struct dhcp_opt *nd_opts;
 	size_t nd_opts_len;
 #ifdef DHCP6
+	int dhcp6_rfd;
+	int dhcp6_wfd;
 	struct dhcp_opt *dhcp6_opts;
 	size_t dhcp6_opts_len;
 #endif
@@ -247,7 +250,11 @@ struct dhcpcd_ctx {
 #ifdef USE_SIGNALS
 extern const int dhcpcd_signals[];
 extern const size_t dhcpcd_signals_len;
+extern const int dhcpcd_signals_ignore[];
+extern const size_t dhcpcd_signals_ignore_len;
 #endif
+
+extern const char *dhcpcd_default_script;
 
 int dhcpcd_ifafwaiting(const struct interface *);
 int dhcpcd_afwaiting(const struct dhcpcd_ctx *);
@@ -257,8 +264,7 @@ void dhcpcd_linkoverflow(struct dhcpcd_ctx *);
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
 void dhcpcd_handlecarrier(struct dhcpcd_ctx *, int, unsigned int, const char *);
 int dhcpcd_handleinterface(void *, int, const char *);
-void dhcpcd_handlehwaddr(struct dhcpcd_ctx *, const char *,
-    const void *, uint8_t);
+void dhcpcd_handlehwaddr(struct interface *, uint16_t, const void *, uint8_t);
 void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 

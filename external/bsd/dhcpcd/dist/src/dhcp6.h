@@ -168,9 +168,10 @@ enum DH6S {
 	DH6S_INFORMED,
 	DH6S_RENEW_REQUESTED,
 	DH6S_PROBE,
+	DH6S_DECLINE,
 	DH6S_DELEGATED,
 	DH6S_RELEASE,
-	DH6S_RELEASED
+	DH6S_RELEASED,
 };
 
 struct dhcp6_state {
@@ -225,6 +226,7 @@ struct dhcp6_state {
 	(D6_CSTATE((ifp)) &&						       \
 	D6_CSTATE((ifp))->reason && dhcp6_dadcompleted((ifp)))
 
+int dhcp6_openraw(void);
 int dhcp6_openudp(unsigned int, struct in6_addr *);
 void dhcp6_recvmsg(struct dhcpcd_ctx *, struct msghdr *, struct ipv6_addr *);
 void dhcp6_printoptions(const struct dhcpcd_ctx *,
