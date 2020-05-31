@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.145 2020/05/15 12:34:52 maxv Exp $	*/
+/*	$NetBSD: uhub.c,v 1.146 2020/05/31 08:05:30 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.145 2020/05/15 12:34:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.146 2020/05/31 08:05:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -365,7 +365,6 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_statuspend = kmem_zalloc(sc->sc_statuslen, KM_SLEEP);
 	sc->sc_status = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	memset(sc->sc_statuspend, 0, sc->sc_statuslen);
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
