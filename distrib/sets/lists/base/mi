@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1247 2020/05/31 13:00:48 roy Exp $
+# $NetBSD: mi,v 1.1248 2020/05/31 13:07:50 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6049,6 +6049,11 @@
 ./var/backups					base-sys-root
 ./var/chroot					base-sys-root
 ./var/chroot/dhcpcd				base-dhcpcd-root
+./var/chroot/dhcpcd/etc				base-obsolete		obsolete
+./var/chroot/dhcpcd/var				base-obsolete		obsolete
+./var/chroot/dhcpcd/var/run			base-obsolete		obsolete
+./var/chroot/dhcpcd/var/db			base-obsolete		obsolete
+./var/chroot/dhcpcd/var/db/dhcpcd		base-obsolete		obsolete
 ./var/chroot/ftp-proxy				base-sys-root
 ./var/chroot/named				base-bind-root
 ./var/chroot/named/dev				base-bind-root
