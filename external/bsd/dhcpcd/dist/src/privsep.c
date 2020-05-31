@@ -63,6 +63,7 @@
 #include "arp.h"
 #include "common.h"
 #include "control.h"
+#include "dev.h"
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "eloop.h"
@@ -70,36 +71,18 @@
 #include "logerr.h"
 #include "privsep.h"
 
+#ifdef HAVE_CAPSICUM
+#include <sys/capsicum.h>
+#endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif
 
 int
-ps_mkdir(char *path)
-{
-	char *slash;
-	bool done;
-
-	slash = path;
-	for (;;) {
-		slash += strspn(slash, "/");
-		slash += strcspn(slash, "/");
-		done = (*slash == '\0');
-		*slash = '\0';
-		if (mkdir(path, 0755) == -1 && errno != EEXIST)
-			return -1;
-		if (done)
-			break;
-		*slash = '/';
-	}
-	return 0;
-}
-
-int
 ps_init(struct dhcpcd_ctx *ctx)
 {
-	char path[PATH_MAX];
-	struct passwd *pw = ctx->ps_user;
+	struct passwd *pw;
+	struct stat st;
 
 	errno = 0;
 	if ((ctx->ps_user = pw = getpwnam(PRIVSEP_USER)) == NULL) {
@@ -113,24 +96,13 @@ ps_init(struct dhcpcd_ctx *ctx)
 		return -1;
 	}
 
-	/* If we pickup the _dhcp user refuse the default directory */
-	if (strcmp(pw->pw_dir, "/var/empty") == 0) {
+	if (stat(pw->pw_dir, &st) == -1 || !S_ISDIR(st.st_mode)) {
 		ctx->options &= ~DHCPCD_PRIVSEP;
-		logerrx("refusing chroot: %s: %s", PRIVSEP_USER, pw->pw_dir);
+		logerrx("refusing chroot: %s: %s",
+		    PRIVSEP_USER, pw->pw_dir);
 		errno = 0;
 		return -1;
 	}
-
-	/* Create the database directory. */
-	if (snprintf(path, sizeof(path), "%s%s", pw->pw_dir, DBDIR) == -1 ||
-	    ps_mkdir(path) == -1 ||
-	    chown(path, pw->pw_uid, pw->pw_gid) == -1 ||
-	    chmod(path, 0755) == -1)
-		logerr("%s: %s", __func__, path);
-
-	/* Ensure we have a localtime to correctly format dates. */
-	if (ps_root_docopychroot(ctx, "/etc/localtime") == -1 && errno!=ENOENT)
-		logerr("%s: %s", __func__, "/etc/localtime");
 
 	ctx->options |= DHCPCD_PRIVSEP;
 	return 0;
@@ -142,8 +114,7 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	struct passwd *pw = ctx->ps_user;
 
 	if (!(ctx->options & DHCPCD_FORKED))
-		logdebugx("chrooting to `%s'", pw->pw_dir);
-
+		logdebugx("chrooting to `%s' as %s", pw->pw_dir, pw->pw_name);
 	if (chroot(pw->pw_dir) == -1)
 		logerr("%s: chroot `%s'", __func__, pw->pw_dir);
 	if (chdir("/") == -1)
@@ -170,6 +141,11 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	int stype;
 	int fd[2];
 	pid_t pid;
+#ifdef HAVE_CAPSICUM
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT, CAP_SHUTDOWN);
+#endif
 
 	stype = SOCK_CLOEXEC | SOCK_NONBLOCK;
 	if (socketpair(AF_UNIX, SOCK_DGRAM | stype, 0, fd) == -1) {
@@ -189,8 +165,17 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		*priv_pid = pid;
 		*priv_fd = fd[0];
 		close(fd[1]);
-		if (recv_unpriv_msg != NULL &&
-		    eloop_event_add(ctx->eloop, *priv_fd,
+		if (recv_unpriv_msg == NULL)
+			;
+#ifdef HAVE_CAPSICUM
+		else if (cap_rights_limit(*priv_fd, &rights) == -1
+		    && errno != ENOSYS)
+		{
+			logerr("%s: cap_rights_limit", __func__);
+			return -1;
+		}
+#endif
+		else if (eloop_event_add(ctx->eloop, *priv_fd,
 		    recv_unpriv_msg, recv_ctx) == -1)
 		{
 			logerr("%s: eloop_event_add", __func__);
@@ -234,6 +219,11 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		goto errexit;
 	}
 
+#ifdef HAVE_CAPSICUM
+	if (cap_rights_limit(*priv_fd, &rights) == -1 && errno != ENOSYS)
+		goto errexit;
+#endif
+
 	if (eloop_event_add(ctx->eloop, *priv_fd, recv_msg, recv_ctx) == -1)
 	{
 		logerr("%s: eloop_event_add", __func__);
@@ -246,8 +236,8 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	if (!(ctx->options & DHCPCD_DEBUG) &&
 	   (!(ctx->options & DHCPCD_TEST) || loggetopts() & LOGERR_QUIET))
 	{
-		freopen(_PATH_DEVNULL, "w", stdout);
-		freopen(_PATH_DEVNULL, "w", stderr);
+		(void)freopen(_PATH_DEVNULL, "w", stdout);
+		(void)freopen(_PATH_DEVNULL, "w", stderr);
 	}
 
 	if (flags & PSF_DROPPRIVS)
@@ -258,7 +248,7 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 errexit:
 	/* Failure to start root or inet processes is fatal. */
 	if (priv_fd == &ctx->ps_root_fd || priv_fd == &ctx->ps_inet_fd)
-		ps_sendcmd(ctx, *priv_fd, PS_STOP, 0, NULL, 0);
+		(void)ps_sendcmd(ctx, *priv_fd, PS_STOP, 0, NULL, 0);
 	shutdown(*priv_fd, SHUT_RDWR);
 	*priv_fd = -1;
 	return -1;
@@ -288,6 +278,18 @@ ps_dostop(struct dhcpcd_ctx *ctx, pid_t *pid, int *fd)
 		logerr(__func__);
 #endif
 	status = 0;
+
+#ifdef HAVE_CAPSICUM
+	unsigned int cap_mode = 0;
+	int cap_err = cap_getmode(&cap_mode);
+
+	if (cap_err == -1) {
+		if (errno != ENOSYS)
+			logerr("%s: cap_getmode", __func__);
+	} else if (cap_mode != 0)
+		goto nowait;
+#endif
+
 	/* Wait for the process to finish */
 	while (waitpid(*pid, &status, 0) == -1) {
 		if (errno != EINTR) {
@@ -300,6 +302,9 @@ ps_dostop(struct dhcpcd_ctx *ctx, pid_t *pid, int *fd)
 			logerr("%s: waitpid ", __func__);
 #endif
 	}
+#ifdef HAVE_CAPSICUM
+nowait:
+#endif
 	*pid = 0;
 
 #ifdef PRIVSEP_DEBUG
@@ -318,6 +323,7 @@ ps_start(struct dhcpcd_ctx *ctx)
 
 	switch (pid = ps_root_start(ctx)) {
 	case -1:
+		logerr("ps_root_start");
 		return -1;
 	case 0:
 		return 0;
@@ -327,7 +333,7 @@ ps_start(struct dhcpcd_ctx *ctx)
 
 	/* No point in spawning the generic network listener if we're
 	 * not going to use it. */
-	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_IPV6RS)))
+	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_IPV6)))
 		goto started;
 
 	switch (pid = ps_inet_start(ctx)) {
@@ -342,6 +348,13 @@ ps_start(struct dhcpcd_ctx *ctx)
 	}
 
 started:
+
+#ifdef ARC4RANDOM_H
+	/* Seed the random number generator early incase it needs /dev/urandom
+	 * which won't be available in the chroot. */
+	arc4random();
+#endif
+
 	return 1;
 }
 
@@ -374,14 +387,6 @@ ps_stop(struct dhcpcd_ctx *ctx)
 void
 ps_freeprocess(struct ps_process *psp)
 {
-#ifdef INET
-	struct ipv4_state *istate = IPV4_STATE(&psp->psp_ifp);
-
-	if (istate != NULL) {
-		free(istate->buffer);
-		free(istate);
-	}
-#endif
 
 	TAILQ_REMOVE(&psp->psp_ctx->ps_processes, psp, next);
 	if (psp->psp_fd != -1) {
@@ -392,6 +397,10 @@ ps_freeprocess(struct ps_process *psp)
 		eloop_event_delete(psp->psp_ctx->eloop, psp->psp_work_fd);
 		close(psp->psp_work_fd);
 	}
+#ifdef INET
+	if (psp->psp_bpf != NULL)
+		bpf_close(psp->psp_bpf);
+#endif
 	free(psp);
 }
 
@@ -452,26 +461,24 @@ ps_unrollmsg(struct msghdr *msg, struct ps_msghdr *psm,
 	return 0;
 }
 
-
 ssize_t
 ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
     struct ps_msghdr *psm, const struct msghdr *msg)
 {
-	assert(msg == NULL || msg->msg_iovlen == 1);
-
 	struct iovec iov[] = {
 		{ .iov_base = UNCONST(psm), .iov_len = sizeof(*psm) },
 		{ .iov_base = NULL, },	/* name */
 		{ .iov_base = NULL, },	/* control */
-		{ .iov_base = NULL, },	/* payload */
+		{ .iov_base = NULL, },	/* payload 1 */
+		{ .iov_base = NULL, },	/* payload 2 */
+		{ .iov_base = NULL, },	/* payload 3 */
 	};
-	int iovlen = __arraycount(iov);
+	int iovlen;
 	ssize_t len;
 
 	if (msg != NULL) {
 		struct iovec *iovp = &iov[1];
-
-		assert(msg->msg_iovlen == 1);
+		int i;
 
 		psm->ps_namelen = msg->msg_namelen;
 		psm->ps_controllen = (socklen_t)msg->msg_controllen;
@@ -481,10 +488,18 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 		iovp++;
 		iovp->iov_base = msg->msg_control;
 		iovp->iov_len = msg->msg_controllen;
-		iovp++;
-		iovp->iov_base = msg->msg_iov[0].iov_base;
-		iovp->iov_len = msg->msg_iov[0].iov_len;
-		iovlen = __arraycount(iov);
+		iovlen = 3;
+
+		for (i = 0; i < (int)msg->msg_iovlen; i++) {
+			if ((size_t)(iovlen + i) > __arraycount(iov)) {
+				errno =	ENOBUFS;
+				return -1;
+			}
+			iovp++;
+			iovp->iov_base = msg->msg_iov[i].iov_base;
+			iovp->iov_len = msg->msg_iov[i].iov_len;
+		}
+		iovlen += i;
 	} else
 		iovlen = 1;
 
@@ -513,18 +528,19 @@ ps_sendpsmdata(struct dhcpcd_ctx *ctx, int fd,
 
 
 ssize_t
-ps_sendmsg(struct dhcpcd_ctx *ctx, int fd, uint8_t cmd, unsigned long flags,
+ps_sendmsg(struct dhcpcd_ctx *ctx, int fd, uint16_t cmd, unsigned long flags,
     const struct msghdr *msg)
 {
-	assert(msg->msg_iovlen == 1);
-
 	struct ps_msghdr psm = {
 		.ps_cmd = cmd,
 		.ps_flags = flags,
 		.ps_namelen = msg->msg_namelen,
 		.ps_controllen = (socklen_t)msg->msg_controllen,
-		.ps_datalen = msg->msg_iov[0].iov_len,
 	};
+	size_t i;
+
+	for (i = 0; i < (size_t)msg->msg_iovlen; i++)
+		psm.ps_datalen += msg->msg_iov[i].iov_len;
 
 #if 0	/* For debugging structure padding. */
 	logerrx("psa.family %lu %zu", offsetof(struct ps_addr, psa_family), sizeof(psm.ps_id.psi_addr.psa_family));
@@ -555,7 +571,7 @@ ps_sendmsg(struct dhcpcd_ctx *ctx, int fd, uint8_t cmd, unsigned long flags,
 }
 
 ssize_t
-ps_sendcmd(struct dhcpcd_ctx *ctx, int fd, uint8_t cmd, unsigned long flags,
+ps_sendcmd(struct dhcpcd_ctx *ctx, int fd, uint16_t cmd, unsigned long flags,
     const void *data, size_t len)
 {
 	struct ps_msghdr psm = {
@@ -573,7 +589,7 @@ ps_sendcmd(struct dhcpcd_ctx *ctx, int fd, uint8_t cmd, unsigned long flags,
 }
 
 static ssize_t
-ps_sendcmdmsg(int fd, uint8_t cmd, const struct msghdr *msg)
+ps_sendcmdmsg(int fd, uint16_t cmd, const struct msghdr *msg)
 {
 	struct ps_msghdr psm = { .ps_cmd = cmd };
 	uint8_t data[PS_BUFLEN], *p = data;
@@ -616,7 +632,7 @@ nobufs:
 }
 
 ssize_t
-ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint8_t cmd, int wfd)
+ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint16_t cmd, int wfd)
 {
 	struct sockaddr_storage ss = { .ss_family = AF_UNSPEC };
 	uint8_t controlbuf[sizeof(struct sockaddr_storage)] = { 0 };
@@ -688,6 +704,9 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd,
 		logdebugx("process %d stopping", getpid());
 #endif
 		ps_free(ctx);
+#ifdef PLUGIN_DEV
+		dev_stop(ctx);
+#endif
 		eloop_exit(ctx->eloop, len != -1 ? EXIT_SUCCESS : EXIT_FAILURE);
 		return len;
 	}
@@ -695,6 +714,9 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd,
 
 	if (ps_unrollmsg(&msg, &psm.psm_hdr, psm.psm_data, dlen) == -1)
 		return -1;
+
+	if (callback == NULL)
+		return 0;
 
 	errno = 0;
 	return callback(cbctx, &psm.psm_hdr, &msg);
