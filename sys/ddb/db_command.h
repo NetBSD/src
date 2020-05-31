@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.37 2020/05/31 09:40:09 rin Exp $	*/
+/*	$NetBSD: db_command.h,v 1.38 2020/05/31 09:51:55 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -143,6 +143,10 @@ struct db_command {
 	const char *cmd_arg_help;	/* arguments description */
 #endif
 };
+
+void	*db_alloc(size_t);
+void	*db_zalloc(size_t);
+void	db_free(void *, size_t);
 
 #ifndef _KERNEL
 #define db_kernelonly() \
