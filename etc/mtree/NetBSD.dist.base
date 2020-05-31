@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.217 2020/05/30 20:47:59 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.218 2020/05/31 12:58:09 roy Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1276,11 +1276,6 @@
 ./var/backups
 ./var/chroot
 ./var/chroot/dhcpcd
-./var/chroot/dhcpcd/etc
-./var/chroot/dhcpcd/var
-./var/chroot/dhcpcd/var/run
-./var/chroot/dhcpcd/var/db
-./var/chroot/dhcpcd/var/db/dhcpcd	mode=0775 uname=_dhcpcd gname=_dhcpcd
 ./var/chroot/ftp-proxy		mode=0755
 ./var/chroot/named
 ./var/chroot/named/dev

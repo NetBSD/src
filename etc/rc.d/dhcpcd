@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# $NetBSD: dhcpcd,v 1.8 2020/04/02 12:58:49 roy Exp $
+# $NetBSD: dhcpcd,v 1.9 2020/05/31 12:58:09 roy Exp $
 
 # PROVIDE: dhcpcd
 # REQUIRE: network mountcritlocal
 # BEFORE:  NETWORKING
-# KEYWORD: chrootdir
 
 $_rc_subr_loaded . /etc/rc.subr
 
