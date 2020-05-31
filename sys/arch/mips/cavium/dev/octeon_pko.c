@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pko.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_pko.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -41,11 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $"
 #include <mips/cavium/dev/octeon_pkoreg.h>
 #include <mips/cavium/dev/octeon_pkovar.h>
 
-static inline void	octeon_pko_op_store(uint64_t, uint64_t);
+static inline void	octpko_op_store(uint64_t, uint64_t);
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_pko_intr_evcnt_attach(struct octeon_pko_softc *);
-void			octeon_pko_intr_rml(void *);
+#ifdef CNMAC_DEBUG
+void			octpko_intr_evcnt_attach(struct octpko_softc *);
+void			octpko_intr_rml(void *);
 #endif
 
 #define	_PKO_RD8(sc, off) \
@@ -53,18 +53,17 @@ void			octeon_pko_intr_rml(void *);
 #define	_PKO_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
-#ifdef OCTEON_ETH_DEBUG
-struct octeon_pko_softc	*__octeon_pko_softc;
+#ifdef CNMAC_DEBUG
+struct octpko_softc	*__octpko_softc;
 #endif
 
 /* ----- gloal functions */
 
 /* XXX */
 void
-octeon_pko_init(struct octeon_pko_attach_args *aa,
-    struct octeon_pko_softc **rsc)
+octpko_init(struct octpko_attach_args *aa, struct octpko_softc **rsc)
 {
-	struct octeon_pko_softc *sc;
+	struct octpko_softc *sc;
 	int status;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -84,14 +83,14 @@ octeon_pko_init(struct octeon_pko_attach_args *aa,
 
 	*rsc = sc;
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pko_intr_evcnt_attach(sc);
-	__octeon_pko_softc = sc;
+#ifdef CNMAC_DEBUG
+	octpko_intr_evcnt_attach(sc);
+	__octpko_softc = sc;
 #endif
 }
 
 int
-octeon_pko_enable(struct octeon_pko_softc *sc)
+octpko_enable(struct octpko_softc *sc)
 {
 	uint64_t reg_flags;
 
@@ -109,7 +108,7 @@ octeon_pko_enable(struct octeon_pko_softc *sc)
 
 #if 0
 void
-octeon_pko_reset(octeon_pko_softc *sc)
+octpko_reset(octpko_softc *sc)
 {
 	uint64_t reg_flags;
 
@@ -120,7 +119,7 @@ octeon_pko_reset(octeon_pko_softc *sc)
 #endif
 
 void
-octeon_pko_config(struct octeon_pko_softc *sc)
+octpko_config(struct octpko_softc *sc)
 {
 	uint64_t reg_cmd_buf = 0;
 
@@ -128,13 +127,13 @@ octeon_pko_config(struct octeon_pko_softc *sc)
 	SET(reg_cmd_buf, sc->sc_cmd_buf_size & PKO_REG_CMD_BUF_SIZE);
 	_PKO_WR8(sc, PKO_REG_CMD_BUF_OFFSET, reg_cmd_buf);
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pko_int_enable(sc, 1);
+#ifdef CNMAC_DEBUG
+	octpko_int_enable(sc, 1);
 #endif
 }
 
 int
-octeon_pko_port_enable(struct octeon_pko_softc *sc, int enable)
+octpko_port_enable(struct octpko_softc *sc, int enable)
 {
 	uint64_t reg_read_idx;
 	uint64_t mem_queue_qos;
@@ -159,14 +158,14 @@ octeon_pko_port_enable(struct octeon_pko_softc *sc, int enable)
 static int pko_queue_map_init[32];
 
 int
-octeon_pko_port_config(struct octeon_pko_softc *sc)
+octpko_port_config(struct octpko_softc *sc)
 {
 	paddr_t buf_ptr = 0;
 	uint64_t mem_queue_ptrs;
 
 	KASSERT(sc->sc_port < 32);
 
-	buf_ptr = octeon_fpa_load(FPA_COMMAND_BUFFER_POOL);
+	buf_ptr = octfpa_load(FPA_COMMAND_BUFFER_POOL);
 	if (buf_ptr == 0)
 		return 1;
 
@@ -195,35 +194,35 @@ octeon_pko_port_config(struct octeon_pko_softc *sc)
 	return 0;
 }
 
-#ifdef OCTEON_ETH_DEBUG
-int			octeon_pko_intr_rml_verbose;
-struct evcnt		octeon_pko_intr_evcnt;
+#ifdef CNMAC_DEBUG
+int			octpko_intr_rml_verbose;
+struct evcnt		octpko_intr_evcnt;
 
-static const struct octeon_evcnt_entry octeon_pko_intr_evcnt_entries[] = {
+static const struct octeon_evcnt_entry octpko_intr_evcnt_entries[] = {
 #define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octeon_pko_softc, name, type, parent, descr)
+	OCTEON_EVCNT_ENTRY(struct octpko_softc, name, type, parent, descr)
 	_ENTRY(pkoerrdbell,		MISC, NULL, "pko doorbell overflow"),
 	_ENTRY(pkoerrparity,		MISC, NULL, "pko parity error")
 #undef	_ENTRY
 };
 
 void
-octeon_pko_intr_evcnt_attach(struct octeon_pko_softc *sc)
+octpko_intr_evcnt_attach(struct octpko_softc *sc)
 {
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_pko_intr_evcnt_entries, "pko0");
+	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octpko_intr_evcnt_entries, "pko0");
 }
 
 void
-octeon_pko_intr_rml(void *arg)
+octpko_intr_rml(void *arg)
 {
-	struct octeon_pko_softc *sc;
+	struct octpko_softc *sc;
 	uint64_t reg;
 
-	octeon_pko_intr_evcnt.ev_count++;
-	sc = __octeon_pko_softc;
+	octpko_intr_evcnt.ev_count++;
+	sc = __octpko_softc;
 	KASSERT(sc != NULL);
-	reg = octeon_pko_int_summary(sc);
-	if (octeon_pko_intr_rml_verbose)
+	reg = octpko_int_summary(sc);
+	if (octpko_intr_rml_verbose)
 		printf("%s: PKO_REG_ERROR=0x%016" PRIx64 "\n", __func__, reg);
 	if (reg & PKO_REG_ERROR_DOORBELL)
 		OCTEON_EVCNT_INC(sc, pkoerrdbell);
@@ -232,7 +231,7 @@ octeon_pko_intr_rml(void *arg)
 }
 
 void
-octeon_pko_int_enable(struct octeon_pko_softc *sc, int enable)
+octpko_int_enable(struct octpko_softc *sc, int enable)
 {
 	uint64_t pko_int_xxx = 0;
 
@@ -242,7 +241,7 @@ octeon_pko_int_enable(struct octeon_pko_softc *sc, int enable)
 }
 
 uint64_t
-octeon_pko_int_summary(struct octeon_pko_softc *sc)
+octpko_int_summary(struct octpko_softc *sc)
 {
 	uint64_t summary;
 
