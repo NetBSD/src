@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.10 2017/03/30 08:43:40 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.11 2020/05/31 06:27:06 simonb Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.10 2017/03/30 08:43:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.11 2020/05/31 06:27:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -175,7 +175,7 @@ struct octeon_intrhand ipi_intrhands[2] = {
 };
 #endif
 
-struct octeon_intrhand *octeon_ciu_intrs[NIRQS] = {
+struct octeon_intrhand *octciu_intrs[NIRQS] = {
 #ifdef MULTIPROCESSOR
 	[_CIU_INT_MBOX_15_0_SHIFT] = &ipi_intrhands[0],
 	[_CIU_INT_MBOX_31_16_SHIFT] = &ipi_intrhands[1],
@@ -402,10 +402,10 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	/*
 	 * First, make it known.
 	 */
-	KASSERTMSG(octeon_ciu_intrs[irq] == NULL, "irq %d in use! (%p)",
-	    irq, octeon_ciu_intrs[irq]);
+	KASSERTMSG(octciu_intrs[irq] == NULL, "irq %d in use! (%p)",
+	    irq, octciu_intrs[irq]);
 
-	octeon_ciu_intrs[irq] = ih;
+	octciu_intrs[irq] = ih;
 	membar_producer();
 
 	/*
@@ -495,7 +495,7 @@ octeon_intr_disestablish(void *cookie)
 	/*
 	 * Now remove it since we shouldn't get interrupts for it.
 	 */
-	octeon_ciu_intrs[irq] = NULL;
+	octciu_intrs[irq] = NULL;
 
 	mutex_exit(&octeon_intr_lock);
 
@@ -529,7 +529,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		const int irq = ffs64(hwpend) - 1;
 		hwpend &= ~__BIT(irq);
 		
-		struct octeon_intrhand * const ih = octeon_ciu_intrs[irq];
+		struct octeon_intrhand * const ih = octciu_intrs[irq];
 		cpu->cpu_intr_evs[irq].ev_count++;
 		if (__predict_true(ih != NULL)) {
 #ifdef MULTIPROCESSOR

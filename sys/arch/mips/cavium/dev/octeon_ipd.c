@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipd.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_ipd.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -52,28 +52,27 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 #define IP_OFFSET(data, word2) \
 	((uintptr_t)(data) + (uintptr_t)((word2 & PIP_WQE_WORD2_IP_OFFSET) >> PIP_WQE_WORD2_IP_OFFSET_SHIFT))
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_ipd_intr_evcnt_attach(struct octeon_ipd_softc *);
-void			octeon_ipd_intr_rml(void *);
-int			octeon_ipd_intr_drop(void *);
+#ifdef CNMAC_DEBUG
+void			octipd_intr_evcnt_attach(struct octipd_softc *);
+void			octipd_intr_rml(void *);
+int			octipd_intr_drop(void *);
 
-void			octeon_ipd_dump(void);
+void			octipd_dump(void);
 
-static void		*octeon_ipd_intr_drop_ih;
-struct evcnt		octeon_ipd_intr_drop_evcnt =
+static void		*octipd_intr_drop_ih;
+struct evcnt		octipd_intr_drop_evcnt =
 			    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "octeon",
 			    "ipd drop intr");
-EVCNT_ATTACH_STATIC(octeon_ipd_intr_drop_evcnt);
+EVCNT_ATTACH_STATIC(octipd_intr_drop_evcnt);
 
-struct octeon_ipd_softc	*__octeon_ipd_softc[3/* XXX */];
+struct octipd_softc	*__octipd_softc[3/* XXX */];
 #endif
 
 /* XXX */
 void
-octeon_ipd_init(struct octeon_ipd_attach_args *aa,
-    struct octeon_ipd_softc **rsc)
+octipd_init(struct octipd_attach_args *aa, struct octipd_softc **rsc)
 {
-	struct octeon_ipd_softc *sc;
+	struct octipd_softc *sc;
 	int status;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -92,15 +91,15 @@ octeon_ipd_init(struct octeon_ipd_attach_args *aa,
 
 	*rsc = sc;
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_ipd_int_enable(sc, 1);
-	octeon_ipd_intr_evcnt_attach(sc);
-	if (octeon_ipd_intr_drop_ih == NULL)
-		octeon_ipd_intr_drop_ih = octeon_intr_establish(
+#ifdef CNMAC_DEBUG
+	octipd_int_enable(sc, 1);
+	octipd_intr_evcnt_attach(sc);
+	if (octipd_intr_drop_ih == NULL)
+		octipd_intr_drop_ih = octeon_intr_establish(
 		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, IPL_NET,
-		   octeon_ipd_intr_drop, NULL);
-	__octeon_ipd_softc[sc->sc_port] = sc;
-#endif /* OCTEON_ETH_DEBUG */
+		   octipd_intr_drop, NULL);
+	__octipd_softc[sc->sc_port] = sc;
+#endif /* CNMAC_DEBUG */
 }
 
 #define	_IPD_RD8(sc, off) \
@@ -109,7 +108,7 @@ octeon_ipd_init(struct octeon_ipd_attach_args *aa,
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
 int
-octeon_ipd_enable(struct octeon_ipd_softc *sc)
+octipd_enable(struct octipd_softc *sc)
 {
 	uint64_t ctl_status;
 
@@ -121,7 +120,7 @@ octeon_ipd_enable(struct octeon_ipd_softc *sc)
 }
 
 int
-octeon_ipd_config(struct octeon_ipd_softc *sc)
+octipd_config(struct octipd_softc *sc)
 {
 	uint64_t first_mbuff_skip;
 	uint64_t not_first_mbuff_skip;
@@ -184,7 +183,7 @@ octeon_ipd_config(struct octeon_ipd_softc *sc)
  * L3 error & L4 error
  */
 void
-octeon_ipd_offload(uint64_t word2, void *data, int *rcflags)
+octipd_offload(uint64_t word2, void *data, int *rcflags)
 {
 	int cflags;
 
@@ -234,9 +233,9 @@ octeon_ipd_offload(uint64_t word2, void *data, int *rcflags)
 }
 
 int
-octeon_ipd_red(struct octeon_ipd_softc *sc, uint64_t pass_thr, uint64_t drop_thr)
+octipd_red(struct octipd_softc *sc, uint64_t pass_thr, uint64_t drop_thr)
 {
-#if defined(OCTEON_ETH_IPD_RED)
+#if defined(CNMAC_IPD_RED)
 	/*
 	 * no receive problem workaround.
 	 * if not set IPD RED pramaters,
@@ -283,7 +282,7 @@ octeon_ipd_red(struct octeon_ipd_softc *sc, uint64_t pass_thr, uint64_t drop_thr
 }
 
 void
-octeon_ipd_sub_port_fcs(struct octeon_ipd_softc *sc, int enable)
+octipd_sub_port_fcs(struct octipd_softc *sc, int enable)
 {
 	uint64_t sub_port_fcs;
 
@@ -295,13 +294,13 @@ octeon_ipd_sub_port_fcs(struct octeon_ipd_softc *sc, int enable)
 	_IPD_WR8(sc, IPD_SUB_PORT_FCS_OFFSET, sub_port_fcs);
 }
 
-#ifdef OCTEON_ETH_DEBUG
-int			octeon_ipd_intr_rml_verbose;
-struct evcnt		octeon_ipd_intr_evcnt;
+#ifdef CNMAC_DEBUG
+int			octipd_intr_rml_verbose;
+struct evcnt		octipd_intr_evcnt;
 
-static const struct octeon_evcnt_entry octeon_ipd_intr_evcnt_entries[] = {
+static const struct octeon_evcnt_entry octipd_intr_evcnt_entries[] = {
 #define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octeon_ipd_softc, name, type, parent, descr)
+	OCTEON_EVCNT_ENTRY(struct octipd_softc, name, type, parent, descr)
 	_ENTRY(ipdbpsub,	MISC, NULL, "ipd backpressure subtract"),
 	_ENTRY(ipdprcpar3,	MISC, NULL, "ipd parity error 127:96"),
 	_ENTRY(ipdprcpar2,	MISC, NULL, "ipd parity error 95:64"),
@@ -311,25 +310,25 @@ static const struct octeon_evcnt_entry octeon_ipd_intr_evcnt_entries[] = {
 };
 
 void
-octeon_ipd_intr_evcnt_attach(struct octeon_ipd_softc *sc)
+octipd_intr_evcnt_attach(struct octipd_softc *sc)
 {
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_ipd_intr_evcnt_entries, "ipd0");
+	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octipd_intr_evcnt_entries, "ipd0");
 }
 
 void
-octeon_ipd_intr_rml(void *arg)
+octipd_intr_rml(void *arg)
 {
 	int i;
 
-	octeon_ipd_intr_evcnt.ev_count++;
+	octipd_intr_evcnt.ev_count++;
 	for (i = 0; i < 3/* XXX */; i++) {
-		struct octeon_ipd_softc *sc;
+		struct octipd_softc *sc;
 		uint64_t reg;
 
-		sc = __octeon_ipd_softc[i];
+		sc = __octipd_softc[i];
 		KASSERT(sc != NULL);
-		reg = octeon_ipd_int_summary(sc);
-		if (octeon_ipd_intr_rml_verbose)
+		reg = octipd_int_summary(sc);
+		if (octipd_intr_rml_verbose)
 			printf("%s: IPD_INT_SUM=0x%016" PRIx64 "\n", __func__, reg);
 		if (reg & IPD_INT_SUM_BP_SUB)
 			OCTEON_EVCNT_INC(sc, ipdbpsub);
@@ -345,7 +344,7 @@ octeon_ipd_intr_rml(void *arg)
 }
 
 void
-octeon_ipd_int_enable(struct octeon_ipd_softc *sc, int enable)
+octipd_int_enable(struct octipd_softc *sc, int enable)
 {
 	uint64_t ipd_int_xxx = 0;
 
@@ -360,7 +359,7 @@ octeon_ipd_int_enable(struct octeon_ipd_softc *sc, int enable)
 }
 
 uint64_t
-octeon_ipd_int_summary(struct octeon_ipd_softc *sc)
+octipd_int_summary(struct octipd_softc *sc)
 {
 	uint64_t summary;
 
@@ -370,22 +369,22 @@ octeon_ipd_int_summary(struct octeon_ipd_softc *sc)
 }
 
 int
-octeon_ipd_intr_drop(void *arg)
+octipd_intr_drop(void *arg)
 {
 	octeon_write_csr(CIU_INT0_SUM0, CIU_INTX_SUM0_IPD_DRP);
-	octeon_ipd_intr_drop_evcnt.ev_count++;
+	octipd_intr_drop_evcnt.ev_count++;
 	return (1);
 }
 
 #define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
 
-struct octeon_ipd_dump_reg {
+struct octipd_dump_reg {
 	const char *name;
 	const char *format;
 	size_t	offset;
 };
 
-static const struct octeon_ipd_dump_reg octeon_ipd_dump_regs[] = {
+static const struct octipd_dump_reg octipd_dump_regs[] = {
 	_ENTRY(IPD_1ST_MBUFF_SKIP),
 	_ENTRY(IPD_NOT_1ST_MBUFF_SKIP),
 	_ENTRY(IPD_PACKET_MBUFF_SIZE),
@@ -435,17 +434,17 @@ static const struct octeon_ipd_dump_reg octeon_ipd_dump_regs[] = {
 };
 
 void
-octeon_ipd_dump(void)
+octipd_dump(void)
 {
-	struct octeon_ipd_softc *sc;
-	const struct octeon_ipd_dump_reg *reg;
+	struct octipd_softc *sc;
+	const struct octipd_dump_reg *reg;
 	uint64_t tmp;
 	char buf[512];
 	int i;
 
-	sc = __octeon_ipd_softc[0];
-	for (i = 0; i < (int)__arraycount(octeon_ipd_dump_regs); i++) {
-		reg = &octeon_ipd_dump_regs[i];
+	sc = __octipd_softc[0];
+	for (i = 0; i < (int)__arraycount(octipd_dump_regs); i++) {
+		reg = &octipd_dump_regs[i];
 		tmp = _IPD_RD8(sc, reg->offset);
 		if (reg->format == NULL) {
 			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
@@ -455,4 +454,4 @@ octeon_ipd_dump(void)
 		printf("%-32s: %s\n", reg->name, buf);
 	}
 }
-#endif /* OCTEON_ETH_DEBUG */
+#endif /* CNMAC_DEBUG */

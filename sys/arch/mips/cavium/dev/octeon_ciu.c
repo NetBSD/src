@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciu.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_ciu.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -49,19 +49,19 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $"
 #define	DPRINTF(x)
 #endif
 
-#ifdef OCTEON_ETH_DEBUG
-void		octeon_ciu_dump(void);
-void		octeon_ciu_dump_regs(void);
+#ifdef CNMAC_DEBUG
+void		octciu_dump(void);
+void		octciu_dump_regs(void);
 
 #define	_ENTRY(x)	{ #x, x##_BITS, x }
 
-struct octeon_ciu_dump_reg_entry {
+struct octciu_dump_reg_entry {
 	const char *name;
 	const char *format;
 	paddr_t address;
 };
 
-static const struct octeon_ciu_dump_reg_entry octeon_ciu_dump_regs_entries[] = {
+static const struct octciu_dump_reg_entry octciu_dump_regs_entries[] = {
 	_ENTRY(CIU_INT0_SUM0),
 	_ENTRY(CIU_INT1_SUM0),
 	_ENTRY(CIU_INT2_SUM0),
@@ -104,21 +104,21 @@ static const struct octeon_ciu_dump_reg_entry octeon_ciu_dump_regs_entries[] = {
 };
 
 void
-octeon_ciu_dump(void)
+octciu_dump(void)
 {
-	octeon_ciu_dump_regs();
+	octciu_dump_regs();
 }
 
 void
-octeon_ciu_dump_regs(void)
+octciu_dump_regs(void)
 {
-	const struct octeon_ciu_dump_reg_entry *reg;
+	const struct octciu_dump_reg_entry *reg;
 	uint64_t tmp;
 	char buf[512];
 	int i;
 
-	for (i = 0; i < (int)__arraycount(octeon_ciu_dump_regs_entries); i++) {
-		reg = &octeon_ciu_dump_regs_entries[i];
+	for (i = 0; i < (int)__arraycount(octciu_dump_regs_entries); i++) {
+		reg = &octciu_dump_regs_entries[i];
 		tmp = octeon_xkphys_read_8(reg->address);
 		if (reg->format == NULL) {
 			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);

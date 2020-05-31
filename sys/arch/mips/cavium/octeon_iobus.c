@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_iobus.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_iobus.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
 
 #include "locators.h"
 
@@ -170,21 +170,21 @@ extern struct octeon_config octeon_configuration;
 void
 iobus_init_local_pow(struct iobus_softc *sc)
 {
-	void octeon_pow_bootstrap(struct octeon_config *);
+	void octpow_bootstrap(struct octeon_config *);
 
 	aprint_normal("%s: initializing POW\n", device_xname(sc->sc_dev));
 
-	octeon_pow_bootstrap(&octeon_configuration);
+	octpow_bootstrap(&octeon_configuration);
 }
 
 void
 iobus_init_local_fpa(struct iobus_softc *sc)
 {
-	void octeon_fpa_bootstrap(struct octeon_config *);
+	void octfpa_bootstrap(struct octeon_config *);
 
 	aprint_normal("%s: initializing FPA\n", device_xname(sc->sc_dev));
 
-	octeon_fpa_bootstrap(&octeon_configuration);
+	octfpa_bootstrap(&octeon_configuration);
 }
 
 /* ---- bus_space(9) */
