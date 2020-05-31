@@ -29,7 +29,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"9.0.2"
+#define VERSION			"9.1.0"
 
 #ifndef PRIVSEP_USER
 # define PRIVSEP_USER		"_" PACKAGE
@@ -60,7 +60,7 @@
 # define PIDFILE		RUNDIR "/%s%s%spid"
 #endif
 #ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/%s%ssock"
+# define CONTROLSOCKET		RUNDIR "/%s%s%ssock"
 #endif
 #ifndef UNPRIVSOCKET
 # define UNPRIVSOCKET		RUNDIR "/unpriv.sock"

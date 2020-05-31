@@ -34,30 +34,42 @@
 /* Start flags */
 #define	PSF_DROPPRIVS		0x01
 
-/* Commands */
-#define	PS_BOOTP		0x01
-#define	PS_ND			0x02
-#define	PS_DHCP6		0x03
-#define	PS_BPF_BOOTP		0x04
-#define	PS_BPF_ARP		0x05
-#define	PS_BPF_ARP_ADDR		0x06
+/* Protocols */
+#define	PS_BOOTP		0x0001
+#define	PS_ND			0x0002
+#define	PS_DHCP6		0x0003
+#define	PS_BPF_BOOTP		0x0004
+#define	PS_BPF_ARP		0x0005
 
-#define	PS_IOCTL		0x10
-#define	PS_ROUTE		0x11	/* Also used for NETLINK */
-#define	PS_SCRIPT		0x12
-#define	PS_UNLINK		0x13
-#define	PS_COPY			0x14
+/* Generic commands */
+#define	PS_IOCTL		0x0010
+#define	PS_ROUTE		0x0011	/* Also used for NETLINK */
+#define	PS_SCRIPT		0x0012
+#define	PS_UNLINK		0x0013
+#define	PS_READFILE		0x0014
+#define	PS_WRITEFILE		0x0015
+#define	PS_FILEMTIME		0x0016
 
 /* BSD Commands */
-#define	PS_IOCTLLINK		0x15
-#define	PS_IOCTL6		0x16
+#define	PS_IOCTLLINK		0x0101
+#define	PS_IOCTL6		0x0102
+#define	PS_IOCTLINDIRECT	0x0103
+#define	PS_IP6FORWARDING	0x0104
+#define	PS_GETIFADDRS		0x0105
 
-/* Linux commands */
-#define	PS_WRITEPATHUINT	0x17
+/* Dev Commands */
+#define	PS_DEV_LISTENING	0x0201
+#define	PS_DEV_INITTED		0x0202
+#define	PS_DEV_IFCMD		0x0203
 
-#define	PS_DELETE		0x20
-#define	PS_START		0x40
-#define	PS_STOP			0x80
+/* Dev Interface Commands (via flags) */
+#define	PS_DEV_IFADDED		0x0001
+#define	PS_DEV_IFREMOVED	0x0002
+#define	PS_DEV_IFUPDATED	0x0003
+
+/* Process commands */
+#define	PS_START		0x4000
+#define	PS_STOP			0x8000
 
 /* Max INET message size + meta data for IPC */
 #define	PS_BUFLEN		((64 * 1024) +			\
@@ -92,13 +104,13 @@ struct ps_addr {
 struct ps_id {
 	struct ps_addr psi_addr;
 	unsigned int psi_ifindex;
-	uint8_t psi_cmd;
-	uint8_t psi_pad[3];
+	uint16_t psi_cmd;
+	uint8_t psi_pad[2];
 };
 
 struct ps_msghdr {
-	uint8_t ps_cmd;
-	uint8_t ps_pad[sizeof(unsigned long) - 1];
+	uint16_t ps_cmd;
+	uint8_t ps_pad[sizeof(unsigned long) - sizeof(uint16_t)];
 	unsigned long ps_flags;
 	struct ps_id ps_id;
 	socklen_t ps_namelen;
@@ -112,6 +124,7 @@ struct ps_msg {
 	uint8_t psm_data[PS_BUFLEN];
 };
 
+struct bpf;
 struct ps_process {
 	TAILQ_ENTRY(ps_process) next;
 	struct dhcpcd_ctx *psp_ctx;
@@ -125,8 +138,9 @@ struct ps_process {
 	const char *psp_protostr;
 
 #ifdef INET
-	int (*psp_filter)(struct interface *, int);
+	int (*psp_filter)(const struct bpf *, const struct in_addr *);
 	struct interface psp_ifp; /* Move BPF gubbins elsewhere */
+	struct bpf *psp_bpf;
 #endif
 };
 TAILQ_HEAD(ps_process_head, ps_process);
@@ -137,7 +151,6 @@ TAILQ_HEAD(ps_process_head, ps_process);
 #include "privsep-bpf.h"
 #endif
 
-int ps_mkdir(char *);
 int ps_init(struct dhcpcd_ctx *);
 int ps_dropprivs(struct dhcpcd_ctx *);
 int ps_start(struct dhcpcd_ctx *);
@@ -148,11 +161,11 @@ ssize_t ps_sendpsmmsg(struct dhcpcd_ctx *, int,
     struct ps_msghdr *, const struct msghdr *);
 ssize_t ps_sendpsmdata(struct dhcpcd_ctx *, int,
     struct ps_msghdr *, const void *, size_t);
-ssize_t ps_sendmsg(struct dhcpcd_ctx *, int, uint8_t, unsigned long,
+ssize_t ps_sendmsg(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const struct msghdr *);
-ssize_t ps_sendcmd(struct dhcpcd_ctx *, int, uint8_t, unsigned long,
+ssize_t ps_sendcmd(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const void *data, size_t len);
-ssize_t ps_recvmsg(struct dhcpcd_ctx *, int, uint8_t, int);
+ssize_t ps_recvmsg(struct dhcpcd_ctx *, int, uint16_t, int);
 ssize_t ps_recvpsmsg(struct dhcpcd_ctx *, int,
     ssize_t (*callback)(void *, struct ps_msghdr *, struct msghdr *), void *);
 
