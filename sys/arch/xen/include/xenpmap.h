@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.41 2019/02/13 06:52:43 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.41.4.1 2020/05/31 10:39:35 martin Exp $	*/
 
 /*
  *
@@ -48,7 +48,7 @@ void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
-int  xpq_update_foreign(paddr_t, pt_entry_t, int);
+int  xpq_update_foreign(paddr_t, pt_entry_t, int, u_int);
 void xen_mcast_tlbflush(kcpuset_t *);
 void xen_bcast_tlbflush(void);
 void xen_mcast_invlpg(vaddr_t, kcpuset_t *);
@@ -74,6 +74,10 @@ void xen_kpm_sync(struct pmap *, int);
 
 #ifdef XENPV
 extern unsigned long *xpmap_phys_to_machine_mapping;
+
+/* MD PMAP flags */
+/* mmu_update with MMU_PT_UPDATE_NO_TRANSLATE */
+#define PMAP_MD_XEN_NOTR	0x01000000
 
 static __inline paddr_t
 xpmap_mtop_masked(paddr_t mpa)
@@ -170,5 +174,8 @@ MULTI_update_va_mapping_otherdomain(
 #if defined(__x86_64__)
 void xen_set_user_pgd(paddr_t);
 #endif
+
+int pmap_enter_gnt(struct pmap *, vaddr_t, vaddr_t, int,
+    const struct gnttab_map_grant_ref *);
 
 #endif /* _XEN_XENPMAP_H_ */
