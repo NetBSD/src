@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.13 2017/05/04 09:42:23 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.13.2.1 2020/05/31 10:43:05 martin Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.13 2017/05/04 09:42:23 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.13.2.1 2020/05/31 10:43:05 martin Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -99,21 +99,21 @@ set_curterm(TERMINAL *nterm)
 
 		p = ttytype;
 		l = sizeof(ttytype);
-		if ((n = strlcpy(p, nterm->name, l)) == strlen(p)) {
+		if ((n = strlcpy(p, nterm->name, l)) < l) {
 			p += n;
 			l -= n;
 			*p++ = '|';
 			l--;
-			if (nterm->_alias  &&
-				(n = strlcpy(p, nterm->_alias, l)) == strlen(p))
+			if (nterm->_alias != NULL &&
+			    (n = strlcpy(p, nterm->_alias, l)) < l)
 			{
 				p += n;
 				l -= n;
 				*p++ = '|';
 				l--;
 			}
-			if (nterm->desc  &&
-				(n = strlcpy(p, nterm->desc, l)) == strlen(p))
+			if (nterm->desc != NULL &&
+			    (n = strlcpy(p, nterm->desc, l)) < l)
 			{
 				p += n;
 				l -= n;
