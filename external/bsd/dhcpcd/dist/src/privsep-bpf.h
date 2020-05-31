@@ -35,11 +35,10 @@ ssize_t ps_bpf_dispatch(struct dhcpcd_ctx *,
     struct ps_msghdr *, struct msghdr *);
 
 #ifdef ARP
-ssize_t ps_bpf_openarp(const struct interface *);
-ssize_t ps_bpf_addaddr(const struct interface *, const struct in_addr *);
-ssize_t ps_bpf_deladdr(const struct interface *, const struct in_addr *);
-ssize_t ps_bpf_closearp(const struct interface *);
-ssize_t ps_bpf_sendarp(const struct interface *, const void *, size_t);
+ssize_t ps_bpf_openarp(const struct interface *, const struct in_addr *);
+ssize_t ps_bpf_closearp(const struct interface *, const struct in_addr *);
+ssize_t ps_bpf_sendarp(const struct interface *, const struct in_addr *,
+    const void *, size_t);
 #endif
 
 ssize_t ps_bpf_openbootp(const struct interface *);
