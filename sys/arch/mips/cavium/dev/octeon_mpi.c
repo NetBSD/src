@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_mpi.c,v 1.3 2020/05/31 04:56:35 simonb Exp $	*/
+/*	$NetBSD: octeon_mpi.c,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.3 2020/05/31 04:56:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.4 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.3 2020/05/31 04:56:35 simonb Exp $"
 #include <mips/cavium/dev/octeon_mpivar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 
-struct octeon_mpi_softc {
+struct octmpi_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_regt;
@@ -58,38 +58,32 @@ struct octeon_mpi_softc {
 	/* board-specific chip-select hook ops */
 	void			(*sc_ops_cs_on)(void);
 	void			(*sc_ops_cs_off)(void);
-	struct octeon_mpi_controller ctrl;
+	struct octmpi_controller ctrl;
 
 };
  
-static int		octeon_mpi_match(device_t, struct cfdata *,
-			    void *);
-static void		octeon_mpi_attach(device_t, device_t,
-			    void *);
+static int		octmpi_match(device_t, struct cfdata *, void *);
+static void		octmpi_attach(device_t, device_t, void *);
 #if 0
-static int		octeon_mpi_intr(void *);
+static int		octmpi_intr(void *);
 #endif
-void			octeon_mpi_read(void *, u_int,
-			    u_int, size_t, uint8_t *);
-void			octeon_mpi_write(void *, u_int,
-			    u_int, size_t, uint8_t *);
-static void		octeon_mpi_xfer(struct octeon_mpi_softc *, size_t,
-			    size_t);
-static void		octeon_mpi_wait(struct octeon_mpi_softc *);
-static inline uint64_t	octeon_mpi_reg_rd(struct octeon_mpi_softc *, int);
-static inline void	octeon_mpi_reg_wr(struct octeon_mpi_softc *, int,
-			    uint64_t);
+void			octmpi_read(void *, u_int, u_int, size_t, uint8_t *);
+void			octmpi_write(void *, u_int, u_int, size_t, uint8_t *);
+static void		octmpi_xfer(struct octmpi_softc *, size_t, size_t);
+static void		octmpi_wait(struct octmpi_softc *);
+static inline uint64_t	octmpi_reg_rd(struct octmpi_softc *, int);
+static inline void	octmpi_reg_wr(struct octmpi_softc *, int, uint64_t);
 
 /* SPI service routines */
-int octeon_mpi_configure(void *, void *, void *);
+int octmpi_configure(void *, void *, void *);
 
 #define GETREG(sc, x)	\
 	bus_space_read_8(sc->sc_regt, sc->sc_regh, x)
 #define PUTREG(sc, x, v)	\
 	bus_space_write_8(sc->sc_regt, sc->sc_regh, x, v)
 
-CFATTACH_DECL_NEW(octeon_mpi, sizeof(struct octeon_mpi_softc),
-    octeon_mpi_match, octeon_mpi_attach, NULL, NULL);
+CFATTACH_DECL_NEW(octeon_mpi, sizeof(struct octmpi_softc),
+    octmpi_match, octmpi_attach, NULL, NULL);
 
 
 static int
@@ -100,7 +94,7 @@ spi_print(void *aux, const char *pnp)
 }
 
 static int
-octeon_mpi_match(device_t parent, struct cfdata *cf, void *aux)
+octmpi_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
 
@@ -110,11 +104,11 @@ octeon_mpi_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 static void
-octeon_mpi_attach(device_t parent, device_t self, void *aux)
+octmpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct octeon_mpi_softc *sc = device_private(self);
+	struct octmpi_softc *sc = device_private(self);
 	struct iobus_attach_args *aa = aux;
-	struct octeon_mpi_attach_args pa;
+	struct octmpi_attach_args pa;
 	int status;
 
 	sc->sc_regt = aa->aa_bust;
@@ -135,36 +129,36 @@ octeon_mpi_attach(device_t parent, device_t self, void *aux)
 	sc->ctrl.sc_bust = sc->sc_regt;
 	sc->ctrl.sc_bush = sc->sc_regh;
 	sc->ctrl.sct_cookie = sc;
-	sc->ctrl.sct_configure = octeon_mpi_configure;
-	sc->ctrl.sct_read = octeon_mpi_read;
-	sc->ctrl.sct_write = octeon_mpi_write;
-	pa.octeon_mpi_ctrl = &(sc->ctrl);
+	sc->ctrl.sct_configure = octmpi_configure;
+	sc->ctrl.sct_read = octmpi_read;
+	sc->ctrl.sct_write = octmpi_write;
+	pa.octmpi_ctrl = &(sc->ctrl);
 
 	/* Enable SPI mode */
 #if 0
-	octeon_mpi_reg_wr(sc, MPI_CFG_OFFSET,
+	octmpi_reg_wr(sc, MPI_CFG_OFFSET,
 	    (0x7d << MPI_CFG_CLKDIV_SHIFT) | MPI_CFG_CSENA | MPI_CFG_ENABLE | MPI_CFG_INT_ENA);
 	/* Enable device interrupts */
 	sc->sc_ih = octeon_intr_establish(ffs64(CIU_INTX_SUM0_MPI) - 1,
-		IPL_SERIAL, octeon_mpi_intr, sc);
+		IPL_SERIAL, octmpi_intr, sc);
 	if (sc->sc_ih == NULL)
 		panic("l2sw: can't establish interrupt\n");
 #else
-	octeon_mpi_reg_wr(sc, MPI_CFG_OFFSET,
+	octmpi_reg_wr(sc, MPI_CFG_OFFSET,
 	    (0x7d << MPI_CFG_CLKDIV_SHIFT) | MPI_CFG_CSENA | MPI_CFG_ENABLE);
 #endif
-	octeon_mpi_reg_wr(sc, MPI_TX_OFFSET, 0);
+	octmpi_reg_wr(sc, MPI_TX_OFFSET, 0);
 
 	config_found_ia(&sc->sc_dev, "octmpi", &pa, spi_print);
 }
 
 #if 0
 static int
-octeon_mpi_intr(void *arg)
+octmpi_intr(void *arg)
 {
-	struct octeon_mpi_softc *sc = arg;
+	struct octmpi_softc *sc = arg;
 
-	octeon_mpi_recv(sc);
+	octmpi_recv(sc);
 
 	/* Clear interrupts? */
 
@@ -173,80 +167,80 @@ octeon_mpi_intr(void *arg)
 #endif
 
 void
-octeon_mpi_read(void *parent, u_int cmd, u_int addr,
-    size_t len, uint8_t *data)
+octmpi_read(void *parent, u_int cmd, u_int addr, size_t len, uint8_t *data)
 {
-	struct octeon_mpi_softc *sc = (void *)parent;
+	struct octmpi_softc *sc = (void *)parent;
 	int i;
 
-	octeon_mpi_reg_wr(sc, MPI_DAT0_OFFSET, cmd);
-	octeon_mpi_reg_wr(sc, MPI_DAT1_OFFSET, addr);
+	octmpi_reg_wr(sc, MPI_DAT0_OFFSET, cmd);
+	octmpi_reg_wr(sc, MPI_DAT1_OFFSET, addr);
 
-	octeon_mpi_xfer(sc, 2, 2 + len);
+	octmpi_xfer(sc, 2, 2 + len);
 
 	for (i = 0; i < (int)len; i++)
-		data[i] = octeon_mpi_reg_rd(sc, MPI_DAT2_OFFSET + i * 0x8);
+		data[i] = octmpi_reg_rd(sc, MPI_DAT2_OFFSET + i * 0x8);
 }
 
 void
-octeon_mpi_write(void *parent, u_int cmd, u_int addr,
-    size_t len, uint8_t *data)
+octmpi_write(void *parent, u_int cmd, u_int addr, size_t len, uint8_t *data)
 {
-	struct octeon_mpi_softc *sc = (void *)parent;
+	struct octmpi_softc *sc = (void *)parent;
 	int i;
 
-	octeon_mpi_reg_wr(sc, MPI_DAT0_OFFSET, cmd);
-	octeon_mpi_reg_wr(sc, MPI_DAT1_OFFSET, addr);
+	octmpi_reg_wr(sc, MPI_DAT0_OFFSET, cmd);
+	octmpi_reg_wr(sc, MPI_DAT1_OFFSET, addr);
 
 	for (i = 0; i < (int)len; i++)
-		octeon_mpi_reg_wr(sc, MPI_DAT2_OFFSET + i * 0x8, data[i]);
+		octmpi_reg_wr(sc, MPI_DAT2_OFFSET + i * 0x8, data[i]);
 
-	octeon_mpi_xfer(sc, 2 + len, 2 + len);
+	octmpi_xfer(sc, 2 + len, 2 + len);
 }
 
 static void
-octeon_mpi_xfer(struct octeon_mpi_softc *sc, size_t tx, size_t total)
+octmpi_xfer(struct octmpi_softc *sc, size_t tx, size_t total)
 {
 	if (sc->sc_ops_cs_on != NULL)
 		(*sc->sc_ops_cs_on)();
 
-	octeon_mpi_reg_wr(sc, MPI_TX_OFFSET,
+	octmpi_reg_wr(sc, MPI_TX_OFFSET,
 	    (tx << MPI_TX_TXNUM_SHIFT) | (total << MPI_TX_TOTNUM_SHIFT));
-	octeon_mpi_wait(sc);
+	octmpi_wait(sc);
 
 	if (sc->sc_ops_cs_off != NULL)
 		(*sc->sc_ops_cs_off)();
 }
 
 static void
-octeon_mpi_wait(struct octeon_mpi_softc *sc)
+octmpi_wait(struct octmpi_softc *sc)
 {
 	uint64_t tmp;
 	
 	/* XXX ltsleep & interrupt */
-	tmp = octeon_mpi_reg_rd(sc, MPI_STS_OFFSET);
+	tmp = octmpi_reg_rd(sc, MPI_STS_OFFSET);
 	while (ISSET(tmp, MPI_STS_BUSY)) {
 		delay(10);
-		tmp = octeon_mpi_reg_rd(sc, MPI_STS_OFFSET);
+		tmp = octmpi_reg_rd(sc, MPI_STS_OFFSET);
 	}
 }
 
 static inline uint64_t
-octeon_mpi_reg_rd(struct octeon_mpi_softc *sc, int offset)
+octmpi_reg_rd(struct octmpi_softc *sc, int offset)
 {
+
 	return GETREG(sc, offset);
 }
 
 static inline void
-octeon_mpi_reg_wr(struct octeon_mpi_softc *sc, int offset, uint64_t datum)
+octmpi_reg_wr(struct octmpi_softc *sc, int offset, uint64_t datum)
 {
+
 	PUTREG(sc, offset, datum);
 }
 
 int
-octeon_mpi_configure(void *arg, void *cs_on, void *cs_off)
+octmpi_configure(void *arg, void *cs_on, void *cs_off)
 {
-	struct octeon_mpi_softc *sc = arg;
+	struct octmpi_softc *sc = arg;
 
 	sc->sc_ops_cs_on = cs_on;
 	sc->sc_ops_cs_off = cs_off;

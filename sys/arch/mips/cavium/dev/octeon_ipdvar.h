@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipdvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_ipdvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -30,13 +30,13 @@
 #define _OCTEON_IPDVAR_H_
 
 /* XXX */
-struct octeon_ipd_softc {
+struct octipd_softc {
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
 	size_t			sc_first_mbuff_skip;
 	size_t			sc_not_first_mbuff_skip;
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	struct evcnt		sc_ev_ipdbpsub;
 	struct evcnt		sc_ev_ipdprcpar3;
 	struct evcnt		sc_ev_ipdprcpar2;
@@ -46,28 +46,27 @@ struct octeon_ipd_softc {
 };
 
 /* XXX */
-struct octeon_ipd_attach_args {
+struct octipd_attach_args {
 	int			aa_port;
 	bus_space_tag_t		aa_regt;
 	size_t			aa_first_mbuff_skip;
 	size_t			aa_not_first_mbuff_skip;
 };
 
-void			octeon_ipd_init(struct octeon_ipd_attach_args *,
-			    struct octeon_ipd_softc **);
-int			octeon_ipd_enable(struct octeon_ipd_softc *);
-int			octeon_ipd_config(struct octeon_ipd_softc *);
-int			octeon_ipd_red(struct octeon_ipd_softc *sc,
-			     uint64_t pass_thr, uint64_t drop_thr);
-void			octeon_ipd_sub_port_fcs(struct octeon_ipd_softc *, int);
-void			octeon_ipd_offload(uint64_t, void *, int *);
+void			octipd_init(struct octipd_attach_args *,
+			    struct octipd_softc **);
+int			octipd_enable(struct octipd_softc *);
+int			octipd_config(struct octipd_softc *);
+int			octipd_red(struct octipd_softc *, uint64_t, uint64_t);
+void			octipd_sub_port_fcs(struct octipd_softc *, int);
+void			octipd_offload(uint64_t, void *, int *);
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_ipd_int_enable(struct octeon_ipd_softc *, int);
-uint64_t		octeon_ipd_int_summary(struct octeon_ipd_softc *);
-#endif /* OCTEON_ETH_DEBUG */
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_ipd_int_enable(struct octeon_ipd_softc *, int);
-#endif /* OCTEON_ETH_DEBUG */
+#ifdef CNMAC_DEBUG
+void			octipd_int_enable(struct octipd_softc *, int);
+uint64_t		octipd_int_summary(struct octipd_softc *);
+#endif /* CNMAC_DEBUG */
+#ifdef CNMAC_DEBUG
+void			octipd_int_enable(struct octipd_softc *, int);
+#endif /* CNMAC_DEBUG */
 
 #endif

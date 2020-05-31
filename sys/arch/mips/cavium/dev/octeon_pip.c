@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.3 2020/01/29 05:30:14 thorpej Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.3 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.4 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -42,14 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.3 2020/01/29 05:30:14 thorpej Exp $
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_pipvar.h>
 
-#ifdef OCTEON_ETH_DEBUG
-struct octeon_pip_softc *__octeon_pip_softc;
+#ifdef CNMAC_DEBUG
+struct octpip_softc *__octpip_softc;
 
-void			octeon_pip_intr_evcnt_attach(struct octeon_pip_softc *);
-void			octeon_pip_intr_rml(void *);
+void			octpip_intr_evcnt_attach(struct octpip_softc *);
+void			octpip_intr_rml(void *);
 
-void			octeon_pip_dump(void);
-void			octeon_pip_int_enable(struct octeon_pip_softc *, int);
+void			octpip_dump(void);
+void			octpip_int_enable(struct octpip_softc *, int);
 #endif
 
 /*
@@ -64,13 +64,13 @@ void			octeon_pip_int_enable(struct octeon_pip_softc *, int);
 #define	_ENTRY_0_1_2_32(x) \
 	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x##32)
 
-struct octeon_pip_dump_reg_ {
+struct octpip_dump_reg_ {
 	const char *name;
 	const char *format;
 	size_t	offset;
 };
 
-static const struct octeon_pip_dump_reg_ octeon_pip_dump_stats_[] = {
+static const struct octpip_dump_reg_ octpip_dump_stats_[] = {
 /* PIP_QOS_DIFF[0-63] */
 	_ENTRY_0_1_2_32	(PIP_STAT0_PRT),
 	_ENTRY_0_1_2_32	(PIP_STAT1_PRT),
@@ -88,8 +88,8 @@ static const struct octeon_pip_dump_reg_ octeon_pip_dump_stats_[] = {
 	_ENTRY_0_1_2_32	(PIP_STAT_INB_ERRS),
 };
 
-#ifdef OCTEON_ETH_DEBUG
-static const struct octeon_pip_dump_reg_ octeon_pip_dump_regs_[] = {
+#ifdef CNMAC_DEBUG
+static const struct octpip_dump_reg_ octpip_dump_regs_[] = {
 	_ENTRY		(PIP_BIST_STATUS),
 	_ENTRY		(PIP_INT_REG),
 	_ENTRY		(PIP_INT_EN),
@@ -116,10 +116,9 @@ static const struct octeon_pip_dump_reg_ octeon_pip_dump_regs_[] = {
 
 /* XXX */
 void
-octeon_pip_init(struct octeon_pip_attach_args *aa,
-    struct octeon_pip_softc **rsc)
+octpip_init(struct octpip_attach_args *aa, struct octpip_softc **rsc)
 {
-	struct octeon_pip_softc *sc;
+	struct octpip_softc *sc;
 	int status;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -139,10 +138,10 @@ octeon_pip_init(struct octeon_pip_attach_args *aa,
 
 	*rsc = sc;
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pip_int_enable(sc, 1);
-	octeon_pip_intr_evcnt_attach(sc);
-	__octeon_pip_softc = sc;
+#ifdef CNMAC_DEBUG
+	octpip_int_enable(sc, 1);
+	octpip_intr_evcnt_attach(sc);
+	__octpip_softc = sc;
 	printf("PIP Code initialized.\n");
 #endif
 }
@@ -153,7 +152,7 @@ octeon_pip_init(struct octeon_pip_attach_args *aa,
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
 int
-octeon_pip_port_config(struct octeon_pip_softc *sc)
+octpip_port_config(struct octpip_softc *sc)
 {
 	uint64_t prt_cfg;
 	uint64_t prt_tag;
@@ -211,8 +210,7 @@ octeon_pip_port_config(struct octeon_pip_softc *sc)
 }
 
 void
-octeon_pip_prt_cfg_enable(struct octeon_pip_softc *sc, uint64_t prt_cfg,
-    int enable)
+octpip_prt_cfg_enable(struct octpip_softc *sc, uint64_t prt_cfg, int enable)
 {
 	uint64_t tmp;
 
@@ -225,9 +223,9 @@ octeon_pip_prt_cfg_enable(struct octeon_pip_softc *sc, uint64_t prt_cfg,
 }
 
 void
-octeon_pip_stats(struct octeon_pip_softc *sc, struct ifnet *ifp, int gmx_port)
+octpip_stats(struct octpip_softc *sc, struct ifnet *ifp, int gmx_port)
 {
-	const struct octeon_pip_dump_reg_ *reg;
+	const struct octpip_dump_reg_ *reg;
 	uint64_t tmp, pkts;
 	uint64_t pip_stat_ctl;
 
@@ -242,7 +240,7 @@ octeon_pip_stats(struct octeon_pip_softc *sc, struct ifnet *ifp, int gmx_port)
 
 	pip_stat_ctl = _PIP_RD8(sc, PIP_STAT_CTL_OFFSET);
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl | PIP_STAT_CTL_RDCLR);
-	reg = &octeon_pip_dump_stats_[gmx_port];
+	reg = &octpip_dump_stats_[gmx_port];
 	tmp = _PIP_RD8(sc, reg->offset);
 	pkts = (tmp & 0xffffffff00000000ULL) >> 32;
 	if_statadd(ifp, if_iqdrops, pkts);
@@ -251,13 +249,13 @@ octeon_pip_stats(struct octeon_pip_softc *sc, struct ifnet *ifp, int gmx_port)
 }
 
 
-#ifdef OCTEON_ETH_DEBUG
-int			octeon_pip_intr_rml_verbose;
-struct evcnt		octeon_pip_intr_evcnt;
+#ifdef CNMAC_DEBUG
+int			octpip_intr_rml_verbose;
+struct evcnt		octpip_intr_evcnt;
 
-static const struct octeon_evcnt_entry octeon_pip_intr_evcnt_entries[] = {
+static const struct octeon_evcnt_entry octpip_intr_evcnt_entries[] = {
 #define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octeon_pip_softc, name, type, parent, descr)
+	OCTEON_EVCNT_ENTRY(struct octpip_softc, name, type, parent, descr)
 	_ENTRY(pipbeperr,	MISC, NULL, "pip parity error backend"),
 	_ENTRY(pipfeperr,	MISC, NULL, "pip parity error frontend"),
 	_ENTRY(pipskprunt,	MISC, NULL, "pip skiper"),
@@ -268,22 +266,22 @@ static const struct octeon_evcnt_entry octeon_pip_intr_evcnt_entries[] = {
 };
 
 void
-octeon_pip_intr_evcnt_attach(struct octeon_pip_softc *sc)
+octpip_intr_evcnt_attach(struct octpip_softc *sc)
 {
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_pip_intr_evcnt_entries, "pip0");
+	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octpip_intr_evcnt_entries, "pip0");
 }
 
 void
-octeon_pip_intr_rml(void *arg)
+octpip_intr_rml(void *arg)
 {
-	struct octeon_pip_softc *sc;
+	struct octpip_softc *sc;
 	uint64_t reg;
 
-	octeon_pip_intr_evcnt.ev_count++;
-	sc = __octeon_pip_softc;
+	octpip_intr_evcnt.ev_count++;
+	sc = __octpip_softc;
 	KASSERT(sc != NULL);
-	reg = octeon_pip_int_summary(sc);
-	if (octeon_pip_intr_rml_verbose)
+	reg = octpip_int_summary(sc);
+	if (octpip_intr_rml_verbose)
 		printf("%s: PIP_INT_REG=0x%016" PRIx64 "\n", __func__, reg);
 	if (reg & PIP_INT_REG_BEPERR)
 		OCTEON_EVCNT_INC(sc, pipbeperr);
@@ -299,27 +297,27 @@ octeon_pip_intr_rml(void *arg)
 		OCTEON_EVCNT_INC(sc, pippktdrp);
 }
 
-void		octeon_pip_dump_regs(void);
-void		octeon_pip_dump_stats(void);
+void		octpip_dump_regs(void);
+void		octpip_dump_stats(void);
 
 void
-octeon_pip_dump(void)
+octpip_dump(void)
 {
-	octeon_pip_dump_regs();
-	octeon_pip_dump_stats();
+	octpip_dump_regs();
+	octpip_dump_stats();
 }
 
 void
-octeon_pip_dump_regs(void)
+octpip_dump_regs(void)
 {
-	struct octeon_pip_softc *sc = __octeon_pip_softc;
-	const struct octeon_pip_dump_reg_ *reg;
+	struct octpip_softc *sc = __octpip_softc;
+	const struct octpip_dump_reg_ *reg;
 	uint64_t tmp;
 	char buf[512];
 	int i;
 
-	for (i = 0; i < (int)__arraycount(octeon_pip_dump_regs_); i++) {
-		reg = &octeon_pip_dump_regs_[i];
+	for (i = 0; i < (int)__arraycount(octpip_dump_regs_); i++) {
+		reg = &octpip_dump_regs_[i];
 		tmp = _PIP_RD8(sc, reg->offset);
 		if (reg->format == NULL) {
 			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
@@ -331,10 +329,10 @@ octeon_pip_dump_regs(void)
 }
 
 void
-octeon_pip_dump_stats(void)
+octpip_dump_stats(void)
 {
-	struct octeon_pip_softc *sc = __octeon_pip_softc;
-	const struct octeon_pip_dump_reg_ *reg;
+	struct octpip_softc *sc = __octpip_softc;
+	const struct octpip_dump_reg_ *reg;
 	uint64_t tmp;
 	char buf[512];
 	int i;
@@ -342,8 +340,8 @@ octeon_pip_dump_stats(void)
 
 	pip_stat_ctl = _PIP_RD8(sc, PIP_STAT_CTL_OFFSET);
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl & ~PIP_STAT_CTL_RDCLR);
-	for (i = 0; i < (int)__arraycount(octeon_pip_dump_stats_); i++) {
-		reg = &octeon_pip_dump_stats_[i];
+	for (i = 0; i < (int)__arraycount(octpip_dump_stats_); i++) {
+		reg = &octpip_dump_stats_[i];
 		tmp = _PIP_RD8(sc, reg->offset);
 		if (reg->format == NULL) {
 			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
@@ -374,7 +372,7 @@ octeon_pip_dump_stats(void)
 }
 
 void
-octeon_pip_int_enable(struct octeon_pip_softc *sc, int enable)
+octpip_int_enable(struct octpip_softc *sc, int enable)
 {
 	uint64_t pip_int_xxx = 0;
 
@@ -389,7 +387,7 @@ octeon_pip_int_enable(struct octeon_pip_softc *sc, int enable)
 	_PIP_WR8(sc, PIP_INT_EN_OFFSET, enable ? pip_int_xxx : 0);
 }
 uint64_t
-octeon_pip_int_summary(struct octeon_pip_softc *sc)
+octpip_int_summary(struct octpip_softc *sc)
 {
 	uint64_t summary;
 
@@ -397,4 +395,4 @@ octeon_pip_int_summary(struct octeon_pip_softc *sc)
 	_PIP_WR8(sc, PIP_INT_REG_OFFSET, summary);
 	return summary;
 }
-#endif /* OCTEON_ETH_DEBUG */
+#endif /* CNMAC_DEBUG */

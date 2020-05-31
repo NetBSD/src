@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.2 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.2 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,14 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.2 2019/01/22 03:42:26 msaitoh Exp $
 #include <mips/cavium/dev/octeon_smireg.h>
 #include <mips/cavium/dev/octeon_smivar.h>
 
-static void		octeon_smi_enable(struct octeon_smi_softc *);
+static void		octsmi_enable(struct octsmi_softc *);
 
 /* XXX */
 void
-octeon_smi_init(struct octeon_smi_attach_args *aa,
-    struct octeon_smi_softc **rsc)
+octsmi_init(struct octsmi_attach_args *aa, struct octsmi_softc **rsc)
 {
-	struct octeon_smi_softc *sc;
+	struct octsmi_softc *sc;
 	int status;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -62,7 +61,7 @@ octeon_smi_init(struct octeon_smi_attach_args *aa,
 	if (status != 0)
 		panic("can't map %s space", "smi register");
 
-	octeon_smi_enable(sc);
+	octsmi_enable(sc);
 
 	*rsc = sc;
 }
@@ -73,8 +72,7 @@ octeon_smi_init(struct octeon_smi_attach_args *aa,
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
 int
-octeon_smi_read(struct octeon_smi_softc *sc, int phy_addr, int reg,
-    uint16_t *val)
+octsmi_read(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t *val)
 {
 	uint64_t smi_rd;
 	int timo;
@@ -101,8 +99,7 @@ octeon_smi_read(struct octeon_smi_softc *sc, int phy_addr, int reg,
 }
 
 int
-octeon_smi_write(struct octeon_smi_softc *sc, int phy_addr, int reg,
-    uint16_t value)
+octsmi_write(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t value)
 {
 	uint64_t smi_wr;
 	int timo;
@@ -131,13 +128,13 @@ octeon_smi_write(struct octeon_smi_softc *sc, int phy_addr, int reg,
 }
 
 static void
-octeon_smi_enable(struct octeon_smi_softc *sc)
+octsmi_enable(struct octsmi_softc *sc)
 {
 	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);
 }
 
 void
-octeon_smi_set_clock(struct octeon_smi_softc *sc, uint64_t clock)
+octsmi_set_clock(struct octsmi_softc *sc, uint64_t clock)
 {
 	_SMI_WR8(sc, SMI_CLK_OFFSET, clock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pow.c,v 1.5 2019/11/10 21:16:30 chs Exp $	*/
+/*	$NetBSD: octeon_pow.c,v 1.6 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.5 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.6 2020/05/31 06:27:06 simonb Exp $");
 
-#include "opt_octeon.h"	/* OCTEON_ETH_DEBUG */
+#include "opt_octeon.h"	/* CNMAC_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.5 2019/11/10 21:16:30 chs Exp $");
 
 extern int ipflow_fastforward_disable_flags;
 
-struct octeon_pow_intr_handle {
+struct octpow_intr_handle {
 	void				*pi_ih;
-	struct octeon_pow_softc		*pi_sc;
+	struct octpow_softc		*pi_sc;
 	int				pi_group;
 	void				(*pi_cb)(void *, uint64_t *);
 	void				*pi_data;
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 #define	_EV_PER_N	32	/* XXX */
 #define	_EV_IVAL_N	32	/* XXX */
 	int				pi_first;
@@ -75,55 +75,55 @@ struct octeon_pow_intr_handle {
 #endif
 };
 
-void			octeon_pow_bootstrap(struct octeon_config *);
+void			octpow_bootstrap(struct octeon_config *);
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_pow_intr_evcnt_attach(struct octeon_pow_softc *);
-void			octeon_pow_intr_rml(void *);
+#ifdef CNMAC_DEBUG
+void			octpow_intr_evcnt_attach(struct octpow_softc *);
+void			octpow_intr_rml(void *);
 
-static void             octeon_pow_intr_debug_init(
-			    struct octeon_pow_intr_handle *, int);
-static inline void      octeon_pow_intr_work_debug_ival(struct octeon_pow_softc *,
-			    struct octeon_pow_intr_handle *);
-static inline void	octeon_pow_intr_work_debug_per(struct octeon_pow_softc *,
-			    struct octeon_pow_intr_handle *, int);
+static void             octpow_intr_debug_init(
+			    struct octpow_intr_handle *, int);
+static inline void      octpow_intr_work_debug_ival(struct octpow_softc *,
+			    struct octpow_intr_handle *);
+static inline void	octpow_intr_work_debug_per(struct octpow_softc *,
+			    struct octpow_intr_handle *, int);
 #endif
-static void		octeon_pow_init(struct octeon_pow_softc *);
-static void		octeon_pow_init_regs(struct octeon_pow_softc *);
-static inline int	octeon_pow_tag_sw_poll(void) __unused;
-static inline void	octeon_pow_tag_sw_wait(void);
-static inline void	octeon_pow_config_int_pc(struct octeon_pow_softc *, int);
-static inline void      octeon_pow_config_int(struct octeon_pow_softc *, int,
-			    uint64_t, uint64_t, uint64_t);
-static inline void	octeon_pow_intr_work(struct octeon_pow_softc *,
-			    struct octeon_pow_intr_handle *, int);
-static int		octeon_pow_intr(void *);
+static void		octpow_init(struct octpow_softc *);
+static void		octpow_init_regs(struct octpow_softc *);
+static inline int	octpow_tag_sw_poll(void) __unused;
+static inline void	octpow_tag_sw_wait(void);
+static inline void	octpow_config_int_pc(struct octpow_softc *, int);
+static inline void      octpow_config_int(struct octpow_softc *, int, uint64_t,
+			    uint64_t, uint64_t);
+static inline void	octpow_intr_work(struct octpow_softc *,
+			    struct octpow_intr_handle *, int);
+static int		octpow_intr(void *);
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_pow_dump(void);
+#ifdef CNMAC_DEBUG
+void			octpow_dump(void);
 #endif
 
 /* XXX */
-struct octeon_pow_softc	octeon_pow_softc;
+struct octpow_softc	octpow_softc;
 
-#ifdef OCTEON_ETH_DEBUG
-struct octeon_pow_softc *__octeon_pow_softc;
+#ifdef CNMAC_DEBUG
+struct octpow_softc	*__octpow_softc;
 #endif
 
 /*
  * XXX: parameter tuning is needed: see files.octeon
  */
-#ifndef OCTEON_ETH_RING_MAX
-#define OCTEON_ETH_RING_MAX 512
+#ifndef CNMAC_RING_MAX
+#define CNMAC_RING_MAX 512
 #endif
-#ifndef OCTEON_ETH_RING_MIN
-#define OCTEON_ETH_RING_MIN 1
+#ifndef CNMAC_RING_MIN
+#define CNMAC_RING_MIN 1
 #endif
 
-#ifdef OCTEON_ETH_INTR_FEEDBACK_RING
-int max_recv_cnt = OCTEON_ETH_RING_MAX;
-int min_recv_cnt = OCTEON_ETH_RING_MIN;
-int recv_cnt = OCTEON_ETH_RING_MIN;
+#ifdef CNMAC_INTR_FEEDBACK_RING
+int max_recv_cnt = CNMAC_RING_MAX;
+int min_recv_cnt = CNMAC_RING_MIN;
+int recv_cnt = CNMAC_RING_MIN;
 int int_rate = 1;
 #endif
 
@@ -145,89 +145,89 @@ int int_rate = 1;
 /* ---- status by coreid */
 
 static inline uint64_t
-octeon_pow_status_by_coreid_pend_tag(int coreid)
+octpow_status_by_coreid_pend_tag(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 0, 0, 0);
+	return octpow_ops_pow_status(coreid, 0, 0, 0);
 }
 
 static inline uint64_t
-octeon_pow_status_by_coreid_pend_wqp(int coreid)
+octpow_status_by_coreid_pend_wqp(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 0, 0, 1);
+	return octpow_ops_pow_status(coreid, 0, 0, 1);
 }
 
 static inline uint64_t
-octeon_pow_status_by_coreid_cur_tag_next(int coreid)
+octpow_status_by_coreid_cur_tag_next(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 0, 1, 0);
+	return octpow_ops_pow_status(coreid, 0, 1, 0);
 }
 
 static inline uint64_t
-octeon_pow_status_by_coreid_cur_tag_prev(int coreid)
+octpow_status_by_coreid_cur_tag_prev(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 1, 1, 0);
+	return octpow_ops_pow_status(coreid, 1, 1, 0);
 }
 
 static inline uint64_t
-octeon_pow_status_by_coreid_cur_wqp_next(int coreid)
+octpow_status_by_coreid_cur_wqp_next(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 0, 1, 1);
+	return octpow_ops_pow_status(coreid, 0, 1, 1);
 }
 
 static inline uint64_t
-octeon_pow_status_by_coreid_cur_wqp_prev(int coreid)
+octpow_status_by_coreid_cur_wqp_prev(int coreid)
 {
-	return octeon_pow_ops_pow_status(coreid, 1, 1, 1);
+	return octpow_ops_pow_status(coreid, 1, 1, 1);
 }
 
 /* ---- status by index */
 
 static inline uint64_t
-octeon_pow_status_by_index_tag(int index)
+octpow_status_by_index_tag(int index)
 {
-	return octeon_pow_ops_pow_memory(index, 0, 0);
+	return octpow_ops_pow_memory(index, 0, 0);
 }
 
 static inline uint64_t
-octeon_pow_status_by_index_wqp(int index)
+octpow_status_by_index_wqp(int index)
 {
-	return octeon_pow_ops_pow_memory(index, 0, 1);
+	return octpow_ops_pow_memory(index, 0, 1);
 }
 
 static inline uint64_t
-octeon_pow_status_by_index_desched(int index)
+octpow_status_by_index_desched(int index)
 {
-	return octeon_pow_ops_pow_memory(index, 1, 0);
+	return octpow_ops_pow_memory(index, 1, 0);
 }
 
 /* ---- status by qos level */
 
 static inline uint64_t
-octeon_pow_status_by_qos_free_loc(int qos)
+octpow_status_by_qos_free_loc(int qos)
 {
-	return octeon_pow_ops_pow_idxptr(qos, 0, 0);
+	return octpow_ops_pow_idxptr(qos, 0, 0);
 }
 
 /* ---- status by desched group */
 
 static inline uint64_t
-octeon_pow_status_by_grp_nosched_des(int grp)
+octpow_status_by_grp_nosched_des(int grp)
 {
-	return octeon_pow_ops_pow_idxptr(grp, 0, 1);
+	return octpow_ops_pow_idxptr(grp, 0, 1);
 }
 
 /* ---- status by memory input queue */
 
 static inline uint64_t
-octeon_pow_status_by_queue_remote_head(int queue)
+octpow_status_by_queue_remote_head(int queue)
 {
-	return octeon_pow_ops_pow_idxptr(queue, 1, 0);
+	return octpow_ops_pow_idxptr(queue, 1, 0);
 }
 
 static inline uint64_t
-octeon_pow_status_by_queue_remote_tail(int queue)
+octpow_status_by_queue_remote_tail(int queue)
 {
-	return octeon_pow_ops_pow_idxptr(queue, 1, 0);
+	return octpow_ops_pow_idxptr(queue, 1, 0);
 }
 
 /* ---- tag switch */
@@ -240,7 +240,7 @@ octeon_pow_status_by_queue_remote_tail(int queue)
 
 /* return 1 if pending bit is clear (ready) */
 static inline int
-octeon_pow_tag_sw_poll(void)
+octpow_tag_sw_poll(void)
 {
 	uint64_t result;
 
@@ -262,24 +262,24 @@ octeon_pow_tag_sw_poll(void)
 /* ---- initialization and configuration */
 
 void
-octeon_pow_bootstrap(struct octeon_config *mcp)
+octpow_bootstrap(struct octeon_config *mcp)
 {
-	struct octeon_pow_softc *sc = &octeon_pow_softc;
+	struct octpow_softc *sc = &octpow_softc;
 
 	sc->sc_regt = &mcp->mc_iobus_bust;
 	/* XXX */
 
-	octeon_pow_init(sc);
+	octpow_init(sc);
 
-#ifdef OCTEON_ETH_DEBUG
-	__octeon_pow_softc = sc;
+#ifdef CNMAC_DEBUG
+	__octpow_softc = sc;
 #endif
 
 }
 
 static inline void
-octeon_pow_config_int(struct octeon_pow_softc *sc, int group,
-   uint64_t tc_thr, uint64_t ds_thr, uint64_t iq_thr)
+octpow_config_int(struct octpow_softc *sc, int group, uint64_t tc_thr,
+    uint64_t ds_thr, uint64_t iq_thr)
 {
 	uint64_t wq_int_thr;
 
@@ -304,21 +304,20 @@ octeon_pow_config_int(struct octeon_pow_softc *sc, int group,
  */
 
 void
-octeon_pow_config(struct octeon_pow_softc *sc, int group)
+octpow_config(struct octpow_softc *sc, int group)
 {
 
-	octeon_pow_config_int(sc, group,
+	octpow_config_int(sc, group,
 	    0x0f,		/* TC */
 	    0x00,		/* DS */
 	    0x00);		/* IQ */
 }
 
 void *
-octeon_pow_intr_establish(int group, int level,
-    void (*cb)(void *, uint64_t *), void (*fcb)(int*, int *, uint64_t, void *),
-    void *data)
+octpow_intr_establish(int group, int level, void (*cb)(void *, uint64_t *),
+    void (*fcb)(int*, int *, uint64_t, void *), void *data)
 {
-	struct octeon_pow_intr_handle *pow_ih;
+	struct octpow_intr_handle *pow_ih;
 
 	KASSERT(group >= 0);
 	KASSERT(group < 16);
@@ -327,26 +326,26 @@ octeon_pow_intr_establish(int group, int level,
 	pow_ih->pi_ih = octeon_intr_establish(
 	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
 	    level,
-	    octeon_pow_intr, pow_ih);
+	    octpow_intr, pow_ih);
 	KASSERT(pow_ih->pi_ih != NULL);
 
-	pow_ih->pi_sc = &octeon_pow_softc;	/* XXX */
+	pow_ih->pi_sc = &octpow_softc;	/* XXX */
 	pow_ih->pi_group = group;
 	pow_ih->pi_cb = cb;
 	pow_ih->pi_data = data;
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pow_intr_debug_init(pow_ih, group);
+#ifdef CNMAC_DEBUG
+	octpow_intr_debug_init(pow_ih, group);
 #endif
 	return pow_ih;
 }
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 #define	_NAMELEN	8
 #define	_DESCRLEN	40
 
 static void
-octeon_pow_intr_debug_init(struct octeon_pow_intr_handle *pow_ih, int group)
+octpow_intr_debug_init(struct octpow_intr_handle *pow_ih, int group)
 {
 	pow_ih->pi_first = 1;
 	char *name, *descr;
@@ -408,20 +407,20 @@ octeon_pow_intr_debug_init(struct octeon_pow_intr_handle *pow_ih, int group)
 #endif
 
 void
-octeon_pow_init(struct octeon_pow_softc *sc)
+octpow_init(struct octpow_softc *sc)
 {
-	octeon_pow_init_regs(sc);
+	octpow_init_regs(sc);
 
 	sc->sc_int_pc_base = 10000;
-	octeon_pow_config_int_pc(sc, sc->sc_int_pc_base);
+	octpow_config_int_pc(sc, sc->sc_int_pc_base);
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pow_error_int_enable(sc, 1);
+#ifdef CNMAC_DEBUG
+	octpow_error_int_enable(sc, 1);
 #endif
 }
 
 void
-octeon_pow_init_regs(struct octeon_pow_softc *sc)
+octpow_init_regs(struct octpow_softc *sc)
 {
 	int status;
 
@@ -430,7 +429,7 @@ octeon_pow_init_regs(struct octeon_pow_softc *sc)
 	if (status != 0)
 		panic("can't map %s space", "pow register");
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	_POW_WR8(sc, POW_ECC_ERR_OFFSET,
 	    POW_ECC_ERR_IOP_IE | POW_ECC_ERR_RPE_IE |
 	    POW_ECC_ERR_DBE_IE | POW_ECC_ERR_SBE_IE);
@@ -441,10 +440,10 @@ octeon_pow_init_regs(struct octeon_pow_softc *sc)
 
 /* ---- interrupt handling */
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 static inline void
-octeon_pow_intr_work_debug_ival(struct octeon_pow_softc *sc,
-    struct octeon_pow_intr_handle *pow_ih)
+octpow_intr_work_debug_ival(struct octpow_softc *sc,
+    struct octpow_intr_handle *pow_ih)
 {
 	struct timeval now;
 	struct timeval ival;
@@ -468,8 +467,8 @@ stat_done:
 }
 
 static inline void
-octeon_pow_intr_work_debug_per(struct octeon_pow_softc *sc,
-    struct octeon_pow_intr_handle *pow_ih, int count)
+octpow_intr_work_debug_per(struct octpow_softc *sc,
+    struct octpow_intr_handle *pow_ih, int count)
 {
 	int n;
 
@@ -493,11 +492,11 @@ octeon_pow_intr_work_debug_per(struct octeon_pow_softc *sc,
 }
 #endif
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 #define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
-	    octeon_pow_intr_work_debug_ival((sc), (ih))
+	    octpow_intr_work_debug_ival((sc), (ih))
 #define _POW_INTR_WORK_DEBUG_PER(sc, ih, count) \
-	    octeon_pow_intr_work_debug_per((sc), (ih), (count))
+	    octpow_intr_work_debug_per((sc), (ih), (count))
 #else
 #define _POW_INTR_WORK_DEBUG_IVAL(sc, ih) \
 	    do {} while (0)
@@ -518,8 +517,8 @@ octeon_pow_intr_work_debug_per(struct octeon_pow_softc *sc,
 #define MAX_RX_CNT 0x7fffffff 
 
 static inline void
-octeon_pow_intr_work(struct octeon_pow_softc *sc,
-    struct octeon_pow_intr_handle *pow_ih, int recv_limit)
+octpow_intr_work(struct octpow_softc *sc, struct octpow_intr_handle *pow_ih,
+    int recv_limit)
 {
 	uint64_t *work;
 	uint64_t count = 0;
@@ -529,10 +528,10 @@ octeon_pow_intr_work(struct octeon_pow_softc *sc,
 	_POW_INTR_WORK_DEBUG_IVAL(sc, pow_ih);
 
 	for (count = 0; count < recv_limit; count++) {
-		octeon_pow_tag_sw_wait();
-		octeon_pow_work_request_async(
+		octpow_tag_sw_wait();
+		octpow_work_request_async(
 		    OCTEON_CVMSEG_OFFSET(csm_pow_intr), POW_NO_WAIT);
-		work = (uint64_t *)octeon_pow_work_response_async(
+		work = (uint64_t *)octpow_work_response_async(
 		    OCTEON_CVMSEG_OFFSET(csm_pow_intr));
 		if (work == NULL)
 			break;
@@ -543,34 +542,34 @@ octeon_pow_intr_work(struct octeon_pow_softc *sc,
 }
 
 static int
-octeon_pow_intr(void *data)
+octpow_intr(void *data)
 {
-	struct octeon_pow_intr_handle *pow_ih = data;
-	struct octeon_pow_softc *sc = pow_ih->pi_sc;
+	struct octpow_intr_handle *pow_ih = data;
+	struct octpow_softc *sc = pow_ih->pi_sc;
 	uint64_t wq_int_mask = UINT64_C(0x1) << pow_ih->pi_group;
 
-#ifdef OCTEON_ETH_INTR_FEEDBACK_RING
-	octeon_pow_intr_work(sc, pow_ih, recv_cnt);
+#ifdef CNMAC_INTR_FEEDBACK_RING
+	octpow_intr_work(sc, pow_ih, recv_cnt);
 #else
-	octeon_pow_intr_work(sc, pow_ih, INT_MAX);
-#endif /* OCTEON_ETH_INTR_FEEDBACK_RING */
+	octpow_intr_work(sc, pow_ih, INT_MAX);
+#endif /* CNMAC_INTR_FEEDBACK_RING */
 
 	_POW_WR8(sc, POW_WQ_INT_OFFSET, wq_int_mask << POW_WQ_INT_WQ_INT_SHIFT);
 	return 1;
 }
 
-#ifdef OCTEON_ETH_INTR_FEEDBACK_RING
+#ifdef CNMAC_INTR_FEEDBACK_RING
 int
-octeon_pow_ring_reduce(void *arg)
+octpow_ring_reduce(void *arg)
 {
-	struct octeon_pow_softc *sc = arg;
+	struct octpow_softc *sc = arg;
 	int new, newi;
 	int s;
 
 #if 0
 	if (ipflow_fastforward_disable_flags == 0) {
 		newi = int_rate = 1;
-		octeon_pow_config_int_pc_rate(sc, int_rate);
+		octpow_config_int_pc_rate(sc, int_rate);
 		return recv_cnt;
 	}
 #endif
@@ -591,7 +590,7 @@ octeon_pow_ring_reduce(void *arg)
 				"pow interrupt rate optimized %d->%d.\n",
 				int_rate, newi);
 			int_rate = newi;
-			octeon_pow_config_int_pc_rate(sc, int_rate);
+			octpow_config_int_pc_rate(sc, int_rate);
 			new = max_recv_cnt;
 		}
 	}
@@ -604,16 +603,16 @@ octeon_pow_ring_reduce(void *arg)
 }
 
 int
-octeon_pow_ring_grow(void *arg)
+octpow_ring_grow(void *arg)
 {
-	struct octeon_pow_softc *sc = arg;
+	struct octpow_softc *sc = arg;
 	int new, newi;
 	int s;
 
 #if 0
 	if (ipflow_fastforward_disable_flags == 0) {
 		newi = int_rate = 1;
-		octeon_pow_config_int_pc_rate(sc, int_rate);
+		octpow_config_int_pc_rate(sc, int_rate);
 		return recv_cnt;
 	}
 #endif
@@ -634,7 +633,7 @@ octeon_pow_ring_grow(void *arg)
 				"pow interrupt rate optimized %d->%d.\n",
 				int_rate, newi);
 			int_rate = newi;
-			octeon_pow_config_int_pc_rate(sc, int_rate);
+			octpow_config_int_pc_rate(sc, int_rate);
 			new = min_recv_cnt;
 		}
 	}
@@ -647,28 +646,28 @@ octeon_pow_ring_grow(void *arg)
 }
 
 int
-octeon_pow_ring_size(void)
+octpow_ring_size(void)
 {
 	return recv_cnt;
 }
 
 int
-octeon_pow_ring_intr(void)
+octpow_ring_intr(void)
 {
 	return int_rate;
 }
-#endif /* OCTEON_ETH_INTR_FEEDBACK_RING */
+#endif /* CNMAC_INTR_FEEDBACK_RING */
 
 /* -------------------------------------------------------------------------- */
 
 /* ---- debug configuration */
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 
 void
-octeon_pow_error_int_enable(void *data, int enable)
+octpow_error_int_enable(void *data, int enable)
 {
-	struct octeon_pow_softc *sc = data;
+	struct octpow_softc *sc = data;
 	uint64_t pow_error_int_xxx;
 
 	pow_error_int_xxx =
@@ -679,9 +678,9 @@ octeon_pow_error_int_enable(void *data, int enable)
 }
 
 uint64_t
-octeon_pow_error_int_summary(void *data)
+octpow_error_int_summary(void *data)
 {
-	struct octeon_pow_softc *sc = data;
+	struct octpow_softc *sc = data;
 	uint64_t summary;
 
 	summary = _POW_RD8(sc, POW_ECC_ERR_OFFSET);
@@ -695,13 +694,13 @@ octeon_pow_error_int_summary(void *data)
 
 /* ---- debug counter */
 
-#ifdef OCTEON_ETH_DEBUG
-int			octeon_pow_intr_rml_verbose;
-struct evcnt		octeon_pow_intr_evcnt;
+#ifdef CNMAC_DEBUG
+int			octpow_intr_rml_verbose;
+struct evcnt		octpow_intr_evcnt;
 
-static const struct octeon_evcnt_entry octeon_pow_intr_evcnt_entries[] = {
+static const struct octeon_evcnt_entry octpow_intr_evcnt_entries[] = {
 #define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octeon_pow_softc, name, type, parent, descr)
+	OCTEON_EVCNT_ENTRY(struct octpow_softc, name, type, parent, descr)
 	_ENTRY(powecciopcsrpend,	MISC, NULL, "pow csr load"),
 	_ENTRY(powecciopdbgpend,	MISC, NULL, "pow dbg load"),
 	_ENTRY(powecciopaddwork,	MISC, NULL, "pow addwork"),
@@ -723,22 +722,22 @@ static const struct octeon_evcnt_entry octeon_pow_intr_evcnt_entries[] = {
 };
 
 void
-octeon_pow_intr_evcnt_attach(struct octeon_pow_softc *sc)
+octpow_intr_evcnt_attach(struct octpow_softc *sc)
 {
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_pow_intr_evcnt_entries, "pow0");
+	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octpow_intr_evcnt_entries, "pow0");
 }
 
 void
-octeon_pow_intr_rml(void *arg)
+octpow_intr_rml(void *arg)
 {
-	struct octeon_pow_softc *sc;
+	struct octpow_softc *sc;
 	uint64_t reg;
 
-	octeon_pow_intr_evcnt.ev_count++;
-	sc = __octeon_pow_softc;
+	octpow_intr_evcnt.ev_count++;
+	sc = __octpow_softc;
 	KASSERT(sc != NULL);
-	reg = octeon_pow_error_int_summary(sc);
-	if (octeon_pow_intr_rml_verbose)
+	reg = octpow_error_int_summary(sc);
+	if (octpow_intr_rml_verbose)
 		printf("%s: POW_ECC_ERR=0x%016" PRIx64 "\n", __func__, reg);
 	switch (reg & POW_ECC_ERR_IOP) {
 	case POW_ECC_ERR_IOP_CSRPEND:
@@ -798,21 +797,21 @@ octeon_pow_intr_rml(void *arg)
 
 /* ---- debug dump */
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 
-void			octeon_pow_dump_reg(void);
-void			octeon_pow_dump_ops(void);
+void			octpow_dump_reg(void);
+void			octpow_dump_ops(void);
 
 void
-octeon_pow_dump(void)
+octpow_dump(void)
 {
-	octeon_pow_dump_reg();
-	octeon_pow_dump_ops();
+	octpow_dump_reg();
+	octpow_dump_ops();
 }
 
 /* ---- register dump */
 
-struct octeon_pow_dump_reg_entry {
+struct octpow_dump_reg_entry {
 	const char *name;
 	const char *format;
 	size_t offset;
@@ -828,7 +827,7 @@ struct octeon_pow_dump_reg_entry {
 	_ENTRY(x## 8), _ENTRY(x## 9), _ENTRY(x##10), _ENTRY(x##11), \
 	_ENTRY(x##12), _ENTRY(x##13), _ENTRY(x##14), _ENTRY(x##15)
 
-static const struct octeon_pow_dump_reg_entry octeon_pow_dump_reg_entries[] = {
+static const struct octpow_dump_reg_entry octpow_dump_reg_entries[] = {
 	_ENTRY		(POW_PP_GRP_MSK0),
 	_ENTRY		(POW_PP_GRP_MSK1),
 	_ENTRY_0_15	(POW_WQ_INT_THR),
@@ -853,16 +852,16 @@ static const struct octeon_pow_dump_reg_entry octeon_pow_dump_reg_entries[] = {
 #undef _ENTRY
 
 void
-octeon_pow_dump_reg(void)
+octpow_dump_reg(void)
 {
-	struct octeon_pow_softc *sc = __octeon_pow_softc;
-	const struct octeon_pow_dump_reg_entry *entry;
+	struct octpow_softc *sc = __octpow_softc;
+	const struct octpow_dump_reg_entry *entry;
 	uint64_t tmp;
 	char buf[512];
 	int i;
 
-	for (i = 0; i < (int)__arraycount(octeon_pow_dump_reg_entries); i++) {
-		entry = &octeon_pow_dump_reg_entries[i];
+	for (i = 0; i < (int)__arraycount(octpow_dump_reg_entries); i++) {
+		entry = &octpow_dump_reg_entries[i];
 		tmp = _POW_RD8(sc, entry->offset);
 		if (entry->format == NULL)
 			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
@@ -874,25 +873,24 @@ octeon_pow_dump_reg(void)
 
 /* ---- operations dump */
 
-struct octeon_pow_dump_ops_entry {
+struct octpow_dump_ops_entry {
 	const char *name;
 	const char *format;
 	uint64_t (*func)(int);
 };
 
-void			octeon_pow_dump_ops_coreid(int);
-void			octeon_pow_dump_ops_index(int);
-void			octeon_pow_dump_ops_qos(int);
-void			octeon_pow_dump_ops_grp(int);
-void			octeon_pow_dump_ops_queue(int);
-void                    octeon_pow_dump_ops_common(const struct
-			    octeon_pow_dump_ops_entry *, size_t, const char *,
-			    int);
+void	octpow_dump_ops_coreid(int);
+void	octpow_dump_ops_index(int);
+void	octpow_dump_ops_qos(int);
+void	octpow_dump_ops_grp(int);
+void	octpow_dump_ops_queue(int);
+void	octpow_dump_ops_common(const struct octpow_dump_ops_entry *, size_t,
+	    const char *, int);
 
 #define	_ENTRY_COMMON(name, prefix, x, y) \
-	{ #name "_" #x, prefix##_##y##_BITS, octeon_pow_status_by_##name##_##x }
+	{ #name "_" #x, prefix##_##y##_BITS, octpow_status_by_##name##_##x }
 
-const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_coreid_entries[] = {
+const struct octpow_dump_ops_entry octpow_dump_ops_coreid_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(coreid, POW_STATUS_LOAD_RESULT, x, y)
 	_ENTRY(pend_tag, PEND_TAG),
 	_ENTRY(pend_wqp, PEND_WQP),
@@ -903,7 +901,7 @@ const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_coreid_entries[] = {
 #undef _ENTRY
 };
 
-const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_index_entries[] = {
+const struct octpow_dump_ops_entry octpow_dump_ops_index_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(index, POW_MEMORY_LOAD_RESULT, x, y)
 	_ENTRY(tag, TAG),
 	_ENTRY(wqp, WQP),
@@ -911,19 +909,19 @@ const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_index_entries[] = {
 #undef _ENTRY
 };
 
-const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_qos_entries[] = {
+const struct octpow_dump_ops_entry octpow_dump_ops_qos_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(qos, POW_IDXPTR_LOAD_RESULT_QOS, x, y)
 	_ENTRY(free_loc, FREE_LOC)
 #undef _ENTRY
 };
 
-const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_grp_entries[] = {
+const struct octpow_dump_ops_entry octpow_dump_ops_grp_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(grp, POW_IDXPTR_LOAD_RESULT_GRP, x, y)
 	_ENTRY(nosched_des, NOSCHED_DES)
 #undef _ENTRY
 };
 
-const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_queue_entries[] = {
+const struct octpow_dump_ops_entry octpow_dump_ops_queue_entries[] = {
 #define	_ENTRY(x, y)	_ENTRY_COMMON(queue, POW_IDXPTR_LOAD_RESULT_QUEUE, x, y)
 	_ENTRY(remote_head, REMOTE_HEAD),
 	_ENTRY(remote_tail, REMOTE_TAIL)
@@ -931,67 +929,67 @@ const struct octeon_pow_dump_ops_entry octeon_pow_dump_ops_queue_entries[] = {
 };
 
 void
-octeon_pow_dump_ops(void)
+octpow_dump_ops(void)
 {
 	int i;
 
 	/* XXX */
 	for (i = 0; i < 2/* XXX */; i++)
-		octeon_pow_dump_ops_coreid(i);
+		octpow_dump_ops_coreid(i);
 
 	/* XXX */
-	octeon_pow_dump_ops_index(0);
+	octpow_dump_ops_index(0);
 
 	for (i = 0; i < 8; i++)
-		octeon_pow_dump_ops_qos(i);
+		octpow_dump_ops_qos(i);
 
 	for (i = 0; i < 16; i++)
-		octeon_pow_dump_ops_grp(i);
+		octpow_dump_ops_grp(i);
 
 	for (i = 0; i < 16; i++)
-		octeon_pow_dump_ops_queue(i);
+		octpow_dump_ops_queue(i);
 }
 
 void
-octeon_pow_dump_ops_coreid(int coreid)
+octpow_dump_ops_coreid(int coreid)
 {
-	octeon_pow_dump_ops_common(octeon_pow_dump_ops_coreid_entries,
-	    __arraycount(octeon_pow_dump_ops_coreid_entries), "coreid", coreid);
+	octpow_dump_ops_common(octpow_dump_ops_coreid_entries,
+	    __arraycount(octpow_dump_ops_coreid_entries), "coreid", coreid);
 }
 
 void
-octeon_pow_dump_ops_index(int index)
+octpow_dump_ops_index(int index)
 {
-	octeon_pow_dump_ops_common(octeon_pow_dump_ops_index_entries,
-	    __arraycount(octeon_pow_dump_ops_index_entries), "index", index);
+	octpow_dump_ops_common(octpow_dump_ops_index_entries,
+	    __arraycount(octpow_dump_ops_index_entries), "index", index);
 }
 
 void
-octeon_pow_dump_ops_qos(int qos)
+octpow_dump_ops_qos(int qos)
 {
-	octeon_pow_dump_ops_common(octeon_pow_dump_ops_qos_entries,
-	    __arraycount(octeon_pow_dump_ops_qos_entries), "qos", qos);
+	octpow_dump_ops_common(octpow_dump_ops_qos_entries,
+	    __arraycount(octpow_dump_ops_qos_entries), "qos", qos);
 }
 
 void
-octeon_pow_dump_ops_grp(int grp)
+octpow_dump_ops_grp(int grp)
 {
-	octeon_pow_dump_ops_common(octeon_pow_dump_ops_grp_entries,
-	    __arraycount(octeon_pow_dump_ops_grp_entries), "grp", grp);
+	octpow_dump_ops_common(octpow_dump_ops_grp_entries,
+	    __arraycount(octpow_dump_ops_grp_entries), "grp", grp);
 }
 
 void
-octeon_pow_dump_ops_queue(int queue)
+octpow_dump_ops_queue(int queue)
 {
-	octeon_pow_dump_ops_common(octeon_pow_dump_ops_queue_entries,
-	    __arraycount(octeon_pow_dump_ops_queue_entries), "queue", queue);
+	octpow_dump_ops_common(octpow_dump_ops_queue_entries,
+	    __arraycount(octpow_dump_ops_queue_entries), "queue", queue);
 }
 
 void
-octeon_pow_dump_ops_common(const struct octeon_pow_dump_ops_entry *entries,
+octpow_dump_ops_common(const struct octpow_dump_ops_entry *entries,
     size_t nentries, const char *by_what, int arg)
 {
-	const struct octeon_pow_dump_ops_entry *entry;
+	const struct octpow_dump_ops_entry *entry;
 	uint64_t tmp;
 	char buf[512];
 	int i;
@@ -1014,15 +1012,15 @@ octeon_pow_dump_ops_common(const struct octeon_pow_dump_ops_entry *entries,
 
 /* ---- test */
 
-#ifdef OCTEON_POW_TEST
+#ifdef octPOW_TEST
 /*
  * Standalone test entries; meant to be called from ddb.
  */
 
-void			octeon_pow_test(void);
-void			octeon_pow_test_dump_wqe(paddr_t);
+void			octpow_test(void);
+void			octpow_test_dump_wqe(paddr_t);
 
-static void		octeon_pow_test_1(void);
+static void		octpow_test_1(void);
 
 struct test_wqe {
 	uint64_t word0;
@@ -1033,13 +1031,13 @@ struct test_wqe {
 struct test_wqe test_wqe;
 
 void
-octeon_pow_test(void)
+octpow_test(void)
 {
-	octeon_pow_test_1();
+	octpow_test_1();
 }
 
 static void
-octeon_pow_test_1(void)
+octpow_test_1(void)
 {
 	struct test_wqe *wqe = &test_wqe;
 	int qos, grp, queue, tt;
@@ -1053,8 +1051,8 @@ octeon_pow_test_1(void)
 
 	/* => make sure that the queue is empty */
 
-	octeon_pow_dump_ops_qos(qos);
-	octeon_pow_dump_ops_grp(grp);
+	octpow_dump_ops_qos(qos);
+	octpow_dump_ops_grp(grp);
 	printf("\n");
 
 	/*
@@ -1076,37 +1074,37 @@ octeon_pow_test_1(void)
 	    __BITS64_SET(POW_WQE_WORD1_TAG, tag);
 
 	printf("calling ADDWQ\n");
-	octeon_pow_ops_addwq(MIPS_KSEG0_TO_PHYS(wqe), qos, grp, tt, tag);
+	octpow_ops_addwq(MIPS_KSEG0_TO_PHYS(wqe), qos, grp, tt, tag);
 
-	octeon_pow_dump_ops_qos(qos);
-	octeon_pow_dump_ops_grp(grp);
+	octpow_dump_ops_qos(qos);
+	octpow_dump_ops_grp(grp);
 	printf("\n");
 
 	/* => make sure that a WQE is added to the queue */
 
 	printf("calling GET_WORK_LOAD\n");
-	ptr = octeon_pow_ops_get_work_load(0);
+	ptr = octpow_ops_get_work_load(0);
 
-	octeon_pow_dump_ops_qos(qos);
-	octeon_pow_dump_ops_grp(grp);
+	octpow_dump_ops_qos(qos);
+	octpow_dump_ops_grp(grp);
 	printf("\n");
 
-	octeon_pow_test_dump_wqe(ptr);
+	octpow_test_dump_wqe(ptr);
 
 	/* => make sure that the WQE is in-flight (and scheduled) */
 
 	printf("calling SWTAG(NULL)\n");
-	octeon_pow_ops_swtag(POW_TAG_TYPE_NULL, tag);
+	octpow_ops_swtag(POW_TAG_TYPE_NULL, tag);
 
-	octeon_pow_dump_ops_qos(qos);
-	octeon_pow_dump_ops_grp(grp);
+	octpow_dump_ops_qos(qos);
+	octpow_dump_ops_grp(grp);
 	printf("\n");
 
 	/* => make sure that the WQE is un-scheduled (completed) */
 }
 
 void
-octeon_pow_test_dump_wqe(paddr_t ptr)
+octpow_test_dump_wqe(paddr_t ptr)
 {
 	uint64_t word0, word1;
 	char buf[128];

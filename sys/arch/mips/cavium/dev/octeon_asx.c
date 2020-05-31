@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_asx.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_asx.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_asx.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_asx.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -38,21 +38,20 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_asx.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $"
 #include <mips/cavium/dev/octeon_asxreg.h>
 #include <mips/cavium/dev/octeon_asxvar.h>
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_asx_intr_evcnt_attach(struct octeon_asx_softc *);
-void			octeon_asx_intr_rml(void *);
+#ifdef CNMAC_DEBUG
+void			octasx_intr_evcnt_attach(struct octasx_softc *);
+void			octasx_intr_rml(void *);
 #endif
 
-#ifdef OCTEON_ETH_DEBUG
-struct octeon_asx_softc *__octeon_asx_softc;
+#ifdef CNMAC_DEBUG
+struct octasx_softc *__octasx_softc;
 #endif
 
 /* XXX */
 void
-octeon_asx_init(struct octeon_asx_attach_args *aa,
-    struct octeon_asx_softc **rsc)
+octasx_init(struct octasx_attach_args *aa, struct octasx_softc **rsc)
 {
-	struct octeon_asx_softc *sc;
+	struct octasx_softc *sc;
 	int status;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -69,10 +68,10 @@ octeon_asx_init(struct octeon_asx_attach_args *aa,
 
 	*rsc = sc;
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_asx_intr_evcnt_attach(sc);
-	if (__octeon_asx_softc == NULL)
-		__octeon_asx_softc = sc;
+#ifdef CNMAC_DEBUG
+	octasx_intr_evcnt_attach(sc);
+	if (__octasx_softc == NULL)
+		__octasx_softc = sc;
 #endif
 }
 
@@ -81,26 +80,26 @@ octeon_asx_init(struct octeon_asx_attach_args *aa,
 #define	_ASX_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
-static int	octeon_asx_enable_tx(struct octeon_asx_softc *, int);
-static int	octeon_asx_enable_rx(struct octeon_asx_softc *, int);
-#ifdef OCTEON_ETH_DEBUG
-static int	octeon_asx_enable_intr(struct octeon_asx_softc *, int);
+static int	octasx_enable_tx(struct octasx_softc *, int);
+static int	octasx_enable_rx(struct octasx_softc *, int);
+#ifdef CNMAC_DEBUG
+static int	octasx_enable_intr(struct octasx_softc *, int);
 #endif
 
 int
-octeon_asx_enable(struct octeon_asx_softc *sc, int enable)
+octasx_enable(struct octasx_softc *sc, int enable)
 {
 
-#ifdef OCTEON_ETH_DEBUG
-	octeon_asx_enable_intr(sc, enable);
+#ifdef CNMAC_DEBUG
+	octasx_enable_intr(sc, enable);
 #endif
-	octeon_asx_enable_tx(sc, enable);
-	octeon_asx_enable_rx(sc, enable);
+	octasx_enable_tx(sc, enable);
+	octasx_enable_rx(sc, enable);
 	return 0;
 }
 
 static int
-octeon_asx_enable_tx(struct octeon_asx_softc *sc, int enable)
+octasx_enable_tx(struct octasx_softc *sc, int enable)
 {
 	uint64_t asx_tx_port;
 
@@ -114,7 +113,7 @@ octeon_asx_enable_tx(struct octeon_asx_softc *sc, int enable)
 }
 
 static int
-octeon_asx_enable_rx(struct octeon_asx_softc *sc, int enable)
+octasx_enable_rx(struct octasx_softc *sc, int enable)
 {
 	uint64_t asx_rx_port;
 
@@ -127,12 +126,12 @@ octeon_asx_enable_rx(struct octeon_asx_softc *sc, int enable)
 	return 0;
 }
 
-#if defined(OCTEON_ETH_DEBUG)
-int			octeon_asx_intr_rml_verbose;
+#if defined(CNMAC_DEBUG)
+int			octasx_intr_rml_verbose;
 
-static const struct octeon_evcnt_entry octeon_asx_intr_evcnt_entries[] = {
+static const struct octeon_evcnt_entry octasx_intr_evcnt_entries[] = {
 #define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octeon_asx_softc, name, type, parent, descr)
+	OCTEON_EVCNT_ENTRY(struct octasx_softc, name, type, parent, descr)
 	_ENTRY(asxrxpsh,	MISC, NULL, "asx tx fifo overflow"),
 	_ENTRY(asxtxpop,	MISC, NULL, "asx tx fifo underflow"),
 	_ENTRY(asxovrflw,	MISC, NULL, "asx rx fifo overflow"),
@@ -140,19 +139,19 @@ static const struct octeon_evcnt_entry octeon_asx_intr_evcnt_entries[] = {
 };
 
 void
-octeon_asx_intr_evcnt_attach(struct octeon_asx_softc *sc)
+octasx_intr_evcnt_attach(struct octasx_softc *sc)
 {
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_asx_intr_evcnt_entries, "asx0");
+	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octasx_intr_evcnt_entries, "asx0");
 }
 
 void
-octeon_asx_intr_rml(void *arg)
+octasx_intr_rml(void *arg)
 {
-	struct octeon_asx_softc *sc = __octeon_asx_softc;
+	struct octasx_softc *sc = __octasx_softc;
 	uint64_t reg = 0;
 
-	reg = octeon_asx_int_summary(sc);
-	if (octeon_asx_intr_rml_verbose)
+	reg = octasx_int_summary(sc);
+	if (octasx_intr_rml_verbose)
 		printf("%s: ASX_INT_REG=0x%016" PRIx64 "\n", __func__, reg);
 	if (reg & ASX0_INT_REG_TXPSH)
 		OCTEON_EVCNT_INC(sc, asxrxpsh);
@@ -163,7 +162,7 @@ octeon_asx_intr_rml(void *arg)
 }
 
 static int
-octeon_asx_enable_intr(struct octeon_asx_softc *sc, int enable)
+octasx_enable_intr(struct octasx_softc *sc, int enable)
 {
 	uint64_t asx_int_xxx = 0;
 
@@ -178,16 +177,16 @@ octeon_asx_enable_intr(struct octeon_asx_softc *sc, int enable)
 #endif
 
 int
-octeon_asx_clk_set(struct octeon_asx_softc *sc, int tx_setting, int rx_setting)
+octasx_clk_set(struct octasx_softc *sc, int tx_setting, int rx_setting)
 {
 	_ASX_WR8(sc, ASX0_TX_CLK_SET0_OFFSET + 8 * sc->sc_port, tx_setting);
 	_ASX_WR8(sc, ASX0_RX_CLK_SET0_OFFSET + 8 * sc->sc_port, rx_setting);
 	return 0;
 }
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 uint64_t
-octeon_asx_int_summary(struct octeon_asx_softc *sc)
+octasx_int_summary(struct octasx_softc *sc)
 {
 	uint64_t summary;
 
@@ -198,15 +197,15 @@ octeon_asx_int_summary(struct octeon_asx_softc *sc)
 
 #define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
 
-struct octeon_asx_dump_reg_ {
+struct octasx_dump_reg_ {
 	const char *name;
 	const char *format;
 	size_t	offset;
 };
 
-void		octeon_asx_dump(void);
+void		octasx_dump(void);
 
-static const struct octeon_asx_dump_reg_ octeon_asx_dump_regs_[] = {
+static const struct octasx_dump_reg_ octasx_dump_regs_[] = {
 	_ENTRY(ASX0_RX_PRT_EN),
 	_ENTRY(ASX0_TX_PRT_EN),
 	_ENTRY(ASX0_INT_REG),
@@ -228,16 +227,16 @@ static const struct octeon_asx_dump_reg_ octeon_asx_dump_regs_[] = {
 };
 
 void
-octeon_asx_dump(void)
+octasx_dump(void)
 {
-	struct octeon_asx_softc *sc = __octeon_asx_softc;
-	const struct octeon_asx_dump_reg_ *reg;
+	struct octasx_softc *sc = __octasx_softc;
+	const struct octasx_dump_reg_ *reg;
 	uint64_t tmp;
 	char buf[512];
 	int i;
 
-	for (i = 0; i < (int)__arraycount(octeon_asx_dump_regs_); i++) {
-		reg = &octeon_asx_dump_regs_[i];
+	for (i = 0; i < (int)__arraycount(octasx_dump_regs_); i++) {
+		reg = &octasx_dump_regs_[i];
 		tmp = _ASX_RD8(sc, reg->offset);
 		if (reg->format == NULL)
 			snprintf(buf, sizeof(buf), "%016" PRIx64, tmp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmacvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: if_cnmacvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 #undef DEBUG
 #undef TENBASET_DBG
@@ -17,7 +17,7 @@
 #define FREE_QUEUE_SIZE		GATHER_QUEUE_SIZE
 #define RECV_QUEUE_SIZE		(GATHER_QUEUE_SIZE * 2)
 
-#ifdef OCTEON_ETH_FIXUP_ODD_NIBBLE_DYNAMIC
+#ifdef CNMAC_FIXUP_ODD_NIBBLE_DYNAMIC
 #define PROC_NIBBLE_SOFT_THRESHOLD 2000
 #endif
 
@@ -26,18 +26,17 @@ paddr_t kvtophys(vaddr_t);
 /* XXX MUST BE REPLACED WITH BUS_DMA!!! */
 
 struct _send_queue_entry;
-struct octeon_pow_softc;
-struct octeon_pip_softc;
-struct octeon_ipd_softc;
-struct octeon_pko_softc;
-struct octeon_asx_softc;
-struct octeon_smi_softc;
-struct octeon_gmx_port_softc;
-struct octeon_pow_softc;
+struct octasx_softc;
+struct octsmi_softc;
+struct octgmx_port_softc;
+struct octipd_softc;
+struct octpip_softc;
+struct octpko_softc;
+struct octpow_softc;
 
-extern struct octeon_pow_softc	octeon_pow_softc;
+extern struct octpow_softc	octpow_softc;
 
-struct octeon_eth_softc {
+struct cnmac_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_regt;
 	bus_dma_tag_t		sc_dmat;
@@ -54,16 +53,15 @@ struct octeon_eth_softc {
 #endif
 
 	void			*sc_pow_recv_ih;
-	struct octeon_pip_softc	*sc_pip;
-	struct octeon_ipd_softc	*sc_ipd;
-	struct octeon_pko_softc	*sc_pko;
-	struct octeon_asx_softc	*sc_asx;
-	struct octeon_smi_softc	*sc_smi;
-	struct octeon_gmx_softc	*sc_gmx;
-	struct octeon_gmx_port_softc
+	struct octpip_softc	*sc_pip;
+	struct octipd_softc	*sc_ipd;
+	struct octpko_softc	*sc_pko;
+	struct octasx_softc	*sc_asx;
+	struct octsmi_softc	*sc_smi;
+	struct octgmx_softc	*sc_gmx;
+	struct octgmx_port_softc
 				*sc_gmx_port;
-	struct octeon_pow_softc
-				*sc_pow;
+	struct octpow_softc	*sc_pow;
 
 	struct ethercom		sc_ethercom;
 	struct mii_data		sc_mii;
@@ -73,7 +71,7 @@ struct octeon_eth_softc {
 	struct callout		sc_tick_misc_ch;
 	struct callout		sc_tick_free_ch;
 
-#ifdef OCTEON_ETH_INTR_FEEDBACK
+#ifdef CNMAC_INTR_FEEDBACK
 	struct callout		sc_resume_ch;
 #endif
 
@@ -102,8 +100,8 @@ struct octeon_eth_softc {
 	 */
 	int			sc_redir;
 
-	struct octeon_fau_desc	sc_fau_done;
-	struct octeon_pko_cmdptr_desc
+	struct octfau_desc	sc_fau_done;
+	struct octpko_cmdptr_desc
 				sc_cmdptr;
 
 	size_t			sc_ip_offset;
@@ -120,12 +118,12 @@ struct octeon_eth_softc {
 	struct timeval		sc_rate_recv_fixup_odd_nibble_preamble_cap;
 	struct timeval		sc_rate_recv_fixup_odd_nibble_crc_last;
 	struct timeval		sc_rate_recv_fixup_odd_nibble_crc_cap;
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	struct timeval		sc_rate_recv_fixup_odd_nibble_addr_last;
 	struct timeval		sc_rate_recv_fixup_odd_nibble_addr_cap;
 #endif
 	int			sc_quirks;
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	struct evcnt		sc_ev_rx;
 	struct evcnt		sc_ev_rxint;
 	struct evcnt		sc_ev_rxrs;

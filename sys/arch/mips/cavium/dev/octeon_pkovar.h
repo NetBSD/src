@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pkovar.h,v 1.2 2018/04/19 21:50:06 christos Exp $	*/
+/*	$NetBSD: octeon_pkovar.h,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,53 +47,53 @@
 #define	PKO_MEM_QUEUE_PTRS_ILLEGAL_PID	63
 
 /* XXX */
-struct octeon_pko_cmdptr_desc {
+struct octpko_cmdptr_desc {
 	uint64_t	cmdptr;
 	uint64_t	cmdptr_idx;
 };
 
 /* XXX */
-struct octeon_pko_softc {
+struct octpko_softc {
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
-	struct octeon_pko_cmdptr_desc
+	struct octpko_cmdptr_desc
 				*sc_cmdptr;
 	int			sc_cmd_buf_pool;
 	size_t			sc_cmd_buf_size;
 
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	struct evcnt		sc_ev_pkoerrdbell;
 	struct evcnt		sc_ev_pkoerrparity;
 #endif
 };
 
 /* XXX */
-struct octeon_pko_attach_args {
+struct octpko_attach_args {
 	int				aa_port;
 	bus_space_tag_t			aa_regt;
-	struct octeon_pko_cmdptr_desc	*aa_cmdptr;
+	struct octpko_cmdptr_desc	*aa_cmdptr;
 	int				aa_cmd_buf_pool;
 	size_t				aa_cmd_buf_size;
 };
 
 /* XXX */
-void			octeon_pko_init(struct octeon_pko_attach_args *,
-			    struct octeon_pko_softc **);
-int			octeon_pko_enable(struct octeon_pko_softc *);
-int			octeon_pko_reset(struct octeon_pko_softc *);
-void			octeon_pko_config(struct octeon_pko_softc *);
-int			octeon_pko_port_enable(struct octeon_pko_softc *, int);
-int			octeon_pko_port_config(struct octeon_pko_softc *);
-void			octeon_pko_int_enable(struct octeon_pko_softc *, int);
-uint64_t		octeon_pko_int_summary(struct octeon_pko_softc *);
-static __inline uint64_t	octeon_pko_cmd_word0(int, int, int, int, int, int,
+void			octpko_init(struct octpko_attach_args *,
+			    struct octpko_softc **);
+int			octpko_enable(struct octpko_softc *);
+int			octpko_reset(struct octpko_softc *);
+void			octpko_config(struct octpko_softc *);
+int			octpko_port_enable(struct octpko_softc *, int);
+int			octpko_port_config(struct octpko_softc *);
+void			octpko_int_enable(struct octpko_softc *, int);
+uint64_t		octpko_int_summary(struct octpko_softc *);
+static __inline uint64_t	octpko_cmd_word0(int, int, int, int, int, int,
 			    int, int, int, int, int, int, int, int, int, int);
-static __inline uint64_t	octeon_pko_cmd_word1(int, int, int, int, paddr_t);
+static __inline uint64_t	octpko_cmd_word1(int, int, int, int, paddr_t);
 
 
 static __inline uint64_t
-octeon_pko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
+octpko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
     int le, int n2, int q, int r, int g, int ipoffp1, int ii, int df, int segs,
     int totalbytes)
 {
@@ -119,7 +119,7 @@ octeon_pko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
 }
 
 static __inline uint64_t
-octeon_pko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
+octpko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
 {
 	uint64_t cmd = 0;
 
@@ -136,7 +136,7 @@ octeon_pko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
 /* Store Operations */
 
 static __inline void
-octeon_pko_op_store(uint64_t args, uint64_t value)
+octpko_op_store(uint64_t args, uint64_t value)
 {
 	paddr_t addr;
 
@@ -151,7 +151,7 @@ octeon_pko_op_store(uint64_t args, uint64_t value)
 }
 
 static __inline void
-octeon_pko_op_doorbell_write(int pid, int qid, int wdc)
+octpko_op_doorbell_write(int pid, int qid, int wdc)
 {
 	uint64_t args, value;
 
@@ -159,7 +159,7 @@ octeon_pko_op_doorbell_write(int pid, int qid, int wdc)
 	    ((uint64_t)(pid & 0x3f) << 12) |
 	    ((uint64_t)(qid & 0x1ff) << 3);
 	value = wdc & 0xfffff;
-	octeon_pko_op_store(args, value);
+	octpko_op_store(args, value);
 }
 
 #endif

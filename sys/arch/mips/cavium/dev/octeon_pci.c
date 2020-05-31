@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pci.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_pci.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -47,67 +47,67 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
  * interrupt.  Hence, here.
  */
 
-void			octeon_pci_bootstrap(struct octeon_config *);
-static void		octeon_pci_init(void);
+void			octpci_bootstrap(struct octeon_config *);
+static void		octpci_init(void);
 
-#ifdef OCTEON_ETH_DEBUG
-static int		octeon_pci_intr_rml(void *);
-static void		*octeon_pci_intr_rml_ih;
+#ifdef CNMAC_DEBUG
+static int		octpci_intr_rml(void *);
+static void		*octpci_intr_rml_ih;
 #endif
 
 void
-octeon_pci_bootstrap(struct octeon_config *mcp)
+octpci_bootstrap(struct octeon_config *mcp)
 {
-	octeon_pci_init();
+	octpci_init();
 }
 
 static void
-octeon_pci_init(void)
+octpci_init(void)
 {
-#ifdef OCTEON_ETH_DEBUG
-	octeon_pci_intr_rml_ih = octeon_intr_establish(
-	    ffs64(CIU_INTX_SUM0_RML) - 1, IPL_NET, octeon_pci_intr_rml, NULL);
+#ifdef CNMAC_DEBUG
+	octpci_intr_rml_ih = octeon_intr_establish(
+	    ffs64(CIU_INTX_SUM0_RML) - 1, IPL_NET, octpci_intr_rml, NULL);
 #endif
 }
 
-#ifdef OCTEON_ETH_DEBUG
-int octeon_pci_intr_rml_verbose;
+#ifdef CNMAC_DEBUG
+int octpci_intr_rml_verbose;
 
-void			octeon_gmx_intr_rml_gmx0(void *);
-void			octeon_gmx_intr_rml_gmx1(void *);
-void			octeon_asx_intr_rml(void *);
-void			octeon_ipd_intr_rml(void *);
-void			octeon_pip_intr_rml(void *);
-void			octeon_pow_intr_rml(void *);
-void			octeon_pko_intr_rml(void *);
-void			octeon_fpa_intr_rml(void *);
+void			octgmx_intr_rml_gmx0(void *);
+void			octgmx_intr_rml_gmx1(void *);
+void			octasx_intr_rml(void *);
+void			octipd_intr_rml(void *);
+void			octpip_intr_rml(void *);
+void			octpow_intr_rml(void *);
+void			octpko_intr_rml(void *);
+void			octfpa_intr_rml(void *);
 
 static int
-octeon_pci_intr_rml(void *arg)
+octpci_intr_rml(void *arg)
 {
 	uint64_t block;
 
 	block = octeon_read_csr(NPI_RSL_INT_BLOCKS);
-	if (octeon_pci_intr_rml_verbose)
+	if (octpci_intr_rml_verbose)
 		printf("%s: block=0x%016" PRIx64 "\n", __func__, block);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_GMX0))
-		octeon_gmx_intr_rml_gmx0(arg);
+		octgmx_intr_rml_gmx0(arg);
 #ifdef notyet
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_GMX1))
-		octeon_gmx_intr_rml_gmx1(arg);
+		octgmx_intr_rml_gmx1(arg);
 #endif
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_ASX0))
-		octeon_asx_intr_rml(arg);
+		octasx_intr_rml(arg);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_IPD))
-		octeon_ipd_intr_rml(arg);
+		octipd_intr_rml(arg);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_PIP))
-		octeon_pip_intr_rml(arg);
+		octpip_intr_rml(arg);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_POW))
-		octeon_pow_intr_rml(arg);
+		octpow_intr_rml(arg);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_PKO))
-		octeon_pko_intr_rml(arg);
+		octpko_intr_rml(arg);
 	if (ISSET(block, NPI_RSL_INT_BLOCKS_FPA))
-		octeon_fpa_intr_rml(arg);
+		octfpa_intr_rml(arg);
 	return 1;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pipvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_pipvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,14 +31,14 @@
 
 
 /* XXX */
-struct octeon_pip_softc {
+struct octpip_softc {
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
 	int			sc_tag_type;
 	int			sc_receive_group;
 	size_t			sc_ip_offset;
-#ifdef OCTEON_ETH_DEBUG
+#ifdef CNMAC_DEBUG
 	struct evcnt		sc_ev_pipbeperr;
 	struct evcnt		sc_ev_pipfeperr;
 	struct evcnt		sc_ev_pipskprunt;
@@ -49,7 +49,7 @@ struct octeon_pip_softc {
 };
 
 /* XXX */
-struct octeon_pip_attach_args {
+struct octpip_attach_args {
 	int			aa_port;
 	bus_space_tag_t		aa_regt;
 	int			aa_tag_type;
@@ -57,25 +57,23 @@ struct octeon_pip_attach_args {
 	size_t			aa_ip_offset;
 };
 
-void			octeon_pip_init(struct octeon_pip_attach_args *,
-			    struct octeon_pip_softc **);
-void			octeon_pip_gbl_ctl_debug(struct octeon_pip_softc *);
-int			octeon_pip_port_config(struct octeon_pip_softc *);
-void			octeon_pip_prt_cfg_enable(struct octeon_pip_softc *,
-			    uint64_t, int);
-void			octeon_pip_stats(struct octeon_pip_softc *,
-			    struct ifnet *, int);
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_pip_int_enable(struct octeon_pip_softc *, int);
-void			octeon_pip_dump(void);
-void			octeon_pip_dump_regs(void);
-void			octeon_pip_dump_stats(void);
-#endif /* OCTEON_ETH_DEBUG */
+void		octpip_init(struct octpip_attach_args *,
+		    struct octpip_softc **);
+void		octpip_gbl_ctl_debug(struct octpip_softc *);
+int		octpip_port_config(struct octpip_softc *);
+void		octpip_prt_cfg_enable(struct octpip_softc *, uint64_t, int);
+void		octpip_stats(struct octpip_softc *, struct ifnet *, int);
+#ifdef CNMAC_DEBUG
+void		octpip_int_enable(struct octpip_softc *, int);
+void		octpip_dump(void);
+void		octpip_dump_regs(void);
+void		octpip_dump_stats(void);
+#endif /* CNMAC_DEBUG */
 
-#ifdef OCTEON_ETH_DEBUG
-void			octeon_pip_int_enable(struct octeon_pip_softc *, int);
-uint64_t		octeon_pip_int_summary(struct octeon_pip_softc *);
-#endif /* OCTEON_ETH_DEBUG */
+#ifdef CNMAC_DEBUG
+void		octpip_int_enable(struct octpip_softc *, int);
+uint64_t	octpip_int_summary(struct octpip_softc *);
+#endif /* CNMAC_DEBUG */
 
 
 #endif

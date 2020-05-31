@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.7 2020/05/13 21:09:02 riastradh Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.8 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ struct octeon_cvmseg_map {
  * => devices (PKO) can access these registers
  * => CPU can read those values after loading them into CVMSEG
  */
-struct octeon_fau_map {
+struct octfau_map {
 	struct {
 		/* PKO command index */
 		uint64_t	_fau_map_port_pkocmdidx;
@@ -239,7 +239,7 @@ void	octeon_cal_timer(int);
 void	octeon_dma_init(struct octeon_config *);
 void	octeon_intr_init(struct cpu_info *);
 void	octeon_iointr(int, vaddr_t, uint32_t);
-void	octeon_pci_init(pci_chipset_tag_t, struct octeon_config *);
+void	octpci_init(pci_chipset_tag_t, struct octeon_config *);
 void	*octeon_intr_establish(int, int, int (*)(void *), void *);
 void	octeon_intr_disestablish(void *cookie);
 
@@ -414,7 +414,7 @@ octeon_get_cycles(void)
 
 /* ---- event counter */
 
-#if defined(OCTEON_ETH_DEBUG)
+#if defined(CNMAC_DEBUG)
 #define	OCTEON_EVCNT_INC(sc, name) \
 	do { (sc)->sc_ev_##name.ev_count++; } while (0)
 #define	OCTEON_EVCNT_ADD(sc, name, n) \
