@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2019/04/01 06:12:51 msaitoh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2020/05/31 04:56:35 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2019/04/01 06:12:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2020/05/31 04:56:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ device_register(device_t dev, void *aux)
 
 	if (device_is_a(dev, "cnmac")) {
 		prop_set_cnmac(dev);
-	} else if (device_is_a(dev, "octeon_gmx")) {
+	} else if (device_is_a(dev, "octgmx")) {
 		prop_set_octeon_gmx(dev);
 	}
 }

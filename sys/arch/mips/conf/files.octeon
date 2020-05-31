@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.4 2015/06/06 04:34:23 matt Exp $
+#	$NetBSD: files.octeon,v 1.5 2020/05/31 04:56:35 simonb Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -51,33 +51,33 @@ file	arch/mips/cavium/dev/octeon_smi.c	iobus
 
 # I/O Bus devices
 
-attach	com at iobus with octeon_uart_iobus
-file	arch/mips/cavium/dev/octeon_uart.c	octeon_uart_iobus
+attach	com at iobus with com_iobus
+file	arch/mips/cavium/dev/octeon_uart.c	com_iobus
 options 	COM_REGMAP
 
-device	octeon_rnm
-attach	octeon_rnm at iobus
-file	arch/mips/cavium/dev/octeon_rnm.c	octeon_rnm & rnd
+device	octrnm
+attach	octrnm at iobus
+file	arch/mips/cavium/dev/octeon_rnm.c	octrnm & rnd
 
-device	octeon_twsi: i2cbus
-attach	octeon_twsi at iobus
-file	arch/mips/cavium/dev/octeon_twsi.c	octeon_twsi
+device	octtwsi: i2cbus
+attach	octtwsi at iobus
+file	arch/mips/cavium/dev/octeon_twsi.c	octtwsi
 
-device	octeon_mpi {}
-attach	octeon_mpi at iobus
-file	arch/mips/cavium/dev/octeon_mpi.c	octeon_mpi
+device	octmpi {}
+attach	octmpi at iobus
+file	arch/mips/cavium/dev/octeon_mpi.c	octmpi
 
-device	octeon_gmx {}
-attach	octeon_gmx at iobus
-file	arch/mips/cavium/dev/octeon_gmx.c	octeon_gmx
+device	octgmx {}
+attach	octgmx at iobus
+file	arch/mips/cavium/dev/octeon_gmx.c	octgmx
 
 # On-chip ethernet device(s)
 device	cnmac: ether, ifnet, arp, mii
-attach	cnmac at octeon_gmx
+attach	cnmac at octgmx
 file	arch/mips/cavium/dev/if_cnmac.c		cnmac
 
-attach	dwctwo at iobus with octeon_dwctwo
-file	arch/mips/cavium/dev/octeon_dwctwo.c	octeon_dwctwo
+attach	dwctwo at iobus with octdwctwo
+file	arch/mips/cavium/dev/octeon_dwctwo.c	octdwctwo
 
 # Boot-Bus
 
