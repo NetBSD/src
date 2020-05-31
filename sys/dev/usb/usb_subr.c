@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.245 2020/05/31 17:52:58 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.245 2020/05/31 17:52:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -447,10 +447,17 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 				break;
 		}
 		/* passed end, or bad desc */
-		printf("usbd_fill_iface_data: bad descriptor(s): %s\n",
-		       ed->bLength == 0 ? "0 length" :
-		       ed->bDescriptorType == UDESC_INTERFACE ? "iface desc":
-		       "out of data");
+		if (p < end) {
+			if (ed->bLength == 0) {
+				printf("%s: bad descriptor: 0 length\n",
+				    __func__);
+			} else {
+				printf("%s: bad descriptor: iface desc\n",
+				    __func__);
+			}
+		} else {
+			printf("%s: no desc found\n", __func__);
+		}
 		goto bad;
 	found:
 		ifc->ui_endpoints[endpt].ue_edesc = ed;
