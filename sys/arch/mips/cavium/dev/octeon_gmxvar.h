@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.3 2020/04/24 09:29:26 mrg Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -44,17 +44,17 @@
 
 #define GMX_FRM_MAX_SIZ	0x600
 
-enum OCTEON_ETH_QUIRKS {
-	OCTEON_ETH_QUIRKS_NO_RX_INBND = 1 << 0,
-	OCTEON_ETH_QUIRKS_NO_PRE_ALIGN = 1 << 1,
+enum CNMAC_QUIRKS {
+	CNMAC_QUIRKS_NO_RX_INBND = 1 << 0,
+	CNMAC_QUIRKS_NO_PRE_ALIGN = 1 << 1,
 };
 
 #if 1
-struct octeon_gmx_softc;
-struct octeon_gmx_port_softc;
+struct octgmx_softc;
+struct octgmx_port_softc;
 
-struct octeon_gmx_port_softc {
-	struct octeon_gmx_softc	*sc_port_gmx;
+struct octgmx_port_softc {
+	struct octgmx_softc	*sc_port_gmx;
 	bus_space_handle_t	sc_port_regh;
 	int			sc_port_no;	/* GMX0:0, GMX0:1, ... */
 	int			sc_port_type;
@@ -63,16 +63,16 @@ struct octeon_gmx_port_softc {
 	uint64_t		sc_link;
 	struct mii_data		*sc_port_mii;
 	struct ethercom		*sc_port_ec;
-	struct octeon_gmx_port_ops
+	struct octgmx_port_ops
 				*sc_port_ops;
-	struct octeon_asx_softc	*sc_port_asx;
-	struct octeon_ipd_softc	*sc_ipd;
+	struct octasx_softc	*sc_port_asx;
+	struct octipd_softc	*sc_ipd;
 	int			sc_port_flowflags;
 
 	int			sc_clk_tx_setting;
 	int			sc_clk_rx_setting;
 
-#if defined(OCTEON_DEBUG) || defined(OCTEON_ETH_DEBUG)
+#if defined(OCTEON_DEBUG) || defined(CNMAC_DEBUG)
 #if 0
 	/* XXX */
 	struct evcnt		sc_ev_pausedrp;
@@ -99,7 +99,7 @@ struct octeon_gmx_port_softc {
 #endif
 };
 
-struct octeon_gmx_softc {
+struct octgmx_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_regt;
@@ -108,10 +108,10 @@ struct octeon_gmx_softc {
 	int			sc_nports;
 	int			sc_port_types[4/* XXX */];
 
-	struct octeon_gmx_port_softc
+	struct octgmx_port_softc
 				*sc_ports;
 
-#if defined(OCTEON_DEBUG) || defined(OCTEON_ETH_DEBUG)
+#if defined(OCTEON_DEBUG) || defined(CNMAC_DEBUG)
 	struct evcnt		sc_ev_latecol;
 	struct evcnt		sc_ev_xsdef;
 	struct evcnt		sc_ev_xscol;
@@ -121,15 +121,15 @@ struct octeon_gmx_softc {
 };
 #endif
 
-struct octeon_gmx_attach_args {
+struct octgmx_attach_args {
         bus_space_tag_t         ga_regt;
 	bus_addr_t		ga_addr;
 	const char		*ga_name;
 	int			ga_portno;
 	int			ga_port_type;
 
-	struct octeon_gmx_softc *ga_gmx;
-	struct octeon_gmx_port_softc
+	struct octgmx_softc	*ga_gmx;
+	struct octgmx_port_softc
 				*ga_gmx_port;
 };
 
@@ -142,35 +142,33 @@ enum CN30XXGMX_FILTER_POLICY {
 	CN30XXGMX_FILTER_POLICY_REJECT_ALL
 };
 
-int		octeon_gmx_link_enable(struct octeon_gmx_port_softc *, int);
-int		octeon_gmx_tx_stats_rd_clr(struct octeon_gmx_port_softc *, int);
-int		octeon_gmx_rx_stats_rd_clr(struct octeon_gmx_port_softc *, int);
-void		octeon_gmx_rx_stats_dec_bad(struct octeon_gmx_port_softc *);
-int		octeon_gmx_stats_init(struct octeon_gmx_port_softc *);
-void		octeon_gmx_tx_int_enable(struct octeon_gmx_port_softc *, int);
-void		octeon_gmx_rx_int_enable(struct octeon_gmx_port_softc *, int);
-int		octeon_gmx_setfilt(struct octeon_gmx_port_softc *,
+int		octgmx_link_enable(struct octgmx_port_softc *, int);
+int		octgmx_tx_stats_rd_clr(struct octgmx_port_softc *, int);
+int		octgmx_rx_stats_rd_clr(struct octgmx_port_softc *, int);
+void		octgmx_rx_stats_dec_bad(struct octgmx_port_softc *);
+int		octgmx_stats_init(struct octgmx_port_softc *);
+void		octgmx_tx_int_enable(struct octgmx_port_softc *, int);
+void		octgmx_rx_int_enable(struct octgmx_port_softc *, int);
+int		octgmx_setfilt(struct octgmx_port_softc *,
 		    enum CN30XXGMX_FILTER_POLICY, size_t, uint8_t **);
-int		octeon_gmx_rx_frm_ctl_enable(struct octeon_gmx_port_softc *,
-		    uint64_t rx_frm_ctl);
-int		octeon_gmx_rx_frm_ctl_disable(struct octeon_gmx_port_softc *,
-		    uint64_t rx_frm_ctl);
-int		octeon_gmx_tx_thresh(struct octeon_gmx_port_softc *, int);
-int		octeon_gmx_set_mac_addr(struct octeon_gmx_port_softc *, uint8_t *);
-int		octeon_gmx_set_filter(struct octeon_gmx_port_softc *);
-int		octeon_gmx_port_enable(struct octeon_gmx_port_softc *, int);
-int		octeon_gmx_reset_speed(struct octeon_gmx_port_softc *);
-int		octeon_gmx_reset_flowctl(struct octeon_gmx_port_softc *);
-int		octeon_gmx_reset_timing(struct octeon_gmx_port_softc *);
-int		octeon_gmx_reset_board(struct octeon_gmx_port_softc *);
-void		octeon_gmx_stats(struct octeon_gmx_port_softc *);
-uint64_t	octeon_gmx_get_rx_int_reg(struct octeon_gmx_port_softc *sc);
-uint64_t	octeon_gmx_get_tx_int_reg(struct octeon_gmx_port_softc *sc);
-static __inline int	octeon_gmx_link_status(struct octeon_gmx_port_softc *);
+int		octgmx_rx_frm_ctl_enable(struct octgmx_port_softc *, uint64_t);
+int		octgmx_rx_frm_ctl_disable(struct octgmx_port_softc *, uint64_t);
+int		octgmx_tx_thresh(struct octgmx_port_softc *, int);
+int		octgmx_set_mac_addr(struct octgmx_port_softc *, uint8_t *);
+int		octgmx_set_filter(struct octgmx_port_softc *);
+int		octgmx_port_enable(struct octgmx_port_softc *, int);
+int		octgmx_reset_speed(struct octgmx_port_softc *);
+int		octgmx_reset_flowctl(struct octgmx_port_softc *);
+int		octgmx_reset_timing(struct octgmx_port_softc *);
+int		octgmx_reset_board(struct octgmx_port_softc *);
+void		octgmx_stats(struct octgmx_port_softc *);
+uint64_t	octgmx_get_rx_int_reg(struct octgmx_port_softc *sc);
+uint64_t	octgmx_get_tx_int_reg(struct octgmx_port_softc *sc);
+static __inline int	octgmx_link_status(struct octgmx_port_softc *);
 
 /* XXX RGMII specific */
 static __inline int
-octeon_gmx_link_status(struct octeon_gmx_port_softc *sc)
+octgmx_link_status(struct octgmx_port_softc *sc)
 {
 	return (sc->sc_link & RXN_RX_INBND_STATUS) ? 1 : 0;
 }

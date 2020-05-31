@@ -1,9 +1,9 @@
-/*	$NetBSD: octeon_mpivar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_mpivar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
 
 #ifndef _DEV_OCTEON_MPI_H_
 #define _DEV_OCTEON_MPI_H_
 
-struct octeon_mpi_controller {
+struct octmpi_controller {
 	void	*sct_cookie;
 	int	(*sct_configure)(void *, void *, void *);
 	void	(*sct_read)(void *, u_int, u_int, size_t, uint8_t *);
@@ -12,8 +12,8 @@ struct octeon_mpi_controller {
 	bus_space_handle_t	sc_bush;	/* Bus space handle */
 };
 
-struct octeon_mpi_attach_args {
-	struct octeon_mpi_controller	*octeon_mpi_ctrl;
+struct octmpi_attach_args {
+	struct octmpi_controller	*octmpi_ctrl;
 };
 
 #endif /* _DEV_OCTEON_MPI_H__ */
