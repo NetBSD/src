@@ -1,4 +1,4 @@
-.\" $NetBSD: npf-params.7,v 1.4 2020/05/30 14:16:56 rmind Exp $
+.\" $NetBSD: npf-params.7,v 1.5 2020/05/31 15:57:15 rmind Exp $
 .\"
 .\" Copyright (c) 2019 Mindaugas Rasiukevicius <rmind at netbsd org>
 .\" All rights reserved.
@@ -94,10 +94,10 @@ some of the information in (from) the keys.
 .It Li interface
 Include interface identifier into the keys, making the connection
 state strictly per-interface.
-Default: 0.
+Default: 1.
 .It Li direction
 Include packet direction into the keys.
-Default: 0.
+Default: 1.
 .El
 .\" ---
 .It Li state.generic
