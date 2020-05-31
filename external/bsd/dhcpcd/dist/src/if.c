@@ -75,12 +75,6 @@
 #include "logerr.h"
 #include "privsep.h"
 
-#ifdef __sun
-/* It has the ioctl, but the member is missing from the struct?
- * No matter, our getifaddrs foo in if-sun.c will DTRT. */
-#undef SIOCGIFHWADDR
-#endif
-
 void
 if_free(struct interface *ifp)
 {
@@ -387,10 +381,10 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	struct if_laddrreq iflr = { .flags = IFLR_PREFIX };
 	int link_fd;
 #endif
-#elif AF_PACKET
+#elif defined(AF_PACKET)
 	const struct sockaddr_ll *sll;
 #endif
-#if defined(SIOCGIFPRIORITY) || defined(SIOCGIFHWADDR)
+#if defined(SIOCGIFPRIORITY)
 	struct ifreq ifr;
 #endif
 
@@ -398,12 +392,22 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		logerr(__func__);
 		return NULL;
 	}
+	TAILQ_INIT(ifs);
+
+#if defined(PRIVSEP) && defined(HAVE_CAPSICUM)
+	if (ctx->options & DHCPCD_PRIVSEP) {
+		if (ps_root_getifaddrs(ctx, ifaddrs) == -1) {
+			logerr("ps_root_getifaddrs");
+			free(ifs);
+			return NULL;
+		}
+	} else
+#endif
 	if (getifaddrs(ifaddrs) == -1) {
-		logerr(__func__);
+		logerr("getifaddrs");
 		free(ifs);
 		return NULL;
 	}
-	TAILQ_INIT(ifs);
 
 #ifdef IFLR_ACTIVE
 	link_fd = xsocket(PF_LINK, SOCK_DGRAM | SOCK_CLOEXEC, 0);
@@ -419,7 +423,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #ifdef AF_LINK
 			if (ifa->ifa_addr->sa_family != AF_LINK)
 				continue;
-#elif AF_PACKET
+#elif defined(AF_PACKET)
 			if (ifa->ifa_addr->sa_family != AF_PACKET)
 				continue;
 #endif
@@ -485,13 +489,9 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		if_noconf = ((argc == 0 || argc == -1) && ctx->ifac == 0 &&
 		    !if_hasconf(ctx, spec.devname));
 
-		/* Don't allow loopback or pointopoint unless explicit.
-		 * Don't allow some reserved interface names unless explicit. */
-		if (if_noconf) {
-			if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT) ||
-			    if_ignore(ctx, spec.devname))
-				active = IF_INACTIVE;
-		}
+		/* Don't allow some reserved interface names unless explicit. */
+		if (if_noconf && if_ignore(ctx, spec.devname))
+			active = IF_INACTIVE;
 
 		ifp = calloc(1, sizeof(*ifp));
 		if (ifp == NULL) {
@@ -533,6 +533,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #ifdef IFT_TUNNEL
 			case IFT_TUNNEL: /* FALLTHROUGH */
 #endif
+			case IFT_LOOP: /* FALLTHROUGH */
 			case IFT_PPP:
 				/* Don't allow unless explicit */
 				if (if_noconf) {
@@ -551,16 +552,16 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			case IFT_L3IPVLAN: /* FALLTHROUGH */
 #endif
 			case IFT_ETHER:
-				ifp->family = ARPHRD_ETHER;
+				ifp->hwtype = ARPHRD_ETHER;
 				break;
 #ifdef IFT_IEEE1394
 			case IFT_IEEE1394:
-				ifp->family = ARPHRD_IEEE1394;
+				ifp->hwtype = ARPHRD_IEEE1394;
 				break;
 #endif
 #ifdef IFT_INFINIBAND
 			case IFT_INFINIBAND:
-				ifp->family = ARPHRD_INFINIBAND;
+				ifp->hwtype = ARPHRD_INFINIBAND;
 				break;
 #endif
 			default:
@@ -572,71 +573,43 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 					    " interface type 0x%.2x",
 					    ifp->name, sdl->sdl_type);
 				/* Pretend it's ethernet */
-				ifp->family = ARPHRD_ETHER;
+				ifp->hwtype = ARPHRD_ETHER;
 				break;
 			}
 			ifp->hwlen = sdl->sdl_alen;
 			memcpy(ifp->hwaddr, CLLADDR(sdl), ifp->hwlen);
-#elif AF_PACKET
+#elif defined(AF_PACKET)
 			sll = (const void *)ifa->ifa_addr;
 			ifp->index = (unsigned int)sll->sll_ifindex;
-			ifp->family = sll->sll_hatype;
+			ifp->hwtype = sll->sll_hatype;
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
-#endif
-		}
-#ifdef SIOCGIFHWADDR
-		else {
-			/* This is a huge bug in getifaddrs(3) as there
-			 * is no reason why this can't be returned in
-			 * ifa_addr. */
-			memset(&ifr, 0, sizeof(ifr));
-			strlcpy(ifr.ifr_name, ifa->ifa_name,
-			    sizeof(ifr.ifr_name));
-			if (ioctl(ctx->pf_inet_fd, SIOCGIFHWADDR, &ifr) == -1)
-				logerr("%s: SIOCGIFHWADDR", ifa->ifa_name);
-			ifp->family = ifr.ifr_hwaddr.sa_family;
-			if (ioctl(ctx->pf_inet_fd, SIOCGIFINDEX, &ifr) == -1)
-				logerr("%s: SIOCGIFINDEX", ifa->ifa_name);
-			ifp->index = (unsigned int)ifr.ifr_ifindex;
-		}
-#endif
 
-		/* Ensure hardware address is valid. */
-		if (!if_valid_hwaddr(ifp->hwaddr, ifp->hwlen))
-			ifp->hwlen = 0;
-
-		/* We only work on ethernet by default */
-		if (ifp->family != ARPHRD_ETHER) {
-			if ((argc == 0 || argc == -1) &&
-			    ctx->ifac == 0 && !if_hasconf(ctx, ifp->name))
-				active = IF_INACTIVE;
-			switch (ifp->family) {
-			case ARPHRD_IEEE1394:
-			case ARPHRD_INFINIBAND:
-#ifdef ARPHRD_LOOPBACK
-			case ARPHRD_LOOPBACK:
-#endif
-#ifdef ARPHRD_PPP
-			case ARPHRD_PPP:
-#endif
-#ifdef ARPHRD_NONE
-			case ARPHRD_NONE:
-#endif
-				/* We don't warn for supported families */
+			switch(ifp->hwtype) {
+			case ARPHRD_ETHER:	/* FALLTHROUGH */
+			case ARPHRD_IEEE1394:	/* FALLTHROUGH */
+			case ARPHRD_INFINIBAND:	/* FALLTHROUGH */
+			case ARPHRD_NONE:	/* FALLTHROUGH */
 				break;
-
-/* IFT already checked */
-#ifndef AF_LINK
+			case ARPHRD_LOOPBACK:
+			case ARPHRD_PPP:
+				if (if_noconf) {
+					logdebugx("%s: ignoring due to"
+					    " interface type and"
+					    " no config",
+					    ifp->name);
+					active = IF_INACTIVE;
+				}
+				break;
 			default:
 				if (active)
 					logwarnx("%s: unsupported"
-					    " interface family 0x%.2x",
-					    ifp->name, ifp->family);
+					    " interface type 0x%.2x",
+					    ifp->name, ifp->hwtype);
 				break;
-#endif
 			}
+#endif
 		}
 
 		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
@@ -654,7 +627,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		/* Respect the interface priority */
 		memset(&ifr, 0, sizeof(ifr));
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-		if (ioctl(ctx->pf_inet_fd, SIOCGIFPRIORITY, &ifr) == 0)
+		if (pioctl(ctx, SIOCGIFPRIORITY, &ifr, sizeof(ifr)) == 0)
 			ifp->metric = (unsigned int)ifr.ifr_metric;
 		if_getssid(ifp);
 #else
@@ -713,22 +686,39 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 			errno = e;
 			return -1;
 		}
-		*ep-- = '\0';
+		*ep = '\0';
+#ifdef __sun
+		ep--;
+#endif
 	} else {
 		spec->lun = -1;
+#ifdef __sun
 		ep = spec->drvname + strlen(spec->drvname) - 1;
+#endif
 	}
 
 	strlcpy(spec->devname, spec->drvname, sizeof(spec->devname));
+#ifdef __sun
+	/* Solaris has numbers in the driver name, such as e1000g */
+	while (ep > spec->drvname && isdigit((int)*ep))
+		ep--;
+	if (*ep++ == ':') {
+		errno = EINVAL;
+		return -1;
+	}
+#else
+	/* BSD and Linux no not have numbers in the driver name */
 	for (ep = spec->drvname; *ep != '\0' && !isdigit((int)*ep); ep++) {
 		if (*ep == ':') {
 			errno = EINVAL;
 			return -1;
 		}
 	}
+#endif
 	spec->ppa = (int)strtoi(ep, &pp, 10, 0, INT_MAX, &e);
 	*ep = '\0';
 
+#ifndef __sun
 	/*
 	 * . is used for VLAN style names
 	 * i is used on NetBSD for xvif interfaces
@@ -738,6 +728,7 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 		if (e)
 			spec->vlid = -1;
 	} else
+#endif
 		spec->vlid = -1;
 
 	return 0;
@@ -808,7 +799,8 @@ if_domtu(const struct interface *ifp, short int mtu)
 	if (mtu != 0)
 		r = if_ioctl(ifp->ctx, SIOCSIFMTU, &ifr, sizeof(ifr));
 	else
-		r = ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMTU, &ifr);
+		r = pioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr));
+
 	if (r == -1)
 		return -1;
 	return ifr.ifr_mtu;
@@ -910,9 +902,6 @@ xsocket(int domain, int type, int protocol)
 #if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
 	int xflags, xtype = type;
 #endif
-#ifdef SO_RERROR
-	int on;
-#endif
 
 #ifndef HAVE_SOCK_CLOEXEC
 	if (xtype & SOCK_CLOEXEC)
@@ -935,13 +924,6 @@ xsocket(int domain, int type, int protocol)
 	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
 	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
-#endif
-
-#ifdef SO_RERROR
-	/* Tell recvmsg(2) to return ENOBUFS if the receiving socket overflows. */
-	on = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &on, sizeof(on)) == -1)
-		logerr("%s: SO_RERROR", __func__);
 #endif
 
 	return s;

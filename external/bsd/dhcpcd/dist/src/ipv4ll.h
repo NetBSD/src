@@ -43,11 +43,13 @@
 struct ipv4ll_state {
 	struct in_addr pickedaddr;
 	struct ipv4_addr *addr;
-	struct arp_state *arp;
 	char randomstate[128];
 	bool seeded;
 	bool down;
 	size_t conflicts;
+#ifndef KERNEL_RFC5227
+	struct arp_state *arp;
+#endif
 };
 
 #define	IPV4LL_STATE(ifp)						       \

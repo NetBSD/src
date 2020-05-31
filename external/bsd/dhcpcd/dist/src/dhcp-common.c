@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/stat.h>
 #include <sys/utsname.h>
 
 #include <ctype.h>
@@ -176,9 +175,10 @@ dhcp_vendor(char *str, size_t len)
 		return -1;
 	p += l;
 	len -= (size_t)l;
-	l = if_machinearch(p, len);
+	l = if_machinearch(p + 1, len - 1);
 	if (l == -1 || (size_t)(l + 1) > len)
 		return -1;
+	*p = ':';
 	p += l;
 	return p - str;
 }
@@ -202,8 +202,8 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 			continue;
 		if (strncmp(token, "dhcp6_", 6) == 0)
 			token += 6;
-		if (strncmp(token, "nd6_", 4) == 0)
-			token += 4;
+		if (strncmp(token, "nd_", 3) == 0)
+			token += 3;
 		match = 0;
 		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
 			if (opt->var == NULL || opt->option == 0)
@@ -945,38 +945,85 @@ dhcp_zero_index(struct dhcp_opt *opt)
 		dhcp_zero_index(o);
 }
 
-size_t
-dhcp_read_lease_fd(int fd, void **lease)
+ssize_t
+dhcp_readfile(struct dhcpcd_ctx *ctx, const char *file, void *data, size_t len)
 {
-	struct stat st;
-	size_t sz;
-	void *buf;
-	ssize_t len;
 
-	if (fstat(fd, &st) != 0)
-		goto out;
-	if (!S_ISREG(st.st_mode)) {
-		errno = EINVAL;
-		goto out;
-	}
-	if (st.st_size > UINT32_MAX) {
-		errno = E2BIG;
-		goto out;
-	}
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
+		return ps_root_readfile(ctx, file, data, len);
+#else
+	UNUSED(ctx);
+#endif
 
-	sz = (size_t)st.st_size;
-	if (sz == 0)
-		goto out;
-	if ((buf = malloc(sz)) == NULL)
-		goto out;
-	if ((len = read(fd, buf, sz)) == -1) {
-		free(buf);
-		goto out;
-	}
-	*lease = buf;
-	return (size_t)len;
+	return readfile(file, data, len);
+}
 
-out:
-	*lease = NULL;
-	return 0;
+ssize_t
+dhcp_writefile(struct dhcpcd_ctx *ctx, const char *file, mode_t mode,
+    const void *data, size_t len)
+{
+
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
+		return ps_root_writefile(ctx, file, mode, data, len);
+#else
+	UNUSED(ctx);
+#endif
+
+	return writefile(file, mode, data, len);
+}
+
+int
+dhcp_filemtime(struct dhcpcd_ctx *ctx, const char *file, time_t *time)
+{
+
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
+		return (int)ps_root_filemtime(ctx, file, time);
+#else
+	UNUSED(ctx);
+#endif
+
+	return filemtime(file, time);
+}
+
+int
+dhcp_unlink(struct dhcpcd_ctx *ctx, const char *file)
+{
+
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
+		return (int)ps_root_unlink(ctx, file);
+#else
+	UNUSED(ctx);
+#endif
+
+	return unlink(file);
+}
+
+size_t
+dhcp_read_hwaddr_aton(struct dhcpcd_ctx *ctx, uint8_t **data, const char *file)
+{
+	char buf[BUFSIZ];
+	ssize_t bytes;
+	size_t len;
+
+	bytes = dhcp_readfile(ctx, file, buf, sizeof(buf));
+	if (bytes == -1 || bytes == sizeof(buf))
+		return 0;
+
+	bytes[buf] = '\0';
+	len = hwaddr_aton(NULL, buf);
+	if (len == 0)
+		return 0;
+	*data = malloc(len);
+	if (*data == NULL)
+		return 0;
+	hwaddr_aton(*data, buf);
+	return len;
 }
