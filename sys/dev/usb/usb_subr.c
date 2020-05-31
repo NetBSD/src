@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.246 2020/05/31 18:20:23 jdolecek Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.247 2020/05/31 18:33:08 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.246 2020/05/31 18:20:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.247 2020/05/31 18:33:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -734,14 +734,21 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		if (err) {
 			while (--ifcidx >= 0)
 				usbd_free_iface_data(dev, ifcidx);
+			kmem_free(dev->ud_ifaces,
+			    nifc * sizeof(struct usbd_interface));
+			dev->ud_ifaces = NULL;
 			goto bad;
 		}
 	}
 
 	return USBD_NORMAL_COMPLETION;
 
- bad:
+bad:
+	/* XXX Use usbd_set_config() to reset the config? */
+	/* XXX Should we forbid USB_UNCONFIG_NO from bConfigurationValue? */
+	dev->ud_config = USB_UNCONFIG_NO;
 	kmem_free(cdp, len);
+	dev->ud_cdesc = NULL;
 	if (bdp != NULL) {
 		kmem_free(bdp, UGETW(bdp->wTotalLength));
 		dev->ud_bdesc = NULL;
