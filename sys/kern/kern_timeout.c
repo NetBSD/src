@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.62 2020/05/31 08:33:47 rin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.63 2020/05/31 09:59:37 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.62 2020/05/31 08:33:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.63 2020/05/31 09:59:37 rin Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.62 2020/05/31 08:33:47 rin Exp $"
 #include <ddb/db_interface.h>
 #include <ddb/db_access.h>
 #include <ddb/db_cpu.h>
+#include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #endif
@@ -798,7 +799,7 @@ callout_softclock(void *v)
 	cc->cc_lwp = NULL;
 	mutex_spin_exit(cc->cc_lock);
 }
-#endif
+#endif /* !CRASH */
 
 #ifdef DDB
 static void
@@ -844,14 +845,14 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 #endif
 	db_printf("    ticks  wheel               arg  func\n");
 
-	ccp = kmem_intr_alloc(ccs, KM_NOSLEEP); /* XXX ddb */
+	ccp = db_alloc(ccs);
 	if (ccp == NULL) {
 		db_printf("%s: cannot allocate callout_cpu\n", __func__);
 		return;
 	}
-	cip = kmem_intr_alloc(cis, KM_NOSLEEP); /* XXX ddb */
+	cip = db_alloc(cis);
 	if (cip == NULL) {
-		kmem_intr_free(ccp, ccs);
+		db_free(ccp, ccs);
 		db_printf("%s: cannot allocate cpu_info\n", __func__);
 		return;
 	}
@@ -877,7 +878,7 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 		}
 	}
 
-	kmem_intr_free(ccp, ccs);
-	kmem_intr_free(cip, cis);
+	db_free(ccp, ccs);
+	db_free(cip, cis);
 }
 #endif /* DDB */
