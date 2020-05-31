@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.12 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.13 2020/05/31 09:00:25 rin Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -64,11 +64,11 @@ GLOBAL(adb_ms_asmcomplete)
 #endif
 	rts
 
-
+#if defined(ADB_DEBUG) && 0
 GLOBAL(adb_jadbprochello)
 	.asciz	"adb: hello from adbproc\n"
 	.even
-
+#endif
 
 GLOBAL(adb_jadbproc)
 #if defined(ADB_DEBUG) && 0
