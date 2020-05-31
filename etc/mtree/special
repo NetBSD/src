@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.167 2019/05/11 19:31:03 maxv Exp $
+#	$NetBSD: special,v 1.168 2020/05/31 12:58:09 roy Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -64,8 +64,8 @@
 ./etc/defaults/security.conf	type=file mode=0444
 ./etc/defaults/weekly.conf	type=file mode=0444
 ./etc/dhcpcd.conf		type=file mode=0644
-./etc/dhcpcd.duid		type=file mode=0644 optional
-./etc/dhcpcd.hook		type=file mode=0644 optional
+./etc/dhcpcd.enter-hook		type=file mode=0644 optional
+./etc/dhcpcd.exit-hook		type=file mode=0644 optional
 ./etc/dhcpd.conf		type=file mode=0644 optional
 ./etc/dhcpd6.conf		type=file mode=0644 optional
 ./etc/disktab			type=file mode=0644
