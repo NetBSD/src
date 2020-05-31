@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.14 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.15 2020/05/31 17:45:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -5739,13 +5739,17 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager0, int fd, int flags,
 #if defined(USE_EPOLL)
 	manager->epoll_events[sock->fd] = 0;
 #endif
+#ifdef USE_DEVPOLL
+	INSIST(thread->fdpollinfo[sock->fd].want_read == 0 &&
+	       thread->fdpollinfo[sock->fd].want_write == 0);
+#endif /* ifdef USE_DEVPOLL */
 	UNLOCK(&thread->fdlock[lockid]);
 
 	LOCK(&manager->lock);
 	ISC_LIST_APPEND(manager->socklist, sock, link);
 #ifdef USE_SELECT
-	if (manager->maxfd < sock->fd)
-		manager->maxfd = sock->fd;
+	if (thread->maxfd < sock->fd)
+		thread->maxfd = sock->fd;
 #endif
 	UNLOCK(&manager->lock);
 
