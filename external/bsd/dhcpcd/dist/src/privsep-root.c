@@ -38,16 +38,21 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "common.h"
+#include "dev.h"
 #include "dhcpcd.h"
+#include "dhcp6.h"
 #include "eloop.h"
 #include "if.h"
+#include "ipv6nd.h"
 #include "logerr.h"
 #include "privsep.h"
+#include "sa.h"
 #include "script.h"
 
 __CTASSERT(sizeof(ioctl_request_t) <= sizeof(unsigned long));
@@ -57,11 +62,14 @@ struct psr_error
 	ssize_t psr_result;
 	int psr_errno;
 	char psr_pad[sizeof(ssize_t) - sizeof(int)];
+	size_t psr_datalen;
 };
 
 struct psr_ctx {
 	struct dhcpcd_ctx *psr_ctx;
 	struct psr_error psr_error;
+	size_t psr_datalen;
+	void *psr_data;
 };
 
 static void
@@ -78,35 +86,43 @@ ps_root_readerrorcb(void *arg)
 	struct psr_ctx *psr_ctx = arg;
 	struct dhcpcd_ctx *ctx = psr_ctx->psr_ctx;
 	struct psr_error *psr_error = &psr_ctx->psr_error;
+	struct iovec iov[] = {
+		{ .iov_base = psr_error, .iov_len = sizeof(*psr_error) },
+		{ .iov_base = psr_ctx->psr_data,
+		  .iov_len = psr_ctx->psr_datalen },
+	};
 	ssize_t len;
 	int exit_code = EXIT_FAILURE;
 
-	len = read(ctx->ps_root_fd, psr_error, sizeof(*psr_error));
-	if (len == 0 || len == -1) {
-		logerr(__func__);
-		psr_error->psr_result = -1;
-		psr_error->psr_errno = errno;
-	} else if ((size_t)len < sizeof(*psr_error)) {
-		logerrx("%s: psr_error truncated", __func__);
-		psr_error->psr_result = -1;
-		psr_error->psr_errno = EINVAL;
-	} else
-		exit_code = EXIT_SUCCESS;
+#define PSR_ERROR(e)				\
+	do {					\
+		psr_error->psr_result = -1;	\
+		psr_error->psr_errno = (e);	\
+		goto out;			\
+	} while (0 /* CONSTCOND */)
 
+	len = readv(ctx->ps_root_fd, iov, __arraycount(iov));
+	if (len == -1)
+		PSR_ERROR(errno);
+	else if ((size_t)len < sizeof(*psr_error))
+		PSR_ERROR(EINVAL);
+	exit_code = EXIT_SUCCESS;
+
+out:
 	eloop_exit(ctx->ps_eloop, exit_code);
 }
 
 ssize_t
-ps_root_readerror(struct dhcpcd_ctx *ctx)
+ps_root_readerror(struct dhcpcd_ctx *ctx, void *data, size_t len)
 {
-	struct psr_ctx psr_ctx = { .psr_ctx = ctx };
+	struct psr_ctx psr_ctx = {
+	    .psr_ctx = ctx,
+	    .psr_data = data, .psr_datalen = len,
+	};
 
 	if (eloop_event_add(ctx->ps_eloop, ctx->ps_root_fd,
 	    ps_root_readerrorcb, &psr_ctx) == -1)
-	{
-		logerr(__func__);
 		return -1;
-	}
 
 	eloop_start(ctx->ps_eloop, &ctx->sigset);
 
@@ -114,25 +130,112 @@ ps_root_readerror(struct dhcpcd_ctx *ctx)
 	return psr_ctx.psr_error.psr_result;
 }
 
+#ifdef HAVE_CAPSICUM
+static void
+ps_root_mreaderrorcb(void *arg)
+{
+	struct psr_ctx *psr_ctx = arg;
+	struct dhcpcd_ctx *ctx = psr_ctx->psr_ctx;
+	struct psr_error *psr_error = &psr_ctx->psr_error;
+	struct iovec iov[] = {
+		{ .iov_base = psr_error, .iov_len = sizeof(*psr_error) },
+		{ .iov_base = NULL, .iov_len = 0 },
+	};
+	ssize_t len;
+	int exit_code = EXIT_FAILURE;
+
+	len = recv(ctx->ps_root_fd, psr_error, sizeof(*psr_error), MSG_PEEK);
+	if (len == -1)
+		PSR_ERROR(errno);
+	else if ((size_t)len < sizeof(*psr_error))
+		PSR_ERROR(EINVAL);
+
+	if (psr_error->psr_datalen != 0) {
+		psr_ctx->psr_data = malloc(psr_error->psr_datalen);
+		if (psr_ctx->psr_data == NULL)
+			PSR_ERROR(errno);
+		psr_ctx->psr_datalen = psr_error->psr_datalen;
+		iov[1].iov_base = psr_ctx->psr_data;
+		iov[1].iov_len = psr_ctx->psr_datalen;
+	}
+
+	len = readv(ctx->ps_root_fd, iov, __arraycount(iov));
+	if (len == -1)
+		PSR_ERROR(errno);
+	else if ((size_t)len != sizeof(*psr_error) + psr_ctx->psr_datalen)
+		PSR_ERROR(EINVAL);
+	exit_code = EXIT_SUCCESS;
+
+out:
+	eloop_exit(ctx->ps_eloop, exit_code);
+}
+
+ssize_t
+ps_root_mreaderror(struct dhcpcd_ctx *ctx, void **data, size_t *len)
+{
+	struct psr_ctx psr_ctx = {
+	    .psr_ctx = ctx,
+	};
+
+	if (eloop_event_add(ctx->ps_eloop, ctx->ps_root_fd,
+	    ps_root_mreaderrorcb, &psr_ctx) == -1)
+		return -1;
+
+	eloop_start(ctx->ps_eloop, &ctx->sigset);
+
+	errno = psr_ctx.psr_error.psr_errno;
+	*data = psr_ctx.psr_data;
+	*len = psr_ctx.psr_datalen;
+	return psr_ctx.psr_error.psr_result;
+}
+#endif
+
 static ssize_t
-ps_root_writeerror(struct dhcpcd_ctx *ctx, ssize_t result)
+ps_root_writeerror(struct dhcpcd_ctx *ctx, ssize_t result,
+    void *data, size_t len)
 {
 	struct psr_error psr = {
 		.psr_result = result,
 		.psr_errno = errno,
+		.psr_datalen = len,
+	};
+	struct iovec iov[] = {
+		{ .iov_base = &psr, .iov_len = sizeof(psr) },
+		{ .iov_base = data, .iov_len = len },
 	};
 
 #ifdef PRIVSEP_DEBUG
 	logdebugx("%s: result %zd errno %d", __func__, result, errno);
 #endif
 
-	return write(ctx->ps_root_fd, &psr, sizeof(psr));
+	return writev(ctx->ps_root_fd, iov, __arraycount(iov));
 }
 
 static ssize_t
 ps_root_doioctl(unsigned long req, void *data, size_t len)
 {
 	int s, err;
+
+	/* Only allow these ioctls */
+	switch(req) {
+#ifdef SIOCAIFADDR
+	case SIOCAIFADDR:	/* FALLTHROUGH */
+	case SIOCDIFADDR:	/* FALLTHROUGH */
+#endif
+#ifdef SIOCSIFHWADDR
+	case SIOCSIFHWADDR:	/* FALLTHROUGH */
+#endif
+#ifdef SIOCGIFPRIORITY
+	case SIOCGIFPRIORITY:	/* FALLTHROUGH */
+#endif
+	case SIOCSIFFLAGS:	/* FALLTHROUGH */
+	case SIOCGIFMTU:	/* FALLTHROUGH */
+	case SIOCSIFMTU:
+		break;
+	default:
+		errno = EPERM;
+		return -1;
+	}
 
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if (s != -1)
@@ -157,33 +260,12 @@ static ssize_t
 ps_root_run_script(struct dhcpcd_ctx *ctx, const void *data, size_t len)
 {
 	const char *envbuf = data;
-	char * const argv[] = { UNCONST(data), NULL };
+	char * const argv[] = { ctx->script, NULL };
 	pid_t pid;
 	int status;
 
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: IN %zu", __func__, len);
-#endif
-
 	if (len == 0)
 		return 0;
-
-	/* Script is the first one, find the environment buffer. */
-	while (*envbuf != '\0') {
-		if (len == 0)
-			return EINVAL;
-		envbuf++;
-		len--;
-	}
-
-	if (len != 0) {
-		envbuf++;
-		len--;
-	}
-
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: run script: %s", __func__, argv[0]);
-#endif
 
 	if (script_buftoenv(ctx, UNCONST(envbuf), len) == NULL)
 		return -1;
@@ -202,147 +284,174 @@ ps_root_run_script(struct dhcpcd_ctx *ctx, const void *data, size_t len)
 	return status;
 }
 
-#if defined(__linux__) && !defined(st_mtimespec)
-#define	st_atimespec  st_atim
-#define	st_mtimespec  st_mtim
-#endif
-ssize_t
-ps_root_docopychroot(struct dhcpcd_ctx *ctx, const char *file)
+static bool
+ps_root_validpath(const struct dhcpcd_ctx *ctx, uint16_t cmd, const char *path)
 {
 
-	char path[PATH_MAX], buf[BUFSIZ], *slash;
-	struct stat from_sb, to_sb;
-	int from_fd, to_fd;
-	ssize_t rcount, wcount, total;
-#if defined(BSD) || defined(__linux__)
-	struct timespec ts[2];
-#else
-	struct timeval tv[2];
-#endif
+	/* Avoid a previous directory attack to avoid /proc/../
+	 * dhcpcd should never use a path with double dots. */
+	if (strstr(path, "..") != NULL)
+		return false;
 
-	if (snprintf(path, sizeof(path), "%s/%s",
-	    ctx->ps_user->pw_dir, file) == -1)
-		return -1;
-	if (stat(file, &from_sb) == -1)
-		return -1;
-	if (stat(path, &to_sb) == 0) {
-#if defined(BSD) || defined(__linux__)
-		if (from_sb.st_mtimespec.tv_sec == to_sb.st_mtimespec.tv_sec &&
-		    from_sb.st_mtimespec.tv_nsec == to_sb.st_mtimespec.tv_nsec)
-			return 0;
-#else
-		if (from_sb.st_mtime == to_sb.st_mtime)
-			return 0;
-#endif
-	} else {
-		/* Ensure directory exists */
-		slash = strrchr(path, '/');
-		if (slash != NULL) {
-			*slash = '\0';
-			ps_mkdir(path);
-			*slash = '/';
-		}
+	if (cmd == PS_READFILE) {
+		if (strcmp(ctx->cffile, path) == 0)
+			return true;
 	}
+	if (strncmp(DBDIR, path, strlen(DBDIR)) == 0)
+		return true;
+	if (strncmp(RUNDIR, path, strlen(RUNDIR)) == 0)
+		return true;
 
-	if (unlink(path) == -1 && errno != ENOENT)
-		return -1;
-	if ((from_fd = open(file, O_RDONLY, 0)) == -1)
-		return -1;
-	if ((to_fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0555)) == -1)
-		return -1;
-
-	total = 0;
-	while ((rcount = read(from_fd, buf, sizeof(buf))) > 0) {
-		wcount = write(to_fd, buf, (size_t)rcount);
-		if (wcount != rcount) {
-			total = -1;
-			break;
-		}
-		total += wcount;
-	}
-
-#if defined(BSD) || defined(__linux__)
-	ts[0] = from_sb.st_atimespec;
-	ts[1] = from_sb.st_mtimespec;
-	if (futimens(to_fd, ts) == -1)
-		total = -1;
-#else
-	tv[0].tv_sec = from_sb.st_atime;
-	tv[0].tv_usec = 0;
-	tv[1].tv_sec = from_sb.st_mtime;
-	tv[1].tv_usec = 0;
-	if (futimes(to_fd, tv) == -1)
-		total = -1;
+#ifdef __linux__
+	if (strncmp("/proc/net/", path, strlen("/proc/net/")) == 0 ||
+	    strncmp("/proc/sys/net/", path, strlen("/proc/sys/net/")) == 0 ||
+	    strncmp("/sys/class/net/", path, strlen("/sys/class/net/")) == 0)
+		return true;
 #endif
-	close(from_fd);
-	close(to_fd);
 
-	return total;
+	errno = EPERM;
+	return false;
 }
 
 static ssize_t
-ps_root_dofileop(struct dhcpcd_ctx *ctx, void *data, size_t len, uint8_t op)
+ps_root_dowritefile(const struct dhcpcd_ctx *ctx,
+    mode_t mode, void *data, size_t len)
 {
-	char *path = data;
-	size_t plen;
+	char *file = data, *nc;
 
-	if (len < sizeof(plen)) {
+	nc = memchr(file, '\0', len);
+	if (nc == NULL) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	memcpy(&plen, path, sizeof(plen));
-	path += sizeof(plen);
-	if (sizeof(plen) + plen > len) {
-		errno = EINVAL;
+	if (!ps_root_validpath(ctx, PS_WRITEFILE, file))
 		return -1;
-	}
-
-	switch(op) {
-	case PS_COPY:
-		return ps_root_docopychroot(ctx, path);
-	case PS_UNLINK:
-		return (ssize_t)unlink(path);
-	default:
-		errno = ENOTSUP;
-		return -1;
-	}
+	nc++;
+	return writefile(file, mode, nc, len - (size_t)(nc - file));
 }
+
+#ifdef HAVE_CAPSICUM
+#define	IFA_NADDRS	3
+static ssize_t
+ps_root_dogetifaddrs(void **rdata, size_t *rlen)
+{
+	struct ifaddrs *ifaddrs, *ifa;
+	size_t len;
+	uint8_t *buf, *sap;
+	socklen_t salen;
+	void *ifdata;
+
+	if (getifaddrs(&ifaddrs) == -1)
+		return -1;
+	if (ifaddrs == NULL) {
+		*rdata = NULL;
+		*rlen = 0;
+		return 0;
+	}
+
+	/* Work out the buffer length required.
+	 * Ensure everything is aligned correctly, which does
+	 * create a larger buffer than what is needed to send,
+	 * but makes creating the same structure in the client
+	 * much easier. */
+	len = 0;
+	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+		len += ALIGN(sizeof(*ifa));
+		len += ALIGN(IFNAMSIZ);
+		len += ALIGN(sizeof(salen) * IFA_NADDRS);
+		if (ifa->ifa_addr != NULL)
+			len += ALIGN(sa_len(ifa->ifa_addr));
+		if (ifa->ifa_netmask != NULL)
+			len += ALIGN(sa_len(ifa->ifa_netmask));
+		if (ifa->ifa_broadaddr != NULL)
+			len += ALIGN(sa_len(ifa->ifa_broadaddr));
+	}
+
+	/* Use calloc to set everything to zero.
+	 * This satisfies memory sanitizers because don't write
+	 * where we don't need to. */
+	buf = calloc(1, len);
+	if (buf == NULL) {
+		freeifaddrs(ifaddrs);
+		return -1;
+	}
+	*rdata = buf;
+	*rlen = len;
+
+	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+		/* Don't carry ifa_data. */
+		ifdata = ifa->ifa_data;
+		ifa->ifa_data = NULL;
+		memcpy(buf, ifa, sizeof(*ifa));
+		buf += ALIGN(sizeof(*ifa));
+		ifa->ifa_data = ifdata;
+
+		strlcpy((char *)buf, ifa->ifa_name, IFNAMSIZ);
+		buf += ALIGN(IFNAMSIZ);
+		sap = buf;
+		buf += ALIGN(sizeof(salen) * IFA_NADDRS);
+
+#define	COPYINSA(addr)						\
+	do {							\
+		salen = sa_len((addr));				\
+		if (salen != 0) {				\
+			memcpy(sap, &salen, sizeof(salen));	\
+			memcpy(buf, (addr), salen);		\
+			buf += ALIGN(salen);			\
+		}						\
+		sap += sizeof(salen);				\
+	} while (0 /*CONSTCOND */)
+
+		if (ifa->ifa_addr != NULL)
+			COPYINSA(ifa->ifa_addr);
+		if (ifa->ifa_netmask != NULL)
+			COPYINSA(ifa->ifa_netmask);
+		if (ifa->ifa_broadaddr != NULL)
+			COPYINSA(ifa->ifa_broadaddr);
+	}
+
+	freeifaddrs(ifaddrs);
+	return 0;
+}
+#endif
 
 static ssize_t
 ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 {
 	struct dhcpcd_ctx *ctx = arg;
-	uint8_t cmd;
+	uint16_t cmd;
 	struct ps_process *psp;
 	struct iovec *iov = msg->msg_iov;
-	void *data = iov->iov_base;
-	size_t len = iov->iov_len;
+	void *data = iov->iov_base, *rdata = NULL;
+	size_t len = iov->iov_len, rlen = 0;
+	uint8_t buf[PS_BUFLEN];
+	time_t mtime;
 	ssize_t err;
+	bool free_rdata = false;
 
-	cmd = (uint8_t)(psm->ps_cmd & ~(PS_START | PS_STOP | PS_DELETE));
+	cmd = (uint16_t)(psm->ps_cmd & ~(PS_START | PS_STOP));
 	psp = ps_findprocess(ctx, &psm->ps_id);
 
 #ifdef PRIVSEP_DEBUG
 	logerrx("%s: IN cmd %x, psp %p", __func__, psm->ps_cmd, psp);
 #endif
 
-	if ((!(psm->ps_cmd & PS_START) || cmd == PS_BPF_ARP_ADDR) &&
-	    psp != NULL)
-	{
+	if (psp != NULL) {
 		if (psm->ps_cmd & PS_STOP) {
 			int ret = ps_dostop(ctx, &psp->psp_pid, &psp->psp_fd);
 
 			ps_freeprocess(psp);
 			return ret;
-		}
-		return ps_sendpsmmsg(ctx, psp->psp_fd, psm, msg);
+		} else if (!(psm->ps_cmd & PS_START))
+			return ps_sendpsmmsg(ctx, psp->psp_fd, psm, msg);
+		/* Process has already started .... */
+		return 0;
 	}
 
-	if (psm->ps_cmd & (PS_STOP | PS_DELETE) && psp == NULL)
+	if (psm->ps_cmd & PS_STOP && psp == NULL)
 		return 0;
 
-	/* All these should just be PS_START */
 	switch (cmd) {
 #ifdef INET
 #ifdef ARP
@@ -366,7 +475,7 @@ ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 		break;
 	}
 
-	assert(msg->msg_iovlen == 1);
+	assert(msg->msg_iovlen == 0 || msg->msg_iovlen == 1);
 
 	/* Reset errno */
 	errno = 0;
@@ -374,20 +483,71 @@ ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 	switch (psm->ps_cmd) {
 	case PS_IOCTL:
 		err = ps_root_doioctl(psm->ps_flags, data, len);
+		if (err != -1) {
+			rdata = data;
+			rlen = len;
+		}
 		break;
 	case PS_SCRIPT:
 		err = ps_root_run_script(ctx, data, len);
 		break;
-	case PS_COPY:	/* FALLTHROUGH */
 	case PS_UNLINK:
-		err = ps_root_dofileop(ctx, data, len, psm->ps_cmd);
+		if (!ps_root_validpath(ctx, psm->ps_cmd, data)) {
+			err = -1;
+			break;
+		}
+		err = unlink(data);
 		break;
+	case PS_READFILE:
+		if (!ps_root_validpath(ctx, psm->ps_cmd, data)) {
+			err = -1;
+			break;
+		}
+		err = readfile(data, buf, sizeof(buf));
+		if (err != -1) {
+			rdata = buf;
+			rlen = (size_t)err;
+		}
+		break;
+	case PS_WRITEFILE:
+		err = ps_root_dowritefile(ctx, (mode_t)psm->ps_flags,
+		    data, len);
+		break;
+	case PS_FILEMTIME:
+		err = filemtime(data, &mtime);
+		if (err != -1) {
+			rdata = &mtime;
+			rlen = sizeof(mtime);
+		}
+		break;
+#ifdef HAVE_CAPSICUM
+	case PS_GETIFADDRS:
+		err = ps_root_dogetifaddrs(&rdata, &rlen);
+		free_rdata = true;
+		break;
+#endif
+#if defined(INET6) && (defined(__linux__) || defined(HAVE_PLEDGE))
+	case PS_IP6FORWARDING:
+		 err = ip6_forwarding(data);
+		 break;
+#endif
+#ifdef PLUGIN_DEV
+	case PS_DEV_INITTED:
+		err = dev_initialized(ctx, data);
+		break;
+	case PS_DEV_LISTENING:
+		err = dev_listening(ctx);
+		break;
+#endif
 	default:
 		err = ps_root_os(psm, msg);
 		break;
 	}
 
-	return ps_root_writeerror(ctx, err);
+	err = ps_root_writeerror(ctx, err, rlen != 0 ? rdata : 0, rlen);
+	if (free_rdata)
+		free(rdata);
+	return err;
 }
 
 /* Receive from state engine, do an action. */
@@ -401,13 +561,72 @@ ps_root_recvmsg(void *arg)
 		logerr(__func__);
 }
 
+#ifdef PLUGIN_DEV
+static int
+ps_root_handleinterface(void *arg, int action, const char *ifname)
+{
+	struct dhcpcd_ctx *ctx = arg;
+	unsigned long flag;
+
+	if (action == 1)
+		flag = PS_DEV_IFADDED;
+	else if (action == -1)
+		flag = PS_DEV_IFREMOVED;
+	else if (action == 0)
+		flag = PS_DEV_IFUPDATED;
+	else {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return (int)ps_sendcmd(ctx, ctx->ps_data_fd, PS_DEV_IFCMD, flag,
+	    ifname, strlen(ifname) + 1);
+}
+#endif
+
 static int
 ps_root_startcb(void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	setproctitle("[privileged actioneer]");
+	if (ctx->options & DHCPCD_MASTER)
+		setproctitle("[privileged actioneer]");
+	else
+		setproctitle("[privileged actioneer] %s%s%s",
+		    ctx->ifv[0],
+		    ctx->options & DHCPCD_IPV4 ? " [ip4]" : "",
+		    ctx->options & DHCPCD_IPV6 ? " [ip6]" : "");
 	ctx->ps_root_pid = getpid();
+	ctx->options |= DHCPCD_PRIVSEPROOT;
+
+	/* Open network sockets for sending.
+	 * This is a small bit wasteful for non sandboxed OS's
+	 * but makes life very easy for unicasting DHCPv6 in non master
+	 * mode as we no longer care about address selection. */
+#ifdef INET
+	ctx->udp_wfd = xsocket(PF_INET, SOCK_RAW | SOCK_CXNB, IPPROTO_UDP);
+	if (ctx->udp_wfd == -1)
+		return -1;
+#endif
+#ifdef INET6
+	ctx->nd_fd = ipv6nd_open(false);
+	if (ctx->nd_fd == -1)
+		return -1;
+#endif
+#ifdef DHCP6
+	ctx->dhcp6_wfd = dhcp6_openraw();
+	if (ctx->dhcp6_wfd == -1)
+		return -1;
+#endif
+
+#ifdef PLUGIN_DEV
+	/* Start any dev listening plugin which may want to
+	 * change the interface name provided by the kernel */
+	if ((ctx->options & (DHCPCD_MASTER | DHCPCD_DEV)) ==
+	    (DHCPCD_MASTER | DHCPCD_DEV))
+		dev_start(ctx, ps_root_handleinterface);
+#endif
+
 	return 0;
 }
 
@@ -429,17 +648,58 @@ ps_root_signalcb(int sig, void *arg)
 	eloop_exit(ctx->eloop, sig == SIGTERM ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
+int (*handle_interface)(void *, int, const char *);
+
+#ifdef PLUGIN_DEV
+static ssize_t
+ps_root_devcb(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
+{
+	int action;
+	struct iovec *iov = msg->msg_iov;
+
+	if (msg->msg_iovlen != 1) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	switch(psm->ps_flags) {
+	case PS_DEV_IFADDED:
+		action = 1;
+		break;
+	case PS_DEV_IFREMOVED:
+		action = -1;
+		break;
+	case PS_DEV_IFUPDATED:
+		action = 0;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	return dhcpcd_handleinterface(ctx, action, iov->iov_base);
+}
+#endif
+
 static ssize_t
 ps_root_dispatchcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	ssize_t err;
 
-#ifdef INET
-	err = ps_bpf_dispatch(ctx, psm, msg);
-	if (err == -1 && errno == ENOTSUP)
+	switch(psm->ps_cmd) {
+#ifdef PLUGIN_DEV
+	case PS_DEV_IFCMD:
+		err = ps_root_devcb(ctx, psm, msg);
+		break;
 #endif
-		err = ps_inet_dispatch(ctx, psm, msg);
+	default:
+#ifdef INET
+		err = ps_bpf_dispatch(ctx, psm, msg);
+		if (err == -1 && errno == ENOTSUP)
+#endif
+			err = ps_inet_dispatch(ctx, psm, msg);
+	}
 	return err;
 }
 
@@ -458,7 +718,6 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 	int fd[2];
 	pid_t pid;
 
-#define	SOCK_CXNB	SOCK_CLOEXEC | SOCK_NONBLOCK
 	if (socketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fd) == -1)
 		return -1;
 
@@ -477,20 +736,16 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 	close(fd[1]);
 	if (eloop_event_add(ctx->eloop, ctx->ps_data_fd,
 	    ps_root_dispatch, ctx) == -1)
-		logerr(__func__);
-
-	if ((ctx->ps_eloop = eloop_new()) == NULL) {
-		logerr(__func__);
 		return -1;
-	}
+
+	if ((ctx->ps_eloop = eloop_new()) == NULL)
+		return -1;
 
 	if (eloop_signal_set_cb(ctx->ps_eloop,
 	    dhcpcd_signals, dhcpcd_signals_len,
 	    ps_root_readerrorsig, ctx) == -1)
-	{
-		logerr(__func__);
 		return -1;
-	}
+
 	return pid;
 }
 
@@ -502,39 +757,12 @@ ps_root_stop(struct dhcpcd_ctx *ctx)
 }
 
 ssize_t
-ps_root_script(const struct interface *ifp, const void *data, size_t len)
+ps_root_script(struct dhcpcd_ctx *ctx, const void *data, size_t len)
 {
-	char buf[PS_BUFLEN], *p = buf;
-	size_t blen = PS_BUFLEN, slen = strlen(ifp->options->script) + 1;
 
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: sending script: %zu %s len %zu",
-	    __func__, slen, ifp->options->script, len);
-#endif
-
-	if (slen > blen) {
-		errno = ENOBUFS;
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_SCRIPT, 0, data, len) == -1)
 		return -1;
-	}
-	memcpy(p, ifp->options->script, slen);
-	p += slen;
-	blen -= slen;
-
-	if (len > blen) {
-		errno = ENOBUFS;
-		return -1;
-	}
-	memcpy(p, data, len);
-
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: sending script data: %zu", __func__, slen + len);
-#endif
-
-	if (ps_sendcmd(ifp->ctx, ifp->ctx->ps_root_fd, PS_SCRIPT, 0,
-	    buf, slen + len) == -1)
-		return -1;
-
-	return ps_root_readerror(ifp->ctx);
+	return ps_root_readerror(ctx, NULL, 0);
 }
 
 ssize_t
@@ -551,41 +779,157 @@ ps_root_ioctl(struct dhcpcd_ctx *ctx, ioctl_request_t req, void *data,
 	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_IOCTL, req, data, len) == -1)
 		return -1;
 #endif
-	return ps_root_readerror(ctx);
+	return ps_root_readerror(ctx, data, len);
 }
 
-static ssize_t
-ps_root_fileop(struct dhcpcd_ctx *ctx, const char *path, uint8_t op)
+ssize_t
+ps_root_unlink(struct dhcpcd_ctx *ctx, const char *file)
 {
-	char buf[PATH_MAX], *p = buf;
-	size_t plen = strlen(path) + 1;
-	size_t len = sizeof(plen) + plen;
 
-	if (len > sizeof(buf)) {
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_UNLINK, 0,
+	    file, strlen(file) + 1) == -1)
+		return -1;
+	return ps_root_readerror(ctx, NULL, 0);
+}
+
+ssize_t
+ps_root_readfile(struct dhcpcd_ctx *ctx, const char *file,
+    void *data, size_t len)
+{
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_READFILE, 0,
+	    file, strlen(file) + 1) == -1)
+		return -1;
+	return ps_root_readerror(ctx, data, len);
+}
+
+ssize_t
+ps_root_writefile(struct dhcpcd_ctx *ctx, const char *file, mode_t mode,
+    const void *data, size_t len)
+{
+	char buf[PS_BUFLEN];
+	size_t flen;
+
+	flen = strlcpy(buf, file, sizeof(buf));
+	flen += 1;
+	if (flen > sizeof(buf) || flen + len > sizeof(buf)) {
 		errno = ENOBUFS;
 		return -1;
 	}
+	memcpy(buf + flen, data, len);
 
-	memcpy(p, &plen, sizeof(plen));
-	p += sizeof(plen);
-	memcpy(p, path, plen);
-
-	if (ps_sendcmd(ctx, ctx->ps_root_fd, op, 0, buf, len) == -1)
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_WRITEFILE, mode,
+	    buf, flen + len) == -1)
 		return -1;
-	return ps_root_readerror(ctx);
-}
-
-
-ssize_t
-ps_root_copychroot(struct dhcpcd_ctx *ctx, const char *path)
-{
-
-	return ps_root_fileop(ctx, path, PS_COPY);
+	return ps_root_readerror(ctx, NULL, 0);
 }
 
 ssize_t
-ps_root_unlink(struct dhcpcd_ctx *ctx, const char *path)
+ps_root_filemtime(struct dhcpcd_ctx *ctx, const char *file, time_t *time)
 {
 
-	return ps_root_fileop(ctx, path, PS_UNLINK);
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_FILEMTIME, 0,
+	    file, strlen(file) + 1) == -1)
+		return -1;
+	return ps_root_readerror(ctx, time, sizeof(*time));
 }
+
+#ifdef HAVE_CAPSICUM
+int
+ps_root_getifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **ifahead)
+{
+	struct ifaddrs *ifa;
+	void *buf = NULL;
+	char *bp, *sap;
+	socklen_t salen;
+	size_t len;
+	ssize_t err;
+
+	if (ps_sendcmd(ctx, ctx->ps_root_fd,
+	    PS_GETIFADDRS, 0, NULL, 0) == -1)
+		return -1;
+	err = ps_root_mreaderror(ctx, &buf, &len);
+
+	if (err == -1)
+		return -1;
+
+	/* Should be impossible - lo0 will always exist. */
+	if (len == 0) {
+		*ifahead = NULL;
+		return 0;
+	}
+
+	bp = buf;
+	*ifahead = (struct ifaddrs *)(void *)bp;
+	for (ifa = *ifahead; len != 0; ifa = ifa->ifa_next) {
+		if (len < ALIGN(sizeof(*ifa)) +
+		    ALIGN(IFNAMSIZ) + ALIGN(sizeof(salen) * IFA_NADDRS))
+			goto err;
+		bp += ALIGN(sizeof(*ifa));
+		ifa->ifa_name = bp;
+		bp += ALIGN(IFNAMSIZ);
+		sap = bp;
+		bp += ALIGN(sizeof(salen) * IFA_NADDRS);
+		len -= ALIGN(sizeof(*ifa)) +
+		    ALIGN(IFNAMSIZ) + ALIGN(sizeof(salen) * IFA_NADDRS);
+
+#define	COPYOUTSA(addr)						\
+	do {							\
+		memcpy(&salen, sap, sizeof(salen));		\
+		if (len < salen)				\
+			goto err;				\
+		if (salen != 0) {				\
+			(addr) = (struct sockaddr *)bp;		\
+			bp += ALIGN(salen);			\
+			len -= ALIGN(salen);			\
+		}						\
+		sap += sizeof(salen);				\
+	} while (0 /* CONSTCOND */)
+
+		COPYOUTSA(ifa->ifa_addr);
+		COPYOUTSA(ifa->ifa_netmask);
+		COPYOUTSA(ifa->ifa_broadaddr);
+		ifa->ifa_next = (struct ifaddrs *)(void *)bp;
+	}
+	ifa->ifa_next = NULL;
+	return 0;
+
+err:
+	free(buf);
+	*ifahead = NULL;
+	errno = EINVAL;
+	return -1;
+}
+#endif
+
+#if defined(__linux__) || defined(HAVE_PLEDGE)
+ssize_t
+ps_root_ip6forwarding(struct dhcpcd_ctx *ctx, const char *ifname)
+{
+
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_IP6FORWARDING, 0,
+	    ifname, ifname != NULL ? strlen(ifname) + 1 : 0) == -1)
+		return -1;
+	return ps_root_readerror(ctx, NULL, 0);
+}
+#endif
+
+#ifdef PLUGIN_DEV
+int
+ps_root_dev_initialized(struct dhcpcd_ctx *ctx, const char *ifname)
+{
+
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_DEV_INITTED, 0,
+	    ifname, strlen(ifname) + 1)== -1)
+		return -1;
+	return (int)ps_root_readerror(ctx, NULL, 0);
+}
+
+int
+ps_root_dev_listening(struct dhcpcd_ctx * ctx)
+{
+
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_DEV_LISTENING, 0, NULL, 0)== -1)
+		return -1;
+	return (int)ps_root_readerror(ctx, NULL, 0);
+}
+#endif
