@@ -57,8 +57,6 @@
 #include "if.h"
 #include "logerr.h"
 
-#define	ARP_ADDRS_MAX	3
-
 /* BPF helper macros */
 #ifdef __linux__
 #define	BPF_WHOLEPACKET		0x7fffffff /* work around buggy LPF filters */
@@ -85,7 +83,7 @@ size_t
 bpf_frame_header_len(const struct interface *ifp)
 {
 
-	switch (ifp->family) {
+	switch (ifp->hwtype) {
 	case ARPHRD_ETHER:
 		return sizeof(struct ether_header);
 	default:
@@ -98,7 +96,7 @@ bpf_frame_header_src(const struct interface *ifp, void *fh, size_t *len)
 {
 	uint8_t *f = fh;
 
-	switch (ifp->family) {
+	switch (ifp->hwtype) {
 	case ARPHRD_ETHER:
 		*len = sizeof(((struct ether_header *)0)->ether_shost);
 		return f + offsetof(struct ether_header, ether_shost);
@@ -114,7 +112,7 @@ bpf_frame_header_dst(const struct interface *ifp, void *fh, size_t *len)
 {
 	uint8_t *f = fh;
 
-	switch (ifp->family) {
+	switch (ifp->hwtype) {
 	case ARPHRD_ETHER:
 		*len = sizeof(((struct ether_header *)0)->ether_dhost);
 		return f + offsetof(struct ether_header, ether_dhost);
@@ -129,12 +127,12 @@ static const uint8_t etherbcastaddr[] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 int
-bpf_frame_bcast(const struct interface *ifp, const char *frame)
+bpf_frame_bcast(const struct interface *ifp, const void *frame)
 {
 
-	switch (ifp->family) {
+	switch (ifp->hwtype) {
 	case ARPHRD_ETHER:
-		return memcmp(frame +
+		return memcmp((const char *)frame +
 		    offsetof(struct ether_header, ether_dhost),
 		    etherbcastaddr, sizeof(etherbcastaddr));
 	default:
@@ -148,15 +146,15 @@ bpf_frame_bcast(const struct interface *ifp, const char *frame)
 
 const char *bpf_name = "Berkley Packet Filter";
 
-int
-bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
+struct bpf *
+bpf_open(const struct interface *ifp,
+    int (*filter)(const struct bpf *, const struct in_addr *),
+    const struct in_addr *ia)
 {
-	struct ipv4_state *state;
-	int fd = -1;
-	struct ifreq ifr;
+	struct bpf *bpf;
+	struct bpf_version pv = { .bv_major = 0, .bv_minor = 0 };
+	struct ifreq ifr = { .ifr_flags = 0 };
 	int ibuf_len = 0;
-	size_t buf_len;
-	struct bpf_version pv;
 #ifdef BIOCIMMEDIATE
 	unsigned int flags;
 #endif
@@ -164,8 +162,13 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 	int fd_opts;
 #endif
 
+	bpf = calloc(1, sizeof(*bpf));
+	if (bpf == NULL)
+		return NULL;
+	bpf->bpf_ifp = ifp;
+
 #ifdef _PATH_BPF
-	fd = open(_PATH_BPF, O_RDWR | O_NONBLOCK
+	bpf->bpf_fd = open(_PATH_BPF, O_RDWR | O_NONBLOCK
 #ifdef O_CLOEXEC
 		| O_CLOEXEC
 #endif
@@ -176,27 +179,24 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 
 	do {
 		snprintf(device, sizeof(device), "/dev/bpf%d", n++);
-		fd = open(device, O_RDWR | O_NONBLOCK
+		bpf->bpf_fd = open(device, O_RDWR | O_NONBLOCK
 #ifdef O_CLOEXEC
 				| O_CLOEXEC
 #endif
 		);
-	} while (fd == -1 && errno == EBUSY);
+	} while (bpf->bpf_fd == -1 && errno == EBUSY);
 #endif
 
-	if (fd == -1)
-		return -1;
+	if (bpf->bpf_fd == -1)
+		goto eexit;
 
 #ifndef O_CLOEXEC
-	if ((fd_opts = fcntl(fd, F_GETFD)) == -1 ||
-	    fcntl(fd, F_SETFD, fd_opts | FD_CLOEXEC) == -1) {
-		close(fd);
-		return -1;
-	}
+	if ((fd_opts = fcntl(bpf->bpf_fd, F_GETFD)) == -1 ||
+	    fcntl(bpf->bpf_fd, F_SETFD, fd_opts | FD_CLOEXEC) == -1)
+		goto eexit;
 #endif
 
-	memset(&pv, 0, sizeof(pv));
-	if (ioctl(fd, BIOCVERSION, &pv) == -1)
+	if (ioctl(bpf->bpf_fd, BIOCVERSION, &pv) == -1)
 		goto eexit;
 	if (pv.bv_major != BPF_MAJOR_VERSION ||
 	    pv.bv_minor < BPF_MINOR_VERSION) {
@@ -204,94 +204,84 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 		goto eexit;
 	}
 
-	if (filter(ifp, fd) != 0)
-		goto eexit;
-
-	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	if (ioctl(fd, BIOCSETIF, &ifr) == -1)
+	if (ioctl(bpf->bpf_fd, BIOCSETIF, &ifr) == -1)
 		goto eexit;
-
-	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(fd, BIOCGBLEN, &ibuf_len) == -1)
-		goto eexit;
-	buf_len = (size_t)ibuf_len;
-	state = ipv4_getstate(ifp);
-	if (state == NULL)
-		goto eexit;
-	if (state->buffer_size != buf_len) {
-		void *nb;
-
-		if ((nb = realloc(state->buffer, buf_len)) == NULL)
-			goto eexit;
-		state->buffer = nb;
-		state->buffer_size = buf_len;
-	}
 
 #ifdef BIOCIMMEDIATE
 	flags = 1;
-	if (ioctl(fd, BIOCIMMEDIATE, &flags) == -1)
+	if (ioctl(bpf->bpf_fd, BIOCIMMEDIATE, &flags) == -1)
 		goto eexit;
 #endif
 
-	return fd;
+	if (filter(bpf, ia) != 0)
+		goto eexit;
+
+	/* Get the required BPF buffer length from the kernel. */
+	if (ioctl(bpf->bpf_fd, BIOCGBLEN, &ibuf_len) == -1)
+		goto eexit;
+	bpf->bpf_size = (size_t)ibuf_len;
+	bpf->bpf_buffer = malloc(bpf->bpf_size);
+	if (bpf->bpf_buffer == NULL)
+		goto eexit;
+	return bpf;
 
 eexit:
-	close(fd);
-	return -1;
+	if (bpf->bpf_fd != -1)
+		close(bpf->bpf_fd);
+	free(bpf);
+	return NULL;
 }
 
 /* BPF requires that we read the entire buffer.
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
-bpf_read(struct interface *ifp, int fd, void *data, size_t len,
-    unsigned int *flags)
+bpf_read(struct bpf *bpf, void *data, size_t len)
 {
 	ssize_t bytes;
-	struct ipv4_state *state = IPV4_STATE(ifp);
-
 	struct bpf_hdr packet;
 	const char *payload;
 
-	*flags &= ~BPF_EOF;
+	bpf->bpf_flags &= ~BPF_EOF;
 	for (;;) {
-		if (state->buffer_len == 0) {
-			bytes = read(fd, state->buffer, state->buffer_size);
+		if (bpf->bpf_len == 0) {
+			bytes = read(bpf->bpf_fd, bpf->bpf_buffer,
+			    bpf->bpf_size);
 #if defined(__sun)
 			/* After 2^31 bytes, the kernel offset overflows.
 			 * To work around this bug, lseek 0. */
 			if (bytes == -1 && errno == EINVAL) {
-				lseek(fd, 0, SEEK_SET);
+				lseek(bpf->bpf_fd, 0, SEEK_SET);
 				continue;
 			}
 #endif
 			if (bytes == -1 || bytes == 0)
 				return bytes;
-			state->buffer_len = (size_t)bytes;
-			state->buffer_pos = 0;
+			bpf->bpf_len = (size_t)bytes;
+			bpf->bpf_pos = 0;
 		}
 		bytes = -1;
-		memcpy(&packet, state->buffer + state->buffer_pos,
-		    sizeof(packet));
-		if (state->buffer_pos + packet.bh_caplen + packet.bh_hdrlen >
-		    state->buffer_len)
+		payload = (const char *)bpf->bpf_buffer + bpf->bpf_pos;
+		memcpy(&packet, payload, sizeof(packet));
+		if (bpf->bpf_pos + packet.bh_caplen + packet.bh_hdrlen >
+		    bpf->bpf_len)
 			goto next; /* Packet beyond buffer, drop. */
-		payload = state->buffer + state->buffer_pos + packet.bh_hdrlen;
-		if (bpf_frame_bcast(ifp, payload) == 0)
-			*flags |= BPF_BCAST;
-		else
-			*flags &= ~BPF_BCAST;
+		payload += packet.bh_hdrlen;
 		if (packet.bh_caplen > len)
 			bytes = (ssize_t)len;
 		else
 			bytes = (ssize_t)packet.bh_caplen;
+		if (bpf_frame_bcast(bpf->bpf_ifp, payload) == 0)
+			bpf->bpf_flags |= BPF_BCAST;
+		else
+			bpf->bpf_flags &= ~BPF_BCAST;
 		memcpy(data, payload, (size_t)bytes);
 next:
-		state->buffer_pos += BPF_WORDALIGN(packet.bh_hdrlen +
+		bpf->bpf_pos += BPF_WORDALIGN(packet.bh_hdrlen +
 		    packet.bh_caplen);
-		if (state->buffer_pos >= state->buffer_len) {
-			state->buffer_len = state->buffer_pos = 0;
-			*flags |= BPF_EOF;
+		if (bpf->bpf_pos >= bpf->bpf_len) {
+			bpf->bpf_len = bpf->bpf_pos = 0;
+			bpf->bpf_flags |= BPF_EOF;
 		}
 		if (bytes != -1)
 			return bytes;
@@ -303,29 +293,38 @@ next:
 int
 bpf_attach(int fd, void *filter, unsigned int filter_len)
 {
-	struct bpf_program pf;
+	struct bpf_program pf = { .bf_insns = filter, .bf_len = filter_len };
 
 	/* Install the filter. */
-	memset(&pf, 0, sizeof(pf));
-	pf.bf_insns = filter;
-	pf.bf_len = filter_len;
 	return ioctl(fd, BIOCSETF, &pf);
 }
+
+#ifdef BIOCSETWF
+static int
+bpf_wattach(int fd, void *filter, unsigned int filter_len)
+{
+	struct bpf_program pf = { .bf_insns = filter, .bf_len = filter_len };
+
+	/* Install the filter. */
+	return ioctl(fd, BIOCSETWF, &pf);
+}
+#endif
 #endif
 
 #ifndef __sun
 /* SunOS is special too - sending via BPF goes nowhere. */
 ssize_t
-bpf_send(const struct interface *ifp, int fd, uint16_t protocol,
+bpf_send(const struct bpf *bpf, uint16_t protocol,
     const void *data, size_t len)
 {
 	struct iovec iov[2];
 	struct ether_header eh;
 
-	switch(ifp->family) {
+	switch(bpf->bpf_ifp->hwtype) {
 	case ARPHRD_ETHER:
 		memset(&eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
-		memcpy(&eh.ether_shost, ifp->hwaddr, sizeof(eh.ether_shost));
+		memcpy(&eh.ether_shost, bpf->bpf_ifp->hwaddr,
+		    sizeof(eh.ether_shost));
 		eh.ether_type = htons(protocol);
 		iov[0].iov_base = &eh;
 		iov[0].iov_len = sizeof(eh);
@@ -337,27 +336,24 @@ bpf_send(const struct interface *ifp, int fd, uint16_t protocol,
 	}
 	iov[1].iov_base = UNCONST(data);
 	iov[1].iov_len = len;
-	return writev(fd, iov, 2);
+	return writev(bpf->bpf_fd, iov, 2);
 }
 #endif
 
-int
-bpf_close(struct interface *ifp, int fd)
+void
+bpf_close(struct bpf *bpf)
 {
-	struct ipv4_state *state = IPV4_STATE(ifp);
 
-	/* Rewind the buffer on closing. */
-	state->buffer_len = state->buffer_pos = 0;
-	return close(fd);
+	close(bpf->bpf_fd);
+	free(bpf->bpf_buffer);
+	free(bpf);
 }
 
-/* Normally this is needed by bootp.
- * Once that uses this again, the ARP guard here can be removed. */
 #ifdef ARP
 #define BPF_CMP_HWADDR_LEN	((((HWADDR_LEN / 4) + 2) * 2) + 1)
 static unsigned int
 bpf_cmp_hwaddr(struct bpf_insn *bpf, size_t bpf_len, size_t off,
-    bool equal, uint8_t *hwaddr, size_t hwaddr_len)
+    bool equal, const uint8_t *hwaddr, size_t hwaddr_len)
 {
 	struct bpf_insn *bp;
 	size_t maclen, nlft, njmps;
@@ -451,7 +447,7 @@ static const struct bpf_insn bpf_arp_ether [] = {
 	/* Load frame header length into X */
 	BPF_STMT(BPF_LDX + BPF_W + BPF_IMM, sizeof(struct ether_header)),
 
-	/* Make sure the hardware family matches. */
+	/* Make sure the hardware type matches. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, offsetof(struct arphdr, ar_hrd)),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPHRD_ETHER, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
@@ -482,28 +478,24 @@ static const struct bpf_insn bpf_arp_filter [] = {
 };
 #define BPF_ARP_FILTER_LEN	__arraycount(bpf_arp_filter)
 
-#define BPF_ARP_ADDRS_LEN	1 + (ARP_ADDRS_MAX * 2) + 3 + \
-				(ARP_ADDRS_MAX * 2) + 1
+/* One address is two checks of two statements. */
+#define BPF_NADDRS		1
+#define BPF_ARP_ADDRS_LEN	5 + ((BPF_NADDRS * 2) * 2)
 
 #define BPF_ARP_LEN		BPF_ARP_ETHER_LEN + BPF_ARP_FILTER_LEN + \
 				BPF_CMP_HWADDR_LEN + BPF_ARP_ADDRS_LEN
 
-int
-bpf_arp(struct interface *ifp, int fd)
+static int
+bpf_arp_rw(const struct bpf *bpf, const struct in_addr *ia, bool recv)
 {
-	struct bpf_insn bpf[BPF_ARP_LEN];
+	const struct interface *ifp = bpf->bpf_ifp;
+	struct bpf_insn buf[BPF_ARP_LEN + 1];
 	struct bpf_insn *bp;
-	struct iarp_state *state;
 	uint16_t arp_len;
-	struct arp_state *astate;
-	size_t naddrs;
 
-	if (fd == -1)
-		return 0;
-
-	bp = bpf;
+	bp = buf;
 	/* Check frame header. */
-	switch(ifp->family) {
+	switch(ifp->hwtype) {
 	case ARPHRD_ETHER:
 		memcpy(bp, bpf_arp_ether, sizeof(bpf_arp_ether));
 		bp += BPF_ARP_ETHER_LEN;
@@ -520,32 +512,16 @@ bpf_arp(struct interface *ifp, int fd)
 
 	/* Ensure it's not from us. */
 	bp += bpf_cmp_hwaddr(bp, BPF_CMP_HWADDR_LEN, sizeof(struct arphdr),
-	                     false, ifp->hwaddr, ifp->hwlen);
-
-	state = ARP_STATE(ifp);
-	/* privsep may not have an initial state yet. */
-	if (state == NULL || TAILQ_FIRST(&state->arp_states) == NULL)
-		goto noaddrs;
+	                     !recv, ifp->hwaddr, ifp->hwlen);
 
 	/* Match sender protocol address */
 	BPF_SET_STMT(bp, BPF_LD + BPF_W + BPF_IND,
-	             sizeof(struct arphdr) + ifp->hwlen);
+	    sizeof(struct arphdr) + ifp->hwlen);
 	bp++;
-	naddrs = 0;
-	TAILQ_FOREACH(astate, &state->arp_states, next) {
-		if (IN_IS_ADDR_UNSPECIFIED(&astate->addr))
-			continue;
-		if (++naddrs > ARP_ADDRS_MAX) {
-			errno = ENOBUFS;
-			logerr(__func__);
-			break;
-		}
-		BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
-		             htonl(astate->addr.s_addr), 0, 1);
-		bp++;
-		BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
-		bp++;
-	}
+	BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K, htonl(ia->s_addr), 0, 1);
+	bp++;
+	BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
+	bp++;
 
 	/* If we didn't match sender, then we're only interested in
 	 * ARP probes to us, so check the null host sender. */
@@ -555,29 +531,39 @@ bpf_arp(struct interface *ifp, int fd)
 	bp++;
 
 	/* Match target protocol address */
-	BPF_SET_STMT(bp, BPF_LD + BPF_W + BPF_IND,
-	             (sizeof(struct arphdr)
-		     + (size_t)(ifp->hwlen * 2) + sizeof(in_addr_t)));
+	BPF_SET_STMT(bp, BPF_LD + BPF_W + BPF_IND, (sizeof(struct arphdr) +
+	    (size_t)(ifp->hwlen * 2) + sizeof(in_addr_t)));
 	bp++;
-	naddrs = 0;
-	TAILQ_FOREACH(astate, &state->arp_states, next) {
-		if (++naddrs > ARP_ADDRS_MAX) {
-			/* Already logged error above. */
-			break;
-		}
-		BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
-		             htonl(astate->addr.s_addr), 0, 1);
-		bp++;
-		BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
-		bp++;
-	}
+	BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K, htonl(ia->s_addr), 0, 1);
+	bp++;
+	BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
+	bp++;
 
-noaddrs:
-	/* Return nothing, no protocol address match. */
+	/* No match, drop it */
 	BPF_SET_STMT(bp, BPF_RET + BPF_K, 0);
 	bp++;
 
-	return bpf_attach(fd, bpf, (unsigned int)(bp - bpf));
+#ifdef BIOCSETWF
+	if (!recv)
+		return bpf_wattach(bpf->bpf_fd, buf, (unsigned int)(bp - buf));
+#endif
+
+	return bpf_attach(bpf->bpf_fd, buf, (unsigned int)(bp - buf));
+}
+
+int
+bpf_arp(const struct bpf *bpf, const struct in_addr *ia)
+{
+
+#ifdef BIOCSETWF
+	if (bpf_arp_rw(bpf, ia, true) == -1 ||
+	    bpf_arp_rw(bpf, ia, false) == -1 ||
+	    ioctl(bpf->bpf_fd, BIOCLOCK) == -1)
+		return -1;
+	return 0;
+#else
+	return bpf_arp_rw(bpf, ia, true);
+#endif
 }
 #endif
 
@@ -602,7 +588,7 @@ static const struct bpf_insn bpf_bootp_ether[] = {
 #define BOOTP_MIN_SIZE		sizeof(struct ip) + sizeof(struct udphdr) + \
 				sizeof(struct bootp)
 
-static const struct bpf_insn bpf_bootp_filter[] = {
+static const struct bpf_insn bpf_bootp_base[] = {
 	/* Make sure it's an IPv4 packet. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_IND, 0),
 	BPF_STMT(BPF_ALU + BPF_AND + BPF_K, 0xf0),
@@ -625,35 +611,43 @@ static const struct bpf_insn bpf_bootp_filter[] = {
 	BPF_STMT(BPF_ALU + BPF_MUL + BPF_K, 4),
 	BPF_STMT(BPF_ALU + BPF_ADD + BPF_X, 0),
 	BPF_STMT(BPF_MISC + BPF_TAX, 0),
+};
+#define BPF_BOOTP_BASE_LEN	__arraycount(bpf_bootp_base)
 
+static const struct bpf_insn bpf_bootp_read[] = {
 	/* Make sure it's from and to the right port. */
 	BPF_STMT(BPF_LD + BPF_W + BPF_IND, 0),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, (BOOTPS << 16) + BOOTPC, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
+#define BPF_BOOTP_READ_LEN	__arraycount(bpf_bootp_read)
 
-#define BPF_BOOTP_FILTER_LEN	__arraycount(bpf_bootp_filter)
+#ifdef BIOCSETWF
+static const struct bpf_insn bpf_bootp_write[] = {
+	/* Make sure it's from and to the right port. */
+	BPF_STMT(BPF_LD + BPF_W + BPF_IND, 0),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, (BOOTPC << 16) + BOOTPS, 1, 0),
+	BPF_STMT(BPF_RET + BPF_K, 0),
+};
+#define BPF_BOOTP_WRITE_LEN	__arraycount(bpf_bootp_write)
+#endif
+
 #define BPF_BOOTP_CHADDR_LEN	((BOOTP_CHADDR_LEN / 4) * 3)
 #define	BPF_BOOTP_XID_LEN	4 /* BOUND check is 4 instructions */
 
-#define BPF_BOOTP_LEN		BPF_BOOTP_ETHER_LEN + BPF_BOOTP_FILTER_LEN \
-				+ BPF_BOOTP_XID_LEN + BPF_BOOTP_CHADDR_LEN + 4
+#define BPF_BOOTP_LEN		BPF_BOOTP_ETHER_LEN + \
+				BPF_BOOTP_BASE_LEN + BPF_BOOTP_READ_LEN + \
+				BPF_BOOTP_XID_LEN + BPF_BOOTP_CHADDR_LEN + 4
 
-int
-bpf_bootp(struct interface *ifp, int fd)
+static int
+bpf_bootp_rw(const struct bpf *bpf, bool read)
 {
-#if 0
-	const struct dhcp_state *state = D_CSTATE(ifp);
-#endif
-	struct bpf_insn bpf[BPF_BOOTP_LEN];
+	struct bpf_insn buf[BPF_BOOTP_LEN + 1];
 	struct bpf_insn *bp;
 
-	if (fd == -1)
-		return 0;
-
-	bp = bpf;
+	bp = buf;
 	/* Check frame header. */
-	switch(ifp->family) {
+	switch(bpf->bpf_ifp->hwtype) {
 #ifdef ARPHRD_NONE
 	case ARPHRD_NONE:
 		memcpy(bp, bpf_bootp_none, sizeof(bpf_bootp_none));
@@ -670,48 +664,45 @@ bpf_bootp(struct interface *ifp, int fd)
 	}
 
 	/* Copy in the main filter. */
-	memcpy(bp, bpf_bootp_filter, sizeof(bpf_bootp_filter));
-	bp += BPF_BOOTP_FILTER_LEN;
+	memcpy(bp, bpf_bootp_base, sizeof(bpf_bootp_base));
+	bp += BPF_BOOTP_BASE_LEN;
 
-	/* These checks won't work when same IP exists on other interfaces. */
-#if 0
-	if (ifp->hwlen <= sizeof(((struct bootp *)0)->chaddr))
-		bp += bpf_cmp_hwaddr(bp, BPF_BOOTP_CHADDR_LEN,
-		                     offsetof(struct bootp, chaddr),
-				     true, ifp->hwaddr, ifp->hwlen);
+#ifdef BIOCSETWF
+	if (!read) {
+		memcpy(bp, bpf_bootp_write, sizeof(bpf_bootp_write));
+		bp += BPF_BOOTP_WRITE_LEN;
 
-	/* Make sure the BOOTP packet is for us. */
-	if (state->state == DHS_BOUND) {
-		/* If bound, we only expect FORCERENEW messages
-		 * and they need to be unicast to us.
-		 * Move back to the IP header in M0 and check dst. */
-		BPF_SET_STMT(bp, BPF_LDX + BPF_W + BPF_MEM, 0);
+		/* All passed, return the packet. */
+		BPF_SET_STMT(bp, BPF_RET + BPF_K, BPF_WHOLEPACKET);
 		bp++;
-		BPF_SET_STMT(bp, BPF_LD + BPF_W + BPF_IND,
-		             offsetof(struct ip, ip_dst));
-		bp++;
-		BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
-		             htonl(state->lease.addr.s_addr), 1, 0);
-		bp++;
-		BPF_SET_STMT(bp, BPF_RET + BPF_K, 0);
-		bp++;
-	} else {
-		/* As we're not bound, we need to check xid to ensure
-		 * it's a reply to our transaction. */
-		BPF_SET_STMT(bp, BPF_LD + BPF_W + BPF_IND,
-		             offsetof(struct bootp, xid));
-		bp++;
-		BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
-		             state->xid, 1, 0);
-		bp++;
-		BPF_SET_STMT(bp, BPF_RET + BPF_K, 0);
-		bp++;
+
+		return bpf_wattach(bpf->bpf_fd, buf, (unsigned int)(bp - buf));
 	}
+#else
+	UNUSED(read);
 #endif
+
+	memcpy(bp, bpf_bootp_read, sizeof(bpf_bootp_read));
+	bp += BPF_BOOTP_READ_LEN;
 
 	/* All passed, return the packet. */
 	BPF_SET_STMT(bp, BPF_RET + BPF_K, BPF_WHOLEPACKET);
 	bp++;
 
-	return bpf_attach(fd, bpf, (unsigned int)(bp - bpf));
+	return bpf_attach(bpf->bpf_fd, buf, (unsigned int)(bp - buf));
+}
+
+int
+bpf_bootp(const struct bpf *bpf, __unused const struct in_addr *ia)
+{
+
+#ifdef BIOCSETWF
+	if (bpf_bootp_rw(bpf, true) == -1 ||
+	    bpf_bootp_rw(bpf, false) == -1 ||
+	    ioctl(bpf->bpf_fd, BIOCLOCK) == -1)
+		return -1;
+	return 0;
+#else
+	return bpf_bootp_rw(bpf, true);
+#endif
 }

@@ -108,6 +108,8 @@ script_exec(char *const *argv, char *const *env)
 	posix_spawnattr_setsigmask(&attr, &defsigs);
 	for (i = 0; i < dhcpcd_signals_len; i++)
 		sigaddset(&defsigs, dhcpcd_signals[i]);
+	for (i = 0; i < dhcpcd_signals_ignore_len; i++)
+		sigaddset(&defsigs, dhcpcd_signals_ignore[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
 #endif
 	errno = 0;
@@ -250,8 +252,10 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 
 	fp = NULL;
 	tmpfd = mkstemp(tmpfile);
-	if (tmpfd == -1)
-		goto eexit;
+	if (tmpfd == -1) {
+		logerr("%s: mkstemp", __func__);
+		return -1;
+	}
 	unlink(tmpfile);
 	fp = fdopen(tmpfd, "w+");
 	if (fp == NULL) {
@@ -689,7 +693,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	int status = 0;
 	struct fd_list *fd;
 
-	if (ifp->options->script == NULL &&
+	if (ctx->script == NULL &&
 	    TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
 		return 0;
 
@@ -699,23 +703,23 @@ script_runreason(const struct interface *ifp, const char *reason)
 		return -1;
 	}
 
-	if (ifp->options->script == NULL)
+	if (ctx->script == NULL)
 		goto send_listeners;
 
-	argv[0] = ifp->options->script;
+	argv[0] = ctx->script;
 	argv[1] = NULL;
 	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
 
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP) {
-		if (ps_root_script(ifp,
+		if (ps_root_script(ctx,
 		    ctx->script_buf, ctx->script_buflen) == -1)
 			logerr(__func__);
 		goto send_listeners;
 	}
 #endif
 
-	status = script_run(ctx, argv);
+	script_run(ctx, argv);
 
 send_listeners:
 	/* Send to our listeners */
@@ -732,23 +736,3 @@ send_listeners:
 
 	return status;
 }
-
-#ifdef PRIVSEP
-int
-script_runchroot(struct dhcpcd_ctx *ctx, char *script)
-{
-	char *argv[2];
-
-	/* Make our env */
-	if (make_env(ctx, NULL, "CHROOT") == -1) {
-		logerr(__func__);
-		return -1;
-	}
-
-	argv[0] = script;
-	argv[1] = NULL;
-	logdebugx("executing `%s' %s", argv[0], "CHROOT");
-
-	return script_run(ctx, argv);
-}
-#endif

@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 27, 2020
+.Dd May 21, 2020
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ to renew early.
 .Pp
 If any interface reports a working carrier then
 .Nm
-will try and obtain a lease before forking to the background,
+will try to obtain a lease before forking to the background,
 otherwise it will fork right away.
 This behaviour can be modified with the
 .Fl b , Fl Fl background
@@ -669,7 +669,9 @@ only responds to DHCP servers and not BOOTP servers, you can
 Quiet
 .Nm
 on the command line, only warnings and errors will be displayed.
-The messages are still logged though.
+If this option is used another time then all console output is disabled.
+These messages are still logged via
+.Xr syslog 3 .
 .It Fl T , Fl Fl test
 On receipt of DHCP messages just call
 .Pa @SCRIPT@
