@@ -1,4 +1,4 @@
-/*	$NetBSD: h_nsd_recurse.c,v 1.2 2011/01/13 02:24:51 pgoyette Exp $ */
+/*	$NetBSD: h_nsd_recurse.c,v 1.3 2020/06/01 01:03:21 kamil Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,9 +32,11 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_nsd_recurse.c,v 1.2 2011/01/13 02:24:51 pgoyette Exp $");
+__RCSID("$NetBSD: h_nsd_recurse.c,v 1.3 2020/06/01 01:03:21 kamil Exp $");
 
+#ifndef	_REENTRANT
 #define	_REENTRANT
+#endif
 
 #include <assert.h>
 #include <nsswitch.h>
