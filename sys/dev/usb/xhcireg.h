@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.14 2020/05/29 06:53:40 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.15 2020/06/01 10:25:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -45,9 +45,8 @@
 #define	PCI_XHCI_INTEL_USB3PRM	0xdc    /* Intel USB3 Port Routing Mask */
 
 /* XHCI capability registers */
-#define	XHCI_CAPLENGTH		0x00	/* RO capability */
-#define	 XHCI_CAP_CAPLENGTH(x)	((x) & 0xFF)
-#define	 XHCI_CAP_HCIVERSION(x)	(((x) >> 16) & 0xFFFF)	/* RO Interface version number */
+#define	XHCI_CAPLENGTH		0x00	/* RO capability - 1 byte */
+#define	XHCI_HCIVERSION		0x02	/* RO version - 2 bytes */
 #define	 XHCI_HCIVERSION_0_9	0x0090	/* xHCI version 0.9 */
 #define	 XHCI_HCIVERSION_0_96	0x0096	/* xHCI version 0.96 */
 #define	 XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
