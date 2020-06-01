@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.1.1.1 2008/12/22 00:18:44 haad Exp $	*/
+/*	$NetBSD: lib.h,v 1.2 2020/06/01 00:34:25 kamil Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -23,7 +23,9 @@
 
 #include "configure.h"
 
+#ifndef _REENTRANT
 #define _REENTRANT
+#endif
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64
 
