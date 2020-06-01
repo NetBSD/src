@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.3 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.4 2020/06/01 04:38:37 martin Exp $
 #
 # Copyright (c) 2018 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -389,7 +389,7 @@ test_ipsecif_natt_transport()
 	port_a=$($HIJACKING_NPF npfctl list | grep $ip_local_a | awk -F 'shmif1:' '/4500/ {print $2;}')
 	$DEBUG && echo port_a=$port_a
 	if [ -z "$port_a" ]; then
-		atf_fail "Failed to get a traslated port on NAPT"
+		atf_fail "Failed to get a translated port on NAPT"
 	fi
 
 	# Setup ESP-UDP ipsecif(4) for first client under NAPT
@@ -444,7 +444,7 @@ test_ipsecif_natt_transport()
 	port_b=$($HIJACKING_NPF npfctl list | grep $ip_local_b | awk -F 'shmif1:' '/4500/ {print $2;}')
 	$DEBUG && echo port_b=$port_b
 	if [ -z "$port_b" ]; then
-		atf_fail "Failed to get a traslated port on NAPT"
+		atf_fail "Failed to get a translated port on NAPT"
 	fi
 
 	# Setup ESP-UDP ipsecif(4) for first client under NAPT
