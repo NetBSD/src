@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.3 2014/01/07 02:13:00 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.4 2020/06/01 00:55:24 kamil Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -68,8 +68,10 @@
 #define _GNU_SOURCE
 #endif
 
+#ifndef _REENTRANT
 /* Needed for gmtime_r on Interix */
 #define _REENTRANT
+#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
