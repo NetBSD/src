@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.239 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.240 2020/06/01 13:58:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.239 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.240 2020/06/01 13:58:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -2060,7 +2060,6 @@ lwp_setprivate(struct lwp *l, void *ptr)
 void
 lwp_thread_cleanup(struct lwp *l)
 {
-	KASSERT(l == curlwp);
 	const lwpid_t tid = l->l_lid;
 
 	KASSERT((tid & FUTEX_TID_MASK) == tid);
