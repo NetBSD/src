@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.445 2020/05/18 21:19:34 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.446 2020/06/01 01:41:40 jmcneill Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -177,8 +177,6 @@ MOTD_SOURCE=	motd.current
 MOTD_SOURCE=	motd.beta
 .elif !empty(DISTRIBVER:M*RC*)
 MOTD_SOURCE=	motd.rc
-.elif !empty(DISTRIBVER:M*STABLE*)
-MOTD_SOURCE=	motd.stable
 .else
 MOTD_SOURCE=	motd.default
 .endif
