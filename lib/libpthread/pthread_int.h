@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.104 2020/05/16 22:53:37 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.105 2020/06/01 11:44:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -105,7 +105,6 @@ struct	__pthread_st {
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
 	int		pt_willpark;	/* About to park */
-	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
 	void		*(*pt_func)(void *);/* Function to call at start. */
 	void		*pt_arg;	/* Argument to pass at start. */
@@ -142,10 +141,11 @@ struct	__pthread_st {
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
 	volatile int	pt_mutexwait;	/* Waiting to acquire mutex */
+	volatile int	pt_condwait;	/* Waiting to acquire mutex */
 	void * volatile pt_mutexnext;	/* Next thread in chain */
+	void * volatile pt_condnext;	/* Next thread in chain */
 	void * volatile	pt_sleepobj;	/* Object slept on */
 	PTQ_ENTRY(__pthread_st) pt_sleep;
-	void		(*pt_early)(void *);
 
 	/* Thread-specific data.  Large so it sits close to the end. */
 	int		pt_havespecific __aligned(COHERENCY_UNIT);

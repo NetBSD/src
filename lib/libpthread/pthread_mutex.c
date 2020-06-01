@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.77 2020/05/16 22:53:37 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.78 2020/06/01 11:44:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.77 2020/05/16 22:53:37 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.78 2020/06/01 11:44:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -358,26 +358,24 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 		 * it is unsafe to re-enter the thread onto the waiters
 		 * list.
 		 */
-#ifndef PTHREAD__ATOMIC_IS_MEMBAR
-		membar_sync();
-#endif
-		while (self->pt_mutexwait) {
+		do {
+			pthread__assert(self->pt_nwaiters <= 1);
+			pthread__assert(self->pt_nwaiters != 0 ||
+			    self->pt_waiters[0] == 0);
 			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
-			    __UNCONST(ts), self->pt_unpark, NULL, NULL);
-			self->pt_unpark = 0;
-			if (__predict_true(error != -1)) {
-				continue;
-			}
-			if (errno == ETIMEDOUT && self->pt_mutexwait) {
-				/*Remove self from waiters list*/
+			    __UNCONST(ts), self->pt_waiters[0], NULL, NULL);
+			self->pt_waiters[0] = 0;
+			self->pt_nwaiters = 0;
+			if (error < 0 && errno == ETIMEDOUT) {
+				/* Remove self from waiters list */
 				pthread__mutex_wakeup(self, ptm);
-				/*priority protect*/
+				/* Priority protect */
 				if (MUTEX_PROTECT(owner))
 					(void)_sched_protect(-1);
 				errno = serrno;
 				return ETIMEDOUT;
 			}
-		}
+		} while (self->pt_mutexwait);
 		owner = ptm->ptm_owner;
 	}
 }
@@ -485,7 +483,6 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 			}
 		}
 	}
-	pthread__smt_wake();
 
 	/*
 	 * Finally, wake any waiters and return.
@@ -515,7 +512,6 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	/* Take ownership of the current set of waiters. */
 	thread = atomic_swap_ptr(&ptm->ptm_waiters, NULL);
 	membar_datadep_consumer(); /* for alpha */
-	pthread__smt_wake();
 
 	/*
 	 * Pull waiters from the queue and add to our list.  Use a memory
@@ -523,23 +519,17 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	 * before 'thread' sees pt_mutexwait being cleared.
 	 */
 	while (thread != NULL) {
-		if (self->pt_nwaiters < pthread__unpark_max) {
-			next = thread->pt_mutexnext;
-			if (thread != self) {
-				self->pt_waiters[self->pt_nwaiters++] =
-				    thread->pt_lid;
-				membar_sync();
-			}
-			thread->pt_mutexwait = 0;
-			/* No longer safe to touch 'thread' */
-			thread = next;
-			continue;
+		if (self->pt_nwaiters >= pthread__unpark_max) {
+			pthread__clear_waiters(self);
 		}
-		pthread__clear_waiters(self);
+		next = thread->pt_mutexnext;
+		self->pt_waiters[self->pt_nwaiters++] = thread->pt_lid;
+		membar_sync();
+		thread->pt_mutexwait = 0;
+		/* No longer safe to touch 'thread' */
+		thread = next;
 	}
-	if (self->pt_nwaiters > 0) {
-		pthread__clear_waiters(self);
-	}
+	pthread__clear_waiters(self);
 }
 
 int
