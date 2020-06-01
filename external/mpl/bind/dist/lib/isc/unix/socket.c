@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.15 2020/05/31 17:45:02 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.16 2020/06/01 18:55:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3174,7 +3174,6 @@ internal_fdwatch_write(isc__socket_t *sock)
 
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	isc_refcount_increment(&sock->references);
 	UNLOCK(&sock->lock);
 
@@ -3192,8 +3191,6 @@ internal_fdwatch_write(isc__socket_t *sock)
 	if (more_data)
 		select_poke(sock->manager, sock->threadid, sock->fd,
 		    SELECT_POKE_WRITE);
-
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3203,7 +3200,6 @@ internal_fdwatch_read(isc__socket_t *sock)
 
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	isc_refcount_increment(&sock->references);
 	UNLOCK(&sock->lock);
 
@@ -3221,8 +3217,6 @@ internal_fdwatch_read(isc__socket_t *sock)
 	if (more_data)
 		select_poke(sock->manager, sock->threadid, sock->fd,
 		    SELECT_POKE_READ);
-
-	UNLOCK(&sock->lock);
 }
 
 /*
