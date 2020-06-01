@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.7 2020/05/31 23:55:18 thorpej Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.8 2020/06/01 00:00:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.7 2020/05/31 23:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.8 2020/06/01 00:00:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,7 +117,6 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct sniiic_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	prop_dictionary_t dict = device_properties(self);
 	const int phandle = faa->faa_phandle;
 	bus_space_handle_t ioh;
 	bus_addr_t addr;
