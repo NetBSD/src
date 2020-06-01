@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.129 2020/05/21 15:28:35 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.130 2020/06/01 10:25:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.129 2020/05/21 15:28:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.130 2020/06/01 10:25:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -269,6 +269,12 @@ static inline uint32_t
 xhci_read_1(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, offset);
+}
+
+static inline uint32_t
+xhci_read_2(const struct xhci_softc * const sc, bus_size_t offset)
+{
+	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
 }
 
 static inline uint32_t
@@ -938,7 +944,7 @@ int
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
-	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff, hcc2;
+	uint32_t hcs1, hcs2, hcs3, hcc, dboff, rtsoff, hcc2;
 	uint32_t pagesize, config;
 	int i = 0;
 	uint16_t hciversion;
@@ -959,9 +965,8 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_bus2.ub_hcpriv = sc;
 	sc->sc_bus2.ub_dmatag = sc->sc_bus.ub_dmatag;
 
-	cap = xhci_read_4(sc, XHCI_CAPLENGTH);
-	caplength = XHCI_CAP_CAPLENGTH(cap);
-	hciversion = XHCI_CAP_HCIVERSION(cap);
+	caplength = xhci_read_1(sc, XHCI_CAPLENGTH);
+	hciversion = xhci_read_2(sc, XHCI_HCIVERSION);
 
 	if (hciversion < XHCI_HCIVERSION_0_96 ||
 	    hciversion >= 0x0200) {
