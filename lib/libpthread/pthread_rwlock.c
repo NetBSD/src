@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.40 2020/05/16 22:53:37 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.41 2020/06/01 11:44:59 ad Exp $ */
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.40 2020/05/16 22:53:37 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.41 2020/06/01 11:44:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -56,7 +56,8 @@ __RCSID("$NetBSD: pthread_rwlock.c,v 1.40 2020/05/16 22:53:37 ad Exp $");
 
 static int pthread__rwlock_wrlock(pthread_rwlock_t *, const struct timespec *);
 static int pthread__rwlock_rdlock(pthread_rwlock_t *, const struct timespec *);
-static void pthread__rwlock_early(void *);
+static void pthread__rwlock_early(pthread_t, pthread_rwlock_t *,
+    pthread_mutex_t *);
 
 int	_pthread_rwlock_held_np(pthread_rwlock_t *);
 int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
@@ -218,9 +219,12 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	    	ptr->ptr_nreaders++;
 		self->pt_rwlocked = _RW_WANT_READ;
 		self->pt_sleepobj = &ptr->ptr_rblocked;
-		self->pt_early = pthread__rwlock_early;
 		error = pthread__park(self, interlock, &ptr->ptr_rblocked,
 		    ts, 0);
+
+		if (self->pt_sleepobj != NULL) {
+			pthread__rwlock_early(self, ptr, interlock);
+		}
 
 		/* Did we get the lock? */
 		if (self->pt_rwlocked == _RW_LOCKED) {
@@ -339,9 +343,12 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	    	PTQ_INSERT_TAIL(&ptr->ptr_wblocked, self, pt_sleep);
 		self->pt_rwlocked = _RW_WANT_WRITE;
 		self->pt_sleepobj = &ptr->ptr_wblocked;
-		self->pt_early = pthread__rwlock_early;
 		error = pthread__park(self, interlock, &ptr->ptr_wblocked,
 		    ts, 0);
+
+		if (self->pt_sleepobj != NULL) {
+			pthread__rwlock_early(self, ptr, interlock);
+		}
 
 		/* Did we get the lock? */
 		if (self->pt_rwlocked == _RW_LOCKED) {
@@ -357,7 +364,6 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		    "direct handoff failure");
 	}
 }
-
 
 int
 pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
@@ -563,32 +569,19 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
  * removed from the waiters lists.
  */
 static void
-pthread__rwlock_early(void *obj)
+pthread__rwlock_early(pthread_t self, pthread_rwlock_t *ptr,
+    pthread_mutex_t *interlock)
 {
-	uintptr_t owner, set, new, next;
-	pthread_rwlock_t *ptr;
-	pthread_t self;
-	u_int off;
+	uintptr_t owner, set, newval, next;
+	pthread_queue_t *queue;
 
-	self = pthread__self();
-
-	switch (self->pt_rwlocked) {
-	case _RW_WANT_READ:
-		off = offsetof(pthread_rwlock_t, ptr_rblocked);
-		break;
-	case _RW_WANT_WRITE:
-		off = offsetof(pthread_rwlock_t, ptr_wblocked);
-		break;
-	default:
-		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "bad value of pt_rwlocked");
-		off = 0;
-		/* NOTREACHED */
-		break;
+	pthread_mutex_lock(interlock);
+	if ((queue = self->pt_sleepobj) == NULL) {
+		pthread_mutex_unlock(interlock);
+		return;
 	}
-
-	/* LINTED mind your own business */
-	ptr = (pthread_rwlock_t *)((uint8_t *)obj - off);
+	PTQ_REMOVE(queue, self, pt_sleep);
+	self->pt_sleepobj = NULL;
 	owner = (uintptr_t)ptr->ptr_owner;
 
 	if ((owner & RW_THREAD) == 0) {
@@ -604,11 +597,12 @@ pthread__rwlock_early(void *obj)
 		set = 0;
 
 	for (;; owner = next) {
-		new = (owner & ~(RW_HAS_WAITERS | RW_WRITE_WANTED)) | set;
-		next = rw_cas(ptr, owner, new);
+		newval = (owner & ~(RW_HAS_WAITERS | RW_WRITE_WANTED)) | set;
+		next = rw_cas(ptr, owner, newval);
 		if (owner == next)
 			break;
 	}
+	pthread_mutex_unlock(interlock);
 }
 
 int
