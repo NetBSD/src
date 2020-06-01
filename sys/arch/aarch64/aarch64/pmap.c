@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2020/05/15 05:39:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2020/06/01 02:42:24 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2020/05/15 05:39:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2020/06/01 02:42:24 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -171,17 +171,13 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 	} while (0/*CONSTCOND*/)
 
 /*
- * aarch64 require write permission in pte to invalidate instruction cache.
- * changing pte to writable temporarly before cpu_icache_sync_range().
+ * require access permission in pte to invalidate instruction cache.
+ * change the pte to accessible temporarly before cpu_icache_sync_range().
  * this macro modifies PTE (*ptep). need to update PTE after this.
  */
 #define PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, ll)			\
 	do {								\
-		pt_entry_t tpte;					\
-		tpte = (pte) & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);		\
-		tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);			\
-		tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);			\
-		atomic_swap_64((ptep), tpte);				\
+		atomic_swap_64((ptep), (pte) | LX_BLKPAG_AF);		\
 		AARCH64_TLBI_BY_ASID_VA((pm)->pm_asid, (va), (ll));	\
 		cpu_icache_sync_range((va), PAGE_SIZE);			\
 	} while (0/*CONSTCOND*/)
@@ -1328,7 +1324,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			UVMHIST_LOG(pmaphist, "icache_sync: "
 			    "pm=%p, va=%016lx, pte: %016lx -> %016lx",
 			    pm, va, opte, pte);
-			if (!l3pte_writable(pte)) {
+			if (!l3pte_readable(pte)) {
 				PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, true);
 				atomic_swap_64(ptep, pte);
 				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
@@ -1889,7 +1885,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		UVMHIST_LOG(pmaphist,
 		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
 		    pm, va, opte, pte);
-		if (!l3pte_writable(pte)) {
+		if (!l3pte_readable(pte)) {
 			PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, l3only);
 			atomic_swap_64(ptep, pte);
 			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va ,true);
