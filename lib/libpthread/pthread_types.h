@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_types.h,v 1.23 2017/09/09 23:21:45 kamil Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.24 2020/06/01 11:44:59 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -172,7 +172,8 @@ struct	__pthread_cond_st {
 
 	/* Protects the queue of waiters */
 	__pthread_spin_t ptc_lock;
-	pthread_queue_t	ptc_waiters;
+	pthread_t volatile ptc_waiters;
+	void *ptc_spare;
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
 	void	*ptc_private;
@@ -183,7 +184,8 @@ struct	__pthread_cond_st {
 
 #define _PTHREAD_COND_INITIALIZER { _PT_COND_MAGIC,			\
 				   __SIMPLELOCK_UNLOCKED,		\
-				   {NULL, NULL},			\
+				   NULL,				\
+				   NULL,				\
 				   NULL,				\
 				   NULL  				\
 				 }
