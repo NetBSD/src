@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.405 2020/05/30 20:47:59 christos Exp $
+#	$NetBSD: bsd.README,v 1.406 2020/06/01 14:39:14 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1342,6 +1342,8 @@ LIBISMODULE	If not "no", install as ${LIB}.so (without the "lib" prefix),
 LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
 		MKPROFILE=no", and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
+		If set to "pic", then a _pic.a library is also produced,
+		so that it can be incorporated into other shared objects.
 		Default: no
 
 LIBISCXX	If not "no", Use ${CXX} instead of ${CC} to link
