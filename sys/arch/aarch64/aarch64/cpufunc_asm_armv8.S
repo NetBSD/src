@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.4 2019/09/12 06:12:56 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.5 2020/06/01 08:59:00 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -41,43 +41,44 @@
 
 /*
  * Macro to handle the cache. This takes the start address in x0, length
- * in x1. It will corrupt x0, x1, x2, and x3.
+ * in x1. It will corrupt x2-x5.
  */
-.macro cache_handle_range dcop = 0, ic = 0, icop = 0
-.if \ic == 0
+.macro cache_handle_range dcop = 0, icop = 0
 	mrs	x3, ctr_el0
-	ubfx	x3, x3, #16, #4		/* x3 = D cache shift */
-	mov	x2, #4			/* size of word */
-	lsl	x3, x2, x3		/* x3 = D cache line size */
-.else
-	mrs	x3, ctr_el0
+	mov	x4, #4			/* size of word */
+.if \dcop != 0
 	ubfx	x2, x3, #16, #4		/* x2 = D cache shift */
+	lsl	x2, x4, x2		/* x2 = D cache line size */
+.endif
+.if \icop != 0
 	and	x3, x3, #15		/* x3 = I cache shift */
-	cmp	x3, x2
-	bcs	1f
-	mov	x3, x2
-1:					/* x3 = MAX(IcacheShift,DcacheShift) */
-	mov	x2, #4			/* size of word */
-	lsl	x3, x2, x3		/* x3 = cache line size */
+	lsl	x3, x4, x3		/* x3 = I cache line size */
 .endif
-	sub	x4, x3, #1		/* Get the address mask */
-	and	x2, x0, x4		/* Get the low bits of the address */
-	add	x1, x1, x2		/* Add these to the size */
-	bic	x0, x0, x4		/* Clear the low bit of the address */
+.if \dcop != 0
+	sub	x4, x2, #1		/* Get the address mask */
+	and	x4, x0, x4		/* Get the low bits of the address */
+	add	x5, x1, x4		/* Add these to the size */
+	bic	x4, x0, x4		/* Clear the low bit of the address */
 1:
-	dc	\dcop, x0
-	dsb	ish
-.if \ic != 0
-	ic	\icop, x0
+	dc	\dcop, x4
+	add	x4, x4, x2		/* Move to the next line */
+	subs	x5, x5, x2		/* Reduce the size */
+	b.hi	1b			/* Check if we are done */
 	dsb	ish
 .endif
-	add	x0, x0, x3		/* Move to the next line */
-	subs	x1, x1, x3		/* Reduce the size */
+.if \icop != 0
+	sub	x4, x3, #1		/* Get the address mask */
+	and	x4, x0, x4		/* Get the low bits of the address */
+	add	x5, x1, x4		/* Add these to the size */
+	bic	x4, x0, x4		/* Clear the low bit of the address */
+1:
+	ic	\icop, x4
+	add	x4, x4, x3		/* Move to the next line */
+	subs	x5, x5, x3		/* Reduce the size */
 	b.hi	1b			/* Check if we are done */
-.if \ic != 0
+	dsb	ish
 	isb
 .endif
-	ret
 .endm
 
 
@@ -95,6 +96,7 @@ END(aarch64_cpuid)
  */
 ENTRY(aarch64_dcache_wb_range)
 	cache_handle_range	dcop = cvac
+	ret
 END(aarch64_dcache_wb_range)
 
 /*
@@ -102,6 +104,7 @@ END(aarch64_dcache_wb_range)
  */
 ENTRY(aarch64_dcache_wbinv_range)
 	cache_handle_range	dcop = civac
+	ret
 END(aarch64_dcache_wbinv_range)
 
 /*
@@ -112,20 +115,23 @@ END(aarch64_dcache_wbinv_range)
  */
 ENTRY(aarch64_dcache_inv_range)
 	cache_handle_range	dcop = ivac
+	ret
 END(aarch64_dcache_inv_range)
 
 /*
  * void aarch64_idcache_wbinv_range(vaddr_t, vsize_t)
  */
 ENTRY(aarch64_idcache_wbinv_range)
-	cache_handle_range	dcop = civac, ic = 1, icop = ivau
+	cache_handle_range	dcop = civac, icop = ivau
+	ret
 END(aarch64_idcache_wbinv_range)
 
 /*
  * void aarch64_icache_sync_range(vaddr_t, vsize_t)
  */
 ENTRY(aarch64_icache_sync_range)
-	cache_handle_range	dcop = cvau, ic = 1, icop = ivau
+	cache_handle_range	dcop = cvau, icop = ivau
+	ret
 END(aarch64_icache_sync_range)
 
 /*
