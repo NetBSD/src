@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.170 2020/05/16 22:53:37 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.171 2020/06/01 11:44:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.170 2020/05/16 22:53:37 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.171 2020/06/01 11:44:59 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -294,12 +294,11 @@ pthread__initthread(pthread_t t)
 	t->pt_self = t;
 	t->pt_magic = PT_MAGIC;
 	t->pt_willpark = 0;
-	t->pt_unpark = 0;
+	t->pt_waiters[0] = 0;
 	t->pt_nwaiters = 0;
 	t->pt_sleepobj = NULL;
 	t->pt_signalled = 0;
 	t->pt_havespecific = 0;
-	t->pt_early = NULL;
 	t->pt_lwpctl = &pthread__dummy_lwpctl;
 
 	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
@@ -609,51 +608,32 @@ pthread__clear_waiters(pthread_t self)
 {
 	int rv;
 
-	/* Zero waiters or one waiter in error case (pthread_exit()). */
-	if (self->pt_nwaiters == 0) {
-		if (self->pt_unpark != 0 && self->pt_willpark == 0) {
-			rv = (ssize_t)_lwp_unpark(self->pt_unpark, NULL);
-			self->pt_unpark = 0;
-			if (rv != 0 && errno != EALREADY && errno != EINTR &&
-			    errno != ESRCH) {
-				pthread__errorfunc(__FILE__, __LINE__, __func__,
-				    "_lwp_unpark failed");
-			}
-		}
-		return;
-	}
+	pthread__smt_wake();
 
-	/* One waiter or two waiters (the second being a deferred wakeup). */
-	if (self->pt_nwaiters == 1) {
-		if (self->pt_unpark != 0) {
-			/* Fall through to multiple waiters case. */
-			self->pt_waiters[1] = self->pt_unpark;
-			self->pt_nwaiters = 2;
-			self->pt_unpark = 0;
-		} else if (self->pt_willpark) {
-			/* Defer to _lwp_park(). */
-			self->pt_unpark = self->pt_waiters[0];
-			self->pt_nwaiters = 0;
-			return;
-		} else {
-			/* Wake one now. */
-			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], NULL);
-			self->pt_nwaiters = 0;
-			if (rv != 0 && errno != EALREADY && errno != EINTR &&
-			    errno != ESRCH) {
-				pthread__errorfunc(__FILE__, __LINE__, __func__,
-				    "_lwp_unpark failed");
-			}
-			return;
+	switch (self->pt_nwaiters) {
+	case 0:
+		break;
+	case 1:
+		if (self->pt_willpark) {
+			break;
 		}
-	}
-
-	/* Multiple waiters. */
-	rv = _lwp_unpark_all(self->pt_waiters, self->pt_nwaiters, NULL);
-	self->pt_nwaiters = 0;
-	if (rv != 0 && errno != EINTR) {
-		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "_lwp_unpark_all failed");
+		rv = _lwp_unpark(self->pt_waiters[0], NULL);
+		self->pt_waiters[0] = 0;
+		self->pt_nwaiters = 0;
+		if (rv != 0) {
+			pthread__errorfunc(__FILE__, __LINE__, __func__,
+			    "_lwp_unpark failed");
+		}
+		break;
+	default:
+		rv = _lwp_unpark_all(self->pt_waiters, self->pt_nwaiters, NULL);
+		self->pt_waiters[0] = 0;
+		self->pt_nwaiters = 0;
+		if (rv != 0) {
+			pthread__errorfunc(__FILE__, __LINE__, __func__,
+			    "_lwp_unpark_all failed");
+		}
+		break;
 	}
 }
 
@@ -1115,7 +1095,7 @@ pthread__assertfunc(const char *file, int line, const char *function,
 	    function ? "\"" : "");
 
 	_sys_write(STDERR_FILENO, buf, (size_t)len);
-	(void)_lwp_kill(_lwp_self(), SIGABRT);
+	(void)raise(SIGABRT);
 	_exit(1);
 }
 
@@ -1163,16 +1143,12 @@ pthread__errorfunc(const char *file, int line, const char *function,
  * http://www.sun.com/software/whitepapers/solaris9/multithread.pdf
  */
 
-#define	OOPS(msg)			\
-    pthread__errorfunc(__FILE__, __LINE__, __func__, msg)
-
 int
 pthread__park(pthread_t self, pthread_mutex_t *lock,
 	      pthread_queue_t *queue, const struct timespec *abstime,
 	      int cancelpt)
 {
 	int rv, error;
-	void *obj;
 
 	self->pt_willpark = 1;
 	pthread_mutex_unlock(lock);
@@ -1186,26 +1162,15 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 	 * It is fine to test the value of pt_sleepobj without
 	 * holding any locks, because:
 	 *
-	 * o Only the blocking thread (this thread) ever sets them
+	 * o Only the blocking thread (this thread) ever sets it
 	 *   to a non-NULL value.
 	 *
-	 * o Other threads may set them NULL, but if they do so they
+	 * o Other threads may set it NULL, but if they do so they
 	 *   must also make this thread return from _lwp_park.
 	 *
 	 * o _lwp_park, _lwp_unpark and _lwp_unpark_all are system
 	 *   calls and all make use of spinlocks in the kernel.  So
-	 *   these system calls act as full memory barriers, and will
-	 *   ensure that the calling CPU's store buffers are drained.
-	 *   In combination with the spinlock release before unpark,
-	 *   this means that modification of pt_sleepobj/onq by another
-	 *   thread will become globally visible before that thread
-	 *   schedules an unpark operation on this thread.
-	 *
-	 * Note: the test in the while() statement dodges the park op if
-	 * we have already been awoken, unless there is another thread to
-	 * awaken.  This saves a syscall - if we were already awakened,
-	 * the next call to _lwp_park() would need to return early in order
-	 * to eat the previous wakeup.
+	 *   these system calls act as full memory barriers.
 	 */
 	rv = 0;
 	do {
@@ -1213,9 +1178,13 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 		 * If we deferred unparking a thread, arrange to
 		 * have _lwp_park() restart it before blocking.
 		 */
+		pthread__assert(self->pt_nwaiters <= 1);
+		pthread__assert(self->pt_nwaiters != 0 ||
+		    self->pt_waiters[0] == 0);
 		error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
-		    __UNCONST(abstime), self->pt_unpark, NULL, NULL);
-		self->pt_unpark = 0;
+		    __UNCONST(abstime), self->pt_waiters[0], NULL, NULL);
+		self->pt_waiters[0] = 0;
+		self->pt_nwaiters = 0;
 		if (error != 0) {
 			switch (rv = errno) {
 			case EINTR:
@@ -1225,7 +1194,8 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 			case ETIMEDOUT:
 				break;
 			default:
-				OOPS("_lwp_park failed");
+				pthread__errorfunc(__FILE__, __LINE__,
+				    __func__, "_lwp_park failed");
 				break;
 			}
 		}
@@ -1233,24 +1203,6 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 		if (cancelpt && self->pt_cancel)
 			rv = EINTR;
 	} while (self->pt_sleepobj != NULL && rv == 0);
-
-	/*
-	 * If we have been awoken early but are still on the queue,
-	 * then remove ourself.  Again, it's safe to do the test
-	 * without holding any locks.
-	 */
-	if (__predict_false(self->pt_sleepobj != NULL)) {
-		pthread_mutex_lock(lock);
-		if ((obj = self->pt_sleepobj) != NULL) {
-			PTQ_REMOVE(queue, self, pt_sleep);
-			self->pt_sleepobj = NULL;
-			if (obj != NULL && self->pt_early != NULL)
-				(*self->pt_early)(obj);
-		}
-		pthread_mutex_unlock(lock);
-	}
-	self->pt_early = NULL;
-
 	return rv;
 }
 
