@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.47 2017/07/18 19:50:54 wiz Exp $
+.\" $NetBSD: modload.8,v 1.48 2020/06/01 03:18:36 uwe Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -85,6 +85,7 @@ from the
 .Ar plist
 specified.
 .It Fl f
+Force the module to be loaded.
 When a module is loaded, the kernel checks if the module is compatible
 with the running kernel and will refuse to load modules that are
 potentially incompatible.
