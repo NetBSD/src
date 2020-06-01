@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.3 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.4 2020/06/01 04:38:37 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -328,7 +328,7 @@ test_ipsec_natt_transport_ipv4()
 	port=$($HIJACKING_NPF npfctl list | awk -F 'shmif1:' '/4500/ {print $2;}')
 	$DEBUG && echo port=$port
 	if [ -z "$port" ]; then
-		atf_fail "Failed to get a traslated port on NAPT"
+		atf_fail "Failed to get a translated port on NAPT"
 	fi
 
 	# Create ESP-UDP IPsec connections
