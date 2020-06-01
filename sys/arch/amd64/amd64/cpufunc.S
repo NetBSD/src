@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.58 2020/05/27 20:48:42 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.59 2020/06/01 22:58:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -424,6 +424,7 @@ END(outl)
 ENTRY(x86_stos)
 	movq	%rsi,%rax
 	movq	%rdx,%rcx
+	KMSAN_REP_STOS(8)
 	rep
 	stosq
 	ret
@@ -431,6 +432,7 @@ END(x86_stos)
 
 ENTRY(x86_movs)
 	movq	%rdx,%rcx
+	KMSAN_REP_STOS(8)
 	rep
 	movsq
 	ret
