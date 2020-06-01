@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.165 2020/05/28 07:59:38 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.166 2020/06/01 08:32:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -367,6 +367,7 @@
 #define CPUID_DSPM_HWP_PECI   __BIT(16)	/* HWP PECI override */
 #define CPUID_DSPM_HWP_FLEX   __BIT(17)	/* Flexible HWP */
 #define CPUID_DSPM_HWP_FAST   __BIT(18)	/* Fast access for IA32_HWP_REQUEST */
+#define CPUID_DSPM_HW_FEEDBACK __BIT(19) /* HW_FEEDBACK*, IA32_PACKAGE_TERM* */
 #define CPUID_DSPM_HWP_IGNIDL __BIT(20)	/* Ignore Idle Logical Processor HWP */
 
 #define CPUID_DSPM_FLAGS	"\20" \
@@ -374,8 +375,8 @@
 	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
 	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
 			"\16" "HDC"	"\17" "TBM3"	"\20" "HWP_CAP" \
-	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST"		\
-	"25" "HWP_IGNIDL"
+	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST" "\24HW_FEEDBACK"   \
+	"\25" "HWP_IGNIDL"
 
 /*
  * Intel/AMD Digital Thermal Sensor and
@@ -460,6 +461,7 @@
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
+#define CPUID_SEF_PKS		__BIT(31) /* Protection Keys */
 
 #define CPUID_SEF_FLAGS1	"\177\20" \
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
@@ -469,7 +471,7 @@
 	"f\21\5MAWAU\0"							\
 					"b\26RDPID\0"			\
 			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
-	"b\34MOVDIR64B\0"		"b\36SGXLC\0"
+	"b\34MOVDIR64B\0"		"b\36SGXLC\0"	"b\37PKS\0"
 
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
@@ -608,6 +610,8 @@
 #define CPUID_DATP_TCTYPE_D	1		/*   Data TLB */
 #define CPUID_DATP_TCTYPE_I	2		/*   Instruction TLB */
 #define CPUID_DATP_TCTYPE_U	3		/*   Unified TLB */
+#define CPUID_DATP_TCTYPE_L	4		/*   Load only TLB */
+#define CPUID_DATP_TCTYPE_S	5		/*   Store only TLB */
 #define CPUID_DATP_TCLEVEL	__BITS(7, 5)	/* TLB level (start at 1) */
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
 #define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
@@ -882,6 +886,7 @@
 #define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
 #define 	IA32_ARCH_MDS_NO	0x20
+#define 	IA32_ARCH_IF_PSCHANGE_MC_NO 0x40
 #define 	IA32_ARCH_TSX_CTRL	0x80
 #define 	IA32_ARCH_TAA_NO	0x100
 #define MSR_IA32_FLUSH_CMD	0x10b
