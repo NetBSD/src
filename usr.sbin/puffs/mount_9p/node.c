@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.28 2020/05/27 03:25:13 uwe Exp $	*/
+/*	$NetBSD: node.c,v 1.29 2020/06/01 13:30:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.28 2020/05/27 03:25:13 uwe Exp $");
+__RCSID("$NetBSD: node.c,v 1.29 2020/06/01 13:30:52 uwe Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -595,7 +595,7 @@ puffs9p_node_rename(struct puffs_usermount *pu,
 	if (targ) {
 		struct puffs_node *pn_targ = targ;
 
-		rv = noderemove(pu,  pn_targ);
+		rv = noderemove(pu, pn_targ);
 		if (rv)
 			goto out;
 	}
