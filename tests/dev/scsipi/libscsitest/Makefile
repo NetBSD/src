@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/04/26 18:53:21 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/06/01 14:42:53 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ RUMPTOP= ${NETBSDSRCDIR}/sys/rump
 
 LIB=	rumpdev_scsitest
 IOCONF=	SCSITEST.ioconf
-LIBISPRIVATE= #defined
+LIBISPRIVATE=	yes
 
 SRCS=	scsitest.c
 SRCS+=	scsitest_component.c
