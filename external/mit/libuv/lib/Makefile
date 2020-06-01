@@ -1,9 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2020/05/30 20:54:46 christos Exp $
+# $NetBSD: Makefile,v 1.4 2020/06/01 14:39:42 christos Exp $
 
-LIBISPRIVATE=yes
-
-LIBISPRIVATE=yes
-MKPICLIB=yes
+LIBISPRIVATE=pic
 
 .include <bsd.own.mk>
 
