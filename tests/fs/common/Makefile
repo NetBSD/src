@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/10/13 07:28:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/06/01 14:42:03 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ CPPFLAGS+=	-DDEBUG -DLIBWRAP -DRUMP_RPC
 CPPFLAGS+=	-I${LIBC}/include -I${LIBC}/rpc
 
 
-LIBISPRIVATE=	# yup
+LIBISPRIVATE=	yes
 
 # NFS client stuff
 .PATH:	${NETBSDSRCDIR}/sbin/mount_nfs ${NETBSDSRCDIR}/sbin/mount
