@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.382 2020/05/30 19:51:32 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.383 2020/06/01 14:39:14 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -30,7 +30,7 @@ MKLINT:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
 MKSTATICLIB:=	no
-. elif ${MKPICLIB} == "no"
+. elif ${LIBISPRIVATE} != "pic"
 MKPIC:=		no
 . endif
 MKPROFILE:=	no
@@ -118,6 +118,7 @@ print-shlib-teeny:
 	@false
 .endif
 
+.if ${LIBISPRIVATE} == "no"
 .if defined(SHLIB_MAJOR) && !empty(SHLIB_MAJOR)				# {
 .if defined(SHLIB_MINOR) && !empty(SHLIB_MINOR)
 .if defined(SHLIB_TEENY) && !empty(SHLIB_TEENY)
@@ -129,6 +130,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
 SHLIB_FULLVERSION=${SHLIB_MAJOR}
 .endif
 .endif									# }
+.endif
 
 # add additional suffixes not exported.
 # .po is used for profiling object files.
@@ -170,7 +172,7 @@ MKSHLIBOBJS= no
 # We only add -g to the shared library objects
 # because we don't currently split .a archives.
 CSHLIBFLAGS+=	-g
-.if ${LIBISPRIVATE} == "yes"
+.if ${LIBISPRIVATE} != "no"
 CFLAGS+=	-g
 .endif
 .endif
