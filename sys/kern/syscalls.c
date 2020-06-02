@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.321 2020/06/02 17:02:32 kamil Exp $ */
+/* $NetBSD: syscalls.c,v 1.322 2020/06/02 17:23:21 kamil Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.321 2020/06/02 17:02:32 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.322 2020/06/02 17:23:21 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #ifdef _KERNEL_OPT
