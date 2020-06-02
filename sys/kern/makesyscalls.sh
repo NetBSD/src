@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.176 2019/11/09 22:05:50 jdolecek Exp $
+#	$NetBSD: makesyscalls.sh,v 1.177 2020/06/02 13:49:15 kamil Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -765,7 +765,7 @@ function printrumpsysent(insysent, compatwrap) {
 
 	printf("\t{") > rumpsysent
 	if (argc != 0) {
-		printf("\n\t\tns(struct %ssys_%s_args),", compatwrap_, funcalias) > rumpsysent
+		printf("\n\t\tns(struct %s%s_args),", compatwrap_, funcname) > rumpsysent
 	}
 
 	printf("\n\t\t.sy_call = %s,\n\t},", fn) > rumpsysent
