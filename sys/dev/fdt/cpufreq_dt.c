@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.13 2019/10/29 10:52:22 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.14 2020/06/02 11:40:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.13 2019/10/29 10:52:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.14 2020/06/02 11:40:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,10 @@ struct cpufreq_dt_softc {
 static void
 cpufreq_dt_change_cb(void *arg1, void *arg2)
 {
-#if notyet
+	struct cpufreq_dt_softc * const sc = arg1;
 	struct cpu_info *ci = curcpu();
-	ci->ci_data.cpu_cc_freq = cpufreq_get_rate() * 1000000;
-#endif
+
+	ci->ci_data.cpu_cc_freq = sc->sc_freq_target * 1000000;
 }
 
 static int
@@ -489,7 +489,7 @@ cpufreq_dt_parse(struct cpufreq_dt_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_nopp; i++) {
-		aprint_verbose_dev(sc->sc_dev, "%u.%03u MHz, %u uV\n",
+		aprint_debug_dev(sc->sc_dev, "supported rate: %u.%03u MHz, %u uV\n",
 		    sc->sc_opp[i].freq_khz / 1000,
 		    sc->sc_opp[i].freq_khz % 1000,
 		    sc->sc_opp[i].voltage_uv);
@@ -531,6 +531,14 @@ cpufreq_dt_init(device_t self)
 	pmf_event_register(sc->sc_dev, PMFE_THROTTLE_DISABLE, cpufreq_dt_throttle_disable, true);
 
 	cpufreq_dt_init_sysctl(sc);
+
+	if (sc->sc_nopp > 0) {
+		struct cpufreq_dt_opp * const opp = &sc->sc_opp[sc->sc_nopp - 1];
+
+		aprint_normal_dev(sc->sc_dev, "rate: %u.%03u MHz, %u uV\n",
+		    opp->freq_khz / 1000, opp->freq_khz % 1000, opp->voltage_uv);
+		cpufreq_dt_set_rate(sc, opp->freq_khz);
+	}
 }
 
 static int
