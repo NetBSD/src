@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.70 2019/03/04 17:45:16 christos Exp $ */
+/* $NetBSD: decl.c,v 1.71 2020/06/02 21:10:07 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.70 2019/03/04 17:45:16 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.71 2020/06/02 21:10:07 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1153,7 +1153,7 @@ decl1str(sym_t *dsym)
 		}
 		if ((len = tp->t_flen) < 0 || len > (ssize_t)size(t)) {
 			/* illegal bit-field size */
-			error(36);
+			error(36, len);
 			tp->t_flen = size(t);
 		} else if (len == 0 && dsym->s_name != unnamed) {
 			/* zero size bit-field */
