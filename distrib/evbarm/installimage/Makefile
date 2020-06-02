@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2020/06/02 10:41:30 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.6 2020/06/02 14:27:32 jmcneill Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
 
-.if ${MKDEBUG:Uno} != "no"
-INSTIMAGEMB?=	2000			# for all installation binaries w/ debug
-.else
 INSTIMAGEMB?=	1550			# for all installation binaries
-.endif
 
 .if ${MACHINE_ARCH} == "aarch64"
 EFIBOOT=		${WORKDIR}/usr/mdec/bootaa64.efi
