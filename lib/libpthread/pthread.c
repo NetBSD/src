@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.171 2020/06/01 11:44:59 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.172 2020/06/02 00:29:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.171 2020/06/01 11:44:59 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.172 2020/06/02 00:29:53 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -622,7 +622,7 @@ pthread__clear_waiters(pthread_t self)
 		self->pt_nwaiters = 0;
 		if (rv != 0) {
 			pthread__errorfunc(__FILE__, __LINE__, __func__,
-			    "_lwp_unpark failed");
+			    "_lwp_unpark failed: %d", errno);
 		}
 		break;
 	default:
@@ -631,7 +631,7 @@ pthread__clear_waiters(pthread_t self)
 		self->pt_nwaiters = 0;
 		if (rv != 0) {
 			pthread__errorfunc(__FILE__, __LINE__, __func__,
-			    "_lwp_unpark_all failed");
+			    "_lwp_unpark_all failed: %d", errno);
 		}
 		break;
 	}
@@ -1102,23 +1102,29 @@ pthread__assertfunc(const char *file, int line, const char *function,
 
 void
 pthread__errorfunc(const char *file, int line, const char *function,
-		   const char *msg)
+		   const char *msg, ...)
 {
 	char buf[1024];
+	char buf2[1024];
 	size_t len;
+	va_list ap;
 
 	if (pthread__diagassert == 0)
 		return;
+
+	va_start(ap, msg);
+	vsnprintf_ss(buf2, sizeof(buf2), msg, ap);
+	va_end(ap);
 
 	/*
 	 * snprintf should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
 	 */
-	len = snprintf(buf, 1024,
+	len = snprintf_ss(buf, sizeof(buf),
 	    "%s: Error detected by libpthread: %s.\n"
 	    "Detected by file \"%s\", line %d%s%s%s.\n"
 	    "See pthread(3) for information.\n",
-	    getprogname(), msg, file, line,
+	    getprogname(), buf2, file, line,
 	    function ? ", function \"" : "",
 	    function ? function : "",
 	    function ? "\"" : "");
@@ -1195,7 +1201,7 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 				break;
 			default:
 				pthread__errorfunc(__FILE__, __LINE__,
-				    __func__, "_lwp_park failed");
+				    __func__, "_lwp_park failed: %d", errno);
 				break;
 			}
 		}

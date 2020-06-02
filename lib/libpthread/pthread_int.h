@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.105 2020/06/01 11:44:59 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.106 2020/06/02 00:29:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -300,8 +300,8 @@ void	pthread__copy_tsd(pthread_t) PTHREAD_HIDE;
 
 __dead void	pthread__assertfunc(const char *, int, const char *, const char *)
 			    PTHREAD_HIDE;
-void	pthread__errorfunc(const char *, int, const char *, const char *)
-			   PTHREAD_HIDE;
+void	pthread__errorfunc(const char *, int, const char *, const char *, ...)
+			    __printflike(4, 5) PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 __dead void	pthread__cancelled(void) PTHREAD_HIDE;
 void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
