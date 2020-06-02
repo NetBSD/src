@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.120 2020/06/02 17:02:32 kamil Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.121 2020/06/02 17:23:22 kamil Exp $ */
 
 /*
  * System call protos in rump namespace.

@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.151 2020/06/02 17:02:33 kamil Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.152 2020/06/02 17:23:22 kamil Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.151 2020/06/02 17:02:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.152 2020/06/02 17:23:22 kamil Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
