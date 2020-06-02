@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.37 2019/07/28 14:26:08 christos Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.38 2020/06/02 01:30:31 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -118,6 +118,7 @@
  *
  */
 
+#include <stdalign.h>
 
 /* prototypes */
 
@@ -505,6 +506,10 @@ _FUNCNAME(ctype_getops)(_citrus_ctype_ops_rec_t *ops, size_t lenops,
 
 	return (0);
 }
+
+/* Ensure alignment matches guarantees from locale/multibyte.h */
+__CTASSERT(alignof(_ENCODING_STATE) <= alignof(int) ||
+           alignof(_ENCODING_STATE) <= alignof(void *));
 
 static int
 _FUNCNAME(ctype_init)(void ** __restrict cl,
