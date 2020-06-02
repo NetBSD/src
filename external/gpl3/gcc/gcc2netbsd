@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2netbsd,v 1.7 2018/02/08 19:33:26 mrg Exp $
+#	$NetBSD: gcc2netbsd,v 1.8 2020/06/02 08:03:59 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,6 @@ cleantags "$DIR"
 RM="
 boehm-gc
 gcc/ada
-gcc/fortran
 gcc/go
 gcc/java
 gcc/po
@@ -59,7 +58,6 @@ libatomic
 libcilkrts
 libcpp/po
 libffi
-libgfortran
 libgo
 libgomp/testsuite
 libiberty/testsuite
@@ -68,7 +66,6 @@ libjava
 libmpx
 liboffloadmic
 libmudflap/testsuite
-libquadmath
 libstdc++-v3/po
 libstdc++-v3/testsuite
 libvtv
