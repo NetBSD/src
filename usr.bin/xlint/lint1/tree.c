@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.87 2019/07/12 23:32:45 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.88 2020/06/02 21:10:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.87 2019/07/12 23:32:45 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.88 2020/06/02 21:10:07 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3152,7 +3152,7 @@ bldalof(type_t *tp)
 	st = UINT;
 #endif
 
-	return getinode(st, (int64_t)getbound(tp));
+	return getinode(st, (int64_t)getbound(tp) / CHAR_BIT);
 }
 
 /*

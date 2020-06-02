@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.53 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.54 2020/06/02 21:10:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.53 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.54 2020/06/02 21:10:07 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ const	char *msgs[] = {
 	"duplicate member name: %s",				      /* 33 */
 	"nonportable bit-field type",				      /* 34 */
 	"illegal bit-field type",				      /* 35 */
-	"illegal bit-field size",				      /* 36 */
+	"illegal bit-field size: %d",				      /* 36 */
 	"zero size bit-field",					      /* 37 */
 	"function illegal in structure or union",		      /* 38 */
 	"zero sized array in struct is a C99 extension: %s",	      /* 39 */
