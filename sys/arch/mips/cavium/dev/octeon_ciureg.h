@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciureg.h,v 1.5 2016/08/20 06:34:22 skrll Exp $	*/
+/*	$NetBSD: octeon_ciureg.h,v 1.6 2020/06/02 14:39:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -189,6 +189,7 @@
 #define	_CIU_INT_WORKQ_3_SHIFT			0x03
 #define	_CIU_INT_WORKQ_2_SHIFT			0x02
 #define	_CIU_INT_WORKQ_1_SHIFT			0x01
+#define	_CIU_INT_WORKQ_0_SHIFT			0x00
 
 #define	CIU_INTX_SUM0_XXX_63_59			UINT64_C(0xf800000000000000)
 #define	CIU_INTX_SUM0_MPI			UINT64_C(0x0400000000000000)
@@ -352,7 +353,8 @@
 #define	CIU_MBOX_CLRX_XXX_63_32			UINT64_C(0xffffffff00000000)
 #define	CIU_MBOX_CLRX_CLR			UINT64_C(0x00000000ffffffff)
 
-#define	CIU_PP_RST_XXX_63_1			UINT64_C(0xfffffffffffffffe)
+#define	CIU_PP_RST_XXX_63_2			UINT64_C(0xfffffffffffffffc)
+#define	CIU_PP_RST_RST				UINT64_C(0x0000000000000002)
 #define	CIU_PP_RST_RST0				UINT64_C(0x0000000000000001)
 
 #define	CIU_PP_DBG_XXX_63_1			UINT64_C(0xfffffffffffffffe)
@@ -361,14 +363,14 @@
 #define	CIU_GSTOP_XXX_63_1			UINT64_C(0xfffffffffffffffe)
 #define	CIU_GSTOP_GSTOP				UINT64_C(0x0000000000000001)
 
-#define	CIU_NMI_XXX_63_1			UINT64_C(0xfffffffffffffffe)
-#define	CIU_NMI_NMI				UINT64_C(0x0000000000000001)
+#define	CIU_NMI_XXX_63_2			UINT64_C(0xfffffffffffffffc)
+#define	CIU_NMI_NMI				UINT64_C(0x0000000000000003)
 
-#define	CIU_DINT_XXX_63_1			UINT64_C(0xfffffffffffffffe)
-#define	CIU_DINT_DINT				UINT64_C(0x0000000000000001)
+#define	CIU_DINT_XXX_63_2			UINT64_C(0xfffffffffffffffc)
+#define	CIU_DINT_DINT				UINT64_C(0x0000000000000003)
 
-#define	CIU_FUSE_XXX_63_1			UINT64_C(0xfffffffffffffffe)
-#define	CIU_FUSE_FUSE				UINT64_C(0x0000000000000001)
+#define	CIU_FUSE_XXX_63_2			UINT64_C(0xfffffffffffffffc)
+#define	CIU_FUSE_FUSE				UINT64_C(0x0000000000000003)
 
 #define	CIU_BIST_XXX_63_4			UINT64_C(0xfffffffffffffff0)
 #define	CIU_BIST_BIST				UINT64_C(0x000000000000000f)
@@ -379,7 +381,7 @@
 #define	CIU_SOFT_RST_XXX_63_1			UINT64_C(0xfffffffffffffffe)
 #define	CIU_SOFT_RST_SOFT_RST			UINT64_C(0x0000000000000001)
 
-#define	CIU_SOFT_PRST_XXX_63_1			UINT64_C(0xfffffffffffffff8)
+#define	CIU_SOFT_PRST_XXX_63_4			UINT64_C(0xfffffffffffffff8)
 #define	CIU_SOFT_PRST_HOST64			UINT64_C(0x0000000000000004)
 #define	CIU_SOFT_PRST_NPI			UINT64_C(0x0000000000000002)
 #define	CIU_SOFT_PRST_SOFT_PRST			UINT64_C(0x0000000000000001)
