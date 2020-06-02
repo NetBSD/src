@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/05/30 12:36:37 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.4 2020/06/02 01:34:50 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,7 @@ IMGFILE_EXTRA=								\
 	${SYSINSTDIR}/sysinst		.
 
 MD_IMGDIR_EXCLUDE=	-s ',./binary/gzimg.*,,gp'
-MD_IMGDIR_EXCLUDE+=	-s ',./binary/instkernel.*,,gp'
+MD_IMGDIR_EXCLUDE+=	-s ',./installation/instkernel.*,,gp'
+MD_IMGDIR_EXCLUDE+=	-s ',./installation/ramdisk.*,,gp'
 
 .include "${NETBSDSRCDIR}/distrib/common/bootimage/Makefile.installimage"
