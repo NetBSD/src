@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.41 2020/06/01 11:44:59 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.42 2020/06/02 00:29:53 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.41 2020/06/01 11:44:59 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.42 2020/06/02 00:29:53 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -361,7 +361,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 			return error;
 
 		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "direct handoff failure");
+		    "direct handoff failure: %d", errno);
 	}
 }
 
