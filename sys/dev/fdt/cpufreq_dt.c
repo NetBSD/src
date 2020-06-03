@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.14 2020/06/02 11:40:02 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.15 2020/06/03 15:44:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.14 2020/06/02 11:40:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.15 2020/06/03 15:44:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ cpufreq_dt_init(device_t self)
 	cpufreq_dt_init_sysctl(sc);
 
 	if (sc->sc_nopp > 0) {
-		struct cpufreq_dt_opp * const opp = &sc->sc_opp[sc->sc_nopp - 1];
+		struct cpufreq_dt_opp * const opp = &sc->sc_opp[0];
 
 		aprint_normal_dev(sc->sc_dev, "rate: %u.%03u MHz, %u uV\n",
 		    opp->freq_khz / 1000, opp->freq_khz % 1000, opp->voltage_uv);
