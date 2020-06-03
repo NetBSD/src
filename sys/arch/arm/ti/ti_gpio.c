@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.3 2019/11/03 11:34:40 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.3 2019/11/03 11:34:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.4 2020/06/03 16:00:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -518,6 +518,8 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_modname = fdtbus_get_string(phandle, "ti,hwmods");
 	if (sc->sc_modname == NULL)
 		sc->sc_modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
+	if (sc->sc_modname == NULL)
+		sc->sc_modname = kmem_asprintf("gpio@%" PRIxBUSADDR, addr);
 
 	aprint_naive("\n");
 	aprint_normal(": GPIO (%s)\n", sc->sc_modname);
