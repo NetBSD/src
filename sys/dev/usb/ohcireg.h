@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.27 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.28 2020/06/03 15:38:02 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -43,47 +43,54 @@
 /*** OHCI registers */
 
 #define OHCI_REVISION		0x00	/* OHCI revision # */
-#define  OHCI_REV_LO(rev)	((rev)&0xf)
-#define  OHCI_REV_HI(rev)	(((rev)>>4)&0xf)
-#define  OHCI_REV_LEGACY(rev)	((rev) & 0x100)
+#define  OHCI_REV_LO_MASK	__BITS(3,0)
+#define  OHCI_REV_HI_MASK	__BITS(7,4)
+#define  OHCI_REV_LO(rev)	__SHIFTOUT((rev), OHCI_REV_LO_MASK)
+#define  OHCI_REV_HI(rev)	__SHIFTOUT((rev), OHCI_REV_HI_MASK)
+#define  OHCI_REV_LEGACY_MASK	__BIT(8)
+#define  OHCI_REV_LEGACY(rev)	__SHIFTOUT((rev), OHCI_REV_LEGACY_MASK)
 
 #define OHCI_CONTROL		0x04
-#define  OHCI_CBSR_MASK		0x00000003 /* Control/Bulk Service Ratio */
-#define  OHCI_RATIO_1_1		0x00000000
-#define  OHCI_RATIO_1_2		0x00000001
-#define  OHCI_RATIO_1_3		0x00000002
-#define  OHCI_RATIO_1_4		0x00000003
-#define  OHCI_PLE		0x00000004 /* Periodic List Enable */
-#define  OHCI_IE		0x00000008 /* Isochronous Enable */
-#define  OHCI_CLE		0x00000010 /* Control List Enable */
-#define  OHCI_BLE		0x00000020 /* Bulk List Enable */
-#define  OHCI_HCFS_MASK		0x000000c0 /* HostControllerFunctionalState */
-#define  OHCI_HCFS_RESET	0x00000000
-#define  OHCI_HCFS_RESUME	0x00000040
-#define  OHCI_HCFS_OPERATIONAL	0x00000080
-#define  OHCI_HCFS_SUSPEND	0x000000c0
-#define  OHCI_IR		0x00000100 /* Interrupt Routing */
-#define  OHCI_RWC		0x00000200 /* Remote Wakeup Connected */
-#define  OHCI_RWE		0x00000400 /* Remote Wakeup Enabled */
+#define  OHCI_CBSR_MASK		__BITS(1,0)	/* Control/Bulk Service Ratio */
+#define  OHCI_CBSR_SET(x)	__SHIFTIN((x), OHCI_CBSR_MASK)
+#define  OHCI_RATIO_1_1		0
+#define  OHCI_RATIO_1_2		1
+#define  OHCI_RATIO_1_3		2
+#define  OHCI_RATIO_1_4		3
+#define  OHCI_PLE		__BIT(2)	/* Periodic List Enable */
+#define  OHCI_IE		__BIT(3)	/* Isochronous Enable */
+#define  OHCI_CLE		__BIT(4)	/* Control List Enable */
+#define  OHCI_BLE		__BIT(5)	/* Bulk List Enable */
+#define  OHCI_HCFS_MASK		__BITS(7,6)	/* HostControllerFunctionalState */
+#define  OHCI_SET_HCFS(x)	__SHIFTIN((x), OHCI_HCFS_MASK)
+#define  OHCI_GET_HCFS(x)	__SHIFTOUT((x), OHCI_HCFS_MASK)
+#define  OHCI_HCFS_RESET	0
+#define  OHCI_HCFS_RESUME	1
+#define  OHCI_HCFS_OPERATIONAL	2
+#define  OHCI_HCFS_SUSPEND	3
+#define  OHCI_IR		__BIT(8)       /* Interrupt Routing */
+#define  OHCI_RWC		__BIT(9)       /* Remote Wakeup Connected */
+#define  OHCI_RWE		__BIT(10)      /* Remote Wakeup Enabled */
 #define OHCI_COMMAND_STATUS	0x08
-#define  OHCI_HCR		0x00000001 /* Host Controller Reset */
-#define  OHCI_CLF		0x00000002 /* Control List Filled */
-#define  OHCI_BLF		0x00000004 /* Bulk List Filled */
-#define  OHCI_OCR		0x00000008 /* Ownership Change Request */
-#define  OHCI_SOC_MASK		0x00030000 /* Scheduling Overrun Count */
+#define  OHCI_HCR		__BIT(0)       /* Host Controller Reset */
+#define  OHCI_CLF		__BIT(1)       /* Control List Filled */
+#define  OHCI_BLF		__BIT(2)       /* Bulk List Filled */
+#define  OHCI_OCR		__BIT(3)       /* Ownership Change Request */
+#define  OHCI_SOC_MASK		__BITS(17,16)  /* Scheduling Overrun Count */
 #define OHCI_INTERRUPT_STATUS	0x0c
-#define  OHCI_SO		0x00000001 /* Scheduling Overrun */
-#define  OHCI_WDH		0x00000002 /* Writeback Done Head */
-#define  OHCI_SF		0x00000004 /* Start of Frame */
-#define  OHCI_RD		0x00000008 /* Resume Detected */
-#define  OHCI_UE		0x00000010 /* Unrecoverable Error */
-#define  OHCI_FNO		0x00000020 /* Frame Number Overflow */
-#define  OHCI_RHSC		0x00000040 /* Root Hub Status Change */
-#define  OHCI_OC		0x40000000 /* Ownership Change */
-#define  OHCI_MIE		0x80000000 /* Master Interrupt Enable */
+#define  OHCI_SO		__BIT(0)	/* Scheduling Overrun */
+#define  OHCI_WDH		__BIT(1)	/* Writeback Done Head */
+#define  OHCI_SF		__BIT(2)	/* Start of Frame */
+#define  OHCI_RD		__BIT(3)	/* Resume Detected */
+#define  OHCI_UE		__BIT(4)	/* Unrecoverable Error */
+#define  OHCI_FNO		__BIT(5)	/* Frame Number Overflow */
+#define  OHCI_RHSC		__BIT(6)	/* Root Hub Status Change */
+#define  OHCI_OC		__BIT(30)	/* Ownership Change */
+#define  OHCI_MIE		__BIT(31)	/* Master Interrupt Enable */
 #define OHCI_INTERRUPT_ENABLE	0x10
 #define OHCI_INTERRUPT_DISABLE	0x14
 #define OHCI_HCCA		0x18
+#define OHCI_PERIOD_CURRENT_ED	0x1c
 #define OHCI_PERIOD_CURRENT_ED	0x1c
 #define OHCI_CONTROL_HEAD_ED	0x20
 #define OHCI_CONTROL_CURRENT_ED	0x24
@@ -91,31 +98,36 @@
 #define OHCI_BULK_CURRENT_ED	0x2c
 #define OHCI_DONE_HEAD		0x30
 #define OHCI_FM_INTERVAL	0x34
-#define  OHCI_GET_IVAL(s)	((s) & 0x3fff)
-#define  OHCI_GET_FSMPS(s)	(((s) >> 16) & 0x7fff)
-#define  OHCI_FIT		0x80000000
+#define  OHCI_FM_IVAL_MASK	__BITS(13,0)
+#define  OHCI_FM_GET_IVAL(x)	__SHIFTOUT((x), OHCI_FM_IVAL_MASK)
+#define  OHCI_FM_FSMPS_MASK	__BITS(30,16)
+#define  OHCI_FM_GET_FSMPS(x)	__SHIFTOUT((x), OHCI_FM_FSMPS_MASK)
+#define  OHCI_FM_SET_FSMPS(x)	__SHIFTIN((x), OHCI_FM_FSMPS_MASK)
+#define  OHCI_FM_FIT		__BIT(31)
 #define OHCI_FM_REMAINING	0x38
 #define OHCI_FM_NUMBER		0x3c
 #define OHCI_PERIODIC_START	0x40
 #define OHCI_LS_THRESHOLD	0x44
 #define OHCI_RH_DESCRIPTOR_A	0x48
-#define  OHCI_GET_NDP(s)	((s) & 0xff)
-#define  OHCI_PSM		0x0100     /* Power Switching Mode */
-#define  OHCI_NPS		0x0200	   /* No Power Switching */
-#define  OHCI_DT		0x0400     /* Device Type */
-#define  OHCI_OCPM		0x0800     /* Overcurrent Protection Mode */
-#define  OHCI_NOCP		0x1000     /* No Overcurrent Protection */
-#define  OHCI_GET_POTPGT(s)	((s) >> 24)
-#define  OHCI_POTPGT_MASK	0xff000000
+#define  OHCI_RHD_NDP_MASK	__BITS(7,0)
+#define  OHCI_RHD_GET_NDP(x)	__SHIFTOUT((x), OHCI_RHD_NDP_MASK)
+#define  OHCI_RHD_PSM		__BIT(8)	/* Power Switching Mode */
+#define  OHCI_RHD_NPS		__BIT(9)	/* No Power Switching */
+#define  OHCI_RHD_DT		__BIT(10)	/* Device Type */
+#define  OHCI_RHD_OCPM		__BIT(11)	/* Overcurrent Protection Mode */
+#define  OHCI_RHD_NOCP		__BIT(12)	/* No Overcurrent Protection */
+#define  OHCI_RHD_POTPGT_MASK	__BITS(31,24)
+#define  OHCI_RHD_GET_POTPGT(x)	__SHIFTOUT((x), OHCI_RHD_POTPGT_MASK)
+#define  OHCI_RHD_SET_POTPGT(x)	__SHIFTIN((x), OHCI_RHD_POTPGT_MASK)
 #define OHCI_RH_DESCRIPTOR_B	0x4c
 #define OHCI_RH_STATUS		0x50
-#define  OHCI_LPS		0x00000001 /* Local Power Status */
-#define  OHCI_OCI		0x00000002 /* OverCurrent Indicator */
-#define  OHCI_DRWE		0x00008000 /* Device Remote Wakeup Enable */
-#define  OHCI_LPSC		0x00010000 /* Local Power Status Change */
-#define  OHCI_CCIC		0x00020000 /* OverCurrent Indicator Change */
-#define  OHCI_CRWE		0x80000000 /* Clear Remote Wakeup Enable */
-#define OHCI_RH_PORT_STATUS(n)	(0x50 + (n)*4) /* 1 based indexing */
+#define  OHCI_RHS_LPS		__BIT(0)	/* Local Power Status */
+#define  OHCI_RHS_OCI		__BIT(1)	/* OverCurrent Indicator */
+#define  OHCI_RHS_DRWE		__BIT(15)	/* Device Remote Wakeup Enable */
+#define  OHCI_RHS_LPSC		__BIT(16)	/* Local Power Status Change */
+#define  OHCI_RHS_CCIC		__BIT(17)	/* OverCurrent Indicator Change */
+#define  OHCI_RHS_CRWE		__BIT(31)	/* Clear Remote Wakeup Enable */
+#define OHCI_RH_PORT_STATUS(n)	(0x50 + (n)*4)	/* 1 based indexing */
 
 #define OHCI_LES (OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE)
 #define OHCI_ALL_INTRS (OHCI_SO | OHCI_WDH | OHCI_SF | OHCI_RD | OHCI_UE | \
@@ -143,27 +155,33 @@ struct ohci_hcca {
 
 typedef struct {
 	volatile uint32_t	ed_flags;
-#define OHCI_ED_GET_FA(s)	((s) & 0x7f)
-#define OHCI_ED_ADDRMASK	0x0000007f
-#define OHCI_ED_SET_FA(s)	(s)
-#define OHCI_ED_GET_EN(s)	(((s) >> 7) & 0xf)
-#define OHCI_ED_SET_EN(s)	((s) << 7)
-#define OHCI_ED_DIR_MASK	0x00001800
-#define  OHCI_ED_DIR_TD		0x00000000
-#define  OHCI_ED_DIR_OUT	0x00000800
-#define  OHCI_ED_DIR_IN		0x00001000
-#define OHCI_ED_SPEED		0x00002000
-#define OHCI_ED_SKIP		0x00004000
-#define OHCI_ED_FORMAT_GEN	0x00000000
-#define OHCI_ED_FORMAT_ISO	0x00008000
-#define OHCI_ED_GET_MAXP(s)	(((s) >> 16) & 0x07ff)
-#define OHCI_ED_SET_MAXP(s)	((s) << 16)
-#define OHCI_ED_MAXPMASK	(0x7ff << 16)
+#define OHCI_ED_ADDR_MASK	__BITS(6,0)
+#define OHCI_ED_GET_FA(x)	__SHIFTOUT((x), OHCI_ED_ADDR_MASK)
+#define OHCI_ED_SET_FA(x)	__SHIFTIN((x), OHCI_ED_ADDR_MASK)
+#define OHCI_ED_EN_MASK		__BITS(10,7)
+#define OHCI_ED_GET_EN(x)	__SHIFTOUT((x), OHCI_ED_EN_MASK)
+#define OHCI_ED_SET_EN(x)	__SHIFTIN((x), OHCI_ED_EN_MASK)
+#define OHCI_ED_DIR_MASK	__BITS(12,11)
+#define OHCI_ED_GET_DIR(x)	__SHIFTOUT((x), OHCI_ED_DIR_MASK)
+#define OHCI_ED_SET_DIR(x)	__SHIFTIN((x), OHCI_ED_DIR_MASK)
+#define  OHCI_ED_DIR_TD		0
+#define  OHCI_ED_DIR_OUT	1
+#define  OHCI_ED_DIR_IN		2
+#define OHCI_ED_SPEED		__BIT(13)
+#define OHCI_ED_SKIP		__BIT(14)
+#define OHCI_ED_FORMAT_MASK	__BIT(15)
+#define OHCI_ED_GET_FORMAT(x)	__SHIFTOUT((x), OHCI_ED_FORMAT_MASK)
+#define OHCI_ED_SET_FORMAT(x)	__SHIFTIN((x), OHCI_ED_FORMAT_MASK)
+#define  OHCI_ED_FORMAT_GEN	0
+#define  OHCI_ED_FORMAT_ISO	1
+#define OHCI_ED_MAXP_MASK	__BITS(26,16)
+#define OHCI_ED_GET_MAXP(x)	__SHIFTOUT((x), OHCI_ED_MAXP_MASK)
+#define OHCI_ED_SET_MAXP(x)	__SHIFTIN((x), OHCI_ED_MAXP_MASK)
 	volatile ohci_physaddr_t	ed_tailp;
 	volatile ohci_physaddr_t	ed_headp;
-#define OHCI_HALTED		0x00000001
-#define OHCI_TOGGLECARRY	0x00000002
-#define OHCI_HEADMASK		0xfffffffc
+#define OHCI_HALTED		__BIT(0)
+#define OHCI_TOGGLECARRY	__BIT(1)
+#define OHCI_HEADMASK		__BITS(31,2)
 	volatile ohci_physaddr_t	ed_nexted;
 } ohci_ed_t;
 /* #define OHCI_ED_SIZE 16 */
@@ -171,22 +189,31 @@ typedef struct {
 
 typedef struct {
 	volatile uint32_t	td_flags;
-#define OHCI_TD_R		0x00040000		/* Buffer Rounding  */
-#define OHCI_TD_DP_MASK		0x00180000		/* Direction / PID */
-#define  OHCI_TD_SETUP		0x00000000
-#define  OHCI_TD_OUT		0x00080000
-#define  OHCI_TD_IN		0x00100000
-#define OHCI_TD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay Interrupt */
-#define OHCI_TD_SET_DI(x)	((x) << 21)
-#define  OHCI_TD_NOINTR		0x00e00000
-#define  OHCI_TD_INTR_MASK	0x00e00000
-#define OHCI_TD_TOGGLE_CARRY	0x00000000
-#define OHCI_TD_TOGGLE_0	0x02000000
-#define OHCI_TD_TOGGLE_1	0x03000000
-#define OHCI_TD_TOGGLE_MASK	0x03000000
-#define OHCI_TD_GET_EC(x)	(((x) >> 26) & 3)	/* Error Count */
-#define OHCI_TD_GET_CC(x)	((x) >> 28)		/* Condition Code */
-#define  OHCI_TD_NOCC		0xf0000000
+#define OHCI_TD_R		__BIT(18)	/* Buffer Rounding  */
+#define OHCI_TD_DP_MASK		__BITS(20,19)	/* Direction / PID */
+#define OHCI_TD_GET_DP(x)	__SHIFTOUT((x), OHCI_TD_DP_MASK)
+#define OHCI_TD_SET_DP(x)	__SHIFTIN((x), OHCI_TD_DP_MASK)
+#define  OHCI_TD_DP_SETUP	0
+#define  OHCI_TD_DP_OUT		1
+#define  OHCI_TD_DP_IN		2
+#define OHCI_TD_DI_MASK		__BITS(23,21)	/* Delay Interrupt */
+#define OHCI_TD_GET_DI(x)	__SHIFTOUT((x), OHCI_TD_DI_MASK)
+#define OHCI_TD_SET_DI(x)	__SHIFTIN((x), OHCI_TD_DI_MASK)
+#define  OHCI_TD_NOINTR		__SHIFTOUT_MASK(OHCI_TD_DI_MASK)
+#define OHCI_TD_TOGGLE_MASK	__BITS(25,24)	/* Toggle */
+#define OHCI_TD_GET_TOGGLE(x)	__SHIFTOUT((x), OHCI_TD_TOGGLE_MASK)
+#define OHCI_TD_SET_TOGGLE(x)	__SHIFTIN((x), OHCI_TD_TOGGLE_MASK)
+#define  OHCI_TD_TOGGLE_CARRY	0
+#define  OHCI_TD_TOGGLE_0	2
+#define  OHCI_TD_TOGGLE_1	3
+#define OHCI_TD_EC_MASK		__BITS(27,26)	/* Error Count */
+#define OHCI_TD_GET_EC(x)	__SHIFTOUT((x), OHCI_TD_EC_MASK)
+#define OHCI_TD_CC_MASK		__BITS(31,28)	/* Condition Code */
+#define OHCI_TD_GET_CC(x)	__SHIFTOUT((x), OHCI_TD_CC_MASK)
+#define OHCI_TD_SET_CC(x)	__SHIFTIN((x), OHCI_TD_CC_MASK)
+
+#define  OHCI_TD_NOCC		__SHIFTOUT_MASK(OHCI_TD_CC_MASK)
+
 	volatile ohci_physaddr_t td_cbp;	/* Current Buffer Pointer */
 	volatile ohci_physaddr_t td_nexttd;	/* Next TD */
 	volatile ohci_physaddr_t td_be;		/* Buffer End */
@@ -197,24 +224,31 @@ typedef struct {
 #define OHCI_ITD_NOFFSET 8
 typedef struct {
 	volatile uint32_t	itd_flags;
-#define OHCI_ITD_GET_SF(x)	((x) & 0x0000ffff)
-#define OHCI_ITD_SET_SF(x)	((x) & 0xffff)
-#define OHCI_ITD_GET_DI(x)	(((x) >> 21) & 7)	/* Delay Interrupt */
-#define OHCI_ITD_SET_DI(x)	((x) << 21)
-#define  OHCI_ITD_NOINTR	0x00e00000
-#define OHCI_ITD_GET_FC(x)	((((x) >> 24) & 7)+1)	/* Frame Count */
-#define OHCI_ITD_SET_FC(x)	(((x)-1) << 24)
-#define OHCI_ITD_GET_CC(x)	((x) >> 28)		/* Condition Code */
-#define  OHCI_ITD_NOCC		0xf0000000
-	volatile ohci_physaddr_t itd_bp0;		/* Buffer Page 0 */
-	volatile ohci_physaddr_t itd_nextitd;		/* Next ITD */
-	volatile ohci_physaddr_t itd_be;			/* Buffer End */
+#define OHCI_ITD_SF_MASK	__BITS(15,0)
+#define OHCI_ITD_GET_SF(x)	__SHIFTOUT((x), OHCI_ITD_SF_MASK)
+#define OHCI_ITD_SET_SF(x)	__SHIFTIN((x), OHCI_ITD_SF_MASK)
+#define OHCI_ITD_DI_MASK	__BITS(23,21)	/* Delay Interrupt */
+#define OHCI_ITD_GET_DI(x)	__SHIFTOUT((x), OHCI_ITD_DI_MASK)
+#define OHCI_ITD_SET_DI(x)	__SHIFTIN((x), OHCI_ITD_DI_MASK)
+#define OHCI_ITD_FC_MASK	__BITS(26,24)	/* Frame Count */
+#define OHCI_ITD_GET_FC(x)	(__SHIFTOUT((x), OHCI_ITD_FC_MASK) + 1)
+#define OHCI_ITD_SET_FC(x)	__SHIFTIN(((x) - 1), OHCI_ITD_FC_MASK)
+#define OHCI_ITD_CC_MASK	__BITS(31,28)	/* Condition Code */
+#define OHCI_ITD_GET_CC(x)	__SHIFTOUT((x), OHCI_ITD_CC_MASK)
+#define OHCI_ITD_SET_CC(x)	__SHIFTIN((x), OHCI_ITD_CC_MASK)
+#define  OHCI_ITD_NOCC		__SHIFTOUT_MASK(OHCI_ITD_CC_MASK)
+	volatile ohci_physaddr_t itd_bp0;	/* Buffer Page 0 */
+	volatile ohci_physaddr_t itd_nextitd;	/* Next ITD */
+	volatile ohci_physaddr_t itd_be;	/* Buffer End */
 	volatile uint16_t itd_offset[OHCI_ITD_NOFFSET];/* Buffer offsets */
-#define itd_pswn itd_offset				/* Packet Status Word*/
-#define OHCI_ITD_PAGE_SELECT	0x00001000
+#define itd_pswn itd_offset			/* Packet Status Word*/
+#define OHCI_ITD_PAGE_SELECT	__BIT(12)
 #define OHCI_ITD_MK_OFFS(len)	(0xe000 | ((len) & 0x1fff))
-#define OHCI_ITD_PSW_LENGTH(x)	((x) & 0xfff)		/* Transfer length */
-#define OHCI_ITD_PSW_GET_CC(x)	((x) >> 12)		/* Condition Code */
+
+#define OHCI_ITD_PSW_SIZE_MASK	__BITS(10,0)	/* Transfer length */
+#define OHCI_ITD_PSW_SIZE(x)	__SHIFTOUT((x), OHCI_ITD_PSW_SIZE_MASK)
+#define OHCI_ITD_PSW_CC_MASK	__BITS(15,12)	/* Condition Code */
+#define OHCI_ITD_PSW_GET_CC(x)	__SHIFTOUT((x), OHCI_ITD_PSW_CC_MASK)
 } ohci_itd_t;
 /* #define OHCI_ITD_SIZE 32 */
 #define OHCI_ITD_ALIGN 32
