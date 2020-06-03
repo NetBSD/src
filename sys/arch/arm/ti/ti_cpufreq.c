@@ -1,4 +1,4 @@
-/* $NetBSD: ti_cpufreq.c,v 1.2 2019/10/29 10:54:10 jmcneill Exp $ */
+/* $NetBSD: ti_cpufreq.c,v 1.3 2020/06/03 18:02:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.2 2019/10/29 10:54:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.3 2020/06/03 18:02:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ am33xx_opp_supported(const int opp_table, const int opp_node)
 	int len;
 
 	syscon_lock(ti_opp_syscon);
-	rev = __SHIFTOUT(syscon_read_4(ti_opp_syscon, AM33XX_REV_OFFSET), AM33XX_REV_MASK);
+	rev = __BIT(__SHIFTOUT(syscon_read_4(ti_opp_syscon, AM33XX_REV_OFFSET), AM33XX_REV_MASK));
 	efuse = __SHIFTOUT(syscon_read_4(ti_opp_syscon, AM33XX_EFUSE_OFFSET), AM33XX_EFUSE_MASK);
 	syscon_unlock(ti_opp_syscon);
 
