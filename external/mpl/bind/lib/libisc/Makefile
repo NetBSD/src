@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2020/05/30 20:47:59 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2020/06/03 02:07:52 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -54,8 +54,13 @@ SRCS+=		ipv6.c
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/isc.map
 LDADD+=-Wl,-Bstatic
 
+.if ${MKPICLIB} != "no"
 LDADD+=-L${LIBUVOBJDIR} -luv_pic
 DPADD+=${LIBUVOBJDIR}/libuv_pic.a
+.else
+LDADD+=-L${LIBUVOBJDIR} -luv
+DPADD+=${LIBUVOBJDIR}/libuv.a
+.endif
 
 LDADD+=-Wl,-Bdynamic
 
