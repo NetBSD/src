@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.78 2020/06/01 11:44:59 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.78 2020/06/01 11:44:59 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -278,6 +278,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 	serrno = errno;
 
 	pthread__assert(!self->pt_willpark);
+	pthread__assert(!self->pt_mutexwait);
 
 	/* Recursive or errorcheck? */
 	if (MUTEX_OWNER(owner) == (uintptr_t)self) {
@@ -369,6 +370,18 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 			if (error < 0 && errno == ETIMEDOUT) {
 				/* Remove self from waiters list */
 				pthread__mutex_wakeup(self, ptm);
+
+				/*
+				 * Might have raced with another thread to
+				 * do the wakeup.  In any case there will be
+				 * a wakeup for sure.  Eat it and wait for
+				 * pt_mutexwait to clear.
+				 */
+				do {
+					(void)_lwp_park(CLOCK_REALTIME,
+					   TIMER_ABSTIME, NULL, 0, NULL, NULL);
+				} while (self->pt_mutexwait);
+
 				/* Priority protect */
 				if (MUTEX_PROTECT(owner))
 					(void)_sched_protect(-1);
