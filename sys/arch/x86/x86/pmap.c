@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.397 2020/05/29 22:40:15 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.398 2020/06/03 00:27:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.397 2020/05/29 22:40:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.398 2020/06/03 00:27:46 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1297,8 +1297,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	xen_dummy_user_pgd = xen_dummy_page - KERNBASE;
 
 	/* Zero fill it, the less checks in Xen it requires the better */
-	x86_stos((void *)(xen_dummy_user_pgd + KERNBASE), 0,
-	    PAGE_SIZE / sizeof(long));
+	memset((void *)(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PTE_P | pmap_pg_nx,
@@ -1547,7 +1546,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		x86_stos((void *)tmpva, 0, PAGE_SIZE / sizeof(long));
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
 		L4_BASE[L4e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1561,7 +1560,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		x86_stos((void *)tmpva, 0, PAGE_SIZE / sizeof(long));
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
 		L3_BASE[L3e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1576,7 +1575,7 @@ pmap_init_pcpu(void)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		x86_stos((void *)tmpva, 0, PAGE_SIZE / sizeof(long));
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
 		L2_BASE[L2e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1668,7 +1667,7 @@ pmap_init_directmap(struct pmap *kpm)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		x86_stos((void *)tmpva, 0, PAGE_SIZE / sizeof(long));
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
 		L4_BASE[L4e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -1682,7 +1681,7 @@ pmap_init_directmap(struct pmap *kpm)
 		pa = pmap_bootstrap_palloc(1);
 		*pte = (pa & PTE_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
-		x86_stos((void *)tmpva, 0, PAGE_SIZE / sizeof(long));
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
 		L3_BASE[L3e_idx+i] = pa | pteflags | PTE_A;
 	}
@@ -2632,7 +2631,7 @@ pmap_pdp_init(pd_entry_t *pdir)
 	int s;
 #endif
 
-	x86_stos(pdir, 0, PDP_SIZE * PAGE_SIZE / sizeof(long));
+	memset(pdir, 0, PDP_SIZE * PAGE_SIZE);
 
 	/*
 	 * NOTE: This is all done unlocked, but we will check afterwards
@@ -2675,8 +2674,8 @@ pmap_pdp_init(pd_entry_t *pdir)
 	/* Copy the kernel's top level PDE */
 	npde = nkptp[PTP_LEVELS - 1];
 
-	x86_movs(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
-	    npde * sizeof(pd_entry_t) / sizeof(long));
+	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
+	    npde * sizeof(pd_entry_t));
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		int idx = pl_i(KERNBASE, PTP_LEVELS);
@@ -3811,7 +3810,7 @@ void
 pmap_zero_page(paddr_t pa)
 {
 #if defined(__HAVE_DIRECT_MAP)
-	x86_stos((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE / sizeof(long));
+	memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
 #else
 #if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4))
@@ -3835,7 +3834,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_flush();
 	pmap_update_pg(zerova);		/* flush TLB */
 
-	x86_stos((void *)zerova, 0, PAGE_SIZE / sizeof(long));
+	memset((void *)zerova, 0, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(zpte, 0);				/* zap ! */
@@ -3853,7 +3852,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	vaddr_t srcva = PMAP_DIRECT_MAP(srcpa);
 	vaddr_t dstva = PMAP_DIRECT_MAP(dstpa);
 
-	x86_movs((void *)dstva, (void *)srcva, PAGE_SIZE / sizeof(long));
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 #else
 #if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4)) {
@@ -3883,7 +3882,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_update_pg(srcva);
 	pmap_update_pg(dstva);
 
-	x86_movs((void *)dstva, (void *)srcva, PAGE_SIZE / sizeof(long));
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(srcpte, 0);
@@ -5407,8 +5406,7 @@ pmap_get_physpage(void)
 		if (!uvm_page_physget(&pa))
 			panic("%s: out of memory", __func__);
 #if defined(__HAVE_DIRECT_MAP)
-		x86_stos((void *)PMAP_DIRECT_MAP(pa), 0,
-		    PAGE_SIZE / sizeof(long));
+		memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
 #else
 #if defined(XENPV)
 		if (XEN_VERSION_SUPPORTED(3, 4)) {
@@ -5421,7 +5419,7 @@ pmap_get_physpage(void)
 		    PTE_W | pmap_pg_nx);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
-		x86_stos(early_zerop, 0, PAGE_SIZE / sizeof(long));
+		memset(early_zerop, 0, PAGE_SIZE);
 #if defined(DIAGNOSTIC) || defined(XENPV)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
@@ -5619,9 +5617,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				 */
 				continue;
 			}
-			x86_movs(&pm->pm_pdir[PDIR_SLOT_KERN + old],
+			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
 			    &kpm->pm_pdir[PDIR_SLOT_KERN + old],
-			    newpdes * sizeof(pd_entry_t) / sizeof(long));
+			    newpdes * sizeof(pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
 #endif
@@ -5789,13 +5787,13 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	/* Zero levels 1-3 */
 	for (level = 0; level < PTP_LEVELS - 1; ++level) {
 		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
-		x86_stos(tmp_pml, 0, PAGE_SIZE / sizeof(long));
+		memset(tmp_pml, 0, PAGE_SIZE);
 	}
 
 	/* Copy PML4 */
 	kernel_pml = pmap_kernel()->pm_pdir;
 	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
-	x86_movs(tmp_pml, kernel_pml, PAGE_SIZE / sizeof(long));
+	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
 
 #ifdef PAE
 	/*
@@ -6708,7 +6706,7 @@ pmap_ept_transform(struct pmap *pmap)
 	pmap->pm_write_protect = pmap_ept_write_protect;
 	pmap->pm_unwire = pmap_ept_unwire;
 
-	x86_stos(pmap->pm_pdir, 0, PAGE_SIZE / sizeof(long));
+	memset(pmap->pm_pdir, 0, PAGE_SIZE);
 }
 
 #endif /* __HAVE_DIRECT_MAP && __x86_64__ && !XENPV */
