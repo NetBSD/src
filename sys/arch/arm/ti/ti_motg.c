@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motg.c,v 1.1 2019/10/27 16:31:26 jmcneill Exp $ */
+/* $NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.1 2019/10/27 16:31:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.2 2020/06/03 19:16:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,7 @@ ti_motg_intr(void *v)
 {
 	struct ti_motg_softc *sc = v;
 	uint32_t stat, stat0, stat1;
-	int rv = 0;
-	int i;
+	int rv;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
@@ -198,34 +197,18 @@ ti_motg_intr(void *v)
 	stat1 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT1);
 	DPRINTF("USB %jd 0x%jx 0x%jx stat %jd",
 	    sc->sc_ctrlport, stat0, stat1, stat);
-	/* try to deal with vbus errors */
-	if (stat1 & MUSB2_MASK_IVBUSERR ) {
-		stat1 &= ~MUSB2_MASK_IVBUSERR;
-		for (i = 0; i < 1000; i++) {
-			TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT1,
-			    MUSB2_MASK_IVBUSERR);
-			motg_intr_vbus(&sc->sc_motg, stat & 0x1);
-			delay(1000);
-			stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
-			if (stat & 0x1)
-				break;
-		}
-	}
+
 	if (stat0) {
 		TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT0, stat0);
 	}
 	if (stat1) {
 		TIOTG_USBC_WRITE4(sc, USBCTRL_IRQ_STAT1, stat1);
 	}
-	if ((stat & 0x1) == 0) {
-		mutex_spin_exit(&sc->sc_motg.sc_intr_lock);
-		aprint_error_dev(sc->sc_motg.sc_dev, ": vbus error\n");
-		return 1;
+	if (stat1 & USBCTRL_IRQ_STAT1_DRVVBUS) {
+		motg_intr_vbus(&sc->sc_motg, stat & 0x1);
 	}
-	if (stat0 != 0 || stat1 != 0) {
-		rv = motg_intr(&sc->sc_motg, ((stat0 >> 16) & 0xffff),
-			    stat0 & 0xffff, stat1 & 0xff);
-	}
+	rv = motg_intr(&sc->sc_motg, ((stat0 >> 16) & 0xffff),
+		    stat0 & 0xffff, stat1 & 0xff);
 	mutex_spin_exit(&sc->sc_motg.sc_intr_lock);
 	return rv;
 }
