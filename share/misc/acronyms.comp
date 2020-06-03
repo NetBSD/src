@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.304 2020/05/18 20:28:44 sevan Exp $
+$NetBSD: acronyms.comp,v 1.305 2020/06/03 14:19:10 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -579,6 +579,7 @@ FFS	Fast File System
 FFS	find first set
 FFT	fast Fourier transform
 FG	floating gate
+FHRP	first hop redundancy protocol
 FHSS	frequency hop spread spectrum
 FID	frequency identifier
 FIFO	first in, first out
@@ -628,6 +629,7 @@ GHES	generic hardware error source
 GIC	generic interrupt controller
 GID	group identifier
 GIF	graphics interchange format
+GLBP	gateway load balancing protocol
 GMCH	graphics and memory controller hub
 GNU	GNU's Not Unix
 GOP	graphics output protocol
@@ -678,6 +680,7 @@ HPD	hot plug detection
 HPET	high precision event timer
 HSM	hardware security module
 HSM	hierarchical storage management 
+HSRP	hot standby router protocol
 HT	hyper-threading
 HTC	hardware thermal control
 HTCC	high temperature co-fired ceramic
