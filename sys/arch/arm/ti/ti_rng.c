@@ -1,4 +1,4 @@
-/* $NetBSD: ti_rng.c,v 1.3 2020/04/30 03:40:53 riastradh Exp $ */
+/* $NetBSD: ti_rng.c,v 1.4 2020/06/03 15:59:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.3 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.4 2020/06/03 15:59:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,12 +112,12 @@ ti_rng_attach(device_t parent, device_t self, void *aux)
 		    TRNG_CONTROL_ENABLE);
 	}
 
+	aprint_naive("\n");
+	aprint_normal(": RNG\n");
+
 	rndsource_setcb(&sc->sc_rndsource, ti_rng_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-
-	aprint_naive("\n");
-	aprint_normal(": RNG\n");
 }
 
 static void
