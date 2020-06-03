@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2017/04/28 13:38:35 christos Exp $
+#	$NetBSD: Makefile,v 1.43 2020/06/03 02:51:39 rin Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -13,6 +13,11 @@ CFLAGS+=	-freestanding
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+CWARNFLAGS.clang+=      -Wno-error=address-of-packed-member
 
 .include "../Makefile.buildboot"
 
