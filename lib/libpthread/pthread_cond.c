@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.70 2020/06/01 11:44:59 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.71 2020/06/03 22:10:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.70 2020/06/01 11:44:59 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.71 2020/06/03 22:10:24 ad Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -112,7 +112,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		       const struct timespec *abstime)
 {
 	pthread_t self, next, waiters;
-	int retval;
+	int retval, cancel;
 	clockid_t clkid = pthread_cond_getclock(cond);
 
 	if (__predict_false(__uselibcstub))
@@ -126,6 +126,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    mutex->ptm_owner != NULL);
 
 	self = pthread__self();
+	pthread__assert(!self->pt_condwait);
 
 	if (__predict_false(self->pt_cancel)) {
 		pthread__cancelled();
@@ -165,24 +166,42 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 				retval = errno;
 			}
 		}
-	} while (self->pt_condwait && !self->pt_cancel && !retval);
+		cancel = self->pt_cancel;
+	} while (self->pt_condwait && !cancel && !retval);
 
 	/*
-	 * If we have cancelled then exit.  POSIX dictates that
-	 * the mutex must be held when we action the cancellation.
+	 * If this thread absorbed a wakeup from pthread_cond_signal() and
+	 * cannot take the wakeup, we must ensure that another thread does.
 	 *
-	 * If we absorbed a pthread_cond_signal() and cannot take
-	 * the wakeup, we must ensure that another thread does.
+	 * And if awoken early, we may still be on the waiter list and must
+	 * remove self.
 	 *
-	 * If awoke early, we may still be on the waiter list and
-	 * must remove ourself.
+	 * In all cases do the wakeup without the mutex held otherwise:
+	 *
+	 * - wakeup could be deferred until mutex release
+	 * - it would be mixing up two sets of waitpoints
+	 */
+	if (__predict_false(self->pt_condwait | cancel | retval)) {
+		pthread_cond_broadcast(cond);
+
+		/*
+		 * Might have raced with another thread to do the wakeup. 
+		 * In any case there will be a wakeup for sure.  Eat it and
+		 * wait for pt_condwait to clear.
+		 */
+		do {
+			(void)_lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, NULL,
+			    0, NULL, NULL);
+		} while (self->pt_condwait);
+	}
+
+	/*
+	 * If cancelled then exit.  POSIX dictates that the mutex must be
+	 * held if this happens.
 	 */
 	pthread_mutex_lock(mutex);
-	if (__predict_false(self->pt_condwait | self->pt_cancel | retval)) {
-		pthread_cond_broadcast(cond);
-		if (self->pt_cancel) {
-			pthread__cancelled();
-		}
+	if (cancel) {
+		pthread__cancelled();
 	}
 
 	return retval;
