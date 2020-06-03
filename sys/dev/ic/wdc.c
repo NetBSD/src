@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.302 2020/05/30 13:23:14 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.303 2020/06/03 18:25:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.302 2020/05/30 13:23:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.303 2020/06/03 18:25:26 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -892,10 +892,8 @@ wdcintr(void *arg)
 		return (0);
 	}
 
-	if ((chp->ch_flags & ATACH_IRQ_WAIT) == 0) {
-		__wdcerror(chp, "irq not expected");
+	if ((chp->ch_flags & ATACH_IRQ_WAIT) == 0)
 		goto ignore;
-	}
 
 	xfer = ata_queue_get_active_xfer(chp);
 	if (xfer == NULL) {
