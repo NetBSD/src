@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2017/04/08 19:53:20 christos Exp $
+# $NetBSD: Makefile,v 1.18 2020/06/03 11:33:38 tsutsui Exp $
 
 .include <bsd.init.mk>
 
@@ -62,7 +62,7 @@ ${PROG}: ${OBJS} ${LIBS}
 	    -e start -o ${PROG}.elf ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}.elf
 	${OBJCOPY} --impure -O ecoff-littlemips \
-	    -R .pdr -R .mdebug.abi32 -R .comment -R .ident \
+	    -R .pdr -R .mdebug.abi32 -R .comment -R .ident --strip-debug \
 	    ${PROG}.elf ${.TARGET}
 
 CLEANFILES+=	${PROG}.elf ${PROG}.map
