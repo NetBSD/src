@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.12 2019/11/29 20:54:00 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.13 2020/06/03 14:56:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.12 2019/11/29 20:54:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.13 2020/06/03 14:56:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,6 +64,11 @@ __KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.12 2019/11/29 20:54:00 jmcneill Exp $
 #define	  AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_LOCK		7
 
 #define	DPLL_DISP_RATE				297000000
+
+struct am3_prcm_softc {
+	struct ti_prcm_softc	sc_prcm;	/* must be first */
+	bus_addr_t		sc_regbase;
+};
 
 static int am3_prcm_match(device_t, cfdata_t, void *);
 static void am3_prcm_attach(device_t, device_t, void *);
@@ -133,7 +138,17 @@ static const char * const compatible[] = {
 	NULL
 };
 
-CFATTACH_DECL_NEW(am3_prcm, sizeof(struct ti_prcm_softc),
+static const char * const cm_compatible[] = {
+	"ti,omap4-cm",
+	NULL
+};
+
+static const char * const clkctrl_compatible[] = {
+	"ti,clkctrl",
+	NULL
+};
+
+CFATTACH_DECL_NEW(am3_prcm, sizeof(struct am3_prcm_softc),
 	am3_prcm_match, am3_prcm_attach, NULL, NULL);
 
 static struct ti_prcm_clk am3_prcm_clks[] = {
@@ -146,6 +161,7 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	TI_PRCM_FIXED_FACTOR("PERIPH_CLK", 1, 1, "FIXED_48MHZ"),
 	TI_PRCM_FIXED_FACTOR("MMC_CLK", 1, 1, "FIXED_96MHZ"),
 
+	AM3_PRCM_HWMOD_WKUP("uart0", 0xb4, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("uart1", 0x6c, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("uart2", 0x70, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("uart3", 0x74, "PERIPH_CLK"),
@@ -187,6 +203,53 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	AM3_PRCM_HWMOD_PER_DISP("lcdc", 0x18, "DISPLAY_CLK"),
 };
 
+static struct clk *
+am3_prcm_clock_decode(device_t dev, int cc_phandle, const void *data, size_t len)
+{
+	struct am3_prcm_softc * const sc = device_private(dev);
+	const u_int *cells = data;
+	bus_addr_t regbase;
+	u_int n;
+
+	if (len != 8)
+		return NULL;
+
+	bus_size_t regoff = be32toh(cells[0]);
+	const u_int clock_index = be32toh(cells[1]);
+
+	/* XXX not sure how to handle this yet */
+	if (clock_index != 0)
+		return NULL;
+
+	/*
+	 * Register offset in specifier is relative to base address of the
+	 * clock node. Translate this to an address relative to the start
+	 * of PRCM space.
+	 */
+	if (fdtbus_get_reg(cc_phandle, 0, &regbase, NULL) != 0)
+		return NULL;
+	regoff += (regbase - sc->sc_regbase);
+
+	/*
+	 * Look for a matching hwmod.
+	 */
+	for (n = 0; n < sc->sc_prcm.sc_nclks; n++) {
+		struct ti_prcm_clk *tclk = &sc->sc_prcm.sc_clks[n];
+		if (tclk->type != TI_PRCM_HWMOD)
+			continue;
+
+		if (tclk->u.hwmod.reg == regoff)
+			return &tclk->base;
+	}
+
+	/* Not found */
+	return NULL;
+}
+
+static const struct fdtbus_clock_controller_func am3_prcm_clock_fdt_funcs = {
+	.decode = am3_prcm_clock_decode
+};
+
 static int
 am3_prcm_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -198,24 +261,43 @@ am3_prcm_match(device_t parent, cfdata_t cf, void *aux)
 static void
 am3_prcm_attach(device_t parent, device_t self, void *aux)
 {
-	struct ti_prcm_softc * const sc = device_private(self);
+	struct am3_prcm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	int clocks;
+	const int phandle = faa->faa_phandle;
+	int clocks, child, cm_child;
 
-	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_bst = faa->faa_bst;
+	if (fdtbus_get_reg(phandle, 0, &sc->sc_regbase, NULL) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
-	sc->sc_clks = am3_prcm_clks;
-	sc->sc_nclks = __arraycount(am3_prcm_clks);
+	sc->sc_prcm.sc_dev = self;
+	sc->sc_prcm.sc_phandle = phandle;
+	sc->sc_prcm.sc_bst = faa->faa_bst;
+	sc->sc_prcm.sc_clks = am3_prcm_clks;
+	sc->sc_prcm.sc_nclks = __arraycount(am3_prcm_clks);
 
-	if (ti_prcm_attach(sc) != 0)
+	if (ti_prcm_attach(&sc->sc_prcm) != 0)
 		return;
 
 	aprint_naive("\n");
 	aprint_normal(": AM3xxx PRCM\n");
 
-	clocks = of_find_firstchild_byname(sc->sc_phandle, "clocks");
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (of_match_compatible(child, cm_compatible) == 0)
+			continue;
+
+		for (cm_child =	OF_child(child); cm_child; cm_child = OF_peer(cm_child)) {
+			if (of_match_compatible(cm_child, clkctrl_compatible) == 0)
+				continue;
+
+			aprint_debug_dev(self, "clkctrl: %s\n", fdtbus_get_string(cm_child, "name"));
+			fdtbus_register_clock_controller(self, cm_child,
+			    &am3_prcm_clock_fdt_funcs);
+		}
+	}
+
+	clocks = of_find_firstchild_byname(phandle, "clocks");
 	if (clocks > 0)
 		fdt_add_bus(self, clocks, faa);
 }
