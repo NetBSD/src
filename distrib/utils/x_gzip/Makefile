@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2018/10/26 22:28:59 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2020/06/03 07:06:18 rin Exp $
 # Build a tiny limited gzip (i.e. for tiny boot media)
 
 SRCDIR=         ${.CURDIR}/../../../usr.bin/gzip
@@ -15,8 +15,12 @@ CPPFLAGS+=	${"${USE_XZ_SETS:Uno}"!="no":?:-DNO_XZ_SUPPORT}
 
 # for crunched binaries this does not take effect, also check the
 # LIBS entry in the lists file
-DPADD=		${LIBZ} ${LIBLZMA}
-LDADD=		-lz -llzma
+DPADD=		${LIBZ}
+LDADD=		-lz
+.if ${USE_XZ_SETS:Uno} != "no"
+DPADD+=		${LIBLZMA}
+LDADD+=		-llzma
+.endif
 
 .include <bsd.prog.mk>
 
