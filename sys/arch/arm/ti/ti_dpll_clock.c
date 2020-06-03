@@ -1,4 +1,4 @@
-/* $NetBSD: ti_dpll_clock.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
+/* $NetBSD: ti_dpll_clock.c,v 1.3 2020/06/03 18:26:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.3 2020/06/03 18:26:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ am3_dpll_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 	control |= __SHIFTIN(AM3_DPLL_EN_NM_BYPASS, AM3_DPLL_EN);
 	WR4(sc, REG_CONTROL, control);
 
-	while ((RD4(sc, REG_IDLEST) & AM3_ST_MN_BYPASS) != 0)
+	while (RD4(sc, REG_IDLEST) != AM3_ST_MN_BYPASS)
 		;
 
 	mult_div1 = __SHIFTIN(mult, DPLL_MULT);
@@ -278,7 +278,7 @@ am3_dpll_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 	control |= __SHIFTIN(AM3_DPLL_EN_LOCK, AM3_DPLL_EN);
 	WR4(sc, REG_CONTROL, control);
 
-	while ((RD4(sc, REG_IDLEST) & AM3_ST_DPLL_CLK) != 0)
+	while (RD4(sc, REG_IDLEST) != AM3_ST_DPLL_CLK)
 		;    
 
 	return 0;
