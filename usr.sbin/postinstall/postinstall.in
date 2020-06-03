@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.22 2020/05/31 13:45:47 roy Exp $
+# $NetBSD: postinstall.in,v 1.23 2020/06/03 11:47:46 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -996,7 +996,7 @@ do_dhcpcd()
 
 	# Ensure chroot is now empty
 	for dir in \
-		$(find ${chroot_dir} -type f) \
+		$(find ${chroot_dir} ! -type d) \
 		$(find ${chroot_dir} -type d -mindepth 1 | sort -r)
 	do
 		echo "/var/chroot/dhcpcd${dir##${chroot_dir}}"
