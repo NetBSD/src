@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.71 2020/06/03 22:10:24 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.72 2020/06/04 04:40:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.71 2020/06/03 22:10:24 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.72 2020/06/04 04:40:01 riastradh Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -61,7 +61,7 @@ pthread_cond_getclock(const pthread_cond_t *cond)
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
 
-	return cond->ptc_private ? 
+	return cond->ptc_private ?
 	    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
 }
 
@@ -185,7 +185,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		pthread_cond_broadcast(cond);
 
 		/*
-		 * Might have raced with another thread to do the wakeup. 
+		 * Might have raced with another thread to do the wakeup.
 		 * In any case there will be a wakeup for sure.  Eat it and
 		 * wait for pt_condwait to clear.
 		 */
