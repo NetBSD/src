@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.25 2020/05/19 21:57:25 ad Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.26 2020/06/04 08:24:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.25 2020/05/19 21:57:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.26 2020/06/04 08:24:44 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -86,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.25 2020/05/19 21:57:25 ad Exp $");
 #define DPRINTF(a)
 #endif
 
-
-u_int	tsc_get_timecount(struct timecounter *);
 
 bool xen_suspend_allow;
 
@@ -220,7 +218,6 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 }
 
 #ifdef XENPV
-extern uint64_t tsc_freq;	/* XXX */
 
 static int sysctl_xen_suspend(SYSCTLFN_ARGS);
 static void xen_suspend_domain(void);
