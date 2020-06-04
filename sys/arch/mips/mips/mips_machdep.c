@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.281 2020/05/23 11:33:56 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.282 2020/06/04 15:42:31 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.281 2020/05/23 11:33:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.282 2020/06/04 15:42:31 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2139,6 +2139,17 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 		 */
 		paddr_t segstart = round_page(segs->start);
 		const paddr_t segfinish = trunc_page(segs->start + segs->size);
+
+		if (segstart >= segfinish) {
+			/*
+			 * This is purely cosmetic, to avoid output like
+			 *    phys segment: 0xffffffffffffe000 @ 0xffb6000
+			 * when a segment starts and finishes in the same page.
+			 */
+			printf("phys segment: %#"PRIxPADDR" @ %#"PRIxPADDR
+			    " (short)\n", (paddr_t)segs->size, segstart);
+			continue;
+		}
 
 		printf("phys segment: %#"PRIxPADDR" @ %#"PRIxPADDR"\n",
 		    segfinish - segstart, segstart);
