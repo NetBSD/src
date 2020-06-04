@@ -27,6 +27,8 @@
  */
 
 #include <sys/file.h>
+#include <sys/stat.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -42,6 +44,7 @@
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "dhcpcd.h"
+#include "privsep-root.h"
 
 #ifdef HAVE_HMAC_H
 #include <hmac.h>
@@ -408,11 +411,11 @@ finish:
 	return t;
 }
 
-static uint64_t
-get_next_rdm_monotonic_counter(struct auth *auth)
+int
+auth_get_rdm_monotonic(uint64_t *rdm)
 {
 	FILE *fp;
-	uint64_t rdm;
+	int err;
 #ifdef LOCK_EX
 	int flocked;
 #endif
@@ -420,41 +423,43 @@ get_next_rdm_monotonic_counter(struct auth *auth)
 	fp = fopen(RDM_MONOFILE, "r+");
 	if (fp == NULL) {
 		if (errno != ENOENT)
-			return ++auth->last_replay; /* report error? */
+			return -1;
 		fp = fopen(RDM_MONOFILE, "w");
 		if (fp == NULL)
-			return ++auth->last_replay; /* report error? */
+			return -1;
+		if (chmod(RDM_MONOFILE, 0400) == -1) {
+			fclose(fp);
+			unlink(RDM_MONOFILE);
+			return -1;
+		}
 #ifdef LOCK_EX
 		flocked = flock(fileno(fp), LOCK_EX);
 #endif
-		rdm = 0;
+		*rdm = 0;
 	} else {
 #ifdef LOCK_EX
 		flocked = flock(fileno(fp), LOCK_EX);
 #endif
-		if (fscanf(fp, "0x%016" PRIu64, &rdm) != 1)
-			rdm = 0; /* truncated? report error? */
+		if (fscanf(fp, "0x%016" PRIu64, rdm) != 1) {
+			fclose(fp);
+			return -1;
+		}
 	}
 
-	rdm++;
+	(*rdm)++;
 	if (fseek(fp, 0, SEEK_SET) == -1 ||
 	    ftruncate(fileno(fp), 0) == -1 ||
-	    fprintf(fp, "0x%016" PRIu64 "\n", rdm) != 19 ||
+	    fprintf(fp, "0x%016" PRIu64 "\n", *rdm) != 19 ||
 	    fflush(fp) == EOF)
-	{
-		if (!auth->last_replay_set) {
-			auth->last_replay = rdm;
-			auth->last_replay_set = 1;
-		} else
-			rdm = ++auth->last_replay;
-		/* report error? */
-	}
+		err = -1;
+	else
+		err = 0;
 #ifdef LOCK_EX
 	if (flocked == 0)
 		flock(fileno(fp), LOCK_UN);
 #endif
 	fclose(fp);
-	return rdm;
+	return err;
 }
 
 #define	NTP_EPOCH	2208988800U	/* 1970 - 1900 in seconds */
@@ -476,11 +481,29 @@ get_next_rdm_monotonic_clock(struct auth *auth)
 }
 
 static uint64_t
-get_next_rdm_monotonic(struct auth *auth)
+get_next_rdm_monotonic(struct dhcpcd_ctx *ctx, struct auth *auth)
 {
+#ifndef PRIVSEP
+	UNUSED(ctx);
+#endif
 
-	if (auth->options & DHCPCD_AUTH_RDM_COUNTER)
-		return get_next_rdm_monotonic_counter(auth);
+	if (auth->options & DHCPCD_AUTH_RDM_COUNTER) {
+		uint64_t rdm;
+		int err;
+
+#ifdef PRIVSEP
+		if (IN_PRIVSEP(ctx)) {
+
+			err = ps_root_getauthrdm(ctx, &rdm);
+		} else
+#endif
+			err = auth_get_rdm_monotonic(&rdm);
+		if (err == -1)
+			return ++auth->last_replay;
+
+		auth->last_replay = rdm;
+		return rdm;
+	}
 	return get_next_rdm_monotonic_clock(auth);
 }
 
@@ -495,7 +518,8 @@ get_next_rdm_monotonic(struct auth *auth)
  * data and dlen refer to the authentication option within the message.
  */
 ssize_t
-dhcp_auth_encode(struct auth *auth, const struct token *t,
+dhcp_auth_encode(struct dhcpcd_ctx *ctx, struct auth *auth,
+    const struct token *t,
     void *vm, size_t mlen, int mp, int mt,
     void *vdata, size_t dlen)
 {
@@ -611,11 +635,11 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 		*data++ = auth->rdm;
 		switch (auth->rdm) {
 		case AUTH_RDM_MONOTONIC:
-			rdm = get_next_rdm_monotonic(auth);
+			rdm = get_next_rdm_monotonic(ctx, auth);
 			break;
 		default:
 			/* This block appeases gcc, clang doesn't need it */
-			rdm = get_next_rdm_monotonic(auth);
+			rdm = get_next_rdm_monotonic(ctx, auth);
 			break;
 		}
 		rdm = htonll(rdm);
