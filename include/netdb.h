@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.69 2013/08/19 07:18:42 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.70 2020/06/04 11:21:16 nia Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -162,13 +162,11 @@ struct	netent {
 	char		*n_name;	/*%< official name of net */
 	char		**n_aliases;	/*%< alias list */
 	int		n_addrtype;	/*%< net address type */
-#if (defined(__sparc__) && defined(_LP64)) || \
-    (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _BIG_ENDIAN))
+#if defined(__sparc__) && defined(_LP64)
 	int		__n_pad0;	/* ABI compatibility */
 #endif
 	uint32_t	n_net;		/*%< network # */
-#if defined(__alpha__) || (defined(__i386__) && defined(_LP64)) || \
-    (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _LITTLE_ENDIAN))
+#if defined(__alpha__)
 	int		__n_pad0;	/* ABI compatibility */
 #endif
 };
@@ -208,7 +206,7 @@ struct addrinfo {
 	int		__ai_pad0;	/* ABI compatibility */
 #endif
 	socklen_t	 ai_addrlen;	/*%< length of ai_addr */
-#if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
+#if defined(__alpha__)
 	int		__ai_pad0;	/* ABI compatibility */
 #endif
 	char		*ai_canonname;	/*%< canonical name for hostname */
