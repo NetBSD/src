@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.173 2020/06/03 22:10:24 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.174 2020/06/04 00:45:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.173 2020/06/03 22:10:24 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.174 2020/06/04 00:45:32 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: pthread.c,v 1.173 2020/06/03 22:10:24 ad Exp $");
 #include "pthread_int.h"
 #include "pthread_makelwp.h"
 #include "reentrant.h"
+
+__BEGIN_DECLS
+void _malloc_thread_cleanup(void) __weak;
+__END_DECLS
 
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
 static rb_tree_t	pthread__alltree;
@@ -676,6 +680,9 @@ pthread_exit(void *retval)
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
+
+	if (_malloc_thread_cleanup)
+		_malloc_thread_cleanup();
 
 	/*
 	 * Signal our exit.  Our stack and pthread_t won't be reused until

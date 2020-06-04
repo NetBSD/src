@@ -138,7 +138,7 @@
  * _malloc_thread_cleanup() exists, use it as the basis for thread cleanup in
  * malloc_tsd.
  */
-/* #undef JEMALLOC_MALLOC_THREAD_CLEANUP */
+#define JEMALLOC_MALLOC_THREAD_CLEANUP
 
 /*
  * Defined if threaded initialization is known to be safe on this platform.
