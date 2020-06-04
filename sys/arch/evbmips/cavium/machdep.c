@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2020/05/31 14:05:21 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2020/06/04 03:08:59 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@
 #include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2020/05/31 14:05:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2020/06/04 03:08:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2020/05/31 14:05:21 simonb Exp $");
 
 #include <evbmips/cavium/octeon_uboot.h>
 
-static void	mach_init_bss(void);
 static void	mach_init_vector(void);
 static void	mach_init_bus_space(void);
 static void	mach_init_console(void);
@@ -191,8 +190,11 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	uint64_t btinfo_paddr;
 	u_quad_t memsize;
 	int corefreq;
+	extern char edata[], end[];
 
-	mach_init_bss();
+	/* clear the BSS segment */
+	memset(edata, 0, end - edata);
+
 
 	KASSERT(MIPS_XKPHYS_P(arg3));
 	btinfo_paddr = mips3_ld(arg3 + OCTEON_BTINFO_PADDR_OFFSET);
@@ -267,17 +269,6 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in mach_init().
 	 */
-}
-
-void
-mach_init_bss(void)
-{
-	extern char edata[], end[];
-
-	/*
-	 * Clear the BSS segment.
-	 */
-	memset(edata, 0, mips_round_page(end) - (uintptr_t)edata);
 }
 
 void
