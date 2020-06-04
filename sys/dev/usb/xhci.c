@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.130 2020/06/01 10:25:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.131 2020/06/04 20:54:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.130 2020/06/01 10:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.131 2020/06/04 20:54:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1003,7 +1003,8 @@ xhci_init(struct xhci_softc *sc)
 	else
 		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, hcc);
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
-	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
+	aprint_debug_dev(sc->sc_dev, "xECP %" __PRIxBITS "\n",
+	    XHCI_HCC_XECP(hcc) * 4);
 	if (hciversion >= XHCI_HCIVERSION_1_1) {
 		hcc2 = xhci_cap_read_4(sc, XHCI_HCCPARAMS2);
 		snprintb(sbuf, sizeof(sbuf), XHCI_HCC2_BITS, hcc2);

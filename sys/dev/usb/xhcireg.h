@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.16 2020/06/04 19:50:21 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.17 2020/06/04 20:54:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -53,162 +53,242 @@
 #define	 XHCI_HCIVERSION_1_1	0x0110	/* xHCI version 1.1 */
 
 #define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
-#define	 XHCI_HCS1_MAXSLOTS(x)	((x) & 0xFF)
-#define	 XHCI_HCS1_MAXINTRS(x)	(((x) >> 8) & 0x7FF)
-#define	 XHCI_HCS1_MAXPORTS(x)	(((x) >> 24) & 0xFF)
+#define	 XHCI_HCS1_MAXSLOTS_MASK	__BITS(7, 0)
+#define	 XHCI_HCS1_MAXSLOTS(x)		__SHIFTOUT((x), XHCI_HCS1_MAXSLOTS_MASK)
+#define	 XHCI_HCS1_MAXINTRS_MASK	__BITS(18, 8)
+#define	 XHCI_HCS1_MAXINTRS(x)		__SHIFTOUT((x), XHCI_HCS1_MAXINTRS_MASK)
+#define	 XHCI_HCS1_MAXPORTS_MASK	__BITS(31, 24)
+#define	 XHCI_HCS1_MAXPORTS(x)		__SHIFTOUT((x), XHCI_HCS1_MAXPORTS_MASK)
 
 #define	XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
-#define	 XHCI_HCS2_IST(x)	((x) & 0xF)
-#define	 XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xF)
-#define	 XHCI_HCS2_SPR(x)	(((x) >> 26) & 0x1)
-#define  XHCI_HCS2_SPBUFLO	__BITS(31, 27)
-#define  XHCI_HCS2_SPBUFHI	__BITS(25, 21)
+#define	 XHCI_HCS2_IST_MASK	__BITS(3, 0)
+#define	 XHCI_HCS2_IST(x)	__SHIFTOUT((x), XHCI_HCS2_IST_MASK)
+#define	 XHCI_HCS2_ERSTMAX_MASK	__BITS(7, 4)
+#define	 XHCI_HCS2_ERSTMAX(x)	__SHIFTOUT((x), XHCI_HCS2_ERSTMAX_MASK)
+#define  XHCI_HCS2_SPBUFHI_MASK	__BITS(25, 21)
+#define	 XHCI_HCS2_SPR_MASK	__BIT(26)
+#define	 XHCI_HCS2_SPR(x)	__SHIFTOUT((x), XHCI_HCS2_SPR_MASK)
+#define  XHCI_HCS2_SPBUFLO_MASK	__BITS(31, 27)
 #define	 XHCI_HCS2_MAXSPBUF(x)	\
-    (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI) << 5) | \
-    (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO))
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI_MASK) << 5) | \
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO_MASK))
 
 #define	XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
-#define	 XHCI_HCS3_U1_DEL(x)	((x) & 0xFF)
-#define	 XHCI_HCS3_U2_DEL(x)	(((x) >> 16) & 0xFFFF)
+#define	 XHCI_HCS3_U1_DEL_MASK	__BITS(7, 0)
+#define	 XHCI_HCS3_U1_DEL(x)	__SHIFTOUT((x), XHCI_HCS3_U1_DEL_MASK)
+#define	 XHCI_HCS3_U2_DEL_MASK	__BITS(15, 8)
+#define	 XHCI_HCS3_U2_DEL(x)	__SHIFTOUT((x), XHCI_HCS3_U2_DEL_MASK)
 
 #define	XHCI_HCCPARAMS		0x10	/* RO capability parameters */
-#define	 XHCI_HCC_AC64(x)	(((x) >> 0) & 0x1)	/* 64-bit capable */
-#define	 XHCI_HCC_BNC(x)	(((x) >> 1) & 0x1)	/* BW negotiation */
-#define	 XHCI_HCC_CSZ(x)	(((x) >> 2) & 0x1)	/* context size */
-#define	 XHCI_HCC_PPC(x)	(((x) >> 3) & 0x1)	/* port power control */
-#define	 XHCI_HCC_PIND(x)	(((x) >> 4) & 0x1)	/* port indicators */
-#define	 XHCI_HCC_LHRC(x)	(((x) >> 5) & 0x1)	/* light HC reset */
-#define	 XHCI_HCC_LTC(x)	(((x) >> 6) & 0x1)	/* latency tolerance msg */
-#define	 XHCI_HCC_NSS(x)	(((x) >> 7) & 0x1)	/* no secondary sid */
-#define	 XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1)	/* Parse All Event Data */
-#define	 XHCI_HCC_SPC(x)	(((x) >> 9) & 0x1)	/* Short packet */
-#define	 XHCI_HCC_SEC(x)	(((x) >> 10) & 0x1)	/* Stopped EDTLA */
-#define	 XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1)	/* Configuous Frame ID */
-#define	 XHCI_HCC_MAXPSASIZE(x)	(((x) >> 12) & 0xF)	/* max pri. stream array size */
-#define	 XHCI_HCC_XECP(x)	(((x) >> 16) & 0xFFFF)	/* extended capabilities pointer */
+#define	 XHCI_HCC_AC64(x)	__SHIFTOUT((x), __BIT(0))	/* 64-bit capable */
+#define	 XHCI_HCC_BNC(x)	__SHIFTOUT((x), __BIT(1))	/* BW negotiation */
+#define	 XHCI_HCC_CSZ(x)	__SHIFTOUT((x), __BIT(2))	/* context size */
+#define	 XHCI_HCC_PPC(x)	__SHIFTOUT((x), __BIT(3))	/* port power control */
+#define	 XHCI_HCC_PIND(x)	__SHIFTOUT((x), __BIT(4))	/* port indicators */
+#define	 XHCI_HCC_LHRC(x)	__SHIFTOUT((x), __BIT(5))	/* light HC reset */
+#define	 XHCI_HCC_LTC(x)	__SHIFTOUT((x), __BIT(6))	/* latency tolerance msg */
+#define	 XHCI_HCC_NSS(x)	__SHIFTOUT((x), __BIT(7))	/* no secondary sid */
+#define	 XHCI_HCC_PAE(x)	__SHIFTOUT((x), __BIT(8))	/* Parse All Event Data */
+#define	 XHCI_HCC_SPC(x)	__SHIFTOUT((x), __BIT(9))	/* Short packet */
+#define	 XHCI_HCC_SEC(x)	__SHIFTOUT((x), __BIT(10))	/* Stopped EDTLA */
+#define	 XHCI_HCC_CFC(x)	__SHIFTOUT((x), __BIT(11))	/* Configuous Frame ID */
+#define	 XHCI_HCC_MAXPSASIZE_MASK __BITS(15, 12)	/* max pri. stream array size */
+#define	 XHCI_HCC_MAXPSASIZE(x)	__SHIFTOUT((x), XHCI_HCC_MAXPSASIZE_MASK)
+#define	 XHCI_HCC_XECP_MASK	__BITS(31, 16)		/* extended capabilities pointer */
+#define	 XHCI_HCC_XECP(x)	__SHIFTOUT((x), XHCI_HCC_XECP_MASK)
 
 #define	XHCI_DBOFF		0x14	/* RO doorbell offset */
 #define	XHCI_RTSOFF		0x18	/* RO runtime register space offset */
-#define XHCI_HCCPARAMS2	0x1c	/* RO capability parameters 2 */
-#define	 XHCI_HCC2_U3C(x)	(((x) >> 0) & 0x1)	/* U3 Entry capable */
-#define	 XHCI_HCC2_CMC(x)	(((x) >> 1) & 0x1)	/* CEC MaxExLatTooLg */
-#define	 XHCI_HCC2_FSC(x)	(((x) >> 2) & 0x1)	/* Foce Save Context */
-#define	 XHCI_HCC2_CTC(x)	(((x) >> 3) & 0x1)	/* Compliance Transc */
-#define	 XHCI_HCC2_LEC(x)	(((x) >> 4) & 0x1)	/* Large ESIT Paylod */
-#define	 XHCI_HCC2_CIC(x)	(((x) >> 5) & 0x1)	/* Configuration Inf */
-#define	 XHCI_HCC2_ETC(x)	(((x) >> 6) & 0x1)	/* Extended TBC */
-#define	 XHCI_HCC2_ETC_TSC(x)	(((x) >> 7) & 0x1)	/* ExtTBC TRB Status */
+#define XHCI_HCCPARAMS2		0x1c	/* RO capability parameters 2 */
+#define	 XHCI_HCC2_U3C(x)	__SHIFTOUT((x), __BIT(0))	/* U3 Entry capable */
+#define	 XHCI_HCC2_CMC(x)	__SHIFTOUT((x), __BIT(1))	/* CEC MaxExLatTooLg */
+#define	 XHCI_HCC2_FSC(x)	__SHIFTOUT((x), __BIT(2))	/* Foce Save Context */
+#define	 XHCI_HCC2_CTC(x)	__SHIFTOUT((x), __BIT(3))	/* Compliance Transc */
+#define	 XHCI_HCC2_LEC(x)	__SHIFTOUT((x), __BIT(4))	/* Large ESIT Paylod */
+#define	 XHCI_HCC2_CIC(x)	__SHIFTOUT((x), __BIT(5))	/* Configuration Inf */
+#define	 XHCI_HCC2_ETC(x)	__SHIFTOUT((x), __BIT(6))	/* Extended TBC */
+#define	 XHCI_HCC2_ETC_TSC(x)	__SHIFTOUT((x), __BIT(7))	/* ExtTBC TRB Status */
+#define	 XHCI_HCC2_GSC(x)	__SHIFTOUT((x), __BIT(8))	/* Get/Set Extended Property */
+#define	 XHCI_HCC2_VTC(x)	__SHIFTOUT((x), __BIT(9))	/* Virt. Based Trust */
+
+#define XHCI_VTIOSOFF		0x20	/* RO Virtualization Base Trusted IO Offset */
 
 /* XHCI operational registers.  Offset given by XHCI_CAPLENGTH register */
 #define	XHCI_USBCMD		0x00	/* XHCI command */
-#define	 XHCI_CMD_RS		0x00000001	/* RW Run/Stop */
-#define	 XHCI_CMD_HCRST		0x00000002	/* RW Host Controller Reset */
-#define	 XHCI_CMD_INTE		0x00000004	/* RW Interrupter Enable */
-#define	 XHCI_CMD_HSEE		0x00000008	/* RW Host System Error Enable */
-#define	 XHCI_CMD_LHCRST		0x00000080	/* RO/RW Light Host Controller Reset */
-#define	 XHCI_CMD_CSS		0x00000100	/* RW Controller Save State */
-#define	 XHCI_CMD_CRS		0x00000200	/* RW Controller Restore State */
-#define	 XHCI_CMD_EWE		0x00000400	/* RW Enable Wrap Event */
-#define	 XHCI_CMD_EU3S		0x00000800	/* RW Enable U3 MFINDEX Stop */
+#define	 XHCI_CMD_RS		__BIT(0)	/* RW Run/Stop */
+#define	 XHCI_CMD_HCRST		__BIT(1)	/* RW Host Controller Reset */
+#define	 XHCI_CMD_INTE		__BIT(2)	/* RW Interrupter Enable */
+#define	 XHCI_CMD_HSEE		__BIT(3)	/* RW Host System Error Enable */
+#define	 XHCI_CMD_LHCRST	__BIT(7)	/* RO/RW Light Host Controller Reset */
+#define	 XHCI_CMD_CSS		__BIT(8)	/* RW Controller Save State */
+#define	 XHCI_CMD_CRS		__BIT(9)	/* RW Controller Restore State */
+#define	 XHCI_CMD_EWE		__BIT(10)	/* RW Enable Wrap Event */
+#define	 XHCI_CMD_EU3S		__BIT(11)	/* RW Enable U3 MFINDEX Stop */
+#define	 XHCI_CMD_CME		__BIT(13)	/* RW CEM Enable */
+#define	 XHCI_CMD_ETE		__BIT(14)	/* RW Extended TBC Enable */
+#define	 XHCI_CMD_TSC_EN	__BIT(15)	/* RW Extended TBC TRB Status Enable */
+#define	 XHCI_CMD_VTIOE		__BIT(16)	/* RW VTIO Enable */
+
 
 #define	XHCI_WAIT_CNR		100		/* in 1ms */
 #define	XHCI_WAIT_HCRST		100		/* in 1ms */
 
 #define	XHCI_USBSTS		0x04	/* XHCI status */
-#define	 XHCI_STS_HCH		0x00000001	/* RO - Host Controller Halted */
-#define	 XHCI_STS_RSVDZ0	0x00000002	/* RsvdZ - 2:2 */
-#define	 XHCI_STS_HSE		0x00000004	/* RW - Host System Error */
-#define	 XHCI_STS_EINT		0x00000008	/* RW - Event Interrupt */
-#define	 XHCI_STS_PCD		0x00000010	/* RW - Port Change Detect */
+#define	 XHCI_STS_HCH		__BIT(0)	/* RO - Host Controller Halted */
+#define	 XHCI_STS_RSVDZ0	__BIT(1)	/* RsvdZ - 1:1 */
+#define	 XHCI_STS_HSE		__BIT(2)	/* RW - Host System Error */
+#define	 XHCI_STS_EINT		__BIT(3)	/* RW - Event Interrupt */
+#define	 XHCI_STS_PCD		__BIT(4)	/* RW - Port Change Detect */
 #define	 XHCI_STS_RSVDZ1	__BITS(7, 5)	/* RsvdZ - 7:5 */
-#define	 XHCI_STS_SSS		0x00000100	/* RO - Save State Status */
-#define	 XHCI_STS_RSS		0x00000200	/* RO - Restore State Status */
-#define	 XHCI_STS_SRE		0x00000400	/* RW - Save/Restore Error */
-#define	 XHCI_STS_CNR		0x00000800	/* RO - Controller Not Ready */
-#define	 XHCI_STS_HCE		0x00001000	/* RO - Host Controller Error */
-#define	 XHCI_STS_RSVDP0	__BITS(31, 13)	/* RsvdP - 31:13 */
+#define	 XHCI_STS_SSS		__BIT(8)	/* RO - Save State Status */
+#define	 XHCI_STS_RSS		__BIT(9)	/* RO - Restore State Status */
+#define	 XHCI_STS_SRE		__BIT(10)	/* RW - Save/Restore Error */
+#define	 XHCI_STS_CNR		__BIT(11)	/* RO - Controller Not Ready */
+#define	 XHCI_STS_HCE		__BIT(12)	/* RO - Host Controller Error */
+#define	 XHCI_STS_RSVDP0	__BITS(13, 31)	/* RsvdP - 31:13 */
 
 #define	XHCI_PAGESIZE		0x08	/* XHCI page size mask */
-#define	 XHCI_PAGESIZE_4K	0x00000001	/* 4K Page Size */
-#define	 XHCI_PAGESIZE_8K	0x00000002	/* 8K Page Size */
-#define	 XHCI_PAGESIZE_16K	0x00000004	/* 16K Page Size */
-#define	 XHCI_PAGESIZE_32K	0x00000008	/* 32K Page Size */
-#define	 XHCI_PAGESIZE_64K	0x00000010	/* 64K Page Size */
+#define	 XHCI_PAGESIZE_4K	__BIT(0)	/* 4K Page Size */
+#define	 XHCI_PAGESIZE_8K	__BIT(1)	/* 8K Page Size */
+#define	 XHCI_PAGESIZE_16K	__BIT(2)	/* 16K Page Size */
+#define	 XHCI_PAGESIZE_32K	__BIT(3)	/* 32K Page Size */
+#define	 XHCI_PAGESIZE_64K	__BIT(4)	/* 64K Page Size */
+#define	 XHCI_PAGESIZE_128K	__BIT(5)	/* 128K Page Size */
+#define	 XHCI_PAGESIZE_256K	__BIT(6)	/* 256K Page Size */
+#define	 XHCI_PAGESIZE_512K	__BIT(7)	/* 512K Page Size */
+#define	 XHCI_PAGESIZE_1M	__BIT(8)	/* 1M Page Size */
+#define	 XHCI_PAGESIZE_2M	__BIT(9)	/* 2M Page Size */
+/* ... extends to 128M */
 
 #define	XHCI_DNCTRL		0x14	/* XHCI device notification control */
-#define	 XHCI_DNCTRL_MASK(n)	(1U << (n))
+#define	 XHCI_DNCTRL_MASK(n)	__BIT((n))
 
+/* 5.4.5 Command Ring Control Register */
 #define	XHCI_CRCR		0x18	/* XHCI command ring control */
-#define	 XHCI_CRCR_LO_RCS	0x00000001	/* RW - consumer cycle state */
-#define	 XHCI_CRCR_LO_CS	0x00000002	/* RW - command stop */
-#define	 XHCI_CRCR_LO_CA	0x00000004	/* RW - command abort */
-#define	 XHCI_CRCR_LO_CRR	0x00000008	/* RW - command ring running */
-#define	 XHCI_CRCR_LO_MASK	0x0000000F
+#define	 XHCI_CRCR_LO_RCS	__BIT(0)	/* RW - consumer cycle state */
+#define	 XHCI_CRCR_LO_CS	__BIT(1)	/* RW - command stop */
+#define	 XHCI_CRCR_LO_CA	__BIT(2)	/* RW - command abort */
+#define	 XHCI_CRCR_LO_CRR	__BIT(3)	/* RW - command ring running */
+#define	 XHCI_CRCR_LO_MASK	__BITS(31, 6)
 
 #define	XHCI_CRCR_HI		0x1c	/* XHCI command ring control */
+
+/* 5.4.6 Device Context Base Address Array Pointer Registers */
 #define	XHCI_DCBAAP		0x30	/* XHCI dev context BA pointer */
 #define	XHCI_DCBAAP_HI		0x34	/* XHCI dev context BA pointer */
-#define	XHCI_CONFIG		0x38
-#define	 XHCI_CONFIG_SLOTS_MASK	0x000000FF	/* RW - number of device slots enabled */
 
-/* XHCI port status registers */
+/* 5.4.7 Configure Register */
+#define	XHCI_CONFIG		0x38
+#define	 XHCI_CONFIG_SLOTS_MASK	__BITS(7, 0)	/* RW - number of device slots enabled */
+#define	 XHCI_CONFIG_U3E	__BIT(8)	/* RW - U3 Entry Enable */
+#define	 XHCI_CONFIG_CIE	__BIT(9)	/* RW - Configuration Information Enable */
+
+/* 5.4.8 XHCI port status registers */
 #define	XHCI_PORTSC(n)		(0x3f0 + (0x10 * (n)))	/* XHCI port status */
-#define	 XHCI_PS_CCS		0x00000001	/* RO - current connect status */
-#define	 XHCI_PS_PED		0x00000002	/* RW - port enabled / disabled */
-#define	 XHCI_PS_OCA		0x00000008	/* RO - over current active */
-#define	 XHCI_PS_PR		0x00000010	/* RW - port reset */
-#define	 XHCI_PS_PLS_GET(x)	(((x) >> 5) & 0xF)	/* RW - port link state */
-#define	 XHCI_PS_PLS_SET(x)	(((x) & 0xF) << 5)	/* RW - port link state */
-#define	 XHCI_PS_PP		0x00000200	/* RW - port power */
-#define	 XHCI_PS_SPEED_GET(x)	(((x) >> 10) & 0xF)	/* RO - port speed */
+#define	 XHCI_PS_CCS		__BIT(0)	/* RO - current connect status */
+#define	 XHCI_PS_PED		__BIT(1)	/* RW - port enabled / disabled */
+#define	 XHCI_PS_OCA		__BIT(3)	/* RO - over current active */
+#define	 XHCI_PS_PR		__BIT(4)	/* RW - port reset */
+#define	 XHCI_PS_PLS_MASK	__BITS(8, 5)	/* RW - port link state */
+#define	 XHCI_PS_PLS_GET(x)	__SHIFTOUT((x), XHCI_PS_PLS_MASK)	/* RW - port link state */
+#define	 XHCI_PS_PLS_SET(x)	__SHIFTIN((x), XHCI_PS_PLS_MASK)	/* RW - port link state */
+
+#define  XHCI_PS_PLS_SETU0	0
+#define  XHCI_PS_PLS_SETU2	2
+#define  XHCI_PS_PLS_SETU3	3
+#define  XHCI_PS_PLS_SETDISC	5
+#define  XHCI_PS_PLS_SETCOMP	10
+#define  XHCI_PS_PLS_SETRESUME	15
+
+#define  XHCI_PS_PLS_U0		0
+#define  XHCI_PS_PLS_U1		1
+#define  XHCI_PS_PLS_U2		2
+#define  XHCI_PS_PLS_U3		3
+#define  XHCI_PS_PLS_DISABLED	4
+#define  XHCI_PS_PLS_RXDETECT	5
+#define  XHCI_PS_PLS_INACTIVE	6
+#define  XHCI_PS_PLS_POLLING	7
+#define  XHCI_PS_PLS_RECOVERY	8
+#define  XHCI_PS_PLS_HOTRESET	9
+#define  XHCI_PS_PLS_COMPLIANCE	10
+#define  XHCI_PS_PLS_TEST	11
+#define  XHCI_PS_PLS_RESUME	15
+
+#define	 XHCI_PS_PP		__BIT(9)	/* RW - port power */
+#define	 XHCI_PS_SPEED_MASK	__BITS(13, 10)	/* RO - port speed */
+#define	 XHCI_PS_SPEED_GET(x)	__SHIFTOUT((x), XHCI_PS_SPEED_MASK)
 #define	 XHCI_PS_SPEED_FS	1
 #define	 XHCI_PS_SPEED_LS	2
 #define	 XHCI_PS_SPEED_HS	3
 #define	 XHCI_PS_SPEED_SS	4
-#define	 XHCI_PS_PIC_GET(x)	(((x) >> 14) & 0x3)	/* RW - port indicator */
-#define	 XHCI_PS_PIC_SET(x)	(((x) & 0x3) << 14)	/* RW - port indicator */
-#define	 XHCI_PS_LWS		0x00010000	/* RW - port link state write strobe */
-#define	 XHCI_PS_CSC		0x00020000	/* RW - connect status change */
-#define	 XHCI_PS_PEC		0x00040000	/* RW - port enable/disable change */
-#define	 XHCI_PS_WRC		0x00080000	/* RW - warm port reset change */
-#define	 XHCI_PS_OCC		0x00100000	/* RW - over-current change */
-#define	 XHCI_PS_PRC		0x00200000	/* RW - port reset change */
-#define	 XHCI_PS_PLC		0x00400000	/* RW - port link state change */
-#define	 XHCI_PS_CEC		0x00800000	/* RW - config error change */
-#define	 XHCI_PS_CAS		0x01000000	/* RO - cold attach status */
-#define	 XHCI_PS_WCE		0x02000000	/* RW - wake on connect enable */
-#define	 XHCI_PS_WDE		0x04000000	/* RW - wake on disconnect enable */
-#define	 XHCI_PS_WOE		0x08000000	/* RW - wake on over-current enable */
-#define	 XHCI_PS_DR		0x40000000	/* RO - device removable */
-#define	 XHCI_PS_WPR		0x80000000U	/* RW - warm port reset */
+#define	 XHCI_PS_PIC_MASK	__BITS(15, 14)	/* RW - port indicator */
+#define	 XHCI_PS_PIC_GET(x)	__SHIFTOUT((x), XHCI_PS_PIC_MASK)
+#define	 XHCI_PS_PIC_SET(x)	__SHIFTIN((x), XHCI_PS_PIC_MASK)
+#define	 XHCI_PS_LWS		__BIT(16)	/* RW - port link state write strobe */
+#define	 XHCI_PS_CSC		__BIT(17)	/* RW - connect status change */
+#define	 XHCI_PS_PEC		__BIT(18)	/* RW - port enable/disable change */
+#define	 XHCI_PS_WRC		__BIT(19)	/* RW - warm port reset change */
+#define	 XHCI_PS_OCC		__BIT(20)	/* RW - over-current change */
+#define	 XHCI_PS_PRC		__BIT(21)	/* RW - port reset change */
+#define	 XHCI_PS_PLC		__BIT(22)	/* RW - port link state change */
+#define	 XHCI_PS_CEC		__BIT(23)	/* RW - config error change */
+#define	 XHCI_PS_CAS		__BIT(24)	/* RO - cold attach status */
+#define	 XHCI_PS_WCE		__BIT(25)	/* RW - wake on connect enable */
+#define	 XHCI_PS_WDE		__BIT(26)	/* RW - wake on disconnect enable */
+#define	 XHCI_PS_WOE		__BIT(27)	/* RW - wake on over-current enable */
+#define	 XHCI_PS_DR		__BIT(30)	/* RO - device removable */
+#define	 XHCI_PS_WPR		__BIT(31)	/* RW - warm port reset */
 #define	 XHCI_PS_CLEAR		0x80FF01FFU	/* command bits */
 
+/* 5.4.9 Port PM Status and Control Register */
 #define	XHCI_PORTPMSC(n)	(0x3f4 + (0x10 * (n)))	/* XHCI status and control */
-#define	 XHCI_PM3_U1TO_GET(x)	(((x) >> 0) & 0xFF)	/* RW - U1 timeout */
-#define	 XHCI_PM3_U1TO_SET(x)	(((x) & 0xFF) << 0)	/* RW - U1 timeout */
-#define	 XHCI_PM3_U2TO_GET(x)	(((x) >> 8) & 0xFF)	/* RW - U2 timeout */
-#define	 XHCI_PM3_U2TO_SET(x)	(((x) & 0xFF) << 8)	/* RW - U2 timeout */
-#define	 XHCI_PM3_FLA		0x00010000	/* RW - Force Link PM Accept */
-#define	 XHCI_PM2_L1S_GET(x)	(((x) >> 0) & 0x7)	/* RO - L1 status */
-#define	 XHCI_PM2_RWE		0x00000008		/* RW - remote wakup enable */
-#define	 XHCI_PM2_HIRD_GET(x)	(((x) >> 4) & 0xF)	/* RW - host initiated resume duration */
-#define	 XHCI_PM2_HIRD_SET(x)	(((x) & 0xF) << 4)	/* RW - host initiated resume duration */
-#define	 XHCI_PM2_L1SLOT_GET(x)	(((x) >> 8) & 0xFF)	/* RW - L1 device slot */
-#define	 XHCI_PM2_L1SLOT_SET(x)	(((x) & 0xFF) << 8)	/* RW - L1 device slot */
-#define	 XHCI_PM2_HLE		0x00010000		/* RW - hardware LPM enable */
+/* 5.4.9.1 */
+#define	 XHCI_PM3_U1TO_MASK	__BITS(7, 0)	/* RW - U1 timeout */
+#define	 XHCI_PM3_U1TO_GET(x)	__SHIFTOUT((x), XHCI_PM3_U1TO_MASK)
+#define	 XHCI_PM3_U1TO_SET(x)	__SHIFTIN((x), XHCI_PM3_U1TO_MASK)
+#define	 XHCI_PM3_U2TO_MASK	__BITS(15, 8)	/* RW - U2 timeout */
+#define	 XHCI_PM3_U2TO_GET(x)	__SHIFTOUT((x), XHCI_PM3_U2TO_MASK)
+#define	 XHCI_PM3_U2TO_SET(x)	__SHIFTIN((x), XHCI_PM3_U2TO_MASK)
+#define	 XHCI_PM3_FLA		__BIT(16)	/* RW - Force Link PM Accept */
 
+/* 5.4.9.2 */
+#define	 XHCI_PM2_L1S_MASK	__BITS(2, 0)	/* RO - L1 status */
+#define	 XHCI_PM2_L1S_GET(x)	__SHIFTOUT((x), XHCI_PM2_L1S_MASK)
+#define	 XHCI_PM2_RWE		__BIT(3)	/* RW - remote wakup enable */
+#define	 XHCI_PM2_BESL_MASK	__BITS(7, 4)	/* RW - Best Effort Service Latency */
+#define	 XHCI_PM2_BESL_GET(x)	__SHIFTOUT((x), XHCI_PM2_BESL_MASK)
+#define	 XHCI_PM2_BESL_SET(x)	__SHIFTIN((x), XHCI_PM2_BESL_MASK)
+#define	 XHCI_PM2_L1SLOT_MASK	__BITS(15, 8)	/* RW - L1 device slot */
+#define	 XHCI_PM2_L1SLOT_GET(x)	__SHIFTOUT((x), XHCI_PM2_L1SLOT_MASK)
+#define	 XHCI_PM2_L1SLOT_SET(x)	__SHIFTIN((x), XHCI_PM2_L1SLOT_MASK)
+#define	 XHCI_PM2_HLE		__BIT(16)	/* RW - hardware LPM enable */
+#define	 XHCI_PM2_PTC_MASK	__BITS(31, 28)	/* RW - port test control */
+#define	 XHCI_PM2_PTC_GET(x)	__SHIFTOUT((x), XHCI_PM2_PTC_MASK)
+#define	 XHCI_PM2_PTC_SET(x)	__SHIFTOUT((x), XHCI_PM2_PTC_MASK)
+
+/* 5.4.10 Port Link Info Register */
 #define	XHCI_PORTLI(n)		(0x3f8 + (0x10 * (n)))	/* XHCI port link info */
-#define	 XHCI_PLI3_ERR_GET(x)	(((x) >> 0) & 0xFFFF)	/* RO - port link errors */
+/* 5.4.10.1 */
+#define	 XHCI_PLI3_ERR_MASK	__BITS(15, 0)	/* RW - port link errors */
+#define	 XHCI_PLI3_ERR_GET(x)	__SHIFTOUT((x), XHCI_PLI3_ERR_MASK)
+#define	 XHCI_PLI3_RLC_MASK	__BITS(19, 16)	/* RO - Rx Lane Count */
+#define	 XHCI_PLI3_RLC_GET	__SHIFTOUT((x), XHCI_PLI3_RLC_MASK)
+#define	 XHCI_PLI3_TLC_MASK	__BITS(23, 20)	/* RO - Tx Lane Count */
+#define	 XHCI_PLI3_TLC_GET	__SHIFTOUT((x), XHCI_PLI3_TLC_MASK)
 
-#define	XHCI_PORTRSV(n)		(0x3fc + (0x10 * (n)))	/* XHCI port reserved */
+/* 5.4.11 */
+#define	XHCI_PORTHLPMC(n)	(0x3fc + (0x10 * (n)))	/* XHCI port hardware LPM control */
+/* 5.4.11.1 */
+#define	XHCI_PLMC3_LSEC_MASK	__BITS(15, 0)	/* RW - Link Soft Error Count */
+#define	XHCI_PLMC3_LSEC_GET(x)	__SHIFTOUT((x), XHCI_PLMC3_LSEC_MASK)
 
 /* XHCI runtime registers.  Offset given by XHCI_CAPLENGTH + XHCI_RTSOFF registers */
 #define	XHCI_MFINDEX		0x0000		/* RO - microframe index */
 #define	 XHCI_MFINDEX_GET(x)	((x) & 0x3FFF)
 
 #define	XHCI_IMAN(n)		(0x0020 + (0x20 * (n)))	/* XHCI interrupt management */
-#define	 XHCI_IMAN_INTR_PEND	0x00000001	/* RW - interrupt pending */
-#define	 XHCI_IMAN_INTR_ENA	0x00000002	/* RW - interrupt enable */
+#define	 XHCI_IMAN_INTR_PEND	__BIT(0)	/* RW - interrupt pending */
+#define	 XHCI_IMAN_INTR_ENA	__BIT(1)	/* RW - interrupt enable */
 
 #define	XHCI_IMOD(n)		(0x0024 + (0x20 * (n)))	/* XHCI interrupt moderation */
 #define	 XHCI_IMOD_IVAL_GET(x)	(((x) >> 0) & 0xFFFF)	/* 250ns unit */
@@ -228,7 +308,7 @@
 #define	XHCI_ERDP(n)		(0x0038 + (0x20 * (n)))	/* XHCI event ring dequeue pointer */
 #define	XHCI_ERDP_HI(n)		(0x003C + (0x20 * (n)))	/* XHCI event ring dequeue pointer */
 #define	 XHCI_ERDP_LO_SINDEX(x)	((x) & 0x7)	/* RO - dequeue segment index */
-#define	 XHCI_ERDP_LO_BUSY	0x00000008	/* RW - event handler busy */
+#define	 XHCI_ERDP_LO_BUSY	__BIT(3)	/* RW - event handler busy */
 
 /* XHCI doorbell registers. Offset given by XHCI_CAPLENGTH + XHCI_DBOFF registers */
 #define	XHCI_DOORBELL(n)	(0x0000 + (4 * (n)))
@@ -277,72 +357,89 @@
 #define XHCI_PAGE_SIZE(sc) ((sc)->sc_pgsz)
 
 /* Chapter 6, Table 49 */
-#define XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN 64
-#define XHCI_DEVICE_CONTEXT_ALIGN 64
-#define XHCI_INPUT_CONTROL_CONTEXT_ALIGN 64
-#define XHCI_SLOT_CONTEXT_ALIGN 32
-#define XHCI_ENDPOINT_CONTEXT_ALIGN 32
-#define XHCI_STREAM_CONTEXT_ALIGN 16
-#define XHCI_STREAM_ARRAY_ALIGN 16
-#define XHCI_TRANSFER_RING_SEGMENTS_ALIGN 16
-#define XHCI_COMMAND_RING_SEGMENTS_ALIGN 64
-#define XHCI_EVENT_RING_SEGMENTS_ALIGN 64
-#define XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN 64
-#define XHCI_SCRATCHPAD_BUFFER_ARRAY_ALIGN 64
-#define XHCI_SCRATCHPAD_BUFFERS_ALIGN XHCI_PAGE_SIZE
+#define XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN	64
+#define XHCI_DEVICE_CONTEXT_ALIGN			64
+#define XHCI_INPUT_CONTROL_CONTEXT_ALIGN		64
+#define XHCI_SLOT_CONTEXT_ALIGN				32
+#define XHCI_ENDPOINT_CONTEXT_ALIGN			32
+#define XHCI_STREAM_CONTEXT_ALIGN			16
+#define XHCI_STREAM_ARRAY_ALIGN				16
+#define XHCI_TRANSFER_RING_SEGMENTS_ALIGN		16
+#define XHCI_COMMAND_RING_SEGMENTS_ALIGN		64
+#define XHCI_EVENT_RING_SEGMENTS_ALIGN			64
+#define XHCI_EVENT_RING_SEGMENT_TABLE_ALIGN		64
+#define XHCI_SCRATCHPAD_BUFFER_ARRAY_ALIGN		64
+#define XHCI_SCRATCHPAD_BUFFERS_ALIGN			XHCI_PAGE_SIZE
 
-#define XHCI_ERSTE_ALIGN 16
-#define XHCI_TRB_ALIGN 16
+#define XHCI_ERSTE_ALIGN				16
+#define XHCI_TRB_ALIGN					16
 
 struct xhci_trb {
 	uint64_t trb_0;
 	uint32_t trb_2;
-#define XHCI_TRB_2_ERROR_GET(x)         (((x) >> 24) & 0xFF)
-#define XHCI_TRB_2_ERROR_SET(x)         (((x) & 0xFF) << 24)
-#define XHCI_TRB_2_TDSZ_GET(x)          (((x) >> 17) & 0x1F)
-#define XHCI_TRB_2_TDSZ_SET(x)          (((x) & 0x1F) << 17)
-#define XHCI_TRB_2_REM_GET(x)           ((x) & 0xFFFFFF)
-#define XHCI_TRB_2_REM_SET(x)           ((x) & 0xFFFFFF)
-#define XHCI_TRB_2_BYTES_GET(x)         ((x) & 0x1FFFF)
-#define XHCI_TRB_2_BYTES_SET(x)         ((x) & 0x1FFFF)
-#define XHCI_TRB_2_IRQ_GET(x)           (((x) >> 22) & 0x3FF)
-#define XHCI_TRB_2_IRQ_SET(x)           (((x) & 0x3FF) << 22)
-#define XHCI_TRB_2_STREAM_GET(x)        (((x) >> 16) & 0xFFFF)
-#define XHCI_TRB_2_STREAM_SET(x)        (((x) & 0xFFFF) << 16)
+#define XHCI_TRB_2_ERROR_MASK		__BITS(31, 24)
+#define XHCI_TRB_2_ERROR_GET(x)		__SHIFTOUT((x), XHCI_TRB_2_ERROR_MASK)
+#define XHCI_TRB_2_ERROR_SET(x)		__SHIFTIN((x), XHCI_TRB_2_ERROR_MASK)
+
+#define XHCI_TRB_2_TDSZ_MASK		__BITS(21, 17)	/* TD Size */
+#define XHCI_TRB_2_TDSZ_GET(x)		__SHIFTOUT((x), XHCI_TRB_2_TDSZ_MASK)
+#define XHCI_TRB_2_TDSZ_SET(x)		__SHIFTIN((x), XHCI_TRB_2_TDSZ_MASK)
+#define XHCI_TRB_2_REM_MASK		__BITS(23, 0)
+#define XHCI_TRB_2_REM_GET(x)		__SHIFTOUT((x), XHCI_TRB_2_REM_MASK)
+#define XHCI_TRB_2_REM_SET(x)		__SHIFTIN((x), XHCI_TRB_2_REM_MASK)
+
+#define XHCI_TRB_2_BYTES_MASK		__BITS(16, 0)
+#define XHCI_TRB_2_BYTES_GET(x)		__SHIFTOUT((x), XHCI_TRB_2_BYTES_MASK)
+#define XHCI_TRB_2_BYTES_SET(x)		__SHIFTIN((x), XHCI_TRB_2_BYTES_MASK)
+#define XHCI_TRB_2_IRQ_MASK		__BITS(31, 22)
+#define XHCI_TRB_2_IRQ_GET(x)		__SHIFTOUT((x), XHCI_TRB_2_IRQ_MASK)
+#define XHCI_TRB_2_IRQ_SET(x)		__SHIFTIN((x), XHCI_TRB_2_IRQ_MASK)
+#define XHCI_TRB_2_STREAM_MASK		__BITS(31, 16)
+#define XHCI_TRB_2_STREAM_GET(x)	__SHIFTOUT((x), XHCI_TRB_2_STREAM_MASK)
+#define XHCI_TRB_2_STREAM_SET(x)	__SHIFTIN((x), XHCI_TRB_2_STREAM_MASK)
 	uint32_t trb_3;
-#define XHCI_TRB_3_TYPE_GET(x)          (((x) >> 10) & 0x3F)
-#define XHCI_TRB_3_TYPE_SET(x)          (((x) & 0x3F) << 10)
-#define XHCI_TRB_3_CYCLE_BIT            (1U << 0)
-#define XHCI_TRB_3_TC_BIT               (1U << 1)       /* command ring only */
-#define XHCI_TRB_3_ENT_BIT              (1U << 1)       /* transfer ring only */
-#define XHCI_TRB_3_ISP_BIT              (1U << 2)
-#define XHCI_TRB_3_NSNOOP_BIT           (1U << 3)
-#define XHCI_TRB_3_CHAIN_BIT            (1U << 4)
-#define XHCI_TRB_3_IOC_BIT              (1U << 5)
-#define XHCI_TRB_3_IDT_BIT              (1U << 6)
-#define XHCI_TRB_3_TBC_GET(x)           (((x) >> 7) & 3)
-#define XHCI_TRB_3_TBC_SET(x)           (((x) & 3) << 7)
-#define XHCI_TRB_3_BEI_BIT              (1U << 9)
-#define XHCI_TRB_3_DCEP_BIT             (1U << 9)
-#define XHCI_TRB_3_PRSV_BIT             (1U << 9)
-#define XHCI_TRB_3_BSR_BIT              (1U << 9)
-#define XHCI_TRB_3_TRT_MASK             (3U << 16)
-#define XHCI_TRB_3_TRT_NONE             (0U << 16)
-#define XHCI_TRB_3_TRT_OUT              (2U << 16)
-#define XHCI_TRB_3_TRT_IN               (3U << 16)
-#define XHCI_TRB_3_DIR_IN               (1U << 16)
-#define XHCI_TRB_3_TLBPC_GET(x)         (((x) >> 16) & 0xF)
-#define XHCI_TRB_3_TLBPC_SET(x)         (((x) & 0xF) << 16)
-#define XHCI_TRB_3_EP_GET(x)            (((x) >> 16) & 0x1F)
-#define XHCI_TRB_3_EP_SET(x)            (((x) & 0x1F) << 16)
-#define XHCI_TRB_3_FRID_GET(x)          (((x) >> 20) & 0x7FF)
-#define XHCI_TRB_3_FRID_SET(x)          (((x) & 0x7FF) << 20)
-#define XHCI_TRB_3_ISO_SIA_BIT          (1U << 31)
-#define XHCI_TRB_3_SUSP_EP_BIT          (1U << 23)
-#define XHCI_TRB_3_VFID_GET(x)          (((x) >> 16) & 0xFF)
-#define XHCI_TRB_3_VFID_SET(x)          (((x) & 0xFF) << 16)
-#define XHCI_TRB_3_SLOT_GET(x)          (((x) >> 24) & 0xFF)
-#define XHCI_TRB_3_SLOT_SET(x)          (((x) & 0xFF) << 24)
+#define XHCI_TRB_3_TYPE_MASK		__BITS(15, 10)
+#define XHCI_TRB_3_TYPE_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_TYPE_MASK)
+#define XHCI_TRB_3_TYPE_SET(x)		__SHIFTIN((x), XHCI_TRB_3_TYPE_MASK)
+#define XHCI_TRB_3_CYCLE_BIT		__BIT(0)
+#define XHCI_TRB_3_TC_BIT		__BIT(1)       /* command ring only */
+#define XHCI_TRB_3_ENT_BIT		__BIT(1)       /* transfer ring only */
+#define XHCI_TRB_3_ISP_BIT		__BIT(2)
+#define XHCI_TRB_3_NSNOOP_BIT		__BIT(3)
+#define XHCI_TRB_3_CHAIN_BIT		__BIT(4)
+#define XHCI_TRB_3_IOC_BIT		__BIT(5)
+#define XHCI_TRB_3_IDT_BIT		__BIT(6)
+#define XHCI_TRB_3_TBC_MASK		__BITS(8, 7)
+#define XHCI_TRB_3_TBC_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_TBC_MASK)
+#define XHCI_TRB_3_TBC_SET(x)		__SHIFTIN((x), XHCI_TRB_3_TBC_MASK)
+#define XHCI_TRB_3_BEI_BIT		__BIT(9)
+#define XHCI_TRB_3_DCEP_BIT		__BIT(9)
+#define XHCI_TRB_3_PRSV_BIT		__BIT(9)
+#define XHCI_TRB_3_BSR_BIT		__BIT(9)
+
+#define XHCI_TRB_3_TRT_MASK		__BITS(17, 16)
+#define XHCI_TRB_3_TRT_NONE		__SHIFTIN(0U, XHCI_TRB_3_TRT_MASK)
+#define XHCI_TRB_3_TRT_OUT		__SHIFTIN(2U, XHCI_TRB_3_TRT_MASK)
+#define XHCI_TRB_3_TRT_IN		__SHIFTIN(3U, XHCI_TRB_3_TRT_MASK)
+#define XHCI_TRB_3_DIR_IN		__BIT(16)
+#define XHCI_TRB_3_TLBPC_MASK		__BITS(19, 16)
+#define XHCI_TRB_3_TLBPC_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_TLBPC_MASK)
+#define XHCI_TRB_3_TLBPC_SET(x)		__SHIFTIN((x), XHCI_TRB_3_TLBPC_MASK)
+#define XHCI_TRB_3_EP_MASK		__BITS(20, 16)
+#define XHCI_TRB_3_EP_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_EP_MASK)
+#define XHCI_TRB_3_EP_SET(x)		__SHIFTIN((x), XHCI_TRB_3_EP_MASK)
+#define XHCI_TRB_3_FRID_MASK		__BITS(30, 20)
+#define XHCI_TRB_3_FRID_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_FRID_MASK)
+#define XHCI_TRB_3_FRID_SET(x)		__SHIFTIN((x), XHCI_TRB_3_FRID_MASK)
+#define XHCI_TRB_3_ISO_SIA_BIT		__BIT(31)
+#define XHCI_TRB_3_SUSP_EP_BIT		__BIT(23)
+#define XHCI_TRB_3_VFID_MASK		__BITS(23, 16)
+#define XHCI_TRB_3_VFID_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_VFID_MASK)
+#define XHCI_TRB_3_VFID_SET(x)		__SHIFTIN((x), XHCI_TRB_3_VFID_MASK)
+#define XHCI_TRB_3_SLOT_MASK		__BITS(31, 24)
+#define XHCI_TRB_3_SLOT_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_SLOT_MASK)
+#define XHCI_TRB_3_SLOT_SET(x)		__SHIFTIN((x), XHCI_TRB_3_SLOT_MASK)
+
 
 	/* Commands */
 #define XHCI_TRB_TYPE_RESERVED          0x00
@@ -420,89 +517,121 @@ struct xhci_trb {
 } __packed __aligned(XHCI_TRB_ALIGN);
 #define XHCI_TRB_SIZE sizeof(struct xhci_trb)
 
-#define XHCI_SCTX_0_ROUTE_SET(x)                ((x) & 0xFFFFF)
-#define XHCI_SCTX_0_ROUTE_GET(x)                ((x) & 0xFFFFF)
-#define XHCI_SCTX_0_SPEED_SET(x)                (((x) & 0xF) << 20)
-#define XHCI_SCTX_0_SPEED_GET(x)                (((x) >> 20) & 0xF)
-#define XHCI_SCTX_0_MTT_SET(x)                  (((x) & 0x1) << 25)
-#define XHCI_SCTX_0_MTT_GET(x)                  (((x) >> 25) & 0x1)
-#define XHCI_SCTX_0_HUB_SET(x)                  (((x) & 0x1) << 26)
-#define XHCI_SCTX_0_HUB_GET(x)                  (((x) >> 26) & 0x1)
-#define XHCI_SCTX_0_CTX_NUM_SET(x)              (((x) & 0x1F) << 27)
-#define XHCI_SCTX_0_CTX_NUM_GET(x)              (((x) >> 27) & 0x1F)
+/*
+ * 6.2.2 Slot context
+ */
+#define XHCI_SCTX_0_ROUTE_MASK			__BITS(19, 0)
+#define XHCI_SCTX_0_ROUTE_GET(x)		__SHIFTOUT((x), XHCI_SCTX_0_ROUTE_MASK)
+#define XHCI_SCTX_0_ROUTE_SET(x)		__SHIFTIN((x), XHCI_SCTX_0_ROUTE_MASK)
+#define XHCI_SCTX_0_SPEED_MASK			__BITS(23, 20)
+#define XHCI_SCTX_0_SPEED_GET(x)		__SHIFTOUT((x), XHCI_SCTX_0_SPEED_MASK)
+#define XHCI_SCTX_0_SPEED_SET(x)		__SHIFTIN((x), XHCI_SCTX_0_SPEED_MASK)
+#define XHCI_SCTX_0_MTT_MASK			__BIT(25)
+#define XHCI_SCTX_0_MTT_SET(x)			__SHIFTIN((x), XHCI_SCTX_0_MTT_MASK)
+#define XHCI_SCTX_0_MTT_GET(x)                  __SHIFTOUT((x), XHCI_SCTX_0_MTT_MASK)
+#define XHCI_SCTX_0_HUB_MASK			__BIT(26)
+#define XHCI_SCTX_0_HUB_SET(x)			__SHIFTIN((x), XHCI_SCTX_0_HUB_MASK)
+#define XHCI_SCTX_0_HUB_GET(x)			__SHIFTOUT((x), XHCI_SCTX_0_HUB_MASK)
+#define XHCI_SCTX_0_CTX_NUM_MASK		__BITS(31, 27)
+#define XHCI_SCTX_0_CTX_NUM_SET(x)		__SHIFTIN((x), XHCI_SCTX_0_CTX_NUM_MASK)
+#define XHCI_SCTX_0_CTX_NUM_GET(x)		__SHIFTOUT((x), XHCI_SCTX_0_CTX_NUM_MASK)
 
-#define XHCI_SCTX_1_MAX_EL_SET(x)               ((x) & 0xFFFF)
-#define XHCI_SCTX_1_MAX_EL_GET(x)               ((x) & 0xFFFF)
-#define XHCI_SCTX_1_RH_PORT_SET(x)              (((x) & 0xFF) << 16)
-#define XHCI_SCTX_1_RH_PORT_GET(x)              (((x) >> 16) & 0xFF)
-#define XHCI_SCTX_1_NUM_PORTS_SET(x)            (((x) & 0xFF) << 24)
-#define XHCI_SCTX_1_NUM_PORTS_GET(x)            (((x) >> 24) & 0xFF)
+#define XHCI_SCTX_1_MAX_EL_MASK			__BITS(15, 0)
+#define XHCI_SCTX_1_MAX_EL_SET(x)		__SHIFTIN((x), XHCI_SCTX_1_MAX_EL_MASK)
+#define XHCI_SCTX_1_MAX_EL_GET(x)		__SHIFTOUT((x), XHCI_SCTX_1_MAX_EL_MASK)
+#define XHCI_SCTX_1_RH_PORT_MASK		__BITS(23, 16)
+#define XHCI_SCTX_1_RH_PORT_SET(x)		__SHIFTIN((x), XHCI_SCTX_1_RH_PORT_MASK)
+#define XHCI_SCTX_1_RH_PORT_GET(x)		__SHIFTOUT((x), XHCI_SCTX_1_RH_PORT_MASK)
+#define XHCI_SCTX_1_NUM_PORTS_MASK		__BITS(31, 24)
+#define XHCI_SCTX_1_NUM_PORTS_SET(x)		__SHIFTIN((x), XHCI_SCTX_1_NUM_PORTS_MASK)
+#define XHCI_SCTX_1_NUM_PORTS_GET(x)		__SHIFTOUT((x), XHCI_SCTX_1_NUM_PORTS_MASK)
 
-#define XHCI_SCTX_2_TT_HUB_SID_SET(x)           ((x) & 0xFF)
-#define XHCI_SCTX_2_TT_HUB_SID_GET(x)           ((x) & 0xFF)
-#define XHCI_SCTX_2_TT_PORT_NUM_SET(x)          (((x) & 0xFF) << 8)
-#define XHCI_SCTX_2_TT_PORT_NUM_GET(x)          (((x) >> 8) & 0xFF)
-#define XHCI_SCTX_2_TT_THINK_TIME_SET(x)        (((x) & 0x3) << 16)
-#define XHCI_SCTX_2_TT_THINK_TIME_GET(x)        (((x) >> 16) & 0x3)
-#define XHCI_SCTX_2_IRQ_TARGET_SET(x)           (((x) & 0x3FF) << 22)
-#define XHCI_SCTX_2_IRQ_TARGET_GET(x)           (((x) >> 22) & 0x3FF)
+#define XHCI_SCTX_2_TT_HUB_SID_MASK		__BITS(7, 0)
+#define XHCI_SCTX_2_TT_HUB_SID_SET(x)		__SHIFTIN((x), XHCI_SCTX_2_TT_HUB_SID_MASK)
+#define XHCI_SCTX_2_TT_HUB_SID_GET(x)		__SHIFTOUT((x), XHCI_SCTX_2_TT_HUB_SID_MASK)
+#define XHCI_SCTX_2_TT_PORT_NUM_MASK		__BITS(15, 8)
+#define XHCI_SCTX_2_TT_PORT_NUM_SET(x)		__SHIFTIN((x), XHCI_SCTX_2_TT_PORT_NUM_MASK)
+#define XHCI_SCTX_2_TT_PORT_NUM_GET(x)		__SHIFTOUT((x), XHCI_SCTX_2_TT_PORT_NUM_MASK)
+#define XHCI_SCTX_2_TT_THINK_TIME_MASK		__BITS(17, 16)
+#define XHCI_SCTX_2_TT_THINK_TIME_SET(x)	__SHIFTIN((x), XHCI_SCTX_2_TT_THINK_TIME_MASK)
+#define XHCI_SCTX_2_TT_THINK_TIME_GET(x)	__SHIFTOUT((x), XHCI_SCTX_2_TT_THINK_TIME_MASK)
+#define XHCI_SCTX_2_IRQ_TARGET_MASK		__BITS(31, 22)
+#define XHCI_SCTX_2_IRQ_TARGET_SET(x)		__SHIFTIN((x), XHCI_SCTX_2_IRQ_TARGET_MASK)
+#define XHCI_SCTX_2_IRQ_TARGET_GET(x)		__SHIFTOUT((x), XHCI_SCTX_2_IRQ_TARGET_MASK)
 
-#define XHCI_SCTX_3_DEV_ADDR_SET(x)             ((x) & 0xFF)
-#define XHCI_SCTX_3_DEV_ADDR_GET(x)             ((x) & 0xFF)
-#define XHCI_SCTX_3_SLOT_STATE_SET(x)           (((x) & 0x1F) << 27)
-#define XHCI_SCTX_3_SLOT_STATE_GET(x)           (((x) >> 27) & 0x1F)
+#define XHCI_SCTX_3_DEV_ADDR_MASK		__BITS(7, 0)
+#define XHCI_SCTX_3_DEV_ADDR_SET(x)		__SHIFTIN((x), XHCI_SCTX_3_DEV_ADDR_MASK)
+#define XHCI_SCTX_3_DEV_ADDR_GET(x)		__SHIFTOUT((x), XHCI_SCTX_3_DEV_ADDR_MASK)
+#define XHCI_SCTX_3_SLOT_STATE_MASK		__BITS(31, 27)
+#define XHCI_SCTX_3_SLOT_STATE_SET(x)		__SHIFTIN((x), XHCI_SCTX_3_SLOT_STATE_MASK)
+#define XHCI_SCTX_3_SLOT_STATE_GET(x)		__SHIFTOUT((x), XHCI_SCTX_3_SLOT_STATE_MASK)
 #define XHCI_SLOTSTATE_DISABLED			0 /* disabled or enabled */
 #define XHCI_SLOTSTATE_ENABLED			0
 #define XHCI_SLOTSTATE_DEFAULT			1
 #define XHCI_SLOTSTATE_ADDRESSED		2
 #define XHCI_SLOTSTATE_CONFIGURED		3
-
-
-#define XHCI_EPCTX_0_EPSTATE_SET(x)             ((x) & 0x7)
-#define XHCI_EPCTX_0_EPSTATE_GET(x)             ((x) & 0x7)
+/*
+ * 6.2.3 Endpoint Context
+ * */
+#define XHCI_EPCTX_0_EPSTATE_MASK		__BITS(2, 0)
+#define XHCI_EPCTX_0_EPSTATE_SET(x)		__SHIFTIN((x), XHCI_EPCTX_0_EPSTATE_MASK)
+#define XHCI_EPCTX_0_EPSTATE_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_0_EPSTATE_MASK)
 #define XHCI_EPSTATE_DISABLED			0
 #define XHCI_EPSTATE_RUNNING			1
 #define XHCI_EPSTATE_HALTED			2
 #define XHCI_EPSTATE_STOPPED			3
 #define XHCI_EPSTATE_ERROR			4
-#define XHCI_EPCTX_0_MULT_SET(x)                (((x) & 0x3) << 8)
-#define XHCI_EPCTX_0_MULT_GET(x)                (((x) >> 8) & 0x3)
-#define XHCI_EPCTX_0_MAXP_STREAMS_SET(x)        (((x) & 0x1F) << 10)
-#define XHCI_EPCTX_0_MAXP_STREAMS_GET(x)        (((x) >> 10) & 0x1F)
-#define XHCI_EPCTX_0_LSA_SET(x)                 (((x) & 0x1) << 15)
-#define XHCI_EPCTX_0_LSA_GET(x)                 (((x) >> 15) & 0x1)
-#define XHCI_EPCTX_0_IVAL_SET(x)                (((x) & 0xFF) << 16)
-#define XHCI_EPCTX_0_IVAL_GET(x)                (((x) >> 16) & 0xFF)
-#define XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_MASK	__BITS(31,24)
+#define XHCI_EPCTX_0_MULT_MASK			__BITS(9, 8)
+#define XHCI_EPCTX_0_MULT_SET(x)		__SHIFTIN((x), XHCI_EPCTX_0_MULT_MASK)
+#define XHCI_EPCTX_0_MULT_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_0_MULT_MASK)
+#define XHCI_EPCTX_0_MAXP_STREAMS_MASK		__BITS(14, 10)
+#define XHCI_EPCTX_0_MAXP_STREAMS_SET(x)	__SHIFTIN((x), XHCI_EPCTX_0_MAXP_STREAMS_MASK)
+#define XHCI_EPCTX_0_MAXP_STREAMS_GET(x)	__SHIFTOUT((x), XHCI_EPCTX_0_MAXP_STREAMS_MASK)
+#define XHCI_EPCTX_0_LSA_MASK			__BIT(15)
+#define XHCI_EPCTX_0_LSA_SET(x)			__SHIFTIN((x), XHCI_EPCTX_0_LSA_MASK)
+#define XHCI_EPCTX_0_LSA_GET(x)			__SHIFTOUT((x), XHCI_EPCTX_0_LSA_MASK)
+#define XHCI_EPCTX_0_IVAL_MASK			__BITS(23, 16)
+#define XHCI_EPCTX_0_IVAL_SET(x)                __SHIFTIN((x), XHCI_EPCTX_0_IVAL_MASK)
+#define XHCI_EPCTX_0_IVAL_GET(x)                __SHIFTOUT((x), XHCI_EPCTX_0_IVAL_MASK)
+#define XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_MASK	__BITS(31, 24)
 #define XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(x) __SHIFTIN((x), XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_MASK)
 #define XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_GET(x) __SHIFTOUT((x), XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_MASK)
 
-#define XHCI_EPCTX_1_CERR_SET(x)                (((x) & 0x3) << 1)
-#define XHCI_EPCTX_1_CERR_GET(x)                (((x) >> 1) & 0x3)
-#define XHCI_EPCTX_1_EPTYPE_SET(x)              (((x) & 0x7) << 3)
-#define XHCI_EPCTX_1_EPTYPE_GET(x)              (((x) >> 3) & 0x7)
-#define XHCI_EPCTX_1_HID_SET(x)                 (((x) & 0x1) << 7)
-#define XHCI_EPCTX_1_HID_GET(x)                 (((x) >> 7) & 0x1)
-#define XHCI_EPCTX_1_MAXB_SET(x)                (((x) & 0xFF) << 8)
-#define XHCI_EPCTX_1_MAXB_GET(x)                (((x) >> 8) & 0xFF)
-#define XHCI_EPCTX_1_MAXP_SIZE_SET(x)           (((x) & 0xFFFF) << 16)
-#define XHCI_EPCTX_1_MAXP_SIZE_GET(x)           (((x) >> 16) & 0xFFFF)
+#define XHCI_EPCTX_1_CERR_MASK			__BITS(2, 1)
+#define XHCI_EPCTX_1_CERR_SET(x)		__SHIFTIN((x), XHCI_EPCTX_1_CERR_MASK)
+#define XHCI_EPCTX_1_CERR_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_1_CERR_MASK)
+#define XHCI_EPCTX_1_EPTYPE_MASK		__BITS(5, 3)
+#define XHCI_EPCTX_1_EPTYPE_SET(x)		__SHIFTIN((x), XHCI_EPCTX_1_EPTYPE_MASK)
+#define XHCI_EPCTX_1_EPTYPE_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_1_EPTYPE_MASK)
+#define XHCI_EPCTX_1_HID_MASK			__BIT(7)
+#define XHCI_EPCTX_1_HID_SET(x)			__SHIFTIN((x), XHCI_EPCTX_1_HID_MASK)
+#define XHCI_EPCTX_1_HID_GET(x)			__SHIFTOUT((x), XHCI_EPCTX_1_HID_MASK)
+#define XHCI_EPCTX_1_MAXB_MASK			__BITS(15, 8)
+#define XHCI_EPCTX_1_MAXB_SET(x)		__SHIFTIN((x), XHCI_EPCTX_1_MAXB_MASK)
+#define XHCI_EPCTX_1_MAXB_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_1_MAXB_MASK)
+#define XHCI_EPCTX_1_MAXP_SIZE_MASK		__BITS(31, 16)
+#define XHCI_EPCTX_1_MAXP_SIZE_SET(x)		__SHIFTIN((x), XHCI_EPCTX_1_MAXP_SIZE_MASK)
+#define XHCI_EPCTX_1_MAXP_SIZE_GET(x)		__SHIFTOUT((x), XHCI_EPCTX_1_MAXP_SIZE_MASK)
 
-#define XHCI_EPCTX_2_DCS_SET(x)                 ((x) & 0x1)
-#define XHCI_EPCTX_2_DCS_GET(x)                 ((x) & 0x1)
-#define XHCI_EPCTX_2_TR_DQ_PTR_MASK             0xFFFFFFFFFFFFFFF0U
 
-#define XHCI_EPCTX_4_AVG_TRB_LEN_SET(x)         ((x) & 0xFFFF)
-#define XHCI_EPCTX_4_AVG_TRB_LEN_GET(x)         ((x) & 0xFFFF)
-#define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(x)    (((x) & 0xFFFF) << 16)
-#define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_GET(x)    (((x) >> 16) & 0xFFFF)
+#define XHCI_EPCTX_2_DCS_MASK			__BIT(0)
+#define XHCI_EPCTX_2_DCS_SET(x)			__SHIFTIN((x), XHCI_EPCTX_2_DCS_MASK)
+#define XHCI_EPCTX_2_DCS_GET(x)			__SHIFTOUT((x), XHCI_EPCTX_2_DCS_MASK)
+#define XHCI_EPCTX_2_TR_DQ_PTR_MASK             0xFFFFFFFFFFFFFFF0ULL
+
+#define XHCI_EPCTX_4_AVG_TRB_LEN_MASK		__BITS(15, 0)
+#define XHCI_EPCTX_4_AVG_TRB_LEN_SET(x)		__SHIFTIN((x), XHCI_EPCTX_4_AVG_TRB_LEN_MASK)
+#define XHCI_EPCTX_4_AVG_TRB_LEN_GET(x)         __SHIFTOUT((x), XHCI_EPCTX_4_AVG_TRB_LEN_MASK)
+#define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK	__BITS(16, 31)
+#define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(x)    __SHIFTIN((x), XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK)
+#define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_GET(x)    __SHIFTOUT((x), XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK)
 
 
 #define XHCI_INCTX_NON_CTRL_MASK        0xFFFFFFFCU
 
-#define XHCI_INCTX_0_DROP_MASK(n)       (1U << (n))
+#define XHCI_INCTX_0_DROP_MASK(n)       __BIT((n))
 
-#define XHCI_INCTX_1_ADD_MASK(n)        (1U << (n))
+#define XHCI_INCTX_1_ADD_MASK(n)        __BIT((n))
 
 
 struct xhci_erste {
