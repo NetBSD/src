@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.15 2020/06/01 10:25:00 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.16 2020/06/04 19:50:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -87,8 +87,8 @@
 #define	 XHCI_HCC_MAXPSASIZE(x)	(((x) >> 12) & 0xF)	/* max pri. stream array size */
 #define	 XHCI_HCC_XECP(x)	(((x) >> 16) & 0xFFFF)	/* extended capabilities pointer */
 
-#define	 XHCI_DBOFF		0x14	/* RO doorbell offset */
-#define	 XHCI_RTSOFF		0x18	/* RO runtime register space offset */
+#define	XHCI_DBOFF		0x14	/* RO doorbell offset */
+#define	XHCI_RTSOFF		0x18	/* RO runtime register space offset */
 #define XHCI_HCCPARAMS2	0x1c	/* RO capability parameters 2 */
 #define	 XHCI_HCC2_U3C(x)	(((x) >> 0) & 0x1)	/* U3 Entry capable */
 #define	 XHCI_HCC2_CMC(x)	(((x) >> 1) & 0x1)	/* CEC MaxExLatTooLg */
@@ -135,8 +135,8 @@
 #define	 XHCI_PAGESIZE_32K	0x00000008	/* 32K Page Size */
 #define	 XHCI_PAGESIZE_64K	0x00000010	/* 64K Page Size */
 
-#define	 XHCI_DNCTRL		0x14	/* XHCI device notification control */
-#define	XHCI_DNCTRL_MASK(n)	(1U << (n))
+#define	XHCI_DNCTRL		0x14	/* XHCI device notification control */
+#define	 XHCI_DNCTRL_MASK(n)	(1U << (n))
 
 #define	XHCI_CRCR		0x18	/* XHCI command ring control */
 #define	 XHCI_CRCR_LO_RCS	0x00000001	/* RW - consumer cycle state */
@@ -149,7 +149,7 @@
 #define	XHCI_DCBAAP		0x30	/* XHCI dev context BA pointer */
 #define	XHCI_DCBAAP_HI		0x34	/* XHCI dev context BA pointer */
 #define	XHCI_CONFIG		0x38
-#define	XHCI_CONFIG_SLOTS_MASK	0x000000FF	/* RW - number of device slots enabled */
+#define	 XHCI_CONFIG_SLOTS_MASK	0x000000FF	/* RW - number of device slots enabled */
 
 /* XHCI port status registers */
 #define	XHCI_PORTSC(n)		(0x3f0 + (0x10 * (n)))	/* XHCI port status */
@@ -204,7 +204,7 @@
 
 /* XHCI runtime registers.  Offset given by XHCI_CAPLENGTH + XHCI_RTSOFF registers */
 #define	XHCI_MFINDEX		0x0000		/* RO - microframe index */
-#define	XHCI_MFINDEX_GET(x)	((x) & 0x3FFF)
+#define	 XHCI_MFINDEX_GET(x)	((x) & 0x3FFF)
 
 #define	XHCI_IMAN(n)		(0x0020 + (0x20 * (n)))	/* XHCI interrupt management */
 #define	 XHCI_IMAN_INTR_PEND	0x00000001	/* RW - interrupt pending */
@@ -258,7 +258,7 @@
 #define	XHCI_XECP_OS_SEM	0x0003
 
 /* 7.2 xHCI Supported Protocol Capability */
-#define	XHCI_XECP_USBID 0x20425355
+#define	XHCI_XECP_USBID		0x20425355
 
 #define	XHCI_XECP_SP_W0_MINOR_MASK	__BITS(23, 16)
 #define	XHCI_XECP_SP_W0_MINOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MINOR_MASK)
