@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.61 2020/01/31 08:55:38 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.62 2020/06/04 19:53:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.61 2020/01/31 08:55:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.62 2020/06/04 19:53:55 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -365,6 +365,14 @@ fpu_kern_enter(void)
 	} else {
 		fpu_save_lwp(l);
 	}
+
+	/*
+	 * Clear CR0_TS, which fpu_save_lwp set if it saved anything --
+	 * otherwise the CPU will trap if we try to use the FPU under
+	 * the false impression that there has been a task switch since
+	 * the last FPU usage requiring that we save the FPU state.
+	 */
+	clts();
 }
 
 void
@@ -375,6 +383,13 @@ fpu_kern_leave(void)
 
 	KASSERT(ci->ci_ilevel == IPL_HIGH);
 	KASSERT(ci->ci_kfpu_spl != -1);
+
+	/*
+	 * Set CR0_TS again so that the kernel can't accidentally use
+	 * the FPU.
+	 */
+	stts();
+
 	s = ci->ci_kfpu_spl;
 	ci->ci_kfpu_spl = -1;
 	splx(s);
