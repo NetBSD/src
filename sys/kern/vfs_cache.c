@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.146 2020/05/30 20:16:14 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.147 2020/06/04 03:08:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  *          ...
  *           ^
  *           |- vi_nc_tree
- *           |                                                           
+ *           |
  *      +----o----+               +---------+               +---------+
  *      |  VDIR   |               |  VCHR   |               |  VREG   |
  *      |  vnode  o-----+         |  vnode  o-----+         |  vnode  o------+
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.146 2020/05/30 20:16:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.147 2020/06/04 03:08:33 riastradh Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -416,7 +416,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	/*
 	 * Search the RB tree for the key.  This is an inlined lookup
 	 * tailored for exactly what's needed here (64-bit key and so on)
-	 * that is quite a bit faster than using rb_tree_find_node(). 
+	 * that is quite a bit faster than using rb_tree_find_node().
 	 *
 	 * For a matching key memcmp() needs to be called once to confirm
 	 * that the correct name has been found.  Very rarely there will be
@@ -435,7 +435,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 			if (__predict_true(diff == 0)) {
 				break;
 			}
-			node = node->rb_nodes[diff < 0];			
+			node = node->rb_nodes[diff < 0];
 		} else {
 			node = node->rb_nodes[ncp->nc_key < key];
 		}
@@ -745,7 +745,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	}
 	if (newlock) {
 		*plock = newlock;
-	}	
+	}
 	*vn_ret = ncp->nc_vp;
 	return true;
 }
@@ -1312,7 +1312,7 @@ cache_activate(struct namecache *ncp)
 
 /*
  * Try to balance the LRU lists.  Pick some victim entries, and re-queue
- * them from the head of the active list to the tail of the inactive list. 
+ * them from the head of the active list to the tail of the inactive list.
  */
 static void
 cache_deactivate(void)
