@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.222 2020/05/30 20:23:25 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.223 2020/06/04 03:12:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.222 2020/05/30 20:23:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.223 2020/06/04 03:12:26 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -817,7 +817,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 		/* Keep absolute symbolic links inside emulation root */
 		searchdir = ndp->ni_erootdir;
 		if (searchdir == NULL ||
-		    (ndp->ni_pnbuf[1] == '.' 
+		    (ndp->ni_pnbuf[1] == '.'
 		     && ndp->ni_pnbuf[2] == '.'
 		     && ndp->ni_pnbuf[3] == '/')) {
 			ndp->ni_erootdir = NULL;
@@ -971,7 +971,7 @@ lookup_crossmount(struct namei_state *state,
 				break;
 			}
 
-			/* 
+			/*
 			 * Check to see if something is still mounted on it.
 			 */
 			if ((mp = foundobj->v_mountedhere) == NULL) {
@@ -1048,7 +1048,7 @@ lookup_crossmount(struct namei_state *state,
 
 /*
  * Call VOP_LOOKUP for a single lookup; return a new search directory
- * (used when crossing mountpoints up or searching union mounts down) and 
+ * (used when crossing mountpoints up or searching union mounts down) and
  * the found object, which for create operations may be NULL on success.
  *
  * Note that the new search directory may be null, which means the
@@ -1268,7 +1268,7 @@ done:
 }
 
 /*
- * Parse out the first path name component that we need to to consider. 
+ * Parse out the first path name component that we need to to consider.
  *
  * While doing this, attempt to use the name cache to fast-forward through
  * as many "easy" to find components of the path as possible.
@@ -1440,7 +1440,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		/*
 		 * If we exited the loop above having successfully located
 		 * the last component with a zero error code, and it's not a
-		 * symbolic link, then the parent directory is not needed. 
+		 * symbolic link, then the parent directory is not needed.
 		 * Release reference to the starting parent and make the
 		 * terminal parent disappear into thin air.
 		 */
@@ -2258,7 +2258,7 @@ namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
 }
 
 int
-nameiat_simple_kernel(struct vnode *dvp, const char *path, 
+nameiat_simple_kernel(struct vnode *dvp, const char *path,
 	namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct nameidata nd;
