@@ -169,6 +169,10 @@ malloc_tsd_dalloc(void *wrapper) {
 	a0dalloc(wrapper);
 }
 
+__BEGIN_DECLS
+void _malloc_thread_cleanup(void);
+__END_DECLS
+
 #if defined(JEMALLOC_MALLOC_THREAD_CLEANUP) || defined(_WIN32)
 #ifndef _WIN32
 JEMALLOC_EXPORT
