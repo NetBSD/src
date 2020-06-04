@@ -170,8 +170,8 @@ ps_inet_startcb(void *arg)
 	}
 #endif
 #ifdef DHCP6
-	if ((ctx->options & (DHCPCD_DHCP6 | DHCPCD_MASTER)) ==
-	    (DHCPCD_DHCP6 | DHCPCD_MASTER))
+	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MASTER)) ==
+	    (DHCPCD_IPV6 | DHCPCD_MASTER))
 	{
 		ctx->dhcp6_rfd = dhcp6_openudp(0, NULL);
 		if (ctx->dhcp6_rfd == -1)

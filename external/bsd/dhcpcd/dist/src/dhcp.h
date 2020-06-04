@@ -276,6 +276,7 @@ void dhcp_bind(struct interface *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
+int dhcp_dump(struct interface *);
 #endif /* INET */
 
 #endif /* DHCP_H */

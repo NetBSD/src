@@ -55,6 +55,12 @@ ps_root_doioctldom(int domain, unsigned long req, void *data, size_t len)
 
 	/* Only allow these ioctls */
 	switch(req) {
+#ifdef SIOCG80211NWID
+	case SIOCG80211NWID:	/* FALLTHROUGH */
+#endif
+#ifdef SIOCGETVLAN
+	case SIOCGETVLAN:	/* FALLTHROUGH */
+#endif
 #ifdef SIOCIFAFATTACH
 	case SIOCIFAFATTACH:	/* FALLTHROUGH */
 #endif
@@ -78,7 +84,7 @@ ps_root_doioctldom(int domain, unsigned long req, void *data, size_t len)
 	case SIOCSIFINFO_IN6:	/* FALLTHROUGH */
 #endif
 	case SIOCAIFADDR_IN6:	/* FALLTHROUGH */
-	case SIOCDIFADDR_IN6:	/* FALLTHROUGH */
+	case SIOCDIFADDR_IN6:
 		break;
 	default:
 		errno = EPERM;
@@ -115,53 +121,56 @@ ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
 {
 	char *p = data;
 	struct ifreq ifr = { .ifr_flags = 0 };
-	ssize_t err;
 
-	switch(req) {
-	case SIOCG80211NWID:	/* FALLTHROUGH */
-	case SIOCGETVLAN:
-		break;
-	default:
-		errno =	EPERM;
-		return -1;
-	}
+	/* ioctl filtering is done in ps_root_doioctldom */
 
-	if (len < IFNAMSIZ) {
+	if (len < IFNAMSIZ + 1) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	strlcpy(ifr.ifr_name, p, IFNAMSIZ);
-	ifr.ifr_data = p + IFNAMSIZ;
-	err = ps_root_doioctldom(PF_INET, req, &ifr, sizeof(ifr));
-	if (err != -1)
-		memmove(data, ifr.ifr_data, len - IFNAMSIZ);
-	return err;
+	len -= IFNAMSIZ;
+	memmove(data, p + IFNAMSIZ, len);
+	ifr.ifr_data = data;
+
+	return ps_root_doioctldom(PF_INET, req, &ifr, sizeof(ifr));
 }
 #endif
 
 ssize_t
-ps_root_os(struct ps_msghdr *psm, struct msghdr *msg)
+ps_root_os(struct ps_msghdr *psm, struct msghdr *msg,
+    void **rdata, size_t *rlen)
 {
 	struct iovec *iov = msg->msg_iov;
 	void *data = iov->iov_base;
 	size_t len = iov->iov_len;
+	ssize_t err;
 
 	switch (psm->ps_cmd) {
 	case PS_IOCTLLINK:
-		return ps_root_doioctldom(PF_LINK, psm->ps_flags, data, len);
+		err = ps_root_doioctldom(PF_LINK, psm->ps_flags, data, len);
+		break;
 	case PS_IOCTL6:
-		return ps_root_doioctldom(PF_INET6, psm->ps_flags, data, len);
+		err = ps_root_doioctldom(PF_INET6, psm->ps_flags, data, len);
+		break;
 	case PS_ROUTE:
 		return ps_root_doroute(data, len);
 #ifdef HAVE_PLEDGE
 	case PS_IOCTLINDIRECT:
-		return ps_root_doindirectioctl(psm->ps_flags, data, len);
+		err = ps_root_doindirectioctl(psm->ps_flags, data, len);
+		break;
 #endif
 	default:
 		errno = ENOTSUP;
 		return -1;
 	}
+
+	if (err != -1) {
+		*rdata = data;
+		*rlen = len;
+	}
+	return err;
 }
 
 static ssize_t
@@ -206,6 +215,11 @@ ps_root_indirectioctl(struct dhcpcd_ctx *ctx, unsigned long request,
     const char *ifname, void *data, size_t len)
 {
 	char buf[PS_BUFLEN];
+
+	if (IFNAMSIZ + len > sizeof(buf)) {
+		errno = ENOBUFS;
+		return -1;
+	}
 
 	strlcpy(buf, ifname, IFNAMSIZ);
 	memcpy(buf + IFNAMSIZ, data, len);

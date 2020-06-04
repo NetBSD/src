@@ -49,6 +49,7 @@
 #define	PS_READFILE		0x0014
 #define	PS_WRITEFILE		0x0015
 #define	PS_FILEMTIME		0x0016
+#define	PS_AUTH_MONORDM		0x0017
 
 /* BSD Commands */
 #define	PS_IOCTLLINK		0x0101

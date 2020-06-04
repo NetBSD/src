@@ -466,11 +466,13 @@ arp_announce(struct arp_state *astate)
 			    a2);
 			if (r == -1)
 				logerr(__func__);
-			else if (r != 0)
+			else if (r != 0) {
 				logdebugx("%s: ARP announcement "
 				    "of %s cancelled",
 				    a2->iface->name,
 				    inet_ntoa(a2->addr));
+				arp_announced(a2);
+			}
 		}
 	}
 

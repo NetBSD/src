@@ -36,5 +36,6 @@ void if_printoptions(void);
 char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
 pid_t script_exec(char *const *, char *const *);
 int send_interface(struct fd_list *, const struct interface *, int);
+int script_dump(const char *, size_t);
 int script_runreason(const struct interface *, const char *);
 #endif

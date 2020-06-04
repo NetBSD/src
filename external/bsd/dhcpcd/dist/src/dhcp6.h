@@ -243,9 +243,10 @@ ssize_t dhcp6_env(FILE *, const char *, const struct interface *,
     const struct dhcp6_message *, size_t);
 void dhcp6_free(struct interface *);
 void dhcp6_handleifa(int, struct ipv6_addr *, pid_t);
-int dhcp6_dadcompleted(const struct interface *);
+bool dhcp6_dadcompleted(const struct interface *);
 void dhcp6_abort(struct interface *);
 void dhcp6_drop(struct interface *, const char *);
+int dhcp6_dump(struct interface *);
 #endif /* DHCP6 */
 
 #endif /* DHCP6_H */
