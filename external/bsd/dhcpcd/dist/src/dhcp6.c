@@ -881,7 +881,7 @@ dhcp6_makemessage(struct interface *ifp)
 #ifdef AUTH
 	auth_len = 0;
 	if (ifo->auth.options & DHCPCD_AUTH_SEND) {
-		ssize_t alen = dhcp_auth_encode(&ifo->auth,
+		ssize_t alen = dhcp_auth_encode(ifp->ctx, &ifo->auth,
 		    state->auth.token, NULL, 0, 6, type, NULL, 0);
 		if (alen != -1 && alen > UINT16_MAX) {
 			errno = ERANGE;
@@ -1196,9 +1196,9 @@ dhcp6_update_auth(struct interface *ifp, struct dhcp6_message *m, size_t len)
 		return -1;
 
 	state = D6_STATE(ifp);
-	return dhcp_auth_encode(&ifp->options->auth, state->auth.token,
-	    (uint8_t *)state->send, state->send_len,
-	    6, state->send->type, opt, opt_len);
+	return dhcp_auth_encode(ifp->ctx, &ifp->options->auth,
+	    state->auth.token, (uint8_t *)state->send, state->send_len, 6,
+	    state->send->type, opt, opt_len);
 }
 #endif
 
@@ -1483,7 +1483,7 @@ void dhcp6_renew(struct interface *ifp)
 	dhcp6_startrenew(ifp);
 }
 
-int
+bool
 dhcp6_dadcompleted(const struct interface *ifp)
 {
 	const struct dhcp6_state *state;
@@ -1493,9 +1493,9 @@ dhcp6_dadcompleted(const struct interface *ifp)
 	TAILQ_FOREACH(ap, &state->addrs, next) {
 		if (ap->flags & IPV6_AF_ADDED &&
 		    !(ap->flags & IPV6_AF_DADCOMPLETED))
-			return 0;
+			return false;
 	}
-	return 1;
+	return true;
 }
 
 static void
@@ -3319,7 +3319,7 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 			loginfox("%s: accepted reconfigure key", ifp->name);
 	} else if (ifo->auth.options & DHCPCD_AUTH_SEND) {
 		if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
-			logerr("%s: no authentication from %s",
+			logerrx("%s: no authentication from %s",
 			    ifp->name, sfrom);
 			return;
 		}
@@ -3595,15 +3595,12 @@ dhcp6_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, struct ipv6_addr *ia)
 	}
 
 	if (r->type == DHCP6_RECONFIGURE) {
-		logdebugx("%s: RECONFIGURE6 recv from %s,"
-		    " sending to all interfaces",
-		    ifp->name, sfrom);
-		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-			state = D6_CSTATE(ifp);
-			if (state != NULL && state->send != NULL)
-				dhcp6_recvif(ifp, sfrom, r, len);
+		if (!IN6_IS_ADDR_LINKLOCAL(&from->sin6_addr)) {
+			logerrx("%s: RECONFIGURE6 recv from %s, not LL",
+			    ifp->name, sfrom);
+			return;
 		}
-		return;
+		goto recvif;
 	}
 
 	state = D6_CSTATE(ifp);
@@ -3679,6 +3676,7 @@ dhcp6_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, struct ipv6_addr *ia)
 	len = (size_t)tlen;
 #endif
 
+recvif:
 	dhcp6_recvif(ifp, sfrom, r, len);
 }
 
@@ -4041,6 +4039,19 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 			}
 			dhcp_unlink(ifp->ctx, state->leasefile);
 		}
+#ifdef AUTH
+		else if (state->auth.reconf != NULL) {
+			/*
+			 * Drop the lease as the token may only be present
+			 * in the initial reply message and not subsequent
+			 * renewals.
+			 * If dhcpcd is restarted, the token is lost.
+			 * XXX persist this in another file?
+			 */
+			dhcp_unlink(ifp->ctx, state->leasefile);
+		}
+#endif
+
 		dhcp6_freedrop_addrs(ifp, drop, NULL);
 		free(state->old);
 		state->old = state->new;
@@ -4291,5 +4302,26 @@ delegated:
 #endif
 
 	return 1;
+}
+#endif
+
+#ifndef SMALL
+int
+dhcp6_dump(struct interface *ifp)
+{
+	struct dhcp6_state *state;
+
+	ifp->if_data[IF_DATA_DHCP6] = state = calloc(1, sizeof(*state));
+	if (state == NULL) {
+		logerr(__func__);
+		return -1;
+	}
+	TAILQ_INIT(&state->addrs);
+	if (dhcp6_readlease(ifp, 0) == -1) {
+		logerr("dhcp6_readlease");
+		return -1;
+	}
+	state->reason = "DUMP6";
+	return script_runreason(ifp, state->reason);
 }
 #endif
