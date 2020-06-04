@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.59 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.60 2020/06/04 11:28:00 nia Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 13, 2015
+.Dd June 4, 2020
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -81,8 +81,8 @@ struct addrinfo {
 	int ai_socktype;	/* socket type */
 	int ai_protocol;	/* protocol for socket */
 	socklen_t ai_addrlen;	/* length of socket-address */
-	struct sockaddr *ai_addr; /* socket-address for socket */
 	char *ai_canonname;	/* canonical name for service location */
+	struct sockaddr *ai_addr; /* socket-address for socket */
 	struct addrinfo *ai_next; /* pointer to next in list */
 };
 .Ed
