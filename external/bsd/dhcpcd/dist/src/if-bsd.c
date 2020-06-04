@@ -100,10 +100,12 @@
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 #endif
 
-/* Ignore these interface names which look like ethernet but are virtual. */
+/* Ignore these interface names which look like ethernet but are virtual or
+ * just won't work without explicit configuration. */
 static const char * const ifnames_ignore[] = {
 	"bridge",
 	"fwe",		/* Firewire */
+	"fwip",		/* Firewire */
 	"tap",
 	"xvif",		/* XEN DOM0 -> guest interface */
 	NULL

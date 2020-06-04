@@ -1,4 +1,4 @@
-/* stSPDX-License-Identifier: BSD-2-Clause */
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
@@ -193,6 +193,8 @@ script_buftoenv(struct dhcpcd_ctx *ctx, char *buf, size_t len)
 		}
 	}
 	assert(*(bufp - 1) == '\0');
+	if (nenv == 0)
+		return NULL;
 
 	if (ctx->script_envlen < nenv) {
 		env = reallocarray(ctx->script_env, nenv + 1, sizeof(*env));
@@ -235,6 +237,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 #ifdef DHCP6
 	const struct dhcp6_state *d6_state;
 #endif
+	bool is_stdin = ifp->name[0] == '\0';
 
 #ifdef HAVE_OPEN_MEMSTREAM
 	if (ctx->script_fp == NULL) {
@@ -264,23 +267,19 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	}
 #endif
 
-	/* Needed for scripts */
-	path = getenv("PATH");
-	if (efprintf(fp, "PATH=%s", path == NULL ? DEFAULT_PATH:path) == -1)
-		goto eexit;
-	if (efprintf(fp, "reason=%s", reason) == -1)
-		goto eexit;
-	if (efprintf(fp, "pid=%d", getpid()) == -1)
-		goto eexit;
-
-#ifdef PRIVSEP
-	if (ctx->options & DHCPCD_PRIVSEP && ctx->ps_user != NULL) {
-		if (efprintf(fp, "chroot=%s", ctx->ps_user->pw_dir) == -1)
+	if (!(ifp->ctx->options & DHCPCD_DUMPLEASE)) {
+		/* Needed for scripts */
+		path = getenv("PATH");
+		if (efprintf(fp, "PATH=%s",
+		    path == NULL ? DEFAULT_PATH : path) == -1)
+			goto eexit;
+		if (efprintf(fp, "pid=%d", getpid()) == -1)
 			goto eexit;
 	}
-	if (strcmp(reason, "CHROOT") == 0)
-		goto make;
-#endif
+	if (!is_stdin) {
+		if (efprintf(fp, "reason=%s", reason) == -1)
+			goto eexit;
+	}
 
 	ifo = ifp->options;
 #ifdef INET
@@ -340,9 +339,10 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		protocol = PROTO_DHCP;
 #endif
 
-
-	if (efprintf(fp, "interface=%s", ifp->name) == -1)
-		goto eexit;
+	if (!is_stdin) {
+		if (efprintf(fp, "interface=%s", ifp->name) == -1)
+			goto eexit;
+	}
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		goto dumplease;
 	if (efprintf(fp, "ifcarrier=%s",
@@ -508,9 +508,6 @@ dumplease:
 				goto eexit;
 	}
 
-#ifdef PRIVSEP
-make:
-#endif
 	/* Convert buffer to argv */
 	fflush(fp);
 
@@ -535,6 +532,9 @@ make:
 	fclose(fp);
 	fp = NULL;
 #endif
+
+	if (is_stdin)
+		return buf_pos;
 
 	if (script_buftoenv(ctx, ctx->script_buf, (size_t)buf_pos) == NULL)
 		goto eexit;
@@ -686,22 +686,47 @@ script_run(struct dhcpcd_ctx *ctx, char **argv)
 }
 
 int
+script_dump(const char *env, size_t len)
+{
+	const char *ep = env + len;
+
+	if (len == 0)
+		return 0;
+
+	if (*(ep - 1) != '\0') {
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (; env < ep; env += strlen(env) + 1) {
+		if (strncmp(env, "new_", 4) == 0)
+			env += 4;
+		printf("%s\n", env);
+	}
+	return 0;
+}
+
+int
 script_runreason(const struct interface *ifp, const char *reason)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 	char *argv[2];
 	int status = 0;
 	struct fd_list *fd;
+	long buflen;
 
 	if (ctx->script == NULL &&
 	    TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
 		return 0;
 
 	/* Make our env */
-	if (make_env(ifp->ctx, ifp, reason) == -1) {
+	if ((buflen = make_env(ifp->ctx, ifp, reason)) == -1) {
 		logerr(__func__);
 		return -1;
 	}
+
+	if (strncmp(reason, "DUMP", 4) == 0)
+		return script_dump(ctx->script_buf, (size_t)buflen);
 
 	if (ctx->script == NULL)
 		goto send_listeners;

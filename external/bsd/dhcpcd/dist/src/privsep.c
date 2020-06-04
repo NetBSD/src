@@ -131,6 +131,41 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	return 0;
 }
 
+static int
+ps_setbuf0(int fd, int ctl, int minlen)
+{
+	int len;
+	socklen_t slen;
+
+	slen = sizeof(len);
+	if (getsockopt(fd, SOL_SOCKET, ctl, &len, &slen) == -1)
+		return -1;
+
+#ifdef __linux__
+	len /= 2;
+#endif
+	if (len >= minlen)
+		return 0;
+
+	return setsockopt(fd, SOL_SOCKET, ctl, &minlen, sizeof(minlen));
+}
+
+static int
+ps_setbuf(int fd)
+{
+	/* Ensure we can receive a fully sized privsep message.
+	 * Double the send buffer. */
+	int minlen = (int)sizeof(struct ps_msg);
+
+	if (ps_setbuf0(fd, SO_RCVBUF, minlen) == -1 ||
+	    ps_setbuf0(fd, SO_SNDBUF, minlen * 2) == -1)
+	{
+		logerr(__func__);
+		return -1;
+	}
+	return 0;
+}
+
 pid_t
 ps_dostart(struct dhcpcd_ctx *ctx,
     pid_t *priv_pid, int *priv_fd,
@@ -160,11 +195,13 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	case 0:
 		*priv_fd = fd[1];
 		close(fd[0]);
+		ps_setbuf(*priv_fd);
 		break;
 	default:
 		*priv_pid = pid;
 		*priv_fd = fd[0];
 		close(fd[1]);
+		ps_setbuf(*priv_fd);
 		if (recv_unpriv_msg == NULL)
 			;
 #ifdef HAVE_CAPSICUM
@@ -206,12 +243,8 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		ctx->ps_inet_fd = -1;
 	}
 
-	if (eloop_signal_set_cb(ctx->eloop,
-	    dhcpcd_signals, dhcpcd_signals_len, signal_cb, ctx) == -1)
-	{
-		logerr("%s: eloop_signal_set_cb", __func__);
-		goto errexit;
-	}
+	eloop_signal_set_cb(ctx->eloop,
+	    dhcpcd_signals, dhcpcd_signals_len, signal_cb, ctx);
 
 	/* ctx->sigset aready has the initial sigmask set in main() */
 	if (eloop_signal_mask(ctx->eloop, NULL) == -1) {
@@ -251,67 +284,35 @@ errexit:
 		(void)ps_sendcmd(ctx, *priv_fd, PS_STOP, 0, NULL, 0);
 	shutdown(*priv_fd, SHUT_RDWR);
 	*priv_fd = -1;
+	eloop_exit(ctx->eloop, EXIT_FAILURE);
 	return -1;
 }
 
 int
 ps_dostop(struct dhcpcd_ctx *ctx, pid_t *pid, int *fd)
 {
-	int status;
+	int err = 0;
 
 #ifdef PRIVSEP_DEBUG
 	logdebugx("%s: pid %d fd %d", __func__, *pid, *fd);
 #endif
-	if (*pid == 0)
-		return 0;
-	eloop_event_delete(ctx->eloop, *fd);
-	if (ps_sendcmd(ctx, *fd, PS_STOP, 0, NULL, 0) == -1 &&
-	    errno != ECONNRESET)
-		logerr(__func__);
-	if (shutdown(*fd, SHUT_RDWR) == -1 && errno != ENOTCONN)
-		logerr(__func__);
-	close(*fd);
-	*fd = -1;
-	/* We won't have permission for all processes .... */
-#if 0
-	if (kill(*pid, SIGTERM) == -1)
-		logerr(__func__);
-#endif
-	status = 0;
 
-#ifdef HAVE_CAPSICUM
-	unsigned int cap_mode = 0;
-	int cap_err = cap_getmode(&cap_mode);
-
-	if (cap_err == -1) {
-		if (errno != ENOSYS)
-			logerr("%s: cap_getmode", __func__);
-	} else if (cap_mode != 0)
-		goto nowait;
-#endif
-
-	/* Wait for the process to finish */
-	while (waitpid(*pid, &status, 0) == -1) {
-		if (errno != EINTR) {
-			logerr("%s: waitpid", __func__);
-			status = 0;
-			break;
+	if (*fd != -1) {
+		eloop_event_delete(ctx->eloop, *fd);
+		if (ps_sendcmd(ctx, *fd, PS_STOP, 0, NULL, 0) == -1 ||
+		    shutdown(*fd, SHUT_RDWR) == -1)
+		{
+			logerr(__func__);
+			err = -1;
 		}
-#ifdef PRIVSEP_DEBUG
-		else
-			logerr("%s: waitpid ", __func__);
-#endif
+		close(*fd);
+		*fd = -1;
 	}
-#ifdef HAVE_CAPSICUM
-nowait:
-#endif
+
+	/* Don't wait for the process as it may not respond to the shutdown
+	 * request. We'll reap the process on receipt of SIGCHLD. */
 	*pid = 0;
-
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: status %d", __func__, status);
-#endif
-
-	return status;
+	return err;
 }
 
 int
@@ -507,7 +508,8 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 #ifdef PRIVSEP_DEBUG
 	logdebugx("%s: %zd", __func__, len);
 #endif
-	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED)
+	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
 		eloop_exit(ctx->eloop, len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 	return len;
 }
@@ -650,8 +652,12 @@ ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint16_t cmd, int wfd)
 #ifdef PRIVSEP_DEBUG
 	logdebugx("%s: recv fd %d, %zd bytes", __func__, rfd, len);
 #endif
-	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED) {
-		eloop_exit(ctx->eloop, len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+
+	if (len == -1 || len == 0) {
+		if (ctx->options & DHCPCD_FORKED &&
+		    !(ctx->options & DHCPCD_PRIVSEPROOT))
+			eloop_exit(ctx->eloop,
+			    len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 		return len;
 	}
 
@@ -660,7 +666,8 @@ ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint16_t cmd, int wfd)
 #ifdef PRIVSEP_DEBUG
 	logdebugx("%s: send fd %d, %zu bytes", __func__, wfd, len);
 #endif
-	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED)
+	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED &&
+	    !(ctx->options & DHCPCD_PRIVSEPROOT))
 		eloop_exit(ctx->eloop, len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 	return len;
 }
@@ -682,8 +689,6 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd,
 	logdebugx("%s: %zd", __func__, len);
 #endif
 
-	if (len == -1 && (errno == ECONNRESET || errno == EBADF))
-		len = 0;
 	if (len == -1 || len == 0)
 		stop = true;
 	else {
