@@ -18,8 +18,7 @@
 #define	HAVE_SYS_QUEUE_H
 #define	HAVE_SYS_RBTREE_H
 #define	HAVE_REALLOCARRAY
-#define	HAVE_KQUEUE
-#define	HAVE_KQUEUE1
+#define	HAVE_POLLTS
 #define	HAVE_SYS_BITOPS_H
 #define	HAVE_MD5_H
 #define	SHA2_H			<sha2.h>
