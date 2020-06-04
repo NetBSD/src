@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2698 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2699 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -216,3 +216,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	postfix(1): Import version 3.5.2. [christos 20200525]
 	OpenSSH: Import 8.3. [christos 20200528]
 	evbarm: Add install media for earmv7hf and aarch64. [jmcneill 20200528]
+	dhcpcd: Import version 9.1.1 [roy 20200604]
