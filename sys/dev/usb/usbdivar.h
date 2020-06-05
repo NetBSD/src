@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.123 2020/05/15 12:34:52 maxv Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.124 2020/06/05 17:20:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ struct usbd_bus {
 #define USBHCTYPE_EHCI		4
 #define USBHCTYPE_XHCI		5
 #define USBHCTYPE_VHCI		6
+	int			ub_busnum;
 	const struct usbd_bus_methods
 			       *ub_methods;
 	uint32_t		ub_pipesize;	/* size of a pipe struct */

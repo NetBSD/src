@@ -1,4 +1,4 @@
-/*      $NetBSD: kcov.h,v 1.9 2020/05/15 13:09:02 maxv Exp $        */
+/*      $NetBSD: kcov.h,v 1.10 2020/06/05 17:20:57 maxv Exp $        */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@ struct kcov_ioc_remote_attach {
 };
 
 #define KCOV_REMOTE_VHCI	0
+#define KCOV_REMOTE_VHCI_ID(bus, port)	\
+	(((uint64_t)bus << 32ULL) | ((uint64_t)port & 0xFFFFFFFFULL))
 
 #define KCOV_MODE_NONE		0
 #define KCOV_MODE_TRACE_PC	1
