@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uboot.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_uboot.h,v 1.2 2020/06/05 07:17:38 simonb Exp $	*/
 
 #ifndef _EVBMIPS_OCTEON_UBOOT_H_
 #define _EVBMIPS_OCTEON_UBOOT_H_
@@ -54,5 +54,42 @@ extern struct octeon_btinfo octeon_btinfo;
 
 /* obt_board_type */
 #define BOARD_TYPE_UBIQUITI_E100	20002
+
+
+struct octeon_bootmem_desc {
+#if BYTE_ORDER == BIG_ENDIAN
+	uint32_t	bmd_lock;
+	uint32_t	bmd_flags;
+	uint64_t	bmd_head_addr;
+
+	uint32_t	bmd_major_version;
+	uint32_t	bmd_minor_version;
+	uint64_t	bmd_app_data_addr;
+	uint64_t	bmd_app_data_size;
+
+	uint32_t	bmd_named_block_num_blocks;
+	uint32_t	bmd_named_block_name_len;
+	uint64_t	bmd_named_block_array_addr;
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+	uint32_t	bmd_flags;
+	uint32_t	bmd_lock;
+	uint64_t	bmd_head_addr;
+
+	uint32_t	bmd_minor_version;
+	uint32_t	bmd_major_version;
+	uint64_t	bmd_app_data_addr;
+	uint64_t	bmd_app_data_size;
+
+	uint32_t	bmd_named_block_name_len;
+	uint32_t	bmd_named_block_num_blocks;
+	uint64_t	bmd_named_block_array_addr;
+#endif
+};
+
+struct octeon_bootmem_block_header {
+	uint64_t	bbh_next_block_addr;
+	uint64_t	bbh_size;
+};
 
 #endif /* _EVBMIPS_OCTEON_UBOOT_H_ */

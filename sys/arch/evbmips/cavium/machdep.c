@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2020/06/04 03:08:59 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2020/06/05 07:17:38 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@
 #include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2020/06/04 03:08:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2020/06/05 07:17:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2020/06/04 03:08:59 simonb Exp $");
 static void	mach_init_vector(void);
 static void	mach_init_bus_space(void);
 static void	mach_init_console(void);
-static void	mach_init_memory(u_quad_t);
+static void	mach_init_memory(void);
 
 #include "com.h"
 #if NCOM > 0
@@ -173,6 +173,9 @@ int	netboot;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
+extern char kernel_text[];
+extern char edata[];
+extern char end[];
 
 void	mach_init(uint64_t, uint64_t, uint64_t, uint64_t);
 
@@ -188,13 +191,10 @@ void
 mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
 	uint64_t btinfo_paddr;
-	u_quad_t memsize;
 	int corefreq;
-	extern char edata[], end[];
 
 	/* clear the BSS segment */
 	memset(edata, 0, end - edata);
-
 
 	KASSERT(MIPS_XKPHYS_P(arg3));
 	btinfo_paddr = mips3_ld(arg3 + OCTEON_BTINFO_PADDR_OFFSET);
@@ -206,11 +206,6 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	    sizeof(octeon_btinfo));
 
 	corefreq = octeon_btinfo.obt_eclock_hz;
-#ifdef OCTEON_MEMSIZE // avoid uvm issue
-	memsize = OCTEON_MEMSIZE;
-#else
-	memsize = octeon_btinfo.obt_dram_size * 1024 * 1024;
-#endif
 
 	octeon_cal_timer(corefreq);
 
@@ -233,7 +228,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 	mach_init_console();
 
-	mach_init_memory(memsize);
+	mach_init_memory();
 
 	/*
 	 * Allocate uarea page for lwp0 and set it.
@@ -325,34 +320,42 @@ mach_init_console(void)
 #endif /* NCOM > 0 */
 }
 
-void
-mach_init_memory(u_quad_t memsize)
+static void
+mach_init_memory(void)
 {
-	extern char kernel_text[];
-	extern char end[];
+	struct octeon_bootmem_desc *memdesc;
+	struct octeon_bootmem_block_header *block;
+	paddr_t blockaddr;
+	int i;
 
-	physmem = btoc(memsize);
+	mem_cluster_cnt = 0;
 
-	if (memsize <= 256 * 1024 * 1024) {
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = memsize;
-		mem_cluster_cnt = 1;
-	} else if (memsize <= 512 * 1024 * 1024) {
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = 256 * 1024 * 1024;
-		mem_clusters[1].start = 0x410000000ULL;
-		mem_clusters[1].size = memsize - 256 * 1024 * 1024;
-		mem_cluster_cnt = 2;
-	} else {
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = 256 * 1024 * 1024;
-		mem_clusters[1].start = 0x20000000;
-		mem_clusters[1].size = memsize - 512 * 1024 * 1024;
-		mem_clusters[2].start = 0x410000000ULL;
-		mem_clusters[2].size = 256 * 1024 * 1024;
-		mem_cluster_cnt = 3;
+	if (octeon_btinfo.obt_phy_mem_desc_addr == 0)
+		panic("bootmem desc is missing");
+
+	memdesc = (void *)MIPS_PHYS_TO_XKPHYS(CCA_CACHEABLE,
+                    octeon_btinfo.obt_phy_mem_desc_addr);
+	printf("u-boot bootmem desc @ 0x%x version %d.%d\n",
+	    octeon_btinfo.obt_phy_mem_desc_addr,
+	    memdesc->bmd_major_version, memdesc->bmd_minor_version);
+	if (memdesc->bmd_major_version > 3)
+		panic("unhandled bootmem desc version %d.%d",
+		    memdesc->bmd_major_version, memdesc->bmd_minor_version);
+
+	blockaddr = memdesc->bmd_head_addr;
+	if (blockaddr == 0)
+		panic("bootmem list is empty");
+
+	for (i = 0; i < VM_PHYSSEG_MAX && blockaddr != 0;
+	    i++, blockaddr = block->bbh_next_block_addr) {
+		block = (void *)MIPS_PHYS_TO_XKPHYS(CCA_CACHEABLE, blockaddr);
+
+		mem_clusters[mem_cluster_cnt].start = blockaddr;
+		mem_clusters[mem_cluster_cnt].size = block->bbh_size;
+		mem_cluster_cnt++;
 	}
 
+	physmem = btoc(octeon_btinfo.obt_dram_size * 1024 * 1024);
 
 #ifdef MULTIPROCESSOR
 	const u_int cores = mipsNN_cp0_ebase_read() & MIPS_EBASE_CPUNUM;
