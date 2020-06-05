@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.41 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.42 2020/06/05 08:01:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.41 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.42 2020/06/05 08:01:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -94,7 +94,6 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305 }, 0 },
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC8700 }, 0 },
 
 	/*
