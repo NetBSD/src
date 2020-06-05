@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.9 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.10 2020/06/05 09:18:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.9 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.10 2020/06/05 09:18:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -368,8 +368,8 @@ octrnm_iobdma(struct octrnm_softc *sc, uint64_t *buf, unsigned nwords)
 	    __SHIFTIN(RNM_IOBDMA_MAJORDID, IOBDMA_MAJORDID) |
 	    __SHIFTIN(RNM_IOBDMA_SUBDID, IOBDMA_SUBDID);
 
-	KASSERT(nwords < 128);	/* iobdma address restriction */
-	KASSERT(nwords <= 32);	/* octeon_cvmseg_map limitation */
+	KASSERT(nwords < 128);			/* iobdma address restriction */
+	KASSERT(nwords <= CVMSEG_LM_RNM_SIZE);	/* size of CVMSEM LM buffer */
 
 	octeon_iobdma_write_8(iobdma);
 	OCTEON_SYNCIOBDMA;
