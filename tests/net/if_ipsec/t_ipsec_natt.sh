@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.4 2020/06/01 04:38:37 martin Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.5 2020/06/05 03:24:58 knakahara Exp $
 #
 # Copyright (c) 2018 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -33,7 +33,6 @@ BUS_LOCAL=./bus_ipsec_natt_local
 BUS_NAT=./bus_ipsec_natt_nat
 
 DEBUG=${DEBUG:-false}
-HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 
 setup_servers()
 {
@@ -386,7 +385,7 @@ test_ipsecif_natt_transport()
 	export RUMP_SERVER=$SOCK_NAT
 	$DEBUG && $HIJACKING_NPF npfctl list
 	#          192.168.0.2:4500 10.0.0.2:4500  via shmif1:65248
-	port_a=$($HIJACKING_NPF npfctl list | grep $ip_local_a | awk -F 'shmif1:' '/4500/ {print $2;}')
+	port_a=$(get_natt_port $ip_local_a $ip_nat_remote)
 	$DEBUG && echo port_a=$port_a
 	if [ -z "$port_a" ]; then
 		atf_fail "Failed to get a translated port on NAPT"
@@ -441,7 +440,7 @@ test_ipsecif_natt_transport()
 	export RUMP_SERVER=$SOCK_NAT
 	$DEBUG && $HIJACKING_NPF npfctl list
 	#          192.168.0.2:4500 10.0.0.2:4500  via shmif1:65248
-	port_b=$($HIJACKING_NPF npfctl list | grep $ip_local_b | awk -F 'shmif1:' '/4500/ {print $2;}')
+	port_b=$(get_natt_port $ip_local_b $ip_nat_remote)
 	$DEBUG && echo port_b=$port_b
 	if [ -z "$port_b" ]; then
 		atf_fail "Failed to get a translated port on NAPT"
