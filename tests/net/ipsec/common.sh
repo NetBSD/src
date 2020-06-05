@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.7 2017/10/20 03:43:51 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.8 2020/06/05 03:24:58 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -24,6 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 
 test_flush_entries()
 {
@@ -82,4 +84,15 @@ generate_pktproto()
 	else
 		echo $proto | tr 'a-z' 'A-Z'
 	fi
+}
+
+get_natt_port()
+{
+	local local_addr=$1
+	local remote_addr=$2
+	local port=""
+
+	# 10.0.1.2:4500         20.0.0.2:4500         shmif1     20.0.0.1:35574
+	port=$($HIJACKING_NPF npfctl list | grep $local_addr | awk -F "${remote_addr}:" '/4500/ {print $2;}')
+	echo $port
 }
