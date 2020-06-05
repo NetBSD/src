@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.16 2020/06/05 02:28:10 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.17 2020/06/05 02:30:54 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.16 2020/06/05 02:28:10 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.17 2020/06/05 02:30:54 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -1286,43 +1286,43 @@ static int
 imxccm_clk_set_rate_div(struct imxccm_softc *sc,
     struct imx6_clk *iclk, u_int rate)
 {
-        struct imx6_clk_div *div = &iclk->clk.div;
-        struct imx6_clk *parent;
+	struct imx6_clk_div *div = &iclk->clk.div;
+	struct imx6_clk *parent;
 
-        KASSERT(iclk->type == IMX6_CLK_DIV);
+	KASSERT(iclk->type == IMX6_CLK_DIV);
 
-        parent = imx6_clk_find(iclk->parent);
-        KASSERT(parent != NULL);
+	parent = imx6_clk_find(iclk->parent);
+	KASSERT(parent != NULL);
 
-        u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
-        u_int divider = rate_parent / rate;
+	u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
+	u_int divider = rate_parent / rate;
 
-        bus_space_handle_t ioh;
-        if (div->base == IMX6_CLK_REG_CCM_ANALOG)
-                ioh = sc->sc_ioh_analog;
-        else
-                ioh = sc->sc_ioh;
+	bus_space_handle_t ioh;
+	if (div->base == IMX6_CLK_REG_CCM_ANALOG)
+		ioh = sc->sc_ioh_analog;
+	else
+		ioh = sc->sc_ioh;
 
-        uint32_t v = bus_space_read_4(sc->sc_iot, ioh, div->reg);
-        v &= ~div->mask;
-        if (div->type == IMX6_CLK_DIV_TABLE) {
-                int n = -1;
+	uint32_t v = bus_space_read_4(sc->sc_iot, ioh, div->reg);
+	v &= ~div->mask;
+	if (div->type == IMX6_CLK_DIV_TABLE) {
+		int n = -1;
 
-                KASSERT(div->tbl != NULL);
-                for (int i = 0; div->tbl[i] != 0; i++)
-                        if (div->tbl[i] == divider)
-                                n = i;
+		KASSERT(div->tbl != NULL);
+		for (int i = 0; div->tbl[i] != 0; i++)
+			if (div->tbl[i] == divider)
+				n = i;
 
-                if (n >= 0)
-                        v |= __SHIFTIN(n, div->mask);
-                else
-                        return EINVAL;
-        } else {
-                v |= __SHIFTIN(divider - 1, div->mask);
-        }
-        bus_space_write_4(sc->sc_iot, ioh, div->reg, v);
+		if (n >= 0)
+			v |= __SHIFTIN(n, div->mask);
+		else
+			return EINVAL;
+	} else {
+		v |= __SHIFTIN(divider - 1, div->mask);
+	}
+	bus_space_write_4(sc->sc_iot, ioh, div->reg, v);
 
-        return 0;
+	return 0;
 }
 
 /*
