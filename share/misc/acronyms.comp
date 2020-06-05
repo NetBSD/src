@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.305 2020/06/03 14:19:10 sevan Exp $
+$NetBSD: acronyms.comp,v 1.306 2020/06/05 19:45:51 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -738,6 +738,7 @@ ILM	internal loopback mode
 ILOM	integrated lights-out management
 ILP	instruction level parallelism
 IM	instant messaging
+IME	input method editor
 IMAP	Internet Message Access Protocol
 IMC	integrated memory controller
 IMCR	interrupt mode configuration register
@@ -1413,6 +1414,7 @@ SCCP	skinny call control protocol
 SCCS	Source Code Control System
 SCI	scalable coherent interface
 SCI	system control interrupt
+SCIM	smart common input method
 SCM	software configuration management
 SCM	source code management
 SCM	storage-class memory
