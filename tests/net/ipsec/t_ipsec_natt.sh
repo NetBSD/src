@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.4 2020/06/01 04:38:37 martin Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.5 2020/06/05 03:24:58 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ BUS_REMOTE=./bus_ipsec_natt_remote
 BUS_GLOBAL=./bus_ipsec_natt_global
 
 DEBUG=${DEBUG:-false}
-HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 
 setup_servers_ipv4()
 {
@@ -325,7 +324,7 @@ test_ipsec_natt_transport_ipv4()
 	export RUMP_SERVER=$SOCK_NAT
 	$DEBUG && $HIJACKING_NPF npfctl list
 	#          10.0.1.2:4500    20.0.0.2:4500  via shmif1:9696
-	port=$($HIJACKING_NPF npfctl list | awk -F 'shmif1:' '/4500/ {print $2;}')
+	port=$(get_natt_port $ip_local $ip_nat_remote)
 	$DEBUG && echo port=$port
 	if [ -z "$port" ]; then
 		atf_fail "Failed to get a translated port on NAPT"
