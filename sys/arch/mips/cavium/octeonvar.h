@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.8 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.9 2020/06/05 09:18:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,26 +148,18 @@ struct cpu_softc {
 /*
  * CVMSEG (``scratch'') memory map
  */
+
+#define CVMSEG_LM_RNM_SIZE	16	/* limited by CN70XX hardware (why?) */
+#define CVMSEG_LM_ETHER_COUNT	4	/* limits number of cnmac devices */
+
 struct octeon_cvmseg_map {
-	/* 0-3 */
-	uint64_t		csm_xxx_0;
-	uint64_t		csm_xxx_1;
-	uint64_t		csm_xxx_2;
 	uint64_t		csm_pow_intr;
 
-	/* 4-19 */
 	struct octeon_cvmseg_ether_map {
-		uint64_t	csm_ether_fau_req;
 		uint64_t	csm_ether_fau_done;
-		uint64_t	csm_ether_fau_cmdptr;
-		uint64_t	csm_ether_xxx_3;
-	} csm_ether[4/* XXX */];
+	} csm_ether[CVMSEG_LM_ETHER_COUNT];
 
-	/* 20-31 */
-	uint64_t	xxx_20_32[32 - 20];
-
-	/* 32-63 */
-	uint64_t	csm_rnm[32];
+	uint64_t	csm_rnm[CVMSEG_LM_RNM_SIZE];
 } __packed;
 #define	OCTEON_CVMSEG_OFFSET(entry) \
 	offsetof(struct octeon_cvmseg_map, entry)
