@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.15 2019/11/12 04:32:36 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.16 2020/06/05 02:28:10 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.15 2019/11/12 04:32:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.16 2020/06/05 02:28:10 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -1297,8 +1297,6 @@ imxccm_clk_set_rate_div(struct imxccm_softc *sc,
         u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
         u_int divider = rate_parent / rate;
 
-        KASSERT(div->tbl != NULL);
-
         bus_space_handle_t ioh;
         if (div->base == IMX6_CLK_REG_CCM_ANALOG)
                 ioh = sc->sc_ioh_analog;
@@ -1309,6 +1307,8 @@ imxccm_clk_set_rate_div(struct imxccm_softc *sc,
         v &= ~div->mask;
         if (div->type == IMX6_CLK_DIV_TABLE) {
                 int n = -1;
+
+                KASSERT(div->tbl != NULL);
                 for (int i = 0; div->tbl[i] != 0; i++)
                         if (div->tbl[i] == divider)
                                 n = i;
