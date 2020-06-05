@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.218 2020/04/04 16:04:36 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.219 2020/06/05 17:20:56 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1785,8 +1785,9 @@ veriexec)
 	mkdev veriexec c %veriexec_chr% 0 600
 	;;
 
-vhci)
-	mkdev vhci c %vhci_chr% 0
+vhci[0-7]*)
+	unit=${i#vhci}
+	mkdev vhci$unit c %vhci_chr% $unit
 	;;
 
 ttyv[0-9]*)
