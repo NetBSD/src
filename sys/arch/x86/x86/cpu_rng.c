@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.14 2020/05/10 06:30:57 maxv Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.15 2020/06/05 21:48:03 kamil Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ cpu_rng(enum cpu_rng_mode mode, uint64_t *out)
 static void
 cpu_rng_get(size_t nbytes, void *cookie)
 {
-	const unsigned N = howmany(256, 64);
+#define N howmany(256, 64)
 	uint64_t buf[2*N];
 	unsigned i, nbits = 0;
 
@@ -269,6 +269,7 @@ cpu_rng_get(size_t nbytes, void *cookie)
 		}
 		rnd_add_data_sync(&cpu_rng_source, buf, sizeof buf, nbits);
 	}
+#undef N
 }
 
 void
