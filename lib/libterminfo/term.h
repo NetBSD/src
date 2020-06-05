@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.23 2020/03/13 15:19:25 roy Exp $ */
+/* $NetBSD: term.h,v 1.24 2020/06/05 22:08:10 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013, 2020 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ enum TINUMS {
  * dot_vert_spacing: Spacing of pins vertically in pins per inch
  * init_tabs: Tabs initially every #1 spaces
  * label_height: Number of rows in each label
- * label_width: Numbre of columns in each label
+ * label_width: Number of columns in each label
  * lines: Number of lines on a screen or a page
  * lines_of_memory: Lines of memory of > lines; 0 means varies
  * max_attributes: Maximum combined video attributes terminal can display
