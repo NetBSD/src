@@ -1,17 +1,13 @@
-#	$NetBSD: ERLITE,v 1.25 2020/05/31 04:56:35 simonb Exp $
+#	$NetBSD: ERLITE,v 1.26 2020/06/05 07:17:38 simonb Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.25 $"
+#ident 		"ERLITE-$Revision: 1.26 $"
 
 maxusers	32
-
-# XXX UVM freelists vs 4GB issue.  Enable this if you see hangs
-# waiting for memory when there are actual free pages around.
-#options 	OCTEON_MEMSIZE="(256*1024*1024)"
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
