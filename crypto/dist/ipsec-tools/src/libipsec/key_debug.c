@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.14 2018/05/28 20:45:38 maxv Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.15 2020/06/05 15:19:08 christos Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -418,7 +418,7 @@ kdebug_sadb_key(struct sadb_ext *ext)
 			(long)PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
 	}
 
-	ipsec_hexdump(key + sizeof(struct sadb_key),
+	ipsec_hexdump(key + 1,
 	              (int)((uint32_t)key->sadb_key_bits >> 3));
 	printf(" }\n");
 	return;
