@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.19 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.20 2020/06/05 09:18:35 simonb Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.19 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.20 2020/06/05 09:18:35 simonb Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -294,6 +294,16 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_port_type = ga->ga_port_type;
 	sc->sc_gmx = ga->ga_gmx;
 	sc->sc_gmx_port = ga->ga_gmx_port;
+
+	if (sc->sc_port >= CVMSEG_LM_ETHER_COUNT) {
+		/*
+		 * If we got here, increase CVMSEG_LM_ETHER_COUNT
+		 * in octeonvar.h .
+		 */
+		printf("%s: ERROR out of CVMSEG LM buffers\n",
+		    device_xname(self));
+		return;
+	}
 
 	sc->sc_init_flag = 0;
 	/*
