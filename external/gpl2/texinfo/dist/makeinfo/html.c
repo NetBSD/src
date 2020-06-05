@@ -1,4 +1,4 @@
-/*	$NetBSD: html.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: html.c,v 1.2 2020/06/05 12:47:28 rin Exp $	*/
 
 /* html.c -- html-related utilities.
    Id: html.c,v 1.28 2004/12/06 01:13:06 karl Exp 
@@ -447,7 +447,7 @@ rollback_empty_tag (char *tag)
     return 0;
 
   /* Find the end of the previous tag.  */
-  while (output_paragraph[check_position-1] != '>' && check_position > 0)
+  while (check_position > 0 && output_paragraph[check_position-1] != '>')
     check_position--;
 
   /* Save stuff between tag's end to output_paragraph's end.  */
@@ -464,7 +464,7 @@ rollback_empty_tag (char *tag)
     }
 
   /* Find the start of the previous tag.  */
-  while (output_paragraph[check_position-1] != '<' && check_position > 0)
+  while (check_position > 0 && output_paragraph[check_position-1] != '<')
     check_position--;
 
   /* Check to see if this is the tag.  */
