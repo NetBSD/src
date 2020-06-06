@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/07/16 13:56:31 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/06 21:26:00 thorpej Exp $
 
 NOMAN=		# defined
 
@@ -8,6 +8,6 @@ TESTSDIR=	${TESTSBASE}/lib/libprop
 
 LDADD+=		-lprop
 
-TESTS_C=	t_basic
+TESTS_C=	t_proplib
 
 .include <bsd.test.mk>

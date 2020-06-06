@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.841 2020/05/17 12:36:26 rillig Exp $
+# $NetBSD: mi,v 1.842 2020/06/06 21:26:00 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3551,7 +3551,8 @@
 ./usr/tests/lib/libprop				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libprop/t_basic			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libprop/t_basic			tests-obsolete		obsolete
+./usr/tests/lib/libprop/t_proplib		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libpthread/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
