@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.28 2019/02/03 11:59:43 mrg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.29 2020/06/06 15:45:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -127,6 +127,12 @@ do {								\
 #endif	/* LIBSA_PRINTF_LONGLONG_SUPPORT */
 
 static void
+null_sputchar(int c)
+{
+	sbuf++;
+}
+
+static void
 sputchar(int c)
 {
 
@@ -147,8 +153,9 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 
 	sbuf = buf;
 	ebuf = buf + size - 1;
-	kdoprnt(sputchar, fmt, ap);
-	*sbuf = '\0';
+	kdoprnt(buf == NULL ? null_sputchar : sputchar, fmt, ap);
+	if (buf != NULL)
+		*sbuf = '\0';
 	return sbuf - buf;
 }
 
