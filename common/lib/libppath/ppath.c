@@ -1,4 +1,4 @@
-/* $NetBSD: ppath.c,v 1.4 2012/12/29 20:08:23 christos Exp $ */
+/* $NetBSD: ppath.c,v 1.5 2020/06/06 22:28:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppath.c,v 1.4 2012/12/29 20:08:23 christos Exp $");
+__RCSID("$NetBSD: ppath.c,v 1.5 2020/06/06 22:28:07 thorpej Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -412,7 +412,7 @@ int
 ppath_create_string(prop_object_t o, const ppath_t *p, const char *s)
 {
 	return ppath_create_object_and_release(o, p,
-	    prop_string_create_cstring(s));
+	    prop_string_create_copy(s));
 }
 
 int
@@ -420,21 +420,21 @@ ppath_create_data(prop_object_t o, const ppath_t *p,
     const void *data, size_t size)
 {
 	return ppath_create_object_and_release(o, p,
-	    prop_data_create_data(data, size));
+	    prop_data_create_copy(data, size));
 }
 
 int
 ppath_create_uint64(prop_object_t o, const ppath_t *p, uint64_t u)
 {
 	return ppath_create_object_and_release(o, p,
-	    prop_number_create_unsigned_integer(u));
+	    prop_number_create_unsigned(u));
 }
 
 int
 ppath_create_int64(prop_object_t o, const ppath_t *p, int64_t i)
 {
 	return ppath_create_object_and_release(o, p,
-	    prop_number_create_integer(i));
+	    prop_number_create_signed(i));
 }
 
 int
@@ -746,14 +746,14 @@ ppath_copyset_data(prop_object_t o, prop_object_t *op, const ppath_t *p,
     const void *data, size_t size)
 {
 	return ppath_copyset_object_and_release(o, op, p,
-	    prop_data_create_data(data, size));
+	    prop_data_create_copy(data, size));
 }
 
 int
 ppath_set_data(prop_object_t o, const ppath_t *p, const void *data, size_t size)
 {
 	return ppath_set_object_and_release(o, p,
-	    prop_data_create_data(data, size));
+	    prop_data_create_copy(data, size));
 }
 
 int
@@ -767,7 +767,7 @@ ppath_get_data(prop_object_t o, const ppath_t *p, const void **datap,
 		return rc;
 
 	if (datap != NULL)
-		*datap = prop_data_data_nocopy(v);
+		*datap = prop_data_value(v);
 	if (sizep != NULL)
 		*sizep = prop_data_size(v);
 
@@ -783,10 +783,16 @@ ppath_dup_data(prop_object_t o, const ppath_t *p, void **datap, size_t *sizep)
 	if ((rc = ppath_get_object_of_type(o, p, &v, PROP_TYPE_DATA)) != 0)
 		return rc;
 
-	if (datap != NULL)
-		*datap = prop_data_data(v);
+	const size_t data_size = prop_data_size(v);
+
+	if (datap != NULL) {
+		void *buf = ppath_alloc(data_size);
+		if (buf != NULL)
+			(void) prop_data_copy_value(v, buf, data_size);
+		*datap = buf;
+	}
 	if (sizep != NULL)
-		*sizep = prop_data_size(v);
+		*sizep = data_size;
 
 	return 0;
 }
@@ -802,14 +808,14 @@ ppath_copyset_int64(prop_object_t o, prop_object_t *op, const ppath_t *p,
     int64_t i)
 {
 	return ppath_copyset_object_and_release(o, op, p,
-	    prop_number_create_integer(i));
+	    prop_number_create_signed(i));
 }
 
 int
 ppath_set_int64(prop_object_t o, const ppath_t *p, int64_t i)
 {
 	return ppath_set_object_and_release(o, p,
-	    prop_number_create_integer(i));
+	    prop_number_create_signed(i));
 }
 
 int
@@ -825,7 +831,7 @@ ppath_get_int64(prop_object_t o, const ppath_t *p, int64_t *ip)
 		return EFTYPE;
 
 	if (ip != NULL)
-		*ip = prop_number_integer_value(v);
+		*ip = prop_number_signed_value(v);
 
 	return 0;
 }
@@ -841,14 +847,14 @@ ppath_copyset_string(prop_object_t o, prop_object_t *op, const ppath_t *p,
     const char *s)
 {
 	return ppath_copyset_object_and_release(o, op, p,
-	    prop_string_create_cstring(s));
+	    prop_string_create_copy(s));
 }
 
 int
 ppath_set_string(prop_object_t o, const ppath_t *p, const char *s)
 {
 	return ppath_set_object_and_release(o, p,
-	    prop_string_create_cstring(s));
+	    prop_string_create_copy(s));
 }
 
 int
@@ -861,7 +867,7 @@ ppath_get_string(prop_object_t o, const ppath_t *p, const char **sp)
 		return rc;
 
 	if (sp != NULL)
-		*sp = prop_string_cstring_nocopy(v);
+		*sp = prop_string_value(v);
 
 	return 0;
 }
@@ -875,8 +881,14 @@ ppath_dup_string(prop_object_t o, const ppath_t *p, char **sp)
 	if ((rc = ppath_get_object_of_type(o, p, &v, PROP_TYPE_STRING)) != 0)
 		return rc;
 
-	if (sp != NULL)
-		*sp = prop_string_cstring(v);
+	const size_t string_size = prop_string_size(v);
+
+	if (sp != NULL) {
+		char *cp = ppath_alloc(string_size + 1);
+		if (cp != NULL)
+			(void)prop_string_copy_value(v, cp, string_size + 1);
+		*sp = cp;
+	}
 
 	return 0;
 }
@@ -892,14 +904,14 @@ ppath_copyset_uint64(prop_object_t o, prop_object_t *op, const ppath_t *p,
     uint64_t u)
 {
 	return ppath_copyset_object_and_release(o, op, p,
-	    prop_number_create_unsigned_integer(u));
+	    prop_number_create_unsigned(u));
 }
 
 int
 ppath_set_uint64(prop_object_t o, const ppath_t *p, uint64_t u)
 {
 	return ppath_set_object_and_release(o, p,
-	    prop_number_create_unsigned_integer(u));
+	    prop_number_create_unsigned(u));
 }
 
 int
@@ -915,7 +927,7 @@ ppath_get_uint64(prop_object_t o, const ppath_t *p, uint64_t *up)
 		return EFTYPE;
 
 	if (up != NULL)
-		*up = prop_number_unsigned_integer_value(v);
+		*up = prop_number_unsigned_value(v);
 
 	return 0;
 }
