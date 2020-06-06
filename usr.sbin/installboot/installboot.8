@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.98 2020/06/06 10:22:45 tsutsui Exp $
+.\"	$NetBSD: installboot.8,v 1.99 2020/06/06 20:30:23 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -774,9 +774,10 @@ already present in the SysVBFS partition on the disk:
 .Bd -ragged -offset indent-two -compact
 .Em Note :
 On
-.Nx Ns /ews4800mips the p partition is the
+.Nx Ns /ews4800mips
+the p partition is the
 .Dq whole disk
-(i.e. raw) partition.
+(i.e., raw) partition.
 .Ed
 .Ss Nx Ns /i386 and Nx Ns /amd64
 Install new boot blocks on an existing
