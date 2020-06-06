@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.14 2018/05/28 12:42:45 wiz Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.15 2020/06/06 22:33:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.14 2018/05/28 12:42:45 wiz Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.15 2020/06/06 22:33:23 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -108,7 +108,7 @@ of_tree_mkprop(struct of_node *node, prop_dictionary_t propdict,
 	prop_data_t obj;
 	const char *name;
 
-	name = prop_dictionary_keysym_cstring_nocopy(key);
+	name = prop_dictionary_keysym_value(key);
 	obj = prop_dictionary_get_keysym(propdict, key);
 
 	prop = malloc(sizeof(*prop) + strlen(name) + 1);
@@ -131,8 +131,10 @@ of_tree_mkprop(struct of_node *node, prop_dictionary_t propdict,
 	of_prop_count++;
 
 	prop->prop_length = prop_data_size(obj);
-	if (prop->prop_length)
-		prop->prop_data = prop_data_data(obj);
+	if (prop->prop_length) {
+		prop->prop_data = malloc(prop->prop_length);
+		prop_data_copy_value(obj, prop->prop_data, prop->prop_length);
+	}
 }
 
 static struct of_node *
@@ -163,7 +165,7 @@ of_tree_fill(prop_dictionary_t dict, struct of_node *node)
 	prop_array_t children;
 	unsigned int i, count;
 
-	node->of_nodeid = prop_number_unsigned_integer_value(
+	node->of_nodeid = prop_number_unsigned_value(
 	    prop_dictionary_get(dict, "node"));
 
 	propdict = prop_dictionary_get(dict, "properties");
@@ -224,7 +226,7 @@ of_proplib_mkprop(int fd, int nodeid, char *name)
 		free(ofio.of_buf);
 		return NULL;
 	}
-	obj = prop_data_create_data(ofio.of_buf, ofio.of_buflen);
+	obj = prop_data_create_copy(ofio.of_buf, ofio.of_buflen);
 	free(ofio.of_buf);
 	return obj;
 }
@@ -249,7 +251,7 @@ of_proplib_tree_fill(int fd, int nodeid)
 
 	dict = prop_dictionary_create();
 	prop_dictionary_set(dict, "node",
-	    prop_number_create_unsigned_integer(nodeid));
+	    prop_number_create_unsigned(nodeid));
 
 	propdict = prop_dictionary_create();
 	for (;;) {
