@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.131 2020/06/04 20:54:37 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.132 2020/06/06 08:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.131 2020/06/04 20:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.132 2020/06/06 08:56:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -645,7 +645,7 @@ xhci_detach(struct xhci_softc *sc, int flags)
 
 	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), 0);
 	xhci_rt_write_8(sc, XHCI_ERSTBA(0), 0);
-	xhci_rt_write_8(sc, XHCI_ERDP(0), 0|XHCI_ERDP_LO_BUSY);
+	xhci_rt_write_8(sc, XHCI_ERDP(0), 0 | XHCI_ERDP_BUSY);
 	xhci_ring_free(sc, &sc->sc_er);
 
 	usb_freemem(&sc->sc_bus, &sc->sc_eventst_dma);
@@ -1211,7 +1211,7 @@ xhci_init(struct xhci_softc *sc)
 	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), XHCI_EVENT_RING_SEGMENTS);
 	xhci_rt_write_8(sc, XHCI_ERSTBA(0), DMAADDR(&sc->sc_eventst_dma, 0));
 	xhci_rt_write_8(sc, XHCI_ERDP(0), xhci_ring_trbp(sc->sc_er, 0) |
-	    XHCI_ERDP_LO_BUSY);
+	    XHCI_ERDP_BUSY);
 
 	xhci_op_write_8(sc, XHCI_DCBAAP, DMAADDR(&sc->sc_dcbaa_dma, 0));
 	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(sc->sc_cr, 0) |
@@ -2225,7 +2225,7 @@ xhci_softintr(void *v)
 	er->xr_cs = j;
 
 	xhci_rt_write_8(sc, XHCI_ERDP(0), xhci_ring_trbp(er, er->xr_ep) |
-	    XHCI_ERDP_LO_BUSY);
+	    XHCI_ERDP_BUSY);
 
 	DPRINTFN(16, "ends", 0, 0, 0, 0);
 

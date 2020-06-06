@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.17 2020/06/04 20:54:37 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.18 2020/06/06 08:56:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -51,6 +51,7 @@
 #define	 XHCI_HCIVERSION_0_96	0x0096	/* xHCI version 0.96 */
 #define	 XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
 #define	 XHCI_HCIVERSION_1_1	0x0110	/* xHCI version 1.1 */
+#define	 XHCI_HCIVERSION_1_2	0x0120	/* xHCI version 1.2 */
 
 #define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
 #define	 XHCI_HCS1_MAXSLOTS_MASK	__BITS(7, 0)
@@ -128,7 +129,6 @@
 #define	 XHCI_CMD_ETE		__BIT(14)	/* RW Extended TBC Enable */
 #define	 XHCI_CMD_TSC_EN	__BIT(15)	/* RW Extended TBC TRB Status Enable */
 #define	 XHCI_CMD_VTIOE		__BIT(16)	/* RW VTIO Enable */
-
 
 #define	XHCI_WAIT_CNR		100		/* in 1ms */
 #define	XHCI_WAIT_HCRST		100		/* in 1ms */
@@ -282,44 +282,63 @@
 #define	XHCI_PLMC3_LSEC_MASK	__BITS(15, 0)	/* RW - Link Soft Error Count */
 #define	XHCI_PLMC3_LSEC_GET(x)	__SHIFTOUT((x), XHCI_PLMC3_LSEC_MASK)
 
+/* 5.5.1 */
 /* XHCI runtime registers.  Offset given by XHCI_CAPLENGTH + XHCI_RTSOFF registers */
-#define	XHCI_MFINDEX		0x0000		/* RO - microframe index */
-#define	 XHCI_MFINDEX_GET(x)	((x) & 0x3FFF)
+#define	XHCI_MFINDEX		0x0000
+#define	 XHCI_MFINDEX_MASK	__BITS(13, 0)	/* RO - microframe index */
+#define	 XHCI_MFINDEX_GET(x)	__SHIFTOUT((x), XHCI_MFINDEX_MASK)
 
-#define	XHCI_IMAN(n)		(0x0020 + (0x20 * (n)))	/* XHCI interrupt management */
+/* 5.5.2 Interrupter Register set */
+/* 5.5.2.1 interrupt management */
+#define	XHCI_IMAN(n)		(0x0020 + (0x20 * (n)))
 #define	 XHCI_IMAN_INTR_PEND	__BIT(0)	/* RW - interrupt pending */
 #define	 XHCI_IMAN_INTR_ENA	__BIT(1)	/* RW - interrupt enable */
 
+/* 5.5.2.2 Interrupter Moderation */
 #define	XHCI_IMOD(n)		(0x0024 + (0x20 * (n)))	/* XHCI interrupt moderation */
-#define	 XHCI_IMOD_IVAL_GET(x)	(((x) >> 0) & 0xFFFF)	/* 250ns unit */
-#define	 XHCI_IMOD_IVAL_SET(x)	(((x) & 0xFFFF) << 0)	/* 250ns unit */
-#define	 XHCI_IMOD_ICNT_GET(x)	(((x) >> 16) & 0xFFFF)	/* 250ns unit */
-#define	 XHCI_IMOD_ICNT_SET(x)	(((x) & 0xFFFF) << 16)	/* 250ns unit */
+#define	 XHCI_IMOD_IVAL_MASK	__BITS(15,0)	/* 250ns unit */
+#define	 XHCI_IMOD_IVAL_GET(x)	__SHIFTOUT((x), XHCI_IMOD_IVAL_MASK)
+#define	 XHCI_IMOD_IVAL_SET(x)	__SHIFTIN((x), XHCI_IMOD_IVAL_MASK)
+#define	 XHCI_IMOD_ICNT_MASK	__BITS(31, 16)	/* 250ns unit */
+#define	 XHCI_IMOD_ICNT_GET(x)	__SHIFTOUT((x), XHCI_IMOD_ICNT_MASK)
+#define	 XHCI_IMOD_ICNT_SET(x)	__SHIFTIN((x), XHCI_IMOD_ICNT_MASK)
 #define	 XHCI_IMOD_DEFAULT	0x000001F4U	/* 8000 IRQ/second */
 #define	 XHCI_IMOD_DEFAULT_LP	0x000003E8U	/* 4000 IRQ/sec for LynxPoint */
 
-#define	XHCI_ERSTSZ(n)		(0x0028 + (0x20 * (n)))	/* XHCI event ring segment table size */
-#define	 XHCI_ERSTS_GET(x)	((x) & 0xFFFF)
-#define	 XHCI_ERSTS_SET(x)	((x) & 0xFFFF)
+/* 5.5.2.3 Event Ring */
+/* 5.5.2.3.1 Event Ring Segment Table Size */
+#define	XHCI_ERSTSZ(n)		(0x0028 + (0x20 * (n)))
+#define	 XHCI_ERSTS_MASK	__BITS(15, 0)	/* Event Ring Segment Table Size */
+#define	 XHCI_ERSTS_GET(x)	__SHIFTOUT((x), XHCI_ERSTS_MASK)
+#define	 XHCI_ERSTS_SET(x)	__SHIFTIN((x), XHCI_ERSTS_MASK)
 
-#define	XHCI_ERSTBA(n)		(0x0030 + (0x20 * (n)))	/* XHCI event ring segment table BA */
-#define	XHCI_ERSTBA_HI(n)	(0x0034 + (0x20 * (n)))	/* XHCI event ring segment table BA */
+/* 5.5.2.3.2 Event Ring Segment Table Base Address Register */
+#define	XHCI_ERSTBA(n)		(0x0030 + (0x20 * (n)))
+#define	 XHCI_ERSTBA_MASK	__BIT(31,6)	/* RW - segment base address (low) */
+#define	XHCI_ERSTBA_HI(n)	(0x0034 + (0x20 * (n)))
 
-#define	XHCI_ERDP(n)		(0x0038 + (0x20 * (n)))	/* XHCI event ring dequeue pointer */
-#define	XHCI_ERDP_HI(n)		(0x003C + (0x20 * (n)))	/* XHCI event ring dequeue pointer */
-#define	 XHCI_ERDP_LO_SINDEX(x)	((x) & 0x7)	/* RO - dequeue segment index */
-#define	 XHCI_ERDP_LO_BUSY	__BIT(3)	/* RW - event handler busy */
+/* 5.5.2.3.3 Event Ring Dequeue Pointer */
+#define	XHCI_ERDP(n)		(0x0038 + (0x20 * (n)))
+#define	 XHCI_ERDP_DESI_MASK	__BITS(2,0)	/* RO - dequeue segment index */
+#define	 XHCI_ERDP_GET_DESI(x)	__SHIFTOUT(x), XHCI_ERDP_DESI_MASK)
+#define	 XHCI_ERDP_BUSY		__BIT(3)	/* RW - event handler busy */
+#define	 XHCI_ERDP_PTRLO_MASK	__BIT(31,4)	/* RW - dequeue pointer (low) */
+#define	XHCI_ERDP_HI(n)		(0x003C + (0x20 * (n)))
 
-/* XHCI doorbell registers. Offset given by XHCI_CAPLENGTH + XHCI_DBOFF registers */
+/* 5.6 XHCI doorbell registers. Offset given by XHCI_CAPLENGTH + XHCI_DBOFF registers */
 #define	XHCI_DOORBELL(n)	(0x0000 + (4 * (n)))
-#define	 XHCI_DB_TARGET_GET(x)	((x) & 0xFF)		/* RW - doorbell target */
-#define	 XHCI_DB_TARGET_SET(x)	((x) & 0xFF)		/* RW - doorbell target */
-#define	 XHCI_DB_SID_GET(x)	(((x) >> 16) & 0xFFFF)	/* RW - doorbell stream ID */
-#define	 XHCI_DB_SID_SET(x)	(((x) & 0xFFFF) << 16)	/* RW - doorbell stream ID */
+#define	 XHCI_DB_TARGET_MASK	__BITS(7, 0)	/* RW - doorbell target */
+#define	 XHCI_DB_TARGET_GET(x)	__SHIFTOUT((x), XHCI_DB_TARGET_MASK)
+#define	 XHCI_DB_TARGET_SET(x)	__SHIFTIN((x), XHCI_DB_TARGET_MASK)
+#define	 XHCI_DB_SID_MASK	__BITS(31, 16)	/* RW - doorbell stream ID */
+#define	 XHCI_DB_SID_GET(x)	__SHIFTOUT((x), XHCI_DB_SID_MASK)
+#define	 XHCI_DB_SID_SET(x)	__SHIFTIN((x), XHCI_DB_SID_MASK)
 
 /* 7 xHCI Extendeded capabilities */
-#define	XHCI_XECP_ID(x)		((x) & 0xFF)
-#define	XHCI_XECP_NEXT(x)	(((x) >> 8) & 0xFF)
+#define	XHCI_XECP_ID_MASK	__BITS(7, 0)
+#define	XHCI_XECP_ID(x)		__SHIFTOUT((x), XHCI_XECP_ID_MASK)
+#define	XHCI_XECP_NEXT_MASK	__BITS(15, 8)
+#define	XHCI_XECP_NEXT(x)	__SHIFTOUT((x), XHCI_XECP_NEXT_MASK)
 
 /* XHCI extended capability ID's */
 #define	XHCI_ID_USB_LEGACY	0x0001	/* USB Legacy Support */
@@ -338,7 +357,7 @@
 #define	XHCI_XECP_OS_SEM	0x0003
 
 /* 7.2 xHCI Supported Protocol Capability */
-#define	XHCI_XECP_USBID		0x20425355
+#define	XHCI_XECP_USBID 	0x20425355
 
 #define	XHCI_XECP_SP_W0_MINOR_MASK	__BITS(23, 16)
 #define	XHCI_XECP_SP_W0_MINOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MINOR_MASK)
@@ -439,7 +458,6 @@ struct xhci_trb {
 #define XHCI_TRB_3_SLOT_MASK		__BITS(31, 24)
 #define XHCI_TRB_3_SLOT_GET(x)		__SHIFTOUT((x), XHCI_TRB_3_SLOT_MASK)
 #define XHCI_TRB_3_SLOT_SET(x)		__SHIFTIN((x), XHCI_TRB_3_SLOT_MASK)
-
 
 	/* Commands */
 #define XHCI_TRB_TYPE_RESERVED          0x00
@@ -570,6 +588,7 @@ struct xhci_trb {
 #define XHCI_SLOTSTATE_DEFAULT			1
 #define XHCI_SLOTSTATE_ADDRESSED		2
 #define XHCI_SLOTSTATE_CONFIGURED		3
+
 /*
  * 6.2.3 Endpoint Context
  * */
