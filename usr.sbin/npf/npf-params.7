@@ -1,4 +1,4 @@
-.\" $NetBSD: npf-params.7,v 1.6 2020/05/31 16:32:07 tnn Exp $
+.\" $NetBSD: npf-params.7,v 1.7 2020/06/06 20:38:00 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Mindaugas Rasiukevicius <rmind at netbsd org>
 .\" All rights reserved.
@@ -34,7 +34,9 @@
 NPF supports a set of dynamically tunable parameters.
 .Pp
 All parameter values are integers and should generally be between
-zero and INT_MAX, unless specified otherwise.
+zero and
+.Dv INT_MAX ,
+unless specified otherwise.
 Some parameters values can be negative; such values would typically
 have a special meaning.
 Enable/disable switches should be represented as boolean values 0 ("off")
