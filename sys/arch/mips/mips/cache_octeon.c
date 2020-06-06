@@ -1,7 +1,7 @@
-/*	$NetBSD: cache_octeon.c,v 1.3 2019/04/13 21:39:46 maya Exp $	*/
+/*	$NetBSD: cache_octeon.c,v 1.4 2020/06/06 14:30:44 simonb Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.3 2019/04/13 21:39:46 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.4 2020/06/06 14:30:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -13,59 +13,55 @@ __KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.3 2019/04/13 21:39:46 maya Exp $"
 #define	SYNC	__asm volatile("sync")
 
 #ifdef OCTEON_ICACHE_DEBUG
-int octeon_cache_debug;
+int octeon_cache_debug = 0;
+#define	ICACHE_DEBUG_PRINTF(x)						\
+	if (__predict_false(octeon_cache_debug != 0))			\
+		printf x;
+#else
+#define	ICACHE_DEBUG_PRINTF(x)		/* nothing */
 #endif
+
 
 static inline void
 mips_synci(vaddr_t va)
 {
+
 	__asm __volatile("synci 0(%0)" :: "r"(va));
 }
 
 void
 octeon_icache_sync_all(void)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s\n", __func__);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s\n", __func__));
 	mips_synci(MIPS_KSEG0_START);
-//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
 	SYNC;
 }
 void
 octeon_icache_sync_range(register_t va, vsize_t size)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
-		    __func__, va, size);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
+	    __func__, va, size));
 	mips_synci(MIPS_KSEG0_START);
-//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
 	SYNC;
 }
 
 void
 octeon_icache_sync_range_index(vaddr_t va, vsize_t size)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
-		    __func__, va, size);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
+	    __func__, va, size));
 	mips_synci(MIPS_KSEG0_START);
-//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
 	SYNC;
 }
 
 void
 octeon_pdcache_inv_all(void)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s\n", __func__);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s\n", __func__));
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
 	SYNC;
 }
@@ -73,11 +69,9 @@ octeon_pdcache_inv_all(void)
 void
 octeon_pdcache_inv_range(register_t va, vsize_t size)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
-		    __func__, va, size);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
+	    __func__, va, size));
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
 	SYNC;
 }
@@ -85,11 +79,9 @@ octeon_pdcache_inv_range(register_t va, vsize_t size)
 void
 octeon_pdcache_inv_range_index(vaddr_t va, vsize_t size)
 {
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
-		    __func__, va, size);
-#endif
+
+	ICACHE_DEBUG_PRINTF(("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
+	    __func__, va, size));
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
 	SYNC;
 }
@@ -97,6 +89,8 @@ octeon_pdcache_inv_range_index(vaddr_t va, vsize_t size)
 /* ---- debug dump */
 
 #ifdef OCTEON_ICACHE_DEBUG
+
+/* XXX does the following even make sense for Octeon II/III? */
 
 /* icache: 16KB, 2ways */
 
