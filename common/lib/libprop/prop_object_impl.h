@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_object_impl.h,v 1.33 2019/05/08 02:25:50 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.34 2020/06/06 21:25:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -298,6 +298,7 @@ __link_set_add_rodata(prop_linkpools, _link_ ## pp);
 
 #include <sys/atomic.h>
 
+#define	_PROP_ATOMIC_LOAD(x)		atomic_load_relaxed(x)
 #define _PROP_ATOMIC_INC32(x)		atomic_inc_32(x)
 #define _PROP_ATOMIC_DEC32(x)		atomic_dec_32(x)
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = atomic_inc_32_nv(x)
@@ -343,6 +344,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define _PROP_ONCE_DECL(x)		_PROP_NOTHREAD_ONCE_DECL(x)
 #define _PROP_ONCE_RUN(x,f)		_PROP_NOTHREAD_ONCE_RUN(x,f)
 
+#define	_PROP_ATOMIC_LOAD(x)		*(x)
 #define _PROP_ATOMIC_INC32(x)		++*(x)
 #define _PROP_ATOMIC_DEC32(x)		--*(x)
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = ++*(x)
@@ -397,6 +399,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 	static pthread_once_t x = PTHREAD_ONCE_INIT;
 #define _PROP_ONCE_RUN(x,f)		thr_once(&(x), (void(*)(void))f);
 
+#define	_PROP_ATOMIC_LOAD(x)		*(x)
 #define _PROP_ATOMIC_INC32(x)		atomic_inc_32(x)
 #define _PROP_ATOMIC_DEC32(x)		atomic_dec_32(x)
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = atomic_inc_32_nv(x)
@@ -421,6 +424,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define _PROP_ONCE_DECL(x)		_PROP_NOTHREAD_ONCE_DECL(x)
 #define _PROP_ONCE_RUN(x,f)		_PROP_NOTHREAD_ONCE_RUN(x,f)
 
+#define	_PROP_ATOMIC_LOAD(x)		*(x)
 #define _PROP_ATOMIC_INC32(x)		++*(x)
 #define _PROP_ATOMIC_DEC32(x)		--*(x)
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = ++*(x)
@@ -448,6 +452,8 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define _PROP_ONCE_RUN(x,f)		pthread_once(&(x),(void(*)(void))f)
 
 #define _PROP_NEED_REFCNT_MTX
+
+#define	_PROP_ATOMIC_LOAD(x)		*(x)
 
 #define _PROP_ATOMIC_INC32(x)						\
 do {									\
@@ -486,8 +492,10 @@ do {									\
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
 #define	_PROP_ARG_UNUSED		__unused
+#define	_PROP_DEPRECATED(s, m)		__warn_references(s, m)
 #else
 #define	_PROP_ARG_UNUSED		/* delete */
+#define	_PROP_DEPRECATED(s, m)		/* delete */
 #endif /* __NetBSD__ */
 
 #endif /* _PROPLIB_PROP_OBJECT_IMPL_H_ */
