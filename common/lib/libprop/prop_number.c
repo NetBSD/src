@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_number.c,v 1.31 2019/05/08 02:25:50 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.32 2020/06/06 21:25:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,6 +40,7 @@
 #include <lib/libkern/libkern.h>
 #else
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #endif
 
@@ -251,7 +252,7 @@ _prop_number_equals(prop_object_t v1, prop_object_t v2,
 		/*
 		 * num1 is unsigned and num2 is signed.
 		 */
-		if (num1->pn_value.pnv_unsigned > INT64_MAX)
+		if (num1->pn_value.pnv_unsigned > INTMAX_MAX)
 			return (_PROP_OBJECT_EQUALS_FALSE);
 		if (num2->pn_value.pnv_signed < 0)
 			return (_PROP_OBJECT_EQUALS_FALSE);
@@ -261,7 +262,7 @@ _prop_number_equals(prop_object_t v1, prop_object_t v2,
 		 */
 		if (num1->pn_value.pnv_signed < 0)
 			return (_PROP_OBJECT_EQUALS_FALSE);
-		if (num2->pn_value.pnv_unsigned > INT64_MAX)
+		if (num2->pn_value.pnv_unsigned > INTMAX_MAX)
 			return (_PROP_OBJECT_EQUALS_FALSE);
 	}
 
@@ -322,12 +323,12 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 }
 
 /*
- * prop_number_create_integer --
+ * prop_number_create_signed --
  *	Create a prop_number_t and initialize it with the
- *	provided integer value.
+ *	provided signed value.
  */
 prop_number_t
-prop_number_create_integer(int64_t val)
+prop_number_create_signed(intmax_t val)
 {
 	struct _prop_number_value pnv;
 
@@ -338,13 +339,22 @@ prop_number_create_integer(int64_t val)
 	return (_prop_number_alloc(&pnv));
 }
 
+_PROP_DEPRECATED(prop_number_create_integer,
+    "this program uses prop_number_create_integer(), "
+    "which is deprecated; use prop_number_create_signed() instead.")
+prop_number_t
+prop_number_create_integer(int64_t val)
+{
+	return prop_number_create_signed(val);
+}
+
 /*
- * prop_number_create_unsigned_integer --
+ * prop_number_create_unsigned --
  *	Create a prop_number_t and initialize it with the
- *	provided unsigned integer value.
+ *	provided unsigned value.
  */
 prop_number_t
-prop_number_create_unsigned_integer(uint64_t val)
+prop_number_create_unsigned(uintmax_t val)
 {
 	struct _prop_number_value pnv;
 
@@ -353,6 +363,15 @@ prop_number_create_unsigned_integer(uint64_t val)
 	pnv.pnv_is_unsigned = true;
 
 	return (_prop_number_alloc(&pnv));
+}
+
+_PROP_DEPRECATED(prop_number_create_unsigned_integer,
+    "this program uses prop_number_create_uinteger(), "
+    "which is deprecated; use prop_number_create_unsigned() instead.")
+prop_number_t
+prop_number_create_unsigned_integer(uint64_t val)
+{
+	return prop_number_create_unsigned(val);
 }
 
 /*
@@ -420,11 +439,11 @@ prop_number_size(prop_number_t pn)
 }
 
 /*
- * prop_number_integer_value --
- *	Get the integer value of a prop_number_t.
+ * prop_number_signed_value --
+ *	Get the signed value of a prop_number_t.
  */
-int64_t
-prop_number_integer_value(prop_number_t pn)
+intmax_t
+prop_number_signed_value(prop_number_t pn)
 {
 
 	/*
@@ -437,12 +456,21 @@ prop_number_integer_value(prop_number_t pn)
 	return (pn->pn_value.pnv_signed);
 }
 
+_PROP_DEPRECATED(prop_number_integer_value,
+    "this program uses prop_number_integer_value(), "
+    "which is deprecated; use prop_number_signed_value() instead.")
+int64_t
+prop_number_integer_value(prop_number_t pn)
+{
+	return prop_number_signed_value(pn);
+}
+
 /*
- * prop_number_unsigned_integer_value --
- *	Get the unsigned integer value of a prop_number_t.
+ * prop_number_unsigned_value --
+ *	Get the unsigned value of a prop_number_t.
  */
-uint64_t
-prop_number_unsigned_integer_value(prop_number_t pn)
+uintmax_t
+prop_number_unsigned_value(prop_number_t pn)
 {
 
 	/*
@@ -454,6 +482,66 @@ prop_number_unsigned_integer_value(prop_number_t pn)
 
 	return (pn->pn_value.pnv_unsigned);
 }
+
+_PROP_DEPRECATED(prop_number_unsigned_integer_value,
+    "this program uses prop_number_unsigned_integer_value(), "
+    "which is deprecated; use prop_number_unsigned_value() instead.")
+uint64_t
+prop_number_unsigned_integer_value(prop_number_t pn)
+{
+	return prop_number_unsigned_value(pn);
+}
+
+/*
+ * prop_number_[...]_value --
+ *	Retrieve the bounds-checked value as the specified type.
+ *	Returns true if successful.
+ */
+#define	TEMPLATE(name, typ, minv, maxv)					\
+bool									\
+prop_number_ ## name ## _value(prop_number_t pn, typ * const valp)	\
+{									\
+									\
+	if (! prop_object_is_number(pn))				\
+		return (false);						\
+									\
+	if (pn->pn_value.pnv_is_unsigned) {				\
+		if (pn->pn_value.pnv_unsigned > (maxv))			\
+			return (false);					\
+		*valp = (typ) pn->pn_value.pnv_unsigned;		\
+	} else {							\
+		if ((pn->pn_value.pnv_signed > 0 &&			\
+		     (uintmax_t)pn->pn_value.pnv_signed > (maxv)) ||	\
+		    pn->pn_value.pnv_signed < (minv))			\
+			return (false);					\
+		*valp = (typ) pn->pn_value.pnv_signed;			\
+	}								\
+									\
+	return (true);							\
+}
+TEMPLATE(schar,    signed char, SCHAR_MIN,  SCHAR_MAX)
+TEMPLATE(short,    short,       SHRT_MIN,   SHRT_MAX)
+TEMPLATE(int,      int,         INT_MIN,    INT_MAX)
+TEMPLATE(long,     long,        LONG_MIN,   LONG_MAX)
+TEMPLATE(longlong, long long,   LLONG_MIN,  LLONG_MAX)
+TEMPLATE(intptr,   intptr_t,    INTPTR_MIN, INTPTR_MAX)
+TEMPLATE(int8,     int8_t,      INT8_MIN,   INT8_MAX)
+TEMPLATE(int16,    int16_t,     INT16_MIN,  INT16_MAX)
+TEMPLATE(int32,    int32_t,     INT32_MIN,  INT32_MAX)
+TEMPLATE(int64,    int64_t,     INT64_MIN,  INT64_MAX)
+
+TEMPLATE(uchar,     unsigned char,      0, UCHAR_MAX)
+TEMPLATE(ushort,    unsigned short,     0, USHRT_MAX)
+TEMPLATE(uint,      unsigned int,       0, UINT_MAX)
+TEMPLATE(ulong,     unsigned long,      0, ULONG_MAX)
+TEMPLATE(ulonglong, unsigned long long, 0, ULLONG_MAX)
+TEMPLATE(uintptr,   uintptr_t,          0, UINTPTR_MAX)
+TEMPLATE(uint8,     uint8_t,            0, UINT8_MAX)
+TEMPLATE(uint16,    uint16_t,           0, UINT16_MAX)
+TEMPLATE(uint32,    uint32_t,           0, UINT32_MAX)
+TEMPLATE(uint64,    uint64_t,           0, UINT64_MAX)
+
+#undef TEMPLATE
 
 /*
  * prop_number_equals --
@@ -469,30 +557,40 @@ prop_number_equals(prop_number_t num1, prop_number_t num2)
 }
 
 /*
- * prop_number_equals_integer --
- *	Return true if the number is equivalent to the specified integer.
+ * prop_number_equals_signed --
+ *	Return true if the number is equivalent to the specified signed
+ *	value.
  */
 bool
-prop_number_equals_integer(prop_number_t pn, int64_t val)
+prop_number_equals_signed(prop_number_t pn, intmax_t val)
 {
 
 	if (! prop_object_is_number(pn))
 		return (false);
 
 	if (pn->pn_value.pnv_is_unsigned &&
-	    (pn->pn_value.pnv_unsigned > INT64_MAX || val < 0))
+	    (pn->pn_value.pnv_unsigned > INTMAX_MAX || val < 0))
 		return (false);
 	
 	return (pn->pn_value.pnv_signed == val);
 }
 
+_PROP_DEPRECATED(prop_number_equals_integer,
+    "this program uses prop_number_equals_integer(), "
+    "which is deprecated; use prop_number_equals_signed() instead.")
+bool
+prop_number_equals_integer(prop_number_t pn, int64_t val)
+{
+	return prop_number_equals_signed(pn, val);
+}
+
 /*
- * prop_number_equals_unsigned_integer --
+ * prop_number_equals_unsigned --
  *	Return true if the number is equivalent to the specified
- *	unsigned integer.
+ *	unsigned value.
  */
 bool
-prop_number_equals_unsigned_integer(prop_number_t pn, uint64_t val)
+prop_number_equals_unsigned(prop_number_t pn, uintmax_t val)
 {
 
 	if (! prop_object_is_number(pn))
@@ -503,6 +601,15 @@ prop_number_equals_unsigned_integer(prop_number_t pn, uint64_t val)
 		return (false);
 	
 	return (pn->pn_value.pnv_unsigned == val);
+}
+
+_PROP_DEPRECATED(prop_number_equals_unsigned_integer,
+    "this program uses prop_number_equals_unsigned_integer(), "
+    "which is deprecated; use prop_number_equals_unsigned() instead.")
+bool
+prop_number_equals_unsigned_integer(prop_number_t pn, uint64_t val)
+{
+	return prop_number_equals_unsigned(pn, val);
 }
 
 static bool

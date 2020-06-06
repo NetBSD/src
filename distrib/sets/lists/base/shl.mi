@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.890 2020/05/30 20:47:58 christos Exp $
+# $NetBSD: shl.mi,v 1.891 2020/06/06 21:25:59 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -74,7 +74,7 @@
 ./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
-./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
+./lib/libprop.so.1.2				base-sys-shlib		dynamicroot
 ./lib/libpthread.so				base-sys-shlib		dynamicroot
 ./lib/libpthread.so.1				base-sys-shlib		dynamicroot
 ./lib/libpthread.so.1.4				base-sys-shlib		dynamicroot
@@ -510,7 +510,7 @@
 ./usr/lib/libproc.so.1.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libprop.so				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1				base-sys-shlib		compatfile
-./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
+./usr/lib/libprop.so.1.2			base-sys-shlib		compatfile
 ./usr/lib/libpthread.so				base-sys-shlib		compatfile
 ./usr/lib/libpthread.so.1			base-sys-shlib		compatfile
 ./usr/lib/libpthread.so.1.4			base-sys-shlib		compatfile
