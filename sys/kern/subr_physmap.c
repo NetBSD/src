@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_physmap.c,v 1.2 2013/01/19 01:04:51 rmind Exp $	*/
+/*	$NetBSD: subr_physmap.c,v 1.3 2020/06/06 23:02:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.2 2013/01/19 01:04:51 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.3 2020/06/06 23:02:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/physmap.h>
@@ -316,7 +316,7 @@ physmap_map(void *cookie, vaddr_t *kvap)
 		 * so we map it via the kernel_map.
 		 */
 		pc->pc_kva = uvm_km_alloc(kernel_map, pc->pc_klen,
-		    atop(pa) & uvmexp.ncolors,
+		    atop(pa) & uvmexp.colormask,
 		    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 		KASSERT(pc->pc_kva != 0);
 
