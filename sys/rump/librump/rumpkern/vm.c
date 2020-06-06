@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.188 2020/06/03 22:25:49 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.189 2020/06/06 22:31:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.188 2020/06/03 22:25:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.189 2020/06/06 22:31:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -176,7 +176,6 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 		pool_cache_put(&pagecache, pg);
 		return NULL;
 	}
-	uobj->uo_npages++;
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -187,6 +186,7 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 		}
 		pg->flags |= PG_FILE;
 	}
+	uobj->uo_npages++;
 
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 	if (flags & UVM_PGA_ZERO) {
