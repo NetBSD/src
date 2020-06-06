@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.11 2008/08/31 23:37:45 dholland Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.12 2020/06/06 22:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -34,15 +34,15 @@
 #define _VERIEXECCTL_H_
 
 #define dict_sets(d, k, v) \
-	prop_dictionary_set(d, k, prop_string_create_cstring(v))
+	prop_dictionary_set_string(d, k, v)
 
 #define dict_gets(d, k) \
-	prop_string_cstring_nocopy(prop_dictionary_get(d, k))
+	prop_string_value(prop_dictionary_get(d, k))
 
 #define	dict_setd(d, k, v, n) \
-	prop_dictionary_set(d, k, prop_data_create_data(v, n))
+	prop_dictionary_set_data(d, k, v, n)
 
 #define	dict_getd(d, k) \
-	prop_data_data_nocopy(prop_dictionary_get(d, k))
+	prop_data_value(prop_dictionary_get(d, k))
 
 #endif /* _VERIEXECCTL_H_ */
