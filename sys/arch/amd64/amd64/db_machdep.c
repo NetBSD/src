@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.7 2020/05/14 16:57:53 maxv Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.8 2020/06/06 07:03:21 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2020/05/14 16:57:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2020/06/06 07:03:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,8 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 		fp = (struct x86_64_frame *)
 			db_get_value((long)&tf->tf_rbp, 8, false);
 		if (fp == NULL)
+			return 0;
+		if (((uintptr_t)fp & 7) != 0)
 			return 0;
 		*nextframe = (long *)&fp->f_frame;
 		*retaddr = (long *)&fp->f_retaddr;
