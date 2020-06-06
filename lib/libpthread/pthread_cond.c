@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.72 2020/06/04 04:40:01 riastradh Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.73 2020/06/06 22:23:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.72 2020/06/04 04:40:01 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.73 2020/06/06 22:23:59 ad Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -185,14 +185,14 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		pthread_cond_broadcast(cond);
 
 		/*
-		 * Might have raced with another thread to do the wakeup.
-		 * In any case there will be a wakeup for sure.  Eat it and
-		 * wait for pt_condwait to clear.
+		 * Might have raced with another thread to do the wakeup. 
+		 * Wait until released - this thread can't wait on a condvar
+		 * again until the data structures are no longer in us.
 		 */
-		do {
+		while (self->pt_condwait) {
 			(void)_lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, NULL,
 			    0, NULL, NULL);
-		} while (self->pt_condwait);
+		}
 	}
 
 	/*
