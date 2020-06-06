@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_run.c,v 1.40 2020/06/06 13:53:43 gson Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.40 2020/06/06 13:53:43 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -649,6 +649,19 @@ run_attach(device_t parent, device_t self, void *aux)
 	sc->mac_ver = ver >> 16;
 	sc->mac_rev = ver & 0xffff;
 
+       /*
+	* Per the comment in run_write_region_1(), "the WRITE_REGION_1
+	* command is not stable on RT2860", but WRITE_REGION_1 calls
+	* of up to 64 bytes have been tested and found to work with
+	* mac_ver 0x5390, and they reduce the run time of "ifconfig
+	* run0 up" from 30 seconds to a couple of seconds on OHCI.
+	* Enable WRITE_REGION_1 for the tested version only.  As other
+	* versions are tested and found to work, they can be added
+	* here.
+	*/
+	if (sc->mac_ver == 0x5390)
+		sc->sc_flags |= RUN_USE_BLOCK_WRITE;
+
 	/* retrieve RF rev. no and various other things from EEPROM */
 	run_read_eeprom(sc);
 
@@ -1046,37 +1059,49 @@ run_write_2(struct run_softc *sc, uint16_t reg, uint16_t val)
 static int
 run_write(struct run_softc *sc, uint16_t reg, uint32_t val)
 {
-	int error;
-
-	if ((error = run_write_2(sc, reg, val & 0xffff)) == 0)
-		error = run_write_2(sc, reg + 2, val >> 16);
-	return error;
+	uint32_t tmp = htole32(val);
+	return run_write_region_1(sc, reg, (uint8_t *)&tmp, sizeof(tmp));
 }
 
 static int
 run_write_region_1(struct run_softc *sc, uint16_t reg, const uint8_t *buf,
     int len)
 {
-#if 1
-	int i, error = 0;
-	/*
-	 * NB: the WRITE_REGION_1 command is not stable on RT2860.
-	 * We thus issue multiple WRITE_2 commands instead.
-	 */
-	KASSERT((len & 1) == 0);
-	for (i = 0; i < len && error == 0; i += 2)
-		error = run_write_2(sc, reg + i, buf[i] | buf[i + 1] << 8);
+	int error = 0;
+	if (sc->sc_flags & RUN_USE_BLOCK_WRITE) {
+		usb_device_request_t req;
+		/*
+		 * NOTE: It appears the WRITE_REGION_1 command cannot be
+		 * passed a huge amount of data, which will crash the
+		 * firmware. Limit amount of data passed to 64 bytes at a
+		 * time.
+		 */
+		while (len > 0) {
+			int delta = MIN(len, 64);
+			req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+			req.bRequest = RT2870_WRITE_REGION_1;
+			USETW(req.wValue, 0);
+			USETW(req.wIndex, reg);
+			USETW(req.wLength, delta);
+			error = usbd_do_request(sc->sc_udev, &req,
+			    __UNCONST(buf));
+			if (error != 0)
+				break;
+			reg += delta;
+			buf += delta;
+			len -= delta;
+		}
+	} else {
+		/*
+		 * NB: the WRITE_REGION_1 command is not stable on RT2860.
+		 * We thus issue multiple WRITE_2 commands instead.
+		 */
+		int i;
+		KASSERT((len & 1) == 0);
+		for (i = 0; i < len && error == 0; i += 2)
+			error = run_write_2(sc, reg + i, buf[i] | buf[i + 1] << 8);
+	}
 	return error;
-#else
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = RT2870_WRITE_REGION_1;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, reg);
-	USETW(req.wLength, len);
-	return usbd_do_request(sc->sc_udev, &req, __UNCONST(buf));
-#endif
 }
 
 static int
@@ -1084,8 +1109,25 @@ run_set_region_4(struct run_softc *sc, uint16_t reg, uint32_t val, int count)
 {
 	int error = 0;
 
-	for (; count > 0 && error == 0; count--, reg += 4)
-		error = run_write(sc, reg, val);
+	if (sc->sc_flags & RUN_USE_BLOCK_WRITE) {
+		while (count > 0) {
+			int i, delta;
+			uint32_t tmp[16];
+
+			delta = MIN(count, __arraycount(tmp));
+			for (i = 0; i < delta; i++)
+				tmp[i] = htole32(val);
+			error = run_write_region_1(sc, reg, (uint8_t *)tmp,
+			    delta * sizeof(uint32_t));
+			if (error != 0)
+				break;
+			reg += delta * sizeof(uint32_t);
+			count -= delta;
+		}
+	} else {
+		for (; count > 0 && error == 0; count--, reg += 4)
+			error = run_write(sc, reg, val);
+	}
 	return error;
 }
 
