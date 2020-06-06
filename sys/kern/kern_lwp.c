@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.240 2020/06/01 13:58:14 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.241 2020/06/06 22:26:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.240 2020/06/01 13:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.241 2020/06/06 22:26:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1054,6 +1054,8 @@ lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 
 /*
  * Exit an LWP.
+ *
+ * *** WARNING *** This can be called with (l != curlwp) in error paths.
  */
 void
 lwp_exit(struct lwp *l)
