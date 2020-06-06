@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_dictionary.c,v 1.41 2016/06/28 05:21:15 pgoyette Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.42 2020/06/06 21:25:59 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1170,9 +1170,22 @@ prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 }
 
 /*
- * prop_dictionary_keysym_cstring_nocopy --
- *	Return an immutable reference to the keysym's value.
+ * prop_dictionary_keysym_value --
+ *	Return a reference to the keysym's value.
  */
+const char *
+prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
+{
+
+	if (! prop_object_is_dictionary_keysym(pdk))
+		return (NULL);
+
+	return (pdk->pdk_key);
+}
+
+_PROP_DEPRECATED(prop_dictionary_keysym_cstring_nocopy,
+    "this program uses prop_dictionary_keysym_cstring_nocopy(), "
+    "which is deprecated; use prop_dictionary_keysym_value() instead.")
 const char *
 prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 {
