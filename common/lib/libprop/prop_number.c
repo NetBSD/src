@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.32 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.33 2020/06/06 22:23:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -366,7 +366,7 @@ prop_number_create_unsigned(uintmax_t val)
 }
 
 _PROP_DEPRECATED(prop_number_create_unsigned_integer,
-    "this program uses prop_number_create_uinteger(), "
+    "this program uses prop_number_create_unsigned_integer(), "
     "which is deprecated; use prop_number_create_unsigned() instead.")
 prop_number_t
 prop_number_create_unsigned_integer(uint64_t val)
