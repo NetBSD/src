@@ -1,4 +1,4 @@
-/* $NetBSD: t_proplib.c,v 1.1 2020/06/06 21:26:00 thorpej Exp $ */
+/* $NetBSD: t_proplib.c,v 1.2 2020/06/06 21:45:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proplib.c,v 1.1 2020/06/06 21:26:00 thorpej Exp $");
+__RCSID("$NetBSD: t_proplib.c,v 1.2 2020/06/06 21:45:07 thorpej Exp $");
 
 #include <limits.h>
 #include <stdlib.h>
@@ -110,7 +110,7 @@ ATF_TC_BODY(prop_basic, tc)
 	ATF_REQUIRE(dict != NULL);
 
 	{
-		prop_number_t num = prop_number_create_integer(1);
+		prop_number_t num = prop_number_create_signed(1);
 		ATF_REQUIRE(num != NULL);
 
 		ATF_REQUIRE_EQ(prop_dictionary_set(dict, "one", num), true);
@@ -118,7 +118,7 @@ ATF_TC_BODY(prop_basic, tc)
 	}
 
 	{
-		prop_string_t str = prop_string_create_cstring("number-two");
+		prop_string_t str = prop_string_create_copy("number-two");
 		ATF_REQUIRE(str != NULL);
 
 		ATF_REQUIRE_EQ(prop_dictionary_set(dict, "two", str), true);
