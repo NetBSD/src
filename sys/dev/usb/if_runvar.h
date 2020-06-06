@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.8 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.9 2020/06/06 13:53:43 gson Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -201,8 +201,9 @@ struct run_softc {
 	int				sc_tx_timer;
 	struct ieee80211_beacon_offsets	sc_bo;
 	int				sc_flags;
-#define RUN_FWLOADED	(1 << 0)
-#define RUN_DETACHING	(1 << 1)
+#define RUN_FWLOADED		(1 << 0)
+#define RUN_DETACHING		(1 << 1)
+#define RUN_USE_BLOCK_WRITE	(1 << 2)
 
 	struct bpf_if *			sc_drvbpf;
 
