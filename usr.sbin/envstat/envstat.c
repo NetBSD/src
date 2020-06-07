@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.96 2018/05/27 01:39:00 thorpej Exp $ */
+/* $NetBSD: envstat.c,v 1.97 2020/06/07 00:51:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.96 2018/05/27 01:39:00 thorpej Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.97 2020/06/07 00:51:48 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -404,7 +404,7 @@ parse_dictionary(int fd)
 				goto out;
 			}
 
-			dnp = prop_dictionary_keysym_cstring_nocopy(obj);
+			dnp = prop_dictionary_keysym_value(obj);
 			rval = find_sensors(array, dnp, edp);
 			if (rval)
 				goto out;
@@ -486,7 +486,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		if (desc) {
 			/* copy description */
 			(void)strlcpy(sensor->desc,
-			    prop_string_cstring_nocopy(desc),
+			    prop_string_value(desc),
 		    	    sizeof(sensor->desc));
 		} else {
 			free(sensor);
@@ -498,7 +498,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		if (obj1) {
 			/* copy type */
 			(void)strlcpy(sensor->type,
-		    	    prop_string_cstring_nocopy(obj1),
+		    	    prop_string_value(obj1),
 		    	    sizeof(sensor->type));
 		} else {
 			free(sensor);
@@ -509,15 +509,15 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		state = prop_dictionary_get(obj, "state");
 
 		/* mark sensors with invalid/unknown state */
-		if ((prop_string_equals_cstring(state, "invalid") ||
-		     prop_string_equals_cstring(state, "unknown")))
+		if ((prop_string_equals_string(state, "invalid") ||
+		     prop_string_equals_string(state, "unknown")))
 			sensor->invalid = true;
 
 		/* get current drive state string */
 		obj1 = prop_dictionary_get(obj, "drive-state");
 		if (obj1) {
 			(void)strlcpy(sensor->drvstate,
-			    prop_string_cstring_nocopy(obj1),
+			    prop_string_value(obj1),
 			    sizeof(sensor->drvstate));
 		}
 
@@ -525,24 +525,24 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		obj1 = prop_dictionary_get(obj, "battery-capacity");
 		if (obj1) {
 			(void)strlcpy(sensor->battcap,
-			    prop_string_cstring_nocopy(obj1),
+			    prop_string_value(obj1),
 			    sizeof(sensor->battcap));
 		}
 
 		/* get current value */
 		obj1 = prop_dictionary_get(obj, "cur-value");
 		if (obj1)
-			sensor->cur_value = prop_number_integer_value(obj1);
+			sensor->cur_value = prop_number_signed_value(obj1);
 
 		/* get max value */
 		obj1 = prop_dictionary_get(obj, "max-value");
 		if (obj1)
-			sensor->max_value = prop_number_integer_value(obj1);
+			sensor->max_value = prop_number_signed_value(obj1);
 
 		/* get min value */
 		obj1 = prop_dictionary_get(obj, "min-value");
 		if (obj1)
-			sensor->min_value = prop_number_integer_value(obj1);
+			sensor->min_value = prop_number_signed_value(obj1);
 
 		/* get percentage flag */
 		obj1 = prop_dictionary_get(obj, "want-percentage");
@@ -552,51 +552,51 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		/* get critical max value if available */
 		obj1 = prop_dictionary_get(obj, "critical-max");
 		if (obj1)
-			sensor->critmax_value = prop_number_integer_value(obj1);
+			sensor->critmax_value = prop_number_signed_value(obj1);
 
 		/* get maximum capacity value if available */
 		obj1 = prop_dictionary_get(obj, "maximum-capacity");
 		if (obj1)
-			sensor->critmax_value = prop_number_integer_value(obj1);
+			sensor->critmax_value = prop_number_signed_value(obj1);
 
 		/* get critical min value if available */
 		obj1 = prop_dictionary_get(obj, "critical-min");
 		if (obj1)
-			sensor->critmin_value = prop_number_integer_value(obj1);
+			sensor->critmin_value = prop_number_signed_value(obj1);
 
 		/* get critical capacity value if available */
 		obj1 = prop_dictionary_get(obj, "critical-capacity");
 		if (obj1)
-			sensor->critmin_value = prop_number_integer_value(obj1);
+			sensor->critmin_value = prop_number_signed_value(obj1);
 
 		/* get warning max value if available */
 		obj1 = prop_dictionary_get(obj, "warning-max");
 		if (obj1)
-			sensor->warnmax_value = prop_number_integer_value(obj1);
+			sensor->warnmax_value = prop_number_signed_value(obj1);
 
 		/* get high capacity value if available */
 		obj1 = prop_dictionary_get(obj, "high-capacity");
 		if (obj1)
-			sensor->warnmax_value = prop_number_integer_value(obj1);
+			sensor->warnmax_value = prop_number_signed_value(obj1);
 
 		/* get warning min value if available */
 		obj1 = prop_dictionary_get(obj, "warning-min");
 		if (obj1)
-			sensor->warnmin_value = prop_number_integer_value(obj1);
+			sensor->warnmin_value = prop_number_signed_value(obj1);
 
 		/* get warning capacity value if available */
 		obj1 = prop_dictionary_get(obj, "warning-capacity");
 		if (obj1)
-			sensor->warnmin_value = prop_number_integer_value(obj1);
+			sensor->warnmin_value = prop_number_signed_value(obj1);
 
 		/* print sensor names if -l was given */
 		if (flags & ENVSYS_LFLAG) {
 			if (width)
 				(void)printf("%*s\n", width,
-				    prop_string_cstring_nocopy(desc));
+				    prop_string_value(desc));
 			else
 				(void)printf("%s\n",
-				    prop_string_cstring_nocopy(desc));
+				    prop_string_value(desc));
 		}
 
 		/* Add the sensor into the list */
