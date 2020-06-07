@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.219 2020/06/05 17:20:56 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.220 2020/06/07 09:45:19 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1759,6 +1759,10 @@ qemufwcfg[0-9]*)
 vio9p[0-9]*)
 	unit=${i#vio9p}
 	mkdev vio9p$unit c %vio9p_chr% $unit 660
+	;;
+
+fault)
+	mkdev fault c %fault_chr% 0
 	;;
 
 nvram)
