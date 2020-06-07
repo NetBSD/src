@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.139.10.1 2017/09/23 17:22:48 snj Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.139.10.2 2020/06/07 16:41:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.139.10.1 2017/09/23 17:22:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.139.10.2 2020/06/07 16:41:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -824,16 +824,6 @@ out:
 	if (error == 0) {
 		nevent = 0;
 
-		if (sme->sme_flags & SME_INIT_REFRESH) {
-			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
-			DPRINTF(("%s: scheduled initial refresh for '%s'\n",
-				__func__, sme->sme_name));
-		}
-		SLIST_FOREACH(evdv, &sme_evdrv_list, evdrv_head) {
-			sysmon_task_queue_sched(0,
-			    sme_event_drvadd, evdv->evdrv);
-			nevent++;
-		}
 		/*
 		 * Hook the sensor into rnd(4) entropy pool if requested
 		 */
@@ -888,6 +878,17 @@ out:
 				rnd_attach_source(&edata->rnd_src, rnd_name,
 				    rnd_type, rnd_flag);
 			}
+		}
+
+		if (sme->sme_flags & SME_INIT_REFRESH) {
+			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
+			DPRINTF(("%s: scheduled initial refresh for '%s'\n",
+				__func__, sme->sme_name));
+		}
+		SLIST_FOREACH(evdv, &sme_evdrv_list, evdrv_head) {
+			sysmon_task_queue_sched(0,
+			    sme_event_drvadd, evdv->evdrv);
+			nevent++;
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d nevent=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors, nevent));
