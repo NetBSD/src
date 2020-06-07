@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2018/05/28 21:05:11 chs Exp $
+#	$NetBSD: Makefile,v 1.11 2020/06/07 23:26:54 fox Exp $
 
 # $FreeBSD: head/cddl/usr.bin/ctfmerge/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -35,5 +35,7 @@ COPTS.util.c +=		-Wno-format-nonliteral
 LDADD+=-lpthread
 DPADD+=${LIBPTHREAD}
 .endif
+
+COPTS.ctfmerge.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
