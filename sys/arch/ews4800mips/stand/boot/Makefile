@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2019/12/23 19:28:04 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2020/06/07 03:02:42 tsutsui Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -62,7 +62,7 @@ MIPSFLAGS	= -mips1 -G 0 -mno-abicalls
 DEBUGFLAGS	= -Wall -Werror
 DEBUGFLAGS	+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 DEBUGFLAGS	+= -Wno-format-zero-length -Wno-sign-compare
-OPTFLAGS	= -Os -mmemcpy
+OPTFLAGS	= -Os -mmemcpy -fno-unwind-tables
 FLAGS		= ${MIPSFLAGS} ${DEBUGFLAGS} ${OPTFLAGS}
 AFLAGS		= -xassembler-with-cpp -D_LOCORE ${FLAGS}
 CFLAGS		= ${FLAGS} -ffreestanding
