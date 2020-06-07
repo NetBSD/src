@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.4 2020/05/14 08:34:18 msaitoh Exp $	*/
+/*	$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.4 2020/05/14 08:34:18 msaitoh Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -654,7 +654,7 @@ validate_ubinstall_object(evb_board board, evb_ubinstall obj)
 
 	if (prop_object_type(obj) == PROP_TYPE_STRING) {
 		evb_ubinstall tobj = prop_dictionary_get(board,
-		    prop_string_cstring_nocopy((prop_string_t)obj));
+		    prop_string_value((prop_string_t)obj));
 
 		/*
 		 * The target evb_ubinstall object must exist
@@ -738,7 +738,7 @@ validate_board_object(evb_board obj, bool is_overlay)
 	prop_object_iterator_t iter = prop_dictionary_iterator(obj);
 	prop_dictionary_keysym_t key;
 	while ((key = prop_object_iterator_next(iter)) != NULL) {
-		const char *cp = prop_dictionary_keysym_cstring_nocopy(key);
+		const char *cp = prop_dictionary_keysym_value(key);
 		if (strcmp(cp, board_u_boot_install_key) == 0) {
 			has_default_install = true;
 		} else if (strncmp(cp, board_u_boot_install_key,
@@ -807,13 +807,13 @@ evb_db_load_overlay(ib_params *params, const char *path,
 		assert(board != NULL);
 		if (!validate_board_object(board, true)) {
 			warnx("invalid board object in '%s': '%s'", path,
-			    prop_dictionary_keysym_cstring_nocopy(key));
+			    prop_dictionary_keysym_value(key));
 			continue;
 		}
 
 		/* Add "runtime-u-boot-path". */
 		prop_string_t string =
-		    prop_string_create_cstring(runtime_uboot_path);
+		    prop_string_create_copy(runtime_uboot_path);
 		assert(string != NULL);
 		prop_dictionary_set(board, board_u_boot_path_key, string);
 		prop_object_release(string);
@@ -942,7 +942,7 @@ evb_db_load_base(ib_params *params)
 		assert(board != NULL);
 		if (!validate_board_object(board, false)) {
 			warnx("invalid board object in '%s': '%s'", path,
-			    prop_dictionary_keysym_cstring_nocopy(key));
+			    prop_dictionary_keysym_value(key));
 			prop_dictionary_remove_keysym(board_db, key);
 		}
 	}
@@ -1339,7 +1339,7 @@ evb_db_list_boards(ib_params *params, FILE *out)
 			continue;
 
 		fprintf(out, "%-30s %s\n",
-		    prop_dictionary_keysym_cstring_nocopy(key),
+		    prop_dictionary_keysym_value(key),
 		    evb_board_get_description(params, board));
 
 		if ((params->flags & IB_VERBOSE) && uboot_path) {
@@ -1364,7 +1364,7 @@ evb_board_get_description(ib_params *params, evb_board board)
 	prop_string_t string;
 
 	string = prop_dictionary_get(board, board_description_key);
-	return prop_string_cstring_nocopy(string);
+	return prop_string_value(string);
 }
 
 /*
@@ -1379,7 +1379,7 @@ evb_board_get_uboot_pkg(ib_params *params, evb_board board)
 	string = prop_dictionary_get(board, board_u_boot_pkg_key);
 	if (string == NULL)
 		return NULL;
-	return prop_string_cstring_nocopy(string);
+	return prop_string_value(string);
 }
 
 /*
@@ -1394,7 +1394,7 @@ evb_board_get_uboot_path(ib_params *params, evb_board board)
 	string = prop_dictionary_get(board, board_u_boot_path_key);
 	if (string == NULL)
 		return NULL;
-	return prop_string_cstring_nocopy(string);
+	return prop_string_value(string);
 }
 
 /*
@@ -1440,7 +1440,7 @@ evb_board_get_uboot_install(ib_params *params, evb_board board)
 			 * exists.
 			 */
 			install = prop_dictionary_get(board,
-			    prop_string_cstring_nocopy((prop_string_t)install));
+			    prop_string_value((prop_string_t)install));
 		}
 		return install;
 	}
@@ -1453,7 +1453,7 @@ evb_board_get_uboot_install(ib_params *params, evb_board board)
 	prop_object_iterator_t iter = prop_array_iterator(array);
 	prop_string_t string;
 	while ((string = prop_object_iterator_next(iter)) != NULL)
-		fprintf(stderr, " %s", prop_string_cstring_nocopy(string));
+		fprintf(stderr, " %s", prop_string_value(string));
 	fprintf(stderr, "\n");
 	prop_object_iterator_release(iter);
 	prop_object_release(array);
@@ -1482,12 +1482,12 @@ evb_board_copy_uboot_media(ib_params *params, evb_board board)
 	assert(iter != NULL);
 
 	while ((key = prop_object_iterator_next(iter)) != NULL) {
-		cp = prop_dictionary_keysym_cstring_nocopy(key);
+		cp = prop_dictionary_keysym_value(key);
 		if (strcmp(cp, board_u_boot_install_key) == 0 ||
 		    strncmp(cp, board_u_boot_install_key,
 			    sizeof(board_u_boot_install_key) - 1) != 0)
 			continue;
-		string = prop_string_create_cstring(strrchr(cp, '-')+1);
+		string = prop_string_create_copy(strrchr(cp, '-')+1);
 		assert(string != NULL);
 		prop_array_add(array, string);
 		prop_object_release(string);
@@ -1532,7 +1532,7 @@ const char *
 evb_ubstep_get_file_name(ib_params *params, evb_ubstep step)
 {
 	prop_string_t string = prop_dictionary_get(step, step_file_name_key);
-	return prop_string_cstring_nocopy(string);
+	return prop_string_value(string);
 }
 
 /*
@@ -1544,7 +1544,7 @@ evb_ubstep_get_file_offset(ib_params *params, evb_ubstep step)
 {
 	prop_number_t number = prop_dictionary_get(step, step_file_offset_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1558,7 +1558,7 @@ evb_ubstep_get_file_size(ib_params *params, evb_ubstep step)
 {
 	prop_number_t number = prop_dictionary_get(step, step_file_size_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1572,7 +1572,7 @@ evb_ubstep_get_image_offset(ib_params *params, evb_ubstep step)
 {
 	prop_number_t number = prop_dictionary_get(step, step_image_offset_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1587,7 +1587,7 @@ evb_ubstep_get_input_block_size(ib_params *params, evb_ubstep step)
 	prop_number_t number = prop_dictionary_get(step,
 						   step_input_block_size_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1602,7 +1602,7 @@ evb_ubstep_get_input_pad_size(ib_params *params, evb_ubstep step)
 	prop_number_t number = prop_dictionary_get(step,
 						   step_input_pad_size_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1616,7 +1616,7 @@ evb_ubstep_get_output_size(ib_params *params, evb_ubstep step)
 {
 	prop_number_t number = prop_dictionary_get(step, step_output_size_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 
@@ -1630,7 +1630,7 @@ evb_ubstep_get_output_block_size(ib_params *params, evb_ubstep step)
 	prop_number_t number = prop_dictionary_get(step,
 						   step_output_block_size_key);
 	if (number != NULL)
-		return prop_number_unsigned_integer_value(number);
+		return prop_number_unsigned_value(number);
 	return 0;
 }
 

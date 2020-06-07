@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.5 2009/04/15 00:37:05 lukem Exp $	*/
+/*	$NetBSD: config.c,v 1.6 2020/06/07 00:54:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.5 2009/04/15 00:37:05 lukem Exp $");
+__RCSID("$NetBSD: config.c,v 1.6 2020/06/07 00:54:22 thorpej Exp $");
 
 #include <sys/time.h>
 #include <prop/proplib.h>
@@ -114,7 +114,7 @@ lookup_key(bdaddr_t *laddr, bdaddr_t *raddr)
 		return NULL;
 	}
 
-	memcpy(key, prop_data_data_nocopy(obj), sizeof(key));
+	memcpy(key, prop_data_value(obj), sizeof(key));
 	prop_object_release(cfg);
 	return key;
 }
@@ -156,7 +156,7 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 		prop_object_release(dev);
 	}
 
-	dat = prop_data_create_data_nocopy(key, HCI_KEY_SIZE);
+	dat = prop_data_create_nocopy(key, HCI_KEY_SIZE);
 	if (dat == NULL) {
 		syslog(LOG_ERR, "Cannot create data object: %m");
 		prop_object_release(cfg);
