@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94.8.1 2018/02/27 09:07:33 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94.8.2 2020/06/07 12:23:43 martin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94.8.1 2018/02/27 09:07:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94.8.2 2020/06/07 12:23:43 martin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -991,6 +991,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 			}
 			source_pvo = pvo;
 			if (exec && !PVO_EXECUTABLE_P(source_pvo)) {
+				PMAP_UNLOCK();
 				return 0;
 			}
 			if (victim_pvo != NULL)
@@ -2162,6 +2163,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				return true;
 			}
 		}
+		PMAP_UNLOCK();
 		return false;
 #elif defined (PMAP_OEA64_BRIDGE)
 	if (va >= SEGMENT_LENGTH)
