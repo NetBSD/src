@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.20 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.21 2020/06/07 06:02:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.20 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.21 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -138,7 +138,13 @@ at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	if ((d0 = (prop_data_t)prop_dictionary_get(env, "address")) == NULL)
 		return;
 
-	addr = prop_data_data(d0);
+	addr = malloc(prop_data_size(d0));
+	if (addr == NULL)
+		return;
+	if (!prop_data_copy_value(d0, addr, prop_data_size(d0))) {
+		free(addr);
+		return;
+	}
 
 	sat = (struct sockaddr_at *)&addr->pfx_addr;
 
@@ -154,11 +160,13 @@ at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	/* Copy the new address to a temporary input environment */
 
-	d = prop_data_create_data_nocopy(addr, paddr_prefix_size(addr));
+	d = prop_data_create_copy(addr, paddr_prefix_size(addr));
+	free(addr);
+
 	ienv = prop_dictionary_copy_mutable(env);
 
 	if (d == NULL)
-		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
+		err(EXIT_FAILURE, "%s: prop_data_create_copy", __func__);
 	if (ienv == NULL)
 		err(EXIT_FAILURE, "%s: prop_dictionary_copy_mutable", __func__);
 
