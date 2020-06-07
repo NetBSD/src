@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.45 2020/05/16 18:31:47 christos Exp $
+.\"	$NetBSD: tunefs.8,v 1.46 2020/06/07 19:35:15 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,17 +69,6 @@ will lose anything changed by
 is ignored when
 .Fl N
 is specified.
-.It Fl F
-Indicates that
-.Ar special
-is a file system image, rather than a device name or file system mount point.
-.Ar special
-will be accessed
-.Sq as-is .
-.It Fl N
-Display all the settable options
-(after any changes from the tuning options)
-but do not cause any of them to be changed.
 .It Fl a Cm enable | disable
 Turn on/off the administrative NFSv4 ACL enable flag.
 .It Fl e Ar maxbpg
@@ -97,6 +86,13 @@ more frequently than if they were allowed to allocate all the blocks
 in a cylinder group before seeking elsewhere.
 For file systems with exclusively large files,
 this parameter should be set higher.
+.It Fl F
+Indicates that
+.Ar special
+is a file system image, rather than a device name or file system mount point.
+.Ar special
+will be accessed
+.Sq as-is .
 .It Fl g Ar avgfilesize
 This specifies the expected average file size.
 .It Fl h Ar avgfpdir
@@ -124,6 +120,10 @@ threshold.
 Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
+.It Fl N
+Display all the settable options
+(after any changes from the tuning options)
+but do not cause any of them to be changed.
 .It Fl o Ar optimize_preference
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space
