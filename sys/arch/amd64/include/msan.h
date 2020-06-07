@@ -1,4 +1,4 @@
-/*	$NetBSD: msan.h,v 1.3 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: msan.h,v 1.4 2020/06/07 23:15:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ kmsan_md_shadow_map_page(vaddr_t va)
 			L2_BASE[pl2_i(va)] = pa | pteflags | PTE_PS |
 			    pmap_pg_g;
 			__insn_barrier();
-			__builtin_memset(va, 0, NBPD_L2);
+			__builtin_memset((void *)va, 0, NBPD_L2);
 			return;
 		}
 		pa = __md_palloc();
