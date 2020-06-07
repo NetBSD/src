@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.17 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.17.68.1 2020/06/07 12:35:01 martin Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.17 2009/11/27 03:23:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.17.68.1 2020/06/07 12:35:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.17 2009/11/27 03:23:04 rmind Exp $");
 #include <sys/kcore.h>
 #include <uvm/uvm_extern.h>
 #include <dev/cons.h>
+#include <machine/asm.h>
 #include <machine/cpu.h>
+#include <machine/regdef.h>
 #include <arc/arc/arcbios.h>
 
 int Bios_Read(int, char *, int, int *);
@@ -68,23 +70,56 @@ int arc_cpu_l2cache_size = 0;
 
 /*
  *	ARC Bios trampoline code.
+ *	Note we have to save/restore reserved MIPS_CURLWP register.
  */
-#define ARC_Call(Name,Offset)	\
-__asm("\n"			\
-"	.text\n"		\
-"	.ent	" #Name "\n"	\
-"	.align	3\n"		\
-"	.set	noreorder\n"	\
-"	.globl	" #Name "\n" 	\
-#Name":\n"			\
-"	lw	$2, 0x80001020\n"\
-"	lw	$2," #Offset "($2)\n"\
-"	jr	$2\n"		\
-"	nop\n"			\
+#define ARC_Call(Name,Offset)					\
+__asm("\n"							\
+"	.text\n"						\
+"	.ent	" #Name "\n"					\
+"	.align	3\n"						\
+"	.set	noreorder\n"					\
+"	.globl	" #Name "\n" 					\
+#Name":\n"							\
+"	subu	$29, " ___STRING(CALLFRAME_SIZ) "\n"		\
+"	sw	$31, " ___STRING(CALLFRAME_RA) "($29)\n"	\
+"	sw	$16, " ___STRING(CALLFRAME_SP) "($29)\n"	\
+"	lw	$2, 0x80001020\n"				\
+"	lw	$2," #Offset "($2)\n"				\
+"	jalr	$2\n"						\
+"	 move	$16, " ___STRING(MIPS_CURLWP) "\n"		\
+"	move	" ___STRING(MIPS_CURLWP) ", $16\n"		\
+"	lw	$31, " ___STRING(CALLFRAME_RA) "($29)\n"	\
+"	lw	$16, " ___STRING(CALLFRAME_SP) "($29)\n"	\
+"	j	$31\n"						\
+"	 addu	$29, " ___STRING(CALLFRAME_SIZ) "\n"		\
+"	.end	" #Name "\n"	);
+
+#define ARC_Call5(Name,Offset)					\
+__asm("\n"							\
+"	.text\n"						\
+"	.ent	" #Name "\n"					\
+"	.align	3\n"						\
+"	.set	noreorder\n"					\
+"	.globl	" #Name "\n" 					\
+#Name":\n"							\
+"	subu	$29, " ___STRING(CALLFRAME_SIZ + 4) "\n"	\
+"	sw	$31, " ___STRING(CALLFRAME_RA + 4) "($29)\n"	\
+"	sw	$16, " ___STRING(CALLFRAME_SP + 4) "($29)\n"	\
+"	lw	$12, " ___STRING(CALLFRAME_SIZ + 4 + 16) "($29)\n" \
+"	sw	$12, 16($29)\n"					\
+"	lw	$2, 0x80001020\n"				\
+"	lw	$2," #Offset "($2)\n"				\
+"	jalr	$2\n"						\
+"	 move	$16, " ___STRING(MIPS_CURLWP) "\n"		\
+"	move	" ___STRING(MIPS_CURLWP) ", $16\n"		\
+"	lw	$31, " ___STRING(CALLFRAME_RA + 4) "($29)\n"	\
+"	lw	$16, " ___STRING(CALLFRAME_SP + 4) "($29)\n"	\
+"	j	$31\n"						\
+"	 addu	$29, " ___STRING(CALLFRAME_SIZ + 4) "\n"	\
 "	.end	" #Name "\n"	);
 
 ARC_Call(Bios_Load,			0x00);
-ARC_Call(Bios_Invoke,			0x04);
+ARC_Call5(Bios_Invoke,			0x04);
 ARC_Call(Bios_Execute,			0x08);
 ARC_Call(Bios_Halt,			0x0c);
 ARC_Call(Bios_PowerDown,		0x10);
