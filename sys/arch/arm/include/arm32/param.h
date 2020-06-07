@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 2019/06/19 09:53:39 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.27.2.1 2020/06/07 19:06:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -70,7 +70,12 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+
+#if defined(_ARM_ARCH_6)
+#define	NKMEMPAGES_MAX_DEFAULT	((768 * 1024 * 1024) >> PAGE_SHIFT)
+#else
+#define	NKMEMPAGES_MAX_DEFAULT	((256 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
 
 /* Constants used to divide the USPACE area */
 
