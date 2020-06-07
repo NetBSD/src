@@ -35,11 +35,11 @@ You can view your non-default Postfix settings with:
 To report about installed packages with known vulnerabilities,
 fetch the latest pkg-vulnerabilities file as the superuser with:
 
- download-vulnerability-list
+ pkg_admin fetch-pkg-vulnerabilities
 
 And then run:
 
- audit-packages
+ pkg_admin audit
 %
 The following shows an example of temporarily adding 10MB more swap
 space for virtual memory:
