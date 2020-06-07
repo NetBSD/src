@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.12 2020/05/31 10:48:27 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.13 2020/06/07 17:09:33 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -167,4 +167,20 @@ usr.sbin/bta2dpd/bta2dpd/bta2dpd.c		1.7
 
 	Avoid running of the end of the array if a file cannot be opened.
 	[nat, ticket #1553]
+
+sys/arch/powerpc/oea/pmap.c			1.96
+
+	Fix inconsistent KERNEL_LOCK state in pmap for powerpc/oea.
+	[rin, ticket #1554]
+
+sys/dev/sysmon/sysmon_envsys.c			1.145
+
+	Do not queue sysmon refresh until the rndsource is attached.
+	[riastradh, ticket #1555]
+
+sys/kern/subr_pcu.c				1.22
+
+	Relax KASSERT() in pcu_discard_all() to allow new LWPs to 
+	gracefully exit when an error occurs in _lwp_create(2).
+	[thorpej, ticket #1556]
 
