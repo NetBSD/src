@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334.2.2 2020/05/31 10:39:35 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334.2.3 2020/06/07 12:54:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.2 2020/05/31 10:39:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.3 2020/06/07 12:54:39 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4461,7 +4461,7 @@ pmap_free_gnt(struct pmap *pmap, struct pmap_data_gnt *pgnt)
 	struct pmap_data_gnt_head *headp = pmap->pm_data;
 	int nentries = (pgnt->pd_gnt_eva - pgnt->pd_gnt_sva) / PAGE_SIZE;
 	KASSERT(nentries >= 1);
-	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(mutex_owned(pmap->pm_lock));
 	KASSERT(pgnt->pd_gnt_refs == 0);
 	SLIST_REMOVE(headp, pgnt, pmap_data_gnt, pd_gnt_list);
 	kmem_free(pgnt, sizeof(*pgnt) +
