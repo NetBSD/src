@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2016/09/05 01:09:57 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2020/06/07 05:49:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2016/09/05 01:09:57 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2020/06/07 05:49:05 thorpej Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -184,7 +184,6 @@ parse_bool_param(prop_dictionary_t props, const char *name,
 		 const char *value)
 {
 	bool boolvalue;
-	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
@@ -200,10 +199,8 @@ parse_bool_param(prop_dictionary_t props, const char *name,
 	else
 		errx(EXIT_FAILURE, "Invalid boolean value `%s'", value);
 
-	po = prop_bool_create(boolvalue);
-	if (po == NULL)
-		err(EXIT_FAILURE, "prop_bool_create");
-	prop_dictionary_set(props, name, po);
+	if (!prop_dictionary_set_bool(props, name, boolvalue))
+		err(EXIT_FAILURE, "prop_dictionary_set_bool");
 }
 
 static void
@@ -211,7 +208,6 @@ parse_int_param(prop_dictionary_t props, const char *name,
 		const char *value)
 {
 	int64_t intvalue;
-	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
@@ -219,10 +215,8 @@ parse_int_param(prop_dictionary_t props, const char *name,
 	if (dehumanize_number(value, &intvalue) != 0)
 		err(EXIT_FAILURE, "Invalid integer value `%s'", value);
 
-	po = prop_number_create_integer(intvalue);
-	if (po == NULL)
-		err(EXIT_FAILURE, "prop_number_create_integer");
-	prop_dictionary_set(props, name, po);
+	if (!prop_dictionary_set_int64(props, name, intvalue))
+		err(EXIT_FAILURE, "prop_dictionary_set_int64");
 }
 
 static void
@@ -249,15 +243,12 @@ static void
 parse_string_param(prop_dictionary_t props, const char *name,
 		   const char *value)
 {
-	prop_object_t po;
 
 	assert(name != NULL);
 	assert(value != NULL);
 
-	po = prop_string_create_cstring(value);
-	if (po == NULL)
-		err(EXIT_FAILURE, "prop_string_create_cstring");
-	prop_dictionary_set(props, name, po);
+	if (!prop_dictionary_set_string(props, name, value))
+		err(EXIT_FAILURE, "prop_dictionary_set_string");
 }
 
 static void
@@ -288,7 +279,7 @@ merge_dicts(prop_dictionary_t existing_dict, const prop_dictionary_t new_dict)
 
 	while ((props_obj = prop_object_iterator_next(props_iter)) != NULL) {
 		props_keysym = (prop_dictionary_keysym_t)props_obj;
-		props_key = prop_dictionary_keysym_cstring_nocopy(props_keysym);
+		props_key = prop_dictionary_keysym_value(props_keysym);
 		props_obj = prop_dictionary_get_keysym(new_dict, props_keysym);
 		if ((props_obj == NULL) || !prop_dictionary_set(existing_dict,
 		    props_key, props_obj)) {
