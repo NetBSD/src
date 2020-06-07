@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2017/12/10 20:38:14 bouyer Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2020/06/07 00:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.11 2017/12/10 20:38:14 bouyer Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2020/06/07 00:12:00 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -92,17 +92,17 @@ cfg_print(prop_dictionary_t dict)
 	if (prop_object_type(obj) != PROP_TYPE_DATA) {
 		return;
 	}
-	printf("local bdaddr: %s\n", bt_ntoa(prop_data_data_nocopy(obj), NULL));
+	printf("local bdaddr: %s\n", bt_ntoa(prop_data_value(obj), NULL));
 
 	obj = prop_dictionary_get(dict, BTDEVraddr);
 	if (prop_object_type(obj) != PROP_TYPE_DATA) {
 		return;
 	}
-	printf("remote bdaddr: %s\n", bt_ntoa(prop_data_data_nocopy(obj), NULL));
+	printf("remote bdaddr: %s\n", bt_ntoa(prop_data_value(obj), NULL));
 
 	obj = prop_dictionary_get(dict, BTDEVmode);
 	if (prop_object_type(obj) == PROP_TYPE_STRING)
-		printf("link mode: %s\n", prop_string_cstring_nocopy(obj));
+		printf("link mode: %s\n", prop_string_value(obj));
 
 	if (prop_dictionary_get_uint16(dict, BTDEVvendor, &v))
 		printf("vendor id: 0x%04x\n", v);
@@ -115,14 +115,14 @@ cfg_print(prop_dictionary_t dict)
 		printf("No device type!\n");
 		return;
 	}
-	printf("device type: %s\n", prop_string_cstring_nocopy(obj));
+	printf("device type: %s\n", prop_string_value(obj));
 
-	if (prop_string_equals_cstring(obj, "bthidev")) {
+	if (prop_string_equals_string(obj, "bthidev")) {
 		cfg_bthidev(dict);
 		return;
 	}
 
-	if (prop_string_equals_cstring(obj, "btsco")) {
+	if (prop_string_equals_string(obj, "btsco")) {
 		cfg_btsco(dict);
 		return;
 	}
@@ -138,12 +138,12 @@ cfg_bthidev(prop_dictionary_t dict)
 	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
 		printf("control psm: 0x%4.4" PRIx64 "\n",
-			prop_number_integer_value(obj));
+			prop_number_signed_value(obj));
 
 	obj = prop_dictionary_get(dict, BTHIDEVinterruptpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
 		printf("interrupt psm: 0x%4.4" PRIx64 "\n",
-			prop_number_integer_value(obj));
+			prop_number_signed_value(obj));
 
 	obj = prop_dictionary_get(dict, BTHIDEVreconnect);
 	if (prop_bool_true(obj))
@@ -165,7 +165,7 @@ cfg_btsco(prop_dictionary_t dict)
 	obj = prop_dictionary_get(dict, BTSCOchannel);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
 		printf("channel: %" PRId64 "\n",
-			prop_number_integer_value(obj));
+			prop_number_signed_value(obj));
 }
 
 static void
@@ -177,7 +177,7 @@ hid_parse(prop_data_t desc)
 
 	hid_init(NULL);
 
-	r = hid_use_report_desc(prop_data_data_nocopy(desc),
+	r = hid_use_report_desc(prop_data_value(desc),
 				prop_data_size(desc));
 	if (r == NULL)
 		return;
