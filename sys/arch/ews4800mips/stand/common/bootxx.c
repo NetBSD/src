@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.5 2009/02/04 15:22:13 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.6 2020/06/07 03:00:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -45,6 +45,10 @@
 #include <machine/sbd.h>
 
 #include "common.h"
+
+#define	IS_TEXT(p)	(p.p_flags & PF_X)
+#define	IS_DATA(p)	((p.p_flags & PF_X) == 0)
+#define	IS_BSS(p)	(p.p_filesz < p.p_memsz)
 
 #define	FILHSZ	(sizeof(struct ecoff_filehdr))
 #define	SCNHSZ	(sizeof(struct ecoff_scnhdr))
@@ -186,6 +190,7 @@ load_elf(uint8_t *buf, uint32_t *entry)
 {
 	Elf32_Ehdr *e = (void *)buf;
 	Elf32_Phdr *p;
+	int i;
 
 	if (e->e_ident[EI_MAG2] != 'L' || e->e_ident[EI_MAG3] != 'F' ||
 	    e->e_ident[EI_CLASS] != ELFCLASS32 ||
@@ -197,16 +202,35 @@ load_elf(uint8_t *buf, uint32_t *entry)
 	BASSERT(e->e_phentsize == sizeof(Elf32_Phdr));
 	p = (void *)(buf + e->e_phoff);
 #ifdef _STANDALONE
-	memcpy((void *)p->p_vaddr, buf + p->p_offset, p->p_filesz);
-	p++;
-	memcpy((void *)p->p_vaddr, buf + p->p_offset, p->p_filesz);
+	for (i = 0; i < e->e_phnum; i++) {
+		if (p[i].p_type != PT_LOAD ||
+		    (p[i].p_flags & (PF_W|PF_R|PF_X)) == 0)
+			continue;
+		if (IS_TEXT(p[i]) || IS_DATA(p[i])) {
+			memcpy((void *)p[i].p_vaddr,
+			    buf + p[i].p_offset, p[i].p_filesz);
+		}
+		if (IS_BSS(p[i])) {
+			memset((void *)(p[i].p_vaddr + p[i].p_filesz), 0,
+			    p[i].p_memsz - p[i].p_filesz);
+		}
+	}
 #else
 	DPRINTF("ELF entry point 0x%08x\n", e->e_entry);
-	DPRINTF("[text] 0x%08x 0x%x %dbyte.\n", p->p_vaddr, p->p_offset,
-	    p->p_filesz);
-	p++;
-	DPRINTF("[data] 0x%08x 0x%x %dbyte.\n", p->p_vaddr, p->p_offset,
-	    p->p_filesz);
+	for (i = 0; i < e->e_phnum; i++) {
+		if (p[i].p_type != PT_LOAD ||
+		    (p[i].p_flags & (PF_W|PF_R|PF_X)) == 0)
+			continue;
+		if (IS_TEXT(p[i]) || IS_DATA(p[i])) {
+			DPRINTF("[text/data] 0x%08x 0x%x %dbyte.\n",
+			    p[i].p_vaddr, p[i].p_offset, p[i].p_filesz);
+		}
+		if (IS_BSS(p[i])) {
+			DPRINTF("[bss] 0x%08x %dbyte.\n",
+			    p[i].p_vaddr + p[i].p_filesz,
+			    p[i].p_memsz - p[i].p_filesz);
+		}
+	}
 #endif
 	*entry = e->e_entry;
 
