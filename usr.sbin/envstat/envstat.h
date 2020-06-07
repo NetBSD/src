@@ -1,4 +1,4 @@
-/* 	$NetBSD: envstat.h,v 1.2 2007/11/16 08:01:38 xtraeme Exp $	*/
+/* 	$NetBSD: envstat.h,v 1.3 2020/06/07 00:51:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -52,7 +52,7 @@ void config_dict_mark(void);
 prop_dictionary_t config_dict_parsed(void);
 
 prop_number_t convert_val_to_pnumber(prop_dictionary_t, const char *,
-				     const char *, char *);
+				     const char *, const char *);
 
 void config_devblock_add(const char *, prop_dictionary_t);
 void config_devblock_check_sensorprops(prop_dictionary_t,
