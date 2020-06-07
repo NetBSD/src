@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.568 2020/05/16 18:31:48 christos Exp $
+# $NetBSD: GENERIC,v 1.569 2020/06/07 09:45:19 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.568 $"
+#ident		"GENERIC-$Revision: 1.569 $"
 
 maxusers	64		# estimated number of users
 
@@ -157,6 +157,9 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Kernel Code Coverage Driver.
 #makeoptions	KCOV=1
 #options 	KCOV
+
+# Fault Injection Driver.
+#options 	FAULT
 
 # Compatibility options
 # x86_64 never shipped with a.out binaries; the two options below are
