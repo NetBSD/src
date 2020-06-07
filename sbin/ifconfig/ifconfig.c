@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.241 2020/01/02 23:02:19 ryo Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.242 2020/06/07 06:02:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.241 2020/01/02 23:02:19 ryo Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.242 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -614,7 +614,7 @@ do_setifcaps(prop_dictionary_t env)
 
 	assert(sizeof(ifcr) == prop_data_size(d));
 
-	memcpy(&ifcr, prop_data_data_nocopy(d), sizeof(ifcr));
+	memcpy(&ifcr, prop_data_value(d), sizeof(ifcr));
 	if (direct_ioctl(env, SIOCSIFCAP, &ifcr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFCAP");
 }
@@ -884,7 +884,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 			sdl = ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
-		if (!prop_dictionary_set_cstring(env, "if", ifa->ifa_name))
+		if (!prop_dictionary_set_string(env, "if", ifa->ifa_name))
 			continue;
 		p = ifa->ifa_name;
 
@@ -990,7 +990,7 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	d = (prop_data_t)prop_dictionary_get(env, "address");
 	assert(d != NULL);
-	pfx0 = prop_data_data_nocopy(d);
+	pfx0 = prop_data_value(d);
 
 	if (pfx0->pfx_len >= 0) {
 		pfx = prefixlen_to_mask(af, pfx0->pfx_len);
@@ -1107,7 +1107,7 @@ getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 	capdata = (prop_data_t)prop_dictionary_get(env, "ifcaps");
 
 	if (capdata != NULL) {
-		tmpifcr = prop_data_data_nocopy(capdata);
+		tmpifcr = prop_data_value(capdata);
 		*oifcr = *tmpifcr;
 		return 0;
 	}
@@ -1115,7 +1115,7 @@ getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 	(void)direct_ioctl(env, SIOCGIFCAP, &ifcr);
 	*oifcr = ifcr;
 
-	capdata = prop_data_create_data(&ifcr, sizeof(ifcr));
+	capdata = prop_data_create_copy(&ifcr, sizeof(ifcr));
 
 	rc = prop_dictionary_set(oenv, "ifcaps", capdata);
 
@@ -1144,7 +1144,7 @@ setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 	} else
 		ifcr.ifcr_capenable |= ifcap;
 
-	if ((capdata = prop_data_create_data(&ifcr, sizeof(ifcr))) == NULL)
+	if ((capdata = prop_data_create_copy(&ifcr, sizeof(ifcr))) == NULL)
 		return -1;
 
 	rc = prop_dictionary_set(oenv, "ifcaps", capdata);
@@ -1185,7 +1185,7 @@ do_setifpreference(prop_dictionary_t env)
 	d = (prop_data_t)prop_dictionary_get(env, "address");
 	assert(d != NULL);
 
-	pfx = prop_data_data_nocopy(d);
+	pfx = prop_data_value(d);
 
 	memcpy(&ifap.ifap_addr, &pfx->pfx_addr,
 	    MIN(sizeof(ifap.ifap_addr), pfx->pfx_addr.sa_len));
@@ -1422,9 +1422,9 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (pfx == NULL)
 		err(EXIT_FAILURE, "prefixlen_to_mask");
 
-	d = prop_data_create_data(pfx, paddr_prefix_size(pfx));
+	d = prop_data_create_copy(pfx, paddr_prefix_size(pfx));
 	if (d == NULL)
-		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
+		err(EXIT_FAILURE, "%s: prop_data_create_copy", __func__);
 
 	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);

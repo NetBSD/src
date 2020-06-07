@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.13 2009/09/11 23:22:28 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.14 2020/06/07 06:02:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: carp.c,v 1.13 2009/09/11 23:22:28 dyoung Exp $");
+__RCSID("$NetBSD: carp.c,v 1.14 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ setcarp_passwd(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	memset(carpr.carpr_key, 0, sizeof(carpr.carpr_key));
 	/* XXX Should hash the password into the key here, perhaps? */
-	strlcpy((char *)carpr.carpr_key, prop_data_data_nocopy(data),
+	strlcpy((char *)carpr.carpr_key, prop_data_value(data),
 	    MIN(CARP_KEY_LEN, prop_data_size(data)));
 
 	carp_set(env, &carpr);
@@ -267,7 +267,7 @@ setcarpdev(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	carp_get(env, &carpr);
 
-	strlcpy(carpr.carpr_carpdev, prop_string_cstring_nocopy(s),
+	strlcpy(carpr.carpr_carpdev, prop_string_value(s),
 	    sizeof(carpr.carpr_carpdev));
 
 	carp_set(env, &carpr);

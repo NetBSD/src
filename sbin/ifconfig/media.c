@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.8 2019/04/22 10:44:55 msaitoh Exp $");
+__RCSID("$NetBSD: media.c,v 1.9 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -188,7 +188,7 @@ setmedia(prop_dictionary_t env, prop_dictionary_t oenv)
 	type = IFM_TYPE(media_current);
 	inst = IFM_INST(media_current);
 
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
+	val = strndup(prop_data_value(data), prop_data_size(data));
 	if (val == NULL)
 		return -1;
 
@@ -219,7 +219,7 @@ setmediaopt(prop_dictionary_t env, prop_dictionary_t oenv)
 	/* Can only issue `mediaopt' once. */
 	/* Can't issue `mediaopt' if `instance' has already been issued. */
 
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
+	val = strndup(prop_data_value(data), prop_data_size(data));
 	if (val == NULL)
 		return -1;
 
@@ -246,7 +246,7 @@ unsetmediaopt(prop_dictionary_t env, prop_dictionary_t oenv)
 		return -1;
 	}
 
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
+	val = strndup(prop_data_value(data), prop_data_size(data));
 	if (val == NULL)
 		return -1;
 
@@ -306,7 +306,7 @@ setmediamode(prop_dictionary_t env, prop_dictionary_t oenv)
 	options = IFM_OPTIONS(media_current);
 	inst = IFM_INST(media_current);
 
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
+	val = strndup(prop_data_value(data), prop_data_size(data));
 	if (val == NULL)
 		return -1;
 

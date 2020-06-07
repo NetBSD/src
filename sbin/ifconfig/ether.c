@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.8 2020/01/02 23:02:19 ryo Exp $	*/
+/*	$NetBSD: ether.c,v 1.9 2020/06/07 06:02:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.8 2020/01/02 23:02:19 ryo Exp $");
+__RCSID("$NetBSD: ether.c,v 1.9 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ do_setethercaps(prop_dictionary_t env)
 
 	assert(sizeof(eccr) == prop_data_size(d));
 
-	memcpy(&eccr, prop_data_data_nocopy(d), sizeof(eccr));
+	memcpy(&eccr, prop_data_value(d), sizeof(eccr));
 	if (direct_ioctl(env, SIOCSETHERCAP, &eccr) == -1)
 		err(EXIT_FAILURE, "SIOCSETHERCAP");
 }
@@ -102,7 +102,7 @@ getethercaps(prop_dictionary_t env, prop_dictionary_t oenv,
 	capdata = (prop_data_t)prop_dictionary_get(env, "ethercaps");
 
 	if (capdata != NULL) {
-		tmpeccr = prop_data_data_nocopy(capdata);
+		tmpeccr = prop_data_value(capdata);
 		*oeccr = *tmpeccr;
 		return 0;
 	}
@@ -110,7 +110,7 @@ getethercaps(prop_dictionary_t env, prop_dictionary_t oenv,
 	(void)direct_ioctl(env, SIOCGETHERCAP, &eccr);
 	*oeccr = eccr;
 
-	capdata = prop_data_create_data(&eccr, sizeof(eccr));
+	capdata = prop_data_create_copy(&eccr, sizeof(eccr));
 
 	rc = prop_dictionary_set(oenv, "ethercaps", capdata);
 
@@ -139,7 +139,7 @@ setethercaps(prop_dictionary_t env, prop_dictionary_t oenv)
 	} else
 		eccr.eccr_capenable |= ethercap;
 
-	if ((capdata = prop_data_create_data(&eccr, sizeof(eccr))) == NULL)
+	if ((capdata = prop_data_create_copy(&eccr, sizeof(eccr))) == NULL)
 		return -1;
 
 	rc = prop_dictionary_set(oenv, "ethercaps", capdata);

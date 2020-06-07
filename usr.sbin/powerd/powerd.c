@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.18 2013/02/09 01:16:39 christos Exp $	*/
+/*	$NetBSD: powerd.c,v 1.19 2020/06/07 05:54:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -314,7 +314,6 @@ static void
 dispatch_power_event_state_change(int fd, power_event_t *pev)
 {
 	prop_dictionary_t dict;
-	prop_object_t obj;
 	const char *argv[6];
 	char *buf = NULL;
 	int error;
@@ -333,21 +332,11 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 		free(buf);
 	}
 
-	obj = prop_dictionary_get(dict, "powerd-script-name");
-	argv[0] = prop_string_cstring_nocopy(obj);
-
-	obj = prop_dictionary_get(dict, "driver-name");
-	argv[1] = prop_string_cstring_nocopy(obj);
-
-	obj = prop_dictionary_get(dict, "powerd-event-name");
-	argv[2] = prop_string_cstring_nocopy(obj);
-
-	obj = prop_dictionary_get(dict, "sensor-name");
-	argv[3] = prop_string_cstring_nocopy(obj);
-
-	obj = prop_dictionary_get(dict, "state-description");
-	argv[4] = prop_string_cstring_nocopy(obj);
-
+	prop_dictionary_get_string(dict, "powerd-script-name", &argv[0]);
+	prop_dictionary_get_string(dict, "driver-name", &argv[1]);
+	prop_dictionary_get_string(dict, "powerd-event-name", &argv[2]);
+	prop_dictionary_get_string(dict, "sensor-name", &argv[3]);
+	prop_dictionary_get_string(dict, "state-description", &argv[4]);
 	argv[5] = NULL;
 
 	run_script(argv);

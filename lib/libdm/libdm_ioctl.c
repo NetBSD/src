@@ -207,7 +207,7 @@ libdm_task_create(const char *command)
 		return NULL;
 	}
 
-	if ((prop_dictionary_set_cstring(task->ldm_task, DM_IOCTL_COMMAND,
+	if ((prop_dictionary_set_string(task->ldm_task, DM_IOCTL_COMMAND,
 		    command)) == false) {
 		prop_object_release(task->ldm_task);
 		free(task);
@@ -253,7 +253,7 @@ int
 libdm_task_set_name(const char *name, libdm_task_t libdm_task)
 {
 
-	if ((prop_dictionary_set_cstring(libdm_task->ldm_task,
+	if ((prop_dictionary_set_string(libdm_task->ldm_task,
 		    DM_IOCTL_NAME, name)) == false)
 		return ENOENT;
  
@@ -278,7 +278,7 @@ int
 libdm_task_set_uuid(const char *uuid, libdm_task_t libdm_task)
 {
 
-	if ((prop_dictionary_set_cstring(libdm_task->ldm_task,
+	if ((prop_dictionary_set_string(libdm_task->ldm_task,
 	    DM_IOCTL_UUID, uuid)) == false)
 		return ENOENT;
 
@@ -657,7 +657,7 @@ libdm_cmd_get_deps(libdm_iter_t libdm_iter)
 	uint64_t deps;
 
 	obj = prop_object_iterator_next(libdm_iter->ldm_obji);
-	deps = prop_number_unsigned_integer_value(obj);
+	deps = prop_number_unsigned_value(obj);
 
 	if (obj != NULL)
 		prop_object_release(obj);
@@ -747,7 +747,7 @@ libdm_table_set_target(const char *name, libdm_table_t libdm_table)
 	if (libdm_table == NULL)
 		return ENOENT;
 
-	return prop_dictionary_set_cstring(libdm_table->ldm_tbl, DM_TABLE_TYPE, name);
+	return prop_dictionary_set_string(libdm_table->ldm_tbl, DM_TABLE_TYPE, name);
 }
 
 char *
@@ -769,7 +769,7 @@ libdm_table_set_params(const char *params, libdm_table_t  libdm_table)
 	if (libdm_table == NULL)
 		return ENOENT;
 
-	return prop_dictionary_set_cstring(libdm_table->ldm_tbl,
+	return prop_dictionary_set_string(libdm_table->ldm_tbl,
 	    DM_TABLE_PARAMS, params);
 }
 
@@ -885,5 +885,5 @@ libdm_dev_set_newname(const char *newname, libdm_cmd_t libdm_cmd)
 	if (newname == NULL)
 		return ENOENT;
 
-	return prop_array_set_cstring(libdm_cmd->ldm_cmd, 0, newname);
+	return prop_array_set_string(libdm_cmd->ldm_cmd, 0, newname);
 }

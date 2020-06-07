@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.19 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: parse.c,v 1.20 2020/06/07 06:02:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.19 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: parse.c,v 1.20 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -163,7 +163,7 @@ pstr_match(const struct parser *p, const struct match *im, struct match *om,
 		return -1;
 	}
 
-	o = (prop_object_t)prop_data_create_data(buf, len);
+	o = (prop_object_t)prop_data_create_copy(buf, len);
 
 	if (o == NULL) {
 		errno = ENOMEM;
@@ -208,7 +208,7 @@ pinteger_match(const struct parser *p, const struct match *im, struct match *om,
 		return -1;
 	}
 
-	o = (prop_object_t)prop_number_create_integer(val);
+	o = (prop_object_t)prop_number_create_signed(val);
 
 	if (o == NULL) {
 		errno = ENOMEM;
@@ -446,7 +446,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	if (result != NULL)
 		freeaddrinfo(result);
 
-	o = (prop_object_t)prop_data_create_data(pfx, len);
+	o = (prop_object_t)prop_data_create_copy(pfx, len);
 
 	free(pfx);
 
@@ -467,11 +467,11 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 
 		masklen = paddr_prefix_size(mask);
 
-		d = prop_data_create_data(mask, masklen);
+		d = prop_data_create_copy(mask, masklen);
 		free(mask);
 
 		if (d == NULL) {
-			err(EXIT_FAILURE, "%s: prop_data_create_data",
+			err(EXIT_FAILURE, "%s: prop_data_create_copy",
 			    __func__);
 			return -1;
 		}
@@ -527,7 +527,7 @@ piface_match(const struct parser *p, const struct match *im,
 		return -1;
 	}
 
-	if ((o = (prop_object_t)prop_string_create_cstring(arg)) == NULL) {
+	if ((o = (prop_object_t)prop_string_create_copy(arg)) == NULL) {
 		errno = ENOMEM;
 		return -1;
 	}
@@ -666,13 +666,12 @@ pkw_match(const struct parser *p, const struct match *im,
 			goto err;
 		break;
 	case KW_T_INT:
-		o = (prop_object_t)prop_number_create_integer(u->u_sint);
+		o = (prop_object_t)prop_number_create_signed(u->u_sint);
 		if (o == NULL)
 			goto err;
 		break;
 	case KW_T_UINT:
-		o = (prop_object_t)prop_number_create_unsigned_integer(
-		    u->u_uint);
+		o = (prop_object_t)prop_number_create_unsigned(u->u_uint);
 		if (o == NULL)
 			goto err;
 		break;
@@ -680,7 +679,7 @@ pkw_match(const struct parser *p, const struct match *im,
 		o = u->u_obj;
 		break;
 	case KW_T_STR:
-		o = (prop_object_t)prop_string_create_cstring_nocopy(u->u_str);
+		o = (prop_object_t)prop_string_create_nocopy(u->u_str);
 		if (o == NULL)
 			goto err;
 		break;
