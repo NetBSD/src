@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.251 2020/05/30 20:47:58 christos Exp $
+# $NetBSD: shl.mi,v 1.252 2020/06/07 10:24:50 martin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -21,7 +21,7 @@
 ./usr/libdata/debug/lib/libnvpair.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libpcap.so.8.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libprop.so.1.1.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libprop.so.1.2.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libpthread.so.1.4.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libradius.so.4.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-rump-debug	debug,dynamicroot,rump
@@ -189,7 +189,7 @@
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libproc.so.1.0.debug		comp-sys-debug	debug,dtrace
-./usr/libdata/debug/usr/lib/libprop.so.1.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libprop.so.1.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread.so.1.4.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug		comp-puffs-debug	debug,compatfile
@@ -345,6 +345,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libprop/t_proplib.debug		tests-lib-debug		debug,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
