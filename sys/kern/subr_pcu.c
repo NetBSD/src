@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.21 2017/10/16 15:03:57 bouyer Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.21.8.1 2020/06/07 17:07:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.21 2017/10/16 15:03:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.21.8.1 2020/06/07 17:07:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -130,7 +130,12 @@ pcu_discard_all(lwp_t *l)
 {
 	const uint32_t pcu_valid = l->l_pcu_valid;
 
-	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_valid == 0));
+	/*
+	 * The check for LSIDL here is to catch the case where the LWP exits
+	 * due to an error in the LWP creation path before it ever runs.
+	 */
+	KASSERT(l == curlwp || l->l_stat == LSIDL ||
+		((l->l_flag & LW_SYSTEM) && pcu_valid == 0));
 
 	if (__predict_true(pcu_valid == 0)) {
 		/* PCUs are not in use. */
