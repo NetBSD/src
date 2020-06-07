@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.113 2019/02/28 09:16:42 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.114 2020/06/07 23:33:02 fox Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -496,7 +496,7 @@ got_proto_09:
 
 	if (strncasecmp(proto, "HTTP/", 5) != 0)
 		goto bad;
-	strncpy(majorstr, proto + 5, sizeof majorstr);
+	strncpy(majorstr, proto + 5, sizeof(majorstr)-1);
 	majorstr[sizeof(majorstr)-1] = 0;
 	minorstr = strchr(majorstr, '.');
 	if (minorstr == NULL)
