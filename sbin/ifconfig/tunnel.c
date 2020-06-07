@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.21 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.22 2020/06/07 06:02:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.21 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.22 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,8 +98,8 @@ settunnel(prop_dictionary_t env, prop_dictionary_t oenv)
 		return -1;
 	}
 
-	srcpfx = prop_data_data_nocopy(srcdata);
-	dstpfx = prop_data_data_nocopy(dstdata);
+	srcpfx = prop_data_value(srcdata);
+	dstpfx = prop_data_value(dstdata);
 
 	if (srcpfx->pfx_addr.sa_family != dstpfx->pfx_addr.sa_family)
 		errx(EXIT_FAILURE,

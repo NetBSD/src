@@ -1,4 +1,4 @@
-/*	$NetBSD: pfsync.c,v 1.2 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: pfsync.c,v 1.3 2020/06/07 06:02:58 thorpej Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfsync.c,v 1.2 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: pfsync.c,v 1.3 2020/06/07 06:02:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -185,7 +185,7 @@ setpfsync_peer(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	pfsync_get(env, &pfsyncr);
 
-	peerpfx = prop_data_data_nocopy(data);
+	peerpfx = prop_data_value(data);
 
 	if (peerpfx != NULL) {
 		// Only AF_INET is supported for now
