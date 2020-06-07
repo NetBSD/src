@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $	*/
+/*	$NetBSD: sdp.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -318,43 +318,27 @@ config_hid(prop_dictionary_t dict, sdp_data_t *rec)
 	    || hid_length == -1)
 		return ENOATTR;
 
-	obj = prop_string_create_cstring_nocopy("bthidev");
-	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
+	if (!prop_dictionary_set_string_nocopy(dict, BTDEVtype, "bthidev"))
 		return errno;
 
-	prop_object_release(obj);
-
-	obj = prop_number_create_integer(control_psm);
-	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVcontrolpsm, obj))
+	if (!prop_dictionary_set_int32(dict, BTHIDEVcontrolpsm, control_psm) ||
+	    !prop_dictionary_set_int32(dict, BTHIDEVinterruptpsm,
+	    			       interrupt_psm))
 		return errno;
 
-	prop_object_release(obj);
-
-	obj = prop_number_create_integer(interrupt_psm);
-	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVinterruptpsm, obj))
-		return errno;
-
-	prop_object_release(obj);
-
-	obj = prop_data_create_data(hid_descriptor, hid_length);
+	obj = prop_data_create_copy(hid_descriptor, hid_length);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVdescriptor, obj))
 		return errno;
 
 	mode = hid_mode(obj);
 	prop_object_release(obj);
 
-	obj = prop_string_create_cstring_nocopy(mode);
-	if (obj == NULL || !prop_dictionary_set(dict, BTDEVmode, obj))
+	if (!prop_dictionary_set_string_nocopy(dict, BTDEVmode, mode))
 		return errno;
 
-	prop_object_release(obj);
-
 	if (!reconnect_initiate) {
-		obj = prop_bool_create(true);
-		if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVreconnect, obj))
+		if (!prop_dictionary_set_bool(dict, BTHIDEVreconnect, true))
 			return errno;
-
-		prop_object_release(obj);
 	}
 
 	return 0;
@@ -366,7 +350,6 @@ config_hid(prop_dictionary_t dict, sdp_data_t *rec)
 static int
 config_hset(prop_dictionary_t dict, sdp_data_t *rec)
 {
-	prop_object_t obj;
 	sdp_data_t value;
 	int32_t channel;
 	uint16_t attr;
@@ -387,17 +370,11 @@ config_hset(prop_dictionary_t dict, sdp_data_t *rec)
 	if (channel == -1)
 		return ENOATTR;
 
-	obj = prop_string_create_cstring_nocopy("btsco");
-	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
+	if (!prop_dictionary_set_string_nocopy(dict, BTDEVtype, "btsco"))
 		return errno;
 
-	prop_object_release(obj);
-
-	obj = prop_number_create_integer(channel);
-	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
+	if (!prop_dictionary_set_int32(dict, BTSCOchannel, channel))
 		return errno;
-
-	prop_object_release(obj);
 
 	return 0;
 }
@@ -408,7 +385,6 @@ config_hset(prop_dictionary_t dict, sdp_data_t *rec)
 static int
 config_hf(prop_dictionary_t dict, sdp_data_t *rec)
 {
-	prop_object_t obj;
 	sdp_data_t value;
 	int32_t channel;
 	uint16_t attr;
@@ -429,23 +405,14 @@ config_hf(prop_dictionary_t dict, sdp_data_t *rec)
 	if (channel == -1)
 		return ENOATTR;
 
-	obj = prop_string_create_cstring_nocopy("btsco");
-	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
+	if (!prop_dictionary_set_string_nocopy(dict, BTDEVtype, "btsco"))
 		return errno;
 
-	prop_object_release(obj);
-
-	obj = prop_bool_create(true);
-	if (obj == NULL || !prop_dictionary_set(dict, BTSCOlisten, obj))
+	if (!prop_dictionary_set_bool(dict, BTSCOlisten, true))
 		return errno;
 
-	prop_object_release(obj);
-
-	obj = prop_number_create_integer(channel);
-	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
+	if (!prop_dictionary_set_int32(dict, BTSCOchannel, channel))
 		return errno;
-
-	prop_object_release(obj);
 
 	return 0;
 }
@@ -600,7 +567,7 @@ hid_mode(prop_data_t desc)
 
 	mode = BTDEVauth;	/* default */
 
-	r = hid_use_report_desc(prop_data_data_nocopy(desc),
+	r = hid_use_report_desc(prop_data_value(desc),
 				prop_data_size(desc));
 	if (r == NULL)
 		err(EXIT_FAILURE, "hid_use_report_desc");

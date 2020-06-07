@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 2014/02/23 07:50:01 mlelstv Exp $	*/
+/*	$NetBSD: file.c,v 1.3 2020/06/07 00:15:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.2 2014/02/23 07:50:01 mlelstv Exp $");
+__RCSID("$NetBSD: file.c,v 1.3 2020/06/07 00:15:37 thorpej Exp $");
 
 #include <sys/stat.h>
 #include <prop/proplib.h>
@@ -67,7 +67,7 @@ list_file(void)
 		goto done;
 
 	while ((sym = prop_object_iterator_next(iter)) != NULL) {
-		if (bt_aton(prop_dictionary_keysym_cstring_nocopy(sym), &bdaddr) == 0)
+		if (bt_aton(prop_dictionary_keysym_value(sym), &bdaddr) == 0)
 			continue;
 		if (bdaddr_any(&bdaddr))
 			continue;
@@ -78,7 +78,7 @@ list_file(void)
 
 		printf("\n");
 		print_addr("bdaddr", &bdaddr);
-		print_key("file key", prop_data_data_nocopy(dat));
+		print_key("file key", prop_data_value(dat));
 	}
 
 	prop_object_iterator_release(iter);
@@ -111,7 +111,7 @@ read_file(void)
 	if (prop_data_size(dat) != HCI_KEY_SIZE)
 		goto done;
 
-	memcpy(key, prop_data_data_nocopy(dat), HCI_KEY_SIZE);
+	memcpy(key, prop_data_value(dat), HCI_KEY_SIZE);
 	rv = true;
 
 done:
@@ -149,7 +149,7 @@ write_file(void)
 			goto done;
 	}
 
-	dat = prop_data_create_data_nocopy(key, HCI_KEY_SIZE);
+	dat = prop_data_create_nocopy(key, HCI_KEY_SIZE);
 	if (dat == NULL)
 		goto done;
 

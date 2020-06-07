@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.5 2019/02/03 03:19:30 mrg Exp $	*/
+/*	$NetBSD: db.c,v 1.6 2020/06/07 00:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.5 2019/02/03 03:19:30 mrg Exp $");
+__RCSID("$NetBSD: db.c,v 1.6 2020/06/07 00:12:00 thorpej Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -75,7 +75,7 @@ db_get(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 			return NULL;
 		} else {
 			obj = prop_dictionary_get(db, "btdevctl-version");
-			switch(prop_number_integer_value(obj)) {
+			switch(prop_number_signed_value(obj)) {
 			case 0: db_update0();
 				/* FALLTHROUGH */
 			case 1: db_update1();
@@ -111,7 +111,6 @@ int
 db_set(prop_dictionary_t dev, bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 {
 	prop_dictionary_t ldev, rdev;
-	prop_number_t version;
 
 	ldev = prop_dictionary_get(db, bt_ntoa(laddr, NULL));
 	if (ldev == NULL) {
@@ -141,14 +140,9 @@ db_set(prop_dictionary_t dev, bdaddr_t *laddr, bdaddr_t *raddr, const char *serv
 		return 0;
 
 	if (db_flush == true) {
-		version = prop_number_create_integer(BTDEVCTL_VERSION);
-		if (version == NULL)
-			err(EXIT_FAILURE, "prop_number_create_integer");
-
-		if (!prop_dictionary_set(db, "btdevctl-version", version))
-			err(EXIT_FAILURE, "prop_dictionary_set");
-
-		prop_object_release(version);
+		if (!prop_dictionary_set_int(db, "btdevctl-version",
+					     BTDEVCTL_VERSION))
+			err(EXIT_FAILURE, "prop_dictionary_set_int");
 
 		if (!prop_dictionary_externalize_to_file(db, BTDEVCTL_PLIST))
 			warn("%s", BTDEVCTL_PLIST);
@@ -194,20 +188,20 @@ db_update0(void)
 		if (prop_data_size(obj) != sizeof(laddr))
 			errx(EXIT_FAILURE, "invalid %s", BTDEVladdr);
 
-		bdaddr_copy(&laddr, prop_data_data_nocopy(obj));
+		bdaddr_copy(&laddr, prop_data_value(obj));
 		prop_dictionary_remove(dev, BTDEVladdr);
 
 		obj = prop_dictionary_get(dev, BTDEVraddr);
 		if (prop_data_size(obj) != sizeof(raddr))
 			errx(EXIT_FAILURE, "invalid %s", BTDEVraddr);
 
-		bdaddr_copy(&raddr, prop_data_data_nocopy(obj));
+		bdaddr_copy(&raddr, prop_data_value(obj));
 		prop_dictionary_remove(dev, BTDEVraddr);
 
 		obj = prop_dictionary_get(dev, BTDEVtype);
-		if (prop_string_equals_cstring(obj, "bthidev"))
+		if (prop_string_equals_string(obj, "bthidev"))
 			service = "HID";
-		else if (prop_string_equals_cstring(obj, "btsco")) {
+		else if (prop_string_equals_string(obj, "btsco")) {
 			obj = prop_dictionary_get(dev, BTSCOlisten);
 			if (prop_bool_true(obj))
 				service = "HF";
@@ -247,7 +241,7 @@ db_update1(void)
 	while ((key = prop_object_iterator_next(iter0)) != NULL) {
 		ldev = prop_dictionary_get_keysym(db, key);
 		if (prop_object_type(ldev) != PROP_TYPE_DICTIONARY
-		    || !bt_aton(prop_dictionary_keysym_cstring_nocopy(key), &bdaddr))
+		    || !bt_aton(prop_dictionary_keysym_value(key), &bdaddr))
 			continue;
 
 		iter1 = prop_dictionary_iterator(ldev);
@@ -257,7 +251,7 @@ db_update1(void)
 		while ((key = prop_object_iterator_next(iter1)) != NULL) {
 			rdev = prop_dictionary_get_keysym(ldev, key);
 			if (prop_object_type(rdev) != PROP_TYPE_DICTIONARY
-			    || !bt_aton(prop_dictionary_keysym_cstring_nocopy(key), &bdaddr))
+			    || !bt_aton(prop_dictionary_keysym_value(key), &bdaddr))
 				continue;
 
 			srv = prop_dictionary_get(rdev, "HID");
@@ -268,11 +262,9 @@ db_update1(void)
 			if (prop_object_type(obj) != PROP_TYPE_DATA)
 				continue;
 
-			obj = prop_string_create_cstring_nocopy(hid_mode(obj));
-			if (obj == NULL || !prop_dictionary_set(srv, BTDEVmode, obj))
+			if (!prop_dictionary_set_string_nocopy(srv, BTDEVmode,
+							       hid_mode(obj)))
 				err(EXIT_FAILURE, "Cannot set %s", BTDEVmode);
-
-			prop_object_release(obj);
 		}
 
 		prop_object_iterator_release(iter1);
