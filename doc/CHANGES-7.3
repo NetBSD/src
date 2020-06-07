@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.84 2020/05/07 12:09:26 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.85 2020/06/07 16:46:01 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -856,4 +856,14 @@ bin/rcp/rcp.c					1.50
 	as this would lead to a desynchronization of the protocol and
 	further files or directories to be ignored or corrupted.
 	[aymeric, ticket #1731]
+
+sys/arch/powerpc/oea/pmap.c			1.96
+
+	Fix inconsistent KERNEL_LOCK state in pmap for powerpc/oea.
+	[rin, ticket #1732]
+
+sys/dev/sysmon/sysmon_envsys.c			1.145
+
+	Do not queue sysmon refresh until the rndsource is attached.
+	[riastradh, ticket #1733]
 
