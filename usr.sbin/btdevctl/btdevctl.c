@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.10 2011/08/27 22:24:14 joerg Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 The NetBSD Foundation, Inc.\
   @(#) Copyright (c) 2006 Itronix, Inc.\
   All rights reserved.");
-__RCSID("$NetBSD: btdevctl.c,v 1.10 2011/08/27 22:24:14 joerg Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -62,7 +62,6 @@ int
 main(int argc, char *argv[])
 {
 	prop_dictionary_t dev;
-	prop_object_t obj;
 	bdaddr_t laddr, raddr;
 	const char *service, *mode;
 	int ch, query, verbose, attach, detach, set, none;
@@ -161,11 +160,8 @@ main(int argc, char *argv[])
 	}
 
 	if (mode != NULL) {
-		obj = prop_string_create_cstring_nocopy(mode);
-		if (obj == NULL || !prop_dictionary_set(dev, BTDEVmode, obj))
+		if (!prop_dictionary_set_string_nocopy(dev, BTDEVmode, mode))
 			errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVmode);
-
-		prop_object_release(obj);
 		set = true;
 	}
 
@@ -178,25 +174,16 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "service store failed");
 
 	/* add binary local-bdaddr */
-	obj = prop_data_create_data(&laddr, sizeof(laddr));
-	if (obj == NULL || !prop_dictionary_set(dev, BTDEVladdr, obj))
+	if (!prop_dictionary_set_data(dev, BTDEVladdr, &laddr, sizeof(laddr)))
 		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVladdr);
 
-	prop_object_release(obj);
-
 	/* add binary remote-bdaddr */
-	obj = prop_data_create_data(&raddr, sizeof(raddr));
-	if (obj == NULL || !prop_dictionary_set(dev, BTDEVraddr, obj))
+	if (!prop_dictionary_set_data(dev, BTDEVraddr, &raddr, sizeof(raddr)))
 		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVraddr);
 
-	prop_object_release(obj);
-
 	/* add service name */
-	obj = prop_string_create_cstring(service);
-	if (obj == NULL || !prop_dictionary_set(dev, BTDEVservice, obj))
+	if (!prop_dictionary_set_string(dev, BTDEVservice, service))
 		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVservice);
-
-	prop_object_release(obj);
 
 	if (verbose == true)
 		cfg_print(dev);
