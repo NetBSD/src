@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2332 2020/06/06 21:25:59 thorpej Exp $
+#	$NetBSD: mi,v 1.2333 2020/06/07 14:55:13 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9175,7 +9175,7 @@
 ./usr/share/man/cat3/prop_dictionary_get.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_bool.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_cstring.0	comp-obsolete	obsolete
-./usr/share/man/cat3/prop_dictionary_get_cstring_nocopy.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_get_cstring_nocopy.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/prop_dictionary_get_int.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_int16.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_int32.0	comp-c-catman		.cat
