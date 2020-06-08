@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.17 2020/06/05 02:30:54 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.18 2020/06/08 07:48:57 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.17 2020/06/05 02:30:54 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.18 2020/06/08 07:48:57 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -1295,7 +1295,7 @@ imxccm_clk_set_rate_div(struct imxccm_softc *sc,
 	KASSERT(parent != NULL);
 
 	u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
-	u_int divider = rate_parent / rate;
+	u_int divider = uimax(1, rate_parent / rate);
 
 	bus_space_handle_t ioh;
 	if (div->base == IMX6_CLK_REG_CCM_ANALOG)
