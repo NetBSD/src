@@ -33,13 +33,15 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.19 2020/06/07 05:42:25 thorpej Exp $");
+__RCSID("$NetBSD: backup.c,v 1.20 2020/06/08 22:52:09 thorpej Exp $");
 #endif
 
 #include <sys/bootblock.h>
 #include <sys/types.h>
 
+#include <assert.h>
 #include <err.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +82,8 @@ store_mbr(gpt_t gpt, unsigned int i, const struct mbr *mbr,
 
 	mbr_dict = prop_dictionary_create();
 	PROP_ERR(mbr_dict);
-	PROP_ERR(prop_dictionary_set_uint(mbr_dict, "index", i));
+	assert(i <= INT_MAX);
+	PROP_ERR(prop_dictionary_set_int(mbr_dict, "index", (int)i));
 	PROP_ERR(prop_dictionary_set_uint(mbr_dict, "flag", par->part_flag));
 	PROP_ERR(prop_dictionary_set_uint(mbr_dict, "start_head",
 					  par->part_shd));
@@ -127,8 +130,9 @@ store_gpt(gpt_t gpt, const struct gpt_hdr *hdr, prop_dictionary_t *type_dict)
 					  le32toh(hdr->hdr_revision)));
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", hdr->hdr_guid);
 	PROP_ERR(prop_dictionary_set_string(*type_dict, "guid", buf));
-	PROP_ERR(prop_dictionary_set_uint(*type_dict, "entries",
-					  le32toh(hdr->hdr_entries)));
+	assert(le32toh(hdr->hdr_entries) <= INT32_MAX);
+	PROP_ERR(prop_dictionary_set_int32(*type_dict, "entries",
+					   (int32_t)le32toh(hdr->hdr_entries)));
 	return 0;
 cleanup:
 	if (*type_dict)
@@ -161,7 +165,8 @@ store_tbl(gpt_t gpt, const map_t m, prop_dictionary_t *type_dict)
 	    m->map_size * gpt->secsz; i++, ent++) {
 		gpt_dict = prop_dictionary_create();
 		PROP_ERR(gpt_dict);
-		PROP_ERR(prop_dictionary_set_uint(gpt_dict, "index", i));
+		assert(i <= INT_MAX);
+		PROP_ERR(prop_dictionary_set_int(gpt_dict, "index", (int)i));
 		gpt_uuid_snprintf(buf, sizeof(buf), "%d", ent->ent_type);
 		PROP_ERR(prop_dictionary_set_string(gpt_dict, "type", buf));
 		gpt_uuid_snprintf(buf, sizeof(buf), "%d", ent->ent_guid);
@@ -206,7 +211,9 @@ backup(gpt_t gpt, const char *outfile)
 
 	props = prop_dictionary_create();
 	PROP_ERR(props);
-	PROP_ERR(prop_dictionary_set_uint(props, "sector_size", gpt->secsz));
+	assert(gpt->secsz <= INT_MAX);
+	PROP_ERR(prop_dictionary_set_int(props, "sector_size",
+					 (int)gpt->secsz));
 	m = map_first(gpt);
 	while (m != NULL) {
 		switch (m->map_type) {
