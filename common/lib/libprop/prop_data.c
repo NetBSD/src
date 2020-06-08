@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.16 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.17 2020/06/08 21:31:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -272,9 +272,6 @@ prop_data_create_copy(const void *v, size_t size)
 {
 	prop_data_t pd;
 	void *nv;
-
-	if (v == NULL || size == 0)
-		return (NULL);
 
 	/* Tolerate the creation of empty data objects. */
 	if (v != NULL && size != 0) {
