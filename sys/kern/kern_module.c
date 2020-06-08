@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.149 2020/04/04 19:50:54 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.150 2020/06/08 20:19:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.149 2020/04/04 19:50:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.150 2020/06/08 20:19:50 thorpej Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1799,7 +1799,7 @@ module_merge_dicts(prop_dictionary_t existing_dict,
 
 	while ((props_obj = prop_object_iterator_next(props_iter)) != NULL) {
 		props_keysym = (prop_dictionary_keysym_t)props_obj;
-		props_key = prop_dictionary_keysym_cstring_nocopy(props_keysym);
+		props_key = prop_dictionary_keysym_value(props_keysym);
 		props_obj = prop_dictionary_get_keysym(new_dict, props_keysym);
 		if ((props_obj == NULL) || !prop_dictionary_set(existing_dict,
 		    props_key, props_obj)) {

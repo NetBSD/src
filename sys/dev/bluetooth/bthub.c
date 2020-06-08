@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.22 2015/05/09 22:23:40 dholland Exp $	*/
+/*	$NetBSD: bthub.c,v 1.23 2020/06/08 20:20:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.22 2015/05/09 22:23:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.23 2020/06/08 20:20:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,7 +110,7 @@ bthub_attach(device_t parent, device_t self, void *aux)
 	prop_object_t obj;
 
 	dict = device_properties(self);
-	obj = prop_data_create_data(addr, sizeof(*addr));
+	obj = prop_data_create_copy(addr, sizeof(*addr));
 	prop_dictionary_set(dict, BTDEVladdr, obj);
 	prop_object_release(obj);
 
