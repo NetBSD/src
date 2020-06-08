@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.252 2020/06/07 10:24:50 martin Exp $
+# $NetBSD: shl.mi,v 1.253 2020/06/08 05:05:43 rin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -345,7 +345,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/libprop/t_proplib.debug		tests-lib-debug		debug,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
