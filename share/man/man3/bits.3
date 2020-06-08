@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.18 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: bits.3,v 1.19 2020/06/08 17:28:10 sevan Exp $
 .\"
 .\" Copyright (c) 2006, 2010 David Young.  All rights reserved.
 .\"
@@ -58,7 +58,6 @@ Use
 and
 .Fn __BITS
 to define bitmasks:
-.Pp
 .Bl -tag -width __BITS -offset indent
 .It Fn __BIT "n"
 Return a bitmask with bit
@@ -82,7 +81,6 @@ The least significant bit is bit 0.
 and
 .Fn __SHIFTOUT_MASK
 help read and write bitfields from words:
-.Pp
 .Bl -tag -width __SHIFTOUT_MASK -offset indent
 .It Fn __SHIFTIN "v" "mask"
 Left-shift bits
