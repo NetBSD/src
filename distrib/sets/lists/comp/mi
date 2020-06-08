@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2333 2020/06/07 14:55:13 thorpej Exp $
+#	$NetBSD: mi,v 1.2334 2020/06/08 16:36:18 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3048,6 +3048,7 @@
 ./usr/include/sys/exec_script.h			comp-c-include
 ./usr/include/sys/extattr.h			comp-c-include
 ./usr/include/sys/extent.h			comp-c-include
+./usr/include/sys/fault.h			comp-c-include
 ./usr/include/sys/fcntl.h			comp-c-include
 ./usr/include/sys/fd_set.h			comp-c-include
 ./usr/include/sys/fdio.h			comp-c-include
