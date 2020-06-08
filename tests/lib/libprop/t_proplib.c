@@ -1,4 +1,4 @@
-/* $NetBSD: t_proplib.c,v 1.2 2020/06/06 21:45:07 thorpej Exp $ */
+/* $NetBSD: t_proplib.c,v 1.3 2020/06/08 21:31:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proplib.c,v 1.2 2020/06/06 21:45:07 thorpej Exp $");
+__RCSID("$NetBSD: t_proplib.c,v 1.3 2020/06/08 21:31:17 thorpej Exp $");
 
 #include <limits.h>
 #include <stdlib.h>
@@ -223,6 +223,26 @@ ATF_TC_BODY(prop_data_basic, tc)
 	 * This test exercises implementation details, not only
 	 * API contract.
 	 */
+
+	d1 = prop_data_create_copy(const_data1, 0);
+	ATF_REQUIRE(d1 != NULL);
+	ATF_REQUIRE(prop_data_value(d1) == NULL);
+	prop_object_release(d1);
+
+	d1 = prop_data_create_copy(NULL, sizeof(const_data1));
+	ATF_REQUIRE(d1 != NULL);
+	ATF_REQUIRE(prop_data_value(d1) == NULL);
+	prop_object_release(d1);
+
+	d1 = prop_data_create_nocopy(const_data1, 0);
+	ATF_REQUIRE(d1 != NULL);
+	ATF_REQUIRE(prop_data_value(d1) == NULL);
+	prop_object_release(d1);
+
+	d1 = prop_data_create_nocopy(NULL, sizeof(const_data1));
+	ATF_REQUIRE(d1 != NULL);
+	ATF_REQUIRE(prop_data_value(d1) == NULL);
+	prop_object_release(d1);
 
 	d1 = prop_data_create_nocopy(const_data1, sizeof(const_data1));
 	ATF_REQUIRE(d1 != NULL);
