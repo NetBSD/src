@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.23 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.24 2020/06/08 20:14:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.23 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.24 2020/06/08 20:14:24 thorpej Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1213,11 +1213,11 @@ veriexec_file_convert(struct veriexec_file_entry *vfe, prop_dictionary_t rdict)
 {
 	if (vfe->filename)
 		prop_dictionary_set(rdict, "file",
-		    prop_string_create_cstring(vfe->filename));
+		    prop_string_create_copy(vfe->filename));
 	prop_dictionary_set_uint8(rdict, "entry-type", vfe->type);
 	prop_dictionary_set_uint8(rdict, "status", vfe->status);
 	prop_dictionary_set(rdict, "fp-type",
-	    prop_string_create_cstring(vfe->ops->type));
+	    prop_string_create_copy(vfe->ops->type));
 	prop_dictionary_set(rdict, "fp",
 	    prop_data_create_data(vfe->fp, vfe->ops->hash_len));
 }

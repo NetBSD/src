@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.145 2020/06/01 21:54:47 riastradh Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.146 2020/06/08 20:18:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.145 2020/06/01 21:54:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.146 2020/06/08 20:18:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -267,7 +267,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				return EINVAL;
 			}
 			
-			devname = prop_dictionary_keysym_cstring_nocopy(obj);
+			devname = prop_dictionary_keysym_value(obj);
 			DPRINTF(("%s: processing the '%s' array requests\n",
 			    __func__, devname));
 
@@ -950,9 +950,9 @@ sysmon_envsys_destroy_plist(prop_array_t array)
 		DPRINTFOBJ(("%s: iterating over dictionary\n", __func__));
 		while ((obj = prop_object_iterator_next(iter2)) != NULL) {
 			DPRINTFOBJ(("%s: obj=%s\n", __func__,
-			    prop_dictionary_keysym_cstring_nocopy(obj)));
+			    prop_dictionary_keysym_value(obj)));
 			prop_dictionary_remove(dict,
-			    prop_dictionary_keysym_cstring_nocopy(obj));
+			    prop_dictionary_keysym_value(obj));
 			prop_object_iterator_reset(iter2);
 		}
 		prop_object_iterator_release(iter2);
@@ -1848,7 +1848,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj1 && prop_object_type(obj1) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			refresh_timo =
-			    prop_number_unsigned_integer_value(obj1);
+			    prop_number_unsigned_value(obj1);
 			if (refresh_timo < 1)
 				error = EINVAL;
 			else {
