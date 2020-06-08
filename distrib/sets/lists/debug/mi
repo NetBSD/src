@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.313 2020/05/30 20:47:58 christos Exp $
+# $NetBSD: mi,v 1.314 2020/06/08 02:54:41 rin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2266,7 +2266,8 @@
 ./usr/libdata/debug/usr/tests/lib/libppath/t_ppath.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libproc/proc_test.debug		tests-lib-debugq	debug,atf,compattestfile,dtrace
 ./usr/libdata/debug/usr/tests/lib/libproc/target_prog.debug		tests-lib-debugq	debug,atf,compattestfile,dtrace
-./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		obsolete
+./usr/libdata/debug/usr/tests/lib/libprop/t_proplib.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1.debug	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dlopen.debug	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dso_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
