@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.7 2015/01/27 12:57:14 martin Exp $
+# $NetBSD: t_make.sh,v 1.8 2020/06/08 19:50:10 rillig Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,6 +77,12 @@ atf_init_test_cases()
 	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk ; do
 	    basename="${filename##*/}"
 	    basename="${basename%.mk}"
+
+	    # skip files that are not test cases on their own
+	    case "${basename}" in
+	    include-sub*) continue;;
+	    esac
+
 	    atfname="$(echo "${basename}" | tr "x-" "x_")"
 	    descr='' # XXX
             test_case "${atfname}" "${basename}" "${descr}"
