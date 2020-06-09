@@ -33,7 +33,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.4 2020/05/12 06:32:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.5 2020/06/09 05:06:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -71,10 +71,7 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 	x86_cpuid(0x15, descs);
 	denominator = descs[0];
 	numerator = descs[1];
-	if ((denominator == 0) || numerator == 0) {
-		aprint_debug_dev(ci->ci_dev,
-		    "TSC/core crystal clock ratio is not enumerated\n");
-	} else {
+	if ((denominator != 0) && numerator != 0) {
 		khz = 0;
 		if (descs[2] != 0)
 			khz = descs[2] / 1000;
