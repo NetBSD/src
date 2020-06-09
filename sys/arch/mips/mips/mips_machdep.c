@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.283 2020/06/09 06:01:49 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.284 2020/06/09 06:18:01 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.283 2020/06/09 06:01:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.284 2020/06/09 06:18:01 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1495,6 +1495,22 @@ cpu_identify(device_t dev)
 		fpuname = "built-in FPU";
 	if (MIPS_PRID_IMPL(cpu_id) == MIPS_RC64470)	/* FPU PRid is 0x21 */
 		fpuname = "built-in FPU";
+	if (CPUISMIPSNN) {
+		uint32_t cfg1;
+
+		switch (MIPS_PRID_CID(cpu_id)) {
+		/*
+		 * CPUs from the following companies have a built-in
+		 * FPU if Config1[FP] is set.
+		 */
+		case MIPS_PRID_CID_SIBYTE:
+		case MIPS_PRID_CID_CAVIUM:
+			cfg1 = mipsNN_cp0_config1_read();
+			if (cfg1 & MIPSNN_CFG1_FP)
+				fpuname = "built-in FPU";
+			break;
+		}
+	}
 
 	if (opts->mips_cpu->cpu_cid != 0) {
 		if (opts->mips_cpu->cpu_cid <= ncidnames)
