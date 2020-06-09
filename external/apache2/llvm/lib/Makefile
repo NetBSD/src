@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/02/23 02:01:17 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2020/06/09 21:50:32 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -116,11 +116,12 @@ SUBDIR+= \
 	libLLVMRuntimeDyld
 .endif
 
-.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
+.if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
 SUBDIR+= \
 	libLLVMDebugInfoPDB \
 	libLLVMDebugInfoPDBNative \
-	libLLVMDebugInfoSymbolize
+	libLLVMDebugInfoSymbolize \
+	libLLVMObjectYAML
 .endif
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
@@ -129,7 +130,6 @@ SUBDIR+= \
 	libLLVMHello \
 	libLLVMInterpreter \
 	libLLVMLineEditor \
-	libLLVMObjectYAML \
 	libLLVMToolDrivers \
 	libLLVMToolDriversDlltool \
 	libLLVMXRay

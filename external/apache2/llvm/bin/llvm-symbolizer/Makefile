@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2020/06/09 21:50:32 kamil Exp $
 
 PROG_CXX=	llvm-symbolizer
 NOMAN=		yes
@@ -21,6 +21,8 @@ LLVM_LIBS+= \
 	BitstreamReader \
 	IR \
 	BinaryFormat \
+	ObjectYAML \
+	TextAPI \
 	Support \
 	Demangle
 

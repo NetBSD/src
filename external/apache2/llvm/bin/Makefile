@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2020/06/09 21:50:32 kamil Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	clang \
 	clang-tblgen \
-	tblgen
+	tblgen \
+	llvm-symbolizer
 
 .if defined(LLVM_DEVELOPER)
 SUBDIR+= \
@@ -32,7 +33,6 @@ SUBDIR+= \
 	llvm-readobj \
 	llvm-size \
 	llvm-strings \
-	llvm-symbolizer \
 	llvm-xray \
 	opt \
 	sancov \
