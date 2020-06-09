@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.178 2020/06/02 16:45:42 kamil Exp $
+#	$NetBSD: makesyscalls.sh,v 1.179 2020/06/09 04:48:45 dholland Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -47,6 +47,8 @@ esac
 #	syssw		the syscall switch file
 #	sysautoload	the syscall autoload definitions file
 #	sysarghdr	the syscall argument struct definitions
+#	sysarghdrextra	extra stuff dumped into sysarghdr
+#	systrace	the dtrace definitions
 #	compatopts	those syscall types that are for 'compat' syscalls
 #	switchname	the name for the 'struct sysent' we define
 #	namesname	the name for the 'const char *[]' we define
@@ -57,6 +59,9 @@ esac
 #	sys_nosys	[optional] name of function called for unsupported
 #			syscalls, if not sys_nosys()
 #       maxsysargs	[optiona] the maximum number or arguments
+#	rumpcalls	???
+#	rumpcallshdr	???
+#	rumpsysmap	???
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'SYSLIBCOMPAT'.
 
@@ -143,7 +148,7 @@ function toupper(str) {
 fi
 
 # before handing it off to awk, make a few adjustments:
-#	(1) insert spaces around {, }, (, ), *, and commas.
+#	(1) insert spaces around {, }, (, ), *, |, and commas.
 #	(2) get rid of any and all dollar signs (so that rcs id use safe)
 #
 # The awk script will deal with blank lines and lines that
