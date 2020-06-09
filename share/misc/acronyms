@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.300 2020/06/04 14:33:28 nia Exp $
+$NetBSD: acronyms,v 1.301 2020/06/09 19:45:29 nia Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -168,6 +168,7 @@ FNO	from now on
 FOC	free of charge
 FPS	first person shooter
 FPS	frames per second
+FQA	frequently questioned answer
 FRAND	fair, reasonable, and non-discriminatory
 FSDO	for some definition of
 FSVO	for some value of
@@ -192,6 +193,7 @@ GAC	get a clue
 GAL	get a life
 GBTW	get back to work
 GCD	greatest common divisor
+GCHQ	Government Communications Headquarters (UK)
 GDPR	General Data Protection Regulation
 GF	girlfriend
 GFCI	ground-fault circuit interrupter
