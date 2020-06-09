@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2334 2020/06/08 16:36:18 maxv Exp $
+#	$NetBSD: mi,v 1.2335 2020/06/09 21:50:32 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -52,6 +52,7 @@
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lld					comp-obsolete		obsolete
 ./usr/bin/lldb					comp-obsolete		obsolete
+./usr/bin/llvm-symbolizer			comp-c-bin		llvm
 ./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/luac					comp-util-bin

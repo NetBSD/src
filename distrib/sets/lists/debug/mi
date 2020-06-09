@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.314 2020/06/08 02:54:41 rin Exp $
+# $NetBSD: mi,v 1.315 2020/06/09 21:50:32 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -635,6 +635,7 @@
 ./usr/libdata/debug/usr/bin/lex.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/lint.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/lkbib.debug		comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/llvm-symbolizer.debug	comp-c-debug		llvm,debug
 ./usr/libdata/debug/usr/bin/llvm-tblgen.debug	comp-c-debug		llvm,debug
 ./usr/libdata/debug/usr/bin/locale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/locate.debug	comp-util-debug		debug
