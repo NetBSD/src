@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.217 2020/02/23 05:14:29 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.218 2020/06/09 21:57:00 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.217 2020/02/23 05:14:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.218 2020/06/09 21:57:00 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1019,7 +1019,7 @@ device_ofnode(device_t dev)
 	if (obj == NULL)
 		return 0;
 
-	return prop_number_integer_value(obj);
+	return prop_number_signed_value(obj);
 }
 
 /*
@@ -1037,7 +1037,7 @@ device_setofnode(device_t dev, int node)
 	props = device_properties(dev);
 	if (props == NULL)
 		return;
-	obj = prop_number_create_integer(node);
+	obj = prop_number_create_signed(node);
 	if (obj == NULL)
 		return;
 	prop_dictionary_set(props, OFNODEKEY, obj);
@@ -1274,7 +1274,7 @@ noether:
 			if (OF_getprop(ofnode, "port-wwn", &pwwn, sizeof(pwwn))
 			    == sizeof(pwwn)) {
 				pwwnd = 
-				    prop_number_create_unsigned_integer(pwwn);
+				    prop_number_create_unsigned(pwwn);
 				prop_dictionary_set(dict, "port-wwn", pwwnd);
 				prop_object_release(pwwnd);
 			}
@@ -1282,7 +1282,7 @@ noether:
 			if (OF_getprop(ofnode, "node-wwn", &nwwn, sizeof(nwwn))
 			    == sizeof(nwwn)) {
 				nwwnd = 
-				    prop_number_create_unsigned_integer(nwwn);
+				    prop_number_create_unsigned(nwwn);
 				prop_dictionary_set(dict, "node-wwn", nwwnd);
 				prop_object_release(nwwnd);
 			}
@@ -1299,7 +1299,7 @@ noether:
 				    sizeof(id)) <= 0)
 					continue;
 
-				idd = prop_number_create_unsigned_integer(id);
+				idd = prop_number_create_unsigned(id);
 				prop_dictionary_set(dict,
 						    "scsi-initiator-id", idd);
 				prop_object_release(idd);
