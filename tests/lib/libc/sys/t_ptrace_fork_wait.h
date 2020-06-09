@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_fork_wait.h,v 1.6 2020/05/16 23:10:26 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_fork_wait.h,v 1.7 2020/06/09 00:28:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 static void
 fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
-    bool trackvforkdone)
+    bool trackvforkdone, bool newpgrp)
 {
 	const int exitval = 5;
 	const int exitval2 = 0; /* This matched exit status from /bin/echo */
@@ -46,9 +46,17 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 
 	char * const arg[] = { __UNCONST("/bin/echo"), NULL };
 
+	if (newpgrp)
+		atf_tc_skip("kernel panic (pg_jobc going negative)");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
+		if (newpgrp) {
+			DPRINTF("Before entering new process group");
+			setpgid(0, 0);
+		}
+
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
@@ -232,23 +240,27 @@ fork_body(const char *fn, bool trackspawn, bool trackfork, bool trackvfork,
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define FORK_TEST(name,fun,tspawn,tfork,tvfork,tvforkdone)		\
+#define FORK_TEST2(name,fun,tspawn,tfork,tvfork,tvforkdone,newpgrp)	\
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
 	atf_tc_set_md_var(tc, "descr", "Verify " fun "() "		\
-	    "called with 0%s%s%s%s in EVENT_MASK",			\
+	    "called with 0%s%s%s%s in EVENT_MASK%s",			\
 	    tspawn ? "|PTRACE_POSIX_SPAWN" : "",			\
 	    tfork ? "|PTRACE_FORK" : "",				\
 	    tvfork ? "|PTRACE_VFORK" : "",				\
-	    tvforkdone ? "|PTRACE_VFORK_DONE" : "");			\
+	    tvforkdone ? "|PTRACE_VFORK_DONE" : "",			\
+	    newpgrp ? " and the traced processes call setpgrp(0,0)":"");\
 }									\
 									\
 ATF_TC_BODY(name, tc)							\
 {									\
 									\
-	fork_body(fun, tspawn, tfork, tvfork, tvforkdone);		\
+	fork_body(fun, tspawn, tfork, tvfork, tvforkdone, newpgrp);	\
 }
+
+#define FORK_TEST(name,fun,tspawn,tfork,tvfork,tvforkdone)		\
+	FORK_TEST2(name,fun,tspawn,tfork,tvfork,tvforkdone,false)
 
 FORK_TEST(fork1, "fork", false, false, false, false)
 #if defined(TWAIT_HAVE_PID)
@@ -273,6 +285,10 @@ FORK_TEST(fork13, "fork", true, false, false, true)
 FORK_TEST(fork14, "fork", true, true, false, true)
 FORK_TEST(fork15, "fork", true, false, true, true)
 FORK_TEST(fork16, "fork", true, true, true, true)
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST2(fork_setpgid, "fork", true, true, true, true, true)
 #endif
 
 FORK_TEST(vfork1, "vfork", false, false, false, false)
@@ -300,6 +316,10 @@ FORK_TEST(vfork15, "vfork", true, false, true, true)
 FORK_TEST(vfork16, "vfork", true, true, true, true)
 #endif
 
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST2(vfork_setpgid, "vfork", true, true, true, true, true)
+#endif
+
 FORK_TEST(posix_spawn1, "spawn", false, false, false, false)
 FORK_TEST(posix_spawn2, "spawn", false, true, false, false)
 FORK_TEST(posix_spawn3, "spawn", false, false, true, false)
@@ -319,12 +339,16 @@ FORK_TEST(posix_spawn15, "spawn", true, false, true, true)
 FORK_TEST(posix_spawn16, "spawn", true, true, true, true)
 #endif
 
+#if defined(TWAIT_HAVE_PID)
+FORK_TEST2(posix_spawn_setpgid, "spawn", true, true, true, true, true)
+#endif
+
 /// ----------------------------------------------------------------------------
 
 #if defined(TWAIT_HAVE_PID)
 static void
 unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
-    bool trackvfork, bool trackvforkdone)
+    bool trackvfork, bool trackvforkdone, bool newpgrp)
 {
 	const int sigval = SIGSTOP;
 	struct msg_fds parent_tracee, parent_tracer;
@@ -346,10 +370,18 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 
 	char * const arg[] = { __UNCONST("/bin/echo"), NULL };
 
+	if (newpgrp)
+		atf_tc_skip("kernel panic (pg_jobc going negative)");
+
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
+		if (newpgrp) {
+			DPRINTF("Before entering new process group");
+			setpgid(0, 0);
+		}
+
 		// Wait for parent to let us crash
 		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
 
@@ -622,24 +654,28 @@ unrelated_tracer_fork_body(const char *fn, bool trackspawn, bool trackfork,
 	msg_close(&parent_tracee);
 }
 
-#define UNRELATED_TRACER_FORK_TEST(name,fun,tspawn,tfork,tvfork,tvforkdone)\
+#define UNRELATED_TRACER_FORK_TEST2(name,fun,tspawn,tfork,tvfork,tvforkdone,newpgrp)\
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
 	atf_tc_set_md_var(tc, "descr", "Verify " fun "() "		\
-	    "called with 0%s%s%s%s in EVENT_MASK",			\
+	    "called with 0%s%s%s%s in EVENT_MASK%s",			\
 	    tspawn ? "|PTRACE_POSIX_SPAWN" : "",			\
 	    tfork ? "|PTRACE_FORK" : "",				\
 	    tvfork ? "|PTRACE_VFORK" : "",				\
-	    tvforkdone ? "|PTRACE_VFORK_DONE" : "");			\
+	    tvforkdone ? "|PTRACE_VFORK_DONE" : "",			\
+	    newpgrp ? " and the traced processes call setpgrp(0,0)":"");\
 }									\
 									\
 ATF_TC_BODY(name, tc)							\
 {									\
 									\
 	unrelated_tracer_fork_body(fun, tspawn, tfork, tvfork,		\
-	    tvforkdone);						\
+	    tvforkdone, newpgrp);					\
 }
+
+#define UNRELATED_TRACER_FORK_TEST(name,fun,tspawn,tfork,tvfork,tvforkdone)	\
+	UNRELATED_TRACER_FORK_TEST2(name,fun,tspawn,tfork,tvfork,tvforkdone,false)
 
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_fork1, "fork", false, false, false, false)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_fork2, "fork", false, true, false, false)
@@ -658,6 +694,8 @@ UNRELATED_TRACER_FORK_TEST(unrelated_tracer_fork14, "fork", true, true, false, t
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_fork15, "fork", true, false, true, true)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_fork16, "fork", true, true, true, true)
 
+UNRELATED_TRACER_FORK_TEST2(unrelated_tracer_fork_setpgid, "fork", true, true, true, true, true)
+
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork1, "vfork", false, false, false, false)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork2, "vfork", false, true, false, false)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork3, "vfork", false, false, true, false)
@@ -675,6 +713,8 @@ UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork14, "vfork", true, true, false,
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork15, "vfork", true, false, true, true)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_vfork16, "vfork", true, true, true, true)
 
+UNRELATED_TRACER_FORK_TEST2(unrelated_tracer_vfork_setpgid, "vfork", true, true, true, true, true)
+
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn1, "spawn", false, false, false, false)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn2, "spawn", false, true, false, false)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn3, "spawn", false, false, true, false)
@@ -691,6 +731,8 @@ UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn13, "spawn", true, false,
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn14, "spawn", true, true, false, true)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn15, "spawn", true, false, true, true)
 UNRELATED_TRACER_FORK_TEST(unrelated_tracer_posix_spawn16, "spawn", true, true, true, true)
+
+UNRELATED_TRACER_FORK_TEST2(unrelated_tracer_posix_spawn_setpgid, "spawn", true, true, true, true, true)
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -1633,6 +1675,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, fork_setpgid); \
 	ATF_TP_ADD_TC(tp, vfork1); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork2); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork3); \
@@ -1649,6 +1692,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_setpgid); \
 	ATF_TP_ADD_TC(tp, posix_spawn1); \
 	ATF_TP_ADD_TC(tp, posix_spawn2); \
 	ATF_TP_ADD_TC(tp, posix_spawn3); \
@@ -1665,6 +1709,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_setpgid); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork1); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork2); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork3); \
@@ -1681,6 +1726,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_fork_setpgid); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork1); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork2); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork3); \
@@ -1697,6 +1743,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_vfork_setpgid); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn1); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn2); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn3); \
@@ -1713,6 +1760,7 @@ FORK2_TEST(vforkdone_signalignored, "vforkdone", false, true)
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn14); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn15); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn16); \
+	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_posix_spawn_setpgid); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_detach_spawner); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_detach_forker); \
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_detach_vforker); \
