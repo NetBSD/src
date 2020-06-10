@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $ */
+/* $NetBSD: imx_ccm_mux.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_mux.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,32 +36,43 @@ __KERNEL_RCSID(0, "$NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Ex
 
 #include <arm/imx/fdt/imx_ccm.h>
 
-int
-imx_ccm_gate_enable(struct imx_ccm_softc *sc, struct imx_ccm_clk *clk,
-    int enable)
-{
-	struct imx_ccm_gate *gate = &clk->u.gate;
-	uint32_t val;
-
-	KASSERT(clk->type == IMX_CCM_GATE);
-
-	val = CCM_READ(sc, clk->regidx, gate->reg);
-	if (enable)
-		val |= gate->mask;
-	else
-		val &= ~gate->mask;
-	CCM_WRITE(sc, clk->regidx, gate->reg, val);
-
-	return 0;
-}
+#include <dev/fdt/fdtvar.h>
 
 const char *
-imx_ccm_gate_get_parent(struct imx_ccm_softc *sc,
+imx_ccm_mux_get_parent(struct imx_ccm_softc *sc,
     struct imx_ccm_clk *clk)
 {
-	struct imx_ccm_gate *gate = &clk->u.gate;
+	struct imx_ccm_mux *mux = &clk->u.mux;
 
-	KASSERT(clk->type == IMX_CCM_GATE);
+	KASSERT(clk->type == IMX_CCM_MUX);
 
-	return gate->parent;
+	const uint32_t val = CCM_READ(sc, clk->regidx, mux->reg);
+	const u_int sel = __SHIFTOUT(val, mux->sel);
+
+	if (sel >= mux->nparents)
+		return NULL;
+
+	return mux->parents[sel];
+}
+
+int
+imx_ccm_mux_set_parent(struct imx_ccm_softc *sc,
+    struct imx_ccm_clk *clk, const char *parent)
+{
+	struct imx_ccm_mux *mux = &clk->u.mux;
+	uint32_t val;
+
+	KASSERT(clk->type == IMX_CCM_MUX);
+
+	for (u_int sel = 0; sel < mux->nparents; sel++) {
+		if (strcmp(mux->parents[sel], parent) == 0) {
+			val = CCM_READ(sc, clk->regidx, mux->reg);
+			val &= ~mux->sel;
+			val |= __SHIFTIN(sel, mux->sel);
+			CCM_WRITE(sc, clk->regidx, mux->reg, val);
+			return 0;
+		}
+	}
+
+	return EINVAL;
 }

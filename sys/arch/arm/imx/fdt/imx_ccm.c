@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $ */
+/* $NetBSD: imx_ccm.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,7 +215,7 @@ imx_ccm_clock_get_parent(void *priv, struct clk *clkp)
 	return fdtbus_clock_byname(parent);
 }
 
-static const struct clk_funcs imx_ccm_clock_funcs = {
+const struct clk_funcs imx_ccm_clock_funcs = {
 	.get = imx_ccm_clock_get,
 	.put = imx_ccm_clock_put,
 	.get_rate = imx_ccm_clock_get_rate,
@@ -251,7 +251,7 @@ imx_ccm_attach(struct imx_ccm_softc *sc)
 		aprint_error(": couldn't get registers\n");
 		return ENXIO;
 	}
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh[0]) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return ENXIO;
 	}
@@ -289,8 +289,11 @@ imx_ccm_print(struct imx_ccm_softc *sc)
 		case IMX_CCM_EXTCLK:		type = "extclk"; break;
 		case IMX_CCM_GATE:		type = "gate"; break;
 		case IMX_CCM_COMPOSITE:		type = "comp"; break;
+		case IMX_CCM_PLL:		type = "pll"; break;
 		case IMX_CCM_FIXED:		type = "fixed"; break;
 		case IMX_CCM_FIXED_FACTOR:	type = "fixed-factor"; break;
+		case IMX_CCM_MUX:		type = "mux"; break;
+		case IMX_CCM_DIV:		type = "div"; break;
 		default:			type = "???"; break;
 		}
 
