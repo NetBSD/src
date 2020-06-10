@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.35 2020/02/21 13:15:54 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.36 2020/06/10 19:29:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.35 2020/02/21 13:15:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.36 2020/06/10 19:29:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -191,6 +191,20 @@ arm_fdt_cpu_bootstrap(void)
 
 #ifdef MULTIPROCESSOR
 static struct arm_cpu_method *
+arm_fdt_cpu_enable_method_byname(const char *method)
+{
+	__link_set_decl(arm_cpu_methods, struct arm_cpu_method);
+	struct arm_cpu_method * const *acmp;
+
+	__link_set_foreach(acmp, arm_cpu_methods) {
+		if (strcmp(method, (*acmp)->acm_compat) == 0)
+			return *acmp;
+	}
+
+	return NULL;
+}
+
+static struct arm_cpu_method *
 arm_fdt_cpu_enable_method(int phandle)
 {
 	const char *method;
@@ -199,14 +213,7 @@ arm_fdt_cpu_enable_method(int phandle)
 	if (method == NULL)
 		return NULL;
 
-	__link_set_decl(arm_cpu_methods, struct arm_cpu_method);
-	struct arm_cpu_method * const *acmp;
-	__link_set_foreach(acmp, arm_cpu_methods) {
-		if (strcmp(method, (*acmp)->acm_compat) == 0)
-			return *acmp;
-	}
-
-	return NULL;
+	return arm_fdt_cpu_enable_method_byname(method);
 }
 
 static int
@@ -250,6 +257,8 @@ arm_fdt_cpu_mpstart(void)
 		acm = arm_fdt_cpu_enable_method(child);
 		if (acm == NULL)
 			acm = arm_fdt_cpu_enable_method(cpus);
+		if (acm == NULL)
+			acm = arm_fdt_cpu_enable_method_byname("psci");
 		if (acm == NULL)
 			continue;
 
