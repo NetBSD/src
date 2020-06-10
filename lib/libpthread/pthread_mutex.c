@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.80 2020/06/10 22:45:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.80 2020/06/10 22:45:15 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -65,12 +65,10 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $");
 #include "pthread_int.h"
 #include "reentrant.h"
 
-#define	MUTEX_WAITERS_BIT		((uintptr_t)0x01)
 #define	MUTEX_RECURSIVE_BIT		((uintptr_t)0x02)
 #define	MUTEX_PROTECT_BIT		((uintptr_t)0x08)
 #define	MUTEX_THREAD			((uintptr_t)~0x0f)
 
-#define	MUTEX_HAS_WAITERS(x)		((uintptr_t)(x) & MUTEX_WAITERS_BIT)
 #define	MUTEX_RECURSIVE(x)		((uintptr_t)(x) & MUTEX_RECURSIVE_BIT)
 #define	MUTEX_PROTECT(x)		((uintptr_t)(x) & MUTEX_PROTECT_BIT)
 #define	MUTEX_OWNER(x)			((uintptr_t)(x) & MUTEX_THREAD)
@@ -94,7 +92,12 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.79 2020/06/03 22:10:24 ad Exp $");
 #define	NOINLINE		/* nothing */
 #endif
 
-static void	pthread__mutex_wakeup(pthread_t, pthread_mutex_t *);
+struct waiter {
+	struct waiter	*volatile next;
+	lwpid_t		volatile lid;
+};
+
+static void	pthread__mutex_wakeup(pthread_t, struct pthread__waiter *);
 static int	pthread__mutex_lock_slow(pthread_mutex_t *,
     const struct timespec *);
 static void	pthread__mutex_pause(void);
@@ -268,7 +271,8 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 NOINLINE static int
 pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 {
-	void *waiters, *newval, *owner, *next;
+	void *newval, *owner, *next;
+	struct waiter waiter;
 	pthread_t self;
 	int serrno;
 	int error;
@@ -277,8 +281,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 	self = pthread__self();
 	serrno = errno;
 
-	pthread__assert(!self->pt_willpark);
-	pthread__assert(!self->pt_mutexwait);
+	pthread__assert(self->pt_lid != 0);
 
 	/* Recursive or errorcheck? */
 	if (MUTEX_OWNER(owner) == (uintptr_t)self) {
@@ -323,64 +326,57 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 
 		/*
 		 * Nope, still held.  Add thread to the list of waiters.
-		 * Issue a memory barrier to ensure mutexwait/mutexnext
-		 * are visible before we enter the waiters list.
+		 * Issue a memory barrier to ensure stores to 'waiter'
+		 * are visible before we enter the list.
 		 */
-		self->pt_mutexwait = 1;
-		for (waiters = ptm->ptm_waiters;; waiters = next) {
-			self->pt_mutexnext = waiters;
+		waiter.next = ptm->ptm_waiters;
+		waiter.lid = self->pt_lid;
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
-			membar_producer();
+		membar_producer();
 #endif
-			next = atomic_cas_ptr(&ptm->ptm_waiters, waiters, self);
-			if (next == waiters)
-			    	break;
+		next = atomic_cas_ptr(&ptm->ptm_waiters, waiter.next, &waiter);
+		if (next != waiter.next) {
+			owner = ptm->ptm_owner;
+			continue;
 		}
-		
+
 		/*
-		 * Try to set the waiters bit.  If the mutex has become free
-		 * since entering self onto the waiters list, need to wake
-		 * everybody up (including self) and retry.  It's possible
-		 * to race with the unlocking thread, so self may have
-		 * already been awoken.
+		 * If the mutex has become free since entering self onto the
+		 * waiters list, need to wake everybody up (including self)
+		 * and retry.  It's possible to race with an unlocking
+		 * thread, so self may have already been awoken.
 		 */
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
-		membar_sync();
+		membar_enter();
 #endif
-		next = atomic_cas_ptr(&ptm->ptm_owner, owner,
-		    (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT));
-		if (next != owner) {
-			pthread__mutex_wakeup(self, ptm);
+		if (MUTEX_OWNER(ptm->ptm_owner) == 0) {
+			pthread__mutex_wakeup(self,
+			    atomic_swap_ptr(&ptm->ptm_waiters, NULL));
 		}
 
 		/*
 		 * We must not proceed until told that we are no longer
-		 * waiting (via pt_mutexwait being set to zero).  Otherwise
-		 * it is unsafe to re-enter the thread onto the waiters
-		 * list.
+		 * waiting (via waiter.lid being set to zero).  Otherwise
+		 * it's unsafe to re-enter "waiter" onto the waiters list.
 		 */
-		do {
-			pthread__assert(self->pt_nwaiters <= 1);
-			pthread__assert(self->pt_nwaiters != 0 ||
-			    self->pt_waiters[0] == 0);
+		while (waiter.lid != 0) {
 			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
-			    __UNCONST(ts), self->pt_waiters[0], NULL, NULL);
-			self->pt_waiters[0] = 0;
-			self->pt_nwaiters = 0;
+			    __UNCONST(ts), 0, NULL, NULL);
 			if (error < 0 && errno == ETIMEDOUT) {
 				/* Remove self from waiters list */
-				pthread__mutex_wakeup(self, ptm);
+				pthread__mutex_wakeup(self,
+				    atomic_swap_ptr(&ptm->ptm_waiters, NULL));
 
 				/*
 				 * Might have raced with another thread to
 				 * do the wakeup.  In any case there will be
 				 * a wakeup for sure.  Eat it and wait for
-				 * pt_mutexwait to clear.
+				 * waiter.lid to clear.
 				 */
-				do {
-					(void)_lwp_park(CLOCK_REALTIME,
-					   TIMER_ABSTIME, NULL, 0, NULL, NULL);
-				} while (self->pt_mutexwait);
+				while (waiter.lid != 0) {
+					(void)_lwp_park(CLOCK_MONOTONIC, 0,
+					    NULL, 0, NULL, NULL);
+				}
 
 				/* Priority protect */
 				if (MUTEX_PROTECT(owner))
@@ -388,7 +384,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 				errno = serrno;
 				return ETIMEDOUT;
 			}
-		} while (self->pt_mutexwait);
+		}
 		owner = ptm->ptm_owner;
 	}
 }
@@ -440,7 +436,7 @@ int
 pthread_mutex_unlock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
-	void *val;
+	void *val, *newval;
 	int error;
 
 	if (__predict_false(__uselibcstub))
@@ -454,11 +450,11 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 #endif
 	error = 0;
 	self = pthread__self();
+	newval = NULL;
 
-	val = atomic_cas_ptr(&ptm->ptm_owner, self, NULL);
+	val = atomic_cas_ptr(&ptm->ptm_owner, self, newval);
 	if (__predict_false(val != self)) {
 		bool weown = (MUTEX_OWNER(val) == (uintptr_t)self);
-		void *newval = val;
 		if (__SIMPLELOCK_LOCKED_P(&ptm->ptm_errorcheck)) {
 			if (!weown) {
 				error = EPERM;
@@ -503,46 +499,48 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 	membar_enter();
 #endif
-	if (MUTEX_HAS_WAITERS(val)) {
-		pthread__mutex_wakeup(self, ptm);
-	} else if (self->pt_nwaiters > 0) {
-		pthread__clear_waiters(self);
+	if (MUTEX_OWNER(newval) == 0 && ptm->ptm_waiters != NULL) {
+		pthread__mutex_wakeup(self,
+		    atomic_swap_ptr(&ptm->ptm_waiters, NULL));
 	}
 	return error;
 }
 
 /*
  * pthread__mutex_wakeup: unpark threads waiting for us
- *
- * unpark threads on the ptm->ptm_waiters list and self->pt_waiters.
  */
 
 static void
-pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
+pthread__mutex_wakeup(pthread_t self, struct pthread__waiter *cur)
 {
-	pthread_t thread, next;
-
-	/* Take ownership of the current set of waiters. */
-	thread = atomic_swap_ptr(&ptm->ptm_waiters, NULL);
-	membar_datadep_consumer(); /* for alpha */
+	lwpid_t lids[PTHREAD__UNPARK_MAX];
+	const size_t mlid = pthread__unpark_max;
+	struct pthread__waiter *next;
+	size_t nlid;
 
 	/*
 	 * Pull waiters from the queue and add to our list.  Use a memory
-	 * barrier to ensure that we safely read the value of pt_mutexnext
-	 * before 'thread' sees pt_mutexwait being cleared.
+	 * barrier to ensure that we safely read the value of waiter->next
+	 * before the awoken thread sees waiter->lid being cleared.
 	 */
-	while (thread != NULL) {
-		if (self->pt_nwaiters >= pthread__unpark_max) {
-			pthread__clear_waiters(self);
+	membar_datadep_consumer(); /* for alpha */
+	for (nlid = 0; cur != NULL; cur = next) {
+		if (nlid == mlid) {
+			(void)_lwp_unpark_all(lids, nlid, NULL);
+			nlid = 0;
 		}
-		next = thread->pt_mutexnext;
-		self->pt_waiters[self->pt_nwaiters++] = thread->pt_lid;
+		next = cur->next;
+		pthread__assert(cur->lid != 0);
+		lids[nlid++] = cur->lid;
 		membar_sync();
-		thread->pt_mutexwait = 0;
-		/* No longer safe to touch 'thread' */
-		thread = next;
+		cur->lid = 0;
+		/* No longer safe to touch 'cur' */
 	}
-	pthread__clear_waiters(self);
+	if (nlid == 1) {
+		(void)_lwp_unpark(lids[0], NULL);
+	} else if (nlid > 1) {
+		(void)_lwp_unpark_all(lids, nlid, NULL);
+	}
 }
 
 int
@@ -690,19 +688,41 @@ pthread_mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared)
 #endif
 
 /*
- * pthread__mutex_deferwake: try to defer unparking threads in self->pt_waiters
- *
  * In order to avoid unnecessary contention on interlocking mutexes, we try
  * to defer waking up threads until we unlock the mutex.  The threads will
- * be woken up when the calling thread (self) releases a mutex.
+ * be woken up when the calling thread (self) releases the mutex.
  */
 void
-pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)
+pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm,
+    struct pthread__waiter *head)
 {
+	struct pthread__waiter *tail, *n, *o;
+
+	pthread__assert(head != NULL);
 
 	if (__predict_false(ptm == NULL ||
 	    MUTEX_OWNER(ptm->ptm_owner) != (uintptr_t)self)) {
-		pthread__clear_waiters(self);
+	    	pthread__mutex_wakeup(self, head);
+	    	return;
+	}
+
+	/* This is easy if no existing waiters on mutex. */
+	if (atomic_cas_ptr(&ptm->ptm_waiters, NULL, head) == NULL) {
+		return;
+	}
+
+	/* Oops need to append.  Find the tail of the new queue. */
+	for (tail = head; tail->next != NULL; tail = tail->next) {
+		/* nothing */
+	}
+
+	/* Append atomically. */
+	for (o = ptm->ptm_waiters;; o = n) {
+		tail->next = o;
+		n = atomic_cas_ptr(&ptm->ptm_waiters, o, head);
+		if (__predict_true(n == o)) {
+			break;
+		}
 	}
 }
 

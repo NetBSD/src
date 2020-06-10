@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.106 2020/06/02 00:29:53 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.107 2020/06/10 22:45:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -104,14 +104,9 @@ struct	__pthread_st {
 	size_t		pt_guardsize;
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
-	int		pt_willpark;	/* About to park */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
 	void		*(*pt_func)(void *);/* Function to call at start. */
 	void		*pt_arg;	/* Argument to pass at start. */
-
-	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
-	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
-	size_t		pt_nwaiters;
 
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
@@ -139,11 +134,6 @@ struct	__pthread_st {
 	int		pt_dummy1 __aligned(COHERENCY_UNIT);
 	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
-	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
-	volatile int	pt_mutexwait;	/* Waiting to acquire mutex */
-	volatile int	pt_condwait;	/* Waiting to acquire mutex */
-	void * volatile pt_mutexnext;	/* Next thread in chain */
-	void * volatile pt_condnext;	/* Next thread in chain */
 	void * volatile	pt_sleepobj;	/* Object slept on */
 	PTQ_ENTRY(__pthread_st) pt_sleep;
 
@@ -187,6 +177,11 @@ extern int	pthread_keys_max;
 
 extern int	__uselibcstub;
 
+struct pthread__waiter {
+	struct pthread__waiter	*volatile next;
+	lwpid_t			volatile lid;
+};
+
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
  * trap state.
@@ -202,7 +197,6 @@ void	pthread__unpark(pthread_queue_t *, pthread_t, pthread_mutex_t *)
 int	pthread__park(pthread_t, pthread_mutex_t *, pthread_queue_t *,
 		      const struct timespec *, int) PTHREAD_HIDE;
 pthread_mutex_t *pthread__hashlock(volatile const void *) PTHREAD_HIDE;
-void	pthread__clear_waiters(pthread_t) PTHREAD_HIDE;
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(void) PTHREAD_HIDE;
@@ -304,7 +298,8 @@ void	pthread__errorfunc(const char *, int, const char *, const char *, ...)
 			    __printflike(4, 5) PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 __dead void	pthread__cancelled(void) PTHREAD_HIDE;
-void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
+void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *,
+    struct pthread__waiter *) PTHREAD_HIDE;
 int	pthread__checkpri(int) PTHREAD_HIDE;
 int	pthread__add_specific(pthread_t, pthread_key_t, const void *) PTHREAD_HIDE;
 
