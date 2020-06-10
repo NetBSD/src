@@ -1,10 +1,9 @@
-#	$NetBSD: files.imx6,v 1.13 2020/06/10 17:57:50 jmcneill Exp $
+#	$NetBSD: files.imx6,v 1.14 2020/06/10 19:30:23 jmcneill Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
 
 file	arch/arm/imx/fdt/imx6_platform.c	soc_imx
-file	arch/arm/imx/fdt/imx7_platform.c	soc_imx
 
 # SOC parameters
 defflag	opt_soc.h			SOC_IMX
