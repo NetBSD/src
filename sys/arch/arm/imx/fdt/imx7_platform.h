@@ -1,8 +1,7 @@
-/* $NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $ */
-
+/*	$NetBSD: imx7_platform.h,v 1.1 2020/06/10 17:57:50 jmcneill Exp $	*/
 /*-
- * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
- * All rights reserved.
+ * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
+ * Written by Hashimoto Kenichi for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,43 +24,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef _ARM_IMX_FDT_IMX7_PLATFORM_H
+#define _ARM_IMX_FDT_IMX7_PLATFORM_H
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
+#include <arch/evbarm/fdt/platform.h>
 
-#include <sys/param.h>
-#include <sys/bus.h>
+#define	KERNEL_IO_IOREG_VBASE		KERNEL_IO_VBASE
+#define	KERNEL_IO_ARMCORE_VBASE		(KERNEL_IO_IOREG_VBASE + IMX7_IOREG_SIZE)
 
-#include <dev/clk/clk_backend.h>
-
-#include <arm/imx/fdt/imx_ccm.h>
-
-int
-imx_ccm_gate_enable(struct imx_ccm_softc *sc, struct imx_ccm_clk *clk,
-    int enable)
-{
-	struct imx_ccm_gate *gate = &clk->u.gate;
-	uint32_t val;
-
-	KASSERT(clk->type == IMX_CCM_GATE);
-
-	val = CCM_READ(sc, clk->regidx, gate->reg);
-	if (enable)
-		val |= gate->mask;
-	else
-		val &= ~gate->mask;
-	CCM_WRITE(sc, clk->regidx, gate->reg, val);
-
-	return 0;
-}
-
-const char *
-imx_ccm_gate_get_parent(struct imx_ccm_softc *sc,
-    struct imx_ccm_clk *clk)
-{
-	struct imx_ccm_gate *gate = &clk->u.gate;
-
-	KASSERT(clk->type == IMX_CCM_GATE);
-
-	return gate->parent;
-}
+#endif /* _ARM_IMX_FDT_IMX7_PLATFORM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -86,7 +86,7 @@ imx6_clk_fixed_from_fdt(const char *name)
 static int imxccm_match(device_t, cfdata_t, void *);
 static void imxccm_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(imxccm, sizeof(struct imxccm_softc),
+CFATTACH_DECL_NEW(imx6ccm, sizeof(struct imxccm_softc),
     imxccm_match, imxccm_attach, NULL, NULL);
 
 static int
