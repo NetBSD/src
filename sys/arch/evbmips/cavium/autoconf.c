@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2020/05/31 04:56:35 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2020/06/10 07:34:19 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2020/05/31 04:56:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2020/06/10 07:34:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,17 +131,17 @@ prop_set_cnmac(device_t dev)
 	enaddr[3] = (mac_lo >> 16) & 0xff;
 	enaddr[4] = (mac_lo >> 8) & 0xff;
 	enaddr[5] = mac_lo & 0xff;
-	pd = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
+	pd = prop_data_create_copy(enaddr, ETHER_ADDR_LEN);
 	KASSERT(pd != NULL);
 	prop_dictionary_set_and_rel(dict, "mac-address", pd);
 
 	/* ethernet phy address */
 	switch (octeon_btinfo.obt_board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
-		pn = prop_number_create_integer(0x07 - unit);
+		pn = prop_number_create_signed(0x07 - unit);
 		break;
 	default:
-		pn = prop_number_create_integer(-1);
+		pn = prop_number_create_signed(-1);
 		break;
 	}
 	KASSERT(pn != NULL);
@@ -157,12 +157,12 @@ prop_set_octeon_gmx(device_t dev)
 	/* ethernet rgmii phy dependent timing parameter. */
 	switch (octeon_btinfo.obt_board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
-		tx = prop_number_create_integer(16);
-		rx = prop_number_create_integer(0);
+		tx = prop_number_create_signed(16);
+		rx = prop_number_create_signed(0);
 		break;
 	default:
-		tx = prop_number_create_integer(0);
-		rx = prop_number_create_integer(0);
+		tx = prop_number_create_signed(0);
+		rx = prop_number_create_signed(0);
 		break;
 	}
 	KASSERT(tx != NULL);
