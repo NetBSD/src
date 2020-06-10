@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2020/06/01 02:42:24 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2020/06/10 22:24:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2020/06/01 02:42:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2020/06/10 22:24:22 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1594,7 +1594,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	unsigned int idx;
 	int error = 0;
 	const bool user = (pm != pmap_kernel());
-	bool need_sync_icache, need_update_pv;
+	bool need_sync_icache, need_enter_pv;
 	bool l3only = true;
 
 	UVMHIST_FUNC(__func__);
@@ -1659,10 +1659,10 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		 * pool_cache_get() may call pmap_kenter() internally.
 		 */
 		spv = pool_cache_get(&_pmap_pv_pool, PR_NOWAIT);
-		need_update_pv = true;
+		need_enter_pv = true;
 	} else {
 		spv = NULL;
-		need_update_pv = false;
+		need_enter_pv = false;
 	}
 
 	pm_lock(pm);
@@ -1764,12 +1764,12 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		bool need_remove_pv;
 
 		KASSERT(!kenter);	/* pmap_kenter_pa() cannot override */
-#ifdef PMAPCOUNTERS
-		PMAP_COUNT(remappings);
 		if (opte & LX_BLKPAG_OS_WIRED) {
 			PMSTAT_DEC_WIRED_COUNT(pm);
 		}
 		PMSTAT_DEC_RESIDENT_COUNT(pm);
+#ifdef PMAPCOUNTERS
+		PMAP_COUNT(remappings);
 		if (user) {
 			PMAP_COUNT(user_mappings_changed);
 		} else {
@@ -1784,7 +1784,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if (pa == l3pte_pa(opte)) {
 			/* old and new pte have same pa, no need to update pv */
 			need_remove_pv = (pp == NULL);
-			need_update_pv = false;
+			need_enter_pv = false;
 			if (need_sync_icache && l3pte_executable(opte, user))
 				need_sync_icache = false;
 		} else {
@@ -1831,7 +1831,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		flags |= VM_PROT_READ;
 
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
-	if (need_update_pv) {
+	if (need_enter_pv) {
 		error = _pmap_enter_pv(pp, pm, &spv, va, ptep, pa, flags);
 		if (error != 0) {
 			/*
