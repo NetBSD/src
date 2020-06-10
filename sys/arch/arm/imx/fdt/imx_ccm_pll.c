@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $ */
+/* $NetBSD: imx_ccm_pll.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_pll.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,32 +36,79 @@ __KERNEL_RCSID(0, "$NetBSD: imx_ccm_gate.c,v 1.2 2020/06/10 17:57:50 jmcneill Ex
 
 #include <arm/imx/fdt/imx_ccm.h>
 
+#include <dev/fdt/fdtvar.h>
+
+#define	PLL_POWERDOWN		__BIT(12)
+#define	PLL_POWERDOWN_ENET	__BIT(5)
+
 int
-imx_ccm_gate_enable(struct imx_ccm_softc *sc, struct imx_ccm_clk *clk,
+imx_ccm_pll_enable(struct imx_ccm_softc *sc, struct imx_ccm_clk *clk,
     int enable)
 {
-	struct imx_ccm_gate *gate = &clk->u.gate;
-	uint32_t val;
+	struct imx_ccm_pll *pll = &clk->u.pll;
+	uint32_t val, mask;
 
-	KASSERT(clk->type == IMX_CCM_GATE);
+	KASSERT(clk->type == IMX_CCM_PLL);
 
-	val = CCM_READ(sc, clk->regidx, gate->reg);
-	if (enable)
-		val |= gate->mask;
+	if ((pll->flags & IMX_PLL_ENET) != 0)
+		mask = PLL_POWERDOWN_ENET;
 	else
-		val &= ~gate->mask;
-	CCM_WRITE(sc, clk->regidx, gate->reg, val);
+		mask = PLL_POWERDOWN;
+
+	val = CCM_READ(sc, clk->regidx, pll->reg);
+	if (enable)
+		val &= ~mask;
+	else
+		val |= mask;
+	CCM_WRITE(sc, clk->regidx, pll->reg, val);
+
+	return 0;
+}
+
+u_int
+imx_ccm_pll_get_rate(struct imx_ccm_softc *sc,
+    struct imx_ccm_clk *clk)
+{
+	struct imx_ccm_pll *pll= &clk->u.pll;
+	struct clk *clkp, *clkp_parent;
+
+	KASSERT(clk->type == IMX_CCM_PLL);
+
+	clkp = &clk->base;
+	clkp_parent = clk_get_parent(clkp);
+	if (clkp_parent == NULL)
+		return 0;
+
+	const u_int prate = clk_get_rate(clkp_parent);
+	if (prate == 0)
+		return 0;
+
+	if ((pll->flags & IMX_PLL_ENET) != 0) {
+		/* For ENET PLL, div_mask contains the fixed output rate */
+		return pll->div_mask;
+	}
+
+	const uint32_t val = CCM_READ(sc, clk->regidx, pll->reg);
+	const u_int div = __SHIFTOUT(val, pll->div_mask);
+
+	if ((pll->flags & IMX_PLL_ARM) != 0) {
+		return prate * div / 2;
+	}
+
+	if ((pll->flags & IMX_PLL_480M_528M) != 0) {
+		return div == 1 ? 528000000 : 480000000;
+	}
 
 	return 0;
 }
 
 const char *
-imx_ccm_gate_get_parent(struct imx_ccm_softc *sc,
+imx_ccm_pll_get_parent(struct imx_ccm_softc *sc,
     struct imx_ccm_clk *clk)
 {
-	struct imx_ccm_gate *gate = &clk->u.gate;
+	struct imx_ccm_pll *pll = &clk->u.pll;
 
-	KASSERT(clk->type == IMX_CCM_GATE);
+	KASSERT(clk->type == IMX_CCM_PLL);
 
-	return gate->parent;
+	return pll->parent;
 }

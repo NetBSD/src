@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_composite.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $ */
+/* $NetBSD: imx_ccm_composite.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.2 2020/06/10 17:57:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,12 +53,12 @@ imx_ccm_composite_enable(struct imx_ccm_softc *sc, struct imx_ccm_clk *clk,
 
 	KASSERT(clk->type == IMX_CCM_COMPOSITE);
 
-	val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+	val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 	if (enable)
 		val |= TARGET_ROOT_ENABLE;
 	else
 		val &= ~TARGET_ROOT_ENABLE;
-	CCM_WRITE(sc, composite->reg + CCM_TARGET_ROOT, val);
+	CCM_WRITE(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT, val);
 
 	return 0;
 }
@@ -81,7 +81,7 @@ imx_ccm_composite_get_rate(struct imx_ccm_softc *sc,
 	if (prate == 0)
 		return 0;
 
-	const uint32_t val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+	const uint32_t val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 	const u_int pre_div = __SHIFTOUT(val, TARGET_ROOT_PRE_PODF) + 1;
 	const u_int post_div = __SHIFTOUT(val, TARGET_ROOT_POST_PODF) + 1;
 
@@ -111,7 +111,7 @@ imx_ccm_composite_set_rate(struct imx_ccm_softc *sc,
 	best_postdiv = 0;
 	best_diff = INT_MAX;
 
-	val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+	val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 	const u_int mux = __SHIFTOUT(val, TARGET_ROOT_MUX);
 
 	if (mux >= composite->nparents)
@@ -151,12 +151,12 @@ imx_ccm_composite_set_rate(struct imx_ccm_softc *sc,
 	if (best_diff == INT_MAX)
 		return ERANGE;
 
-	val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+	val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 	val &= ~TARGET_ROOT_PRE_PODF;
 	val |= __SHIFTIN(best_prediv - 1, TARGET_ROOT_PRE_PODF);
 	val &= ~TARGET_ROOT_POST_PODF;
 	val |= __SHIFTIN(best_postdiv - 1, TARGET_ROOT_POST_PODF);
-	CCM_WRITE(sc, composite->reg + CCM_TARGET_ROOT, val);
+	CCM_WRITE(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT, val);
 
 	return 0;
 }
@@ -169,7 +169,7 @@ imx_ccm_composite_get_parent(struct imx_ccm_softc *sc,
 
 	KASSERT(clk->type == IMX_CCM_COMPOSITE);
 
-	const uint32_t val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+	const uint32_t val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 	const u_int mux = __SHIFTOUT(val, TARGET_ROOT_MUX);
 
 	if (mux >= composite->nparents)
@@ -189,10 +189,10 @@ imx_ccm_composite_set_parent(struct imx_ccm_softc *sc,
 
 	for (u_int mux = 0; mux < composite->nparents; mux++) {
 		if (strcmp(composite->parents[mux], parent) == 0) {
-			val = CCM_READ(sc, composite->reg + CCM_TARGET_ROOT);
+			val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
 			val &= ~TARGET_ROOT_MUX;
 			val |= __SHIFTIN(mux, TARGET_ROOT_MUX);
-			CCM_WRITE(sc, composite->reg + CCM_TARGET_ROOT, val);
+			CCM_WRITE(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT, val);
 			return 0;
 		}
 	}
