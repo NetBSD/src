@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.301 2020/06/09 19:45:29 nia Exp $
+$NetBSD: acronyms,v 1.302 2020/06/10 20:26:52 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -587,6 +587,7 @@ UGT	universal greeting time
 UPC	Universal Product Code
 UR	your
 UR	{you're, you are}
+URM	underrepresented minority
 UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
