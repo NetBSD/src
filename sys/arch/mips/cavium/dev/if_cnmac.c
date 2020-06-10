@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.20 2020/06/05 09:18:35 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.21 2020/06/10 07:34:19 simonb Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.20 2020/06/05 09:18:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.21 2020/06/10 07:34:19 simonb Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -408,10 +408,10 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 
 	clk = prop_dictionary_get(dict, "rgmii-tx");
 	KASSERT(clk != NULL);
-	sc->sc_gmx_port->sc_clk_tx_setting = prop_number_integer_value(clk);
+	sc->sc_gmx_port->sc_clk_tx_setting = prop_number_signed_value(clk);
 	clk = prop_dictionary_get(dict, "rgmii-rx");
 	KASSERT(clk != NULL);
-	sc->sc_gmx_port->sc_clk_rx_setting = prop_number_integer_value(clk);
+	sc->sc_gmx_port->sc_clk_rx_setting = prop_number_signed_value(clk);
 }
 
 /* ---- submodules */
@@ -505,7 +505,7 @@ cnmac_board_mac_addr(uint8_t *enaddr, size_t size, struct cnmac_softc *sc)
 	KASSERT(dict != NULL);
 	ea = prop_dictionary_get(dict, "mac-address");
 	KASSERT(ea != NULL);
-	memcpy(enaddr, prop_data_data_nocopy(ea), size);
+	memcpy(enaddr, prop_data_value(ea), size);
 }
 
 /* ---- media */
@@ -562,7 +562,7 @@ cnmac_mediainit(struct cnmac_softc *sc)
 	phy = prop_dictionary_get(device_properties(sc->sc_dev), "phy-addr");
 	KASSERT(phy != NULL);
 
-	mii_attach(sc->sc_dev, mii, 0xffffffff, prop_number_integer_value(phy),
+	mii_attach(sc->sc_dev, mii, 0xffffffff, prop_number_signed_value(phy),
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	/* XXX XXX XXX */
