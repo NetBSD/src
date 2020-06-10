@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2020/01/27 21:21:22 martin Exp $ */
+/*	$NetBSD: md.c,v 1.13 2020/06/10 16:56:22 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,7 +281,7 @@ md_parts_use_wholedisk(struct disk_partitions *parts)
 	struct disk_part_info boot_part = {
 		.size = PART_BOOT / 512,
 		.fs_type = PART_BOOT_TYPE,
-		.fs_sub_type = MBR_PTYPE_FAT12,
+		.fs_sub_type = MBR_PTYPE_LNXEXT2,
 		.last_mounted = PART_BOOT_MOUNT,
 	};
 
