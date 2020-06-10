@@ -1,30 +1,40 @@
-#	$NetBSD: files.imx6,v 1.12 2020/06/03 13:14:01 jmcneill Exp $
+#	$NetBSD: files.imx6,v 1.13 2020/06/10 17:57:50 jmcneill Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
 
 file	arch/arm/imx/fdt/imx6_platform.c	soc_imx
+file	arch/arm/imx/fdt/imx7_platform.c	soc_imx
 
 # SOC parameters
 defflag	opt_soc.h			SOC_IMX
 defflag	opt_soc.h			SOC_IMX6DL: SOC_IMX
 defflag	opt_soc.h			SOC_IMX6Q: SOC_IMX
 defflag	opt_soc.h			SOC_IMX6QDL: SOC_IMX
+defflag	opt_soc.h			SOC_IMX7D: SOC_IMX
 
 # Clock
-device	imxccm: clk
-attach	imxccm at fdt
-file	arch/arm/imx/imx6_ccm.c		imxccm
-file	arch/arm/imx/fdt/imx6_clk.c	imxccm
+device	imx6ccm: clk
+attach	imx6ccm at fdt
+file	arch/arm/imx/imx6_ccm.c		imx6ccm
+file	arch/arm/imx/fdt/imx6_clk.c	imx6ccm
 
 # Common FDT clock framework
 define	imx_ccm: clk
 file	arch/arm/imx/fdt/imx_ccm.c		imx_ccm
-file	arch/arm/imx/fdt/imx_ccm_extclk.c	imx_ccm
-file	arch/arm/imx/fdt/imx_ccm_gate.c		imx_ccm
 file	arch/arm/imx/fdt/imx_ccm_composite.c	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_div.c		imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_extclk.c	imx_ccm
 file	arch/arm/imx/fdt/imx_ccm_fixed.c	imx_ccm
 file	arch/arm/imx/fdt/imx_ccm_fixed_factor.c	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_gate.c		imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_mux.c		imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_pll.c		imx_ccm
+
+# CCM (iMX7D)
+device	imx7dccm: imx_ccm
+attach	imx7dccm at fdt with imx7d_ccm
+file	arch/arm/imx/fdt/imx7d_ccm.c	imx7d_ccm
 
 # CCM (iMX8MQ)
 device	imx8mqccm: imx_ccm
