@@ -1,4 +1,4 @@
-/* $NetBSD: t_cond.c,v 1.7 2016/07/03 14:24:59 christos Exp $ */
+/* $NetBSD: t_cond.c,v 1.8 2020/06/10 21:46:50 ad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cond.c,v 1.7 2016/07/03 14:24:59 christos Exp $");
+__RCSID("$NetBSD: t_cond.c,v 1.8 2020/06/10 21:46:50 ad Exp $");
 
 #include <sys/time.h>
 
@@ -329,7 +329,7 @@ pthread_cond_timedwait_func(void *arg)
 		 * Sometimes we catch ESRCH.
 		 * This should never happen.
 		 */
-		ATF_REQUIRE(rv == ETIMEDOUT);
+		ATF_REQUIRE(rv == ETIMEDOUT || rv == 0);
 		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 	}
 }
