@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.44 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.45 2020/06/11 09:51:37 martin Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.44 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.45 2020/06/11 09:51:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1758,6 +1758,10 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	}
 	/* Compute MPDU's length. */
 	mlen = len - AR_PLCP_HDR_LEN - sizeof(*tail);
+	if (__predict_false(mlen < IEEE80211_CRC_LEN)) {
+		if_statinc(ifp, if_ierrors);
+		return;
+	}
 	mlen -= IEEE80211_CRC_LEN;	/* strip 802.11 FCS */
 	/* Make sure there's room for an 802.11 header. */
 	/*
@@ -1778,7 +1782,8 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		return;
 	}
 	if (align + mlen > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
+		if (__predict_true(align + mlen <= MCLBYTES))
+			MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {
 			if_statinc(ifp, if_ierrors);
 			m_freem(m);
