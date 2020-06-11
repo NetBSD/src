@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.45 2018/06/27 17:23:36 kamil Exp $ */
+/* $NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.45 2018/06/27 17:23:36 kamil Exp $");
+__RCSID("$NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -361,7 +361,7 @@ perform_arith_op(const char *left, const char *op, const char *right)
 			r = -r;
 		}
 
-		/* - remove the case of legative l and positive r */
+		/* - remove the case of negative l and positive r */
 		if (l < 0 && r >= 0) {
 			/* Use res as a temporary variable */
 			res = l;
