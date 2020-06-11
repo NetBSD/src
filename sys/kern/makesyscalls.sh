@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.180 2020/06/11 02:21:26 dholland Exp $
+#	$NetBSD: makesyscalls.sh,v 1.181 2020/06/11 03:25:35 dholland Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -1111,6 +1111,24 @@ $2 == "EXTERN" {
 	printf("%s: line %d: unrecognized keyword %s\n", infile, NR, $2)
 	exit 1
 }
+
+function sort(arr, n,    i, j, t) {
+	# this is going to be bubble sort because I cannot be bothered to
+	# write a real sort, this whole script is hopefully going to be
+	# deprecated before much longer, and performance of a few hundred
+	# things (even interpreted in awk) should be adequate.
+	for (i = 1; i <= n; i++) {
+		for (j = i + 1; j <= n; j++) {
+			if (arr[j] < arr[i]) {
+				t = arr[i];
+				arr[i] = arr[j];
+				arr[j] = t;
+			}
+		}
+	}
+	return 0;
+}
+
 END {
 	# output pipe() syscall with its special retval[2] handling
 	if (rumphaspipe) {
@@ -1134,7 +1152,15 @@ END {
 	}
 
 	# print default rump syscall interfaces
+	# be sure to generate them in a deterministic order, not awk
+	# hash order as would happen with a plain "for (var in funcseen)"
+	numfuncseenvars = 0;
 	for (var in funcseen) {
+		funcseenvars[++numfuncseenvars] = var;
+	}
+	sort(funcseenvars, numfuncseenvars)
+	for (i = 1; i <= numfuncseenvars; i++) {
+		var = funcseenvars[i];
 		printf("#ifndef RUMP_SYS_RENAME_%s\n", \
 		    toupper(var)) > rumpcallshdr
 		printf("#define RUMP_SYS_RENAME_%s rump___sysimpl_%s\n", \
