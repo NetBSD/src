@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mtx.c,v 1.1 2019/04/24 11:43:19 kamil Exp $	*/
+/*	$NetBSD: t_mtx.c,v 1.2 2020/06/11 11:40:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mtx.c,v 1.1 2019/04/24 11:43:19 kamil Exp $");
+__RCSID("$NetBSD: t_mtx.c,v 1.2 2020/06/11 11:40:54 martin Exp $");
 
 #include <time.h>
 #include <threads.h>
@@ -62,13 +62,10 @@ ATF_TC_BODY(mtx_init, tc)
 	mtx_destroy(&m);
 
 	ATF_REQUIRE_EQ(mtx_init(&m, mtx_recursive), thrd_error);
-	mtx_destroy(&m);
 
 	ATF_REQUIRE_EQ(mtx_init(&m, mtx_plain | mtx_timed), thrd_error);
-	mtx_destroy(&m);
 
 	ATF_REQUIRE_EQ(mtx_init(&m, -1), thrd_error);
-	mtx_destroy(&m);
 }
 
 ATF_TC(mtx_lock);
