@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.80 2020/06/10 22:45:15 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.81 2020/06/11 18:41:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.80 2020/06/10 22:45:15 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.81 2020/06/11 18:41:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -532,7 +532,7 @@ pthread__mutex_wakeup(pthread_t self, struct pthread__waiter *cur)
 		next = cur->next;
 		pthread__assert(cur->lid != 0);
 		lids[nlid++] = cur->lid;
-		membar_sync();
+		membar_exit();
 		cur->lid = 0;
 		/* No longer safe to touch 'cur' */
 	}
@@ -719,6 +719,9 @@ pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm,
 	/* Append atomically. */
 	for (o = ptm->ptm_waiters;; o = n) {
 		tail->next = o;
+#ifndef PTHREAD__ATOMIC_IS_MEMBAR
+		membar_producer();
+#endif
 		n = atomic_cas_ptr(&ptm->ptm_waiters, o, head);
 		if (__predict_true(n == o)) {
 			break;
