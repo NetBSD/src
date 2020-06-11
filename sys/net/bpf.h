@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.74 2019/02/26 10:30:28 msaitoh Exp $	*/
+/*	$NetBSD: bpf.h,v 1.75 2020/06/11 13:36:20 roy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -151,6 +151,8 @@ struct bpf_version {
 #define BIOCGFEEDBACK	 _IOR('B', 124, u_int)
 #define BIOCSFEEDBACK	 _IOW('B', 125, u_int)
 #define BIOCFEEDBACK     BIOCSFEEDBACK		/* FreeBSD name */
+#define BIOCLOCK	  _IO('B', 126)
+#define BIOCSETWF	 _IOW('B', 127, struct bpf_program)
 
 /* Obsolete */
 #define	BIOCGSEESENT	BIOCGDIRECTION

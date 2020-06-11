@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.236 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.237 2020/06/11 13:36:20 roy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.236 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.237 2020/06/11 13:36:20 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -236,6 +236,7 @@ static struct pslist_head bpf_dlist;
 	PSLIST_ENTRY_DESTROY((__d), bd_bif_dlist_entry)
 
 static int	bpf_allocbufs(struct bpf_d *);
+static u_int	bpf_xfilter(struct bpf_filter **, void *, u_int, u_int);
 static void	bpf_deliver(struct bpf_if *,
 		            void *(*cpfn)(void *, const void *, size_t),
 		            void *, u_int, u_int, const u_int);
@@ -244,11 +245,12 @@ static void	bpf_free_filter(struct bpf_filter *);
 static void	bpf_ifname(struct ifnet *, struct ifreq *);
 static void	*bpf_mcpy(void *, const void *, size_t);
 static int	bpf_movein(struct uio *, int, uint64_t,
-			        struct mbuf **, struct sockaddr *);
+			        struct mbuf **, struct sockaddr *,
+				struct bpf_filter **);
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 static void	bpf_detachd(struct bpf_d *);
 static int	bpf_setif(struct bpf_d *, struct ifreq *);
-static int	bpf_setf(struct bpf_d *, struct bpf_program *);
+static int	bpf_setf(struct bpf_d *, struct bpf_program *, u_long);
 static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
@@ -322,13 +324,14 @@ bpf_jit_freecode(bpfjit_func_t jcode)
 
 static int
 bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
-	   struct sockaddr *sockp)
+	   struct sockaddr *sockp, struct bpf_filter **wfilter)
 {
 	struct mbuf *m, *m0, *n;
 	int error;
 	size_t len;
 	size_t hlen;
 	size_t align;
+	u_int slen;
 
 	/*
 	 * Build a sockaddr based on the data link layer type.
@@ -429,6 +432,12 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 		m_clget(n, M_WAIT);	/* if fails, there is no problem */
 		m->m_next = n;
 		m = n;
+	}
+
+	slen = bpf_xfilter(wfilter, mtod(m, u_char *), len, len);
+	if (slen == 0) {
+		error = EPERM;
+		goto bad;
 	}
 
 	if (hlen != 0) {
@@ -572,7 +581,9 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	callout_init(&d->bd_callout, CALLOUT_MPSAFE);
 	selinit(&d->bd_sel);
 	d->bd_jitcode = NULL;
-	d->bd_filter = NULL;
+	d->bd_rfilter = NULL;
+	d->bd_wfilter = NULL;
+	d->bd_locked = 0;
 	BPF_DLIST_ENTRY_INIT(d);
 	BPFIF_DLIST_ENTRY_INIT(d);
 	d->bd_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
@@ -820,7 +831,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	}
 
 	error = bpf_movein(uio, (int)bp->bif_dlt, ifp->if_mtu, &m,
-		(struct sockaddr *) &dst);
+		(struct sockaddr *) &dst, &d->bd_wfilter);
 	if (error)
 		goto out;
 
@@ -934,6 +945,28 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	d->bd_state = BPF_IDLE;
 	mutex_exit(d->bd_mtx);
 
+	if (d->bd_locked) {
+		switch (cmd) {
+		case BIOCGBLEN:		/* FALLTHROUGH */
+		case BIOCFLUSH:		/* FALLTHROUGH */
+		case BIOCGDLT:		/* FALLTHROUGH */
+		case BIOCGDLTLIST:	/* FALLTHROUGH */
+		case BIOCGETIF:		/* FALLTHROUGH */
+		case BIOCGRTIMEOUT:	/* FALLTHROUGH */
+		case BIOCGSTATS:	/* FALLTHROUGH */
+		case BIOCVERSION:	/* FALLTHROUGH */
+		case BIOCGHDRCMPLT:	/* FALLTHROUGH */
+		case FIONREAD:		/* FALLTHROUGH */
+		case BIOCLOCK:		/* FALLTHROUGH */
+		case BIOCSRTIMEOUT:	/* FALLTHROUGH */
+		case BIOCIMMEDIATE:	/* FALLTHROUGH */
+		case TIOCGPGRP:
+			break;
+		default:
+			return EPERM;
+		}
+	}
+
 	switch (cmd) {
 
 	default:
@@ -992,8 +1025,13 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	/*
 	 * Set link layer read filter.
 	 */
-	case BIOCSETF:
-		error = bpf_setf(d, addr);
+	case BIOCSETF:		/* FALLTHROUGH */
+	case BIOCSETWF:
+		error = bpf_setf(d, addr, cmd);
+		break;
+
+	case BIOCLOCK:
+		d->bd_locked = 1;
 		break;
 
 	/*
@@ -1267,12 +1305,12 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
  * free it and replace it.  Returns EINVAL for bogus requests.
  */
 static int
-bpf_setf(struct bpf_d *d, struct bpf_program *fp)
+bpf_setf(struct bpf_d *d, struct bpf_program *fp, u_long cmd)
 {
 	struct bpf_insn *fcode;
 	bpfjit_func_t jcode;
 	size_t flen, size = 0;
-	struct bpf_filter *oldf, *newf;
+	struct bpf_filter *oldf, *newf, **storef;
 
 	jcode = NULL;
 	flen = fp->bf_len;
@@ -1303,13 +1341,20 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 	newf->bf_insn = fcode;
 	newf->bf_size = size;
 	newf->bf_jitcode = jcode;
-	d->bd_jitcode = jcode; /* XXX just for kvm(3) users */
+	if (cmd == BIOCSETF)
+		d->bd_jitcode = jcode; /* XXX just for kvm(3) users */
 
 	/* Need to hold bpf_mtx for pserialize_perform */
 	mutex_enter(&bpf_mtx);
 	mutex_enter(d->bd_mtx);
-	oldf = d->bd_filter;
-	atomic_store_release(&d->bd_filter, newf);
+	if (cmd == BIOCSETWF) {
+		oldf = d->bd_wfilter;
+		storef = &d->bd_wfilter;
+	} else {
+		oldf = d->bd_rfilter;
+		storef = &d->bd_rfilter;
+	}
+	atomic_store_release(storef, newf);
 	reset_d(d);
 	pserialize_perform(bpf_psz);
 	mutex_exit(d->bd_mtx);
@@ -1560,6 +1605,31 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
 	return dst_arg;
 }
 
+static inline u_int
+bpf_xfilter(struct bpf_filter **filter, void *pkt, u_int pktlen, u_int buflen)
+{
+	struct bpf_filter *filt;
+	uint32_t mem[BPF_MEMWORDS];
+	bpf_args_t args = {
+		.pkt = (const uint8_t *)pkt,
+		.wirelen = pktlen,
+		.buflen = buflen,
+		.mem = mem,
+		.arg = NULL
+	};
+	u_int slen;
+
+	filt = atomic_load_consume(filter);
+	if (filt == NULL) /* No filter means accept all. */
+		return (u_int)-1;
+
+	if (filt->bf_jitcode != NULL)
+		slen = filt->bf_jitcode(NULL, &args);
+	else
+		slen = bpf_filter_ext(NULL, filt->bf_insn, &args);
+	return slen;
+}
+
 /*
  * Dispatch a packet to all the listeners on interface bp.
  *
@@ -1573,18 +1643,11 @@ static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const u_int direction)
 {
-	uint32_t mem[BPF_MEMWORDS];
-	bpf_args_t args = {
-		.pkt = (const uint8_t *)pkt,
-		.wirelen = pktlen,
-		.buflen = buflen,
-		.mem = mem,
-		.arg = NULL
-	};
 	bool gottime = false;
 	struct timespec ts;
 	struct bpf_d *d;
 	int s;
+	u_int slen;
 
 	KASSERT(!cpu_intr_p());
 
@@ -1595,9 +1658,6 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	 */
 	s = pserialize_read_enter();
 	BPFIF_DLIST_READER_FOREACH(d, bp) {
-		u_int slen = 0;
-		struct bpf_filter *filter;
-
 		if (direction == BPF_D_IN) {
 			if (d->bd_direction == BPF_D_OUT)
 				continue;
@@ -1609,18 +1669,10 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		atomic_inc_ulong(&d->bd_rcount);
 		BPF_STATINC(recv);
 
-		filter = atomic_load_consume(&d->bd_filter);
-		if (filter != NULL) {
-			if (filter->bf_jitcode != NULL)
-				slen = filter->bf_jitcode(NULL, &args);
-			else
-				slen = bpf_filter_ext(NULL, filter->bf_insn,
-				    &args);
-		}
-
-		if (!slen) {
+		slen = bpf_xfilter(&d->bd_rfilter, pkt, pktlen, buflen);
+		if (slen == 0)
 			continue;
-		}
+
 		if (!gottime) {
 			gottime = true;
 			nanotime(&ts);
@@ -2044,9 +2096,13 @@ bpf_freed(struct bpf_d *d)
 		if (d->bd_fbuf != NULL)
 			kmem_free(d->bd_fbuf, d->bd_bufsize);
 	}
-	if (d->bd_filter != NULL) {
-		bpf_free_filter(d->bd_filter);
-		d->bd_filter = NULL;
+	if (d->bd_rfilter != NULL) {
+		bpf_free_filter(d->bd_rfilter);
+		d->bd_rfilter = NULL;
+	}
+	if (d->bd_wfilter != NULL) {
+		bpf_free_filter(d->bd_wfilter);
+		d->bd_wfilter = NULL;
 	}
 	d->bd_jitcode = NULL;
 }
@@ -2371,6 +2427,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 				    IFNAMSIZ - 1);
 			else
 				dpe.bde_ifname[0] = '\0';
+			dpe.bde_locked = dp->bd_locked;
 			mutex_exit(dp->bd_mtx);
 
 			error = copyout(&dpe, sp, out_size);

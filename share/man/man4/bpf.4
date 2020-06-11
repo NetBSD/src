@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.61 2018/06/26 06:47:57 msaitoh Exp $
+.\"	$NetBSD: bpf.4,v 1.62 2020/06/11 13:36:20 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd June 22, 2018
+.Dd June 11, 2020
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -231,6 +231,10 @@ This is useful for programs like
 .Xr rarpd 8 ,
 which must respond to messages in real time.
 The default for a new file is off.
+.Dv BIOCLOCK
+Set the locked flag on the bpf descriptor.
+This prevents the execution of ioctl commands which could change the
+underlying operating parameters of the device.
 .It Dv BIOCSETF ( struct bpf_program )
 Sets the filter program used by the kernel to discard uninteresting
 packets.
@@ -256,6 +260,10 @@ are performed.
 See section
 .Sy FILTER MACHINE
 for an explanation of the filter language.
+.It Dv BIOCSETWF ( struct bpf_program )
+Sets the write filter program used by the kernel to control what type
+of packets can be written to the interface.
+See the BIOCSETF command for more information on the bpf filter program.
 .It Dv BIOCVERSION ( struct bpf_version )
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
