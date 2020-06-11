@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.20 2018/02/14 17:43:09 jakllsch Exp $ */
+/* $NetBSD: drvctl.c,v 1.21 2020/06/11 13:49:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -76,9 +76,8 @@ main(int argc, char **argv)
 	struct devrescanargs raa;
 	int *locs, i;
 	prop_dictionary_t command_dict, args_dict, results_dict, data_dict;
-	prop_string_t string;
-	prop_number_t number;
 	char *xml;
+	int drvctl_error;
 
 	mode = 0;
 	while ((c = getopt(argc, argv, "QRSa:dlnprt")) != -1) {
@@ -164,17 +163,12 @@ main(int argc, char **argv)
 		command_dict = prop_dictionary_create();
 		args_dict = prop_dictionary_create();
 
-		string = prop_string_create_cstring_nocopy("get-properties");
-		prop_dictionary_set(command_dict, "drvctl-command", string);
-		prop_object_release(string);
-
-		string = prop_string_create_cstring(argv[0]);
-		prop_dictionary_set(args_dict, "device-name", string);
-		prop_object_release(string);
-
-		prop_dictionary_set(command_dict, "drvctl-arguments",
+		prop_dictionary_set_string_nocopy(command_dict,
+		    "drvctl-command", "get-properties");
+		prop_dictionary_set_string(args_dict, "device-name",
+		    argv[0]);
+		prop_dictionary_set_and_rel(command_dict, "drvctl-arguments",
 		    args_dict);
-		prop_object_release(args_dict);
 
 		res = prop_dictionary_sendrecv_ioctl(command_dict, fd,
 		    DRVCTLCOMMAND, &results_dict);
@@ -182,11 +176,10 @@ main(int argc, char **argv)
 		if (res)
 			errc(EXIT_FAILURE, res, "DRVCTLCOMMAND");
 
-		number = prop_dictionary_get(results_dict, "drvctl-error");
-		if (prop_number_integer_value(number) != 0) {
-			errc(EXIT_FAILURE,
-			    (int)prop_number_integer_value(number),
-			    "get-properties");
+		if (prop_dictionary_get_int(results_dict, "drvctl-error",
+					    &drvctl_error) &&
+		    drvctl_error != 0) {
+			errc(EXIT_FAILURE, drvctl_error, "get-properties");
 		}
 
 		data_dict = prop_dictionary_get(results_dict,
@@ -271,10 +264,10 @@ display_object(prop_object_t obj, bool nflag)
 		printf("%s\n", prop_bool_true(obj) ? "true" : "false");
 		break;
 	case PROP_TYPE_NUMBER:
-		printf("%" PRId64 "\n", prop_number_integer_value(obj));
+		printf("%" PRId64 "\n", prop_number_signed_value(obj));
 		break;
 	case PROP_TYPE_STRING:
-		printf("%s\n", prop_string_cstring_nocopy(obj));
+		printf("%s\n", prop_string_value(obj));
 		break;
 	case PROP_TYPE_DICTIONARY:
 		xml = prop_dictionary_externalize(obj);
