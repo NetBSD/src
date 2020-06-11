@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls_autoload.c,v 1.39 2020/06/02 17:23:21 kamil Exp $ */
+/* $NetBSD: syscalls_autoload.c,v 1.40 2020/06/11 03:45:30 dholland Exp $ */
 
 /*
  * System call autoload table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.39 2020/06/02 17:23:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.40 2020/06/11 03:45:30 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
