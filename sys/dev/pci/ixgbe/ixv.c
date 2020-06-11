@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.148 2020/04/17 02:21:25 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.149 2020/06/11 09:16:05 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -226,11 +226,11 @@ TUNABLE_INT("hw.ixv.enable_legacy_tx", &ixv_enable_legacy_tx);
 #ifdef NET_MPSAFE
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
-#define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_SOFTINT_FLAGS	0
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
@@ -3255,11 +3255,11 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 #ifndef IXGBE_LEGACY_TX
 		txr->txr_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixv_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
@@ -3317,7 +3317,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		aprint_normal("\n");
 
 	/* Tasklets for Mailbox */
-	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINT_FLAGS,
 	    ixv_handle_link, adapter);
 	/*
 	 * Due to a broken design QEMU will fail to properly
