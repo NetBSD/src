@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.175 2020/06/10 22:45:15 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.176 2020/06/11 18:42:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.175 2020/06/10 22:45:15 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.176 2020/06/11 18:42:02 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -615,21 +615,18 @@ pthread_exit(void *retval)
 	pthread_mutex_lock(&self->pt_lock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
 	self->pt_cancel = 0;
+	pthread_mutex_unlock(&self->pt_lock);
 
 	/* Call any cancellation cleanup handlers */
 	if (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
-		pthread_mutex_unlock(&self->pt_lock);
 		while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
 			cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
 			PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
 			(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
 		}
-		pthread_mutex_lock(&self->pt_lock);
 	}
 
-	pthread_mutex_unlock(&self->pt_lock);
 	__cxa_thread_run_atexit();
-	pthread_mutex_lock(&self->pt_lock);
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
@@ -641,6 +638,7 @@ pthread_exit(void *retval)
 	 * Signal our exit.  Our stack and pthread_t won't be reused until
 	 * pthread_create() can see from kernel info that this LWP is gone.
 	 */
+	pthread_mutex_lock(&self->pt_lock);
 	self->pt_exitval = retval;
 	if (self->pt_flags & PT_FLAG_DETACHED) {
 		/* pthread__reap() will drop the lock. */
