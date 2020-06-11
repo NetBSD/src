@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.25 2020/06/11 02:28:01 thorpej Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.26 2020/06/11 02:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.25 2020/06/11 02:28:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.26 2020/06/11 02:30:21 thorpej Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1045,7 +1045,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	int error;
 	bool ignore_dup = false;
 
-	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+	if (!prop_dictionary_get_string(dict, "file", &file))
 		return (EINVAL);
 
 	error = namei_simple_kernel(file, NSM_FOLLOW_NOEMULROOT, &vp);
