@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.14 2020/03/26 19:23:18 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.15 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.14 2020/03/26 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.15 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
 #include <sys/conf.h>
@@ -445,70 +446,56 @@ cpu_count(enum cpu_count idx, int64_t delta)
 
 /*
  * Fetch fresh sum total for all counts.  Expensive - don't call often.
+ *
+ * If poll is true, the the caller is okay with with less recent values (but
+ * no more than 1/hz seconds old).  Where this is called very often that
+ * should be the case.
+ *
+ * This should be reasonably quick so that any value collected get isn't
+ * totally out of whack, and it can also be called from interrupt context,
+ * so go to splvm() while summing the counters.  It's tempting to use a spin
+ * mutex here but this routine is called from DDB.
  */
 void
-cpu_count_sync_all(void)
+cpu_count_sync(bool poll)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int64_t sum[CPU_COUNT_MAX], *ptr;
+	static int lasttick;
+	int curtick, s;
 	enum cpu_count i;
-	int s;
 
 	KASSERT(sizeof(ci->ci_counts) == sizeof(cpu_counts));
 
-	if (__predict_true(mp_online)) {
-		memset(sum, 0, sizeof(sum));
-		/*
-		 * We want this to be reasonably quick, so any value we get
-		 * isn't totally out of whack, so don't let the current LWP
-		 * get preempted.
-		 */
-		s = splvm();
-		curcpu()->ci_counts[CPU_COUNT_SYNC_ALL]++;
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			ptr = ci->ci_counts;
-			for (i = 0; i < CPU_COUNT_MAX; i += 8) {
-				sum[i+0] += ptr[i+0];
-				sum[i+1] += ptr[i+1];
-				sum[i+2] += ptr[i+2];
-				sum[i+3] += ptr[i+3];
-				sum[i+4] += ptr[i+4];
-				sum[i+5] += ptr[i+5];
-				sum[i+6] += ptr[i+6];
-				sum[i+7] += ptr[i+7];
-			}
-			KASSERT(i == CPU_COUNT_MAX);
-		}
-		memcpy(cpu_counts, sum, sizeof(cpu_counts));
-		splx(s);
-	} else {
+	if (__predict_false(!mp_online)) {
 		memcpy(cpu_counts, curcpu()->ci_counts, sizeof(cpu_counts));
+		return;
 	}
-}
 
-/*
- * Fetch a fresh sum total for one single count.  Expensive - don't call often.
- */
-int64_t
-cpu_count_sync(enum cpu_count count)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	int64_t sum;
-	int s;
-
-	if (__predict_true(mp_online)) {
-		s = splvm();
-		curcpu()->ci_counts[CPU_COUNT_SYNC_ONE]++;
-		sum = 0;
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			sum += ci->ci_counts[count];
-		}
+	s = splvm();
+	curtick = getticks();
+	if (poll && atomic_load_acquire(&lasttick) == curtick) {
 		splx(s);
-	} else {
-		/* XXX Early boot, iterator might not be available. */
-		sum = curcpu()->ci_counts[count];
+		return;
 	}
-	return cpu_counts[count] = sum;
+	memset(sum, 0, sizeof(sum));
+	curcpu()->ci_counts[CPU_COUNT_SYNC]++;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ptr = ci->ci_counts;
+		for (i = 0; i < CPU_COUNT_MAX; i += 8) {
+			sum[i+0] += ptr[i+0];
+			sum[i+1] += ptr[i+1];
+			sum[i+2] += ptr[i+2];
+			sum[i+3] += ptr[i+3];
+			sum[i+4] += ptr[i+4];
+			sum[i+5] += ptr[i+5];
+			sum[i+6] += ptr[i+6];
+			sum[i+7] += ptr[i+7];
+		}
+		KASSERT(i == CPU_COUNT_MAX);
+	}
+	memcpy(cpu_counts, sum, sizeof(cpu_counts));
+	atomic_store_release(&lasttick, curtick);
+	splx(s);
 }
