@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomux.c,v 1.3 2020/01/15 01:09:56 jmcneill Exp $	*/
+/*	$NetBSD: imx6_iomux.c,v 1.4 2020/06/11 11:05:29 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.3 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.4 2020/06/11 11:05:29 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -134,6 +134,7 @@ imxiomux_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
 		"fsl,imx6q-iomuxc",
+		"fsl,imx7d-iomuxc",
 		"fsl,imx8mq-iomuxc",
 		NULL
 	};
