@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.179 2020/05/22 19:46:29 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.180 2020/06/11 19:20:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.179 2020/05/22 19:46:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.180 2020/06/11 19:20:47 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -482,7 +482,7 @@ uvm_init_limits(struct proc *p)
 	p->p_rlimit[RLIMIT_AS].rlim_cur = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_AS].rlim_max = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = MIN(VM_MAXUSER_ADDRESS,
-	    ctob((rlim_t)uvm_availmem()));
+	    ctob((rlim_t)uvm_availmem(false)));
 }
 
 /*
