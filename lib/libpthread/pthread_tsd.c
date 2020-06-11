@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_tsd.c,v 1.22 2020/04/19 20:47:03 joerg Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.23 2020/06/11 18:42:02 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.22 2020/04/19 20:47:03 joerg Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.23 2020/06/11 18:42:02 ad Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -323,7 +323,6 @@ pthread__destroy_tsd(pthread_t self)
 
 	if (!self->pt_havespecific)
 		return;
-	pthread_mutex_unlock(&self->pt_lock);
 
 	/* Butenhof, section 5.4.2 (page 167):
 	 * 
@@ -378,7 +377,6 @@ pthread__destroy_tsd(pthread_t self)
 	} while (!done && --iterations);
 
 	self->pt_havespecific = 0;
-	pthread_mutex_lock(&self->pt_lock);
 }
 
 void
