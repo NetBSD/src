@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.44 2018/09/18 01:25:09 mrg Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.45 2020/06/11 02:28:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.44 2018/09/18 01:25:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.45 2020/06/11 02:28:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	}
 
 	/* Fill in mandatory member */
-	if (!prop_dictionary_set_cstring_nocopy(ev, "event", event)) {
+	if (!prop_dictionary_set_string_nocopy(ev, "event", event)) {
 		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
 		return 0;
@@ -468,7 +468,7 @@ drvctl_command_get_properties(struct lwp *l,
 	
 	for (dev = deviter_first(&di, 0); dev != NULL;
 	     dev = deviter_next(&di)) {
-		if (prop_string_equals_cstring(devname_string,
+		if (prop_string_equals_string(devname_string,
 					       device_xname(dev))) {
 			prop_dictionary_set(results_dict, "drvctl-result-data",
 			    device_properties(dev));
@@ -527,8 +527,8 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	}
 
 	for (dcd = drvctl_command_table; dcd->dcd_name != NULL; dcd++) {
-		if (prop_string_equals_cstring(command_string,
-					       dcd->dcd_name))
+		if (prop_string_equals_string(command_string,
+					      dcd->dcd_name))
 			break;
 	}
 
