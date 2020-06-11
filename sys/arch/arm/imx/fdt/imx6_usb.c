@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.3 2019/11/24 11:07:19 skrll Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.4 2020/06/11 11:01:16 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.3 2019/11/24 11:07:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.4 2020/06/11 11:01:16 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -75,6 +75,7 @@ CFATTACH_DECL_NEW(imxusbc_fdt, sizeof(struct imxusbc_fdt_softc),
 
 static const char * const compatible[] = {
 	"fsl,imx6q-usb",
+	"fsl,imx7d-usb",
 	NULL
 };
 
