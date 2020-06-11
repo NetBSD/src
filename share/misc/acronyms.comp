@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.306 2020/06/05 19:45:51 sevan Exp $
+$NetBSD: acronyms.comp,v 1.307 2020/06/11 23:19:53 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1285,6 +1285,8 @@ QBE	query by example
 QC	quality control
 QDI	quasi delay insensitive
 QCIF	quarter common intermediate format
+QOI	quality of implementation
+QOI	quick order interface
 QOS	quality of service
 QVL	qualified vendor list
 R/O	read only
