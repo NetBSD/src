@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.34 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.35 2020/06/11 22:25:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ do {									\
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
 #define	_PROP_ARG_UNUSED		__unused
-#define	_PROP_DEPRECATED(s, m)		__warn_references(s, m)
+#define	_PROP_DEPRECATED(s, m)
 #else
 #define	_PROP_ARG_UNUSED		/* delete */
 #define	_PROP_DEPRECATED(s, m)		/* delete */
