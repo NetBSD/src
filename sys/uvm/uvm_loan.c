@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.103 2020/05/20 18:37:50 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.104 2020/06/11 22:21:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.103 2020/05/20 18:37:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.104 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1219,9 +1219,7 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 
 	/* done! */
 	kpreempt_disable();
-	if (uobj != NULL) {
-		CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
-	} else {
+	if (uobj == NULL) {
 		CPU_COUNT(CPU_COUNT_ANONUNKNOWN + oldstatus, -1);
 	}
 	CPU_COUNT(CPU_COUNT_ANONDIRTY, 1);
