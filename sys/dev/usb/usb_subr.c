@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.247 2020/05/31 18:33:08 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.248 2020/06/11 02:39:30 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.247 2020/05/31 18:33:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.248 2020/06/11 02:39:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -865,7 +865,7 @@ static void
 usbd_serialnumber(device_t dv, struct usbd_device *dev)
 {
 	if (dev->ud_serial) {
-		prop_dictionary_set_cstring(device_properties(dv),
+		prop_dictionary_set_string(device_properties(dv),
 		    "serialnumber", dev->ud_serial);
 	}
 }

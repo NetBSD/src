@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.10 2020/02/08 00:14:06 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.11 2020/06/11 02:39:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.10 2020/02/08 00:14:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.11 2020/06/11 02:39:30 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1351,7 +1351,7 @@ hdaudioioctl_fgrp_info(struct hdaudio_softc *sc, prop_dictionary_t request,
 			dict = prop_dictionary_create();
 			if (dict == NULL)
 				return ENOMEM;
-			prop_dictionary_set_cstring_nocopy(dict,
+			prop_dictionary_set_string_nocopy(dict,
 			    "type", hdaudioioctl_fgrp_to_cstr(fg->fg_type));
 			prop_dictionary_set_int16(dict, "nid", fg->fg_nid);
 			prop_dictionary_set_int16(dict, "codecid", codecid);
@@ -1362,10 +1362,10 @@ hdaudioioctl_fgrp_info(struct hdaudio_softc *sc, prop_dictionary_t request,
 			prop_dictionary_set_uint32(dict, "subsystem-id",
 			    sc->sc_subsystem);
 			if (fg->fg_device)
-				prop_dictionary_set_cstring(dict, "device",
+				prop_dictionary_set_string(dict, "device",
 				    device_xname(fg->fg_device));
 			else
-				prop_dictionary_set_cstring_nocopy(dict,
+				prop_dictionary_set_string_nocopy(dict,
 				    "device", "<none>");
 			prop_array_add(array, dict);
 		}

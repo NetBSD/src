@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.34 2019/08/06 18:17:52 tnn Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.35 2020/06/11 02:39:30 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.34 2019/08/06 18:17:52 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.35 2020/06/11 02:39:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 			array = prop_array_create();
 
 		dev = prop_dictionary_create();
-		prop_dictionary_set_cstring(dev, "name", name);
+		prop_dictionary_set_string(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", node);
 		of_to_dataprop(dev, node, "compatible", "compatible");
@@ -543,7 +543,7 @@ of_enter_spi_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 			array = prop_array_create();
 
 		dev = prop_dictionary_create();
-		prop_dictionary_set_cstring(dev, "name", name);
+		prop_dictionary_set_string(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "slave", slave);
 		prop_dictionary_set_uint32(dev, "mode", mode);
 		if (maxfreq > 0)

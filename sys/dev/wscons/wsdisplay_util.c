@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_util.c,v 1.2 2013/01/31 10:57:31 macallan Exp $ */
+/*	$NetBSD: wsdisplay_util.c,v 1.3 2020/06/11 02:39:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Michael Lorenz
@@ -54,7 +54,7 @@ wsdisplayio_get_edid(device_t dev, struct wsdisplayio_edid_info *d)
 		d->data_size = edid_size;
 		if (d->buffer_size < edid_size)
 			return EAGAIN;
-		return copyout(prop_data_data_nocopy(edid_data),
+		return copyout(prop_data_value(edid_data),
 			       d->edid_data, edid_size);
 	}
 	return ENODEV;

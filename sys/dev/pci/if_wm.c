@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.676 2020/04/30 03:42:10 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.677 2020/06/11 02:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.676 2020/04/30 03:42:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.677 2020/06/11 02:39:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2560,7 +2560,7 @@ alloc_retry:
 	pn = prop_dictionary_get(dict, "i82543-cfg1");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
-		cfg1 = (uint16_t) prop_number_integer_value(pn);
+		cfg1 = (uint16_t) prop_number_signed_value(pn);
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
@@ -2571,7 +2571,7 @@ alloc_retry:
 	pn = prop_dictionary_get(dict, "i82543-cfg2");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
-		cfg2 = (uint16_t) prop_number_integer_value(pn);
+		cfg2 = (uint16_t) prop_number_signed_value(pn);
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
@@ -2700,7 +2700,7 @@ alloc_retry:
 		pn = prop_dictionary_get(dict, "i82543-swdpin");
 		if (pn != NULL) {
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
-			swdpin = (uint16_t) prop_number_integer_value(pn);
+			swdpin = (uint16_t) prop_number_signed_value(pn);
 		} else {
 			if (wm_nvm_read(sc, NVM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
