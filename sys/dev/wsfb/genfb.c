@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.73 2020/05/30 14:15:43 jdolecek Exp $ */
+/*	$NetBSD: genfb.c,v 1.74 2020/06/11 02:39:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.73 2020/05/30 14:15:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.74 2020/06/11 02:39:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ genfb_calc_hsize(struct genfb_softc *sc)
 
 	edid = kmem_alloc(sizeof(*edid), KM_SLEEP);
 
-	edid_ptr = prop_data_data_nocopy(edid_data);
+	edid_ptr = prop_data_value(edid_data);
 	if (edid_parse(__UNCONST(edid_ptr), edid) == 0)
 		hsize = (int)edid->edid_max_hsize * 10;
 	else
