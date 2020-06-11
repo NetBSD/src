@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2019/12/31 13:07:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2020/06/11 19:20:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2019/12/31 13:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2020/06/11 19:20:43 ad Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -179,7 +179,7 @@ cpu_startup(void)
 	 * pool pages.
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
 	/*

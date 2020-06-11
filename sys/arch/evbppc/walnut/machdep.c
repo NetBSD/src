@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2019/12/31 13:07:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2019/12/31 13:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2020/06/11 19:20:43 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -259,7 +259,7 @@ cpu_startup(void)
 	 * pool pages.
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.77 2020/05/23 23:42:44 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.78 2020/06/11 19:20:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.77 2020/05/23 23:42:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.78 2020/06/11 19:20:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.pagemask = uvmexp.pagemask;
 	u.pageshift = uvmexp.pageshift;
 	u.npages = uvmexp.npages;
-	u.free = uvm_availmem();
+	u.free = uvm_availmem(true);
 	u.active = active;
 	u.inactive = inactive;
 	u.paging = uvmexp.paging;
@@ -390,7 +390,7 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
-	freepg = uvm_availmem();
+	freepg = uvm_availmem(true);
 	uvm_estimatepageable(&active, NULL);
 	totalp->t_free = freepg;
 	totalp->t_vm = uvmexp.npages - freepg + uvmexp.swpginuse;
@@ -457,7 +457,7 @@ uvm_update_uvmexp(void)
 
 	cpu_count_sync_all();
 
-	uvmexp.free = (int)uvm_availmem();
+	uvmexp.free = (int)uvm_availmem(true);
 	uvmexp.zeropages = (int)cpu_count_get(CPU_COUNT_ZEROPAGES);
 	uvmexp.cpuhit = (int)cpu_count_get(CPU_COUNT_CPUHIT);
 	uvmexp.cpumiss = (int)cpu_count_get(CPU_COUNT_CPUMISS);

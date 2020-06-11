@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.189 2020/06/06 22:31:40 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.190 2020/06/11 19:20:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.189 2020/06/06 22:31:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.190 2020/06/11 19:20:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -430,7 +430,7 @@ uvm_pageunwire(struct vm_page *pg)
 }
 
 int
-uvm_availmem(void)
+uvm_availmem(bool cached)
 {
 
 	return uvmexp.free;

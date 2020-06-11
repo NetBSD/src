@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2019/12/31 13:07:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2020/06/11 19:20:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2019/12/31 13:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2020/06/11 19:20:43 ad Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -260,7 +260,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvm_availmem()));
+	printf("avail mem = %ld\n", ptoa(uvm_availmem(false)));
 }
 
 /*

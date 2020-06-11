@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.109 2019/12/31 13:07:12 ad Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.110 2020/06/11 19:20:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.109 2019/12/31 13:07:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.110 2020/06/11 19:20:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -304,7 +304,7 @@ sh_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 }
 

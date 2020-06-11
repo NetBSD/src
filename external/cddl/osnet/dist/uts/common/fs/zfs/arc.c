@@ -285,7 +285,7 @@ int arc_procfd;
 #endif
 //#define	needfree	(uvm_availmem() < uvmexp.freetarg ? uvmexp.freetarg : 0)
 #define	buf_init	arc_buf_init
-#define	freemem		uvm_availmem()
+#define	freemem		uvm_availmem(false)
 #define	minfree		uvmexp.freemin
 #define	desfree		uvmexp.freetarg
 #define	lotsfree	(desfree * 2)

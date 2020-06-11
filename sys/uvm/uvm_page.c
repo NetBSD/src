@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.238 2020/05/24 19:46:59 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.239 2020/06/11 19:20:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.238 2020/05/24 19:46:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.239 2020/06/11 19:20:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1018,7 +1018,7 @@ uvm_cpu_attach(struct cpu_info *ci)
  */
 
 int
-uvm_availmem(void)
+uvm_availmem(bool cached)
 {
 	struct pgfreelist *pgfl;
 	int fl, b, fpages;
