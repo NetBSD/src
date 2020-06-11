@@ -493,7 +493,7 @@ Tenth   Edition         1989-10-xx [QCU]
 2.9BSD-Seismo		1985-08-xx [SMS]
 2.10BSD			1987-04-xx [KKK]
 2.10.1BSD		1989-01-xx [SMS]
-2.11BSD			1992-02-xx [SMS]
+2.11BSD			1991-03-14 [SMS]
 2.11BSD rev #430	1999-12-13 [SMS]
 
 32V			1978-1[01]-xx [QCU] 1979-03-26 [TUHS]
@@ -873,5 +873,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 359561 2020-04-02 11:08:19Z sevan $
-$NetBSD: bsd-family-tree,v 1.81 2020/04/02 11:09:24 sevan Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 361673 2020-05-31 21:38:33Z imp $
+$NetBSD: bsd-family-tree,v 1.82 2020/06/11 09:15:31 sevan Exp $
