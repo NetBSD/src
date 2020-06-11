@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.302 2020/06/10 20:26:52 sevan Exp $
+$NetBSD: acronyms,v 1.303 2020/06/11 23:19:53 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -469,6 +469,7 @@ PTT	post-telephone-telegraph
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
+QOI	quality of information
 RA	residential advisor
 RAND	reasonable and non-discriminatory
 RCD	residual current device
