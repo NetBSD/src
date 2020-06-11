@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.357 2019/12/31 13:07:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.358 2020/06/11 19:20:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.357 2019/12/31 13:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.358 2020/06/11 19:20:44 ad Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -414,7 +414,7 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
 	/*

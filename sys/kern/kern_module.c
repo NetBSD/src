@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.150 2020/06/08 20:19:50 thorpej Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.151 2020/06/11 19:20:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.150 2020/06/08 20:19:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.151 2020/06/11 19:20:46 ad Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1655,7 +1655,7 @@ module_thread(void *cookie)
 			if (!ISSET(mod->mod_flags, MODFLG_AUTO_LOADED))
 				continue;
 
-			if (uvm_availmem() < uvmexp.freemin) {
+			if (uvm_availmem(false) < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (module_autotime == 0 ||
 				   mod->mod_autotime == 0) {

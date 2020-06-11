@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.254 2020/05/26 00:50:53 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.255 2020/06/11 19:20:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.254 2020/05/26 00:50:53 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.255 2020/06/11 19:20:46 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -524,7 +524,7 @@ proc0_init(void)
 	rlim[RLIMIT_NPROC].rlim_max = maxproc;
 	rlim[RLIMIT_NPROC].rlim_cur = maxproc < maxuprc ? maxproc : maxuprc;
 
-	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvm_availmem()));
+	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvm_availmem(false)));
 	rlim[RLIMIT_RSS].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
