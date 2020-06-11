@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.348 2020/05/23 23:42:44 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.349 2020/06/11 00:33:30 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.348 2020/05/23 23:42:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.349 2020/06/11 00:33:30 kamil Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -756,7 +756,9 @@ rump_syscall(int num, void *data, size_t dlen, register_t *retval)
 	p = curproc;
 	e = p->p_emul;
 #ifndef __HAVE_MINIMAL_EMUL
-	KASSERT(num > 0 && num < e->e_nsysent);
+	num &= e->e_nsysent - 1;
+#else
+	num &= SYS_NSYSENT - 1;
 #endif
 	callp = e->e_sysent + num;
 
