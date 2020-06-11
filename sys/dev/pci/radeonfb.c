@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.107 2020/06/11 07:46:59 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.108 2020/06/11 07:51:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.107 2020/06/11 07:46:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.108 2020/06/11 07:51:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,7 +1022,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		callout_setfunc(&dp->rd_bl_lvds_co,
 				radeonfb_lvds_callout, dp);
 		dp->rd_bl_on = 1;
-		dp->rd_bl_level = radeonfb_get_backlight(dp);
+		if (sc->sc_flags & RFB_MOB) {
+			dp->rd_bl_level = radeonfb_get_backlight(dp);
+		} else
+			dp->rd_bl_level = 128;
 		radeonfb_set_backlight(dp, dp->rd_bl_level);
 	}
 
