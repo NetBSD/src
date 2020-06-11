@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.83 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.84 2020/06/11 22:25:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.83 2020/06/11 19:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.84 2020/06/11 22:25:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 #endif
 	LIST_REMOVE(pg, pageq.list);
 	pgb->pgb_nfree--;
+    	CPU_COUNT(CPU_COUNT_FREEPAGES, -1);
 	if (pg->flags & PG_ZERO)
 		CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
 	pg->flags = PG_CLEAN;
