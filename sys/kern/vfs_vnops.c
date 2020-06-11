@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.212 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.213 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.212 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.213 2020/06/11 22:21:05 ad Exp $");
 
 #include "veriexec.h"
 
@@ -342,7 +342,6 @@ vn_markexec(struct vnode *vp)
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
-		cpu_count(CPU_COUNT_FILEPAGES, -vp->v_uobj.uo_npages);
 		cpu_count(CPU_COUNT_EXECPAGES, vp->v_uobj.uo_npages);
 		vp->v_iflag |= VI_EXECMAP;
 	}
@@ -372,7 +371,6 @@ vn_marktext(struct vnode *vp)
 		return (ETXTBSY);
 	}
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
-		cpu_count(CPU_COUNT_FILEPAGES, -vp->v_uobj.uo_npages);
 		cpu_count(CPU_COUNT_EXECPAGES, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);

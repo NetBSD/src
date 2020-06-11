@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.85 2020/06/11 19:20:46 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.86 2020/06/11 22:21:05 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.85 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.86 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,15 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	cpu_count_sync_all();
+	/* uvm_availmem() will sync the counters if needed. */
 	freepg = (long)uvm_availmem(true);
-	filepg = (long)cpu_count_get(CPU_COUNT_FILEPAGES);
-	anonpg = (long)cpu_count_get(CPU_COUNT_ANONPAGES);
+	filepg = (long)(cpu_count_get(CPU_COUNT_FILECLEAN) +
+	    cpu_count_get(CPU_COUNT_FILEDIRTY) + 
+	    cpu_count_get(CPU_COUNT_FILEUNKNOWN) -
+	    cpu_count_get(CPU_COUNT_EXECPAGES));
+	anonpg = (long)(cpu_count_get(CPU_COUNT_ANONCLEAN) +
+	    cpu_count_get(CPU_COUNT_ANONDIRTY) + 
+	    cpu_count_get(CPU_COUNT_ANONUNKNOWN));
 	execpg = (long)cpu_count_get(CPU_COUNT_EXECPAGES);
 
 	len = snprintf(bf, LBFSZ,
@@ -296,7 +301,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		i += 1;
 	}
 
-	cpu_count_sync_all();
+	cpu_count_sync(true);
 
 	struct timeval btv;
 	getmicroboottime(&btv);

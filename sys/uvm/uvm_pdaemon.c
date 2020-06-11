@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.128 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.129 2020/06/11 22:21:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.128 2020/06/11 19:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.129 2020/06/11 22:21:05 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -952,6 +952,7 @@ uvm_reclaimable(void)
 	/*
 	 * file-backed pages can be reclaimed even when swap is full.
 	 * if we have more than 1/16 of pageable memory or 5MB, try to reclaim.
+	 * NB: filepages calculation does not exclude EXECPAGES - intentional.
 	 *
 	 * XXX assume the worst case, ie. all wired pages are file-backed.
 	 *
@@ -959,9 +960,10 @@ uvm_reclaimable(void)
 	 * XXX ie. pools, traditional buffer cache.
 	 */
 
-	cpu_count_sync_all();
-	filepages = (int)cpu_count_get(CPU_COUNT_FILEPAGES) +
-	    (int)cpu_count_get(CPU_COUNT_EXECPAGES) - uvmexp.wired;
+	cpu_count_sync(false);
+	filepages = (int)(cpu_count_get(CPU_COUNT_FILECLEAN) +
+	    cpu_count_get(CPU_COUNT_FILEUNKNOWN) +
+	    cpu_count_get(CPU_COUNT_FILEDIRTY) - uvmexp.wired);
 	uvm_estimatepageable(&active, &inactive);
 	if (filepages >= MIN((active + inactive) >> 4,
 	    5 * 1024 * 1024 >> PAGE_SHIFT)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.38 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.39 2020/06/11 22:21:05 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.38 2020/06/11 19:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.39 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -193,13 +193,18 @@ uvmpdpol_scaninit(void)
 	/*
 	 * decide which types of pages we want to reactivate instead of freeing
 	 * to keep usage within the minimum and maximum usage limits.
+	 * uvm_availmem() will sync the counters.
 	 */
 
-	cpu_count_sync_all();
 	freepg = uvm_availmem(false);
-	anonpg = cpu_count_get(CPU_COUNT_ANONPAGES);
-	filepg = cpu_count_get(CPU_COUNT_FILEPAGES);
+	anonpg = cpu_count_get(CPU_COUNT_ANONCLEAN) +
+	    cpu_count_get(CPU_COUNT_ANONDIRTY) +
+	    cpu_count_get(CPU_COUNT_ANONUNKNOWN);
 	execpg = cpu_count_get(CPU_COUNT_EXECPAGES);
+	filepg = cpu_count_get(CPU_COUNT_FILECLEAN) +
+	    cpu_count_get(CPU_COUNT_FILEDIRTY) +
+	    cpu_count_get(CPU_COUNT_FILEUNKNOWN) -
+	    execpg;
 
 	mutex_enter(&s->lock);
 	t = s->s_active + s->s_inactive + freepg;
