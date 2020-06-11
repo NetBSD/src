@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.22 2020/04/19 04:13:09 isaki Exp $ */
+/* $NetBSD: hdafg.c,v 1.23 2020/06/11 02:39:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.22 2020/04/19 04:13:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.23 2020/06/11 02:39:30 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -4371,7 +4371,7 @@ hdafg_widget_info(void *opaque, prop_dictionary_t request,
 	wcap = hda_get_wparam(w, PIN_CAPABILITIES);
 	config = hdaudio_command(sc->sc_codec, w->w_nid,
 	    CORB_GET_CONFIGURATION_DEFAULT, 0);
-	prop_dictionary_set_cstring_nocopy(response, "name", w->w_name);
+	prop_dictionary_set_string_nocopy(response, "name", w->w_name);
 	prop_dictionary_set_bool(response, "enable", w->w_enable);
 	prop_dictionary_set_uint8(response, "nid", w->w_nid);
 	prop_dictionary_set_uint8(response, "type", w->w_type);
@@ -4383,8 +4383,8 @@ hdafg_widget_info(void *opaque, prop_dictionary_t request,
 	for (i = 0; i < w->w_nconns; i++) {
 		if (w->w_conns[i] == 0)
 			continue;
-		prop_array_add(connlist,
-		    prop_number_create_unsigned_integer(w->w_conns[i]));
+		prop_array_add_and_rel(connlist,
+		    prop_number_create_unsigned(w->w_conns[i]));
 	}
 	prop_dictionary_set(response, "connlist", connlist);
 	prop_object_release(connlist);

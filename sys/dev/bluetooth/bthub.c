@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.23 2020/06/08 20:20:54 thorpej Exp $	*/
+/*	$NetBSD: bthub.c,v 1.24 2020/06/11 02:39:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.23 2020/06/08 20:20:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.24 2020/06/11 02:39:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -205,7 +205,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 	/* validate remote address */
 	raddr = prop_dictionary_get(dict, BTDEVraddr);
 	if (prop_data_size(raddr) != sizeof(bdaddr_t)
-	    || bdaddr_any(prop_data_data_nocopy(raddr)))
+	    || bdaddr_any(prop_data_value(raddr)))
 		return EINVAL;
 
 	/* validate service name */
@@ -269,11 +269,11 @@ bthub_print(void *aux, const char *pnp)
 	if (pnp != NULL) {
 		obj = prop_dictionary_get(dict, BTDEVtype);
 		aprint_normal("%s: %s '%s',", pnp, BTDEVtype,
-					prop_string_cstring_nocopy(obj));
+					prop_string_value(obj));
 	}
 
 	obj = prop_dictionary_get(dict, BTDEVraddr);
-	raddr = prop_data_data_nocopy(obj);
+	raddr = prop_data_value(obj);
 
 	aprint_verbose(" %s %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
 			BTDEVraddr,

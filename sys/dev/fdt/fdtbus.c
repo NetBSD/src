@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.33 2020/02/20 01:35:55 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.34 2020/06/11 02:39:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.33 2020/02/20 01:35:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.34 2020/06/11 02:39:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		if (node->n_dev) {
 			dict = device_properties(node->n_dev);
 			if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
-				prop_dictionary_set_cstring(dict, "fdt-path", buf);
+				prop_dictionary_set_string(dict, "fdt-path", buf);
 		}
 	}
 }

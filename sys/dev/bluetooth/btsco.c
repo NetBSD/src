@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.41 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: btsco.c,v 1.42 2020/06/11 02:39:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.41 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.42 2020/06/11 02:39:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -258,10 +258,10 @@ btsco_match(device_t self, cfdata_t cfdata, void *aux)
 	prop_object_t obj;
 
 	obj = prop_dictionary_get(dict, BTDEVservice);
-	if (prop_string_equals_cstring(obj, "HSET"))
+	if (prop_string_equals_string(obj, "HSET"))
 		return 1;
 
-	if (prop_string_equals_cstring(obj, "HF"))
+	if (prop_string_equals_string(obj, "HF"))
 		return 1;
 
 	return 0;
@@ -288,25 +288,25 @@ btsco_attach(device_t parent, device_t self, void *aux)
 	 * copy in our configuration info
 	 */
 	obj = prop_dictionary_get(dict, BTDEVladdr);
-	bdaddr_copy(&sc->sc_laddr, prop_data_data_nocopy(obj));
+	bdaddr_copy(&sc->sc_laddr, prop_data_value(obj));
 
 	obj = prop_dictionary_get(dict, BTDEVraddr);
-	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
+	bdaddr_copy(&sc->sc_raddr, prop_data_value(obj));
 
 	obj = prop_dictionary_get(dict, BTDEVservice);
-	if (prop_string_equals_cstring(obj, "HF")) {
+	if (prop_string_equals_string(obj, "HF")) {
 		sc->sc_flags |= BTSCO_LISTEN;
 		aprint_verbose(" listen mode");
 	}
 
 	obj = prop_dictionary_get(dict, BTSCOchannel);
 	if (prop_object_type(obj) != PROP_TYPE_NUMBER
-	    || prop_number_integer_value(obj) < RFCOMM_CHANNEL_MIN
-	    || prop_number_integer_value(obj) > RFCOMM_CHANNEL_MAX) {
+	    || prop_number_signed_value(obj) < RFCOMM_CHANNEL_MIN
+	    || prop_number_signed_value(obj) > RFCOMM_CHANNEL_MAX) {
 		aprint_error(" invalid %s", BTSCOchannel);
 		return;
 	}
-	sc->sc_channel = prop_number_integer_value(obj);
+	sc->sc_channel = prop_number_signed_value(obj);
 
 	aprint_verbose(" channel %d", sc->sc_channel);
 	aprint_normal("\n");

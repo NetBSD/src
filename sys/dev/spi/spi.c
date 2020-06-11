@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.13 2019/11/27 07:26:08 hkenken Exp $ */
+/* $NetBSD: spi.c,v 1.14 2020/06/11 02:39:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.13 2019/11/27 07:26:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.14 2020/06/11 02:39:30 thorpej Exp $");
 
 #include "locators.h"
 
@@ -247,7 +247,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 
 		buf = NULL;
 		spi_fill_compat(&sa,
-				prop_data_data_nocopy(cdata),
+				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
 		(void) config_found_sm_loc(parent, "spi",
 					   loc, &sa, spi_print,

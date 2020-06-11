@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.66 2020/05/14 08:34:18 msaitoh Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.67 2020/06/11 02:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.66 2020/05/14 08:34:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.67 2020/06/11 02:39:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7065,7 +7065,7 @@ ixl_parse_modprop(prop_dictionary_t dict)
 
 	obj = prop_dictionary_get(dict, "stats_interval");
 	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
-		val = prop_number_integer_value((prop_number_t)obj);
+		val = prop_number_signed_value((prop_number_t)obj);
 
 		/* the range has no reason */
 		if (100 < val && val < 180000) {
@@ -7075,7 +7075,7 @@ ixl_parse_modprop(prop_dictionary_t dict)
 
 	obj = prop_dictionary_get(dict, "nqps_limit");
 	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
-		val = prop_number_integer_value((prop_number_t)obj);
+		val = prop_number_signed_value((prop_number_t)obj);
 
 		if (val <= INT32_MAX)
 			ixl_param_nqps_limit = val;

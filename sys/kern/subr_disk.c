@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.130 2020/03/27 11:13:57 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.131 2020/06/11 02:32:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.130 2020/03/27 11:13:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.131 2020/06/11 02:32:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -737,7 +737,7 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 	prop_dictionary_set(disk_info, "geometry", geom);
 
 	if (type)
-		prop_dictionary_set_cstring_nocopy(disk_info, "type", type);
+		prop_dictionary_set_string_nocopy(disk_info, "type", type);
 
 	prop_object_release(geom);
 
