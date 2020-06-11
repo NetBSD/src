@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.46 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.47 2020/06/11 13:36:20 roy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -123,7 +123,9 @@ struct bpf_d {
 #endif
 	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	bpfjit_func_t	bd_jitcode;	/* compiled filter program */
-	struct bpf_filter *bd_filter;
+	struct bpf_filter *bd_rfilter;
+	struct bpf_filter *bd_wfilter;
+	int		bd_locked;
 #ifdef _KERNEL
 	struct pslist_entry	bd_bif_dlist_entry; /* For bpf_if */
 	struct pslist_entry	bd_bpf_dlist_entry; /* For the global list */
@@ -155,6 +157,7 @@ struct bpf_d_ext {
 	uint64_t	bde_dcount;		/* number of packets dropped */
 	uint64_t	bde_ccount;		/* number of packets captured */
 	char		bde_ifname[IFNAMSIZ];
+	int		bde_locked;
 };
 
 
