@@ -1,4 +1,4 @@
-/* $NetBSD: imx7d_ccm.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $ */
+/* $NetBSD: imx7d_ccm.c,v 1.2 2020/06/11 11:01:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.1 2020/06/10 17:57:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.2 2020/06/11 11:01:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -269,6 +269,10 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 	IMX_GATE(USDHC1_ROOT_CLK, "usdhc1_root_clk", "usdhc1_post_div", 0x46c0, __BIT(0)),
 	IMX_GATE(USDHC2_ROOT_CLK, "usdhc2_root_clk", "usdhc2_post_div", 0x46d0, __BIT(0)),
 	IMX_GATE(USDHC3_ROOT_CLK, "usdhc3_root_clk", "usdhc3_post_div", 0x46e0, __BIT(0)),
+
+	IMX_GATE(USB_CTRL_CLK, "usb_ctrl_clk", "ahb_root_clk", 0x4680, __BIT(0)),
+	IMX_GATE(USB_PHY1_CLK, "usb_phy1_clk", "pll_usb1_main_clk", 0x46a0, __BIT(0)),
+	IMX_GATE(USB_PHY2_CLK, "usb_phy2_clk", "pll_usb_main_clk", 0x46b0, __BIT(0)),
 };
 
 static int
