@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.179 2020/06/09 04:48:45 dholland Exp $
+#	$NetBSD: makesyscalls.sh,v 1.180 2020/06/11 02:21:26 dholland Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -756,7 +756,7 @@ function printproto(wrap) {
 	}
 }
 
-function printrumpsysent(insysent, compatwrap) {
+function printrumpsysent(insysent, compatwrap_) {
 	if (modular) {
 		fn = rumpnomodule
 		flags = rumpnoflags
@@ -941,7 +941,7 @@ function putent(type, compatwrap) {
 	} else {
 		insysent = 1
 	}
-	printrumpsysent(insysent, compatwrap)
+	printrumpsysent(insysent, compatwrap_)
 
 	# output rump marshalling code if necessary
 	if (!rumpable) {
