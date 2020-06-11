@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.64 2020/06/07 19:08:12 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.65 2020/06/11 11:04:11 jdc Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2885,4 +2885,17 @@ sys/arch/arm/include/arm32/param.h		1.30
 	Bump the amount of KMEM allowed to 1/3rd of KVM.
 	_ARCH_ARM_6 has a split of 2:2 and others have a split of 3:1.
 	[skrll, ticket #951]
+
+src/sys/dev/usb/if_otus.c			1.45 (via patch)
+
+	Stricter bounds check for some packet length we get from the usb chip,
+	to make sure we do not corrupt kernel memory.
+	Pointed out by Ilja Van Sprundel.
+	[martin, ticket #957]
+
+src/sys/dev/usb/if_run.c			1.41
+
+	Better bounds checking for oversized packets, to avoid kernel memory
+	corruption. Pointed out by Ilja Van Sprundel.
+	[martin, ticket #958]
 
