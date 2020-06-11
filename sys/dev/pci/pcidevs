@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1414 2020/05/26 19:07:14 martin Exp $
+$NetBSD: pcidevs,v 1.1415 2020/06/11 09:01:27 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5860,6 +5860,7 @@ product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Regist
 product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
 product INTEL HANKSVILLE	0xf0fe	HANKSVILLE LAN Controller
 product INTEL SSD_760P		0xf1a6	SSD 760p
+product INTEL XMM7360		0x7360  XMM 7360 LTE Modem
 
 /* Intergraph products */
 product INTERGRAPH 4D60T	0x00e3	Powerstorm 4D60T
