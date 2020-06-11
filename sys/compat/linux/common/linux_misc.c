@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.250 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.251 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.250 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.251 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1347,6 +1347,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	} */
 	struct linux_sysinfo si;
 	struct loadavg *la;
+	int64_t filepg;
 
 	memset(&si, 0, sizeof(si));
 	si.uptime = time_uptime;
@@ -1355,9 +1356,14 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.totalram = ctob((u_long)physmem);
+	/* uvm_availmem() may sync the counters. */
 	si.freeram = (u_long)uvm_availmem(true) * uvmexp.pagesize;
+	filepg = cpu_count_get(CPU_COUNT_FILECLEAN) +
+	    cpu_count_get(CPU_COUNT_FILEDIRTY) +
+	    cpu_count_get(CPU_COUNT_FILEUNKNOWN) -
+	    cpu_count_get(CPU_COUNT_EXECPAGES);
 	si.sharedram = 0;	/* XXX */
-	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
+	si.bufferram = (u_long)(filepg * uvmexp.pagesize);
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
 	si.freeswap = 
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;

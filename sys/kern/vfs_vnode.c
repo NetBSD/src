@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.123 2020/05/26 18:38:37 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.124 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.123 2020/05/26 18:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.124 2020/06/11 22:21:05 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -900,7 +900,6 @@ vrelel(vnode_t *vp, int flags, int lktype)
 		if ((vp->v_iflag & VI_EXECMAP) != 0 &&
 		    vp->v_uobj.uo_npages != 0) {
 			cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
-			cpu_count(CPU_COUNT_FILEPAGES, vp->v_uobj.uo_npages);
 		}
 		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
 		vp->v_vflag &= ~VV_MAPPED;
@@ -1710,7 +1709,6 @@ vcache_reclaim(vnode_t *vp)
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) != 0 && vp->v_uobj.uo_npages != 0) {
 		cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
-		cpu_count(CPU_COUNT_FILEPAGES, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 	vp->v_iflag |= VI_DEADCHECK; /* for genfs_getpages() */

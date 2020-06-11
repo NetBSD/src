@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.239 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.240 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.239 2020/06/11 19:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.240 2020/06/11 22:21:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -230,19 +230,13 @@ uvm_pageinsert_object(struct uvm_object *uobj, struct vm_page *pg)
 				vholdl(vp);
 				mutex_exit(vp->v_interlock);
 			}
-			kpreempt_disable();
 			if (UVM_OBJ_IS_VTEXT(uobj)) {
-				CPU_COUNT(CPU_COUNT_EXECPAGES, 1);
-			} else {
-				CPU_COUNT(CPU_COUNT_FILEPAGES, 1);
+				cpu_count(CPU_COUNT_EXECPAGES, 1);
 			}
-			CPU_COUNT(CPU_COUNT_FILEUNKNOWN + status, 1);
+			cpu_count(CPU_COUNT_FILEUNKNOWN + status, 1);
 		} else {
-			kpreempt_disable();
-			CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
-			CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, 1);
+			cpu_count(CPU_COUNT_ANONUNKNOWN + status, 1);
 		}
-		kpreempt_enable();
 	}
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
@@ -293,19 +287,13 @@ uvm_pageremove_object(struct uvm_object *uobj, struct vm_page *pg)
 				holdrelel(vp);
 				mutex_exit(vp->v_interlock);
 			}
-			kpreempt_disable();
 			if (UVM_OBJ_IS_VTEXT(uobj)) {
-				CPU_COUNT(CPU_COUNT_EXECPAGES, -1);
-			} else {
-				CPU_COUNT(CPU_COUNT_FILEPAGES, -1);
+				cpu_count(CPU_COUNT_EXECPAGES, -1);
 			}
-			CPU_COUNT(CPU_COUNT_FILEUNKNOWN + status, -1);
+			cpu_count(CPU_COUNT_FILEUNKNOWN + status, -1);
 		} else {
-			kpreempt_disable();
-			CPU_COUNT(CPU_COUNT_ANONPAGES, -1);
-			CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, -1);
+			cpu_count(CPU_COUNT_ANONUNKNOWN + status, -1);
 		}
-		kpreempt_enable();
 	}
 	uobj->uo_npages--;
 	pg->flags &= ~PG_TABLED;
@@ -1015,22 +1003,28 @@ uvm_cpu_attach(struct cpu_info *ci)
  * uvm_availmem: fetch the total amount of free memory in pages.  this can
  * have a detrimental effect on performance due to false sharing; don't call
  * unless needed.
+ *
+ * some users can request the amount of free memory so often that it begins
+ * to impact upon performance.  if calling frequently and an inexact value
+ * is okay, call with cached = true.
  */
 
 int
 uvm_availmem(bool cached)
 {
-	struct pgfreelist *pgfl;
-	int fl, b, fpages;
+	int64_t fp;
 
-	fpages = 0;
-	for (fl = 0; fl < VM_NFREELIST; fl++) {
-		pgfl = &uvm.page_free[fl];
-		for (b = 0; b < uvm.bucketcount; b++) {
-			fpages += pgfl->pgfl_buckets[b]->pgb_nfree;
-		}
+	cpu_count_sync(cached);
+	if ((fp = cpu_count_get(CPU_COUNT_FREEPAGES)) < 0) {
+		/*
+		 * XXXAD could briefly go negative because it's impossible
+		 * to get a clean snapshot.  address this for other counters
+		 * used as running totals before NetBSD 10 although less
+		 * important for those.
+		 */
+		fp = 0;
 	}
-	return fpages;
+	return (int)fp;
 }
 
 /*
@@ -1290,6 +1284,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * if we have to zero the page
 	 */
 
+    	CPU_COUNT(CPU_COUNT_FREEPAGES, -1);
 	if (flags & UVM_PGA_ZERO) {
 		if (pg->flags & PG_ZERO) {
 		    	CPU_COUNT(CPU_COUNT_PGA_ZEROHIT, 1);
@@ -1303,7 +1298,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
 	}
 	if (anon) {
-		CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
 		CPU_COUNT(CPU_COUNT_ANONCLEAN, 1);
 	}
 	splx(s);
@@ -1547,8 +1541,9 @@ uvm_pagefree(struct vm_page *pg)
 			if ((pg->flags & PG_ANON) == 0) {
 				pg->loan_count--;
 			} else {
+				const unsigned status = uvm_pagegetdirty(pg);
 				pg->flags &= ~PG_ANON;
-				cpu_count(CPU_COUNT_ANONPAGES, -1);
+				cpu_count(CPU_COUNT_ANONUNKNOWN + status, -1);
 			}
 			pg->uanon->an_page = NULL;
 			pg->uanon = NULL;
@@ -1587,10 +1582,7 @@ uvm_pagefree(struct vm_page *pg)
 		const unsigned int status = uvm_pagegetdirty(pg);
 		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;
-		kpreempt_disable();
-		CPU_COUNT(CPU_COUNT_ANONPAGES, -1);
-		CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, -1);
-		kpreempt_enable();
+		cpu_count(CPU_COUNT_ANONUNKNOWN + status, -1);
 	}
 
 	/*
@@ -1632,6 +1624,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
+    	CPU_COUNT(CPU_COUNT_FREEPAGES, 1);
 	if (pg->flags & PG_ZERO) {
 	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.50 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.51 2020/06/11 22:21:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,22 +55,22 @@ enum cpu_count {
 	CPU_COUNT_FORKS,
 	CPU_COUNT_FORKS_PPWAIT,
 	CPU_COUNT_FORKS_SHAREVM,
-	CPU_COUNT_ANONPAGES,		/* 8 */
-	CPU_COUNT_COLORHIT,
+	CPU_COUNT_COLORHIT,		/* 8 */
 	CPU_COUNT_COLORMISS,
+	CPU_COUNT_PGA_ZEROHIT,
+	CPU_COUNT_PGA_ZEROMISS,
 	CPU_COUNT_CPUHIT,
 	CPU_COUNT_CPUMISS,
-	CPU_COUNT_EXECPAGES,
-	CPU_COUNT_FILEPAGES,
-	CPU_COUNT_PGA_ZEROHIT,
-	CPU_COUNT_PGA_ZEROMISS,		/* 16 */
+	CPU_COUNT_FREEPAGES,
 	CPU_COUNT_ZEROPAGES,
-	CPU_COUNT_PAGEINS,
-	CPU_COUNT_SYNC_ONE,
-	CPU_COUNT_SYNC_ALL,
+	CPU_COUNT_PAGEINS,		/* 16 */
+	CPU_COUNT_FLTUP,
+	CPU_COUNT_FLTNOUP,
 	CPU_COUNT_FLTPGWAIT,
 	CPU_COUNT_FLTRELCK,
 	CPU_COUNT_FLTRELCKOK,
+	CPU_COUNT__UNUSED1,
+	CPU_COUNT__UNUSED2,
 	CPU_COUNT_NFAULT,		/* 24 */
 	CPU_COUNT_FLT_ACOW,
 	CPU_COUNT_FLT_ANON,
@@ -93,8 +93,8 @@ enum cpu_count {
 	CPU_COUNT_FILEUNKNOWN,
 	CPU_COUNT_FILECLEAN,
 	CPU_COUNT_FILEDIRTY,
-	CPU_COUNT_FLTUP,
-	CPU_COUNT_FLTNOUP,
+	CPU_COUNT_EXECPAGES,
+	CPU_COUNT_SYNC,
 	CPU_COUNT_MAX			/* 48 */
 };
 
@@ -249,8 +249,6 @@ cpu_count_get(enum cpu_count idx)
 }
 
 void	cpu_count(enum cpu_count, int64_t);
-int64_t	cpu_count_get(enum cpu_count);
-int64_t	cpu_count_sync(enum cpu_count);
-void	cpu_count_sync_all(void);
+void	cpu_count_sync(bool);
 
 #endif /* _SYS_CPU_DATA_H_ */

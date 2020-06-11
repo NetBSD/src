@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.12 2020/06/11 19:20:46 ad Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.13 2020/06/11 22:21:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.12 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.13 2020/06/11 22:21:05 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,7 @@ linux32_sys_sysinfo(struct lwp *l, const struct linux32_sys_sysinfo_args *uap, r
 	} */
 	struct linux32_sysinfo si;
 	struct loadavg *la;
+	int64_t filepg;
 
 	memset(&si, 0, sizeof(si));
 	si.uptime = time_uptime;
@@ -77,9 +78,14 @@ linux32_sys_sysinfo(struct lwp *l, const struct linux32_sys_sysinfo_args *uap, r
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.totalram = ctob((u_long)physmem);
+	/* uvm_availmem() may sync the counters. */
 	si.freeram = (u_long)uvm_availmem(true) * uvmexp.pagesize;
+	filepg = cpu_count_get(CPU_COUNT_FILECLEAN) +
+	    cpu_count_get(CPU_COUNT_FILEDIRTY) +
+	    cpu_count_get(CPU_COUNT_FILEUNKNOWN) -
+	    cpu_count_get(CPU_COUNT_EXECPAGES);
 	si.sharedram = 0;	/* XXX */
-	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
+	si.bufferram = (u_long)(filepg * uvmexp.pagesize);
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
 	si.freeswap = 
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
