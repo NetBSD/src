@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.24 2020/06/08 20:14:24 thorpej Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.25 2020/06/11 02:28:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.24 2020/06/08 20:14:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.25 2020/06/11 02:28:01 thorpej Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1064,8 +1064,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	rw_init(&vfe->lock);
 
 	/* Lookup fingerprint hashing algorithm. */
-	fp_type = prop_string_cstring_nocopy(prop_dictionary_get(dict,
-	    "fp-type"));
+	fp_type = prop_string_value(prop_dictionary_get(dict, "fp-type"));
 	if ((vfe->ops = veriexec_fpops_lookup(fp_type)) == NULL) {
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
 		    "`%s' for file `%s'.\n", fp_type, file);
@@ -1082,7 +1081,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	}
 
 	vfe->fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
-	memcpy(vfe->fp, prop_data_data_nocopy(prop_dictionary_get(dict, "fp")),
+	memcpy(vfe->fp, prop_data_value(prop_dictionary_get(dict, "fp")),
 	    vfe->ops->hash_len);
 
 	rw_enter(&veriexec_op_lock, RW_WRITER);
@@ -1219,7 +1218,7 @@ veriexec_file_convert(struct veriexec_file_entry *vfe, prop_dictionary_t rdict)
 	prop_dictionary_set(rdict, "fp-type",
 	    prop_string_create_copy(vfe->ops->type));
 	prop_dictionary_set(rdict, "fp",
-	    prop_data_create_data(vfe->fp, vfe->ops->hash_len));
+	    prop_data_create_copy(vfe->fp, vfe->ops->hash_len));
 }
 
 int
