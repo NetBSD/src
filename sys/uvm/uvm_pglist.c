@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.82 2020/05/23 20:22:42 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.83 2020/06/11 19:20:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.82 2020/05/23 20:22:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.83 2020/06/11 19:20:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 	uvm_pgfl_lock();
 
 	/* Are there even any free pages? */
-	if (uvm_availmem() <=
+	if (uvm_availmem(false) <=
 	    (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
 		goto out;
 
@@ -456,7 +456,7 @@ again:
 	count++;
 
 	/* Are there even any free pages? */
-	if (uvm_availmem() <=
+	if (uvm_availmem(false) <=
 	    (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
 		goto out;
 
