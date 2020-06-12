@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.4 2019/12/22 23:23:31 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.5 2020/06/12 03:41:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.4 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.5 2020/06/12 03:41:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,6 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	struct i2cbus_attach_args iba;
 	prop_array_t cfg;
 	prop_dictionary_t dev;
-	prop_data_t data;
 	prop_dictionary_t dict = device_properties(sc->sc_dev);
 	int devs, regs[2], addr;
 	char name[64], compat[256];
@@ -167,10 +166,9 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 		addr = (regs[1] & 0xff) >> 1;
 		DPRINTF("-> %s@%d,%x\n", name, regs[0], addr);
 		dev = prop_dictionary_create();
-		prop_dictionary_set_cstring(dev, "name", name);
-		data = prop_data_create_data(compat, strlen(compat)+1);
-		prop_dictionary_set(dev, "compatible", data);
-		prop_object_release(data);
+		prop_dictionary_set_string(dev, "name", name);
+		prop_dictionary_set_data(dev, "compatible", compat,
+		    strlen(compat)+1);
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", devs);
 		prop_array_add(cfg, dev);
