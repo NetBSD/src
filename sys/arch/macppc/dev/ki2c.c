@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.29 2020/01/09 18:49:06 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.30 2020/06/12 06:44:57 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -173,8 +173,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			addr = addr >> 1;
 			DPRINTF("-> %s@%x\n", name, addr);
 			dev = prop_dictionary_create();
-			prop_dictionary_set_cstring(dev, "name", name);
-			data = prop_data_create_data(compat, strlen(compat)+1);
+			prop_dictionary_set_string(dev, "name", name);
+			data = prop_data_create_copy(compat, strlen(compat)+1);
 			prop_dictionary_set(dev, "compatible", data);
 			prop_object_release(data);
 			prop_dictionary_set_uint32(dev, "addr", addr);
@@ -187,7 +187,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 					goto nope;
 				DPRINTF("found '%s' at %02x\n", descr, reg);
 				snprintf(num, 7, "s%02x", reg);
-				prop_dictionary_set_cstring(dev, num, descr);
+				prop_dictionary_set_string(dev, num, descr);
 			nope:
 				devc = OF_peer(devc);
 			}
