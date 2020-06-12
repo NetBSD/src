@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.130 2020/01/29 14:09:58 thorpej Exp $	*/
+/*	$NetBSD: ath.c,v 1.131 2020/06/12 15:34:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.130 2020/01/29 14:09:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.131 2020/06/12 15:34:20 thorpej Exp $");
 #endif
 
 /*
@@ -307,7 +307,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	sc->sc_ah = ah;
 
 	if (!prop_dictionary_set_bool(device_properties(sc->sc_dev),
-	    "pmf-powerdown", false))
+	    "pmf-no-powerdown", true))
 		goto bad;
 
 	/*
