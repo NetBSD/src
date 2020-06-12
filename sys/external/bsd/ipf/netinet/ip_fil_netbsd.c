@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.34 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.35 2020/06/12 10:35:59 roy Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.34 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.35 2020/06/12 10:35:59 roy Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1465,7 +1465,8 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 	}
 
 	{
-# if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU)
+# if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU) \
+     && defined(IPV6CTL_ACCEPT_RTADV)
 		struct in6_ifextra *ife;
 # endif
 		if (rt->rt_flags & RTF_GATEWAY)
@@ -1479,13 +1480,15 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		/* Determine path MTU. */
 # if (__NetBSD_Version__ <= 106009999)
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-# else
+# elif defined(IPV6CTL_ACCEPT_RTADV)
 #  ifdef IN6_LINKMTU
 		mtu = IN6_LINKMTU(ifp);
 #  else
 		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 #  endif
+# else
+		mtu = ifp->if_mtu;
 # endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 # if __NetBSD_Version__ >= 499001100
