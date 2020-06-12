@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.109 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.110 2020/06/12 15:34:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.109 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.110 2020/06/12 15:34:20 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -775,7 +775,7 @@ enable_function(struct cardbus_softc *sc, int cdstatus, int function)
 static void
 disable_function(struct cardbus_softc *sc, int function)
 {
-	bool powerdown;
+	bool no_powerdown;
 	cardbus_devfunc_t ct;
 	device_t dv;
 	int i;
@@ -788,7 +788,7 @@ disable_function(struct cardbus_softc *sc, int function)
 			continue;
 		dv = ct->ct_device;
 		if (prop_dictionary_get_bool(device_properties(dv),
-		    "pmf-powerdown", &powerdown) && !powerdown)
+		    "pmf-no-powerdown", &no_powerdown) && no_powerdown)
 			return;
 	}
 	/* power-off because no functions are enabled */
