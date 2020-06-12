@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2013/05/16 19:06:44 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2020/06/12 11:21:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,8 +37,7 @@
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 #define	MAXPARTITIONS	16		/* number of partitions */
-#define	RAW_PART	2		/* raw partition: ie. XX?c (XXX) */
-#define	OPENBSD_RAW_PART 2		/* raw partition: XX?c */
+#define	RAW_PART	2		/* raw partition: ie. XX?c */
 
 /* Pull in MBR partition definitions. */
 #if HAVE_NBTOOL_CONFIG_H
