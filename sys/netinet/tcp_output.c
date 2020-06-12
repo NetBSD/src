@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.212 2019/11/17 08:21:25 mlelstv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.213 2020/06/12 11:04:45 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.212 2019/11/17 08:21:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.213 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -307,7 +307,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 			 * for IPv6, path MTU discovery is always turned on,
 			 * or the node must use packet size <= 1280.
 			 */
-			size = tp->t_mtudisc ? IN6_LINKMTU(ifp) : IPV6_MMTU;
+			size = tp->t_mtudisc ? ifp->if_mtu : IPV6_MMTU;
 			size -= hdrlen;
 		}
 	}

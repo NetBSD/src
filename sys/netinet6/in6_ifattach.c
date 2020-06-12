@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.118 2020/01/20 18:38:22 thorpej Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.119 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.118 2020/01/20 18:38:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.119 2020/06/12 11:04:45 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,23 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.118 2020/01/20 18:38:22 thorpej E
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/scope6_var.h>
 
-unsigned long in6_maxmtu = 0;
-
 int ip6_auto_linklocal = 1;	/* enable by default */
-
-static callout_t in6_tmpaddrtimer_ch;
-
 
 #if 0
 static int get_hostid_ifid(struct ifnet *, struct in6_addr *);
 #endif
-static int get_rand_ifid(struct in6_addr *);
-static int generate_tmp_ifid(u_int8_t *, const u_int8_t *, u_int8_t *);
 static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
 static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
 static int in6_ifattach_loopback(struct ifnet *);
-
-static void in6_tmpaddrtimer(void *);
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
@@ -87,8 +78,6 @@ static void in6_tmpaddrtimer(void *);
 
 #define IFID_LOCAL(in6)		(!EUI64_LOCAL(in6))
 #define IFID_UNIVERSAL(in6)	(!EUI64_UNIVERSAL(in6))
-
-#define GEN_TEMPID_RETRY_MAX 5
 
 #if 0
 /*
@@ -167,146 +156,6 @@ get_rand_ifid(struct in6_addr *in6)	/* upper 64bits are preserved */
 
 	/* convert EUI64 into IPv6 interface identifier */
 	EUI64_TO_IFID(in6);
-
-	return 0;
-}
-
-static int
-generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
-{
-	MD5_CTX ctxt;
-	u_int8_t seed[16], digest[16], nullbuf[8];
-	/*
-	 * interface ID for subnet anycast addresses.
-	 * XXX: we assume the unicast address range that requires IDs
-	 * in EUI-64 format.
-	 */
-	static const uint8_t anycast_id[8] = { 0xfd, 0xff, 0xff, 0xff,
-	    0xff, 0xff, 0xff, 0x80 };
-	static const uint8_t isatap_id[4] = { 0x00, 0x00, 0x5e, 0xfe };
-	int badid, retry = 0;
-
-	/* If there's no hisotry, start with a random seed. */
-	memset(nullbuf, 0, sizeof(nullbuf));
-	if (memcmp(nullbuf, seed0, sizeof(nullbuf)) == 0) {
-		cprng_fast(seed, sizeof(seed));
-	} else
-		memcpy(seed, seed0, 8);
-
-	/* copy the right-most 64-bits of the given address */
-	/* XXX assumption on the size of IFID */
-	memcpy(&seed[8], seed1, 8);
-
-  again:
-	/* for debugging purposes only */
-#if 0
-	{
-		int i;
-
-		printf("generate_tmp_ifid: new randomized ID from: ");
-		for (i = 0; i < 16; i++)
-			printf("%02x", seed[i]);
-		printf(" ");
-	}
-#endif
-
-	/* generate 16 bytes of pseudo-random value. */
-	memset(&ctxt, 0, sizeof(ctxt));
-	MD5Init(&ctxt);
-	MD5Update(&ctxt, seed, sizeof(seed));
-	MD5Final(digest, &ctxt);
-
-	/*
-	 * draft-ietf-ipngwg-temp-addresses-v2-00.txt 3.2.1. (3)
-	 * Take the left-most 64-bits of the MD5 digest and set bit 6 (the
-	 * left-most bit is numbered 0) to zero.
-	 */
-	memcpy(ret, digest, 8);
-	ret[0] &= ~EUI64_UBIT;
-
-	/*
-	 * Reject inappropriate identifiers according to
-	 * draft-ietf-ipngwg-temp-addresses-v2-00.txt 3.2.1. (4)
-	 * At this moment, we reject following cases:
-	 * - all 0 identifier
-	 * - identifiers that conflict with reserved subnet anycast addresses,
-	 *   which are defined in RFC 2526.
-	 * - identifiers that conflict with ISATAP addresses
-	 * - identifiers used in our own addresses
-	 */
-	badid = 0;
-	if (memcmp(nullbuf, ret, sizeof(nullbuf)) == 0)
-		badid = 1;
-	else if (memcmp(anycast_id, ret, 7) == 0 &&
-	    (anycast_id[7] & ret[7]) == anycast_id[7]) {
-		badid = 1;
-	} else if (memcmp(isatap_id, ret, sizeof(isatap_id)) == 0)
-		badid = 1;
-	else {
-		struct in6_ifaddr *ia;
-		int s = pserialize_read_enter();
-
-		IN6_ADDRLIST_READER_FOREACH(ia) {
-			if (!memcmp(&ia->ia_addr.sin6_addr.s6_addr[8], 
-			    ret, 8)) {
-				badid = 1;
-				break;
-			}
-		}
-		pserialize_read_exit(s);
-	}
-
-	/*
-	 * In the event that an unacceptable identifier has been generated,
-	 * restart the process, using the right-most 64 bits of the MD5 digest
-	 * obtained in place of the history value.
-	 */
-	if (badid) {
-		/* for debugging purposes only */
-#if 0
-		{
-			int i;
-
-			printf("unacceptable random ID: ");
-			for (i = 0; i < 16; i++)
-				printf("%02x", digest[i]);
-			printf("\n");
-		}
-#endif
-
-		if (++retry < GEN_TEMPID_RETRY_MAX) {
-			memcpy(seed, &digest[8], 8);
-			goto again;
-		} else {
-			/*
-			 * We're so unlucky.  Give up for now, and return
-			 * all 0 IDs to tell the caller not to make a
-			 * temporary address.
-			 */
-			nd6log(LOG_NOTICE, "never found a good ID\n");
-			memset(ret, 0, 8);
-		}
-	}
-
-	/*
-	 * draft-ietf-ipngwg-temp-addresses-v2-00.txt 3.2.1. (6)
-	 * Take the rightmost 64-bits of the MD5 digest and save them in
-	 * stable storage as the history value to be used in the next
-	 * iteration of the algorithm.
-	 */
-	memcpy(seed0, &digest[8], 8);
-
-	/* for debugging purposes only */
-#if 0
-	{
-		int i;
-
-		printf("to: ");
-		for (i = 0; i < 16; i++)
-			printf("%02x", digest[i]);
-		printf("\n");
-	}
-#endif
 
 	return 0;
 }
@@ -816,87 +665,4 @@ in6_ifdetach(struct ifnet *ifp)
 
 	/* remove neighbor management table */
 	nd6_purge(ifp, NULL);
-
-	nd6_assert_purged(ifp);
-}
-
-int
-in6_get_tmpifid(struct ifnet *ifp, u_int8_t *retbuf, 
-	const u_int8_t *baseid, int generate)
-{
-	u_int8_t nullbuf[8];
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
-
-	memset(nullbuf, 0, sizeof(nullbuf));
-	if (memcmp(ndi->randomid, nullbuf, sizeof(nullbuf)) == 0) {
-		/* we've never created a random ID.  Create a new one. */
-		generate = 1;
-	}
-
-	if (generate) {
-		memcpy(ndi->randomseed1, baseid, sizeof(ndi->randomseed1));
-
-		/* generate_tmp_ifid will update seedn and buf */
-		(void)generate_tmp_ifid(ndi->randomseed0, ndi->randomseed1,
-		    ndi->randomid);
-	}
-	memcpy(retbuf, ndi->randomid, 8);
-	if (generate && memcmp(retbuf, nullbuf, sizeof(nullbuf)) == 0) {
-		/* generate_tmp_ifid could not found a good ID. */
-		return -1;
-	}
-
-	return 0;
-}
-
-void
-in6_tmpaddrtimer_init(void)
-{
-
-	/* timer for regeneration of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&in6_tmpaddrtimer_ch, in6_tmpaddrtimer, NULL);
-	in6_tmpaddrtimer_schedule();
-}
-
-void
-in6_tmpaddrtimer_schedule(void)
-{
-
-	callout_schedule(&in6_tmpaddrtimer_ch,
-	    (ip6_temp_preferred_lifetime - ip6_desync_factor -
-	    ip6_temp_regen_advance) * hz);
-}
-
-static void
-in6_tmpaddrtimer(void *ignored_arg)
-{
-	struct nd_ifinfo *ndi;
-	u_int8_t nullbuf[8];
-	struct ifnet *ifp;
-	int s;
-
-	/* XXX NOMPSAFE still need softnet_lock */
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-
-	in6_tmpaddrtimer_schedule();
-
-	memset(nullbuf, 0, sizeof(nullbuf));
-	s = pserialize_read_enter();
-	IFNET_READER_FOREACH(ifp) {
-		ndi = ND_IFINFO(ifp);
-		if (memcmp(ndi->randomid, nullbuf, sizeof(nullbuf)) != 0) {
-			/*
-			 * We've been generating a random ID on this interface.
-			 * Create a new one.
-			 */
-			(void)generate_tmp_ifid(ndi->randomseed0,
-			    ndi->randomseed1, ndi->randomid);
-		}
-	}
-	pserialize_read_exit(s);
-
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }
