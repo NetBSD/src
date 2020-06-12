@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.35 2020/06/11 02:39:30 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.36 2020/06/12 14:52:11 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.35 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.36 2020/06/12 14:52:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,19 +393,14 @@ boolean_t
 of_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
     const char *propname)
 {
-	prop_data_t data;
 	int len;
 	uint8_t prop[256];
-	boolean_t res;
 
 	len = OF_getprop(node, ofname, prop, 256);
 	if (len < 1)
 		return FALSE;
 
-	data = prop_data_create_data(prop, len);
-	res = prop_dictionary_set(dict, propname, data);
-	prop_object_release(data);
-	return res;
+	return prop_dictionary_set_data(dict, propname, prop, len);
 }
 
 /*
