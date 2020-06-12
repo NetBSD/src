@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.277 2020/01/20 18:38:22 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.278 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.277 2020/01/20 18:38:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.278 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -107,6 +107,9 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.277 2020/01/20 18:38:22 thorpej Exp $");
 
 #ifdef COMPAT_50
 #include <compat/netinet6/in6_var.h>
+#endif
+#ifdef COMPAT_90
+#include <compat/netinet6/nd6.h>
 #endif
 
 MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
@@ -407,34 +410,30 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		return EOPNOTSUPP;
 
 	switch (cmd) {
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSRTRFLUSH_IN6:
-	case SIOCSDEFIFACE_IN6:
+#ifdef OSIOCSIFINFO_IN6_90
+	case OSIOCSIFINFO_FLAGS_90:
+	case OSIOCSIFINFO_IN6_90:
+	case OSIOCSDEFIFACE_IN6:
+	case OSIOCSNDFLUSH_IN6:
+	case OSIOCSPFXFLUSH_IN6:
+	case OSIOCSRTRFLUSH_IN6:
+#endif
 	case SIOCSIFINFO_FLAGS:
 	case SIOCSIFINFO_IN6:
 		/* Privileged. */
 		/* FALLTHROUGH */
+#ifdef OSIOCGIFINFO_IN6
 	case OSIOCGIFINFO_IN6:
+#endif
+#ifdef OSIOCGIFINFO_IN6_90
+	case OSIOCGDRLST_IN6:
+	case OSIOCGPRLST_IN6:
+	case OSIOCGIFINFO_IN6_90:
+	case OSIOCGDEFIFACE_IN6:
+#endif
 	case SIOCGIFINFO_IN6:
-	case SIOCGDRLST_IN6:
-	case SIOCGPRLST_IN6:
 	case SIOCGNBRINFO_IN6:
-	case SIOCGDEFIFACE_IN6:
 		return nd6_ioctl(cmd, data, ifp);
-	}
-
-	switch (cmd) {
-	case SIOCSIFPREFIX_IN6:
-	case SIOCDIFPREFIX_IN6:
-	case SIOCAIFPREFIX_IN6:
-	case SIOCCIFPREFIX_IN6:
-	case SIOCSGIFPREFIX_IN6:
-	case SIOCGIFPREFIX_IN6:
-		log(LOG_NOTICE,
-		    "prefix ioctls are now invalidated. "
-		    "please use ifconfig.\n");
-		return EOPNOTSUPP;
 	}
 
 	switch (cmd) {
@@ -479,9 +478,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCGIFPSRCADDR_IN6:
 	case SIOCGIFPDSTADDR_IN6:
 	case SIOCGIFAFLAG_IN6:
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSRTRFLUSH_IN6:
 	case SIOCGIFALIFETIME_IN6:
 #ifdef OSIOCGIFALIFETIME_IN6
 	case OSIOCGIFALIFETIME_IN6:
@@ -738,10 +734,14 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	int error, s;
 
 	switch (cmd) {
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSRTRFLUSH_IN6:
-	case SIOCSDEFIFACE_IN6:
+#ifdef OSIOCSIFINFO_IN6_90
+	case OSIOCSIFINFO_FLAGS_90:
+	case OSIOCSIFINFO_IN6_90:
+	case OSIOCSDEFIFACE_IN6:
+	case OSIOCSNDFLUSH_IN6:
+	case OSIOCSPFXFLUSH_IN6:
+	case OSIOCSRTRFLUSH_IN6:
+#endif
 	case SIOCSIFINFO_FLAGS:
 	case SIOCSIFINFO_IN6:
 
@@ -1200,26 +1200,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	/* set prefix mask */
 	if (ifra->ifra_prefixmask.sin6_len) {
 		if (ia->ia_prefixmask.sin6_len) {
-			/*
-			 * We prohibit changing the prefix length of an
-			 * existing autoconf address, because the operation
-			 * would confuse prefix management.
-			 */
-			if (ia->ia6_ndpr != NULL &&
-			    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) !=
-			    plen)
-			{
-				nd6log(LOG_INFO, "the prefix length of an"
-				    " existing (%s) autoconf address should"
-				    " not be changed\n",
-				    IN6_PRINT(ip6buf,
-				    &ia->ia_addr.sin6_addr));
-				error = EINVAL;
-				if (hostIsNew)
-					free(ia, M_IFADDR);
-				return error;
-			}
-
 			if (!IN6_ARE_ADDR_EQUAL(&ia->ia_prefixmask.sin6_addr,
 			    &ifra->ifra_prefixmask.sin6_addr))
 				in6_ifremprefix(ia);
@@ -1461,26 +1441,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	ifa_remove(ifp, &ia->ia_ifa);
 	/* Assume ifa_remove called pserialize_perform and psref_destroy */
 	mutex_exit(&in6_ifaddr_lock);
-
-	/*
-	 * Release the reference to the ND prefix.
-	 */
-	if (ia->ia6_ndpr != NULL) {
-		nd6_prefix_unref(ia->ia6_ndpr);
-		ia->ia6_ndpr = NULL;
-	}
-
-	/*
-	 * Also, if the address being removed is autoconf'ed, call
-	 * nd6_pfxlist_onlink_check() since the release might affect the status of
-	 * other (detached) addresses.
-	 */
-	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0) {
-		ND6_WLOCK();
-		nd6_pfxlist_onlink_check();
-		ND6_UNLOCK();
-	}
-
 	IN6_ADDRLIST_ENTRY_DESTROY(ia);
 
 	/*
@@ -2239,11 +2199,6 @@ in6_if_link_up(struct ifnet *ifp)
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
-
-	/* Restore any detached prefixes */
-	ND6_WLOCK();
-	nd6_pfxlist_onlink_check();
-	ND6_UNLOCK();
 }
 
 void
@@ -2269,11 +2224,6 @@ in6_if_link_down(struct ifnet *ifp)
 	struct in6_ifaddr *ia;
 	int s, bound;
 	char ip6buf[INET6_ADDRSTRLEN];
-
-	/* Any prefixes on this interface should be detached as well */
-	ND6_WLOCK();
-	nd6_pfxlist_onlink_check();
-	ND6_UNLOCK();
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
@@ -2336,31 +2286,6 @@ in6_if_link_state_change(struct ifnet *ifp, int link_state)
 	}
 }
 
-/*
- * Calculate max IPv6 MTU through all the interfaces and store it
- * to in6_maxmtu.
- */
-void
-in6_setmaxmtu(void)
-{
-	unsigned long maxmtu = 0;
-	struct ifnet *ifp;
-	int s;
-
-	s = pserialize_read_enter();
-	IFNET_READER_FOREACH(ifp) {
-		/* this function can be called during ifnet initialization */
-		if (!ifp->if_afdata[AF_INET6])
-			continue;
-		if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
-		    IN6_LINKMTU(ifp) > maxmtu)
-			maxmtu = IN6_LINKMTU(ifp);
-	}
-	pserialize_read_exit(s);
-	if (maxmtu)	     /* update only when maxmtu is positive */
-		in6_maxmtu = maxmtu;
-}
-
 int
 in6_tunnel_validate(const struct ip6_hdr *ip6, const struct in6_addr *src,
     const struct in6_addr *dst)
@@ -2377,46 +2302,6 @@ in6_tunnel_validate(const struct ip6_hdr *ip6, const struct in6_addr *src,
 
 	/* return valid bytes length */
 	return sizeof(*src) + sizeof(*dst);
-}
-
-/*
- * Provide the length of interface identifiers to be used for the link attached
- * to the given interface.  The length should be defined in "IPv6 over
- * xxx-link" document.  Note that address architecture might also define
- * the length for a particular set of address prefixes, regardless of the
- * link type.  As clarified in rfc2462bis, those two definitions should be
- * consistent, and those really are as of August 2004.
- */
-int
-in6_if2idlen(struct ifnet *ifp)
-{
-	switch (ifp->if_type) {
-	case IFT_ETHER:		/* RFC2464 */
-	case IFT_PROPVIRTUAL:	/* XXX: no RFC. treat it as ether */
-	case IFT_L2VLAN:	/* ditto */
-	case IFT_IEEE80211:	/* ditto */
-	case IFT_PPP:		/* RFC2472 */
-	case IFT_ARCNET:	/* RFC2497 */
-	case IFT_FRELAY:	/* RFC2590 */
-	case IFT_IEEE1394:	/* RFC3146 */
-	case IFT_GIF:		/* draft-ietf-v6ops-mech-v2-07 */
-	case IFT_LOOP:		/* XXX: is this really correct? */
-		return 64;
-	default:
-		/*
-		 * Unknown link type:
-		 * It might be controversial to use the today's common constant
-		 * of 64 for these cases unconditionally.  For full compliance,
-		 * we should return an error in this case.  On the other hand,
-		 * if we simply miss the standard for the link type or a new
-		 * standard is defined for a new link type, the IFID length
-		 * is very likely to be the common constant.  As a compromise,
-		 * we always use the constant, but make an explicit notice
-		 * indicating the "unknown" case.
-		 */
-		printf("in6_if2idlen: unknown link type (%d)\n", ifp->if_type);
-		return 64;
-	}
 }
 
 #define	IN6_LLTBL_DEFAULT_HSIZE	32
@@ -2713,9 +2598,6 @@ in6_domifattach(struct ifnet *ifp)
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
 	ext->scope6_id = scope6_ifattach(ifp);
-	ext->nprefixes = 0;
-	ext->ndefrouters = 0;
-
 	ext->lltable = in6_lltattach(ifp);
 
 	return ext;

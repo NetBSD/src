@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.178 2020/04/22 19:32:11 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.179 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.178 2020/04/22 19:32:11 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.179 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,7 +611,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct llentry *ln = NULL;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
-	bool checklink = false;
 	struct psref psref;
 	struct psref psref_ia;
 	char ip6buf[INET6_ADDRSTRLEN], ip6buf2[INET6_ADDRSTRLEN];
@@ -760,14 +759,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_state = ND6_LLINFO_STALE;
 			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
 		}
-		if ((ln->ln_router = is_router) != 0) {
-			/*
-			 * This means a router's state has changed from
-			 * non-reachable to probably reachable, and might
-			 * affect the status of associated prefixes..
-			 */
-			checklink = true;
-		}
 	} else {
 		bool llchange;
 
@@ -848,32 +839,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				}
 			}
 		}
-
-		if (ln->ln_router && !is_router) {
-			/*
-			 * The peer dropped the router flag.
-			 * Remove the sender from the Default Router List and
-			 * update the Destination Cache entries.
-			 */
-			const struct in6_addr *in6 = &ln->r_l3addr.addr6;
-			struct nd_defrouter *dr;
-
-			ND6_WLOCK();
-			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
-			if (dr)
-				nd6_defrtrlist_del(dr, NULL);
-			else if (!ip6_forwarding) {
-				/*
-				 * Even if the neighbor is not in the default
-				 * router list, the neighbor may be used
-				 * as a next hop for some destinations
-				 * (e.g. redirect case). So we must
-				 * call nd6_rt_flush explicitly.
-				 */
-				nd6_rt_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
-			}
-			ND6_UNLOCK();
-		}
 		ln->ln_router = is_router;
 	}
         /*
@@ -894,12 +859,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
  freeit:
 	if (ln != NULL)
 		LLE_WUNLOCK(ln);
-
-	if (checklink) {
-		ND6_WLOCK();
-		nd6_pfxlist_onlink_check();
-		ND6_UNLOCK();
-	}
 
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);

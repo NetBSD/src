@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.98 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.99 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.98 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.99 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -291,14 +291,11 @@ ip6_forward(struct mbuf *m, int srcrt)
 		goto drop;
 	}
 
-	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
+	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
-		if (mcopy) {
-			u_long mtu;
-
-			mtu = IN6_LINKMTU(rt->rt_ifp);
-			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
-		}
+		if (mcopy)
+			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
+			    rt->rt_ifp->if_mtu);
 		goto drop;
 	}
 

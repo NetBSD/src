@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2016/11/24 08:52:20 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.4 2020/06/12 11:04:45 roy Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/ndp
 
-.for name in dad ndp ra
+.for name in dad ndp
 TESTS_SH+=		t_${name}
 TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
 .endfor

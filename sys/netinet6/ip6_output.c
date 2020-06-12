@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.222 2019/11/13 02:51:22 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.223 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.222 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.223 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -794,7 +794,7 @@ ip6_output(
 		error = EMSGSIZE;
 		goto bad;
 	}
-	if (dontfrag && (!tso && tlen > IN6_LINKMTU(ifp))) {	/* case 2-b */
+	if (dontfrag && (!tso && tlen > ifp->if_mtu)) {	/* case 2-b */
 		/*
 		 * Even if the DONTFRAG option is specified, we cannot send the
 		 * packet when the data length is larger than the MTU of the
@@ -1233,14 +1233,11 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
 	int error = 0;
 
 	if (rt != NULL) {
-		u_int32_t ifmtu;
-
 		if (ifp == NULL)
 			ifp = rt->rt_ifp;
-		ifmtu = IN6_LINKMTU(ifp);
 		mtu = rt->rt_rmx.rmx_mtu;
 		if (mtu == 0)
-			mtu = ifmtu;
+			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
 			/*
 			 * RFC2460 section 5, last paragraph:
@@ -1252,7 +1249,7 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
 			 */
 			alwaysfrag = 1;
 			mtu = IPV6_MMTU;
-		} else if (mtu > ifmtu) {
+		} else if (mtu > ifp->if_mtu) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -1261,12 +1258,12 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
 			 * route to match the interface MTU (as long as the
 			 * field isn't locked).
 			 */
-			mtu = ifmtu;
+			mtu = ifp->if_mtu;
 			if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 				rt->rt_rmx.rmx_mtu = mtu;
 		}
 	} else if (ifp) {
-		mtu = IN6_LINKMTU(ifp);
+		mtu = ifp->if_mtu;
 	} else
 		error = EHOSTUNREACH; /* XXX */
 

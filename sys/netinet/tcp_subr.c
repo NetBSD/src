@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.283 2019/08/06 15:48:18 riastradh Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.284 2020/06/12 11:04:45 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.283 2019/08/06 15:48:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.284 2020/06/12 11:04:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1819,26 +1819,22 @@ tcp_mss_to_advertise(const struct ifnet *ifp, int af)
 
 	if (ifp != NULL)
 		switch (af) {
+#ifdef INET6
+		case AF_INET6:	/* FALLTHROUGH */
+#endif
 		case AF_INET:
 			mss = ifp->if_mtu;
 			break;
-#ifdef INET6
-		case AF_INET6:
-			mss = IN6_LINKMTU(ifp);
-			break;
-#endif
 		}
 
 	if (tcp_mss_ifmtu == 0)
 		switch (af) {
+#ifdef INET6
+		case AF_INET6:	/* FALLTHROUGH */
+#endif
 		case AF_INET:
 			mss = uimax(in_maxmtu, mss);
 			break;
-#ifdef INET6
-		case AF_INET6:
-			mss = uimax(in6_maxmtu, mss);
-			break;
-#endif
 		}
 
 	switch (af) {

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.842 2020/06/06 21:26:00 thorpej Exp $
+# $NetBSD: mi,v 1.843 2020/06/12 11:04:44 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3884,7 +3884,7 @@
 ./usr/tests/net/ndp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/ndp/t_dad			tests-net-tests		atf,rump
 ./usr/tests/net/ndp/t_ndp			tests-net-tests		atf,rump
-./usr/tests/net/ndp/t_ra			tests-net-tests		atf,rump
+./usr/tests/net/ndp/t_ra			tests-obsolete		obsolete
 ./usr/tests/net/net				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Kyuafile			tests-net-tests		compattestfile,atf,kyua
