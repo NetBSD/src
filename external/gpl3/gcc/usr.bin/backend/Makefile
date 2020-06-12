@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2019/10/29 02:49:05 christos Exp $
+#	$NetBSD: Makefile,v 1.58 2020/06/12 14:37:51 fox Exp $
 
 LIBISPRIVATE=	yes
 
@@ -594,6 +594,8 @@ COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
 
 CFLAGS+=	-Wno-stack-protector
+
+COPTS.dwarf2out.c+=-Wno-error=maybe-uninitialized
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
