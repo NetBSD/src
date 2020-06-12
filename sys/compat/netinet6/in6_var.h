@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.5 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.6 2020/06/12 11:04:45 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,9 +49,27 @@ struct in6_aliasreq50 {
 	struct in6_addrlifetime50 ifra_lifetime;
 };
 
-#define OSIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+struct prf_ra {
+	u_int32_t onlink : 1;
+	u_int32_t autonomous : 1;
+	u_int32_t router : 1;
+	u_int32_t reserved : 5;
+};
+
 #define OSIOCAIFADDR_IN6	_IOW('i', 26, struct in6_aliasreq50)
 #define OSIOCSIFPHYADDR_IN6	_IOW('i', 70, struct in6_aliasreq50)
+#define OSIOCGDRLST_IN6		_IOWR('i', 74, struct in6_drlist)
+#define OSIOCGPRLST_IN6		_IOWR('i', 75, struct in6_oprlist)
+#define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
+#define OSIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
+#define OSIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
+#define OSIOCSRTRFLUSH_IN6	_IOWR('i', 80, struct in6_ifreq)
+#define OSIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
+#define OSIOCSDEFIFACE_IN6	_IOWR('i', 85, struct in6_ndifreq90)
+#define OSIOCGDEFIFACE_IN6	_IOWR('i', 86, struct in6_ndifreq90)
+#define OSIOCSIFINFO_FLAGS_90	_IOWR('i', 87, struct in6_ndireq90)
+#define OSIOCGIFINFO_IN6_90	_IOWR('i', 108, struct in6_ndireq90)
+#define OSIOCSIFINFO_IN6_90	_IOWR('i', 109, struct in6_ndireq90)
 
 static __inline void in6_addrlifetime_to_in6_addrlifetime50(
     struct in6_addrlifetime *al)

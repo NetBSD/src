@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.24 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.25 2020/06/12 11:04:45 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.24 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.25 2020/06/12 11:04:45 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,7 +164,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCDIFADDR:
 		case SIOCDIFADDR_IN6:
 		case SIOCDIFPHYADDR:
-		case SIOCGDEFIFACE_IN6:
 		case SIOCG80211NWID:
 		case SIOCG80211STATS:
 		case SIOCG80211ZSTATS:
@@ -192,7 +191,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCIFCREATE:
 		case SIOCIFDESTROY:
 		case SIOCS80211NWID:
-		case SIOCSDEFIFACE_IN6:
 		case SIOCSIFADDR:
 		case SIOCSIFADDR_IN6:
 		case SIOCSIFBRDADDR:
@@ -205,9 +203,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCSIFMTU:
 		case SIOCSIFNETMASK:
 		case SIOCSIFNETMASK_IN6:
-		case SIOCSNDFLUSH_IN6:
-		case SIOCSPFXFLUSH_IN6:
-		case SIOCSRTRFLUSH_IN6:
 		case SIOCSVH:
 		case TAPGIFNAME:
 			return ncmd;

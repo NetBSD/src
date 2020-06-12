@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.29 2018/02/14 10:13:25 wiz Exp $
+.\"	$NetBSD: ndp.8,v 1.30 2020/06/12 11:04:46 roy Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 14, 2018
+.Dd April 19, 2020
 .Dt NDP 8
 .Os
 .\"
@@ -45,12 +45,6 @@
 .Fl a | Fl c | Fl p
 .Nm ndp
 .Op Fl nt
-.Fl r
-.Nm ndp
-.Op Fl nt
-.Fl H | Fl P | Fl R
-.Nm ndp
-.Op Fl nt
 .Fl A Ar wait
 .Nm ndp
 .Op Fl nt
@@ -63,9 +57,6 @@
 .Fl i
 .Ar interface
 .Op Ar expressions ...
-.Nm ndp
-.Op Fl nt
-.Fl I Op Ar interface | Li delete
 .Nm ndp
 .Op Fl nt
 .Fl s Ar nodename etheraddr
@@ -138,18 +129,6 @@ Delete specified NDP entry.
 .It Fl f
 Parse the file specified by
 .Ar filename .
-.It Fl H
-Harmonize consistency between the routing table and the default router
-list; install the top entry of the list into the kernel routing table.
-.It Fl I
-Shows the default interface used as the default route when
-there is no default router.
-.It Fl I Ar interface
-Specifies the default
-.Ar interface
-to be used when there is no interface specified even though required.
-.It Fl I Li delete
-The current default interface will be deleted from the kernel.
 .It Fl i Ar interface Op Ar expressions ...
 View ND information for the specified interface.
 If additional arguments
@@ -176,34 +155,12 @@ in this case.
 Turn on or off NUD (Neighbor Unreachability Detection) on the
 interface.
 NUD is usually turned on by default.
-.It Ic accept_rtadv
-Specify whether or not to accept Router Advertisement messages
-received on the
-.Ar interface .
-Note that the kernel does not accept Router Advertisement messages,
-even if the flag
-.Ic accept_rtadv
-is on, unless either the
-.Li net.inet6.ip6.accept_rtadv
-variable is non-0, or the flag
-.Ic override_rtadv
-is on.
-This flag is set to 1 by default.
 .It Ic auto_linklocal
 Specify whether or not to perform automatic link-local address configuration on
 .Ar interface .
 This flag is set by
 .Li net.inet6.ip6.auto_linklocal
 sysctl variable.
-.It Ic override_rtadv
-Specify whether or not to override the
-.Li net.inet6.ip6.accept_rtadv
-variable.
-If the flag is on, then it will suffice to set the flag
-.Ic accept_rtadv
-to make the kernel accept Router Advertisement messages on the
-.Ar interface .
-This flag is set to 0 by default.
 .It Ic prefer_source
 Prefer addresses on the
 .Ar interface
@@ -236,14 +193,6 @@ Specify the Cur Hop Limit on the interface.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
-.It Fl P
-Flush all the entries in the prefix list.
-.It Fl p
-Show prefix list.
-.It Fl R
-Flush all the entries in the default router list.
-.It Fl r
-Show default router list.
 .It Fl s
 Register an NDP entry for a node.
 The entry will be permanent unless the word
