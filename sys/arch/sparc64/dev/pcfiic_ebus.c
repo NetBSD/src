@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.5 2016/01/03 17:32:17 jdc Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.6 2020/06/12 03:41:57 thorpej Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.5 2016/01/03 17:32:17 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.6 2020/06/12 03:41:57 thorpej Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -187,13 +187,10 @@ add_prop(prop_array_t c, const char *name, const char *compat, u_int addr,
 	int node)
 {
 	prop_dictionary_t dev;
-	prop_data_t data;
 
 	dev = prop_dictionary_create();
-	prop_dictionary_set_cstring(dev, "name", name);
-	data = prop_data_create_data(compat, strlen(compat)+1);
-	prop_dictionary_set(dev, "compatible", data);
-	prop_object_release(data);
+	prop_dictionary_set_string(dev, "name", name);
+	prop_dictionary_set_data(dev, "compatible", compat, strlen(compat)+1);
 	prop_dictionary_set_uint32(dev, "addr", addr);
 	prop_dictionary_set_uint64(dev, "cookie", node);
 	prop_array_add(c, dev);
