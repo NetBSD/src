@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.229 2020/06/11 09:16:05 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.230 2020/06/12 09:28:48 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1538,9 +1538,7 @@ ixgbe_config_link(struct adapter *adapter)
 			ixgbe_schedule_msf_tasklet(adapter);
 			kpreempt_enable();
 		}
-		kpreempt_disable();
 		softint_schedule(adapter->mod_si);
-		kpreempt_enable();
 	} else {
 		struct ifmedia	*ifm = &adapter->media;
 
@@ -4126,6 +4124,9 @@ ixgbe_init_locked(struct adapter *adapter)
 	/* Setup DMA Coalescing */
 	ixgbe_config_dmac(adapter);
 
+	/* OK to schedule workqueues. */
+	adapter->schedule_wqs_ok = true;
+
 	/* And now turn on interrupts */
 	ixgbe_enable_intr(adapter);
 
@@ -4142,9 +4143,6 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
-
-	/* OK to schedule workqueues. */
-	adapter->schedule_wqs_ok = true;
 
 	return;
 } /* ixgbe_init_locked */
@@ -4694,7 +4692,7 @@ ixgbe_handle_msf(struct work *wk, void *context)
 
 	/*
 	 * Hold the IFNET_LOCK across this entire call.  This will
-	 * prevent additional changes to adapter->phy_layer and
+	 * prevent additional changes to adapter->phy_layer
 	 * and serialize calls to this tasklet.  We cannot hold the
 	 * CORE_LOCK while calling into the ifmedia functions as
 	 * they may block while allocating memory.
