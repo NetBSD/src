@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.218 2020/06/09 21:57:00 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.219 2020/06/12 03:32:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.218 2020/06/09 21:57:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.219 2020/06/12 03:32:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1391,7 +1391,7 @@ noether:
 				prop_dictionary_set(props, "i2c-child-devices",
 				    cfg);
 				prop_dictionary_set_bool(props,
-				    "i2c-indirect-config", false);
+				    "i2c-no-indirect-config", true);
 			}
 
 			/* ADM1026 at 0x2e */
