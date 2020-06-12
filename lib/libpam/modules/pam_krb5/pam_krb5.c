@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.28 2020/02/07 23:28:59 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.29 2020/06/12 01:20:32 fox Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.28 2020/02/07 23:28:59 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.29 2020/06/12 01:20:32 fox Exp $");
 #endif
 
 #include <sys/types.h>
@@ -945,9 +945,8 @@ verify_krb_v5_tgt(krb5_context context, krb5_ccache ccache,
 			return -1;
 
 		/* Extract the name directly. */
-		strncpy(phost, compat_princ_component(context, princ, 1),
-		    BUFSIZ);
-		phost[BUFSIZ - 1] = '\0';
+		strlcpy(phost, compat_princ_component(context, princ, 1),
+		    sizeof(phost));
 
 		/*
 		 * Do we have service/<host> keys?
