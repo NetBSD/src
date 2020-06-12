@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.53 2020/03/09 21:20:55 roy Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.54 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -633,8 +633,10 @@ struct icmp6_filter {
 #define ICMPV6CTL_MTUDISC_HIWAT	16
 #define ICMPV6CTL_MTUDISC_LOWAT	17
 #define ICMPV6CTL_ND6_DEBUG	18
-#define ICMPV6CTL_ND6_DRLIST	19
-#define ICMPV6CTL_ND6_PRLIST	20
+#ifdef _KERNEL
+#define OICMPV6CTL_ND6_DRLIST	19
+#define OICMPV6CTL_ND6_PRLIST	20
+#endif
 #define	ICMPV6CTL_ND6_MAXQLEN	24
 
 #ifdef _KERNEL

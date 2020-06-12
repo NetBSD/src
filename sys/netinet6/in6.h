@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.98 2019/11/01 04:28:14 knakahara Exp $	*/
+/*	$NetBSD: in6.h,v 1.99 2020/06/12 11:04:45 roy Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ struct ip6_mtuinfo {
 #define IPV6CTL_MAXFRAGPACKETS	9	/* max packets reassembly queue */
 #define IPV6CTL_SOURCECHECK	10	/* verify source route and intf */
 #define IPV6CTL_SOURCECHECK_LOGINT 11	/* minimum logging interval */
-#define IPV6CTL_ACCEPT_RTADV	12
+/* 12 was IPV6CTL_ACCEPT_RTADV */
 #define IPV6CTL_KEEPFAITH	13
 #define IPV6CTL_LOG_INTERVAL	14
 #define IPV6CTL_HDRNESTLIMIT	15
@@ -516,7 +516,7 @@ struct ip6_mtuinfo {
 #define IPV6CTL_GIF_HLIM	19	/* default HLIM for gif encap packet */
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
-#define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
+/* 22 was IPV6CTL_RR_PRUNE */
 /* 23: reserved */
 #define IPV6CTL_V6ONLY		24
 /* 25 to 27: reserved */
@@ -532,10 +532,8 @@ struct ip6_mtuinfo {
 /* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_IFQ		42	/* IPv6 packet input queue */
-#define IPV6CTL_RTADV_MAXROUTES 43	/* maximum number of routes */
-					/* via router advertisement */
-#define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
-					/* via router advertisement */
+/* 43 was IPV6CTL_RTADV_MAXROUTES */
+/* 44 was IPV6CTL_RTADV_NUMROUTES */
 #define IPV6CTL_GIF_PMTU	45	/* gif(4) Path MTU setting */
 #define IPV6CTL_IPSEC_HLIM	46	/* default HLIM for ipsecif encap packet */
 #define IPV6CTL_IPSEC_PMTU	47	/* ipsecif(4) Path MTU setting */
