@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.56 2020/06/12 11:04:46 roy Exp $	*/
+/*	$NetBSD: ndp.c,v 1.57 2020/06/12 21:08:02 roy Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -695,7 +695,7 @@ usage(void)
 
 	(void)fprintf(stderr, "Usage: %s [-nt] hostname\n", pn);
 	(void)fprintf(stderr,
-	    "       %s [-nt] -a | -c | -p | -r | -H | -P | -R\n", pn);
+	    "       %s [-nt] -a | -c\n", pn);
 	(void)fprintf(stderr, "       %s [-nt] -A wait\n", pn);
 	(void)fprintf(stderr, "       %s [-nt] -d hostname\n", pn);
 	(void)fprintf(stderr, "       %s [-nt] -f filename\n", pn);
