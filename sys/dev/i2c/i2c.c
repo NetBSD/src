@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.73 2020/06/11 02:39:30 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.74 2020/06/12 03:32:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.73 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.74 2020/06/12 03:32:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 	char *buf;
 	i2c_tag_t ic;
 	int rv;
-	bool indirect_config;
+	bool no_indirect_config = false;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
@@ -424,12 +424,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 	if (iba->iba_child_devices) {
 		child_devices = iba->iba_child_devices;
-		indirect_config = false;
+		no_indirect_config = true;
 	} else {
 		props = device_properties(parent);
-		if (!prop_dictionary_get_bool(props, "i2c-indirect-config",
-		    &indirect_config))
-			indirect_config = true;
+		prop_dictionary_get_bool(props, "i2c-no-indirect-config",
+		    &no_indirect_config);
 		child_devices = prop_dictionary_get(props, "i2c-child-devices");
 	}
 
@@ -495,7 +494,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (buf)
 				free(buf, M_TEMP);
 		}
-	} else if (indirect_config) {
+	} else if (!no_indirect_config) {
 		/*
 		 * Attach all i2c devices described in the kernel
 		 * configuration file.
