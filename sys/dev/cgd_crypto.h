@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.11 2020/06/13 18:35:35 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.12 2020/06/13 22:15:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 
 typedef void *(cfunc_init)(size_t, const void *, size_t *);
 typedef void  (cfunc_destroy)(void *);
-typedef void  (cfunc_cipher)(void *, struct uio *, struct uio *, const void *,
-				int);
+typedef void  (cfunc_cipher)(void *, void *, const void *, size_t,
+    const void *, int);
 
 struct cryptfuncs {
 	const char		 *cf_name;	/* cipher name */
