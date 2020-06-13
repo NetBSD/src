@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.18 2020/06/13 18:35:35 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.19 2020/06/13 18:38:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,17 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.18 2020/06/13 18:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.19 2020/06/13 18:38:33 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <dev/cgd_crypto.h>
 
-#include <crypto/rijndael/rijndael-api-fst.h>
-#include <crypto/des/des.h>
 #include <crypto/blowfish/blowfish.h>
+#include <crypto/des/des.h>
+#include <crypto/rijndael/rijndael-api-fst.h>
 
 /*
  * The general framework provides only one generic function.
