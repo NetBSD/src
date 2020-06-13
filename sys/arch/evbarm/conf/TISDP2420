@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.41 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: TISDP2420,v 1.42 2020/06/13 16:51:25 ad Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -19,7 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_ARM1136
 options 	OMAP_2420
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 
 # Architecture options
 

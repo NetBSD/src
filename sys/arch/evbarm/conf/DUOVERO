@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.17 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: DUOVERO,v 1.18 2020/06/13 16:51:25 ad Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -19,7 +19,7 @@ options 	OMAP_4430
 options 	MULTIPROCESSOR
 options 	 __HAVE_CPU_UAREA_ALLOC_IDLELWP	# need for MULTIPROCESSOR
 options 	FPU_VFP
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 options 	ARM_HAS_VBAR
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions	CPUFLAGS="-mcpu=cortex-a9 -mfpu=neon"

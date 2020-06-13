@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.34 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: N900,v 1.35 2020/06/13 16:51:25 ad Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -20,7 +20,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	OMAP_3430
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 
 # Architecture options
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.15 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: PEPPER,v 1.16 2020/06/13 16:51:25 ad Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -17,7 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA8
 options 	TI_AM335X
 options 	FPU_VFP
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 options 	ARM_HAS_VBAR
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
