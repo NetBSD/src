@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.286 2020/06/13 14:39:07 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.287 2020/06/13 14:45:17 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.286 2020/06/13 14:39:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.287 2020/06/13 14:45:17 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -930,7 +930,7 @@ mips32r2_vector_init(const struct splsw *splsw)
 	      mips32r2_intr_end - mips32r2_tlb_miss);
 
 	/*
-	 * Let see if this cpu has DSP V2 ASE...
+	 * Let's see if this cpu has USERLOCAL or DSP V2 ASE...
 	 */
 	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
@@ -1076,7 +1076,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	      mips64r2_intr_end - mips64r2_tlb_miss);
 
 	/*
-	 * Let see if this cpu has DSP V2 ASE...
+	 * Let's see if this cpu has USERLOCAL or DSP V2 ASE...
 	 */
 	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
