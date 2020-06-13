@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1415 2020/06/11 09:01:27 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1416 2020/06/13 12:42:26 ryo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1346,6 +1346,7 @@ product ARECA ARC1880 		0x1880	ARC-1880
 
 /* ASIX Electronics products */
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
+product ASIX AX99100	0x9100	AX99100 Multi I/O Controller
 
 /* ASMedia products */
 product ASMEDIA ASM1061_01	0x0601	ASM1061 AHCI SATA III Controller
