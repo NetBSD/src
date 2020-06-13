@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.107 2020/04/05 10:43:09 ryo Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.108 2020/06/13 12:42:58 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.107 2020/04/05 10:43:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.108 2020/06/13 12:42:58 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,15 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
 	    }
+	},
+
+	/* ASIX PCIe AX99100 : 4S */
+	{   "ASIX AX99100 UART",
+	    {	PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX99100,	0xa000, 0x1000 },
+	    {	0xffff, 0xffff,					0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
 	},
 
 	/* Avlab Technology, Inc. PCI 2 Serial: 2S */
