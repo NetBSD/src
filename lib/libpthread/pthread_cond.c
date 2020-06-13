@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.74 2020/06/10 22:45:15 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.75 2020/06/13 17:39:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.74 2020/06/10 22:45:15 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.75 2020/06/13 17:39:42 riastradh Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -179,7 +179,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		pthread_cond_broadcast(cond);
 
 		/*
-		 * Might have raced with another thread to do the wakeup. 
+		 * Might have raced with another thread to do the wakeup.
 		 * Wait until released, otherwise "waiter" is still globally
 		 * visible.
 		 */
