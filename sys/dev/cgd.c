@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.128 2020/06/13 18:36:07 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.129 2020/06/13 18:38:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,32 +30,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.128 2020/06/13 18:36:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.129 2020/06/13 18:38:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/kmem.h>
-#include <sys/module.h>
-#include <sys/pool.h>
-#include <sys/ioctl.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/namei.h> /* for pathbuf */
-#include <sys/vnode.h>
-#include <sys/conf.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 #include <sys/workqueue.h>
-#include <sys/cpu.h>
 
-#include <dev/dkvar.h>
+#include <dev/cgd_crypto.h>
 #include <dev/cgdvar.h>
+#include <dev/dkvar.h>
 
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
