@@ -1,13 +1,13 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.65 2020/06/11 11:04:11 jdc Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.66 2020/06/13 05:56:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
 
-external/gpl2/groff/tmac/mdoc.local             patched by hand
-sys/sys/param.h                                 patched by hand
+external/gpl2/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h 				patched by hand
 
-        Welcome to 9.0_STABLE.
-        [martin]
+	Welcome to 9.0_STABLE.
+	[martin]
 
 external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.57
 
@@ -29,7 +29,7 @@ sys/arch/hpcmips/hpcmips/hpcapm_machdep.c	1.6
 	Fix spelling in comments.
 	[sevan, ticket #712]
 
-lib/libdm/libdm_ioctl.c				1.4
+lib/libdm/libdm_ioctl.c 			1.4
 
 	Do not write temporary files to fixed paths in /tmp.
 	[riastradh, ticket #713]
@@ -40,7 +40,7 @@ crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.14
 	into child processes.
 	[riastradh, ticket #714]
 
-external/cddl/osnet/dist/cmd/zpool/zpool_vdev.c	1.5
+external/cddl/osnet/dist/cmd/zpool/zpool_vdev.c 1.5
 
 	zpool: The NetBSD specific ioctl needs to include sys/ioctl.h.
 	[riastradh, ticket #715]
@@ -67,7 +67,7 @@ sys/dev/sdmmc/sdmmc_cis.c			1.6,1.8
 sys/dev/sdmmc/sdmmc_io.c			1.15-1.19
 sys/dev/sdmmc/sdmmc_ioreg.h			1.4,1.5
 sys/dev/sdmmc/sdmmc_mem.c			1.69-1.71
-sys/dev/sdmmc/sdmmcdevs				1.5-1.8
+sys/dev/sdmmc/sdmmcdevs 			1.5-1.8
 sys/dev/sdmmc/sdmmcvar.h			1.31,1.33,1.34
 sys/net/if_media.h				1.66
 sys/dev/sdmmc/sdmmcdevs.h			(regen)
@@ -140,7 +140,7 @@ sys/arch/powerpc/ibm4xx/dev/com_opb.c		1.23
 	Fix a panic during attach of com(4) for powerpc/ibm4xx peripheral.
 	[rin, ticket #728]
 
-sys/arch/powerpc/include/intr.h			1.15
+sys/arch/powerpc/include/intr.h 		1.15
 
 	Fix !__HAVE_FAST_SOFTINTS build for debugging.
 	[rin, ticket #729]
@@ -207,7 +207,7 @@ sys/arch/powerpc/powerpc/sig_machdep.c		1.47
 	[rin, ticket #736]
 
 sys/arch/powerpc/powerpc/locore_subr.S		1.60
-sys/arch/powerpc/powerpc/trap.c			1.157
+sys/arch/powerpc/powerpc/trap.c 		1.157
 
 	Comment out do_ucas_32(), only user of which, _ucas_32(), is
 	commented out since powerpc/trap.c rev 1.156.
@@ -219,7 +219,7 @@ usr.sbin/postinstall/postinstall.in		1.15
 	/etc/motd (http->https).
 	[nakayama, ticket #738]
 
-sys/ufs/ufs/ufs_vnops.c				1.249
+sys/ufs/ufs/ufs_vnops.c 			1.249
 
 	Zero out the padding in 'd_namlen', to prevent info leaks.
 	[maxv, ticket #739]
@@ -262,7 +262,7 @@ sys/dev/usb/usbdi.h				1.99-1.101
 sys/dev/usb/usbdivar.h				1.121,1.122
 sys/dev/usb/xhci.c				1.116-1.118
 sys/external/bsd/dwc2/dwc2.c			1.67-1.71
-sys/external/bsd/dwc2/dwc2var.h			1.7
+sys/external/bsd/dwc2/dwc2var.h 		1.7
 
 	Fix various race conditions in USB abort and timeout.
 	[riastradh, ticket #744]
@@ -307,7 +307,7 @@ sys/arch/cobalt/dev/gt.c			1.30
 	Fix mapping of the PCI I/O space.
 	[thorpej, ticket #751]
 
-sys/arch/powerpc/booke/copyin.c			1.8
+sys/arch/powerpc/booke/copyin.c 		1.8
 
 	Let copyinstr(9) return ENAMETOOLONG correctly if source is not
 	NUL-terminated.
@@ -327,14 +327,14 @@ sys/kern/files.kern				1.44
 common/lib/libc/arch/powerpc/atomic/atomic_cas.S 1.9
 common/lib/libc/arch/powerpc/atomic/atomic_op_asm.h 1.7
 common/lib/libc/arch/powerpc/atomic/atomic_swap.S 1.8
-sys/arch/evbppc/conf/std.obs200			1.5
-sys/arch/evbppc/conf/std.obs266			1.3
-sys/arch/evbppc/conf/std.virtex			1.4
-sys/arch/evbppc/conf/std.walnut			1.9
-sys/arch/powerpc/ibm4xx/4xx_trap_subr.S		1.8
+sys/arch/evbppc/conf/std.obs200 		1.5
+sys/arch/evbppc/conf/std.obs266 		1.3
+sys/arch/evbppc/conf/std.virtex 		1.4
+sys/arch/evbppc/conf/std.walnut 		1.9
+sys/arch/powerpc/ibm4xx/4xx_trap_subr.S 	1.8
 sys/arch/powerpc/ibm4xx/trap_subr.S		1.28
 sys/arch/powerpc/include/asm.h			1.49
-sys/arch/powerpc/include/lock.h			1.15
+sys/arch/powerpc/include/lock.h 		1.15
 sys/arch/powerpc/powerpc/lock_stubs.S		1.12
 sys/arch/powerpc/powerpc/locore_subr.S		1.61
 sys/arch/powerpc/powerpc/trap_subr.S		1.81
@@ -378,7 +378,7 @@ sys/compat/netbsd32/syscalls.master		1.132
 sys/compat/netbsd32/netbsd32_syscallargs.h	(regen)
 sys/compat/netbsd32/netbsd32_syscall.h		(regen)
 sys/compat/netbsd32/netbsd32_sysent.c		(regen)
-sys/compat/netbsd32/netbsd32_syscalls.c		(regen)
+sys/compat/netbsd32/netbsd32_syscalls.c 	(regen)
 sys/compat/netbsd32/netbsd32_syscalls_autoload.c (regen)
 sys/compat/netbsd32/netbsd32_systrace_args.c	(regen)
 
@@ -394,7 +394,7 @@ sys/sys/compat_stub.h				1.23
 	[pgoyette, ticket #762]
 
 lib/libkvm/kvm.c				1.105
-lib/libkvm/kvm_x86_64.c				1.11
+lib/libkvm/kvm_x86_64.c 			1.11
 
 	Only do bounce buffering for character devices.
 	Uuse a binary search in _kvm_pa2off().
@@ -455,7 +455,7 @@ sys/arch/powerpc/booke/copyout.c		1.6-1.8
 
 	copyoutstr(9):
 	 - sync style with copyinstr(9)
-	 - return  ENAMETOOLONG correctly when source string is not
+	 - return ENAMETOOLONG correctly when source string is not
 	   NUL-terminated.
 	Comment out full function of optimized version of copyoutstr(9),
 	which has never been enabled so far.
@@ -489,14 +489,14 @@ sys/arch/powerpc/ibm4xx/pic_uic.c		1.5
 	Remove unused macros.
 	[rin, ticket #774]
 
-usr.bin/config/TODO                             up to 1.32
-usr.bin/config/defs.h                           up to 1.105
-usr.bin/config/files.c                          up to 1.37
-usr.bin/config/gram.y                           up to 1.55
-usr.bin/config/main.c                           up to 1.99
-usr.bin/config/scan.l                           up to 1.31
-usr.bin/config/sem.c                            up to 1.84
-usr.bin/config/util.c                           up to 1.21
+usr.bin/config/TODO				up to 1.32
+usr.bin/config/defs.h				up to 1.105
+usr.bin/config/files.c				up to 1.37
+usr.bin/config/gram.y				up to 1.55
+usr.bin/config/main.c				up to 1.99
+usr.bin/config/scan.l				up to 1.31
+usr.bin/config/sem.c				up to 1.84
+usr.bin/config/util.c				up to 1.21
 
 	config(1): fix issue with incorrect handling of elifdef statements.
 	[christos, ticket #776]
@@ -554,10 +554,10 @@ sys/dev/pci/pcidevs				1.1398-1.1402
 sys/dev/pci/pcidevs.h				(regen)
 sys/dev/pci/pcidevs_data.h			(regen)
 
-	- Add Radeon HD4290				  
+	- Add Radeon HD4290
 	- Add Farallon PN9000SX Ethernet.
 	- NVIDIA 0x036[0-7] are nForce MCP55 LPC Bridge.
-	- Add VIA VX900 chipset.	    
+	- Add VIA VX900 chipset.
 	- Add some GeForce devices.
 	[msaitoh, ticket #784]
 
@@ -594,7 +594,7 @@ sys/dev/mii/miidevs_data.h		regen
 	[msaitoh, ticket #786]
 
 sys/altq/altq_flowvalve.h			1.4
-sys/dist/pf/net/pfvar.h				1.23
+sys/dist/pf/net/pfvar.h 			1.23
 sys/external/bsd/drm2/dist/drm/drm_drv.c	1.13
 sys/external/bsd/drm2/dist/include/drm/drmP.h	1.38
 sys/net/slcompress.h				1.20
@@ -622,7 +622,7 @@ sys/miscfs/deadfs/dead_vnops.c			1.62
 	Fix missing biodone from VOP_BWRITE on revoked device vnode.
 	[riastradh, ticket #789]
 
-sys/ufs/ffs/ffs_alloc.c				1.165
+sys/ufs/ffs/ffs_alloc.c 			1.165
 
 	Fix non-DIAGNOSTIC build with UVM_PAGE_TRKOWN.
 	[riastradh, ticket #790]
@@ -638,7 +638,7 @@ sys/dev/pci/auacer.c				1.39
 sys/dev/pci/auich.c				1.159
 sys/dev/pci/auixp.c				1.49
 sys/dev/pci/auvia.c				1.85
-sys/dev/pci/gcscaudio.c				1.19
+sys/dev/pci/gcscaudio.c 			1.19
 sys/dev/sbus/dbri.c				1.42
 
 	PR 55017: fix audio round_blocksize mismatch.
@@ -661,19 +661,19 @@ sys/arch/xen/xen/xbd_xenbus.c			1.95
 sys/dev/ata/wd.c				1.458
 sys/dev/cgd.c					1.120
 sys/dev/dksubr.c				1.112
-sys/dev/dkvar.h					1.32
+sys/dev/dkvar.h 				1.32
 sys/dev/ld.c					1.109
 sys/dev/raidframe/rf_netbsdkintf.c		1.380
 sys/dev/scsipi/sd.c				1.328
 sys/dev/dksubr.c				(apply patch)
-sys/dev/dkvar.h					(apply patch)
+sys/dev/dkvar.h 				(apply patch)
 
 	Fix dump on nested virtual disk devices.
 	Additional patches to provide ABI compatibility.
 	[riastradh, ticket #795]
 
-sys/arch/arm/samsung/exynos5410_clock.c		1.6
-sys/arch/arm/samsung/exynos5422_clock.c		1.15
+sys/arch/arm/samsung/exynos5410_clock.c 	1.6
+sys/arch/arm/samsung/exynos5422_clock.c 	1.15
 sys/arch/arm/samsung/exynos_gpio.c		1.26
 sys/arch/arm/samsung/exynos_pinctrl.c		1.16
 sys/arch/arm/samsung/exynos_uart.c		1.3
@@ -753,7 +753,7 @@ sys/dev/pckbport/synaptics.c			1.57,1.58
 	synaptics: Allow the max_speed sysctls to be set.
 	[nia, ticket #810]
 
-include/stdio.h					1.98
+include/stdio.h 				1.98
 
 	Move P_tmpdir from "/var/tmp/" to "/tmp/".
 	[mrg, ticket #811]
@@ -869,10 +869,10 @@ sys/external/bsd/ipf/netinet/ip_frag.c		1.8
 	[christos, ticket #827]
 
 distrib/sets/lists/man/mi			1.1687
-share/man/man4/Makefile				1.704 (via patch)
+share/man/man4/Makefile 			1.704 (via patch)
 share/man/man4/ucom.4				1.28
-share/man/man4/uxrcom.4				1.1
-share/man/man4/uxrcom.4				1.2
+share/man/man4/uxrcom.4 			1.1
+share/man/man4/uxrcom.4 			1.2
 sys/dev/usb/files.usb				1.173
 sys/dev/usb/ukyopon.c				1.26
 sys/dev/usb/umodem.c				1.74
@@ -970,7 +970,7 @@ sys/kern/vfs_mount.c				1.79
 	[gson, ticket #839]
 
 lib/libc/sys/fdatasync.2			1.17
-sys/kern/vfs_syscalls.c				1.544
+sys/kern/vfs_syscalls.c 			1.544
 
 	Allow fdatasync on non-writable fds (POSIX conformance fix).
 	[gdt, ticket #840]
@@ -1006,11 +1006,11 @@ distrib/amd64/uefi-installimage/Makefile.installimage 1.3
 distrib/common/bootimage/Makefile.bootimage	1.23,1.24
 distrib/common/bootimage/Makefile.installimage	1.6
 distrib/common/bootimage/diskproto.mbrfat.in	1.1
-distrib/hpcarm/Makefile				1.7
+distrib/hpcarm/Makefile 			1.7
 distrib/hpcarm/liveimage/Makefile		1.1
 distrib/hpcarm/liveimage/fstab.in		1.1
 distrib/hpcarm/liveimage/spec.in		1.1
-distrib/zaurus/Makefile				1.3
+distrib/zaurus/Makefile 			1.3
 distrib/zaurus/liveimage/Makefile		1.1
 distrib/zaurus/liveimage/fstab.in		1.1
 distrib/zaurus/liveimage/spec.in		1.1
@@ -1057,7 +1057,7 @@ sys/arch/x86/pci/amdzentemp.c			1.10
 	Add support for newer AMD Family 15 temperature sensors.
 	[simonb, ticket #851]
 
-sys/dev/hdaudio/hdafg.c				1.22
+sys/dev/hdaudio/hdafg.c 			1.22
 
 	PR kern/54474: make round_blocksize satisfy old, new and 6 channel
 	hardware requirements.
@@ -1260,55 +1260,55 @@ crypto/external/bsd/openssl/dist/ssl/packet_locl.h delete
 crypto/external/bsd/openssl/dist/ssl/ssl_locl.h delete
 crypto/external/bsd/openssl/dist/ssl/statem/statem_locl.h delete
 crypto/external/bsd/openssl/dist/test/testutil/init.c delete
-crypto/external/bsd/openssl/dist/CHANGES        up to 1.24
-crypto/external/bsd/openssl/dist/CONTRIBUTING   up to 1.1.1.8
-crypto/external/bsd/openssl/dist/Configure      up to 1.26
-crypto/external/bsd/openssl/dist/INSTALL        up to 1.1.1.13
-crypto/external/bsd/openssl/dist/NEWS           up to 1.24
-crypto/external/bsd/openssl/dist/NOTES.ANDROID  up to 1.1.1.4
-crypto/external/bsd/openssl/dist/README         up to 1.24
-crypto/external/bsd/openssl/dist/appveyor.yml   up to 1.1.1.5
-crypto/external/bsd/openssl/dist/build.info     up to 1.1.1.3
-crypto/external/bsd/openssl/dist/config         up to 1.1.1.11
-crypto/external/bsd/openssl/dist/e_os.h         up to 1.16
+crypto/external/bsd/openssl/dist/CHANGES	up to 1.24
+crypto/external/bsd/openssl/dist/CONTRIBUTING	up to 1.1.1.8
+crypto/external/bsd/openssl/dist/Configure	up to 1.26
+crypto/external/bsd/openssl/dist/INSTALL	up to 1.1.1.13
+crypto/external/bsd/openssl/dist/NEWS		up to 1.24
+crypto/external/bsd/openssl/dist/NOTES.ANDROID	up to 1.1.1.4
+crypto/external/bsd/openssl/dist/README 	up to 1.24
+crypto/external/bsd/openssl/dist/appveyor.yml	up to 1.1.1.5
+crypto/external/bsd/openssl/dist/build.info	up to 1.1.1.3
+crypto/external/bsd/openssl/dist/config 	up to 1.1.1.11
+crypto/external/bsd/openssl/dist/e_os.h 	up to 1.16
 crypto/external/bsd/openssl/dist/Configurations/10-main.conf up to 1.1.1.7
 crypto/external/bsd/openssl/dist/Configurations/15-android.conf up to 1.1.1.4
 crypto/external/bsd/openssl/dist/Configurations/50-win-onecore.conf up to 1.1.1.4
 crypto/external/bsd/openssl/dist/Configurations/descrip.mms.tmpl up to 1.1.1.6
 crypto/external/bsd/openssl/dist/Configurations/unix-Makefile.tmpl up to 1.1.1.10
-crypto/external/bsd/openssl/dist/apps/apps.c    up to 1.1.1.21
-crypto/external/bsd/openssl/dist/apps/apps.h    up to 1.1.1.15
+crypto/external/bsd/openssl/dist/apps/apps.c	up to 1.1.1.21
+crypto/external/bsd/openssl/dist/apps/apps.h	up to 1.1.1.15
 crypto/external/bsd/openssl/dist/apps/build.info up to 1.1.1.3
-crypto/external/bsd/openssl/dist/apps/dgst.c    up to 1.1.1.15
+crypto/external/bsd/openssl/dist/apps/dgst.c	up to 1.1.1.15
 crypto/external/bsd/openssl/dist/apps/dhparam.c up to 1.1.1.12
-crypto/external/bsd/openssl/dist/apps/dsa.c     up to 1.1.1.9
+crypto/external/bsd/openssl/dist/apps/dsa.c	up to 1.1.1.9
 crypto/external/bsd/openssl/dist/apps/dsaparam.c up to 1.1.1.10
-crypto/external/bsd/openssl/dist/apps/ec.c      up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/ec.c	up to 1.1.1.7
 crypto/external/bsd/openssl/dist/apps/ecparam.c up to 1.1.1.11
-crypto/external/bsd/openssl/dist/apps/enc.c     up to 1.1.1.16
-crypto/external/bsd/openssl/dist/apps/engine.c  up to 1.1.1.8
-crypto/external/bsd/openssl/dist/apps/gendsa.c  up to 1.1.1.7
-crypto/external/bsd/openssl/dist/apps/genrsa.c  up to 1.1.1.10
-crypto/external/bsd/openssl/dist/apps/ocsp.c    up to 1.22
+crypto/external/bsd/openssl/dist/apps/enc.c	up to 1.1.1.16
+crypto/external/bsd/openssl/dist/apps/engine.c	up to 1.1.1.8
+crypto/external/bsd/openssl/dist/apps/gendsa.c	up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/genrsa.c	up to 1.1.1.10
+crypto/external/bsd/openssl/dist/apps/ocsp.c	up to 1.22
 crypto/external/bsd/openssl/dist/apps/openssl.c up to 1.6
-crypto/external/bsd/openssl/dist/apps/passwd.c  up to 1.1.1.7
-crypto/external/bsd/openssl/dist/apps/pkcs12.c  up to 1.1.1.16
+crypto/external/bsd/openssl/dist/apps/passwd.c	up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/pkcs12.c	up to 1.1.1.16
 crypto/external/bsd/openssl/dist/apps/pkeyutl.c up to 1.1.1.9
-crypto/external/bsd/openssl/dist/apps/rehash.c  up to 1.1.1.6
-crypto/external/bsd/openssl/dist/apps/req.c     up to 1.4
-crypto/external/bsd/openssl/dist/apps/rsa.c     up to 1.1.1.9
-crypto/external/bsd/openssl/dist/apps/rsautl.c  up to 1.1.1.7
-crypto/external/bsd/openssl/dist/apps/s_cb.c    up to 1.1.1.18
+crypto/external/bsd/openssl/dist/apps/rehash.c	up to 1.1.1.6
+crypto/external/bsd/openssl/dist/apps/req.c	up to 1.4
+crypto/external/bsd/openssl/dist/apps/rsa.c	up to 1.1.1.9
+crypto/external/bsd/openssl/dist/apps/rsautl.c	up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/s_cb.c	up to 1.1.1.18
 crypto/external/bsd/openssl/dist/apps/s_client.c up to 1.22
 crypto/external/bsd/openssl/dist/apps/s_server.c up to 1.23
-crypto/external/bsd/openssl/dist/apps/s_time.c  up to 1.11
+crypto/external/bsd/openssl/dist/apps/s_time.c	up to 1.11
 crypto/external/bsd/openssl/dist/apps/server.pem up to 1.1.1.3
-crypto/external/bsd/openssl/dist/apps/speed.c   up to 1.20
-crypto/external/bsd/openssl/dist/apps/srp.c     up to 1.1.1.11
+crypto/external/bsd/openssl/dist/apps/speed.c	up to 1.20
+crypto/external/bsd/openssl/dist/apps/srp.c	up to 1.1.1.11
 crypto/external/bsd/openssl/dist/apps/timeouts.h up to 1.1.1.4
-crypto/external/bsd/openssl/dist/apps/ts.c      up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/ts.c	up to 1.1.1.7
 crypto/external/bsd/openssl/dist/apps/vms_term_sock.h up to 1.1.1.3
-crypto/external/bsd/openssl/dist/apps/x509.c    up to 1.1.1.15
+crypto/external/bsd/openssl/dist/apps/x509.c	up to 1.1.1.15
 crypto/external/bsd/openssl/dist/crypto/LPdir_unix.c up to 1.1.1.7
 crypto/external/bsd/openssl/dist/crypto/alphacpuid.pl up to 1.1.1.4
 crypto/external/bsd/openssl/dist/crypto/arm64cpuid.pl up to 1.1.1.3
@@ -1320,8 +1320,8 @@ crypto/external/bsd/openssl/dist/crypto/cryptlib.c up to 1.15
 crypto/external/bsd/openssl/dist/crypto/ctype.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/crypto/dllmain.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/crypto/ex_data.c up to 1.7
-crypto/external/bsd/openssl/dist/crypto/init.c  up to 1.1.1.8
-crypto/external/bsd/openssl/dist/crypto/mem.c   up to 1.12
+crypto/external/bsd/openssl/dist/crypto/init.c	up to 1.1.1.8
+crypto/external/bsd/openssl/dist/crypto/mem.c	up to 1.12
 crypto/external/bsd/openssl/dist/crypto/mips_arch.h up to 1.1.1.3
 crypto/external/bsd/openssl/dist/crypto/pariscid.pl up to 1.1.1.6
 crypto/external/bsd/openssl/dist/crypto/ppc_arch.h up to 1.1.1.4
@@ -2072,34 +2072,34 @@ crypto/external/bsd/openssl/dist/include/openssl/randerr.h up to 1.1.1.4
 crypto/external/bsd/openssl/dist/include/openssl/rsa.h up to 1.1.1.5
 crypto/external/bsd/openssl/dist/include/openssl/safestack.h up to 1.6
 crypto/external/bsd/openssl/dist/include/openssl/sslerr.h up to 1.1.1.5
-crypto/external/bsd/openssl/dist/ssl/bio_ssl.c  up to 1.1.1.9
-crypto/external/bsd/openssl/dist/ssl/d1_lib.c   up to 1.10
-crypto/external/bsd/openssl/dist/ssl/d1_msg.c   up to 1.1.1.4
-crypto/external/bsd/openssl/dist/ssl/d1_srtp.c  up to 1.7
-crypto/external/bsd/openssl/dist/ssl/methods.c  up to 1.1.1.3
-crypto/external/bsd/openssl/dist/ssl/packet.c   up to 1.1.1.2
-crypto/external/bsd/openssl/dist/ssl/pqueue.c   up to 1.1.1.3
-crypto/external/bsd/openssl/dist/ssl/s3_cbc.c   up to 1.10
-crypto/external/bsd/openssl/dist/ssl/s3_enc.c   up to 1.16
-crypto/external/bsd/openssl/dist/ssl/s3_lib.c   up to 1.26
-crypto/external/bsd/openssl/dist/ssl/s3_msg.c   up to 1.1.1.4
+crypto/external/bsd/openssl/dist/ssl/bio_ssl.c	up to 1.1.1.9
+crypto/external/bsd/openssl/dist/ssl/d1_lib.c	up to 1.10
+crypto/external/bsd/openssl/dist/ssl/d1_msg.c	up to 1.1.1.4
+crypto/external/bsd/openssl/dist/ssl/d1_srtp.c	up to 1.7
+crypto/external/bsd/openssl/dist/ssl/methods.c	up to 1.1.1.3
+crypto/external/bsd/openssl/dist/ssl/packet.c	up to 1.1.1.2
+crypto/external/bsd/openssl/dist/ssl/pqueue.c	up to 1.1.1.3
+crypto/external/bsd/openssl/dist/ssl/s3_cbc.c	up to 1.10
+crypto/external/bsd/openssl/dist/ssl/s3_enc.c	up to 1.16
+crypto/external/bsd/openssl/dist/ssl/s3_lib.c	up to 1.26
+crypto/external/bsd/openssl/dist/ssl/s3_msg.c	up to 1.1.1.4
 crypto/external/bsd/openssl/dist/ssl/ssl_asn1.c up to 1.1.1.11
 crypto/external/bsd/openssl/dist/ssl/ssl_cert.c up to 1.1.1.14
 crypto/external/bsd/openssl/dist/ssl/ssl_ciph.c up to 1.20
 crypto/external/bsd/openssl/dist/ssl/ssl_conf.c up to 1.1.1.6
 crypto/external/bsd/openssl/dist/ssl/ssl_init.c up to 1.1.1.6
-crypto/external/bsd/openssl/dist/ssl/ssl_lib.c  up to 1.18
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c	up to 1.18
 crypto/external/bsd/openssl/dist/ssl/ssl_mcnf.c up to 1.1.1.4
-crypto/external/bsd/openssl/dist/ssl/ssl_rsa.c  up to 1.1.1.9
+crypto/external/bsd/openssl/dist/ssl/ssl_rsa.c	up to 1.1.1.9
 crypto/external/bsd/openssl/dist/ssl/ssl_sess.c up to 1.9
 crypto/external/bsd/openssl/dist/ssl/ssl_stat.c up to 1.1.1.9
-crypto/external/bsd/openssl/dist/ssl/ssl_txt.c  up to 1.1.1.9
+crypto/external/bsd/openssl/dist/ssl/ssl_txt.c	up to 1.1.1.9
 crypto/external/bsd/openssl/dist/ssl/ssl_utst.c up to 1.1.1.5
-crypto/external/bsd/openssl/dist/ssl/t1_enc.c   up to 1.21
-crypto/external/bsd/openssl/dist/ssl/t1_lib.c   up to 1.32
-crypto/external/bsd/openssl/dist/ssl/t1_trce.c  up to 1.1.1.6
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c	up to 1.21
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	up to 1.32
+crypto/external/bsd/openssl/dist/ssl/t1_trce.c	up to 1.1.1.6
 crypto/external/bsd/openssl/dist/ssl/tls13_enc.c up to 1.1.1.5
-crypto/external/bsd/openssl/dist/ssl/tls_srp.c  up to 1.7
+crypto/external/bsd/openssl/dist/ssl/tls_srp.c	up to 1.7
 crypto/external/bsd/openssl/dist/ssl/record/README up to 1.1.1.2
 crypto/external/bsd/openssl/dist/ssl/record/dtls1_bitmap.c up to 1.1.1.2
 crypto/external/bsd/openssl/dist/ssl/record/rec_layer_d1.c up to 1.1.1.7
@@ -2117,11 +2117,11 @@ crypto/external/bsd/openssl/dist/ssl/statem/statem_clnt.c up to 1.1.1.9
 crypto/external/bsd/openssl/dist/ssl/statem/statem_dtls.c up to 1.1.1.5
 crypto/external/bsd/openssl/dist/ssl/statem/statem_lib.c up to 1.1.1.8
 crypto/external/bsd/openssl/dist/ssl/statem/statem_srvr.c up to 1.1.1.8
-crypto/external/bsd/openssl/dist/test/README    up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/README	up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/asn1_internal_test.c up to 1.1.1.2
 crypto/external/bsd/openssl/dist/test/asynciotest.c up to 1.1.1.4
 crypto/external/bsd/openssl/dist/test/bad_dtls_test.c up to 1.1.1.4
-crypto/external/bsd/openssl/dist/test/bntest.c  up to 1.8
+crypto/external/bsd/openssl/dist/test/bntest.c	up to 1.8
 crypto/external/bsd/openssl/dist/test/build.info up to 1.1.1.9
 crypto/external/bsd/openssl/dist/test/chacha_internal_test.c up to 1.1.1.2
 crypto/external/bsd/openssl/dist/test/cipher_overhead_test.c up to 1.1.1.2
@@ -2136,7 +2136,7 @@ crypto/external/bsd/openssl/dist/test/dtls_mtu_test.c up to 1.1.1.2
 crypto/external/bsd/openssl/dist/test/dtlstest.c up to 1.1.1.7
 crypto/external/bsd/openssl/dist/test/ec_internal_test.c up to 1.1.1.2
 crypto/external/bsd/openssl/dist/test/ecdsatest.h up to 1.1.1.2
-crypto/external/bsd/openssl/dist/test/ectest.c  up to 1.7
+crypto/external/bsd/openssl/dist/test/ectest.c	up to 1.7
 crypto/external/bsd/openssl/dist/test/evp_extra_test.c up to 1.9
 crypto/external/bsd/openssl/dist/test/handshake_helper.c up to 1.1.1.6
 crypto/external/bsd/openssl/dist/test/handshake_helper.h up to 1.1.1.3
@@ -2240,7 +2240,7 @@ crypto/external/bsd/openssl/lib/libcrypto/arch/x86_64/x25519-x86_64.S up to 1.2
 crypto/external/bsd/openssl/lib/libcrypto/arch/x86_64/x86_64-mont5.S up to 1.9
 crypto/external/bsd/openssl/lib/libcrypto/arch/x86_64/x86_64cpuid.S up to 1.12
 crypto/external/bsd/openssl/lib/libcryptotest/Makefile up to 1.3
-crypto/Makefile.openssl                         up to 1.12
+crypto/Makefile.openssl 			up to 1.12
 doc/3RDPARTY					1.1714
 
 	Import OpenSSL 1.1.1g.
@@ -2254,7 +2254,7 @@ sys/dev/nvmm/nvmm.c				1.26
 
 sys/dev/pci/if_mcx.c				1.13
 
-	mcx(4): various fixes.	
+	mcx(4): various fixes.
 	[jmcneill, ticket #858]
 
 usr.bin/calendar/calendars/calendar.birthday	1.37-1.41
@@ -2266,7 +2266,7 @@ usr.bin/calendar/calendars/calendar.netbsd	1.44-1.46
 	[sevan, ticket #859]
 
 sys/dev/pckbport/synaptics.c			1.65
-sys/dev/pckbport/synapticsvar.h			1.10
+sys/dev/pckbport/synapticsvar.h 		1.10
 
 	pms(4): synaptics: fix extended button reporting.
 	[jmcneill, ticket #863]
@@ -2316,7 +2316,7 @@ sys/dev/acpi/acpi_display.c			1.17
 	[jmcneill, ticket #867]
 
 sys/arch/amd64/amd64/machdep.c			1.349
-sys/arch/x86/x86/pmap.c				1.384
+sys/arch/x86/x86/pmap.c 			1.384
 
 	amd64: speed up early console framebuffer.
 	[jmcneill, ticket #868]
@@ -2334,7 +2334,7 @@ external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.16
 	[riastradh, ticket #870]
 
 external/cddl/osnet/sys/sys/cred.h		1.7
-sys/sys/kauth.h					1.84
+sys/sys/kauth.h 				1.84
 
 	Fix crash in zfs access control.
 	[riastradh, ticket #871]
@@ -2388,7 +2388,7 @@ crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.16
 	Fix the detection of KERN_ARND by OpenSSL.
 	[nia, ticket #878]
 
-games/fortune/strfile/strfile.c			1.39
+games/fortune/strfile/strfile.c 		1.39
 games/fortune/unstr/unstr.c			1.15
 
 	Fix potential buffer overflows in fortune tools.
@@ -2484,7 +2484,7 @@ usr.sbin/lastlogin/lastlogin.c			1.16-1.20
 	  and lastlogx fields could sometimes be dropped.
 	[kim, ticket #893]
 
-usr.bin/finger/finger.1				1.22
+usr.bin/finger/finger.1 			1.22
 usr.bin/finger/util.c				1.30
 
 	finger(1): add lastlogx support.
@@ -2512,8 +2512,8 @@ external/cddl/osnet/dist/uts/common/fs/zfs/zfs_znode.c 1.33
 
 sys/dev/nvmm/nvmm.c				1.27,1.28
 sys/dev/nvmm/nvmm_internal.h			1.14
-sys/dev/nvmm/x86/nvmm_x86_svm.c			1.59
-sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.53-1.55
+sys/dev/nvmm/x86/nvmm_x86_svm.c 		1.59
+sys/dev/nvmm/x86/nvmm_x86_vmx.c 		1.53-1.55
 
 	Better diagnostic, better filtering for guest CPU identification,
 	stability fixes.
@@ -2526,7 +2526,7 @@ crypto/external/bsd/openssl/lib/libcrypto/evp.inc 1.9
 
 distrib/sets/lists/comp/ad.aarch64		1.40
 sys/arch/aarch64/include/Makefile		1.4
-sys/arch/aarch64/include/trap.h			1.3
+sys/arch/aarch64/include/trap.h 		1.3
 
 	Provide a trap.h (currently empty).
 	[skrll, ticket #900]
@@ -2572,7 +2572,7 @@ libexec/ld.elf_so/rtld.c			1.204,1.205
 libexec/ld.elf_so/rtld.h			1.139,1.140
 libexec/ld.elf_so/symbols.map			1.3,1.4
 
-	Introduce intermediate locking for fork, so that the  dynamic
+	Introduce intermediate locking for fork, so that the dynamic
 	linker is in a consistent state.
 	[chs, ticket #907]
 
@@ -2663,8 +2663,8 @@ sys/arch/mips/cavium/octeonvar.h		1.7
 
 sys/dev/nvmm/nvmm.c				1.29
 sys/dev/nvmm/x86/nvmm_x86.c			1.9
-sys/dev/nvmm/x86/nvmm_x86_svm.c			1.60,1.61
-sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.56-1.58
+sys/dev/nvmm/x86/nvmm_x86_svm.c 		1.60,1.61
+sys/dev/nvmm/x86/nvmm_x86_vmx.c 		1.56-1.58
 
 	Improve the CPUID emulation.
 	Fix deinitialization for certain kernel configs (fix for
@@ -2682,24 +2682,24 @@ sys/dev/usb/xhci.c				1.129
 	ticket #744).
 	[jakllsch, ticket #921]
 
-sys/arch/x86/x86/cpu_topology.c			1.18
+sys/arch/x86/x86/cpu_topology.c 		1.18
 
 	Assert smt_bits value only after it is computed.
 	[mlelstv, ticket #922]
 
-external/gpl3/gdb/dist/gdb/alpha-tdep.c		1.5
+external/gpl3/gdb/dist/gdb/alpha-tdep.c 	1.5
 
 	Revive entrypoint heuristics for alpha.
 	[rin, ticket #924]
 
-tests/lib/libc/sys/t_ptrace_fork_wait.h	1.2-1.4,1.6	(via patch, adapted)
+tests/lib/libc/sys/t_ptrace_fork_wait.h 1.2-1.4,1.6	(via patch, adapted)
 	(applied to tests/lib/libc/sys/t_ptrace_wait.c)
 
 	Fix race in fork_singalmasked.
 	Ignore interception of SIGCHLD signals in the debugger.
 	PR 55241: there is a race that SIGCHLD might be blocked during
-	forking	and dropped.
-	[kamil, ticket #925]	
+	forking and dropped.
+	[kamil, ticket #925]
 
 sys/arch/sparc/sparc/process_machdep.c		1.20
 
@@ -2718,7 +2718,7 @@ sys/net/npf/npf_conn.h				1.19
 sys/net/npf/npf_conndb.c			1.8
 sys/net/npf/npf_inet.c				1.56
 sys/net/npf/npf_nat.c				1.49
-usr.sbin/npf/npfctl/npf_build.c			1.54
+usr.sbin/npf/npfctl/npf_build.c 		1.54
 usr.sbin/npf/npfctl/npf_show.c			1.31
 usr.sbin/npf/npfctl/npfctl.h			1.52
 
@@ -2763,7 +2763,7 @@ sys/dev/usb/usb.c				1.187
 	[skrll, ticket #934]
 
 sys/arch/x86/include/pmap.h			1.121 (patch)
-sys/arch/x86/x86/pmap.c				1.394 (patch)
+sys/arch/x86/x86/pmap.c 			1.394 (patch)
 sys/arch/xen/include/xenio.h			1.12 (patch)
 sys/arch/xen/include/xenpmap.h			1.44 (patch)
 sys/arch/xen/x86/x86_xpmap.c			1.89 (patch)
@@ -2802,33 +2802,33 @@ sys/arch/arc/conf/RAMDISK			1.83
 	Preserver the curlwp register (t8) accross ARC BIOS calls.
 	[tsutsui, ticket #939]
 
-bin/sh/expand.c					1.134-1.137
-bin/sh/expand.h					1.25
+bin/sh/expand.c 				1.134-1.137
+bin/sh/expand.h 				1.25
 
 	Fix a few bugs in shell variable expansion.
 	[kre, ticket #940]
 
-sys/arch/x86/x86/pmap.c				(apply patch)
+sys/arch/x86/x86/pmap.c 			(apply patch)
 
 	Fix Xen dom0 kernel build with options DIAGNOSTIC.
 	[bouyer, ticket #941]
 
-external/public-domain/tz/dist/Makefile         up to 1.1.1.26
-external/public-domain/tz/dist/NEWS             up to 1.1.1.29
-external/public-domain/tz/dist/TZDATA_VERSION   up to 1.19
-external/public-domain/tz/dist/africa           up to 1.1.1.22
-external/public-domain/tz/dist/asia             up to 1.1.1.25
-external/public-domain/tz/dist/backward         up to 1.1.1.11
-external/public-domain/tz/dist/backzone         up to 1.1.1.18
-external/public-domain/tz/dist/europe           up to 1.1.1.26
+external/public-domain/tz/dist/Makefile 	up to 1.1.1.26
+external/public-domain/tz/dist/NEWS		up to 1.1.1.29
+external/public-domain/tz/dist/TZDATA_VERSION	up to 1.19
+external/public-domain/tz/dist/africa		up to 1.1.1.22
+external/public-domain/tz/dist/asia		up to 1.1.1.25
+external/public-domain/tz/dist/backward 	up to 1.1.1.11
+external/public-domain/tz/dist/backzone 	up to 1.1.1.18
+external/public-domain/tz/dist/europe		up to 1.1.1.26
 external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.13
-external/public-domain/tz/dist/leapseconds      up to 1.1.1.15
-external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.10
-external/public-domain/tz/dist/northamerica     up to 1.1.1.25
-external/public-domain/tz/dist/theory.html      up to 1.1.1.10
-external/public-domain/tz/dist/version          up to 1.1.1.16
-external/public-domain/tz/dist/zone.tab         up to 1.1.1.18
-external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.20
+external/public-domain/tz/dist/leapseconds	up to 1.1.1.15
+external/public-domain/tz/dist/leapseconds.awk	up to 1.1.1.10
+external/public-domain/tz/dist/northamerica	up to 1.1.1.25
+external/public-domain/tz/dist/theory.html	up to 1.1.1.10
+external/public-domain/tz/dist/version		up to 1.1.1.16
+external/public-domain/tz/dist/zone.tab 	up to 1.1.1.18
+external/public-domain/tz/dist/zone1970.tab	up to 1.1.1.20
 doc/3RDPARTY					(apply patch)
 distrib/sets/lists/base/mi			(apply patch)
 
@@ -2840,7 +2840,7 @@ sys/arch/arm/ti/ti_cpufreq.c			1.3
 	Fix SoC revision detection.
 	[jmcneill, ticket #943]
 
-sys/arch/arm/ti/ti_dpll_clock.c			1.3
+sys/arch/arm/ti/ti_dpll_clock.c 		1.3
 
 	Fix dpll clock setting on am335x.
 	[jmcneill, ticket #944]
