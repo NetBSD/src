@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.130 2020/06/13 18:40:44 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.131 2020/06/13 18:42:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.130 2020/06/13 18:40:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.131 2020/06/13 18:42:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -389,6 +389,8 @@ static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
 			   size_t, daddr_t, size_t, int);
 
+static void	cgd_selftest(void);
+
 static const struct dkdriver cgddkdriver = {
         .d_minphys  = minphys,
         .d_open = cgdopen,
@@ -534,6 +536,8 @@ cgdattach(int num)
 		aprint_error("%s: unable to register cfattach\n",
 		    cgd_cd.cd_name);
 #endif
+
+	cgd_selftest();
 }
 
 static struct cgd_softc *
@@ -1598,7 +1602,7 @@ hexprint(const char *start, void *buf, int len)
 #endif
 
 static void
-selftest(void)
+cgd_selftest(void)
 {
 	struct cgd_softc sc;
 	void *buf;
@@ -1673,7 +1677,6 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		selftest();
 #ifdef _MODULE
 		mutex_init(&cgd_spawning_mtx, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&cgd_spawning_cv, "cgspwn");
