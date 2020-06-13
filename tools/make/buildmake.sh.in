@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.12 2018/01/16 08:53:51 uwe Exp $
+#	$NetBSD: buildmake.sh.in,v 1.13 2020/06/13 11:28:24 lukem Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -17,12 +17,17 @@ _CFLAGS="${_CFLAGS} @CFLAGS@"
 _LDFLAGS="@LDFLAGS@ @LIBS@"
 
 docmd () {
-	echo "$1"
-	$1 || exit 1
+	if [ ${MAKEVERBOSE:-2} -lt 2 ]; then
+		echo "   $1 ${2##*/}"
+	else
+		echo "$3"
+	fi
+	$3 || exit 1
 }
 
 for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c; do
-	docmd "${_CC} ${_CFLAGS} -c $f"
+	docmd "compile " "$f" "${_CC} ${_CFLAGS} -c $f"
 done
 
-docmd "${_CC} -o ${_TOOL_PREFIX:-nb}make *.o ${_LDFLAGS}"
+docmd "   link " "${_TOOL_PREFIX:-nb}make" \
+	"${_CC} -o ${_TOOL_PREFIX:-nb}make *.o ${_LDFLAGS}"
