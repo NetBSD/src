@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.21 2020/06/13 18:39:36 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.22 2020/06/13 18:40:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.21 2020/06/13 18:39:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.22 2020/06/13 18:40:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -270,10 +270,25 @@ cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
 	}
 }
 
+/*
+ * AES-XTS
+ */
+
+struct aesxts {
+	keyInstance	ax_enckey;
+	keyInstance	ax_deckey;
+	keyInstance	ax_tweakkey;
+};
+
+struct aesxts_state {
+	struct aesxts	*axs_keys;
+	uint8_t		axs_tweak[CGD_AES_BLOCK_SIZE];
+};
+
 static void *
 cgd_cipher_aes_xts_init(size_t keylen, const void *xtskey, size_t *blocksize)
 {
-	struct aes_privdata *ap;
+	struct aesxts *ax;
 	const char *key, *key2; /* XTS key is made of two AES keys. */
 
 	if (!blocksize)
@@ -285,77 +300,75 @@ cgd_cipher_aes_xts_init(size_t keylen, const void *xtskey, size_t *blocksize)
 	if (*blocksize != 128)
 		return NULL;
 
-	ap = kmem_zalloc(2 * sizeof(*ap), KM_SLEEP);
+	ax = kmem_zalloc(sizeof(*ax), KM_SLEEP);
 	keylen /= 2;
 	key = xtskey;
 	key2 = key + keylen / CHAR_BIT;
 
-	rijndael_makeKey(&ap[0].ap_enckey, DIR_ENCRYPT, keylen, key);
-	rijndael_makeKey(&ap[0].ap_deckey, DIR_DECRYPT, keylen, key);
-	rijndael_makeKey(&ap[1].ap_enckey, DIR_ENCRYPT, keylen, key2);
+	rijndael_makeKey(&ax->ax_enckey, DIR_ENCRYPT, keylen, key);
+	rijndael_makeKey(&ax->ax_deckey, DIR_DECRYPT, keylen, key);
+	rijndael_makeKey(&ax->ax_tweakkey, DIR_ENCRYPT, keylen, key2);
 
-	return ap;
+	return ax;
 }
 
 static void
-cgd_cipher_aes_xts_destroy(void *data)
+cgd_cipher_aes_xts_destroy(void *cookie)
 {
-	struct aes_privdata *apd = data;
+	struct aesxts *ax = cookie;
 
-	explicit_memset(apd, 0, 2 * sizeof(*apd));
-	kmem_free(apd, 2 * sizeof(*apd));
+	explicit_memset(ax, 0, sizeof(*ax));
+	kmem_free(ax, sizeof(*ax));
 }
 
 static void
-aes_xts_enc_int(void *privdata, void *dst, const void *src, size_t len)
+aes_xts_enc_int(void *state, void *dst, const void *src, size_t len)
 {
-	struct aes_encdata	*ae = privdata;
-	cipherInstance		 cipher;
-	int			 cipher_ok __diagused;
+	struct aesxts_state *axs = state;
+	cipherInstance cipher;
+	int cipher_ok __diagused;
 
-	cipher_ok = rijndael_cipherInit(&cipher, MODE_XTS, ae->ae_iv);
+	cipher_ok = rijndael_cipherInit(&cipher, MODE_XTS, axs->axs_tweak);
 	KASSERT(cipher_ok > 0);
-	rijndael_blockEncrypt(&cipher, ae->ae_key, src, /*inputbits*/len * 8,
-	    dst);
-	(void)memcpy(ae->ae_iv, cipher.IV, CGD_AES_BLOCK_SIZE);
+	rijndael_blockEncrypt(&cipher, &axs->axs_keys->ax_enckey, src,
+	    /*inputbits*/len * 8, dst);
+	memcpy(axs->axs_tweak, cipher.IV, CGD_AES_BLOCK_SIZE);
 }
 
 static void
-aes_xts_dec_int(void *privdata, void *dst, const void *src, size_t len)
+aes_xts_dec_int(void *state, void *dst, const void *src, size_t len)
 {
-	struct aes_encdata	*ae = privdata;
-	cipherInstance		 cipher;
-	int			 cipher_ok __diagused;
+	struct aesxts_state *axs = state;
+	cipherInstance cipher;
+	int cipher_ok __diagused;
 
-	cipher_ok = rijndael_cipherInit(&cipher, MODE_XTS, ae->ae_iv);
+	cipher_ok = rijndael_cipherInit(&cipher, MODE_XTS, axs->axs_tweak);
 	KASSERT(cipher_ok > 0);
-	rijndael_blockDecrypt(&cipher, ae->ae_key, src, /*inputbits*/len * 8,
-	    dst);
-	(void)memcpy(ae->ae_iv, cipher.IV, CGD_AES_BLOCK_SIZE);
+	rijndael_blockDecrypt(&cipher, &axs->axs_keys->ax_deckey, src,
+	    /*inputbits*/len * 8, dst);
+	memcpy(axs->axs_tweak, cipher.IV, CGD_AES_BLOCK_SIZE);
 }
 
 static void
-cgd_cipher_aes_xts(void *privdata, struct uio *dstuio,
-    struct uio *srcuio, const void *iv, int dir)
+cgd_cipher_aes_xts(void *cookie, struct uio *dstuio, struct uio *srcuio,
+    const void *iv, int dir)
 {
-	struct aes_privdata	*apd = privdata;
-	struct aes_encdata	 encd;
-	cipherInstance		 cipher;
-	int			 cipher_ok __diagused;
+	struct aesxts *ax = cookie;
+	struct aesxts_state axs = { .axs_keys = ax };
+	cipherInstance cipher;
+	int cipher_ok __diagused;
 
 	cipher_ok = rijndael_cipherInit(&cipher, MODE_ECB, NULL);
 	KASSERT(cipher_ok > 0);
-	rijndael_blockEncrypt(&cipher, &apd[1].ap_enckey, iv, /*inputbits*/128,
-	    encd.ae_iv);
+	rijndael_blockEncrypt(&cipher, &ax->ax_tweakkey, iv, /*inputbits*/128,
+	    axs.axs_tweak);
 
 	switch (dir) {
 	case CGD_CIPHER_ENCRYPT:
-		encd.ae_key = &apd->ap_enckey;
-		cgd_cipher_uio(&encd, aes_xts_enc_int, dstuio, srcuio);
+		cgd_cipher_uio(&axs, aes_xts_enc_int, dstuio, srcuio);
 		break;
 	case CGD_CIPHER_DECRYPT:
-		encd.ae_key = &apd->ap_deckey;
-		cgd_cipher_uio(&encd, aes_xts_dec_int, dstuio, srcuio);
+		cgd_cipher_uio(&axs, aes_xts_dec_int, dstuio, srcuio);
 		break;
 	default:
 		panic("%s: unrecognised direction %d", __func__, dir);
