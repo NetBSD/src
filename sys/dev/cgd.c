@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.126 2020/06/04 19:54:53 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.127 2020/06/13 18:35:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.126 2020/06/04 19:54:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.127 2020/06/13 18:35:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1535,7 +1535,6 @@ cgd_cipher(struct cgd_softc *sc, void *dstv, void *srcv,
 {
 	char		*dst = dstv;
 	char		*src = srcv;
-	cfunc_cipher_prep	*ciprep = sc->sc_cfuncs->cf_cipher_prep;
 	cfunc_cipher	*cipher = sc->sc_cfuncs->cf_cipher;
 	struct uio	dstuio;
 	struct uio	srcuio;
@@ -1543,7 +1542,7 @@ cgd_cipher(struct cgd_softc *sc, void *dstv, void *srcv,
 	struct iovec	srciov[2];
 	size_t		blocksize = sc->sc_cdata.cf_blocksize;
 	size_t		todo;
-	char		blkno_buf[CGD_MAXBLOCKSIZE], *iv;
+	char		blkno_buf[CGD_MAXBLOCKSIZE];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
@@ -1576,15 +1575,7 @@ cgd_cipher(struct cgd_softc *sc, void *dstv, void *srcv,
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 1: blkno_buf",
 		    blkno_buf, blocksize));
 
-		/*
-		 * Compute an initial IV. All ciphers
-		 * can convert blkno_buf in-place.
-		 */
-		iv = blkno_buf;
-		ciprep(sc->sc_cdata.cf_priv, iv, blkno_buf, blocksize, dir);
-		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: iv", iv, blocksize));
-
-		cipher(sc->sc_cdata.cf_priv, &dstuio, &srcuio, iv, dir);
+		cipher(sc->sc_cdata.cf_priv, &dstuio, &srcuio, blkno_buf, dir);
 
 		dst += todo;
 		src += todo;
