@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.63 2020/06/13 19:00:18 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.64 2020/06/13 19:01:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.63 2020/06/13 19:00:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.64 2020/06/13 19:01:11 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -343,6 +343,15 @@ fpu_lwp_abandon(struct lwp *l)
 
 /* -------------------------------------------------------------------------- */
 
+/*
+ * fpu_kern_enter()
+ *
+ *	Begin using the FPU.  Raises to splhigh, disabling all
+ *	interrupts and rendering the thread non-preemptible; caller
+ *	should not use this for long periods of time, and must call
+ *	fpu_kern_leave() afterward.  Non-recursive -- you cannot call
+ *	fpu_kern_enter() again without calling fpu_kern_leave() first.
+ */
 void
 fpu_kern_enter(void)
 {
@@ -375,6 +384,11 @@ fpu_kern_enter(void)
 	clts();
 }
 
+/*
+ * fpu_kern_leave()
+ *
+ *	End using the FPU after fpu_kern_enter().
+ */
 void
 fpu_kern_leave(void)
 {
