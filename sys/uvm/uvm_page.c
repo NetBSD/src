@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.240 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.241 2020/06/13 19:55:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.240 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.241 2020/06/13 19:55:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1411,12 +1411,13 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
  * uvm_pagerealloc: reallocate a page from one object to another
  *
  * => both objects must be locked
- * => both interlocks must be held
  */
 
-void
+int
 uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 {
+	int error = 0;
+
 	/*
 	 * remove it from the old object
 	 */
@@ -1431,11 +1432,25 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (newobj) {
-		/*
-		 * XXX we have no in-tree users of this functionality
-		 */
-		panic("uvm_pagerealloc: no impl");
+		mutex_enter(&pg->interlock);
+		pg->uobject = newobj;
+		pg->offset = newoff;
+		if (UVM_OBJ_IS_VNODE(newobj)) {
+			pg->flags |= PG_FILE;
+		} else if (UVM_OBJ_IS_AOBJ(newobj)) {
+			pg->flags |= PG_AOBJ;
+		}
+		uvm_pageinsert_object(newobj, pg);
+		mutex_exit(&pg->interlock);
+		error = uvm_pageinsert_tree(newobj, pg);
+		if (error != 0) {
+			mutex_enter(&pg->interlock);
+			uvm_pageremove_object(newobj, pg);
+			mutex_exit(&pg->interlock);
+		}
 	}
+
+	return error;
 }
 
 #ifdef DEBUG

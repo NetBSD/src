@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.228 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.229 2020/06/13 19:55:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -789,7 +789,7 @@ struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
 				UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagereplace(struct vm_page *,
 			    struct vm_page *);
-void			uvm_pagerealloc(struct vm_page *,
+int			uvm_pagerealloc(struct vm_page *,
 			    struct uvm_object *, voff_t);
 void			uvm_setpagesize(void);
 
