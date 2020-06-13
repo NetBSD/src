@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.14 2020/06/13 11:32:52 lukem Exp $
+#	$NetBSD: buildmake.sh.in,v 1.15 2020/06/13 11:39:43 lukem Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -17,11 +17,14 @@ _CFLAGS="${_CFLAGS} @CFLAGS@"
 _LDFLAGS="@LDFLAGS@ @LIBS@"
 
 docmd () {
-	if [ ${MAKEVERBOSE:-2} -lt 2 ]; then
-		echo "    $1 ${2##*/}"
-	else
-		echo "$3"
-	fi
+	case "${MAKEVERBOSE:-2}" in
+	0)
+		;;
+	1)
+		echo "    $1 ${2##*/}" ;;
+	*)
+		echo "$3" ;;
+	esac
 	$3 || exit 1
 }
 
