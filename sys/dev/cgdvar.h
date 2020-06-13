@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.20 2020/06/13 18:38:33 riastradh Exp $ */
+/* $NetBSD: cgdvar.h,v 1.21 2020/06/13 22:15:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ struct cgd_xfer {
 	struct buf		*cx_obp;
 	struct buf		*cx_nbp;
 	void			*cx_dstv;
-	void			*cx_srcv;
+	const void		*cx_srcv;
 	size_t			 cx_len;
 	daddr_t			 cx_blkno;
 	size_t			 cx_secsize;

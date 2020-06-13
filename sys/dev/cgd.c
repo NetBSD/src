@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.132 2020/06/13 22:15:06 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.133 2020/06/13 22:15:57 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.132 2020/06/13 22:15:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.133 2020/06/13 22:15:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -386,7 +386,7 @@ static int	cgd_ioctl_clr(struct cgd_softc *, struct lwp *);
 static int	cgd_ioctl_get(dev_t, void *, struct lwp *);
 static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
-static void	cgd_cipher(struct cgd_softc *, void *, void *,
+static void	cgd_cipher(struct cgd_softc *, void *, const void *,
 			   size_t, daddr_t, size_t, int);
 
 static void	cgd_selftest(void);
@@ -1535,11 +1535,11 @@ cgd_process(struct work *wk, void *arg)
 }
 
 static void
-cgd_cipher(struct cgd_softc *sc, void *dstv, void *srcv,
+cgd_cipher(struct cgd_softc *sc, void *dstv, const void *srcv,
     size_t len, daddr_t blkno, size_t secsize, int dir)
 {
 	char		*dst = dstv;
-	char		*src = srcv;
+	const char	*src = srcv;
 	cfunc_cipher	*cipher = sc->sc_cfuncs->cf_cipher;
 	size_t		blocksize = sc->sc_cdata.cf_blocksize;
 	size_t		todo;
