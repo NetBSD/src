@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.7 2020/06/13 14:39:07 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.8 2020/06/13 14:41:24 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -239,9 +239,6 @@
 /* "CMGCR" (R): Coherency Manager memory-mapped Global Configuration Register Space is implemented. */
 #define	MIPSNN_CFG3_CMGCR	0x20000000
 
-/* "ULRI" (R): UserLocal register is implemented. */
-#define	MIPSNN_CFG3_ULRI	0x00002000
-
 /* "IPLW" (R): Width of Status[IPL] and Cause[RIPL] fields. */
 #define	MIPSNN_CFG3_IPLW_MASK	0x00600000
 #define	MIPSNN_CFG3_IPLW_SHIFT	21
@@ -270,6 +267,9 @@
 #define	MIPSNN_CFG3_ISA_microMIPS64	1	/* only microMIPS64 */
 #define	MIPSNN_CFG3_ISA_MIPS64_OOR	2	/* both, MIPS64 out of reset */
 #define	MIPSNN_CFG3_ISA_microMIPS64_OOR	3	/* both, microMIPS64 OOR */
+
+/* "ULRI" (R): UserLocal register is implemented. */
+#define	MIPSNN_CFG3_ULRI	0x00002000
 
 /* "DSP2P" (R): DSP v2 ASE extension present. */
 #define	MIPSNN_CFG3_DSP2P	0x00000800
