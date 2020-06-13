@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.107 2020/02/15 17:01:00 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.108 2020/06/13 12:53:42 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1321,8 +1321,8 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	/*
 	 * Was this rdhwr $3,$29?
 	 */
-	lui	v0, %hi(0x7c03e83b)
-	addiu	v0, %lo(0x7c03e83b)
+	lui	v0, %hi(0x7c03e83b)	# 0x7c03e83b => rdhwr $3,$29
+	addiu	v0, %lo(0x7c03e83b)	#        or ... rdhwr v1,ulr
 	bne	AT, v0, MIPSX(user_gen_exception_common)
 	 nop
 
