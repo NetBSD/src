@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.19 2020/06/13 18:38:33 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.20 2020/06/13 18:39:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.19 2020/06/13 18:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.20 2020/06/13 18:39:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -171,11 +171,6 @@ cgd_cipher_uio(void *privdata, cipher_func cipher,
 
 /*
  *  AES Framework
- */
-
-/*
- * NOTE: we do not store the blocksize in here, because it is not
- *       variable [yet], we hardcode the blocksize to 16 (128 bits).
  */
 
 struct aes_privdata {
