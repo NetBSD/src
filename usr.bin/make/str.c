@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.42 2020/05/06 02:30:10 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -415,8 +415,8 @@ Str_Match(const char *string, const char *pattern)
 			goto thisCharOK;
 		}
 		/*
-		 * If the next pattern character is '/', just strip off the
-		 * '/' so we do exact matching on the character that follows.
+		 * If the next pattern character is a backslash, just strip it
+		 * off so we do exact matching on the character that follows.
 		 */
 		if (*pattern == '\\') {
 			++pattern;
