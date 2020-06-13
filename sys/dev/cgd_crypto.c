@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.20 2020/06/13 18:39:06 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.21 2020/06/13 18:39:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.20 2020/06/13 18:39:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.21 2020/06/13 18:39:36 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/cgd_crypto.h>
@@ -196,9 +196,7 @@ cgd_cipher_aes_cbc_init(size_t keylen, const void *key, size_t *blocksize)
 		*blocksize = 128;
 	if (*blocksize != 128)
 		return NULL;
-	ap = malloc(sizeof(*ap), M_DEVBUF, 0);
-	if (!ap)
-		return NULL;
+	ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
 	rijndael_makeKey(&ap->ap_enckey, DIR_ENCRYPT, keylen, key);
 	rijndael_makeKey(&ap->ap_deckey, DIR_DECRYPT, keylen, key);
 	return ap;
@@ -210,7 +208,7 @@ cgd_cipher_aes_cbc_destroy(void *data)
 	struct aes_privdata *apd = data;
 
 	explicit_memset(apd, 0, sizeof(*apd));
-	free(apd, M_DEVBUF);
+	kmem_free(apd, sizeof(*apd));
 }
 
 static void
@@ -286,10 +284,8 @@ cgd_cipher_aes_xts_init(size_t keylen, const void *xtskey, size_t *blocksize)
 		*blocksize = 128;
 	if (*blocksize != 128)
 		return NULL;
-	ap = malloc(2 * sizeof(*ap), M_DEVBUF, 0);
-	if (!ap)
-		return NULL;
 
+	ap = kmem_zalloc(2 * sizeof(*ap), KM_SLEEP);
 	keylen /= 2;
 	key = xtskey;
 	key2 = key + keylen / CHAR_BIT;
@@ -307,7 +303,7 @@ cgd_cipher_aes_xts_destroy(void *data)
 	struct aes_privdata *apd = data;
 
 	explicit_memset(apd, 0, 2 * sizeof(*apd));
-	free(apd, M_DEVBUF);
+	kmem_free(apd, 2 * sizeof(*apd));
 }
 
 static void
@@ -396,16 +392,14 @@ cgd_cipher_3des_init(size_t keylen, const void *key, size_t *blocksize)
 		*blocksize = 64;
 	if (keylen != (DES_KEY_SZ * 3 * 8) || *blocksize != 64)
 		return NULL;
-	cp = malloc(sizeof(*cp), M_DEVBUF, 0);
-	if (!cp)
-		return NULL;
+	cp = kmem_zalloc(sizeof(*cp), KM_SLEEP);
 	block = __UNCONST(key);
 	error  = des_key_sched(block, cp->cp_key1);
 	error |= des_key_sched(block + 1, cp->cp_key2);
 	error |= des_key_sched(block + 2, cp->cp_key3);
 	if (error) {
 		explicit_memset(cp, 0, sizeof(*cp));
-		free(cp, M_DEVBUF);
+		kmem_free(cp, sizeof(*cp));
 		return NULL;
 	}
 	return cp;
@@ -417,7 +411,7 @@ cgd_cipher_3des_destroy(void *data)
 	struct c3des_privdata *cp = data;
 
 	explicit_memset(cp, 0, sizeof(*cp));
-	free(cp, M_DEVBUF);
+	kmem_free(cp, sizeof(*cp));
 }
 
 static void
@@ -496,7 +490,7 @@ cgd_cipher_bf_init(size_t keylen, const void *key, size_t *blocksize)
 		*blocksize = 64;
 	if (*blocksize != 64)
 		return NULL;
-	bp = malloc(sizeof(*bp), M_DEVBUF, 0);
+	bp = kmem_zalloc(sizeof(*bp), KM_SLEEP);
 	if (!bp)
 		return NULL;
 	BF_set_key(&bp->bp_key, keylen / 8, key);
@@ -509,7 +503,7 @@ cgd_cipher_bf_destroy(void *data)
 	struct	bf_privdata *bp = data;
 
 	explicit_memset(bp, 0, sizeof(*bp));
-	free(bp, M_DEVBUF);
+	kmem_free(bp, sizeof(*bp));
 }
 
 static void
