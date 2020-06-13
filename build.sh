@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.340 2020/06/13 11:42:47 lukem Exp $
+#	$NetBSD: build.sh,v 1.341 2020/06/13 18:00:29 riastradh Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1662,7 +1662,7 @@ rebuildmake()
 	if ! ${do_rebuildmake}; then
 		return
 	fi
-	
+
 	# Silent configure with MAKEVERBOSE==0
 	if [ ${MAKEVERBOSE:-2} -eq 0 ]; then
 		configure_args=--silent
@@ -1942,7 +1942,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.340 2020/06/13 11:42:47 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.341 2020/06/13 18:00:29 riastradh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2041,7 +2041,7 @@ getkernelconf()
 diskimage()
 {
 	ARG="$(echo $1 | tr '[:lower:]' '[:upper:]')"
-	[ -f "${DESTDIR}/etc/mtree/set.base" ] || 
+	[ -f "${DESTDIR}/etc/mtree/set.base" ] ||
 	    bomb "The release binaries must be built first"
 	kerneldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
 	kernel="${kerneldir}/netbsd-${ARG}.gz"
@@ -2196,7 +2196,7 @@ RUMP_LIBSETS='
 	-lrumpkern_tty -lrumpvfs -lrump,
 	-lrumpfs_tmpfs -lrumpvfs -lrump,
 	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
-	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet 
+	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
 	    -lrumpdev -lrumpvfs -lrump,
 	-lrumpnet_sockin -lrumpfs_smbfs -lrumpdev_netsmb
 	    -lrumpkern_crypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
