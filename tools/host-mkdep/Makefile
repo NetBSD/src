@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/01/27 05:16:10 dholland Exp $
+#	$NetBSD: Makefile,v 1.16 2020/06/13 10:49:17 lukem Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -19,11 +19,15 @@ CLEANFILES+=	config.cache config.log config.status host-mkdep
 #
 CONFIGURE_ENV=	CC=${HOST_CC:Q}
 
+CONFIGURE_ARGS=	--cache-file=config.cache
+.if ${MAKEVERBOSE} == 0
+CONFIGURE_ARGS+=--silent
+.endif
+
 realall: host-mkdep
 host-mkdep: configure host-mkdep.in
 	-rm -f $@
-	${CONFIGURE_ENV} \
-	    ${HOST_SH} ${.CURDIR}/configure --cache-file=config.cache
+	${CONFIGURE_ENV} ${HOST_SH} ${.CURDIR}/configure ${CONFIGURE_ARGS}
 	chmod +x $@
 
 # Use uninstalled copy of the install program
