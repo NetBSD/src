@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.61 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.62 2020/06/13 05:31:28 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.61 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.62 2020/06/13 05:31:28 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,8 @@ tctrl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tft_on = 1;
 
+	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* clear any pending data.
 	 */
 	for (i = 0; i < 10000; i++) {
@@ -312,7 +314,6 @@ tctrl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ext_pending = 0;
 		sc->sc_ext_pending = 0;
 
-	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
 	selinit(&sc->sc_rsel);
 
 	/* setup sensors and register the power button */
