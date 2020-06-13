@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.21 2019/12/26 04:44:10 msaitoh Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.22 2020/06/13 01:41:59 roy Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.21 2019/12/26 04:44:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.22 2020/06/13 01:41:59 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2476,11 +2476,11 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 				}
 				rtcache_unref(rt, ro);
 			} else if (ifp) {
-				if (ND_IFINFO(ifp)->linkmtu &&
-				    (stcb->asoc.smallest_mtu > ND_IFINFO(ifp)->linkmtu)) {
+				if (ifp->if_mtu &&
+				    (stcb->asoc.smallest_mtu > ifp->if_mtu)) {
 					sctp_mtu_size_reset(inp,
 							    &stcb->asoc,
-							    ND_IFINFO(ifp)->linkmtu);
+							    ifp->if_mtu);
 				}
 			}
 		}
