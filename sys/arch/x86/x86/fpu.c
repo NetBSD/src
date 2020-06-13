@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.62 2020/06/04 19:53:55 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.63 2020/06/13 19:00:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.62 2020/06/04 19:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.63 2020/06/13 19:00:18 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -378,11 +378,20 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
+	union savefpu zero_fpu __aligned(64);
 	struct cpu_info *ci = curcpu();
 	int s;
 
 	KASSERT(ci->ci_ilevel == IPL_HIGH);
 	KASSERT(ci->ci_kfpu_spl != -1);
+
+	/*
+	 * Zero the fpu registers; otherwise we might leak secrets
+	 * through Spectre-class attacks to userland, even if there are
+	 * no bugs in fpu state management.
+	 */
+	memset(&zero_fpu, 0, sizeof(zero_fpu));
+	fpu_area_restore(&zero_fpu, x86_xsave_features);
 
 	/*
 	 * Set CR0_TS again so that the kernel can't accidentally use
