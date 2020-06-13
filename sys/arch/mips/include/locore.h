@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.105 2020/05/24 07:15:24 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.106 2020/06/13 14:26:33 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -857,17 +857,17 @@ struct pridtab {
 #define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
 #define  MIPS_CP0FL_EIRR	__BIT(3)
 #define  MIPS_CP0FL_EIMR	__BIT(4)
-#define  MIPS_CP0FL_EBASE	__BIT(5)
-#define  MIPS_CP0FL_CONFIG	__BIT(6)
-#define  MIPS_CP0FL_CONFIG1	__BIT(7)
-#define  MIPS_CP0FL_CONFIG2	__BIT(8)
-#define  MIPS_CP0FL_CONFIG3	__BIT(9)
-#define  MIPS_CP0FL_CONFIG4	__BIT(10)
-#define  MIPS_CP0FL_CONFIG5	__BIT(11)
-#define  MIPS_CP0FL_CONFIG6	__BIT(12)
-#define  MIPS_CP0FL_CONFIG7	__BIT(13)
-#define  MIPS_CP0FL_USERLOCAL	__BIT(14)
-#define  MIPS_CP0FL_HWRENA	__BIT(15)
+#define  MIPS_CP0FL_EBASE	__BIT(5)  /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG	__BIT(6)  /* XXX defined - doesn't need to be hard coded */
+#define  MIPS_CP0FL_CONFIG1	__BIT(7)  /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG2	__BIT(8)  /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG3	__BIT(9)  /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG4	__BIT(10) /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG5	__BIT(11) /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG6	__BIT(12) /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_CONFIG7	__BIT(13) /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_USERLOCAL	__BIT(14) /* XXX probeable - shouldn't be hard coded */
+#define  MIPS_CP0FL_HWRENA	__BIT(15) /* XXX probeable - shouldn't be hard coded */
 
 /*
  * cpu_cidflags defines, by company
