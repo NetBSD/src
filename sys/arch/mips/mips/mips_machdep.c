@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.285 2020/06/10 01:42:17 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.286 2020/06/13 14:39:07 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.285 2020/06/10 01:42:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.286 2020/06/13 14:39:07 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -935,7 +935,7 @@ mips32r2_vector_init(const struct splsw *splsw)
 	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
 		const uint32_t cfg3 = mipsNN_cp0_config3_read();
-		if (cfg3 & MIPSNN_CFG3_ULRP) {
+		if (cfg3 & MIPSNN_CFG3_ULRI) {
 			cp0flags |= MIPS_CP0FL_USERLOCAL;
 		}
 		if (cfg3 & MIPSNN_CFG3_DSP2P) {
@@ -1081,7 +1081,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
 		const uint32_t cfg3 = mipsNN_cp0_config3_read();
-		if (cfg3 & MIPSNN_CFG3_ULRP) {
+		if (cfg3 & MIPSNN_CFG3_ULRI) {
 			cp0flags |= MIPS_CP0FL_USERLOCAL;
 		}
 		if (cfg3 & MIPSNN_CFG3_DSP2P) {
