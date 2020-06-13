@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.45 2020/05/28 20:03:19 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.46 2020/06/13 23:58:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.45 2020/05/28 20:03:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.46 2020/06/13 23:58:52 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -163,7 +163,7 @@ ENTRY(msr_onfault)
 	ret
 END(msr_onfault)
 
-ENTRY(tsc_get_timecount)
+ENTRY(cpu_counter)
 	pushl	%ebx
 	movl	CPUVAR(CURLWP), %ecx
 1:
@@ -177,10 +177,9 @@ ENTRY(tsc_get_timecount)
 	ret
 2:
 	jmp	1b
-END(tsc_get_timecount)
+END(cpu_counter)
 
-STRONG_ALIAS(cpu_counter, tsc_get_timecount)
-STRONG_ALIAS(cpu_counter32, tsc_get_timecount)
+STRONG_ALIAS(cpu_counter32, cpu_counter)
 
 ENTRY(breakpoint)
 	pushl	%ebp

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.49 2020/06/13 23:58:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.49 2020/06/13 23:58:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
+#include <sys/lock.h>
 
 #include <machine/cpu_counter.h>
 #include <machine/cpuvar.h>
@@ -50,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.48 2020/05/27 18:46:15 ad Exp $");
 #define	TSC_SYNC_ROUNDS		1000
 #define	ABS(a)			((a) >= 0 ? (a) : -(a))
 
-u_int	tsc_get_timecount(struct timecounter *);
+static u_int	tsc_get_timecount(struct timecounter *);
 
 static void	tsc_delay(unsigned int);
 
@@ -351,4 +352,37 @@ tsc_delay(unsigned int us)
 	while ((cpu_counter() - start) < delta) {
 		x86_pause();
 	}
+}
+
+static u_int
+tsc_get_timecount(struct timecounter *tc)
+{
+	static __cpu_simple_lock_t lock = __SIMPLELOCK_UNLOCKED;
+	static int lastwarn;
+	uint64_t cur, prev;
+	lwp_t *l = curlwp;
+	int ticks;
+
+	/*
+	 * Previous value must be read before the counter and stored to
+	 * after, because this routine can be called from interrupt context
+	 * and may run over the top of an existing invocation.  Ordering is
+	 * guaranteed by "volatile" on md_tsc.
+	 */
+	prev = l->l_md.md_tsc;
+	cur = cpu_counter();
+	if (__predict_false(cur < prev)) {
+		if ((cur >> 63) == (prev >> 63) &&
+		    __cpu_simple_lock_try(&lock)) {
+			ticks = getticks();
+			if (ticks - lastwarn >= hz) {
+				printf("WARNING: TSC time went backwards "
+				    " by %u\n", (unsigned)(prev - cur));
+				lastwarn = ticks;
+			}
+			__cpu_simple_unlock(&lock);
+		}
+	}
+	l->l_md.md_tsc = cur;
+	return (uint32_t)cur;
 }

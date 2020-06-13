@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.59 2020/06/01 22:58:06 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.60 2020/06/13 23:58:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -206,8 +206,10 @@ ENTRY(x86_hotpatch)
 END(x86_hotpatch)
 #endif /* !XENPV */
 
-/* Could be exact same as cpu_counter, but KMSAN needs to have the correct
- * size of the return value. */
+/*
+ * Could be exact same as cpu_counter, but KMSAN needs to have the correct
+ * size of the return value.
+ */
 ENTRY(cpu_counter32)
 	movq	CPUVAR(CURLWP), %rcx
 1:
@@ -221,7 +223,6 @@ ENTRY(cpu_counter32)
 2:
 	jmp	1b
 END(cpu_counter32)
-STRONG_ALIAS(tsc_get_timecount, cpu_counter32)
 
 ENTRY(cpu_counter)
 	movq	CPUVAR(CURLWP), %rcx
