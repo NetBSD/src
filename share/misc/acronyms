@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.303 2020/06/11 23:19:53 sevan Exp $
+$NetBSD: acronyms,v 1.304 2020/06/13 14:31:49 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -59,6 +59,7 @@ B/W	bandwidth
 B/W	between
 BAI	goodbye
 BAK	back at keyboard
+BAU	business as usual
 BBIAB	be back in a bit
 BBL	[I'll] be back later
 BBR	burnt beyond repair
