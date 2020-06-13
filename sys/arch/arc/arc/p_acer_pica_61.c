@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.12 2011/03/06 14:58:42 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.13 2020/06/13 20:01:27 ad Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.12 2011/03/06 14:58:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.13 2020/06/13 20:01:27 ad Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm.h>
@@ -86,15 +86,6 @@ struct pica_dev acer_pica_61_cpu[] = {
 void
 p_acer_pica_61_init(void)
 {
-
-	/*
-	 * PICA-61 has PC-style coherent(?) 128KB L2 cache,
-	 * and mips_L2CachePresent == 0 on this machine.
-	 *
-	 * if page zero in the idle loop is enabled,
-	 * commands dump core due to incoherent cache.
-	 */
-	vm_page_zero_enable = false; /* XXX - should be enabled */
 
 	c_magnum_init();
 
