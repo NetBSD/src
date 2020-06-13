@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.19 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.20 2020/06/13 20:01:27 ad Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.19 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.20 2020/06/13 20:01:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,14 +198,6 @@ p_dti_tyne_init(void)
 	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
 	 */
 	ipl_sr_map = dti_tyne_ipl_sr_map;
-
-	/*
-	 * XXX - should be enabled, if tested.
-	 *
-	 * We use safe default for now, because this platform is untested.
-	 * In other words, the following may not be needed at all.
-	 */
-	vm_page_zero_enable = false;
 
 	/*
 	 * Initialize I/O address offset
