@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.6 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.7 2020/06/13 14:39:07 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -239,8 +239,8 @@
 /* "CMGCR" (R): Coherency Manager memory-mapped Global Configuration Register Space is implemented. */
 #define	MIPSNN_CFG3_CMGCR	0x20000000
 
-/* "ULRP" (R): UserLocal register is implemented. */
-#define	MIPSNN_CFG3_ULRP	0x00002000
+/* "ULRI" (R): UserLocal register is implemented. */
+#define	MIPSNN_CFG3_ULRI	0x00002000
 
 /* "IPLW" (R): Width of Status[IPL] and Cause[RIPL] fields. */
 #define	MIPSNN_CFG3_IPLW_MASK	0x00600000
