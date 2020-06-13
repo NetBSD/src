@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.44 2020/06/13 07:36:07 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.44 2020/06/13 07:36:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.43 2020/06/13 07:30:02 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.44 2020/06/13 07:36:07 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -304,7 +304,7 @@ Str_FindSubstring(const char *string, const char *substring)
 	 * substring.
 	 */
 
-	for (b = substring; *string != 0; string += 1) {
+	for (b = substring; *string != 0; string++) {
 		if (*string != *b)
 			continue;
 		a = string;
@@ -354,7 +354,7 @@ Str_Match(const char *string, const char *pattern)
 		 * match or we reach the end of the string.
 		 */
 		if (*pattern == '*') {
-			pattern += 1;
+			pattern++;
 			if (*pattern == 0)
 				return(1);
 			while (*string != 0) {
