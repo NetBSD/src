@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.129 2020/06/13 18:38:33 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.130 2020/06/13 18:40:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.129 2020/06/13 18:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.130 2020/06/13 18:40:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1635,13 +1635,21 @@ selftest(void)
 
 		cgd_cipher(&sc, buf, buf, txtlen, selftests[i].blkno,
 				selftests[i].secsize, CGD_CIPHER_ENCRYPT);
-		if (memcmp(buf, selftests[i].ctxt, txtlen) != 0)
-			panic("encryption is broken");
+		if (memcmp(buf, selftests[i].ctxt, txtlen) != 0) {
+			hexdump(printf, "was", buf, txtlen);
+			hexdump(printf, "exp", selftests[i].ctxt, txtlen);
+			panic("cgd %s encryption is broken [%zu]",
+			    selftests[i].alg, i);
+		}
 
 		cgd_cipher(&sc, buf, buf, txtlen, selftests[i].blkno,
 				selftests[i].secsize, CGD_CIPHER_DECRYPT);
-		if (memcmp(buf, selftests[i].ptxt, txtlen) != 0)
-			panic("decryption is broken");
+		if (memcmp(buf, selftests[i].ptxt, txtlen) != 0) {
+			hexdump(printf, "was", buf, txtlen);
+			hexdump(printf, "exp", selftests[i].ptxt, txtlen);
+			panic("cgd %s decryption is broken [%zu]",
+			    selftests[i].alg, i);
+		}
 
 		kmem_free(buf, txtlen);
 		sc.sc_cfuncs->cf_destroy(sc.sc_cdata.cf_priv);
