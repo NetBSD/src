@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.339 2020/05/24 04:55:53 rin Exp $
+#	$NetBSD: build.sh,v 1.340 2020/06/13 11:42:47 lukem Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1662,12 +1662,17 @@ rebuildmake()
 	if ! ${do_rebuildmake}; then
 		return
 	fi
+	
+	# Silent configure with MAKEVERBOSE==0
+	if [ ${MAKEVERBOSE:-2} -eq 0 ]; then
+		configure_args=--silent
+	fi
 
 	statusmsg "Bootstrapping ${toolprefix}make"
 	${runcmd} cd "${tmpdir}"
 	${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
 		CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-	    ${HOST_SH} "${TOP}/tools/make/configure" ||
+	    ${HOST_SH} "${TOP}/tools/make/configure" ${configure_args} ||
 	( cp ${tmpdir}/config.log ${tmpdir}-config.log
 	      bomb "Configure of ${toolprefix}make failed, see ${tmpdir}-config.log for details" )
 	${runcmd} ${HOST_SH} buildmake.sh ||
@@ -1937,7 +1942,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.339 2020/05/24 04:55:53 rin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.340 2020/06/13 11:42:47 lukem Exp $
 # with these arguments: ${_args}
 #
 
