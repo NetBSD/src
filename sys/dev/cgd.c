@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.131 2020/06/13 18:42:22 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.132 2020/06/13 22:15:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.131 2020/06/13 18:42:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.132 2020/06/13 22:15:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1541,46 +1541,26 @@ cgd_cipher(struct cgd_softc *sc, void *dstv, void *srcv,
 	char		*dst = dstv;
 	char		*src = srcv;
 	cfunc_cipher	*cipher = sc->sc_cfuncs->cf_cipher;
-	struct uio	dstuio;
-	struct uio	srcuio;
-	struct iovec	dstiov[2];
-	struct iovec	srciov[2];
 	size_t		blocksize = sc->sc_cdata.cf_blocksize;
 	size_t		todo;
 	char		blkno_buf[CGD_MAXBLOCKSIZE];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
-	KASSERTMSG(len % blocksize == 0,
-	    "cgd_cipher: len %% blocksize != 0");
-
+	KASSERT(len % blocksize == 0);
 	/* ensure that sizeof(daddr_t) <= blocksize (for encblkno IVing) */
-	KASSERTMSG(sizeof(daddr_t) <= blocksize,
-	    "cgd_cipher: sizeof(daddr_t) > blocksize");
-
-	KASSERTMSG(blocksize <= CGD_MAXBLOCKSIZE,
-	    "cgd_cipher: blocksize > CGD_MAXBLOCKSIZE");
-
-	dstuio.uio_iov = dstiov;
-	dstuio.uio_iovcnt = 1;
-
-	srcuio.uio_iov = srciov;
-	srcuio.uio_iovcnt = 1;
+	KASSERT(sizeof(daddr_t) <= blocksize);
+	KASSERT(blocksize <= CGD_MAXBLOCKSIZE);
 
 	for (; len > 0; len -= todo) {
 		todo = MIN(len, secsize);
-
-		dstiov[0].iov_base = dst;
-		srciov[0].iov_base = src;
-		dstiov[0].iov_len  = todo;
-		srciov[0].iov_len  = todo;
 
 		memset(blkno_buf, 0x0, blocksize);
 		blkno2blkno_buf(blkno_buf, blkno);
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 1: blkno_buf",
 		    blkno_buf, blocksize));
 
-		cipher(sc->sc_cdata.cf_priv, &dstuio, &srcuio, blkno_buf, dir);
+		cipher(sc->sc_cdata.cf_priv, dst, src, todo, blkno_buf, dir);
 
 		dst += todo;
 		src += todo;
