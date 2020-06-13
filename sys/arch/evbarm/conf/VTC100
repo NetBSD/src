@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.22 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: VTC100,v 1.23 2020/06/13 16:51:25 ad Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -19,7 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_CORTEXA8
 options 	TI_AM335X
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 
 # XXX The Cortex PMC delay() doesn't seem to work.
 #no options	CORTEX_PMC
