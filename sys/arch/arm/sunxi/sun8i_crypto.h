@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.h,v 1.1 2019/12/09 04:51:03 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.h,v 1.2 2020/06/13 18:57:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -125,9 +125,20 @@
 #define	SUN8I_CRYPTO_ESR_CHAN_DATALENERR	__BIT(1)
 #define	SUN8I_CRYPTO_ESR_CHAN_KEYSRAMERR	__BIT(2)
 
+#define	SUN8I_CRYPTO_MAXKEYBYTES	256	/* e.g. 2048-bit RSA */
+#define	SUN8I_CRYPTO_MAXIVBYTES		64	/* e.g. SHA-512 */
+#define	SUN8I_CRYPTO_MAXCTRBYTES	16	/* e.g. AES */
+
+/*
+ * Eight src segments and eight dst segments per task.  The datalen
+ * field, measured either in bytes or words, is 32 bits.  Each segment
+ * length is measured in words and is also 32 bits.  We never do very
+ * long transfers anyway so rounding the maximum size down to 2^32 - 1
+ * is not a real limitation.
+ */
 #define	SUN8I_CRYPTO_MAXSEGS		8
-#define	SUN8I_CRYPTO_MAXSEGSIZE		UINT32_MAX
-#define	SUN8I_CRYPTO_MAXSIZE		UINT32_MAX /* datalen */
+#define	SUN8I_CRYPTO_MAXSEGLEN		UINT32_MAX
+#define	SUN8I_CRYPTO_MAXDATALEN		UINT32_MAX
 
 struct sun8i_crypto_taskdesc {
 	uint32_t	td_cid;		/* task channel id */
