@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.127 2020/06/13 18:35:35 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.128 2020/06/13 18:36:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.127 2020/06/13 18:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.128 2020/06/13 18:36:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1602,15 +1602,13 @@ selftest(void)
 	struct cgd_softc sc;
 	void *buf;
 
-	printf("running cgd selftest ");
-
 	for (size_t i = 0; i < __arraycount(selftests); i++) {
 		const char *alg = selftests[i].alg;
 		const uint8_t *key = selftests[i].key;
 		int keylen = selftests[i].keylen;
 		int txtlen = selftests[i].txtlen;
 
-		printf("%s-%d ", alg, keylen);
+		aprint_verbose("cgd: self-test %s-%d\n", alg, keylen);
 
 		memset(&sc, 0, sizeof(sc));
 
@@ -1648,7 +1646,7 @@ selftest(void)
 		sc.sc_cfuncs->cf_destroy(sc.sc_cdata.cf_priv);
 	}
 
-	printf("done\n");
+	aprint_verbose("cgd: self-tests passed\n");
 }
 
 MODULE(MODULE_CLASS_DRIVER, cgd, "blowfish,des,dk_subr,bufq_fcfs");
