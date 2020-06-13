@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.30 2020/06/13 13:45:06 uwe Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.31 2020/06/13 16:56:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.30 2020/06/13 13:45:06 uwe Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.31 2020/06/13 16:56:46 wiz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -59,9 +59,9 @@ __dead static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-su] [-o mntopts] [-p port] "
+	fprintf(stderr, "usage: %s [-46su] [-o mntopts] [-p port] "
 	    "[user@]server[:path] mountpoint\n", getprogname());
-	fprintf(stderr, "       %s -c [-su] [-o mntopts] devfile mountpoint\n",
+	fprintf(stderr, "       %s -c [-46su] [-o mntopts] devfile mountpoint\n",
 	    getprogname());
 	exit(1);
 }
