@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2019/05/08 02:25:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.88 2020/06/13 10:49:17 lukem Exp $
 
 HOSTLIB=	nbcompat
 
@@ -76,10 +76,15 @@ _CURDIR:=	${.CURDIR}
 
 SRCS:=		${SRCS:M*.c}
 
+CONFIGURE_ARGS=	--cache-file=config.cache
+.if ${MAKEVERBOSE} == 0
+CONFIGURE_ARGS+=--silent
+.endif
+
 config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 	rm -f ${.TARGET}
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
-		${HOST_SH} ${.CURDIR}/configure --cache-file=config.cache
+		${HOST_SH} ${.CURDIR}/configure ${CONFIGURE_ARGS}
 
 defs.mk: config.cache
 	@touch ${.TARGET}
