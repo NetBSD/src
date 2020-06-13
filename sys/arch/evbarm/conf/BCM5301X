@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.35 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: BCM5301X,v 1.36 2020/06/13 16:51:25 ad Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -26,7 +26,7 @@ options 	BCMETH_COUNTERS
 options 	CPU_CORTEXA9
 #options 	MEMSIZE=256
 options 	BCM5301X
-options 	PMAPCOUNTERS
+#options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 makeoptions	KERNEL_BASE_PHYS="0x80100000"
 
