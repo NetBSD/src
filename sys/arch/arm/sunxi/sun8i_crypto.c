@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.14 2020/05/15 19:28:09 maxv Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.15 2020/06/13 18:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.14 2020/05/15 19:28:09 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.15 2020/06/13 18:54:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1203,10 +1203,8 @@ sun8i_crypto_sysctl_rng(SYSCTLFN_ARGS)
 		return 0;
 	}
 
-	/* Verify the output buffer size is reasonable.  */
-	size = *oldlenp;
-	if (size > 4096)	/* size_t, so never negative */
-		return E2BIG;
+	/* Truncate to 4096 bytes.  */
+	size = MIN(4096, *oldlenp);
 	if (size == 0)
 		return 0;	/* nothing to do */
 
