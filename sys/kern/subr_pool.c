@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.271 2020/06/14 21:34:25 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.272 2020/06/14 23:17:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.271 2020/06/14 21:34:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.272 2020/06/14 23:17:01 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3353,7 +3353,7 @@ pool_sysctl(SYSCTLFN_ARGS)
 				data.pr_cache_nhit_pcpu += cc->cc_hits;
 				data.pr_cache_nmiss_global += cc->cc_pcmisses;
 				nfull += cc->cc_nfull; /* 32-bit rollover! */
-				data.pr_cache_npartial = cc->cc_npart;
+				data.pr_cache_npartial += cc->cc_npart;
 			}
 			data.pr_cache_nfull = nfull;
 		} else {
