@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.63 2020/06/14 09:55:37 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.64 2020/06/14 12:02:07 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.63 2020/06/14 09:55:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.64 2020/06/14 12:02:07 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1345,44 +1345,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 	}
 
-#define CACHE_DEBUG
-#ifdef CACHE_DEBUG
-	printf("MIPS32/64 params: cpu arch: %d\n", opts->mips_cpu_arch);
-	printf("MIPS32/64 params: TLB entries: %d\n", opts->mips_num_tlb_entries);
-	if (mci->mci_picache_line_size == 0) {
-		printf("MIPS32/64 params: no Icache\n");
-	} else {
-		printf("MIPS32/64 params: %s: line=%d, total=%d, "
-		    "ways=%d, sets=%d, colors=%d\n", "Icache",
-		    mci->mci_picache_line_size,
-		    mci->mci_picache_way_size * mci->mci_picache_ways,
-		    mci->mci_picache_ways,
-		    mci->mci_picache_way_size / mci->mci_picache_line_size,
-		    mci->mci_picache_way_size >> PAGE_SHIFT);
-	}
-	if (mci->mci_pdcache_line_size == 0) {
-		printf("MIPS32/64 params: no Dcache\n");
-	} else {
-		printf("MIPS32/64 params: %s: line=%d, total=%d, "
-		    "ways=%d, sets=%d, colors=%d\n", "Dcache",
-		    mci->mci_pdcache_line_size,
-		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways,
-		    mci->mci_pdcache_ways,
-		    mci->mci_pdcache_way_size / mci->mci_pdcache_line_size,
-		    mci->mci_pdcache_way_size >> PAGE_SHIFT);
-	}
-	if (mci->mci_sdcache_line_size != 0) {
-		printf("MIPS32/64 params: %s: line=%d, total=%d, "
-		    "ways=%d, sets=%d, colors=%d\n", "SDcache",
-		    mci->mci_sdcache_line_size,
-		    mci->mci_sdcache_way_size * mci->mci_sdcache_ways,
-		    mci->mci_sdcache_ways,
-		    mci->mci_sdcache_way_size / mci->mci_sdcache_line_size,
-		    mci->mci_sdcache_way_size >> PAGE_SHIFT);
-	}
-#endif
-
-
         /*
          * calculate the alias masks and from them set to virtual alias flags.
          */
@@ -1441,6 +1403,43 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 		break;
 	}
+
+#define CACHE_DEBUG
+#ifdef CACHE_DEBUG
+	printf("MIPS32/64 params: cpu arch: %d\n", opts->mips_cpu_arch);
+	printf("MIPS32/64 params: TLB entries: %d\n", opts->mips_num_tlb_entries);
+	if (mci->mci_picache_line_size == 0) {
+		printf("MIPS32/64 params: no Icache\n");
+	} else {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Icache",
+		    mci->mci_picache_line_size,
+		    mci->mci_picache_way_size * mci->mci_picache_ways,
+		    mci->mci_picache_ways,
+		    mci->mci_picache_way_size / mci->mci_picache_line_size,
+		    mci->mci_picache_way_size >> PAGE_SHIFT);
+	}
+	if (mci->mci_pdcache_line_size == 0) {
+		printf("MIPS32/64 params: no Dcache\n");
+	} else {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Dcache",
+		    mci->mci_pdcache_line_size,
+		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways,
+		    mci->mci_pdcache_ways,
+		    mci->mci_pdcache_way_size / mci->mci_pdcache_line_size,
+		    mci->mci_pdcache_way_size >> PAGE_SHIFT);
+	}
+	if (mci->mci_sdcache_line_size != 0) {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "SDcache",
+		    mci->mci_sdcache_line_size,
+		    mci->mci_sdcache_way_size * mci->mci_sdcache_ways,
+		    mci->mci_sdcache_ways,
+		    mci->mci_sdcache_way_size / mci->mci_sdcache_line_size,
+		    mci->mci_sdcache_way_size >> PAGE_SHIFT);
+	}
+#endif
 
 	mipsNN_cache_init(cfg, cfg1);
 
