@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.176 2020/06/11 18:42:02 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.177 2020/06/14 21:31:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.176 2020/06/11 18:42:02 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.177 2020/06/14 21:31:11 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1145,7 +1145,6 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 			switch (rv = errno) {
 			case EINTR:
 			case EALREADY:
-			case ESRCH:
 				rv = 0;
 				break;
 			case ETIMEDOUT:
