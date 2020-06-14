@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.43 2019/11/10 21:16:23 chs Exp $	*/
+/*	$NetBSD: necpb.c,v 1.44 2020/06/14 01:40:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.43 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.44 2020/06/14 01:40:02 chs Exp $");
 
 #include "opt_pci.h"
 
@@ -244,9 +244,9 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pc = &sc->sc_ncp->nc_pc;
 #ifdef PCI_NETBSD_CONFIGURE
 	pc->pc_ioext = extent_create("necpbio", 0x00100000, 0x01ffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
 #endif

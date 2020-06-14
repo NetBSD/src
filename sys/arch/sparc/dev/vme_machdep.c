@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.69 2019/11/10 21:16:32 chs Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.70 2020/06/14 01:40:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.69 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.70 2020/06/14 01:40:05 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -315,9 +315,7 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 		sizeof(vmebus_translations)/sizeof(vmebus_translations[0]);
 
 	vme_dvmamap = extent_create("vmedvma", VME4_DVMA_BASE, VME4_DVMA_END,
-				    0, 0, EX_NOWAIT);
-	if (vme_dvmamap == NULL)
-		panic("vme: unable to allocate DVMA map");
+				    0, 0, EX_WAITOK);
 
 	printf("\n");
 	(void)config_found(self, &vba, 0);
