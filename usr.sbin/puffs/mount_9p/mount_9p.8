@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.14 2020/06/13 13:45:06 uwe Exp $
+.\"	$NetBSD: mount_9p.8,v 1.15 2020/06/14 00:30:20 uwe Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -57,6 +57,10 @@ If
 is supplied, it is used as the mount rootpath on the remote host.
 .Ar path
 must be an absolute path.
+.Pp
+The host name may be optionally enclosed in square brackets.
+This is required when using numeric IPv6 addresses as they contain
+colons as part of their syntax.
 .Pp
 The
 .Fl c
