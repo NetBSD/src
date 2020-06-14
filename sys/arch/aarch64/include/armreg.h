@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.48 2020/05/28 12:41:15 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.49 2020/06/14 16:10:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1305,6 +1305,26 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	CNTCTL_ENABLE		__BIT(0)	// Timer Enabled
 
 // ID_AA64PFR0_EL1: AArch64 Processor Feature Register 0
+#define	ID_AA64PFR0_EL1_CSV3		__BITS(63,60) // Speculative fault data
+#define	 ID_AA64PFR0_EL1_CSV3_NONE	0
+#define	 ID_AA64PFR0_EL1_CSV3_IMPL	1
+#define	ID_AA64PFR0_EL1_CSV2		__BITS(59,56) // Speculative branches
+#define	 ID_AA64PFR0_EL1_CSV2_NONE	0
+#define	 ID_AA64PFR0_EL1_CSV2_IMPL	1
+// reserved [55:52]
+#define	ID_AA64PFR0_EL1_DIT		__BITS(51,48) // Data-indep. timing
+#define	 ID_AA64PFR0_EL1_DIT_NONE	0
+#define	 ID_AA64PFR0_EL1_DIT_IMPL	1
+#define	ID_AA64PFR0_EL1_AMU		__BITS(47,44) // Activity monitors ext.
+#define	 ID_AA64PFR0_EL1_AMU_NONE	0
+#define	 ID_AA64PFR0_EL1_AMU_IMPLv8_4	1
+#define	 ID_AA64PFR0_EL1_AMU_IMPLv8_6	2
+#define	ID_AA64PFR0_EL1_MPAM		__BITS(43,40) // MPAM Extension
+#define	 ID_AA64PFR0_EL1_MPAM_NONE	0
+#define	 ID_AA64PFR0_EL1_MPAM_IMPL	1
+#define	ID_AA64PFR0_EL1_SEL2		__BITS(43,40) // Secure EL2
+#define	 ID_AA64PFR0_EL1_SEL2_NONE	0
+#define	 ID_AA64PFR0_EL1_SEL2_IMPL	1
 #define	ID_AA64PFR0_EL1_SVE		__BITS(35,32) // Scalable Vector
 #define	 ID_AA64PFR0_EL1_SVE_NONE	 0
 #define	 ID_AA64PFR0_EL1_SVE_IMPL	 1
