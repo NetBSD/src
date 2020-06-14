@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.288 2020/06/14 06:50:31 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.289 2020/06/14 14:40:24 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.288 2020/06/14 06:50:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.289 2020/06/14 14:40:24 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1444,7 +1444,7 @@ mips3_tlb_probe(void)
 static const char *
 wayname(int ways)
 {
-	static char buf[sizeof("xxx-way set-associative")];
+	static char buf[sizeof("xxx-way set-associative") + 1];
 
 #ifdef DIAGNOSTIC
 	if (ways > 999)
