@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.64 2020/06/14 12:02:07 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.65 2020/06/14 12:07:44 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.64 2020/06/14 12:02:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.65 2020/06/14 12:07:44 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1152,6 +1152,13 @@ mips_config_cache_modern(uint32_t cpu_id)
 	mco->mco_icache_sync_range_index = mipsNN_picache_sync_range_index;
 
 	switch (mci->mci_picache_line_size) {
+#ifdef MIPS_DISABLE_L1_CACHE
+	case 0:
+		mco->mco_icache_sync_all = no_cache_op;
+		mco->mco_icache_sync_range = no_cache_op_range;
+		mco->mco_icache_sync_range_index = no_cache_op_range_index;
+		break;
+#endif
 	case 16:
 		/* used internally by mipsNN_picache_sync_range */
 		mco->mco_intern_icache_sync_range =
@@ -1170,13 +1177,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mco->mco_intern_icache_sync_range_index =
 		    cache_r4k_icache_index_inv_32;
 		break;
-#ifdef MIPS_DISABLE_L1_CACHE
-	case 0:
-		mco->mco_icache_sync_all = no_cache_op;
-		mco->mco_icache_sync_range = no_cache_op_range;
-		mco->mco_icache_sync_range_index = no_cache_op_range_index;
-		break;
-#endif
 	case 64:
 		/* used internally by mipsNN_picache_sync_range */
 		mco->mco_intern_icache_sync_range =
@@ -1210,6 +1210,15 @@ mips_config_cache_modern(uint32_t cpu_id)
 	mco->mco_pdcache_wbinv_range_index = mipsNN_pdcache_wbinv_range_index;
 
 	switch (mci->mci_pdcache_line_size) {
+#ifdef MIPS_DISABLE_L1_CACHE
+	case 0:
+		mco->mco_pdcache_wbinv_all = no_cache_op;
+		mco->mco_pdcache_wbinv_range = no_cache_op_range;
+		mco->mco_pdcache_wbinv_range_index = no_cache_op_index;
+		mco->mco_pdcache_inv_range = no_cache_op_range;
+		mco->mco_pdcache_wb_range = no_cache_op_range;
+		break;
+#endif
 	case 16:
 		mco->mco_pdcache_wbinv_range =
 		    cache_r4k_pdcache_hit_wb_inv_16;
@@ -1265,15 +1274,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    cache_r4k_pdcache_index_wb_inv_128;
 #endif
 		break;
-#ifdef MIPS_DISABLE_L1_CACHE
-	case 0:
-		mco->mco_pdcache_wbinv_all = no_cache_op;
-		mco->mco_pdcache_wbinv_range = no_cache_op_range;
-		mco->mco_pdcache_wbinv_range_index = no_cache_op_index;
-		mco->mco_pdcache_inv_range = no_cache_op_range;
-		mco->mco_pdcache_wb_range = no_cache_op_range;
-		break;
-#endif
 	default:
 		panic("no Dcache ops for %dB lines",
 		    mci->mci_pdcache_line_size);
