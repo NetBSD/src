@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.17 2020/06/13 18:58:26 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.17 2020/06/13 18:58:26 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.18 2020/06/14 16:29:47 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2393,7 +2393,7 @@ sun8i_crypto_callback(struct sun8i_crypto_softc *sc,
     struct sun8i_crypto_task *task, void *cookie, int error)
 {
 	struct cryptop *crp = cookie;
-	struct cryptodesc *crd = crp->crp_desc;
+	struct cryptodesc *crd __diagused = crp->crp_desc;
 
 	KASSERT(error != ERESTART);
 	KASSERT(crd != NULL);
