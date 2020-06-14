@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.5 2020/03/05 15:33:13 msaitoh Exp $	*/
+/*	$NetBSD: qat.c,v 1.6 2020/06/14 23:23:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.5 2020/03/05 15:33:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.6 2020/06/14 23:23:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1577,24 +1577,13 @@ int
 qat_crypto_load_iv(struct qat_sym_cookie *qsc, struct cryptop *crp,
     struct cryptodesc *crde, struct qat_crypto_desc const *desc)
 {
-	uint32_t rand;
 	uint32_t ivlen = desc->qcd_cipher_blk_sz;
-	int i;
 
 	if (crde->crd_flags & CRD_F_IV_EXPLICIT) {
 		memcpy(qsc->qsc_iv_buf, crde->crd_iv, ivlen);
 	} else {
 		if (crde->crd_flags & CRD_F_ENCRYPT) {
-			for (i = 0; i + sizeof(rand) <= ivlen;
-			    i += sizeof(rand)) {
-				rand = cprng_fast32();
-				memcpy(qsc->qsc_iv_buf + i, &rand, sizeof(rand));
-			}
-			if (sizeof(qsc->qsc_iv_buf) % sizeof(rand) != 0) {
-				rand = cprng_fast32();
-				memcpy(qsc->qsc_iv_buf + i, &rand,
-				       sizeof(qsc->qsc_iv_buf) - i);
-			}
+			cprng_fast(qsc->qsc_iv_buf, ivlen);
 		} else if (crp->crp_flags & CRYPTO_F_IMBUF) {
 			/* get iv from buf */
 			m_copydata(qsc->qsc_buf, crde->crd_inject, ivlen,
