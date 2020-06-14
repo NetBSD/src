@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.15 2015/10/30 12:14:32 phx Exp $ */
+/*	$NetBSD: p5pb.c,v 1.16 2020/06/14 01:40:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -495,14 +495,11 @@ p5pb_bus_reconfigure(struct p5pb_softc *sc)
 	pc = &sc->apc;
 
 	ioext = extent_create("p5pbio", 0, P5BUS_PCI_IO_SIZE, NULL, 0,
-	    EX_NOWAIT);
+	    EX_WAITOK);
 
 	memext = extent_create("p5pbmem", sc->pci_mem_lowest, 
-	     sc->pci_mem_highest - 1, NULL, 0, EX_NOWAIT);
+	     sc->pci_mem_highest - 1, NULL, 0, EX_WAITOK);
 	
-	if ( (!ioext) || (!memext) ) 
-		return false;
-
 #ifdef P5PB_DEBUG 
 	aprint_normal("p5pb: reconfiguring the bus!\n");
 #endif /* P5PB_DEBUG */

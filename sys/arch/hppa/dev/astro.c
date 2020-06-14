@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.2 2020/06/14 01:40:04 chs Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -328,7 +328,7 @@ astro_attach(device_t parent, device_t self, void *aux)
 	snprintf(sc->sc_dvmamapname, sizeof(sc->sc_dvmamapname),
 	    "%s_dvma", device_xname(sc->sc_dv));
 	sc->sc_dvmamap = extent_create(sc->sc_dvmamapname, 0, (1 << iova_bits),
-	    0, 0, EX_NOWAIT);
+	    0, 0, EX_WAITOK);
 
 	sc->sc_dmatag = astro_dmat;
 	sc->sc_dmatag._cookie = sc;

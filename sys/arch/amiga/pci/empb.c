@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.11 2015/10/02 05:22:49 msaitoh Exp $ */
+/*	$NetBSD: empb.c,v 1.12 2020/06/14 01:40:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -234,10 +234,10 @@ empb_callback(device_t self) {
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext = extent_create("empbio", 0, EMPB_BRIDGE_SIZE, 
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	memext = extent_create("empbmem", EMPB_MEM_BASE, EMPB_MEM_END,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
 

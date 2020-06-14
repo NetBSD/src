@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2019/11/10 21:16:29 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2020/06/14 01:40:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -124,9 +124,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: em4k.c,v 1.4 2015/10/02 05:22:49 msaitoh Exp $ */
+/*	$NetBSD: em4k.c,v 1.5 2020/06/14 01:40:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ em4k_pci_configure(struct em4k_softc *sc)
 
 	/* I/O addresses are relative to I/O space address. */
 	ioext = extent_create("em4kio", 0, EM4K_IO_SIZE, 
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	/*
 	 * Memory space addresses are absolute (and keep in mind that
@@ -255,7 +255,7 @@ em4k_pci_configure(struct em4k_softc *sc)
 	 */
 	memext = extent_create("em4kmem", kvtop((void*) sc->pci_mem_win.base),
 	    kvtop((void*) sc->pci_mem_win.base) + sc->pci_mem_win_size,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->apc, ioext, memext, NULL, 0, CACHELINE_SIZE);
 

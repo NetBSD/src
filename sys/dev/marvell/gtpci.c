@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.32 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.33 2020/06/14 01:40:06 chs Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.32 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.33 2020/06/14 01:40:06 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -454,20 +454,14 @@ gtpci_pci_config(struct gtpci_softc *sc, bus_space_tag_t iot,
 	p2pc = GTPCI_READ(sc, GTPCI_P2PC);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext = extent_create("pciio", iostart, ioend, NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", memstart, memend, NULL, 0, EX_NOWAIT);
-	if (ioext != NULL && memext != NULL)
-		pci_configure_bus(pc, ioext, memext, NULL,
-		    GTPCI_P2PC_BUSNUMBER(p2pc), cacheline_size);
-	else
-		aprint_error_dev(sc->sc_dev, "can't create extent %s%s%s\n",
-		    ioext == NULL ? "io" : "",
-		    ioext == NULL && memext == NULL ? " and " : "",
-		    memext == NULL ? "mem" : "");
-	if (ioext != NULL)
-		extent_destroy(ioext);
-	if (memext != NULL)
-		extent_destroy(memext);
+	ioext = extent_create("pciio", iostart, ioend, NULL, 0, EX_WAITOK);
+	memext = extent_create("pcimem", memstart, memend, NULL, 0, EX_WAITOK);
+
+	pci_configure_bus(pc, ioext, memext, NULL,
+	    GTPCI_P2PC_BUSNUMBER(p2pc), cacheline_size);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
 #endif
 
 	pba.pba_iot = iot;
