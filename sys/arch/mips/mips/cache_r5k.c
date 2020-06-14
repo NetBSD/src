@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.20 2017/04/27 20:05:09 skrll Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.21 2020/06/14 15:12:56 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.20 2017/04/27 20:05:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.21 2020/06/14 15:12:56 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -407,9 +407,6 @@ r4600v2_pdcache_wb_range_32(register_t va, vsize_t size)
 
 __asm(".set mips3");
 
-#define R5K_Page_Invalidate_S   0x17
-CTASSERT(R5K_Page_Invalidate_S == (CACHEOP_R4K_HIT_WB_INV|CACHE_R4K_SD));
-
 void
 r5k_sdcache_wbinv_all(void)
 {
@@ -431,9 +428,6 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	r5k_sdcache_wbinv_range((intptr_t)va, size);
 }
 
-#define	mips_r5k_round_page(x)	round_line(x, PAGE_SIZE)
-#define	mips_r5k_trunc_page(x)	trunc_line(x, PAGE_SIZE)
-
 void
 r5k_sdcache_wbinv_range(register_t va, vsize_t size)
 {
@@ -448,8 +442,8 @@ r5k_sdcache_wbinv_range(register_t va, vsize_t size)
 	__asm volatile("mfc0 %0, $28" : "=r"(taglo));
 	__asm volatile("mtc0 $0, $28");
 
-	for (; va < eva; va += (128 * 32)) {
-		cache_op_r4k_line(va, CACHEOP_R4K_HIT_WB_INV|CACHE_R4K_SD);
+	for (; va < eva; va += R5K_SC_PAGESIZE) {
+		cache_op_r4k_line(va, CACHEOP_R5K_Page_Invalidate_S);
 	}
 
 	mips_cp0_status_write(ostatus);
