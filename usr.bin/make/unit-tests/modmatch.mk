@@ -36,4 +36,4 @@ check-cclass:
 # Before 2020-06-13, this expression took quite a long time in Str_Match,
 # calling itself 601080390 times for 16 asterisks.
 slow: .PHONY
-	@:;: ${:U****************:M****************b:Q}
+#	@:;: ${:U****************:M****************b:Q}
