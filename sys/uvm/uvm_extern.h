@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.229 2020/06/13 19:55:58 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.230 2020/06/14 22:25:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -515,8 +515,6 @@ struct uvmexp_sysctl {
 #ifdef _KERNEL
 /* we need this before including uvm_page.h on some platforms */
 extern struct uvmexp uvmexp;
-/* MD code needs this without including <uvm/uvm.h> */
-extern bool vm_page_zero_enable;
 #endif
 
 /*
