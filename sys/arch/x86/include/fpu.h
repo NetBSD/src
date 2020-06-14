@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.20 2019/11/27 06:24:33 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.21 2020/06/14 16:12:05 riastradh Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -15,7 +15,7 @@ void fpuinit(struct cpu_info *);
 void fpuinit_mxcsr_mask(void);
 
 void fpu_area_save(void *, uint64_t);
-void fpu_area_restore(void *, uint64_t);
+void fpu_area_restore(const void *, uint64_t);
 
 void fpu_save(void);
 
