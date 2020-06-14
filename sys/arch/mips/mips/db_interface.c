@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.82 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.83 2020/06/14 06:50:31 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.82 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.83 2020/06/14 06:50:31 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -466,9 +466,9 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			SHOW32SEL(16, 6, "config6");
 		if ((cp0flags & MIPS_CP0FL_CONFIG7) != 0)
 			SHOW32SEL(16, 7, "config7");
-		if ((cp0flags & MIPS_CP0FL_HWRENA) != 0)
+		if (CPUISMIPSNNR2)
 			SHOW32(7, "hwrena");
-		if ((cp0flags & MIPS_CP0FL_USERLOCAL) != 0)
+		if (MIPS_HAS_USERLOCAL)
 			SHOW32SEL(4, 2, "userlocal");
 	} else {
 		SHOW32(MIPS_COP_0_CONFIG, "config");

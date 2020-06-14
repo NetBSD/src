@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.47 2020/06/11 19:20:44 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.48 2020/06/14 06:50:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.47 2020/06/11 19:20:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.48 2020/06/14 06:50:31 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -209,14 +209,14 @@ cpu_hwrena_setup(void)
 	if ((cp0flags & MIPS_CP0FL_USE) == 0)
 		return;
 
-	if (cp0flags & MIPS_CP0FL_HWRENA) {
+	if (CPUISMIPSNNR2) {
 		mipsNN_cp0_hwrena_write(
-		    MIPS_HWRENA_UL
-		    |MIPS_HWRENA_CCRES
-		    |MIPS_HWRENA_CC
-		    |MIPS_HWRENA_SYNCI_STEP
-		    |MIPS_HWRENA_CPUNUM);
-		if (cp0flags & MIPS_CP0FL_USERLOCAL) {
+		    (MIPS_HAS_USERLOCAL ? MIPS_HWRENA_UL : 0)
+		    | MIPS_HWRENA_CCRES
+		    | MIPS_HWRENA_CC
+		    | MIPS_HWRENA_SYNCI_STEP
+		    | MIPS_HWRENA_CPUNUM);
+		if (MIPS_HAS_USERLOCAL) {
 			mipsNN_cp0_userlocal_write(curlwp->l_private);
 		}
 	}
@@ -1022,8 +1022,7 @@ int
 cpu_lwp_setprivate(lwp_t *l, void *v)
 {
 #if (MIPS32R2 + MIPS64R2) > 0
-	if (l == curlwp
-	    && (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+	if (l == curlwp && MIPS_HAS_USERLOCAL) {
 		mipsNN_cp0_userlocal_write(v);
 	}
 #endif

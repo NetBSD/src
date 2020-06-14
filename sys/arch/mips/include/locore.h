@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.106 2020/06/13 14:26:33 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.107 2020/06/14 06:50:31 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -146,22 +146,23 @@ struct mips_options {
 #define	CPU_ARCH_MIPS32R2	(1 << 7)
 #define	CPU_ARCH_MIPS64R2	(1 << 8)
 
-#define	CPU_MIPS_R4K_MMU		0x0001
-#define	CPU_MIPS_NO_LLSC		0x0002
-#define	CPU_MIPS_CAUSE_IV		0x0004
-#define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
-#define	CPU_MIPS_CACHED_CCA_MASK	0x0070
+#define	CPU_MIPS_R4K_MMU		0x00001
+#define	CPU_MIPS_NO_LLSC		0x00002
+#define	CPU_MIPS_CAUSE_IV		0x00004
+#define	CPU_MIPS_HAVE_SPECIAL_CCA	0x00008	/* Defaults to '3' if not set. */
+#define	CPU_MIPS_CACHED_CCA_MASK	0x00070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
-#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
-#define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
-#define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
-#define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
-#define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
-#define	CPU_MIPS_NO_LLADDR		0x1000
-#define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
-#define	CPU_MIPS_LOONGSON2		0x4000
-#define	MIPS_NOT_SUPP			0x8000
+#define	CPU_MIPS_DOUBLE_COUNT		0x00080	/* 1 cp0 count == 2 clock cycles */
+#define	CPU_MIPS_USE_WAIT		0x00100	/* Use "wait"-based cpu_idle() */
+#define	CPU_MIPS_NO_WAIT		0x00200	/* Inverse of previous, for mips32/64 */
+#define	CPU_MIPS_D_CACHE_COHERENT	0x00400	/* D-cache is fully coherent */
+#define	CPU_MIPS_I_D_CACHE_COHERENT	0x00800	/* I-cache funcs don't need to flush the D-cache */
+#define	CPU_MIPS_NO_LLADDR		0x01000
+#define	CPU_MIPS_HAVE_MxCR		0x02000	/* have mfcr, mtcr insns */
+#define	CPU_MIPS_LOONGSON2		0x04000
+#define	MIPS_NOT_SUPP			0x08000
 #define	CPU_MIPS_HAVE_DSP		0x10000
+#define	CPU_MIPS_HAVE_USERLOCAL		0x20000
 
 #endif	/* !_LOCORE */
 
@@ -181,8 +182,9 @@ struct mips_options {
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
 # define MIPS_HAS_LLADDR	0
-# define MIPS_HAS_DSP		0
 # define MIPS_HAS_LMMI		0
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_USERLOCAL	0
 
 #elif defined(MIPS3) || defined(MIPS4)
 
@@ -206,12 +208,14 @@ struct mips_options {
 #  define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
 # endif	/* _LOCORE */
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
 # if defined(MIPS3_LOONGSON2)
 #  define MIPS_HAS_LMMI		((mips_options.mips_cpu_flags & CPU_MIPS_LOONGSON2) != 0)
 # else
 #  define MIPS_HAS_LMMI		0
 # endif
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_USERLOCAL	0
+
 #elif defined(MIPS32)
 
 # define CPUISMIPS3		1
@@ -226,8 +230,9 @@ struct mips_options {
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
 # define MIPS_HAS_LMMI		0
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_USERLOCAL	0
 
 #elif defined(MIPS32R2)
 
@@ -243,8 +248,9 @@ struct mips_options {
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 # define MIPS_HAS_LMMI		0
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
 
 #elif defined(MIPS64)
 
@@ -260,8 +266,9 @@ struct mips_options {
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
 # define MIPS_HAS_LMMI		0
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_USERLOCAL	0
 
 #elif defined(MIPS64R2)
 
@@ -277,8 +284,9 @@ struct mips_options {
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 # define MIPS_HAS_LMMI		0
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
 
 #endif
 
@@ -297,6 +305,7 @@ struct mips_options {
 #endif
 #define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 #define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
 
 /* This test is ... rather bogus */
 #define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
@@ -309,7 +318,10 @@ struct mips_options {
 #define	CPUISMIPS32R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) != 0)
 #define	CPUISMIPS64	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) != 0)
 #define	CPUISMIPS64R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) != 0)
-#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
+#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & \
+	(CPU_ARCH_MIPS32 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
+#define	CPUISMIPSNNR2	((mips_options.mips_cpu_arch & \
+	(CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64R2)) != 0)
 #define	CPUIS64BITS	((mips_options.mips_cpu_arch & \
 	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
 
@@ -866,8 +878,6 @@ struct pridtab {
 #define  MIPS_CP0FL_CONFIG5	__BIT(11) /* XXX probeable - shouldn't be hard coded */
 #define  MIPS_CP0FL_CONFIG6	__BIT(12) /* XXX probeable - shouldn't be hard coded */
 #define  MIPS_CP0FL_CONFIG7	__BIT(13) /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_USERLOCAL	__BIT(14) /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_HWRENA	__BIT(15) /* XXX probeable - shouldn't be hard coded */
 
 /*
  * cpu_cidflags defines, by company
