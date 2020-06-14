@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.279 2020/06/13 06:05:08 mlelstv Exp $	*/
+/*	$NetBSD: in6.c,v 1.280 2020/06/14 14:26:17 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.279 2020/06/13 06:05:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.280 2020/06/14 14:26:17 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -682,8 +682,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_TENTATIVE) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
+		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0) {
 			error = EINVAL;
 			break;
 		}
