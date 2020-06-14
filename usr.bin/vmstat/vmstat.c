@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.241 2020/06/14 21:34:25 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.242 2020/06/14 21:41:42 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.241 2020/06/14 21:34:25 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.242 2020/06/14 21:41:42 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -921,7 +921,6 @@ dosum(void)
 		COPY(free);
 		COPY(paging);
 		COPY(wired);
-		COPY(zeropages);
 		COPY(reserve_pagedaemon);
 		COPY(reserve_kernel);
 		COPY(anonpages);
@@ -941,9 +940,6 @@ dosum(void)
 		COPY(forks);
 		COPY(forks_ppwait);
 		COPY(forks_sharevm);
-		COPY(pga_zerohit);
-		COPY(pga_zeromiss);
-		COPY(zeroaborts);
 		COPY(colorhit);
 		COPY(colormiss);
 		COPY(cpuhit);
@@ -1006,7 +1002,6 @@ dosum(void)
 	}
 	(void)printf("%9" PRIu64 " pages paging\n", uvmexp.paging);
 	(void)printf("%9" PRIu64 " pages wired\n", uvmexp.wired);
-	(void)printf("%9" PRIu64 " zero pages\n", uvmexp.zeropages);
 	(void)printf("%9" PRIu64 " reserve pagedaemon pages\n",
 	    uvmexp.reserve_pagedaemon);
 	(void)printf("%9" PRIu64 " reserve kernel pages\n", uvmexp.reserve_kernel);
@@ -1041,12 +1036,6 @@ dosum(void)
 	(void)printf("%9" PRIu64 " forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%9" PRIu64 " forks shared address space with parent\n",
 	    uvmexp.forks_sharevm);
-	(void)printf("%9" PRIu64 " pagealloc zero wanted and avail\n",
-	    uvmexp.pga_zerohit);
-	(void)printf("%9" PRIu64 " pagealloc zero wanted and not avail\n",
-	    uvmexp.pga_zeromiss);
-	(void)printf("%9" PRIu64 " aborts of idle page zeroing\n",
-	    uvmexp.zeroaborts);
 	(void)printf("%9" PRIu64 " pagealloc desired color avail\n",
 	    uvmexp.colorhit);
 	(void)printf("%9" PRIu64 " pagealloc desired color not avail\n",
