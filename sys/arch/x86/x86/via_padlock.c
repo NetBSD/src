@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.28 2020/03/07 13:28:45 maya Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.29 2020/06/14 23:20:15 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.28 2020/03/07 13:28:45 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.29 2020/06/14 23:20:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,6 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 				C3_CRYPT_CWLO_KEYGEN_SW |
 				C3_CRYPT_CWLO_NORMAL;
 
-			cprng_fast(ses->ses_iv, sizeof(ses->ses_iv));
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 
@@ -384,7 +383,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			memcpy(sc->op_iv, crd->crd_iv, 16);
 		else
-			memcpy(sc->op_iv, ses->ses_iv, 16);
+			cprng_fast(sc->op_iv, 16);
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -438,21 +437,6 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	else
 		memcpy((char *)crp->crp_buf + crd->crd_skip, sc->op_buf,
 		    crd->crd_len);
-
-	/* copy out last block for use as next session IV */
-	if (crd->crd_flags & CRD_F_ENCRYPT) {
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16,
-			    ses->ses_iv);
-		else if (crp->crp_flags & CRYPTO_F_IOV)
-			cuio_copydata((struct uio *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16,
-			    ses->ses_iv);
-		else
-			memcpy(ses->ses_iv, (char *)crp->crp_buf +
-			    crd->crd_skip + crd->crd_len - 16, 16);
-	}
 
 	if (sc->op_buf != NULL) {
 		memset(sc->op_buf, 0, crd->crd_len);
