@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.70 2017/05/11 18:16:00 christos Exp $	*/
+/*	$NetBSD: rump.h,v 1.71 2020/06/14 22:12:58 kamil Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -86,9 +86,8 @@ enum rump_etfs_type {
 	RUMP_ETFS_DIR_SUBDIRS	/* dir + subdirectories (recursive) */
 };
 
-/* um, what's the point ?-) */
-#ifdef _BEGIN_DECLS
-_BEGIN_DECLS
+#if defined(__cplusplus)
+extern "C" {
 #endif
 
 int	rump_getversion(void);
@@ -130,8 +129,8 @@ int	rump_daemonize_done(int);
 #include <rump/rumpnet_if_pub.h>
 #endif
 
-#ifdef _END_DECLS
-_END_DECLS
+#if defined(__cplusplus)
+}
 #endif
 
 /*
