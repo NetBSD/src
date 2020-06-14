@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.64 2020/06/13 19:01:11 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.65 2020/06/14 16:12:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.64 2020/06/13 19:01:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.65 2020/06/14 16:12:05 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -267,7 +267,7 @@ fpu_area_save(void *area, uint64_t xsave_features)
 }
 
 void
-fpu_area_restore(void *area, uint64_t xsave_features)
+fpu_area_restore(const void *area, uint64_t xsave_features)
 {
 	clts();
 
@@ -392,7 +392,7 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
-	union savefpu zero_fpu __aligned(64);
+	static const union savefpu zero_fpu __aligned(64);
 	struct cpu_info *ci = curcpu();
 	int s;
 
@@ -404,7 +404,6 @@ fpu_kern_leave(void)
 	 * through Spectre-class attacks to userland, even if there are
 	 * no bugs in fpu state management.
 	 */
-	memset(&zero_fpu, 0, sizeof(zero_fpu));
 	fpu_area_restore(&zero_fpu, x86_xsave_features);
 
 	/*

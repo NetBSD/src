@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.39 2020/05/02 11:37:17 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40 2020/06/14 16:12:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ fnsave(void *addr)
 }
 
 static inline void
-frstor(void *addr)
+frstor(const void *addr)
 {
 	const uint8_t *area = addr;
 
@@ -407,7 +407,7 @@ fxsave(void *addr)
 }
 
 static inline void
-fxrstor(void *addr)
+fxrstor(const void *addr)
 {
 	const uint8_t *area = addr;
 
@@ -452,7 +452,7 @@ xsaveopt(void *addr, uint64_t mask)
 }
 
 static inline void
-xrstor(void *addr, uint64_t mask)
+xrstor(const void *addr, uint64_t mask)
 {
 	const uint8_t *area = addr;
 	uint32_t low, high;
