@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.287 2020/06/13 14:45:17 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.288 2020/06/14 06:50:31 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.287 2020/06/13 14:45:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.288 2020/06/14 06:50:31 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -460,21 +460,21 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_MTI, MIPS_24K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
 	  0, "24K" },
 	{ MIPS_PRID_CID_MTI, MIPS_24KE, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
 	  0, "24KE" },
 	{ MIPS_PRID_CID_MTI, MIPS_34K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG7,
 	  0, "34K" },
@@ -482,21 +482,21 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_HAVE_SPECIAL_CCA | (0 << CPU_MIPS_CACHED_CCA_SHIFT) |
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "74K" },
 	{ MIPS_PRID_CID_MTI, MIPS_1004K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "1004K" },
 	{ MIPS_PRID_CID_MTI, MIPS_1074K, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "1074K" },
@@ -659,7 +659,7 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_CAVIUM, MIPS_CN50XX, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
 	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
 	  0,
 	  "CN50xx"		},
@@ -667,7 +667,7 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_CAVIUM, MIPS_CN70XX, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
 	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
 	  0,
 	  "CN70xx/CN71xx"	},
@@ -932,21 +932,21 @@ mips32r2_vector_init(const struct splsw *splsw)
 	/*
 	 * Let's see if this cpu has USERLOCAL or DSP V2 ASE...
 	 */
-	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
 		const uint32_t cfg3 = mipsNN_cp0_config3_read();
 		if (cfg3 & MIPSNN_CFG3_ULRI) {
-			cp0flags |= MIPS_CP0FL_USERLOCAL;
+			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_USERLOCAL;
 		}
 		if (cfg3 & MIPSNN_CFG3_DSP2P) {
 			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_DSP;
 		}
 	}
+
 	/*
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!(cp0flags & MIPS_CP0FL_USERLOCAL)) {
+	if (!MIPS_HAS_USERLOCAL && cpunum == 0) {
 		extern uint32_t mips32r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips32r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
@@ -962,7 +962,8 @@ mips32r2_vector_init(const struct splsw *splsw)
 	/*
 	 * Copy locore-function vector.
 	 */
-	mips_locore_jumpvec = mips32r2_locore_vec;
+	if (cpunum == 0)
+		mips_locore_jumpvec = mips32r2_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -1078,11 +1079,10 @@ mips64r2_vector_init(const struct splsw *splsw)
 	/*
 	 * Let's see if this cpu has USERLOCAL or DSP V2 ASE...
 	 */
-	uint32_t cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if (mipsNN_cp0_config2_read() & MIPSNN_CFG2_M) {
 		const uint32_t cfg3 = mipsNN_cp0_config3_read();
 		if (cfg3 & MIPSNN_CFG3_ULRI) {
-			cp0flags |= MIPS_CP0FL_USERLOCAL;
+			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_USERLOCAL;
 		}
 		if (cfg3 & MIPSNN_CFG3_DSP2P) {
 			mips_options.mips_cpu_flags |= CPU_MIPS_HAVE_DSP;
@@ -1093,7 +1093,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!(cp0flags & MIPS_CP0FL_USERLOCAL) && cpunum == 0) {
+	if (!MIPS_HAS_USERLOCAL && cpunum == 0) {
 		extern uint32_t mips64r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips64r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
