@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/01/01 19:09:12 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2020/06/14 05:10:33 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,6 +18,7 @@ BOOT_RELEASEDIR=	installation/boot
 all realall:	${BOOT_RAMDISK}.gz
 
 ${BOOT_RAMDISK}.gz:	netbsd-RAMDISK.gz ${DESTDIR}/usr/mdec/boot_kernel.gz
+	@echo "Creating a bootloader binary with embedded RAMDISK kernel"
 	gunzip -c ${DESTDIR}/usr/mdec/boot_kernel.gz > ${BOOT_RAMDISK}.tmp
 	${TOOL_MDSETIMAGE} -v ${BOOT_RAMDISK}.tmp netbsd-RAMDISK.gz
 	${MIPS_ELF2ECOFF} ${BOOT_RAMDISK}.tmp ${BOOT_RAMDISK}.coff
