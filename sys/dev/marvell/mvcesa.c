@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesa.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: mvcesa.c,v 1.3 2020/06/14 23:29:23 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.3 2020/06/14 23:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,6 @@ struct mvcesa_session {
 	int ses_used;
 
 	int ses_klen;
-	uint32_t ses_iv[4];
 	uint32_t ses_key[8];
 
 	uint32_t ses_hminner[5];	/* HMAC inner state */
@@ -236,9 +235,6 @@ mvcesa_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 				return EINVAL;
 			enc = 1;
 
-			cprng_fast(ses->ses_iv,
-			    c->cri_alg == CRYPTO_AES_CBC ? 16 : 8);
-
 			/* Go ahead and compute key in CESA's byte order */
 			ses->ses_klen = c->cri_klen;
 			memcpy(ses->ses_key, c->cri_key, c->cri_klen / 8);
@@ -406,8 +402,10 @@ mvcesa_process(void *arg, struct cryptop *crp, int hint)
 				dir = MVCESA_DESE_C_DIRECTION_ENC;
 				if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 					iv = (uint32_t *)crd->crd_iv;
-				else
-					iv = ses->ses_iv;
+				else {
+					cprng_fast(ivbuf, sizeof(ivbuf));
+					iv = ivbuf;
+				}
 				if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
 					if (m != NULL)
 						m_copyback(m, crd->crd_inject,
@@ -759,9 +757,6 @@ mvcesa_des_encdec(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 				break;
 		}
 	}
-
-	if (dir == MVCESA_DESE_C_DIRECTION_ENC)
-		memcpy(ses->ses_iv, iv, sizeof(ses->ses_iv));
 
 	return 0;
 }
