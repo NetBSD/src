@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.51 2020/05/25 19:13:28 thorpej Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.52 2020/06/14 23:22:09 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.51 2020/05/25 19:13:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.52 2020/06/14 23:22:09 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1031,9 +1031,6 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 	memset(ses, 0, sizeof(struct ubsec_session));
 	ses->ses_used = 1;
 	if (encini) {
-		/* get an IV, network byte order */
-		cprng_fast(ses->ses_iv, sizeof(ses->ses_iv));
-
 		/* Go ahead and compute key in ubsec's byte order */
 		if (encini->cri_alg == CRYPTO_AES_CBC) {
 			memcpy(ses->ses_key, encini->cri_key,
@@ -1294,14 +1291,10 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		encoffset = enccrd->crd_skip;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
-
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				memcpy(key.ses_iv, enccrd->crd_iv, ivlen);
-			else {
-				for (i = 0; i < (ivlen / 4); i++)
-					key.ses_iv[i] = ses->ses_iv[i];
-			}
+			else
+				cprng_fast(key.ses_iv, ivlen);
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -1833,26 +1826,6 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
 		crp->crp_buf = (void *)q->q_dst_m;
-	}
-
-	/* copy out IV for future use */
-	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-			if (crd->crd_alg != CRYPTO_DES_CBC &&
-			    crd->crd_alg != CRYPTO_3DES_CBC &&
-			    crd->crd_alg != CRYPTO_AES_CBC)
-				continue;
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (void *)sc->sc_sessions[q->q_sesn].ses_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_skip + crd->crd_len - 8, 8,
-				    (void *)sc->sc_sessions[q->q_sesn].ses_iv);
-			}
-			break;
-		}
 	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {

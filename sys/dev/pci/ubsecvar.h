@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.10 2015/04/13 15:43:43 riastradh Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.11 2020/06/14 23:22:09 riastradh Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.38 2009/03/27 13:31:30 reyk Exp $	*/
 
 /*
@@ -200,8 +200,6 @@ struct ubsec_softc {
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
 	bus_size_t		sc_memsize;	/* size mapped by sc_sh */
 };
-
-#define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
 	u_int32_t	ses_used;
