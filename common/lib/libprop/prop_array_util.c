@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.6 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.7 2020/06/14 21:28:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ prop_array_set_unsigned_number(prop_array_t array, unsigned int indx,
 }
 
 static bool
-prop_array_add_unsigned_number(prop_array_t array, intmax_t val)
+prop_array_add_unsigned_number(prop_array_t array, uintmax_t val)
 {
 	return prop_array_add_and_rel(array, prop_number_create_unsigned(val));
 }
@@ -136,6 +136,7 @@ prop_array_set_ ## name (prop_array_t array,				\
 			 unsigned int indx,				\
 			 typ val)					\
 {									\
+	/*LINTED: for conversion from long long to 'long'*/		\
 	return prop_array_set_ ## which ## _number(array, indx, val);	\
 }									\
 									\
@@ -143,6 +144,7 @@ bool									\
 prop_array_add_ ## name (prop_array_t array,				\
 			 typ val)					\
 {									\
+	/*LINTED: for conversion from long long to 'long'*/		\
 	return prop_array_add_ ## which ## _number(array, val);		\
 }
 
