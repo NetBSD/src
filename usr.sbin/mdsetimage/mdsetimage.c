@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.24 2016/12/18 18:32:24 riastradh Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.25 2020/06/14 18:24:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.24 2016/12/18 18:32:24 riastradh Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.25 2020/06/14 18:24:21 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -166,10 +166,10 @@ main(int argc, char *argv[])
 		if (fstat(fsfd, &fssb) == -1)
 			err(1, "fstat %s", fsfile);
 		if ((uintmax_t)fssb.st_size != (size_t)fssb.st_size)
-			errx(1, "fs image is too big");
+			errx(1, "fs image %s is too big", fsfile);
 		if (fssb.st_size > md_root_size_value)
-			errx(1, "fs image (%jd bytes) too big for buffer"
-			    " (%u bytes)", (intmax_t) fssb.st_size,
+			errx(1, "fs image %s (%jd bytes) too big for buffer"
+			    " (%u bytes)", fsfile, (intmax_t) fssb.st_size,
 			    md_root_size_value);
 		left_to_copy = fssb.st_size;
 	}
