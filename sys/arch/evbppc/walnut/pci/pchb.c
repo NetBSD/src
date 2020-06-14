@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.13 2011/06/22 18:06:33 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.14 2020/06/14 01:40:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2011/06/22 18:06:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.14 2020/06/14 01:40:04 chs Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -165,9 +165,9 @@ pchbattach(device_t parent, device_t self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
 	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT);
+	    EX_WAITOK);
 	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
-	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_WAITOK);
 	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 	extent_destroy(memext);
 	extent_destroy(ioext);

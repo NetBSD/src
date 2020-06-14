@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 2015/09/07 23:00:08 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31 2020/06/14 01:40:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2015/09/07 23:00:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2020/06/14 01:40:05 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -114,9 +114,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 #if defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio",  0x00001000, 0x0000ffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", 0x80000000, 0x8fffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 

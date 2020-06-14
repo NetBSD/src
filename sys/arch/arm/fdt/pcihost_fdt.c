@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.15 2020/01/07 10:20:07 skrll Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.16 2020/06/14 01:40:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.15 2020/01/07 10:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.16 2020/06/14 01:40:02 chs Exp $");
 
 #include <sys/param.h>
 
@@ -301,7 +301,7 @@ pcihost_config(struct pcihost_softc *sc)
 				aprint_error_dev(sc->sc_dev, "ignoring duplicate IO space range\n");
 				continue;
 			}
-			ioext = extent_create("pciio", bus_phys, bus_phys + size - 1, NULL, 0, EX_NOWAIT);
+			ioext = extent_create("pciio", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
 			aprint_verbose_dev(sc->sc_dev,
 			    "IO: 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 			    bus_phys, size, cpu_phys);
@@ -328,7 +328,7 @@ pcihost_config(struct pcihost_softc *sc)
 					aprint_error_dev(sc->sc_dev, "ignoring duplicate mem (prefetchable) range\n");
 					continue;
 				}
-				pmemext = extent_create("pcipmem", bus_phys, bus_phys + size - 1, NULL, 0, EX_NOWAIT);
+				pmemext = extent_create("pcipmem", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
 				aprint_verbose_dev(sc->sc_dev,
 				    "MMIO (%d-bit prefetchable): 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 				    is64 ? 64 : 32, bus_phys, size, cpu_phys);
@@ -337,7 +337,7 @@ pcihost_config(struct pcihost_softc *sc)
 					aprint_error_dev(sc->sc_dev, "ignoring duplicate mem (non-prefetchable) range\n");
 					continue;
 				}
-				memext = extent_create("pcimem", bus_phys, bus_phys + size - 1, NULL, 0, EX_NOWAIT);
+				memext = extent_create("pcimem", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
 				aprint_verbose_dev(sc->sc_dev,
 				    "MMIO (%d-bit non-prefetchable): 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 				    is64 ? 64 : 32, bus_phys, size, cpu_phys);
