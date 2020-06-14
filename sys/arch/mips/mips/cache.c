@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.61 2019/12/27 09:47:18 msaitoh Exp $	*/
+/*	$NetBSD: cache.c,v 1.62 2020/06/14 09:41:17 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.61 2019/12/27 09:47:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.62 2020/06/14 09:41:17 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -205,7 +205,7 @@ mips_config_cache(void)
 
 #ifdef DIAGNOSTIC
 	/* Check that all cache ops are set up. */
-	if (mci->mci_picache_size || 1) {	/* XXX- must have primary Icache */
+	if (mci->mci_picache_size || 1) { /* XXX- must have primary Icache */
 		if (!mco->mco_icache_sync_all)
 			panic("no icache_sync_all cache op");
 		if (!mco->mco_icache_sync_range)
@@ -213,7 +213,7 @@ mips_config_cache(void)
 		if (!mco->mco_icache_sync_range_index)
 			panic("no icache_sync_range_index cache op");
 	}
-	if (mci->mci_pdcache_size || 1) {	/* XXX- must have primary Dcache */
+	if (mci->mci_pdcache_size || 1) { /* XXX- must have primary Dcache */
 		if (!mco->mco_pdcache_wbinv_all)
 			panic("no pdcache_wbinv_all");
 		if (!mco->mco_pdcache_wbinv_range)
@@ -375,7 +375,8 @@ mips_config_cache_prehistoric(void)
 		/* change to write-through mode */
 		tx39_cache_config_write_through();
 
-		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
+		uvmexp.ncolors =
+		    atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
 		break;
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
@@ -617,7 +618,7 @@ primary_cache_is_2way:
 
 		mips3_get_cache_config(csizebase);
 
-		mci->mci_sdcache_line_size = 32;	/* don't trust config reg */
+		mci->mci_sdcache_line_size = 32; /* don't trust config reg */
 
 		if (mci->mci_picache_size / mci->mci_picache_ways > PAGE_SIZE)
 			mci->mci_icache_virtual_alias = true;
@@ -660,7 +661,8 @@ primary_cache_is_2way:
 	 */
 	if (mci->mci_picache_size) {
 		KASSERT(mci->mci_picache_ways != 0);
-		mci->mci_picache_way_size = mci->mci_picache_size / mci->mci_picache_ways;
+		mci->mci_picache_way_size =
+		    mci->mci_picache_size / mci->mci_picache_ways;
 		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
 #if (MIPS2 + MIPS3 + MIPS4) > 0
 		if (mci->mci_icache_virtual_alias)
@@ -670,7 +672,8 @@ primary_cache_is_2way:
 	}
 	if (mci->mci_pdcache_size) {
 		KASSERT(mci->mci_pdcache_ways != 0);
-		mci->mci_pdcache_way_size = mci->mci_pdcache_size / mci->mci_pdcache_ways;
+		mci->mci_pdcache_way_size =
+		    mci->mci_pdcache_size / mci->mci_pdcache_ways;
 		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
 #if (MIPS2 + MIPS3 + MIPS4) > 0
 		if (mci->mci_cache_virtual_alias)
@@ -777,7 +780,8 @@ primary_cache_is_2way:
 
 			default:
 				panic("r4k sdcache %d way line size %d",
-				    mci->mci_sdcache_ways, mci->mci_sdcache_line_size);
+				    mci->mci_sdcache_ways,
+				    mci->mci_sdcache_line_size);
 			}
 			break;
 
@@ -851,7 +855,8 @@ primary_cache_is_2way:
 	 */
 	if (mci->mci_sdcache_size) {
 		KASSERT(mci->mci_sdcache_ways != 0);
-		mci->mci_sdcache_way_size = mci->mci_sdcache_size / mci->mci_sdcache_ways;
+		mci->mci_sdcache_way_size =
+		    mci->mci_sdcache_size / mci->mci_sdcache_ways;
 		mci->mci_sdcache_way_mask = mci->mci_sdcache_way_size - 1;
 	}
 
@@ -1019,7 +1024,8 @@ mips3_get_cache_config(int csizebase)
 				mci->mci_scache_unified = true;
 		} else {
 #ifdef CACHE_DEBUG
-			printf("External cache detected, but is disabled -- WILL NOT ENABLE!\n");
+			printf("External cache detected, but is disabled -- "
+			    "WILL NOT ENABLE!\n");
 #endif	/* CACHE_DEBUG */
 		}
 	}
@@ -1302,7 +1308,8 @@ mips_config_cache_modern(uint32_t cpu_id)
 	}
 
 	mco->mco_intern_pdcache_sync_all = mco->mco_pdcache_wbinv_all;
-	mco->mco_intern_pdcache_sync_range_index = mco->mco_intern_pdcache_wbinv_range_index;
+	mco->mco_intern_pdcache_sync_range_index =
+	    mco->mco_intern_pdcache_wbinv_range_index;
 	mco->mco_intern_pdcache_sync_range = mco->mco_pdcache_wb_range;
 
 	if (MIPSNN_CFG1_M & cfg1) {
@@ -1340,8 +1347,10 @@ mips_config_cache_modern(uint32_t cpu_id)
 			break;
 		}
 
-		// Note we don't set up any sd cache ops because we expect that
-		// the coherence checks below will overwrite them with no ops.
+		/*
+		 * Note we don't set up any sd cache ops because we expect that
+		 * the coherence checks below will overwrite them with no ops.
+		 */
 
 #ifdef CACHE_DEBUG
 		if (mci->mci_sdcache_line_size != 0) {
