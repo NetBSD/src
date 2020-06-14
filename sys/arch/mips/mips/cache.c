@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.66 2020/06/14 12:58:01 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.67 2020/06/14 14:16:49 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.66 2020/06/14 12:58:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.67 2020/06/14 14:16:49 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -495,11 +495,11 @@ primary_cache_is_2way:
 		case 32:
 			/* used internally by mipsNN_picache_sync_range */
 			mco->mco_intern_icache_sync_range =
-			    cache_r4k_icache_hit_inv_16;
+			    cache_r4k_icache_hit_inv_32;
 
 			/* used internally by mipsNN_picache_sync_range_index */
 			mco->mco_intern_icache_sync_range_index =
-			    cache_r4k_icache_index_inv_16;
+			    cache_r4k_icache_index_inv_32;
 			break;
 
 		default:
