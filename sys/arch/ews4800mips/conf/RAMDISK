@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.29 2020/06/09 17:13:41 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.30 2020/06/14 04:35:49 tsutsui Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -68,7 +68,7 @@ no pseudo-device	raid
 no pseudo-device	vnd
 no pseudo-device	fss
 no pseudo-device	putter
-no pseudo-device	ipfilter
+no pseudo-device	npf
 no pseudo-device	ppp
 no pseudo-device	pppoe
 no pseudo-device	tap
