@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.97 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.98 2020/06/14 00:25:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.97 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.98 2020/06/14 00:25:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1208,6 +1208,11 @@ retry:
 			 *	0
 			 *	UVM_PAGE_ARRAY_FILL_DIRTY
 			 *	UVM_PAGE_ARRAY_FILL_DIRTY|WRITEBACK
+			 *
+			 * XXX this is fragile but it'll work: the array
+			 * was earlier filled sparsely, but UFP_DIRTYONLY
+			 * implies dense.  see corresponding comment in
+			 * uvn_findpages().
 			 */
 
 			npages = MAXPAGES - nback - 1;
@@ -1215,7 +1220,7 @@ retry:
 				npages = MIN(npages,
 					     (fshi - off - 1) >> PAGE_SHIFT);
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
-			    &pgs[nback + 1], NULL,
+			    &pgs[nback + 1], &a,
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
 			npages += nback + 1;
 		} else {
