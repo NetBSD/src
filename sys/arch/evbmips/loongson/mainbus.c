@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2016/08/26 13:58:27 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2020/06/14 01:40:04 chs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2016/08/26 13:58:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2020/06/14 01:40:04 chs Exp $");
 
 #include "opt_pci.h"
 
@@ -104,9 +104,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct extent *ioext = extent_create("pciio",  0x00001000, 0x00003fff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	struct extent *memext = extent_create("pcimem", 0, BONITO_PCILO_SIZE,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	struct mips_cache_info * const mci = &mips_cache_info;
 
 	pci_configure_bus(&bonito_pc, ioext, memext,

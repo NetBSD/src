@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.29 2020/01/07 10:20:07 skrll Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.30 2020/06/14 01:40:03 chs Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.29 2020/01/07 10:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.30 2020/06/14 01:40:03 chs Exp $");
 
 #include <sys/param.h>
 
@@ -230,13 +230,13 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 
 	ioext = extent_create("pciio", TEGRA_PCIE_IO_BASE,
 	    TEGRA_PCIE_IO_BASE + TEGRA_PCIE_IO_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", TEGRA_PCIE_MEM_BASE,
 	    TEGRA_PCIE_MEM_BASE + TEGRA_PCIE_MEM_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pmemext = extent_create("pcipmem", TEGRA_PCIE_PMEM_BASE,
 	    TEGRA_PCIE_PMEM_BASE + TEGRA_PCIE_PMEM_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, 0,
 	    arm_dcache_align);

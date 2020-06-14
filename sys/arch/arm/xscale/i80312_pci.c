@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.18 2020/06/14 01:40:03 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.17 2019/03/01 09:25:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.18 2020/06/14 01:40:03 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -112,10 +112,10 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 
 	ioext  = extent_create("pciio", sc->sc_sioout_base,
 	    sc->sc_sioout_base + sc->sc_sioout_size - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", sc->sc_smemout_base,
 	    sc->sc_smemout_base + sc->sc_smemout_size - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	aprint_normal_dev(sc->sc_dev, "configuring Secondary PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, sbus, arm_dcache_align);
