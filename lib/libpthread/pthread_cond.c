@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.75 2020/06/13 17:39:42 riastradh Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.76 2020/06/14 21:33:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.75 2020/06/13 17:39:42 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.76 2020/06/14 21:33:28 ad Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -53,6 +53,13 @@ __strong_alias(__libc_cond_broadcast,pthread_cond_broadcast)
 __strong_alias(__libc_cond_wait,pthread_cond_wait)
 __strong_alias(__libc_cond_timedwait,pthread_cond_timedwait)
 __strong_alias(__libc_cond_destroy,pthread_cond_destroy)
+
+/*
+ * A dummy waiter that's used to flag that pthread_cond_signal() is in
+ * progress and nobody else should try to modify the waiter list until
+ * it completes.
+ */
+static struct pthread__waiter pthread__cond_dummy;
 
 static clockid_t
 pthread_cond_getclock(const pthread_cond_t *cond)
@@ -111,7 +118,7 @@ int
 pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		       const struct timespec *abstime)
 {
-	struct pthread__waiter waiter, *next, *waiters;
+	struct pthread__waiter waiter, *next, *head;
 	pthread_t self;
 	int error, cancel;
 	clockid_t clkid = pthread_cond_getclock(cond);
@@ -135,33 +142,39 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	/* Note this thread as waiting on the CV. */
 	cond->ptc_mutex = mutex;
-	for (waiters = cond->ptc_waiters;; waiters = next) {
+	for (head = cond->ptc_waiters;; head = next) {
+		/* Wait while pthread_cond_signal() in progress. */
+		if (__predict_false(head == &pthread__cond_dummy)) {
+			sched_yield();
+			next = cond->ptc_waiters;
+			continue;
+		}
 		waiter.lid = self->pt_lid;
-		waiter.next = waiters;
+		waiter.next = head;
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 		membar_producer();
 #endif
-		next = atomic_cas_ptr(&cond->ptc_waiters, waiters, &waiter);
-		if (__predict_true(next == waiters)) {
+		next = atomic_cas_ptr(&cond->ptc_waiters, head, &waiter);
+		if (__predict_true(next == head)) {
 			break;
 		}
 	}
 
-	/* Drop the interlock */
-	pthread_mutex_unlock(mutex);
+	/* Drop the interlock and wait. */
 	error = 0;
-
+	pthread_mutex_unlock(mutex);
 	while (waiter.lid && !(cancel = self->pt_cancel)) {
 		int rv = _lwp_park(clkid, TIMER_ABSTIME, __UNCONST(abstime),
 		    0, NULL, NULL);
 		if (rv == 0) {
 			continue;
 		}
-		if (errno != EINTR && errno != EALREADY && errno != ESRCH) {
+		if (errno != EINTR && errno != EALREADY) {
 			error = errno;
 			break;
 		}
 	}
+	pthread_mutex_lock(mutex);
 
 	/*
 	 * If this thread absorbed a wakeup from pthread_cond_signal() and
@@ -169,11 +182,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 *
 	 * And if awoken early, we may still be on the waiter list and must
 	 * remove self.
-	 *
-	 * In all cases do the wakeup without the mutex held otherwise:
-	 *
-	 * - wakeup could be deferred until mutex release
-	 * - it would be mixing up two sets of waitpoints
 	 */
 	if (__predict_false(cancel | error)) {
 		pthread_cond_broadcast(cond);
@@ -183,10 +191,12 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		 * Wait until released, otherwise "waiter" is still globally
 		 * visible.
 		 */
+		pthread_mutex_unlock(mutex);
 		while (__predict_false(waiter.lid)) {
 			(void)_lwp_park(CLOCK_MONOTONIC, 0, NULL, 0, NULL,
 			    NULL);
 		}
+		pthread_mutex_lock(mutex);
 	} else {
 		pthread__assert(!waiter.lid);
 	}
@@ -195,7 +205,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * If cancelled then exit.  POSIX dictates that the mutex must be
 	 * held if this happens.
 	 */
-	pthread_mutex_lock(mutex);
 	if (cancel) {
 		pthread__cancelled();
 	}
@@ -215,7 +224,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 int
 pthread_cond_signal(pthread_cond_t *cond)
 {
-	struct pthread__waiter *waiter, *next;
+	struct pthread__waiter *head, *next;
 	pthread_mutex_t *mutex;
 	pthread_t self;
 
@@ -228,28 +237,39 @@ pthread_cond_signal(pthread_cond_t *cond)
 	/* Take ownership of one waiter. */
 	self = pthread_self();
 	mutex = cond->ptc_mutex;
-	for (waiter = cond->ptc_waiters;; waiter = next) {
-		if (waiter == NULL) {
+	for (head = cond->ptc_waiters;; head = next) {
+		/* Wait while pthread_cond_signal() in progress. */
+		if (__predict_false(head == &pthread__cond_dummy)) {
+			sched_yield();
+			next = cond->ptc_waiters;
+			continue;
+		}
+		if (head == NULL) {
 			return 0;
 		}
-		membar_datadep_consumer(); /* for alpha */
-		next = waiter->next;
-		next = atomic_cas_ptr(&cond->ptc_waiters, waiter, next);
-		if (__predict_true(next == waiter)) {
+		/* Block concurrent access to the waiter list. */
+		next = atomic_cas_ptr(&cond->ptc_waiters, head,
+		    &pthread__cond_dummy);
+		if (__predict_true(next == head)) {
 			break;
 		}
 	}
 
+	/* Now that list is locked, read pointer to next and then unlock. */
+	membar_enter();
+	cond->ptc_waiters = head->next;
+	membar_producer();
+	head->next = NULL;
+
 	/* Now transfer waiter to the mutex. */
-	waiter->next = NULL;
-	pthread__mutex_deferwake(self, mutex, waiter);
+	pthread__mutex_deferwake(self, mutex, head);
 	return 0;
 }
 
 int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
-	struct pthread__waiter *head;
+	struct pthread__waiter *head, *next;
 	pthread_mutex_t *mutex;
 	pthread_t self;
 
@@ -262,14 +282,25 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	if (cond->ptc_waiters == NULL)
 		return 0;
 
-	/* Take ownership of the current set of waiters. */
+	/* Take ownership of current set of waiters. */
 	self = pthread_self();
 	mutex = cond->ptc_mutex;
-	head = atomic_swap_ptr(&cond->ptc_waiters, NULL);
-	if (head == NULL) {
-		return 0;
+	for (head = cond->ptc_waiters;; head = next) {
+		/* Wait while pthread_cond_signal() in progress. */
+		if (__predict_false(head == &pthread__cond_dummy)) {
+			sched_yield();
+			next = cond->ptc_waiters;
+			continue;
+		}
+		if (head == NULL) {
+			return 0;
+		}
+		next = atomic_cas_ptr(&cond->ptc_waiters, head, NULL);
+		if (__predict_true(next == head)) {
+			break;
+		}
 	}
-	membar_datadep_consumer(); /* for alpha */
+	membar_enter();
 
 	/* Now transfer waiters to the mutex. */
 	pthread__mutex_deferwake(self, mutex, head);
