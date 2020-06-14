@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary_util.c,v 1.6 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary_util.c,v 1.7 2020/06/14 21:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ static bool
 prop_dictionary_set_unsigned_number(prop_dictionary_t dict, const char *key,
 				    uintmax_t val)
 {
+	/*LINTED: for conversion from 'long long' to 'long'*/		\
 	return prop_dictionary_set_and_rel(dict, key,
 					   prop_number_create_unsigned(val));
 }
@@ -131,6 +132,7 @@ prop_dictionary_set_ ## name (prop_dictionary_t dict,			\
 			      const char *key,				\
 			      typ val)					\
 {									\
+	/*LINTED: for conversion from long long to 'long'*/		\
 	return prop_dictionary_set_ ## which ## _number(dict, key, val);\
 }
 
@@ -152,6 +154,8 @@ UTEMPLATE(uchar,     unsigned char)
 UTEMPLATE(ushort,    unsigned short)
 UTEMPLATE(uint,      unsigned int)
 UTEMPLATE(ulong,     unsigned long)
+/*###155 [lint] warning conversion to 'unsigned long' due to prototype, arg #3 [259]%%%*/
+/*###155 [lint] warning conversion from 'unsigned long long' to 'unsigned long' may lose accuracy, arg #3 [298]%%%*/
 UTEMPLATE(ulonglong, unsigned long long)
 UTEMPLATE(uintptr,   uintptr_t)
 UTEMPLATE(uint8,     uint8_t)
