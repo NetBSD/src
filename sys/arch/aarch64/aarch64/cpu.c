@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.46 2020/05/30 17:50:39 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.47 2020/06/14 16:10:18 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.46 2020/05/30 17:50:39 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.47 2020/06/14 16:10:18 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -343,6 +343,16 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 	aprint_verbose_dev(self, "auxID=0x%" PRIx64, ci->ci_id.ac_aa64isar0);
 
 	/* PFR0 */
+	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_CSV3)) {
+	case ID_AA64PFR0_EL1_CSV3_IMPL:
+		aprint_verbose(", CSV3");
+		break;
+	}
+	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_CSV2)) {
+	case ID_AA64PFR0_EL1_CSV2_IMPL:
+		aprint_verbose(", CSV2");
+		break;
+	}
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_GIC)) {
 	case ID_AA64PFR0_EL1_GIC_CPUIF_EN:
 		aprint_verbose(", GICv3");
@@ -384,6 +394,12 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 		break;
 	}
 
+	/* PFR0:DIT -- data-independent timing support */
+	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_DIT)) {
+	case ID_AA64PFR0_EL1_DIT_IMPL:
+		aprint_verbose(", DIT");
+		break;
+	}
 
 	/* PFR0:AdvSIMD */
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
