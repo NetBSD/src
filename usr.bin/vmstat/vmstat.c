@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.240 2020/06/11 22:21:05 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.241 2020/06/14 21:34:25 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.240 2020/06/11 22:21:05 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.241 2020/06/14 21:34:25 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1796,7 +1796,8 @@ dopoolcache(int verbose)
 	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	char name[32];
-	uint64_t cpuhit, cpumiss, tot;
+	uint64_t cpuhit, cpumiss, pchit, pcmiss, contended, tot;
+	uint32_t nfull;
 	void *addr;
 	int first, ovflw;
 	size_t i;
@@ -1815,12 +1816,13 @@ dopoolcache(int verbose)
 		deref_kptr(pp->pr_wchan, name, sizeof(name),
 		    "pool wait channel trashed");
 		deref_kptr(pp->pr_cache, pc, sizeof(*pc), "pool cache trashed");
-		if (pc->pc_misses == 0 && !verbose)
-			continue;
 		name[sizeof(name)-1] = '\0';
 
 		cpuhit = 0;
 		cpumiss = 0;
+		pcmiss = 0;
+		contended = 0;
+		nfull = 0;
 		for (i = 0; i < __arraycount(pc->pc_cpus); i++) {
 		    	if ((addr = pc->pc_cpus[i]) == NULL)
 		    		continue;
@@ -1828,7 +1830,14 @@ dopoolcache(int verbose)
 			    "pool cache cpu trashed");
 			cpuhit += cc->cc_hits;
 			cpumiss += cc->cc_misses;
+			pcmiss += cc->cc_pcmisses;
+			nfull += cc->cc_nfull;
+			contended += cc->cc_contended;
 		}
+		pchit = cpumiss - pcmiss;
+
+		if (pcmiss == 0 && !verbose)
+			continue;
 
 		if (first) {
 			(void)printf("Pool cache statistics.\n");
@@ -1849,14 +1858,14 @@ dopoolcache(int verbose)
 
 		ovflw = 0;
 		PRWORD(ovflw, "%-*s", 13, 1, name);
-		PRWORD(ovflw, " %*llu", 6, 1, (long long)pc->pc_contended);
+		PRWORD(ovflw, " %*llu", 6, 1, (long long)contended);
 		PRWORD(ovflw, " %*u", 6, 1, pc->pc_pcgsize);
-		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nfull);
-		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nempty);
-		PRWORD(ovflw, " %*llu", 10, 1, (long long)pc->pc_misses);
+		PRWORD(ovflw, " %*u", 5, 1, nfull);
+		PRWORD(ovflw, " %*u", 5, 1, 0);
+		PRWORD(ovflw, " %*llu", 10, 1, (long long)pcmiss);
 
-		tot = pc->pc_hits + pc->pc_misses;
-		p = pc->pc_hits * 100.0 / (tot);
+		tot = pchit + pcmiss;
+		p = pchit * 100.0 / (tot);
 		PRWORD(ovflw, " %*llu", 11, 1, (long long)tot);
 		PRWORD(ovflw, " %*.1f", 6, 1, p);
 
