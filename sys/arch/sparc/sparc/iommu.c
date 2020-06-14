@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.95 2012/01/27 18:53:02 para Exp $ */
+/*	$NetBSD: iommu.c,v 1.96 2020/06/14 01:40:05 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.95 2012/01/27 18:53:02 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.96 2020/06/14 01:40:05 chs Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -276,9 +276,7 @@ iommu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dvmamap = extent_create("iommudvma",
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
-					0, 0, EX_NOWAIT);
-	if (sc->sc_dvmamap == NULL)
-		panic("iommu: unable to allocate DVMA map");
+					0, 0, EX_WAITOK);
 
 	/*
 	 * If we are attaching implicit iommu on JS1/OF we do not have

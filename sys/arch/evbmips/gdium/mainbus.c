@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2016/08/26 13:52:38 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2020/06/14 01:40:04 chs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2016/08/26 13:52:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2020/06/14 01:40:04 chs Exp $");
 
 #include "opt_pci.h"
 
@@ -102,9 +102,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mips_cache_info * const mci = &mips_cache_info;
 
 	struct extent *ioext = extent_create("pciio",  0x00001000, 0x00003fff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	struct extent *memext = extent_create("pcimem", 0, BONITO_PCILO_SIZE,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pci_configure_bus(&gdium_configuration.gc_pc, ioext, memext,
 	    NULL, 0, mci->mci_dcache_align);
 	extent_destroy(ioext);

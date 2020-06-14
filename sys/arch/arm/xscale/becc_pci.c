@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.20 2020/06/14 01:40:03 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.20 2020/06/14 01:40:03 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -130,10 +130,10 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 	/* Reserve the bottom 32K of the PCI address space. */
 	ioext  = extent_create("pciio", sc->sc_ioout_xlate + (32 * 1024),
 	    sc->sc_ioout_xlate + (64 * 1024) - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", sc->sc_owin_xlate[0],
 	    sc->sc_owin_xlate[0] + BECC_PCI_MEM1_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	aprint_normal("%s: configuring PCI bus\n", device_xname(sc->sc_dev));
 	pci_configure_bus(pc, ioext, memext, NULL, 0, arm_dcache_align);

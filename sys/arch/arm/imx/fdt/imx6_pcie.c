@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.6 2019/12/05 00:31:14 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.7 2020/06/14 01:40:03 chs Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6 2019/12/05 00:31:14 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.7 2020/06/14 01:40:03 chs Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -233,10 +233,10 @@ imx6_pcie_configure(void *cookie)
 
 	ioext = extent_create("pciio", IMX6_PCIE_IO_BASE,
 	    IMX6_PCIE_IO_BASE + IMX6_PCIE_IO_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	memext = extent_create("pcimem", IMX6_PCIE_MEM_BASE,
 	    IMX6_PCIE_MEM_BASE + IMX6_PCIE_MEM_SIZE - 1,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 
 	error = pci_configure_bus(&sc->sc_pc, ioext, memext, NULL, 0,
 	    arm_dcache_align);

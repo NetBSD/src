@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.98 2020/01/01 22:57:16 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.99 2020/06/14 01:40:05 chs Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.98 2020/01/01 22:57:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.99 2020/06/14 01:40:05 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -273,7 +273,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 
 		if (extent_alloc_subregion(sc->sc_is.is_dvmamap,
 		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + PAGE_SIZE,
-		    PAGE_SIZE, PAGE_SIZE, 0, EX_NOWAIT|EX_BOUNDZERO,
+		    PAGE_SIZE, PAGE_SIZE, 0, EX_WAITOK|EX_BOUNDZERO,
 		    (u_long *)&dummy) != 0)
 			panic("sbus iommu: can't toss first dvma page");
 	}

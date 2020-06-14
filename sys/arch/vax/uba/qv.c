@@ -1,4 +1,4 @@
-/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.34 2019/03/14 23:49:38 thorpej Exp $*/
+/* $NetBSD: qv.c,v 1.35 2020/06/14 01:40:06 chs Exp $ */
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -31,7 +31,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.34 2019/03/14 23:49:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.35 2020/06/14 01:40:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ qv_attach(device_t parent, device_t self, void *aux)
 	sc->sc_scanmap = (uint16_t *)&sc->sc_fb[QV_SCANMAP];
 #if 0
 	if (extent_alloc_region(((struct uba_vsoftc*)uh)->uv_sgmap.aps_ex,
-			sc->sc_fbphys & 0x3fffff, QVSIZE, EX_NOWAIT)) {
+			sc->sc_fbphys & 0x3fffff, QVSIZE, EX_WAITOK)) {
 		aprint_error_dev(self, 
 			"Couldn't alloc graphics memory in sgmap.\n");
 		return;

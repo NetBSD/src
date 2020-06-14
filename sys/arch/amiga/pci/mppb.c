@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.8 2015/10/02 05:22:49 msaitoh Exp $ */
+/*	$NetBSD: mppb.c,v 1.9 2020/06/14 01:40:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -167,9 +167,9 @@ mppb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext = extent_create("mppbio",  MPPB_IO_BASE, 
-	    MPPB_IO_BASE + MPPB_IO_SIZE, NULL, 0, EX_NOWAIT);
+	    MPPB_IO_BASE + MPPB_IO_SIZE, NULL, 0, EX_WAITOK);
 	memext = extent_create("mppbmem",  MPPB_MEM_BASE, 
-	    MPPB_MEM_BASE + MPPB_MEM_SIZE, NULL, 0, EX_NOWAIT);
+	    MPPB_MEM_BASE + MPPB_MEM_SIZE, NULL, 0, EX_WAITOK);
 
 #ifdef MPPB_DEBUG	
 	aprint_normal("mppb: reconfiguring the bus!\n");

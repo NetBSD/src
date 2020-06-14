@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.15 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.16 2020/06/14 01:40:05 chs Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.15 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.16 2020/06/14 01:40:05 chs Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -221,7 +221,7 @@ giopci_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCI_NETBSD_CONFIGURE
 	pc->pc_memext = extent_create("giopcimem", m_start, m_end,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pci_configure_bus(pc, NULL, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
 #endif

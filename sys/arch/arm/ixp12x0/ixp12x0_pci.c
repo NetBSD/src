@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.16 2020/06/14 01:40:03 chs Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.16 2020/06/14 01:40:03 chs Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -99,12 +99,12 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio", 0, IXP12X0_PCI_IO_SIZE - 1,
-				NULL, 0, EX_NOWAIT);
+				NULL, 0, EX_WAITOK);
 	/* PCI MEM space is mapped same address as real memory */
 	memext = extent_create("pcimem", IXP12X0_PCI_MEM_HWBASE,
 				IXP12X0_PCI_MEM_HWBASE +
 				IXP12X0_PCI_MEM_SIZE - 1,
-				NULL, 0, EX_NOWAIT);
+				NULL, 0, EX_WAITOK);
 	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);

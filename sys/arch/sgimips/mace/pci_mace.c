@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.21 2016/08/05 20:21:58 macallan Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.22 2020/06/14 01:40:05 chs Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.21 2016/08/05 20:21:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.22 2020/06/14 01:40:05 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -163,15 +163,15 @@ macepci_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 #ifdef USE_HIGH_PCI
 	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	pc->pc_memext = extent_create("macepcimem", 0x80000000, 0xffffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 #else
 	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 	/* XXX no idea why we limit ourselves to only half of the 32MB window */
 	pc->pc_memext = extent_create("macepcimem", 0x80100000, 0x81ffffff,
-	    NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_WAITOK);
 #endif /* USE_HIGH_PCI */
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
