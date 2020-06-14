@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.65 2020/06/14 12:07:44 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.66 2020/06/14 12:58:01 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.65 2020/06/14 12:07:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.66 2020/06/14 12:58:01 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1078,20 +1078,17 @@ mips_config_cache_modern(uint32_t cpu_id)
 	/* figure out Dcache params. */
 	switch (MIPSNN_GET(CFG1_DL, cfg1)) {
 	case MIPSNN_CFG1_DL_NONE:
-#ifdef MIPS64_OCTEON
-		mci->mci_pdcache_line_size = 128;
-		mci->mci_pdcache_way_size = 256;
-		mci->mci_pdcache_ways = 64;
-		mci->mci_pdcache_write_through = true;
-
-		mci->mci_pdcache_size =
-		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways;
-		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
-		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
-#else
 		mci->mci_pdcache_line_size = mci->mci_pdcache_way_size =
 		    mci->mci_pdcache_ways = 0;
-#endif
+#ifdef MIPS64_OCTEON
+		if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_CAVIUM) {
+			/*
+			 * Set the cache line size here, remaining Octeon
+			 * cache configuration will be done below.
+			 */
+			mci->mci_pdcache_line_size = OCTEON_CACHELINE_SIZE;
+		}
+#endif /* MIPS64_OCTEON */
 		break;
 	case MIPSNN_CFG1_DL_RSVD:
 		panic("reserved MIPS32/64 Dcache line size");
@@ -1187,11 +1184,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    cache_r4k_icache_index_inv_64;
 		break;
 	case 128:
-#ifdef MIPS64_OCTEON
-		mco->mco_icache_sync_all = octeon_icache_sync_all;
-		mco->mco_icache_sync_range = octeon_icache_sync_range;
-		mco->mco_icache_sync_range_index = octeon_icache_sync_range_index;
-#else
 		/* used internally by mipsNN_picache_sync_range */
 		mco->mco_intern_icache_sync_range =
 		    cache_r4k_icache_hit_inv_128;
@@ -1199,7 +1191,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		/* used internally by mipsNN_picache_sync_range_index */
 		mco->mco_intern_icache_sync_range_index =
 		    cache_r4k_icache_index_inv_128;
-#endif
 		break;
 	default:
 		panic("no Icache ops for %dB lines",
@@ -1255,13 +1246,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mco->mco_intern_pdcache_wbinv_range_index =
 		    cache_r4k_pdcache_index_wb_inv_64;
 	case 128:
-#ifdef MIPS64_OCTEON
-		mco->mco_pdcache_wbinv_all = octeon_pdcache_inv_all;
-		mco->mco_pdcache_wbinv_range = octeon_pdcache_inv_range;
-		mco->mco_pdcache_wbinv_range_index = octeon_pdcache_inv_range_index;
-		mco->mco_pdcache_inv_range = octeon_pdcache_inv_range;
-		mco->mco_pdcache_wb_range = no_cache_op_range;
-#else
 		mco->mco_pdcache_wbinv_range =
 		    cache_r4k_pdcache_hit_wb_inv_128;
 		mco->mco_pdcache_inv_range =
@@ -1272,7 +1256,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		/* used internally by mipsNN_pdcache_wbinv_range_index */
 		mco->mco_intern_pdcache_wbinv_range_index =
 		    cache_r4k_pdcache_index_wb_inv_128;
-#endif
 		break;
 	default:
 		panic("no Dcache ops for %dB lines",
@@ -1358,26 +1341,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 	 * Core specific overrides
 	 */
 	switch (MIPS_PRID_CID(cpu_id)) {
-	case MIPS_PRID_CID_RMI:
-		/*
-		 * RMI (NetLogic/Broadcom) don't support WB (op 6)
-		 * so we have to make do with WBINV (op 5).  This is
-		 * merely for correctness since because the caches are
-		 * coherent, these routines will become noops in a bit.
-		 */
-		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
-		mco->mco_intern_pdcache_sync_range =
-		    mco->mco_pdcache_wbinv_range;
-		if (MIPSNN_GET(CFG_AR, cfg) == MIPSNN_CFG_AR_REV2) {
-			mci->mci_pdcache_write_through = true;
-			mci->mci_sdcache_write_through = false;
-			KASSERT(PAGE_SIZE >= mci->mci_picache_way_size
-			    || MIPS_ICACHE_VIRTUAL_ALIAS);
-		} else {
-			KASSERT(MIPS_CACHE_VIRTUAL_ALIAS == 0);
-			KASSERT(MIPS_ICACHE_VIRTUAL_ALIAS == 0);
-		}
-		break;
 	case MIPS_PRID_CID_MTI:
 		/*
 		 * All MTI cores share a (mostly) common config7 definition.
@@ -1402,6 +1365,129 @@ mips_config_cache_modern(uint32_t cpu_id)
 #endif
 		}
 		break;
+	case MIPS_PRID_CID_RMI:
+		/*
+		 * RMI (NetLogic/Broadcom) don't support WB (op 6)
+		 * so we have to make do with WBINV (op 5).  This is
+		 * merely for correctness since because the caches are
+		 * coherent, these routines will become noops in a bit.
+		 */
+		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
+		mco->mco_intern_pdcache_sync_range =
+		    mco->mco_pdcache_wbinv_range;
+		if (MIPSNN_GET(CFG_AR, cfg) == MIPSNN_CFG_AR_REV2) {
+			mci->mci_pdcache_write_through = true;
+			mci->mci_sdcache_write_through = false;
+			KASSERT(PAGE_SIZE >= mci->mci_picache_way_size
+			    || MIPS_ICACHE_VIRTUAL_ALIAS);
+		} else {
+			KASSERT(MIPS_CACHE_VIRTUAL_ALIAS == 0);
+			KASSERT(MIPS_ICACHE_VIRTUAL_ALIAS == 0);
+		}
+		break;
+#ifdef MIPS64_OCTEON
+	case MIPS_PRID_CID_CAVIUM:
+		/*
+		 * Cavium Octeon cores have cache configurations that aren't
+		 * describable using the standard MIPS configN definitions.
+		 */
+		switch (MIPS_PRID_IMPL(cpu_id)) {
+		case MIPS_CN38XX:
+		case MIPS_CN31XX:
+		case MIPS_CN30XX:
+		case MIPS_CN50XX:
+		case MIPS_CN52XX:
+		case MIPS_CN58XX:
+		case MIPS_CN56XX:
+			/* OCTEON and OCTEON Plus */
+
+			/* Dcache on cnMIPS core doesn't follow spec */
+			mci->mci_pdcache_line_size = OCTEON_CACHELINE_SIZE;
+			mci->mci_pdcache_ways = OCTEON_I_DCACHE_WAYS;
+			mci->mci_pdcache_way_size =
+			    OCTEON_I_DCACHE_SETS * OCTEON_CACHELINE_SIZE;
+			mci->mci_pdcache_write_through = true;
+
+			/* Icache on cnMIPS core does follows MIPS spec */
+
+			break;
+
+		/* XXX cnMIPS II cores not yet tested */
+		case MIPS_CN63XX:
+		case MIPS_CN66XX:
+		case MIPS_CN68XX:
+			/* OCTEON II */
+
+			mci->mci_pdcache_line_size = OCTEON_CACHELINE_SIZE;
+			mci->mci_pdcache_ways = OCTEON_II_DCACHE_WAYS;
+			mci->mci_pdcache_way_size =
+			    OCTEON_II_DCACHE_SETS * OCTEON_CACHELINE_SIZE;
+			mci->mci_pdcache_write_through = true;
+
+			mci->mci_picache_line_size = OCTEON_CACHELINE_SIZE;
+			mci->mci_picache_ways = OCTEON_II_ICACHE_WAYS;
+			mci->mci_picache_way_size =
+			    OCTEON_II_ICACHE_SETS * OCTEON_CACHELINE_SIZE;
+			break;
+
+		case MIPS_CN70XX:
+		case MIPS_CN73XX:
+		case MIPS_CN78XX:
+			/* OCTEON III */
+
+			mci->mci_pdcache_line_size = OCTEON_CACHELINE_SIZE;
+			mci->mci_pdcache_ways = OCTEON_III_DCACHE_WAYS;
+			mci->mci_pdcache_way_size =
+			    OCTEON_CACHELINE_SIZE * OCTEON_III_DCACHE_SETS;
+			mci->mci_pdcache_write_through = true;
+
+			mci->mci_picache_line_size = OCTEON_CACHELINE_SIZE;
+			mci->mci_picache_ways = OCTEON_III_ICACHE_WAYS;
+			mci->mci_picache_way_size =
+			    OCTEON_CACHELINE_SIZE * OCTEON_III_ICACHE_SETS;
+			break;
+
+		default:
+			panic("Unknown Octeon Cavium core impl %#x",
+			    MIPS_PRID_IMPL(cpu_id));
+		}
+
+		/* recalculate dcache params */
+		mci->mci_pdcache_size =
+		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways;
+		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
+		uvmexp.ncolors =
+		    atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
+
+		/* recalculate icache params */
+		mci->mci_picache_size =
+		    mci->mci_picache_way_size * mci->mci_picache_ways;
+		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
+
+		/* recalculate the alias masks */
+		mci->mci_cache_alias_mask =
+		    mci->mci_pdcache_way_mask & -PAGE_SIZE;
+		mci->mci_cache_virtual_alias =
+		    (mci->mci_cache_alias_mask != 0);
+
+		mci->mci_icache_alias_mask =
+		    mci->mci_picache_way_mask & -PAGE_SIZE;
+		mci->mci_icache_virtual_alias =
+		    (mci->mci_icache_alias_mask != 0);
+
+		/* use Octeon-specific cache ops */
+		mco->mco_icache_sync_all = octeon_icache_sync_all;
+		mco->mco_icache_sync_range = octeon_icache_sync_range;
+		mco->mco_icache_sync_range_index =
+		    octeon_icache_sync_range_index;
+
+		mco->mco_pdcache_wbinv_all = octeon_pdcache_inv_all;
+		mco->mco_pdcache_wbinv_range = octeon_pdcache_inv_range;
+		mco->mco_pdcache_wbinv_range_index =
+		    octeon_pdcache_inv_range_index;
+		mco->mco_pdcache_inv_range = octeon_pdcache_inv_range;
+		mco->mco_pdcache_wb_range = no_cache_op_range;
+#endif /* MIPS64_OCTEON */
 	}
 
 #define CACHE_DEBUG
@@ -1439,7 +1525,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    mci->mci_sdcache_way_size / mci->mci_sdcache_line_size,
 		    mci->mci_sdcache_way_size >> PAGE_SHIFT);
 	}
-#endif
+#endif /* CACHE_DEBUG */
 
 	mipsNN_cache_init(cfg, cfg1);
 
