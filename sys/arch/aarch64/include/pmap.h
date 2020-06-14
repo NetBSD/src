@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.39 2020/05/14 07:59:03 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.40 2020/06/14 21:47:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -84,34 +84,38 @@ struct pmap {
 	bool pm_activated;
 };
 
-struct pv_entry;
+/* sized to reduce memory consumption & cache misses (32 bytes) */
+struct pv_entry {
+	struct pv_entry *pv_next;
+	struct pmap *pv_pmap;
+	vaddr_t pv_va;	/* for embedded entry (pp_pv) also includes flags */
+	void *pv_ptep;	/* pointer for fast pte lookup */
+};
 
 struct pmap_page {
 	kmutex_t pp_pvlock;
-	LIST_HEAD(, pv_entry) pp_pvhead;
-
-	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
-	uint32_t pp_flags;
+	struct pv_entry pp_pv;
 };
 
+/* try to keep vm_page at or under 128 bytes to reduce cache misses */
 struct vm_page_md {
-	LIST_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
-	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
-
 	struct pmap_page mdpg_pp;
 };
+/* for page descriptor page only */
+#define	mdpg_ptep_parent	mdpg_pp.pp_pv.pv_ptep
 
 #define VM_MDPAGE_INIT(pg)					\
 	do {							\
-		(pg)->mdpage.mdpg_ptep_parent = NULL;		\
 		PMAP_PAGE_INIT(&(pg)->mdpage.mdpg_pp);		\
 	} while (/*CONSTCOND*/ 0)
 
 #define PMAP_PAGE_INIT(pp)						\
 	do {								\
 		mutex_init(&(pp)->pp_pvlock, MUTEX_NODEBUG, IPL_VM);	\
-		LIST_INIT(&(pp)->pp_pvhead);				\
-		(pp)->pp_flags = 0;					\
+		(pp)->pp_pv.pv_next = NULL;				\
+		(pp)->pp_pv.pv_pmap = NULL;				\
+		(pp)->pp_pv.pv_va = 0;					\
+		(pp)->pp_pv.pv_ptep = NULL;				\
 	} while (/*CONSTCOND*/ 0)
 
 /* saved permission bit for referenced/modified emulation */
