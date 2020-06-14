@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.7 2020/06/14 21:28:58 christos Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.8 2020/06/14 21:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ prop_array_set_ ## name (prop_array_t array,				\
 			 unsigned int indx,				\
 			 typ val)					\
 {									\
-	/*LINTED: for conversion from long long to 'long'*/		\
+	/*LINTED: for conversion from 'long long' to 'long'*/		\
 	return prop_array_set_ ## which ## _number(array, indx, val);	\
 }									\
 									\
@@ -144,7 +144,7 @@ bool									\
 prop_array_add_ ## name (prop_array_t array,				\
 			 typ val)					\
 {									\
-	/*LINTED: for conversion from long long to 'long'*/		\
+	/*LINTED: for conversion from 'long long' to 'long'*/		\
 	return prop_array_add_ ## which ## _number(array, val);		\
 }
 
