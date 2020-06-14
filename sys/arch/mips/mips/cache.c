@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.62 2020/06/14 09:41:17 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.63 2020/06/14 09:55:37 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.62 2020/06/14 09:41:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.63 2020/06/14 09:55:37 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1147,34 +1147,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		break;
 	}
 
-#define CACHE_DEBUG
-#ifdef CACHE_DEBUG
-	printf("MIPS32/64 params: cpu arch: %d\n", opts->mips_cpu_arch);
-	printf("MIPS32/64 params: TLB entries: %d\n", opts->mips_num_tlb_entries);
-	if (mci->mci_picache_line_size == 0) {
-		printf("MIPS32/64 params: no Icache\n");
-	} else {
-		printf("MIPS32/64 params: %s: line=%d, total=%d, "
-		    "ways=%d, sets=%d, colors=%d\n", "Icache",
-		    mci->mci_picache_line_size,
-		    mci->mci_picache_way_size * mci->mci_picache_ways,
-		    mci->mci_picache_ways,
-		    mci->mci_picache_way_size / mci->mci_picache_line_size,
-		    mci->mci_picache_way_size >> PAGE_SHIFT);
-	}
-	if (mci->mci_pdcache_line_size == 0) {
-		printf("MIPS32/64 params: no Dcache\n");
-	} else {
-		printf("MIPS32/64 params: %s: line=%d, total=%d, "
-		    "ways=%d, sets=%d, colors=%d\n", "Dcache",
-		    mci->mci_pdcache_line_size,
-		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways,
-		    mci->mci_pdcache_ways,
-		    mci->mci_pdcache_way_size / mci->mci_pdcache_line_size,
-		    mci->mci_pdcache_way_size >> PAGE_SHIFT);
-	}
-#endif /* CACHE_DEBUG */
-
 	mco->mco_icache_sync_all = mipsNN_picache_sync_all;
 	mco->mco_icache_sync_range = mipsNN_picache_sync_range;
 	mco->mco_icache_sync_range_index = mipsNN_picache_sync_range_index;
@@ -1352,20 +1324,6 @@ mips_config_cache_modern(uint32_t cpu_id)
 		 * the coherence checks below will overwrite them with no ops.
 		 */
 
-#ifdef CACHE_DEBUG
-		if (mci->mci_sdcache_line_size != 0) {
-			printf("MIPS32/64 params: %s: line=%d, total=%d, "
-			    "ways=%d, sets=%d, colors=%d\n",
-			    "SDcache",
-			    mci->mci_sdcache_line_size,
-			    mci->mci_sdcache_way_size * mci->mci_sdcache_ways,
-			    mci->mci_sdcache_ways,
-			    mci->mci_sdcache_way_size
-			        / mci->mci_sdcache_line_size,
-			    mci->mci_sdcache_way_size >> PAGE_SHIFT);
-		}
-#endif
-
 		switch (MIPSNN_GET(CFG2_TL, cfg2)) {
 		case MIPSNN_CFG2_TL_NONE:
 			break;
@@ -1387,6 +1345,44 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 	}
 
+#define CACHE_DEBUG
+#ifdef CACHE_DEBUG
+	printf("MIPS32/64 params: cpu arch: %d\n", opts->mips_cpu_arch);
+	printf("MIPS32/64 params: TLB entries: %d\n", opts->mips_num_tlb_entries);
+	if (mci->mci_picache_line_size == 0) {
+		printf("MIPS32/64 params: no Icache\n");
+	} else {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Icache",
+		    mci->mci_picache_line_size,
+		    mci->mci_picache_way_size * mci->mci_picache_ways,
+		    mci->mci_picache_ways,
+		    mci->mci_picache_way_size / mci->mci_picache_line_size,
+		    mci->mci_picache_way_size >> PAGE_SHIFT);
+	}
+	if (mci->mci_pdcache_line_size == 0) {
+		printf("MIPS32/64 params: no Dcache\n");
+	} else {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "Dcache",
+		    mci->mci_pdcache_line_size,
+		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways,
+		    mci->mci_pdcache_ways,
+		    mci->mci_pdcache_way_size / mci->mci_pdcache_line_size,
+		    mci->mci_pdcache_way_size >> PAGE_SHIFT);
+	}
+	if (mci->mci_sdcache_line_size != 0) {
+		printf("MIPS32/64 params: %s: line=%d, total=%d, "
+		    "ways=%d, sets=%d, colors=%d\n", "SDcache",
+		    mci->mci_sdcache_line_size,
+		    mci->mci_sdcache_way_size * mci->mci_sdcache_ways,
+		    mci->mci_sdcache_ways,
+		    mci->mci_sdcache_way_size / mci->mci_sdcache_line_size,
+		    mci->mci_sdcache_way_size >> PAGE_SHIFT);
+	}
+#endif
+
+
         /*
          * calculate the alias masks and from them set to virtual alias flags.
          */
@@ -1397,13 +1393,19 @@ mips_config_cache_modern(uint32_t cpu_id)
 	mci->mci_icache_virtual_alias = (mci->mci_icache_alias_mask != 0);
 
 	/*
-	 * RMI (NetLogic/Broadcom) don't support WB (op 6) so we have to make
-	 * do with WBINV (op 5).  This is merely for correctness since because
-	 * the caches are coherent, these routines will become noops in a bit.
+	 * Core specific overrides
 	 */
-	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_RMI) {
+	switch (MIPS_PRID_CID(cpu_id)) {
+	case MIPS_PRID_CID_RMI:
+		/*
+		 * RMI (NetLogic/Broadcom) don't support WB (op 6)
+		 * so we have to make do with WBINV (op 5).  This is
+		 * merely for correctness since because the caches are
+		 * coherent, these routines will become noops in a bit.
+		 */
 		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
-		mco->mco_intern_pdcache_sync_range = mco->mco_pdcache_wbinv_range;
+		mco->mco_intern_pdcache_sync_range =
+		    mco->mco_pdcache_wbinv_range;
 		if (MIPSNN_GET(CFG_AR, cfg) == MIPSNN_CFG_AR_REV2) {
 			mci->mci_pdcache_write_through = true;
 			mci->mci_sdcache_write_through = false;
@@ -1413,7 +1415,8 @@ mips_config_cache_modern(uint32_t cpu_id)
 			KASSERT(MIPS_CACHE_VIRTUAL_ALIAS == 0);
 			KASSERT(MIPS_ICACHE_VIRTUAL_ALIAS == 0);
 		}
-	} else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MTI) {
+		break;
+	case MIPS_PRID_CID_MTI:
 		/*
 		 * All MTI cores share a (mostly) common config7 definition.
 		 * Use it to determine if the caches have virtual aliases.
@@ -1436,6 +1439,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 			KASSERT(mci->mci_picache_way_size <= PAGE_SIZE);
 #endif
 		}
+		break;
 	}
 
 	mipsNN_cache_init(cfg, cfg1);
@@ -1461,7 +1465,8 @@ mips_config_cache_modern(uint32_t cpu_id)
 		printf("  Icache is coherent against Dcache\n");
 #endif
 		mco->mco_intern_pdcache_sync_all = no_cache_op;
-		mco->mco_intern_pdcache_sync_range_index = no_cache_op_range_index;
+		mco->mco_intern_pdcache_sync_range_index =
+		    no_cache_op_range_index;
 		mco->mco_intern_pdcache_sync_range = no_cache_op_range;
 	}
 
