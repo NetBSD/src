@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.49 2020/06/13 23:58:52 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.50 2020/06/14 23:24:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.49 2020/06/13 23:58:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.50 2020/06/14 23:24:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,7 @@ tsc_delay(unsigned int us)
 static u_int
 tsc_get_timecount(struct timecounter *tc)
 {
+#ifdef _LP64 /* requires atomic 64-bit store */
 	static __cpu_simple_lock_t lock = __SIMPLELOCK_UNLOCKED;
 	static int lastwarn;
 	uint64_t cur, prev;
@@ -385,4 +386,7 @@ tsc_get_timecount(struct timecounter *tc)
 	}
 	l->l_md.md_tsc = cur;
 	return (uint32_t)cur;
+#else
+	return cpu_counter32();
+#endif
 }
