@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.79 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.80 2020/06/14 21:41:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.79 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.80 2020/06/14 21:41:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.inactive = inactive;
 	u.paging = uvmexp.paging;
 	u.wired = uvmexp.wired;
-	u.zeropages = cpu_count_get(CPU_COUNT_ZEROPAGES);
 	u.reserve_pagedaemon = uvmexp.reserve_pagedaemon;
 	u.reserve_kernel = uvmexp.reserve_kernel;
 	u.freemin = uvmexp.freemin;
@@ -137,8 +136,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.forks = cpu_count_get(CPU_COUNT_FORKS);
 	u.forks_ppwait = cpu_count_get(CPU_COUNT_FORKS_PPWAIT);
 	u.forks_sharevm = cpu_count_get(CPU_COUNT_FORKS_SHAREVM);
-	u.pga_zerohit = cpu_count_get(CPU_COUNT_PGA_ZEROHIT);
-	u.pga_zeromiss = cpu_count_get(CPU_COUNT_PGA_ZEROMISS);
 	u.zeroaborts = uvmexp.zeroaborts;
 	u.fltnoram = cpu_count_get(CPU_COUNT_FLTNORAM);
 	u.fltnoanon = cpu_count_get(CPU_COUNT_FLTNOANON);
@@ -272,12 +269,6 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 				    "stack"),
 		       NULL, USPACE, NULL, 0,
 		       CTL_VM, VM_USPACE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "idlezero",
-		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
-		       NULL, 0, &vm_page_zero_enable, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_LONG, "minaddress",
@@ -455,7 +446,6 @@ uvm_update_uvmexp(void)
 
 	/* uvm_availmem() will sync the counters if old. */
 	uvmexp.free = (int)uvm_availmem(true);
-	uvmexp.zeropages = (int)cpu_count_get(CPU_COUNT_ZEROPAGES);
 	uvmexp.cpuhit = (int)cpu_count_get(CPU_COUNT_CPUHIT);
 	uvmexp.cpumiss = (int)cpu_count_get(CPU_COUNT_CPUMISS);
 	uvmexp.faults = (int)cpu_count_get(CPU_COUNT_NFAULT);
@@ -468,8 +458,6 @@ uvm_update_uvmexp(void)
 	uvmexp.forks = (int)cpu_count_get(CPU_COUNT_FORKS);
 	uvmexp.forks_ppwait = (int)cpu_count_get(CPU_COUNT_FORKS_PPWAIT);
 	uvmexp.forks_sharevm = (int)cpu_count_get(CPU_COUNT_FORKS_SHAREVM);
-	uvmexp.pga_zerohit = (int)cpu_count_get(CPU_COUNT_PGA_ZEROHIT);
-	uvmexp.pga_zeromiss = (int)cpu_count_get(CPU_COUNT_PGA_ZEROMISS);
 	uvmexp.fltnoram = (int)cpu_count_get(CPU_COUNT_FLTNORAM);
 	uvmexp.fltnoanon = (int)cpu_count_get(CPU_COUNT_FLTNOANON);
 	uvmexp.fltpgwait = (int)cpu_count_get(CPU_COUNT_FLTPGWAIT);

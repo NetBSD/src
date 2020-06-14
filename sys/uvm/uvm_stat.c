@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.45 2020/06/11 22:21:05 ad Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.46 2020/06/14 21:41:42 ad Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.45 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.46 2020/06/14 21:41:42 ad Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -84,9 +84,8 @@ uvmexp_print(void (*pr)(const char *, ...)
 	    anonpg, filepg, execpg);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
-	(*pr)("  resv-pg=%d, resv-kernel=%d, zeropages=%" PRId64 "\n",
-	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel,
-	    cpu_count_get(CPU_COUNT_ZEROPAGES));
+	(*pr)("  resv-pg=%d, resv-kernel=%d\n",
+	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel);
 	(*pr)("  bootpages=%d, poolpages=%d\n",
 	    uvmexp.bootpages, poolpages);
 

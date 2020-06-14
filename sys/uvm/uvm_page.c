@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.241 2020/06/13 19:55:39 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.242 2020/06/14 21:41:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.241 2020/06/13 19:55:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.242 2020/06/14 21:41:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -117,13 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.241 2020/06/13 19:55:39 ad Exp $");
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_pgflcache.h>
-
-/*
- * Some supported CPUs in a given architecture don't support all
- * of the things necessary to do idle page zero'ing efficiently.
- * We therefore provide a way to enable it from machdep code here.
- */
-bool vm_page_zero_enable = false;
 
 /*
  * number of pages per-CPU to reserve for the kernel.
@@ -1078,8 +1071,8 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 			 * lock because of uvm_pglistalloc().
 			 */
 			LIST_REMOVE(pg, pageq.list);
-			KASSERT(pg->flags & PG_FREE);
-			pg->flags &= PG_ZERO;
+			KASSERT(pg->flags == PG_FREE);
+			pg->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
 			pgb->pgb_nfree--;
 
 			/*
@@ -1154,8 +1147,8 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int f, int *trycolorp, int flags)
  * => caller must activate/deactivate page if it is not wired.
  * => free_list is ignored if strat == UVM_PGA_STRAT_NORMAL.
  * => policy decision: it is more important to pull a page off of the
- *	appropriate priority free list than it is to get a zero'd or
- *	unknown contents page.  This is because we live with the
+ *	appropriate priority free list than it is to get a page from the
+ *	correct bucket or color bin.  This is because we live with the
  *	consequences of a bad free list decision for the entire
  *	lifetime of the page, e.g. if the page comes from memory that
  *	is slower to access.
@@ -1165,8 +1158,7 @@ struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags, int strat, int free_list)
 {
-	int zeroit = 0, color;
-	int lcv, error, s;
+	int color, lcv, error, s;
 	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 	lwp_t *l;
@@ -1280,28 +1272,15 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	ucpu->pgflcolor = (color + 1) & uvmexp.colormask;
 
 	/*
-	 * while still at IPL_VM, update allocation statistics and remember
-	 * if we have to zero the page
+	 * while still at IPL_VM, update allocation statistics.
 	 */
 
     	CPU_COUNT(CPU_COUNT_FREEPAGES, -1);
-	if (flags & UVM_PGA_ZERO) {
-		if (pg->flags & PG_ZERO) {
-		    	CPU_COUNT(CPU_COUNT_PGA_ZEROHIT, 1);
-			zeroit = 0;
-		} else {
-		    	CPU_COUNT(CPU_COUNT_PGA_ZEROMISS, 1);
-			zeroit = 1;
-		}
-	}
-	if (pg->flags & PG_ZERO) {
-	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
-	}
 	if (anon) {
 		CPU_COUNT(CPU_COUNT_ANONCLEAN, 1);
 	}
 	splx(s);
-	KASSERT((pg->flags & ~(PG_ZERO|PG_FREE)) == 0);
+	KASSERT(pg->flags == (PG_BUSY|PG_CLEAN|PG_FAKE));
 
 	/*
 	 * assign the page to the object.  as the page was free, we know
@@ -1315,7 +1294,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	pg->uobject = obj;
 	pg->uanon = anon;
 	KASSERT(uvm_page_owner_locked_p(pg, true));
-	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
 	if (anon) {
 		anon->an_page = pg;
 		pg->flags |= PG_ANON;
@@ -1347,16 +1325,11 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	UVM_PAGE_OWN(pg, "new alloc");
 
 	if (flags & UVM_PGA_ZERO) {
-		/*
-		 * A zero'd page is not clean.  If we got a page not already
-		 * zero'd, then we have to zero it ourselves.
-		 */
+		/* A zero'd page is not clean. */
 		if (obj != NULL || anon != NULL) {
 			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		}
-		if (zeroit) {
-			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
-		}
+		pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 	}
 
 	return(pg);
@@ -1477,7 +1450,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	pmap_update(pmap_kernel());
 	while (p < ep) {
 		if (*p != 0)
-			panic("PG_ZERO page isn't zero-filled");
+			panic("zero page isn't zero-filled");
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
@@ -1633,16 +1606,11 @@ uvm_pagefree(struct vm_page *pg)
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
 	pg->uanon = (void *)0xdeadbeef;
-	if (pg->flags & PG_ZERO)
-		uvm_pagezerocheck(pg);
 #endif /* DEBUG */
 
 	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
     	CPU_COUNT(CPU_COUNT_FREEPAGES, 1);
-	if (pg->flags & PG_ZERO) {
-	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
-	}
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	bucket = uvm_page_get_bucket(pg);
 	if (bucket == ucpu->pgflbucket && uvm_pgflcache_free(ucpu, pg)) {
@@ -1657,7 +1625,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	mutex_spin_enter(lock);
 	/* PG_FREE must be set under lock because of uvm_pglistalloc(). */
-	pg->flags = (pg->flags & PG_ZERO) | PG_FREE;
+	pg->flags = PG_FREE;
 	LIST_INSERT_HEAD(&pgb->pgb_colors[VM_PGCOLOR(pg)], pg, pageq.list);
 	pgb->pgb_nfree++;
 	mutex_spin_exit(lock);
@@ -1809,20 +1777,6 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	pg->owner_tag = NULL;
 }
 #endif
-
-/*
- * uvm_pageidlezero: zero free pages while the system is idle.
- */
-void
-uvm_pageidlezero(void)
-{
-
-	/*
-	 * Disabled for the moment.  Previous strategy too cache heavy.  In
-	 * the future we may experiment with zeroing the pages held in the
-	 * per-CPU cache (uvm_pgflcache).
-	 */
-}
 
 /*
  * uvm_pagelookup: look up a page

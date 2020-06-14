@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pgflcache.c,v 1.4 2019/12/30 17:47:06 ad Exp $	*/
+/*	$NetBSD: uvm_pgflcache.c,v 1.5 2020/06/14 21:41:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.4 2019/12/30 17:47:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.5 2020/06/14 21:41:42 ad Exp $");
 
 #include "opt_uvm.h"
 #include "opt_multiprocessor.h"
@@ -217,10 +217,10 @@ uvm_pgflcache_alloc(struct uvm_cpu *ucpu, int fl, int c)
 	}
 	pg = pcc->pages[--(pcc->count)];
 	KASSERT(pg != NULL);
-	KASSERT(pg->flags & PG_FREE);
+	KASSERT(pg->flags == PG_FREE);
 	KASSERT(uvm_page_get_freelist(pg) == fl);
 	KASSERT(uvm_page_get_bucket(pg) == ucpu->pgflbucket);
-	pg->flags &= PG_ZERO;
+	pg->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
 	return pg;
 }
 
@@ -253,7 +253,7 @@ uvm_pgflcache_free(struct uvm_cpu *ucpu, struct vm_page *pg)
 	if (__predict_false(pcc->count == MAXPGS)) {
 		uvm_pgflcache_spill(ucpu, fl, c);
 	}
-	pg->flags = (pg->flags & PG_ZERO) | PG_FREE;
+	pg->flags = PG_FREE;
 	pcc->pages[pcc->count] = pg;
 	pcc->count++;
 	return true;
