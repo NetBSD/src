@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.398 2020/06/03 00:27:46 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.399 2020/06/14 21:41:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.398 2020/06/03 00:27:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.399 2020/06/14 21:41:42 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3066,7 +3066,6 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		if (!pmap_valid_entry(opte)) {
 			continue;
 		}
-		pmap_pte_set(pte, 0);
 
 		/*
 		 * Count the PTE.  If it's not for a managed mapping
@@ -5741,8 +5740,6 @@ pmap_update(struct pmap *pmap)
 		PMAP_DUMMY_LOCK(pmap);
 		uvm_pagerealloc(ptp, NULL, 0);
 		PMAP_DUMMY_UNLOCK(pmap);
-
-		ptp->flags |= PG_ZERO;
 		uvm_pagefree(ptp);
 	}
 	mutex_exit(&pmap->pm_lock);
