@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.14 2016/07/14 10:19:05 msaitoh Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.15 2020/06/14 23:19:11 riastradh Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.14 2016/07/14 10:19:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.15 2020/06/14 23:19:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ struct glxsb_dma_map {
 };
 struct glxsb_session {
 	uint32_t	ses_key[4];
-	uint8_t		ses_iv[SB_AES_BLOCK_SIZE];
 	int		ses_klen;
 	int		ses_used;
 };
@@ -346,7 +345,6 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 	memset(ses, 0, sizeof(*ses));
 	ses->ses_used = 1;
 
-	cprng_fast(ses->ses_iv, sizeof(ses->ses_iv));
 	ses->ses_klen = cri->cri_klen;
 
 	/* Copy the key (Geode LX wants the primary key only) */
@@ -450,7 +448,7 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 	struct cryptodesc *crd;
 	char *op_src, *op_dst;
 	uint32_t op_psrc, op_pdst;
-	uint8_t op_iv[SB_AES_BLOCK_SIZE], *piv;
+	uint8_t op_iv[SB_AES_BLOCK_SIZE];
 	int sesn, err = 0;
 	int len, tlen, xlen;
 	int offset;
@@ -497,7 +495,7 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			memcpy(op_iv, crd->crd_iv, sizeof(op_iv));
 		else
-			memcpy(op_iv, ses->ses_iv, sizeof(op_iv));
+			cprng_fast(op_iv, sizeof(op_iv));
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -530,7 +528,6 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 
 	offset = 0;
 	tlen = crd->crd_len;
-	piv = op_iv;
 
 	/* Process the data in GLXSB_MAX_AES_LEN chunks */
 	while (tlen > 0) {
@@ -566,25 +563,13 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 		offset += len;
 		tlen -= len;
 
-		if (tlen <= 0) {	/* Ideally, just == 0 */
-			/* Finished - put the IV in session IV */
-			piv = ses->ses_iv;
-		}
-
-		/*
-		 * Copy out last block for use as next iteration/session IV.
-		 *
-		 * piv is set to op_iv[] before the loop starts, but is
-		 * set to ses->ses_iv if we're going to exit the loop this
-		 * time.
-		 */
 		if (crd->crd_flags & CRD_F_ENCRYPT) {
-			memcpy(piv, op_dst + len - sizeof(op_iv),
+			memcpy(op_iv, op_dst + len - sizeof(op_iv),
 			    sizeof(op_iv));
 		} else {
 			/* Decryption, only need this if another iteration */
 			if (tlen > 0) {
-				memcpy(piv, op_src + len - sizeof(op_iv),
+				memcpy(op_iv, op_src + len - sizeof(op_iv),
 				    sizeof(op_iv));
 			}
 		}
