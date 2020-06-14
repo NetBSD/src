@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.27 2019/02/03 03:19:29 mrg Exp $	*/
+/*	$NetBSD: jot.c,v 1.28 2020/06/14 01:26:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.27 2019/02/03 03:19:29 mrg Exp $");
+__RCSID("$NetBSD: jot.c,v 1.28 2020/06/14 01:26:46 kamil Exp $");
 #endif /* not lint */
 
 /*
@@ -226,10 +226,11 @@ getargs(int argc, char *argv[])
 		errx(EXIT_FAILURE,
 		    "Too many arguments.  What do you mean by %s?", argv[4]);
 	}
-	getformat();
 
 	if (prec == -1)
 		prec = 0;
+
+	getformat();
 
 	if (randomize) {
 		/* 'step' is the seed here, use pseudo-random default */
