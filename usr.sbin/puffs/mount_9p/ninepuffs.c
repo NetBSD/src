@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.32 2020/06/13 21:23:27 uwe Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.33 2020/06/14 00:30:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.32 2020/06/13 21:23:27 uwe Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.33 2020/06/14 00:30:20 uwe Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -262,15 +262,33 @@ main(int argc, char *argv[])
 		user = pw->pw_name;
 	}
 
-	/* :/mountpath */
-	if ((p = strchr(srvhost, ':')) != NULL) {
-		*p = '\0';
-		srvpath = p+1;
-		if (*srvpath != '/')
-			errx(1, "%s is not an absolute path", srvpath);
-	} else {
-		srvpath = "/";
+	/* [host] or [host]:/path with square brackets around host */
+	if (server == P9P_SERVER_TCP && *srvhost == '[') {
+		++srvhost;
+		if ((p = strchr(srvhost, ']')) == NULL)
+			errx(EXIT_FAILURE, "Missing bracket after the host name");
+		*p++ = '\0';
+		if (*p == '\0')		/* [host] */
+			srvpath = "/";
+		else if (*p == ':')	/* [host]:path */
+			srvpath = p+1;
+		else			/* [foo]bar */
+			errx(EXIT_FAILURE, "Invalid brackets in the host name");
+
+	} else { /* host or host:/path without brackets around host */
+		if ((p = strchr(srvhost, ':')) != NULL) {
+			*p = '\0';
+			srvpath = p+1;
+		} else {
+			srvpath = "/";
+		}
 	}
+
+	if (*srvpath == '\0')
+		errx(1, "Empty path");
+	if (*srvpath != '/')
+		errx(1, "%s: Not an absolute path", srvpath);
+
 
 	if (p9p.server == P9P_SERVER_TCP) {
 		p9p.servsock = serverconnect(srvhost, port, family);
