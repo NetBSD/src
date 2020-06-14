@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.30 2020/06/14 04:35:49 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.31 2020/06/14 04:46:27 tsutsui Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -23,15 +23,16 @@ options 	FFS_NO_SNAPSHOT
 options 	NO_DEV_PTM
 
 # disable some options to shrink kernel
-no options	DDB
 no options 	INCLUDE_CONFIG_FILE
 no options 	NTP
 no options 	KTRACE
-no options 	USERCONF
 no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
+no options 	USERCONF
 no options 	SYSCTL_INCLUDE_DESCR
+
+no options	DDB
 
 no options	COMPAT_43
 
@@ -51,8 +52,10 @@ no file-system	TMPFS
 no options 	QUOTA
 no options 	QUOTA2
 no options 	NFSSERVER
+
 no options 	NETATALK
 no options 	PPP_FILTER
+
 no options 	SCSIVERBOSE
 
 no ewsms0 at zsc?
@@ -65,9 +68,10 @@ no uk*	at scsibus?
 
 no pseudo-device	ccd
 no pseudo-device	raid
-no pseudo-device	vnd
 no pseudo-device	fss
 no pseudo-device	putter
+no pseudo-device	vnd
+no pseudo-device 	carp
 no pseudo-device	npf
 no pseudo-device	ppp
 no pseudo-device	pppoe
@@ -84,5 +88,4 @@ no pseudo-device	accf_http
 no pseudo-device	clockctl
 no pseudo-device	ksyms
 no pseudo-device	wsmux
-no pseudo-device 	carp
 no pseudo-device 	veriexec
