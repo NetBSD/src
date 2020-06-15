@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2702 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2703 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	inet6: in-kernel Router Advertisment handling removed. [roy 20200612]
 	file(1): Upgraded to 5.39. [christos 20200614]
 	blocklist: import current version [christos 20200614]
+	dhcpcd: Import version 9.1.2 [roy 20200615]
