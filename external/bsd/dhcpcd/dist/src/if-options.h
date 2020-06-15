@@ -188,7 +188,7 @@ struct if_sla {
 	uint32_t sla;
 	uint8_t prefix_len;
 	uint64_t suffix;
-	int8_t sla_set;
+	bool sla_set;
 };
 
 struct if_ia {
