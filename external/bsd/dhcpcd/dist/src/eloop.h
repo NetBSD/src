@@ -54,6 +54,7 @@ struct eloop;
 
 unsigned long long eloop_timespec_diff(const struct timespec *tsp,
     const struct timespec *usp, unsigned int *nsp);
+size_t eloop_event_count(const struct eloop  *);
 int eloop_event_add_rw(struct eloop *, int,
     void (*)(void *), void *,
     void (*)(void *), void *);
