@@ -64,7 +64,7 @@ diff -u -u -r1.8 Makefile
  	update.c xfrout.c zoneconf.c ${SRCS_UNIX}
  
 +LDADD+=-lblocklist
-+DPADD+=${LIBBLACKLIST}
++DPADD+=${LIBBLOCKLIST}
  .include <bsd.prog.mk>
 Index: dist/bin/named/client.c
 ===================================================================

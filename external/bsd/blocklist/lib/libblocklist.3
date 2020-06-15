@@ -1,4 +1,4 @@
-.\" $NetBSD: libblocklist.3,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $
+.\" $NetBSD: libblocklist.3,v 1.2 2020/06/15 02:29:45 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 30, 2020
-.Dt LIBBLACKLIST 3
+.Dt LIBBLOCKLIST 3
 .Os
 .Sh NAME
 .Nm blocklist_open ,
@@ -89,17 +89,17 @@ argument.
 The
 .Ar action
 parameter can take these values:
-.Bl -tag -width ".Va BLACKLIST_ABUSIVE_BEHAVIOR"
-.It Va BLACKLIST_AUTH_FAIL
+.Bl -tag -width ".Va BLOCKLIST_ABUSIVE_BEHAVIOR"
+.It Va BLOCKLIST_AUTH_FAIL
 There was an unsuccessful authentication attempt.
-.It Va BLACKLIST_AUTH_OK
+.It Va BLOCKLIST_AUTH_OK
 A user successfully authenticated.
-.It Va BLACKLIST_ABUSIVE_BEHAVIOR
+.It Va BLOCKLIST_ABUSIVE_BEHAVIOR
 The sending daemon has detected abusive behavior
 from the remote system.
 The remote address should
 be blocked as soon as possible.
-.It Va BLACKLIST_BAD_USER
+.It Va BLOCKLIST_BAD_USER
 The sending daemon has determined the username
 presented for authentication is invalid.
 The
@@ -108,7 +108,7 @@ daemon compares the username to a configured list of forbidden
 usernames and
 blocks the address immediately if a forbidden username matches.
 (The
-.Ar BLACKLIST_BAD_USER
+.Ar BLOCKLIST_BAD_USER
 support is not currently available.)
 .El
 .Pp

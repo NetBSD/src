@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklist.h,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $	*/
+/*	$NetBSD: blocklist.h,v 1.2 2020/06/15 02:29:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _BLACKLIST_H
-#define _BLACKLIST_H
+#ifndef _BLOCKLIST_H
+#define _BLOCKLIST_H
 
 #include <sys/socket.h>
 
@@ -44,12 +44,12 @@ int blocklist_sa_r(struct blocklist *, int, int,
 __END_DECLS
 
 /* action values for user applications */
-#define BLACKLIST_API_ENUM	1
+#define BLOCKLIST_API_ENUM	1
 enum {
-        BLACKLIST_AUTH_OK = 0,
-        BLACKLIST_AUTH_FAIL,
-        BLACKLIST_ABUSIVE_BEHAVIOR,
-        BLACKLIST_BAD_USER
+        BLOCKLIST_AUTH_OK = 0,
+        BLOCKLIST_AUTH_FAIL,
+        BLOCKLIST_ABUSIVE_BEHAVIOR,
+        BLOCKLIST_BAD_USER
 };
 
-#endif /* _BLACKLIST_H */
+#endif /* _BLOCKLIST_H */
