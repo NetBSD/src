@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.292 2020/06/15 07:48:12 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.293 2020/06/15 07:55:45 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.292 2020/06/15 07:48:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.293 2020/06/15 07:55:45 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1528,7 +1528,8 @@ cpu_identify(device_t dev)
 		else if (opts->mips_cpu->cpu_cid == MIPS_PRID_CID_INGENIC) {
 			aprint_normal("Ingenic ");
 		} else {
-			aprint_normal("Unknown Company ID - 0x%x", opts->mips_cpu->cpu_cid);
+			aprint_normal("Unknown Company ID - 0x%x",
+			    opts->mips_cpu->cpu_cid);
 			aprint_normal_dev(dev, "");
 		}
 	}
@@ -1560,9 +1561,10 @@ cpu_identify(device_t dev)
 
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC &&
 	    MIPS_PRID_RSVD(cpu_id) != 0) {
-		aprint_normal_dev(dev, "NOTE: top 8 bits of prehistoric PRID not 0!\n");
-		aprint_normal_dev(dev, "Please mail port-mips@NetBSD.org with %s "
-		    "dmesg lines.\n", device_xname(dev));
+		aprint_normal_dev(dev,
+		    "NOTE: top 8 bits of prehistoric PRID not 0!\n");
+		aprint_normal_dev(dev, "Please mail port-mips@NetBSD.org "
+		    "with %s dmesg lines.\n", device_xname(dev));
 	}
 
 	switch (opts->mips_cpu_arch) {
