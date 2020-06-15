@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.223 2020/06/04 03:12:26 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.224 2020/06/15 18:44:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.223 2020/06/04 03:12:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.224 2020/06/15 18:44:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1382,6 +1382,9 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			if (error != 0) {
 				foundobj = NULL;
 				error = EOPNOTSUPP;
+			} else {
+				terminal = (foundobj->v_type != VLNK &&
+				    (cnp->cn_flags & ISLASTCN) != 0);
 			}
 			break;
 		}
@@ -1458,7 +1461,16 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		 * fastforward to the beginning and let lookup_once() take
 		 * care of it.
 		 */
-		error2 = vcache_tryvget(searchdir);
+		if (searchdir == NULL) {
+			/*
+			 * It's possible for searchdir to be NULL in the
+			 * case of a root vnode being reclaimed while
+			 * trying to cross a mount.
+			 */
+			error2 = EOPNOTSUPP;
+		} else {
+			error2 = vcache_tryvget(searchdir);
+		}
 		KASSERT(plock != NULL);
 		rw_exit(plock);
 		if (__predict_true(error2 == 0)) {
