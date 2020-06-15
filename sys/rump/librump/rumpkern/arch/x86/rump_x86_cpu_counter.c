@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_cpu_counter.c,v 1.1 2014/02/12 22:28:43 pooka Exp $	*/
+/*	$NetBSD: rump_x86_cpu_counter.c,v 1.2 2020/06/15 09:09:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu_counter.c,v 1.1 2014/02/12 22:28:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu_counter.c,v 1.2 2020/06/15 09:09:24 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -45,22 +45,23 @@ cpu_hascounter(void)
 }
 
 uint64_t
-cpu_counter(void)
-{
-
-	return 0;
-}
-
-uint32_t
-cpu_counter32(void)
-{
-
-	return 0;
-}
-
-uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 
 	return 0;
 }
+
+static uint64_t
+nullfunc64(void)
+{
+	return 0;
+}
+
+static uint32_t
+nullfunc32(void)
+{
+	return 0;
+}
+
+uint64_t (*cpu_counter)(void) = nullfunc64;
+uint32_t (*cpu_counter32)(void) = nullfunc32;
