@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.253 2020/06/08 05:05:43 rin Exp $
+# $NetBSD: shl.mi,v 1.254 2020/06/15 00:39:03 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -162,7 +162,7 @@
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblzma.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libm.so.0.12.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libmagic.so.6.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libmagic.so.7.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug		comp-sys-debug	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.7.0.debug		comp-sys-debug	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.8.0.debug		comp-sys-debug	debug,compatfile
