@@ -541,12 +541,12 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 		state->reason = "DELEGATED6";
 	}
 
-	if (sla == NULL || sla->sla_set == 0) {
+	if (sla == NULL || !sla->sla_set) {
 		/* No SLA set, so make an assumption of
 		 * desired SLA and prefix length. */
 		asla.sla = ifp->index;
 		asla.prefix_len = 0;
-		asla.sla_set = 0;
+		asla.sla_set = false;
 		sla = &asla;
 	} else if (sla->prefix_len == 0) {
 		/* An SLA was given, but prefix length was not.
@@ -554,7 +554,7 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 		 * potentially more than one interface. */
 		asla.sla = sla->sla;
 		asla.prefix_len = 0;
-		asla.sla_set = 0;
+		asla.sla_set = sla->sla_set;
 		sla = &asla;
 	}
 
@@ -562,16 +562,15 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 		uint32_t sla_max;
 		int bits;
 
-		if (ia->sla_max == 0) {
+		sla_max = ia->sla_max;
+		if (sla_max == 0 && (sla == NULL || !sla->sla_set)) {
 			const struct interface *ifi;
 
-			sla_max = 0;
 			TAILQ_FOREACH(ifi, ifp->ctx->ifaces, next) {
 				if (ifi->index > sla_max)
 					sla_max = ifi->index;
 			}
-		} else
-			sla_max = ia->sla_max;
+		}
 
 		bits = fls32(sla_max);
 
@@ -1727,6 +1726,7 @@ dhcp6_fail(struct interface *ifp)
 		if (state->old != NULL)
 			script_runreason(ifp, "EXPIRE6");
 		dhcp_unlink(ifp->ctx, state->leasefile);
+		dhcp6_addrequestedaddrs(ifp);
 	}
 
 	if (!dhcp6_startdiscoinform(ifp)) {
@@ -2672,6 +2672,7 @@ ex:
 	free(state->new);
 	state->new = NULL;
 	state->new_len = 0;
+	dhcp6_addrequestedaddrs(ifp);
 	return bytes == 0 ? 0 : -1;
 }
 
