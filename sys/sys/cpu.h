@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2020/02/15 07:20:40 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2020/06/15 18:04:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -135,8 +135,8 @@ int cpu_ucode_md_open(firmware_handle_t *, int, const char *);
 #endif	/* !_LOCORE */
 
 /*
- * Flags for cpu_need_resched.  RESCHED_KERNEL must be greater than
- * RESCHED_USER; see sched_resched_cpu().
+ * Flags for cpu_need_resched.  RESCHED_KPREEMPT must be greater than
+ * RESCHED_UPREEMPT; see sched_resched_cpu().
  */
 #define	RESCHED_REMOTE		0x01	/* request is for a remote CPU */
 #define	RESCHED_IDLE		0x02	/* idle LWP observed */
