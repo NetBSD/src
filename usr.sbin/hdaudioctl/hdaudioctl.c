@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioctl.c,v 1.3 2020/06/15 13:06:39 sborrill Exp $ */
+/* $NetBSD: hdaudioctl.c,v 1.4 2020/06/15 20:29:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -94,7 +94,7 @@ usage(void)
 {
 	const char *prog;
 	prog = getprogname();
-	
+
 	fprintf(stderr, "usage: %s [-f dev] list\n", prog);
 	fprintf(stderr, "       %s [-f dev] show <codecid> <nid>\n", prog);
 	fprintf(stderr, "       %s [-f dev] get <codecid> <nid>\n", prog);
@@ -308,7 +308,6 @@ hdaudioctl_show(int fd, int argc, char *argv[])
 		printf("%3d %08X %2d %3d %-14s %-5s %-7s %-10s %-7s %4X\n",
 		    nid, config, ((config >> 4U) & 0xf), (config & 0xf),
 		    device, conn, jack, loc, color, ((config >> 8U) & 0xf));
-		    
 	}
 	prop_object_release(array);
 	prop_object_release(response);
@@ -324,7 +323,7 @@ main(int argc, char *argv[])
 	int fd, error;
 	int ch;
 	const char *devpath = DEVPATH_HDAUDIO;
-	
+
 	while ((ch = getopt(argc, argv, "f:h")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -348,7 +347,7 @@ main(int argc, char *argv[])
 		    strerror(errno));
 		return EXIT_FAILURE;
 	}
-	
+
 	error = 0;
 	if (strcmp(argv[0], "list") == 0)
 		error = hdaudioctl_list(fd);

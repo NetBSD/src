@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.51 2020/06/15 09:09:24 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.51 2020/06/15 09:09:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.52 2020/06/15 20:27:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,6 @@ tsc_setfunc(struct cpu_info *ci)
 		cpu_counter = cpu_counter_##fence;			      \
 		cpu_counter32 = cpu_counter32_##fence;			      \
 	} while (/* CONSTCOND */ 0)
-	
 
 	if (use_lfence)
 		TSC_SETFUNC(lfence);
