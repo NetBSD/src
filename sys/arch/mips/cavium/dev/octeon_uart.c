@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.5 2020/05/31 14:05:21 simonb Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.6 2020/06/15 07:48:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.5 2020/05/31 14:05:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.6 2020/06/15 07:48:12 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -139,7 +139,7 @@ octuart_iobus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc_com->sc_type = COM_TYPE_16550_NOERS;
-	sc_com->sc_frequency = curcpu()->ci_cpu_freq;
+	sc_com->sc_frequency = octeon_ioclock_speed();
 	sc_com->enable = octuart_com_enable;
 	sc_com->disable = octuart_com_disable;
 
@@ -205,7 +205,7 @@ octuart_com_cnattach(bus_space_tag_t bust, int portno, int speed)
 	return comcnattach1(
 		&regs,
 		speed,
-		curcpu()->ci_cpu_freq,
+		octeon_ioclock_speed(),
 		COM_TYPE_16550_NOERS,
 		CONMODE);
 }

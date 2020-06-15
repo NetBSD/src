@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.291 2020/06/15 00:31:21 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.292 2020/06/15 07:48:12 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.291 2020/06/15 00:31:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.292 2020/06/15 07:48:12 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -165,6 +165,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.291 2020/06/15 00:31:21 simonb Ex
 
 #ifdef __HAVE_BOOTINFO_H
 #include <machine/bootinfo.h>
+#endif
+
+#ifdef MIPS64_OCTEON
+#include <mips/cavium/octeonvar.h>
 #endif
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
@@ -1479,6 +1483,11 @@ cpu_identify(device_t dev)
 	int i;
 
 	cpuname = opts->mips_cpu->cpu_name;
+#ifdef MIPS64_OCTEON
+	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_CAVIUM) {
+		cpuname = octeon_cpu_model(cpu_id);
+	}
+#endif
 
 	fpuname = NULL;
 	for (i = 0; i < sizeof(fputab)/sizeof(fputab[0]); i++) {
