@@ -43,7 +43,7 @@ diff -u -p -u -r1.63 Makefile
  
 +SRCS+=	pfilter.c
 +LDADD+=	-lblocklist
-+DPADD+=	${LIBBLACKLIST}
++DPADD+=	${LIBBLOCKLIST}
 +
  .if defined(NO_INTERNAL_LS)
  CPPFLAGS+=-DNO_INTERNAL_LS

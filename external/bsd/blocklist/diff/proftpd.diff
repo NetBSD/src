@@ -5,7 +5,7 @@
  FTPWHO_OBJS=ftpwho.o scoreboard.o misc.o
  BUILD_FTPWHO_OBJS=utils/ftpwho.o utils/scoreboard.o utils/misc.o
 +
-+CPPFLAGS+=-DHAVE_BLACKLIST
++CPPFLAGS+=-DHAVE_BLOCKLIST
 +LIBS+=-lblocklist
 +OBJS+= pfilter.o
 +BUILD_OBJS+= src/pfilter.o
@@ -84,7 +84,7 @@
 +#include "pfilter.h"
 +#include "conf.h"
 +#include "privs.h"
-+#ifdef HAVE_BLACKLIST
++#ifdef HAVE_BLOCKLIST
 +#include <blocklist.h>
 +#endif
 +
@@ -93,7 +93,7 @@
 +void
 +pfilter_init(void)
 +{
-+#ifdef HAVE_BLACKLIST
++#ifdef HAVE_BLOCKLIST
 +	if (blstate == NULL)
 +		blstate = blocklist_open();
 +#endif
@@ -102,7 +102,7 @@
 +void
 +pfilter_notify(int a)
 +{
-+#ifdef HAVE_BLACKLIST
++#ifdef HAVE_BLOCKLIST
 +	conn_t *c = session.c;
 +	int fd;
 +
