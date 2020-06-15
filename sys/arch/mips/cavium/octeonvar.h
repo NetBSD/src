@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.9 2020/06/05 09:18:35 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.10 2020/06/15 07:48:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,14 @@
 #define	__BITS64_SET(name, subbits)	\
 	    (((uint64_t)(subbits) << name##_SHIFT) & name)
 #endif
+
+#ifdef _KERNEL
+extern int	octeon_core_ver;
+#endif /* _KERNEL */
+#define	OCTEON_1		1
+#define	OCTEON_PLUS		10	/* arbitary, keep sequence for others */
+#define	OCTEON_2		2
+#define	OCTEON_3		3
 
 struct octeon_config {
 	struct mips_bus_space mc_iobus_bust;
@@ -221,24 +229,28 @@ struct octfau_map {
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
 #ifdef MULTIPROCESSOR
-extern kcpuset_t *cpus_booted;
+extern kcpuset_t		*cpus_booted;
 extern struct cpu_softc		octeon_cpu1_softc;
 #endif
 
-void	octeon_bus_io_init(bus_space_tag_t, void *);
-void	octeon_bus_mem_init(bus_space_tag_t, void *);
-void	octeon_cal_timer(int);
-void	octeon_dma_init(struct octeon_config *);
-void	octeon_intr_init(struct cpu_info *);
-void	octeon_iointr(int, vaddr_t, uint32_t);
-void	octpci_init(pci_chipset_tag_t, struct octeon_config *);
-void	*octeon_intr_establish(int, int, int (*)(void *), void *);
-void	octeon_intr_disestablish(void *cookie);
+const char	*octeon_cpu_model(mips_prid_t);
 
-void	octeon_reset_vector(void);
-uint64_t mips_cp0_cvmctl_read(void);
-void	 mips_cp0_cvmctl_write(uint64_t);
+void		octeon_bus_io_init(bus_space_tag_t, void *);
+void		octeon_bus_mem_init(bus_space_tag_t, void *);
+void		octeon_cal_timer(int);
+void		octeon_dma_init(struct octeon_config *);
+void		octeon_intr_init(struct cpu_info *);
+void		octeon_iointr(int, vaddr_t, uint32_t);
+void		octpci_init(pci_chipset_tag_t, struct octeon_config *);
+void		*octeon_intr_establish(int, int, int (*)(void *), void *);
+void		octeon_intr_disestablish(void *cookie);
 
+int		octeon_ioclock_speed(void);
+void		octeon_soft_reset(void);
+
+void		octeon_reset_vector(void);
+uint64_t	mips_cp0_cvmctl_read(void);
+void		mips_cp0_cvmctl_write(uint64_t);
 #endif /* _KERNEL */
 
 #if defined(__mips_n32)

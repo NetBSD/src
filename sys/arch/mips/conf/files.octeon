@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.6 2020/05/31 06:27:06 simonb Exp $
+#	$NetBSD: files.octeon,v 1.7 2020/06/15 07:48:12 simonb Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -7,6 +7,7 @@ file	arch/mips/mips/mips3_clockintr.c
 
 file	arch/mips/cavium/octeon_dma.c
 file	arch/mips/cavium/octeon_intr.c
+file	arch/mips/cavium/octeon_misc.c
 file	arch/mips/cavium/dev/octeon_ciu.c
 
 defparam	opt_octeon.h			OCTEON_ECLK

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2020/06/05 07:17:38 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2020/06/15 07:48:12 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@
 #include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2020/06/05 07:17:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2020/06/15 07:48:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,6 @@ void
 mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 {
 	uint64_t btinfo_paddr;
-	int corefreq;
 
 	/* clear the BSS segment */
 	memset(edata, 0, end - edata);
@@ -205,20 +204,10 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	    (struct octeon_btinfo *)MIPS_PHYS_TO_KSEG0(btinfo_paddr),
 	    sizeof(octeon_btinfo));
 
-	corefreq = octeon_btinfo.obt_eclock_hz;
+	octeon_cal_timer(octeon_btinfo.obt_eclock_hz);
 
-	octeon_cal_timer(corefreq);
-
-	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
-	case 0: cpu_setmodel("Cavium Octeon CN38XX/CN36XX"); break;
-	case 1: cpu_setmodel("Cavium Octeon CN31XX/CN3020"); break;
-	case 2: cpu_setmodel("Cavium Octeon CN3005/CN3010"); break;
-	case 3: cpu_setmodel("Cavium Octeon CN58XX"); break;
-	case 4: cpu_setmodel("Cavium Octeon CN5[4-7]XX"); break;
-	case 6: cpu_setmodel("Cavium Octeon CN50XX"); break;
-	case 7: cpu_setmodel("Cavium Octeon CN52XX"); break;
-	default: cpu_setmodel("Cavium Octeon"); break;
-	}
+	cpu_setmodel("Cavium Octeon %s",
+	    octeon_cpu_model(mips_options.mips_cpu_id));
 
 	mach_init_vector();
 
@@ -459,11 +448,7 @@ haltsys:
 	 */
 	delay(80000);
 
-	/* initiate chip soft-reset */
-	uint64_t fuse = octeon_read_csr(CIU_FUSE);
-	octeon_write_csr(CIU_SOFT_BIST, fuse);
-	octeon_read_csr(CIU_SOFT_RST);
-	octeon_write_csr(CIU_SOFT_RST, fuse);
+	octeon_soft_reset();
 
 	delay(1000000);
 
