@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.259 2019/09/15 19:38:08 brad Exp $
+# $NetBSD: mi,v 1.260 2020/06/15 01:57:30 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -188,7 +188,8 @@
 ./etc/rc.d/automount				etc-sys-rc
 ./etc/rc.d/automountd				etc-sys-rc
 ./etc/rc.d/autounmountd				etc-sys-rc
-./etc/rc.d/blacklistd				etc-sys-rc
+./etc/rc.d/blacklistd				etc-obsolete		obsolete
+./etc/rc.d/blocklistd				etc-sys-rc
 ./etc/rc.d/bluetooth				etc-sys-rc
 ./etc/rc.d/bootconf.sh				etc-sys-rc
 ./etc/rc.d/bootparams				etc-bootserver-rc

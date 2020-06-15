@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.168 2020/05/31 12:58:09 roy Exp $
+#	$NetBSD: special,v 1.169 2020/06/15 01:57:30 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -37,7 +37,7 @@
 ./etc/autofs/special_media	type=file mode=0755
 ./etc/autofs/special_noauto	type=file mode=0755
 ./etc/autofs/special_null	type=file mode=0755
-./etc/blacklistd.conf		type=file mode=0644 optional
+./etc/blocklistd.conf		type=file mode=0644 optional
 ./etc/bluetooth			type=dir  mode=0755
 ./etc/bluetooth/btattach.conf	type=file mode=0644
 ./etc/bluetooth/btdevctl.conf	type=file mode=0644

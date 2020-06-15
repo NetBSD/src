@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1250 2020/06/04 14:08:16 roy Exp $
+# $NetBSD: mi,v 1.1251 2020/06/15 01:57:29 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -471,7 +471,8 @@
 ./libdata/firmware/zyd/zyd-zd1211		base-firmware-root	firmware
 ./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root	firmware
 ./libexec					base-sys-root
-./libexec/blacklistd-helper			base-sysutil-root
+./libexec/blacklistd-helper			base-obsolete		obsolete
+./libexec/blocklistd-helper			base-sysutil-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
 ./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
@@ -504,8 +505,10 @@
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/bioctl					base-sysutil-root
-./sbin/blacklistctl				base-sysutil-root
-./sbin/blacklistd				base-sysutil-root
+./sbin/blacklistctl				base-obsolete		obsolete
+./sbin/blocklistctl				base-sysutil-root
+./sbin/blacklistd				base-obsolete		obsolete
+./sbin/blocklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/canconfig				base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
@@ -2280,9 +2283,12 @@
 ./usr/share/examples				base-sys-share
 ./usr/share/examples/amd			base-amd-examples
 ./usr/share/examples/apm			base-sys-examples
-./usr/share/examples/blacklist			base-sys-examples
-./usr/share/examples/blacklist/blacklistd.conf	base-sys-examples
-./usr/share/examples/blacklist/npf.conf		base-sys-examples
+./usr/share/examples/blacklist			base-obsolete		obsolete
+./usr/share/examples/blacklist/blacklistd.conf	base-obsolete		obsolete
+./usr/share/examples/blacklist/npf.conf		base-obsolete		obsolete
+./usr/share/examples/blocklist			base-sys-examples
+./usr/share/examples/blocklist/blocklistd.conf	base-sys-examples
+./usr/share/examples/blocklist/npf.conf		base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
