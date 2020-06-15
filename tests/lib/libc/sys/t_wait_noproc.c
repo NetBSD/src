@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait_noproc.c,v 1.5 2016/11/09 17:50:19 kamil Exp $ */
+/* $NetBSD: t_wait_noproc.c,v 1.6 2020/06/15 13:57:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait_noproc.c,v 1.5 2016/11/09 17:50:19 kamil Exp $");
+__RCSID("$NetBSD: t_wait_noproc.c,v 1.6 2020/06/15 13:57:45 christos Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -141,7 +141,7 @@ get_options6(size_t pos)
 	 */
 
 	const int matrix[] = {
-		WNOWAIT,	/* First in order to blacklist it easily */
+		WNOWAIT,	/* First in order to exclude it easily */
 		WEXITED,
 		WUNTRACED,
 		WSTOPPED,	/* SUS compatibility, equal to WUNTRACED */
