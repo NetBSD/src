@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.61 2020/06/15 09:09:23 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.62 2020/06/15 20:27:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ END(x86_hotpatch)
 
 #define RSIZE_counter32	4
 #define RSIZE_counter	8
-	
+
 #define CPU_COUNTER_FENCE(counter, fence)	\
 ENTRY(cpu_ ## counter ## _ ## fence)		;\
 	movq	CPUVAR(CURLWP), %rcx		;\
