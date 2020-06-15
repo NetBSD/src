@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.14 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.15 2020/06/15 00:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.111 2019/05/07 02:27:11 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.112 2020/06/08 19:44:10 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.14 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.15 2020/06/15 00:37:24 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -469,8 +469,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	}
 
 	if (fd != -1) {
-		if (!okstat)
-			okstat = fstat(fd, &sb) == 0;
+		okstat = fstat(fd, &sb) == 0;
 		if (okstat && S_ISFIFO(sb.st_mode))
 			ispipe = 1;
 		if (inname == NULL)
