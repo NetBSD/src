@@ -1,19 +1,19 @@
 #include "pfilter.h"
 #include <stdio.h>	/* for NULL */
-#include <blacklist.h>
+#include <blocklist.h>
 
-static struct blacklist *blstate;
+static struct blocklist *blstate;
 
 void
 pfilter_notify(int a, int fd)
 {
 	if (blstate == NULL)
-		blstate = blacklist_open();
+		blstate = blocklist_open();
 	if (blstate == NULL)
 		return;
-	(void)blacklist_r(blstate, a, fd, "smtpd");
+	(void)blocklist_r(blstate, a, fd, "smtpd");
 	if (a == 0) {
-		blacklist_close(blstate);
+		blocklist_close(blstate);
 		blstate = NULL;
 	}
 }

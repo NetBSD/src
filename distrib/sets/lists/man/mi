@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1691 2020/05/19 06:26:37 jdc Exp $
+# $NetBSD: mi,v 1.1692 2020/06/15 01:57:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2115,7 +2115,8 @@
 ./usr/share/man/cat5/audit-packages.conf.0	man-obsolete		obsolete
 ./usr/share/man/cat5/auto_master.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/autofs.0			man-sysutil-catman	.cat
-./usr/share/man/cat5/blacklistd.conf.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/blacklistd.conf.0		man-obsolete		obsolete
+./usr/share/man/cat5/blocklistd.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/boot.cfg.0			man-sys-catman		.cat
@@ -2440,8 +2441,10 @@
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bioctl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/blacklistctl.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/blacklistd.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/blacklistctl.0		man-obsolete		obsolete
+./usr/share/man/cat8/blacklistd.0		man-obsolete		obsolete
+./usr/share/man/cat8/blocklistctl.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/blocklistd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/boot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bootparamd.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpd.0			man-bootserver-catman	.cat
@@ -5237,7 +5240,8 @@
 ./usr/share/man/html5/audit-packages.conf.html	man-obsolete		obsolete
 ./usr/share/man/html5/auto_master.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/autofs.html		man-sysutil-htmlman	html
-./usr/share/man/html5/blacklistd.conf.html	man-sysutil-htmlman	html
+./usr/share/man/html5/blacklistd.conf.html	man-obsolete		obsolete
+./usr/share/man/html5/blocklistd.conf.html	man-sysutil-htmlman	html
 ./usr/share/man/html5/body_checks.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/boot.cfg.html		man-sys-htmlman		html
 ./usr/share/man/html5/bootparams.html		man-bootserver-htmlman	html
@@ -5511,8 +5515,10 @@
 ./usr/share/man/html8/bad144.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/badsect.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	html
-./usr/share/man/html8/blacklistctl.html		man-sysutil-htmlman	html
-./usr/share/man/html8/blacklistd.html		man-sysutil-htmlman	html
+./usr/share/man/html8/blacklistctl.html		man-obsolete		obsolete
+./usr/share/man/html8/blacklistd.html		man-obsolete		obsolete
+./usr/share/man/html8/blocklistctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/blocklistd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/boot.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/bootparamd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/bootpd.html		man-bootserver-htmlman	html
@@ -8291,7 +8297,8 @@
 ./usr/share/man/man5/audit-packages.conf.5	man-obsolete		obsolete
 ./usr/share/man/man5/auto_master.5		man-sysutil-man		.man
 ./usr/share/man/man5/autofs.5			man-sysutil-man		.man
-./usr/share/man/man5/blacklistd.conf.5		man-sysutil-man		.man
+./usr/share/man/man5/blacklistd.conf.5		man-obsolete		obsolete
+./usr/share/man/man5/blocklistd.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/boot.cfg.5			man-sys-man		.man
@@ -8615,8 +8622,10 @@
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/bioctl.8			man-sysutil-man		.man
-./usr/share/man/man8/blacklistctl.8		man-sysutil-man		.man
-./usr/share/man/man8/blacklistd.8		man-sysutil-man		.man
+./usr/share/man/man8/blacklistctl.8		man-obsolete		obsolete
+./usr/share/man/man8/blacklistd.8		man-obsolete		obsolete
+./usr/share/man/man8/blocklistctl.8		man-sysutil-man		.man
+./usr/share/man/man8/blocklistd.8		man-sysutil-man		.man
 ./usr/share/man/man8/boot.8			man-sysutil-man		.man
 ./usr/share/man/man8/bootparamd.8		man-bootserver-man	.man
 ./usr/share/man/man8/bootpd.8			man-bootserver-man	.man

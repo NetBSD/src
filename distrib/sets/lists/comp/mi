@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2335 2020/06/09 21:50:32 kamil Exp $
+#	$NetBSD: mi,v 1.2336 2020/06/15 01:57:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -204,7 +204,8 @@
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
 ./usr/include/bfd/libiberty.h			comp-obsolete		obsolete
 ./usr/include/bitstring.h			comp-c-include
-./usr/include/blacklist.h			comp-c-include
+./usr/include/blacklist.h			comp-obsolete		obsolete
+./usr/include/blocklist.h			comp-c-include
 ./usr/include/bluetooth.h			comp-c-include
 ./usr/include/bm.h				comp-c-include
 ./usr/include/bozohttpd.h			comp-c-include
@@ -3438,8 +3439,10 @@
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib		compatfile
 ./usr/lib/libbind9_p.a				comp-bind-proflib	compatfile,profile
-./usr/lib/libblacklist.a			comp-c-lib		compatfile
-./usr/lib/libblacklist_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libblacklist.a			comp-obsolete		obsolete
+./usr/lib/libblacklist_p.a			comp-obsolete		obsolete
+./usr/lib/libblocklist.a			comp-c-lib		compatfile
+./usr/lib/libblocklist_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbluetooth.a			comp-c-lib		compatfile
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbozohttpd.a			comp-c-lib		compatfile
@@ -3967,7 +3970,8 @@
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lasn1.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
-./usr/libdata/lint/llib-lblacklist.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lblacklist.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lblocklist.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbozohttpd.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
@@ -6136,12 +6140,18 @@
 ./usr/share/man/cat3/bitstring.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bkgdset.0			comp-c-catman		.cat
-./usr/share/man/cat3/blacklist.0		comp-c-catman		.cat
-./usr/share/man/cat3/blacklist_close.0		comp-c-catman		.cat
-./usr/share/man/cat3/blacklist_open.0		comp-c-catman		.cat
-./usr/share/man/cat3/blacklist_r.0		comp-c-catman		.cat
-./usr/share/man/cat3/blacklist_sa.0		comp-c-catman		.cat
-./usr/share/man/cat3/blacklist_sa_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/blacklist.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blacklist_close.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blacklist_open.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blacklist_r.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blacklist_sa.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blacklist_sa_r.0		comp-obsolete		obsolete
+./usr/share/man/cat3/blocklist.0		comp-c-catman		.cat
+./usr/share/man/cat3/blocklist_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/blocklist_open.0		comp-c-catman		.cat
+./usr/share/man/cat3/blocklist_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/blocklist_sa.0		comp-c-catman		.cat
+./usr/share/man/cat3/blocklist_sa_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/blowfish.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/bluetooth.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bm.0			comp-c-catman		.cat
@@ -8467,7 +8477,8 @@
 ./usr/share/man/cat3/libarchive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_changes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_internals.0	comp-c-catman		.cat
-./usr/share/man/cat3/libblacklist.0		comp-c-catman		.cat
+./usr/share/man/cat3/libblacklist.0		comp-obsolete		obsolete
+./usr/share/man/cat3/libblocklist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libiscsi.0			comp-c-catman		iscsi,.cat
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libmj.0			comp-c-catman		.cat
@@ -14419,12 +14430,18 @@
 ./usr/share/man/html3/bitstring.html		comp-c-htmlman		html
 ./usr/share/man/html3/bkgd.html			comp-c-htmlman		html
 ./usr/share/man/html3/bkgdset.html		comp-c-htmlman		html
-./usr/share/man/html3/blacklist.html		comp-c-htmlman		html
-./usr/share/man/html3/blacklist_close.html	comp-c-htmlman		html
-./usr/share/man/html3/blacklist_open.html	comp-c-htmlman		html
-./usr/share/man/html3/blacklist_r.html		comp-c-htmlman		html
-./usr/share/man/html3/blacklist_sa.html		comp-c-htmlman		html
-./usr/share/man/html3/blacklist_sa_r.html	comp-c-htmlman		html
+./usr/share/man/html3/blacklist.html		comp-obsolete		obsolete
+./usr/share/man/html3/blacklist_close.html	comp-obsolete		obsolete
+./usr/share/man/html3/blacklist_open.html	comp-obsolete		obsolete
+./usr/share/man/html3/blacklist_r.html		comp-obsolete		obsolete
+./usr/share/man/html3/blacklist_sa.html		comp-obsolete		obsolete
+./usr/share/man/html3/blacklist_sa_r.html	comp-obsolete		obsolete
+./usr/share/man/html3/blocklist.html		comp-c-htmlman		html
+./usr/share/man/html3/blocklist_close.html	comp-c-htmlman		html
+./usr/share/man/html3/blocklist_open.html	comp-c-htmlman		html
+./usr/share/man/html3/blocklist_r.html		comp-c-htmlman		html
+./usr/share/man/html3/blocklist_sa.html		comp-c-htmlman		html
+./usr/share/man/html3/blocklist_sa_r.html	comp-c-htmlman		html
 ./usr/share/man/html3/bluetooth.html		comp-c-htmlman		html
 ./usr/share/man/html3/bm.html			comp-c-htmlman		html
 ./usr/share/man/html3/bm_comp.html		comp-c-htmlman		html
@@ -16684,7 +16701,8 @@
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_changes.html	comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html comp-c-htmlman		html
-./usr/share/man/html3/libblacklist.html		comp-c-htmlman		html
+./usr/share/man/html3/libblacklist.html		comp-obsolete		obsolete
+./usr/share/man/html3/libblocklist.html		comp-c-htmlman		html
 ./usr/share/man/html3/libiscsi.html		comp-c-htmlman		iscsi,html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		html
@@ -22539,12 +22557,18 @@
 ./usr/share/man/man3/bitstring.3		comp-c-man		.man
 ./usr/share/man/man3/bkgd.3			comp-c-man		.man
 ./usr/share/man/man3/bkgdset.3			comp-c-man		.man
-./usr/share/man/man3/blacklist.3		comp-c-man		.man
-./usr/share/man/man3/blacklist_close.3		comp-c-man		.man
-./usr/share/man/man3/blacklist_open.3		comp-c-man		.man
-./usr/share/man/man3/blacklist_r.3		comp-c-man		.man
-./usr/share/man/man3/blacklist_sa.3		comp-c-man		.man
-./usr/share/man/man3/blacklist_sa_r.3		comp-c-man		.man
+./usr/share/man/man3/blacklist.3		comp-obsolete		obsolete
+./usr/share/man/man3/blacklist_close.3		comp-obsolete		obsolete
+./usr/share/man/man3/blacklist_open.3		comp-obsolete		obsolete
+./usr/share/man/man3/blacklist_r.3		comp-obsolete		obsolete
+./usr/share/man/man3/blacklist_sa.3		comp-obsolete		obsolete
+./usr/share/man/man3/blacklist_sa_r.3		comp-obsolete		obsolete
+./usr/share/man/man3/blocklist.3		comp-c-man		.man
+./usr/share/man/man3/blocklist_close.3		comp-c-man		.man
+./usr/share/man/man3/blocklist_open.3		comp-c-man		.man
+./usr/share/man/man3/blocklist_r.3		comp-c-man		.man
+./usr/share/man/man3/blocklist_sa.3		comp-c-man		.man
+./usr/share/man/man3/blocklist_sa_r.3		comp-c-man		.man
 ./usr/share/man/man3/blowfish.3			comp-obsolete		obsolete
 ./usr/share/man/man3/bluetooth.3		comp-c-man		.man
 ./usr/share/man/man3/bm.3			comp-c-man		.man
@@ -24882,7 +24906,8 @@
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
 ./usr/share/man/man3/libarchive_changes.3	comp-c-man		.man
 ./usr/share/man/man3/libarchive_internals.3	comp-c-man		.man
-./usr/share/man/man3/libblacklist.3		comp-c-man		.man
+./usr/share/man/man3/libblacklist.3		comp-obsolete		obsolete
+./usr/share/man/man3/libblocklist.3		comp-c-man		.man
 ./usr/share/man/man3/libiscsi.3			comp-c-man		iscsi,.man
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
 ./usr/share/man/man3/libmj.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.406 2020/06/01 14:39:14 christos Exp $
+#	$NetBSD: bsd.README,v 1.407 2020/06/15 01:57:31 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1664,6 +1664,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBATF_C?=		${DESTDIR}/usr/lib/libatf-c.a
 		LIBATF_CXX?=		${DESTDIR}/usr/lib/libatf-c++.a
 		LIBBIND9?=		${DESTDIR}/usr/lib/libbind9.a
+		LIBBLOCKLIST?=		${DESTDIR}/usr/lib/libblocklist.a
 		LIBBLUETOOTH?=		${DESTDIR}/usr/lib/libbluetooth.a
 		LIBBSDMALLOC?=		${DESTDIR}/usr/lib/libbsdmalloc.a
 		LIBBZ2?=		${DESTDIR}/usr/lib/libbz2.a

@@ -4,11 +4,11 @@
 #include <ns/types.h>
 #include <ns/client.h>
 
-#include <blacklist.h>
+#include <blocklist.h>
 
 #include <ns/pfilter.h>
 
-static struct blacklist *blstate;
+static struct blocklist *blstate;
 static int blenable;
 
 void
@@ -27,7 +27,7 @@ pfilter_notify(isc_result_t res, ns_client_t *client, const char *msg)
 		return;
 
 	if (blstate == NULL)
-		blstate = blacklist_open();
+		blstate = blocklist_open();
 
 	if (blstate == NULL)
 		return;
@@ -38,7 +38,7 @@ pfilter_notify(isc_result_t res, ns_client_t *client, const char *msg)
 	if ((fd = isc_nmhandle_getfd(client->handle)) == -1)
 		return;
 
-	blacklist_sa_r(blstate, 
+	blocklist_sa_r(blstate, 
 	    res != ISC_R_SUCCESS, fd,
 	    &client->peeraddr.type.sa, client->peeraddr.length, msg);
 }
