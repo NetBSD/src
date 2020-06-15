@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.23 2020/06/03 11:47:46 roy Exp $
+# $NetBSD: postinstall.in,v 1.24 2020/06/15 14:25:40 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -842,6 +842,38 @@ do_bluetooth()
 	done
 
 	return ${failed}
+}
+
+fixblock() {
+	for i; do
+		if [ ! -f "$i" ]; then
+			continue
+		fi
+		local p=$(stat -f %Lp "$i")
+		chmod u+w "$i"
+		sed -i -e s/black/block/g "$i"
+		chmod "$p" "$i"
+	done
+}
+
+#
+#	blocklist update
+#
+additem blocklist "rename old files to blocklist"
+do_blocklist()
+{
+	# if we are actually using blocklistd
+	if [ -f /var/db/blacklist.db ]; then
+		mv /var/db/blocklist.db /var/db/blacklist.db
+	fi
+
+	# if we have fixed the rc files we are done
+	if [ ! -f /etc/rc.d/blacklist ]; then
+		return
+	fi
+
+	fixblock /etc/rc.conf /etc/npf.conf /etc/defaults/rc.conf
+	rm -f /etc/rc.d/blacklist
 }
 
 #
