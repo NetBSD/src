@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.893 2020/06/15 01:57:29 christos Exp $
+# $NetBSD: shl.mi,v 1.894 2020/06/15 23:41:55 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -16,9 +16,9 @@
 ./lib/libavl.so					base-zfs-shlib		dynamicroot,zfs
 ./lib/libavl.so.0				base-zfs-shlib		dynamicroot,zfs
 ./lib/libavl.so.0.0          			base-zfs-shlib		dynamicroot,zfs
-./lib/libblacklist.so				base-obsolete		obsolete
-./lib/libblacklist.so.0				base-obsolete		obsolete
-./lib/libblacklist.so.0.0			base-obsolete		obsolete
+./lib/libblacklist.so				base-obsolete		obsolete,compatfile
+./lib/libblacklist.so.0				base-obsolete		obsolete,compatfile
+./lib/libblacklist.so.0.0			base-obsolete		obsolete,compatfile
 ./lib/libblocklist.so				base-sys-shlib		dynamicroot
 ./lib/libblocklist.so.0				base-sys-shlib		dynamicroot
 ./lib/libblocklist.so.0.0			base-sys-shlib		dynamicroot
@@ -232,9 +232,9 @@
 ./usr/lib/libbind9.so				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.14				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.14.0			base-bind-shlib		compatfile
-./usr/lib/libblacklist.so			base-obsolete		obsolete
-./usr/lib/libblacklist.so.0			base-obsolete		obsolete
-./usr/lib/libblacklist.so.0.0			base-obsolete		obsolete
+./usr/lib/libblacklist.so			base-obsolete		obsolete,compatfile
+./usr/lib/libblacklist.so.0			base-obsolete		obsolete,compatfile
+./usr/lib/libblacklist.so.0.0			base-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist.so			base-sys-shlib		compatfile
 ./usr/lib/libblocklist.so.0			base-sys-shlib		compatfile
 ./usr/lib/libblocklist.so.0.0			base-sys-shlib		compatfile
