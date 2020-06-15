@@ -174,6 +174,9 @@ ipv4ll_announced_arp(struct arp_state *astate)
 	struct ipv4ll_state *state = IPV4LL_STATE(astate->iface);
 
 	state->conflicts = 0;
+#ifdef KERNEL_RFC5227
+	arp_free(astate);
+#endif
 }
 
 #ifndef KERNEL_RFC5227

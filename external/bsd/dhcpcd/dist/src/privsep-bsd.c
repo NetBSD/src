@@ -136,6 +136,24 @@ ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
 
 	return ps_root_doioctldom(PF_INET, req, &ifr, sizeof(ifr));
 }
+
+static ssize_t
+ps_root_doifignoregroup(void *data, size_t len)
+{
+	int s, err;
+
+	if (len == 0 || ((const char *)data)[len - 1] != '\0') {
+		errno = EINVAL;
+		return -1;
+	}
+
+	s = socket(PF_INET, SOCK_DGRAM, 0);
+	if (s == -1)
+		return -1;
+	err = if_ignoregroup(s, data);
+	close(s);
+	return err;
+}
 #endif
 
 ssize_t
@@ -160,6 +178,8 @@ ps_root_os(struct ps_msghdr *psm, struct msghdr *msg,
 	case PS_IOCTLINDIRECT:
 		err = ps_root_doindirectioctl(psm->ps_flags, data, len);
 		break;
+	case PS_IFIGNOREGRP:
+		return ps_root_doifignoregroup(data, len);
 #endif
 	default:
 		errno = ENOTSUP;
@@ -227,5 +247,15 @@ ps_root_indirectioctl(struct dhcpcd_ctx *ctx, unsigned long request,
 	    request, buf, IFNAMSIZ + len) == -1)
 		return -1;
 	return ps_root_readerror(ctx, data, len);
+}
+
+ssize_t
+ps_root_ifignoregroup(struct dhcpcd_ctx *ctx, const char *ifname)
+{
+
+	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_IFIGNOREGRP, 0,
+	    ifname, strlen(ifname) + 1) == -1)
+		return -1;
+	return ps_root_readerror(ctx, NULL, 0);
 }
 #endif
