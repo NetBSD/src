@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2336 2020/06/15 01:57:29 christos Exp $
+#	$NetBSD: mi,v 1.2337 2020/06/15 23:41:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3439,8 +3439,8 @@
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib		compatfile
 ./usr/lib/libbind9_p.a				comp-bind-proflib	compatfile,profile
-./usr/lib/libblacklist.a			comp-obsolete		obsolete
-./usr/lib/libblacklist_p.a			comp-obsolete		obsolete
+./usr/lib/libblacklist.a			comp-obsolete		obsolete,compatfile
+./usr/lib/libblacklist_p.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist.a			comp-c-lib		compatfile
 ./usr/lib/libblocklist_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libbluetooth.a			comp-c-lib		compatfile

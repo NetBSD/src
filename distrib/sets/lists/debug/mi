@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.316 2020/06/15 01:57:30 christos Exp $
+# $NetBSD: mi,v 1.317 2020/06/15 23:41:55 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -32,7 +32,7 @@
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libavl_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libbind9_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libblacklist_g.a			comp-obsolete		obsolete
+./usr/lib/libblacklist_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbozohttpd_g.a			comp-c-debuglib		debuglib,compatfile
