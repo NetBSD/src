@@ -703,6 +703,14 @@ bpf_bootp(const struct bpf *bpf, __unused const struct in_addr *ia)
 		return -1;
 	return 0;
 #else
+#ifdef PRIVSEP
+#if defined(__sun) /* Solaris cannot send via BPF. */
+#elif defined(BIOCSETF)
+#warning No BIOCSETWF support - a compromised BPF can be used as a raw socket
+#else
+#warning A compromised PF_PACKET socket can be used as a raw socket
+#endif
+#endif
 	return bpf_bootp_rw(bpf, true);
 #endif
 }

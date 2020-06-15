@@ -1460,7 +1460,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				logerrx("%s: interface name too long", arg);
 				goto err_sla;
 			}
-			sla->sla_set = 0;
+			sla->sla_set = false;
 			sla->prefix_len = 0;
 			sla->suffix = 1;
 			p = np;
@@ -1471,7 +1471,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				if (*p != '\0') {
 					sla->sla = (uint32_t)strtou(p, NULL,
 					    0, 0, UINT32_MAX, &e);
-					sla->sla_set = 1;
+					sla->sla_set = true;
 					if (e) {
 						logerrx("%s: failed to convert "
 						    "sla",
@@ -1530,7 +1530,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					    sla->ifname);
 					goto err_sla;
 				}
-				if (sla->sla_set == 0 &&
+				if (!sla->sla_set &&
 				    strcmp(slap->ifname, sla->ifname) == 0)
 				{
 					logwarnx("%s: cannot specify the "
@@ -2366,8 +2366,8 @@ read_config(struct dhcpcd_ctx *ctx,
 			return ifo;
 		}
 		if (buf[buflen - 1] != '\0') {
-			if (buflen < sizeof(buf) - 1)
-				bulen++;
+			if ((size_t)buflen < sizeof(buf) - 1)
+				buflen++;
 			buf[buflen - 1] = '\0';
 		}
 #else

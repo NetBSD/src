@@ -163,6 +163,10 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 
 #ifdef INET6
 	priv->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+#ifdef PRIVSEP_RIGHTS
+	if (IN_PRIVSEP(ctx))
+		ps_rights_limit_ioctl(priv->pf_inet6_fd);
+#endif
 	/* Don't return an error so we at least work on kernels witout INET6
 	 * even though we expect INET6 support.
 	 * We will fail noisily elsewhere anyway. */
@@ -292,6 +296,38 @@ if_ignore1(const char *drvname)
 	return false;
 }
 
+#ifdef SIOCGIFGROUP
+int
+if_ignoregroup(int s, const char *ifname)
+{
+	struct ifgroupreq ifgr = { .ifgr_len = 0 };
+	struct ifg_req *ifg;
+	size_t ifg_len;
+
+	/* Sadly it is possible to remove the device name
+	 * from the interface groups, but hopefully this
+	 * will be very unlikely.... */
+
+	strlcpy(ifgr.ifgr_name, ifname, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGROUP, &ifgr) == -1 ||
+	    (ifgr.ifgr_groups = malloc(ifgr.ifgr_len)) == NULL ||
+	    ioctl(s, SIOCGIFGROUP, &ifgr) == -1)
+	{
+		logerr(__func__);
+		return -1;
+	}
+
+	for (ifg = ifgr.ifgr_groups, ifg_len = ifgr.ifgr_len;
+	     ifg && ifg_len >= sizeof(*ifg);
+	     ifg++, ifg_len -= sizeof(*ifg))
+	{
+		if (if_ignore1(ifg->ifgrq_group))
+			return 1;
+	}
+	return 0;
+}
+#endif
+
 bool
 if_ignore(struct dhcpcd_ctx *ctx, const char *ifname)
 {
@@ -304,38 +340,17 @@ if_ignore(struct dhcpcd_ctx *ctx, const char *ifname)
 		return true;
 
 #ifdef SIOCGIFGROUP
-#ifdef HAVE_PLEDGE
-#warning Fix SIOCGIFGROUP to use privsep to remove inet pledge requirement
+#if defined(PRIVSEP) && defined(HAVE_PLEDGE)
+	if (IN_PRIVSEP(ctx))
+		return ps_root_ifignoregroup(ctx, ifname) == 1 ? true : false;
 #endif
-	struct ifgroupreq ifgr = { .ifgr_len = 0 };
-	struct ifg_req *ifg;
-	size_t ifg_len;
-
-	/* Sadly it is possible to remove the device name
-	 * from the interface groups, but hopefully this
-	 * will be very unlikely.... */
-
-	strlcpy(ifgr.ifgr_name, ifname, sizeof(ifgr.ifgr_name));
-	if (ioctl(ctx->pf_inet_fd, SIOCGIFGROUP, &ifgr) == -1 ||
-	    (ifgr.ifgr_groups = malloc(ifgr.ifgr_len)) == NULL ||
-	    ioctl(ctx->pf_inet_fd, SIOCGIFGROUP, &ifgr) == -1)
-	{
-		logerr(__func__);
-		return false;
-	}
-
-	for (ifg = ifgr.ifgr_groups, ifg_len = ifgr.ifgr_len;
-	     ifg && ifg_len >= sizeof(*ifg);
-	     ifg++, ifg_len -= sizeof(*ifg))
-	{
-		if (if_ignore1(ifg->ifgrq_group))
-			return true;
-	}
+	else
+		return if_ignoregroup(ctx->pf_inet_fd, ifname) == 1 ?
+		    true : false;
 #else
 	UNUSED(ctx);
-#endif
-
 	return false;
+#endif
 }
 
 int
@@ -712,9 +727,7 @@ if_route(unsigned char cmd, const struct rt *rt)
 		} else
 			rtm->rtm_flags |= RTF_GATEWAY;
 
-		/* Emulate the kernel by marking address generated
-		 * network routes non-static. */
-		if (!(rt->rt_dflags & RTDF_IFA_ROUTE))
+		if (rt->rt_dflags & RTDF_STATIC)
 			rtm->rtm_flags |= RTF_STATIC;
 
 		if (rt->rt_mtu != 0) {
@@ -989,8 +1002,7 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	if (ia->addr_flags & IN6_IFF_TENTATIVE)
 		ifa.ifra_flags |= IN6_IFF_TENTATIVE;
 #endif
-// #if (defined(__NetBSD__) && __NetBSD_Version__ >= 999005700) ||
-#if    (defined(__OpenBSD__) && OpenBSD >= 201605)
+#if !defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)
 	if (ia->flags & IPV6_AF_AUTOCONF)
 		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
 #endif
@@ -1353,7 +1365,18 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		struct ifaddrs *ifaddrs = NULL, *ifa;
 
 		sa = rti_info[RTAX_IFA];
-		getifaddrs(&ifaddrs);
+#ifdef PRIVSEP_GETIFADDRS
+		if (IN_PRIVSEP(ctx)) {
+			if (ps_root_getifaddrs(ctx, &ifaddrs) == -1) {
+				logerr("ps_root_getifaddrs");
+				break;
+			}
+		} else
+#endif
+		if (getifaddrs(&ifaddrs) == -1) {
+			logerr("getifaddrs");
+			break;
+		}
 		for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
 			if (ifa->ifa_addr == NULL)
 				continue;
@@ -1361,6 +1384,11 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 			    strcmp(ifa->ifa_name, ifp->name) == 0)
 				break;
 		}
+#ifdef PRIVSEP_GETIFADDRS
+		if (IN_PRIVSEP(ctx))
+			free(ifaddrs);
+		else
+#endif
 		freeifaddrs(ifaddrs);
 		if (ifam->ifam_type == RTM_DELADDR) {
 			if (ifa != NULL)
