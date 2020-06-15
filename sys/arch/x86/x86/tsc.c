@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.50 2020/06/14 23:24:20 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.51 2020/06/15 09:09:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.50 2020/06/14 23:24:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.51 2020/06/15 09:09:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,9 @@ static uint64_t	tsc_dummy_cacheline __cacheline_aligned;
 uint64_t	tsc_freq __read_mostly;	/* exported for sysctl */
 static int64_t	tsc_drift_max = 1000;	/* max cycles */
 static int64_t	tsc_drift_observed;
+uint64_t	(*rdtsc)(void) = rdtsc_cpuid;
+uint64_t	(*cpu_counter)(void) = cpu_counter_cpuid;
+uint32_t	(*cpu_counter32)(void) = cpu_counter32_cpuid;
 
 int tsc_user_enabled = 1;
 
@@ -146,6 +149,51 @@ tsc_is_invariant(void)
 	}
 
 	return invariant;
+}
+
+/* Setup function porniters for rdtsc() and timecounter(9). */
+void
+tsc_setfunc(struct cpu_info *ci)
+{
+	bool use_lfence, use_mfence;
+
+	use_lfence = use_mfence = false;
+
+	/*
+	 * XXX On AMD, we might be able to use lfence for some cases:
+	 *   a) if MSR_DE_CFG exist and the bit 1 is set.
+	 *   b) family == 0x0f or 0x11. Those have no MSR_DE_CFG and
+	 *      lfence is always serializing.
+	 *
+	 * We don't use it because the test result showed mfence was better
+	 * than lfence with MSR_DE_CFG.
+	 */
+	if (cpu_vendor == CPUVENDOR_AMD)
+		use_mfence = true;
+	else if (cpu_vendor == CPUVENDOR_INTEL)
+		use_lfence = true;
+
+	/* LFENCE and MFENCE are applicable if SSE2 is set. */
+	if ((ci->ci_feat_val[0] & CPUID_SSE2) == 0)
+		use_lfence = use_mfence = false;
+
+#define TSC_SETFUNC(fence)						      \
+	do {								      \
+		rdtsc = rdtsc_##fence;					      \
+		cpu_counter = cpu_counter_##fence;			      \
+		cpu_counter32 = cpu_counter32_##fence;			      \
+	} while (/* CONSTCOND */ 0)
+	
+
+	if (use_lfence)
+		TSC_SETFUNC(lfence);
+	else if (use_mfence)
+		TSC_SETFUNC(mfence);
+	else
+		TSC_SETFUNC(cpuid);
+
+	aprint_verbose_dev(ci->ci_dev, "Use %s to serialize rdtsc\n",
+	    use_lfence ? "lfence" : (use_mfence ? "mfence" : "cpuid"));
 }
 
 /*

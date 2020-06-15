@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.h,v 1.6 2017/10/02 19:23:16 maxv Exp $	*/
+/*	$NetBSD: tsc.h,v 1.7 2020/06/15 09:09:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,6 +27,7 @@
  */
 
 bool	tsc_is_invariant(void);
+void	tsc_setfunc(struct cpu_info *);
 void	tsc_tc_init(void);
 void	tsc_sync_ap(struct cpu_info *);
 void	tsc_sync_bp(struct cpu_info *);
