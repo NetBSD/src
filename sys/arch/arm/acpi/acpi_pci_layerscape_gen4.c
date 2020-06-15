@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_layerscape_gen4.c,v 1.2 2020/02/02 16:44:25 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_layerscape_gen4.c,v 1.3 2020/06/15 18:57:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_layerscape_gen4.c,v 1.2 2020/02/02 16:44:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_layerscape_gen4.c,v 1.3 2020/06/15 18:57:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,8 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_layerscape_gen4.c,v 1.2 2020/02/02 16:44:25
 #include <sys/extent.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
