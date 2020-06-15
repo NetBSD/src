@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.1.1.1 2020/06/15 01:52:52 christos Exp $
+# $NetBSD: README,v 1.2 2020/06/15 21:27:57 christos Exp $
 
 This package contains library that can be used by network daemons to
 communicate with a packet filter via a daemon to enforce opening and
@@ -52,7 +52,7 @@ peer information to blocklistd via:
 
 The configuration file contains entries of the form:
 
-# Blacklist rule
+# Blocklist rule
 # host/Port	type	protocol	owner	name	nfail	disable
 192.168.1.1:ssh	stream	tcp		*	-int	10	1m
 8.8.8.8:ssh	stream	tcp		*	-ext	6	60m
