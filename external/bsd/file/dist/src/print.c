@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.14 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.15 2020/06/15 00:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.85 2019/03/12 20:43:05 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.88 2020/05/09 18:57:15 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.14 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.15 2020/06/15 00:37:24 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -56,7 +56,7 @@ protected void
 file_mdump(struct magic *m)
 {
 	static const char optyp[] = { FILE_OPS };
-	char tbuf[26];
+	char tbuf[256];
 
 	(void) fprintf(stderr, "%u: %.*s %u", m->lineno,
 	    (m->cont_level & 7) + 1, ">>>>>>>>", m->offset);
@@ -145,6 +145,7 @@ file_mdump(struct magic *m)
 		case FILE_BEQUAD:
 		case FILE_LEQUAD:
 		case FILE_QUAD:
+		case FILE_OFFSET:
 			(void) fprintf(stderr, "%" INT64_T_FORMAT "d",
 			    CAST(long long, m->value.q));
 			break;
@@ -162,32 +163,35 @@ file_mdump(struct magic *m)
 		case FILE_BEDATE:
 		case FILE_MEDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.l, 0, tbuf));
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.l, 0));
 			break;
 		case FILE_LDATE:
 		case FILE_LELDATE:
 		case FILE_BELDATE:
 		case FILE_MELDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.l, FILE_T_LOCAL, tbuf));
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.l,
+			    FILE_T_LOCAL));
 			break;
 		case FILE_QDATE:
 		case FILE_LEQDATE:
 		case FILE_BEQDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.q, 0, tbuf));
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.q, 0));
 			break;
 		case FILE_QLDATE:
 		case FILE_LEQLDATE:
 		case FILE_BEQLDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.q, FILE_T_LOCAL, tbuf));
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.q,
+			    FILE_T_LOCAL));
 			break;
 		case FILE_QWDATE:
 		case FILE_LEQWDATE:
 		case FILE_BEQWDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(m->value.q, FILE_T_WINDOWS, tbuf));
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.q,
+			    FILE_T_WINDOWS));
 			break;
 		case FILE_FLOAT:
 		case FILE_BEFLOAT:
@@ -207,6 +211,12 @@ file_mdump(struct magic *m)
 		case FILE_DER:
 			(void) fprintf(stderr, "'%s'", m->value.s);
 			break;
+		case FILE_GUID:
+			(void) file_print_guid(tbuf, sizeof(tbuf),
+			    m->value.guid);
+			(void) fprintf(stderr, "%s", tbuf);
+			break;
+
 		default:
 			(void) fprintf(stderr, "*bad type %d*", m->type);
 			break;
@@ -236,7 +246,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 }
 
 protected const char *
-file_fmttime(uint64_t v, int flags, char *buf)
+file_fmttime(char *buf, size_t bsize, uint64_t v, int flags)
 {
 	char *pp;
 	time_t t;
@@ -266,5 +276,6 @@ file_fmttime(uint64_t v, int flags, char *buf)
 	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
 out:
-	return strcpy(buf, "*Invalid time*");
+	strlcpy(buf, "*Invalid time*", bsize);
+	return buf;
 }

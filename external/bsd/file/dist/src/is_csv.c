@@ -1,4 +1,4 @@
-/*	$NetBSD: is_csv.c,v 1.1.1.1 2019/12/17 02:23:53 christos Exp $	*/
+/*	$NetBSD: is_csv.c,v 1.2 2020/06/15 00:37:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 Christos Zoulas
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: is_csv.c,v 1.4 2019/06/26 20:31:31 christos Exp $")
 #else
-__RCSID("$NetBSD: is_csv.c,v 1.1.1.1 2019/12/17 02:23:53 christos Exp $");
+__RCSID("$NetBSD: is_csv.c,v 1.2 2020/06/15 00:37:24 christos Exp $");
 #endif
 #endif
 
@@ -100,8 +100,7 @@ csv_parse(const unsigned char *uc, const unsigned char *ue)
 	size_t nf = 0, tf = 0, nl = 0;
 
 	while (uc < ue) {
-		unsigned char c;
-		switch (c = *uc++) {
+		switch (*uc++) {
 		case '"':
 			// Eat until the matching quote
 			uc = eatquote(uc, ue);
