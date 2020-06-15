@@ -1,7 +1,7 @@
-/*	$NetBSD: imxgpio.c,v 1.8 2020/01/15 01:09:56 jmcneill Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.9 2020/06/15 18:57:39 ad Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.8 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.9 2020/06/15 18:57:39 ad Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.8 2020/01/15 01:09:56 jmcneill Exp $")
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
-
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
