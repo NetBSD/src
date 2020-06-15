@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.308 2020/06/01 14:46:04 christos Exp $
+$NetBSD: UPDATING,v 1.309 2020/06/15 03:39:00 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20200614:
+	blacklist* has been renamed to blocklist*. You need to manually:
+	mv /var/db/bl{a,o}cklist.db
+	fix npf rules that mention blacklist
+	fix rc.conf variables
 
 20200601:
 	Due to a mistake in LIBISPRIVATE handling, .so libraries were
