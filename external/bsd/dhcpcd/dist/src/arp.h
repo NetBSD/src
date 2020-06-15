@@ -98,7 +98,6 @@ struct arp_state *arp_new(struct interface *, const struct in_addr *);
 void arp_probe(struct arp_state *);
 struct arp_state *arp_announceaddr(struct dhcpcd_ctx *, const struct in_addr *);
 struct arp_state *arp_ifannounceaddr(struct interface *, const struct in_addr *);
-void arp_cancel(struct arp_state *);
 struct arp_state * arp_find(struct interface *, const struct in_addr *);
 void arp_free(struct arp_state *);
 void arp_freeaddr(struct interface *, const struct in_addr *);
