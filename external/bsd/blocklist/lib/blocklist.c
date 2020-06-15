@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklist.c,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $	*/
+/*	$NetBSD: blocklist.c,v 1.2 2020/06/15 02:29:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklist.c,v 1.1.1.1 2020/06/15 01:52:53 christos Exp $");
+__RCSID("$NetBSD: blocklist.c,v 1.2 2020/06/15 02:29:45 christos Exp $");
 
 #include <stdio.h>
 #include <bl.h>
@@ -65,16 +65,16 @@ blocklist_sa_r(struct blocklist *bl, int action, int rfd,
 
 	/* internal values are not the same as user application values */
 	switch (action) {
-	case BLACKLIST_AUTH_FAIL:
+	case BLOCKLIST_AUTH_FAIL:
 		internal_action = BL_ADD;
 		break;
-	case BLACKLIST_AUTH_OK:
+	case BLOCKLIST_AUTH_OK:
 		internal_action = BL_DELETE;
 		break;
-	case BLACKLIST_ABUSIVE_BEHAVIOR:
+	case BLOCKLIST_ABUSIVE_BEHAVIOR:
 		internal_action = BL_ABUSE;
 		break;
-	case BLACKLIST_BAD_USER:
+	case BLOCKLIST_BAD_USER:
 		internal_action = BL_BADUSER;
 		break;
 	default:
