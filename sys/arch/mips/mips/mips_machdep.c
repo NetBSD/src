@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.290 2020/06/14 14:45:12 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.291 2020/06/15 00:31:21 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.290 2020/06/14 14:45:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.291 2020/06/15 00:31:21 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -946,7 +946,7 @@ mips32r2_vector_init(const struct splsw *splsw)
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!MIPS_HAS_USERLOCAL && cpunum == 0) {
+	if (!MIPS_HAS_USERLOCAL) {
 		extern uint32_t mips32r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips32r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
@@ -962,8 +962,7 @@ mips32r2_vector_init(const struct splsw *splsw)
 	/*
 	 * Copy locore-function vector.
 	 */
-	if (cpunum == 0)
-		mips_locore_jumpvec = mips32r2_locore_vec;
+	mips_locore_jumpvec = mips32r2_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
