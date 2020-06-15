@@ -50,6 +50,8 @@
 #define	PS_WRITEFILE		0x0015
 #define	PS_FILEMTIME		0x0016
 #define	PS_AUTH_MONORDM		0x0017
+#define	PS_CTL			0x0018
+#define	PS_CTL_EOF		0x0019
 
 /* BSD Commands */
 #define	PS_IOCTLLINK		0x0101
@@ -57,16 +59,21 @@
 #define	PS_IOCTLINDIRECT	0x0103
 #define	PS_IP6FORWARDING	0x0104
 #define	PS_GETIFADDRS		0x0105
+#define	PS_IFIGNOREGRP		0x0106
 
 /* Dev Commands */
-#define	PS_DEV_LISTENING	0x0201
-#define	PS_DEV_INITTED		0x0202
-#define	PS_DEV_IFCMD		0x0203
+#define	PS_DEV_LISTENING	0x1001
+#define	PS_DEV_INITTED		0x1002
+#define	PS_DEV_IFCMD		0x1003
 
 /* Dev Interface Commands (via flags) */
 #define	PS_DEV_IFADDED		0x0001
 #define	PS_DEV_IFREMOVED	0x0002
 #define	PS_DEV_IFUPDATED	0x0003
+
+/* Control Type (via flags) */
+#define	PS_CTL_PRIV		0x0004
+#define	PS_CTL_UNPRIV		0x0005
 
 /* Process commands */
 #define	PS_START		0x4000
@@ -84,6 +91,11 @@
 	((ctx)->options & DHCPCD_PRIVSEP)
 #define	IN_PRIVSEP_SE(ctx)	\
 	(((ctx)->options & (DHCPCD_PRIVSEP | DHCPCD_FORKED)) == DHCPCD_PRIVSEP)
+
+
+#if defined(PRIVSEP) && defined(HAVE_CAPSICUM)
+#define PRIVSEP_RIGHTS
+#endif
 
 #include "config.h"
 #include "arp.h"
@@ -146,6 +158,7 @@ struct ps_process {
 };
 TAILQ_HEAD(ps_process_head, ps_process);
 
+#include "privsep-control.h"
 #include "privsep-inet.h"
 #include "privsep-root.h"
 #ifdef INET
@@ -156,6 +169,7 @@ int ps_init(struct dhcpcd_ctx *);
 int ps_dropprivs(struct dhcpcd_ctx *);
 int ps_start(struct dhcpcd_ctx *);
 int ps_stop(struct dhcpcd_ctx *);
+int ps_mastersandbox(struct dhcpcd_ctx *);
 
 int ps_unrollmsg(struct msghdr *, struct ps_msghdr *, const void *, size_t);
 ssize_t ps_sendpsmmsg(struct dhcpcd_ctx *, int,
@@ -171,6 +185,14 @@ ssize_t ps_recvpsmsg(struct dhcpcd_ctx *, int,
     ssize_t (*callback)(void *, struct ps_msghdr *, struct msghdr *), void *);
 
 /* Internal privsep functions. */
+int ps_setbuf_fdpair(int []);
+#ifdef PRIVSEP_RIGHTS
+int ps_rights_limit_ioctl(int);
+int ps_rights_limit_fd_fctnl(int);
+int ps_rights_limit_fd_rdonly(int);
+int ps_rights_limit_fd(int);
+int ps_rights_limit_fdpair(int []);
+#endif
 pid_t ps_dostart(struct dhcpcd_ctx * ctx,
     pid_t *priv_pid, int *priv_fd,
     void (*recv_msg)(void *), void (*recv_unpriv_msg),

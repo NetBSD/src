@@ -578,13 +578,6 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 }
 
 void
-arp_cancel(struct arp_state *astate)
-{
-
-	eloop_timeout_delete(astate->iface->ctx->eloop, NULL, astate);
-}
-
-void
 arp_free(struct arp_state *astate)
 {
 	struct interface *ifp;
