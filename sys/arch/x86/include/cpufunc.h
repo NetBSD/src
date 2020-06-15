@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.40 2020/06/14 16:12:05 riastradh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.41 2020/06/15 09:09:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -89,19 +89,37 @@ invpcid(register_t op, uint64_t pcid, vaddr_t va)
 	);
 }
 
-static inline uint64_t
-rdtsc(void)
-{
-	uint32_t low, high;
+extern uint64_t (*rdtsc)(void);
 
-	__asm volatile (
-		"rdtsc"
-		: "=a" (low), "=d" (high)
-		:
-	);
+#define _SERIALIZE_lfence	__asm volatile ("lfence")
+#define _SERIALIZE_mfence	__asm volatile ("mfence")
+#define _SERIALIZE_cpuid	__asm volatile ("xor %%eax, %%eax;cpuid" ::: \
+	    "eax", "ebx", "ecx", "edx");
 
-	return (low | ((uint64_t)high << 32));
+#define RDTSCFUNC(fence)			\
+static inline uint64_t				\
+rdtsc_##fence(void)				\
+{						\
+	uint32_t low, high;			\
+						\
+	_SERIALIZE_##fence;			\
+	__asm volatile (			\
+		"rdtsc"				\
+		: "=a" (low), "=d" (high)	\
+		:				\
+	);					\
+						\
+	return (low | ((uint64_t)high << 32));	\
 }
+
+RDTSCFUNC(lfence)
+RDTSCFUNC(mfence)
+RDTSCFUNC(cpuid)
+
+#undef _SERIALIZE_LFENCE
+#undef _SERIALIZE_MFENCE
+#undef _SERIALIZE_CPUID
+
 
 #ifndef XENPV
 struct x86_hotpatch_source {
