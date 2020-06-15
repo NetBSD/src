@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.53 2020/06/11 16:05:54 roy Exp $
+# $NetBSD: Makefile,v 1.54 2020/06/15 17:02:58 roy Exp $
 #
 
 WARNS?=		6
@@ -17,7 +17,7 @@ SRCS+=		if-bsd.c
 # This should be fine for ramdisk based installers
 .if !defined(SMALLPROG)
 CPPFLAGS+=	-DPRIVSEP -DPRIVSEP_USER=\"_dhcpcd\"
-SRCS+=		privsep.c privsep-root.c privsep-inet.c
+SRCS+=		privsep.c privsep-root.c privsep-inet.c privsep-control.c
 SRCS+=		privsep-bsd.c
 .endif
 
