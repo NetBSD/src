@@ -31,6 +31,10 @@
 
 #include "if.h"
 
+#if defined(PRIVSEP) && (defined(HAVE_CAPSICUM) || defined(__linux__))
+#define PRIVSEP_GETIFADDRS
+#endif
+
 pid_t ps_root_start(struct dhcpcd_ctx *ctx);
 int ps_root_stop(struct dhcpcd_ctx *ctx);
 
@@ -45,7 +49,9 @@ ssize_t ps_root_writefile(struct dhcpcd_ctx *, const char *, mode_t,
     const void *, size_t);
 ssize_t ps_root_script(struct dhcpcd_ctx *, const void *, size_t);
 int ps_root_getauthrdm(struct dhcpcd_ctx *, uint64_t *);
+#ifdef PRIVSEP_GETIFADDRS
 int ps_root_getifaddrs(struct dhcpcd_ctx *, struct ifaddrs **);
+#endif
 
 ssize_t ps_root_os(struct ps_msghdr *, struct msghdr *, void **, size_t *);
 #if defined(BSD) || defined(__sun)
@@ -54,10 +60,10 @@ ssize_t ps_root_ioctllink(struct dhcpcd_ctx *, unsigned long, void *, size_t);
 ssize_t ps_root_ioctl6(struct dhcpcd_ctx *, unsigned long, void *, size_t);
 ssize_t ps_root_indirectioctl(struct dhcpcd_ctx *, unsigned long, const char *,
     void *, size_t);
+ssize_t ps_root_ifignoregroup(struct dhcpcd_ctx *, const char *);
 #endif
 #ifdef __linux__
 ssize_t ps_root_sendnetlink(struct dhcpcd_ctx *, int, struct msghdr *);
-ssize_t ps_root_writepathuint(struct dhcpcd_ctx *, const char *, unsigned int);
 #endif
 
 #ifdef PLUGIN_DEV
