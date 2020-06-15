@@ -39,6 +39,7 @@
  * this in a script or something.
  */
 
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -128,6 +129,49 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 		return -1;
 	}
 
+	struct rlimit rzero = { .rlim_cur = 0, .rlim_max = 0 };
+
+	if (ctx->ps_control_pid != getpid()) {
+		/* Prohibit new files, sockets, etc */
+#if defined(__linux__) || defined(__sun) || defined(__OpenBSD__)
+		/*
+		 * If poll(2) is called with nfds > RLIMIT_NOFILE
+		 * then it returns EINVAL.
+		 * This blows.
+		 * Do the best we can and limit to what we need.
+		 * An attacker could potentially close a file and
+		 * open a new one still, but that cannot be helped.
+		 */
+		unsigned long maxfd;
+		maxfd = (unsigned long)eloop_event_count(ctx->eloop);
+		if (IN_PRIVSEP_SE(ctx))
+			maxfd++; /* XXX why? */
+
+		struct rlimit rmaxfd = {
+		    .rlim_cur = maxfd,
+		    .rlim_max = maxfd
+		};
+		if (setrlimit(RLIMIT_NOFILE, &rmaxfd) == -1)
+			logerr("setrlimit RLIMIT_NOFILE");
+#else
+		if (setrlimit(RLIMIT_NOFILE, &rzero) == -1)
+			logerr("setrlimit RLIMIT_NOFILE");
+#endif
+	}
+
+	/* Prohibit writing to files.
+	 * Obviously this won't work if we are using a logfile. */
+	if (ctx->logfile == NULL) {
+		if (setrlimit(RLIMIT_FSIZE, &rzero) == -1)
+			logerr("setrlimit RLIMIT_FSIZE");
+	}
+
+#ifdef RLIMIT_NPROC
+	/* Prohibit forks */
+	if (setrlimit(RLIMIT_NPROC, &rzero) == -1)
+		logerr("setrlimit RLIMIT_NPROC");
+#endif
+
 	return 0;
 }
 
@@ -166,6 +210,71 @@ ps_setbuf(int fd)
 	return 0;
 }
 
+int
+ps_setbuf_fdpair(int fd[])
+{
+
+	if (ps_setbuf(fd[0]) == -1 || ps_setbuf(fd[1]) == -1)
+		return -1;
+	return 0;
+}
+
+#ifdef PRIVSEP_RIGHTS
+int
+ps_rights_limit_ioctl(int fd)
+{
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_IOCTL);
+	if (cap_rights_limit(fd, &rights) == -1 && errno != ENOSYS)
+		return -1;
+	return 0;
+}
+
+int
+ps_rights_limit_fd_fctnl(int fd)
+{
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT,
+	    CAP_ACCEPT, CAP_FCNTL);
+	if (cap_rights_limit(fd, &rights) == -1 && errno != ENOSYS)
+		return -1;
+	return 0;
+}
+
+int
+ps_rights_limit_fd(int fd)
+{
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT, CAP_SHUTDOWN);
+	if (cap_rights_limit(fd, &rights) == -1 && errno != ENOSYS)
+		return -1;
+	return 0;
+}
+
+int
+ps_rights_limit_fd_rdonly(int fd)
+{
+	cap_rights_t rights;
+
+	cap_rights_init(&rights, CAP_READ, CAP_EVENT);
+	if (cap_rights_limit(fd, &rights) == -1 && errno != ENOSYS)
+		return -1;
+	return 0;
+}
+
+int
+ps_rights_limit_fdpair(int fd[])
+{
+
+	if (ps_rights_limit_fd(fd[0]) == -1 || ps_rights_limit_fd(fd[1]) == -1)
+		return -1;
+	return 0;
+}
+#endif
+
 pid_t
 ps_dostart(struct dhcpcd_ctx *ctx,
     pid_t *priv_pid, int *priv_fd,
@@ -176,17 +285,22 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	int stype;
 	int fd[2];
 	pid_t pid;
-#ifdef HAVE_CAPSICUM
-	cap_rights_t rights;
-
-	cap_rights_init(&rights, CAP_READ, CAP_WRITE, CAP_EVENT, CAP_SHUTDOWN);
-#endif
 
 	stype = SOCK_CLOEXEC | SOCK_NONBLOCK;
 	if (socketpair(AF_UNIX, SOCK_DGRAM | stype, 0, fd) == -1) {
-		logerr("socketpair");
+		logerr("%s: socketpair", __func__);
 		return -1;
 	}
+	if (ps_setbuf_fdpair(fd) == -1) {
+		logerr("%s: ps_setbuf_fdpair", __func__);
+		return -1;
+	}
+#ifdef PRIVSEP_RIGHTS
+	if (ps_rights_limit_fdpair(fd) == -1) {
+		logerr("%s: ps_rights_limit_fdpair", __func__);
+		return -1;
+	}
+#endif
 
 	switch (pid = fork()) {
 	case -1:
@@ -195,23 +309,13 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 	case 0:
 		*priv_fd = fd[1];
 		close(fd[0]);
-		ps_setbuf(*priv_fd);
 		break;
 	default:
 		*priv_pid = pid;
 		*priv_fd = fd[0];
 		close(fd[1]);
-		ps_setbuf(*priv_fd);
 		if (recv_unpriv_msg == NULL)
 			;
-#ifdef HAVE_CAPSICUM
-		else if (cap_rights_limit(*priv_fd, &rights) == -1
-		    && errno != ENOSYS)
-		{
-			logerr("%s: cap_rights_limit", __func__);
-			return -1;
-		}
-#endif
 		else if (eloop_event_add(ctx->eloop, *priv_fd,
 		    recv_unpriv_msg, recv_ctx) == -1)
 		{
@@ -252,11 +356,6 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 		goto errexit;
 	}
 
-#ifdef HAVE_CAPSICUM
-	if (cap_rights_limit(*priv_fd, &rights) == -1 && errno != ENOSYS)
-		goto errexit;
-#endif
-
 	if (eloop_event_add(ctx->eloop, *priv_fd, recv_msg, recv_ctx) == -1)
 	{
 		logerr("%s: eloop_event_add", __func__);
@@ -294,17 +393,16 @@ ps_dostop(struct dhcpcd_ctx *ctx, pid_t *pid, int *fd)
 	int err = 0;
 
 #ifdef PRIVSEP_DEBUG
-	logdebugx("%s: pid %d fd %d", __func__, *pid, *fd);
+	logdebugx("%s: pid=%d fd=%d", __func__, *pid, *fd);
 #endif
 
 	if (*fd != -1) {
 		eloop_event_delete(ctx->eloop, *fd);
-		if (ps_sendcmd(ctx, *fd, PS_STOP, 0, NULL, 0) == -1 ||
-		    shutdown(*fd, SHUT_RDWR) == -1)
-		{
+		if (ps_sendcmd(ctx, *fd, PS_STOP, 0, NULL, 0) == -1) {
 			logerr(__func__);
 			err = -1;
 		}
+		(void)shutdown(*fd, SHUT_RDWR);
 		close(*fd);
 		*fd = -1;
 	}
@@ -335,7 +433,7 @@ ps_start(struct dhcpcd_ctx *ctx)
 	/* No point in spawning the generic network listener if we're
 	 * not going to use it. */
 	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_IPV6)))
-		goto started;
+		goto started_net;
 
 	switch (pid = ps_inet_start(ctx)) {
 	case -1:
@@ -348,7 +446,17 @@ ps_start(struct dhcpcd_ctx *ctx)
 		logdebugx("spawned network proxy on PID %d", pid);
 	}
 
-started:
+started_net:
+	if (!(ctx->options & DHCPCD_TEST)) {
+		switch (pid = ps_ctl_start(ctx)) {
+		case -1:
+			return -1;
+		case 0:
+			return 0;
+		default:
+			logdebugx("spawned controller proxy on PID %d", pid);
+		}
+	}
 
 #ifdef ARC4RANDOM_H
 	/* Seed the random number generator early incase it needs /dev/urandom
@@ -360,6 +468,40 @@ started:
 }
 
 int
+ps_mastersandbox(struct dhcpcd_ctx *ctx)
+{
+
+	if (ps_dropprivs(ctx) == -1) {
+		logerr("%s: ps_dropprivs", __func__);
+		return -1;
+	}
+
+#ifdef PRIVSEP_RIGHTS
+	if ((ps_rights_limit_ioctl(ctx->pf_inet_fd) == -1 ||
+	     ps_rights_limit_fd(ctx->link_fd) == -1) &&
+	    errno != ENOSYS)
+	{
+		logerr("%s: cap_rights_limit", __func__);
+		return -1;
+	}
+#endif
+#ifdef HAVE_CAPSICUM
+	if (cap_enter() == -1 && errno != ENOSYS) {
+		logerr("%s: cap_enter", __func__);
+		return -1;
+	}
+#endif
+#ifdef HAVE_PLEDGE
+	if (pledge("stdio route", NULL) == -1) {
+		logerr("%s: pledge", __func__);
+		return -1;
+	}
+#endif
+
+	return 0;
+}
+
+int
 ps_stop(struct dhcpcd_ctx *ctx)
 {
 	int r, ret = 0;
@@ -368,6 +510,10 @@ ps_stop(struct dhcpcd_ctx *ctx)
 	    ctx->options & DHCPCD_FORKED ||
 	    ctx->eloop == NULL)
 		return 0;
+
+	r = ps_ctl_stop(ctx);
+	if (r != 0)
+		ret = r;
 
 	r = ps_inet_stop(ctx);
 	if (r != 0)
