@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.54 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.55 2020/06/15 23:38:17 roy Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -335,6 +335,7 @@ struct nd_opt_prefix_info {	/* prefix information */
 
 #define ND_OPT_PI_FLAG_ONLINK		0x80
 #define ND_OPT_PI_FLAG_AUTO		0x40
+#define ND_OPT_PI_FLAG_ROUTER		0x20
 
 struct nd_opt_rd_hdr {		/* redirected header */
 	u_int8_t	nd_opt_rh_type;
