@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.46 2020/06/13 23:58:52 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.47 2020/06/15 09:09:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.46 2020/06/13 23:58:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.47 2020/06/15 09:09:23 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -163,23 +163,59 @@ ENTRY(msr_onfault)
 	ret
 END(msr_onfault)
 
-ENTRY(cpu_counter)
-	pushl	%ebx
-	movl	CPUVAR(CURLWP), %ecx
-1:
-	movl	L_NCSW(%ecx), %ebx
-	rdtsc
-	addl	CPUVAR(CC_SKEW), %eax
-	adcl	CPUVAR(CC_SKEW+4), %edx
-	cmpl	%ebx, L_NCSW(%ecx)
-	jne	2f
-	popl	%ebx
-	ret
-2:
-	jmp	1b
-END(cpu_counter)
+#define ADD_counter32	addl	CPUVAR(CC_SKEW), %eax
+#define ADD_counter	ADD_counter32			;\
+			adcl	CPUVAR(CC_SKEW+4), %edx
 
-STRONG_ALIAS(cpu_counter32, cpu_counter)
+#define SERIALIZE_lfence	lfence
+#define SERIALIZE_mfence	mfence
+
+#define CPU_COUNTER_FENCE(counter, fence) \
+ENTRY(cpu_ ## counter ## _ ## fence)	;\
+	pushl	%ebx			;\
+	movl	CPUVAR(CURLWP), %ecx	;\
+1:					;\
+	movl	L_NCSW(%ecx), %ebx	;\
+	SERIALIZE_ ## fence		;\
+	rdtsc				;\
+	ADD_ ## counter			;\
+	cmpl	%ebx, L_NCSW(%ecx)	;\
+	jne	2f			;\
+	popl	%ebx			;\
+	ret				;\
+2:					;\
+	jmp	1b			;\
+END(cpu_ ## counter ## _ ## fence)
+
+CPU_COUNTER_FENCE(counter, lfence)
+CPU_COUNTER_FENCE(counter, mfence)
+CPU_COUNTER_FENCE(counter32, lfence)
+CPU_COUNTER_FENCE(counter32, mfence)
+
+#define CPU_COUNTER_CPUID(counter)	\
+ENTRY(cpu_ ## counter ## _cpuid)	;\
+	pushl	%ebx			;\
+	pushl	%esi			;\
+	movl	CPUVAR(CURLWP), %ecx	;\
+1:					;\
+	movl	L_NCSW(%ecx), %esi	;\
+	pushl	%ecx			;\
+	xor	%eax, %eax		;\
+	cpuid				;\
+	rdtsc				;\
+	ADD_ ## counter			;\
+	popl	%ecx			;\
+	cmpl	%esi, L_NCSW(%ecx)	;\
+	jne	2f			;\
+	popl	%esi			;\
+	popl	%ebx			;\
+	ret				;\
+2:					;\
+	jmp	1b			;\
+END(cpu_ ## counter ##_cpuid)
+
+CPU_COUNTER_CPUID(counter)
+CPU_COUNTER_CPUID(counter32)
 
 ENTRY(breakpoint)
 	pushl	%ebp

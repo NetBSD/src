@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.9 2020/05/17 11:54:39 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.10 2020/06/15 09:09:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.9 2020/05/17 11:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.10 2020/06/15 09:09:24 msaitoh Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -178,8 +178,10 @@ struct hyperv_ref_tsc {
 
 static struct hyperv_ref_tsc hyperv_ref_tsc;
 
+static u_int	hyperv_tsc_timecount(struct timecounter *);
+
 static struct timecounter hyperv_tsc_timecounter = {
-	.tc_get_timecount = NULL,	/* based on CPU vendor. */
+	.tc_get_timecount = hyperv_tsc_timecount,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = HYPERV_TIMER_FREQ,
 	.tc_name = "Hyper-V-TSC",
@@ -194,51 +196,45 @@ atomic_load_acq_int(volatile u_int *p)
 	return r;
 }
 
-#define HYPERV_TSC_TIMECOUNT(fence)					\
-static uint64_t								\
-hyperv_tc64_tsc_##fence(void)						\
-{									\
-	struct hyperv_reftsc *tsc_ref = hyperv_ref_tsc.tsc_ref;		\
-	uint32_t seq;							\
-									\
-	while ((seq = atomic_load_acq_int(&tsc_ref->tsc_seq)) != 0) {	\
-		uint64_t disc, ret, tsc;				\
-		uint64_t scale = tsc_ref->tsc_scale;			\
-		int64_t ofs = tsc_ref->tsc_ofs;				\
-									\
-		x86_##fence();						\
-		tsc = cpu_counter();					\
-									\
-		/* ret = ((tsc * scale) >> 64) + ofs */			\
-		__asm__ __volatile__ ("mulq %3" :			\
-		    "=d" (ret), "=a" (disc) :				\
-		    "a" (tsc), "r" (scale));				\
-		ret += ofs;						\
-									\
-		__insn_barrier();					\
-		if (tsc_ref->tsc_seq == seq)				\
-			return ret;					\
-									\
-		/* Sequence changed; re-sync. */			\
-	}								\
-	/* Fallback to the generic timecounter, i.e. rdmsr. */		\
-	return rdmsr(MSR_HV_TIME_REF_COUNT);				\
-}									\
-									\
-static u_int								\
-hyperv_tsc_timecount_##fence(struct timecounter *tc __unused)		\
-{									\
-									\
-	return hyperv_tc64_tsc_##fence();				\
+static uint64_t
+hyperv_tc64_tsc(void)
+{
+	struct hyperv_reftsc *tsc_ref = hyperv_ref_tsc.tsc_ref;
+	uint32_t seq;
+
+	while ((seq = atomic_load_acq_int(&tsc_ref->tsc_seq)) != 0) {
+		uint64_t disc, ret, tsc;
+		uint64_t scale = tsc_ref->tsc_scale;
+		int64_t ofs = tsc_ref->tsc_ofs;
+
+		tsc = cpu_counter();
+
+		/* ret = ((tsc * scale) >> 64) + ofs */
+		__asm__ __volatile__ ("mulq %3" :
+		    "=d" (ret), "=a" (disc) :
+		    "a" (tsc), "r" (scale));
+		ret += ofs;
+
+		__insn_barrier();
+		if (tsc_ref->tsc_seq == seq)
+			return ret;
+
+		/* Sequence changed; re-sync. */
+	}
+	/* Fallback to the generic timecounter, i.e. rdmsr. */
+	return rdmsr(MSR_HV_TIME_REF_COUNT);
 }
 
-HYPERV_TSC_TIMECOUNT(lfence);
-HYPERV_TSC_TIMECOUNT(mfence);
+static u_int
+hyperv_tsc_timecount(struct timecounter *tc __unused)
+{
+
+	return hyperv_tc64_tsc();
+}
 
 static bool
 hyperv_tsc_tcinit(void)
 {
-	hyperv_tc64_t tc64 = NULL;
 	uint64_t orig_msr, msr;
 
 	if ((hyperv_features &
@@ -246,24 +242,6 @@ hyperv_tsc_tcinit(void)
 	    (CPUID_HV_MSR_TIME_REFCNT | CPUID_HV_MSR_REFERENCE_TSC) ||
 	    (cpu_feature[0] & CPUID_SSE2) == 0)	/* SSE2 for mfence/lfence */
 		return false;
-
-	switch (cpu_vendor) {
-	case CPUVENDOR_AMD:
-		hyperv_tsc_timecounter.tc_get_timecount =
-		    hyperv_tsc_timecount_mfence;
-		tc64 = hyperv_tc64_tsc_mfence;
-		break;
-
-	case CPUVENDOR_INTEL:
-		hyperv_tsc_timecounter.tc_get_timecount =
-		    hyperv_tsc_timecount_lfence;
-		tc64 = hyperv_tc64_tsc_lfence;
-		break;
-
-	default:
-		/* Unsupport CPU vendors. */
-		return false;
-	}
 
 	hyperv_ref_tsc.tsc_ref = (void *)uvm_km_alloc(kernel_map,
 	    PAGE_SIZE, PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_ZERO);
@@ -287,14 +265,14 @@ hyperv_tsc_tcinit(void)
 	wrmsr(MSR_HV_REFERENCE_TSC, msr);
 
 	/* Install 64 bits timecounter method for other modules to use. */
-	hyperv_tc64 = tc64;
+	hyperv_tc64 = hyperv_tc64_tsc;
 
 	/* Register "enlightened" timecounter. */
 	tc_init(&hyperv_tsc_timecounter);
 
 	return true;
 }
-#endif
+#endif /* __amd64__ */
 
 static void
 delay_tc(unsigned int n)
