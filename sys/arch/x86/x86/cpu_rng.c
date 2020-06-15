@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.16 2020/06/15 01:23:44 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.17 2020/06/15 01:24:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ cpu_rng_get(size_t nbytes, void *cookie)
 	uint64_t buf[2*N];
 	unsigned i, nbits = 0;
 
-	for (; nbytes; nbytes -= MIN(nbytes, sizeof buf)) {
+	while (nbytes) {
 		/*
 		 * The fraction of outputs this rejects in correct
 		 * operation is 1/2^256, which is close enough to zero
@@ -269,6 +269,7 @@ cpu_rng_get(size_t nbytes, void *cookie)
 			nbits = 0;
 		}
 		rnd_add_data_sync(&cpu_rng_source, buf, sizeof buf, nbits);
+		nbytes -= MIN(MIN(nbytes, sizeof buf), MAX(1, 8*nbits));
 	}
 #undef N
 }
