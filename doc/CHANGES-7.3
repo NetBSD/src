@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.85 2020/06/07 16:46:01 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.86 2020/06/16 10:36:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -866,4 +866,17 @@ sys/dev/sysmon/sysmon_envsys.c			1.145
 
 	Do not queue sysmon refresh until the rndsource is attached.
 	[riastradh, ticket #1733]
+
+sys/dev/usb/if_otus.c				1.45 via patch
+
+	Stricter bounds check for some packet length we get from the usb chip,
+	to make sure we do not corrupt kernel memory.
+	Pointed out by Ilja Van Sprundel.
+	[martin, ticket #1734]
+
+sys/dev/usb/if_run.c				1.41
+
+	Better bounds checking for oversized packets, to avoid kernel memory
+	corruption. Pointed out by Ilja Van Sprundel.
+	[martin, ticket #1735]
 
