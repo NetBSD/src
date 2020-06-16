@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.280 2020/06/14 14:26:17 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.281 2020/06/16 17:12:18 maxv Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.280 2020/06/14 14:26:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.281 2020/06/16 17:12:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1998,32 +1998,6 @@ in6_matchlen(struct in6_addr *src, struct in6_addr *dst)
 		} else
 			match += NBBY;
 	return match;
-}
-
-/* XXX: to be scope conscious */
-int
-in6_are_prefix_equal(struct in6_addr *p1, struct in6_addr *p2, int len)
-{
-	int bytelen, bitlen;
-
-	/* sanity check */
-	if (len < 0 || len > 128) {
-		log(LOG_ERR, "in6_are_prefix_equal: invalid prefix length(%d)\n",
-		    len);
-		return 0;
-	}
-
-	bytelen = len / NBBY;
-	bitlen = len % NBBY;
-
-	if (memcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
-		return 0;
-	if (bitlen != 0 &&
-	    p1->s6_addr[bytelen] >> (NBBY - bitlen) !=
-	    p2->s6_addr[bytelen] >> (NBBY - bitlen))
-		return 0;
-
-	return 1;
 }
 
 void
