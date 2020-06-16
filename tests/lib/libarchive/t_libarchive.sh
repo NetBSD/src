@@ -1,4 +1,4 @@
-#       $NetBSD: t_libarchive.sh,v 1.5 2020/06/16 07:59:07 martin Exp $
+#       $NetBSD: t_libarchive.sh,v 1.6 2020/06/16 09:47:11 sevan Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ libarchive_body()
 {
 	local m=$(( $( sysctl -n hw.usermem64 ) / 1024 / 1024 ))
 	if [ $m -lt 400 ]; then
-		atf_skip "too few RAM"
+		atf_skip "Not enough RAM"
 	fi
 	local ncpu=$( sysctl -n hw.ncpuonline )
 	if [ $ncpu -lt 2 ]; then
