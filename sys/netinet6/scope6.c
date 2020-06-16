@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.22 2019/09/23 23:12:47 kamil Exp $	*/
+/*	$NetBSD: scope6.c,v 1.23 2020/06/16 17:12:18 maxv Exp $	*/
 /*	$KAME$	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.22 2019/09/23 23:12:47 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.23 2020/06/16 17:12:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -95,78 +95,6 @@ scope6_ifdetach(struct scope6_id *sid)
 	free(sid, M_IFADDR);
 }
 
-int
-scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
-{
-	int i;
-	int error = 0;
-	struct scope6_id *sid = SID(ifp);
-
-	if (!sid)	/* paranoid? */
-		return EINVAL;
-
-	/*
-	 * XXX: We need more consistency checks of the relationship among
-	 * scopes (e.g. an organization should be larger than a site).
-	 */
-
-	/*
-	 * TODO(XXX): after setting, we should reflect the changes to
-	 * interface addresses, routing table entries, PCB entries...
-	 */
-
-	for (i = 0; i < 16; i++) {
-		if (idlist->s6id_list[i] &&
-		    idlist->s6id_list[i] != sid->s6id_list[i]) {
-			int s;
-			/*
-			 * An interface zone ID must be the corresponding
-			 * interface index by definition.
-			 */
-			if (i == IPV6_ADDR_SCOPE_INTFACELOCAL &&
-			    idlist->s6id_list[i] != ifp->if_index)
-				return EINVAL;
-
-			s = pserialize_read_enter();
-			if (i == IPV6_ADDR_SCOPE_LINKLOCAL &&
-			    !if_byindex(idlist->s6id_list[i])) {
-				/*
-				 * XXX: theoretically, there should be no
-				 * relationship between link IDs and interface
-				 * IDs, but we check the consistency for
-				 * safety in later use.
-				 */
-				pserialize_read_exit(s);
-				return EINVAL;
-			}
-			pserialize_read_exit(s);
-
-			/*
-			 * XXX: we must need lots of work in this case,
-			 * but we simply set the new value in this initial
-			 * implementation.
-			 */
-			sid->s6id_list[i] = idlist->s6id_list[i];
-		}
-	}
-
-	return error;
-}
-
-int
-scope6_get(const struct ifnet *ifp, struct scope6_id *idlist)
-{
-	/* We only need to lock the interface's afdata for SID() to work. */
-	const struct scope6_id *sid = SID(ifp);
-
-	if (sid == NULL)	/* paranoid? */
-		return EINVAL;
-
-	*idlist = *sid;
-
-	return 0;
-}
-
 /*
  * Get a scope of the address. Interface-local, link-local, site-local
  * or global.
@@ -222,37 +150,6 @@ in6_addrscope(const struct in6_addr *addr)
 	}
 
 	return IPV6_ADDR_SCOPE_GLOBAL;
-}
-
-/* note that ifp argument might be NULL */
-void
-scope6_setdefault(struct ifnet *ifp)
-{
-
-	/*
-	 * Currently, this function just sets the default "interfaces"
-	 * and "links" according to the given interface.
-	 * We might eventually have to separate the notion of "link" from
-	 * "interface" and provide a user interface to set the default.
-	 */
-	if (ifp) {
-		sid_default.s6id_list[IPV6_ADDR_SCOPE_INTFACELOCAL] =
-			ifp->if_index;
-		sid_default.s6id_list[IPV6_ADDR_SCOPE_LINKLOCAL] =
-			ifp->if_index;
-	} else {
-		sid_default.s6id_list[IPV6_ADDR_SCOPE_INTFACELOCAL] = 0;
-		sid_default.s6id_list[IPV6_ADDR_SCOPE_LINKLOCAL] = 0;
-	}
-}
-
-int
-scope6_get_default(struct scope6_id *idlist)
-{
-
-	*idlist = sid_default;
-
-	return 0;
 }
 
 uint32_t
