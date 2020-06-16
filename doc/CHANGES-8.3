@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.13 2020/06/07 17:09:33 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.14 2020/06/16 10:29:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -183,4 +183,22 @@ sys/kern/subr_pcu.c				1.22
 	Relax KASSERT() in pcu_discard_all() to allow new LWPs to 
 	gracefully exit when an error occurs in _lwp_create(2).
 	[thorpej, ticket #1556]
+
+sys/arch/mac68k/dev/ams.c			1.23
+
+	Fix inverted Y-axis value passed to wsmouse_input(9).
+	[tsutsui, ticket #1557]
+
+sys/dev/usb/if_otus.c				1.45 via patch
+
+	Stricter bounds check for some packet length we get from the usb chip,
+	to make sure we do not corrupt kernel memory.
+	Pointed out by Ilja Van Sprundel.
+	[martin, ticket #1558]
+
+sys/dev/usb/if_run.c				1.41
+
+	Better bounds checking for oversized packets, to avoid kernel memory
+	corruption. Pointed out by Ilja Van Sprundel.
+	[martin, ticket #1559]
 
