@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.4 2016/10/08 23:40:52 joerg Exp $	*/
+/*	$NetBSD: input.cpp,v 1.5 2020/06/16 00:47:21 christos Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -7242,6 +7242,14 @@ void usage(FILE *stream, const char *prog)
 "       -rcn -Tname -Fdir -Idir -Mdir [files...]\n",
 	  prog);
 }
+ 
+static
+#ifdef LONG_FOR_TIME_T
+long
+#else /* not LONG_FOR_TIME_T */
+time_t
+#endif /* not LONG_FOR_TIME_T */
+timestamp;
 
 int main(int argc, char **argv)
 {
@@ -7273,6 +7281,7 @@ int main(int argc, char **argv)
   }
   static const struct option long_options[] = {
     { "help", no_argument, 0, CHAR_MAX + 1 },
+    { "timestamp", required_argument, 0, 'Y' },
     { "version", no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
   };
@@ -7280,7 +7289,7 @@ int main(int argc, char **argv)
 #define DEBUG_OPTION "D"
 #endif
   while ((c = getopt_long(argc, argv,
-			  "abciI:vw:W:zCEf:m:n:o:r:d:F:M:T:tqs:RU"
+			  "abciI:vw:W:zCEf:m:n:o:r:d:F:M:T:tqs:RUY:"
 			  DEBUG_OPTION, long_options, 0))
 	 != EOF)
     switch(c) {
@@ -7382,6 +7391,9 @@ int main(int argc, char **argv)
     case CHAR_MAX + 1: // --help
       usage(stdout, argv[0]);
       exit(0);
+      break;
+    case 'Y': // --timestamp
+      timestamp = strtoul(optarg, NULL, 0);
       break;
     case '?':
       usage(stderr, argv[0]);
@@ -7485,7 +7497,7 @@ static void init_registers()
 #else /* not LONG_FOR_TIME_T */
   time_t
 #endif /* not LONG_FOR_TIME_T */
-    t = time(0);
+    t = timestamp ? timestamp : time(0);
   // Use struct here to work around misfeature in old versions of g++.
   struct tm *tt = localtime(&t);
   set_number_reg("seconds", int(tt->tm_sec));
