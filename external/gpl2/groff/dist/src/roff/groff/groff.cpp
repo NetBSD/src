@@ -1,4 +1,4 @@
-/*	$NetBSD: groff.cpp,v 1.1.1.1 2016/01/13 18:41:48 christos Exp $	*/
+/*	$NetBSD: groff.cpp,v 1.2 2020/06/16 00:47:21 christos Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989-2000, 2001, 2002, 2003, 2004
@@ -126,11 +126,12 @@ int main(int argc, char **argv)
   commands[TROFF_INDEX].set_name(command_prefix, "troff");
   static const struct option long_options[] = {
     { "help", no_argument, 0, 'h' },
+    { "timestamp", required_argument, 0, 'Y' },
     { "version", no_argument, 0, 'v' },
     { NULL, 0, 0, 0 }
   };
   while ((opt = getopt_long(argc, argv,
-			    "abcCd:eEf:F:gGhiI:lL:m:M:n:No:pP:r:RsStT:UvVw:W:XzZ",
+			    "abcCd:eEf:F:gGhiI:lL:m:M:n:No:pP:r:RsStT:UvVw:W:XY:zZ",
 			    long_options, NULL))
 	 != EOF) {
     char buf[3];
@@ -280,6 +281,9 @@ int main(int argc, char **argv)
     case '?':
       usage(stderr);
       exit(1);
+      break;
+    case 'Y':
+      commands[TROFF_INDEX].append_arg(buf, optarg);
       break;
     default:
       assert(0);
