@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.19 2019/11/06 11:55:18 wiz Exp $
+.\"	$NetBSD: vmem.9,v 1.20 2020/06/16 01:29:00 thorpej Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd November 5, 2019
+.Dd June 15, 2020
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -62,6 +62,9 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn vmem_xfree "vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft void
+.Fn vmem_xfreeall "vmem_t *vm"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft int
 .Fn vmem_alloc "vmem_t *vm" "vmem_size_t size" "vm_flag_t flags" "vmem_addr_t *addrp"
@@ -404,6 +407,24 @@ It must be the same as the
 .Fa size
 argument used for
 .Fn vmem_xalloc .
+.El
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn vmem_xfreeall
+frees all resources that have been allocated by
+.Fn vmem_xalloc
+to the arena.
+.Bl -tag -offset indent -width addr
+.It Fa vm
+The arena which we free to.
+Note that this function is may not be used on arenas
+where resources have been allocated using
+.Fn vmem_alloc
+or arenas that have a quantum cache
+.Po
+i.e. were created with a non-zero
+.Fa qcache_max
+.Pc .
 .El
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

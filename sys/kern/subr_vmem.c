@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.103 2020/04/21 17:50:19 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.104 2020/06/16 01:29:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.103 2020/04/21 17:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.104 2020/06/16 01:29:00 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -193,6 +193,8 @@ static kmutex_t vmem_btag_lock;
 static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
 static struct pool vmem_btag_pool;
+
+static void vmem_xfree_bt(vmem_t *, bt_t *);
 
 static void
 vmem_kick_pdaemon(void)
@@ -1313,7 +1315,6 @@ void
 vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 {
 	bt_t *bt;
-	bt_t *t;
 
 	KASSERT(size > 0);
 
@@ -1324,6 +1325,42 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(bt->bt_start == addr);
 	KASSERT(bt->bt_size == vmem_roundup_size(vm, size) ||
 	    bt->bt_size - vmem_roundup_size(vm, size) <= vm->vm_quantum_mask);
+	
+	/* vmem_xfree_bt() drops the lock. */
+	vmem_xfree_bt(vm, bt);
+}
+
+void
+vmem_xfreeall(vmem_t *vm)
+{
+	bt_t *bt;
+
+	/* This can't be used if the arena has a quantum cache. */
+	KASSERT(vm->vm_qcache_max == 0);
+
+	for (;;) {
+		VMEM_LOCK(vm);
+		TAILQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+			if (bt->bt_type == BT_TYPE_BUSY)
+				break;
+		}
+		if (bt != NULL) {
+			/* vmem_xfree_bt() drops the lock. */
+			vmem_xfree_bt(vm, bt);
+		} else {
+			VMEM_UNLOCK(vm);
+			return;
+		}
+	}
+}
+
+static void
+vmem_xfree_bt(vmem_t *vm, bt_t *bt)
+{
+	bt_t *t;
+
+	VMEM_ASSERT_LOCKED(vm);
+
 	KASSERT(bt->bt_type == BT_TYPE_BUSY);
 	bt_rembusy(vm, bt);
 	bt->bt_type = BT_TYPE_FREE;
