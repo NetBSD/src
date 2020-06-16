@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.22.2.2 2018/08/08 10:28:35 martin Exp $	*/
+/*	$NetBSD: if_run.c,v 1.22.2.3 2020/06/16 10:28:29 bouyer Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.22.2.2 2018/08/08 10:28:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.22.2.3 2020/06/16 10:28:29 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2255,7 +2255,8 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 		return;
 	}
 	if (len > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
+		if (__predict_true(len <= MCLBYTES))
+			MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {
 			ifp->if_ierrors++;
 			m_freem(m);
