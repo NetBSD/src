@@ -105,10 +105,6 @@ struct scope6_id {
 void	scope6_init(void);
 struct scope6_id *scope6_ifattach(struct ifnet *);
 void	scope6_ifdetach(struct scope6_id *);
-int	scope6_set(struct ifnet *, const struct scope6_id *);
-int	scope6_get(const struct ifnet *, struct scope6_id *);
-void	scope6_setdefault(struct ifnet *);
-int	scope6_get_default(struct scope6_id *);
 uint32_t scope6_in6_addrscope(struct in6_addr *);
 uint32_t scope6_addr2default(const struct in6_addr *);
 int	sa6_embedscope(struct sockaddr_in6 *, int);
