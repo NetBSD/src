@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.53 2020/02/16 09:40:35 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.54 2020/06/16 17:25:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@ usbd_status	usbd_get_config_desc_full(struct usbd_device *, int, void *,
 		    int);
 usbd_status	usbd_get_bos_desc(struct usbd_device *, int,
 		    usb_bos_descriptor_t *);
-usbd_status	usbd_get_bos_desc_full(struct usbd_device *, int, void *, int);
 usbd_status	usbd_get_device_desc(struct usbd_device *,
 		    usb_device_descriptor_t *);
 usbd_status	usbd_get_initial_ddesc(struct usbd_device *,
