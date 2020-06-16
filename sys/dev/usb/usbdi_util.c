@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.83 2020/05/15 07:51:49 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.84 2020/06/16 17:25:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.83 2020/05/15 07:51:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.84 2020/06/16 17:25:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -135,14 +135,6 @@ usbd_get_bos_desc(struct usbd_device *dev, int confidx,
 		return USBD_INVAL;
 	}
 	return USBD_NORMAL_COMPLETION;
-}
-
-usbd_status
-usbd_get_bos_desc_full(struct usbd_device *dev, int conf, void *d, int size)
-{
-	USBHIST_FUNC(); USBHIST_CALLARGS(usbdebug, "conf=%jd", conf, 0, 0, 0);
-
-	return usbd_get_desc(dev, UDESC_BOS, conf, size, d);
 }
 
 usbd_status
