@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.54 2020/01/23 23:59:53 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.55 2020/06/16 00:45:56 christos Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+GROFF_TIMESTAMP=--timestamp=${MKREPRO_TIMESTAMP}
+DATE_TIMESTAMP=-r ${MKREPRO_TIMESTAMP}
+.endif
 
 # Whether or not to regenerate tables of contents
 #
@@ -55,7 +60,7 @@ curdate!=	env LANG="C" date -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, 
 .if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
 .error "No release date could be derived from BUILDID"
 .else
-curdate!=	env LANG="C" date "+%b %d, %Y"
+curdate!=	env LANG="C" date ${DATE_TIMESTAMP} "+%b %d, %Y"
 .endif
 .endif
 PRESET+=	-dcur_date="${curdate}"
@@ -86,7 +91,7 @@ TOC.more=	${TOCS:M*.more.*}
 REMOVE_CREATION_DATE= ${TOOL_SED} -e '/^%%CreationDate:/d'
 
 ${TARG}.ps: ${SRCS} ${TOC.ps} ${DISTRIBVERDEP}
-	${TOOL_GROFF} ${ARGS_PS}   -mdoc      ${MAIN} \
+	${TOOL_GROFF} ${ARGS_PS} ${GROFF_TIMESTAMP} -mdoc      ${MAIN} \
 	    ${${MKREPRO:Uno} == "yes":? | ${REMOVE_CREATION_DATE} :} \
 	    > $@
 
@@ -94,13 +99,13 @@ ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
 ${TARG}.txt: ${SRCS} ${TOC.txt} ${DISTRIBVERDEP}
-	${TOOL_GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_TXT} ${GROFF_TIMESTAMP}  -mdoc      ${MAIN} > $@
 
 ${TARG}.html: ${SRCS} ${TOC.html} ${DISTRIBVERDEP}
-	${TOOL_GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_HTML} ${GROFF_TIMESTAMP} -mdoc2html ${MAIN} > $@
 
 ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
-	${TOOL_GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_MORE} ${GROFF_TIMESTAMP} -mdoc      ${MAIN} > $@
 
 
 # Rules to build the table of contents (.toc) files.  For the
@@ -108,21 +113,21 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 # space taken by the TOC itself.  Other versions are not paginated.
 
 ${TARG}.PostScript.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} ${GROFF_TIMESTAMP} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} ${GROFF_TIMESTAMP} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.ASCII.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} ${GROFF_TIMESTAMP} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc2html ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} ${GROFF_TIMESTAMP} -mdoc2html ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} ${GROFF_TIMESTAMP} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 
