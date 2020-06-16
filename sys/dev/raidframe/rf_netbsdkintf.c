@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.382 2020/04/13 00:27:17 chs Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.383 2020/06/16 14:45:08 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.382 2020/04/13 00:27:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.383 2020/06/16 14:45:08 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -689,10 +689,10 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	/* 
 	   Look for a component to dump to.  The preference for the
 	   component to dump to is as follows:
-	   1) the master
-	   2) a used_spare of the master
-	   3) the slave
-	   4) a used_spare of the slave
+	   1) the first component
+	   2) a used_spare of the first component
+	   3) the second component
+	   4) a used_spare of the second component
 	*/
 
 	dumpto = -1;
@@ -705,10 +705,9 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	}
 	
 	/* 
-	   At this point we have possibly selected a live master or a
-	   live slave.  We now check to see if there is a spared
-	   master (or a spared slave), if we didn't find a live master
-	   or a live slave.  
+	   At this point we have possibly selected a live component.
+	   If we didn't find a live ocmponent, we now check to see
+	   if there is a relevant spared component.
 	*/
 
 	for (c = 0; c < raidPtr->numSpare; c++) {
@@ -724,24 +723,25 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 			}
 			if (scol == 0) {
 				/* 
-				   We must have found a spared master!
-				   We'll take that over anything else
-				   found so far.  (We couldn't have
-				   found a real master before, since
-				   this is a used spare, and it's
-				   saying that it's replacing the
-				   master.)  On reboot (with
+				   We must have found a spared first
+				   component!  We'll take that over
+				   anything else found so far.  (We
+				   couldn't have found a real first
+				   component before, since this is a
+				   used spare, and it's saying that
+				   it's replacing the first
+				   component.)  On reboot (with
 				   autoconfiguration turned on)
-				   sparecol will become the 1st
-				   component (component0) of this set.  
+				   sparecol will become the first
+				   component (component0) of this set.
 				*/
 				dumpto = sparecol;
 				break;
 			} else if (scol != -1) {
 				/* 
-				   Must be a spared slave.  We'll dump
-				   to that if we havn't found anything
-				   else so far. 
+				   Must be a spared second component.  
+				   We'll dump to that if we havn't found 
+				   anything else so far. 
 				*/
 				if (dumpto == -1)
 					dumpto = sparecol;
