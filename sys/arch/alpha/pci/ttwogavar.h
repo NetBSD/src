@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogavar.h,v 1.4 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: ttwogavar.h,v 1.5 2020/06/17 03:50:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/extent.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>

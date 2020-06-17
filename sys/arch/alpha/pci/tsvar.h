@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.13 2019/12/22 23:23:29 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.14 2020/06/17 03:50:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -31,6 +31,7 @@
  *
  */
 
+#include <sys/extent.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/i2c/i2cvar.h>
