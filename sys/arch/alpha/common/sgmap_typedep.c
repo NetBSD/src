@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.38 2020/06/17 04:12:39 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.39 2020/06/17 05:52:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.38 2020/06/17 04:12:39 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.39 2020/06/17 05:52:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -438,7 +438,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		alpha_mb();
 
 		/* Free the virtual address space used by the mapping. */
-		vmem_free(sgmap->aps_arena, osgva, (esgva - osgva));
+		vmem_xfree(sgmap->aps_arena, osgva, (esgva - osgva));
 	}
 
 	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
