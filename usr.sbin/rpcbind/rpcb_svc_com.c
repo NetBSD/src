@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.22 2019/01/03 19:26:50 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.23 2020/06/17 00:16:22 kamil Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -62,6 +62,7 @@
 
 #ifdef RPCBIND_RUMP
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 #endif
 

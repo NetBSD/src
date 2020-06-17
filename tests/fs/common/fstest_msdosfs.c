@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_msdosfs.c,v 1.3 2012/03/26 15:10:26 njoly Exp $	*/
+/*	$NetBSD: fstest_msdosfs.c,v 1.4 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <msdosfs/msdosfsmount.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"

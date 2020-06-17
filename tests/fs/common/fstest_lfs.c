@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.7 2019/08/30 23:45:13 brad Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.8 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <ufs/ufs/ufsmount.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"
