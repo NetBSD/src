@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.12 2012/09/08 05:02:41 matt Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.13 2020/06/17 13:09:16 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/extent.h>
 
 /*
  * args: pci_chipset_tag_t, io_extent, mem_extent, pmem_extent
