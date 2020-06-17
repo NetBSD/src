@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.270 2020/05/21 18:44:19 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.271 2020/06/17 02:40:43 simonb Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -104,6 +104,9 @@ CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
 CFLAGS+=	${DEBUG} ${COPTS}
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
+# example usage to find largest stack users in kernel compile directory:
+#    find . -name \*.su | xargs awk '{ printf "%6d %s\n", $2, $1 }' | sort -n
+CFLAGS+=	-fstack-usage
 
 # XXX
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
@@ -338,8 +341,8 @@ ${_s:T:R}.o: ${_s}
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
 	${_MKMSG} "${.TARGET}ing the kernel objects"
-	rm -f ${KERNELS} *.map eddep tags *.[io] *.ko *.ln [a-z]*.s vers.c \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
+	rm -f ${KERNELS} *.map *.[io] *.ko *.ln [a-z]*.s *.su vers.c \
+	    eddep tags [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
 	    ${EXTRA_KERNELS} ${EXTRA_CLEAN}
 .endif
 
