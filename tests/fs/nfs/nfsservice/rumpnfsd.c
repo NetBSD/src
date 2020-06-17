@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.10 2020/04/23 00:31:51 joerg Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.11 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ sem_t gensem;
 #include "svc_fdset.h"
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_zfs.c,v 1.2 2018/12/16 14:04:14 hannken Exp $	*/
+/*	$NetBSD: fstest_zfs.c,v 1.3 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011  The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"
