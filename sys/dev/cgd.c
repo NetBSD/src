@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.134 2020/06/13 22:17:03 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.135 2020/06/17 20:44:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.134 2020/06/13 22:17:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.135 2020/06/17 20:44:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1298,7 +1298,7 @@ cgd_ioctl_set(struct cgd_softc *sc, void *data, struct lwp *l)
 	if (encblkno[i].v != CGD_CIPHER_CBC_ENCBLKNO1) {
 		if (strcmp(sc->sc_cfuncs->cf_name, "aes-cbc") &&
 		    strcmp(sc->sc_cfuncs->cf_name, "3des-cbc") &&
-		    strcmp(sc->sc_cfuncs->cf_name, "bf-cbc")) {
+		    strcmp(sc->sc_cfuncs->cf_name, "blowfish-cbc")) {
 			log(LOG_WARNING, "cgd: %s only makes sense for cbc,"
 			    " not for %s; ignoring\n",
 			    encblkno[i].n, sc->sc_cfuncs->cf_name);
