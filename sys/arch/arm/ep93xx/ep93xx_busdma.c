@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_busdma.c,v 1.5 2012/09/18 05:47:27 matt Exp $ */
+/*	$NetBSD: ep93xx_busdma.c,v 1.6 2020/06/17 06:49:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -33,13 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.5 2012/09/18 05:47:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.6 2020/06/17 06:49:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
 #include <sys/bus.h>

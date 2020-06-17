@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_busdma.c,v 1.5 2012/09/18 05:47:28 matt Exp $ */
+/*	$NetBSD: s3c2xx0_busdma.c,v 1.6 2020/06/17 06:52:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_busdma.c,v 1.5 2012/09/18 05:47:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_busdma.c,v 1.6 2020/06/17 06:52:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 
 #define _ARM32_BUS_DMA_PRIVATE
 #include <sys/bus.h>
