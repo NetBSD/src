@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.23 2019/01/23 20:46:18 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.24 2020/06/17 00:16:22 kamil Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/util.c 300973 2016-05-29 20:28:01Z ngie $ */
 
 /*-
@@ -51,6 +51,7 @@
 
 #ifdef RPCBIND_RUMP
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 #endif
 

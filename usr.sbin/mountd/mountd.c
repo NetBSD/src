@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.131 2020/04/23 00:22:01 joerg Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.132 2020/06/17 00:16:21 kamil Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.131 2020/04/23 00:22:01 joerg Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.132 2020/06/17 00:16:21 kamil Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,6 +66,7 @@ __RCSID("$NetBSD: mountd.c,v 1.131 2020/04/23 00:22:01 joerg Exp $");
 
 #ifdef MOUNTD_RUMP
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 #include <pthread.h>
 #include <semaphore.h>
