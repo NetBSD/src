@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.230 2020/06/12 09:28:48 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.231 2020/06/17 09:11:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3593,8 +3593,10 @@ ixgbe_detach(device_t dev, int flags)
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
 
 	callout_halt(&adapter->timer, NULL);
-	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
+		callout_stop(&adapter->recovery_mode_timer);
 		callout_halt(&adapter->recovery_mode_timer, NULL);
+	}
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		netmap_detach(adapter->ifp);
@@ -3917,6 +3919,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	hw->adapter_stopped = FALSE;
 	ixgbe_stop_adapter(hw);
 	callout_stop(&adapter->timer);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
+		callout_stop(&adapter->recovery_mode_timer);
 	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		que->disabled_count = 0;
 
@@ -4062,6 +4066,9 @@ ixgbe_init_locked(struct adapter *adapter)
 	ixgbe_enable_rx_dma(hw, rxctrl);
 
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
+		callout_reset(&adapter->recovery_mode_timer, hz,
+		    ixgbe_recovery_mode_timer, adapter);
 
 	/* Set up MSI/MSI-X routing */
 	if (adapter->feat_en & IXGBE_FEATURE_MSIX) {
