@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.17 2020/06/15 18:57:39 ad Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.18 2020/06/17 06:45:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.17 2020/06/15 18:57:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.18 2020/06/17 06:45:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.17 2020/06/15 18:57:39 ad Exp
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/extent.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
