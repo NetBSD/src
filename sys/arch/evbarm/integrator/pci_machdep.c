@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2012/09/07 04:32:04 matt Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.7 2020/06/17 06:55:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2012/09/07 04:32:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2020/06/17 06:55:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <sys/extent.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
