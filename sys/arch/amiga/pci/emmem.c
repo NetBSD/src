@@ -1,4 +1,4 @@
-/*	$NetBSD: emmem.c,v 1.4 2013/01/29 00:49:43 rkujawa Exp $ */
+/*	$NetBSD: emmem.c,v 1.5 2020/06/17 06:39:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 

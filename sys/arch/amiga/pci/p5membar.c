@@ -1,4 +1,4 @@
-/*	$NetBSD: p5membar.c,v 1.3 2012/10/27 17:17:34 chs Exp $ */
+/*	$NetBSD: p5membar.c,v 1.4 2020/06/17 06:40:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 

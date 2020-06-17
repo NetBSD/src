@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2014/03/29 19:28:26 christos Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.4 2020/06/17 06:41:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
