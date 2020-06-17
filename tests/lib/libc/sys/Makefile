@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.64 2020/04/30 11:03:29 ryo Exp $
+# $NetBSD: Makefile,v 1.65 2020/06/17 22:07:21 rin Exp $
 
 MKMAN=	no
 
@@ -111,6 +111,7 @@ CPPFLAGS.t_futex_ops.c		+= -I${.CURDIR}/../../../../lib
 CPPFLAGS.t_futex_robust.c	+= -I${.CURDIR}/../../../../lib
 
 CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_sigchld.c	+= -D__TEST_FENV
 CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ptrace_wait3.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES -D__TEST_FENV
