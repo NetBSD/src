@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.37 2010/12/15 01:28:24 matt Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.38 2020/06/17 04:12:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.37 2010/12/15 01:28:24 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.38 2020/06/17 04:12:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_addr_t dmaoffset, sgva;
 	bus_size_t sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int s, pteidx, error, spill;
+	int pteidx, error, spill;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
@@ -131,10 +131,17 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 #endif
 
-	s = splvm();
-	error = extent_alloc(sgmap->aps_ex, sgvalen, alignment, boundary,
-	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &sgva);
-	splx(s);
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_SLEEP : VM_NOSLEEP);
+
+	error = vmem_xalloc(sgmap->aps_arena, sgvalen,
+			    alignment,		/* alignment */
+			    0,			/* phase */
+			    boundary,		/* nocross */
+			    VMEM_ADDR_MIN,	/* minaddr */
+			    VMEM_ADDR_MAX,	/* maxaddr */
+			    vmflags,
+			    &sgva);
 	if (error)
 		return (error);
 
@@ -395,7 +402,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	bus_addr_t osgva, sgva, esgva;
-	int s, error, spill, seg, pteidx;
+	int spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		/*
@@ -431,12 +438,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		alpha_mb();
 
 		/* Free the virtual address space used by the mapping. */
-		s = splvm();
-		error = extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
-		    EX_NOWAIT);
-		splx(s);
-		if (error)
-			panic(__S(__C(SGMAP_TYPE,_unload)));
+		vmem_free(sgmap->aps_arena, osgva, (esgva - osgva));
 	}
 
 	map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
