@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_tmpfs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: fstest_tmpfs.c,v 1.3 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <fs/tmpfs/tmpfs_args.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"

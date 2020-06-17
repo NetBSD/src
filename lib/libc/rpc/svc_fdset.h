@@ -1,7 +1,8 @@
-/*	$NetBSD: svc_fdset.h,v 1.4 2015/11/08 02:46:53 christos Exp $	*/
+/*	$NetBSD: svc_fdset.h,v 1.5 2020/06/17 00:16:21 kamil Exp $	*/
 
 # ifdef RUMP_RPC
 #  include <rump/rump.h>
+#  include <rump/rump_syscallshotgun.h>
 #  include <rump/rump_syscalls.h>
 #  undef	close
 #  define	close(a)		rump_sys_close(a)

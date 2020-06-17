@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_v7fs.c,v 1.1 2011/08/11 10:52:12 uch Exp $	*/
+/*	$NetBSD: fstest_v7fs.c,v 1.2 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <fs/v7fs/v7fs_args.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"

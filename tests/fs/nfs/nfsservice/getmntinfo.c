@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.2 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.1 2010/07/26 15:53:00 pooka Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.2 2020/06/17 00:16:21 kamil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: getmntinfo.c,v 1.1 2010/07/26 15:53:00 pooka Exp $");
 #include <sys/mount.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include <assert.h>

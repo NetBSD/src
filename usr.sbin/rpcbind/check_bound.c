@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.8 2019/01/03 19:04:21 christos Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.9 2020/06/17 00:16:22 kamil Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/check_bound.c 300942 2016-05-29 06:01:18Z ngie $ */
 
 /*-
@@ -59,6 +59,7 @@ static	char sccsid[] = "@(#)check_bound.c 1.11 89/04/21 Copyr 1989 Sun Micro";
 
 #ifdef RPCBIND_RUMP
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 #endif
 

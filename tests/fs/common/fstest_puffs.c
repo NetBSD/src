@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.12 2019/02/01 09:06:07 mrg Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.13 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <stdlib.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"

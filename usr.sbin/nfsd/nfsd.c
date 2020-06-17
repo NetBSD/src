@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.68 2016/08/23 13:10:12 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.69 2020/06/17 00:16:22 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.68 2016/08/23 13:10:12 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.69 2020/06/17 00:16:22 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.68 2016/08/23 13:10:12 christos Exp $");
 
 #ifdef NFSD_RUMP
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #define nfssvc(a, b) rump_sys_nfssvc((a), (b))

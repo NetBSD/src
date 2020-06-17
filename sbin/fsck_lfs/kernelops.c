@@ -1,4 +1,4 @@
-/*	$NetBSD: kernelops.c,v 1.3 2009/10/13 22:04:31 pooka Exp $	*/
+/*	$NetBSD: kernelops.c,v 1.4 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: kernelops.c,v 1.3 2009/10/13 22:04:31 pooka Exp $");
+__RCSID("$NetBSD: kernelops.c,v 1.4 2020/06/17 00:16:21 kamil Exp $");
 #endif /* !lint */
 
 /*
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: kernelops.c,v 1.3 2009/10/13 22:04:31 pooka Exp $");
 #ifdef USE_RUMP
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 const struct kernelops kops = {
