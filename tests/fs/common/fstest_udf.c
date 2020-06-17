@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_udf.c,v 1.4 2013/07/02 15:00:55 reinoud Exp $	*/
+/*	$NetBSD: fstest_udf.c,v 1.5 2020/06/17 00:16:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <fs/udf/udf_mount.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"

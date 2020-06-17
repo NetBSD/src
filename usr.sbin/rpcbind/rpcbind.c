@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.28 2019/05/13 14:29:41 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.29 2020/06/17 00:16:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -78,6 +78,7 @@ static	char sccsid[] = "@(#)rpcbind.c 1.35 89/04/21 Copyr 1984 Sun Micro";
 #include <semaphore.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscallshotgun.h>
 #include <rump/rump_syscalls.h>
 
 #include "svc_fdset.h"
