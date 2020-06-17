@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.1 2019/02/14 21:47:52 macallan Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.2 2020/06/17 07:01:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.1 2019/02/14 21:47:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.2 2020/06/17 07:01:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.1 2019/02/14 21:47:52 macallan Exp 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-#include <sys/extent.h>
 #include <dev/pci/pciconf.h>
 
 int	iyonix_pci_intr_map(const struct pci_attach_args *,
