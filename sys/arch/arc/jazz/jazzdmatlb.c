@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.16 2012/01/27 18:52:50 para Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.17 2020/06/17 06:20:05 thorpej Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.16 2012/01/27 18:52:50 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.17 2020/06/17 06:20:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/vmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -54,17 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.16 2012/01/27 18:52:50 para Exp $")
 
 extern paddr_t	kvtophys(vaddr_t);	/* XXX */
 
-/*
- * Currently, only NET and BIO devices use DMA, and splnet > splbio.
- */
-#define spldma()	splnet()
-
 #define NDMATLB		(JAZZ_DMATLB_SIZE / sizeof(jazz_dma_pte_t))
 
 static bus_space_tag_t dmatlb_iot;
 static bus_space_handle_t dmatlb_ioh;
 
-static struct extent *dmatlbmap;
+static vmem_t *dmatlb_arena;
 static jazz_dma_pte_t *dma_tlb;
 
 /*
@@ -85,9 +80,15 @@ jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr)
 	mips_dcache_wbinv_all();/* Make sure no map entries are cached */
 	memset((char *)dma_tlb, 0, JAZZ_DMATLB_SIZE);
 
-	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, NULL, 0, EX_NOWAIT);
-	if (dmatlbmap == NULL)
-		panic("jazz_dmatlb_init: cannot create extent map");
+	dmatlb_arena = vmem_create("dmatlb", 0, NDMATLB,
+				   1,		/* quantum */
+				   NULL,	/* importfn */
+				   NULL,	/* releasefn */
+				   NULL,	/* source */
+				   0,		/* qcache_max */
+				   VM_SLEEP,
+				   IPL_VM);
+	KASSERT(dmatlb_arena != NULL);
 
 	bus_space_write_4(dmatlb_iot, dmatlb_ioh, JAZZ_DMATLBREG_MAP,
 	    MIPS_KSEG1_TO_PHYS(dma_tlb));
@@ -103,16 +104,20 @@ jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr)
 jazz_dma_pte_t *
 jazz_dmatlb_alloc(int npte, bus_size_t boundary, int flags, bus_addr_t *addr)
 {
-	u_long start;
+	vmem_addr_t start;
 	int err;
-	int s;
 
-	s = spldma();
-	err = extent_alloc(dmatlbmap, npte, 1, boundary / JAZZ_DMA_PAGE_SIZE,
-	    (flags & BUS_DMA_WAITOK) ? (EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT,
-	    &start);
-	splx(s);
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    ((flags & BUS_DMA_WAITOK) ? VM_SLEEP : VM_NOSLEEP);
 
+	err = vmem_xalloc(dmatlb_arena, npte,
+			  1,			/* align */
+			  0,			/* phase */
+			  boundary / JAZZ_DMA_PAGE_SIZE,
+			  VMEM_ADDR_MIN,
+			  VMEM_ADDR_MAX,
+			  vmflags,
+			  &start);
 	if (err)
 		return NULL;
 
@@ -127,13 +132,10 @@ jazz_dmatlb_alloc(int npte, bus_size_t boundary, int flags, bus_addr_t *addr)
 void
 jazz_dmatlb_free(bus_addr_t addr, int npte)
 {
-	u_long start;
-	int s;
+	vmem_addr_t start;
 
 	start = addr / JAZZ_DMA_PAGE_SIZE;
-	s = spldma();
-	extent_free(dmatlbmap, start, npte, EX_NOWAIT);
-	splx(s);
+	vmem_xfree(dmatlb_arena, start, npte);
 }
 
 /*
