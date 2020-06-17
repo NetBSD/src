@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.13 2014/03/29 19:28:27 christos Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.14 2020/06/17 06:59:45 thorpej Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.13 2014/03/29 19:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.14 2020/06/17 06:59:45 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.13 2014/03/29 19:28:27 christos Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 
@@ -163,7 +161,7 @@ nppbattach(device_t parent, device_t self, void *aux)
 		printf("%s: couldn't map interrupt\n", device_xname(self));
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih, buf, sizeof(buf));
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nppb_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
