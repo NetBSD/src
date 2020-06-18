@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.231 2020/06/17 09:11:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.232 2020/06/18 09:00:11 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -168,9 +168,9 @@ static bool	ixgbe_suspend(device_t, const pmf_qual_t *);
 static bool	ixgbe_resume(device_t, const pmf_qual_t *);
 static int	ixgbe_ifflags_cb(struct ethercom *);
 static int	ixgbe_ioctl(struct ifnet *, u_long, void *);
-static void	ixgbe_ifstop(struct ifnet *, int);
 static int	ixgbe_init(struct ifnet *);
 static void	ixgbe_init_locked(struct adapter *);
+static void	ixgbe_ifstop(struct ifnet *, int);
 static void	ixgbe_stop(void *);
 static void	ixgbe_init_device_features(struct adapter *);
 static void	ixgbe_check_fan_failure(struct adapter *, u32, bool);
@@ -4457,7 +4457,7 @@ ixgbe_local_timer1(void *arg)
 {
 	struct adapter	*adapter = arg;
 	device_t	dev = adapter->dev;
-	struct ix_queue *que = adapter->queues;
+	struct ix_queue	*que = adapter->queues;
 	u64		queues = 0;
 	u64		v0, v1, v2, v3, v4, v5, v6, v7;
 	int		hung = 0;
@@ -4530,7 +4530,7 @@ ixgbe_local_timer1(void *arg)
 		}
 	}
 
-	/* Only truely watchdog if all queues show hung */
+	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
 #if 0 /* XXX Avoid unexpectedly disabling interrupt forever (PR#53294) */
@@ -6258,7 +6258,7 @@ out:
  *   return 0 on success, positive on failure
  ************************************************************************/
 static int
-ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
+ixgbe_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct ixgbe_hw *hw = &adapter->hw;
