@@ -1,4 +1,4 @@
-/*	$NetBSD: setfacl.c,v 1.2 2020/05/22 01:28:44 joerg Exp $	*/
+/*	$NetBSD: setfacl.c,v 1.3 2020/06/18 19:44:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 Chris D. Faulhaber
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/bin/setfacl/setfacl.c 339793 2018-10-26 21:17:06Z markj $");
 #else
-__RCSID("$NetBSD: setfacl.c,v 1.2 2020/05/22 01:28:44 joerg Exp $");
+__RCSID("$NetBSD: setfacl.c,v 1.3 2020/06/18 19:44:01 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -85,9 +85,9 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: setfacl [-R [-H | -L | -P]] [-bdhkn] "
-	    "[-a position entries] [-m entries] [-M file] "
-	    "[-x entries] [-X file] [file ...]\n");
+	fprintf(stderr, "usage: setfacl [-bdhkn] "
+	    "[-a position entries] [-M file] [-m entries] "
+	    "[-R [-H | -L | -P]] [-X file] [-x entries | position] [file ...]\n");
 	exit(1);
 }
 
