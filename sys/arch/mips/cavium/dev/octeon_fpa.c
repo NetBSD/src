@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.5 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.6 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,7 +29,7 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.5 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.6 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.5 2020/05/31 06:27:06 simonb Exp $"
 
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/include/iobusvar.h>
-#include <mips/cavium/dev/octeon_fpavar.h>
 #include <mips/cavium/dev/octeon_fpareg.h>
+#include <mips/cavium/dev/octeon_fpavar.h>
 
 #ifdef FPADEBUG
 #define	DPRINTF(x)	printf x
