@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.6 2009/01/12 07:00:59 tsutsui Exp $	*/
+/*	$NetBSD: idprom.c,v 1.7 2020/06/18 17:59:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,12 +49,12 @@
 u_char cpu_machine_id = 0;
 struct idprom identity_prom = { 0 };
 
-int idprom_cksum(u_char *);
-void idprom_init2(void);
-void idprom_init3(void);
-void idprom_init3x(void);
+static int idprom_cksum(u_char *);
+static void idprom_init2(void);
+static void idprom_init3(void);
+static void idprom_init3x(void);
 
-int
+static int
 idprom_cksum(u_char *p)
 {
 	int len, x;
@@ -100,7 +100,7 @@ idprom_init(void)
  * Sun2 version:
  * Just copy it from control space.
  */
-void 
+static void 
 idprom_init2(void)
 {
 
@@ -114,7 +114,7 @@ idprom_init2(void)
  * Sun3 version:
  * Just copy it from control space.
  */
-void 
+static void 
 idprom_init3(void)
 {
 
@@ -135,7 +135,7 @@ idprom_init3(void)
  * to search was determined from some "insider" info. about
  * the layout of the PROM data area.
  */
-void 
+static void 
 idprom_init3x(void)
 {
 	u_char *p;

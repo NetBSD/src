@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.9 2009/12/11 18:42:05 tsutsui Exp $	*/
+/*	$NetBSD: sun3.c,v 1.10 2020/06/18 17:59:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,12 +35,6 @@
 
 #define _SUN3_ XXX
 
-/* Need to avoid conflicts on these: */
-#define get_pte sun3_get_pte
-#define set_pte sun3_set_pte
-#define get_segmap sun3_get_segmap
-#define set_segmap sun3_set_segmap
-
 /* 
  * We need to get the sun3 NBSG definition, even if we're
  * building this with a different sun68k target.
@@ -63,14 +57,18 @@
 
 #define OBIO_MASK 0xFFFFFF
 
-u_int	get_pte(vaddr_t);
-void	set_pte(vaddr_t, u_int);
-void	dvma3_init(void);
-char *	dvma3_alloc(int);
-void	dvma3_free(char *, int);
-char *	dvma3_mapin(char *, int);
-void	dvma3_mapout(char *, int);
-char *	dev3_mapin(int, u_long, int);
+#ifdef	DEBUG_PROM
+static u_int	sun3_get_pte(vaddr_t);
+#endif
+static void	sun3_set_pte(vaddr_t, u_int);
+static void	dvma3_init(void);
+static char *	dvma3_alloc(int);
+static void	dvma3_free(char *, int);
+static char *	dvma3_mapin(char *, int);
+static void	dvma3_mapout(char *, int);
+static char *	dev3_mapin(int, u_long, int);
+static int	sun3_get_segmap(vaddr_t);
+static void	sun3_set_segmap(vaddr_t, int);
 
 struct mapinfo {
 	int maptype;
@@ -101,7 +99,7 @@ sun3_mapinfo[MAP__NTYPES] = {
 /* The virtual address we will use for PROM device mappings. */
 int sun3_devmap = SUN3_MONSHORTSEG;
 
-char *
+static char *
 dev3_mapin(int maptype, u_long physaddr, int length)
 {
 	u_int i, pa, pte, pgva, va;
@@ -123,7 +121,7 @@ found:
 
 	va = pgva = sun3_devmap;
 	do {
-		set_pte(pgva, pte);
+		sun3_set_pte(pgva, pte);
 		pgva += NBPG;
 		pte += 1;
 		length -= NBPG;
@@ -134,7 +132,7 @@ found:
 #ifdef	DEBUG_PROM
 	if (debug)
 		printf("dev3_mapin: va=0x%x pte=0x%x\n",
-			   va, get_pte(va));
+			   va, sun3_get_pte(va));
 #endif
 	return ((char*)va);
 }
@@ -162,7 +160,7 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3_end = DVMA_BASE + DVMA_MAPLEN;
 
-void 
+static void 
 dvma3_init(void)
 {
 	int segva, dmava, sme;
@@ -171,15 +169,15 @@ dvma3_init(void)
 	dmava = DVMA_BASE;
 
 	while (segva < SA_MAX_VA) {
-		sme = get_segmap(segva);
-		set_segmap(dmava, sme);
+		sme = sun3_get_segmap(segva);
+		sun3_set_segmap(dmava, sme);
 		segva += NBSG;
 		dmava += NBSG;
 	}
 }
 
 /* Convert a local address to a DVMA address. */
-char *
+static char *
 dvma3_mapin(char *addr, int len)
 {
 	int va = (int)addr;
@@ -195,7 +193,7 @@ dvma3_mapin(char *addr, int len)
 }
 
 /* Destroy a DVMA address alias. */
-void
+static void
 dvma3_mapout(char *addr, int len)
 {
 	int va = (int)addr;
@@ -205,7 +203,7 @@ dvma3_mapout(char *addr, int len)
 		panic("dvma3_mapout");
 }
 
-char *
+static char *
 dvma3_alloc(int len)
 {
 	len = m68k_round_page(len);
@@ -213,7 +211,7 @@ dvma3_alloc(int len)
 	return((char*)dvma3_end);
 }
 
-void
+static void
 dvma3_free(char *dvma, int len)
 {
 	/* not worth the trouble */
@@ -223,29 +221,31 @@ dvma3_free(char *dvma, int len)
  * Control space stuff...
  */
 
-u_int
-get_pte(vaddr_t va)
+#ifdef	DEBUG_PROM
+static u_int
+sun3_get_pte(vaddr_t va)
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	return (get_control_word(va));
 }
+#endif
 
-void
-set_pte(vaddr_t va, u_int pte)
+static void
+sun3_set_pte(vaddr_t va, u_int pte)
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	set_control_word(va, pte);
 }
 
-int
-get_segmap(vaddr_t va)
+static int
+sun3_get_segmap(vaddr_t va)
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	return (get_control_byte(va));
 }
 
-void
-set_segmap(vaddr_t va, int sme)
+static void
+sun3_set_segmap(vaddr_t va, int sme)
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	set_control_byte(va, sme);
