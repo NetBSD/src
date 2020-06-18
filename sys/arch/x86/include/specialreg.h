@@ -1,7 +1,7 @@
-/*	$NetBSD: specialreg.h,v 1.167 2020/06/10 03:39:03 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.168 2020/06/18 16:27:24 maxv Exp $	*/
 
 /*
- * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -294,10 +294,10 @@
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
 
 /* CPUID Fn00000001 %ebx */
-#define	CPUID_BRAND_INDEX	__BITS(7,0)
-#define	CPUID_CLFLUSH_SIZE	__BITS(15,8)
-#define	CPUID_HTT_CORES		__BITS(23,16)
-#define	CPUID_LOCAL_APIC_ID	__BITS(31,24)
+#define CPUID_BRAND_INDEX	__BITS(7,0)
+#define CPUID_CLFLUSH_SIZE	__BITS(15,8)
+#define CPUID_HTT_CORES		__BITS(23,16)
+#define CPUID_LOCAL_APIC_ID	__BITS(31,24)
 
 /*
  * Intel Deterministic Cache Parameter Leaf
@@ -389,7 +389,7 @@
 
 /*
  * Intel/AMD Structured Extended Feature leaf Fn0000_0007
- * %eax == 0: Subleaf 0
+ * %ecx == 0: Subleaf 0
  *	%eax: The Maximum input value for supported subleaf.
  *	%ebx: Feature bits.
  *	%ecx: Feature bits.
