@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fau.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_fau.c,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fau.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fau.c,v 1.3 2020/06/18 13:52:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,26 +49,18 @@ static inline void	octfau_op_store_paddr(int, int, int64_t);
 static inline int64_t
 octfau_op_load(uint64_t args)
 {
-	paddr_t addr;
+	paddr_t addr = OCTEON_ADDR_IO_DID(FAU_MAJOR_DID, FAU_SUB_DID) |
+	    __SHIFTIN(args, OCTEON_ADDR_OFFSET);
 
-	addr =
-	    ((uint64_t)1 << 48) |
-	    ((uint64_t)(CN30XXFAU_MAJORDID & 0x1f) << 43) |
-	    ((uint64_t)(CN30XXFAU_SUBDID & 0x7) << 40) |
-	    ((uint64_t)(args & 0xfffffffffULL) << 0);
 	return octeon_read_csr(addr);
 }
 
 static inline void
 octfau_op_store(uint64_t args, int64_t value)
 {
-	paddr_t addr;
+	paddr_t addr = OCTEON_ADDR_IO_DID(FAU_MAJOR_DID, FAU_SUB_DID) |
+	    __SHIFTIN(args, OCTEON_ADDR_OFFSET);
 
-	addr =
-	    ((uint64_t)1 << 48) |
-	    ((uint64_t)(CN30XXFAU_MAJORDID & 0x1f) << 43) |
-	    ((uint64_t)(CN30XXFAU_SUBDID & 0x7) << 40) |
-	    ((uint64_t)(args & 0xfffffffffULL) << 0);
 	octeon_write_csr(addr, value);
 }
 
@@ -85,12 +77,11 @@ octfau_op_store(uint64_t args, int64_t value)
 static inline int64_t
 octfau_op_load_paddr(int incval, int tagwait, int reg)
 {
-	uint64_t args;
+	uint64_t args =
+	    __SHIFTIN(incval, POW_LOAD_INCVAL) |
+	    __SHIFTIN(tagwait, POW_LOAD_TAGWAIT) |
+	    __SHIFTIN(reg, POW_LOAD_REG);
 
-	args =
-	    ((uint64_t)(incval & 0x3fffff) << 14) |
-	    ((uint64_t)(tagwait & 0x1) << 13) |  
-	    ((uint64_t)(reg & 0x7ff) << 0);
 	return octfau_op_load(args);
 }
 
@@ -101,11 +92,8 @@ octfau_op_load_paddr(int incval, int tagwait, int reg)
 static inline void
 octfau_op_store_paddr(int noadd, int reg, int64_t value)
 {
-	uint64_t args;
+	uint64_t args = POW_STORE_NOADD | __SHIFTIN(reg, POW_STORE_REG);
 
-	args =
-	    ((uint64_t)(noadd & 0x1) << 13) | 
-	    ((uint64_t)(reg & 0x7ff) << 0);
 	octfau_op_store(args, value);
 }
 
@@ -114,6 +102,7 @@ octfau_op_store_paddr(int noadd, int reg, int64_t value)
 void
 octfau_op_init(struct octfau_desc *fd, size_t scroff, size_t regno)
 {
+
 	fd->fd_scroff = scroff;
 	fd->fd_regno = regno;
 }
@@ -121,6 +110,7 @@ octfau_op_init(struct octfau_desc *fd, size_t scroff, size_t regno)
 uint64_t
 octfau_op_save(struct octfau_desc *fd)
 {
+
 	OCTEON_SYNCIOBDMA/* XXX */;
 	return octeon_cvmseg_read_8(fd->fd_scroff);
 }
@@ -128,12 +118,14 @@ octfau_op_save(struct octfau_desc *fd)
 void
 octfau_op_restore(struct octfau_desc *fd, uint64_t backup)
 {
+
 	octeon_cvmseg_write_8(fd->fd_scroff, backup);
 }
 
 int64_t
 octfau_op_inc_8(struct octfau_desc *fd, int64_t v)
 {
+
 	octfau_op_iobdma_store_data(fd->fd_scroff, v, 0, OCT_FAU_OP_SIZE_64/* XXX */,
 	    fd->fd_regno);
 	OCTEON_SYNCIOBDMA/* XXX */;
@@ -143,6 +135,7 @@ octfau_op_inc_8(struct octfau_desc *fd, int64_t v)
 int64_t
 octfau_op_incwait_8(struct octfau_desc *fd, int v)
 {
+
 	octfau_op_iobdma_store_data(fd->fd_scroff, v, 1, OCT_FAU_OP_SIZE_64/* XXX */,
 	    fd->fd_regno);
 	/* XXX */
@@ -154,11 +147,13 @@ octfau_op_incwait_8(struct octfau_desc *fd, int v)
 void
 octfau_op_add_8(struct octfau_desc *fd, int64_t v)
 {
+
 	octfau_op_store_paddr(0, fd->fd_regno, v);
 }
 
 void
 octfau_op_set_8(struct octfau_desc *fd, int64_t v)
 {
+
 	octfau_op_store_paddr(1, fd->fd_regno, v);
 }

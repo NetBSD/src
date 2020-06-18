@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnmreg.h,v 1.3 2020/05/13 21:09:02 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnmreg.h,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -33,10 +33,14 @@
 #ifndef _OCTEON_RNMREG_H_
 #define _OCTEON_RNMREG_H_
 
+/* ---- IO address IDs */
+#define	RNM_MAJOR_DID				8
+#define	RNM_SUB_DID				0
+
 /* ---- register addresses */
 
-#define	RNM_CTL_STATUS				0x0001180040000000ULL
-#define	RNM_BIST_STATUS				0x0001180040000008ULL
+#define	RNM_CTL_STATUS				UINT64_C(0x0001180040000000)
+#define	RNM_BIST_STATUS				UINT64_C(0x0001180040000008)
 
 /* ---- register bits */
 
@@ -51,28 +55,6 @@
 #define RNM_BIST_STATUS_XXX_63_2		UINT64_C(0xfffffffffffffffc)
 #define RNM_BIST_STATUS_RRC			UINT64_C(0x0000000000000002)
 #define RNM_BIST_STATUS_MEM			UINT64_C(0x0000000000000001)
-
-/* ---- operations */
-#define RNM_OPERATION_BASE_IO_BIT		UINT64_C(0x0001000000000000)
-#define RNM_OPERATION_BASE_MAJOR_DID		UINT64_C(0x0000f80000000000)
-#define RNM_OPERATION_BASE_SUB_DID		UINT64_C(0x0000070000000000)
-#define	RNM_OPERATION_BASE_MAJOR_DID_SHIFT	43
-#define	RNM_OPERATION_BASE_SUB_DID_SHIFT	40
-#define	RNM_OPERATION_BASE_IO_BIT_SHIFT	48
-
-/* ---- IOBDMA */
-
-/* 4.7 IOBDMA Operations (XXX move me elsewhere) */
-#define	IOBDMA_SCRADDR		__BITS(63,56)
-#define	IOBDMA_LEN		__BITS(55,48)
-#define	IOBDMA_MAJORDID		__BITS(47,43)
-#define	IOBDMA_SUBDID		__BITS(42,40)
-/* reserved 39:36 */
-#define	IOBDMA_OFFSET		__BITS(35,0)
-
-/* 19.1.12 IOBDMA Operations, p. 661 */
-#define	RNM_IOBDMA_MAJORDID	8
-#define	RNM_IOBDMA_SUBDID	0
 
 /* ---- snprintb */
 

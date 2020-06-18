@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smireg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_smireg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -51,12 +51,12 @@
 /* SMI CMD */
 #define SMI_CMD_63_17			UINT64_C(0xfffffffffffe0000)
 #define SMI_CMD_PHY_OP			UINT64_C(0x0000000000010000)
+#define  SMI_CMD_PHY_OP_READ		 1
+#define  SMI_CMD_PHY_OP_WRITE		 0
 #define SMI_CMD_15_13			UINT64_C(0x000000000000e000)
 #define SMI_CMD_PHY_ADR			UINT64_C(0x0000000000001f00)
-#define  SMI_CMD_PHY_ADR_SHIFT		8
 #define SMI_CMD_7_5			UINT64_C(0x00000000000000e0)
 #define SMI_CMD_REG_ADR			UINT64_C(0x000000000000001f)
-#define  SMI_CMD_REG_ADR_SHIFT		0
 
 /* SMI_WR_DAT */
 #define SMI_WR_DAT_63_18		UINT64_C(0xfffffffffffc0000)
