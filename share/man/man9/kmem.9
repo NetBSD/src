@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.24 2019/08/15 12:24:08 maxv Exp $
+.\"	$NetBSD: kmem.9,v 1.25 2020/06/18 23:30:51 kamil Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd August 15, 2019
+.Dd June 19, 2020
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -63,6 +63,12 @@
 .Ft char *
 .Fn kmem_strdupsize \
 "const char *str" "size_t *size" "km_flag_t kmflags"
+.Ft char *
+.Fn kmem_strdup \
+"const char *str" "km_flag_t kmflags"
+.Ft char *
+.Fn kmem_strndup \
+"const char *str" "size_t manxlen" "km_flag_t kmflags"
 .Ft void
 .Fn kmem_strfree \
 "char *str"
@@ -182,6 +188,22 @@ in the
 .Fa size
 argument if that is not
 .Dv NULL .
+.Pp
+The
+.Fn kmem_strdup
+function is a simplified version of
+.Fn kmem_strdupsize
+that does not return the size of the allocation.
+.Pp
+The 
+.Fn kmem_strndup
+function is variation of
+.Fn kmem_strdup
+that copies at most
+.Fa maxlen
+characters from the string
+.Fa str
+always NUL terminating the copied string.
 .Pp
 The
 .Fn kmem_strfree
