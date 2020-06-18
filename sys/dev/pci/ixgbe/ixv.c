@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.149 2020/06/11 09:16:05 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.150 2020/06/18 09:00:11 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -158,7 +158,7 @@ const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
 static const ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
 /************************************************************************
- * FreeBSD Device Interface Entry Points
+ * NetBSD Device Interface Entry Points
  ************************************************************************/
 CFATTACH_DECL3_NEW(ixv, sizeof(struct adapter),
     ixv_probe, ixv_attach, ixv_detach, NULL, NULL, NULL,
@@ -319,8 +319,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Allocate, clear, and link in our adapter structure */
 	adapter = device_private(dev);
-	adapter->dev = dev;
 	adapter->hw.back = adapter;
+	adapter->dev = dev;
 	hw = &adapter->hw;
 
 	adapter->init_locked = ixv_init_locked;
@@ -341,7 +341,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixv_strings[ent->index], ixv_driver_version);
 
-	/* Core Lock Init*/
+	/* Core Lock Init */
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* Do base PCI setup - map BAR0 */
@@ -1081,7 +1081,7 @@ ixv_negotiate_api(struct adapter *adapter)
 
 
 /************************************************************************
- * ixv_set_multi - Multicast Update
+ * ixv_set_rxfilter - Multicast Update
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
@@ -3306,8 +3306,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* Round-robin affinity */
 	kcpuset_zero(affinity);
 	kcpuset_set(affinity, cpu_id % ncpu);
-	error = interrupt_distribute(adapter->osdep.ihs[vector],
-	    affinity, NULL);
+	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,
+	    NULL);
 
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);
