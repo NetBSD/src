@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.59 2020/05/24 08:08:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.60 2020/06/18 16:31:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.59 2020/05/24 08:08:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.60 2020/06/18 16:31:15 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_HOST_IA32_SYSENTER_ESP		0x00006C10
 #define VMCS_HOST_IA32_SYSENTER_EIP		0x00006C12
 #define VMCS_HOST_RSP				0x00006C14
-#define VMCS_HOST_RIP				0x00006c16
+#define VMCS_HOST_RIP				0x00006C16
 
 /* VMX basic exit reasons. */
 #define VMCS_EXITCODE_EXC_NMI			0
