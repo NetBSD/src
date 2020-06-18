@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.271 2020/06/17 02:40:43 simonb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.272 2020/06/18 11:50:44 rin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -106,7 +106,10 @@ CFLAGS+=	${DEBUG} ${COPTS}
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 # example usage to find largest stack users in kernel compile directory:
 #    find . -name \*.su | xargs awk '{ printf "%6d %s\n", $2, $1 }' | sort -n
+.if ${MACHINE} != "vax"
+# GCC/vax 8.4 does not support -fstack-usage.
 CFLAGS+=	-fstack-usage
+.endif
 
 # XXX
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
