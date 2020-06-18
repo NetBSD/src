@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.91 2020/06/14 21:34:25 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.92 2020/06/18 16:56:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -70,7 +70,7 @@ struct pool_sysctl {
 };
 
 #ifdef _KERNEL
-#define	__POOL_EXPOSE
+#define __POOL_EXPOSE
 #endif
 
 #ifdef __POOL_EXPOSE
@@ -86,7 +86,7 @@ struct pool_sysctl {
 #include "opt_pool.h"
 #endif
 
-#define	POOL_PADDR_INVALID	((paddr_t) -1)
+#define POOL_PADDR_INVALID	((paddr_t) -1)
 
 struct pool;
 
@@ -149,7 +149,7 @@ struct pool {
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
-#define	PR_WAITOK	0x01	/* Note: matches KM_SLEEP */
+#define PR_WAITOK	0x01	/* Note: matches KM_SLEEP */
 #define PR_NOWAIT	0x02	/* Note: matches KM_NOSLEEP */
 #define PR_WANTED	0x04
 #define PR_PHINPAGE	0x40
@@ -158,11 +158,11 @@ struct pool {
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
-#define	PR_LARGECACHE	0x1000	/* use large cache groups */
-#define	PR_GROWING	0x2000	/* pool_grow in progress */
-#define	PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
-#define	PR_ZERO		0x8000	/* zero data before returning */
-#define	PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
+#define PR_LARGECACHE	0x1000	/* use large cache groups */
+#define PR_GROWING	0x2000	/* pool_grow in progress */
+#define PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
+#define PR_ZERO		0x8000	/* zero data before returning */
+#define PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -220,11 +220,11 @@ struct pool {
  * All groups will be aligned to COHERENCY_UNIT.
  */
 #ifdef _LP64
-#define	PCG_NOBJECTS_NORMAL	15	/* 256 byte group */
-#define	PCG_NOBJECTS_LARGE	63	/* 1024 byte group */
+#define PCG_NOBJECTS_NORMAL	15	/* 256 byte group */
+#define PCG_NOBJECTS_LARGE	63	/* 1024 byte group */
 #else
-#define	PCG_NOBJECTS_NORMAL	14	/* 124 byte group */
-#define	PCG_NOBJECTS_LARGE	62	/* 508 byte group */
+#define PCG_NOBJECTS_NORMAL	14	/* 124 byte group */
+#define PCG_NOBJECTS_LARGE	62	/* 508 byte group */
 #endif
 
 typedef struct pcgpair {
@@ -358,7 +358,7 @@ void		pool_cache_cpu_init(struct cpu_info *);
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
 				          POOL_PADDR_INVALID)
 
-void 		pool_whatis(uintptr_t, void (*)(const char *, ...)
+void		pool_whatis(uintptr_t, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif /* _KERNEL */
 
