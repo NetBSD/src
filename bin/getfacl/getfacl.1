@@ -1,4 +1,4 @@
-.\" $NetBSD: getfacl.1,v 1.1 2020/05/16 18:31:45 christos Exp $
+.\" $NetBSD: getfacl.1,v 1.2 2020/06/18 19:36:13 wiz Exp $
 .\"-
 .\" Copyright (c) 2000, 2001, 2002 Robert N. M. Watson
 .\" All rights reserved.
@@ -116,11 +116,11 @@ Retrieve the default ACL for the directory
 .Pa / ,
 if any.
 .Sh SEE ALSO
+.Xr getextattr 1 ,
+.Xr setextattr 1 ,
 .Xr setfacl 1 ,
 .Xr acl 3 ,
-.Xr getextattr 8 ,
-.Xr setextattr 8 ,
-.Xr acl 9 ,
+.\".Xr acl 9 ,
 .Xr extattr 9
 .Sh STANDARDS
 The
