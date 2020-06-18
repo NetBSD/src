@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pipvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pipvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -75,5 +75,4 @@ void		octpip_int_enable(struct octpip_softc *, int);
 uint64_t	octpip_int_summary(struct octpip_softc *);
 #endif /* CNMAC_DEBUG */
 
-
-#endif
+#endif /* _OCTEON_PIPVAR_H_ */

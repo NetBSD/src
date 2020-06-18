@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pow.c,v 1.6 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pow.c,v 1.7 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.6 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.7 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"	/* CNMAC_DEBUG */
 
@@ -126,16 +126,6 @@ int min_recv_cnt = CNMAC_RING_MIN;
 int recv_cnt = CNMAC_RING_MIN;
 int int_rate = 1;
 #endif
-
-/* -------------------------------------------------------------------------- */
-
-/* ---- operation primitive functions */
-
-/* Load Operations */
-
-/* IOBDMA Operations */
-
-/* Store Operations */
 
 /* -------------------------------------------------------------------------- */
 
@@ -281,13 +271,12 @@ static inline void
 octpow_config_int(struct octpow_softc *sc, int group, uint64_t tc_thr,
     uint64_t ds_thr, uint64_t iq_thr)
 {
-	uint64_t wq_int_thr;
-
-	wq_int_thr =
+	uint64_t wq_int_thr =
 	    POW_WQ_INT_THRX_TC_EN |
-	    (tc_thr << POW_WQ_INT_THRX_TC_THR_SHIFT) |
-	    (ds_thr << POW_WQ_INT_THRX_DS_THR_SHIFT) |
-	    (iq_thr << POW_WQ_INT_THRX_IQ_THR_SHIFT);
+	    __SHIFTIN(tc_thr, POW_WQ_INT_THRX_TC_THR) |
+	    __SHIFTIN(ds_thr, POW_WQ_INT_THRX_DS_THR) |
+	    __SHIFTIN(iq_thr, POW_WQ_INT_THRX_IQ_THR);
+
 	_POW_WR8(sc, POW_WQ_INT_THR0_OFFSET + (group * 8), wq_int_thr);
 }
 
@@ -523,7 +512,7 @@ octpow_intr_work(struct octpow_softc *sc, struct octpow_intr_handle *pow_ih,
 	uint64_t *work;
 	uint64_t count = 0;
 
-	_POW_WR8(sc, POW_PP_GRP_MSK0_OFFSET, UINT64_C(1) << pow_ih->pi_group);
+	_POW_WR8(sc, POW_PP_GRP_MSK0_OFFSET, __BIT(pow_ih->pi_group));
 
 	_POW_INTR_WORK_DEBUG_IVAL(sc, pow_ih);
 
@@ -546,7 +535,7 @@ octpow_intr(void *data)
 {
 	struct octpow_intr_handle *pow_ih = data;
 	struct octpow_softc *sc = pow_ih->pi_sc;
-	uint64_t wq_int_mask = UINT64_C(0x1) << pow_ih->pi_group;
+	uint64_t wq_int_mask = __BIT(pow_ih->pi_group);
 
 #ifdef CNMAC_INTR_FEEDBACK_RING
 	octpow_intr_work(sc, pow_ih, recv_cnt);
@@ -554,7 +543,8 @@ octpow_intr(void *data)
 	octpow_intr_work(sc, pow_ih, INT_MAX);
 #endif /* CNMAC_INTR_FEEDBACK_RING */
 
-	_POW_WR8(sc, POW_WQ_INT_OFFSET, wq_int_mask << POW_WQ_INT_WQ_INT_SHIFT);
+	_POW_WR8(sc, POW_WQ_INT_OFFSET,
+	    __SHIFTIN(wq_int_mask, POW_WQ_INT_WQ_INT));
 	return 1;
 }
 

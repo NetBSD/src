@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_cop2reg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_cop2reg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008 Internet Initiative Japan, Inc.
@@ -33,8 +33,8 @@
  * DMFC2 / DMTC2 instructions
  */
 
-#ifndef _CN30XXCOP2REG_H_
-#define _CN30XXCOP2REG_H_
+#ifndef _OCTEON_COP2REG_H_
+#define _OCTEON_COP2REG_H_
 
 /* 3DES */
 
@@ -125,4 +125,4 @@
 #define	CVM_MT_KAS_KEY			0x0080	/* Load Key into KASUMI Unit */
 #define	CVM_MT_KAS_RESULT		0x0098	/* Load Result into KASUMI Unit */
 
-#endif /* _CN30XXCOP2REG_H_ */
+#endif /* _OCTEON_COP2REG_H_ */

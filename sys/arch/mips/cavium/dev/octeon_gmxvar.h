@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -133,13 +133,13 @@ struct octgmx_attach_args {
 				*ga_gmx_port;
 };
 
-#define	CN30XXGMX_FILTER_NADDRS_MAX	8	/* XXX elsewhere */
+#define	OCTEON_GMX_FILTER_NADDRS_MAX	8	/* XXX elsewhere */
 
-enum CN30XXGMX_FILTER_POLICY {
-	CN30XXGMX_FILTER_POLICY_ACCEPT_ALL,
-	CN30XXGMX_FILTER_POLICY_ACCEPT,
-	CN30XXGMX_FILTER_POLICY_REJECT,
-	CN30XXGMX_FILTER_POLICY_REJECT_ALL
+enum OCTEON_GMX_FILTER_POLICY {
+	OCTEON_GMX_FILTER_POLICY_ACCEPT_ALL,
+	OCTEON_GMX_FILTER_POLICY_ACCEPT,
+	OCTEON_GMX_FILTER_POLICY_REJECT,
+	OCTEON_GMX_FILTER_POLICY_REJECT_ALL
 };
 
 int		octgmx_link_enable(struct octgmx_port_softc *, int);
@@ -150,7 +150,7 @@ int		octgmx_stats_init(struct octgmx_port_softc *);
 void		octgmx_tx_int_enable(struct octgmx_port_softc *, int);
 void		octgmx_rx_int_enable(struct octgmx_port_softc *, int);
 int		octgmx_setfilt(struct octgmx_port_softc *,
-		    enum CN30XXGMX_FILTER_POLICY, size_t, uint8_t **);
+		    enum OCTEON_GMX_FILTER_POLICY, size_t, uint8_t **);
 int		octgmx_rx_frm_ctl_enable(struct octgmx_port_softc *, uint64_t);
 int		octgmx_rx_frm_ctl_disable(struct octgmx_port_softc *, uint64_t);
 int		octgmx_tx_thresh(struct octgmx_port_softc *, int);
@@ -173,4 +173,4 @@ octgmx_link_status(struct octgmx_port_softc *sc)
 	return (sc->sc_link & RXN_RX_INBND_STATUS) ? 1 : 0;
 }
 
-#endif
+#endif /* _OCTEON_GMXVAR_H_ */

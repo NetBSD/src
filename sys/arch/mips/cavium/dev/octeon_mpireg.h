@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_mpireg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_mpireg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -48,7 +48,6 @@
 
 #define MPI_CFG_XXX_63_29			UINT64_C(0xffffffffe0000000)
 #define MPI_CFG_CLKDIV				UINT64_C(0x000000001fff0000)
-#define  MPI_CFG_CLKDIV_SHIFT			16
 #define MPI_CFG_XXX_15_12			UINT64_C(0x000000000000f000)
 #define MPI_CFG_CSLATE				UINT64_C(0x0000000000000800)
 #define MPI_CFG_TRITX				UINT64_C(0x0000000000000400)
@@ -71,10 +70,8 @@
 #define MPI_TX_LEAVECS				UINT64_C(0x0000000000010000)
 #define MPI_TX_XXX_15_13			UINT64_C(0x000000000000e000)
 #define MPI_TX_TXNUM				UINT64_C(0x0000000000001f00)
-#define  MPI_TX_TXNUM_SHIFT			8
 #define MPI_TX_XXX_7_5				UINT64_C(0x00000000000000e0)
 #define MPI_TX_TOTNUM				UINT64_C(0x000000000000001f)
-#define  MPI_TX_TOTNUM_SHIFT			0
 
 #define MPI_DATX_XXX_63_8			UINT64_C(0xffffffffffffff00)
 #define MPI_DATX_DATA				UINT64_C(0x00000000000000ff)

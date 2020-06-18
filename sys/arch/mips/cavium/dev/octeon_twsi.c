@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_twsi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_twsi.c,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -30,7 +30,7 @@
 #undef	TWSITEST
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_twsi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_twsi.c,v 1.2 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -239,8 +239,10 @@ octeon_twsi_hlcm_read(struct octeon_twsi_softc *sc, int addr, char *buf,
 	resid = len;
 
 	while (resid > 4) {
-		cmd = MIO_TWS_SW_TWSI_OP_FOUR | MIO_TWS_SW_TWSI_R
-		    | (addr << MIO_TWS_SW_TWSI_A_SHIFT);
+		cmd =
+		    __SHIFTIN(MIO_TWS_SW_TWSI_OP_FOUR, MIO_TWS_SW_TWSI_OP) |
+		    MIO_TWS_SW_TWSI_R |
+		    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A);
 		octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 		octeon_twsi_wait(sc);
 		cmd = octeon_twsi_reg_rd(sc);
@@ -249,8 +251,10 @@ octeon_twsi_hlcm_read(struct octeon_twsi_softc *sc, int addr, char *buf,
 	}
 
 	while (resid > 0) {
-		cmd = MIO_TWS_SW_TWSI_OP_ONE | MIO_TWS_SW_TWSI_R
-		    | (addr << MIO_TWS_SW_TWSI_A_SHIFT);
+		cmd =
+		    __SHIFTIN(MIO_TWS_SW_TWSI_OP_ONE, MIO_TWS_SW_TWSI_OP) |
+		    MIO_TWS_SW_TWSI_R |
+		    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A);
 		octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 		octeon_twsi_wait(sc);
 		cmd = octeon_twsi_reg_rd(sc);
@@ -279,18 +283,20 @@ octeon_twsi_hlcm_write(struct octeon_twsi_softc *sc, int addr, char *buf,
 	resid = len;
 
 	while (resid > 4) {
-		cmd = MIO_TWS_SW_TWSI_OP_FOUR
-		    | (addr << MIO_TWS_SW_TWSI_A_SHIFT)
-		    | _BUFTOLE32(&buf[len - 1 - resid]);
+		cmd =
+		    __SHIFTIN(MIO_TWS_SW_TWSI_OP_FOUR, MIO_TWS_SW_TWSI_OP) |
+		    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A) |
+		    __SHIFTIN(_BUFTOLE32(&buf[len - 1 - resid]), MIO_TWS_SW_TWSI_D);
 		octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 		octeon_twsi_wait(sc);
 		resid -= 4;
 	}
 
 	while (resid > 0) {
-		cmd = MIO_TWS_SW_TWSI_OP_ONE
-		    | (addr << MIO_TWS_SW_TWSI_A_SHIFT)
-		    | buf[len - 1 - resid];
+		cmd =
+		    __SHIFTIN(MIO_TWS_SW_TWSI_OP_ONE, MIO_TWS_SW_TWSI_OP) |
+		    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A) |
+		    __SHIFTIN(buf[len - 1 - resid], MIO_TWS_SW_TWSI_D);
 		octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 		octeon_twsi_wait(sc);
 		resid--;
@@ -372,9 +378,10 @@ octeon_twsi_control_read(struct octeon_twsi_softc *sc, uint64_t eop_ia)
 {
 	uint64_t cmd;
 
-	cmd = MIO_TWS_SW_TWSI_OP_EXTEND
-	    | (addr << MIO_TWS_SW_TWSI_A_SHIFT)
-	    | eop_ia;
+	cmd =
+	    __SHIFTIN(MIO_TWS_SW_TWSI_OP_EXTEND, MIO_TWS_SW_TWSI_OP) |
+	    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A) |
+	    __SHIFTIN(eop_ia, MIO_TWS_SW_TWSI_EOP_IA);
 	octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 	octeon_twsi_wait(sc);
 	return (uint8_t)octeon_twsi_reg_rd(sc, MIO_TWS_SW_TWSI_OFFSET);
@@ -386,10 +393,11 @@ octeon_twsi_control_write(struct octeon_twsi_softc *sc, uint64_t eop_ia,
 {
 	uint64_t cmd;
 
-	cmd = MIO_TWS_SW_TWSI_OP_EXTEND
-	    | (addr << MIO_TWS_SW_TWSI_A_SHIFT)
-	    | eop_ia
-	    | _BUFTOLE32(&buf[len - 1 - resid]);
+	cmd =
+	    __SHIFTIN(MIO_TWS_SW_TWSI_OP_EXTEND, MIO_TWS_SW_TWSI_OP) |
+	    __SHIFTIN(addr, MIO_TWS_SW_TWSI_A_SHIFT) |
+	    __SHIFTIN(eop_ia, MIO_TWS_SW_TWSI_EOP_IA) |
+	    __SHIFTIN(_BUFTOLE32(&buf[len - 1 - resid]), MIO_TWS_SW_TWSI_D);
 	octeon_twsi_reg_wr(sc, MIO_TWS_SW_TWSI_OFFSET, cmd);
 	octeon_twsi_wait(sc);
 }

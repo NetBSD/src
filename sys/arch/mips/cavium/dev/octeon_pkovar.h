@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pkovar.h,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pkovar.h,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -97,37 +97,37 @@ octpko_cmd_word0(int sz1, int sz0, int s1, int reg1, int s0, int reg0,
     int le, int n2, int q, int r, int g, int ipoffp1, int ii, int df, int segs,
     int totalbytes)
 {
-	uint64_t cmd = 0;
+	uint64_t cmd =
+	    __SHIFTIN(sz1, PKO_CMD_WORD0_SZ1) |
+	    __SHIFTIN(sz0, PKO_CMD_WORD0_SZ0) |
+	    __SHIFTIN(s1, PKO_CMD_WORD0_S1) |
+	    __SHIFTIN(reg1, PKO_CMD_WORD0_REG1) |
+	    __SHIFTIN(s0, PKO_CMD_WORD0_S0) |
+	    __SHIFTIN(reg0, PKO_CMD_WORD0_REG0) |
+	    __SHIFTIN(le, PKO_CMD_WORD0_LE) |
+	    __SHIFTIN(n2, PKO_CMD_WORD0_N2) |
+	    __SHIFTIN(q, PKO_CMD_WORD0_Q) |
+	    __SHIFTIN(r, PKO_CMD_WORD0_R) |
+	    __SHIFTIN(g, PKO_CMD_WORD0_G) |
+	    __SHIFTIN(ipoffp1, PKO_CMD_WORD0_IPOFFP1) |
+	    __SHIFTIN(ii, PKO_CMD_WORD0_II) |
+	    __SHIFTIN(df, PKO_CMD_WORD0_DF) |
+	    __SHIFTIN(segs, PKO_CMD_WORD0_SEGS) |
+	    __SHIFTIN(totalbytes, PKO_CMD_WORD0_TOTALBYTES);
 
-	SET(cmd, (((uint64_t)sz1 << 62) & PKO_CMD_WORD0_SZ1)
- 	    | (((uint64_t)sz0 << 60) & PKO_CMD_WORD0_SZ0)
-	    | (((uint64_t)s1 << 59) & PKO_CMD_WORD0_S1)
-	    | (((uint64_t)reg1 << 48) & PKO_CMD_WORD0_REG1)
-	    | (((uint64_t)s0 << 47) & PKO_CMD_WORD0_S0)
-	    | (((uint64_t)reg0 << 36) & PKO_CMD_WORD0_REG0)
-	    | (((uint64_t)le << 35) & PKO_CMD_WORD0_LE)
-	    | (((uint64_t)n2 << 34) & PKO_CMD_WORD0_N2)
-	    | (((uint64_t)q << 33) & PKO_CMD_WORD0_Q)
-	    | (((uint64_t)r << 32) & PKO_CMD_WORD0_R)
-	    | (((uint64_t)g << 31) & PKO_CMD_WORD0_G)
-	    | (((uint64_t)ipoffp1 << 24) & PKO_CMD_WORD0_IPOFFP1)
-	    | (((uint64_t)ii << 23) & PKO_CMD_WORD0_II)
-	    | (((uint64_t)df << 22) & PKO_CMD_WORD0_DF)
-	    | (((uint64_t)segs << 16) & PKO_CMD_WORD0_SEGS)
-	    | (((uint64_t)totalbytes << 0) & PKO_CMD_WORD0_TOTALBYTES));
 	return cmd;
 }
 
 static __inline uint64_t
 octpko_cmd_word1(int i, int back, int pool, int size, paddr_t addr)
 {
-	uint64_t cmd = 0;
+	uint64_t cmd =
+	    __SHIFTIN(i, PKO_CMD_WORD1_I) |
+	    __SHIFTIN(back, PKO_CMD_WORD1_BACK) |
+	    __SHIFTIN(pool, PKO_CMD_WORD1_POOL) |
+	    __SHIFTIN(size, PKO_CMD_WORD1_SIZE) |
+	    __SHIFTIN(addr, PKO_CMD_WORD1_ADDR);
 
-	SET(cmd, (((uint64_t)i << 63) & PKO_CMD_WORD1_I)
-	    | (((uint64_t)back << 59) & PKO_CMD_WORD1_BACK)
-	    | (((uint64_t)pool << 56) & PKO_CMD_WORD1_POOL)
-	    | (((uint64_t)size << 40) & PKO_CMD_WORD1_SIZE)
-	    | (((uint64_t)addr << 0) & PKO_CMD_WORD1_ADDR));
 	return cmd;
 }
 
@@ -140,11 +140,7 @@ octpko_op_store(uint64_t args, uint64_t value)
 {
 	paddr_t addr;
 
-	addr =
-	    ((uint64_t)1 << 48) |
-	    ((uint64_t)(CN30XXPKO_MAJORDID & 0x1f) << 43) |
-	    ((uint64_t)(CN30XXPKO_SUBDID & 0x7) << 40) |
-	    ((uint64_t)args);
+	addr = OCTEON_ADDR_IO_DID(PKO_MAJOR_DID, PKO_SUB_DID) | args;
 	/* XXX */
 	OCTEON_SYNCW;
 	octeon_write_csr(addr, value);
@@ -156,10 +152,10 @@ octpko_op_doorbell_write(int pid, int qid, int wdc)
 	uint64_t args, value;
 
 	args =
-	    ((uint64_t)(pid & 0x3f) << 12) |
-	    ((uint64_t)(qid & 0x1ff) << 3);
-	value = wdc & 0xfffff;
+	    __SHIFTIN(pid, PKO_DOORBELL_WRITE_PID) |
+	    __SHIFTIN(qid, PKO_DOORBELL_WRITE_QID);
+	value = __SHIFTIN(wdc, PKO_DOORBELL_WRITE_WDC);
 	octpko_op_store(args, value);
 }
 
-#endif
+#endif /* _OCTEON_PKOVAR_H_ */

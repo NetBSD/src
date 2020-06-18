@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.11 2020/06/08 01:17:05 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.12 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.11 2020/06/08 01:17:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.12 2020/06/18 13:52:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,10 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.11 2020/06/08 01:17:05 simonb Exp $
 #include <sys/systm.h>
 
 #include <mips/locore.h>
+#include <mips/cavium/octeonreg.h>
+#include <mips/cavium/octeonvar.h>
 #include <mips/cavium/include/iobusvar.h>
 #include <mips/cavium/dev/octeon_rnmreg.h>
 #include <mips/cavium/dev/octeon_corereg.h>
-#include <mips/cavium/octeonvar.h>
 
 #include <sys/bus.h>
 
@@ -345,10 +346,7 @@ octrnm_raw_entropy(struct octrnm_softc *sc, unsigned rogroup)
 static uint64_t
 octrnm_load(struct octrnm_softc *sc)
 {
-	uint64_t addr =
-	    RNM_OPERATION_BASE_IO_BIT |
-	    __BITS64_SET(RNM_OPERATION_BASE_MAJOR_DID, 0x08) |
-	    __BITS64_SET(RNM_OPERATION_BASE_SUB_DID, 0x00);
+	uint64_t addr = OCTEON_ADDR_IO_DID(RNM_MAJOR_DID, RNM_SUB_DID);
 
 	return octeon_xkphys_read_8(addr);
 }
@@ -361,12 +359,10 @@ octrnm_load(struct octrnm_softc *sc)
 static void
 octrnm_iobdma(struct octrnm_softc *sc, uint64_t *buf, unsigned nwords)
 {
+ 	/* ``scraddr'' part is index in 64-bit words, not address */
 	size_t scraddr = OCTEON_CVMSEG_OFFSET(csm_rnm);
-	uint64_t iobdma =
-	    __SHIFTIN(scraddr/sizeof(uint64_t), IOBDMA_SCRADDR) |
-	    __SHIFTIN(nwords, IOBDMA_LEN) |
-	    __SHIFTIN(RNM_IOBDMA_MAJORDID, IOBDMA_MAJORDID) |
-	    __SHIFTIN(RNM_IOBDMA_SUBDID, IOBDMA_SUBDID);
+	uint64_t iobdma = IOBDMA_CREATE(RNM_MAJOR_DID, RNM_SUB_DID,
+	    scraddr / sizeof(uint64_t), nwords, 0);
 
 	KASSERT(nwords < 128);			/* iobdma address restriction */
 	KASSERT(nwords <= CVMSEG_LM_RNM_SIZE);	/* size of CVMSEG LM buffer */

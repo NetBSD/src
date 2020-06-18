@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_faureg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_faureg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -33,9 +33,30 @@
 #ifndef _OCTEON_FAUREG_H_
 #define _OCTEON_FAUREG_H_
 
+
+#define	FAU_MAJOR_DID			0x1e
+#define	FAU_SUB_DID			0
+
 /* ---- operations */
 
-#define	CN30XXFAU_MAJORDID	0x1e
-#define	CN30XXFAU_SUBDID	0
+/* -- load operations */
+#define	POW_LOAD_INCVAL			__BITS(35,14)
+#define	POW_LOAD_TAGWAIT		__BIT(13)
+/*      reserved			__BiTS(12,11) */
+#define	POW_LOAD_REG			__BITS(10,0)
+
+/* -- iobdma store operations */
+
+#define	POW_IOBDMA_LEN			1	/* always 1 for POW */
+#define	POW_IOBDMA_INCVAL		POW_LOAD_INCVAL
+#define	POW_IOBDMA_TAGWAIT		POW_LOAD_TAGWAIT
+#define	POW_IOBDMA_SIZE			__BITS(12,11)
+#define	POW_IOBDMA_REG			POW_LOAD_REG
+
+/* -- store operations */
+/*      reserved			__BiTS(35,14) */
+#define	POW_STORE_NOADD			__BIT(13)
+/*      reserved			__BiTS(12,11) */
+#define	POW_STORE_REG			__BITS(10,0)
 
 #endif /* _OCTEON_FAUREG_H_ */

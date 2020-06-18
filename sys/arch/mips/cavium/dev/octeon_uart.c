@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.6 2020/06/15 07:48:12 simonb Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.7 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.6 2020/06/15 07:48:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.7 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -58,9 +58,6 @@ static int	octuart_iobus_match(device_t, struct cfdata *, void *);
 static void	octuart_iobus_attach(device_t, device_t, void *);
 static int	octuart_com_enable(struct com_softc *);
 static void	octuart_com_disable(struct com_softc *);
-
-
-#define CN30XXUART_BUSYDETECT	0x7
 
 
 /* XXX */

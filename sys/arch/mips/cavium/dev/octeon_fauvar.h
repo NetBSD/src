@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fauvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_fauvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,6 +28,8 @@
 
 #ifndef _OCTEON_FAUVAR_H_
 #define _OCTEON_FAUVAR_H_
+
+#include <mips/cavium/octeonreg.h>
 
 /* ---- API */
 
@@ -89,14 +91,9 @@ typedef enum {
 static inline void
 octfau_op_iobdma(int index, uint64_t args)
 {
-	uint64_t value;
+	uint64_t value = IOBDMA_CREATE(FAU_MAJOR_DID, FAU_SUB_DID,
+	    index, POW_IOBDMA_LEN, args);
 
-	value =
-	    ((uint64_t)(index & 0xff) << 56) |
-	    ((uint64_t)1 << 48) |
-	    ((uint64_t)(CN30XXFAU_MAJORDID & 0x1f) << 43) |
-	    ((uint64_t)(CN30XXFAU_SUBDID & 0x7) << 40) |
-	    ((uint64_t)args & 0xfffffffffULL);
 	octeon_iobdma_write_8(value);
 }
 
@@ -108,24 +105,21 @@ static inline void
 octfau_op_iobdma_store_data(int scraddr, int incval, int tagwait,
     int size, int reg)
 {
-	uint64_t args;
+	uint64_t args =
+	    __SHIFTIN(incval, POW_IOBDMA_INCVAL) |
+	    __SHIFTIN(tagwait, POW_IOBDMA_TAGWAIT) |
+	    __SHIFTIN(size, POW_IOBDMA_SIZE) |
+	    __SHIFTIN(reg, POW_IOBDMA_REG);
 
-	args =
-	    ((uint64_t)(incval & 0x3fffff) << 14) |
-	    ((uint64_t)(tagwait & 0x1) << 13) |  
-	    ((uint64_t)(size & 0x3) << 11) |  
-	    ((uint64_t)(reg & 0x7ff) << 0);
-	/*
-	 * `scraddr' parameter of IOBDMA operation is actually `index';
-	 */
-	octfau_op_iobdma((int)((uint32_t)scraddr >> 3) /* XXX */, args);
+	/* `scraddr' parameter of IOBDMA operation is actually `index' */
+	octfau_op_iobdma(scraddr / sizeof(uint64_t), args);
 }
 
 static inline void
 octfau_op_inc_fetch_8(struct octfau_desc *fd, int64_t v)
 {
-	octfau_op_iobdma_store_data(fd->fd_scroff, v, 0, OCT_FAU_OP_SIZE_64/* XXX */,
-	    fd->fd_regno);
+	octfau_op_iobdma_store_data(fd->fd_scroff, v, 0,
+	    OCT_FAU_OP_SIZE_64/* XXX */, fd->fd_regno);
 }
 
 static inline int64_t

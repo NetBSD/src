@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipdvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_ipdvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -69,4 +69,4 @@ uint64_t		octipd_int_summary(struct octipd_softc *);
 void			octipd_int_enable(struct octipd_softc *, int);
 #endif /* CNMAC_DEBUG */
 
-#endif
+#endif /* _OCTEON_IPDVAR_H_ */

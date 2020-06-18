@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpavar.h,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_fpavar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,6 +28,8 @@
 
 #ifndef _OCTEON_FPAVAR_H_
 #define _OCTEON_FPAVAR_H_
+
+#include <mips/cavium/octeonreg.h>
 
 struct octfpa_buf {
 	int		fb_poolno;	/* pool # */
@@ -95,12 +97,8 @@ void	octfpa_dump(void);
 static __inline uint64_t
 octfpa_load(uint64_t fpapool)
 {
-	uint64_t addr;
-
-	addr =
-	    (0x1ULL << 48) |
-	    (0x5ULL << 43) |
-	    (fpapool & 0x07ULL) << 40;
+	/* for FPA operations, subdid == pool number */
+	uint64_t addr = OCTEON_ADDR_IO_DID(FPA_MAJOR_DID, fpapool);
 
 	return octeon_read_csr(addr);
 }
@@ -109,6 +107,7 @@ octfpa_load(uint64_t fpapool)
 static __inline uint64_t
 octfpa_iobdma(struct octfpa_softc *sc, int srcaddr, int len)
 {
+
 	/* XXX */
 	return 0ULL;
 }
@@ -117,27 +116,26 @@ octfpa_iobdma(struct octfpa_softc *sc, int srcaddr, int len)
 static __inline void
 octfpa_store(uint64_t addr, uint64_t fpapool, uint64_t dwbcount)
 {
-	uint64_t ptr;
-
-	ptr =
-	    (0x1ULL << 48) |
-	    (0x5ULL << 43) |
-	    (fpapool & 0x07ULL) << 40 |
-	    (addr & 0xffffffffffULL);
+	/* for FPA operations, subdid == pool number */
+	uint64_t ptr =
+	    OCTEON_ADDR_IO_DID(FPA_MAJOR_DID, fpapool) |
+	    __SHIFTIN(addr, FPA_OPS_STORE_ADDR);
 
 	OCTEON_SYNCWS;
-	octeon_write_csr(ptr, (dwbcount & 0x0ffULL));
+	octeon_write_csr(ptr, __SHIFTIN(dwbcount, FPA_OPS_STORE_DATA_DWBCOUNT));
 }
 
 static __inline paddr_t
 octfpa_buf_get_paddr(struct octfpa_buf *fb)
 {
+
 	return octfpa_load(fb->fb_poolno);
 }
 
 static __inline void
 octfpa_buf_put_paddr(struct octfpa_buf *fb, paddr_t paddr)
 {
+
 	KASSERT(paddr >= fb->fb_paddr);
 	KASSERT(paddr < fb->fb_paddr + fb->fb_len);
 	octfpa_store(paddr, fb->fb_poolno, fb->fb_size / 128);
@@ -154,4 +152,4 @@ octfpa_buf_put(struct octfpa_buf *fb, void *addr)
 	octfpa_buf_put_paddr(fb, paddr);
 }
 
-#endif
+#endif /* _OCTEON_FPAVAR_H_ */

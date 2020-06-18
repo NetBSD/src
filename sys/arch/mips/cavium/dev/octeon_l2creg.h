@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_l2creg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_l2creg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -30,8 +30,8 @@
  * L2C Registers
  */
 
-#ifndef _CN30XXL2CREG_H_
-#define _CN30XXL2CREG_H_
+#ifndef _OCTEON_L2CREG_H_
+#define _OCTEON_L2CREG_H_
 
 #define	L2C_CFG					0x0001180080000000ULL
 #define	L2T_ERR					0x0001180080000008ULL
@@ -66,4 +66,4 @@
 #define	L2C_BST1				0x00011800800007f0ULL
 #define	L2C_BST0				0x00011800800007f8ULL
 
-#endif /* _CN30XXL2CREG_H_ */
+#endif /* _OCTEON_L2CREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.10 2020/06/15 07:48:12 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.11 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/kcpuset.h>
 #include <mips/locore.h>
 #include <dev/pci/pcivar.h>
+
+#include <mips/cavium/octeonreg.h>
 
 /* XXX elsewhere */
 #define	_ASM_PROLOGUE \
@@ -338,21 +340,20 @@ octeon_xkphys_write_8(paddr_t address, uint64_t value)
 static __inline void
 octeon_iobdma_write_8(uint64_t value)
 {
-	uint64_t addr = UINT64_C(0xffffffffffffa200);
 
-	octeon_xkphys_write_8(addr, value);
+	octeon_xkphys_write_8(OCTEON_IOBDMA_ADDR, value);
 }
 
 static __inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
-	return octeon_xkphys_read_8(UINT64_C(0xffffffffffff8000) + offset);
+	return octeon_xkphys_read_8(OCTEON_CVMSEG_LM + offset);
 }
 
 static __inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
-	octeon_xkphys_write_8(UINT64_C(0xffffffffffff8000) + offset, value);
+	octeon_xkphys_write_8(OCTEON_CVMSEG_LM + offset, value);
 }
 
 /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smivar.h,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_smivar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,4 +47,4 @@ int	octsmi_read(struct octsmi_softc *, int, int, uint16_t *);
 int	octsmi_write(struct octsmi_softc *, int, int, uint16_t);
 void	octsmi_set_clock(struct octsmi_softc *, uint64_t);
 
-#endif
+#endif /* _OCTEON_SMIVAR_H_ */

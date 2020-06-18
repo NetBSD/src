@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.11 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.12 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.11 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.12 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -418,15 +418,15 @@ octgmx_tx_ovr_bp_enable(struct octgmx_port_softc *sc, int enable)
 
 	ovr_bp = _GMX_RD8(sc, GMX0_TX_OVR_BP);
 	if (enable) {
-		CLR(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_EN_SHIFT);
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_BP_SHIFT);
+		CLR(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_EN));
+		SET(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_BP));
 		/* XXX really??? */
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_IGN_FULL_SHIFT);
+		SET(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_IGN_FULL));
 	} else {
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_EN_SHIFT);
-		CLR(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_BP_SHIFT);
+		SET(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_EN));
+		CLR(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_BP));
 		/* XXX really??? */
-		SET(ovr_bp, (1 << sc->sc_port_no) << TX_OVR_BP_IGN_FULL_SHIFT);
+		SET(ovr_bp, __SHIFTIN(__BIT(sc->sc_port_no), TX_OVR_BP_IGN_FULL));
 	}
 	_GMX_WR8(sc, GMX0_TX_OVR_BP, ovr_bp);
 	return 0;
@@ -639,7 +639,7 @@ octgmx_rgmii_speed(struct octgmx_port_softc *sc)
 	}
 	sc->sc_link = newlink;
 
-	switch (sc->sc_link & RXN_RX_INBND_SPEED) {
+	switch (__SHIFTOUT(sc->sc_link, RXN_RX_INBND_SPEED)) {
 	case RXN_RX_INBND_SPEED_2_5:
 		baudrate = IF_Mbps(10);
 		break;
@@ -824,7 +824,7 @@ octgmx_rgmii_speed_speed(struct octgmx_port_softc *sc)
 	 * GMX Port Configuration Registers
 	 *  Duplex mode: 0 = half-duplex mode, 1=full-duplex
 	 */
-	if (ISSET(sc->sc_link, RXN_RX_INBND_DUPLEX)) {
+	if (__SHIFTOUT(sc->sc_link, RXN_RX_INBND_DUPLEX)) {
 		/* Full-Duplex */
 		SET(prt_cfg, PRTN_CFG_DUPLEX);
 	} else {
@@ -973,7 +973,7 @@ octgmx_rgmii_set_filter(struct octgmx_port_softc *sc)
 		/* XXX XXX XXX */
 
 		/* XXX XXX XXX */
-		SET(cam_en, 1ULL << multi);
+		SET(cam_en, __BIT(multi));
 		/* XXX XXX XXX */
 
 		for (i = 0; i < 6; i++) {
@@ -1012,17 +1012,17 @@ setmulti:
 	    ISSET(ifp->if_flags, IFF_PROMISC)) {
 		/* XXX XXX XXX */
 		dprintf("accept all multicast\n");
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
+		ctl |= __SHIFTIN(RXN_ADR_CTL_MCST_ACCEPT, RXN_ADR_CTL_MCST);
 		/* XXX XXX XXX */
 	} else if (multi) {
 		/* XXX XXX XXX */
 		dprintf("use cam\n");
-		SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
+		ctl |= __SHIFTIN(RXN_ADR_CTL_MCST_AFCAM, RXN_ADR_CTL_MCST);
 		/* XXX XXX XXX */
 	} else {
 		/* XXX XXX XXX */
 		dprintf("reject all multicast\n");
-		SET(ctl, RXN_ADR_CTL_MCST_REJECT);
+		ctl |= __SHIFTIN(RXN_ADR_CTL_MCST_REJECT, RXN_ADR_CTL_MCST);
 		/* XXX XXX XXX */
 	}
 	/* XXX XXX XXX */
@@ -1093,11 +1093,11 @@ octgmx_stats(struct octgmx_port_softc *sc)
  */
 
 /* XXX local namespace */
-#define	_POLICY			CN30XXGMX_FILTER_POLICY
-#define	_POLICY_ACCEPT_ALL	CN30XXGMX_FILTER_POLICY_ACCEPT_ALL
-#define	_POLICY_ACCEPT		CN30XXGMX_FILTER_POLICY_ACCEPT
-#define	_POLICY_REJECT		CN30XXGMX_FILTER_POLICY_REJECT
-#define	_POLICY_REJECT_ALL	CN30XXGMX_FILTER_POLICY_REJECT_ALL
+#define	_POLICY			OCTEON_GMX_FILTER_POLICY
+#define	_POLICY_ACCEPT_ALL	OCTEON_GMX_FILTER_POLICY_ACCEPT_ALL
+#define	_POLICY_ACCEPT		OCTEON_GMX_FILTER_POLICY_ACCEPT
+#define	_POLICY_REJECT		OCTEON_GMX_FILTER_POLICY_REJECT
+#define	_POLICY_REJECT_ALL	OCTEON_GMX_FILTER_POLICY_REJECT_ALL
 
 static int	octgmx_setfilt_addrs(struct octgmx_port_softc *, size_t,
 		    uint8_t **);
@@ -1120,16 +1120,19 @@ octgmx_setfilt(struct octgmx_port_softc *sc, enum _POLICY policy, size_t naddrs,
 		KASSERT(naddrs == 0);
 		KASSERT(addrs == NULL);
 
-		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT_ALL) ?
-		    RXN_ADR_CTL_MCST_ACCEPT : RXN_ADR_CTL_MCST_REJECT);
+		SET(rx_adr_ctl,
+		    __SHIFTIN((policy == _POLICY_ACCEPT_ALL) ?
+		      RXN_ADR_CTL_MCST_ACCEPT : RXN_ADR_CTL_MCST_REJECT),
+		    RXN_ADR_CTL_MCST);
 		break;
 	case _POLICY_ACCEPT:
 	case _POLICY_REJECT:
-		if (naddrs > CN30XXGMX_FILTER_NADDRS_MAX)
+		if (naddrs > OCTEON_GMX_FILTER_NADDRS_MAX)
 			return E2BIG;
 		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT) ?
 		    RXN_ADR_CTL_CAM_MODE : 0);
-		SET(rx_adr_ctl, RXN_ADR_CTL_MCST_AFCAM);
+		SET(rx_adr_ctl,
+		    __SHIFTIN(RXN_ADR_CTL_MCST_AFCAM, RXN_ADR_CTL_MCST);
 		/* set GMX0_RXN_ADR_CAM_EN, GMX0_RXN_ADR_CAM[0-5] */
 		octgmx_setfilt_addrs(sc, naddrs, addrs);
 		break;
@@ -1146,16 +1149,16 @@ octgmx_setfilt_addrs(struct octgmx_port_softc *sc, size_t naddrs,
     uint8_t **addrs)
 {
 	uint64_t rx_adr_cam_en;
-	uint64_t rx_adr_cam_addrs[CN30XXGMX_FILTER_NADDRS_MAX];
+	uint64_t rx_adr_cam_addrs[OCTEON_GMX_FILTER_NADDRS_MAX];
 	int i, j;
 
-	KASSERT(naddrs <= CN30XXGMX_FILTER_NADDRS_MAX);
+	KASSERT(naddrs <= OCTEON_GMX_FILTER_NADDRS_MAX);
 
 	rx_adr_cam_en = 0;
 	(void)memset(rx_adr_cam_addrs, 0, sizeof(rx_adr_cam_addrs));
 
 	for (i = 0; i < naddrs; i++) {
-		SET(rx_adr_cam_en, 1ULL << i);
+		SET(rx_adr_cam_en, __BIT(i));
 		for (j = 0; j < 6; j++)
 			SET(rx_adr_cam_addrs[j],
 			    (uint64_t)addrs[i][j] << (8 * i));

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pko.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pko.c,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.3 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -37,11 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.2 2020/05/31 06:27:06 simonb Exp $"
 #include <mips/locore.h>
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_faureg.h>
+#include <mips/cavium/dev/octeon_fpareg.h>
 #include <mips/cavium/dev/octeon_fpavar.h>
 #include <mips/cavium/dev/octeon_pkoreg.h>
 #include <mips/cavium/dev/octeon_pkovar.h>
-
-static inline void	octpko_op_store(uint64_t, uint64_t);
 
 #ifdef CNMAC_DEBUG
 void			octpko_intr_evcnt_attach(struct octpko_softc *);

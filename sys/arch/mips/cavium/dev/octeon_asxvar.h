@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_asxvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_asxvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -53,4 +53,4 @@ int			octasx_enable(struct octasx_softc *, int);
 int			octasx_clk_set(struct octasx_softc *, int, int);
 uint64_t		octasx_int_summary(struct octasx_softc *sc);
 
-#endif
+#endif /* _OCTEON_ASXVAR_H_ */
