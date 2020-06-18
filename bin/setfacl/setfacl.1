@@ -1,3 +1,4 @@
+.\" $NetBSD: setfacl.1,v 1.2 2020/06/18 19:43:53 wiz Exp $
 .\"-
 .\" Copyright (c) 2001 Chris D. Faulhaber
 .\" Copyright (c) 2011 Edward Tomasz Napierała
@@ -34,13 +35,13 @@
 .Nd set ACL information
 .Sh SYNOPSIS
 .Nm
-.Op Fl R Op Fl H | L | P
 .Op Fl bdhkn
 .Op Fl a Ar position entries
-.Op Fl m Ar entries
 .Op Fl M Ar file
-.Op Fl x Ar entries | position
+.Op Fl m Ar entries
+.Op Fl R Op Fl H | L | P
 .Op Fl X Ar file
+.Op Fl x Ar entries | position
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -82,28 +83,36 @@ access ACL entries.
 Currently only directories may have
 default ACL's.
 This option is not applicable to NFSv4 ACLs.
-.It Fl h
-If the target of the operation is a symbolic link, perform the operation
-on the symbolic link itself, rather than following the link.
 .It Fl H
 If the
 .Fl R
 option is specified, symbolic links on the command line are followed
 and hence unaffected by the command.
 (Symbolic links encountered during tree traversal are not followed.)
+.It Fl h
+If the target of the operation is a symbolic link, perform the operation
+on the symbolic link itself, rather than following the link.
 .It Fl k
 Delete any default ACL entries on the specified files.
-It
-is not considered an error if the specified files do not have
+It is not considered an error if the specified files do not have
 any default ACL entries.
-An error will be reported if any of
-the specified files cannot have a default entry (i.e.,
-non-directories).
+An error will be reported if any of the specified files cannot have
+a default entry (i.e., non-directories).
 This option is not applicable to NFSv4 ACLs.
 .It Fl L
 If the
 .Fl R
 option is specified, all symbolic links are followed.
+.It Fl M Ar file
+Modify the ACL entries on the specified files by adding new
+ACL entries and modifying existing ACL entries with the ACL
+entries specified in the file
+.Ar file .
+If
+.Ar file
+is
+.Fl ,
+the input is taken from stdin.
 .It Fl m Ar entries
 Modify the ACL on the specified file.
 New entries will be added, and existing entries will be modified
@@ -115,19 +124,8 @@ For NFSv4 ACLs, it is recommended to use the
 and
 .Fl x
 options instead.
-.It Fl M Ar file
-Modify the ACL entries on the specified files by adding new
-ACL entries and modifying existing ACL entries with the ACL
-entries specified in the file
-.Ar file .
-If
-.Ar file
-is
-.Fl ,
-the input is taken from stdin.
 .It Fl n
-Do not recalculate the permissions associated with the ACL
-mask entry.
+Do not recalculate the permissions associated with the ACL mask entry.
 This option is not applicable to NFSv4 ACLs.
 .It Fl P
 If the
@@ -138,6 +136,10 @@ This is the default.
 Perform the action recursively on any specified directories.
 When modifying or adding NFSv4 ACL entries, inheritance flags
 are applied only to directories.
+.It Fl X Ar file
+Remove the ACL entries specified in the file
+.Ar file
+from the access or default ACL of the specified files.
 .It Fl x Ar entries | position
 If
 .Ar entries
@@ -146,10 +148,6 @@ from the access or default ACL of the specified files.
 Otherwise, remove entry at index
 .Ar position ,
 counting from zero.
-.It Fl X Ar file
-Remove the ACL entries specified in the file
-.Ar file
-from the access or default ACL of the specified files.
 .El
 .Pp
 The above options are evaluated in the order specified
@@ -190,8 +188,8 @@ ACL entry.
 .It Ar "ACL qualifier"
 The ACL qualifier field describes the user or group associated with
 the ACL entry.
-It may consist of one of the following: uid or
-user name, gid or group name, or empty.
+It may consist of one of the following: UID or
+user name, GID or group name, or empty.
 For
 .Dq Li user
 ACL entries, an empty field specifies access granted to the
@@ -324,8 +322,8 @@ literally, everyone, including file owner and owning group.
 .It Ar "ACL qualifier"
 The ACL qualifier field describes the user or group associated with
 the ACL entry.
-It may consist of one of the following: uid or
-user name, or gid or group name.
+It may consist of one of the following: UID or
+user name, or GID or group name.
 In entries whose tag type is one of
 .Dq Li owner@ ,
 .Dq Li group@ ,
@@ -487,11 +485,11 @@ Copy ACL entries from
 to
 .Pa file2 .
 .Sh SEE ALSO
+.Xr getextattr 1 ,
 .Xr getfacl 1 ,
+.Xr setextattr 1 ,
 .Xr acl 3 ,
-.Xr getextattr 8 ,
-.Xr setextattr 8 ,
-.Xr acl 9 ,
+.\".Xr acl 9 ,
 .Xr extattr 9
 .Sh STANDARDS
 The
