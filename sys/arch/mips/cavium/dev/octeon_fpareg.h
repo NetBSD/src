@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpareg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_fpareg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -308,38 +308,11 @@
  * Free Pool Unit Operations
  */
 
-#define	FPA_MAJORDID				0x5			/* 0b00101 */
-
-#define	FPA_OPS_MAJORDID			UINT64_C(0x0000f80000000000)
-#define	 FPA_OPS_MAJORDID_SHIFT			43
-#define	FPA_OPS_SUBDID				UINT64_C(0x0000070000000000)
-#define	 FPA_OPS_SUBDID_SHIFT			40
-#define	FPA_OPS_XXX_39_0			UINT64_C(0x000000ffffffffff)
-
-/* Load Operations */
-
-#define	FPA_OPS_LOAD_1				UINT64_C(0x0001000000000000)
-#define	FPA_OPS_LOAD_MAJORDID			UINT64_C(0x0000f80000000000)
-#define	FPA_OPS_LOAD_SUBDID			UINT64_C(0x0000070000000000)
-#define	FPA_OPS_LOAD_XXX_39_0			UINT64_C(0x000000ffffffffff)
-
-/* IOBDMA Operations */
-
-#define	FPA_OPS_IOBDMA_SRCADDR			UINT64_C(0xff00000000000000)
-#define	FPA_OPS_IOBDMA_LEN			UINT64_C(0x00ff000000000000)
-#define	 FPA_OPS_IOBDMA_LEN_SHIFT		48
-#define	FPA_OPS_IOBDMA_MAJORDID			UINT64_C(0x0000f80000000000)
-#define	FPA_OPS_IOBDMA_SUBDIR			UINT64_C(0x0000070000000000)
-#define	FPA_OPS_IOBDMA_XXX_39_0			UINT64_C(0x000000ffffffffff)
+#define	FPA_MAJOR_DID				0x5
 
 /* Store Operations */
+#define	FPA_OPS_STORE_ADDR			UINT64_C(0x000000ffffffffff)
 
-#define	FPA_OPS_STORE_1				UINT64_C(0x0001000000000000)
-#define	FPA_OPS_STORE_MAJORDID			UINT64_C(0x0000f80000000000)
-#define	FPA_OPS_STORE_SUBDID			UINT64_C(0x0000070000000000)
-#define	FPA_OPS_STORE_XXX_39_0			UINT64_C(0x000000ffffffffff)
-
-#define	FPA_OPS_STORE_DATA_XXX_63_9		UINT64_C(0xfffffffffffffe00)
 #define	FPA_OPS_STORE_DATA_DWBCOUNT		UINT64_C(0x00000000000001ff)
 
 /* ---- bus_space(9) */

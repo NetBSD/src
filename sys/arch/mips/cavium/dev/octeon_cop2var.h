@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_cop2var.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_cop2var.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * TODO:
@@ -12,8 +12,8 @@
  *   direction argument (int dir, 0 => encrypt, 1 => decrypt) then branch.
  */
 
-#ifndef _CN30XXCOP2VAR_H_
-#define _CN30XXCOP2VAR_H_
+#ifndef _OCTEON_COP2VAR_H_
+#define _OCTEON_COP2VAR_H_
 
 #ifdef __OCTEON_USEUN__
 #define CNASM_ULD(r, o, b)		"uld	%["#r"], "#o"(%["#b"])	\n\t"
@@ -1035,4 +1035,4 @@ octeon_cop2_crc_reflect(XXX)
 
 /* XXX */
 
-#endif	/* _CN30XXCOP2VAR_H_ */
+#endif	/* _OCTEON_COP2VAR_H_ */
