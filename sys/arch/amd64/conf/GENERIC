@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.569 2020/06/07 09:45:19 maxv Exp $
+# $NetBSD: GENERIC,v 1.570 2020/06/18 16:23:43 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.569 $"
+#ident		"GENERIC-$Revision: 1.570 $"
 
 maxusers	64		# estimated number of users
 
@@ -76,8 +76,9 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # CPU-related options
 #options 	USER_LDT	# User-settable LDT, used by Wine
 options 	SVS		# Separate Virtual Space
-makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
-						# migitation
+
+# GCC Spectre variant 2 migitation
+makeoptions	SPECTRE_V2_GCC_MITIGATION=1
 options 	SPECTRE_V2_GCC_MITIGATION
 
 # CPU features
@@ -122,12 +123,14 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table for CTF
 options DDB_COMMANDONENTER="trace;show registers"
-#options 	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
-#options 	UBSAN_ALWAYS_FATAL	# (optional) Panic on all kUBSan reports
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
+
+# Kernel Undefined Behavior Sanitizer (kUBSan).
+#options 	KUBSAN			# mandatory
+#options 	UBSAN_ALWAYS_FATAL	# optional: panic on all kUBSan reports
 
 # Kernel Address Sanitizer (kASan). You need to disable SVS to use it.
 # The quarantine is optional and can help KASAN find more use-after-frees.
