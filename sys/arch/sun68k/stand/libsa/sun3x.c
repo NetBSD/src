@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.12 2009/12/11 18:45:05 tsutsui Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.13 2020/06/18 17:59:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,10 +35,6 @@
 
 #define _SUN3X_ XXX
 
-/* Avoid conflicts on these: */
-#define get_pte sun3x_get_pte
-#define set_pte sun3x_set_pte
-
 #include <sys/param.h>
 #include <machine/mon.h>
 
@@ -62,17 +58,19 @@
 #define MON_DVMA_BASE	SUN3X_MON_DVMA_BASE
 #define MON_DVMA_SIZE	SUN3X_MON_DVMA_SIZE
 
-void mmu_atc_flush(vaddr_t);
-void set_iommupte(vaddr_t, paddr_t);
+static void mmu_atc_flush(vaddr_t);
+static void set_iommupte(vaddr_t, paddr_t);
 
-u_int	get_pte(vaddr_t);
-void	set_pte(vaddr_t, paddr_t);
-void	dvma3x_init(void);
-char *	dvma3x_alloc(int);
-void	dvma3x_free(char *, int);
-char *	dvma3x_mapin(char *, int);
-void	dvma3x_mapout(char *, int);
-char *	dev3x_mapin(int, u_long, int);
+#ifdef	DEBUG_PROM
+static u_int	sun3x_get_pte(vaddr_t);
+#endif
+static void	sun3x_set_pte(vaddr_t, paddr_t);
+static void	dvma3x_init(void);
+static char *	dvma3x_alloc(int);
+static void	dvma3x_free(char *, int);
+static char *	dvma3x_mapin(char *, int);
+static void	dvma3x_mapout(char *, int);
+static char *	dev3x_mapin(int, u_long, int);
 
 struct mapinfo {
 	int maptype;
@@ -102,7 +100,7 @@ sun3x_mapinfo[MAP__NTYPES] = {
 /* The virtual address we will use for PROM device mappings. */
 u_int sun3x_devmap = MON_KDB_BASE;
 
-char *
+static char *
 dev3x_mapin(int maptype, u_long physaddr, int length)
 {
 	u_int i, pa, pte, pgva, va;
@@ -124,7 +122,7 @@ found:
 
 	va = pgva = sun3x_devmap;
 	do {
-		set_pte(pgva, pte);
+		sun3x_set_pte(pgva, pte);
 		pgva += NBPG;
 		pte += NBPG;
 		length -= NBPG;
@@ -135,7 +133,7 @@ found:
 #ifdef	DEBUG_PROM
 	if (debug)
 		printf("dev3x_mapin: va=0x%x pte=0x%x\n",
-			   va, get_pte(va));
+			   va, sun3x_get_pte(va));
 #endif
 	return ((char*)va);
 }
@@ -152,7 +150,7 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3x_end = MON_DVMA_BASE + MON_DVMA_MAPLEN;
 
-void 
+static void 
 dvma3x_init(void)
 {
 	u_int va, pa;
@@ -161,7 +159,7 @@ dvma3x_init(void)
 	va = MON_DVMA_BASE;
 
 	while (pa < SA_MAX_VA) {
-		set_pte(va, pa | MMU_DT_PAGE | MMU_SHORT_PTE_CI);
+		sun3x_set_pte(va, pa | MMU_DT_PAGE | MMU_SHORT_PTE_CI);
 		set_iommupte(va, pa | IOMMU_PDE_DT_VALID | IOMMU_PDE_CI);
 		va += NBPG;
 		pa += NBPG;
@@ -185,7 +183,7 @@ dvma3x_mapin(char *addr, int len)
 }
 
 /* Convert a DVMA address to a local address. */
-void
+static void
 dvma3x_mapout(char *addr, int len)
 {
 	int va = (int)addr;
@@ -196,7 +194,7 @@ dvma3x_mapout(char *addr, int len)
 		panic("dvma3x_mapout");
 }
 
-char *
+static char *
 dvma3x_alloc(int len)
 {
 	len = m68k_round_page(len);
@@ -204,7 +202,7 @@ dvma3x_alloc(int len)
 	return((char *)dvma3x_end);
 }
 
-void
+static void
 dvma3x_free(char *dvma, int len)
 {
 	/* not worth the trouble */
@@ -214,8 +212,9 @@ dvma3x_free(char *dvma, int len)
  * MMU (and I/O MMU) support
  */
 
-u_int
-get_pte(vaddr_t va)
+#ifdef	DEBUG_PROM
+static u_int
+sun3x_get_pte(vaddr_t va)
 {
 	u_int	pn;
 	mmu_short_pte_t *tbl;
@@ -237,9 +236,10 @@ get_pte(vaddr_t va)
 	/* Extract the PTE from the table. */
 	return tbl[pn].attr.raw;
 }
+#endif
 
-void
-set_pte(vaddr_t va, paddr_t pa)
+static void
+sun3x_set_pte(vaddr_t va, paddr_t pa)
 {
 	u_int	pn;
 	mmu_short_pte_t *tbl;
@@ -274,14 +274,14 @@ set_pte(vaddr_t va, paddr_t pa)
 	mmu_atc_flush(va);
 }
 
-void 
+static void 
 mmu_atc_flush(vaddr_t va)
 {
 
 	__asm volatile ("pflush	#0,#0,%0@" : : "a" (va));
 }
 
-void 
+static void 
 set_iommupte(vaddr_t va, paddr_t pa)
 {
 	iommu_pde_t *iommu_va;
