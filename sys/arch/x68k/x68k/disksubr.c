@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.35 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.36 2020/06/18 19:54:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.35 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.36 2020/06/18 19:54:08 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -78,16 +78,16 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		lp->d_secsize = DEF_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0)
-		lp->d_secpercyl = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
 		lp->d_partitions[i].p_offset = 0;
 	}
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (lp->d_partitions[RAW_PART].p_size == 0)
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+
+	lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
 
 	/* get a buffer and initialize it */
 	bsdlabelsz =
