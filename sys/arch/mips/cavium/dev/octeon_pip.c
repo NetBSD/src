@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.4 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.4 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.5 2020/06/18 13:52:08 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -192,11 +192,11 @@ octpip_port_config(struct octpip_softc *sc)
 	CLR(prt_tag, PIP_PRT_TAGN_IP4_SRC);
 	CLR(prt_tag, PIP_PRT_TAGN_IP6_SRC);
 	CLR(prt_tag, PIP_PRT_TAGN_IP4_DST);
-	SET(prt_tag, PIP_PRT_TAGN_TCP6_TAG_ORDERED);
-	SET(prt_tag, PIP_PRT_TAGN_TCP4_TAG_ORDERED);
-	SET(prt_tag, PIP_PRT_TAGN_IP6_TAG_ORDERED);
-	SET(prt_tag, PIP_PRT_TAGN_IP4_TAG_ORDERED);
-	SET(prt_tag, PIP_PRT_TAGN_NON_TAG_ORDERED);
+	SET(prt_tag, __SHIFTIN(PIP_PRT_TAGN_TCP6_TAG_ORDERED, PIP_PRT_TAGN_TCP6_TAG));
+	SET(prt_tag, __SHIFTIN(PIP_PRT_TAGN_TCP4_TAG_ORDERED, PIP_PRT_TAGN_TCP4_TAG));
+	SET(prt_tag, __SHIFTIN(PIP_PRT_TAGN_IP6_TAG_ORDERED, PIP_PRT_TAGN_IP6_TAG));
+	SET(prt_tag, __SHIFTIN(PIP_PRT_TAGN_IP4_TAG_ORDERED, PIP_PRT_TAGN_IP4_TAG));
+	SET(prt_tag, __SHIFTIN(PIP_PRT_TAGN_NON_TAG_ORDERED, PIP_PRT_TAGN_NON_TAG));
 	SET(prt_tag, sc->sc_receive_group & PIP_PRT_TAGN_GRP);
 
 	ip_offset = 0;
@@ -242,7 +242,7 @@ octpip_stats(struct octpip_softc *sc, struct ifnet *ifp, int gmx_port)
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl | PIP_STAT_CTL_RDCLR);
 	reg = &octpip_dump_stats_[gmx_port];
 	tmp = _PIP_RD8(sc, reg->offset);
-	pkts = (tmp & 0xffffffff00000000ULL) >> 32;
+	pkts = __SHIFTOUT(tmp, PIP_STAT0_PRTN_DRP_PKTS);
 	if_statadd(ifp, if_iqdrops, pkts);
 
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl);

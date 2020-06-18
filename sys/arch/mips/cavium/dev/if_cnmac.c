@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.21 2020/06/10 07:34:19 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.22 2020/06/18 13:52:08 simonb Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.21 2020/06/10 07:34:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.22 2020/06/18 13:52:08 simonb Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -63,18 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.21 2020/06/10 07:34:19 simonb Exp $")
 
 #include <mips/cpuregs.h>
 
-#include <mips/cavium/dev/octeon_asxreg.h>
+#include <mips/cavium/octeonreg.h>
+#include <mips/cavium/include/iobusvar.h>
+
 #include <mips/cavium/dev/octeon_ciureg.h>
-#include <mips/cavium/dev/octeon_npireg.h>
 #include <mips/cavium/dev/octeon_gmxreg.h>
-#include <mips/cavium/dev/octeon_ipdreg.h>
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_powreg.h>
 #include <mips/cavium/dev/octeon_faureg.h>
 #include <mips/cavium/dev/octeon_fpareg.h>
-#include <mips/cavium/dev/octeon_bootbusreg.h>
-#include <mips/cavium/include/iobusvar.h>
-#include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_fpavar.h>
 #include <mips/cavium/dev/octeon_gmxvar.h>
 #include <mips/cavium/dev/octeon_fauvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.4 2020/06/18 13:52:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.3 2020/05/31 06:27:06 simonb Exp $"
 #include <sys/mbuf.h>
 #include <mips/locore.h>
 #include <mips/cavium/octeonvar.h>
+#include <mips/cavium/dev/octeon_fpareg.h>
 #include <mips/cavium/dev/octeon_fpavar.h>
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_smireg.h>
@@ -77,9 +78,10 @@ octsmi_read(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t *val)
 	uint64_t smi_rd;
 	int timo;
 
-	_SMI_WR8(sc, SMI_CMD_OFFSET, SMI_CMD_PHY_OP | 
-	    (phy_addr << SMI_CMD_PHY_ADR_SHIFT) |
-	    (reg << SMI_CMD_REG_ADR_SHIFT));
+	_SMI_WR8(sc, SMI_CMD_OFFSET, 
+	    __SHIFTIN(SMI_CMD_PHY_OP_READ, SMI_CMD_PHY_OP) |
+	    __SHIFTIN(phy_addr, SMI_CMD_PHY_ADR) |
+	    __SHIFTIN(reg, SMI_CMD_REG_ADR));
 
 	timo = 10000;
 	smi_rd = _SMI_RD8(sc, SMI_RD_DAT_OFFSET);
@@ -108,8 +110,10 @@ octsmi_write(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t value)
 	SET(smi_wr, value);
 	_SMI_WR8(sc, SMI_WR_DAT_OFFSET, smi_wr);
 
-	_SMI_WR8(sc, SMI_CMD_OFFSET, (phy_addr << SMI_CMD_PHY_ADR_SHIFT) |
-	    (reg << SMI_CMD_REG_ADR_SHIFT));
+	_SMI_WR8(sc, SMI_CMD_OFFSET,
+	    __SHIFTIN(SMI_CMD_PHY_OP_WRITE, SMI_CMD_PHY_OP) |
+	    __SHIFTIN(phy_addr, SMI_CMD_PHY_ADR) |
+	    __SHIFTIN(reg, SMI_CMD_REG_ADR));
 
 	timo = 10000;
 	smi_wr = _SMI_RD8(sc, SMI_WR_DAT_OFFSET);
