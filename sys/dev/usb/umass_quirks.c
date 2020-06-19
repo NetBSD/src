@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.101 2020/04/13 09:26:43 jdolecek Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.102 2020/06/19 11:52:42 flxd Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.101 2020/04/13 09:26:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.102 2020/06/19 11:52:42 flxd Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -327,6 +327,19 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * Fix Alcor multi-card readers in many HP machines (like net-tops).
+	 * FreeBSD applies the no-sync-cache quirk for /all/ Alcor usb devices
+	 * as well as a no-test-unit-ready quirk. Mine works without the latter.
+	 */
+	{ { USB_VENDOR_ALCOR, USB_PRODUCT_ALCOR_AU6366 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
