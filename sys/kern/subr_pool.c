@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.272 2020/06/14 23:17:01 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.273 2020/06/19 13:49:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.272 2020/06/14 23:17:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.273 2020/06/19 13:49:38 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -223,6 +223,26 @@ static struct pool_allocator pool_allocator_big[] = {
 		.pa_alloc = pool_page_alloc,
 		.pa_free = pool_page_free,
 		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 7),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 8),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 9),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 10),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 11),
 	}
 };
 
