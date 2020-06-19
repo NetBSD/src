@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.14 2018/07/13 09:37:32 maxv Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.15 2020/06/19 16:20:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -125,11 +125,7 @@ struct mtrr;
 
 #ifdef _KERNEL
 int x86_iopl(struct lwp *, void *, register_t *);
-int x86_get_mtrr(struct lwp *, void *, register_t *);
-int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_get_ldt(struct lwp *, void *, register_t *);
 int x86_get_ldt1(struct lwp *, struct x86_get_ldt_args *, union descriptor *);
-int x86_set_ldt(struct lwp *, void *, register_t *);
 int x86_set_ldt1(struct lwp *, struct x86_set_ldt_args *, union descriptor *);
 int x86_set_sdbase(void *, char, lwp_t *, bool);
 int x86_get_sdbase(void *, char);
