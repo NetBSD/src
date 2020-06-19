@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.23 2014/03/26 17:46:04 christos Exp $	*/
+/*	$NetBSD: pram.c,v 1.24 2020/06/19 16:30:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.23 2014/03/26 17:46:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.24 2020/06/19 16:30:31 tsutsui Exp $");
 
 #include "opt_adb.h"
 
@@ -54,107 +54,102 @@ __KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.23 2014/03/26 17:46:04 christos Exp $");
 #if DEBUG
 static const char *convtime(unsigned long t)
 {
-  static long daypmon[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
-  static const char *monstr[] = {"January","February","March","April","May",
-    "June","July","August","September","October","November","December" };
-  static char s[200];
-  long year,month,day,hour,minute,seconds,i,dayperyear;
+	static long daypmon[] =
+	    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	static const char *monstr[] = {
+	    "January", "February", "March", "April", "May", "June",
+	    "July", "August", "September", "October", "November", "December"
+	};
+	static char s[200];
+	long year, month, day, hour, minute, seconds, i, dayperyear;
 
-  year=1904;
-  month=0;  /* Jan */
-  day=1;
-  hour=0;
-  minute=0;
-  seconds=0;
+	year = 1904;
+	month = 0;	/* Jan */
+	day = 1;
+	hour = 0;
+	minute = 0;
+	seconds = 0;
 
-  if(t == 0xffffffff)
-     return("<time value is -1>");
+	if (t == 0xffffffff)
+		return "<time value is -1>";
 
-  while (t > 0)
-  {
-    if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
-    {
-      dayperyear=366;
-      daypmon[1]=29;
-    }
-    else
-    {
-      dayperyear=365;
-      daypmon[1]=28;
-    }
-    i=dayperyear*60*60*24;
-    if (t >= i)
-    {
-      t-=i;
-      year++;
-      continue;
-    }
-    i=daypmon[month]*60*60*24;
-    if (t >= i)
-    {
-      t-=i;
-      month++;
-      continue;
-    }
-    i=60*60*24;
-    if (t >= i)
-    {
-      t-=i;
-      day++;
-      continue;
-    }
-    i=60*60;
-    if (t >= i)
-    {
-      t-=i;
-      hour++;
-      continue;
-    }
-    i=60;
-    if (t >= i)
-    {
-      t-=i;
-      minute++;
-      continue;
-    }
-    seconds=t;
-    t=0;
-  }
+	while (t > 0) {
+		if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) {
+			dayperyear = 366;
+			daypmon[1] = 29;
+		} else {
+			dayperyear = 365;
+			daypmon[1] = 28;
+		}
+		i = dayperyear * 60 * 60 * 24;
+		if (t >= i) {
+			t -= i;
+			year++;
+			continue;
+		}
+		i = daypmon[month] * 60 * 60 * 24;
+		if (t >= i) {
+			t -= i;
+			month++;
+			continue;
+		}
+		i = 60 * 60 * 24;
+		if (t >= i) {
+			t -= i;
+			day++;
+			continue;
+		}
+		i = 60 * 60;
+		if (t >= i) {
+			t -= i;
+			hour++;
+			continue;
+		}
+		i = 60;
+		if (t >= i) {
+			t -= i;
+			minute++;
+			continue;
+		}
+		seconds = t;
+		t = 0;
+	}
 
-  snprintf(s, sizeof(s), "%s %ld, %ld   %ld:%ld:%ld",
-      monstr[month], day, year, hour, minute, seconds);
+	snprintf(s, sizeof(s), "%s %ld, %ld   %ld:%ld:%ld",
+	    monstr[month], day, year, hour, minute, seconds);
 
-  return s;
+	return s;
 }
 #endif
 
 unsigned long
 pram_readtime(void)
 {
-   unsigned long	timedata;
+	unsigned long	timedata;
 
 #ifdef MRG_ADB
-   if (0 == jClkNoMem)
-	timedata = 0;	/* cause comparision of MacOS boottime */
-			/* and PRAM time to fail */
-   else
+	if (0 == jClkNoMem)
+		timedata = 0;	/* cause comparision of MacOS boottime */
+				/* and PRAM time to fail */
+	else
 #endif
 	timedata = getPramTime();
 #if DEBUG
-   printf("time read from PRAM: 0x%lx\n", timedata);
-   printf("Date and time: %s\n",convtime(timedata));
+	printf("time read from PRAM: 0x%lx\n", timedata);
+	printf("Date and time: %s\n",convtime(timedata));
 #endif
 
-   return(timedata);
+	return timedata;
 }
 
 void
 pram_settime(unsigned long curtime)
 {
+
 #ifdef MRG_ADB
-   if (0 == jClkNoMem)
-	return;
-   else
+	if (0 == jClkNoMem)
+		return;
+	else
 #endif
 	return setPramTime(curtime);
 }
@@ -211,6 +206,7 @@ getPramTime(void)
 void
 setPramTime(unsigned long curtime)
 {
+
 	switch (adbHardware) {
 	case ADB_HW_IOP:
 	case ADB_HW_II:		/* access PRAM via ADB interface */
