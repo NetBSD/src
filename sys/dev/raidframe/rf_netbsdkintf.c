@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.383 2020/06/16 14:45:08 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.384 2020/06/19 19:29:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.383 2020/06/16 14:45:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.384 2020/06/19 19:29:39 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -175,13 +175,15 @@ static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 						 * installation process */
 #endif
 
+const int rf_b_pass = (B_PHYS|B_RAW|B_MEDIA_FLAGS);
+
 MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 
 /* prototypes */
 static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
     dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
-    void *, int, struct proc *);
+    void *, int);
 static void raidinit(struct raid_softc *);
 static int raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp);
 static int rf_get_component_caches(RF_Raid_t *raidPtr, int *);
@@ -2004,7 +2006,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		    op, queue->rf_cinfo->ci_dev,
 		    req->sectorOffset, req->numSector,
 		    req->buf, KernelWakeupFunc, (void *) req,
-		    queue->raidPtr->logBytesPerSector, req->b_proc);
+		    queue->raidPtr->logBytesPerSector);
 
 		if (rf_debugKernelAccess) {
 			db1_printf(("dispatch: bp->b_blkno = %ld\n",
@@ -2120,11 +2122,9 @@ KernelWakeupFunc(struct buf *bp)
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
        RF_SectorNum_t startSect, RF_SectorCount_t numSect, void *bf,
-       void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
-       struct proc *b_proc)
+       void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector)
 {
-	/* bp->b_flags       = B_PHYS | rw_flag; */
-	bp->b_flags = rw_flag;	/* XXX need B_PHYS here too??? */
+	bp->b_flags = rw_flag | (bp->b_flags & rf_b_pass);
 	bp->b_oflags = 0;
 	bp->b_cflags = 0;
 	bp->b_bcount = numSect << logBytesPerSector;
@@ -2137,7 +2137,6 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!");
 	}
-	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
 	bp->b_private = cbArg;
 }
