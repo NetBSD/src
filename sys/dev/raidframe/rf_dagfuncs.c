@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.31 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.32 2020/06/19 19:29:39 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.31 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.32 2020/06/19 19:29:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -272,10 +272,6 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_READ : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
-	void   *b_proc = NULL;
-
-	if (node->dagHdr->bp)
-		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    bf, parityStripeID, which_ru, node->wakeFunc, node,
@@ -284,7 +280,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 #else
              NULL,
 #endif
-	    (void *) (node->dagHdr->raidPtr), 0, b_proc, PR_NOWAIT);
+	    (void *) (node->dagHdr->raidPtr), 0, node->dagHdr->bp, PR_NOWAIT);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
@@ -308,10 +304,6 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_WRITE : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
-	void   *b_proc = NULL;
-
-	if (node->dagHdr->bp)
-		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	/* normal processing (rollaway or forward recovery) begins here */
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
@@ -322,7 +314,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    0, b_proc, PR_NOWAIT);
+	    0, node->dagHdr->bp, PR_NOWAIT);
 
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);

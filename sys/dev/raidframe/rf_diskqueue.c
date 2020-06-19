@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.56 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.57 2020/06/19 19:29:39 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.56 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.57 2020/06/19 19:29:39 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -362,7 +362,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       RF_ReconUnitNum_t which_ru,
 		       void (*wakeF) (void *, int), void *arg,
 		       RF_AccTraceEntry_t *tracerec, RF_Raid_t *raidPtr,
-		       RF_DiskQueueDataFlags_t flags, void *kb_proc,
+		       RF_DiskQueueDataFlags_t flags, const struct buf *mbp,
 		       int waitflag)
 {
 	RF_DiskQueueData_t *p;
@@ -381,6 +381,10 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		return (NULL);
 	}
 	SET(p->bp->b_cflags, BC_BUSY);	/* mark buffer busy */
+	if (mbp) {
+		SET(p->bp->b_flags, mbp->b_flags & rf_b_pass);
+		p->bp->b_proc = mbp->b_proc;
+	}
 
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
@@ -395,7 +399,6 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	p->priority = RF_IO_NORMAL_PRIORITY;
 	p->raidPtr = raidPtr;
 	p->flags = flags;
-	p->b_proc = kb_proc;
 	return (p);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.20 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.21 2020/06/19 19:29:39 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -178,7 +178,7 @@ struct RF_DagHeader_s {
 	RF_Raid_t *raidPtr;	/* the descriptor for the RAID device this DAG
 				 * is for */
 	RF_RaidAccessDesc_t *desc;	/* ptr to descriptor for this access */
-	void   *bp;		/* the bp for this I/O passed down from the
+	const struct buf *bp;	/* the bp for this I/O passed down from the
 				 * file system. ignored outside kernel */
 };
 
