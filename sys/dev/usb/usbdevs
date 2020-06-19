@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.782 2020/04/29 08:05:10 nia Exp $
+$NetBSD: usbdevs,v 1.783 2020/06/19 11:52:42 flxd Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -803,6 +803,7 @@ product ALCATELT ST121G		0x0121	SpeedTouch 121g
 /* Alcor Micro, Inc. products */
 product ALCOR2 KBD_HUB		0x2802	Kbd Hub
 
+product ALCOR AU6366		0x6366	AU6366 USB2.0 Single LUN Multiple Flash Card Reader Controller
 product ALCOR MA_KBD_HUB	0x9213	MacAlly Kbd Hub
 product ALCOR AU9814		0x9215	AU9814 Hub
 product ALCOR SM_KBD		0x9410	MicroConnectors/StrongMan Keyboard
