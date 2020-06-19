@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.104 2020/01/29 05:59:50 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.105 2020/06/19 10:30:27 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.104 2020/01/29 05:59:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.105 2020/06/19 10:30:27 jdc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.104 2020/01/29 05:59:50 thorpej Exp $");
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/mutex.h>
+#include <sys/pcq.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_ctron_ether.h>
@@ -142,7 +144,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.104 2020/01/29 05:59:50 thorpej Exp $");
 #define SE_POLL0 10		/* default in milliseconds */
 int se_poll = 0;		/* Delay in ticks set at attach time */
 int se_poll0 = 0;
+#ifdef SE_DEBUG
 int se_max_received = 0;	/* Instrumentation */
+#endif
 
 #define	PROTOCMD(p, d) \
 	((d) = (p))
@@ -175,6 +179,8 @@ struct se_softc {
 
 	struct callout sc_ifstart_ch;
 	struct callout sc_recv_ch;
+	struct kmutex sc_iflock;
+	struct if_percpuq *sc_ipq;
 
 	char *sc_tbuf;
 	char *sc_rbuf;
@@ -186,7 +192,6 @@ struct se_softc {
 #define PROTO_AARP	0x10
 	int sc_debug;
 	int sc_flags;
-#define SE_NEED_RECV 0x1
 	int sc_last_timeout;
 	int sc_enabled;
 };
@@ -250,7 +255,7 @@ const struct cdevsw se_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 const struct scsipi_periphsw se_switch = {
@@ -319,8 +324,9 @@ seattach(device_t parent, device_t self, void *aux)
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
 
-	callout_init(&sc->sc_ifstart_ch, 0);
-	callout_init(&sc->sc_recv_ch, 0);
+	callout_init(&sc->sc_ifstart_ch, CALLOUT_MPSAFE);
+	callout_init(&sc->sc_recv_ch, CALLOUT_MPSAFE);
+	mutex_init(&sc->sc_iflock, MUTEX_DEFAULT, IPL_SOFTNET);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -360,13 +366,17 @@ seattach(device_t parent, device_t self, void *aux)
 		free(sc->sc_tbuf, M_DEVBUF);
 		callout_destroy(&sc->sc_ifstart_ch);
 		callout_destroy(&sc->sc_recv_ch);
+		mutex_destroy(&sc->sc_iflock);
 		return; /* Error */
 	}
+	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
 	ether_ifattach(ifp, myaddr);
 	if_register(ifp);
 }
 
-
+/*
+ * Send a command to the device
+ */
 static inline int
 se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
@@ -374,21 +384,24 @@ se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
 {
 	int error;
 
+	KASSERT(!mutex_owned(chan_mtx(periph->periph_channel)));
+
 	error = scsipi_command(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
 	return (error);
 }
 
-/* Start routine for calling from scsi sub system */
+/*
+ * Start routine for calling from scsi sub system
+ * Called with the channel lock held
+ */
 static void
 sestart(struct scsipi_periph *periph)
 {
 	struct se_softc *sc = device_private(periph->periph_dev);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s = splnet();
 
 	se_ifstart(ifp);
-	(void) splx(s);
 }
 
 static void
@@ -396,19 +409,18 @@ se_delayed_ifstart(void *v)
 {
 	struct ifnet *ifp = v;
 	struct se_softc *sc = ifp->if_softc;
-	int s;
 
-	s = splnet();
+	mutex_enter(chan_mtx(sc->sc_periph->periph_channel));
 	if (sc->sc_enabled) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		se_ifstart(ifp);
 	}
-	splx(s);
+	mutex_exit(chan_mtx(sc->sc_periph->periph_channel));
 }
 
 /*
  * Start transmission on the interface.
- * Always called at splnet().
+ * Must be called with the scsipi channel lock held
  */
 static void
 se_ifstart(struct ifnet *ifp)
@@ -426,6 +438,9 @@ se_ifstart(struct ifnet *ifp)
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
+
+	KASSERT(mutex_owned(chan_mtx(sc->sc_periph->periph_channel)));
+
 	/* If BPF is listening on this interface, let it see the
 	 * packet before we commit it to the wire.
 	 */
@@ -464,17 +479,13 @@ se_ifstart(struct ifnet *ifp)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&send_cmd, sizeof(send_cmd),
 	    sc->sc_tbuf, len, SERETRIES,
-	    SETIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_OUT);
+	    SETIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_DATA_OUT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "not queued, error %d\n", error);
 		if_statinc(ifp, if_oerrors);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	} else
 		if_statinc(ifp, if_opackets);
-	if (sc->sc_flags & SE_NEED_RECV) {
-		sc->sc_flags &= ~SE_NEED_RECV;
-		se_recv((void *) sc);
-	}
 }
 
 
@@ -487,9 +498,7 @@ sedone(struct scsipi_xfer *xs, int error)
 	struct se_softc *sc = device_private(xs->xs_periph->periph_dev);
 	struct scsipi_generic *cmd = xs->cmd;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
 
-	s = splnet();
 	if (IS_SEND(cmd)) {
 		if (xs->error == XS_BUSY) {
 			printf("se: busy, retry txmit\n");
@@ -512,8 +521,10 @@ sedone(struct scsipi_xfer *xs, int error)
 		} else {
 			int n, ntimeo;
 			n = se_read(sc, xs->data, xs->datalen - xs->resid);
+#ifdef SE_DEBUG
 			if (n > se_max_received)
 				se_max_received = n;
+#endif
 			if (n == 0)
 				ntimeo = se_poll;
 			else if (n >= RDATA_MAX)
@@ -527,18 +538,10 @@ sedone(struct scsipi_xfer *xs, int error)
 					  se_poll: ntimeo);
 			}
 			sc->sc_last_timeout = ntimeo;
-			if (ntimeo == se_poll0	&&
-			    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				/* Output is pending. Do next recv
-				 * after the next send. */
-				sc->sc_flags |= SE_NEED_RECV;
-			else {
-				callout_reset(&sc->sc_recv_ch, ntimeo,
-				    se_recv, (void *)sc);
-			}
+			callout_reset(&sc->sc_recv_ch, ntimeo,
+			    se_recv, (void *)sc);
 		}
 	}
-	splx(s);
 }
 
 static void
@@ -557,7 +560,7 @@ se_recv(void *v)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&recv_cmd, sizeof(recv_cmd),
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
-	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
+	    XS_CTL_NOSLEEP | XS_CTL_DATA_IN);
 	if (error)
 		callout_reset(&sc->sc_recv_ch, se_poll, se_recv, (void *)sc);
 }
@@ -667,7 +670,7 @@ se_read(struct se_softc *sc, char *data, int datalen)
 		}
 
 		/* Pass the packet up. */
-		if_input(ifp, m);
+		if_percpuq_enqueue(sc->sc_ipq, m);
 
 	next_packet:
 		data += len;
@@ -693,7 +696,7 @@ static int
 se_reset(struct se_softc *sc)
 {
 	int error;
-	int s = splnet();
+
 #if 0
 	/* Maybe we don't *really* want to reset the entire bus
 	 * because the ctron isn't working. We would like to send a
@@ -704,7 +707,6 @@ se_reset(struct se_softc *sc)
 	    XS_CTL_RESET);
 #endif
 	error = se_init(sc);
-	splx(s);
 	return (error);
 }
 
@@ -826,7 +828,9 @@ se_init(struct se_softc *sc)
 		ifp->if_flags |= IFF_RUNNING;
 		se_recv(sc);
 		ifp->if_flags &= ~IFF_OACTIVE;
+		mutex_enter(chan_mtx(sc->sc_periph->periph_channel));
 		se_ifstart(ifp);
+		mutex_exit(chan_mtx(sc->sc_periph->periph_channel));
 	}
 	return (error);
 }
@@ -924,7 +928,10 @@ se_stop(struct se_softc *sc)
 	/* Don't schedule any reads */
 	callout_stop(&sc->sc_recv_ch);
 
-	/* How can we abort any scsi cmds in progress? */
+	/* Abort any scsi cmds in progress */
+	mutex_enter(chan_mtx(sc->sc_periph->periph_channel));
+	scsipi_kill_pending(sc->sc_periph);
+	mutex_exit(chan_mtx(sc->sc_periph->periph_channel));
 }
 
 
@@ -938,16 +945,17 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct sockaddr *sa;
-	int s, error = 0;
+	int error = 0;
 
-	s = splnet();
 
 	switch (cmd) {
 
 	case SIOCINITIFADDR:
+		mutex_enter(&sc->sc_iflock);
 		if ((error = se_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
+		mutex_exit(&sc->sc_iflock);
 
 		if ((error = se_set_media(sc, CMEDIA_AUTOSENSE)) != 0)
 			break;
@@ -986,15 +994,20 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * stop it.
 			 */
 			se_stop(sc);
+			mutex_enter(&sc->sc_iflock);
 			ifp->if_flags &= ~IFF_RUNNING;
 			se_disable(sc);
+			mutex_exit(&sc->sc_iflock);
 			break;
 		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			if ((error = se_enable(sc)) != 0)
+			mutex_enter(&sc->sc_iflock);
+			error = se_enable(sc);
+			mutex_exit(&sc->sc_iflock);
+			if (error)
 				break;
 			error = se_init(sc);
 			break;
@@ -1017,7 +1030,9 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		mutex_enter(&sc->sc_iflock);
 		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_WAITOK);
+		mutex_exit(&sc->sc_iflock);
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				error = (cmd == SIOCADDMULTI) ?
@@ -1026,7 +1041,9 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			} else
 				error = 0;
 		}
+		mutex_enter(&sc->sc_iflock);
 		sockaddr_free(sa);
+		mutex_exit(&sc->sc_iflock);
 		break;
 
 	default:
@@ -1035,7 +1052,6 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	splx(s);
 	return (error);
 }
 
@@ -1049,12 +1065,12 @@ se_enable(struct se_softc *sc)
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int error = 0;
 
-	if (sc->sc_enabled == 0 &&
-	    (error = scsipi_adapter_addref(adapt)) == 0)
-		sc->sc_enabled = 1;
-	else
-		aprint_error_dev(sc->sc_dev, "device enable failed\n");
-
+	if (sc->sc_enabled == 0) {
+		if ((error = scsipi_adapter_addref(adapt)) == 0)
+			sc->sc_enabled = 1;
+		else
+			aprint_error_dev(sc->sc_dev, "device enable failed\n");
+	}
 	return (error);
 }
 
