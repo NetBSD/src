@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2020/06/19 07:24:41 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 2020/06/19 07:31:59 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2020/06/19 07:24:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2020/06/19 07:31:59 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -438,21 +438,21 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   mfmsr %[msr];"		/* Save MSR */
 		"   li %[pid],0x20;"
 		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   isync;"
 		"   mfpid %[pid];"		/* Save old PID */
-		"   sync; isync;"
 
 		"   srwi. %[count],%[len],0x2;"	/* How many words? */
 		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
-		"1: mtpid %[ctx]; sync;"
+		"1: mtpid %[ctx]; isync;"
 #ifdef PPC_IBM403
 		"   lswi %[tmp],%[udaddr],4;"	/* Load user word */
 #else
 		"   lwz %[tmp],0(%[udaddr]);"
 #endif
 		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
-		"   sync; isync;"
-		"   mtpid %[pid]; sync;"
+		"   sync;"
+		"   mtpid %[pid]; isync;"
 #ifdef PPC_IBM403
 		"   stswi %[tmp],%[kaddr],4;"	/* Store kernel word */
 #else
@@ -460,24 +460,24 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 #endif
 		"   dcbst 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x4;" /* next udaddr word */
-		"   sync; isync;"
+		"   sync;"
 		"   bdnz 1b;"			/* repeat */
 
 		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
 		"   addi %[count],%[count],0x1;"
 		"   mtctr %[count];"
 		"3: bdz 10f;"			/* while count */
-		"   mtpid %[ctx]; sync;"
+		"   mtpid %[ctx]; isync;"
 		"   lbz %[tmp],0(%[udaddr]);"	/* Load user byte */
 		"   addi %[udaddr],%[udaddr],0x1;" /* next udaddr byte */
-		"   sync; isync;"
-		"   mtpid %[pid]; sync;"
+		"   sync;"
+		"   mtpid %[pid]; isync;"
 		"   stb %[tmp],0(%[kaddr]);"	/* Store kernel byte */
 		"   dcbst 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
-		"   sync; isync;"
+		"   sync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+		"10:mtpid %[pid]; mtmsr %[msr]; isync;"
 						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
@@ -545,21 +545,21 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   mfmsr %[msr];"		/* Save MSR */
 		"   li %[pid],0x20;"
 		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   isync;"
 		"   mfpid %[pid];"		/* Save old PID */
-		"   sync; isync;"
 
 		"   srwi. %[count],%[len],0x2;"	/* How many words? */
 		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
-		"1: mtpid %[pid]; sync;"
+		"1: mtpid %[pid]; isync;"
 #ifdef PPC_IBM403
 		"   lswi %[tmp],%[kaddr],4;"	/* Load kernel word */
 #else
 		"   lwz %[tmp],0(%[kaddr]);"
 #endif
 		"   addi %[kaddr],%[kaddr],0x4;" /* next kaddr word */
-		"   sync; isync;"
-		"   mtpid %[ctx]; sync;"
+		"   sync;"
+		"   mtpid %[ctx]; isync;"
 #ifdef PPC_IBM403
 		"   stswi %[tmp],%[udaddr],4;"	/* Store user word */
 #else
@@ -567,24 +567,24 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 #endif
 		"   dcbst 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
-		"   sync; isync;"
+		"   sync;"
 		"   bdnz 1b;"			/* repeat */
 
 		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
 		"   addi %[count],%[count],0x1;"
 		"   mtctr %[count];"
 		"3: bdz  10f;"			/* while count */
-		"   mtpid %[pid]; sync;"
+		"   mtpid %[pid]; isync;"
 		"   lbz %[tmp],0(%[kaddr]);"	/* Load kernel byte */
 		"   addi %[kaddr],%[kaddr],0x1;" /* next kaddr byte */
-		"   sync; isync;"
-		"   mtpid %[ctx]; sync;"
+		"   sync;"
+		"   mtpid %[ctx]; isync;"
 		"   stb %[tmp],0(%[udaddr]);"	/* Store user byte */
 		"   dcbst 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x1;"
-		"   sync; isync;"
+		"   sync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+		"10:mtpid %[pid]; mtmsr %[msr]; isync;"
 						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
