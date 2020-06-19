@@ -46,7 +46,7 @@
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, zio, CTLFLAG_RW, 0, "ZFS ZIO");
 #ifdef __NetBSD__
-const int zio_use_uma = 0;
+const int zio_use_uma = 1;
 #else
 #if defined(__amd64__)
 static int zio_use_uma = 1;
@@ -156,7 +156,6 @@ zio_init(void)
 	zio_link_cache = kmem_cache_create("zio_link_cache",
 	    sizeof (zio_link_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
 
-#ifndef __NetBSD__
 	if (!zio_use_uma)
 		goto out;
 
@@ -220,7 +219,6 @@ zio_init(void)
 			zio_data_buf_cache[c - 1] = zio_data_buf_cache[c];
 	}
 out:
-#endif /* __NetBSD__ */
 
 	zio_inject_init();
 
@@ -242,7 +240,6 @@ zio_fini(void)
 	kmem_cache_t *last_cache = NULL;
 	kmem_cache_t *last_data_cache = NULL;
 
-#ifndef __NetBSD__	
 	for (c = 0; c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT; c++) {
 		if (zio_buf_cache[c] != last_cache) {
 			last_cache = zio_buf_cache[c];
@@ -256,7 +253,6 @@ zio_fini(void)
 		}
 		zio_data_buf_cache[c] = NULL;
 	}
-#endif /* __NetBSD__ */
 
 	kmem_cache_destroy(zio_link_cache);
 	kmem_cache_destroy(zio_cache);
