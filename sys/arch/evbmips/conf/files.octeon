@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.6 2016/12/28 03:27:08 mrg Exp $
+#	$NetBSD: files.octeon,v 1.7 2020/06/19 12:24:39 simonb Exp $
 
 file	arch/evbmips/cavium/autoconf.c
 file	arch/evbmips/cavium/machdep.c
@@ -18,6 +18,3 @@ include	"external/bsd/sljit/conf/files.sljit"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-
-# workaround Cavium 50x0 problem vs uvm freelists
-defparam opt_cavium.h		OCTEON_MEMSIZE
