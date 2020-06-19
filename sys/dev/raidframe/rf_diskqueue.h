@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.25 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.26 2020/06/19 19:29:39 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,8 +74,6 @@ struct RF_DiskQueueData_s {
 				 * targeted */
 	RF_DiskQueueDataFlags_t flags;	/* flags controlling operation */
 
-	struct proc *b_proc;	/* the b_proc from the original bp passed into
-				 * the driver for this I/O */
 	struct buf *bp;		/* a bp to use to get this I/O done */
 	/* TAILQ bits for a queue for completed I/O requests */
 	TAILQ_ENTRY(RF_DiskQueueData_s) iodone_entries;
@@ -145,7 +143,7 @@ RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
 					   void *,
 					   RF_AccTraceEntry_t *, RF_Raid_t *,
 					   RF_DiskQueueDataFlags_t,
-					   void *, int);
+					   const struct buf *, int);
 void rf_FreeDiskQueueData(RF_DiskQueueData_t *);
 int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 			  RF_RowCol_t, const RF_DiskQueueSW_t *,
