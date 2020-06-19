@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.157 2019/03/19 20:30:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.158 2020/06/19 07:43:37 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -983,7 +983,7 @@ LMMUenable_end:
 
 /* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea 
-	lea	%a1@(USPACE),%sp	| set kernel stack to end of area
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a2,%a1@(PCB_USP)	| and save it
