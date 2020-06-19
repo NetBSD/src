@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.55 2019/02/07 04:33:58 mrg Exp $
+#	$NetBSD: RAMDISK,v 1.56 2020/06/19 10:35:11 tsutsui Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -10,7 +10,7 @@ include "arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
+makeoptions	COPTS="-Os -fno-unwind-tables"	# bootloader has size limit (~2MB)
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE		# No FP code here!
