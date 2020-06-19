@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pow.c,v 1.7 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_pow.c,v 1.8 2020/06/19 02:23:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.7 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.8 2020/06/19 02:23:43 simonb Exp $");
 
 #include "opt_octeon.h"	/* CNMAC_DEBUG */
 
@@ -313,7 +313,7 @@ octpow_intr_establish(int group, int level, void (*cb)(void *, uint64_t *),
 
 	pow_ih = malloc(sizeof(*pow_ih), M_DEVBUF, M_WAITOK);
 	pow_ih->pi_ih = octeon_intr_establish(
-	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
+	    CIU_INT_WORKQ_0 + group,
 	    level,
 	    octpow_intr, pow_ih);
 	KASSERT(pow_ih->pi_ih != NULL);

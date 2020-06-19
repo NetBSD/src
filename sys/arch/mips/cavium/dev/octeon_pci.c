@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pci.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_pci.c,v 1.4 2020/06/19 02:23:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.4 2020/06/19 02:23:43 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -65,8 +65,8 @@ static void
 octpci_init(void)
 {
 #ifdef CNMAC_DEBUG
-	octpci_intr_rml_ih = octeon_intr_establish(
-	    ffs64(CIU_INTX_SUM0_RML) - 1, IPL_NET, octpci_intr_rml, NULL);
+	octpci_intr_rml_ih = octeon_intr_establish( CIU_INT_RML, IPL_NET,
+	    octpci_intr_rml, NULL);
 #endif
 }
 
