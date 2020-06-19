@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipd.c,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_ipd.c,v 1.5 2020/06/19 02:23:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.4 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.5 2020/06/19 02:23:43 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -96,9 +96,8 @@ octipd_init(struct octipd_attach_args *aa, struct octipd_softc **rsc)
 	octipd_int_enable(sc, 1);
 	octipd_intr_evcnt_attach(sc);
 	if (octipd_intr_drop_ih == NULL)
-		octipd_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, IPL_NET,
-		   octipd_intr_drop, NULL);
+		octipd_intr_drop_ih = octeon_intr_establish(CIU_INT_IPD_DRP,
+		    IPL_NET, octipd_intr_drop, NULL);
 	__octipd_softc[sc->sc_port] = sc;
 #endif /* CNMAC_DEBUG */
 }
