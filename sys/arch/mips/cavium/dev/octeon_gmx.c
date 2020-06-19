@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.12 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.13 2020/06/19 02:23:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.12 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.13 2020/06/19 02:23:43 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -239,9 +239,8 @@ octgmx_attach(device_t parent, device_t self, void *aux)
 #ifdef CNMAC_DEBUG
 	octgmx_intr_evcnt_attach(sc);
 	if (octgmx_intr_drop_ih == NULL)
-		octgmx_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, IPL_NET,
-		   octgmx_intr_drop, NULL);
+		octgmx_intr_drop_ih = octeon_intr_establish(CIU_INT_GMX_DRP,
+		    IPL_NET, octgmx_intr_drop, NULL);
 #endif
 }
 
