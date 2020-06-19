@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.7 2019/07/24 11:58:00 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.8 2020/06/19 16:11:14 skrll Exp $	*/
 /*
  * Copyright (c) 2012,2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -326,7 +326,7 @@ enum imx6_clk_reg {
 };
 
 enum imx6_clk_pll_type {
-	IMX6_CLK_PLL_GENNERIC,
+	IMX6_CLK_PLL_GENERIC,
 	IMX6_CLK_PLL_SYS,
 	IMX6_CLK_PLL_USB,
 	IMX6_CLK_PLL_AUDIO_VIDEO,
