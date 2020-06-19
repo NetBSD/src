@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.125 2020/05/02 16:44:35 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.126 2020/06/19 16:20:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -564,12 +564,6 @@ void	cpu_probe_features(struct cpu_info *);
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
 paddr_t	kvtop(void *);
-
-#ifdef USER_LDT
-/* sys_machdep.h */
-int	x86_get_ldt(struct lwp *, void *, register_t *);
-int	x86_set_ldt(struct lwp *, void *, register_t *);
-#endif
 
 /* isa_machdep.c */
 void	isa_defaultirq(void);

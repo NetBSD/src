@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.55 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56 2020/06/19 16:20:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.55 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56 2020/06/19 16:20:22 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -75,16 +75,15 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.55 2020/04/25 15:26:18 bouyer Exp 
 
 extern struct vm_map *kernel_map;
 
-int x86_get_ioperm(struct lwp *, void *, register_t *);
-int x86_set_ioperm(struct lwp *, void *, register_t *);
-int x86_get_mtrr(struct lwp *, void *, register_t *);
-int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_set_sdbase32(void *, char, lwp_t *, bool);
+static int x86_get_ioperm(struct lwp *, void *, register_t *);
+static int x86_set_ioperm(struct lwp *, void *, register_t *);
+static int x86_set_sdbase32(void *, char, lwp_t *, bool);
 int x86_set_sdbase(void *, char, lwp_t *, bool);
-int x86_get_sdbase32(void *, char);
+static int x86_get_sdbase32(void *, char);
 int x86_get_sdbase(void *, char);
 
-int
+#ifdef i386
+static int
 x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
 #ifndef USER_LDT
@@ -113,6 +112,7 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	return error;
 #endif
 }
+#endif
 
 int
 x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
@@ -175,7 +175,8 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 #endif
 }
 
-int
+#ifdef i386
+static int
 x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 {
 #ifndef USER_LDT
@@ -201,6 +202,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	return error;
 #endif
 }
+#endif
 
 int
 x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
@@ -388,7 +390,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	return 0;
 }
 
-int
+static int
 x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef IOPERM
@@ -421,7 +423,7 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 #endif
 }
 
-int
+static int
 x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef IOPERM
@@ -467,7 +469,7 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 #endif
 }
 
-int
+static int
 x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef MTRR
@@ -502,7 +504,7 @@ x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 #endif
 }
 
-int
+static int
 x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef MTRR
@@ -545,7 +547,7 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 #define segment_descriptor mem_segment_descriptor
 #endif
 
-int
+static int
 x86_set_sdbase32(void *arg, char which, lwp_t *l, bool direct)
 {
 	struct trapframe *tf = l->l_md.md_regs;
@@ -644,7 +646,7 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 #endif
 }
 
-int
+static int
 x86_get_sdbase32(void *arg, char which)
 {
 	struct segment_descriptor *sd;
