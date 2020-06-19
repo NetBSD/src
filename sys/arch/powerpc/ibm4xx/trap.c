@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2020/02/21 15:15:48 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2020/06/19 07:19:19 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2020/02/21 15:15:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2020/06/19 07:19:19 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -221,7 +221,7 @@ out:
 				tf->tf_cr = fb->fb_cr;
 				tf->tf_fixreg[1] = fb->fb_sp;
 				tf->tf_fixreg[2] = fb->fb_r2;
-				tf->tf_fixreg[3] = 1; /* Return TRUE */
+				tf->tf_fixreg[3] = rv;
 				memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
 				    sizeof(fb->fb_fixreg));
 				return;
