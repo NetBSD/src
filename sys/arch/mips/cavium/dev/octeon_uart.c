@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.7 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.8 2020/06/19 02:23:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.7 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.8 2020/06/19 02:23:43 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -145,8 +145,7 @@ octuart_iobus_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc_com);
 
-	/* XXX pass intr mask via _attach_args -- uebayasi */
-	sc->sc_ih = octeon_intr_establish(ffs64(CIU_INTX_SUM0_UART_0) - 1/* XXX */ + device_unit(self),
+	sc->sc_ih = octeon_intr_establish(CIU_INT_UART_0 + device_unit(self),
 	    IPL_SERIAL, comintr, sc_com);
 	if (sc->sc_ih == NULL)
 		panic("%s: can't establish interrupt\n",
