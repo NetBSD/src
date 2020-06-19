@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2020/06/19 07:19:19 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 2020/06/19 07:24:41 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2020/06/19 07:19:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2020/06/19 07:24:41 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -247,16 +247,28 @@ out:
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)tf->tf_dear;
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
-			    "out of swap\n",
-			    p->p_pid, p->p_comm, l->l_lid,
-			    l->l_cred ?
-			    kauth_cred_geteuid(l->l_cred) : -1);
+vm_signal:
+		switch (rv) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			break;
+		case ENOMEM:
 			ksi.ksi_signo = SIGKILL;
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			       "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			       l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		trapsignal(l, &ksi);
 		break;
@@ -274,11 +286,9 @@ out:
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)tf->tf_srr0;
-		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
-		trapsignal(l, &ksi);
+		goto vm_signal;
 		break;
 
 	case EXC_AST|EXC_USER:
