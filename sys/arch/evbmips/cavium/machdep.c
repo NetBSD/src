@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2020/06/15 07:48:12 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2020/06/19 12:38:53 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,10 +112,9 @@
  */
 
 #include "opt_multiprocessor.h"
-#include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2020/06/15 07:48:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2020/06/19 12:38:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
