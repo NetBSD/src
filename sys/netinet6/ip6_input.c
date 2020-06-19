@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.216 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.217 2020/06/19 16:08:06 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.216 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.217 2020/06/19 16:08:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -135,8 +135,13 @@ percpu_t *ip6stat_percpu;
 percpu_t *ip6_forward_rt_percpu __cacheline_aligned;
 
 static void ip6intr(void *);
+static void ip6_input(struct mbuf *, struct ifnet *);
 static bool ip6_badaddr(struct ip6_hdr *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
+
+static struct m_tag *ip6_addaux(struct mbuf *);
+static struct m_tag *ip6_findaux(struct mbuf *);
+static void ip6_delaux(struct mbuf *);
 
 static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
     u_int32_t *);
@@ -225,7 +230,7 @@ ip6intr(void *arg __unused)
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
-void
+static void
 ip6_input(struct mbuf *m, struct ifnet *rcvif)
 {
 	struct ip6_hdr *ip6;
@@ -1479,7 +1484,7 @@ ip6_lasthdr(struct mbuf *m, int off, int proto, int *nxtp)
 	}
 }
 
-struct m_tag *
+static struct m_tag *
 ip6_addaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
@@ -1496,7 +1501,7 @@ ip6_addaux(struct mbuf *m)
 	return mtag;
 }
 
-struct m_tag *
+static struct m_tag *
 ip6_findaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
@@ -1505,7 +1510,7 @@ ip6_findaux(struct mbuf *m)
 	return mtag;
 }
 
-void
+static void
 ip6_delaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
