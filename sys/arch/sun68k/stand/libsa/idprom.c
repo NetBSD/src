@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.7 2020/06/18 17:59:05 tsutsui Exp $	*/
+/*	$NetBSD: idprom.c,v 1.8 2020/06/20 18:44:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ idprom_etheraddr(u_char *eaddrp)
 }
 
 /* Fetch a copy of the idprom. */
-void 
+void
 idprom_init(void)
 {
 
@@ -100,7 +100,7 @@ idprom_init(void)
  * Sun2 version:
  * Just copy it from control space.
  */
-static void 
+static void
 idprom_init2(void)
 {
 
@@ -114,7 +114,7 @@ idprom_init2(void)
  * Sun3 version:
  * Just copy it from control space.
  */
-static void 
+static void
 idprom_init3(void)
 {
 
@@ -135,7 +135,7 @@ idprom_init3(void)
  * to search was determined from some "insider" info. about
  * the layout of the PROM data area.
  */
-static void 
+static void
 idprom_init3x(void)
 {
 	u_char *p;
