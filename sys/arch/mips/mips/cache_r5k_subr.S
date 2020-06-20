@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k_subr.S,v 1.3 2011/02/20 07:45:47 matt Exp $ 	*/
+/*	$NetBSD: cache_r5k_subr.S,v 1.3.60.1 2020/06/20 16:38:42 martin Exp $ 	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,8 @@ LEAF_NOPROFILE(r5k_enable_sdcache)
 	nop
 
 2:
-	cache	0x17, 0(t1)		# 0x17 == Page_Invalidate_SD
-	PTR_ADDU t1, t1, 4096
+	cache	CACHEOP_R5K_Page_Invalidate_S, 0(t1)
+	PTR_ADDU t1, t1, R5K_SC_PAGESIZE
 
 	sltu	v0, t1, t2
 	bne	v0, zero, 2b
