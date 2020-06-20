@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.25 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.26 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.26 2020/06/20 15:45:22 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -71,13 +71,13 @@ arm32_sync_icache(struct lwp *l, const void *args, register_t *retval)
 	int error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
+		return error;
 
 	pmap_icache_sync_range(vm_map_pmap(&l->l_proc->p_vmspace->vm_map),
 	    ua.addr, ua.addr + ua.len);
 
 	*retval = 0;
-	return(0);
+	return 0;
 }
 
 static int
@@ -88,7 +88,7 @@ arm32_drain_writebuf(struct lwp *l, const void *args, register_t *retval)
 	cpu_drain_writebuf();
 
 	*retval = 0;
-	return(0);
+	return 0;
 }
 
 static int
@@ -110,7 +110,7 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 		struct arm_vfp_fpscr_args ua;
 		int error;
 		if ((error = copyin(uap, &ua, sizeof(ua))) != 0)
-			return (error);
+			return error;
 		if ((ua.fpscr_clear|ua.fpscr_set) & ~vfp_fpscr_changable)
 			return EINVAL;
 		pcb->pcb_vfp.vfp_fpscr &= ~ua.fpscr_clear;
@@ -162,7 +162,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		error = EINVAL;
 		break;
 	}
-	return (error);
+	return error;
 }
 
 int
