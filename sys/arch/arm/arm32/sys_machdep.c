@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24 2020/06/20 07:01:16 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.25 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,17 +41,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.24 2020/06/20 07:01:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25 2020/06/20 07:10:36 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mbuf.h>
-#include <sys/mount.h>
+
 #include <sys/cpu.h>
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
+#include <sys/proc.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/sysarch.h>
 #include <machine/pcb.h>

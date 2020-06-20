@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.12 2020/06/20 07:01:16 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.13 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,14 +122,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.12 2020/06/20 07:01:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.13 2020/06/20 07:10:36 skrll Exp $");
 
 #include <sys/param.h>
+
+#include <dev/cons.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
-
-#include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
