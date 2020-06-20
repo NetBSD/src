@@ -1,4 +1,4 @@
-/* $NetBSD: graph.c,v 1.2 2010/08/10 13:52:13 joerg Exp $ */
+/* $NetBSD: graph.c,v 1.2.24.1 2020/06/20 16:15:45 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -44,13 +44,6 @@
 #include <dev/pci/hdaudio/hdaudioreg.h>
 
 #include "hdaudioctl.h"
-
-static const char *pin_devices[16] = {
-	"Line Out", "Speaker", "HP Out", "CD",
-	"SPDIF Out", "Digital Out", "Modem Line", "Modem Handset",
-	"Line In", "AUX", "Mic In", "Telephony",
-	"SPDIF In", "Digital In", "Reserved", "Other"
-};
 
 int
 hdaudioctl_graph(int fd, int argc, char *argv[])
