@@ -1,4 +1,4 @@
-/*	$NetBSD: arm11_pmc.c,v 1.7 2020/06/20 07:01:16 skrll Exp $	*/
+/*	$NetBSD: arm11_pmc.c,v 1.8 2020/06/20 07:10:36 skrll Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,14 +34,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.7 2020/06/20 07:01:16 skrll Exp $");
-#include <sys/types.h>
+__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.8 2020/06/20 07:10:36 skrll Exp $");
+
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
+
 #include <dev/clock_subr.h>
+
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 

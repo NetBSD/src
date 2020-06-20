@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.24 2012/11/12 18:00:35 skrll Exp $	*/
+/*	$NetBSD: stubs.c,v 1.25 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,24 +41,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.24 2012/11/12 18:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.25 2020/06/20 07:10:36 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
+
 #include <sys/conf.h>
+#include <sys/core.h>
+#include <sys/errno.h>
+#include <sys/kcore.h>
 #include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+
 #include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+
 #include <arm/arm32/machdep.h>
 #include <arm/kcore.h>
-#include <sys/kcore.h>
-#include <sys/core.h>
-#include <sys/exec_aout.h>
 
 extern dev_t dumpdev;
 

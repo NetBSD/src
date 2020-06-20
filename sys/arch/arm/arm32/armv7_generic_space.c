@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.11 2020/02/05 07:37:35 skrll Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.12 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.11 2020/02/05 07:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.12 2020/06/20 07:10:36 skrll Exp $");
 
 #include <sys/param.h>
+
+#include <sys/bus.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/bus.h>
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(armv7_generic);

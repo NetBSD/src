@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.13 2020/06/20 07:01:16 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.14 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,18 +52,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.13 2020/06/20 07:01:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.14 2020/06/20 07:10:36 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kobj.h>
+
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/kmem.h>
-#include <sys/ksyms.h>
+#include <sys/kobj.h>
 #include <sys/kobj_impl.h>
+#include <sys/ksyms.h>
+#include <sys/systm.h>
 
 #include <arm/cpufunc.h>
 #include <arm/locore.h>
