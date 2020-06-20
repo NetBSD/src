@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.13 2020/06/18 17:59:05 tsutsui Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.14 2020/06/20 18:46:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3x_end = MON_DVMA_BASE + MON_DVMA_MAPLEN;
 
-static void 
+static void
 dvma3x_init(void)
 {
 	u_int va, pa;
@@ -274,14 +274,14 @@ sun3x_set_pte(vaddr_t va, paddr_t pa)
 	mmu_atc_flush(va);
 }
 
-static void 
+static void
 mmu_atc_flush(vaddr_t va)
 {
 
 	__asm volatile ("pflush	#0,#0,%0@" : : "a" (va));
 }
 
-static void 
+static void
 set_iommupte(vaddr_t va, paddr_t pa)
 {
 	iommu_pde_t *iommu_va;
@@ -302,7 +302,7 @@ set_iommupte(vaddr_t va, paddr_t pa)
  * Init our function pointers, etc.
  */
 
-void 
+void
 sun3x_init(void)
 {
 
