@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.97 2019/05/07 08:14:59 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.97.2.1 2020/06/20 13:51:46 martin Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -770,8 +770,15 @@ Install the System V Boot File System primary bootstrap on to disk
 with the secondary bootstrap
 .Sq Pa /boot
 already present in the SysVBFS partition on the disk:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
-.
+.Dl Ic installboot /dev/rsd0p /usr/mdec/bootxx_bfs
+.Bd -ragged -offset indent-two -compact
+.Em Note :
+On
+.Nx Ns /ews4800mips
+the p partition is the
+.Dq whole disk
+(i.e., raw) partition.
+.Ed
 .Ss Nx Ns /i386 and Nx Ns /amd64
 Install new boot blocks on an existing
 .Sy FFSv2
