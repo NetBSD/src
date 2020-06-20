@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.111 2020/03/29 09:10:26 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.112 2020/06/20 07:10:36 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,15 +81,16 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.111 2020/03/29 09:10:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.112 2020/06/20 07:10:36 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/kauth.h>
+
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
