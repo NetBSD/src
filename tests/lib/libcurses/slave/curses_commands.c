@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.9 2019/05/26 07:47:37 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.10 2020/06/20 07:50:16 rin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -3061,7 +3061,7 @@ cmd_mvprintw(int nargs, char **args)
 void
 cmd_mvscanw(int nargs, char **args)
 {
-	int y, x;
+	int y, x, val;
 	char string[256];
 
 	if (check_arg_count(nargs, 3) == 1)
@@ -3081,7 +3081,13 @@ cmd_mvscanw(int nargs, char **args)
 
 	/* XXX - call2 */
 	report_count(2);
-	report_return(mvscanw(y, x, args[2], &string));
+	if (strchr(args[2], 's') != NULL)
+		report_return(mvscanw(y, x, args[2], &string));
+	else {
+		/* XXX assume 32bit integer */
+		report_return(mvscanw(y, x, args[2], &val));
+		snprintf(string, sizeof(string), args[2], val);
+	}
 	report_status(string);
 }
 
