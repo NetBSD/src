@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.13 2019/08/13 09:56:08 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.14 2020/06/20 15:48:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.13 2019/08/13 09:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.14 2020/06/20 15:48:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,10 +189,8 @@ meson_platform_device_register(device_t self, void *aux)
 		uint8_t enaddr[ETHER_ADDR_LEN];
 		if (get_bootconf_option(boot_args, "awge0.mac-address",
 		    BOOTOPT_TYPE_MACADDR, enaddr)) {
-			prop_data_t pd = prop_data_create_data(enaddr,
+			prop_dictionary_set_data(dict, "mac-address", enaddr,
 			    sizeof(enaddr));
-			prop_dictionary_set(dict, "mac-address", pd);
-			prop_object_release(pd);
 		}
 	}
 

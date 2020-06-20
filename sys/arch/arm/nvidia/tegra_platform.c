@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.20 2019/01/03 12:52:40 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.21 2020/06/20 15:48:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.20 2019/01/03 12:52:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.21 2020/06/20 15:48:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,23 +161,23 @@ tegra_platform_device_register(device_t self, void *aux)
 	if (device_is_a(self, "tegradrm")) {
 		const char *video = get_bootconf_string(boot_args, "video");
 		if (video)
-			prop_dictionary_set_cstring(dict, "HDMI-A-1", video);
+			prop_dictionary_set_string(dict, "HDMI-A-1", video);
 		if (match_bootconf_option(boot_args, "hdmi.forcemode", "dvi"))
 			prop_dictionary_set_bool(dict, "force-dvi", true);
 	}
 
 	if (device_is_a(self, "tegracec"))
-		prop_dictionary_set_cstring(dict, "hdmi-device", "tegradrm0");
+		prop_dictionary_set_string(dict, "hdmi-device", "tegradrm0");
 
 	if (device_is_a(self, "nouveau")) {
 		const char *config = get_bootconf_string(boot_args,
 		    "nouveau.config");
 		if (config)
-			prop_dictionary_set_cstring(dict, "config", config);
+			prop_dictionary_set_string(dict, "config", config);
 		const char *debug = get_bootconf_string(boot_args,
 		    "nouveau.debug");
 		if (debug)
-			prop_dictionary_set_cstring(dict, "debug", debug);
+			prop_dictionary_set_string(dict, "debug", debug);
 	}
 
 	if (device_is_a(self, "tegrapcie")) {
