@@ -84,12 +84,13 @@ nl_config_t *	npf_config_import(const void *, size_t);
 void *		npf_config_export(nl_config_t *, size_t *);
 bool		npf_config_active_p(nl_config_t *);
 bool		npf_config_loaded_p(nl_config_t *);
-void *		npf_config_build(nl_config_t *);
+const void *	npf_config_build(nl_config_t *);
 
 int		npf_alg_load(nl_config_t *, const char *);
 
 int		npf_param_get(nl_config_t *, const char *, int *);
 int		npf_param_set(nl_config_t *, const char *, int);
+const char *	npf_param_iterate(nl_config_t *, nl_iter_t *, int *, int *);
 
 int		npf_ruleset_add(int, const char *, nl_rule_t *, uint64_t *);
 int		npf_ruleset_remove(int, const char *, uint64_t);

@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.54.2.2 2020/05/25 17:25:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.54.2.3 2020/06/20 15:46:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -642,8 +642,10 @@ again:
 		break;
 	}
 
-	/* Error out if nbuf_advance failed. */
-	if (l4flags && npc->npc_l4.hdr == NULL) {
+	/*
+	 * Error out if nbuf_advance() failed.
+	 */
+	if (__predict_false(l4flags && !npc->npc_l4.hdr)) {
 		goto err;
 	}
 

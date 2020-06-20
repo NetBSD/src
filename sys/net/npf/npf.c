@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.3 2019/09/01 13:21:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38.2.4 2020/06/20 15:46:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,7 +67,8 @@ npfk_sysfini(void)
 }
 
 __dso_public npf_t *
-npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
+npfk_create(int flags, const npf_mbufops_t *mbufops,
+    const npf_ifops_t *ifops, void *arg)
 {
 	npf_t *npf;
 
@@ -75,6 +76,7 @@ npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 	npf->ebr = npf_ebr_create();
 	npf->stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf->mbufops = mbufops;
+	npf->arg = arg;
 
 	npf_param_init(npf);
 	npf_state_sysinit(npf);
@@ -88,7 +90,7 @@ npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 	npf_config_init(npf);
 
 	if ((flags & NPF_NO_GC) == 0) {
-		npf_worker_register(npf, npf_conn_worker);
+		npf_worker_enlist(npf);
 	}
 	return npf;
 }
@@ -96,6 +98,8 @@ npfk_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 __dso_public void
 npfk_destroy(npf_t *npf)
 {
+	npf_worker_discharge(npf);
+
 	/*
 	 * Destroy the current configuration.  Note: at this point all
 	 * handlers must be deactivated; we will drain any processing.
@@ -116,10 +120,24 @@ npfk_destroy(npf_t *npf)
 	kmem_free(npf, sizeof(npf_t));
 }
 
+
+/*
+ * npfk_load: (re)load the configuration.
+ *
+ * => Will not modify the configuration reference.
+ */
 __dso_public int
-npfk_load(npf_t *npf, void *config_ref, npf_error_t *err)
+npfk_load(npf_t *npf, const void *config_ref, npf_error_t *err)
 {
-	return npfctl_load(npf, 0, config_ref);
+	const nvlist_t *req = (const nvlist_t *)config_ref;
+	nvlist_t *resp;
+	int error;
+
+	resp = nvlist_create(0);
+	error = npfctl_run_op(npf, IOC_NPF_LOAD, req, resp);
+	nvlist_destroy(resp);
+
+	return error;
 }
 
 __dso_public void
@@ -139,6 +157,12 @@ npfk_thread_unregister(npf_t *npf)
 {
 	npf_ebr_full_sync(npf->ebr);
 	npf_ebr_unregister(npf->ebr);
+}
+
+__dso_public void *
+npfk_getarg(npf_t *npf)
+{
+	return npf->arg;
 }
 
 void
