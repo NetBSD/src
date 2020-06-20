@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.75.20.3 2020/04/29 13:33:35 martin Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.75.20.4 2020/06/20 15:52:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.20.3 2020/04/29 13:33:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.75.20.4 2020/06/20 15:52:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -265,6 +265,11 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	if (ec_singleton != NULL) {
 		aprint_naive(": using %s\n", device_xname(ec_singleton));
 		aprint_normal(": using %s\n", device_xname(ec_singleton));
+		goto fail0;
+	}
+
+	if (!acpi_device_present(aa->aa_node->ad_handle)) {
+		aprint_normal(": not present\n");
 		goto fail0;
 	}
 
