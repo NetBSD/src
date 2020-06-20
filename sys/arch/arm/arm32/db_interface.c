@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.60 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2020/06/20 15:45:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -210,7 +210,7 @@ db_validate_address(vaddr_t addr)
 	else
 		pmap = p->p_vmspace->vm_map.pmap;
 
-	return (pmap_extract(pmap, addr, NULL) == false);
+	return pmap_extract(pmap, addr, NULL) == false;
 }
 
 /*

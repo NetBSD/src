@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.25 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: stubs.c,v 1.26 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.25 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.26 2020/06/20 15:45:22 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -133,7 +133,7 @@ cpu_dump(void)
 
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
-		return (ENXIO);
+		return ENXIO;
 	dump = bdev->d_dump;
 
 	memset(bf, 0, sizeof bf);
@@ -165,7 +165,7 @@ cpu_dump(void)
 		memsegp[i].size = bootconfig.dram[i].pages * PAGE_SIZE;
 	}
 
-	return (dump(dumpdev, dumplo, bf, dbtob(1)));
+	return dump(dumpdev, dumplo, bf, dbtob(1));
 }
 
 /*
@@ -179,9 +179,9 @@ cpu_dumpsize(void)
 	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
 	    ALIGN( bootconfig.dramblocks * sizeof(phys_ram_seg_t));
 	if (roundup(size, dbtob(1)) != dbtob(1))
-		return (-1);
+		return -1;
 
-	return (1);
+	return 1;
 }
 
 
@@ -198,7 +198,7 @@ cpu_dump_mempagecnt(void)
 		n += bootconfig.dram[i].pages;
 	}
 
-	return (n);
+	return n;
 }
 
 /* This should be moved to machdep.c */
