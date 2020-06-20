@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.15 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.15.4.1 2020/06/20 15:46:47 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -139,10 +139,10 @@ npf_log(npf_cache_t *npc, void *meta, const npf_match_info_t *mi, int *decision)
 		return true;
 	}
 
-	/* Pass through BPF. */
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	if (ifp->if_bpf) {
+		/* Pass through BPF. */
 		bpf_mtap2(ifp->if_bpf, &hdr, NPFLOG_HDRLEN, m, BPF_D_OUT);
 	}
 	if_put(ifp, &psref);
@@ -152,11 +152,8 @@ npf_log(npf_cache_t *npc, void *meta, const npf_match_info_t *mi, int *decision)
 	return true;
 }
 
-/*
- * Module interface.
- */
-static int
-npf_ext_log_modcmd(modcmd_t cmd, void *arg)
+__dso_public int
+npf_ext_log_init(npf_t *npf)
 {
 	static const npf_ext_ops_t npf_log_ops = {
 		.version	= NPFEXT_LOG_VER,
@@ -165,33 +162,33 @@ npf_ext_log_modcmd(modcmd_t cmd, void *arg)
 		.dtor		= npf_log_dtor,
 		.proc		= npf_log
 	};
+	npf_ext_log_id = npf_ext_register(npf, "log", &npf_log_ops);
+	return npf_ext_log_id ? 0 : EEXIST;
+}
+
+__dso_public int
+npf_ext_log_fini(npf_t *npf)
+{
+	return npf_ext_unregister(npf, npf_ext_log_id);
+}
+
+#ifdef _KERNEL
+static int
+npf_ext_log_modcmd(modcmd_t cmd, void *arg)
+{
 	npf_t *npf = npf_getkernctx();
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		/*
-		 * Initialise the NPF logging extension.
-		 */
-		npf_ext_log_id = npf_ext_register(npf, "log", &npf_log_ops);
-		if (!npf_ext_log_id) {
-			return EEXIST;
-		}
-		break;
-
+		return npf_ext_log_init(npf);
 	case MODULE_CMD_FINI:
-		error = npf_ext_unregister(npf, npf_ext_log_id);
-		if (error) {
-			return error;
-		}
+		return npf_ext_log_fini(npf);
 		break;
-
 	case MODULE_CMD_AUTOUNLOAD:
-		/* Allow auto-unload only if NPF permits it. */
 		return npf_autounload_p() ? 0 : EBUSY;
-
 	default:
 		return ENOTTY;
 	}
 	return 0;
 }
+#endif

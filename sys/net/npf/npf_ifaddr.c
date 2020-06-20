@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.5.4.1 2019/09/01 13:21:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.5.4.2 2020/06/20 15:46:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,10 +54,10 @@ lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
 	const char *ifname;
 	npf_config_t *nc;
 	npf_table_t *t;
-	u_int tid;
+	unsigned tid;
 
 	/* Get the interface name and prefix it. */
-	ifname = ifops->getname(ifp);
+	ifname = ifops->getname(npf, ifp);
 	snprintf(tname, sizeof(tname), ".ifnet-%s", ifname);
 
 	KERNEL_LOCK(1, NULL);

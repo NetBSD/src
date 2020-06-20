@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.3 2019/09/01 13:21:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.12.2.4 2020/06/20 15:46:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -84,6 +84,8 @@ MODULE(MODULE_CLASS_MISC, npf, "bpf");
 MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
 #endif
 
+#define	NPF_IOCTL_DATA_LIMIT	(4 * 1024 * 1024)
+
 static int	npf_pfil_register(bool);
 static void	npf_pfil_unregister(bool);
 
@@ -108,11 +110,11 @@ const struct cdevsw npf_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
-static const char *	npf_ifop_getname(ifnet_t *);
-static ifnet_t *	npf_ifop_lookup(const char *);
-static void		npf_ifop_flush(void *);
-static void *		npf_ifop_getmeta(const ifnet_t *);
-static void		npf_ifop_setmeta(ifnet_t *, void *);
+static const char *	npf_ifop_getname(npf_t *, ifnet_t *);
+static ifnet_t *	npf_ifop_lookup(npf_t *, const char *);
+static void		npf_ifop_flush(npf_t *, void *);
+static void *		npf_ifop_getmeta(npf_t *, const ifnet_t *);
+static void		npf_ifop_setmeta(npf_t *, ifnet_t *, void *);
 
 static const unsigned	nworkers = 1;
 
@@ -153,7 +155,7 @@ npf_init(void)
 	error = npfk_sysinit(nworkers);
 	if (error)
 		return error;
-	npf = npfk_create(0, NULL, &kern_ifops);
+	npf = npfk_create(0, NULL, &kern_ifops, NULL);
 	npf_setkernctx(npf);
 	npf_pfil_register(true);
 
@@ -253,6 +255,7 @@ static int
 npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	npf_t *npf = npf_getkernctx();
+	nvlist_t *req, *resp;
 	int error;
 
 	/* Available only for super-user. */
@@ -262,38 +265,38 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	}
 
 	switch (cmd) {
-	case IOC_NPF_TABLE:
-		error = npfctl_table(npf, data);
-		break;
-	case IOC_NPF_RULE:
-		error = npfctl_rule(npf, cmd, data);
-		break;
-	case IOC_NPF_STATS:
-		error = npf_stats_export(npf, data);
-		break;
-	case IOC_NPF_SAVE:
-		error = npfctl_save(npf, cmd, data);
-		break;
-	case IOC_NPF_SWITCH:
-		error = npfctl_switch(data);
-		break;
-	case IOC_NPF_LOAD:
-		error = npfctl_load(npf, cmd, data);
-		break;
-	case IOC_NPF_CONN_LOOKUP:
-		error = npfctl_conn_lookup(npf, cmd, data);
-		break;
-	case IOC_NPF_TABLE_REPLACE:
-		error = npfctl_table_replace(npf, cmd, data);
-		break;
 	case IOC_NPF_VERSION:
 		*(int *)data = NPF_VERSION;
-		error = 0;
-		break;
-	default:
-		error = ENOTTY;
-		break;
+		return 0;
+
+	case IOC_NPF_SWITCH:
+		return npfctl_switch(data);
+
+	case IOC_NPF_TABLE:
+		return npfctl_table(npf, data);
+
+	case IOC_NPF_STATS:
+		return npf_stats_export(npf, data);
 	}
+
+	error = nvlist_copyin(data, &req, NPF_IOCTL_DATA_LIMIT);
+	if (__predict_false(error)) {
+#ifdef __NetBSD__
+		/* Until the version bump. */
+		if (cmd != IOC_NPF_SAVE) {
+			return error;
+		}
+		req = nvlist_create(0);
+#else
+		return error;
+#endif
+	}
+	resp = nvlist_create(0);
+	npfctl_run_op(npf, cmd, req, resp);
+	error = nvlist_copyout(data, resp);
+	nvlist_destroy(resp);
+	nvlist_destroy(req);
+
 	return error;
 }
 
@@ -321,19 +324,19 @@ npf_autounload_p(void)
  */
 
 static const char *
-npf_ifop_getname(ifnet_t *ifp)
+npf_ifop_getname(npf_t *npf __unused, ifnet_t *ifp)
 {
 	return ifp->if_xname;
 }
 
 static ifnet_t *
-npf_ifop_lookup(const char *name)
+npf_ifop_lookup(npf_t *npf __unused, const char *name)
 {
 	return ifunit(name);
 }
 
 static void
-npf_ifop_flush(void *arg)
+npf_ifop_flush(npf_t *npf __unused, void *arg)
 {
 	ifnet_t *ifp;
 
@@ -347,13 +350,13 @@ npf_ifop_flush(void *arg)
 }
 
 static void *
-npf_ifop_getmeta(const ifnet_t *ifp)
+npf_ifop_getmeta(npf_t *npf __unused, const ifnet_t *ifp)
 {
 	return ifp->if_pf_kif;
 }
 
 static void
-npf_ifop_setmeta(ifnet_t *ifp, void *arg)
+npf_ifop_setmeta(npf_t *npf __unused, ifnet_t *ifp, void *arg)
 {
 	ifp->if_pf_kif = arg;
 }
@@ -521,6 +524,12 @@ npf_active_p(void)
 #endif
 
 #ifdef __NetBSD__
+
+/*
+ * Epoch-Based Reclamation (EBR) wrappers: in NetBSD, we rely on the
+ * passive serialization mechanism (see pserialize(9) manual page),
+ * which provides sufficient guarantees for NPF.
+ */
 
 ebr_t *
 npf_ebr_create(void)

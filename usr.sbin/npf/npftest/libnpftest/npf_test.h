@@ -73,8 +73,8 @@ struct mbuf {
 #define	M_NOWAIT		0x00001
 #define M_PKTHDR		0x00002
 
-#define	m_get(x, y)		npfkern_m_get(0, MLEN)
-#define	m_gethdr(x, y)		npfkern_m_get(M_PKTHDR, MLEN)
+#define	m_get(x, y)		npfkern_m_get(NULL, 0, MLEN)
+#define	m_gethdr(x, y)		npfkern_m_get(NULL, M_PKTHDR, MLEN)
 #define	m_length(m)		npfkern_m_length(m)
 #define	m_freem(m)		npfkern_m_freem(m)
 #define	mtod(m, t)		((t)((m)->m_data))
@@ -87,7 +87,7 @@ struct mbuf {
 const npf_mbufops_t	npftest_mbufops;
 const npf_ifops_t	npftest_ifops;
 
-struct mbuf *	npfkern_m_get(int, int);
+struct mbuf *	npfkern_m_get(npf_t *, unsigned, size_t);
 size_t		npfkern_m_length(const struct mbuf *);
 void		npfkern_m_freem(struct mbuf *);
 
@@ -121,8 +121,8 @@ bool		npf_table_test(bool, void *, size_t);
 bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
-bool		npf_conn_test(bool);
 bool		npf_nat_test(bool);
+bool		npf_gc_test(bool);
 
 int		npf_inet_pton(int, const char *, void *);
 const char *	npf_inet_ntop(int, const void *, char *, socklen_t);

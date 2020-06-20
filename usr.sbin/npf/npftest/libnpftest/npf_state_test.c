@@ -149,7 +149,8 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 		KASSERT(ret == true);
 		*snew = false;
 	}
-	ret = npf_state_inspect(npc, nst, p->flags == OUT);
+	ret = npf_state_inspect(npc, nst,
+	    (p->flags == OUT) ? NPF_FLOW_FORW : NPF_FLOW_BACK);
 	put_cached_pkt(npc);
 
 	return ret ? true : (p->flags & ERR) != 0;
