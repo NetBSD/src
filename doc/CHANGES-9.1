@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.67 2020/06/20 15:49:15 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.68 2020/06/20 16:43:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2995,4 +2995,56 @@ usr.sbin/npf/npftest/npftest.h			1.17
 	- Amend and improve the manual pages.
 	- Various bug fixes.
 	[rmind, ticket #956]
+
+sys/dev/acpi/acpi_ec.c				1.84
+
+	PR 53687: only install space handler and enable interrupt for EC if
+	ACPI claims the device is actually present .
+	[jdolecek, ticket #959]
+
+sys/arch/x86/x86/cpu_rng.c			1.16
+
+	Use x86_read_psl/x86_disable_intr/x86_write_psl to defer interrupts.
+	This avoids accidently enabling interrupts too early.
+	[riastradh, ticket #960]
+
+usr.sbin/hdaudioctl/graph.c			1.5
+usr.sbin/hdaudioctl/hdaudioctl.8		1.7
+usr.sbin/hdaudioctl/hdaudioctl.c		1.3,1.4
+usr.sbin/hdaudioctl/hdaudioctl.h		1.3
+
+	Add show subcommand that displays the codec configuration in
+	human-readable tabulated form.
+	[sborrill, ticket #961]
+
+etc/MAKEDEV.awk					1.29
+etc/etc.cobalt/MAKEDEV.conf			1.18,1.19
+sys/arch/cobalt/conf/majors.cobalt		1.34
+
+	PR 55009: rename /dev/panel to lcdpanel.
+	[tsutsui, ticket #962]
+
+sys/arch/mips/mips/bus_dma.c			1.41
+
+	PR 54216: fix inconsistent mips_o32, _mips_o32,
+	and __mips_o32 macro.
+	[tsutsui, ticket #963]
+
+sys/arch/mips/mips/cache.c			1.67
+
+	PR 55138: use 32 byte cacheline ops (not 16 byte ones) for
+	R5000 picache.
+	[tsutsui, ticket #964]
+
+sys/arch/mips/include/cache_r5k.h		1.5
+sys/arch/mips/mips/cache_r5k.c			1.21
+sys/arch/mips/mips/cache_r5k_subr.S		1.4
+
+	PR 55139: use proper "page" alignments for R5k Page Invalidate(S) op.
+	[tsutsui, ticket #965]
+
+etc/rc.d/postfix				1.19
+
+	PR 55396: show "Starting postfix" message at startup.
+	[rin, ticket #966]
 
