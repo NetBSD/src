@@ -6,6 +6,7 @@
 
 #ifdef _KERNEL
 #include <sys/types.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #endif
 
