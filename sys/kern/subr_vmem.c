@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.104 2020/06/16 01:29:00 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.105 2020/06/20 18:33:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.104 2020/06/16 01:29:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.105 2020/06/20 18:33:23 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -172,7 +172,7 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 /*
  * BT_RESERVE calculation:
  * we allocate memory for boundry tags with vmem; therefore we have
- * to keep a reserve of bts used to allocated memory for bts. 
+ * to keep a reserve of bts used to allocated memory for bts.
  * This reserve is 4 for each arena involved in allocating vmems memory.
  * BT_MAXFREE: don't cache excessive counts of bts in arenas
  */
@@ -1325,7 +1325,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(bt->bt_start == addr);
 	KASSERT(bt->bt_size == vmem_roundup_size(vm, size) ||
 	    bt->bt_size - vmem_roundup_size(vm, size) <= vm->vm_quantum_mask);
-	
+
 	/* vmem_xfree_bt() drops the lock. */
 	vmem_xfree_bt(vm, bt);
 }

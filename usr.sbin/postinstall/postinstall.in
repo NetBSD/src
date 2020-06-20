@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.27 2020/06/15 21:56:49 christos Exp $
+# $NetBSD: postinstall.in,v 1.28 2020/06/20 18:30:53 riastradh Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -863,7 +863,7 @@ additem blocklist "rename old files to blocklist"
 do_blocklist()
 {
 	local rcfiles="/etc/rc.conf /etc/npf.conf /etc/defaults/rc.conf"
-	
+
 	# if we are actually using blocklistd
 	if [ -f /var/db/blacklist.db ]; then
 		mv /var/db/blacklist.db /var/db/blocklist.db
@@ -1110,7 +1110,7 @@ include_nis
 special_hosts
 special_media
 special_noauto
-special_null 
+special_null
 "
 	op="$1"
 	failed=0
@@ -1656,12 +1656,12 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 	for i in ${rc_external_files}; do
-	    local rc_file 
+	    local rc_file
 	    case $i in
 	    *d) rc_file=${i};;
 	    *)	rc_file=${i}d;;
 	    esac
-		
+
 	    update_rc "${op}" "${dir}" ${rc_file} /sbin \
 		"${SRC_DIR}/external/bsd/$i/etc/rc.d"
 	    failed=$(( ${failed} + $? ))
@@ -2381,7 +2381,7 @@ listarchsubdirs() {
 		echo "@ARCHSUBDIRS@"
 	else
 		${SED} -n -e '/ARCHDIR_SUBDIR/s/[[:space:]]//gp' \
-		    ${SRC_DIR}/compat/archdirs.mk 
+		    ${SRC_DIR}/compat/archdirs.mk
 	fi
 }
 
