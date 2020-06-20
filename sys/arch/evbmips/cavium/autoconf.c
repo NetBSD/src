@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2020/06/10 07:34:19 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2020/06/20 02:27:55 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2020/06/10 07:34:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2020/06/20 02:27:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,15 +72,17 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
+
+#ifndef MEMORY_DISK_IS_ROOT
 	findroot();
+#endif
 
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+		booted_device ? device_xname(booted_device) : "<unknown>");
 
 	rootconf();
 }
 
-extern char	bootstring[];
 extern int	netboot;
 
 static void
@@ -92,7 +94,23 @@ findroot(void)
 	if (booted_device)
 		return;
 
-	if ((booted_device == NULL) && netboot == 0) {
+	if (rootspec && *rootspec) {
+		/* XXX hard coded "cnmac" for network boot */
+		if (strncmp(rootspec, "cnmac", 5) == 0) {
+			rootfstype = "nfs";
+			netboot = 1;
+			return;
+		}
+		/*
+		 * XXX
+		 * Assume that if the root spec is not a cnmac, it'll
+		 * be a sd. handled below.  Should be fixed to handle
+		 * multiple sd devices.
+		 */
+	}
+
+	if (netboot == 0) {
+		/* if no root device specified, default to a "sd" device */
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 		     dv = deviter_next(&di)) {
 			if (device_class(dv) == DV_DISK &&
@@ -174,6 +192,7 @@ prop_set_octeon_gmx(device_t dev)
 void
 device_register(device_t dev, void *aux)
 {
+
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
