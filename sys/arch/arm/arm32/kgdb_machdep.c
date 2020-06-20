@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.10 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.10 2020/06/20 15:45:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -56,11 +56,11 @@ kgdb_acc(vaddr_t va, size_t len)
 
 	do {
 		if (db_validate_address(va))
-			return (0);
+			return 0;
 		va  += PAGE_SIZE;
 	} while (va < last_va);
 
-	return (1);
+	return 1;
 }
 
 /*

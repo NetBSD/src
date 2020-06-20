@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.112 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.112 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.113 2020/06/20 15:45:22 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -194,7 +194,7 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 	/* Call the CPU specific data abort fixup routine */
 	error = cpu_dataabt_fixup(tf);
 	if (__predict_true(error != ABORT_FIXUP_FAILED))
-		return (error);
+		return error;
 
 	/*
 	 * Oops, couldn't fix up the instruction
@@ -219,9 +219,9 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 	if (!TRAP_USERMODE(tf))
 		dab_fatal(tf, fsr, far, l, NULL);
 
-	return (error);
+	return error;
 #else
-	return (ABORT_FIXUP_OK);
+	return ABORT_FIXUP_OK;
 #endif /* CPU_ABORT_FIXUP_REQUIRED */
 }
 
@@ -641,7 +641,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -727,7 +727,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 		KDASSERT(TRAP_USERMODE(tf) == 0);
 		tf->tf_r0 = EFAULT;
 		tf->tf_pc = (register_t)(intptr_t) pcb->pcb_onfault;
-		return (0);
+		return 0;
 	}
 
 	/* See if the CPU state needs to be fixed up */
@@ -748,7 +748,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
-	return (1);
+	return 1;
 }
 
 static inline int
@@ -760,7 +760,7 @@ prefetch_abort_fixup(trapframe_t *tf)
 	/* Call the CPU specific prefetch abort fixup routine */
 	error = cpu_prefetchabt_fixup(tf);
 	if (__predict_true(error != ABORT_FIXUP_FAILED))
-		return (error);
+		return error;
 
 	/*
 	 * Oops, couldn't fix up the instruction
@@ -785,9 +785,9 @@ prefetch_abort_fixup(trapframe_t *tf)
 	if (!TRAP_USERMODE(tf))
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 
-	return (error);
+	return error;
 #else
-	return (ABORT_FIXUP_OK);
+	return ABORT_FIXUP_OK;
 #endif /* CPU_ABORT_FIXUP_REQUIRED */
 }
 
@@ -993,5 +993,5 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	splx(s);
 
 	/* Return EFAULT if the address was invalid, else zero */
-	return (rv);
+	return rv;
 }
