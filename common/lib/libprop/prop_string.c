@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.14 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.15 2020/06/20 00:16:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -314,6 +314,7 @@ prop_string_create_format(const char *fmt, ...)
 	prop_string_t ps;
 	char *str = NULL;
 	int len;
+	size_t nlen;
 	va_list ap;
 
 	_PROP_ASSERT(fmt != NULL);
@@ -324,16 +325,17 @@ prop_string_create_format(const char *fmt, ...)
 
 	if (len < 0)
 		return (NULL);
+	nlen = len + 1;
 
-	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
+	str = _PROP_MALLOC(nlen, M_PROP_STRING);
 	if (str == NULL)
 		return (NULL);
 
 	va_start(ap, fmt);
-	vsnprintf(str, len + 1, fmt, ap);
+	vsnprintf(str, nlen, fmt, ap);
 	va_end(ap);
 
-	ps = _prop_string_instantiate(0, str, len);
+	ps = _prop_string_instantiate(0, str, (size_t)len);
 	if (ps == NULL)
 		_PROP_FREE(str, M_PROP_STRING);
 
