@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.39 2020/02/22 19:09:51 kamil Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.40 2020/06/20 07:30:09 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -463,6 +463,15 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	ATF_REQUIRE(rv == 0);
 	if (val == 0)
 		atf_tc_skip("No SIGBUS signal for unaligned accesses");
+#endif
+
+#ifdef __powerpc__
+	/*
+	 * SIGBUS is not mandatory for powerpc; most processors (not all)
+	 * can deal with unaligned accesses.
+	 */
+	atf_tc_skip("SIGBUS signal for unaligned accesses is "
+	    "not mandatory for this architecture");
 #endif
 
 	/* m68k (except sun2) never issue SIGBUS (PR lib/49653),
