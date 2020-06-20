@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.24 2020/06/20 07:01:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.23 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.24 2020/06/20 07:01:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,11 +142,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-	case ARM_SYNC_ICACHE : 
+	case ARM_SYNC_ICACHE :
 		error = arm32_sync_icache(l, SCARG(uap, parms), retval);
 		break;
 
-	case ARM_DRAIN_WRITEBUF : 
+	case ARM_DRAIN_WRITEBUF :
 		error = arm32_drain_writebuf(l, SCARG(uap, parms), retval);
 		break;
 
@@ -164,7 +164,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	}
 	return (error);
 }
-  
+
 int
 cpu_lwp_setprivate(lwp_t *l, void *addr)
 {

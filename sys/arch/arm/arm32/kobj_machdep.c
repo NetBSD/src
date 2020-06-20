@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.12 2017/11/03 09:59:08 maxv Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.13 2020/06/20 07:01:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.12 2017/11/03 09:59:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.13 2020/06/20 07:01:16 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -345,7 +345,7 @@ be8_ksym_swap(void *start, size_t size, const struct be8_marker_list *list)
 		}
 	}
 }
- 
+
 static void
 kobj_be8_fixup(kobj_t ko)
 {
