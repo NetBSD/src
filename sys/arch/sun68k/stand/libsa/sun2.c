@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.12 2020/06/18 17:59:05 tsutsui Exp $	*/
+/*	$NetBSD: sun2.c,v 1.13 2020/06/20 18:45:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 /*
- * We need to get the sun2 NBSG definition, even if we're 
+ * We need to get the sun2 NBSG definition, even if we're
  * building this with a different sun68k target.
  */
 #include <arch/sun2/include/pmap.h>
@@ -171,7 +171,7 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma2_end = DVMA_BASE + DVMA_MAPLEN;
 
-static void 
+static void
 dvma2_init(void)
 {
 	int segva, dmava, sme;
@@ -195,7 +195,7 @@ dvma2_mapin(char *addr, int len)
 
 	/* Make sure the address is in the DVMA map. */
 	if ((va < SA_MIN_VA) || (va >= SA_MAX_VA))
-		panic("dvma2_mapin: 0x%x outside 0x%x..0x%x", 
+		panic("dvma2_mapin: 0x%x outside 0x%x..0x%x",
 		    va, SA_MIN_VA, SA_MAX_VA);
 
 	va -= SA_MIN_VA;
@@ -240,7 +240,7 @@ sun2_get_pte(vaddr_t va)
 
 	pte = get_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va));
 	if (pte & PG_VALID) {
-		/* 
+		/*
 		 * This clears bit 30 (the kernel readable bit, which
 		 * should always be set), bit 28 (which should always
 		 * be set) and bit 26 (the user writable bit, which we
@@ -325,8 +325,8 @@ sun2_getidprom(u_char *dst)
  */
 
 /*
- * For booting, the PROM in fredette's Sun 2/120 doesn't map 
- * much main memory, and what is mapped is mapped strangely.  
+ * For booting, the PROM in fredette's Sun 2/120 doesn't map
+ * much main memory, and what is mapped is mapped strangely.
  * Low virtual memory is mapped like:
  *
  * 0x000000 - 0x0bffff virtual -> 0x000000 - 0x0bffff physical
@@ -348,7 +348,7 @@ sun2_getidprom(u_char *dst)
  * 0x400000 - 0x4bffff virtual -> 0x000000 - 0x0bffff physical
  * 0x4c0000 - 0x600000 virtual -> 0x2c0000 - 0x3fffff physical
  *
- * And then we load starting at virtual 0x400000.  We will do 
+ * And then we load starting at virtual 0x400000.  We will do
  * all of this mapping just by copying PMEGs.
  *
  * After the load is done, but before we enter the kernel, we're
@@ -375,7 +375,7 @@ sun2_getidprom(u_char *dst)
 #define MEM_CHUNK1_COPY_VIRT		MEM_CHUNK1_COPY_PHYS
 
 /* Maps memory for loading. */
-u_long 
+u_long
 sun2_map_mem_load(void)
 {
 	vaddr_t off;
@@ -424,20 +424,20 @@ sun2_map_mem_run(void *entry)
 
 		/* Set the PTEs in this new PMEG. */
 		for(off_end = off + NBSG; off < off_end; off += NBPG)
-			sun2_set_pte(MEM_CHUNK1_COPY_VIRT + off, 
+			sun2_set_pte(MEM_CHUNK1_COPY_VIRT + off,
 				pte | PA_PGNUM(MEM_CHUNK1_COPY_PHYS + off));
-		
+
 		/* Copy this segment. */
 		memcpy((void *)(MEM_CHUNK1_COPY_VIRT + (off - NBSG)),
 		       (void *)(MEM_CHUNK1_LOAD_VIRT + (off - NBSG)),
 		       NBSG);
 	}
-		
+
 	/* Tell our caller where in virtual space to enter. */
 	return ((char *)entry) - MEM_CHUNK0_LOAD_VIRT;
 }
 
-void 
+void
 sun2_init(void)
 {
 	/* Set the function pointers. */
@@ -446,7 +446,7 @@ sun2_init(void)
 	dvma_free_p   = dvma2_free;
 	dvma_mapin_p  = dvma2_mapin;
 	dvma_mapout_p = dvma2_mapout;
-       
+
 	/* Prepare DVMA segment. */
 	dvma2_init();
 }

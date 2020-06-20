@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.10 2020/06/18 17:59:05 tsutsui Exp $	*/
+/*	$NetBSD: sun3.c,v 1.11 2020/06/20 18:46:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #define _SUN3_ XXX
 
-/* 
+/*
  * We need to get the sun3 NBSG definition, even if we're
  * building this with a different sun68k target.
  */
@@ -160,7 +160,7 @@ found:
 /* This points to the end of the free DVMA space. */
 u_int dvma3_end = DVMA_BASE + DVMA_MAPLEN;
 
-static void 
+static void
 dvma3_init(void)
 {
 	int segva, dmava, sme;
@@ -273,7 +273,7 @@ sun3_getidprom(u_char *dst)
  * Init our function pointers, etc.
  */
 
-void 
+void
 sun3_init(void)
 {
 
