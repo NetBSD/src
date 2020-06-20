@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.66 2020/06/13 05:56:44 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.67 2020/06/20 15:49:15 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -2898,4 +2898,101 @@ src/sys/dev/usb/if_run.c			1.41
 	Better bounds checking for oversized packets, to avoid kernel memory
 	corruption. Pointed out by Ilja Van Sprundel.
 	[martin, ticket #958]
+
+sys/arch/ews4800mips/stand/common/bootxx.c	1.6
+
+	Fix "illegal exception" error on loading a secondary boot.
+	[tsutsui, ticket #952]
+
+usr.sbin/installboot/installboot.8		1.98,1.99
+
+	Fix ews4800mips example.  Its raw partition is rsd0p, not rsd0c.
+	[tsutsui, ticket #953]
+
+sys/dev/pckbport/synaptics.c			1.67
+
+	synaptics: Don't reset the device multiple times in succession.
+	[nia, ticket #954]
+
+sys/arch/mac68k/dev/ams.c			1.23
+
+	Fix inverted Y-axis value passed to wsmouse_input(9).
+	[tsutsui, ticket #955]
+
+lib/libnpf/libnpf.3				1.12
+lib/libnpf/npf.c				1.49
+lib/libnpf/npf.h				1.39
+sys/net/npf/files.npf				1.23
+sys/net/npf/npf.c				1.43
+sys/net/npf/npf.h				1.63
+sys/net/npf/npf_alg.c				1.22
+sys/net/npf/npf_alg_icmp.c			1.33
+sys/net/npf/npf_conf.c				1.17
+sys/net/npf/npf_conn.c				1.32
+sys/net/npf/npf_conn.h				1.20
+sys/net/npf/npf_conndb.c			1.9
+sys/net/npf/npf_connkey.c			1.2
+sys/net/npf/npf_ctl.c				1.60
+sys/net/npf/npf_ext_log.c			1.17
+sys/net/npf/npf_ext_normalize.c			1.10
+sys/net/npf/npf_ext_rndblock.c			1.9
+sys/net/npf/npf_handler.c			1.49
+sys/net/npf/npf_if.c				1.13
+sys/net/npf/npf_ifaddr.c			1.7
+sys/net/npf/npf_impl.h				1.81
+sys/net/npf/npf_inet.c				1.57
+sys/net/npf/npf_mbuf.c				1.24
+sys/net/npf/npf_nat.c				1.50
+sys/net/npf/npf_os.c				1.18
+sys/net/npf/npf_params.c			1.3
+sys/net/npf/npf_portmap.c			1.5
+sys/net/npf/npf_rproc.c				1.20
+sys/net/npf/npf_ruleset.c			1.51
+sys/net/npf/npf_sendpkt.c			1.22
+sys/net/npf/npf_state.c				1.23
+sys/net/npf/npf_state_tcp.c			1.21
+sys/net/npf/npf_tableset.c			1.35
+sys/net/npf/npf_worker.c			1.8
+sys/net/npf/npf_worker.c			1.9
+sys/net/npf/npfkern.h				1.5
+tests/net/npf/t_npf.sh				1.4
+usr.sbin/npf/npf-params.7			1.4-1.7
+usr.sbin/npf/npfctl/Makefile			1.15
+usr.sbin/npf/npfctl/npf.conf.5			1.91
+usr.sbin/npf/npfctl/npf_bpf_comp.c		1.16
+usr.sbin/npf/npfctl/npf_build.c			1.55
+usr.sbin/npf/npfctl/npf_cmd.c			1.1
+usr.sbin/npf/npfctl/npf_parse.y			1.51
+usr.sbin/npf/npfctl/npf_scan.l			1.32
+usr.sbin/npf/npfctl/npf_show.c			1.32
+usr.sbin/npf/npfctl/npf_var.c			1.13
+usr.sbin/npf/npfctl/npf_var.h			1.10
+usr.sbin/npf/npfctl/npfctl.8			1.25
+usr.sbin/npf/npfctl/npfctl.c			1.64
+usr.sbin/npf/npfctl/npfctl.h			1.53
+usr.sbin/npf/npftest/libnpftest/Makefile	1.11
+usr.sbin/npf/npftest/libnpftest/npf_conn_test.c	delete
+usr.sbin/npf/npftest/libnpftest/npf_gc_test.c	1.1
+usr.sbin/npf/npftest/libnpftest/npf_mbuf_subr.c	1.11
+usr.sbin/npf/npftest/libnpftest/npf_nat_test.c	1.14
+usr.sbin/npf/npftest/libnpftest/npf_state_test.c 1.10
+usr.sbin/npf/npftest/libnpftest/npf_test.h	1.21
+usr.sbin/npf/npftest/libnpftest/npf_test_subr.c	1.17
+usr.sbin/npf/npftest/libnpftest/npf_test_subr.c	1.18
+usr.sbin/npf/npftest/npftest.c			1.25
+usr.sbin/npf/npftest/npftest.conf		1.9
+usr.sbin/npf/npftest/npftest.h			1.17
+
+	Major NPF improvements:
+	- npfkern: introduce the 'state.key.interface' and
+	  'state.key.direction' settings.
+	  Users can now choose whether the connection state should be
+	  strictly per-interface or global at the configuration level.
+	  Keep NAT logic to be always per-interface, though.
+	- npfctl: lots of fixes for the 'npfctl show' logic;
+	  make 'npfctl list' more informative; misc usability improvements
+	  and more user-friendly error messages.
+	- Amend and improve the manual pages.
+	- Various bug fixes.
+	[rmind, ticket #956]
 
