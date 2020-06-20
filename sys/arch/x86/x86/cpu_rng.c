@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.5 2016/02/29 00:17:54 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.5.12.1 2020/06/20 16:05:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ exhausted:
 static size_t
 cpu_rng_via(cpu_rng_t *out)
 {
+	u_long psl;
 	uint32_t creg0, rndsts;
 
 	/*
@@ -149,9 +150,9 @@ cpu_rng_via(cpu_rng_t *out)
 	 * even if such a fault is generated.
 	 *
 	 * XXX can this really happen if we don't use "rep xstorrng"?
-	 *
 	 */
 	kpreempt_disable();
+	psl = x86_read_psl();
 	x86_disable_intr();
 	creg0 = rcr0();
 	lcr0(creg0 & ~(CR0_EM|CR0_TS)); /* Permit access to SIMD/FPU path */
@@ -165,7 +166,7 @@ cpu_rng_via(cpu_rng_t *out)
 	    : "=a" (rndsts), "+D" (out) : "d" (0) : "memory");
 	/* Put CR0 back how it was */
 	lcr0(creg0);
-	x86_enable_intr();
+	x86_write_psl(psl);
 	kpreempt_enable();
 
 	/*
