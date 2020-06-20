@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2012/09/01 12:15:39 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.35 2020/06/20 07:01:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2012/09/01 12:15:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2020/06/20 07:01:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2012/09/01 12:15:39 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <arm/arm32/machdep.h>
- 
+
 u_int spl_masks[NIPL];
 
 extern u_int irqmasks[];

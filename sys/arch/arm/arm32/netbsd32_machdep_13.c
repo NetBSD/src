@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_13.c,v 1.3 2019/11/13 16:11:27 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_13.c,v 1.4 2020/06/20 07:01:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -64,20 +64,20 @@ compat_13_netbsd32_sigreturn(struct lwp *l,
 	return compat_13_sys_sigreturn(l, &ua, retval);
 }
 
-static struct syscall_package compat_arm32_netbsd32_13_syscalls[] = { 
+static struct syscall_package compat_arm32_netbsd32_13_syscalls[] = {
 	{ NETBSD32_SYS_compat_13_sigreturn13, 0,
 	    (sy_call_t *)compat_13_netbsd32_sigreturn },
 	{ 0, 0, NULL }
-}; 
- 
+};
+
 void
 netbsd32_machdep_md_13_init(void)
 {
- 
+
 	(void)syscall_establish(&emul_netbsd32,
 	    compat_arm32_netbsd32_13_syscalls);
 }
- 
+
 void
 netbsd32_machdep_md_13_fini(void)
 {
