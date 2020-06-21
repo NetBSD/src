@@ -1,7 +1,7 @@
-/* $NetBSD: efifdt.h,v 1.9 2020/06/21 17:24:26 jmcneill Exp $ */
+/* $NetBSD: module.h,v 1.1 2020/06/21 17:24:26 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,12 @@
  * SUCH DAMAGE.
  */
 
-int efi_fdt_probe(void);
-void efi_fdt_memory_map(void);
-void efi_fdt_gop(void);
-int efi_fdt_set_data(void *);
-void *efi_fdt_data(void);
-int efi_fdt_size(void);
-bool efi_fdt_overlay_is_compatible(void *);
-int efi_fdt_overlay_apply(void *, int *);
-void efi_fdt_show(void);
-void efi_fdt_bootargs(const char *);
-void efi_fdt_initrd(u_long, u_long);
-void efi_fdt_rndseed(u_long, u_long);
-void efi_fdt_efirng(u_long, u_long);
-void efi_fdt_module(const char *, u_long, u_long);
-void efi_fdt_init(u_long, u_long);
-void efi_fdt_fini(void);
+/* module.c */
+extern int	module_enabled;
+extern char	module_prefix[];
+void		module_init(const char *);
+void		module_foreach(void (*)(const char *));
+void		module_enable(int);
+void		module_add(const char *);
+void		module_remove(const char *);
+void		module_remove_all(void);
