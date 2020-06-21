@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.31 2020/05/26 00:50:54 kamil Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.32 2020/06/21 23:08:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -34,11 +34,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
-
-#ifndef ISCSI_MINIMAL
-#include <uvm/uvm.h>
-#include <uvm/uvm_pmap.h>
-#endif
+#include <sys/kmem.h>
 
 static kmutex_t iscsi_cleanup_mtx;
 static kcondvar_t iscsi_cleanup_cv;
@@ -1278,92 +1274,6 @@ restore_connection(iscsi_login_parameters_t *par, struct lwp *l)
 #ifndef ISCSI_MINIMAL
 
 /*
- * map_databuf:
- *    Map user-supplied data buffer into kernel space.
- *
- *    Parameter:
- *          p        IN: The proc pointer of the caller
- *          buf      IN/OUT: The virtual address of the buffer, modified
- *                   on exit to reflect kernel VA.
- *          datalen  IN: The size of the data buffer
- *
- *    Returns:
- *          An ISCSI status code on error, else 0.
- */
-
-uint32_t
-map_databuf(struct proc *p, void **buf, uint32_t datalen)
-{
-	vaddr_t kva, databuf, offs;
-	int error;
-
-	/* page align address */
-	databuf = (vaddr_t) * buf & ~PAGE_MASK;
-	/* offset of VA into page */
-	offs = (vaddr_t) * buf & PAGE_MASK;
-	/* round to full page including offset */
-	datalen = (datalen + offs + PAGE_MASK) & ~PAGE_MASK;
-
-	/* Do some magic to the vm space reference count (copied from "copyin_proc") */
-	if ((p->p_sflag & PS_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
-		return ISCSI_STATUS_NO_RESOURCES;
-	}
-	uvmspace_addref(p->p_vmspace);
-
-	/* this is lifted from uvm_io */
-	error = uvm_map_extract(&p->p_vmspace->vm_map, databuf, datalen,
-			kernel_map, &kva,
-			UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG |
-				UVM_EXTRACT_FIXPROT);
-	if (error) {
-		DEBOUT(("uvm_map_extract failed, error = %d\n", error));
-		return ISCSI_STATUS_NO_RESOURCES;
-	}
-	/* add offset back into kernel VA */
-	*buf = (void *) (kva + offs);
-
-	return 0;
-}
-
-
-/*
- * unmap_databuf:
- *    Remove kernel space mapping of data buffer.
- *
- *    Parameter:
- *          p        IN: The proc pointer of the caller
- *          buf      IN: The kernel virtual address of the buffer
- *          datalen  IN: The size of the data buffer
- *
- *    Returns:
- *          An ISCSI status code on error, else 0.
- */
-
-void
-unmap_databuf(struct proc *p, void *buf, uint32_t datalen)
-{
-	struct vm_map_entry *dead_entries;
-	vaddr_t databuf;
-
-	/* round to full page */
-	datalen = (datalen + ((uintptr_t) buf & PAGE_MASK) + PAGE_MASK) & ~PAGE_MASK;
-	/* page align address */
-	databuf = (vaddr_t) buf & ~PAGE_MASK;
-
-	/* following code lifted almost verbatim from uvm_io.c */
-	vm_map_lock(kernel_map);
-	uvm_unmap_remove(kernel_map, databuf, databuf + datalen, &dead_entries,
-	    0);
-	vm_map_unlock(kernel_map);
-	if (dead_entries != NULL) {
-		uvm_unmap_detach(dead_entries, AMAP_REFALL);
-	}
-	/* this apparently reverses the magic to the vm ref count, from copyin_proc */
-	uvmspace_free(p->p_vmspace);
-}
-
-
-/*
  * io_command:
  *    Handle the io_command ioctl.
  *
@@ -1376,8 +1286,9 @@ static void
 io_command(iscsi_iocommand_parameters_t *par, struct lwp *l)
 {
 	uint32_t datalen = par->req.datalen;
-	void *databuf = par->req.databuf;
 	session_t *session;
+	void *kbuf = NULL;
+	int error;
 
 	DEB(9, ("ISCSI: io_command, SID=%d, lun=%" PRIu64 "\n", par->session_id, par->lun));
 	mutex_enter(&iscsi_cleanup_mtx);
@@ -1400,18 +1311,31 @@ io_command(iscsi_iocommand_parameters_t *par, struct lwp *l)
 		return;
 	}
 
-	if (datalen && (par->status = map_databuf(l->l_proc,
-			&par->req.databuf, datalen)) != 0) {
-		return;
+	if (datalen) {
+		/* Arbitrarily limit datalen to 8k. */
+		if (datalen > 8192) {
+			par->status = ISCSI_STATUS_PARAMETER_INVALID;
+			return;
+		}
+		kbuf = kmem_zalloc(datalen, KM_SLEEP);
+		if ((par->req.flags & SCCMD_WRITE) != 0) {
+			error = copyin(par->req.databuf, kbuf, datalen);
+			if (error) {
+				kmem_free(kbuf, datalen);
+				par->status = ISCSI_STATUS_PARAMETER_INVALID;
+				return;
+			}
+		}
 	}
 	par->status = send_io_command(session, par->lun, &par->req,
 								  par->options.immediate, par->connection_id);
 
-	if (datalen) {
-		unmap_databuf(l->l_proc, par->req.databuf, datalen);
-		par->req.databuf = databuf;	/* restore original addr */
+	if (kbuf) {
+		if ((par->req.flags & SCCMD_READ) != 0) {
+			(void) copyout(kbuf, par->req.databuf, datalen);
+		}
+		kmem_free(kbuf, datalen);
 	}
-
 	switch (par->status) {
 	case ISCSI_STATUS_SUCCESS:
 		par->req.retsts = SCCMD_OK;
