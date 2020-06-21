@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.15 2020/05/23 16:40:41 thorpej Exp $ */
+/* $NetBSD: exec.c,v 1.16 2020/06/21 17:24:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -32,7 +32,9 @@
 #include "efifdt.h"
 #include "efiacpi.h"
 #include "efirng.h"
+#include "module.h"
 
+#include <sys/param.h>
 #include <sys/reboot.h>
 
 extern char twiddle_toggle;
@@ -276,6 +278,32 @@ load_fdt_overlays(void)
 }
 
 static void
+load_module(const char *module_name)
+{
+	EFI_PHYSICAL_ADDRESS addr;
+	u_long size;
+	char path[PATH_MAX];
+
+	snprintf(path, sizeof(path), "%s/%s/%s.kmod", module_prefix,
+	    module_name, module_name);
+
+	if (load_file(path, 0, false, &addr, &size) != 0 || addr == 0 || size == 0)
+		return;
+
+	efi_fdt_module(module_name, (u_long)addr, size);
+}
+
+static void
+load_modules(const char *kernel_name)
+{
+	if (!module_enabled)
+		return;
+
+	module_init(kernel_name);
+	module_foreach(load_module);
+}
+
+static void
 generate_efirng(void)
 {
 	EFI_PHYSICAL_ADDRESS addr;
@@ -387,6 +415,7 @@ exec_netbsd(const char *fname, const char *args)
 		    &rndseed_addr, &rndseed_size);
 
 		efi_fdt_init((marks[MARK_END] + FDT_ALIGN) & ~FDT_ALIGN, FDT_ALIGN + 1);
+		load_modules(fname);
 		load_fdt_overlays();
 		efi_fdt_initrd(initrd_addr, initrd_size);
 		efi_fdt_rndseed(rndseed_addr, rndseed_size);
