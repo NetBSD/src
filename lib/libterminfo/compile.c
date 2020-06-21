@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.25 2020/04/05 12:31:02 roy Exp $ */
+/* $NetBSD: compile.c,v 1.26 2020/06/21 15:05:23 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.25 2020/04/05 12:31:02 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.26 2020/06/21 15:05:23 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -560,9 +560,9 @@ _ti_encode_buf_id_num(TBUF *tbuf, int ind, int num, size_t len)
 		return 0;
 	_ti_encode_buf_16(tbuf, ind);
 	if (len == sizeof(uint32_t))
-		_ti_encode_buf_32(tbuf, num);
+		_ti_encode_buf_32(tbuf, (uint32_t)num);
 	else
-		_ti_encode_buf_16(tbuf, num);
+		_ti_encode_buf_16(tbuf, (uint16_t)num);
 	tbuf->entries++;
 	return 1;
 }
