@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.48 2020/04/11 09:15:23 rin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.49 2020/06/21 00:00:27 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.48 2020/04/11 09:15:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2020/06/21 00:00:27 rin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -91,6 +91,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save register context. */
 	memset(&uc, 0, sizeof(uc));
 	uc.uc_flags = _UC_SIGMASK;
+	uc.uc_flags |= (ss->ss_flags & SS_ONSTACK) ?
+	    _UC_SETSTACK : _UC_CLRSTACK;
 	uc.uc_sigmask = *mask;
 	uc.uc_link = l->l_ctxlink;
 	sendsig_reset(l, ksi->ksi_signo);
@@ -199,6 +201,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg_t * const gr = mcp->__gregs;
+	struct proc * const p = l->l_proc;
 	int error;
 
 	/* Restore GPR context, if any. */
@@ -260,6 +263,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_POWERPC_SPE)
 		vec_restore_from_mcontext(l, mcp);
 #endif
+
+	mutex_enter(p->p_lock);
+	if (flags & _UC_SETSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(p->p_lock);
 
 	return (0);
 }
