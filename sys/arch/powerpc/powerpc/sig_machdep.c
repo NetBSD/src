@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.49 2020/06/21 00:00:27 rin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.50 2020/06/21 00:40:00 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2020/06/21 00:00:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.50 2020/06/21 00:40:00 rin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -243,8 +243,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 
+#define TLS_BIAS (TLS_TP_OFFSET + sizeof(struct tls_tcb))
 	if (flags & _UC_TLSBASE)
-		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_R2]);
+		lwp_setprivate(l, (void *)((uintptr_t)gr[_REG_R2] - TLS_BIAS));
 
 #ifdef PPC_HAVE_FPU
 	/* Restore FPU context, if any. */
@@ -279,6 +280,8 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 
-	tf->tf_fixreg[_REG_R2] = (register_t)addr;
+	tf->tf_fixreg[_REG_R2] = (register_t)addr + TLS_BIAS;
+#undef TLS_BIAS
+
 	return 0;
 }
