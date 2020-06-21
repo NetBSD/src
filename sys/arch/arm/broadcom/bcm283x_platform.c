@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.37 2020/02/22 00:28:35 jmcneill Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.38 2020/06/21 07:17:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.37 2020/02/22 00:28:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.38 2020/06/21 07:17:25 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1428,14 +1428,8 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 		     (vb.vbt_macaddr.addr >> 40) & 0xff
 		};
 
-		prop_data_t pd = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
-		KASSERT(pd != NULL);
-		if (prop_dictionary_set(device_properties(dev), "mac-address",
-		    pd) == false) {
-			aprint_error_dev(dev,
-			    "WARNING: Unable to set mac-address property\n");
-		}
-		prop_object_release(pd);
+		prop_dictionary_set_data(dict, "mac-address", enaddr,
+		    ETHER_ADDR_LEN);
 	}
 
 #if NGENFB > 0
