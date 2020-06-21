@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2019/08/15 19:53:01 martin Exp $
+#	$NetBSD: Makefile,v 1.55 2020/06/21 17:17:02 thorpej Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ ARCH_XLAT+= sun2-sun68k.c sun3-sun68k.c
 
 .if !defined(SMALLPROG) && !defined(ARCH_FILES)
 ARCH_FILES=  alpha.c amiga.c
-ARCH_FILES+= emips.c evbarm.c ews4800mips.c
+ARCH_FILES+= emips.c evbarm.c evbmips.c ews4800mips.c
 ARCH_FILES+= hp300.c hppa.c
 ARCH_FILES+= i386.c
 ARCH_FILES+= landisk.c
@@ -32,11 +32,11 @@ COPTS.machines.c+=	-DSINGLE_ARCH=ib_mach_${MACHINE}
 
 SRCS+=${ARCH_FILES}
 
-.if !empty(ARCH_FILES:C/(evbarm)/evboard/:Mevboard.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips)/evboard/:Mevboard.c)
 SRCS+=evboards.c
 .endif
 
-.if !empty(ARCH_FILES:C/(evbarm)/fdt/:Mfdt.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips)/fdt/:Mfdt.c)
 FDTDIR=		${.CURDIR}/../../sys/external/bsd/libfdt/dist
 .PATH:		${FDTDIR}
 CPPFLAGS+=	-DSUPPORT_FDT -I${FDTDIR}
@@ -49,7 +49,7 @@ COPTS.fdt_strerror.c+=	-Wno-error=sign-compare
 
 
 .if !defined(HOSTPROGNAME)
-.if !empty(ARCH_FILES:C/(evbarm)/ofw/:Mofw.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips)/ofw/:Mofw.c)
 CPPFLAGS+=	-DSUPPORT_OPENFIRMWARE
 .endif
 .endif
