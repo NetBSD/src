@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.22 2020/05/23 06:21:15 rin Exp $
+#	$NetBSD: files.imx51,v 1.23 2020/06/21 08:02:43 simonb Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -99,7 +99,7 @@ file	arch/arm/imx/imx51_uart.c		imx51_uart
 defflag	opt_imxuart.h				IMXUARTCONSOLE
 
 # USB controller
-# attach of this driver need to be specified in paltform configuration
+# attach of this driver need to be specified in platform configuration
 device imxusbc { unit, irq } : bus_dma_generic
 file   arch/arm/imx/imx51_usb.c			imxusbc
 
