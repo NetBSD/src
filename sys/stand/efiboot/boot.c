@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2020/06/21 17:24:26 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.23 2020/06/21 23:53:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,12 +34,14 @@
 #include "efienv.h"
 #include "efirng.h"
 #include "module.h"
+#include "bootmenu.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
 #include <machine/limits.h>
 
 #include <loadfile.h>
+#include <bootcfg.h>
 
 extern const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
@@ -96,6 +98,7 @@ void	command_load(char *);
 void	command_unload(char *);
 void	command_ls(char *);
 void	command_mem(char *);
+void	command_menu(char *);
 void	command_printenv(char *);
 void	command_setenv(char *);
 void	command_clearenv(char *);
@@ -116,6 +119,7 @@ const struct boot_command commands[] = {
 	{ "unload",	command_unload,		"unload <module_name>" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "mem",	command_mem,		"mem" },
+	{ "menu",	command_menu,		"menu" },
 	{ "printenv",	command_printenv,	"printenv [key]" },
 	{ "setenv",	command_setenv,		"setenv <key> <value>" },
 	{ "clearenv",	command_clearenv,	"clearenv <key>" },
@@ -266,6 +270,17 @@ command_mem(char *arg)
 		    mem_type, md->PhysicalStart, md->PhysicalStart + (md->NumberOfPages * EFI_PAGE_SIZE) - 1,
 		    md->Attribute);
 	}
+}
+
+void
+command_menu(char *arg)
+{
+	if (bootcfg_info.nummenu == 0) {
+		printf("No menu defined in boot.cfg\n");
+		return;
+	}
+
+	doboottypemenu();	/* Does not return */
 }
 
 void
@@ -530,7 +545,20 @@ boot(void)
 	int currname, c;
 
 	read_env();
+
+	parsebootconf(BOOTCFG_FILENAME);
+
+	if (bootcfg_info.clear)
+		uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+
 	print_banner();
+
+	/* Display menu if configured */
+	twiddle_toggle = 1;
+	if (bootcfg_info.nummenu > 0) {
+		doboottypemenu();	/* No return */
+	}
+
 	printf("Press return to boot now, any other key for boot prompt\n");
 
 	if (netbsd_path[0] != '\0')
