@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.209 2020/05/27 19:33:40 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.210 2020/06/21 16:57:18 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1481,7 +1481,13 @@ IDTVEC(\name)
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
 #else
-	/* Xen already switched to kernel stack */
+	/*
+	 * Xen already switched to kernel stack.
+	 * But it didn't disable events
+	 */
+	pushq	%rsi
+	CLI(si)
+	popq	%rsi
 	addq	$0x10,%rsp	/* gap to match cs:rip */
 	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
@@ -1524,6 +1530,9 @@ IDTVEC_END(syscall32)
 	TEXT_USER_BEGIN
 IDTVEC(osyscall)
 #ifdef XENPV
+	pushq	%rsi
+	CLI(si)
+	popq	%rsi
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11
 	addq $0x10,%rsp
