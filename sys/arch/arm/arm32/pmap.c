@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.414 2020/05/27 06:43:22 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.415 2020/06/21 07:14:15 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.414 2020/05/27 06:43:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.415 2020/06/21 07:14:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6337,12 +6337,12 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 * for L2 descriptor tables and metadata allocation in
 	 * pmap_growkernel().
 	 */
-	size = ((virtual_end - pmap_curmaxkvaddr) + L1_S_OFFSET) / L1_S_SIZE;
+	size = howmany(virtual_end - pmap_curmaxkvaddr, L1_S_SIZE);
 	pmap_alloc_specials(&virtual_avail,
 	    round_page(size * L2_TABLE_SIZE_REAL) / PAGE_SIZE,
 	    &pmap_kernel_l2ptp_kva, NULL);
 
-	size = (size + (L2_BUCKET_SIZE - 1)) / L2_BUCKET_SIZE;
+	size = howmany(size, L2_BUCKET_SIZE);
 	pmap_alloc_specials(&virtual_avail,
 	    round_page(size * sizeof(struct l2_dtable)) / PAGE_SIZE,
 	    &pmap_kernel_l2dtable_kva, NULL);
