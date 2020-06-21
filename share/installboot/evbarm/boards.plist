@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.8 2020/06/21 16:53:57 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.9 2020/06/21 19:39:11 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -294,6 +294,28 @@
 		<string>FriendlyARM NanoPi R1</string>
 		<key>u-boot-pkg</key>
 		<string>nanopi-r1</string>
+	</dict>
+
+	<key>libretech,all-h3-cc-h2-plus</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H2+</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h2-plus</string>
+	</dict>
+	<key>libretech,all-h3-cc-h3</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H3</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h3</string>
+	</dict>
+	<key>libretech,all-h3-cc-h5</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H5</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h5</string>
 	</dict>
 
 	<key>merrii,a31-hummingbird</key>
