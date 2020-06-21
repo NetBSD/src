@@ -316,9 +316,8 @@ bn_sqr_words_internal:
 	sw	$11,-2*4($4)
 
 	.set	noreorder
-	sw	$10,-4($4)
 	bgtz	$8,.L_bn_sqr_words_loop
-	nop
+	sw	$10,-4($4)
 
 	beqz	$6,.L_bn_sqr_words_return
 	nop
@@ -589,9 +588,8 @@ bn_div_3_words:
 
 	lw	$4,($7)
 	move	$10,$5
-	lw	$5,-4($7)
 	bne	$4,$6,bn_div_3_words_internal
-	 nop
+	 lw	$5,-4($7)
 	li	$2,-1
 	jr	$31
 	move	$4,$2
