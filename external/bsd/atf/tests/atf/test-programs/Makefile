@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/02/15 04:15:20 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2020/06/21 13:59:56 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -11,6 +11,7 @@ KYUAFILE=	yes
 TESTS_C=	c_helpers
 
 TESTS_CXX=	cpp_helpers
+SRCS.cpp_helpers=cpp_helpers.cpp
 
 TESTS_SH=	sh_helpers
 .for t in config_test expect_test meta_data_test result_test srcdir_test

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2014/02/15 22:32:26 jmmv Exp $
+# $NetBSD: Makefile,v 1.8 2020/06/21 13:59:56 lukem Exp $
 
 USE_ATF_LIBTOOLS=	yes
 
@@ -23,7 +23,9 @@ TESTS_C=	expect_helpers \
 		several_tcs_helper \
 		zero_tcs_helper
 
-TESTS_CXX=	application_test \
+TESTS_CXX=
+.for test in	\
+		application_test \
 		atffile_test \
 		auto_array_test \
 		config_file_test \
@@ -44,6 +46,9 @@ TESTS_CXX=	application_test \
 		text_test \
 		ui_test \
 		user_test
+TESTS_CXX+=	${test}
+SRCS.${test}=	${test}.cpp
+.endfor
 
 TESTS_SH=	atf-config_test \
 		atf-report_test \
