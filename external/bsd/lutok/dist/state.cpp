@@ -145,7 +145,7 @@ call_cxx_function_from_c(lutok::cxx_function function,
         lutok::state state = lutok::state_c_gate::connect(raw_state);
         return function(state);
     } catch (const std::exception& e) {
-        std::strncpy(error_buf, e.what(), sizeof(error_buf));
+        std::strncpy(error_buf, e.what(), sizeof(error_buf)-1);
     } catch (...) {
         std::strncpy(error_buf, "Unhandled exception in Lua C++ hook",
                      sizeof(error_buf));
