@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.7 2020/03/27 23:02:33 bad Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.8 2020/06/21 16:53:57 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -29,6 +29,17 @@
 -->
 <plist>
 <dict>
+	<!--
+	  -- altera boards
+	  -->
+	<key>terasic,de0-atlas</key>
+	<dict>
+		<key>description</key>
+		<string>Terasic DE-0(Atlas)</string>
+		<key>u-boot-pkg</key>
+		<string>de0-nanosoc</string>
+	</dict>
+
 	<!--
 	  -- amlogic boards
 	  -->
@@ -82,6 +93,13 @@
 		<key>u-boot-pkg</key>
 		<string>pinebook-pro</string>
 	</dict>
+	<key>asus,rk3288-tinker</key>
+	<dict>
+		<key>description</key>
+		<string>Rockchip RK3288 Asus Tinker Board</string>
+		<key>u-boot-pkg</key>
+		<string>tinker</string>
+	</dict>
 
 	<!--
 	 -- mediatek boards
@@ -114,9 +132,16 @@
 	<key>nvidia,p2771-0000</key>
 	<dict>
 		<key>description</key>
-		<string>NVIDIA Tegra186 P2771-0000 Development Board</string>
+		<string>NVIDIA Jetson TX2 Developer Kit</string>
 		<key>u-boot-pkg</key>
 		<string>jetson-tx2</string>
+	</dict>
+	<key>nvidia,p3450-0000</key>
+	<dict>
+		<key>description</key>
+		<string>NVIDIA Jetson Nano Developer Kit</string>
+		<key>u-boot-pkg</key>
+		<string>jetson-nano</string>
 	</dict>
 
 	<!--
@@ -142,6 +167,20 @@
 		<string>TI AM335x BeagleBone Black</string>
 		<key>u-boot-pkg</key>
 		<string>beagleboneblack</string>
+	</dict>
+	<key>ti,omap4-panda</key>
+	<dict>
+		<key>description</key>
+		<string>TI OMAP4 PandaBoard</string>
+		<key>u-boot-pkg</key>
+		<string>pandaboard</string>
+	</dict>
+	<key>ti,omap4-panda-es</key>
+	<dict>
+		<key>description</key>
+		<string>TI OMAP4 PandaBoard-ES</string>
+		<key>u-boot-pkg</key>
+		<string>pandaboard</string>
 	</dict>
 
 	<!--
@@ -218,7 +257,7 @@
 		<key>description</key>
 		<string>Cubietech Cubietruck Plus</string>
 		<key>u-boot-pkg</key>
-		<string>cubietruck_plus</string>
+		<string>cubietruck-plus</string>
 	</dict>
 
 	<key>friendlyarm,nanopi-m1</key>
@@ -293,6 +332,34 @@
 		<string>Olimex A10-OLinuXino-LIME</string>
 		<key>u-boot-pkg</key>
 		<string>a10-olinuxino-lime</string>
+	</dict>
+	<key>olimex,a20-olinuxino-lime2</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-LIME2</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-lime2</string>
+	</dict>
+	<key>olimex,a20-olinuxino-lime2-emmc</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-LIME2-eMMC</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-lime2-emmc</string>
+	</dict>
+	<key>olimex,a20-olinuxino-micro</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-MICRO</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-micro-emmc</string>
+	</dict>
+	<key>olimex,a20-olinuxino-micro-emmc</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-MICRO-eMMC</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-micro-emmc</string>
 	</dict>
 
 	<key>pine64,pine64-plus</key>
@@ -395,6 +462,24 @@
 		<string>Xunlong Orange Pi Zero Plus</string>
 		<key>u-boot-pkg</key>
 		<string>orangepi-zero-plus</string>
+	</dict>
+
+	<!--
+	  -- xilinx boards
+	  -->
+	<key>digilent,zynq-zybo</key>
+	<dict>
+		<key>description</key>
+		<string>Digilent Zybo board</string>
+		<key>u-boot-pkg</key>
+		<string>zynq-zybo</string>
+	</dict>
+	<key>digilent,zynq-zybo-z7</key>
+	<dict>
+		<key>description</key>
+		<string>Digilent Zybo Z7 board</string>
+		<key>u-boot-pkg</key>
+		<string>zynq-zybo-z7</string>
 	</dict>
 </dict>
 </plist>
