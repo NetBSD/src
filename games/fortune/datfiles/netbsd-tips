@@ -35,11 +35,11 @@ You can view your non-default Postfix settings with:
 To report about installed packages with known vulnerabilities,
 fetch the latest pkg-vulnerabilities file as the superuser with:
 
- download-vulnerability-list
+ pkg_admin fetch-pkg-vulnerabilities
 
 And then run:
 
- audit-packages
+ pkg_admin audit
 %
 The following shows an example of temporarily adding 10MB more swap
 space for virtual memory:
@@ -51,7 +51,7 @@ space for virtual memory:
 If your console ever gets broken, you can try resetting it to its
 initial state with:
 
- printf "\033c
+ printf "\033c"
 %
 If you installed a package, but don't know what the software is
 called or what executables to run, use pkg_info with the -L switch
