@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.18 2020/03/29 21:46:22 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.19 2020/06/21 15:05:23 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -276,14 +276,16 @@ _ti_encode_buf_count_str(TBUF *tbuf, const void *buf, size_t len)
 }
 
 static __inline void
-_ti_encode_buf_num(TBUF *tbuf, size_t num, int rtype)
+_ti_encode_buf_num(TBUF *tbuf, int num, int rtype)
 {
 	if (rtype == TERMINFO_RTYPE_O1) {
 		if (num > INT16_MAX)
 			num = INT16_MAX;
-		_ti_encode_buf_16(tbuf, num);
+		_ti_encode_buf_16(tbuf, (uint16_t)num);
 	} else {
-		_ti_encode_buf_32(tbuf, num);
+		if (num > INT32_MAX)
+			num = INT32_MAX;
+		_ti_encode_buf_32(tbuf, (uint32_t)num);
 	}
 }
 
