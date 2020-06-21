@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.25 2019/04/21 11:45:08 maya Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.26 2020/06/21 23:08:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -651,10 +651,6 @@ int kill_all_sessions(void);
 void handle_connection_error(connection_t *, uint32_t, int);
 void add_connection_cleanup(connection_t *);
 
-#ifndef ISCSI_MINIMAL
-uint32_t map_databuf(struct proc *, void **, uint32_t);
-void unmap_databuf(struct proc *, void *, uint32_t);
-#endif
 int iscsiioctl(struct file *, u_long, void *);
 
 session_t *find_session(uint32_t);
