@@ -229,11 +229,12 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	*/
 	{
 		struct buf buf = {
-			.b_dev = vp->v_rdev,
 			.b_bcount = MAXPHYS,
 		};
-		if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys)
+		if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys) {
+			buf.b_dev = pdk->dk_rawvp->v_rdev;
 			(*pdk->dk_driver->d_minphys)(&buf);
+		}
 		dvd->vd_maxphys = buf.b_bcount;
 	}
 
