@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.407 2020/06/15 01:57:31 christos Exp $
+#	$NetBSD: bsd.README,v 1.408 2020/06/21 13:29:05 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1645,8 +1645,16 @@ PROG_CXX	If defined, the name of the program to build.  Also
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.
 
+PROGS		Multiple programs to build from a single directory.
+		Defaults to PROG. For each program ${_P} in ${PROGS},
+		uses SRCS.${_P}, defaulting to ${_P}.c.
+
+PROGS_CXX	Multiple C++ programs to build from a single directory.
+		Defaults to PROG_CXX. For each program ${_P} in ${PROGS_CXX},
+		uses SRCS.${_P}, defaulting to ${_P}.cc.
+
 SRCS		List of source files to build the program.  If SRCS is not
-		defined, it's assumed to be ${PROG}.c.
+		defined, it's assumed to be ${PROG}.c or ${PROG_CXX}.cc.
 
 DPSRCS		List of source files which are needed for generating
 		dependencies, but are not needed in ${SRCS}.
