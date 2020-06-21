@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.287.2.2 2020/04/28 18:00:56 martin Exp $
+$NetBSD: acronyms,v 1.287.2.3 2020/06/21 10:28:20 martin Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -9,6 +9,7 @@ A/S/L	age/sex/location
 AAMOF	as a matter of fact
 ABD	all but dissertation
 AC	audible chuckle
+ACAB	all cats are beautiful
 ADD	attention deficit disorder
 ADHD	attention deficit (and) hyperactivity disorder
 ADN	any day now
@@ -58,6 +59,7 @@ B/W	bandwidth
 B/W	between
 BAI	goodbye
 BAK	back at keyboard
+BAU	business as usual
 BBIAB	be back in a bit
 BBL	[I'll] be back later
 BBR	burnt beyond repair
@@ -167,6 +169,7 @@ FNO	from now on
 FOC	free of charge
 FPS	first person shooter
 FPS	frames per second
+FQA	frequently questioned answer
 FRAND	fair, reasonable, and non-discriminatory
 FSDO	for some definition of
 FSVO	for some value of
@@ -191,6 +194,7 @@ GAC	get a clue
 GAL	get a life
 GBTW	get back to work
 GCD	greatest common divisor
+GCHQ	Government Communications Headquarters (UK)
 GDPR	General Data Protection Regulation
 GF	girlfriend
 GFCI	ground-fault circuit interrupter
@@ -466,6 +470,7 @@ PTT	post-telephone-telegraph
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
+QOI	quality of information
 RA	residential advisor
 RAND	reasonable and non-discriminatory
 RCD	residual current device
@@ -584,6 +589,7 @@ UGT	universal greeting time
 UPC	Universal Product Code
 UR	your
 UR	{you're, you are}
+URM	underrepresented minority
 UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
