@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.62 2020/04/16 22:11:12 rin Exp $	*/
+/*	$NetBSD: types.h,v 1.63 2020/06/21 00:39:59 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -89,7 +89,6 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE___LWP_GETTCB_FAST
-#define	__HAVE___LWP_SETTCB
 #define	__HAVE_TLS_VARIANT_I
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
