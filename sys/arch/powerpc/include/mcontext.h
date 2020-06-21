@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.18 2018/02/15 15:53:56 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19 2020/06/21 00:00:27 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ typedef struct {
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
 #define	_UC_POWERPC_SPE	0x00020000	/* Vector Register File valid */
 #define	_UC_TLSBASE	0x00080000	/* thread context valid in R2 */
+#define	_UC_SETSTACK	0x00100000
+#define	_UC_CLRSTACK	0x00200000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_R1])
 #define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_R31])
