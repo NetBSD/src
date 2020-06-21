@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2019/04/26 08:52:16 maya Exp $
+# $NetBSD: Makefile,v 1.47 2020/06/21 06:58:16 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,8 @@ TESTS_C+=	t_sqrt
 TESTS_C+=	t_tan
 TESTS_C+=	t_tanh
 TESTS_CXX+=	t_cabsl
+
+SRCS.t_cabsl=	t_cabsl.cxx
 
 LDADD+=		-lm
 #COPTS+=	-Wfloat-equal
