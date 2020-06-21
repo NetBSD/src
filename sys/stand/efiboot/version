@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.16 2020/06/21 17:24:26 jmcneill Exp $
+$NetBSD: version,v 1.17 2020/06/21 23:53:26 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -20,3 +20,4 @@ is taken as the current.
 1.13:	Add rndseed support.
 1.14:	Add EFI RNG support.
 1.15:	Add module support.
+2.0:	Add boot.cfg support.
