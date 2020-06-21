@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.134 2020/06/20 15:45:22 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.135 2020/06/21 17:25:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.134 2020/06/20 15:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.135 2020/06/21 17:25:03 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -687,6 +687,9 @@ dosoftints(void)
 void
 module_init_md(void)
 {
+#ifdef FDT
+	arm_fdt_module_init();
+#endif
 }
 #endif /* MODULAR */
 
