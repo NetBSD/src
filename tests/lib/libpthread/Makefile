@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2019/04/24 11:43:19 kamil Exp $
+# $NetBSD: Makefile,v 1.15 2020/06/21 07:06:05 lukem Exp $
 
 NOMAN=		# defined
 
@@ -55,6 +55,7 @@ TESTS_C+=	t_call_once t_cnd t_mtx t_thrd t_tss # C11 threads(3)
 COPTS.h_thread_local_dtor.cpp+=	-std=c++11
 # Deal with questionable warning and header quality in libstdc++.
 COPTS.h_thread_local_dtor.cpp+=	 ${${ACTIVE_CC} == "gcc" :?  -Wno-ctor-dtor-privacy -Wno-sign-compare -Wno-shadow :}
+SRCS.h_thread_local_dtor= h_thread_local_dtor.cpp
 
 FILESDIR=	${TESTSDIR}
 FILES=		d_mach
