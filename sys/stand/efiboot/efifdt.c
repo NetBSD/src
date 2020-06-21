@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.23 2020/05/14 19:21:53 riastradh Exp $ */
+/* $NetBSD: efifdt.c,v 1.24 2020/06/21 17:24:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -424,4 +424,19 @@ efi_fdt_efirng(u_long efirng_addr, u_long efirng_size)
 	    efirng_addr);
 	fdt_setprop_u64(fdt_data, chosen, "netbsd,efirng-end",
 	    efirng_addr + efirng_size);
+}
+
+/* pass in module information */
+void
+efi_fdt_module(const char *module_name, u_long module_addr, u_long module_size)
+{
+	int chosen;
+
+	if (module_size == 0)
+		return;
+
+	chosen = efi_fdt_chosen();
+	fdt_appendprop_string(fdt_data, chosen, "netbsd,module-names", module_name);
+	fdt_appendprop_u64(fdt_data, chosen, "netbsd,modules", module_addr);
+	fdt_appendprop_u64(fdt_data, chosen, "netbsd,modules", module_size);
 }

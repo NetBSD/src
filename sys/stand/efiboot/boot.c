@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2020/05/14 19:19:08 riastradh Exp $	*/
+/*	$NetBSD: boot.c,v 1.22 2020/06/21 17:24:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -33,6 +33,7 @@
 #include "efiacpi.h"
 #include "efienv.h"
 #include "efirng.h"
+#include "module.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -90,6 +91,9 @@ void	command_dtb(char *);
 void	command_plist(char *);
 void	command_initrd(char *);
 void	command_rndseed(char *);
+void	command_modules(char *);
+void	command_load(char *);
+void	command_unload(char *);
 void	command_ls(char *);
 void	command_mem(char *);
 void	command_printenv(char *);
@@ -107,6 +111,9 @@ const struct boot_command commands[] = {
 	{ "plist",	command_plist,		"plist [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
+	{ "modules",	command_modules,	"modules [{on|off|reset}]" },
+	{ "load",	command_load,		"load <module_name>" },
+	{ "unload",	command_unload,		"unload <module_name>" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "mem",	command_mem,		"mem" },
 	{ "printenv",	command_printenv,	"printenv [key]" },
@@ -190,6 +197,47 @@ void
 command_rndseed(char *arg)
 {
 	set_rndseed_path(arg);
+}
+
+void
+command_modules(char *arg)
+{
+	if (arg && *arg) {
+		if (strcmp(arg, "on") == 0)
+			module_enable(1);
+		else if (strcmp(arg, "off") == 0)
+			module_enable(0);
+		else if (strcmp(arg, "reset") == 0)
+			module_remove_all();
+		else {
+			command_help("");
+			return;
+		}
+	} else {
+		printf("modules are %sabled\n", module_enabled ? "en" : "dis");
+	}
+}
+
+void
+command_load(char *arg)
+{
+	if (!arg || !*arg) {
+		command_help("");
+		return;
+	}
+
+	module_add(arg);
+}
+
+void
+command_unload(char *arg)
+{
+	if (!arg || !*arg) {
+		command_help("");
+		return;
+	}
+
+	module_remove(arg);
 }
 
 void
