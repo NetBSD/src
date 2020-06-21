@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.84 2019/01/21 21:11:54 christos Exp $
+#	$NetBSD: bsd.dep.mk,v 1.85 2020/06/21 03:39:21 lukem Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -94,16 +94,16 @@ _MKDEP_FILEFLAGS=
 
 ##### Clean rules
 .if defined(SRCS) && !empty(SRCS)
-CLEANDIRFILES+= .depend ${__DPSRCS.d} ${__DPSRCS.d:.d=.d.tmp} ${.CURDIR}/tags ${CLEANDEPEND}
+CLEANDIRFILES+= .depend ${__DPSRCS.d} ${__DPSRCS.d:.d=.d.tmp} tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
-.if !target(tags)
+.if !commands(tags)
 tags: ${SRCS}
 .if defined(SRCS) && !empty(SRCS)
 	${_MKTARGET_CREATE}
-	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
-	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
+	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:M*.[cly]} | \
+	    ${TOOL_SED} "s;\${.CURDIR}/;;" > ${.OBJDIR}/tags
 .endif
 .endif
 
