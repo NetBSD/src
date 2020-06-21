@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1251 2020/06/15 01:57:29 christos Exp $
+# $NetBSD: mi,v 1.1252 2020/06/21 17:15:51 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3132,6 +3132,8 @@
 ./usr/share/installboot				base-sysutil-share
 ./usr/share/installboot/evbarm			base-sysutil-share
 ./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
+./usr/share/installboot/evbmips			base-sysutil-share
+./usr/share/installboot/evbmips/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
