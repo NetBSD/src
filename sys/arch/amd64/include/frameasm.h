@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.50 2020/06/01 22:58:06 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.51 2020/06/21 16:53:37 bouyer Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -48,7 +48,7 @@
 #define STI(temp_reg) sti
 #define PUSHF(temp_reg) pushf
 #define POPL popl
-#endif	/* XEN */
+#endif	/* XENPV */
 
 #define HP_NAME_CLAC		1
 #define HP_NAME_STAC		2
