@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.51 2019/12/07 10:19:35 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.52 2020/06/21 16:57:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #ifdef	XENPV
-#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
+#define	PRE_TRAP	CLI(cx); movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
 #endif
@@ -231,9 +231,9 @@ IDTVEC(trap01)
 	movw	%ds,TF_DS(%rsp)
 
 	jmp	.Lalltraps_noentry
-#else
+#else /* !XENPV */
 	ZTRAP(T_TRCTRAP)
-#endif
+#endif /* !XENPV */
 IDTVEC_END(trap01)
 
 /*
@@ -250,7 +250,7 @@ IDTVEC_END(trap01)
 IDTVEC(trap02)
 #if defined(XENPV)
 	ZTRAP(T_NMI)
-#else
+#else /* XENPV */
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
@@ -299,7 +299,7 @@ IDTVEC(trap02)
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
-#endif
+#endif /* XENPV */
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)
@@ -361,7 +361,7 @@ IDTVEC_END(trap07)
 IDTVEC(trap08)
 #if defined(XENPV)
 	TRAP(T_DOUBLEFLT)
-#else
+#else /* XENPV */
 	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
@@ -396,7 +396,7 @@ IDTVEC(trap08)
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
-#endif
+#endif /* XENPV */
 IDTVEC_END(trap08)
 
 IDTVEC(trap09)
@@ -414,7 +414,7 @@ IDTVEC_END(trap10)
  * in order to copy the user segment registers into the fault frame.
  */
 #define kernuser_reenter alltraps
-#endif
+#endif /* XENPV */
 
 IDTVEC(trap11)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
@@ -448,6 +448,14 @@ IDTVEC(trap16)
 	ZTRAP_NJ(T_ARITHTRAP)
 .Ldo_fputrap:
 	INTRENTRY
+#ifdef XENPV
+	/* traps are called with interrupts enabled, and we may have been
+	 * interrupted just before the CLI in the trap macro.
+	 * we have to check if a FPU reload is needed.
+	 */ 
+	movq    CPUVAR(CURLWP),%r14
+	HANDLE_DEFERRED_FPU
+#endif /* XENPV */
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
