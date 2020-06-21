@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.23 2020/06/21 08:02:43 simonb Exp $
+#	$NetBSD: files.imx51,v 1.24 2020/06/21 16:33:34 skrll Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -117,7 +117,7 @@ file	arch/arm/imx/imxi2c.c		imxi2c
 file	arch/arm/imx/imx51_i2c.c	imxi2c
 
 # SPI bus controller
-# attach of this driver need to be specified in paltform configuration
+# attach of this driver need to be specified in platform configuration
 # use flags to module version
 device  imxspi : spibus
 file    arch/arm/imx/imxspi.c			imxspi
