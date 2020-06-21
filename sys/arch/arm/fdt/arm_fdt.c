@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.10 2020/01/05 17:16:07 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.11 2020/06/21 17:25:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,9 +27,10 @@
  */
 
 #include "opt_arm_timer.h"
+#include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.10 2020/01/05 17:16:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.11 2020/06/21 17:25:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.10 2020/01/05 17:16:07 jmcneill Exp $"
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/bus.h>
+#include <sys/module.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/ofw/openfirm.h>
@@ -200,3 +204,52 @@ cpu_initclocks(void)
 	_arm_fdt_timer_init();
 }
 #endif
+
+void
+arm_fdt_module_init(void)
+{
+#ifdef MODULAR
+	const int chosen = OF_finddevice("/chosen");
+	const char *module_name;
+	const uint64_t *data;
+	u_int index;
+	paddr_t pa;
+	vaddr_t va;
+	int len;
+
+	if (chosen == -1)
+		return;
+
+	data = fdtbus_get_prop(chosen, "netbsd,modules", &len);
+	if (data == NULL)
+		return;
+
+	for (index = 0; index < len / 16; index++, data += 2) {
+		module_name = fdtbus_get_string_index(chosen,
+		    "netbsd,module-names", index);
+		if (module_name == NULL)
+			break;
+
+		const paddr_t startpa = (paddr_t)be64dec(data + 0);
+		const size_t size = (size_t)be64dec(data + 1);
+		const paddr_t endpa = round_page(startpa + size);
+
+		const vaddr_t startva = uvm_km_alloc(kernel_map, endpa - startpa,
+		    0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+		if (startva == 0) {
+			printf("ERROR: Cannot allocate VA for module %s\n",
+			    module_name);
+			continue;
+		}
+
+		for (pa = startpa, va = startva;
+		     pa < endpa;
+		     pa += PAGE_SIZE, va += PAGE_SIZE) {
+			pmap_kenter_pa(va, pa, VM_PROT_ALL, PMAP_WRITE_BACK);
+		}
+		pmap_update(pmap_kernel());
+
+		module_prime(module_name, (void *)(uintptr_t)startva, size);
+	}
+#endif /* !MODULAR */
+}

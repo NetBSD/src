@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.42 2020/04/13 05:40:25 maxv Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.43 2020/06/21 17:25:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.42 2020/04/13 05:40:25 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.43 2020/06/21 17:25:03 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -530,6 +530,9 @@ machdep_init(void)
 void
 module_init_md(void)
 {
+#ifdef FDT
+	arm_fdt_module_init();
+#endif
 }
 #endif /* MODULAR */
 
