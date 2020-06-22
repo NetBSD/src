@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.6 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.7 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,7 +29,7 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.6 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.7 2020/06/22 02:26:20 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -72,17 +72,6 @@ struct octfpa_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct octfpa_desc	sc_descs[8];
-
-#ifdef CNMAC_DEBUG
-	struct evcnt		sc_ev_fpaq7perr;
-	struct evcnt		sc_ev_fpaq7coff;
-	struct evcnt		sc_ev_fpaq7und;
-	struct evcnt		sc_ev_fpaq6perr;
-	struct evcnt		sc_ev_fpaq6coff;
-	struct evcnt		sc_ev_fpaq6und;
-	struct evcnt		sc_ev_fpaq5perr;
-	struct evcnt		sc_ev_fpaq5coff;
-#endif
 };
 
 void			octfpa_bootstrap(struct octeon_config *);
@@ -93,11 +82,6 @@ void			octfpa_buf_dma_alloc(struct octfpa_buf *);
 static void		octfpa_init(struct octfpa_softc *);
 #ifdef notyet
 static uint64_t		octfpa_iobdma(struct octfpa_softc *, int, int);
-#endif
-
-#ifdef CNMAC_DEBUG
-void			octfpa_intr_evcnt_attach(struct octfpa_softc *);
-void			octfpa_intr_rml(void *);
 #endif
 
 static struct octfpa_softc	octfpa_softc;
@@ -121,94 +105,6 @@ octfpa_reset(void)
 {
 	/* XXX */
 }
-
-#ifdef CNMAC_DEBUG
-int			octfpa_intr_rml_verbose;
-struct evcnt		octfpa_intr_evcnt;
-
-static const struct octeon_evcnt_entry octfpa_intr_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct octfpa_softc, name, type, parent, descr)
-	_ENTRY(fpaq7perr,          MISC, NULL, "fpa q7 pointer"),
-	_ENTRY(fpaq7coff,          MISC, NULL, "fpa q7 counter offset"),
-	_ENTRY(fpaq7und,           MISC, NULL, "fpa q7 underflow"),
-	_ENTRY(fpaq6perr,          MISC, NULL, "fpa q6 pointer"),
-	_ENTRY(fpaq6coff,          MISC, NULL, "fpa q6 counter offset"),
-	_ENTRY(fpaq6und,           MISC, NULL, "fpa q6 underflow"),
-	_ENTRY(fpaq5perr,          MISC, NULL, "fpa q5 pointer"),
-	_ENTRY(fpaq5coff,          MISC, NULL, "fpa q5 counter offset"),
-#undef	_ENTRY
-};
-
-void
-octfpa_intr_evcnt_attach(struct octfpa_softc *sc)
-{
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octfpa_intr_evcnt_entries, "fpa0");
-}
-
-void
-octfpa_intr_rml(void *arg)
-{
-	struct octfpa_softc *sc;
-	uint64_t reg;
-
-	octfpa_intr_evcnt.ev_count++;
-	sc = &octfpa_softc;
-	KASSERT(sc != NULL);
-	reg = octfpa_int_summary();
-	if (octfpa_intr_rml_verbose)
-		printf("%s: FPA_INT_SUM=0x%016" PRIx64 "\n", __func__, reg);
-	if (reg & FPA_INT_SUM_Q7_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq7perr);
-	if (reg & FPA_INT_SUM_Q7_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq7coff);
-	if (reg & FPA_INT_SUM_Q7_UND)
-		OCTEON_EVCNT_INC(sc, fpaq7und);
-	if (reg & FPA_INT_SUM_Q6_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq6perr);
-	if (reg & FPA_INT_SUM_Q6_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq6coff);
-	if (reg & FPA_INT_SUM_Q6_UND)
-		OCTEON_EVCNT_INC(sc, fpaq6und);
-	if (reg & FPA_INT_SUM_Q5_PERR)
-		OCTEON_EVCNT_INC(sc, fpaq5perr);
-	if (reg & FPA_INT_SUM_Q5_COFF)
-		OCTEON_EVCNT_INC(sc, fpaq5coff);
-}
-
-void
-octfpa_int_enable(struct octfpa_softc *sc, int enable)
-{
-	const uint64_t int_xxx =
-	    FPA_INT_ENB_Q7_PERR | FPA_INT_ENB_Q7_COFF | FPA_INT_ENB_Q7_UND |
-	    FPA_INT_ENB_Q6_PERR | FPA_INT_ENB_Q6_COFF | FPA_INT_ENB_Q6_UND |
-	    FPA_INT_ENB_Q5_PERR | FPA_INT_ENB_Q5_COFF | FPA_INT_ENB_Q5_UND |
-	    FPA_INT_ENB_Q4_PERR | FPA_INT_ENB_Q4_COFF | FPA_INT_ENB_Q4_UND |
-	    FPA_INT_ENB_Q3_PERR | FPA_INT_ENB_Q3_COFF | FPA_INT_ENB_Q3_UND |
-	    FPA_INT_ENB_Q2_PERR | FPA_INT_ENB_Q2_COFF | FPA_INT_ENB_Q2_UND |
-	    FPA_INT_ENB_Q1_PERR | FPA_INT_ENB_Q1_COFF | FPA_INT_ENB_Q1_UND |
-	    FPA_INT_ENB_Q0_PERR | FPA_INT_ENB_Q0_COFF | FPA_INT_ENB_Q0_UND |
-	    FPA_INT_ENB_FED1_DBE | FPA_INT_ENB_FED1_SBE |
-	    FPA_INT_ENB_FED0_DBE | FPA_INT_ENB_FED0_SBE;
-
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET,
-	    int_xxx);
-	if (enable)
-		bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_ENB_OFFSET,
-		    int_xxx);
-}
-
-uint64_t
-octfpa_int_summary(void)
-{
-	struct octfpa_softc *sc = &octfpa_softc;
-	uint64_t summary;
-
-	summary = bus_space_read_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET);
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET, summary);
-	return summary;
-}
-#endif
 
 int
 octfpa_buf_init(int poolno, size_t size, size_t nelems, struct octfpa_buf **rfb)
@@ -315,10 +211,6 @@ octfpa_init(struct octfpa_softc *sc)
 
 	octfpa_init_bus(sc);
 	octfpa_init_regs(sc);
-#ifdef CNMAC_DEBUG
-	octfpa_int_enable(sc, 1);
-	octfpa_intr_evcnt_attach(sc);
-#endif
 }
 
 void
@@ -348,21 +240,6 @@ octfpa_init_regs(struct octfpa_softc *sc)
 
 	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_CTL_STATUS_OFFSET,
 	    FPA_CTL_STATUS_ENB);
-
-/* XXX */
-#ifdef CNMAC_DEBUG
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_ENB_OFFSET,
-	    FPA_INT_ENB_Q7_PERR | FPA_INT_ENB_Q7_COFF | FPA_INT_ENB_Q7_UND |
-	    FPA_INT_ENB_Q6_PERR | FPA_INT_ENB_Q6_COFF | FPA_INT_ENB_Q6_UND |
-	    FPA_INT_ENB_Q5_PERR | FPA_INT_ENB_Q5_COFF | FPA_INT_ENB_Q5_UND |
-	    FPA_INT_ENB_Q4_PERR | FPA_INT_ENB_Q4_COFF | FPA_INT_ENB_Q4_UND |
-	    FPA_INT_ENB_Q3_PERR | FPA_INT_ENB_Q3_COFF | FPA_INT_ENB_Q3_UND |
-	    FPA_INT_ENB_Q2_PERR | FPA_INT_ENB_Q2_COFF | FPA_INT_ENB_Q2_UND |
-	    FPA_INT_ENB_Q1_PERR | FPA_INT_ENB_Q1_COFF | FPA_INT_ENB_Q1_UND |
-	    FPA_INT_ENB_Q0_PERR | FPA_INT_ENB_Q0_COFF | FPA_INT_ENB_Q0_UND |
-	    FPA_INT_ENB_FED1_DBE | FPA_INT_ENB_FED1_SBE |
-	    FPA_INT_ENB_FED0_DBE | FPA_INT_ENB_FED0_SBE);
-#endif
 }
 
 int
@@ -406,113 +283,3 @@ octfpa_available_fpa_pool(int *available, int pool_no) {
 
 	return 0;
 }
-
-#ifdef CNMAC_DEBUG
-void		octfpa_dump_regs(void);
-void		octfpa_dump_bufs(void);
-void		octfpa_dump_buf(int);
-
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
-
-struct octfpa_dump_reg_ {
-	const char *name;
-	const char *format;
-	size_t	offset;
-};
-
-static const struct octfpa_dump_reg_ octfpa_dump_regs_[] = {
-	_ENTRY(FPA_INT_SUM),
-	_ENTRY(FPA_INT_ENB),
-	_ENTRY(FPA_CTL_STATUS),
-	_ENTRY(FPA_QUE0_AVAILABLE),
-	_ENTRY(FPA_QUE1_AVAILABLE),
-	_ENTRY(FPA_QUE2_AVAILABLE),
-	_ENTRY(FPA_QUE3_AVAILABLE),
-	_ENTRY(FPA_QUE4_AVAILABLE),
-	_ENTRY(FPA_QUE5_AVAILABLE),
-	_ENTRY(FPA_QUE6_AVAILABLE),
-	_ENTRY(FPA_QUE7_AVAILABLE),
-	_ENTRY(FPA_WART_CTL),
-	_ENTRY(FPA_WART_STATUS),
-	_ENTRY(FPA_BIST_STATUS),
-	_ENTRY(FPA_QUE0_PAGE_INDEX),
-	_ENTRY(FPA_QUE1_PAGE_INDEX),
-	_ENTRY(FPA_QUE2_PAGE_INDEX),
-	_ENTRY(FPA_QUE3_PAGE_INDEX),
-	_ENTRY(FPA_QUE4_PAGE_INDEX),
-	_ENTRY(FPA_QUE5_PAGE_INDEX),
-	_ENTRY(FPA_QUE6_PAGE_INDEX),
-	_ENTRY(FPA_QUE7_PAGE_INDEX),
-	_ENTRY(FPA_QUE_EXP),
-	_ENTRY(FPA_QUE_ACT),
-};
-
-static const char *octfpa_dump_bufs_[8] = {
-	[0] = "recv",
-	[1] = "wq",
-	[2] = "cmdbuf",
-	[3] = "gbuf",
-};
-
-void
-octfpa_dump(void)
-{
-	octfpa_dump_regs();
-	octfpa_dump_bufs();
-}
-
-void
-octfpa_dump_regs(void)
-{
-	struct octfpa_softc *sc = &octfpa_softc;
-	const struct octfpa_dump_reg_ *reg;
-	uint64_t tmp;
-	char buf[512];
-	int i;
-
-	for (i = 0; i < (int)__arraycount(octfpa_dump_regs_); i++) {
-		reg = &octfpa_dump_regs_[i];
-		tmp = bus_space_read_8(sc->sc_regt, sc->sc_regh, reg->offset);
-		if (reg->format == NULL) {
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		} else {
-			snprintb(buf, sizeof(buf), reg->format, tmp);
-		}
-		printf("\t%-24s: %s\n", reg->name, buf);
-	}
-}
-
-/*
- * XXX assume pool 7 is unused!
- */
-void
-octfpa_dump_bufs(void)
-{
-	int i;
-
-	for (i = 0; i < 8; i++)
-		octfpa_dump_buf(i);
-}
-
-void
-octfpa_dump_buf(int pool)
-{
-	int i;
-	uint64_t ptr;
-	const char *name;
-
-	name = octfpa_dump_bufs_[pool];
-	if (name == NULL)
-		return;
-	printf("%s pool:\n", name);
-	for (i = 0; (ptr = octfpa_load(pool)) != 0; i++) {
-		printf("\t%016" PRIx64 "%s", ptr, ((i % 4) == 3) ? "\n" : "");
-		octfpa_store(ptr, OCTEON_POOL_NO_DUMP, 0);
-	}
-	if (i % 4 != 3)
-		printf("\n");
-	printf("total = %d buffers\n", i);
-	while ((ptr = octfpa_load(OCTEON_POOL_NO_DUMP)) != 0)
-		octfpa_store(ptr, pool, 0);
-}
-#endif

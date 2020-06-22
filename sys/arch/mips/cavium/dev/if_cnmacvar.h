@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmacvar.h,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: if_cnmacvar.h,v 1.3 2020/06/22 02:26:19 simonb Exp $	*/
 
 #undef DEBUG
 #undef TENBASET_DBG
@@ -118,42 +118,5 @@ struct cnmac_softc {
 	struct timeval		sc_rate_recv_fixup_odd_nibble_preamble_cap;
 	struct timeval		sc_rate_recv_fixup_odd_nibble_crc_last;
 	struct timeval		sc_rate_recv_fixup_odd_nibble_crc_cap;
-#ifdef CNMAC_DEBUG
-	struct timeval		sc_rate_recv_fixup_odd_nibble_addr_last;
-	struct timeval		sc_rate_recv_fixup_odd_nibble_addr_cap;
-#endif
 	int			sc_quirks;
-#ifdef CNMAC_DEBUG
-	struct evcnt		sc_ev_rx;
-	struct evcnt		sc_ev_rxint;
-	struct evcnt		sc_ev_rxrs;
-	struct evcnt		sc_ev_rxbufpkalloc;
-	struct evcnt		sc_ev_rxbufpkput;
-	struct evcnt		sc_ev_rxbufwqalloc;
-	struct evcnt		sc_ev_rxbufwqput;
-	struct evcnt		sc_ev_rxerrcode;
-	struct evcnt		sc_ev_rxerrfix;
-	struct evcnt		sc_ev_rxerrjmb;
-	struct evcnt		sc_ev_rxerrlink;
-	struct evcnt		sc_ev_rxerroff;
-	struct evcnt		sc_ev_rxonperrshort;
-	struct evcnt		sc_ev_rxonperrpreamble;
-	struct evcnt		sc_ev_rxonperrcrc;
-	struct evcnt		sc_ev_rxonperraddress;
-	struct evcnt		sc_ev_rxonponp;
-	struct evcnt		sc_ev_rxonpok;
-	struct evcnt		sc_ev_tx;
-	struct evcnt		sc_ev_txadd;
-	struct evcnt		sc_ev_txbufcballoc;
-	struct evcnt		sc_ev_txbufcbget;
-	struct evcnt		sc_ev_txbufgballoc;
-	struct evcnt		sc_ev_txbufgbget;
-	struct evcnt		sc_ev_txbufgbput;
-	struct evcnt		sc_ev_txdel;
-	struct evcnt		sc_ev_txerr;
-	struct evcnt		sc_ev_txerrcmd;
-	struct evcnt		sc_ev_txerrgbuf;
-	struct evcnt		sc_ev_txerrlink;
-	struct evcnt		sc_ev_txerrmkcmd;
-#endif
 };
