@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.107 2015/10/14 15:53:24 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.108 2020/06/22 07:50:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.107 2015/10/14 15:53:24 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.108 2020/06/22 07:50:53 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -945,7 +945,7 @@ runcom(void)
 #endif /* CHROOT */
 
 	/*
-	 * Regardless of whether in chroot or not, we booted successfuly.
+	 * Regardless of whether in chroot or not, we booted successfully.
 	 * It's time to spawn gettys (ie. next_step's value at this point).
 	 */
 	runcom_mode = AUTOBOOT;		/* the default */
