@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.219 2020/06/15 01:57:30 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.220 2020/06/22 03:16:29 rin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -485,6 +485,7 @@
 ./usr/share/info
 ./usr/share/installboot
 ./usr/share/installboot/evbarm
+./usr/share/installboot/evbmips
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
