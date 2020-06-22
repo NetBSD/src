@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.20 2020/06/21 00:39:59 rin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.21 2020/06/22 05:34:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,8 +141,7 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-#if defined(_KERNEL) || \
-defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
 #include <sys/tls.h>
 
 /*
@@ -154,7 +153,6 @@ defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
 #define	TLS_DTV_OFFSET	0x8000
 __CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
 
-#ifndef _KERNEL
 static __inline void *
 __lwp_gettcb_fast(void)
 {
@@ -167,7 +165,21 @@ __lwp_gettcb_fast(void)
 
 	return __tcb;
 }
-#endif /* !_KERNEL */
-#endif /* _KERNEL || _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
+
+void _lwp_setprivate(void *);
+
+static __inline void
+__lwp_settcb(void *__tcb)
+{
+	__tcb = (uint8_t *)__tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
+
+	__asm __volatile(
+		"mr %%r2,%[__tcb]"
+	    :
+	    :	[__tcb] "r" (__tcb));
+
+	_lwp_setprivate(__tcb);
+}
+#endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */
