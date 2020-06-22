@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.28 2020/06/20 18:30:53 riastradh Exp $
+# $NetBSD: postinstall.in,v 1.29 2020/06/22 06:55:41 rin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -845,15 +845,24 @@ do_bluetooth()
 }
 
 fixblock() {
-	for i; do
-		if [ ! -f "$i" ]; then
-			continue
+	local op="$1"
+	local target="${DEST_DIR}$2"
+
+	if [ ! -f "${target}" ]; then
+		continue
+	fi
+
+	if ${GREP} '[bB]lack' "${target}" > /dev/null; then
+		if [ "$1" = "check" ]; then
+			msg "Fix old configuration file(s)."
+			return 1
+		else
+			local p=$(${STAT} -f %Lp "${target}")
+			chmod u+w "${target}" || return 1
+			${SED} -i -e 's/\([bB]\)lack/\1lock/g' "${target}"
+			chmod "${p}" "${target}"
 		fi
-		local p=$(stat -f %Lp "$i")
-		chmod u+w "$i"
-		sed -i -e 's/\([bB]\)lack/\1lock/g' "$i"
-		chmod "$p" "$i"
-	done
+	fi
 }
 
 #
@@ -862,23 +871,26 @@ fixblock() {
 additem blocklist "rename old files to blocklist"
 do_blocklist()
 {
-	local rcfiles="/etc/rc.conf /etc/npf.conf /etc/defaults/rc.conf"
-
+	[ -n "$1" ] || err 3 "USAGE: do_blocklist  fix|check"
+	local op="$1"
+	
 	# if we are actually using blocklistd
-	if [ -f /var/db/blacklist.db ]; then
-		mv /var/db/blacklist.db /var/db/blocklist.db
-	fi
-	if [ -f /etc/blacklistd.conf ]; then
-		mv /etc/blacklistd.conf /etc/blocklistd.conf
-		fixblock /etc/blocklistd.conf
-	fi
+	for i in /var/db/blacklist.db /etc/blacklistd.conf; do
+		local old="${DEST_DIR}${i}"
+		if [ ! -f "${old}" ]; then
+			continue
+		elif [ "$1" = "check" ]; then
+			msg "Rename old file(s)."
+			return 1
+		fi
+		local new=$(echo "${old}" | ${SED} s/black/block/)
+		mv "${old}" "${new}" || return 1
+	done
 
-	# if we have fixed the rc files we are done
-	if ! grep -qs $rcfiles; then
-		return
-	fi
-
-	fixblock $rcfiles
+	for i in /etc/rc.conf /etc/npf.conf /etc/blocklistd.conf \
+	    /etc/defaults/rc.conf; do
+		fixblock "${op}" "${i}" || return 1
+	done
 }
 
 #
