@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.30 2020/06/17 08:42:16 rin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.31 2020/06/22 02:51:06 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -671,6 +671,9 @@ are_fpu_exceptions_supported(void)
 		return false;
 	return true;
 }
+#elif __powerpc__
+/* Integer division by zero do not trap on powerpc. */
+#define are_fpu_exceptions_supported() 0
 #else
 #define are_fpu_exceptions_supported() 1
 #endif
@@ -678,14 +681,15 @@ are_fpu_exceptions_supported(void)
 static void __used
 trigger_fpe(void)
 {
-	volatile double a = getpid();
-	volatile double b = atoi("0");
+	volatile int a = getpid();
+	volatile int b = atoi("0");
 
 #ifdef __HAVE_FENV
 	feenableexcept(FE_ALL_EXCEPT);
 #endif
 
-	usleep((int)(a / b));
+	/* Division by zero causes CPU trap, translated to SIGFPE */
+	usleep(a / b);
 }
 
 static void __used
