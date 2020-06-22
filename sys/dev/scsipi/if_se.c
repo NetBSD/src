@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.106 2020/06/22 16:05:20 jdc Exp $	*/
+/*	$NetBSD: if_se.c,v 1.107 2020/06/22 17:38:27 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.106 2020/06/22 16:05:20 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.107 2020/06/22 17:38:27 jdc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -198,10 +198,12 @@ struct se_softc {
 	int sc_flags;
 	int sc_last_timeout;
 	int sc_enabled;
+	int sc_attach_state;
 };
 
 static int	sematch(device_t, cfdata_t, void *);
 static void	seattach(device_t, device_t, void *);
+static int	sedetach(device_t, int);
 
 static void	se_ifstart(struct ifnet *);
 
@@ -240,7 +242,7 @@ int	se_enable(struct se_softc *);
 void	se_disable(struct se_softc *);
 
 CFATTACH_DECL_NEW(se, sizeof(struct se_softc),
-    sematch, seattach, NULL, NULL);
+    sematch, seattach, sedetach, NULL);
 
 extern struct cfdriver se_cd;
 
@@ -267,7 +269,7 @@ const struct scsipi_periphsw se_switch = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have no queue */
 	NULL,			/* have no async handler */
-	sedone,			/* deal with stats at interrupt time */
+	sedone,			/* deal with send/recv completion */
 };
 
 const struct scsipi_inquiry_pattern se_patterns[] = {
@@ -330,6 +332,7 @@ seattach(device_t parent, device_t self, void *aux)
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
 
+	sc->sc_attach_state = 0;
 	callout_init(&sc->sc_recv_ch, CALLOUT_MPSAFE);
 	mutex_init(&sc->sc_iflock, MUTEX_DEFAULT, IPL_SOFTNET);
 
@@ -363,43 +366,82 @@ seattach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	se_get_addr(sc, myaddr);
+	sc->sc_attach_state = 1;
 
 	/* Attach the interface. */
 	rv = if_initialize(ifp);
 	if (rv != 0) {
-		free(sc->sc_tbuf, M_DEVBUF);
-		callout_destroy(&sc->sc_recv_ch);
-		mutex_destroy(&sc->sc_iflock);
+		sedetach(sc->sc_dev, 0);
 		return; /* Error */
 	}
+	
 	snprintf(wqname, sizeof(wqname), "%sRx", device_xname(sc->sc_dev));
 	rv = workqueue_create(&sc->sc_recv_wq, wqname, se_recv_worker, sc,
 	    PRI_SOFTNET, IPL_NET, WQ_MPSAFE);
 	if (rv != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create recv workqueue\n");
-		free(sc->sc_tbuf, M_DEVBUF);
-		callout_destroy(&sc->sc_recv_ch);
-		mutex_destroy(&sc->sc_iflock);
+		    "unable to create recv Rx workqueue\n");
+		sedetach(sc->sc_dev, 0);
 		return; /* Error */
 	}
 	sc->sc_recv_work_pending = false;
+	sc->sc_attach_state = 2;
+
 	snprintf(wqname, sizeof(wqname), "%sTx", device_xname(sc->sc_dev));
 	rv = workqueue_create(&sc->sc_send_wq, wqname, se_send_worker, ifp,
 	    PRI_SOFTNET, IPL_NET, WQ_MPSAFE);
 	if (rv != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create send workqueue\n");
-		free(sc->sc_tbuf, M_DEVBUF);
-		callout_destroy(&sc->sc_recv_ch);
-		mutex_destroy(&sc->sc_iflock);
-		workqueue_destroy(sc->sc_send_wq);
+		    "unable to create send Tx workqueue\n");
+		sedetach(sc->sc_dev, 0);
 		return; /* Error */
 	}
 	sc->sc_send_work_pending = false;
+	sc->sc_attach_state = 3;
+
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
 	ether_ifattach(ifp, myaddr);
 	if_register(ifp);
+	sc->sc_attach_state = 4;
+}
+
+static int
+sedetach(device_t self, int flags)
+{
+	struct se_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	switch(sc->sc_attach_state) {
+	case 4:
+		se_stop(sc);
+		mutex_enter(&sc->sc_iflock);
+		ifp->if_flags &= ~IFF_RUNNING;
+		se_disable(sc);
+		callout_halt(&sc->sc_recv_ch, NULL);
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+		mutex_exit(&sc->sc_iflock);
+		if_percpuq_destroy(sc->sc_ipq);
+		/*FALLTHROUGH*/
+	case 3:
+		workqueue_destroy(sc->sc_send_wq);
+		/*FALLTHROUGH*/
+	case 2:
+		workqueue_destroy(sc->sc_recv_wq);
+		/*FALLTHROUGH*/
+	case 1:
+		free(sc->sc_rbuf, M_DEVBUF);
+		free(sc->sc_tbuf, M_DEVBUF);
+		callout_destroy(&sc->sc_recv_ch);
+		mutex_destroy(&sc->sc_iflock);
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev, "detach failed (state %d)\n",
+		    sc->sc_attach_state);
+		return 1;
+		break;
+	}
+	return 0;
 }
 
 /*
