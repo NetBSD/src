@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.241 2020/06/06 22:26:47 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.242 2020/06/22 16:21:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.241 2020/06/06 22:26:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.242 2020/06/22 16:21:29 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -325,9 +325,7 @@ sysctl_kern_maxlwp(SYSCTLFN_ARGS)
 static void
 sysctl_kern_lwp_setup(void)
 {
-	struct sysctllog *clog = NULL;
-
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlwp",
 		       SYSCTL_DESCR("Maximum number of simultaneous threads"),
