@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.3 2020/06/22 02:51:06 rin Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.4 2020/06/22 12:21:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -423,7 +423,7 @@ traceme_crash(int sig)
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
@@ -603,7 +603,7 @@ traceme_signalmasked_crash(int sig)
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
@@ -786,7 +786,7 @@ traceme_signalignored_crash(int sig)
 		            info.psi_siginfo.si_code <= ILL_BADSTK);
 		break;
 	case SIGFPE:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
@@ -1890,7 +1890,7 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			            info.psi_siginfo.si_code <= ILL_BADSTK);
 			break;
 		case SIGFPE:
-			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+// XXXQEMU		FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 			break;
 		case SIGBUS:
 			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
