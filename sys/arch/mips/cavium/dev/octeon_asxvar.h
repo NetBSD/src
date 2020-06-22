@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_asxvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_asxvar.h,v 1.4 2020/06/22 02:26:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -34,11 +34,6 @@ struct octasx_softc {
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
-#if defined(OCTEON_DEBUG) || defined(CNMAC_DEBUG)
-	struct evcnt		sc_ev_asxrxpsh;
-	struct evcnt		sc_ev_asxtxpop;
-	struct evcnt		sc_ev_asxovrflw;
-#endif
 };
 
 /* XXX */

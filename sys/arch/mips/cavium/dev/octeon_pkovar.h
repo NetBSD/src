@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pkovar.h,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_pkovar.h,v 1.5 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -61,11 +61,6 @@ struct octpko_softc {
 				*sc_cmdptr;
 	int			sc_cmd_buf_pool;
 	size_t			sc_cmd_buf_size;
-
-#ifdef CNMAC_DEBUG
-	struct evcnt		sc_ev_pkoerrdbell;
-	struct evcnt		sc_ev_pkoerrparity;
-#endif
 };
 
 /* XXX */
