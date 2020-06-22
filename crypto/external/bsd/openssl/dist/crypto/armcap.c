@@ -41,7 +41,6 @@ static void ill_handler(int sig)
  * Following subroutines could have been inlined, but it's not all
  * ARM compilers support inline assembler...
  */
-#if __ARM_MAX_ARCH__>=7
 void _armv7_neon_probe(void);
 void _armv8_aes_probe(void);
 void _armv8_sha1_probe(void);
@@ -54,11 +53,9 @@ uint32_t _armv7_tick(void);
 
 uint32_t OPENSSL_rdtsc(void)
 {
-#if __ARM_MAX_ARCH__>=7
     if (OPENSSL_armcap_P & ARMV7_TICK)
         return _armv7_tick();
     else
-#endif
         return 0;
 }
 
@@ -210,7 +207,6 @@ void OPENSSL_cpuid_setup(void)
         _armv7_tick();
         OPENSSL_armcap_P |= ARMV7_TICK;
     }
-#endif
 
     sigaction(SIGILL, &ill_oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
