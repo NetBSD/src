@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.284 2020/04/09 10:46:19 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.284 2020/04/09 10:46:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.285 2020/06/22 16:14:18 maxv Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -792,6 +792,11 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		}
 
 		awc->aw_parent = ad;
+		break;
+
+	default:
+		ACPI_FREE(devinfo);
+		break;
 	}
 
 	return AE_OK;
