@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.7 2020/06/15 07:48:12 simonb Exp $
+#	$NetBSD: files.octeon,v 1.8 2020/06/22 02:26:20 simonb Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -13,8 +13,7 @@ file	arch/mips/cavium/dev/octeon_ciu.c
 defparam	opt_octeon.h			OCTEON_ECLK
 defparam	opt_octeon.h			CNMAC_RING_MAX
 defparam	opt_octeon.h			CNMAC_RING_MIN
-defflag 	opt_octeon.h			CNMAC_DEBUG
-						CNMAC_FAST_CRC
+defflag 	opt_octeon.h			CNMAC_FAST_CRC
 						CNMAC_IPD_RED
 						CNMAC_USENFS
 						OCTEON_USBN_CN31XX_DMA_WORKAROUND
