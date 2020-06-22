@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gpioreg.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_gpioreg.h,v 1.2 2020/06/22 03:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -73,19 +73,6 @@
 #define	GPIO_BIT_CFG_TX_OE			UINT64_C(0x0000000000000001)
 
 /* XXX */
-
-/* ---- snprintb */
-
-#define	GPIO_BIT_CFG_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x08\x04"	"FIL_SEL\0" \
-	"f\x04\x04"	"FIL_CNT\0" \
-	"b\x03"		"INT_TYPE\0" \
-	"b\x02"		"INT_EN\0" \
-	"b\x01"		"RX_XOR\0" \
-	"b\x00"		"TX_OE\0"
 
 /* ---- bus_space */
 

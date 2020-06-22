@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_corereg.h,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_corereg.h,v 1.3 2020/06/22 03:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -473,35 +473,6 @@
 #define	CP0_CVMCTL_LE				UINT64_C(0x0000000000000002)
 #define	CP0_CVMCTL_USELY			UINT64_C(0x0000000000000001)
 
-#define	CP0_CVMCTL_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x1f"		"FUSE_STARTBIT\0" \
-	"b\x1c"		"NODFA_CP21\0" \
-	"b\x1b"		"NOMUL\0" \
-	"b\x1a"		"NOCRYPTO\0" \
-	"b\x19"		"RST_SHT\0" \
-	"b\x18"		"BIST_DIS\0" \
-	"b\x17"		"DISSETPRED\0" \
-	"b\x16"		"DISJRPRED\0" \
-	"b\x15"		"DISICACHE\0" \
-	"b\x14"		"DISWAIT\0" \
-	"b\x13"		"DEFET\0" \
-	"b\x12"		"DISCO\0" \
-	"b\x11"		"DISCE\0" \
-	"b\x10"		"DDCLK\0" \
-	"b\x0f"		"DCICLK\0" \
-	"b\x0e"		"REPUN\0" \
-	"b\x0d"		"IPREF\0" \
-	"b\x0c"		"USEUN\0" \
-	"b\x0b"		"DISIOCACHE\0" \
-	"b\x0a"		"IRAND\0" \
-	"f\x07\x03"	"IPPCI\0" \
-	"f\x04\x03"	"IPTI\0" \
-	"b\x01"		"LE\0" \
-	"b\x00"		"USELY\0"
-
 /* CvmMemCtl Register */
 
 #define	CP0_CVMMEMCTL_TLBBIST			UINT64_C(0x8000000000000000)
@@ -534,39 +505,6 @@
 #define	CP0_CVMMEMCTL_CVMSEGENAS		UINT64_C(0x0000000000000080)
 #define	CP0_CVMMEMCTL_CVMSEGENAU		UINT64_C(0x0000000000000040)
 #define	CP0_CVMMEMCTL_LMEMSZ			UINT64_C(0x000000000000003f)
-
-#define	CP0_CVMMEMCTL_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x3f"		"TLBBIST\0" \
-	"b\x3e"		"L1CBIST\0" \
-	"b\x3d"		"L1DBIST\0" \
-	"b\x3c"		"DCMBIST\0" \
-	"b\x3b"		"PTGBIST\0" \
-	"b\x3a"		"WBFBIST\0" \
-	"b\x23"		"DISMARKWBLONGTO\0" \
-	"b\x22"		"DISMRGCLRWBTO\0" \
-	"f\x20\x02"	"IOBDMASCRMSB\0" \
-	"b\x1f"		"SYNCWSMARKED\0" \
-	"b\x1e"		"DISSYNCWS\0" \
-	"b\x1d"		"DISWBFST\0" \
-	"b\x1c"		"XKMEMENAS\0" \
-	"b\x1b"		"XKMEMENAU\0" \
-	"b\x1a"		"XKIOENAS\0" \
-	"b\x19"		"XKIOENAU\0" \
-	"b\x18"		"ALLSYNCW\0" \
-	"b\x17"		"NOMERGE\0" \
-	"f\x15\x02"	"DIDTTO\0" \
-	"b\x14"		"CSRCLKALWYS\0" \
-	"b\x13"		"MCLKALWYS\0" \
-	"f\x10\x03"	"WBFLTIME\0" \
-	"b\x0f"		"ISTRNOL2\0" \
-	"f\x0b\x04"	"WBTHRESH\0" \
-	"b\x08"		"CVMSEGENAK\0" \
-	"b\x07"		"CVMSEGENAS\0" \
-	"b\x06"		"CVMSEGENAU\0" \
-	"f\x00\x06"	"LMEMSZ\0"
 
 /* CvmCount Register */
 

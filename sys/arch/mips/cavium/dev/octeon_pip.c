@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.7 2020/06/22 03:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.6 2020/06/22 02:26:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.7 2020/06/22 03:05:07 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -41,47 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.6 2020/06/22 02:26:20 simonb Exp $"
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_pipvar.h>
-
-/*
- * register definitions (for debug and statics)
- */
-#define	_ENTRY(x)	{ #x, x##_BITS, x##_OFFSET }
-#define	_ENTRY_0_3(x) \
-	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3)
-#define	_ENTRY_0_7(x) \
-	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x## 3), \
-	_ENTRY(x## 4), _ENTRY(x## 5), _ENTRY(x## 6), _ENTRY(x## 7)
-#define	_ENTRY_0_1_2_32(x) \
-	_ENTRY(x## 0), _ENTRY(x## 1), _ENTRY(x## 2), _ENTRY(x##32)
-
-struct octpip_dump_reg_ {
-	const char *name;
-	const char *format;
-	size_t	offset;
-};
-
-static const struct octpip_dump_reg_ octpip_dump_stats_[] = {
-/* PIP_QOS_DIFF[0-63] */
-	_ENTRY_0_1_2_32	(PIP_STAT0_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT1_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT2_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT3_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT4_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT5_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT6_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT7_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT8_PRT),
-	_ENTRY_0_1_2_32	(PIP_STAT9_PRT),
-/* PIP_TAG_INC[0-63] */
-	_ENTRY_0_1_2_32	(PIP_STAT_INB_PKTS),
-	_ENTRY_0_1_2_32	(PIP_STAT_INB_OCTS),
-	_ENTRY_0_1_2_32	(PIP_STAT_INB_ERRS),
-};
-
-#undef	_ENTRY
-#undef	_ENTRY_0_3
-#undef	_ENTRY_0_7
-#undef	_ENTRY_0_1_2_32
 
 /* XXX */
 void
@@ -187,7 +146,6 @@ octpip_prt_cfg_enable(struct octpip_softc *sc, uint64_t prt_cfg, int enable)
 void
 octpip_stats(struct octpip_softc *sc, struct ifnet *ifp, int gmx_port)
 {
-	const struct octpip_dump_reg_ *reg;
 	uint64_t tmp, pkts;
 	uint64_t pip_stat_ctl;
 
@@ -202,8 +160,7 @@ octpip_stats(struct octpip_softc *sc, struct ifnet *ifp, int gmx_port)
 
 	pip_stat_ctl = _PIP_RD8(sc, PIP_STAT_CTL_OFFSET);
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl | PIP_STAT_CTL_RDCLR);
-	reg = &octpip_dump_stats_[gmx_port];
-	tmp = _PIP_RD8(sc, reg->offset);
+	tmp = _PIP_RD8(sc, PIP_STAT0_PRT_OFFSET(gmx_port));
 	pkts = __SHIFTOUT(tmp, PIP_STAT0_PRTN_DRP_PKTS);
 	if_statadd(ifp, if_iqdrops, pkts);
 

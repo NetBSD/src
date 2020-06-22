@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_twsireg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_twsireg.h,v 1.3 2020/06/22 03:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -112,56 +112,6 @@
 #define	TWSI_CTL_IFLG				UINT8_C(0x08)
 #define	TWSI_CTL_AAK				UINT8_C(0x04)
 #define	TWSI_CTL_XXX_1_0			0x03
-
-/* TWSI Status Register */
-
-/* ---- snprintb */
-
-#define	MIO_TWS_SW_TWSI_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x3f"		"V\0" \
-	"b\x3e"		"SLONLY\0" \
-	"b\x3d"		"EIA\0" \
-	"f\x39\x04"	"OP\0" \
-	"b\x38"		"R\0" \
-	"b\x37"		"SOVR\0" \
-	"f\x34\x03"	"SIZE\0" \
-	"f\x32\x02"	"SCR\0" \
-	"f\x28\x0a"	"A\0" \
-	"f\x23\x05"	"IA\0" \
-	"f\x20\x03"	"EOP_IA\0" \
-	"f\x00\x20"	"D\0"
-
-#define	MIO_TWS_TWSI_SW_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x3e\x02"	"V\0" \
-	"f\x00\x20"	"D\0"
-
-#define	MIO_TWS_INT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x0b"		"SCL\0" \
-	"b\x0a"		"SDA\0" \
-	"b\x09"		"SCL_OVR\0" \
-	"b\x08"		"SDA_OVR\0" \
-	"b\x06"		"CORE_EN\0" \
-	"b\x05"		"TS_EN\0" \
-	"b\x04"		"ST_EN\0" \
-	"b\x02"		"CORE_INT\0" \
-	"b\x01"		"TS_INT\0" \
-	"b\x00"		"ST_INT\0"
-
-#define	MIO_TWS_SW_TWSI_EXT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x20\x08"	"IA\0" \
-	"f\x00\x20"	"D\0"
 
 /* ---- bus_space */
 
