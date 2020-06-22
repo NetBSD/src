@@ -1,23 +1,11 @@
-/*	$NetBSD: if_cnmac.c,v 1.22 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.23 2020/06/22 02:26:19 simonb Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.22 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.23 2020/06/22 02:26:19 simonb Exp $");
 #endif
 
 #include "opt_octeon.h"
-
-#ifdef	CNMAC_DEBUG
-
-#ifndef DIAGNOSTIC
-#define	DIAGNOSTIC
-#endif
-
-#ifndef DEBUG
-#define	DEBUG
-#endif
-
-#endif
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -82,14 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.22 2020/06/18 13:52:08 simonb Exp $")
 #include <mips/cavium/dev/octeon_asxvar.h>
 #include <mips/cavium/dev/octeon_smivar.h>
 #include <mips/cavium/dev/if_cnmacvar.h>
-
-#ifdef CNMAC_DEBUG
-#define	CNMAC_KASSERT(x)	KASSERT(x)
-#define	CNMAC_KDASSERT(x)	KDASSERT(x)
-#else
-#define	CNMAC_KASSERT(x)
-#define	CNMAC_KDASSERT(x)
-#endif
 
 /*
  * Set the PKO to think command buffers are an odd length.  This makes it so we
@@ -182,46 +162,6 @@ int		cnmac_param_intr = 0;
 
 CFATTACH_DECL_NEW(cnmac, sizeof(struct cnmac_softc),
     cnmac_match, cnmac_attach, NULL, NULL);
-
-#ifdef CNMAC_DEBUG
-
-static const struct octeon_evcnt_entry octeon_evcnt_entries[] = {
-#define	_ENTRY(name, type, parent, descr) \
-	OCTEON_EVCNT_ENTRY(struct cnmac_softc, name, type, parent, descr)
-	_ENTRY(rx,			MISC, NULL, "rx"),
-	_ENTRY(rxint,			INTR, NULL, "rx intr"),
-	_ENTRY(rxrs,			MISC, NULL, "rx dynamic short"),
-	_ENTRY(rxbufpkalloc,		MISC, NULL, "rx buf pkt alloc"),
-	_ENTRY(rxbufpkput,		MISC, NULL, "rx buf pkt put"),
-	_ENTRY(rxbufwqalloc,		MISC, NULL, "rx buf wqe alloc"),
-	_ENTRY(rxbufwqput,		MISC, NULL, "rx buf wqe put"),
-	_ENTRY(rxerrcode,		MISC, NULL, "rx code error"),
-	_ENTRY(rxerrfix,		MISC, NULL, "rx fixup error"),
-	_ENTRY(rxerrjmb,		MISC, NULL, "rx jmb error"),
-	_ENTRY(rxerrlink,		MISC, NULL, "rx link error"),
-	_ENTRY(rxerroff,		MISC, NULL, "rx offload error"),
-	_ENTRY(rxonperrshort,		MISC, NULL, "rx onp fixup short error"),
-	_ENTRY(rxonperrpreamble,	MISC, NULL, "rx onp fixup preamble error"),
-	_ENTRY(rxonperrcrc,		MISC, NULL, "rx onp fixup crc error"),
-	_ENTRY(rxonperraddress,		MISC, NULL, "rx onp fixup address error"),
-	_ENTRY(rxonponp,		MISC, NULL, "rx onp fixup onp packets"),
-	_ENTRY(rxonpok,			MISC, NULL, "rx onp fixup success packets"),
-	_ENTRY(tx,			MISC, NULL, "tx"),
-	_ENTRY(txadd,			MISC, NULL, "tx add"),
-	_ENTRY(txbufcballoc,		MISC, NULL, "tx buf cb alloc"),
-	_ENTRY(txbufcbget,		MISC, NULL, "tx buf cb get"),
-	_ENTRY(txbufgballoc,		MISC, NULL, "tx buf gb alloc"),
-	_ENTRY(txbufgbget,		MISC, NULL, "tx buf gb get"),
-	_ENTRY(txbufgbput,		MISC, NULL, "tx buf gb put"),
-	_ENTRY(txdel,			MISC, NULL, "tx del"),
-	_ENTRY(txerr,			MISC, NULL, "tx error"),
-	_ENTRY(txerrcmd,		MISC, NULL, "tx cmd error"),
-	_ENTRY(txerrgbuf,		MISC, NULL, "tx gbuf error"),
-	_ENTRY(txerrlink,		MISC, NULL, "tx link error"),
-	_ENTRY(txerrmkcmd,		MISC, NULL, "tx makecmd error"),
-#undef	_ENTRY
-};
-#endif
 
 /* ---- buffer management */
 
@@ -384,9 +324,6 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rate_recv_fixup_odd_nibble_short_cap.tv_sec = 1;
 	sc->sc_rate_recv_fixup_odd_nibble_preamble_cap.tv_sec = 1;
 	sc->sc_rate_recv_fixup_odd_nibble_crc_cap.tv_sec = 1;
-#ifdef CNMAC_DEBUG
-	sc->sc_rate_recv_fixup_odd_nibble_addr_cap.tv_sec = 1;
-#endif
 	/* XXX */
 
 #if 1
@@ -397,9 +334,6 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 		cnmac_pow_recv_ih
 		    = octpow_intr_establish(OCTEON_POW_GROUP_PIP,
 			IPL_NET, cnmac_recv_intr, NULL, NULL);
-
-	OCTEON_EVCNT_ATTACH_EVCNTS(sc, octeon_evcnt_entries,
-	    device_xname(sc->sc_dev));
 
 	dict = device_properties(sc->sc_gmx->sc_dev);
 
@@ -598,7 +532,8 @@ cnmac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 static inline void
 cnmac_send_queue_flush_prefetch(struct cnmac_softc *sc)
 {
-	CNMAC_KASSERT(sc->sc_prefetch == 0);
+
+	KASSERT(sc->sc_prefetch == 0);
 	octfau_op_inc_fetch_8(&sc->sc_fau_done, 0);
 	sc->sc_prefetch = 1;
 }
@@ -606,13 +541,10 @@ cnmac_send_queue_flush_prefetch(struct cnmac_softc *sc)
 static inline void
 cnmac_send_queue_flush_fetch(struct cnmac_softc *sc)
 {
-#ifndef	 CNMAC_DEBUG
-	if (!sc->sc_prefetch)
-		return;
-#endif
-	CNMAC_KASSERT(sc->sc_prefetch == 1);
+
+	KASSERT(sc->sc_prefetch == 1);
 	sc->sc_hard_done_cnt = octfau_op_inc_read_8(&sc->sc_fau_done);
-	CNMAC_KASSERT(sc->sc_hard_done_cnt <= 0);
+	KASSERT(sc->sc_hard_done_cnt <= 0);
 	sc->sc_prefetch = 0;
 }
 
@@ -623,8 +555,8 @@ cnmac_send_queue_flush(struct cnmac_softc *sc)
 	const int64_t sent_count = sc->sc_hard_done_cnt;
 	int i;
 
-	CNMAC_KASSERT(sc->sc_flush == 0);
-	CNMAC_KASSERT(sent_count <= 0);
+	KASSERT(sc->sc_flush == 0);
+	KASSERT(sent_count <= 0);
 
 	for (i = 0; i < 0 - sent_count; i++) {
 		struct mbuf *m;
@@ -633,7 +565,6 @@ cnmac_send_queue_flush(struct cnmac_softc *sc)
 		cnmac_send_queue_del(sc, &m, &gbuf);
 
 		octfpa_buf_put(cnmac_fb_sg, gbuf);
-		OCTEON_EVCNT_INC(sc, txbufgbput);
 
 		m_freem(m);
 
@@ -650,12 +581,12 @@ cnmac_send_queue_flush_sync(struct cnmac_softc *sc)
 	if (sc->sc_flush == 0)
 		return;
 
-	CNMAC_KASSERT(sc->sc_flush > 0);
+	KASSERT(sc->sc_flush > 0);
 
 	/* XXX XXX XXX */
 	octfau_op_inc_read_8(&sc->sc_fau_done);
 	sc->sc_soft_req_cnt -= sc->sc_flush;
-	CNMAC_KASSERT(sc->sc_soft_req_cnt >= 0);
+	KASSERT(sc->sc_soft_req_cnt >= 0);
 	/* XXX XXX XXX */
 
 	sc->sc_flush = 0;
@@ -671,7 +602,6 @@ cnmac_send_queue_is_full(struct cnmac_softc *sc)
 
 	if (__predict_false(nofree_cnt == GATHER_QUEUE_SIZE - 1)) {
 		cnmac_send_queue_flush(sc);
-		OCTEON_EVCNT_INC(sc, txerrgbuf);
 		cnmac_send_queue_flush_sync(sc);
 		return 1;
 	}
@@ -712,8 +642,6 @@ cnmac_send_queue_add(struct cnmac_softc *sc, struct mbuf *m,
 
 	if ((m->m_flags & M_EXT) && m->m_ext.ext_free != NULL)
 		sc->sc_ext_callback_cnt++;
-
-	OCTEON_EVCNT_INC(sc, txadd);
 }
 
 static inline void
@@ -722,7 +650,7 @@ cnmac_send_queue_del(struct cnmac_softc *sc, struct mbuf **rm, uint64_t **rgbuf)
 	struct _send_queue_entry *sqe;
 
 	sqe = SIMPLEQ_FIRST(&sc->sc_sendq);
-	CNMAC_KASSERT(sqe != NULL);
+	KASSERT(sqe != NULL);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_sendq, _sqe_entry);
 
 	*rm = (void *)sqe;
@@ -730,10 +658,8 @@ cnmac_send_queue_del(struct cnmac_softc *sc, struct mbuf **rm, uint64_t **rgbuf)
 
 	if (((*rm)->m_flags & M_EXT) && (*rm)->m_ext.ext_free != NULL) {
 		sc->sc_ext_callback_cnt--;
-		CNMAC_KASSERT(sc->sc_ext_callback_cnt >= 0);
+		KASSERT(sc->sc_ext_callback_cnt >= 0);
 	}
-
-	OCTEON_EVCNT_INC(sc, txdel);
 }
 
 static inline int
@@ -748,11 +674,9 @@ cnmac_buf_free_work(struct cnmac_softc *sc, uint64_t *work, uint64_t word2)
 		start_buffer = addr & ~(2048 - 1);
 
 		octfpa_buf_put_paddr(cnmac_fb_pkt, start_buffer);
-		OCTEON_EVCNT_INC(sc, rxbufpkput);
 	}
 
 	octfpa_buf_put(cnmac_fb_wqe, work);
-	OCTEON_EVCNT_INC(sc, rxbufwqput);
 
 	return 0;
 }
@@ -761,17 +685,11 @@ static inline void
 cnmac_buf_ext_free_m(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	uint64_t *work = (void *)arg;
-#ifdef CNMAC_DEBUG
-	struct cnmac_softc *sc = (void *)(uintptr_t)work[0];
-#endif
 	int s = splnet();
 
-	OCTEON_EVCNT_INC(sc, rxrs);
-
 	octfpa_buf_put(cnmac_fb_wqe, work);
-	OCTEON_EVCNT_INC(sc, rxbufwqput);
 
-	CNMAC_KASSERT(m != NULL);
+	KASSERT(m != NULL);
 
 	pool_cache_put(mb_cache, m);
 
@@ -782,18 +700,13 @@ static inline void
 cnmac_buf_ext_free_ext(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	uint64_t *work = (void *)arg;
-#ifdef CNMAC_DEBUG
-	struct cnmac_softc *sc = (void *)(uintptr_t)work[0];
-#endif
 	int s = splnet();
 
 	octfpa_buf_put(cnmac_fb_wqe, work);
-	OCTEON_EVCNT_INC(sc, rxbufwqput);
 
 	octfpa_buf_put(cnmac_fb_pkt, buf);
-	OCTEON_EVCNT_INC(sc, rxbufpkput);
 
-	CNMAC_KASSERT(m != NULL);
+	KASSERT(m != NULL);
 
 	pool_cache_put(mb_cache, m);
 
@@ -886,7 +799,7 @@ cnmac_send_makecmd_gbuf(struct cnmac_softc *sc, struct mbuf *m0, uint64_t *gbuf,
 			continue;
 
 #if 0
-		CNMAC_KASSERT(((uint32_t)m->m_data & (PAGE_SIZE - 1))
+		KASSERT(((uint32_t)m->m_data & (PAGE_SIZE - 1))
 		   == (kvtophys((vaddr_t)m->m_data) & (PAGE_SIZE - 1)));
 #endif
 
@@ -917,7 +830,7 @@ cnmac_send_makecmd_gbuf(struct cnmac_softc *sc, struct mbuf *m0, uint64_t *gbuf,
 		}
 	}
 
-	CNMAC_KASSERT(m == NULL);
+	KASSERT(m == NULL);
 
 	*rsegs = segs;
 
@@ -984,12 +897,12 @@ cnmac_send_cmd(struct cnmac_softc *sc, uint64_t pko_cmd_w0,
 #endif
 	cmdptr += sc->sc_cmdptr.cmdptr_idx;
 
-	CNMAC_KASSERT(cmdptr != NULL);
+	KASSERT(cmdptr != NULL);
 
 	*cmdptr++ = pko_cmd_w0;
 	*cmdptr++ = pko_cmd_w1;
 
-	CNMAC_KASSERT(sc->sc_cmdptr.cmdptr_idx + 2 <= FPA_COMMAND_BUFFER_POOL_NWORDS - 1);
+	KASSERT(sc->sc_cmdptr.cmdptr_idx + 2 <= FPA_COMMAND_BUFFER_POOL_NWORDS - 1);
 
 	if (sc->sc_cmdptr.cmdptr_idx + 2 == FPA_COMMAND_BUFFER_POOL_NWORDS - 1) {
 		paddr_t buf;
@@ -1002,7 +915,6 @@ cnmac_send_cmd(struct cnmac_softc *sc, uint64_t pko_cmd_w0,
 			result = 1;
 			goto done;
 		}
-		OCTEON_EVCNT_INC(sc, txbufcbget);
 		*cmdptr++ = buf;
 		sc->sc_cmdptr.cmdptr = (uint64_t)buf;
 		sc->sc_cmdptr.cmdptr_idx = 0;
@@ -1026,7 +938,6 @@ cnmac_send_buf(struct cnmac_softc *sc, struct mbuf *m, uint64_t *gbuf,
 	error = cnmac_send_makecmd(sc, m, gbuf, &pko_cmd_w0, &pko_cmd_w1);
 	if (error != 0) {
 		/* Already logging */
-		OCTEON_EVCNT_INC(sc, txerrmkcmd);
 		result = error;
 		goto done;
 	}
@@ -1034,7 +945,6 @@ cnmac_send_buf(struct cnmac_softc *sc, struct mbuf *m, uint64_t *gbuf,
 	error = cnmac_send_cmd(sc, pko_cmd_w0, pko_cmd_w1, pwdc);
 	if (error != 0) {
 		/* Already logging */
-		OCTEON_EVCNT_INC(sc, txerrcmd);
 		result = error;
 	}
 
@@ -1049,17 +959,13 @@ cnmac_send(struct cnmac_softc *sc, struct mbuf *m, int *pwdc)
 	uint64_t *gbuf = NULL;
 	int result = 0, error;
 
-	OCTEON_EVCNT_INC(sc, tx);
-
 	gaddr = octfpa_buf_get_paddr(cnmac_fb_sg);
 	if (gaddr == 0) {
 		log(LOG_WARNING, "%s: can not allocate gather buffer from "
 		    "free pool allocator\n", device_xname(sc->sc_dev));
-		OCTEON_EVCNT_INC(sc, txerrgbuf);
 		result = 1;
 		goto done;
 	}
-	OCTEON_EVCNT_INC(sc, txbufgbget);
 
 #ifdef __mips_n32
 	KASSERT((gaddr & ~MIPS_PHYS_MASK) == 0);
@@ -1068,13 +974,12 @@ cnmac_send(struct cnmac_softc *sc, struct mbuf *m, int *pwdc)
 	gbuf = (uint64_t *)(uintptr_t)MIPS_PHYS_TO_XKPHYS_CACHED(gaddr);
 #endif
 
-	CNMAC_KASSERT(gbuf != NULL);
+	KASSERT(gbuf != NULL);
 
 	error = cnmac_send_buf(sc, m, gbuf, pwdc);
 	if (error != 0) {
 		/* Already logging */
 		octfpa_buf_put_paddr(cnmac_fb_sg, gaddr);
-		OCTEON_EVCNT_INC(sc, txbufgbput);
 		result = error;
 		goto done;
 	}
@@ -1111,7 +1016,6 @@ cnmac_start(struct ifnet *ifp)
 
 			m_freem(m);
 			IF_DROP(&ifp->if_snd);
-			OCTEON_EVCNT_INC(sc, txerrlink);
 		}
 		goto last;
 	}
@@ -1150,7 +1054,6 @@ cnmac_start(struct ifnet *ifp)
 			log(LOG_WARNING,
 			  "%s: failed in the transmission of the packet\n",
 			  device_xname(sc->sc_dev));
-			OCTEON_EVCNT_INC(sc, txerr);
 		} else
 			sc->sc_soft_req_cnt++;
 
@@ -1323,7 +1226,7 @@ cnmac_recv_mbuf(struct cnmac_softc *sc, uint64_t *work, struct mbuf **rm)
 	MGETHDR(m, M_NOWAIT, MT_DATA);
 	if (m == NULL)
 		return 1;
-	CNMAC_KASSERT(m != NULL);
+	KASSERT(m != NULL);
 
 	if ((word2 & PIP_WQE_WORD2_IP_BUFS) == 0) {
 		/* Dynamic short */
@@ -1355,7 +1258,7 @@ cnmac_recv_mbuf(struct cnmac_softc *sc, uint64_t *work, struct mbuf **rm)
 	work[0] = (uintptr_t)sc;
 
 	MEXTADD(m, ext_buf, ext_size, 0, ext_free, work);
-	CNMAC_KASSERT(ISSET(m->m_flags, M_EXT));
+	KASSERT(ISSET(m->m_flags, M_EXT));
 
 	m->m_data = data;
 	m->m_len = m->m_pkthdr.len = (word1 & PIP_WQE_WORD1_LEN) >> 48;
@@ -1366,7 +1269,7 @@ cnmac_recv_mbuf(struct cnmac_softc *sc, uint64_t *work, struct mbuf **rm)
 
 	*rm = m;
 
-	CNMAC_KASSERT(*rm != NULL);
+	KASSERT(*rm != NULL);
 
 	return 0;
 }
@@ -1411,7 +1314,6 @@ cnmac_recv_check(struct cnmac_softc *sc, uint64_t word2)
 			log(LOG_DEBUG,
 			    "%s: link is not up, the packet was dropped\n",
 			    device_xname(sc->sc_dev));
-		OCTEON_EVCNT_INC(sc, rxerrlink);
 		return 1;
 	}
 
@@ -1422,7 +1324,6 @@ cnmac_recv_check(struct cnmac_softc *sc, uint64_t word2)
 		    &sc->sc_rate_recv_check_jumbo_cap))
 			log(LOG_DEBUG,
 			    "jumbo frame was received\n");
-		OCTEON_EVCNT_INC(sc, rxerrjmb);
 		return 1;
 	}
 #endif
@@ -1445,7 +1346,6 @@ cnmac_recv_check(struct cnmac_softc *sc, uint64_t word2)
 				    "(error code = %" PRId64 ")\n",
 				    device_xname(sc->sc_dev), word2 & PIP_WQE_WORD2_NOIP_OPECODE);
 		}
-		OCTEON_EVCNT_INC(sc, rxerrcode);
 		return 1;
 	}
 
@@ -1470,15 +1370,13 @@ cnmac_recv(struct cnmac_softc *sc, uint64_t *work)
 	}
 	/* XXX XXX XXX */
 
-	CNMAC_KASSERT(sc != NULL);
-	CNMAC_KASSERT(work != NULL);
-
-	OCTEON_EVCNT_INC(sc, rx);
+	KASSERT(sc != NULL);
+	KASSERT(work != NULL);
 
 	word2 = work[2];
 	ifp = &sc->sc_ethercom.ec_if;
 
-	CNMAC_KASSERT(ifp != NULL);
+	KASSERT(ifp != NULL);
 
 	if (__predict_false(cnmac_recv_check(sc, word2) != 0)) {
 		if_statinc(ifp, if_ierrors);
@@ -1496,7 +1394,7 @@ cnmac_recv(struct cnmac_softc *sc, uint64_t *work)
 
 	/* work[0] .. work[3] may not be valid any more */
 
-	CNMAC_KASSERT(m != NULL);
+	KASSERT(m != NULL);
 
 	octipd_offload(word2, m->m_data, &m->m_pkthdr.csum_flags);
 
@@ -1570,16 +1468,16 @@ cnmac_recv_intr(void *data, uint64_t *work)
 	struct cnmac_softc *sc;
 	int port;
 
-	CNMAC_KASSERT(work != NULL);
+	KASSERT(work != NULL);
 
 	port = (work[1] & PIP_WQE_WORD1_IPRT) >> 42;
 
-	CNMAC_KASSERT(port < GMX_PORT_NUNITS);
+	KASSERT(port < GMX_PORT_NUNITS);
 
 	sc = cnmac_gsc[port];
 
-	CNMAC_KASSERT(sc != NULL);
-	CNMAC_KASSERT(port == sc->sc_port);
+	KASSERT(sc != NULL);
+	KASSERT(port == sc->sc_port);
 
 	/* XXX process all work queue entries anyway */
 

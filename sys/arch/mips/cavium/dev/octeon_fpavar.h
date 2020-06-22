@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpavar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_fpavar.h,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -53,10 +53,6 @@ int		octfpa_buf_init(int, size_t, size_t, struct octfpa_buf **);
 void		*octfpa_buf_get(struct octfpa_buf *);
 uint64_t	octfpa_query(int);
 int		octfpa_available_fpa_pool(int *available, int pool_no);
-
-#ifdef CNMAC_DEBUG
-void	octfpa_dump(void);
-#endif
 
 #define OCTEON_CACHE_LINE_SIZE (128)
 

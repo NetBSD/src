@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipdvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_ipdvar.h,v 1.4 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -36,13 +36,6 @@ struct octipd_softc {
 	bus_space_handle_t	sc_regh;
 	size_t			sc_first_mbuff_skip;
 	size_t			sc_not_first_mbuff_skip;
-#ifdef CNMAC_DEBUG
-	struct evcnt		sc_ev_ipdbpsub;
-	struct evcnt		sc_ev_ipdprcpar3;
-	struct evcnt		sc_ev_ipdprcpar2;
-	struct evcnt		sc_ev_ipdprcpar1;
-	struct evcnt		sc_ev_ipdprcpar0;
-#endif
 };
 
 /* XXX */
@@ -53,20 +46,11 @@ struct octipd_attach_args {
 	size_t			aa_not_first_mbuff_skip;
 };
 
-void			octipd_init(struct octipd_attach_args *,
-			    struct octipd_softc **);
-int			octipd_enable(struct octipd_softc *);
-int			octipd_config(struct octipd_softc *);
-int			octipd_red(struct octipd_softc *, uint64_t, uint64_t);
-void			octipd_sub_port_fcs(struct octipd_softc *, int);
-void			octipd_offload(uint64_t, void *, int *);
-
-#ifdef CNMAC_DEBUG
-void			octipd_int_enable(struct octipd_softc *, int);
-uint64_t		octipd_int_summary(struct octipd_softc *);
-#endif /* CNMAC_DEBUG */
-#ifdef CNMAC_DEBUG
-void			octipd_int_enable(struct octipd_softc *, int);
-#endif /* CNMAC_DEBUG */
+void	octipd_init(struct octipd_attach_args *, struct octipd_softc **);
+int	octipd_enable(struct octipd_softc *);
+int	octipd_config(struct octipd_softc *);
+int	octipd_red(struct octipd_softc *, uint64_t, uint64_t);
+void	octipd_sub_port_fcs(struct octipd_softc *, int);
+void	octipd_offload(uint64_t, void *, int *);
 
 #endif /* _OCTEON_IPDVAR_H_ */

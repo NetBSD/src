@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powvar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_powvar.h,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -57,25 +57,6 @@ struct octpow_softc {
 	bus_space_handle_t	sc_regh;
 	int			sc_port;
 	int			sc_int_pc_base;
-#ifdef CNMAC_DEBUG
-	struct evcnt		sc_ev_powecciopcsrpend;
-	struct evcnt		sc_ev_powecciopdbgpend;
-	struct evcnt		sc_ev_powecciopaddwork;
-	struct evcnt		sc_ev_powecciopillop;
-	struct evcnt		sc_ev_poweccioppend24;
-	struct evcnt		sc_ev_poweccioppend23;
-	struct evcnt		sc_ev_poweccioppend22;
-	struct evcnt		sc_ev_poweccioppend21;
-	struct evcnt		sc_ev_poweccioptagnull;
-	struct evcnt		sc_ev_poweccioptagnullnull;
-	struct evcnt		sc_ev_powecciopordatom;
-	struct evcnt		sc_ev_powecciopnull;
-	struct evcnt		sc_ev_powecciopnullnull;
-	struct evcnt		sc_ev_poweccrpe;
-	struct evcnt		sc_ev_poweccsyn;
-	struct evcnt		sc_ev_poweccdbe;
-	struct evcnt		sc_ev_poweccsbe;
-#endif
 };
 
 /* XXX */
