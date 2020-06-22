@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.17 2020/04/22 23:53:27 joerg Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.18 2020/06/22 07:50:53 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ get_ldp_peer_by_socket(int s)
 
 /*
  * Adds address list bounded to a specific peer
- * Returns the number of addresses inserted successfuly
+ * Returns the number of addresses inserted successfully
  */
 int 
 add_ifaddresses(struct ldp_peer * p, const struct al_tlv * a)
