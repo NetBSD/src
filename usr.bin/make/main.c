@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.275 2020/06/19 21:17:48 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.275 2020/06/19 21:17:48 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.275 2020/06/19 21:17:48 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2027,7 +2027,7 @@ dieQuietly(GNode *gn, int bf)
 	else if (bf >= 0)
 	    quietly = bf;
 	else
-	    quietly = (gn) ? ((gn->type  & (OP_MAKE|OP_SUBMAKE)) != 0) : 0;
+	    quietly = (gn) ? ((gn->type  & (OP_MAKE)) != 0) : 0;
     }
     return quietly;
 }
