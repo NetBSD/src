@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powreg.h,v 1.2 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_powreg.h,v 1.3 2020/06/22 03:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -372,24 +372,6 @@
 #define POW_STATUS_LOAD_RESULT_PEND_TAG_PEND_XXX_35_34		UINT64_C(0x0000000c00000000)
 #define POW_STATUS_LOAD_RESULT_PEND_TAG_PEND_TYPE		UINT64_C(0x0000000300000000)
 #define POW_STATUS_LOAD_RESULT_PEND_TAG_PEND_TAG		UINT64_C(0x00000000ffffffff)
-#define	POW_STATUS_LOAD_RESULT_PEND_TAG_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x3d"		"PEND_SWITCH\0" \
-	"b\x3c"		"PEND_SWITCH_FULL\0" \
-	"b\x3b"		"PEND_SWITCH_NULL\0" \
-	"b\x3a"		"PEND_DESCHED\0" \
-	"b\x39"		"PEND_DESCHED_SWITCH\0" \
-	"b\x38"		"PEND_NOSCHED\0" \
-	"b\x37"		"PEND_NEW_WORK\0" \
-	"b\x36"		"PEND_NEW_WORK_WAIT\0" \
-	"b\x35"		"PEND_NULL_RD\0" \
-	"b\x34"		"PEND_NOSCHED_CLR\0" \
-	"f\x28\x0b"	"PEND_INDEX\0" \
-	"f\x24\x04"	"PEND_GRP\0" \
-	"f\x20\x02"	"PEND_TYPE\0" \
-	"f\x00\x20"	"PEND_TAG\0"
 
 /* get_cur = 0 and get_wqp = 1 ("pend_wqp") */
 #define POW_STATUS_LOAD_RESULT_PEND_WQP_XXX_63_62		UINT64_C(0xc000000000000000)
@@ -406,22 +388,6 @@
 #define POW_STATUS_LOAD_RESULT_PEND_WQP_PEND_XXX_51		UINT64_C(0x0008000000000000)
 #define POW_STATUS_LOAD_RESULT_PEND_WQP_PEND_INDEX		UINT64_C(0x0007ff0000000000)
 #define POW_STATUS_LOAD_RESULT_PEND_WQP_PEND_WQP		UINT64_C(0x0000000fffffffff)
-#define	POW_STATUS_LOAD_RESULT_PEND_WQP_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x3d"		"PEND_SWITCH\0" \
-	"b\x3c"		"PEND_SWITCH_FULL\0" \
-	"b\x3b"		"PEND_SWITCH_NULL\0" \
-	"b\x3a"		"PEND_DESCHED\0" \
-	"b\x39"		"PEND_DESCHED_SWITCH\0" \
-	"b\x38"		"PEND_NOSCHED\0" \
-	"b\x37"		"PEND_NEW_WORK\0" \
-	"b\x36"		"PEND_NEW_WORK_WAIT\0" \
-	"b\x35"		"PEND_NULL_RD\0" \
-	"b\x34"		"PEND_NOSCHED_CLR\0" \
-	"f\x28\x0b"	"PEND_INDEX\0" \
-	"f\x00\x24"	"PEND_WQP\0"
 
 /* get_cur = 1 and get_wqp = 0 and get_rev = 0 ("cur_tag_next") */
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_NEXT_XXX_63_62		UINT64_C(0xc000000000000000)
@@ -432,17 +398,6 @@
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_NEXT_TAIL		UINT64_C(0x0000000400000000)
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_NEXT_TAG_TYPE		UINT64_C(0x0000000300000000)
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_NEXT_TAG			UINT64_C(0x00000000ffffffff)
-#define	POW_STATUS_LOAD_RESULT_CUR_TAG_NEXT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x33\x0b"	"LINK_INDEX\0" \
-	"f\x28\x0b"	"INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"b\x23"		"HEAD\0" \
-	"b\x22"		"TAIL\0" \
-	"f\x20\x02"	"TAG_TYPE\0" \
-	"f\x00\x20"	"TAG\0"
 
 /* get_cur = 1 and get_wqp = 0 and get_rev = 1 ("cur_tag_prev") */
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_PREV_XXX_63_62		UINT64_C(0xc000000000000000)
@@ -453,17 +408,6 @@
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_PREV_TAIL		UINT64_C(0x0000000400000000)
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_PREV_TAG_TYPE		UINT64_C(0x0000000300000000)
 #define POW_STATUS_LOAD_RESULT_CUR_TAG_PREV_TAG			UINT64_C(0x00000000ffffffff)
-#define	POW_STATUS_LOAD_RESULT_CUR_TAG_PREV_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x33\x0b"	"REVLINK_INDEX\0" \
-	"f\x28\x0b"	"INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"b\x23"		"HEAD\0" \
-	"b\x22"		"TAIL\0" \
-	"f\x20\x02"	"TAG_TYPE\0" \
-	"f\x00\x20"	"TAG\0"
 
 /* get_cur = 1 and get_wqp = 1 and get_rev = 0 ("cur_wqp_next") */
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_NEXT_XXX_63_62		UINT64_C(0xc000000000000000)
@@ -471,14 +415,6 @@
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_NEXT_INDEX		UINT64_C(0x0007ff0000000000)
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_NEXT_GRP			UINT64_C(0x000000f000000000)
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_NEXT_WQP			UINT64_C(0x0000000fffffffff)
-#define	POW_STATUS_LOAD_RESULT_CUR_WQP_NEXT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x33\x0b"	"LINK_INDEX\0" \
-	"f\x28\x0b"	"INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"f\x00\x24"	"WQP\0"
 
 /* get_cur = 1 and get_wqp = 1 and get_rev = 1 ("cur_wqp_prev") */
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_PREV_XXX_63_62		UINT64_C(0xc000000000000000)
@@ -486,14 +422,6 @@
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_PREV_INDEX		UINT64_C(0x0007ff0000000000)
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_PREV_GRP			UINT64_C(0x000000f000000000)
 #define POW_STATUS_LOAD_RESULT_CUR_WQP_PREV_WQP			UINT64_C(0x0000000fffffffff)
-#define	POW_STATUS_LOAD_RESULT_CUR_WQP_PREV_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x33\x0b"	"REVLINK_INDEX\0" \
-	"f\x28\x0b"	"INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"f\x00\x24"	"WQP\0"
 
 /* pow memory load */
 #define	POW_OP_SUBDID_MEMORY_LOAD		2
@@ -510,28 +438,12 @@
 #define POW_MEMORY_LOAD_RESULT_TAG_TAIL				UINT64_C(0x0000000400000000)
 #define POW_MEMORY_LOAD_RESULT_TAG_TAG_TYPE			UINT64_C(0x0000000300000000)
 #define POW_MEMORY_LOAD_RESULT_TAG_TAG				UINT64_C(0x00000000ffffffff)
-#define	POW_MEMORY_LOAD_RESULT_TAG_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x28\x0b"	"NEXT_INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"b\x22"		"TAIL\0" \
-	"f\x20\x02"	"TAG_TYPE\0" \
-	"f\x00\x20"	"TAG\0"
 
 /* get_des = 0 and get_wqp = 1 ("wqp") */
 #define POW_MEMORY_LOAD_RESULT_WQP_XXX_63_51			UINT64_C(0xfff8000000000000)
 #define POW_MEMORY_LOAD_RESULT_WQP_NEXT_INDEX			UINT64_C(0x0007ff0000000000)
 #define POW_MEMORY_LOAD_RESULT_WQP_GRP				UINT64_C(0x000000f000000000)
 #define POW_MEMORY_LOAD_RESULT_WQP_WQP				UINT64_C(0x0000000fffffffff)
-#define	POW_MEMORY_LOAD_RESULT_WQP_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x28\x0b"	"NEXT_INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"f\x00\x24"	"WQP\0"
 
 /* get_des = 1 ("desched") */
 #define POW_MEMORY_LOAD_RESULT_DESCHED_XXX_63_51		UINT64_C(0xfff8000000000000)
@@ -541,16 +453,6 @@
 #define POW_MEMORY_LOAD_RESULT_DESCHED_PEND_SWITCH		UINT64_C(0x0000000400000000)
 #define POW_MEMORY_LOAD_RESULT_DESCHED_PEND_TYPE		UINT64_C(0x0000000300000000)
 #define POW_MEMORY_LOAD_RESULT_DESCHED_PEND_TAG			UINT64_C(0x00000000ffffffff)
-#define	POW_MEMORY_LOAD_RESULT_DESCHED_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x28\x0b"	"FWD_INDEX\0" \
-	"f\x24\x04"	"GRP\0" \
-	"b\x23"		"NOSCHED\0" \
-	"b\x22"		"PEND_SWITCH\0" \
-	"f\x20\x02"	"PEND_TYPE\0" \
-	"f\x00\x20"	"PEND_TAG\0"
 
 /* pow index/pointer load */
 #define	POW_OP_SUBDID_IDXPTR_LOAD		3
@@ -574,18 +476,6 @@
 #define POW_IDXPTR_LOAD_RESULT_QOS_FREE_LOC_LOC_HEAD		UINT64_C(0x00000000007ff000)
 #define POW_IDXPTR_LOAD_RESULT_QOS_FREE_LOC_XXX_11		UINT64_C(0x0000000000000800)
 #define POW_IDXPTR_LOAD_RESULT_QOS_FREE_LOC_LOC_TAIL		UINT64_C(0x00000000000007ff)
-#define	POW_IDXPTR_LOAD_RESULT_QOS_FREE_LOC_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x33"		"FREE_VAL\0" \
-	"b\x32"		"FREE_ONE\0" \
-	"f\x26\x0b"	"FREE_HEAD\0" \
-	"f\x1a\x0b"	"FREE_TAIL\0" \
-	"b\x19"		"LOC_VAL\0" \
-	"b\x18"		"LOC_ONE\0" \
-	"f\x0c\x0b"	"LOC_HEAD\0" \
-	"f\x00\x0b"	"LOC_TAIL\0"
 
 /* get_rmt = 0 and get_des_get_tail = 1 ("desched") */
 #define POW_IDXPTR_LOAD_RESULT_GRP_NOSCHED_DES_XXX_63_52	UINT64_C(0xfff0000000000000)
@@ -601,18 +491,6 @@
 #define POW_IDXPTR_LOAD_RESULT_GRP_NOSCHED_DES_DES_HEAD		UINT64_C(0x00000000007ff000)
 #define POW_IDXPTR_LOAD_RESULT_GRP_NOSCHED_DES_XXX_11		UINT64_C(0x0000000000000800)
 #define POW_IDXPTR_LOAD_RESULT_GRP_NOSCHED_DES_DES_TAIL		UINT64_C(0x00000000000007ff)
-#define	POW_IDXPTR_LOAD_RESULT_GRP_NOSCHED_DES_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x33"		"NOSCHED_VAL\0" \
-	"b\x32"		"NOSCHED_ONE\0" \
-	"f\x26\x0b"	"NOSCHED_HEAD\0" \
-	"f\x1a\x0b"	"NOSCHED_TAIL\0" \
-	"b\x19"		"DES_VAL\0" \
-	"b\x18"		"DES_ONE\0" \
-	"f\x0c\x0b"	"DES_HEAD\0" \
-	"f\x00\x0b"	"DES_TAIL\0"
 
 /* get_rmt = 1 and get_des_get_tail = 0 ("remote_head") */
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_HEAD_XXX_63_39	UINT64_C(0xffffff8000000000)
@@ -620,14 +498,6 @@
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_HEAD_RMT_VAL	UINT64_C(0x0000002000000000)
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_HEAD_RMT_ONE	UINT64_C(0x0000001000000000)
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_HEAD_RMT_HEAD	UINT64_C(0x0000000fffffffff)
-#define	POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_HEAD_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x26"		"RMT_IS_HEAD\0" \
-	"b\x25"		"RMT_VAL\0" \
-	"b\x24"		"RMT_ONE\0" \
-	"f\x00\x24"	"RMT_HEAD\0"
 
 /* get_rmt = 1 and get_des_get_tail = 1 ("remote_tail") */
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_TAIL_XXX_63_39	UINT64_C(0xffffff8000000000)
@@ -635,14 +505,6 @@
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_TAIL_RMT_VAL	UINT64_C(0x0000002000000000)
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_TAIL_RMT_ONE	UINT64_C(0x0000001000000000)
 #define POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_TAIL_RMT_TAIL	UINT64_C(0x0000000fffffffff)
-#define	POW_IDXPTR_LOAD_RESULT_QUEUE_REMOTE_TAIL_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x26"		"RMT_IS_HEAD\0" \
-	"b\x25"		"RMT_VAL\0" \
-	"b\x24"		"RMT_ONE\0" \
-	"f\x00\x24"	"RMT_TAIL\0"
 
 /* pow null rd */
 #define	POW_OP_SUBDID_NULL_RD			4
@@ -692,45 +554,18 @@
 
 #define	POW_WQE_WORD0_XXX_63_40			UINT64_C(0xffffff0000000000)
 #define	POW_WQE_WORD0_NEXT			UINT64_C(0x000000ffffffffff)
-#define	POW_WQE_WORD0_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x28"	"NEXT\0"
 
 #define	POW_WQE_WORD1_XXX_63_42			UINT64_C(0xfffffc0000000000)
 #define	POW_WQE_WORD1_QOS			UINT64_C(0x0000038000000000)
 #define	POW_WQE_WORD1_GRP			UINT64_C(0x0000007800000000)
 #define	POW_WQE_WORD1_TT			UINT64_C(0x0000000700000000)
 #define	POW_WQE_WORD1_TAG			UINT64_C(0x00000000ffffffff)
-#define	POW_WQE_WORD1_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x27\x03"	"QOS\0" \
-	"f\x23\x04"	"GRP\0" \
-	"f\x20\x03"	"TT\0" \
-	"f\x00\x20"	"TAG\0"
 
 /* ------------------------------------------------------------------------- */
 
-/* for snprintb(9) */
-
-#define	POW_PP_GRP_MSKX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x10"	"GRP_MSK\0"
 #define	POW_PP_GRP_MSK0_BITS	POW_PP_GRP_MSKX_BITS
 #define	POW_PP_GRP_MSK1_BITS	POW_PP_GRP_MSKX_BITS
-#define	POW_WQ_INT_THRX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x1c"		"TC_EN\0" \
-	"f\x18\x04"	"TC_THR\0" \
-	"f\x0c\x06"	"DS_THR\0" \
-	"f\x00\x06"	"IQ_THR\0"
+
 #define	POW_WQ_INT_THR0_BITS	POW_WQ_INT_THRX_BITS
 #define	POW_WQ_INT_THR1_BITS	POW_WQ_INT_THRX_BITS
 #define	POW_WQ_INT_THR2_BITS	POW_WQ_INT_THRX_BITS
@@ -747,13 +582,7 @@
 #define	POW_WQ_INT_THR13_BITS	POW_WQ_INT_THRX_BITS
 #define	POW_WQ_INT_THR14_BITS	POW_WQ_INT_THRX_BITS
 #define	POW_WQ_INT_THR15_BITS	POW_WQ_INT_THRX_BITS
-#define	POW_WQ_INT_CNTX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x18\x04"	"TC_CNT\0" \
-	"f\x0c\x06"	"DS_CNT\0" \
-	"f\x00\x06"	"IQ_CNT\0"
+
 #define	POW_WQ_INT_CNT0_BITS	POW_WQ_INT_CNTX_BITS
 #define	POW_WQ_INT_CNT1_BITS	POW_WQ_INT_CNTX_BITS
 #define	POW_WQ_INT_CNT2_BITS	POW_WQ_INT_CNTX_BITS
@@ -770,15 +599,7 @@
 #define	POW_WQ_INT_CNT13_BITS	POW_WQ_INT_CNTX_BITS
 #define	POW_WQ_INT_CNT14_BITS	POW_WQ_INT_CNTX_BITS
 #define	POW_WQ_INT_CNT15_BITS	POW_WQ_INT_CNTX_BITS
-#define	POW_QOS_THRX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x30\x07"	"DES_CNT\0" \
-	"f\x24\x07"	"BUF_CNT\0" \
-	"f\x18\x07"	"FREE_CNT\0" \
-	"f\x0c\x06"	"MAX_THR\0" \
-	"f\x00\x06"	"MIN_THR\0"
+
 #define	POW_QOS_THR0_BITS	POW_QOS_THRX_BITS
 #define	POW_QOS_THR1_BITS	POW_QOS_THRX_BITS
 #define	POW_QOS_THR2_BITS	POW_QOS_THRX_BITS
@@ -787,14 +608,7 @@
 #define	POW_QOS_THR5_BITS	POW_QOS_THRX_BITS
 #define	POW_QOS_THR6_BITS	POW_QOS_THRX_BITS
 #define	POW_QOS_THR7_BITS	POW_QOS_THRX_BITS
-#define	POW_QOS_RNDX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x18\x08"	"RND_P3\0" \
-	"f\x10\x08"	"RND_P2\0" \
-	"f\x08\x08"	"RND_P1\0" \
-	"f\x00\x08"	"RND\0"
+
 #define	POW_QOS_RND0_BITS	POW_QOS_RNDX_BITS
 #define	POW_QOS_RND1_BITS	POW_QOS_RNDX_BITS
 #define	POW_QOS_RND2_BITS	POW_QOS_RNDX_BITS
@@ -803,45 +617,6 @@
 #define	POW_QOS_RND5_BITS	POW_QOS_RNDX_BITS
 #define	POW_QOS_RND6_BITS	POW_QOS_RNDX_BITS
 #define	POW_QOS_RND7_BITS	POW_QOS_RNDX_BITS
-#define	POW_WQ_INT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x10\x10"	"IQ_DIS\0" \
-	"f\x00\x10"	"WQ_INT\0"
-#define	POW_WQ_INT_PC_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x20\x1c"	"PC\0" \
-	"f\x08\x14"	"PC_THR\0"
-#define	POW_NW_TIM_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x0a"	"NW_TIM\0"
-#define	POW_ECC_ERR_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x20\x0d"	"IOP_IE\0" \
-	"f\x10\x0d"	"IOP\0" \
-	"b\x0d"		"RPE_IE\0" \
-	"b\x0c"		"RPE\0" \
-	"f\x04\x05"	"SYN\0" \
-	"b\x03"		"DBE_IE\0" \
-	"b\x02"		"SBE_IE\0" \
-	"b\x01"		"DBE\0" \
-	"b\x00"		"SBE\0"
-#define	POW_NOS_CNT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x07"	"NOS_CNT\0"
-#define	POW_WS_PCX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
 
 #define	POW_WS_PC0_BITS		POW_WS_PCX_BITS
 #define	POW_WS_PC1_BITS		POW_WS_PCX_BITS
@@ -859,10 +634,6 @@
 #define	POW_WS_PC13_BITS	POW_WS_PCX_BITS
 #define	POW_WS_PC14_BITS	POW_WS_PCX_BITS
 #define	POW_WS_PC15_BITS	POW_WS_PCX_BITS
-#define	POW_WA_PCX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
 
 #define	POW_WA_PC0_BITS		POW_WA_PCX_BITS
 #define	POW_WA_PC1_BITS		POW_WA_PCX_BITS
@@ -872,10 +643,6 @@
 #define	POW_WA_PC5_BITS		POW_WA_PCX_BITS
 #define	POW_WA_PC6_BITS		POW_WA_PCX_BITS
 #define	POW_WA_PC7_BITS		POW_WA_PCX_BITS
-#define	POW_IQ_CNTX_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
 
 #define	POW_IQ_CNT0_BITS	POW_IQ_CNTX_BITS
 #define	POW_IQ_CNT1_BITS	POW_IQ_CNTX_BITS
@@ -885,39 +652,5 @@
 #define	POW_IQ_CNT5_BITS	POW_IQ_CNTX_BITS
 #define	POW_IQ_CNT6_BITS	POW_IQ_CNTX_BITS
 #define	POW_IQ_CNT7_BITS	POW_IQ_CNTX_BITS
-#define	POW_WA_COM_PC_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x20"	"WA_PC\0"
-#define	POW_IQ_COM_CNT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-
-#define	POW_TS_PC_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x20"	"TS_PC\0"
-#define	POW_DS_PC_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"f\x00\x20"	"DS_PC\0"
-#define	POW_BIST_STAT_BITS \
-	"\177"		/* new format */ \
-	"\020"		/* hex display */ \
-	"\020"		/* %016x format */ \
-	"b\x10"		"PP\0" \
-	"b\x08"		"CAM\0" \
-	"b\x07"		"NBT1\0" \
-	"b\x06"		"NBT0\0" \
-	"b\x05"		"IDX\0" \
-	"b\x04"		"FIDX\0" \
-	"b\x03"		"NBR1\0" \
-	"b\x02"		"NBR0\0" \
-	"b\x01"		"PEND\0" \
-	"b\x00"		"ADR\0"
 
 #endif /* _OCTEON_POWREG_H_ */
