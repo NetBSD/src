@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pci.c,v 1.4 2020/06/19 02:23:43 simonb Exp $	*/
+/*	$NetBSD: octeon_pci.c,v 1.5 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.4 2020/06/19 02:23:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.5 2020/06/22 02:26:20 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -50,11 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.4 2020/06/19 02:23:43 simonb Exp $"
 void			octpci_bootstrap(struct octeon_config *);
 static void		octpci_init(void);
 
-#ifdef CNMAC_DEBUG
-static int		octpci_intr_rml(void *);
-static void		*octpci_intr_rml_ih;
-#endif
-
 void
 octpci_bootstrap(struct octeon_config *mcp)
 {
@@ -64,50 +59,6 @@ octpci_bootstrap(struct octeon_config *mcp)
 static void
 octpci_init(void)
 {
-#ifdef CNMAC_DEBUG
-	octpci_intr_rml_ih = octeon_intr_establish( CIU_INT_RML, IPL_NET,
-	    octpci_intr_rml, NULL);
-#endif
+
+	/* XXX remove this? */
 }
-
-#ifdef CNMAC_DEBUG
-int octpci_intr_rml_verbose;
-
-void			octgmx_intr_rml_gmx0(void *);
-void			octgmx_intr_rml_gmx1(void *);
-void			octasx_intr_rml(void *);
-void			octipd_intr_rml(void *);
-void			octpip_intr_rml(void *);
-void			octpow_intr_rml(void *);
-void			octpko_intr_rml(void *);
-void			octfpa_intr_rml(void *);
-
-static int
-octpci_intr_rml(void *arg)
-{
-	uint64_t block;
-
-	block = octeon_read_csr(NPI_RSL_INT_BLOCKS);
-	if (octpci_intr_rml_verbose)
-		printf("%s: block=0x%016" PRIx64 "\n", __func__, block);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_GMX0))
-		octgmx_intr_rml_gmx0(arg);
-#ifdef notyet
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_GMX1))
-		octgmx_intr_rml_gmx1(arg);
-#endif
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_ASX0))
-		octasx_intr_rml(arg);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_IPD))
-		octipd_intr_rml(arg);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_PIP))
-		octpip_intr_rml(arg);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_POW))
-		octpow_intr_rml(arg);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_PKO))
-		octpko_intr_rml(arg);
-	if (ISSET(block, NPI_RSL_INT_BLOCKS_FPA))
-		octfpa_intr_rml(arg);
-	return 1;
-}
-#endif

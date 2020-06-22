@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.5 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -71,32 +71,6 @@ struct octgmx_port_softc {
 
 	int			sc_clk_tx_setting;
 	int			sc_clk_rx_setting;
-
-#if defined(OCTEON_DEBUG) || defined(CNMAC_DEBUG)
-#if 0
-	/* XXX */
-	struct evcnt		sc_ev_pausedrp;
-	struct evcnt		sc_ev_phydupx;
-	struct evcnt		sc_ev_physpd;
-	struct evcnt		sc_ev_phylink;
-#endif
-	struct evcnt		sc_ev_ifgerr;
-	struct evcnt		sc_ev_coldet;
-	struct evcnt		sc_ev_falerr;
-	struct evcnt		sc_ev_rcverr;
-	struct evcnt		sc_ev_rsverr;
-	struct evcnt		sc_ev_pckterr;
-	struct evcnt		sc_ev_ovrerr;
-	struct evcnt		sc_ev_niberr;
-	struct evcnt		sc_ev_skperr;
-	struct evcnt		sc_ev_lenerr;
-	struct evcnt		sc_ev_alnerr;
-	struct evcnt		sc_ev_fcserr;
-	struct evcnt		sc_ev_jabber;
-	struct evcnt		sc_ev_maxerr;
-	struct evcnt		sc_ev_carext;
-	struct evcnt		sc_ev_minerr;
-#endif
 };
 
 struct octgmx_softc {
@@ -110,14 +84,6 @@ struct octgmx_softc {
 
 	struct octgmx_port_softc
 				*sc_ports;
-
-#if defined(OCTEON_DEBUG) || defined(CNMAC_DEBUG)
-	struct evcnt		sc_ev_latecol;
-	struct evcnt		sc_ev_xsdef;
-	struct evcnt		sc_ev_xscol;
-	struct evcnt		sc_ev_undflw;
-	struct evcnt		sc_ev_pkonxa;
-#endif
 };
 #endif
 

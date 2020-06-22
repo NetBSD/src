@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciu.c,v 1.2 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_ciu.c,v 1.3 2020/06/22 02:26:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.2 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.3 2020/06/22 02:26:19 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -43,89 +43,4 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.2 2020/05/31 06:27:06 simonb Exp $"
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 
-#ifdef CIUDEBUG
-#define	DPRINTF(x)	printf x
-#else
-#define	DPRINTF(x)
-#endif
-
-#ifdef CNMAC_DEBUG
-void		octciu_dump(void);
-void		octciu_dump_regs(void);
-
-#define	_ENTRY(x)	{ #x, x##_BITS, x }
-
-struct octciu_dump_reg_entry {
-	const char *name;
-	const char *format;
-	paddr_t address;
-};
-
-static const struct octciu_dump_reg_entry octciu_dump_regs_entries[] = {
-	_ENTRY(CIU_INT0_SUM0),
-	_ENTRY(CIU_INT1_SUM0),
-	_ENTRY(CIU_INT2_SUM0),
-	_ENTRY(CIU_INT3_SUM0),
-	_ENTRY(CIU_INT32_SUM0),
-	_ENTRY(CIU_INT_SUM1),
-	_ENTRY(CIU_INT0_EN0),
-	_ENTRY(CIU_INT1_EN0),
-	_ENTRY(CIU_INT2_EN0),
-	_ENTRY(CIU_INT3_EN0),
-	_ENTRY(CIU_INT32_EN0),
-	_ENTRY(CIU_INT0_EN1),
-	_ENTRY(CIU_INT1_EN1),
-	_ENTRY(CIU_INT2_EN1),
-	_ENTRY(CIU_INT3_EN1),
-	_ENTRY(CIU_INT32_EN1),
-	_ENTRY(CIU_TIM0),
-	_ENTRY(CIU_TIM1),
-	_ENTRY(CIU_TIM2),
-	_ENTRY(CIU_TIM3),
-	_ENTRY(CIU_WDOG0),
-	_ENTRY(CIU_WDOG1),
-	/* _ENTRY(CIU_PP_POKE0), */
-	/* _ENTRY(CIU_PP_POKE1), */
-	_ENTRY(CIU_MBOX_SET0),
-	_ENTRY(CIU_MBOX_SET1),
-	_ENTRY(CIU_MBOX_CLR0),
-	_ENTRY(CIU_MBOX_CLR1),
-	_ENTRY(CIU_PP_RST),
-	_ENTRY(CIU_PP_DBG),
-	_ENTRY(CIU_GSTOP),
-	_ENTRY(CIU_NMI),
-	_ENTRY(CIU_DINT),
-	_ENTRY(CIU_FUSE),
-	_ENTRY(CIU_BIST),
-	_ENTRY(CIU_SOFT_BIST),
-	_ENTRY(CIU_SOFT_RST),
-	_ENTRY(CIU_SOFT_PRST),
-	_ENTRY(CIU_PCI_INTA)
-};
-
-void
-octciu_dump(void)
-{
-	octciu_dump_regs();
-}
-
-void
-octciu_dump_regs(void)
-{
-	const struct octciu_dump_reg_entry *reg;
-	uint64_t tmp;
-	char buf[512];
-	int i;
-
-	for (i = 0; i < (int)__arraycount(octciu_dump_regs_entries); i++) {
-		reg = &octciu_dump_regs_entries[i];
-		tmp = octeon_xkphys_read_8(reg->address);
-		if (reg->format == NULL) {
-			snprintf(buf, sizeof(buf), "%16" PRIx64, tmp);
-		} else {
-			snprintb(buf, sizeof(buf), reg->format, tmp);
-		}
-		printf("\t%-24s: %s\n", reg->name, buf);
-	}
-}
-#endif
+/* XXX keep this file? */
