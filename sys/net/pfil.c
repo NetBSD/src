@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.38 2020/04/27 23:35:40 nat Exp $	*/
+/*	$NetBSD: pfil.c,v 1.39 2020/06/22 16:39:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.38 2020/04/27 23:35:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.39 2020/06/22 16:39:56 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -86,13 +86,17 @@ static LIST_HEAD(, pfil_head) pfil_head_list __read_mostly =
 
 static kmutex_t pfil_mtx __cacheline_aligned;
 static struct psref_class *pfil_psref_class __read_mostly;
+#ifdef NET_MPSAFE
 static pserialize_t pfil_psz;
+#endif
 
 void
 pfil_init(void)
 {
 	mutex_init(&pfil_mtx, MUTEX_DEFAULT, IPL_NONE);
+#ifdef NET_MPSAFE
 	pfil_psz = pserialize_create();
+#endif
 	pfil_psref_class = psref_class_create("pfil", IPL_SOFTNET);
 }
 
