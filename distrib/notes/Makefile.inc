@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2020/06/16 00:45:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2020/06/23 06:28:01 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -36,8 +36,10 @@ PRESET=	${GFLAGS} -U -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
 PRESET+=	-rmajor=${DISTRIBVER:C/\..*$//}
 .if ${USE_XZ_SETS:Uno} == "yes"
 PRESET+=	-dsetsuffix=tar.xz
+PRESET+=	-dcompressor=xz
 .else
 PRESET+=	-dsetsuffix=tgz
+PRESET+=	-dcompressor=gzip
 .endif
 .if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
 PRESET+=	-rFOR_RELEASE=1
