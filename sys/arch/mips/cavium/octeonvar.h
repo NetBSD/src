@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.12 2020/06/22 02:26:19 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.13 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,18 +52,6 @@
 		"	.set arch=octeon		\n"
 #define	_ASM_EPILOGUE \
 		"	.set pop			\n"
-/*
- * subbits = __BITS64_GET(XXX, bits);
- * bits = __BITS64_SET(XXX, subbits);
- */
-#ifndef	__BITS64_GET
-#define	__BITS64_GET(name, bits)	\
-	    (((uint64_t)(bits) & name) >> name##_SHIFT)
-#endif
-#ifndef	__BITS64_SET
-#define	__BITS64_SET(name, subbits)	\
-	    (((uint64_t)(subbits) << name##_SHIFT) & name)
-#endif
 
 #ifdef _KERNEL
 extern int	octeon_core_ver;
@@ -211,22 +199,7 @@ struct octfau_map {
 #define	OCTEON_POW_QOS_XXX_6		6
 #define	OCTEON_POW_QOS_XXX_7		7
 
-#define	OCTEON_POW_GROUP_PIP		0
-#define	OCTEON_POW_GROUP_XXX_1		1
-#define	OCTEON_POW_GROUP_XXX_2		2
-#define	OCTEON_POW_GROUP_XXX_3		3
-#define	OCTEON_POW_GROUP_XXX_4		4
-#define	OCTEON_POW_GROUP_XXX_5		5
-#define	OCTEON_POW_GROUP_XXX_6		6
-#define	OCTEON_POW_GROUP_CORE1_SEND	7
-#define	OCTEON_POW_GROUP_CORE1_TASK_0	8
-#define	OCTEON_POW_GROUP_CORE1_TASK_1	9
-#define	OCTEON_POW_GROUP_CORE1_TASK_2	10
-#define	OCTEON_POW_GROUP_CORE1_TASK_3	11
-#define	OCTEON_POW_GROUP_CORE1_TASK_4	12
-#define	OCTEON_POW_GROUP_CORE1_TASK_5	13
-#define	OCTEON_POW_GROUP_CORE1_TASK_6	14
-#define	OCTEON_POW_GROUP_CORE1_TASK_7	15
+#define	OCTEON_POW_GROUP_MAX		16
 
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
@@ -305,14 +278,6 @@ void		mips_cp0_cvmctl_write(uint64_t);
 #define OCTEON_SYNC		OCTEON_SYNCCOMMON(sync)
 #define OCTEON_SYNCWS		OCTEON_SYNCCOMMON(syncws)
 #define OCTEON_SYNCS		OCTEON_SYNCCOMMON(syncs)
-/* XXX backward compatibility */
-#if 1
-#define	OCT_SYNCIOBDMA		OCTEON_SYNCIOBDMA
-#define	OCT_SYNCW		OCTEON_SYNCW
-#define	OCT_SYNC		OCTEON_SYNC
-#define	OCT_SYNCWS		OCTEON_SYNCWS
-#define	OCT_SYNCS		OCTEON_SYNCS
-#endif
 
 /* octeon core does not use cca to determine cacheability */
 #define OCTEON_CCA_NONE UINT64_C(0)
@@ -329,14 +294,6 @@ octeon_xkphys_write_8(paddr_t address, uint64_t value)
 	mips3_sd(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address), value);
 }
 
-/* XXX backward compatibility */
-#if 1
-#define octeon_read_csr(address) \
-	octeon_xkphys_read_8(address)
-#define octeon_write_csr(address, value) \
-	octeon_xkphys_write_8(address, value)
-#endif
-
 static __inline void
 octeon_iobdma_write_8(uint64_t value)
 {
@@ -347,72 +304,15 @@ octeon_iobdma_write_8(uint64_t value)
 static __inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
+
 	return octeon_xkphys_read_8(OCTEON_CVMSEG_LM + offset);
 }
 
 static __inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
+
 	octeon_xkphys_write_8(OCTEON_CVMSEG_LM + offset, value);
-}
-
-/* XXX */
-static __inline uint32_t
-octeon_disable_interrupt(uint32_t *new)
-{
-	uint32_t s, tmp;
-        
-	__asm __volatile (
-		_ASM_PROLOGUE
-		"	mfc0	%[s], $12		\n"
-		"	and	%[tmp], %[s], ~1	\n"
-		"	mtc0	%[tmp], $12		\n"
-		_ASM_EPILOGUE
-		: [s]"=&r"(s), [tmp]"=&r"(tmp));
-	if (new)
-		*new = tmp;
-	return s;
-}
-
-/* XXX */
-static __inline void
-octeon_restore_status(uint32_t s)
-{
-	__asm __volatile (
-		_ASM_PROLOGUE
-		"	mtc0	%[s], $12		\n"
-		_ASM_EPILOGUE
-		:: [s]"r"(s));
-}
-
-static __inline uint64_t
-octeon_get_cycles(void)
-{ 
-#if defined(__mips_o32)
-	uint32_t s, lo, hi;
-  
-	s = octeon_disable_interrupt((void *)0);
-	__asm __volatile (
-		_ASM_PROLOGUE_MIPS64
-		"	dmfc0	%[lo], $9, 6		\n"
-		"	add	%[hi], %[lo], $0	\n"
-		"	srl	%[hi], 32		\n"
-		"	sll	%[lo], 32		\n"
-		"	srl	%[lo], 32		\n"
-		_ASM_EPILOGUE
-		: [lo]"=&r"(lo), [hi]"=&r"(hi));
-	octeon_restore_status(s);
-	return ((uint64_t)hi << 32) + (uint64_t)lo;
-#else
-	uint64_t tmp;
-
-	__asm __volatile (
-		_ASM_PROLOGUE_MIPS64
-		"	dmfc0	%[tmp], $9, 6		\n"
-		_ASM_EPILOGUE
-		: [tmp]"=&r"(tmp));
-	return tmp;
-#endif
 }
 
 #endif	/* _MIPS_OCTEON_OCTEONVAR_H_ */

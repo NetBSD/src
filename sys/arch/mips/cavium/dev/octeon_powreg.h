@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powreg.h,v 1.4 2020/06/22 12:26:11 simonb Exp $	*/
+/*	$NetBSD: octeon_powreg.h,v 1.5 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -35,8 +35,7 @@
 
 /* ---- register addresses */
 
-#define	POW_PP_GRP_MSK0				UINT64_C(0x0001670000000000)
-#define	POW_PP_GRP_MSK1				UINT64_C(0x0001670000000008)
+#define	POW_PP_GRP_MSK(core)			(UINT64_C(0x0001670000000000) + (core) * 8)
 #define	POW_WQ_INT_THR0				UINT64_C(0x0001670000000080)
 #define	POW_WQ_INT_THR1				UINT64_C(0x0001670000000088)
 #define	POW_WQ_INT_THR2				UINT64_C(0x0001670000000090)
@@ -131,8 +130,7 @@
 #define POW_BASE				UINT64_C(0x0001670000000000)
 #define POW_SIZE				UINT64_C(0x400)
 
-#define	POW_PP_GRP_MSK0_OFFSET			UINT64_C(0x0)
-#define	POW_PP_GRP_MSK1_OFFSET			UINT64_C(0x8)
+#define	POW_PP_GRP_MSK_OFFSET(core)		(UINT64_C(0) + (core) * 8)
 #define	POW_WQ_INT_THR0_OFFSET			UINT64_C(0x80)
 #define	POW_WQ_INT_THR1_OFFSET			UINT64_C(0x88)
 #define	POW_WQ_INT_THR2_OFFSET			UINT64_C(0x90)

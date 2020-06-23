@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipdvar.h,v 1.4 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_ipdvar.h,v 1.5 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -49,7 +49,6 @@ struct octipd_attach_args {
 void	octipd_init(struct octipd_attach_args *, struct octipd_softc **);
 int	octipd_enable(struct octipd_softc *);
 int	octipd_config(struct octipd_softc *);
-int	octipd_red(struct octipd_softc *, uint64_t, uint64_t);
 void	octipd_sub_port_fcs(struct octipd_softc *, int);
 void	octipd_offload(uint64_t, void *, int *);
 

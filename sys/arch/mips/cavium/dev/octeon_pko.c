@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pko.c,v 1.4 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_pko.c,v 1.5 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.4 2020/06/22 02:26:20 simonb Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.5 2020/06/23 05:15:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.4 2020/06/22 02:26:20 simonb Exp $"
 #include <mips/cavium/dev/octeon_fpavar.h>
 #include <mips/cavium/dev/octeon_pkoreg.h>
 #include <mips/cavium/dev/octeon_pkovar.h>
+
+static inline void	octpko_op_store(uint64_t, uint64_t);
 
 #define	_PKO_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
@@ -91,25 +91,13 @@ octpko_enable(struct octpko_softc *sc)
 	return 0;
 }
 
-#if 0
-void
-octpko_reset(octpko_softc *sc)
-{
-	uint64_t reg_flags;
-
-	reg_flags = _PKO_RD8(sc, PKO_REG_FLAGS_OFFSET);
-	SET(reg_flags, PKO_REG_FLAGS_RESET);
-	_PKO_WR8(sc, PKO_REG_FLAGS_OFFSET, reg_flags);
-}
-#endif
-
 void
 octpko_config(struct octpko_softc *sc)
 {
 	uint64_t reg_cmd_buf = 0;
 
-	SET(reg_cmd_buf, (sc->sc_cmd_buf_pool << 20) & PKO_REG_CMD_BUF_POOL);
-	SET(reg_cmd_buf, sc->sc_cmd_buf_size & PKO_REG_CMD_BUF_SIZE);
+	SET(reg_cmd_buf, __SHIFTIN(sc->sc_cmd_buf_pool, PKO_REG_CMD_BUF_POOL));
+	SET(reg_cmd_buf, __SHIFTIN(sc->sc_cmd_buf_size, PKO_REG_CMD_BUF_SIZE));
 	_PKO_WR8(sc, PKO_REG_CMD_BUF_OFFSET, reg_cmd_buf);
 }
 
@@ -125,10 +113,9 @@ octpko_port_enable(struct octpko_softc *sc, int enable)
 	/* XXX assume one queue maped one port */
 	/* Enable packet output by enabling all queues for this port */
 	mem_queue_qos = 0;
-	SET(mem_queue_qos, ((uint64_t)sc->sc_port << 7) & PKO_MEM_QUEUE_QOS_PID);
-	SET(mem_queue_qos, sc->sc_port & PKO_MEM_QUEUE_QOS_QID);
-	SET(mem_queue_qos, ((enable ? 0xffULL : 0x00ULL) << 53) &
-	    PKO_MEM_QUEUE_QOS_QOS_MASK);
+	SET(mem_queue_qos, __SHIFTIN(sc->sc_port, PKO_MEM_QUEUE_QOS_PID));
+	SET(mem_queue_qos, __SHIFTIN(sc->sc_port, PKO_MEM_QUEUE_QOS_QID));
+	SET(mem_queue_qos, enable ? PKO_MEM_QUEUE_QOS_QOS_MASK : 0);
 
 	_PKO_WR8(sc, PKO_REG_READ_IDX_OFFSET, reg_read_idx);
 	_PKO_WR8(sc, PKO_MEM_QUEUE_QOS_OFFSET, mem_queue_qos);
@@ -155,11 +142,11 @@ octpko_port_config(struct octpko_softc *sc)
 	/* assume one queue maped one port */
 	mem_queue_ptrs = 0;
 	SET(mem_queue_ptrs, PKO_MEM_QUEUE_PTRS_TAIL);
-	SET(mem_queue_ptrs, ((uint64_t)0 << 13) & PKO_MEM_QUEUE_PTRS_IDX);
-	SET(mem_queue_ptrs, ((uint64_t)sc->sc_port << 7) & PKO_MEM_QUEUE_PTRS_PID);
-	SET(mem_queue_ptrs, sc->sc_port & PKO_MEM_QUEUE_PTRS_QID);
-	SET(mem_queue_ptrs, ((uint64_t)0xff << 53) & PKO_MEM_QUEUE_PTRS_QOS_MASK);
-	SET(mem_queue_ptrs, ((uint64_t)buf_ptr << 17) & PKO_MEM_QUEUE_PTRS_BUF_PTR);
+	SET(mem_queue_ptrs, __SHIFTIN(0, PKO_MEM_QUEUE_PTRS_IDX));
+	SET(mem_queue_ptrs, __SHIFTIN(sc->sc_port, PKO_MEM_QUEUE_PTRS_PID));
+	SET(mem_queue_ptrs, __SHIFTIN(sc->sc_port, PKO_MEM_QUEUE_PTRS_QID));
+	SET(mem_queue_ptrs, __SHIFTIN(0xff, PKO_MEM_QUEUE_PTRS_QOS_MASK));
+	SET(mem_queue_ptrs, __SHIFTIN(buf_ptr, PKO_MEM_QUEUE_PTRS_BUF_PTR));
 	OCTEON_SYNCW;
 	_PKO_WR8(sc, PKO_MEM_QUEUE_PTRS_OFFSET, mem_queue_ptrs);
 
