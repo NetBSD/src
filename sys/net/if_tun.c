@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.158 2020/01/29 04:34:10 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.159 2020/06/23 18:30:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.158 2020/01/29 04:34:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.159 2020/06/23 18:30:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -856,6 +856,9 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	ifp = &tp->tun_if;
 
 	TUNDEBUG("%s: tunwrite\n", ifp->if_xname);
+
+	if (uio->uio_resid == 0)
+		return 0;
 
 	if (tp->tun_flags & TUN_PREPADDR) {
 		if (uio->uio_resid < sizeof(dst)) {
