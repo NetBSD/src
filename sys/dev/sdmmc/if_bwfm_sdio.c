@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.18 2020/05/30 15:55:47 jdolecek Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.19 2020/06/23 10:09:33 martin Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -689,7 +689,7 @@ bwfm_sdio_read_4(struct bwfm_sdio_softc *sc, uint32_t addr)
 		sf = sc->sc_sf[1];
 
 	rv = sdmmc_io_read_4(sf, addr);
-	return rv;
+	return htole32(rv);
 }
 
 static void
@@ -732,7 +732,7 @@ bwfm_sdio_write_4(struct bwfm_sdio_softc *sc, uint32_t addr, uint32_t data)
 	else
 		sf = sc->sc_sf[1];
 
-	sdmmc_io_write_4(sf, addr, data);
+	sdmmc_io_write_4(sf, addr, htole32(data));
 }
 
 static int
