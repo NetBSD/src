@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxvar.h,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_gmxvar.h,v 1.7 2020/06/23 05:17:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,8 +29,6 @@
 #ifndef _OCTEON_GMXVAR_H_
 #define _OCTEON_GMXVAR_H_
 
-#include "opt_octeon.h"
-
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
@@ -40,7 +38,8 @@
 #define GMX_MII_PORT	1
 #define GMX_GMII_PORT	2
 #define GMX_RGMII_PORT	3
-#define GMX_SPI42_PORT	4
+#define GMX_SGMII_PORT	4
+#define GMX_SPI42_PORT	5
 
 #define GMX_FRM_MAX_SIZ	0x600
 
@@ -66,6 +65,7 @@ struct octgmx_port_softc {
 	struct octgmx_port_ops
 				*sc_port_ops;
 	struct octasx_softc	*sc_port_asx;
+	bus_space_handle_t	sc_port_pcs_regh;
 	struct octipd_softc	*sc_ipd;
 	int			sc_port_flowflags;
 
@@ -93,50 +93,31 @@ struct octgmx_attach_args {
 	const char		*ga_name;
 	int			ga_portno;
 	int			ga_port_type;
+	struct octsmi_softc	*ga_smi;
 
 	struct octgmx_softc	*ga_gmx;
 	struct octgmx_port_softc
 				*ga_gmx_port;
 };
 
-#define	OCTEON_GMX_FILTER_NADDRS_MAX	8	/* XXX elsewhere */
-
-enum OCTEON_GMX_FILTER_POLICY {
-	OCTEON_GMX_FILTER_POLICY_ACCEPT_ALL,
-	OCTEON_GMX_FILTER_POLICY_ACCEPT,
-	OCTEON_GMX_FILTER_POLICY_REJECT,
-	OCTEON_GMX_FILTER_POLICY_REJECT_ALL
-};
-
-int		octgmx_link_enable(struct octgmx_port_softc *, int);
+int		octgmx_port_enable(struct octgmx_port_softc *, int);
+int		octgmx_stats_init(struct octgmx_port_softc *);
+void		octgmx_stats(struct octgmx_port_softc *);
+int		octgmx_set_mac_addr(struct octgmx_port_softc *, const uint8_t *);
+int		octgmx_set_filter(struct octgmx_port_softc *);
 int		octgmx_tx_stats_rd_clr(struct octgmx_port_softc *, int);
 int		octgmx_rx_stats_rd_clr(struct octgmx_port_softc *, int);
-void		octgmx_rx_stats_dec_bad(struct octgmx_port_softc *);
-int		octgmx_stats_init(struct octgmx_port_softc *);
-void		octgmx_tx_int_enable(struct octgmx_port_softc *, int);
-void		octgmx_rx_int_enable(struct octgmx_port_softc *, int);
-int		octgmx_setfilt(struct octgmx_port_softc *,
-		    enum OCTEON_GMX_FILTER_POLICY, size_t, uint8_t **);
-int		octgmx_rx_frm_ctl_enable(struct octgmx_port_softc *, uint64_t);
-int		octgmx_rx_frm_ctl_disable(struct octgmx_port_softc *, uint64_t);
-int		octgmx_tx_thresh(struct octgmx_port_softc *, int);
-int		octgmx_set_mac_addr(struct octgmx_port_softc *, uint8_t *);
-int		octgmx_set_filter(struct octgmx_port_softc *);
-int		octgmx_port_enable(struct octgmx_port_softc *, int);
 int		octgmx_reset_speed(struct octgmx_port_softc *);
 int		octgmx_reset_flowctl(struct octgmx_port_softc *);
 int		octgmx_reset_timing(struct octgmx_port_softc *);
-int		octgmx_reset_board(struct octgmx_port_softc *);
-void		octgmx_stats(struct octgmx_port_softc *);
-uint64_t	octgmx_get_rx_int_reg(struct octgmx_port_softc *sc);
-uint64_t	octgmx_get_tx_int_reg(struct octgmx_port_softc *sc);
 static __inline int	octgmx_link_status(struct octgmx_port_softc *);
 
-/* XXX RGMII specific */
 static __inline int
 octgmx_link_status(struct octgmx_port_softc *sc)
 {
-	return (sc->sc_link & RXN_RX_INBND_STATUS) ? 1 : 0;
+
+	return ((sc->sc_port_mii->mii_media_status & (IFM_AVALID | IFM_ACTIVE))
+	    == (IFM_AVALID | IFM_ACTIVE));
 }
 
 #endif /* _OCTEON_GMXVAR_H_ */
