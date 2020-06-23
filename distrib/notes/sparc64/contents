@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.10 2020/06/22 12:03:47 maya Exp $
+.\"	$NetBSD: contents,v 1.11 2020/06/23 06:28:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -295,7 +295,9 @@ This includes the modular Xorg and Xvfb servers.
 .\" XXX: should be in notes/common
 .
 .Pp
-The \*M binary distribution sets are distributed as xzipped tar files
+The \*M binary distribution sets are distributed as tar files
+compressed with
+.Sy \*[compressor]
 named with the extension
 .Sy .\*[setsuffix] ,
 e.g.,
