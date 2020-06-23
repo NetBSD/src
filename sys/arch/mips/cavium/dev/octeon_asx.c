@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_asx.c,v 1.3 2020/06/22 02:26:19 simonb Exp $	*/
+/*	$NetBSD: octeon_asx.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_asx.c,v 1.3 2020/06/22 02:26:19 simonb Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_asx.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +82,9 @@ octasx_enable_tx(struct octasx_softc *sc, int enable)
 
 	asx_tx_port = _ASX_RD8(sc, ASX0_TX_PRT_EN_OFFSET);
 	if (enable)
-		SET(asx_tx_port, 1 << sc->sc_port);
+		SET(asx_tx_port, __BIT(sc->sc_port));
 	else
-		CLR(asx_tx_port, 1 << sc->sc_port);
+		CLR(asx_tx_port, __BIT(sc->sc_port));
 	_ASX_WR8(sc, ASX0_TX_PRT_EN_OFFSET, asx_tx_port);
 	return 0;
 }
@@ -98,9 +96,9 @@ octasx_enable_rx(struct octasx_softc *sc, int enable)
 
 	asx_rx_port = _ASX_RD8(sc, ASX0_RX_PRT_EN_OFFSET);
 	if (enable)
-		SET(asx_rx_port, 1 << sc->sc_port);
+		SET(asx_rx_port, __BIT(sc->sc_port));
 	else
-		CLR(asx_rx_port, 1 << sc->sc_port);
+		CLR(asx_rx_port, __BIT(sc->sc_port));
 	_ASX_WR8(sc, ASX0_RX_PRT_EN_OFFSET, asx_rx_port);
 	return 0;
 }
@@ -108,6 +106,7 @@ octasx_enable_rx(struct octasx_softc *sc, int enable)
 int
 octasx_clk_set(struct octasx_softc *sc, int tx_setting, int rx_setting)
 {
+
 	_ASX_WR8(sc, ASX0_TX_CLK_SET0_OFFSET + 8 * sc->sc_port, tx_setting);
 	_ASX_WR8(sc, ASX0_RX_CLK_SET0_OFFSET + 8 * sc->sc_port, rx_setting);
 	return 0;

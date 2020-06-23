@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_iobus.c,v 1.3 2020/05/31 06:27:06 simonb Exp $	*/
+/*	$NetBSD: octeon_iobus.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.3 2020/05/31 06:27:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
 
 #include "locators.h"
 
@@ -47,18 +47,17 @@ struct iobus_softc {
 	bus_space_handle_t	sc_ops_bush;
 };
 
-static int		iobus_match(device_t, struct cfdata *, void *);
-static void		iobus_attach(device_t, device_t, void *);
-static int		iobus_submatch(device_t, struct cfdata *,
-			    const int *, void *);
-static int		iobus_print(void *, const char *);
-static void		iobus_init(struct iobus_softc *);
-static void		iobus_init_map(struct iobus_softc *);
-static void		iobus_init_local(struct iobus_softc *);
-static void		iobus_init_local_pow(struct iobus_softc *);
-static void		iobus_init_local_fpa(struct iobus_softc *);
+static int	iobus_match(device_t, struct cfdata *, void *);
+static void	iobus_attach(device_t, device_t, void *);
+static int	iobus_submatch(device_t, struct cfdata *, const int *, void *);
+static int	iobus_print(void *, const char *);
+static void	iobus_init(struct iobus_softc *);
+static void	iobus_init_map(struct iobus_softc *);
+static void	iobus_init_local(struct iobus_softc *);
+static void	iobus_init_local_pow(struct iobus_softc *);
+static void	iobus_init_local_fpa(struct iobus_softc *);
 
-static void		iobus_bus_io_init(bus_space_tag_t, void *);
+static void	iobus_bus_io_init(bus_space_tag_t, void *);
 
 static struct mips_bus_space	*iobus_bust;
 static struct mips_bus_dma_tag	*iobus_dmat;
@@ -74,8 +73,8 @@ iobus_bootstrap(struct octeon_config *mcp)
 
 /* ---- autoconf */
 
-CFATTACH_DECL_NEW(iobus, sizeof(struct iobus_softc), iobus_match, iobus_attach, NULL,
-    NULL);
+CFATTACH_DECL_NEW(iobus, sizeof(struct iobus_softc),
+    iobus_match, iobus_attach, NULL, NULL);
 
 static int
 iobus_match(device_t parent, struct cfdata *match, void *aux)
@@ -97,6 +96,7 @@ iobus_attach(device_t parent, device_t self, void *aux)
 
 	iobus_init(sc);
 
+	/* XXX should only attach Octeon 1 and Octeon Plus drivers */
 	for (i = 0; i < (int)iobus_ndevs; i++) {
 		dev = iobus_devs[i];
 		for (j = 0; j < dev->nunits; j++) {
@@ -107,20 +107,20 @@ iobus_attach(device_t parent, device_t self, void *aux)
 			aa.aa_dmat = iobus_dmat;
 
 			(void)config_found_sm_loc(
-				self,
-				"iobus",
-				NULL,
-				&aa,
-				iobus_print,
-				iobus_submatch);
+			    self,
+			    "iobus",
+			    NULL,
+			    &aa,
+			    iobus_print,
+			    iobus_submatch);
 		}
 	}
 }
 
 static int
-iobus_submatch(device_t parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+iobus_submatch(device_t parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
+
 	return config_match(parent, cf, aux);
 }
 
@@ -142,6 +142,7 @@ iobus_print(void *aux, const char *pnp)
 void
 iobus_init(struct iobus_softc *sc)
 {
+
 	iobus_init_map(sc);
 	iobus_init_local(sc);
 }
@@ -149,6 +150,7 @@ iobus_init(struct iobus_softc *sc)
 void
 iobus_init_map(struct iobus_softc *sc)
 {
+
 	/* XXX map all ``operations'' space at once */
 	bus_space_map(
 		iobus_bust,
@@ -161,6 +163,7 @@ iobus_init_map(struct iobus_softc *sc)
 void
 iobus_init_local(struct iobus_softc *sc)
 {
+
 	iobus_init_local_pow(sc);
 	iobus_init_local_fpa(sc);
 }
@@ -170,6 +173,7 @@ extern struct octeon_config octeon_configuration;
 void
 iobus_init_local_pow(struct iobus_softc *sc)
 {
+
 	void octpow_bootstrap(struct octeon_config *);
 
 	aprint_normal("%s: initializing POW\n", device_xname(sc->sc_dev));
@@ -180,6 +184,7 @@ iobus_init_local_pow(struct iobus_softc *sc)
 void
 iobus_init_local_fpa(struct iobus_softc *sc)
 {
+
 	void octfpa_bootstrap(struct octeon_config *);
 
 	aprint_normal("%s: initializing FPA\n", device_xname(sc->sc_dev));
