@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/02/26 07:31:51 riastradh Exp $
+#	$NetBSD: Makefile,v 1.35 2020/06/23 16:08:46 maxv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.init.mk>
@@ -6,7 +6,8 @@
 # missing: eqnchar.7 man.7 ms.7 term.7
 
 MAN=	ascii.7 c.7 environ.7 glob.7 groups.7 hier.7 hostname.7 intro.7 \
-	mailaddr.7 module.7 nls.7 operator.7 orders.7 pkgsrc.7 release.7 \
+	kernel_sanitizers.7 mailaddr.7 module.7 nls.7 operator.7 orders.7 \
+	pkgsrc.7 release.7 \
 	rfc6056.7 security.7 script.7 setuid.7 signal.7 src.7 sticky.7 \
 	symlink.7 sysctl.7 tests.7 users.7
 
