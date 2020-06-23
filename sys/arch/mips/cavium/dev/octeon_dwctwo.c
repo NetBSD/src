@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.12 2020/06/23 03:07:47 simonb Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.13 2020/06/23 05:18:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,9 +43,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.12 2020/06/23 03:07:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.13 2020/06/23 05:18:28 simonb Exp $");
 
-#include "opt_octeon.h"
 #include "opt_usb.h"
 
 #include <sys/param.h>
@@ -83,29 +82,21 @@ struct octeon_dwc2_softc {
 	void *sc_ih;
 };
 
-static int		octeon_dwc2_match(device_t, struct cfdata *, void *);
-static void		octeon_dwc2_attach(device_t, device_t, void *);
-static uint32_t		octeon_dwc2_rd_4(void *, bus_space_handle_t,
-			    bus_size_t);
-static void		octeon_dwc2_wr_4(void *, bus_space_handle_t,
-			    bus_size_t, uint32_t);
-int			octeon_dwc2_set_dma_addr(device_t, bus_addr_t, int);
-static inline void	octeon_dwc2_reg_assert(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
-static inline void 	octeon_dwc2_reg_deassert(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
-static inline uint64_t	octeon_dwc2_reg_rd(struct octeon_dwc2_softc *,
-			    bus_size_t);
-static inline void	octeon_dwc2_reg_wr(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
-static inline void 	octeon_dwc2_reg2_assert(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
-static inline void 	octeon_dwc2_reg2_deassert(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
-static inline uint64_t	octeon_dwc2_reg2_rd(struct octeon_dwc2_softc *,
-			    bus_size_t);
-static inline void	octeon_dwc2_reg2_wr(struct octeon_dwc2_softc *,
-			    bus_size_t, uint64_t);
+static int	octeon_dwc2_match(device_t, struct cfdata *, void *);
+static void	octeon_dwc2_attach(device_t, device_t, void *);
+static uint32_t	octeon_dwc2_rd_4(void *, bus_space_handle_t, bus_size_t);
+static void	octeon_dwc2_wr_4(void *, bus_space_handle_t, bus_size_t,
+		    uint32_t);
+static int	octeon_dwc2_set_dma_addr(device_t, bus_addr_t, int);
+static void	octeon_dwc2_reg_assert(struct octeon_dwc2_softc *, bus_size_t,
+		    uint64_t);
+static void 	octeon_dwc2_reg_deassert(struct octeon_dwc2_softc *, bus_size_t,
+		    uint64_t);
+static uint64_t	octeon_dwc2_reg_rd(struct octeon_dwc2_softc *, bus_size_t);
+static void	octeon_dwc2_reg_wr(struct octeon_dwc2_softc *, bus_size_t,
+		    uint64_t);
+static void	octeon_dwc2_reg2_wr(struct octeon_dwc2_softc *, bus_size_t,
+		    uint64_t);
 
 static struct dwc2_core_params octeon_dwc2_params = {
 	.otg_cap			= 2,	/* 2 - No HNP/SRP capable */
@@ -143,12 +134,20 @@ CFATTACH_DECL_NEW(octdwctwo, sizeof(struct octeon_dwc2_softc),
 static int
 octeon_dwc2_match(device_t parent, struct cfdata *cf, void *aux)
 {
+	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
 	struct iobus_attach_args *aa = aux;
 
 	if (strcmp(cf->cf_name, aa->aa_name) != 0)
 		return 0;
 
-	return 1;
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_CN31XX:
+	case MIPS_CN30XX:
+	case MIPS_CN50XX:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static void
@@ -214,8 +213,8 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 		 */
 		/* XXX board specific */
 		clk &= ~(USBN_CLK_CTL_DIVIDE | USBN_CLK_CTL_DIVIDE2);
-		clk |= SET_USBN_CLK_CTL_DIVIDE(0x4ULL)
-			| SET_USBN_CLK_CTL_DIVIDE2(0x0ULL);
+		clk |= __SHIFTIN(0x4, USBN_CLK_CTL_DIVIDE) |	/* XXXXXX magic 0x4 */
+		       __SHIFTIN(0x0, USBN_CLK_CTL_DIVIDE2);
 		octeon_dwc2_reg_wr(sc, USBN_CLK_CTL_OFFSET, clk);
 		/*
 		 * d. Write USBN_CLK_CTL[HCLK_RST] = 1.
@@ -233,7 +232,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 		 * a. write USBN_CLK_CTL[DIVIDE] with the new divide value.
 		 */
 		clk = octeon_dwc2_reg_rd(sc, USBN_CLK_CTL_OFFSET);
-		clk |= 0x4ULL & USBN_CLK_CTL_DIVIDE;
+		clk |= __SHIFTIN(0x4, USBN_CLK_CTL_DIVIDE);	/* XXXXXX magic 0x4 */
 		octeon_dwc2_reg_wr(sc, USBN_CLK_CTL_OFFSET, clk);
 		/*
 		 * b. Wait 64 core-clock cycles for HCLK to stabilize.
@@ -241,7 +240,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 		delay(1);
 		break;
 	default:
-		panic("unknown H/W type"); /* XXX */
+		panic("unknown H/W type"); /* shouldn't get here */
 	}
 
 	/*
@@ -330,7 +329,7 @@ octeon_dwc2_wr_4(void *v, bus_space_handle_t h, bus_size_t off,
 	mips_sw((h + off) ^ 4, val);
 }
 
-int
+static int
 octeon_dwc2_set_dma_addr(device_t self, dma_addr_t dma_addr, int ch)
 {
 	struct octeon_dwc2_softc *sc = device_private(self);
@@ -342,8 +341,7 @@ octeon_dwc2_set_dma_addr(device_t self, dma_addr_t dma_addr, int ch)
 	return 0;
 }
 
-
-static inline void
+static void
 octeon_dwc2_reg_assert(struct octeon_dwc2_softc *sc, bus_size_t offset,
     uint64_t bits)
 {
@@ -354,7 +352,7 @@ octeon_dwc2_reg_assert(struct octeon_dwc2_softc *sc, bus_size_t offset,
 	octeon_dwc2_reg_wr(sc, offset, value);
 }
 
-static inline void
+static void
 octeon_dwc2_reg_deassert(struct octeon_dwc2_softc *sc, bus_size_t offset,
     uint64_t bits)
 {
@@ -365,13 +363,13 @@ octeon_dwc2_reg_deassert(struct octeon_dwc2_softc *sc, bus_size_t offset,
 	octeon_dwc2_reg_wr(sc, offset, value);
 }
 
-static inline uint64_t
+static uint64_t
 octeon_dwc2_reg_rd(struct octeon_dwc2_softc *sc, bus_size_t off)
 {
 	return bus_space_read_8(sc->sc_bust, sc->sc_regh, off);
 }
 
-static inline void
+static void
 octeon_dwc2_reg_wr(struct octeon_dwc2_softc *sc, bus_size_t off, uint64_t val)
 {
 	bus_space_write_8(sc->sc_bust, sc->sc_regh, off, val);
@@ -379,35 +377,7 @@ octeon_dwc2_reg_wr(struct octeon_dwc2_softc *sc, bus_size_t off, uint64_t val)
 	bus_space_read_8(sc->sc_bust, sc->sc_regh, off);
 }
 
-static inline void
-octeon_dwc2_reg2_assert(struct octeon_dwc2_softc *sc, bus_size_t off,
-    uint64_t bits)
-{
-	uint64_t val;
-
-	val = octeon_dwc2_reg2_rd(sc, off);
-	val |= bits;
-	octeon_dwc2_reg2_wr(sc, off, val);
-}
-
-static inline void
-octeon_dwc2_reg2_deassert(struct octeon_dwc2_softc *sc, bus_size_t off,
-    uint64_t bits)
-{
-	uint64_t val;
-
-	val = octeon_dwc2_reg2_rd(sc, off);
-	val &= ~bits;
-	octeon_dwc2_reg2_wr(sc, off, val);
-}
-
-static inline uint64_t
-octeon_dwc2_reg2_rd(struct octeon_dwc2_softc *sc, bus_size_t off)
-{
-	return bus_space_read_8(sc->sc_bust, sc->sc_reg2h, off);
-}
-
-static inline void
+static void
 octeon_dwc2_reg2_wr(struct octeon_dwc2_softc *sc, bus_size_t off, uint64_t val)
 {
 	bus_space_write_8(sc->sc_bust, sc->sc_reg2h, off, val);
