@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.8 2020/06/19 02:23:43 simonb Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.9 2020/06/23 05:18:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.8 2020/06/19 02:23:43 simonb Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.9 2020/06/23 05:18:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.8 2020/06/19 02:23:43 simonb Exp $
 #include <sys/cpu.h>
 #include <machine/intr.h>
 
+#include <dev/cons.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
 #include <mips/cavium/include/iobusvar.h>
 #include <mips/cavium/dev/octeon_uartreg.h>
+#include <mips/cavium/dev/octeon_uartvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 
 struct octuart_iobus_softc {
@@ -59,9 +59,8 @@ static void	octuart_iobus_attach(device_t, device_t, void *);
 static int	octuart_com_enable(struct com_softc *);
 static void	octuart_com_disable(struct com_softc *);
 
-
-/* XXX */
-int		octuart_com_cnattach(bus_space_tag_t, int, int);
+/* octputc() is not declared static so it can be used for debugging elsewhere */
+void		octputc(dev_t, int);
 
 /* XXX */
 const bus_addr_t octuart_com_bases[] = {
@@ -93,7 +92,7 @@ const struct com_regs octuart_com_regs = {
 CFATTACH_DECL_NEW(com_iobus, sizeof(struct octuart_iobus_softc),
     octuart_iobus_match, octuart_iobus_attach, NULL, NULL);
 
-int
+static int
 octuart_iobus_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
@@ -109,7 +108,7 @@ out:
 	return result;
 }
 
-void
+static void
 octuart_iobus_attach(device_t parent, device_t self, void *aux)
 {
 	struct octuart_iobus_softc *sc = device_private(self);
@@ -154,17 +153,7 @@ octuart_iobus_attach(device_t parent, device_t self, void *aux)
 	/* XXX disable if kgdb? */
 }
 
-#if 0
-void
-octuart_iobus_detach(device_t self, ...)
-{
-	struct octuart_iobus_softc *sc = (void *)self;
-
-	octeon_intr_disestablish(sc->ih);
-}
-#endif
-
-int
+static int
 octuart_com_enable(struct com_softc *sc_com)
 {
 	struct com_regs *regsp = &sc_com->sc_regs;
@@ -176,7 +165,7 @@ octuart_com_enable(struct com_softc *sc_com)
 	return 0;
 }
 
-void
+static void
 octuart_com_disable(struct com_softc *sc_com)
 {
 	/*
@@ -204,4 +193,32 @@ octuart_com_cnattach(bus_space_tag_t bust, int portno, int speed)
 		octeon_ioclock_speed(),
 		COM_TYPE_16550_NOERS,
 		CONMODE);
+}
+
+
+/*
+ * A very simple output-only console so early printf() can work.
+ */
+struct consdev early_console = {
+	.cn_putc = octputc,
+	.cn_pollc = nullcnpollc,
+	.cn_dev = makedev(0, 0),
+	.cn_pri = CN_DEAD
+};
+static int early_comcnrate;
+
+void
+octputc(dev_t dev, int c)
+{
+
+	octeon_xkphys_write_8(MIO_UART0_RBR, (uint8_t)c);
+	delay(1000000 / (early_comcnrate / 10)); /* wait for char to drain */
+}
+
+void
+octuart_early_cnattach(int rate)
+{
+
+	early_comcnrate = rate;
+	cn_tab = &early_console;
 }
