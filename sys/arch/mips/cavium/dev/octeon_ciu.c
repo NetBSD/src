@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciu.c,v 1.3 2020/06/22 02:26:19 simonb Exp $	*/
+/*	$NetBSD: octeon_ciu.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.3 2020/06/22 02:26:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
 
 #include "opt_octeon.h"
 
@@ -43,4 +43,4 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.3 2020/06/22 02:26:19 simonb Exp $"
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 
-/* XXX keep this file? */
+/* XXX Add MP IPI interrupt support */

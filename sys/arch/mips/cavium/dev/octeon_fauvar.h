@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fauvar.h,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_fauvar.h,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -118,6 +118,7 @@ octfau_op_iobdma_store_data(int scraddr, int incval, int tagwait,
 static inline void
 octfau_op_inc_fetch_8(struct octfau_desc *fd, int64_t v)
 {
+
 	octfau_op_iobdma_store_data(fd->fd_scroff, v, 0,
 	    OCT_FAU_OP_SIZE_64/* XXX */, fd->fd_regno);
 }
@@ -125,6 +126,7 @@ octfau_op_inc_fetch_8(struct octfau_desc *fd, int64_t v)
 static inline int64_t
 octfau_op_inc_read_8(struct octfau_desc *fd)
 {
+
 	OCTEON_SYNCIOBDMA;
 	return octeon_cvmseg_read_8(fd->fd_scroff);
 }

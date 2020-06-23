@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpareg.h,v 1.4 2020/06/22 12:26:11 simonb Exp $	*/
+/*	$NetBSD: octeon_fpareg.h,v 1.5 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -176,6 +176,8 @@
 
 #define	FPA_BASE				0x0001180028000000ULL
 #define	FPA_SIZE				0x0200
+
+#define	FPA_NPOOLS				8
 
 #define	FPA_INT_SUM_OFFSET			0x0040
 #define	FPA_INT_ENB_OFFSET			0x0048

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fpa.c,v 1.7 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,9 +29,7 @@
 #undef	FPADEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.7 2020/06/22 02:26:20 simonb Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_fpa.c,v 1.8 2020/06/23 05:14:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +214,7 @@ octfpa_init(struct octfpa_softc *sc)
 void
 octfpa_init_bus(struct octfpa_softc *sc)
 {
+
 	octfpa_init_bus_space(sc);
 }
 

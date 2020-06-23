@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.12 2018/01/23 06:57:49 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.13 2020/06/23 05:14:18 simonb Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -63,7 +63,6 @@ struct cpunode_attach_args {
 struct cpunode_softc {
 	device_t sc_dev;
 	device_t sc_wdog_dev;
-	uint64_t sc_fuse;
 };
 
 static int cpunode_mainbus_match(device_t, cfdata_t, void *);
@@ -79,8 +78,6 @@ CFATTACH_DECL_NEW(cpu_cpunode, 0,
     cpu_cpunode_match, cpu_cpunode_attach, NULL, NULL);
 
 kcpuset_t *cpus_booted;
-
-void octeon_reset_vector(void);
 
 static void wdog_cpunode_poke(void *arg);
 
@@ -109,18 +106,14 @@ void
 cpunode_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpunode_softc * const sc = device_private(self);
+	const uint64_t fuse = octeon_xkphys_read_8(CIU_FUSE);
 	int cpunum = 0;
 
 	sc->sc_dev = self;
-	sc->sc_fuse = octeon_xkphys_read_8(CIU_FUSE);
 
-	aprint_naive(": %u core%s\n",
-	    popcount32((uint32_t)sc->sc_fuse),
-	    sc->sc_fuse == 1 ? "" : "s");
+	aprint_naive(": %u core%s\n", popcount64(fuse), fuse == 1 ? "" : "s");
+	aprint_normal(": %u core%s", popcount64(fuse), fuse == 1 ? "" : "s");
 
-	aprint_normal(": %u core%s",
-	    popcount32((uint32_t)sc->sc_fuse),
-	    sc->sc_fuse == 1 ? "" : "s");
 	const uint64_t cvmctl = mips_cp0_cvmctl_read();
 	aprint_normal(", %scrypto", (cvmctl & CP0_CVMCTL_NOCRYPTO) ? "no " : "");
 	aprint_normal((cvmctl & CP0_CVMCTL_KASUMI) ? "+kasumi" : "");
@@ -134,7 +127,7 @@ cpunode_mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 	aprint_normal("\n");
 
-	for (uint64_t fuse = sc->sc_fuse; fuse != 0; fuse >>= 1, cpunum++) {
+	for (uint64_t f = fuse; f != 0; f >>= 1, cpunum++) {
 		struct cpunode_attach_args cnaa = {
 			.cnaa_name = "cpu",
 			.cnaa_cpunum = cpunum,
@@ -250,6 +243,7 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	KASSERTMSG(cpu != NULL, "ci %p index %d", ci, cpu_index(ci));
 
 #if NWDOG > 0 || defined(DDB)
+	/* XXXXXX __mips_n32 and MIPS_PHYS_TO_XKPHYS_CACHED needed here?????? */
 	void **nmi_vector = (void *)MIPS_PHYS_TO_KSEG0(0x800 + 32*ci->ci_cpuid);
 	*nmi_vector = octeon_reset_vector;
 
@@ -266,9 +260,10 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	KASSERT(cpu->cpu_wdog_sih != NULL);
 #endif
 
-	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
-	    ci->ci_cpu_freq / 1000000,
-	    (ci->ci_cpu_freq % 1000000) / 10000,
+	aprint_normal(": %lu.%02luMHz\n",
+	    (ci->ci_cpu_freq + 5000) / 1000000,
+	    ((ci->ci_cpu_freq + 5000) % 1000000) / 10000);
+	aprint_debug_dev(self, "hz cycles = %lu, delay divisor = %lu\n",
 	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
 	if (CPU_IS_PRIMARY(ci)) {

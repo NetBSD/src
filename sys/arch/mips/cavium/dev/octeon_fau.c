@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_fau.c,v 1.3 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_fau.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_fau.c,v 1.3 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_fau.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ octfau_op_load(uint64_t args)
 	paddr_t addr = OCTEON_ADDR_IO_DID(FAU_MAJOR_DID, FAU_SUB_DID) |
 	    __SHIFTIN(args, OCTEON_ADDR_OFFSET);
 
-	return octeon_read_csr(addr);
+	return octeon_xkphys_read_8(addr);
 }
 
 static inline void
@@ -61,7 +61,7 @@ octfau_op_store(uint64_t args, int64_t value)
 	paddr_t addr = OCTEON_ADDR_IO_DID(FAU_MAJOR_DID, FAU_SUB_DID) |
 	    __SHIFTIN(args, OCTEON_ADDR_OFFSET);
 
-	octeon_write_csr(addr, value);
+	octeon_xkphys_write_8(addr, value);
 }
 
 /* ---- operation primitives */
