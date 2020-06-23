@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pipvar.h,v 1.4 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_pipvar.h,v 1.5 2020/06/23 05:18:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,6 +32,7 @@
 
 /* XXX */
 struct octpip_softc {
+	device_t		sc_dev;
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;

@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.26 2020/06/05 07:17:38 simonb Exp $
+#	$NetBSD: ERLITE,v 1.27 2020/06/23 05:18:02 simonb Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.26 $"
+#ident 		"ERLITE-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -116,12 +116,16 @@ bootbus0	at mainbus?
 
 com*		at iobus?
 
-octrnm*		at iobus?
+octsmi*		at iobus?		# MDIO controller
+octpip*		at iobus?		# PIP packet processing controller
 
-octgmx*		at iobus?
+octgmx*		at octpip?
 cnmac*		at octgmx?
 
+octrnm*		at iobus?		# Random Number Memory (and generator)
+
 dwctwo*		at iobus?
+
 usb*		at dwctwo?
 
 uhub*		at usb?
@@ -131,6 +135,7 @@ umass*		at uhub? port ? configuration ? interface ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
+# Ethernet PHYs
 atphy*		at mii? phy ?		# Attansic/Atheros PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
@@ -173,4 +178,3 @@ pseudo-device	drvctl				# driver control
 include "dev/veriexec.config"
 
 cinclude 	"arch/evbmips/conf/ERLITE.local"
-
