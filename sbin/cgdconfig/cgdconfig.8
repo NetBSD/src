@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.46 2020/06/23 13:23:56 nia Exp $
+.\" $NetBSD: cgdconfig.8,v 1.47 2020/06/23 14:08:01 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,8 +187,10 @@ The method simply reads
 and uses the resulting bits as the key.
 This is similar to the
 .Pa randomkey
-method, but it guarantees that cgdconfig will not stall waiting for 256
-bits of entropy from a hardware RNG or seed.
+method, but it guarantees that
+.Nm
+will not stall waiting for 256 bits of entropy from a hardware RNG
+or seed.
 .It shell_cmd
 This method executes a shell command via
 .Xr popen 3
