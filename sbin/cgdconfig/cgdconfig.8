@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.44 2018/12/29 18:34:01 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.45 2020/06/23 13:20:14 nia Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 27, 2018
+.Dd June 23, 2020
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -187,12 +187,9 @@ The method simply reads
 and uses the resulting bits as the key.
 This is similar to the
 .Pa randomkey
-method, but it guarantees that cgdconfig will not stall waiting for
-hard-random bits (useful when configuring a cgd for swap at boot time).
-Note, however, that some or all of the bits used to generate the
-key may be obtained from a pseudo-random number generator,
-which may not be as secure as the entropy based hard-random
-number generator.
+method, but it guarantees that cgdconfig will not stall waiting for 256
+bits of entropy from a hardware RNG or seed (useful when configuring a
+cgd for swap at boot time).
 .It shell_cmd
 This method executes a shell command via
 .Xr popen 3
