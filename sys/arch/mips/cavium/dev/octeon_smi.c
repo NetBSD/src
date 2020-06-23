@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.4 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,12 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.4 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+
 #include <mips/locore.h>
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_fpareg.h>
@@ -40,37 +43,84 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.4 2020/06/18 13:52:08 simonb Exp $"
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_smireg.h>
 #include <mips/cavium/dev/octeon_smivar.h>
+#include <mips/cavium/include/iobusvar.h>
 
-static void		octsmi_enable(struct octsmi_softc *);
+/*
+ * System Management Interface
+ *
+ *
+ * CN30XX  - 1 SMI interface
+ * CN31XX  - 1 SMI interface
+ * CN38XX  - 1 SMI interface
+ * CN50XX  - 1 SMI interface
+ * CN52XX  - 2 SMI interfaces
+ * CN56XX  - 2 SMI interfaces
+ * CN58XX  - 1 SMI interface
+ * CN61XX  - 2 SMI interfaces
+ * CN63XX  - 2 SMI interfaces
+ * CN66XX  - 2 SMI interfaces
+ * CN68XX  - 4 SMI interfaces
+ * CN70XX  - 2 SMI interfaces
+ * CN73XX  - 2 SMI interfaces
+ * CN78XX  - 4 SMI interfaces
+ * CNF71XX - 2 SMI interfaces
+ * CNF75XX - 2 SMI interfaces
+ */
 
-/* XXX */
-void
-octsmi_init(struct octsmi_attach_args *aa, struct octsmi_softc **rsc)
-{
-	struct octsmi_softc *sc;
-	int status;
+static int	octsmi_match(device_t, struct cfdata *, void *);
+static void	octsmi_attach(device_t, device_t, void *);
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc == NULL)
-		panic("can't allocate memory: %s", __func__);
-
-	sc->sc_port = aa->aa_port;
-	sc->sc_regt = aa->aa_regt;
-
-	status = bus_space_map(sc->sc_regt, SMI_BASE, SMI_SIZE, 0,
-	    &sc->sc_regh);
-	if (status != 0)
-		panic("can't map %s space", "smi register");
-
-	octsmi_enable(sc);
-
-	*rsc = sc;
-}
+struct octsmi_softc *smi_list;	/* XXX up to 4 SMIs on CN68XX,CN78XX */
 
 #define	_SMI_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
 #define	_SMI_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
+
+CFATTACH_DECL_NEW(octsmi, sizeof(struct octsmi_softc),
+    octsmi_match, octsmi_attach, NULL, NULL);
+
+static int
+octsmi_match(device_t parent, struct cfdata *cf, void *aux)
+{
+	struct iobus_attach_args *aa = aux;
+
+	if (strcmp(cf->cf_name, aa->aa_name) != 0)
+		return 0;
+	if (aa->aa_unitno < SMI_NUNITS)
+		return 1;
+	else
+		return 0;
+}
+
+static void
+octsmi_attach(device_t parent, device_t self, void *aux)
+{
+	struct octsmi_softc *sc = device_private(self);
+	struct iobus_attach_args *aa = aux;
+	int status;
+
+	sc->sc_dev = self;
+	sc->sc_regt = aa->aa_bust;
+
+	aprint_normal("\n");
+
+	status = bus_space_map(sc->sc_regt, aa->aa_unit->addr, SMI_SIZE, 0,
+	    &sc->sc_regh);
+	if (status != 0) {
+		aprint_error_dev(self, "could not map registers\n");
+		return;
+	}
+
+	smi_list = sc;
+
+	const uint64_t magic_value =
+	    SMI_CLK_PREAMBLE |
+	    __SHIFTIN(0x4, SMI_CLK_SAMPLE) |		/* XXX magic 0x4 */
+	    __SHIFTIN(0x64, SMI_CLK_PHASE);		/* XXX magic 0x64 */
+	_SMI_WR8(sc, SMI_CLK_OFFSET, magic_value);
+	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);
+}
 
 int
 octsmi_read(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t *val)
@@ -119,27 +169,27 @@ octsmi_write(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t value)
 	smi_wr = _SMI_RD8(sc, SMI_WR_DAT_OFFSET);
 	while (ISSET(smi_wr, SMI_WR_DAT_PENDING)) {
 		if (timo-- == 0) {
-			/* XXX log */
-			printf("ERROR: cnmac_mii_writereg(0x%x, 0x%x, 0x%hx) "
-			    "timed out.\n", phy_addr, reg, value);
 			return ETIMEDOUT;
 		}
 		delay(10);
 		smi_wr = _SMI_RD8(sc, SMI_WR_DAT_OFFSET);
 	}
+	if (ISSET(smi_wr, SMI_WR_DAT_PENDING)) {
+		/* XXX log */
+		printf("ERROR: octsmi_write(0x%x, 0x%x, 0x%hx) timed out.\n",
+		    phy_addr, reg, value);
+	}
 
 	return 0;
 }
 
-static void
-octsmi_enable(struct octsmi_softc *sc)
+struct octsmi_softc *
+octsmi_lookup(int phandle, int port)
 {
-	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);
-}
+	struct octsmi_softc *smi;
 
-void
-octsmi_set_clock(struct octsmi_softc *sc, uint64_t clock)
-{
-	_SMI_WR8(sc, SMI_CLK_OFFSET, clock);
-}
+	/* XXX deal with more than one SMI ... */
+	smi = smi_list;
 
+	return smi;
+}
