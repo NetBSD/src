@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.6 2020/05/02 16:28:37 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.7 2020/06/23 17:21:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #define __MD_VIRTUAL_SHIFT	47	/* 48bit address space, cut half */
-#define __MD_CANONICAL_BASE	0xFFFF800000000000
+#define __MD_KERNMEM_BASE	0xFFFF800000000000 /* kern mem base address */
 
 #define __MD_SHADOW_SIZE	(1ULL << (__MD_VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
 #define KASAN_MD_SHADOW_START	(VA_SIGN_NEG((L4_SLOT_KASAN * NBPD_L4)))
@@ -113,7 +113,7 @@ kasan_md_addr_to_shad(const void *addr)
 {
 	vaddr_t va = (vaddr_t)addr;
 	return (int8_t *)(KASAN_MD_SHADOW_START +
-	    ((va - __MD_CANONICAL_BASE) >> KASAN_SHADOW_SCALE_SHIFT));
+	    ((va - __MD_KERNMEM_BASE) >> KASAN_SHADOW_SCALE_SHIFT));
 }
 
 static inline bool
