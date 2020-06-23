@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipd.c,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_ipd.c,v 1.7 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,11 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.6 2020/06/22 02:26:20 simonb Exp $");
-
-#include "opt_octeon.h"
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.7 2020/06/23 05:15:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,55 +204,6 @@ octipd_offload(uint64_t word2, void *data, int *rcflags)
 	*rcflags = cflags;
 }
 
-int
-octipd_red(struct octipd_softc *sc, uint64_t pass_thr, uint64_t drop_thr)
-{
-#if defined(CNMAC_IPD_RED)
-	/*
-	 * no receive problem workaround.
-	 * if not set IPD RED pramaters,
-	 * may become unable to receive packet
-	 * on media mismatch environment
-	 * of self media 100-half duplex.
-	 */
-	uint64_t red_marks;
-	uint64_t red_param;
-	uint64_t red_port;
-
-        red_marks = drop_thr << 32 /* XXX */ | pass_thr;
-        _IPD_WR8(sc, IPD_QOS0_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS1_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS2_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS3_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS4_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS5_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS6_RED_MARKS_OFFSET, red_marks);
-        _IPD_WR8(sc, IPD_QOS7_RED_MARKS_OFFSET, red_marks);
-        red_param = 
-            ((255ull << 24 /* XXX */) / (pass_thr - drop_thr)) |
-            1ull << 32 /* XXX */ |
-            255ull << 40 /* XXX */ |
-            1ull << 48 /* XXX */;
-        _IPD_WR8(sc, IPD_RED_QUE0_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE1_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE2_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE3_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE4_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE5_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE6_PARAM_OFFSET, red_param);
-        _IPD_WR8(sc, IPD_RED_QUE7_PARAM_OFFSET, red_param);
-
-        _IPD_WR8(sc, IPD_BP_PRT_RED_END_OFFSET, 0);
-
-        red_port = 0xfffffffffull |
-            10000ull << 36 /* XXX */ |
-            10000ull << 50 /* XXX */;
-        _IPD_WR8(sc, IPD_RED_PORT_ENABLE_OFFSET, red_port);
-#endif
-
-	return 0;
-}
-
 void
 octipd_sub_port_fcs(struct octipd_softc *sc, int enable)
 {
@@ -264,8 +211,8 @@ octipd_sub_port_fcs(struct octipd_softc *sc, int enable)
 
 	sub_port_fcs = _IPD_RD8(sc, IPD_SUB_PORT_FCS_OFFSET);
 	if (enable == 0)
-		CLR(sub_port_fcs, 1 << sc->sc_port);
+		CLR(sub_port_fcs, __BIT(sc->sc_port));
 	else
-		SET(sub_port_fcs, 1 << sc->sc_port);
+		SET(sub_port_fcs, __BIT(sc->sc_port));
 	_IPD_WR8(sc, IPD_SUB_PORT_FCS_OFFSET, sub_port_fcs);
 }
