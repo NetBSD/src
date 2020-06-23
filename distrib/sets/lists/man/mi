@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1692 2020/06/15 01:57:30 christos Exp $
+# $NetBSD: mi,v 1.1693 2020/06/23 16:08:46 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2333,6 +2333,7 @@
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
 ./usr/share/man/cat7/intro.0			man-reference-catman	.cat
+./usr/share/man/cat7/kernel_sanitizers.7	man-reference-catman	.cat
 ./usr/share/man/cat7/kyua-atf-interface.0	man-kyua-catman		kyua,.cat
 ./usr/share/man/cat7/kyua-build-root.0		man-kyua-catman		kyua,.cat
 ./usr/share/man/cat7/kyua-plain-interface.0	man-kyua-catman		kyua,.cat
@@ -5439,6 +5440,7 @@
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
 ./usr/share/man/html7/hostname.html		man-reference-htmlman	html
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
+./usr/share/man/html7/kernel_sanitizers.7	man-reference-htmlman	html
 ./usr/share/man/html7/kyua-atf-interface.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html7/kyua-build-root.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html7/kyua-plain-interface.html	man-kyua-htmlman	kyua,html
@@ -8515,6 +8517,7 @@
 ./usr/share/man/man7/hier.7			man-reference-man	.man
 ./usr/share/man/man7/hostname.7			man-reference-man	.man
 ./usr/share/man/man7/intro.7			man-reference-man	.man
+./usr/share/man/man7/kernel_sanitizers.7	man-reference-man	.man
 ./usr/share/man/man7/kyua-atf-interface.7	man-kyua-man		kyua,.man
 ./usr/share/man/man7/kyua-build-root.7		man-kyua-man		kyua,.man
 ./usr/share/man/man7/kyua-plain-interface.7	man-kyua-man		kyua,.man
