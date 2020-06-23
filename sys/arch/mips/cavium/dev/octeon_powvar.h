@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powvar.h,v 1.6 2020/06/22 02:26:20 simonb Exp $	*/
+/*	$NetBSD: octeon_powvar.h,v 1.7 2020/06/23 05:15:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -50,6 +50,8 @@
 #define POW_WAIT	1
 #define POW_NO_WAIT	0
 
+#define	POW_WORKQ_IRQ(group)		(group)
+
 /* XXX */
 struct octpow_softc {
 	device_t		sc_dev;
@@ -65,17 +67,13 @@ struct octpow_attach_args {
 	bus_space_tag_t		aa_regt;
 };
 
-void			octpow_config(struct octpow_softc *, int);
-void			*octpow_intr_establish(int, int,
-			    void (*)(void *, uint64_t *),
-			    void (*)(int *, int *, uint64_t, void *),
-			    void *);
-void			octpow_error_int_enable(void *, int);
-uint64_t		octpow_error_int_summary(void *);
-int			octpow_ring_reduce(void *);
-int			octpow_ring_grow(void *);
-int			octpow_ring_size(void);
-int			octpow_ring_intr(void);
+void		octpow_config(struct octpow_softc *, int);
+void		octpow_error_int_enable(void *, int);
+uint64_t	octpow_error_int_summary(void *);
+int		octpow_ring_reduce(void *);
+int		octpow_ring_grow(void *);
+int		octpow_ring_size(void);
+int		octpow_ring_intr(void);
 
 #define	_POW_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
@@ -104,91 +102,6 @@ octpow_ops_get_work_load(
 	    OCTEON_ADDR_IO_DID(POW_MAJOR_DID, POW_OP_SUBDID_GET_WORK) |
 	    (wait ? POW_GET_WORK_LOAD_WAIT : 0);
 
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Status Loads */
-
-/*
- * a) get_cur == 0, get_wqp == 0 (pend_tag)
- * b) get_cur == 0, get_wqp == 1 (pend_wqp)
- * c) get_cur == 1, get_wqp == 0, get_rev == 0 (cur_tag_next)
- * d) get_cur == 1, get_wqp == 0, get_rev == 1 (cur_tag_prev)
- * e) get_cur == 1, get_wqp == 1, get_rev == 0 (cur_wqp_next)
- * f) get_cur == 1, get_wqp == 1, get_rev == 1 (cur_wqp_prev)
- */
-
-static __inline uint64_t
-octpow_ops_pow_status(
-	int coreid,			/* 0-15 */
-	int get_rev,			/* 0-1 */
-	int get_cur,			/* 0-1 */
-	int get_wqp)			/* 0-1 */
-{
-	uint64_t ptr =
-	    OCTEON_ADDR_IO_DID(POW_MAJOR_DID, POW_OP_SUBDID_STATUS_LOAD) |
-	    __SHIFTIN(coreid, POW_STATUS_LOAD_COREID) |
-	    __SHIFTIN(get_rev, POW_STATUS_LOAD_GET_REV) |
-	    __SHIFTIN(get_cur, POW_STATUS_LOAD_GET_CUR) |
-	    __SHIFTIN(get_wqp, POW_STATUS_LOAD_GET_WQP);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Memory Loads */
-
-/*
- * a) get_des == 0, get_wqp == 0 (tag)
- * b) get_des == 0, get_wqp == 1 (wqe)
- * c) get_des == 1 (desched)
- */
-
-static __inline uint64_t
-octpow_ops_pow_memory(
-	int index,			/* 0-2047 */
-	int get_des,			/* 0-1 */
-	int get_wqp)			/* 0-1 */
-{
-	uint64_t ptr =
-	    OCTEON_ADDR_IO_DID(POW_MAJOR_DID, POW_OP_SUBDID_MEMORY_LOAD) |
-	    __SHIFTIN(index, POW_MEMORY_LOAD_INDEX) |
-	    __SHIFTIN(get_des, POW_MEMORY_LOAD_GET_DES) |
-	    __SHIFTIN(get_wqp, POW_MEMORY_LOAD_GET_WQP);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Index/Pointer Loads */
-
-/*
- * a) get_rmt == 0, get_des_get_tail == 0
- * b) get_rmt == 0, get_des_get_tail == 1
- * c) get_rmt == 1, get_des_get_tail == 0
- * d) get_rmt == 1, get_des_get_tail == 1
- */
-
-static __inline uint64_t
-octpow_ops_pow_idxptr(
-	int qosgrp,			/* 0-7 */
-	int get_des_get_tail,		/* 0-1 */
-	int get_rmt)			/* 0-1 */
-{
-	uint64_t ptr =
-	    OCTEON_ADDR_IO_DID(POW_MAJOR_DID, POW_OP_SUBDID_IDXPTR_LOAD) |
-	    __SHIFTIN(qosgrp, POW_IDXPTR_LOAD_QOSGRP) |
-	    __SHIFTIN(get_des_get_tail, POW_IDXPTR_LOAD_GET_DES_GET_TAIL) |
-	    __SHIFTIN(get_rmt, POW_IDXPTR_LOAD_GET_RMT);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* NULL_RD Loads */
-
-static __inline uint64_t
-octpow_ops_null_rd_load(void)
-{
-	uint64_t ptr = OCTEON_ADDR_IO_DID(POW_MAJOR_DID, POW_OP_SUBDID_NULL_RD);
- 
 	return octeon_xkphys_read_8(ptr);
 }
 
@@ -406,6 +319,40 @@ octpow_ops_nop(void)
 		0);			/* tag (not used for NOP) */
 }
 
+/*
+ * Check if there is a pending POW tag switch.
+ */
+static __inline int
+octpow_tag_sw_pending(void)
+{
+	int result;
+
+	/*
+	 * "RDHWR rt, $30" returns:
+	 *	0 => pending bit is set
+	 *	1 => pending bit is clear
+	 */
+
+	__asm volatile (
+		"	.set	push\n"
+		"	.set	noreorder\n"
+		"	.set	arch=mips64r2\n"
+		"	rdhwr	%0, $30\n"
+		"	.set	pop\n"
+		: "=r" (result));
+	return result == 0;
+}
+
+/*
+ * Wait until there is no pending POW tag switch.
+ */
+static inline void
+octpow_tag_sw_wait(void)
+{
+	while (octpow_tag_sw_pending())
+		continue;
+}
+
 /* -------------------------------------------------------------------------- */
 
 /*
@@ -432,8 +379,7 @@ octpow_work_response_async(uint64_t scraddr)
 	    return NULL;
 #ifdef __mips_n32
 	KASSERT(addr < MIPS_PHYS_MASK);
-	//if (addr < MIPS_PHYS_MASK)
-		return (uint64_t *)MIPS_PHYS_TO_KSEG0(addr);
+	return (uint64_t *)MIPS_PHYS_TO_KSEG0(addr);
 #else
 	return (uint64_t *)MIPS_PHYS_TO_XKPHYS_CACHED(addr);
 #endif
@@ -463,19 +409,4 @@ octpow_config_int_pc_rate(struct octpow_softc *sc, int rate)
 	octpow_config_int_pc(sc, sc->sc_int_pc_base / rate);
 }
 
-/* wait until ready */
-static __inline void
-octpow_tag_sw_wait(void)
-{
-	__asm __volatile (
-		"	.set	push		\n"
-		"	.set	noreorder	\n"
-		"	.set	arch=octeon	\n"
-		"1:	rdhwr	$2, $30		\n"
-		"	beqz	$2, 1b		\n"
-		"	 nop			\n"
-		"	.set	pop		\n"
-	);
-}
-
-#endif /* _OCTEON_POWVAR_H_ */
+#endif /* !_OCTEON_POWVAR_H_ */
