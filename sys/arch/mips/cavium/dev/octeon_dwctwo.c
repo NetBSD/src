@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.11 2020/06/19 02:23:43 simonb Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.12 2020/06/23 03:07:47 simonb Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.11 2020/06/19 02:23:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.12 2020/06/23 03:07:47 simonb Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -63,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.11 2020/06/19 02:23:43 simonb Ex
 #include <mips/cavium/include/iobusvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 #include <mips/cavium/dev/octeon_usbnreg.h>
-#include <mips/cavium/dev/octeon_usbnvar.h>
 #include <mips/cavium/dev/octeon_usbcreg.h>
-#include <mips/cavium/dev/octeon_usbcvar.h>
 #include <mips/cavium/octeonvar.h>
 
 #include <dwc2/dwc2var.h>
