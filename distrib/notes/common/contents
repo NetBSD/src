@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.180 2019/11/24 11:15:33 martin Exp $
+.\"	$NetBSD: contents,v 1.181 2020/06/23 06:28:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -965,7 +965,9 @@ servers with man pages and the runtime configuration file.
 .
 .
 .Pp
-The \*M binary distribution sets are distributed as gzipped tar files
+The \*M binary distribution sets are distributed as tar files
+compressed with
+.Sy \*[compressor]
 named with the extension
 .Sy .\*[setsuffix] ,
 e.g.
