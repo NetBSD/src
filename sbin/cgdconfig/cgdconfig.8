@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.45 2020/06/23 13:20:14 nia Exp $
+.\" $NetBSD: cgdconfig.8,v 1.46 2020/06/23 13:23:56 nia Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,7 +178,7 @@ The method simply reads
 and uses the resulting bits as the key.
 It does not require a passphrase to be entered.
 This method is typically used to present disk devices that do not
-need to survive a reboot, such as the swap partition.
+need to survive a reboot.
 It is also handy to facilitate overwriting the contents of
 a disk volume with meaningless data prior to use.
 .It urandomkey
@@ -188,8 +188,7 @@ and uses the resulting bits as the key.
 This is similar to the
 .Pa randomkey
 method, but it guarantees that cgdconfig will not stall waiting for 256
-bits of entropy from a hardware RNG or seed (useful when configuring a
-cgd for swap at boot time).
+bits of entropy from a hardware RNG or seed.
 .It shell_cmd
 This method executes a shell command via
 .Xr popen 3
