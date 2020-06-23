@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2020/06/20 02:27:55 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2020/06/23 05:19:12 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2020/06/20 02:27:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2020/06/23 05:19:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,11 @@ prop_set_cnmac(device_t dev)
 	/* ethernet phy address */
 	switch (octeon_btinfo.obt_board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
-		pn = prop_number_create_signed(0x07 - unit);
+	case BOARD_TYPE_UBIQUITI_E120:
+		pn = prop_number_create_signed(7 - unit);
+		break;
+	case BOARD_TYPE_UBIQUITI_E300:
+		pn = prop_number_create_signed(4 + dev->dv_unit);
 		break;
 	default:
 		pn = prop_number_create_signed(-1);
@@ -172,21 +176,19 @@ prop_set_octeon_gmx(device_t dev)
 	prop_dictionary_t dict = device_properties(dev);
 	prop_number_t tx, rx;
 
-	/* ethernet rgmii phy dependent timing parameter. */
+	/* ethernet rgmii phy dependent timing parameters. */
+	tx = rx = NULL;
 	switch (octeon_btinfo.obt_board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:
+	case BOARD_TYPE_UBIQUITI_E120:
 		tx = prop_number_create_signed(16);
 		rx = prop_number_create_signed(0);
 		break;
-	default:
-		tx = prop_number_create_signed(0);
-		rx = prop_number_create_signed(0);
-		break;
 	}
-	KASSERT(tx != NULL);
-	KASSERT(rx != NULL);
-	prop_dictionary_set_and_rel(dict, "rgmii-tx", tx);
-	prop_dictionary_set_and_rel(dict, "rgmii-rx", rx);
+	if (tx)
+		prop_dictionary_set_and_rel(dict, "rgmii-tx", tx);
+	if (rx)
+		prop_dictionary_set_and_rel(dict, "rgmii-rx", rx);
 }
 
 void
