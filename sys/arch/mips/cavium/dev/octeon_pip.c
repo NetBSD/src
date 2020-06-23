@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.7 2020/06/22 03:05:07 simonb Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.8 2020/06/23 05:18:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.7 2020/06/22 03:05:07 simonb Exp $");
-
-#include "opt_octeon.h"
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.8 2020/06/23 05:18:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,10 +35,68 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.7 2020/06/22 03:05:07 simonb Exp $"
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <net/if.h>
+
 #include <mips/locore.h>
+
 #include <mips/cavium/octeonvar.h>
+#include <mips/cavium/dev/octeon_gmxreg.h>
 #include <mips/cavium/dev/octeon_pipreg.h>
 #include <mips/cavium/dev/octeon_pipvar.h>
+#include <mips/cavium/include/iobusvar.h>
+
+static int	octpip_match(device_t, struct cfdata *, void *);
+static void	octpip_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(octpip, sizeof(struct octpip_softc),
+    octpip_match, octpip_attach, NULL, NULL);
+
+static int
+octpip_match(device_t parent, struct cfdata *cf, void *aux)
+{
+	struct iobus_attach_args *aa = aux;
+
+	if (strcmp(cf->cf_name, aa->aa_name) != 0)
+		return 0;
+	return 1;
+}
+
+static void
+octpip_attach(device_t parent, device_t self, void *aux)
+{
+	struct octpip_softc *sc = device_private(self);
+	struct iobus_attach_args *aa = aux;
+	struct iobus_attach_args gmxaa;
+	struct iobus_unit gmxiu;
+	int i, ndevs;
+
+	sc->sc_dev = self;
+
+	aprint_normal("\n");
+
+	/*
+	 * XXX: In a non-FDT world, should allow for the configuration
+	 * of multple GMX devices.
+	 */
+	ndevs = 1;
+
+	for (i = 0; i < ndevs; i++) {
+		memcpy(&gmxaa, aa, sizeof(gmxaa));
+		memset(&gmxiu, 0, sizeof(gmxiu));
+
+		gmxaa.aa_name = "octgmx";
+		gmxaa.aa_unitno = i;
+		gmxaa.aa_unit = &gmxiu;
+		gmxaa.aa_bust = aa->aa_bust;
+		gmxaa.aa_dmat = aa->aa_dmat;
+
+		if (MIPS_PRID_IMPL(mips_options.mips_cpu_id) == MIPS_CN68XX)
+			gmxiu.addr = GMX_CN68XX_BASE_PORT(i, 0);
+		else
+			gmxiu.addr = GMX_BASE_PORT(i, 0);
+
+		config_found(self, &gmxaa, NULL);
+	}
+}
 
 /* XXX */
 void
@@ -90,10 +146,10 @@ octpip_port_config(struct octpip_softc *sc)
 	}
 	/* RAWDRP=0; don't allow raw packet drop */
 	/* TAGINC=0 */
-	SET(prt_cfg, PIP_PRT_CFGN_DYN_RS);
+	/* DYN_RS=0; disable dynamic short buffering */
 	/* INST_HDR=0 */
 	/* GRP_WAT=0 */
-	SET(prt_cfg, (sc->sc_port << 24) & PIP_PRT_CFGN_QOS);
+	SET(prt_cfg, __SHIFTIN(sc->sc_port, PIP_PRT_CFGN_QOS));
 	/* QOS_WAT=0 */
 	/* SPARE=0 */
 	/* QOS_DIFF=0 */
@@ -153,7 +209,7 @@ octpip_stats(struct octpip_softc *sc, struct ifnet *ifp, int gmx_port)
 		panic("%s: invalid argument. sc=%p, ifp=%p\n", __func__,
 			sc, ifp);
 
-	if (gmx_port < 0 || gmx_port > 2) {
+	if (gmx_port < 0 || gmx_port > GMX_PORT_NUNITS) {
 		printf("%s: invalid gmx_port %d\n", __func__, gmx_port);
 		return;
 	}
