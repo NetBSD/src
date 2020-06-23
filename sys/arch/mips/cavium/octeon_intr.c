@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.13 2020/06/20 18:48:28 riastradh Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.14 2020/06/23 05:14:39 simonb Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -38,14 +38,13 @@
  * Platform-specific interrupt support for the MIPS Malta.
  */
 
-#include "opt_octeon.h"
 #include "opt_multiprocessor.h"
 
 #include "cpunode.h"
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.13 2020/06/20 18:48:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.14 2020/06/23 05:14:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
