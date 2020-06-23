@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.21 2020/06/22 12:03:46 maya Exp $
+.\"	$NetBSD: contents,v 1.22 2020/06/23 06:28:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,7 +309,9 @@ The X server.
 .\" XXX: should be in notes/common
 .
 .Pp
-The \*M binary distribution sets are distributed as xzipped tar files
+The \*M binary distribution sets are distributed as tar files
+compressed with
+.Sy \*[compressor]
 named with the extension
 .Sy .\*[setsuffix] ,
 e.g.
