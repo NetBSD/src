@@ -1,4 +1,4 @@
-/* $Id: t_pty.c,v 1.2 2017/01/13 21:30:41 christos Exp $ */
+/* $Id: t_pty.c,v 1.3 2020/06/24 05:59:18 rin Exp $ */
 
 /*
  * Allocates a pty(4) device, and sends the specified number of packets of the
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pty.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_pty.c,v 1.3 2020/06/24 05:59:18 rin Exp $");
 
 #include <errno.h>
 #include <err.h>
@@ -31,6 +31,8 @@ __RCSID("$NetBSD: t_pty.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
 #include <sys/wait.h>
 
 #ifdef STANDALONE
+#define	atf_tc_fail_errno(fmt, ...)	err(EXIT_FAILURE, fmt, ## __VA_ARGS__)
+#define	atf_tc_fail(fmt, ...)		errx(EXIT_FAILURE, fmt, ## __VA_ARGS__)
 static __dead void	usage(const char *);
 static void		parse_args(int, char **);
 #else
@@ -59,7 +61,7 @@ void run(void)
 	int status;
 	pid_t child;
 	if ((dbuf = calloc(1, buffer_size)) == NULL)
-		err(EXIT_FAILURE, "malloc(%zu)", buffer_size);
+		atf_tc_fail_errno("malloc(%zu)", buffer_size);
 
 	if (verbose)
 		(void)printf(
@@ -84,7 +86,7 @@ void run(void)
 			    "parent: attempting to write %zu bytes to PTY\n",
 			    buffer_size);
 		if ((size = write(pty, dbuf, buffer_size)) == -1) {
-			err(EXIT_FAILURE, "parent: write()");
+			atf_tc_fail_errno("parent: write()");
 			break;
 		}
 		if (verbose)
@@ -94,9 +96,9 @@ void run(void)
 	if (verbose)
 		(void)printf("parent: waiting for child to exit\n");
 	if (waitpid(child, &status, 0) == -1)
-		err(EXIT_FAILURE, "waitpid");
+		atf_tc_fail_errno("waitpid");
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-		errx(EXIT_FAILURE, "child failed");
+		atf_tc_fail("child failed");
 
 	if (verbose)
 		(void)printf("parent: closing PTY\n");
@@ -113,19 +115,18 @@ condition(int fd)
 	if (qsize) {
 		int opt = qsize;
 		if (ioctl(fd, TIOCSQSIZE, &opt) == -1)
-			err(EXIT_FAILURE, "Couldn't set tty(4) buffer size");
+			atf_tc_fail_errno("Couldn't set tty(4) buffer size");
 		if (ioctl(fd, TIOCGQSIZE, &opt) == -1)
-			err(EXIT_FAILURE, "Couldn't get tty(4) buffer size");
+			atf_tc_fail_errno("Couldn't get tty(4) buffer size");
 		if (opt != qsize)
-			errx(EXIT_FAILURE, "Wrong qsize %d != %d\n",
-			    qsize, opt);
+			atf_tc_fail_errno("Wrong qsize %d != %d\n", qsize, opt);
 	}
 	if (tcgetattr(fd, &tios) == -1)
-		err(EXIT_FAILURE, "tcgetattr()");
+		atf_tc_fail_errno("tcgetattr()");
 	cfmakeraw(&tios);
 	cfsetspeed(&tios, B921600);
 	if (tcsetattr(fd, TCSANOW, &tios) == -1)
-		err(EXIT_FAILURE, "tcsetattr()");
+		atf_tc_fail_errno("tcsetattr()");
 }
 
 static int
@@ -134,17 +135,17 @@ pty_open(void)
 	int	fd;
 
 	if ((fd = posix_openpt(O_RDWR)) == -1)
-		err(EXIT_FAILURE, "Couldn't pty(4) device");
+		atf_tc_fail_errno("Couldn't pty(4) device");
 	condition(fd);
 	if (grantpt(fd) == -1)
-		err(EXIT_FAILURE,
+		atf_tc_fail_errno(
 		    "Couldn't grant permissions on tty(4) device");
 
 
 	condition(fd);
 
 	if (unlockpt(fd) == -1)
-		err(EXIT_FAILURE, "unlockpt()");
+		atf_tc_fail_errno("unlockpt()");
 
 	return fd;
 }
@@ -155,13 +156,13 @@ tty_open(const char *ttydev)
 	int		fd;
 
 	if ((fd = open(ttydev, O_RDWR, 0)) == -1)
-		err(EXIT_FAILURE, "Couldn't open tty(4) device");
+		atf_tc_fail_errno("Couldn't open tty(4) device");
 
 #ifdef USE_PPP_DISCIPLINE
 	{
 		int	opt = PPPDISC;
 		if (ioctl(fd, TIOCSETD, &opt) == -1)
-			err(EXIT_FAILURE,
+			atf_tc_fail_errno(
 			    "Couldn't set tty(4) discipline to PPP");
 	}
 #endif
@@ -177,9 +178,9 @@ fd_nonblock(int fd)
 	int	opt;
 
 	if ((opt = fcntl(fd, F_GETFL, NULL)) == -1)
-		err(EXIT_FAILURE, "fcntl()");
+		atf_tc_fail_errno("fcntl()");
 	if (fcntl(fd, F_SETFL, opt | O_NONBLOCK) == -1)
-		err(EXIT_FAILURE, "fcntl()");
+		atf_tc_fail_errno("fcntl()");
 }
 
 static pid_t
@@ -191,7 +192,7 @@ child_spawn(const char *ttydev)
 	size_t		total = 0;
 
 	if ((pid = fork()) == -1)
-		err(EXIT_FAILURE, "fork()");
+		atf_tc_fail_errno("fork()");
 	(void)setsid();
 	if (pid != 0)
 		return pid;
