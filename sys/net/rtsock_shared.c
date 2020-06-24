@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.17 2020/03/13 16:37:12 christos Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.18 2020/06/24 12:27:51 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.17 2020/03/13 16:37:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.18 2020/06/24 12:27:51 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,6 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.17 2020/03/13 16:37:12 christos 
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>
+
+#define _SA_MINSIZE	(offsetof(struct sockaddr, sa_len) + \
+			 sizeof(((struct sockaddr *)0)->sa_len))
 
 #ifdef COMPAT_RTSOCK
 /*
@@ -244,12 +247,13 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		char *ep = cp + rop->rocb_missfilterlen;
 
 		/* Ensure we can access sa_len */
-		if (m->m_pkthdr.len < sizeof(*rtm) +
-		    offsetof(struct sockaddr, sa_len) + sizeof(ss.ss_len))
+		if (m->m_pkthdr.len < sizeof(*rtm) + _SA_MINSIZE)
 			return EINVAL;
 		m_copydata(m, sizeof(*rtm) + offsetof(struct sockaddr, sa_len),
 		    sizeof(ss.ss_len), &ss.ss_len);
-		if (m->m_pkthdr.len < sizeof(*rtm) + ss.ss_len)
+		if (ss.ss_len < _SA_MINSIZE ||
+		    ss.ss_len > sizeof(ss) ||
+		    m->m_pkthdr.len < sizeof(*rtm) + ss.ss_len)
 			return EINVAL;
 		/* Copy out the destination sockaddr */
 		m_copydata(m, sizeof(*rtm), ss.ss_len, &ss);
@@ -1059,6 +1063,9 @@ route_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 					break;
 				}
 				sa = (struct sockaddr *)cp;
+				if (sa->sa_len < _SA_MINSIZE ||
+				    sa->sa_len >sizeof(struct sockaddr_storage))
+					return EINVAL;
 				cp += RT_XROUNDUP(sa->sa_len);
 			}
 			if (cp != ep) {
