@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.570 2020/06/18 16:23:43 maxv Exp $
+# $NetBSD: GENERIC,v 1.571 2020/06/24 03:38:54 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.570 $"
+#ident		"GENERIC-$Revision: 1.571 $"
 
 maxusers	64		# estimated number of users
 
@@ -461,6 +461,7 @@ nouveaufb*	at nouveaufbbus?
 # Cryptographic Devices
 
 # PCI cryptographic devices
+amdccp*	at pci? dev ? function ?	# AMD Cryptographic Coprocessor
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 #qat*	at pci? dev ? function ?	# Intel QuickAssist
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
