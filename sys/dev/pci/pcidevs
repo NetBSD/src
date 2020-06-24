@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1416 2020/06/13 12:42:26 ryo Exp $
+$NetBSD: pcidevs,v 1.1417 2020/06/24 03:35:07 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1025,11 +1025,13 @@ product AMD F17_DF_5		0x1464	Family17h Data Fabric
 product AMD F17_DF_6		0x1465	Family17h Data Fabric
 product AMD F17_DF_7		0x1466	Family17h Data Fabric
 product AMD F17_DF_8		0x1467	Family17h Data Fabric
+product AMD F17_CCP_2		0x1468	Family17h Crypto
 product AMD F17_PCIE_4		0x1470	Family17h PCIe
 product AMD F17_PCIE_5		0x1471	Family17h PCIe
 product AMD F17_7X_RC		0x1480	Family17h/7xh Root Complex
 product AMD F17_7X_IOMMU	0x1481	Family17h/7xh IOMMU
 product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
+product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
 product AMD F14_RC		0x1510	Family14h Root Complex
 product AMD F14_PCIE_1		0x1512	Family14h PCIe
