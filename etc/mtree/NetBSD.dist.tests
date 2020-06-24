@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.162 2020/04/19 13:22:58 maxv Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.163 2020/06/24 09:21:43 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -422,6 +422,7 @@
 ./usr/tests/usr.bin/mkdep
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/netpgpverify
+./usr/tests/usr.bin/patch
 ./usr/tests/usr.bin/pkill
 ./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/printf
