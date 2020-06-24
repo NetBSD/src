@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.4 2020/01/30 01:49:44 manu Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.5 2020/06/24 22:28:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.4 2020/01/30 01:49:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.5 2020/06/24 22:28:07 jdolecek Exp $");
 
 #include "opt_multiboot.h"
 
@@ -115,7 +115,7 @@ char multiboot_info[16384] = "\0\0\0\0";
 bool multiboot2_enabled = false;
 bool has_syms = false;
 struct multiboot_symbols Multiboot_Symbols;
-
+static char bimbuf[16384];
 
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 
@@ -448,7 +448,6 @@ mbi_modules(char *mbi, uint32_t mbi_size, int module_count)
 	size_t bim_len;
 	struct bi_modulelist_entry *bie;
 	struct btinfo_modulelist *bim;
-	char bimbuf[16384];
 
 	bim_len = sizeof(*bim) + (module_count * sizeof(*bie));
 	if (bim_len > sizeof(bimbuf))
@@ -518,7 +517,6 @@ mbi_bootdev(struct multiboot_tag_bootdev *mbt)
 static void
 mbi_mmap(struct multiboot_tag_mmap *mbt)
 {
-	char bimbuf[16384];
 	struct btinfo_memmap *bim;
 	char *cp;
 
@@ -616,15 +614,14 @@ mbi_efi64(struct multiboot_tag_efi64 *mbt)
 static void
 mbi_efi_mmap(struct multiboot_tag_efi_mmap *mbt)
 {
-	char biebuf[16384];
-	struct btinfo_efimemmap *bie = (struct btinfo_efimemmap *)biebuf;
+	struct btinfo_efimemmap *bie = (struct btinfo_efimemmap *)bimbuf;
 	size_t bie_len;
 
 	if (mbt->descr_vers != 0)
 		goto out;
 
 	bie_len = sizeof(*bie) + mbt->size - sizeof(*mbt);
-	if (bie_len > sizeof(biebuf))
+	if (bie_len > sizeof(bimbuf))
 		goto out;
 
 	bie->num = (mbt->size - sizeof(*mbt)) / mbt->descr_size;
