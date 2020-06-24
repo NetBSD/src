@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.41 2020/06/11 09:56:57 martin Exp $	*/
+/*	$NetBSD: if_run.c,v 1.42 2020/06/24 21:06:39 jdolecek Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.41 2020/06/11 09:56:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.42 2020/06/24 21:06:39 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -931,7 +931,7 @@ run_free_tx_ring(struct run_softc *sc, int qid)
 	}
 }
 
-static int
+static int __noinline
 run_load_microcode(struct run_softc *sc)
 {
 	usb_device_request_t req;
@@ -1003,7 +1003,7 @@ run_load_microcode(struct run_softc *sc)
 	return 0;
 }
 
-static int
+static int __noinline
 run_reset(struct run_softc *sc)
 {
 	usb_device_request_t req;
@@ -1016,7 +1016,7 @@ run_reset(struct run_softc *sc)
 	return usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-static int
+static int __noinline
 run_read(struct run_softc *sc, uint16_t reg, uint32_t *val)
 {
 	uint32_t tmp;
@@ -1056,7 +1056,7 @@ run_write_2(struct run_softc *sc, uint16_t reg, uint16_t val)
 	return usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-static int
+static int __noinline
 run_write(struct run_softc *sc, uint16_t reg, uint32_t val)
 {
 	uint32_t tmp = htole32(val);
