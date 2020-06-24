@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.7 2008/04/04 09:30:55 xtraeme Exp $ */
+/* $NetBSD: ug_isa.c,v 1.8 2020/06/24 19:24:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.7 2008/04/04 09:30:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.8 2020/06/24 19:24:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ static int
 ug_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct ug_softc wrap_sc;
 	bus_space_handle_t bsh;
 	uint8_t valc, vald;
 
@@ -97,11 +96,7 @@ ug_isa_match(device_t parent, cfdata_t match, void *aux)
 		ug_ver = 1;
 
 	/* Check for uGuru 2005 */
-
-	wrap_sc.sc_iot = ia->ia_iot;
-	wrap_sc.sc_ioh = bsh;
-
-	if (ug2_sync(&wrap_sc) == 1)
+	if (ug2_sync(ia->ia_iot, bsh) == 1)
 		ug_ver = 2;
 
 	/* unmap, prepare ia and bye */
