@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.844 2020/06/24 09:11:26 jruoho Exp $
+# $NetBSD: mi,v 1.845 2020/06/24 09:21:43 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4562,6 +4562,10 @@
 ./usr/tests/usr.bin/netpgpverify/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/netpgpverify/t_netpgpverify		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/patch			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/patch/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/patch/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/patch/t_patch		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/pkill			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/pkill/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/pkill/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
