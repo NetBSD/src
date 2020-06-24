@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.11 2012/02/12 16:34:11 matt Exp $ */
+/* $NetBSD: ibm561.c,v 1.12 2020/06/24 19:55:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.11 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.12 2020/06/24 19:55:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ ibm561_register(
  * initializing the console early on.
  */
 
-struct ibm561data *saved_console_data;
+static struct ibm561data saved_console_data;
 
 void
 ibm561_cninit(
@@ -172,9 +172,7 @@ ibm561_cninit(
 	data->ramdac_wr = wr;
 	data->ramdac_rd = rd;
 	ibm561_set_dotclock((struct ramdac_cookie *)data, dotclock);
-	saved_console_data = data;
 	ibm561_init((struct ramdac_cookie *)data);
-	saved_console_data = NULL;
 }
 
 void
@@ -394,7 +392,7 @@ ibm561_update(void *vp)
 
 	/* XXX see comment above ibm561_cninit() */
 	if (!data)
-		data = saved_console_data;
+		data = &saved_console_data;
 
 	if (data->changed & CHANGED_WTYPE) {
 		ibm561_regbegin(data, IBM561_FB_WINTYPE);
