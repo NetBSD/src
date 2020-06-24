@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.45 2016/02/28 10:59:29 mrg Exp $ */
+/* $NetBSD: mv.c,v 1.46 2020/06/24 16:58:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.45 2016/02/28 10:59:29 mrg Exp $");
+__RCSID("$NetBSD: mv.c,v 1.46 2020/06/24 16:58:12 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: mv.c,v 1.45 2016/02/28 10:59:29 mrg Exp $");
 
 #include "pathnames.h"
 
-static int fflg, iflg, vflg;
+static int fflg, hflg, iflg, vflg;
 static int stdin_ok;
 static sig_atomic_t pinfo;
 
@@ -93,8 +93,11 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ifv")) != -1)
+	while ((ch = getopt(argc, argv, "hifv")) != -1)
 		switch (ch) {
+		case 'h':
+			hflg = 1;
+			break;
 		case 'i':
 			fflg = 0;
 			iflg = 1;
@@ -123,7 +126,7 @@ main(int argc, char *argv[])
 	 * If the stat on the target fails or the target isn't a directory,
 	 * try the move.  More than 2 arguments is an error in this case.
 	 */
-	if (stat(argv[argc - 1], &sb) || !S_ISDIR(sb.st_mode)) {
+	if (hflg || stat(argv[argc - 1], &sb) || !S_ISDIR(sb.st_mode)) {
 		if (argc > 2)
 			usage();
 		exit(do_move(argv[0], argv[1]));
@@ -419,7 +422,7 @@ copy(char *from, char *to)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-fiv] source target\n"
+	(void)fprintf(stderr, "usage: %s [-fhiv] source target\n"
 	    "       %s [-fiv] source ... directory\n", getprogname(),
 	    getprogname());
 	exit(1);
