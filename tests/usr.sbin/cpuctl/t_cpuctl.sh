@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.1 2020/06/24 09:32:41 jruoho Exp $
+# $NetBSD: t_cpuctl.sh,v 1.2 2020/06/24 10:07:13 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -176,7 +176,7 @@ offline_body() {
 	setcpu "offline" atf_fail "error in setting a CPU offline"
 
 	# Additional check that the boot processor cannot be
-	# set offline, as noted in the cpuctl(9) manual page.
+	# set offline, as noted in the cpuctl(8) manual page.
 	#
 	cpuctl offline 0 >/dev/null 2>&1
 
