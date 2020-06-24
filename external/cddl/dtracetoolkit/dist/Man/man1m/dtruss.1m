@@ -1,4 +1,4 @@
-.\" $NetBSD: dtruss.1m,v 1.2 2020/06/24 18:43:38 sevan Exp $
+.\" $NetBSD: dtruss.1m,v 1.3 2020/06/24 18:49:01 sevan Exp $
 .Dd June 24, 2020
 .Dt DTRUSS 1
 .Os
@@ -101,7 +101,8 @@ descriptions explaining the output.
 dtruss will run forever until Ctrl\-C is hit, or if a command was
 executed dtruss will finish when the command ends.
 .Sh SEE ALSO
-procsystime(1M), dtrace(1M), truss(1)
+.Xr dtrace 1 ,
+.Xr procsystime 1
 .Sh AUTHORS
 .An Brendan Gregg
 [Sydney, Australia]
