@@ -1,4 +1,4 @@
-/* $Id: t_pty.c,v 1.3 2020/06/24 05:59:18 rin Exp $ */
+/* $Id: t_pty.c,v 1.4 2020/06/24 06:15:40 rin Exp $ */
 
 /*
  * Allocates a pty(4) device, and sends the specified number of packets of the
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pty.c,v 1.3 2020/06/24 05:59:18 rin Exp $");
+__RCSID("$NetBSD: t_pty.c,v 1.4 2020/06/24 06:15:40 rin Exp $");
 
 #include <errno.h>
 #include <err.h>
@@ -231,11 +231,6 @@ child_spawn(const char *ttydev)
 						break;
 					err(EXIT_FAILURE, "child: read()");
 				}
-				if (qsize && size < qsize &&
-				    (size_t)size < buffer_size)
-					errx(EXIT_FAILURE, "read returned %zd "
-					    "less than the queue size %d",
-					    size, qsize);
 				if (verbose)
 					(void)printf(
 					    "child: read %zd bytes from TTY\n",
