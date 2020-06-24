@@ -1,4 +1,4 @@
-/* $Id: t_pty.c,v 1.4 2020/06/24 06:15:40 rin Exp $ */
+/* $Id: t_pty.c,v 1.5 2020/06/24 07:02:57 rin Exp $ */
 
 /*
  * Allocates a pty(4) device, and sends the specified number of packets of the
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pty.c,v 1.4 2020/06/24 06:15:40 rin Exp $");
+__RCSID("$NetBSD: t_pty.c,v 1.5 2020/06/24 07:02:57 rin Exp $");
 
 #include <errno.h>
 #include <err.h>
@@ -119,7 +119,7 @@ condition(int fd)
 		if (ioctl(fd, TIOCGQSIZE, &opt) == -1)
 			atf_tc_fail_errno("Couldn't get tty(4) buffer size");
 		if (opt != qsize)
-			atf_tc_fail_errno("Wrong qsize %d != %d\n", qsize, opt);
+			atf_tc_fail("Wrong qsize %d != %d\n", qsize, opt);
 	}
 	if (tcgetattr(fd, &tios) == -1)
 		atf_tc_fail_errno("tcgetattr()");
