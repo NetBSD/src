@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.428 2020/05/21 22:58:46 macallan Exp $
+#	$NetBSD: files.pci,v 1.429 2020/06/24 03:38:01 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -755,6 +755,10 @@ device	amdpm: i2cbus, acpipmtimer
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 file	dev/pci/amdpm_smbus.c		amdpm
+
+# AMD Cryptographic Coprocessor
+attach	amdccp at pci with amdccp_pci
+file	dev/pci/amdccp_pci.c		amdccp_pci
 
 # Hi/fn 7751
 device	hifn: opencrypto
