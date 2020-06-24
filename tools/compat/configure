@@ -4315,9 +4315,14 @@ enum uio_rw rw;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 
 $as_echo "#define HAVE_ENUM_UIO_RW 1" >>confdefs.h
 
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
@@ -4339,9 +4344,14 @@ enum uio_seg seg;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 
 $as_echo "#define HAVE_ENUM_UIO_SEG 1" >>confdefs.h
 
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
