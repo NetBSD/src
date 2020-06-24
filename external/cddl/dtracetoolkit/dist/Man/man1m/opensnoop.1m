@@ -1,139 +1,120 @@
-.TH opensnoop 1m  "$Date: 2015/09/30 22:01:09 $" "USER COMMANDS"
-.SH NAME
-opensnoop \- snoop file opens as they occur. Uses DTrace.
-.SH SYNOPSIS
-.B opensnoop
-[\-a|\-A|\-ceghsvxZ] [\-f pathname] [\-n name] [\-p PID]
-.SH DESCRIPTION
-opensnoop tracks file opens. As a process issues a file open, details
-such as UID, PID and pathname are printed out. 
-
-The returned file descriptor is printed,
-a value of -1 indicates an error. This can be useful
-for troubleshooting to determine if appliacions are attempting to
-open files that do not exist. 
-
+.\" $NetBSD: opensnoop.1m,v 1.2 2020/06/24 18:06:01 sevan Exp $
+.Dd June 24, 2020
+.Dt OPENSNOOP 1
+.Os
+.Sh NAME
+.Nm opensnoop
+.Nd snoop file opens as they occur. Uses DTrace
+.Sh SYNOPSIS
+.Nm
+.Op Fl a | Fl A | Fl ceghsvxZ
+.Op Fl f Ar pathname
+.Op Fl n Ar name
+.Op Fl p Ar PID
+.Sh DESCRIPTION
+.Nm
+tracks file opens.
+As a process issues a file open, details such as UID, PID and pathname are
+printed out.
+The returned file descriptor is printed, a value of -1 indicates an error.
+This can be useful for troubleshooting to determine if appliacions are
+attempting to open files that do not exist.
 Since this uses DTrace, only the root user or users with the
 dtrace_kernel privilege can run this command.
-.SH OS
-Solaris
-.SH STABILITY
-stable - needs the syscall provider.
-.SH OPTIONS
-.TP
-\-a
+.Bl -tag -width Ds
+.It Fl a
 print all data
-.TP
-\-A
+.It Fl A
 dump all data, space delimited
-.TP
-\-c
+.It Fl c
 print current working directory of process
-.TP
-\-e
+.It Fl e
 print errno value
-.TP
-\-g
+.It Fl g
 print full command arguments
-.TP
-\-s
+.It Fl s
 print start time, us
-.TP
-\-v
+.It Fl v
 print start time, string
-.TP
-\-x
+.It Fl x
 only print failed opens
-.TP
-\-Z
+.It Fl Z
 print zonename
-.TP
-\-f pathname
+.It Fl f Ar pathname
 file pathname to snoop
-.TP
-\-n name
+.It Fl n Ar name
 process name to snoop
-.TP
-\-p PID
+.It Fl p Ar PID
 process ID to snoop
-.PP
-.SH EXAMPLES
-.TP
-Default output, print file opens by process as they occur,
-# 
-.B opensnoop
-.PP
-.TP
-Print human readable timestamps,
-# 
-.B opensnoop
-\-v 
-.PP
-.TP
-See error codes,
-#
-.B opensnoop
-\-e
-.PP
-.TP
-Snoop this file only,
-#
-.B opensnoop
-\-f /etc/passwd
-.PP
-.SH FIELDS
-.TP
-ZONE
+.El
+.Pp
+Description of fields
+.Bl -column
+.It ZONE
 Zone name
-.TP
-UID
+.It UID
 User ID
-.TP
-PID
+.It PID
 Process ID
-.TP
-PPID
+.It PPID
 Parent Process ID
-.TP
-FD
+.It FD
 File Descriptor (-1 is error)
-.TP
-ERR
-errno value (see /usr/include/sys/errno.h)
-.TP
-CWD
+.It ERR
+errno value (see
+.Pa /usr/include/sys/errno.h
+)
+.It CWD
 current working directory of process
-.TP
-PATH
+.It PATH
 pathname for file open
-.TP
-COMM
+.It COMM
 command name for the process
-.TP
-ARGS
+.It ARGS
 argument listing for the process
-.TP
-TIME
+.It TIME
 timestamp for the open event, us
-.TP
-STRTIME
+.It STRTIME
 timestamp for the open event, string
-.SH DOCUMENTATION
-See the DTraceToolkit for further documentation under the 
-Docs directory. The DTraceToolkit docs may include full worked
-examples with verbose descriptions explaining the output.
-.SH EXIT
-opensnoop will run forever until Ctrl\-C is hit. 
-.SH BUGS
-occasionally the pathname for the file open cannot be read
-and the following error will be seen,
-
-dtrace: error on enabled probe ID 6 (...): invalid address
-
-this is normal behaviour.
-.SH AUTHOR
-Brendan Gregg
+.El
+.Sh EXAMPLES
+Default output, print file opens by process as they occur,
+.Bd -literal -offset indent
+.Ic opensnoop
+.Ed
+.Pp
+Print human readable timestamps,
+.Bd -literal -offset indent
+.Ic opensnoop -v
+.Ed
+.Pp
+See error codes,
+.Bd -literal -offset indent
+.Ic opensnoop -e
+.Ed
+.Pp
+Snoop this file only,
+.Bd -literal -offset indent
+.Ic opensnoop -f /etc/passwd
+.Ed
+.Sh STABILITY
+stable - needs the syscall provider.
+.Sh DOCUMENTATION
+See the DTraceToolkit for further documentation under the Docs directory.
+The DTraceToolkit docs may include full worked examples with verbose
+descriptions explaining the output.
+.Sh EXIT
+opensnoop will run forever until Ctrl\-C is hit.
+.Sh SEE ALSO
+.Xr dtrace 1
+.Sh AUTHORS
+.An Brendan Gregg
 [Sydney, Australia]
-.SH SEE ALSO
-dtrace(1M), truss(1)
-
+.Sh BUGS
+Occasionally the pathname for the file open cannot be read and the following
+error will be seen,
+.Bd -literal -offset indent
+dtrace: error on enabled probe ID 6 (...): invalid address
+.Ed
+.Pp
+this is normal behaviour.
