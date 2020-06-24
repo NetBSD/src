@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/11/14 09:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2020/06/24 05:06:08 rin Exp $
 
 BUILD_ENV= \
 		AR=${HOST_AR:Q} \
@@ -24,7 +24,7 @@ BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e
 
 libcpp/libcpp.a:
 	[ ! -d libcpp ] && mkdir libcpp || true
-	(cd libcpp && ${BUILD_ENV} && \
+	(cd libcpp && ${BUILD_ENV} \
 		${HOST_SH} ${DIST}/libcpp/configure -v am_cv_func_iconv=no \
 		&& ${BUILD_COMMAND})
 
