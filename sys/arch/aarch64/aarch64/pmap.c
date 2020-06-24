@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2020/06/14 21:47:14 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2020/06/24 08:27:47 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2020/06/14 21:47:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2020/06/24 08:27:47 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -913,7 +913,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		pte = *ptep;
 		if (lxpde_valid(pte)) {
 			vaddr_t eob = (va + blocksize) & ~(blocksize - 1);
-			vsize_t len = ulmin(eva, eob - va);
+			vsize_t len = ulmin(eva, eob) - va;
 
 			if (l3pte_writable(pte)) {
 				cpu_icache_sync_range(va, len);
