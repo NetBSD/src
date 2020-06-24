@@ -1,4 +1,4 @@
-/* $NetBSD: ugvar.h,v 1.5 2018/06/03 10:04:40 maxv Exp $ */
+/* $NetBSD: ugvar.h,v 1.6 2020/06/24 19:24:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -59,9 +59,7 @@ uint8_t ug_read(struct ug_softc *, unsigned short);
 int ug_waitfor(struct ug_softc *, uint16_t, uint8_t);
 void ug_setup_sensors(struct ug_softc *);
 void ug2_attach(device_t);
-int ug2_wait_ready(struct ug_softc *);
-int ug2_wait_readable(struct ug_softc *);
-int ug2_sync(struct ug_softc *);
+int ug2_sync(bus_space_tag_t, bus_space_handle_t);
 int ug2_read(struct ug_softc *, uint8_t, uint8_t, uint8_t, uint8_t*);
 
 /* Envsys */

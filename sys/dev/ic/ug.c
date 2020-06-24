@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.13 2018/06/03 10:04:40 maxv Exp $ */
+/* $NetBSD: ug.c,v 1.14 2020/06/24 19:24:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.13 2018/06/03 10:04:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.14 2020/06/24 19:24:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,13 +580,13 @@ ug2_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 #undef SENSOR_VALUE
 }
 
-int
-ug2_wait_ready(struct ug_softc *sc)
+static int
+ug2_wait_ready(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int cnt = 0;
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x1a);
-	while (bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_DATA) &
+	bus_space_write_1(iot, ioh, UG_DATA, 0x1a);
+	while (bus_space_read_1(iot, ioh, UG_DATA) &
 	    UG2_STATUS_BUSY) {
 		if (cnt++ > UG_DELAY_CYCLES)
 			return 0;
@@ -594,12 +594,12 @@ ug2_wait_ready(struct ug_softc *sc)
 	return 1;
 }
 
-int
-ug2_wait_readable(struct ug_softc *sc)
+static int
+ug2_wait_readable(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int cnt = 0;
 
-	while (!(bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_DATA) &
+	while (!(bus_space_read_1(iot, ioh, UG_DATA) &
 		UG2_STATUS_READY_FOR_READ)) {
 		if (cnt++ > UG_DELAY_CYCLES)
 			return 0;
@@ -608,28 +608,28 @@ ug2_wait_readable(struct ug_softc *sc)
 }
 
 int
-ug2_sync(struct ug_softc *sc)
+ug2_sync(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int cnt = 0;
 
-#define UG2_WAIT_READY if(ug2_wait_ready(sc) == 0) return 0;
+#define UG2_WAIT_READY if(ug2_wait_ready(iot, ioh) == 0) return 0;
 
 	/* Don't sync two times in a row */
-	if(ug_ver != 0) {
+	if (ug_ver != 0) {
 		ug_ver = 0;
 		return 1;
 	}
 
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x20);
+	bus_space_write_1(iot, ioh, UG_DATA, 0x20);
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, 0x10);
+	bus_space_write_1(iot, ioh, UG_CMD, 0x10);
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, 0x00);
+	bus_space_write_1(iot, ioh, UG_CMD, 0x00);
 	UG2_WAIT_READY;
-	if (ug2_wait_readable(sc) == 0)
+	if (ug2_wait_readable(iot, ioh) == 0)
 		return 0;
-	while (bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_CMD) != 0xAC)
+	while (bus_space_read_1(iot, ioh, UG_CMD) != 0xAC)
 		if (cnt++ > UG_DELAY_CYCLES)
 			return 0;
 	return 1;
@@ -640,24 +640,26 @@ ug2_read(struct ug_softc *sc, uint8_t bank, uint8_t offset, uint8_t count,
 	 uint8_t *ret)
 {
 	int i;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
-	if (ug2_sync(sc) == 0)
+	if (ug2_sync(iot, ioh) == 0)
 		return 0;
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x1A);
+	bus_space_write_1(iot, ioh, UG_DATA, 0x1A);
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, bank);
+	bus_space_write_1(iot, ioh, UG_CMD, bank);
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, offset);
+	bus_space_write_1(iot, ioh, UG_CMD, offset);
 	UG2_WAIT_READY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, count);
+	bus_space_write_1(iot, ioh, UG_CMD, count);
 	UG2_WAIT_READY;
 
 #undef UG2_WAIT_READY
 
 	/* Now wait for the results */
 	for (i = 0; i < count; i++) {
-		if (ug2_wait_readable(sc) == 0)
+		if (ug2_wait_readable(sc->sc_iot, sc->sc_ioh) == 0)
 			break;
 		ret[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_CMD);
 	}
