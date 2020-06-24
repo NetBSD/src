@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.47 2020/06/15 09:09:23 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.48 2020/06/24 18:09:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.47 2020/06/15 09:09:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.48 2020/06/24 18:09:37 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -353,22 +353,6 @@ ENTRY(outl)
 	outl	%eax, %dx
 	ret
 END(outl)
-
-ENTRY(x86_stos)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%edi
-	pushl	%esi
-	movl	8(%ebp),%edi
-	movl	12(%ebp),%eax
-	movl	16(%ebp),%ecx
-	rep
-	stosl
-	popl	%esi
-	popl	%edi
-	leave
-	ret
-END(x86_stos)
 
 ENTRY(x86_movs)
 	pushl	%ebp
