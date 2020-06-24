@@ -1,123 +1,107 @@
-.TH dtruss 1m  "$Date: 2015/09/30 22:01:09 $" "USER COMMANDS"
-.SH NAME
-dtruss \- process syscall details. Uses DTrace.
-.SH SYNOPSIS
-.B dtruss
-[\-acdeflhoLs] [\-t syscall] { \-p PID | \-n name | command }
-.SH DESCRIPTION
-dtruss prints details on process system calls. It is like a DTrace
-version of truss, and has been designed to be less intrusive than
-truss.
-
-Of particular interest is the elapsed times and on cpu times, which
-can identify both system calls that are slow to complete, and those
-which are consuming CPU cycles.
-
-Since this uses DTrace, only the root user or users with the
-dtrace_kernel privilege can run this command.
-.SH OS
-Solaris
-.SH STABILITY
-stable - needs the syscall provider.
-.SH OPTIONS
-.TP
-\-a
+.\" $NetBSD: dtruss.1m,v 1.2 2020/06/24 18:43:38 sevan Exp $
+.Dd June 24, 2020
+.Dt DTRUSS 1
+.Os
+.Sh NAME
+.Nm dtruss
+.Nd process syscall details. Uses DTrace
+.Sh SYNOPSIS
+.Nm
+.Op Fl acdeflhoLs
+.Op Fl t Ar syscall
+.Op Fl p Ar PID | Fl n Ar name | command
+.Sh DESCRIPTION
+.Nm
+prints details on process system calls.
+It is like a DTrace version of truss, and has been designed to be less
+intrusive than truss.
+.Pp
+Of particular interest is the elapsed times and on cpu times, which can
+identify both system calls that are slow to complete, and those which are
+consuming CPU cycles.
+.Pp
+Since this uses DTrace, only the root user or users with the dtrace_kernel
+privilege can run this command.
+.Bl -tag -width Ds
+.It Fl a
 print all details
-.TP
-\-b bufsize
-dynamic variable buffer size. Increase this if you notice dynamic
-variable drop errors. The default is "4m" for 4 megabytes per CPU.
-.TP
-\-c
+.It Fl b Ar bufsize
+dynamic variable buffer size.
+Increase this if you notice dynamic variable drop errors.
+The default is "4m" for 4 megabytes per CPU.
+.It Fl c
 print system call counts
-.TP
-\-d
+.It Fl d
 print relative timestamps, us
-.TP
-\-e
+.It Fl e
 print elapsed times, us
-.TP
-\-f
+.It Fl f
 follow children as they are forked
-.TP
-\-l
+.It Fl l
 force printing of pid/lwpid per line
-.TP
-\-L
+.It Fl L
 don't print pid/lwpid per line
-.TP
-\-n name
+.It Fl n Ar name
 examine processes with this name
-.TP
-\-o
+.It Fl o
 print on-cpu times, us
-.TP
-\-s
+.It Fl s
 print stack backtraces
-.TP
-\-p PID
+.It Fl p Ar PID
 examine this PID
-.TP
-\-t syscall
+.It Fl t Ar syscall
 examine this syscall only
-.PP
-.SH EXAMPLES
-.TP
-run and examine the "df -h" command
-# 
-.B dtruss 
-df -h
-.PP
-.TP
-examine PID 1871
-# 
-.B dtruss
-\-p 1871 
-.PP
-.TP
-examine all processes called "tar"
-#
-.B dtruss
-\-n tar
-.PP
-.TP
-run test.sh and follow children
-#
-.B dtruss
-\-f test.sh
-.TP
-run the "date" command and print elapsed and on cpu times,
-#
-.B dtruss
-\-eo date
-.PP
-.SH FIELDS
-.TP
-PID/LWPID
+.El
+.Pp
+Description of fields
+.Bl -column
+.It PID/LWPID
 Process ID / Lightweight Process ID
-.TP
-RELATIVE
+.It RELATIVE
 relative timestamps to the start of the thread, us (microseconds)
-.TP
-ELAPSD
+.It ELAPSD
 elapsed time for this system call, us
-.TP
-CPU
+.It CPU
 on-cpu time for this system call, us
-.TP
-SYSCALL(args)
+.It SYSCALL(args)
 system call name, with arguments (some may be evaluated)
-.PP
-.SH DOCUMENTATION
-See the DTraceToolkit for further documentation under the 
-Docs directory. The DTraceToolkit docs may include full worked
-examples with verbose descriptions explaining the output.
-.SH EXIT
+.El
+.Sh EXAMPLES
+run and examine the "df -h" command
+.Bd -literal -offset indent
+.Ic dtruss df -h
+.Ed
+.Pp
+examine PID 1871
+.Bd -literal -offset indent
+.Ic dtruss -p 1871
+.Ed
+.Pp
+examine all processes called "tar"
+.Bd -literal -offset indent
+.Ic dtruss -n tar
+.Ed
+.Pp
+run test.sh and follow children
+.Bd -literal -offset indent
+.Ic dtruss -f test.sh
+.Ed
+.Pp
+run the "date" command and print elapsed and on cpu times,
+.Bd -literal -offset indent
+.Ic dtruss -eo date
+.Ed
+.Sh STABILITY
+stable - needs the syscall provider.
+.Sh DOCUMENTATION
+See the DTraceToolkit for further documentation under the Docs directory.
+The DTraceToolkit docs may include full worked examples with verbose
+descriptions explaining the output.
+.Sh EXIT
 dtruss will run forever until Ctrl\-C is hit, or if a command was
 executed dtruss will finish when the command ends.
-.SH AUTHOR
-Brendan Gregg
-[Sydney, Australia]
-.SH SEE ALSO
+.Sh SEE ALSO
 procsystime(1M), dtrace(1M), truss(1)
-
+.Sh AUTHORS
+.An Brendan Gregg
+[Sydney, Australia]
