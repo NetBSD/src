@@ -1,4 +1,4 @@
-/* $NetBSD: t_proplib.c,v 1.3 2020/06/08 21:31:17 thorpej Exp $ */
+/* $NetBSD: t_proplib.c,v 1.4 2020/06/24 14:28:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proplib.c,v 1.3 2020/06/08 21:31:17 thorpej Exp $");
+__RCSID("$NetBSD: t_proplib.c,v 1.4 2020/06/24 14:28:10 thorpej Exp $");
 
 #include <limits.h>
 #include <stdlib.h>
@@ -551,16 +551,16 @@ ATF_TC_BODY(prop_number_range_check, tc)
 #endif
 
 	ATF_REQUIRE(prop_number_longlong_value(n_llong_max, &val.v_llong) &&
-		    val.v_llong == INTPTR_MAX);
+		    val.v_llong == LLONG_MAX);
 	ATF_REQUIRE(prop_number_longlong_value(n_llong_min, &val.v_llong) &&
-		    val.v_llong == INTPTR_MIN);
+		    val.v_llong == LLONG_MIN);
 	ATF_REQUIRE(!prop_number_longlong_value(n_ullong_max, &val.v_llong));
 
 	ATF_REQUIRE(prop_number_ulonglong_value(n_llong_max, &val.v_ullong) &&
-		    val.v_ullong == INTPTR_MAX);
+		    val.v_ullong == LLONG_MAX);
 	ATF_REQUIRE(!prop_number_ulonglong_value(n_llong_min, &val.v_ullong));
 	ATF_REQUIRE(prop_number_ulonglong_value(n_ullong_max, &val.v_ullong) &&
-		    val.v_ullong == UINTPTR_MAX);
+		    val.v_ullong == ULLONG_MAX);
 
 	/* int8_t / uint8_t */
 	ATF_REQUIRE(prop_number_int8_value(n_int8_max, &val.v_int8) &&
