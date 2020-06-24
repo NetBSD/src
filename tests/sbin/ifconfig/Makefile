@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2011/05/03 06:13:06 jruoho Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/24 09:11:26 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/sbin/ifconfig
 
-TESTS_SH=	t_nonexistent
+TESTS_SH=	t_nonexistent t_repeated_scan
 
 .include <bsd.test.mk>
