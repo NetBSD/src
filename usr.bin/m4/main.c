@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2020/06/24 16:49:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2020/06/24 16:49:30 uwe Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -274,6 +274,17 @@ main(int argc, char *argv[])
 			}
 			fclose(stderr);
 			memcpy(stderr, sfp, sizeof(*sfp));
+			/*
+			 * XXX: try to avoid the trap set up by the
+			 * kludge above.  When exit flushes and closes
+			 * open streams it may close sfp first and
+			 * when it comes about to flush and close
+			 * stderr, the descriptor is already gone and
+			 * we lose any buffered output.  This actually
+			 * happens on some hosts, breaking autoconf
+			 * tracing.
+			 */
+			setvbuf(stderr, (char *)NULL, _IOLBF, 0);
 			break;
 		case 'F':
 			freeze = optarg;
