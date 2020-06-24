@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.65 2020/02/27 18:19:16 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.66 2020/06/24 10:28:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.65 2020/02/27 18:19:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.66 2020/06/24 10:28:16 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -179,69 +179,19 @@ compat_43_sys_lstat(struct lwp *l, const struct compat_43_sys_lstat_args *uap, r
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
 	} */
-	struct vnode *vp, *dvp;
-	struct stat sb, sb1;
+	struct stat sb;
 	struct stat43 osb;
 	int error;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	int ndflags;
 
-	error = pathbuf_copyin(SCARG(uap, path), &pb);
-	if (error) {
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
+	if (error)
 		return error;
-	}
 
-	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
-again:
-	NDINIT(&nd, LOOKUP, ndflags, pb);
-	if ((error = namei(&nd))) {
-		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
-			/*
-			 * Should only happen on '/'. Retry without LOCKPARENT;
-			 * this is safe since the vnode won't be a VLNK.
-			 */
-			ndflags &= ~LOCKPARENT;
-			goto again;
-		}
-		pathbuf_destroy(pb);
-		return (error);
-	}
 	/*
-	 * For symbolic links, always return the attributes of its
+	 * For symbolic links, BSD4.3 returned the attributes of its
 	 * containing directory, except for mode, size, and links.
+	 * This is no longer emulated, the parent directory is not consulted.
 	 */
-	vp = nd.ni_vp;
-	dvp = nd.ni_dvp;
-	pathbuf_destroy(pb);
-	if (vp->v_type != VLNK) {
-		if ((ndflags & LOCKPARENT) != 0) {
-			if (dvp == vp)
-				vrele(dvp);
-			else
-				vput(dvp);
-		}
-		error = vn_stat(vp, &sb);
-		vput(vp);
-		if (error)
-			return (error);
-	} else {
-		error = vn_stat(dvp, &sb);
-		vput(dvp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-		error = vn_stat(vp, &sb1);
-		vput(vp);
-		if (error)
-			return (error);
-		sb.st_mode &= ~S_IFDIR;
-		sb.st_mode |= S_IFLNK;
-		sb.st_nlink = sb1.st_nlink;
-		sb.st_size = sb1.st_size;
-		sb.st_blocks = sb1.st_blocks;
-	}
 	cvtstat(&sb, &osb);
 	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 	return (error);

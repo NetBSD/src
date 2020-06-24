@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.83 2019/10/26 11:34:48 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.84 2020/06/24 10:28:17 jdolecek Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.83 2019/10/26 11:34:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.84 2020/06/24 10:28:17 jdolecek Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -294,72 +294,19 @@ sunos32_sys_lstat(struct lwp *l, const struct sunos32_sys_lstat_args *uap, regis
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */
-	struct vnode *vp, *dvp;
-	struct stat sb, sb1;
+	struct stat sb;
 	struct netbsd32_stat43 sb32;
 	int error;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	int ndflags;
-	const char *path;
 
-	path = SCARG_P32(uap, path);
-
-	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
-again:
-	error = pathbuf_copyin(path, &pb);
-	if (error) {
+	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &sb);
+	if (error)
 		return error;
-	}
 
-	NDINIT(&nd, LOOKUP, ndflags, pb);
-	if ((error = namei(&nd))) {
-		pathbuf_destroy(pb);
-		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
-			/*
-			 * Should only happen on '/'. Retry without LOCKPARENT;
-			 * this is safe since the vnode won't be a VLNK.
-			 */
-			ndflags &= ~LOCKPARENT;
-			goto again;
-		}
-		return (error);
-	}
 	/*
-	 * For symbolic links, always return the attributes of its
+	 * For symbolic links, SunOS returned the attributes of its
 	 * containing directory, except for mode, size, and links.
+	 * This is no longer emulated, the parent directory is not consulted.
 	 */
-	vp = nd.ni_vp;
-	dvp = nd.ni_dvp;
-	pathbuf_destroy(pb);
-	if (vp->v_type != VLNK) {
-		if ((ndflags & LOCKPARENT) != 0) {
-			if (dvp == vp)
-				vrele(dvp);
-			else
-				vput(dvp);
-		}
-		error = vn_stat(vp, &sb);
-		vput(vp);
-		if (error)
-			return (error);
-	} else {
-		error = vn_stat(dvp, &sb);
-		vput(dvp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-		error = vn_stat(vp, &sb1);
-		vput(vp);
-		if (error)
-			return (error);
-		sb.st_mode &= ~S_IFDIR;
-		sb.st_mode |= S_IFLNK;
-		sb.st_nlink = sb1.st_nlink;
-		sb.st_size = sb1.st_size;
-		sb.st_blocks = sb1.st_blocks;
-	}
 	sunos32_from___stat13(&sb, &sb32);
 	error = copyout((void *)&sb32, SCARG_P32(uap, ub), sizeof (sb32));
 	return (error);
