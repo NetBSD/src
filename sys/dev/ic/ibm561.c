@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.12 2020/06/24 19:55:25 jdolecek Exp $ */
+/* $NetBSD: ibm561.c,v 1.13 2020/06/24 20:17:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.12 2020/06/24 19:55:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.13 2020/06/24 20:17:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ ibm561_cninit(
 	u_int8_t (*rd)(void *, u_int),
 	u_int dotclock)
 {
-	struct ibm561data tmp, *data = &tmp;
+	struct ibm561data *data = &saved_console_data;
 	memset(data, 0x0, sizeof *data);
 	data->cookie = v;
 	data->ramdac_sched_update = sched_update;
