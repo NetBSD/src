@@ -1,4 +1,4 @@
-.\"	$NetBSD: mv.1,v 1.30 2017/07/04 06:50:04 wiz Exp $
+.\"	$NetBSD: mv.1,v 1.31 2020/06/24 16:58:12 riastradh Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd move files
 .Sh SYNOPSIS
 .Nm
-.Op Fl fiv
+.Op Fl fhiv
 .Ar source target
 .Nm
 .Op Fl fiv
@@ -54,7 +54,9 @@ operand to the destination path named by the
 .Ar target
 operand.
 This form is assumed when the last operand does not name an already
-existing directory.
+existing directory or when the
+.Fl h
+flag is specified.
 .Pp
 In its second form,
 .Nm
@@ -72,6 +74,11 @@ The following options are available:
 .It Fl f
 Do not prompt for confirmation before overwriting the destination
 path.
+.It Fl h
+Try to rename the source to the target irrespective of whether the
+target may resolve to a directory.
+This option allows atomically replacing a symbolic link to a
+directory.
 .It Fl i
 Causes
 .Nm
