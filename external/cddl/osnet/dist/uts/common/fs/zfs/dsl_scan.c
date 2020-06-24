@@ -778,10 +778,7 @@ dsl_scan_visitbp(blkptr_t *bp, const zbookmark_phys_t *zb,
     dmu_objset_type_t ostype, dmu_tx_t *tx)
 {
 	dsl_pool_t *dp = scn->scn_dp;
-	arc_buf_t *buf = NULL;
-	blkptr_t bp_toread = *bp;
-
-	/* ASSERT(pbuf == NULL || arc_released(pbuf)); */
+	blkptr_t *bp_toread = NULL;
 
 	if (dsl_scan_check_pause(scn, zb))
 		return;
@@ -803,8 +800,11 @@ dsl_scan_visitbp(blkptr_t *bp, const zbookmark_phys_t *zb,
 	if (bp->blk_birth <= scn->scn_phys.scn_cur_min_txg)
 		return;
 
-	if (dsl_scan_recurse(scn, ds, ostype, dnp, &bp_toread, zb, tx) != 0)
-		return;
+	bp_toread = kmem_alloc(sizeof (blkptr_t), KM_SLEEP);
+	*bp_toread = *bp;
+
+	if (dsl_scan_recurse(scn, ds, ostype, dnp, bp_toread, zb, tx) != 0)
+		goto out;
 
 	/*
 	 * If dsl_scan_ddt() has aready visited this block, it will have
@@ -813,8 +813,7 @@ dsl_scan_visitbp(blkptr_t *bp, const zbookmark_phys_t *zb,
 	 */
 	if (ddt_class_contains(dp->dp_spa,
 	    scn->scn_phys.scn_ddt_class_max, bp)) {
-		ASSERT(buf == NULL);
-		return;
+		goto out;
 	}
 
 	/*
@@ -827,6 +826,9 @@ dsl_scan_visitbp(blkptr_t *bp, const zbookmark_phys_t *zb,
 	if (BP_PHYSICAL_BIRTH(bp) <= scn->scn_phys.scn_cur_max_txg) {
 		scan_funcs[scn->scn_phys.scn_func](dp, bp, zb);
 	}
+
+out:
+	kmem_free(bp_toread, sizeof (blkptr_t));
 }
 
 static void
