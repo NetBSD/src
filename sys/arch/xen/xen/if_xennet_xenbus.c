@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.126 2020/05/14 13:25:40 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.127 2020/06/24 14:33:08 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.126 2020/05/14 13:25:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.127 2020/06/24 14:33:08 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -774,7 +774,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 		KASSERT(req != NULL);
 		KASSERT(req == &sc->sc_rxreqs[req->rxreq_id]);
 		KASSERT(req->rxreq_m == NULL);
-		KASSERT(req->rxreq_gntref = GRANT_INVALID_REF);
+		KASSERT(req->rxreq_gntref == GRANT_INVALID_REF);
 
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
