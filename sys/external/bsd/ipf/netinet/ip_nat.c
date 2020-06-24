@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.21 2019/02/04 07:59:01 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.22 2020/06/24 21:54:57 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.21 2019/02/04 07:59:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.22 2020/06/24 21:54:57 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -983,7 +983,7 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	int error = 0, ret, arg, getlock;
 	ipnat_t *nat, *nt, *n;
-	ipnat_t natd;
+	ipnat_t *natd = NULL;
 	SPL_INT(s);
 
 #if BSD_GE_YEAR(199306) && defined(_KERNEL)
@@ -1017,30 +1017,35 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 
 	if ((cmd == (ioctlcmd_t)SIOCADNAT) || (cmd == (ioctlcmd_t)SIOCRMNAT) ||
 	    (cmd == (ioctlcmd_t)SIOCPURGENAT)) {
+		KMALLOC(natd, ipnat_t *);
+		if (natd == NULL) {
+			error = ENOMEM;
+			goto done;
+		}
 		if (mode & NAT_SYSSPACE) {
-			bcopy(data, (char *)&natd, sizeof(natd));
-			nat = &natd;
+			bcopy(data, natd, sizeof(*natd));
+			nat = natd;
 			error = 0;
 		} else {
-			bzero(&natd, sizeof(natd));
-			error = ipf_inobj(softc, data, NULL, &natd,
+			bzero(natd, sizeof(*natd));
+			error = ipf_inobj(softc, data, NULL, natd,
 					  IPFOBJ_IPNAT);
 			if (error != 0)
 				goto done;
 
-			if (natd.in_size < sizeof(ipnat_t)) {
+			if (natd->in_size < sizeof(ipnat_t)) {
 				error = EINVAL;
 				goto done;
 			}
-			KMALLOCS(nt, ipnat_t *, natd.in_size);
+			KMALLOCS(nt, ipnat_t *, natd->in_size);
 			if (nt == NULL) {
 				IPFERROR(60070);
 				error = ENOMEM;
 				goto done;
 			}
-			bzero(nt, natd.in_size);
+			bzero(nt, natd->in_size);
 			error = ipf_inobjsz(softc, data, nt, IPFOBJ_IPNAT,
-					    natd.in_size);
+					    natd->in_size);
 			if (error)
 				goto done;
 			nat = nt;
@@ -1132,7 +1137,13 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 			IPFERROR(60006);
 			error = EPERM;
 		} else if (n != NULL) {
-			natd.in_flineno = n->in_flineno;
+			KMALLOC(natd, ipnat_t *);
+			if (natd == NULL) {
+				error = ENOMEM;
+				goto done;
+			}
+			bzero(natd, sizeof(*natd));
+			natd->in_flineno = n->in_flineno;
 			(void) ipf_outobj(softc, data, &natd, IPFOBJ_IPNAT);
 			IPFERROR(60007);
 			error = EEXIST;
@@ -1392,6 +1403,8 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 done:
 	if (nat != NULL)
 		ipf_nat_rule_fini(softc, nat);
+	if (natd != NULL)
+		KFREE(natd);
 	if (nt != NULL)
 		KFREES(nt, nt->in_size);
 	return error;
