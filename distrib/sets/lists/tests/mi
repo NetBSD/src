@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.849 2020/06/25 14:24:45 jruoho Exp $
+# $NetBSD: mi,v 1.850 2020/06/25 15:01:35 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3967,6 +3967,10 @@
 ./usr/tests/sbin				tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/Atffile			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/Kyuafile			tests-sbin-tests	compattestfile,atf,kyua
+./usr/tests/sbin/envstat			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/envstat/Atffile		tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/envstat/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
+./usr/tests/sbin/envstat/t_envstat		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/fsck_ffs			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/fsck_ffs/Atffile		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/fsck_ffs/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
