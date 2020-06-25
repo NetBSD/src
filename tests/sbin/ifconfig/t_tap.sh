@@ -1,4 +1,4 @@
-# $NetBSD: t_tap.sh,v 1.3 2020/06/25 16:52:49 jruoho Exp $
+# $NetBSD: t_tap.sh,v 1.4 2020/06/25 16:57:00 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,15 +83,15 @@ overflow_head() {
 
 overflow_body() {
 	atf_skip "The test causes a panic (PR kern/53546)"
-	ifconfig tap65537 create
+	ifconfig tap99999 create
 }
 
 overflow_cleanup() {
 
-	ifconfig tap65537 create
+	ifconfig tap99999
 
 	if [ $? -eq 0 ]; then
-		ifconfig tap65537 destroy
+		ifconfig tap99999 destroy
 	fi
 }
 
