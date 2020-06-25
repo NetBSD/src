@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.50 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: fp.S,v 1.51 2020/06/25 11:48:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1848,7 +1848,7 @@ cvt_d_w:
 	move	t3, zero
 	b	result_fs_d
 /*
- * Find out how many leading zero bits are in t2 and put in at.
+ * Find out how many leading zero bits are in t2 and put in v1.
  */
 #if __mips == 32 || __mips == 64
 	clz	v1, t2
