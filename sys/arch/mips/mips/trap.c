@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.253 2020/04/09 06:49:37 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.254 2020/06/25 08:00:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2020/04/09 06:49:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.254 2020/06/25 08:00:49 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -695,7 +695,7 @@ ast(void)
 }
 
 
-/* XXX need to rewrite acient comment XXX
+/* XXX need to rewrite ancient comment XXX
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
  * resuming execution, and then restoring the old instruction.
