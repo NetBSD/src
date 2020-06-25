@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_updown.sh,v 1.1 2020/06/25 15:41:40 jruoho Exp $
+# $NetBSD: t_repeated_updown.sh,v 1.2 2020/06/25 16:34:49 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,8 +30,8 @@
 atf_test_case repeated_updown
 repeated_updown_head() {
 	atf_set "require.user" "root"
-	atf_set "descr" "Test with ifconfig(8) that repeated " \
-		"up/down does not cause a panic (PR kern/52771)"
+	atf_set "descr" "Test with ifconfig(8) that repeated up/down " \
+		"does not cause a panic (PR kern/52526; PR kern/52771)"
 }
 
 repeated_updown_body() {
