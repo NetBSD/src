@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.36 2018/08/22 01:05:24 msaitoh Exp $ */
+/* $NetBSD: pipe.h,v 1.37 2020/06/25 14:22:19 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -73,24 +73,11 @@ struct pipebuf {
 };
 
 /*
- * Information to support direct transfers between processes for pipes.
- */
-struct pipemapping {
-	vsize_t		cnt;		/* number of chars in buffer */
-	voff_t		pos;		/* current position within page */
-	u_int		npages;		/* how many pages available */
-	u_int		maxpages;	/* how many pages allocated */
-	struct vm_page	**pgs;		/* pointers to the pages */
-};
-
-/*
  * Bits in pipe_state.
  */
 #define PIPE_ASYNC	0x001	/* Async I/O */
 #define PIPE_EOF	0x010	/* Pipe is in EOF condition */
 #define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
-#define PIPE_DIRECTW	0x040	/* Pipe in direct write mode setup */
-#define PIPE_DIRECTR	0x080	/* Pipe direct read request (setup complete) */
 #define	PIPE_LOCKFL	0x100	/* Process has exclusive access to
 				   pointers/data. */
 #define	PIPE_LWANT	0x200	/* Process wants exclusive access to
@@ -108,7 +95,6 @@ struct pipe {
 	kcondvar_t pipe_draincv;	/* cv for close */
 	kcondvar_t pipe_lkcv;		/* locking */
 	struct	pipebuf pipe_buffer;	/* data storage */
-	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */
 	struct	timespec pipe_atime;	/* time of last access */
 	struct	timespec pipe_mtime;	/* time of last modify */
