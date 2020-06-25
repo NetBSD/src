@@ -1,6 +1,6 @@
-#	$NetBSD: files.nvmm,v 1.2 2019/03/28 19:00:40 maxv Exp $
+#	$NetBSD: files.nvmm,v 1.3 2020/06/25 17:01:19 maxv Exp $
 
-defpseudo nvmm
+defpseudodev nvmm
 
 file	dev/nvmm/nvmm.c			nvmm
 
