@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.850 2020/06/25 15:01:35 jruoho Exp $
+# $NetBSD: mi,v 1.851 2020/06/25 15:41:40 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3995,6 +3995,7 @@
 ./usr/tests/sbin/ifconfig/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/ifconfig/t_nonexistent		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/ifconfig/t_repeated_scan	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/ifconfig/t_repeated_updown	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/ifconfig/t_tap			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/newfs				tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/newfs/Atffile			tests-sbin-tests	compattestfile,atf
