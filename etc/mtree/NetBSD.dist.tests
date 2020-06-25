@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.167 2020/06/25 15:01:35 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.168 2020/06/25 17:08:33 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -379,6 +379,7 @@
 ./usr/tests/sbin/newfs_msdos
 ./usr/tests/sbin/resize_ffs
 ./usr/tests/sbin/route
+./usr/tests/sbin/setkey
 ./usr/tests/sbin/sysctl
 ./usr/tests/share
 ./usr/tests/share/examples
