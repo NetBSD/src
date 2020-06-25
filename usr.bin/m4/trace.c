@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: trace.c,v 1.9 2020/06/25 02:25:53 uwe Exp $	*/
 /* $OpenBSD: trace.c,v 1.15 2006/03/24 08:03:44 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,7 +28,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: trace.c,v 1.9 2020/06/25 02:25:53 uwe Exp $");
 
 #include <sys/types.h>
 #include <err.h>
@@ -59,15 +59,27 @@ static int frame_level(void);
 
 unsigned int trace_flags = TRACE_QUOTE | TRACE_EXPANSION;
 
-void
+int
 trace_file(const char *name)
 {
+	FILE *newfp;
+
+	if (name == NULL)
+		newfp = stderr;
+#if 0 /* not yet */
+	else if (*name == '\0')
+		newfp = NULL;
+#endif
+	else {
+		newfp = fopen(name, "a");
+		if (newfp == NULL)
+			return -1;
+	}
 
 	if (traceout && traceout != stderr)
 		fclose(traceout);
-	traceout = fopen(name, "w");
-	if (!traceout)
-		err(1, "can't open %s", name);
+	traceout = newfp;
+	return 0;
 }
 
 static unsigned int
