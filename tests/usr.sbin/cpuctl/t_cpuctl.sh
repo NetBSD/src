@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.2 2020/06/24 10:07:13 jruoho Exp $
+# $NetBSD: t_cpuctl.sh,v 1.3 2020/06/25 15:43:26 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -126,13 +126,13 @@ err_body() {
 		-o empty -x cpuctl nointr -1
 
 	atf_check -s exit:1 -e ignore \
-		-o empty -x cpuctl identify $(exp ncpu + 1)
+		-o empty -x cpuctl identify $(expr ncpu + 1)
 
 	atf_check -s exit:1 -e ignore \
-		-o empty -x cpuctl offline $(exp ncpu + 1)
+		  -o empty -x cpuctl offline $(expr ncpu + 1)
 
 	atf_check -s exit:1 -e ignore \
-		-o empty -x cpuctl nointr $(exp ncpu + 1)
+		-o empty -x cpuctl nointr $(expr ncpu + 1)
 }
 
 err_cleanup() {
