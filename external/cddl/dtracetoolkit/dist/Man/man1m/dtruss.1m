@@ -1,4 +1,4 @@
-.\" $NetBSD: dtruss.1m,v 1.4 2020/06/25 09:39:19 sevan Exp $
+.\" $NetBSD: dtruss.1m,v 1.5 2020/06/25 14:08:48 uwe Exp $
 .Dd June 25, 2020
 .Dt DTRUSS 1
 .Os
@@ -22,17 +22,19 @@ consuming CPU cycles.
 .Pp
 Since this uses DTrace, only the root user or users with the dtrace_kernel
 privilege can run this command.
-.Bl -tag -width Ds
+.Bl -tag -width Fl
 .It Fl a
 print all details
 .It Fl b Ar bufsize
 dynamic variable buffer size.
 Increase this if you notice dynamic variable drop errors.
-The default is "4m" for 4 megabytes per CPU.
+The default is
+.Ql "4m"
+for 4\~megabytes per CPU.
 .It Fl c
 print system call counts
 .It Fl d
-print relative timestamps, us
+print relative timestamps, us (microseconds)
 .It Fl e
 print elapsed times, us
 .It Fl f
@@ -52,41 +54,42 @@ examine this PID
 .It Fl t Ar syscall
 examine this syscall only
 .El
-.Bl -column fieldtitle description
-.It Sy Fields Ta Sy Description
-.It PID/LWPID	Process ID / Lightweight Process ID
-.It RELATIVE	relative timestamps to the start of the thread, us (microseconds)
-.It ELAPSD	elapsed time for this system call, us
-.It CPU	on-cpu time for this system call, us
-.It SYSCALL(args)	system call name, with arguments (some may be evaluated)
+.Bl -column "SYSCALL(args)"
+.It Sy Field      Ta Sy Description
+.It PID/LWPID     Ta Process ID\|/\|Lightweight Process ID
+.It RELATIVE      Ta relative timestamps to the start of the thread, us
+.It ELAPSD        Ta elapsed time for this system call, us
+.It CPU	          Ta on-cpu time for this system call, us
+.It SYSCALL(args) Ta system call name, with arguments (some may be evaluated)
 .El
 .Sh EXAMPLES
-run and examine the "df -h" command
-.Bd -literal -offset indent
-.Ic dtruss df -h
-.Ed
+run and examine the
+.Ql df -h
+command
+.Pp
+.Dl Ic dtruss df -h
 .Pp
 examine PID 1871
-.Bd -literal -offset indent
-.Ic dtruss -p 1871
-.Ed
+.Pp
+.Dl Ic dtruss -p 1871
 .Pp
 examine all processes called "tar"
-.Bd -literal -offset indent
-.Ic dtruss -n tar
-.Ed
 .Pp
-run test.sh and follow children
-.Bd -literal -offset indent
-.Ic dtruss -f test.sh
-.Ed
+.Dl Ic dtruss -n tar
 .Pp
-run the "date" command and print elapsed and on cpu times,
-.Bd -literal -offset indent
-.Ic dtruss -eo date
-.Ed
+run
+.Ql test.sh
+and follow children
+.Pp
+.Dl Ic dtruss -f test.sh
+.Pp
+run the
+.Ql date
+command and print elapsed and on cpu times,
+.Pp
+.Dl Ic dtruss -eo date
 .Sh STABILITY
-stable - needs the syscall provider.
+stable \(em needs the syscall provider.
 .Sh DOCUMENTATION
 See the DTraceToolkit for further documentation under the Docs directory.
 The DTraceToolkit docs may include full worked examples with verbose
