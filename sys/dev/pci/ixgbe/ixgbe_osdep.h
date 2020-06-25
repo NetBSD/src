@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.26 2020/06/11 05:16:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.27 2020/06/25 07:53:02 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -66,9 +66,9 @@ enum {
 	IXGBE_ERROR_CAUTION,
 };
 
-/* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
-#define usec_delay(x) DELAY(x)
-#define msec_delay(x) DELAY(1000*(x))
+#define usec_delay(x) ixgbe_delay(x)
+#define msec_delay(x) ixgbe_delay((x) * 1000)
+void ixgbe_delay(unsigned int);
 
 #define DBG 0
 #define MSGOUT(S, A, B)     printf(S "\n", A, B)

@@ -645,7 +645,6 @@ ixgbe_handle_mbx(void *context, int pending)
 
 	hw = &adapter->hw;
 
-	IXGBE_CORE_LOCK(adapter);
 	for (i = 0; i < adapter->num_vfs; i++) {
 		vf = &adapter->vfs[i];
 
@@ -660,7 +659,6 @@ ixgbe_handle_mbx(void *context, int pending)
 				ixgbe_process_vf_ack(adapter, vf);
 		}
 	}
-	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_mbx */
 
 int
