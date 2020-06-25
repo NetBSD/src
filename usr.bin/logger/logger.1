@@ -1,4 +1,4 @@
-.\"	$NetBSD: logger.1,v 1.15 2012/05/13 17:08:31 njoly Exp $
+.\"	$NetBSD: logger.1,v 1.16 2020/06/25 15:21:56 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)logger.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd April 26, 2012
+.Dd June 25, 2020
 .Dt LOGGER 1
 .Os
 .Sh NAME
@@ -54,8 +54,12 @@ Options:
 .Pp
 .Bl -tag -width "messageXX"
 .It Fl c
-Log to console
-.Dv ( LOG_CONS ) .
+Log to console as a fallback
+.Dv ( LOG_CONS ) :
+if the message cannot be passed to
+.Xr syslogd 8 ,
+the message is written to
+.Pa /dev/console .
 .It Fl d Ar sd
 Log this in the structured data (SD) field.
 .Po
