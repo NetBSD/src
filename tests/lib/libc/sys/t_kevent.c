@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.7 2015/02/05 13:55:37 isaki Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.8 2020/06/25 11:12:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.7 2015/02/05 13:55:37 isaki Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.8 2020/06/25 11:12:03 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -85,7 +85,7 @@ ATF_TC_BODY(kqueue_desc_passing, tc)
 
 	ATF_REQUIRE((kq = kqueue()) != -1);
 
-	// atf_tc_skip("crashes kernel (PR 46463)");
+	// atf_tc_skip("crashes kernel (PR kern/46463)");
 
 	ATF_REQUIRE(socketpair(AF_LOCAL, SOCK_STREAM, 0, s) != -1);
 	msg = malloc(CMSG_SPACE(sizeof(int)));

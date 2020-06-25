@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.4 2014/04/21 19:10:41 christos Exp $
+# $NetBSD: t_integration.sh,v 1.5 2020/06/25 11:12:03 jruoho Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,7 +122,7 @@ test_case check_invalid incorrect_array_size "Checks failing on incorrect" \
     "array sizes"
 
 test_case check_invalid long_double_int "Checks for confusion of 'long" \
-    "double' with 'long int'; PR 39639"
+    "double' with 'long int'; PR bin/39639"
 
 atf_init_test_cases()
 {

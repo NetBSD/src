@@ -1,4 +1,4 @@
-# $NetBSD: t_vmstat.sh,v 1.1 2014/01/07 16:47:13 gson Exp $
+# $NetBSD: t_vmstat.sh,v 1.2 2020/06/25 11:12:03 jruoho Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,8 @@
 
 atf_test_case default
 default_head() {
-	atf_set "descr" "Test that vmstat(1) returns success when run with no arguments"
+	atf_set "descr" "Test that vmstat(1) returns " \
+		"success when run with no arguments"
 }
 default_body() {
 	atf_check -s exit:0 -o ignore -e empty vmstat
@@ -35,7 +36,8 @@ default_body() {
 
 atf_test_case opt_s
 opt_s_head() {
-	atf_set "descr" "Test that vmstat(1) returns success when run with -s (PR 44518)"
+	atf_set "descr" "Test that vmstat(1) returns " \
+		"success when run with -s (PR bin/44518)"
 }
 opt_s_body() {
 	atf_check -s exit:0 -o ignore -e empty vmstat -s
