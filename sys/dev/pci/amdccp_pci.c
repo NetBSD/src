@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_pci.c,v 1.1 2020/06/24 03:38:01 thorpej Exp $ */
+/* $NetBSD: amdccp_pci.c,v 1.2 2020/06/25 16:40:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.1 2020/06/24 03:38:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.2 2020/06/25 16:40:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,7 +101,7 @@ amdccp_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
-	aprint_normal(": AMD Cryptographc Coprocessor\n");
+	aprint_normal(": AMD Cryptographic Coprocessor\n");
 
 	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMDCCP_MEM_BAR);
 	if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM) {
