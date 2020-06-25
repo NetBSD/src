@@ -1,4 +1,4 @@
-# $NetBSD: t_regress.sh,v 1.2 2019/06/07 19:05:15 gson Exp $
+# $NetBSD: t_regress.sh,v 1.3 2020/06/25 11:12:03 jruoho Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,11 +27,10 @@
 
 # Regression tests for some GDB PRs
 
-# PR 47430
-
 atf_test_case threads
 threads_head() {
-	atf_set "descr" "Test that gdb works with threaded programs"
+	atf_set "descr" "Test that gdb works with " \
+		"threaded programs (PR bin/47430)"
 	atf_set "require.progs" "gdb"
 }
 threads_body() {
@@ -50,11 +49,10 @@ EOF
 	atf_check -s exit:1 -o ignore -e ignore grep "Program received signal SIGTRAP" gdb.out
 }
 
-# PR 48250
-
 atf_test_case pie
 pie_head() {
-	atf_set "descr" "Test that gdb works with PIE executables"
+	atf_set "descr" "Test that gdb works with " \
+		"PIE executables (PR bin/48250)"
 	atf_set "require.progs" "cc gdb"
 }
 pie_body() {
@@ -71,11 +69,10 @@ EOF
 	atf_check -s exit:1 -o ignore -e ignore grep "annot access memory" gdb.out
 }
 
-# PR 54154
-
 atf_test_case xml
 xml_head() {
-	atf_set "descr" "Test that gdb was built with XML support"
+	atf_set "descr" "Test that gdb was built " \
+		"with XML support (PR bin/54154)"
 	atf_set "require.progs" "gdb"
 }
 xml_body() {

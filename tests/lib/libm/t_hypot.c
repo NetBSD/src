@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.1 2016/01/24 20:26:47 gson Exp $ */
+/* $NetBSD: t_hypot.c,v 1.2 2020/06/25 11:12:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ ATF_TC_BODY(hypotf_integer, tc)
 ATF_TC(pr50698);
 ATF_TC_HEAD(pr50698, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Check for the bug of PR 50698");
+	atf_tc_set_md_var(tc, "descr", "Check for the bug of PR lib/50698");
 }
 
 ATF_TC_BODY(pr50698, tc)
