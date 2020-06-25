@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_scan.sh,v 1.3 2020/06/25 10:34:34 jruoho Exp $
+# $NetBSD: t_repeated_scan.sh,v 1.4 2020/06/25 11:26:05 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@ atf_test_case repeated_scan
 repeated_scan_head() {
 	atf_set "require.user" "root"
 	atf_set "descr" "Test with ifconfig(8) that repeated 802.11 " \
-		"scanning does not cause a panic (PR kern/55389)"
+		"scanning does not panic (PR kern/53860; PR kern/55389)"
 }
 
 repeated_scan_body() {
