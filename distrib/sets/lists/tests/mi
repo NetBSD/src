@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.852 2020/06/25 16:16:49 jruoho Exp $
+# $NetBSD: mi,v 1.853 2020/06/25 17:08:33 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4021,6 +4021,10 @@
 ./usr/tests/sbin/route/Atffile			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/route/Kyuafile			tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/route/t_missing		tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/setkey				tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/setkey/Atffile			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/setkey/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
+./usr/tests/sbin/setkey/t_setkey		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/sysctl				tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/sysctl/Atffile			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/sysctl/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
