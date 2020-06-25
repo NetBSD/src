@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.125 2020/04/19 21:53:38 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.126 2020/06/25 09:58:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.125 2020/04/19 21:53:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.126 2020/06/25 09:58:44 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -516,16 +516,18 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
  * uvm_aio_aiodone: do iodone processing for async i/os.
  * this should be called in thread context, not interrupt context.
  */
-
 void
 uvm_aio_aiodone(struct buf *bp)
 {
-	int npages = bp->b_bufsize >> PAGE_SHIFT;
-	struct vm_page *pgs[npages];
+	const int npages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vm_page *pgs[howmany(MAXPHYS, MIN_PAGE_SIZE)];
 	int i, error;
 	bool write;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %#jx", (uintptr_t)bp, 0,0,0);
+
+	KASSERT(bp->b_bufsize <= MAXPHYS);
+	KASSERT(npages <= __arraycount(pgs));
 
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
