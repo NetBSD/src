@@ -1,4 +1,4 @@
-# $NetBSD: t_tap.sh,v 1.5 2020/06/25 18:30:42 jruoho Exp $
+# $NetBSD: t_bridge.sh,v 1.1 2020/06/25 18:30:42 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,75 +27,46 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-taps="/tmp/taps"
+bridges="/tmp/bridges"
 
-atf_test_case manytaps cleanup
-manytaps_head() {
+atf_test_case manybridges cleanup
+manybridges_head() {
 	atf_set "require.user" "root"
-	atf_set "descr" "Test creating many, many tap(4)'s (PR kern/55417)"
+	atf_set "descr" "Test creating many, many bridge(4)'s"
 }
 
-manytaps_body() {
+manybridges_body() {
 
-	atf_skip "The test causes a panic (PR kern/55417)"
-	seq 65535 65000 > $taps # Try to avoid stalling automated runs.
+	seq 65535 65000 > $bridges # Try to avoid stalling automated runs.
 
-	while read tap; do
+	while read bridge; do
 
-		ifconfig "tap$tap"
+		ifconfig "bridge$bridge" >/dev/null 2>&1
 
 		if [ $? -eq 0 ]; then
-			echo "Skipping existing tap$tap"
+			echo "Skipping existing bridge$bridge"
 			continue
 		fi
 
-		ifconfig "tap$tap" create
-		echo "Created tap$tap"
+		ifconfig "bridge$bridge" create
+		echo "Created bridge$bridge"
 
-	done < $taps
+	done < $bridges
 }
 
-manytaps_cleanup() {
+manybridges_cleanup() {
 
-	if [ -f $taps ]; then
+	if [ -f $bridges ]; then
 
-		while read tap; do
+		while read bridge; do
+			ifconfig "bridge$bridge" destroy >/dev/null 2>&1
+			echo "Burnt down bridge$bridge"
+		done < $bridges
 
-			ifconfig "tap$tap"
-
-			if [ $? -eq 0 ]; then
-				ifconfig "tap$tap" destroy
-				echo "Destroyed tap$tap"
-			fi
-
-		done < $taps
-
-		rm $taps
-	fi
-}
-
-atf_test_case overflow cleanup
-overflow_head() {
-	atf_set "require.user" "root"
-	atf_set "descr" "Test creating a tap(4) with a " \
-		"negative device number (PR kern/53546)"
-}
-
-overflow_body() {
-	atf_skip "The test causes a panic (PR kern/53546)"
-	ifconfig tap99999 create
-}
-
-overflow_cleanup() {
-
-	ifconfig tap99999
-
-	if [ $? -eq 0 ]; then
-		ifconfig tap99999 destroy
+		rm $bridges
 	fi
 }
 
 atf_init_test_cases() {
-	atf_add_test_case manytaps
-	atf_add_test_case overflow
+	atf_add_test_case manybridges
 }
