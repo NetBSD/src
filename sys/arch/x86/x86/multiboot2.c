@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.5 2020/06/24 22:28:07 jdolecek Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.6 2020/06/25 17:24:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.5 2020/06/24 22:28:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.6 2020/06/25 17:24:31 jdolecek Exp $");
 
 #include "opt_multiboot.h"
 
@@ -115,7 +115,6 @@ char multiboot_info[16384] = "\0\0\0\0";
 bool multiboot2_enabled = false;
 bool has_syms = false;
 struct multiboot_symbols Multiboot_Symbols;
-static char bimbuf[16384];
 
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 
@@ -346,15 +345,12 @@ multiboot2_pre_reloc(char *mbi)
 	return;
 }
 
-static void
-bootinfo_add(struct btinfo_common *item, int type, int len)    
+static struct btinfo_common *
+bootinfo_init(int type, int len)
 {
 	int i;  
 	struct bootinfo *bip = (struct bootinfo *)&bootinfo;
 	vaddr_t data;
-
-	item->type = type;
-	item->len = len;
 
 	data = (vaddr_t)&bip->bi_data;
 	for (i = 0; i < bip->bi_nentries; i++) {
@@ -364,9 +360,26 @@ bootinfo_add(struct btinfo_common *item, int type, int len)
 		data += tmp->len;
 	}
 	if (data + len < (vaddr_t)&bip->bi_data + sizeof(bip->bi_data)) {
-		memcpy((void *)data, item, len);
+		/* Initialize the common part */
+		struct btinfo_common *item = (struct btinfo_common *)data;
+		item->type = type;
+		item->len = len;
 		bip->bi_nentries++;
+		return item;
+	} else {
+		return NULL;
 	}
+}
+
+static void
+bootinfo_add(struct btinfo_common *item, int type, int len)
+{
+	struct btinfo_common *bip = bootinfo_init(type, len);
+	if (bip == NULL)
+		return;
+
+	/* Copy the data after the common part over */
+	memcpy(&bip[1], &item[1], len - sizeof(*item));
 }
 
 static void
@@ -450,10 +463,10 @@ mbi_modules(char *mbi, uint32_t mbi_size, int module_count)
 	struct btinfo_modulelist *bim;
 
 	bim_len = sizeof(*bim) + (module_count * sizeof(*bie));
-	if (bim_len > sizeof(bimbuf))
+	bim = (struct btinfo_modulelist *)bootinfo_init(BTINFO_MODULELIST,
+	    bim_len);
+	if (bim == NULL)
 		return;
-
-	bim = (struct btinfo_modulelist *)bimbuf;
 
 	bim->num = module_count;
 	bim->endpa = end;
@@ -474,11 +487,6 @@ mbi_modules(char *mbi, uint32_t mbi_size, int module_count)
 
 		bie++;
 	}
-
-	bootinfo_add((struct btinfo_common *)&bim,
-           BTINFO_MODULELIST, bim_len);
-
-	return;
 }
 
 static void
@@ -518,12 +526,24 @@ static void
 mbi_mmap(struct multiboot_tag_mmap *mbt)
 {
 	struct btinfo_memmap *bim;
+	int num;
 	char *cp;
 
 	if (mbt->entry_version != 0)
 		return;
 
-	bim = (struct btinfo_memmap *)bimbuf;
+	/* Determine size */
+	num = 0;
+	for (cp = (char *)(mbt + 1);
+	     cp - (char *)mbt < mbt->size;
+	     cp += mbt->entry_size) {
+		num++;
+	}
+
+	bim = (struct btinfo_memmap *)bootinfo_init(BTINFO_MEMMAP,
+	    sizeof(num) + num * sizeof(struct bi_memmap_entry));
+	if (bim == NULL)
+		return;
 	bim->num = 0;
 
 	for (cp = (char *)(mbt + 1);
@@ -557,15 +577,9 @@ mbi_mmap(struct multiboot_tag_mmap *mbt)
 		}
 
 		bim->num++;
-
-		if ((char*)&bim->entry[bim->num] - (char *)bim > sizeof(bimbuf))
-			break;
 	}
 
-	bootinfo_add((struct btinfo_common *)bim, BTINFO_MEMMAP,
-	    (char*)&bim->entry[bim->num] - (char *)bim);
-
-	return;
+	KASSERT(bim->num == num);
 }
 
 static void
@@ -614,26 +628,22 @@ mbi_efi64(struct multiboot_tag_efi64 *mbt)
 static void
 mbi_efi_mmap(struct multiboot_tag_efi_mmap *mbt)
 {
-	struct btinfo_efimemmap *bie = (struct btinfo_efimemmap *)bimbuf;
+	struct btinfo_efimemmap *bie;
 	size_t bie_len;
 
 	if (mbt->descr_vers != 0)
-		goto out;
+		return;
 
 	bie_len = sizeof(*bie) + mbt->size - sizeof(*mbt);
-	if (bie_len > sizeof(bimbuf))
-		goto out;
+	bie = (struct btinfo_efimemmap *)bootinfo_init(BTINFO_EFIMEMMAP,
+	    bie_len);
+	if (bie == NULL)
+		return;
 
 	bie->num = (mbt->size - sizeof(*mbt)) / mbt->descr_size;
 	bie->version = mbt->descr_vers;
 	bie->size = mbt->descr_size;
 	memcpy(bie->memmap, mbt + 1, mbt->size - sizeof(*mbt));
-
-	bootinfo_add((struct btinfo_common *)bie,
-           BTINFO_EFIMEMMAP, bie_len);
-
-out:
-	return;
 }
 
 void
