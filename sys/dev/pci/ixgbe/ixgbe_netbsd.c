@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.14 2020/04/17 02:21:25 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.15 2020/06/25 07:53:02 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -304,4 +304,20 @@ u_int
 atomic_load_acq_uint(volatile u_int *p)
 {
 	return atomic_load_acquire(p);
+}
+
+void
+ixgbe_delay(unsigned int us)
+{
+
+	if (__predict_false(cold))
+		delay(us);
+	else if ((us / 1000) >= hztoms(1)) {
+		/*
+		 * Wait at least two clock ticks so we know the time has
+		 * passed.
+		 */
+		kpause("ixgdly", false, mstohz(us / 1000) + 1, NULL);
+	} else
+		delay(us);
 }

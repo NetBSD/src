@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.66 2020/06/23 05:50:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.67 2020/06/25 07:53:01 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -475,6 +475,10 @@ struct adapter {
 
 	struct ifmedia		media;
 	callout_t		timer;
+	struct workqueue	*timer_wq;
+	struct work		timer_wc;
+	u_int			timer_pending;
+
 	u_short			if_flags;	/* saved ifp->if_flags */
 	int			ec_capenable;	/* saved ec->ec_capenable */
 
@@ -513,18 +517,15 @@ struct adapter {
 
 	/* Support for pluggable optics */
 	bool			sfp_probe;
-	void			*link_si;  /* Link tasklet */
-	void			*mod_si;   /* SFP tasklet */
-	struct workqueue	*msf_wq;   /* Multispeed Fiber */
-	struct work		 msf_wc;
-	bool			 msf_pending;
-	void			*mbx_si;   /* VF -> PF mailbox interrupt */
 
 	/* Flow Director */
 	int			fdir_reinit;
-	void			*fdir_si;
 
-	void			*phy_si;   /* PHY intr tasklet */
+	/* Admin task */
+	struct workqueue	*admin_wq; /* Link, SFP, PHY and FDIR */
+	struct work		admin_wc;
+	u_int			admin_pending;
+	volatile u32		task_requests;
 
 	bool			txrx_use_workqueue;
 
@@ -583,7 +584,10 @@ struct adapter {
 
 	/* Firmware error check */
 	u_int                   recovery_mode;
-	struct callout          recovery_mode_timer;
+	callout_t               recovery_mode_timer;
+	struct workqueue        *recovery_mode_timer_wq;
+	struct work             recovery_mode_timer_wc;
+	u_int			recovery_mode_timer_pending;
 
 	/* Misc stats maintained by the driver */
 	struct evcnt		efbig_tx_dma_setup;
@@ -595,11 +599,11 @@ struct adapter {
 	struct evcnt		enomem_tx_dma_setup;
 	struct evcnt		tso_err;
 	struct evcnt		watchdog_events;
-	struct evcnt		link_irq;
-	struct evcnt		link_sicount;
-	struct evcnt		mod_sicount;
-	struct evcnt		msf_sicount;
-	struct evcnt		phy_sicount;
+	struct evcnt		admin_irqev;
+	struct evcnt		link_workev;
+	struct evcnt		mod_workev;
+	struct evcnt		msf_workev;
+	struct evcnt		phy_workev;
 
 	union {
 		struct ixgbe_hw_stats pf;
@@ -761,9 +765,15 @@ void ixgbe_free_receive_structures(struct adapter *);
 bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
-const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
+#define IXGBE_REQUEST_TASK_MOD		0x01
+#define IXGBE_REQUEST_TASK_MSF		0x02
+#define IXGBE_REQUEST_TASK_MBX		0x04
+#define IXGBE_REQUEST_TASK_FDIR		0x08
+#define IXGBE_REQUEST_TASK_PHY		0x10
+#define IXGBE_REQUEST_TASK_LSC		0x20
 
 /* For NetBSD */
+const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
     int, size_t);
 void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
