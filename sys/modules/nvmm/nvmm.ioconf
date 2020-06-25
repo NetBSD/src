@@ -1,7 +1,8 @@
-#	$NetBSD: nvmm.ioconf,v 1.1 2018/11/07 07:43:08 maxv Exp $
+#	$NetBSD: nvmm.ioconf,v 1.2 2020/06/25 17:01:20 maxv Exp $
 
 ioconf		nvmm
 
 include		"conf/files"
+include		"dev/nvmm/files.nvmm"
 
 pseudo-device   nvmm
