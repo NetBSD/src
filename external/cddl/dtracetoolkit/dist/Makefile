@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2017/09/17 00:00:39 sevan Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/25 09:48:29 sevan Exp $
 
 .include <bsd.own.mk>
 
 .if (${MKDTRACE} != "no")
-FILES= 	dtruss
+FILES=		dtruss
 FILES+= 	execsnoop
 FILES+= 	opensnoop
 FILES+= 	procsystime
