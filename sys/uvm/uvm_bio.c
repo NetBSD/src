@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.117 2020/05/25 19:29:08 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.118 2020/06/25 14:04:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.117 2020/05/25 19:29:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.118 2020/06/25 14:04:30 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.117 2020/05/25 19:29:08 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/bitops.h>		/* for ilog2() */
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -120,9 +121,13 @@ const struct uvm_pagerops ubc_pager = {
 	/* ... rest are NULL */
 };
 
+/* Use value at least as big as maximum page size supported by architecture */
+#define UBC_MAX_WINSHIFT	\
+    ((1 << UBC_WINSHIFT) > MAX_PAGE_SIZE ? UBC_WINSHIFT : ilog2(MAX_PAGE_SIZE))
+
 int ubc_nwins = UBC_NWINS;
-int ubc_winshift __read_mostly = UBC_WINSHIFT;
-int ubc_winsize __read_mostly;
+const int ubc_winshift = UBC_MAX_WINSHIFT;
+const int ubc_winsize = 1 << UBC_MAX_WINSHIFT;
 #if defined(PMAP_PREFER)
 int ubc_nqueues;
 #define UBC_NQUEUES ubc_nqueues
@@ -161,9 +166,7 @@ ubc_init(void)
 	/*
 	 * Make sure ubc_winshift is sane.
 	 */
-	if (ubc_winshift < PAGE_SHIFT)
-		ubc_winshift = PAGE_SHIFT;
-	ubc_winsize = 1 << ubc_winshift;
+	KASSERT(ubc_winshift >= PAGE_SHIFT);
 
 	/*
 	 * init ubc_object.
@@ -304,7 +307,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	struct uvm_object *uobj;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	struct vm_page *pgs[howmany(ubc_winsize, MIN_PAGE_SIZE)];
 	int i, error, npages;
 	vm_prot_t prot;
 
@@ -732,7 +735,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
     int flags)
 {
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	struct vm_page *pgs[howmany(ubc_winsize, MIN_PAGE_SIZE)];
 	voff_t off;
 	int error, npages;
 
@@ -798,7 +801,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 void
 ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 {
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	struct vm_page *pgs[howmany(ubc_winsize, MIN_PAGE_SIZE)];
 	int npages;
 
 #ifdef UBC_USE_PMAP_DIRECT
@@ -975,7 +978,7 @@ ubc_uiomove_direct(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int a
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
 	voff_t off;
 	int error, npages;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	struct vm_page *pgs[howmany(ubc_winsize, MIN_PAGE_SIZE)];
 
 	KASSERT(todo <= uio->uio_resid);
 	KASSERT(((flags & UBC_WRITE) != 0 && uio->uio_rw == UIO_WRITE) ||
@@ -1043,7 +1046,7 @@ static void __noinline
 ubc_zerorange_direct(struct uvm_object *uobj, off_t off, size_t todo, int flags)
 {
 	int error, npages;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
+	struct vm_page *pgs[howmany(ubc_winsize, MIN_PAGE_SIZE)];
 
 	flags |= UBC_WRITE;
 
