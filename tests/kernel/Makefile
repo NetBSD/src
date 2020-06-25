@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.66 2020/03/01 18:08:15 christos Exp $
+# $NetBSD: Makefile,v 1.67 2020/06/25 16:16:48 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -26,6 +26,7 @@ TESTS_SH+=	t_umountstress
 TESTS_SH+=	t_ps_strings
 TESTS_SH+=	t_trapsignal
 TESTS_SH+=	t_interp
+TESTS_SH+=	t_nointerpreter
 TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
 TESTS_SH+=	t_fexecve
