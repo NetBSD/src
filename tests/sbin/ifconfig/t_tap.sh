@@ -1,4 +1,4 @@
-# $NetBSD: t_tap.sh,v 1.1 2020/06/25 14:24:46 jruoho Exp $
+# $NetBSD: t_tap.sh,v 1.2 2020/06/25 15:43:26 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@ manytaps_body() {
 		fi
 
 		ifconfig "tap$tap" create
-		echo "Created $tap"
+		echo "Created tap$tap"
 
 	done < $taps
 }
