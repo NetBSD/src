@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.39 2020/06/25 16:36:43 mlelstv Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.40 2020/06/25 18:20:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -213,7 +213,6 @@ extern unsigned int user_thread_stack_guard_size;
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern const int	ubc_winshift;	/* shift for a UBC mapping window */
-extern u_int		uvm_emap_size;	/* size of emap */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
