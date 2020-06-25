@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.38 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.39 2020/06/25 16:36:43 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -212,7 +212,7 @@ extern unsigned int user_thread_stack_guard_size;
 #endif
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
-extern int		ubc_winshift;	/* shift for a UBC mapping window */
+extern const int	ubc_winshift;	/* shift for a UBC mapping window */
 extern u_int		uvm_emap_size;	/* size of emap */
 
 #else
