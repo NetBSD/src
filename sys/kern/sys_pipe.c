@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.149 2020/06/25 14:22:18 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.150 2020/06/25 16:19:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.149 2020/06/25 14:22:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.150 2020/06/25 16:19:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,8 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 		pipe = pipe->pipe_peer;
 		if (pipe == NULL)
 			*(int *)data = 0;
-		*(int *)data = pipe->pipe_buffer.cnt;
+		else
+			*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
 		return (0);
 
