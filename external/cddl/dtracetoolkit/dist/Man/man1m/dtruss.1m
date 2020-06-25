@@ -1,5 +1,5 @@
-.\" $NetBSD: dtruss.1m,v 1.3 2020/06/24 18:49:01 sevan Exp $
-.Dd June 24, 2020
+.\" $NetBSD: dtruss.1m,v 1.4 2020/06/25 09:39:19 sevan Exp $
+.Dd June 25, 2020
 .Dt DTRUSS 1
 .Os
 .Sh NAME
@@ -52,19 +52,13 @@ examine this PID
 .It Fl t Ar syscall
 examine this syscall only
 .El
-.Pp
-Description of fields
-.Bl -column
-.It PID/LWPID
-Process ID / Lightweight Process ID
-.It RELATIVE
-relative timestamps to the start of the thread, us (microseconds)
-.It ELAPSD
-elapsed time for this system call, us
-.It CPU
-on-cpu time for this system call, us
-.It SYSCALL(args)
-system call name, with arguments (some may be evaluated)
+.Bl -column fieldtitle description
+.It Sy Fields Ta Sy Description
+.It PID/LWPID	Process ID / Lightweight Process ID
+.It RELATIVE	relative timestamps to the start of the thread, us (microseconds)
+.It ELAPSD	elapsed time for this system call, us
+.It CPU	on-cpu time for this system call, us
+.It SYSCALL(args)	system call name, with arguments (some may be evaluated)
 .El
 .Sh EXAMPLES
 run and examine the "df -h" command
