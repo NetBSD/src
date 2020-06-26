@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.6 2019/01/19 01:02:12 christos Exp $
+# $NetBSD: t_awk.sh,v 1.7 2020/06/26 07:50:11 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,7 +93,7 @@ atf_test_case period
 
 period_head() {
 	atf_set "descr" "Checks that the period character is recognised" \
-	                "in awk program regardless of locale (bin/42320)"
+	                "in awk program regardless of locale (PR bin/42320)"
 }
 
 period_body() {
