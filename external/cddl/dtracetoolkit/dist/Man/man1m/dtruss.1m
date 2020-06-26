@@ -1,4 +1,4 @@
-.\" $NetBSD: dtruss.1m,v 1.5 2020/06/25 14:08:48 uwe Exp $
+.\" $NetBSD: dtruss.1m,v 1.6 2020/06/26 15:45:18 wiz Exp $
 .Dd June 25, 2020
 .Dt DTRUSS 1
 .Os
@@ -7,7 +7,7 @@
 .Nd process syscall details. Uses DTrace
 .Sh SYNOPSIS
 .Nm
-.Op Fl acdeflhoLs
+.Op Fl acdeflhLos
 .Op Fl t Ar syscall
 .Op Fl p Ar PID | Fl n Ar name | command
 .Sh DESCRIPTION
@@ -39,18 +39,18 @@ print relative timestamps, us (microseconds)
 print elapsed times, us
 .It Fl f
 follow children as they are forked
-.It Fl l
-force printing of pid/lwpid per line
 .It Fl L
 don't print pid/lwpid per line
+.It Fl l
+force printing of pid/lwpid per line
 .It Fl n Ar name
 examine processes with this name
 .It Fl o
 print on-cpu times, us
-.It Fl s
-print stack backtraces
 .It Fl p Ar PID
 examine this PID
+.It Fl s
+print stack backtraces
 .It Fl t Ar syscall
 examine this syscall only
 .El
@@ -59,7 +59,7 @@ examine this syscall only
 .It PID/LWPID     Ta Process ID\|/\|Lightweight Process ID
 .It RELATIVE      Ta relative timestamps to the start of the thread, us
 .It ELAPSD        Ta elapsed time for this system call, us
-.It CPU	          Ta on-cpu time for this system call, us
+.It CPU           Ta on-cpu time for this system call, us
 .It SYSCALL(args) Ta system call name, with arguments (some may be evaluated)
 .El
 .Sh EXAMPLES
@@ -88,9 +88,9 @@ run the
 command and print elapsed and on cpu times,
 .Pp
 .Dl Ic dtruss -eo date
-.Sh STABILITY
+.Ss STABILITY
 stable \(em needs the syscall provider.
-.Sh DOCUMENTATION
+.Ss DOCUMENTATION
 See the DTraceToolkit for further documentation under the Docs directory.
 The DTraceToolkit docs may include full worked examples with verbose
 descriptions explaining the output.
@@ -98,8 +98,8 @@ descriptions explaining the output.
 dtruss will run forever until Ctrl\-C is hit, or if a command was
 executed dtruss will finish when the command ends.
 .Sh SEE ALSO
-.Xr dtrace 1 ,
-.Xr procsystime 1
+.Xr dtrace 1
+.\".Xr procsystime 1
 .Sh AUTHORS
 .An Brendan Gregg
 [Sydney, Australia]
