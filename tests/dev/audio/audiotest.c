@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.11 2020/05/01 05:45:57 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.12 2020/06/26 07:50:12 jruoho Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.11 2020/05/01 05:45:57 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.12 2020/06/26 07:50:12 jruoho Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -720,7 +720,7 @@ consumer_thread(void *arg)
 
 /*
  * XXX
- * Closing pad descriptor before audio descriptor causes panic (kern/54427).
+ * Closing pad descriptor before audio descriptor causes panic (PR kern/54427).
  * To avoid this, close non-pad descriptor first using atexit(3) for now.
  * This is just a workaround and this function should be removed.
  */

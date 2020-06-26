@@ -9,7 +9,7 @@ ATF_TC(extattrctl_namei);
 ATF_TC_HEAD(extattrctl_namei, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "extattrctl namei safety (kern/43328)");
+	atf_tc_set_md_var(tc, "descr", "extattrctl namei safety (PR kern/43328)");
 }
 
 ATF_TC_BODY(extattrctl_namei, tc)

@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $ */
+/* $NetBSD: t_mmap.c,v 1.14 2020/06/26 07:50:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.14 2020/06/26 07:50:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -171,7 +171,8 @@ ATF_TC_BODY(mmap_block, tc)
 	size_t len;
 	int fd = -1;
 
-	atf_tc_skip("The test case causes a panic (PR kern/38889, kern/46592)");
+	atf_tc_skip("The test case causes a panic " \
+	    "(PR kern/38889, PR kern/46592)");
 
 	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
 	drives = malloc(len);

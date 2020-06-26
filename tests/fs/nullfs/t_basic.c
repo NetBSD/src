@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.4 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.5 2020/06/26 07:50:12 jruoho Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -133,11 +133,11 @@ ATF_TC_HEAD(twistymount, tc)
 
 	/* this is expected to fail until the PR is fixed */
 	atf_tc_set_md_var(tc, "descr", "\"recursive\" mounts deadlock"
-	    " (kern/43439)");
+	    " (PR kern/43439)");
 }
 
 /*
- * Mapping to identifiers in kern/43439:
+ * Mapping to identifiers in PR kern/43439:
  *  /td		= /home/current/pkgsrc
  *  /td/dist	= /home/current/pkgsrc/distiles
  *  /mp		= /usr/pkgsrc
