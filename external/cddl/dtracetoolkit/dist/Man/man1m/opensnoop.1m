@@ -1,4 +1,4 @@
-.\" $NetBSD: opensnoop.1m,v 1.4 2020/06/25 14:59:51 uwe Exp $
+.\" $NetBSD: opensnoop.1m,v 1.5 2020/06/26 15:45:18 wiz Exp $
 .Dd June 25, 2020
 .Dt OPENSNOOP 1
 .Os
@@ -22,16 +22,22 @@ attempting to open files that do not exist.
 Since this uses DTrace, only the root user or users with the
 dtrace_kernel privilege can run this command.
 .Bl -tag -width Fl
-.It Fl a
-print all data
 .It Fl A
 dump all data, space delimited
+.It Fl a
+print all data
 .It Fl c
 print current working directory of process
 .It Fl e
 print errno value
+.It Fl f Ar pathname
+file pathname to snoop
 .It Fl g
 print full command arguments
+.It Fl n Ar name
+process name to snoop
+.It Fl p Ar PID
+process ID to snoop
 .It Fl s
 print start time, us
 .It Fl v
@@ -40,12 +46,6 @@ print start time, string
 only print failed opens
 .It Fl Z
 print zonename
-.It Fl f Ar pathname
-file pathname to snoop
-.It Fl n Ar name
-process name to snoop
-.It Fl p Ar PID
-process ID to snoop
 .El
 .Bl -column "STRTIME"
 .It Sy Fields Ta Sy Description
@@ -81,9 +81,9 @@ See error codes,
 Snoop this file only,
 .Pp
 .Dl Ic opensnoop -f /etc/passwd
-.Sh STABILITY
+.Ss STABILITY
 stable \(em needs the syscall provider.
-.Sh DOCUMENTATION
+.Ss DOCUMENTATION
 See the DTraceToolkit for further documentation under the Docs directory.
 The DTraceToolkit docs may include full worked examples with verbose
 descriptions explaining the output.
