@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.19 2020/06/21 23:53:26 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.20 2020/06/26 03:23:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -56,8 +56,6 @@ static UINTN heap_size = 8 * 1024 * 1024;
 static EFI_EVENT delay_ev = 0;
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
-
-prop_dictionary_t efibootplist;
 
 EFI_STATUS EFIAPI
 efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
@@ -185,10 +183,6 @@ efi_cleanup(void)
 	EFI_MEMORY_DESCRIPTOR *memmap;
 	UINTN nentries, mapkey, descsize;
 	UINT32 descver;
-
-	if (efibootplist) {
-		prop_object_release(efibootplist);
-	}
 
 	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 

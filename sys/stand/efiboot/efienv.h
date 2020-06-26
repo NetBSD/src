@@ -1,4 +1,4 @@
-/* $NetBSD: efienv.h,v 1.2 2019/04/21 22:30:41 thorpej Exp $ */
+/* $NetBSD: efienv.h,v 1.3 2020/06/26 03:23:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,6 @@
  * SUCH DAMAGE.
  */
 
-void efi_env_from_efibootplist(void);
 void efi_env_set(const char *, char *);
 char *efi_env_get(const char *);
 void efi_env_clear(const char *);
