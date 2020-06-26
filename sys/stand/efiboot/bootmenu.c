@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.1 2020/06/21 23:53:26 jmcneill Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.2 2020/06/26 03:23:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include "bootmenu.h"
 #include "efiboot.h"
 #include "module.h"
+#include "overlay.h"
 
 static void docommandchoice(int);
 
@@ -63,6 +64,8 @@ do_bootcfg_command(const char *cmd, char *arg)
 	else if (strcmp(cmd, BOOTCFG_CMD_USERCONF) == 0)
 		userconf_add(arg);
 #endif
+	else if (strcmp(cmd, "dtoverlay") == 0)
+		dtoverlay_add(arg);
 }
 
 int
