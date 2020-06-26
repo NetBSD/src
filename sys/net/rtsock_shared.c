@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.18 2020/06/24 12:27:51 roy Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.19 2020/06/26 15:53:59 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.18 2020/06/24 12:27:51 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.19 2020/06/26 15:53:59 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,8 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.18 2020/06/24 12:27:51 roy Exp $
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 
-#define _SA_MINSIZE	(offsetof(struct sockaddr, sa_len) + \
-			 sizeof(((struct sockaddr *)0)->sa_len))
+/* sa_family is after sa_len, rest is data */
+#define _SA_MINSIZE	(offsetof(struct sockaddr, sa_family) + \
+			 sizeof(((struct sockaddr *)0)->sa_family))
 
 #ifdef COMPAT_RTSOCK
 /*
