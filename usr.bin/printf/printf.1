@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.31 2018/08/31 17:27:35 kre Exp $
+.\"	$NetBSD: printf.1,v 1.32 2020/06/26 20:16:55 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,9 +64,8 @@ either
 .Cm c ,
 or
 .Cm s ;
-otherwise it is evaluated as a C constant, with the following extensions:
-.Pp
-.Bl -bullet -offset indent -compact
+otherwise it is evaluated as a C\~constant, with the following extensions:
+.Bl -bullet -offset indent
 .It
 A leading plus or minus sign is allowed.
 .It
@@ -82,7 +81,7 @@ string.
 Character escape sequences are in backslash notation as defined in
 .St -ansiC .
 The characters and their meanings are as follows:
-.Bl -tag -width Ds -offset indent
+.Bl -tag -offset indent -width Cm
 .It Cm \ee
 Write an
 .Aq escape
@@ -119,32 +118,32 @@ character.
 Write a
 .Aq single quote
 character.
-.It Cm \e"
+.It Cm \e\*q
 Write a
 .Aq double quote
 character.
 .It Cm \e\e
 Write a backslash character.
 .It Cm \e Ns Ar num
-Write an 8\-bit character whose ASCII
-value is the 1\-, 2\-, or 3\-digit octal number
+Write an 8-bit character whose ASCII
+value is the 1-, 2-, or 3-digit octal number
 .Ar num .
 .It Cm \ex Ns Ar xx
-Write an 8\-bit character whose ASCII
-value is the 1\- or 2\-digit hexadecimal number
+Write an 8-bit character whose ASCII
+value is the 1- or 2-digit hexadecimal number
 .Ar xx .
 .El
 .Pp
 Each format specification is introduced by the percent character
-.Pq Dq \&% .
+.Pq Ql \&% .
 The remainder of the format specification includes,
 in the following order:
-.Bl -tag -width Ds
+.Bl -tag -width 5n
 .It Zero or more of the following flags :
-.Bl -tag -width Ds
+.Bl -tag -width Cm
 .It Cm #
 A
-.Sq #
+.Ql \&#
 character specifying that the value should be printed in an
 .Dq alternative form .
 For
@@ -162,8 +161,8 @@ For the
 .Cm x
 .Pq Cm X
 format, a non-zero result has the string
-.Li 0x
-.Pq Li 0X
+.Ql 0x
+.Pq Ql 0X
 prepended to it.
 For
 .Cm e ,
@@ -187,41 +186,41 @@ would otherwise be.
 .\" .Cm B
 .\" format, backslash-escape sequences are expanded first;
 .It Cm \&\-
-A minus sign
-.Sq \-
-which specifies
+A minus sign which specifies
 .Em left adjustment
 of the output in the indicated field;
 .It Cm \&+
-A
-.Sq \&+
-character specifying that there should always be
+A plus sign which specifies that there should always be
 a sign placed before the number when using signed formats.
-.It Sq \&\ \&
-A space specifying that a blank should be left before a positive number
-for a signed format.
+.It Sq Cm \&\ \&
 A
-.Sq \&+
-overrides a space if both are used;
-.It Cm \&0
-A zero `0' character indicating that zero-padding should be used
-rather than blank-padding.
+.Aq space
+character which specifies that a space should be left before
+a positive number for a signed format.
 A
-.Sq \-
+.Ql \&+
 overrides a
-.Sq \&0
+.Aq space
+if both are used;
+.It Cm \&0
+A digit zero character which specifies that zero-padding should be used
+rather than space-padding.
+A
+.Ql \-
+overrides a
+.Ql \&0
 if both are used;
 .El
 .It Field Width :
 An optional digit string specifying a
 .Em field width ;
 if the output string has fewer characters than the field width it will
-be blank-padded on the left (or right, if the left-adjustment indicator
+be space-padded on the left (or right, if the left-adjustment indicator
 has been given) to make up the field width (note that a leading zero
 is a flag, but an embedded zero is part of a field width);
 .It Precision :
-An optional period,
-.Sq Cm \&. ,
+An optional period
+.Pq Ql \&. ,
 followed by an optional digit string giving a
 .Em precision
 which specifies the number of digits to appear after the decimal point,
@@ -258,29 +257,39 @@ The
 .Ar argument ,
 which must represent an integer constant,
 with an optional leading plus or minus sign,
-is printed as a signed decimal (d or i),
-unsigned octal (o), unsigned decimal (u),
-or unsigned hexadecimal (X or x).
+is printed as a signed decimal
+.Cm ( d
+or
+.Cm i ) ,
+unsigned octal
+.Cm ( o ) ,
+unsigned decimal
+.Cm ( u ) ,
+or unsigned hexadecimal
+.Cm ( X
+or
+.Cm x ) .
 .It Cm fF
 The
 .Ar argument
 is printed in the style
-.Sm off
-.Pf [\-]ddd Cm \&. No ddd
-.Sm on
-where the number of d's
+.Oo Li \&\- Oc Ns Ar \&\^ddd Ns Li \&\^\&. Ns Ar ddd
+where the number of
+.Ar d Ns \|'s
 after the decimal point is equal to the precision specification for
 the argument.
 If the precision is missing, 6 digits are given; if the precision
 is explicitly 0, no digits and no decimal point are printed.
-If the number is Infinity, or Not a Number (NaN), then
-.Dq inf
-.Pq \&or Dq nan
+If the number is Infinity, or Not-a-Number, then
+.Ql inf
+or
+.Ql nan
 is printed for
 .Cm f
 format, and
-.Dq INF
-.Pq \&or Dq NAN
+.Ql INF
+or
+.Ql NAN
 for
 .Cm F
 format.
@@ -288,17 +297,17 @@ format.
 The
 .Ar argument
 is printed in the style
-.Sm off
-.Pf [\-]d Cm \&. No ddd Cm e No \*(Pmdd
-.Sm on
+.Oo Li \&\- Oc Ns Ar \&\^d Ns Li \&. Ns Ar ddd Ns Li \&\|e\*(Pm Ns Ar \&\|dd
 where there
 is one digit before the decimal point and the number after is equal to
 the precision specification for the argument; when the precision is
 missing, 6 digits are produced.
-An upper-case E is used for an
-.Sq E
+An upper-case
+.Ql E
+is used for an
+.Cm E
 format, and upper-case for Infinity and NaN as for
-.Sq F
+.Cm F
 format.
 .It Cm gG
 The
@@ -325,7 +334,7 @@ Characters from the string
 are printed with backslash-escape sequences expanded.
 .Pp
 The following additional backslash-escape sequences are supported:
-.Bl -tag -width Ds
+.Bl -tag -width Cm
 .It Cm \ec
 Causes
 .Nm
@@ -333,35 +342,50 @@ to ignore any remaining characters in the string operand containing it,
 any remaining string operands, and any additional characters in
 the format operand.
 .It Cm \e0 Ns Ar num
-Write an 8\-bit character whose ASCII value is the 1\-, 2\-, or
-3\-digit octal number
+Write an 8-bit character whose ASCII value is the 1-, 2-, or
+3-digit octal number
 .Ar num .
 .It Cm \e^ Ns Ar c
 Write the control character
 .Ar c .
-Generates characters `\e000' through `\e037`, and `\e177' (from `\e^?').
-.It Cm \eM\- Ns Ar c
-Write the character
-.Ar c
-with the 8th bit set.
-Generates characters `\e241' through `\e376`.
+Generates characters
+.Sq \e000
+through
+.Sq \e037 ,
+and
+.Sq \e177
+(from
+.Ql \e^\&? ) .
 .It Cm \eM^ Ns Ar c
 Write the control character
 .Ar c
 with the 8th bit set.
-Generates characters `\e200' through `\e237`, and `\e377' (from `\eM^?').
+Generates characters
+.Sq \e200
+through
+.Sq \e237 ,
+and
+.Sq \e377
+(from
+.Ql \eM^\&? ) .
+.It Cm \eM\- Ns Ar c
+Write the character
+.Ar c
+with the 8th bit set.
+Generates characters
+.Sq \e241
+through
+.Sq \e376 .
 .El
 .It Cm B
 Characters from the string
 .Ar argument
 are printed with unprintable characters backslash-escaped using the
-.Sm off
-.Pf ` Cm \e Ar c No ',
-.Pf ` Cm \e^ Ar c No ',
-.Pf ` Cm \eM\- Ar c No '
+.Sq Cm \e Ns Ar c ,
+.Sq Cm \e^ Ns Ar c ,
+.Sq Cm \eM^ Ns Ar c ,
 or
-.Pf ` Cm \eM^ Ar c No ',
-.Sm on
+.Sq Cm \eM\- Ns Ar c
 formats described above.
 .It Cm c
 The first character of
@@ -374,7 +398,9 @@ are printed until the end is reached or until the number of characters
 indicated by the precision specification is reached; if the
 precision is omitted, all characters in the string are printed.
 .It Cm \&%
-Print a `%'; no argument is used.
+Print a literal percent character
+.Pq Ql % ;
+no argument is used.
 .El
 .Pp
 In no case does a non-existent or small field width cause truncation of
@@ -385,7 +411,9 @@ If the first character of
 .Ar format
 is a dash,
 .Ar format
-must be preceded by a word consisting of two dashes (--) to prevent it
+must be preceded by a word consisting of two dashes
+.Pq Sq Fl Fl
+to prevent it
 from being interpreted as an option string.
 .Sh EXIT STATUS
 .Ex -std
@@ -400,11 +428,21 @@ The
 utility conforms to
 .St -p1003.1-2001 .
 .Pp
-Support for the floating point formats and `*' as a field width and precision
+Support for the floating point formats and
+.Sq Cm \&*
+as a field width and precision
 are optional in POSIX.
 .Pp
-The behaviour of the %B format and the \e', \e", \exxx, \ee and
-\e[M][\-|^]c escape sequences are undefined in POSIX.
+The behaviour of the
+.Cm \&%B
+format and the
+.Cm \e' ,
+.Cm \e\*q ,
+.Cm \ee ,
+.Cm \e Ns Ar num ,
+and
+.Cm \e Ns Oo Cm M Oc Ns Oo Cm \- Ns Li \&\(or Ns Cm ^ Oc Ns Ar c
+escape sequences are undefined in POSIX.
 .Sh BUGS
 Since the floating point numbers are translated from ASCII to
 floating-point and then back again, floating-point precision may be lost.
