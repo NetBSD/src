@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.38 2020/06/25 22:50:56 rin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.39 2020/06/26 10:14:32 martin Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.38 2020/06/25 22:50:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.39 2020/06/26 10:14:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ of_compatible(int phandle, const char * const *strings)
 		return (-1);
 
 	if (len > sizeof(sbuf)) {
-		KASSERT(!cold);
 		buf = malloc(len, M_TEMP, M_WAITOK);
 		allocated = 1;
 	} else {
