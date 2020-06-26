@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2020/06/21 23:53:26 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2020/06/26 03:23:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,6 +34,7 @@
 #include "efienv.h"
 #include "efirng.h"
 #include "module.h"
+#include "overlay.h"
 #include "bootmenu.h"
 
 #include <sys/bootblock.h>
@@ -76,7 +77,6 @@ static const char *efi_memory_type[] = {
 static char default_device[32];
 static char initrd_path[255];
 static char dtb_path[255];
-static char efibootplist_path[255];
 static char netbsd_path[255];
 static char netbsd_args[255];
 static char rndseed_path[255];
@@ -90,9 +90,10 @@ int	set_bootargs(const char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_dtb(char *);
-void	command_plist(char *);
 void	command_initrd(char *);
 void	command_rndseed(char *);
+void	command_dtoverlay(char *);
+void	command_dtoverlays(char *);
 void	command_modules(char *);
 void	command_load(char *);
 void	command_unload(char *);
@@ -111,9 +112,10 @@ const struct boot_command commands[] = {
 	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
-	{ "plist",	command_plist,		"plist [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
+	{ "dtoverlay",	command_dtoverlay,	"dtoverlay [dev:][filename]" },
+	{ "dtoverlays",	command_dtoverlays,	"dtoverlays [{on|off|reset}]" },
 	{ "modules",	command_modules,	"modules [{on|off|reset}]" },
 	{ "load",	command_load,		"load <module_name>" },
 	{ "unload",	command_unload,		"unload <module_name>" },
@@ -185,13 +187,6 @@ command_dtb(char *arg)
 }
 
 void
-command_plist(char *arg)
-{
-	if (set_efibootplist_path(arg) == 0)
-		load_efibootplist(false);
-}
-
-void
 command_initrd(char *arg)
 {
 	set_initrd_path(arg);
@@ -201,6 +196,37 @@ void
 command_rndseed(char *arg)
 {
 	set_rndseed_path(arg);
+}
+
+void
+command_dtoverlays(char *arg)
+{
+	if (arg && *arg) {
+		if (strcmp(arg, "on") == 0)
+			dtoverlay_enable(1);
+		else if (strcmp(arg, "off") == 0)
+			dtoverlay_enable(0);
+		else if (strcmp(arg, "reset") == 0)
+			dtoverlay_remove_all();
+		else {
+			command_help("");
+			return;
+		}
+	} else {
+		printf("Device Tree overlays are %sabled\n",
+		    dtoverlay_enabled ? "en" : "dis");
+	}
+}
+
+void
+command_dtoverlay(char *arg)
+{
+	if (!arg || !*arg) {
+		command_help("");
+		return;
+	}
+
+	dtoverlay_add(arg);
 }
 
 void
@@ -410,20 +436,6 @@ get_dtb_path(void)
 }
 
 int
-set_efibootplist_path(const char *arg)
-{
-	if (strlen(arg) + 1 > sizeof(efibootplist_path))
-		return ERANGE;
-	strcpy(efibootplist_path, arg);
-	return 0;
-}
-
-char *get_efibootplist_path(void)
-{
-	return efibootplist_path;
-}
-
-int
 set_rndseed_path(const char *arg)
 {
 	if (strlen(arg) + 1 > sizeof(rndseed_path))
@@ -468,21 +480,6 @@ static void
 read_env(void)
 {
 	char *s;
-
-	s = efi_env_get("efibootplist");
-	if (s) {
-#ifdef EFIBOOT_DEBUG
-		printf(">> Setting efiboot.plist path to '%s' from environment\n", s);
-#endif
-		set_efibootplist_path(s);
-		FreePool(s);
-	}
-
-	/*
-	 * Read the efiboot.plist now as it may contain additional
-	 * environment variables.
-	 */
-	load_efibootplist(true);
 
 	s = efi_env_get("fdtfile");
 	if (s) {
