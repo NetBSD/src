@@ -1,8 +1,8 @@
-/*	$NetBSD: t_renamerace.c,v 1.14 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.15 2020/06/26 07:50:12 jruoho Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
- * by Nicolas Joly in kern/40948
+ * by Nicolas Joly in PR kern/40948
  */
 
 #include <sys/types.h>
