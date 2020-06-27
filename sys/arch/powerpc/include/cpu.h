@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.110 2019/12/01 15:34:45 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.111 2020/06/27 07:33:51 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -416,8 +416,10 @@ void	cpu_debug_dump(void);
 
 #define	cpu_proc_fork(p1, p2)
 
+#ifndef __HIDE_DELAY
 #define	DELAY(n)		delay(n)
 void	delay(unsigned int);
+#endif /* __HIDE_DELAY */
 
 #define	CLKF_USERMODE(cf)	cpu_clkf_usermode(cf)
 #define	CLKF_PC(cf)		cpu_clkf_pc(cf)
