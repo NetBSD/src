@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2020/06/24 12:31:26 jruoho Exp $
+#	$NetBSD: Makefile,v 1.32 2020/06/27 05:20:34 jruoho Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ TESTS_SUBDIRS=	awk basename bzip2 cc cmp config cpio cut \
 		diff dirname find fstat gdb grep gzip id indent \
 		infocmp jot ld m4 make mixerctl mkdep nbperf netpgpverify \
 		patch pkill pr printf pwhash rump_server shmif_dumpbus sdiff \
-		sed sort tar tmux tr unifdef uniq vmstat xlint
+		sed sort tar tmux tr unifdef uniq vmstat xlint ztest
 
 .if ${MKCXX} != "no"
 TESTS_SUBDIRS+=	c++
