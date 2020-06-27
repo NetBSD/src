@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.4 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.5 2020/06/27 17:22:12 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 {
 	char *bc, *c;
 	int cmenu, cbanner;
-	ssize_t len, off;
+	ssize_t len, off, resid;
 	int fd, err;
 	struct stat st;
 	char *next, *key, *value, *v2;
@@ -119,8 +119,8 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 
 	err = fstat(fd, &st);
 	if (err == -1) {
-		close(fd);
-		return EIO;
+		/* file descriptor may not be backed by a libsa file-system */
+		st.st_size = maxsz;
 	}
 
 	/* if a maximum size is being requested for the boot.cfg enforce it. */
@@ -146,12 +146,14 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 	 *       the storage anyway.
 	 */
 	off = 0;
+	resid = st.st_size;
 	do {
-		len = read(fd, bc + off, 1024);
+		len = read(fd, bc + off, uimin(1024, resid));
 		if (len <= 0)
 			break;
 		off += len;
-	} while (len > 0);
+		resid -= len;
+	} while (len > 0 && resid > 0);
 	bc[off] = '\0';
 
 	close(fd);
