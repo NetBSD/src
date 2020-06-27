@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_updown.sh,v 1.2 2020/06/25 16:34:49 jruoho Exp $
+# $NetBSD: t_repeated_updown.sh,v 1.3 2020/06/27 04:15:17 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,8 @@ repeated_updown_body() {
 		echo "Restored state of $i to $state"
 		sleep 1
 	done
+
+	atf_pass
 }
 
 atf_init_test_cases() {

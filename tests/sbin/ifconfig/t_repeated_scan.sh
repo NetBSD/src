@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_scan.sh,v 1.4 2020/06/25 11:26:05 jruoho Exp $
+# $NetBSD: t_repeated_scan.sh,v 1.5 2020/06/27 04:15:17 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,6 +81,8 @@ repeated_scan_body() {
 
 	/bin/sh /etc/rc.d/hostapd restart >/dev/null 2>&1
 	/bin/sh /etc/rc.d/wpa_supplicant restart >/dev/null 2>&1
+
+	atf_pass
 }
 
 atf_init_test_cases() {
