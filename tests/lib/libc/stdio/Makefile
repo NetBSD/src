@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2014/10/15 21:55:34 justin Exp $
+# $NetBSD: Makefile,v 1.13 2020/06/27 09:45:57 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,6 @@ TESTS_C+=	t_fmemopen
 TESTS_C+=	t_fopen
 TESTS_C+=	t_open_memstream
 TESTS_C+=	t_fputc
-TESTS_C+=	t_mktemp
 TESTS_C+=	t_popen
 TESTS_C+=	t_printf
 TESTS_C+=	t_scanf
