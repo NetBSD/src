@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.168 2020/06/25 17:08:33 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.169 2020/06/27 05:20:34 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -443,6 +443,7 @@
 ./usr/tests/usr.bin/vmstat
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1
+./usr/tests/usr.bin/ztest
 ./usr/tests/usr.sbin
 ./usr/tests/usr.sbin/cpuctl
 ./usr/tests/usr.sbin/mtree
