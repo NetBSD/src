@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.30 2020/06/25 02:59:20 uwe Exp $
+.\"	$NetBSD: m4.1,v 1.31 2020/06/27 19:07:15 uwe Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.56 2009/10/14 17:19:47 sthen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -38,11 +38,11 @@
 .Nm m4
 .Nd macro language processor
 .Sh SYNOPSIS
-.Nm m4
+.Nm
 .Op Fl EGgiPQsv
 .Oo
 .Sm off
-.Fl D Ar name Op No = Ar value
+.Fl D Ar name Op Cm = Ar value
 .Sm on
 .Oc
 .Op Fl d Ar flags
@@ -56,42 +56,49 @@
 .Op Ar
 .Sh DESCRIPTION
 The
-.Nm m4
+.Nm
 utility is a macro processor that can be used as a front end to any
 language (e.g., C, ratfor, fortran, lex, and yacc).
 If no input files are given,
-.Nm m4
+.Nm
 reads from the standard input,
 otherwise files specified on the command line are
 processed in the given order.
-Input files can be regular files, files in the m4 include paths, or a
+Input files can be regular files, files in the
+.Nm
+include paths, or a
 single dash
-.Pq Sq - ,
+.Pq Sq Fl ,
 denoting standard input.
-.Nm m4
+.Nm
 writes
 the processed text to the standard output, unless told otherwise.
 .Pp
-Macro calls have the form name(argument1[, argument2, ..., argumentN]).
+Macro calls have the form
+.Fo name
+.Fa argument1\|
+.Bo \" should be Oo/Oc but mandoc chokes on it
+.Fa argument2
+.Fa \&...
+.Fa argumentN\|
+.Bc Ns Fc
 .Pp
 There cannot be any space following the macro name and the open
 parenthesis
-.Sq \&( .
+.Ql \&( .
 If the macro name is not followed by an open
 parenthesis it is processed with no arguments.
 .Pp
 Macro names consist of a leading alphabetic or underscore
-possibly followed by alphanumeric or underscore characters, e.g.,
-valid macro names match the pattern
-.Dq [a-zA-Z_][a-zA-Z0-9_]* .
+possibly followed by alphanumeric or underscore characters,
+i.e. valid macro names match the pattern
+.Dq Li [a-zA-Z_][a-zA-Z0-9_]*\| .
 .Pp
 In arguments to macros, leading unquoted space, tab, and newline
 .Pq Sq \en
 characters are ignored.
-To quote strings, use left and right single quotes
-.Po e.g.,\ \&
-.Sq "\ this is a string with a leading space"
-.Pc .
+To quote strings, use left and right single quotes, e.g.\&
+.Li "\` this is a string with a leading space\(aq" .
 You can change the quote characters with the
 .Ic changequote
 built-in macro.
@@ -100,39 +107,41 @@ Most built-ins don't make any sense without arguments, and hence are not
 recognized as special when not followed by an open parenthesis.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
-.It Fl D , Fl Fl define Ar name Ns Op Pf = Ns Ar value
+.Bl -tag -width Fl
+.It Fl D , Fl Fl define Ar name Ns Op Ns Cm = Ns Ar value
 Define the symbol
 .Ar name
-to have some value (or
-.Dv NULL ) .
+to have
+.Ar value
+or to be a null string.
 .It Fl d , Fl Fl debug Ar "flags"
 Set trace flags.
 .Ar flags
 may hold the following:
-.Bl -tag -width Ds
-.It Ar a
+.Pp
+.Bl -tag -width ".Li XX" -compact
+.It Cm a
 print macro arguments.
-.It Ar c
+.It Cm c
 print macro expansion over several lines.
-.It Ar e
+.It Cm e
 print result of macro expansion.
-.It Ar f
+.It Cm f
 print filename location.
-.It Ar l
+.It Cm l
 print line number.
-.It Ar q
+.It Cm q
 quote arguments and expansion with the current quotes.
-.It Ar t
+.It Cm t
 start with all macros traced.
-.It Ar x
+.It Cm x
 number macro expansions.
-.It Ar V
-turn on all options.
+.It Cm V
+turn on all trace flags.
 .El
 .Pp
 By default, trace is set to
-.Qq eq .
+.Ql eq .
 .It Fl E , Fl Fl fatal-warnings
 Warnings make
 .Nm
@@ -141,16 +150,24 @@ exit.
 Save the input state to
 .Ar filename .
 .It Fl G , Fl Fl traditional
-Disable GNU-m4 extensions.
+Disable GNU\~m4 extensions.
 .It Fl g , Fl Fl gnu
-Activate GNU-m4 compatibility mode.
-In this mode, translit handles simple character
-ranges (e.g., a-z), regular expressions mimic emacs behavior,
-multiple m4wrap calls are handled as a stack,
+Activate GNU\~m4 compatibility mode.
+In this mode
+.Ic translit
+handles simple character
+ranges (e.g., 
+.Sq Li a-z ) ,
+regular expressions mimic emacs behavior,
+multiple
+.Ic m4wrap
+calls are handled as a stack,
 the number of diversions is unlimited,
 empty names for macro definitions are allowed,
-and eval understands
-.Sq 0rbase:value
+and
+.Ic eval
+understands
+.Sq Ic 0r Ns Ar base Ns Cm \&: Ns Ar value
 numbers.
 .It Fl Fl help
 Print help message and exit.
@@ -168,7 +185,7 @@ Send trace output to
 .Ar filename .
 .It Fl P , Fl Fl prefix-builtins
 Prefix all built-in macros with
-.Sq m4_ .
+.Sq Li m4_ .
 For example, instead of writing
 .Ic define ,
 use
@@ -191,7 +208,7 @@ Undefine the symbol
 Print the version and exit.
 .El
 .Sh SYNTAX
-.Nm m4
+.Nm
 provides the following built-in macros.
 They may be redefined, losing their original meaning.
 Return values are null unless otherwise stated.
@@ -205,9 +222,8 @@ Changes the start comment and end comment sequences.
 Comment sequences may be up to five characters long.
 The default values are the hash sign
 and the newline character.
-.Bd -literal -offset indent
-# This is a comment
-.Ed
+.Pp
+.Dl # This is a comment
 .Pp
 With no arguments, comments are turned off.
 With one single argument, the end comment sequence is set
@@ -217,9 +233,8 @@ Defines the open quote and close quote sequences.
 Quote sequences may be up to five characters long.
 The default values are the backquote character and the quote
 character.
-.Bd -literal -offset indent
-`Here is a quoted string'
-.Ed
+.Pp
+.Dl \&\`Here is a quoted string\(aq
 .Pp
 With no arguments, the default quotes are restored.
 With one single argument, the close quote sequence is set
@@ -238,22 +253,22 @@ to have the
 value of the second argument
 .Fa value .
 Each occurrence of
-.Sq $n
+.Sq Li \&$ Ns Ar n
 (where
 .Ar n
 is 0 through 9) is replaced by the
 .Ar n Ns 'th
 argument.
-.Sq $0
+.Sq Li $0
 is the name of the calling macro.
 Undefined arguments are replaced by a null string.
-.Sq $#
+.Sq Li $#
 is replaced by the number of arguments;
-.Sq $*
+.Sq Li $*\|
 is replaced by all arguments comma separated;
-.Sq $@
+.Sq Li $@
 is the same as
-.Sq $*
+.Sq Li $*\|
 but all arguments are quoted against further expansion.
 .It Fn defn name ...
 Returns the quoted definition for each argument.
@@ -262,7 +277,7 @@ macro definitions (even for built-in macros).
 .It Fn divert num
 There are 10 output queues (numbered 0-9).
 At the end of processing
-.Nm m4
+.Nm
 concatenates all the queues in numerical order to produce the
 final output.
 Initially the output queue is 0.
@@ -277,12 +292,12 @@ Discard input characters up to and including the next newline.
 Prints the names and definitions for the named items, or for everything
 if no arguments are passed.
 .It Fn errprint msg
-Prints the first argument on the standard error output stream.
+Prints the first argument on the standard error stream.
 .It Fn esyscmd cmd
 Passes its first argument to a shell and returns the shell's standard output.
 Note that the shell shares its standard input and standard error with
-.Nm m4 .
-.It Fn eval expr[,radix[,minimum]]
+.Nm .
+.It Fn eval expr radix minimum
 Computes the first argument as an arithmetic expression using 32-bit
 arithmetic.
 Operators are the standard C ternary, arithmetic, logical,
@@ -304,17 +319,21 @@ with escape sequences substituted with
 .Fa arg1
 and following arguments, in a way similar to
 .Xr printf 3 .
-This built-in is only available in GNU-m4 compatibility mode, and the only
+This built-in is only available in GNU\~m4 compatibility mode, and the only
 parameters implemented are there for autoconf compatibility:
 left-padding flag, an optional field width, a maximum field width,
-*-specified field widths, and the %s and %c data type.
+.So Li \&*\| Sc Ns -specified
+field widths, and the
+.Ql %s
+and
+.Ql %c
+data type.
 .It Fn ifdef name yes no
 If the macro named by the first argument is defined then return the second
 argument, otherwise the third.
-If there is no third argument, the value is
-.Dv NULL .
+If there is no third argument, the value is null.
 The word
-.Qq unix
+.Sq Li unix
 is predefined.
 .It Fn ifelse a b yes ...
 If the first argument
@@ -328,8 +347,7 @@ the third argument
 .Fa yes .
 If the match fails the three arguments are
 discarded and the next three arguments are used until there is
-zero or one arguments left, either this last argument or
-.Dv NULL
+zero or one arguments left, either this last argument or null
 is returned if no other matches were found.
 .It Fn include name
 Returns the contents of the file specified in the first argument.
@@ -344,14 +362,16 @@ Include aborts with an error message if the file cannot be included.
 Increments the argument by 1.
 The argument must be a valid numeric string.
 .It Fn index string substring
-Returns the index of the second argument in the first argument (e.g.,
-.Ic index(the quick brown fox jumped, fox)
-returns 16).
+Returns the index of the second argument in the first argument, e.g.,
+.Pp
+.Dl index(the quick brown fox jumped, fox)
+.Pp
+returns 16.
 If the second
 argument is not found index returns \-1.
 .It Fn indir macro arg1 ...
 Indirectly calls the macro whose name is passed as the first argument,
-with the remaining arguments passed as first, ... arguments.
+with the remaining arguments passed as first, etc arguments.
 .It Fn len arg
 Returns the number of characters in the first argument.
 Extra arguments
@@ -362,10 +382,14 @@ Immediately exits with the return value specified by the first argument,
 .It Fn m4wrap todo
 Allows you to define what happens at the final
 .Dv EOF ,
-usually for cleanup purposes (e.g.,
-.Ic m4wrap("cleanup(tempfile)")
-causes the macro cleanup to be
-invoked after all other processing is done).
+usually for cleanup purposes.
+E.g.,
+.Pp
+.Dl m4wrap(\`cleanup(tempfile)\(aq)
+.Pp
+causes the macro
+.Ql cleanup
+to be invoked after all other processing is done.
 .Pp
 Multiple calls to
 .Fn m4wrap
@@ -385,21 +409,21 @@ included.
 .It Fn patsubst string regexp replacement
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
-.Pq Sq \&&
+.Pq Ql \&&
 is replaced by the string matching the regular expression.
 The string
-.Sq \e# ,
+.Sq Li \&\e Ns Ar \&# ,
 where
-.Sq #
+.Ar \&#
 is a digit, is replaced by the corresponding back-reference.
 .It Fn popdef arg ...
 Restores the
 .Ic pushdef Ns ed
 definition for each argument.
-.It Fn pushdef macro def
+.It Fn pushdef name value
 Takes the same arguments as
 .Ic define ,
-but it saves the definition on a
+but it saves the existing definition on a
 stack for later retrieval by
 .Fn popdef .
 .It Fn regexp string regexp replacement
@@ -420,7 +444,7 @@ Similar to
 except it ignores any errors.
 .It Fn spaste file
 Similar to
-.Fn paste ,
+.Ic paste ,
 except it ignores any errors.
 .It Fn substr string offset length
 Returns a substring of the first argument starting at the offset specified
@@ -432,10 +456,10 @@ Nothing is returned.
 .It Ic sysval
 Returns the return value from the last
 .Ic syscmd .
-.It Fn traceon arg ...
+.It Fn traceon name ...
 Enables tracing of macro expansions for the given arguments, or for all
 macros if no argument is given.
-.It Fn traceoff arg ...
+.It Fn traceoff name ...
 Disables tracing of macro expansions for the given arguments, or for all
 macros if no argument is given.
 .It Fn translit string mapfrom mapto
@@ -444,16 +468,16 @@ given by the second argument to the set given by the third.
 You cannot use
 .Xr tr 1
 style abbreviations.
-.It Fn undefine name1 ...
+.It Fn undefine name ...
 Removes the definition for the macros specified by its arguments.
 .It Fn undivert arg ...
 Flushes the named output queues (or all queues if no arguments).
 .It Ic unix
 A pre-defined macro for testing the OS platform.
-.It Ic __line__
-Returns the current file's line number.
 .It Ic __file__
 Returns the current file's name.
+.It Ic __line__
+Returns the current file's line number.
 .El
 .Sh STANDARDS
 The
@@ -463,7 +487,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl dgIot
+.Fl dgIot
 and the macros
 .Ic builtin ,
 .Ic esyscmd ,
@@ -475,9 +499,9 @@ and the macros
 .Ic regexp ,
 .Ic spaste ,
 .Ic unix ,
-.Ic __line__ ,
+.Ic __file__ ,
 and
-.Ic __file__
+.Ic __line__
 are extensions to that specification.
 .Pp
 The output format of tracing and of
@@ -485,7 +509,7 @@ The output format of tracing and of
 are not specified in any standard,
 are likely to change and should not be relied upon.
 The current format of tracing is closely modelled on
-.Nm gnu-m4 ,
+GNU\~m4,
 to allow
 .Nm autoconf
 to work.
@@ -504,7 +528,7 @@ replaces the top-most definition only.
 Other implementations may erase all definitions on the stack instead.
 .Pp
 All built-ins do expand without arguments in many other
-.Nm m4 .
+.Nm .
 .Pp
 Many other
 .Nm
@@ -515,5 +539,5 @@ have dire size limitations with respect to buffer sizes.
 and
 .An Richard A. O'Keefe Aq Mt ok@goanna.cs.rmit.OZ.AU .
 .Pp
-GNU-m4 compatibility extensions by
+GNU\~m4 compatibility extensions by
 .An Marc Espie Aq Mt espie@cvs.openbsd.org .
