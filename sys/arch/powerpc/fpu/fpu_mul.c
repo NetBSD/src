@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_mul.c,v 1.4 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_mul.c,v 1.5 2020/06/27 03:07:57 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,15 +45,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.5 2020/06/27 03:07:57 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
 #include <sys/systm.h>
 #endif
 
-#include <machine/reg.h>
 #include <machine/fpu.h>
+#include <machine/reg.h>
 
 #include <powerpc/fpu/fpu_arith.h>
 #include <powerpc/fpu/fpu_emu.h>
