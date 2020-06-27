@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.855 2020/06/27 05:07:07 jruoho Exp $
+# $NetBSD: mi,v 1.856 2020/06/27 05:20:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4767,6 +4767,10 @@
 ./usr/tests/usr.bin/xlint/lint1/d_typename_as_var.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_zero_sized_arrays.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ztest			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ztest/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/ztest/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/ztest/t_ztest		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.sbin				tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/Atffile			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua
