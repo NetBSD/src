@@ -5,7 +5,7 @@
  * NetBSD: aic7xxx.seq,v 1.20 2019/06/04 10:15:22 msaitoh Exp $
  * NetBSD: aic7xxx.reg,v 1.4 2005/12/11 12:22:18 christos Exp $
  */
-static uint8_t seqprog[] = {
+static const uint8_t seqprog[] = {
 	0xb2, 0x00, 0x00, 0x08,
 	0xf7, 0x11, 0x22, 0x08,
 	0x00, 0x65, 0xec, 0x59,
@@ -1090,7 +1090,7 @@ ahc_patch0_func(struct ahc_softc *ahc)
 	return (0);
 }
 
-static struct patch {
+static const struct patch {
 	ahc_patch_func_t		*patch_func;
 	uint32_t		 begin		:10,
 				 skip_instr	:10,
@@ -1300,7 +1300,7 @@ static struct patch {
 	{ ahc_patch4_func, 874, 12, 1 }
 };
 
-static struct cs {
+static const struct cs {
 	uint16_t	begin;
 	uint16_t	end;
 } critical_sections[] = {
