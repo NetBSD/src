@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_gram.y,v 1.6 2006/11/25 16:48:32 christos Exp $	*/
+/*	$NetBSD: aicasm_gram.y,v 1.7 2020/06/27 16:48:01 jdolecek Exp $	*/
 
 /*
  * Parser for the Aic7xxx SCSI Host adapter sequencer assembler.
@@ -1914,6 +1914,9 @@ add_version(const char *verstring)
 	const char prefix[] = " * ";
 	int newlen;
 	int oldlen;
+
+	if (verstring[0] == '$')
+		verstring++;
 
 	newlen = strlen(verstring) + strlen(prefix);
 	oldlen = 0;
