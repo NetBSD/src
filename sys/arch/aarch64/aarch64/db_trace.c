@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.11 2020/05/22 19:29:26 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.12 2020/06/27 00:43:38 rin Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2020/05/22 19:29:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2020/06/27 00:43:38 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,14 +174,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 
 	if (trace_thread) {
-		proc_t *pp, p;
+		proc_t *pp;
 
 		if ((pp = db_proc_find((pid_t)addr)) == 0) {
 			(*pr)("trace: pid %d: not found\n", (int)addr);
 			return;
 		}
-		db_read_bytes((db_addr_t)pp, sizeof(p), (char *)&p);
-		addr = (db_addr_t)p.p_lwps.lh_first;
+		db_read_bytes((db_addr_t)pp + offsetof(proc_t, p_lwps.lh_first),
+		    sizeof(addr), (char *)&addr);
 		trace_thread = false;
 		trace_lwp = true;
 	}
@@ -193,32 +193,32 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 
 	if (trace_lwp) {
-		proc_t p;
 		struct lwp l;
+		pid_t pid;
 
 		db_read_bytes(addr, sizeof(l), (char *)&l);
-		db_read_bytes((db_addr_t)l.l_proc, sizeof(p), (char *)&p);
+		db_read_bytes((db_addr_t)l.l_proc + offsetof(proc_t, p_pid),
+		    sizeof(pid), (char *)&pid);
 
 #if defined(_KERNEL)
 		if (addr == (db_expr_t)curlwp) {
 			fp = (uint64_t)&DDB_REGS->tf_reg[29];	/* &reg[29]={fp,lr} */
 			tf = DDB_REGS;
 			(*pr)("trace: pid %d lid %d (curlwp) at tf %p\n",
-			    p.p_pid, l.l_lid, tf);
+			    pid, l.l_lid, tf);
 		} else
 #endif
 		{
-			struct pcb pcb_buf;
 			struct pcb *pcb = lwp_getpcb(&l);
 
-			db_read_bytes((db_addr_t)pcb, sizeof(pcb_buf),
-			    (char *)&pcb_buf);
-			tf = pcb_buf.pcb_tf;
+			db_read_bytes((db_addr_t)pcb +
+			    offsetof(struct pcb, pcb_tf),
+			    sizeof(tf), (char *)&tf);
 			if (tf != 0) {
 				db_read_bytes((db_addr_t)&tf->tf_reg[29],
 				    sizeof(fp), (char *)&fp);
 				(*pr)("trace: pid %d lid %d at tf %p (in pcb)\n",
-				    p.p_pid, l.l_lid, tf);
+				    pid, l.l_lid, tf);
 			}
 #if defined(MULTIPROCESSOR) && defined(_KERNEL)
 			else if (l.l_stat == LSONPROC ||
@@ -226,14 +226,15 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 				/* running lwp on other cpus */
 				extern struct trapframe *db_readytoswitch[];
-				struct cpu_info cpuinfobuf;
+				u_int index;
 
-				db_read_bytes((db_addr_t)l.l_cpu,
-				    sizeof(cpuinfobuf), (char *)&cpuinfobuf);
-				tf = db_readytoswitch[cpuinfobuf.ci_index];
+				db_read_bytes((db_addr_t)l.l_cpu +
+				    offsetof(struct cpu_info, ci_index),
+				    sizeof(index), (char *)&index);
+				tf = db_readytoswitch[index];
 
 				(*pr)("trace: pid %d lid %d at tf %p (in kdb_trap)\n",
-				    p.p_pid, l.l_lid, tf);
+				    pid, l.l_lid, tf);
 			}
 #endif
 			else {
