@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.27 2018/07/30 22:58:09 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.28 2020/06/27 19:18:58 uwe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.27 2018/07/30 22:58:09 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.28 2020/06/27 19:18:58 uwe Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -184,7 +184,7 @@ expand_builtin(const char *argv[], int argc, int td)
 		int maxdigits = 0;
 		int e;
 
-		if (argc > 3) {
+		if (argc > 3 && *argv[3] != '\0') {
 			base = strtoi(argv[3], NULL, 0, 2, 36, &e);
 			if (e) {
 				m4errx(1, "expr: base %s invalid.", argv[3]);
