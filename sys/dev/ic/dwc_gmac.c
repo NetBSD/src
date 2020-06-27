@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.70 2020/05/17 21:50:47 chs Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.71 2020/06/27 13:34:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.70 2020/05/17 21:50:47 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.71 2020/06/27 13:34:20 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -202,7 +202,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		 */
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_value(ea), ETHER_ADDR_LEN);
 	} else {
 		/*
 		 * If we did not get an externaly configure address,

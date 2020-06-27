@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.678 2020/06/11 09:23:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.679 2020/06/27 13:32:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.678 2020/06/11 09:23:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.679 2020/06/27 13:32:00 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2543,7 +2543,7 @@ alloc_retry:
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_value(ea), ETHER_ADDR_LEN);
 	} else {
 		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,

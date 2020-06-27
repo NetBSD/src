@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.59 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.59 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -732,7 +732,7 @@ mue_get_macaddr(struct usbnet *un, prop_dictionary_t dict)
 	if (eaprop != NULL) {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(un->un_eaddr, prop_data_data_nocopy(eaprop),
+		memcpy(un->un_eaddr, prop_data_value(eaprop),
 		    ETHER_ADDR_LEN);
 		if (ETHER_IS_VALID(un->un_eaddr))
 			return 0;
