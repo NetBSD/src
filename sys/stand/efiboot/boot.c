@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2020/06/26 03:23:04 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.25 2020/06/27 17:23:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,6 +29,7 @@
 
 #include "efiboot.h"
 #include "efiblock.h"
+#include "efifile.h"
 #include "efifdt.h"
 #include "efiacpi.h"
 #include "efienv.h"
@@ -539,11 +540,15 @@ read_env(void)
 void
 boot(void)
 {
+	char pathbuf[80];
 	int currname, c;
 
 	read_env();
 
-	parsebootconf(BOOTCFG_FILENAME);
+	if (efi_bootdp != NULL && efi_file_path(efi_bootdp, BOOTCFG_FILENAME, pathbuf, sizeof(pathbuf)) == 0) {
+		twiddle_toggle = 1;
+		parsebootconf(pathbuf);
+	}
 
 	if (bootcfg_info.clear)
 		uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
@@ -551,7 +556,6 @@ boot(void)
 	print_banner();
 
 	/* Display menu if configured */
-	twiddle_toggle = 1;
 	if (bootcfg_info.nummenu > 0) {
 		doboottypemenu();	/* No return */
 	}

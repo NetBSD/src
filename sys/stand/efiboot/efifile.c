@@ -1,4 +1,4 @@
-/* $NetBSD: efifile.c,v 1.3 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: efifile.c,v 1.4 2020/06/27 17:23:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -144,5 +144,24 @@ efi_file_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, s
 		return EIO;
 	*rsize = len;
 
+	return 0;
+}
+
+int
+efi_file_path(EFI_DEVICE_PATH *dp, const char *fname, char *buf, size_t buflen)
+{
+	UINTN vol;
+	int depth;
+
+	depth = efi_device_path_depth(dp, END_DEVICE_PATH_TYPE);
+
+	for (vol = 0; vol < efi_nvol; vol++) {
+		if (efi_device_path_ncmp(dp, DevicePathFromHandle(efi_vol[vol]), depth) == 0)
+			break;
+	}
+	if (vol == efi_nvol)
+		return ENOENT;
+
+	snprintf(buf, buflen, "fs%u:%s", (u_int)vol, fname);
 	return 0;
 }
