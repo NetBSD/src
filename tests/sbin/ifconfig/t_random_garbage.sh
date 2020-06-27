@@ -1,4 +1,4 @@
-# $NetBSD: t_random_garbage.sh,v 1.1 2020/06/27 13:53:43 jruoho Exp $
+# $NetBSD: t_random_garbage.sh,v 1.2 2020/06/27 14:04:17 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,10 +38,10 @@ getrstr() {
 write_garbage() {
 	val=$(getrint)
 	echo "Test $3: write to $1 opt $2 -> $val"
-	ifconfig $1 $opt $val >/dev/null 2>&1
+	ifconfig $1 $2 $val >/dev/null 2>&1
 	val=$(getrstr)
 	echo "Test $3: write to $1 opt $2 -> $val"
-	ifconfig $1 $opt $val >/dev/null 2>&1
+	ifconfig $1 $2 $val >/dev/null 2>&1
 }
 
 atf_test_case random_garbage
