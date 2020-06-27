@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.6 2020/05/25 19:49:28 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.7 2020/06/27 13:34:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.6 2020/05/25 19:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.7 2020/06/27 13:34:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -836,7 +836,7 @@ genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 	if (eaprop != NULL) {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(eaddr, prop_data_data_nocopy(eaprop),
+		memcpy(eaddr, prop_data_value(eaprop),
 		    ETHER_ADDR_LEN);
 		return;
 	}
