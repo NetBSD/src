@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.7 2020/06/27 03:25:28 rin Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.8 2020/06/27 04:17:51 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.7 2020/06/27 03:25:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.8 2020/06/27 04:17:51 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -211,7 +211,7 @@ fpu_sqrt(struct fpemu *fe)
 	 *
 	 * Then all that remains are numbers with mantissas in [1..2).
 	 */
-	DPRINTF(FPE_REG, ("fpu_sqer:\n"));
+	DPRINTF(FPE_REG, ("fpu_sqrt:\n"));
 	DUMPFPN(FPE_REG, x);
 	DPRINTF(FPE_REG, ("=>\n"));
 	if (ISNAN(x)) {
