@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.140 2020/06/27 09:03:15 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.141 2020/06/27 09:28:15 jdolecek Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.140 2020/06/27 09:03:15 jdolecek Exp $
+ * $Id: aic7xxx.c,v 1.141 2020/06/27 09:28:15 jdolecek Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.140 2020/06/27 09:03:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.141 2020/06/27 09:28:15 jdolecek Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.140 2020/06/27 09:03:15 jdolecek Exp $
 struct ahc_softc_tailq ahc_tailq = TAILQ_HEAD_INITIALIZER(ahc_tailq);
 
 /***************************** Lookup Tables **********************************/
-const char *ahc_chip_names[] =
+const char * const ahc_chip_names[] =
 {
 	"NONE",
 	"aic7770",

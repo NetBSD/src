@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.54 2020/06/27 09:03:15 jdolecek Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.55 2020/06/27 09:28:15 jdolecek Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.54 2020/06/27 09:03:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.55 2020/06/27 09:28:15 jdolecek Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.54 2020/06/27 09:03:15 jdolecek Exp $"
 struct ahd_softc_tailq ahd_tailq = TAILQ_HEAD_INITIALIZER(ahd_tailq);
 
 /***************************** Lookup Tables **********************************/
-const char *ahd_chip_names[] =
+const char * const ahd_chip_names[] =
 {
 	"NONE",
 	"aic7901",
@@ -5983,14 +5983,14 @@ ahd_controller_info(struct ahd_softc *ahd, char *tbuf, size_t l)
 		ahd->scb_data.maxhscbs);
 }
 
-static const char *channel_strings[] = {
+static const char * const channel_strings[] = {
 	"Primary Low",
 	"Primary High",
 	"Secondary Low",
 	"Secondary High"
 };
 
-static const char *termstat_strings[] = {
+static const char * const termstat_strings[] = {
 	"Terminated Correctly",
 	"Over Terminated",
 	"Under Terminated",
