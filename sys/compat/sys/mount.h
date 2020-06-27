@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.11 2019/10/04 01:28:02 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.12 2020/06/27 07:00:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -140,7 +140,7 @@ statvfs_to_statfs12_copy(const void *vs, void *vs12, size_t l)
 	struct statfs12 *s12 = STATVFSBUF_GET();
 	int error;
 
-	statvfs_to_statfs12(vs, vs12);
+	statvfs_to_statfs12(vs, s12);
 	error = copyout(s12, vs12, l);
 	STATVFSBUF_PUT(s12);
 
