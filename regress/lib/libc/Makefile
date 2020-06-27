@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.82 2014/01/10 16:35:11 christos Exp $
+#	$NetBSD: Makefile,v 1.83 2020/06/27 11:06:43 mlelstv Exp $
 
-SUBDIR+= citrus divrem
+SUBDIR+= divrem
 
 .include <bsd.own.mk>
 
