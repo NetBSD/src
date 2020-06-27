@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.66 2018/06/23 14:22:30 jakllsch Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.67 2020/06/27 17:27:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.66 2018/06/23 14:22:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.67 2020/06/27 17:27:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -889,7 +889,8 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		 * Don't even try to lookup the symbol if the index is
 		 * bogus.
 		 */
-		kobj_error(ko, "symbol index out of range");
+		kobj_error(ko, "symbol index %ju out of range",
+		    (uintmax_t)symidx);
 		return EINVAL;
 	}
 
@@ -903,7 +904,8 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 	switch (ELF_ST_BIND(sym->st_info)) {
 	case STB_LOCAL:
 		/* Local, but undefined? huh? */
-		kobj_error(ko, "local symbol undefined");
+		kobj_error(ko, "local symbol @%ju undefined",
+		    (uintmax_t)symidx);
 		return EINVAL;
 
 	case STB_GLOBAL:
@@ -912,11 +914,13 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 
 		/* Force a lookup failure if the symbol name is bogus. */
 		if (*symbol == 0) {
-			kobj_error(ko, "bad symbol name");
+			kobj_error(ko, "bad symbol @%ju name",
+			    (uintmax_t)symidx);
 			return EINVAL;
 		}
 		if (sym->st_value == 0) {
-			kobj_error(ko, "bad value");
+			kobj_error(ko, "%s @%ju: bad value", symbol,
+			    (uintmax_t)symidx);
 			return EINVAL;
 		}
 
@@ -924,10 +928,13 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		return 0;
 
 	case STB_WEAK:
-		kobj_error(ko, "weak symbols not supported");
+		kobj_error(ko, "weak symbol @%ju not supported",
+		    (uintmax_t)symidx);
 		return EINVAL;
 
 	default:
+		kobj_error(ko, "bad binding %#x for symbol @%ju",
+		    ELF_ST_BIND(sym->st_info), (uintmax_t)symidx);
 		return EINVAL;
 	}
 }
