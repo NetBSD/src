@@ -820,7 +820,7 @@ again:
 	search = kmem_zalloc(sizeof (*search), KM_NOSLEEP);
 	if (search) {
 		search->io_offset = vq->vq_last_offset + 1;
-		VERIFY3P(avl_find(tree, &search, &idx), ==, NULL);
+		VERIFY3P(avl_find(tree, search, &idx), ==, NULL);
 		kmem_free(search, sizeof (*search));
 		zio = avl_nearest(tree, idx, AVL_AFTER);
 	} else {
