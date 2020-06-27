@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.28 2020/04/02 13:38:50 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.29 2020/06/27 13:34:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -224,7 +224,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 		 */
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_value(ea), ETHER_ADDR_LEN);
 		aprint_debug_dev(sc->sc_dev, "got MAC address!\n");
 	} else {
 		/*
