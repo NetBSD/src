@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.8 2020/06/27 03:07:57 rin Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.9 2020/06/27 04:24:08 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.8 2020/06/27 03:07:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.9 2020/06/27 04:24:08 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -258,5 +258,4 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 				((type == FTYPE_DBL) ? 'd' : '?'))),
 		reg));
 	DUMPFPN(FPE_REG, fp);
-	DPRINTF(FPE_REG, ("\n"));
 }
