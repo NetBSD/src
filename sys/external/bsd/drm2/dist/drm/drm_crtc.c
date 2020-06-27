@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.16 2020/02/14 14:34:57 maya Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.17 2020/06/27 13:39:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.16 2020/02/14 14:34:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.17 2020/06/27 13:39:05 jmcneill Exp $");
 
 #include <linux/ctype.h>
 #include <linux/list.h>
@@ -825,13 +825,14 @@ EXPORT_SYMBOL(drm_display_info_set_bus_formats);
 static void drm_connector_get_cmdline_mode(struct drm_connector *connector)
 {
 	struct drm_cmdline_mode *mode = &connector->cmdline_mode;
-	char *option = NULL;
 
 #ifdef __NetBSD__
+	const char *option;
 	prop_dictionary_t prop = device_properties(connector->dev->dev);
-	if (!prop_dictionary_get_cstring(prop, connector->name, &option))
+	if (!prop_dictionary_get_string(prop, connector->name, &option))
 		return;
 #else
+	char *option = NULL;
 	if (fb_get_options(connector->name, &option))
 		return;
 #endif
