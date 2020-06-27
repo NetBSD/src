@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_scan.l,v 1.5 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: aicasm_scan.l,v 1.6 2020/06/27 16:19:38 jdolecek Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
@@ -59,6 +59,13 @@
 #include "aicasm.h"
 #include "aicasm_symbol.h"
 #include "aicasm_gram.h"
+
+int yyparse(void);
+void yy_delete_buffer(YY_BUFFER_STATE);
+int mmlex(void);
+int mmparse(void);
+void mm_delete_buffer(YY_BUFFER_STATE);
+void mm_switch_to_buffer(YY_BUFFER_STATE);
 
 /* This is used for macro body capture too, so err on the large size. */
 #define MAX_STR_CONST 4096
