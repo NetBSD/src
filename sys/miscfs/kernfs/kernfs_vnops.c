@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.165 2020/05/16 18:31:51 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.166 2020/06/27 17:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.165 2020/05/16 18:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.166 2020/06/27 17:29:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1171,7 +1171,7 @@ kernfs_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }
