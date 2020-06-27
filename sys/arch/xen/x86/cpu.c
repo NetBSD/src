@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.136 2020/05/21 21:12:31 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.137 2020/06/27 09:54:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.136 2020/05/21 21:12:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.137 2020/06/27 09:54:08 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -999,22 +999,24 @@ int
 mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 {
 	int hyperror;
-	struct vcpu_guest_context vcpuctx;
+	struct vcpu_guest_context *vcpuctx;
 
 	KASSERT(ci != NULL);
 	KASSERT(ci != &cpu_info_primary);
 	KASSERT(ci->ci_flags & CPUF_AP);
 
+	vcpuctx = kmem_alloc(sizeof(*vcpuctx), KM_SLEEP);
+
 #ifdef __x86_64__
-	xen_init_amd64_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
+	xen_init_amd64_vcpuctxt(ci, vcpuctx, (void (*)(struct cpu_info *))target);
 #else
-	xen_init_i386_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
+	xen_init_i386_vcpuctxt(ci, vcpuctx, (void (*)(struct cpu_info *))target);
 #endif
 
 	/* Initialise the given vcpu to execute cpu_hatch(ci); */
-	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_vcpuid, &vcpuctx))) {
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_vcpuid, vcpuctx))) {
 		aprint_error(": context initialisation failed. errno = %d\n", hyperror);
-		return hyperror;
+		goto out;
 	}
 
 	/* Start it up */
@@ -1022,20 +1024,23 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 	/* First bring it down */
 	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_vcpuid, NULL))) {
 		aprint_error(": VCPUOP_down hypervisor command failed. errno = %d\n", hyperror);
-		return hyperror;
+		goto out;
 	}
 
 	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_up, ci->ci_vcpuid, NULL))) {
 		aprint_error(": VCPUOP_up hypervisor command failed. errno = %d\n", hyperror);
-		return hyperror;
+		goto out;
 	}
 
 	if (!vcpu_is_up(ci)) {
 		aprint_error(": did not come up\n");
-		return -1;
+		hyperror = -1;
+		goto out;
 	}
 
-	return 0;
+out:
+	kmem_free(vcpuctx, sizeof(*vcpuctx));
+	return hyperror;
 }
 
 void
