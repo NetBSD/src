@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.142 2020/05/24 20:08:26 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.143 2020/06/27 17:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.142 2020/05/24 20:08:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.143 2020/06/27 17:29:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1125,39 +1125,36 @@ tmpfs_pathconf(void *v)
 		int		a_name;
 		register_t	*a_retval;
 	} */ *ap = v;
-	const int name = ap->a_name;
 	register_t *retval = ap->a_retval;
-	int error = 0;
 
-	switch (name) {
+	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*retval = LINK_MAX;
-		break;
+		return 0;
 	case _PC_NAME_MAX:
 		*retval = TMPFS_MAXNAMLEN;
-		break;
+		return 0;
 	case _PC_PATH_MAX:
 		*retval = PATH_MAX;
-		break;
+		return 0;
 	case _PC_PIPE_BUF:
 		*retval = PIPE_BUF;
-		break;
+		return 0;
 	case _PC_CHOWN_RESTRICTED:
 		*retval = 1;
-		break;
+		return 0;
 	case _PC_NO_TRUNC:
 		*retval = 1;
-		break;
+		return 0;
 	case _PC_SYNC_IO:
 		*retval = 1;
-		break;
+		return 0;
 	case _PC_FILESIZEBITS:
 		*retval = sizeof(off_t) * CHAR_BIT;
-		break;
+		return 0;
 	default:
-		error = EINVAL;
+		return genfs_pathconf(ap);
 	}
-	return error;
 }
 
 int

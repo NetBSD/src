@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.41 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.42 2020/06/27 17:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.41 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.42 2020/06/27 17:29:18 christos Exp $");
 #endif /* not lint */
 
 
@@ -926,9 +926,9 @@ nilfs_pathconf(void *v)
 #endif
 		*ap->a_retval = bits;
 		return 0;
+	default:
+		return genfs_pathconf(ap);
 	}
-
-	return EINVAL;
 }
 
 
