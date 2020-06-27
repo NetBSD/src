@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.133 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.134 2020/06/27 17:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.133 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.134 2020/06/27 17:29:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,7 +905,7 @@ fdesc_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }

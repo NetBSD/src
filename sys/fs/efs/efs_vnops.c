@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.40 2020/05/16 18:31:48 christos Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.41 2020/06/27 17:29:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.40 2020/05/16 18:31:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.41 2020/06/27 17:29:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,7 @@ efs_pathconf(void *v)
 		*ap->a_retval = 32;
 		break;
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 
 	return (0);

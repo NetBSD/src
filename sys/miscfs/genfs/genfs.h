@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.34 2020/05/16 18:31:51 christos Exp $	*/
+/*	$NetBSD: genfs.h,v 1.35 2020/06/27 17:29:19 christos Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -41,6 +41,7 @@ int	genfs_getpages(void *);
 int	genfs_putpages(void *);
 int	genfs_null_putpages(void *);
 int	genfs_compat_getpages(void *);
+int	genfs_pathconf(void *v);
 
 int	genfs_do_putpages(struct vnode *, off_t, off_t, int, struct vm_page **);
 

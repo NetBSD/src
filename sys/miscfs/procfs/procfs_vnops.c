@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.214 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.215 2020/06/27 17:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.214 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.215 2020/06/27 17:29:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -500,7 +500,7 @@ procfs_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }

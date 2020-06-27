@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.30 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.31 2020/06/27 17:29:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.30 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.31 2020/06/27 17:29:18 christos Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -1172,48 +1172,43 @@ int
 v7fs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
-				    struct vnode *a_vp;
-				    int a_name;
-				    register_t *a_retval;
-				    } */ *a = v;
-	int err = 0;
+		struct vnode *a_vp;
+		int a_name;
+		register_t *a_retval;
+	} */ *ap = v;
+	DPRINTF("%p\n", ap->a_vp);
 
-	DPRINTF("%p\n", a->a_vp);
-
-	switch (a->a_name) {
+	switch (ap->a_name) {
 	case _PC_LINK_MAX:
-		*a->a_retval = V7FS_LINK_MAX;
-		break;
+		*ap->a_retval = V7FS_LINK_MAX;
+		return 0;
 	case _PC_NAME_MAX:
-		*a->a_retval = V7FS_NAME_MAX;
-		break;
+		*ap->a_retval = V7FS_NAME_MAX;
+		return 0;
 	case _PC_PATH_MAX:
-		*a->a_retval = V7FS_PATH_MAX;
-		break;
+		*ap->a_retval = V7FS_PATH_MAX;
+		return 0;
 	case _PC_CHOWN_RESTRICTED:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	case _PC_NO_TRUNC:
-		*a->a_retval = 0;
-		break;
+		*ap->a_retval = 0;
+		return 0;
 	case _PC_SYNC_IO:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	case _PC_FILESIZEBITS:
-		*a->a_retval = 30; /* ~1G */
-		break;
+		*ap->a_retval = 30; /* ~1G */
+		return 0;
 	case _PC_SYMLINK_MAX:
-		*a->a_retval = V7FSBSD_MAXSYMLINKLEN;
-		break;
+		*ap->a_retval = V7FSBSD_MAXSYMLINKLEN;
+		return 0;
 	case _PC_2_SYMLINKS:
-		*a->a_retval = 1;
-		break;
+		*ap->a_retval = 1;
+		return 0;
 	default:
-		err = EINVAL;
-		break;
+		return genfs_pathconf(ap);
 	}
-
-	return err;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.54 2020/05/16 18:31:48 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.55 2020/06/27 17:29:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.54 2020/05/16 18:31:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.55 2020/06/27 17:29:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,7 +931,7 @@ adosfs_pathconf(void *v)
 		*ap->a_retval = 32;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }

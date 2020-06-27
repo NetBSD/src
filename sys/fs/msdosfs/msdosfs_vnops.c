@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.103 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.103 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1765,7 +1765,7 @@ msdosfs_pathconf(void *v)
 		*ap->a_retval = 32;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }

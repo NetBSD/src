@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.315 2020/05/16 18:31:52 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.316 2020/06/27 17:29:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.315 2020/05/16 18:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.316 2020/06/27 17:29:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -3270,7 +3270,7 @@ nfs_pathconf(void *v)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = genfs_pathconf(ap);
 		break;
 	}
 
