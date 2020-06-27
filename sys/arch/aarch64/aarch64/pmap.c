@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2020/06/24 08:27:47 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2020/06/27 00:46:37 rin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2020/06/24 08:27:47 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2020/06/27 00:46:37 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ PMAP_COUNTER(fixup_modified, "page modification emulations");
 PMAP_COUNTER(kern_mappings_bad, "kernel pages mapped (bad color)");
 PMAP_COUNTER(kern_mappings_bad_wired, "kernel pages mapped (wired bad color)");
 PMAP_COUNTER(user_mappings_bad, "user pages mapped (bad color, not wired)");
-PMAP_COUNTER(user_mappings_bad_wired, "user pages mapped (bad colo, wiredr)");
+PMAP_COUNTER(user_mappings_bad_wired, "user pages mapped (bad color, wired)");
 PMAP_COUNTER(kern_mappings, "kernel pages mapped");
 PMAP_COUNTER(user_mappings, "user pages mapped");
 PMAP_COUNTER(user_mappings_changed, "user mapping changed");
