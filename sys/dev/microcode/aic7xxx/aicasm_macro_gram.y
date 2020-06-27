@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_macro_gram.y,v 1.2 2006/11/25 16:48:32 christos Exp $	*/
+/*	$NetBSD: aicasm_macro_gram.y,v 1.3 2020/06/27 16:19:38 jdolecek Exp $	*/
 
 /*
  * Sub-parser for macro invocation in the Aic7xxx SCSI
@@ -65,6 +65,8 @@
 static symbol_t *macro_symbol;
 
 static void add_macro_arg(const char *argtext, int position);
+
+int yylex(void);
 
 %}
 
