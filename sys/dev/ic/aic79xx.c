@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.55 2020/06/27 09:28:15 jdolecek Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.56 2020/06/27 17:07:49 jdolecek Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.55 2020/06/27 09:28:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.56 2020/06/27 17:07:49 jdolecek Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -222,7 +222,7 @@ static void		ahd_dumpseq(struct ahd_softc *ahd);
 #endif
 static void		ahd_loadseq(struct ahd_softc *ahd);
 static int		ahd_check_patch(struct ahd_softc *ahd,
-					struct patch **start_patch,
+					const struct patch **start_patch,
 					u_int start_instr, u_int *skip_addr);
 static u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
 					    u_int address);
@@ -8258,7 +8258,7 @@ ahd_loadseq(struct ahd_softc *ahd)
 	struct	cs cs_table[num_critical_sections];
 	u_int	begin_set[num_critical_sections];
 	u_int	end_set[num_critical_sections];
-	struct	patch *cur_patch;
+	const struct patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;
 	u_int	i;
@@ -8409,12 +8409,12 @@ ahd_loadseq(struct ahd_softc *ahd)
 }
 
 static int
-ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
+ahd_check_patch(struct ahd_softc *ahd, const struct patch **start_patch,
 		u_int start_instr, u_int *skip_addr)
 {
-	struct	patch *cur_patch;
-	struct	patch *last_patch;
-	u_int	num_patches;
+	const struct	patch *cur_patch;
+	const struct	patch *last_patch;
+	u_int		num_patches;
 
 	num_patches = sizeof(patches)/sizeof(struct patch);
 	last_patch = &patches[num_patches];
@@ -8447,7 +8447,7 @@ ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
 static u_int
 ahd_resolve_seqaddr(struct ahd_softc *ahd, u_int address)
 {
-	struct patch *cur_patch;
+	const struct patch *cur_patch;
 	int address_offset;
 	u_int skip_addr;
 	u_int i;
@@ -8484,7 +8484,7 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 	/*
 	 * The firmware is always compiled into a little endian format.
 	 */
-	instr.integer = ahd_le32toh(*(uint32_t*)&seqprog[instrptr * 4]);
+	instr.integer = ahd_le32toh(*(const uint32_t*)&seqprog[instrptr * 4]);
 
 	fmt1_ins = &instr.format1;
 	fmt3_ins = NULL;
