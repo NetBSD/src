@@ -1,13 +1,6 @@
-# $NetBSD: mi,v 1.137 2020/04/23 11:41:28 uki Exp $
+# $NetBSD: mi,v 1.138 2020/06/27 05:39:07 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
-#
-# IMPORTANT:	When you add a module here, you have to add it twice to
-#		md.evbppc as well. evbppc does not use mi, because
-#		powerpc-4xx and powerpc-booke modules are incompatible.
-#		Additionally, you may have to add it once more in md.amd64
-#		(for xen) and twice more for i386 (xen and xen-pae).
-#		Sorry for any inconvenience this may cause, the management.
 #
 ./@MODULEDIR@					modules-base-kernel	kmod
 ./@MODULEDIR@/aac				base-obsolete		obsolete
