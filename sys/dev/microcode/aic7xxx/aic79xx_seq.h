@@ -5,7 +5,7 @@
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#96 $
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#70 $
  */
-static uint8_t seqprog[] = {
+static const uint8_t seqprog[] = {
 	0xff, 0x02, 0x06, 0x78,
 	0x00, 0xea, 0x50, 0x59,
 	0x01, 0xea, 0x04, 0x30,
@@ -978,7 +978,7 @@ ahd_patch0_func(struct ahd_softc *ahd)
 	return (0);
 }
 
-static struct patch {
+static const struct patch {
 	ahd_patch_func_t		*patch_func;
 	uint32_t		 begin		:10,
 				 skip_instr	:10,
@@ -1117,7 +1117,7 @@ static struct patch {
 	{ ahd_patch22_func, 774, 11, 1 }
 };
 
-static struct cs {
+static const struct cs {
 	uint16_t	begin;
 	uint16_t	end;
 } critical_sections[] = {
