@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.7 2019/05/31 20:25:58 jmcneill Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.8 2020/06/27 13:41:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.7 2019/05/31 20:25:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.8 2020/06/27 13:41:44 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -141,10 +141,8 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 		    da->da_fb_helper->connector_info[n]->connector;
 		struct drm_property_blob *edid = connector->edid_blob_ptr;
 		if (edid && edid->length) {
-			prop_data_t edid_data =
-			    prop_data_create_data(edid->data, edid->length);
-			prop_dictionary_set(dict, "EDID", edid_data);
-			prop_object_release(edid_data);
+			prop_dictionary_set_data(dict, "EDID", edid->data,
+			    edid->length);
 			break;
 		}
 	}
