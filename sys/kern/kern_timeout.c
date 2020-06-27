@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.65 2020/06/02 02:04:35 rin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.66 2020/06/27 01:26:32 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.65 2020/06/02 02:04:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.66 2020/06/27 01:26:32 rin Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -184,7 +184,6 @@ struct callout_cpu {
 
 #ifdef DDB
 static struct callout_cpu ccb;
-static struct cpu_info cib;
 #endif
 
 #ifndef CRASH /* _KERNEL */
@@ -853,15 +852,17 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 	 * some other CPU was paused while holding the lock.
 	 */
 	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-		db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
-		cc = cib.ci_data.cpu_callout;
+		db_read_bytes((db_addr_t)ci +
+		    offsetof(struct cpu_info, ci_data.cpu_callout),
+		    sizeof(cc), (char *)&cc);
 		db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
 		db_show_callout_bucket(&ccb, &cc->cc_todo, &ccb.cc_todo);
 	}
 	for (b = 0; b < BUCKETS; b++) {
 		for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-			db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
-			cc = cib.ci_data.cpu_callout;
+			db_read_bytes((db_addr_t)ci +
+			    offsetof(struct cpu_info, ci_data.cpu_callout),
+			    sizeof(cc), (char *)&cc);
 			db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
 			db_show_callout_bucket(&ccb, &cc->cc_wheel[b],
 			    &ccb.cc_wheel[b]);
