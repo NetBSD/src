@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.21 2020/06/27 04:18:57 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.22 2020/06/27 04:31:06 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.21 2020/06/27 04:18:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.22 2020/06/27 04:31:06 rin Exp $");
 
 #include "opt_ddb.h"
 
@@ -162,6 +162,8 @@ fpu_dumpfpn(struct fpn *fp)
 	static const char *class[] = {
 		"SNAN", "QNAN", "ZERO", "NUM", "INF"
 	};
+
+	KASSERT(fp != NULL);
 
 	printf("%s %c.%x %x %x %xE%d\n", class[fp->fp_class + 2],
 		fp->fp_sign ? '-' : ' ',
