@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.6 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.7 2020/06/27 03:07:57 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,15 +46,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.6 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.7 2020/06/27 03:07:57 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include <machine/ieee.h>
 #include <powerpc/instr.h>
-#include <machine/reg.h>
 #include <machine/fpu.h>
+#include <machine/ieee.h>
+#include <machine/reg.h>
 
 #include <powerpc/fpu/fpu_arith.h>
 #include <powerpc/fpu/fpu_emu.h>
