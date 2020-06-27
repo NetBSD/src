@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.72 2020/05/15 06:01:26 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.73 2020/06/27 18:44:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.72 2020/05/15 06:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.73 2020/06/27 18:44:02 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -307,17 +307,21 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 
 	fdt_add_reserved_memory(mem_start, mem_end);
 
-	const uint64_t initrd_size = initrd_end - initrd_start;
+	const uint64_t initrd_size =
+	    round_page(initrd_end) - trunc_page(initrd_start);
 	if (initrd_size > 0)
-		fdt_memory_remove_range(initrd_start, initrd_size);
+		fdt_memory_remove_range(trunc_page(initrd_start), initrd_size);
 
-	const uint64_t rndseed_size = rndseed_end - rndseed_start;
+	const uint64_t rndseed_size =
+	    round_page(rndseed_end) - trunc_page(rndseed_start);
 	if (rndseed_size > 0)
-		fdt_memory_remove_range(rndseed_start, rndseed_size);
+		fdt_memory_remove_range(trunc_page(rndseed_start),
+		    rndseed_size);
 
-	const uint64_t efirng_size = efirng_end - efirng_start;
+	const uint64_t efirng_size =
+	    round_page(efirng_end) - trunc_page(efirng_start);
 	if (efirng_size > 0)
-		fdt_memory_remove_range(efirng_start, efirng_size);
+		fdt_memory_remove_range(trunc_page(efirng_start), efirng_size);
 
 	const int framebuffer = OF_finddevice("/chosen/framebuffer");
 	if (framebuffer >= 0) {
