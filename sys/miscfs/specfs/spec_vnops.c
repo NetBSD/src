@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.179 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.180 2020/06/27 17:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.179 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.180 2020/06/27 17:29:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1316,7 +1316,7 @@ spec_pathconf(void *v)
 		*ap->a_retval = 1;
 		return (0);
 	default:
-		return (EINVAL);
+		return genfs_pathconf(ap);
 	}
 	/* NOTREACHED */
 }
