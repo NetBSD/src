@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.858 2020/06/27 08:50:46 jruoho Exp $
+# $NetBSD: mi,v 1.859 2020/06/27 09:45:57 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3052,7 +3052,7 @@
 ./usr/tests/lib/libc/stdio/t_fopen		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_format		tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdio/t_fputc		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/stdio/t_mktemp		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdio/t_mktemp		tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdio/t_open_memstream	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_popen		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_printf		tests-lib-tests		compattestfile,atf
@@ -3075,6 +3075,7 @@
 ./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdlib/t_mktemp		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_random		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		compattestfile,atf
