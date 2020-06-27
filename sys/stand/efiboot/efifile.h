@@ -1,4 +1,4 @@
-/* $NetBSD: efifile.h,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: efifile.h,v 1.2 2020/06/27 17:23:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,3 +31,5 @@ void efi_file_system_probe(void);
 int efi_file_open(struct open_file *, ...);
 int efi_file_close(struct open_file *);
 int efi_file_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int efi_file_path(EFI_DEVICE_PATH *, const char *, char *, size_t);
+
