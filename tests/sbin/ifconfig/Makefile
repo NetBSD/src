@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.6 2020/06/27 05:07:07 jruoho Exp $
+# $NetBSD: Makefile,v 1.7 2020/06/27 06:57:44 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/sbin/ifconfig
 
 TESTS_SH=	t_bridge \
+		t_capabilities \
 		t_nonexistent \
 		t_repeated_scan \
 		t_repeated_updown \
