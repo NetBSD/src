@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.25 2020/06/27 17:23:08 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.26 2020/06/27 18:52:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -360,6 +360,7 @@ command_resetenv(char *arg)
 void
 command_version(char *arg)
 {
+	char pathbuf[80];
 	char *ufirmware;
 	int rv;
 
@@ -372,6 +373,10 @@ command_version(char *arg)
 		printf("Firmware: %s (rev 0x%x)\n", ufirmware,
 		    ST->FirmwareRevision);
 		FreePool(ufirmware);
+	}
+	if (efi_bootdp != NULL &&
+	    efi_file_path(efi_bootdp, BOOTCFG_FILENAME, pathbuf, sizeof(pathbuf)) == 0) {
+		printf("Config path: %s\n", pathbuf);
 	}
 
 	efi_fdt_show();
