@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.155 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.156 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1077,7 +1077,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 		execve(), or the registers might get dumped on someone
 		else's stack... (deraadt)
 	execve(2): keep execve arg buffer around for later use (deraadt & cgd)
-	STACKGAP: a small optional buffer located near the top of the stack
+	stackgap: a small optional buffer located near the top of the stack
 		where binary compatibility functions can copyout/copyin
 		argument buffers that are copyin/copyout'd at low levels
 		by various system calls (deraadt)
@@ -8798,6 +8798,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		to locate files within an emulation's root directory.
 		Instead get namei() to check the emulation root first.
 		[dsl 20070422]
+	stackgap: Now only used by systrace(4) [dsl 20070422]
 	pax(1): Add a '-V' flag to pax for verbose summary without listing.
 		[christos 20070423]
 	prep: Add support for the MTX604 RAVEN based machine. Other RAVEN
@@ -9205,6 +9206,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	hp700: Kernels are now compiled with -O2. [skrll 20071230]
 	compat_hpux: Removed. [ad 20071231]
 	systrace(1): Removed. [ad 20071231]
+	stackgap: Removed stackgap support functions due to systrace(4)
+		removal [ad 20071231]
 	arm: Add support for kernel crashdump to arm32. [chris 20080101]
 	tprof: Add tprof, a simple performance monitor based profiler,
 		inspired from linux oprofile.  it's still very experimental.
