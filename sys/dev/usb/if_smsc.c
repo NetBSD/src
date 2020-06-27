@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.68 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.69 2020/06/27 13:33:26 jmcneill Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.68 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.69 2020/06/27 13:33:26 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -896,7 +896,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	if (eaprop != NULL) {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(un->un_eaddr, prop_data_data_nocopy(eaprop),
+		memcpy(un->un_eaddr, prop_data_value(eaprop),
 		    ETHER_ADDR_LEN);
 	} else {
 		/* Check if there is already a MAC address in the register */
