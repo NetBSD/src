@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_dss.c,v 1.1 2019/10/31 17:08:54 jmcneill Exp $	*/
+/*	$NetBSD: omap3_dss.c,v 1.2 2020/06/28 12:43:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.1 2019/10/31 17:08:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.2 2020/06/28 12:43:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_edid_size = uimin(prop_data_size(edid_data), 1024);
 		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
-		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
-		    sc->sc_edid_size);
+		memcpy(sc->sc_edid_data, prop_data_value(edid_data), sc->sc_edid_size);
 
 		edid_parse(sc->sc_edid_data, &ei);
 		edid_print(&ei);
