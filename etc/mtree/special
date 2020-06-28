@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.169 2020/06/15 01:57:30 christos Exp $
+#	$NetBSD: special,v 1.170 2020/06/28 03:05:59 kim Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -356,7 +356,7 @@
 ./etc/zfs			type=dir  mode=0755
 
 ./private			type=dir mode=0755 optional
-./private/tmp			type=dir mode=0111 optional ignore
+./private/tmp			type=dir mode=0555 optional ignore
 
 ./root				type=dir  mode=0755
 ./root/.cshrc			type=file mode=0644
