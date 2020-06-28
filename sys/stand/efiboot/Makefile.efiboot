@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.16 2020/06/26 03:23:04 thorpej Exp $
+# $NetBSD: Makefile.efiboot,v 1.17 2020/06/28 11:39:50 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -23,7 +23,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c bootmenu.c conf.c console.c dev_net.c devopen.c exec.c \
 		module.c overlay.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c \
+SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c efifdt.c \
 		efifile.c efiblock.c efinet.c efipxe.c efiacpi.c efirng.c smbios.c
 
 .PATH: ${S}/external/bsd/libfdt/dist

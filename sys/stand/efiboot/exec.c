@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.17 2020/06/26 03:23:04 thorpej Exp $ */
+/* $NetBSD: exec.c,v 1.18 2020/06/28 11:39:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,6 @@
  */
 
 #include "efiboot.h"
-#include "efienv.h"
 #include "efifdt.h"
 #include "efiacpi.h"
 #include "efirng.h"
