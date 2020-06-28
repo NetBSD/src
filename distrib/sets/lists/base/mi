@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1252 2020/06/21 17:15:51 thorpej Exp $
+# $NetBSD: mi,v 1.1253 2020/06/28 14:26:18 fcambus Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5327,6 +5327,11 @@
 ./usr/share/wscons/fonts/latin2.814		base-util-share		share
 ./usr/share/wscons/fonts/latin2.816		base-util-share		share
 ./usr/share/wscons/fonts/orator.816		base-util-share		share
+./usr/share/wscons/fonts/spleen-12x24.fnt	base-util-share		share
+./usr/share/wscons/fonts/spleen-16x32.fnt	base-util-share		share
+./usr/share/wscons/fonts/spleen-32x64.fnt	base-util-share		share
+./usr/share/wscons/fonts/spleen-5x8.fnt		base-util-share		share
+./usr/share/wscons/fonts/spleen-8x16.fnt	base-util-share		share
 ./usr/share/wscons/fonts/vt220h.808		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.810		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.814		base-util-share		share
